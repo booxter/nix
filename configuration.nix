@@ -234,7 +234,8 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
   nixpkgs.config.firefox.gssSupport = true;
 
   # User session adjustments.
-  programs.gnupg.agent = { enable = true; enableSSHSupport = true; };
+  programs.gnupg.agent = { enable = true; };
+  #programs.gnupg.agent = { enable = true; enableSSHSupport = true; };
   programs.bash.enableCompletion = true;
   programs.vim.defaultEditor = true;
 
@@ -242,6 +243,7 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
 
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
+  programs.ssh.startAgent = true;
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
