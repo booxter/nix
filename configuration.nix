@@ -244,6 +244,9 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
 
   # List services that you want to enable:
 
+  # Don't rate limit journal log messages.
+  services.journald.rateLimitInterval = "0";
+
   # Enable the OpenSSH daemon.
   services.openssh.enable = true;
   programs.ssh.startAgent = true;
