@@ -218,8 +218,11 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
     # misc tools
     emacs vim git gitAndTools.tig gitAndTools.git-hub
     pass gnupg file tmux pstree vagrant lsof telnet
-    openssl ranger bc python3 strace ltrace tcpdump
-    wireshark gnumake go gcc
+    openssl ranger bc strace ltrace tcpdump
+    wireshark gnumake go gcc wget zip dnsutils
+    # python
+    python36Packages.tox
+    (python3.withPackages(ps: with ps; [ setuptools ]))
     # productivity
     firefox slack libreoffice zathura evince zoom-us
     # X terminal
