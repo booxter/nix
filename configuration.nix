@@ -29,7 +29,7 @@
     kernelModules = [ "hid_microsoft" ];
   };
   boot.cleanTmpDir = true;
-  
+
   networking = {
     hostName = "dell"; # Define your hostname.
     extraHosts = ''
@@ -101,7 +101,7 @@ RxNEp7yHoXcwn+fXna+t5JWh1gxUZty3
       uuid=f281b867-85e1-4979-8adf-ad9fac216a7c
       type=vpn
       permissions=
-      
+
       [vpn]
       ca=/etc/pki/tls/certs/ca-bundle.crt
       cipher=AES-256-CBC
@@ -114,12 +114,12 @@ RxNEp7yHoXcwn+fXna+t5JWh1gxUZty3
       username=ihrachys
       verify-x509-name=name:ovpn.redhat.com
       service-type=org.freedesktop.NetworkManager.openvpn
-      
+
       [ipv4]
       dns-search=
       method=auto
       never-default=true
-      
+
       [ipv6]
       addr-gen-mode=stable-privacy
       dns-search=
@@ -371,7 +371,7 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
            Xft.lcdfilter:  lcddefault
            Xft.hintstyle:  hintfull
            Xft.hinting: 1
-           Xft.antialias: 1 
+           Xft.antialias: 1
          ''}"
          ${pkgs.autocutsel}/bin/autocutsel -fork
          ${pkgs.autocutsel}/bin/autocutsel -selection PRIMARY -fork
