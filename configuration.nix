@@ -285,7 +285,7 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
   # Enable Mopidy for Spotify.
   services.mopidy = {
     enable = true;
-    extensionPackages = [ pkgs.mopidy-mopify pkgs.mopidy-spotify pkgs.mopidy-spotify-tunigo ];
+    extensionPackages = [ pkgs.mopidy-iris pkgs.mopidy-mopify pkgs.mopidy-spotify pkgs.mopidy-spotify-tunigo ];
     extraConfigFiles = [ "/etc/nixos/mopidy.conf" ];
   };
 
