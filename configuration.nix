@@ -397,6 +397,7 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
          ''}"
          ${pkgs.autocutsel}/bin/autocutsel -fork
          ${pkgs.autocutsel}/bin/autocutsel -selection PRIMARY -fork
+         ${pkgs.xscreensaver}/bin/xscreensaver -no-splash &
       '';
     };
   };
