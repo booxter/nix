@@ -213,26 +213,35 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
 
   # List packages installed in system profile.
   environment.systemPackages = with pkgs; [
-    # hardware tools
+    # hw
     dmidecode pciutils
-    # misc tools
-    emacs vim git gitAndTools.tig gitAndTools.git-hub
-    pass gnupg file tmux pstree vagrant lsof telnet
-    openssl ranger bc strace ltrace tcpdump
-    wireshark gnumake go gcc wget zip dnsutils
-    # python
-    python36Packages.tox
-    (python3.withPackages(ps: with ps; [ setuptools ]))
-    # productivity
-    firefox slack libreoffice zathura evince zoom-us
-    # X terminal
-    rxvt_unicode-with-plugins urxvt_perl autocutsel
+    # dev
+    git gitAndTools.tig gitAndTools.git-hub strace ltrace gcc gnumake patchelf
+    gdb
+    # network
+    telnet lsof openssl tcpdump wireshark dnsutils
+    # misc
+    emacs vim pass gnupg file tmux pstree ranger bc gnumake go gcc wget zip
+    poppler_utils pastebinit fortune
+    # virt
+    vagrant skopeo
+    # gui
+    firefox slack libreoffice zathura evince zoom-us scrot xscreensaver
+    # terminal
+    rxvt_unicode-with-plugins urxvt_perl urxvt_font_size autocutsel
     # media
-    mpc_cli ncmpcpp spotify
+    mpc_cli ncmpcpp spotify mplayer vlc
+    # twitter
+    turses rainbowstream oysttyer
+    # learn how to manage virtual environments in nixos properly
+    (python3.withPackages(ps: with ps; [
+        pip setuptools tox virtualenvwrapper arrow matplotlib
+    ]))
   ];
 
   # Install flash plugin for firefox.
   nixpkgs.config.allowUnfree = true;
+  nixpkgs.config.enableParallelBuilding = true;
   nixpkgs.config.firefox.enableAdobeFlash = true;
   nixpkgs.config.firefox.gssSupport = true;
 
