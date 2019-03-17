@@ -413,7 +413,7 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
     uid = 1000;
     extraGroups = [
       "wheel" "disk" "audio" "video" "networkmanager" "systemd-journal"
-      "docker"
+      "docker" "libvirtd"
     ];
   };
 
