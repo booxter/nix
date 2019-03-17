@@ -368,10 +368,16 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
            URxvt*saveLines:            32767
            XTerm*saveLines:            32767
            URxvt.colorUL:              #AED210
-           URxvt.perl-ext-common:      default,url-select,keyboard-select
+           URxvt.perl-ext-common:      default,url-select,keyboard-select,font-size
            URxvt.keysym.M-u:           perl:url-select:select_next
            URxvt.keysym.M-Escape:      perl:keyboard-select:activate
            URxvt.keysym.M-s:           perl:keyboard-select:search
+           URxvt.keysym.C-Up:          font-size:increase
+           URxvt.keysym.C-Down:        font-size:decrease
+           URxvt.keysym.C-S-Up:        font-size:incglobal
+           URxvt.keysym.C-S-Down:      font-size:decglobal
+           URxvt.keysym.C-equal:       font-size:reset
+           URxvt.keysym.C-slash:       font-size:show
            URxvt.url-select.launcher:  /usr/bin/env xdg-open
            URxvt.url-select.underline: true
            Xft*dpi:                    96
