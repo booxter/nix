@@ -262,6 +262,7 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
     docker.enable = true;
     libvirtd.enable = true;
   };
+  boot.extraModprobeConfig = "options kvm_intel nested=1";
 
   sound = {
     # Enable sound.
