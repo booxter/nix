@@ -282,6 +282,10 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
       defaults.ctl.card 1
     '';
   };
+  hardware.pulseaudio = {
+    enable = true;
+    systemWide = true;
+  };
 
   # Enable media keys.
   sound.mediaKeys = {
