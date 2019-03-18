@@ -424,8 +424,11 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
     uid = 1000;
     extraGroups = [
       "wheel" "disk" "audio" "video" "networkmanager" "systemd-journal"
-      "docker" "libvirtd"
+      "docker" "libvirtd" "pulse"
     ];
+  };
+  users.users.mopidy = {
+    extraGroups = [ "pulse" ];
   };
 
   # This value determines the NixOS release with which your system is to be
