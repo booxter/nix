@@ -287,15 +287,6 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
     systemWide = true;
   };
 
-  # Enable media keys.
-  sound.mediaKeys = {
-    enable = true;
-    volumeStep = "3%";
-  };
-  services.actkbd = {
-    enable = true;
-  };
-
   # Enable Mopidy for Spotify.
   services.mopidy = {
     enable = true;
