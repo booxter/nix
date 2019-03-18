@@ -221,7 +221,7 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
     # network
     telnet lsof openssl tcpdump wireshark dnsutils
     # misc
-    emacs vim pass gnupg file tmux pstree ranger bc gnumake go gcc wget zip
+    emacs vim pass gnupg file tmux pstree ranger bc gnumake go gcc wget zip unzip
     poppler_utils pastebinit fortune
     # virt
     vagrant skopeo
