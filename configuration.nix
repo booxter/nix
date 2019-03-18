@@ -222,7 +222,7 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
     telnet lsof openssl tcpdump wireshark dnsutils
     # misc
     emacs vim pass gnupg file tmux pstree ranger bc gnumake go gcc wget zip unzip
-    poppler_utils pastebinit fortune
+    poppler_utils pastebinit fortune xorg.xev
     # virt
     vagrant skopeo
     # gui
