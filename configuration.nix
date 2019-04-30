@@ -216,13 +216,16 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
     # hw
     dmidecode pciutils
     # dev
-    git gitAndTools.tig gitAndTools.git-hub strace ltrace gcc gnumake patchelf
-    gdb
+    git gitAndTools.tig gitAndTools.git-hub git-review
+    strace ltrace gcc gnumake patchelf gdb
     # network
     telnet lsof openssl tcpdump wireshark dnsutils
     # misc
     emacs vim pass gnupg file tmux pstree ranger bc gnumake go gcc wget zip unzip
-    poppler_utils pastebinit fortune xorg.xev
+    poppler_utils pastebinit wgetpaste fortune xorg.xev killall kubectl unoconv
+    gnuplot openshift
+    # haskell
+    ghc
     # virt
     vagrant skopeo
     # gui
@@ -261,7 +264,19 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
   programs.ssh.startAgent = true;
 
   # Enable CUPS to print documents.
-  services.printing.enable = true;
+  services.printing = {
+    enable = true;
+    drivers = [ pkgs.gutenprint pkgs.epson-escpr ];
+  };
+  #hardware.sane = {
+  #  snapshot = true;
+  #  enable = true;
+  #  netConf = "192.168.0.17";
+  #  extraBackends = [ pkgs.epkowa ];
+  #  extraConfig."epkowa" = ''
+  #    net 192.168.0.17
+  #  '';
+  #};
 
   # Enable flatpak service.
   services.flatpak.enable = true;
@@ -405,7 +420,6 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
       anonymousPro
       corefonts
       dejavu_fonts
-      font-droid
       freefont_ttf
       google-fonts
       inconsolata
@@ -435,5 +449,5 @@ voMIMqAFfHKidKN/yrjJg/1ahIjSt11lMUvRJ4TNT+pk5VnB
   # compatible, in order to avoid breaking some software such as database
   # servers. You should change this only after NixOS release notes say you
   # should.
-  system.stateVersion = "18.09"; # Did you read the comment?
+  system.stateVersion = "19.03"; # Did you read the comment?
 }
