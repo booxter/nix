@@ -87,6 +87,7 @@
             programs.git.package = pkgs.gitAndTools.gitFull;
             programs.git.userEmail = "ihar.hrachyshka@gmail.com";
             programs.git.userName = "Ihar Hrachyshka";
+            programs.gh.enable = true;
             programs.home-manager.enable = true; # let it manage itself
           };
         }
