@@ -26,7 +26,8 @@
       nixpkgs.config = { allowUnfree = true; };
 
       homebrew.enable = true;
-      homebrew.onActivation.autoUpdate = true;
+      homebrew.onActivation.autoUpdate = false;
+      homebrew.brews = [ "openssh" ];
 
       # Create /etc/zshrc that loads the nix-darwin environment.
       programs.zsh.enable = true;  # default shell on catalina
@@ -98,7 +99,7 @@
             programs.git.userName = "Ihar Hrachyshka";
             programs.gh.enable = true;
 
-            home.packages = [ pkgs.gitAndTools.gitFull pkgs.openssh ];
+            home.packages = [ pkgs.gitAndTools.gitFull ];
 
             programs.zsh.enable = true;
             programs.zsh = {
@@ -108,9 +109,8 @@
             };
 
             programs.ssh.enable = true;
-            programs.ssh.package = pkgs.openssh;
             programs.ssh.forwardAgent = true;
-            # programs.ssh.includes = [ "config.backup" ];
+            programs.ssh.includes = [ "config.backup" ];
           };
         }
       ];
