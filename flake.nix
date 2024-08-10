@@ -14,7 +14,7 @@
     configuration = { pkgs, ... }: {
       # List packages installed in system profile. To search by name, run:
       # $ nix-env -qaP | grep wget
-      environment.systemPackages = [ pkgs.git ];
+      # environment.systemPackages = [ pkgs.git ];
 
       # Auto upgrade nix package and the daemon service.
       services.nix-daemon.enable = true;
@@ -22,6 +22,11 @@
 
       # Necessary for using flakes on this system.
       nix.settings.experimental-features = "nix-command flakes";
+
+      nixpkgs.config = { allowUnfree = true; };
+
+      homebrew.enable = true;
+      homebrew.onActivation.autoUpdate = true;
 
       # Create /etc/zshrc that loads the nix-darwin environment.
       programs.zsh.enable = true;  # default shell on catalina
@@ -81,14 +86,28 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.backupFileExtension = "backup";
+
           home-manager.users.ihrachys = { pkgs, ... }: {
             home.stateVersion = "24.05";
+            programs.home-manager.enable = true; # let it manage itself
+
             programs.git.enable = true;
             programs.git.package = pkgs.gitAndTools.gitFull;
             programs.git.userEmail = "ihar.hrachyshka@gmail.com";
             programs.git.userName = "Ihar Hrachyshka";
             programs.gh.enable = true;
-            programs.home-manager.enable = true; # let it manage itself
+
+            programs.zsh.enable = true;
+            programs.zsh = {
+              initExtra = ''
+                eval "$(/opt/homebrew/bin/brew shellenv)"
+              '';
+            };
+
+            programs.ssh.enable = true;
+            programs.ssh.forwardAgent = true;
+            # programs.ssh.includes = [ "config.backup" ];
           };
         }
       ];
