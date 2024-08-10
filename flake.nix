@@ -105,6 +105,11 @@
 
             home.packages = [ pkgs.gitAndTools.gitFull ];
 
+            home.sessionVariables = {
+              EDITOR = "nvim";
+            };
+            programs.neovim.enable = true;
+
             programs.zsh.enable = true;
             programs.zsh = {
               initExtra = ''
