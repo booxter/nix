@@ -98,6 +98,8 @@
             programs.git.userName = "Ihar Hrachyshka";
             programs.gh.enable = true;
 
+            home.packages = [ pkgs.gitAndTools.gitFull ];
+
             programs.zsh.enable = true;
             programs.zsh = {
               initExtra = ''
