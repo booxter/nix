@@ -70,6 +70,30 @@
         finder.ShowPathbar = true;
         finder.ShowStatusBar = true;
 
+        CustomUserPreferences = {
+          "com.apple.finder" = {
+            _FXSortFoldersFirst = true;
+          };
+          "com.apple.desktopservices" = {
+            # Avoid creating .DS_Store files on network or USB volumes
+            DSDontWriteNetworkStores = true;
+            DSDontWriteUSBStores = true;
+          };
+          "com.apple.print.PrintingPrefs" = {
+            # Automatically quit printer app once the print jobs complete
+            "Quit When Finished" = true;
+          };
+          "com.apple.SoftwareUpdate" = {
+            AutomaticCheckEnabled = true;
+            # Check for software updates daily, not just once per week
+            ScheduleFrequency = 1;
+            # Download newly available updates in background
+            AutomaticDownload = 1;
+            # Install System data files & security updates
+            CriticalUpdateInstall = 1;
+          };
+        };
+
         screensaver.askForPasswordDelay = 10;
 
         NSGlobalDomain."com.apple.mouse.tapBehavior" = 1;
