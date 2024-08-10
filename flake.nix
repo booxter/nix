@@ -98,7 +98,7 @@
             programs.git.userName = "Ihar Hrachyshka";
             programs.gh.enable = true;
 
-            home.packages = [ pkgs.gitAndTools.gitFull ];
+            home.packages = [ pkgs.gitAndTools.gitFull pkgs.openssh ];
 
             programs.zsh.enable = true;
             programs.zsh = {
@@ -108,6 +108,7 @@
             };
 
             programs.ssh.enable = true;
+            programs.ssh.package = pkgs.openssh;
             programs.ssh.forwardAgent = true;
             # programs.ssh.includes = [ "config.backup" ];
           };
