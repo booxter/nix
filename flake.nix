@@ -25,9 +25,11 @@
 
       nixpkgs.config = { allowUnfree = true; };
 
-      homebrew.enable = true;
-      homebrew.onActivation.autoUpdate = false;
-      homebrew.brews = [ "openssh" ];
+      homebrew = {
+        enable = true;
+        onActivation.autoUpdate = false;
+        brews = [ "openssh" ];
+      };
 
       # Create /etc/zshrc that loads the nix-darwin environment.
       programs.zsh.enable = true;  # default shell on catalina
@@ -50,26 +52,30 @@
 
       # TODO: not working in Sonoma, yet: https://github.com/LnL7/nix-darwin/pull/787
       security.pam.enableSudoTouchIdAuth = true;
-      security.sudo.extraConfig = "Defaults    timestamp_timeout=5";
+      security.sudo.extraConfig = "Defaults    timestamp_timeout=30";
 
       system.defaults = {
-        dock.autohide = true;
-        dock.orientation = "right";
-        dock.persistent-apps = [
-          "/Applications/Safari.app"
-          "/System/Applications/Utilities/Terminal.app"
-        ];
-        dock.tilesize = 32;
-        dock.show-recents = false;
-        dock.mru-spaces = false; # disable most recent apps affecting the dock items order
+        dock = {
+          autohide = true;
+          orientation = "right";
+          persistent-apps = [
+            "/Applications/Safari.app"
+            "/System/Applications/Utilities/Terminal.app"
+          ];
+          tilesize = 32;
+          show-recents = false;
+          mru-spaces = false; # disable most recent apps affecting the dock items order
+        };
 
-        finder.AppleShowAllExtensions = true;
-        finder.CreateDesktop = false; # don't show files on desktop
-        finder.FXPreferredViewStyle = "clmv"; # column view
-        finder.QuitMenuItem = true; # allow to exit
-        finder._FXShowPosixPathInTitle = true;
-        finder.ShowPathbar = true;
-        finder.ShowStatusBar = true;
+        finder = {
+          AppleShowAllExtensions = true;
+          CreateDesktop = false; # don't show files on desktop
+          FXPreferredViewStyle = "clmv"; # column view
+          QuitMenuItem = true; # allow to exit
+          _FXShowPosixPathInTitle = true;
+          ShowPathbar = true;
+          ShowStatusBar = true;
+        };
 
         CustomUserPreferences = {
           "com.apple.finder" = {
@@ -96,7 +102,6 @@
         };
 
         screensaver.askForPasswordDelay = 10;
-
         NSGlobalDomain."com.apple.mouse.tapBehavior" = 1;
         trackpad.Clicking = true;
       };
@@ -110,9 +115,11 @@
         configuration
         home-manager.darwinModules.home-manager
         {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.backupFileExtension = "backup";
+          home-manager = {
+            useGlobalPkgs = true;
+            useUserPackages = true;
+            backupFileExtension = "backup";
+          };
 
           home-manager.users.ihrachys = { pkgs, ... }: {
             home.stateVersion = "24.05";
@@ -135,16 +142,18 @@
             };
             programs.neovim.enable = true;
 
-            programs.zsh.enable = true;
             programs.zsh = {
+              enable = true;
               initExtra = ''
                 eval "$(/opt/homebrew/bin/brew shellenv)"
               '';
             };
 
-            programs.ssh.enable = true;
-            programs.ssh.forwardAgent = true;
-            programs.ssh.includes = [ "config.backup" ];
+            programs.ssh = {
+              enable = true;
+              forwardAgent = true;
+              includes = [ "config.backup" ];
+            };
           };
         }
       ];
