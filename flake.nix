@@ -50,6 +50,7 @@
 
       # TODO: not working in Sonoma, yet: https://github.com/LnL7/nix-darwin/pull/787
       security.pam.enableSudoTouchIdAuth = true;
+      security.sudo.extraConfig = "Defaults    timestamp_timeout=5";
 
       system.defaults = {
         dock.autohide = true;
