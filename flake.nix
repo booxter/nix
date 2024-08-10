@@ -99,6 +99,10 @@
             programs.git.userName = "Ihar Hrachyshka";
             programs.gh.enable = true;
 
+            programs.tmux.enable = true;
+            programs.tmux.terminal = "tmux-256color";
+            programs.tmux.historyLimit = 100000;
+
             home.packages = [ pkgs.gitAndTools.gitFull ];
 
             programs.zsh.enable = true;
