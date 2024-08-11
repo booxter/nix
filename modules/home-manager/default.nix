@@ -2,47 +2,60 @@
   home.stateVersion = "24.05";
   programs.home-manager.enable = true; # let it manage itself
 
-  programs.git.enable = true;
-  programs.git.package = pkgs.gitAndTools.gitFull;
-  programs.git.userEmail = "ihar.hrachyshka@gmail.com";
-  programs.git.userName = "Ihar Hrachyshka";
+  programs.git = {
+    enable = true;
+    package = pkgs.gitAndTools.gitFull;
+    userEmail = "ihar.hrachyshka@gmail.com";
+    userName = "Ihar Hrachyshka";
+  };
   programs.gh.enable = true;
 
-  programs.tmux.enable = true;
-  programs.tmux.terminal = "tmux-256color";
-  programs.tmux.historyLimit = 100000;
+  programs.tmux = {
+    enable = true;
+    terminal = "tmux-256color";
+    historyLimit = 100000;
+  };
 
-  home.packages = [
-    pkgs.tig
-    pkgs.gitAndTools.gitFull
-    pkgs.telegram-desktop
-    pkgs.raycast
+  home.packages = with pkgs; [
+    tig
+    gitAndTools.gitFull
+    telegram-desktop
+    raycast
   ];
 
   home.sessionVariables = {
     GIT_SSH_COMMAND = "ssh";
   };
-  programs.neovim.enable = true;
-  programs.neovim.defaultEditor = true;
-  programs.neovim.viAlias = true;
+  programs.neovim = {
+    enable = true;
+    defaultEditor = true;
+    viAlias = true;
+    vimdiffAlias = true;
+  };
 
   programs.zsh = {
     enable = true;
-    autosuggestion.enable = true;
-    autosuggestion.strategy = [ "match_prev_cmd" "completion" ];
+    autosuggestion = {
+      enable = true;
+      strategy = [ "match_prev_cmd" "completion" ];
+    };
     syntaxHighlighting.enable = true;
     initExtra = ''
       eval "$(/opt/homebrew/bin/brew shellenv)"
     '';
     shellAliases = { ls = "ls --color=auto -F"; };
   };
-  programs.starship.enable = true;
-  programs.starship.enableZshIntegration = true;
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+  };
 
   programs.alacritty = {
     enable = true;
-    settings.font.normal.family = "MesloLGS Nerd Font Mono";
-    settings.font.size = 16;
+    settings.font = {
+      normal.family = "MesloLGS Nerd Font Mono";
+      size = 16;
+    };
   };
 
   programs.ssh = {
