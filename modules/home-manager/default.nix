@@ -23,9 +23,11 @@
     raycast
   ];
 
+  # Use homebrew ssh for git. It supports gss.
   home.sessionVariables = {
     GIT_SSH_COMMAND = "ssh";
   };
+
   programs.neovim = {
     enable = true;
     defaultEditor = true;
