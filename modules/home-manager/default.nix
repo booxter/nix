@@ -13,6 +13,7 @@
   programs.tmux.historyLimit = 100000;
 
   home.packages = [
+    pkgs.tig
     pkgs.gitAndTools.gitFull
     pkgs.telegram-desktop
     pkgs.raycast
