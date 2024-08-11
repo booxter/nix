@@ -158,6 +158,7 @@
               initExtra = ''
                 eval "$(/opt/homebrew/bin/brew shellenv)"
               '';
+              shellAliases = { ls = "ls --color=auto -F"; };
             };
 
             programs.ssh = {
