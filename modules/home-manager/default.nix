@@ -20,10 +20,10 @@
   ];
 
   home.sessionVariables = {
-    EDITOR = "nvim";
     GIT_SSH_COMMAND = "ssh";
   };
   programs.neovim.enable = true;
+  programs.neovim.defaultEditor = true;
 
   programs.zsh = {
     enable = true;
