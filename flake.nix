@@ -152,6 +152,9 @@
 
             programs.zsh = {
               enable = true;
+              autosuggestion.enable = true;
+              autosuggestion.strategy = [ "match_prev_cmd" "completion" ];
+              syntaxHighlighting.enable = true;
               initExtra = ''
                 eval "$(/opt/homebrew/bin/brew shellenv)"
               '';
