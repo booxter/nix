@@ -163,6 +163,12 @@
             programs.starship.enable = true;
             programs.starship.enableZshIntegration = true;
 
+            programs.alacritty = {
+              enable = true;
+              settings.font.normal.family = "MesloLGS Nerd Font Mono";
+              settings.font.size = 16;
+            };
+
             programs.ssh = {
               enable = true;
               forwardAgent = true;
