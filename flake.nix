@@ -45,6 +45,8 @@
       # The platform the configuration will be used on.
       nixpkgs.hostPlatform = "aarch64-darwin";
 
+      fonts.packages = [ pkgs.nerdfonts ];
+
       users.users.ihrachys = {
         name = "ihrachys";
         home = "/Users/ihrachys";
