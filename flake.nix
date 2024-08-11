@@ -136,7 +136,10 @@
             programs.tmux.terminal = "tmux-256color";
             programs.tmux.historyLimit = 100000;
 
-            home.packages = [ pkgs.gitAndTools.gitFull ];
+            home.packages = [
+              pkgs.gitAndTools.gitFull
+              pkgs.telegram-desktop
+            ];
 
             home.sessionVariables = {
               EDITOR = "nvim";
