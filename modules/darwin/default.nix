@@ -52,7 +52,7 @@
       orientation = "right";
       persistent-apps = [
         "/Applications/Safari.app"
-        "/System/Applications/Utilities/Terminal.app"
+        "${pkgs.alacritty}/Applications/Alacritty.app"
       ];
       tilesize = 32;
       show-recents = false;
