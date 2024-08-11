@@ -142,6 +142,7 @@
             home.packages = [
               pkgs.gitAndTools.gitFull
               pkgs.telegram-desktop
+              pkgs.raycast
             ];
 
             home.sessionVariables = {
