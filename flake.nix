@@ -29,6 +29,7 @@
         enable = true;
         onActivation.autoUpdate = false;
         brews = [ "openssh" ];
+        casks = [ "amethyst" ];
       };
 
       # Create /etc/zshrc that loads the nix-darwin environment.
