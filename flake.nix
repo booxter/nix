@@ -31,10 +31,9 @@
             useGlobalPkgs = true;
             useUserPackages = true;
             backupFileExtension = "backup";
+            extraSpecialArgs = { inherit pkgs; };
           };
-          home-manager.users.ihrachys = import modules/home-manager {
-            inherit pkgs;
-          };
+          home-manager.users.ihrachys.imports = [ ./modules/home-manager ];
         }
       ];
     };
