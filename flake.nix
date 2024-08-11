@@ -160,6 +160,8 @@
               '';
               shellAliases = { ls = "ls --color=auto -F"; };
             };
+            programs.starship.enable = true;
+            programs.starship.enableZshIntegration = true;
 
             programs.ssh = {
               enable = true;
