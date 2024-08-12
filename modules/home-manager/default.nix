@@ -14,6 +14,12 @@
     enable = true;
     terminal = "tmux-256color";
     historyLimit = 100000;
+    keyMode = "vi";
+    mouse = true;
+    newSession = true; # create session if not running
+    plugins = [
+      pkgs.tmuxPlugins.vim-tmux-navigator
+    ];
   };
 
   home.packages = with pkgs; [
@@ -28,12 +34,7 @@
     GIT_SSH_COMMAND = "ssh";
   };
 
-  programs.neovim = {
-    enable = true;
-    defaultEditor = true;
-    viAlias = true;
-    vimdiffAlias = true;
-  };
+  programs.nixvim = import ./nixvim.nix { inherit pkgs; }; 
 
   programs.zsh = {
     enable = true;

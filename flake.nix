@@ -7,9 +7,11 @@
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    nixvim.url = "github:nix-community/nixvim";
+    nixvim.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, home-manager, nix-darwin, nixpkgs }:
+  outputs = inputs@{ self, nixvim, home-manager, nix-darwin, nixpkgs }:
   let
     pkgs = import nixpkgs {
       system = "aarch64-darwin";
@@ -33,7 +35,10 @@
             backupFileExtension = "backup";
             extraSpecialArgs = { inherit pkgs; };
           };
-          home-manager.users.ihrachys.imports = [ ./modules/home-manager ];
+          home-manager.users.ihrachys.imports = [
+            nixvim.homeManagerModules.nixvim
+            ./modules/home-manager
+          ];
         }
       ];
     };
