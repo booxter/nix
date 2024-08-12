@@ -5,17 +5,25 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
-    home-manager.url = "github:nix-community/home-manager";
+    # home-manager.url = "github:nix-community/home-manager";
+    # Use a fork with a fix for profiles.ini Version=2 breaking change
+    # See: https://github.com/nix-community/home-manager/pull/5724
+    home-manager.url = "github:HyunggyuJang/home-manager/fix/firefox-darwin";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
+    nur.url = "github:nix-community/NUR";
+    nur.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nixvim, home-manager, nix-darwin, nixpkgs }:
+  outputs = { self, nixvim, home-manager, nix-darwin, nixpkgs, nur }:
   let
     pkgs = import nixpkgs {
       system = "aarch64-darwin";
       config = { allowUnfree = true; };
+      overlays = [
+        nur.overlay
+      ];
     };
     configuration = import ./modules/darwin {
       inherit self pkgs;

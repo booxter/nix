@@ -1,7 +1,10 @@
-{ self, pkgs, ... }: {
+{ self, pkgs, ... }: rec {
   # List packages installed in system profile. To search by name, run:
   # $ nix-env -qaP | grep wget
-  environment.systemPackages = [ pkgs.coreutils ];
+  environment.systemPackages = with pkgs; [
+    coreutils
+    defaultbrowser
+  ];
 
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
@@ -14,7 +17,16 @@
     enable = true;
     onActivation.autoUpdate = false;
     brews = [ "openssh" ];
-    casks = [ "amethyst" ];
+    casks = [
+      "amethyst"
+      {
+        name = "firefox";
+        args = {
+          appdir = "~/Applications";
+          no_quarantine = true;
+        };
+      }
+    ];
   };
 
   # Create /etc/zshrc that loads the nix-darwin environment.
@@ -33,9 +45,10 @@
 
   fonts.packages = [ pkgs.nerdfonts ];
 
-  users.users.ihrachys = {
+  # TODO: pass name as argument
+  users.users.ihrachys = rec {
     name = "ihrachys";
-    home = "/Users/ihrachys";
+    home = "/Users/${name}";
   };
 
   security.pam.enableSudoTouchIdAuth = true;
@@ -44,6 +57,7 @@
   system.activationScripts.postUserActivation.text = ''
     # Following line should allow us to avoid a logout/login cycle
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
+    defaultbrowser firefox
   '';
 
   system.defaults = {
@@ -51,8 +65,8 @@
       autohide = true;
       orientation = "right";
       persistent-apps = [
-        "/Applications/Safari.app"
         "${pkgs.alacritty}/Applications/Alacritty.app"
+        "${users.users.ihrachys.home}/Applications/Firefox.app"
       ];
       tilesize = 32;
       show-recents = false;
