@@ -61,6 +61,7 @@
     git-pw
     python312Packages.ipython
     raycast
+    slack
     telegram-desktop
     tig
 
