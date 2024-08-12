@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ lib, pkgs, ... }: {
   home.stateVersion = "24.05";
   programs.home-manager.enable = true; # let it manage itself
 
@@ -54,6 +54,24 @@
 
       set -g window-style 'fg=colour247,bg=colour236'
       set -g window-active-style 'fg=default,bg=colour234'
+    '';
+  };
+
+  programs.password-store.enable = true;
+  services.git-sync = {
+    enable = true;
+    repositories = {
+      password-store = {
+        uri = "git+ssh://booxter@github.com:booxter/pass.git";
+        # TODO: pass name as argument
+        path = "/Users/ihrachys/.local/share/password-store";
+        interval = 30;
+      };
+    };
+  };
+  home.activation = {
+    makePotato = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    GIT_SSH_COMMAND=${pkgs.openssh}/bin/ssh ${pkgs.git}/bin/git clone git@github.com:booxter/pass.git ~/.local/share/password-store || true
     '';
   };
 
