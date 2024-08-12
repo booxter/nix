@@ -77,6 +77,7 @@
 
   home.packages = with pkgs; [
     git-pw
+    gnupg
     python312Packages.ipython
     raycast
     slack
