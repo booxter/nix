@@ -6,3 +6,4 @@ set match-hidden-files off
 set visible-stats on
 set keymap vi
 set editing-mode vi-insert
+set show-mode-in-prompt on
