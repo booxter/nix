@@ -32,17 +32,29 @@
       enable = true;
       autoEnableSources = true;
     };
+    cmp-async-path.enable = true;
+    cmp-buffer.enable = true;
+    cmp-cmdline.enable = true;
+    cmp-cmdline-history.enable = true;
+    cmp-conventionalcommits.enable = true;
+    cmp-git.enable = true;
+    cmp-nvim-lsp.enable = true;
+    cmp-nvim-lsp-signature-help.enable = true;
+    cmp-tmux.enable = true;
+    cmp-treesitter.enable = true;
+    cmp-zsh.enable = true;
     copilot-vim = {
       enable = true;
       settings.workspace_folders = [ "~/src" ];
     };
-    tmux-navigator = {
-      enable = true;
-    };
+    fugitive.enable = true;
+    gitsigns.enable = true;
+    tmux-navigator.enable = true;
     toggleterm.enable = true;
   };
   extraPlugins = [
     pkgs.vimPlugins.nerdtree
+    pkgs.vimPlugins.vim-polyglot
     (pkgs.vimUtils.buildVimPlugin {
       name = "my-plugin";
       src = pkgs.fetchFromGitHub {
