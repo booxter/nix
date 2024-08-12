@@ -63,6 +63,18 @@
     raycast
     telegram-desktop
     tig
+
+    (pkgs.writeScriptBin "vpn" ''
+    osascript << EOF
+      tell application "Viscosity"
+      if the state of the first connection is "Connected" then
+        disconnect "Red Hat Global VPN"
+      else
+        connect "Red Hat Global VPN"
+      end if
+      end tell
+    EOF
+    '')
   ];
 
   # Use homebrew ssh for git. It supports gss.
