@@ -6,6 +6,11 @@
     defaultbrowser
   ];
 
+  environment.userLaunchAgents.iterm2 = {
+    source = ./dotfiles/iterm2-login.plist;
+    target = "iterm2.plist";
+  };
+
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
   # nix.package = pkgs.nix;
