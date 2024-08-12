@@ -99,6 +99,9 @@
     };
 
     CustomUserPreferences = {
+      "com.apple.loginwindow" = {
+        TALLogoutSavesState = 0;
+      };
       "com.apple.finder" = {
         _FXSortFoldersFirst = true;
       };
