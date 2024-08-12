@@ -29,6 +29,20 @@
     ];
   };
 
+  services.spotifyd = {
+    enable = true;
+    package = (pkgs.spotifyd.override { withKeyring = true; });
+    settings = {
+      global = {
+        # security add-generic-password -s spotifyd -D rust-keyring -a <your username> -w <your password>
+        username = "11126800926";
+        use_keyring = true;
+        device_name = "nix";
+        device_type = "computer";
+      };
+    };
+  };
+
   # Create /etc/zshrc that loads the nix-darwin environment.
   programs.zsh.enable = true;  # default shell on catalina
   # programs.fish.enable = true;
