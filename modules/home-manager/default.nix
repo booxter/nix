@@ -102,5 +102,13 @@
     includes = [ "config.backup" ];
   };
 
+  targets.darwin.defaults."com.apple.Safari" = {
+    AutoFillCreditCardData = true;
+    AutoFillPasswords = true;
+    IncludeDevelopMenu = true;
+    ShowOverlayStatusBar = true;
+  };
+
+
   home.file.".inputrc".source = ./dotfiles/inputrc;
 }
