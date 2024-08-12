@@ -36,19 +36,32 @@
     enable = true;
     terminal = "tmux-256color";
     historyLimit = 100000;
+    baseIndex = 1;
+    clock24 = true;
     keyMode = "vi";
     mouse = true;
     newSession = true; # create session if not running
+    sensibleOnTop = true;
     plugins = [
       pkgs.tmuxPlugins.vim-tmux-navigator
     ];
+    extraConfig = ''
+      # Open panes in the same directory as the current pane
+      bind '"' split-window -v -c "#{pane_current_path}"
+      bind % split-window -h -c "#{pane_current_path}"
+      bind c new-window -c "#{pane_current_path}"
+
+      set -g window-style 'fg=colour247,bg=colour236'
+      set -g window-active-style 'fg=default,bg=colour234'
+    '';
   };
 
   home.packages = with pkgs; [
-    tig
     git-pw
-    telegram-desktop
+    python312Packages.ipython
     raycast
+    telegram-desktop
+    tig
   ];
 
   # Use homebrew ssh for git. It supports gss.
