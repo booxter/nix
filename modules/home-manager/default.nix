@@ -82,6 +82,7 @@
     python312Packages.ipython
     raycast
     slack
+    spotify
     telegram-desktop
     tig
 
