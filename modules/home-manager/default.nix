@@ -79,6 +79,7 @@
   home.packages = with pkgs; [
     git-pw
     gnupg
+    iterm2
     python312Packages.ipython
     raycast
     slack
@@ -216,4 +217,5 @@
   };
 
   home.file.".inputrc".source = ./dotfiles/inputrc;
+  home.file.".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
 }

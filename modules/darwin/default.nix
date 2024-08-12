@@ -120,6 +120,9 @@
         # Install System data files & security updates
         CriticalUpdateInstall = 1;
       };
+      "com.googlecode.iterm2" = {
+        PrefsCustomFolder = "/Users/ihrachys/.iterm2";
+      };
     };
 
     screensaver.askForPasswordDelay = 10;
