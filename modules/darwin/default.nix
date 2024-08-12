@@ -67,6 +67,7 @@
       persistent-apps = [
         "${pkgs.alacritty}/Applications/Alacritty.app"
         "${users.users.ihrachys.home}/Applications/Firefox.app"
+        "${pkgs.slack}/Applications/Slack.app"
       ];
       tilesize = 32;
       show-recents = false;
