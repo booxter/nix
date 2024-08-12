@@ -87,6 +87,7 @@
         "${pkgs.alacritty}/Applications/Alacritty.app"
         "${users.users.ihrachys.home}/Applications/Firefox.app"
         "${pkgs.slack}/Applications/Slack.app"
+        "${pkgs.spotify}/Applications/Spotify.app"
       ];
       tilesize = 32;
       show-recents = false;
