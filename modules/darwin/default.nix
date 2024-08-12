@@ -123,8 +123,18 @@
         # Install System data files & security updates
         CriticalUpdateInstall = 1;
       };
+      "com.amethyst.Amethyst" = {
+        # Amethyst is messing with iterm2 quake window otherwise
+        floating = [
+          {
+            id = "com.googlecode.iterm2";
+            window-titles = [ ];
+          }
+        ];
+      };
       "com.googlecode.iterm2" = {
         PrefsCustomFolder = "/Users/ihrachys/.iterm2";
+        NoSyncNeverRemindPrefsChangesLostForFile_selection = 1; # Manually save changes
       };
     };
 
