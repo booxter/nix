@@ -72,6 +72,7 @@
   home.activation = {
     makePotato = lib.hm.dag.entryAfter ["writeBoundary"] ''
     GIT_SSH_COMMAND=${pkgs.openssh}/bin/ssh ${pkgs.git}/bin/git clone git@github.com:booxter/pass.git ~/.local/share/password-store || true
+    cd ~/.local/share/password-store && ${pkgs.git}/bin/git config --bool branch.master.sync true
     '';
   };
 
