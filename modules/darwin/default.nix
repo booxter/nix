@@ -12,6 +12,9 @@
     target = "iterm2.plist";
   };
 
+  # clean up old nix derivations
+  nix.gc.automatic = true;
+
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
   # nix.package = pkgs.nix;
