@@ -50,6 +50,12 @@
     };
   };
 
+  services.jankyborders = {
+    enable = true;
+    hidpi = true;
+    active_color = "0xffff0000"; # red
+  };
+
   # TODO: understand why sometimes I have to `pkill gpg-agent`
   programs.gnupg.agent = {
     enable = true;
