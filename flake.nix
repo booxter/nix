@@ -8,6 +8,7 @@
     # home-manager.url = "github:nix-community/home-manager";
     # Use a fork with a fix for thunderbird and firefox profiles.ini Version=2
     # See: https://github.com/nix-community/home-manager/pull/5724
+    # TODO: overlay just for the packages of interest
     home-manager.url = "github:booxter/home-manager/fix-thunderbird-aarch64";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nixvim.url = "github:nix-community/nixvim";
