@@ -133,16 +133,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1723296719,
-        "narHash": "sha256-YsovhtzqGkyhT4dKtB8dGtEcZuzR7XyeagedLD5WnJo=",
-        "owner": "HyunggyuJang",
+        "lastModified": 1723509282,
+        "narHash": "sha256-G/ffRuZ3uf6Dcy2ba8kbEB3Rf0rKcO64xrU6hU/UwYs=",
+        "owner": "booxter",
         "repo": "home-manager",
-        "rev": "0b3077dbadb1fd3095ee76d18f7387a0e1bfdcae",
+        "rev": "b238b911d8168b47d780e2da3bf2e8fa7c986a8e",
         "type": "github"
       },
       "original": {
-        "owner": "HyunggyuJang",
-        "ref": "fix/firefox-darwin",
+        "owner": "booxter",
+        "ref": "fix-thunderbird-aarch64",
         "repo": "home-manager",
         "type": "github"
       }

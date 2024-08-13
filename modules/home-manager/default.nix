@@ -216,6 +216,64 @@
     };
   };
 
+  accounts.email.accounts = {
+    default = {
+      primary = true;
+      realName = "Ihar Hrachyshka";
+      flavor = "gmail.com";
+      address = "ihar.hrachyshka@gmail.com";
+      userName = "ihar.hrachyshka@gmail.com";
+      # passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
+      imap.host = "imap.gmail.com";
+      smtp.host = "smtp.gmail.com";
+      thunderbird.enable = true;
+    };
+    work = {
+      realName = "Ihar Hrachyshka";
+      flavor = "gmail.com";
+      address = "ihrachys@redhat.com";
+      aliases = [ "ihar@redhat.com" ];
+      userName = "ihrachys@redhat.com";
+      # passwordCommand = "${pkgs.pass}/bin/pass show rh/google.com-app-password-macpro";
+      imap.host = "imap.gmail.com";
+      smtp.host = "smtp.gmail.com";
+      thunderbird.enable = true;
+    };
+  };
+  programs.thunderbird = {
+    enable = true;
+    # fake package; we use homebrew
+    package = pkgs.runCommand "thunderbird.0.0" {} "mkdir $out";
+    profiles.default = {
+      isDefault = true;
+      settings = {
+        # Sort by date in descending order using threaded view
+        "mailnews.default_sort_type" = 18;
+        "mailnews.default_sort_order" = 2;
+        "mailnews.default_view_flags" = 1;
+        "mailnews.default_news_sort_type" = 18;
+        "mailnews.default_news_sort_order" = 2;
+        "mailnews.default_news_view_flags" = 1;
+
+        # Disable autoupdates
+        "app.update.auto" = false;
+        "app.update.staging.enabled" = false;
+
+        # Remove some ui bloat
+        "mailnews.start_page.enabled" = false;
+        "javascript.enabled" = false;
+        "mail.uidensity" = 0;
+
+        "mail.ui.folderpane.view" = 1;
+        "mail.folder.views.version" = 1;
+
+        # Check IMAP subfolder for new messages
+        "mail.check_all_imap_folders_for_new" = true;
+        "mail.server.default.check_all_folders_for_new" = true;
+      };
+    };
+  };
+
   home.file.".inputrc".source = ./dotfiles/inputrc;
   home.file.".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
 }

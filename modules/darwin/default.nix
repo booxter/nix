@@ -6,6 +6,7 @@
     defaultbrowser
   ];
 
+  # TODO: use launchd.user.agents.iterm2.serviceConfig instead?
   environment.userLaunchAgents.iterm2 = {
     source = ./dotfiles/iterm2-login.plist;
     target = "iterm2.plist";
@@ -24,6 +25,7 @@
     brews = [ "openssh" ];
     casks = [
       "amethyst"
+      "thunderbird"
       {
         name = "firefox";
         args = {
@@ -46,6 +48,12 @@
         device_type = "computer";
       };
     };
+  };
+
+  # TODO: understand why sometimes I have to `pkill gpg-agent`
+  programs.gnupg.agent = {
+    enable = true;
+    enableSSHSupport = true;
   };
 
   # Create /etc/zshrc that loads the nix-darwin environment.

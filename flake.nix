@@ -6,9 +6,9 @@
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     # home-manager.url = "github:nix-community/home-manager";
-    # Use a fork with a fix for profiles.ini Version=2 breaking change
+    # Use a fork with a fix for thunderbird and firefox profiles.ini Version=2
     # See: https://github.com/nix-community/home-manager/pull/5724
-    home-manager.url = "github:HyunggyuJang/home-manager/fix/firefox-darwin";
+    home-manager.url = "github:booxter/home-manager/fix-thunderbird-aarch64";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
@@ -32,7 +32,7 @@
   {
     # Build darwin flake using:
     # $ darwin-rebuild build --flake .#
-    darwinConfigurations."ihrachys-macpro" = nix-darwin.lib.darwinSystem {
+    darwinConfigurations."darwin" = nix-darwin.lib.darwinSystem {
       modules = [
         configuration
         home-manager.darwinModules.home-manager
@@ -52,6 +52,6 @@
     };
 
     # Expose the package set, including overlays, for convenience.
-    darwinPackages = self.darwinConfigurations."ihrachys-macpro".pkgs;
+    darwinPackages = self.darwinConfigurations."darwin".pkgs;
   };
 }
