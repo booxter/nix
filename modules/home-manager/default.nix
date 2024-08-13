@@ -166,16 +166,27 @@
       search.privateDefault = "DuckDuckGo";
       search.force = true;
       settings = {
+        # enable installed extensions
         "extensions.autoDisableScopes" = 0;
-        "browser.aboutConfig.showWarning" = false;
-        "browser.ctrlTab.sortByRecentlyUsed" = false;
-        "browser.translations.neverTranslateLanguages" = "en,ru,be,uk,cz,pl";
-        "browser.tabs.crashReporting.sendReport" = false;
-        "accessibility.typeaheadfind.enablesound" = false;
 
+        # I know what I'm doing
+        "browser.aboutConfig.showWarning" = false;
+        "browser.translations.neverTranslateLanguages" = "en,ru,be,uk,cz,pl";
+
+        # UX fixes
         "browser.startup.homepage" = "about:blank";
         "browser.newtab.url" = "about:blank";
+        "browser.ctrlTab.sortByRecentlyUsed" = false;
+        "browser.tabs.closeWindowWithLastTab" = false;
+        "accessibility.typeaheadfind.enablesound" = false;
+        "browser.tabs.tabmanager.enabled" = true;
+        "browser.tabs.tabClipWidth" = 999; # only active tab has close button
 
+        "media.block-autoplay-until-in-foreground" = true;
+        "media.block-play-until-document-interaction" = true;
+        "media.block-play-until-visible" = true;
+
+        # privacy
         "geo.enabled" = true;
         "privacy.clearOnShutdown.history" = false;
         "privacy.donottrackheader.enabled" = true;
@@ -183,10 +194,6 @@
         "privacy.trackingprotection.socialtracking.enabled" = true;
         "device.sensors.enabled" = false;
         "beacon.enabled" = false; # bluetooth location tracking
-
-        # don't allow mozilla to test config changes
-        "app.normandy.enabled" = false;
-        "app.shield.optoutstudies.enabled" = false;
 
         # telemetry
         "browser.send_pings" = false;
@@ -199,9 +206,15 @@
         "datareporting.healthreport.uploadEnabled" = false;
         "browser.ping-centre.telemetry" = false;
         "browser.urlbar.eventTelemetry.enabled" = false; # (default)
+        "browser.tabs.crashReporting.sendReport" = false;
+
+        # don't allow mozilla to test config changes
+        "app.normandy.enabled" = false;
+        "app.shield.optoutstudies.enabled" = false;
 
         # Disable some useless stuff
         "extensions.pocket.enabled" = false; # disable pocket, save links, send tabs
+        "browser.vpn_promo.enabled" = false;
         "extensions.abuseReport.enabled" = false; # don't show 'report abuse' in extensions
         "identity.fxaccounts.enabled" = false; # disable firefox login
         "identity.fxaccounts.toolbar.enabled" = false;
