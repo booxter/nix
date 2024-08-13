@@ -65,7 +65,6 @@
         uri = "git+ssh://booxter@github.com:booxter/pass.git";
         # TODO: pass name as argument
         path = "/Users/ihrachys/.local/share/password-store";
-        interval = 30;
       };
     };
   };
