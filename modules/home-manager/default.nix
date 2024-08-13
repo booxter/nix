@@ -274,6 +274,35 @@
     };
   };
 
+  programs.irssi = {
+    enable = true;
+    networks = {
+      liberachat = {
+        nick = "ihrachys";
+        server = {
+          address = "irc.libera.chat";
+          port = 6697;
+          autoConnect = true;
+        };
+        channels = {
+          openvswitch.autoJoin = true;
+        };
+      };
+      oftc = {
+        nick = "ihrachys";
+        server = {
+          address = "irc.oftc.net";
+          port = 6697;
+          autoConnect = true;
+        };
+        channels = {
+          openstack-neutron.autoJoin = true;
+          openstack-infra.autoJoin = true;
+        };
+      };
+    };
+  };
+
   home.file.".inputrc".source = ./dotfiles/inputrc;
   home.file.".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
 }
