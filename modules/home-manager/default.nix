@@ -54,6 +54,10 @@
 
       set -g window-style 'fg=colour247,bg=colour236'
       set -g window-active-style 'fg=default,bg=colour234'
+
+      bind-key -T copy-mode-vi v send-keys -X begin-selection
+      bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
+      bind-key -T copy-mode-vi p "paste-buffer; send-keys q"
     '';
   };
 
@@ -122,7 +126,7 @@
     BROWSER = "firefox";
   };
 
-  programs.nixvim = import ./nixvim.nix { inherit pkgs; }; 
+  programs.nixvim = import ./nixvim.nix { inherit pkgs; };
 
   programs.zsh = {
     enable = true;
