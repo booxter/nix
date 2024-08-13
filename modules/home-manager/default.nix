@@ -91,6 +91,7 @@
     gnupg
     iterm2
     obsidian
+    podman
     python312Packages.ipython
     raycast
     slack
