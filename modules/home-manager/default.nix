@@ -61,17 +61,28 @@
   services.git-sync = {
     enable = true;
     repositories = {
+      # TODO: pass username as argument
       password-store = {
         uri = "git+ssh://booxter@github.com:booxter/pass.git";
-        # TODO: pass name as argument
         path = "/Users/ihrachys/.local/share/password-store";
+      };
+      notes = {
+        uri = "git+ssh://booxter@github.com:booxter/notes.git";
+        path = "/Users/ihrachys/notes";
+        interval = 30;
       };
     };
   };
   home.activation = {
     makePotato = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    GIT_SSH_COMMAND=${pkgs.openssh}/bin/ssh ${pkgs.git}/bin/git clone git@github.com:booxter/pass.git ~/.local/share/password-store || true
-    cd ~/.local/share/password-store && ${pkgs.git}/bin/git config --bool branch.master.sync true
+    sync_setup() {
+      src=$1
+      destdir=$2
+      GIT_SSH_COMMAND=${pkgs.openssh}/bin/ssh ${pkgs.git}/bin/git clone git@github.com:booxter/$src.git $destdir || true
+      pushd $destdir && ${pkgs.git}/bin/git config --bool branch.master.sync true && popd
+    }
+    sync_setup pass ~/.local/share/password-store
+    sync_setup notes ~/notes
     '';
   };
 
