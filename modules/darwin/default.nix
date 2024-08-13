@@ -96,6 +96,8 @@
   system.defaults = {
     dock = {
       autohide = true;
+      autohide-delay = 0.0;
+      autohide-time-modifier = 0.0;
       orientation = "right";
       persistent-apps = [
         "${pkgs.alacritty}/Applications/Alacritty.app"
