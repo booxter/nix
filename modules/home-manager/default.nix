@@ -91,6 +91,7 @@
 
   home.packages = with pkgs; [
     git-pw
+    git-review
     gnupg
     iterm2
     obsidian
