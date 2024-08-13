@@ -172,7 +172,8 @@
         "browser.tabs.crashReporting.sendReport" = false;
         "accessibility.typeaheadfind.enablesound" = false;
 
-        "browser.startup.homepage" = "";
+        "browser.startup.homepage" = "about:blank";
+        "browser.newtab.url" = "about:blank";
 
         "geo.enabled" = true;
         "privacy.clearOnShutdown.history" = false;
