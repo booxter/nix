@@ -90,6 +90,7 @@
     git-pw
     gnupg
     iterm2
+    obsidian
     python312Packages.ipython
     raycast
     slack
