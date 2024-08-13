@@ -154,9 +154,12 @@
 
     screensaver.askForPasswordDelay = 10;
 
-    NSGlobalDomain."com.apple.mouse.tapBehavior" = 1;
     trackpad.Clicking = true;
-    NSGlobalDomain.InitialKeyRepeat = 14;
-    NSGlobalDomain.KeyRepeat = 1;
+    NSGlobalDomain = {
+      "com.apple.mouse.tapBehavior" = 1;
+      InitialKeyRepeat = 14;
+      KeyRepeat = 1;
+      AppleInterfaceStyle = "Dark";
+    };
   };
 }
