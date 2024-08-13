@@ -101,6 +101,7 @@
         "${pkgs.alacritty}/Applications/Alacritty.app"
         "${users.users.ihrachys.home}/Applications/Firefox.app"
         "${pkgs.slack}/Applications/Slack.app"
+        "${pkgs.telegram-desktop}/Applications/Telegram.app"
         "${pkgs.spotify}/Applications/Spotify.app"
       ];
       tilesize = 32;
