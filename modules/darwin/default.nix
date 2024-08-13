@@ -14,6 +14,7 @@
 
   # clean up old nix derivations
   nix.gc.automatic = true;
+  nix.optimise.automatic = true;
 
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
