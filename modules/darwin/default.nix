@@ -150,6 +150,33 @@
         PrefsCustomFolder = "/Users/ihrachys/.iterm2";
         NoSyncNeverRemindPrefsChangesLostForFile_selection = 1; # Manually save changes
       };
+      "com.apple.HIToolbox" = {
+        AppleEnabledInputSources = [
+          {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = 0;
+            "KeyboardLayout Name" = "U.S.";
+          }
+          {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = 19517;
+            "KeyboardLayout Name" = "Byelorussian";
+          }
+          {
+            InputSourceKind = "Keyboard Layout";
+            "KeyboardLayout ID" = 19456;
+            "KeyboardLayout Name" = "Russian";
+          }
+          {
+            "Bundle ID" = "com.apple.CharacterPaletteIM";
+            InputSourceKind = "Non Keyboard Input Method";
+          }
+          {
+            "Bundle ID" = "com.apple.PressAndHold";
+            InputSourceKind = "Non Keyboard Input Method";
+          }
+        ];
+      };
     };
 
     screensaver.askForPasswordDelay = 10;
