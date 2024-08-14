@@ -181,6 +181,9 @@
     enable = true;
     # using homebrew firefox
     package = null;
+    nativeMessagingHosts = [
+      pkgs.browserpass
+    ];
     profiles.default = {
       search.default = "DuckDuckGo";
       search.privateDefault = "DuckDuckGo";
@@ -255,6 +258,7 @@
         "network.negotiate-auth.trusted-uris" = "redhat.com";
       };
       extensions = with pkgs.nur.repos.rycee.firefox-addons; [
+        browserpass
         privacy-badger
         ublock-origin
         vimium
@@ -288,6 +292,10 @@
         })
       ];
     };
+  };
+  programs.browserpass = {
+    enable = true;
+    browsers = [ "firefox" ];
   };
 
   accounts.email.accounts = {
