@@ -171,6 +171,7 @@
   programs.ssh = {
     enable = true;
     forwardAgent = true;
+    addKeysToAgent = true;
     includes = [ "config.backup" ];
   };
 
