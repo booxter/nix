@@ -204,7 +204,7 @@
     enable = true;
     forwardAgent = true;
     addKeysToAgent = "yes";
-    includes = [ "config.backup" ];
+    includes = [ "config.backup" "config.local" ];
   };
 
   targets.darwin.defaults."com.apple.Safari" = {
