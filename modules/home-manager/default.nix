@@ -32,6 +32,7 @@
     diff-so-fancy.markEmptyLines = false;
   };
   programs.gh.enable = true;
+  programs.gh-dash.enable = true;
 
   programs.tmux = {
     enable = true;
