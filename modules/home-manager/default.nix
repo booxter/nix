@@ -147,6 +147,7 @@
   };
   programs.jq.enable = true;
   programs.less.enable = true;
+  programs.sioyek.enable = true;
 
   programs.alacritty = {
     enable = true;
