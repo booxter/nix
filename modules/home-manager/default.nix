@@ -145,6 +145,7 @@
     enable = true;
     enableZshIntegration = true;
   };
+  programs.jq.enable = true;
 
   programs.alacritty = {
     enable = true;
