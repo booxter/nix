@@ -146,6 +146,7 @@
     enableZshIntegration = true;
   };
   programs.jq.enable = true;
+  programs.less.enable = true;
 
   programs.alacritty = {
     enable = true;
