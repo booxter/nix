@@ -50,6 +50,7 @@
   };
 
   home.packages = with pkgs; [
+    ack
     git-pw
     git-review
     gnupg
