@@ -2,69 +2,27 @@
   home.stateVersion = "24.05";
   programs.home-manager.enable = true; # let it manage itself
 
-  programs.git = {
-    enable = true;
-    package = pkgs.gitAndTools.gitFull;
-    userEmail = "ihar.hrachyshka@gmail.com";
-    userName = "Ihar Hrachyshka";
-    ignores = [
-      "*.swp"
-    ];
+  # url: 127.0.0.1:8384
+  services.syncthing.enable = true;
+  services.git-sync.enable = true;
 
-    extraConfig = {
-      pw = {
-        server = "https://patchwork.ozlabs.org/api/1.2";
-        project = "ovn";
-      };
-      sendemail = {
-        confirm = "auto";
-        smtpServer = "smtp.gmail.com";
-        smtpServerPort = 587;
-        smtpEncryption = "tls";
-        # TODO: pass name as argument
-        smtpUser = "ihrachys@redhat.com";
-      };
-      rerere.enabled = true;
-      branch.sort = "-committerdate";
-    };
-
-    diff-so-fancy.enable = true;
-    diff-so-fancy.markEmptyLines = false;
-  };
+  programs.firefox = import ./programs/firefox.nix { inherit pkgs; inherit lib; };
+  programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
+  programs.alacritty = import ./programs/alacritty.nix;
+  programs.ssh = import ./programs/ssh.nix;
+  programs.zsh = import ./programs/zsh.nix;
+  programs.nixvim = import ./programs/nixvim.nix { inherit pkgs; };
+  programs.tmux = import ./programs/tmux.nix { inherit pkgs; };
+  programs.git = import ./programs/git.nix { inherit pkgs; };
   programs.gh.enable = true;
   programs.gh-dash.enable = true;
-
-  programs.tmux = {
-    enable = true;
-    terminal = "tmux-256color";
-    historyLimit = 100000;
-    baseIndex = 1;
-    clock24 = true;
-    keyMode = "vi";
-    mouse = true;
-    newSession = true; # create session if not running
-    sensibleOnTop = true;
-    plugins = [
-      pkgs.tmuxPlugins.vim-tmux-navigator
-    ];
-    extraConfig = ''
-      # Open panes in the same directory as the current pane
-      bind '"' split-window -v -c "#{pane_current_path}"
-      bind % split-window -h -c "#{pane_current_path}"
-      bind c new-window -c "#{pane_current_path}"
-
-      set -g window-style 'fg=colour247,bg=colour236'
-      set -g window-active-style 'fg=default,bg=colour234'
-
-      bind-key -T copy-mode-vi v send-keys -X begin-selection
-      bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
-      bind-key -T copy-mode-vi p "paste-buffer; send-keys q"
-    '';
-  };
-
+  programs.jq.enable = true;
+  programs.less.enable = true;
+  programs.sioyek.enable = true;
   programs.password-store.enable = true;
+
+  # Sync notes and pass db
   services.git-sync = {
-    enable = true;
     repositories = {
       # TODO: pass username as argument
       password-store = {
@@ -79,20 +37,17 @@
     };
   };
   home.activation = {
-    makePotato = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    sync_setup() {
-      src=$1
-      destdir=$2
-      GIT_SSH_COMMAND=${pkgs.openssh}/bin/ssh ${pkgs.git}/bin/git clone git@github.com:booxter/$src.git $destdir || true
-      pushd $destdir && ${pkgs.git}/bin/git config --bool branch.master.sync true && popd
-    }
-    sync_setup pass ~/.local/share/password-store
-    sync_setup notes ~/notes
-    '';
+    notes = import ./modules/git-sync-repo.nix {
+      inherit pkgs; inherit lib;
+      gh-repo = "booxter/notes";
+      destdir = "~/notes";
+    };
+    pass = import ./modules/git-sync-repo.nix {
+      inherit pkgs; inherit lib;
+      gh-repo = "booxter/pass";
+      destdir = "~/.local/share/password-store";
+    };
   };
-
-  # url: 127.0.0.1:8384
-  services.syncthing.enable = true;
 
   home.packages = with pkgs; [
     git-pw
@@ -107,50 +62,8 @@
     spotify
     telegram-desktop
     tig
-
-    (python3Packages.buildPythonApplication rec {
-      pname = "devnest";
-      version = "0.0.3";
-      env.PBR_VERSION = version;
-
-      # src = pkgs.fetchFromGitHub {
-      #   owner = "rhos-infra";
-      #   repo = "devnest";
-      #   rev = "bc72a842cd5cab5eb3175de0a67962a16433473c";
-      #   hash = "sha256-Ifo5cqR1Yh7sOLE+aVkRCl9+ymkisp8aKmGd7XrDF9k=";
-      # };
-      src = ({ pname, version }: fetchgit {
-        url = "https://github.com/rhos-infra/${pname}";
-        branchName = "${version}";
-        sha256 = "sha256-Ifo5cqR1Yh7sOLE+aVkRCl9+ymkisp8aKmGd7XrDF9k=";
-      }) { inherit pname; inherit version; };
-      # buildInputs = [ python3Packages.pip ];
-      build-system = with python3Packages; [
-        pbr
-        pip
-        setuptools
-      ];
-      dependencies = with python3Packages; [
-        colorlog
-        jenkinsapi
-        terminaltables
-        urllib3
-        requests
-        distro
-      ];
-    })
-
-    (writeScriptBin "vpn" ''
-    osascript << EOF
-      tell application "Viscosity"
-      if the state of the first connection is "Connected" then
-        disconnect "Red Hat Global VPN"
-      else
-        connect "Red Hat Global VPN"
-      end if
-      end tell
-    EOF
-    '')
+    (import ./modules/devnest.nix { inherit pkgs; })
+    (import ./modules/vpn.nix { inherit pkgs; })
   ];
 
   # Use homebrew ssh for git. It supports gss.
@@ -159,52 +72,9 @@
     BROWSER = "firefox";
   };
 
-  programs.nixvim = import ./nixvim.nix { inherit pkgs; };
-
-  programs.zsh = {
-    enable = true;
-    autosuggestion = {
-      enable = true;
-      strategy = [ "match_prev_cmd" "completion" ];
-    };
-    syntaxHighlighting.enable = true;
-    initExtra = ''
-      eval "$(/opt/homebrew/bin/brew shellenv)"
-    '';
-    shellAliases = { ls = "ls --color=auto -F"; };
-  };
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
-  };
-  programs.jq.enable = true;
-  programs.less.enable = true;
-  programs.sioyek.enable = true;
-
-  programs.alacritty = {
-    enable = true;
-    settings = {
-      font = {
-        normal.family = "MesloLGS Nerd Font Mono";
-        size = 16;
-      };
-      keyboard = {
-        bindings = [
-          {
-            key = "Return";
-            mods = "Command";
-            action = "CreateNewWindow";
-          }
-        ];
-      };
-    };
-  };
-
-  programs.ssh = {
-    enable = true;
-    forwardAgent = true;
-    addKeysToAgent = "yes";
-    includes = [ "config.backup" "config.local" ];
   };
 
   targets.darwin.defaults."com.apple.Safari" = {
@@ -214,214 +84,18 @@
     ShowOverlayStatusBar = true;
   };
 
-  programs.firefox = {
-    enable = true;
-    # using homebrew firefox
-    package = null;
-    nativeMessagingHosts = [
-      pkgs.browserpass
-    ];
-    profiles.default = {
-      search.default = "DuckDuckGo";
-      search.privateDefault = "DuckDuckGo";
-      search.force = true;
-      settings = {
-        # enable installed extensions
-        "extensions.autoDisableScopes" = 0;
-
-        # I know what I'm doing
-        "browser.aboutConfig.showWarning" = false;
-        "browser.translations.neverTranslateLanguages" = "en,ru,be,uk,cz,pl";
-
-        # UX fixes
-        "browser.startup.homepage" = "about:blank";
-        "browser.newtab.url" = "about:blank";
-        "browser.ctrlTab.sortByRecentlyUsed" = false;
-        "browser.tabs.closeWindowWithLastTab" = false;
-        "accessibility.typeaheadfind.enablesound" = false;
-        "browser.tabs.tabmanager.enabled" = true;
-        "browser.tabs.tabClipWidth" = 999; # only active tab has close button
-
-        "media.block-autoplay-until-in-foreground" = true;
-        "media.block-play-until-document-interaction" = true;
-        "media.block-play-until-visible" = true;
-
-        # privacy
-        "geo.enabled" = true;
-        "privacy.clearOnShutdown.history" = false;
-        "privacy.donottrackheader.enabled" = true;
-        "privacy.trackingprotection.enabled" = true;
-        "privacy.trackingprotection.socialtracking.enabled" = true;
-        "device.sensors.enabled" = false;
-        "beacon.enabled" = false; # bluetooth location tracking
-
-        # telemetry
-        "browser.send_pings" = false;
-        "toolkit.telemetry.archive.enabled" = false;
-        "toolkit.telemetry.enabled" = false;
-        "toolkit.telemetry.server" = "";
-        "toolkit.telemetry.unified" = false;
-        "extensions.webcompat-reporter.enabled" = false;
-        "datareporting.policy.dataSubmissionEnabled" = false;
-        "datareporting.healthreport.uploadEnabled" = false;
-        "browser.ping-centre.telemetry" = false;
-        "browser.urlbar.eventTelemetry.enabled" = false; # (default)
-        "browser.tabs.crashReporting.sendReport" = false;
-
-        # don't allow mozilla to test config changes
-        "app.normandy.enabled" = false;
-        "app.shield.optoutstudies.enabled" = false;
-
-        # Disable some useless stuff
-        "extensions.pocket.enabled" = false; # disable pocket, save links, send tabs
-        "browser.vpn_promo.enabled" = false;
-        "extensions.abuseReport.enabled" = false; # don't show 'report abuse' in extensions
-        "identity.fxaccounts.enabled" = false; # disable firefox login
-        "identity.fxaccounts.toolbar.enabled" = false;
-        "identity.fxaccounts.pairing.enabled" = false;
-        "identity.fxaccounts.commands.enabled" = false;
-        "browser.contentblocking.report.lockwise.enabled" = false; # don't use firefox password manager
-        "browser.uitour.enabled" = false; # no tutorial please
-        "browser.newtabpage.activity-stream.showSponsored" = false;
-        "browser.newtabpage.activity-stream.showSponsoredTopSites" = false;
-
-        # disable annoying web features
-        "dom.push.enabled" = false; # push notifications
-        "dom.push.connection.enabled" = false;
-        "dom.battery.enabled" = false; # you don't need to see my battery...
-        "dom.private-attribution.submission.enabled" = false; # No PPA
-
-        # krb gss login
-        "network.negotiate-auth.trusted-uris" = "redhat.com";
-      };
-      extensions = with pkgs.nur.repos.rycee.firefox-addons; [
-        browserpass
-        privacy-badger
-        ublock-origin
-        vimium
-        # https://addons.mozilla.org/api/v5/addons/search/?q=readwise-highlighter
-        (with lib; buildFirefoxXpiAddon {
-          pname = "readwise-highlighter";
-          version = "0.15.23";
-          addonId = "team@readwise.io";
-          url = "https://addons.mozilla.org/firefox/downloads/file/4222692/readwise_highlighter-0.15.23.xpi";
-          #sha256 = lib.fakeSha256;
-          sha256 = "sha256-Jg62eKy7s3tbs0IR/zHOSzLpQVj++wTUYyPU4MUBipQ=";
-          meta = {
-            homepage = "https://read.readwise.io/";
-            description = "Readwise Highlighter";
-            license = {
-              fullName = "All Rights Reserved";
-              free = false;
-            };
-            mozPermissions = [
-              "<all_urls>"
-              "activeTab"
-              "background"
-              "contextMenus"
-              "notifications"
-              "storage"
-              "tabs"
-              "unlimitedStorage"
-            ];
-            platforms = platforms.all;
-          };
-        })
-      ];
-    };
-  };
   programs.browserpass = {
     enable = true;
     browsers = [ "firefox" ];
   };
 
-  accounts.email.accounts = {
-    default = {
-      primary = true;
-      realName = "Ihar Hrachyshka";
-      flavor = "gmail.com";
-      address = "ihar.hrachyshka@gmail.com";
-      userName = "ihar.hrachyshka@gmail.com";
-      # passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
-      imap.host = "imap.gmail.com";
-      smtp.host = "smtp.gmail.com";
-      thunderbird.enable = true;
-    };
-    work = {
-      realName = "Ihar Hrachyshka";
-      flavor = "gmail.com";
-      address = "ihrachys@redhat.com";
-      aliases = [ "ihar@redhat.com" ];
-      userName = "ihrachys@redhat.com";
-      # passwordCommand = "${pkgs.pass}/bin/pass show rh/google.com-app-password-macpro";
-      imap.host = "imap.gmail.com";
-      smtp.host = "smtp.gmail.com";
-      thunderbird.enable = true;
-    };
-  };
-  programs.thunderbird = {
-    enable = true;
-    # fake package; we use homebrew
-    package = pkgs.runCommand "thunderbird.0.0" {} "mkdir $out";
-    profiles.default = {
-      isDefault = true;
-      settings = {
-        # Sort by date in descending order using threaded view
-        "mailnews.default_sort_type" = 18;
-        "mailnews.default_sort_order" = 2;
-        "mailnews.default_view_flags" = 1;
-        "mailnews.default_news_sort_type" = 18;
-        "mailnews.default_news_sort_order" = 2;
-        "mailnews.default_news_view_flags" = 1;
-
-        # Disable autoupdates
-        "app.update.auto" = false;
-        "app.update.staging.enabled" = false;
-
-        # Remove some ui bloat
-        "mailnews.start_page.enabled" = false;
-        "javascript.enabled" = false;
-        "mail.uidensity" = 0;
-
-        "mail.ui.folderpane.view" = 1;
-        "mail.folder.views.version" = 1;
-
-        # Check IMAP subfolder for new messages
-        "mail.check_all_imap_folders_for_new" = true;
-        "mail.server.default.check_all_folders_for_new" = true;
-      };
-    };
-  };
-
+  accounts.email.accounts = import ./config/email.nix;
   programs.irssi = {
     enable = true;
-    networks = {
-      liberachat = {
-        nick = "ihrachys";
-        server = {
-          address = "irc.libera.chat";
-          port = 6697;
-          autoConnect = true;
-        };
-        channels = {
-          openvswitch.autoJoin = true;
-        };
-      };
-      oftc = {
-        nick = "ihrachys";
-        server = {
-          address = "irc.oftc.net";
-          port = 6697;
-          autoConnect = true;
-        };
-        channels = {
-          openstack-neutron.autoJoin = true;
-          openstack-infra.autoJoin = true;
-        };
-      };
-    };
+    networks = import ./config/irc.nix;
   };
 
+  # TODO: use native readline module for inputrc
   home.file.".inputrc".source = ./dotfiles/inputrc;
   home.file.".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
 }
