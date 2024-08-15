@@ -55,6 +55,7 @@
     git-review
     gnupg
     iterm2
+    lima
     obsidian
     podman
     python312Packages.ipython
