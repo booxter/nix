@@ -5,6 +5,7 @@
   vimAlias = true;
   vimdiffAlias = true;
   colorschemes.gruvbox.enable = true;
+  clipboard.register = "unnamedplus";
   plugins = {
     lualine.enable = true;
     lsp = {
