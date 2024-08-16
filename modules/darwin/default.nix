@@ -91,4 +91,8 @@ in rec {
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
     defaultbrowser firefox
   '';
+  system.activationScripts.postActivation.text = ''
+    # don't sleep when plugged
+    sudo pmset -c sleep 0
+  '';
 }
