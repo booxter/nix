@@ -64,6 +64,7 @@
     spotify
     telegram-desktop
     tig
+    watch
     (import ./modules/devnest.nix { inherit pkgs; })
     (import ./modules/vpn.nix { inherit pkgs; })
   ];
