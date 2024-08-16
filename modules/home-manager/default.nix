@@ -54,6 +54,7 @@
     git-pw
     git-review
     gnupg
+    htop
     iterm2
     lima
     obsidian
