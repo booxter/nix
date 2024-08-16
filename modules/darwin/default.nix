@@ -1,8 +1,35 @@
-{ self, pkgs, ... }: rec {
+{ self, pkgs, ... }: let
+  kinit-pass = "${(import ../../modules/home-manager/modules/kinit-pass.nix { inherit pkgs; })}/bin/kinit-pass";
+in rec {
   # TODO: use launchd.user.agents.iterm2.serviceConfig instead?
   environment.userLaunchAgents.iterm2 = {
     source = ./dotfiles/iterm2-login.plist;
     target = "iterm2.plist";
+  };
+  # TODO: untangle setting of PASSWORD_STORE_DIR from user name
+  environment.userLaunchAgents.kinit-pass = {
+    text = ''
+      <?xml version="1.0" encoding="UTF-8"?>
+      <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+      <plist version="1.0">
+      <dict>
+          <key>Label</key>
+          <string>kinit-pass</string>
+          <key>ProgramArguments</key>
+          <array>
+              <string>${kinit-pass}</string>
+          </array>
+          <key>EnvironmentVariables</key>
+          <dict>
+              <key>PASSWORD_STORE_DIR</key>
+              <string>/Users/ihrachys/.local/share/password-store</string>
+          </dict>
+          <key>StartInterval</key>
+          <integer>${toString (60 * 60 * 8)}</integer>
+      </dict>
+      </plist>
+    '';
+    target = "kinit-pass.plist";
   };
 
   # clean up old nix derivations
