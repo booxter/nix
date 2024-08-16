@@ -13,7 +13,6 @@
       servers = {
         ansiblels.enable = true;
         bashls.enable = true;
-        clangd.enable = true;
         dockerls.enable = true;
         golangci-lint-ls.enable = true;
         gopls.enable = true;
@@ -27,6 +26,9 @@
         sqls.enable = true; # SQL
         taplo.enable = true; # toml
         yamlls.enable = true; # toml
+
+        clangd.enable = true;
+        clangd.extraOptions.capabilities.offsetEncoding = "utf-16";
       };
     };
     cmp = {
