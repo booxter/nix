@@ -1,4 +1,4 @@
-{ pkgs, ...}: {
+{ pkgs, ...}: with pkgs; {
   enable = true;
   defaultEditor = true;
   viAlias = true;
@@ -6,6 +6,9 @@
   vimdiffAlias = true;
   colorschemes.gruvbox.enable = true;
   clipboard.register = "unnamedplus";
+  extraPackages = [
+    golangci-lint
+  ];
   plugins = {
     lualine.enable = true;
     lsp = {
@@ -56,11 +59,11 @@
     toggleterm.enable = true;
   };
   extraPlugins = [
-    pkgs.vimPlugins.nerdtree
-    pkgs.vimPlugins.vim-polyglot
-    (pkgs.vimUtils.buildVimPlugin {
+    vimPlugins.nerdtree
+    vimPlugins.vim-polyglot
+    (vimUtils.buildVimPlugin {
       name = "my-plugin";
-      src = pkgs.fetchFromGitHub {
+      src = fetchFromGitHub {
           owner = "nvim-focus";
           repo = "focus.nvim";
           rev = "3841a38df972534567e85840d7ead20d3a26faa6";
