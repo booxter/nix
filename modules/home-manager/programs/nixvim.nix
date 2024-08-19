@@ -8,6 +8,7 @@
   clipboard.register = "unnamedplus";
   extraPackages = [
     golangci-lint
+    ripgrep
   ];
   plugins = {
     lualine.enable = true;
@@ -56,6 +57,13 @@
     fugitive.enable = true;
     gitsigns.enable = true;
     tmux-navigator.enable = true;
+    telescope = {
+      enable = true;
+      extensions = {
+        file-browser.enable = true;
+        undo.enable = true;
+      };
+    };
     toggleterm.enable = true;
   };
   extraPlugins = [
