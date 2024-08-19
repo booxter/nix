@@ -1,7 +1,10 @@
 {
   enable = true;
   onActivation.autoUpdate = false;
-  brews = [ "openssh" ];
+  brews = [
+    "openssh"
+    "cfergeau/crc/vfkit" # for podman machine
+  ];
   casks = [
     "amethyst"
     "thunderbird"
@@ -12,5 +15,8 @@
         no_quarantine = true;
       };
     }
+  ];
+  taps = [
+    "cfergeau/crc" # vfkit
   ];
 }
