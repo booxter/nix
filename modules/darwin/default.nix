@@ -53,6 +53,7 @@ in rec {
   homebrew = import ./modules/homebrew.nix;
   services.spotifyd = import ./modules/spotifyd.nix { inherit pkgs; };
   services.jankyborders = import ./modules/jankyborders.nix;
+  services.emacs.enable = true;
 
   # TODO: understand why sometimes I have to `pkill gpg-agent`
   programs.gnupg.agent = {

@@ -11,6 +11,7 @@
   programs.alacritty = import ./programs/alacritty.nix;
   programs.ssh = import ./programs/ssh.nix;
   programs.zsh = import ./programs/zsh.nix;
+  programs.emacs = import ./programs/emacs.nix { inherit pkgs; };
   programs.nixvim = import ./programs/nixvim.nix { inherit pkgs; };
   programs.tmux = import ./programs/tmux.nix { inherit pkgs; };
   programs.git = import ./programs/git.nix { inherit pkgs; };
@@ -75,6 +76,9 @@
     GIT_SSH_COMMAND = "ssh";
     BROWSER = "firefox";
   };
+  home.sessionPath = [
+    "$HOME/.config/emacs/bin"
+  ];
 
   programs.starship = {
     enable = true;
