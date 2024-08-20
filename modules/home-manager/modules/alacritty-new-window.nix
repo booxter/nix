@@ -15,6 +15,6 @@
   # @raycast.description Create new window in Alacritty
   # @raycast.author Ihar Hrachyshka
 
-  ${pkgs.alacritty}/bin/alacritty msg create-window || ${pkgs.alacritty}/bin/alacritty
+  ${pkgs.alacritty}/bin/alacritty msg create-window > /dev/null 2>&1 || ${pkgs.alacritty}/bin/alacritty
   '';
 }
