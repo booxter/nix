@@ -26,6 +26,8 @@ in rec {
           </dict>
           <key>StartInterval</key>
           <integer>${toString (60 * 60 * 8)}</integer>
+          <key>RunAtLoad</key>
+          <true/>
       </dict>
       </plist>
     '';
