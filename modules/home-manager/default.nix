@@ -83,6 +83,8 @@
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
+    # starship preset gruvbox-rainbow > ./modules/home-manager/config/starship.toml
+    settings = (with builtins; fromTOML (readFile ./config/starship.toml));
   };
 
   targets.darwin.defaults."com.apple.Safari" = {
