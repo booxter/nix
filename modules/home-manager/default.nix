@@ -105,6 +105,13 @@
     networks = import ./config/irc.nix;
   };
 
+  home.file.".tigrc".source = pkgs.fetchFromGitHub {
+      owner = "jonas";
+      repo = "tig";
+      rev = "c6899e98e10da37e8034e0f0cfd0904091ad34e5";
+      sha256 = "sha256-crgIhsXqp6XpyF0vXYJIPpWmfLSCyeXCirWlrRxx/gg=";
+  } + "/contrib/vim.tigrc";
+
   # TODO: use native readline module for inputrc
   home.file.".inputrc".source = ./dotfiles/inputrc;
   home.file.".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
