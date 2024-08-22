@@ -7,6 +7,7 @@
   ];
   casks = [
     "amethyst"
+    "chatgpt"
     "thunderbird"
     {
       name = "firefox";
