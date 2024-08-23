@@ -91,6 +91,14 @@
         }
       ];
     };
+
+    "com.superultra.Homerow" = {
+      SUEnableAutomaticChecks = 0;
+      SUHasLaunchedBefore = 1;
+      "check-for-updates-automatically" = 0;
+      "is-experimental-support-enabled" = 0;
+      "launch-at-login" = 1;
+    };
   };
 
   screensaver.askForPasswordDelay = 10;
@@ -102,4 +110,4 @@
     KeyRepeat = 1;
     AppleInterfaceStyle = "Dark";
   };
-  }
+}
