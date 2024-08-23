@@ -21,10 +21,9 @@
       "browser.startup.homepage" = "about:blank";
       "browser.newtab.url" = "about:blank";
       "browser.ctrlTab.sortByRecentlyUsed" = false;
-      "browser.tabs.closeWindowWithLastTab" = false;
+      "browser.tabs.closeWindowWithLastTab" = true;
       "accessibility.typeaheadfind.enablesound" = false;
       "browser.tabs.tabmanager.enabled" = true;
-      "browser.tabs.tabClipWidth" = 999; # only active tab has close button
 
       "media.block-autoplay-until-in-foreground" = true;
       "media.block-play-until-document-interaction" = true;
