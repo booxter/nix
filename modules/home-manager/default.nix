@@ -68,6 +68,7 @@
     tig
     watch
     (import ./modules/devnest.nix { inherit pkgs; })
+    (import ./modules/homerow.nix { inherit pkgs; inherit lib; })
     (import ./modules/vpn.nix { inherit pkgs; })
   ];
 
