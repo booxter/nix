@@ -58,6 +58,10 @@
           id = "com.googlecode.iterm2";
           window-titles = [ ];
         }
+        {
+          id = "com.apple.systempreferences";
+          window-titles = [ ];
+        }
       ];
     };
     "com.googlecode.iterm2" = {
