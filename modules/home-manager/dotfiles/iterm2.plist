@@ -285,6 +285,8 @@
 	<false/>
 	<key>HotkeyMigratedFromSingleToMulti</key>
 	<true/>
+	<key>NeverBlockSystemShutdown</key>
+	<true/>
 	<key>NeverWarnAboutShortLivedSessions_2A8582EF-74C3-4CBD-81EB-D2E47185C26A</key>
 	<true/>
 	<key>NeverWarnAboutShortLivedSessions_2A8582EF-74C3-4CBD-81EB-D2E47185C26A_selection</key>
