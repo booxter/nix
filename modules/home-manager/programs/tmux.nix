@@ -10,6 +10,7 @@
   sensibleOnTop = true;
   plugins = [
     pkgs.tmuxPlugins.vim-tmux-navigator
+    pkgs.tmuxPlugins.gruvbox
   ];
   extraConfig = ''
     # Open panes in the same directory as the current pane
@@ -23,5 +24,7 @@
     bind-key -T copy-mode-vi v send-keys -X begin-selection
     bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
     bind-key -T copy-mode-vi p "paste-buffer; send-keys q"
+
+    set -g @tmux-gruvbox 'light'
   '';
 }
