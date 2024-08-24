@@ -5,7 +5,6 @@
     autohide-time-modifier = 0.0;
     orientation = "right";
     persistent-apps = [
-      "${pkgs.alacritty}/Applications/Alacritty.app"
       "${home}/Applications/Firefox.app"
       "${pkgs.slack}/Applications/Slack.app"
       "${pkgs.telegram-desktop}/Applications/Telegram.app"
