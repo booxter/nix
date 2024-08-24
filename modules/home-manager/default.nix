@@ -10,7 +10,7 @@
   programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
   programs.kitty = import ./programs/kitty.nix;
   programs.ssh = import ./programs/ssh.nix;
-  programs.zsh = import ./programs/zsh.nix;
+  programs.zsh = import ./programs/zsh.nix { inherit pkgs; };
   programs.emacs = import ./programs/emacs.nix { inherit pkgs; };
   programs.nixvim = import ./programs/nixvim.nix { inherit pkgs; };
   programs.tmux = import ./programs/tmux.nix { inherit pkgs; };
@@ -52,6 +52,7 @@
 
   home.packages = with pkgs; [
     ack
+    chatgpt-cli
     git-pw
     git-review
     gnupg
@@ -62,6 +63,7 @@
     podman
     python312Packages.ipython
     raycast
+    shell-gpt
     slack
     spotify
     telegram-desktop
