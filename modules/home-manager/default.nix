@@ -99,6 +99,7 @@
     BROWSER = "firefox";
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
+    HOMEBREW_NO_AUTO_UPDATE = 1;
   };
   home.sessionPath = [
     "$HOME/.config/emacs/bin"
