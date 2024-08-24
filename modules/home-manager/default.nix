@@ -15,8 +15,10 @@
   programs.nixvim = import ./programs/nixvim.nix { inherit pkgs; };
   programs.tmux = import ./programs/tmux.nix { inherit pkgs; };
   programs.git = import ./programs/git.nix { inherit pkgs; };
-  programs.gh.enable = true;
-  programs.gh-dash.enable = true;
+  programs.gh = {
+    enable = true;
+    extensions = with pkgs; [ gh-dash gh-poi ];
+  };
   programs.jq.enable = true;
   programs.less.enable = true;
   programs.sioyek.enable = true;
