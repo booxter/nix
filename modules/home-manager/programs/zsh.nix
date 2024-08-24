@@ -8,6 +8,7 @@
   initExtra = ''
       eval "$(/opt/homebrew/bin/brew shellenv)"
       set -o vi
+      bindkey "^R" history-incremental-search-backward
   '';
   shellAliases = { ls = "ls --color=auto -F"; };
 }
