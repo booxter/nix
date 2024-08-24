@@ -275,7 +275,7 @@ float-small-windows: true
 mouse-follows-focus: false
 
 # true if the windows underneath the mouse should become focused as the mouse moves (default false). Note that this is largely incompatible with mouse-follows-focus
-focus-follows-mouse: true
+focus-follows-mouse: false
 
 # true if dragging and dropping windows on to each other should swap their positions (default false).
 mouse-swaps-windows: true
