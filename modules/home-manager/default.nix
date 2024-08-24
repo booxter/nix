@@ -116,5 +116,6 @@
   # TODO: use native readline module for inputrc
   home.file.".inputrc".source = ./dotfiles/inputrc;
   home.file.".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
+  home.file.".amethyst.yml".source = ./dotfiles/amethyst.yml;
   home.file.".bin/alacritty-new-window.sh" = import ./modules/alacritty-new-window.nix { inherit pkgs; };
 }
