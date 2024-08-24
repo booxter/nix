@@ -8,9 +8,9 @@
   mouse = true;
   newSession = true; # create session if not running
   sensibleOnTop = true;
-  plugins = [
-    pkgs.tmuxPlugins.vim-tmux-navigator
-    pkgs.tmuxPlugins.gruvbox
+  plugins = with pkgs.tmuxPlugins; [
+    gruvbox
+    vim-tmux-navigator
   ];
   extraConfig = ''
     # Open panes in the same directory as the current pane
