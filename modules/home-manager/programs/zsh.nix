@@ -5,9 +5,9 @@
     strategy = [ "match_prev_cmd" "completion" ];
   };
   syntaxHighlighting.enable = true;
+  defaultKeymap = "viins";
   initExtra = ''
       eval "$(/opt/homebrew/bin/brew shellenv)"
-      set -o vi
       bindkey "^R" history-incremental-search-backward
   '';
   shellAliases = {
