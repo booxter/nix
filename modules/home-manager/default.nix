@@ -57,6 +57,7 @@
     git-review
     gnupg
     htop
+    ipcalc
     iterm2
     lima
     obsidian
