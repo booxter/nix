@@ -60,6 +60,7 @@
     ipcalc
     iterm2
     lima
+    ngrep
     obsidian
     podman
     python312Packages.ipython
@@ -67,6 +68,7 @@
     shell-gpt
     slack
     spotify
+    tcpdump
     telegram-desktop
     tig
     watch
