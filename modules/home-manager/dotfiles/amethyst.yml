@@ -299,7 +299,7 @@ new-windows-to-main: false
 follow-space-thrown-windows: true
 
 # The integer percentage of the screen dimension to increment and decrement main pane ratios by (default 5).
-window-resize-step: 2
+window-resize-step: 5
 
 # Padding to apply between windows and the left edge of the screen (in px, default 0).
 screen-padding-left: 1
