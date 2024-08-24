@@ -21,6 +21,7 @@
         no_quarantine = true;
       };
     }
+    "wireshark-chmodbpf" # TODO: find a flake
   ];
   taps = [
     "cfergeau/crc" # vfkit

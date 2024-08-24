@@ -85,6 +85,7 @@
     tree
     unzip
     watch
+    wireshark
     zip
     (import ./modules/devnest.nix { inherit pkgs; })
     (import ./modules/homerow.nix { inherit pkgs; inherit lib; })
