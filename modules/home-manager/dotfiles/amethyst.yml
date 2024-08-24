@@ -269,7 +269,7 @@ floating-is-blacklist: true
 ignore-menu-bar: false
 
 # true if windows smaller than a 500px square should be floating by default (default true)
-float-small-windows: true
+float-small-windows: false
 
 # true if the mouse should move position to the center of a window when it becomes focused (default false). Note that this is largely incompatible with focus-follows-mouse.
 mouse-follows-focus: false
@@ -293,25 +293,25 @@ enables-layout-hud-on-space-change: true
 use-canary-build: false
 
 # true to insert new windows into the first position and false to insert new windows into the last position (default false).
-new-windows-to-main: true
+new-windows-to-main: false
 
 # true to automatically move to a space when throwing a window to it (default true).
 follow-space-thrown-windows: true
 
 # The integer percentage of the screen dimension to increment and decrement main pane ratios by (default 5).
-window-resize-step: 5
+window-resize-step: 2
 
 # Padding to apply between windows and the left edge of the screen (in px, default 0).
-screen-padding-left: 0
+screen-padding-left: 1
 
 # Padding to apply between windows and the right edge of the screen (in px, default 0).
-screen-padding-right: 0
+screen-padding-right: 1
 
 # Padding to apply between windows and the top edge of the screen (in px, default 0).
-screen-padding-top: 0
+screen-padding-top: 1
 
 # Padding to apply between windows and the bottom edge of the screen (in px, default 0).
-screen-padding-bottom: 0
+screen-padding-bottom: 1
 
 # true to maintain layout state across application executions (default true).
 restore-layouts-on-launch: true
