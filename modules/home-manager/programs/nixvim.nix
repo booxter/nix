@@ -79,6 +79,9 @@
       };
     })
   ];
+  extraConfigVim = ''
+    set relativenumber
+  '';
   extraConfigLua = ''
     require('focus').setup()
   '';
