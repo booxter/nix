@@ -70,6 +70,7 @@
     ngrep
     nix-tree
     obsidian
+    page
     podman
     procps
     pstree
@@ -96,6 +97,8 @@
   home.sessionVariables = {
     GIT_SSH_COMMAND = "ssh";
     BROWSER = "firefox";
+    PAGER = "page -WO -q 90000";
+    MANPAGER = "page -t man";
   };
   home.sessionPath = [
     "$HOME/.config/emacs/bin"
