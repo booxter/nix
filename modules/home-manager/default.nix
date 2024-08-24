@@ -9,6 +9,7 @@
   programs.firefox = import ./programs/firefox.nix { inherit pkgs; inherit lib; };
   programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
   programs.alacritty = import ./programs/alacritty.nix;
+  programs.kitty = import ./programs/kitty.nix;
   programs.ssh = import ./programs/ssh.nix;
   programs.zsh = import ./programs/zsh.nix;
   programs.emacs = import ./programs/emacs.nix { inherit pkgs; };
