@@ -53,25 +53,39 @@
   home.packages = with pkgs; [
     ack
     chatgpt-cli
+    curl
+    file
     git-pw
     git-review
+    gnugrep
     gnupg
+    gzip
     htop
     ipcalc
     iterm2
+    jq
+    less
     lima
+    neofetch
     ngrep
+    nix-tree
     obsidian
     podman
+    procps
+    pstree
     python312Packages.ipython
     raycast
+    ripgrep
     shell-gpt
     slack
     spotify
     tcpdump
     telegram-desktop
     tig
+    tree
+    unzip
     watch
+    zip
     (import ./modules/devnest.nix { inherit pkgs; })
     (import ./modules/homerow.nix { inherit pkgs; inherit lib; })
     (import ./modules/vpn.nix { inherit pkgs; })
