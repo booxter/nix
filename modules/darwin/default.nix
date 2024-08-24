@@ -97,5 +97,12 @@ in rec {
   system.activationScripts.postActivation.text = ''
     # don't sleep when plugged
     sudo pmset -c sleep 0
+
+    # PAM for tmux touchid
+    # Borrowed from https://github.com/zmre/nix-config/blob/main/modules/darwin/pam.nix
+    /usr/bin/sed -i "" '2i\
+    auth       optional     ${pkgs.pam-reattach}/lib/pam/pam_reattach.so # nix-darwin: security.pam.enableCustomSudoTouchIdAuth\
+    auth       sufficient     pam_tid.so # nix-darwin: security.pam.enableCustomSudoTouchIdAuth
+    ' /etc/pam.d/sudo
   '';
 }
