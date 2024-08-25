@@ -66,9 +66,10 @@
     };
     toggleterm.enable = true;
   };
-  extraPlugins = [
-    vimPlugins.nerdtree
-    vimPlugins.vim-polyglot
+  extraPlugins = with vimPlugins; [
+    nerdtree
+    vim-polyglot
+    vimux
     (vimUtils.buildVimPlugin {
       name = "my-plugin";
       src = fetchFromGitHub {
