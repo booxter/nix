@@ -12,6 +12,7 @@
     enable_audio_bell = false;
     mouse_hide_wait = 0;
     strip_trailing_spaces = "always";
+    scrollback_pager = "page -t man";
     scrollback_lines = 100000;
   };
 }
