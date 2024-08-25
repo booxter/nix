@@ -11,8 +11,8 @@
       bindkey "^R" history-incremental-search-backward
   '';
   shellAliases = {
-    ll = "ls --color=auto -Fal";
-    ls = "ls --color=auto -F";
+    ll = "ls --hyperlink=auto --color=auto -Fal";
+    ls = "ls --hyperlink=auto --color=auto -F";
     chatgpt = "OPENAI_API_KEY=$(${pkgs.pass}/bin/pass priv/openai-chatgpt-secret) chatgpt";
     sgpt = "OPENAI_API_KEY=$(${pkgs.pass}/bin/pass priv/openai-chatgpt-secret) sgpt";
   };
