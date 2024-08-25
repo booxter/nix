@@ -57,6 +57,7 @@
     chatgpt-cli
     curl
     file
+    fzf
     git-pw
     git-review
     gnugrep

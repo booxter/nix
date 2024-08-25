@@ -11,6 +11,10 @@
   plugins = with pkgs.tmuxPlugins; [
     gruvbox
     jump
+    logging
+    tmux-fzf
+    # -url implies fzf installed elsewhere - probably a bug in the package
+    fzf-tmux-url
     vim-tmux-navigator
   ];
   extraConfig = ''
