@@ -86,7 +86,15 @@ in rec {
   };
   system.defaults = import ./modules/defaults.nix { inherit pkgs; home = users.users.ihrachys.home; };
 
-  security.pam.enableSudoTouchIdAuth = true;
+  # Disable nix-darwin implementation because it doesn't configure reattach
+  security.pam.enableSudoTouchIdAuth = false;
+  environment.etc."pam.d/sudo_local".text = ''
+    # PAM for tmux touchid; must go before _tid.so
+    auth       optional     ${pkgs.pam-reattach}/lib/pam/pam_reattach.so
+    # Base touchid pam module
+    auth       sufficient   pam_tid.so
+  '';
+
   security.sudo.extraConfig = "Defaults    timestamp_timeout=30";
 
   system.activationScripts.postUserActivation.text = ''
@@ -97,12 +105,5 @@ in rec {
   system.activationScripts.postActivation.text = ''
     # don't sleep when plugged
     sudo pmset -c sleep 0
-
-    # PAM for tmux touchid
-    # Borrowed from https://github.com/zmre/nix-config/blob/main/modules/darwin/pam.nix
-    /usr/bin/sed -i "" '2i\
-    auth       optional     ${pkgs.pam-reattach}/lib/pam/pam_reattach.so # nix-darwin: security.pam.enableCustomSudoTouchIdAuth\
-    auth       sufficient     pam_tid.so # nix-darwin: security.pam.enableCustomSudoTouchIdAuth
-    ' /etc/pam.d/sudo
   '';
 }
