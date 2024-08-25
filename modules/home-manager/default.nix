@@ -23,6 +23,25 @@
   programs.sioyek.enable = true;
   programs.password-store.enable = true;
 
+  # TODO: explore more features later
+  programs.ranger = {
+    enable = true;
+    extraPackages = with pkgs; [
+      w3m
+    ];
+
+    settings = {
+      preview_images = true;
+      preview_images_method = "kitty";
+      preview_files = true;
+      preview_directories = true;
+      collapse_preview = true;
+
+      # TODO: do I need a preview script like:
+      # https://github.com/redxtech/nixfiles/blob/a9eba0db5c44c519eec8c837f6508cea8437bef7/modules/home-manager/cli/ranger/scope.sh ?
+    };
+  };
+
   # Sync notes and pass db
   services.git-sync = {
     repositories = {
