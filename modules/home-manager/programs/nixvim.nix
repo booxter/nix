@@ -82,6 +82,12 @@
   ];
   extraConfigVim = ''
     set relativenumber
+
+    " Vimux runner mappings
+    " \vp for command prompt
+    map <Leader>vp :VimuxPromptCommand<CR>
+    " \vl to run latest command
+    map <Leader>vl :VimuxRunLastCommand<CR>
   '';
   extraConfigLua = ''
     require('focus').setup()
