@@ -16,8 +16,6 @@
   # @raycast.author Ihar Hrachyshka
 
   # --single-instance doesn't play well with amethyst (it doesn't recognize consequent windows)
-  # ${pkgs.kitty}/bin/kitty --single-instance
-
-  ${pkgs.kitty}/bin/kitty
+  ${pkgs.kitty}/bin/kitty --directory ~
   '';
 }
