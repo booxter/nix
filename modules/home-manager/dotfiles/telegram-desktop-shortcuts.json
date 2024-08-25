@@ -1,0 +1,14 @@
+[
+    {
+        "command": "previous_chat",
+        "keys": "ctrl+k"
+    },
+    {
+        "command": "next_chat",
+        "keys": "ctrl+j"
+    },
+    {
+        "command": "search",
+        "keys": "/"
+    }
+]
