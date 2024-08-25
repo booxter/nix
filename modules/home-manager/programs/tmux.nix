@@ -39,5 +39,7 @@
     bind-key -n C-\\ if-shell "$is_vim" "send-keys C-\\" "select-pane -l"
 
     set -g @tmux-gruvbox 'light'
+
+    set -ga terminal-features "*:hyperlinks"
   '';
 }

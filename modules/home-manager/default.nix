@@ -8,7 +8,6 @@
 
   programs.firefox = import ./programs/firefox.nix { inherit pkgs; inherit lib; };
   programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
-  programs.kitty = import ./programs/kitty.nix;
   programs.ssh = import ./programs/ssh.nix;
   programs.zsh = import ./programs/zsh.nix { inherit pkgs; };
   programs.emacs = import ./programs/emacs.nix { inherit pkgs; };
@@ -139,6 +138,9 @@
       rev = "c6899e98e10da37e8034e0f0cfd0904091ad34e5";
       sha256 = "sha256-crgIhsXqp6XpyF0vXYJIPpWmfLSCyeXCirWlrRxx/gg=";
   } + "/contrib/vim.tigrc";
+
+  programs.kitty = import ./programs/kitty.nix;
+  home.file.".config/kitty/open-actions.conf".source = ./dotfiles/kitty-open-actions.conf;
 
   # TODO: use native readline module for inputrc
   home.file.".inputrc".source = ./dotfiles/inputrc;
