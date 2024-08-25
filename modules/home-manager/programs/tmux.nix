@@ -10,6 +10,7 @@
   sensibleOnTop = true;
   plugins = with pkgs.tmuxPlugins; [
     gruvbox
+    jump
     vim-tmux-navigator
   ];
   extraConfig = ''
