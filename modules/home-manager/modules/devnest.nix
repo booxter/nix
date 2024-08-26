@@ -6,7 +6,7 @@
     url = "https://github.com/rhos-infra/${pname}";
     branchName = "${version}";
     sha256 = "sha256-Ifo5cqR1Yh7sOLE+aVkRCl9+ymkisp8aKmGd7XrDF9k=";
-  }) { inherit pname; inherit version; };
+  }) { inherit pname version; };
 
   env.PBR_VERSION = version;
   build-system = with python3Packages; [

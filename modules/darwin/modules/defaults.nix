@@ -1,4 +1,4 @@
-{ pkgs, home, ... }: {
+{ pkgs, home, username, ... }: {
   dock = {
     autohide = true;
     autohide-delay = 0.0;
@@ -51,7 +51,7 @@
       CriticalUpdateInstall = 1;
     };
     "com.googlecode.iterm2" = {
-      PrefsCustomFolder = "/Users/ihrachys/.iterm2";
+      PrefsCustomFolder = "/Users/${username}/.iterm2";
       NoSyncNeverRemindPrefsChangesLostForFile_selection = 1; # Manually save changes
     };
     "com.apple.HIToolbox" = {

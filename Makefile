@@ -1,2 +1,2 @@
 deploy:
-	darwin-rebuild switch --flake .#darwin
+	darwin-rebuild switch --flake .#macpro

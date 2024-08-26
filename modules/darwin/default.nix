@@ -1,5 +1,5 @@
-{ self, pkgs, ... }: let
-  kinit-pass = "${(import ../../modules/home-manager/modules/kinit-pass.nix { inherit pkgs; })}/bin/kinit-pass";
+{ pkgs, username, ... }: let
+  kinit-pass = "${(import ./modules/kinit-pass.nix { inherit pkgs; })}/bin/kinit-pass";
 in rec {
   # TODO: use launchd.user.agents.iterm2.serviceConfig instead?
   environment.userLaunchAgents.iterm2 = {
@@ -22,7 +22,7 @@ in rec {
           <key>EnvironmentVariables</key>
           <dict>
               <key>PASSWORD_STORE_DIR</key>
-              <string>/Users/ihrachys/.local/share/password-store</string>
+              <string>/Users/${username}/.local/share/password-store</string>
           </dict>
           <key>StartInterval</key>
           <integer>${toString (60 * 60 * 8)}</integer>
@@ -65,26 +65,18 @@ in rec {
 
   # Create /etc/zshrc that loads the nix-darwin environment.
   programs.zsh.enable = true;  # default shell on catalina
-  # programs.fish.enable = true;
-
-  # Set Git commit hash for darwin-version.
-  system.configurationRevision = self.rev or self.dirtyRev or null;
 
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
   system.stateVersion = 4;
 
-  # The platform the configuration will be used on.
-  nixpkgs.hostPlatform = "aarch64-darwin";
-
   fonts.packages = [ pkgs.nerdfonts ];
 
-  # TODO: pass name as argument
-  users.users.ihrachys = rec {
-    name = "ihrachys";
-    home = "/Users/${name}";
+  users.users.${username} = {
+    name = username;
+    home = "/Users/${username}";
   };
-  system.defaults = import ./modules/defaults.nix { inherit pkgs; home = users.users.ihrachys.home; };
+  system.defaults = import ./modules/defaults.nix { inherit pkgs username; home = users.users.${username}.home; };
 
   # Disable nix-darwin implementation because it doesn't configure reattach
   security.pam.enableSudoTouchIdAuth = false;

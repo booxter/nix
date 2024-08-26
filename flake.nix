@@ -19,43 +19,55 @@
     emacs.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixvim, home-manager, nix-darwin, nixpkgs, nur, emacs }:
+  outputs = inputs@{ self, nixvim, home-manager, nix-darwin, nixpkgs, nur, emacs }:
   let
-    pkgs = import nixpkgs {
-      system = "aarch64-darwin";
-      config = { allowUnfree = true; };
-      overlays = [
-        nur.overlay
-        emacs.overlay
-      ];
+    mkPkgs = system:
+      import nixpkgs {
+        inherit system;
+        config = { allowUnfree = true; };
+        overlays = [
+          nur.overlay
+          emacs.overlay
+        ];
+      };
+    mkHome = username: modules: {
+      home-manager = {
+        useGlobalPkgs = true;
+        useUserPackages = true;
+        backupFileExtension = "backup";
+        extraSpecialArgs = {inherit inputs username; };
+        users."${username}".imports = modules;
+      };
     };
-    configuration = import ./modules/darwin {
-      inherit self pkgs;
-    };
+    globalModules = { username }: [
+      {
+        system.configurationRevision = self.rev or self.dirtyRev or null;
+      }
+      (mkHome username [
+        ./modules/home-manager
+        nixvim.homeManagerModules.nixvim
+      ])
+    ];
+    globalModulesMacos = { username }: globalModules { inherit username; } ++ [
+      ./modules/darwin
+      home-manager.darwinModules.home-manager
+      # ./modules/home-manager/darwin.nix
+    ];
   in
   {
-    # Build darwin flake using:
-    # $ darwin-rebuild build --flake .#
-    darwinConfigurations."darwin" = nix-darwin.lib.darwinSystem {
-      modules = [
-        configuration
-        home-manager.darwinModules.home-manager
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "backup";
-            extraSpecialArgs = { inherit pkgs; };
-          };
-          home-manager.users.ihrachys.imports = [
-            nixvim.homeManagerModules.nixvim
-            ./modules/home-manager
-          ];
-        }
-      ];
+    darwinConfigurations = let
+      username = "ihrachys";
+    in {
+      macpro = nix-darwin.lib.darwinSystem rec {
+        system = "aarch64-darwin";
+        pkgs = mkPkgs system;
+        specialArgs = {
+          inherit username;
+        };
+        modules = (globalModulesMacos { inherit username; }) ++ [
+          ./hosts/macpro/configuration.nix
+        ];
+      };
     };
-
-    # Expose the package set, including overlays, for convenience.
-    darwinPackages = self.darwinConfigurations."darwin".pkgs;
   };
 }
