@@ -163,6 +163,7 @@
 
   # TODO: use native readline module for inputrc
   home.file.".inputrc".source = ./dotfiles/inputrc;
+  home.file.".config/svim/blacklist".source = ./dotfiles/svim-blacklist;
   home.file.".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
   home.file.".amethyst.yml".source = ./dotfiles/amethyst.yml;
   home.file."Library/Application Support/Telegram Desktop/tdata/shortcuts-custom.json".source = ./dotfiles/telegram-desktop-shortcuts.json;
