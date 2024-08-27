@@ -85,6 +85,7 @@
     jq
     less
     lima
+    magic-wormhole
     neofetch
     ngrep
     nix-tree
