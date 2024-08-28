@@ -3,6 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs_kitty_fix.url = "github:leiserfg/nixpkgs/fix-kitty-nerfont";
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
     # home-manager.url = "github:nix-community/home-manager";
@@ -19,7 +20,7 @@
     emacs.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nixvim, home-manager, nix-darwin, nixpkgs, nur, emacs }:
+  outputs = inputs@{ self, nixvim, home-manager, nix-darwin, nixpkgs, nixpkgs_kitty_fix, nur, emacs }:
   let
     mkPkgs = system:
       import nixpkgs {
@@ -28,6 +29,10 @@
         overlays = [
           nur.overlay
           emacs.overlay
+          (final: prev: {
+            inherit (nixpkgs_kitty_fix.legacyPackages.${prev.system})
+              kitty;
+          })
         ];
       };
     mkHome = username: modules: {
