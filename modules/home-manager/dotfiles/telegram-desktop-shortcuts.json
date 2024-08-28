@@ -9,6 +9,6 @@
     },
     {
         "command": "search",
-        "keys": "/"
+        "keys": "ctrl+/"
     }
 ]
