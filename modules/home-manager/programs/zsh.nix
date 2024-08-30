@@ -16,5 +16,6 @@
     chatgpt = "OPENAI_API_KEY=$(${pkgs.pass}/bin/pass priv/openai-chatgpt-secret) chatgpt";
     sgpt = "OPENAI_API_KEY=$(${pkgs.pass}/bin/pass priv/openai-chatgpt-secret) sgpt";
     rg = "rg --hyperlink-format=kitty";
+    icat = "kitten icat";
   };
 }
