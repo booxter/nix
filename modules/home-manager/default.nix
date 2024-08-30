@@ -18,6 +18,7 @@
     enable = true;
     extensions = with pkgs; [ gh-dash gh-poi ];
   };
+  programs.eza = import ./programs/eza.nix;
   programs.jq.enable = true;
   programs.less.enable = true;
   programs.sioyek.enable = true;
