@@ -25,5 +25,5 @@
     };
 
     diff-so-fancy.enable = true;
-    diff-so-fancy.markEmptyLines = false;
+    diff-so-fancy.markEmptyLines = true;
   }
