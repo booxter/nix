@@ -25,6 +25,7 @@
         lua-ls.enable = true;
         marksman.enable = true; # markdown
         nil-ls.enable = true; # nix
+        nixd.enable = true; # nix
         perlpls.enable = true;
         pyright.enable = true; # python
         sqls.enable = true; # SQL
