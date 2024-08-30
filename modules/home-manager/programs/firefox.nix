@@ -25,6 +25,12 @@
       "accessibility.typeaheadfind.enablesound" = false;
       "browser.tabs.tabmanager.enabled" = true;
 
+      # don't pollute home for no reason
+      "browser.download.start_downloads_in_tmp_dir" = true;
+      "browser.download.folderList" = 2; # use the last dir
+      "browser.download.useDownloadDir" = true;
+      "browser.download.dir" = "/tmp";
+
       "media.block-autoplay-until-in-foreground" = true;
       "media.block-play-until-document-interaction" = true;
       "media.block-play-until-visible" = true;
