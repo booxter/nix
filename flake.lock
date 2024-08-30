@@ -284,16 +284,16 @@
     },
     "nixpkgs_kitty_fix": {
       "locked": {
-        "lastModified": 1724894277,
-        "narHash": "sha256-wxsMWJEAXrz4yOcJ/POPQjf3oBrl3S2Eobj5b+yd4OY=",
-        "owner": "booxter",
+        "lastModified": 1724879822,
+        "narHash": "sha256-AM7206bRn3a9IUMas5QUkIASs06YeoOTXs70p0YFn30=",
+        "owner": "leiserfg",
         "repo": "nixpkgs",
-        "rev": "9d6d6beb3d6d038d71c3be0f40f7062edf667482",
+        "rev": "0c3d12a3e5d4077cf7fee84fcb177237ee8daddf",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "fix-kitty-and-darwin-tests",
+        "owner": "leiserfg",
+        "ref": "fix-kitty-nerfont",
         "repo": "nixpkgs",
         "type": "github"
       }
