@@ -22,6 +22,7 @@
   programs.less.enable = true;
   programs.sioyek.enable = true;
   programs.password-store.enable = true;
+  programs.bat.enable = true;
 
   # TODO: explore more features later
   programs.ranger = {
@@ -147,10 +148,6 @@
   };
 
   programs.kitty = import ./programs/kitty.nix;
-
-  programs.bat = {
-    enable = true;
-  };
 
   # TODO: move darwin specific config files to a separate module?
   home.file = {
