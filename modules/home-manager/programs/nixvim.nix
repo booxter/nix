@@ -82,6 +82,8 @@
     })
   ];
   extraConfigVim = ''
+    " Show relative except for current line
+    set number
     set relativenumber
 
     " Vimux runner mappings
