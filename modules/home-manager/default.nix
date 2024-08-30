@@ -148,6 +148,10 @@
 
   programs.kitty = import ./programs/kitty.nix;
 
+  programs.bat = {
+    enable = true;
+  };
+
   # TODO: move darwin specific config files to a separate module?
   home.file = {
     # TODO: use native readline module for inputrc
