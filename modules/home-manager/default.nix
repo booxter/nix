@@ -120,6 +120,7 @@
     wireshark
     zip
     (import ./modules/devnest.nix { inherit pkgs; })
+    (import ./modules/weechat-session.nix { inherit pkgs; })
   ]
   ++ lib.optionals stdenv.isDarwin [
     iterm2
