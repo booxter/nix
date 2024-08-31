@@ -154,7 +154,7 @@
 
   accounts.email.accounts = import ./config/email.nix;
   programs.irssi = {
-    enable = true;
+    enable = false;
     networks = import ./config/irc.nix;
   };
 
