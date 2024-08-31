@@ -26,17 +26,17 @@
     emacs.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = inputs@{ self, nixvim, home-manager, nix-darwin, nixpkgs, nixpkgs_kitty_fix, nur, emacs }:
+  outputs = inputs@{ self, ... }:
   let
     mkPkgs = system:
-      import nixpkgs {
+      import inputs.nixpkgs {
         inherit system;
         config = { allowUnfree = true; };
         overlays = [
-          nur.overlay
-          emacs.overlay
+          inputs.nur.overlay
+          inputs.emacs.overlay
           (final: prev: {
-            inherit (nixpkgs_kitty_fix.legacyPackages.${prev.system})
+            inherit (inputs.nixpkgs_kitty_fix.legacyPackages.${prev.system})
               kitty;
           })
         ];
@@ -56,12 +56,12 @@
       }
       (mkHome username [
         ./modules/home-manager
-        nixvim.homeManagerModules.nixvim
+        inputs.nixvim.homeManagerModules.nixvim
       ])
     ];
     globalModulesMacos = { username }: globalModules { inherit username; } ++ [
       ./modules/darwin
-      home-manager.darwinModules.home-manager
+      inputs.home-manager.darwinModules.home-manager
       # ./modules/home-manager/darwin.nix
     ];
   in
@@ -69,7 +69,7 @@
     darwinConfigurations = let
       username = "ihrachys";
     in {
-      macpro = nix-darwin.lib.darwinSystem rec {
+      macpro = inputs.nix-darwin.lib.darwinSystem rec {
         system = "aarch64-darwin";
         pkgs = mkPkgs system;
         specialArgs = {
