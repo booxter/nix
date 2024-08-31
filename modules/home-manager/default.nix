@@ -56,6 +56,10 @@
         path = "/Users/${username}/notes";
         interval = 30;
       };
+      weechat-config = {
+        uri = "git+ssh://booxter@github.com:booxter/weechat-config.git";
+        path = "/Users/${username}/.config/weechat";
+      };
     };
   };
   home.activation = {
@@ -68,6 +72,11 @@
       inherit pkgs lib;
       gh-repo = "booxter/pass";
       destdir = "~/.local/share/password-store";
+    };
+    weechat-config = import ./modules/git-sync-repo.nix {
+      inherit pkgs lib;
+      gh-repo = "booxter/weechat-config";
+      destdir = "~/.config/weechat";
     };
   };
 
@@ -107,6 +116,7 @@
     tree
     unzip
     watch
+    weechat
     wireshark
     zip
     (import ./modules/devnest.nix { inherit pkgs; })
