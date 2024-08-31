@@ -20,7 +20,6 @@
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
-    nur.inputs.nixpkgs.follows = "nixpkgs";
 
     emacs.url = "github:nix-community/emacs-overlay";
     emacs.inputs.nixpkgs.follows = "nixpkgs";
