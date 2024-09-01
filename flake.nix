@@ -5,8 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs_kitty_fix.url = "github:leiserfg/nixpkgs/fix-kitty-nerfont";
 
-    # nix-darwin.url = "github:LnL7/nix-darwin";
-    nix-darwin.url = "github:booxter/nix-darwin/suppress-gpg-connect-agent-stderr";
+    nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     # home-manager.url = "github:nix-community/home-manager";
