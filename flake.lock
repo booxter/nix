@@ -173,16 +173,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1723509282,
-        "narHash": "sha256-G/ffRuZ3uf6Dcy2ba8kbEB3Rf0rKcO64xrU6hU/UwYs=",
-        "owner": "booxter",
+        "lastModified": 1725180166,
+        "narHash": "sha256-fzssXuGR/mCeGbzM1ExaTqDz7QDGta3WA4jJsZyRruo=",
+        "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "b238b911d8168b47d780e2da3bf2e8fa7c986a8e",
+        "rev": "471e3eb0a114265bcd62d11d58ba8d3421ee68eb",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "fix-thunderbird-aarch64",
+        "owner": "nix-community",
         "repo": "home-manager",
         "type": "github"
       }

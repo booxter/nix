@@ -8,11 +8,7 @@
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
-    # home-manager.url = "github:nix-community/home-manager";
-    # Use a fork with a fix for thunderbird and firefox profiles.ini Version=2
-    # See: https://github.com/nix-community/home-manager/pull/5724
-    # TODO: overlay just for the packages of interest
-    home-manager.url = "github:booxter/home-manager/fix-thunderbird-aarch64";
+    home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixvim.url = "github:nix-community/nixvim";
@@ -59,9 +55,20 @@
     ];
     globalModulesMacos = { username }: globalModules { inherit username; } ++ [
       ./modules/darwin
-      inputs.home-manager.darwinModules.home-manager
+      home-manager.darwinModules.home-manager
       # ./modules/home-manager/darwin.nix
     ];
+    home-manager = with inputs; let
+        src = nixpkgs.legacyPackages."aarch64-darwin".applyPatches {
+          name = "home-manager";
+          src = inputs.home-manager;
+          patches = [
+            ./patches/home-manager-firefox.patch
+            ./patches/home-manager-thunderbird.patch
+          ];
+        };
+      in
+      nixpkgs.lib.fix (self: (import "${src}/flake.nix").outputs { inherit self nixpkgs; });
   in
   {
     darwinConfigurations = let

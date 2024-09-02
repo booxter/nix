@@ -1,0 +1,30 @@
+From 45fa03365208d7e05662a103026d9bb6f86f6dec Mon Sep 17 00:00:00 2001
+From: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+Date: Mon, 12 Aug 2024 20:32:44 -0400
+Subject: [PATCH] thunderbird(darwin): remove Version = 2 from profiles
+
+This fixes app startup for (externally managed, via homebrew)
+thunderbird on Darwin.
+
+The fix is almost identical to the other patch for Firefox:
+https://github.com/nix-community/home-manager/pull/5724
+
+Signed-off-by: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+---
+ modules/programs/thunderbird.nix | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/modules/programs/thunderbird.nix b/modules/programs/thunderbird.nix
+index c15a946ec663..d6bdbd76f366 100644
+--- a/modules/programs/thunderbird.nix
++++ b/modules/programs/thunderbird.nix
+@@ -27,8 +27,7 @@ let
+   profilesIni = foldl recursiveUpdate {
+     General = {
+       StartWithLastProfile = 1;
+-      Version = 2;
+-    };
++    } // (if isDarwin then { } else { Version = 2; });
+   } (flip map profilesWithId (profile: {
+     "Profile${profile.id}" = {
+       Name = profile.name;

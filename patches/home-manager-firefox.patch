@@ -1,0 +1,24 @@
+From 0b3077dbadb1fd3095ee76d18f7387a0e1bfdcae Mon Sep 17 00:00:00 2001
+From: Hyunggyu Jang <murasakipurplez5@gmail.com>
+Date: Sat, 10 Aug 2024 22:27:18 +0900
+Subject: [PATCH] firefox: fix launching on darwin
+
+Removed version on profiles.ini for darwin launching
+---
+ modules/programs/firefox/mkFirefoxModule.nix | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/modules/programs/firefox/mkFirefoxModule.nix b/modules/programs/firefox/mkFirefoxModule.nix
+index f22af019b066..a5f867215a15 100644
+--- a/modules/programs/firefox/mkFirefoxModule.nix
++++ b/modules/programs/firefox/mkFirefoxModule.nix
+@@ -61,8 +61,7 @@ let
+     }) // {
+       General = {
+         StartWithLastProfile = 1;
+-        Version = 2;
+-      };
++      } // (if isDarwin then { } else { Version = 2; });
+     };
+ 
+   profilesIni = generators.toINI { } profiles;
