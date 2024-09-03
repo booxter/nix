@@ -56,15 +56,13 @@
     globalModulesMacos = { username }: globalModules { inherit username; } ++ [
       ./modules/darwin
       home-manager.darwinModules.home-manager
-      # ./modules/home-manager/darwin.nix
     ];
     home-manager = with inputs; let
         src = nixpkgs.legacyPackages."aarch64-darwin".applyPatches {
           name = "home-manager";
           src = inputs.home-manager;
           patches = [
-            ./patches/home-manager-firefox.patch
-            ./patches/home-manager-thunderbird.patch
+            ./patches/set-moz-variables.patch
           ];
         };
       in
