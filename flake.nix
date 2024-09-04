@@ -62,7 +62,8 @@
           name = "home-manager";
           src = inputs.home-manager;
           patches = [
-            ./patches/set-moz-variables.patch
+            ./patches/home-manager-firefox.patch
+            ./patches/home-manager-thunderbird.patch
           ];
         };
       in
