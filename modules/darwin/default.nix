@@ -7,10 +7,10 @@ in rec {
   # is fixed.
   # Requires SIP disabled, otherwise:
   # Could not set environment: 150: Operation not permitted while System Integrity Protection is engaged
-  launchd.envVariables = {
-    MOZ_LEGACY_PROFILES = "1";
-    MOZ_ALLOW_DOWNGRADE = "1";
-  };
+  #launchd.envVariables = {
+  #  MOZ_LEGACY_PROFILES = "1";
+  #  MOZ_ALLOW_DOWNGRADE = "1";
+  #};
 
   # TODO: use launchd.user.agents.iterm2.serviceConfig instead?
   environment.userLaunchAgents.iterm2 = {
