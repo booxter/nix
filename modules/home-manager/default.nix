@@ -115,6 +115,7 @@
     tig
     tree
     unzip
+    viddy
     watch
     weechat
     wireshark
