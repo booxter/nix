@@ -1,14 +1,10 @@
-{ pkgs, home, username, ... }: {
+{ username, ... }: {
   dock = {
     autohide = true;
     autohide-delay = 0.0;
     autohide-time-modifier = 0.0;
     orientation = "right";
     persistent-apps = [
-      "${home}/Applications/Firefox.app"
-      "${pkgs.slack}/Applications/Slack.app"
-      "${pkgs.telegram-desktop}/Applications/Telegram.app"
-      "${pkgs.spotify}/Applications/Spotify.app"
     ];
     tilesize = 32;
     show-recents = false;
