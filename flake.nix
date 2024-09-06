@@ -62,6 +62,9 @@
           name = "home-manager";
           src = inputs.home-manager;
           patches = [
+            ./patches/0001-thunderbird-set-MOZ_-variables-for-legacy-profiles.i.patch
+            ./patches/0002-firefox-set-MOZ_-variables-for-legacy-profiles.ini.patch
+            ./patches/0003-darwin-Set-launchd.user.envVariables-from-home.sessi.patch
           ];
         };
       in

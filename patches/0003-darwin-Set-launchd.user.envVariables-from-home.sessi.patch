@@ -1,0 +1,66 @@
+From a99274db12aa513f68c4db70044e8d740881ae5f Mon Sep 17 00:00:00 2001
+From: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+Date: Thu, 5 Sep 2024 21:01:13 -0400
+Subject: [PATCH 3/3] darwin: Set launchd.user.envVariables from
+ home.sessionVariables
+
+This allows to have consistent environment for both (gui) apps started
+by launchd and shell programs.
+
+Signed-off-by: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+---
+ nix-darwin/default.nix | 39 +++++++++++++++++++++++----------------
+ 1 file changed, 23 insertions(+), 16 deletions(-)
+
+diff --git a/nix-darwin/default.nix b/nix-darwin/default.nix
+index 018e9bab..637e0559 100644
+--- a/nix-darwin/default.nix
++++ b/nix-darwin/default.nix
+@@ -11,21 +11,28 @@ in {
+ 
+   config = mkMerge [
+     { home-manager.extraSpecialArgs.darwinConfig = config; }
+-    (mkIf (cfg.users != { }) {
+-      system.activationScripts.postActivation.text = concatStringsSep "\n"
+-        (mapAttrsToList (username: usercfg: ''
+-          echo Activating home-manager configuration for ${username}
+-          sudo -u ${username} --set-home ${
+-            pkgs.writeShellScript "activation-${username}" ''
+-              ${lib.optionalString (cfg.backupFileExtension != null)
+-              "export HOME_MANAGER_BACKUP_EXT=${
+-                lib.escapeShellArg cfg.backupFileExtension
+-              }"}
+-              ${lib.optionalString cfg.verbose "export VERBOSE=1"}
+-              exec ${usercfg.home.activationPackage}/activate
+-            ''
+-          }
+-        '') cfg.users);
+-    })
++    (mkIf (cfg.users != { }) (mkMerge [
++      {
++        system.activationScripts.postActivation.text = concatStringsSep "\n"
++          (mapAttrsToList (username: usercfg: ''
++            echo Activating home-manager configuration for ${username}
++            sudo -u ${username} --set-home ${
++              pkgs.writeShellScript "activation-${username}" ''
++                ${lib.optionalString (cfg.backupFileExtension != null)
++                "export HOME_MANAGER_BACKUP_EXT=${
++                  lib.escapeShellArg cfg.backupFileExtension
++                }"}
++                ${lib.optionalString cfg.verbose "export VERBOSE=1"}
++                exec ${usercfg.home.activationPackage}/activate
++              ''
++            }
++          '') cfg.users);
++      }
++      {
++        launchd.user.envVariables = mkMerge (map (usercfg:
++          mapAttrs (name: value: toString value) usercfg.home.sessionVariables)
++          (attrValues cfg.users));
++      }
++    ]))
+   ];
+ }
+-- 
+2.46.0
+

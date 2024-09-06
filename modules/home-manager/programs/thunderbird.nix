@@ -1,7 +1,5 @@
 { pkgs, ... }: {
   enable = true;
-  # I patch thunderbird profiles in my fork to exclude Version=
-  darwinSetupWarning = false;
   # fake package; we use homebrew
   package = pkgs.runCommand "thunderbird.0.0" {} "mkdir $out";
   profiles.default = {
