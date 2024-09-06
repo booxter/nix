@@ -5,12 +5,10 @@ in rec {
   # Needed for firefox and thunderbird to work with read-only profiles.ini
   # managed by home-manager; update if/when https://github.com/LnL7/nix-darwin/issues/1056
   # is fixed.
-  # Requires SIP disabled, otherwise:
-  # Could not set environment: 150: Operation not permitted while System Integrity Protection is engaged
-  #launchd.envVariables = {
-  #  MOZ_LEGACY_PROFILES = "1";
-  #  MOZ_ALLOW_DOWNGRADE = "1";
-  #};
+  launchd.user.envVariables = {
+    MOZ_LEGACY_PROFILES = "1";
+    MOZ_ALLOW_DOWNGRADE = "1";
+  };
 
   # TODO: use launchd.user.agents.iterm2.serviceConfig instead?
   environment.userLaunchAgents.iterm2 = {
