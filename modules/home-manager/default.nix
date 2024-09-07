@@ -83,6 +83,7 @@
   home.packages = with pkgs; [
     ack
     chatgpt-cli
+    coreutils
     curl
     file
     fzf
@@ -97,6 +98,7 @@
     less
     lima
     magic-wormhole
+    moreutils
     neofetch
     ngrep
     nix-tree
