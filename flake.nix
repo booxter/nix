@@ -52,6 +52,8 @@
       ./modules/darwin
       home-manager.darwinModules.home-manager
     ];
+
+    # local patches for stuff that I haven't merged upstream yet
     home-manager = with inputs; let
         src = nixpkgs.legacyPackages."aarch64-darwin".applyPatches {
           name = "home-manager";
@@ -64,12 +66,22 @@
         };
       in
       nixpkgs.lib.fix (self: (import "${src}/flake.nix").outputs { inherit self nixpkgs; });
+    nix-darwin = with inputs; let
+        src = nixpkgs.legacyPackages."aarch64-darwin".applyPatches {
+          name = "nix-darwin";
+          src = inputs.nix-darwin;
+          patches = [
+            ./patches/0001-activate-system-Activate-user-environment-too.patch
+          ];
+        };
+      in
+      nixpkgs.lib.fix (self: (import "${src}/flake.nix").outputs { inherit self nixpkgs; });
   in
   {
     darwinConfigurations = let
       username = "ihrachys";
     in {
-      macpro = inputs.nix-darwin.lib.darwinSystem rec {
+      macpro = nix-darwin.lib.darwinSystem rec {
         system = "aarch64-darwin";
         pkgs = mkPkgs system;
         specialArgs = {

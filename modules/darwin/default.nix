@@ -33,11 +33,11 @@ in rec {
     target = "kinit-pass.plist";
   };
 
-  launchd.user.agents.activate-user = {
-    command = "/run/current-system/activate-user";
-    serviceConfig.RunAtLoad = true;
-    serviceConfig.KeepAlive.SuccessfulExit = false;
-  };
+  # launchd.user.agents.activate-user = {
+  #   command = "/run/current-system/activate-user";
+  #   serviceConfig.RunAtLoad = true;
+  #   serviceConfig.KeepAlive.SuccessfulExit = false;
+  # };
 
   # clean up old nix derivations
   nix.gc.automatic = true;
