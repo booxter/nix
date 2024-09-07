@@ -6,7 +6,6 @@ in rec {
     source = ./dotfiles/iterm2-login.plist;
     target = "iterm2.plist";
   };
-  # TODO: untangle setting of PASSWORD_STORE_DIR from user name
   environment.userLaunchAgents.kinit-pass = {
     text = ''
       <?xml version="1.0" encoding="UTF-8"?>

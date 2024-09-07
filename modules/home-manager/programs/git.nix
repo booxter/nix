@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ pkgs, username, ... }: {
   enable = true;
   package = pkgs.gitAndTools.gitFull;
   userEmail = "ihar.hrachyshka@gmail.com";
@@ -17,8 +17,7 @@
       smtpServer = "smtp.gmail.com";
       smtpServerPort = 587;
       smtpEncryption = "tls";
-        # TODO: pass name as argument
-        smtpUser = "ihrachys@redhat.com";
+        smtpUser = "${username}@redhat.com";
       };
       rerere.enabled = true;
       branch.sort = "-committerdate";

@@ -13,7 +13,7 @@
   programs.emacs = import ./programs/emacs.nix { inherit pkgs; };
   programs.nixvim = import ./programs/nixvim.nix { inherit pkgs; };
   programs.tmux = import ./programs/tmux.nix { inherit pkgs; };
-  programs.git = import ./programs/git.nix { inherit pkgs; };
+  programs.git = import ./programs/git.nix { inherit pkgs username; };
   programs.gh = {
     enable = true;
     extensions = with pkgs; [ gh-dash gh-poi ];
