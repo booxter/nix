@@ -96,7 +96,9 @@ in rec {
   system.activationScripts.postActivation.text = ''
     # don't sleep when plugged
     sudo pmset -c sleep 0
-    # disable power nap to avoid unnecessary irc reconnects
+    # disable power nap to avoid unnecessary network reconnects
     sudo pmset -a powernap 0
+    # don't wake up for network keepalives
+    sudo pmset -a tcpkeepalive 0
   '';
 }
