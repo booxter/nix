@@ -113,6 +113,7 @@
     tcpdump
     telegram-desktop
     tig
+    todoist
     tree
     unzip
     viddy
