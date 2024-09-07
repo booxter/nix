@@ -1,4 +1,3 @@
 { pkgs, ... }: pkgs.writeShellScriptBin "kinit-pass" ''
-  # TODO: use nix package for kinit?
-  ${pkgs.pass}/bin/pass rh/ipa | kinit --password-file=STDIN
+  ${pkgs.pass}/bin/pass rh/ipa | ${pkgs.heimdal}/bin/kinit --password-file=STDIN
   ''
