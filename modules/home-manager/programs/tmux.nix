@@ -41,5 +41,8 @@
     set -g @tmux-gruvbox 'light'
 
     set -ga terminal-features "*:hyperlinks"
+
+    # quicker Esc handling in vim running under tmux
+    set -sg escape-time 0
   '';
 }
