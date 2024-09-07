@@ -95,5 +95,11 @@
     InitialKeyRepeat = 14;
     KeyRepeat = 1;
     AppleInterfaceStyle = "Dark";
+
+    NSAutomaticSpellingCorrectionEnabled = false;
+    NSAutomaticCapitalizationEnabled = false;
+    NSAutomaticPeriodSubstitutionEnabled = false;
+    NSAutomaticDashSubstitutionEnabled = false;
+    NSAutomaticQuoteSubstitutionEnabled = false;
   };
 }
