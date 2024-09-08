@@ -39,7 +39,7 @@
         useGlobalPkgs = true;
         useUserPackages = true;
         backupFileExtension = "backup";
-        extraSpecialArgs = { inherit inputs username; name = username; };
+        extraSpecialArgs = { inherit inputs username; };
         users."${username}".imports = modules;
       };
     };
@@ -57,9 +57,6 @@
       (home-manager system).darwinModules.home-manager
     ];
     globalModulesSystemManager = { system, username }: globalModules { inherit username; } ++ [
-      ({ pkgs, ... }: {
-        _module.args = { name = username; };
-      })
       ./modules/system-manager
       (home-manager system).nixosModules.home-manager
     ];
