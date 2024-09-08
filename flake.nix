@@ -17,10 +17,14 @@
 
     emacs.url = "github:nix-community/emacs-overlay";
     emacs.inputs.nixpkgs.follows = "nixpkgs";
+
+    system-manager.url = "github:numtide/system-manager";
+    system-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs@{ self, ... }:
   let
+    username = "ihrachys";
     mkPkgs = system:
       import inputs.nixpkgs {
         inherit system;
@@ -35,27 +39,34 @@
         useGlobalPkgs = true;
         useUserPackages = true;
         backupFileExtension = "backup";
-        extraSpecialArgs = {inherit inputs username; };
+        extraSpecialArgs = { inherit inputs username; name = username; };
         users."${username}".imports = modules;
       };
     };
     globalModules = { username }: [
-      {
-        system.configurationRevision = self.rev or self.dirtyRev or null;
-      }
       (mkHome username [
         ./modules/home-manager
         inputs.nixvim.homeManagerModules.nixvim
       ])
     ];
-    globalModulesMacos = { username }: globalModules { inherit username; } ++ [
+    globalModulesMacos = { system, username }: globalModules { inherit username; } ++ [
+      {
+        system.configurationRevision = self.rev or self.dirtyRev or null;
+      }
       ./modules/darwin
-      home-manager.darwinModules.home-manager
+      (home-manager system).darwinModules.home-manager
+    ];
+    globalModulesSystemManager = { system, username }: globalModules { inherit username; } ++ [
+      ({ pkgs, ... }: {
+        _module.args = { name = username; };
+      })
+      ./modules/system-manager
+      (home-manager system).nixosModules.home-manager
     ];
 
     # local patches for stuff that I haven't merged upstream yet
-    home-manager = with inputs; let
-        src = nixpkgs.legacyPackages."aarch64-darwin".applyPatches {
+    home-manager = system: with inputs; let
+        src = (mkPkgs system).applyPatches {
           name = "home-manager";
           src = inputs.home-manager;
           patches = [
@@ -66,8 +77,8 @@
         };
       in
       nixpkgs.lib.fix (self: (import "${src}/flake.nix").outputs { inherit self nixpkgs; });
-    nix-darwin = with inputs; let
-        src = nixpkgs.legacyPackages."aarch64-darwin".applyPatches {
+    nix-darwin = system: with inputs; let
+        src = (mkPkgs system).applyPatches {
           name = "nix-darwin";
           src = inputs.nix-darwin;
           patches = [
@@ -79,18 +90,25 @@
   in
   {
     darwinConfigurations = let
-      username = "ihrachys";
+      system = "aarch64-darwin";
     in {
-      macpro = nix-darwin.lib.darwinSystem rec {
-        system = "aarch64-darwin";
+      macpro = (nix-darwin system).lib.darwinSystem rec {
+        inherit system;
         pkgs = mkPkgs system;
         specialArgs = {
           inherit username;
         };
-        modules = (globalModulesMacos { inherit username; }) ++ [
+        modules = (globalModulesMacos { inherit system username; }) ++ [
           ./hosts/macpro/configuration.nix
         ];
       };
+    };
+
+    systemConfigs.default = let
+      system = "x86_64-linux";
+    in inputs.system-manager.lib.makeSystemConfig {
+      extraSpecialArgs = { inherit username; };
+      modules = (globalModulesSystemManager { inherit system username; });
     };
   };
 }
