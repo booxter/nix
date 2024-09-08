@@ -110,5 +110,9 @@ in rec {
     ffdir=/Library/Preferences/FeatureFlags/Domain/
     mkdir -p $ffdir
     cp ${./dotfiles/powerd.plist} $ffdir/powerd.plist
+
+    # cancel all scheduled power events and forbid scheduling new events
+    sudo pmset schedule cancelall
+    sudo chflags schg /Library/Preferences/SystemConfiguration/com.apple.AutoWake.plist
   '';
 }
