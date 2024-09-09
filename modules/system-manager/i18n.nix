@@ -79,7 +79,7 @@
 
     };
 
-        fonts = {
+    fonts = {
 
       fontconfig = {
         enable = lib.mkOption {
@@ -208,84 +208,84 @@
                 warning = "The option `${from}` contains a deprecated value `${val}`. Use `${val'}` instead.";
               in
               lib.warnIf (lib.hasPrefix "hint" val) warning val';
+            };
           };
-        };
 
-        includeUserConf = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = ''
-            Include the user configuration from
-            {file}`~/.config/fontconfig/fonts.conf` or
-            {file}`~/.config/fontconfig/conf.d`.
-          '';
-        };
-
-        subpixel = {
-
-          rgba = lib.mkOption {
-            default = "none";
-            type = lib.types.enum ["rgb" "bgr" "vrgb" "vbgr" "none"];
+          includeUserConf = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
             description = ''
-              Subpixel order. The overwhelming majority of displays are
-              `rgb` in their normal orientation. Select
-              `vrgb` for mounting such a display 90 degrees
-              clockwise from its normal orientation or `vbgr`
-              for mounting 90 degrees counter-clockwise. Select
-              `bgr` in the unlikely event of mounting 180
-              degrees from the normal orientation. Reverse these directions in
-              the improbable event that the display's native subpixel order is
-              `bgr`.
+              Include the user configuration from
+              {file}`~/.config/fontconfig/fonts.conf` or
+              {file}`~/.config/fontconfig/conf.d`.
             '';
           };
 
-          lcdfilter = lib.mkOption {
-            default = "default";
-            type = lib.types.enum ["none" "default" "light" "legacy"];
+          subpixel = {
+
+            rgba = lib.mkOption {
+              default = "none";
+              type = lib.types.enum ["rgb" "bgr" "vrgb" "vbgr" "none"];
+              description = ''
+                Subpixel order. The overwhelming majority of displays are
+                `rgb` in their normal orientation. Select
+                `vrgb` for mounting such a display 90 degrees
+                clockwise from its normal orientation or `vbgr`
+                for mounting 90 degrees counter-clockwise. Select
+                `bgr` in the unlikely event of mounting 180
+                degrees from the normal orientation. Reverse these directions in
+                the improbable event that the display's native subpixel order is
+                `bgr`.
+              '';
+            };
+
+            lcdfilter = lib.mkOption {
+              default = "default";
+              type = lib.types.enum ["none" "default" "light" "legacy"];
+              description = ''
+                FreeType LCD filter. At high resolution (> 200 DPI), LCD filtering
+                has no visible effect; users of such displays may want to select
+                `none`.
+              '';
+            };
+
+          };
+
+          cache32Bit = lib.mkOption {
+            default = false;
+            type = lib.types.bool;
             description = ''
-              FreeType LCD filter. At high resolution (> 200 DPI), LCD filtering
-              has no visible effect; users of such displays may want to select
-              `none`.
+              Generate system fonts cache for 32-bit applications.
             '';
           };
 
-        };
+          allowBitmaps = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = ''
+              Allow bitmap fonts. Set to `false` to ban all
+              bitmap fonts.
+            '';
+          };
 
-        cache32Bit = lib.mkOption {
-          default = false;
-          type = lib.types.bool;
-          description = ''
-            Generate system fonts cache for 32-bit applications.
-          '';
-        };
+          allowType1 = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = ''
+              Allow Type-1 fonts. Default is `false` because of
+              poor rendering.
+            '';
+          };
 
-        allowBitmaps = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = ''
-            Allow bitmap fonts. Set to `false` to ban all
-            bitmap fonts.
-          '';
-        };
+          useEmbeddedBitmaps = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = "Use embedded bitmaps in fonts like Calibri.";
+          };
 
-        allowType1 = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-          description = ''
-            Allow Type-1 fonts. Default is `false` because of
-            poor rendering.
-          '';
-        };
-
-        useEmbeddedBitmaps = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-          description = "Use embedded bitmaps in fonts like Calibri.";
         };
 
       };
-
-    };
 
 
   };
@@ -294,7 +294,6 @@
   ###### implementation
 
   config = {
-
     # environment.systemPackages =
     #   # We increase the priority a little, so that plain glibc in systemPackages can't win.
     #   lib.optional (config.i18n.supportedLocales != []) (lib.setPrio (-1) config.i18n.glibcLocales);
