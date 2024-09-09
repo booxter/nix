@@ -58,6 +58,7 @@
     ];
     globalModulesSystemManager = { system, username }: globalModules { inherit username; } ++ [
       ./modules/system-manager
+      ./modules/system-manager/i18n.nix
       (home-manager system).nixosModules.home-manager
     ];
 
@@ -104,7 +105,7 @@
     systemConfigs.default = let
       system = "x86_64-linux";
     in inputs.system-manager.lib.makeSystemConfig {
-      extraSpecialArgs = { inherit username; };
+      extraSpecialArgs = { inherit username; pkgs = mkPkgs system; };
       modules = (globalModulesSystemManager { inherit system username; });
     };
   };
