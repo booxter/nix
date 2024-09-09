@@ -101,6 +101,7 @@
       };
     };
 
+    # TODO: this is still broken; haven't figured out home-manager integration yet
     systemConfigs.default = let
       system = "x86_64-linux";
     in inputs.system-manager.lib.makeSystemConfig {
