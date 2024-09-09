@@ -3,7 +3,6 @@
   onActivation.autoUpdate = false;
   brews = [
     "openssh"
-    "cfergeau/crc/vfkit" # for podman machine
     {
       name = "svim"; # SketchyVim
       start_service = true;
