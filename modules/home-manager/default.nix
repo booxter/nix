@@ -107,7 +107,9 @@
     podman
     procps
     pstree
-    python312Packages.ipython
+    python311Full
+    python311Packages.ipython
+    python311Packages.tox
     ripgrep
     shell-gpt
     slack
