@@ -24,7 +24,6 @@
     "wireshark-chmodbpf" # TODO: find a flake
   ];
   taps = [
-    "cfergeau/crc" # vfkit
     "FelixKratz/formulae" # SketchyVim
   ];
 }
