@@ -1,6 +1,6 @@
 {
   enable = true;
-  theme = "Gruvbox Dark Hard";
+  themeFile = "gruvbox-dark-hard";
   shellIntegration.enableZshIntegration = true;
   font = {
     name = "MesloLGS Nerd Font Mono";
