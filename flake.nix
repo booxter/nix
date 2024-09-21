@@ -69,17 +69,9 @@
           patches = [
             ./patches/0001-thunderbird-set-MOZ_-variables-for-legacy-profiles.i.patch
             ./patches/0002-firefox-set-MOZ_-variables-for-legacy-profiles.ini.patch
-            ./patches/0003-darwin-Set-launchd.user.envVariables-from-home.sessi.patch
-          ];
-        };
-      in
-      nixpkgs.lib.fix (self: (import "${src}/flake.nix").outputs { inherit self nixpkgs; });
-    nix-darwin = system: with inputs; let
-        src = (mkPkgs system).applyPatches {
-          name = "nix-darwin";
-          src = inputs.nix-darwin;
-          patches = [
-            ./patches/0001-activate-system-Activate-user-environment-too.patch
+            ./patches/0003-launchd-create-service-to-launchctl-setenv-for-all-s.patch
+            ./patches/0004-Revert-firefox-fix-incorrect-condition.patch
+            ./patches/0005-Revert-firefox-only-add-Version-2-on-non-darwin.patch
           ];
         };
       in
@@ -89,7 +81,7 @@
     darwinConfigurations = let
       system = "aarch64-darwin";
     in {
-      macpro = (nix-darwin system).lib.darwinSystem rec {
+      macpro = inputs.nix-darwin.lib.darwinSystem rec {
         inherit system;
         pkgs = mkPkgs system;
         specialArgs = {
