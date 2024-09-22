@@ -379,11 +379,11 @@
     },
     "nixpkgs-podman-desktop": {
       "locked": {
-        "lastModified": 1726980070,
-        "narHash": "sha256-5cmiNVKovMIoS65l/rDxdfYNyhfPySZpj6beodzYs+M=",
+        "lastModified": 1726980728,
+        "narHash": "sha256-8b3296WqqOWwOxrp7K9iufr32Guw1wpLJ9Bayqtl8kQ=",
         "owner": "booxter",
         "repo": "nixpkgs",
-        "rev": "9b29bac01c573fd3e86ccf8d3778cb66513fe599",
+        "rev": "8b644e46e92ecae14eed31edcd960b1450b1c55f",
         "type": "github"
       },
       "original": {
