@@ -4,6 +4,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    nixpkgs-podman-desktop.url = "github:booxter/nixpkgs/podman-desktop";
+
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -32,6 +34,10 @@
         overlays = [
           inputs.nur.overlay
           inputs.emacs.overlay
+          (final: prev: {
+            inherit (inputs.nixpkgs-podman-desktop.legacyPackages.${prev.system})
+              podman-desktop;
+          })
         ];
       };
     mkHome = username: modules: {

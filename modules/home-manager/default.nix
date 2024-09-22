@@ -105,6 +105,7 @@
     obsidian
     page
     podman
+    podman-desktop
     procps
     pstree
     python311Full

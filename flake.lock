@@ -66,11 +66,11 @@
         "nixpkgs-stable": "nixpkgs-stable"
       },
       "locked": {
-        "lastModified": 1726935676,
-        "narHash": "sha256-7gyRhR5aJTyv0kyOYzuzpXJpm530J7nVS1XvifB02OQ=",
+        "lastModified": 1726967971,
+        "narHash": "sha256-UO0TQbj8UFI4tioDTjmui0UqTL8CZkwizolvxqJLGu0=",
         "owner": "nix-community",
         "repo": "emacs-overlay",
-        "rev": "0229bbe8b5e1d9c6d7ade2f90bab122d0c96e976",
+        "rev": "2c5171a36fcd616753b204c34ef38bf7729825e2",
         "type": "github"
       },
       "original": {
@@ -377,6 +377,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-podman-desktop": {
+      "locked": {
+        "lastModified": 1726980070,
+        "narHash": "sha256-5cmiNVKovMIoS65l/rDxdfYNyhfPySZpj6beodzYs+M=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "9b29bac01c573fd3e86ccf8d3778cb66513fe599",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "podman-desktop",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1726838390,
@@ -439,11 +455,11 @@
     },
     "nur": {
       "locked": {
-        "lastModified": 1726950640,
-        "narHash": "sha256-VpU1v3QSxzwYLIQ9a9nRvSB1h3FlZzX7PYkgbQIacV0=",
+        "lastModified": 1726979371,
+        "narHash": "sha256-pfo3gA+/f2fesFL82Z8FwCyCen7aE+spIljwzm6FWus=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "e0592ed4327a65f23f3d9ab73a08417ae5853747",
+        "rev": "bdd834037910acd7241cd7c7de108dea08874190",
         "type": "github"
       },
       "original": {
@@ -504,6 +520,7 @@
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-podman-desktop": "nixpkgs-podman-desktop",
         "nixvim": "nixvim",
         "nur": "nur",
         "system-manager": "system-manager"
