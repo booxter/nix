@@ -54,7 +54,7 @@
       notes = {
         uri = "git+ssh://booxter@github.com:booxter/notes.git";
         path = "/Users/${username}/notes";
-        interval = 30;
+        interval = 300;
       };
       weechat-config = {
         uri = "git+ssh://booxter@github.com:booxter/weechat-config.git";
