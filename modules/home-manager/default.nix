@@ -95,6 +95,7 @@
     htop
     ipcalc
     jq
+    keycastr
     less
     lima
     magic-wormhole
