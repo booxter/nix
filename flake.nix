@@ -17,9 +17,6 @@
 
     nur.url = "github:nix-community/NUR";
 
-    emacs.url = "github:nix-community/emacs-overlay";
-    emacs.inputs.nixpkgs.follows = "nixpkgs";
-
     system-manager.url = "github:numtide/system-manager";
     system-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -33,7 +30,6 @@
         config = { allowUnfree = true; };
         overlays = [
           inputs.nur.overlay
-          inputs.emacs.overlay
           (final: prev: {
             inherit (inputs.nixpkgs-podman-desktop.legacyPackages.${prev.system})
               podman-desktop;
