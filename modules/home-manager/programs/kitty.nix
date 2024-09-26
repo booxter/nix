@@ -4,7 +4,7 @@
   shellIntegration.enableZshIntegration = true;
   font = {
     name = "MesloLGS Nerd Font Mono";
-    size = 16;
+    size = 14;
   };
   settings = {
     macos_quit_when_last_window_closed = true;
