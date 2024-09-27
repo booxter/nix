@@ -60,6 +60,10 @@
         uri = "git+ssh://booxter@github.com:booxter/weechat-config.git";
         path = "/Users/${username}/.config/weechat";
       };
+      doom-config = {
+        uri = "git+ssh://booxter@github.com:booxter/doom.git";
+        path = "/Users/${username}/.config/doom";
+      };
     };
   };
   home.activation = {
@@ -77,6 +81,11 @@
       inherit pkgs lib;
       gh-repo = "booxter/weechat-config";
       destdir = "~/.config/weechat";
+    };
+    doom-config = import ./modules/git-sync-repo.nix {
+      inherit pkgs lib;
+      gh-repo = "booxter/doom";
+      destdir = "~/.config/doom";
     };
   };
 
