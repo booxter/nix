@@ -66,6 +66,7 @@
       };
     };
     toggleterm.enable = true;
+    web-devicons.enable = true;
   };
   extraPlugins = with vimPlugins; [
     nerdtree
