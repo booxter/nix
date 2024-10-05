@@ -19,5 +19,6 @@
     icat = "kitten icat";
     q = "eza";
     qq = "eza -l";
+    gmailctl-rh="gmailctl --config=$HOME/.gmailctl-rh";
   };
 }

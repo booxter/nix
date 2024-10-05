@@ -64,6 +64,14 @@
         uri = "git+ssh://booxter@github.com:booxter/doom.git";
         path = "/Users/${username}/.config/doom";
       };
+      gmailctl-private-config = {
+        uri = "git+ssh://booxter@github.com:booxter/gmailctl-private-config.git";
+        path = "/Users/${username}/.gmailctl";
+      };
+      gmailctl-work-config = {
+        uri = "git+ssh://booxter@github.com:booxter/gmailctl-work-config.git";
+        path = "/Users/${username}/.gmailctl-rh";
+      };
     };
   };
   home.activation = {
@@ -86,6 +94,16 @@
       inherit pkgs lib;
       gh-repo = "booxter/doom";
       destdir = "~/.config/doom";
+    };
+    gmailctl-private-config = import ./modules/git-sync-repo.nix {
+      inherit pkgs lib;
+      gh-repo = "booxter/gmailctl-private-config";
+      destdir = "~/.gmailctl";
+    };
+    gmailctl-work-config = import ./modules/git-sync-repo.nix {
+      inherit pkgs lib;
+      gh-repo = "booxter/gmailctl-work-config";
+      destdir = "~/.gmailctl-rh";
     };
   };
 
