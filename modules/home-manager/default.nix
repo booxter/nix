@@ -98,6 +98,7 @@
     fzf
     git-pw
     git-review
+    gmailctl
     gnugrep
     gnupg
     gzip
