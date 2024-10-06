@@ -7,7 +7,6 @@
   services.git-sync.enable = true;
 
   programs.firefox = import ./programs/firefox.nix { inherit pkgs lib; };
-  programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
   programs.ssh = import ./programs/ssh.nix;
   programs.zsh = import ./programs/zsh.nix { inherit pkgs; };
   programs.emacs = import ./programs/emacs.nix { inherit pkgs; };
@@ -189,7 +188,11 @@
     browsers = [ "firefox" ];
   };
 
-  accounts.email.accounts = import ./config/email.nix;
+  accounts.email.accounts = import ./config/email.nix { inherit pkgs; };
+  programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
+  programs.offlineimap.enable = true;
+  programs.notmuch.enable = true;
+
   programs.irssi = {
     enable = false;
     networks = import ./config/irc.nix;
