@@ -4,6 +4,13 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    # sdk: https://github.com/NixOS/nixpkgs/pull/346043
+    # gcc: https://github.com/NixOS/nixpkgs/pull/346949
+    # rpm: https://github.com/NixOS/nixpkgs/pull/346967
+    nixpkgs-rpm.url = "github:booxter/nixpkgs/rpm-darwin";
+
+    nixpkgs-sioyek.url = "github:booxter/nixpkgs/sioyek";
+
     nixpkgs-podman-desktop.url = "github:booxter/nixpkgs/podman-desktop";
 
     nix-darwin.url = "github:LnL7/nix-darwin";
@@ -33,6 +40,14 @@
           (final: prev: {
             inherit (inputs.nixpkgs-podman-desktop.legacyPackages.${prev.system})
               podman-desktop;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-rpm.legacyPackages.${prev.system})
+              rpm;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-sioyek.legacyPackages.${prev.system})
+              sioyek;
           })
         ];
       };

@@ -154,6 +154,7 @@
     weechat
     wireshark
     zip
+    (import ./modules/rhpkg.nix { inherit pkgs; })
     (import ./modules/devnest.nix { inherit pkgs; })
     (import ./modules/weechat-session.nix { inherit pkgs; })
   ]
