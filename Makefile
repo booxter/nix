@@ -1,5 +1,5 @@
 deploy:
-	darwin-rebuild --verbose --show-trace switch --flake .#macpro
+	darwin-rebuild --keep-failed --verbose --show-trace switch --flake .#macpro
 
 update:
 	nix flake update
