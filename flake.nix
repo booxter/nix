@@ -9,8 +9,8 @@
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
     nixpkgs-rpm.url = "github:booxter/nixpkgs/rpm-darwin";
 
-    # https://github.com/NixOS/nixpkgs/pull/347760
-    nixpkgs-heimdal.url = "github:SuperSandro2000/nixpkgs/heimdal-fix";
+    # https://github.com/NixOS/nixpkgs/pull/348370
+    nixpkgs-heimdal.url = "github:booxter/nixpkgs/heimdal-darwin";
 
     nixpkgs-sioyek.url = "github:booxter/nixpkgs/sioyek";
 
