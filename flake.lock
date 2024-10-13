@@ -323,32 +323,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1728409405,
-        "narHash": "sha256-kk530XBUGDpt0DQbyUb3yDpSddPqF9PA5KTo/nsmmg0=",
+        "lastModified": 1728217273,
+        "narHash": "sha256-p/gvyVf24WFs0bted3c71uSQk++ZOYRWbg3bjRoePu4=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1366d1af8f58325602280e43ed6233849fb92216",
+        "rev": "50b3bd3fed0442bcbf7f58355e990da84af1749d",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-heimdal": {
-      "locked": {
-        "lastModified": 1728574740,
-        "narHash": "sha256-NVTiuG0VLXEkikX3MvIBh/PU4oyvlIfbrsa2taoOEw8=",
-        "owner": "SuperSandro2000",
-        "repo": "nixpkgs",
-        "rev": "89fa20d080ad0968d801b79d04571a3bce8b16c0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "SuperSandro2000",
-        "ref": "heimdal-fix",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -432,11 +416,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1728485062,
-        "narHash": "sha256-+2e9hAM2GVDF3gywdQI/OA7s4f0Z9rvFuiVxePI41QM=",
+        "lastModified": 1728425441,
+        "narHash": "sha256-90U6pDiAd42KU/JHkFTzpuhLLVLGUAXBXf4c/vaaJWQ=",
         "owner": "nix-community",
         "repo": "nixvim",
-        "rev": "61ec39764fbe1e4f21cf801ea7b9209d527c8135",
+        "rev": "28485b0e57aa61ee3636e7226ddc7283ce11fe4c",
         "type": "github"
       },
       "original": {
@@ -447,11 +431,11 @@
     },
     "nur": {
       "locked": {
-        "lastModified": 1728506034,
-        "narHash": "sha256-wphGw0bkdzHI0kQF5yJ9SCAEGpEBmsag/KSyo2wsbxg=",
+        "lastModified": 1728424123,
+        "narHash": "sha256-b3+q3s/gDa5TefN1zdcMmua9iAlw3VrrujcziVKdlnw=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "39fc87f67f57c77f889da98675bba35e95193213",
+        "rev": "854a676df29bb977182b7bc63ed3ab6a0f820b06",
         "type": "github"
       },
       "original": {
@@ -511,7 +495,6 @@
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-heimdal": "nixpkgs-heimdal",
         "nixpkgs-podman-desktop": "nixpkgs-podman-desktop",
         "nixpkgs-rpm": "nixpkgs-rpm",
         "nixpkgs-sioyek": "nixpkgs-sioyek",

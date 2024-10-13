@@ -9,9 +9,6 @@
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
     nixpkgs-rpm.url = "github:booxter/nixpkgs/rpm-darwin";
 
-    # https://github.com/NixOS/nixpkgs/pull/347760
-    nixpkgs-heimdal.url = "github:SuperSandro2000/nixpkgs/heimdal-fix";
-
     nixpkgs-sioyek.url = "github:booxter/nixpkgs/sioyek";
 
     nixpkgs-podman-desktop.url = "github:booxter/nixpkgs/podman-desktop";
@@ -51,10 +48,6 @@
           (final: prev: {
             inherit (inputs.nixpkgs-sioyek.legacyPackages.${prev.system})
               sioyek;
-          })
-          (final: prev: {
-            inherit (inputs.nixpkgs-heimdal.legacyPackages.${prev.system})
-              heimdal;
           })
         ];
       };
