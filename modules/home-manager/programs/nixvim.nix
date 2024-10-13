@@ -19,13 +19,13 @@
         # disable until shellcheck no longer ooms the machine: https://github.com/koalaman/shellcheck/issues/2721
         bashls.enable = false;
         dockerls.enable = true;
-        golangci-lint-ls.enable = true;
+        golangci_lint_ls.enable = true;
         gopls.enable = true;
         html.enable = true;
         jsonls.enable = true;
-        lua-ls.enable = true;
+        lua_ls.enable = true;
         marksman.enable = true; # markdown
-        nil-ls.enable = true; # nix
+        nil_ls.enable = true; # nix
         nixd.enable = true; # nix
         perlpls.enable = true;
         pyright.enable = true; # python
