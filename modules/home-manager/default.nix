@@ -111,6 +111,7 @@
     chatgpt-cli
     coreutils
     curl
+    element-desktop
     file
     fzf
     git-pw
