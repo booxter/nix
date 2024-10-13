@@ -16,7 +16,8 @@
       enable = true;
       servers = {
         ansiblels.enable = true;
-        bashls.enable = true;
+        # disable until shellcheck no longer ooms the machine: https://github.com/koalaman/shellcheck/issues/2721
+        bashls.enable = false;
         dockerls.enable = true;
         golangci-lint-ls.enable = true;
         gopls.enable = true;
