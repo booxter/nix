@@ -120,6 +120,7 @@
     gnugrep
     gnupg
     gzip
+    heimdal
     htop
     ipcalc
     jq
