@@ -12,7 +12,8 @@
     # https://github.com/NixOS/nixpkgs/pull/348370
     nixpkgs-heimdal.url = "github:booxter/nixpkgs/heimdal-darwin";
 
-    nixpkgs-sioyek.url = "github:booxter/nixpkgs/sioyek";
+    # https://github.com/NixOS/nixpkgs/pull/348045
+    nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
     nixpkgs-podman-desktop.url = "github:booxter/nixpkgs/podman-desktop";
 

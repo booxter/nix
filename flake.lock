@@ -387,16 +387,16 @@
     },
     "nixpkgs-sioyek": {
       "locked": {
-        "lastModified": 1728425649,
-        "narHash": "sha256-xtYIx29y5gWLckdRu83gQiVeq8JzybO0YkK0DtWhp+I=",
-        "owner": "booxter",
+        "lastModified": 1728802690,
+        "narHash": "sha256-1Y9YYQYTBfqJx8UKkqI5VbFB/XWtPGRX57r6xXMjQzI=",
+        "owner": "b-fein",
         "repo": "nixpkgs",
-        "rev": "135f8991a46eb230dd4f4d2056d2ed52cba9da4b",
+        "rev": "ad80cc3b5198f62f4488349f4fbec7037b9878ee",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "sioyek",
+        "owner": "b-fein",
+        "ref": "sioyek-fix-darwin-build",
         "repo": "nixpkgs",
         "type": "github"
       }
