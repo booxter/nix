@@ -2,6 +2,7 @@
   enable = true;
   onActivation.autoUpdate = false;
   brews = [
+    "dyld-shared-cache-extractor"
     "openssh"
     {
       name = "svim"; # SketchyVim
@@ -25,5 +26,6 @@
   ];
   taps = [
     "FelixKratz/formulae" # SketchyVim
+    "keith/formulae" # dyld-shared-cache-extractor
   ];
 }
