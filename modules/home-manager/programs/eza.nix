@@ -6,5 +6,6 @@
       "--group-directories-first"
       "--header"
       "--hyperlink"
+      "--follow-symlinks"
     ];
   }
