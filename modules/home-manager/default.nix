@@ -139,6 +139,7 @@
     moreutils
     neofetch
     ngrep
+    nixpkgs-review
     nix-tree
     obsidian
     page
