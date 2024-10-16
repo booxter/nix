@@ -15,7 +15,15 @@
   programs.git = import ./programs/git.nix { inherit pkgs username; };
   programs.gh = {
     enable = true;
-    extensions = with pkgs; [ gh-dash gh-poi ];
+    extensions = with pkgs; [ gh-poi ];
+  };
+  programs.gh-dash = {
+    enable = true;
+    settings = {
+      repoPaths = {
+        ":owner/:repo" = "~/src/:repo";
+      };
+    };
   };
   programs.eza = import ./programs/eza.nix;
   programs.jq.enable = true;
