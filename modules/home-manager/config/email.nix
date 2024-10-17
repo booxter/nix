@@ -5,7 +5,13 @@
     imap.host = "imap.gmail.com";
     smtp.host = "smtp.gmail.com";
     thunderbird.enable = true;
-    mbsync.enable = true;
+    mbsync = {
+      enable = true;
+      extraConfig.account = {
+        # throttle, https://people.kernel.org/mcgrof/replacing-offlineimap-with-mbsync
+        PipelineDepth = 50;
+      };
+    };
     notmuch.enable = true;
   };
 in {
