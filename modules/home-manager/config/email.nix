@@ -1,13 +1,4 @@
-{ pkgs, ...}: let
-  offlineimap-config = {
-    offlineimap = {
-      enable = true;
-      extraConfig.remote = {
-        folderfilter = "lambda name: name not in ['[Gmail]/All Mail']";
-      };
-    };
-  };
-in {
+{ pkgs, ...}: {
   default = {
     primary = true;
     realName = "Ihar Hrachyshka";
@@ -18,9 +9,9 @@ in {
     imap.host = "imap.gmail.com";
     smtp.host = "smtp.gmail.com";
     thunderbird.enable = true;
-    offlineimap = offlineimap-config;
+    mbsync.enable = true;
     notmuch.enable = true;
-  } // offlineimap-config;
+  };
   work = {
     realName = "Ihar Hrachyshka";
     flavor = "gmail.com";
@@ -31,6 +22,7 @@ in {
     imap.host = "imap.gmail.com";
     smtp.host = "smtp.gmail.com";
     thunderbird.enable = true;
+    mbsync.enable = true;
     notmuch.enable = true;
-  } // offlineimap-config;
+  };
 }

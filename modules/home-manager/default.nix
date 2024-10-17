@@ -212,7 +212,7 @@
 
   accounts.email.accounts = import ./config/email.nix { inherit pkgs; };
   programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
-  programs.offlineimap.enable = true;
+  programs.mbsync.enable = true;
   programs.notmuch.enable = true;
 
   programs.irssi = {
