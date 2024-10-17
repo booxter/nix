@@ -7,6 +7,7 @@
     thunderbird.enable = true;
     mbsync = {
       enable = true;
+      create = "maildir";
       extraConfig.account = {
         # throttle, https://people.kernel.org/mcgrof/replacing-offlineimap-with-mbsync
         PipelineDepth = 50;
