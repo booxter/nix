@@ -63,6 +63,11 @@
         path = "/Users/${username}/notes";
         interval = 300;
       };
+      org = {
+        uri = "git+ssh://booxter@github.com:booxter/org.git";
+        path = "/Users/${username}/org";
+        interval = 300;
+      };
       weechat-config = {
         uri = "git+ssh://booxter@github.com:booxter/weechat-config.git";
         path = "/Users/${username}/.config/weechat";
@@ -86,6 +91,11 @@
       inherit pkgs lib;
       gh-repo = "booxter/notes";
       destdir = "~/notes";
+    };
+    org = import ./modules/git-sync-repo.nix {
+      inherit pkgs lib;
+      gh-repo = "booxter/org";
+      destdir = "~/org";
     };
     pass = import ./modules/git-sync-repo.nix {
       inherit pkgs lib;

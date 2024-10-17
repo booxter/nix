@@ -2,7 +2,8 @@
   description = "my work flake";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
+    # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     # sdk: https://github.com/NixOS/nixpkgs/pull/346043
     # gcc: https://github.com/NixOS/nixpkgs/pull/346949
@@ -15,6 +16,7 @@
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
+    # https://github.com/NixOS/nixpkgs/pull/343648
     nixpkgs-podman-desktop.url = "github:booxter/nixpkgs/podman-desktop";
 
     nix-darwin.url = "github:LnL7/nix-darwin";
@@ -57,6 +59,14 @@
             inherit (inputs.nixpkgs-heimdal.legacyPackages.${prev.system})
               heimdal;
           })
+          # (final: prev: rec {
+          #   python3 = prev.python3.override {
+          #     packageOverrides = python-final: python-prev: {
+          #       bugzilla = inputs.nixpkgs-python-bugzilla.legacyPackages.${prev.system}.python3.pkgs.bugzilla;
+          #     };
+          #   };
+          #   python3Packages = python3.pkgs;
+          # })
         ];
       };
     mkHome = username: modules: {
