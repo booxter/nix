@@ -5,6 +5,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
     # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
+
     # sdk: https://github.com/NixOS/nixpkgs/pull/346043
     # gcc: https://github.com/NixOS/nixpkgs/pull/346949
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
@@ -58,6 +60,12 @@
           (final: prev: {
             inherit (inputs.nixpkgs-heimdal.legacyPackages.${prev.system})
               heimdal;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
+              # 1.5.0 is broken for empty mails
+              # https://sourceforge.net/p/isync/bugs/78/
+              isync;
           })
           # (final: prev: rec {
           #   python3 = prev.python3.override {
