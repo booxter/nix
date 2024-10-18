@@ -8,10 +8,8 @@
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
 
-    # sdk: https://github.com/NixOS/nixpkgs/pull/346043
-    # gcc: https://github.com/NixOS/nixpkgs/pull/346949
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
-    nixpkgs-rpm.url = "github:booxter/nixpkgs/rpm-darwin";
+    nixpkgs-rpm.url = "github:reckenrode/nixpkgs/push-vvywqpsumluy";
 
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";

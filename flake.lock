@@ -387,16 +387,16 @@
     },
     "nixpkgs-rpm": {
       "locked": {
-        "lastModified": 1728500857,
-        "narHash": "sha256-LchG9+LpzcIEje//lNKrPeqNPOJOSJ0BU8jHFWu1+NU=",
-        "owner": "booxter",
+        "lastModified": 1728997887,
+        "narHash": "sha256-vFmeO2/fLMhvnWUBJVkdWIkiCZrvkRmUEISZ3zrTS4I=",
+        "owner": "reckenrode",
         "repo": "nixpkgs",
-        "rev": "b468be62295e4dc3da63fc2e81b5ed662bd2ea38",
+        "rev": "718741995339d9814255734e134156ff8e2a66de",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "rpm-darwin",
+        "owner": "reckenrode",
+        "ref": "push-vvywqpsumluy",
         "repo": "nixpkgs",
         "type": "github"
       }
