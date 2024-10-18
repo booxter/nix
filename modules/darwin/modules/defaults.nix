@@ -16,7 +16,7 @@
     CreateDesktop = false; # don't show files on desktop
     FXPreferredViewStyle = "clmv"; # column view
     QuitMenuItem = true; # allow to exit
-    _FXShowPosixPathInTitle = true;
+    _FXShowPosixPathInTitle = false;
     ShowPathbar = true;
     ShowStatusBar = true;
   };
