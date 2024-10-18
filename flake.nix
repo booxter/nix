@@ -5,15 +5,13 @@
     nixpkgs.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
     # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
 
     # sdk: https://github.com/NixOS/nixpkgs/pull/346043
     # gcc: https://github.com/NixOS/nixpkgs/pull/346949
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
     nixpkgs-rpm.url = "github:booxter/nixpkgs/rpm-darwin";
-
-    # https://github.com/NixOS/nixpkgs/pull/348370
-    nixpkgs-heimdal.url = "github:booxter/nixpkgs/heimdal-darwin";
 
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
@@ -58,7 +56,8 @@
               sioyek;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-heimdal.legacyPackages.${prev.system})
+            inherit (inputs.nixpkgs-master.legacyPackages.${prev.system})
+              # https://github.com/NixOS/nixpkgs/pull/348370
               heimdal;
           })
           (final: prev: {
