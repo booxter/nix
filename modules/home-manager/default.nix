@@ -146,6 +146,7 @@
     less
     lima
     magic-wormhole
+    mc
     moreutils
     neofetch
     ngrep
