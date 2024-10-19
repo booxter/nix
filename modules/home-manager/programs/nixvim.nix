@@ -1,6 +1,7 @@
 { pkgs, ...}: with pkgs; {
   enable = true;
   defaultEditor = true;
+  # TODO: introduce an alias for view (nvim -R)
   viAlias = true;
   vimAlias = true;
   vimdiffAlias = true;

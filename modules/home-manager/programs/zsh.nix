@@ -20,5 +20,6 @@
     q = "eza";
     qq = "eza -l";
     gmailctl-rh="gmailctl --config=$HOME/.gmailctl-rh";
+    view="nvim -R";
   };
 }
