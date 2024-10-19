@@ -35,6 +35,7 @@
     coreutils
     fd
     fontconfig
+    ghostscript
     git
     gnugrep
     notmuch
