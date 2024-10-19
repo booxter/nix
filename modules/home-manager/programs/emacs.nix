@@ -37,6 +37,7 @@
     fontconfig
     git
     gnugrep
+    notmuch
     (ripgrep.override { withPCRE2 = true; })
     shellcheck
   ];
