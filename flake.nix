@@ -6,6 +6,7 @@
     # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
 
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
@@ -13,9 +14,6 @@
 
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
-
-    # https://github.com/NixOS/nixpkgs/pull/343648
-    nixpkgs-podman-desktop.url = "github:booxter/nixpkgs/podman-desktop";
 
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
@@ -42,8 +40,12 @@
         overlays = [
           inputs.nur.overlay
           (final: prev: {
-            inherit (inputs.nixpkgs-podman-desktop.legacyPackages.${prev.system})
+            inherit (inputs.nixpkgs-master.legacyPackages.${prev.system})
               podman-desktop;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-unstable.legacyPackages.${prev.system})
+              heimdal;
           })
           (final: prev: {
             inherit (inputs.nixpkgs-rpm.legacyPackages.${prev.system})
@@ -54,24 +56,11 @@
               sioyek;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-master.legacyPackages.${prev.system})
-              # https://github.com/NixOS/nixpkgs/pull/348370
-              heimdal;
-          })
-          (final: prev: {
             inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
               # 1.5.0 is broken for empty mails
               # https://sourceforge.net/p/isync/bugs/78/
               isync;
           })
-          # (final: prev: rec {
-          #   python3 = prev.python3.override {
-          #     packageOverrides = python-final: python-prev: {
-          #       bugzilla = inputs.nixpkgs-python-bugzilla.legacyPackages.${prev.system}.python3.pkgs.bugzilla;
-          #     };
-          #   };
-          #   python3Packages = python3.pkgs;
-          # })
         ];
       };
     mkHome = username: modules: {

@@ -225,11 +225,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1729171802,
-        "narHash": "sha256-Eip3uI+XeyAfBoQXpkm/F7eG3M7AgvzSyhyJdzxVt74=",
+        "lastModified": 1729260213,
+        "narHash": "sha256-jAvHoU/1y/yCuXzr2fNF+q6uKmr8Jj2xgAisK4QB9to=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "9c1a1c7df49a9b28539ccb509b36d0b81e41391c",
+        "rev": "09a0c0c02953318bf94425738c7061ffdc4cba75",
         "type": "github"
       },
       "original": {
@@ -339,11 +339,11 @@
     },
     "nixpkgs-2405": {
       "locked": {
-        "lastModified": 1729181673,
-        "narHash": "sha256-LDiPhQ3l+fBjRATNtnuDZsBS7hqoBtPkKBkhpoBHv3I=",
+        "lastModified": 1729271490,
+        "narHash": "sha256-fZGZmlSWvEuuu3FS4eDdLhFKGKYIpEoWHCCLwFk5IWk=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "4eb33fe664af7b41a4c446f87d20c9a0a6321fa3",
+        "rev": "ce9125ee676c505a481eff2d87986f971c8a11f8",
         "type": "github"
       },
       "original": {
@@ -355,32 +355,16 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1729206252,
-        "narHash": "sha256-lJEiq1wu1dRGACz97JXSGbdqn+nuShewrV/Nftcj7sI=",
+        "lastModified": 1729338580,
+        "narHash": "sha256-nDrCthDXHvohrhjBGZCG1X22+e+nMid8XKndrlwXTKY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "b5cd423a3684307faf822b875cd186e4d7173a10",
+        "rev": "99e0ded43893c67755a0fabcf87b1c232d05108c",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-podman-desktop": {
-      "locked": {
-        "lastModified": 1729049391,
-        "narHash": "sha256-ytaCn64DhcamHWGl8c1cF8R+H7mady1SmQt1e76+MFA=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "af71af6e870edc17b7ecd31761d8808fa75afcd8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "podman-desktop",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -433,6 +417,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-unstable": {
+      "locked": {
+        "lastModified": 1729265718,
+        "narHash": "sha256-4HQI+6LsO3kpWTYuVGIzhJs1cetFcwT7quWCk/6rqeo=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ccc0c2126893dd20963580b6478d1a10a4512185",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixvim": {
       "inputs": {
         "devshell": "devshell",
@@ -448,11 +448,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1729093974,
-        "narHash": "sha256-gQ0Zb0YN5+wqzq5v8vh0ssWZgyYzoiiT7La6WWOFiXM=",
+        "lastModified": 1729196897,
+        "narHash": "sha256-xftdQl0kxWJZNWCDSl0pU2E7zCmGjhD/N9ZWgPXK0A0=",
         "owner": "nix-community",
         "repo": "nixvim",
-        "rev": "717e7060fafa2c3822a64e3f5bbfd4895577fdbf",
+        "rev": "3c7b6ae5d1524c691a1b65f7290facd0dc296e40",
         "type": "github"
       },
       "original": {
@@ -463,11 +463,11 @@
     },
     "nur": {
       "locked": {
-        "lastModified": 1729194334,
-        "narHash": "sha256-nb/OD63gbz65DnUxAwXv9wMClD9K3RHpZDeiL98hGak=",
+        "lastModified": 1729266515,
+        "narHash": "sha256-BH6hvQIcitru5c/nZ+6oH+fcHBRInxXGbvLFcv+sGLk=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "8e1f3f345801ba9332d561c48e27130a81e6e963",
+        "rev": "5b4bbf951debaf923488d5b8db29b8337c92e82e",
         "type": "github"
       },
       "original": {
@@ -529,9 +529,9 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-2405": "nixpkgs-2405",
         "nixpkgs-master": "nixpkgs-master",
-        "nixpkgs-podman-desktop": "nixpkgs-podman-desktop",
         "nixpkgs-rpm": "nixpkgs-rpm",
         "nixpkgs-sioyek": "nixpkgs-sioyek",
+        "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
         "nur": "nur",
         "system-manager": "system-manager"
