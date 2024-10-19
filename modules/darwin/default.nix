@@ -43,6 +43,25 @@ in rec {
   nix.gc.automatic = true;
   nix.optimise.automatic = true;
 
+  # enable linux package builds via a local-remote vm
+  nix = {
+    linux-builder = {
+      enable = true;
+      ephemeral = true;
+      maxJobs = 4;
+      config = {
+        virtualisation = {
+          darwin-builder = {
+            diskSize = 40 * 1024;
+            memorySize = 8 * 1024;
+          };
+          cores = 6;
+        };
+    };
+    };
+    settings.trusted-users = [ "@admin" ];
+  };
+
   # Auto upgrade nix package and the daemon service.
   services.nix-daemon.enable = true;
   # nix.package = pkgs.nix;
