@@ -214,7 +214,14 @@
   accounts.email.accounts = import ./config/email.nix { inherit pkgs; };
   programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
   programs.mbsync.enable = true;
-  programs.notmuch.enable = true;
+  programs.lieer.enable = true;
+  programs.msmtp.enable = true;
+  programs.notmuch = {
+    enable = true;
+    hooks = {
+      preNew = "mbsync --all";
+    };
+  };
 
   programs.irssi = {
     enable = false;
