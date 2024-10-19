@@ -2,8 +2,8 @@
   description = "my work flake";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
-    # nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs-telegram.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -54,6 +54,10 @@
           (final: prev: {
             inherit (inputs.nixpkgs-sioyek.legacyPackages.${prev.system})
               sioyek;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-telegram.legacyPackages.${prev.system})
+              telegram-desktop;
           })
           (final: prev: {
             inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
