@@ -8,11 +8,10 @@
     mbsync = {
       enable = true;
       create = "maildir";
+      expunge = "both";
       extraConfig.account = {
         # throttle, https://people.kernel.org/mcgrof/replacing-offlineimap-with-mbsync
         PipelineDepth = 50;
-        Create = "Near";
-        Expunge = "Both";
       };
     };
     notmuch.enable = true;
