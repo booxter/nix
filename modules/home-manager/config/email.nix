@@ -5,27 +5,9 @@
     imap.host = "imap.gmail.com";
     smtp.host = "smtp.gmail.com";
     thunderbird.enable = true;
-    mbsync = {
-      enable = true;
-      create = "maildir";
-      expunge = "both";
-      patterns = ["*" "![Gmail]*" "[Gmail]/Sent Mail" "[Gmail]/Starred" "[Gmail]/All Mail"];
-      extraConfig = {
-        channel.Sync = "All";
-        # throttle, https://people.kernel.org/mcgrof/replacing-offlineimap-with-mbsync
-        account.PipelineDepth = 50;
-      };
-    };
     notmuch.enable = true;
     lieer.enable = true;
     msmtp.enable = true;
-
-    folders = {
-      drafts = "drafts";
-      inbox = "inbox";
-      sent = "sent";
-      trash = "trash";
-    };
   };
 in {
   default = {

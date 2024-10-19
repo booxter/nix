@@ -1,4 +1,4 @@
-{ lib, pkgs, username, ... }: {
+{ config, lib, pkgs, username, ... }: with lib; {
   home.stateVersion = "24.05";
   programs.home-manager.enable = true; # let it manage itself
 
@@ -213,14 +213,29 @@
 
   accounts.email.accounts = import ./config/email.nix { inherit pkgs; };
   programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
-  programs.mbsync.enable = true;
   programs.lieer.enable = true;
   programs.msmtp.enable = true;
   programs.notmuch = {
     enable = true;
-    hooks = {
-      preNew = "mbsync --all";
-    };
+    new.tags = [];
+    hooks.preNew = concatMapStringsSep "\n"
+    (a: ''
+      pushd ${a.maildir.absPath}
+
+      # for unclear reason, lieer requires a `mail` directory in the base mail dir:
+      # https://github.com/gauteh/lieer/blob/ad6dec284c8699a1e3eaf36d863bd8662a0b8712/lieer/local.py#L330
+      [ -e mail ] || ln -s . mail
+
+      # initialize maildir structure if it's the first time the sync is happening
+      for dir in cur new tmp; do
+        [ -e $dir ] || mkdir $dir
+      done
+
+      popd
+
+      ${config.programs.lieer.package}/bin/gmi sync -C ${a.maildir.absPath}
+    '')
+    (filter (a: a.lieer.enable) (attrValues config.accounts.email.accounts));
   };
 
   programs.irssi = {
