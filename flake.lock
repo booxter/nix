@@ -337,7 +337,7 @@
         "type": "github"
       }
     },
-    "nixpkgs-2405": {
+    "nixpkgs-isync": {
       "locked": {
         "lastModified": 1729324038,
         "narHash": "sha256-yp9XaqybgDGAGFZrQ+LTS4vOiksfLiE9vSomSJqNQio=",
@@ -348,12 +348,12 @@
       },
       "original": {
         "owner": "NixOS",
-        "ref": "release-24.05",
         "repo": "nixpkgs",
+        "rev": "b05f6e2067567e50bfda1e45e768d550cfeec25b",
         "type": "github"
       }
     },
-    "nixpkgs-master": {
+    "nixpkgs-podman-desktop": {
       "locked": {
         "lastModified": 1729339320,
         "narHash": "sha256-z8h2SVRbJNNQyJgNgVGn9/Prr6eT10wr6PQE1FoSfMo=",
@@ -364,8 +364,8 @@
       },
       "original": {
         "owner": "NixOS",
-        "ref": "master",
         "repo": "nixpkgs",
+        "rev": "f7db4165e1e8b299692cfa77338a65b2c8413b85",
         "type": "github"
       }
     },
@@ -430,22 +430,6 @@
         "owner": "NixOS",
         "repo": "nixpkgs",
         "rev": "b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221",
-        "type": "github"
-      }
-    },
-    "nixpkgs-unstable": {
-      "locked": {
-        "lastModified": 1729265718,
-        "narHash": "sha256-4HQI+6LsO3kpWTYuVGIzhJs1cetFcwT7quWCk/6rqeo=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "ccc0c2126893dd20963580b6478d1a10a4512185",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -543,12 +527,11 @@
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-2405": "nixpkgs-2405",
-        "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-isync": "nixpkgs-isync",
+        "nixpkgs-podman-desktop": "nixpkgs-podman-desktop",
         "nixpkgs-rpm": "nixpkgs-rpm",
         "nixpkgs-sioyek": "nixpkgs-sioyek",
         "nixpkgs-telegram": "nixpkgs-telegram",
-        "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
         "nur": "nur",
         "system-manager": "system-manager"

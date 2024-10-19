@@ -2,12 +2,17 @@
   description = "my work flake";
 
   inputs = {
-    nixpkgs-telegram.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
+    # not synced to -unstable, yet
+    nixpkgs-podman-desktop.url = "github:NixOS/nixpkgs/f7db4165e1e8b299692cfa77338a65b2c8413b85";
+
+    # 1.5.0 is broken for empty mails
+    # https://sourceforge.net/p/isync/bugs/78/
+    nixpkgs-isync.url = "github:NixOS/nixpkgs/b05f6e2067567e50bfda1e45e768d550cfeec25b";
+
+    # https://github.com/NixOS/nixpkgs/issues/349148
+    nixpkgs-telegram.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
 
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
     nixpkgs-rpm.url = "github:reckenrode/nixpkgs/push-vvywqpsumluy";
@@ -40,12 +45,8 @@
         overlays = [
           inputs.nur.overlay
           (final: prev: {
-            inherit (inputs.nixpkgs-master.legacyPackages.${prev.system})
+            inherit (inputs.nixpkgs-podman-desktop.legacyPackages.${prev.system})
               podman-desktop;
-          })
-          (final: prev: {
-            inherit (inputs.nixpkgs-unstable.legacyPackages.${prev.system})
-              heimdal;
           })
           (final: prev: {
             inherit (inputs.nixpkgs-rpm.legacyPackages.${prev.system})
@@ -60,9 +61,7 @@
               telegram-desktop;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
-              # 1.5.0 is broken for empty mails
-              # https://sourceforge.net/p/isync/bugs/78/
+            inherit (inputs.nixpkgs-isync.legacyPackages.${prev.system})
               isync;
           })
         ];
