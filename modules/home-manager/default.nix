@@ -218,6 +218,7 @@
   programs.notmuch = {
     enable = true;
     new.tags = [];
+    new.ignore = [ "mail" ];
     hooks.preNew = concatMapStringsSep "\n"
     (a: ''
       pushd ${a.maildir.absPath}

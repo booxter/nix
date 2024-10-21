@@ -6,7 +6,10 @@
     smtp.host = "smtp.gmail.com";
     thunderbird.enable = true;
     notmuch.enable = true;
-    lieer.enable = true;
+    lieer = {
+      enable = true;
+      settings.drop_non_existing_label = true;
+    };
     msmtp.enable = true;
   };
 in {
