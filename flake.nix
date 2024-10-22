@@ -4,9 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    # not synced to -unstable, yet
-    nixpkgs-podman-desktop.url = "github:NixOS/nixpkgs/f7db4165e1e8b299692cfa77338a65b2c8413b85";
-
     # https://github.com/NixOS/nixpkgs/issues/349148
     nixpkgs-telegram.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
 
@@ -40,10 +37,6 @@
         config = { allowUnfree = true; };
         overlays = [
           inputs.nur.overlay
-          (final: prev: {
-            inherit (inputs.nixpkgs-podman-desktop.legacyPackages.${prev.system})
-              podman-desktop;
-          })
           (final: prev: {
             inherit (inputs.nixpkgs-rpm.legacyPackages.${prev.system})
               rpm;
