@@ -70,7 +70,11 @@ in rec {
         };
     };
     };
-    settings.trusted-users = [ "@admin" ];
+    settings = {
+      trusted-users = [ "@admin" ];
+      # Try to avoid: "warning: download buffer is full; consider increasing the 'download-buffer-size' setting"
+      download-buffer-size = 1024*1024*256; # 256Mb; default is 64Mb
+    };
   };
 
   # Auto upgrade nix package and the daemon service.
