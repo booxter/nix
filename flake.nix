@@ -7,6 +7,9 @@
     # https://github.com/NixOS/nixpkgs/issues/349148
     nixpkgs-telegram.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
 
+    # https://github.com/NixOS/nixpkgs/pull/350384
+    nixpkgs-firefox.url = "github:booxter/nixpkgs/firefox-for-darwin";
+
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
     nixpkgs-rpm.url = "github:reckenrode/nixpkgs/push-vvywqpsumluy";
 
@@ -48,6 +51,10 @@
           (final: prev: {
             inherit (inputs.nixpkgs-telegram.legacyPackages.${prev.system})
               telegram-desktop;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-firefox.legacyPackages.${prev.system})
+              firefox-unwrapped firefox-beta-unwrapped firefox-devedition-unwrapped firefox-esr-128-unwrapped;
           })
         ];
       };

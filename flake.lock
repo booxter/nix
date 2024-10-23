@@ -337,6 +337,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-firefox": {
+      "locked": {
+        "lastModified": 1729626153,
+        "narHash": "sha256-8jvXeETkugVu78x90Q+ToWnORRLwqSFpxNEuap+KEZk=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "c6db9d313590b130511f4d447690a3e0401eb240",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "firefox-for-darwin",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-rpm": {
       "locked": {
         "lastModified": 1728997887,
@@ -495,6 +511,7 @@
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-firefox": "nixpkgs-firefox",
         "nixpkgs-rpm": "nixpkgs-rpm",
         "nixpkgs-sioyek": "nixpkgs-sioyek",
         "nixpkgs-telegram": "nixpkgs-telegram",

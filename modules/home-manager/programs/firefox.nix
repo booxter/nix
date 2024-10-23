@@ -1,7 +1,6 @@
 { pkgs, lib, ... }: {
   enable = true;
-  # using homebrew firefox
-  package = null;
+  package = pkgs.firefox-unwrapped;
   nativeMessagingHosts = [
     pkgs.browserpass
   ];

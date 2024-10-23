@@ -14,13 +14,6 @@
     "amethyst"
     "chatgpt"
     "thunderbird"
-    {
-      name = "firefox";
-      args = {
-        appdir = "~/Applications";
-        no_quarantine = true;
-      };
-    }
     "todoist"
     "wireshark-chmodbpf" # TODO: find a flake
   ];
