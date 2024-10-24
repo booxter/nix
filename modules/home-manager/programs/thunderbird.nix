@@ -1,7 +1,6 @@
 { pkgs, ... }: {
   enable = true;
-  # fake package; we use homebrew
-  package = pkgs.runCommand "thunderbird.0.0" {} "mkdir $out";
+  package = pkgs.thunderbird-unwrapped;
   profiles.default = {
     isDefault = true;
     settings = {

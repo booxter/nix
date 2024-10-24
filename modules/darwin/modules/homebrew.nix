@@ -13,7 +13,6 @@
   casks = [
     "amethyst"
     "chatgpt"
-    "thunderbird"
     "todoist"
     "wireshark-chmodbpf" # TODO: find a flake
   ];
