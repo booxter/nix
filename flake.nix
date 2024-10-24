@@ -8,10 +8,7 @@
     nixpkgs-telegram.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
 
     # https://github.com/NixOS/nixpkgs/pull/350384
-    nixpkgs-firefox.url = "github:booxter/nixpkgs/firefox-for-darwin";
-
-    # TODO: post PR
-    nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunderbird-for-darwin";
+    nixpkgs-firefox-thunderbird.url = "github:booxter/nixpkgs/firefox-for-darwin";
 
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
     nixpkgs-rpm.url = "github:reckenrode/nixpkgs/push-vvywqpsumluy";
@@ -56,11 +53,8 @@
               telegram-desktop;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-firefox.legacyPackages.${prev.system})
-              firefox-unwrapped firefox-beta-unwrapped firefox-devedition-unwrapped firefox-esr-128-unwrapped;
-          })
-          (final: prev: {
-            inherit (inputs.nixpkgs-thunderbird.legacyPackages.${prev.system})
+            inherit (inputs.nixpkgs-firefox-thunderbird.legacyPackages.${prev.system})
+              firefox-unwrapped firefox-beta-unwrapped firefox-devedition-unwrapped firefox-esr-128-unwrapped
               thunderbird-unwrapped thunderbird-115-unwrapped thunderbird-128-unwrapped;
           })
         ];
