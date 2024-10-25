@@ -132,6 +132,7 @@
     element-desktop
     file
     fzf
+    git-absorb
     git-pw
     git-review
     gmailctl
