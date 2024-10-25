@@ -15,7 +15,7 @@
   programs.git = import ./programs/git.nix { inherit pkgs username; };
   programs.gh = {
     enable = true;
-    extensions = with pkgs; [ gh-poi ];
+    extensions = with pkgs; [  gh-copilot gh-poi ];
   };
   programs.gh-dash = {
     enable = true;
