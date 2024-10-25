@@ -238,6 +238,15 @@
     '')
     (filter (a: a.lieer.enable) (attrValues config.accounts.email.accounts));
   };
+  launchd.agents."notmuch-new" = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${pkgs.notmuch}/bin/notmuch" "new" ];
+      StartInterval = 10 * 60; # 10 mins
+      RunAtLoad = true;
+      KeepAlive = false;
+    };
+  };
 
   programs.irssi = {
     enable = false;
