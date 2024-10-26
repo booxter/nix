@@ -153,6 +153,7 @@
     ngrep
     nixpkgs-review
     nix-tree
+    nurl
     obsidian
     page
     podman
