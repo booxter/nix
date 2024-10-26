@@ -126,15 +126,32 @@
 
     # local patches for stuff that I haven't merged upstream yet
     home-manager = system: with inputs; let
-        src = (mkPkgs system).applyPatches {
+      src = let
+        pkgs = mkPkgs system;
+      in pkgs.applyPatches {
           name = "home-manager";
           src = inputs.home-manager;
           patches = [
-            ./patches/0001-thunderbird-set-MOZ_-variables-for-legacy-profiles.i.patch
-            ./patches/0002-firefox-set-MOZ_-variables-for-legacy-profiles.ini.patch
-            ./patches/0003-launchd-create-service-to-launchctl-setenv-for-all-s.patch
-            ./patches/0004-Revert-firefox-fix-incorrect-condition.patch
-            ./patches/0005-Revert-firefox-only-add-Version-2-on-non-darwin.patch
+            (pkgs.fetchpatch {
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/0165235ea1162346397e2b600899e130b96a0e22.patch";
+              sha256 = "sha256-vSQFf4y7Nun1PB2msDdjOMadm/ejaX45OrM1vrXcYWE=";
+            })
+            (pkgs.fetchpatch {
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/c200ff63c0f99c57fac96aac667fd50b5057aec7.patch";
+              sha256 = "sha256-HVQ+ZhkyroSYEeXXD7/Jrv3CNYDHx24Jn+iQB34VzLQ=";
+            })
+            (pkgs.fetchpatch {
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/3afb17e065dcb88cb4794a16a16d44573c0b76cf.patch";
+              sha256 = "sha256-iu/W8eJ2bd6rXoolvuA4E8yDwDPGibraPxByXTUzXKk=";
+            })
+            (pkgs.fetchpatch {
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/a2bbd84dc2eba1c19a84aa917c247fc73843a387.patch";
+              sha256 = "sha256-lhsgTkk+5YqColAFS0Y4MBEPhIkMpuywTt7IdhE9QN4=";
+            })
+            (pkgs.fetchpatch {
+              url = "https://github.com/nix-community/home-manager/commit/d58239f42b44d42b64e1c20e6b563a72dce729bc.patch";
+              sha256 = "sha256-j/LBM/pEIi14H2PbAFQjUgWX0h8bd9hAXqyaG1m9uX4=";
+            })
           ];
         };
       in
