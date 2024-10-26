@@ -256,6 +256,10 @@
   };
 
   programs.kitty = import ./programs/kitty.nix;
+  home.sessionVariables = {
+    # emacs daemon needs this set to allow clients to connect from kitty
+    TERMINFO = "${pkgs.kitty}/Applications/kitty.app/Contents/Resources/kitty/terminfo";
+  };
 
   # TODO: move darwin specific config files to a separate module?
   home.file = {
