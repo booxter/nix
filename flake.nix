@@ -131,7 +131,10 @@
       in pkgs.applyPatches {
           name = "home-manager";
           src = inputs.home-manager;
+          # TODO: is there a fetcher for a range of commits?..
           patches = [
+            # Embed MOZ_* and other variables into launchd environment
+            # https://github.com/nix-community/home-manager/pull/5801
             (pkgs.fetchpatch {
               url = "https://github.com/nix-community/home-manager/pull/5801/commits/0165235ea1162346397e2b600899e130b96a0e22.patch";
               sha256 = "sha256-vSQFf4y7Nun1PB2msDdjOMadm/ejaX45OrM1vrXcYWE=";
@@ -156,12 +159,30 @@
         };
       in
       nixpkgs.lib.fix (self: (import "${src}/flake.nix").outputs { inherit self nixpkgs; });
+
+    nix-darwin = system: with inputs; let
+      src = let
+        pkgs = mkPkgs system;
+      in pkgs.applyPatches {
+          name = "nix-darwin";
+          src = inputs.nix-darwin;
+          patches = [
+            # Enable KeepAlive for emacs service
+            # https://github.com/LnL7/nix-darwin/pull/1126
+            (pkgs.fetchpatch {
+              url = "https://github.com/LnL7/nix-darwin/pull/1126/commits/81a66374b13dbd8746842ab909a73894a1e14a76.patch";
+              sha256 = "sha256-2/HUzvn48HKDkhCdJsC99itenCxOwXC4/31RJ0R1fNw=";
+            })
+          ];
+        };
+      in
+      nixpkgs.lib.fix (self: (import "${src}/flake.nix").outputs { inherit self nixpkgs; });
   in
   {
     darwinConfigurations = let
       system = "aarch64-darwin";
     in {
-      macpro = inputs.nix-darwin.lib.darwinSystem rec {
+      macpro = (nix-darwin system).lib.darwinSystem rec {
         inherit system;
         pkgs = mkPkgs system;
         specialArgs = {
