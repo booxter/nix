@@ -59,6 +59,17 @@
           })
           (final: prev: {
             emacs29-pgtk = prev.emacs29-pgtk.overrideAttrs (old: {
+              buildInputs = prev.emacs29-pgtk.buildInputs ++ (with prev; [
+                coreutils
+                fd
+                fontconfig
+                ghostscript
+                git
+                gnugrep
+                notmuch
+                (ripgrep.override { withPCRE2 = true; })
+                shellcheck
+              ]);
               patches =
                 (old.patches or [])
                 ++ [
