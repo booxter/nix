@@ -1,6 +1,6 @@
 { pkgs }:
 
-(pkgs.emacsPackagesFor (pkgs.emacs29-pgtk.overrideAttrs (old: {
+(pkgs.emacsPackagesFor (pkgs.emacs29.overrideAttrs (old: {
   # increase pselect limits for emacs for lsp watching
   NIX_CFLAGS_COMPILE = (old.NIX_CFLAGS_COMPILE or "") + " -DFD_SETSIZE=10000 -DDARWIN_UNLIMITED_SELECT";
 
