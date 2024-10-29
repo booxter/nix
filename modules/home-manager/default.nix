@@ -147,6 +147,7 @@
     less
     lima
     magic-wormhole
+    man-pages
     mc
     moreutils
     neofetch
