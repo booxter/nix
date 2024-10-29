@@ -138,7 +138,6 @@
     gmailctl
     gnugrep
     gnupg
-    go_1_21 # NOTE: primarily here so that emacs have access to it; could be better to embed it into emacs meta-package
     gzip
     heimdal
     htop
@@ -165,7 +164,7 @@
     python311Full
     python311Packages.ipython
     python311Packages.tox
-    ripgrep
+    (ripgrep.override { withPCRE2 = true; })
     shell-gpt
     slack
     spotify
@@ -189,6 +188,25 @@
     raycast
     (import ./modules/homerow.nix { inherit pkgs lib; })
     (import ./modules/vpn.nix { inherit pkgs; })
+  ] ++ [
+    # TODO: is there a better way to embed these into emacs env?
+
+    # doom emacs deps
+    fd # for projectile
+    fontconfig # use fc names to configure ui
+    ghostscript # export org to pdf
+
+    # golang
+    go_1_21
+    gomodifytags
+    gopls
+    gore
+    gotests
+
+    # lsp
+    nixfmt
+    pyright
+    shellcheck
   ];
 
   home.sessionVariables = {

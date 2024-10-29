@@ -62,10 +62,10 @@
           (final: prev: {
             inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
               # go1.21 was dropped since 24.11
-              go_1_21 gopls;
+              go_1_21 gopls gomodifytags gore gotests;
           })
           (final: prev: {
-            emacs29-pgtk = (prev.emacsPackagesFor (prev.emacs29-pgtk.overrideAttrs (old: {
+            emacs29-pgtk = prev.emacs29-pgtk.overrideAttrs (old: {
               # increase pselect limits for emacs for lsp watching
               NIX_CFLAGS_COMPILE = (old.NIX_CFLAGS_COMPILE or "") + " -DFD_SETSIZE=10000 -DDARWIN_UNLIMITED_SELECT";
 
@@ -98,19 +98,7 @@
                       sha256 = "sha256-QLGplGoRpM4qgrIAJIbVJJsa4xj34axwT3LiWt++j/c=";
                     })
                 ];
-            }))).emacsWithPackages (epkgs: with final; [
-              coreutils
-              fd
-              fontconfig
-              ghostscript
-              git
-              gnugrep
-              gopls # TODO: how to embed go into emacs PATH?
-              notmuch
-              pyright
-              (ripgrep.override { withPCRE2 = true; })
-              shellcheck
-            ]);
+            });
           })
         ];
       };
