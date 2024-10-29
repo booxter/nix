@@ -151,6 +151,7 @@
     mc
     moreutils
     neofetch
+    nerdfonts
     ngrep
     nixpkgs-review
     nix-tree
@@ -208,6 +209,8 @@
     pyright
     shellcheck
   ];
+
+  fonts.fontconfig.enable = true;
 
   home.sessionVariables = {
     # Use homebrew ssh for git. It supports gss.
