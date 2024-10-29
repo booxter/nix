@@ -110,13 +110,7 @@
               pyright
               (ripgrep.override { withPCRE2 = true; })
               shellcheck
-              epkgs.vterm
             ]);
-          })
-          (final: prev: {
-            inherit (inputs.nixpkgs-firefox-thunderbird.legacyPackages.${prev.system})
-              firefox-unwrapped firefox-beta-unwrapped firefox-devedition-unwrapped firefox-esr-128-unwrapped
-              thunderbird-unwrapped thunderbird-115-unwrapped thunderbird-128-unwrapped;
           })
         ];
       };
