@@ -58,18 +58,10 @@
               thunderbird-unwrapped thunderbird-115-unwrapped thunderbird-128-unwrapped;
           })
           (final: prev: {
-            emacs29-pgtk = prev.emacs29-pgtk.overrideAttrs (old: {
-              buildInputs = prev.emacs29-pgtk.buildInputs ++ (with prev; [
-                coreutils
-                fd
-                fontconfig
-                ghostscript
-                git
-                gnugrep
-                notmuch
-                (ripgrep.override { withPCRE2 = true; })
-                shellcheck
-              ]);
+            emacs29-pgtk = (prev.emacsPackagesFor (prev.emacs29-pgtk.overrideAttrs (old: {
+              # increase pselect limits for emacs for lsp watching
+              NIX_CFLAGS_COMPILE = (old.NIX_CFLAGS_COMPILE or "") + " -DFD_SETSIZE=10000 -DDARWIN_UNLIMITED_SELECT";
+
               patches =
                 (old.patches or [])
                 ++ [
@@ -99,7 +91,19 @@
                       sha256 = "sha256-QLGplGoRpM4qgrIAJIbVJJsa4xj34axwT3LiWt++j/c=";
                     })
                 ];
-            });
+            }))).emacsWithPackages (epkgs: with final; [
+              coreutils
+              fd
+              fontconfig
+              ghostscript
+              git
+              gnugrep
+              notmuch
+              pyright
+              (ripgrep.override { withPCRE2 = true; })
+              shellcheck
+              epkgs.vterm
+            ]);
           })
           (final: prev: {
             inherit (inputs.nixpkgs-firefox-thunderbird.legacyPackages.${prev.system})

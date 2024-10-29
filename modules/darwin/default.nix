@@ -99,6 +99,34 @@ in rec {
     package = pkgs.emacs29-pgtk;
   };
 
+  # TODO: not sure if this is needed; was enabled for emacs lsp watchers but
+  # the FD_SETSIZE limit probably applies instead
+  launchd.daemons = {
+    limit-maxfiles = {
+      command = "/bin/launchctl limit maxfiles 524288 16777216";
+      serviceConfig = {
+        RunAtLoad = true;
+        KeepAlive = false;
+      };
+    };
+    limit-maxproc = {
+      command = "/bin/launchctl limit maxproc 16704 16704";
+      serviceConfig = {
+        RunAtLoad = true;
+        KeepAlive = false;
+      };
+    };
+    sysctl = {
+      serviceConfig = {
+        Program = "/usr/sbin/sysctl";
+        ProgramArguments =
+          [ "kern.maxfiles=16777216" "kern.maxfilesperproc=16704" ];
+        RunAtLoad = true;
+        KeepAlive = false;
+      };
+    };
+  };
+
   # TODO: understand why sometimes I have to `pkill gpg-agent`
   programs.gnupg.agent = {
     enable = true;
