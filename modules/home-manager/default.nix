@@ -204,9 +204,12 @@
     gore
     gotests
 
+    # python
+    pyright
+    python3Packages.pytest
+
     # lsp
     nixfmt
-    pyright
     shellcheck
   ];
 
