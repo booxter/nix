@@ -65,6 +65,7 @@
               go_1_21 gopls gomodifytags gore gotests;
           })
           (final: prev: {
+            myemacs = final.emacs29-pgtk;
             emacs29-pgtk = (prev.emacsPackagesFor (prev.emacs29-pgtk.overrideAttrs (old: {
               # increase pselect limits for emacs for lsp watching
               NIX_CFLAGS_COMPILE = (old.NIX_CFLAGS_COMPILE or "") + " -DFD_SETSIZE=10000 -DDARWIN_UNLIMITED_SELECT";

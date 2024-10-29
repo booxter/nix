@@ -96,7 +96,7 @@ in rec {
   services.jankyborders = import ./modules/jankyborders.nix;
   services.emacs = {
     enable = true;
-    package = pkgs.emacs29-pgtk;
+    package = pkgs.myemacs;
   };
 
   # TODO: not sure if this is needed; was enabled for emacs lsp watchers but
