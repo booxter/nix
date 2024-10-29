@@ -16,6 +16,8 @@
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
+    nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
+
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -58,6 +60,11 @@
               thunderbird-unwrapped thunderbird-115-unwrapped thunderbird-128-unwrapped;
           })
           (final: prev: {
+            inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
+              # go1.21 was dropped since 24.11
+              go_1_21 gopls;
+          })
+          (final: prev: {
             emacs29-pgtk = (prev.emacsPackagesFor (prev.emacs29-pgtk.overrideAttrs (old: {
               # increase pselect limits for emacs for lsp watching
               NIX_CFLAGS_COMPILE = (old.NIX_CFLAGS_COMPILE or "") + " -DFD_SETSIZE=10000 -DDARWIN_UNLIMITED_SELECT";
@@ -98,6 +105,7 @@
               ghostscript
               git
               gnugrep
+              gopls # TODO: how to embed go into emacs PATH?
               notmuch
               pyright
               (ripgrep.override { withPCRE2 = true; })

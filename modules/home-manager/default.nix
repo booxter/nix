@@ -138,6 +138,7 @@
     gmailctl
     gnugrep
     gnupg
+    go_1_21 # NOTE: primarily here so that emacs have access to it; could be better to embed it into emacs meta-package
     gzip
     heimdal
     htop
