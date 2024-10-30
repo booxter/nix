@@ -263,8 +263,6 @@
       popd
 
       ${config.programs.lieer.package}/bin/gmi sync -C ${a.maildir.absPath}
-    '' + ''
-      notmuch new
     '')
     (filter (a: a.lieer.enable) (attrValues config.accounts.email.accounts));
   };
