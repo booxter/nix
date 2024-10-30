@@ -241,40 +241,7 @@
 
   accounts.email.accounts = import ./config/email.nix { inherit pkgs; };
   programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
-  programs.lieer.enable = true;
   programs.msmtp.enable = true;
-  programs.notmuch = {
-    enable = true;
-    new.tags = [];
-    new.ignore = [ "mail" ];
-    hooks.preNew = concatMapStringsSep "\n"
-    (a: ''
-      pushd ${a.maildir.absPath}
-
-      # for unclear reason, lieer requires a `mail` directory in the base mail dir:
-      # https://github.com/gauteh/lieer/blob/ad6dec284c8699a1e3eaf36d863bd8662a0b8712/lieer/local.py#L330
-      [ -e mail ] || ln -s . mail
-
-      # initialize maildir structure if it's the first time the sync is happening
-      for dir in cur new tmp; do
-        [ -e $dir ] || mkdir $dir
-      done
-
-      popd
-
-      ${config.programs.lieer.package}/bin/gmi sync -C ${a.maildir.absPath}
-    '')
-    (filter (a: a.lieer.enable) (attrValues config.accounts.email.accounts));
-  };
-  launchd.agents."notmuch-new" = {
-    enable = true;
-    config = {
-      ProgramArguments = [ "${pkgs.notmuch}/bin/notmuch" "new" ];
-      StartInterval = 10 * 60; # 10 mins
-      RunAtLoad = true;
-      KeepAlive = false;
-    };
-  };
 
   programs.irssi = {
     enable = false;
