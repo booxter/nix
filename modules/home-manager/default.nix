@@ -209,7 +209,7 @@
     python3Packages.pytest
 
     # lsp
-    nixfmt
+    nixfmt-classic
     shellcheck
   ];
 
