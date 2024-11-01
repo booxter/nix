@@ -11,7 +11,8 @@
     nixpkgs-firefox.url = "github:booxter/nixpkgs/firefox-for-darwin";
 
     # https://github.com/NixOS/nixpkgs/pull/352493
-    nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunderbird-132-darwin";
+    #nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunderbird-132-darwin";
+    nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunder-try-latest-with-staging";
 
     # rpm: https://github.com/NixOS/nixpkgs/pull/346967
     nixpkgs-rpm.url = "github:reckenrode/nixpkgs/push-vvywqpsumluy";
@@ -62,8 +63,8 @@
               firefox-unwrapped;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-thunderbird.legacyPackages.${prev.system})
-              thunderbird-unwrapped;
+            # Pull -latest as a regular thunderbird-unwrapped to avoid changes in other modules
+            thunderbird-unwrapped = inputs.nixpkgs-thunderbird.legacyPackages.${prev.system}.thunderbird-latest-unwrapped;
           })
           (final: prev: {
             inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
