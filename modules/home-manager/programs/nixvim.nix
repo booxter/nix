@@ -80,15 +80,6 @@
     nerdtree
     vim-polyglot
     vimux
-    (vimUtils.buildVimPlugin {
-      name = "my-plugin";
-      src = fetchFromGitHub {
-          owner = "nvim-focus";
-          repo = "focus.nvim";
-          rev = "3841a38df972534567e85840d7ead20d3a26faa6";
-          hash = "sha256-mgHk4u0ab2uSUNE+7DU22IO/xS5uop9iATfFRk6l6hs=";
-      };
-    })
   ];
   extraConfigVim = ''
     " Show relative except for current line
@@ -100,8 +91,5 @@
     map <Leader>vp :VimuxPromptCommand<CR>
     " \vl to run latest command
     map <Leader>vl :VimuxRunLastCommand<CR>
-  '';
-  extraConfigLua = ''
-    require('focus').setup()
   '';
 }
