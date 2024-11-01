@@ -196,6 +196,7 @@
     fd # for projectile
     fontconfig # use fc names to configure ui
     ghostscript # export org to pdf
+    w3m # browser
 
     # golang
     go_1_21
