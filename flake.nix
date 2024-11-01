@@ -20,6 +20,9 @@
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
+    # https://github.com/insanum/gcalcli/pull/813
+    nixpkgs-gcalcli.url = "github:booxter/nixpkgs/gcalcli-with-empty-searh-support";
+
     nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
 
     nix-darwin.url = "github:LnL7/nix-darwin";
@@ -61,6 +64,10 @@
           (final: prev: {
             inherit (inputs.nixpkgs-firefox.legacyPackages.${prev.system})
               firefox-unwrapped;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-gcalcli.legacyPackages.${prev.system})
+              gcalcli;
           })
           (final: prev: {
             # Pull -latest as a regular thunderbird-unwrapped to avoid changes in other modules

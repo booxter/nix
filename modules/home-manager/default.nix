@@ -132,6 +132,7 @@
     element-desktop
     file
     fzf
+    gcalcli
     git-absorb
     git-pw
     git-review
