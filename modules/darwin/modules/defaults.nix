@@ -22,6 +22,10 @@
   };
 
   CustomUserPreferences = {
+    "com.apple.Terminal" = {
+      # skhd requires Secure Keyboard Entry to be disabled.
+      "SecureKeyboardEntry" = false;
+    };
     "com.apple.loginwindow" = {
       TALLogoutSavesState = 0;
     };
