@@ -93,7 +93,6 @@
         version = "0.15.23";
         addonId = "team@readwise.io";
         url = "https://addons.mozilla.org/firefox/downloads/file/4222692/readwise_highlighter-0.15.23.xpi";
-        #sha256 = lib.fakeSha256;
         sha256 = "sha256-Jg62eKy7s3tbs0IR/zHOSzLpQVj++wTUYyPU4MUBipQ=";
         meta = {
           homepage = "https://read.readwise.io/";

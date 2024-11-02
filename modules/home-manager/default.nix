@@ -243,7 +243,7 @@
   };
 
   accounts.email.accounts = import ./config/email.nix { inherit pkgs; };
-  programs.thunderbird = import ./programs/thunderbird.nix { inherit pkgs; };
+  programs.thunderbird = import ./programs/thunderbird.nix { inherit lib pkgs; };
   programs.msmtp.enable = true;
 
   programs.irssi = {

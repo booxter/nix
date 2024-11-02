@@ -70,8 +70,8 @@
               gcalcli;
           })
           (final: prev: {
-            # Pull -latest as a regular thunderbird-unwrapped to avoid changes in other modules
-            thunderbird-unwrapped = inputs.nixpkgs-thunderbird.legacyPackages.${prev.system}.thunderbird-latest-unwrapped;
+            inherit (inputs.nixpkgs-thunderbird.legacyPackages.${prev.system})
+              thunderbird-unwrapped;
           })
           (final: prev: {
             inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
@@ -138,8 +138,14 @@
               sha256 = "sha256-lhsgTkk+5YqColAFS0Y4MBEPhIkMpuywTt7IdhE9QN4=";
             })
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/commit/d58239f42b44d42b64e1c20e6b563a72dce729bc.patch";
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/d58239f42b44d42b64e1c20e6b563a72dce729bc.patch";
               sha256 = "sha256-j/LBM/pEIi14H2PbAFQjUgWX0h8bd9hAXqyaG1m9uX4=";
+            })
+
+            # Support extensions for thunderbird profiles
+            (pkgs.fetchpatch {
+              url = "https://github.com/nix-community/home-manager/pull/6033/commits/a935413e4369737c2f8a1289a5db5fb24c33071d.patch";
+              sha256 = "sha256-6fcQoiGQ074qbp/piXNIyysSAnrmBSHitz0dc3oGip4=";
             })
           ];
         };
