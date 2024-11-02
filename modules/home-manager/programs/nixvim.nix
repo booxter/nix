@@ -9,7 +9,6 @@
   clipboard.register = "unnamedplus";
   extraPackages = [
     golangci-lint
-    pandoc
     ripgrep
   ];
   plugins = {
@@ -62,20 +61,8 @@
     gitsigns.enable = true;
     orgmode = {
       enable = true;
-      settings = let
-        orgdir = "~/.org";
-      in
-      {
-        org_agenda_files = "${orgdir}/**/*";
-        org_default_notes_file = "${orgdir}/notes.org";
-        org_capture_templates = {
-          J = {
-            description = "Journal";
-            template = "%<%H:%M> %?";
-            target = "${orgdir}/journal/%<%Y>.org";
-            datetree = true;
-          };
-        };
+      settings = {
+        org_agenda_files = "~/.org/**/*";
       };
     };
     tmux-navigator.enable = true;
@@ -93,42 +80,6 @@
     nerdtree
     vim-polyglot
     vimux
-    (vimUtils.buildVimPlugin {
-      name = "org-bullets";
-      src = fetchFromGitHub {
-          owner = "nvim-orgmode";
-          repo = "org-bullets.nvim";
-          rev = "46ae687e22192fb806b5977d664ec98af9cf74f6";
-          sha256 = "sha256-cRcO0TDY0v9c/H5vQ1v96WiEkIhJDZkPcw+P58XNL9w=";
-      };
-    })
-    (vimUtils.buildVimPlugin {
-      name = "telescope-orgmode";
-      src = fetchFromGitHub {
-          owner = "nvim-orgmode";
-          repo = "telescope-orgmode.nvim";
-          rev = "2cd2ea778726c6e44429fef82f23b63197dbce1b";
-          sha256 = "sha256-yeGdy1aip4TZKp++MuSo+kxo+XhFsOT0yv+9xJpKEps=";
-      };
-    })
-    (vimUtils.buildVimPlugin {
-      name = "org-roam";
-      src = fetchFromGitHub {
-          owner = "chipsenkbeil";
-          repo = "org-roam.nvim";
-          rev = "17f85abf207ece51bd37c8f3490d8f7d2fa106d0";
-          sha256 = "sha256-gONxa/CUXPgV+ucC+WkEyeH/lFAiTaQx8bEBq7g6HyY=";
-      };
-    })
-    (vimUtils.buildVimPlugin {
-      name = "org-modern";
-      src = fetchFromGitHub {
-          owner = "danilshvalov";
-          repo = "org-modern.nvim";
-          rev = "c024900b7ee78a0274036025569b47001ef3e6aa";
-          sha256 = "sha256-TYs3g5CZDVXCFXuYaj3IriJ4qlIOxQgArVOzT7pqkqs=";
-      };
-    })
   ];
   extraConfigVim = ''
     " Show relative except for current line
@@ -141,49 +92,4 @@
     " \vl to run latest command
     map <Leader>vl :VimuxRunLastCommand<CR>
   '';
-  extraConfigLua = ''
-    require('org-roam').setup({
-      directory = "~/.org-roam"
-    })
-
-    require('org-bullets').setup()
-
-    local Menu = require("org-modern.menu")
-    require("orgmode").setup({
-      ui = {
-        menu = {
-          handler = function(data)
-            Menu:new({
-              window = {
-                margin = { 1, 0, 1, 0 },
-                padding = { 0, 1, 0, 1 },
-                title_pos = "center",
-                border = "single",
-                zindex = 1000,
-              },
-              icons = {
-                separator = "➜",
-              },
-            }):open(data)
-          end,
-        },
-      },
-    })
-
-    require('telescope').load_extension('orgmode')
-  '';
-  autoCmd = [
-    {
-      event = [ "FileType" ];
-      pattern = [ "org" ];
-      callback = {
-        __raw = ''
-          function()
-            vim.keymap.set('n', '<leader>or', "")
-            vim.keymap.set('n', '<leader>or', require('telescope').extensions.orgmode.refile_heading)
-          end
-        '';
-      };
-    }
-  ];
 }
