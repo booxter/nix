@@ -1,6 +1,9 @@
 { lib, pkgs, ... }: {
   enable = true;
   package = pkgs.thunderbird-unwrapped;
+  nativeMessagingHosts = with pkgs; [
+    cb_thunderlink-native
+  ];
   profiles.default = {
     isDefault = true;
     settings = {

@@ -202,11 +202,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1730560543,
-        "narHash": "sha256-Ny8bMwoQH2JmLr2/+Zqer1Aizk5nCIXLPGUL1YyFS3I=",
+        "lastModified": 1730589595,
+        "narHash": "sha256-QI//TRTTmkUM0bz+KhdanRcwzlYib6PjMTvhC3dwUWA=",
         "owner": "LnL7",
         "repo": "nix-darwin",
-        "rev": "e56d80b28314643da5a0a27c6371c0682ab8389f",
+        "rev": "146629a54364f6b54e7f3d15c44fea69ed0bf476",
         "type": "github"
       },
       "original": {
@@ -254,16 +254,32 @@
     },
     "nixpkgs-2405": {
       "locked": {
-        "lastModified": 1730536648,
-        "narHash": "sha256-liSPk8LHIaE4szk6W9y4BBQ92jfu9QgnscYpl5RTiKk=",
+        "lastModified": 1730583075,
+        "narHash": "sha256-JA+uU5AV0ePKOD5NqIkgIYq7TnNm6lN0CLZgt+pP03Q=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "4df2561800d1fb1be56d9d71cddb9a1079b688c2",
+        "rev": "ea820a7ccaea99d84dda0c5ecbe5fa4992443ad6",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "ref": "release-24.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-cb_thunderlink-native": {
+      "locked": {
+        "lastModified": 1730592469,
+        "narHash": "sha256-PuIFi2G0EZv+f75yKYx7FhDnWcqlwPIQHjcnkhc6AGY=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "e7dfdc6cdf8ec1d25f87da50fb911b9751b5b52b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "cb_thunderlink-native",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -394,11 +410,11 @@
     },
     "nur": {
       "locked": {
-        "lastModified": 1730570740,
-        "narHash": "sha256-DyI+7zFvr7XnN24BFG6VABnmZ8zZbKIrNWLjNrudW7I=",
+        "lastModified": 1730582014,
+        "narHash": "sha256-uDmIIdv5Hft2Az2UUwKbb5QweYwkw25e6Y8mCLrF9QI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "74f094bc4e8f7511f870a588b177dd656d6bfa2a",
+        "rev": "62fa5dcf74c3d2cae2d207926572614489e78815",
         "type": "github"
       },
       "original": {
@@ -436,6 +452,7 @@
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs",
         "nixpkgs-2405": "nixpkgs-2405",
+        "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-firefox": "nixpkgs-firefox",
         "nixpkgs-gcalcli": "nixpkgs-gcalcli",
         "nixpkgs-rpm": "nixpkgs-rpm",

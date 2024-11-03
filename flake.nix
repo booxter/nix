@@ -23,6 +23,9 @@
     # https://github.com/insanum/gcalcli/pull/813
     nixpkgs-gcalcli.url = "github:booxter/nixpkgs/gcalcli-with-empty-searh-support";
 
+    # TODO: post PR to nixpkgs
+    nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
+
     nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
 
     nix-darwin.url = "github:LnL7/nix-darwin";
@@ -77,6 +80,10 @@
             inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
               # go1.21 was dropped since 24.11
               go_1_21 gopls gomodifytags gore gotests;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-cb_thunderlink-native.legacyPackages.${prev.system})
+              cb_thunderlink-native;
           })
           (final: prev: {
             myemacs = import ./modules/myemacs { pkgs = prev; };
@@ -143,9 +150,16 @@
             })
 
             # Support extensions for thunderbird profiles
+            # https://github.com/nix-community/home-manager/pull/6033
             (pkgs.fetchpatch {
               url = "https://github.com/nix-community/home-manager/pull/6033/commits/a935413e4369737c2f8a1289a5db5fb24c33071d.patch";
               sha256 = "sha256-6fcQoiGQ074qbp/piXNIyysSAnrmBSHitz0dc3oGip4=";
+            })
+            # Support native hosts for thunderbird
+            # TODO: post upstream
+            (pkgs.fetchpatch {
+              url = "https://github.com/booxter/home-manager/commit/61b7d5db483241dc6f11c36ef00202539e957480.patch";
+              sha256 = "sha256-yfWd7jGjvQ4I83nzRrIyiXPLHbuP50wABSiCjoZgX0U=";
             })
           ];
         };
