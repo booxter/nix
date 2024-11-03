@@ -316,6 +316,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-master": {
+      "locked": {
+        "lastModified": 1730667894,
+        "narHash": "sha256-+pQFuuatoNCsJpAuwPDT8PoEhjcmE+mBuFLWm9WLJ98=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "c3b7c08517c5e689a297b7409f97c0ff08e4695a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-rpm": {
       "locked": {
         "lastModified": 1728997887,
@@ -345,22 +361,6 @@
         "owner": "b-fein",
         "ref": "sioyek-fix-darwin-build",
         "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-telegram": {
-      "locked": {
-        "lastModified": 1728538411,
-        "narHash": "sha256-f0SBJz1eZ2yOuKUr5CA9BHULGXVSn6miBuUWdTyhUhU=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221",
         "type": "github"
       }
     },
@@ -455,9 +455,9 @@
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-firefox": "nixpkgs-firefox",
         "nixpkgs-gcalcli": "nixpkgs-gcalcli",
+        "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-rpm": "nixpkgs-rpm",
         "nixpkgs-sioyek": "nixpkgs-sioyek",
-        "nixpkgs-telegram": "nixpkgs-telegram",
         "nixpkgs-thunderbird": "nixpkgs-thunderbird",
         "nixvim": "nixvim",
         "nur": "nur",

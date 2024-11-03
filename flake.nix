@@ -4,8 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    # https://github.com/NixOS/nixpkgs/issues/349148
-    nixpkgs-telegram.url = "github:NixOS/nixpkgs/b69de56fac8c2b6f8fd27f2eca01dcda8e0a4221";
+    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
     # https://github.com/NixOS/nixpkgs/pull/350384
     nixpkgs-firefox.url = "github:booxter/nixpkgs/firefox-for-darwin";
@@ -61,7 +60,8 @@
               sioyek;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-telegram.legacyPackages.${prev.system})
+            inherit (inputs.nixpkgs-master.legacyPackages.${prev.system})
+              # https://github.com/NixOS/nixpkgs/pull/353228
               telegram-desktop;
           })
           (final: prev: {
