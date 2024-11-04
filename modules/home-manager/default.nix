@@ -181,10 +181,11 @@
     weechat
     wireshark
     zip
-    (import ./modules/rhpkg.nix { inherit pkgs; })
+    (import ./modules/beaker.nix { inherit pkgs lib; })
     (import ./modules/devnest.nix { inherit pkgs; })
-    (import ./modules/weechat-session.nix { inherit pkgs; })
     (import ./modules/meetings.nix { inherit pkgs; })
+    (import ./modules/rhpkg.nix { inherit pkgs; })
+    (import ./modules/weechat-session.nix { inherit pkgs; })
   ]
   ++ lib.optionals stdenv.isDarwin [
     iterm2

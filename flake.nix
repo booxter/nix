@@ -152,8 +152,8 @@
             # Support extensions for thunderbird profiles
             # https://github.com/nix-community/home-manager/pull/6033
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/6033/commits/a935413e4369737c2f8a1289a5db5fb24c33071d.patch";
-              sha256 = "sha256-6fcQoiGQ074qbp/piXNIyysSAnrmBSHitz0dc3oGip4=";
+              url = "https://github.com/nix-community/home-manager/commit/4d680ee96fe1b698e75804cf655c365ea4ec5433.patch";
+              sha256 = "sha256-17FaxrhHymgFrVE4hO5eAn7DesLZ6CBlettDfJC/ro4=";
             })
             # Support native hosts for thunderbird
             # TODO: post upstream
