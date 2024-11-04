@@ -270,11 +270,11 @@
     },
     "nixpkgs-cb_thunderlink-native": {
       "locked": {
-        "lastModified": 1730592469,
-        "narHash": "sha256-PuIFi2G0EZv+f75yKYx7FhDnWcqlwPIQHjcnkhc6AGY=",
+        "lastModified": 1730684683,
+        "narHash": "sha256-J4m/rGRZfs3jSs3+9CVpDa0RgKKFhSw4Ee03dF+SPY0=",
         "owner": "booxter",
         "repo": "nixpkgs",
-        "rev": "e7dfdc6cdf8ec1d25f87da50fb911b9751b5b52b",
+        "rev": "562ff4c1abd3441ebadeca009e4169f0e1d32adc",
         "type": "github"
       },
       "original": {

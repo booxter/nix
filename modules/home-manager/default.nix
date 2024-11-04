@@ -1,4 +1,4 @@
-{ config, lib, pkgs, username, ... }: with lib; {
+{ lib, pkgs, username, ... }: with lib; {
   home.stateVersion = "24.05";
   programs.home-manager.enable = true; # let it manage itself
 
@@ -189,6 +189,7 @@
   ++ lib.optionals stdenv.isDarwin [
     iterm2
     raycast
+    cb_thunderlink-native
     (import ./modules/homerow.nix { inherit pkgs lib; })
     (import ./modules/vpn.nix { inherit pkgs; })
   ] ++ [
