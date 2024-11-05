@@ -122,6 +122,7 @@
       gh-repo = "booxter/gmailctl-work-config";
       destdir = "~/.gmailctl-rh";
     };
+    default-apps = import ./modules/default-apps.nix { inherit pkgs lib; };
   };
 
   home.packages = with pkgs; [
