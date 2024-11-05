@@ -185,7 +185,8 @@
     (import ./modules/beaker.nix { inherit pkgs lib; })
     (import ./modules/devnest.nix { inherit pkgs; })
     (import ./modules/meetings.nix { inherit pkgs; })
-    (import ./modules/rhpkg.nix { inherit pkgs; })
+    # TODO: re-enable when https://github.com/NixOS/nixpkgs/pull/346967 merges
+    # (import ./modules/rhpkg.nix { inherit pkgs; })
     (import ./modules/weechat-session.nix { inherit pkgs; })
   ]
   ++ lib.optionals stdenv.isDarwin [
