@@ -45,6 +45,7 @@
     mkPkgs = system:
       import inputs.nixpkgs {
         inherit system;
+        # for vim copilot plugin
         config = { allowUnfree = true; };
         overlays = [
           inputs.nur.overlay
