@@ -13,9 +13,6 @@
     #nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunderbird-132-darwin";
     nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunder-try-latest-with-staging";
 
-    # rpm: https://github.com/NixOS/nixpkgs/pull/346967
-    nixpkgs-rpm.url = "github:reckenrode/nixpkgs/push-vvywqpsumluy";
-
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
@@ -52,17 +49,12 @@
         overlays = [
           inputs.nur.overlay
           (final: prev: {
-            inherit (inputs.nixpkgs-rpm.legacyPackages.${prev.system})
-              rpm;
-          })
-          (final: prev: {
             inherit (inputs.nixpkgs-sioyek.legacyPackages.${prev.system})
               sioyek;
           })
           (final: prev: {
             inherit (inputs.nixpkgs-master.legacyPackages.${prev.system})
-              # https://github.com/NixOS/nixpkgs/pull/353228
-              telegram-desktop;
+              rpm;
           })
           (final: prev: {
             inherit (inputs.nixpkgs-firefox.legacyPackages.${prev.system})
