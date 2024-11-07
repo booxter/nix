@@ -69,16 +69,8 @@
               thunderbird-unwrapped;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-2405.legacyPackages.${prev.system})
-              # go1.21 was dropped since 24.11
-              go_1_21 gopls gomodifytags gore gotests;
-          })
-          (final: prev: {
             inherit (inputs.nixpkgs-cb_thunderlink-native.legacyPackages.${prev.system})
               cb_thunderlink-native;
-          })
-          (final: prev: {
-            myemacs = import ./modules/myemacs { pkgs = prev; };
           })
         ];
       };

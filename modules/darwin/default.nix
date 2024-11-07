@@ -94,38 +94,6 @@ in rec {
   homebrew = import ./modules/homebrew.nix;
   services.spotifyd = import ./modules/spotifyd.nix { inherit pkgs; };
   services.jankyborders = import ./modules/jankyborders.nix;
-  services.emacs = {
-    enable = true;
-    package = pkgs.myemacs;
-  };
-
-  # TODO: not sure if this is needed; was enabled for emacs lsp watchers but
-  # the FD_SETSIZE limit probably applies instead
-  launchd.daemons = {
-    limit-maxfiles = {
-      command = "/bin/launchctl limit maxfiles 524288 16777216";
-      serviceConfig = {
-        RunAtLoad = true;
-        KeepAlive = false;
-      };
-    };
-    limit-maxproc = {
-      command = "/bin/launchctl limit maxproc 16704 16704";
-      serviceConfig = {
-        RunAtLoad = true;
-        KeepAlive = false;
-      };
-    };
-    sysctl = {
-      serviceConfig = {
-        Program = "/usr/sbin/sysctl";
-        ProgramArguments =
-          [ "kern.maxfiles=16777216" "kern.maxfilesperproc=16704" ];
-        RunAtLoad = true;
-        KeepAlive = false;
-      };
-    };
-  };
 
   services.skhd = {
     enable = true;

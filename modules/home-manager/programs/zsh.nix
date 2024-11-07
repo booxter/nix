@@ -25,7 +25,6 @@
     qq = "eza -l";
     gmailctl-rh="gmailctl --config=$HOME/.gmailctl-rh";
     view="nvim -R";
-    e="emacsclient -nw";
     gc="${gcalcliHome}";
     gc-rh="${gcalcliWork}";
     gcw="${gcalcliHome} ${gcalcliCalwArgs}";

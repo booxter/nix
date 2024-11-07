@@ -9,7 +9,6 @@
   programs.firefox = import ./programs/firefox.nix { inherit pkgs lib; };
   programs.ssh = import ./programs/ssh.nix;
   programs.zsh = import ./programs/zsh.nix { inherit pkgs; };
-  programs.emacs = import ./programs/emacs.nix { inherit pkgs; };
   programs.nixvim = import ./programs/nixvim.nix { inherit pkgs; };
   programs.tmux = import ./programs/tmux.nix { inherit pkgs; };
   programs.git = import ./programs/git.nix { inherit pkgs username; };
@@ -131,6 +130,7 @@
     coreutils
     curl
     element-desktop
+    fd
     file
     fzf
     gcalcli
@@ -194,29 +194,6 @@
     cb_thunderlink-native
     (import ./modules/homerow.nix { inherit pkgs lib; })
     (import ./modules/vpn.nix { inherit pkgs; })
-  ] ++ [
-    # TODO: is there a better way to embed these into emacs env?
-
-    # doom emacs deps
-    fd # for projectile
-    fontconfig # use fc names to configure ui
-    ghostscript # export org to pdf
-    w3m # browser
-
-    # golang
-    go_1_21
-    gomodifytags
-    gopls
-    gore
-    gotests
-
-    # python
-    pyright
-    python3Packages.pytest
-
-    # lsp
-    nixfmt-classic
-    shellcheck
   ];
 
   fonts.fontconfig.enable = true;
@@ -229,9 +206,6 @@
     MANPAGER = "page -t man";
     HOMEBREW_NO_AUTO_UPDATE = 1;
   };
-  home.sessionPath = [
-    "$HOME/.config/emacs/bin"
-  ];
 
   programs.starship = {
     enable = true;
@@ -255,10 +229,6 @@
   };
 
   programs.kitty = import ./programs/kitty.nix;
-  home.sessionVariables = {
-    # emacs daemon needs this set to allow clients to connect from kitty
-    TERMINFO = "${pkgs.kitty}/Applications/kitty.app/Contents/Resources/kitty/terminfo";
-  };
 
   # TODO: move darwin specific config files to a separate module?
   home.file = {
