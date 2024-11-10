@@ -29,5 +29,6 @@
     gc-rh="${gcalcliWork}";
     gcw="${gcalcliHome} ${gcalcliCalwArgs}";
     gcw-rh="${gcalcliWork} ${gcalcliCalwArgs}";
+    report="~/.priv-bin/weekly-report";
   };
 }

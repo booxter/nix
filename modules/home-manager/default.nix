@@ -83,6 +83,10 @@
         uri = "git+ssh://booxter@github.com:booxter/gmailctl-work-config.git";
         path = "/Users/${username}/.gmailctl-rh";
       };
+      priv-bin = {
+        uri = "git+ssh://booxter@github.com:booxter/dotfiles.git";
+        path = "/Users/${username}/.priv-bin";
+      };
     };
   };
   home.activation = {
