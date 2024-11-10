@@ -19,6 +19,9 @@
     # https://github.com/insanum/gcalcli/pull/813
     nixpkgs-gcalcli.url = "github:booxter/nixpkgs/gcalcli-with-empty-searh-support";
 
+    # https://github.com/NixOS/nixpkgs/pull/252383
+    nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
+
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 
@@ -72,6 +75,10 @@
           (final: prev: {
             inherit (inputs.nixpkgs-cb_thunderlink-native.legacyPackages.${prev.system})
               cb_thunderlink-native;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-mailsend-go.legacyPackages.${prev.system})
+              mailsend-go;
           })
         ];
       };

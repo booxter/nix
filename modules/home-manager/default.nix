@@ -149,6 +149,7 @@
     less
     lima
     magic-wormhole
+    mailsend-go
     man-pages
     mc
     moreutils
