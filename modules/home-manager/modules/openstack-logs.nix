@@ -11,15 +11,20 @@
       echo "$''\{1%/*}"
   }
   
-  pushd $TMPDIR
+  cd "$(${coreutils}/bin/mktemp -d)"
   
-  curl $(get_base_url $URL)/$DOWNLOAD_SCRIPT -o $DOWNLOAD_SCRIPT
+  ${curl}/bin/curl $(get_base_url $URL)/$DOWNLOAD_SCRIPT -o $DOWNLOAD_SCRIPT
   
   # Remove after https://review.opendev.org/c/zuul/zuul-jobs/+/934665 merges
   ${gnused}/bin/sed -i 's|#!/bin/bash|#!/usr/bin/env bash|' $DOWNLOAD_SCRIPT
   
-  chmod +x $DOWNLOAD_SCRIPT
-  ./$DOWNLOAD_SCRIPT
-  
-  popd
+  ${coreutils}/bin/chmod +x $DOWNLOAD_SCRIPT
+  TMPDIR=. ./$DOWNLOAD_SCRIPT
+
+  ${findutils}/bin/find . -name '*.tar.gz' -exec ${gnutar}/bin/tar xf {} \;
+  ${findutils}/bin/find . -name '*.tar.gz' -exec ${coreutils}/bin/rm {} \;
+  ${findutils}/bin/find . -name '*.gz' -exec ${gzip}/bin/gzip -d {} \;
+
+  echo "Done. Logs can be found in:"
+  pwd
 ''
