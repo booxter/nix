@@ -8,6 +8,8 @@
   colorschemes.gruvbox.enable = true;
   clipboard.register = "unnamedplus";
   extraPackages = [
+    ansible
+    ansible-lint
     golangci-lint
     ripgrep
   ];
