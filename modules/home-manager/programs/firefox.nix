@@ -28,7 +28,7 @@
       "browser.download.start_downloads_in_tmp_dir" = true;
       "browser.download.folderList" = 2; # use the last dir
       "browser.download.useDownloadDir" = true;
-      "browser.download.dir" = "/tmp";
+      "browser.download.dir" = "~/Downloads";
 
       "media.block-autoplay-until-in-foreground" = true;
       "media.block-play-until-document-interaction" = true;
