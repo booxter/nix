@@ -21,9 +21,9 @@
   ${coreutils}/bin/chmod +x $DOWNLOAD_SCRIPT
   TMPDIR=. ./$DOWNLOAD_SCRIPT
 
-  ${findutils}/bin/find . -name '*.tar.gz' -exec ${gnutar}/bin/tar xf {} \;
-  ${findutils}/bin/find . -name '*.tar.gz' -exec ${coreutils}/bin/rm {} \;
-  ${findutils}/bin/find . -name '*.gz' -exec ${gzip}/bin/gzip -d {} \;
+  ${findutils}/bin/find . -name '*.tar.gz' -execdir ${gnutar}/bin/tar xf {} \;
+  ${findutils}/bin/find . -name '*.tar.gz' -execdir ${coreutils}/bin/rm {} \;
+  ${findutils}/bin/find . -name '*.gz' -execdir ${gzip}/bin/gzip -d {} \;
 
   echo "Done. Logs can be found in:"
   pwd
