@@ -1,4 +1,5 @@
 { pkgs, ... }: pkgs.writeScriptBin "vpn" ''
+  # TODO: how to kinit-pass on VPN up?
   osascript << EOF
     tell application "Viscosity"
     if the state of the first connection is "Connected" then
