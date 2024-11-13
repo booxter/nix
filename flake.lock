@@ -316,6 +316,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-lima": {
+      "locked": {
+        "lastModified": 1731523597,
+        "narHash": "sha256-zR5yygXuiwILkIENRbljAtYLI8JAHElffz18ikWmof0=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "0d4b17a9b384e5128745a85f28e268f6b746d74e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "lima",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-mailsend-go": {
       "locked": {
         "lastModified": 1693415164,
@@ -455,6 +471,7 @@
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-firefox": "nixpkgs-firefox",
         "nixpkgs-gcalcli": "nixpkgs-gcalcli",
+        "nixpkgs-lima": "nixpkgs-lima",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-sioyek": "nixpkgs-sioyek",

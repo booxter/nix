@@ -16,6 +16,9 @@
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
+    # https://github.com/NixOS/nixpkgs/pull/355729
+    nixpkgs-lima.url = "github:booxter/nixpkgs/lima";
+
     # https://github.com/insanum/gcalcli/pull/813
     nixpkgs-gcalcli.url = "github:booxter/nixpkgs/gcalcli-with-empty-searh-support";
 
@@ -79,6 +82,10 @@
           (final: prev: {
             inherit (inputs.nixpkgs-mailsend-go.legacyPackages.${prev.system})
               mailsend-go;
+          })
+          (final: prev: {
+            inherit (inputs.nixpkgs-lima.legacyPackages.${prev.system})
+              lima;
           })
         ];
       };
