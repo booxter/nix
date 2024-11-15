@@ -40,7 +40,7 @@
 
   meetings=$(\
     ${gcalcli}/bin/gcalcli --config-folder $configDir --calendar $calendarName \
-        search "" "$DATE 00:00" "$DATE 23:59" \
+        agenda "$DATE 00:00" "$DATE 23:59" \
         --detail conference \
         --tsv \
         --nodeclined |\

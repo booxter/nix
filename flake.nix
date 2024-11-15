@@ -19,9 +19,6 @@
     # https://github.com/NixOS/nixpkgs/pull/355729
     nixpkgs-lima.url = "github:booxter/nixpkgs/lima";
 
-    # https://github.com/insanum/gcalcli/pull/813
-    nixpkgs-gcalcli.url = "github:booxter/nixpkgs/gcalcli-with-empty-searh-support";
-
     # https://github.com/NixOS/nixpkgs/pull/252383
     nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
 
@@ -66,10 +63,6 @@
           (final: prev: {
             inherit (inputs.nixpkgs-firefox.legacyPackages.${prev.system})
               firefox-unwrapped;
-          })
-          (final: prev: {
-            inherit (inputs.nixpkgs-gcalcli.legacyPackages.${prev.system})
-              gcalcli;
           })
           (final: prev: {
             inherit (inputs.nixpkgs-thunderbird.legacyPackages.${prev.system})
