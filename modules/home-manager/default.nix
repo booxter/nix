@@ -1,5 +1,5 @@
 { lib, pkgs, username, ... }: with lib; {
-  home.stateVersion = "24.05";
+  home.stateVersion = "24.11";
   programs.home-manager.enable = true; # let it manage itself
 
   # url: 127.0.0.1:8384
@@ -207,7 +207,7 @@
   home.sessionVariables = {
     # Use homebrew ssh for git. It supports gss.
     GIT_SSH_COMMAND = "ssh";
-    BROWSER = "firefox";
+    BROWSER = "open";
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
     HOMEBREW_NO_AUTO_UPDATE = 1;
