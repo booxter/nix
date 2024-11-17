@@ -16,6 +16,10 @@
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
+    # prior to https://github.com/NixOS/nixpkgs/pull/355452
+    # Obsidian hangs when scrolling
+    nixpkgs-obsidian.url = "github:NixOS/nixpkgs/18e6680cb4556afeccfe7149ece7b5284d4b2548";
+
     # https://github.com/NixOS/nixpkgs/pull/355729
     nixpkgs-lima.url = "github:booxter/nixpkgs/lima";
 
@@ -24,8 +28,6 @@
 
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
-
-    nixpkgs-2405.url = "github:NixOS/nixpkgs/release-24.05";
 
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
@@ -79,6 +81,10 @@
           (final: prev: {
             inherit (inputs.nixpkgs-lima.legacyPackages.${prev.system})
               lima;
+          })
+          (final: prev: {
+            inherit (import inputs.nixpkgs-obsidian { inherit system; config = { allowUnfree = true; }; })
+              obsidian;
           })
         ];
       };

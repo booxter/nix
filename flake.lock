@@ -252,22 +252,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-2405": {
-      "locked": {
-        "lastModified": 1731609278,
-        "narHash": "sha256-WzslUHS4wJj5eorUzJw09olUVQ4lc9oxeENtpRm/4JM=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "6bbb777b4386ff7ebc8bd025b52665987719b36a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "release-24.05",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-cb_thunderlink-native": {
       "locked": {
         "lastModified": 1730778669,
@@ -345,6 +329,22 @@
         "owner": "NixOS",
         "ref": "master",
         "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-obsidian": {
+      "locked": {
+        "lastModified": 1731423402,
+        "narHash": "sha256-2TJTbcP94uvcNYqnrGAyz4mfp2JYWyobJKnYLUxWif8=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "18e6680cb4556afeccfe7149ece7b5284d4b2548",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "18e6680cb4556afeccfe7149ece7b5284d4b2548",
         "type": "github"
       }
     },
@@ -451,12 +451,12 @@
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-2405": "nixpkgs-2405",
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-firefox": "nixpkgs-firefox",
         "nixpkgs-lima": "nixpkgs-lima",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-obsidian": "nixpkgs-obsidian",
         "nixpkgs-sioyek": "nixpkgs-sioyek",
         "nixpkgs-thunderbird": "nixpkgs-thunderbird",
         "nixvim": "nixvim",
