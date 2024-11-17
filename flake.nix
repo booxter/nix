@@ -47,6 +47,10 @@
   outputs = inputs@{ self, ... }:
   let
     username = "ihrachys";
+    importPkgs = { pkgs, system }: (import pkgs {
+      inherit system;
+      config = { allowUnfree = true; };
+    });
     mkPkgs = system:
       import inputs.nixpkgs {
         inherit system;
@@ -55,35 +59,35 @@
         overlays = [
           inputs.nur.overlay
           (final: prev: {
-            inherit (inputs.nixpkgs-sioyek.legacyPackages.${prev.system})
+            inherit (importPkgs { pkgs = inputs.nixpkgs-sioyek; inherit system; })
               sioyek;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-master.legacyPackages.${prev.system})
+            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
               rpm;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-firefox.legacyPackages.${prev.system})
+            inherit (importPkgs { pkgs = inputs.nixpkgs-firefox; inherit system; })
               firefox-unwrapped;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-thunderbird.legacyPackages.${prev.system})
+            inherit (importPkgs { pkgs = inputs.nixpkgs-thunderbird; inherit system; })
               thunderbird-unwrapped;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-cb_thunderlink-native.legacyPackages.${prev.system})
+            inherit (importPkgs { pkgs = inputs.nixpkgs-cb_thunderlink-native; inherit system; })
               cb_thunderlink-native;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-mailsend-go.legacyPackages.${prev.system})
+            inherit (importPkgs { pkgs = inputs.nixpkgs-mailsend-go; inherit system; })
               mailsend-go;
           })
           (final: prev: {
-            inherit (inputs.nixpkgs-lima.legacyPackages.${prev.system})
+            inherit (importPkgs { pkgs = inputs.nixpkgs-lima; inherit system; })
               lima;
           })
           (final: prev: {
-            inherit (import inputs.nixpkgs-obsidian { inherit system; config = { allowUnfree = true; }; })
+            inherit (importPkgs { pkgs = inputs.nixpkgs-obsidian; inherit system; })
               obsidian;
           })
         ];
