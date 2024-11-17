@@ -176,6 +176,47 @@
       };
     };
 
+    # adopted from https://www.tweag.io/blog/2023-02-09-nixos-vm-on-macos/
+    nixosModules.base = { pkgs, ... }: {
+      system.stateVersion = "24.11";
+
+      # Configure networking
+      networking.useDHCP = false;
+      networking.interfaces.eth0.useDHCP = true;
+
+      # Create user "test"
+      services.getty.autologinUser = "test";
+      users.users.test.isNormalUser = true;
+
+      # Enable passwordless ‘sudo’ for the "test" user
+      users.users.test.extraGroups = ["wheel"];
+      security.sudo.wheelNeedsPassword = false;
+
+      environment.systemPackages = with pkgs; [
+        python311
+      ];
+    };
+
+    nixosModules.vm = { ... }: {
+      # Make VM output to the terminal instead of a separate window
+      virtualisation.vmVariant.virtualisation.graphics = false;
+    };
+
+    nixosConfigurations = {
+      darwinVM = inputs.nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          self.nixosModules.base
+          self.nixosModules.vm
+          {
+            virtualisation.vmVariant.virtualisation.host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
+          }
+        ];
+      };
+    };
+
+    packages.aarch64-darwin.darwinVM = self.nixosConfigurations.darwinVM.config.system.build.vm;
+
     # TODO: this is still broken; haven't figured out home-manager integration yet
     systemConfigs.default = let
       system = "x86_64-linux";

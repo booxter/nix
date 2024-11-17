@@ -3,3 +3,6 @@ deploy:
 
 update:
 	nix flake update
+
+linux:
+	nix run .#darwinVM
