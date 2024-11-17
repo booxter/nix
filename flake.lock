@@ -332,22 +332,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-obsidian": {
-      "locked": {
-        "lastModified": 1731423402,
-        "narHash": "sha256-2TJTbcP94uvcNYqnrGAyz4mfp2JYWyobJKnYLUxWif8=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "18e6680cb4556afeccfe7149ece7b5284d4b2548",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "18e6680cb4556afeccfe7149ece7b5284d4b2548",
-        "type": "github"
-      }
-    },
     "nixpkgs-sioyek": {
       "locked": {
         "lastModified": 1728802690,
@@ -456,7 +440,6 @@
         "nixpkgs-lima": "nixpkgs-lima",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
-        "nixpkgs-obsidian": "nixpkgs-obsidian",
         "nixpkgs-sioyek": "nixpkgs-sioyek",
         "nixpkgs-thunderbird": "nixpkgs-thunderbird",
         "nixvim": "nixvim",
