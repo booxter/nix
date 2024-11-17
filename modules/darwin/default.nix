@@ -57,6 +57,10 @@ in rec {
   # enable linux package builds via a local-remote vm
   nix = {
     linux-builder = {
+      # if custom config is ever broken to the point the machine cannot start
+      # and the builder itself cannot be rebuilt, just leave the enable = true
+      # and temporarily disable the rest of settings to pull the builder image
+      # from cache
       enable = true;
       ephemeral = true;
       maxJobs = 4;
