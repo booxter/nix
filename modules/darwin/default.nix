@@ -66,9 +66,9 @@ in rec {
             diskSize = 80 * 1024;
             memorySize = 16 * 1024;
           };
-          cores = 10;
+          cores = 8;
         };
-    };
+      };
     };
     settings = {
       trusted-users = [ "@admin" ];
