@@ -194,19 +194,30 @@
       users.groups.${username} = {};
       security.sudo.wheelNeedsPassword = false;
 
+      environment.systemPackages = with pkgs; [
+        dig
+      ];
+
       services.openssh.enable = true;
     };
 
     nixosModules.vm = { ... }: {
-      # Make VM output to the terminal instead of a separate window
-      virtualisation.vmVariant.virtualisation.graphics = false;
       virtualisation.vmVariant.virtualisation = {
         host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
-          qemu.networkingOptions = inputs.nixpkgs.lib.mkForce [
-            "-netdev vmnet-bridged,id=vmnet,ifname=en0"
-            "-device virtio-net-pci,netdev=vmnet"
-        ];
+
+        # Make VM output to the terminal instead of a separate window
+        graphics = false;
+
+        # qemu.networkingOptions = inputs.nixpkgs.lib.mkForce [
+        #     "-netdev vmnet-bridged,id=vmnet,ifname=en0"
+        #     "-device virtio-net-pci,netdev=vmnet"
+        # ];
       };
+
+      # a workaround until slirp dns is fixed on macos:
+      # https://github.com/utmapp/UTM/issues/2353
+      # Note: the same workaround is applied to linux-builder in nixpkgs.
+      networking.nameservers = [ "8.8.8.8" ];
     };
 
     nixosConfigurations = {
