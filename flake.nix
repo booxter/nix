@@ -3,7 +3,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/release-24.11";
-
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
     # https://github.com/NixOS/nixpkgs/pull/350384
@@ -192,11 +191,20 @@
       };
       users.groups.${username} = {};
       security.sudo.wheelNeedsPassword = false;
+
+      services.openssh.enable = true;
     };
 
     nixosModules.vm = { ... }: {
       # Make VM output to the terminal instead of a separate window
       virtualisation.vmVariant.virtualisation.graphics = false;
+      virtualisation.vmVariant.virtualisation = {
+        host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
+          qemu.networkingOptions = inputs.nixpkgs.lib.mkForce [
+            "-netdev vmnet-bridged,id=vmnet,ifname=en0"
+            "-device virtio-net-pci,netdev=vmnet"
+        ];
+      };
     };
 
     nixosConfigurations = {
@@ -209,26 +217,6 @@
         modules = [
           self.nixosModules.base
           self.nixosModules.vm
-          {
-            services.openssh.enable = true;
-            networking.firewall.enable = false;
-
-            environment.systemPackages = [
-              pkgs.dig
-            ];
-          }
-          {
-            virtualisation.vmVariant.virtualisation = {
-              host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
-              # forwardPorts = [
-              #   { from = "host"; host.port = 2222; guest.port = 22; }
-              # ];
-              qemu.networkingOptions = inputs.nixpkgs.lib.mkForce [
-                "-netdev vmnet-bridged,id=vmnet,ifname=en0"
-                "-device virtio-net-pci,netdev=vmnet"
-              ];
-            };
-          }
         ] ++ (globalModulesLinux { inherit system username; });
       };
     };
