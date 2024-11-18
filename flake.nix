@@ -52,10 +52,6 @@
               sioyek;
           })
           (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
-              rpm;
-          })
-          (final: prev: {
             inherit (importPkgs { pkgs = inputs.nixpkgs-firefox; inherit system; })
               firefox-unwrapped;
           })
