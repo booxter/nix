@@ -187,10 +187,12 @@
 
       services.getty.autologinUser = "${username}";
 
+      users.mutableUsers = false;
       users.users.${username} = {
         extraGroups = ["wheel"];
         group = "${username}";
         isNormalUser = true;
+        password = "test";
       };
       users.groups.${username} = {};
       security.sudo.wheelNeedsPassword = false;
@@ -212,7 +214,25 @@
           self.nixosModules.base
           self.nixosModules.vm
           {
-            virtualisation.vmVariant.virtualisation.host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
+            services.openssh.enable = true;
+            networking.firewall.enable = false;
+
+            environment.systemPackages = [
+              pkgs.dig
+            ];
+          }
+          {
+            virtualisation.vmVariant.virtualisation = {
+              host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
+              forwardPorts = [
+                { from = "host"; host.port = 2222; guest.port = 22; }
+              ];
+              # qemu.networkingOptions = inputs.nixpkgs.lib.mkForce [
+              #   "-net nic,netdev=user.0,model=virtio"
+              #   "-netdev user,id=user.0,dns=8.8.8.8,\${QEMU_NET_OPTS:+,$QEMU_NET_OPTS}"
+              #   "-object filter-dump,id=dump,netdev=user.0,file=/tmp/dump.dat"
+              # ];
+            };
           }
         ] ++ (globalModulesLinux { inherit system username; });
       };
