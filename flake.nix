@@ -224,14 +224,13 @@
           {
             virtualisation.vmVariant.virtualisation = {
               host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
-              forwardPorts = [
-                { from = "host"; host.port = 2222; guest.port = 22; }
-              ];
-              # qemu.networkingOptions = inputs.nixpkgs.lib.mkForce [
-              #   "-net nic,netdev=user.0,model=virtio"
-              #   "-netdev user,id=user.0,dns=8.8.8.8,\${QEMU_NET_OPTS:+,$QEMU_NET_OPTS}"
-              #   "-object filter-dump,id=dump,netdev=user.0,file=/tmp/dump.dat"
+              # forwardPorts = [
+              #   { from = "host"; host.port = 2222; guest.port = 22; }
               # ];
+              qemu.networkingOptions = inputs.nixpkgs.lib.mkForce [
+                "-netdev vmnet-bridged,id=vmnet,ifname=en0"
+                "-device virtio-net-pci,netdev=vmnet"
+              ];
             };
           }
         ] ++ (globalModulesLinux { inherit system username; });

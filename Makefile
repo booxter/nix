@@ -5,4 +5,4 @@ update:
 	nix flake update
 
 linux:
-	nix run .#darwinVM
+	sudo nix run .#darwinVM
