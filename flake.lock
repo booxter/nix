@@ -284,22 +284,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-lima": {
-      "locked": {
-        "lastModified": 1731530351,
-        "narHash": "sha256-tSHkLShbybbwJICTmNwYj//o9HdZdiByweRoSCWveTE=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "9254e653c16431d642f79ee87e286aa1f117372c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "lima",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-mailsend-go": {
       "locked": {
         "lastModified": 1693415164,
@@ -437,34 +421,12 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-firefox": "nixpkgs-firefox",
-        "nixpkgs-lima": "nixpkgs-lima",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-sioyek": "nixpkgs-sioyek",
         "nixpkgs-thunderbird": "nixpkgs-thunderbird",
         "nixvim": "nixvim",
-        "nur": "nur",
-        "system-manager": "system-manager"
-      }
-    },
-    "system-manager": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1731533503,
-        "narHash": "sha256-nzJYpa8fUVzd9Ej/AWrFDO/ZANaI6r5bK1zxayHJJRg=",
-        "owner": "numtide",
-        "repo": "system-manager",
-        "rev": "19f20fe6e4a8df8473ca4da0e8d70543e97d868b",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "system-manager",
-        "type": "github"
+        "nur": "nur"
       }
     },
     "systems": {

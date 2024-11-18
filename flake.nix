@@ -16,9 +16,6 @@
     # https://github.com/NixOS/nixpkgs/pull/348045
     nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
-    # https://github.com/NixOS/nixpkgs/pull/355729
-    nixpkgs-lima.url = "github:booxter/nixpkgs/lima";
-
     # https://github.com/NixOS/nixpkgs/pull/252383
     nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
 
@@ -35,9 +32,6 @@
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
-
-    system-manager.url = "github:numtide/system-manager";
-    system-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs@{ self, ... }:
@@ -50,7 +44,6 @@
     mkPkgs = system:
       import inputs.nixpkgs {
         inherit system;
-        # for vim copilot plugin
         config = { allowUnfree = true; };
         overlays = [
           inputs.nur.overlay
@@ -78,10 +71,6 @@
             inherit (importPkgs { pkgs = inputs.nixpkgs-mailsend-go; inherit system; })
               mailsend-go;
           })
-          (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-lima; inherit system; })
-              lima;
-          })
         ];
       };
     mkHome = username: modules: {
@@ -93,22 +82,27 @@
         users."${username}".imports = modules;
       };
     };
-    globalModules = { username }: [
-      (mkHome username [
+
+    commonModules = { username, modules ? [] }: [
+      (mkHome username ([
         ./modules/home-manager
         inputs.nixvim.homeManagerModules.nixvim
-      ])
+      ] ++ modules))
     ];
-    globalModulesMacos = { system, username }: globalModules { inherit username; } ++ [
+
+    globalModulesLinux = { system, username }: commonModules { inherit username; } ++ [
       {
         system.configurationRevision = self.rev or self.dirtyRev or null;
       }
-      ./modules/darwin
-      (home-manager system).darwinModules.home-manager
-    ];
-    globalModulesSystemManager = { system, username }: globalModules { inherit username; } ++ [
-      ./modules/system-manager
       (home-manager system).nixosModules.home-manager
+    ];
+
+    globalModulesMacos = { system, username, modules }: commonModules { inherit modules username; } ++ [
+      {
+        system.configurationRevision = self.rev or self.dirtyRev or null;
+      }
+      (home-manager system).darwinModules.home-manager
+      ./modules/darwin
     ];
 
     # local patches for stuff that I haven't merged upstream yet
@@ -170,8 +164,19 @@
         specialArgs = {
           inherit username;
         };
-        modules = (globalModulesMacos { inherit system username; }) ++ [
-          ./hosts/macpro/configuration.nix
+        modules = let
+          additionalModules = [
+            ./modules/home-manager/modules/git-sync.nix
+            ./modules/home-manager/modules/thunderbird.nix
+            ./modules/home-manager/modules/firefox.nix
+            ./modules/home-manager/modules/kitty.nix
+          ];
+        in
+          (globalModulesMacos {
+            inherit system username;
+            modules = additionalModules;
+          }) ++ [
+            ./hosts/macpro/configuration.nix
         ];
       };
     };
@@ -180,21 +185,15 @@
     nixosModules.base = { pkgs, ... }: {
       system.stateVersion = "24.11";
 
-      # Configure networking
-      networking.useDHCP = false;
-      networking.interfaces.eth0.useDHCP = true;
+      services.getty.autologinUser = "${username}";
 
-      # Create user "test"
-      services.getty.autologinUser = "test";
-      users.users.test.isNormalUser = true;
-
-      # Enable passwordless ‘sudo’ for the "test" user
-      users.users.test.extraGroups = ["wheel"];
+      users.users.${username} = {
+        extraGroups = ["wheel"];
+        group = "${username}";
+        isNormalUser = true;
+      };
+      users.groups.${username} = {};
       security.sudo.wheelNeedsPassword = false;
-
-      environment.systemPackages = with pkgs; [
-        python311
-      ];
     };
 
     nixosModules.vm = { ... }: {
@@ -203,26 +202,22 @@
     };
 
     nixosConfigurations = {
-      darwinVM = inputs.nixpkgs.lib.nixosSystem {
+      darwinVM = inputs.nixpkgs.lib.nixosSystem rec {
         system = "aarch64-linux";
+        pkgs = mkPkgs system;
+        specialArgs = {
+          inherit username;
+        };
         modules = [
           self.nixosModules.base
           self.nixosModules.vm
           {
             virtualisation.vmVariant.virtualisation.host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
           }
-        ];
+        ] ++ (globalModulesLinux { inherit system username; });
       };
     };
 
     packages.aarch64-darwin.darwinVM = self.nixosConfigurations.darwinVM.config.system.build.vm;
-
-    # TODO: this is still broken; haven't figured out home-manager integration yet
-    systemConfigs.default = let
-      system = "x86_64-linux";
-    in inputs.system-manager.lib.makeSystemConfig {
-      extraSpecialArgs = { inherit username; };
-      modules = (globalModulesSystemManager { inherit system username; });
-    };
   };
 }

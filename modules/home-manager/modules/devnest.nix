@@ -21,5 +21,7 @@
     urllib3
     requests
     distro
+  ] ++ lib.optionals pkgs.stdenv.isLinux [
+    selinux-python
   ];
 }

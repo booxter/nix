@@ -2,11 +2,6 @@
   home.stateVersion = "24.11";
   programs.home-manager.enable = true; # let it manage itself
 
-  # url: 127.0.0.1:8384
-  services.syncthing.enable = true;
-  services.git-sync.enable = true;
-
-  programs.firefox = import ./programs/firefox.nix { inherit pkgs lib; };
   programs.ssh = import ./programs/ssh.nix;
   programs.zsh = import ./programs/zsh.nix { inherit pkgs; };
   programs.nixvim = import ./programs/nixvim.nix { inherit pkgs; };
@@ -27,113 +22,13 @@
   programs.eza = import ./programs/eza.nix;
   programs.jq.enable = true;
   programs.less.enable = true;
-  programs.sioyek.enable = true;
   programs.password-store.enable = true;
-  programs.bat.enable = true;
-
-  # TODO: explore more features later
-  programs.ranger = {
-    enable = true;
-    extraPackages = with pkgs; [
-      w3m
-    ];
-
-    settings = {
-      preview_images = true;
-      preview_images_method = "kitty";
-      preview_files = true;
-      preview_directories = true;
-      collapse_preview = true;
-
-      # TODO: do I need a preview script like:
-      # https://github.com/redxtech/nixfiles/blob/a9eba0db5c44c519eec8c837f6508cea8437bef7/modules/home-manager/cli/ranger/scope.sh ?
-    };
-  };
-
-  # Sync notes and pass db
-  services.git-sync = {
-    repositories = {
-      password-store = {
-        uri = "git+ssh://booxter@github.com:booxter/pass.git";
-        path = "/Users/${username}/.local/share/password-store";
-      };
-      notes = {
-        uri = "git+ssh://booxter@github.com:booxter/notes.git";
-        path = "/Users/${username}/notes";
-        interval = 300;
-      };
-      org = {
-        uri = "git+ssh://booxter@github.com:booxter/org.git";
-        path = "/Users/${username}/org";
-        interval = 300;
-      };
-      weechat-config = {
-        uri = "git+ssh://booxter@github.com:booxter/weechat-config.git";
-        path = "/Users/${username}/.config/weechat";
-      };
-      doom-config = {
-        uri = "git+ssh://booxter@github.com:booxter/doom.git";
-        path = "/Users/${username}/.config/doom";
-      };
-      gmailctl-private-config = {
-        uri = "git+ssh://booxter@github.com:booxter/gmailctl-private-config.git";
-        path = "/Users/${username}/.gmailctl";
-      };
-      gmailctl-work-config = {
-        uri = "git+ssh://booxter@github.com:booxter/gmailctl-work-config.git";
-        path = "/Users/${username}/.gmailctl-rh";
-      };
-      priv-bin = {
-        uri = "git+ssh://booxter@github.com:booxter/dotfiles.git";
-        path = "/Users/${username}/.priv-bin";
-      };
-    };
-  };
-  home.activation = {
-    notes = import ./modules/git-sync-repo.nix {
-      inherit pkgs lib;
-      gh-repo = "booxter/notes";
-      destdir = "~/notes";
-    };
-    org = import ./modules/git-sync-repo.nix {
-      inherit pkgs lib;
-      gh-repo = "booxter/org";
-      destdir = "~/org";
-    };
-    pass = import ./modules/git-sync-repo.nix {
-      inherit pkgs lib;
-      gh-repo = "booxter/pass";
-      destdir = "~/.local/share/password-store";
-    };
-    weechat-config = import ./modules/git-sync-repo.nix {
-      inherit pkgs lib;
-      gh-repo = "booxter/weechat-config";
-      destdir = "~/.config/weechat";
-    };
-    doom-config = import ./modules/git-sync-repo.nix {
-      inherit pkgs lib;
-      gh-repo = "booxter/doom";
-      destdir = "~/.config/doom";
-    };
-    gmailctl-private-config = import ./modules/git-sync-repo.nix {
-      inherit pkgs lib;
-      gh-repo = "booxter/gmailctl-private-config";
-      destdir = "~/.gmailctl";
-    };
-    gmailctl-work-config = import ./modules/git-sync-repo.nix {
-      inherit pkgs lib;
-      gh-repo = "booxter/gmailctl-work-config";
-      destdir = "~/.gmailctl-rh";
-    };
-    default-apps = import ./modules/default-apps.nix { inherit pkgs lib; };
-  };
 
   home.packages = with pkgs; [
     ack
     chatgpt-cli
     coreutils
     curl
-    element-desktop
     fd
     file
     fzf
@@ -149,7 +44,6 @@
     htop
     ipcalc
     jq
-    keycastr
     less
     lima
     magic-wormhole
@@ -158,15 +52,12 @@
     mc
     moreutils
     neofetch
-    nerdfonts
     ngrep
     nixpkgs-review
     nix-tree
     nurl
-    obsidian
     page
     podman
-    podman-desktop
     procps
     pstree
     python311Full
@@ -174,32 +65,37 @@
     python311Packages.tox
     (ripgrep.override { withPCRE2 = true; })
     shell-gpt
-    slack
-    spotify
     tcpdump
-    telegram-desktop
     tig
-    todoist
     tree
     unzip
     viddy
     watch
-    weechat
     wireshark
     zip
-    (import ./modules/beaker.nix { inherit pkgs lib; })
-    (import ./modules/devnest.nix { inherit pkgs; })
     (import ./modules/meetings.nix { inherit pkgs; })
     (import ./modules/openstack-logs.nix { inherit pkgs; })
-    (import ./modules/rhpkg.nix { inherit pkgs; })
-    (import ./modules/weechat-session.nix { inherit pkgs; })
   ]
   ++ lib.optionals stdenv.isDarwin [
-    iterm2
-    raycast
     cb_thunderlink-native
+    element-desktop
+    iterm2
+    keycastr
+    nerdfonts
+    obsidian
+    podman-desktop
+    raycast
+    sioyek
+    slack
+    spotify
+    todoist
+    weechat
+    (import ./modules/beaker.nix { inherit pkgs lib; })
+    (import ./modules/devnest.nix { inherit pkgs; })
+    (import ./modules/rhpkg.nix { inherit pkgs; })
     (import ./modules/homerow.nix { inherit pkgs lib; })
     (import ./modules/vpn.nix { inherit pkgs; })
+    (import ./modules/weechat-session.nix { inherit pkgs; })
   ];
 
   fonts.fontconfig.enable = true;
@@ -220,28 +116,13 @@
     settings = (with builtins; fromTOML (readFile ./config/starship.toml));
   };
 
-  programs.browserpass = {
-    enable = true;
-    browsers = [ "firefox" ];
-  };
-
   accounts.email.accounts = import ./config/email.nix { inherit pkgs; };
-  programs.thunderbird = import ./programs/thunderbird.nix { inherit lib pkgs; };
   programs.msmtp.enable = true;
-
-  programs.irssi = {
-    enable = false;
-    networks = import ./config/irc.nix;
-  };
-
-  programs.kitty = import ./programs/kitty.nix;
 
   # TODO: move darwin specific config files to a separate module?
   home.file = {
     # TODO: use native readline module for inputrc
     ".inputrc".source = ./dotfiles/inputrc;
-
-    ".config/kitty/open-actions.conf".source = ./dotfiles/kitty-open-actions.conf;
 
     ".tigrc".source = pkgs.fetchFromGitHub {
       owner = "jonas";
@@ -253,8 +134,6 @@
     ".config/svim/blacklist".source = ./dotfiles/svim-blacklist;
     ".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
     ".amethyst.yml".source = ./dotfiles/amethyst.yml;
-    # TODO: configure telegram for other platforms too (use conditional paths?)
-    "Library/Application Support/Telegram Desktop/tdata/shortcuts-custom.json".source = ./dotfiles/telegram-desktop-shortcuts.json;
     ".bin/terminal-new-window.sh" = import ./modules/terminal-new-window.nix { inherit pkgs; };
   };
 }

@@ -4,7 +4,7 @@
     flavor = "gmail.com";
     imap.host = "imap.gmail.com";
     smtp.host = "smtp.gmail.com";
-    thunderbird.enable = true;
+    thunderbird.enable = pkgs.stdenv.isDarwin;
     msmtp.enable = true;
   };
 in {
