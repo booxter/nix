@@ -187,7 +187,9 @@
         extraGroups = ["wheel"];
         group = "${username}";
         isNormalUser = true;
-        password = "test";
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA0W1oVd2GMoSwXHVQMb6v4e3rIMVe9/pr/PcsHg+Uz3 ihrachys@ihrachys-macpro"
+        ];
       };
       users.groups.${username} = {};
       security.sudo.wheelNeedsPassword = false;
