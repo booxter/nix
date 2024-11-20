@@ -31,6 +31,7 @@
     curl
     fd
     file
+    flox
     fzf
     gcalcli
     git-absorb

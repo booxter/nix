@@ -1,6 +1,11 @@
 {
   description = "my work flake";
 
+  nixConfig = {
+    extra-trusted-substituters = ["https://cache.flox.dev"];
+    extra-trusted-public-keys = ["flox-cache-public-1:7F4OyH7ZCnFhcze3fJdfyXYLQw/aV7GEed86nQ7IsOs="];
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/release-24.11";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
@@ -31,6 +36,9 @@
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
+
+    flox.url = "github:flox/flox/v1.3.5";
+    flox.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = inputs@{ self, ... }:
@@ -65,6 +73,9 @@
           (final: prev: {
             inherit (importPkgs { pkgs = inputs.nixpkgs-mailsend-go; inherit system; })
               mailsend-go;
+          })
+          (final: prev: {
+            flox = inputs.flox.packages.${system}.default;
           })
         ];
       };

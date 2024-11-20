@@ -78,6 +78,14 @@ in rec {
       trusted-users = [ "@admin" ];
       # Try to avoid: "warning: download buffer is full; consider increasing the 'download-buffer-size' setting"
       download-buffer-size = 1024*1024*256; # 256Mb; default is 64Mb
+
+      # flox; from https://flox.dev/docs/install-flox/#install-flox-from-scratch
+      substituters = [
+        "https://cache.flox.dev"
+      ];
+      trusted-public-keys = [
+        "flox-cache-public-1:7F4OyH7ZCnFhcze3fJdfyXYLQw/aV7GEed86nQ7IsOs="
+      ];
     };
   };
 
