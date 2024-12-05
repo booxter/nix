@@ -37,7 +37,7 @@
 
     nur.url = "github:nix-community/NUR";
 
-    flox.url = "github:flox/flox/v1.3.5";
+    flox.url = "github:flox/flox/main";
     flox.inputs.nixpkgs.follows = "nixpkgs";
   };
 
