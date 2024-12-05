@@ -35,6 +35,7 @@
     fzf
     gcalcli
     git-absorb
+    git-prole
     git-pw
     git-review
     gmailctl
