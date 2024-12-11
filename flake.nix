@@ -176,6 +176,8 @@
             ./modules/home-manager/modules/thunderbird.nix
             ./modules/home-manager/modules/firefox.nix
             ./modules/home-manager/modules/kitty.nix
+            ./modules/home-manager/modules/telegram.nix
+            ./modules/home-manager/modules/default-apps.nix
           ];
         in
           (globalModulesMacos {
