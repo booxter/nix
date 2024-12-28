@@ -8,6 +8,7 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-24.11-darwin";
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
     # https://github.com/NixOS/nixpkgs/pull/350384
@@ -16,9 +17,6 @@
     # https://github.com/NixOS/nixpkgs/pull/352493
     #nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunderbird-132-darwin";
     nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunder-try-latest-with-staging";
-
-    # https://github.com/NixOS/nixpkgs/pull/348045
-    nixpkgs-sioyek.url = "github:b-fein/nixpkgs/sioyek-fix-darwin-build";
 
     # https://github.com/NixOS/nixpkgs/pull/252383
     nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
@@ -33,7 +31,7 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixvim.url = "github:nix-community/nixvim";
-    nixvim.inputs.nixpkgs.follows = "nixpkgs";
+    nixvim.inputs.nixpkgs.follows = "nixpkgs-unstable";
 
     nur.url = "github:nix-community/NUR";
 
@@ -53,11 +51,7 @@
         inherit system;
         config = { allowUnfree = true; };
         overlays = [
-          inputs.nur.overlay
-          (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-sioyek; inherit system; })
-              sioyek;
-          })
+          inputs.nur.overlays.default
           (final: prev: {
             inherit (importPkgs { pkgs = inputs.nixpkgs-firefox; inherit system; })
               firefox-unwrapped;

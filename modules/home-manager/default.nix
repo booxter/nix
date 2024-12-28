@@ -88,7 +88,6 @@
     obsidian
     podman-desktop
     raycast
-    sioyek
     slack
     spotify
     todoist
