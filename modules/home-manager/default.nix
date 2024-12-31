@@ -6,6 +6,11 @@
   programs.zsh = import ./programs/zsh.nix { inherit pkgs; };
   programs.nixvim = import ./programs/nixvim.nix { inherit pkgs; };
   programs.tmux = import ./programs/tmux.nix { inherit pkgs; };
+  programs.mercurial = {
+    enable = true;
+    userName = "ihar.hrachyshka";
+    userEmail = "ihar.hrachyshka@gmail.com";
+  };
   programs.git = import ./programs/git.nix { inherit lib pkgs username; };
   programs.gh = {
     enable = true;
