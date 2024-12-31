@@ -31,6 +31,7 @@
 
   home.packages = with pkgs; [
     ack
+    arcanist
     chatgpt-cli
     coreutils
     curl
