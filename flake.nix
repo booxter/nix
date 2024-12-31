@@ -6,37 +6,43 @@
     extra-trusted-public-keys = ["flox-cache-public-1:7F4OyH7ZCnFhcze3fJdfyXYLQw/aV7GEed86nQ7IsOs="];
   };
 
-  inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-24.11-darwin";
+  inputs = rec {
+    nixpkgs-old.url = "github:NixOS/nixpkgs/nixpkgs-24.11-darwin";
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
-    # https://github.com/NixOS/nixpkgs/pull/350384
-    nixpkgs-firefox.url = "github:booxter/nixpkgs/firefox-for-darwin";
+    nixpkgs = nixpkgs-unstable;
 
-    # https://github.com/NixOS/nixpkgs/pull/352493
-    #nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunderbird-132-darwin";
-    nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunder-try-latest-with-staging";
+    # arcanist was removed:
+    # https://github.com/NixOS/nixpkgs/commit/5ed483f0d79461c2c2d63b46ee62f77a37075bae
+    nixpkgs-arcanist.url = "github:NixOS/nixpkgs/nixpkgs-24.05-darwin";
 
     # https://github.com/NixOS/nixpkgs/pull/252383
     nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
 
+    # https://github.com/NixOS/nixpkgs/pull/369517
+    nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunderbird-fix-darwin-clang-19";
+
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
+
+    # https://github.com/NixOS/nixpkgs/pull/368789
+    nixpkgs-ansible-compat.url = "github:ofalvai/nixpkgs/ansible-compat-fix";
 
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
-    home-manager.url = "github:nix-community/home-manager/release-24.11";
+    home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nixvim.url = "github:nix-community/nixvim";
-    nixvim.inputs.nixpkgs.follows = "nixpkgs-unstable";
+    nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
 
     flox.url = "github:flox/flox/main";
-    flox.inputs.nixpkgs.follows = "nixpkgs";
+    # complains about older nix version not available otherwise
+    flox.inputs.nixpkgs.follows = "nixpkgs-old";
   };
 
   outputs = inputs@{ self, ... }:
@@ -53,20 +59,44 @@
         overlays = [
           inputs.nur.overlays.default
           (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-firefox; inherit system; })
-              firefox-unwrapped;
-          })
-          (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-thunderbird; inherit system; })
-              thunderbird-unwrapped;
-          })
-          (final: prev: {
             inherit (importPkgs { pkgs = inputs.nixpkgs-cb_thunderlink-native; inherit system; })
               cb_thunderlink-native;
           })
           (final: prev: {
             inherit (importPkgs { pkgs = inputs.nixpkgs-mailsend-go; inherit system; })
               mailsend-go;
+          })
+          (final: prev: {
+            inherit (importPkgs { pkgs = inputs.nixpkgs-thunderbird; inherit system; })
+              thunderbird-unwrapped;
+          })
+          # https://github.com/NixOS/nixpkgs/pull/369253
+          (final: prev: {
+            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
+              firefox-unwrapped;
+          })
+          (final: prev: {
+            inherit (importPkgs { pkgs = inputs.nixpkgs-arcanist; inherit system; })
+              arcanist;
+          })
+          # https://github.com/NixOS/nixpkgs/pull/368580
+          (final: prev: {
+            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
+              kitty;
+          })
+          # https://github.com/NixOS/nixpkgs/pull/367669
+          (final: prev: {
+            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
+              magic-wormhole;
+          })
+          # https://github.com/NixOS/nixpkgs/pull/368789
+          (final: prev: rec {
+            python3 = prev.python3.override {
+              packageOverrides = python-final: python-prev: {
+                ansible-compat = inputs.nixpkgs-ansible-compat.legacyPackages.${prev.system}.python3.pkgs.ansible-compat;
+              };
+            };
+            python3Packages = python3.pkgs;
           })
           (final: prev: {
             flox = inputs.flox.packages.${system}.default;
@@ -117,37 +147,31 @@
             # Embed MOZ_* and other variables into launchd environment
             # https://github.com/nix-community/home-manager/pull/5801
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/5801/commits/0165235ea1162346397e2b600899e130b96a0e22.patch";
-              sha256 = "sha256-vSQFf4y7Nun1PB2msDdjOMadm/ejaX45OrM1vrXcYWE=";
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/db0eae1c7981bebefed443a0377aff4026f539eb.patch";
+              sha256 = "sha256-UbnthN5zIj3h/7w0+af9LfJ9+ynPRBKSRDBizbPmO6c=";
             })
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/5801/commits/c200ff63c0f99c57fac96aac667fd50b5057aec7.patch";
-              sha256 = "sha256-HVQ+ZhkyroSYEeXXD7/Jrv3CNYDHx24Jn+iQB34VzLQ=";
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/6c52c6fab4b5a39182066181a22c689e371bb5df.patch";
+              sha256 = "sha256-7mWsyaiGXiCLv++mIJEADTgm5HJNygwjGVz55f5aGP0=";
             })
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/5801/commits/3afb17e065dcb88cb4794a16a16d44573c0b76cf.patch";
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/06196d929516a31b82d9b7b04e8ae49f51754bf1.patch";
               sha256 = "sha256-iu/W8eJ2bd6rXoolvuA4E8yDwDPGibraPxByXTUzXKk=";
             })
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/5801/commits/a2bbd84dc2eba1c19a84aa917c247fc73843a387.patch";
-              sha256 = "sha256-lhsgTkk+5YqColAFS0Y4MBEPhIkMpuywTt7IdhE9QN4=";
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/03d774740f1d8f92926641f756061612df3f7fcb.patch";
+              sha256 = "sha256-rGwMFJmWF9N9ny+5lAkqAuwGAuAV0Yu4FMAOTCPDe2s=";
             })
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/5801/commits/d58239f42b44d42b64e1c20e6b563a72dce729bc.patch";
-              sha256 = "sha256-j/LBM/pEIi14H2PbAFQjUgWX0h8bd9hAXqyaG1m9uX4=";
+              url = "https://github.com/nix-community/home-manager/pull/5801/commits/24fc7dacf6b4aca2d5aeced58563f845ed6c9ca9.patch";
+              sha256 = "sha256-t0apIUHaAWrWXHG4AnDQPdHE9qZHGqK7fWBicJXu/LI=";
             })
 
-            # Support extensions for thunderbird profiles
-            # https://github.com/nix-community/home-manager/pull/6033
-            (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/commit/4d680ee96fe1b698e75804cf655c365ea4ec5433.patch";
-              sha256 = "sha256-17FaxrhHymgFrVE4hO5eAn7DesLZ6CBlettDfJC/ro4=";
-            })
             # Support native hosts for thunderbird
             # TODO: post upstream
             (pkgs.fetchpatch {
-              url = "https://github.com/booxter/home-manager/commit/61b7d5db483241dc6f11c36ef00202539e957480.patch";
-              sha256 = "sha256-yfWd7jGjvQ4I83nzRrIyiXPLHbuP50wABSiCjoZgX0U=";
+              url = "https://github.com/booxter/home-manager/commit/34978ffd7b1393e0a30810c835144cd3b0fe0634.patch";
+              sha256 = "sha256-eMGMDokOsotOD5/0ju9x4aBC8rNyYtdks4AIdw5epY0=";
             })
           ];
         };
@@ -185,7 +209,7 @@
 
     # adopted from https://www.tweag.io/blog/2023-02-09-nixos-vm-on-macos/
     nixosModules.base = { pkgs, ... }: {
-      system.stateVersion = "24.11";
+      system.stateVersion = "25.05";
 
       services.getty.autologinUser = "${username}";
 

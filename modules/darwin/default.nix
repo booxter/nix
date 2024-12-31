@@ -139,7 +139,7 @@ in rec {
   # $ darwin-rebuild changelog
   system.stateVersion = 4;
 
-  fonts.packages = [ pkgs.nerdfonts ];
+  fonts.packages = builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
 
   users.users.${username} = {
     name = username;

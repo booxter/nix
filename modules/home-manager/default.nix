@@ -1,5 +1,5 @@
 { lib, pkgs, username, ... }: with lib; {
-  home.stateVersion = "24.11";
+  home.stateVersion = "25.05";
   programs.home-manager.enable = true; # let it manage itself
 
   programs.ssh = import ./programs/ssh.nix;
@@ -84,7 +84,6 @@
     element-desktop
     iterm2
     keycastr
-    nerdfonts
     obsidian
     podman-desktop
     raycast
@@ -98,7 +97,7 @@
     (import ./modules/homerow.nix { inherit pkgs lib; })
     (import ./modules/vpn.nix { inherit pkgs; })
     (import ./modules/weechat-session.nix { inherit pkgs; })
-  ];
+  ] ++ lib.optionals stdenv.isDarwin builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
 
   fonts.fontconfig.enable = true;
 

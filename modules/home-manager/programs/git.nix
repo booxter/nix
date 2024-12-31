@@ -1,6 +1,12 @@
 { pkgs, username, ... }: {
   enable = true;
-  package = pkgs.gitAndTools.gitFull;
+  package = pkgs.gitAndTools.git.override {
+    svnSupport = false; # TODO: revert back to gitFull derivation when build is fixed
+    guiSupport = true;
+    sendEmailSupport = true;
+    withSsh = true;
+    withLibsecret = !pkgs.stdenv.hostPlatform.isDarwin;
+  };
   userEmail = "ihar.hrachyshka@gmail.com";
   userName = "Ihar Hrachyshka";
   ignores = [
