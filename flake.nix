@@ -89,6 +89,10 @@
             inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
               magic-wormhole;
           })
+          # https://github.com/NixOS/nixpkgs/pull/369267
+          (final: prev: {
+            gitAndTools.gitFull = (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; }).gitAndTools.gitFull;
+          })
           # https://github.com/NixOS/nixpkgs/pull/368789
           (final: prev: rec {
             python3 = prev.python3.override {
