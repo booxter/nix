@@ -61,12 +61,6 @@
     };
     fugitive.enable = true;
     gitsigns.enable = true;
-    orgmode = {
-      enable = true;
-      settings = {
-        org_agenda_files = "~/.org/**/*";
-      };
-    };
     tmux-navigator.enable = true;
     telescope = {
       enable = true;
