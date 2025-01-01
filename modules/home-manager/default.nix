@@ -37,6 +37,7 @@
     curl
     fd
     file
+    findutils
     flox
     fzf
     gcalcli
