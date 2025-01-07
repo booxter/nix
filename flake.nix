@@ -20,9 +20,6 @@
     # https://github.com/NixOS/nixpkgs/pull/252383
     nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
 
-    # https://github.com/NixOS/nixpkgs/pull/369517
-    nixpkgs-thunderbird.url = "github:booxter/nixpkgs/thunderbird-fix-darwin-clang-19";
-
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 
@@ -67,15 +64,6 @@
               mailsend-go;
           })
           (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-thunderbird; inherit system; })
-              thunderbird-unwrapped;
-          })
-          # https://github.com/NixOS/nixpkgs/pull/369253
-          (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
-              firefox-unwrapped;
-          })
-          (final: prev: {
             inherit (importPkgs { pkgs = inputs.nixpkgs-arcanist; inherit system; })
               arcanist;
           })
@@ -104,6 +92,11 @@
           })
           (final: prev: {
             flox = inputs.flox.packages.${system}.default;
+          })
+          # Packages I care enough about to pull from master
+          (final: prev: {
+            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
+              firefox-unwrapped thunderbird-unwrapped podman-desktop;
           })
         ];
       };
