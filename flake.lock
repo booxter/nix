@@ -371,22 +371,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-ansible-compat": {
-      "locked": {
-        "lastModified": 1735477005,
-        "narHash": "sha256-zMR2Iprrm1hNa52Nk+ENRGCtbnYbb747oFKKlf2pRzw=",
-        "owner": "ofalvai",
-        "repo": "nixpkgs",
-        "rev": "b46391419521ad8ec4c57403b9b5e7e81bee2c63",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ofalvai",
-        "ref": "ansible-compat-fix",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-arcanist": {
       "locked": {
         "lastModified": 1735564410,
@@ -437,11 +421,11 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1736357131,
-        "narHash": "sha256-ZhYqbgXlbS/DTpPjt/l6fgWfWoRemBKcm33b1w02zTk=",
+        "lastModified": 1736357384,
+        "narHash": "sha256-zSzjDJwdIhm28mIrH4M4EOJIrfow5HGCQEGGh9pocNM=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "45e587dc45a514cecb85bd1d3dfc7d7ae1ad4ad9",
+        "rev": "2553b4dde78983ab00daebe1cfce32208c982e85",
         "type": "github"
       },
       "original": {
@@ -550,11 +534,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1736354715,
-        "narHash": "sha256-phj5W25sMhlkBg8rc3hEzSlZQCfOBipq647bCZ7fOuc=",
+        "lastModified": 1736357676,
+        "narHash": "sha256-B1T0lIw5lu+WDolpyi9JJwSaPa5kvsYMRrgefrl7yQo=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "3cd3e6c29d1343ab573eae77b881e20cfaf63342",
+        "rev": "2d96d2338c185780a93e290be7d9fe13814cd95a",
         "type": "github"
       },
       "original": {
@@ -616,7 +600,6 @@
         "home-manager": "home-manager",
         "nix-darwin": "nix-darwin",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-ansible-compat": "nixpkgs-ansible-compat",
         "nixpkgs-arcanist": "nixpkgs-arcanist",
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",

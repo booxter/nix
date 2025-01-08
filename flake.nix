@@ -23,9 +23,6 @@
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 
-    # https://github.com/NixOS/nixpkgs/pull/368789
-    nixpkgs-ansible-compat.url = "github:ofalvai/nixpkgs/ansible-compat-fix";
-
     nix-darwin.url = "github:LnL7/nix-darwin";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -66,29 +63,6 @@
           (final: prev: {
             inherit (importPkgs { pkgs = inputs.nixpkgs-arcanist; inherit system; })
               arcanist;
-          })
-          # https://github.com/NixOS/nixpkgs/pull/368580
-          (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
-              kitty;
-          })
-          # https://github.com/NixOS/nixpkgs/pull/367669
-          (final: prev: {
-            inherit (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; })
-              magic-wormhole;
-          })
-          # https://github.com/NixOS/nixpkgs/pull/369267
-          (final: prev: {
-            gitAndTools.gitFull = (importPkgs { pkgs = inputs.nixpkgs-master; inherit system; }).gitAndTools.gitFull;
-          })
-          # https://github.com/NixOS/nixpkgs/pull/368789
-          (final: prev: rec {
-            python3 = prev.python3.override {
-              packageOverrides = python-final: python-prev: {
-                ansible-compat = inputs.nixpkgs-ansible-compat.legacyPackages.${prev.system}.python3.pkgs.ansible-compat;
-              };
-            };
-            python3Packages = python3.pkgs;
           })
           (final: prev: {
             flox = inputs.flox.packages.${system}.default;
@@ -151,16 +125,29 @@
               url = "https://github.com/nix-community/home-manager/pull/5801/commits/6c52c6fab4b5a39182066181a22c689e371bb5df.patch";
               sha256 = "sha256-7mWsyaiGXiCLv++mIJEADTgm5HJNygwjGVz55f5aGP0=";
             })
+            #(pkgs.fetchpatch {
+            #  url = "https://github.com/nix-community/home-manager/pull/5801/commits/06196d929516a31b82d9b7b04e8ae49f51754bf1.patch";
+            #  sha256 = "sha256-iu/W8eJ2bd6rXoolvuA4E8yDwDPGibraPxByXTUzXKk=";
+            #})
+            #(pkgs.fetchpatch {
+            #  url = "https://github.com/nix-community/home-manager/pull/5801/commits/03d774740f1d8f92926641f756061612df3f7fcb.patch";
+            #  sha256 = "sha256-rGwMFJmWF9N9ny+5lAkqAuwGAuAV0Yu4FMAOTCPDe2s=";
+            #})
+            #(pkgs.fetchpatch {
+            #  url = "https://github.com/nix-community/home-manager/pull/5801/commits/24fc7dacf6b4aca2d5aeced58563f845ed6c9ca9.patch";
+            #  sha256 = "sha256-t0apIUHaAWrWXHG4AnDQPdHE9qZHGqK7fWBicJXu/LI=";
+            #})
+
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/5801/commits/06196d929516a31b82d9b7b04e8ae49f51754bf1.patch";
-              sha256 = "sha256-iu/W8eJ2bd6rXoolvuA4E8yDwDPGibraPxByXTUzXKk=";
+              url = "https://github.com/booxter/home-manager/commit/dbe54a48a0bc9942289f6a5d8a751ed3be065c81.patch";
+              sha256 = "sha256-1xpGCqx0k9Aewmw3UNfjAfvKyF8pY6PSqZsRBCqE/gA=";
             })
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/5801/commits/03d774740f1d8f92926641f756061612df3f7fcb.patch";
+              url = "https://github.com/booxter/home-manager/commit/8bfa7b024b5b83274388f69ae448e93ddf532573.patch";
               sha256 = "sha256-rGwMFJmWF9N9ny+5lAkqAuwGAuAV0Yu4FMAOTCPDe2s=";
             })
             (pkgs.fetchpatch {
-              url = "https://github.com/nix-community/home-manager/pull/5801/commits/24fc7dacf6b4aca2d5aeced58563f845ed6c9ca9.patch";
+              url = "https://github.com/booxter/home-manager/commit/ff575b88f8320f37cc84c68f8acf687b647902a0.patch";
               sha256 = "sha256-t0apIUHaAWrWXHG4AnDQPdHE9qZHGqK7fWBicJXu/LI=";
             })
 
