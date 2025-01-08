@@ -6,11 +6,12 @@
     xargs = "${pkgs.findutils}/bin/xargs -d '\\n'";
     grep = "${pkgs.gnugrep}/bin/grep";
     realpath = "${pkgs.coreutils}/bin/realpath";
+    find = "${pkgs.findutils}/bin/find";
   in
     lib.hm.dag.entryAfter [ "linkGeneration" ] ''
       # unregister all from the previous generation
       ${lsregister} -dump | ${grep} -oE '(/nix/store/.*\.app)' | ${xargs} ${lsregister} -f -u
       # refresh with new generation
-      ${lsregister} -v -f -R $(${realpath} $HOME/Applications/Home\ Manager\ Apps)
+      ${find} $(${realpath} $HOME/Applications/Home\ Manager\ Apps) -name '*.app' -exec ${realpath} {} \; | ${xargs} ${lsregister} -f
     '';
 }
