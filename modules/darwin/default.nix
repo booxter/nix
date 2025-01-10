@@ -115,6 +115,7 @@ in rec {
       taskToWorkId = "a6a36050-f4c4-49a5-80a2-05471f1d21f8";
       taskToPrivateId = "e810fef2-5240-4c41-bfa4-538534f96ff9";
       obsidianCmd = cmdId: "open 'obsidian://adv-uri?commandid=quickadd%3Achoice%3A${cmdId}'";
+      spotifyCmd = cmd: "${pkgs.spotify-player}/bin/spotify_player playback ${cmd}";
     in ''
       # Exact keycodes may be checked @ https://github.com/koekeishiya/skhd/issues/1
       cmd + shift - c : ${obsidianCmd fleetingId}
@@ -122,9 +123,9 @@ in rec {
       cmd + shift - 0x29 : ${obsidianCmd logToPrivateId} # semicolon
       cmd + shift - t : ${obsidianCmd taskToWorkId}
       cmd + shift - y : ${obsidianCmd taskToPrivateId}
-      shift - play : ${pkgs.spotify-player}/bin/spotify_player playback play-pause
-      shift - next : ${pkgs.spotify-player}/bin/spotify_player playback next
-      shift - previous : ${pkgs.spotify-player}/bin/spotify_player playback previous
+      shift - play : ${spotifyCmd "play-pause"}
+      shift - next : ${spotifyCmd "next"}
+      shift - previous : ${spotifyCmd "previous"}
     '';
   };
 
