@@ -98,14 +98,15 @@
     slack
     spotify
     todoist
-    weechat
     (import ./modules/beaker.nix { inherit pkgs lib; })
     (import ./modules/devnest.nix { inherit pkgs; })
     (import ./modules/rhpkg.nix { inherit pkgs; })
     (import ./modules/homerow.nix { inherit pkgs lib; })
     (import ./modules/vpn.nix { inherit pkgs; })
+    # TODO: maybe add a launchd service to clean up periodically?
     (import ./modules/clean-uri-handlers.nix { inherit pkgs username; })
     (import ./modules/weechat-session.nix { inherit pkgs; })
+    (import ./modules/ncspot.nix { inherit pkgs; })
   ] ++ lib.optionals stdenv.isDarwin builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
 
   fonts.fontconfig.enable = true;
