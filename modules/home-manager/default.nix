@@ -111,6 +111,13 @@
 
   programs.spotify-player.enable = true;
 
+  programs.vscode = {
+    enable = true;
+    enableExtensionUpdateCheck = false;
+    enableUpdateCheck = false;
+    mutableExtensionsDir = false; # at least for now
+  };
+
   fonts.fontconfig.enable = true;
 
   home.sessionVariables = {
