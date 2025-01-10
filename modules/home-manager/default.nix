@@ -55,6 +55,7 @@
     jq
     less
     lima
+    lnav # log viewer
     magic-wormhole
     mailsend-go
     man-pages
