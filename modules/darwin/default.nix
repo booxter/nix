@@ -122,6 +122,9 @@ in rec {
       cmd + shift - 0x29 : ${obsidianCmd logToPrivateId} # semicolon
       cmd + shift - t : ${obsidianCmd taskToWorkId}
       cmd + shift - y : ${obsidianCmd taskToPrivateId}
+      shift - play : ${pkgs.spotify-player}/bin/spotify_player playback play-pause
+      shift - next : ${pkgs.spotify-player}/bin/spotify_player playback next
+      shift - previous : ${pkgs.spotify-player}/bin/spotify_player playback previous
     '';
   };
 
