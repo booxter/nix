@@ -86,6 +86,8 @@
     zip
     (import ./modules/meetings.nix { inherit pkgs; })
     (import ./modules/openstack-logs.nix { inherit pkgs; })
+    (import ./modules/weechat-session.nix { inherit pkgs; })
+    (import ./modules/spot.nix { inherit pkgs; })
   ]
   ++ lib.optionals stdenv.isDarwin [
     cb_thunderlink-native
@@ -105,9 +107,9 @@
     (import ./modules/vpn.nix { inherit pkgs; })
     # TODO: maybe add a launchd service to clean up periodically?
     (import ./modules/clean-uri-handlers.nix { inherit pkgs username; })
-    (import ./modules/weechat-session.nix { inherit pkgs; })
-    (import ./modules/ncspot.nix { inherit pkgs; })
   ] ++ lib.optionals stdenv.isDarwin builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
+
+  programs.spotify-player.enable = true;
 
   fonts.fontconfig.enable = true;
 
