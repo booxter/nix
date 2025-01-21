@@ -63,14 +63,14 @@ in rec {
       # from cache
       enable = true;
       ephemeral = true;
-      maxJobs = 4;
+      maxJobs = 1;
       config = {
         virtualisation = {
           darwin-builder = {
             diskSize = 80 * 1024;
-            memorySize = 16 * 1024;
+            memorySize = 20 * 1024;
           };
-          cores = 8;
+          cores = 4;
         };
       };
     };
