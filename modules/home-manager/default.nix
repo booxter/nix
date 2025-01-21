@@ -35,6 +35,7 @@
     chatgpt-cli
     coreutils
     curl
+    discord
     fd
     file
     findutils
