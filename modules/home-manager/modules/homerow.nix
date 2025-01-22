@@ -5,7 +5,7 @@
   src = fetchzip {
     url = "https://builds.homerow.app/latest/Homerow.zip";
     extension = "zip";
-    hash = "sha256-Bx39Di83+NWtZEEF9pbDoN6SDZPPAmvnlyfAAx8pvIY=";
+    hash = "sha256-CBW+ECLziGsa6lfTKxexaj9FjAfBNra53IftTxQQZmU=";
   };
 
   nativeBuildInputs = [ unzip ];
