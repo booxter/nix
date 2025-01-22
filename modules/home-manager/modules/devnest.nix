@@ -4,8 +4,8 @@
 
   src = ({ pname, version }: fetchgit {
     url = "https://github.com/rhos-infra/${pname}";
-    branchName = "${version}";
-    sha256 = "sha256-Ifo5cqR1Yh7sOLE+aVkRCl9+ymkisp8aKmGd7XrDF9k=";
+    tag = "${version}";
+    hash = "sha256-Ifo5cqR1Yh7sOLE+aVkRCl9+ymkisp8aKmGd7XrDF9k=";
   }) { inherit pname version; };
 
   env.PBR_VERSION = version;

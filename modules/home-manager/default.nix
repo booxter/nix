@@ -29,6 +29,8 @@
   programs.less.enable = true;
   programs.password-store.enable = true;
 
+  programs.awscli.enable = true;
+
   home.packages = with pkgs; [
     ack
     arcanist
@@ -89,6 +91,7 @@
     (import ./modules/openstack-logs.nix { inherit pkgs; })
     (import ./modules/weechat-session.nix { inherit pkgs; })
     (import ./modules/spot.nix { inherit pkgs; })
+    (import ./modules/aws-automation.nix { inherit pkgs; })
   ]
   ++ lib.optionals stdenv.isDarwin [
     cb_thunderlink-native
@@ -128,6 +131,7 @@
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
     HOMEBREW_NO_AUTO_UPDATE = 1;
+    AWS_PROFILE = "saml";
   };
 
   programs.starship = {
