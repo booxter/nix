@@ -54,6 +54,7 @@
     gzip
     heimdal
     htop
+    ibmcloud-cli
     ipcalc
     jq
     less
