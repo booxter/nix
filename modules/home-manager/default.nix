@@ -138,6 +138,10 @@
     AWS_DEFAULT_OUTPUT = "table";
   };
 
+  home.sessionPath = [
+    "$HOME/.priv-bin"
+  ];
+
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
