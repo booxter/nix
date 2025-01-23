@@ -8,6 +8,7 @@
     # local config
     "config.backup"
     "config.local"
+    "config.ilab"
   ];
   extraConfig = "SetEnv TERM=xterm-256color";
 }
