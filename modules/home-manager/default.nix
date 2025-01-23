@@ -132,7 +132,10 @@
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
     HOMEBREW_NO_AUTO_UPDATE = 1;
+
     AWS_PROFILE = "saml";
+    AWS_DEFAULT_REGION = "us-east-2";
+    AWS_DEFAULT_OUTPUT = "table";
   };
 
   programs.starship = {
