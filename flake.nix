@@ -44,12 +44,13 @@
     # home-manager switch -b backup --flake .
     # nix run nixpkgs#home-manager -- switch -b backup --flake .
     homeConfigurations = {
-      "ihrachys@ihrachys-macpro" = helper.mkHome {
+      "ihrachys" = helper.mkHome {
         hostname = "ihrachys-macpro";
         platform = "aarch64-darwin";
       };
       "ec2-user" = helper.mkHome {
-        hostname = "ilab-ec2";
+        hostname = "ec2";
+        username = "ec2-user";
         platform = "x86_64-linux";
       };
     };
