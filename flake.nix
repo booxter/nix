@@ -48,6 +48,10 @@
         hostname = "ihrachys-macpro";
         platform = "aarch64-darwin";
       };
+      "ec2-user" = helper.mkHome {
+        hostname = "ilab-ec2";
+        platform = "x86_64-linux";
+      };
     };
 
     #nix run nix-darwin -- switch --flake .
