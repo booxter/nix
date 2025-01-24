@@ -5,5 +5,6 @@
     kinit-pass
     meetings
     spot
+    vpn
   ];
 }
