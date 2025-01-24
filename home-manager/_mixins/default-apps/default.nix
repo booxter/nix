@@ -2,8 +2,8 @@
 # Changed to honor app paths with space characters.
 { lib, pkgs, ... }:
 {
-  home.activation.default-apps = lib.optionalAttrs pkgs.stdenv.isDarwin (
-    let
+  home.activation = lib.optionalAttrs pkgs.stdenv.isDarwin {
+    default-apps = let
       lsregister = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
       xargs = "${pkgs.findutils}/bin/xargs -d '\\n'";
       realpath = "${pkgs.coreutils}/bin/realpath";
@@ -13,6 +13,6 @@
       ${lsregister} -dump | ${lib.getExe pkgs.gnugrep} -oE '(/nix/store/.*\.app)' | ${xargs} ${lsregister} -f -u
       # refresh with new generation
       ${lib.getExe pkgs.findutils} $(${realpath} $HOME/Applications/Home\ Manager\ Apps) -name '*.app' -exec ${realpath} {} \; | ${xargs} ${lsregister} -f
-    ''
-  );
+    '';
+  };
 }
