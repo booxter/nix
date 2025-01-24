@@ -13,7 +13,8 @@
     AWS_DEFAULT_OUTPUT = "table";
   };
 
-  home.packages = with pkgs; [
+  # TODO: introduce a better check to disable it on remotes
+  home.packages = with pkgs; lib.optionals stdenv.isDarwin [
     aws-automation
   ];
 }
