@@ -31,6 +31,8 @@
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
+
+    flox.url = "github:flox/flox/v1.3.11";
   };
 
   outputs = inputs@{ self, ... }:

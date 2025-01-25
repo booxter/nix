@@ -40,8 +40,18 @@
   services.nix-daemon.enable = true;
   nix.package = pkgs.nix;
 
-  # Necessary for using flakes on this system.
-  nix.settings.experimental-features = "nix-command flakes";
+  nix.settings = {
+    # Necessary for using flakes on this system.
+    experimental-features = "nix-command flakes";
+
+    # flox config
+    substituters = [
+      "https://cache.flox.dev"
+    ];
+    trusted-public-keys = [
+      "flox-cache-public-1:7F4OyH7ZCnFhcze3fJdfyXYLQw/aV7GEed86nQ7IsOs="
+    ];
+  };
 
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog

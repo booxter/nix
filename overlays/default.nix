@@ -10,6 +10,7 @@
     inherit (import inputs.nixpkgs-arcanist { inherit (prev) system; }) arcanist;
     inherit (import inputs.nixpkgs-mailsend-go { inherit (prev) system; }) mailsend-go;
     inherit (import inputs.nixpkgs-cb_thunderlink-native { inherit (prev) system; }) cb_thunderlink-native;
+    flox = inputs.flox.packages.${prev.system}.default;
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will

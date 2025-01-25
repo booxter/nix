@@ -97,6 +97,7 @@
     fd
     file
     findutils
+    flox
     fzf
     gcalcli
     gnugrep
