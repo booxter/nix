@@ -24,7 +24,7 @@
   }
 
   sanitize() {
-    sed=${lib.getExe pkgs.gnused}/bin/sed
+    sed=${lib.getExe pkgs.gnused}
     $sed "s/[\/|]/~/g" | $sed "s/:/-/g"
   }
 
