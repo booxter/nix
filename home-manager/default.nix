@@ -60,6 +60,7 @@ in
       obsidian
       podman-desktop
       wireshark
+      zoom-us
     ]
     ++ lib.optionals isDarwin [
       cb_thunderlink-native
