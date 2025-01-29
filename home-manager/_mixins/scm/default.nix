@@ -26,6 +26,11 @@ in
       "*.swp"
     ];
 
+    hooks = {
+      # TODO: rewrite the hook script use nix
+      prepare-commit-msg = ./prepare-commit-msg.sh;
+    };
+
     extraConfig = {
       # ovs/ovn
       pw = {
