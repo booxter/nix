@@ -44,6 +44,9 @@
     # Necessary for using flakes on this system.
     experimental-features = "nix-command flakes";
 
+    # Some packages like firefox can kill the machine due to memory pressure
+    max-jobs = 2;
+
     # flox config
     substituters = [
       "https://cache.flox.dev"

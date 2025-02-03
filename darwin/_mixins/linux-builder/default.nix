@@ -14,7 +14,7 @@
             diskSize = 80 * 1024;
             memorySize = 20 * 1024;
           };
-          cores = 4;
+          cores = 2;
         };
       };
     };
