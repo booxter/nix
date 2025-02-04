@@ -116,6 +116,7 @@
     moreutils
     ngrep
     nix-tree
+    ollama
     page
     podman
     pre-commit
