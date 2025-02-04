@@ -51,6 +51,8 @@ in
     };
   };
 
+  services.ollama.enable = true;
+
   programs.home-manager.enable = true; # let it manage itself
 
   home.packages =
