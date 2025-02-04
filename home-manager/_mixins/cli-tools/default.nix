@@ -118,6 +118,7 @@
     nix-tree
     page
     podman
+    pre-commit
     procps
     pstree
     shell-gpt
