@@ -52,6 +52,12 @@ in
   };
 
   services.ollama.enable = true;
+  launchd.agents.ollama = lib.optionalAttrs isDarwin {
+    config = {
+      StandardErrorPath = "/tmp/ollama.err";
+      StandardOutPath = "/tmp/ollama.out";
+    };
+  };
 
   programs.home-manager.enable = true; # let it manage itself
 
