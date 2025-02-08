@@ -7,14 +7,15 @@
       # from cache
       enable = true;
       ephemeral = true;
-      maxJobs = 1;
+      systems = ["x86_64-linux" "aarch64-linux"];
       config = {
+        boot.binfmt.emulatedSystems = ["x86_64-linux"];
         virtualisation = {
           darwin-builder = {
             diskSize = 80 * 1024;
             memorySize = 20 * 1024;
           };
-          cores = 2;
+          cores = 4;
         };
       };
     };
