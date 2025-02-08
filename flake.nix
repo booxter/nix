@@ -22,6 +22,8 @@
 
     nix-darwin.url = "github:LnL7/nix-darwin";
 
+    nix-rosetta-builder.url = "github:cpick/nix-rosetta-builder";
+
     home-manager.url = "github:nix-community/home-manager/master";
 
     nixvim.url = "github:nix-community/nixvim";
