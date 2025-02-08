@@ -115,6 +115,7 @@
     mergiraf
     moreutils
     ngrep
+    nix-init
     nix-tree
     ollama
     page
