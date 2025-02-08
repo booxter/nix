@@ -105,6 +105,7 @@
     gzip
     heimdal
     htop
+    hydra-check
     ibmcloud-cli
     ipcalc
     lima
