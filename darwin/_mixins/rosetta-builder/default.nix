@@ -1,6 +1,6 @@
 { ... }: {
   nix-rosetta-builder = {
-    memory = "16GiB";
+    memory = "24GiB";
     cores = 1;
     onDemand = true;
   };
