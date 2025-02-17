@@ -25,6 +25,7 @@
         })
       ];
     });
+    nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override { withNom = true; };
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will

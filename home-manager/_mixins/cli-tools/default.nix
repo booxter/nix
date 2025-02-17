@@ -118,6 +118,7 @@
     ngrep
     nix-init
     nix-tree
+    nom
     ollama
     page
     podman
