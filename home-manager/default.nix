@@ -6,6 +6,7 @@
   pkgs,
   stateVersion,
   username,
+  isLaptop,
   ...
 }:
 let
@@ -16,19 +17,20 @@ in
     inputs.nixvim.homeManagerModules.nixvim
     ./_mixins/awscli
     ./_mixins/cli-tools
-    ./_mixins/default-apps
-    ./_mixins/email
-    ./_mixins/firefox
-    ./_mixins/fonts
     ./_mixins/git-sync
-    ./_mixins/kitty
     ./_mixins/nixvim
     ./_mixins/scm
     ./_mixins/scripts
-    ./_mixins/spotify
     ./_mixins/ssh
-    ./_mixins/telegram
     ./_mixins/tmux
+  ] ++ lib.optionals isLaptop [
+    ./_mixins/default-apps
+    ./_mixins/email
+    ./_mixins/kitty
+    ./_mixins/firefox
+    ./_mixins/fonts
+    ./_mixins/spotify
+    ./_mixins/telegram
     ./_mixins/vscode
   ];
 

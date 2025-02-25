@@ -12,20 +12,24 @@
       username ? "ihrachys",
       platform ? "aarch64-darwin",
     }:
-    inputs.home-manager.lib.homeManagerConfiguration {
-      pkgs = inputs.nixpkgs.legacyPackages.${platform};
-      extraSpecialArgs = {
-        inherit
-          inputs
-          outputs
-          hostname
-          platform
-          username
-          stateVersion
-          ;
+    let
+      isLaptop = hostname == "ihrachys-macpro";
+    in
+      inputs.home-manager.lib.homeManagerConfiguration {
+        pkgs = inputs.nixpkgs.legacyPackages.${platform};
+        extraSpecialArgs = {
+          inherit
+            inputs
+            outputs
+            hostname
+            platform
+            username
+            stateVersion
+            isLaptop
+            ;
+        };
+        modules = [ ../home-manager ];
       };
-      modules = [ ../home-manager ];
-    };
 
   # Helper function for generating NixOS configs
   mkNixos =
