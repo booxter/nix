@@ -18,8 +18,8 @@
     ./_mixins/gnupg
     ./_mixins/homebrew
     ./_mixins/iterm2
-    # ./_mixins/linux-builder
-    ./_mixins/rosetta-builder
+    ./_mixins/linux-builder
+    # ./_mixins/rosetta-builder
     ./_mixins/nix-gc
     ./_mixins/sudo
   ];
