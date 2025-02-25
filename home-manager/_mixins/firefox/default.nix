@@ -84,7 +84,7 @@
         # krb gss login
         "network.negotiate-auth.trusted-uris" = "redhat.com";
       };
-      extensions = with pkgs.nur.repos.rycee.firefox-addons; [
+      extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
         browserpass
         privacy-badger
         ublock-origin

@@ -17,6 +17,9 @@
     # https://github.com/NixOS/nixpkgs/pull/252383
     nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
 
+    # https://github.com/NixOS/nixpkgs/pull/385055
+    nixpkgs-ollama.url = "github:booxter/nixpkgs/ollama";
+
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 

@@ -6,7 +6,7 @@
     # TODO: find a stable url that doesn't get overridden on updates
     url = "https://builds.homerow.app/latest/Homerow.zip";
     extension = "zip";
-    hash = "sha256-4XuqFlvyYOazisYLGETjE9iaddF1AUWtAjho7OUyaFg=";
+    hash = "sha256-AfV7IyrCDELPpwDBl6SmPhwXIkXwcu5PAdwcYM2eMOE=";
   };
 
   nativeBuildInputs = with pkgs; [ unzip ];
