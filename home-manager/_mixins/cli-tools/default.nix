@@ -120,6 +120,7 @@
     nix-tree
     nom
     ollama
+    openssh
     page
     podman
     pre-commit
