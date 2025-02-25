@@ -66,6 +66,7 @@ in
   home.packages =
     with pkgs;
     [
+    ] ++ lib.optionals isLaptop [
       discord
       obsidian
       podman-desktop
