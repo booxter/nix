@@ -12,7 +12,7 @@
       "/etc/ssh/ssh_config"
 
       # local config
-      "config.backup" # prior to home-manager activation
+      # "config.backup" # prior to home-manager activation
       "config.local" # whatever I may want to add manually
     ];
 

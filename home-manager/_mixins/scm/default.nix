@@ -9,11 +9,6 @@ let
   email = "ihar.hrachyshka@gmail.com";
 in
 {
-  # Use homebrew or system ssh for git: they support gss.
-  home.sessionVariables = lib.optionalAttrs pkgs.stdenv.isDarwin {
-    GIT_SSH_COMMAND = if pkgs.stdenv.isDarwin then "/opt/homebrew/bin/ssh" else "/usr/bin/ssh";
-  };
-
   # Git
   programs.git = {
     enable = true;

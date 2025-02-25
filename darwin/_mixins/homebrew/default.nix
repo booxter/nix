@@ -4,7 +4,6 @@
     enable = true;
     onActivation.autoUpdate = false;
     brews = [
-      "openssh" # it supports gss
       {
         name = "svim"; # SketchyVim
         start_service = true;
