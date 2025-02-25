@@ -11,6 +11,7 @@
     inherit (import inputs.nixpkgs-mailsend-go { inherit (prev) system; }) mailsend-go;
     inherit (import inputs.nixpkgs-cb_thunderlink-native { inherit (prev) system; }) cb_thunderlink-native;
     inherit (import inputs.nixpkgs-ollama { inherit (prev) system; }) ollama;
+    inherit (import inputs.nixpkgs-element { inherit (prev) system; }) element-desktop;
     # https://github.com/NixOS/nixpkgs/pull/384794
     inherit (import inputs.nixpkgs-master { inherit (prev) system; }) gitFull;
     flox = inputs.flox.packages.${prev.system}.default;

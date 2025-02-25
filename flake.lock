@@ -327,6 +327,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-element": {
+      "locked": {
+        "lastModified": 1740480827,
+        "narHash": "sha256-t8b1gLtYVIUxjvgxgV8x1viQCa1WVnc9gxSJqMyt0u0=",
+        "owner": "yuyuyureka",
+        "repo": "nixpkgs",
+        "rev": "56b616f7b84ddf156bb42ed2d6dc7c5da174fa07",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yuyuyureka",
+        "ref": "element-crash",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-mailsend-go": {
       "locked": {
         "lastModified": 1693415164,
@@ -599,6 +615,7 @@
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-arcanist": "nixpkgs-arcanist",
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
+        "nixpkgs-element": "nixpkgs-element",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-ollama": "nixpkgs-ollama",
