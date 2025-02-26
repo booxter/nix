@@ -75,7 +75,7 @@
         # { nix.linux-builder.enable = true; }
         # Then: uncomment `nix-rosetta-builder`, remove `linux-builder`, and `darwin-rebuild switch`
         # a second time. Subsequently, `nix-rosetta-builder` can rebuild itself.
-        inputs.nix-rosetta-builder.darwinModules.default
+        # inputs.nix-rosetta-builder.darwinModules.default
         ../darwin
       ];
     };
