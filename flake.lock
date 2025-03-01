@@ -163,11 +163,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1740606115,
-        "narHash": "sha256-GKe3vrIWcei4gSTckEzHr5Zf/g9NSofmsAnbkNYU+lM=",
+        "lastModified": 1740699498,
+        "narHash": "sha256-r9hkKzX99CGiP1ZqH0e+SWKK4CMsRNRLyotuwrUjhTI=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "6be185eb76295e7562f5bf2da42afe374b8beb15",
+        "rev": "b71edac7a3167026aabea82a54d08b1794088c21",
         "type": "github"
       },
       "original": {
@@ -210,11 +210,11 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1740613821,
-        "narHash": "sha256-kShMCSUUTS319NF5JwIR0CfbYdiOsIELoq+WZQ4vubs=",
+        "lastModified": 1740755725,
+        "narHash": "sha256-amZbqP84H/ApugaT+TADXTB3NbjkVHI9Vac1saIk0kE=",
         "owner": "LnL7",
         "repo": "nix-darwin",
-        "rev": "31631ea68f1df3a658d4e85682da2fcf19b0244b",
+        "rev": "5d6e0851b60508cffd66b4a6982440a40720338d",
         "type": "github"
       },
       "original": {
@@ -229,11 +229,11 @@
         "nixpkgs": "nixpkgs_4"
       },
       "locked": {
-        "lastModified": 1740080418,
-        "narHash": "sha256-Ra9Stf8P6Pm/hTvIILDubwDG37BfKZoOPful/2S1u4Q=",
+        "lastModified": 1740547221,
+        "narHash": "sha256-jyuHINViCO2jlNb9oI1XEJwMtLTYcC7q1ZrBwGHwhYw=",
         "owner": "cpick",
         "repo": "nix-rosetta-builder",
-        "rev": "63d84c75f2f76983d69c1faa712f22345fc7b5c7",
+        "rev": "0e57ac7b74f746be47746f1c0d853417e2d6eb52",
         "type": "github"
       },
       "original": {
@@ -327,22 +327,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-element": {
-      "locked": {
-        "lastModified": 1740572903,
-        "narHash": "sha256-mq3RaHdrXkI1Lew8hfOu474VJw/65F7sKU9TxY/+KDg=",
-        "owner": "yuyuyureka",
-        "repo": "nixpkgs",
-        "rev": "063e8854918136f8405aa685aca6ac12eeca7c65",
-        "type": "github"
-      },
-      "original": {
-        "owner": "yuyuyureka",
-        "ref": "element-crash",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-mailsend-go": {
       "locked": {
         "lastModified": 1693415164,
@@ -361,11 +345,11 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1740617705,
-        "narHash": "sha256-WWG+v0PPsIURb5OGTCiykZi8QdcHoitRkOzROIoBoRc=",
+        "lastModified": 1740791350,
+        "narHash": "sha256-igS2Z4tVw5W/x3lCZeeadt0vcU9fxtetZ/RyrqsCRQ0=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "576f2c930108b9ff47e58623ea77836fa648b137",
+        "rev": "199169a2135e6b864a888e89a2ace345703c025d",
         "type": "github"
       },
       "original": {
@@ -505,11 +489,11 @@
     },
     "nixpkgs_7": {
       "locked": {
-        "lastModified": 1740367490,
-        "narHash": "sha256-WGaHVAjcrv+Cun7zPlI41SerRtfknGQap281+AakSAw=",
+        "lastModified": 1740560979,
+        "narHash": "sha256-Vr3Qi346M+8CjedtbyUevIGDZW8LcA1fTG0ugPY/Hic=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "0196c0175e9191c474c26ab5548db27ef5d34b05",
+        "rev": "5135c59491985879812717f4c9fea69604e7f26f",
         "type": "github"
       },
       "original": {
@@ -546,11 +530,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1740603354,
-        "narHash": "sha256-CO7g55YOMqO3APzKZXaGeDnPTwiomNwYVoHu8BttZD8=",
+        "lastModified": 1740776117,
+        "narHash": "sha256-zQuEScC1oP5q9Qtu+IthuD9AUeYx0f9dGCqHYxkVUDE=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "ab4dcea9acd4ce723a5db2c02db8770acae8c629",
+        "rev": "2efd087395c3c3a0778af4bfb79ea8955a5dbb17",
         "type": "github"
       },
       "original": {
@@ -615,7 +599,6 @@
         "nixpkgs": "nixpkgs_5",
         "nixpkgs-arcanist": "nixpkgs-arcanist",
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
-        "nixpkgs-element": "nixpkgs-element",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-ollama": "nixpkgs-ollama",

@@ -20,9 +20,6 @@
     # https://github.com/NixOS/nixpkgs/pull/385055
     nixpkgs-ollama.url = "github:booxter/nixpkgs/ollama";
 
-    # https://github.com/NixOS/nixpkgs/pull/384979
-    nixpkgs-element.url = "github:yuyuyureka/nixpkgs/element-crash";
-
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 
