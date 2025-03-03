@@ -359,22 +359,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-ollama": {
-      "locked": {
-        "lastModified": 1740499558,
-        "narHash": "sha256-3/A2uQnGm6mAuUyGAUNUDXdZoWeT0Wt6DAJJMQyI0VA=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "667e5f32e8ce901bbc225f9338df4f777996f44a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "ollama",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1730741070,
@@ -601,7 +585,6 @@
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
-        "nixpkgs-ollama": "nixpkgs-ollama",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
         "nur": "nur"
