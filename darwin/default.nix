@@ -18,9 +18,10 @@
     ./_mixins/gnupg
     ./_mixins/homebrew
     ./_mixins/iterm2
+    ./_mixins/kinit-pass
     # ./_mixins/linux-builder
-    ./_mixins/rosetta-builder
     ./_mixins/nix-gc
+    ./_mixins/rosetta-builder
     ./_mixins/sudo
   ];
 
