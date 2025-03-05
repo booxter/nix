@@ -5,10 +5,9 @@
     enable = true;
     darwinSetupWarning = false;
     package = if pkgs.stdenv.isDarwin then pkgs.thunderbird-unwrapped else pkgs.thunderbird;
-    # TODO: restore native hosts when merged upstream
-    #nativeMessagingHosts = with pkgs; [
-    #  cb_thunderlink-native
-    #];
+    nativeMessagingHosts = with pkgs; [
+      cb_thunderlink-native
+    ];
     profiles.default = {
       isDefault = true;
       settings = {
