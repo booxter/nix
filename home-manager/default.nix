@@ -83,10 +83,6 @@ in
       homerow
     ];
 
-  home.sessionVariables = {
-    HOMEBREW_NO_AUTO_UPDATE = 1; # can I move it to darwin?
-  };
-
   # set all session variables for launchd services
   launchd.agents.launchctl-setenv = lib.optionalAttrs isDarwin (
     let launchctl-setenv = pkgs.writeShellScriptBin "launchctl-setenv"

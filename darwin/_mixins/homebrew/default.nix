@@ -2,7 +2,7 @@
 { ... }: {
   homebrew = {
     enable = true;
-    onActivation.autoUpdate = false;
+    onActivation.autoUpdate = true;
     brews = [
       "openssh" # it supports gss
       {
