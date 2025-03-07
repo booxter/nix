@@ -110,6 +110,11 @@ in
     enable = true;
     userName = fullName;
     userEmail = email;
+    extraConfig = {
+      extensions = {
+        rebase = "";
+      };
+    };
   };
 
   home.packages = with pkgs; [
