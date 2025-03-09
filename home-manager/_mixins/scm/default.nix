@@ -53,8 +53,8 @@ in
       # show touched branches first
       branch.sort = "-committerdate";
 
-      # use mergigraf for merges
-      merge.mergigraf = {
+      # use mergiraf for merges
+      merge.mergiraf = {
         name = "mergiraf";
         driver = "mergiraf merge --git %O %A %B -s %S -x %X -y %Y -p %P";
       };
