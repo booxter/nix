@@ -20,6 +20,8 @@
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 
+    nixpkgs-obsidian.url = "github:booxter/nixpkgs/obsidian";
+
     nix-darwin.url = "github:LnL7/nix-darwin";
 
     nix-rosetta-builder.url = "github:cpick/nix-rosetta-builder";

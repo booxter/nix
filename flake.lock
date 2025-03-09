@@ -359,6 +359,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-obsidian": {
+      "locked": {
+        "lastModified": 1741559416,
+        "narHash": "sha256-wUwYgE3WwfDVrq2yfRfN/35lVXYx0CCXKyFVL5XWx0o=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "4849b38853f554d05f9bee44361b407a05af28e4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "obsidian",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1730741070,
@@ -585,6 +601,7 @@
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-obsidian": "nixpkgs-obsidian",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",
         "nur": "nur"
