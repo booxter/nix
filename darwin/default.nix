@@ -59,6 +59,20 @@
     trusted-users = [ "@admin" ];
   };
 
+  # Avoid wait4path and sh to reduce the scope of Full Disk Access for nix-daemon.
+  launchd.daemons.nix-daemon.serviceConfig = let
+    command = "/run/current-system/sw/bin/nix-daemon";
+  in {
+    KeepAlive = lib.mkForce {
+      PathState = {
+        "${toString command}" = true;
+      };
+    };
+    ProgramArguments = lib.mkForce [
+      "${command}"
+    ];
+  };
+
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
   system.stateVersion = 4;
