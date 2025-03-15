@@ -25,7 +25,6 @@
 
         # Remove some ui bloat
         "mailnews.start_page.enabled" = false;
-        "javascript.enabled" = false;
         "mail.uidensity" = 0;
 
         "mail.ui.folderpane.view" = 1;
@@ -34,6 +33,10 @@
         # Check IMAP subfolder for new messages
         "mail.check_all_imap_folders_for_new" = true;
         "mail.server.default.check_all_folders_for_new" = true;
+
+        # auth not working for google without it for some reason
+        "javascript.enabled" = true;
+        "general.useragent.compatMode.firefox" = true;
       };
       extensions = with pkgs.nur.repos.rycee.firefox-addons; [
         # https://addons.thunderbird.net/api/v4/addons/search/?q=cb_thunderlink
