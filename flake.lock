@@ -210,15 +210,16 @@
         "nixpkgs": "nixpkgs_3"
       },
       "locked": {
-        "lastModified": 1741229100,
-        "narHash": "sha256-0HwrTDXp9buEwal/1ymK9uQmzUD5ozIA7CJGqnT/gLs=",
-        "owner": "LnL7",
+        "lastModified": 1742006912,
+        "narHash": "sha256-iUOBVinjvDH9K6ZPNlhprvSufPm6nchboXfAltif05c=",
+        "owner": "booxter",
         "repo": "nix-darwin",
-        "rev": "adf5c88ba1fe21af5c083b4d655004431f20c5ab",
+        "rev": "fc4e22f5d40ff2aa9ed53b4705d3304c92b9003b",
         "type": "github"
       },
       "original": {
-        "owner": "LnL7",
+        "owner": "booxter",
+        "ref": "launchd-use-path-state-to-wait-for-path",
         "repo": "nix-darwin",
         "type": "github"
       }

@@ -22,7 +22,7 @@
 
     nixpkgs-obsidian.url = "github:booxter/nixpkgs/obsidian";
 
-    nix-darwin.url = "github:LnL7/nix-darwin";
+    nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";
 
     nix-rosetta-builder.url = "github:cpick/nix-rosetta-builder";
 
