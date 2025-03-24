@@ -7,9 +7,11 @@
       pkgs.browserpass
     ];
     profiles.default = {
-      search.default = "DuckDuckGo";
-      search.privateDefault = "DuckDuckGo";
+      # duckduckgo
+      search.default = "ddg";
+      search.privateDefault = "ddg";
       search.force = true;
+
       settings = {
         # enable installed extensions
         "extensions.autoDisableScopes" = 0;

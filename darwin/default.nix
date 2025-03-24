@@ -46,7 +46,7 @@
     experimental-features = "nix-command flakes";
 
     # Some packages like firefox can kill the machine due to memory pressure
-    max-jobs = 2;
+    max-jobs = 4;
 
     # flox config
     substituters = [
