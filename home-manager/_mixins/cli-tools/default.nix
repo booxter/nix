@@ -119,6 +119,7 @@
     nix-init
     nix-tree
     nom
+    nvtopPackages.full
     ollama
     openssh
     page
