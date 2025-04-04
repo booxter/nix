@@ -107,6 +107,7 @@
   home.packages = with pkgs; [
     (ripgrep.override { withPCRE2 = true; })
     ack
+    bind.dnsutils
     chatgpt-cli
     coreutils
     curl
