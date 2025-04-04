@@ -2,7 +2,7 @@
 {
   programs.firefox = {
     enable = true;
-    package = if pkgs.stdenv.isDarwin then pkgs.master.firefox-unwrapped else pkgs.master.firefox;
+    package = pkgs.master.firefox;
     nativeMessagingHosts = [
       pkgs.browserpass
     ];
