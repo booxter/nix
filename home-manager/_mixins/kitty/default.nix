@@ -2,7 +2,7 @@
 {
   programs.kitty = {
     enable = true;
-    themeFile = "gruvbox-dark-hard";
+    themeFile = "cherry-midnight";
     shellIntegration.enableZshIntegration = true;
     font = {
       name = "MesloLGS Nerd Font Mono";
