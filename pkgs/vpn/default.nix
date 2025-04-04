@@ -10,7 +10,6 @@
 
   # Wait for connection to be established
   while [ "$(osascript -e 'tell application "Viscosity" to state of the seventh connection')" != "Connected" ]; do
-    echo 'waiting for VPN connection to be established...'
     sleep 1
   done
 
