@@ -4,7 +4,7 @@
   programs.thunderbird = {
     enable = true;
     darwinSetupWarning = false;
-    package = if pkgs.stdenv.isDarwin then pkgs.thunderbird-unwrapped else pkgs.thunderbird;
+    package = pkgs.thunderbird;
     nativeMessagingHosts = with pkgs; [
       cb_thunderlink-native
     ];
