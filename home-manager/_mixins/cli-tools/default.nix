@@ -19,6 +19,22 @@
       bindkey "^R" history-incremental-search-backward
     '';
 
+    envExtra = ''
+      # Reinitialize SSH_AUTH_SOCK in tmux on reconnect
+      # from: @tom-wiley-cotton/nix-config
+      if [ -n "$TMUX" ]; then
+        function refresh {
+          export $(tmux show-environment | grep "^SSH_AUTH_SOCK") > /dev/null
+        }
+      else
+        function refresh { }
+      fi
+
+      function preexec {
+         refresh
+      }
+    '';
+
     # TODO: can I apply aliases for all shells?
     shellAliases =
       let
