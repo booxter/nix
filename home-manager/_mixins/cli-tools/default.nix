@@ -150,6 +150,7 @@
     unzip
     viddy
     watch
+    yubikey-manager
     zip
 
     # python
