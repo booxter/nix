@@ -24,6 +24,10 @@
       ripgrep
     ];
 
+    diagnostics = {
+      virtual_lines = true;
+    };
+
     plugins = {
       lualine.enable = true;
       lsp = {
@@ -52,6 +56,7 @@
           clangd.extraOptions.capabilities.offsetEncoding = "utf-16";
         };
       };
+      lsp-lines.enable = true;
 
       cmp = {
         enable = true;
