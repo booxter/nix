@@ -83,22 +83,6 @@ in
       homerow
     ];
 
-  # set all session variables for launchd services
-  launchd.agents.launchctl-setenv = lib.optionalAttrs isDarwin (
-    let launchctl-setenv = pkgs.writeShellScriptBin "launchctl-setenv"
-      (lib.concatStringsSep "\n" (lib.mapAttrsToList
-        (name: val: "/bin/launchctl setenv ${name} ${toString val}")
-        config.home.sessionVariables));
-    in {
-      enable = true;
-      config = {
-        ProgramArguments = [ "${launchctl-setenv}/bin/launchctl-setenv" ];
-        KeepAlive.SuccessfulExit = false;
-        RunAtLoad = true;
-      };
-    }
-  );
-
   # TODO: move darwin specific config files to a separate module?
   home.file = lib.optionalAttrs isDarwin {
     ".config/svim/blacklist".source = ./dotfiles/svim-blacklist;
