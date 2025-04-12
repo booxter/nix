@@ -119,6 +119,7 @@
     gcalcli
     gnugrep
     gnupg
+    gnused
     gzip
     heimdal
     htop
