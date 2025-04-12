@@ -131,9 +131,5 @@
 
   home.sessionVariables = {
     BROWSER = "open";
-
-    # generated profiles imply this setting
-    MOZ_LEGACY_PROFILES = 1;
-    MOZ_ALLOW_DOWNGRADE = 1;
   };
 }

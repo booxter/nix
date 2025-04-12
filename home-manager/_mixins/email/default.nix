@@ -68,12 +68,6 @@
     };
   };
 
-  # generated profiles imply this setting
-  home.sessionVariables = {
-    MOZ_LEGACY_PROFILES = 1;
-    MOZ_ALLOW_DOWNGRADE = 1;
-  };
-
   # Accounts
   accounts.email.accounts =
     let
