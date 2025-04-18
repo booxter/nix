@@ -85,7 +85,6 @@ in
 
   # TODO: move darwin specific config files to a separate module?
   home.file = lib.optionalAttrs isDarwin {
-    ".config/svim/blacklist".source = ./dotfiles/svim-blacklist;
     ".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
     ".amethyst.yml".source = ./dotfiles/amethyst.yml;
 
