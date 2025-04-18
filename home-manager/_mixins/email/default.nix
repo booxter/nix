@@ -4,7 +4,7 @@
   programs.thunderbird = {
     enable = true;
     darwinSetupWarning = false;
-    package = pkgs.master.thunderbird;
+    package = pkgs.thunderbird;
     nativeMessagingHosts = with pkgs; [
       cb_thunderlink-native
     ];

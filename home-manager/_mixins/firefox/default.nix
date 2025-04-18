@@ -2,7 +2,7 @@
 {
   programs.firefox = {
     enable = true;
-    package = pkgs.master.firefox;
+    package = pkgs.firefox;
     nativeMessagingHosts = [
       pkgs.browserpass
     ];
