@@ -22,6 +22,8 @@
 
     nixpkgs-obsidian.url = "github:booxter/nixpkgs/obsidian";
 
+    nixpkgs-libslirp.url = "github:booxter/nixpkgs/macos-remove-hack-for-dns-libslirp";
+
     nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";
 
     nix-rosetta-builder.url = "github:cpick/nix-rosetta-builder";
@@ -102,16 +104,11 @@
 
     nixosModules.vm = { ... }: {
       virtualisation.vmVariant.virtualisation = {
-        host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
+        host.pkgs = inputs.nixpkgs-libslirp.legacyPackages.aarch64-darwin;
 
         # Make VM output to the terminal instead of a separate window
         graphics = false;
       };
-
-      # a workaround until slirp dns is fixed on macos:
-      # https://github.com/utmapp/UTM/issues/2353
-      # Note: the same workaround is applied to linux-builder in nixpkgs.
-      networking.nameservers = [ "8.8.8.8" ];
     };
 
     nixosConfigurations = {
