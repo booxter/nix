@@ -75,65 +75,55 @@
     # Formatter for .nix files, available via 'nix fmt'
     formatter = helper.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
 
-    # TODO: migrate to new scheme
     ## adopted from https://www.tweag.io/blog/2023-02-09-nixos-vm-on-macos/
-    #nixosModules.base = { pkgs, ... }: {
-    #  system.stateVersion = "25.05";
+    nixosModules.base = { pkgs, ... }: {
+      system.stateVersion = "25.05";
 
-    #  services.getty.autologinUser = "${username}";
+      services.getty.autologinUser = "ihrachys";
 
-    #  users.mutableUsers = false;
-    #  users.users.${username} = {
-    #    extraGroups = ["wheel"];
-    #    group = "${username}";
-    #    isNormalUser = true;
-    #    openssh.authorizedKeys.keys = [
-    #      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA0W1oVd2GMoSwXHVQMb6v4e3rIMVe9/pr/PcsHg+Uz3 ihrachys@ihrachys-macpro"
-    #    ];
-    #  };
-    #  users.groups.${username} = {};
-    #  security.sudo.wheelNeedsPassword = false;
+      users.mutableUsers = false;
+      users.users.ihrachys = {
+        extraGroups = ["wheel" "users"];
+        group = "ihrachys";
+        isNormalUser = true;
+        openssh.authorizedKeys.keys = [
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA0W1oVd2GMoSwXHVQMb6v4e3rIMVe9/pr/PcsHg+Uz3 ihrachys@ihrachys-macpro"
+        ];
+      };
+      users.groups.ihrachys = {};
+      security.sudo.wheelNeedsPassword = false;
 
-    #  environment.systemPackages = with pkgs; [
-    #    dig
-    #  ];
+      environment.systemPackages = with pkgs; [
+        dig
+      ];
 
-    #  services.openssh.enable = true;
-    #};
+      services.openssh.enable = true;
+    };
 
-    #nixosModules.vm = { ... }: {
-    #  virtualisation.vmVariant.virtualisation = {
-    #    host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
+    nixosModules.vm = { ... }: {
+      virtualisation.vmVariant.virtualisation = {
+        host.pkgs = inputs.nixpkgs.legacyPackages.aarch64-darwin;
 
-    #    # Make VM output to the terminal instead of a separate window
-    #    graphics = false;
+        # Make VM output to the terminal instead of a separate window
+        graphics = false;
+      };
 
-    #    # qemu.networkingOptions = inputs.nixpkgs.lib.mkForce [
-    #    #     "-netdev vmnet-bridged,id=vmnet,ifname=en0"
-    #    #     "-device virtio-net-pci,netdev=vmnet"
-    #    # ];
-    #  };
+      # a workaround until slirp dns is fixed on macos:
+      # https://github.com/utmapp/UTM/issues/2353
+      # Note: the same workaround is applied to linux-builder in nixpkgs.
+      networking.nameservers = [ "8.8.8.8" ];
+    };
 
-    #  # a workaround until slirp dns is fixed on macos:
-    #  # https://github.com/utmapp/UTM/issues/2353
-    #  # Note: the same workaround is applied to linux-builder in nixpkgs.
-    #  networking.nameservers = [ "8.8.8.8" ];
-    #};
+    nixosConfigurations = {
+      linuxVM = inputs.nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          self.nixosModules.base
+          self.nixosModules.vm
+        ];
+      };
+    };
 
-    #nixosConfigurations = {
-    #  linuxVM = inputs.nixpkgs.lib.nixosSystem rec {
-    #    system = "aarch64-linux";
-    #    pkgs = mkPkgs system;
-    #    specialArgs = {
-    #      inherit username;
-    #    };
-    #    modules = [
-    #      self.nixosModules.base
-    #      self.nixosModules.vm
-    #    ] ++ (globalModulesLinux { inherit system username; });
-    #  };
-    #};
-
-    #packages.aarch64-darwin.linuxVM = self.nixosConfigurations.linuxVM.config.system.build.vm;
+    linuxVM = self.nixosConfigurations.linuxVM.config.system.build.vm;
   };
 }
