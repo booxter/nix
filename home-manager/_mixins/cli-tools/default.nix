@@ -14,7 +14,7 @@
 
     syntaxHighlighting.enable = true;
 
-    initExtra = ''
+    initContent = ''
       [ -f /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
       bindkey "^R" history-incremental-search-backward
     '';
