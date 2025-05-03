@@ -20,8 +20,6 @@
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 
-    nixpkgs-obsidian.url = "github:booxter/nixpkgs/obsidian";
-
     nixpkgs-libslirp.url = "github:booxter/nixpkgs/macos-remove-hack-for-dns-libslirp";
 
     nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";
