@@ -22,6 +22,9 @@
 
     nixpkgs-libslirp.url = "github:booxter/nixpkgs/macos-remove-hack-for-dns-libslirp";
 
+    # TODO: remove when zoom darwin support is back: https://github.com/NixOS/nixpkgs/pull/403993
+    nixpkgs-zoom.url = "github:booxter/nixpkgs/zoom-darwin";
+
     nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";
 
     nix-rosetta-builder.url = "github:cpick/nix-rosetta-builder";
