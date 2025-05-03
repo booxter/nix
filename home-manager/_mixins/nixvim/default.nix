@@ -44,7 +44,10 @@
           jsonls.enable = true;
           lua_ls.enable = true;
           marksman.enable = true; # markdown
-          nil_ls.enable = true; # nix
+          nil_ls = {
+            enable = true; # nix
+            settings.nix.flake.autoArchive = true;
+          };
           nixd.enable = true; # nix
           perlpls.enable = true;
           pyright.enable = true; # python
