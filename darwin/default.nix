@@ -105,6 +105,7 @@
         User booxter
     '';
   };
+  environment.systemPackages = [ pkgs.openssh ];
 
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
