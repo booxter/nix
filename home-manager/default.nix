@@ -76,11 +76,12 @@ in
     ++ lib.optionals isDarwin [
       cb_thunderlink-native
       element-desktop
+      homerow
       iterm2
       keycastr
       raycast
       slack
-      homerow
+      stats
     ];
 
   # TODO: move darwin specific config files to a separate module?
