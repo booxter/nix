@@ -59,26 +59,6 @@
     trusted-users = [ "@admin" ];
   };
 
-  # This is not working; need to figure out how to make it work
-  #nix.buildMachines = let
-  #  makeMachine = args: args // {
-  #    sshUser = "booxter";
-  #    sshKey = "/Users/ihrachys/.ssh/id_ed25519";
-  #    protocol = "ssh-ng";
-  #  };
-  #in [
-  #  (makeMachine {
-  #    hostName = "aarch64-build-box.nix-community.org";
-  #    publicHostKey = "AAAAC3NzaC1lZDI1NTE5AAAAIG9uyfhyli+BRtk64y+niqtb+sKquRGGZ87f4YRc8EE1";
-  #    system = "aarch64-linux";
-  #  })
-  #  (makeMachine {
-  #    hostName = "build-box.nix-community.org";
-  #    publicHostKey = "AAAAC3NzaC1lZDI1NTE5AAAAIElIQ54qAy7Dh63rBudYKdbzJHrrbrrMXLYl7Pkmk88H";
-  #    system = "x86_64-linux";
-  #  })
-  #];
-
   programs.ssh = {
     knownHosts = {
       "aarch64-build-box.nix-community.org" = {
@@ -91,18 +71,24 @@
         publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKMHhlcn7fUpUuiOFeIhDqBzBNFsbNqq+NpzuGX3e6zv";
       };
     };
-    extraConfig = ''
+    extraConfig = let
+      identityFile = "/Users/${username}/.ssh/id_ed25519";
+      user = "booxter";
+    in ''
       Host darwin-builder
         Hostname darwin-build-box.nix-community.org
-        User booxter
+        IdentityFile ${identityFile}
+        User ${user}
 
       Host linux-builder
         Hostname aarch64-build-box.nix-community.org
-        User booxter
+        IdentityFile ${identityFile}
+        User ${user}
 
       Host linux-x86-builder
         Hostname build-box.nix-community.org
-        User booxter
+        IdentityFile ${identityFile}
+        User ${user}
     '';
   };
   environment.systemPackages = [ pkgs.openssh ];
