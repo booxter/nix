@@ -59,6 +59,7 @@
     trusted-users = [ "@admin" ];
   };
 
+  # TODO: move builders config into a new mixin
   programs.ssh = {
     knownHosts = {
       "aarch64-build-box.nix-community.org" = {

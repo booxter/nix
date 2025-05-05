@@ -48,6 +48,8 @@
       bind -n C-l run  "($is_vim && tmux send-keys C-l) || tmux select-pane -R"
       bind-key -n C-\\ if-shell "$is_vim" "send-keys C-\\" "select-pane -l"
 
+      bind-key -T prefix K confirm-before -p "Kill session #S? (y/n)" kill-session
+
       set -g @tmux-gruvbox 'light'
 
       set -ga terminal-features "*:hyperlinks"
