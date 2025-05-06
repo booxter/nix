@@ -17,6 +17,8 @@
     # https://github.com/NixOS/nixpkgs/pull/252383
     nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
 
+    nixpkgs-firefox-binary-wrapper.url = "github:booxter/nixpkgs/switch-firefox-to-binary-wrapper";
+
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 
