@@ -41,11 +41,13 @@
         gcalcliHome = "gcalcli --config-folder ~/.gcalcli --calendar Home";
         gcalcliWork = "gcalcli --config-folder ~/.gcalcli-rh --calendar ihrachys@redhat.com";
         gcalcliCalwArgs = "calw --military --nodeclined --monday";
+        openaiKey = "${pkgs.pass}/bin/pass priv/openai-chatgpt-secret";
       in
       {
         # ai bots
-        chatgpt = "OPENAI_API_KEY=$(${pkgs.pass}/bin/pass priv/openai-chatgpt-secret) chatgpt";
-        sgpt = "OPENAI_API_KEY=$(${pkgs.pass}/bin/pass priv/openai-chatgpt-secret) sgpt";
+        chatgpt = "OPENAI_API_KEY=$(${openaiKey}) chatgpt";
+        sgpt = "OPENAI_API_KEY=$(${openaiKey}) shell-gpt";
+        aider-chat="OPENAI_API_KEY=$(${openaiKey}) aider";
 
         # enable hyperlinks in kitty
         rg = "rg --hyperlink-format=kitty";
@@ -108,6 +110,7 @@
     (ripgrep.override { withPCRE2 = true; })
     ack
     act
+    aider-chat
     bind.dnsutils
     chatgpt-cli
     coreutils
