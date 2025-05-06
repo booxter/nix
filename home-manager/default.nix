@@ -26,12 +26,12 @@ in
   ] ++ lib.optionals isLaptop [
     ./_mixins/default-apps
     ./_mixins/email
+    ./_mixins/ide
     ./_mixins/kitty
     ./_mixins/firefox
     ./_mixins/fonts
     ./_mixins/spotify
     ./_mixins/telegram
-    ./_mixins/vscode
   ];
 
   home = {
