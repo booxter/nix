@@ -1,4 +1,5 @@
 # Copied from https://github.com/reckenrode/nixos-configs/blob/main/modules/by-name/co/copy-apps/module.nix
+# Modifications: remove --archive; add --links and --recursive (due to permissions issues with rsync failing to chmod)
 # SPDX-License-Identifier: MIT
 {
   config,
@@ -29,10 +30,10 @@ let
       if [ -d "$appsSrc" ]; then
         baseDir="${baseDir}"
         rsyncFlags=(
-          --archive
           --checksum
-          --chmod=-w
           --copy-unsafe-links
+          --recursive
+          --links
           --delete
           --no-group
           --no-owner
