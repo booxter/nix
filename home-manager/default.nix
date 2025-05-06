@@ -24,7 +24,7 @@ in
     ./_mixins/ssh
     ./_mixins/tmux
   ] ++ lib.optionals isLaptop [
-    ./_mixins/default-apps
+    ./_mixins/copy-apps
     ./_mixins/email
     ./_mixins/ide
     ./_mixins/kitty
