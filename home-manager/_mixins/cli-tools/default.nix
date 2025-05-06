@@ -47,7 +47,7 @@
         # ai bots
         chatgpt = "OPENAI_API_KEY=$(${openaiKey}) chatgpt";
         sgpt = "OPENAI_API_KEY=$(${openaiKey}) shell-gpt";
-        aider="OPENAI_API_KEY=$(${openaiKey}) aider --no-gitignore --model openai/gpt-4.1";
+        aider="OPENAI_API_KEY=$(${openaiKey}) aider --no-gitignore --model openai/gpt-4.1 --no-attribute-author --no-attribute-committer";
 
         # enable hyperlinks in kitty
         rg = "rg --hyperlink-format=kitty";
