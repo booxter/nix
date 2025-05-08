@@ -115,6 +115,7 @@
     chatgpt-cli
     coreutils
     curl
+    fastfetch
     fd
     file
     findutils
