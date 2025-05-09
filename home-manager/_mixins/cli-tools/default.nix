@@ -151,6 +151,7 @@
     procps
     pstree
     shell-gpt
+    skopeo
     tcpdump
     tree
     unzip
