@@ -24,6 +24,8 @@
 
     nixpkgs-libslirp.url = "github:booxter/nixpkgs/macos-remove-hack-for-dns-libslirp";
 
+    nixpkgs-fromager.url = "github:booxter/nixpkgs/fromager";
+
     # TODO: remove when zoom darwin support is back: https://github.com/NixOS/nixpkgs/pull/403993
     nixpkgs-zoom.url = "github:booxter/nixpkgs/zoom-darwin";
 

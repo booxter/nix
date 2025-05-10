@@ -120,6 +120,7 @@
     file
     findutils
     flox
+    fromager
     fzf
     gcalcli
     gnugrep
