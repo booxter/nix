@@ -162,9 +162,9 @@
     zip
 
     # python
-    python311Full
-    python311Packages.ipython
-    python311Packages.tox
+    python312Full
+    python312Packages.ipython
+    python312Packages.tox
   ];
 
   home.sessionVariables = {
