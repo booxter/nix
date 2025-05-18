@@ -82,6 +82,7 @@ in
       raycast
       slack
       stats
+      teams
     ];
 
   # TODO: move darwin specific config files to a separate module?
