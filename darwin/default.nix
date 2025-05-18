@@ -64,10 +64,13 @@
   # $ darwin-rebuild changelog
   system.stateVersion = 4;
 
+  system.primaryUser = "ihrachys";
+
   # Create /etc/zshrc that loads the nix-darwin environment.
   programs.zsh.enable = true;
 
-  system.activationScripts.postUserActivation.text = ''
+  # TODO: is it still needed? Does it operate in the user context? (Not root?)
+  system.activationScripts.userActivation.text = ''
     # Following line should allow us to avoid a logout/login cycle
     /System/Library/PrivateFrameworks/SystemAdministration.framework/Resources/activateSettings -u
   '';

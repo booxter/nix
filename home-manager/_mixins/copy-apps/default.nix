@@ -1,5 +1,5 @@
 # Copied from https://github.com/reckenrode/nixos-configs/blob/main/modules/by-name/co/copy-apps/module.nix
-# Modifications: remove --archive; add --links and --recursive (due to permissions issues with rsync failing to chmod)
+# Then also from: https://github.com/nix-darwin/nix-darwin/pull/1396
 # SPDX-License-Identifier: MIT
 {
   config,
@@ -32,9 +32,9 @@ let
         rsyncFlags=(
           --checksum
           --copy-unsafe-links
-          --recursive
-          --links
+          --archive
           --delete
+          --chmod=-w
           --no-group
           --no-owner
         )

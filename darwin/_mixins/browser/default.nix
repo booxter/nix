@@ -3,7 +3,7 @@
     defaultbrowser
   ];
 
-  system.activationScripts.postUserActivation.text = ''
+  system.activationScripts.userActivation.text = ''
     # Set default browser to firefox
     ${lib.getExe pkgs.defaultbrowser} firefox
   '';

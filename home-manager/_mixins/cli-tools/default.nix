@@ -119,7 +119,7 @@
     fd
     file
     findutils
-    flox
+    # flox
     fromager
     fzf
     gcalcli

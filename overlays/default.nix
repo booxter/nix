@@ -11,22 +11,17 @@
     inherit (import inputs.nixpkgs-mailsend-go { inherit (prev) system; }) mailsend-go;
     inherit (import inputs.nixpkgs-cb_thunderlink-native { inherit (prev) system; }) cb_thunderlink-native;
     inherit (import inputs.nixpkgs-firefox-binary-wrapper { inherit (prev) system; }) firefox;
-    inherit (import inputs.nixpkgs-fromager { inherit (prev) system; }) fromager;
-    inherit (import inputs.nixpkgs-zoom { inherit (prev) system; config.allowUnfree = true; }) zoom-us;
-    flox = inputs.flox.packages.${prev.system}.default;
     nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override { withNom = true; };
 
-    # TODO: remove when https://github.com/NixOS/nixpkgs/issues/400373 is merged
-    python312 = prev.python312.override {
-      packageOverrides = final: prev: {
-        mocket = prev.mocket.overridePythonAttrs (oldAttrs: {
-          disabledTests = oldAttrs.disabledTests ++ [
-            "test_httprettish_httpx_session"
-          ];
-        });
-      };
-    };
-    python312Packages = python312.pkgs;
+    # python312 = prev.python312.override {
+    #   packageOverrides = final: prev: {
+    #     XXX = prev.XXX.overridePythonAttrs (oldAttrs: {
+    #       disabledTests = oldAttrs.disabledTests ++ [
+    #       ];
+    #     });
+    #   };
+    # };
+    # python312Packages = python312.pkgs;
   };
 
   # When applied, the unstable nixpkgs set (declared in the flake inputs) will

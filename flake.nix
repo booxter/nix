@@ -24,11 +24,6 @@
 
     nixpkgs-libslirp.url = "github:booxter/nixpkgs/macos-remove-hack-for-dns-libslirp";
 
-    nixpkgs-fromager.url = "github:booxter/nixpkgs/fromager";
-
-    # TODO: remove when zoom darwin support is back: https://github.com/NixOS/nixpkgs/pull/403993
-    nixpkgs-zoom.url = "github:booxter/nixpkgs/zoom-darwin";
-
     # TODO: Experiment with this
     #nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";
     nix-darwin.url = "github:nix-darwin/nix-darwin/master";
@@ -42,7 +37,7 @@
 
     nur.url = "github:nix-community/NUR";
 
-    flox.url = "github:flox/flox/v1.3.11";
+    #flox.url = "github:flox/flox/v1.3.11";
   };
 
   outputs = inputs@{ self, ... }:
