@@ -11,7 +11,17 @@
     inherit (import inputs.nixpkgs-mailsend-go { inherit (prev) system; }) mailsend-go;
     inherit (import inputs.nixpkgs-cb_thunderlink-native { inherit (prev) system; }) cb_thunderlink-native;
     inherit (import inputs.nixpkgs-firefox-binary-wrapper { inherit (prev) system; }) firefox;
-    nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override { withNom = true; };
+
+    nixpkgs-review = let
+      pkgs = (import inputs.nixpkgs { inherit (prev) system; });
+    in (prev.nixpkgs-review.overrideAttrs (oldAttrs: {
+      src = pkgs.fetchFromGitHub {
+        owner = "Mic92";
+        repo = "nixpkgs-review";
+        rev = "de90ce3634313bd8f1b14f1ca2d9b51f719d158b";
+        hash = "sha256-C1yDqFiWqhRHfU49kRgXbb3NbhRd0GDExU1a0wsYBJM=";
+      };
+    })).override { withNom = true; };
 
     # python312 = prev.python312.override {
     #   packageOverrides = final: prev: {
