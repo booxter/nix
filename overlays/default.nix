@@ -18,8 +18,8 @@
       src = pkgs.fetchFromGitHub {
         owner = "Mic92";
         repo = "nixpkgs-review";
-        rev = "de90ce3634313bd8f1b14f1ca2d9b51f719d158b";
-        hash = "sha256-C1yDqFiWqhRHfU49kRgXbb3NbhRd0GDExU1a0wsYBJM=";
+        rev = "39ec94e0fe370fc6145907cdb7b1afbd1a109283";
+        hash = "sha256-0010AQH46lO8yumvdgJnQCK2egmTXNMxb6RI/ppzaVU=";
       };
     })).override { withNom = true; };
 

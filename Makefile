@@ -14,4 +14,4 @@ home-build:
 	nix run nixpkgs#home-manager -- build --flake .
 
 home-switch:
-	nix run nixpkgs#home-manager -- switch --flake .
+	nix run nixpkgs#home-manager -- switch --flake . --show-trace
