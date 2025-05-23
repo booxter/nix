@@ -25,7 +25,8 @@
     ];
 
     diagnostic.settings = {
-      virtual_lines = true;
+      virtual_lines = false;
+      virtual_text = true;
     };
 
     plugins = {
@@ -102,6 +103,13 @@
       nerdtree
       vim-polyglot
       vimux
+    ];
+
+    keymaps = [
+      {
+        key = "<Leader>l";
+        action = "<CMD>lua require('lsp_lines').toggle()<CR><CMD>lua vim.diagnostic.config({ virtual_text = not vim.diagnostic.config().virtual_text })<CR>";
+      }
     ];
 
     extraConfigVim = ''
