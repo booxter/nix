@@ -108,7 +108,7 @@
     keymaps = [
       {
         key = "<Leader>l";
-        action = "<CMD>lua require('lsp_lines').toggle()<CR><CMD>lua vim.diagnostic.config({ virtual_text = not vim.diagnostic.config().virtual_text })<CR>";
+        action = "<CMD>lua require('lsp_lines').toggle()<CR><CMD>set diagnostic.settings.virtual_text!<CR>";
       }
     ];
 
