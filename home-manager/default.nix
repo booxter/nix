@@ -32,6 +32,7 @@ in
     ./_mixins/fonts
     ./_mixins/spotify
     ./_mixins/telegram
+    ./_mixins/x11
   ];
 
   home = {
