@@ -280,22 +280,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-libslirp": {
-      "locked": {
-        "lastModified": 1746029510,
-        "narHash": "sha256-u6uR41irKeziH/Ihoag+kwp3k1l9fQT5RbiIsIrhnbk=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "f90236a8f2c33cc8814428ac4cda1e77e43c2375",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "macos-remove-hack-for-dns-libslirp",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-mailsend-go": {
       "locked": {
         "lastModified": 1693415164,
@@ -563,7 +547,6 @@
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-firefox-binary-wrapper": "nixpkgs-firefox-binary-wrapper",
         "nixpkgs-icewm": "nixpkgs-icewm",
-        "nixpkgs-libslirp": "nixpkgs-libslirp",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-mesa-xephyr": "nixpkgs-mesa-xephyr",
