@@ -143,6 +143,7 @@
               username = "ihrachys";
               isLaptop = false;
             };
+            home-manager.useUserPackages = true;
             home-manager.users.ihrachys = import ./home-manager;
           }
         ];
