@@ -127,6 +127,21 @@
         modules = [
           self.nixosModules.base
           self.nixosModules.vm
+
+          # TODO: combine home management with helpers.*?
+          inputs.home-manager.nixosModules.home-manager
+          {
+            home-manager.extraSpecialArgs = {
+              inherit
+                inputs
+                outputs
+                stateVersion
+                ;
+              username = "ihrachys";
+              isLaptop = false;
+            };
+            home-manager.users.ihrachys = import ./home-manager;
+          }
         ];
       };
     };
