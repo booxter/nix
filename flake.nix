@@ -50,7 +50,7 @@
   outputs = inputs@{ self, ... }:
   let
     inherit (self) outputs;
-    stateVersion = "25.05";
+    stateVersion = "25.11";
     helper = import ./lib { inherit inputs outputs stateVersion; };
   in
   {
@@ -89,7 +89,7 @@
 
     ## adopted from https://www.tweag.io/blog/2023-02-09-nixos-vm-on-macos/
     nixosModules.base = { pkgs, ... }: {
-      system.stateVersion = "25.05";
+      system.stateVersion = "25.11";
 
       programs.zsh.enable = true;
       users.defaultUserShell = pkgs.zsh;
