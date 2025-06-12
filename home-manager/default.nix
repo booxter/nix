@@ -13,27 +13,29 @@ let
   inherit (pkgs.stdenv) isDarwin;
 in
 {
-  imports = [
-    inputs.nixvim.homeManagerModules.nixvim
-    ./_mixins/awscli
-    ./_mixins/cli-tools
-    ./_mixins/git-sync
-    ./_mixins/nixvim
-    ./_mixins/scm
-    ./_mixins/scripts
-    ./_mixins/ssh
-    ./_mixins/tmux
-  ] ++ lib.optionals isLaptop [
-    ./_mixins/copy-apps
-    ./_mixins/email
-    ./_mixins/ide
-    ./_mixins/kitty
-    ./_mixins/firefox
-    ./_mixins/fonts
-    ./_mixins/spotify
-    ./_mixins/telegram
-    ./_mixins/x11
-  ];
+  imports =
+    [
+      inputs.nixvim.homeManagerModules.nixvim
+      ./_mixins/awscli
+      ./_mixins/cli-tools
+      ./_mixins/git-sync
+      ./_mixins/nixvim
+      ./_mixins/scm
+      ./_mixins/scripts
+      ./_mixins/ssh
+      ./_mixins/tmux
+    ]
+    ++ lib.optionals isLaptop [
+      ./_mixins/copy-apps
+      ./_mixins/email
+      ./_mixins/ide
+      ./_mixins/kitty
+      ./_mixins/firefox
+      ./_mixins/fonts
+      ./_mixins/spotify
+      ./_mixins/telegram
+      ./_mixins/x11
+    ];
 
   home = {
     inherit stateVersion;
@@ -67,7 +69,8 @@ in
   home.packages =
     with pkgs;
     [
-    ] ++ lib.optionals isLaptop [
+    ]
+    ++ lib.optionals isLaptop [
       discord
       obsidian
       podman-desktop

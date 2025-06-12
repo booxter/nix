@@ -14,7 +14,9 @@
   };
 
   # TODO: introduce a better check to disable it on remotes
-  home.packages = with pkgs; lib.optionals stdenv.isDarwin [
-    aws-automation
-  ];
+  home.packages =
+    with pkgs;
+    lib.optionals stdenv.isDarwin [
+      aws-automation
+    ];
 }
