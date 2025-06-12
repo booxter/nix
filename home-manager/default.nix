@@ -18,7 +18,6 @@ in
       inputs.nixvim.homeManagerModules.nixvim
       ./_mixins/awscli
       ./_mixins/cli-tools
-      ./_mixins/git-sync
       ./_mixins/nixvim
       ./_mixins/scm
       ./_mixins/scripts
@@ -28,6 +27,7 @@ in
     ++ lib.optionals isLaptop [
       ./_mixins/copy-apps
       ./_mixins/email
+      ./_mixins/git-sync
       ./_mixins/ide
       ./_mixins/kitty
       ./_mixins/firefox
