@@ -91,6 +91,9 @@
     nixosModules.base = { pkgs, ... }: {
       system.stateVersion = "25.05";
 
+      programs.zsh.enable = true;
+      users.defaultUserShell = pkgs.zsh;
+
       services.getty.autologinUser = "ihrachys";
 
       users.mutableUsers = false;
