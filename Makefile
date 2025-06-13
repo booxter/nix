@@ -2,7 +2,7 @@ inputs-update:
 	nix flake update
 
 linux:
-	nix run .#linuxVM
+	nix run .#linuxVM -L --show-trace
 
 darwin-build:
 	nix build .#darwinConfigurations.ihrachys-macpro.config.system.build.toplevel

@@ -11,6 +11,7 @@
     inherit (import inputs.nixpkgs-mailsend-go { inherit (prev) system; }) mailsend-go;
     inherit (import inputs.nixpkgs-cb_thunderlink-native { inherit (prev) system; }) cb_thunderlink-native;
     inherit (import inputs.nixpkgs-firefox-binary-wrapper { inherit (prev) system; }) firefox;
+    inherit (import inputs.nixpkgs-telegram-desktop { inherit (prev) system; }) telegram-desktop;
 
     # X11
     inherit (import inputs.nixpkgs-awesome { inherit (prev) system; }) awesome;

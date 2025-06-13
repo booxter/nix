@@ -46,7 +46,8 @@
           lua_ls.enable = true;
           marksman.enable = true; # markdown
           nil_ls = {
-            enable = true; # nix
+            # Re-enable when it's fixed...
+            enable = false; # nix
             settings.nix.flake.autoArchive = true;
           };
           nixd.enable = true; # nix

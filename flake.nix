@@ -22,6 +22,11 @@
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
 
+    nixpkgs-libslirp.url = "github:booxter/nixpkgs/honor-port-libslirp";
+
+    # telegram-desktop pulls linux only deps...
+    nixpkgs-telegram-desktop.url = "github:dtomvan/nixpkgs/dtomvan/push-zypzvrwlmlrm";
+
     # X11
     nixpkgs-awesome.url = "github:booxter/nixpkgs/awesome-darwin";
     nixpkgs-icewm.url = "github:booxter/nixpkgs/icewm-darwin";
@@ -91,6 +96,8 @@
     nixosModules.base = { pkgs, ... }: {
       system.stateVersion = "25.11";
 
+      documentation.enable = false; # until https://github.com/NixOS/nixpkgs/pull/415719 is in unstable
+
       programs.zsh.enable = true;
       users.defaultUserShell = pkgs.zsh;
 
@@ -117,7 +124,7 @@
 
     nixosModules.vm = { ... }: {
       virtualisation.vmVariant.virtualisation = {
-        host.pkgs = inputs.nixpkgs-master.legacyPackages.aarch64-darwin;
+        host.pkgs = inputs.nixpkgs-libslirp.legacyPackages.aarch64-darwin;
 
         # Make VM output to the terminal instead of a separate window
         graphics = false;

@@ -280,6 +280,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-libslirp": {
+      "locked": {
+        "lastModified": 1749773211,
+        "narHash": "sha256-H9gKg6Dnm3yraahzGFSqm3hWqFI3aHcVNYhnx4Zfj58=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "9dff14d95747603e6e0989481df87602f57e1308",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "honor-port-libslirp",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-mailsend-go": {
       "locked": {
         "lastModified": 1693415164,
@@ -340,6 +356,22 @@
       "original": {
         "owner": "booxter",
         "ref": "ted-darwin",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-telegram-desktop": {
+      "locked": {
+        "lastModified": 1749641313,
+        "narHash": "sha256-Lk93R+IXfYP/h1UDxW1Jd91R+TLj869jSLD1Z0wolHI=",
+        "owner": "dtomvan",
+        "repo": "nixpkgs",
+        "rev": "1b77e556ff46cdc72dd47f18aa8eb345a17888c4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "dtomvan",
+        "ref": "dtomvan/push-zypzvrwlmlrm",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -547,10 +579,12 @@
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-firefox-binary-wrapper": "nixpkgs-firefox-binary-wrapper",
         "nixpkgs-icewm": "nixpkgs-icewm",
+        "nixpkgs-libslirp": "nixpkgs-libslirp",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-mesa-xephyr": "nixpkgs-mesa-xephyr",
         "nixpkgs-ted": "nixpkgs-ted",
+        "nixpkgs-telegram-desktop": "nixpkgs-telegram-desktop",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixpkgs-xarchiver": "nixpkgs-xarchiver",
         "nixpkgs-xbill": "nixpkgs-xbill",
