@@ -93,8 +93,6 @@
     nixosModules.base = { pkgs, ... }: {
       system.stateVersion = "25.11";
 
-      documentation.enable = false; # until https://github.com/NixOS/nixpkgs/pull/415719 is in unstable
-
       programs.zsh.enable = true;
       users.defaultUserShell = pkgs.zsh;
 
