@@ -29,12 +29,9 @@
 
     # X11
     nixpkgs-awesome.url = "github:booxter/nixpkgs/awesome-darwin";
-    nixpkgs-icewm.url = "github:booxter/nixpkgs/icewm-darwin";
     nixpkgs-mesa-xephyr.url = "github:booxter/nixpkgs/mesa-darwin-libgl";
     nixpkgs-ted.url = "github:booxter/nixpkgs/ted-darwin";
-    nixpkgs-xarchiver.url = "github:booxter/nixpkgs/xarchiver-darwin";
     nixpkgs-xbill.url = "github:booxter/nixpkgs/xbill-fix-build";
-    nixpkgs-xchm.url = "github:booxter/nixpkgs/xchm";
 
     # TODO: Experiment with this
     #nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";

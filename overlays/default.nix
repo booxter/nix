@@ -15,16 +15,10 @@
 
     # X11
     inherit (import inputs.nixpkgs-awesome { inherit (prev) system; }) awesome;
-    inherit (import inputs.nixpkgs-icewm { inherit (prev) system; }) icewm;
     inherit (import inputs.nixpkgs-mesa-xephyr { inherit (prev) system; }) mesa;
     inherit (import inputs.nixpkgs-ted { inherit (prev) system; }) ted;
-    inherit (import inputs.nixpkgs-xarchiver { inherit (prev) system; }) xarchiver;
     inherit (import inputs.nixpkgs-xbill { inherit (prev) system; }) xbill;
-    inherit (import inputs.nixpkgs-xchm { inherit (prev) system; }) xchm;
     inherit (import inputs.nixpkgs { inherit (prev) system; config.permittedInsecurePackages = [ "xpdf-4.05" ]; }) xpdf;
-
-    # until https://github.com/NixOS/nixpkgs/pull/413055 hits unstable
-    inherit (import inputs.nixpkgs-master { inherit (prev) system; }) windowmaker;
 
     nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override { withNom = true; };
 

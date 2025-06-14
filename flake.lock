@@ -65,11 +65,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1749657191,
-        "narHash": "sha256-QLilaHuhGxiwhgceDWESj9gFcKIdEp7+9lRqNGpN8S4=",
+        "lastModified": 1749821119,
+        "narHash": "sha256-X3WAS322EsebI4ohJcXhKpiyG1v+7wE4VOiXy1pxM/c=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "faeab32528a9360e9577ff4082de2d35c6bbe1ce",
+        "rev": "79dfd9aa295e53773aad45480b44c131da29f35b",
         "type": "github"
       },
       "original": {
@@ -114,11 +114,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1749194393,
-        "narHash": "sha256-vt6hM9DNywnXXuW1qPDLzECmbDcmxhh58wpb0EEQjAo=",
+        "lastModified": 1749739639,
+        "narHash": "sha256-oubMGIrW/vBdX+xw47LEcxrqYqZUdLYPE8xrLDKoBE8=",
         "owner": "nix-darwin",
         "repo": "nix-darwin",
-        "rev": "19346808c445f23b08652971be198b9df6c33edc",
+        "rev": "72c88d5928196159e3a0d03e67b25d8044546ca6",
         "type": "github"
       },
       "original": {
@@ -264,29 +264,13 @@
         "type": "github"
       }
     },
-    "nixpkgs-icewm": {
-      "locked": {
-        "lastModified": 1748921366,
-        "narHash": "sha256-6VGqgaaHIMqCldPC7DYf3LI5Rg4HwshCglxbB8W4Rxk=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "5957890e5b1992299ae426f8596d7ee8ab0db5db",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "icewm-darwin",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-libslirp": {
       "locked": {
-        "lastModified": 1749773211,
-        "narHash": "sha256-H9gKg6Dnm3yraahzGFSqm3hWqFI3aHcVNYhnx4Zfj58=",
+        "lastModified": 1749779022,
+        "narHash": "sha256-GIoau6rzjG6CCLQzDNEgw4mH1Kb18mR1rLemHL4ljSw=",
         "owner": "booxter",
         "repo": "nixpkgs",
-        "rev": "9dff14d95747603e6e0989481df87602f57e1308",
+        "rev": "3764fcd636a8abb7abe521aafe066ef13436aa7e",
         "type": "github"
       },
       "original": {
@@ -314,11 +298,11 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1749698212,
-        "narHash": "sha256-2wURTQjkfVUerefMAHd/nG07HRJ792mYzHOg4OBBG/I=",
+        "lastModified": 1749860489,
+        "narHash": "sha256-s84AvqUwPtCERnDfSa4iUMla0AumqXKyA2T27lwAMd4=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "035a957c5719d682c34c87d6c565930f7c3e8ae2",
+        "rev": "11d9b36c32657f7b869f6de2c697af0fb1726b8c",
         "type": "github"
       },
       "original": {
@@ -378,32 +362,16 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1749619289,
-        "narHash": "sha256-qX6gXVjaCXXbcn6A9eSLUf8Fm07MgPGe5ir3++y2O1Q=",
+        "lastModified": 1749776303,
+        "narHash": "sha256-OHibOvVwKqO1qvRg0r3agtd1EagW4THBcoWT7QGgcNo=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f72be405a10668b8b00937b452f2145244103ebc",
+        "rev": "6e7721e37bf00fa7ea44ac3cfc9d2411284ec3ef",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-xarchiver": {
-      "locked": {
-        "lastModified": 1749004537,
-        "narHash": "sha256-GED0E3+1Z6Prb/cqCVCsqXWH5RkiYwLn6wpcUeda5cM=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "b08ea14f5ed40aff6e4e18628db186595387a7b5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "xarchiver-darwin",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -420,22 +388,6 @@
       "original": {
         "owner": "booxter",
         "ref": "xbill-fix-build",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-xchm": {
-      "locked": {
-        "lastModified": 1749004351,
-        "narHash": "sha256-Fyz4KDNqwsT3xzxQ+Uujp5Ci2NmyedQIRjuyLcoMIL0=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "92471515db3dfead334570d6a27523252c1d1e8c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "xchm",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -458,11 +410,11 @@
     },
     "nixpkgs_3": {
       "locked": {
-        "lastModified": 1749619289,
-        "narHash": "sha256-qX6gXVjaCXXbcn6A9eSLUf8Fm07MgPGe5ir3++y2O1Q=",
+        "lastModified": 1749776303,
+        "narHash": "sha256-OHibOvVwKqO1qvRg0r3agtd1EagW4THBcoWT7QGgcNo=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "f72be405a10668b8b00937b452f2145244103ebc",
+        "rev": "6e7721e37bf00fa7ea44ac3cfc9d2411284ec3ef",
         "type": "github"
       },
       "original": {
@@ -512,11 +464,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1749685505,
-        "narHash": "sha256-qAyDUuYvVoSl4hAq3Ho8vTKG/ms7i7qx+8jqS6beUuw=",
+        "lastModified": 1749761870,
+        "narHash": "sha256-y+rCuxTylur4k2MbL8cJwOR3pHIamCxp8xG9Vuhwvgw=",
         "owner": "nix-community",
         "repo": "nixvim",
-        "rev": "1b08a4d97632a8c3500469ae7e2db91769425ddf",
+        "rev": "18d838e88945b554d059db5f1fff1daed4b7bf8f",
         "type": "github"
       },
       "original": {
@@ -532,11 +484,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1749700217,
-        "narHash": "sha256-gCylBHZAvIgs6u6Ffy7GZTMKWxsexkUpkueXi14Qees=",
+        "lastModified": 1749847892,
+        "narHash": "sha256-+M0AtVshfTfleX0b00ghoVAkXRajepvOxBo68IMoeDc=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "43cc7b9a736dd88fbf6ba726a690894896d8d292",
+        "rev": "81f20de559c9ea83d6d88dbf958960a1c0006ebd",
         "type": "github"
       },
       "original": {
@@ -578,7 +530,6 @@
         "nixpkgs-awesome": "nixpkgs-awesome",
         "nixpkgs-cb_thunderlink-native": "nixpkgs-cb_thunderlink-native",
         "nixpkgs-firefox-binary-wrapper": "nixpkgs-firefox-binary-wrapper",
-        "nixpkgs-icewm": "nixpkgs-icewm",
         "nixpkgs-libslirp": "nixpkgs-libslirp",
         "nixpkgs-mailsend-go": "nixpkgs-mailsend-go",
         "nixpkgs-master": "nixpkgs-master",
@@ -586,9 +537,7 @@
         "nixpkgs-ted": "nixpkgs-ted",
         "nixpkgs-telegram-desktop": "nixpkgs-telegram-desktop",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "nixpkgs-xarchiver": "nixpkgs-xarchiver",
         "nixpkgs-xbill": "nixpkgs-xbill",
-        "nixpkgs-xchm": "nixpkgs-xchm",
         "nixvim": "nixvim",
         "nur": "nur"
       }
