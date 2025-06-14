@@ -141,8 +141,8 @@
     moreutils
     ngrep
     nix-init
+    nix-search-cli
     nix-tree
-    nom
     nvtopPackages.full
     ollama
     openssh
