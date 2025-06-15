@@ -10,5 +10,19 @@
     xpdf
     xquartz
     xterm
-  ];
+  ] ++ (with xorg; [
+    xauth
+    xcalc
+    xconsole
+    xev
+    xeyes
+    xfontsel
+    xkill
+    xload
+    xmessage
+    xmore
+    xvinfo
+    xwininfo
+    twm
+  ]);
 }
