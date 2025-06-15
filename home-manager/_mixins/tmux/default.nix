@@ -56,6 +56,10 @@
 
       # quicker Esc handling in vim running under tmux
       set -sg escape-time 0
+
+      # Sensible not being sensible: https://github.com/nix-community/home-manager/issues/5952
+      # TODO: check if I actually need it and maybe remove.
+      set -g default-command ${pkgs.zsh}/bin/zsh
     '';
   };
 }
