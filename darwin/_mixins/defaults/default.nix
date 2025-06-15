@@ -96,6 +96,8 @@
       KeyRepeat = 1;
       AppleInterfaceStyle = "Dark";
 
+      AppleShowAllFiles = true;
+
       NSAutomaticSpellingCorrectionEnabled = false;
       NSAutomaticCapitalizationEnabled = false;
       NSAutomaticPeriodSubstitutionEnabled = false;
