@@ -24,9 +24,6 @@
 
     nixpkgs-libslirp.url = "github:booxter/nixpkgs/honor-port-libslirp";
 
-    # telegram-desktop pulls linux only deps...
-    nixpkgs-telegram-desktop.url = "github:dtomvan/nixpkgs/dtomvan/push-zypzvrwlmlrm";
-
     # X11
     nixpkgs-awesome.url = "github:booxter/nixpkgs/awesome-darwin";
     nixpkgs-mesa-xephyr.url = "github:booxter/nixpkgs/mesa-darwin-libgl";
