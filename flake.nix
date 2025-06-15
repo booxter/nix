@@ -119,6 +119,7 @@
 
     nixosModules.vm = { ... }: {
       virtualisation.vmVariant.virtualisation = {
+        memorySize = 4096; # 4GB
         host.pkgs = inputs.nixpkgs-libslirp.legacyPackages.aarch64-darwin;
 
         # Make VM output to the terminal instead of a separate window
