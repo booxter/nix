@@ -86,12 +86,6 @@
         userName = "ihar.hrachyshka@gmail.com";
         passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
       } // commonCfg;
-      work = {
-        address = "ihrachys@redhat.com";
-        aliases = [ "ihar@redhat.com" ];
-        userName = "ihrachys@redhat.com";
-        passwordCommand = "${pkgs.pass}/bin/pass show rh/google.com-app-password-macpro";
-      } // commonCfg;
     };
 
   # Misc email tools
@@ -99,6 +93,5 @@
 
   home.packages = with pkgs; [
     gmailctl
-    mailsend-go
   ];
 }

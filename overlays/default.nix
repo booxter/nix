@@ -8,7 +8,6 @@
   # https://nixos.wiki/wiki/Overlays
   modifications = _final: prev: rec {
     inherit (import inputs.nixpkgs-arcanist { inherit (prev) system; }) arcanist;
-    inherit (import inputs.nixpkgs-mailsend-go { inherit (prev) system; }) mailsend-go;
     inherit (import inputs.nixpkgs-cb_thunderlink-native { inherit (prev) system; }) cb_thunderlink-native;
     inherit (import inputs.nixpkgs-firefox-binary-wrapper { inherit (prev) system; }) firefox;
 

@@ -7,12 +7,8 @@
     addKeysToAgent = "yes";
 
     includes = [
-      # homebrew ssh that I use to access GSS doesn't read this directory by
-      # default, for some reason
-      "/etc/ssh/ssh_config"
-
       # local config
-      # "config.backup" # prior to home-manager activation
+      "config.backup" # prior to home-manager activation
       "config.local" # whatever I may want to add manually
     ];
 

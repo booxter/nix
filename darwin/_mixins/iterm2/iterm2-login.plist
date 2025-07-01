@@ -6,7 +6,7 @@
     <string>com.googlecode.iterm2</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/Users/ihrachys/Applications/Home Manager Apps/iTerm2.app/Contents/MacOS/iTerm2</string>
+        <string>/Users/ihrachyshka/Applications/Home Manager Apps/iTerm2.app/Contents/MacOS/iTerm2</string>
     </array>
     <key>ProcessType</key>
     <string>Interactive</string>

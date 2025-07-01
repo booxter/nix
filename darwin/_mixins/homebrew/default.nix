@@ -3,9 +3,6 @@
   homebrew = {
     enable = true;
     onActivation.autoUpdate = true;
-    brews = [
-      "openssh" # it supports gss
-    ];
     casks = [
       "amethyst"
       "chatgpt"

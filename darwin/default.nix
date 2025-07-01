@@ -19,11 +19,11 @@
     ./_mixins/gnupg
     ./_mixins/homebrew
     ./_mixins/iterm2
-    ./_mixins/kinit-pass
-    # ./_mixins/linux-builder
     ./_mixins/nix-gc
-    ./_mixins/rosetta-builder
     ./_mixins/sudo
+
+    # ./_mixins/linux-builder
+    ./_mixins/rosetta-builder
   ];
 
   nixpkgs = {
@@ -64,7 +64,7 @@
   # $ darwin-rebuild changelog
   system.stateVersion = 4;
 
-  system.primaryUser = "ihrachys";
+  system.primaryUser = "ihrachyshka";
 
   # Create /etc/zshrc that loads the nix-darwin environment.
   programs.zsh.enable = true;

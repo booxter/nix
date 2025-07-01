@@ -22,13 +22,9 @@
           path = "${homeDir}/notes";
           interval = 300;
         };
-        gmailctl-private-config = {
+        gmailctl-config = {
           uri = "git+ssh://booxter@github.com:booxter/gmailctl-private-config.git";
           path = "${homeDir}/.gmailctl";
-        };
-        gmailctl-work-config = {
-          uri = "git+ssh://booxter@github.com:booxter/gmailctl-work-config.git";
-          path = "${homeDir}/.gmailctl-rh";
         };
         priv-bin = {
           uri = "git+ssh://booxter@github.com:booxter/dotfiles.git";
@@ -58,10 +54,6 @@
       gmailctl-private-config = git-sync-repo {
         gh-repo = "booxter/gmailctl-private-config";
         destdir = "~/.gmailctl";
-      };
-      gmailctl-work-config = git-sync-repo {
-        gh-repo = "booxter/gmailctl-work-config";
-        destdir = "~/.gmailctl-rh";
       };
     };
 

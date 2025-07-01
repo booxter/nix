@@ -14,15 +14,10 @@
     # https://github.com/NixOS/nixpkgs/commit/5ed483f0d79461c2c2d63b46ee62f77a37075bae
     nixpkgs-arcanist.url = "github:NixOS/nixpkgs/nixpkgs-24.05-darwin";
 
-    # https://github.com/NixOS/nixpkgs/pull/252383
-    nixpkgs-mailsend-go.url = "github:jsoo1/nixpkgs/mailsend-go";
-
     nixpkgs-firefox-binary-wrapper.url = "github:booxter/nixpkgs/switch-firefox-to-binary-wrapper";
 
     # TODO: post PR to nixpkgs
     nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
-
-    nixpkgs-libslirp.url = "github:booxter/nixpkgs/honor-port-libslirp";
 
     # X11
     nixpkgs-awesome.url = "github:booxter/nixpkgs/awesome-darwin";
@@ -57,22 +52,17 @@
     # home-manager switch -b backup --flake .
     # nix run nixpkgs#home-manager -- switch -b backup --flake .
     homeConfigurations = {
-      "ihrachys" = helper.mkHome {
-        hostname = "ihrachys-macpro";
+      ihrachyshka = helper.mkHome {
+        hostname = "mmini";
         platform = "aarch64-darwin";
-      };
-      "ec2-user" = helper.mkHome {
-        hostname = "ec2";
-        username = "ec2-user";
-        platform = "x86_64-linux";
       };
     };
 
     #nix run nix-darwin -- switch --flake .
     #nix build .#darwinConfigurations.{hostname}.config.system.build.toplevel
     darwinConfigurations = {
-      ihrachys-macpro = helper.mkDarwin {
-        hostname = "ihrachys-macpro";
+      mmini = helper.mkDarwin {
+        hostname = "mmini";
         platform = "aarch64-darwin";
       };
     };
@@ -93,18 +83,18 @@
       programs.zsh.enable = true;
       users.defaultUserShell = pkgs.zsh;
 
-      services.getty.autologinUser = "ihrachys";
+      services.getty.autologinUser = "ihrachyshka";
 
       users.mutableUsers = false;
-      users.users.ihrachys = {
+      users.users.ihrachyshka = {
         extraGroups = ["wheel" "users"];
-        group = "ihrachys";
+        group = "ihrachyshka";
         isNormalUser = true;
         openssh.authorizedKeys.keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA0W1oVd2GMoSwXHVQMb6v4e3rIMVe9/pr/PcsHg+Uz3 ihrachys@ihrachys-macpro"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan"
         ];
       };
-      users.groups.ihrachys = {};
+      users.groups.ihrachyshka = {};
       security.sudo.wheelNeedsPassword = false;
 
       environment.systemPackages = with pkgs; [
@@ -117,9 +107,6 @@
     nixosModules.vm = { ... }: {
       virtualisation.vmVariant.virtualisation = {
         memorySize = 4096; # 4GB
-
-        # fix dns resolution in the VM when on full dns vpn
-        host.pkgs = inputs.nixpkgs-libslirp.legacyPackages.aarch64-darwin;
 
         # Make VM output to the terminal instead of a separate window
         graphics = false;
@@ -142,11 +129,11 @@
                 outputs
                 stateVersion
                 ;
-              username = "ihrachys";
-              isLaptop = false;
+              username = "ihrachyshka";
+              isDesktop = false;
             };
             home-manager.useUserPackages = true;
-            home-manager.users.ihrachys = import ./home-manager;
+            home-manager.users.ihrachyshka = import ./home-manager;
           }
         ];
       };

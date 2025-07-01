@@ -6,7 +6,7 @@
   pkgs,
   stateVersion,
   username,
-  isLaptop,
+  isDesktop,
   ...
 }:
 let
@@ -16,7 +16,6 @@ in
   imports =
     [
       inputs.nixvim.homeManagerModules.nixvim
-      ./_mixins/awscli
       ./_mixins/cli-tools
       ./_mixins/nixvim
       ./_mixins/scm
@@ -24,11 +23,10 @@ in
       ./_mixins/ssh
       ./_mixins/tmux
     ]
-    ++ lib.optionals isLaptop [
+    ++ lib.optionals isDesktop [
       ./_mixins/copy-apps
       ./_mixins/email
       ./_mixins/git-sync
-      ./_mixins/ide
       ./_mixins/kitty
       ./_mixins/firefox
       ./_mixins/fonts
@@ -70,8 +68,7 @@ in
     with pkgs;
     [
     ]
-    ++ lib.optionals isLaptop [
-      discord
+    ++ lib.optionals isDesktop [
       obsidian
       podman-desktop
       wireshark
@@ -84,9 +81,7 @@ in
       iterm2
       keycastr
       raycast
-      slack
       stats
-      teams
     ];
 
   # TODO: move darwin specific config files to a separate module?

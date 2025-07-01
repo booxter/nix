@@ -9,11 +9,11 @@
   mkHome =
     {
       hostname,
-      username ? "ihrachys",
+      username ? "ihrachyshka",
       platform ? "aarch64-darwin",
     }:
     let
-      isLaptop = hostname == "ihrachys-macpro";
+      isDesktop = hostname == "mmini";
     in
       inputs.home-manager.lib.homeManagerConfiguration {
         pkgs = inputs.nixpkgs.legacyPackages.${platform};
@@ -25,7 +25,7 @@
             platform
             username
             stateVersion
-            isLaptop
+            isDesktop
             ;
         };
         modules = [ ../home-manager ];
@@ -35,7 +35,7 @@
   mkNixos =
     {
       hostname,
-      username ? "ihrachys",
+      username ? "ihrachyshka",
       platform ? "x86_64-linux",
     }:
     inputs.nixpkgs.lib.nixosSystem {
@@ -55,7 +55,7 @@
   mkDarwin =
     {
       hostname,
-      username ? "ihrachys",
+      username ? "ihrachyshka",
       platform ? "aarch64-darwin",
     }:
     inputs.nix-darwin.lib.darwinSystem {

@@ -1,7 +1,6 @@
 {
   lib,
   pkgs,
-  username,
   ...
 }:
 let
@@ -9,11 +8,6 @@ let
   email = "ihar.hrachyshka@gmail.com";
 in
 {
-  # Use homebrew or system ssh for git: they support gss.
-  home.sessionVariables = lib.optionalAttrs pkgs.stdenv.isDarwin {
-    GIT_SSH_COMMAND = if pkgs.stdenv.isDarwin then "/opt/homebrew/bin/ssh" else "/usr/bin/ssh";
-  };
-
   # Git
   programs.git = {
     enable = true;
@@ -26,11 +20,6 @@ in
       "*.swp"
     ];
 
-    hooks = {
-      # TODO: rewrite the hook script use nix
-      prepare-commit-msg = ./prepare-commit-msg.sh;
-    };
-
     extraConfig = {
       # ovs/ovn
       pw = {
@@ -38,13 +27,12 @@ in
         project = "ovn";
       };
 
-      # use rh smtp for send-email by default
       sendemail = {
         confirm = "auto";
         smtpServer = "smtp.gmail.com";
         smtpServerPort = 587;
         smtpEncryption = "tls";
-        smtpUser = "${username}@redhat.com";
+        smtpUser = "ihar.hrachyshka@gmail.com";
       };
 
       # remember and repeat identical merges

@@ -38,9 +38,6 @@
     # TODO: can I apply aliases for all shells?
     shellAliases =
       let
-        gcalcliHome = "gcalcli --config-folder ~/.gcalcli --calendar Home";
-        gcalcliWork = "gcalcli --config-folder ~/.gcalcli-rh --calendar ihrachys@redhat.com";
-        gcalcliCalwArgs = "calw --military --nodeclined --monday";
         openaiKey = "${pkgs.pass}/bin/pass priv/openai-chatgpt-secret";
       in
       {
@@ -63,19 +60,7 @@
         q = "eza";
         qq = "eza -l";
 
-        # gmailctl for personal account will use the default config path
-        gmailctl-rh = "gmailctl --config=$HOME/.gmailctl-rh";
-
         view = "nvim -R";
-
-        # google calendar
-        gc = "${gcalcliHome}";
-        gc-rh = "${gcalcliWork}";
-        gcw = "${gcalcliHome} ${gcalcliCalwArgs}";
-        gcw-rh = "${gcalcliWork} ${gcalcliCalwArgs}";
-
-        # send weekly report to boss(es)
-        report = "~/.priv-bin/weekly-report";
       };
   };
 
@@ -120,17 +105,13 @@
     file
     findutils
     # flox
-    fromager
     fzf
-    gcalcli
     gnugrep
     gnupg
     gnused
     gzip
-    heimdal
     htop
     hydra-check
-    ibmcloud-cli
     ipcalc
     lima
     lnav # log viewer
@@ -152,13 +133,11 @@
     procps
     pstree
     shell-gpt
-    skopeo
     tcpdump
     tree
     unzip
     viddy
     watch
-    yubikey-manager
     zip
 
     # python

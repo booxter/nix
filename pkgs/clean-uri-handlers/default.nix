@@ -1,6 +1,6 @@
 # TODO: darwin only
 # TODO: confirm it still works
-{ lib, pkgs, username ? "ihrachys", ... }: pkgs.writeScriptBin "clean-uri-handlers"
+{ lib, pkgs, username ? "ihrachyshka", ... }: pkgs.writeScriptBin "clean-uri-handlers"
 (let
     lsregister = "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister";
     xargs = "${pkgs.findutils}/bin/xargs -d '\\n'";

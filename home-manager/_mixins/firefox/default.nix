@@ -81,9 +81,6 @@
         "dom.push.connection.enabled" = false;
         "dom.battery.enabled" = false; # you don't need to see my battery...
         "dom.private-attribution.submission.enabled" = false; # No PPA
-
-        # krb gss login
-        "network.negotiate-auth.trusted-uris" = "redhat.com";
       };
       extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
         browserpass
