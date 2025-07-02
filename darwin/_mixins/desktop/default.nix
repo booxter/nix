@@ -17,6 +17,7 @@
       taskToPrivateId = "e810fef2-5240-4c41-bfa4-538534f96ff9";
       obsidianCmd = cmdId: "open 'obsidian://adv-uri?commandid=quickadd%3Achoice%3A${cmdId}'";
       spotifyCmd = cmd: "${pkgs.spotify-player}/bin/spotify_player playback ${cmd}";
+      quakeTermCmd = "${pkgs.kitty}/bin/kitten quick-access-terminal";
     in ''
       # Exact keycodes may be checked @ https://github.com/koekeishiya/skhd/issues/1
       cmd + shift - c : ${obsidianCmd fleetingId}
@@ -27,6 +28,7 @@
       shift - play : ${spotifyCmd "play-pause"}
       shift - next : ${spotifyCmd "next"}
       shift - previous : ${spotifyCmd "previous"}
+      cmd - 0x32 : ${quakeTermCmd} # backtick
     '';
   };
 }
