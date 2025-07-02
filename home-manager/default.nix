@@ -76,7 +76,6 @@ in
     ]
     ++ lib.optionals isDarwin [
       cb_thunderlink-native
-      element-desktop
       homerow
       keycastr
       stats

@@ -5,6 +5,7 @@
     casks = [
       "amethyst"
       "chatgpt"
+      "element"
       "todoist"
     ];
   };
