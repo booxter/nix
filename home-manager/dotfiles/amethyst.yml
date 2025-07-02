@@ -260,7 +260,7 @@ window-minimum-height: 0
 window-minimum-width: 0
 
 # List of bundle identifiers for applications to either be automatically floating or automatically tiled based on floating-is-blacklist (default []).
-floating: ["com.googlecode.iterm2", "com.apple.systempreferences", "com.spotify.client"]
+floating: ["com.apple.systempreferences", "com.spotify.client"]
 
 # Boolean flag determining behavior of the floating list. true if the applications should be floating and all others tiled. false if the applications should be tiled and all others floating (default true).
 floating-is-blacklist: true

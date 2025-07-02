@@ -11,6 +11,9 @@
     inherit (import inputs.nixpkgs-cb_thunderlink-native { inherit (prev) system; }) cb_thunderlink-native;
     inherit (import inputs.nixpkgs-firefox-binary-wrapper { inherit (prev) system; }) firefox;
 
+    # fixed in https://github.com/NixOS/nixpkgs/pull/421260/
+    inherit (import inputs.nixpkgs-master { inherit (prev) system; }) texlive;
+
     # X11
     inherit (import inputs.nixpkgs-awesome { inherit (prev) system; }) awesome;
     inherit (import inputs.nixpkgs-mesa-xephyr { inherit (prev) system; }) mesa;

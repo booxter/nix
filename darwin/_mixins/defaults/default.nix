@@ -46,10 +46,6 @@
         # Install System data files & security updates
         CriticalUpdateInstall = 1;
       };
-      "com.googlecode.iterm2" = {
-        PrefsCustomFolder = "/Users/${username}/.iterm2";
-        NoSyncNeverRemindPrefsChangesLostForFile_selection = 1; # Manually save changes
-      };
       "com.apple.HIToolbox" = {
         AppleEnabledInputSources = [
           {

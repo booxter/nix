@@ -18,11 +18,10 @@
     ./_mixins/fonts
     ./_mixins/gnupg
     ./_mixins/homebrew
-    ./_mixins/iterm2
     ./_mixins/nix-gc
     ./_mixins/sudo
 
-    # ./_mixins/linux-builder
+    #./_mixins/linux-builder
     ./_mixins/rosetta-builder
   ];
 
@@ -62,7 +61,7 @@
 
   # Used for backwards compatibility, please read the changelog before changing.
   # $ darwin-rebuild changelog
-  system.stateVersion = 4;
+  system.stateVersion = 5;
 
   system.primaryUser = "ihrachyshka";
 

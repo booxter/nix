@@ -1,4 +1,3 @@
-# TODO: check module for homebrew?
 { ... }: {
   homebrew = {
     enable = true;
@@ -8,5 +7,10 @@
       "chatgpt"
       "todoist"
     ];
+  };
+
+  nix-homebrew = {
+    enable = true;
+    user = "ihrachyshka";
   };
 }

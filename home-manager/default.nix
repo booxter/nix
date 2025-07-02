@@ -78,7 +78,6 @@ in
       cb_thunderlink-native
       element-desktop
       homerow
-      iterm2
       keycastr
       raycast
       stats
@@ -86,7 +85,6 @@ in
 
   # TODO: move darwin specific config files to a separate module?
   home.file = lib.optionalAttrs isDarwin {
-    ".iterm2/com.googlecode.iterm2.plist".source = ./dotfiles/iterm2.plist;
     ".amethyst.yml".source = ./dotfiles/amethyst.yml;
 
     # TODO: replace with skhd shortcut
