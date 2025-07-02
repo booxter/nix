@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ lib, pkgs, ... }: {
   # Add red borders to windows
   services.jankyborders = {
     enable = true;
@@ -18,16 +18,21 @@
       obsidianCmd = cmdId: "open 'obsidian://adv-uri?commandid=quickadd%3Achoice%3A${cmdId}'";
       spotifyCmd = cmd: "${pkgs.spotify-player}/bin/spotify_player playback ${cmd}";
       quakeTermCmd = "${pkgs.kitty}/bin/kitten quick-access-terminal";
+      newTermCmd = "${lib.getExe pkgs.kitty} --directory ~";
     in ''
       # Exact keycodes may be checked @ https://github.com/koekeishiya/skhd/issues/1
+
       cmd + shift - c : ${obsidianCmd fleetingId}
       cmd + shift - l : ${obsidianCmd logToWorkId}
       cmd + shift - 0x29 : ${obsidianCmd logToPrivateId} # semicolon
       cmd + shift - t : ${obsidianCmd taskToWorkId}
       cmd + shift - y : ${obsidianCmd taskToPrivateId}
+
       shift - play : ${spotifyCmd "play-pause"}
       shift - next : ${spotifyCmd "next"}
       shift - previous : ${spotifyCmd "previous"}
+
+      cmd - return : ${newTermCmd}
       cmd - 0x32 : ${quakeTermCmd} # backtick
     '';
   };

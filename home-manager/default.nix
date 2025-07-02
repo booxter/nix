@@ -79,35 +79,11 @@ in
       element-desktop
       homerow
       keycastr
-      raycast
       stats
     ];
 
   # TODO: move darwin specific config files to a separate module?
   home.file = lib.optionalAttrs isDarwin {
     ".amethyst.yml".source = ./dotfiles/amethyst.yml;
-
-    # TODO: replace with skhd shortcut
-    ".bin/terminal-new-window.sh" = {
-      executable = true;
-      text = ''
-        #!${lib.getExe pkgs.zsh}
-        #
-        # Required parameters:
-        # @raycast.schemaVersion 1
-        # @raycast.title Terminal New Window
-        # @raycast.mode silent
-
-        # Optional parameters:
-        # @raycast.icon 🤖
-
-        # Documentation:
-        # @raycast.description Create new window in preferred Terminal
-        # @raycast.author Ihar Hrachyshka
-
-        # --single-instance doesn't play well with amethyst (it doesn't recognize consequent windows)
-        ${lib.getExe pkgs.kitty} --directory ~ > /dev/null 2>&1
-      '';
-    };
   };
 }
