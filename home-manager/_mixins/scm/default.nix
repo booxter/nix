@@ -1,11 +1,12 @@
 {
   lib,
   pkgs,
+  isPrivate,
   ...
 }:
 let
   fullName = "Ihar Hrachyshka";
-  email = "ihar.hrachyshka@gmail.com";
+  email = if isPrivate then "ihar.hrachyshka@gmail.com" else "ihrachyshka@nvidia.com";
 in
 {
   # Git
@@ -27,6 +28,7 @@ in
         project = "ovn";
       };
 
+      # TODO: configure for !isPrivate
       sendemail = {
         confirm = "auto";
         smtpServer = "smtp.gmail.com";
@@ -78,8 +80,9 @@ in
   programs.gh = {
     enable = true;
     extensions = with pkgs; [
-      gh-copilot
       gh-poi
+    ] ++ lib.optionals isPrivate [
+      gh-copilot
     ];
   };
   programs.gh-dash = {
@@ -106,8 +109,6 @@ in
   };
 
   home.packages = with pkgs; [
-    arcanist # phabricator client
-
     # misc git goodies
     git-absorb
     git-prole
@@ -119,6 +120,8 @@ in
     # for nix dev
     nixpkgs-review
     nurl
+  ] ++ lib.optionals isPrivate [
+    arcanist # phabricator client
   ];
 
   # use vim bindings for tig

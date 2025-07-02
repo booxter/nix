@@ -7,12 +7,11 @@
   pkgs,
   platform,
   username,
+  isPrivate,
   ...
 }: {
   imports = [
     ./${hostname}
-    ./_mixins/browser
-    ./_mixins/community-builders
     ./_mixins/defaults
     ./_mixins/desktop
     ./_mixins/fonts
@@ -23,6 +22,9 @@
 
     #./_mixins/linux-builder
     ./_mixins/rosetta-builder
+  ] ++ lib.optionals isPrivate [
+    ./_mixins/browser
+    ./_mixins/community-builders
   ];
 
   nixpkgs = {
@@ -47,14 +49,6 @@
 
     # Some packages like firefox can kill the machine due to memory pressure
     max-jobs = 4;
-
-    # flox config
-    substituters = [
-      "https://cache.flox.dev"
-    ];
-    trusted-public-keys = [
-      "flox-cache-public-1:7F4OyH7ZCnFhcze3fJdfyXYLQw/aV7GEed86nQ7IsOs="
-    ];
 
     trusted-users = [ "@admin" ];
   };

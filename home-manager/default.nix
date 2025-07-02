@@ -7,6 +7,7 @@
   stateVersion,
   username,
   isDesktop,
+  isPrivate,
   ...
 }:
 let
@@ -28,9 +29,10 @@ in
       ./_mixins/email
       ./_mixins/git-sync
       ./_mixins/kitty
-      ./_mixins/firefox
       ./_mixins/fonts
       ./_mixins/spotify
+    ] ++ lib.optionals (isDesktop && isPrivate) [
+      ./_mixins/firefox
       ./_mixins/telegram
       ./_mixins/x11
     ];
@@ -76,7 +78,6 @@ in
     ]
     ++ lib.optionals isDarwin [
       cb_thunderlink-native
-      homerow
       keycastr
       stats
     ];

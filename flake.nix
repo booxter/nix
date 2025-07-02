@@ -47,8 +47,6 @@
     nixvim.url = "github:nix-community/nixvim";
 
     nur.url = "github:nix-community/NUR";
-
-    #flox.url = "github:flox/flox/v1.3.11";
   };
 
   outputs = inputs@{ self, ... }:
@@ -66,6 +64,10 @@
         hostname = "mmini";
         platform = "aarch64-darwin";
       };
+      ihrachyshka-mlt = helper.mkHome {
+        hostname = "ihrachyshka-mlt";
+        platform = "aarch64-darwin";
+      };
     };
 
     #nix run nix-darwin -- switch --flake .
@@ -73,6 +75,10 @@
     darwinConfigurations = {
       mmini = helper.mkDarwin {
         hostname = "mmini";
+        platform = "aarch64-darwin";
+      };
+      ihrachyshka-mlt = helper.mkDarwin {
+        hostname = "ihrachyshka-mlt";
         platform = "aarch64-darwin";
       };
     };

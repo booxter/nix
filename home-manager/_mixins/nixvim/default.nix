@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, isPrivate, ... }:
 {
   programs.nixvim = {
     enable = true;
@@ -80,7 +80,7 @@
       cmp-zsh.enable = true;
 
       copilot-vim = {
-        enable = true;
+        enable = isPrivate;
         settings.workspace_folders = [ "~/src" ];
       };
 

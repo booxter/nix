@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, isPrivate, ... }:
 {
   # Thunderbird
   programs.thunderbird = {
@@ -68,7 +68,7 @@
   };
 
   # Accounts
-  accounts.email.accounts =
+  accounts.email.accounts = lib.optionalAttrs isPrivate (
     let
       commonCfg = {
         realName = "Ihar Hrachyshka";
@@ -86,12 +86,12 @@
         userName = "ihar.hrachyshka@gmail.com";
         passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
       } // commonCfg;
-    };
+    });
 
   # Misc email tools
   programs.msmtp.enable = true;
 
-  home.packages = with pkgs; [
+  home.packages = lib.optionals isPrivate (with pkgs; [
     gmailctl
-  ];
+  ]);
 }

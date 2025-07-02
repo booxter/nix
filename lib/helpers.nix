@@ -13,7 +13,9 @@
       platform ? "aarch64-darwin",
     }:
     let
-      isDesktop = hostname == "mmini";
+      # TODO: for now, assuming all darwin machines are desktops, and all linux are not
+      isDesktop = platform == "aarch64-darwin";
+      isPrivate = hostname != "ihrachyshka-mlt";
     in
       inputs.home-manager.lib.homeManagerConfiguration {
         pkgs = inputs.nixpkgs.legacyPackages.${platform};
@@ -26,6 +28,7 @@
             username
             stateVersion
             isDesktop
+            isPrivate
             ;
         };
         modules = [ ../home-manager ];
@@ -58,28 +61,32 @@
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
     }:
-    inputs.nix-darwin.lib.darwinSystem {
-      specialArgs = {
-        inherit
-          inputs
-          outputs
-          hostname
-          platform
-          username
-          ;
+    let
+      isPrivate = hostname != "ihrachyshka-mlt";
+    in
+      inputs.nix-darwin.lib.darwinSystem {
+        specialArgs = {
+          inherit
+            inputs
+            outputs
+            hostname
+            platform
+            username
+            isPrivate
+            ;
+        };
+        modules = [
+          inputs.nix-homebrew.darwinModules.nix-homebrew
+          # An existing Linux builder is needed to initially bootstrap `nix-rosetta-builder`.
+          # If one isn't already available: comment out the `nix-rosetta-builder` module below,
+          # uncomment this `linux-builder` module, and run `darwin-rebuild switch`:
+          # { nix.linux-builder.enable = true; }
+          # Then: uncomment `nix-rosetta-builder`, remove `linux-builder`, and `darwin-rebuild switch`
+          # a second time. Subsequently, `nix-rosetta-builder` can rebuild itself.
+          inputs.nix-rosetta-builder.darwinModules.default
+          ../darwin
+        ];
       };
-      modules = [
-        inputs.nix-homebrew.darwinModules.nix-homebrew
-        # An existing Linux builder is needed to initially bootstrap `nix-rosetta-builder`.
-        # If one isn't already available: comment out the `nix-rosetta-builder` module below,
-        # uncomment this `linux-builder` module, and run `darwin-rebuild switch`:
-        # { nix.linux-builder.enable = true; }
-        # Then: uncomment `nix-rosetta-builder`, remove `linux-builder`, and `darwin-rebuild switch`
-        # a second time. Subsequently, `nix-rosetta-builder` can rebuild itself.
-        inputs.nix-rosetta-builder.darwinModules.default
-        ../darwin
-      ];
-    };
 
   forAllSystems = inputs.nixpkgs.lib.genAttrs [
     "aarch64-linux"
