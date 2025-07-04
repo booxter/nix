@@ -110,6 +110,7 @@
     htop
     hydra-check
     ipcalc
+    kubectl
     lima
     lnav # log viewer
     magic-wormhole
@@ -132,6 +133,7 @@
     tcpdump
     tree
     unzip
+    vault
     viddy
     watch
     zip

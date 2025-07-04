@@ -119,6 +119,7 @@ in
     git-prole
     git-pw
     git-review
+    glab
     mergiraf
     tig
 
