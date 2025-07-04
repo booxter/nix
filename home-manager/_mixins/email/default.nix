@@ -68,25 +68,31 @@
   };
 
   # Accounts
-  accounts.email.accounts = lib.optionalAttrs isPrivate (
+  accounts.email.accounts = 
     let
       commonCfg = {
         realName = "Ihar Hrachyshka";
-        flavor = "gmail.com";
-        imap.host = "imap.gmail.com";
-        smtp.host = "smtp.gmail.com";
-        thunderbird.enable = true;
+        thunderbird = {
+          enable = true;
+          settings = id: {
+            "mail.server.server_${id}.authMethod" = 10; # OAuth2
+            "mail.smtpserver.smtp_${id}.authMethod" = 10; # OAuth2
+          };
+        };
         msmtp.enable = true;
+        primary = true;
       };
     in
     {
-      default = {
-        primary = true;
+      default = (if isPrivate then {
+        flavor = "gmail.com";
         address = "ihar.hrachyshka@gmail.com";
-        userName = "ihar.hrachyshka@gmail.com";
         passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
-      } // commonCfg;
-    });
+      } else {
+        flavor = "outlook.office365.com";
+        address = "ihrachyshka@nvidia.com";
+      }) // commonCfg;
+    };
 
   # Misc email tools
   programs.msmtp.enable = true;

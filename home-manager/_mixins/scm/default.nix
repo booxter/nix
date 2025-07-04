@@ -28,13 +28,18 @@ in
         project = "ovn";
       };
 
-      # TODO: configure for !isPrivate
-      sendemail = {
+      sendemail = if isPrivate then {
         confirm = "auto";
         smtpServer = "smtp.gmail.com";
         smtpServerPort = 587;
         smtpEncryption = "tls";
         smtpUser = "ihar.hrachyshka@gmail.com";
+      } else {
+        confirm = "auto";
+        smtpServer = "smtp.office365.com";
+        smtpServerPort = 587;
+        smtpEncryption = "tls";
+        smtpUser = "ihrachyshka@nvidia.com";
       };
 
       # remember and repeat identical merges
