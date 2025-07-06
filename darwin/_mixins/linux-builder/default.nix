@@ -1,6 +1,6 @@
 { ... }: {
   nix = {
-    linux-builder = {
+    linux-builder = rec {
       # if custom config is ever broken to the point the machine cannot start
       # and the builder itself cannot be rebuilt, just leave the enable = true
       # and temporarily disable the rest of settings to pull the builder image
@@ -9,6 +9,8 @@
       ephemeral = true;
       systems = ["x86_64-linux" "aarch64-linux"];
       config = {
+        boot.binfmt.emulatedSystems = ["x86_64-linux"];
+        nix.settings.extra-platforms = config.boot.binfmt.emulatedSystems;
         virtualisation = {
           darwin-builder = {
             diskSize = 80 * 1024;
