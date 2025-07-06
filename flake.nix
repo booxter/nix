@@ -102,11 +102,6 @@
     nixosModules.base = { pkgs, ... }: {
       system.stateVersion = "25.11";
 
-      programs.zsh.enable = true;
-      users.defaultUserShell = pkgs.zsh;
-
-      services.getty.autologinUser = "ihrachyshka";
-
       users.mutableUsers = false;
       users.users.ihrachyshka = {
         extraGroups = ["wheel" "users"];
@@ -129,9 +124,6 @@
     nixosModules.vm = { ... }: {
       virtualisation.vmVariant.virtualisation = {
         memorySize = 4096; # 4GB
-
-        # Make VM output to the terminal instead of a separate window
-        graphics = false;
       };
     };
 
@@ -150,6 +142,16 @@
           self.nixosModules.vm
           self.nixosModules.formats
 
+          ({ pkgs, ... }: {
+            # use zsh in the VM since it's meant for interactive use
+            programs.zsh.enable = true;
+            users.defaultUserShell = pkgs.zsh;
+
+            # auto-login on tty
+            services.getty.autologinUser = "ihrachyshka";
+            virtualisation.vmVariant.virtualisation.graphics = false;
+          })
+
           # TODO: combine home management with helpers.*?
           inputs.home-manager.nixosModules.home-manager
           {
@@ -166,6 +168,15 @@
             home-manager.useUserPackages = true;
             home-manager.users.ihrachyshka = import ./home-manager;
           }
+        ];
+      };
+
+      serviceVM = inputs.nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          self.nixosModules.base
+          self.nixosModules.vm
+          self.nixosModules.formats
         ];
       };
     };

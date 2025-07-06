@@ -5,10 +5,10 @@ linux:
 	nix run .#linuxVM -L --show-trace
 
 linux-vbox:
-	nix build .#nixosConfigurations.linuxVM.config.formats.virtualbox -L --show-trace
+	nix build .#nixosConfigurations.serviceVM.config.formats.virtualbox -L --show-trace
 
 linux-vmware:
-	nix build .#nixosConfigurations.linuxVM.config.formats.vmware -L --show-trace
+	nix build .#nixosConfigurations.serviceVM.config.formats.vmware -L --show-trace
 
 # TODO: generalize into a single target with parameters
 darwin-build:
