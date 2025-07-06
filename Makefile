@@ -7,6 +7,9 @@ linux:
 linux-vbox:
 	nix build .#nixosConfigurations.linuxVM.config.formats.virtualbox -L --show-trace
 
+linux-vmware:
+	nix build .#nixosConfigurations.linuxVM.config.formats.vmware -L --show-trace
+
 # TODO: generalize into a single target with parameters
 darwin-build:
 	nix build .#darwinConfigurations.mmini.config.system.build.toplevel
