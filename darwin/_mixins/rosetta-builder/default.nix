@@ -1,7 +1,7 @@
 { ... }: {
   nix-rosetta-builder = {
     memory = "24GiB";
-    cores = 4;
+    cores = 8;
     onDemand = true;
     permitNonRootSshAccess = true;
   };
