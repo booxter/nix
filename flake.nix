@@ -47,6 +47,12 @@
     nixvim.url = "github:nix-community/nixvim";
 
     nur.url = "github:nix-community/NUR";
+
+    nixos-generators = {
+      url = "github:nix-community/nixos-generators";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs = inputs@{ self, ... }:
@@ -129,12 +135,20 @@
       };
     };
 
+    nixosModules.formats = { ... }: {
+      imports = [
+        inputs.nixos-generators.nixosModules.all-formats
+      ];
+      nixpkgs.hostPlatform = "x86_64-linux";
+    };
+
     nixosConfigurations = {
       linuxVM = inputs.nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         modules = [
           self.nixosModules.base
           self.nixosModules.vm
+          self.nixosModules.formats
 
           # TODO: combine home management with helpers.*?
           inputs.home-manager.nixosModules.home-manager

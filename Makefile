@@ -4,6 +4,9 @@ inputs-update:
 linux:
 	nix run .#linuxVM -L --show-trace
 
+linux-vbox:
+	nix build .#nixosConfigurations.linuxVM.config.formats.virtualbox -L --show-trace
+
 # TODO: generalize into a single target with parameters
 darwin-build:
 	nix build .#darwinConfigurations.mmini.config.system.build.toplevel
