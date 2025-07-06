@@ -20,8 +20,8 @@
     ./_mixins/nix-gc
     ./_mixins/sudo
 
-    #./_mixins/linux-builder
-    ./_mixins/rosetta-builder
+    ./_mixins/linux-builder
+    #./_mixins/rosetta-builder
   ] ++ lib.optionals isPrivate [
     ./_mixins/browser
     ./_mixins/community-builders

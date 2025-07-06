@@ -1,4 +1,4 @@
-{ lib, ... }: {
+{ ... }: {
   nix = {
     linux-builder = {
       # if custom config is ever broken to the point the machine cannot start
@@ -7,14 +7,14 @@
       # from cache
       enable = true;
       ephemeral = true;
-      systems = ["aarch64-linux"];
+      systems = ["x86_64-linux" "aarch64-linux"];
       config = {
         virtualisation = {
           darwin-builder = {
             diskSize = 80 * 1024;
-            memorySize = 20 * 1024;
+            memorySize = 24 * 1024;
           };
-          cores = 4;
+          cores = 8;
         };
       };
     };
