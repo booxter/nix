@@ -146,6 +146,7 @@
                 stateVersion
                 ;
               username = "ihrachyshka";
+              isPrivate = true;
               isDesktop = false;
             };
             home-manager.useUserPackages = true;
