@@ -4,11 +4,11 @@ inputs-update:
 linux:
 	nix run .#linuxVM -L --show-trace
 
-linux-vbox:
+service-vbox:
 	nix build .#nixosConfigurations.serviceVM.config.formats.virtualbox -L --show-trace
 
-linux-vmware:
-	nix build .#nixosConfigurations.serviceVM.config.formats.vmware -L --show-trace
+builder-vbox:
+	nix build .#nixosConfigurations.builderVM.config.formats.virtualbox -L --show-trace
 
 # TODO: generalize into a single target with parameters
 darwin-build:

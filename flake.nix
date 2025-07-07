@@ -127,6 +127,23 @@
       };
     };
 
+    nixosModules.builder = { config, ... }: {
+        boot.binfmt.emulatedSystems = ["aarch64-linux"];
+        nix.settings.extra-platforms = config.boot.binfmt.emulatedSystems;
+    };
+
+    nixosModules.jellyfin = { pkgs, ... }: {
+      services.jellyfin = {
+        enable = true;
+        openFirewall = true;
+      };
+      environment.systemPackages = [
+        pkgs.jellyfin
+        pkgs.jellyfin-web
+        pkgs.jellyfin-ffmpeg
+      ];
+    };
+
     nixosModules.formats = { ... }: {
       imports = [
         inputs.nixos-generators.nixosModules.all-formats
@@ -171,12 +188,28 @@
         ];
       };
 
+      # TODO: separate service configuration per VM; move to other files
       serviceVM = inputs.nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
+        system = "x86_64-linux";
         modules = [
           self.nixosModules.base
           self.nixosModules.vm
           self.nixosModules.formats
+
+          ({ ... }: { networking.hostName = "service"; })
+          self.nixosModules.jellyfin
+        ];
+      };
+
+      builderVM = inputs.nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          self.nixosModules.base
+          self.nixosModules.vm
+          self.nixosModules.formats
+
+          ({ ... }: { networking.hostName = "builder"; })
+          self.nixosModules.builder
         ];
       };
     };
