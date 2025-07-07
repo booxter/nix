@@ -38,9 +38,6 @@ $VBOX_MANAGE modifyvm nixos --nested-hw-virt on
 # Set OS type
 $VBOX_MANAGE modifyvm nixos --os-type Linux_64
 
-# Enable auto-start
-$VBOX_MANAGE modifyvm nixos --autostart-enabled on
-
 # Start the VM
 $VBOX_MANAGE startvm nixos --type headless
 
