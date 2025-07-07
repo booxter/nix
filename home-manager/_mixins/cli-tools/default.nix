@@ -110,6 +110,7 @@
     htop
     hydra-check
     ipcalc
+    krew
     kubectl
     lima
     lnav # log viewer
