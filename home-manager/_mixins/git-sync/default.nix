@@ -55,6 +55,10 @@
         gh-repo = "booxter/gmailctl-private-config";
         destdir = "~/.gmailctl";
       };
+      priv-bin = git-sync-repo {
+        gh-repo = "booxter/dotfiles";
+        destdir = "~/.priv-bin";
+      };
     };
 
   home.sessionPath = [
