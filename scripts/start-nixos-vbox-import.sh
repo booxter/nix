@@ -24,16 +24,15 @@ MEMORY="2048"
 CPUS="2"
 
 # Delete old VM if it exists
-$VBOX_MANAGE list vms | grep -q $VM && \
-		echo "Deleting old NixOS VM..." && \
-		$VBOX_MANAGE controlvm $VM poweroff && \
-		$VBOX_MANAGE unregistervm $VM --delete
+echo "Deleting old NixOS VM..."
+$VBOX_MANAGE controlvm $VM poweroff || true
+$VBOX_MANAGE unregistervm $VM --delete || true
 
 # Create a new VM
 $VBOX_MANAGE import $DISK_PATH --vsys=0 --vmname $VM
 
 # Calculate unique MAC address from VM name
-MAC=$(echo -n "$VM" | md5sum | cut -c1-12 | sed 's/\(..\)/\1:/g;s/:$//')
+MAC=$(echo -n "$VM" | md5sum | cut -c1-12)
 
 # Switch to bridged networking
 $VBOX_MANAGE modifyvm $VM --nic1 bridged --bridgeadapter1 $NET_IFACE --macaddress1 $MAC
