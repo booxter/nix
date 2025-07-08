@@ -110,8 +110,10 @@
     htop
     hydra-check
     ipcalc
+    kind
     krew
     kubectl
+    kubernetes-helm
     lima
     lnav # log viewer
     magic-wormhole
