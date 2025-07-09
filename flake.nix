@@ -66,13 +66,23 @@
     # home-manager switch -b backup --flake .
     # nix run nixpkgs#home-manager -- switch -b backup --flake .
     homeConfigurations = {
+      # mmini
       ihrachyshka = helper.mkHome {
-        hostname = "mmini";
         platform = "aarch64-darwin";
+        isDesktop = true;
+        isPrivate = true;
       };
+      # nv laptop
       ihrachyshka-mlt = helper.mkHome {
-        hostname = "ihrachyshka-mlt";
         platform = "aarch64-darwin";
+        isDesktop = true;
+        isPrivate = false;
+      };
+      # nv vms
+      ihrachyshka-nvcloud = helper.mkHome {
+        platform = "x86_64-linux";
+        isDesktop = false;
+        isPrivate = false;
       };
     };
 
@@ -82,10 +92,12 @@
       mmini = helper.mkDarwin {
         hostname = "mmini";
         platform = "aarch64-darwin";
+        isPrivate = true;
       };
       ihrachyshka-mlt = helper.mkDarwin {
         hostname = "ihrachyshka-mlt";
         platform = "aarch64-darwin";
+        isPrivate = false;
       };
     };
 

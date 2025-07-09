@@ -34,3 +34,9 @@ home-build-mlt:
 
 home-switch-mlt:
 	nix run nixpkgs#home-manager -- switch --flake .#ihrachyshka-mlt --show-trace
+
+home-build-nvcloud:
+	nix run nixpkgs#home-manager -- build --flake .#ihrachyshka-nvcloud
+
+home-switch-nvcloud:
+	nix run nixpkgs#home-manager -- switch --flake .#ihrachyshka-nvcloud --show-trace
