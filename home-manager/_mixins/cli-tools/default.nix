@@ -136,7 +136,7 @@
     tcpdump
     tree
     unzip
-    vault
+    vault-bin
     viddy
     watch
     zip
