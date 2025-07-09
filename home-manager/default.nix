@@ -27,12 +27,13 @@ in
     ++ lib.optionals isDesktop [
       ./_mixins/copy-apps
       ./_mixins/email
+      ./_mixins/fonts
       ./_mixins/git-sync
       ./_mixins/kitty
-      ./_mixins/fonts
       ./_mixins/spotify
     ] ++ lib.optionals (isDesktop && isPrivate) [
       ./_mixins/firefox
+      ./_mixins/ollama
       ./_mixins/telegram
       ./_mixins/x11
     ];
@@ -53,14 +54,6 @@ in
     ];
     config = {
       allowUnfree = true;
-    };
-  };
-
-  services.ollama.enable = true;
-  launchd.agents.ollama = lib.optionalAttrs isDarwin {
-    config = {
-      StandardErrorPath = "/tmp/ollama.err";
-      StandardOutPath = "/tmp/ollama.out";
     };
   };
 
