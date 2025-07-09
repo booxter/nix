@@ -39,4 +39,4 @@ home-build-nvcloud:
 	nix run nixpkgs#home-manager -- build --flake .#ihrachyshka-nvcloud
 
 home-switch-nvcloud:
-	nix run nixpkgs#home-manager -- switch --flake .#ihrachyshka-nvcloud --show-trace
+	nix run nixpkgs#home-manager -- switch --flake .#ihrachyshka-nvcloud -b backup --show-trace
