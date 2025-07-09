@@ -26,10 +26,7 @@
           uri = "git+ssh://booxter@github.com:booxter/gmailctl-private-config.git";
           path = "${homeDir}/.gmailctl";
         };
-        priv-bin = {
-          uri = "git+ssh://booxter@github.com:booxter/dotfiles.git";
-          path = "${homeDir}/.priv-bin";
-        };
+        # DO NOT SYNC priv-bin
       };
     };
 
@@ -55,6 +52,7 @@
         gh-repo = "booxter/gmailctl-private-config";
         destdir = "~/.gmailctl";
       };
+      # Activate but don't sync
       priv-bin = git-sync-repo {
         gh-repo = "booxter/dotfiles";
         destdir = "~/.priv-bin";
