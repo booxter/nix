@@ -110,6 +110,7 @@
     htop
     hydra-check
     ipcalc
+    jinjanator
     kind
     krew
     kubectl
