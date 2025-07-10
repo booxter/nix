@@ -106,6 +106,7 @@
     gnugrep
     gnupg
     gnused
+    go
     gzip
     htop
     hydra-check
