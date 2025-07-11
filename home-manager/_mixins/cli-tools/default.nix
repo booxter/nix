@@ -141,6 +141,7 @@
     vault-bin
     viddy
     watch
+    yq
     zip
 
     # python
