@@ -80,7 +80,7 @@
       cmp-zsh.enable = true;
 
       copilot-vim = {
-        enable = isPrivate;
+        enable = true;
         settings.workspace_folders = [ "~/src" ];
       };
 

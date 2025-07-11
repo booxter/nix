@@ -86,7 +86,6 @@ in
     enable = true;
     extensions = with pkgs; [
       gh-poi
-    ] ++ lib.optionals isPrivate [
       gh-copilot
     ];
   };
