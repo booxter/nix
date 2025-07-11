@@ -43,6 +43,19 @@
   # Auto upgrade nix package.
   nix.package = pkgs.nix;
 
+  nix = {
+    distributedBuilds = true;
+    buildMachines = [
+      {
+        hostName = "int-linux-builder";
+        systems = [ "x86_64-linux" "aarch64-linux" ];
+        supportedFeatures = [ "kvm" ];
+        speedFactor = 10;
+        maxJobs = 4;
+      }
+    ];
+  };
+
   nix.settings = {
     # Necessary for using flakes on this system.
     experimental-features = "nix-command flakes";
