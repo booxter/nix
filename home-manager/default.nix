@@ -29,6 +29,7 @@ in
       ./_mixins/email
       ./_mixins/fonts
       ./_mixins/git-sync
+      ./_mixins/ide
       ./_mixins/kitty
       ./_mixins/spotify
     ] ++ lib.optionals (isDesktop && isPrivate) [
