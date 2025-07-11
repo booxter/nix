@@ -20,8 +20,8 @@ VBOX_MANAGE="/opt/VirtualBox/VBoxManage"
 VM="$1"
 DISK_PATH="/volume1/VMI/$VM.ova"
 NET_IFACE="eth1"
-MEMORY="2048"
-CPUS="2"
+MEMORY="4096"
+CPUS="4"
 
 # Delete old VM if it exists
 echo "Deleting old NixOS VM..."
@@ -45,6 +45,9 @@ $VBOX_MANAGE modifyvm $VM --nested-hw-virt on
 
 # Set OS type
 $VBOX_MANAGE modifyvm $VM --os-type Linux_64
+
+# Set memory and CPU
+$VBOX_MANAGE modifyvm $VM --memory $MEMORY --cpus $CPUS
 
 # Start the VM
 $VBOX_MANAGE startvm $VM --type headless
