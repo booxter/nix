@@ -52,7 +52,6 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
   };
 
   outputs = inputs@{ self, ... }:
@@ -113,6 +112,8 @@
     ## adopted from https://www.tweag.io/blog/2023-02-09-nixos-vm-on-macos/
     nixosModules.base = { pkgs, ... }: {
       system.stateVersion = "25.11";
+
+      nix.package = pkgs.lix;
 
       users.mutableUsers = false;
       users.users.ihrachyshka = {
