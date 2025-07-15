@@ -1,4 +1,4 @@
-{ lib, pkgs, isPrivate, ... }:
+{ lib, pkgs, isPrivate, isDesktop, ... }:
 {
   programs.zsh = {
     enable = true;
@@ -138,7 +138,6 @@
     tcpdump
     tree
     unzip
-    vault-bin
     viddy
     watch
     yq
@@ -152,6 +151,8 @@
     aider-chat
     chatgpt-cli
     shell-gpt
+  ] ++ lib.optionals (!isPrivate && isDesktop) [
+    vault-bin
   ];
 
   home.sessionVariables = {
