@@ -104,6 +104,7 @@
     findutils
     fzf
     gnugrep
+    gnumake
     gnupg
     gnused
     go
