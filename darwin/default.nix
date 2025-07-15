@@ -45,7 +45,7 @@
 
   nix = {
     distributedBuilds = true;
-    buildMachines = [
+    buildMachines = lib.optionals isPrivate [
       {
         hostName = "int-linux-builder";
         systems = [ "x86_64-linux" "aarch64-linux" ];
