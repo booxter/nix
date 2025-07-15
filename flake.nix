@@ -134,9 +134,25 @@
       services.openssh.enable = true;
     };
 
-    nixosModules.vm = { ... }: {
+    nixosModules.rosetta = { ... }: {
       virtualisation.vmVariant.virtualisation = {
+        rosetta.enable = true;
+      };
+    };
+
+    nixosModules.vm-resources = { ... }: {
+      virtualisation.vmVariant.virtualisation = {
+        cores = 4;
         memorySize = 4096; # 4GB
+      };
+    };
+
+    nixosModules.vm = { ... }: let
+      hostPkgs = (import inputs.nixpkgs { system = "aarch64-darwin"; });
+    in {
+      virtualisation.vmVariant.virtualisation = {
+        qemu.package = hostPkgs.qemu;
+        host.pkgs = hostPkgs;
       };
     };
 
@@ -172,8 +188,9 @@
         system = "aarch64-linux";
         modules = [
           self.nixosModules.base
+          self.nixosModules.rosetta
+          self.nixosModules.vm-resources
           self.nixosModules.vm
-          self.nixosModules.formats
 
           ({ pkgs, ... }: {
             # use zsh in the VM since it's meant for interactive use
@@ -204,12 +221,48 @@
         ];
       };
 
+      nVM = inputs.nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        modules = [
+          self.nixosModules.base
+          self.nixosModules.vm-resources
+          self.nixosModules.vm
+
+          ({ pkgs, ... }: {
+            # use zsh in the VM since it's meant for interactive use
+            programs.zsh.enable = true;
+            users.defaultUserShell = pkgs.zsh;
+
+            # auto-login on tty
+            services.getty.autologinUser = "ihrachyshka";
+            virtualisation.vmVariant.virtualisation.graphics = false;
+          })
+
+          # TODO: combine home management with helpers.*?
+          inputs.home-manager.nixosModules.home-manager
+          {
+            home-manager.extraSpecialArgs = {
+              inherit
+                inputs
+                outputs
+                stateVersion
+                ;
+              username = "ihrachyshka";
+              isPrivate = false;
+              isDesktop = false;
+            };
+            home-manager.useUserPackages = true;
+            home-manager.users.ihrachyshka = import ./home-manager;
+          }
+        ];
+      };
+
       # TODO: separate service configuration per VM; move to other files
       serviceVM = inputs.nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         modules = [
           self.nixosModules.base
-          self.nixosModules.vm
+          self.nixosModules.vm-resources
           self.nixosModules.formats
 
           ({ ... }: { networking.hostName = "service"; })
@@ -221,7 +274,7 @@
         system = "x86_64-linux";
         modules = [
           self.nixosModules.base
-          self.nixosModules.vm
+          self.nixosModules.vm-resources
           self.nixosModules.formats
 
           ({ ... }: { networking.hostName = "builder"; })
@@ -231,5 +284,6 @@
     };
 
     linuxVM = self.nixosConfigurations.linuxVM.config.system.build.vm;
+    nVM = self.nixosConfigurations.nVM.config.system.build.vm;
   };
 }

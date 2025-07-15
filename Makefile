@@ -4,6 +4,9 @@ inputs-update:
 linux:
 	nix run .#linuxVM -L --show-trace
 
+nv:
+	nix run .#nVM -L --show-trace
+
 service-vbox:
 	nix build .#nixosConfigurations.serviceVM.config.formats.virtualbox -L --show-trace
 
