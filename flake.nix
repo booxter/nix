@@ -113,7 +113,15 @@
     nixosModules.base = { pkgs, ... }: {
       system.stateVersion = "25.11";
 
-      nix.package = pkgs.lix;
+      nix = {
+        package = pkgs.lix;
+        settings = {
+          # Share config with darwin module?
+          experimental-features = "nix-command flakes";
+          trusted-users = [ "@admin" ];
+        };
+      };
+
 
       users.mutableUsers = false;
       users.users.ihrachyshka = {
