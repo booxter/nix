@@ -151,7 +151,7 @@
     nixosModules.vm-resources = { ... }: {
       virtualisation.vmVariant.virtualisation = {
         cores = 4;
-        memorySize = 4096; # 4GB
+        memorySize = 4096 * 4; # 16GB
       };
     };
 
@@ -159,7 +159,6 @@
       hostPkgs = (import inputs.nixpkgs { system = "aarch64-darwin"; });
     in {
       virtualisation.vmVariant.virtualisation = {
-        qemu.package = hostPkgs.qemu;
         host.pkgs = hostPkgs;
       };
     };

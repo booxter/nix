@@ -14,7 +14,7 @@
         virtualisation = {
           darwin-builder = {
             diskSize = 80 * 1024;
-            memorySize = 24 * 1024;
+            memorySize = 12 * 1024;
           };
           cores = 8;
         };
