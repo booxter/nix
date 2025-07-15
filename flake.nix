@@ -235,6 +235,10 @@
           self.nixosModules.vm-resources
           self.nixosModules.vm
 
+          ({ ... }: {
+            virtualisation.vmVariant.virtualisation.diskSize = 100 * 1024; # 100GB
+          })
+
           ({ pkgs, ... }: {
             # use zsh in the VM since it's meant for interactive use
             programs.zsh.enable = true;
