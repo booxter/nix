@@ -131,11 +131,13 @@
     nvtopPackages.full
     ollama
     openssh
+    openssl
     page
     podman
     pre-commit
     procps
     pstree
+    skopeo
     tcpdump
     tree
     unzip
