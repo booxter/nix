@@ -45,6 +45,11 @@ in
     homeDirectory = if isDarwin then "/Users/${username}" else "/home/${username}";
   };
 
+  systemd.user = {
+    enable = true;
+    startServices = true;
+  };
+
   nixpkgs = {
     overlays = [
       inputs.nur.overlays.default
