@@ -122,7 +122,6 @@
         };
       };
 
-
       users.mutableUsers = false;
       users.users.ihrachyshka = {
         extraGroups = ["wheel" "users"];
@@ -140,12 +139,6 @@
       ];
 
       services.openssh.enable = true;
-    };
-
-    nixosModules.rosetta = { ... }: {
-      virtualisation.vmVariant.virtualisation = {
-        rosetta.enable = true;
-      };
     };
 
     nixosModules.vm-resources = { ... }: {
@@ -195,7 +188,6 @@
         system = "aarch64-linux";
         modules = [
           self.nixosModules.base
-          self.nixosModules.rosetta
           self.nixosModules.vm-resources
           self.nixosModules.vm
 
@@ -229,7 +221,7 @@
       };
 
       nVM = inputs.nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
+        system = "aarch64-linux";
         modules = [
           self.nixosModules.base
           self.nixosModules.vm-resources
