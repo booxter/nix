@@ -10,6 +10,7 @@
       # local config
       "config.backup" # prior to home-manager activation
       "config.local" # whatever I may want to add manually
+      "~/.ssh/config.d/*"
     ];
 
     # some servers have a problem with kitty terminfo, be conservative
