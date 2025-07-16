@@ -54,6 +54,7 @@
       hostname,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
+      isDesktop ? true,
       isPrivate,
     }:
     inputs.nix-darwin.lib.darwinSystem {
@@ -64,6 +65,7 @@
           hostname
           platform
           username
+          isDesktop
           isPrivate
           ;
       };
