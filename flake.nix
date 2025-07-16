@@ -239,6 +239,13 @@
             virtualisation.vmVariant.virtualisation.diskSize = 100 * 1024; # 100GB
           })
 
+          ({ ... }: {
+            virtualisation.docker = {
+              enable = true;
+            };
+            users.users."ihrachyshka".extraGroups = [ "docker" ];
+          })
+
           ({ pkgs, ... }: {
             # use zsh in the VM since it's meant for interactive use
             programs.zsh.enable = true;
