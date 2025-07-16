@@ -23,12 +23,12 @@ in
       ./_mixins/scripts
       ./_mixins/ssh
       ./_mixins/tmux
+      ./_mixins/git-sync
     ]
     ++ lib.optionals isDesktop [
       ./_mixins/copy-apps
       ./_mixins/email
       ./_mixins/fonts
-      ./_mixins/git-sync
       ./_mixins/ide
       ./_mixins/kitty
       ./_mixins/spotify
