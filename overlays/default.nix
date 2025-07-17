@@ -14,6 +14,9 @@
     # fixed in https://github.com/NixOS/nixpkgs/pull/425312
     inherit (import inputs.nixpkgs-master { inherit (prev) system; }) msmtp;
 
+    # fixed in https://github.com/NixOS/nixpkgs/pull/425990
+    inherit (import inputs.nixpkgs-master { inherit (prev) system; }) aider-chat;
+
     # X11
     inherit (import inputs.nixpkgs-awesome { inherit (prev) system; }) awesome;
     inherit (import inputs.nixpkgs-mesa-xephyr { inherit (prev) system; }) mesa;
