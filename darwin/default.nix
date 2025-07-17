@@ -56,6 +56,16 @@
     ];
   };
 
+  # TODO: move int-linux-builder config to a separate file.
+  programs.ssh = {
+    extraConfig = ''
+      Host int-linux-builder
+        Hostname builder
+        IdentityFile /Users/${username}/.ssh/id_ed25519
+        User ihrachyshka
+    '';
+  };
+
   nix.settings = {
     # Necessary for using flakes on this system.
     experimental-features = "nix-command flakes";

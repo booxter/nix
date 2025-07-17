@@ -12,7 +12,6 @@
       };
     };
     extraConfig = let
-      identityFile = "/Users/${username}/.ssh/id_ed25519";
       communityBuilderIdentityFile = "/Users/${username}/.ssh/nix-community-builders";
       user = "booxter";
     in ''
@@ -30,12 +29,6 @@
         Hostname build-box.nix-community.org
         IdentityFile ${communityBuilderIdentityFile}
         User ${user}
-
-      # TODO: move elsewhere since it's not a community builder
-      Host int-linux-builder
-        Hostname builder
-        IdentityFile ${identityFile}
-        User ihrachyshka
     '';
   };
   environment.systemPackages = [ pkgs.openssh ];
