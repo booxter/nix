@@ -144,7 +144,7 @@
     nixosModules.vm-resources = { ... }: {
       virtualisation.vmVariant.virtualisation = {
         cores = 4;
-        memorySize = 4096 * 4; # 16GB
+        memorySize = 4096; # 4GB
       };
     };
 
@@ -228,7 +228,11 @@
           self.nixosModules.vm
 
           ({ ... }: {
-            virtualisation.vmVariant.virtualisation.diskSize = 100 * 1024; # 100GB
+            virtualisation.vmVariant.virtualisation = {
+              cores = inputs.nixpkgs.lib.mkForce 8;
+              memorySize = inputs.nixpkgs.lib.mkForce (4096 * 4); # 16GB
+              diskSize = 100 * 1024; # 100GB
+            };
           })
 
           ({ ... }: {
