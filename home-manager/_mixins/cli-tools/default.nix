@@ -42,9 +42,9 @@
       in
       {
         # ai bots
-        chatgpt = lib.optionalString isPrivate "OPENAI_API_KEY=$(${openaiKey}) chatgpt";
-        sgpt = lib.optionalString isPrivate "OPENAI_API_KEY=$(${openaiKey}) shell-gpt";
-        aider = lib.optionalString isPrivate "OPENAI_API_KEY=$(${openaiKey}) aider --no-gitignore --model openai/gpt-4.1 --no-attribute-author --no-attribute-committer";
+        chatgpt = "OPENAI_API_KEY=$(${openaiKey}) chatgpt";
+        sgpt = "OPENAI_API_KEY=$(${openaiKey}) shell-gpt";
+        aider = "OPENAI_API_KEY=$(${openaiKey}) aider --no-gitignore --model openai/gpt-4.1 --no-attribute-author --no-attribute-committer";
 
         # enable hyperlinks in kitty
         rg = "rg --hyperlink-format=kitty";
@@ -95,6 +95,7 @@
     (ripgrep.override { withPCRE2 = true; })
     ack
     act
+    aider-chat
     bind.dnsutils
     coreutils
     curl
@@ -152,7 +153,6 @@
     python312Packages.ipython
     python312Packages.tox
   ] ++ lib.optionals isPrivate [
-    aider-chat
     chatgpt-cli
     shell-gpt
   ] ++ lib.optionals (!isPrivate && isDesktop) [
