@@ -62,7 +62,13 @@
       Host int-linux-builder
         Hostname builder
         IdentityFile /Users/${username}/.ssh/id_ed25519
-        User ihrachyshka
+        User ${username}
+
+      Host nVM
+        Hostname localhost
+        IdentityFile /Users/${username}/.ssh/id_ed25519
+        Port 11110
+        User ${username}
     '';
   };
 

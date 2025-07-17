@@ -127,8 +127,10 @@
         extraGroups = ["wheel" "users"];
         group = "ihrachyshka";
         isNormalUser = true;
+        # TODO: separate authorizations between private and non-private VMs
         openssh.authorizedKeys.keys = [
           "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan"
+          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHt25mSiJLQjx2JECMuhTZEV6rlrOYk3CT2cUEdXAoYs ihrachyshka@ihrachyshka-mlt"
         ];
       };
       users.groups.ihrachyshka = {};
@@ -227,6 +229,16 @@
 
           ({ ... }: {
             virtualisation.vmVariant.virtualisation.diskSize = 100 * 1024; # 100GB
+          })
+
+          ({ ... }: {
+            virtualisation.vmVariant.virtualisation.forwardPorts = [
+              {
+                from = "host";
+                guest.port = 22;
+                host.port = 11110;
+              }
+            ];
           })
 
           ({ ... }: {
