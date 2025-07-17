@@ -137,6 +137,7 @@
       environment.systemPackages = with pkgs; [
         dig
       ];
+      environment.enableAllTerminfo = true;
 
       services.openssh.enable = true;
     };

@@ -161,6 +161,7 @@
   home.sessionVariables = {
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
+    TERM = "kitty";
   };
 
   home.file = {
