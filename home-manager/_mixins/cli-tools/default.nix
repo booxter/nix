@@ -98,6 +98,7 @@
     bind.dnsutils
     coreutils
     curl
+    dig
     fastfetch
     fd
     file
