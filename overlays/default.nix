@@ -26,6 +26,8 @@
 
     nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override { withNom = true; };
 
+    openssh = (import inputs.nixpkgs { inherit (prev) system; }).openssh_gssapi;
+
     # python312 = prev.python312.override {
     #   packageOverrides = final: prev: {
     #     XXX = prev.XXX.overridePythonAttrs (oldAttrs: {
