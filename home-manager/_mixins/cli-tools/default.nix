@@ -147,6 +147,7 @@
     watch
     yq
     zip
+    zstd
 
     # python
     python312Full

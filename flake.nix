@@ -7,8 +7,7 @@
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
-    # We can control the base package set with this input alias
-    nixpkgs = nixpkgs-unstable;
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     # arcanist was removed:
     # https://github.com/NixOS/nixpkgs/commit/5ed483f0d79461c2c2d63b46ee62f77a37075bae
@@ -183,7 +182,60 @@
       nixpkgs.hostPlatform = "x86_64-linux";
     };
 
+    # TODO: deduplicate
     nixosConfigurations = {
+      pi5 = inputs.nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          self.nixosModules.base
+
+          ({ pkgs, ... }: {
+            networking = {
+              hostName = "pi5";
+              interfaces.end0 = {
+                ipv4.addresses = [{
+                  address = "10.0.0.10";
+                  prefixLength = 24;
+                }];
+              };
+              defaultGateway = {
+                address = "10.0.0.1";
+                interface = "end0";
+              };
+              nameservers = [
+                "8.8.8.8"
+              ];
+            };
+
+            users.users.ihrachyshka = {
+              isNormalUser = true;
+              extraGroups = [ "wheel" "users" ];
+              openssh.authorizedKeys.keys = [
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan"
+              ];
+            };
+            security.sudo.wheelNeedsPassword = false;
+
+            environment.enableAllTerminfo = true;
+            services.openssh.enable = true;
+
+            boot.initrd.availableKernelModules = [ "xhci_pci" "usbhid" ];
+            boot.initrd.kernelModules = [ ];
+            boot.kernelModules = [ ];
+            boot.extraModulePackages = [ ];
+
+            fileSystems."/" =
+              { device = "/dev/disk/by-label/NIXOS_SD";
+              fsType = "ext4";
+              options = [ "noatime" ];
+            };
+
+            swapDevices = [ ];
+
+            nixpkgs.hostPlatform = inputs.nixpkgs.lib.mkDefault "aarch64-linux";
+          })
+        ];
+      };
       linuxVM = inputs.nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         modules = [
