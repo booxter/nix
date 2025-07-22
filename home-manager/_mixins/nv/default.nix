@@ -2,6 +2,7 @@
 {
   home.sessionPath = [
     "$HOME/.nvcodex/bin"
+    "$HOME/src/ngn2-ssh-utils"
   ];
 
   home.packages =
