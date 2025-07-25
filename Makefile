@@ -52,5 +52,6 @@ home-switch-mlt:
 home-switch-nvcloud:
 	nix run nixpkgs#home-manager -- switch --flake .#ihrachyshka-nvcloud $(ARGS) $(HM_ARGS)
 
+############# raspberry pi targets
 pi-image:
-	nix run nixpkgs#nixos-generators -- -f sd-aarch64 --flake .#pi5 --system aarch64-linux -o ./pi5.sd
+	nix build .#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd

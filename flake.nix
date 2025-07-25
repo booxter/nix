@@ -3,6 +3,16 @@
 {
   description = "booxter Nix* flake configs";
 
+  # raspberrypi5 cachix
+  nixConfig = {
+    extra-substituters = [
+      "https://nixos-raspberrypi.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+    ];
+  };
+
   inputs = rec {
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
@@ -51,6 +61,8 @@
       url = "github:nix-community/nixos-generators";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
   };
 
   outputs = inputs@{ self, ... }:
@@ -184,12 +196,31 @@
 
     # TODO: deduplicate
     nixosConfigurations = {
-      pi5 = inputs.nixpkgs.lib.nixosSystem {
+      pi5 = inputs.nixos-raspberrypi.lib.nixosSystem {
+        specialArgs = inputs;
+
         system = "aarch64-linux";
         modules = [
           self.nixosModules.base
 
-          ({ pkgs, ... }: {
+          {
+            imports = with inputs.nixos-raspberrypi.nixosModules; [
+              sd-image
+              raspberry-pi-5.base
+              raspberry-pi-5.display-vc4
+              raspberry-pi-5.bluetooth
+            ];
+          }
+
+          ({ config, ... }: {
+            system.nixos.tags = let
+              cfg = config.boot.loader.raspberryPi;
+            in [
+              "raspberry-pi-${cfg.variant}"
+              cfg.bootloader
+              config.boot.kernelPackages.kernel.version
+            ];
+
             networking = {
               hostName = "pi5";
               interfaces.end0 = {
@@ -218,19 +249,6 @@
 
             environment.enableAllTerminfo = true;
             services.openssh.enable = true;
-
-            boot.initrd.availableKernelModules = [ "xhci_pci" "usbhid" ];
-            boot.initrd.kernelModules = [ ];
-            boot.kernelModules = [ ];
-            boot.extraModulePackages = [ ];
-
-            fileSystems."/" =
-              { device = "/dev/disk/by-label/NIXOS_SD";
-              fsType = "ext4";
-              options = [ "noatime" ];
-            };
-
-            swapDevices = [ ];
 
             nixpkgs.hostPlatform = inputs.nixpkgs.lib.mkDefault "aarch64-linux";
           })
