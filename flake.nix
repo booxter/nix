@@ -238,6 +238,13 @@
               ];
             };
 
+            users.users.root = {
+              hashedPassword = "$y$j9T$oyigtat.5hqUofV6.n.2A1$.46cDAUbypufD8lYiEF66MIfm6v528vah7/zBUcQJt.";
+              openssh.authorizedKeys.keys = [
+                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan"
+              ];
+            };
+
             users.users.ihrachyshka = {
               isNormalUser = true;
               extraGroups = [ "wheel" "users" ];
