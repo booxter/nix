@@ -24,6 +24,9 @@
     inherit (import inputs.nixpkgs-xbill { inherit (prev) system; }) xbill;
     inherit (import inputs.nixpkgs { inherit (prev) system; config.permittedInsecurePackages = [ "xpdf-4.05" ]; }) xpdf;
 
+    # newer netboot
+    inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
+
     nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override { withNom = true; };
 
     openssh = (import inputs.nixpkgs { inherit (prev) system; }).openssh_gssapi;

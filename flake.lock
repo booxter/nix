@@ -462,6 +462,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-netbootxyz": {
+      "locked": {
+        "lastModified": 1753639186,
+        "narHash": "sha256-4+YYzfF51UzyyAj3rnej+ZZ/It9k2McXyduLxlbanoU=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "92a4d872bad667cedc4ac084326b9d5a4951b474",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "netbootxyz-update",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-ted": {
       "locked": {
         "lastModified": 1748916469,
@@ -670,6 +686,7 @@
         "nixpkgs-firefox-binary-wrapper": "nixpkgs-firefox-binary-wrapper",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-mesa-xephyr": "nixpkgs-mesa-xephyr",
+        "nixpkgs-netbootxyz": "nixpkgs-netbootxyz",
         "nixpkgs-ted": "nixpkgs-ted",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixpkgs-xbill": "nixpkgs-xbill",

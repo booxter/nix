@@ -34,6 +34,8 @@
     nixpkgs-ted.url = "github:booxter/nixpkgs/ted-darwin";
     nixpkgs-xbill.url = "github:booxter/nixpkgs/xbill-fix-build";
 
+    nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
+
     # TODO: Experiment with this
     #nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";
     nix-darwin.url = "github:nix-darwin/nix-darwin/master";
@@ -211,6 +213,17 @@
               raspberry-pi-5.bluetooth
             ];
           }
+
+          ({ config, pkgs, ... }: {
+            nixpkgs = {
+              overlays = [
+                outputs.overlays.additions
+                outputs.overlays.modifications
+                outputs.overlays.unstable-packages
+                outputs.overlays.master-packages
+              ];
+            };
+          })
 
           ({ config, pkgs, ... }: {
             system.nixos.tags = let
