@@ -4,6 +4,7 @@
     onActivation.autoUpdate = true;
     casks = lib.optionals isDesktop [
       "amethyst"
+      "wireshark-chmodbpf"
     ] ++ lib.optionals (!isPrivate) [
       "docker-desktop"
     ] ++ lib.optionals isPrivate [
