@@ -212,7 +212,7 @@
             ];
           }
 
-          ({ config, ... }: {
+          ({ config, pkgs, ... }: {
             system.nixos.tags = let
               cfg = config.boot.loader.raspberryPi;
             in [
@@ -225,18 +225,57 @@
               hostName = "pi5";
               interfaces.end0 = {
                 ipv4.addresses = [{
-                  address = "10.0.0.10";
-                  prefixLength = 24;
+                  address = "192.168.1.1";
+                  prefixLength = 16;
                 }];
               };
               defaultGateway = {
-                address = "10.0.0.1";
+                address = "192.168.0.1";
                 interface = "end0";
               };
               nameservers = [
-                "8.8.8.8"
+                "192.168.0.1"
               ];
             };
+
+            environment.systemPackages = with pkgs; [
+              lm_sensors
+            ];
+
+            # TODO: enable ipv6, dns
+            services.dnsmasq = {
+              enable = true;
+              settings = {
+                interface = "end0";
+                dhcp-authoritative = true;
+                dhcp-rapid-commit = true;
+                dhcp-range = [ "192.168.10.1,192.168.20.255" ];
+
+                listen-address = ["192.168.1.1"];
+
+                dhcp-option = [
+                  "option:router,192.168.0.1"
+                  "option:dns-server,192.168.0.1"
+                ];
+
+                domain = "booxter.lan";
+
+                enable-tftp = true;
+                tftp-root = "/var/lib/dnsmasq/tftp";
+
+                # Note: disable Secure Boot in BIOS
+                dhcp-boot = [
+                  "netboot.xyz.efi"
+                ];
+              };
+            };
+            networking.firewall.allowedUDPPorts = [
+              67 # DHCP
+              69 # TFTP
+            ];
+            systemd.tmpfiles.rules = [
+              "L+ /var/lib/dnsmasq/tftp/netboot.xyz.efi - - - - ${pkgs.netbootxyz-efi}"
+            ];
 
             users.users.root = {
               hashedPassword = "$y$j9T$oyigtat.5hqUofV6.n.2A1$.46cDAUbypufD8lYiEF66MIfm6v528vah7/zBUcQJt.";
