@@ -140,6 +140,7 @@
     procps
     pstree
     skopeo
+    speedtest-cli
     tcpdump
     tree
     unzip
