@@ -297,8 +297,8 @@
                   "36:95:f3:6f:a7:f7,ihrachyshka-mlt,192.168.11.2"
 
                   # lab
-                  "78:2d:7e:24:2d:f9,sw.lab,192.168.15.1" # switch
-                  "78:72:64:43:9c:3f,nas.lab,192.168.15.2" # asustor
+                  "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
+                  "78:72:64:43:9c:3f,nas-lab,192.168.15.2" # asustor
                 ];
 
                 enable-tftp = true;
