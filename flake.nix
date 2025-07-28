@@ -257,7 +257,7 @@
               lm_sensors
             ];
 
-            # TODO: enable ipv6, dns
+            # TODO: enable ipv6
             # TODO: use secret management for internal info?
             services.dnsmasq = {
               enable = true;
