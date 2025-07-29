@@ -12,13 +12,6 @@ linux:
 nv:
 	nix run .#nVM $(ARGS)
 
-########### vm templates for vbox
-service-vbox:
-	nix build .#nixosConfigurations.serviceVM.config.formats.virtualbox $(ARGS)
-
-builder-vbox:
-	nix build .#nixosConfigurations.builderVM.config.formats.virtualbox $(ARGS)
-
 ########### darwin build targets
 darwin-build:
 	nix build .#darwinConfigurations.mmini.config.system.build.toplevel $(ARGS)

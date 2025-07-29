@@ -131,11 +131,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1753747468,
-        "narHash": "sha256-gCzemKKF7/V0+Wag+JbW5aA0PIn6Owtj1tSfCUcWuJU=",
+        "lastModified": 1753754070,
+        "narHash": "sha256-dTPipUIYpIvUcVN8rRKuxHVn6EGAOiuQqkJmVClOjZY=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "3b83e69a6cc38b793d96e41bbb02a9bb541fadf9",
+        "rev": "f237c8d9aa6139c327008aa84707ef237036ba89",
         "type": "github"
       },
       "original": {
@@ -245,21 +245,6 @@
         "type": "github"
       }
     },
-    "nixlib_2": {
-      "locked": {
-        "lastModified": 1736643958,
-        "narHash": "sha256-tmpqTSWVRJVhpvfSN9KXBvKEXplrwKnSZNAoNPf/S/s=",
-        "owner": "nix-community",
-        "repo": "nixpkgs.lib",
-        "rev": "1418bc28a52126761c02dd3d89b2d8ca0f521181",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nixpkgs.lib",
-        "type": "github"
-      }
-    },
     "nixos-generators": {
       "inputs": {
         "nixlib": "nixlib",
@@ -274,27 +259,6 @@
         "owner": "nix-community",
         "repo": "nixos-generators",
         "rev": "d002ce9b6e7eb467cd1c6bb9aef9c35d191b5453",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "nixos-generators",
-        "type": "github"
-      }
-    },
-    "nixos-generators_2": {
-      "inputs": {
-        "nixlib": "nixlib_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1751903740,
-        "narHash": "sha256-PeSkNMvkpEvts+9DjFiop1iT2JuBpyknmBUs0Un0a4I=",
-        "owner": "nix-community",
-        "repo": "nixos-generators",
-        "rev": "032decf9db65efed428afd2fa39d80f7089085eb",
         "type": "github"
       },
       "original": {
@@ -432,11 +396,11 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1753750875,
-        "narHash": "sha256-J1P0aQymehe8AHsID9wwoMjbaYrIB2eH5HftoXhF9xk=",
+        "lastModified": 1753753877,
+        "narHash": "sha256-euBWUElpDcaoP6k7RtPq0bFkEK/LEGBt+AzOVFxzMDU=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "871381d997e4a063f25a3994ce8a9ac595246610",
+        "rev": "5dd6d1d43b023bf2360f54a15055bcb975c56da2",
         "type": "github"
       },
       "original": {
@@ -633,11 +597,11 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1753746745,
-        "narHash": "sha256-1Ii4RX2gUAp5KtdQOLokBMJ0dKeqabAeiS18NirGI6o=",
+        "lastModified": 1753753749,
+        "narHash": "sha256-ekt6s3BbtBg+Bzez+fatOItoJc1Cwc0HBqzRVcSvhuM=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "678f454f7f1b884cea5a8b266937969693419acf",
+        "rev": "ecfdfa16661dda8d974c5413db23240d7e862cfb",
         "type": "github"
       },
       "original": {
@@ -677,7 +641,6 @@
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nix-rosetta-builder": "nix-rosetta-builder",
-        "nixos-generators": "nixos-generators_2",
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-arcanist": "nixpkgs-arcanist",
