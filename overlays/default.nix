@@ -7,14 +7,6 @@
   # You can change versions, add patches, set compilation flags, anything really.
   # https://nixos.wiki/wiki/Overlays
   modifications = _final: prev: {
-    inherit (import inputs.nixpkgs-firefox-binary-wrapper { inherit (prev) system; }) firefox;
-
-    # fixed in https://github.com/NixOS/nixpkgs/pull/425312
-    inherit (import inputs.nixpkgs-master { inherit (prev) system; }) msmtp;
-
-    # fixed in https://github.com/NixOS/nixpkgs/pull/425990
-    inherit (import inputs.nixpkgs-master { inherit (prev) system; }) aider-chat;
-
     # newer netboot
     inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
 

@@ -18,9 +18,6 @@
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    nixpkgs-firefox-binary-wrapper.url = "github:booxter/nixpkgs/switch-firefox-to-binary-wrapper";
-    nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
-
     # TODO: Experiment with this
     #nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";
     nix-darwin.url = "github:nix-darwin/nix-darwin/master";
@@ -37,14 +34,12 @@
     };
 
     nix-rosetta-builder.url = "github:cpick/nix-rosetta-builder";
-
     home-manager.url = "github:nix-community/home-manager/master";
-
     nixvim.url = "github:nix-community/nixvim";
-
     nur.url = "github:nix-community/NUR";
-
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
+
+    nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
   };
 
   outputs = inputs@{ self, ... }:
