@@ -33,7 +33,6 @@
       flake = false;
     };
 
-    nix-rosetta-builder.url = "github:cpick/nix-rosetta-builder";
     home-manager.url = "github:nix-community/home-manager/master";
     nixvim.url = "github:nix-community/nixvim";
     nur.url = "github:nix-community/NUR";

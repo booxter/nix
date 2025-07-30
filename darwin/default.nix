@@ -21,7 +21,6 @@
     ./_mixins/sudo
 
     ./_mixins/linux-builder
-    #./_mixins/rosetta-builder
   ] ++ lib.optionals isPrivate [
     ./_mixins/browser
     ./_mixins/community-builders
