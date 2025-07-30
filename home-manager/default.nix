@@ -78,7 +78,6 @@ in
       zoom-us
     ]
     ++ lib.optionals isDarwin [
-      cb_thunderlink-native
       keycastr
       stats
     ];

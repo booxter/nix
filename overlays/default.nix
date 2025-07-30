@@ -6,9 +6,8 @@
   # This one contains whatever you want to overlay
   # You can change versions, add patches, set compilation flags, anything really.
   # https://nixos.wiki/wiki/Overlays
-  modifications = _final: prev: rec {
+  modifications = _final: prev: {
     inherit (import inputs.nixpkgs-arcanist { inherit (prev) system; }) arcanist;
-    inherit (import inputs.nixpkgs-cb_thunderlink-native { inherit (prev) system; }) cb_thunderlink-native;
     inherit (import inputs.nixpkgs-firefox-binary-wrapper { inherit (prev) system; }) firefox;
 
     # fixed in https://github.com/NixOS/nixpkgs/pull/425312

@@ -4,9 +4,6 @@
   programs.thunderbird = {
     enable = true;
     package = pkgs.thunderbird;
-    nativeMessagingHosts = with pkgs; [
-      cb_thunderlink-native
-    ];
     profiles.default = {
       isDefault = true;
       settings = {
@@ -37,33 +34,6 @@
         "javascript.enabled" = true;
         "general.useragent.compatMode.firefox" = true;
       };
-      extensions = with pkgs.nur.repos.rycee.firefox-addons; [
-        # https://addons.thunderbird.net/api/v4/addons/search/?q=cb_thunderlink
-        (
-          with lib;
-          buildFirefoxXpiAddon {
-            pname = "cb_thunderlink";
-            version = "1.7.4";
-            addonId = "cb_thunderlink@bouchier.be";
-            url = "https://github.com/CamielBouchier/cb_thunderlink/releases/download/Release_1_7_4/cb_thunderlink.xpi";
-            sha256 = "sha256-r0xS/k3davx9BsBhtxh17txdlmws3h9hNRxhk/CW/HI=";
-            meta = {
-              description = "Durable hyperlinks to specific email messages";
-              license = licenses.mit;
-              mozPermissions = [
-                "accountsRead"
-                "clipboardRead"
-                "clipboardWrite"
-                "menus"
-                "messagesRead"
-                "nativeMessaging"
-                "storage"
-              ];
-              platforms = platforms.all;
-            };
-          }
-        )
-      ];
     };
   };
 

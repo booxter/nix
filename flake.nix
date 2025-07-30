@@ -25,9 +25,6 @@
 
     nixpkgs-firefox-binary-wrapper.url = "github:booxter/nixpkgs/switch-firefox-to-binary-wrapper";
 
-    # TODO: post PR to nixpkgs
-    nixpkgs-cb_thunderlink-native.url = "github:booxter/nixpkgs/cb_thunderlink-native";
-
     # X11
     nixpkgs-awesome.url = "github:booxter/nixpkgs/awesome-darwin";
     nixpkgs-mesa-xephyr.url = "github:booxter/nixpkgs/mesa-darwin-libgl";
