@@ -142,8 +142,6 @@ in
     # for nix dev
     nixpkgs-review
     nurl
-  ] ++ lib.optionals isPrivate [
-    arcanist # phabricator client
   ];
 
   # use vim bindings for tig
