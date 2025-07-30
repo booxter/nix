@@ -78,7 +78,6 @@ in
     ]
     ++ lib.optionals isDarwin [
       keycastr
-      stats
     ];
 
   # TODO: move darwin specific config files to a separate module?
