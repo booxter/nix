@@ -17,10 +17,9 @@
     ./_mixins/fonts
     ./_mixins/gnupg
     ./_mixins/homebrew
+    ./_mixins/linux-builder
     ./_mixins/nix-gc
     ./_mixins/sudo
-
-    ./_mixins/linux-builder
   ] ++ lib.optionals isPrivate [
     ./_mixins/browser
     ./_mixins/community-builders
