@@ -22,7 +22,6 @@ in
       ./_mixins/cli-tools
       ./_mixins/nixvim
       ./_mixins/scm
-      ./_mixins/scripts
       ./_mixins/ssh
       ./_mixins/tmux
       ./_mixins/git-sync
@@ -34,10 +33,7 @@ in
       ./_mixins/ide
       ./_mixins/kitty
       ./_mixins/spotify
-    ] ++ lib.optionals (isDesktop && isPrivate) [
       ./_mixins/firefox
-      ./_mixins/ollama
-      ./_mixins/telegram
     ] ++ lib.optionals (!isPrivate) [
       ./_mixins/nv
     ];
@@ -77,6 +73,9 @@ in
       podman-desktop
       wireshark
       zoom-us
+    ]
+    ++ lib.optionals (isPrivate && isDesktop) [
+      telegram-desktop
     ]
     ++ lib.optionals isDarwin [
       keycastr

@@ -91,13 +91,11 @@
   home.packages = with pkgs; [
     (ripgrep.override { withPCRE2 = true; })
     ack
-    act
     aider-chat
     bind.dnsutils
     coreutils
     curl
     dig
-    fastfetch
     fd
     file
     findutils
@@ -121,14 +119,11 @@
     magic-wormhole
     man-pages
     mc
-    mergiraf
     moreutils
     ngrep
     nix-init
     nix-search-cli
     nix-tree
-    nvtopPackages.full
-    ollama
     openssh
     openssl
     page
@@ -151,8 +146,6 @@
     python312Full
     python312Packages.ipython
     python312Packages.tox
-  ] ++ lib.optionals (!isPrivate && isDesktop) [
-    vault-bin
   ];
 
   home.sessionVariables = {

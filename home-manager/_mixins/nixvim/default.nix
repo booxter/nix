@@ -46,12 +46,11 @@
           lua_ls.enable = true;
           marksman.enable = true; # markdown
           nil_ls = {
-            # Re-enable when it's fixed...
-            enable = false; # nix
+            enable = true; # nix
             settings.nix.flake.autoArchive = true;
           };
           nixd.enable = true; # nix
-          perlpls.enable = true;
+          perlpls.enable = true; # perl
           pyright.enable = true; # python
           sqls.enable = true; # SQL
           taplo.enable = true; # toml
