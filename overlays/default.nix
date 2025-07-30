@@ -15,13 +15,6 @@
     # fixed in https://github.com/NixOS/nixpkgs/pull/425990
     inherit (import inputs.nixpkgs-master { inherit (prev) system; }) aider-chat;
 
-    # X11
-    inherit (import inputs.nixpkgs-awesome { inherit (prev) system; }) awesome;
-    inherit (import inputs.nixpkgs-mesa-xephyr { inherit (prev) system; }) mesa;
-    inherit (import inputs.nixpkgs-ted { inherit (prev) system; }) ted;
-    inherit (import inputs.nixpkgs-xbill { inherit (prev) system; }) xbill;
-    inherit (import inputs.nixpkgs { inherit (prev) system; config.permittedInsecurePackages = [ "xpdf-4.05" ]; }) xpdf;
-
     # newer netboot
     inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
 

@@ -16,17 +16,9 @@
   inputs = {
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
-
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     nixpkgs-firefox-binary-wrapper.url = "github:booxter/nixpkgs/switch-firefox-to-binary-wrapper";
-
-    # X11
-    nixpkgs-awesome.url = "github:booxter/nixpkgs/awesome-darwin";
-    nixpkgs-mesa-xephyr.url = "github:booxter/nixpkgs/mesa-darwin-libgl";
-    nixpkgs-ted.url = "github:booxter/nixpkgs/ted-darwin";
-    nixpkgs-xbill.url = "github:booxter/nixpkgs/xbill-fix-build";
-
     nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
 
     # TODO: Experiment with this

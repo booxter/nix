@@ -36,7 +36,6 @@ in
       ./_mixins/firefox
       ./_mixins/ollama
       ./_mixins/telegram
-      ./_mixins/x11
     ] ++ lib.optionals (!isPrivate) [
       ./_mixins/nv
     ];
