@@ -42,27 +42,8 @@
   # Auto upgrade nix package.
   nix.package = pkgs.nix;
 
-  #nix = {
-  #  distributedBuilds = true;
-  #  buildMachines = lib.optionals isPrivate [
-  #    {
-  #      hostName = "int-linux-builder";
-  #      systems = [ "x86_64-linux" "aarch64-linux" ];
-  #      supportedFeatures = [ "kvm" ];
-  #      speedFactor = 10;
-  #      maxJobs = 4;
-  #    }
-  #  ];
-  #};
-
-  # TODO: move int-linux-builder config to a separate file.
   programs.ssh = {
     extraConfig = ''
-      #Host int-linux-builder
-      #  Hostname builder
-      #  IdentityFile /Users/${username}/.ssh/id_ed25519
-      #  User ${username}
-
       Host nVM
         Hostname localhost
         IdentityFile /Users/${username}/.ssh/id_ed25519
