@@ -15,9 +15,6 @@ in
 {
   imports =
     [
-      inputs.nixvim.homeManagerModules.nixvim
-    ]
-    ++ [
       ./_mixins/cli-tools
       ./_mixins/nixvim
       ./_mixins/scm

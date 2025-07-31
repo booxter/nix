@@ -2,6 +2,7 @@
   inputs,
   outputs,
   stateVersion,
+  username,
   ...
 }:
 {
@@ -25,7 +26,10 @@
           isWork
           ;
       };
-      modules = [ ../home-manager ];
+      modules = [
+        inputs.nixvim.homeManagerModules.nixvim
+        ../home-manager
+      ];
     };
 
   # Helper function for generating NixOS configs
@@ -46,7 +50,10 @@
           stateVersion
           ;
       };
-      modules = [ ../nixos ];
+      modules = [
+        ../common
+        ../nixos
+      ];
     };
 
   mkDarwin =
@@ -71,6 +78,7 @@
       };
       modules = [
         inputs.nix-homebrew.darwinModules.nix-homebrew
+        ../common
         ../darwin
       ];
     };

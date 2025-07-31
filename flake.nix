@@ -19,8 +19,6 @@
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    # TODO: Experiment with this
-    #nix-darwin.url = "github:booxter/nix-darwin/launchd-use-path-state-to-wait-for-path";
     nix-darwin.url = "github:nix-darwin/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -46,33 +44,29 @@
   let
     inherit (self) outputs;
     stateVersion = "25.11";
-    helper = import ./lib { inherit inputs outputs stateVersion; };
+    username = "ihrachyshka";
+    helper = import ./lib { inherit inputs outputs stateVersion username; };
   in
   {
-    # home-manager build --flake . -L
-    # home-manager switch -b backup --flake .
-    # nix run nixpkgs#home-manager -- switch -b backup --flake .
     homeConfigurations = {
-      # mmini
-      ihrachyshka = helper.mkHome {
+      # personal mac mini
+      "${username}@mmini" = helper.mkHome {
         platform = "aarch64-darwin";
         isDesktop = true;
       };
       # nv laptop
-      ihrachyshka-mlt = helper.mkHome {
+      "${username}@ihrachyshka-mlt" = helper.mkHome {
         platform = "aarch64-darwin";
         isDesktop = true;
         isWork = true;
       };
-      # nv vms
-      ihrachyshka-nvcloud = helper.mkHome {
+      # nv dev env
+      "${username}@nv" = helper.mkHome {
         platform = "x86_64-linux";
         isWork = true;
       };
     };
 
-    #nix run nix-darwin -- switch --flake .
-    #nix build .#darwinConfigurations.{hostname}.config.system.build.toplevel
     darwinConfigurations = {
       mmini = helper.mkDarwin {
         hostname = "mmini";

@@ -31,19 +31,19 @@ home-build:
 	nix run nixpkgs#home-manager -- build --flake . $(ARGS)
 
 home-build-mlt:
-	nix run nixpkgs#home-manager -- build --flake .#ihrachyshka-mlt $(ARGS)
+	nix run nixpkgs#home-manager -- build --flake .#${USER}@ihrachyshka-mlt $(ARGS)
 
 home-build-nvcloud:
-	nix run nixpkgs#home-manager -- build --flake .#ihrachyshka-nvcloud $(ARGS)
+	nix run nixpkgs#home-manager -- build --flake .#${USER}@nv $(ARGS)
 
 home-switch:
 	nix run nixpkgs#home-manager -- switch --flake . $(ARGS) $(HM_ARGS)
 
 home-switch-mlt:
-	nix run nixpkgs#home-manager -- switch --flake .#ihrachyshka-mlt $(ARGS) $(HM_ARGS)
+	nix run nixpkgs#home-manager -- switch --flake .#${USER}@ihrachyshka-mlt $(ARGS) $(HM_ARGS)
 
-home-switch-nvcloud:
-	nix run nixpkgs#home-manager -- switch --flake .#ihrachyshka-nvcloud $(ARGS) $(HM_ARGS)
+home-switch-nv:
+	nix run nixpkgs#home-manager -- switch --flake .#${USER}@nv $(ARGS) $(HM_ARGS)
 
 ############# raspberry pi targets
 pi-image:
