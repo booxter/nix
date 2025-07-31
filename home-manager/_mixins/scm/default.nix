@@ -1,12 +1,11 @@
 {
-  lib,
   pkgs,
-  isPrivate,
+  isWork,
   ...
 }:
 let
   fullName = "Ihar Hrachyshka";
-  email = if isPrivate then "ihar.hrachyshka@gmail.com" else "ihrachyshka@nvidia.com";
+  email = if isWork then "ihrachyshka@nvidia.com" else "ihar.hrachyshka@gmail.com";
 in
 {
   # Git
@@ -28,18 +27,18 @@ in
         project = "ovn";
       };
 
-      sendemail = if isPrivate then {
-        confirm = "auto";
-        smtpServer = "smtp.gmail.com";
-        smtpServerPort = 587;
-        smtpEncryption = "tls";
-        smtpUser = "ihar.hrachyshka@gmail.com";
-      } else {
+      sendemail = if isWork then {
         confirm = "auto";
         smtpServer = "smtp.office365.com";
         smtpServerPort = 587;
         smtpEncryption = "tls";
         smtpUser = "ihrachyshka@nvidia.com";
+      } else {
+        confirm = "auto";
+        smtpServer = "smtp.gmail.com";
+        smtpServerPort = 587;
+        smtpEncryption = "tls";
+        smtpUser = "ihar.hrachyshka@gmail.com";
       };
 
       # remember and repeat identical merges

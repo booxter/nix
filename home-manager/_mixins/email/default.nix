@@ -1,4 +1,4 @@
-{ lib, pkgs, isPrivate, ... }:
+{ pkgs, isWork, ... }:
 {
   # Thunderbird
   programs.thunderbird = {
@@ -54,20 +54,20 @@
       };
     in
     {
-      default = (if isPrivate then {
+      default = (if isWork then {
+        flavor = "outlook.office365.com";
+        address = "ihrachyshka@nvidia.com";
+      } else {
         flavor = "gmail.com";
         address = "ihar.hrachyshka@gmail.com";
         passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
-      } else {
-        flavor = "outlook.office365.com";
-        address = "ihrachyshka@nvidia.com";
       }) // commonCfg;
     };
 
   # Misc email tools
   programs.msmtp.enable = true;
 
-  home.packages = lib.optionals isPrivate (with pkgs; [
+  home.packages = with pkgs; [
     gmailctl
-  ]);
+  ];
 }

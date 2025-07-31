@@ -3,15 +3,16 @@
 {
   description = "booxter Nix* flake configs";
 
+  # TODO: how to enable for a particular build only?
   # raspberrypi5 cachix
-  nixConfig = {
-    extra-substituters = [
-      "https://nixos-raspberrypi.cachix.org"
-    ];
-    extra-trusted-public-keys = [
-      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
-    ];
-  };
+  #nixConfig = {
+  #  extra-substituters = [
+  #    "https://nixos-raspberrypi.cachix.org"
+  #  ];
+  #  extra-trusted-public-keys = [
+  #    "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+  #  ];
+  #};
 
   inputs = {
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -56,19 +57,17 @@
       ihrachyshka = helper.mkHome {
         platform = "aarch64-darwin";
         isDesktop = true;
-        isPrivate = true;
       };
       # nv laptop
       ihrachyshka-mlt = helper.mkHome {
         platform = "aarch64-darwin";
         isDesktop = true;
-        isPrivate = false;
+        isWork = true;
       };
       # nv vms
       ihrachyshka-nvcloud = helper.mkHome {
         platform = "x86_64-linux";
-        isDesktop = false;
-        isPrivate = false;
+        isWork = true;
       };
     };
 
@@ -78,12 +77,13 @@
       mmini = helper.mkDarwin {
         hostname = "mmini";
         platform = "aarch64-darwin";
-        isPrivate = true;
+        isDesktop = true;
       };
       ihrachyshka-mlt = helper.mkDarwin {
         hostname = "ihrachyshka-mlt";
         platform = "aarch64-darwin";
-        isPrivate = false;
+        isDesktop = true;
+        isWork = true;
       };
     };
 
@@ -316,8 +316,6 @@
                 stateVersion
                 ;
               username = "ihrachyshka";
-              isPrivate = true;
-              isDesktop = false;
             };
             home-manager.useUserPackages = true;
             home-manager.users.ihrachyshka = import ./home-manager;
@@ -377,8 +375,7 @@
                 stateVersion
                 ;
               username = "ihrachyshka";
-              isPrivate = false;
-              isDesktop = false;
+              isWork = true;
             };
             home-manager.useUserPackages = true;
             home-manager.users.ihrachyshka = import ./home-manager;

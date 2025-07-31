@@ -1,13 +1,11 @@
-{ lib, isDesktop, isPrivate, ... }: {
+{ ... }: {
   homebrew = {
     enable = true;
     onActivation.autoUpdate = true;
-    casks = lib.optionals isDesktop [
+    casks = [
       "amethyst"
       "wireshark-chmodbpf"
-    ] ++ lib.optionals (!isPrivate) [
       "docker-desktop"
-    ] ++ lib.optionals isPrivate [
       "chatgpt"
       "element"
       "todoist"

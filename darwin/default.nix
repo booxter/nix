@@ -1,13 +1,11 @@
 {
-  config,
   hostname,
-  inputs,
   lib,
   outputs,
   pkgs,
   platform,
   username,
-  isPrivate,
+  isWork,
   ...
 }: {
   imports = [
@@ -20,7 +18,7 @@
     ./_mixins/linux-builder
     ./_mixins/nix-gc
     ./_mixins/sudo
-  ] ++ lib.optionals isPrivate [
+  ] ++ lib.optionals (!isWork) [
     ./_mixins/browser
     ./_mixins/community-builders
   ];
@@ -41,7 +39,7 @@
   # Auto upgrade nix package.
   nix.package = pkgs.nix;
 
-  programs.ssh = {
+  programs.ssh = lib.optionalAttrs isWork {
     extraConfig = ''
       Host nVM
         Hostname localhost

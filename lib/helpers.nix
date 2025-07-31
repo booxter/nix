@@ -10,8 +10,8 @@
     {
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
-      isPrivate,
-      isDesktop,
+      isWork ? false,
+      isDesktop ? false,
     }:
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = inputs.nixpkgs.legacyPackages.${platform};
@@ -22,7 +22,7 @@
           username
           stateVersion
           isDesktop
-          isPrivate
+          isWork
           ;
       };
       modules = [ ../home-manager ];
@@ -54,8 +54,8 @@
       hostname,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
-      isDesktop ? true,
-      isPrivate,
+      isDesktop ? false,
+      isWork ? false,
     }:
     inputs.nix-darwin.lib.darwinSystem {
       specialArgs = {
@@ -66,7 +66,7 @@
           platform
           username
           isDesktop
-          isPrivate
+          isWork
           ;
       };
       modules = [

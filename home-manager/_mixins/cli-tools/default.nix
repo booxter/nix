@@ -1,4 +1,4 @@
-{ lib, pkgs, isPrivate, isDesktop, ... }:
+{ pkgs, ... }:
 {
   programs.zsh = {
     enable = true;

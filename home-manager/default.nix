@@ -1,5 +1,4 @@
 {
-  config,
   inputs,
   lib,
   outputs,
@@ -7,7 +6,7 @@
   stateVersion,
   username,
   isDesktop,
-  isPrivate,
+  isWork,
   ...
 }:
 let
@@ -34,7 +33,7 @@ in
       ./_mixins/kitty
       ./_mixins/spotify
       ./_mixins/firefox
-    ] ++ lib.optionals (!isPrivate) [
+    ] ++ lib.optionals isWork [
       ./_mixins/nv
     ];
 
@@ -73,8 +72,6 @@ in
       podman-desktop
       wireshark
       zoom-us
-    ]
-    ++ lib.optionals (isPrivate && isDesktop) [
       telegram-desktop
     ]
     ++ lib.optionals isDarwin [
