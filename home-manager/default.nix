@@ -1,7 +1,6 @@
 {
   inputs,
   lib,
-  outputs,
   pkgs,
   stateVersion,
   username,
@@ -14,6 +13,9 @@ let
 in
 {
   imports =
+    [
+      ../common/_mixins/nix
+    ] ++
     [
       ./_mixins/cli-tools
       ./_mixins/nixvim
@@ -34,6 +36,10 @@ in
       ./_mixins/nv
     ];
 
+  nixpkgs.overlays = [
+    inputs.nur.overlays.default
+  ];
+
   home = {
     inherit stateVersion;
     inherit username;
@@ -43,19 +49,6 @@ in
   systemd.user = lib.optionalAttrs (!isDarwin) {
     enable = true;
     startServices = true;
-  };
-
-  nixpkgs = {
-    overlays = [
-      inputs.nur.overlays.default
-      outputs.overlays.additions
-      outputs.overlays.modifications
-      outputs.overlays.unstable-packages
-      outputs.overlays.master-packages
-    ];
-    config = {
-      allowUnfree = true;
-    };
   };
 
   programs.home-manager.enable = true; # let it manage itself

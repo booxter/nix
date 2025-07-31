@@ -20,6 +20,7 @@
           inputs
           outputs
           username
+          platform
           stateVersion
           isDesktop
           isWork

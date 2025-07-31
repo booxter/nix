@@ -71,13 +71,13 @@
 
     darwinConfigurations = {
       mmini = helper.mkDarwin {
-        stateVersion = "25.11";
+        stateVersion = 5;
         hostname = "mmini";
         platform = "aarch64-darwin";
         isDesktop = true;
       };
       ihrachyshka-mlt = helper.mkDarwin {
-        stateVersion = "25.11";
+        stateVersion = 5;
         hostname = "ihrachyshka-mlt";
         platform = "aarch64-darwin";
         isDesktop = true;
@@ -146,17 +146,6 @@
               raspberry-pi-5.bluetooth
             ];
           }
-
-          ({ config, pkgs, ... }: {
-            nixpkgs = {
-              overlays = [
-                outputs.overlays.additions
-                outputs.overlays.modifications
-                outputs.overlays.unstable-packages
-                outputs.overlays.master-packages
-              ];
-            };
-          })
 
           ({ config, pkgs, ... }: {
             system.nixos.tags = let
@@ -299,8 +288,8 @@
               inherit
                 inputs
                 outputs
-                stateVersion
                 ;
+              stateVersion = "25.11";
               username = "ihrachyshka";
             };
             home-manager.useUserPackages = true;
@@ -359,8 +348,8 @@
               inherit
                 inputs
                 outputs
-                stateVersion
                 ;
+              stateVersion = "25.11";
               username = "ihrachyshka";
               isWork = true;
             };

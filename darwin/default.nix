@@ -1,9 +1,8 @@
 {
   hostname,
   lib,
-  outputs,
-  platform,
   username,
+  platform,
   stateVersion,
   isWork,
   ...
@@ -23,18 +22,7 @@
     ./_mixins/community-builders
   ];
 
-  nixpkgs = {
-    hostPlatform = lib.mkDefault "${platform}";
-    overlays = [
-      outputs.overlays.additions
-      outputs.overlays.modifications
-      outputs.overlays.unstable-packages
-      outputs.overlays.master-packages
-    ];
-    config = {
-      allowUnfree = true;
-    };
-  };
+  nixpkgs.hostPlatform = lib.mkDefault platform;
 
   programs.ssh = lib.optionalAttrs isWork {
     extraConfig = ''
