@@ -111,8 +111,6 @@
       };
       users.groups.ihrachyshka = {};
       security.sudo.wheelNeedsPassword = false;
-
-      environment.enableAllTerminfo = true;
     };
 
     nixosModules.vm-resources = { ... }: {
