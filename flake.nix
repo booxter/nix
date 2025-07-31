@@ -109,8 +109,6 @@
       security.sudo.wheelNeedsPassword = false;
 
       environment.enableAllTerminfo = true;
-
-      services.openssh.enable = true;
     };
 
     nixosModules.vm-resources = { ... }: {
@@ -269,7 +267,6 @@
             security.sudo.wheelNeedsPassword = false;
 
             environment.enableAllTerminfo = true;
-            services.openssh.enable = true;
 
             nixpkgs.hostPlatform = inputs.nixpkgs.lib.mkDefault "aarch64-linux";
           })
