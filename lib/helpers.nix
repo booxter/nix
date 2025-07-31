@@ -1,14 +1,13 @@
 {
   inputs,
   outputs,
-  stateVersion,
-  username,
   ...
 }:
 {
   # Helper function for generating home-manager configs
   mkHome =
     {
+      stateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
       isWork ? false,
@@ -36,6 +35,7 @@
   mkNixos =
     {
       hostname,
+      stateVersion,
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
     }:
@@ -59,6 +59,7 @@
   mkDarwin =
     {
       hostname,
+      stateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
       isDesktop ? false,
@@ -72,6 +73,7 @@
           hostname
           platform
           username
+          stateVersion
           isDesktop
           isWork
           ;

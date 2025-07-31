@@ -43,25 +43,27 @@
   outputs = inputs@{ self, ... }:
   let
     inherit (self) outputs;
-    stateVersion = "25.11";
     username = "ihrachyshka";
-    helper = import ./lib { inherit inputs outputs stateVersion username; };
+    helper = import ./lib { inherit inputs outputs username; };
   in
   {
     homeConfigurations = {
       # personal mac mini
       "${username}@mmini" = helper.mkHome {
+        stateVersion = "25.11";
         platform = "aarch64-darwin";
         isDesktop = true;
       };
       # nv laptop
       "${username}@ihrachyshka-mlt" = helper.mkHome {
+        stateVersion = "25.11";
         platform = "aarch64-darwin";
         isDesktop = true;
         isWork = true;
       };
       # nv dev env
       "${username}@nv" = helper.mkHome {
+        stateVersion = "25.11";
         platform = "x86_64-linux";
         isWork = true;
       };
@@ -69,11 +71,13 @@
 
     darwinConfigurations = {
       mmini = helper.mkDarwin {
+        stateVersion = "25.11";
         hostname = "mmini";
         platform = "aarch64-darwin";
         isDesktop = true;
       };
       ihrachyshka-mlt = helper.mkDarwin {
+        stateVersion = "25.11";
         hostname = "ihrachyshka-mlt";
         platform = "aarch64-darwin";
         isDesktop = true;

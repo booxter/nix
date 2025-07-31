@@ -2,9 +2,9 @@
   hostname,
   lib,
   outputs,
-  pkgs,
   platform,
   username,
+  stateVersion,
   isWork,
   ...
 }: {
@@ -46,9 +46,7 @@
     '';
   };
 
-  # Used for backwards compatibility, please read the changelog before changing.
-  # $ darwin-rebuild changelog
-  system.stateVersion = 5;
+  system.stateVersion = stateVersion;
 
   system.primaryUser = "ihrachyshka";
 
