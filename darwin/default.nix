@@ -36,9 +36,6 @@
     };
   };
 
-  # Auto upgrade nix package.
-  nix.package = pkgs.nix;
-
   programs.ssh = lib.optionalAttrs isWork {
     extraConfig = ''
       Host nVM
@@ -47,16 +44,6 @@
         Port 11110
         User ${username}
     '';
-  };
-
-  nix.settings = {
-    # Necessary for using flakes on this system.
-    experimental-features = "nix-command flakes";
-
-    # Some packages like firefox can kill the machine due to memory pressure
-    max-jobs = 4;
-
-    trusted-users = [ "@admin" ];
   };
 
   # Used for backwards compatibility, please read the changelog before changing.

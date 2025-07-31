@@ -91,17 +91,8 @@
     formatter = helper.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
 
     ## adopted from https://www.tweag.io/blog/2023-02-09-nixos-vm-on-macos/
-    nixosModules.base = { pkgs, ... }: {
+    nixosModules.base = { ... }: {
       system.stateVersion = "25.11";
-
-      nix = {
-        package = pkgs.lix;
-        settings = {
-          # Share config with darwin module?
-          experimental-features = "nix-command flakes";
-          trusted-users = [ "@admin" ];
-        };
-      };
 
       users.mutableUsers = false;
       users.users.ihrachyshka = {
@@ -144,6 +135,7 @@
 
         system = "aarch64-linux";
         modules = [
+          ./common
           self.nixosModules.base
 
           {
@@ -286,6 +278,7 @@
       linuxVM = inputs.nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         modules = [
+          ./common
           self.nixosModules.base
           self.nixosModules.vm-resources
           self.nixosModules.vm
@@ -320,6 +313,7 @@
       nVM = inputs.nixpkgs.lib.nixosSystem {
         system = "aarch64-linux";
         modules = [
+          ./common
           self.nixosModules.base
           self.nixosModules.vm-resources
           self.nixosModules.vm

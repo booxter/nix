@@ -1,5 +1,7 @@
 { ... }:
 {
-  imports = [];
+  imports = [
+    ./_mixins/nix
+  ];
 }
 
