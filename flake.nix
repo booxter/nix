@@ -83,28 +83,33 @@
       pi-stateVersion = "25.11";
       pi-hostname = "pi5";
 
-      linuxvm = "linuxvm";
-      nvvm = "nvvm";
+      linux = "linux";
+      nv = "nv";
+      proxmox = "proxmox";
+
+      toVmName = name: "${name}vm";
     in {
       pi5 = helper.mkRaspberryPi {
         hostname = pi-hostname;
         stateVersion = pi-stateVersion;
       };
 
-      pivm = helper.mkNixos {
+      ${toVmName pi-hostname} = helper.mkNixos {
         inherit virtPlatform;
         stateVersion = pi-stateVersion;
-        hostname = pi-hostname;
+        hostname = toVmName pi-hostname;
         platform = targetPlatform;
         isVM = true;
       };
 
-      ${linuxvm} = helper.mkNixos {
+      ${toVmName linux} = helper.mkNixos {
         inherit virtPlatform;
         stateVersion = "25.11";
-        hostname = linuxvm;
+        hostname = toVmName linux;
         platform = targetPlatform;
         isVM = true;
+        # TODO: calculate stable port numbers based on hostnames, somehow
+        # TODO: then, configure ssh config aliases for each of them
         sshPort = 10000;
 
         extraModules = [
@@ -117,13 +122,34 @@
         ];
       };
 
-      ${nvvm} = helper.mkNixos {
+      ${toVmName nv} = helper.mkNixos {
         inherit virtPlatform;
         stateVersion = "25.11";
-        hostname = nvvm;
+        hostname = toVmName nv;
         platform = targetPlatform;
         isVM = true;
         sshPort = 10001;
+
+        isWork = true;
+
+        extraModules = [
+          ({ ... }: {
+            virtualisation.vmVariant.virtualisation = {
+              cores = 8;
+              memorySize = 16 * 1024; # 16GB
+              diskSize = 100 * 1024; # 100GB
+            };
+          })
+        ];
+      };
+
+      ${toVmName proxmox} = helper.mkNixos {
+        inherit virtPlatform;
+        stateVersion = "25.11";
+        hostname = toVmName proxmox;
+        platform = targetPlatform;
+        isVM = true;
+        sshPort = 10002;
 
         isWork = true;
 
