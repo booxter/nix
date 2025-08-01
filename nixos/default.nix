@@ -2,11 +2,11 @@
 {
   imports = [
     ./${hostname}
+    ./_mixins/user
+    ./_mixins/zsh
   ]
   ++ lib.optionals isVM [
-    ./_mixins/user
     ./_mixins/vm
-    ./_mixins/zsh
   ];
 
   system.stateVersion = stateVersion;

@@ -38,4 +38,4 @@ pi-image:
 	nix build \
 		--option extra-trusted-public-keys "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI=" \
 		--option extra-substituters "https://nixos-raspberrypi.cachix.org?priority=50" \
-	.#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd
+	.#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd $(ARGS)

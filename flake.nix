@@ -77,70 +77,18 @@
     };
 
     ## adopted from https://www.tweag.io/blog/2023-02-09-nixos-vm-on-macos/
-    nixosModules.base = { ... }: {
-      system.stateVersion = "25.11";
+    nixosConfigurations = let
+      hostname = "pi5";
+      netIface = "end0";
+    in {
+      pi5 = helper.mkRaspberryPi {
+        inherit hostname;
+        stateVersion = "25.11";
 
-      users.mutableUsers = false;
-      users.users.ihrachyshka = {
-        extraGroups = ["wheel" "users"];
-        group = "ihrachyshka";
-        isNormalUser = true;
-        # TODO: separate authorizations between private and non-private VMs
-        openssh.authorizedKeys.keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan"
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHt25mSiJLQjx2JECMuhTZEV6rlrOYk3CT2cUEdXAoYs ihrachyshka@ihrachyshka-mlt"
-        ];
-      };
-      users.groups.ihrachyshka = {};
-      security.sudo.wheelNeedsPassword = false;
-    };
-
-    # TODO: deduplicate
-    nixosConfigurations = {
-      pi5 = inputs.nixos-raspberrypi.lib.nixosSystem {
-        specialArgs = {
-          inherit inputs outputs;
-          nixos-raspberrypi = inputs.nixos-raspberrypi;
-        };
-
-        system = "aarch64-linux";
-        modules = [
-          ./common
-          self.nixosModules.base
-
-          {
-            nix = {
-              settings = {
-                extra-substituters = [
-                  "https://nixos-raspberrypi.cachix.org"
-                ];
-                extra-trusted-public-keys = [
-                  "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
-                ];
-              };
-            };
-          }
-
-          {
-            imports = with inputs.nixos-raspberrypi.nixosModules; [
-              sd-image
-              raspberry-pi-5.base
-              raspberry-pi-5.display-vc4
-              raspberry-pi-5.bluetooth
-            ];
-          }
-
-          ({ config, pkgs, ... }: {
-            system.nixos.tags = let
-              cfg = config.boot.loader.raspberryPi;
-            in [
-              "raspberry-pi-${cfg.variant}"
-              cfg.bootloader
-              config.boot.kernelPackages.kernel.version
-            ];
-
+        extraModules = [
+          ({ pkgs, ... }: {
             networking = {
-              hostName = "pi5";
+              hostName = hostname;
               interfaces.end0 = {
                 ipv4.addresses = [{
                   address = "192.168.1.1";
@@ -149,18 +97,12 @@
               };
               defaultGateway = {
                 address = "192.168.0.1";
-                interface = "end0";
+                interface = netIface;
               };
               nameservers = [
                 "192.168.0.1"
               ];
             };
-
-            environment.systemPackages = with pkgs; [
-              dig
-              git
-              lm_sensors
-            ];
 
             # TODO: enable ipv6
             # TODO: use secret management for internal info?
@@ -168,7 +110,7 @@
               enable = true;
               resolveLocalQueries = true;
               settings = {
-                interface = "end0";
+                interface = netIface;
                 dhcp-authoritative = true;
                 dhcp-rapid-commit = true;
 
@@ -223,24 +165,6 @@
             systemd.tmpfiles.rules = [
               "L+ /var/lib/dnsmasq/tftp/netboot.xyz.efi - - - - ${pkgs.netbootxyz-efi}"
             ];
-
-            users.users.root = {
-              hashedPassword = "$y$j9T$oyigtat.5hqUofV6.n.2A1$.46cDAUbypufD8lYiEF66MIfm6v528vah7/zBUcQJt.";
-              openssh.authorizedKeys.keys = [
-                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan"
-              ];
-            };
-
-            users.users.ihrachyshka = {
-              isNormalUser = true;
-              extraGroups = [ "wheel" "users" ];
-              openssh.authorizedKeys.keys = [
-                "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan"
-              ];
-            };
-            security.sudo.wheelNeedsPassword = false;
-
-            environment.enableAllTerminfo = true;
 
             nixpkgs.hostPlatform = inputs.nixpkgs.lib.mkDefault "aarch64-linux";
           })

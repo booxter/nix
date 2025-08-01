@@ -12,6 +12,7 @@ in
     mkDarwin
     mkHome
     mkNixos
+    mkRaspberryPi
     forAllSystems
     ;
 }

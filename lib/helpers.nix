@@ -94,6 +94,75 @@ in
       ] ++ extraModules;
     };
 
+  mkRaspberryPi =
+    {
+      hostname,
+      stateVersion,
+      username ? "ihrachyshka",
+      platform ? "aarch64-linux",
+      isDesktop ? false,
+      isWork ? false,
+      isVM ? false,
+      extraModules ? [],
+    }:
+    inputs.nixos-raspberrypi.lib.nixosSystem {
+      specialArgs = {
+        inherit
+          inputs
+          outputs
+          hostname
+          platform
+          username
+          stateVersion
+          isDesktop
+          isWork
+          isVM
+          ;
+        nixos-raspberrypi = inputs.nixos-raspberrypi;
+      };
+      system = platform;
+      modules = [
+        ../common
+        ../nixos
+
+        # configure binary cache substituters
+        {
+          nix = {
+            settings = {
+              extra-substituters = [
+                "https://nixos-raspberrypi.cachix.org"
+              ];
+              extra-trusted-public-keys = [
+                "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+              ];
+            };
+          };
+        }
+
+        # base hardware modules
+        {
+          imports = with inputs.nixos-raspberrypi.nixosModules; [
+            sd-image
+            raspberry-pi-5.base
+            raspberry-pi-5.display-vc4
+            raspberry-pi-5.bluetooth
+          ];
+        }
+
+        # bootloader
+        ({ config, ... }: {
+          system.nixos.tags = let
+            cfg = config.boot.loader.raspberryPi;
+          in [
+            "raspberry-pi-${cfg.variant}"
+            cfg.bootloader
+            config.boot.kernelPackages.kernel.version
+          ];
+        })
+
+      ] ++ extraModules;
+    };
+
   mkDarwin =
     {
       hostname,

@@ -13,5 +13,4 @@
   };
   users.groups.${username} = {};
   security.sudo.wheelNeedsPassword = false;
-  services.getty.autologinUser = username;
 }
