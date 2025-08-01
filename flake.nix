@@ -80,12 +80,6 @@
       pi5 = helper.mkRaspberryPi {
         hostname = "pi5";
         stateVersion = "25.11";
-
-        extraModules = [
-          ({ pkgs, ... }: {
-            nixpkgs.hostPlatform = inputs.nixpkgs.lib.mkDefault "aarch64-linux";
-          })
-        ];
       };
 
       linuxVM = helper.mkNixos {
