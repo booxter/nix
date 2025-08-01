@@ -109,7 +109,10 @@
     # TODO: deduplicate
     nixosConfigurations = {
       pi5 = inputs.nixos-raspberrypi.lib.nixosSystem {
-        specialArgs = inputs;
+        specialArgs = {
+          inherit inputs outputs;
+          nixos-raspberrypi = inputs.nixos-raspberrypi;
+        };
 
         system = "aarch64-linux";
         modules = [
