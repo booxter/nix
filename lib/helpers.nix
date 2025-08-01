@@ -19,7 +19,7 @@ let
     home-manager.users.${username} = ../home-manager;
   };
 in
-{
+rec {
   mkHome =
     {
       stateVersion,
@@ -54,6 +54,7 @@ in
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
       virtPlatform ? platform,
+      withHome ? true,
       isDesktop ? false,
       isWork ? false,
       isVM ? false,
@@ -79,7 +80,8 @@ in
       modules = [
         ../common
         ../nixos
-
+      ]
+      ++ inputs.nixpkgs.lib.optionals withHome [
         inputs.home-manager.nixosModules.home-manager
         (commonHMConfig {
           inherit
@@ -91,8 +93,26 @@ in
             stateVersion
             ;
         })
-      ] ++ extraModules;
+      ]
+      ++ extraModules;
     };
+
+  mkProxmox = args@{ platform, extraModules, ... }: mkNixos (args // {
+    withHome = false;
+    extraModules = extraModules ++ [
+      inputs.proxmox-nixos.nixosModules.proxmox-ve
+
+      ({ ... }: {
+        services.proxmox-ve = {
+          enable = true;
+        };
+
+        nixpkgs.overlays = [
+          inputs.proxmox-nixos.overlays.${platform}
+        ];
+      })
+    ];
+  });
 
   mkRaspberryPi =
     {

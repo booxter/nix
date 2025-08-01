@@ -26,6 +26,8 @@
     nur.url = "github:nix-community/NUR";
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
+    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
+
     nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
   };
 
@@ -97,7 +99,7 @@
       ${toVmName pi-hostname} = helper.mkNixos {
         inherit virtPlatform;
         stateVersion = pi-stateVersion;
-        hostname = toVmName pi-hostname;
+        hostname = pi-hostname; # use the same hostname to retain config
         platform = targetPlatform;
         isVM = true;
       };
@@ -143,11 +145,13 @@
         ];
       };
 
-      ${toVmName proxmox} = helper.mkNixos {
+      ${toVmName proxmox} = let
+        system = "x86_64-linux"; # will eventually run on x86_64 hosts
+      in helper.mkProxmox {
         inherit virtPlatform;
         stateVersion = "25.11";
         hostname = toVmName proxmox;
-        platform = targetPlatform;
+        platform = system; 
         isVM = true;
         sshPort = 10002;
 
@@ -160,6 +164,22 @@
               memorySize = 16 * 1024; # 16GB
               diskSize = 100 * 1024; # 100GB
             };
+          })
+
+          ({ ... }: {
+            services.proxmox-ve.ipAddress = "192.168.0.1";
+          })
+
+          ({ ... }: {
+            virtualisation.vmVariant.virtualisation.forwardPorts = let
+              proxmoxPort = 8006;
+            in [
+              {
+                from = "host";
+                guest.port = proxmoxPort;
+                host.port = proxmoxPort;
+              }
+            ];
           })
         ];
       };

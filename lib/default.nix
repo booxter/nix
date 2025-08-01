@@ -13,6 +13,7 @@ in
     mkHome
     mkNixos
     mkRaspberryPi
+    mkProxmox
     forAllSystems
     ;
 }

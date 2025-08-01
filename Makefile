@@ -2,6 +2,16 @@
 ARGS = -L --show-trace
 HM_ARGS = -b backup
 
+DEFAULT_CACHE_PRIORITY = 50
+
+RPI_CACHE_OPTIONS = \
+	--option extra-trusted-public-keys "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI=" \
+	--option extra-substituters "https://nixos-raspberrypi.cachix.org?priority=$(DEFAULT_CACHE_PRIORITY)"
+
+PROXMOX_CACHE_OPTIONS = \
+	--option extra-trusted-public-keys "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM=" \
+	--option extra-substituters "https://cache.saumon.network/proxmox-nixos?priority=$(DEFAULT_CACHE_PRIORITY)"
+
 # Also the default target (just call `make`)
 inputs-update:
 	nix flake update
@@ -14,7 +24,10 @@ vm:
 	  exit 1;\
 	fi
 
-	nix run .#nixosConfigurations.$(WHAT)vm.config.system.build.vm $(ARGS)
+	nix run \
+		$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
+		$(if $(filter proxmox,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
+		.#nixosConfigurations.$(WHAT)vm.config.system.build.vm $(ARGS)
 
 ########### darwin
 darwin-build:
@@ -32,7 +45,4 @@ home-switch-nv:
 
 ############# raspberry pi
 pi-image:
-	nix build \
-		--option extra-trusted-public-keys "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI=" \
-		--option extra-substituters "https://nixos-raspberrypi.cachix.org?priority=50" \
-	.#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd $(ARGS)
+	nix build $(RPI_CACHE_OPTIONS) .#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd $(ARGS)
