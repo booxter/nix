@@ -85,15 +85,6 @@
       };
     };
 
-    # Custom packages and modifications, exported as overlays
-    overlays = import ./overlays { inherit inputs; };
-
-    # Custom packages; acessible via 'nix build', 'nix shell', etc
-    packages = helper.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
-
-    # Formatter for .nix files, available via 'nix fmt'
-    formatter = helper.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
-
     ## adopted from https://www.tweag.io/blog/2023-02-09-nixos-vm-on-macos/
     nixosModules.base = { ... }: {
       system.stateVersion = "25.11";
@@ -111,21 +102,6 @@
       };
       users.groups.ihrachyshka = {};
       security.sudo.wheelNeedsPassword = false;
-    };
-
-    nixosModules.vm-resources = { ... }: {
-      virtualisation.vmVariant.virtualisation = {
-        cores = 4;
-        memorySize = 4096; # 4GB
-      };
-    };
-
-    nixosModules.vm = { ... }: let
-      hostPkgs = (import inputs.nixpkgs { system = "aarch64-darwin"; });
-    in {
-      virtualisation.vmVariant.virtualisation = {
-        host.pkgs = hostPkgs;
-      };
     };
 
     # TODO: deduplicate
@@ -263,104 +239,53 @@
           })
         ];
       };
-      linuxVM = inputs.nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          ./common
-          self.nixosModules.base
-          self.nixosModules.vm-resources
-          self.nixosModules.vm
 
-          ({ pkgs, ... }: {
-            # use zsh in the VM since it's meant for interactive use
-            programs.zsh.enable = true;
-            users.defaultUserShell = pkgs.zsh;
+      linuxVM = helper.mkNixos {
+        stateVersion = "25.11";
+        hostname = "linuxvm";
+        platform = "aarch64-linux";
+        virtPlatform = "aarch64-darwin";
 
-            # auto-login on tty
-            services.getty.autologinUser = "ihrachyshka";
-            virtualisation.vmVariant.virtualisation.graphics = false;
-          })
+        isVM = true;
+        sshPort = 10000;
 
-          # TODO: combine home management with helpers.*?
-          inputs.home-manager.nixosModules.home-manager
-          {
-            home-manager.extraSpecialArgs = {
-              inherit
-                inputs
-                outputs
-                ;
-              stateVersion = "25.11";
-              username = "ihrachyshka";
+        extraModules = [
+          ({ ... }: {
+            virtualisation.vmVariant.virtualisation = {
+              cores = 4;
+              memorySize = 4 * 1024; # 4GB
             };
-            home-manager.useUserPackages = true;
-            home-manager.users.ihrachyshka = import ./home-manager;
-          }
+          })
         ];
       };
 
-      nVM = inputs.nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          ./common
-          self.nixosModules.base
-          self.nixosModules.vm-resources
-          self.nixosModules.vm
+      nVM = helper.mkNixos {
+        stateVersion = "25.11";
+        hostname = "nvm";
+        platform = "aarch64-linux";
+        virtPlatform = "aarch64-darwin";
 
+        isWork = true;
+        isVM = true;
+        sshPort = 10001;
+
+        extraModules = [
           ({ ... }: {
             virtualisation.vmVariant.virtualisation = {
-              cores = inputs.nixpkgs.lib.mkForce 8;
-              memorySize = inputs.nixpkgs.lib.mkForce (4096 * 4); # 16GB
+              cores = 8;
+              memorySize = 16 * 1024; # 16GB
               diskSize = 100 * 1024; # 100GB
             };
           })
-
-          ({ ... }: {
-            virtualisation.vmVariant.virtualisation.forwardPorts = [
-              {
-                from = "host";
-                guest.port = 22;
-                host.port = 11110;
-              }
-            ];
-          })
-
-          ({ ... }: {
-            virtualisation.docker = {
-              enable = true;
-            };
-            users.users."ihrachyshka".extraGroups = [ "docker" ];
-          })
-
-          ({ pkgs, ... }: {
-            # use zsh in the VM since it's meant for interactive use
-            programs.zsh.enable = true;
-            users.defaultUserShell = pkgs.zsh;
-
-            # auto-login on tty
-            services.getty.autologinUser = "ihrachyshka";
-            virtualisation.vmVariant.virtualisation.graphics = false;
-          })
-
-          # TODO: combine home management with helpers.*?
-          inputs.home-manager.nixosModules.home-manager
-          {
-            home-manager.extraSpecialArgs = {
-              inherit
-                inputs
-                outputs
-                ;
-              stateVersion = "25.11";
-              username = "ihrachyshka";
-              isWork = true;
-            };
-            home-manager.useUserPackages = true;
-            home-manager.users.ihrachyshka = import ./home-manager;
-          }
         ];
       };
     };
 
     linuxVM = self.nixosConfigurations.linuxVM.config.system.build.vm;
     nVM = self.nixosConfigurations.nVM.config.system.build.vm;
+
+    overlays = import ./overlays { inherit inputs; };
+    packages = helper.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
+    formatter = helper.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
   };
 }

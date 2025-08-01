@@ -1,7 +1,7 @@
-{ pkgs, outputs, ... }:
+{ lib, pkgs, outputs, ... }:
 {
   nix = {
-    package = pkgs.lix;
+    package = lib.mkForce pkgs.lix;
     settings = {
       experimental-features = "nix-command flakes";
       trusted-users = [ "@admin" ];

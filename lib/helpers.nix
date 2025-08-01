@@ -4,7 +4,6 @@
   ...
 }:
 {
-  # Helper function for generating home-manager configs
   mkHome =
     {
       stateVersion,
@@ -12,6 +11,7 @@
       platform ? "aarch64-darwin",
       isWork ? false,
       isDesktop ? false,
+      extraModules ? [],
     }:
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = inputs.nixpkgs.legacyPackages.${platform};
@@ -27,18 +27,22 @@
           ;
       };
       modules = [
-        inputs.nixvim.homeManagerModules.nixvim
         ../home-manager
-      ];
+      ] ++ extraModules;
     };
 
-  # Helper function for generating NixOS configs
   mkNixos =
     {
       hostname,
       stateVersion,
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
+      virtPlatform ? platform,
+      isDesktop ? false,
+      isWork ? false,
+      isVM ? false,
+      sshPort ? null,
+      extraModules ? [],
     }:
     inputs.nixpkgs.lib.nixosSystem {
       specialArgs = {
@@ -47,14 +51,34 @@
           outputs
           hostname
           platform
+          virtPlatform
           username
           stateVersion
+          isVM
+          sshPort
+          isDesktop
+          isWork
           ;
-      };
+        };
       modules = [
         ../common
         ../nixos
-      ];
+
+        inputs.home-manager.nixosModules.home-manager {
+          home-manager.extraSpecialArgs = {
+            inherit
+              inputs
+              outputs
+              stateVersion
+              username
+              isDesktop
+              isWork
+              ;
+          };
+          home-manager.useUserPackages = true;
+          home-manager.users.${username} = ../home-manager;
+        }
+      ] ++ extraModules;
     };
 
   mkDarwin =
@@ -65,6 +89,7 @@
       platform ? "aarch64-darwin",
       isDesktop ? false,
       isWork ? false,
+      extraModules ? [],
     }:
     inputs.nix-darwin.lib.darwinSystem {
       specialArgs = {
@@ -83,7 +108,7 @@
         inputs.nix-homebrew.darwinModules.nix-homebrew
         ../common
         ../darwin
-      ];
+      ] ++ extraModules;
     };
 
   forAllSystems = inputs.nixpkgs.lib.genAttrs [
