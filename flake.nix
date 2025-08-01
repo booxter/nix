@@ -77,17 +77,21 @@
     };
 
     nixosConfigurations = let
-      pi-stateVersion = "25.11";
-      pi-hostname = "pi5";
       virtPlatform = "aarch64-darwin";
       targetPlatform = "aarch64-linux";
+
+      pi-stateVersion = "25.11";
+      pi-hostname = "pi5";
+
+      linuxvm = "linuxvm";
+      nvvm = "nvvm";
     in {
       pi5 = helper.mkRaspberryPi {
         hostname = pi-hostname;
         stateVersion = pi-stateVersion;
       };
 
-      piVM = helper.mkNixos {
+      pivm = helper.mkNixos {
         inherit virtPlatform;
         stateVersion = pi-stateVersion;
         hostname = pi-hostname;
@@ -95,10 +99,10 @@
         isVM = true;
       };
 
-      linuxVM = helper.mkNixos {
+      ${linuxvm} = helper.mkNixos {
         inherit virtPlatform;
         stateVersion = "25.11";
-        hostname = "linuxvm";
+        hostname = linuxvm;
         platform = targetPlatform;
         isVM = true;
         sshPort = 10000;
@@ -113,10 +117,10 @@
         ];
       };
 
-      nVM = helper.mkNixos {
+      ${nvvm} = helper.mkNixos {
         inherit virtPlatform;
         stateVersion = "25.11";
-        hostname = "nvm";
+        hostname = nvvm;
         platform = targetPlatform;
         isVM = true;
         sshPort = 10001;
@@ -134,10 +138,6 @@
         ];
       };
     };
-
-    piVM = self.nixosConfigurations.piVM.config.system.build.vm;
-    linuxVM = self.nixosConfigurations.linuxVM.config.system.build.vm;
-    nVM = self.nixosConfigurations.nVM.config.system.build.vm;
 
     overlays = import ./overlays { inherit inputs; };
     packages = helper.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
