@@ -76,25 +76,30 @@
       };
     };
 
-    nixosConfigurations = {
+    nixosConfigurations = let
+      pi-stateVersion = "25.11";
+      pi-hostname = "pi5";
+      virtPlatform = "aarch64-darwin";
+      targetPlatform = "aarch64-linux";
+    in {
       pi5 = helper.mkRaspberryPi {
-        hostname = "pi5";
-        stateVersion = "25.11";
+        hostname = pi-hostname;
+        stateVersion = pi-stateVersion;
       };
 
       piVM = helper.mkNixos {
-        stateVersion = "25.11";
-        hostname = "pi5";
-        platform = "aarch64-linux";
-        virtPlatform = "aarch64-darwin";
+        inherit virtPlatform;
+        stateVersion = pi-stateVersion;
+        hostname = pi-hostname;
+        platform = targetPlatform;
         isVM = true;
       };
 
       linuxVM = helper.mkNixos {
+        inherit virtPlatform;
         stateVersion = "25.11";
         hostname = "linuxvm";
-        platform = "aarch64-linux";
-        virtPlatform = "aarch64-darwin";
+        platform = targetPlatform;
         isVM = true;
         sshPort = 10000;
 
@@ -109,10 +114,10 @@
       };
 
       nVM = helper.mkNixos {
+        inherit virtPlatform;
         stateVersion = "25.11";
         hostname = "nvm";
-        platform = "aarch64-linux";
-        virtPlatform = "aarch64-darwin";
+        platform = targetPlatform;
         isVM = true;
         sshPort = 10001;
 
