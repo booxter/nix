@@ -82,12 +82,19 @@
         stateVersion = "25.11";
       };
 
+      piVM = helper.mkNixos {
+        stateVersion = "25.11";
+        hostname = "pi5";
+        platform = "aarch64-linux";
+        virtPlatform = "aarch64-darwin";
+        isVM = true;
+      };
+
       linuxVM = helper.mkNixos {
         stateVersion = "25.11";
         hostname = "linuxvm";
         platform = "aarch64-linux";
         virtPlatform = "aarch64-darwin";
-
         isVM = true;
         sshPort = 10000;
 
@@ -106,10 +113,10 @@
         hostname = "nvm";
         platform = "aarch64-linux";
         virtPlatform = "aarch64-darwin";
-
-        isWork = true;
         isVM = true;
         sshPort = 10001;
+
+        isWork = true;
 
         extraModules = [
           ({ ... }: {
@@ -123,6 +130,7 @@
       };
     };
 
+    piVM = self.nixosConfigurations.piVM.config.system.build.vm;
     linuxVM = self.nixosConfigurations.linuxVM.config.system.build.vm;
     nVM = self.nixosConfigurations.nVM.config.system.build.vm;
 
