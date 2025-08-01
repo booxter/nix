@@ -3,17 +3,6 @@
 {
   description = "booxter Nix* flake configs";
 
-  # TODO: how to enable for a particular build only?
-  # raspberrypi5 cachix
-  #nixConfig = {
-  #  extra-substituters = [
-  #    "https://nixos-raspberrypi.cachix.org"
-  #  ];
-  #  extra-trusted-public-keys = [
-  #    "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
-  #  ];
-  #};
-
   inputs = {
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
@@ -118,6 +107,19 @@
         modules = [
           ./common
           self.nixosModules.base
+
+          {
+            nix = {
+              settings = {
+                extra-substituters = [
+                  "https://nixos-raspberrypi.cachix.org"
+                ];
+                extra-trusted-public-keys = [
+                  "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+                ];
+              };
+            };
+          }
 
           {
             imports = with inputs.nixos-raspberrypi.nixosModules; [
