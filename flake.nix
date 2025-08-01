@@ -39,19 +39,6 @@
   in
   {
     homeConfigurations = {
-      # personal mac mini
-      "${username}@mmini" = helper.mkHome {
-        stateVersion = "25.11";
-        platform = "aarch64-darwin";
-        isDesktop = true;
-      };
-      # nv laptop
-      "${username}@ihrachyshka-mlt" = helper.mkHome {
-        stateVersion = "25.11";
-        platform = "aarch64-darwin";
-        isDesktop = true;
-        isWork = true;
-      };
       # nv dev env
       "${username}@nv" = helper.mkHome {
         stateVersion = "25.11";
