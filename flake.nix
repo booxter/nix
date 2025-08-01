@@ -82,6 +82,13 @@
       pi5 = helper.mkRaspberryPi {
         hostname = pi-hostname;
         stateVersion = pi-stateVersion;
+        extraModules = [
+          ({ ... }: {
+            users.users.${username} = {
+              hashedPassword = "$6$cgM30pIRZnRi0o21$qMkHs50CF.4Af4UWT.l/INY2nq3zAValESyaWj6mi.cvROO7cOjNXdttwCaEyQMaQAGzRlUJkkmJHUd.DFNxY0";
+            };
+          })
+        ];
       };
 
       ${toVmName pi-hostname} = helper.mkNixos {
@@ -168,6 +175,17 @@
                 host.port = proxmoxPort;
               }
             ];
+          })
+
+          ({ ... }: let
+            proxmoxPass = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
+          in {
+            users.users.root = {
+              hashedPassword = proxmoxPass;
+            };
+            users.users.${username} = {
+              hashedPassword = proxmoxPass;
+            };
           })
         ];
       };

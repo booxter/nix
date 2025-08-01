@@ -12,5 +12,4 @@
     ];
   };
   users.groups.${username} = {};
-  security.sudo.wheelNeedsPassword = false;
 }
