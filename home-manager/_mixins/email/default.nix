@@ -1,4 +1,4 @@
-{ pkgs, isWork, ... }:
+{ pkgs, username, isWork, ... }:
 {
   # Thunderbird
   programs.thunderbird = {
@@ -56,7 +56,7 @@
     {
       default = (if isWork then {
         flavor = "outlook.office365.com";
-        address = "ihrachyshka@nvidia.com";
+        address = "${username}@nvidia.com";
       } else {
         flavor = "gmail.com";
         address = "ihar.hrachyshka@gmail.com";

@@ -1,4 +1,4 @@
-{ ... }: {
+{ username, ... }: {
   homebrew = {
     enable = true;
     onActivation.autoUpdate = true;
@@ -14,6 +14,6 @@
 
   nix-homebrew = {
     enable = true;
-    user = "ihrachyshka";
+    user = username;
   };
 }

@@ -1,11 +1,12 @@
 {
   pkgs,
   isWork,
+  username,
   ...
 }:
 let
   fullName = "Ihar Hrachyshka";
-  email = if isWork then "ihrachyshka@nvidia.com" else "ihar.hrachyshka@gmail.com";
+  email = if isWork then "${username}@nvidia.com" else "ihar.hrachyshka@gmail.com";
 in
 {
   # Git
@@ -32,7 +33,7 @@ in
         smtpServer = "smtp.office365.com";
         smtpServerPort = 587;
         smtpEncryption = "tls";
-        smtpUser = "ihrachyshka@nvidia.com";
+        smtpUser = "${username}@nvidia.com";
       } else {
         confirm = "auto";
         smtpServer = "smtp.gmail.com";

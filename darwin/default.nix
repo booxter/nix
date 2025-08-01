@@ -37,7 +37,7 @@
 
   system.stateVersion = stateVersion;
 
-  system.primaryUser = "ihrachyshka";
+  system.primaryUser = username;
 
   users.users.${username} = {
     home = "/Users/${username}";
