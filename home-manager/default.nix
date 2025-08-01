@@ -46,11 +46,6 @@ in
     homeDirectory = if isDarwin then "/Users/${username}" else "/home/${username}";
   };
 
-  systemd.user = lib.optionalAttrs (!isDarwin) {
-    enable = true;
-    startServices = true;
-  };
-
   programs.home-manager.enable = true; # let it manage itself
 
   home.packages =
