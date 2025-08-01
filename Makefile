@@ -27,20 +27,8 @@ darwin-switch-mlt:
 
 ########### home manager targets
 HM_ARGS = -b backup
-home-build:
-	nix run nixpkgs#home-manager -- build --flake . $(ARGS)
-
-home-build-mlt:
-	nix run nixpkgs#home-manager -- build --flake .#${USER}@ihrachyshka-mlt $(ARGS)
-
-home-build-nvcloud:
+home-build-nv:
 	nix run nixpkgs#home-manager -- build --flake .#${USER}@nv $(ARGS)
-
-home-switch:
-	nix run nixpkgs#home-manager -- switch --flake . $(ARGS) $(HM_ARGS)
-
-home-switch-mlt:
-	nix run nixpkgs#home-manager -- switch --flake .#${USER}@ihrachyshka-mlt $(ARGS) $(HM_ARGS)
 
 home-switch-nv:
 	nix run nixpkgs#home-manager -- switch --flake .#${USER}@nv $(ARGS) $(HM_ARGS)

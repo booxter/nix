@@ -85,6 +85,7 @@
     {
       hostname,
       stateVersion,
+      hmStateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
       isDesktop ? false,
@@ -100,6 +101,7 @@
           platform
           username
           stateVersion
+          hmStateVersion
           isDesktop
           isWork
           ;
@@ -108,6 +110,21 @@
         inputs.nix-homebrew.darwinModules.nix-homebrew
         ../common
         ../darwin
+
+        inputs.home-manager.darwinModules.home-manager {
+          home-manager.extraSpecialArgs = {
+            inherit
+              inputs
+              outputs
+              username
+              isDesktop
+              isWork
+              ;
+            stateVersion = hmStateVersion;
+          };
+          home-manager.useUserPackages = true;
+          home-manager.users.${username} = ../home-manager;
+        }
       ] ++ extraModules;
     };
 

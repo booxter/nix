@@ -72,12 +72,14 @@
     darwinConfigurations = {
       mmini = helper.mkDarwin {
         stateVersion = 5;
+        hmStateVersion = "25.11";
         hostname = "mmini";
         platform = "aarch64-darwin";
         isDesktop = true;
       };
       ihrachyshka-mlt = helper.mkDarwin {
         stateVersion = 5;
+        hmStateVersion = "25.11";
         hostname = "ihrachyshka-mlt";
         platform = "aarch64-darwin";
         isDesktop = true;
