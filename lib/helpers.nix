@@ -3,6 +3,22 @@
   outputs,
   ...
 }:
+let
+  commonHMConfig = { inputs, outputs, username, isDesktop, isWork, stateVersion }: {
+    home-manager.extraSpecialArgs = {
+      inherit
+        inputs
+        outputs
+        username
+        isDesktop
+        isWork
+        stateVersion
+        ;
+    };
+    home-manager.useUserPackages = true;
+    home-manager.users.${username} = ../home-manager;
+  };
+in
 {
   mkHome =
     {
@@ -64,20 +80,17 @@
         ../common
         ../nixos
 
-        inputs.home-manager.nixosModules.home-manager {
-          home-manager.extraSpecialArgs = {
-            inherit
-              inputs
-              outputs
-              stateVersion
-              username
-              isDesktop
-              isWork
-              ;
-          };
-          home-manager.useUserPackages = true;
-          home-manager.users.${username} = ../home-manager;
-        }
+        inputs.home-manager.nixosModules.home-manager
+        (commonHMConfig {
+          inherit
+            inputs
+            outputs
+            username
+            isDesktop
+            isWork
+            stateVersion
+            ;
+        })
       ] ++ extraModules;
     };
 
@@ -111,20 +124,17 @@
         ../common
         ../darwin
 
-        inputs.home-manager.darwinModules.home-manager {
-          home-manager.extraSpecialArgs = {
-            inherit
-              inputs
-              outputs
-              username
-              isDesktop
-              isWork
-              ;
-            stateVersion = hmStateVersion;
-          };
-          home-manager.useUserPackages = true;
-          home-manager.users.${username} = ../home-manager;
-        }
+        inputs.home-manager.darwinModules.home-manager
+        (commonHMConfig {
+          inherit
+            inputs
+            outputs
+            username
+            isDesktop
+            isWork
+            ;
+          stateVersion = hmStateVersion;
+        })
       ] ++ extraModules;
     };
 
