@@ -5,6 +5,7 @@
     graphics = false;
   };
   services.getty.autologinUser = username;
+  security.sudo.wheelNeedsPassword = false;
 
   virtualisation.vmVariant.virtualisation.forwardPorts = lib.optionals (sshPort != null) [
     {
