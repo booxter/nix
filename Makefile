@@ -6,10 +6,10 @@ inputs-update:
 	nix flake update
 
 ########### local interactive vms
-linux:
+linuxvm:
 	nix run .#linuxVM $(ARGS)
 
-nv:
+nvm:
 	nix run .#nVM $(ARGS)
 
 ########### darwin build targets
