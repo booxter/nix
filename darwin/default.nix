@@ -53,6 +53,13 @@
   # Create /etc/zshrc that loads the nix-darwin environment.
   programs.zsh.enable = true;
 
+  system = {
+    activationScripts.postActivation.text = ''
+      echo "Do not sleep when on AC power."
+      pmset -c sleep 0 # Needs testing - UI not immediately updated.
+    '';
+  };
+
   # TODO: is it still needed? Does it operate in the user context? (Not root?)
   system.activationScripts.userActivation.text = ''
     # Following line should allow us to avoid a logout/login cycle
