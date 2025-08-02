@@ -9,6 +9,7 @@
   ...
 }: {
   imports = [
+    # TODO: gracefully handle missing per-machine config
     ./${hostname}
     ./_mixins/defaults
     ./_mixins/desktop

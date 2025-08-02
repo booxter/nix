@@ -49,6 +49,13 @@
     };
 
     darwinConfigurations = {
+      mair = helper.mkDarwin {
+        stateVersion = 6;
+        hmStateVersion = "25.11";
+        hostname = "mair";
+        platform = "aarch64-darwin";
+        isDesktop = true;
+      };
       mmini = helper.mkDarwin {
         stateVersion = 5;
         hmStateVersion = "25.11";
