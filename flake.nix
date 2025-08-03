@@ -164,40 +164,47 @@
             ];
           };
 
-          ${toVmName proxmox} = helper.mkProxmox {
-            inherit username virtPlatform;
-            stateVersion = proxmoxStateVersion;
-            hostname = toVmName proxmox;
-            isVM = true;
-            sshPort = 10002;
+          ${toVmName proxmox} =
+            let
+              name = toVmName proxmox;
+            in
+            helper.mkProxmox {
+              inherit username virtPlatform;
+              stateVersion = proxmoxStateVersion;
+              hostname = name;
+              netIface = "eth0";
+              ipAddress = name;
 
-            isWork = true;
+              isVM = true;
+              sshPort = 10002;
 
-            extraModules = [
-              (
-                { ... }:
-                {
-                  virtualisation.vmVariant.virtualisation = {
-                    cores = 8;
-                    memorySize = 16 * 1024; # 16GB
-                    diskSize = 100 * 1024; # 100GB
+              isWork = true;
 
-                    forwardPorts =
-                      let
-                        proxmoxPort = 8006;
-                      in
-                      [
-                        {
-                          from = "host";
-                          guest.port = proxmoxPort;
-                          host.port = proxmoxPort;
-                        }
-                      ];
-                  };
-                }
-              )
-            ];
-          };
+              extraModules = [
+                (
+                  { ... }:
+                  {
+                    virtualisation.vmVariant.virtualisation = {
+                      cores = 8;
+                      memorySize = 16 * 1024; # 16GB
+                      diskSize = 100 * 1024; # 100GB
+
+                      forwardPorts =
+                        let
+                          proxmoxPort = 8006;
+                        in
+                        [
+                          {
+                            from = "host";
+                            guest.port = proxmoxPort;
+                            host.port = proxmoxPort;
+                          }
+                        ];
+                    };
+                  }
+                )
+              ];
+            };
         }
         // (inputs.nixpkgs.lib.genAttrs
           (map (n: "prx${toString n}-lab") (inputs.nixpkgs.lib.range 1 numProxmoxNodes))
@@ -207,6 +214,13 @@
               inherit username;
               stateVersion = proxmoxStateVersion;
               hostname = name;
+              netIface = "enp5s0f0np0";
+              # TODO: automatically sync with dhcp config
+              ipAddress = "192.168.15.${
+                toString (
+                  10 + inputs.nixpkgs.lib.strings.toInt (builtins.elemAt (builtins.match "prx([0-9]+)-lab" name) 0)
+                )
+              }";
             }
           )
         );

@@ -70,6 +70,7 @@ rec {
       isVM ? false,
       sshPort ? null,
       extraModules ? [ ],
+      ...
     }:
     inputs.nixpkgs.lib.nixosSystem {
       specialArgs = {
@@ -122,6 +123,8 @@ rec {
   mkProxmox =
     args@{
       username,
+      netIface,
+      ipAddress,
       extraModules ? [ ],
       ...
     }:
@@ -138,14 +141,43 @@ rec {
 
           (
             { ... }:
+            let
+              brname = "vmbr0";
+            in
             {
-              services.proxmox-ve = {
-                enable = true;
-              };
-
               nixpkgs.overlays = [
                 inputs.proxmox-nixos.overlays.${platform}
               ];
+
+              services.proxmox-ve = {
+                inherit ipAddress;
+                enable = true;
+              };
+
+              # Bridge to the LAN
+              services.proxmox-ve.bridges = [ brname ];
+              systemd.network.networks."10-lan" = {
+                matchConfig.Name = [ netIface ];
+                networkConfig = {
+                  Bridge = brname;
+                };
+              };
+
+              systemd.network.netdevs.${brname} = {
+                netdevConfig = {
+                  Name = brname;
+                  Kind = "bridge";
+                };
+              };
+
+              systemd.network.networks."10-lan-bridge" = {
+                matchConfig.Name = netIface;
+                networkConfig = {
+                  IPv6AcceptRA = true;
+                  DHCP = "ipv4";
+                };
+                linkConfig.RequiredForOnline = "routable";
+              };
             }
           )
 
