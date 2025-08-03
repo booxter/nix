@@ -203,7 +203,7 @@
               # TODO: automatically sync with dhcp config
               ipAddress = "192.168.15.${
                 toString (
-                  10 + inputs.nixpkgs.lib.strings.toInt (builtins.elemAt (builtins.match "prx([0-9]+)-lab" name) 0)
+                  9 + inputs.nixpkgs.lib.strings.toInt (builtins.elemAt (builtins.match "prx([0-9]+)-lab" name) 0)
                 )
               }";
             }
