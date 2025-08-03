@@ -10,6 +10,7 @@
 
   environment.systemPackages = with pkgs; [
     git
+    gnumake
   ];
 
   users.users.${username} = {
