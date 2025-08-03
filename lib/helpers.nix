@@ -143,7 +143,7 @@ rec {
             inputs.proxmox-nixos.nixosModules.proxmox-ve
 
             (
-              { ... }:
+              { pkgs, ... }:
               let
                 brname = "vmbr0";
               in
@@ -157,7 +157,13 @@ rec {
                   enable = true;
                 };
 
-                # Bridge to the LAN
+                # Some packages useful when debugging Proxmox VE.
+                environment.systemPackages = with pkgs; [
+                  bridge-utils
+                ];
+
+                # Bridge to the LAN, while retaining IP address on the main
+                # interface, with its MAC address - as expected by DHCP server.
                 services.proxmox-ve.bridges = [ brname ];
                 systemd.network.networks."10-lan" = {
                   matchConfig.Name = [ netIface ];
@@ -166,20 +172,30 @@ rec {
                   };
                 };
 
-                systemd.network.netdevs.${brname} = {
+                systemd.network.netdevs."10-lan-bridge" = {
                   netdevConfig = {
                     Name = brname;
                     Kind = "bridge";
+                    MACAddress = "none";
                   };
                 };
 
                 systemd.network.networks."10-lan-bridge" = {
-                  matchConfig.Name = netIface;
+                  matchConfig.Name = brname;
                   networkConfig = {
                     IPv6AcceptRA = true;
                     DHCP = "ipv4";
                   };
-                  linkConfig.RequiredForOnline = "routable";
+                  linkConfig = {
+                    RequiredForOnline = "routable";
+                  };
+                };
+
+                systemd.network.links."10-lan-bridge" = {
+                  matchConfig.OriginalName = brname;
+                  linkConfig = {
+                    MACAddressPolicy = "none";
+                  };
                 };
               }
             )
