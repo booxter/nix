@@ -120,7 +120,11 @@ rec {
     };
 
   mkProxmox =
-    args@{ username, extraModules ? [ ], ... }:
+    args@{
+      username,
+      extraModules ? [ ],
+      ...
+    }:
     let
       platform = "x86_64-linux";
     in

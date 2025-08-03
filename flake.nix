@@ -81,6 +81,7 @@
           virtPlatform = "aarch64-darwin";
           vmPlatform = "aarch64-linux";
 
+          numProxmoxNodes = 3;
           proxmoxStateVersion = "25.11";
 
           piStateVersion = "25.11";
@@ -163,12 +164,6 @@
             ];
           };
 
-          prx1-lab = helper.mkProxmox {
-            inherit username;
-            stateVersion = proxmoxStateVersion;
-            hostname = "prx1-lab";
-          };
-
           ${toVmName proxmox} = helper.mkProxmox {
             inherit username virtPlatform;
             stateVersion = proxmoxStateVersion;
@@ -203,7 +198,17 @@
               )
             ];
           };
-        };
+        }
+        // (inputs.nixpkgs.lib.genAttrs (map (n: "prx{n}-lab") (inputs.nixpkgs.lib.range 1 numProxmoxNodes))
+          (
+            name:
+            helper.mkProxmox {
+              inherit username;
+              stateVersion = proxmoxStateVersion;
+              hostname = name;
+            }
+          )
+        );
 
       overlays = import ./overlays { inherit inputs; };
       packages = helper.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
