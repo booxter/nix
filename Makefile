@@ -29,6 +29,13 @@ vm:
 		$(if $(filter proxmox,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
 		.#nixosConfigurations.$(WHAT)vm.config.system.build.vm $(ARGS)
 
+########### nixos
+nixos-build:
+	nix build .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
+
+nixos-switch:
+	sudo nixos-rebuild switch --flake .#$(shell hostname) $(ARGS)
+
 ########### darwin
 darwin-build:
 	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
