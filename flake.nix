@@ -164,12 +164,13 @@
           };
 
           prx1-lab = helper.mkProxmox {
+            inherit username;
             stateVersion = proxmoxStateVersion;
             hostname = "prx1-lab";
           };
 
           ${toVmName proxmox} = helper.mkProxmox {
-            inherit virtPlatform;
+            inherit username virtPlatform;
             stateVersion = proxmoxStateVersion;
             hostname = toVmName proxmox;
             isVM = true;

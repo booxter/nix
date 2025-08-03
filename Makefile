@@ -2,6 +2,9 @@
 ARGS = -L --show-trace
 HM_ARGS = -b backup
 
+NIX_OPTS = \
+	--extra-experimental-features 'nix-command flakes'
+
 DEFAULT_CACHE_PRIORITY = 50
 
 RPI_CACHE_OPTIONS = \
@@ -41,7 +44,9 @@ disko-install:
 		echo "Usage: make $@ WHAT=host DEV=/dev/XXX";\
 	  exit 1;\
 	fi
-	sudo nix run $(ARGS) 'github:nix-community/disko/latest#disko-install' -- --flake .#$(WHAT) --disk main $(DEV)
+	sudo nix $(NIX_OPTS) run $(ARGS) \
+		$(if $(filter prx%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
+		'github:nix-community/disko/latest#disko-install' -- --flake .#$(WHAT) --disk main $(DEV)
 
 ########### darwin
 darwin-build:
