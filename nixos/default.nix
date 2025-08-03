@@ -3,7 +3,6 @@
   imports = [
     ./${hostname}
     ./_mixins/user
-    ./_mixins/zsh
   ]
   ++ lib.optionals isVM [
     ./_mixins/vm

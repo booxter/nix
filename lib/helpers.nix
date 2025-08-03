@@ -4,7 +4,9 @@
   ...
 }:
 let
-  commonHMConfig = { inputs, outputs, username, isDesktop, isWork, stateVersion }: {
+  commonHMConfig = { inputs, outputs, username, platform, isDesktop, isWork, stateVersion }: let
+    pkgs = inputs.nixpkgs.legacyPackages.${platform};
+  in {
     home-manager.extraSpecialArgs = {
       inherit
         inputs
@@ -15,6 +17,7 @@ let
         stateVersion
         ;
     };
+    users.defaultUserShell = pkgs.zsh;
     home-manager.useUserPackages = true;
     home-manager.users.${username} = ../home-manager;
   };
@@ -88,6 +91,7 @@ rec {
             inputs
             outputs
             username
+            platform
             isDesktop
             isWork
             stateVersion
@@ -219,6 +223,7 @@ rec {
             inputs
             outputs
             username
+            platform
             isDesktop
             isWork
             ;
