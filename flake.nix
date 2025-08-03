@@ -229,6 +229,6 @@
 
       overlays = import ./overlays { inherit inputs; };
       packages = helper.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
-      formatter = helper.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
+      formatter = helper.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-tree);
     };
 }
