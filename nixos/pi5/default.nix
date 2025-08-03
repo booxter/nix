@@ -59,6 +59,7 @@ in
         # clients (wifi)
         "76:90:da:3c:46:db,mmini,192.168.11.1"
         "36:95:f3:6f:a7:f7,ihrachyshka-mlt,192.168.11.2"
+        "7e:74:b3:5f:84:35,mair,192.168.11.3"
 
         # lab
         "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
