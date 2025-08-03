@@ -66,7 +66,6 @@ in
         "78:72:64:43:9c:3f,nas-lab,192.168.15.2" # asustor
 
         # mini-PC NUC nodes running proxmox
-        # TODO: confirm mac addresses
         "38:05:25:30:7d:89,prx1-lab,192.168.15.10"
         "38:05:25:30:7f:7d,prx2-lab,192.168.15.11"
         "38:05:25:30:7d:69,prx3-lab,192.168.15.12"
