@@ -199,7 +199,8 @@
             ];
           };
         }
-        // (inputs.nixpkgs.lib.genAttrs (map (n: "prx{n}-lab") (inputs.nixpkgs.lib.range 1 numProxmoxNodes))
+        // (inputs.nixpkgs.lib.genAttrs
+          (map (n: "prx${toString n}-lab") (inputs.nixpkgs.lib.range 1 numProxmoxNodes))
           (
             name:
             helper.mkProxmox {
