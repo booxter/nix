@@ -125,6 +125,7 @@ rec {
       username,
       netIface,
       ipAddress,
+      isVM ? false,
       extraModules ? [ ],
       ...
     }:
@@ -136,66 +137,84 @@ rec {
       // {
         inherit platform;
         withHome = false;
-        extraModules = extraModules ++ [
-          inputs.proxmox-nixos.nixosModules.proxmox-ve
+        extraModules =
+          extraModules
+          ++ [
+            inputs.proxmox-nixos.nixosModules.proxmox-ve
 
-          (
-            { ... }:
-            let
-              brname = "vmbr0";
-            in
-            {
-              nixpkgs.overlays = [
-                inputs.proxmox-nixos.overlays.${platform}
-              ];
+            (
+              { ... }:
+              let
+                brname = "vmbr0";
+              in
+              {
+                nixpkgs.overlays = [
+                  inputs.proxmox-nixos.overlays.${platform}
+                ];
 
-              services.proxmox-ve = {
-                inherit ipAddress;
-                enable = true;
-              };
-
-              # Bridge to the LAN
-              services.proxmox-ve.bridges = [ brname ];
-              systemd.network.networks."10-lan" = {
-                matchConfig.Name = [ netIface ];
-                networkConfig = {
-                  Bridge = brname;
+                services.proxmox-ve = {
+                  inherit ipAddress;
+                  enable = true;
                 };
-              };
 
-              systemd.network.netdevs.${brname} = {
-                netdevConfig = {
-                  Name = brname;
-                  Kind = "bridge";
+                # Bridge to the LAN
+                services.proxmox-ve.bridges = [ brname ];
+                systemd.network.networks."10-lan" = {
+                  matchConfig.Name = [ netIface ];
+                  networkConfig = {
+                    Bridge = brname;
+                  };
                 };
-              };
 
-              systemd.network.networks."10-lan-bridge" = {
-                matchConfig.Name = netIface;
-                networkConfig = {
-                  IPv6AcceptRA = true;
-                  DHCP = "ipv4";
+                systemd.network.netdevs.${brname} = {
+                  netdevConfig = {
+                    Name = brname;
+                    Kind = "bridge";
+                  };
                 };
-                linkConfig.RequiredForOnline = "routable";
-              };
-            }
-          )
 
-          (
-            { ... }:
-            let
-              proxmoxPass = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
-            in
-            {
-              users.users.root = {
-                hashedPassword = proxmoxPass;
-              };
-              users.users.${username} = {
-                hashedPassword = proxmoxPass;
-              };
-            }
-          )
-        ];
+                systemd.network.networks."10-lan-bridge" = {
+                  matchConfig.Name = netIface;
+                  networkConfig = {
+                    IPv6AcceptRA = true;
+                    DHCP = "ipv4";
+                  };
+                  linkConfig.RequiredForOnline = "routable";
+                };
+              }
+            )
+
+            (
+              { ... }:
+              let
+                proxmoxPass = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
+              in
+              {
+                users.users = {
+                  root.hashedPassword = proxmoxPass;
+                  ${username}.hashedPassword = proxmoxPass;
+                };
+              }
+            )
+          ]
+          ++ inputs.nixpkgs.lib.optionals isVM [
+            (
+              { ... }:
+              {
+                virtualisation.vmVariant.virtualisation.forwardPorts =
+                  let
+                    proxmoxPort = 8006;
+                  in
+                  [
+                    {
+                      from = "host";
+                      guest.port = proxmoxPort;
+                      host.port = proxmoxPort;
+                    }
+                  ];
+              }
+            )
+          ];
       }
     );
 

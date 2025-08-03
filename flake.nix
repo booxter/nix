@@ -145,10 +145,9 @@
             stateVersion = "25.11";
             hostname = toVmName nv;
             platform = vmPlatform;
+            isWork = true;
             isVM = true;
             sshPort = 10001;
-
-            isWork = true;
 
             extraModules = [
               (
@@ -174,11 +173,9 @@
               hostname = name;
               netIface = "eth0";
               ipAddress = name;
-
+              isWork = true;
               isVM = true;
               sshPort = 10002;
-
-              isWork = true;
 
               extraModules = [
                 (
@@ -188,18 +185,6 @@
                       cores = 8;
                       memorySize = 16 * 1024; # 16GB
                       diskSize = 100 * 1024; # 100GB
-
-                      forwardPorts =
-                        let
-                          proxmoxPort = 8006;
-                        in
-                        [
-                          {
-                            from = "host";
-                            guest.port = proxmoxPort;
-                            host.port = proxmoxPort;
-                          }
-                        ];
                     };
                   }
                 )
