@@ -59,6 +59,12 @@ in {
         # lab
         "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
         "78:72:64:43:9c:3f,nas-lab,192.168.15.2" # asustor
+
+        # mini-PC NUC nodes
+        # TODO: confirm mac addresses
+        "38:05:25:30:7d:8a,nuc1-lab,192.168.15.10"
+        "38:05:25:30:7f:7d,nuc2-lab,192.168.15.11"
+        "38:05:25:30:7d:69,nuc3-lab,192.168.15.12"
       ];
 
       enable-tftp = true;
