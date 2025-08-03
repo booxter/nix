@@ -29,6 +29,8 @@
     proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
     #proxmox-nixos.url = "github:booxter/proxmox-nixos/crypt-perl";
 
+    disko.url = "github:nix-community/disko/latest";
+
     nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
   };
 
@@ -77,10 +79,12 @@
       nixosConfigurations =
         let
           virtPlatform = "aarch64-darwin";
-          targetPlatform = "aarch64-linux";
+          vmPlatform = "aarch64-linux";
 
-          pi-stateVersion = "25.11";
-          pi-hostname = "pi5";
+          proxmoxStateVersion = "25.11";
+
+          piStateVersion = "25.11";
+          piHostname = "pi5";
 
           linux = "linux";
           nv = "nv";
@@ -90,8 +94,8 @@
         in
         {
           pi5 = helper.mkRaspberryPi {
-            hostname = pi-hostname;
-            stateVersion = pi-stateVersion;
+            hostname = piHostname;
+            stateVersion = piStateVersion;
             extraModules = [
               (
                 { ... }:
@@ -104,11 +108,11 @@
             ];
           };
 
-          ${toVmName pi-hostname} = helper.mkNixos {
+          ${toVmName piHostname} = helper.mkNixos {
             inherit virtPlatform;
-            stateVersion = pi-stateVersion;
-            hostname = pi-hostname; # use the same hostname to retain config
-            platform = targetPlatform;
+            stateVersion = piStateVersion;
+            hostname = piHostname; # use the same hostname to retain config
+            platform = vmPlatform;
             isVM = true;
           };
 
@@ -116,7 +120,7 @@
             inherit virtPlatform;
             stateVersion = "25.11";
             hostname = toVmName linux;
-            platform = targetPlatform;
+            platform = vmPlatform;
             isVM = true;
             # TODO: calculate stable port numbers based on hostnames, somehow
             # TODO: then, configure ssh config aliases for each of them
@@ -139,7 +143,7 @@
             inherit virtPlatform;
             stateVersion = "25.11";
             hostname = toVmName nv;
-            platform = targetPlatform;
+            platform = vmPlatform;
             isVM = true;
             sshPort = 10001;
 
@@ -159,43 +163,30 @@
             ];
           };
 
-          ${toVmName proxmox} =
-            let
-              system = "x86_64-linux"; # will eventually run on x86_64 hosts
-            in
-            helper.mkProxmox {
-              inherit virtPlatform;
-              stateVersion = "25.11";
-              hostname = toVmName proxmox;
-              platform = system;
-              isVM = true;
-              sshPort = 10002;
+          prx1-lab = helper.mkProxmox {
+            stateVersion = proxmoxStateVersion;
+            hostname = "prx1-lab";
+          };
 
-              isWork = true;
+          ${toVmName proxmox} = helper.mkProxmox {
+            inherit virtPlatform;
+            stateVersion = proxmoxStateVersion;
+            hostname = toVmName proxmox;
+            isVM = true;
+            sshPort = 10002;
 
-              extraModules = [
-                (
-                  { ... }:
-                  {
-                    virtualisation.vmVariant.virtualisation = {
-                      cores = 8;
-                      memorySize = 16 * 1024; # 16GB
-                      diskSize = 100 * 1024; # 100GB
-                    };
-                  }
-                )
+            isWork = true;
 
-                (
-                  { ... }:
-                  {
-                    services.proxmox-ve.ipAddress = "192.168.0.1";
-                  }
-                )
+            extraModules = [
+              (
+                { ... }:
+                {
+                  virtualisation.vmVariant.virtualisation = {
+                    cores = 8;
+                    memorySize = 16 * 1024; # 16GB
+                    diskSize = 100 * 1024; # 100GB
 
-                (
-                  { ... }:
-                  {
-                    virtualisation.vmVariant.virtualisation.forwardPorts =
+                    forwardPorts =
                       let
                         proxmoxPort = 8006;
                       in
@@ -206,25 +197,11 @@
                           host.port = proxmoxPort;
                         }
                       ];
-                  }
-                )
-
-                (
-                  { ... }:
-                  let
-                    proxmoxPass = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
-                  in
-                  {
-                    users.users.root = {
-                      hashedPassword = proxmoxPass;
-                    };
-                    users.users.${username} = {
-                      hashedPassword = proxmoxPass;
-                    };
-                  }
-                )
-              ];
-            };
+                  };
+                }
+              )
+            ];
+          };
         };
 
       overlays = import ./overlays { inherit inputs; };

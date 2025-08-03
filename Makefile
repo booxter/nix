@@ -36,6 +36,13 @@ nixos-build:
 nixos-switch:
 	sudo nixos-rebuild switch --flake .#$(shell hostname) $(ARGS)
 
+disko-install:
+	@if [ "x$(WHAT)" = "x" -o "x$(DEV)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=host DEV=/dev/XXX";\
+	  exit 1;\
+	fi
+	sudo nix run $(ARGS) 'github:nix-community/disko/latest#disko-install' -- --flake .#$(WHAT) --disk main $(DEV)
+
 ########### darwin
 darwin-build:
 	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)

@@ -90,6 +90,8 @@ rec {
       modules = [
         ../common
         ../nixos
+        inputs.disko.nixosModules.disko
+
       ]
       ++ inputs.nixpkgs.lib.optionals withHome [
         inputs.home-manager.nixosModules.home-manager
@@ -118,10 +120,14 @@ rec {
     };
 
   mkProxmox =
-    args@{ platform, extraModules, ... }:
+    args@{ username, extraModules, ... }:
+    let
+      platform = "x86_64-linux";
+    in
     mkNixos (
       args
       // {
+        inherit platform;
         withHome = false;
         extraModules = extraModules ++ [
           inputs.proxmox-nixos.nixosModules.proxmox-ve
@@ -136,6 +142,21 @@ rec {
               nixpkgs.overlays = [
                 inputs.proxmox-nixos.overlays.${platform}
               ];
+            }
+          )
+
+          (
+            { ... }:
+            let
+              proxmoxPass = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
+            in
+            {
+              users.users.root = {
+                hashedPassword = proxmoxPass;
+              };
+              users.users.${username} = {
+                hashedPassword = proxmoxPass;
+              };
             }
           )
         ];
