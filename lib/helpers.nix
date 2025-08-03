@@ -9,14 +9,10 @@ let
       inputs,
       outputs,
       username,
-      platform,
       isDesktop,
       isWork,
       stateVersion,
     }:
-    let
-      pkgs = inputs.nixpkgs.legacyPackages.${platform};
-    in
     {
       home-manager.extraSpecialArgs = {
         inherit
@@ -28,7 +24,6 @@ let
           stateVersion
           ;
       };
-      users.defaultUserShell = pkgs.zsh;
       home-manager.useUserPackages = true;
       home-manager.users.${username} = ../home-manager;
     };
@@ -103,12 +98,21 @@ rec {
             inputs
             outputs
             username
-            platform
             isDesktop
             isWork
             stateVersion
             ;
         })
+
+        (
+          { ... }:
+          let
+            pkgs = inputs.nixpkgs.legacyPackages.${platform};
+          in
+          {
+            users.defaultUserShell = pkgs.zsh;
+          }
+        )
       ]
       ++ extraModules;
     };
@@ -249,7 +253,6 @@ rec {
             inputs
             outputs
             username
-            platform
             isDesktop
             isWork
             ;
