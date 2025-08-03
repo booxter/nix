@@ -26,8 +26,8 @@
     nur.url = "github:nix-community/NUR";
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
-    #proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
-    proxmox-nixos.url = "github:booxter/proxmox-nixos/crypt-perl";
+    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
+    #proxmox-nixos.url = "github:booxter/proxmox-nixos/crypt-perl";
 
     nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
   };

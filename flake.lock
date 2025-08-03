@@ -502,16 +502,15 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1754087372,
-        "narHash": "sha256-fAI4O/ZP/SbDe7SytiDI1Xh0SC6ZscK4tCZIWTK0kGw=",
-        "owner": "booxter",
+        "lastModified": 1751538533,
+        "narHash": "sha256-aNB6A0+azhP/Wt9fFQslHMeQHlTYoz8Y/1cI4XqzrP0=",
+        "owner": "SaumonNet",
         "repo": "proxmox-nixos",
-        "rev": "4cb4cc30fc81834a4a8d5a14a74e72b3955b6ee9",
+        "rev": "bfe830d4d3fc055b8d157313a3ec2fa69ded5d4e",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "crypt-perl",
+        "owner": "SaumonNet",
         "repo": "proxmox-nixos",
         "type": "github"
       }
