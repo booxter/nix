@@ -13,9 +13,11 @@
 
   networking.hostName = hostname;
 
+  # Some packages that I'd like to have available on all my machines.
   environment.systemPackages = with pkgs; [
     git
     gnumake
+    vim
   ];
 
   users.users.${username} = {
