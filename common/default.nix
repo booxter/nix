@@ -20,4 +20,6 @@
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHt25mSiJLQjx2JECMuhTZEV6rlrOYk3CT2cUEdXAoYs ihrachyshka@ihrachyshka-mlt" # mlt
     ];
   };
+
+  programs.zsh.enable = true;
 }

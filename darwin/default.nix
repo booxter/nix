@@ -47,9 +47,6 @@
     shell = pkgs.zsh;
   };
 
-  # Create /etc/zshrc that loads the nix-darwin environment.
-  programs.zsh.enable = true;
-
   system = {
     activationScripts.postActivation.text = ''
       echo "Do not sleep when on AC power."
