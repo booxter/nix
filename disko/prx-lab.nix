@@ -4,7 +4,7 @@
     disk = {
       main = {
         # When using disko-install, we will overwrite this value from the commandline
-        device = "/dev/disk/by-id/main-disk";
+        device = "/dev/nvme0n1";
         type = "disk";
         content = {
           type = "gpt";
