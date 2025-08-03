@@ -2,4 +2,3 @@
 {
   services.openssh.enable = true;
 }
-

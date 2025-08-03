@@ -1,4 +1,5 @@
-{ lib, ... }: rec {
+{ lib, ... }:
+rec {
   nix.gc.automatic = true;
   nix.gc.interval = [
     {

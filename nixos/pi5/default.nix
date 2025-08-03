@@ -1,12 +1,16 @@
-{ pkgs, hostname, ... }: let
+{ pkgs, hostname, ... }:
+let
   netIface = "end0";
-in {
+in
+{
   networking = {
     interfaces.end0 = {
-      ipv4.addresses = [{
-        address = "192.168.1.1";
-        prefixLength = 16;
-      }];
+      ipv4.addresses = [
+        {
+          address = "192.168.1.1";
+          prefixLength = 16;
+        }
+      ];
     };
     defaultGateway = {
       address = "192.168.0.1";
@@ -29,7 +33,7 @@ in {
 
       dhcp-range = [ "192.168.10.1,192.168.20.255" ];
 
-      listen-address = ["192.168.1.1"];
+      listen-address = [ "192.168.1.1" ];
 
       dhcp-option = [
         "option:router,192.168.0.1"

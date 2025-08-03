@@ -1,4 +1,5 @@
-{ username, ... }: {
+{ username, ... }:
+{
   system.defaults = {
     dock = {
       autohide = true;
@@ -27,7 +28,12 @@
         # skhd requires Secure Keyboard Entry to be disabled.
         "SecureKeyboardEntry" = false;
       };
-      "com.apple.loginwindow" = { TALLogoutSavesState = 0; }; "com.apple.finder" = { _FXSortFoldersFirst = true; };
+      "com.apple.loginwindow" = {
+        TALLogoutSavesState = 0;
+      };
+      "com.apple.finder" = {
+        _FXSortFoldersFirst = true;
+      };
       "com.apple.desktopservices" = {
         # Avoid creating .DS_Store files on network or USB volumes
         DSDontWriteNetworkStores = true;

@@ -12,29 +12,29 @@ let
   inherit (pkgs.stdenv) isDarwin;
 in
 {
-  imports =
-    [
-      ../common/_mixins/nix
-    ] ++
-    [
-      ./_mixins/cli-tools
-      ./_mixins/nixvim
-      ./_mixins/scm
-      ./_mixins/ssh
-      ./_mixins/tmux
-      ./_mixins/git-sync
-    ]
-    ++ lib.optionals isDesktop [
-      ./_mixins/copy-apps
-      ./_mixins/email
-      ./_mixins/fonts
-      ./_mixins/ide
-      ./_mixins/kitty
-      ./_mixins/spotify
-      ./_mixins/firefox
-    ] ++ lib.optionals isWork [
-      ./_mixins/nv
-    ];
+  imports = [
+    ../common/_mixins/nix
+  ]
+  ++ [
+    ./_mixins/cli-tools
+    ./_mixins/nixvim
+    ./_mixins/scm
+    ./_mixins/ssh
+    ./_mixins/tmux
+    ./_mixins/git-sync
+  ]
+  ++ lib.optionals isDesktop [
+    ./_mixins/copy-apps
+    ./_mixins/email
+    ./_mixins/fonts
+    ./_mixins/ide
+    ./_mixins/kitty
+    ./_mixins/spotify
+    ./_mixins/firefox
+  ]
+  ++ lib.optionals isWork [
+    ./_mixins/nv
+  ];
 
   nixpkgs.overlays = [
     inputs.nur.overlays.default

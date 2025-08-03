@@ -4,23 +4,34 @@
   ...
 }:
 let
-  commonHMConfig = { inputs, outputs, username, platform, isDesktop, isWork, stateVersion }: let
-    pkgs = inputs.nixpkgs.legacyPackages.${platform};
-  in {
-    home-manager.extraSpecialArgs = {
-      inherit
-        inputs
-        outputs
-        username
-        isDesktop
-        isWork
-        stateVersion
-        ;
+  commonHMConfig =
+    {
+      inputs,
+      outputs,
+      username,
+      platform,
+      isDesktop,
+      isWork,
+      stateVersion,
+    }:
+    let
+      pkgs = inputs.nixpkgs.legacyPackages.${platform};
+    in
+    {
+      home-manager.extraSpecialArgs = {
+        inherit
+          inputs
+          outputs
+          username
+          isDesktop
+          isWork
+          stateVersion
+          ;
+      };
+      users.defaultUserShell = pkgs.zsh;
+      home-manager.useUserPackages = true;
+      home-manager.users.${username} = ../home-manager;
     };
-    users.defaultUserShell = pkgs.zsh;
-    home-manager.useUserPackages = true;
-    home-manager.users.${username} = ../home-manager;
-  };
 in
 rec {
   mkHome =
@@ -30,7 +41,7 @@ rec {
       platform ? "aarch64-darwin",
       isWork ? false,
       isDesktop ? false,
-      extraModules ? [],
+      extraModules ? [ ],
     }:
     inputs.home-manager.lib.homeManagerConfiguration {
       pkgs = inputs.nixpkgs.legacyPackages.${platform};
@@ -47,7 +58,8 @@ rec {
       };
       modules = [
         ../home-manager
-      ] ++ extraModules;
+      ]
+      ++ extraModules;
     };
 
   mkNixos =
@@ -62,7 +74,7 @@ rec {
       isWork ? false,
       isVM ? false,
       sshPort ? null,
-      extraModules ? [],
+      extraModules ? [ ],
     }:
     inputs.nixpkgs.lib.nixosSystem {
       specialArgs = {
@@ -79,7 +91,7 @@ rec {
           isDesktop
           isWork
           ;
-        };
+      };
       modules = [
         ../common
         ../nixos
@@ -101,22 +113,30 @@ rec {
       ++ extraModules;
     };
 
-  mkProxmox = args@{ platform, extraModules, ... }: mkNixos (args // {
-    withHome = false;
-    extraModules = extraModules ++ [
-      inputs.proxmox-nixos.nixosModules.proxmox-ve
+  mkProxmox =
+    args@{ platform, extraModules, ... }:
+    mkNixos (
+      args
+      // {
+        withHome = false;
+        extraModules = extraModules ++ [
+          inputs.proxmox-nixos.nixosModules.proxmox-ve
 
-      ({ ... }: {
-        services.proxmox-ve = {
-          enable = true;
-        };
+          (
+            { ... }:
+            {
+              services.proxmox-ve = {
+                enable = true;
+              };
 
-        nixpkgs.overlays = [
-          inputs.proxmox-nixos.overlays.${platform}
+              nixpkgs.overlays = [
+                inputs.proxmox-nixos.overlays.${platform}
+              ];
+            }
+          )
         ];
-      })
-    ];
-  });
+      }
+    );
 
   mkRaspberryPi =
     {
@@ -127,7 +147,7 @@ rec {
       isDesktop ? false,
       isWork ? false,
       isVM ? false,
-      extraModules ? [],
+      extraModules ? [ ],
     }:
     inputs.nixos-raspberrypi.lib.nixosSystem {
       specialArgs = {
@@ -174,17 +194,23 @@ rec {
         }
 
         # bootloader
-        ({ config, ... }: {
-          system.nixos.tags = let
-            cfg = config.boot.loader.raspberryPi;
-          in [
-            "raspberry-pi-${cfg.variant}"
-            cfg.bootloader
-            config.boot.kernelPackages.kernel.version
-          ];
-        })
+        (
+          { config, ... }:
+          {
+            system.nixos.tags =
+              let
+                cfg = config.boot.loader.raspberryPi;
+              in
+              [
+                "raspberry-pi-${cfg.variant}"
+                cfg.bootloader
+                config.boot.kernelPackages.kernel.version
+              ];
+          }
+        )
 
-      ] ++ extraModules;
+      ]
+      ++ extraModules;
     };
 
   mkDarwin =
@@ -196,7 +222,7 @@ rec {
       platform ? "aarch64-darwin",
       isDesktop ? false,
       isWork ? false,
-      extraModules ? [],
+      extraModules ? [ ],
     }:
     inputs.nix-darwin.lib.darwinSystem {
       specialArgs = {
@@ -229,7 +255,8 @@ rec {
             ;
           stateVersion = hmStateVersion;
         })
-      ] ++ extraModules;
+      ]
+      ++ extraModules;
     };
 
   forAllSystems = inputs.nixpkgs.lib.genAttrs [

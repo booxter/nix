@@ -7,7 +7,8 @@
   stateVersion,
   isWork,
   ...
-}: {
+}:
+{
   imports = [
     # TODO: gracefully handle missing per-machine config
     ./${hostname}
@@ -19,7 +20,8 @@
     ./_mixins/linux-builder
     ./_mixins/nix-gc
     ./_mixins/sudo
-  ] ++ lib.optionals (!isWork) [
+  ]
+  ++ lib.optionals (!isWork) [
     ./_mixins/browser
     ./_mixins/community-builders
   ];

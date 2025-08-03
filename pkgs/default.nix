@@ -1,6 +1,5 @@
 # You can build them using 'nix build .#example'
-pkgs:
-{
+pkgs: {
   # private
   spot = pkgs.callPackage ./spot { };
 

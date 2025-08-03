@@ -81,7 +81,10 @@ python3.pkgs.buildPythonApplication rec {
   meta = {
     description = "Command-line interface to Jinja2 for templating in shell scripts";
     homepage = "https://pypi.org/project/jinjanator/";
-    license = with lib.licenses; [ bsd2 asl20 ];
+    license = with lib.licenses; [
+      bsd2
+      asl20
+    ];
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "jinjanator";
   };

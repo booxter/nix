@@ -1,4 +1,9 @@
-{ pkgs, username, hostname, ... }:
+{
+  pkgs,
+  username,
+  hostname,
+  ...
+}:
 {
   imports = [
     ./_mixins/nix

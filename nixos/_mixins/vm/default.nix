@@ -1,4 +1,11 @@
-{ lib, inputs, username, virtPlatform, sshPort, ... }:
+{
+  lib,
+  inputs,
+  username,
+  virtPlatform,
+  sshPort,
+  ...
+}:
 {
   virtualisation.vmVariant.virtualisation = {
     host.pkgs = (import inputs.nixpkgs { system = virtPlatform; });

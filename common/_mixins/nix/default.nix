@@ -1,4 +1,9 @@
-{ lib, pkgs, outputs, ... }:
+{
+  lib,
+  pkgs,
+  outputs,
+  ...
+}:
 {
   nix = {
     package = lib.mkForce pkgs.lix;

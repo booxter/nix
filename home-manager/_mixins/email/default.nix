@@ -1,4 +1,9 @@
-{ pkgs, username, isWork, ... }:
+{
+  pkgs,
+  username,
+  isWork,
+  ...
+}:
 {
   # Thunderbird
   programs.thunderbird = {
@@ -38,7 +43,7 @@
   };
 
   # Accounts
-  accounts.email.accounts = 
+  accounts.email.accounts =
     let
       commonCfg = {
         realName = "Ihar Hrachyshka";
@@ -54,14 +59,21 @@
       };
     in
     {
-      default = (if isWork then {
-        flavor = "outlook.office365.com";
-        address = "${username}@nvidia.com";
-      } else {
-        flavor = "gmail.com";
-        address = "ihar.hrachyshka@gmail.com";
-        passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
-      }) // commonCfg;
+      default =
+        (
+          if isWork then
+            {
+              flavor = "outlook.office365.com";
+              address = "${username}@nvidia.com";
+            }
+          else
+            {
+              flavor = "gmail.com";
+              address = "ihar.hrachyshka@gmail.com";
+              passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
+            }
+        )
+        // commonCfg;
     };
 
   # Misc email tools

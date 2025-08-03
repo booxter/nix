@@ -10,7 +10,9 @@
     # newer netboot
     inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
 
-    nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override { withNom = true; };
+    nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override {
+      withNom = true;
+    };
 
     inherit (import inputs.nixpkgs { inherit (prev) system; }) openssh_gssapi;
 

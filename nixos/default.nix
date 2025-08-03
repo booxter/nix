@@ -1,4 +1,11 @@
-{ lib, hostname, platform, stateVersion, isVM, ... }:
+{
+  lib,
+  hostname,
+  platform,
+  stateVersion,
+  isVM,
+  ...
+}:
 {
   imports = [
     ./${hostname}
@@ -11,4 +18,3 @@
   system.stateVersion = stateVersion;
   nixpkgs.hostPlatform = platform;
 }
-

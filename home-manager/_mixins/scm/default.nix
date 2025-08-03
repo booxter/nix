@@ -28,19 +28,23 @@ in
         project = "ovn";
       };
 
-      sendemail = if isWork then {
-        confirm = "auto";
-        smtpServer = "smtp.office365.com";
-        smtpServerPort = 587;
-        smtpEncryption = "tls";
-        smtpUser = "${username}@nvidia.com";
-      } else {
-        confirm = "auto";
-        smtpServer = "smtp.gmail.com";
-        smtpServerPort = 587;
-        smtpEncryption = "tls";
-        smtpUser = "ihar.hrachyshka@gmail.com";
-      };
+      sendemail =
+        if isWork then
+          {
+            confirm = "auto";
+            smtpServer = "smtp.office365.com";
+            smtpServerPort = 587;
+            smtpEncryption = "tls";
+            smtpUser = "${username}@nvidia.com";
+          }
+        else
+          {
+            confirm = "auto";
+            smtpServer = "smtp.gmail.com";
+            smtpServerPort = 587;
+            smtpEncryption = "tls";
+            smtpUser = "ihar.hrachyshka@gmail.com";
+          };
 
       # remember and repeat identical merges
       rerere.enabled = true;

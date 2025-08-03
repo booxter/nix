@@ -1,4 +1,5 @@
-{ username, ... }: {
+{ username, ... }:
+{
   homebrew = {
     enable = true;
     onActivation.autoUpdate = true;

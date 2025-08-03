@@ -6,7 +6,8 @@
   ];
 
   home.packages =
-    with pkgs; lib.optionals isDesktop [
+    with pkgs;
+    lib.optionals isDesktop [
       slack
     ];
 }
