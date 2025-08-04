@@ -136,6 +136,7 @@ rec {
     args@{
       netIface,
       ipAddress,
+      macAddress,
       isVM ? false,
       extraModules ? [ ],
       ...
@@ -191,7 +192,7 @@ rec {
                   netdevConfig = {
                     Name = brname;
                     Kind = "bridge";
-                    MACAddress = "none";
+                    MACAddress = macAddress;
                   };
                 };
 
@@ -203,13 +204,6 @@ rec {
                   };
                   linkConfig = {
                     RequiredForOnline = "routable";
-                  };
-                };
-
-                systemd.network.links."10-lan-bridge" = {
-                  matchConfig.OriginalName = brname;
-                  linkConfig = {
-                    MACAddressPolicy = "none";
                   };
                 };
               }

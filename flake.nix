@@ -83,6 +83,8 @@
 
           numProxmoxNodes = 3;
           prxStateVersion = "25.11";
+          prxNetIface = "enp5s0f0np0";
+          prxPassword = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
 
           piStateVersion = "25.11";
           piHostname = "pi5";
@@ -175,6 +177,7 @@
               hostname = name;
               netIface = "eth0";
               ipAddress = name;
+              macAddress = "de:ad:be:ef:00:01";
               isWork = true;
               isVM = true;
               sshPort = 10002;
@@ -193,35 +196,47 @@
               ];
             };
 
+          # TODO: automatically sync ip-mac mapping with dhcp config
           ${nvws} = helper.mkProxmox {
             inherit username;
             password = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
             stateVersion = "25.11";
-            hostname = nvws;
             netIface = "enp3s0f0";
-            # TODO: automatically sync with dhcp config
+            hostname = nvws;
             ipAddress = "192.168.15.100";
+            macAddress = "ac:b4:80:40:05:2e";
           };
-        }
-        // (inputs.nixpkgs.lib.genAttrs
-          (map (n: "prx${toString n}-lab") (inputs.nixpkgs.lib.range 1 numProxmoxNodes))
-          (
-            name:
-            helper.mkProxmox {
-              inherit username;
-              password = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
-              stateVersion = prxStateVersion;
-              hostname = name;
-              netIface = "enp5s0f0np0";
-              # TODO: automatically sync with dhcp config
-              ipAddress = "192.168.15.${
-                toString (
-                  9 + inputs.nixpkgs.lib.strings.toInt (builtins.elemAt (builtins.match "prx([0-9]+)-lab" name) 0)
-                )
-              }";
-            }
-          )
-        );
+
+          "prx1-lab" = helper.mkProxmox {
+            inherit username;
+            password = prxPassword;
+            stateVersion = prxStateVersion;
+            netIface = prxNetIface;
+            hostname = "prx1-lab";
+            ipAddress = "192.168.15.10";
+            macAddress = "38:05:25:30:7d:89";
+          };
+
+          "prx2-lab" = helper.mkProxmox {
+            inherit username;
+            password = prxPassword;
+            stateVersion = prxStateVersion;
+            netIface = prxNetIface;
+            hostname = "prx2-lab";
+            ipAddress = "192.168.15.11";
+            macAddress = "38:05:25:30:7f:7d";
+          };
+
+          "prx3-lab" = helper.mkProxmox {
+            inherit username;
+            password = prxPassword;
+            stateVersion = prxStateVersion;
+            netIface = prxNetIface;
+            hostname = "prx3-lab";
+            ipAddress = "192.168.15.12";
+            macAddress = "38:05:25:30:7d:69";
+          };
+        };
 
       overlays = import ./overlays { inherit inputs; };
       packages = helper.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
