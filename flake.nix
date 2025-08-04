@@ -82,13 +82,14 @@
           vmPlatform = "aarch64-linux";
 
           numProxmoxNodes = 3;
-          proxmoxStateVersion = "25.11";
+          prxStateVersion = "25.11";
 
           piStateVersion = "25.11";
           piHostname = "pi5";
 
           linux = "linux";
           nv = "nv";
+          nvws = "nvws";
           proxmox = "proxmox";
 
           toVmName = name: "${name}vm";
@@ -169,7 +170,7 @@
             in
             helper.mkProxmox {
               inherit username virtPlatform;
-              stateVersion = proxmoxStateVersion;
+              stateVersion = prxStateVersion;
               hostname = name;
               netIface = "eth0";
               ipAddress = name;
@@ -190,6 +191,15 @@
                 )
               ];
             };
+
+          ${nvws} = helper.mkProxmox {
+            inherit username;
+            stateVersion = "25.11";
+            hostname = nvws;
+            netIface = "enp3s0f0";
+            # TODO: automatically sync with dhcp config
+            ipAddress = "192.168.15.100";
+          };
         }
         // (inputs.nixpkgs.lib.genAttrs
           (map (n: "prx${toString n}-lab") (inputs.nixpkgs.lib.range 1 numProxmoxNodes))
@@ -197,7 +207,7 @@
             name:
             helper.mkProxmox {
               inherit username;
-              stateVersion = proxmoxStateVersion;
+              stateVersion = prxStateVersion;
               hostname = name;
               netIface = "enp5s0f0np0";
               # TODO: automatically sync with dhcp config
