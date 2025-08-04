@@ -203,19 +203,6 @@ rec {
                 };
               }
             )
-
-            (
-              { ... }:
-              let
-                proxmoxPass = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
-              in
-              {
-                users.users = {
-                  root.hashedPassword = proxmoxPass;
-                  ${username}.hashedPassword = proxmoxPass;
-                };
-              }
-            )
           ]
           ++ inputs.nixpkgs.lib.optionals isVM [
             (

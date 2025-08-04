@@ -199,6 +199,21 @@
             netIface = "enp3s0f0";
             # TODO: automatically sync with dhcp config
             ipAddress = "192.168.15.100";
+
+            extraModules = [
+              (
+                { ... }:
+                let
+                  proxmoxPass = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
+                in
+                {
+                  users.users = {
+                    root.hashedPassword = proxmoxPass;
+                    ${username}.hashedPassword = proxmoxPass;
+                  };
+                }
+              )
+            ];
           };
         }
         // (inputs.nixpkgs.lib.genAttrs
@@ -216,6 +231,16 @@
                   9 + inputs.nixpkgs.lib.strings.toInt (builtins.elemAt (builtins.match "prx([0-9]+)-lab" name) 0)
                 )
               }";
+              extraModules = [
+                (
+                  { ... }:
+                  {
+                    users.users.${username} = {
+                      hashedPassword = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
+                    };
+                  }
+                )
+              ];
             }
           )
         );
