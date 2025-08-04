@@ -70,6 +70,7 @@ rec {
       isVM ? false,
       sshPort ? null,
       extraModules ? [ ],
+      password ? null,
       ...
     }:
     inputs.nixpkgs.lib.nixosSystem {
@@ -117,12 +118,22 @@ rec {
           }
         )
       ]
+      ++ inputs.nixpkgs.lib.optionals (password != null) [
+        (
+          { ... }:
+          {
+            users.users = {
+              root.hashedPassword = password;
+              ${username}.hashedPassword = password;
+            };
+          }
+        )
+      ]
       ++ extraModules;
     };
 
   mkProxmox =
     args@{
-      username,
       netIface,
       ipAddress,
       isVM ? false,
