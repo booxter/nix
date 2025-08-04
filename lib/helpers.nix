@@ -165,6 +165,10 @@ rec {
                 # Bridge to the LAN, while retaining IP address on the main
                 # interface, with its MAC address - as expected by DHCP server.
                 services.proxmox-ve.bridges = [ brname ];
+
+                networking.useNetworkd = true;
+                systemd.network.enable = true;
+
                 systemd.network.networks."10-lan" = {
                   matchConfig.Name = [ netIface ];
                   networkConfig = {
