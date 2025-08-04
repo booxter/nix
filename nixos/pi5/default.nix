@@ -74,7 +74,12 @@ in
       enable-tftp = true;
       tftp-root = "/var/lib/dnsmasq/tftp";
 
-      # Note: disable Secure Boot in BIOS
+      # Note: disable Secure Boot in BIOS.
+      #
+      # For proxmox VMs, the following configuration is required:
+      # - Select EFI BIOS
+      # - Add UEFI disk (don't enroll keys)
+      # - Add virtio RNG device
       dhcp-boot = [
         "netboot.xyz.efi"
       ];
