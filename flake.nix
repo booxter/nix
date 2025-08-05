@@ -100,23 +100,25 @@
             }:
             let
               vmname = toVmName name;
+              localName = "local-${vmname}";
+              proxName = "prox-${vmname}";
             in
             {
-              "local-${vmname}" = helper.mkVM (
+              "${localName}" = helper.mkVM (
                 args
                 // {
                   inherit stateVersion virtPlatform;
                   platform = "aarch64-linux";
-                  hostname = vmname;
+                  hostname = localName;
                 }
               );
 
-              "prox-${vmname}" = helper.mkVM (
+              "${proxName}" = helper.mkVM (
                 args
                 // {
                   inherit stateVersion virtPlatform;
                   platform = "x86_64-linux";
-                  hostname = vmname;
+                  hostname = proxName;
                 }
               );
             };
