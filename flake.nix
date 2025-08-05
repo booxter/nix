@@ -81,7 +81,6 @@
           virtPlatform = "aarch64-darwin";
           vmPlatform = "aarch64-linux";
 
-          numProxmoxNodes = 3;
           prxStateVersion = "25.11";
           prxNetIface = "enp5s0f0np0";
           prxPassword = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
@@ -95,6 +94,35 @@
           proxmox = "proxmox";
 
           toVmName = name: "${name}vm";
+
+          VM =
+            args@{
+              name,
+              stateVersion ? "25.11",
+              ...
+            }:
+            let
+              vmname = toVmName name;
+            in
+            {
+              "local-${vmname}" = helper.mkVM (
+                args
+                // {
+                  inherit stateVersion virtPlatform;
+                  platform = "aarch64-linux";
+                  hostname = vmname;
+                }
+              );
+
+              "prox-${vmname}" = helper.mkVM (
+                args
+                // {
+                  inherit virtPlatform;
+                  platform = "x86_64-linux";
+                  hostname = vmname;
+                }
+              );
+            };
         in
         {
           pi5 = helper.mkRaspberryPi {
@@ -119,43 +147,6 @@
             hostname = piHostname; # use the same hostname to retain config
             platform = vmPlatform;
             isVM = true;
-          };
-
-          "local-${toVmName linux}" = helper.mkVM {
-            inherit virtPlatform;
-            platform = vmPlatform;
-            stateVersion = "25.11";
-            hostname = toVmName linux;
-
-            cores = 4;
-            memorySize = 4;
-            # TODO: calculate stable port numbers based on hostnames, somehow
-            # TODO: then, configure ssh config aliases for each of them
-            sshPort = 10000;
-          };
-
-          # TODO: generate these VM flavors
-          "local-${toVmName nv}" = helper.mkVM {
-            inherit virtPlatform;
-            platform = vmPlatform;
-            stateVersion = "25.11";
-            hostname = toVmName nv;
-            isWork = true;
-
-            cores = 8;
-            memorySize = 16;
-            diskSize = 100;
-            sshPort = 10001;
-          };
-
-          "prox-${toVmName nv}" = helper.mkVM {
-            stateVersion = "25.11";
-            hostname = toVmName nv;
-            isWork = true;
-
-            cores = 8;
-            memorySize = 16;
-            diskSize = 100;
           };
 
           # TODO: can I use mkVM here?
@@ -224,6 +215,22 @@
             ipAddress = "192.168.15.12";
             macAddress = "38:05:25:30:7d:69";
           };
+        }
+        # TODO: calculate stable ssh port numbers based on hostnames, somehow
+        # TODO: then, configure ssh config aliases for each of them
+        // VM {
+          name = nv;
+          isWork = true;
+          cores = 8;
+          memorySize = 16;
+          diskSize = 100;
+          sshPort = 10000;
+        }
+        // VM {
+          name = linux;
+          cores = 4;
+          memorySize = 4;
+          sshPort = 10001;
         };
 
       overlays = import ./overlays { inherit inputs; };
