@@ -87,8 +87,6 @@
           piStateVersion = "25.11";
           piHostname = "pi5";
 
-          linux = "linux";
-          nv = "nv";
           nvws = "nvws";
           proxmox = "proxmox";
 
@@ -116,7 +114,7 @@
               "prox-${vmname}" = helper.mkVM (
                 args
                 // {
-                  inherit virtPlatform;
+                  inherit stateVersion virtPlatform;
                   platform = "x86_64-linux";
                   hostname = vmname;
                 }
@@ -210,7 +208,7 @@
         # TODO: calculate stable ssh port numbers based on hostnames, somehow
         # TODO: then, configure ssh config aliases for each of them
         // VM {
-          name = nv;
+          name = "nv";
           isWork = true;
           cores = 8;
           memorySize = 16;
@@ -218,7 +216,7 @@
           sshPort = 10000;
         }
         // VM {
-          name = linux;
+          name = "linux";
           cores = 4;
           memorySize = 4;
           sshPort = 10001;
