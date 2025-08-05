@@ -218,6 +218,7 @@
           name = "linux";
           cores = 4;
           memorySize = 4;
+          diskSize = 100;
           sshPort = 10001;
         }
         // VM {
