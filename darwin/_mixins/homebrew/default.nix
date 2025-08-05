@@ -5,11 +5,12 @@
     onActivation.autoUpdate = true;
     casks = [
       "amethyst"
-      "wireshark-chmodbpf"
-      "docker-desktop"
       "chatgpt"
+      "docker-desktop"
       "element"
+      "openvpn-connect"
       "todoist"
+      "wireshark-chmodbpf"
     ];
   };
 
