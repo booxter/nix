@@ -91,6 +91,7 @@
   home.packages = with pkgs; [
     (ripgrep.override { withPCRE2 = true; })
     ack
+    act
     aider-chat
     bind.dnsutils
     coreutils
