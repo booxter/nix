@@ -149,28 +149,33 @@ rec {
         extraModules =
           extraModules
           ++ [
-            inputs.proxmox-nixos.nixosModules.declarative-vms
             (
               { ... }:
               {
-                virtualisation.vmVariant.virtualisation = {
-                  inherit cores;
-                  memorySize = memorySize * 1024;
-                  diskSize = diskSize * 1024;
-                };
-              }
-            )
-            (
-              { ... }:
-              {
-                virtualisation.vmVariant.virtualisation = {
-                  host.pkgs = (import inputs.nixpkgs { system = virtPlatform; });
-                  graphics = false;
-                };
                 services.getty.autologinUser = username;
                 security.sudo.wheelNeedsPassword = false;
               }
             )
+
+            # build-vm (local) vms
+            (
+              { modulesPath, ... }:
+              {
+                imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
+
+                virtualisation.vmVariant.virtualisation = {
+                  inherit cores;
+                  memorySize = memorySize * 1024;
+                  diskSize = diskSize * 1024;
+
+                  host.pkgs = (import inputs.nixpkgs { system = virtPlatform; });
+                  graphics = false;
+                };
+              }
+            )
+
+            # proxmox vms
+            inputs.proxmox-nixos.nixosModules.declarative-vms
             (
               { ... }:
               {
