@@ -157,12 +157,18 @@ rec {
               }
             )
 
-            # build-vm (local) vms
             (
               { modulesPath, ... }:
               {
                 imports = [ (modulesPath + "/profiles/qemu-guest.nix") ];
+                services.qemuGuest.enable = true;
+              }
+            )
 
+            # build-vm (local) vms
+            (
+              { ... }:
+              {
                 virtualisation.vmVariant.virtualisation = {
                   inherit cores;
                   memorySize = memorySize * 1024;
