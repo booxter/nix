@@ -19,18 +19,29 @@ PROXMOX_CACHE_OPTIONS = \
 inputs-update:
 	nix flake update
 
-########### interactive vms
-vm:
+########### local vms
+local-vm:
 	@if [ "x$(WHAT)" = "x" ]; then\
 		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
-	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep 'vm$$' | sed 's/vm$$//';\
+	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^local-.*vm$$' | sed 's/vm$$//' | sed 's/^local-//';\
 	  exit 1;\
 	fi
 
 	nix run \
 		$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
 		$(if $(filter proxmox,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
-		.#nixosConfigurations.$(WHAT)vm.config.system.build.vm $(ARGS)
+		.#nixosConfigurations.local-$(WHAT)vm.config.system.build.vm $(ARGS)
+
+########### proxmox vms
+prox-vm:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
+	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^prox-.*vm$$' | sed 's/vm$$//' | sed 's/^prox-//';\
+	  exit 1;\
+	fi
+
+  # TODO: don't hardcode
+	./scripts/push-vm-to-proxmox.sh 192.168.15.100 root priv/lab-nvws prox-$(WHAT)vm
 
 ########### nixos
 nixos-build:

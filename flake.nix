@@ -121,37 +121,54 @@
             isVM = true;
           };
 
-          ${toVmName linux} = helper.mkNixos {
+          "local-${toVmName linux}" = helper.mkVM {
             inherit virtPlatform;
+            platform = vmPlatform;
             stateVersion = "25.11";
             hostname = toVmName linux;
-            platform = vmPlatform;
-            isVM = true;
+
+            cores = 4;
+            memorySize = 4;
             # TODO: calculate stable port numbers based on hostnames, somehow
             # TODO: then, configure ssh config aliases for each of them
             sshPort = 10000;
-
-            extraModules = [
-              (
-                { ... }:
-                {
-                  virtualisation.vmVariant.virtualisation = {
-                    cores = 4;
-                    memorySize = 4 * 1024; # 4GB
-                  };
-                }
-              )
-            ];
           };
 
-          ${toVmName nv} = helper.mkNixos {
+          # TODO: generate these VM flavors
+          "local-${toVmName nv}" = helper.mkVM {
             inherit virtPlatform;
+            platform = vmPlatform;
             stateVersion = "25.11";
             hostname = toVmName nv;
-            platform = vmPlatform;
+            isWork = true;
+
+            cores = 8;
+            memorySize = 16;
+            diskSize = 100;
+            sshPort = 10001;
+          };
+
+          "prox-${toVmName nv}" = helper.mkVM {
+            stateVersion = "25.11";
+            hostname = toVmName nv;
+            isWork = true;
+
+            cores = 8;
+            memorySize = 16;
+            diskSize = 100;
+          };
+
+          # TODO: can I use mkVM here?
+          ${toVmName proxmox} = helper.mkProxmox {
+            inherit username virtPlatform;
+            stateVersion = prxStateVersion;
+            hostname = toVmName proxmox;
+            netIface = "eth0";
+            ipAddress = toVmName proxmox;
+            macAddress = "de:ad:be:ef:00:01";
             isWork = true;
             isVM = true;
-            sshPort = 10001;
+            sshPort = 10002;
 
             extraModules = [
               (
@@ -166,35 +183,6 @@
               )
             ];
           };
-
-          ${toVmName proxmox} =
-            let
-              name = toVmName proxmox;
-            in
-            helper.mkProxmox {
-              inherit username virtPlatform;
-              stateVersion = prxStateVersion;
-              hostname = name;
-              netIface = "eth0";
-              ipAddress = name;
-              macAddress = "de:ad:be:ef:00:01";
-              isWork = true;
-              isVM = true;
-              sshPort = 10002;
-
-              extraModules = [
-                (
-                  { ... }:
-                  {
-                    virtualisation.vmVariant.virtualisation = {
-                      cores = 8;
-                      memorySize = 16 * 1024; # 16GB
-                      diskSize = 100 * 1024; # 100GB
-                    };
-                  }
-                )
-              ];
-            };
 
           # TODO: automatically sync ip-mac mapping with dhcp config
           ${nvws} = helper.mkProxmox {

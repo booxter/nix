@@ -1,6 +1,6 @@
 { ... }:
 {
   imports = [
-    ../../disko/nvws.nix
+    ../../disko
   ];
 }

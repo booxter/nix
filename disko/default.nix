@@ -1,10 +1,13 @@
-{ ... }:
+{
+  device ? "/dev/nvme0n1",
+  ...
+}:
 {
   disko.devices = {
     disk = {
       main = {
         # When using disko-install, we will overwrite this value from the commandline
-        device = "/dev/nvme0n1";
+        inherit device;
         type = "disk";
         content = {
           type = "gpt";

@@ -68,7 +68,6 @@ rec {
       isDesktop ? false,
       isWork ? false,
       isVM ? false,
-      sshPort ? null,
       extraModules ? [ ],
       password ? null,
       ...
@@ -84,7 +83,6 @@ rec {
           username
           stateVersion
           isVM
-          sshPort
           isDesktop
           isWork
           ;
@@ -93,7 +91,6 @@ rec {
         ../common
         ../nixos
         inputs.disko.nixosModules.disko
-
       ]
       ++ inputs.nixpkgs.lib.optionals withHome [
         inputs.home-manager.nixosModules.home-manager
@@ -131,6 +128,88 @@ rec {
       ]
       ++ extraModules;
     };
+
+  mkVM =
+    args@{
+      extraModules ? [ ],
+      sshPort ? null,
+      username ? "ihrachyshka",
+      platform ? "x86_64-linux",
+      virtPlatform ? platform,
+      cores ? 1,
+      memorySize ? 4, # GB
+      diskSize ? 10, # GB
+      hostname,
+      ...
+    }:
+    mkNixos (
+      args
+      // {
+        isVM = true;
+        extraModules =
+          extraModules
+          ++ [
+            inputs.proxmox-nixos.nixosModules.declarative-vms
+            (
+              { ... }:
+              {
+                virtualisation.vmVariant.virtualisation = {
+                  inherit cores;
+                  memorySize = memorySize * 1024;
+                  diskSize = diskSize * 1024;
+                };
+              }
+            )
+            (
+              { ... }:
+              {
+                virtualisation.vmVariant.virtualisation = {
+                  host.pkgs = (import inputs.nixpkgs { system = virtPlatform; });
+                  graphics = false;
+                };
+                services.getty.autologinUser = username;
+                security.sudo.wheelNeedsPassword = false;
+              }
+            )
+            (
+              { ... }:
+              {
+                imports = [
+                  (import ../disko { device = "/dev/sda"; })
+                ];
+                virtualisation.proxmox = {
+                  name = hostname;
+                  node = "nvws"; # TODO: how to avoid it?
+                  autoInstall = true;
+                  memory = memorySize * 1024;
+                  cores = 8;
+                  net = [
+                    {
+                      model = "virtio";
+                      bridge = "vmbr0";
+                    }
+                  ];
+                  scsi = [ { file = "local:${toString diskSize}"; } ];
+                };
+              }
+            )
+          ]
+          ++ inputs.nixpkgs.lib.optionals (sshPort != null) [
+            (
+              { ... }:
+              {
+                virtualisation.vmVariant.virtualisation.forwardPorts = [
+                  {
+                    from = "host";
+                    guest.port = 22;
+                    host.port = sshPort;
+                  }
+                ];
+              }
+            )
+          ];
+      }
+    );
 
   mkProxmox =
     args@{

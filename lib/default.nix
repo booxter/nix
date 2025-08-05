@@ -14,6 +14,7 @@ in
     mkNixos
     mkRaspberryPi
     mkProxmox
+    mkVM
     forAllSystems
     ;
 }
