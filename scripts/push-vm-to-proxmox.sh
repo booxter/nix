@@ -24,4 +24,4 @@ echo "verify_ssl=0" >> $CONFIG_FILE
 nix run \
 	--option extra-trusted-public-keys "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM=" \
 	--option extra-substituters https://cache.saumon.network/proxmox-nixos \
-	github:SaumonNet/proxmox-nixos#nixmoxer -- --flake $vm_name
+	github:booxter/proxmox-nixos/vmid-fix#nixmoxer -- --flake $vm_name
