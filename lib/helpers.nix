@@ -189,11 +189,11 @@ rec {
                   (import ../disko { device = "/dev/sda"; })
                 ];
                 virtualisation.proxmox = {
+                  inherit cores;
                   name = hostname;
                   node = "nvws"; # TODO: how to avoid it?
                   autoInstall = true;
                   memory = memorySize * 1024;
-                  cores = cores;
                   net = [
                     {
                       model = "virtio";
