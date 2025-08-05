@@ -228,7 +228,7 @@ rec {
     args@{
       netIface,
       ipAddress,
-      macAddress,
+      macAddress ? null,
       isVM ? false,
       extraModules ? [ ],
       ...
@@ -284,7 +284,7 @@ rec {
                   netdevConfig = {
                     Name = brname;
                     Kind = "bridge";
-                    MACAddress = macAddress;
+                    MACAddress = inputs.nixpkgs.lib.optional (macAddress != null) macAddress;
                   };
                 };
 

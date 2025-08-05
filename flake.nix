@@ -145,7 +145,6 @@
             hostname = toVmName proxmox;
             netIface = "eth0";
             ipAddress = toVmName proxmox;
-            macAddress = "de:ad:be:ef:00:01";
             isWork = true;
             isVM = true;
             sshPort = 10002;
