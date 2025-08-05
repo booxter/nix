@@ -79,7 +79,6 @@
       nixosConfigurations =
         let
           virtPlatform = "aarch64-darwin";
-          vmPlatform = "aarch64-linux";
 
           prxStateVersion = "25.11";
           prxNetIface = "enp5s0f0np0";
@@ -139,14 +138,6 @@
                 }
               )
             ];
-          };
-
-          ${toVmName piHostname} = helper.mkNixos {
-            inherit virtPlatform;
-            stateVersion = piStateVersion;
-            hostname = piHostname; # use the same hostname to retain config
-            platform = vmPlatform;
-            isVM = true;
           };
 
           # TODO: can I use mkVM here?
@@ -231,6 +222,10 @@
           cores = 4;
           memorySize = 4;
           sshPort = 10001;
+        }
+        // VM {
+          name = piHostname;
+          stateVersion = piStateVersion;
         };
 
       overlays = import ./overlays { inherit inputs; };
