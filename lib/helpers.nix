@@ -136,9 +136,9 @@ rec {
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
       virtPlatform ? platform,
-      cores ? 1,
-      memorySize ? 4, # GB
-      diskSize ? 10, # GB
+      cores ? 4,
+      memorySize ? 8, # GB
+      diskSize ? 50, # GB
       hostname,
       ...
     }:
