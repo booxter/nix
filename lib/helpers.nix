@@ -193,7 +193,7 @@ rec {
                   node = "nvws"; # TODO: how to avoid it?
                   autoInstall = true;
                   memory = memorySize * 1024;
-                  cores = 8;
+                  cores = cores;
                   net = [
                     {
                       model = "virtio";
