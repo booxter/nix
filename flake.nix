@@ -211,10 +211,25 @@
         // VM {
           name = "nv";
           isWork = true;
-          cores = 8;
-          memorySize = 16;
+          cores = 64;
+          memorySize = 64;
           diskSize = 100;
           sshPort = 10000;
+
+          extraModules = [
+            (
+              { ... }:
+              {
+                boot.kernelParams = [
+                  "default_hugepagesz=1GB"
+                  "hugepagesz=1G"
+                  "hugepages=8"
+                  "hugepagesz=2M"
+                  "hugepages=512"
+                ];
+              }
+            )
+          ];
         }
         // VM {
           name = "linux";
