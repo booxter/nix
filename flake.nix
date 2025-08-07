@@ -220,7 +220,9 @@
             (
               { ... }:
               {
-                virtualisation.proxmox.cpu.flags = "+pdpe1gb;+sse3";
+                virtualisation.proxmox = {
+                  args = "-cpu kvm64,+ssse3,+pdpe1gb";
+                };
                 boot.kernelParams = [
                   "default_hugepagesz=1GB"
                   "hugepagesz=1G"
