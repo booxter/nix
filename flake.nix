@@ -220,8 +220,9 @@
             (
               { ... }:
               {
+                # Enable flags needed for DPDK (hugepages, SS*E...)
                 virtualisation.proxmox = {
-                  args = "-cpu kvm64,+ssse3,+pdpe1gb";
+                  args = "-cpu kvm64,+ssse3,+sse4_1,+sse4_2,+pdpe1gb";
                 };
                 boot.kernelParams = [
                   "default_hugepagesz=1GB"
