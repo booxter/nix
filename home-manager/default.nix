@@ -22,6 +22,7 @@ in
     ./_mixins/ssh
     ./_mixins/tmux
     ./_mixins/git-sync
+    ./_mixins/ide-headless
   ]
   ++ lib.optionals isDesktop [
     ./_mixins/copy-apps
