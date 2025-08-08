@@ -59,6 +59,7 @@
 
         view = "nvim -R";
 
+        # remove once https://github.com/nektos/act/issues/2329 is fixed
         act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04";
       };
   };
