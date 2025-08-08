@@ -58,6 +58,8 @@
         qq = "eza -l";
 
         view = "nvim -R";
+
+        act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04";
       };
   };
 
