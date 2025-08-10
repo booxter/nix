@@ -4,10 +4,12 @@
   platform,
   stateVersion,
   ...
-}: let
+}:
+let
   removePrefix = lib.strings.removePrefix;
   configName = removePrefix "prox-" (removePrefix "local-" hostname);
-in {
+in
+{
   imports = [
     ./${configName}
     ./_mixins/user

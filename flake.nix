@@ -39,12 +39,12 @@
     let
       inherit (self) outputs;
       username = "ihrachyshka";
-      helper = import ./lib { inherit inputs outputs username; };
+      helpers = import ./lib { inherit inputs outputs username; };
     in
     {
       homeConfigurations = {
         # nv dev env
-        "${username}@nv" = helper.mkHome {
+        "${username}@nv" = helpers.mkHome {
           stateVersion = "25.11";
           platform = "x86_64-linux";
           isWork = true;
@@ -52,21 +52,21 @@
       };
 
       darwinConfigurations = {
-        mair = helper.mkDarwin {
+        mair = helpers.mkDarwin {
           stateVersion = 6;
           hmStateVersion = "25.11";
           hostname = "mair";
           platform = "aarch64-darwin";
           isDesktop = true;
         };
-        mmini = helper.mkDarwin {
+        mmini = helpers.mkDarwin {
           stateVersion = 5;
           hmStateVersion = "25.11";
           hostname = "mmini";
           platform = "aarch64-darwin";
           isDesktop = true;
         };
-        ihrachyshka-mlt = helper.mkDarwin {
+        ihrachyshka-mlt = helpers.mkDarwin {
           stateVersion = 5;
           hmStateVersion = "25.11";
           hostname = "ihrachyshka-mlt";
@@ -104,7 +104,7 @@
               proxName = "prox-${vmname}";
             in
             {
-              "${localName}" = helper.mkVM (
+              "${localName}" = helpers.mkVM (
                 args
                 // {
                   inherit stateVersion virtPlatform;
@@ -113,7 +113,7 @@
                 }
               );
 
-              "${proxName}" = helper.mkVM (
+              "${proxName}" = helpers.mkVM (
                 args
                 // {
                   inherit stateVersion virtPlatform;
@@ -124,10 +124,10 @@
             };
         in
         {
-          pi5 = helper.mkRaspberryPi {
+          pi5 = helpers.mkRaspberryPi {
             hostname = piHostname;
             stateVersion = piStateVersion;
-            # TODO: add password argument to the helper like in nixos helper; use it
+            # TODO: add password argument to the helpers like in nixos helpers; use it
             extraModules = [
               (
                 { ... }:
@@ -141,7 +141,7 @@
           };
 
           # TODO: can I use mkVM here?
-          ${toVmName proxmox} = helper.mkProxmox {
+          ${toVmName proxmox} = helpers.mkProxmox {
             inherit username virtPlatform;
             stateVersion = prxStateVersion;
             hostname = toVmName proxmox;
@@ -166,7 +166,7 @@
           };
 
           # TODO: automatically sync ip-mac mapping with dhcp config
-          ${nvws} = helper.mkProxmox {
+          ${nvws} = helpers.mkProxmox {
             inherit username;
             password = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
             stateVersion = "25.11";
@@ -176,7 +176,7 @@
             macAddress = "ac:b4:80:40:05:2e";
           };
 
-          "prx1-lab" = helper.mkProxmox {
+          "prx1-lab" = helpers.mkProxmox {
             inherit username;
             password = prxPassword;
             stateVersion = prxStateVersion;
@@ -186,7 +186,7 @@
             macAddress = "38:05:25:30:7d:89";
           };
 
-          "prx2-lab" = helper.mkProxmox {
+          "prx2-lab" = helpers.mkProxmox {
             inherit username;
             password = prxPassword;
             stateVersion = prxStateVersion;
@@ -196,7 +196,7 @@
             macAddress = "38:05:25:30:7f:7d";
           };
 
-          "prx3-lab" = helper.mkProxmox {
+          "prx3-lab" = helpers.mkProxmox {
             inherit username;
             password = prxPassword;
             stateVersion = prxStateVersion;
@@ -245,7 +245,7 @@
         };
 
       overlays = import ./overlays { inherit inputs; };
-      packages = helper.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
-      formatter = helper.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-tree);
+      packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
+      formatter = helpers.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-tree);
     };
 }

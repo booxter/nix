@@ -1,6 +1,6 @@
 { ... }:
 {
   imports = [
-    (import ../../disko {})
+    (import ../../disko { })
   ];
 }

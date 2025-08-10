@@ -284,8 +284,9 @@ rec {
                   netdevConfig = {
                     Name = brname;
                     Kind = "bridge";
-                  } // inputs.nixpkgs.lib.optionalAttrs (macAddress != null) {
-                      MACAddress = macAddress;
+                  }
+                  // inputs.nixpkgs.lib.optionalAttrs (macAddress != null) {
+                    MACAddress = macAddress;
                   };
                 };
 
