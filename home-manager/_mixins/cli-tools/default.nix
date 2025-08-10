@@ -123,6 +123,7 @@
     magic-wormhole
     man-pages
     mc
+    mkpasswd
     moreutils
     ngrep
     nix-init
