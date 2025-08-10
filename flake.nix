@@ -240,6 +240,39 @@
           sshPort = 10001;
         }
         // VM {
+          name = "linuxui";
+          sshPort = 10002;
+          memorySize = 8;
+          withHome = false;
+
+          extraModules = [
+            (
+              { lib, pkgs, ... }:
+              {
+                services.xserver.enable = true;
+                services.xserver.displayManager.gdm.enable = true;
+                programs.hyprland = {
+                  enable = true;
+                  xwayland.enable = true;
+                };
+
+                environment.systemPackages = with pkgs; [
+                  kitty
+                  podman-desktop
+                ];
+
+                virtualisation.vmVariant.virtualisation = {
+                  graphics = lib.mkForce true;
+                };
+
+                users.users.${username} = {
+                  password = "testpass";
+                };
+              }
+            )
+          ];
+        }
+        // VM {
           name = piHostname;
           stateVersion = piStateVersion;
         };
