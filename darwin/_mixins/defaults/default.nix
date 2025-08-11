@@ -79,6 +79,13 @@
           }
         ];
       };
+
+      # Enable the 'Input menu' in the top right corner of the screen
+      "com.apple.TextInputMenu".visible = 1;
+
+      # use Caps Lock to switch between layouts
+      NSGlobalDomain.TISRomanSwitchState = 1;
+
     };
 
     screensaver.askForPasswordDelay = 10;
