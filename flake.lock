@@ -213,16 +213,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1751313918,
-        "narHash": "sha256-HsJM3XLa43WpG+665aGEh8iS8AfEwOIQWk3Mke3e7nk=",
-        "owner": "nix-darwin",
+        "lastModified": 1754875191,
+        "narHash": "sha256-qdiiZ5/Z+Xwiae/V8gqMOKqoq/2QffZAleFYDv1gnvw=",
+        "owner": "booxter",
         "repo": "nix-darwin",
-        "rev": "e04a388232d9a6ba56967ce5b53a8a6f713cdfcf",
+        "rev": "7e5bdc88e6a3140aa6117410e3c53deeb8e84c4f",
         "type": "github"
       },
       "original": {
-        "owner": "nix-darwin",
-        "ref": "master",
+        "owner": "booxter",
+        "ref": "dhcp-client",
         "repo": "nix-darwin",
         "type": "github"
       }

@@ -49,6 +49,11 @@
     shell = pkgs.zsh;
   };
 
+  networking = {
+    knownNetworkServices = [ "Wi-Fi" ];
+    dhcpClientId = hostname;
+  };
+
   system = {
     activationScripts.postActivation.text = ''
       echo "Do not sleep when on AC power."

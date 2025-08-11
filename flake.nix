@@ -8,7 +8,8 @@
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    nix-darwin.url = "github:nix-darwin/nix-darwin/master";
+    #nix-darwin.url = "github:nix-darwin/nix-darwin/master";
+    nix-darwin.url = "github:booxter/nix-darwin/dhcp-client";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
