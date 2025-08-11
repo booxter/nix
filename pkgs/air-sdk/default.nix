@@ -1,10 +1,10 @@
 {
   lib,
-  python3,
+  python,
   fetchFromGitHub,
 }:
 
-python3.pkgs.buildPythonPackage {
+python.pkgs.buildPythonPackage {
   pname = "air-sdk";
   version = "2.21.1";
   pyproject = true;
@@ -17,9 +17,9 @@ python3.pkgs.buildPythonPackage {
     hash = "sha256-ZWdxZ/KRHQfB1W2PuXy65kz6nC8lEYukyJLIreMc31A=";
   };
 
-  build-system = [ python3.pkgs.poetry-core ];
+  build-system = [ python.pkgs.poetry-core ];
 
-  dependencies = with python3.pkgs; [
+  dependencies = with python.pkgs; [
     python-dateutil
     requests
   ];
@@ -28,7 +28,7 @@ python3.pkgs.buildPythonPackage {
     "air_sdk"
   ];
 
-  nativeCheckInputs = with python3.pkgs; [
+  nativeCheckInputs = with python.pkgs; [
     faker
     pytestCheckHook
     requests-mock
