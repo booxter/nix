@@ -46,11 +46,14 @@ python3.pkgs.buildPythonPackage {
     "tests/tests_v2/test_endpoints/test_simulations.py"
   ];
 
-
   meta = {
     description = "Python SDK for interacting with NVIDIA Air";
     homepage = "https://pypi.org/project/air-sdk/";
-    license = with lib.licenses; [ asl20 bsd3 mit ];
+    license = with lib.licenses; [
+      asl20
+      bsd3
+      mit
+    ];
     maintainers = with lib.maintainers; [ booxter ];
   };
 }
