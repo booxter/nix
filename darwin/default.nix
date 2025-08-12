@@ -28,16 +28,6 @@
 
   nixpkgs.hostPlatform = lib.mkDefault platform;
 
-  programs.ssh = lib.optionalAttrs isWork {
-    extraConfig = ''
-      Host nVM
-        Hostname localhost
-        IdentityFile /Users/${username}/.ssh/id_ed25519
-        Port 11110
-        User ${username}
-    '';
-  };
-
   system.stateVersion = stateVersion;
 
   system.primaryUser = username;
