@@ -129,7 +129,6 @@
     nix-init
     nix-search-cli
     nix-tree
-    openssh
     openssl
     page
     podman

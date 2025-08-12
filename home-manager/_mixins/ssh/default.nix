@@ -1,6 +1,8 @@
+{ pkgs, ... }:
 {
   programs.ssh = {
     enable = true;
+    package = pkgs.openssh_gssapi;
 
     # agent forwarding to remotes
     forwardAgent = true;
