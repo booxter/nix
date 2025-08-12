@@ -14,6 +14,9 @@
       withNom = true;
     };
 
+    # https://github.com/NixOS/nixpkgs/pull/432677
+    inherit (import inputs.nixpkgs-master { inherit (prev) system; }) ghostty-bin;
+
     # python312 = prev.python312.override {
     #   packageOverrides = final: prev: {
     #     XXX = prev.XXX.overridePythonAttrs (oldAttrs: {
