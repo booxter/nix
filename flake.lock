@@ -308,6 +308,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-krunkit": {
+      "locked": {
+        "lastModified": 1752523430,
+        "narHash": "sha256-tzxftGOTLuzHM+BI6QD930TmUIOrsHTVfC7MMIaCYf8=",
+        "owner": "quinneden",
+        "repo": "nixpkgs",
+        "rev": "a9dcbe5cf621970e4fd6b7ea16c7622723e9cf00",
+        "type": "github"
+      },
+      "original": {
+        "owner": "quinneden",
+        "ref": "init-libkrun-efi-and-krunkit",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-master": {
       "locked": {
         "lastModified": 1754956457,
@@ -560,6 +576,7 @@
         "nix-homebrew": "nix-homebrew",
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_4",
+        "nixpkgs-krunkit": "nixpkgs-krunkit",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-netbootxyz": "nixpkgs-netbootxyz",
         "nixpkgs-unstable": "nixpkgs-unstable",

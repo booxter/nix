@@ -17,6 +17,48 @@
     # https://github.com/NixOS/nixpkgs/pull/432677
     inherit (import inputs.nixpkgs-master { inherit (prev) system; }) ghostty-bin;
 
+    # https://github.com/NixOS/nixpkgs/pull/417062
+    inherit (import inputs.nixpkgs-krunkit { inherit (prev) system; }) libkrun-efi;
+    krunkit = ((import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit.override {
+      libkrun-efi = (_final.libkrun-efi.override {
+        withGpu = true;
+      }).overrideAttrs (oldAttrs: rec {
+        version = "1.14.0";
+        src = _final.fetchFromGitHub {
+          owner = "containers";
+          repo = "libkrun";
+          tag = "v${version}";
+          hash = "sha256-tXF1AkcwSBj+e3qEGR/NqB1U+y4+MIRbaL9xB0cZQbQ=";
+        };
+        cargoDeps = _final.rustPlatform.fetchCargoVendor {
+          inherit src;
+          hash = "sha256-IrJVP7I8NDB4KyZ0g8D6Tx+dT+lN8Yg8uRT9tXlL/8s=";
+        };
+      });
+    }).overrideAttrs (oldAttrs: rec {
+      version = "0.2.2";
+      src = _final.fetchFromGitHub {
+        owner = "containers";
+        repo = "krunkit";
+        tag = "v${version}";
+        hash = "sha256-fyk3vF/d+qv347XI1+z7zzd5JxRRjopnKIV6GATA3Ac=";
+      };
+      cargoDeps = _final.rustPlatform.fetchCargoVendor {
+        inherit src;
+        hash = "sha256-4WLmIlk2OSmIt9FPDjCPHD5JyBszCWMwVEhbnnKKNQY=";
+      };
+    });
+
+    podman = prev.podman.override {
+      extraPackages = [
+        _final.krunkit
+      ];
+    };
+
+    ramalama = (import inputs.nixpkgs-master { inherit (prev) system; }).ramalama.override {
+      podman = _final.podman;
+    };
+
     # python312 = prev.python312.override {
     #   packageOverrides = final: prev: {
     #     XXX = prev.XXX.overridePythonAttrs (oldAttrs: {

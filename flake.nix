@@ -33,6 +33,9 @@
     disko.url = "github:nix-community/disko/latest";
 
     nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
+
+    # https://github.com/NixOS/nixpkgs/pull/417062
+    nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
   };
 
   outputs =

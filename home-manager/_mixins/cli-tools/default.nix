@@ -135,6 +135,7 @@
     pre-commit
     procps
     pstree
+    ramalama
     skopeo
     speedtest-cli
     tcpdump
