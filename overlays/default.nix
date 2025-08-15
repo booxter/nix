@@ -55,9 +55,18 @@
       ];
     };
 
-    ramalama = (import inputs.nixpkgs-master { inherit (prev) system; }).ramalama.override {
+    ramalama = ((import inputs.nixpkgs-master { inherit (prev) system; }).ramalama.override {
       podman = _final.podman;
-    };
+    }).overrideAttrs (oldAttrs: rec {
+      version = "0.12.0";
+
+      src = _final.fetchFromGitHub {
+        owner = "containers";
+        repo = "ramalama";
+        tag = "v${version}";
+        hash = "sha256-Hozyf0yfB0XhxWeA3SS24BPfDDXYa2AXY8/gLh8ZFcU=";
+      };
+    });
 
     # python312 = prev.python312.override {
     #   packageOverrides = final: prev: {
