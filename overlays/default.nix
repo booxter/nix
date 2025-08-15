@@ -66,6 +66,14 @@
         tag = "v${version}";
         hash = "sha256-Hozyf0yfB0XhxWeA3SS24BPfDDXYa2AXY8/gLh8ZFcU=";
       };
+
+      postInstall = let
+        lib = _final.lib;
+      in ''
+        wrapProgram $out/bin/ramalama \
+        --prefix PATH : ${lib.makeBinPath [ _final.podman _final.llama-cpp ]}
+      '';
+
     });
 
     # python312 = prev.python312.override {
