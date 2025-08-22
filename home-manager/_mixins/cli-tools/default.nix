@@ -115,7 +115,6 @@
     ipcalc
     jinjanator
     kind
-    krew
     kubectl
     kubernetes-helm
     lima

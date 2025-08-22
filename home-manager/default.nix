@@ -34,6 +34,7 @@ in
     ./_mixins/firefox
   ]
   ++ lib.optionals isWork [
+    ./_mixins/krew
     ./_mixins/nv
   ];
 
