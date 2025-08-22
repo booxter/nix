@@ -5,6 +5,7 @@
   ...
 }:
 let
+  inherit (pkgs.stdenv) isDarwin;
   fullName = "Ihar Hrachyshka";
   email = if isWork then "${username}@nvidia.com" else "ihar.hrachyshka@gmail.com";
 in
@@ -12,7 +13,8 @@ in
   # Git
   programs.git = {
     enable = true;
-    package = pkgs.gitAndTools.gitFull;
+    # Use regular git on macos for now, due to: https://github.com/NixOS/nixpkgs/issues/208951
+    package = if isDarwin then pkgs.git else pkgs.gitAndTools.gitFull;
 
     userEmail = email;
     userName = fullName;
