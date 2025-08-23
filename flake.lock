@@ -340,6 +340,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-moltenvk": {
+      "locked": {
+        "lastModified": 1755313903,
+        "narHash": "sha256-pdyq5sJQN0y5YnuTAP5Yf1NARyXTbW6zzClfQ0o4Gns=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "612e1e9be4b1f391b4f9d3ee8ef681b1d56a1b90",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "moltenvk",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-netbootxyz": {
       "locked": {
         "lastModified": 1753643819,
@@ -578,6 +594,7 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-krunkit": "nixpkgs-krunkit",
         "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-moltenvk": "nixpkgs-moltenvk",
         "nixpkgs-netbootxyz": "nixpkgs-netbootxyz",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixvim": "nixvim",

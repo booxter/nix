@@ -9,21 +9,7 @@
   modifications =
     _final: prev:
     let
-      moltenvk = ((import inputs.nixpkgs { inherit (prev) system; }).moltenvk).overrideAttrs (oldAttrs: {
-        patches = [
-          (_final.fetchpatch {
-            url = "https://github.com/KhronosGroup/MoltenVK/pull/2441/commits/70a3a152168bb8aefd1553e57ca165a590b77a06.patch";
-            hash = "sha256-7yyq/6H0/4m0zlu2f9XKkxKGISCW4suQLRxcLlmyWXQ=";
-          })
-          ./0001-MVKShaderLibrary-Handle-specializtion-with-macros.patch
-          (_final.fetchpatch {
-            url = "https://github.com/KhronosGroup/MoltenVK/commit/856c8237ac3b32178caae3408effc35bedfdffa1.patch";
-            hash = "sha256-+8027qyCKq4NNaca8jNZesAhFHs/piO32KoLKoff2D8=";
-          })
-        ];
-
-      });
-
+      inherit (import inputs.nixpkgs-moltenvk { inherit (prev) system; }) moltenvk;
     in
     {
       # newer netboot
@@ -120,20 +106,4 @@
       # };
       # python312Packages = python312.pkgs;
     };
-
-  # When applied, the unstable nixpkgs set (declared in the flake inputs) will
-  # be accessible through 'pkgs.unstable'
-  unstable-packages = final: _prev: {
-    unstable = import inputs.nixpkgs-unstable {
-      inherit (final) system;
-      config.allowUnfree = true;
-    };
-  };
-
-  master-packages = final: _prev: {
-    master = import inputs.nixpkgs-master {
-      inherit (final) system;
-      config.allowUnfree = true;
-    };
-  };
 }

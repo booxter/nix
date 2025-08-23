@@ -28,7 +28,6 @@
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
     proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
-    #proxmox-nixos.url = "github:booxter/proxmox-nixos/crypt-perl";
 
     disko.url = "github:nix-community/disko/latest";
 
@@ -36,6 +35,9 @@
 
     # https://github.com/NixOS/nixpkgs/pull/417062
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
+
+    # https://github.com/NixOS/nixpkgs/pull/434130
+    nixpkgs-moltenvk.url = "github:booxter/nixpkgs/moltenvk";
   };
 
   outputs =
