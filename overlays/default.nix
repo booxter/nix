@@ -33,9 +33,6 @@
         withNom = true;
       };
 
-      # https://github.com/NixOS/nixpkgs/pull/432677
-      inherit (import inputs.nixpkgs-master { inherit (prev) system; }) ghostty-bin;
-
       # https://github.com/NixOS/nixpkgs/pull/417062
       inherit (import inputs.nixpkgs-krunkit { inherit (prev) system; }) libkrun-efi;
       krunkit =
