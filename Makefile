@@ -35,13 +35,17 @@ local-vm:
 ########### proxmox vms
 prox-vm:
 	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
+		echo "Usage: make $@ WHAT=type WHERE=hv"; echo; echo "Available vms:";\
 	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^prox-.*vm$$' | sed 's/vm$$//' | sed 's/^prox-//';\
 	  exit 1;\
 	fi
 
-  # TODO: don't hardcode
-	./scripts/push-vm-to-proxmox.sh 192.168.15.100 root priv/lab-nvws prox-$(WHAT)vm
+	@if [ "x$(WHERE)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=type WHERE=hv";\
+	  exit 1;\
+	fi
+
+	./scripts/push-vm-to-proxmox.sh $(WHERE) root priv/lab-$(WHERE) prox-$(WHAT)vm
 
 ########### nixos
 nixos-build:
