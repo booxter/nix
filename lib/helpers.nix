@@ -140,6 +140,7 @@ rec {
       memorySize ? 8, # GB
       diskSize ? 50, # GB
       hostname,
+      proxNode ? "nvws",
       ...
     }:
     mkNixos (
@@ -191,7 +192,7 @@ rec {
                 virtualisation.proxmox = {
                   inherit cores;
                   name = hostname;
-                  node = "nvws"; # TODO: how to avoid it?
+                  node = proxNode;
                   autoInstall = true;
                   memory = memorySize * 1024;
                   net = [

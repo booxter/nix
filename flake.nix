@@ -90,6 +90,8 @@
           prxNetIface = "enp5s0f0np0";
           prxPassword = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
 
+          builderStateVersion = "25.11";
+
           piStateVersion = "25.11";
           piHostname = "pi5";
 
@@ -284,6 +286,15 @@
         // VM {
           name = piHostname;
           stateVersion = piStateVersion;
+        }
+        // VM {
+          name = "lab-builder1";
+          proxNode = "prx1-lab";
+          stateVersion = builderStateVersion;
+          memorySize = 8;
+          diskSize = 300;
+          cores = 24;
+          withHome = false;
         };
 
       overlays = import ./overlays { inherit inputs; };
