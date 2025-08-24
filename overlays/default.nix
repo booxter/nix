@@ -57,7 +57,7 @@
           });
 
       podman = prev.podman.override {
-        extraPackages = [
+        extraPackages = _final.lib.optional _final.stdenv.hostPlatform.isDarwin [
           _final.krunkit
         ];
       };
@@ -86,12 +86,14 @@
               ''
                 wrapProgram $out/bin/ramalama \
                 --prefix PATH : ${
-                  lib.makeBinPath [
-                    _final.podman
-                    llama-cpp-vulkan
-                    _final.python313Packages.mlx-lm
-                    _final.python313Packages.huggingface-hub
-                  ]
+                  lib.makeBinPath (
+                    [
+                      _final.podman
+                      llama-cpp-vulkan
+                      _final.python313Packages.huggingface-hub
+                    ]
+                    ++ lib.optional (lib.meta.availableOn _final.stdenv.hostPlatform _final.python313Packages.mlx-lm) _final.python313Packages.mlx-lm
+                  )
                 }
               '';
           });
