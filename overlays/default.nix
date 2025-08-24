@@ -57,7 +57,7 @@
           });
 
       podman = prev.podman.override {
-        extraPackages = _final.lib.optional _final.stdenv.hostPlatform.isDarwin [
+        extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
           _final.krunkit
         ];
       };
