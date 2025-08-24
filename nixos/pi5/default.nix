@@ -21,6 +21,11 @@ in
     ];
   };
 
+  networking.wireless.enable  = true;
+  networking.wireless.networks  = {
+    booxter-guest = {};
+  };
+
   # TODO: enable ipv6
   # TODO: use secret management for internal info?
   services.dnsmasq = {
