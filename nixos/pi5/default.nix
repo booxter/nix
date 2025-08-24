@@ -12,6 +12,14 @@ in
         }
       ];
     };
+    interfaces.wlan0 = {
+      ipv4.addresses = [
+        {
+          address = "192.168.2.1";
+          prefixLength = 16;
+        }
+      ];
+    };
     defaultGateway = {
       address = "192.168.0.1";
       interface = netIface;
