@@ -130,6 +130,22 @@
                 }
               );
             };
+          toBuilder =
+            idx:
+            VM (
+              let
+                idx' = toString idx;
+              in
+              {
+                name = "builder${idx'}";
+                proxNode = "prx${idx'}-lab";
+                stateVersion = builderStateVersion;
+                memorySize = 32;
+                diskSize = 300;
+                cores = 24;
+                withHome = false;
+              }
+            );
         in
         {
           pi5 = helpers.mkRaspberryPi {
@@ -287,15 +303,9 @@
           name = piHostname;
           stateVersion = piStateVersion;
         }
-        // VM {
-          name = "lab-builder1";
-          proxNode = "prx1-lab";
-          stateVersion = builderStateVersion;
-          memorySize = 8;
-          diskSize = 300;
-          cores = 24;
-          withHome = false;
-        };
+        // toBuilder 1
+        // toBuilder 2
+        // toBuilder 3;
 
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
