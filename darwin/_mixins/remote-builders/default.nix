@@ -56,7 +56,7 @@ in
         system = "x86_64-linux";
         protocol = "ssh-ng";
         maxJobs = 4;
-        speedFactor = 1; # prefer these builders
+        speedFactor = 100; # prefer these builders; higher the better
         supportedFeatures = [
           "nixos-test"
           "benchmark"
