@@ -182,6 +182,7 @@
             macAddress = "ac:b4:80:40:05:2e";
           };
 
+          # ssh prx1-lab sudo pvecm create lab-cluster
           "prx1-lab" = helpers.mkProxmox {
             inherit username;
             password = prxPassword;
@@ -192,6 +193,7 @@
             macAddress = "38:05:25:30:7d:89";
           };
 
+          # ssh prx2-lab sudo pvecm add prx1-lab
           "prx2-lab" = helpers.mkProxmox {
             inherit username;
             password = prxPassword;
@@ -202,6 +204,7 @@
             macAddress = "38:05:25:30:7f:7d";
           };
 
+          # ssh prx3-lab sudo pvecm add prx1-lab
           "prx3-lab" = helpers.mkProxmox {
             inherit username;
             password = prxPassword;
