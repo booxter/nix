@@ -144,6 +144,19 @@
                 diskSize = 300;
                 cores = 24;
                 withHome = false;
+
+                extraModules = [
+                  (
+                    { ... }:
+                    {
+                      systemd.services.nix-daemon.serviceConfig = {
+                        MemoryAccounting = true;
+                        MemoryMax = "90%";
+                        OOMScoreAdjust = 500;
+                      };
+                    }
+                  )
+                ];
               }
             );
         in

@@ -10,7 +10,10 @@
     package = lib.mkForce pkgs.lix;
     settings = {
       experimental-features = "nix-command flakes";
-      trusted-users = [ "@admin" username ];
+      trusted-users = [
+        "@admin"
+        username
+      ];
     };
   };
 
