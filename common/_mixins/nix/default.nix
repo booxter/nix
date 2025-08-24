@@ -2,6 +2,7 @@
   lib,
   pkgs,
   outputs,
+  username,
   ...
 }:
 {
@@ -9,7 +10,7 @@
     package = lib.mkForce pkgs.lix;
     settings = {
       experimental-features = "nix-command flakes";
-      trusted-users = [ "@admin" ];
+      trusted-users = [ "@admin" username ];
     };
   };
 

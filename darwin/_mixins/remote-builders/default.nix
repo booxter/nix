@@ -2,7 +2,6 @@
   lib,
   pkgs,
   username,
-  hostname,
   ...
 }:
 let
@@ -68,5 +67,6 @@ in
     in
     (map toBuilder (lib.range 1 3));
 
+  nix.settings.builders-use-substitutes = true;
   nix.distributedBuilds = true;
 }
