@@ -7,6 +7,7 @@
 {
   imports = [
     ./_mixins/nix
+    ./_mixins/nix-gc
     ./_mixins/ssh
     ./_mixins/terminfo
   ];
