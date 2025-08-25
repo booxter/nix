@@ -52,7 +52,7 @@ in
         "${guestIface},192.168.100.1,192.168.100.255"
       ];
 
-      listen-address = [ mainAddr guestAddr ];
+      listen-address = [ "127.0.0.1" mainAddr guestAddr ];
 
       dhcp-option = [
         "option:router,${gwAddr}"
