@@ -1,13 +1,17 @@
 { pkgs, hostname, ... }:
 let
-  netIface = "end0";
+  mainIface = "end0";
+  guestIface = "wlan0";
+  gwAddr = "192.168.0.1";
+  mainAddr = "192.168.1.1";
+  guestAddr = "192.168.2.1";
 in
 {
   networking = {
     interfaces.end0 = {
       ipv4.addresses = [
         {
-          address = "192.168.1.1";
+          address = mainAddr;
           prefixLength = 16;
         }
       ];
@@ -15,17 +19,17 @@ in
     interfaces.wlan0 = {
       ipv4.addresses = [
         {
-          address = "192.168.2.1";
+          address = guestAddr;
           prefixLength = 16;
         }
       ];
     };
     defaultGateway = {
-      address = "192.168.0.1";
-      interface = netIface;
+      address = gwAddr;
+      interface = mainIface;
     };
     nameservers = [
-      "192.168.0.1"
+      gwAddr
     ];
   };
 
@@ -40,28 +44,29 @@ in
     enable = true;
     resolveLocalQueries = true;
     settings = {
-      interface = netIface;
       dhcp-authoritative = true;
       dhcp-rapid-commit = true;
 
-      dhcp-range = [ "192.168.10.1,192.168.20.255" ];
+      dhcp-range = [
+        "${mainIface},192.168.10.1,192.168.20.255"
+        "${guestIface},192.168.100.1,192.168.100.255"
+      ];
 
-      listen-address = [ "192.168.1.1" ];
+      listen-address = [ mainAddr guestAddr ];
 
       dhcp-option = [
-        "option:router,192.168.0.1"
-        "option:dns-server,192.168.1.1"
+        "option:router,${gwAddr}"
+        "${mainIface},option:dns-server,${mainAddr}"
+        "${guestIface},option:dns-server,${gwAddr}"
       ];
 
-      server = [
-        "192.168.0.1"
-      ];
+      server = [ gwAddr ];
 
       domain-needed = true;
 
       host-record = [
-        "egress,192.168.0.1"
-        "dhcp,192.168.1.1"
+        "egress,${gwAddr}"
+        "dhcp,${mainAddr}"
       ];
 
       # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix
