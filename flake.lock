@@ -342,16 +342,16 @@
     },
     "nixpkgs-moltenvk": {
       "locked": {
-        "lastModified": 1755313903,
-        "narHash": "sha256-pdyq5sJQN0y5YnuTAP5Yf1NARyXTbW6zzClfQ0o4Gns=",
+        "lastModified": 1756348273,
+        "narHash": "sha256-rfQ0x9gVZ4vIKOlXoAycZw3J92l+QiuYQoN5MU2rTHw=",
         "owner": "booxter",
         "repo": "nixpkgs",
-        "rev": "612e1e9be4b1f391b4f9d3ee8ef681b1d56a1b90",
+        "rev": "9b5cb72e70f6fae4434fb4e23075759b941ded8a",
         "type": "github"
       },
       "original": {
         "owner": "booxter",
-        "ref": "moltenvk",
+        "ref": "moltenvk-1.4",
         "repo": "nixpkgs",
         "type": "github"
       }

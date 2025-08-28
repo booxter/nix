@@ -36,8 +36,7 @@
     # https://github.com/NixOS/nixpkgs/pull/417062
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
 
-    # https://github.com/NixOS/nixpkgs/pull/434130
-    nixpkgs-moltenvk.url = "github:booxter/nixpkgs/moltenvk";
+    nixpkgs-moltenvk.url = "github:booxter/nixpkgs/moltenvk-1.4";
   };
 
   outputs =
