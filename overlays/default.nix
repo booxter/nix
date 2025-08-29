@@ -11,8 +11,7 @@
     let
       inherit (import inputs.nixpkgs-moltenvk { inherit (prev) system; }) moltenvk;
 
-      getKrunkit =
-        virglrenderer:
+      _krunkit =
         ((import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit.override {
           libkrun-efi =
             (_final.libkrun-efi.override {
@@ -31,11 +30,6 @@
                   inherit src;
                   hash = "sha256-IrJVP7I8NDB4KyZ0g8D6Tx+dT+lN8Yg8uRT9tXlL/8s=";
                 };
-                buildInputs = with _final; [
-                  libepoxy
-                  rutabaga_gfx
-                  virglrenderer
-                ];
               });
         }).overrideAttrs
           (oldAttrs: rec {
@@ -62,10 +56,14 @@
 
       # https://github.com/NixOS/nixpkgs/pull/417062
       inherit (import inputs.nixpkgs-krunkit { inherit (prev) system; }) libkrun-efi;
-      krunkit = getKrunkit _final.virglrenderer;
-      #krunkit =
-      #  getKrunkit
-      #    (import inputs.nixpkgs-virglrenderer-slp { inherit (prev) system; }).virglrenderer;
+      krunkit = _krunkit;
+      #krunkit = _krunkit.overrideAttrs (oldAttrs: {
+      #  buildInputs = with _final; [
+      #    libepoxy
+      #    rutabaga_gfx
+      #    (import inputs.nixpkgs-virglrenderer-slp { inherit (prev) system; }).virglrenderer
+      #  ];
+      #});
 
       podman = prev.podman.override {
         extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
