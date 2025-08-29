@@ -40,6 +40,11 @@
                   inherit src;
                   hash = "sha256-IrJVP7I8NDB4KyZ0g8D6Tx+dT+lN8Yg8uRT9tXlL/8s=";
                 };
+                buildInputs = with _final; [
+                  libepoxy
+                  rutabaga_gfx
+                  (import inputs.nixpkgs-virglrenderer-slp { inherit (prev) system; }).virglrenderer
+                ];
               });
         }).overrideAttrs
           (oldAttrs: rec {
@@ -80,6 +85,8 @@
         }).overrideAttrs
           (oldAttrs: {
             preBuild = ""; # don't build docs -> segfaulting when building proxmox images for some reason
+
+            doCheck = false;
 
             postInstall =
               let

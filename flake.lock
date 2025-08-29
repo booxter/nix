@@ -418,6 +418,22 @@
         "type": "indirect"
       }
     },
+    "nixpkgs-virglrenderer-slp": {
+      "locked": {
+        "lastModified": 1756433343,
+        "narHash": "sha256-XfNwHf3uMWRgy7Ldw194LnX7K61Wqbl4NBYBEIizG7g=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "b8b7481f810b059f9813b33958f822ee2fe3acf2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "virglrenderer-with-slp-patches",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1755186698,
@@ -597,6 +613,7 @@
         "nixpkgs-moltenvk": "nixpkgs-moltenvk",
         "nixpkgs-netbootxyz": "nixpkgs-netbootxyz",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "nixpkgs-virglrenderer-slp": "nixpkgs-virglrenderer-slp",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos"
