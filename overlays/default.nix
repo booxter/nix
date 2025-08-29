@@ -10,18 +10,9 @@
     _final: prev:
     let
       inherit (import inputs.nixpkgs-moltenvk { inherit (prev) system; }) moltenvk;
-    in
-    {
-      # newer netboot
-      inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
 
-      nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override {
-        withNom = true;
-      };
-
-      # https://github.com/NixOS/nixpkgs/pull/417062
-      inherit (import inputs.nixpkgs-krunkit { inherit (prev) system; }) libkrun-efi;
-      krunkit =
+      getKrunkit =
+        virglrenderer:
         ((import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit.override {
           libkrun-efi =
             (_final.libkrun-efi.override {
@@ -43,7 +34,7 @@
                 buildInputs = with _final; [
                   libepoxy
                   rutabaga_gfx
-                  (import inputs.nixpkgs-virglrenderer-slp { inherit (prev) system; }).virglrenderer
+                  virglrenderer
                 ];
               });
         }).overrideAttrs
@@ -60,6 +51,21 @@
               hash = "sha256-4WLmIlk2OSmIt9FPDjCPHD5JyBszCWMwVEhbnnKKNQY=";
             };
           });
+    in
+    {
+      # newer netboot
+      inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
+
+      nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override {
+        withNom = true;
+      };
+
+      # https://github.com/NixOS/nixpkgs/pull/417062
+      inherit (import inputs.nixpkgs-krunkit { inherit (prev) system; }) libkrun-efi;
+      krunkit = getKrunkit _final.virglrenderer;
+      #krunkit =
+      #  getKrunkit
+      #    (import inputs.nixpkgs-virglrenderer-slp { inherit (prev) system; }).virglrenderer;
 
       podman = prev.podman.override {
         extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
