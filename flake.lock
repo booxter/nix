@@ -372,6 +372,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-ramalama": {
+      "locked": {
+        "lastModified": 1756509961,
+        "narHash": "sha256-fRgr5v6//cli6qaQVPckhb8+/EGP2RWUJiRXPVdFHVY=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "999819d7600d49faa06171c86a93832058939f87",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "ramalama-0.12.1",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1748437600,
@@ -612,6 +628,7 @@
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-moltenvk": "nixpkgs-moltenvk",
         "nixpkgs-netbootxyz": "nixpkgs-netbootxyz",
+        "nixpkgs-ramalama": "nixpkgs-ramalama",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixpkgs-virglrenderer-slp": "nixpkgs-virglrenderer-slp",
         "nixvim": "nixvim",

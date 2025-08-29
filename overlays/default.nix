@@ -84,14 +84,10 @@
           };
 
         in
-        ((import inputs.nixpkgs { inherit (prev) system; }).ramalama.override {
+        ((import inputs.nixpkgs-ramalama { inherit (prev) system; }).ramalama.override {
           podman = _final.podman;
         }).overrideAttrs
           (oldAttrs: {
-            preBuild = ""; # don't build docs -> segfaulting when building proxmox images for some reason
-
-            doCheck = false;
-
             postInstall =
               let
                 lib = _final.lib;
