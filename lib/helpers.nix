@@ -202,6 +202,7 @@ rec {
                     }
                   ];
                   scsi = [ { file = "local:${toString diskSize}"; } ];
+                  onboot = true;
                 };
 
                 boot.growPartition = true;
