@@ -33,9 +33,9 @@ in
     ];
   };
 
-  networking.wireless.enable  = true;
-  networking.wireless.networks  = {
-    booxter-guest = {};
+  networking.wireless.enable = true;
+  networking.wireless.networks = {
+    booxter-guest = { };
   };
 
   # TODO: enable ipv6
@@ -52,7 +52,11 @@ in
         "${guestIface},192.168.100.1,192.168.100.255"
       ];
 
-      listen-address = [ "127.0.0.1" mainAddr guestAddr ];
+      listen-address = [
+        "127.0.0.1"
+        mainAddr
+        guestAddr
+      ];
 
       dhcp-option = [
         "option:router,${gwAddr}"
