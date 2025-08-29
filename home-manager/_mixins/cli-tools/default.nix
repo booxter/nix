@@ -124,9 +124,9 @@
     zstd
 
     # python
-    python312Full
-    python312Packages.ipython
-    python312Packages.tox
+    python313Full
+    python313Packages.ipython
+    python313Packages.tox
   ];
 
   home.sessionVariables = {
