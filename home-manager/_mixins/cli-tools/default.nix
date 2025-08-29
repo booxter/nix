@@ -124,13 +124,9 @@
     zstd
 
     # python
-    (python313Full.withPackages (
-      ps: with ps; [
-        air-sdk
-      ]
-    ))
-    python313Packages.ipython
-    python313Packages.tox
+    python312Full
+    python312Packages.ipython
+    python312Packages.tox
   ];
 
   home.sessionVariables = {
