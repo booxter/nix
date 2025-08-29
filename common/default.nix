@@ -16,10 +16,32 @@
 
   # Some packages that I'd like to have available on all my machines.
   environment.systemPackages = with pkgs; [
+    bind.dnsutils
+    coreutils
+    dig
+    file
+    findutils
+    htop
     git
+    gnugrep
     gnumake
+    gnused
+    gzip
+    ipcalc
+    man-pages
+    moreutils
+    ngrep
+    procps
+    pstree
+    speedtest-cli
+    tcpdump
     tmux
+    tree
+    unzip
+    viddy
     vim
+    watch
+    zip
   ];
 
   users.users.${username} = {

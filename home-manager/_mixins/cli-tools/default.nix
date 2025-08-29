@@ -96,23 +96,12 @@
     ack
     act
     aider-chat
-    bind.dnsutils
-    coreutils
     curl
-    dig
     fd
-    file
-    findutils
     fzf
-    gnugrep
-    gnumake
     gnupg
-    gnused
     go
-    gzip
-    htop
     hydra-check
-    ipcalc
     jinjanator
     kind
     kubectl
@@ -120,11 +109,8 @@
     lima
     lnav # log viewer
     magic-wormhole
-    man-pages
     mc
     mkpasswd
-    moreutils
-    ngrep
     nix-init
     nix-search-cli
     nix-tree
@@ -132,18 +118,9 @@
     page
     podman
     pre-commit
-    procps
-    pstree
     ramalama
     skopeo
-    speedtest-cli
-    tcpdump
-    tree
-    unzip
-    viddy
-    watch
     yq
-    zip
     zstd
 
     # python
