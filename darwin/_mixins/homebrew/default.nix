@@ -4,7 +4,6 @@
     enable = true;
     onActivation.autoUpdate = true;
     casks = [
-      "amethyst"
       "chatgpt"
       "docker-desktop"
       "element"

@@ -25,6 +25,7 @@ in
     ./_mixins/ide-headless
   ]
   ++ lib.optionals isDesktop [
+    ./_mixins/aerospace
     ./_mixins/copy-apps
     ./_mixins/email
     ./_mixins/fonts
@@ -64,9 +65,4 @@ in
     ++ lib.optionals isDarwin [
       keycastr
     ];
-
-  # TODO: move darwin specific config files to a separate module?
-  home.file = lib.optionalAttrs isDarwin {
-    ".amethyst.yml".source = ./dotfiles/amethyst.yml;
-  };
 }
