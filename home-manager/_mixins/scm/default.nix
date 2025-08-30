@@ -146,7 +146,7 @@ in
     tig
 
     # for nix dev
-    nixpkgs-review
+    nixpkgs-reviewFull
     nurl
   ];
 

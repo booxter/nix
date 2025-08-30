@@ -50,10 +50,6 @@
       # newer netboot
       inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
 
-      nixpkgs-review = (import inputs.nixpkgs { inherit (prev) system; }).nixpkgs-review.override {
-        withNom = true;
-      };
-
       # https://github.com/NixOS/nixpkgs/pull/417062
       inherit (import inputs.nixpkgs-krunkit { inherit (prev) system; }) libkrun-efi;
       krunkit = _krunkit;
