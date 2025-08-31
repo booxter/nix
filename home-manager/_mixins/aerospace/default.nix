@@ -54,5 +54,8 @@ in
     };
   };
 
-  programs.sketchybar.enable = true;
+  programs.sketchybar = {
+    enable = true;
+    config = builtins.readFile ./sketchybarrc;
+  };
 }
