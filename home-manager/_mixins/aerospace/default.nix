@@ -1,3 +1,4 @@
+# TODO: rename the module to "desktop"?
 { pkgs, ... }:
 let
   inherit (pkgs.stdenv) isDarwin;
@@ -10,12 +11,12 @@ in
     # ex: https://nikitabobko.github.io/AeroSpace/guide.html#default-config
     userSettings = {
       gaps = {
-        outer.left = 3;
-        outer.right = 3;
-        outer.top = 3;
-        outer.bottom = 3;
-        inner.horizontal = 2;
-        inner.vertical = 2;
+        outer.left = 10;
+        outer.right = 10;
+        outer.top = 10;
+        outer.bottom = 10;
+        inner.horizontal = 10;
+        inner.vertical = 10;
       };
       mode.main.binding = {
         alt-h = "focus left";
