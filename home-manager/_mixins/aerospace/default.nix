@@ -53,4 +53,6 @@ in
       automatically-unhide-macos-hidden-apps = false;
     };
   };
+
+  programs.sketchybar.enable = true;
 }
