@@ -1,5 +1,12 @@
 { lib, pkgs, ... }:
 {
+  # Add red borders to windows
+  services.jankyborders = {
+    enable = true;
+    hidpi = true;
+    active_color = "0xffff0000"; # red
+  };
+
   # Configure keybindings
   services.skhd = {
     enable = true;
