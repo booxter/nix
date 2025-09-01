@@ -66,6 +66,9 @@ in
         cmd-alt-h = []; # Disable "hide others"
 
         alt-shift-s = "exec-and-forget screencapture -i -c";
+
+        cmd-backtick = "exec-and-forget ${pkgs.kitty}/bin/kitten quick-access-terminal";
+        alt-enter = "exec-and-forget ${lib.getExe pkgs.kitty} --directory ~";
       }
       // getBindings {
         prefix = "alt";
