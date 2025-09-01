@@ -12,15 +12,9 @@ let
   getBindings =
     { prefix, action }:
     lib.mergeAttrsList (
-      map (
-        i:
-        let
-          idx = toString (i + 1);
-        in
-        {
-          "${prefix}-${idx}" = "${action} ${idx}";
-        }
-      ) (lib.range 0 (workspaceCount - 1))
+      map (i: {
+        "${prefix}-${i}" = "${action} ${i}";
+      }) ((map toString (lib.range 1 workspaceCount)) ++ [ "s" ])
     );
 in
 {
@@ -62,8 +56,8 @@ in
 
         alt-shift-f = "fullscreen";
 
-        cmd-h = []; # Disable "hide application"
-        cmd-alt-h = []; # Disable "hide others"
+        cmd-h = [ ]; # Disable "hide application"
+        cmd-alt-h = [ ]; # Disable "hide others"
 
         alt-shift-s = "exec-and-forget screencapture -i -c";
 
@@ -112,6 +106,15 @@ in
       };
 
       on-focus-changed = [ "move-mouse window-lazy-center" ];
+
+      on-window-detected = [
+        {
+          "if" = {
+            app-id = "com.spotify.client";
+          };
+          run = [ "move-node-to-workspace s" ];
+        }
+      ];
 
       enable-normalization-opposite-orientation-for-nested-containers = false;
 
