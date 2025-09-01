@@ -107,7 +107,6 @@ in
     service.enable = false;
     extraPackages = with pkgs; [
       aerospace
-      sketchybar-app-font
     ];
   };
 }
