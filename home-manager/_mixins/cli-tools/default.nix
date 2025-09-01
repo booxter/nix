@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   programs.zsh = {
     enable = true;
@@ -115,7 +115,12 @@
     nix-search-cli
     nix-tree
     openssl
-    page
+    (page.overrideAttrs (old: {
+      nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.makeWrapper ];
+      postInstall = old.postInstall + ''
+        wrapProgram $out/bin/page --prefix PATH : "${config.programs.nixvim.finalPackage}/bin"
+      '';
+    }))
     podman
     pre-commit
     ramalama
