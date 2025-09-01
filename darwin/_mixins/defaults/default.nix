@@ -29,7 +29,8 @@
         "SecureKeyboardEntry" = false;
       };
       "com.apple.loginwindow" = {
-        TALLogoutSavesState = 0;
+        TALLogoutSavesState = false;
+        LoginwindowLaunchesRelaunchApps = false;
       };
       "com.apple.finder" = {
         _FXSortFoldersFirst = true;
