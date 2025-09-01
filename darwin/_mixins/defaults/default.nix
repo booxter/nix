@@ -81,6 +81,11 @@
         ];
       };
 
+      "com.apple.spaces" = {
+        # as per aerospace recommendation
+        "spans-displays" = true;
+      };
+
       # Enable the 'Input menu' in the top right corner of the screen
       "com.apple.TextInputMenu".visible = 1;
 

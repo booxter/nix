@@ -9,7 +9,7 @@ let
   inherit (pkgs.stdenv) isDarwin;
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
 
-  workspaceCount = 9;
+  workspaceCount = 6;
   getBindings =
     { prefix, action }:
     lib.mergeAttrsList (
@@ -60,6 +60,8 @@ in
 
         alt-slash = "layout tiles horizontal vertical";
         alt-comma = "layout accordion horizontal vertical";
+
+        alt-shift-f = "fullscreen";
       }
       // getBindings {
         prefix = "alt";
@@ -101,6 +103,10 @@ in
           "mode main"
         ];
       };
+
+      on-focus-changed = [ "move-mouse window-lazy-center" ];
+
+      enable-normalization-opposite-orientation-for-nested-containers = false;
 
       automatically-unhide-macos-hidden-apps = false;
 
