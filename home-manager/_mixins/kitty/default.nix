@@ -16,6 +16,7 @@
       strip_trailing_spaces = "always";
       scrollback_pager = "page -t man";
       scrollback_lines = 100000;
+      hide_window_decorations = "titlebar-only";
     };
   };
   home.file = {
