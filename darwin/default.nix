@@ -13,7 +13,6 @@
     # TODO: gracefully handle missing per-machine config
     ./${hostname}
     ./_mixins/defaults
-    ./_mixins/desktop
     ./_mixins/fonts
     ./_mixins/gnupg
     ./_mixins/homebrew
