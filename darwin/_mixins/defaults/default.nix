@@ -11,6 +11,7 @@
       tilesize = 32;
       show-recents = false;
       mru-spaces = false; # disable most recent apps affecting the dock items order
+      expose-group-apps = true;
     };
 
     finder = {
