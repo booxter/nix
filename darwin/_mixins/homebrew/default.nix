@@ -8,6 +8,7 @@
       "docker-desktop"
       "element"
       "openvpn-connect"
+      "sf-symbols"
       "todoist"
       "wireshark-chmodbpf"
     ];
