@@ -1,14 +1,37 @@
 PLUGIN_DIR="$CONFIG_DIR/plugins"
+THEME_DIR="$CONFIG_DIR/themes"
 
-sketchybar --bar position=top height=30 blur_radius=30 color=0x40000000
+source "$THEME_DIR/tokyonight"
+
+bar=(
+    blur_radius="$BAR_BLUR_RADIUS"
+    border_color="$BAR_BORDER_COLOR"
+    color="$BAR_COLOR"
+    corner_radius="$BAR_CORNER_RADIUS"
+    height="$BAR_HEIGHT"
+    margin="$BAR_MARGIN"
+    position="$BAR_POSITION"
+    padding_left="$BAR_PADDING"
+    padding_right="$BAR_PADDING"
+    y_offset="$BAR_Y_OFFSET"
+)
+sketchybar --bar "${bar[@]}"
 
 default=(
-  padding_left=6
-  padding_right=6
-  icon.font="Hack Nerd Font:Bold:17.0"
-  label.font="Hack Nerd Font:Bold:14.0"
-  icon.color=0xffffffff
-  label.color=0xffffffff
+  background.color="$BACKGROUND_COLOR"
+  background.border_color="$BACKGROUND_BORDER_COLOR"
+  background.corner_radius="$BACKGROUND_CORNER_RADIUS"
+  background.height="$BACKGROUND_HEIGHT"
+  icon.drawing=off
+  icon.font="$ICON_FONT"
+  label.align="$LABEL_ALIGN"
+  label.font="$LABEL_FONT"
+  label.color="$LABEL_COLOR"
+  label.highlight_color="$LABEL_HIGHLIGHT_COLOR"
+  label.y_offset="$LABEL_Y_OFFSET"
+  label.padding_left="$LABEL_PADDING"
+  label.padding_right="$LABEL_PADDING"
+  y_offset="$Y_OFFSET"
 )
 sketchybar --default "${default[@]}"
 
@@ -41,4 +64,8 @@ sketchybar --add item clock right \
            --set battery update_freq=120 script="$PLUGIN_DIR/battery.sh" \
            --subscribe battery system_woke power_source_change
 
+# Automatically apply configuration changes
+sketchybar --hotload on
+
+# Force all scripts to run the first time (never do this in a script)
 sketchybar --update
