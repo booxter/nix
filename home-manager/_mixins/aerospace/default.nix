@@ -83,6 +83,23 @@ in
           "flatten-workspace-tree"
           "mode main"
         ];
+
+        alt-shift-h = [
+          "join-with left"
+          "mode main"
+        ];
+        alt-shift-j = [
+          "join-with down"
+          "mode main"
+        ];
+        alt-shift-k = [
+          "join-with up"
+          "mode main"
+        ];
+        alt-shift-l = [
+          "join-with right"
+          "mode main"
+        ];
       };
 
       automatically-unhide-macos-hidden-apps = false;
