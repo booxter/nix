@@ -61,6 +61,11 @@ in
         alt-comma = "layout accordion horizontal vertical";
 
         alt-shift-f = "fullscreen";
+
+        cmd-h = []; # Disable "hide application"
+        cmd-alt-h = []; # Disable "hide others"
+
+        alt-shift-s = "exec-and-forget screencapture -i -c";
       }
       // getBindings {
         prefix = "alt";
