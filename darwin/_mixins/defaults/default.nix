@@ -104,6 +104,9 @@
       NSAutomaticPeriodSubstitutionEnabled = false;
       NSAutomaticDashSubstitutionEnabled = false;
       NSAutomaticQuoteSubstitutionEnabled = false;
+
+      # hide menu bar
+      _HIHideMenuBar = true;
     };
   };
 }
