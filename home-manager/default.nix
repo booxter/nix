@@ -26,6 +26,7 @@ in
   ]
   ++ lib.optionals isDesktop [
     ./_mixins/aerospace
+    ./_mixins/sketchybar
     ./_mixins/copy-apps
     ./_mixins/email
     ./_mixins/fonts

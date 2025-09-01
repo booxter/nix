@@ -1,4 +1,3 @@
-# TODO: rename the module to "desktop"?
 {
   lib,
   config,
@@ -119,19 +118,5 @@ in
         "${sketchybar} --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
       ];
     };
-  };
-
-  programs.sketchybar = {
-    enable = true;
-    config = {
-      source = ./sketchybar;
-      recursive = true;
-    };
-    service.enable = false;
-    extraPackages = with pkgs; [
-      aerospace
-      gnugrep
-      curl
-    ];
   };
 }
