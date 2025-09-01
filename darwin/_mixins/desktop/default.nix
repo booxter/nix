@@ -4,7 +4,8 @@
   services.jankyborders = {
     enable = true;
     hidpi = true;
-    active_color = "0xffff0000"; # red
+    active_color = "0xffe1e3e4";
+    inactive_color = "0xff494d64";
   };
 
   # Configure keybindings
