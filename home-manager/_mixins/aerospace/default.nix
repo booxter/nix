@@ -1,7 +1,17 @@
 # TODO: rename the module to "desktop"?
-{ pkgs, ... }:
+{ lib, config, pkgs, ... }:
 let
   inherit (pkgs.stdenv) isDarwin;
+  sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
+
+  workspaceCount = 9;
+  getBindings = { prefix, action }: lib.mergeAttrsList (
+    map (i: let
+      idx = toString (i + 1);
+    in {
+      "${prefix}-${idx}" = "${action} ${idx}";
+    }) (lib.range 0 (workspaceCount - 1))
+  );
 in
 {
   programs.aerospace = {
@@ -11,10 +21,10 @@ in
     # ex: https://nikitabobko.github.io/AeroSpace/guide.html#default-config
     userSettings = {
       gaps = {
-        outer.left = 10;
-        outer.right = 10;
-        outer.top = 10;
-        outer.bottom = 10;
+        outer.left = 2;
+        outer.right = 2;
+        outer.top = 36;
+        outer.bottom = 2;
         inner.horizontal = 10;
         inner.vertical = 10;
       };
@@ -32,30 +42,43 @@ in
         alt-minus = "resize smart -50";
         alt-equal = "resize smart +50";
 
-        alt-1 = "workspace 1";
-        alt-2 = "workspace 2";
-        alt-3 = "workspace 3";
-        alt-4 = "workspace 4";
-        alt-5 = "workspace 5";
-
-        alt-shift-1 = "move-node-to-workspace 1";
-        alt-shift-2 = "move-node-to-workspace 2";
-        alt-shift-3 = "move-node-to-workspace 3";
-        alt-shift-4 = "move-node-to-workspace 4";
-        alt-shift-5 = "move-node-to-workspace 5";
-
         alt-tab = "workspace-back-and-forth";
         alt-shift-tab = "move-workspace-to-monitor --wrap-around next";
 
         alt-slash = "layout tiles horizontal vertical";
         alt-comma = "layout accordion horizontal vertical";
-      };
+      }
+      // getBindings { prefix = "alt"; action = "workspace"; }
+      // getBindings { prefix = "alt-shift"; action = "move-node-to-workspace"; };
       automatically-unhide-macos-hidden-apps = false;
+
+      after-startup-command = [
+        "exec-and-forget ${sketchybar}"
+      ];
+      exec-on-workspace-change = [
+        "/bin/bash"
+        "-c"
+        "${sketchybar} --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
+      ];
     };
   };
 
   programs.sketchybar = {
     enable = true;
     config = builtins.readFile ./sketchybarrc;
+    service.enable = false;
+    extraPackages = [ pkgs.aerospace ];
+  };
+
+  home.file.".config/sketchybar/plugins/aerospace.sh" = {
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      if [ "$1" = "$FOCUSED_WORKSPACE" ]; then
+        ${sketchybar} --set $NAME background.drawing=on
+      else
+        ${sketchybar} --set $NAME background.drawing=off
+      fi
+    '';
   };
 }
