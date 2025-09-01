@@ -3,7 +3,6 @@
   lib,
   config,
   pkgs,
-  username,
   ...
 }:
 let
@@ -106,6 +105,8 @@ in
       recursive = true;
     };
     service.enable = false;
-    extraPackages = [ pkgs.aerospace ];
+    extraPackages = with pkgs; [
+      aerospace
+    ];
   };
 }
