@@ -54,9 +54,9 @@ update ()
   args=()
   if [ $PLAYING -eq 0 ]; then
     if [ "$ARTIST" == "" ]; then
-      args+=(--set spotify.name label="$TRACK  􀉮  $ALBUM" drawing=on)
+      args+=(--set spotify.name label="􀑪 $TRACK 􀉮 $ALBUM" drawing=on)
     else
-      args+=(--set spotify.name label="$TRACK  􀉮  $ARTIST" drawing=on)
+      args+=(--set spotify.name label="􀑪 $TRACK 􀉮 $ARTIST" drawing=on)
     fi
     args+=(--set spotify.play icon=􀊆 \
            --set spotify.shuffle icon.highlight=$SHUFFLE \
