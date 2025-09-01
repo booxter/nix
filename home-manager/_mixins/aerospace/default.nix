@@ -3,6 +3,7 @@
   lib,
   config,
   pkgs,
+  username,
   ...
 }:
 let
@@ -71,9 +72,18 @@ in
       };
 
       mode.service.binding = {
-        esc = [ "reload-config" "mode main" ];
-        f = [ "layout floating tiling" "mode main" ];
-        r = [ "flatten-workspace-tree" "mode main" ];
+        esc = [
+          "reload-config"
+          "mode main"
+        ];
+        f = [
+          "layout floating tiling"
+          "mode main"
+        ];
+        r = [
+          "flatten-workspace-tree"
+          "mode main"
+        ];
       };
 
       automatically-unhide-macos-hidden-apps = false;
@@ -91,20 +101,11 @@ in
 
   programs.sketchybar = {
     enable = true;
-    config = builtins.readFile ./sketchybarrc;
+    config = {
+      source = ./sketchybar;
+      recursive = true;
+    };
     service.enable = false;
     extraPackages = [ pkgs.aerospace ];
-  };
-
-  home.file.".config/sketchybar/plugins/aerospace.sh" = {
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      if [ "$1" = "$FOCUSED_WORKSPACE" ]; then
-        ${sketchybar} --set $NAME background.drawing=on
-      else
-        ${sketchybar} --set $NAME background.drawing=off
-      fi
-    '';
   };
 }
