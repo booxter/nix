@@ -1,17 +1,28 @@
 # TODO: rename the module to "desktop"?
-{ lib, config, pkgs, ... }:
+{
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 let
   inherit (pkgs.stdenv) isDarwin;
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
 
   workspaceCount = 9;
-  getBindings = { prefix, action }: lib.mergeAttrsList (
-    map (i: let
-      idx = toString (i + 1);
-    in {
-      "${prefix}-${idx}" = "${action} ${idx}";
-    }) (lib.range 0 (workspaceCount - 1))
-  );
+  getBindings =
+    { prefix, action }:
+    lib.mergeAttrsList (
+      map (
+        i:
+        let
+          idx = toString (i + 1);
+        in
+        {
+          "${prefix}-${idx}" = "${action} ${idx}";
+        }
+      ) (lib.range 0 (workspaceCount - 1))
+    );
 in
 {
   programs.aerospace = {
@@ -45,11 +56,26 @@ in
         alt-tab = "workspace-back-and-forth";
         alt-shift-tab = "move-workspace-to-monitor --wrap-around next";
 
+        alt-shift-semicolon = "mode service";
+
         alt-slash = "layout tiles horizontal vertical";
         alt-comma = "layout accordion horizontal vertical";
       }
-      // getBindings { prefix = "alt"; action = "workspace"; }
-      // getBindings { prefix = "alt-shift"; action = "move-node-to-workspace"; };
+      // getBindings {
+        prefix = "alt";
+        action = "workspace";
+      }
+      // getBindings {
+        prefix = "alt-shift";
+        action = "move-node-to-workspace";
+      };
+
+      mode.service.binding = {
+        esc = [ "reload-config" "mode main" ];
+        f = [ "layout floating tiling" "mode main" ];
+        r = [ "flatten-workspace-tree" "mode main" ];
+      };
+
       automatically-unhide-macos-hidden-apps = false;
 
       after-startup-command = [
