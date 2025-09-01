@@ -107,6 +107,8 @@ in
     service.enable = false;
     extraPackages = with pkgs; [
       aerospace
+      gnugrep
+      curl
     ];
   };
 }

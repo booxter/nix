@@ -108,6 +108,10 @@ sketchybar --add bracket status ip_address network.up network.down   \
            --set         status background.color=$BACKGROUND         \
                                 background.border_color=$BLUE
 
+sketchybar --add item  stock right                              \
+           --set       stock script="$PLUGIN_DIR/stock.sh" \
+                                  update_freq=300                    \
+
 # Original source: https://github.com/nicolas-martin/awesome-sketchybar/blob/master/plugins/Spotify-Player-Controls.md
 SPOTIFY_EVENT="com.spotify.client.PlaybackStateChanged"
 POPUP_SCRIPT="sketchybar -m --set \$NAME popup.drawing=toggle"
