@@ -27,7 +27,7 @@ in
       gaps = {
         outer.left = 2;
         outer.right = 2;
-        outer.top = 2;
+        outer.top = 30 + 2; # 30 is sketchybar height from sketchybar theme file
         outer.bottom = 2;
         inner.horizontal = 10;
         inner.vertical = 10;
