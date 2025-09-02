@@ -116,6 +116,10 @@ in
         }
       ];
 
+      workspace-to-monitor-force-assignment = {
+        "6" = "secondary";
+      };
+
       enable-normalization-opposite-orientation-for-nested-containers = false;
 
       automatically-unhide-macos-hidden-apps = false;
