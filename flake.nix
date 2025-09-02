@@ -316,6 +316,21 @@
         // toBuilder 2
         // toBuilder 3;
 
+      devShells = helpers.forAllSystems (
+        system:
+        let
+          pkgs = import inputs.nixpkgs { inherit system; };
+        in
+        {
+          air-sdk = pkgs.mkShell {
+            buildInputs = with pkgs; [
+              python3
+              outputs.packages.${system}.air-sdk
+            ];
+          };
+        }
+      );
+
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
       formatter = helpers.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-tree);
