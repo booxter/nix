@@ -115,7 +115,8 @@ in
           };
           run = [ "move-node-to-workspace s" ];
         }
-      ] ++ lib.optionals isWork [
+      ]
+      ++ lib.optionals isWork [
         {
           "if" = {
             app-id = "com.microsoft.teams2";
