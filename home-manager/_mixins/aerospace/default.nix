@@ -8,6 +8,7 @@
 let
   inherit (pkgs.stdenv) isDarwin;
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
+  sketchybarHeight = 30; # TODO: parametrize it?
 
   workspaceCount = 6;
   getBindings =
@@ -28,7 +29,12 @@ in
       gaps = {
         outer.left = 2;
         outer.right = 2;
-        outer.top = 30 + 2; # 30 is sketchybar height from sketchybar theme file
+        outer.top = [
+          {
+            monitor.built-in = 2;
+          }
+          (sketchybarHeight + 2)
+        ];
         outer.bottom = 2;
         inner.horizontal = 10;
         inner.vertical = 10;
