@@ -324,22 +324,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-master": {
-      "locked": {
-        "lastModified": 1755968135,
-        "narHash": "sha256-K6xPQruUhtRWlQszCJCKkrDIr8e3/cG+jNPBjODpe8M=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "e0b6a2f8a3aa6e4a4326bb127a6a6e25af0838ff",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-moltenvk": {
       "locked": {
         "lastModified": 1756348273,
@@ -372,22 +356,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-ramalama": {
-      "locked": {
-        "lastModified": 1756509961,
-        "narHash": "sha256-fRgr5v6//cli6qaQVPckhb8+/EGP2RWUJiRXPVdFHVY=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "999819d7600d49faa06171c86a93832058939f87",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "ramalama-0.12.1",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1748437600,
@@ -405,22 +373,6 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1755829505,
-        "narHash": "sha256-4/Jd+LkQ2ssw8luQVkqVs9spDBVE6h/u/hC/tzngsPo=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "f937f8ecd1c70efd7e9f90ba13dfb400cf559de4",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixpkgs-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-unstable_2": {
-      "locked": {
         "lastModified": 1723637854,
         "narHash": "sha256-med8+5DSWa2UnOqtdICndjDAEjxr5D7zaIiK4pn0Q7c=",
         "owner": "NixOS",
@@ -432,22 +384,6 @@
         "id": "nixpkgs",
         "ref": "nixos-unstable",
         "type": "indirect"
-      }
-    },
-    "nixpkgs-virglrenderer-slp": {
-      "locked": {
-        "lastModified": 1756433343,
-        "narHash": "sha256-XfNwHf3uMWRgy7Ldw194LnX7K61Wqbl4NBYBEIizG7g=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "b8b7481f810b059f9813b33958f822ee2fe3acf2",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "virglrenderer-with-slp-patches",
-        "repo": "nixpkgs",
-        "type": "github"
       }
     },
     "nixpkgs_2": {
@@ -597,7 +533,7 @@
       "inputs": {
         "flake-compat": "flake-compat",
         "nixpkgs-stable": "nixpkgs-stable",
-        "nixpkgs-unstable": "nixpkgs-unstable_2",
+        "nixpkgs-unstable": "nixpkgs-unstable",
         "utils": "utils"
       },
       "locked": {
@@ -625,12 +561,8 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-krunkit": "nixpkgs-krunkit",
-        "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-moltenvk": "nixpkgs-moltenvk",
         "nixpkgs-netbootxyz": "nixpkgs-netbootxyz",
-        "nixpkgs-ramalama": "nixpkgs-ramalama",
-        "nixpkgs-unstable": "nixpkgs-unstable",
-        "nixpkgs-virglrenderer-slp": "nixpkgs-virglrenderer-slp",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos"

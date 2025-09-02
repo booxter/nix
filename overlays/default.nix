@@ -7,70 +7,20 @@
   # You can change versions, add patches, set compilation flags, anything really.
   # https://nixos.wiki/wiki/Overlays
   modifications =
-    _final: prev:
-    let
-      inherit (import inputs.nixpkgs-moltenvk { inherit (prev) system; }) moltenvk;
-
-      _krunkit =
-        ((import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit.override {
-          libkrun-efi =
-            (_final.libkrun-efi.override {
-              inherit moltenvk;
-              withGpu = true;
-            }).overrideAttrs
-              (oldAttrs: rec {
-                version = "1.14.0";
-                src = _final.fetchFromGitHub {
-                  owner = "containers";
-                  repo = "libkrun";
-                  tag = "v${version}";
-                  hash = "sha256-tXF1AkcwSBj+e3qEGR/NqB1U+y4+MIRbaL9xB0cZQbQ=";
-                };
-                cargoDeps = _final.rustPlatform.fetchCargoVendor {
-                  inherit src;
-                  hash = "sha256-IrJVP7I8NDB4KyZ0g8D6Tx+dT+lN8Yg8uRT9tXlL/8s=";
-                };
-              });
-        }).overrideAttrs
-          (oldAttrs: rec {
-            version = "0.2.2";
-            src = _final.fetchFromGitHub {
-              owner = "containers";
-              repo = "krunkit";
-              tag = "v${version}";
-              hash = "sha256-fyk3vF/d+qv347XI1+z7zzd5JxRRjopnKIV6GATA3Ac=";
-            };
-            cargoDeps = _final.rustPlatform.fetchCargoVendor {
-              inherit src;
-              hash = "sha256-4WLmIlk2OSmIt9FPDjCPHD5JyBszCWMwVEhbnnKKNQY=";
-            };
-          });
-    in
-    {
+    _final: prev: {
       # newer netboot
       inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
 
-      # https://github.com/NixOS/nixpkgs/pull/417062
-      inherit (import inputs.nixpkgs-krunkit { inherit (prev) system; }) libkrun-efi;
-      krunkit = _krunkit;
-      #krunkit = _krunkit.overrideAttrs (oldAttrs: {
-      #  buildInputs = with _final; [
-      #    libepoxy
-      #    rutabaga_gfx
-      #    (import inputs.nixpkgs-virglrenderer-slp { inherit (prev) system; }).virglrenderer
-      #  ];
-      #});
-
       podman = prev.podman.override {
         extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
-          _final.krunkit
+          (import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit
         ];
       };
 
       ramalama =
         let
           vulkan-loader = (import inputs.nixpkgs { inherit (prev) system; }).vulkan-loader.override {
-            inherit moltenvk;
+            inherit (import inputs.nixpkgs-moltenvk { inherit (prev) system; }) moltenvk;
           };
           llama-cpp = (import inputs.nixpkgs { inherit (prev) system; }).llama-cpp.override {
             inherit vulkan-loader;
@@ -80,7 +30,7 @@
           };
 
         in
-        ((import inputs.nixpkgs-ramalama { inherit (prev) system; }).ramalama.override {
+        ((import inputs.nixpkgs { inherit (prev) system; }).ramalama.override {
           podman = _final.podman;
         }).overrideAttrs
           (oldAttrs: {

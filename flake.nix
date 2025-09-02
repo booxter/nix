@@ -4,8 +4,6 @@
   description = "booxter Nix* flake configs";
 
   inputs = {
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     #nix-darwin.url = "github:nix-darwin/nix-darwin/master";
@@ -26,20 +24,16 @@
     nixvim.url = "github:nix-community/nixvim";
     nur.url = "github:nix-community/NUR";
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
-
     proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
-
     disko.url = "github:nix-community/disko/latest";
 
     nixpkgs-netbootxyz.url = "github:booxter/nixpkgs/netbootxyz-update";
 
     # https://github.com/NixOS/nixpkgs/pull/417062
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
+    #nixpkgs-virglrenderer-slp.url = "github:booxter/nixpkgs/virglrenderer-with-slp-patches";
 
     nixpkgs-moltenvk.url = "github:booxter/nixpkgs/moltenvk-1.4";
-    nixpkgs-ramalama.url = "github:booxter/nixpkgs/ramalama-0.12.1";
-
-    nixpkgs-virglrenderer-slp.url = "github:booxter/nixpkgs/virglrenderer-with-slp-patches";
   };
 
   outputs =
