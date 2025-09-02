@@ -2,6 +2,7 @@
   lib,
   config,
   pkgs,
+  isWork,
   ...
 }:
 let
@@ -14,7 +15,7 @@ let
     lib.mergeAttrsList (
       map (i: {
         "${prefix}-${i}" = "${action} ${i}";
-      }) ((map toString (lib.range 1 workspaceCount)) ++ [ "s" ])
+      }) ((map toString (lib.range 1 workspaceCount)) ++ [ "s" ] ++ (lib.optional isWork "t"))
     );
 in
 {
@@ -113,6 +114,13 @@ in
             app-id = "com.spotify.client";
           };
           run = [ "move-node-to-workspace s" ];
+        }
+      ] ++ lib.optionals isWork [
+        {
+          "if" = {
+            app-id = "com.microsoft.teams2";
+          };
+          run = [ "move-node-to-workspace t" ];
         }
       ];
 
