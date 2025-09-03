@@ -2,6 +2,7 @@
   lib,
   pkgs,
   username,
+  hostname,
   ...
 }:
 let
@@ -51,21 +52,33 @@ in
 
   nix.buildMachines =
     let
+      features = [
+        "nixos-test"
+        "benchmark"
+        "big-parallel"
+        "kvm"
+      ];
       toBuilder = n: {
         hostName = toBuilderName n;
         system = "x86_64-linux";
         protocol = "ssh-ng";
         maxJobs = 4;
         speedFactor = 100; # prefer these builders; higher the better
-        supportedFeatures = [
-          "nixos-test"
-          "benchmark"
-          "big-parallel"
-          "kvm"
-        ];
+        supportedFeatures = features;
       };
     in
-    (map toBuilder (lib.range 1 3));
+    (map toBuilder (lib.range 1 3))
+    ++ lib.optional (hostname != "mmini") {
+      hostName = "mmini";
+      systems = [
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
+      protocol = "ssh-ng";
+      maxJobs = 4;
+      speedFactor = 100;
+      supportedFeatures = features;
+    };
 
   nix.settings.builders-use-substitutes = true;
   nix.distributedBuilds = true;
