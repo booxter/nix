@@ -14,9 +14,18 @@ let
   getBindings =
     { prefix, action }:
     lib.mergeAttrsList (
-      map (i: {
-        "${prefix}-${i}" = "${action} ${i}";
-      }) ((map toString (lib.range 1 workspaceCount)) ++ [ "s" ] ++ (lib.optional isWork "t"))
+      map
+        (i: {
+          "${prefix}-${i}" = "${action} ${i}";
+        })
+        (
+          (map toString (lib.range 1 workspaceCount))
+          ++ [
+            "c"
+            "s"
+          ]
+          ++ (lib.optional isWork "t")
+        )
     );
 in
 {
@@ -115,6 +124,27 @@ in
       on-focus-changed = [ "move-mouse window-lazy-center" ];
 
       on-window-detected = [
+        # Chat apps go to C workspace
+        {
+          "if" = {
+            app-id = "com.tinyspeck.slackmacgap";
+          };
+          run = [ "move-node-to-workspace c" ];
+        }
+        {
+          "if" = {
+            app-id = "im.riot.app";
+          };
+          run = [ "move-node-to-workspace c" ];
+        }
+        {
+          "if" = {
+            app-id = "com.tdesktop.Telegram";
+          };
+          run = [ "move-node-to-workspace c" ];
+        }
+        #############################
+
         {
           "if" = {
             app-id = "com.spotify.client";
