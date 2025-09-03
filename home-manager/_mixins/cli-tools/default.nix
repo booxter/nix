@@ -100,6 +100,7 @@
     fd
     fzf
     gnupg
+    gitlab-ci-local
     go
     hydra-check
     jinjanator
