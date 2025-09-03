@@ -2,6 +2,7 @@
 pkgs: {
   # private
   spot = pkgs.callPackage ./spot { };
+  my-page = pkgs.callPackage ./page { };
 
   # https://github.com/NixOS/nixpkgs/pull/432971
   air-sdk = pkgs.callPackage ./air-sdk { };

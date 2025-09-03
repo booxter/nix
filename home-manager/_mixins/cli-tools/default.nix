@@ -111,16 +111,11 @@
     magic-wormhole
     mc
     mkpasswd
+    (my-page.override { neovim = config.programs.nixvim.build.package; })
     nix-init
     nix-search-cli
     nix-tree
     openssl
-    (page.overrideAttrs (old: {
-      nativeBuildInputs = old.nativeBuildInputs ++ [ pkgs.makeWrapper ];
-      postInstall = old.postInstall + ''
-        wrapProgram $out/bin/page --prefix PATH : "${config.programs.nixvim.build.package}/bin"
-      '';
-    }))
     podman
     pre-commit
     ramalama
