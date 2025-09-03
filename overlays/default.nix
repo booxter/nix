@@ -12,7 +12,11 @@
 
     podman = prev.podman.override {
       extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
-        (import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit
+        ((import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit.override {
+          libkrun-efi = (import inputs.nixpkgs-krunkit { inherit (prev) system; }).libkrun-efi.override {
+            inherit (import inputs.nixpkgs-moltenvk { inherit (prev) system; }) moltenvk;
+          };
+        })
       ];
     };
 
