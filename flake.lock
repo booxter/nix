@@ -310,11 +310,11 @@
     },
     "nixpkgs-krunkit": {
       "locked": {
-        "lastModified": 1755576868,
-        "narHash": "sha256-dMUxirkpsuzFEMIIo0wOF0Xe5Ay61TU9zOTwt1rf6Pc=",
+        "lastModified": 1756780393,
+        "narHash": "sha256-7VIo+FQNpX2WiAneTFPxjqae7XyF76Q6msHfjZLTjxc=",
         "owner": "quinneden",
         "repo": "nixpkgs",
-        "rev": "97d6736f2d2a7eee5c159568cc64fe0c0f2cd99b",
+        "rev": "b52ff139be531c19df1ce78227c4afd5d2902a81",
         "type": "github"
       },
       "original": {
