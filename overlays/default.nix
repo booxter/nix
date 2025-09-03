@@ -45,6 +45,12 @@
               url = "https://github.com/containers/ramalama/pull/1890/commits/950bf1127f2383b39e70200fbbcfcdd4f2a77b9d.patch";
               hash = "sha256-7vaA3g6tX2v9FEDVQl2NkCa4LBUJthTA0Linc1aWyd8=";
             })
+            # Suppress llama.cpp output when --nocontainer used:
+            # https://github.com/containers/ramalama/pull/1880
+            (_final.fetchpatch {
+              url = "https://github.com/containers/ramalama/pull/1880/commits/30ff539ac57cefeb419ea4a7fa6ec5229f0feafa.patch";
+              hash = "sha256-OZPl1m9r911IyaIdxfMsY4Rjy49/Pk8/XT/xa+zhBSA=";
+            })
           ];
           # flaky test due to access to /tmp/ramalama/store:
           # https://github.com/NixOS/nixpkgs/pull/439758/
