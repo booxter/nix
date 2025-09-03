@@ -133,6 +133,7 @@
   home.sessionVariables = {
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
+    CONTAINERS_MACHINE_PROVIDER = "libkrun";
   };
 
   home.file = {
