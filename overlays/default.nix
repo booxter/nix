@@ -33,10 +33,24 @@
         };
 
       in
-      ((import inputs.nixpkgs { inherit (prev) system; }).ramalama.override {
+      # pull from master for 0.21.1 (contains chat template parsing fix)
+      ((import inputs.nixpkgs-master { inherit (prev) system; }).ramalama.override {
         podman = _final.podman;
       }).overrideAttrs
         (oldAttrs: {
+          patches = [
+            # chat template fix for models from ollama registry:
+            # https://github.com/containers/ramalama/pull/1890
+            (_final.fetchpatch {
+              url = "https://github.com/containers/ramalama/pull/1890/commits/950bf1127f2383b39e70200fbbcfcdd4f2a77b9d.patch";
+              hash = "sha256-7vaA3g6tX2v9FEDVQl2NkCa4LBUJthTA0Linc1aWyd8=";
+            })
+          ];
+          # flaky test due to access to /tmp/ramalama/store:
+          # https://github.com/NixOS/nixpkgs/pull/439758/
+          disabledTests = [
+            "test_ollama_model_pull"
+          ];
           postInstall =
             let
               lib = _final.lib;
