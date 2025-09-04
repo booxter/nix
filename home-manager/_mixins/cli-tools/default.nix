@@ -116,6 +116,7 @@
     nix-init
     nix-search-cli
     nix-tree
+    nurl
     openssl
     podman
     pre-commit
