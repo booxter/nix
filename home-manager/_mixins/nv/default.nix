@@ -12,5 +12,11 @@
     "$HOME/.krew/bin"
   ];
 
-  home.packages = lib.optionals isDesktop [ pkgs.slack ];
+  home.packages = lib.optionals isDesktop (
+    with pkgs;
+    [
+      slack
+      vault-bin
+    ]
+  );
 }
