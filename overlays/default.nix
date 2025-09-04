@@ -42,13 +42,13 @@
             # chat template fix for models from ollama registry:
             # https://github.com/containers/ramalama/pull/1890
             (_final.fetchpatch {
-              url = "https://github.com/containers/ramalama/pull/1890/commits/950bf1127f2383b39e70200fbbcfcdd4f2a77b9d.patch";
-              hash = "sha256-7vaA3g6tX2v9FEDVQl2NkCa4LBUJthTA0Linc1aWyd8=";
+              url = "https://github.com/containers/ramalama/commit/85de59dc415c09f1d2d0046d90a704c08a9a421c.patch";
+              hash = "sha256-S3Xg5ocyElGPiipUSR7Y56ARB0OmNx/QIz3NTqTXMSg=";
             })
             # Suppress llama.cpp output when --nocontainer used:
             # https://github.com/containers/ramalama/pull/1880
             (_final.fetchpatch {
-              url = "https://github.com/containers/ramalama/pull/1880/commits/30ff539ac57cefeb419ea4a7fa6ec5229f0feafa.patch";
+              url = "https://github.com/containers/ramalama/commit/1ac57e28bf2f63dc0fa4b6c6d97fa60439cfab41.patch";
               hash = "sha256-OZPl1m9r911IyaIdxfMsY4Rjy49/Pk8/XT/xa+zhBSA=";
             })
           ];
