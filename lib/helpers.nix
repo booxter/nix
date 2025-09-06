@@ -140,7 +140,7 @@ rec {
       memorySize ? 8, # GB
       diskSize ? 50, # GB
       hostname,
-      proxNode ? "nvws",
+      proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
       ...
     }:
     mkNixos (
