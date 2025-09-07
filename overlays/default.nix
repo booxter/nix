@@ -1,16 +1,13 @@
 { inputs, ... }:
 {
-  # This one brings our custom packages from the 'pkgs' directory
   additions = final: _prev: import ../pkgs final.pkgs;
 
-  # This one contains whatever you want to overlay
-  # You can change versions, add patches, set compilation flags, anything really.
-  # https://nixos.wiki/wiki/Overlays
   modifications = _final: prev: {
-    # newer netboot
-    inherit (import inputs.nixpkgs-netbootxyz { inherit (prev) system; }) netbootxyz-efi;
+    # newer netboot: https://github.com/NixOS/nixpkgs/pull/428898
+    inherit (import inputs.nixpkgs-master { inherit (prev) system; }) netbootxyz-efi;
 
-    podman = prev.podman.override {
+    # pull build fix from master: https://github.com/NixOS/nixpkgs/pull/439995
+    podman = (import inputs.nixpkgs-master { inherit (prev) system; }).podman.override {
       extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
         ((import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit.override {
           libkrun-efi = (import inputs.nixpkgs-krunkit { inherit (prev) system; }).libkrun-efi.override {
@@ -33,8 +30,9 @@
         };
 
       in
-      # pull from master for 0.21.1 (contains chat template parsing fix)
+      # master has a fix for flaky test: https://github.com/NixOS/nixpkgs/pull/439758
       ((import inputs.nixpkgs-master { inherit (prev) system; }).ramalama.override {
+        llama-cpp = llama-cpp-vulkan;
         podman = _final.podman;
       }).overrideAttrs
         (oldAttrs: {
@@ -52,38 +50,13 @@
               hash = "sha256-OZPl1m9r911IyaIdxfMsY4Rjy49/Pk8/XT/xa+zhBSA=";
             })
           ];
-          # flaky test due to access to /tmp/ramalama/store:
-          # https://github.com/NixOS/nixpkgs/pull/439758/
-          disabledTests = [
-            "test_ollama_model_pull"
-          ];
-          postInstall =
-            let
-              lib = _final.lib;
-            in
-            ''
-              wrapProgram $out/bin/ramalama \
-              --prefix PATH : ${
-                lib.makeBinPath (
-                  [
-                    _final.podman
-                    llama-cpp-vulkan
-                    _final.python313Packages.huggingface-hub
-                  ]
-                  ++ lib.optional (lib.meta.availableOn _final.stdenv.hostPlatform _final.python313Packages.mlx-lm) _final.python313Packages.mlx-lm
-                )
-              }
-            '';
         });
 
-    # python312 = prev.python312.override {
-    #   packageOverrides = final: prev: {
-    #     XXX = prev.XXX.overridePythonAttrs (oldAttrs: {
-    #       disabledTests = oldAttrs.disabledTests ++ [
-    #       ];
-    #     });
-    #   };
-    # };
-    # python312Packages = python312.pkgs;
+    pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+      (python-final: python-prev: {
+        # https://github.com/NixOS/nixpkgs/pull/439354
+        inherit ((import inputs.nixpkgs-master { inherit (prev) system; }).python3Packages) lm-eval;
+      })
+    ];
   };
 }
