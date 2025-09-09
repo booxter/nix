@@ -122,7 +122,7 @@
     pre-commit
     ramalama
     skopeo
-    yq
+    yq-go
     zstd
 
     # python
