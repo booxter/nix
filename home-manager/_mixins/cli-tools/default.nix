@@ -1,4 +1,9 @@
-{ config, pkgs, isWork, ... }:
+{
+  config,
+  pkgs,
+  isWork,
+  ...
+}:
 {
   programs.zsh = {
     enable = true;
@@ -91,49 +96,51 @@
     settings = (with builtins; fromTOML (readFile ./starship.toml));
   };
 
-  home.packages = with pkgs; [
-    (ripgrep.override { withPCRE2 = true; })
-    ack
-    act
-    aider-chat
-    curl
-    fd
-    fzf
-    gnupg
-    gitlab-ci-local
-    go
-    hydra-check
-    jinjanator
-    kind
-    kubectl
-    kubernetes-helm
-    lima
-    lnav # log viewer
-    magic-wormhole
-    mc
-    mkpasswd
-    (my-page.override { neovim = config.programs.nixvim.build.package; })
-    nix-init
-    nix-search-cli
-    nix-tree
-    nurl
-    openssl
-    podman
-    pre-commit
-    skopeo
-    yq-go
-    zstd
+  home.packages =
+    with pkgs;
+    [
+      (ripgrep.override { withPCRE2 = true; })
+      ack
+      act
+      aider-chat
+      curl
+      fd
+      fzf
+      gnupg
+      gitlab-ci-local
+      go
+      hydra-check
+      jinjanator
+      kind
+      kubectl
+      kubernetes-helm
+      lima
+      lnav # log viewer
+      magic-wormhole
+      mc
+      mkpasswd
+      (my-page.override { neovim = config.programs.nixvim.build.package; })
+      nix-init
+      nix-search-cli
+      nix-tree
+      nurl
+      openssl
+      podman
+      pre-commit
+      skopeo
+      yq-go
+      zstd
 
-    # python
-    python313Full
-    python313Packages.ipython
-    python313Packages.tox
-  ]
-  # TODO: re-include the package back to all profiles once I don't have to
-  # rebuild half the world for it
-  ++ lib.optionals (!isWork) [
-    ramalama
-  ];
+      # python
+      python313Full
+      python313Packages.ipython
+      python313Packages.tox
+    ]
+    # TODO: re-include the package back to all profiles once I don't have to
+    # rebuild half the world for it
+    ++ lib.optionals (!isWork) [
+      ramalama
+    ];
 
   home.sessionVariables = {
     PAGER = "page -WO -q 90000";
