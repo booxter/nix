@@ -116,8 +116,6 @@
       kubernetes-helm
       lima
       lnav # log viewer
-      magic-wormhole
-      mc
       mkpasswd
       (my-page.override { neovim = config.programs.nixvim.build.package; })
       nix-init
@@ -127,7 +125,6 @@
       openssl
       podman
       pre-commit
-      skopeo
       yq-go
       zstd
 
