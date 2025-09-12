@@ -118,7 +118,6 @@
       nix-tree
       nurl
       openssl
-      podman
       pre-commit
       yq-go
       zstd
@@ -128,9 +127,10 @@
       python313Packages.ipython
       python313Packages.tox
     ]
-    # TODO: re-include the package back to all profiles once I don't have to
+    # TODO: re-include the packages back to all profiles once I don't have to
     # rebuild half the world for it
     ++ lib.optionals (!isWork) [
+      podman
       ramalama
     ];
 
