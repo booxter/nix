@@ -23,6 +23,12 @@ in
       "*.swp"
     ];
 
+    includes = [
+      {
+        path = "~/.config/git/config-local";
+      }
+    ];
+
     extraConfig = {
       # ovs/ovn
       pw = {
