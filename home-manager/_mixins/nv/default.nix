@@ -12,11 +12,15 @@
     "$HOME/.krew/bin"
   ];
 
-  home.packages = lib.optionals isDesktop (
-    with pkgs;
-    [
-      slack
-      vault-bin
-    ]
-  );
+  home.packages = with pkgs; ([
+    gitlab-ci-local
+  ]
+  ++ lib.optionals isDesktop [
+    jinjanator
+    kind
+    kubectl
+    kubernetes-helm
+    slack
+    vault-bin
+  ]);
 }

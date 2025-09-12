@@ -107,13 +107,8 @@
       fd
       fzf
       gnupg
-      gitlab-ci-local
       go
       hydra-check
-      jinjanator
-      kind
-      kubectl
-      kubernetes-helm
       lima
       lnav # log viewer
       mkpasswd
