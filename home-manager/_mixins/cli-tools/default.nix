@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, isWork, ... }:
 {
   programs.zsh = {
     enable = true;
@@ -120,7 +120,6 @@
     openssl
     podman
     pre-commit
-    ramalama
     skopeo
     yq-go
     zstd
@@ -129,6 +128,11 @@
     python313Full
     python313Packages.ipython
     python313Packages.tox
+  ]
+  # TODO: re-include the package back to all profiles once I don't have to
+  # rebuild half the world for it
+  ++ lib.optionals (!isWork) [
+    ramalama
   ];
 
   home.sessionVariables = {
