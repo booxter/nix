@@ -104,6 +104,7 @@
       act
       aider-chat
       curl
+      delve # go debugger
       fd
       fzf
       gnupg
