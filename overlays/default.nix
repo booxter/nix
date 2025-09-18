@@ -16,7 +16,6 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
-      pkgsMoltenvk = getPkgs inputs.nixpkgs-moltenvk;
       pkgsKrunkit = getPkgs inputs.nixpkgs-krunkit;
     in
     {
@@ -25,29 +24,12 @@
 
       podman = pkgs.podman.override {
         extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
-          (pkgsKrunkit.krunkit.override {
-            libkrun-efi = pkgsKrunkit.libkrun-efi.override {
-              inherit (pkgsMoltenvk) moltenvk;
-            };
-          })
+          pkgsKrunkit.krunkit
         ];
       };
 
       ramalama =
-        let
-          vulkan-loader = pkgs.vulkan-loader.override {
-            inherit (pkgsMoltenvk) moltenvk;
-          };
-          llama-cpp = pkgs.llama-cpp.override {
-            inherit vulkan-loader;
-          };
-          llama-cpp-vulkan = pkgs.llama-cpp-vulkan.override {
-            inherit llama-cpp;
-          };
-
-        in
         (pkgs.ramalama.override {
-          llama-cpp = llama-cpp-vulkan;
           podman = _final.podman;
         }).overrideAttrs
           (oldAttrs: {

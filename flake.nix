@@ -30,9 +30,6 @@
 
     # https://github.com/NixOS/nixpkgs/pull/417062
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
-    #nixpkgs-virglrenderer-slp.url = "github:booxter/nixpkgs/virglrenderer-with-slp-patches";
-
-    nixpkgs-moltenvk.url = "github:booxter/nixpkgs/moltenvk-1.4";
   };
 
   outputs =
