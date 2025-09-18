@@ -86,6 +86,13 @@
         settings.workspace_folders = [ "~/src" ];
       };
 
+      # debugger
+      dap-go.enable = true;
+      dap-lldb.enable = true;
+      dap-python.enable = true;
+      dap-ui.enable = true;
+      dap-virtual-text.enable = true;
+
       fugitive.enable = true;
       gitsigns.enable = true;
       tmux-navigator.enable = true;
