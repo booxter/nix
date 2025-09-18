@@ -60,14 +60,10 @@ in
     ]
     ++ lib.optionals isDesktop [
       obsidian
+      podman-desktop
+      telegram-desktop
       wireshark
       zoom-us
-      telegram-desktop
-    ]
-    # TODO: re-include the package back to all profiles once I don't have to
-    # rebuild half the world for it
-    ++ lib.optionals (!isWork && isDesktop) [
-      podman-desktop
     ]
     ++ lib.optionals isDarwin [
       keycastr

@@ -1,7 +1,6 @@
 {
   config,
   pkgs,
-  isWork,
   ...
 }:
 {
@@ -96,44 +95,38 @@
     settings = (with builtins; fromTOML (readFile ./starship.toml));
   };
 
-  home.packages =
-    with pkgs;
-    [
-      (ripgrep.override { withPCRE2 = true; })
-      ack
-      act
-      aider-chat
-      curl
-      delve # go debugger
-      fd
-      fzf
-      gnupg
-      go
-      hydra-check
-      lima
-      lnav # log viewer
-      mkpasswd
-      (my-page.override { neovim = config.programs.nixvim.build.package; })
-      nix-init
-      nix-search-cli
-      nix-tree
-      nurl
-      openssl
-      pre-commit
-      yq-go
-      zstd
+  home.packages = with pkgs; [
+    (ripgrep.override { withPCRE2 = true; })
+    ack
+    act
+    aider-chat
+    curl
+    delve # go debugger
+    fd
+    fzf
+    gnupg
+    go
+    hydra-check
+    lima
+    lnav # log viewer
+    mkpasswd
+    (my-page.override { neovim = config.programs.nixvim.build.package; })
+    nix-init
+    nix-search-cli
+    nix-tree
+    nurl
+    openssl
+    podman
+    pre-commit
+    ramalama
+    yq-go
+    zstd
 
-      # python
-      python313
-      python313Packages.ipython
-      python313Packages.tox
-    ]
-    # TODO: re-include the packages back to all profiles once I don't have to
-    # rebuild half the world for it
-    ++ lib.optionals (!isWork) [
-      podman
-      ramalama
-    ];
+    # python
+    python313
+    python313Packages.ipython
+    python313Packages.tox
+  ];
 
   home.sessionVariables = {
     PAGER = "page -WO -q 90000";
