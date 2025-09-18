@@ -124,7 +124,7 @@
       zstd
 
       # python
-      python313Full
+      python313
       python313Packages.ipython
       python313Packages.tox
     ]

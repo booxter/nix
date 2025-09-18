@@ -3,11 +3,18 @@
   additions = final: _prev: import ../pkgs final.pkgs;
 
   modifications = _final: prev: {
-    # newer netboot: https://github.com/NixOS/nixpkgs/pull/428898
-    inherit (import inputs.nixpkgs-master { inherit (prev) system; }) netbootxyz-efi;
+    # spotify hash fixed in master: https://github.com/NixOS/nixpkgs/pull/443564
+    inherit
+      (import inputs.nixpkgs-master {
+        inherit (prev) system;
+        config = {
+          allowUnfree = true;
+        };
+      })
+      spotify
+      ;
 
-    # pull build fix from master: https://github.com/NixOS/nixpkgs/pull/439995
-    podman = (import inputs.nixpkgs-master { inherit (prev) system; }).podman.override {
+    podman = (import inputs.nixpkgs { inherit (prev) system; }).podman.override {
       extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
         ((import inputs.nixpkgs-krunkit { inherit (prev) system; }).krunkit.override {
           libkrun-efi = (import inputs.nixpkgs-krunkit { inherit (prev) system; }).libkrun-efi.override {
@@ -30,8 +37,7 @@
         };
 
       in
-      # master has a fix for flaky test: https://github.com/NixOS/nixpkgs/pull/439758
-      ((import inputs.nixpkgs-master { inherit (prev) system; }).ramalama.override {
+      ((import inputs.nixpkgs { inherit (prev) system; }).ramalama.override {
         llama-cpp = llama-cpp-vulkan;
         podman = _final.podman;
       }).overrideAttrs
@@ -51,12 +57,5 @@
             })
           ];
         });
-
-    pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
-      (python-final: python-prev: {
-        # https://github.com/NixOS/nixpkgs/pull/439354
-        inherit ((import inputs.nixpkgs-master { inherit (prev) system; }).python3Packages) lm-eval;
-      })
-    ];
   };
 }
