@@ -21,10 +21,11 @@ let
         (
           (map toString (lib.range 1 workspaceCount))
           ++ [
-            "c"
-            "s"
+            "c" # chat
+            "e" # email
+            "s" # spotify
           ]
-          ++ (lib.optional isWork "t")
+          ++ (lib.optional isWork "t") # teams
         )
     );
 in
@@ -143,13 +144,19 @@ in
           };
           run = [ "move-node-to-workspace c" ];
         }
-        #############################
-
+        # Spotify
         {
           "if" = {
             app-id = "com.spotify.client";
           };
           run = [ "move-node-to-workspace s" ];
+        }
+        # Email
+        {
+          "if" = {
+            app-id = "org.nixos.thunderbird";
+          };
+          run = [ "move-node-to-workspace e" ];
         }
       ]
       ++ lib.optionals isWork [
