@@ -95,7 +95,8 @@
 
       fugitive.enable = true;
       gitsigns.enable = true;
-      tmux-navigator.enable = true;
+
+      repeat.enable = true;
 
       telescope = {
         enable = true;
@@ -105,6 +106,8 @@
         };
       };
 
+      tmux-navigator.enable = true;
+      treesitter.enable = true;
       toggleterm.enable = true;
       web-devicons.enable = true;
     };
