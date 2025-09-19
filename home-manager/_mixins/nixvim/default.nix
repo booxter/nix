@@ -123,6 +123,50 @@
         key = "<Leader>l";
         action = "<CMD>lua require('lsp_lines').toggle()<CR><CMD>set diagnostic.settings.virtual_text!<CR>";
       }
+      {
+        key = "<Leader>dc";
+        action = "<CMD>lua require'dap'.continue()<CR>";
+      }
+      {
+        key = "<Leader>dn";
+        action = "<CMD>lua require'dap'.step_over()<CR>";
+      }
+      {
+        key = "<Leader>di";
+        action = "<CMD>lua require'dap'.step_into()<CR>";
+      }
+      {
+        key = "<Leader>do";
+        action = "<CMD>lua require'dap'.step_out()<CR>";
+      }
+      {
+        key = "<Leader>du";
+        action = "<CMD>lua require'dap'.up()<CR>";
+      }
+      {
+        key = "<Leader>dd";
+        action = "<CMD>lua require'dap'.down()<CR>";
+      }
+      {
+        key = "<Leader>b";
+        action = "<CMD>lua require'dap'.toggle_breakpoint()<CR>";
+      }
+      {
+        key = "<Leader>B";
+        action = "<CMD>lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '))<CR>";
+      }
+      {
+        key = "<Leader>lp";
+        action = "<CMD>lua require'dap'.set_breakpoint(nil, nil, vim.fn.input('Log point message: '))<CR>";
+      }
+      {
+        key = "<Leader>dr";
+        action = "<CMD>lua require'dap'.repl.open()<CR>";
+      }
+      {
+        key = "<Leader>dl";
+        action = "<CMD>lua require'dap'.run_last()<CR>";
+      }
     ];
 
     extraConfigVim = ''
