@@ -182,7 +182,7 @@
     '';
 
     extraConfigLua = ''
-      # Automatically open DAP UI on debugger activated
+      -- Automatically open DAP UI on debugger activated
       local dap, dapui = require("dap"), require("dapui")
       dap.listeners.before.attach.dapui_config = function()
         dapui.open()
