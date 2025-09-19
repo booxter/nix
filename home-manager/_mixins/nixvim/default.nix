@@ -96,8 +96,6 @@
       fugitive.enable = true;
       gitsigns.enable = true;
 
-      repeat.enable = true;
-
       telescope = {
         enable = true;
         extensions = {
