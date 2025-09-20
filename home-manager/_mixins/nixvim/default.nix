@@ -1,4 +1,9 @@
-{ inputs, pkgs, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 {
   imports = [
     inputs.nixvim.homeModules.nixvim
@@ -8,6 +13,10 @@
     nixpkgs.config.allowUnfree = true;
 
     defaultEditor = true;
+
+    env = lib.optional pkgs.stdenv.hostPlatform.isDarwin {
+      LLDB_DEBUGSERVER_PATH = lib.getExe pkgs.debugserver;
+    };
 
     # alias to nixvim
     viAlias = true;
@@ -25,6 +34,7 @@
       ansible-lint
       golangci-lint
       ripgrep
+      vscode-extensions.vadimcn.vscode-lldb.adapter
     ];
 
     diagnostic.settings = {

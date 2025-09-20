@@ -33,6 +33,22 @@
         "type": "github"
       }
     },
+    "debugserver": {
+      "locked": {
+        "lastModified": 1737218546,
+        "narHash": "sha256-ZxTuM0vHf5VERB3gtX/95cKj+/rjqSpOtncszR0J1f4=",
+        "owner": "reckenrode",
+        "repo": "nixpkgs",
+        "rev": "ceda7418a329564565158a005b989729c03f377c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "reckenrode",
+        "ref": "push-tnkmrvyqmzpu",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "disko": {
       "inputs": {
         "nixpkgs": "nixpkgs"
@@ -536,6 +552,7 @@
     },
     "root": {
       "inputs": {
+        "debugserver": "debugserver",
         "disko": "disko",
         "home-manager": "home-manager",
         "homebrew-cask": "homebrew-cask",

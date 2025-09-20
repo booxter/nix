@@ -17,10 +17,14 @@
       pkgs = getPkgs inputs.nixpkgs;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsKrunkit = getPkgs inputs.nixpkgs-krunkit;
+      pkgsLldb = getPkgs inputs.debugserver;
     in
     {
       # spotify hash fixed in master: https://github.com/NixOS/nixpkgs/pull/443564
       inherit (pkgsMaster) spotify;
+
+      # https://github.com/NixOS/nixpkgs/pull/374846
+      inherit (pkgsLldb) debugserver;
 
       podman = pkgs.podman.override {
         extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [

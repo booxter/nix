@@ -28,6 +28,8 @@
     proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
     disko.url = "github:nix-community/disko/latest";
 
+    debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
+
     # https://github.com/NixOS/nixpkgs/pull/417062
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
   };
