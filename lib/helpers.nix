@@ -195,6 +195,7 @@ rec {
                   node = proxNode;
                   autoInstall = true;
                   memory = memorySize * 1024;
+                  cpu.cputype = "host";
                   net = [
                     {
                       model = "virtio";
