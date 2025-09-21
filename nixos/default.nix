@@ -7,11 +7,12 @@
 }:
 let
   removePrefix = lib.strings.removePrefix;
-  configName = removePrefix "prox-" (removePrefix "local-" hostname);
+  configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
 in
 {
-  imports = [
-    ./${configName}
+  imports = lib.optional (builtins.pathExists configName) [
+    configName
+  ] ++ [
     ./_mixins/user
   ];
 
