@@ -168,10 +168,12 @@ rec {
 
             # build-vm (local) vms
             (
-              { ... }:
-              {
+              { ... }: let
+                min = x: y: if x < y then x else y;
+              in {
                 virtualisation.vmVariant.virtualisation = {
-                  inherit cores;
+                  # limit cores to avoid overloading host
+                  cores = min cores 10;
                   memorySize = memorySize * 1024;
                   diskSize = diskSize * 1024;
 
