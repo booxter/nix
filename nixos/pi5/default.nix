@@ -83,8 +83,10 @@ in
         "id:ihrachyshka-mlt,ihrachyshka-mlt,192.168.11.2"
         "id:mair,mair,192.168.11.3"
 
-        # lab
+        #---- lab ----
         "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
+
+        # ports: 8000 (http), 8001 (https)
         "78:72:64:43:9c:3f,nas-lab,192.168.15.2" # asustor
 
         # mini-PC NUC nodes running proxmox
