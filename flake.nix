@@ -98,6 +98,7 @@
             args@{
               name,
               stateVersion ? "25.11",
+              platform ? "aarch64-linux",
               ...
             }:
             let
@@ -109,8 +110,7 @@
               "${localName}" = helpers.mkVM (
                 args
                 // {
-                  inherit stateVersion virtPlatform;
-                  platform = "aarch64-linux";
+                  inherit stateVersion virtPlatform platform;
                   hostname = localName;
                 }
               );
@@ -118,8 +118,7 @@
               "${proxName}" = helpers.mkVM (
                 args
                 // {
-                  inherit stateVersion virtPlatform;
-                  platform = "x86_64-linux";
+                  inherit stateVersion virtPlatform platform;
                   hostname = proxName;
                 }
               );
