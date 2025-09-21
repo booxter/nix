@@ -138,7 +138,7 @@ rec {
       virtPlatform ? platform,
       cores ? 4,
       memorySize ? 8, # GB
-      diskSize ? 50, # GB
+      diskSize ? 100, # GB
       hostname,
       proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
       ...

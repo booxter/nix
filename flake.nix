@@ -247,7 +247,6 @@
           isWork = true;
           cores = 64;
           memorySize = 64;
-          diskSize = 100;
           sshPort = 10000;
           proxNode = "nvws";
 
