@@ -537,15 +537,16 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1754428470,
-        "narHash": "sha256-Sxf8gf+vfGeFaJMW3D+8pwH/+WwYTQOg47Lrm42+kTc=",
-        "owner": "SaumonNet",
+        "lastModified": 1758502947,
+        "narHash": "sha256-n1M9XyMin2RDsXkrObJ2xYEle9mUL/XTdBJOjLOUa78=",
+        "owner": "booxter",
         "repo": "proxmox-nixos",
-        "rev": "6faed2845ef5f0bb05c9519b75097bbe7fb39327",
+        "rev": "ccfa5f3d3c1861c5f8b3715954f8e04700bd8be0",
         "type": "github"
       },
       "original": {
-        "owner": "SaumonNet",
+        "owner": "booxter",
+        "ref": "fix-cpu",
         "repo": "proxmox-nixos",
         "type": "github"
       }

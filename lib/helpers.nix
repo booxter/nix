@@ -206,6 +206,9 @@ rec {
                       bridge = "vmbr0";
                     }
                   ];
+                  # TODO: disable novnc clipboard because it makes LM
+                  # impossible. Proxmox-nixos doesn't support this yet.
+                  # vga.clipboard = ...;
                   scsi = [ { file = "local:${toString diskSize}"; } ];
                   onboot = true;
                 };

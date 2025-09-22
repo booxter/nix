@@ -25,7 +25,10 @@
     nixvim.url = "github:nix-community/nixvim";
     nur.url = "github:nix-community/NUR";
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
-    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos";
+
+    # TODO: contribute upstream
+    proxmox-nixos.url = "github:booxter/proxmox-nixos/fix-cpu";
+
     disko.url = "github:nix-community/disko/latest";
 
     debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
