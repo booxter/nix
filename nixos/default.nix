@@ -10,11 +10,13 @@ let
   configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
 in
 {
-  imports = lib.optional (builtins.pathExists configName) [
-    configName
-  ] ++ [
-    ./_mixins/user
-  ];
+  imports =
+    lib.optional (builtins.pathExists configName) [
+      configName
+    ]
+    ++ [
+      ./_mixins/user
+    ];
 
   system.stateVersion = stateVersion;
   nixpkgs.hostPlatform = platform;

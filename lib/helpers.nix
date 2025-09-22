@@ -168,9 +168,11 @@ rec {
 
             # build-vm (local) vms
             (
-              { ... }: let
+              { ... }:
+              let
                 min = x: y: if x < y then x else y;
-              in {
+              in
+              {
                 virtualisation.vmVariant.virtualisation = {
                   # limit cores to avoid overloading host
                   cores = min cores 10;
