@@ -11,7 +11,7 @@ let
 in
 {
   imports =
-    lib.optional (builtins.pathExists configName) [
+    lib.optionals (builtins.pathExists configName) [
       configName
     ]
     ++ [
