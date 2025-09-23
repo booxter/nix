@@ -20,7 +20,11 @@
         jinjanator
         kind
         kubectl
-        kubernetes-helm
+        (wrapHelm kubernetes-helm {
+          plugins = with kubernetes-helmPlugins; [
+            helm-unittest
+          ];
+        })
         vault-bin
       ]
       ++ lib.optionals isDesktop [
