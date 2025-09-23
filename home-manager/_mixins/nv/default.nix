@@ -17,14 +17,14 @@
     (
       [
         gitlab-ci-local
-      ]
-      ++ lib.optionals isDesktop [
         jinjanator
         kind
         kubectl
         kubernetes-helm
-        slack
         vault-bin
+      ]
+      ++ lib.optionals isDesktop [
+        slack
       ]
     );
 }
