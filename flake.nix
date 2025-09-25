@@ -262,7 +262,7 @@
                   "hugepagesz=1G"
                   "hugepages=8"
                   "hugepagesz=2M"
-                  "hugepages=512"
+                  "hugepages=6000"
                 ];
               }
             )
