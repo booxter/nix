@@ -173,7 +173,7 @@
             ];
           };
 
-          ${frame} = helpers.mkNixOS {
+          ${frame} = helpers.mkNixos {
             password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
             hostname = frame;
             stateVersion = "25.11";
