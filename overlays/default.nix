@@ -26,6 +26,8 @@
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
+      inherit (pkgs) netbootxyz-efi;
+
       podman = pkgs.podman.override {
         extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
           pkgsKrunkit.krunkit
