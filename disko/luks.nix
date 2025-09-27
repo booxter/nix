@@ -32,7 +32,6 @@
               content = {
                 type = "luks";
                 name = "crypted";
-                passwordFile = "/tmp/secret.key"; # Interactive
                 content = {
                   type = "btrfs";
                   extraArgs = [ "-f" ];
