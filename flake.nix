@@ -87,11 +87,10 @@
           prxNetIface = "enp5s0f0np0";
           prxPassword = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
 
-          builderStateVersion = "25.11";
-
           piStateVersion = "25.11";
           piHostname = "pi5";
 
+          frame = "frame";
           nvws = "nvws";
           proxmox = "proxmox";
 
@@ -136,7 +135,7 @@
               {
                 name = "builder${idx'}";
                 proxNode = "prx${idx'}-lab";
-                stateVersion = builderStateVersion;
+                stateVersion = "25.11";
                 memorySize = 32;
                 diskSize = 300;
                 cores = 24;
@@ -172,6 +171,11 @@
                 }
               )
             ];
+          };
+
+          ${frame} = helpers.mkNixOS {
+            hostname = frame;
+            stateVersion = "25.11";
           };
 
           # TODO: can I use mkVM here?
