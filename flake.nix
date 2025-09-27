@@ -7,6 +7,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
+    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+
     #nix-darwin.url = "github:nix-darwin/nix-darwin/master";
     nix-darwin.url = "github:booxter/nix-darwin/dhcp-client";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
@@ -177,6 +179,13 @@
             password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
             hostname = frame;
             stateVersion = "25.11";
+
+            extraModules = [
+              inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
+              ({ ... }: {
+                services.fwupd.enable = true;
+              })
+            ];
           };
 
           # TODO: can I use mkVM here?
