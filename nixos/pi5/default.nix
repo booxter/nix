@@ -78,10 +78,11 @@ in
         # infra
         "7c:b7:7b:04:05:99,mdx,192.168.10.100" # MDX-8
 
-        # clients (wifi)
+        # clients
         "id:mmini,mmini,192.168.11.1"
         "id:ihrachyshka-mlt,ihrachyshka-mlt,192.168.11.2"
         "id:mair,mair,192.168.11.3"
+        "id:frame,frame,192.168.11.4"
 
         #---- lab ----
         "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
