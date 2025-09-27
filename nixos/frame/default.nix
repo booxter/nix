@@ -15,4 +15,10 @@
       pskRaw = "ext:psk_booxter";
     };
   };
+
+  services.displayManager.gdm = {
+    enable = true;
+    wayland = true;
+  };
+  programs.hyprland.enable = true;
 }

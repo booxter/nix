@@ -10,6 +10,7 @@
 }:
 let
   inherit (pkgs.stdenv) isDarwin;
+  inherit (pkgs.stdenv) isLinux;
 in
 {
   imports = [
@@ -24,12 +25,16 @@ in
     ./_mixins/git-sync
     ./_mixins/ide-headless
   ]
-  ++ lib.optionals isDesktop [
+  ++ lib.optionals (isDesktop && isDarwin) [
     ./_mixins/aerospace
     ./_mixins/jankyborders
     ./_mixins/sketchybar
-
     ./_mixins/copy-apps
+  ]
+  ++ lib.optionals (isDesktop && isLinux) [
+    ./_mixins/hyprland
+  ]
+  ++ lib.optionals isDesktop [
     ./_mixins/email
     ./_mixins/fonts
     ./_mixins/ide
