@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   hostname,
   platform,
   stateVersion,
@@ -27,4 +28,8 @@ in
   networking.dhcpcd.extraConfig = ''
     clientid ${hostname}
   '';
+
+  environment.systemPackages = with pkgs; [
+    pciutils
+  ];
 }
