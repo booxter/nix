@@ -184,6 +184,7 @@
               inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
               ({ ... }: {
                 services.fwupd.enable = true;
+                hardware.enableRedistributableFirmware = true;
               })
             ];
           };
