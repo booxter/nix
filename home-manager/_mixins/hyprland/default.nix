@@ -5,5 +5,10 @@ in {
     enable = true;
     xwayland.enable = true;
     systemd.enable = true;
+    settings = {
+      ecosystem = {
+        no_update_news = true;
+      };
+    };
   };
 }
