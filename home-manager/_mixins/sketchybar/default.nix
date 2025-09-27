@@ -1,9 +1,7 @@
-{
-  pkgs,
-  ...
-}:
-{
-  programs.sketchybar = {
+{ lib, pkgs, ... }: let
+  inherit (pkgs.stdenv.hostPlatform) isDarwin;
+in {
+  programs.sketchybar = lib.mkIf isDarwin {
     enable = true;
     config = {
       source = ./sketchybar;
