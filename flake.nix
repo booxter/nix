@@ -179,22 +179,6 @@
             password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
             hostname = frame;
             stateVersion = "25.11";
-
-            extraModules = [
-              inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
-              ({ ... }: {
-                services.fwupd.enable = true;
-                hardware.enableRedistributableFirmware = true;
-
-                networking.wireless.enable = true;
-                networking.wireless.secretsFile = "/etc/wireless.secrets";
-                networking.wireless.networks = {
-                  booxter = {
-                    pskRaw = "ext:psk_booxter";
-                  };
-                };
-              })
-            ];
           };
 
           # TODO: can I use mkVM here?
