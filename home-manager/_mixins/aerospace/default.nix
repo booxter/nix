@@ -30,7 +30,7 @@ let
     );
 in
 {
-  programs.aerospace = lib.mkIf isDarwin {
+  programs.aerospace = {
     enable = isDarwin;
     launchd.enable = true;
 
