@@ -4,6 +4,9 @@ let
   super = "MOD1";
 in
 {
+  home.packages = with pkgs; [
+    wl-clipboard
+  ];
   wayland.windowManager.hyprland = {
     enable = isLinux;
     xwayland.enable = true;
@@ -21,7 +24,6 @@ in
       animation = [
         "windows, 0"
       ];
-
 
       monitor = [
         "DP-2, 3840x2160@60, 0x0, 1.5"
