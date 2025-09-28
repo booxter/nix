@@ -11,6 +11,7 @@ in
     [
       wev
       wl-clipboard
+      wtype
     ]
   );
 
@@ -263,7 +264,7 @@ in
         "${super}, SPACE, exec, ${lib.getExe pkgs.wofi} --show drun"
 
         "${cmdButton}, C, exec, ${pkgs.wl-clipboard}/bin/wl-paste -p | ${pkgs.wl-clipboard}/bin/wl-copy"
-        "${cmdButton}, V, exec, ${pkgs.wl-clipboard}/bin/wl-paste"
+        "${cmdButton}, V, exec, ${lib.getExe pkgs.wtype} $(${pkgs.wl-clipboard}/bin/wl-paste)"
       ];
     };
   };
