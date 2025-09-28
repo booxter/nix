@@ -14,7 +14,6 @@
     ./${hostname}
     ./_mixins/defaults
     ./_mixins/fonts
-    ./_mixins/gnupg
     ./_mixins/homebrew
     ./_mixins/linux-builder
     ./_mixins/nix-gc
