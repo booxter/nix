@@ -11,6 +11,9 @@ in
 {
   programs.ssh = {
     knownHosts = {
+      "frame" = {
+        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICS86u2oMXjLCgXsM+g9EryrS6kUjWEWVHAYe0AaBjs7";
+      };
       "mmini" = {
         publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII8s28KbVXwhV4K5c5WDd6adK5wSSjyT7EWLqkF1VhQf";
       };
@@ -58,16 +61,17 @@ in
         "big-parallel"
         "kvm"
       ];
-      toBuilder = n: {
-        hostName = toBuilderName n;
+      builderSpeedFactor = 100; # prefer these builders; higher the better
+      toBuilder = speedFactor: hostName: {
+        inherit hostName speedFactor;
         system = "x86_64-linux";
         protocol = "ssh-ng";
         maxJobs = 4;
-        speedFactor = 100; # prefer these builders; higher the better
         supportedFeatures = features;
       };
     in
-    (map toBuilder (lib.range 1 3))
+    (map (toBuilder builderSpeedFactor) (map toBuilderName (lib.range 1 3)))
+    ++ lib.optional (hostname != "frame") (toBuilder 200 "frame")
     ++ lib.optional (hostname != "mmini") {
       hostName = "mmini";
       systems = [

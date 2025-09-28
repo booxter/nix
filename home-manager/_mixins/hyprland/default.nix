@@ -4,13 +4,13 @@ let
   super = "MOD1";
 in
 {
-  home.packages = with pkgs; [
+  home.packages = lib.mkIf isLinux (with pkgs; [
     wl-clipboard
-  ];
+  ]);
 
   # TODO: rename module?
   gtk = {
-    enable = true;
+    enable = isLinux;
 
     iconTheme = {
       name = "Papirus-Dark";
@@ -43,7 +43,7 @@ in
   home.sessionVariables.GTK_THEME = "palenight";
 
   programs.waybar = {
-    enable = true;
+    enable = isLinux;
     settings = {
       mainBar = {
         layer = "top";
