@@ -111,16 +111,16 @@ in
         "DP-2, 3840x2160@60, 0x0, 1.5"
 
         # use lower res to accommodate junky kvm hdmi flickering
-        "HDMI-A-1, 1920x1080@60, 1920x0, 1"
+        "HDMI-A-1, 1920x1080@60, auto-right, 1"
       ];
 
       workspace = [
-        "1, DP-2"
-        "2, DP-2"
-        "3, DP-2"
-        "4, DP-2"
-        "5, HDMI-A-1"
-        "6, HDMI-A-1"
+        "1, monitor:DP-2"
+        "2, monitor:DP-2"
+        "3, monitor:DP-2"
+        "4, monitor:DP-2"
+        "5, monitor:HDMI-A-1"
+        "6, monitor:HDMI-A-1"
       ];
 
       bind = [
