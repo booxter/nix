@@ -187,9 +187,9 @@ in
         no_update_news = true;
       };
 
-      animation = [
-        "windows, 0"
-      ];
+      animations = {
+        enabled = 0;
+      };
 
       monitor = [
         "DP-2, 3840x2160@60, 0x0, 1.5"
