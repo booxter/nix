@@ -3,6 +3,7 @@
 let
   inherit (pkgs.stdenv.hostPlatform) isLinux;
   super = "MOD1";
+  cmdButton = "MOD4";
 in
 {
   home.packages = lib.mkIf isLinux (
@@ -258,6 +259,9 @@ in
         "${super}, Return, exec, ${lib.getExe pkgs.kitty}"
         "${super}, grave, exec, ${pkgs.kitty}/bin/kitten quick-access-terminal"
         "${super}, SPACE, exec, ${lib.getExe pkgs.wofi} --show drun"
+
+        "${cmdButton}, C, exec, ${pkgs.wl-clipboard}/bin/wl-paste -p | ${pkgs.wl-clipboard}/bin/wl-copy"
+        "${cmdButton}, V, exec, ${pkgs.wl-clipboard}/bin/wl-paste"
       ];
     };
   };
