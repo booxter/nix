@@ -44,6 +44,7 @@ in
       lib.concatStringsSep "\n" (
         map toHost (
           [
+            "frame"
             "mmini"
             "mair"
           ]
