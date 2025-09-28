@@ -22,8 +22,11 @@ in
         "windows, 0"
       ];
 
+
       monitor = [
         "DP-2, 3840x2160@60, 0x0, 1.5"
+
+        # use lower res to accommodate junky kvm hdmi flickering
         "HDMI-A-1, 1920x1080@60, 1920x0, 1"
       ];
 
