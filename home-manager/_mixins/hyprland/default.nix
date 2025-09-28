@@ -1,3 +1,4 @@
+# TODO: refactor the module
 { lib, pkgs, ... }:
 let
   inherit (pkgs.stdenv.hostPlatform) isLinux;
@@ -202,6 +203,23 @@ in
         "5, monitor:HDMI-A-1"
         "6, monitor:HDMI-A-1"
       ];
+
+      input =
+        let
+          natural_scroll = true;
+        in
+        {
+          inherit natural_scroll;
+          kb_layout = "us";
+
+          repeat_delay = 100;
+
+          touchpad = {
+            inherit natural_scroll;
+            disable_while_typing = true;
+            tap-to-click = true;
+          };
+        };
 
       bind = [
         "${super}, H, movefocus, l"
