@@ -42,6 +42,48 @@ in
 
   home.sessionVariables.GTK_THEME = "palenight";
 
+  programs.waybar = {
+    enable = true;
+    settings = {
+      mainBar = {
+        layer = "top";
+        position = "top";
+        height = 25;
+        modules-left = [ "hyprland/workspaces" ];
+        modules-right = [ "clock" ];
+        "hyprland/workspaces" = {
+          format = "{name} : {icon}";
+          on-click = "activate";
+          disable-scroll = true;
+          all-outputs = true;
+          sort-by-number = true;
+          format-icons = {
+            "1" = "";
+            "2" = "";
+            "3" = "";
+            "4" = "";
+            "5" = "";
+            active = "";
+            default = "";
+          };
+          persistent-workspaces = {
+            "Virtual-1" = [
+              1
+              2
+              3
+              4
+              5
+              6
+            ];
+          };
+        };
+        clock = {
+          format = "{:%H:%M}";
+        };
+      };
+    };
+  };
+
   wayland.windowManager.hyprland = {
     enable = isLinux;
     xwayland.enable = true;
@@ -52,6 +94,11 @@ in
         gaps_out = 2;
         "col.active_border" = "0xffFF0000";
       };
+
+      exec-once = [
+        "waybar"
+      ];
+
       ecosystem = {
         no_update_news = true;
       };
@@ -65,6 +112,15 @@ in
 
         # use lower res to accommodate junky kvm hdmi flickering
         "HDMI-A-1, 1920x1080@60, 1920x0, 1"
+      ];
+
+      workspace = [
+        "1, DP-2"
+        "2, DP-2"
+        "3, DP-2"
+        "4, DP-2"
+        "5, HDMI-A-1"
+        "6, HDMI-A-1"
       ];
 
       bind = [
