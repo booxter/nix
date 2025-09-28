@@ -52,19 +52,27 @@ in
         modules-left = [ "hyprland/workspaces" ];
         modules-right = [ "clock" ];
         "hyprland/workspaces" = {
-          format = "{name} : {icon}";
           on-click = "activate";
           disable-scroll = true;
           all-outputs = true;
-          sort-by-number = true;
+          show-special = true;
+          active-only = false;
+          format = "{name}:{icon}";
           format-icons = {
             "1" = "";
             "2" = "";
             "3" = "";
             "4" = "";
             "5" = "";
+            "6" = "";
             active = "";
             default = "";
+            empty = "";
+            visible = "";
+          };
+          persistent-workspaces = {
+            "*" = [ "1" "2" "3" "4" ];
+            "HDMI-A-1" = [ "5" "6" ];
           };
         };
         clock = {
