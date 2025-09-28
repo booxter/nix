@@ -25,6 +25,8 @@ in
   nix.gc.dates = "Mon, 03:15";
   nix.optimise.dates = [ "Mon, 04:15" ];
 
+  time.timeZone = "America/New_York";
+
   networking.dhcpcd.extraConfig = ''
     clientid ${hostname}
   '';
