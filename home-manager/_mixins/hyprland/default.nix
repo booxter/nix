@@ -9,6 +9,7 @@ in
   home.packages = lib.mkIf isLinux (
     with pkgs;
     [
+      wev
       wl-clipboard
     ]
   );
