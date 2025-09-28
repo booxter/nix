@@ -11,6 +11,33 @@ in
     ]
   );
 
+  services.hypridle = {
+    enable = isLinux;
+    settings =
+      let
+        hyprlock = lib.getExe pkgs.hyprlock;
+      in
+      {
+        general = {
+          after_sleep_cmd = "${hyprlock} dispatch dpms on";
+          ignore_dbus_inhibit = false;
+          lock_cmd = hyprlock;
+        };
+
+        listener = [
+          {
+            timeout = 300;
+            on-timeout = hyprlock;
+          }
+          {
+            timeout = 900;
+            on-timeout = "${hyprlock} dispatch dpms off";
+            on-resume = "${hyprlock} dispatch dpms on";
+          }
+        ];
+      };
+  };
+
   programs.hyprlock = {
     enable = isLinux;
     settings = {
