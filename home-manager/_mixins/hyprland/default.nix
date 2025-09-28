@@ -216,7 +216,7 @@ in
           kb_layout = "us";
 
           repeat_delay = 200;
-          repeat_rate = 30;
+          repeat_rate = 20;
 
           touchpad = {
             inherit natural_scroll;
