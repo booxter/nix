@@ -1,5 +1,6 @@
-{ lib, pkgs, ... }:
-{
+{ lib, pkgs, ... }: let
+  inherit (pkgs.stdenv.hostPlatform) isDarwin;
+in {
   programs.firefox = {
     enable = true;
     nativeMessagingHosts = [
@@ -126,6 +127,6 @@
   };
 
   home.sessionVariables = {
-    BROWSER = "open";
+    BROWSER = if isDarwin then "open" else "xdg-open";
   };
 }
