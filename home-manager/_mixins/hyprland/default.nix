@@ -260,6 +260,9 @@ in
         "${super}_SHIFT, 5, movetoworkspacesilent, 5"
         "${super}_SHIFT, 6, movetoworkspacesilent, 6"
 
+        "${super}, Q, killactive"
+        "${super}_SHIFT, Q, exit"
+
         "${super}, Return, exec, ${lib.getExe pkgs.kitty}"
         "${super}, grave, exec, ${pkgs.kitty}/bin/kitten quick-access-terminal"
         "${super}, SPACE, exec, ${lib.getExe pkgs.wofi} --show drun"
