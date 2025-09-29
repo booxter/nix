@@ -20,6 +20,7 @@ in
     settings =
       let
         hyprlock = lib.getExe pkgs.hyprlock;
+        hyprctl = "${pkgs.hyprland}/bin/hyprctl";
       in
       {
         general = {
@@ -34,9 +35,9 @@ in
             on-timeout = hyprlock;
           }
           {
-            timeout = 900;
-            on-timeout = "${hyprlock} dispatch dpms off";
-            on-resume = "${hyprlock} dispatch dpms on";
+            timeout = 120;
+            on-timeout = "${hyprctl} dispatch dpms off";
+            on-resume = "${hyprctl} dispatch dpms on";
           }
         ];
       };
