@@ -41,8 +41,8 @@
     # https://github.com/NixOS/nixpkgs/pull/450512
     nixpkgs-ruby-nokogiri.url = "github:booxter/nixpkgs/ruby-use-llvm19-stdenv-nokogiri-build-fix";
 
-    # https://github.com/NixOS/nixpkgs/pull/449689
-    nixpkgs-gtk3.url = "github:matteo-pacini/nixpkgs/gtk3-clang-fixes-2";
+    # https://github.com/NixOS/nixpkgs/pull/449689, rebased to master
+    nixpkgs-gtk3.url = "github:booxter/nixpkgs/gtk3-master";
   };
 
   outputs =
