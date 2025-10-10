@@ -9,6 +9,7 @@
       "element"
       "openvpn-connect"
       "sf-symbols"
+      "spotify" # spotify can't keep its shit together with hashes
       "todoist"
       "wireshark-chmodbpf"
     ];

@@ -100,6 +100,7 @@
     ack
     act
     aider-chat
+    codex
     curl
     delve # go debugger
     fd

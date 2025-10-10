@@ -30,8 +30,6 @@
 
     # some dependencies
     extraPackages = with pkgs; [
-      ansible
-      ansible-lint
       golangci-lint
       ripgrep
       vscode-extensions.vadimcn.vscode-lldb.adapter
@@ -47,7 +45,6 @@
       lsp = {
         enable = true;
         servers = {
-          ansiblels.enable = true;
           # disable until shellcheck no longer ooms:
           # https://github.com/koalaman/shellcheck/issues/2721
           # bashls.enable = true;

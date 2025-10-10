@@ -19,7 +19,6 @@ in
     ./_mixins/cli-tools
     ./_mixins/git-sync
     ./_mixins/gnupg
-    ./_mixins/ide-headless
     ./_mixins/nixvim
     ./_mixins/scm
     ./_mixins/ssh
@@ -32,7 +31,6 @@ in
     ./_mixins/firefox
     ./_mixins/fonts
     ./_mixins/hyprland
-    ./_mixins/ide
     ./_mixins/jankyborders
     ./_mixins/kitty
     ./_mixins/sketchybar
