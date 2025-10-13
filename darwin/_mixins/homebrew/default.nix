@@ -10,7 +10,7 @@
       "openvpn-connect"
       "sf-symbols"
       "spotify" # spotify can't keep its shit together with hashes
-      "todoist"
+      "todoist-app"
       "wireshark-chmodbpf"
     ];
   };
