@@ -37,12 +37,6 @@
 
     # https://github.com/NixOS/nixpkgs/pull/417062
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
-
-    # https://github.com/NixOS/nixpkgs/pull/450512
-    nixpkgs-ruby-nokogiri.url = "github:booxter/nixpkgs/ruby-use-llvm19-stdenv-nokogiri-build-fix";
-
-    # https://github.com/NixOS/nixpkgs/pull/449689
-    nixpkgs-gtk3.url = "github:matteo-pacini/nixpkgs/gtk3-clang-fixes-2";
   };
 
   outputs =

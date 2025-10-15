@@ -1,10 +1,13 @@
 {
+  config,
+  lib,
   pkgs,
   ...
 }:
 {
   programs.spotify-player.enable = true;
-  home.packages = [
-    pkgs.spot
+  home.packages = with pkgs; [
+    spot
+    spotify
   ];
 }

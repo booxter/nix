@@ -25,14 +25,10 @@
             helm-unittest
           ];
         })
-        nodejs # needed by cursor for remote access
         vault-bin
       ]
       ++ lib.optionals isDesktop [
-        code-cursor
         slack
       ]
     );
-
-  programs.claude-code.enable = true;
 }
