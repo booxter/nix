@@ -342,16 +342,16 @@
     },
     "nixpkgs-gtk3": {
       "locked": {
-        "lastModified": 1760130103,
-        "narHash": "sha256-w9vkyqAFomq6l6KcASufFuF9NUB4KJME+8TzdI1+9Fg=",
-        "owner": "booxter",
+        "lastModified": 1760024740,
+        "narHash": "sha256-3+uIqCOFlD5gtGF9qPPhTBPm/CMUCu0l1deRXn7PZzo=",
+        "owner": "matteo-pacini",
         "repo": "nixpkgs",
-        "rev": "36165bca545943366c80d965ef52e896417186f0",
+        "rev": "d675d621d2d0a512b12cd393987408b07ae81b08",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "gtk3-master",
+        "owner": "matteo-pacini",
+        "ref": "gtk3-clang-fixes-2",
         "repo": "nixpkgs",
         "type": "github"
       }
