@@ -28,7 +28,10 @@
         vault-bin
       ]
       ++ lib.optionals isDesktop [
+        code-cursor
         slack
       ]
-    );
+      );
+
+  programs.claude-code.enable = true;
 }
