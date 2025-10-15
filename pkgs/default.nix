@@ -1,7 +1,6 @@
 # You can build them using 'nix build .#example'
 pkgs: {
   # private
-  spot = pkgs.callPackage ./spot { };
   my-page = pkgs.callPackage ./page { };
 
   # https://github.com/NixOS/nixpkgs/pull/432971

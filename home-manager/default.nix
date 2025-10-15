@@ -36,7 +36,6 @@ in
     ./_mixins/jankyborders
     ./_mixins/kitty
     ./_mixins/sketchybar
-    ./_mixins/spotify
   ]
   ++ lib.optionals isWork [
     ./_mixins/krew
