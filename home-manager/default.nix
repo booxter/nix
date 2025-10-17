@@ -26,6 +26,7 @@ in
     ./_mixins/tmux
   ]
   ++ lib.optionals isDesktop [
+    "${toString inputs.randy-config}/modules/by-name/co/copy-apps/module.nix"
     ./_mixins/aerospace
     ./_mixins/email
     ./_mixins/firefox

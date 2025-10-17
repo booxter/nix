@@ -37,6 +37,8 @@
 
     # https://github.com/NixOS/nixpkgs/pull/417062
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
+
+    randy-config.url = "github:reckenrode/nixos-configs";
   };
 
   outputs =
