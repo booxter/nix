@@ -1,4 +1,9 @@
-{ inputs, lib, pkgs, ... }:
+{
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
 let
   movies = {
     device = "nas-lab:/volume2/Movies";
@@ -33,31 +38,33 @@ in
       };
     };
 
-    users = let
-      hashedPassword = "$PBKDF2-SHA512$iterations=210000$535A9D75492726EB4D49339E800FC209$A870512E4964ECC260389C9864CEA085FD501945B7526D7F813560BFCA5A728E8E7522BA597C646D339F0193E0CFF8107416DB5EE234E69B6D0AC441A77B4079";
-    in {
-      Admin = {
-        mutable = false;
-        inherit hashedPassword;
-        permissions = {
-          isAdministrator = true;
+    users =
+      let
+        hashedPassword = "$PBKDF2-SHA512$iterations=210000$535A9D75492726EB4D49339E800FC209$A870512E4964ECC260389C9864CEA085FD501945B7526D7F813560BFCA5A728E8E7522BA597C646D339F0193E0CFF8107416DB5EE234E69B6D0AC441A77B4079";
+      in
+      {
+        Admin = {
+          mutable = false;
+          inherit hashedPassword;
+          permissions = {
+            isAdministrator = true;
+          };
+        };
+        Ihar = {
+          mutable = false;
+          inherit hashedPassword;
+          permissions = {
+            isAdministrator = true;
+          };
+        };
+        Kasia = {
+          mutable = false;
+          inherit hashedPassword;
+          permissions = {
+            isAdministrator = false;
+          };
         };
       };
-      Ihar = {
-        mutable = false;
-        inherit hashedPassword;
-        permissions = {
-          isAdministrator = true;
-        };
-      };
-      Kasia = {
-        mutable = false;
-        inherit hashedPassword;
-        permissions = {
-          isAdministrator = false;
-        };
-      };
-    };
   };
 
   # NFS mounts with media
