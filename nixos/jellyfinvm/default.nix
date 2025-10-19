@@ -1,5 +1,6 @@
 {
   inputs,
+  lib,
   pkgs,
   ...
 }:
@@ -13,10 +14,6 @@ in
   imports = [
     inputs.declarative-jellyfin.nixosModules.default
   ];
-
-  # Install amdgpu firmware for GPU passthru
-  services.fwupd.enable = true;
-  hardware.enableRedistributableFirmware = true;
 
   services.declarative-jellyfin = {
     enable = true;
