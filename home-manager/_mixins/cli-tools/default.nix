@@ -119,6 +119,7 @@
     podman
     pre-commit
     ramalama
+    tailscale
     yq-go
     zstd
 

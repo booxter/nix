@@ -43,6 +43,10 @@
     dhcpClientId = hostname;
   };
 
+  services.tailscale = {
+    enable = !isWork;
+  };
+
   system = {
     activationScripts.postActivation.text = ''
       echo "Do not sleep when on AC power."
