@@ -2,6 +2,7 @@
   pkgs,
   username,
   hostname,
+  isWork,
   ...
 }:
 {
@@ -13,6 +14,10 @@
   ];
 
   networking.hostName = hostname;
+
+  services.tailscale = {
+    enable = !isWork;
+  };
 
   # Some packages that I'd like to have available on all my machines.
   environment.systemPackages = with pkgs; [
