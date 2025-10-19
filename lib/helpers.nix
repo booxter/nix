@@ -175,7 +175,7 @@ rec {
               {
                 virtualisation.vmVariant.virtualisation = {
                   # limit cores to avoid overloading host
-                  cores = min cores 10;
+                  cores = min cores 8;
                   memorySize = memorySize * 1024;
                   diskSize = diskSize * 1024;
 
@@ -206,9 +206,6 @@ rec {
                       bridge = "vmbr0";
                     }
                   ];
-                  # TODO: disable novnc clipboard because it makes LM
-                  # impossible. Proxmox-nixos doesn't support this yet.
-                  # vga.clipboard = ...;
                   scsi = [ { file = "local:${toString diskSize}"; } ];
                   onboot = true;
                 };

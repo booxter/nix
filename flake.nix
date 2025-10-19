@@ -38,6 +38,8 @@
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
 
     randy-config.url = "github:reckenrode/nixos-configs";
+
+    declarative-jellyfin.url = "github:Sveske-Juice/declarative-jellyfin";
   };
 
   outputs =
@@ -103,6 +105,7 @@
             args@{
               name,
               stateVersion ? "25.11",
+              platform ? "aarch64-linux",
               ...
             }:
             let
@@ -114,9 +117,8 @@
               "${localName}" = helpers.mkVM (
                 args
                 // {
-                  inherit stateVersion virtPlatform;
+                  inherit platform stateVersion virtPlatform;
                   hostname = localName;
-                  platform = "aarch64-linux";
                 }
               );
 
