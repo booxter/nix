@@ -22,6 +22,11 @@
           path = "${homeDir}/notes";
           interval = 300;
         };
+        vault = {
+          uri = "git+ssh://booxter@github.com:booxter/vault.git";
+          path = "${homeDir}/vault";
+          interval = 300;
+        };
         gmailctl-config = {
           uri = "git+ssh://booxter@github.com:booxter/gmailctl-private-config.git";
           path = "${homeDir}/.gmailctl";
@@ -43,6 +48,10 @@
       notes = git-sync-repo {
         gh-repo = "booxter/notes";
         destdir = "~/notes";
+      };
+      vault = git-sync-repo {
+        gh-repo = "booxter/vault";
+        destdir = "~/vault";
       };
       pass = git-sync-repo {
         gh-repo = "booxter/pass";
