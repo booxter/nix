@@ -31,7 +31,7 @@
         code-cursor
         slack
       ]
-      );
+    );
 
   programs.claude-code.enable = true;
 }
