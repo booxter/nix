@@ -64,6 +64,13 @@ in
             isAdministrator = false;
           };
         };
+        Vatslau = {
+          mutable = false;
+          inherit hashedPassword;
+          permissions = {
+            isAdministrator = false;
+          };
+        };
       };
   };
 
