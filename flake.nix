@@ -284,6 +284,10 @@
           sshPort = 10001;
         }
         // VM {
+          name = "test";
+          withHome = false;
+        }
+        // VM {
           name = "linuxui";
           sshPort = 10002;
           memorySize = 8;
