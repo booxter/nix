@@ -3,10 +3,14 @@
   pkgs,
   outputs,
   username,
+  isWork,
   ...
 }:
 {
-  nix = {
+  nix = let
+    cacheUrl = "http://prox-cachevm:8080/default/";
+    cacheKey = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
+  in {
     package = lib.mkForce pkgs.lix;
     settings = {
       experimental-features = "nix-command flakes";
@@ -14,14 +18,10 @@
         "@admin"
         username
       ];
-
+    } // lib.optionalAttrs (!isWork) {
       # attic
-      trusted-substituters = [
-        "http://prox-cachevm:8080/default/"
-      ];
-      trusted-public-keys = [
-        "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ="
-      ];
+      substituters = [ cacheUrl ];
+      trusted-public-keys = [ cacheKey ];
     };
   };
 
