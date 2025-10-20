@@ -318,6 +318,8 @@
           name = "cache";
           sshPort = 10004;
           withHome = false;
+          cores = 16;
+          memorySize = 16;
           diskSize = 50; # actual cache is on NFS
         }
         // VM {
