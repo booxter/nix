@@ -32,7 +32,6 @@ in
     ./_mixins/firefox
     ./_mixins/fonts
     ./_mixins/hyprland
-    ./_mixins/ide
     ./_mixins/jankyborders
     ./_mixins/kitty
     ./_mixins/sketchybar
