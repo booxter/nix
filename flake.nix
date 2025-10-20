@@ -40,6 +40,8 @@
     randy-config.url = "github:reckenrode/nixos-configs";
 
     declarative-jellyfin.url = "github:Sveske-Juice/declarative-jellyfin";
+
+    attic.url = "github:zhaofengli/attic";
   };
 
   outputs =
@@ -324,6 +326,12 @@
           memorySize = 32;
           sshPort = 10003;
           withHome = false;
+        }
+        // VM {
+          name = "cache";
+          sshPort = 10004;
+          withHome = false;
+          diskSize = 50; # actual cache is on NFS
         }
         // VM {
           name = piHostname;

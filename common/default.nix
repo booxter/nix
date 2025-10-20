@@ -17,6 +17,7 @@
 
   services.tailscale = {
     enable = !isWork;
+    openFirewall = true;
   };
 
   # Some packages that I'd like to have available on all my machines.
