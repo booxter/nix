@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   username,
   hostname,
@@ -57,7 +58,8 @@
   };
 
   programs.zsh.enable = true;
-
+}
+// lib.optionalAttrs (!isWork) {
   # TODO: move elsewhere
   # TODO: Adopt secrets management
   # /root/.config/attic/config.toml:
