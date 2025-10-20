@@ -14,6 +14,14 @@
         "@admin"
         username
       ];
+
+      # attic
+      trusted-substituters = [
+        "http://prox-cachevm:8080/default/"
+      ];
+      trusted-public-keys = [
+        "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ="
+      ];
     };
   };
 

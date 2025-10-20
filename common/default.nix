@@ -58,17 +58,6 @@
   };
 
   programs.zsh.enable = true;
-
-  nix = {
-    settings = {
-      extra-substituters = [
-        "http://prox-cachevm:8080/default/"
-      ];
-      extra-trusted-public-keys = [
-        "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ="
-      ];
-    };
-  };
 }
 // lib.optionalAttrs (!isWork) {
   # TODO: move elsewhere
