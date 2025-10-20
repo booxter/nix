@@ -14,11 +14,7 @@
   ];
 
   networking.hostName = hostname;
-
-  services.tailscale = {
-    enable = !isWork;
-    openFirewall = true;
-  };
+  services.tailscale.enable = !isWork;
 
   # Some packages that I'd like to have available on all my machines.
   environment.systemPackages = with pkgs; [
@@ -61,4 +57,18 @@
   };
 
   programs.zsh.enable = true;
+
+  # TODO: move elsewhere
+  # TODO: Adopt secrets management
+  # /root/.config/attic/config.toml:
+
+  # default-server = "local"
+  # [servers.local]
+  # endpoint = "http://prox-cachevm:8080"
+  # token = "PASTE_PUSH_TOKEN_HERE"
+
+  # Hook script
+  nix.settings.post-build-hook = "${pkgs.writeShellScriptBin "attic-push-hook" ''
+    exec ${pkgs.attic-client}/bin/attic push default $OUT_PATHS
+  ''}/bin/attic-push-hook";
 }

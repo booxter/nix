@@ -18,7 +18,6 @@
       pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsKrunkit = getPkgs inputs.nixpkgs-krunkit;
       pkgsLldb = getPkgs inputs.debugserver;
-      pkgsAttic = getPkgs inputs.attic;
     in
     {
       # https://github.com/NixOS/nixpkgs/pull/374846

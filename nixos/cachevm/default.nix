@@ -5,7 +5,8 @@ let
     device = "nas-lab:/volume2/nix-cache";
     fsType = "nfs";
   };
-in {
+in
+{
   imports = [
     inputs.attic.nixosModules.atticd
   ];
