@@ -31,4 +31,5 @@ in {
     mode = "0755";
   };
   systemd.tmpfiles.rules = [ "f /etc/nix/attic-push-hook.sh 0755 root root -" ];
+  nix.settings.post-build-hook = "/etc/nix/attic-push-hook.sh";
 }
