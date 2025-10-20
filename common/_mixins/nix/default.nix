@@ -1,6 +1,5 @@
 {
   lib,
-  pkgs,
   outputs,
   username,
   isWork,
@@ -11,7 +10,6 @@
     cacheUrl = "http://prox-cachevm:8080/default/";
     cacheKey = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
   in {
-    package = lib.mkForce pkgs.lix;
     settings = {
       experimental-features = "nix-command flakes";
       trusted-users = [
