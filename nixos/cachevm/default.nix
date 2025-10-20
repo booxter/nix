@@ -55,7 +55,10 @@ in {
         max-size = 256 * 1024; # 256 KiB
       };
 
-      storage.path = nfsPath;
+      storage = {
+        type = "local";
+        path = nfsPath;
+      };
     };
   };
 }
