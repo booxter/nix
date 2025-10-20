@@ -285,11 +285,6 @@
           sshPort = 10001;
         }
         // VM {
-          name = "test";
-          withHome = false;
-          proxNode = "prx2-lab";
-        }
-        // VM {
           name = "linuxui";
           sshPort = 10002;
           memorySize = 8;
