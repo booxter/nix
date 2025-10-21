@@ -18,8 +18,14 @@
       ];
     } // lib.optionalAttrs (!isWork) {
       # attic
-      substituters = [ cacheUrl ];
-      trusted-public-keys = [ cacheKey ];
+      substituters = [
+        "https://cache.nixos.org/"
+        cacheUrl
+      ];
+      trusted-public-keys = [
+        "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+        cacheKey
+      ];
     };
   };
 
