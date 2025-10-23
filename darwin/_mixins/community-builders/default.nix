@@ -1,4 +1,9 @@
-{ pkgs, username, ... }:
+{
+  config,
+  pkgs,
+  username,
+  ...
+}:
 {
   programs.ssh = {
     knownHosts = {
@@ -14,7 +19,7 @@
     };
     extraConfig =
       let
-        communityBuilderIdentityFile = "/Users/${username}/.ssh/nix-community-builders";
+        communityBuilderIdentityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
         user = "booxter";
       in
       ''

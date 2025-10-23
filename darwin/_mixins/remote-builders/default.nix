@@ -1,5 +1,6 @@
 {
   lib,
+  config,
   pkgs,
   username,
   hostname,
@@ -32,7 +33,7 @@ in
     };
     extraConfig =
       let
-        identityFile = "/Users/${username}/.ssh/id_ed25519";
+        identityFile = "${config.users.users.${username}.home}/.ssh/id_ed25519";
         user = "ihrachyshka";
         toHost = hostname: ''
           Host ${hostname}
