@@ -5,15 +5,16 @@
   hostname,
   isWork,
   ...
-}:
-{
+}: let
+  canUseBuilders = !isWork && (hostname == "mair" || hostname == "mmini" || hostname == "frame");
+in  {
   imports = [
     ./_mixins/nix
     ./_mixins/nix-gc
     ./_mixins/ssh
     ./_mixins/terminfo
   ]
-  ++ lib.optionals (!isWork) [
+  ++ lib.optionals canUseBuilders [
     ./_mixins/community-builders
     ./_mixins/remote-builders
   ];
