@@ -59,6 +59,7 @@ in  {
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan" # mmini
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHt25mSiJLQjx2JECMuhTZEV6rlrOYk3CT2cUEdXAoYs ihrachyshka@ihrachyshka-mlt" # mlt
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINBhNnNyDsIzKgNgiIfdHp4LORT+elGraPwcueuiRjk3 ihrachyshka@mair" # mair
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGjHlS1RWVYGAhE9SpQMExN0iSfeRdPgqW7ltOIUf49g ihrachyshka@frame" # frame
     ];
   };
 
