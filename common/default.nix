@@ -12,6 +12,10 @@
     ./_mixins/nix-gc
     ./_mixins/ssh
     ./_mixins/terminfo
+  ]
+  ++ lib.optionals (!isWork) [
+    ./_mixins/community-builders
+    ./_mixins/remote-builders
   ];
 
   networking.hostName = hostname;

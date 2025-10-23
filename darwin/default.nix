@@ -21,8 +21,6 @@
   ]
   ++ lib.optionals (!isWork) [
     ./_mixins/browser
-    ./_mixins/community-builders
-    ./_mixins/remote-builders
   ];
 
   nixpkgs.hostPlatform = lib.mkDefault platform;
