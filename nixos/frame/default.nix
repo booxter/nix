@@ -8,6 +8,10 @@
   services.fwupd.enable = true;
   hardware.enableRedistributableFirmware = true;
 
+  # Attempt to fix DNS resolution: https://github.com/tailscale/tailscale/issues/4254
+  # TODO: consider for other nixos machines
+  services.resolved.enable = true;
+
   networking.wireless.enable = true;
   networking.wireless.secretsFile = "/etc/wireless.secrets";
   networking.wireless.networks = {

@@ -5,9 +5,11 @@
   hostname,
   isWork,
   ...
-}: let
+}:
+let
   canUseBuilders = !isWork && (hostname == "mair" || hostname == "mmini" || hostname == "frame");
-in  {
+in
+{
   imports = [
     ./_mixins/nix
     ./_mixins/nix-gc
