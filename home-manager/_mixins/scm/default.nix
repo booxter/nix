@@ -16,9 +16,6 @@ in
     # Use regular git on macos for now, due to: https://github.com/NixOS/nixpkgs/issues/208951
     package = if isDarwin then pkgs.git else pkgs.gitAndTools.gitFull;
 
-    userEmail = email;
-    userName = fullName;
-
     ignores = [
       "*.swp"
     ];
@@ -29,7 +26,12 @@ in
       }
     ];
 
-    extraConfig = {
+    settings = {
+      user = {
+        inherit email;
+        name = fullName;
+      };
+
       # ovs/ovn
       pw = {
         server = "https://patchwork.ozlabs.org/api/1.2";
