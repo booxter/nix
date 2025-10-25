@@ -26,7 +26,6 @@ in
     ./_mixins/tmux
   ]
   ++ lib.optionals isDesktop [
-    "${toString inputs.randy-config}/modules/by-name/co/copy-apps/module.nix"
     ./_mixins/aerospace
     ./_mixins/email
     ./_mixins/firefox
@@ -52,6 +51,7 @@ in
   };
 
   programs.home-manager.enable = true; # let it manage itself
+  targets.darwin.copyApps.enable = true; # populate apps dir for Spotlight
 
   home.packages =
     with pkgs;

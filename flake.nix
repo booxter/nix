@@ -39,8 +39,6 @@
     # https://github.com/NixOS/nixpkgs/pull/417062
     nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
 
-    randy-config.url = "github:reckenrode/nixos-configs";
-
     declarative-jellyfin.url = "github:Sveske-Juice/declarative-jellyfin";
 
     attic.url = "github:zhaofengli/attic";
