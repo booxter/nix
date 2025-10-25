@@ -87,10 +87,13 @@ in
         *.dart merge=mergiraf
       ''}";
     };
+  };
 
-    # diff
-    diff-so-fancy.enable = true;
-    diff-so-fancy.markEmptyLines = true;
+  # diff
+  programs.diff-so-fancy = {
+    enable = true;
+    enableGitIntegration = true;
+    settings.markEmptyLines = true;
   };
 
   # GitHub client
