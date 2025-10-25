@@ -2,11 +2,15 @@
 {
   programs.ssh = {
     enable = true;
+    enableDefaultConfig = false; # deprecated; suppress warnings
+
     package = pkgs.openssh_gssapi;
 
-    # agent forwarding to remotes
-    forwardAgent = true;
-    addKeysToAgent = "yes";
+    matchBlocks."*" = {
+      # agent forwarding to remotes
+      forwardAgent = true;
+      addKeysToAgent = "yes";
+    };
 
     includes = [
       # local config
