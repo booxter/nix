@@ -1,5 +1,6 @@
 {
   lib,
+  pkgs,
   outputs,
   username,
   isWork,
@@ -12,6 +13,7 @@
       cacheKey = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
     in
     {
+      package = lib.mkForce pkgs.nixVersions.latest;
       settings = {
         experimental-features = "nix-command flakes";
         trusted-users = [
