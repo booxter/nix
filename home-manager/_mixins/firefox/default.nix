@@ -70,10 +70,10 @@ in
         "extensions.pocket.enabled" = false; # disable pocket, save links, send tabs
         "browser.vpn_promo.enabled" = false;
         "extensions.abuseReport.enabled" = false; # don't show 'report abuse' in extensions
-        "identity.fxaccounts.enabled" = false; # disable firefox login
-        "identity.fxaccounts.toolbar.enabled" = false;
-        "identity.fxaccounts.pairing.enabled" = false;
-        "identity.fxaccounts.commands.enabled" = false;
+        "identity.fxaccounts.enabled" = true; # disable firefox login
+        "identity.fxaccounts.toolbar.enabled" = true;
+        "identity.fxaccounts.pairing.enabled" = true;
+        "identity.fxaccounts.commands.enabled" = true;
         "browser.contentblocking.report.lockwise.enabled" = false; # don't use firefox password manager
         "browser.uitour.enabled" = false; # no tutorial please
         "browser.newtabpage.activity-stream.showSponsored" = false;
