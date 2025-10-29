@@ -157,6 +157,7 @@ in
     tig
 
     # for nix dev
+    nix-output-monitor
     nixpkgs-reviewFull
     nurl
   ];
