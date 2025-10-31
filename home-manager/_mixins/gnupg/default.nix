@@ -5,7 +5,7 @@
   };
   services.gpg-agent = {
     enable = true;
-    enableSshSupport = true;
+    enableSshSupport = false; # it's not 1:1 compatible and can mess output of `ssh-add -l`.
     enableZshIntegration = true;
     pinentry.package = pkgs.pinentry-tty;
   };
