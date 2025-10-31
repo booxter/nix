@@ -458,6 +458,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-ff-lto": {
+      "locked": {
+        "lastModified": 1761946061,
+        "narHash": "sha256-D3ic4oh7nzumsGwqc4hTjgoViZAOORxFRoHn6TGBd8o=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "ef079ae67dc2e5620b621bb939596afeae04b04f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "ff-lto",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-krunkit": {
       "locked": {
         "lastModified": 1757160575,
@@ -731,6 +747,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_5",
+        "nixpkgs-ff-lto": "nixpkgs-ff-lto",
         "nixpkgs-krunkit": "nixpkgs-krunkit",
         "nixpkgs-master": "nixpkgs-master",
         "nixvim": "nixvim",

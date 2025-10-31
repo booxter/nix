@@ -42,6 +42,8 @@
     declarative-jellyfin.url = "github:Sveske-Juice/declarative-jellyfin";
 
     attic.url = "github:zhaofengli/attic";
+
+    nixpkgs-ff-lto.url = "github:booxter/nixpkgs/ff-lto";
   };
 
   outputs =
