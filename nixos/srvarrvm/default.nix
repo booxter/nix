@@ -2,6 +2,7 @@
   lib,
   pkgs,
   inputs,
+  hostname,
   ...
 }:
 let
@@ -15,24 +16,16 @@ in
     inputs.nixarr.nixosModules.default
   ];
 
-  systemd.services.disable-offloads = {
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig.Type = "oneshot";
-    script = ''${pkgs.ethtool}/bin/ethtool -K eth0 tso off gso off gro off tx off || true'';
-  };
-
   # NFS mounts with media
-  #boot.supportedFilesystems = [ "nfs" ];
-  #services.rpcbind.enable = true;
+  boot.supportedFilesystems = [ "nfs" ];
+  services.rpcbind.enable = true;
 
   # local qemu vms override filesystems
   # TODO: move this special handling for FS to mkVM?
-  #fileSystems."/data/media" = media;
-  #virtualisation.vmVariant.virtualisation.fileSystems."/data/media" = media;
+  fileSystems."/data/media" = media;
+  virtualisation.vmVariant.virtualisation.fileSystems."/data/media" = media;
 
   services.tailscale.enable = lib.mkForce false;
-
-  #boot.kernelPackages = pkgs.linuxPackages_latest;
 
   nixarr = {
     enable = true;
@@ -46,24 +39,27 @@ in
       ];
     };
 
-    jellyfin.enable = true; # media server
     jellyseerr.enable = true; # requests
-    #prowlarr.enable = true; # indexer
-    #radarr.enable = true; # movies
+    prowlarr.enable = true; # indexer
+    radarr.enable = true; # movies
     #sonarr.enable = true; # tv shows
     #lidarr.enable = true; # music
-    #bazarr.enable = true; # subtitles
+    bazarr.enable = true; # subtitles
 
     # usenet
-    #sabnzbd = {
-    #  enable = true;
-    #  vpn.enable = true;
-    #};
+    sabnzbd = {
+      enable = true;
+      vpn.enable = true;
+    };
 
     # torrent
-    #transmission = {
-    #  enable = true;
-    #  #vpn.enable = true;
-    #};
+    transmission = {
+      enable = true;
+      vpn.enable = true;
+      peerPort = 45486;
+      extraSettings = {
+        rpc-host-whitelist = hostname;
+      };
+    };
   };
 }
