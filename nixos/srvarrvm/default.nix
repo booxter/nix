@@ -61,5 +61,80 @@ in
         rpc-host-whitelist = hostname;
       };
     };
+
+  };
+
+  services.glance = {
+    enable = true;
+    openFirewall = true;
+    settings = {
+      server.host = "0.0.0.0";
+      pages = [
+        {
+          name = "Startpage";
+          width = "slim";
+          hide-desktop-navigation = true;
+          center-vertically = true;
+          columns = [
+            {
+              size = "full";
+              widgets = [
+                {
+                  type = "search";
+                  autofocus = true;
+                }
+                {
+                  type = "monitor";
+                  cache = "1m";
+                  title = "Services";
+                  sites = [
+                    {
+                      title = "Jellyfin";
+                      url = "http://prox-jellyfinvm:8096/";
+                      icon = "si:jellyfin";
+                    }
+                    {
+                      title = "Jellyseerr";
+                      url = "http://prox-srvarrvm:5055/";
+                      icon = "si:jellyseerr";
+                    }
+                    {
+                      title = "Radarr";
+                      url = "http://prox-srvarrvm:7878/";
+                      icon = "si:radarr";
+                    }
+                    {
+                      title = "Bazarr";
+                      url = "http://prox-srvarrvm:6767/";
+                      icon = "si:bazarr";
+                    }
+                    {
+                      title = "Prowlarr";
+                      url = "http://prox-srvarrvm:9696/";
+                      icon = "si:prowlarr";
+                    }
+                    {
+                      title = "Transmission";
+                      url = "http://prox-srvarrvm:9091/";
+                      icon = "si:transmission";
+                    }
+                    {
+                      title = "SABNZB";
+                      url = "http://prox-srvarrvm:6336/";
+                      icon = "si:sabnzb";
+                    }
+                    {
+                      title = "NAS";
+                      url = "https://nas-lab:8001/portal";
+                      icon = "si:nas";
+                    }
+                  ];
+                }
+              ];
+            }
+          ];
+        }
+      ];
+    };
   };
 }
