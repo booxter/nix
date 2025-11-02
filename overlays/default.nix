@@ -15,7 +15,6 @@
         };
 
       pkgs = getPkgs inputs.nixpkgs;
-      pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsKrunkit = getPkgs inputs.nixpkgs-krunkit;
       pkgsLldb = getPkgs inputs.debugserver;
     in

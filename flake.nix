@@ -44,6 +44,9 @@
     attic.url = "github:zhaofengli/attic";
 
     nixpkgs-ff-lto.url = "github:booxter/nixpkgs/ff-lto";
+
+    nixarr.url = "github:rasmus-kirk/nixarr";
+    nixarr.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -323,6 +326,14 @@
           cores = 16;
           memorySize = 16;
           diskSize = 50; # actual cache is on NFS
+        }
+        // VM {
+          name = "srvarr";
+          platform = "x86_64-linux";
+          cores = 16;
+          memorySize = 32;
+          sshPort = 10005;
+          withHome = false;
         }
         // VM {
           name = piHostname;
