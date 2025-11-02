@@ -125,8 +125,9 @@ in
                     }
                     {
                       title = "NAS";
-                      url = "https://nas-lab:8001/portal";
+                      url = "https://nas-lab:8001/";
                       icon = "di:asustor";
+                      allow-insecure = true;
                     }
                   ];
                 }
