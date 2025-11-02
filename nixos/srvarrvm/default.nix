@@ -91,42 +91,42 @@ in
                     {
                       title = "Jellyfin";
                       url = "http://prox-jellyfinvm:8096/";
-                      icon = "si:jellyfin";
+                      icon = "sh:jellyfin";
                     }
                     {
                       title = "Jellyseerr";
                       url = "http://prox-srvarrvm:5055/";
-                      icon = "si:jellyseerr";
+                      icon = "sh:jellyseerr";
                     }
                     {
                       title = "Radarr";
                       url = "http://prox-srvarrvm:7878/";
-                      icon = "si:radarr";
+                      icon = "sh:radarr";
                     }
                     {
                       title = "Bazarr";
                       url = "http://prox-srvarrvm:6767/";
-                      icon = "si:bazarr";
+                      icon = "sh:bazarr";
                     }
                     {
                       title = "Prowlarr";
                       url = "http://prox-srvarrvm:9696/";
-                      icon = "si:prowlarr";
+                      icon = "sh:prowlarr";
                     }
                     {
                       title = "Transmission";
                       url = "http://prox-srvarrvm:9091/";
-                      icon = "si:transmission";
+                      icon = "sh:transmission";
                     }
                     {
                       title = "SABNZB";
                       url = "http://prox-srvarrvm:6336/";
-                      icon = "si:sabnzb";
+                      icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
                     }
                     {
                       title = "NAS";
                       url = "https://nas-lab:8001/portal";
-                      icon = "si:nas";
+                      icon = "di:asustor";
                     }
                   ];
                 }
