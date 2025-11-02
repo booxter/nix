@@ -48,6 +48,7 @@ in
       dhcp-rapid-commit = true;
 
       dhcp-range = [
+        # TODO: exclude 192.168.15.0/24?
         "${mainIface},192.168.10.1,192.168.20.255"
         "${guestIface},192.168.100.1,192.168.100.255"
       ];
@@ -84,11 +85,15 @@ in
         "id:mair,mair,192.168.11.3"
         "id:frame,frame,192.168.11.4"
 
+        # DON'T USE 192.168.15.0/24 for nixarr compatibility
+        # TODO: migrate all internal nodes out of .15 range for nixarr compatibility
+        # TODO: modify nixarr to allow using a different range for wg iface?
+
         #---- lab ----
         "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
 
         # ports: 8000 (http), 8001 (https)
-        "78:72:64:43:9c:3f,nas-lab,192.168.15.2" # asustor
+        "78:72:64:43:9c:3f,nas-lab,192.168.16.2" # asustor
 
         # mini-PC NUC nodes running proxmox
         "38:05:25:30:7d:89,prx1-lab,192.168.15.10"
