@@ -16,6 +16,7 @@
     with pkgs;
     (
       [
+        dive
         gitlab-ci-local
         jinjanator
         kind
@@ -25,6 +26,7 @@
             helm-unittest
           ];
         })
+        trivy
         vault-bin
       ]
       ++ lib.optionals isDesktop [
