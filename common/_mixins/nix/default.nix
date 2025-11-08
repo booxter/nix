@@ -20,6 +20,7 @@
           "@admin"
           username
         ];
+        max-jobs = 5;
       }
       // lib.optionalAttrs (!isWork) {
         # attic
