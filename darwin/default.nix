@@ -45,6 +45,9 @@
     activationScripts.postActivation.text = ''
       echo "Do not sleep when on AC power."
       pmset -c sleep 0 # Needs testing - UI not immediately updated.
+
+      echo "Prefer network over sleep."
+      pmset networkoversleep 1
     '';
   };
 
