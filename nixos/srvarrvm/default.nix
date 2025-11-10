@@ -1,5 +1,6 @@
 {
   lib,
+  config,
   pkgs,
   inputs,
   hostname,
@@ -25,7 +26,25 @@ in
   fileSystems."/data/media" = media;
   virtualisation.vmVariant.virtualisation.fileSystems."/data/media" = media;
 
-  services.tailscale.enable = lib.mkForce false;
+  users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
+
+  systemd.services.radarr = {
+    serviceConfig = {
+      UMask = "0002";
+    };
+  };
+
+  systemd.services.sonarr = {
+    serviceConfig = {
+      UMask = "0002";
+    };
+  };
+
+  systemd.services.bazarr = {
+    serviceConfig = {
+      UMask = "0002";
+    };
+  };
 
   nixarr = {
     enable = true;
