@@ -58,12 +58,14 @@ in
       ];
     };
 
-    jellyseerr.enable = true; # requests
-    prowlarr.enable = true; # indexer
-    radarr.enable = true; # movies
-    sonarr.enable = true; # tv shows
-    #lidarr.enable = true; # music
-    bazarr.enable = true; # subtitles
+    jellyseerr.enable = true;
+    prowlarr.enable = true;
+    radarr.enable = true;
+    readarr.enable = true;
+    readarr-audiobook.enable = true;
+    sonarr.enable = true;
+    bazarr.enable = true;
+    audiobookshelf.enable = true;
 
     # usenet
     sabnzbd = {
@@ -82,6 +84,9 @@ in
     };
 
   };
+
+  # expose to lan
+  systemd.services.audiobookshelf.serviceConfig.ExecStart = lib.mkForce "${config.nixarr.audiobookshelf.package}/bin/audiobookshelf --host 0.0.0.0 --port ${toString config.nixarr.audiobookshelf.port}";
 
   services.glance = {
     enable = true;
@@ -106,6 +111,8 @@ in
                   type = "monitor";
                   cache = "1m";
                   title = "Services";
+
+                  # TODO: extract port numbers from config
                   sites = [
                     {
                       title = "Jellyfin";
@@ -124,8 +131,23 @@ in
                     }
                     {
                       title = "Sonarr";
-                      url = "http://prox-srvarrvm:9898/";
+                      url = "http://prox-srvarrvm:8989/";
                       icon = "sh:sonarr";
+                    }
+                    {
+                      title = "Audiobookshelf";
+                      url = "http://prox-srvarrvm:9292/";
+                      icon = "sh:audiobookshelf";
+                    }
+                    {
+                      title = "Readarr";
+                      url = "http://prox-srvarrvm:8787/";
+                      icon = "sh:readarr";
+                    }
+                    {
+                      title = "Readarr Audio";
+                      url = "http://prox-srvarrvm:9494/";
+                      icon = "sh:readarr";
                     }
                     {
                       title = "Bazarr";
