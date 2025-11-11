@@ -61,7 +61,7 @@ in
     jellyseerr.enable = true; # requests
     prowlarr.enable = true; # indexer
     radarr.enable = true; # movies
-    #sonarr.enable = true; # tv shows
+    sonarr.enable = true; # tv shows
     #lidarr.enable = true; # music
     bazarr.enable = true; # subtitles
 
@@ -121,6 +121,11 @@ in
                       title = "Radarr";
                       url = "http://prox-srvarrvm:7878/";
                       icon = "sh:radarr";
+                    }
+                    {
+                      title = "Sonarr";
+                      url = "http://prox-srvarrvm:9898/";
+                      icon = "sh:sonarr";
                     }
                     {
                       title = "Bazarr";
