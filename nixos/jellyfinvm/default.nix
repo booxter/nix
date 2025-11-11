@@ -5,8 +5,8 @@
   ...
 }:
 let
-  movies = {
-    device = "nas-lab:/volume2/Movies";
+  media = {
+    device = "nas-lab:/volume2/Media";
     fsType = "nfs";
   };
 in
@@ -24,8 +24,23 @@ in
       Movies = {
         enabled = true;
         contentType = "movies";
-        pathInfos = [ "/movies" ];
+        pathInfos = [ "/media/library/movies" ];
         typeOptions.Movies = {
+          metadataFetchers = [
+            "The Open Movie Database"
+            "TheMovieDb"
+          ];
+          imageFetchers = [
+            "The Open Movie Database"
+            "TheMovieDb"
+          ];
+        };
+      };
+      Shows = {
+        enabled = true;
+        contentType = "tvshows";
+        pathInfos = [ "/media/library/shows" ];
+        typeOptions.Shows = {
           metadataFetchers = [
             "The Open Movie Database"
             "TheMovieDb"
@@ -73,8 +88,8 @@ in
 
   # local qemu vms override filesystems
   # TODO: move this special handling for FS to mkVM?
-  fileSystems."/movies" = movies;
-  virtualisation.vmVariant.virtualisation.fileSystems."/movies" = movies;
+  fileSystems."/media" = media;
+  virtualisation.vmVariant.virtualisation.fileSystems."/media" = media;
 
   # Acceleration setup: https://nixos.wiki/wiki/Jellyfin
   nixpkgs.config.packageOverrides = pkgs: {
