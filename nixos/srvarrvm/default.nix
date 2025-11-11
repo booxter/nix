@@ -61,6 +61,7 @@ in
     jellyseerr.enable = true;
     prowlarr.enable = true;
     radarr.enable = true;
+    lidarr.enable = true;
     readarr.enable = true;
     readarr-audiobook.enable = true;
     sonarr.enable = true;
@@ -133,6 +134,11 @@ in
                       title = "Sonarr";
                       url = "http://prox-srvarrvm:8989/";
                       icon = "sh:sonarr";
+                    }
+                    {
+                      title = "Lidarr";
+                      url = "http://prox-srvarrvm:8686/";
+                      icon = "sh:lidarr";
                     }
                     {
                       title = "Audiobookshelf";
