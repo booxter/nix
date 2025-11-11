@@ -51,6 +51,21 @@ in
           ];
         };
       };
+      Music = {
+        enabled = true;
+        contentType = "music";
+        pathInfos = [ "/media/library/music" ];
+        typeOptions.Music = {
+          metadataFetchers = [
+            "TheAudioDB"
+            "MusicBrainz"
+          ];
+          imageFetchers = [
+            "TheAudioDB"
+            "MusicBrainz"
+          ];
+        };
+      };
     };
 
     users =
