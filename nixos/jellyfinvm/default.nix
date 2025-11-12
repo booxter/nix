@@ -101,6 +101,28 @@ in
   boot.supportedFilesystems = [ "nfs" ];
   services.rpcbind.enable = true;
 
+  # Reverse proxy with automatic TLS
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "ihar.hrachyshka@gmail.com";
+  };
+
+  services.nginx = {
+    enable = true;
+    recommendedProxySettings = true;
+    recommendedTlsSettings = true;
+    virtualHosts."booxter.tplinkdns.com" = {
+      forceSSL = true;
+      enableACME = true;
+      locations."/" = {
+        proxyPass = "http://127.0.0.1:8096";
+        proxyWebsockets = true;
+      };
+    };
+  };
+
+  networking.firewall.allowedTCPPorts = [ 80 443 ];
+
   # local qemu vms override filesystems
   # TODO: move this special handling for FS to mkVM?
   fileSystems."/media" = media;
