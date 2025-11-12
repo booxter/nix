@@ -111,7 +111,7 @@ in
     enable = true;
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
-    virtualHosts."booxter.tplinkdns.com" = {
+    virtualHosts."jf.ihar.dev" = {
       forceSSL = true;
       enableACME = true;
       locations."/" = {
