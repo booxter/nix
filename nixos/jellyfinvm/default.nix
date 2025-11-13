@@ -111,12 +111,22 @@ in
     enable = true;
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
-    virtualHosts."jf.ihar.dev" = {
-      forceSSL = true;
-      enableACME = true;
-      locations."/" = {
-        proxyPass = "http://127.0.0.1:8096";
-        proxyWebsockets = true;
+    virtualHosts = {
+      "jf.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://127.0.0.1:8096";
+          proxyWebsockets = true;
+        };
+      };
+      "js.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://prox-srvarrvm:8096";
+          proxyWebsockets = true;
+        };
       };
     };
   };
