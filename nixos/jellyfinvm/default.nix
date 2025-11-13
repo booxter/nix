@@ -124,7 +124,7 @@ in
         forceSSL = true;
         enableACME = true;
         locations."/" = {
-          proxyPass = "http://prox-srvarrvm:8096";
+          proxyPass = "http://prox-srvarrvm:5055";
           proxyWebsockets = true;
         };
       };
