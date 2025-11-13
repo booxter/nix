@@ -94,6 +94,14 @@ in
             isAdministrator = false;
           };
         };
+        ZS = {
+          mutable = true;
+          inherit hashedPassword;
+          maxActiveSessions = 1;
+          permissions = {
+            isAdministrator = false;
+          };
+        };
       };
   };
 
