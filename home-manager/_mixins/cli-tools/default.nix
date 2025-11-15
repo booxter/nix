@@ -102,6 +102,7 @@
     aider-chat
     curl
     delve # go debugger
+    devenv
     fd
     fzf
     gnupg
