@@ -121,6 +121,7 @@
     pre-commit
     ramalama
     tailscale
+    wget
     yq-go
     zstd
 
