@@ -51,7 +51,7 @@ in
   };
 
   programs.home-manager.enable = true; # let it manage itself
-  targets.darwin.copyApps.enable = true; # populate apps dir for Spotlight
+  targets.darwin.copyApps.enable = isDarwin; # populate apps dir for Spotlight
 
   home.packages =
     with pkgs;
