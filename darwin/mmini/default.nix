@@ -15,7 +15,7 @@
         pkgs = getPkgs inputs.nixpkgs-ff-lto;
       in
       {
-        inherit (pkgs) thunderbird-unwrapped firefox-unwrapped;
+        #inherit (pkgs) thunderbird-unwrapped firefox-unwrapped;
       }
     )
   ];
