@@ -67,6 +67,7 @@ in
     sonarr.enable = true;
     bazarr.enable = true;
     audiobookshelf.enable = true;
+    whisparr.enable = true;
 
     # usenet
     sabnzbd = {
@@ -134,6 +135,11 @@ in
                       title = "Sonarr";
                       url = "http://prox-srvarrvm:8989/";
                       icon = "sh:sonarr";
+                    }
+                    {
+                      title = "Whisparr";
+                      url = "http://prox-srvarrvm:6969/";
+                      icon = "sh:whisparr";
                     }
                     {
                       title = "Lidarr";
