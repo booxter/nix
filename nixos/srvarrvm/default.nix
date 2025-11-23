@@ -40,6 +40,12 @@ in
     };
   };
 
+  systemd.services.whisparr = {
+    serviceConfig = {
+      UMask = "0002";
+    };
+  };
+
   systemd.services.bazarr = {
     serviceConfig = {
       UMask = "0002";
