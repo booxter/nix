@@ -15,7 +15,6 @@
         };
 
       pkgs = getPkgs inputs.nixpkgs;
-      pkgsKrunkit = getPkgs inputs.nixpkgs-krunkit;
       pkgsLldb = getPkgs inputs.debugserver;
     in
     {
@@ -26,7 +25,7 @@
 
       podman = pkgs.podman.override {
         extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
-          pkgsKrunkit.krunkit
+          pkgs.krunkit
         ];
       };
 

@@ -36,9 +36,6 @@
 
     debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
 
-    # https://github.com/NixOS/nixpkgs/pull/417062
-    nixpkgs-krunkit.url = "github:quinneden/nixpkgs/init-libkrun-efi-and-krunkit";
-
     declarative-jellyfin.url = "github:Sveske-Juice/declarative-jellyfin";
 
     attic.url = "github:zhaofengli/attic";

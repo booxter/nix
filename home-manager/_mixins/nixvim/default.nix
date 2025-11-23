@@ -47,7 +47,6 @@
       lsp = {
         enable = true;
         servers = {
-          ansiblels.enable = true;
           # disable until shellcheck no longer ooms:
           # https://github.com/koalaman/shellcheck/issues/2721
           # bashls.enable = true;
