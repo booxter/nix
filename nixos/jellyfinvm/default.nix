@@ -51,6 +51,21 @@ in
           ];
         };
       };
+      Fruit = {
+        enabled = true;
+        contentType = "movies";
+        pathInfos = [ "/media/library/xxx" ];
+        typeOptions.Movies = {
+          metadataFetchers = [
+            "The Open Movie Database"
+            "TheMovieDb"
+          ];
+          imageFetchers = [
+            "The Open Movie Database"
+            "TheMovieDb"
+          ];
+        };
+      };
       Music = {
         enabled = true;
         contentType = "music";
