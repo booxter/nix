@@ -16,12 +16,15 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
+      pkgsJF = getPkgs inputs.jellyfin-pinned;
     in
     {
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
       inherit (pkgs) netbootxyz-efi;
+
+      inherit (pkgsJF) jellyfin jellyfin-web;
 
       podman = pkgs.podman.override {
         extraPackages = _final.lib.optionals _final.stdenv.hostPlatform.isDarwin [
