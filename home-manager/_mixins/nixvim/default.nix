@@ -8,6 +8,7 @@
   imports = [
     inputs.nixvim.homeModules.nixvim
   ];
+
   programs.nixvim = {
     enable = true;
     nixpkgs.config.allowUnfree = true;
@@ -96,7 +97,18 @@
       };
 
       # debugger
-      dap-go.enable = true;
+      dap-go = {
+        enable = true;
+        # fix remote debugger attach for devspace
+        package = pkgs.vimPlugins.nvim-dap-go.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            (pkgs.fetchpatch {
+              url = "https://github.com/leoluz/nvim-dap-go/pull/106/commits/37d5ac0185b8e0671bc8614ac41a71d38a96b2bc.patch";
+              hash = "sha256-Mhn+gQPibiB7ZmEA4GHwqvcHfU4SVDMzvfleZPIZvIM=";
+            })
+          ];
+        });
+      };
       dap-lldb.enable = true;
       dap-python.enable = true;
       dap-ui.enable = true;
