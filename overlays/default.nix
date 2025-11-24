@@ -22,8 +22,10 @@
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
+      # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
 
+      # pin to older version while declarative module fixes it for newer
       inherit (pkgsJF) jellyfin jellyfin-web;
 
       whisparr = prev.whisparr.overrideAttrs (old: rec {
@@ -34,11 +36,9 @@
           url = "https://whisparr.servarr.com/v1/update/eros/updatefile?runtime=netcore&version=${version}&arch=x64&os=linux";
           hash = "sha256-uIkKdkqRSnDlH2+z16blRdhZW8n7doFXN1U1tfG1K3c=";
         };
-        passthru =
-          old.passthru
-          // {
-            inherit version;
-          };
+        passthru = old.passthru // {
+          inherit version;
+        };
       });
 
       podman = pkgs.podman.override {

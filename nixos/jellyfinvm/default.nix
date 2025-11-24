@@ -154,7 +154,10 @@ in
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ 80 443 ];
+  networking.firewall.allowedTCPPorts = [
+    80
+    443
+  ];
 
   # local qemu vms override filesystems
   # TODO: move this special handling for FS to mkVM?
