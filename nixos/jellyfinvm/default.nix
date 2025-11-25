@@ -112,7 +112,7 @@ in
         ZS = {
           mutable = true;
           inherit hashedPassword;
-          maxActiveSessions = 1;
+          maxActiveSessions = 2;
           permissions = {
             isAdministrator = false;
           };
@@ -120,7 +120,7 @@ in
         DZ = {
           mutable = true;
           inherit hashedPassword;
-          maxActiveSessions = 1;
+          maxActiveSessions = 2;
           permissions = {
             isAdministrator = false;
           };
