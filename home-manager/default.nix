@@ -62,7 +62,6 @@ in
       podman-desktop
       telegram-desktop
       wireshark
-      zoom-us
     ]
     ++ lib.optionals isDarwin [
       keycastr

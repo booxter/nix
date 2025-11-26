@@ -33,6 +33,7 @@
       ++ lib.optionals isDesktop [
         code-cursor
         slack
+        zoom-us
       ]
     );
 
