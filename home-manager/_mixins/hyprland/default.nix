@@ -120,7 +120,13 @@ in
     };
   };
 
-  home.sessionVariables.GTK_THEME = "palenight";
+  home.sessionVariables = {
+    GTK_THEME = "palenight";
+
+    # https://wiki.hypr.land/Configuring/XWayland/
+    GDK_SCALE = 2;
+    XCURSOR_SIZE = 32;
+  };
 
   programs.waybar = {
     enable = isLinux;
@@ -199,6 +205,11 @@ in
         # use lower res to accommodate junky kvm hdmi flickering
         "HDMI-A-1, 1920x1080@60, auto-right, 1"
       ];
+
+      xwayland = {
+        # https://wiki.hypr.land/Configuring/XWayland/
+        force_zero_scaling = true;
+      };
 
       workspace = [
         "1, monitor:DP-2"
