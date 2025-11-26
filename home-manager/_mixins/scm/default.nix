@@ -14,7 +14,7 @@ in
   programs.git = {
     enable = true;
     # Use regular git on macos for now, due to: https://github.com/NixOS/nixpkgs/issues/208951
-    package = if isDarwin then pkgs.git else pkgs.gitAndTools.gitFull;
+    package = if isDarwin then pkgs.git else pkgs.gitFull;
 
     ignores = [
       "*.swp"
