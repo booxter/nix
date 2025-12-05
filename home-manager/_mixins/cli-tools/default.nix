@@ -99,8 +99,7 @@
     (ripgrep.override { withPCRE2 = true; })
     ack
     act
-    # TODO: reenable when pyarrow is fixed in nixpkgs...
-    #aider-chat
+    aider-chat
     curl
     delve # go debugger
     devenv
@@ -120,9 +119,7 @@
     openssl
     podman
     pre-commit
-    # TODO: reenable when pyarrow, accelerate etc are
-    # fixed in nixpkgs...
-    #ramalama
+    ramalama
     tailscale
     wget
     yq-go
