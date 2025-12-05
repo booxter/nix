@@ -23,7 +23,7 @@ in
     serverId = "4d6980bd291d37fa006ece1e8e7fe752";
 
     backups = true;
-    backupCount = 5;
+    backupCount = 1;
 
     #dataDir = getSvcDir "data";
     #backupDir = getSvcDir "backups";
