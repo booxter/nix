@@ -26,7 +26,16 @@
       inherit (pkgs) netbootxyz-efi;
 
       # pin to older version while declarative module fixes it for newer
-      inherit (pkgsJF) jellyfin jellyfin-web;
+      inherit (pkgsJF) jellyfin-web;
+      jellyfin = pkgsJF.jellyfin.overrideAttrs (old: {
+        # fix tmdbid from file name ignored
+        patches = old.patches or [] ++ [
+          (pkgs.fetchpatch {
+            url = "https://github.com/jellyfin/jellyfin/pull/14955/commits/95d057d2ac0ef5f673dd3a7765a741703521c4a6.patch";
+            hash = "sha256-rEacvK/E+EDgHmOS09Di2F5CAA/f6eRby1mez+jHiQI=";
+          })
+        ];
+      });
 
       whisparr = prev.whisparr.overrideAttrs (old: rec {
         pname = "whisparr";
