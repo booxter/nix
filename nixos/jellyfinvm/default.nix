@@ -61,7 +61,8 @@ in
     libraries = let
       # TODO: refactor to use common fetcher config templates
       getTypeOptions = isAdult: if isAdult then {
-        typeOptions.Movies = {
+        # NOTE: I don't think other types but Movie are used here
+        typeOptions.Movie = {
           metadataFetchers = [
             "ThePornDB Movies"
             "ThePornDB Scenes"
@@ -75,26 +76,12 @@ in
             "ThePornDB JAV"
             "TheMovieDb"
             "The Open Movie Database"
-          ];
-        };
-        typeOptions.Shows = {
-          metadataFetchers = [
-            "ThePornDB Scenes"
-            "ThePornDB Movies"
-            "ThePornDB JAV"
-            "TheMovieDb"
-            "The Open Movie Database"
-          ];
-          imageFetchers = [
-            "ThePornDB Scenes"
-            "ThePornDB Movies"
-            "ThePornDB JAV"
-            "TheMovieDb"
-            "The Open Movie Database"
+            "Embedded Image Extractor"
+            "Screen Grabber"
           ];
         };
       } else {
-        typeOptions.Movies = {
+        typeOptions.Movie = {
           metadataFetchers = [
             "TheMovieDb"
             "The Open Movie Database"
@@ -102,26 +89,56 @@ in
           imageFetchers = [
             "TheMovieDb"
             "The Open Movie Database"
+            "Embedded Image Extractor"
+            "Screen Grabber"
           ];
         };
-        typeOptions.Shows = {
+        typeOptions.Series = {
           metadataFetchers = [
             "TheMovieDb"
             "The Open Movie Database"
           ];
           imageFetchers = [
             "TheMovieDb"
-            "The Open Movie Database"
           ];
         };
-        typeOptions.Music = {
+        typeOptions.Season = {
           metadataFetchers = [
-            "TheAudioDB"
-            "MusicBrainz"
+            "TheMovieDb"
           ];
           imageFetchers = [
-            "TheAudioDB"
-            "MusicBrainz"
+            "TheMovieDb"
+          ];
+        };
+        typeOptions.Episode = {
+          metadataFetchers = [
+            "TheMovieDb"
+            "The Open Movie Database"
+          ];
+          imageFetchers = [
+            "TheMovieDb"
+            "The Open Movie Database"
+            "Embedded Image Extractor"
+            "Screen Grabber"
+          ];
+        };
+        typeOptions.MusicArtist = {
+          metadataFetchers = ["MusicBrainz"];
+          imageFetchers = ["TheAudioDB"];
+        };
+        typeOptions.MusicAlbum = {
+          metadataFetchers = ["MusicBrainz"];
+          imageFetchers = ["TheAudioDB"];
+        };
+        typeOptions.Audio = {
+          metadataFetchers = [];
+          imageFetchers = ["Image Extractor"];
+        };
+        typeOptions.MusicVideo = {
+          metadataFetchers = [];
+          imageFetchers = [
+            "Embedded Image Extractor"
+            "Screen Grabber"
           ];
         };
       };
