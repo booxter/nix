@@ -193,7 +193,7 @@ in
           displayMissingEpisodes = true;
           subtitleLanguagePreference = "en";
         } // lib.optionalAttrs (!allLibraries) {
-          preferences.enabledLibraries = [ "Movies" "Anime" "Docu" "Shows" "Music" ] ++ lib.optionals isAdult [ "Fruit" ];
+          preferences.enabledLibraries = [ "Movies" "Shows" ] ++ lib.optionals (!isKid) [ "Anime" "Docu" "Music" ] ++ lib.optionals isAdult [ "Fruit" ];
         };
         getGuestUser = (getUser { mutable = true; isAdmin = false; isKid = false; isAdult = false; allLibraries = false; }) // { maxActiveSessions = 2; };
       in
