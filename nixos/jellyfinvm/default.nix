@@ -27,12 +27,12 @@ in
         pathInfos = [ "/media/library/movies" ];
         typeOptions.Movies = {
           metadataFetchers = [
-            "The Open Movie Database"
             "TheMovieDb"
+            "The Open Movie Database"
           ];
           imageFetchers = [
-            "The Open Movie Database"
             "TheMovieDb"
+            "The Open Movie Database"
           ];
         };
       };
@@ -42,12 +42,42 @@ in
         pathInfos = [ "/media/library/shows" ];
         typeOptions.Shows = {
           metadataFetchers = [
-            "The Open Movie Database"
             "TheMovieDb"
+            "The Open Movie Database"
           ];
           imageFetchers = [
-            "The Open Movie Database"
             "TheMovieDb"
+            "The Open Movie Database"
+          ];
+        };
+      };
+      Anime = {
+        enabled = true;
+        contentType = "movies";
+        pathInfos = [ "/media/library/anime" ];
+        typeOptions.Movies = {
+          metadataFetchers = [
+            "TheMovieDb"
+            "The Open Movie Database"
+          ];
+          imageFetchers = [
+            "TheMovieDb"
+            "The Open Movie Database"
+          ];
+        };
+      };
+      Docu = {
+        enabled = true;
+        contentType = "movies";
+        pathInfos = [ "/media/library/docu" ];
+        typeOptions.Movies = {
+          metadataFetchers = [
+            "TheMovieDb"
+            "The Open Movie Database"
+          ];
+          imageFetchers = [
+            "TheMovieDb"
+            "The Open Movie Database"
           ];
         };
       };
@@ -57,12 +87,46 @@ in
         pathInfos = [ "/media/library/xxx" ];
         typeOptions.Movies = {
           metadataFetchers = [
-            "The Open Movie Database"
+            "ThePornDB Movies"
+            "ThePornDB JAV"
             "TheMovieDb"
+            "The Open Movie Database"
           ];
           imageFetchers = [
-            "The Open Movie Database"
+            "ThePornDB Movies"
+            "ThePornDB JAV"
             "TheMovieDb"
+            "The Open Movie Database"
+          ];
+        };
+      };
+      Whisper = {
+        enabled = true;
+        contentType = "movies";
+        pathInfos = [ "/media/library/whisparr/movies" ];
+        typeOptions.Movies = {
+          metadataFetchers = [
+            "ThePornDB Movies"
+            "ThePornDB JAV"
+          ];
+          imageFetchers = [
+            "ThePornDB Movies"
+            "ThePornDB JAV"
+          ];
+        };
+      };
+      Shout = {
+        enabled = true;
+        contentType = "movies";
+        pathInfos = [ "/media/library/whisparr/scenes" ];
+        typeOptions.Shows = {
+          metadataFetchers = [
+            "ThePornDB Scenes"
+            "ThePornDB JAV"
+          ];
+          imageFetchers = [
+            "ThePornDB Scenes"
+            "ThePornDB JAV"
           ];
         };
       };
