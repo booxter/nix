@@ -51,6 +51,8 @@ in
         }
       ];
       serverName = "main";
+
+      trickplayOptions.processThreads = 10;
     };
 
     encoding = {
