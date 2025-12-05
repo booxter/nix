@@ -97,6 +97,7 @@
       };
 
       # debugger
+      dap.enable = true;
       dap-go = {
         enable = true;
         # fix remote debugger attach for devspace

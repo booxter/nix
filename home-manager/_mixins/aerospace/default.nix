@@ -35,7 +35,7 @@ in
     launchd.enable = true;
 
     # ex: https://nikitabobko.github.io/AeroSpace/guide.html#default-config
-    userSettings = {
+    settings = {
       gaps = {
         outer.left = 2;
         outer.right = 2;
