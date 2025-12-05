@@ -45,6 +45,7 @@
     debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
 
     # Pin as per https://github.com/Sveske-Juice/declarative-jellyfin/issues/20
+    # Try to upgrade after https://github.com/jellyfin/jellyfin/issues/15388 fixed?
     declarative-jellyfin.url = "github:Sveske-Juice/declarative-jellyfin/c9e781b30b748e9b3f7e4148cf52caeb1751fd48";
     jellyfin-pinned.url = "github:NixOS/nixpkgs/6158d9170f0c55f07123559161447f657dc9f887";
     declarative-jellyfin.inputs.nixpkgs.follows = "jellyfin-pinned";
