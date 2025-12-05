@@ -119,7 +119,8 @@
     openssl
     podman
     pre-commit
-    ramalama
+    # TODO: https://github.com/NixOS/nixpkgs/issues/466092 breaks darwin...
+    #ramalama
     tailscale
     wget
     yq-go
