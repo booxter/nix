@@ -198,6 +198,8 @@ in
         getGuestUser = (getUser { mutable = true; isAdmin = false; isKid = false; isAdult = false; allLibraries = false; }) // { maxActiveSessions = 2; };
       in
       {
+        jellyfin = getUser { mutable = false; isAdmin = false; isAdult = false; };
+
         Ihar = getUser { mutable = false; isAdmin = true; isAdult = true; };
         Kasia = getUser { mutable = false; isAdult = true; allowWrite = true; };
         Vatslau = getUser { mutable = false; isKid = true; };
