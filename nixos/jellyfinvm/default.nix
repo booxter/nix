@@ -141,6 +141,7 @@ in
         enableTrickplayImageExtraction = true;
 
         saveTrickplayWithMedia = true;
+        saveLocalMetadata = true;
 
         automaticRefreshIntervalDays = 14;
         enableRealtimeMonitor = true;
