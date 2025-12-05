@@ -52,8 +52,6 @@
 
     attic.url = "github:zhaofengli/attic";
 
-    nixpkgs-ff-lto.url = "github:booxter/nixpkgs/ff-lto";
-
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
   };

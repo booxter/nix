@@ -9,19 +9,21 @@
   ...
 }:
 {
-  imports = [
-    # TODO: gracefully handle missing per-machine config
-    ./${hostname}
-    ./_mixins/defaults
-    ./_mixins/fonts
-    ./_mixins/homebrew
-    ./_mixins/linux-builder
-    ./_mixins/nix-gc
-    ./_mixins/sudo
-  ]
-  ++ lib.optionals (!isWork) [
-    ./_mixins/browser
-  ];
+  imports =
+    lib.optionals (builtins.pathExists ./${hostname}) [
+      ./${hostname}
+    ]
+    ++ [
+      ./_mixins/defaults
+      ./_mixins/fonts
+      ./_mixins/homebrew
+      ./_mixins/linux-builder
+      ./_mixins/nix-gc
+      ./_mixins/sudo
+    ]
+    ++ lib.optionals (!isWork) [
+      ./_mixins/browser
+    ];
 
   nixpkgs.hostPlatform = lib.mkDefault platform;
 
