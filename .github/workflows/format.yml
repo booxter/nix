@@ -22,8 +22,6 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@v11
 
       - name: Format
-        env:
-          NIX_CONFIG: "extra-experimental-features = nix-command flakes"
         run: nix fmt .
 
       - name: Ensure clean working tree

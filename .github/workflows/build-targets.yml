@@ -87,7 +87,4 @@ jobs:
         uses: DeterminateSystems/nix-installer-action@v11
 
       - name: Build ${{ matrix.name }}
-        env:
-          NIX_CONFIG: "extra-experimental-features = nix-command flakes"
-        run: |
-          ${{ matrix.cmd }}
+        run: ${{ matrix.cmd }}

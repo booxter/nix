@@ -21,8 +21,6 @@ jobs:
 
       - name: Update flake inputs
         run: nix flake update
-        env:
-          NIX_CONFIG: "extra-experimental-features = nix-command flakes"
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v6
