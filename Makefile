@@ -32,6 +32,19 @@ local-vm:
 		$(if $(filter proxmox,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
 		.#nixosConfigurations.local-$(WHAT)vm.config.system.build.vm $(ARGS)
 
+########### ci vms
+ci-vm:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
+	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^ci-.*vm$$' | sed 's/vm$$//' | sed 's/^ci-//';\
+	  exit 1;\
+	fi
+
+	nix run \
+		$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
+		$(if $(filter proxmox,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
+		.#nixosConfigurations.ci-$(WHAT)vm.config.system.build.vm $(ARGS)
+
 ########### proxmox vms
 prox-vm:
 	@if [ "x$(WHAT)" = "x" ]; then\

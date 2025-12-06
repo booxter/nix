@@ -34,11 +34,11 @@ jobs:
 
           # Build just one of configs for builder nodes since other nodes are
           # identical by design.
-          - name: builder (aarch64-linux)
-            attr: nixosConfigurations.local-builder1vm.config.system.build.toplevel
+          - name: builder (x86_64-linux)
+            attr: nixosConfigurations.ci-builder1vm.config.system.build.toplevel
             os: ubuntu-latest
-          - name: cache (aarch64-linux)
-            attr: nixosConfigurations.local-cachevm.config.system.build.toplevel
+          - name: cache (x86_64-linux)
+            attr: nixosConfigurations.ci-cachevm.config.system.build.toplevel
             os: ubuntu-latest
 
           # dhcp
@@ -48,10 +48,10 @@ jobs:
 
           # media infra
           - name: jellyfin (x86_64-linux)
-            attr: nixosConfigurations.local-jellyfinvm.config.system.build.toplevel
+            attr: nixosConfigurations.ci-jellyfinvm.config.system.build.toplevel
             os: ubuntu-latest
-          - name: srvarr (aarch64-linux)
-            attr: nixosConfigurations.local-srvarrvm.config.system.build.toplevel
+          - name: srvarr (x86_64-linux)
+            attr: nixosConfigurations.ci-srvarrvm.config.system.build.toplevel
             os: ubuntu-latest
 
           # For macos, we have to build special "ci" flavors that don't use

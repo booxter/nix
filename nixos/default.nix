@@ -9,7 +9,7 @@
 }:
 let
   removePrefix = lib.strings.removePrefix;
-  configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
+  configName = ./${removePrefix "prox-" (removePrefix "local-" (removePrefix "ci-" hostname))};
 in
 {
   imports =

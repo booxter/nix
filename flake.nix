@@ -157,6 +157,7 @@
               vmname = toVmName name;
               localName = "local-${vmname}";
               proxName = "prox-${vmname}";
+              ciName = "ci-${vmname}";
             in
             {
               "${localName}" = helpers.mkVM (
@@ -164,6 +165,15 @@
                 // {
                   inherit platform stateVersion virtPlatform;
                   hostname = localName;
+                }
+              );
+
+              "${ciName}" = helpers.mkVM (
+                args
+                // {
+                  inherit stateVersion virtPlatform;
+                  hostname = localName;
+                  platform = "x86_64-linux";
                 }
               );
 
