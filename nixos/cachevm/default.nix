@@ -1,4 +1,4 @@
-{ inputs, pkgs, ... }:
+{ pkgs, ... }:
 let
   nfsPath = "/cache";
   cache = {
@@ -7,17 +7,13 @@ let
   };
 in
 {
-  imports = [
-    inputs.attic.nixosModules.atticd
-  ];
-
   # local qemu vms override filesystems
   # TODO: move this special handling for FS to mkVM?
   fileSystems.${nfsPath} = cache;
   virtualisation.vmVariant.virtualisation.fileSystems.${nfsPath} = cache;
 
   environment.systemPackages = with pkgs; [
-    attic
+    attic-client
   ];
 
   # https://docs.attic.rs/admin-guide/deployment/nixos.html

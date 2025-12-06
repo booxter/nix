@@ -48,8 +48,6 @@
     jellyfin-pinned.url = "github:NixOS/nixpkgs/6158d9170f0c55f07123559161447f657dc9f887";
     declarative-jellyfin.inputs.nixpkgs.follows = "jellyfin-pinned";
 
-    attic.url = "github:zhaofengli/attic";
-
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
 
@@ -62,6 +60,31 @@
       inherit (self) outputs;
       username = "ihrachyshka";
       helpers = import ./lib { inherit inputs outputs username; };
+
+      darwinHosts = {
+        mair = {
+          stateVersion = 6;
+          hmStateVersion = "25.11";
+          hostname = "mair";
+          platform = "aarch64-darwin";
+          isDesktop = true;
+        };
+        mmini = {
+          stateVersion = 5;
+          hmStateVersion = "25.11";
+          hostname = "mmini";
+          platform = "aarch64-darwin";
+          isDesktop = true;
+        };
+        ihrachyshka-mlt = {
+          stateVersion = 5;
+          hmStateVersion = "25.11";
+          hostname = "ihrachyshka-mlt";
+          platform = "aarch64-darwin";
+          isDesktop = true;
+          isWork = true;
+        };
+      };
     in
     {
       homeConfigurations = {
@@ -73,30 +96,36 @@
         };
       };
 
-      darwinConfigurations = {
-        mair = helpers.mkDarwin {
-          stateVersion = 6;
-          hmStateVersion = "25.11";
-          hostname = "mair";
-          platform = "aarch64-darwin";
-          isDesktop = true;
-        };
-        mmini = helpers.mkDarwin {
-          stateVersion = 5;
-          hmStateVersion = "25.11";
-          hostname = "mmini";
-          platform = "aarch64-darwin";
-          isDesktop = true;
-        };
-        ihrachyshka-mlt = helpers.mkDarwin {
-          stateVersion = 5;
-          hmStateVersion = "25.11";
-          hostname = "ihrachyshka-mlt";
-          platform = "aarch64-darwin";
-          isDesktop = true;
-          isWork = true;
-        };
-      };
+      darwinConfigurations =
+        let
+          base = builtins.listToAttrs (
+            builtins.map (
+              name:
+              let
+                cfg = darwinHosts.${name};
+              in
+              {
+                name = name;
+                value = helpers.mkDarwin cfg;
+              }
+            ) (builtins.attrNames darwinHosts)
+          );
+          ciVariants = builtins.listToAttrs (
+            builtins.map (
+              name:
+              let
+                cfg = darwinHosts.${name} // {
+                  ci = true;
+                };
+              in
+              {
+                name = "${name}-ci";
+                value = helpers.mkDarwin cfg;
+              }
+            ) (builtins.attrNames darwinHosts)
+          );
+        in
+        base // ciVariants;
 
       nixosConfigurations =
         let
@@ -126,6 +155,7 @@
               vmname = toVmName name;
               localName = "local-${vmname}";
               proxName = "prox-${vmname}";
+              ciName = "ci-${vmname}";
             in
             {
               "${localName}" = helpers.mkVM (
@@ -133,6 +163,16 @@
                 // {
                   inherit platform stateVersion virtPlatform;
                   hostname = localName;
+                }
+              );
+
+              "${ciName}" = helpers.mkVM (
+                args
+                // {
+                  inherit stateVersion;
+                  hostname = ciName;
+                  platform = "x86_64-linux";
+                  virtPlatform = "x86_64-linux";
                 }
               );
 

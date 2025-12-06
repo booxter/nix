@@ -6,6 +6,7 @@
   platform,
   stateVersion,
   isWork,
+  ci ? false,
   ...
 }:
 {
@@ -17,7 +18,7 @@
       ./_mixins/defaults
       ./_mixins/fonts
       ./_mixins/homebrew
-      ./_mixins/linux-builder
+      (import ./_mixins/linux-builder { inherit lib ci; })
       ./_mixins/nix-gc
       ./_mixins/sudo
     ]

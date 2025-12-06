@@ -15,6 +15,17 @@ PROXMOX_CACHE_OPTIONS = \
 	--option extra-trusted-public-keys "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM=" \
 	--option extra-substituters "https://cache.saumon.network/proxmox-nixos?priority=$(DEFAULT_CACHE_PRIORITY)"
 
+VM_CACHE_OPTS = \
+	$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
+	$(if $(filter proxmox,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),)
+
+# Reused for host builds too (pi5 benefit from RPI cache, proxmox from Proxmox cache).
+HOST_CACHE_OPTS = \
+	$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
+	$(if $(filter prox%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
+	$(if $(filter prx%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
+	$(if $(filter nvws%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),)
+
 # Also the default target (just call `make`)
 inputs-update:
 	nix flake update
@@ -28,9 +39,42 @@ local-vm:
 	fi
 
 	nix run \
-		$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
-		$(if $(filter proxmox,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
+		$(VM_CACHE_OPTS) \
 		.#nixosConfigurations.local-$(WHAT)vm.config.system.build.vm $(ARGS)
+
+build-local-vm:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
+	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^local-.*vm$$' | sed 's/vm$$//' | sed 's/^local-//';\
+	  exit 1;\
+	fi
+
+	nix build \
+		$(VM_CACHE_OPTS) \
+		.#nixosConfigurations.local-$(WHAT)vm.config.system.build.vm $(ARGS)
+
+########### ci vms
+ci-vm:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
+	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^ci-.*vm$$' | sed 's/vm$$//' | sed 's/^ci-//';\
+	  exit 1;\
+	fi
+
+	nix run \
+		$(VM_CACHE_OPTS) \
+		.#nixosConfigurations.ci-$(WHAT)vm.config.system.build.vm $(ARGS)
+
+build-ci-vm:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
+	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^ci-.*vm$$' | sed 's/vm$$//' | sed 's/^ci-//';\
+	  exit 1;\
+	fi
+
+	nix build \
+		$(VM_CACHE_OPTS) \
+		.#nixosConfigurations.ci-$(WHAT)vm.config.system.build.vm $(ARGS)
 
 ########### proxmox vms
 prox-vm:
@@ -48,6 +92,13 @@ prox-vm:
 	./scripts/push-vm-to-proxmox.sh $(WHERE) root priv/lab-$(WHERE) prox-$(WHAT)vm
 
 ########### nixos
+nixos-build-target:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=host";\
+	  exit 1;\
+	fi
+	nix build $(HOST_CACHE_OPTS) .#nixosConfigurations.$(WHAT).config.system.build.toplevel $(ARGS)
+
 nixos-build:
 	nix build .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
 
@@ -66,6 +117,13 @@ disko-install:
 ########### darwin
 darwin-build:
 	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
+
+darwin-build-target:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=host";\
+	  exit 1;\
+	fi
+	nix build .#darwinConfigurations.$(WHAT).system $(ARGS)
 
 darwin-switch:
 	sudo nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)

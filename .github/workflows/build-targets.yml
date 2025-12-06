@@ -1,0 +1,90 @@
+name: Build targets
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # linux servers
+          - name: frame (x86_64-linux)
+            cmd: make nixos-build-target WHAT=frame
+            os: ubuntu-latest
+          - name: nvws (x86_64-linux)
+            cmd: make nixos-build-target WHAT=nvws
+            os: ubuntu-latest
+
+          # Build just one of configs for prox nodes since other nodes are
+          # identical by design.
+          - name: prx1-lab (x86_64-linux)
+            cmd: make nixos-build-target WHAT=prx1-lab
+            os: ubuntu-latest
+
+          # Build just one of configs for builder nodes since other nodes are
+          # identical by design.
+          - name: builder (x86_64-linux)
+            cmd: make build-ci-vm WHAT=builder1
+            os: ubuntu-latest
+          - name: cache (x86_64-linux)
+            cmd: make build-ci-vm WHAT=cache
+            os: ubuntu-latest
+
+          # dhcp
+          - name: pi5 dhcp (aarch64-linux)
+            cmd: make nixos-build-target WHAT=pi5
+            os: ubuntu-24.04-arm
+
+          # media infra
+          - name: jellyfin (x86_64-linux)
+            cmd: make build-ci-vm WHAT=jellyfin
+            os: ubuntu-latest
+          - name: srvarr (x86_64-linux)
+            cmd: make build-ci-vm WHAT=srvarr
+            os: ubuntu-latest
+
+          # For macos, we have to build special "ci" flavors that don't use
+          # custom linux-builder config that requires aarch64-linux builder.
+          # Use stock builder config to pull the derivation from nixos cache
+          # instead.
+          - name: mair-ci (aarch64-darwin)
+            cmd: make darwin-build-target WHAT=mair-ci
+            os: macos-26
+          - name: mmini-ci (aarch64-darwin)
+            cmd: make darwin-build-target WHAT=mmini-ci
+            os: macos-26
+          - name: ihrachyshka-mlt-ci (aarch64-darwin)
+            cmd: make darwin-build-target WHAT=ihrachyshka-mlt-ci
+            os: macos-26
+
+    timeout-minutes: 180
+
+    steps:
+      - name: Free disk space (Ubuntu)
+        if: runner.os == 'Linux'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          android: true
+          dotnet: true
+          haskell: true
+          tool-cache: false
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v11
+
+      - name: Build ${{ matrix.name }}
+        run: ${{ matrix.cmd }}

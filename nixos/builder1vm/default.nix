@@ -1,9 +1,5 @@
-{ inputs, ... }:
+{ ... }:
 {
-  imports = [
-    inputs.attic.nixosModules.atticd
-  ];
-
   systemd.services.nix-daemon.serviceConfig = {
     MemoryAccounting = true;
     MemoryMax = "90%";
