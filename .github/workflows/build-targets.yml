@@ -59,13 +59,13 @@ jobs:
           # Use stock builder config to pull the derivation from nixos cache
           # instead.
           - name: mair-ci (aarch64-darwin)
-            attr: darwinConfigurations.mair-ci.system
+            cmd: make darwin-build-target WHAT=mair-ci
             os: macos-26
           - name: mmini-ci (aarch64-darwin)
-            attr: darwinConfigurations.mmini-ci.system
+            cmd: make darwin-build-target WHAT=mmini-ci
             os: macos-26
           - name: ihrachyshka-mlt-ci (aarch64-darwin)
-            attr: darwinConfigurations.ihrachyshka-mlt-ci.system
+            cmd: make darwin-build-target WHAT=ihrachyshka-mlt-ci
             os: macos-26
 
     timeout-minutes: 180
@@ -90,8 +90,4 @@ jobs:
         env:
           NIX_CONFIG: "extra-experimental-features = nix-command flakes"
         run: |
-          if [ -n "${{ matrix.cmd }}" ]; then
-            ${{ matrix.cmd }}
-          else
-            nix build ".#${{ matrix.attr }}" --no-link --print-build-logs
-          fi
+          ${{ matrix.cmd }}

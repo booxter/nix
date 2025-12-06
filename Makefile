@@ -116,6 +116,13 @@ disko-install:
 darwin-build:
 	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
 
+darwin-build-target:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=host";\
+	  exit 1;\
+	fi
+	nix build .#darwinConfigurations.$(WHAT).system $(ARGS)
+
 darwin-switch:
 	sudo nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
 
