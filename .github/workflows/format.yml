@@ -21,7 +21,15 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v11
 
-      - name: Check formatting
+      - name: Format
         env:
           NIX_CONFIG: "extra-experimental-features = nix-command flakes"
-        run: nix run .#formatter -- --check .
+        run: nix fmt .
+
+      - name: Ensure clean working tree
+        run: |
+          git status --short
+          if ! git diff --quiet --exit-code; then
+            echo "Repository dirty after formatting. Please commit formatting changes."
+            exit 1
+          fi
