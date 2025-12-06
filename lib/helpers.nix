@@ -1,6 +1,7 @@
 {
   inputs,
   outputs,
+  ci ? false,
   ...
 }:
 let
@@ -429,6 +430,7 @@ rec {
           hmStateVersion
           isDesktop
           isWork
+          ci
           ;
       };
       modules = [

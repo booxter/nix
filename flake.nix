@@ -61,7 +61,15 @@
     let
       inherit (self) outputs;
       username = "ihrachyshka";
-      helpers = import ./lib { inherit inputs outputs username; };
+      ci = builtins.getEnv "CI" == "true";
+      helpers = import ./lib {
+        inherit
+          inputs
+          outputs
+          username
+          ci
+          ;
+      };
     in
     {
       homeConfigurations = {

@@ -6,6 +6,7 @@
   platform,
   stateVersion,
   isWork,
+  ci ? false,
   ...
 }:
 {
@@ -17,9 +18,11 @@
       ./_mixins/defaults
       ./_mixins/fonts
       ./_mixins/homebrew
-      ./_mixins/linux-builder
       ./_mixins/nix-gc
       ./_mixins/sudo
+    ]
+    ++ lib.optionals (!ci) [
+      ./_mixins/linux-builder
     ]
     ++ lib.optionals (!isWork) [
       ./_mixins/browser
