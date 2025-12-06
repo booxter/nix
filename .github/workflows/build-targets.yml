@@ -44,7 +44,7 @@ jobs:
           # dhcp
           - name: pi5 dhcp (aarch64-linux)
             attr: nixosConfigurations.pi5.config.system.build.toplevel
-            os: ubuntu-latest
+            os: ubuntu-24.04-arm
 
           # media infra
           - name: jellyfin (x86_64-linux)
