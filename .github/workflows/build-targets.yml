@@ -44,6 +44,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Maximize build space
+        uses: ./.github/actions/maximize-space
+
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v11
 
