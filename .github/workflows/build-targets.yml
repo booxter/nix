@@ -20,38 +20,38 @@ jobs:
         include:
           # linux servers
           - name: frame (x86_64-linux)
-            attr: nixosConfigurations.frame.config.system.build.toplevel
+            cmd: make nixos-build-target WHAT=frame
             os: ubuntu-latest
           - name: nvws (x86_64-linux)
-            attr: nixosConfigurations.nvws.config.system.build.toplevel
+            cmd: make nixos-build-target WHAT=nvws
             os: ubuntu-latest
 
           # Build just one of configs for prox nodes since other nodes are
           # identical by design.
           - name: prx1-lab (x86_64-linux)
-            attr: nixosConfigurations.prx1-lab.config.system.build.toplevel
+            cmd: make nixos-build-target WHAT=prx1-lab
             os: ubuntu-latest
 
           # Build just one of configs for builder nodes since other nodes are
           # identical by design.
           - name: builder (x86_64-linux)
-            attr: nixosConfigurations.ci-builder1vm.config.system.build.toplevel
+            cmd: make build-ci-vm WHAT=builder1
             os: ubuntu-latest
           - name: cache (x86_64-linux)
-            attr: nixosConfigurations.ci-cachevm.config.system.build.toplevel
+            cmd: make build-ci-vm WHAT=cache
             os: ubuntu-latest
 
           # dhcp
           - name: pi5 dhcp (aarch64-linux)
-            attr: nixosConfigurations.pi5.config.system.build.toplevel
+            cmd: make nixos-build-target WHAT=pi5
             os: ubuntu-24.04-arm
 
           # media infra
           - name: jellyfin (x86_64-linux)
-            attr: nixosConfigurations.ci-jellyfinvm.config.system.build.toplevel
+            cmd: make build-ci-vm WHAT=jellyfin
             os: ubuntu-latest
           - name: srvarr (x86_64-linux)
-            attr: nixosConfigurations.ci-srvarrvm.config.system.build.toplevel
+            cmd: make build-ci-vm WHAT=srvarr
             os: ubuntu-latest
 
           # For macos, we have to build special "ci" flavors that don't use
@@ -89,4 +89,9 @@ jobs:
       - name: Build ${{ matrix.name }}
         env:
           NIX_CONFIG: "extra-experimental-features = nix-command flakes"
-        run: nix build ".#${{ matrix.attr }}" --no-link --print-build-logs
+        run: |
+          if [ -n "${{ matrix.cmd }}" ]; then
+            ${{ matrix.cmd }}
+          else
+            nix build ".#${{ matrix.attr }}" --no-link --print-build-logs
+          fi
