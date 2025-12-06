@@ -174,6 +174,7 @@ in
               enableTrickplayImageExtraction = true;
 
               saveTrickplayWithMedia = true;
+              metadataSavers = [ "Nfo" ];
               saveLocalMetadata = true;
 
               automaticRefreshIntervalDays = 14;
