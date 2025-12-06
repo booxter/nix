@@ -24,18 +24,22 @@ jobs:
           - name: nvws (x86_64-linux)
             attr: nixosConfigurations.nvws.config.system.build.toplevel
             os: ubuntu-latest
-          # build just prx1-lab since other nodes are identical by design
+          # Build just prx1-lab since other nodes are identical by design.
           - name: prx1-lab (x86_64-linux)
             attr: nixosConfigurations.prx1-lab.config.system.build.toplevel
             os: ubuntu-latest
-          - name: mair (aarch64-darwin)
-            attr: darwinConfigurations.mair.system
+          # For macos, we have to build special "ci" flavors that don't use
+          # custom linux-builder config that requires aarch64-linux builder.
+          # Use stock builder config to pull the derivation from nixos cache
+          # instead.
+          - name: mair-ci (aarch64-darwin)
+            attr: darwinConfigurations.mair-ci.system
             os: macos-26
-          - name: mmini (aarch64-darwin)
-            attr: darwinConfigurations.mmini.system
+          - name: mmini-ci (aarch64-darwin)
+            attr: darwinConfigurations.mmini-ci.system
             os: macos-26
-          - name: ihrachyshka-mlt (aarch64-darwin)
-            attr: darwinConfigurations.ihrachyshka-mlt.system
+          - name: ihrachyshka-mlt-ci (aarch64-darwin)
+            attr: darwinConfigurations.ihrachyshka-mlt-ci.system
             os: macos-26
 
     timeout-minutes: 180

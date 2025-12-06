@@ -415,6 +415,7 @@ rec {
       platform ? "aarch64-darwin",
       isDesktop ? false,
       isWork ? false,
+      ci ? false,
       extraModules ? [ ],
     }:
     inputs.nix-darwin.lib.darwinSystem {
@@ -429,6 +430,7 @@ rec {
           hmStateVersion
           isDesktop
           isWork
+          ci
           ;
       };
       modules = [
