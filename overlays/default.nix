@@ -17,10 +17,14 @@
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsJF = getPkgs inputs.jellyfin-pinned;
+      pkgsMoz = getPkgs inputs.nixpkgs-mozilla-wrapper;
     in
     {
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
+
+      # https://github.com/NixOS/nixpkgs/pull/468288
+      inherit (pkgsMoz) firefox thunderbird;
 
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;

@@ -52,6 +52,8 @@
 
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
+
+    nixpkgs-mozilla-wrapper.url = "github:booxter/nixpkgs/firefox-dontFixup-touched-for-source-build";
   };
 
   outputs =
