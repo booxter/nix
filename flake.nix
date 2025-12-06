@@ -172,7 +172,7 @@
                 args
                 // {
                   inherit stateVersion;
-                  hostname = localName;
+                  hostname = ciName;
                   platform = "x86_64-linux";
                   virtPlatform = "x86_64-linux";
                 }
