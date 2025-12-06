@@ -1,6 +1,7 @@
 {
   inputs,
   outputs,
+  ci ? false,
   ...
 }:
 let
@@ -415,6 +416,7 @@ rec {
       platform ? "aarch64-darwin",
       isDesktop ? false,
       isWork ? false,
+      ci ? ci,
       extraModules ? [ ],
     }:
     inputs.nix-darwin.lib.darwinSystem {
@@ -429,6 +431,7 @@ rec {
           hmStateVersion
           isDesktop
           isWork
+          ci
           ;
       };
       modules = [
