@@ -22,7 +22,9 @@ VM_CACHE_OPTS = \
 # Reused for host builds too (pi5 benefit from RPI cache, proxmox from Proxmox cache).
 HOST_CACHE_OPTS = \
 	$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
-	$(if $(filter prox%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),)
+	$(if $(filter prox%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
+	$(if $(filter prx%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
+	$(if $(filter nvws%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),)
 
 # Also the default target (just call `make`)
 inputs-update:
