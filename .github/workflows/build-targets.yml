@@ -1,0 +1,53 @@
+name: Build targets
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: frame (x86_64-linux)
+            attr: nixosConfigurations.frame.config.system.build.toplevel
+            os: ubuntu-latest
+          - name: nvws (x86_64-linux)
+            attr: nixosConfigurations.nvws.config.system.build.toplevel
+            os: ubuntu-latest
+          # build just prx1-lab since other nodes are identical by design
+          - name: prx1-lab (x86_64-linux)
+            attr: nixosConfigurations.prx1-lab.config.system.build.toplevel
+            os: ubuntu-latest
+          - name: mair (aarch64-darwin)
+            attr: darwinConfigurations.mair.system
+            os: macos-26
+          - name: mmini (aarch64-darwin)
+            attr: darwinConfigurations.mmini.system
+            os: macos-26
+          - name: ihrachyshka-mlt (aarch64-darwin)
+            attr: darwinConfigurations.ihrachyshka-mlt.system
+            os: macos-26
+
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v11
+
+      - name: Build ${{ matrix.name }}
+        env:
+          NIX_CONFIG: "extra-experimental-features = nix-command flakes"
+        run: nix build ".#${{ matrix.attr }}" --no-link --print-build-logs
