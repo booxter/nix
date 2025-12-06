@@ -59,4 +59,4 @@ jobs:
       - name: Build ${{ matrix.name }}
         env:
           NIX_CONFIG: "extra-experimental-features = nix-command flakes"
-        run: nix build ".#${{ matrix.attr }}" --no-link --print-build-logs
+        run: nix build ".#${{ matrix.attr }}" --no-link --print-build-logs --show-trace
