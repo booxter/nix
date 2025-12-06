@@ -48,8 +48,6 @@
     jellyfin-pinned.url = "github:NixOS/nixpkgs/6158d9170f0c55f07123559161447f657dc9f887";
     declarative-jellyfin.inputs.nixpkgs.follows = "jellyfin-pinned";
 
-    attic.url = "github:zhaofengli/attic";
-
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
 
