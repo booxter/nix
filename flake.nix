@@ -171,9 +171,10 @@
               "${ciName}" = helpers.mkVM (
                 args
                 // {
-                  inherit stateVersion virtPlatform;
+                  inherit stateVersion;
                   hostname = localName;
                   platform = "x86_64-linux";
+                  virtPlatform = "x86_64-linux";
                 }
               );
 
