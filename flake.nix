@@ -3,15 +3,13 @@
 {
   description = "booxter Nix* flake configs";
 
-  inputs = rec {
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
 
     # Use staging-next if needed
     #nixpkgs-staging-next.url = "github:NixOS/nixpkgs/staging-next";
     #nixpkgs = nixpkgs-staging-next;
-
-    nixpkgs = nixpkgs-unstable;
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
