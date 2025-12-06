@@ -1,0 +1,27 @@
+name: Format check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nix-fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v11
+
+      - name: Check formatting
+        env:
+          NIX_CONFIG: "extra-experimental-features = nix-command flakes"
+        run: nix run .#formatter -- --check .
