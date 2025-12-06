@@ -66,29 +66,55 @@ in
         let
           # TODO: refactor to use common fetcher config templates
           getTypeOptions =
-            isAdult:
+            {
+              isAdult ? false,
+              preferTmdb ? false,
+            }:
             if isAdult then
-              {
-                # NOTE: I don't think other types but Movie are used here
-                typeOptions.Movie = {
-                  metadataFetchers = [
-                    "ThePornDB Movies"
-                    "ThePornDB Scenes"
-                    "ThePornDB JAV"
-                    "TheMovieDb"
-                    "The Open Movie Database"
-                  ];
-                  imageFetchers = [
-                    "ThePornDB Movies"
-                    "ThePornDB Scenes"
-                    "ThePornDB JAV"
-                    "TheMovieDb"
-                    "The Open Movie Database"
-                    "Embedded Image Extractor"
-                    "Screen Grabber"
-                  ];
-                };
-              }
+              if preferTmdb then
+                {
+                  # NOTE: I don't think other types but Movie are used here
+                  typeOptions.Movie = {
+                    metadataFetchers = [
+                      "TheMovieDb"
+                      "ThePornDB Movies"
+                      "ThePornDB Scenes"
+                      "ThePornDB JAV"
+                      "The Open Movie Database"
+                    ];
+                    imageFetchers = [
+                      "TheMovieDb"
+                      "ThePornDB Movies"
+                      "ThePornDB Scenes"
+                      "ThePornDB JAV"
+                      "The Open Movie Database"
+                      "Embedded Image Extractor"
+                      "Screen Grabber"
+                    ];
+                  };
+                }
+              else
+                {
+                  # NOTE: I don't think other types but Movie are used here
+                  typeOptions.Movie = {
+                    metadataFetchers = [
+                      "ThePornDB Movies"
+                      "ThePornDB Scenes"
+                      "ThePornDB JAV"
+                      "TheMovieDb"
+                      "The Open Movie Database"
+                    ];
+                    imageFetchers = [
+                      "ThePornDB Movies"
+                      "ThePornDB Scenes"
+                      "ThePornDB JAV"
+                      "TheMovieDb"
+                      "The Open Movie Database"
+                      "Embedded Image Extractor"
+                      "Screen Grabber"
+                    ];
+                  };
+                }
             else
               {
                 typeOptions.Movie = {
@@ -158,6 +184,7 @@ in
               path,
               contentType ? "movies",
               isAdult ? false,
+              preferTmdb ? false,
             }:
             {
               enabled = true;
@@ -180,7 +207,7 @@ in
               automaticRefreshIntervalDays = 14;
               enableRealtimeMonitor = true;
             }
-            // getTypeOptions isAdult;
+            // getTypeOptions { inherit isAdult preferTmdb; };
 
           getMediaPath = name: "/media/library/" + name;
         in
@@ -201,6 +228,7 @@ in
           Fruit = getLibrary {
             path = getMediaPath "xxx";
             isAdult = true;
+            preferTmdb = true; # the list is letterboxd based and maps to tmdb entries
           };
           Whisper = getLibrary {
             path = getMediaPath "whisparr/movies";
