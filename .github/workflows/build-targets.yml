@@ -42,7 +42,12 @@ jobs:
 
     steps:
       - name: Maximize build space
-        uses: ./.github/actions/maximize-space
+        if: runner.os == 'Linux'
+        uses: easimon/maximize-build-space@v10
+        with:
+          remove-dotnet: true
+          remove-android: true
+          remove-haskell: true
 
       - name: Checkout
         uses: actions/checkout@v4

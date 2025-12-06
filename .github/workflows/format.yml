@@ -15,9 +15,6 @@ jobs:
   nix-fmt:
     runs-on: ubuntu-latest
     steps:
-      - name: Maximize build space
-        uses: ./.github/actions/maximize-space
-
       - name: Checkout
         uses: actions/checkout@v4
 
