@@ -416,7 +416,6 @@ rec {
       platform ? "aarch64-darwin",
       isDesktop ? false,
       isWork ? false,
-      ci ? ci,
       extraModules ? [ ],
     }:
     inputs.nix-darwin.lib.darwinSystem {
