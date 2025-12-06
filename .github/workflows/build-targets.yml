@@ -1,10 +1,11 @@
 name: Build targets
 
 on:
-  pull_request:
-  push:
-    branches:
-      - master
+  workflow_run:
+    workflows:
+      - Format check
+    types:
+      - completed
   workflow_dispatch:
 
 permissions:
@@ -12,6 +13,7 @@ permissions:
 
 jobs:
   build:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
