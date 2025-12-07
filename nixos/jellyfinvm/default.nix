@@ -204,6 +204,7 @@ in
       in
       {
         Movies = getLibrary { path = getMediaPath "movies"; };
+        Family = getLibrary { path = getMediaPath "family"; };
         Anime = getLibrary { path = getMediaPath "anime"; };
         Docu = getLibrary { path = getMediaPath "docu"; };
 
@@ -255,10 +256,11 @@ in
           }
           // lib.optionalAttrs (!allLibraries) {
             preferences.enabledLibraries = [
-              "Movies"
-              "Shows"
+              "Family"
             ]
             ++ lib.optionals (!isKid) [
+              "Movies"
+              "Shows"
               "Anime"
               "Docu"
               "Music"
