@@ -93,6 +93,24 @@ in
 
   };
 
+  systemd.services."update-dynamic-ip" = {
+    after = [ "wg.service" ];
+    wants = [ "wg.service" ];
+    path = [ pkgs.curl ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart =
+        let
+          cookiePath = "/data/.secret/mam.cookies";
+        in
+        "${pkgs.curl}/bin/curl -c ${cookiePath} -b ${cookiePath} https://t.myanonamouse.net/json/dynamicSeedbox.php";
+    };
+    vpnconfinement = {
+      enable = true;
+      vpnnamespace = "wg";
+    };
+  };
+
   # expose to lan
   systemd.services.audiobookshelf.serviceConfig.ExecStart =
     lib.mkForce "${config.nixarr.audiobookshelf.package}/bin/audiobookshelf --host 0.0.0.0 --port ${toString config.nixarr.audiobookshelf.port}";
