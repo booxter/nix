@@ -114,6 +114,7 @@ in
   # expose to lan
   systemd.services.audiobookshelf.serviceConfig.ExecStart =
     lib.mkForce "${config.nixarr.audiobookshelf.package}/bin/audiobookshelf --host 0.0.0.0 --port ${toString config.nixarr.audiobookshelf.port}";
+  networking.firewall.allowedTCPPorts = [ config.nixarr.audiobookshelf.port ];
 
   services.glance = {
     enable = true;
