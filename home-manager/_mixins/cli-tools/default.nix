@@ -84,8 +84,14 @@
   programs.jq.enable = true;
   programs.less.enable = true;
 
-  # passwords
-  programs.password-store.enable = true;
+  # cli password manager
+  programs.password-store = {
+    enable = true;
+    settings = {
+      # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
+      PASSWORD_STORE_DIR = "${config.xdg.dataHome}/password-store";
+    };
+  };
 
   # starship prompt
   programs.starship = {
