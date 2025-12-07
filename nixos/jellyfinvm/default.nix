@@ -15,303 +15,296 @@ in
     inputs.declarative-jellyfin.nixosModules.default
   ];
 
-  services.declarative-jellyfin =
-    let
-      getSvcDir = name: "/media/.jf/" + name;
-    in
-    {
-      enable = true;
-      openFirewall = true;
-      serverId = "4d6980bd291d37fa006ece1e8e7fe752";
+  services.declarative-jellyfin = {
+    enable = true;
+    openFirewall = true;
+    serverId = "4d6980bd291d37fa006ece1e8e7fe752";
 
-      backups = true;
-      backupCount = 1;
+    backups = true;
+    backupCount = 1;
 
-      #dataDir = getSvcDir "data";
-      #backupDir = getSvcDir "backups";
-      #cacheDir = getSvcDir "cache";
+    system = {
+      enableMetrics = true;
+      pluginRepositories = [
+        {
+          content = {
+            Enabled = true;
+            Name = "Jellyfin Stable";
+            Url = "https://repo.jellyfin.org/files/plugin/manifest.json";
+          };
+          tag = "RepositoryInfo";
+        }
+        {
+          content = {
+            Enabled = true;
+            Name = "ThePornDB";
+            Url = "https://raw.githubusercontent.com/ThePornDatabase/Jellyfin.Plugin.ThePornDB/main/manifest.json";
+          };
+          tag = "RepositoryInfo";
+        }
+      ];
+      serverName = "main";
 
-      system = {
-        enableMetrics = true;
-        #metadataPath = getSvcDir "metadata";
-        pluginRepositories = [
+      trickplayOptions.processThreads = 10;
+    };
+
+    encoding = {
+      allowAv1Encoding = true;
+      allowHevcEncoding = true;
+    };
+
+    libraries =
+      let
+        # TODO: refactor to use common fetcher config templates
+        getTypeOptions =
           {
-            content = {
-              Enabled = true;
-              Name = "Jellyfin Stable";
-              Url = "https://repo.jellyfin.org/files/plugin/manifest.json";
-            };
-            tag = "RepositoryInfo";
-          }
-          {
-            content = {
-              Enabled = true;
-              Name = "ThePornDB";
-              Url = "https://raw.githubusercontent.com/ThePornDatabase/Jellyfin.Plugin.ThePornDB/main/manifest.json";
-            };
-            tag = "RepositoryInfo";
-          }
-        ];
-        serverName = "main";
-
-        trickplayOptions.processThreads = 10;
-      };
-
-      encoding = {
-        allowAv1Encoding = true;
-        allowHevcEncoding = true;
-      };
-
-      libraries =
-        let
-          # TODO: refactor to use common fetcher config templates
-          getTypeOptions =
-            {
-              isAdult ? false,
-              preferTmdb ? false,
-            }:
-            if isAdult then
-              if preferTmdb then
-                {
-                  # NOTE: I don't think other types but Movie are used here
-                  typeOptions.Movie = {
-                    metadataFetchers = [
-                      "TheMovieDb"
-                      "ThePornDB Movies"
-                      "ThePornDB Scenes"
-                      "ThePornDB JAV"
-                      "The Open Movie Database"
-                    ];
-                    imageFetchers = [
-                      "TheMovieDb"
-                      "ThePornDB Movies"
-                      "ThePornDB Scenes"
-                      "ThePornDB JAV"
-                      "The Open Movie Database"
-                      "Embedded Image Extractor"
-                      "Screen Grabber"
-                    ];
-                  };
-                }
-              else
-                {
-                  # NOTE: I don't think other types but Movie are used here
-                  typeOptions.Movie = {
-                    metadataFetchers = [
-                      "ThePornDB Movies"
-                      "ThePornDB Scenes"
-                      "ThePornDB JAV"
-                      "TheMovieDb"
-                      "The Open Movie Database"
-                    ];
-                    imageFetchers = [
-                      "ThePornDB Movies"
-                      "ThePornDB Scenes"
-                      "ThePornDB JAV"
-                      "TheMovieDb"
-                      "The Open Movie Database"
-                      "Embedded Image Extractor"
-                      "Screen Grabber"
-                    ];
-                  };
-                }
-            else
+            isAdult ? false,
+            preferTmdb ? false,
+          }:
+          if isAdult then
+            if preferTmdb then
               {
+                # NOTE: I don't think other types but Movie are used here
                 typeOptions.Movie = {
                   metadataFetchers = [
                     "TheMovieDb"
+                    "ThePornDB Movies"
+                    "ThePornDB Scenes"
+                    "ThePornDB JAV"
                     "The Open Movie Database"
                   ];
                   imageFetchers = [
+                    "TheMovieDb"
+                    "ThePornDB Movies"
+                    "ThePornDB Scenes"
+                    "ThePornDB JAV"
+                    "The Open Movie Database"
+                    "Embedded Image Extractor"
+                    "Screen Grabber"
+                  ];
+                };
+              }
+            else
+              {
+                # NOTE: I don't think other types but Movie are used here
+                typeOptions.Movie = {
+                  metadataFetchers = [
+                    "ThePornDB Movies"
+                    "ThePornDB Scenes"
+                    "ThePornDB JAV"
+                    "TheMovieDb"
+                    "The Open Movie Database"
+                  ];
+                  imageFetchers = [
+                    "ThePornDB Movies"
+                    "ThePornDB Scenes"
+                    "ThePornDB JAV"
                     "TheMovieDb"
                     "The Open Movie Database"
                     "Embedded Image Extractor"
                     "Screen Grabber"
                   ];
                 };
-                typeOptions.Series = {
-                  metadataFetchers = [
-                    "TheMovieDb"
-                    "The Open Movie Database"
-                  ];
-                  imageFetchers = [
-                    "TheMovieDb"
-                  ];
-                };
-                typeOptions.Season = {
-                  metadataFetchers = [
-                    "TheMovieDb"
-                  ];
-                  imageFetchers = [
-                    "TheMovieDb"
-                  ];
-                };
-                typeOptions.Episode = {
-                  metadataFetchers = [
-                    "TheMovieDb"
-                    "The Open Movie Database"
-                  ];
-                  imageFetchers = [
-                    "TheMovieDb"
-                    "The Open Movie Database"
-                    "Embedded Image Extractor"
-                    "Screen Grabber"
-                  ];
-                };
-                typeOptions.MusicArtist = {
-                  metadataFetchers = [ "MusicBrainz" ];
-                  imageFetchers = [ "TheAudioDB" ];
-                };
-                typeOptions.MusicAlbum = {
-                  metadataFetchers = [ "MusicBrainz" ];
-                  imageFetchers = [ "TheAudioDB" ];
-                };
-                typeOptions.Audio = {
-                  metadataFetchers = [ ];
-                  imageFetchers = [ "Image Extractor" ];
-                };
-                typeOptions.MusicVideo = {
-                  metadataFetchers = [ ];
-                  imageFetchers = [
-                    "Embedded Image Extractor"
-                    "Screen Grabber"
-                  ];
-                };
+              }
+          else
+            {
+              typeOptions.Movie = {
+                metadataFetchers = [
+                  "TheMovieDb"
+                  "The Open Movie Database"
+                ];
+                imageFetchers = [
+                  "TheMovieDb"
+                  "The Open Movie Database"
+                  "Embedded Image Extractor"
+                  "Screen Grabber"
+                ];
               };
+              typeOptions.Series = {
+                metadataFetchers = [
+                  "TheMovieDb"
+                  "The Open Movie Database"
+                ];
+                imageFetchers = [
+                  "TheMovieDb"
+                ];
+              };
+              typeOptions.Season = {
+                metadataFetchers = [
+                  "TheMovieDb"
+                ];
+                imageFetchers = [
+                  "TheMovieDb"
+                ];
+              };
+              typeOptions.Episode = {
+                metadataFetchers = [
+                  "TheMovieDb"
+                  "The Open Movie Database"
+                ];
+                imageFetchers = [
+                  "TheMovieDb"
+                  "The Open Movie Database"
+                  "Embedded Image Extractor"
+                  "Screen Grabber"
+                ];
+              };
+              typeOptions.MusicArtist = {
+                metadataFetchers = [ "MusicBrainz" ];
+                imageFetchers = [ "TheAudioDB" ];
+              };
+              typeOptions.MusicAlbum = {
+                metadataFetchers = [ "MusicBrainz" ];
+                imageFetchers = [ "TheAudioDB" ];
+              };
+              typeOptions.Audio = {
+                metadataFetchers = [ ];
+                imageFetchers = [ "Image Extractor" ];
+              };
+              typeOptions.MusicVideo = {
+                metadataFetchers = [ ];
+                imageFetchers = [
+                  "Embedded Image Extractor"
+                  "Screen Grabber"
+                ];
+              };
+            };
 
-          getLibrary =
-            {
-              path,
-              contentType ? "movies",
-              isAdult ? false,
-              preferTmdb ? false,
-            }:
-            {
-              enabled = true;
-              inherit contentType;
-              pathInfos = [ path ];
+        getLibrary =
+          {
+            path,
+            contentType ? "movies",
+            isAdult ? false,
+            preferTmdb ? false,
+          }:
+          {
+            enabled = true;
+            inherit contentType;
+            pathInfos = [ path ];
 
-              automaticallyAddToCollection = true;
+            automaticallyAddToCollection = true;
 
-              enableChapterImageExtraction = true;
-              extractChapterImagesDuringLibraryScan = true;
-              extractTrickplayImagesDuringLibraryScan = true;
-              enableEmbeddedEpisodeInfos = true;
-              enableEmbeddedExtraTitles = true;
-              enableTrickplayImageExtraction = true;
+            enableChapterImageExtraction = true;
+            extractChapterImagesDuringLibraryScan = true;
+            extractTrickplayImagesDuringLibraryScan = true;
+            enableEmbeddedEpisodeInfos = true;
+            enableEmbeddedExtraTitles = true;
+            enableTrickplayImageExtraction = true;
 
-              saveTrickplayWithMedia = true;
-              metadataSavers = [ "Nfo" ];
-              saveLocalMetadata = true;
+            saveTrickplayWithMedia = true;
+            metadataSavers = [ "Nfo" ];
+            saveLocalMetadata = true;
 
-              automaticRefreshIntervalDays = 14;
-              enableRealtimeMonitor = true;
-            }
-            // getTypeOptions { inherit isAdult preferTmdb; };
+            automaticRefreshIntervalDays = 14;
+            enableRealtimeMonitor = true;
+          }
+          // getTypeOptions { inherit isAdult preferTmdb; };
 
-          getMediaPath = name: "/media/library/" + name;
-        in
-        {
-          Movies = getLibrary { path = getMediaPath "movies"; };
-          Anime = getLibrary { path = getMediaPath "anime"; };
-          Docu = getLibrary { path = getMediaPath "docu"; };
+        getMediaPath = name: "/media/library/" + name;
+      in
+      {
+        Movies = getLibrary { path = getMediaPath "movies"; };
+        Family = getLibrary { path = getMediaPath "family"; };
+        Anime = getLibrary { path = getMediaPath "anime"; };
+        Docu = getLibrary { path = getMediaPath "docu"; };
 
-          Shows = getLibrary {
-            path = getMediaPath "shows";
-            contentType = "tvshows";
-          };
-          Music = getLibrary {
-            path = getMediaPath "music";
-            contentType = "music";
-          };
-
-          Fruit = getLibrary {
-            path = getMediaPath "xxx";
-            isAdult = true;
-            preferTmdb = true; # the list is letterboxd based and maps to tmdb entries
-          };
-          Whisper = getLibrary {
-            path = getMediaPath "whisparr/movies";
-            isAdult = true;
-          };
-          Shout = getLibrary {
-            path = getMediaPath "whisparr/scenes";
-            isAdult = true;
-          };
+        Shows = getLibrary {
+          path = getMediaPath "shows";
+          contentType = "tvshows";
+        };
+        Music = getLibrary {
+          path = getMediaPath "music";
+          contentType = "music";
         };
 
-      users =
-        let
-          hashedPassword = "$PBKDF2-SHA512$iterations=210000$535A9D75492726EB4D49339E800FC209$A870512E4964ECC260389C9864CEA085FD501945B7526D7F813560BFCA5A728E8E7522BA597C646D339F0193E0CFF8107416DB5EE234E69B6D0AC441A77B4079";
-          getUser =
-            {
-              mutable ? true,
-              isAdmin ? false,
-              allowWrite ? false,
-              isKid ? false,
-              isAdult ? false,
-              allLibraries ? false,
-            }:
-            {
-              inherit mutable hashedPassword;
-              permissions = {
-                isAdministrator = isAdmin;
-                enableAllFolders = allLibraries;
-                enableCollectionManagement = allowWrite || isAdmin;
-              };
-              displayMissingEpisodes = true;
-              subtitleLanguagePreference = "en";
-            }
-            // lib.optionalAttrs (!allLibraries) {
-              preferences.enabledLibraries = [
-                "Movies"
-                "Shows"
-              ]
-              ++ lib.optionals (!isKid) [
-                "Anime"
-                "Docu"
-                "Music"
-              ]
-              ++ lib.optionals isAdult [ "Fruit" ];
+        Fruit = getLibrary {
+          path = getMediaPath "xxx";
+          isAdult = true;
+          preferTmdb = true; # the list is letterboxd based and maps to tmdb entries
+        };
+        Whisper = getLibrary {
+          path = getMediaPath "whisparr/movies";
+          isAdult = true;
+        };
+        Shout = getLibrary {
+          path = getMediaPath "whisparr/scenes";
+          isAdult = true;
+        };
+      };
+
+    users =
+      let
+        hashedPassword = "$PBKDF2-SHA512$iterations=210000$535A9D75492726EB4D49339E800FC209$A870512E4964ECC260389C9864CEA085FD501945B7526D7F813560BFCA5A728E8E7522BA597C646D339F0193E0CFF8107416DB5EE234E69B6D0AC441A77B4079";
+        getUser =
+          {
+            mutable ? true,
+            isAdmin ? false,
+            allowWrite ? false,
+            isKid ? false,
+            isAdult ? false,
+            allLibraries ? false,
+          }:
+          {
+            inherit mutable hashedPassword;
+            permissions = {
+              isAdministrator = isAdmin;
+              enableAllFolders = allLibraries;
+              enableCollectionManagement = allowWrite || isAdmin;
             };
-          getGuestUser =
-            (getUser {
-              mutable = true;
-              isAdmin = false;
-              isKid = false;
-              isAdult = false;
-              allLibraries = false;
-            })
-            // {
-              maxActiveSessions = 2;
-            };
-        in
-        {
-          jellyfin = getUser {
-            mutable = false;
+            displayMissingEpisodes = true;
+            subtitleLanguagePreference = "en";
+          }
+          // lib.optionalAttrs (!allLibraries) {
+            preferences.enabledLibraries = [
+              "Family"
+            ]
+            ++ lib.optionals (!isKid) [
+              "Movies"
+              "Shows"
+              "Anime"
+              "Docu"
+              "Music"
+            ]
+            ++ lib.optionals isAdult [ "Fruit" ];
+          };
+        getGuestUser =
+          (getUser {
+            mutable = true;
             isAdmin = false;
+            isKid = false;
             isAdult = false;
+            allLibraries = false;
+          })
+          // {
+            maxActiveSessions = 2;
           };
-
-          Ihar = getUser {
-            mutable = false;
-            isAdmin = true;
-            isAdult = true;
-          };
-          Kasia = getUser {
-            mutable = false;
-            isAdult = true;
-            allowWrite = true;
-          };
-          Vatslau = getUser {
-            mutable = false;
-            isKid = true;
-          };
-
-          ZS = getGuestUser;
-          DZ = getGuestUser;
+      in
+      {
+        jellyfin = getUser {
+          mutable = false;
+          isAdmin = false;
+          isAdult = false;
         };
-    };
+
+        Ihar = getUser {
+          mutable = false;
+          isAdmin = true;
+          isAdult = true;
+        };
+        Kasia = getUser {
+          mutable = false;
+          isAdult = true;
+          allowWrite = true;
+        };
+        Vatslau = getUser {
+          mutable = false;
+          isKid = true;
+        };
+
+        ZS = getGuestUser;
+        DZ = getGuestUser;
+      };
+  };
 
   # NFS mounts with media
   boot.supportedFilesystems = [ "nfs" ];
