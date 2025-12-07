@@ -84,7 +84,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v11
+        uses: DeterminateSystems/nix-installer-action@v21
 
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
