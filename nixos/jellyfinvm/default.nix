@@ -216,6 +216,10 @@ in
           path = getMediaPath "music";
           contentType = "music";
         };
+        Books = getLibrary {
+          path = getMediaPath "audiobooks";
+          contentType = "books";
+        };
 
         Fruit = getLibrary {
           path = getMediaPath "xxx";
@@ -263,6 +267,7 @@ in
               "Shows"
               "Anime"
               "Docu"
+              "Books"
               "Music"
             ]
             ++ lib.optionals isAdult [ "Fruit" ];
