@@ -28,6 +28,7 @@ in
     path = [
       pkgs.git
       pkgs.gnumake
+      pkgs.hostname-debian
       pkgs.nix
       pkgs.nixos-rebuild
     ];
@@ -66,7 +67,7 @@ in
     wantedBy = [ "timers.target" ];
     timerConfig = {
       # Run every day at 19:30 local time
-      OnCalendar = "19:30";
+      OnCalendar = "19:32";
       # Spread the exact start a bit if many machines share the same repo
       #RandomizedDelaySec = "30min";
       Persistent = true; # catch up missed runs after downtime
