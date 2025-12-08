@@ -1,5 +1,9 @@
 { ... }:
 {
+  imports = [
+    ../_mixins/auto-update
+  ];
+
   systemd.services.nix-daemon.serviceConfig = {
     MemoryAccounting = true;
     MemoryMax = "90%";
