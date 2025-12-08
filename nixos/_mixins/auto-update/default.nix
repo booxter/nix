@@ -69,9 +69,8 @@ in
     wantedBy = [ "timers.target" ];
     timerConfig = {
       # Run on Sundays at night
-      OnCalendar = "Sun 19:46";
-      # Spread the exact start a bit if many machines share the same repo
-      #RandomizedDelaySec = "30min";
+      OnCalendar = "Sun 03:00";
+      RandomizedDelaySec = "15min";
       Persistent = true; # catch up missed runs after downtime
     };
   };
