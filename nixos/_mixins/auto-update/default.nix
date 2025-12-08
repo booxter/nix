@@ -31,6 +31,7 @@ in
       pkgs.hostname-debian
       pkgs.nix
       pkgs.nixos-rebuild
+      pkgs.sudo
     ];
 
     script = ''
@@ -66,8 +67,8 @@ in
     description = "Nightly NixOS auto-upgrade from Git";
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      # Run every day at 19:30 local time
-      OnCalendar = "19:32";
+      # Run every day at 19:40 local time
+      OnCalendar = "19:40";
       # Spread the exact start a bit if many machines share the same repo
       #RandomizedDelaySec = "30min";
       Persistent = true; # catch up missed runs after downtime
