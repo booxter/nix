@@ -32,6 +32,7 @@ in
       pkgs.nix
       pkgs.nixos-rebuild
       pkgs.sudo
+      pkgs.bashInteractive
     ];
 
     script = ''
@@ -67,8 +68,8 @@ in
     description = "Nightly NixOS auto-upgrade from Git";
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      # Run every day at 19:40 local time
-      OnCalendar = "19:40";
+      # Run on Sundays at night
+      OnCalendar = "Sun 19:46";
       # Spread the exact start a bit if many machines share the same repo
       #RandomizedDelaySec = "30min";
       Persistent = true; # catch up missed runs after downtime
