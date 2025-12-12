@@ -37,6 +37,23 @@
       ]
     );
 
+  programs.vscode = {
+    enable = isDesktop;
+    profiles = {
+      default = {
+        enableUpdateCheck = false;
+        enableExtensionUpdateCheck = false;
+
+        extensions = with pkgs.vscode-extensions; [
+          ms-vscode-remote.remote-ssh
+          ms-vscode-remote.remote-ssh-edit
+          github.copilot
+          golang.go
+        ];
+      };
+    };
+  };
+
   programs.claude-code.enable = true;
 
   programs.ssh = {
