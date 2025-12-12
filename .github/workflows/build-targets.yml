@@ -64,8 +64,8 @@ jobs:
           - name: mmini-ci (aarch64-darwin)
             cmd: make darwin-build-target WHAT=mmini-ci
             os: macos-26
-          - name: ihrachyshka-mlt-ci (aarch64-darwin)
-            cmd: make darwin-build-target WHAT=ihrachyshka-mlt-ci
+          - name: JGWXHWDL4X-ci (aarch64-darwin)
+            cmd: make darwin-build-target WHAT=JGWXHWDL4X-ci
             os: macos-26
 
     timeout-minutes: 180
