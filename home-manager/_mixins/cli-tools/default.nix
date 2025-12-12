@@ -1,6 +1,7 @@
 {
   config,
   pkgs,
+  isWork,
   ...
 }:
 {
@@ -101,42 +102,46 @@
     settings = (with builtins; fromTOML (readFile ./starship.toml));
   };
 
-  home.packages = with pkgs; [
-    (ripgrep.override { withPCRE2 = true; })
-    ack
-    act
-    aider-chat
-    curl
-    delve # go debugger
-    devenv
-    fd
-    fzf
-    gnupg
-    go
-    hydra-check
-    lima
-    lnav # log viewer
-    mkpasswd
-    (my-page.override { neovim = config.programs.nixvim.build.package; })
-    nix-init
-    nix-search-cli
-    nix-tree
-    nurl
-    openssl
-    podman
-    pre-commit
-    # TODO: https://github.com/NixOS/nixpkgs/issues/466092 breaks darwin...
-    #ramalama
-    tailscale
-    wget
-    yq-go
-    zstd
+  home.packages =
+    with pkgs;
+    [
+      (ripgrep.override { withPCRE2 = true; })
+      ack
+      act
+      curl
+      delve # go debugger
+      devenv
+      fd
+      fzf
+      gnupg
+      go
+      hydra-check
+      lima
+      lnav # log viewer
+      mkpasswd
+      (my-page.override { neovim = config.programs.nixvim.build.package; })
+      nix-init
+      nix-search-cli
+      nix-tree
+      nurl
+      openssl
+      podman
+      pre-commit
+      wget
+      yq-go
+      zstd
 
-    # python
-    python313
-    python313Packages.ipython
-    python313Packages.tox
-  ];
+      # python
+      python313
+      python313Packages.ipython
+      python313Packages.tox
+    ]
+    ++ lib.optionals (!isWork) [
+      aider-chat
+      # TODO: https://github.com/NixOS/nixpkgs/issues/466092 breaks darwin...
+      #ramalama
+      tailscale
+    ];
 
   home.sessionVariables = {
     PAGER = "page -WO -q 90000";

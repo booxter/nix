@@ -28,12 +28,14 @@ in
   ++ lib.optionals isDesktop [
     ./_mixins/aerospace
     ./_mixins/email
-    ./_mixins/firefox
     ./_mixins/fonts
     ./_mixins/hyprland
     ./_mixins/jankyborders
     ./_mixins/kitty
     ./_mixins/sketchybar
+  ]
+  ++ lib.optionals (!isWork && isDesktop) [
+    ./_mixins/firefox
   ]
   ++ lib.optionals isWork [
     ./_mixins/krew
@@ -59,11 +61,10 @@ in
     ]
     ++ lib.optionals isDesktop [
       obsidian
-      podman-desktop
       telegram-desktop
       wireshark
     ]
-    ++ lib.optionals isDarwin [
-      keycastr
+    ++ lib.optionals (!isWork && isDesktop) [
+      podman-desktop
     ];
 }
