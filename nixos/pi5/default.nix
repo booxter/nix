@@ -81,7 +81,7 @@ in
 
         # clients
         "id:mmini,mmini,192.168.11.1"
-        "id:ihrachyshka-mlt,ihrachyshka-mlt,192.168.11.2"
+        "id:JGWXHWDL4X,mlt,192.168.11.2" # use something more readable
         "id:mair,mair,192.168.11.3"
         "id:frame,frame,192.168.11.4"
 

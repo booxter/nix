@@ -76,10 +76,10 @@
           platform = "aarch64-darwin";
           isDesktop = true;
         };
-        ihrachyshka-mlt = {
+        JGWXHWDL4X = {
           stateVersion = 5;
           hmStateVersion = "25.11";
-          hostname = "ihrachyshka-mlt";
+          hostname = "JGWXHWDL4X";
           platform = "aarch64-darwin";
           isDesktop = true;
           isWork = true;
