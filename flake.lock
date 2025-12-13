@@ -389,22 +389,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-mozilla-wrapper": {
-      "locked": {
-        "lastModified": 1764984494,
-        "narHash": "sha256-wERSLgcqVIOpf14TofNpcsYVrMUo0ij8+NRFWn3KYbk=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "4aa3cf41e589b6857dfafabde6ed93563f3c57b6",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "firefox-dontFixup-touched-for-source-build",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1748437600,
@@ -562,7 +546,6 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-master": "nixpkgs-master",
-        "nixpkgs-mozilla-wrapper": "nixpkgs-mozilla-wrapper",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos"
