@@ -218,17 +218,17 @@
     },
     "jellyfin-pinned": {
       "locked": {
-        "lastModified": 1760942357,
-        "narHash": "sha256-Fr75bzL8ziEpzucXt9iXF0DjySdpqLNumcf+fgcT+fw=",
+        "lastModified": 1765641575,
+        "narHash": "sha256-ceXpu5Mt1xXoNvWD1QE0Gag6ub9mjmgGmr5z2GuNpMw=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "6158d9170f0c55f07123559161447f657dc9f887",
+        "rev": "cb8c34a49da5ace82df79d85febc4cd9202d406e",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "6158d9170f0c55f07123559161447f657dc9f887",
+        "rev": "cb8c34a49da5ace82df79d85febc4cd9202d406e",
         "type": "github"
       }
     },
