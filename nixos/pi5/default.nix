@@ -1,4 +1,4 @@
-{ pkgs, hostname, ... }:
+{ pkgs, ... }:
 let
   mainIface = "end0";
   guestIface = "wlan0";
@@ -122,8 +122,15 @@ in
     53 # DNS
     67 # DHCP
     69 # TFTP
+    514 # syslog
   ];
   systemd.tmpfiles.rules = [
     "L+ /var/lib/dnsmasq/tftp/netboot.xyz.efi - - - - ${pkgs.netbootxyz-efi}"
   ];
+
+  # syslogd -r for remote debugging
+  services.syslogd = {
+    enable = true;
+    enableNetworkInput = true;
+  };
 }
