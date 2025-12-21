@@ -3,6 +3,10 @@
   "extends": [
     "config:recommended"
   ],
+  "timezone": "UTC",
+  "schedule": [
+    "0 0-4 * * 1"
+  ],
   "nix": {
     "enabled": true
   }
