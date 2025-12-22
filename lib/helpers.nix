@@ -141,6 +141,8 @@ rec {
       diskSize ? 100, # GB
       hostname,
       proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
+      diskDevice ? "/dev/sda",
+      disko ? true,
       ...
     }:
     mkNixos (
@@ -191,7 +193,7 @@ rec {
               { ... }:
               {
                 imports = [
-                  (import ../disko { device = "/dev/sda"; })
+                  (import ../disko { device = "/dev/vda"; })
                 ];
                 virtualisation.proxmox = {
                   inherit cores;

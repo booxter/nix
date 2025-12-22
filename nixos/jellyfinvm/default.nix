@@ -15,6 +15,8 @@ in
     inputs.declarative-jellyfin.nixosModules.default
   ];
 
+  boot.loader.grub.enable = false;
+
   services.declarative-jellyfin = {
     enable = true;
     openFirewall = true;
@@ -24,6 +26,7 @@ in
     backupCount = 1;
 
     system = {
+      isStartupWizardCompleted = false;
       enableMetrics = true;
       pluginRepositories = [
         {
@@ -286,23 +289,23 @@ in
       in
       {
         jellyfin = getUser {
-          mutable = false;
+          mutable = true;
           isAdmin = false;
           isAdult = false;
         };
 
         Ihar = getUser {
-          mutable = false;
+          mutable = true;
           isAdmin = true;
           isAdult = true;
         };
         Kasia = getUser {
-          mutable = false;
+          mutable = true;
           isAdult = true;
           allowWrite = true;
         };
         Vatslau = getUser {
-          mutable = false;
+          mutable = true;
           isKid = true;
         };
 
@@ -355,21 +358,26 @@ in
   fileSystems."/media" = media;
   virtualisation.vmVariant.virtualisation.fileSystems."/media" = media;
 
+  fileSystems."/" = {
+    device = "/dev/vda";
+    fsType = "ext4";
+  };
+
   # Acceleration setup: https://nixos.wiki/wiki/Jellyfin
-  nixpkgs.config.packageOverrides = pkgs: {
-    intel-vaapi-driver = pkgs.intel-vaapi-driver.override { enableHybridCodec = true; };
-  };
-  hardware.graphics = {
-    enable = true;
-    extraPackages = with pkgs; [
-      intel-media-driver
-      intel-vaapi-driver # previously vaapiIntel
-      libva-vdpau-driver
-      libvdpau-va-gl
-      intel-compute-runtime # OpenCL filter support (hardware tonemapping and subtitle burn-in)
-      vpl-gpu-rt # QSV on 11th gen or newer
-    ];
-  };
+  #nixpkgs.config.packageOverrides = pkgs: {
+  #  intel-vaapi-driver = pkgs.intel-vaapi-driver.override { enableHybridCodec = true; };
+  #};
+  #hardware.graphics = {
+  #  enable = true;
+  #  extraPackages = with pkgs; [
+  #    intel-media-driver
+  #    intel-vaapi-driver # previously vaapiIntel
+  #    libva-vdpau-driver
+  #    libvdpau-va-gl
+  #    intel-compute-runtime # OpenCL filter support (hardware tonemapping and subtitle burn-in)
+  #    vpl-gpu-rt # QSV on 11th gen or newer
+  #  ];
+  #};
 
   # ports for local vm access
   virtualisation.vmVariant.virtualisation.forwardPorts = [
