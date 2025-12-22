@@ -79,6 +79,8 @@ in
 
   # Hook script
   nix.settings.post-build-hook = "${pkgs.writeShellScriptBin "attic-push-hook" ''
-    exec ${pkgs.attic-client}/bin/attic push default $OUT_PATHS || true
+    if [ -f /root/.config/attic/config.toml ]; then
+      ${pkgs.attic-client}/bin/attic push default $OUT_PATHS || true
+    fi
   ''}/bin/attic-push-hook";
 }

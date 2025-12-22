@@ -161,6 +161,8 @@
                 // {
                   inherit platform stateVersion virtPlatform;
                   hostname = localName;
+                  diskDevice = "/dev/vda";
+                  disko = false;
                 }
               );
 
@@ -358,7 +360,7 @@
         }
         // VM {
           name = "jellyfin";
-          platform = "x86_64-linux";
+          #platform = "x86_64-linux";
           cores = 20;
           memorySize = 32;
           sshPort = 10003;
