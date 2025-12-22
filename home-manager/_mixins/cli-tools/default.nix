@@ -138,8 +138,7 @@
     ]
     ++ lib.optionals (!isWork) [
       aider-chat
-      # TODO: https://github.com/NixOS/nixpkgs/issues/466092 breaks darwin...
-      #ramalama
+      ramalama
       tailscale
     ];
 
