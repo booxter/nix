@@ -17,6 +17,7 @@ in
       configName
     ]
     ++ [
+      ./_mixins/auto-update
       ./_mixins/user
     ]
     ++ lib.optionals isDesktop [
