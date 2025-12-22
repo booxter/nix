@@ -15,6 +15,8 @@ in
     inputs.declarative-jellyfin.nixosModules.default
   ];
 
+  systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
+
   services.declarative-jellyfin = {
     enable = true;
     openFirewall = true;
