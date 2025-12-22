@@ -40,4 +40,10 @@ in
   environment.systemPackages = with pkgs; [
     pciutils
   ];
+
+  systemd.services.nix-daemon.serviceConfig = {
+    MemoryAccounting = true;
+    MemoryMax = "90%";
+    OOMScoreAdjust = 500;
+  };
 }
