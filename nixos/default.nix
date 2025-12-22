@@ -17,6 +17,7 @@ in
       configName
     ]
     ++ [
+      ./_mixins/auto-update
       ./_mixins/user
     ]
     ++ lib.optionals isDesktop [
@@ -40,4 +41,10 @@ in
   environment.systemPackages = with pkgs; [
     pciutils
   ];
+
+  systemd.services.nix-daemon.serviceConfig = {
+    MemoryAccounting = true;
+    MemoryMax = "90%";
+    OOMScoreAdjust = 500;
+  };
 }

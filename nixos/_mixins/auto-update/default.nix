@@ -68,9 +68,9 @@ in
     description = "Nightly NixOS auto-upgrade from Git";
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      # Run on Sundays at night
-      OnCalendar = "Sun 03:00";
-      RandomizedDelaySec = "15min";
+      # Run on Saturdays at night
+      OnCalendar = "Sat 03:00";
+      RandomizedDelaySec = "45min";
       Persistent = true; # catch up missed runs after downtime
     };
   };
