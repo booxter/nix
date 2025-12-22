@@ -1,4 +1,4 @@
-{ ... }:
+{ lib, ... }:
 {
   imports = [
     (import ../../disko { })
@@ -9,4 +9,6 @@
 
   # Intel CPU microcode updates
   hardware.cpu.intel.updateMicrocode = true;
+
+  systemd.timers.nixos-auto-upgrade.timerConfig.OnCalendar = lib.mkForce "Sun 03:00";
 }
