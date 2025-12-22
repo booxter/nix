@@ -52,6 +52,19 @@ in
     };
   };
 
+  # make all services that r/w to nfs mount require the mount
+  systemd.services.audiobookshelf.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.bazarr.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.jellyseerr.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.lidarr.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.radarr.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.readarr.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.readarr-audiobook.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.sonarr.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.whisparr.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.transmission.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.sabnzbd.unitConfig.RequiresMountsFor = "/data/media";
+
   nixarr = {
     enable = true;
     # TODO: reconcile 192.168.15.1 (switch) address being used
