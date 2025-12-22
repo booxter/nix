@@ -61,4 +61,6 @@ in
   networking.firewall.allowedTCPPorts = [
     8080
   ];
+
+  systemd.services.atticd.unitConfig.RequiresMountsFor = "/cache";
 }
