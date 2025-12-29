@@ -13,6 +13,7 @@ in
 {
   imports = [
     inputs.declarative-jellyfin.nixosModules.default
+    ../srvarrvm
   ];
 
   boot.loader.grub.enable = false;

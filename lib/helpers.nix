@@ -181,7 +181,22 @@ rec {
                   memorySize = memorySize * 1024;
                   diskSize = diskSize * 1024;
 
-                  host.pkgs = (import inputs.nixpkgs { system = virtPlatform; });
+                  host.pkgs = (
+                    import inputs.nixpkgs {
+                      system = virtPlatform;
+                      overlays = [
+                        (final: prev: {
+                          # Fix qemu hanging on beefy VMs due to fd limit exhaustion.
+                          # Replicates: https://github.com/NixOS/nixpkgs/pull/474904
+                          glib = prev.glib.overrideAttrs (old: {
+                            env.NIX_CFLAGS_COMPILE =
+                              old.env.NIX_CFLAGS_COMPILE
+                              + inputs.nixpkgs.lib.optionalString prev.stdenv.hostPlatform.isDarwin " -D_DARWIN_UNLIMITED_SELECT -DFD_SETSIZE=4096";
+                          });
+                        })
+                      ];
+                    }
+                  );
                   graphics = false;
                 };
               }
