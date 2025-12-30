@@ -42,11 +42,10 @@
 
     debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
 
-    # Pin as per https://github.com/Sveske-Juice/declarative-jellyfin/issues/20
-    # Try to upgrade after https://github.com/jellyfin/jellyfin/issues/15388 fixed?
-    declarative-jellyfin.url = "github:Sveske-Juice/declarative-jellyfin/c9e781b30b748e9b3f7e4148cf52caeb1751fd48";
-    jellyfin-pinned.url = "github:NixOS/nixpkgs/6158d9170f0c55f07123559161447f657dc9f887";
-    declarative-jellyfin.inputs.nixpkgs.follows = "jellyfin-pinned";
+    # TODO: switch to official when diff is contributed upstream
+    jellarr.url = "github:booxter/jellarr/more-options-based-on-v0.1.0";
+    #jellarr.url = "github:venkyr77/jellarr/v0.1.0";
+    jellarr.inputs.nixpkgs.follows = "nixpkgs";
 
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
