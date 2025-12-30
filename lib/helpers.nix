@@ -283,6 +283,13 @@ rec {
                   enable = true;
                 };
 
+                # Work around issues with proxmox-nixos modules setting these as a single string.
+                # https://github.com/SaumonNet/proxmox-nixos/pull/213
+                services.openssh.settings.AcceptEnv = inputs.nixpkgs.lib.mkForce [
+                  "LANG"
+                  "LC_*"
+                ];
+
                 # Some packages useful when debugging Proxmox VE.
                 environment.systemPackages = with pkgs; [
                   bridge-utils
