@@ -97,8 +97,4 @@ in
       host.port = 7359;
     }
   ];
-
-  # Hold off on auto-updates for now until backup strategy is figured out
-  systemd.timers.nixos-auto-upgrade.enable = false;
-  systemd.services.nixos-auto-upgrade.enable = false;
 }
