@@ -320,6 +320,12 @@
             name = "Vatslau";
             isKid = true;
           })
+          (getUser {
+            name = "Guest";
+            isAdmin = false;
+            isAdult = false;
+            allowWrite = false;
+          })
 
           (getGuestUser { name = "DZ"; })
           (getGuestUser { name = "ZS"; })
