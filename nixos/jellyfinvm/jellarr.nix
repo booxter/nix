@@ -329,6 +329,7 @@
 
           (getGuestUser { name = "DZ"; })
           (getGuestUser { name = "ZS"; })
+          (getGuestUser { name = "Olga"; })
         ];
       plugins = builtins.map (name: { inherit name; }) [
         "AudioDB"
