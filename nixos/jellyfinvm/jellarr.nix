@@ -27,6 +27,11 @@
             url = "https://raw.githubusercontent.com/ThePornDatabase/Jellyfin.Plugin.ThePornDB/main/manifest.json";
             enabled = true;
           }
+          {
+            name = "Letterboxd Link";
+            url = "https://raw.githubusercontent.com/zamhedonia/JellyfinLetterboxdLink/master/manifest.json";
+            enabled = true;
+          }
         ];
         trickplayOptions = {
           enableHwAcceleration = false;
@@ -345,6 +350,7 @@
         ];
       plugins = builtins.map (name: { inherit name; }) [
         "AudioDB"
+        "Letterboxd Link on Movies"
         "MusicBrainz"
         "OMDb"
         "Studio Images"

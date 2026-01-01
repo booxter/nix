@@ -43,7 +43,7 @@
     debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
 
     # TODO: switch to official when diff is contributed upstream
-    jellarr.url = "github:booxter/jellarr/more-options-based-on-v0.1.0";
+    jellarr.url = "github:booxter/jellarr/my-fork-plus-fix-plugin-404";
     #jellarr.url = "github:venkyr77/jellarr/v0.1.0";
     jellarr.inputs.nixpkgs.follows = "nixpkgs";
 
