@@ -207,6 +207,15 @@
 
             # XXX
             {
+              name = "Attic";
+              collectionType = "movies";
+              libraryOptions = getLibraryOptions {
+                path = "attic";
+                isAdult = true;
+                preferTmdb = true;
+              };
+            }
+            {
               name = "Fruit";
               collectionType = "movies";
               libraryOptions = getLibraryOptions {
@@ -282,7 +291,10 @@
                 "Docu"
                 "Music"
               ]
-              ++ lib.optionals isAdult [ "Fruit" ];
+              ++ lib.optionals isAdult [
+                "Attic"
+                "Fruit"
+              ];
             };
           getGuestUser =
             args:
