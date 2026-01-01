@@ -221,16 +221,16 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1767071041,
-        "narHash": "sha256-lC+x1kPQEk1cTAU1ApJq2tffUjlkKGAuBt120VWiinA=",
+        "lastModified": 1767308691,
+        "narHash": "sha256-eF9qgmQlVlf4bUe41WxTusYru0Fvjr8vlEpRl8bLcI0=",
         "owner": "booxter",
         "repo": "jellarr",
-        "rev": "a2656ca7bc682579beb12d2690b6f4601d3700e7",
+        "rev": "5e833a88af2b1742d768a8c6a665e89b89b13ffa",
         "type": "github"
       },
       "original": {
         "owner": "booxter",
-        "ref": "more-options-based-on-v0.1.0",
+        "ref": "my-fork-plus-fix-plugin-404",
         "repo": "jellarr",
         "type": "github"
       }
