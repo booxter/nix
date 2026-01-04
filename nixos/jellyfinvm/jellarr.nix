@@ -355,6 +355,7 @@
         "OMDb"
         "Studio Images"
         "ThePornDB"
+        "TheTVDB"
         "TMDb"
       ];
     };
