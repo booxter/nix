@@ -97,29 +97,36 @@
                 {
                   type = "Series";
                   metadataFetchers = [
+                    "Missing Episode Fetcher"
+                    "TheTVDB"
                     "TheMovieDb"
                     "The Open Movie Database"
                   ];
                   imageFetchers = [
+                    "TheTVDB"
                     "TheMovieDb"
                   ];
                 }
                 {
                   type = "Season";
                   metadataFetchers = [
+                    "TheTVDB"
                     "TheMovieDb"
                   ];
                   imageFetchers = [
+                    "TheTVDB"
                     "TheMovieDb"
                   ];
                 }
                 {
                   type = "Episode";
                   metadataFetchers = [
+                    "TheTVDB"
                     "TheMovieDb"
                     "The Open Movie Database"
                   ];
                   imageFetchers = [
+                    "TheTVDB"
                     "TheMovieDb"
                     "The Open Movie Database"
                     "Embedded Image Extractor"
@@ -355,6 +362,7 @@
         "OMDb"
         "Studio Images"
         "ThePornDB"
+        "TheTVDB"
         "TMDb"
       ];
     };
