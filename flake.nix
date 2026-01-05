@@ -252,6 +252,7 @@
           # TODO: automatically sync ip-mac mapping with dhcp config
           ${nvws} = helpers.mkProxmox {
             inherit username;
+            isWork = true;
             password = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
             stateVersion = "25.11";
             netIface = "enp3s0f0";
