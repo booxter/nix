@@ -16,6 +16,7 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
+      pkgsMaster = getPkgs inputs.nixpkgs-master;
     in
     {
       # https://github.com/NixOS/nixpkgs/pull/374846
@@ -23,6 +24,9 @@
 
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
+
+      # https://github.com/NixOS/nixpkgs/pull/477113
+      inherit (pkgsMaster) ngrep;
 
       whisparr = prev.whisparr.overrideAttrs (old: rec {
         pname = "whisparr";
