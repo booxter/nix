@@ -302,6 +302,10 @@ rec {
                 networking.useNetworkd = true;
                 systemd.network.enable = true;
 
+                services.resolved.extraConfig = ''
+                  ResolveUnicastSingleLabel=yes
+                '';
+
                 systemd.network.networks."10-lan" = {
                   matchConfig.Name = [ netIface ];
                   networkConfig = {
