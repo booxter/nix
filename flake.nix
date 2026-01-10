@@ -96,7 +96,7 @@
       darwinConfigurations =
         let
           base = builtins.listToAttrs (
-            builtins.map (
+            map (
               name:
               let
                 cfg = darwinHosts.${name};
@@ -108,7 +108,7 @@
             ) (builtins.attrNames darwinHosts)
           );
           ciVariants = builtins.listToAttrs (
-            builtins.map (
+            map (
               name:
               let
                 cfg = darwinHosts.${name} // {
