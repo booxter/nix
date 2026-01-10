@@ -102,6 +102,10 @@ in
 
         # nv ws
         "ac:b4:80:40:05:2e,nvws,192.168.15.100"
+
+        # hardcode ips for port forwarding
+        "id:prox-jellyfinvm,prox-jellyfinvm,192.168.20.1"
+        "id:prox-srvarrvm,prox-srvarrvm,192.168.20.2"
       ];
 
       enable-tftp = true;
