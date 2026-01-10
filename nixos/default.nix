@@ -36,8 +36,6 @@ in
     clientid ${hostname}
   '';
 
-  services.tailscale.openFirewall = true;
-
   environment.systemPackages = with pkgs; [
     pciutils
   ];

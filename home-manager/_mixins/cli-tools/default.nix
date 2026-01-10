@@ -139,7 +139,6 @@
     ++ lib.optionals (!isWork) [
       aider-chat
       ramalama
-      tailscale
     ];
 
   home.sessionVariables = {
