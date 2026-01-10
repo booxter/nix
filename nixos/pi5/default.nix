@@ -1,4 +1,4 @@
-{ pkgs, hostname, ... }:
+{ pkgs, ... }:
 let
   mainIface = "end0";
   guestIface = "wlan0";
