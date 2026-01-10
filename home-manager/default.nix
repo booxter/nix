@@ -65,6 +65,7 @@ in
       wireshark
     ]
     ++ lib.optionals (!isWork && isDesktop) [
+      jellyfin-desktop
       podman-desktop
     ];
 }
