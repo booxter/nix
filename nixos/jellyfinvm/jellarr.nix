@@ -355,7 +355,7 @@
           (getGuestUser { name = "ZS"; })
           (getGuestUser { name = "Olga"; })
         ];
-      plugins = builtins.map (name: { inherit name; }) [
+      plugins = map (name: { inherit name; }) [
         "AudioDB"
         "Letterboxd Link on Movies"
         "MusicBrainz"
