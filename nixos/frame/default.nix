@@ -8,7 +8,7 @@
   services.fwupd.enable = true;
   hardware.enableRedistributableFirmware = true;
 
-  networking.wireless.enable = true;
+  networking.wireless.enable = false;
   networking.wireless.secretsFile = "/etc/wireless.secrets";
   networking.wireless.networks = {
     booxter = {

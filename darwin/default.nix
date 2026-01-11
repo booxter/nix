@@ -39,8 +39,11 @@
     shell = pkgs.zsh;
   };
 
-  networking = {
-    knownNetworkServices = [ "Wi-Fi" ];
+  networking = lib.optionalAttrs (!isWork) {
+    knownNetworkServices = [
+      "Ethernet"
+      "Wi-Fi"
+    ];
     dhcpClientId = hostname;
   };
 
