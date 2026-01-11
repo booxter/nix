@@ -40,7 +40,10 @@
   };
 
   networking = lib.optionalAttrs (!isWork) {
-    knownNetworkServices = [ "Wi-Fi" ];
+    knownNetworkServices = [
+      "Ethernet"
+      "Wi-Fi"
+    ];
     dhcpClientId = hostname;
   };
 
