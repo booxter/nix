@@ -79,6 +79,9 @@ in
         # infra
         "7c:b7:7b:04:05:99,mdx,192.168.10.100" # MDX-8
 
+        # better aliases for work machines with forced client id
+        "id:JGWXHWDL4X,mlt,192.168.11.2"
+
         # DON'T USE 192.168.15.0/24 for nixarr compatibility
         # TODO: migrate all internal nodes out of .15 range for nixarr compatibility
         # TODO: modify nixarr to allow using a different range for wg iface?
