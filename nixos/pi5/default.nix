@@ -79,12 +79,6 @@ in
         # infra
         "7c:b7:7b:04:05:99,mdx,192.168.10.100" # MDX-8
 
-        # clients
-        "id:mmini,mmini,192.168.11.1"
-        "id:JGWXHWDL4X,mlt,192.168.11.2" # use something more readable
-        "id:mair,mair,192.168.11.3"
-        "id:frame,frame,192.168.11.4"
-
         # DON'T USE 192.168.15.0/24 for nixarr compatibility
         # TODO: migrate all internal nodes out of .15 range for nixarr compatibility
         # TODO: modify nixarr to allow using a different range for wg iface?
