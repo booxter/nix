@@ -108,6 +108,7 @@
       (ripgrep.override { withPCRE2 = true; })
       ack
       act
+      bc
       curl
       delve # go debugger
       devenv
