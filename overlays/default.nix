@@ -27,18 +27,5 @@
 
       # https://github.com/NixOS/nixpkgs/pull/477113
       inherit (pkgsMaster) ngrep;
-
-      whisparr = prev.whisparr.overrideAttrs (old: rec {
-        pname = "whisparr";
-        version = "3.0.2.1433";
-        src = prev.fetchurl {
-          name = "${pname}-x86-linux-${version}.tar.gz";
-          url = "https://whisparr.servarr.com/v1/update/eros/updatefile?runtime=netcore&version=${version}&arch=x64&os=linux";
-          hash = "sha256-uIkKdkqRSnDlH2+z16blRdhZW8n7doFXN1U1tfG1K3c=";
-        };
-        passthru = old.passthru // {
-          inherit version;
-        };
-      });
     };
 }

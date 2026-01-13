@@ -40,12 +40,6 @@ in
     };
   };
 
-  systemd.services.whisparr = {
-    serviceConfig = {
-      UMask = "0002";
-    };
-  };
-
   systemd.services.bazarr = {
     serviceConfig = {
       UMask = "0002";
@@ -61,9 +55,24 @@ in
   systemd.services.readarr.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.readarr-audiobook.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.sonarr.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.whisparr.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.transmission.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.sabnzbd.unitConfig.RequiresMountsFor = "/data/media";
+
+  # Keep download dir locally to ease load on network and storage
+  systemd.services.sabnzbd.serviceConfig = {
+    ExecStartPre =
+      let
+        fix-incomplete-dir = pkgs.writeShellApplication {
+          name = "fix-incomplete-dir";
+          text = ''
+            sed -i 's|download_dir = .*|download_dir = /data/.cache/usenet/incomplete|g' /var/lib/sabnzbd/sabnzbd.ini
+          '';
+        };
+      in
+      [
+        (lib.getExe' fix-incomplete-dir "fix-incomplete-dir")
+      ];
+  };
 
   nixarr = {
     enable = true;
@@ -86,7 +95,6 @@ in
     sonarr.enable = true;
     bazarr.enable = true;
     audiobookshelf.enable = true;
-    whisparr.enable = true;
 
     # usenet
     sabnzbd = {
@@ -174,11 +182,6 @@ in
                       title = "Sonarr";
                       url = "http://prox-srvarrvm:8989/";
                       icon = "sh:sonarr";
-                    }
-                    {
-                      title = "Whisparr";
-                      url = "http://prox-srvarrvm:6969/";
-                      icon = "sh:whisparr";
                     }
                     {
                       title = "Lidarr";
