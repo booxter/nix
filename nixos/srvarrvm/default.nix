@@ -58,6 +58,22 @@ in
   systemd.services.transmission.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.sabnzbd.unitConfig.RequiresMountsFor = "/data/media";
 
+  # Keep download dir locally to ease load on network and storage
+  systemd.services.sabnzbd.serviceConfig = {
+    ExecStartPre =
+      let
+        fix-incomplete-dir = pkgs.writeShellApplication {
+          name = "fix-incomplete-dir";
+          text = ''
+            sed -i 's|download_dir = .*|download_dir = /data/.cache/usenet/incomplete|g' /var/lib/sabnzbd/sabnzbd.ini
+          '';
+        };
+      in
+      [
+        (lib.getExe' fix-incomplete-dir "fix-incomplete-dir")
+      ];
+  };
+
   nixarr = {
     enable = true;
     # TODO: reconcile 192.168.15.1 (switch) address being used
