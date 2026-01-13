@@ -34,6 +34,14 @@ in
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
     virtualHosts = {
+      "au.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://prox-srvarrvm:9292";
+          proxyWebsockets = true;
+        };
+      };
       "jf.ihar.dev" = {
         forceSSL = true;
         enableACME = true;
