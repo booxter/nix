@@ -236,22 +236,6 @@
                 preferTmdb = true;
               };
             }
-            {
-              name = "Shout";
-              collectionType = "movies";
-              libraryOptions = getLibraryOptions {
-                path = "whisparr/scenes";
-                isAdult = true;
-              };
-            }
-            {
-              name = "Whisper";
-              collectionType = "movies";
-              libraryOptions = getLibraryOptions {
-                path = "whisparr/movies";
-                isAdult = true;
-              };
-            }
 
             # Other
             {

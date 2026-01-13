@@ -40,12 +40,6 @@ in
     };
   };
 
-  systemd.services.whisparr = {
-    serviceConfig = {
-      UMask = "0002";
-    };
-  };
-
   systemd.services.bazarr = {
     serviceConfig = {
       UMask = "0002";
@@ -61,7 +55,6 @@ in
   systemd.services.readarr.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.readarr-audiobook.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.sonarr.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.whisparr.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.transmission.unitConfig.RequiresMountsFor = "/data/media";
   systemd.services.sabnzbd.unitConfig.RequiresMountsFor = "/data/media";
 
@@ -86,7 +79,6 @@ in
     sonarr.enable = true;
     bazarr.enable = true;
     audiobookshelf.enable = true;
-    whisparr.enable = true;
 
     # usenet
     sabnzbd = {
@@ -174,11 +166,6 @@ in
                       title = "Sonarr";
                       url = "http://prox-srvarrvm:8989/";
                       icon = "sh:sonarr";
-                    }
-                    {
-                      title = "Whisparr";
-                      url = "http://prox-srvarrvm:6969/";
-                      icon = "sh:whisparr";
                     }
                     {
                       title = "Lidarr";
