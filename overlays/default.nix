@@ -27,5 +27,16 @@
 
       # https://github.com/NixOS/nixpkgs/pull/477113
       inherit (pkgsMaster) ngrep;
+
+      jellyfin = prev.jellyfin.overrideAttrs (oldAttrs: {
+        patches = oldAttrs.patches or [ ] ++ [
+          # Fix watched state not kept on Media replace/rename
+          # https://github.com/jellyfin/jellyfin/pull/15899
+          (prev.fetchurl {
+            url = "https://github.com/jellyfin/jellyfin/pull/15899.patch";
+            hash = "sha256-PuPpaOyp45ehbzpHcG372QxnXRc49cG70hglpMuvcGc=";
+          })
+        ];
+      });
     };
 }
