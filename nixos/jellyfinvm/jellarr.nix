@@ -290,7 +290,7 @@
                 ];
               };
               displayMissingEpisodes = true;
-              subtitleLanguagePreference = "en";
+              subtitleLanguagePreference = "eng";
             };
           getGuestUser =
             args:
