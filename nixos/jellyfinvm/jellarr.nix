@@ -272,25 +272,25 @@
                 enableAllFolders = allLibraries;
                 enableCollectionManagement = allowWrite || isAdmin;
                 loginAttemptsBeforeLockout = 3;
+              }
+              // lib.optionalAttrs (!allLibraries) {
+                enabledLibraries = [
+                  "Family"
+                ]
+                ++ lib.optionals (!isKid) [
+                  "Movies"
+                  "Shows"
+                  "Anime"
+                  "Docu"
+                  "Music"
+                ]
+                ++ lib.optionals isAdult [
+                  "Attic"
+                  "Fruit"
+                ];
               };
               displayMissingEpisodes = true;
               subtitleLanguagePreference = "en";
-            }
-            // lib.optionalAttrs (!allLibraries) {
-              policy.enabledLibraries = [
-                "Family"
-              ]
-              ++ lib.optionals (!isKid) [
-                "Movies"
-                "Shows"
-                "Anime"
-                "Docu"
-                "Music"
-              ]
-              ++ lib.optionals isAdult [
-                "Attic"
-                "Fruit"
-              ];
             };
           getGuestUser =
             args:
