@@ -263,6 +263,7 @@
               allowWrite ? false,
               isKid ? false,
               isAdult ? false,
+              isGuest ? false,
               allLibraries ? false,
             }:
             {
@@ -272,6 +273,9 @@
                 enableAllFolders = allLibraries;
                 enableCollectionManagement = allowWrite || isAdmin;
                 loginAttemptsBeforeLockout = 3;
+              }
+              // lib.optionalAttrs isGuest {
+                maxActiveSessions = 2;
               }
               // lib.optionalAttrs (!allLibraries) {
                 enabledLibraries = [
@@ -294,18 +298,16 @@
             };
           getGuestUser =
             args:
-            (getUser (
+            getUser (
               args
               // {
                 isAdmin = false;
                 isKid = false;
                 isAdult = false;
+                isGuest = true;
                 allLibraries = false;
               }
-            ))
-            // {
-              maxActiveSessions = 2;
-            };
+            );
         in
         [
           (getUser {
