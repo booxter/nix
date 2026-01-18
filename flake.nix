@@ -13,8 +13,7 @@
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
-    #nix-darwin.url = "github:nix-darwin/nix-darwin/master";
-    nix-darwin.url = "github:booxter/nix-darwin/dhcp-client";
+    nix-darwin.url = "github:nix-darwin/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
