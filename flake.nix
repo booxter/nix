@@ -411,15 +411,15 @@
         in
         pkgs.writeShellApplication {
           name = "formatter";
-          runtimeInputs = [
-            pkgs.nixfmt-tree
-            pkgs.mbake
+          runtimeInputs = with pkgs; [
+            nixfmt-tree
+            shellcheck
+            mbake
           ];
           text = ''
             treefmt "$@"
-            if [ -f Makefile ]; then
-              mbake format Makefile
-            fi
+            mbake format Makefile
+            find . -type f -name '*.sh' -exec shellcheck {} +
           '';
         }
       );
