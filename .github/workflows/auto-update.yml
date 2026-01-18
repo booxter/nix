@@ -17,11 +17,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
-
-      - name: Setup magic Nix cache
-        uses: DeterminateSystems/magic-nix-cache-action@v13
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
 
       - name: Update flake inputs
         run: nix flake update
