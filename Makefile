@@ -76,6 +76,17 @@ build-ci-vm:
 		$(VM_CACHE_OPTS) \
 		.#nixosConfigurations.ci-$(WHAT)vm.config.system.build.vm $(ARGS)
 
+build-ci-vm-config:
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
+	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^ci-.*vm$$' | sed 's/vm$$//' | sed 's/^ci-//';\
+	  exit 1;\
+	fi
+
+	nix build \
+		$(VM_CACHE_OPTS) \
+		.#nixosConfigurations.ci-$(WHAT)vm.config.system.build.toplevel $(ARGS)
+
 ########### proxmox vms
 prox-vm:
 	@if [ "x$(WHAT)" = "x" ]; then\
