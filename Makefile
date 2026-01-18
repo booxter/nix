@@ -11,6 +11,9 @@ get-nixos-configs = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigur
 list-vm-types = $(get-nixos-configs) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
 
 define nix-vm-action
+	# $(1): VM prefix (local/ci)
+	# $(2): nix command (run/build)
+	# $(3): build output (vm/toplevel)
 	@if [ "x$(WHAT)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:"; \
 		$(call list-vm-types,$(1)); \
@@ -23,6 +26,8 @@ define nix-vm-action
 endef
 
 define nix-config-action
+	# $(1): extra nix build options (e.g. cache flags)
+	# $(2): build target attribute path
 	@if [ "x$(WHAT)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=host"; \
 		exit 1; \
