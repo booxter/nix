@@ -7,8 +7,8 @@ NIX_OPTS = \
 
 DEFAULT_CACHE_PRIORITY = 50
 
-list-nixos-configs = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
-list-vm-types = $(list-nixos-configs) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
+get-nixos-configs = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
+list-vm-types = $(get-nixos-configs) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
 
 define nix-vm-action
 	@if [ "x$(WHAT)" = "x" ]; then \
