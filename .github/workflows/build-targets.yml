@@ -55,6 +55,11 @@ jobs:
             cmd: make build-ci-vm-config WHAT=srvarr
             os: ubuntu-latest
 
+          # home-manager
+          - name: home-manager nv (x86_64-linux)
+            cmd: make home-build-nv
+            os: ubuntu-latest
+
           # For macos, we have to build special "ci" flavors that don't use
           # custom linux-builder config that requires aarch64-linux builder.
           # Use stock builder config to pull the derivation from nixos cache
