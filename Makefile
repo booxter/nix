@@ -7,6 +7,30 @@ NIX_OPTS = \
 
 DEFAULT_CACHE_PRIORITY = 50
 
+list-nixos-configs = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
+list-vm-types = $(list-nixos-configs) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
+
+define nix-vm-action
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
+	  $(call list-vm-types,$(1));\
+	  exit 1;\
+	fi
+
+	nix $(2) \
+		$(VM_CACHE_OPTS) \
+		.#nixosConfigurations.$(1)-$(WHAT)vm.config.system.build.$(3) $(ARGS)
+endef
+
+define nix-config-action
+	@if [ "x$(WHAT)" = "x" ]; then\
+		echo "Usage: make $@ WHAT=host";\
+	  exit 1;\
+	fi
+
+	nix build $(1) $(2) $(ARGS)
+endef
+
 RPI_CACHE_OPTIONS = \
 	--option extra-trusted-public-keys "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI=" \
 	--option extra-substituters "https://nixos-raspberrypi.cachix.org?priority=$(DEFAULT_CACHE_PRIORITY)"
@@ -32,66 +56,26 @@ inputs-update:
 
 ########### local vms
 local-vm:
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
-	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^local-.*vm$$' | sed 's/vm$$//' | sed 's/^local-//';\
-	  exit 1;\
-	fi
-
-	nix run \
-		$(VM_CACHE_OPTS) \
-		.#nixosConfigurations.local-$(WHAT)vm.config.system.build.vm $(ARGS)
+	$(call nix-vm-action,local,run,vm)
 
 build-local-vm:
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
-	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^local-.*vm$$' | sed 's/vm$$//' | sed 's/^local-//';\
-	  exit 1;\
-	fi
-
-	nix build \
-		$(VM_CACHE_OPTS) \
-		.#nixosConfigurations.local-$(WHAT)vm.config.system.build.vm $(ARGS)
+	$(call nix-vm-action,local,build,vm)
 
 ########### ci vms
 ci-vm:
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
-	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^ci-.*vm$$' | sed 's/vm$$//' | sed 's/^ci-//';\
-	  exit 1;\
-	fi
-
-	nix run \
-		$(VM_CACHE_OPTS) \
-		.#nixosConfigurations.ci-$(WHAT)vm.config.system.build.vm $(ARGS)
+	$(call nix-vm-action,ci,run,vm)
 
 build-ci-vm:
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
-	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^ci-.*vm$$' | sed 's/vm$$//' | sed 's/^ci-//';\
-	  exit 1;\
-	fi
-
-	nix build \
-		$(VM_CACHE_OPTS) \
-		.#nixosConfigurations.ci-$(WHAT)vm.config.system.build.vm $(ARGS)
+	$(call nix-vm-action,ci,build,vm)
 
 build-ci-vm-config:
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
-	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^ci-.*vm$$' | sed 's/vm$$//' | sed 's/^ci-//';\
-	  exit 1;\
-	fi
-
-	nix build \
-		$(VM_CACHE_OPTS) \
-		.#nixosConfigurations.ci-$(WHAT)vm.config.system.build.toplevel $(ARGS)
+	$(call nix-vm-action,ci,build,toplevel)
 
 ########### proxmox vms
 prox-vm:
 	@if [ "x$(WHAT)" = "x" ]; then\
 		echo "Usage: make $@ WHAT=type WHERE=hv"; echo; echo "Available vms:";\
-	  nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]' | grep '^prox-.*vm$$' | sed 's/vm$$//' | sed 's/^prox-//';\
+	  $(call list-vm-types,prox);\
 	  exit 1;\
 	fi
 
@@ -104,11 +88,7 @@ prox-vm:
 
 ########### nixos
 nixos-build-target:
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=host";\
-	  exit 1;\
-	fi
-	nix build $(HOST_CACHE_OPTS) .#nixosConfigurations.$(WHAT).config.system.build.toplevel $(ARGS)
+	$(call nix-config-action,$(HOST_CACHE_OPTS),.#nixosConfigurations.$(WHAT).config.system.build.toplevel)
 
 nixos-build:
 	nix build .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
@@ -130,11 +110,7 @@ darwin-build:
 	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
 
 darwin-build-target:
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=host";\
-	  exit 1;\
-	fi
-	nix build .#darwinConfigurations.$(WHAT).system $(ARGS)
+	$(call nix-config-action,.,.#darwinConfigurations.$(WHAT).system)
 
 darwin-switch:
 	sudo nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
