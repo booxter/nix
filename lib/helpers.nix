@@ -185,11 +185,14 @@ rec {
                       overlays = [
                         (final: prev: {
                           # Fix qemu hanging on beefy VMs due to fd limit exhaustion.
-                          # Replicates: https://github.com/NixOS/nixpkgs/pull/474904
+                          # Use heap based fdsets in g_poll.
                           glib = prev.glib.overrideAttrs (old: {
-                            env.NIX_CFLAGS_COMPILE =
-                              old.env.NIX_CFLAGS_COMPILE
-                              + inputs.nixpkgs.lib.optionalString prev.stdenv.hostPlatform.isDarwin " -D_DARWIN_UNLIMITED_SELECT -DFD_SETSIZE=4096";
+                            patches = old.patches or [ ] ++ [
+                              (prev.fetchpatch {
+                                url = "https://github.com/booxter/glib/pull/1.patch";
+                                hash = "sha256-guoEc+u1YX31h+ZTqseDVEy4P6uZ5/OMgP4W5nKxSpw=";
+                              })
+                            ];
                           });
                         })
                       ];
