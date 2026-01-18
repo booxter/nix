@@ -404,6 +404,24 @@
 
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
-      formatter = helpers.forAllSystems (system: inputs.nixpkgs.legacyPackages.${system}.nixfmt-tree);
+      formatter = helpers.forAllSystems (
+        system:
+        let
+          pkgs = inputs.nixpkgs.legacyPackages.${system};
+        in
+        pkgs.writeShellApplication {
+          name = "formatter";
+          runtimeInputs = [
+            pkgs.nixfmt-tree
+            pkgs.mbake
+          ];
+          text = ''
+            treefmt "$@"
+            if [ -f Makefile ]; then
+              mbake format Makefile
+            fi
+          '';
+        }
+      );
     };
 }

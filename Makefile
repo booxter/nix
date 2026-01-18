@@ -11,10 +11,10 @@ list-nixos-configs = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigu
 list-vm-types = $(list-nixos-configs) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
 
 define nix-vm-action
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:";\
-	  $(call list-vm-types,$(1));\
-	  exit 1;\
+	@if [ "x$(WHAT)" = "x" ]; then \
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:"; \
+		$(call list-vm-types,$(1)); \
+		exit 1; \
 	fi
 
 	nix $(2) \
@@ -23,9 +23,9 @@ define nix-vm-action
 endef
 
 define nix-config-action
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=host";\
-	  exit 1;\
+	@if [ "x$(WHAT)" = "x" ]; then \
+		echo "Usage: make $@ WHAT=host"; \
+		exit 1; \
 	fi
 
 	nix build $(1) $(2) $(ARGS)
@@ -73,15 +73,15 @@ build-ci-vm-config:
 
 ########### proxmox vms
 prox-vm:
-	@if [ "x$(WHAT)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type WHERE=hv"; echo; echo "Available vms:";\
-	  $(call list-vm-types,prox);\
-	  exit 1;\
+	@if [ "x$(WHAT)" = "x" ]; then \
+		echo "Usage: make $@ WHAT=type WHERE=hv"; echo; echo "Available vms:"; \
+		$(call list-vm-types,prox); \
+		exit 1; \
 	fi
 
-	@if [ "x$(WHERE)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=type WHERE=hv";\
-	  exit 1;\
+	@if [ "x$(WHERE)" = "x" ]; then \
+		echo "Usage: make $@ WHAT=type WHERE=hv"; \
+		exit 1; \
 	fi
 
 	./scripts/push-vm-to-proxmox.sh $(WHERE) root priv/lab-$(WHERE) prox-$(WHAT)vm
@@ -97,9 +97,9 @@ nixos-switch:
 	sudo nixos-rebuild switch --flake .#$(shell hostname) $(ARGS)
 
 disko-install:
-	@if [ "x$(WHAT)" = "x" -o "x$(DEV)" = "x" ]; then\
-		echo "Usage: make $@ WHAT=host DEV=/dev/XXX";\
-	  exit 1;\
+	@if [ "x$(WHAT)" = "x" -o "x$(DEV)" = "x" ]; then \
+		echo "Usage: make $@ WHAT=host DEV=/dev/XXX"; \
+		exit 1; \
 	fi
 	sudo nix $(NIX_OPTS) run $(ARGS) \
 		$(if $(filter prx%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
