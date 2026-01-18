@@ -1,0 +1,13 @@
+name: Free disk space
+description: Free disk space on Ubuntu runners to make room for Nix builds.
+runs:
+  using: composite
+  steps:
+    - name: Free disk space (Ubuntu)
+      if: runner.os == 'Linux'
+      uses: jlumbroso/free-disk-space@main
+      with:
+        android: true
+        dotnet: true
+        haskell: true
+        tool-cache: false
