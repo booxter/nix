@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   build:
@@ -85,6 +86,9 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v21
+
+      - name: Setup magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}

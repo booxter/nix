@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   nix-fmt:
@@ -20,6 +21,9 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v21
+
+      - name: Setup magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Format
         run: nix fmt .

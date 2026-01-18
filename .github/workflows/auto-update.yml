@@ -8,6 +8,7 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 jobs:
   update:
@@ -18,6 +19,9 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v21
+
+      - name: Setup magic Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@v13
 
       - name: Update flake inputs
         run: nix flake update
