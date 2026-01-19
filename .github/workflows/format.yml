@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   nix-fmt:
@@ -18,8 +19,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v21
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
 
       - name: Format
         run: nix fmt .

@@ -1,0 +1,10 @@
+name: Prepare Nix environment
+description: Checkout the repo, install Nix, and configure magic Nix cache.
+runs:
+  using: composite
+  steps:
+    - name: Install Nix
+      uses: DeterminateSystems/nix-installer-action@v21
+
+    - name: Setup magic Nix cache
+      uses: DeterminateSystems/magic-nix-cache-action@v13
