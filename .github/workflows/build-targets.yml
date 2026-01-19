@@ -119,3 +119,13 @@ jobs:
 
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
+
+  ci-success:
+    name: CI (all jobs)
+    needs:
+      - format
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Done
+        run: echo "All CI jobs passed."
