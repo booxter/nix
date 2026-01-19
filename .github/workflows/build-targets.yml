@@ -23,9 +23,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
-
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
 
