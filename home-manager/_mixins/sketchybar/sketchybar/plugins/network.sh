@@ -33,7 +33,6 @@ get_delta() {
   # Basic validation
   if [[ -z "$b1" || -z "$b2" ]]; then
     echo "-1"
-    return
   fi
 
   # Handle normal case; if a rare counter wrap makes this negative, clamp to 0.
