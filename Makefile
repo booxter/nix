@@ -26,14 +26,14 @@ define nix-vm-action
 endef
 
 define nix-config-action
-	# $(1): extra nix build options (e.g. cache flags)
+	# $(1): extra nix build options (e.g. cache flags), optional
 	# $(2): build target attribute path
 	@if [ "x$(WHAT)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=host"; \
 		exit 1; \
 	fi
 
-	nix build $(1) $(2) $(ARGS)
+	nix build $(if $(strip $(1)),$(1),) $(2) $(ARGS)
 endef
 
 RPI_CACHE_OPTIONS = \
@@ -115,7 +115,7 @@ darwin-build:
 	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
 
 darwin-build-target:
-	$(call nix-config-action,.,.#darwinConfigurations.$(WHAT).system)
+	$(call nix-config-action,,.#darwinConfigurations.$(WHAT).system)
 
 darwin-switch:
 	sudo nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
