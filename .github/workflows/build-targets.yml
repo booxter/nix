@@ -59,6 +59,11 @@ jobs:
             cmd: make build-ci-vm-config WHAT=srvarr
             os: ubuntu-latest
 
+          # CI VM build scenario (full VM image)
+          - name: ci vm builder1 (x86_64-linux)
+            cmd: make build-ci-vm WHAT=builder1
+            os: ubuntu-latest
+
           # home-manager
           - name: home-manager nv (x86_64-linux)
             cmd: make home-build-nv USERNAME=ihrachyshka
@@ -92,21 +97,3 @@ jobs:
 
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
-
-  build-ci-vm:
-    name: Build CI VM (builder1)
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-
-      - name: Build CI VM (builder1)
-        run: make build-ci-vm WHAT=builder1
