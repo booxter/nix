@@ -61,7 +61,7 @@ jobs:
 
           # home-manager
           - name: home-manager nv (x86_64-linux)
-            cmd: make home-build-nv
+            cmd: make home-build-nv USERNAME=ihrachyshka
             os: ubuntu-latest
 
           # For macos, we have to build special "ci" flavors that don't use

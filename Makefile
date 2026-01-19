@@ -1,6 +1,7 @@
 # Define common args
 ARGS = -L --show-trace
 HM_ARGS = -b backup
+USERNAME ?= ihrachyshka
 
 NIX_OPTS = \
 	--extra-experimental-features 'nix-command flakes'
@@ -122,10 +123,10 @@ darwin-switch:
 
 ########### standalone home-manager
 home-build-nv:
-	nix run nixpkgs#home-manager -- build --flake .#${USER}@nv $(ARGS)
+	nix run nixpkgs#home-manager -- build --flake .#${USERNAME}@nv $(ARGS)
 
 home-switch-nv:
-	nix run nixpkgs#home-manager -- switch --flake .#${USER}@nv $(ARGS) $(HM_ARGS)
+	nix run nixpkgs#home-manager -- switch --flake .#${USERNAME}@nv $(ARGS) $(HM_ARGS)
 
 ############# raspberry pi
 pi-image:
