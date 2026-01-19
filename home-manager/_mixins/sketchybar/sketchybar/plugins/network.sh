@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 iface="${1:-en0}"
 Ibytes_Column=7
@@ -11,40 +11,41 @@ get_bytes() {
 }
 
 measure_ibw() {
-  b1="$(get_bytes $Ibytes_Column)"
+  b1="$(get_bytes "$Ibytes_Column")"
   sleep 1
-  b2="$(get_bytes $Ibytes_Column)"
+  b2="$(get_bytes "$Ibytes_Column")"
 
   get_delta "$b1" "$b2"
 }
 
 measure_obw() {
-  b1="$(get_bytes $Obytes_Column)"
+  b1="$(get_bytes "$Obytes_Column")"
   sleep 1
-  b2="$(get_bytes $Obytes_Column)"
+  b2="$(get_bytes "$Obytes_Column")"
 
   get_delta "$b1" "$b2"
 }
 
 get_delta() {
-  local b1=$1
-  local b2=$2
+  local b1="$1"
+  local b2="$2"
 
   # Basic validation
   if [[ -z "$b1" || -z "$b2" ]]; then
     echo "-1"
+    return
   fi
 
   # Handle normal case; if a rare counter wrap makes this negative, clamp to 0.
-  delta=$(( b2 - b1 ))
+  local delta=$(( b2 - b1 ))
   if (( delta < 0 )); then delta=0; fi
-  echo $delta
+  echo "$delta"
 }
 
 UP=$(measure_obw)
 DOWN=$(measure_ibw)
 
-function human_readable() {
+human_readable() {
     local abbrevs=(
         $((1 << 60)):Z
         $((1 << 50)):E
@@ -62,15 +63,16 @@ function human_readable() {
         local factor="${item%:*}"
         local abbrev="${item#*:}"
         if [[ "${bytes}" -ge "${factor}" ]]; then
-            local size="$(bc -l <<< "${bytes} / ${factor}")"
+            local size
+            size="$(bc -l <<< "${bytes} / ${factor}")"
             printf "%.*f%s\n" "${precision}" "${size}" "${abbrev}"
             break
         fi
     done
 }
 
-DOWN_FORMAT=$(human_readable $DOWN 1)
-UP_FORMAT=$(human_readable $UP 1)
+DOWN_FORMAT=$(human_readable "$DOWN" 1)
+UP_FORMAT=$(human_readable "$UP" 1)
 
 sketchybar -m --set network.down label="$DOWN_FORMAT" \
 	       --set network.up   label="$UP_FORMAT"
