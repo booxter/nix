@@ -8,8 +8,8 @@ NIX_OPTS = \
 
 DEFAULT_CACHE_PRIORITY = 50
 
-get-nixos-configs = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
-list-vm-types = $(get-nixos-configs) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
+NIXOS_CONFIGS = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
+VM_TYPES = $(NIXOS_CONFIGS) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
 
 define nix-vm-action
 	# $(1): VM prefix (local/ci)
@@ -17,7 +17,7 @@ define nix-vm-action
 	# $(3): build output (vm/toplevel)
 	@if [ "x$(WHAT)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:"; \
-		$(call list-vm-types,$(1)); \
+		$(call VM_TYPES,$(1)); \
 		exit 1; \
 	fi
 
@@ -81,7 +81,7 @@ build-ci-vm-config:
 prox-vm:
 	@if [ "x$(WHAT)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=type WHERE=hv"; echo; echo "Available vms:"; \
-		$(call list-vm-types,prox); \
+		$(call VM_TYPES,prox); \
 		exit 1; \
 	fi
 
