@@ -1,4 +1,4 @@
-name: Build targets
+name: CI
 
 on:
   pull_request:
@@ -7,12 +7,38 @@ on:
       - master
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   id-token: write
 
 jobs:
+  format:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
+
+      - name: Format
+        run: nix fmt .
+
+      - name: Ensure clean working tree
+        run: |
+          git status --short
+          if ! git diff --quiet --exit-code; then
+            echo "Repository dirty after formatting. Please commit formatting changes."
+            exit 1
+          fi
+
   build:
+    needs: format
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -36,10 +62,10 @@ jobs:
           # Build just one of configs for builder nodes since other nodes are
           # identical by design.
           - name: builder (x86_64-linux)
-            cmd: make build-ci-vm WHAT=builder1
+            cmd: make build-ci-vm-config WHAT=builder1
             os: ubuntu-latest
           - name: cache (x86_64-linux)
-            cmd: make build-ci-vm WHAT=cache
+            cmd: make build-ci-vm-config WHAT=cache
             os: ubuntu-latest
 
           # dhcp
@@ -49,10 +75,20 @@ jobs:
 
           # media infra
           - name: jellyfin (x86_64-linux)
-            cmd: make build-ci-vm WHAT=jellyfin
+            cmd: make build-ci-vm-config WHAT=jellyfin
             os: ubuntu-latest
           - name: srvarr (x86_64-linux)
-            cmd: make build-ci-vm WHAT=srvarr
+            cmd: make build-ci-vm-config WHAT=srvarr
+            os: ubuntu-latest
+
+          # CI VM build scenario (full VM image)
+          - name: ci vm builder1 (x86_64-linux)
+            cmd: make build-ci-vm WHAT=builder1
+            os: ubuntu-latest
+
+          # home-manager
+          - name: home-manager nv (x86_64-linux)
+            cmd: make home-build-nv USERNAME=ihrachyshka
             os: ubuntu-latest
 
           # For macos, we have to build special "ci" flavors that don't use
@@ -72,20 +108,24 @@ jobs:
     timeout-minutes: 180
 
     steps:
-      - name: Free disk space (Ubuntu)
-        if: runner.os == 'Linux'
-        uses: jlumbroso/free-disk-space@main
-        with:
-          android: true
-          dotnet: true
-          haskell: true
-          tool-cache: false
-
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
 
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
+
+  ci-success:
+    name: CI (all jobs)
+    needs:
+      - format
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Done
+        run: echo "All CI jobs passed."

@@ -3,7 +3,7 @@ name: Auto update flake
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 5 * * 1"
+    - cron: "0 10 * * 1"
 
 permissions:
   contents: write
@@ -26,6 +26,7 @@ jobs:
       - name: Create pull request
         uses: peter-evans/create-pull-request@v8
         with:
+          token: ${{ secrets.CI_PR_TOKEN }}
           commit-message: "flake: update inputs"
           title: "flake: update inputs"
           body: |

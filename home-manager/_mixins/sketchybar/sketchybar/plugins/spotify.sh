@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 next ()
 {
@@ -52,15 +52,15 @@ update ()
   fi
 
   args=()
-  if [ $PLAYING -eq 0 ]; then
-    if [ "$ARTIST" == "" ]; then
+  if [ "$PLAYING" -eq 0 ]; then
+    if [ -z "$ARTIST" ]; then
       args+=(--set spotify.name label="􀑪 $TRACK 􀉮 $ALBUM" drawing=on)
     else
       args+=(--set spotify.name label="􀑪 $TRACK 􀉮 $ARTIST" drawing=on)
     fi
     args+=(--set spotify.play icon=􀊆 \
-           --set spotify.shuffle icon.highlight=$SHUFFLE \
-           --set spotify.repeat icon.highlight=$REPEAT)
+           --set spotify.shuffle icon.highlight="$SHUFFLE" \
+           --set spotify.repeat icon.highlight="$REPEAT")
   else
     args+=(--set spotify.name drawing=off \
            --set spotify.name popup.drawing=off \
