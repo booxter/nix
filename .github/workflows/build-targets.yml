@@ -105,6 +105,13 @@ jobs:
           - name: JGWXHWDL4X-ci (aarch64-darwin)
             cmd: make darwin-build-target WHAT=JGWXHWDL4X-ci
             os: macos-26
+          # Ensure the QEMU host package builds on both Linux and macOS runners.
+          - name: ci vm qemu (x86_64-linux)
+            cmd: make build-ci-vm-qemu
+            os: ubuntu-latest
+          - name: ci vm qemu (aarch64-darwin)
+            cmd: make build-ci-vm-qemu
+            os: macos-26
 
     timeout-minutes: 180
 

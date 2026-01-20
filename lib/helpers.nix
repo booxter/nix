@@ -204,6 +204,12 @@ rec {
                 };
               }
             )
+            (
+              { config, ... }:
+              {
+                system.build.vmQemu = config.virtualisation.vmVariant.virtualisation.host.pkgs.qemu;
+              }
+            )
 
             # proxmox vms
             inputs.proxmox-nixos.nixosModules.declarative-vms
