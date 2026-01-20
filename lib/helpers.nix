@@ -317,9 +317,9 @@ rec {
                 networking.useNetworkd = true;
                 systemd.network.enable = true;
 
-                services.resolved.extraConfig = ''
-                  ResolveUnicastSingleLabel=yes
-                '';
+                services.resolved.settings.Resolve = {
+                  ResolveUnicastSingleLabel = true;
+                };
 
                 systemd.network.networks."10-lan" = {
                   matchConfig.Name = [ netIface ];
