@@ -5,6 +5,13 @@ runs:
   steps:
     - name: Install Nix
       uses: DeterminateSystems/nix-installer-action@v21
+      with:
+        extra-conf: |
+          trusted-users = root runner
+          allowed-users = root runner
+        determinate: false
 
     - name: Setup magic Nix cache
       uses: DeterminateSystems/magic-nix-cache-action@v13
+      with:
+        use-flakehub: false
