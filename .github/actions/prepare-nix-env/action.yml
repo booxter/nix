@@ -15,3 +15,16 @@ runs:
       uses: DeterminateSystems/magic-nix-cache-action@v13
       with:
         use-flakehub: false
+
+    - name: Report Actions cache usage
+      env:
+        GH_TOKEN: ${{ github.token }}
+      shell: bash
+      run: |
+        set -euo pipefail
+        gib_bytes="$((1024*1024*1024))"
+        gh api -H "Accept: application/vnd.github+json" \
+          "/repos/${GITHUB_REPOSITORY}/actions/cache/usage" \
+          --jq "(.active_caches_size_in_bytes // 0) as \$active
+            | (\$active * 100 / ${gib_bytes} | floor) as \$active_hundredths
+            | \"Actions cache usage: \(\$active_hundredths / 100) GiB\""
