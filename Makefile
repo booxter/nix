@@ -77,6 +77,12 @@ build-ci-vm:
 build-ci-vm-config:
 	$(call nix-vm-action,ci,build,toplevel)
 
+########### ci qemu
+build-ci-vm-qemu:
+	# Using linuxvm as the canonical VM; QEMU comes from host.pkgs so the VM choice doesn't matter.
+	$(eval QEMU_VM_PREFIX := $(if $(filter Darwin,$(shell uname -s)),local,ci))
+	nix build .#nixosConfigurations.$(QEMU_VM_PREFIX)-linuxvm.config.system.build.vmQemu $(ARGS)
+
 ########### proxmox vms
 prox-vm:
 	@if [ "x$(WHAT)" = "x" ]; then \
