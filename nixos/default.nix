@@ -17,7 +17,6 @@ in
       configName
     ]
     ++ [
-      ./_mixins/auto-update
       ./_mixins/user
     ]
     ++ lib.optionals isDesktop [
@@ -29,6 +28,18 @@ in
 
   nix.gc.dates = "Mon, 03:15";
   nix.optimise.dates = [ "Mon, 04:15" ];
+
+  system.autoUpgrade = {
+    enable = true;
+    flake = "github:booxter/nix";
+    flags = [
+      "-L"
+      "--show-trace"
+    ];
+    dates = lib.mkDefault "Sat 03:00";
+    randomizedDelaySec = "45min";
+    persistent = true;
+  };
 
   time.timeZone = "America/New_York";
 

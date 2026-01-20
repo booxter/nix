@@ -279,6 +279,10 @@ rec {
                 brname = "vmbr0";
               in
               {
+                # Hypervisors upgrade on a separate schedule to avoid
+                # disrupting guest VMs running on top.
+                system.autoUpgrade.dates = "Sun 03:00";
+
                 nixpkgs.overlays = [
                   inputs.proxmox-nixos.overlays.${platform}
                 ];
