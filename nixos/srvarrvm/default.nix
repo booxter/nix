@@ -73,6 +73,7 @@ in
         (lib.getExe' fix-incomplete-dir "fix-incomplete-dir")
       ];
   };
+  services.sabnzbd.allowConfigWrite = true;
 
   nixarr = {
     enable = true;
