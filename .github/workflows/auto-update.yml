@@ -26,6 +26,7 @@ jobs:
 
       - name: Create pull request
         uses: peter-evans/create-pull-request@v8
+        id: create_pr
         with:
           token: ${{ secrets.CI_PR_TOKEN }}
           commit-message: "flake: update inputs"
@@ -38,3 +39,11 @@ jobs:
           delete-branch: true
           add-paths: |
             flake.lock
+
+      - name: Enable auto-merge
+        if: ${{ steps.create_pr.outputs.pull-request-number != '' }}
+        env:
+          GH_TOKEN: ${{ secrets.CI_PR_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh pr merge --auto --merge "${{ steps.create_pr.outputs.pull-request-number }}"
