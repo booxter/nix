@@ -28,3 +28,13 @@ runs:
           --jq "(.active_caches_size_in_bytes // 0) as \$active
             | (\$active * 100 / ${gib_bytes} | floor) as \$active_hundredths
             | \"Actions cache usage: \(\$active_hundredths / 100) GiB\""
+
+    - name: Dump nix daemon config
+      shell: bash
+      run: |
+        set -euo pipefail
+        for conf in /etc/nix/*.conf; do
+          [ -f "${conf}" ] || continue
+          echo "----- ${conf} -----"
+          cat "${conf}"
+        done
