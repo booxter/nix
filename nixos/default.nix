@@ -36,7 +36,7 @@ in
       "-L"
       "--show-trace"
     ];
-    dates = "Sat 03:00";
+    dates = lib.mkDefault "Sat 03:00";
     randomizedDelaySec = "45min";
     persistent = true;
   };

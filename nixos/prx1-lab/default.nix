@@ -10,5 +10,4 @@
   # Intel CPU microcode updates
   hardware.cpu.intel.updateMicrocode = true;
 
-  system.autoUpgrade.dates = lib.mkForce "Sun 03:00";
 }
