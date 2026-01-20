@@ -4,5 +4,5 @@
     (import ../../disko { })
   ];
 
-  systemd.timers.nixos-auto-upgrade.timerConfig.OnCalendar = lib.mkForce "Sun 03:00";
+  system.autoUpgrade.dates = lib.mkForce "Sun 03:00";
 }

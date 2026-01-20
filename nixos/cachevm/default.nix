@@ -64,7 +64,7 @@ in
 
   # auto-update cachevm on a separate schedule so that it doesn't clash with
   # machines that use the cache for their auto-updates.
-  systemd.timers.nixos-auto-upgrade.timerConfig.OnCalendar = lib.mkForce "Sun 06:00";
+  system.autoUpgrade.dates = lib.mkForce "Sun 06:00";
 
   systemd.services.atticd.unitConfig.RequiresMountsFor = "/cache";
 }
