@@ -191,9 +191,9 @@
                 name = "builder${idx'}";
                 proxNode = "prx${idx'}-lab";
                 stateVersion = "25.11";
-                memorySize = 64;
+                memorySize = 128;
                 diskSize = 300;
-                cores = 24;
+                cores = 64;
                 withHome = false;
               }
             );
