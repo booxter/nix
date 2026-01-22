@@ -130,10 +130,19 @@ jobs:
 
   ci-success:
     name: CI (all jobs)
+    if: ${{ always() }}
     needs:
       - format
       - build
     runs-on: ubuntu-latest
     steps:
-      - name: Done
-        run: echo "All CI jobs passed."
+      - name: Check job results
+        run: |
+          set -euo pipefail
+          if [ "${{ needs.format.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ]; then
+            echo "One or more CI jobs failed."
+            echo "format=${{ needs.format.result }}"
+            echo "build=${{ needs.build.result }}"
+            exit 1
+          fi
+          echo "All CI jobs passed."
