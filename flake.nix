@@ -300,10 +300,6 @@
           sshPort = 10005;
           withHome = false;
         }
-        // VM {
-          name = piHostname;
-          stateVersion = piStateVersion;
-        }
         // toBuilder 1
         // toBuilder 2
         // toBuilder 3;
