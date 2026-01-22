@@ -60,12 +60,12 @@ in
     [
     ]
     ++ lib.optionals isDesktop [
+      jellyfin-desktop
       obsidian
       telegram-desktop
       wireshark
     ]
     ++ lib.optionals (!isWork && isDesktop) [
-      jellyfin-desktop
       podman-desktop
     ];
 }
