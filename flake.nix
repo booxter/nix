@@ -136,7 +136,6 @@
 
           frame = "frame";
           nvws = "nvws";
-          proxmox = "proxmox";
 
           toVmName = name: "${name}vm";
 
@@ -210,31 +209,6 @@
             stateVersion = "25.11";
             platform = "x86_64-linux";
             isDesktop = true;
-          };
-
-          # TODO: can I use mkVM here?
-          ${toVmName proxmox} = helpers.mkProxmox {
-            inherit username virtPlatform;
-            stateVersion = prxStateVersion;
-            hostname = toVmName proxmox;
-            netIface = "eth0";
-            ipAddress = toVmName proxmox;
-            isWork = true;
-            isVM = true;
-            sshPort = 10002;
-
-            extraModules = [
-              (
-                { ... }:
-                {
-                  virtualisation.vmVariant.virtualisation = {
-                    cores = 8;
-                    memorySize = 16 * 1024; # 16GB
-                    diskSize = 100 * 1024; # 100GB
-                  };
-                }
-              )
-            ];
           };
 
           # TODO: automatically sync ip-mac mapping with dhcp config
