@@ -136,7 +136,6 @@
 
           frame = "frame";
           nvws = "nvws";
-          proxmox = "proxmox";
 
           toVmName = name: "${name}vm";
 
@@ -202,17 +201,6 @@
           pi5 = helpers.mkRaspberryPi {
             hostname = piHostname;
             stateVersion = piStateVersion;
-            # TODO: add password argument to the helpers like in nixos helpers; use it
-            extraModules = [
-              (
-                { ... }:
-                {
-                  users.users.${username} = {
-                    hashedPassword = "$6$cgM30pIRZnRi0o21$qMkHs50CF.4Af4UWT.l/INY2nq3zAValESyaWj6mi.cvROO7cOjNXdttwCaEyQMaQAGzRlUJkkmJHUd.DFNxY0";
-                  };
-                }
-              )
-            ];
           };
 
           ${frame} = helpers.mkNixos {
@@ -221,31 +209,6 @@
             stateVersion = "25.11";
             platform = "x86_64-linux";
             isDesktop = true;
-          };
-
-          # TODO: can I use mkVM here?
-          ${toVmName proxmox} = helpers.mkProxmox {
-            inherit username virtPlatform;
-            stateVersion = prxStateVersion;
-            hostname = toVmName proxmox;
-            netIface = "eth0";
-            ipAddress = toVmName proxmox;
-            isWork = true;
-            isVM = true;
-            sshPort = 10002;
-
-            extraModules = [
-              (
-                { ... }:
-                {
-                  virtualisation.vmVariant.virtualisation = {
-                    cores = 8;
-                    memorySize = 16 * 1024; # 16GB
-                    diskSize = 100 * 1024; # 100GB
-                  };
-                }
-              )
-            ];
           };
 
           # TODO: automatically sync ip-mac mapping with dhcp config
@@ -302,21 +265,6 @@
           memorySize = 128;
           sshPort = 10000;
           proxNode = "nvws";
-
-          extraModules = [
-            (
-              { ... }:
-              {
-                boot.kernelParams = [
-                  "default_hugepagesz=1GB"
-                  "hugepagesz=1G"
-                  "hugepages=8"
-                  "hugepagesz=2M"
-                  "hugepages=6000"
-                ];
-              }
-            )
-          ];
         }
         // VM {
           name = "linux";
@@ -327,33 +275,6 @@
           sshPort = 10002;
           memorySize = 8;
           withHome = false;
-
-          extraModules = [
-            (
-              { lib, pkgs, ... }:
-              {
-                services.xserver.enable = true;
-                services.xserver.displayManager.gdm.enable = true;
-                programs.hyprland = {
-                  enable = true;
-                  xwayland.enable = true;
-                };
-
-                environment.systemPackages = with pkgs; [
-                  kitty
-                  podman-desktop
-                ];
-
-                virtualisation.vmVariant.virtualisation = {
-                  graphics = lib.mkForce true;
-                };
-
-                users.users.${username} = {
-                  password = "testpass";
-                };
-              }
-            )
-          ];
         }
         // VM {
           name = "jellyfin";
@@ -378,10 +299,6 @@
           memorySize = 32;
           sshPort = 10005;
           withHome = false;
-        }
-        // VM {
-          name = piHostname;
-          stateVersion = piStateVersion;
         }
         // toBuilder 1
         // toBuilder 2
