@@ -151,6 +151,13 @@ in
           };
           run = [ "move-node-to-workspace s" ];
         }
+        # Jellyfin Desktop on same workspace as Spotify
+        {
+          "if" = {
+            app-id = "org.jellyfin.JellyfinDesktop";
+          };
+          run = [ "move-node-to-workspace s" ];
+        }
         # Email
         {
           "if" = {
