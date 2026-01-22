@@ -302,21 +302,6 @@
           memorySize = 128;
           sshPort = 10000;
           proxNode = "nvws";
-
-          extraModules = [
-            (
-              { ... }:
-              {
-                boot.kernelParams = [
-                  "default_hugepagesz=1GB"
-                  "hugepagesz=1G"
-                  "hugepages=8"
-                  "hugepagesz=2M"
-                  "hugepages=6000"
-                ];
-              }
-            )
-          ];
         }
         // VM {
           name = "linux";
