@@ -20,7 +20,7 @@ python3.pkgs.buildPythonPackage {
   build-system = [ python3.pkgs.poetry-core ];
 
   dependencies = with python3.pkgs; [
-    dateutil
+    python-dateutil
     requests
   ];
 

@@ -269,16 +269,6 @@
           proxNode = "nvws";
         }
         // VM {
-          name = "linux";
-          sshPort = 10001;
-        }
-        // VM {
-          name = "linuxui";
-          sshPort = 10002;
-          memorySize = 8;
-          withHome = false;
-        }
-        // VM {
           name = "jellyfin";
           platform = "x86_64-linux";
           cores = 20;
@@ -342,5 +332,6 @@
           '';
         }
       );
+
     };
 }

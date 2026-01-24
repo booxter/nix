@@ -38,8 +38,37 @@ jobs:
             exit 1
           fi
 
+  get-hosts-check:
+    name: get-hosts check
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
+
+      - name: Run get-hosts test
+        run: ./tests/test-get-hosts.sh
+
+  flake-check:
+    name: flake check
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
+
+      - name: Run flake check
+        run: nix flake check -L --show-trace
+
   build:
-    needs: format
+    needs:
+      - format
+      - get-hosts-check
+      - flake-check
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -133,6 +162,8 @@ jobs:
     if: ${{ always() }}
     needs:
       - format
+      - get-hosts-check
+      - flake-check
       - build
     runs-on: ubuntu-slim
     steps:

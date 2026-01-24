@@ -31,56 +31,64 @@ in
     ./_mixins/remote-builders
   ];
 
-  networking.hostName = hostname;
-
-  # Some packages that I'd like to have available on all my machines.
-  environment.systemPackages = with pkgs; [
-    bind.dnsutils
-    coreutils
-    dig
-    file
-    findutils
-    htop
-    git
-    gnugrep
-    gnumake
-    gnused
-    gzip
-    ipcalc
-    man-pages
-    moreutils
-    ngrep
-    procps
-    pstree
-    speedtest-cli
-    tcpdump
-    tmux
-    tree
-    unzip
-    viddy
-    vim
-    watch
-    zip
-  ];
-
-  users.users.${username} = {
-    openssh.authorizedKeys.keys = workKeys ++ lib.optionals (!isWork) personalKeys;
+  options.host.isWork = lib.mkOption {
+    type = lib.types.bool;
+    default = false;
   };
 
-  programs.zsh.enable = true;
-}
-// lib.optionalAttrs (!isWork) {
-  # TODO: move elsewhere
-  # TODO: Adopt secrets management
-  # /root/.config/attic/config.toml:
+  config = {
+    networking.hostName = hostname;
 
-  # default-server = "local"
-  # [servers.local]
-  # endpoint = "http://prox-cachevm:8080"
-  # token = "PASTE_PUSH_TOKEN_HERE"
+    # Some packages that I'd like to have available on all my machines.
+    environment.systemPackages = with pkgs; [
+      bind.dnsutils
+      coreutils
+      dig
+      file
+      findutils
+      htop
+      git
+      gnugrep
+      gnumake
+      gnused
+      gzip
+      ipcalc
+      man-pages
+      moreutils
+      ngrep
+      procps
+      pstree
+      speedtest-cli
+      tcpdump
+      tmux
+      tree
+      unzip
+      viddy
+      vim
+      watch
+      zip
+    ];
 
-  # Hook script
-  nix.settings.post-build-hook = "${pkgs.writeShellScriptBin "attic-push-hook" ''
-    ${pkgs.attic-client}/bin/attic push default $OUT_PATHS || true
-  ''}/bin/attic-push-hook";
+    users.users.${username} = {
+      openssh.authorizedKeys.keys = workKeys ++ lib.optionals (!isWork) personalKeys;
+    };
+
+    programs.zsh.enable = true;
+    host.isWork = isWork;
+  }
+  // lib.optionalAttrs (!isWork) {
+    # TODO: move elsewhere
+    # TODO: Adopt secrets management
+    # /root/.config/attic/config.toml:
+
+    # default-server = "local"
+    # [servers.local]
+    # endpoint = "http://prox-cachevm:8080"
+    # token = "PASTE_PUSH_TOKEN_HERE"
+
+    # Hook script
+    nix.settings.post-build-hook = "${pkgs.writeShellScriptBin "attic-push-hook" ''
+      ${pkgs.attic-client}/bin/attic push default $OUT_PATHS || true
+    ''}/bin/attic-push-hook";
+  };
 }
