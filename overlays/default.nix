@@ -15,6 +15,7 @@
         };
 
       pkgs = getPkgs inputs.nixpkgs;
+      pkgsNut = getPkgs inputs.nixpkgs-nut;
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
     in
@@ -27,6 +28,9 @@
 
       # https://github.com/NixOS/nixpkgs/pull/477113
       inherit (pkgsMaster) ngrep;
+
+      # Pull NUT from the darwin-enabled fork on macOS only.
+      nut = if prev.stdenv.hostPlatform.isDarwin then pkgsNut.nut else prev.nut;
 
       jellyfin = prev.jellyfin.overrideAttrs (oldAttrs: {
         patches = oldAttrs.patches or [ ] ++ [

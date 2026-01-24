@@ -4,11 +4,27 @@
   hostname,
   platform,
   stateVersion,
+  isVM ? false,
   ...
 }:
 let
   removePrefix = lib.strings.removePrefix;
   configName = ./${removePrefix "prox-" (removePrefix "local-" (removePrefix "ci-" hostname))};
+  upsClientsNAS = [
+    "prx1-lab"
+    "prx2-lab"
+    "prx3-lab"
+    "prox-cachevm"
+    "prox-builder1vm"
+    "prox-builder2vm"
+    "prox-builder3vm"
+    "prox-jellyfinvm"
+    "prox-srvarrvm"
+  ];
+  upsClientsPi5 = [
+    "nvws"
+    "prox-nvvm"
+  ];
 in
 {
   imports =
@@ -17,6 +33,26 @@ in
     ]
     ++ [
       ./_mixins/user
+    ]
+    ++ lib.optionals (lib.elem hostname upsClientsNAS) [
+      # TODO: rotate this password and migrate to sops-managed secrets.
+      (import ./_mixins/ups-client {
+        inherit pkgs isVM;
+        monitorName = "nas";
+        system = "ASUSTOR-UPS@nas-lab";
+        user = "upsadmin";
+        passwordText = "AdmUps1111";
+      })
+    ]
+    ++ lib.optionals (lib.elem hostname upsClientsPi5) [
+      # TODO: rotate this password and migrate to sops-managed secrets.
+      (import ./_mixins/ups-client {
+        inherit pkgs isVM;
+        monitorName = "dhcp";
+        system = "PI5-UPS@dhcp";
+        user = "upsslave";
+        passwordText = "upsslave123";
+      })
     ];
 
   system.stateVersion = stateVersion;
