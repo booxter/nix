@@ -1,10 +1,10 @@
 { pkgs, ... }:
-let
-  shutdownDelaySeconds = 900;
-in
 {
   imports = [
-    (import ../_mixins/ups-sched.nix { inherit pkgs shutdownDelaySeconds; })
+    (import ../_mixins/ups-sched.nix {
+      inherit pkgs;
+      isCriticalNode = true;
+    })
   ];
 
   # TODO: rotate these passwords and migrate to sops-managed secrets.

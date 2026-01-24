@@ -1,4 +1,8 @@
-{ pkgs, shutdownDelaySeconds }:
+{
+  pkgs,
+  shutdownDelaySeconds ? null,
+  isCriticalNode ? false,
+}:
 {
   environment.etc."nut/upssched-cmd" = {
     mode = "0755";
@@ -37,9 +41,15 @@
       CMDSCRIPT /etc/nut/upssched-cmd
       PIPEFN /var/state/ups/upssched.pipe
       LOCKFN /var/state/ups/upssched.lock
-
-      AT ONBATT * START-TIMER onbatt ${toString shutdownDelaySeconds}
-      AT ONLINE * CANCEL-TIMER onbatt
+      ${
+        if isCriticalNode then
+          ""
+        else
+          ''
+            AT ONBATT * START-TIMER onbatt ${toString shutdownDelaySeconds}
+            AT ONLINE * CANCEL-TIMER onbatt
+          ''
+      }
       AT LOWBATT * EXECUTE lowbatt
     ''}";
   };
