@@ -27,6 +27,9 @@ let
       home-manager.useUserPackages = true;
       home-manager.users.${username} = ../home-manager;
     };
+  upsNonVmShutdownDelaySeconds = 600;
+  upsShutdownDelaySeconds =
+    isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
 in
 rec {
   mkHome =
@@ -86,6 +89,7 @@ rec {
           isDesktop
           isWork
           ;
+        upsShutdownDelaySeconds = upsShutdownDelaySeconds isVM;
       };
       modules = [
         ../common
@@ -473,6 +477,8 @@ rec {
           isWork
           ci
           ;
+        # If we ever add macOS VMs, thread isVM here and compute accordingly.
+        upsShutdownDelaySeconds = upsShutdownDelaySeconds false;
       };
       modules = [
         inputs.nix-homebrew.darwinModules.nix-homebrew

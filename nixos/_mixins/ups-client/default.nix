@@ -1,6 +1,6 @@
 {
-  isVM ? false,
   pkgs,
+  upsShutdownDelaySeconds,
   monitorName,
   system,
   user,
@@ -8,7 +8,7 @@
   ...
 }:
 let
-  shutdownDelaySeconds = if isVM then 300 else 600;
+  shutdownDelaySeconds = upsShutdownDelaySeconds;
 in
 {
   imports = [
