@@ -48,8 +48,8 @@ in
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs isVM;
-        monitorName = "pi5";
-        system = "PI5-UPS@pi5";
+        monitorName = "dhcp";
+        system = "PI5-UPS@dhcp";
         user = "upsslave";
         passwordText = "upsslave123";
       })
