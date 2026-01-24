@@ -5,12 +5,13 @@
   platform,
   stateVersion,
   isDesktop,
+  isVM ? false,
   ...
 }:
 let
   removePrefix = lib.strings.removePrefix;
   configName = ./${removePrefix "prox-" (removePrefix "local-" (removePrefix "ci-" hostname))};
-  upsClients = [
+  upsClientsNAS = [
     "prx1-lab"
     "prx2-lab"
     "prx3-lab"
@@ -21,6 +22,10 @@ let
     "prox-jellyfinvm"
     "prox-srvarrvm"
   ];
+  upsClientsPi5 = [
+    "nvws"
+    "prox-nvvm"
+  ];
 in
 {
   imports =
@@ -30,8 +35,25 @@ in
     ++ [
       ./_mixins/user
     ]
-    ++ lib.optionals (lib.elem hostname upsClients) [
-      ./_mixins/ups-client
+    ++ lib.optionals (lib.elem hostname upsClientsNAS) [
+      # TODO: rotate this password and migrate to sops-managed secrets.
+      (import ./_mixins/ups-client {
+        inherit pkgs isVM;
+        monitorName = "nas";
+        system = "ASUSTOR-UPS@nas-lab";
+        user = "upsadmin";
+        passwordText = "AdmUps1111";
+      })
+    ]
+    ++ lib.optionals (lib.elem hostname upsClientsPi5) [
+      # TODO: rotate this password and migrate to sops-managed secrets.
+      (import ./_mixins/ups-client {
+        inherit pkgs isVM;
+        monitorName = "pi5";
+        system = "PI5-UPS@pi5";
+        user = "upsslave";
+        passwordText = "upsslave123";
+      })
     ]
     ++ lib.optionals isDesktop [
       ./_mixins/desktop
