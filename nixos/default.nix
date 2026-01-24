@@ -10,6 +10,17 @@
 let
   removePrefix = lib.strings.removePrefix;
   configName = ./${removePrefix "prox-" (removePrefix "local-" (removePrefix "ci-" hostname))};
+  upsClients = [
+    "prx1-lab"
+    "prx2-lab"
+    "prx3-lab"
+    "prox-cachevm"
+    "prox-builder1vm"
+    "prox-builder2vm"
+    "prox-builder3vm"
+    "prox-jellyfinvm"
+    "prox-srvarrvm"
+  ];
 in
 {
   imports =
@@ -18,6 +29,9 @@ in
     ]
     ++ [
       ./_mixins/user
+    ]
+    ++ lib.optionals (lib.elem hostname upsClients) [
+      ./_mixins/ups-client
     ]
     ++ lib.optionals isDesktop [
       ./_mixins/desktop
