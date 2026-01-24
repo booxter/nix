@@ -1,4 +1,0 @@
-{ ... }:
-{
-  security.pam.services.hyprlock = { };
-}

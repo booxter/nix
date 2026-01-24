@@ -20,21 +20,14 @@ in
     enable = isLinux;
     settings =
       let
-        hyprlock = lib.getExe pkgs.hyprlock;
         hyprctl = "${pkgs.hyprland}/bin/hyprctl";
       in
       {
         general = {
-          after_sleep_cmd = "${hyprlock} dispatch dpms on";
           ignore_dbus_inhibit = false;
-          lock_cmd = hyprlock;
         };
 
         listener = [
-          {
-            timeout = 300;
-            on-timeout = hyprlock;
-          }
           {
             timeout = 120;
             on-timeout = "${hyprctl} dispatch dpms off";
@@ -42,50 +35,6 @@ in
           }
         ];
       };
-  };
-
-  programs.hyprlock = {
-    enable = isLinux;
-    settings = {
-      general = {
-        hide_cursor = true;
-        ignore_empty_input = true;
-      };
-      animations = {
-        enabled = true;
-        fade_in = {
-          duration = 300;
-          bezier = "easeOutQuint";
-        };
-        fade_out = {
-          duration = 300;
-          bezier = "easeOutQuint";
-        };
-      };
-
-      background = [
-        {
-          path = "screenshot";
-          blur_passes = 3;
-          blur_size = 8;
-        }
-      ];
-      input-field = [
-        {
-          size = "200, 50";
-          position = "0, -80";
-          monitor = "";
-          dots_center = true;
-          fade_on_empty = false;
-          font_color = "rgb(202, 211, 245)";
-          inner_color = "rgb(91, 96, 120)";
-          outer_color = "rgb(24, 25, 38)";
-          outline_thickness = 5;
-          placeholder_text = "Password...";
-          shadow_passes = 2;
-        }
-      ];
-    };
   };
 
   # TODO: rename module?
@@ -163,7 +112,8 @@ in
               "3"
               "4"
             ];
-            "HDMI-A-1" = [
+            # right
+            "DP-2" = [
               "5"
               "6"
             ];
@@ -200,10 +150,8 @@ in
       };
 
       monitor = [
-        "DP-2, 3840x2160@60, 0x0, 1.5"
-
-        # use lower res to accommodate junky kvm hdmi flickering
-        "HDMI-A-1, 1920x1080@60, auto-right, 1"
+        "DP-4, 3840x2160@60, 0x0, 1.5" # left
+        "DP-2, 3840x2160@60, 2560x0, 1.5" # right (logical width = 3840/1.5)
       ];
 
       xwayland = {
@@ -212,12 +160,14 @@ in
       };
 
       workspace = [
-        "1, monitor:DP-2"
-        "2, monitor:DP-2"
-        "3, monitor:DP-2"
-        "4, monitor:DP-2"
-        "5, monitor:HDMI-A-1"
-        "6, monitor:HDMI-A-1"
+        # left
+        "1, monitor:DP-4"
+        "2, monitor:DP-4"
+        "3, monitor:DP-4"
+        "4, monitor:DP-4"
+        # right
+        "5, monitor:DP-2"
+        "6, monitor:DP-2"
       ];
 
       input =
@@ -228,8 +178,8 @@ in
           inherit natural_scroll;
           kb_layout = "us";
 
-          repeat_delay = 200;
-          repeat_rate = 10;
+          repeat_delay = 210;
+          repeat_rate = 33;
 
           touchpad = {
             inherit natural_scroll;
