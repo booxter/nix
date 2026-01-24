@@ -151,7 +151,7 @@ in
 
       monitor = [
         "DP-4, 3840x2160@60, 0x0, 1.5" # left
-        "DP-2, 3840x2160@60, 3840x0, 1.5" # right
+        "DP-2, 3840x2160@60, 2560x0, 1.5" # right (logical width = 3840/1.5)
       ];
 
       xwayland = {
