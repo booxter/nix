@@ -4,6 +4,13 @@
   isCriticalNode ? false,
 }:
 {
+  systemd.tmpfiles.rules = [
+    # upssched (runs as nutmon) needs to create pipe/lock files here
+    "d /run/nut 0770 nutmon nutmon -"
+    # upssched writes its pid under NUT_STATEPATH (/var/lib/nut by default)
+    "d /var/lib/nut 0750 nutmon nutmon -"
+  ];
+
   environment.etc."nut/upssched-cmd" = {
     mode = "0755";
     text = ''
@@ -39,8 +46,8 @@
     ];
     schedulerRules = "${pkgs.writeText "upssched.conf" ''
       CMDSCRIPT /etc/nut/upssched-cmd
-      PIPEFN /var/state/ups/upssched.pipe
-      LOCKFN /var/state/ups/upssched.lock
+      PIPEFN /run/nut/upssched.pipe
+      LOCKFN /run/nut/upssched.lock
       ${
         if isCriticalNode then
           ""
