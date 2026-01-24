@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   environment.systemPackages = [
     pkgs.nut
@@ -16,14 +16,15 @@
     NOTIFYFLAG ONBATT SYSLOG+EXEC
     NOTIFYFLAG ONLINE SYSLOG+EXEC
     NOTIFYFLAG LOWBATT SYSLOG+EXEC
+    POWERDOWNFLAG /var/lib/nut/upsmon.powerdown
     RUN_AS_USER root
     SHUTDOWNCMD /sbin/shutdown -h now
   '';
 
   environment.etc."nut/upssched.conf".text = ''
     CMDSCRIPT /etc/nut/upssched-cmd
-    PIPEFN /var/state/ups/upssched.pipe
-    LOCKFN /var/state/ups/upssched.lock
+    PIPEFN /var/lib/nut/upssched.pipe
+    LOCKFN /var/lib/nut/upssched.lock
 
     AT ONBATT * START-TIMER onbatt 300
     AT ONLINE * CANCEL-TIMER onbatt
@@ -45,8 +46,8 @@
     esac
   '';
 
-  system.activationScripts.upsmonDirs.text = ''
-    mkdir -p /var/state/ups /var/lib/nut
+  system.activationScripts.postActivation.text = lib.mkAfter ''
+    mkdir -p /var/lib/nut
     chmod 700 /var/lib/nut
     chmod 755 /etc/nut/upssched-cmd
   '';
@@ -62,6 +63,8 @@
       EnvironmentVariables = {
         NUT_CONFPATH = "/etc/nut";
         NUT_STATEPATH = "/var/lib/nut";
+        # Silence upsnotify warning; consider enabling a launchd-capable notifier in NUT if desired.
+        NUT_QUIET_INIT_UPSNOTIFY = "true";
       };
       StandardOutPath = "/var/log/upsmon.log";
       StandardErrorPath = "/var/log/upsmon.log";
