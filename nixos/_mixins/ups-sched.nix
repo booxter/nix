@@ -1,6 +1,6 @@
 {
   pkgs,
-  shutdownDelaySeconds ? null,
+  upsShutdownDelaySeconds ? null,
   isCriticalNode ? false,
 }:
 {
@@ -53,7 +53,7 @@
           ""
         else
           ''
-            AT ONBATT * START-TIMER onbatt ${toString shutdownDelaySeconds}
+            AT ONBATT * START-TIMER onbatt ${toString upsShutdownDelaySeconds}
             AT ONLINE * CANCEL-TIMER onbatt
           ''
       }

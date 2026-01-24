@@ -7,12 +7,9 @@
   passwordText,
   ...
 }:
-let
-  shutdownDelaySeconds = upsShutdownDelaySeconds;
-in
 {
   imports = [
-    (import ../ups-sched.nix { inherit pkgs shutdownDelaySeconds; })
+    (import ../ups-sched.nix { inherit pkgs upsShutdownDelaySeconds; })
   ];
 
   environment.etc."nut/upsclient.pass" = {

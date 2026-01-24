@@ -2,7 +2,7 @@
   pkgs,
   upsName,
   upsDescription,
-  shutdownDelaySeconds ? 600,
+  upsShutdownDelaySeconds ? 600,
   isCriticalNode ? false,
   upsmonPasswordText,
   upsslavePasswordText,
@@ -10,7 +10,7 @@
 }:
 {
   imports = [
-    (import ./ups-sched.nix { inherit pkgs shutdownDelaySeconds isCriticalNode; })
+    (import ./ups-sched.nix { inherit pkgs upsShutdownDelaySeconds isCriticalNode; })
   ];
 
   environment.etc."nut/upsmon.pass" = {
