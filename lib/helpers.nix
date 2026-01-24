@@ -27,7 +27,7 @@ let
       home-manager.useUserPackages = true;
       home-manager.users.${username} = ../home-manager;
     };
-  upsNonVmShutdownDelaySeconds = 600;
+  upsNonVmShutdownDelaySeconds = 900;
   upsShutdownDelaySeconds =
     isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
 in
