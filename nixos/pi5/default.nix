@@ -7,6 +7,10 @@ let
   guestAddr = "192.168.2.1";
 in
 {
+  imports = [
+    ./ups.nix
+  ];
+
   networking = {
     interfaces.end0 = {
       ipv4.addresses = [
