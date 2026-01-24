@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  upsShutdownDelaySeconds,
+  ...
+}:
 {
   environment.systemPackages = [
     pkgs.nut
@@ -26,7 +31,7 @@
     PIPEFN /var/lib/nut/upssched.pipe
     LOCKFN /var/lib/nut/upssched.lock
 
-    AT ONBATT * START-TIMER onbatt 300
+    AT ONBATT * START-TIMER onbatt ${toString upsShutdownDelaySeconds}
     AT ONLINE * CANCEL-TIMER onbatt
     AT LOWBATT * EXECUTE lowbatt
   '';

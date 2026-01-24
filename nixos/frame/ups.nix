@@ -6,7 +6,7 @@
       inherit pkgs;
       upsName = "FRAME-UPS";
       upsDescription = "APC UPS 1500VA";
-      shutdownDelaySeconds = 600;
+      upsShutdownDelaySeconds = 600;
       upsmonPasswordText = "upsmon234";
       upsslavePasswordText = "upsslave234";
     })

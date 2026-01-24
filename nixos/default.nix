@@ -4,7 +4,7 @@
   hostname,
   platform,
   stateVersion,
-  isVM ? false,
+  upsShutdownDelaySeconds,
   ...
 }:
 let
@@ -37,7 +37,7 @@ in
     ++ lib.optionals (lib.elem hostname upsClientsNAS) [
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
-        inherit pkgs isVM;
+        inherit pkgs upsShutdownDelaySeconds;
         monitorName = "nas";
         system = "ASUSTOR-UPS@nas-lab";
         user = "upsadmin";
@@ -47,7 +47,7 @@ in
     ++ lib.optionals (lib.elem hostname upsClientsPi5) [
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
-        inherit pkgs isVM;
+        inherit pkgs upsShutdownDelaySeconds;
         monitorName = "dhcp";
         system = "PI5-UPS@dhcp";
         user = "upsslave";

@@ -1,18 +1,15 @@
 {
-  isVM ? false,
   pkgs,
+  upsShutdownDelaySeconds,
   monitorName,
   system,
   user,
   passwordText,
   ...
 }:
-let
-  shutdownDelaySeconds = if isVM then 300 else 600;
-in
 {
   imports = [
-    (import ../ups-sched.nix { inherit pkgs shutdownDelaySeconds; })
+    (import ../ups-sched.nix { inherit pkgs upsShutdownDelaySeconds; })
   ];
 
   environment.etc."nut/upsclient.pass" = {
