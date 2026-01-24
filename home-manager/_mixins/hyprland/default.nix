@@ -112,7 +112,8 @@ in
               "3"
               "4"
             ];
-            "HDMI-A-1" = [
+            # right
+            "DP-2" = [
               "5"
               "6"
             ];
@@ -149,10 +150,8 @@ in
       };
 
       monitor = [
-        "DP-2, 3840x2160@60, 0x0, 1.5"
-
-        # use lower res to accommodate junky kvm hdmi flickering
-        "HDMI-A-1, 1920x1080@60, auto-right, 1"
+        "DP-4, 3840x2160@60, 0x0, 1.5" # left
+        "DP-2, 3840x2160@60, 3840x0, 1.5" # right
       ];
 
       xwayland = {
@@ -161,12 +160,14 @@ in
       };
 
       workspace = [
-        "1, monitor:DP-2"
-        "2, monitor:DP-2"
-        "3, monitor:DP-2"
-        "4, monitor:DP-2"
-        "5, monitor:HDMI-A-1"
-        "6, monitor:HDMI-A-1"
+        # left
+        "1, monitor:DP-4"
+        "2, monitor:DP-4"
+        "3, monitor:DP-4"
+        "4, monitor:DP-4"
+        # right
+        "5, monitor:DP-2"
+        "6, monitor:DP-2"
       ];
 
       input =
