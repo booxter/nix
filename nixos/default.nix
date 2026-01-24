@@ -4,7 +4,6 @@
   hostname,
   platform,
   stateVersion,
-  isDesktop,
   ...
 }:
 let
@@ -18,9 +17,6 @@ in
     ]
     ++ [
       ./_mixins/user
-    ]
-    ++ lib.optionals isDesktop [
-      ./_mixins/desktop
     ];
 
   system.stateVersion = stateVersion;

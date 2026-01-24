@@ -20,21 +20,14 @@ in
     enable = isLinux;
     settings =
       let
-        hyprlock = lib.getExe pkgs.hyprlock;
         hyprctl = "${pkgs.hyprland}/bin/hyprctl";
       in
       {
         general = {
-          after_sleep_cmd = "${hyprlock} dispatch dpms on";
           ignore_dbus_inhibit = false;
-          lock_cmd = hyprlock;
         };
 
         listener = [
-          {
-            timeout = 300;
-            on-timeout = hyprlock;
-          }
           {
             timeout = 120;
             on-timeout = "${hyprctl} dispatch dpms off";
@@ -42,50 +35,6 @@ in
           }
         ];
       };
-  };
-
-  programs.hyprlock = {
-    enable = isLinux;
-    settings = {
-      general = {
-        hide_cursor = true;
-        ignore_empty_input = true;
-      };
-      animations = {
-        enabled = true;
-        fade_in = {
-          duration = 300;
-          bezier = "easeOutQuint";
-        };
-        fade_out = {
-          duration = 300;
-          bezier = "easeOutQuint";
-        };
-      };
-
-      background = [
-        {
-          path = "screenshot";
-          blur_passes = 3;
-          blur_size = 8;
-        }
-      ];
-      input-field = [
-        {
-          size = "200, 50";
-          position = "0, -80";
-          monitor = "";
-          dots_center = true;
-          fade_on_empty = false;
-          font_color = "rgb(202, 211, 245)";
-          inner_color = "rgb(91, 96, 120)";
-          outer_color = "rgb(24, 25, 38)";
-          outline_thickness = 5;
-          placeholder_text = "Password...";
-          shadow_passes = 2;
-        }
-      ];
-    };
   };
 
   # TODO: rename module?
