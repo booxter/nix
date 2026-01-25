@@ -323,12 +323,15 @@
           runtimeInputs = with pkgs; [
             nixfmt-tree
             shellcheck
+            ruff
             mbake
           ];
           text = ''
             treefmt "$@"
             mbake format Makefile
             find . -type f -name '*.sh' -exec shellcheck {} +
+            ruff format .
+            ruff check .
           '';
         }
       );

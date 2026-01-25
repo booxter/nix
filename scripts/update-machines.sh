@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p jq bind gum
+#!nix-shell -i bash -p jq bind python3 python3Packages.prompt-toolkit
 # shellcheck shell=bash
 set -euo pipefail
 
@@ -53,6 +53,20 @@ ssh_base_opts=(
   -o ConnectTimeout=8
 )
 
+run_selector() {
+  local -a items=("$@")
+  local tmpfile selection
+  tmpfile="$(mktemp)"
+  printf '%s\n' "${items[@]}" >"$tmpfile"
+  if ! selection="$(python3 "${REPO_ROOT}/scripts/selector.py" --file "$tmpfile")"; then
+    rm -f "$tmpfile"
+    echo "Selection canceled." >&2
+    exit 1
+  fi
+  rm -f "$tmpfile"
+  printf '%s' "$selection"
+}
+
 print_summary_box() {
   local total="$1"
   local ok="$2"
@@ -73,16 +87,19 @@ Duration: ${duration_fmt}"
 Failed hosts: ${failed_list}"
   fi
 
-  # gum colors use ANSI 256-color palette; 2 = green, 1 = red.
   border_color=2
   text_color=2
   if ((failed > 0)); then
     border_color=1
     text_color=1
   fi
-  printf '%s\n' "$summary_text" | gum style \
-    --foreground "$text_color" --border-foreground "$border_color" --border double \
-    --align center --width 60 --margin "1 2" --padding "1 2"
+  printf '%s\n' "$summary_text" | python3 "${REPO_ROOT}/scripts/box.py" \
+    --border-color "$border_color" \
+    --text-color "$text_color" \
+    --margin "1 2" \
+    --padding "1 2" \
+    --border double \
+    --align center
 }
 
 SSH_OPTS_ARR=()
@@ -247,9 +264,7 @@ fi
 
 if [[ "$SELECT" == "true" ]]; then
   mapfile -t sorted_hosts < <(printf '%s\n' "${HOSTS[@]}" | LC_ALL=C sort)
-  selection="$(
-    gum choose --no-limit --height 12 --cursor-prefix "❯ " --selected-prefix "✓ " "${sorted_hosts[@]}"
-  )"
+  selection="$(run_selector "${sorted_hosts[@]}")"
   if [[ -z "$selection" ]]; then
     echo "No selection made." >&2
     exit 1
