@@ -82,6 +82,18 @@ in
     clientid ${hostname}
   '';
 
+  services.avahi = {
+    enable = true;
+    # NixOS uses separate knobs for v4/v6 NSS.
+    nssmdns4 = true;
+    nssmdns6 = true;
+    # Ensure this host publishes its name/address over mDNS.
+    publish = {
+      enable = true;
+      addresses = true;
+    };
+  };
+
   environment.systemPackages = with pkgs; [
     pciutils
   ];
