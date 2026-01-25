@@ -61,9 +61,16 @@ in
     ]
     ++ lib.optionals isDesktop [
       jellyfin-desktop
+      mpv
       obsidian
       telegram-desktop
       wireshark
+    ]
+    ++ lib.optionals (isDesktop && isDarwin) [
+      vlc-bin
+    ]
+    ++ lib.optionals (isDesktop && !isDarwin) [
+      vlc
     ]
     ++ lib.optionals (!isWork && isDesktop) [
       podman-desktop
