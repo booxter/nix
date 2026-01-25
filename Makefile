@@ -79,9 +79,9 @@ build-ci-vm-config:
 
 ########### ci qemu
 build-ci-vm-qemu:
-	# Using linuxvm as the canonical VM; QEMU comes from host.pkgs so the VM choice doesn't matter.
+	# Using builder1vm as the canonical VM; QEMU comes from host.pkgs so the VM choice doesn't matter.
 	$(eval QEMU_VM_PREFIX := $(if $(filter Darwin,$(shell uname -s)),local,ci))
-	nix build .#nixosConfigurations.$(QEMU_VM_PREFIX)-linuxvm.config.system.build.vmQemu $(ARGS)
+	nix build .#nixosConfigurations.$(QEMU_VM_PREFIX)-builder1vm.config.system.build.vmQemu $(ARGS)
 
 ########### proxmox vms
 prox-vm:
@@ -126,6 +126,16 @@ darwin-build-target:
 
 darwin-switch:
 	sudo nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
+
+switch:
+	@if [ "$(shell uname -s)" = "Darwin" ]; then \
+		$(MAKE) darwin-switch; \
+	elif [ "$(shell uname -s)" = "Linux" ]; then \
+		$(MAKE) nixos-switch; \
+	else \
+		echo "Unsupported OS: $(shell uname -s)" >&2; \
+		exit 1; \
+	fi
 
 ########### standalone home-manager
 home-build-nv:

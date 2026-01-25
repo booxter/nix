@@ -269,16 +269,6 @@
           proxNode = "nvws";
         }
         // VM {
-          name = "linux";
-          sshPort = 10001;
-        }
-        // VM {
-          name = "linuxui";
-          sshPort = 10002;
-          memorySize = 8;
-          withHome = false;
-        }
-        // VM {
           name = "jellyfin";
           platform = "x86_64-linux";
           cores = 20;
@@ -333,14 +323,18 @@
           runtimeInputs = with pkgs; [
             nixfmt-tree
             shellcheck
+            ruff
             mbake
           ];
           text = ''
             treefmt "$@"
             mbake format Makefile
             find . -type f -name '*.sh' -exec shellcheck {} +
+            ruff format .
+            ruff check .
           '';
         }
       );
+
     };
 }

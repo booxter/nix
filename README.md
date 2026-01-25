@@ -10,13 +10,14 @@ without `WHAT` prints the available options when supported.
 make inputs-update
 make nixos-build-target WHAT=frame
 make darwin-build-target WHAT=mair
+
 ```
 
 ## Local and CI VMs
 
 ```sh
-make local-vm WHAT=linux
-make build-local-vm WHAT=linux
+make local-vm WHAT=builder1
+make build-local-vm WHAT=builder1
 
 make ci-vm WHAT=builder1
 make build-ci-vm WHAT=builder1
@@ -37,6 +38,24 @@ make nixos-switch
 
 make darwin-build
 make darwin-switch
+```
+
+## Fleet updates
+
+Update multiple machines over SSH with `scripts/update-machines.sh` (defaults to `--all`):
+
+```sh
+# Update all personal machines (default)
+./scripts/update-machines.sh -A
+
+# Update all work machines
+./scripts/update-machines.sh -A --work
+
+# Update a subset interactively (fzf required)
+./scripts/update-machines.sh -A --select
+
+# Dry run (SSH check + disk estimate only)
+./scripts/update-machines.sh -A --dry-run
 ```
 
 ## Disk and image helpers
@@ -86,16 +105,10 @@ All VMs run on Proxmox hosts and are deployed with the `nixmoxer` tool
 | `JGWXHWDL4X` | macOS (aarch64-darwin) | Work Mac. | [darwin/default.nix](darwin/default.nix) | [common](common), [darwin](darwin) |
 | `frame` | NixOS (x86_64-linux) | Desktop workstation. | [nixos/frame/default.nix](nixos/frame/default.nix) | [common](common), [nixos](nixos) |
 
+
 ### Media servers
 
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
 | `jellyfin` | NixOS VM | Media server (Jellyfin). | [nixos/jellyfinvm/default.nix](nixos/jellyfinvm/default.nix) | [common](common), [nixos](nixos) |
 | `srvarr` | NixOS VM | Media automation stack (Arr suite). | [nixos/srvarrvm/default.nix](nixos/srvarrvm/default.nix) | [common](common), [nixos](nixos) |
-
-### Test VMs
-
-| Machine | Type | Purpose | Config | Includes |
-| --- | --- | --- | --- | --- |
-| `linux` | NixOS VM | CLI-only testing VM. | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
-| `linuxui` | NixOS VM | Wayland UI testing VM. | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
