@@ -53,6 +53,19 @@ ssh_base_opts=(
   -o ConnectTimeout=8
 )
 
+avail_gb_cmd() {
+  local path="$1"
+  printf 'df -Pk %q | awk '"'"'NR==2 {printf "%.1f", $4/1024/1024}'"'"'' "$path"
+}
+
+is_local_host() {
+  local host="$1"
+  local local_short local_full
+  local_short="$(hostname -s 2>/dev/null || hostname)"
+  local_full="$(hostname -f 2>/dev/null || hostname)"
+  [[ "$host" == "localhost" || "$host" == "$local_short" || "$host" == "$local_full" ]]
+}
+
 run_selector() {
   local -a items=("$@")
   local tmpfile selection
@@ -320,16 +333,25 @@ failed=0
 host_status_lines=()
 for host in "${HOSTS[@]}"; do
   ssh_host="$(resolve_ssh_host "$host")"
-  if ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "$ssh_host" true >/dev/null 2>&1; then
-    ok="ok"
+  if is_local_host "$host"; then
+    ok="ok (local)"
   else
-    ok="failed"
-    failed=$((failed + 1))
+    if ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "$ssh_host" true >/dev/null 2>&1; then
+      ok="ok"
+    else
+      ok="failed"
+      failed=$((failed + 1))
+    fi
   fi
 
   avail_gb=""
   if [[ "$DRY_RUN" == "true" && "$ok" == "ok" ]]; then
-    avail_gb="$(ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "$ssh_host" "df -Pk \"\$HOME\" | awk 'NR==2 {printf \"%.1f\", \$4/1024/1024}'" 2>/dev/null || true)"
+    if is_local_host "$host"; then
+      avail_path="$(get_local_avail_path)"
+      avail_gb="$(eval "$(avail_gb_cmd "$avail_path")" 2>/dev/null || true)"
+    else
+      avail_gb="$(ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "$ssh_host" "$(avail_gb_cmd "\$HOME")" 2>/dev/null || true)"
+    fi
     if [[ -z "$avail_gb" ]]; then
       avail_gb="unknown"
     fi
@@ -368,8 +390,7 @@ for host in "${HOSTS[@]}"; do
     exit 1
   fi
   remote_script="/tmp/update-nix-$$.sh"
-  # shellcheck disable=SC2029
-  ssh "${SSH_OPTS_ARR[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\"" <<'REMOTE'
+  remote_payload="$(cat <<'REMOTE'
 set -euo pipefail
 trap 'rm -f "$0"' EXIT
 branch="$1"
@@ -434,6 +455,19 @@ else
   esac
 fi
 REMOTE
+)"
+  if is_local_host "$host"; then
+    printf '%s\n' "$remote_payload" > "$remote_script"
+    chmod +x "$remote_script"
+    if "$remote_script" "$BRANCH" "$REPO_URL"; then
+      ok_hosts+=("$host")
+    else
+      failed_hosts+=("$host")
+    fi
+    continue
+  fi
+  # shellcheck disable=SC2029
+  printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
   if ssh -tt "${SSH_OPTS_ARR[@]}" "$ssh_host" "$remote_script" "$BRANCH" "$REPO_URL"; then
     ok_hosts+=("$host")
   else
