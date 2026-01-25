@@ -142,7 +142,10 @@ in
     enable = true;
     openFirewall = true;
     settings = {
-      server.host = "0.0.0.0";
+      server = {
+        host = "0.0.0.0";
+        port = 80;
+      };
       pages = [
         {
           name = "Startpage";
@@ -238,5 +241,13 @@ in
         }
       ];
     };
+  };
+
+  # Allow glance to bind to lower port, 80
+  systemd.services.glance.serviceConfig = {
+    AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
+    CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
+    NoNewPrivileges = false;
+    PrivateUsers = lib.mkForce false;
   };
 }
