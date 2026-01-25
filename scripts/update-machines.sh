@@ -108,6 +108,31 @@ if [[ -n "${SSH_OPTS:-}" ]]; then
   read -r -a SSH_OPTS_ARR <<<"${SSH_OPTS}"
 fi
 
+get_local_avail_path() {
+  if [[ -d /nix/store ]]; then
+    printf '%s' "/nix/store"
+  elif [[ -d /nix ]]; then
+    printf '%s' "/nix"
+  else
+    printf '%s' "$HOME"
+  fi
+}
+
+local_disk_cleanup_if_low() {
+  local avail_path avail_kb avail_gb
+  avail_path="$(get_local_avail_path)"
+  avail_kb="$(df -Pk "$avail_path" | awk 'NR==2 {print $4}')"
+  if [[ -z "$avail_kb" ]]; then
+    return 0
+  fi
+  avail_gb="$(awk "BEGIN {printf \"%.1f\", ${avail_kb}/1024/1024}")"
+  printf '%b\n' "${COLOR_DIM}Local available disk on ${avail_path}: ${avail_gb} GiB${COLOR_RESET}"
+  if [[ "$avail_kb" -lt 20971520 ]]; then
+    echo "Low local disk space (<20GiB). Running nix-collect-garbage -d..."
+    sudo nix-collect-garbage -d
+  fi
+}
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -203,6 +228,7 @@ if [[ "$ALL" == "true" ]]; then
     echo "Do not pass host names with -A." >&2
     exit 1
   fi
+  local_disk_cleanup_if_low
   WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" 2>/dev/null || echo '')"
   if [[ -z "$WORK_MAP" ]]; then
     echo "Failed to read hosts from get-hosts.sh." >&2
@@ -351,25 +377,36 @@ repo_url="$2"
 repo_dir="$(mktemp -d)"
 trap 'rm -rf "$repo_dir"' EXIT
 
-format_avail_gib() {
-  AVAIL_KB="$(df -Pk "$HOME" | awk 'NR==2 {print $4}')"
+get_avail_path() {
+  if [[ -d /nix/store ]]; then
+    printf '%s' "/nix/store"
+  elif [[ -d /nix ]]; then
+    printf '%s' "/nix"
+  else
+    printf '%s' "$HOME"
+  fi
+}
+
+set_avail_gib() {
+  AVAIL_PATH="$(get_avail_path)"
+  AVAIL_KB="$(df -Pk "$AVAIL_PATH" | awk 'NR==2 {print $4}')"
   if [[ -z "$AVAIL_KB" ]]; then
     return 1
   fi
-  awk "BEGIN {printf \"%.1f\", ${AVAIL_KB}/1024/1024}"
+  AVAIL_GB="$(awk "BEGIN {printf \"%.1f\", ${AVAIL_KB}/1024/1024}")"
 }
 
 AVAIL_KB=""
-avail_gb="$(format_avail_gib || true)"
-if [[ -n "$avail_gb" ]]; then
-  printf '\033[1;33m%s\033[0m\n' "Available disk: ${avail_gb} GiB"
+AVAIL_GB=""
+AVAIL_PATH=""
+if set_avail_gib; then
+  printf '\033[1;33m%s\033[0m\n' "Available disk on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
 fi
 if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt 20971520 ]]; then
   echo "Low disk space (<20GiB). Running nix-collect-garbage -d..."
   sudo nix-collect-garbage -d
-  avail_gb_after="$(format_avail_gib || true)"
-  if [[ -n "$avail_gb_after" ]]; then
-    printf '\033[1;33m%s\033[0m\n' "Available disk after cleanup: ${avail_gb_after} GiB"
+  if set_avail_gib; then
+    printf '\033[1;33m%s\033[0m\n' "Available disk after cleanup on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
   fi
 fi
 
