@@ -53,9 +53,14 @@ ssh_base_opts=(
   -o ConnectTimeout=8
 )
 
-avail_gb_cmd() {
+avail_gb_local() {
   local path="$1"
-  printf 'df -Pk %q | awk '"'"'NR==2 {printf "%.1f", $4/1024/1024}'"'"'' "$path"
+  df -Pk "$path" | awk 'NR==2 {printf "%.1f", $4/1024/1024}'
+}
+
+avail_gb_remote_cmd() {
+  local path_literal="$1"
+  printf '%s\n' "df -Pk \"$path_literal\" | awk 'NR==2 {printf \"%.1f\", \\$4/1024/1024}'"
 }
 
 is_local_host() {
@@ -348,9 +353,10 @@ for host in "${HOSTS[@]}"; do
   if [[ "$DRY_RUN" == "true" && "$ok" == "ok" ]]; then
     if is_local_host "$host"; then
       avail_path="$(get_local_avail_path)"
-      avail_gb="$(eval "$(avail_gb_cmd "$avail_path")" 2>/dev/null || true)"
+      avail_gb="$(avail_gb_local "$avail_path" 2>/dev/null || true)"
     else
-      avail_gb="$(ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "$ssh_host" "$(avail_gb_cmd "\$HOME")" 2>/dev/null || true)"
+      # shellcheck disable=SC2029
+      avail_gb="$(ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "$ssh_host" "$(avail_gb_remote_cmd "\\\$HOME")" 2>/dev/null || true)"
     fi
     if [[ -z "$avail_gb" ]]; then
       avail_gb="unknown"
