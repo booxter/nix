@@ -9,7 +9,10 @@
 }:
 let
   removePrefix = lib.strings.removePrefix;
+  removeSuffix = lib.strings.removeSuffix;
   configName = ./${removePrefix "prox-" (removePrefix "local-" (removePrefix "ci-" hostname))};
+  # TODO: for now just avahi but maybe consider simplifying hostnames in general
+  avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
   upsClientsNAS = [
     "prx1-lab"
     "prx2-lab"
@@ -81,6 +84,19 @@ in
   networking.dhcpcd.extraConfig = ''
     clientid ${hostname}
   '';
+
+  services.avahi = {
+    enable = true;
+    # NixOS uses separate knobs for v4/v6 NSS.
+    nssmdns4 = true;
+    nssmdns6 = true;
+    # Ensure this host publishes its name/address over mDNS.
+    publish = {
+      enable = true;
+      addresses = true;
+    };
+    hostName = avahiHostName;
+  };
 
   environment.systemPackages = with pkgs; [
     pciutils
