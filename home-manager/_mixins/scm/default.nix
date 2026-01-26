@@ -1,4 +1,5 @@
 {
+  inputs,
   pkgs,
   isWork,
   username,
@@ -164,13 +165,6 @@ in
 
   # use vim bindings for tig
   home.file = {
-    ".tigrc".source =
-      pkgs.fetchFromGitHub {
-        owner = "jonas";
-        repo = "tig";
-        rev = "c6899e98e10da37e8034e0f0cfd0904091ad34e5";
-        sha256 = "sha256-crgIhsXqp6XpyF0vXYJIPpWmfLSCyeXCirWlrRxx/gg=";
-      }
-      + "/contrib/vim.tigrc";
+    ".tigrc".source = "${inputs.tig}/contrib/vim.tigrc";
   };
 }

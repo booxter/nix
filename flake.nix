@@ -50,6 +50,11 @@
 
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
+
+    tig = {
+      url = "github:jonas/tig";
+      flake = false;
+    };
   };
 
   outputs =
