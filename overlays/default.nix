@@ -15,7 +15,6 @@
         };
 
       pkgs = getPkgs inputs.nixpkgs;
-      pkgsNut = getPkgs inputs.nixpkgs-nut;
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
@@ -33,9 +32,6 @@
       # Pull Sonarr from release-25.11 to test hang regressions
       inherit (pkgsRelease) sonarr;
 
-      # Pull NUT from the darwin-enabled fork on macOS only.
-      nut = if prev.stdenv.hostPlatform.isDarwin then pkgsNut.nut else prev.nut;
-
       jellyfin = prev.jellyfin.overrideAttrs (oldAttrs: {
         patches = oldAttrs.patches or [ ] ++ [
           # Fix watched state not kept on Media replace/rename
@@ -47,5 +43,9 @@
           })
         ];
       });
+    }
+    // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
+      # Pull NUT from master for now for darwin support.
+      inherit (pkgsMaster) nut;
     };
 }
