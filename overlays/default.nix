@@ -26,9 +26,6 @@
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
 
-      # https://github.com/NixOS/nixpkgs/pull/477113
-      inherit (pkgsMaster) ngrep;
-
       # Pull Sonarr from release-25.11 to test hang regressions
       inherit (pkgsRelease) sonarr;
 
