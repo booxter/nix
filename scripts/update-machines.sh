@@ -350,7 +350,7 @@ for host in "${HOSTS[@]}"; do
   fi
 
   avail_gb=""
-  if [[ "$DRY_RUN" == "true" && "$ok" == "ok" ]]; then
+  if [[ "$DRY_RUN" == "true" && "$ok" == ok* ]]; then
     if is_local_host "$host"; then
       avail_path="$(get_local_avail_path)"
       avail_gb="$(avail_gb_local "$avail_path" 2>/dev/null || true)"
