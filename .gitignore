@@ -3,3 +3,4 @@ keys
 *.qcow2
 *.sd
 nixmoxer.conf
+**/__pycache__/
