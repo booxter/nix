@@ -393,32 +393,16 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1768916468,
-        "narHash": "sha256-QIssegqRL8jBrG9/KIlb1cQhbxCfTSzrIieno53Hb/c=",
+        "lastModified": 1769385949,
+        "narHash": "sha256-SRQaiH9ckO3I/4kGHJSepJl/R0RqdyycdBnnlQ5saKY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "7143bd7e64646b6dec9534a145b231dfece260ad",
+        "rev": "b3ac5a8a8ca2e8a57b387b1dda5e790132afdd8c",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-nut": {
-      "locked": {
-        "lastModified": 1769220095,
-        "narHash": "sha256-2fkixwFhOPueS4xZ5lqG4gpiEuB5bUDdMwhHd5THGp4=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "b9d1f0d186b4b5cebab15bb8aaceb9b093610b97",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "nut-darwin",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -579,7 +563,6 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-master": "nixpkgs-master",
-        "nixpkgs-nut": "nixpkgs-nut",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos"

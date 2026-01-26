@@ -15,7 +15,6 @@
         };
 
       pkgs = getPkgs inputs.nixpkgs;
-      pkgsNut = getPkgs inputs.nixpkgs-nut;
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
     in
@@ -26,11 +25,8 @@
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
 
-      # https://github.com/NixOS/nixpkgs/pull/477113
-      inherit (pkgsMaster) ngrep;
-
-      # Pull NUT from the darwin-enabled fork on macOS only.
-      nut = if prev.stdenv.hostPlatform.isDarwin then pkgsNut.nut else prev.nut;
+      # Pull NUT from master for now for darwin support.
+      inherit (pkgsMaster) nut;
 
       jellyfin = prev.jellyfin.overrideAttrs (oldAttrs: {
         patches = oldAttrs.patches or [ ] ++ [
