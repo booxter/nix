@@ -125,7 +125,7 @@ darwin-build-target:
 	$(call nix-config-action,,.#darwinConfigurations.$(WHAT).system)
 
 darwin-switch:
-	sudo nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
+	sudo -H nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
 
 switch:
 	@if [ "$(shell uname -s)" = "Darwin" ]; then \
