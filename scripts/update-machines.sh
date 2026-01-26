@@ -58,7 +58,7 @@ run_selector() {
   local tmpfile selection
   tmpfile="$(mktemp)"
   printf '%s\n' "${items[@]}" >"$tmpfile"
-  if ! selection="$(python3 "${REPO_ROOT}/scripts/selector.py" --file "$tmpfile")"; then
+  if ! selection="$(python3 "${REPO_ROOT}/scripts/_helpers/selector.py" --file "$tmpfile")"; then
     rm -f "$tmpfile"
     echo "Selection canceled." >&2
     exit 1
@@ -93,7 +93,7 @@ Failed hosts: ${failed_list}"
     border_color=1
     text_color=1
   fi
-  printf '%s\n' "$summary_text" | python3 "${REPO_ROOT}/scripts/box.py" \
+  printf '%s\n' "$summary_text" | python3 "${REPO_ROOT}/scripts/_helpers/box.py" \
     --border-color "$border_color" \
     --text-color "$text_color" \
     --margin "1 2" \
