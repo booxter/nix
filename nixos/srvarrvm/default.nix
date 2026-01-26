@@ -109,7 +109,7 @@ in
       vpn.enable = true;
       peerPort = 45486;
       extraSettings = {
-        rpc-host-whitelist = hostname;
+        rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
       };
     };
 
