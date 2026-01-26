@@ -19,6 +19,7 @@ WORK_MAP=""
 DRY_RUN=false
 SELECT=false
 START_TS="$(date +%s)"
+MIN_DISK_KB=20971520
 
 resolve_ssh_host() {
   local host="$1"
@@ -145,7 +146,7 @@ local_disk_cleanup_if_low() {
   fi
   avail_gb="$(awk "BEGIN {printf \"%.1f\", ${avail_kb}/1024/1024}")"
   printf '%b\n' "${COLOR_DIM}Local available disk on ${avail_path}: ${avail_gb} GiB${COLOR_RESET}"
-  if [[ "$avail_kb" -lt 20971520 ]]; then
+  if [[ "$avail_kb" -lt "$MIN_DISK_KB" ]]; then
     echo "Low local disk space (<20GiB). Running nix-collect-garbage -d..."
     sudo nix-collect-garbage -d
   fi
@@ -429,7 +430,7 @@ AVAIL_PATH=""
 if set_avail_gib; then
   printf '\033[1;33m%s\033[0m\n' "Available disk on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
 fi
-if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt 20971520 ]]; then
+if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
   echo "Low disk space (<20GiB). Running nix-collect-garbage -d..."
   sudo nix-collect-garbage -d
   if set_avail_gib; then
