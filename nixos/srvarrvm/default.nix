@@ -169,12 +169,12 @@ in
                   sites = [
                     {
                       title = "Jellyfin";
-                      url = "http://jellyfin.local:8096/";
+                      url = "https://jf.ihar.dev";
                       icon = "sh:jellyfin";
                     }
                     {
                       title = "Jellyseerr";
-                      url = "http://srvarr.local:5055/";
+                      url = "https://js.ihar.dev";
                       icon = "sh:jellyseerr";
                     }
                     {
