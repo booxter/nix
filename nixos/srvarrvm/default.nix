@@ -169,62 +169,62 @@ in
                   sites = [
                     {
                       title = "Jellyfin";
-                      url = "http://prox-jellyfinvm.local:8096/";
+                      url = "http://jellyfin.local:8096/";
                       icon = "sh:jellyfin";
                     }
                     {
                       title = "Jellyseerr";
-                      url = "http://prox-srvarrvm.local:5055/";
+                      url = "http://srvarr.local:5055/";
                       icon = "sh:jellyseerr";
                     }
                     {
                       title = "Radarr";
-                      url = "http://prox-srvarrvm.local:7878/";
+                      url = "http://srvarr.local:7878/";
                       icon = "sh:radarr";
                     }
                     {
                       title = "Sonarr";
-                      url = "http://prox-srvarrvm.local:8989/";
+                      url = "http://srvarr.local:8989/";
                       icon = "sh:sonarr";
                     }
                     {
                       title = "Lidarr";
-                      url = "http://prox-srvarrvm.local:8686/";
+                      url = "http://srvarr.local:8686/";
                       icon = "sh:lidarr";
                     }
                     {
                       title = "Audiobookshelf";
-                      url = "http://prox-srvarrvm.local:9292/";
+                      url = "http://srvarr.local:9292/";
                       icon = "sh:audiobookshelf";
                     }
                     {
                       title = "Readarr";
-                      url = "http://prox-srvarrvm.local:8787/";
+                      url = "http://srvarr.local:8787/";
                       icon = "sh:readarr";
                     }
                     {
                       title = "Readarr Audio";
-                      url = "http://prox-srvarrvm.local:9494/";
+                      url = "http://srvarr.local:9494/";
                       icon = "sh:readarr";
                     }
                     {
                       title = "Bazarr";
-                      url = "http://prox-srvarrvm.local:6767/";
+                      url = "http://srvarr.local:6767/";
                       icon = "sh:bazarr";
                     }
                     {
                       title = "Prowlarr";
-                      url = "http://prox-srvarrvm.local:9696/";
+                      url = "http://srvarr.local:9696/";
                       icon = "sh:prowlarr";
                     }
                     {
                       title = "Transmission";
-                      url = "http://prox-srvarrvm.local:9091/";
+                      url = "http://srvarr.local:9091/";
                       icon = "sh:transmission";
                     }
                     {
                       title = "SABNZB";
-                      url = "http://prox-srvarrvm.local:6336/";
+                      url = "http://srvarr.local:6336/";
                       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
                     }
                     {
