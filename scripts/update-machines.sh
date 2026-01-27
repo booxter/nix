@@ -32,14 +32,10 @@ resolve_ssh_host() {
   # - hosts are explicitly passed (ALL=false), or
   # - mode is work/both
   if [[ "$ALL" == "false" || "$MODE" == "work" || "$MODE" == "both" ]]; then
-    local is_work
-    is_work="$(is_work_host "$host" "$WORK_MAP")"
-    if [[ "$is_work" == "true" ]]; then
-      resolved="$(dig +short "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
-      if [[ -n "$resolved" ]]; then
-        printf '%s' "$resolved"
-        return
-      fi
+    resolved="$(dig +short "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
+    if [[ -n "$resolved" ]]; then
+      printf '%s' "$resolved"
+      return
     fi
   fi
 
@@ -270,12 +266,6 @@ else
   HOSTS=("$@")
   SELECT=false
   local_disk_cleanup_if_low
-  # Only evaluate configs for the specific hosts requested (optimization).
-  WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" "${HOSTS[@]}" 2>/dev/null || echo '')"
-  if [[ -z "$WORK_MAP" ]]; then
-    echo "Failed to read work status for requested hosts." >&2
-    exit 1
-  fi
 fi
 
 if [[ ${#HOSTS[@]} -eq 0 ]]; then
