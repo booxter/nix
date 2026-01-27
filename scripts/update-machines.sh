@@ -400,6 +400,8 @@ for host in "${HOSTS[@]}"; do
   remote_payload="$(cat <<'REMOTE'
 set -euo pipefail
 trap 'rm -f "$0"' EXIT
+MIN_DISK_GIB=20
+MIN_DISK_KB=$((MIN_DISK_GIB * 1024 * 1024))
 branch="$1"
 repo_url="$2"
 repo_dir="$(mktemp -d)"
