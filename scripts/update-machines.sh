@@ -266,6 +266,7 @@ else
   fi
   HOSTS=("$@")
   SELECT=false
+  local_disk_cleanup_if_low
   # Only evaluate configs for the specific hosts requested (optimization).
   WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" "${HOSTS[@]}" 2>/dev/null || echo '')"
   if [[ -z "$WORK_MAP" ]]; then
