@@ -18,6 +18,7 @@
       pkgsNut = getPkgs inputs.nixpkgs-nut;
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
+      pkgsRelease = getPkgs inputs.nixpkgs-25_11;
     in
     {
       # https://github.com/NixOS/nixpkgs/pull/374846
@@ -28,6 +29,9 @@
 
       # https://github.com/NixOS/nixpkgs/pull/477113
       inherit (pkgsMaster) ngrep;
+
+      # Pull Sonarr from release-25.11 to test hang regressions
+      inherit (pkgsRelease) sonarr;
 
       # Pull NUT from the darwin-enabled fork on macOS only.
       nut = if prev.stdenv.hostPlatform.isDarwin then pkgsNut.nut else prev.nut;
