@@ -141,7 +141,7 @@ local_disk_cleanup_if_low() {
   avail_gb="$(awk "BEGIN {printf \"%.1f\", ${avail_kb}/1024/1024}")"
   printf '%b\n' "${COLOR_DIM}Local available disk on ${avail_path}: ${avail_gb} GiB${COLOR_RESET}"
   if [[ "$avail_kb" -lt "$MIN_DISK_KB" ]]; then
-    echo "Low local disk space (<20GiB). Running nix-collect-garbage -d..."
+    echo "Low local disk space (<${MIN_DISK_GIB}GiB). Running nix-collect-garbage -d..."
     sudo nix-collect-garbage -d
   fi
 }
@@ -361,10 +361,10 @@ for host in "${HOSTS[@]}"; do
   remote_payload="$(cat <<'REMOTE'
 set -euo pipefail
 trap 'rm -f "$0"' EXIT
-MIN_DISK_GIB=20
-MIN_DISK_KB=$((MIN_DISK_GIB * 1024 * 1024))
-branch="$1"
-repo_url="$2"
+MIN_DISK_KB="$1"
+MIN_DISK_GIB="$2"
+branch="$3"
+repo_url="$4"
 repo_dir="$(mktemp -d)"
 trap 'rm -rf "$repo_dir"' EXIT
 
@@ -394,7 +394,7 @@ if set_avail_gib; then
   printf '\033[1;33m%s\033[0m\n' "Available disk on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
 fi
 if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
-  echo "Low disk space (<20GiB). Running nix-collect-garbage -d..."
+  echo "Low disk space (<${MIN_DISK_GIB}GiB). Running nix-collect-garbage -d..."
   sudo nix-collect-garbage -d
   if set_avail_gib; then
     printf '\033[1;33m%s\033[0m\n' "Available disk after cleanup on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
@@ -429,7 +429,7 @@ REMOTE
   if is_local_host "$host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
-    if "$remote_script" "$BRANCH" "$REPO_URL"; then
+    if "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -438,7 +438,7 @@ REMOTE
   fi
   # shellcheck disable=SC2029
   printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "$ssh_host" "$remote_script" "$BRANCH" "$REPO_URL"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "$ssh_host" "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")
