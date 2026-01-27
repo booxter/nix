@@ -6,6 +6,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-master.url = "github:NixOS/nixpkgs/master";
+    nixpkgs-25_11.url = "github:NixOS/nixpkgs/release-25.11";
 
     # Use staging-next if needed
     #nixpkgs-staging-next.url = "github:NixOS/nixpkgs/staging-next";
