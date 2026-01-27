@@ -53,3 +53,40 @@ if [[ "$actual_norm" != "$expected_norm" ]]; then
 fi
 
 echo "get-hosts.sh output matches expected map."
+
+# Test with specific host arguments
+expected_filtered='{
+  "darwin": {
+    "mair": false
+  },
+  "nixos": {
+    "nvws": true,
+    "pi5": false
+  }
+}'
+
+stderr_file="$(mktemp)"
+if ! filtered_json="$(./scripts/get-hosts.sh mair nvws pi5 2>"$stderr_file")"; then
+  echo "get-hosts.sh with args failed" >&2
+  cat "$stderr_file" >&2 || true
+  rm -f "$stderr_file"
+  exit 1
+fi
+if [[ -z "$filtered_json" ]]; then
+  echo "get-hosts.sh with args produced no output" >&2
+  cat "$stderr_file" >&2 || true
+  rm -f "$stderr_file"
+  exit 1
+fi
+rm -f "$stderr_file"
+
+filtered_norm="$(printf '%s' "$filtered_json" | normalize_json)"
+expected_filtered_norm="$(printf '%s' "$expected_filtered" | normalize_json)"
+
+if [[ "$filtered_norm" != "$expected_filtered_norm" ]]; then
+  echo "get-hosts.sh with args output mismatch" >&2
+  diff -u <(printf '%s\n' "$expected_filtered_norm") <(printf '%s\n' "$filtered_norm") || true
+  exit 1
+fi
+
+echo "get-hosts.sh with args output matches expected filtered map."

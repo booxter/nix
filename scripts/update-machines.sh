@@ -28,15 +28,14 @@ resolve_ssh_host() {
   local base_host
   base_host="$(resolve_base_host "$host")"
 
-  if [[ "$MODE" == "work" || "$MODE" == "both" ]]; then
-    local is_work
-    is_work="$(is_work_host "$host" "$WORK_MAP")"
-    if [[ "$is_work" == "true" ]]; then
-      resolved="$(dig +short "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
-      if [[ -n "$resolved" ]]; then
-        printf '%s' "$resolved"
-        return
-      fi
+  # Use LAN DNS for work hosts when:
+  # - hosts are explicitly passed (ALL=false), or
+  # - mode is work/both
+  if [[ "$ALL" == "false" || "$MODE" == "work" || "$MODE" == "both" ]]; then
+    resolved="$(dig +short "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
+    if [[ -n "$resolved" ]]; then
+      printf '%s' "$resolved"
+      return
     fi
   fi
 
@@ -247,12 +246,13 @@ if [[ "$ALL" == "true" && "$SELECT" == "false" ]]; then
   SELECT=true
 fi
 
+local_disk_cleanup_if_low
+
 if [[ "$ALL" == "true" ]]; then
   if [[ $# -gt 0 ]]; then
     echo "Do not pass host names with -A." >&2
     exit 1
   fi
-  local_disk_cleanup_if_low
   WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" 2>/dev/null || echo '')"
   if [[ -z "$WORK_MAP" ]]; then
     echo "Failed to read hosts from get-hosts.sh." >&2
@@ -273,17 +273,9 @@ if [[ ${#HOSTS[@]} -eq 0 ]]; then
   exit 1
 fi
 
-if [[ "$MODE" != "both" ]]; then
-  if [[ -z "$WORK_MAP" ]]; then
-    WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" 2>/dev/null || echo '')"
-    if [[ -z "$WORK_MAP" ]]; then
-      echo "Failed to read work status map from flake." >&2
-      exit 1
-    fi
-  fi
-fi
-
-if [[ "$MODE" != "both" ]]; then
+# Only apply mode filtering when discovering hosts (ALL=true).
+# When hosts are explicitly passed, update them without filtering.
+if [[ "$ALL" == "true" && "$MODE" != "both" ]]; then
   mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$WORK_MAP" "${HOSTS[@]}")
   HOSTS=("${filtered[@]}")
 fi
