@@ -599,7 +599,8 @@
         "nixpkgs-nut": "nixpkgs-nut",
         "nixvim": "nixvim",
         "nur": "nur",
-        "proxmox-nixos": "proxmox-nixos"
+        "proxmox-nixos": "proxmox-nixos",
+        "tig": "tig"
       }
     },
     "systems": {
@@ -644,6 +645,22 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
+        "type": "github"
+      }
+    },
+    "tig": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1764274830,
+        "narHash": "sha256-S6cfd3D6s+qkrCH+n0XOq/XWcA5kxqPkkI6bOMhQkXE=",
+        "owner": "jonas",
+        "repo": "tig",
+        "rev": "a7d0b68d3ed658220550221d913fc01f64e38703",
+        "type": "github"
+      },
+      "original": {
+        "owner": "jonas",
+        "repo": "tig",
         "type": "github"
       }
     },
