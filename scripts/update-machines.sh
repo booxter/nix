@@ -58,6 +58,13 @@ avail_gb_remote_cmd() {
   printf '%s\n' "df -Pk \"$path_literal\" | awk 'NR==2 {printf \"%.1f\", \\$4/1024/1024}'"
 }
 
+print_lines_if_any() {
+  local -a lines=("$@")
+  if [[ ${#lines[@]} -gt 0 ]]; then
+    printf '%b\n' "${lines[@]}"
+  fi
+}
+
 is_local_host() {
   local host="$1"
   local local_short local_full
@@ -69,6 +76,10 @@ is_local_host() {
 run_selector() {
   local -a items=("$@")
   local tmpfile selection
+  if [[ ${#items[@]} -eq 0 ]]; then
+    echo "No items to select." >&2
+    exit 1
+  fi
   tmpfile="$(mktemp)"
   printf '%s\n' "${items[@]}" >"$tmpfile"
   if ! selection="$(python3 "${REPO_ROOT}/scripts/_helpers/selector.py" --file "$tmpfile")"; then
@@ -283,6 +294,10 @@ if [[ ${#HOSTS[@]} -eq 0 ]]; then
 fi
 
 if [[ "$SELECT" == "true" ]]; then
+  if [[ ${#HOSTS[@]} -eq 0 ]]; then
+    echo "No hosts available for selection." >&2
+    exit 1
+  fi
   mapfile -t sorted_hosts < <(printf '%s\n' "${HOSTS[@]}" | LC_ALL=C sort)
   selection="$(run_selector "${sorted_hosts[@]}")"
   if [[ -z "$selection" ]]; then
@@ -336,7 +351,7 @@ for host in "${HOSTS[@]}"; do
   host_status_lines+=("$line")
 done
 
-printf '%b\n' "${host_status_lines[@]}"
+print_lines_if_any "${host_status_lines[@]}"
 
 if [[ $failed -ne 0 ]]; then
   echo "Aborting: $failed host(s) unreachable." >&2
