@@ -8,6 +8,7 @@ BRANCH="master"
 ALL=true
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${REPO_ROOT}/scripts/_helpers/update-machines-lib.sh"
 COLOR_RESET='\033[0m'
 COLOR_HOST='\033[1;36m'
 COLOR_BLUE='\033[1;34m'
@@ -19,24 +20,17 @@ WORK_MAP=""
 DRY_RUN=false
 SELECT=false
 START_TS="$(date +%s)"
-MIN_DISK_KB=20971520
+MIN_DISK_GIB=20
+MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$MIN_DISK_GIB")"
 
 resolve_ssh_host() {
   local host="$1"
   local base_host
-  case "$host" in
-    pi5)
-      # TODO: add DNS alias so "pi5" resolves, then remove this mapping.
-      base_host="dhcp"
-      ;;
-    *)
-      base_host="$host"
-      ;;
-  esac
+  base_host="$(resolve_base_host "$host")"
 
   if [[ "$MODE" == "work" || "$MODE" == "both" ]]; then
     local is_work
-    is_work="$(jq -r --arg h "$host" '(.nixos[$h] // .darwin[$h] // "unknown")' <<<"$WORK_MAP" 2>/dev/null || echo "unknown")"
+    is_work="$(is_work_host "$host" "$WORK_MAP")"
     if [[ "$is_work" == "true" ]]; then
       resolved="$(dig +short "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
       if [[ -n "$resolved" ]]; then
@@ -253,17 +247,7 @@ if [[ "$ALL" == "true" ]]; then
     echo "Failed to read hosts from get-hosts.sh." >&2
     exit 1
   fi
-  mapfile -t HOSTS < <(
-    jq -r '
-      [
-        (.nixos | keys[]),
-        (.darwin | keys[])
-      ]
-      | unique
-      | sort
-      | .[]
-    ' <<<"$WORK_MAP"
-  )
+  mapfile -t HOSTS < <(hosts_from_work_map "$WORK_MAP")
 else
   if [[ $# -lt 1 ]]; then
     usage >&2
@@ -289,16 +273,7 @@ if [[ "$MODE" != "both" ]]; then
 fi
 
 if [[ "$MODE" != "both" ]]; then
-  filtered=()
-  for host in "${HOSTS[@]}"; do
-    is_work="$(jq -r --arg h "$host" '(.nixos[$h] // .darwin[$h] // "null")' <<<"$WORK_MAP")"
-    if [[ -z "$is_work" || "$is_work" == "null" ]]; then
-      is_work="false"
-    fi
-    if [[ "$MODE" == "work" && "$is_work" == "true" ]] || [[ "$MODE" == "personal" && "$is_work" == "false" ]]; then
-      filtered+=("$host")
-    fi
-  done
+  mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$WORK_MAP" "${HOSTS[@]}")
   HOSTS=("${filtered[@]}")
 fi
 
@@ -318,21 +293,7 @@ if [[ "$SELECT" == "true" ]]; then
   HOSTS=("${selected[@]}")
 fi
 
-prioritized=()
-deferred=()
-normal=()
-for host in "${HOSTS[@]}"; do
-  if [[ "$host" == "pi5" ]]; then
-    prioritized+=("$host")
-  elif [[ "$host" =~ ^prx[0-9]+-lab$ || "$host" == "nvws" ]]; then
-    prioritized+=("$host")
-  elif [[ "$host" == *cachevm* ]]; then
-    deferred+=("$host")
-  else
-    normal+=("$host")
-  fi
-done
-HOSTS=("${prioritized[@]}" "${normal[@]}" "${deferred[@]}")
+mapfile -t HOSTS < <(prioritize_hosts "${HOSTS[@]}")
 
 echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."
 failed=0

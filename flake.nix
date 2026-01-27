@@ -311,6 +311,37 @@
         }
       );
 
+      checks = helpers.forAllSystems (
+        system:
+        let
+          pkgs = import inputs.nixpkgs { inherit system; };
+          lib = pkgs.lib;
+          fileset = lib.fileset;
+        in
+        {
+          update-machines = pkgs.stdenv.mkDerivation {
+            name = "update-machines-tests";
+            src = fileset.toSource {
+              root = ./.;
+              fileset = fileset.unions [
+                ./scripts
+                ./tests
+              ];
+            };
+            nativeBuildInputs = with pkgs; [
+              bats
+              jq
+            ];
+            buildPhase = ''
+              bats tests/update-machines.bats
+            '';
+            installPhase = ''
+              touch "$out"
+            '';
+          };
+        }
+      );
+
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
       formatter = helpers.forAllSystems (
