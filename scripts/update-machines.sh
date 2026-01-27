@@ -280,7 +280,9 @@ if [[ ${#HOSTS[@]} -eq 0 ]]; then
   exit 1
 fi
 
-if [[ "$MODE" != "both" ]]; then
+# Only apply mode filtering when discovering hosts (ALL=true).
+# When hosts are explicitly passed, update them without filtering.
+if [[ "$ALL" == "true" && "$MODE" != "both" ]]; then
   mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$WORK_MAP" "${HOSTS[@]}")
   HOSTS=("${filtered[@]}")
 fi
