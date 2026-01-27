@@ -266,21 +266,17 @@ else
   fi
   HOSTS=("$@")
   SELECT=false
+  # Only evaluate configs for the specific hosts requested (optimization).
+  WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" "${HOSTS[@]}" 2>/dev/null || echo '')"
+  if [[ -z "$WORK_MAP" ]]; then
+    echo "Failed to read work status for requested hosts." >&2
+    exit 1
+  fi
 fi
 
 if [[ ${#HOSTS[@]} -eq 0 ]]; then
   echo "No hosts selected." >&2
   exit 1
-fi
-
-if [[ "$MODE" != "both" ]]; then
-  if [[ -z "$WORK_MAP" ]]; then
-    WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" 2>/dev/null || echo '')"
-    if [[ -z "$WORK_MAP" ]]; then
-      echo "Failed to read work status map from flake." >&2
-      exit 1
-    fi
-  fi
 fi
 
 if [[ "$MODE" != "both" ]]; then
