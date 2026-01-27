@@ -8,6 +8,7 @@ BRANCH="master"
 ALL=true
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${REPO_ROOT}/scripts/_helpers/update-machines-lib.sh"
 COLOR_RESET='\033[0m'
 COLOR_HOST='\033[1;36m'
 COLOR_BLUE='\033[1;34m'
@@ -19,24 +20,17 @@ WORK_MAP=""
 DRY_RUN=false
 SELECT=false
 START_TS="$(date +%s)"
-MIN_DISK_KB=20971520
+MIN_DISK_GIB=20
+MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$MIN_DISK_GIB")"
 
 resolve_ssh_host() {
   local host="$1"
   local base_host
-  case "$host" in
-    pi5)
-      # TODO: add DNS alias so "pi5" resolves, then remove this mapping.
-      base_host="dhcp"
-      ;;
-    *)
-      base_host="$host"
-      ;;
-  esac
+  base_host="$(resolve_base_host "$host")"
 
   if [[ "$MODE" == "work" || "$MODE" == "both" ]]; then
     local is_work
-    is_work="$(jq -r --arg h "$host" '(.nixos[$h] // .darwin[$h] // "unknown")' <<<"$WORK_MAP" 2>/dev/null || echo "unknown")"
+    is_work="$(is_work_host "$host" "$WORK_MAP")"
     if [[ "$is_work" == "true" ]]; then
       resolved="$(dig +short "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
       if [[ -n "$resolved" ]]; then
@@ -64,6 +58,13 @@ avail_gb_remote_cmd() {
   printf '%s\n' "df -Pk \"$path_literal\" | awk 'NR==2 {printf \"%.1f\", \\$4/1024/1024}'"
 }
 
+print_lines_if_any() {
+  local -a lines=("$@")
+  if [[ ${#lines[@]} -gt 0 ]]; then
+    printf '%b\n' "${lines[@]}"
+  fi
+}
+
 is_local_host() {
   local host="$1"
   local local_short local_full
@@ -75,6 +76,10 @@ is_local_host() {
 run_selector() {
   local -a items=("$@")
   local tmpfile selection
+  if [[ ${#items[@]} -eq 0 ]]; then
+    echo "No items to select." >&2
+    exit 1
+  fi
   tmpfile="$(mktemp)"
   printf '%s\n' "${items[@]}" >"$tmpfile"
   if ! selection="$(python3 "${REPO_ROOT}/scripts/_helpers/selector.py" --file "$tmpfile")"; then
@@ -147,7 +152,7 @@ local_disk_cleanup_if_low() {
   avail_gb="$(awk "BEGIN {printf \"%.1f\", ${avail_kb}/1024/1024}")"
   printf '%b\n' "${COLOR_DIM}Local available disk on ${avail_path}: ${avail_gb} GiB${COLOR_RESET}"
   if [[ "$avail_kb" -lt "$MIN_DISK_KB" ]]; then
-    echo "Low local disk space (<20GiB). Running nix-collect-garbage -d..."
+    echo "Low local disk space (<${MIN_DISK_GIB}GiB). Running nix-collect-garbage -d..."
     sudo nix-collect-garbage -d
   fi
 }
@@ -253,17 +258,7 @@ if [[ "$ALL" == "true" ]]; then
     echo "Failed to read hosts from get-hosts.sh." >&2
     exit 1
   fi
-  mapfile -t HOSTS < <(
-    jq -r '
-      [
-        (.nixos | keys[]),
-        (.darwin | keys[])
-      ]
-      | unique
-      | sort
-      | .[]
-    ' <<<"$WORK_MAP"
-  )
+  mapfile -t HOSTS < <(hosts_from_work_map "$WORK_MAP")
 else
   if [[ $# -lt 1 ]]; then
     usage >&2
@@ -289,16 +284,7 @@ if [[ "$MODE" != "both" ]]; then
 fi
 
 if [[ "$MODE" != "both" ]]; then
-  filtered=()
-  for host in "${HOSTS[@]}"; do
-    is_work="$(jq -r --arg h "$host" '(.nixos[$h] // .darwin[$h] // "null")' <<<"$WORK_MAP")"
-    if [[ -z "$is_work" || "$is_work" == "null" ]]; then
-      is_work="false"
-    fi
-    if [[ "$MODE" == "work" && "$is_work" == "true" ]] || [[ "$MODE" == "personal" && "$is_work" == "false" ]]; then
-      filtered+=("$host")
-    fi
-  done
+  mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$WORK_MAP" "${HOSTS[@]}")
   HOSTS=("${filtered[@]}")
 fi
 
@@ -308,6 +294,10 @@ if [[ ${#HOSTS[@]} -eq 0 ]]; then
 fi
 
 if [[ "$SELECT" == "true" ]]; then
+  if [[ ${#HOSTS[@]} -eq 0 ]]; then
+    echo "No hosts available for selection." >&2
+    exit 1
+  fi
   mapfile -t sorted_hosts < <(printf '%s\n' "${HOSTS[@]}" | LC_ALL=C sort)
   selection="$(run_selector "${sorted_hosts[@]}")"
   if [[ -z "$selection" ]]; then
@@ -318,21 +308,7 @@ if [[ "$SELECT" == "true" ]]; then
   HOSTS=("${selected[@]}")
 fi
 
-prioritized=()
-deferred=()
-normal=()
-for host in "${HOSTS[@]}"; do
-  if [[ "$host" == "pi5" ]]; then
-    prioritized+=("$host")
-  elif [[ "$host" =~ ^prx[0-9]+-lab$ || "$host" == "nvws" ]]; then
-    prioritized+=("$host")
-  elif [[ "$host" == *cachevm* ]]; then
-    deferred+=("$host")
-  else
-    normal+=("$host")
-  fi
-done
-HOSTS=("${prioritized[@]}" "${normal[@]}" "${deferred[@]}")
+mapfile -t HOSTS < <(prioritize_hosts "${HOSTS[@]}")
 
 echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."
 failed=0
@@ -375,7 +351,7 @@ for host in "${HOSTS[@]}"; do
   host_status_lines+=("$line")
 done
 
-printf '%b\n' "${host_status_lines[@]}"
+print_lines_if_any "${host_status_lines[@]}"
 
 if [[ $failed -ne 0 ]]; then
   echo "Aborting: $failed host(s) unreachable." >&2
@@ -400,8 +376,10 @@ for host in "${HOSTS[@]}"; do
   remote_payload="$(cat <<'REMOTE'
 set -euo pipefail
 trap 'rm -f "$0"' EXIT
-branch="$1"
-repo_url="$2"
+MIN_DISK_KB="$1"
+MIN_DISK_GIB="$2"
+branch="$3"
+repo_url="$4"
 repo_dir="$(mktemp -d)"
 trap 'rm -rf "$repo_dir"' EXIT
 
@@ -431,7 +409,7 @@ if set_avail_gib; then
   printf '\033[1;33m%s\033[0m\n' "Available disk on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
 fi
 if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
-  echo "Low disk space (<20GiB). Running nix-collect-garbage -d..."
+  echo "Low disk space (<${MIN_DISK_GIB}GiB). Running nix-collect-garbage -d..."
   sudo nix-collect-garbage -d
   if set_avail_gib; then
     printf '\033[1;33m%s\033[0m\n' "Available disk after cleanup on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
@@ -466,7 +444,7 @@ REMOTE
   if is_local_host "$host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
-    if "$remote_script" "$BRANCH" "$REPO_URL"; then
+    if "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -475,7 +453,7 @@ REMOTE
   fi
   # shellcheck disable=SC2029
   printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "$ssh_host" "$remote_script" "$BRANCH" "$REPO_URL"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "$ssh_host" "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")

@@ -317,6 +317,8 @@
         }
       );
 
+      checks = import ./checks.nix { inherit inputs helpers; };
+
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
       formatter = helpers.forAllSystems (
