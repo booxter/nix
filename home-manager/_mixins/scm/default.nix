@@ -104,7 +104,7 @@ in
     enable = true;
     extensions = with pkgs; [
       gh-poi
-      gh-copilot
+      github-copilot-cli
     ];
   };
   programs.gh-dash = {
