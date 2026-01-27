@@ -28,7 +28,10 @@ resolve_ssh_host() {
   local base_host
   base_host="$(resolve_base_host "$host")"
 
-  if [[ "$MODE" == "work" || "$MODE" == "both" ]]; then
+  # Use LAN DNS for work hosts when:
+  # - hosts are explicitly passed (ALL=false), or
+  # - mode is work/both
+  if [[ "$ALL" == "false" || "$MODE" == "work" || "$MODE" == "both" ]]; then
     local is_work
     is_work="$(is_work_host "$host" "$WORK_MAP")"
     if [[ "$is_work" == "true" ]]; then
