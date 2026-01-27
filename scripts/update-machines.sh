@@ -246,12 +246,13 @@ if [[ "$ALL" == "true" && "$SELECT" == "false" ]]; then
   SELECT=true
 fi
 
+local_disk_cleanup_if_low
+
 if [[ "$ALL" == "true" ]]; then
   if [[ $# -gt 0 ]]; then
     echo "Do not pass host names with -A." >&2
     exit 1
   fi
-  local_disk_cleanup_if_low
   WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" 2>/dev/null || echo '')"
   if [[ -z "$WORK_MAP" ]]; then
     echo "Failed to read hosts from get-hosts.sh." >&2
@@ -265,7 +266,6 @@ else
   fi
   HOSTS=("$@")
   SELECT=false
-  local_disk_cleanup_if_low
 fi
 
 if [[ ${#HOSTS[@]} -eq 0 ]]; then
