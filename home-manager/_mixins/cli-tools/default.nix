@@ -41,32 +41,26 @@
     '';
 
     # TODO: can I apply aliases for all shells?
-    shellAliases =
-      let
-        openaiKey = "${pkgs.pass}/bin/pass priv/openai-chatgpt-secret";
-      in
-      {
-        aider = "OPENAI_API_KEY=$(${openaiKey}) aider --no-gitignore --model openai/gpt-4.1 --no-attribute-author --no-attribute-committer";
+    shellAliases = {
+      # enable hyperlinks in kitty
+      rg = "rg --hyperlink-format=kitty";
 
-        # enable hyperlinks in kitty
-        rg = "rg --hyperlink-format=kitty";
+      # cat images in kitty
+      icat = "kitten icat";
 
-        # cat images in kitty
-        icat = "kitten icat";
+      # beatify ls
+      ll = "ls --hyperlink=auto --color=auto -Fal";
+      ls = "ls --hyperlink=auto --color=auto -F";
 
-        # beatify ls
-        ll = "ls --hyperlink=auto --color=auto -Fal";
-        ls = "ls --hyperlink=auto --color=auto -F";
+      # eza
+      q = "eza";
+      qq = "eza -l";
 
-        # eza
-        q = "eza";
-        qq = "eza -l";
+      view = "nvim -R";
 
-        view = "nvim -R";
-
-        # remove once https://github.com/nektos/act/issues/2329 is fixed
-        act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04";
-      };
+      # remove once https://github.com/nektos/act/issues/2329 is fixed
+      act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04";
+    };
   };
 
   # eza, ls alternative (`q` and `qq` aliases set for shell)
@@ -138,7 +132,6 @@
       python313Packages.tox
     ]
     ++ lib.optionals (!isWork) [
-      aider-chat
       ramalama
     ];
 
