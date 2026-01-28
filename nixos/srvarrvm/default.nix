@@ -7,9 +7,19 @@
   ...
 }:
 let
+  mediaPath = "/data/media";
   media = {
     device = "nas-lab:/volume2/Media";
     fsType = "nfs";
+  };
+  wgUnitDepsBase = {
+    After = [ "wg.service" ];
+    BindsTo = [ "wg.service" ];
+    PartOf = [ "wg.service" ];
+  };
+  wgUnitDepsWithMount = wgUnitDepsBase // requiresMediaMount;
+  requiresMediaMount = {
+    RequiresMountsFor = mediaPath;
   };
 in
 {
@@ -23,8 +33,8 @@ in
 
   # local qemu vms override filesystems
   # TODO: move this special handling for FS to mkVM?
-  fileSystems."/data/media" = media;
-  virtualisation.vmVariant.virtualisation.fileSystems."/data/media" = media;
+  fileSystems."${mediaPath}" = media;
+  virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
 
   users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
 
@@ -47,16 +57,16 @@ in
   };
 
   # make all services that r/w to nfs mount require the mount
-  systemd.services.audiobookshelf.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.bazarr.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.jellyseerr.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.lidarr.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.radarr.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.readarr.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.readarr-audiobook.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.sonarr.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.transmission.unitConfig.RequiresMountsFor = "/data/media";
-  systemd.services.sabnzbd.unitConfig.RequiresMountsFor = "/data/media";
+  systemd.services.audiobookshelf.unitConfig = requiresMediaMount;
+  systemd.services.bazarr.unitConfig = requiresMediaMount;
+  systemd.services.jellyseerr.unitConfig = requiresMediaMount;
+  systemd.services.lidarr.unitConfig = requiresMediaMount;
+  systemd.services.radarr.unitConfig = requiresMediaMount;
+  systemd.services.readarr.unitConfig = requiresMediaMount;
+  systemd.services.readarr-audiobook.unitConfig = requiresMediaMount;
+  systemd.services.sonarr.unitConfig = requiresMediaMount;
+  systemd.services.transmission.unitConfig = wgUnitDepsWithMount;
+  systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
 
   # Keep download dir locally to ease load on network and storage
   systemd.services.sabnzbd.serviceConfig = {
@@ -116,8 +126,7 @@ in
   };
 
   systemd.services."update-dynamic-ip" = {
-    after = [ "wg.service" ];
-    wants = [ "wg.service" ];
+    unitConfig = wgUnitDepsBase;
     path = [ pkgs.curl ];
     serviceConfig = {
       Type = "oneshot";
