@@ -22,21 +22,33 @@ SELECT=false
 START_TS="$(date +%s)"
 MIN_DISK_GIB=20
 MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$MIN_DISK_GIB")"
+SSH_HOST_OPTS=()
 
 resolve_ssh_host() {
   local host="$1"
   local base_host
+  local ssh_config proxy_jump proxy_cmd
+  local resolved
   base_host="$(resolve_base_host "$host")"
+  SSH_HOST_OPTS=()
 
-  # Use LAN DNS for work hosts when:
-  # - hosts are explicitly passed (ALL=false), or
-  # - mode is work/both
-  if [[ "$ALL" == "false" || "$MODE" == "work" || "$MODE" == "both" ]]; then
-    resolved="$(dig +short "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
-    if [[ -n "$resolved" ]]; then
-      printf '%s' "$resolved"
-      return
-    fi
+  ssh_config="$(ssh -G "$base_host" 2>/dev/null || true)"
+  proxy_jump="$(awk '$1=="proxyjump" {print $2; exit}' <<<"$ssh_config")"
+  proxy_cmd="$(awk '$1=="proxycommand" {print $2; exit}' <<<"$ssh_config")"
+  if [[ -n "$proxy_jump" && "$proxy_jump" != "none" ]]; then
+    printf '%s' "$base_host"
+    return
+  fi
+  if [[ -n "$proxy_cmd" && "$proxy_cmd" != "none" ]]; then
+    printf '%s' "$base_host"
+    return
+  fi
+
+  resolved="$(dig +short +time=1 +tries=1 "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
+  if [[ -n "$resolved" ]]; then
+    SSH_HOST_OPTS=(-o HostName="$resolved" -o HostKeyAlias="$base_host")
+    printf '%s' "$base_host"
+    return
   fi
 
   printf '%s' "$base_host"
@@ -310,7 +322,7 @@ for host in "${HOSTS[@]}"; do
   if is_local_host "$host"; then
     ok="ok (local)"
   else
-    if ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "$ssh_host" true >/dev/null 2>&1; then
+    if ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" true >/dev/null 2>&1; then
       ok="ok"
     else
       ok="failed"
@@ -325,7 +337,7 @@ for host in "${HOSTS[@]}"; do
       avail_gb="$(avail_gb_local "$avail_path" 2>/dev/null || true)"
     else
       # shellcheck disable=SC2029
-      avail_gb="$(ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "$ssh_host" "$(avail_gb_remote_cmd "\\\$HOME")" 2>/dev/null || true)"
+      avail_gb="$(ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$(avail_gb_remote_cmd "\\\$HOME")" 2>/dev/null || true)"
     fi
     if [[ -z "$avail_gb" ]]; then
       avail_gb="unknown"
@@ -444,8 +456,8 @@ REMOTE
     continue
   fi
   # shellcheck disable=SC2029
-  printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "$ssh_host" "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL"; then
+  printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")
