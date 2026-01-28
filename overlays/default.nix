@@ -36,7 +36,7 @@
       # Pull NUT from the darwin-enabled fork on macOS only.
       nut = if prev.stdenv.hostPlatform.isDarwin then pkgsNut.nut else prev.nut;
 
-      # Pull firefox and thunderbird from release-25.11 because it timed out in Hydra
-      inherit (pkgsRelease) firefox-unwrapped thunderbird-unwrapped;
+      # Pull firefox from release-25.11 because it timed out in Hydra
+      inherit (pkgsRelease) firefox-unwrapped;
     };
 }
