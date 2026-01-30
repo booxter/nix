@@ -22,6 +22,9 @@
     ];
 
     # some servers have a problem with kitty terminfo, be conservative
-    extraConfig = "SetEnv TERM=xterm-256color";
+    extraConfig = ''
+      SetEnv TERM=xterm-256color
+      WarnWeakCrypto no
+    '';
   };
 }
