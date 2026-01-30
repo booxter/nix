@@ -47,6 +47,7 @@ in
       file
       findutils
       htop
+      gawk
       git
       gnugrep
       gnumake
