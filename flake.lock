@@ -409,32 +409,16 @@
     },
     "nixpkgs-master": {
       "locked": {
-        "lastModified": 1768916468,
-        "narHash": "sha256-QIssegqRL8jBrG9/KIlb1cQhbxCfTSzrIieno53Hb/c=",
+        "lastModified": 1769889376,
+        "narHash": "sha256-CoZqYLTaRYsLgtWfWXailJ1XcCgsIMUukKb8u+HfDY4=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "7143bd7e64646b6dec9534a145b231dfece260ad",
+        "rev": "8d3bf40806d0c3e9ea9238b79323f5bc188dc5a5",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-nut": {
-      "locked": {
-        "lastModified": 1769220095,
-        "narHash": "sha256-2fkixwFhOPueS4xZ5lqG4gpiEuB5bUDdMwhHd5THGp4=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "b9d1f0d186b4b5cebab15bb8aaceb9b093610b97",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "nut-darwin",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -596,7 +580,6 @@
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-25_11": "nixpkgs-25_11",
         "nixpkgs-master": "nixpkgs-master",
-        "nixpkgs-nut": "nixpkgs-nut",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos",
