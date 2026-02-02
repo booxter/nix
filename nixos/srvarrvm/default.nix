@@ -25,6 +25,8 @@ in
 {
   imports = [
     inputs.nixarr.nixosModules.default
+    # TODO: drop when Huntarr module lands upstream
+    (import "${inputs.nixpkgs-huntarr}/nixos/modules/services/misc/servarr/huntarr.nix")
   ];
 
   # NFS mounts with media
@@ -124,6 +126,16 @@ in
     };
 
   };
+
+  services.huntarr = {
+    enable = true;
+    dataDir = "${config.nixarr.stateDir}/huntarr";
+    openFirewall = true;
+  };
+
+  # TODO: remove once huntarr ids land in upstream nixpkgs
+  ids.uids.huntarr = 328;
+  ids.gids.huntarr = 328;
 
   systemd.services."update-dynamic-ip" = {
     unitConfig = wgUnitDepsBase;

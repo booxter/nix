@@ -18,6 +18,7 @@
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
+      pkgsHuntarr = getPkgs inputs.nixpkgs-huntarr;
     in
     {
       # https://github.com/NixOS/nixpkgs/pull/374846
@@ -28,6 +29,9 @@
 
       # Pull Sonarr from release-25.11 to test hang regressions
       inherit (pkgsRelease) sonarr;
+
+      # Huntarr from fork until it lands upstream
+      inherit (pkgsHuntarr) huntarr;
 
       jellyfin = prev.jellyfin.overrideAttrs (oldAttrs: {
         patches = oldAttrs.patches or [ ] ++ [
