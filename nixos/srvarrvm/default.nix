@@ -203,7 +203,7 @@ in
                     }
                     {
                       title = "Audiobookshelf";
-                      url = "http://srvarr.local:9292/";
+                      url = "https://au.ihar.dev";
                       icon = "sh:audiobookshelf";
                     }
                     {
