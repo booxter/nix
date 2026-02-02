@@ -47,6 +47,9 @@
     #jellarr.url = "github:venkyr77/jellarr/v0.1.0";
     jellarr.inputs.nixpkgs.follows = "nixpkgs";
 
+    # TODO: contribute upstream once Huntarr module/package confirmed working
+    nixpkgs-huntarr.url = "github:booxter/nixpkgs/huntarr-init";
+
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
 
