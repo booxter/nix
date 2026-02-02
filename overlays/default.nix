@@ -27,8 +27,9 @@
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
 
-      # Pull Sonarr from release-25.11 to test hang regressions
-      inherit (pkgsRelease) sonarr;
+      # Pull Sonarr and Readarr from release-25.11 to test hang regressions
+      # TODO: report issues; investigate; fix
+      inherit (pkgsRelease) readarr sonarr;
 
       # Huntarr from fork until it lands upstream
       inherit (pkgsHuntarr) huntarr;
