@@ -239,6 +239,11 @@ in
                       icon = "sh:prowlarr";
                     }
                     {
+                      title = "Huntarr";
+                      url = "http://srvarr.local:9705/";
+                      icon = "si:huntarr";
+                    }
+                    {
                       title = "Transmission";
                       url = "http://srvarr.local:9091/";
                       icon = "sh:transmission";
