@@ -241,7 +241,7 @@ in
                     {
                       title = "Huntarr";
                       url = "http://srvarr.local:9705/";
-                      icon = "si:huntarr";
+                      icon = "https://raw.githubusercontent.com/plexguide/Huntarr.io/main/frontend/static/logo/64.png";
                     }
                     {
                       title = "Transmission";
