@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   isWork,
   ...
@@ -8,6 +9,7 @@
   programs.zsh = {
     enable = true;
     defaultKeymap = "viins";
+    enableCompletion = false;
 
     autosuggestion = {
       enable = true;
@@ -22,6 +24,15 @@
     initContent = ''
       [ -f /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
       bindkey "^R" history-incremental-search-backward
+
+      autoload -U compinit
+      ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION"
+      mkdir -p "$(dirname "$ZSH_COMPDUMP")"
+      if [[ -f "$ZSH_COMPDUMP" ]]; then
+        compinit -d "$ZSH_COMPDUMP" -C
+      else
+        compinit -d "$ZSH_COMPDUMP"
+      fi
     '';
 
     envExtra = ''
@@ -152,4 +163,8 @@
     # TODO: use native readline module for inputrc
     ".inputrc".source = ./inputrc;
   };
+
+  home.activation.clearZshCompdump = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    rm -f "${config.xdg.cacheHome}/zsh/zcompdump-"*
+  '';
 }
