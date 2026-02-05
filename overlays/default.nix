@@ -33,18 +33,6 @@
 
       # Huntarr from fork until it lands upstream
       inherit (pkgsHuntarr) huntarr;
-
-      jellyfin = prev.jellyfin.overrideAttrs (oldAttrs: {
-        patches = oldAttrs.patches or [ ] ++ [
-          # Fix watched state not kept on Media replace/rename
-          # https://github.com/jellyfin/jellyfin/pull/15899
-          (prev.fetchpatch {
-            url = "https://github.com/jellyfin/jellyfin/commit/09edca8b7a9174c374a7d03bb1ec3aea32d02ffd.patch";
-            hash = "sha256-uC9RfhZK3BFT7K8gwgOvakPAp1Ti+bpfMzivVCLws64=";
-            excludes = [ "CONTRIBUTORS.md" ];
-          })
-        ];
-      });
     }
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
       # Pull NUT from master for now for darwin support.
