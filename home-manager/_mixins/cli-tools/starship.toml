@@ -3,8 +3,10 @@
 format = """
 [](color_orange)\
 $os\
-$username\
-[](bg:color_yellow fg:color_orange)\
+[ ](bg:color_orange)\
+${custom.ssh_hostname}\
+${custom.local_sep}\
+${custom.ssh_sep}\
 $directory\
 [](fg:color_yellow bg:color_aqua)\
 $git_branch\
@@ -66,11 +68,23 @@ Debian = "󰣚"
 Redhat = "󱄛"
 RedHatEnterprise = "󱄛"
 
-[username]
-show_always = true
-style_user = "bg:color_orange fg:color_fg0"
-style_root = "bg:color_orange fg:color_fg0"
-format = '[ $user ]($style)'
+[custom.ssh_hostname]
+command = 'hostname'
+when = 'test -n "$SSH_CONNECTION"'
+style = "bg:color_red fg:color_fg0"
+format = '[ $output ]($style)'
+
+[custom.local_sep]
+command = 'printf ""'
+when = 'test -z "$SSH_CONNECTION"'
+style = "bg:color_yellow fg:color_orange"
+format = '[$output]($style)'
+
+[custom.ssh_sep]
+command = 'printf ""'
+when = 'test -n "$SSH_CONNECTION"'
+style = "bg:color_yellow fg:color_red"
+format = '[$output]($style)'
 
 [directory]
 style = "fg:color_fg0 bg:color_yellow"
