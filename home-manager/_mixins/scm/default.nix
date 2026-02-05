@@ -104,7 +104,6 @@ in
     enable = true;
     extensions = with pkgs; [
       gh-poi
-      gh-copilot
     ];
   };
   programs.gh-dash = {
