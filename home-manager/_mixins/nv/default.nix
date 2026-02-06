@@ -21,6 +21,7 @@
         jinjanator
         kind
         kubectl
+        kubevirt
         (wrapHelm kubernetes-helm {
           plugins = with kubernetes-helmPlugins; [
             helm-unittest
