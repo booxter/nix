@@ -96,6 +96,7 @@ rec {
         ../common
         ../nixos
         inputs.disko.nixosModules.disko
+        inputs.sops-nix.nixosModules.sops
       ]
       ++ nixpkgsInput.lib.optionals withHome [
         inputs.home-manager.nixosModules.home-manager
