@@ -19,7 +19,7 @@ permissions:
 jobs:
   format:
     name: Format check
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -40,7 +40,7 @@ jobs:
 
   get-hosts-check:
     name: get-hosts check
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -50,6 +50,19 @@ jobs:
 
       - name: Run get-hosts test
         run: ./tests/test-get-hosts.sh
+
+  sops-config-check:
+    name: sops config check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
+
+      - name: Run sops config test
+        run: ./tests/test-sops-config.sh
 
   flake-check:
     name: flake check
@@ -68,6 +81,7 @@ jobs:
     needs:
       - format
       - get-hosts-check
+      - sops-config-check
       - flake-check
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -163,9 +177,10 @@ jobs:
     needs:
       - format
       - get-hosts-check
+      - sops-config-check
       - flake-check
       - build
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
     steps:
       - name: Check job results
         run: |

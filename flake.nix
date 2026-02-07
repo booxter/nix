@@ -17,6 +17,9 @@
     nix-darwin.url = "github:nix-darwin/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -29,6 +32,8 @@
 
     home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager-25_11.url = "github:nix-community/home-manager/release-25.11";
+    home-manager-25_11.inputs.nixpkgs.follows = "nixpkgs-25_11";
 
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
@@ -230,6 +235,15 @@
             hostname = nvws;
             ipAddress = "192.168.15.100";
             macAddress = "ac:b4:80:40:05:2e";
+          };
+
+          beast = helpers.mkNixos {
+            hostname = "beast";
+            stateVersion = "25.11";
+            platform = "x86_64-linux";
+            nixpkgsInput = inputs.nixpkgs-25_11;
+            homeManagerInput = inputs.home-manager-25_11;
+            withHome = false;
           };
 
           # ssh prx1-lab sudo pvecm create lab-cluster

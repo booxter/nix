@@ -24,14 +24,16 @@ helpers.forAllSystems (
       };
   in
   {
-    update-machines = mkCheck {
-      name = "update-machines-tests";
+    bats-tests = mkCheck {
+      name = "bats-tests";
       nativeBuildInputs = with pkgs; [
         bats
         jq
       ];
       buildPhase = ''
         bats tests/update-machines.bats
+        bats tests/test-sops-config.bats
+        bats tests/test-sops-bootstrap.bats
       '';
     };
     box-py = mkCheck {

@@ -9,7 +9,7 @@
 let
   mediaPath = "/data/media";
   media = {
-    device = "nas-lab:/volume2/Media";
+    device = "beast:/volume2/Media";
     fsType = "nfs";
   };
   wgUnitDepsBase = {
@@ -255,7 +255,7 @@ in
                     }
                     {
                       title = "NAS";
-                      url = "https://nas-lab:8001/";
+                      url = "https://beast:8001/";
                       icon = "di:asustor";
                       allow-insecure = true;
                     }

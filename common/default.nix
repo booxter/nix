@@ -41,24 +41,29 @@ in
 
     # Some packages that I'd like to have available on all my machines.
     environment.systemPackages = with pkgs; [
+      age
       bind.dnsutils
       coreutils
       dig
+      ethtool
       file
       findutils
-      htop
       gawk
       git
       gnugrep
       gnumake
       gnused
       gzip
+      htop
       ipcalc
+      iperf3
+      jq
       man-pages
       moreutils
       ngrep
       procps
       pstree
+      sops
       speedtest-cli
       tcpdump
       tmux
@@ -67,7 +72,9 @@ in
       viddy
       vim
       watch
+      yq
       zip
+      ipmitool
     ];
 
     users.users.${username} = {
