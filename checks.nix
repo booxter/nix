@@ -32,6 +32,8 @@ helpers.forAllSystems (
       ];
       buildPhase = ''
         bats tests/update-machines.bats
+        bats tests/test-sops-config.bats
+        bats tests/test-sops-bootstrap.bats
       '';
     };
     box-py = mkCheck {

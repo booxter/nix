@@ -65,6 +65,29 @@ make disko-install WHAT=frame DEV=/dev/sdX
 make pi-image
 ```
 
+## Secrets
+
+Secrets are managed via sops-nix, with one encrypted YAML per host under `secrets/`.
+Optional templates can live in `secrets/_templates/` to prefill host-specific keys.
+
+Bootstrap (beast example):
+
+```sh
+scripts/sops-bootstrap-remote.sh --host beast
+```
+
+This will:
+- create `/var/lib/sops-nix/key.txt` on the host (if missing)
+- fetch the age public key
+- create `.sops.yaml` if needed (or patch it)
+- create `secrets/beast.yaml` encrypted with that key
+
+Afterwards, edit the secret with:
+
+```sh
+scripts/sops-edit.sh --host beast
+```
+
 ## Home Manager
 
 ```sh
