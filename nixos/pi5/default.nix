@@ -100,6 +100,11 @@ in
         # ports: 8000 (http), 8001 (https)
         "78:72:64:43:9c:3f,nas-lab,192.168.16.2" # asustor
 
+        # new NAS (client-id from dhcpcd extraConfig)
+        "id:beast,beast,192.168.16.3"
+        # NAS IPMI
+        "bc:fc:e7:3b:f5:99,beast-ipmi,192.168.16.4"
+
         # mini-PC NUC nodes running proxmox
         "38:05:25:30:7d:89,prx1-lab,192.168.15.10"
         "38:05:25:30:7f:7d,prx2-lab,192.168.15.11"

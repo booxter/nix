@@ -71,11 +71,12 @@ rec {
       isDesktop ? false,
       isWork ? false,
       isVM ? false,
+      nixpkgsInput ? inputs.nixpkgs,
       extraModules ? [ ],
       password ? null,
       ...
     }:
-    inputs.nixpkgs.lib.nixosSystem {
+    nixpkgsInput.lib.nixosSystem {
       specialArgs = {
         inherit
           inputs
@@ -96,7 +97,7 @@ rec {
         ../nixos
         inputs.disko.nixosModules.disko
       ]
-      ++ inputs.nixpkgs.lib.optionals withHome [
+      ++ nixpkgsInput.lib.optionals withHome [
         inputs.home-manager.nixosModules.home-manager
         (commonHMConfig {
           inherit
@@ -112,7 +113,7 @@ rec {
         (
           { ... }:
           let
-            pkgs = inputs.nixpkgs.legacyPackages.${platform};
+            pkgs = nixpkgsInput.legacyPackages.${platform};
           in
           {
             users.defaultUserShell = pkgs.zsh;

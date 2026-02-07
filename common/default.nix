@@ -46,14 +46,16 @@ in
       dig
       file
       findutils
-      htop
       gawk
       git
       gnugrep
       gnumake
       gnused
       gzip
+      htop
       ipcalc
+      iperf3
+      jq
       man-pages
       moreutils
       ngrep
@@ -67,7 +69,9 @@ in
       viddy
       vim
       watch
+      yq
       zip
+      ipmitool
     ];
 
     users.users.${username} = {
