@@ -33,6 +33,16 @@
 
       # Huntarr from fork until it lands upstream
       inherit (pkgsHuntarr) huntarr;
+
+      jellyfin = prev.jellyfin.overrideAttrs (old: {
+        patches = old.patches or [ ] ++ [
+          # fix directors not populated for new movies since 10.11.6
+          (prev.fetchpatch {
+            url = "https://github.com/jellyfin/jellyfin/commit/673f617994da6ff6a45cf428a3ea47de59edc6c5.patch";
+            hash = "sha256-iHriDqPqJ5Xcdrq905sdSxMmEvr4hWmNrzU5CDFFJyY=";
+          })
+        ];
+      });
     }
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
       # Pull NUT from master for now for darwin support.
