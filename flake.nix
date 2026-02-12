@@ -232,6 +232,14 @@
             macAddress = "ac:b4:80:40:05:2e";
           };
 
+          beast = helpers.mkNixos {
+            hostname = "beast";
+            stateVersion = "25.11";
+            platform = "x86_64-linux";
+            nixpkgsInput = inputs.nixpkgs-25_11;
+            withHome = false;
+          };
+
           # ssh prx1-lab sudo pvecm create lab-cluster
           "prx1-lab" = helpers.mkProxmox {
             inherit username;

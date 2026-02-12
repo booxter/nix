@@ -8,6 +8,7 @@ expected_json='{
     "mmini": false
   },
   "nixos": {
+    "beast": false,
     "frame": false,
     "nvws": true,
     "pi5": false,

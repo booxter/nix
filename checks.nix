@@ -24,8 +24,8 @@ helpers.forAllSystems (
       };
   in
   {
-    update-machines = mkCheck {
-      name = "update-machines-tests";
+    bats-tests = mkCheck {
+      name = "bats-tests";
       nativeBuildInputs = with pkgs; [
         bats
         jq

@@ -25,6 +25,7 @@ let
     "prox-srvarrvm"
   ];
   upsClientsPi5 = [
+    "beast"
     "nvws"
     "prox-nvvm"
   ];
@@ -98,7 +99,10 @@ in
     hostName = avahiHostName;
   };
 
+  # TODO: revisit hw sensor monitoring (sensord or alternative).
+
   environment.systemPackages = with pkgs; [
+    ethtool
     pciutils
   ];
 
@@ -107,4 +111,7 @@ in
     MemoryMax = "90%";
     OOMScoreAdjust = 500;
   };
+
+  hardware.enableRedistributableFirmware = true;
+  services.fwupd.enable = true;
 }
