@@ -1,4 +1,5 @@
 {
+  lib,
   pkgs,
   username,
   isWork,
@@ -65,6 +66,7 @@
             {
               flavor = "outlook.office365.com";
               address = "${username}@nvidia.com";
+              smtp.host = lib.mkForce "mail.nvidia.com";
             }
           else
             {
