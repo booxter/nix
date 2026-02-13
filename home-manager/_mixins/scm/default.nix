@@ -43,7 +43,7 @@ in
         if isWork then
           {
             confirm = "auto";
-            smtpServer = "smtp.office365.com";
+            smtpServer = "mail.nvidia.com";
             smtpServerPort = 587;
             smtpEncryption = "tls";
             smtpUser = "${username}@nvidia.com";
