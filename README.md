@@ -36,6 +36,8 @@ make prox-vm WHAT=jellyfin WHERE=prx1
 make nixos-build
 make nixos-switch
 
+make nixos-build-target WHAT=prox-jellyfinvm REMOTE=false
+
 make darwin-build
 make darwin-switch
 ```
