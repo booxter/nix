@@ -20,6 +20,9 @@
           "@admin"
           username
         ];
+        fallback = true;
+        connect-timeout = 2;
+        download-attempts = 1;
         max-jobs = 5;
       }
       // lib.optionalAttrs (!isWork) {
