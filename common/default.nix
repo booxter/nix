@@ -41,6 +41,7 @@ in
 
     # Some packages that I'd like to have available on all my machines.
     environment.systemPackages = with pkgs; [
+      age
       bind.dnsutils
       coreutils
       dig
@@ -61,6 +62,7 @@ in
       ngrep
       procps
       pstree
+      sops
       speedtest-cli
       tcpdump
       tmux

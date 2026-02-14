@@ -10,6 +10,7 @@ let
   nfsPorts = [
     2049 # nfsd
   ];
+  hasSopsSecrets = builtins.pathExists ../../secrets/beast.yaml;
 in
 {
   imports = [
@@ -88,6 +89,30 @@ in
   services.smartd = {
     enable = true;
     autodetect = true;
+    notifications.mail.enable = lib.mkIf hasSopsSecrets true;
+    notifications.mail.recipient = lib.mkIf hasSopsSecrets "ihar.hrachyshka@gmail.com";
+  };
+
+  sops = lib.mkIf hasSopsSecrets {
+    defaultSopsFile = ../../secrets/beast.yaml;
+    age.keyFile = "/var/lib/sops-nix/key.txt";
+    secrets = {
+      "msmtp/gmail_password" = { };
+    };
+  };
+
+  programs.msmtp = lib.mkIf hasSopsSecrets {
+    enable = true;
+    setSendmail = true;
+    accounts.default = {
+      host = "smtp.gmail.com";
+      port = 587;
+      tls = true;
+      auth = true;
+      user = "ihar.hrachyshka@gmail.com";
+      from = "ihar.hrachyshka@gmail.com";
+      passwordFile = config.sops.secrets."msmtp/gmail_password".path;
+    };
   };
 
   environment.systemPackages = with pkgs; [
