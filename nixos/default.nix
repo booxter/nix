@@ -14,7 +14,6 @@ let
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
   upsClientsNAS = [
-    "prx1-lab"
     "prx2-lab"
     "prx3-lab"
     "prox-cachevm"
@@ -43,9 +42,9 @@ in
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
         monitorName = "nas";
-        system = "ASUSTOR-UPS@nas-lab";
-        user = "upsadmin";
-        passwordText = "AdmUps1111";
+        system = "PRX1-UPS@prx1-lab";
+        user = "upsslave";
+        passwordText = "upsslave123";
       })
     ]
     ++ lib.optionals (lib.elem hostname upsClientsPi5) [

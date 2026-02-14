@@ -2,6 +2,7 @@
 {
   imports = [
     (import ../../disko { })
+    ./ups.nix
   ];
 
   # Intel CPU microcode updates
