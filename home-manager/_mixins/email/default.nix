@@ -52,7 +52,11 @@
           enable = true;
           settings = id: {
             "mail.server.server_${id}.authMethod" = 10; # OAuth2
-            "mail.smtpserver.smtp_${id}.authMethod" = 10; # OAuth2
+            "mail.smtpserver.smtp_${id}.authMethod" =
+              if isWork then
+                3 # plain
+              else
+                10; # OAuth2
           };
         };
         msmtp.enable = true;
