@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 {
   # TODO: rotate these passwords and migrate to sops-managed secrets.
   imports = [
@@ -11,5 +11,4 @@
       isCriticalNode = true;
     })
   ];
-
 }

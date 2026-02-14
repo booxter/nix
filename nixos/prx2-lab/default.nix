@@ -2,7 +2,6 @@
 {
   imports = [
     (import ../../disko { })
-    ./ups.nix
   ];
 
 }
