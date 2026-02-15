@@ -23,6 +23,10 @@ let
     "prox-jellyfinvm"
     "prox-srvarrvm"
   ];
+  upsCriticalHosts = [
+    # UPS servers are always critical in their own configs.
+    "beast"
+  ];
   upsClientsPi5 = [
     "beast"
     "nvws"
@@ -41,6 +45,7 @@ in
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
+        isCriticalNode = lib.elem hostname upsCriticalHosts;
         monitorName = "nas";
         system = "PRX1-UPS@prx1-lab";
         user = "upsslave";
