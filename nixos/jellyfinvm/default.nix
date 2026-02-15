@@ -4,7 +4,7 @@
 }:
 let
   media = {
-    device = "nas-lab:/volume2/Media";
+    device = "beast:/volume2/Media";
     fsType = "nfs";
   };
 in

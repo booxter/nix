@@ -9,9 +9,11 @@
 let
   mediaPath = "/data/media";
   media = {
-    device = "nas-lab:/volume2/Media";
+    device = "beast:/volume2/Media";
     fsType = "nfs";
   };
+  wgBridgeAddress = "192.168.50.5";
+  wgNamespaceAddress = "192.168.50.1";
   wgUnitDepsBase = {
     After = [ "wg.service" ];
     BindsTo = [ "wg.service" ];
@@ -71,26 +73,10 @@ in
   systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
 
   # Keep download dir locally to ease load on network and storage
-  systemd.services.sabnzbd.serviceConfig = {
-    ExecStartPre =
-      let
-        fix-incomplete-dir = pkgs.writeShellApplication {
-          name = "fix-incomplete-dir";
-          text = ''
-            sed -i 's|download_dir = .*|download_dir = /data/.cache/usenet/incomplete|g' /var/lib/sabnzbd/sabnzbd.ini
-          '';
-        };
-      in
-      [
-        (lib.getExe' fix-incomplete-dir "fix-incomplete-dir")
-      ];
-  };
   services.sabnzbd.allowConfigWrite = true;
 
   nixarr = {
     enable = true;
-    # TODO: reconcile 192.168.15.1 (switch) address being used
-    # for vpn routing?
     vpn = {
       enable = true;
       wgConf = "/data/.secret/vpn/wg.conf";
@@ -121,10 +107,68 @@ in
       vpn.enable = true;
       peerPort = 45486;
       extraSettings = {
+        compact-view = true;
+        download-queue-enabled = true;
+        download-queue-size = 100;
+        rpc-bind-address = wgNamespaceAddress;
         rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
+        sort-mode = "progress";
       };
     };
 
+  };
+
+  systemd.services.sabnzbd.serviceConfig.ExecStartPre =
+    let
+      fix-incomplete-dir = pkgs.writeShellApplication {
+        name = "fix-incomplete-dir";
+        text = ''
+          sed -i 's|download_dir = .*|download_dir = /data/.cache/usenet/incomplete|g' /var/lib/sabnzbd/sabnzbd.ini
+        '';
+      };
+      sabnzbdSetHost = pkgs.writeShellApplication {
+        name = "sabnzbd-set-host";
+        runtimeInputs = [
+          (pkgs.python3.withPackages (ps: [ ps.configobj ]))
+        ];
+        text = ''
+          cfg_file="${config.nixarr.sabnzbd.stateDir}/sabnzbd.ini"
+          if [ ! -f "$cfg_file" ]; then
+            exit 0
+          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          from configobj import ConfigObj
+
+          cfg_path = Path("${config.nixarr.sabnzbd.stateDir}/sabnzbd.ini")
+          cfg = ConfigObj(str(cfg_path))
+          cfg.setdefault("misc", {})
+          cfg["misc"]["host"] = "${wgNamespaceAddress}"
+          cfg.write()
+          PY
+        '';
+      };
+    in
+    [
+      (lib.getExe' fix-incomplete-dir "fix-incomplete-dir")
+      (lib.getExe sabnzbdSetHost)
+    ];
+
+  # nixarr hardcodes sabnzbd nginx proxy to 192.168.15.1; override to wg subnet.
+  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}".locations."/" = {
+    proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.sabnzbd.guiPort}";
+  };
+
+  # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
+  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}".locations."/" =
+    {
+      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
+    };
+
+  # Move VPN bridge off the lab subnet to avoid routing conflicts.
+  vpnNamespaces.wg = {
+    bridgeAddress = wgBridgeAddress;
+    namespaceAddress = wgNamespaceAddress;
   };
 
   services.huntarr = {
@@ -252,12 +296,6 @@ in
                       title = "SABNZB";
                       url = "http://srvarr.local:6336/";
                       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
-                    }
-                    {
-                      title = "NAS";
-                      url = "https://nas-lab:8001/";
-                      icon = "di:asustor";
-                      allow-insecure = true;
                     }
                   ];
                 }

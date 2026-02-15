@@ -11,6 +11,13 @@ DEFAULT_CACHE_PRIORITY = 50
 NIXOS_CONFIGS = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
 VM_TYPES = $(NIXOS_CONFIGS) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
 
+REMOTE ?= true
+LOCAL_LOCAL_BUILDERS := $(shell ./scripts/get-local-builders.sh --local)
+
+define builder-opts
+$(if $(filter false,$(REMOTE)),--option builders '$(LOCAL_LOCAL_BUILDERS)',)
+endef
+
 define nix-vm-action
 	# $(1): VM prefix (local/ci)
 	# $(2): nix command (run/build)
@@ -22,6 +29,7 @@ define nix-vm-action
 	fi
 
 	nix $(2) \
+		$(call builder-opts) \
 		$(VM_CACHE_OPTS) \
 		.#nixosConfigurations.$(1)-$(WHAT)vm.config.system.build.$(3) $(ARGS)
 endef
@@ -34,7 +42,7 @@ define nix-config-action
 		exit 1; \
 	fi
 
-	nix build $(if $(strip $(1)),$(1),) $(2) $(ARGS)
+	nix build $(call builder-opts) $(if $(strip $(1)),$(1),) $(2) $(ARGS)
 endef
 
 RPI_CACHE_OPTIONS = \
@@ -103,10 +111,10 @@ nixos-build-target:
 	$(call nix-config-action,$(HOST_CACHE_OPTS),.#nixosConfigurations.$(WHAT).config.system.build.toplevel)
 
 nixos-build:
-	nix build .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
+	nix build $(call builder-opts) .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
 
 nixos-switch:
-	sudo nixos-rebuild switch --flake .#$(shell hostname) $(ARGS)
+	sudo nixos-rebuild switch --flake .#$(shell hostname) $(call builder-opts) $(ARGS)
 
 disko-install:
 	@if [ "x$(WHAT)" = "x" -o "x$(DEV)" = "x" ]; then \

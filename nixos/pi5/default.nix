@@ -52,7 +52,7 @@ in
       dhcp-rapid-commit = true;
 
       dhcp-range = [
-        # TODO: exclude 192.168.15.0/24?
+        # Keep DHCP ranges away from reserved VPN netns subnet (192.168.50.0/24).
         "${mainIface},192.168.10.1,192.168.20.255"
         "${guestIface},192.168.100.1,192.168.100.255"
       ];
@@ -96,9 +96,6 @@ in
 
         #---- lab ----
         "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
-
-        # ports: 8000 (http), 8001 (https)
-        "78:72:64:43:9c:3f,nas-lab,192.168.16.2" # asustor
 
         # new NAS (client-id from dhcpcd extraConfig)
         "id:beast,beast,192.168.16.3"

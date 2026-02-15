@@ -1,6 +1,7 @@
 {
   pkgs,
   upsShutdownDelaySeconds,
+  isCriticalNode ? false,
   monitorName,
   system,
   user,
@@ -9,7 +10,7 @@
 }:
 {
   imports = [
-    (import ../ups-sched.nix { inherit pkgs upsShutdownDelaySeconds; })
+    (import ../ups-sched.nix { inherit pkgs upsShutdownDelaySeconds isCriticalNode; })
   ];
 
   environment.etc."nut/upsclient.pass" = {

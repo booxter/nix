@@ -14,7 +14,6 @@ let
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
   upsClientsNAS = [
-    "prx1-lab"
     "prx2-lab"
     "prx3-lab"
     "prox-cachevm"
@@ -23,6 +22,10 @@ let
     "prox-builder3vm"
     "prox-jellyfinvm"
     "prox-srvarrvm"
+  ];
+  upsCriticalHosts = [
+    # UPS servers are always critical in their own configs.
+    "beast"
   ];
   upsClientsPi5 = [
     "beast"
@@ -42,10 +45,11 @@ in
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
+        isCriticalNode = lib.elem hostname upsCriticalHosts;
         monitorName = "nas";
-        system = "ASUSTOR-UPS@nas-lab";
-        user = "upsadmin";
-        passwordText = "AdmUps1111";
+        system = "PRX1-UPS@prx1-lab";
+        user = "upsslave";
+        passwordText = "upsslave123";
       })
     ]
     ++ lib.optionals (lib.elem hostname upsClientsPi5) [
@@ -113,5 +117,8 @@ in
   };
 
   hardware.enableRedistributableFirmware = true;
+  hardware.cpu.intel.updateMicrocode = lib.mkIf (
+    pkgs.stdenv.hostPlatform.isx86_64 || pkgs.stdenv.hostPlatform.isi686
+  ) true;
   services.fwupd.enable = true;
 }

@@ -2,7 +2,7 @@
 let
   nfsPath = "/cache";
   cache = {
-    device = "nas-lab:/volume2/nix-cache";
+    device = "beast:/volume2/nix-cache";
     fsType = "nfs";
   };
 in
