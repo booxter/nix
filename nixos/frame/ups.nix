@@ -1,4 +1,10 @@
-{ pkgs, ... }:
+{
+  lib,
+  pkgs,
+  hostname,
+  upsCriticalHosts,
+  ...
+}:
 {
   # TODO: rotate these passwords and migrate to sops-managed secrets.
   imports = [
@@ -9,6 +15,7 @@
       upsShutdownDelaySeconds = 600;
       upsmonPasswordText = "upsmon234";
       upsslavePasswordText = "upsslave234";
+      isCriticalNode = lib.elem hostname upsCriticalHosts;
     })
   ];
 }

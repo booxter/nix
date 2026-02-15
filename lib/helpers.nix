@@ -30,6 +30,13 @@ let
   upsNonVmShutdownDelaySeconds = 900;
   upsShutdownDelaySeconds =
     isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
+  # UPS servers should always be treated as critical nodes.
+  upsCriticalHosts = [
+    "beast"
+    "frame"
+    "pi5"
+    "prx1-lab"
+  ];
 in
 rec {
   mkHome =
@@ -91,6 +98,7 @@ rec {
           isWork
           ;
         upsShutdownDelaySeconds = upsShutdownDelaySeconds isVM;
+        inherit upsCriticalHosts;
       };
       modules = [
         ../common
