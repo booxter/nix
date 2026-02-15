@@ -36,8 +36,6 @@ in
     options = [
       "compress=zstd"
       "noatime"
-      "nofail"
-      "x-systemd.device-timeout=10s"
     ];
   };
 
