@@ -13,7 +13,7 @@ teardown() {
 builders = builder1;builder2
 EOF
 
-  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" ./scripts/get-local-builders.sh
+  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" bash ./scripts/get-local-builders.sh
   [ "$status" -eq 0 ]
   [ "$output" = "builder1;builder2" ]
 }
@@ -23,7 +23,7 @@ EOF
   builders = builderA;builderB
 EOF
 
-  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" ./scripts/get-local-builders.sh
+  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" bash ./scripts/get-local-builders.sh
   [ "$status" -eq 0 ]
   [ "$output" = "builderA;builderB" ]
 }
@@ -34,7 +34,7 @@ builders = old
   builders = new1;new2
 EOF
 
-  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" ./scripts/get-local-builders.sh
+  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" bash ./scripts/get-local-builders.sh
   [ "$status" -eq 0 ]
   [ "$output" = "new1;new2" ]
 }
@@ -50,7 +50,7 @@ builder2 aarch64-linux /etc/nix/id 2 1
 
 EOF
 
-  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" ./scripts/get-local-builders.sh
+  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" bash ./scripts/get-local-builders.sh
   [ "$status" -eq 0 ]
   [ "$output" = "builder1 x86_64-linux /etc/nix/id 4 1;builder2 aarch64-linux /etc/nix/id 2 1" ]
 }
@@ -60,7 +60,7 @@ EOF
 builders = remote1;localhost;linux-builder;remote2
 EOF
 
-  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" ./scripts/get-local-builders.sh --local
+  run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" bash ./scripts/get-local-builders.sh --local
   [ "$status" -eq 0 ]
   [ "$output" = "localhost;linux-builder" ]
 }
