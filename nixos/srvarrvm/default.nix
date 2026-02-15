@@ -12,6 +12,8 @@ let
     device = "beast:/volume2/Media";
     fsType = "nfs";
   };
+  wgBridgeAddress = "192.168.50.5";
+  wgNamespaceAddress = "192.168.50.1";
   wgUnitDepsBase = {
     After = [ "wg.service" ];
     BindsTo = [ "wg.service" ];
@@ -89,8 +91,6 @@ in
 
   nixarr = {
     enable = true;
-    # TODO: reconcile 192.168.15.1 (switch) address being used
-    # for vpn routing?
     vpn = {
       enable = true;
       wgConf = "/data/.secret/vpn/wg.conf";
@@ -121,6 +121,7 @@ in
       vpn.enable = true;
       peerPort = 45486;
       extraSettings = {
+        rpc-bind-address = wgNamespaceAddress;
         rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
       };
     };
@@ -129,8 +130,8 @@ in
 
   # Move VPN bridge off the lab subnet to avoid routing conflicts.
   vpnNamespaces.wg = {
-    bridgeAddress = "192.168.50.5";
-    namespaceAddress = "192.168.50.1";
+    bridgeAddress = wgBridgeAddress;
+    namespaceAddress = wgNamespaceAddress;
   };
 
   services.huntarr = {
