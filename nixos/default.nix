@@ -5,7 +5,6 @@
   platform,
   stateVersion,
   upsShutdownDelaySeconds,
-  upsCriticalHosts,
   ...
 }:
 let
@@ -23,6 +22,10 @@ let
     "prox-builder3vm"
     "prox-jellyfinvm"
     "prox-srvarrvm"
+  ];
+  upsCriticalHosts = [
+    # UPS servers are always critical in their own configs.
+    "beast"
   ];
   upsClientsPi5 = [
     "beast"
