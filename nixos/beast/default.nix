@@ -75,6 +75,24 @@ in
     TIMELINE_LIMIT_YEARLY = "1";
   };
 
+  systemd.services.volume2-snapshots-dir = {
+    description = "Ensure /volume2/.snapshots exists";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "volume2.mount" ];
+    requires = [ "volume2.mount" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.btrfs-progs}/bin/btrfs subvolume show /volume2/.snapshots >/dev/null 2>&1 || ${pkgs.btrfs-progs}/bin/btrfs subvolume create /volume2/.snapshots'";
+      ExecStartPost = "${pkgs.coreutils}/bin/chmod 0750 /volume2/.snapshots";
+    };
+  };
+
+  systemd.services.snapper-timeline = {
+    after = [ "volume2-snapshots-dir.service" ];
+    requires = [ "volume2-snapshots-dir.service" ];
+  };
+
   # Regular btrfs scrubs for data integrity.
   services.btrfs.autoScrub = {
     enable = true;
