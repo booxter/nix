@@ -127,6 +127,12 @@ in
 
   };
 
+  # Move VPN bridge off the lab subnet to avoid routing conflicts.
+  vpnNamespaces.wg = {
+    bridgeAddress = "192.168.50.5";
+    namespaceAddress = "192.168.50.1";
+  };
+
   services.huntarr = {
     enable = true;
     dataDir = "${config.nixarr.stateDir}/huntarr";

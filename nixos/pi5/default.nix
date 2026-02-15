@@ -52,7 +52,7 @@ in
       dhcp-rapid-commit = true;
 
       dhcp-range = [
-        # TODO: exclude 192.168.15.0/24?
+        # Keep DHCP ranges away from reserved VPN netns subnet (192.168.50.0/24).
         "${mainIface},192.168.10.1,192.168.20.255"
         "${guestIface},192.168.100.1,192.168.100.255"
       ];
