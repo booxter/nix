@@ -297,12 +297,6 @@ in
                       url = "http://srvarr.local:6336/";
                       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
                     }
-                    {
-                      title = "NAS";
-                      url = "https://nas-lab:8001/";
-                      icon = "di:asustor";
-                      allow-insecure = true;
-                    }
                   ];
                 }
               ];
