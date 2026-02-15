@@ -46,14 +46,17 @@ in
   # NFS exports matching existing clients.
   services.nfs.server = {
     enable = true;
-    extraNfsdConfig = ''
-      vers3 = n
-      vers4 = y
-    '';
     exports = ''
       ${mkNfsExport "/volume2/Media"}
       ${mkNfsExport "/volume2/nix-cache"}
     '';
+  };
+
+  services.nfs.settings = {
+    nfsd = {
+      vers3 = "n";
+      vers4 = "y";
+    };
   };
 
   services.rpcbind.enable = lib.mkForce false;
