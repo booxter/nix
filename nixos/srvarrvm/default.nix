@@ -121,6 +121,8 @@ in
       vpn.enable = true;
       peerPort = 45486;
       extraSettings = {
+        download-queue-enabled = true;
+        download-queue-size = 100;
         rpc-bind-address = wgNamespaceAddress;
         rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
       };
