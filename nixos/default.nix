@@ -112,6 +112,8 @@ in
   };
 
   hardware.enableRedistributableFirmware = true;
-  hardware.cpu.intel.updateMicrocode = true;
+  hardware.cpu.intel.updateMicrocode = lib.mkIf (
+    pkgs.stdenv.hostPlatform.isx86_64 || pkgs.stdenv.hostPlatform.isi686
+  ) true;
   services.fwupd.enable = true;
 }
