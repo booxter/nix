@@ -107,10 +107,12 @@ in
       vpn.enable = true;
       peerPort = 45486;
       extraSettings = {
+        compact-view = true;
         download-queue-enabled = true;
         download-queue-size = 100;
         rpc-bind-address = wgNamespaceAddress;
         rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
+        sort-mode = "progress";
       };
     };
 
@@ -158,9 +160,10 @@ in
   };
 
   # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}".locations."/" = {
-    proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
-  };
+  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}".locations."/" =
+    {
+      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
+    };
 
   # Move VPN bridge off the lab subnet to avoid routing conflicts.
   vpnNamespaces.wg = {
