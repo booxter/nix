@@ -36,6 +36,7 @@ in
     options = [
       "compress=zstd"
       "noatime"
+      "nofail"
     ];
   };
 
