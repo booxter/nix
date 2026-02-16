@@ -37,8 +37,8 @@ in
 
   # local qemu vms override filesystems
   # TODO: move this special handling for FS to mkVM?
-  fileSystems."${mediaPath}" = media;
-  virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
+  #fileSystems."${mediaPath}" = media;
+  #virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
 
   users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
 
@@ -61,16 +61,16 @@ in
   };
 
   # make all services that r/w to nfs mount require the mount
-  systemd.services.audiobookshelf.unitConfig = requiresMediaMount;
-  systemd.services.bazarr.unitConfig = requiresMediaMount;
-  systemd.services.jellyseerr.unitConfig = requiresMediaMount;
-  systemd.services.lidarr.unitConfig = requiresMediaMount;
-  systemd.services.radarr.unitConfig = requiresMediaMount;
-  systemd.services.readarr.unitConfig = requiresMediaMount;
-  systemd.services.readarr-audiobook.unitConfig = requiresMediaMount;
-  systemd.services.sonarr.unitConfig = requiresMediaMount;
-  systemd.services.transmission.unitConfig = wgUnitDepsWithMount;
-  systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
+  #systemd.services.audiobookshelf.unitConfig = requiresMediaMount;
+  #systemd.services.bazarr.unitConfig = requiresMediaMount;
+  #systemd.services.jellyseerr.unitConfig = requiresMediaMount;
+  #systemd.services.lidarr.unitConfig = requiresMediaMount;
+  #systemd.services.radarr.unitConfig = requiresMediaMount;
+  #systemd.services.readarr.unitConfig = requiresMediaMount;
+  #systemd.services.readarr-audiobook.unitConfig = requiresMediaMount;
+  #systemd.services.sonarr.unitConfig = requiresMediaMount;
+  #systemd.services.transmission.unitConfig = wgUnitDepsWithMount;
+  #systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
 
   # Keep download dir locally to ease load on network and storage
   services.sabnzbd.allowConfigWrite = true;

@@ -192,6 +192,16 @@ rec {
                           # Fix qemu hanging on beefy VMs due to fd limit exhaustion.
                           # Use heap based fdsets in g_poll.
                           glib = prev.glib.overrideAttrs (old: {
+                            dontStrip = true;
+                            separateDebugInfo = false;
+                            mesonBuildType = "debugoptimized";
+                            mesonFlags = (old.mesonFlags or []) ++ [
+                              "--buildtype=debugoptimized"
+                              "-Ddebug=true"
+                            ];
+                            NIX_CFLAGS_LINK    = (old.NIX_CFLAGS_LINK or "") + " -g";
+
+                            env.NIX_CFLAGS_COMPILE = (old.env.NIX_CFLAGS_COMPILE or "") + " -g";
                             patches =
                               old.patches or [ ]
                               ++ prev.lib.optionals prev.stdenv.hostPlatform.isDarwin [
@@ -201,6 +211,31 @@ rec {
                                   excludes = [ ".gitlab-ci.yml" ];
                                 })
                               ];
+                              postFixup = (old.postFixup or "") + ''
+                                dsymutil -o $out/lib/libglib-2.0.0.dylib.dSYM $out/lib/libglib-2.0.0.dylib || true
+                              '';
+
+                          });
+
+                          qemu = prev.qemu.overrideAttrs (old: {
+                            dontStrip = true;
+                            separateDebugInfo = false;
+                            mesonBuildType = "debugoptimized";
+                            mesonFlags = (old.mesonFlags or []) ++ [
+                              "--buildtype=debugoptimized"
+                              "-Ddebug=true"
+                            ];
+                            NIX_CFLAGS_LINK    = (old.NIX_CFLAGS_LINK or "") + " -g";
+                            env.NIX_CFLAGS_COMPILE = (old.env.NIX_CFLAGS_COMPILE or "") + " -g";
+
+                            postFixup = (old.postFixup or "") + ''
+                              shopt -s nullglob
+                              for exe in $out/bin/qemu-*; do
+                              if [ -x "$exe" ] && [ ! -d "$exe.dSYM" ]; then
+                              dsymutil -o "$exe.dSYM" "$exe" || true
+                              fi
+                              done
+                            '';
                           });
                         })
                       ];
