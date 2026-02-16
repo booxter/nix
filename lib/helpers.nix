@@ -196,8 +196,9 @@ rec {
                               old.patches or [ ]
                               ++ prev.lib.optionals prev.stdenv.hostPlatform.isDarwin [
                                 (prev.fetchpatch {
-                                  url = "https://github.com/booxter/glib/pull/1.patch";
-                                  hash = "sha256-guoEc+u1YX31h+ZTqseDVEy4P6uZ5/OMgP4W5nKxSpw=";
+                                  url = "https://gitlab.gnome.org/ihar.hrachyshka/glib/-/commit/9bd63d0d265bd8128ffdee9cd5c3cc9821b37e92.patch";
+                                  hash = "sha256-iwrqiTQbKP/PUEXZuOhQo6tBKCgelHNe0lFTC7hzxB8=";
+                                  excludes = [ ".gitlab-ci.yml" ];
                                 })
                               ];
                           });
