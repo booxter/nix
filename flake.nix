@@ -284,14 +284,6 @@
           proxNode = "nvws";
         }
         // VM {
-          name = "jellyfin";
-          platform = "x86_64-linux";
-          cores = 20;
-          memorySize = 32;
-          sshPort = 10003;
-          withHome = false;
-        }
-        // VM {
           name = "cache";
           sshPort = 10004;
           withHome = false;

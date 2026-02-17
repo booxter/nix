@@ -104,8 +104,8 @@ jobs:
             os: ubuntu-24.04-arm
 
           # media infra
-          - name: jellyfin (x86_64-linux)
-            cmd: make build-ci-vm-config WHAT=jellyfin
+          - name: beast (x86_64-linux)
+            cmd: make nixos-build-target WHAT=beast
             os: ubuntu-latest
           - name: srvarr (x86_64-linux)
             cmd: make build-ci-vm-config WHAT=srvarr
