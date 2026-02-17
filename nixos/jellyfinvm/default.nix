@@ -14,10 +14,9 @@ in
   ];
 
   services.jellyfin = {
-    enable = true;
-    openFirewall = true;
+    enable = false;
+    openFirewall = false;
   };
-  systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
 
   # NFS mounts with media
   boot.supportedFilesystems = [ "nfs" ];
@@ -46,7 +45,7 @@ in
         forceSSL = true;
         enableACME = true;
         locations."/" = {
-          proxyPass = "http://127.0.0.1:8096";
+          proxyPass = "http://beast:8096";
           proxyWebsockets = true;
         };
       };
