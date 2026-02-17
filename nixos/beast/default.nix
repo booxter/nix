@@ -14,6 +14,7 @@ in
 {
   imports = [
     (import ../../disko { })
+    ./jellarr.nix
   ];
 
   # Pin this host to the latest stable release channel (critical infra).
@@ -62,7 +63,65 @@ in
 
   services.rpcbind.enable = lib.mkForce false;
 
-  networking.firewall.allowedTCPPorts = nfsPorts;
+  services.jellyfin = {
+    enable = true;
+    openFirewall = true;
+  };
+  systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
+
+  # Reverse proxy with automatic TLS.
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "ihar.hrachyshka@gmail.com";
+  };
+
+  services.nginx = {
+    enable = true;
+    recommendedProxySettings = true;
+    recommendedTlsSettings = true;
+    virtualHosts = {
+      "au.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://prox-srvarrvm:9292";
+          proxyWebsockets = true;
+        };
+      };
+      "jf.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://127.0.0.1:8096";
+          proxyWebsockets = true;
+        };
+      };
+      "js.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://prox-srvarrvm:5055";
+          proxyWebsockets = true;
+        };
+      };
+    };
+  };
+
+  # Keep the existing /media path expected by Jellyfin/Jellarr.
+  fileSystems."/media" = {
+    device = "/volume2/Media";
+    fsType = "none";
+    options = [
+      "bind"
+      "nofail"
+      "x-systemd.requires-mounts-for=/volume2"
+    ];
+  };
+
+  networking.firewall.allowedTCPPorts = nfsPorts ++ [
+    80
+    443
+  ];
   networking.firewall.allowedUDPPorts = nfsPorts;
 
   networking.resolvconf.enable = true;
@@ -118,4 +177,14 @@ in
     nvme-cli
     smartmontools
   ];
+
+  # Acceleration setup: https://nixos.wiki/wiki/Jellyfin
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-media-driver
+      intel-compute-runtime
+      vpl-gpu-rt
+    ];
+  };
 }

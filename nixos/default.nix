@@ -20,7 +20,6 @@ let
     "prox-builder1vm"
     "prox-builder2vm"
     "prox-builder3vm"
-    "prox-jellyfinvm"
     "prox-srvarrvm"
   ];
   upsCriticalHosts = [

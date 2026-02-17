@@ -27,7 +27,7 @@ make build-ci-vm-config WHAT=builder1
 ## Proxmox VMs
 
 ```sh
-make prox-vm WHAT=jellyfin WHERE=prx1
+make prox-vm WHAT=srvarr WHERE=prx1
 ```
 
 ## Host rebuilds
@@ -36,7 +36,7 @@ make prox-vm WHAT=jellyfin WHERE=prx1
 make nixos-build
 make nixos-switch
 
-make nixos-build-target WHAT=prox-jellyfinvm REMOTE=false
+make nixos-build-target WHAT=beast REMOTE=false
 
 make darwin-build
 make darwin-switch
@@ -84,7 +84,7 @@ All VMs run on Proxmox hosts and are deployed with the `nixmoxer` tool
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
 | `pi5` | NixOS (Raspberry Pi) | DHCP and network services for the lab. | [nixos/pi5/default.nix](nixos/pi5/default.nix) | [common](common), [nixos](nixos) |
-| `beast` | NixOS (x86_64-linux) | NAS storage server. | [nixos/beast/default.nix](nixos/beast/default.nix) | [common](common), [nixos](nixos) |
+| `beast` | NixOS (x86_64-linux) | NAS storage + Jellyfin/Jellarr server. | [nixos/beast/default.nix](nixos/beast/default.nix) | [common](common), [nixos](nixos) |
 | `nvws` | Proxmox host | Work Proxmox node configuration. Single node. | [nixos/nvws/default.nix](nixos/nvws/default.nix) | [common](common), [nixos](nixos) |
 | `prx1-lab` | Proxmox host | Lab Proxmox node (cluster leader). | [nixos/prx1-lab/default.nix](nixos/prx1-lab/default.nix) | [common](common), [nixos](nixos) |
 | `prx2-lab` | Proxmox host | Lab Proxmox node (cluster member). | [nixos/prx2-lab/default.nix](nixos/prx2-lab/default.nix) | [common](common), [nixos](nixos) |
@@ -111,7 +111,8 @@ All VMs run on Proxmox hosts and are deployed with the `nixmoxer` tool
 
 ### Media servers
 
+Jellyfin and Jellarr run on `beast`.
+
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
-| `jellyfin` | NixOS VM | Media server (Jellyfin). | [nixos/jellyfinvm/default.nix](nixos/jellyfinvm/default.nix) | [common](common), [nixos](nixos) |
 | `srvarr` | NixOS VM | Media automation stack (Arr suite). | [nixos/srvarrvm/default.nix](nixos/srvarrvm/default.nix) | [common](common), [nixos](nixos) |
