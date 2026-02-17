@@ -69,6 +69,44 @@ in
   };
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
 
+  # Reverse proxy with automatic TLS.
+  security.acme = {
+    acceptTerms = true;
+    defaults.email = "ihar.hrachyshka@gmail.com";
+  };
+
+  services.nginx = {
+    enable = true;
+    recommendedProxySettings = true;
+    recommendedTlsSettings = true;
+    virtualHosts = {
+      "au.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://prox-srvarrvm:9292";
+          proxyWebsockets = true;
+        };
+      };
+      "jf.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://127.0.0.1:8096";
+          proxyWebsockets = true;
+        };
+      };
+      "js.ihar.dev" = {
+        forceSSL = true;
+        enableACME = true;
+        locations."/" = {
+          proxyPass = "http://prox-srvarrvm:5055";
+          proxyWebsockets = true;
+        };
+      };
+    };
+  };
+
   # Keep the existing /media path expected by Jellyfin/Jellarr.
   fileSystems."/media" = {
     device = "/volume2/Media";
@@ -76,7 +114,10 @@ in
     options = [ "bind" ];
   };
 
-  networking.firewall.allowedTCPPorts = nfsPorts;
+  networking.firewall.allowedTCPPorts = nfsPorts ++ [
+    80
+    443
+  ];
   networking.firewall.allowedUDPPorts = nfsPorts;
 
   networking.resolvconf.enable = true;

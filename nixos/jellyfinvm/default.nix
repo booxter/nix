@@ -22,49 +22,6 @@ in
   boot.supportedFilesystems = [ "nfs" ];
   services.rpcbind.enable = true;
 
-  # Reverse proxy with automatic TLS
-  security.acme = {
-    acceptTerms = true;
-    defaults.email = "ihar.hrachyshka@gmail.com";
-  };
-
-  services.nginx = {
-    enable = true;
-    recommendedProxySettings = true;
-    recommendedTlsSettings = true;
-    virtualHosts = {
-      "au.ihar.dev" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/" = {
-          proxyPass = "http://prox-srvarrvm:9292";
-          proxyWebsockets = true;
-        };
-      };
-      "jf.ihar.dev" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/" = {
-          proxyPass = "http://beast:8096";
-          proxyWebsockets = true;
-        };
-      };
-      "js.ihar.dev" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/" = {
-          proxyPass = "http://prox-srvarrvm:5055";
-          proxyWebsockets = true;
-        };
-      };
-    };
-  };
-
-  networking.firewall.allowedTCPPorts = [
-    80
-    443
-  ];
-
   # local qemu vms override filesystems
   # TODO: move this special handling for FS to mkVM?
   fileSystems."/media" = media;
