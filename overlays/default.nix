@@ -19,8 +19,11 @@
       pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsHuntarr = getPkgs inputs.nixpkgs-huntarr;
+      llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
     in
     {
+      inherit (llmAgentsPkgs) codex claude-code;
+
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
