@@ -7,7 +7,6 @@
 let
   nfsSubnet = "192.168.0.0/16";
   mkNfsExport = path: "${path} ${nfsSubnet}(rw,async,no_subtree_check)";
-  intelVaapiDriverHybrid = pkgs.intel-vaapi-driver.override { enableHybridCodec = true; };
   nfsPorts = [
     2049 # nfsd
   ];
@@ -180,7 +179,6 @@ in
     enable = true;
     extraPackages = with pkgs; [
       intel-media-driver
-      intelVaapiDriverHybrid
       intel-compute-runtime
       vpl-gpu-rt
     ];
