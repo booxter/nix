@@ -53,6 +53,8 @@
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
 
+    llm-agents.url = "github:numtide/llm-agents.nix";
+
     tig = {
       url = "github:jonas/tig";
       flake = false;
