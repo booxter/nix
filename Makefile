@@ -6,8 +6,6 @@ USERNAME ?= ihrachyshka
 NIX_OPTS = \
 	--extra-experimental-features 'nix-command flakes'
 
-DEFAULT_CACHE_PRIORITY = 50
-
 NIXOS_CONFIGS = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
 VM_TYPES = $(NIXOS_CONFIGS) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
 
@@ -30,39 +28,18 @@ define nix-vm-action
 
 	nix $(2) \
 		$(call builder-opts) \
-		$(VM_CACHE_OPTS) \
 		.#nixosConfigurations.$(1)-$(WHAT)vm.config.system.build.$(3) $(ARGS)
 endef
 
 define nix-config-action
-	# $(1): extra nix build options (e.g. cache flags), optional
-	# $(2): build target attribute path
+	# $(1): build target attribute path
 	@if [ "x$(WHAT)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=host"; \
 		exit 1; \
 	fi
 
-	nix build $(call builder-opts) $(if $(strip $(1)),$(1),) $(2) $(ARGS)
+	nix build $(call builder-opts) $(1) $(ARGS)
 endef
-
-RPI_CACHE_OPTIONS = \
-	--option extra-trusted-public-keys "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI=" \
-	--option extra-substituters "https://nixos-raspberrypi.cachix.org?priority=$(DEFAULT_CACHE_PRIORITY)"
-
-PROXMOX_CACHE_OPTIONS = \
-	--option extra-trusted-public-keys "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM=" \
-	--option extra-substituters "https://cache.saumon.network/proxmox-nixos?priority=$(DEFAULT_CACHE_PRIORITY)"
-
-VM_CACHE_OPTS = \
-	$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
-	$(if $(filter proxmox,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),)
-
-# Reused for host builds too (pi5 benefit from RPI cache, proxmox from Proxmox cache).
-HOST_CACHE_OPTS = \
-	$(if $(filter pi5,$(WHAT)), $(RPI_CACHE_OPTIONS),) \
-	$(if $(filter prox%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
-	$(if $(filter prx%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
-	$(if $(filter nvws%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),)
 
 # Also the default target (just call `make`)
 inputs-update:
@@ -108,7 +85,7 @@ prox-vm:
 
 ########### nixos
 nixos-build-target:
-	$(call nix-config-action,$(HOST_CACHE_OPTS),.#nixosConfigurations.$(WHAT).config.system.build.toplevel)
+	$(call nix-config-action,.#nixosConfigurations.$(WHAT).config.system.build.toplevel)
 
 nixos-build:
 	nix build $(call builder-opts) .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
@@ -122,7 +99,6 @@ disko-install:
 		exit 1; \
 	fi
 	sudo nix $(NIX_OPTS) run $(ARGS) \
-		$(if $(filter prx%,$(WHAT)), $(PROXMOX_CACHE_OPTIONS),) \
 		'github:nix-community/disko/latest#disko-install' -- --flake .#$(WHAT) --disk main $(DEV)
 
 ########### darwin
@@ -130,7 +106,7 @@ darwin-build:
 	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
 
 darwin-build-target:
-	$(call nix-config-action,,.#darwinConfigurations.$(WHAT).system)
+	$(call nix-config-action,.#darwinConfigurations.$(WHAT).system)
 
 darwin-switch:
 	sudo -H nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
@@ -154,4 +130,4 @@ home-switch-nv:
 
 ############# raspberry pi
 pi-image:
-	nix build $(RPI_CACHE_OPTIONS) .#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd $(ARGS)
+	nix build .#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd $(ARGS)
