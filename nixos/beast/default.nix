@@ -7,6 +7,7 @@
 let
   nfsSubnet = "192.168.0.0/16";
   mkNfsExport = path: "${path} ${nfsSubnet}(rw,async,no_subtree_check)";
+  intelVaapiDriverHybrid = pkgs.intel-vaapi-driver.override { enableHybridCodec = true; };
   nfsPorts = [
     2049 # nfsd
   ];
@@ -61,6 +62,19 @@ in
   };
 
   services.rpcbind.enable = lib.mkForce false;
+
+  services.jellyfin = {
+    enable = true;
+    openFirewall = true;
+  };
+  systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
+
+  # Keep the existing /media path expected by Jellyfin/Jellarr.
+  fileSystems."/media" = {
+    device = "/volume2/Media";
+    fsType = "none";
+    options = [ "bind" ];
+  };
 
   networking.firewall.allowedTCPPorts = nfsPorts;
   networking.firewall.allowedUDPPorts = nfsPorts;
@@ -118,4 +132,15 @@ in
     nvme-cli
     smartmontools
   ];
+
+  # Acceleration setup: https://nixos.wiki/wiki/Jellyfin
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      intel-media-driver
+      intelVaapiDriverHybrid
+      intel-compute-runtime
+      vpl-gpu-rt
+    ];
+  };
 }
