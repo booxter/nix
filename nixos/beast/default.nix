@@ -15,6 +15,7 @@ in
 {
   imports = [
     (import ../../disko { })
+    ./jellarr.nix
   ];
 
   # Pin this host to the latest stable release channel (critical infra).

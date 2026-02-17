@@ -9,10 +9,6 @@ let
   };
 in
 {
-  imports = [
-    ./jellarr.nix
-  ];
-
   services.jellyfin = {
     enable = false;
     openFirewall = false;
