@@ -111,7 +111,11 @@ in
   fileSystems."/media" = {
     device = "/volume2/Media";
     fsType = "none";
-    options = [ "bind" ];
+    options = [
+      "bind"
+      "nofail"
+      "x-systemd.requires-mounts-for=/volume2"
+    ];
   };
 
   networking.firewall.allowedTCPPorts = nfsPorts ++ [
