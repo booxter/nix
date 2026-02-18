@@ -90,7 +90,8 @@ in
         forceSSL = true;
         enableACME = true;
         locations."/" = {
-          proxyPass = "http://prox-srvarrvm:9292";
+          # Use fixed VM IP to avoid boot-time DNS dependency.
+          proxyPass = "http://192.168.20.2:9292";
           proxyWebsockets = true;
         };
       };
@@ -106,7 +107,8 @@ in
         forceSSL = true;
         enableACME = true;
         locations."/" = {
-          proxyPass = "http://prox-srvarrvm:5055";
+          # Use fixed VM IP to avoid boot-time DNS dependency.
+          proxyPass = "http://192.168.20.2:5055";
           proxyWebsockets = true;
         };
       };
