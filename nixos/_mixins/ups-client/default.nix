@@ -27,4 +27,10 @@
       type = "slave";
     };
   };
+
+  # Netclient mode depends on network reachability to the UPS server.
+  systemd.services.upsmon = {
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+  };
 }

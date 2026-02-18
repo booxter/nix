@@ -23,6 +23,10 @@ in
   # Use the freshest kernel available on the stable channel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
+  # Host critical services; keep upgrades on Monday, separate from the
+  # fleet's default Saturday schedule.
+  system.autoUpgrade.dates = "Mon 03:00";
+
   # Assemble the existing RAID6 array from the previous NAS.
   # Auto-assembly should work; add explicit mdadm config only if needed.
   boot.swraid.enable = true;
@@ -55,6 +59,11 @@ in
       ${mkNfsExport "/volume2/nix-cache"}
     '';
   };
+  systemd.services.nfs-server.unitConfig.RequiresMountsFor = [
+    "/volume2"
+    "/volume2/Media"
+    "/volume2/nix-cache"
+  ];
 
   services.nfs.settings = {
     nfsd = {

@@ -55,8 +55,8 @@ in
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
-        monitorName = "dhcp";
-        system = "PI5-UPS@dhcp";
+        monitorName = "pi5";
+        system = "PI5-UPS@192.168.1.1";
         user = "upsslave";
         passwordText = "upsslave123";
       })
