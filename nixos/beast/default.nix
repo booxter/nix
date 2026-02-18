@@ -38,6 +38,8 @@ in
       "compress=zstd"
       "noatime"
       "nofail"
+      "x-systemd.device-timeout=5min"
+      "x-systemd.mount-timeout=5min"
     ];
   };
 
