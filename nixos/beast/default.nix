@@ -38,6 +38,8 @@ in
       "compress=zstd"
       "noatime"
       "nofail"
+      "x-systemd.device-timeout=5min"
+      "x-systemd.mount-timeout=5min"
     ];
   };
 
@@ -67,6 +69,10 @@ in
     enable = true;
     openFirewall = true;
   };
+  users.users.jellyfin.extraGroups = [
+    "render"
+    "video"
+  ];
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
 
   # Reverse proxy with automatic TLS.
@@ -84,7 +90,8 @@ in
         forceSSL = true;
         enableACME = true;
         locations."/" = {
-          proxyPass = "http://prox-srvarrvm:9292";
+          # Use fixed VM IP to avoid boot-time DNS dependency.
+          proxyPass = "http://192.168.20.2:9292";
           proxyWebsockets = true;
         };
       };
@@ -100,7 +107,8 @@ in
         forceSSL = true;
         enableACME = true;
         locations."/" = {
-          proxyPass = "http://prox-srvarrvm:5055";
+          # Use fixed VM IP to avoid boot-time DNS dependency.
+          proxyPass = "http://192.168.20.2:5055";
           proxyWebsockets = true;
         };
       };

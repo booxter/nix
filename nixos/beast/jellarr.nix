@@ -40,8 +40,21 @@
         };
       };
       encoding = {
+        # TODO: revisit subtitle hardcoding policy once jellarr module exposes
+        # explicit subtitle-mode/burn-in options declaratively.
+        enableHardwareEncoding = true;
+        hardwareAccelerationType = "vaapi";
+        vaapiDevice = "/dev/dri/renderD128";
+        hardwareDecodingCodecs = [
+          "h264"
+          "hevc"
+          "vp9"
+          "av1"
+        ];
+        enableDecodingColorDepth10Hevc = true;
+        enableDecodingColorDepth10Vp9 = true;
         allowHevcEncoding = true;
-        allowAv1Encoding = true;
+        allowAv1Encoding = false;
       };
       library = {
         virtualFolders =
