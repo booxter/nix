@@ -59,6 +59,11 @@ in
       ${mkNfsExport "/volume2/nix-cache"}
     '';
   };
+  systemd.services.nfs-server.unitConfig.RequiresMountsFor = [
+    "/volume2"
+    "/volume2/Media"
+    "/volume2/nix-cache"
+  ];
 
   services.nfs.settings = {
     nfsd = {
