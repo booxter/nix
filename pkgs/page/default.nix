@@ -4,6 +4,6 @@
   neovim ? pkgs.neovim,
   ...
 }:
-pkgs.writeScriptBin "page" ''
+pkgs.writeShellScriptBin "page" ''
   PATH=${neovim}/bin:$PATH exec ${lib.getExe pkgs.page}
 ''
