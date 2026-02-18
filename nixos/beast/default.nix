@@ -67,6 +67,10 @@ in
     enable = true;
     openFirewall = true;
   };
+  users.users.jellyfin.extraGroups = [
+    "render"
+    "video"
+  ];
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
 
   # Reverse proxy with automatic TLS.
