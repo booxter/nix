@@ -6,7 +6,9 @@
 }:
 let
   nfsSubnet = "192.168.0.0/16";
-  mkNfsExport = path: "${path} ${nfsSubnet}(rw,async,no_subtree_check)";
+  # Pin export IDs so clients see stable export identities across server restarts.
+  mkNfsExport =
+    { path, fsid }: "${path} ${nfsSubnet}(rw,async,no_subtree_check,fsid=${toString fsid})";
   nfsPorts = [
     2049 # nfsd
   ];
@@ -55,8 +57,14 @@ in
   services.nfs.server = {
     enable = true;
     exports = ''
-      ${mkNfsExport "/volume2/Media"}
-      ${mkNfsExport "/volume2/nix-cache"}
+      ${mkNfsExport {
+        path = "/volume2/Media";
+        fsid = 10; # media export
+      }}
+      ${mkNfsExport {
+        path = "/volume2/nix-cache";
+        fsid = 11; # binary cache export
+      }}
     '';
   };
   systemd.services.nfs-server.unitConfig.RequiresMountsFor = [
