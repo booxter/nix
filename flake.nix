@@ -50,6 +50,8 @@
     # TODO: contribute upstream once Huntarr module/package confirmed working
     nixpkgs-huntarr.url = "github:booxter/nixpkgs/huntarr-init";
 
+    nixpkgs-quartz-wm.url = "github:booxter/nixpkgs/quartz-wm-darwin";
+
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
 
