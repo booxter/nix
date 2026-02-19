@@ -483,6 +483,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-quartz-wm": {
+      "locked": {
+        "lastModified": 1771462627,
+        "narHash": "sha256-d9hnSYVzBntqw94fbPsIatTCPTfwdVzXoLUbokn+is4=",
+        "owner": "booxter",
+        "repo": "nixpkgs",
+        "rev": "59db8b663c9c0d9936b5ce73372c50540aee1357",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "quartz-wm-darwin",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1748437600,
@@ -642,6 +658,7 @@
         "nixpkgs-25_11": "nixpkgs-25_11",
         "nixpkgs-huntarr": "nixpkgs-huntarr",
         "nixpkgs-master": "nixpkgs-master",
+        "nixpkgs-quartz-wm": "nixpkgs-quartz-wm",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos",

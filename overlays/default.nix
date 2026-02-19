@@ -18,6 +18,7 @@
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
+      pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
       pkgsHuntarr = getPkgs inputs.nixpkgs-huntarr;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
     in
@@ -50,5 +51,10 @@
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
       # Pull NUT from master for now for darwin support.
       inherit (pkgsMaster) nut;
+
+      # Pull XQuartz stack from a fork until quartz-wm changes are merged:
+      # https://github.com/NixOS/nixpkgs/pull/491935
+      xquartz = pkgsQuartzWm.xquartz;
+      quartz-wm = pkgsQuartzWm."quartz-wm";
     };
 }
