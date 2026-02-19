@@ -107,6 +107,7 @@ in
   environment.systemPackages = with pkgs; [
     ethtool
     pciutils
+    psmisc
   ];
 
   systemd.services.nix-daemon.serviceConfig = {

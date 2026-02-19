@@ -56,6 +56,7 @@ in
       ipcalc
       iperf3
       jq
+      lsof
       man-pages
       moreutils
       ngrep
