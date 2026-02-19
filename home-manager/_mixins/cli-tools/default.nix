@@ -122,7 +122,7 @@
       gnupg
       go
       hydra-check
-      lima
+      (lima.override { withAdditionalGuestAgents = true; })
       lnav # log viewer
       mkpasswd
       (my-page.override { neovim = config.programs.nixvim.build.package; })
