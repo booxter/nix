@@ -1,9 +1,26 @@
 { lib, pkgs, ... }:
 let
   nfsPath = "/cache";
+  # Same recovery semantics as other NFS clients:
+  # - block writes/reads until NAS returns
+  # - avoid boot failure when NAS is unavailable
+  # - use automount to re-establish mount on first access
+  nfsMountOptions = [
+    "nfsvers=4"
+    "hard"
+    "nofail"
+    "_netdev"
+    "noatime"
+    "x-systemd.automount"
+    "x-systemd.idle-timeout=5min"
+    "x-systemd.mount-timeout=30s"
+    "x-systemd.requires=network-online.target"
+    "x-systemd.after=network-online.target"
+  ];
   cache = {
     device = "beast:/volume2/nix-cache";
     fsType = "nfs";
+    options = nfsMountOptions;
   };
 in
 {

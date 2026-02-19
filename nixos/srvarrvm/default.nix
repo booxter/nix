@@ -8,9 +8,27 @@
 }:
 let
   mediaPath = "/data/media";
+  # Resilient NFS client behavior:
+  # - hard: block I/O until the server is back (avoid soft I/O errors).
+  # - nofail/_netdev/network-online: don't fail boot when NAS is down.
+  # - automount + idle timeout: remount on demand after outages.
+  # - mount-timeout: fail each mount attempt quickly, retry on next access.
+  mediaMountOptions = [
+    "nfsvers=4"
+    "hard"
+    "nofail"
+    "_netdev"
+    "noatime"
+    "x-systemd.automount"
+    "x-systemd.idle-timeout=5min"
+    "x-systemd.mount-timeout=30s"
+    "x-systemd.requires=network-online.target"
+    "x-systemd.after=network-online.target"
+  ];
   media = {
     device = "beast:/volume2/Media";
     fsType = "nfs";
+    options = mediaMountOptions;
   };
   wgBridgeAddress = "192.168.50.5";
   wgNamespaceAddress = "192.168.50.1";
