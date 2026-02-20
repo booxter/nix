@@ -21,6 +21,11 @@
       pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
       pkgsHuntarr = getPkgs inputs.nixpkgs-huntarr;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
+      releaseTransmission =
+        if prev.lib.strings.hasPrefix "4.0." pkgsRelease.transmission_4.version then
+          pkgsRelease.transmission_4
+        else
+          throw "Expected transmission_4 from nixpkgs-25_11 to be 4.0.x, got ${pkgsRelease.transmission_4.version}";
     in
     {
       inherit (llmAgentsPkgs) codex claude-code;
@@ -31,9 +36,11 @@
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
 
-      # Pull Sonarr and Readarr from release-25.11 to test hang regressions
+      # Pull Sonarr/Readarr and pin Transmission to 4.0.x from release-25.11.
       # TODO: report issues; investigate; fix
       inherit (pkgsRelease) readarr sonarr;
+      transmission_4 = releaseTransmission;
+      transmission = releaseTransmission;
 
       # Huntarr from fork until it lands upstream
       inherit (pkgsHuntarr) huntarr;
