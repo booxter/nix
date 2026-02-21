@@ -297,6 +297,22 @@ rec {
 
                 nixpkgs.overlays = [
                   inputs.proxmox-nixos.overlays.${platform}
+                  (
+                    final: prev:
+                    let
+                      patchedPveManager = prev.pve-manager.overrideAttrs (old: {
+                        patches = (old.patches or [ ]) ++ [
+                          ./patches/pve-manager-disable-subscription-popup.patch
+                        ];
+                      });
+                    in
+                    {
+                      pve-manager = patchedPveManager;
+                      proxmox-ve = prev.proxmox-ve.override {
+                        pve-manager = patchedPveManager;
+                      };
+                    }
+                  )
                 ];
 
                 services.proxmox-ve = {

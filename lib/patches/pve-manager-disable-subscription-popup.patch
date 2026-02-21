@@ -1,0 +1,12 @@
+diff --git a/www/manager6/Workspace.js b/www/manager6/Workspace.js
+--- a/www/manager6/Workspace.js
++++ b/www/manager6/Workspace.js
+@@ -49,7 +49,7 @@ Ext.define('PVE.StdWorkspace', {
+                 handler: function (data) {
+                     me.login = null;
+                     me.updateLoginData(data);
+-                    Proxmox.Utils.checked_command(Ext.emptyFn); // display subscription status
++                    Ext.emptyFn();
+                 },
+             });
+         }
