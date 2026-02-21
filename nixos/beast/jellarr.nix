@@ -53,7 +53,7 @@
         ];
         enableDecodingColorDepth10Hevc = true;
         enableDecodingColorDepth10Vp9 = true;
-        allowHevcEncoding = true;
+        allowHevcEncoding = false;
         allowAv1Encoding = false;
       };
       library = {
@@ -307,7 +307,6 @@
                 ];
               };
               displayMissingEpisodes = true;
-              subtitleLanguagePreference = "eng";
             };
           getGuestUser =
             args:
