@@ -2,7 +2,6 @@
 .DEFAULT_GOAL := help
 
 ARGS = -L --show-trace
-HM_ARGS = -b backup
 USERNAME ?= ihrachyshka
 
 NIX_OPTS = \
@@ -75,7 +74,6 @@ help:
 	@echo "  make local-vm WHAT=<type>"
 	@echo "  make linux-home-build-target TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 	@echo "  make darwin-home-build-target TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
-	@echo "  make home-switch-nv [USERNAME=<name>]"
 	@echo "  make disko-install WHAT=<host> DEV=/dev/<disk>"
 
 ########### local vms
@@ -104,6 +102,3 @@ linux-home-build-target:
 
 darwin-home-build-target:
 	$(call standalone-home-build-action,darwin,aarch64-darwin)
-
-home-switch-nv:
-	nix run nixpkgs#home-manager -- switch --flake .#${USERNAME}@nv $(ARGS) $(HM_ARGS)

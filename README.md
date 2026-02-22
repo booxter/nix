@@ -33,21 +33,21 @@ make darwin-build-target WHAT=mair
 
 ## Fleet updates
 
-Update multiple machines over SSH with `nix run .#fleet-upgrade` (defaults to
+Update multiple machines over SSH with `nix run .#fleet-apply` (defaults to
 `--all`):
 
 ```sh
 # Update all personal machines (default)
-nix run .#fleet-upgrade -- -A
+nix run .#fleet-apply -- -A
 
 # Update all work machines
-nix run .#fleet-upgrade -- -A --work
+nix run .#fleet-apply -- -A --work
 
 # Update a subset interactively (fzf required)
-nix run .#fleet-upgrade -- -A --select
+nix run .#fleet-apply -- -A --select
 
 # Dry run (SSH check + disk estimate only)
-nix run .#fleet-upgrade -- -A --dry-run
+nix run .#fleet-apply -- -A --dry-run
 ```
 
 ## Disk and image helpers
@@ -122,7 +122,7 @@ nix run .#sops-copy -- mair prx1-lab attic
 ```sh
 make linux-home-build-target TARGET=nv
 make darwin-home-build-target TARGET=mair
-make home-switch-nv
+nix run .#fleet-apply -- --home nv
 ```
 
 `TARGET` must match a standalone Home Manager profile from
