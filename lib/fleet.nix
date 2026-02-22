@@ -89,8 +89,56 @@ let
       exec ${pkgs.bash}/bin/bash ${../.}/scripts/update-machines.sh "$@"
     '';
   };
+
+  vm = pkgs.writeShellApplication {
+    name = "vm";
+    runtimeInputs = with pkgs; [
+      jq
+      nix
+    ];
+    text = ''
+      set -euo pipefail
+
+      list_vm_types() {
+        nix flake show --json "${../.}" 2>/dev/null \
+          | jq -r '.nixosConfigurations | keys[] | select(test("^local-.*vm$")) | capture("^local-(?<type>.*)vm$").type' \
+          | sort -u
+      }
+
+      usage() {
+        cat <<'EOF'
+      Usage: vm <type>
+      Example: vm builder1
+
+      Available VM types:
+      EOF
+        list_vm_types | sed 's/^/  /'
+      }
+
+      if [ "$#" -eq 1 ] && [ "$1" = "--help" ]; then
+        usage
+        exit 0
+      fi
+
+      if [ "$#" -ne 1 ]; then
+        usage >&2
+        exit 1
+      fi
+
+      vm_type="$1"
+      if ! list_vm_types | grep -Fxq "$vm_type"; then
+        echo "Unknown VM type: $vm_type" >&2
+        echo >&2
+        usage >&2
+        exit 1
+      fi
+
+      exec nix run "${../.}#nixosConfigurations.local-''${vm_type}vm.config.system.build.vm" -L --show-trace
+    '';
+  };
 in
 {
   "fleet-apply" =
     mkApp "${fleetApply}/bin/fleet-apply" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
+  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM by type (maps <type> to local-<type>vm).";
 }

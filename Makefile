@@ -4,9 +4,6 @@
 ARGS = -L --show-trace
 USERNAME ?= ihrachyshka
 
-NIXOS_CONFIGS = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
-VM_TYPES = $(NIXOS_CONFIGS) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
-
 define home-targets-for-system
 nix eval --json --apply 'hc: builtins.mapAttrs (_: v: v.activationPackage.drvAttrs.system) hc' .#homeConfigurations \
 	| jq -r 'to_entries[] | select(.value=="$(1)") | .key' \
@@ -18,21 +15,6 @@ LOCAL_LOCAL_BUILDERS := $(shell ./scripts/get-local-builders.sh --local)
 
 define builder-opts
 $(if $(filter false,$(REMOTE)),--option builders '$(LOCAL_LOCAL_BUILDERS)',)
-endef
-
-define nix-vm-action
-	# $(1): VM prefix (local/prox)
-	# $(2): nix command (run/build)
-	# $(3): build output (vm/toplevel)
-	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:"; \
-		$(call VM_TYPES,$(1)); \
-		exit 1; \
-	fi
-
-	nix $(2) \
-		$(call builder-opts) \
-		.#nixosConfigurations.$(1)-$(WHAT)vm.config.system.build.$(3) $(ARGS)
 endef
 
 define nix-config-action
@@ -68,13 +50,8 @@ help:
 	@echo "Available targets:"
 	@echo "  make nixos-build-target WHAT=<host> [REMOTE=false]"
 	@echo "  make darwin-build-target WHAT=<host> [REMOTE=false]"
-	@echo "  make local-vm WHAT=<type>"
 	@echo "  make linux-home-build-target TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 	@echo "  make darwin-home-build-target TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
-
-########### local vms
-local-vm:
-	$(call nix-vm-action,local,run,vm)
 
 ########### nixos vms
 ########### nixos

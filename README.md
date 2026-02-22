@@ -1,8 +1,8 @@
 # Nix configs
 
-This repo uses a `Makefile` as the main entrypoint for builds and local VM
-workflows. Most targets take `WHAT=` (a host or VM type). Running a target
-without `WHAT` prints the available options when supported.
+This repo uses a `Makefile` as the main entrypoint for host builds. Most
+targets take `WHAT=` (a host). Running a target without `WHAT` prints available
+options when supported.
 
 ## Common commands
 
@@ -15,7 +15,7 @@ make darwin-build-target WHAT=mair
 ## Local and NixOS VMs
 
 ```sh
-make local-vm WHAT=builder1
+nix run .#vm -- builder1
 ```
 
 ## Proxmox VMs
