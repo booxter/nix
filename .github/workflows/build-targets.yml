@@ -94,8 +94,8 @@ jobs:
                 { name: "mmini-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=mmini-ci", os: "macos-26" },
                 { name: "JGWXHWDL4X-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=JGWXHWDL4X-ci", os: "macos-26" },
                 { name: "nixos vm qemu (x86_64-linux)", cmd: "make nixos-build-vm-qemu", os: "ubuntu-latest" },
-                { name: "nixos vm qemu (aarch64-darwin)", cmd: "make nixos-build-vm-qemu", os: "macos-26" }
-                // TODO: add proxmox ISO CI entry once nixos-build-prox-iso target is available in this branch.
+                { name: "nixos vm qemu (aarch64-darwin)", cmd: "make nixos-build-vm-qemu", os: "macos-26" },
+                { name: "nixos vm proxmox iso (x86_64-linux)", cmd: "make nixos-build-prox-iso WHAT=builder1", os: "ubuntu-latest" }
               ]
             };
 
@@ -171,11 +171,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.plan-build-matrix.outputs.matrix) }}
-
-          # Ensure Proxmox declarative-vms ISO generation works on x86_64-linux.
-          - name: nixos vm proxmox iso (x86_64-linux)
-            cmd: make nixos-build-prox-iso WHAT=builder1
-            os: ubuntu-latest
 
     timeout-minutes: 180
 
