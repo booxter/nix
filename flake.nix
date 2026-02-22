@@ -363,7 +363,7 @@
           ];
           text = ''
             treefmt "$@"
-            mbake format Makefile
+            mbake format --config ./.bake.toml Makefile
             git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
             actionlint .github/workflows/*.yml
             git ls-files -z -- '*.md' '**/*.md' | xargs -0 -r markdownlint-cli2

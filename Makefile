@@ -140,4 +140,3 @@ home-build-nv:
 
 home-switch-nv:
 	nix run nixpkgs#home-manager -- switch --flake .#${USERNAME}@nv $(ARGS) $(HM_ARGS)
-
