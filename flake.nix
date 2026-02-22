@@ -1,7 +1,7 @@
 # Inspirations:
 # - https://github.com/wimpysworld/nix-config/ for general structure
 {
-  description = "booxter Nix* flake configs";
+  description = "booxter Nix* flake config";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
