@@ -50,7 +50,6 @@ help:
 	@echo "  make local-vm WHAT=<type>"
 	@echo "  make nixos-run-vm WHAT=<type>"
 	@echo "  make nixos-build-vm WHAT=<type>"
-	@echo "  make nixos-build-vm-qemu"
 	@echo "  make home-build-nv [USERNAME=<name>]"
 	@echo "  make home-switch-nv [USERNAME=<name>]"
 	@echo "  make disko-install WHAT=<host> DEV=/dev/<disk>"
@@ -65,22 +64,6 @@ nixos-run-vm:
 
 nixos-build-vm:
 	$(call nix-vm-action,prox,build,vm)
-
-########### nixos qemu
-nixos-build-vm-qemu:
-	# Using builder1vm as the canonical VM; QEMU comes from host.pkgs so the VM choice doesn't matter.
-	$(eval QEMU_VM_PREFIX := $(if $(filter Darwin,$(shell uname -s)),local,prox))
-	nix build .#nixosConfigurations.$(QEMU_VM_PREFIX)-builder1vm.config.system.build.vmQemu $(ARGS)
-
-########### proxmox iso
-nixos-build-prox-iso:
-	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:"; \
-		$(call VM_TYPES,prox); \
-		exit 1; \
-	fi
-	# Proxmox VMs are x86_64 in this setup; use prox-* VM configs.
-	nix build $(call builder-opts) .#nixosConfigurations.prox-$(WHAT)vm.config.virtualisation.proxmox.iso $(ARGS)
 
 ########### nixos
 nixos-build-target:
