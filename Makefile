@@ -49,9 +49,6 @@ help:
 	@echo "  make darwin-build-target WHAT=<host>"
 	@echo "  make nixos-build"
 	@echo "  make darwin-build"
-	@echo "  make nixos-switch"
-	@echo "  make darwin-switch"
-	@echo "  make switch"
 	@echo "  make local-vm WHAT=<type>"
 	@echo "  make build-local-vm WHAT=<type>"
 	@echo "  make nixos-run-vm WHAT=<type>"
@@ -103,9 +100,6 @@ nixos-build-target:
 nixos-build:
 	nix build $(call builder-opts) .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
 
-nixos-switch:
-	sudo nixos-rebuild switch --flake .#$(shell hostname) $(call builder-opts) $(ARGS)
-
 disko-install:
 	@if [ "x$(WHAT)" = "x" -o "x$(DEV)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=host DEV=/dev/XXX"; \
@@ -120,19 +114,6 @@ darwin-build:
 
 darwin-build-target:
 	$(call nix-config-action,.#darwinConfigurations.$(WHAT).system)
-
-darwin-switch:
-	sudo -H nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
-
-switch:
-	@if [ "$(shell uname -s)" = "Darwin" ]; then \
-		$(MAKE) darwin-switch; \
-	elif [ "$(shell uname -s)" = "Linux" ]; then \
-		$(MAKE) nixos-switch; \
-	else \
-		echo "Unsupported OS: $(shell uname -s)" >&2; \
-		exit 1; \
-	fi
 
 ########### standalone home-manager
 home-build-nv:

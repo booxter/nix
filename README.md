@@ -1,7 +1,7 @@
 # Nix configs
 
-This repo uses a `Makefile` as the main entrypoint for building and switching
-configurations. Most targets take `WHAT=` (a host or VM type). Running a target
+This repo uses a `Makefile` as the main entrypoint for builds and local VM
+workflows. Most targets take `WHAT=` (a host or VM type). Running a target
 without `WHAT` prints the available options when supported.
 
 ## Common commands
@@ -32,12 +32,10 @@ nix run .#prox-deploy -- srvarr prx1
 
 ```sh
 make nixos-build
-make nixos-switch
 
 make nixos-build-target WHAT=beast REMOTE=false
 
 make darwin-build
-make darwin-switch
 ```
 
 ## Fleet updates
