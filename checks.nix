@@ -24,6 +24,8 @@ helpers.forAllSystems (
       };
   in
   {
+    qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
+
     bats-tests = mkCheck {
       name = "bats-tests";
       nativeBuildInputs = with pkgs; [

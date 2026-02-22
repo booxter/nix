@@ -174,7 +174,7 @@
                 // {
                   inherit platform stateVersion virtPlatform;
                   hostname = localName;
-                  withProxmox = false;
+                  vmMode = "qemu";
                 }
               );
 
@@ -185,6 +185,7 @@
                   hostname = proxName;
                   platform = "x86_64-linux";
                   virtPlatform = "x86_64-linux";
+                  vmMode = "proxmox";
                 }
               );
             };

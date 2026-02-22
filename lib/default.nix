@@ -23,6 +23,7 @@ in
     mkRaspberryPi
     mkProxmox
     mkVM
+    mkVmHostPkgs
     forAllSystems
     ;
 }

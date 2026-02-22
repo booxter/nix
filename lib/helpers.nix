@@ -82,6 +82,28 @@ let
       builtins.getAttr targetSystem patchedProxmoxNixosModules
     else
       throw "Unsupported patch system for proxmox modules: ${targetSystem}";
+  mkVmHostPkgs =
+    virtPlatform:
+    import inputs.nixpkgs {
+      system = virtPlatform;
+      overlays = [
+        (final: prev: {
+          # Fix qemu hanging on beefy VMs due to fd limit exhaustion.
+          # Use heap based fdsets in g_poll.
+          glib = prev.glib.overrideAttrs (old: {
+            patches =
+              old.patches or [ ]
+              ++ prev.lib.optionals prev.stdenv.hostPlatform.isDarwin [
+                (prev.fetchpatch {
+                  url = "https://gitlab.gnome.org/ihar.hrachyshka/glib/-/commit/9bd63d0d265bd8128ffdee9cd5c3cc9821b37e92.patch";
+                  hash = "sha256-iwrqiTQbKP/PUEXZuOhQo6tBKCgelHNe0lFTC7hzxB8=";
+                  excludes = [ ".gitlab-ci.yml" ];
+                })
+              ];
+          });
+        })
+      ];
+    };
 in
 rec {
   mkHome =
@@ -190,7 +212,7 @@ rec {
   mkVM =
     args@{
       extraModules ? [ ],
-      withProxmox ? true,
+      vmMode ? "proxmox",
       sshPort ? null,
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
@@ -202,6 +224,18 @@ rec {
       proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
       ...
     }:
+    let
+      _ =
+        if
+          builtins.elem vmMode [
+            "qemu"
+            "proxmox"
+          ]
+        then
+          null
+        else
+          throw "Unsupported mkVM vmMode `${vmMode}`; expected one of: qemu, proxmox";
+    in
     mkNixos (
       args
       // {
@@ -238,28 +272,7 @@ rec {
                   memorySize = memorySize * 1024;
                   diskSize = diskSize * 1024;
 
-                  host.pkgs = (
-                    import inputs.nixpkgs {
-                      system = virtPlatform;
-                      overlays = [
-                        (final: prev: {
-                          # Fix qemu hanging on beefy VMs due to fd limit exhaustion.
-                          # Use heap based fdsets in g_poll.
-                          glib = prev.glib.overrideAttrs (old: {
-                            patches =
-                              old.patches or [ ]
-                              ++ prev.lib.optionals prev.stdenv.hostPlatform.isDarwin [
-                                (prev.fetchpatch {
-                                  url = "https://gitlab.gnome.org/ihar.hrachyshka/glib/-/commit/9bd63d0d265bd8128ffdee9cd5c3cc9821b37e92.patch";
-                                  hash = "sha256-iwrqiTQbKP/PUEXZuOhQo6tBKCgelHNe0lFTC7hzxB8=";
-                                  excludes = [ ".gitlab-ci.yml" ];
-                                })
-                              ];
-                          });
-                        })
-                      ];
-                    }
-                  );
+                  host.pkgs = mkVmHostPkgs virtPlatform;
                   graphics = false;
                 };
               }
@@ -271,7 +284,20 @@ rec {
               }
             )
           ]
-          ++ inputs.nixpkgs.lib.optionals withProxmox [
+          ++ inputs.nixpkgs.lib.optionals (vmMode == "qemu") [
+            (
+              { lib, ... }:
+              {
+                # Keep qemu-mode VM configs evaluable when system.build.toplevel is requested.
+                fileSystems."/" = lib.mkDefault {
+                  device = "/dev/disk/by-label/nixos";
+                  fsType = "ext4";
+                };
+                boot.loader.grub.devices = lib.mkDefault [ "nodev" ];
+              }
+            )
+          ]
+          ++ inputs.nixpkgs.lib.optionals (vmMode == "proxmox") [
             # proxmox vms
             (mkPatchedProxmoxNixosModules platform).declarative-vms
             (
@@ -567,4 +593,5 @@ rec {
     "aarch64-darwin"
     "x86_64-darwin"
   ];
+  inherit mkVmHostPkgs;
 }
