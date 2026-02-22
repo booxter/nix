@@ -5,7 +5,7 @@
   ];
 
   services.jellarr = {
-    enable = true;
+    enable = false;
     user = "jellyfin";
     group = "jellyfin";
     environmentFile = "/data/jellyfin.env"; # TODO: switch to sops
