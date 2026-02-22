@@ -5,6 +5,7 @@ setup() {
   mkdir -p "$workdir/secrets" "$workdir/bin"
   cd "$workdir"
   git init -q
+  bash_path="$(command -v bash)"
 
   cat > "$workdir/secrets/mair.yaml" <<'EOF'
 attic:
@@ -21,8 +22,9 @@ other:
   keep: "dst"
 EOF
 
-  cat > "$workdir/bin/sops" <<'EOF'
-#!/usr/bin/env bash
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
 set -euo pipefail
 if [[ "$1" == "--decrypt" ]]; then
   cat "$2"
@@ -35,10 +37,12 @@ if [[ "$1" == "--encrypt" ]]; then
 fi
 exit 1
 EOF
+  } > "$workdir/bin/sops"
   chmod +x "$workdir/bin/sops"
 
-  cat > "$workdir/bin/yq" <<'EOF'
-#!/usr/bin/env bash
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
 set -euo pipefail
 
 extract_top_level() {
@@ -125,6 +129,7 @@ fi
 
 exit 1
 EOF
+  } > "$workdir/bin/yq"
   chmod +x "$workdir/bin/yq"
 
   export PATH="$workdir/bin:$PATH"
