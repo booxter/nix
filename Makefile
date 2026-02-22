@@ -1,4 +1,6 @@
 # Define common args
+.DEFAULT_GOAL := help
+
 ARGS = -L --show-trace
 HM_ARGS = -b backup
 USERNAME ?= ihrachyshka
@@ -40,6 +42,26 @@ define nix-config-action
 
 	nix build $(call builder-opts) $(1) $(ARGS)
 endef
+
+help:
+	@echo "Available targets:"
+	@echo "  make nixos-build-target WHAT=<host> [REMOTE=false]"
+	@echo "  make darwin-build-target WHAT=<host>"
+	@echo "  make nixos-build"
+	@echo "  make darwin-build"
+	@echo "  make nixos-switch"
+	@echo "  make darwin-switch"
+	@echo "  make switch"
+	@echo "  make local-vm WHAT=<type>"
+	@echo "  make build-local-vm WHAT=<type>"
+	@echo "  make nixos-run-vm WHAT=<type>"
+	@echo "  make nixos-build-vm WHAT=<type>"
+	@echo "  make nixos-build-vm-qemu"
+	@echo "  make home-build-nv [USERNAME=<name>]"
+	@echo "  make home-switch-nv [USERNAME=<name>]"
+	@echo "  make disko-install WHAT=<host> DEV=/dev/<disk>"
+	@echo "  make pi-image"
+	@echo "  make bats"
 
 ########### tests
 bats:
