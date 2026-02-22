@@ -26,7 +26,7 @@ make nixos-build-vm WHAT=builder1
 ## Proxmox VMs
 
 ```sh
-make prox-vm WHAT=srvarr WHERE=prx1
+nix run .#prox-deploy -- srvarr prx1
 ```
 
 ## Host rebuilds
@@ -129,10 +129,17 @@ make home-build-nv
 make home-switch-nv
 ```
 
+## Tests
+
+Run Bats checks:
+
+```sh
+nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).bats-tests --no-link
+```
+
 ## Machines
 
-All VMs run on Proxmox hosts and are deployed with the `nixmoxer` tool
-(`scripts/push-vm-to-proxmox.sh`).
+All VMs run on Proxmox hosts and are deployed with `prox-deploy` (wrapper around `nixmoxer`).
 
 ### Infra (DHCP, Proxmox)
 

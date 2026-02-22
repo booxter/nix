@@ -45,6 +45,10 @@ endef
 inputs-update:
 	nix flake update
 
+########### tests
+bats:
+	nix build .#checks.$(shell nix eval --impure --raw --expr builtins.currentSystem).bats-tests --no-link
+
 ########### local vms
 local-vm:
 	$(call nix-vm-action,local,run,vm)
@@ -64,21 +68,6 @@ nixos-build-vm-qemu:
 	# Using builder1vm as the canonical VM; QEMU comes from host.pkgs so the VM choice doesn't matter.
 	$(eval QEMU_VM_PREFIX := $(if $(filter Darwin,$(shell uname -s)),local,prox))
 	nix build .#nixosConfigurations.$(QEMU_VM_PREFIX)-builder1vm.config.system.build.vmQemu $(ARGS)
-
-########### proxmox vms
-prox-vm:
-	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=type WHERE=hv"; echo; echo "Available vms:"; \
-		$(call VM_TYPES,prox); \
-		exit 1; \
-	fi
-
-	@if [ "x$(WHERE)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=type WHERE=hv"; \
-		exit 1; \
-	fi
-
-	./scripts/push-vm-to-proxmox.sh $(WHERE) root priv/lab-$(WHERE) prox-$(WHAT)vm
 
 ########### nixos
 nixos-build-target:
