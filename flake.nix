@@ -39,7 +39,7 @@
     nur.url = "github:nix-community/NUR";
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
-    proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
+    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos/main";
 
     disko.url = "github:nix-community/disko/latest";
 

@@ -30,6 +30,58 @@ let
   upsNonVmShutdownDelaySeconds = 900;
   upsShutdownDelaySeconds =
     isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
+  # Apply upstream module PR deltas once and reuse the imported modules.
+  #
+  # NOTE: Patching the proxmox module source is architecture-agnostic, but
+  # pkgs.applyPatches itself is a derivation and therefore has a build system.
+  # Use target-system patch tooling so each Linux runner can evaluate its
+  # corresponding target architecture without cross-arch requirements.
+  patchedProxmoxNixosModules =
+    let
+      mkPatchedModules =
+        patchSystem:
+        let
+          pkgs = inputs.nixpkgs.legacyPackages.${patchSystem};
+        in
+        import "${
+          pkgs.applyPatches {
+            name = "proxmox-nixos-source-patched";
+            src = inputs.proxmox-nixos.outPath;
+            patches = [
+              # PR #195: allow setting only `cpu.cputype` by making other CPU sub-options nullable/defaulted.
+              # https://github.com/SaumonNet/proxmox-nixos/pull/195
+              (pkgs.fetchpatch {
+                url = "https://github.com/SaumonNet/proxmox-nixos/commit/dc7e3daff2527155c0d4d685a0ce88dfa6aff8a2.patch";
+                hash = "sha256-vvlKTzsYKFuukwJTPmSsOrKawL/Tu01yekQRbBopVIU=";
+              })
+              # PR #196: stop defaulting `vga.clipboard` to "vnc" (set null by default for migration compatibility).
+              # https://github.com/SaumonNet/proxmox-nixos/pull/196
+              (pkgs.fetchpatch {
+                url = "https://github.com/SaumonNet/proxmox-nixos/commit/0ebf346501f6b5c93f9c37537d296cd2187aaf78.patch";
+                hash = "sha256-JCYAL0dusUjLejj4TF2lw4PWxOi/ZOXMEJTUEM/UXUA=";
+              })
+            ];
+          }
+        }/modules";
+      patchSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+    in
+    builtins.listToAttrs (
+      map (patchSystem: {
+        name = patchSystem;
+        value = mkPatchedModules patchSystem;
+      }) patchSystems
+    );
+  mkPatchedProxmoxNixosModules =
+    targetSystem:
+    if builtins.hasAttr targetSystem patchedProxmoxNixosModules then
+      builtins.getAttr targetSystem patchedProxmoxNixosModules
+    else
+      throw "Unsupported patch system for proxmox modules: ${targetSystem}";
 in
 rec {
   mkHome =
@@ -219,7 +271,7 @@ rec {
             )
 
             # proxmox vms
-            inputs.proxmox-nixos.nixosModules.declarative-vms
+            (mkPatchedProxmoxNixosModules platform).declarative-vms
             (
               { ... }:
               {
@@ -284,7 +336,7 @@ rec {
         extraModules =
           extraModules
           ++ [
-            inputs.proxmox-nixos.nixosModules.proxmox-ve
+            (mkPatchedProxmoxNixosModules platform).proxmox-ve
 
             (
               { pkgs, ... }:
