@@ -77,7 +77,7 @@ nixos-build-prox-iso:
 		exit 1; \
 	fi
 	# Proxmox VMs are x86_64 in this setup; use prox-* VM configs.
-	nix build .#nixosConfigurations.prox-$(WHAT)vm.config.virtualisation.proxmox.iso $(ARGS)
+	nix build $(call builder-opts) .#nixosConfigurations.prox-$(WHAT)vm.config.virtualisation.proxmox.iso $(ARGS)
 
 ########### nixos
 nixos-build-target:
