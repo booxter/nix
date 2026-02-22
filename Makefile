@@ -54,11 +54,6 @@ help:
 	@echo "  make home-build-nv [USERNAME=<name>]"
 	@echo "  make home-switch-nv [USERNAME=<name>]"
 	@echo "  make disko-install WHAT=<host> DEV=/dev/<disk>"
-	@echo "  make bats"
-
-########### tests
-bats:
-	nix build .#checks.$(shell nix eval --impure --raw --expr builtins.currentSystem).bats-tests --no-link
 
 ########### local vms
 local-vm:
