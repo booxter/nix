@@ -137,6 +137,10 @@ Run Bats checks:
 nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).bats-tests --no-link
 ```
 
+## CI
+
+CI matrix selection rules and skip behavior are documented in [.github/README.md](.github/README.md).
+
 ## Machines
 
 All VMs run on Proxmox hosts and are deployed with `prox-deploy` (wrapper around `nixmoxer`).
