@@ -120,9 +120,13 @@ nix run .#sops-copy -- mair prx1-lab attic
 ## Home Manager
 
 ```sh
-make home-build-nv
+make linux-home-build-target TARGET=nv
+make darwin-home-build-target TARGET=mair
 make home-switch-nv
 ```
+
+`TARGET` must match a standalone Home Manager profile from
+`homeConfigurations` (the part after `${USERNAME}@`).
 
 ## Tests
 

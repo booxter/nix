@@ -96,7 +96,8 @@ jobs:
                 { name: "beast (x86_64-linux)", cmd: "make nixos-build-target WHAT=beast", os: "ubuntu-latest" },
                 { name: "srvarr (x86_64-linux)", cmd: "make nixos-build-target WHAT=prox-srvarrvm", os: "ubuntu-latest" },
                 { name: "nixos vm builder1 (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.system.build.vm -L --show-trace", os: "ubuntu-latest" },
-                { name: "home-manager nv (x86_64-linux)", cmd: "make home-build-nv USERNAME=ihrachyshka", os: "ubuntu-latest" },
+                { name: "home-manager nv (x86_64-linux)", cmd: "make linux-home-build-target TARGET=nv USERNAME=ihrachyshka", os: "ubuntu-latest" },
+                { name: "home-manager mair (aarch64-darwin)", cmd: "make darwin-home-build-target TARGET=mair USERNAME=ihrachyshka", os: "macos-26" },
                 { name: "mair-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=mair-ci", os: "macos-26" },
                 { name: "mmini-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=mmini-ci", os: "macos-26" },
                 { name: "JGWXHWDL4X-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=JGWXHWDL4X-ci", os: "macos-26" },
@@ -157,7 +158,7 @@ jobs:
               { prefix: "nixos/beast/", jobs: [ "beast (x86_64-linux)" ] },
               { prefix: "nixos/srvarrvm/", jobs: [ "srvarr (x86_64-linux)" ] },
               { prefix: "nixos/cachevm/", jobs: [ "cache (x86_64-linux)" ] },
-              { prefix: "darwin/mair/", jobs: [ "mair-ci (aarch64-darwin)" ] },
+              { prefix: "darwin/mair/", jobs: [ "mair-ci (aarch64-darwin)", "home-manager mair (aarch64-darwin)" ] },
               { prefix: "darwin/mmini/", jobs: [ "mmini-ci (aarch64-darwin)" ] },
               { prefix: "darwin/JGWXHWDL4X/", jobs: [ "JGWXHWDL4X-ci (aarch64-darwin)" ] }
             ];

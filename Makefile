@@ -11,6 +11,12 @@ NIX_OPTS = \
 NIXOS_CONFIGS = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
 VM_TYPES = $(NIXOS_CONFIGS) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
 
+define home-targets-for-system
+nix eval --json --apply 'hc: builtins.mapAttrs (_: v: v.activationPackage.drvAttrs.system) hc' .#homeConfigurations \
+	| jq -r 'to_entries[] | select(.value=="$(1)") | .key' \
+	| sed 's/^$(USERNAME)@//'
+endef
+
 REMOTE ?= true
 LOCAL_LOCAL_BUILDERS := $(shell ./scripts/get-local-builders.sh --local)
 
@@ -43,12 +49,32 @@ define nix-config-action
 	nix build $(call builder-opts) $(1) $(ARGS)
 endef
 
+define standalone-home-build-action
+	@if [ "x$(TARGET)" = "x" ]; then \
+		echo "Usage: make $@ TARGET=profile [USERNAME=<name>] [REMOTE=false]"; \
+		echo; \
+		echo "Available $(1) home profiles:"; \
+		$(call home-targets-for-system,$(2)); \
+		exit 1; \
+	fi
+	@if ! ($(call home-targets-for-system,$(2)) | grep -Fxq "$(TARGET)"); then \
+		echo "Unknown $(1) home profile: $(TARGET)"; \
+		echo; \
+		echo "Available $(1) home profiles:"; \
+		$(call home-targets-for-system,$(2)); \
+		exit 1; \
+	fi
+
+	nix build $(call builder-opts) .#homeConfigurations.$(USERNAME)@$(TARGET).activationPackage $(ARGS)
+endef
+
 help:
 	@echo "Available targets:"
 	@echo "  make nixos-build-target WHAT=<host> [REMOTE=false]"
 	@echo "  make darwin-build-target WHAT=<host> [REMOTE=false]"
 	@echo "  make local-vm WHAT=<type>"
-	@echo "  make home-build-nv [USERNAME=<name>]"
+	@echo "  make linux-home-build-target TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
+	@echo "  make darwin-home-build-target TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 	@echo "  make home-switch-nv [USERNAME=<name>]"
 	@echo "  make disko-install WHAT=<host> DEV=/dev/<disk>"
 
@@ -73,9 +99,11 @@ disko-install:
 darwin-build-target:
 	$(call nix-config-action,.#darwinConfigurations.$(WHAT).system)
 
-########### standalone home-manager
-home-build-nv:
-	nix run nixpkgs#home-manager -- build --flake .#${USERNAME}@nv $(ARGS)
+linux-home-build-target:
+	$(call standalone-home-build-action,linux,x86_64-linux)
+
+darwin-home-build-target:
+	$(call standalone-home-build-action,darwin,aarch64-darwin)
 
 home-switch-nv:
 	nix run nixpkgs#home-manager -- switch --flake .#${USERNAME}@nv $(ARGS) $(HM_ARGS)
