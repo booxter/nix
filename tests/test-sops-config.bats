@@ -47,10 +47,10 @@ load_test_script() {
   }
 }
 
-@test "sops-merge-template merges missing keys from template" {
+@test "sops-update merges missing keys from default template" {
   workdir="$BATS_TMPDIR/sops-merge"
-  mkdir -p "$workdir/secrets/_templates"
-  cat > "$workdir/secrets/_templates/beast.yaml" <<'EOF'
+  mkdir -p "$workdir/secrets"
+  cat > "$workdir/secrets/_template.yaml" <<'EOF'
 msmtp:
   gmail_password: "REPLACE_ME"
 other:
@@ -92,7 +92,7 @@ EOF
     return 1
   }
 
-  source "$BATS_TEST_DIRNAME/../scripts/sops-merge-template.sh"
+  source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
   run main --host beast
   [ "$status" -eq 0 ]
   grep -q 'gmail_password: "SECRET"' "$workdir/secrets/beast.yaml"
@@ -131,10 +131,10 @@ EOF
   [[ "$output" == *"sops config check passed."* ]]
 }
 
-@test "passes with template stored under secrets/_templates" {
+@test "passes with default template stored under secrets/_template.yaml" {
   workdir="$BATS_TMPDIR/sops-template"
-  mkdir -p "$workdir/secrets/_templates"
-  cat > "$workdir/secrets/_templates/beast.yaml" <<'EOF'
+  mkdir -p "$workdir/secrets"
+  cat > "$workdir/secrets/_template.yaml" <<'EOF'
 msmtp:
   gmail_password: "REPLACE_ME"
 EOF

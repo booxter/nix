@@ -1,0 +1,9 @@
+keys:
+  - age1zha8umledk8vcsqpvkkfsm65wyk7q8gk4y245nzrytyj7hlkffpsact628
+  - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
+creation_rules:
+  - path_regex: secrets/mair\.yaml$
+    key_groups:
+      - age:
+          - age1zha8umledk8vcsqpvkkfsm65wyk7q8gk4y245nzrytyj7hlkffpsact628
+          - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv

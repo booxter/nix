@@ -4,7 +4,8 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-merge-template.sh [--host HOST]
+  scripts/sops-update.sh [HOST]
+  scripts/sops-update.sh [--host HOST]
 
 Update secrets/HOST.yaml from template defaults in secrets/_template.yaml.
 
@@ -32,8 +33,13 @@ main() {
         shift 2
         ;;
       *)
-        usage
-        exit 1
+        if [[ -z "$host" ]]; then
+          host="$1"
+          shift
+        else
+          usage
+          exit 1
+        fi
         ;;
     esac
   done
@@ -59,12 +65,14 @@ main() {
 
   tmp="$(mktemp)"
   merged="$(mktemp)"
+  encrypted="$(mktemp)"
 
-  trap 'rm -f "$tmp" "$merged"' EXIT
+  trap 'rm -f "$tmp" "$merged" "$encrypted"' EXIT
 
   sops --decrypt "$secret" > "$tmp"
   yq -s '.[0] * .[1]' "$template" "$tmp" > "$merged"
-  sops --encrypt --input-type yaml --output-type yaml "$merged" > "$secret"
+  sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$merged" > "$encrypted"
+  mv "$encrypted" "$secret"
 
   echo "Updated secret from template: $secret"
 }

@@ -76,7 +76,7 @@ case "$cmd" in
 
     secrets_dir="secrets"
     secrets_file="${secrets_dir}/${host}.yaml"
-    template_file="secrets/_templates/${host}.yaml"
+    template_file="secrets/_template.yaml"
     sops_yaml=".sops.yaml"
 
     mkdir -p "$secrets_dir"
@@ -118,14 +118,21 @@ EOF
     fi
 
     if [[ ! -f "$secrets_file" ]]; then
+      encrypted="$(mktemp)"
+      trap 'rm -f "$encrypted"' EXIT
       if [[ -f "$template_file" ]]; then
-        sops --encrypt --age "$age" --input-type yaml --output-type yaml \
-          "$template_file" > "$secrets_file"
+        sops --encrypt --filename-override "$secrets_file" --input-type yaml --output-type yaml \
+          "$template_file" > "$encrypted"
       else
-        sops --encrypt --age "$age" --input-type yaml --output-type yaml <<'EOF' > "$secrets_file"
+        sops --encrypt --filename-override "$secrets_file" --input-type yaml --output-type yaml <<'EOF' > "$encrypted"
 {}
 EOF
       fi
+      if [[ ! -f "$encrypted" || ! -s "$encrypted" ]]; then
+        echo "Failed to create encrypted secret for $secrets_file."
+        exit 1
+      fi
+      mv "$encrypted" "$secrets_file"
       echo "Created encrypted $secrets_file."
     else
       echo "$secrets_file already exists."

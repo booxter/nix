@@ -70,24 +70,48 @@ make pi-image
 ## Secrets
 
 Secrets are managed via sops-nix, with one encrypted YAML per host under `secrets/`.
-Optional templates can live in `secrets/_templates/` to prefill host-specific keys.
+The shared plaintext seed template is `secrets/_template.yaml`.
+Use flake apps for bootstrap so required tools are provided automatically.
 
 Bootstrap (beast example):
 
 ```sh
-scripts/sops-bootstrap-remote.sh --host beast
+nix run .#sops-bootstrap-remote -- --host beast
 ```
 
 This will:
 - create `/var/lib/sops-nix/key.txt` on the host (if missing)
 - fetch the age public key
 - create `.sops.yaml` if needed (or patch it)
-- create `secrets/beast.yaml` encrypted with that key
+- create `secrets/beast.yaml` encrypted using `.sops.yaml` creation rules
+
+Bootstrap for the current machine (mair example):
+
+```sh
+nix run .#sops-host-keygen
+nix run .#sops-repo-init -- --host mair --age 'age1...'
+```
 
 Afterwards, edit the secret with:
 
 ```sh
-scripts/sops-edit.sh --host beast
+nix run .#sops-edit -- beast
+```
+
+For the current host (detected via `hostname -s`), you can omit `--host`:
+
+```sh
+nix run .#sops-cat
+nix run .#sops-edit
+nix run .#sops-update
+```
+
+Or pass a host name as a positional argument:
+
+```sh
+nix run .#sops-cat -- mair
+nix run .#sops-edit -- mair
+nix run .#sops-update -- mair
 ```
 
 ## Home Manager

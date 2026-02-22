@@ -113,6 +113,7 @@
       (ripgrep.override { withPCRE2 = true; })
       ack
       act
+      age
       bc
       curl
       delve # go debugger
@@ -133,6 +134,7 @@
       openssl
       podman
       pre-commit
+      sops
       wget
       yq-go
       zstd
@@ -150,6 +152,7 @@
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
     CONTAINERS_MACHINE_PROVIDER = "libkrun";
+    SOPS_AGE_KEY_FILE = "${config.home.homeDirectory}/.config/sops/age/keys.txt";
   };
 
   home.file = {

@@ -330,6 +330,12 @@
 
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
+      apps = helpers.forAllSystems (
+        system:
+        import ./lib/sops.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.${system};
+        }
+      );
       formatter = helpers.forAllSystems (
         system:
         let

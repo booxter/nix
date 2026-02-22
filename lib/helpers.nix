@@ -487,6 +487,7 @@ rec {
       };
       modules = [
         inputs.nix-homebrew.darwinModules.nix-homebrew
+        inputs.sops-nix.darwinModules.sops
         ../common
         ../darwin
 
