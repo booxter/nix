@@ -36,7 +36,7 @@ endef
 define nix-config-action
 	# $(1): build target attribute path
 	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=host"; \
+		echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
 		exit 1; \
 	fi
 
@@ -46,7 +46,7 @@ endef
 help:
 	@echo "Available targets:"
 	@echo "  make nixos-build-target WHAT=<host> [REMOTE=false]"
-	@echo "  make darwin-build-target WHAT=<host>"
+	@echo "  make darwin-build-target WHAT=<host> [REMOTE=false]"
 	@echo "  make local-vm WHAT=<type>"
 	@echo "  make nixos-run-vm WHAT=<type>"
 	@echo "  make nixos-build-vm WHAT=<type>"
