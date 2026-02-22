@@ -425,24 +425,20 @@ git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
 
 cd "$repo_dir"
 
-if make -n switch >/dev/null 2>&1; then
-  make switch
-else
-  os="$(uname -s)"
-  # TODO: remove once all machines have the switch target.
-  case "$os" in
-    Darwin)
-      make darwin-switch
-      ;;
-    Linux)
-      make nixos-switch
-      ;;
-    *)
-      echo "Unsupported OS: $os" >&2
-      exit 1
-      ;;
-  esac
-fi
+os="$(uname -s)"
+host_name="$(hostname)"
+case "$os" in
+  Darwin)
+    sudo -H nix run nix-darwin -- switch --flake ".#${host_name}" -L --show-trace
+    ;;
+  Linux)
+    sudo nixos-rebuild switch --flake ".#${host_name}" -L --show-trace
+    ;;
+  *)
+    echo "Unsupported OS: $os" >&2
+    exit 1
+    ;;
+esac
 REMOTE
 )"
   if is_local_host "$host"; then
