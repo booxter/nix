@@ -10,7 +10,7 @@
   ];
 
   environment.etc."nut/nut.conf".text = ''
-    MODE = netclient
+    MODE = netclient1
   '';
 
   # TODO: rotate this password and migrate to sops-managed secrets.
