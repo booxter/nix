@@ -334,11 +334,12 @@
         let
           pkgs = inputs.nixpkgs.legacyPackages.${system};
           sopsApps = import ./lib/sops.nix { inherit pkgs; };
+          fleetApps = import ./lib/fleet.nix { inherit pkgs; };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;
           };
         in
-        sopsApps // proxmox.apps
+        sopsApps // fleetApps // proxmox.apps
       );
       formatter = helpers.forAllSystems (
         system:

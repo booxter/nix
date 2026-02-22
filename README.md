@@ -42,21 +42,21 @@ make darwin-switch
 
 ## Fleet updates
 
-Update multiple machines over SSH with `scripts/update-machines.sh` (defaults to
+Update multiple machines over SSH with `nix run .#fleet-upgrade` (defaults to
 `--all`):
 
 ```sh
 # Update all personal machines (default)
-./scripts/update-machines.sh -A
+nix run .#fleet-upgrade -- -A
 
 # Update all work machines
-./scripts/update-machines.sh -A --work
+nix run .#fleet-upgrade -- -A --work
 
 # Update a subset interactively (fzf required)
-./scripts/update-machines.sh -A --select
+nix run .#fleet-upgrade -- -A --select
 
 # Dry run (SSH check + disk estimate only)
-./scripts/update-machines.sh -A --dry-run
+nix run .#fleet-upgrade -- -A --dry-run
 ```
 
 ## Disk and image helpers
