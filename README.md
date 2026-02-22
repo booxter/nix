@@ -16,8 +16,6 @@ make darwin-build-target WHAT=mair
 
 ```sh
 make local-vm WHAT=builder1
-
-make nixos-build-vm WHAT=builder1
 ```
 
 ## Proxmox VMs

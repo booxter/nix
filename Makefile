@@ -48,7 +48,6 @@ help:
 	@echo "  make nixos-build-target WHAT=<host> [REMOTE=false]"
 	@echo "  make darwin-build-target WHAT=<host> [REMOTE=false]"
 	@echo "  make local-vm WHAT=<type>"
-	@echo "  make nixos-build-vm WHAT=<type>"
 	@echo "  make home-build-nv [USERNAME=<name>]"
 	@echo "  make home-switch-nv [USERNAME=<name>]"
 	@echo "  make disko-install WHAT=<host> DEV=/dev/<disk>"
@@ -58,9 +57,6 @@ local-vm:
 	$(call nix-vm-action,local,run,vm)
 
 ########### nixos vms
-nixos-build-vm:
-	$(call nix-vm-action,prox,build,vm)
-
 ########### nixos
 nixos-build-target:
 	$(call nix-config-action,.#nixosConfigurations.$(WHAT).config.system.build.toplevel)
