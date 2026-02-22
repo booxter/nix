@@ -64,6 +64,7 @@ in
       ngrep
       procps
       pstree
+      ripgrep
       sops
       speedtest-cli
       tcpdump
