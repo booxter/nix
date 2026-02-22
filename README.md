@@ -73,24 +73,27 @@ Secrets are managed via sops-nix, with one encrypted YAML per host under `secret
 The shared plaintext seed template is `secrets/_template.yaml`.
 Use flake apps for bootstrap so required tools are provided automatically.
 
-Bootstrap (beast example):
+Bootstrap a remote host over SSH (beast example):
 
 ```sh
-nix run .#sops-bootstrap-remote -- --host beast
+nix run .#sops-bootstrap -- beast
+```
+
+If SSH user differs from your local username:
+
+```sh
+nix run .#sops-bootstrap -- beast --user root
 ```
 
 This will:
 - create `/var/lib/sops-nix/key.txt` on the host (if missing)
 - fetch the age public key
-- create `.sops.yaml` if needed (or patch it)
+- create `.sops.yaml` if needed (or patch it), including your local age key as a recipient for that host rule
 - create `secrets/beast.yaml` encrypted using `.sops.yaml` creation rules
 
-Bootstrap for the current machine (mair example):
-
-```sh
-nix run .#sops-host-keygen
-nix run .#sops-repo-init -- --host mair --age 'age1...'
-```
+Notes:
+- `sops-bootstrap` needs a real terminal (`ssh -tt`) because it may prompt for remote `sudo` password.
+- It reads your local age key from `$SOPS_AGE_KEY_FILE` or `~/.config/sops/age/keys.txt`.
 
 Afterwards, edit the secret with:
 
@@ -98,7 +101,7 @@ Afterwards, edit the secret with:
 nix run .#sops-edit -- beast
 ```
 
-For the current host (detected via `hostname -s`), you can omit `--host`:
+For the current host (detected via `hostname -s`), you can omit the host argument:
 
 ```sh
 nix run .#sops-cat
@@ -112,6 +115,12 @@ Or pass a host name as a positional argument:
 nix run .#sops-cat -- mair
 nix run .#sops-edit -- mair
 nix run .#sops-update -- mair
+```
+
+Copy a section between host secrets (example: copy `attic` from `mair` to `prx1-lab`):
+
+```sh
+nix run .#sops-copy -- mair prx1-lab attic
 ```
 
 ## Home Manager

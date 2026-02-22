@@ -4,11 +4,11 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-merge-template.sh [--host HOST]
+  scripts/sops-merge-template.sh [HOST]
 
 Update secrets/HOST.yaml from template defaults in secrets/_template.yaml.
 
-If --host is omitted, the current short hostname is used.
+If HOST is omitted, the current short hostname is used.
 Template keys are added only if missing; existing values win.
 EOF
 }
@@ -27,13 +27,14 @@ main() {
   host=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
-      --host)
-        host="$2"
-        shift 2
-        ;;
       *)
-        usage
-        exit 1
+        if [[ -z "$host" ]]; then
+          host="$1"
+          shift
+        else
+          usage
+          exit 1
+        fi
         ;;
     esac
   done

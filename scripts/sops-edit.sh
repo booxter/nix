@@ -5,9 +5,8 @@ usage() {
   cat <<'EOF'
 Usage:
   scripts/sops-edit.sh [HOST]
-  scripts/sops-edit.sh [--host HOST]
 
-If --host is omitted, the current short hostname is used.
+If HOST is omitted, the current short hostname is used.
 If a template exists for HOST, merge it into the secret first.
 Then open the secret for editing with sops.
 EOF
@@ -28,10 +27,6 @@ resolve_repo_root() {
 repo_root="$(resolve_repo_root)"
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --host)
-      host="$2"
-      shift 2
-      ;;
     *)
       if [[ -z "$host" ]]; then
         host="$1"
@@ -57,7 +52,7 @@ if [[ ! -f "$secret" ]]; then
 fi
 
 if [[ -f "$default_template" ]]; then
-  "${repo_root}/scripts/sops-update.sh" --host "$host"
+  "${repo_root}/scripts/sops-update.sh" "$host"
 fi
 
 sops "$secret"

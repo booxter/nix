@@ -46,7 +46,21 @@ let
     '';
   };
 
-  # Generic bootstrap command with subcommands (host-keygen/repo-init).
+  # Copy a key path from one host secret into another host secret.
+  sops-copy = pkgs.writeShellApplication {
+    name = "sops-copy";
+    runtimeInputs = with pkgs; [
+      coreutils
+      git
+      sops
+      yq
+    ];
+    text = ''
+      exec ${../scripts/sops-copy.sh} "$@"
+    '';
+  };
+
+  # Bootstrap a remote host over SSH and initialize its encrypted secret file.
   sops-bootstrap = pkgs.writeShellApplication {
     name = "sops-bootstrap";
     runtimeInputs = with pkgs; [
@@ -61,62 +75,12 @@ let
       exec ${../scripts/sops-bootstrap.sh} "$@"
     '';
   };
-
-  # Generate/read /var/lib/sops-nix/key.txt and print the age public key.
-  sops-host-keygen = pkgs.writeShellApplication {
-    name = "sops-host-keygen";
-    runtimeInputs = with pkgs; [
-      age
-      gnugrep
-      openssh
-      ripgrep
-      sops
-      yq
-    ];
-    text = ''
-      exec ${../scripts/sops-bootstrap.sh} host-keygen "$@"
-    '';
-  };
-
-  # Create/update .sops.yaml and initialize encrypted secrets/HOST.yaml.
-  sops-repo-init = pkgs.writeShellApplication {
-    name = "sops-repo-init";
-    runtimeInputs = with pkgs; [
-      age
-      gnugrep
-      openssh
-      ripgrep
-      sops
-      yq
-    ];
-    text = ''
-      exec ${../scripts/sops-bootstrap.sh} repo-init "$@"
-    '';
-  };
-
-  # Bootstrap a remote host over SSH and initialize its encrypted secret file.
-  sops-bootstrap-remote = pkgs.writeShellApplication {
-    name = "sops-bootstrap-remote";
-    runtimeInputs = with pkgs; [
-      age
-      gnugrep
-      openssh
-      ripgrep
-      sops
-      yq
-    ];
-    text = ''
-      exec ${../scripts/sops-bootstrap-remote.sh} "$@"
-    '';
-  };
 in
 {
   default = mkApp "${sops-bootstrap}/bin/sops-bootstrap";
   "sops-bootstrap" = mkApp "${sops-bootstrap}/bin/sops-bootstrap";
-  "sops-bootstrap-remote" = mkApp "${sops-bootstrap-remote}/bin/sops-bootstrap-remote";
-  "sops-host-keygen" = mkApp "${sops-host-keygen}/bin/sops-host-keygen";
-  "sops-repo-init" = mkApp "${sops-repo-init}/bin/sops-repo-init";
   "sops-cat" = mkApp "${sops-cat}/bin/sops-cat";
   "sops-edit" = mkApp "${sops-edit}/bin/sops-edit";
   "sops-update" = mkApp "${sops-update}/bin/sops-update";
+  "sops-copy" = mkApp "${sops-copy}/bin/sops-copy";
 }

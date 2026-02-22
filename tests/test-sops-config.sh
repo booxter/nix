@@ -37,11 +37,11 @@ assert_sops_yaml_present() {
 
 check_sops_yaml_structure() {
   if [[ -f .sops.yaml ]]; then
-    if [[ "$(yq -r 'type' .sops.yaml)" != "!!map" ]]; then
+    if [[ "$(yq -r 'type' .sops.yaml)" != "object" ]]; then
       echo ".sops.yaml must be a YAML map at top-level."
       return 1
     fi
-    if [[ "$(yq -r '.keys | type' .sops.yaml)" != "!!seq" ]]; then
+    if [[ "$(yq -r '.keys | type' .sops.yaml)" != "array" ]]; then
       echo ".sops.yaml must contain a top-level 'keys' sequence."
       return 1
     fi
@@ -49,7 +49,7 @@ check_sops_yaml_structure() {
       echo ".sops.yaml 'keys' sequence must not be empty."
       return 1
     fi
-    if [[ "$(yq -r '.creation_rules | type' .sops.yaml)" != "!!seq" ]]; then
+    if [[ "$(yq -r '.creation_rules | type' .sops.yaml)" != "array" ]]; then
       echo ".sops.yaml must contain a top-level 'creation_rules' sequence."
       return 1
     fi
@@ -63,6 +63,9 @@ check_sops_yaml_structure() {
 check_secrets_encrypted() {
   if has_secrets; then
     for f in secrets/*.yaml; do
+      if [[ "$f" == "secrets/_template.yaml" ]]; then
+        continue
+      fi
       if ! yq -e '.sops' "$f" >/dev/null; then
         echo "$f is missing a 'sops' block (not encrypted?)."
         return 1

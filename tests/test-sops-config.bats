@@ -12,25 +12,25 @@ load_test_script() {
       case "$query" in
         "type")
           if grep -q '^keys:' "$file" || grep -q '^creation_rules:' "$file"; then
-            echo "!!map"
+            echo "object"
           else
-            echo "!!str"
+            echo "string"
           fi
           ;;
         ".keys | type")
-          if grep -q '^keys:' "$file"; then echo "!!seq"; else echo "!!null"; fi
+          if grep -q '^keys:' "$file"; then echo "array"; else echo "null"; fi
           ;;
         ".keys | length")
           if grep -q '^keys:' "$file"; then echo "1"; else echo "0"; fi
           ;;
         ".creation_rules | type")
-          if grep -q '^creation_rules:' "$file"; then echo "!!seq"; else echo "!!null"; fi
+          if grep -q '^creation_rules:' "$file"; then echo "array"; else echo "null"; fi
           ;;
         ".creation_rules | length")
           if grep -q '^creation_rules:' "$file"; then echo "1"; else echo "0"; fi
           ;;
         *)
-          echo "!!null"
+          echo "null"
           ;;
       esac
       return 0
@@ -63,15 +63,16 @@ sops:
   dummy: true
 EOF
   cd "$workdir"
+  git init -q
 
   sops() {
     if [[ "$1" == "--decrypt" ]]; then
       cat "$2"
       return 0
     fi
-    if [[ "$1" == "--encrypt" && "$2" == "--in-place" ]]; then
-      local target="${@: -1}"
-      cat - > "$target"
+    if [[ "$1" == "--encrypt" ]]; then
+      local source_file="${@: -1}"
+      cat "$source_file"
       return 0
     fi
     return 1
@@ -82,7 +83,7 @@ EOF
       # Minimal merge: keep secret value if present, otherwise take template.
       local file_a="$3"
       local file_b="$4"
-      if rg -q 'gmail_password: "SECRET"' "$file_b"; then
+      if grep -q 'gmail_password: "SECRET"' "$file_b"; then
         printf '%s\n' 'msmtp:' '  gmail_password: "SECRET"' 'other:' '  key: "TEMPLATE"'
       else
         cat "$file_a"
@@ -93,7 +94,7 @@ EOF
   }
 
   source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
-  run main --host beast
+  run main beast
   [ "$status" -eq 0 ]
   grep -q 'gmail_password: "SECRET"' "$workdir/secrets/beast.yaml"
   grep -q 'key: "TEMPLATE"' "$workdir/secrets/beast.yaml"

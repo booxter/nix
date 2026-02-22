@@ -425,6 +425,7 @@ rec {
       modules = [
         ../common
         ../nixos
+        inputs.sops-nix.nixosModules.sops
 
         # base hardware modules
         {
