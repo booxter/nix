@@ -7,7 +7,6 @@ without `WHAT` prints the available options when supported.
 ## Common commands
 
 ```sh
-make inputs-update
 make nixos-build-target WHAT=frame
 make darwin-build-target WHAT=mair
 

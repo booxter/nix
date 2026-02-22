@@ -41,10 +41,6 @@ define nix-config-action
 	nix build $(call builder-opts) $(1) $(ARGS)
 endef
 
-# Also the default target (just call `make`)
-inputs-update:
-	nix flake update
-
 ########### tests
 bats:
 	nix build .#checks.$(shell nix eval --impure --raw --expr builtins.currentSystem).bats-tests --no-link
