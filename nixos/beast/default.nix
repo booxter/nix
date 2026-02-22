@@ -213,6 +213,8 @@ in
   environment.systemPackages = with pkgs; [
     btrfs-progs
     hdparm
+    intel-gpu-tools
+    libva-utils
     lm_sensors
     mdadm
     nvme-cli
