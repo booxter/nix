@@ -135,6 +135,18 @@ jobs:
             }
             core.setOutput("docs_only", "false");
 
+            const onlyDarwinPaths = paths.length > 0 && paths.every((p) => p.startsWith("darwin/"));
+            const onlyNixosPaths = paths.length > 0 && paths.every((p) => p.startsWith("nixos/"));
+
+            let candidateInclude = fullMatrix.include;
+            if (onlyDarwinPaths) {
+              candidateInclude = fullMatrix.include.filter((item) => item.os.startsWith("macos-"));
+              core.info(`Darwin-only change detected, scoping matrix to ${candidateInclude.length} macOS job(s).`);
+            } else if (onlyNixosPaths) {
+              candidateInclude = fullMatrix.include.filter((item) => !item.os.startsWith("macos-"));
+              core.info(`NixOS-only change detected, scoping matrix to ${candidateInclude.length} Linux job(s).`);
+            }
+
             const machinePathMap = [
               { prefix: "nixos/frame/", jobs: [ "frame (x86_64-linux)" ] },
               { prefix: "nixos/nvws/", jobs: [ "nvws (x86_64-linux)" ] },
@@ -169,14 +181,14 @@ jobs:
               }
             }
 
-            let matrix = fullMatrix;
+            let matrix = { include: candidateInclude };
             if (onlyMachineSpecific && selected.size > 0) {
               matrix = {
-                include: fullMatrix.include.filter((item) => selected.has(item.name))
+                include: candidateInclude.filter((item) => selected.has(item.name))
               };
               core.info(`Using machine-specific build matrix with ${matrix.include.length} job(s).`);
             } else {
-              core.info("Using full build matrix.");
+              core.info(`Using scoped/full build matrix with ${matrix.include.length} job(s).`);
             }
 
             core.setOutput("matrix", JSON.stringify(matrix));
