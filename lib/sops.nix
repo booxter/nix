@@ -1,8 +1,9 @@
 { pkgs }:
 let
-  mkApp = program: {
+  mkApp = program: description: {
     type = "app";
     inherit program;
+    meta = { inherit description; };
   };
 
   # Decrypt and print a host secret (defaults to current short hostname).
@@ -77,10 +78,11 @@ let
   };
 in
 {
-  default = mkApp "${sops-bootstrap}/bin/sops-bootstrap";
-  "sops-bootstrap" = mkApp "${sops-bootstrap}/bin/sops-bootstrap";
-  "sops-cat" = mkApp "${sops-cat}/bin/sops-cat";
-  "sops-edit" = mkApp "${sops-edit}/bin/sops-edit";
-  "sops-update" = mkApp "${sops-update}/bin/sops-update";
-  "sops-copy" = mkApp "${sops-copy}/bin/sops-copy";
+  "sops-bootstrap" =
+    mkApp "${sops-bootstrap}/bin/sops-bootstrap" "Bootstrap host sops secrets and key recipients.";
+  "sops-cat" = mkApp "${sops-cat}/bin/sops-cat" "Decrypt and print a host secret.";
+  "sops-edit" = mkApp "${sops-edit}/bin/sops-edit" "Edit a host secret and merge template keys.";
+  "sops-update" =
+    mkApp "${sops-update}/bin/sops-update" "Merge missing template keys into a host secret.";
+  "sops-copy" = mkApp "${sops-copy}/bin/sops-copy" "Copy a top-level key path between host secrets.";
 }
