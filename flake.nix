@@ -319,12 +319,26 @@
       checks = import ./checks.nix { inherit inputs helpers; };
 
       overlays = import ./overlays { inherit inputs; };
-      packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
+      packages = helpers.forAllSystems (
+        system:
+        let
+          basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
+          proxmox = import ./lib/proxmox-apps.nix {
+            inherit inputs system;
+          };
+        in
+        basePackages // proxmox.packages
+      );
       apps = helpers.forAllSystems (
         system:
-        import ./lib/sops.nix {
+        let
           pkgs = inputs.nixpkgs.legacyPackages.${system};
-        }
+          sopsApps = import ./lib/sops.nix { inherit pkgs; };
+          proxmox = import ./lib/proxmox-apps.nix {
+            inherit inputs system;
+          };
+        in
+        sopsApps // proxmox.apps
       );
       formatter = helpers.forAllSystems (
         system:

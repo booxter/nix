@@ -37,6 +37,7 @@ helpers.forAllSystems (
         bats tests/get-local-builders.bats
         bats tests/test-sops-config.bats
         bats tests/test-sops-copy.bats
+        bats tests/test-prox-deploy.bats
       '';
     };
     box-py = mkCheck {
