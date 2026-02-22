@@ -43,7 +43,8 @@ make darwin-switch
 
 ## Fleet updates
 
-Update multiple machines over SSH with `scripts/update-machines.sh` (defaults to `--all`):
+Update multiple machines over SSH with `scripts/update-machines.sh` (defaults to
+`--all`):
 
 ```sh
 # Update all personal machines (default)
@@ -85,13 +86,17 @@ nix run .#sops-bootstrap -- beast --user root
 ```
 
 This will:
+
 - create `/var/lib/sops-nix/key.txt` on the host (if missing)
 - fetch the age public key
-- create `.sops.yaml` if needed (or patch it), including your local age key as a recipient for that host rule
+- create `.sops.yaml` if needed (or patch it), including your local age key as a
+  recipient for that host rule
 - create `secrets/beast.yaml` encrypted using `.sops.yaml` creation rules
 
 Notes:
-- `sops-bootstrap` needs a real terminal (`ssh -tt`) because it may prompt for remote `sudo` password.
+
+- `sops-bootstrap` needs a real terminal (`ssh -tt`) because it may prompt for
+  remote `sudo` password.
 - It reads your local age key from `$SOPS_AGE_KEY_FILE` or `~/.config/sops/age/keys.txt`.
 
 Afterwards, edit the secret with:
@@ -134,12 +139,19 @@ make home-switch-nv
 Run Bats checks:
 
 ```sh
-nix build .#checks.$(nix eval --impure --raw --expr builtins.currentSystem).bats-tests --no-link
+system="$(nix eval --impure --raw --expr builtins.currentSystem)"
+nix build ".#checks.${system}.bats-tests" --no-link
 ```
+
+## CI
+
+CI matrix selection rules and skip behavior are documented in
+[.github/README.md](.github/README.md).
 
 ## Machines
 
-All VMs run on Proxmox hosts and are deployed with `prox-deploy` (wrapper around `nixmoxer`).
+All VMs run on Proxmox hosts and are deployed with `prox-deploy` (wrapper
+around `nixmoxer`).
 
 ### Infra (DHCP, Proxmox)
 
@@ -169,7 +181,6 @@ All VMs run on Proxmox hosts and are deployed with `prox-deploy` (wrapper around
 | `mmini` | macOS (aarch64-darwin) | Mac mini workstation. | [darwin/default.nix](darwin/default.nix) | [common](common), [darwin](darwin) |
 | `JGWXHWDL4X` | macOS (aarch64-darwin) | Work Mac. | [darwin/default.nix](darwin/default.nix) | [common](common), [darwin](darwin) |
 | `frame` | NixOS (x86_64-linux) | Desktop workstation. | [nixos/frame/default.nix](nixos/frame/default.nix) | [common](common), [nixos](nixos) |
-
 
 ### Media servers
 

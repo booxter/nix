@@ -41,6 +41,9 @@ jobs:
 
   get-hosts-check:
     name: get-hosts check
+    needs:
+      - plan-build-matrix
+    if: needs.plan-build-matrix.outputs.docs_only != 'true'
     runs-on: ubuntu-slim
     steps:
       - name: Checkout
@@ -54,6 +57,9 @@ jobs:
 
   flake-check:
     name: flake check
+    needs:
+      - plan-build-matrix
+    if: needs.plan-build-matrix.outputs.docs_only != 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -69,6 +75,7 @@ jobs:
     name: plan build matrix
     runs-on: ubuntu-slim
     outputs:
+      docs_only: ${{ steps.plan.outputs.docs_only }}
       matrix: ${{ steps.plan.outputs.matrix }}
     steps:
       - name: Compute build matrix
@@ -101,6 +108,7 @@ jobs:
 
             if (context.eventName !== "pull_request") {
               core.info("Non-PR event, using full build matrix.");
+              core.setOutput("docs_only", "false");
               core.setOutput("matrix", JSON.stringify(fullMatrix));
               return;
             }
@@ -114,6 +122,31 @@ jobs:
             const paths = changedFiles.map((f) => f.filename);
             core.info(`Changed files (${paths.length}): ${paths.join(", ")}`);
 
+            const isDocPath = (path) =>
+              path === "README.md" ||
+              path.startsWith("docs/") ||
+              path.endsWith(".md");
+            const docsOnly = paths.length > 0 && paths.every(isDocPath);
+            if (docsOnly) {
+              core.info("Docs-only pull request detected, skipping heavy build jobs.");
+              core.setOutput("docs_only", "true");
+              core.setOutput("matrix", JSON.stringify({ include: [] }));
+              return;
+            }
+            core.setOutput("docs_only", "false");
+
+            const onlyDarwinPaths = paths.length > 0 && paths.every((p) => p.startsWith("darwin/"));
+            const onlyNixosPaths = paths.length > 0 && paths.every((p) => p.startsWith("nixos/"));
+
+            let candidateInclude = fullMatrix.include;
+            if (onlyDarwinPaths) {
+              candidateInclude = fullMatrix.include.filter((item) => item.os.startsWith("macos-"));
+              core.info(`Darwin-only change detected, scoping matrix to ${candidateInclude.length} macOS job(s).`);
+            } else if (onlyNixosPaths) {
+              candidateInclude = fullMatrix.include.filter((item) => !item.os.startsWith("macos-"));
+              core.info(`NixOS-only change detected, scoping matrix to ${candidateInclude.length} Linux job(s).`);
+            }
+
             const machinePathMap = [
               { prefix: "nixos/frame/", jobs: [ "frame (x86_64-linux)" ] },
               { prefix: "nixos/nvws/", jobs: [ "nvws (x86_64-linux)" ] },
@@ -125,7 +158,8 @@ jobs:
               { prefix: "nixos/srvarrvm/", jobs: [ "srvarr (x86_64-linux)" ] },
               { prefix: "nixos/cachevm/", jobs: [ "cache (x86_64-linux)" ] },
               { prefix: "darwin/mair/", jobs: [ "mair-ci (aarch64-darwin)" ] },
-              { prefix: "darwin/mmini/", jobs: [ "mmini-ci (aarch64-darwin)" ] }
+              { prefix: "darwin/mmini/", jobs: [ "mmini-ci (aarch64-darwin)" ] },
+              { prefix: "darwin/JGWXHWDL4X/", jobs: [ "JGWXHWDL4X-ci (aarch64-darwin)" ] }
             ];
 
             const selected = new Set();
@@ -148,19 +182,20 @@ jobs:
               }
             }
 
-            let matrix = fullMatrix;
+            let matrix = { include: candidateInclude };
             if (onlyMachineSpecific && selected.size > 0) {
               matrix = {
-                include: fullMatrix.include.filter((item) => selected.has(item.name))
+                include: candidateInclude.filter((item) => selected.has(item.name))
               };
               core.info(`Using machine-specific build matrix with ${matrix.include.length} job(s).`);
             } else {
-              core.info("Using full build matrix.");
+              core.info(`Using scoped/full build matrix with ${matrix.include.length} job(s).`);
             }
 
             core.setOutput("matrix", JSON.stringify(matrix));
 
   build:
+    if: needs.plan-build-matrix.outputs.docs_only != 'true'
     needs:
       - format
       - get-hosts-check
@@ -191,6 +226,7 @@ jobs:
     name: CI (all jobs)
     if: ${{ always() }}
     needs:
+      - plan-build-matrix
       - format
       - get-hosts-check
       - flake-check
@@ -200,9 +236,24 @@ jobs:
       - name: Check job results
         run: |
           set -euo pipefail
-          if [ "${{ needs.format.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ]; then
+
+          if [ "${{ needs.plan-build-matrix.result }}" != "success" ] || [ "${{ needs.format.result }}" != "success" ]; then
             echo "One or more CI jobs failed."
+            echo "plan-build-matrix=${{ needs.plan-build-matrix.result }}"
             echo "format=${{ needs.format.result }}"
+            exit 1
+          fi
+
+          if [ "${{ needs.plan-build-matrix.outputs.docs_only }}" = "true" ]; then
+            echo "Docs-only change detected; skipped get-hosts-check, flake-check, and build."
+            echo "All CI jobs passed."
+            exit 0
+          fi
+
+          if [ "${{ needs.get-hosts-check.result }}" != "success" ] || [ "${{ needs.flake-check.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ]; then
+            echo "One or more CI jobs failed."
+            echo "get-hosts-check=${{ needs.get-hosts-check.result }}"
+            echo "flake-check=${{ needs.flake-check.result }}"
             echo "build=${{ needs.build.result }}"
             exit 1
           fi
