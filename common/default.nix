@@ -21,6 +21,7 @@ let
 in
 {
   imports = [
+    ./_mixins/attic
     ./_mixins/nix
     ./_mixins/nix-gc
     ./_mixins/ssh
@@ -41,6 +42,7 @@ in
 
     # Some packages that I'd like to have available on all my machines.
     environment.systemPackages = with pkgs; [
+      age
       bind.dnsutils
       coreutils
       dig
@@ -62,6 +64,7 @@ in
       ngrep
       procps
       pstree
+      sops
       speedtest-cli
       tcpdump
       tmux
@@ -81,20 +84,5 @@ in
 
     programs.zsh.enable = true;
     host.isWork = isWork;
-  }
-  // lib.optionalAttrs (!isWork) {
-    # TODO: move elsewhere
-    # TODO: Adopt secrets management
-    # /root/.config/attic/config.toml:
-
-    # default-server = "local"
-    # [servers.local]
-    # endpoint = "http://prox-cachevm:8080"
-    # token = "PASTE_PUSH_TOKEN_HERE"
-
-    # Hook script
-    nix.settings.post-build-hook = "${pkgs.writeShellScriptBin "attic-push-hook" ''
-      ${pkgs.attic-client}/bin/attic push default $OUT_PATHS || true
-    ''}/bin/attic-push-hook";
   };
 }

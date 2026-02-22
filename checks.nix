@@ -28,10 +28,15 @@ helpers.forAllSystems (
       name = "bats-tests";
       nativeBuildInputs = with pkgs; [
         bats
+        git
         jq
+        yq
       ];
       buildPhase = ''
-        bats tests/update-machines.bats tests/get-local-builders.bats
+        bats tests/update-machines.bats
+        bats tests/get-local-builders.bats
+        bats tests/test-sops-config.bats
+        bats tests/test-sops-copy.bats
       '';
     };
     box-py = mkCheck {

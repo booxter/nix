@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   ...
@@ -23,6 +22,7 @@ let
   nfsPorts = [
     2049 # nfsd
   ];
+  hasSopsSecrets = builtins.pathExists ../../secrets/beast.yaml;
 in
 {
   imports = [

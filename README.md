@@ -13,15 +13,14 @@ make darwin-build-target WHAT=mair
 
 ```
 
-## Local and CI VMs
+## Local and NixOS VMs
 
 ```sh
 make local-vm WHAT=builder1
 make build-local-vm WHAT=builder1
 
-make ci-vm WHAT=builder1
-make build-ci-vm WHAT=builder1
-make build-ci-vm-config WHAT=builder1
+make nixos-run-vm WHAT=builder1
+make nixos-build-vm WHAT=builder1
 ```
 
 ## Proxmox VMs
@@ -65,6 +64,62 @@ Update multiple machines over SSH with `scripts/update-machines.sh` (defaults to
 ```sh
 make disko-install WHAT=frame DEV=/dev/sdX
 make pi-image
+```
+
+## Secrets
+
+Secrets are managed via sops-nix, with one encrypted YAML per host under `secrets/`.
+The shared plaintext seed template is `secrets/_template.yaml`.
+Use flake apps for bootstrap so required tools are provided automatically.
+
+Bootstrap a remote host over SSH (beast example):
+
+```sh
+nix run .#sops-bootstrap -- beast
+```
+
+If SSH user differs from your local username:
+
+```sh
+nix run .#sops-bootstrap -- beast --user root
+```
+
+This will:
+- create `/var/lib/sops-nix/key.txt` on the host (if missing)
+- fetch the age public key
+- create `.sops.yaml` if needed (or patch it), including your local age key as a recipient for that host rule
+- create `secrets/beast.yaml` encrypted using `.sops.yaml` creation rules
+
+Notes:
+- `sops-bootstrap` needs a real terminal (`ssh -tt`) because it may prompt for remote `sudo` password.
+- It reads your local age key from `$SOPS_AGE_KEY_FILE` or `~/.config/sops/age/keys.txt`.
+
+Afterwards, edit the secret with:
+
+```sh
+nix run .#sops-edit -- beast
+```
+
+For the current host (detected via `hostname -s`), you can omit the host argument:
+
+```sh
+nix run .#sops-cat
+nix run .#sops-edit
+nix run .#sops-update
+```
+
+Or pass a host name as a positional argument:
+
+```sh
+nix run .#sops-cat -- mair
+nix run .#sops-edit -- mair
+nix run .#sops-update -- mair
+```
+
+Copy a section between host secrets (example: copy `attic` from `mair` to `prx1-lab`):
+
+```sh
+nix run .#sops-copy -- mair prx1-lab attic
 ```
 
 ## Home Manager

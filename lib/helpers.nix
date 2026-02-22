@@ -96,6 +96,7 @@ rec {
         ../common
         ../nixos
         inputs.disko.nixosModules.disko
+        inputs.sops-nix.nixosModules.sops
       ]
       ++ nixpkgsInput.lib.optionals withHome [
         inputs.home-manager.nixosModules.home-manager
@@ -424,6 +425,7 @@ rec {
       modules = [
         ../common
         ../nixos
+        inputs.sops-nix.nixosModules.sops
 
         # base hardware modules
         {
@@ -486,6 +488,7 @@ rec {
       };
       modules = [
         inputs.nix-homebrew.darwinModules.nix-homebrew
+        inputs.sops-nix.darwinModules.sops
         ../common
         ../darwin
 

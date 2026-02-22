@@ -72,6 +72,9 @@ in
       server = [ gwAddr ];
 
       domain-needed = true;
+      cname = [
+        "nix-cache,prox-cachevm"
+      ];
 
       host-record = [
         "egress,${gwAddr}"

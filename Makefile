@@ -17,7 +17,7 @@ $(if $(filter false,$(REMOTE)),--option builders '$(LOCAL_LOCAL_BUILDERS)',)
 endef
 
 define nix-vm-action
-	# $(1): VM prefix (local/ci)
+	# $(1): VM prefix (local/prox)
 	# $(2): nix command (run/build)
 	# $(3): build output (vm/toplevel)
 	@if [ "x$(WHAT)" = "x" ]; then \
@@ -52,20 +52,17 @@ local-vm:
 build-local-vm:
 	$(call nix-vm-action,local,build,vm)
 
-########### ci vms
-ci-vm:
-	$(call nix-vm-action,ci,run,vm)
+########### nixos vms
+nixos-run-vm:
+	$(call nix-vm-action,prox,run,vm)
 
-build-ci-vm:
-	$(call nix-vm-action,ci,build,vm)
+nixos-build-vm:
+	$(call nix-vm-action,prox,build,vm)
 
-build-ci-vm-config:
-	$(call nix-vm-action,ci,build,toplevel)
-
-########### ci qemu
-build-ci-vm-qemu:
+########### nixos qemu
+nixos-build-vm-qemu:
 	# Using builder1vm as the canonical VM; QEMU comes from host.pkgs so the VM choice doesn't matter.
-	$(eval QEMU_VM_PREFIX := $(if $(filter Darwin,$(shell uname -s)),local,ci))
+	$(eval QEMU_VM_PREFIX := $(if $(filter Darwin,$(shell uname -s)),local,prox))
 	nix build .#nixosConfigurations.$(QEMU_VM_PREFIX)-builder1vm.config.system.build.vmQemu $(ARGS)
 
 ########### proxmox vms

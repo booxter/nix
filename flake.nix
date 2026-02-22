@@ -17,6 +17,9 @@
     nix-darwin.url = "github:nix-darwin/nix-darwin/master";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
+    sops-nix.url = "github:Mic92/sops-nix";
+    sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
     homebrew-core = {
       url = "github:homebrew/homebrew-core";
@@ -164,7 +167,6 @@
               vmname = toVmName name;
               localName = "local-${vmname}";
               proxName = "prox-${vmname}";
-              ciName = "ci-${vmname}";
             in
             {
               "${localName}" = helpers.mkVM (
@@ -175,22 +177,13 @@
                 }
               );
 
-              "${ciName}" = helpers.mkVM (
-                args
-                // {
-                  inherit stateVersion;
-                  hostname = ciName;
-                  platform = "x86_64-linux";
-                  virtPlatform = "x86_64-linux";
-                }
-              );
-
               "${proxName}" = helpers.mkVM (
                 args
                 // {
-                  inherit stateVersion virtPlatform;
+                  inherit stateVersion;
                   hostname = proxName;
                   platform = "x86_64-linux";
+                  virtPlatform = "x86_64-linux";
                 }
               );
             };
@@ -327,6 +320,12 @@
 
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (system: import ./pkgs inputs.nixpkgs.legacyPackages.${system});
+      apps = helpers.forAllSystems (
+        system:
+        import ./lib/sops.nix {
+          pkgs = inputs.nixpkgs.legacyPackages.${system};
+        }
+      );
       formatter = helpers.forAllSystems (
         system:
         let

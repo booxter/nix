@@ -9,7 +9,7 @@
 {
   nix =
     let
-      cacheUrl = "http://prox-cachevm:8080/default/";
+      cacheUrl = "http://nix-cache:8080/default/";
       cacheKey = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
     in
     {
