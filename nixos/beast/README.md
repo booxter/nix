@@ -45,7 +45,8 @@ Disk-to-Bay layout with identifying info can be found on Google Drive under
 ## IPMI quirks
 
 - If the BMC gets into a broken state, run: `sudo ipmitool raw 0x32 0x66`.
-- On first setup, use a simple password (no special characters) or later logins can fail.
+- On first setup, use a simple password (no special characters) or later
+  logins can fail.
 
 ## SAS3008 quirk and firmware flashing
 
@@ -84,7 +85,7 @@ nix shell nixpkgs#psmisc -c fuser -vm /volume2
 sudo lsof +f -- /volume2
 ```
 
-2. Unmount and stop array:
+1. Unmount and stop array:
 
 ```bash
 sudo umount /volume2
@@ -93,7 +94,7 @@ sudo mdadm --stop /dev/md127
 cat /proc/mdstat
 ```
 
-3. Flash the target controller explicitly (example: controller 1):
+1. Flash the target controller explicitly (example: controller 1):
 
 ```bash
 cd ~/SAS3FLASH\ P16-V17.00.00.00/sas3flash_rel/sas3flash/sas3flash_linux_x86_rel
@@ -104,7 +105,7 @@ sudo ./sas3flash -c 1 -list
 sudo ./sas3flash -listall
 ```
 
-4. Reboot and bring storage back:
+1. Reboot and bring storage back:
 
 ```bash
 sudo reboot
@@ -120,7 +121,7 @@ sudo mount /volume2
 sudo btrfs device stats /volume2
 ```
 
-### Notes
+### Post-flash notes
 
 - If Linux `sas3flash` cannot access one controller, use UEFI shell with
   `sas3flash.efi` and the same `-c <N>` targeting.

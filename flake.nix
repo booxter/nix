@@ -352,11 +352,17 @@
             shellcheck
             ruff
             mbake
+            actionlint
+            markdownlint-cli2
+            git
+            findutils
           ];
           text = ''
             treefmt "$@"
             mbake format Makefile
             find . -type f -name '*.sh' -exec shellcheck {} +
+            actionlint .github/workflows/*.yml
+            git ls-files -z -- '*.md' '**/*.md' | xargs -0 -r markdownlint-cli2
             ruff format .
             ruff check .
           '';

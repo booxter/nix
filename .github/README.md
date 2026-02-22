@@ -31,5 +31,6 @@ The build matrix is selected in this order:
 
 ## Notes
 
-- `push` and `workflow_dispatch` use full matrix behavior (docs-only shortcut is PR-only).
+- `push` and `workflow_dispatch` use full matrix behavior (docs-only shortcut is
+  PR-only).
 - If no machine-specific mapping applies cleanly, CI falls back to full scoped matrix.
