@@ -136,6 +136,12 @@ system="$(nix eval --impure --raw --expr builtins.currentSystem)"
 nix build ".#checks.${system}.bats-tests" --no-link
 ```
 
+Run full flake checks (same entrypoint used in CI):
+
+```sh
+nix flake check -L --show-trace
+```
+
 ## CI
 
 CI matrix selection rules and skip behavior are documented in
