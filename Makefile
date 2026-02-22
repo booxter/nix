@@ -1,5 +1,6 @@
 # Define common args
 .DEFAULT_GOAL := help
+.PHONY: help nixos darwin linux-home darwin-home
 
 ARGS = -L --show-trace
 USERNAME ?= ihrachyshka
@@ -48,22 +49,43 @@ endef
 
 help:
 	@echo "Available targets:"
-	@echo "  make nixos-build-target WHAT=<host> [REMOTE=false]"
-	@echo "  make darwin-build-target WHAT=<host> [REMOTE=false]"
-	@echo "  make linux-home-build-target TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
-	@echo "  make darwin-home-build-target TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
+	@echo "  make nixos WHAT=<host> [REMOTE=false]"
+	@echo "  make darwin WHAT=<host> [REMOTE=false]"
+	@echo "  make linux-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
+	@echo "  make darwin-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 
 ########### nixos vms
 ########### nixos
-nixos-build-target:
-	$(call nix-config-action,.#nixosConfigurations.$(WHAT).config.system.build.toplevel)
+nixos:
+	@if [ "x$(WHAT)" = "x" ]; then \
+		echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
+		exit 1; \
+	fi
+	@resolved="$(WHAT)"; \
+	known="$$(nix eval --json .#nixosConfigurations --apply builtins.attrNames | jq -r '.[]')"; \
+	if ! printf '%s\n' "$$known" | grep -Fxq "$$resolved"; then \
+		for candidate in "prox-$(WHAT)vm" "local-$(WHAT)vm"; do \
+			if printf '%s\n' "$$known" | grep -Fxq "$$candidate"; then \
+				resolved="$$candidate"; \
+				break; \
+			fi; \
+		done; \
+	fi; \
+	if ! printf '%s\n' "$$known" | grep -Fxq "$$resolved"; then \
+		echo "Unknown nixos host: $(WHAT)"; \
+		echo; \
+		echo "Available nixos hosts:"; \
+		printf '%s\n' "$$known"; \
+		exit 1; \
+	fi; \
+	nix build $(call builder-opts) ".#nixosConfigurations.$$resolved.config.system.build.toplevel" $(ARGS)
 
 ########### darwin
-darwin-build-target:
+darwin:
 	$(call nix-config-action,.#darwinConfigurations.$(WHAT).system)
 
-linux-home-build-target:
+linux-home:
 	$(call standalone-home-build-action,linux,x86_64-linux)
 
-darwin-home-build-target:
+darwin-home:
 	$(call standalone-home-build-action,darwin,aarch64-darwin)

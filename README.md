@@ -7,8 +7,8 @@ options when supported.
 ## Common commands
 
 ```sh
-make nixos-build-target WHAT=frame
-make darwin-build-target WHAT=mair
+make nixos WHAT=frame
+make darwin WHAT=mair
 
 ```
 
@@ -27,8 +27,8 @@ nix run .#prox-deploy -- srvarr prx1
 ## Host rebuilds
 
 ```sh
-make nixos-build-target WHAT=beast REMOTE=false
-make darwin-build-target WHAT=mair
+make nixos WHAT=beast REMOTE=false
+make darwin WHAT=mair
 ```
 
 ## Fleet updates
@@ -120,8 +120,8 @@ nix run .#sops-copy -- mair prx1-lab attic
 ## Home Manager
 
 ```sh
-make linux-home-build-target TARGET=nv
-make darwin-home-build-target TARGET=mair
+make linux-home TARGET=nv
+make darwin-home TARGET=mair
 nix run .#fleet-apply -- --home nv
 ```
 
