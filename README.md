@@ -53,7 +53,7 @@ nix run .#fleet-apply -- -A --dry-run
 ## Disk and image helpers
 
 ```sh
-make disko-install WHAT=frame DEV=/dev/sdX
+nix run .#fleet-apply -- --disko frame /dev/sdX
 nix build .#pi-image -o pi5.sd
 ```
 
