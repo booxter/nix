@@ -4,9 +4,10 @@
 }:
 let
   pkgs = inputs.nixpkgs.legacyPackages.${system};
-  mkApp = program: {
+  mkApp = program: description: {
     type = "app";
     inherit program;
+    meta = { inherit description; };
   };
 in
 if builtins.hasAttr system inputs.proxmox-nixos.packages then
@@ -56,8 +57,7 @@ if builtins.hasAttr system inputs.proxmox-nixos.packages then
         prox-deploy = proxDeploy;
       };
       apps = {
-        default = mkApp "${proxDeploy}/bin/prox-deploy";
-        prox-deploy = mkApp "${proxDeploy}/bin/prox-deploy";
+        prox-deploy = mkApp "${proxDeploy}/bin/prox-deploy" "Deploy a prox VM via nixmoxer.";
       };
     }
   else
