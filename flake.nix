@@ -360,11 +360,11 @@
           text = ''
             treefmt "$@"
             mbake format Makefile
-            find . -type f -name '*.sh' -exec shellcheck {} +
+            git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
             actionlint .github/workflows/*.yml
             git ls-files -z -- '*.md' '**/*.md' | xargs -0 -r markdownlint-cli2
-            ruff format .
-            ruff check .
+            git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff format
+            git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff check
           '';
         }
       );

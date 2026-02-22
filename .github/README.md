@@ -31,6 +31,8 @@ The build matrix is selected in this order:
 
 ## Notes
 
+- `format` runs `nix fmt .`, which uses the flake-pinned formatter and includes
+  workflow (`actionlint`) and markdown checks.
 - `push` and `workflow_dispatch` use full matrix behavior (docs-only shortcut is
   PR-only).
 - If no machine-specific mapping applies cleanly, CI falls back to full scoped matrix.
