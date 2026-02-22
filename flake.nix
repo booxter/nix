@@ -174,6 +174,7 @@
                 // {
                   inherit platform stateVersion virtPlatform;
                   hostname = localName;
+                  withProxmox = false;
                 }
               );
 
@@ -270,6 +271,7 @@
             ipAddress = "192.168.15.12";
             macAddress = "38:05:25:30:7d:69";
           };
+
         }
         # TODO: calculate stable ssh port numbers based on hostnames, somehow
         # TODO: then, configure ssh config aliases for each of them

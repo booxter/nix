@@ -190,6 +190,7 @@ rec {
   mkVM =
     args@{
       extraModules ? [ ],
+      withProxmox ? true,
       sshPort ? null,
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
@@ -269,7 +270,8 @@ rec {
                 system.build.vmQemu = config.virtualisation.vmVariant.virtualisation.host.pkgs.qemu;
               }
             )
-
+          ]
+          ++ inputs.nixpkgs.lib.optionals withProxmox [
             # proxmox vms
             (mkPatchedProxmoxNixosModules platform).declarative-vms
             (
