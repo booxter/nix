@@ -15,6 +15,7 @@ permissions:
   contents: read
   id-token: write
   actions: read
+  pull-requests: read
 
 jobs:
   format:
@@ -64,83 +65,112 @@ jobs:
       - name: Run flake check
         run: nix flake check -L --show-trace
 
+  plan-build-matrix:
+    name: plan build matrix
+    runs-on: ubuntu-slim
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - name: Compute build matrix
+        id: plan
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fullMatrix = {
+              include: [
+                { name: "frame (x86_64-linux)", cmd: "make nixos-build-target WHAT=frame", os: "ubuntu-latest" },
+                { name: "nvws (x86_64-linux)", cmd: "make nixos-build-target WHAT=nvws", os: "ubuntu-latest" },
+                { name: "prx1-lab (x86_64-linux)", cmd: "make nixos-build-target WHAT=prx1-lab", os: "ubuntu-latest" },
+                { name: "prx2-lab (x86_64-linux)", cmd: "make nixos-build-target WHAT=prx2-lab", os: "ubuntu-latest" },
+                { name: "prx3-lab (x86_64-linux)", cmd: "make nixos-build-target WHAT=prx3-lab", os: "ubuntu-latest" },
+                { name: "builder (x86_64-linux)", cmd: "make nixos-build-target WHAT=prox-builder1vm", os: "ubuntu-latest" },
+                { name: "cache (x86_64-linux)", cmd: "make nixos-build-target WHAT=prox-cachevm", os: "ubuntu-latest" },
+                { name: "pi5 dhcp (aarch64-linux)", cmd: "make nixos-build-target WHAT=pi5", os: "ubuntu-24.04-arm" },
+                { name: "beast (x86_64-linux)", cmd: "make nixos-build-target WHAT=beast", os: "ubuntu-latest" },
+                { name: "srvarr (x86_64-linux)", cmd: "make nixos-build-target WHAT=prox-srvarrvm", os: "ubuntu-latest" },
+                { name: "nixos vm builder1 (x86_64-linux)", cmd: "make nixos-build-vm WHAT=builder1", os: "ubuntu-latest" },
+                { name: "home-manager nv (x86_64-linux)", cmd: "make home-build-nv USERNAME=ihrachyshka", os: "ubuntu-latest" },
+                { name: "mair-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=mair-ci", os: "macos-26" },
+                { name: "mmini-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=mmini-ci", os: "macos-26" },
+                { name: "JGWXHWDL4X-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=JGWXHWDL4X-ci", os: "macos-26" },
+                { name: "nixos vm qemu (x86_64-linux)", cmd: "make nixos-build-vm-qemu", os: "ubuntu-latest" },
+                { name: "nixos vm qemu (aarch64-darwin)", cmd: "make nixos-build-vm-qemu", os: "macos-26" }
+                // TODO: add proxmox ISO CI entry once nixos-build-prox-iso target is available in this branch.
+              ]
+            };
+
+            if (context.eventName !== "pull_request") {
+              core.info("Non-PR event, using full build matrix.");
+              core.setOutput("matrix", JSON.stringify(fullMatrix));
+              return;
+            }
+
+            const changedFiles = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100
+            });
+            const paths = changedFiles.map((f) => f.filename);
+            core.info(`Changed files (${paths.length}): ${paths.join(", ")}`);
+
+            const machinePathMap = [
+              { prefix: "nixos/frame/", jobs: [ "frame (x86_64-linux)" ] },
+              { prefix: "nixos/nvws/", jobs: [ "nvws (x86_64-linux)" ] },
+              { prefix: "nixos/prx1-lab/", jobs: [ "prx1-lab (x86_64-linux)" ] },
+              { prefix: "nixos/prx2-lab/", jobs: [ "prx2-lab (x86_64-linux)" ] },
+              { prefix: "nixos/prx3-lab/", jobs: [ "prx3-lab (x86_64-linux)" ] },
+              { prefix: "nixos/pi5/", jobs: [ "pi5 dhcp (aarch64-linux)" ] },
+              { prefix: "nixos/beast/", jobs: [ "beast (x86_64-linux)" ] },
+              { prefix: "nixos/srvarrvm/", jobs: [ "srvarr (x86_64-linux)" ] },
+              { prefix: "nixos/cachevm/", jobs: [ "cache (x86_64-linux)" ] },
+              { prefix: "darwin/mair/", jobs: [ "mair-ci (aarch64-darwin)" ] },
+              { prefix: "darwin/mmini/", jobs: [ "mmini-ci (aarch64-darwin)" ] }
+            ];
+
+            const selected = new Set();
+            let onlyMachineSpecific = paths.length > 0;
+
+            for (const filePath of paths) {
+              let matched = false;
+              for (const mapping of machinePathMap) {
+                if (filePath.startsWith(mapping.prefix)) {
+                  for (const jobName of mapping.jobs) {
+                    selected.add(jobName);
+                  }
+                  matched = true;
+                  break;
+                }
+              }
+              if (!matched) {
+                onlyMachineSpecific = false;
+                break;
+              }
+            }
+
+            let matrix = fullMatrix;
+            if (onlyMachineSpecific && selected.size > 0) {
+              matrix = {
+                include: fullMatrix.include.filter((item) => selected.has(item.name))
+              };
+              core.info(`Using machine-specific build matrix with ${matrix.include.length} job(s).`);
+            } else {
+              core.info("Using full build matrix.");
+            }
+
+            core.setOutput("matrix", JSON.stringify(matrix));
+
   build:
     needs:
       - format
       - get-hosts-check
       - flake-check
+      - plan-build-matrix
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          # linux servers
-          - name: frame (x86_64-linux)
-            cmd: make nixos-build-target WHAT=frame
-            os: ubuntu-latest
-          - name: nvws (x86_64-linux)
-            cmd: make nixos-build-target WHAT=nvws
-            os: ubuntu-latest
-
-          # Build just one of configs for prox nodes since other nodes are
-          # identical by design.
-          - name: prx1-lab (x86_64-linux)
-            cmd: make nixos-build-target WHAT=prx1-lab
-            os: ubuntu-latest
-
-          # Build just one of configs for builder nodes since other nodes are
-          # identical by design.
-          - name: builder (x86_64-linux)
-            cmd: make nixos-build-target WHAT=prox-builder1vm
-            os: ubuntu-latest
-          - name: cache (x86_64-linux)
-            cmd: make nixos-build-target WHAT=prox-cachevm
-            os: ubuntu-latest
-
-          # dhcp
-          - name: pi5 dhcp (aarch64-linux)
-            cmd: make nixos-build-target WHAT=pi5
-            os: ubuntu-24.04-arm
-
-          # media infra
-          - name: beast (x86_64-linux)
-            cmd: make nixos-build-target WHAT=beast
-            os: ubuntu-latest
-          - name: srvarr (x86_64-linux)
-            cmd: make nixos-build-target WHAT=prox-srvarrvm
-            os: ubuntu-latest
-
-          # CI VM build scenario (full VM image)
-          - name: nixos vm builder1 (x86_64-linux)
-            cmd: make nixos-build-vm WHAT=builder1
-            os: ubuntu-latest
-
-          # home-manager
-          - name: home-manager nv (x86_64-linux)
-            cmd: make home-build-nv USERNAME=ihrachyshka
-            os: ubuntu-latest
-
-          # For macos, we have to build special "ci" flavors that don't use
-          # custom linux-builder config that requires aarch64-linux builder.
-          # Use stock builder config to pull the derivation from nixos cache
-          # instead.
-          - name: mair-ci (aarch64-darwin)
-            cmd: make darwin-build-target WHAT=mair-ci
-            os: macos-26
-          - name: mmini-ci (aarch64-darwin)
-            cmd: make darwin-build-target WHAT=mmini-ci
-            os: macos-26
-          - name: JGWXHWDL4X-ci (aarch64-darwin)
-            cmd: make darwin-build-target WHAT=JGWXHWDL4X-ci
-            os: macos-26
-          # Ensure the QEMU host package builds on both Linux and macOS runners.
-          - name: nixos vm qemu (x86_64-linux)
-            cmd: make nixos-build-vm-qemu
-            os: ubuntu-latest
-          - name: nixos vm qemu (aarch64-darwin)
-            cmd: make nixos-build-vm-qemu
-            os: macos-26
+      matrix: ${{ fromJson(needs.plan-build-matrix.outputs.matrix) }}
 
     timeout-minutes: 180
 
