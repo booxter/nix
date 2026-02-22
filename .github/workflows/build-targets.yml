@@ -158,7 +158,8 @@ jobs:
               { prefix: "nixos/srvarrvm/", jobs: [ "srvarr (x86_64-linux)" ] },
               { prefix: "nixos/cachevm/", jobs: [ "cache (x86_64-linux)" ] },
               { prefix: "darwin/mair/", jobs: [ "mair-ci (aarch64-darwin)" ] },
-              { prefix: "darwin/mmini/", jobs: [ "mmini-ci (aarch64-darwin)" ] }
+              { prefix: "darwin/mmini/", jobs: [ "mmini-ci (aarch64-darwin)" ] },
+              { prefix: "darwin/JGWXHWDL4X/", jobs: [ "JGWXHWDL4X-ci (aarch64-darwin)" ] }
             ];
 
             const selected = new Set();
