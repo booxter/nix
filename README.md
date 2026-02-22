@@ -63,7 +63,7 @@ nix run .#fleet-upgrade -- -A --dry-run
 
 ```sh
 make disko-install WHAT=frame DEV=/dev/sdX
-make pi-image
+nix build .#pi-image -o pi5.sd
 ```
 
 ## Secrets

@@ -60,7 +60,6 @@ help:
 	@echo "  make home-build-nv [USERNAME=<name>]"
 	@echo "  make home-switch-nv [USERNAME=<name>]"
 	@echo "  make disko-install WHAT=<host> DEV=/dev/<disk>"
-	@echo "  make pi-image"
 	@echo "  make bats"
 
 ########### tests
@@ -142,6 +141,3 @@ home-build-nv:
 home-switch-nv:
 	nix run nixpkgs#home-manager -- switch --flake .#${USERNAME}@nv $(ARGS) $(HM_ARGS)
 
-############# raspberry pi
-pi-image:
-	nix build .#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd $(ARGS)

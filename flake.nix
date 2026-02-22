@@ -323,11 +323,14 @@
         system:
         let
           basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
+          fleetPackages = {
+            pi-image = self.nixosConfigurations.pi5.config.system.build.sdImage;
+          };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;
           };
         in
-        basePackages // proxmox.packages
+        basePackages // fleetPackages // proxmox.packages
       );
       apps = helpers.forAllSystems (
         system:
