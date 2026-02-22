@@ -13,15 +13,14 @@ make darwin-build-target WHAT=mair
 
 ```
 
-## Local and CI VMs
+## Local and NixOS VMs
 
 ```sh
 make local-vm WHAT=builder1
 make build-local-vm WHAT=builder1
 
-make ci-vm WHAT=builder1
-make build-ci-vm WHAT=builder1
-make build-ci-vm-config WHAT=builder1
+make nixos-run-vm WHAT=builder1
+make nixos-build-vm WHAT=builder1
 ```
 
 ## Proxmox VMs

@@ -21,7 +21,7 @@ nix eval --impure --json --expr "
         allNames = builtins.attrNames attrs;
         filteredAll = builtins.filter
           (name:
-            (builtins.match \"^(local-|ci-).*\" name) == null
+            (builtins.match \"^local-.*\" name) == null
             && (builtins.match \".*-ci\$\" name) == null
           )
           allNames;

@@ -10,7 +10,7 @@
 let
   removePrefix = lib.strings.removePrefix;
   removeSuffix = lib.strings.removeSuffix;
-  configName = ./${removePrefix "prox-" (removePrefix "local-" (removePrefix "ci-" hostname))};
+  configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
   upsClientsNAS = [
