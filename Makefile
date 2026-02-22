@@ -65,9 +65,9 @@ nixos-build-vm:
 
 ########### nixos qemu
 nixos-build-vm-qemu:
-	# Use non-proxmox VM configs for QEMU host package checks on both platforms.
-	$(eval QEMU_VM_CONFIG := $(if $(filter Darwin,$(shell uname -s)),local-builder1vm,local-srvarrvm))
-	nix build .#nixosConfigurations.$(QEMU_VM_CONFIG).config.system.build.vmQemu $(ARGS)
+	# Build standalone QEMU host package check output (no nixosConfigurations coupling).
+	$(eval QEMU_CHECK_SYSTEM := $(if $(filter Darwin,$(shell uname -s)),aarch64-darwin,x86_64-linux))
+	nix build .#packages.$(QEMU_CHECK_SYSTEM).qemu-host-package $(ARGS)
 
 ########### proxmox iso
 nixos-build-prox-iso:

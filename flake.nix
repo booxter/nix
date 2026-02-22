@@ -330,7 +330,11 @@
             inherit inputs system;
           };
         in
-        basePackages // proxmox.packages
+        basePackages
+        // proxmox.packages
+        // {
+          qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
+        }
       );
       apps = helpers.forAllSystems (
         system:
