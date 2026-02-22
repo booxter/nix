@@ -289,6 +289,8 @@
               }
               // lib.optionalAttrs isGuest {
                 maxActiveSessions = 2;
+                # 20 Mbps (Jellyfin policy expects bits/sec).
+                remoteClientBitrateLimit = 20 * 1000 * 1000;
               }
               // lib.optionalAttrs (!allLibraries) {
                 enabledLibraries = [
