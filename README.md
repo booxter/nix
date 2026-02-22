@@ -16,7 +16,6 @@ make darwin-build-target WHAT=mair
 
 ```sh
 make local-vm WHAT=builder1
-make build-local-vm WHAT=builder1
 
 make nixos-run-vm WHAT=builder1
 make nixos-build-vm WHAT=builder1
@@ -31,11 +30,8 @@ nix run .#prox-deploy -- srvarr prx1
 ## Host rebuilds
 
 ```sh
-make nixos-build
-
 make nixos-build-target WHAT=beast REMOTE=false
-
-make darwin-build
+make darwin-build-target WHAT=mair
 ```
 
 ## Fleet updates

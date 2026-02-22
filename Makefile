@@ -47,10 +47,7 @@ help:
 	@echo "Available targets:"
 	@echo "  make nixos-build-target WHAT=<host> [REMOTE=false]"
 	@echo "  make darwin-build-target WHAT=<host>"
-	@echo "  make nixos-build"
-	@echo "  make darwin-build"
 	@echo "  make local-vm WHAT=<type>"
-	@echo "  make build-local-vm WHAT=<type>"
 	@echo "  make nixos-run-vm WHAT=<type>"
 	@echo "  make nixos-build-vm WHAT=<type>"
 	@echo "  make nixos-build-vm-qemu"
@@ -66,9 +63,6 @@ bats:
 ########### local vms
 local-vm:
 	$(call nix-vm-action,local,run,vm)
-
-build-local-vm:
-	$(call nix-vm-action,local,build,vm)
 
 ########### nixos vms
 nixos-run-vm:
@@ -97,9 +91,6 @@ nixos-build-prox-iso:
 nixos-build-target:
 	$(call nix-config-action,.#nixosConfigurations.$(WHAT).config.system.build.toplevel)
 
-nixos-build:
-	nix build $(call builder-opts) .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
-
 disko-install:
 	@if [ "x$(WHAT)" = "x" -o "x$(DEV)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=host DEV=/dev/XXX"; \
@@ -109,9 +100,6 @@ disko-install:
 		'github:nix-community/disko/latest#disko-install' -- --flake .#$(WHAT) --disk main $(DEV)
 
 ########### darwin
-darwin-build:
-	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
-
 darwin-build-target:
 	$(call nix-config-action,.#darwinConfigurations.$(WHAT).system)
 
