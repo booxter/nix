@@ -69,6 +69,16 @@ nixos-build-vm-qemu:
 	$(eval QEMU_VM_PREFIX := $(if $(filter Darwin,$(shell uname -s)),local,prox))
 	nix build .#nixosConfigurations.$(QEMU_VM_PREFIX)-builder1vm.config.system.build.vmQemu $(ARGS)
 
+########### proxmox iso
+nixos-build-prox-iso:
+	@if [ "x$(WHAT)" = "x" ]; then \
+		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:"; \
+		$(call VM_TYPES,prox); \
+		exit 1; \
+	fi
+	# Proxmox VMs are x86_64 in this setup; use prox-* VM configs.
+	nix build .#nixosConfigurations.prox-$(WHAT)vm.config.virtualisation.proxmox.iso $(ARGS)
+
 ########### nixos
 nixos-build-target:
 	$(call nix-config-action,.#nixosConfigurations.$(WHAT).config.system.build.toplevel)

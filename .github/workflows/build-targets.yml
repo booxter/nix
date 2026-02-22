@@ -172,6 +172,11 @@ jobs:
       fail-fast: false
       matrix: ${{ fromJson(needs.plan-build-matrix.outputs.matrix) }}
 
+          # Ensure Proxmox declarative-vms ISO generation works on x86_64-linux.
+          - name: nixos vm proxmox iso (x86_64-linux)
+            cmd: make nixos-build-prox-iso WHAT=builder1
+            os: ubuntu-latest
+
     timeout-minutes: 180
 
     steps:
