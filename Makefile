@@ -65,9 +65,9 @@ nixos-build-vm:
 
 ########### nixos qemu
 nixos-build-vm-qemu:
-	# Using builder1vm as the canonical VM; QEMU comes from host.pkgs so the VM choice doesn't matter.
-	$(eval QEMU_VM_PREFIX := $(if $(filter Darwin,$(shell uname -s)),local,prox))
-	nix build .#nixosConfigurations.$(QEMU_VM_PREFIX)-builder1vm.config.system.build.vmQemu $(ARGS)
+	# Build standalone QEMU host package check output (no nixosConfigurations coupling).
+	$(eval QEMU_CHECK_SYSTEM := $(if $(filter Darwin,$(shell uname -s)),aarch64-darwin,x86_64-linux))
+	nix build .#packages.$(QEMU_CHECK_SYSTEM).qemu-host-package $(ARGS)
 
 ########### proxmox iso
 nixos-build-prox-iso:

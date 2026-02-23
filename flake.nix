@@ -38,7 +38,7 @@
     nur.url = "github:nix-community/NUR";
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
-    proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
+    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos/main";
 
     disko.url = "github:nix-community/disko/latest";
 
@@ -173,6 +173,7 @@
                 // {
                   inherit platform stateVersion virtPlatform;
                   hostname = localName;
+                  vmMode = "qemu";
                 }
               );
 
@@ -183,6 +184,7 @@
                   hostname = proxName;
                   platform = "x86_64-linux";
                   virtPlatform = "x86_64-linux";
+                  vmMode = "proxmox";
                 }
               );
             };
@@ -269,6 +271,7 @@
             ipAddress = "192.168.15.12";
             macAddress = "38:05:25:30:7d:69";
           };
+
         }
         # TODO: calculate stable ssh port numbers based on hostnames, somehow
         # TODO: then, configure ssh config aliases for each of them
@@ -326,7 +329,11 @@
             inherit inputs system;
           };
         in
-        basePackages // proxmox.packages
+        basePackages
+        // proxmox.packages
+        // {
+          qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
+        }
       );
       apps = helpers.forAllSystems (
         system:
