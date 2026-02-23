@@ -27,7 +27,10 @@
 
   nix.buildMachines = lib.optional (hostname != "nvws") {
     hostName = "nvws.local";
-    system = "x86_64-linux";
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+    ];
     protocol = "ssh-ng";
     maxJobs = 4;
     speedFactor = 100;
