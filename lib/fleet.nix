@@ -136,9 +136,23 @@ let
       exec nix run "${../.}#nixosConfigurations.local-''${target_host}vm.config.system.build.vm" -L --show-trace
     '';
   };
+
+  getLocalBuilders = pkgs.writeShellApplication {
+    name = "get-local-builders";
+    runtimeInputs = with pkgs; [
+      bash
+      coreutils
+      gawk
+    ];
+    text = ''
+      exec ${../scripts/get-local-builders.sh} "$@"
+    '';
+  };
 in
 {
   "fleet-deploy" =
     mkApp "${fleetDeploy}/bin/fleet-deploy" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
   vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a target host defined as local-<target-host>vm in nixosConfigurations.";
+  "get-local-builders" =
+    mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
 }

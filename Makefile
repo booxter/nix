@@ -12,7 +12,7 @@ nix eval --json --apply 'hc: builtins.mapAttrs (_: v: v.activationPackage.drvAtt
 endef
 
 REMOTE ?= true
-LOCAL_LOCAL_BUILDERS := $(shell ./scripts/get-local-builders.sh --local)
+LOCAL_LOCAL_BUILDERS = $(shell nix run --quiet --option builders '' .#get-local-builders -- --local)
 
 define builder-opts
 $(if $(filter false,$(REMOTE)),--option builders '$(LOCAL_LOCAL_BUILDERS)',)
