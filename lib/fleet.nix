@@ -6,8 +6,8 @@ let
     meta = { inherit description; };
   };
 
-  fleetApply = pkgs.writeShellApplication {
-    name = "fleet-apply";
+  fleetDeploy = pkgs.writeShellApplication {
+    name = "fleet-deploy";
     runtimeInputs = with pkgs; [
       bind
       git
@@ -24,14 +24,14 @@ let
       usage() {
         cat <<'EOF'
       Usage:
-        fleet-apply [fleet deploy args]
-        fleet-apply --home <target> [username]
-        fleet-apply --disko <host> <device>
+        fleet-deploy [fleet deploy args]
+        fleet-deploy --home <target> [username]
+        fleet-deploy --disko <host> <device>
 
       Examples:
-        fleet-apply -A --select
-        fleet-apply --home nv ihrachyshka
-        fleet-apply --disko frame /dev/sdX
+        fleet-deploy -A --select
+        fleet-deploy --home nv ihrachyshka
+        fleet-deploy --disko frame /dev/sdX
       EOF
       }
 
@@ -99,20 +99,20 @@ let
     text = ''
       set -euo pipefail
 
-      list_vm_types() {
+      list_target_hosts() {
         nix flake show --json "${../.}" 2>/dev/null \
-          | jq -r '.nixosConfigurations | keys[] | select(test("^local-.*vm$")) | capture("^local-(?<type>.*)vm$").type' \
+          | jq -r '.nixosConfigurations | keys[] | select(test("^local-.*vm$")) | capture("^local-(?<host>.*)vm$").host' \
           | sort -u
       }
 
       usage() {
         cat <<'EOF'
-      Usage: vm <type>
+      Usage: vm <target-host>
       Example: vm builder1
 
-      Available VM types:
+      Available target hosts (from local-<host>vm configs):
       EOF
-        list_vm_types | sed 's/^/  /'
+        list_target_hosts | sed 's/^/  /'
       }
 
       if [ "$#" -eq 1 ] && [ "$1" = "--help" ]; then
@@ -125,20 +125,20 @@ let
         exit 1
       fi
 
-      vm_type="$1"
-      if ! list_vm_types | grep -Fxq "$vm_type"; then
-        echo "Unknown VM type: $vm_type" >&2
+      target_host="$1"
+      if ! list_target_hosts | grep -Fxq "$target_host"; then
+        echo "Unknown target host: $target_host" >&2
         echo >&2
         usage >&2
         exit 1
       fi
 
-      exec nix run "${../.}#nixosConfigurations.local-''${vm_type}vm.config.system.build.vm" -L --show-trace
+      exec nix run "${../.}#nixosConfigurations.local-''${target_host}vm.config.system.build.vm" -L --show-trace
     '';
   };
 in
 {
-  "fleet-apply" =
-    mkApp "${fleetApply}/bin/fleet-apply" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
-  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM by type (maps <type> to local-<type>vm).";
+  "fleet-deploy" =
+    mkApp "${fleetDeploy}/bin/fleet-deploy" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
+  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a target host defined as local-<target-host>vm in nixosConfigurations.";
 }

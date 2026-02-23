@@ -1,119 +1,69 @@
 # Nix configs
 
-This repo uses a `Makefile` as the main entrypoint for host builds. Most
-targets take `WHAT=` (a host). Running a target without `WHAT` prints available
-options when supported.
+This repo provides flake apps and scripts as the primary interfaces. The
+`Makefile` is a convenience wrapper for a few host/home build commands.
 
-## Common commands
+## Build and Deploy
 
 ```sh
+# Host builds
 make nixos WHAT=frame
 make darwin WHAT=mair
-
-```
-
-## Local and NixOS VMs
-
-```sh
-nix run .#vm -- builder1
-```
-
-## Proxmox VMs
-
-```sh
-nix run .#prox-deploy -- srvarr prx1
-```
-
-## Host rebuilds
-
-```sh
 make nixos WHAT=beast REMOTE=false
-make darwin WHAT=mair
+
+# Local VMs (any host with a `local-<host>vm` config)
+nix run .#vm -- --help
+nix run .#vm -- builder1
+nix run .#vm -- srvarr
+
+# Proxmox VM deploy
+nix run .#prox-deploy -- srvarr prx1
+
+# Disk and image helpers
+nix run .#fleet-deploy -- --disko frame /dev/sdX
+nix build .#pi-image -o pi5.sd
 ```
 
 ## Fleet updates
 
-Update multiple machines over SSH with `nix run .#fleet-apply` (defaults to
+Update multiple machines over SSH with `nix run .#fleet-deploy` (defaults to
 `--all`):
 
 ```sh
 # Update all personal machines (default)
-nix run .#fleet-apply -- -A
+nix run .#fleet-deploy -- -A
 
 # Update all work machines
-nix run .#fleet-apply -- -A --work
+nix run .#fleet-deploy -- -A --work
 
-# Update a subset interactively (fzf required)
-nix run .#fleet-apply -- -A --select
+# Update a subset interactively
+nix run .#fleet-deploy -- -A --select
 
 # Dry run (SSH check + disk estimate only)
-nix run .#fleet-apply -- -A --dry-run
-```
-
-## Disk and image helpers
-
-```sh
-nix run .#fleet-apply -- --disko frame /dev/sdX
-nix build .#pi-image -o pi5.sd
+nix run .#fleet-deploy -- -A --dry-run
 ```
 
 ## Secrets
 
 Secrets are managed via sops-nix, with one encrypted YAML per host under `secrets/`.
-The shared plaintext seed template is `secrets/_template.yaml`.
-Use flake apps for bootstrap so required tools are provided automatically.
-
-Bootstrap a remote host over SSH (beast example):
+Use these commands:
 
 ```sh
+# Bootstrap a host secret
 nix run .#sops-bootstrap -- beast
-```
-
-If SSH user differs from your local username:
-
-```sh
 nix run .#sops-bootstrap -- beast --user root
-```
 
-This will:
-
-- create `/var/lib/sops-nix/key.txt` on the host (if missing)
-- fetch the age public key
-- create `.sops.yaml` if needed (or patch it), including your local age key as a
-  recipient for that host rule
-- create `secrets/beast.yaml` encrypted using `.sops.yaml` creation rules
-
-Notes:
-
-- `sops-bootstrap` needs a real terminal (`ssh -tt`) because it may prompt for
-  remote `sudo` password.
-- It reads your local age key from `$SOPS_AGE_KEY_FILE` or `~/.config/sops/age/keys.txt`.
-
-Afterwards, edit the secret with:
-
-```sh
-nix run .#sops-edit -- beast
-```
-
-For the current host (detected via `hostname -s`), you can omit the host argument:
-
-```sh
+# Current host (detected from hostname)
 nix run .#sops-cat
 nix run .#sops-edit
 nix run .#sops-update
-```
 
-Or pass a host name as a positional argument:
-
-```sh
+# Explicit host
 nix run .#sops-cat -- mair
 nix run .#sops-edit -- mair
 nix run .#sops-update -- mair
-```
 
-Copy a section between host secrets (example: copy `attic` from `mair` to `prx1-lab`):
-
-```sh
+# Copy one section between host secrets
 nix run .#sops-copy -- mair prx1-lab attic
 ```
 
@@ -122,7 +72,7 @@ nix run .#sops-copy -- mair prx1-lab attic
 ```sh
 make linux-home TARGET=nv
 make darwin-home TARGET=mair
-nix run .#fleet-apply -- --home nv
+nix run .#fleet-deploy -- --home nv
 ```
 
 `TARGET` must match a standalone Home Manager profile from
