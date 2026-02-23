@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   username,
   hostname,
   ...
@@ -25,7 +24,6 @@
           User ${user}
       '';
   };
-  environment.systemPackages = [ pkgs.openssh_gssapi ];
 
   nix.buildMachines = lib.optional (hostname != "nvws") {
     hostName = "nvws.local";
