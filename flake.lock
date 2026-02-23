@@ -483,22 +483,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-master": {
-      "locked": {
-        "lastModified": 1771236797,
-        "narHash": "sha256-wQoZEyF/e1HhyqesyTZbIjR827O/OcsJ/Kbs0J7POCE=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "c724b7ff6d7ce10b6e88358a555b620448cf0558",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-quartz-wm": {
       "locked": {
         "lastModified": 1771462627,
@@ -659,7 +643,6 @@
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-25_11": "nixpkgs-25_11",
         "nixpkgs-huntarr": "nixpkgs-huntarr",
-        "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-quartz-wm": "nixpkgs-quartz-wm",
         "nixvim": "nixvim",
         "nur": "nur",
