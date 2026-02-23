@@ -16,7 +16,6 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
-      pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
       pkgsHuntarr = getPkgs inputs.nixpkgs-huntarr;
@@ -83,9 +82,6 @@
       });
     }
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
-      # Pull NUT from master for now for darwin support.
-      inherit (pkgsMaster) nut;
-
       # Backport until https://github.com/NixOS/nixpkgs/pull/488112 lands in our pinned nixpkgs.
       firefox = patchFirefoxDarwinWrapper prev.firefox;
 
