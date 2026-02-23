@@ -26,32 +26,39 @@ SSH_HOST_OPTS=()
 
 resolve_ssh_host() {
   local host="$1"
-  local base_host
+  local base_host ssh_lookup_host
   local ssh_config proxy_jump proxy_cmd
   local resolved
   base_host="$(resolve_base_host "$host")"
   SSH_HOST_OPTS=()
+  ssh_lookup_host="$base_host"
 
-  ssh_config="$(ssh -G "$base_host" 2>/dev/null || true)"
+  # Work hosts are accessed over mDNS because corporate DNS policy blocks use
+  # of the LAN DNS server for these names.
+  if [[ "$MODE" == "work" && "$ssh_lookup_host" != *.* && ! "$ssh_lookup_host" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    ssh_lookup_host="${ssh_lookup_host}.local"
+  fi
+
+  ssh_config="$(ssh -G "$ssh_lookup_host" 2>/dev/null || true)"
   proxy_jump="$(awk '$1=="proxyjump" {print $2; exit}' <<<"$ssh_config")"
   proxy_cmd="$(awk '$1=="proxycommand" {print $2; exit}' <<<"$ssh_config")"
   if [[ -n "$proxy_jump" && "$proxy_jump" != "none" ]]; then
-    printf '%s' "$base_host"
+    printf '%s' "$ssh_lookup_host"
     return
   fi
   if [[ -n "$proxy_cmd" && "$proxy_cmd" != "none" ]]; then
-    printf '%s' "$base_host"
+    printf '%s' "$ssh_lookup_host"
     return
   fi
 
-  resolved="$(dig +short +time=1 +tries=1 "@${LAN_DNS_SERVER}" "$base_host" A | head -n1)"
+  resolved="$(dig +short +time=1 +tries=1 "@${LAN_DNS_SERVER}" "$ssh_lookup_host" A | head -n1)"
   if [[ -n "$resolved" ]]; then
-    SSH_HOST_OPTS=(-o HostName="$resolved" -o HostKeyAlias="$base_host")
-    printf '%s' "$base_host"
+    SSH_HOST_OPTS=(-o HostName="$resolved" -o HostKeyAlias="$ssh_lookup_host")
+    printf '%s' "$ssh_lookup_host"
     return
   fi
 
-  printf '%s' "$base_host"
+  printf '%s' "$ssh_lookup_host"
 }
 
 ssh_base_opts=(
