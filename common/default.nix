@@ -8,6 +8,7 @@
 }:
 let
   canUseBuilders = !isWork && (hostname == "mair" || hostname == "mmini" || hostname == "frame");
+  canUseWorkBuilders = isWork && hostname != "nvws";
   workKeys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHt25mSiJLQjx2JECMuhTZEV6rlrOYk3CT2cUEdXAoYs ihrachyshka@ihrachyshka-mlt"
   ];
@@ -29,7 +30,10 @@ in
   ]
   ++ lib.optionals canUseBuilders [
     ./_mixins/community-builders
-    ./_mixins/remote-builders
+    ./_mixins/personal-builders
+  ]
+  ++ lib.optionals canUseWorkBuilders [
+    ./_mixins/work-builders
   ];
 
   options.host.isWork = lib.mkOption {
