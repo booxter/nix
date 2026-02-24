@@ -78,6 +78,7 @@ in
     dates = lib.mkDefault "Sat 03:00";
     randomizedDelaySec = "45min";
     persistent = true;
+    allowReboot = true;
   };
 
   time.timeZone = "America/New_York";
