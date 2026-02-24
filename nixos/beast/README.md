@@ -13,6 +13,36 @@ This host is a storage/NAS node. The host-specific configuration lives in
 - Snapper timelines and scheduled Btrfs scrubs for data hygiene.
 - SMART monitoring for disk health.
 
+## DDNS rollout (`jf.ihar.dev`, `au.ihar.dev`, `js.ihar.dev`)
+
+`nixos/beast/default.nix` runs `services.ddclient` to update Dynu directly from
+this host (instead of router-managed DDNS).
+
+1. Create a Dynu hostname (current: `ihrachyshka-home.freeddns.org`).
+1. In `nixos/beast/default.nix`, set:
+   - `dynuHostname = "ihrachyshka-home.freeddns.org";`
+   - `dynuUsername = "ihrachyshka";`
+1. Add `ddns.dynu.password` to `secrets/beast.yaml` via `sops`.
+1. Rebuild on beast.
+1. At your registrar DNS, repoint:
+   - `jf.ihar.dev CNAME <dynu-hostname>`
+   - `au.ihar.dev CNAME <dynu-hostname>`
+   - `js.ihar.dev CNAME <dynu-hostname>`
+
+Validation:
+
+```bash
+dig +short jf.ihar.dev CNAME
+dig +short au.ihar.dev CNAME
+dig +short js.ihar.dev CNAME
+dig +short ihrachyshka-home.freeddns.org A
+systemctl status ddclient
+journalctl -u ddclient -n 100 --no-pager
+curl -I https://jf.ihar.dev
+curl -I https://au.ihar.dev
+curl -I https://js.ihar.dev
+```
+
 ## Storage
 
 - `/volume2` is a Btrfs filesystem mounted with `compress=zstd`, `noatime`, and

@@ -5,6 +5,7 @@ usage() {
   cat <<'EOF'
 Usage:
   scripts/sops-update.sh [HOST]
+  scripts/sops-update.sh --help
 
 Update secrets/HOST.yaml from template defaults in secrets/_template.yaml.
 
@@ -27,6 +28,15 @@ main() {
   host=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        usage >&2
+        exit 1
+        ;;
       *)
         if [[ -z "$host" ]]; then
           host="$1"

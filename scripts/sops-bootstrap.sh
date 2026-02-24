@@ -5,6 +5,7 @@ usage() {
   cat <<'EOF'
 Usage:
   scripts/sops-bootstrap.sh HOST [--user USER]
+  scripts/sops-bootstrap.sh --help
 
 This script:
   1) SSHes into HOST and generates /var/lib/sops-nix/key.txt (if missing)
@@ -44,16 +45,30 @@ user="${USER:-$(whoami)}"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
     --user)
+      if [[ $# -lt 2 || -z "${2:-}" ]]; then
+        echo "Missing value for --user" >&2
+        usage >&2
+        exit 1
+      fi
       user="$2"
       shift 2
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
       ;;
     *)
       if [[ -z "$host" ]]; then
         host="$1"
         shift
       else
-        usage
+        usage >&2
         exit 1
       fi
       ;;
@@ -61,7 +76,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$host" ]]; then
-  usage
+  usage >&2
   exit 1
 fi
 

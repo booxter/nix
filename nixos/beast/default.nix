@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -23,6 +24,9 @@ let
     2049 # nfsd
   ];
   hasSopsSecrets = builtins.pathExists ../../secrets/beast.yaml;
+  # DDNS provider target for public endpoints (jf/au/js).
+  dynuHostname = "ihrachyshka-home.freeddns.org";
+  dynuUsername = "ihrachyshka";
 in
 {
   imports = [
@@ -107,6 +111,40 @@ in
   security.acme = {
     acceptTerms = true;
     defaults.email = "ihar.hrachyshka@gmail.com";
+  };
+
+  # Run DDNS updates from this host (instead of the router).
+  sops = {
+    defaultSopsFile = ../../secrets/beast.yaml;
+    age.keyFile = "/var/lib/sops-nix/key.txt";
+    useSystemdActivation = true;
+    secrets.ddnsDynuPassword = {
+      key = "ddns/dynu/password";
+      mode = "0400";
+    };
+  };
+
+  services.ddclient = {
+    enable = true;
+    interval = "1min";
+    protocol = "dyndns2";
+    server = "api.dynu.com";
+    username = dynuUsername;
+    passwordFile = config.sops.secrets.ddnsDynuPassword.path;
+    domains = [ dynuHostname ];
+    ssl = true;
+    quiet = true;
+    usev4 = "webv4, webv4=checkip.dynu.com/, webv4-skip='IP Address'";
+    usev6 = "";
+  };
+  systemd.services.ddclient = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
+    serviceConfig = {
+      DynamicUser = lib.mkForce false;
+      User = "root";
+      Group = "root";
+    };
   };
 
   services.nginx = {

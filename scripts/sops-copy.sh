@@ -5,6 +5,7 @@ usage() {
   cat <<'EOF'
 Usage:
   scripts/sops-copy.sh SRC_HOST DST_HOST KEY_PATH
+  scripts/sops-copy.sh --help
 
 Copy KEY_PATH from secrets/SRC_HOST.yaml into secrets/DST_HOST.yaml.
 Example:
@@ -86,14 +87,42 @@ path_to_jq_array() {
 }
 
 main() {
-  if [[ $# -ne 3 ]]; then
-    usage
+  local src_host=""
+  local dst_host=""
+  local key_path=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        usage >&2
+        exit 1
+        ;;
+      *)
+        if [[ -z "$src_host" ]]; then
+          src_host="$1"
+        elif [[ -z "$dst_host" ]]; then
+          dst_host="$1"
+        elif [[ -z "$key_path" ]]; then
+          key_path="$1"
+        else
+          usage >&2
+          exit 1
+        fi
+        shift
+        ;;
+    esac
+  done
+
+  if [[ -z "$src_host" || -z "$dst_host" || -z "$key_path" ]]; then
+    usage >&2
     exit 1
   fi
 
-  local src_host="$1"
-  local dst_host="$2"
-  local key_path="$3"
   local key_expr
   local key_path_array
   key_expr="$(path_to_yq_expr "$key_path")"
