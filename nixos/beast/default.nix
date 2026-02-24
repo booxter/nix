@@ -136,7 +136,7 @@ in
     domains = [ dynuHostname ];
     ssl = true;
     quiet = true;
-    usev4 = "webv4, webv4=checkip.dynu.com/, webv4-skip='IP Address'";
+    usev4 = "webv4,webv4=checkip.dynu.com/,webv4-skip='IP Address'";
     usev6 = "";
   };
   systemd.services.ddclient = {
