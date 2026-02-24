@@ -6,7 +6,7 @@ This host is a storage/NAS node. The host-specific configuration lives in
 
 ## What it runs
 
-- NixOS with the latest stable kernel (`linuxPackages_latest`).
+- NixOS with the LTS kernel (`linuxPackages_6_12`).
 - Software RAID (`mdadm`) to assemble an existing RAID6 array.
 - Btrfs for the data volume mounted at `/volume2`.
 - NFS server exporting media and Nix cache paths to the local subnet.
