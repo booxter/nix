@@ -79,9 +79,10 @@ in
     8080
   ];
 
-  # auto-update cachevm on a separate schedule so that it doesn't clash with
-  # machines that use the cache for their auto-updates.
-  system.autoUpgrade.dates = lib.mkForce "Sun 06:00";
+  # Keep cachevm upgrades on a separate schedule so they don't clash with
+  # machines that use this cache for their own auto-updates.
+  # Run inside the global reboot window (01:00-05:00).
+  system.autoUpgrade.dates = lib.mkForce "Sun 01:00";
 
   systemd.services.atticd.unitConfig.RequiresMountsFor = "/cache";
 }
