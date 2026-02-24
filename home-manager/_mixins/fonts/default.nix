@@ -1,5 +1,11 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 {
   fonts.fontconfig.enable = true;
-  home.packages = builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
+  home.packages = with pkgs.nerd-fonts; [
+    meslo-lg
+    jetbrains-mono
+    hack
+    fira-code
+    symbols-only
+  ];
 }
