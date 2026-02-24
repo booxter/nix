@@ -436,22 +436,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-huntarr": {
-      "locked": {
-        "lastModified": 1769997730,
-        "narHash": "sha256-M0DaO6PiSfzkh4QBM0ROB1rCnzEIwpJsHclqtvGA6pI=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "0f165e7c9416764eae61f86f52dad6d8565768a5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "huntarr-init",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1761765539,
@@ -642,7 +626,6 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-25_11": "nixpkgs-25_11",
-        "nixpkgs-huntarr": "nixpkgs-huntarr",
         "nixpkgs-quartz-wm": "nixpkgs-quartz-wm",
         "nixvim": "nixvim",
         "nur": "nur",
