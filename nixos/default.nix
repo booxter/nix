@@ -79,6 +79,10 @@ in
     randomizedDelaySec = "45min";
     persistent = true;
     allowReboot = true;
+    rebootWindow = {
+      lower = "01:00";
+      upper = "05:00";
+    };
   };
 
   time.timeZone = "America/New_York";
