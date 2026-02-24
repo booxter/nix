@@ -1,4 +1,3 @@
-# Define common args
 .DEFAULT_GOAL := help
 .PHONY: help nixos darwin linux-home darwin-home
 
@@ -54,8 +53,6 @@ help:
 	@echo "  make linux-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 	@echo "  make darwin-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 
-########### nixos vms
-########### nixos
 nixos:
 	@if [ "x$(WHAT)" = "x" ]; then \
 		echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
@@ -80,7 +77,6 @@ nixos:
 	fi; \
 	nix build $(call builder-opts) ".#nixosConfigurations.$$resolved.config.system.build.toplevel" $(ARGS)
 
-########### darwin
 darwin:
 	$(call nix-config-action,.#darwinConfigurations.$(WHAT).system)
 

@@ -436,22 +436,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-huntarr": {
-      "locked": {
-        "lastModified": 1769997730,
-        "narHash": "sha256-M0DaO6PiSfzkh4QBM0ROB1rCnzEIwpJsHclqtvGA6pI=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "0f165e7c9416764eae61f86f52dad6d8565768a5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "huntarr-init",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1761765539,
@@ -480,22 +464,6 @@
         "owner": "NixOS",
         "repo": "nixpkgs",
         "rev": "e6f23dc08d3624daab7094b701aa3954923c6bbb",
-        "type": "github"
-      }
-    },
-    "nixpkgs-master": {
-      "locked": {
-        "lastModified": 1771236797,
-        "narHash": "sha256-wQoZEyF/e1HhyqesyTZbIjR827O/OcsJ/Kbs0J7POCE=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "c724b7ff6d7ce10b6e88358a555b620448cf0558",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "master",
-        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -628,16 +596,16 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1771716213,
-        "narHash": "sha256-QPJ3jLrGXGwyMOWl4uZ3W4K/HRVKXjG1Ugq4/uE5k8w=",
-        "owner": "booxter",
+        "lastModified": 1769870714,
+        "narHash": "sha256-wjwCj70iiFXoAasQto+3jTaA4wCMOAs/rdX+nsmtBrQ=",
+        "owner": "SaumonNet",
         "repo": "proxmox-nixos",
-        "rev": "0ebf346501f6b5c93f9c37537d296cd2187aaf78",
+        "rev": "c1f79f104930347a0b84abbca0d42884063a8c09",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "my-fork",
+        "owner": "SaumonNet",
+        "ref": "main",
         "repo": "proxmox-nixos",
         "type": "github"
       }
@@ -658,8 +626,6 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-25_11": "nixpkgs-25_11",
-        "nixpkgs-huntarr": "nixpkgs-huntarr",
-        "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-quartz-wm": "nixpkgs-quartz-wm",
         "nixvim": "nixvim",
         "nur": "nur",

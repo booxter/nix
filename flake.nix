@@ -5,7 +5,6 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs-25_11.url = "github:NixOS/nixpkgs/release-25.11";
 
     # Use staging-next if needed
@@ -39,7 +38,7 @@
     nur.url = "github:nix-community/NUR";
     nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
-    proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
+    proxmox-nixos.url = "github:SaumonNet/proxmox-nixos/main";
 
     disko.url = "github:nix-community/disko/latest";
 
@@ -49,9 +48,6 @@
     jellarr.url = "github:booxter/jellarr/my-fork-plus-fix-plugin-404";
     #jellarr.url = "github:venkyr77/jellarr/v0.1.0";
     jellarr.inputs.nixpkgs.follows = "nixpkgs";
-
-    # TODO: contribute upstream once Huntarr module/package confirmed working
-    nixpkgs-huntarr.url = "github:booxter/nixpkgs/huntarr-init";
 
     nixpkgs-quartz-wm.url = "github:booxter/nixpkgs/quartz-wm-darwin";
 
@@ -193,6 +189,7 @@
                 // {
                   inherit platform stateVersion virtPlatform;
                   hostname = localName;
+                  vmMode = "qemu";
                 }
               );
 
@@ -203,6 +200,7 @@
                   hostname = proxName;
                   platform = "x86_64-linux";
                   virtPlatform = "x86_64-linux";
+                  vmMode = "proxmox";
                 }
               );
             };
@@ -289,6 +287,7 @@
             ipAddress = "192.168.15.12";
             macAddress = "38:05:25:30:7d:69";
           };
+
         }
         # TODO: calculate stable ssh port numbers based on hostnames, somehow
         # TODO: then, configure ssh config aliases for each of them
@@ -349,7 +348,12 @@
             inherit inputs system;
           };
         in
-        basePackages // fleetPackages // proxmox.packages
+        basePackages
+        // proxmox.packages
+        // fleetPackages
+        // {
+          qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
+        }
       );
       apps = helpers.forAllSystems (
         system:

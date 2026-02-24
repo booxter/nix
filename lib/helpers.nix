@@ -30,6 +30,80 @@ let
   upsNonVmShutdownDelaySeconds = 900;
   upsShutdownDelaySeconds =
     isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
+  # Apply upstream module PR deltas once and reuse the imported modules.
+  #
+  # NOTE: Patching the proxmox module source is architecture-agnostic, but
+  # pkgs.applyPatches itself is a derivation and therefore has a build system.
+  # Use target-system patch tooling so each Linux runner can evaluate its
+  # corresponding target architecture without cross-arch requirements.
+  patchedProxmoxNixosModules =
+    let
+      mkPatchedModules =
+        patchSystem:
+        let
+          pkgs = inputs.nixpkgs.legacyPackages.${patchSystem};
+        in
+        import "${
+          pkgs.applyPatches {
+            name = "proxmox-nixos-source-patched";
+            src = inputs.proxmox-nixos.outPath;
+            patches = [
+              # PR #195: allow setting only `cpu.cputype` by making other CPU sub-options nullable/defaulted.
+              # https://github.com/SaumonNet/proxmox-nixos/pull/195
+              (pkgs.fetchpatch {
+                url = "https://github.com/SaumonNet/proxmox-nixos/commit/dc7e3daff2527155c0d4d685a0ce88dfa6aff8a2.patch";
+                hash = "sha256-vvlKTzsYKFuukwJTPmSsOrKawL/Tu01yekQRbBopVIU=";
+              })
+              # PR #196: stop defaulting `vga.clipboard` to "vnc" (set null by default for migration compatibility).
+              # https://github.com/SaumonNet/proxmox-nixos/pull/196
+              (pkgs.fetchpatch {
+                url = "https://github.com/SaumonNet/proxmox-nixos/commit/0ebf346501f6b5c93f9c37537d296cd2187aaf78.patch";
+                hash = "sha256-JCYAL0dusUjLejj4TF2lw4PWxOi/ZOXMEJTUEM/UXUA=";
+              })
+            ];
+          }
+        }/modules";
+      patchSystems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+    in
+    builtins.listToAttrs (
+      map (patchSystem: {
+        name = patchSystem;
+        value = mkPatchedModules patchSystem;
+      }) patchSystems
+    );
+  mkPatchedProxmoxNixosModules =
+    targetSystem:
+    if builtins.hasAttr targetSystem patchedProxmoxNixosModules then
+      builtins.getAttr targetSystem patchedProxmoxNixosModules
+    else
+      throw "Unsupported patch system for proxmox modules: ${targetSystem}";
+  mkVmHostPkgs =
+    virtPlatform:
+    import inputs.nixpkgs {
+      system = virtPlatform;
+      overlays = [
+        (final: prev: {
+          # Fix qemu hanging on beefy VMs due to fd limit exhaustion.
+          # Use heap based fdsets in g_poll.
+          glib = prev.glib.overrideAttrs (old: {
+            patches =
+              old.patches or [ ]
+              ++ prev.lib.optionals prev.stdenv.hostPlatform.isDarwin [
+                (prev.fetchpatch {
+                  url = "https://gitlab.gnome.org/ihar.hrachyshka/glib/-/commit/9bd63d0d265bd8128ffdee9cd5c3cc9821b37e92.patch";
+                  hash = "sha256-iwrqiTQbKP/PUEXZuOhQo6tBKCgelHNe0lFTC7hzxB8=";
+                  excludes = [ ".gitlab-ci.yml" ];
+                })
+              ];
+          });
+        })
+      ];
+    };
 in
 rec {
   mkHome =
@@ -138,6 +212,7 @@ rec {
   mkVM =
     args@{
       extraModules ? [ ],
+      vmMode ? "proxmox",
       sshPort ? null,
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
@@ -149,6 +224,18 @@ rec {
       proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
       ...
     }:
+    let
+      _ =
+        if
+          builtins.elem vmMode [
+            "qemu"
+            "proxmox"
+          ]
+        then
+          null
+        else
+          throw "Unsupported mkVM vmMode `${vmMode}`; expected one of: qemu, proxmox";
+    in
     mkNixos (
       args
       // {
@@ -185,28 +272,7 @@ rec {
                   memorySize = memorySize * 1024;
                   diskSize = diskSize * 1024;
 
-                  host.pkgs = (
-                    import inputs.nixpkgs {
-                      system = virtPlatform;
-                      overlays = [
-                        (final: prev: {
-                          # Fix qemu hanging on beefy VMs due to fd limit exhaustion.
-                          # Use heap based fdsets in g_poll.
-                          glib = prev.glib.overrideAttrs (old: {
-                            patches =
-                              old.patches or [ ]
-                              ++ prev.lib.optionals prev.stdenv.hostPlatform.isDarwin [
-                                (prev.fetchpatch {
-                                  url = "https://gitlab.gnome.org/ihar.hrachyshka/glib/-/commit/9bd63d0d265bd8128ffdee9cd5c3cc9821b37e92.patch";
-                                  hash = "sha256-iwrqiTQbKP/PUEXZuOhQo6tBKCgelHNe0lFTC7hzxB8=";
-                                  excludes = [ ".gitlab-ci.yml" ];
-                                })
-                              ];
-                          });
-                        })
-                      ];
-                    }
-                  );
+                  host.pkgs = mkVmHostPkgs virtPlatform;
                   graphics = false;
                 };
               }
@@ -217,9 +283,23 @@ rec {
                 system.build.vmQemu = config.virtualisation.vmVariant.virtualisation.host.pkgs.qemu;
               }
             )
-
+          ]
+          ++ inputs.nixpkgs.lib.optionals (vmMode == "qemu") [
+            (
+              { lib, ... }:
+              {
+                # Keep qemu-mode VM configs evaluable when system.build.toplevel is requested.
+                fileSystems."/" = lib.mkDefault {
+                  device = "/dev/disk/by-label/nixos";
+                  fsType = "ext4";
+                };
+                boot.loader.grub.devices = lib.mkDefault [ "nodev" ];
+              }
+            )
+          ]
+          ++ inputs.nixpkgs.lib.optionals (vmMode == "proxmox") [
             # proxmox vms
-            inputs.proxmox-nixos.nixosModules.declarative-vms
+            (mkPatchedProxmoxNixosModules platform).declarative-vms
             (
               { ... }:
               {
@@ -284,7 +364,7 @@ rec {
         extraModules =
           extraModules
           ++ [
-            inputs.proxmox-nixos.nixosModules.proxmox-ve
+            (mkPatchedProxmoxNixosModules platform).proxmox-ve
 
             (
               { pkgs, ... }:
@@ -513,4 +593,5 @@ rec {
     "aarch64-darwin"
     "x86_64-darwin"
   ];
+  inherit mkVmHostPkgs;
 }

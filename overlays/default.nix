@@ -16,10 +16,8 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
-      pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
-      pkgsHuntarr = getPkgs inputs.nixpkgs-huntarr;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       releaseTransmission =
         if prev.lib.strings.hasPrefix "4.0." pkgsRelease.transmission_4.version then
@@ -69,9 +67,6 @@
       transmission_4 = releaseTransmission;
       transmission = releaseTransmission;
 
-      # Huntarr from fork until it lands upstream
-      inherit (pkgsHuntarr) huntarr;
-
       jellyfin = prev.jellyfin.overrideAttrs (old: {
         patches = old.patches or [ ] ++ [
           # fix directors not populated for new movies since 10.11.6
@@ -83,9 +78,6 @@
       });
     }
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
-      # Pull NUT from master for now for darwin support.
-      inherit (pkgsMaster) nut;
-
       # Backport until https://github.com/NixOS/nixpkgs/pull/488112 lands in our pinned nixpkgs.
       firefox = patchFirefoxDarwinWrapper prev.firefox;
 
