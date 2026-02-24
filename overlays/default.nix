@@ -18,7 +18,6 @@
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
-      pkgsHuntarr = getPkgs inputs.nixpkgs-huntarr;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       releaseTransmission =
         if prev.lib.strings.hasPrefix "4.0." pkgsRelease.transmission_4.version then
@@ -67,9 +66,6 @@
       inherit (pkgsRelease) readarr sonarr;
       transmission_4 = releaseTransmission;
       transmission = releaseTransmission;
-
-      # Huntarr from fork until it lands upstream
-      inherit (pkgsHuntarr) huntarr;
 
       jellyfin = prev.jellyfin.overrideAttrs (old: {
         patches = old.patches or [ ] ++ [
