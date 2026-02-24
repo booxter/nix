@@ -5,6 +5,7 @@ usage() {
   cat <<'EOF'
 Usage:
   scripts/sops-edit.sh [HOST]
+  scripts/sops-edit.sh --help
 
 If HOST is omitted, the current short hostname is used.
 If a template exists for HOST, merge it into the secret first.
@@ -27,12 +28,21 @@ resolve_repo_root() {
 repo_root="$(resolve_repo_root)"
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
     *)
       if [[ -z "$host" ]]; then
         host="$1"
         shift
       else
-        usage
+        usage >&2
         exit 1
       fi
       ;;

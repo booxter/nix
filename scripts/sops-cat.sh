@@ -5,6 +5,7 @@ usage() {
   cat <<'EOF'
 Usage:
   scripts/sops-cat.sh [HOST]
+  scripts/sops-cat.sh --help
 
 Decrypt and print secrets/HOST.yaml.
 If HOST is omitted, the current short hostname is used.
@@ -24,12 +25,21 @@ resolve_repo_root() {
 host=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
     *)
       if [[ -z "$host" ]]; then
         host="$1"
         shift
       else
-        usage
+        usage >&2
         exit 1
       fi
       ;;
