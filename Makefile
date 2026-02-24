@@ -1,129 +1,87 @@
-# Define common args
+.DEFAULT_GOAL := help
+.PHONY: help nixos darwin linux-home darwin-home
+
 ARGS = -L --show-trace
-HM_ARGS = -b backup
 USERNAME ?= ihrachyshka
 
-NIX_OPTS = \
-	--extra-experimental-features 'nix-command flakes'
-
-NIXOS_CONFIGS = nix flake show --json 2>/dev/null | jq -r -c '.nixosConfigurations | keys[]'
-VM_TYPES = $(NIXOS_CONFIGS) | grep '^$(1)-.*vm$$' | sed 's/vm$$//' | sed 's/^$(1)-//'
+define home-targets-for-system
+nix eval --json --apply 'hc: builtins.mapAttrs (_: v: v.activationPackage.drvAttrs.system) hc' .#homeConfigurations \
+	| jq -r 'to_entries[] | select(.value=="$(1)") | .key' \
+	| sed 's/^$(USERNAME)@//'
+endef
 
 REMOTE ?= true
-LOCAL_LOCAL_BUILDERS := $(shell ./scripts/get-local-builders.sh --local)
+LOCAL_LOCAL_BUILDERS = $(shell nix run --quiet --option builders '' .#get-local-builders -- --local)
 
 define builder-opts
 $(if $(filter false,$(REMOTE)),--option builders '$(LOCAL_LOCAL_BUILDERS)',)
 endef
 
-define nix-vm-action
-	# $(1): VM prefix (local/prox)
-	# $(2): nix command (run/build)
-	# $(3): build output (vm/toplevel)
-	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:"; \
-		$(call VM_TYPES,$(1)); \
-		exit 1; \
-	fi
-
-	nix $(2) \
-		$(call builder-opts) \
-		.#nixosConfigurations.$(1)-$(WHAT)vm.config.system.build.$(3) $(ARGS)
-endef
-
 define nix-config-action
 	# $(1): build target attribute path
 	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=host"; \
+		echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
 		exit 1; \
 	fi
 
 	nix build $(call builder-opts) $(1) $(ARGS)
 endef
 
-# Also the default target (just call `make`)
-inputs-update:
-	nix flake update
+define standalone-home-build-action
+	@if [ "x$(TARGET)" = "x" ]; then \
+		echo "Usage: make $@ TARGET=profile [USERNAME=<name>] [REMOTE=false]"; \
+		echo; \
+		echo "Available $(1) home profiles:"; \
+		$(call home-targets-for-system,$(2)); \
+		exit 1; \
+	fi
+	@if ! ($(call home-targets-for-system,$(2)) | grep -Fxq "$(TARGET)"); then \
+		echo "Unknown $(1) home profile: $(TARGET)"; \
+		echo; \
+		echo "Available $(1) home profiles:"; \
+		$(call home-targets-for-system,$(2)); \
+		exit 1; \
+	fi
 
-########### tests
-bats:
-	nix build .#checks.$(shell nix eval --impure --raw --expr builtins.currentSystem).bats-tests --no-link
+	nix build $(call builder-opts) .#homeConfigurations.$(USERNAME)@$(TARGET).activationPackage $(ARGS)
+endef
 
-########### local vms
-local-vm:
-	$(call nix-vm-action,local,run,vm)
+help:
+	@echo "Available targets:"
+	@echo "  make nixos WHAT=<host> [REMOTE=false]"
+	@echo "  make darwin WHAT=<host> [REMOTE=false]"
+	@echo "  make linux-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
+	@echo "  make darwin-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 
-build-local-vm:
-	$(call nix-vm-action,local,build,vm)
-
-########### nixos vms
-nixos-run-vm:
-	$(call nix-vm-action,prox,run,vm)
-
-nixos-build-vm:
-	$(call nix-vm-action,prox,build,vm)
-
-########### nixos qemu
-nixos-build-vm-qemu:
-	# Build standalone QEMU host package check output (no nixosConfigurations coupling).
-	$(eval QEMU_CHECK_SYSTEM := $(if $(filter Darwin,$(shell uname -s)),aarch64-darwin,x86_64-linux))
-	nix build .#packages.$(QEMU_CHECK_SYSTEM).qemu-host-package $(ARGS)
-
-########### proxmox iso
-nixos-build-prox-iso:
+nixos:
 	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=type"; echo; echo "Available vms:"; \
-		$(call VM_TYPES,prox); \
+		echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
 		exit 1; \
 	fi
-	# Proxmox VMs are x86_64 in this setup; use prox-* VM configs.
-	nix build $(call builder-opts) .#nixosConfigurations.prox-$(WHAT)vm.config.virtualisation.proxmox.iso $(ARGS)
-
-########### nixos
-nixos-build-target:
-	$(call nix-config-action,.#nixosConfigurations.$(WHAT).config.system.build.toplevel)
-
-nixos-build:
-	nix build $(call builder-opts) .#nixosConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
-
-nixos-switch:
-	sudo nixos-rebuild switch --flake .#$(shell hostname) $(call builder-opts) $(ARGS)
-
-disko-install:
-	@if [ "x$(WHAT)" = "x" -o "x$(DEV)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=host DEV=/dev/XXX"; \
+	@resolved="$(WHAT)"; \
+	known="$$(nix eval --json .#nixosConfigurations --apply builtins.attrNames | jq -r '.[]')"; \
+	if ! printf '%s\n' "$$known" | grep -Fxq "$$resolved"; then \
+		for candidate in "prox-$(WHAT)vm" "local-$(WHAT)vm"; do \
+			if printf '%s\n' "$$known" | grep -Fxq "$$candidate"; then \
+				resolved="$$candidate"; \
+				break; \
+			fi; \
+		done; \
+	fi; \
+	if ! printf '%s\n' "$$known" | grep -Fxq "$$resolved"; then \
+		echo "Unknown nixos host: $(WHAT)"; \
+		echo; \
+		echo "Available nixos hosts:"; \
+		printf '%s\n' "$$known"; \
 		exit 1; \
-	fi
-	sudo nix $(NIX_OPTS) run $(ARGS) \
-		'github:nix-community/disko/latest#disko-install' -- --flake .#$(WHAT) --disk main $(DEV)
+	fi; \
+	nix build $(call builder-opts) ".#nixosConfigurations.$$resolved.config.system.build.toplevel" $(ARGS)
 
-########### darwin
-darwin-build:
-	nix build .#darwinConfigurations.$(shell hostname).config.system.build.toplevel $(ARGS)
-
-darwin-build-target:
+darwin:
 	$(call nix-config-action,.#darwinConfigurations.$(WHAT).system)
 
-darwin-switch:
-	sudo -H nix run nix-darwin -- switch --flake .#$(shell hostname) $(ARGS)
+linux-home:
+	$(call standalone-home-build-action,linux,x86_64-linux)
 
-switch:
-	@if [ "$(shell uname -s)" = "Darwin" ]; then \
-		$(MAKE) darwin-switch; \
-	elif [ "$(shell uname -s)" = "Linux" ]; then \
-		$(MAKE) nixos-switch; \
-	else \
-		echo "Unsupported OS: $(shell uname -s)" >&2; \
-		exit 1; \
-	fi
-
-########### standalone home-manager
-home-build-nv:
-	nix run nixpkgs#home-manager -- build --flake .#${USERNAME}@nv $(ARGS)
-
-home-switch-nv:
-	nix run nixpkgs#home-manager -- switch --flake .#${USERNAME}@nv $(ARGS) $(HM_ARGS)
-
-############# raspberry pi
-pi-image:
-	nix build .#nixosConfigurations.pi5.config.system.build.sdImage -o pi5.sd $(ARGS)
+darwin-home:
+	$(call standalone-home-build-action,darwin,aarch64-darwin)

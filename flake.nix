@@ -103,7 +103,26 @@
           platform = "x86_64-linux";
           isWork = true;
         };
-      };
+      }
+      // builtins.listToAttrs (
+        map (
+          name:
+          let
+            cfg = darwinHosts.${name};
+          in
+          {
+            name = "${username}@${name}";
+            value = helpers.mkHome {
+              stateVersion = cfg.hmStateVersion;
+              inherit (cfg)
+                platform
+                isDesktop
+                ;
+              isWork = cfg.isWork or false;
+            };
+          }
+        ) (builtins.attrNames darwinHosts)
+      );
 
       darwinConfigurations =
         let
@@ -322,12 +341,16 @@
         system:
         let
           basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
+          fleetPackages = {
+            pi-image = self.nixosConfigurations.pi5.config.system.build.sdImage;
+          };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;
           };
         in
         basePackages
         // proxmox.packages
+        // fleetPackages
         // {
           qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
         }
@@ -337,11 +360,12 @@
         let
           pkgs = inputs.nixpkgs.legacyPackages.${system};
           sopsApps = import ./lib/sops.nix { inherit pkgs; };
+          fleetApps = import ./lib/fleet.nix { inherit pkgs; };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;
           };
         in
-        sopsApps // proxmox.apps
+        sopsApps // fleetApps // proxmox.apps
       );
       formatter = helpers.forAllSystems (
         system:
@@ -362,7 +386,7 @@
           ];
           text = ''
             treefmt "$@"
-            mbake format Makefile
+            mbake format --config ./.bake.toml Makefile
             git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
             actionlint .github/workflows/*.yml
             git ls-files -z -- '*.md' '**/*.md' | xargs -0 -r markdownlint-cli2

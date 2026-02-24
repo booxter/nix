@@ -85,24 +85,25 @@ jobs:
           script: |
             const fullMatrix = {
               include: [
-                { name: "frame (x86_64-linux)", cmd: "make nixos-build-target WHAT=frame", os: "ubuntu-latest" },
-                { name: "nvws (x86_64-linux)", cmd: "make nixos-build-target WHAT=nvws", os: "ubuntu-latest" },
-                { name: "prx1-lab (x86_64-linux)", cmd: "make nixos-build-target WHAT=prx1-lab", os: "ubuntu-latest" },
-                { name: "prx2-lab (x86_64-linux)", cmd: "make nixos-build-target WHAT=prx2-lab", os: "ubuntu-latest" },
-                { name: "prx3-lab (x86_64-linux)", cmd: "make nixos-build-target WHAT=prx3-lab", os: "ubuntu-latest" },
-                { name: "builder (x86_64-linux)", cmd: "make nixos-build-target WHAT=prox-builder1vm", os: "ubuntu-latest" },
-                { name: "cache (x86_64-linux)", cmd: "make nixos-build-target WHAT=prox-cachevm", os: "ubuntu-latest" },
-                { name: "pi5 dhcp (aarch64-linux)", cmd: "make nixos-build-target WHAT=pi5", os: "ubuntu-24.04-arm" },
-                { name: "beast (x86_64-linux)", cmd: "make nixos-build-target WHAT=beast", os: "ubuntu-latest" },
-                { name: "srvarr (x86_64-linux)", cmd: "make nixos-build-target WHAT=prox-srvarrvm", os: "ubuntu-latest" },
-                { name: "nixos vm builder1 (x86_64-linux)", cmd: "make nixos-build-vm WHAT=builder1", os: "ubuntu-latest" },
-                { name: "home-manager nv (x86_64-linux)", cmd: "make home-build-nv USERNAME=ihrachyshka", os: "ubuntu-latest" },
-                { name: "mair-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=mair-ci", os: "macos-26" },
-                { name: "mmini-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=mmini-ci", os: "macos-26" },
-                { name: "JGWXHWDL4X-ci (aarch64-darwin)", cmd: "make darwin-build-target WHAT=JGWXHWDL4X-ci", os: "macos-26" },
-                { name: "nixos vm qemu (x86_64-linux)", cmd: "make nixos-build-vm-qemu", os: "ubuntu-latest" },
-                { name: "nixos vm qemu (aarch64-darwin)", cmd: "make nixos-build-vm-qemu", os: "macos-26" },
-                { name: "nixos vm proxmox iso (x86_64-linux)", cmd: "make nixos-build-prox-iso WHAT=builder1", os: "ubuntu-latest" }
+                { name: "frame (x86_64-linux)", cmd: "make nixos WHAT=frame", os: "ubuntu-latest" },
+                { name: "nvws (x86_64-linux)", cmd: "make nixos WHAT=nvws", os: "ubuntu-latest" },
+                { name: "prx1-lab (x86_64-linux)", cmd: "make nixos WHAT=prx1-lab", os: "ubuntu-latest" },
+                { name: "prx2-lab (x86_64-linux)", cmd: "make nixos WHAT=prx2-lab", os: "ubuntu-latest" },
+                { name: "prx3-lab (x86_64-linux)", cmd: "make nixos WHAT=prx3-lab", os: "ubuntu-latest" },
+                { name: "builder (x86_64-linux)", cmd: "make nixos WHAT=prox-builder1vm", os: "ubuntu-latest" },
+                { name: "cache (x86_64-linux)", cmd: "make nixos WHAT=prox-cachevm", os: "ubuntu-latest" },
+                { name: "pi5 dhcp (aarch64-linux)", cmd: "make nixos WHAT=pi5", os: "ubuntu-24.04-arm" },
+                { name: "beast (x86_64-linux)", cmd: "make nixos WHAT=beast", os: "ubuntu-latest" },
+                { name: "srvarr (x86_64-linux)", cmd: "make nixos WHAT=prox-srvarrvm", os: "ubuntu-latest" },
+                { name: "nixos vm builder1 (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.system.build.vm -L --show-trace", os: "ubuntu-latest" },
+                { name: "home-manager nv (x86_64-linux)", cmd: "make linux-home TARGET=nv USERNAME=ihrachyshka", os: "ubuntu-latest" },
+                { name: "home-manager mair (aarch64-darwin)", cmd: "make darwin-home TARGET=mair USERNAME=ihrachyshka", os: "macos-26" },
+                { name: "mair-ci (aarch64-darwin)", cmd: "make darwin WHAT=mair-ci", os: "macos-26" },
+                { name: "mmini-ci (aarch64-darwin)", cmd: "make darwin WHAT=mmini-ci", os: "macos-26" },
+                { name: "JGWXHWDL4X-ci (aarch64-darwin)", cmd: "make darwin WHAT=JGWXHWDL4X-ci", os: "macos-26" },
+                { name: "nixos vm qemu (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.system.build.vmQemu -L --show-trace", os: "ubuntu-latest" },
+                { name: "nixos vm qemu (aarch64-darwin)", cmd: "nix build .#nixosConfigurations.local-builder1vm.config.system.build.vmQemu -L --show-trace", os: "macos-26" },
+                { name: "nixos vm proxmox iso (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.virtualisation.proxmox.iso -L --show-trace", os: "ubuntu-latest" }
               ]
             };
 
@@ -157,7 +158,7 @@ jobs:
               { prefix: "nixos/beast/", jobs: [ "beast (x86_64-linux)" ] },
               { prefix: "nixos/srvarrvm/", jobs: [ "srvarr (x86_64-linux)" ] },
               { prefix: "nixos/cachevm/", jobs: [ "cache (x86_64-linux)" ] },
-              { prefix: "darwin/mair/", jobs: [ "mair-ci (aarch64-darwin)" ] },
+              { prefix: "darwin/mair/", jobs: [ "mair-ci (aarch64-darwin)", "home-manager mair (aarch64-darwin)" ] },
               { prefix: "darwin/mmini/", jobs: [ "mmini-ci (aarch64-darwin)" ] },
               { prefix: "darwin/JGWXHWDL4X/", jobs: [ "JGWXHWDL4X-ci (aarch64-darwin)" ] }
             ];
