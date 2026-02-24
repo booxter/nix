@@ -105,6 +105,7 @@ in
     "render"
     "video"
   ];
+  users.groups.ddclient-secrets = { };
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
 
   # Reverse proxy with automatic TLS.
@@ -120,7 +121,8 @@ in
     useSystemdActivation = true;
     secrets.ddnsDynuPassword = {
       key = "ddns/dynu/password";
-      mode = "0400";
+      group = "ddclient-secrets";
+      mode = "0440";
     };
   };
 
@@ -141,9 +143,7 @@ in
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
     serviceConfig = {
-      DynamicUser = lib.mkForce false;
-      User = "root";
-      Group = "root";
+      SupplementaryGroups = [ "ddclient-secrets" ];
     };
   };
 
