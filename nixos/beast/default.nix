@@ -23,7 +23,6 @@ let
   nfsPorts = [
     2049 # nfsd
   ];
-  hasSopsSecrets = builtins.pathExists ../../secrets/beast.yaml;
   # DDNS provider target for public endpoints (jf/au/js).
   dynuHostname = "ihrachyshka-home.freeddns.org";
   dynuUsername = "ihrachyshka";
