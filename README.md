@@ -11,10 +11,11 @@ make nixos WHAT=frame
 make darwin WHAT=mair
 make nixos WHAT=beast REMOTE=false
 
-# Local VMs (any host with a `local-<host>vm` config)
+# Local VMs (resolved via `local-<host>vm`)
 nix run .#vm -- --help
 nix run .#vm -- builder1
 nix run .#vm -- srvarr
+nix run .#vm -- beast
 
 # Proxmox VM deploy
 nix run .#prox-deploy -- srvarr prx1

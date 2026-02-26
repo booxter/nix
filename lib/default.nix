@@ -22,6 +22,7 @@ in
     mkNixos
     mkRaspberryPi
     mkProxmox
+    mkBM
     mkVM
     mkVmHostPkgs
     forAllSystems

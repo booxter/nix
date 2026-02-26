@@ -220,74 +220,73 @@
                 withHome = false;
               }
             );
+          BM = args: helpers.mkBM ({ inherit virtPlatform; } // args);
         in
-        {
-          pi5 = helpers.mkRaspberryPi {
-            hostname = piHostname;
-            stateVersion = piStateVersion;
-          };
-
-          ${frame} = helpers.mkNixos {
-            password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
-            hostname = frame;
-            stateVersion = "25.11";
-            platform = "x86_64-linux";
-            isDesktop = true;
-          };
-
-          # TODO: automatically sync ip-mac mapping with dhcp config
-          ${nvws} = helpers.mkProxmox {
-            inherit username;
-            isWork = true;
-            password = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
-            stateVersion = "25.11";
-            netIface = "enp3s0f0";
-            hostname = nvws;
-            ipAddress = "192.168.15.100";
-            macAddress = "ac:b4:80:40:05:2e";
-          };
-
-          beast = helpers.mkNixos {
-            hostname = "beast";
-            stateVersion = "25.11";
-            platform = "x86_64-linux";
-            nixpkgsInput = inputs.nixpkgs-25_11;
-            withHome = false;
-          };
-
-          # ssh prx1-lab sudo pvecm create lab-cluster
-          "prx1-lab" = helpers.mkProxmox {
-            inherit username;
-            password = prxPassword;
-            stateVersion = prxStateVersion;
-            netIface = prxNetIface;
-            hostname = "prx1-lab";
-            ipAddress = "192.168.15.10";
-            macAddress = "38:05:25:30:7d:89";
-          };
-
-          # ssh prx2-lab sudo pvecm add prx1-lab
-          "prx2-lab" = helpers.mkProxmox {
-            inherit username;
-            password = prxPassword;
-            stateVersion = prxStateVersion;
-            netIface = prxNetIface;
-            hostname = "prx2-lab";
-            ipAddress = "192.168.15.11";
-            macAddress = "38:05:25:30:7f:7d";
-          };
-
-          # ssh prx3-lab sudo pvecm add prx1-lab
-          "prx3-lab" = helpers.mkProxmox {
-            inherit username;
-            password = prxPassword;
-            stateVersion = prxStateVersion;
-            netIface = prxNetIface;
-            hostname = "prx3-lab";
-            ipAddress = "192.168.15.12";
-            macAddress = "38:05:25:30:7d:69";
-          };
-
+        BM {
+          mkHost = helpers.mkRaspberryPi;
+          name = piHostname;
+          stateVersion = piStateVersion;
+        }
+        // BM {
+          mkHost = helpers.mkNixos;
+          name = frame;
+          password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
+          stateVersion = "25.11";
+          platform = "x86_64-linux";
+          isDesktop = true;
+        }
+        # TODO: automatically sync ip-mac mapping with dhcp config
+        // BM {
+          mkHost = helpers.mkProxmox;
+          name = nvws;
+          inherit username;
+          isWork = true;
+          password = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
+          stateVersion = "25.11";
+          netIface = "enp3s0f0";
+          ipAddress = "192.168.15.100";
+          macAddress = "ac:b4:80:40:05:2e";
+        }
+        // BM {
+          mkHost = helpers.mkNixos;
+          name = "beast";
+          stateVersion = "25.11";
+          platform = "x86_64-linux";
+          nixpkgsInput = inputs.nixpkgs-25_11;
+          withHome = false;
+        }
+        # ssh prx1-lab sudo pvecm create lab-cluster
+        // BM {
+          mkHost = helpers.mkProxmox;
+          name = "prx1-lab";
+          inherit username;
+          password = prxPassword;
+          stateVersion = prxStateVersion;
+          netIface = prxNetIface;
+          ipAddress = "192.168.15.10";
+          macAddress = "38:05:25:30:7d:89";
+        }
+        # ssh prx2-lab sudo pvecm add prx1-lab
+        // BM {
+          mkHost = helpers.mkProxmox;
+          name = "prx2-lab";
+          inherit username;
+          password = prxPassword;
+          stateVersion = prxStateVersion;
+          netIface = prxNetIface;
+          ipAddress = "192.168.15.11";
+          macAddress = "38:05:25:30:7f:7d";
+        }
+        # ssh prx3-lab sudo pvecm add prx1-lab
+        // BM {
+          mkHost = helpers.mkProxmox;
+          name = "prx3-lab";
+          inherit username;
+          password = prxPassword;
+          stateVersion = prxStateVersion;
+          netIface = prxNetIface;
+          ipAddress = "192.168.15.12";
+          macAddress = "38:05:25:30:7d:69";
         }
         # TODO: calculate stable ssh port numbers based on hostnames, somehow
         # TODO: then, configure ssh config aliases for each of them
