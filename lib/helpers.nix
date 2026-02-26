@@ -104,6 +104,10 @@ let
         })
       ];
     };
+  mkLocalVmVariantVirtualisation = virtPlatform: {
+    host.pkgs = mkVmHostPkgs virtPlatform;
+    graphics = false;
+  };
 in
 rec {
   mkHome =
@@ -266,14 +270,11 @@ rec {
                 min = x: y: if x < y then x else y;
               in
               {
-                virtualisation.vmVariant.virtualisation = {
+                virtualisation.vmVariant.virtualisation = (mkLocalVmVariantVirtualisation virtPlatform) // {
                   # limit cores to avoid overloading host
                   cores = min cores 8;
                   memorySize = memorySize * 1024;
                   diskSize = diskSize * 1024;
-
-                  host.pkgs = mkVmHostPkgs virtPlatform;
-                  graphics = false;
                 };
               }
             )
@@ -343,6 +344,40 @@ rec {
           ];
       }
     );
+
+  mkBM =
+    {
+      mkHost,
+      name,
+      virtPlatform,
+      ...
+    }@args:
+    let
+      hostArgs = removeAttrs (args // { hostname = args.hostname or name; }) [
+        "mkHost"
+        "name"
+        "virtPlatform"
+      ];
+      cfg = mkHost hostArgs;
+      localName = "local-${name}vm";
+      localCfg = builtins.tryEval (
+        cfg.extendModules {
+          modules = [
+            {
+              virtualisation.vmVariant.virtualisation = mkLocalVmVariantVirtualisation virtPlatform;
+            }
+          ];
+        }
+      );
+    in
+    {
+      "${name}" = cfg;
+      "${localName}" =
+        if localCfg.success then
+          localCfg.value
+        else
+          throw "Cannot derive `${localName}` from `${name}`; expected a nixosSystem with extendModules support.";
+    };
 
   mkProxmox =
     args@{

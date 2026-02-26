@@ -33,11 +33,12 @@ helpers.forAllSystems (
         yq
       ];
       buildPhase = ''
-        bats tests/update-machines.bats
         bats tests/get-local-builders.bats
+        bats tests/test-prox-deploy.bats
         bats tests/test-sops-config.bats
         bats tests/test-sops-copy.bats
-        bats tests/test-prox-deploy.bats
+        bats tests/test-vm.bats
+        bats tests/update-machines.bats
       '';
     };
     box-py = mkCheck {

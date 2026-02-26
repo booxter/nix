@@ -97,43 +97,8 @@ let
       nix
     ];
     text = ''
-      set -euo pipefail
-
-      list_target_hosts() {
-        nix flake show --json "${../.}" 2>/dev/null \
-          | jq -r '.nixosConfigurations | keys[] | select(test("^local-.*vm$")) | capture("^local-(?<host>.*)vm$").host' \
-          | sort -u
-      }
-
-      usage() {
-        cat <<'EOF'
-      Usage: vm <target-host>
-      Example: vm builder1
-
-      Available target hosts (from local-<host>vm configs):
-      EOF
-        list_target_hosts | sed 's/^/  /'
-      }
-
-      if [ "$#" -eq 1 ] && [ "$1" = "--help" ]; then
-        usage
-        exit 0
-      fi
-
-      if [ "$#" -ne 1 ]; then
-        usage >&2
-        exit 1
-      fi
-
-      target_host="$1"
-      if ! list_target_hosts | grep -Fxq "$target_host"; then
-        echo "Unknown target host: $target_host" >&2
-        echo >&2
-        usage >&2
-        exit 1
-      fi
-
-      exec nix run "${../.}#nixosConfigurations.local-''${target_host}vm.config.system.build.vm" -L --show-trace
+      export VM_REPO_ROOT="${../.}"
+      exec ${pkgs.bash}/bin/bash ${../scripts/vm.sh} "$@"
     '';
   };
 
@@ -152,7 +117,7 @@ in
 {
   "fleet-deploy" =
     mkApp "${fleetDeploy}/bin/fleet-deploy" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
-  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a target host defined as local-<target-host>vm in nixosConfigurations.";
+  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
 }
