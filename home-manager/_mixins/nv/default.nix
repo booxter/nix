@@ -27,6 +27,7 @@
             helm-unittest
           ];
         })
+        teleport
         trivy
         vault-bin
       ]
