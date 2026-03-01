@@ -278,6 +278,7 @@
               isAdult ? false,
               isGuest ? false,
               allLibraries ? false,
+              extraLibraries ? [ ],
             }:
             {
               inherit name password;
@@ -306,7 +307,8 @@
                 ++ lib.optionals isAdult [
                   "Attic"
                   "Fruit"
-                ];
+                ]
+                ++ extraLibraries;
               };
               displayMissingEpisodes = true;
               subtitleLanguagePreference = "eng";
@@ -353,7 +355,10 @@
           })
 
           (getGuestUser { name = "DZ"; })
-          (getGuestUser { name = "ZS"; })
+          (getGuestUser {
+            name = "ZS";
+            extraLibraries = [ "Attic" ];
+          })
           (getGuestUser { name = "Olga"; })
         ];
       plugins = map (name: { inherit name; }) [
