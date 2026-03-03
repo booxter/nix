@@ -92,68 +92,76 @@
       quartz-wm = pkgsQuartzWm."quartz-wm";
 
       # Backport until this lands in our pinned nixpkgs:
-      # https://github.com/NixOS/nixpkgs/pull/485980
-      dbus = prev.dbus.overrideAttrs (
-        old:
-        let
-          hasMergedSessionBusFix = builtins.elem "-Ddbus_session_bus_listen_address=unix:tmpdir=/tmp" (
-            old.mesonFlags or [ ]
-          );
-          hasMergedInstallNameFix = inputs.nixpkgs.lib.hasInfix "@rpath/libdbus-1.3.dylib" (
-            old.postInstall or ""
-          );
-        in
-        assert
-          (!(hasMergedSessionBusFix || hasMergedInstallNameFix))
-          || throw ''
-            dbus Darwin backport for nixpkgs#485980 appears to be upstream now.
-            Remove the temporary dbus override from overlays/default.nix.
-          '';
-        {
-          mesonFlags = (old.mesonFlags or [ ]) ++ [
-            # D-Bus defaults to launchd activation on Darwin, but that requires a
-            # launch agent and breaks dbus-run-session in tests.
-            "-Ddbus_session_bus_listen_address=unix:tmpdir=/tmp"
-          ];
-
-          postInstall = (old.postInstall or "") + ''
-            # Match nixpkgs#485980 install_name fixup on Darwin.
-            for exe in bin/dbus-daemon bin/dbus-run-session libexec/dbus-daemon-launch-helper; do
-              install_name_tool "$out/$exe" \
-                -change "@rpath/libdbus-1.3.dylib" "$lib/lib/libdbus-1.3.dylib"
-            done
-          '';
-        }
-      );
-
-      # Backport until this lands in our pinned nixpkgs:
       # https://github.com/NixOS/nixpkgs/pull/496019
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
-        (python-final: python-prev: {
-          accelerate = python-prev.accelerate.overridePythonAttrs (
-            old:
-            let
-              hasMergedTransformersCheckInput = builtins.any (
-                dep:
-                builtins.isAttrs dep
-                && (
-                  (dep ? pname && dep.pname == "transformers")
-                  || (dep ? name && inputs.nixpkgs.lib.hasInfix "transformers" dep.name)
-                )
-              ) (old.checkInputs or [ ]);
-            in
-            assert
-              (!hasMergedTransformersCheckInput)
-              || throw ''
-                accelerate Darwin backport for https://github.com/NixOS/nixpkgs/pull/496019 appears to be upstream now.
-                Remove the temporary accelerate override from overlays/default.nix.
-              '';
-            {
-              # pytest fails without this on Darwin.
-              checkInputs = (old.checkInputs or [ ]) ++ [ python-final.transformers ];
-            }
-          );
-        })
+        (
+          python-final: python-prev:
+          let
+            # Backport until this lands in our pinned nixpkgs:
+            # https://github.com/NixOS/nixpkgs/pull/485980
+            dbusForJeepney = prev.dbus.overrideAttrs (
+              old:
+              let
+                hasMergedSessionBusFix = builtins.elem "-Ddbus_session_bus_listen_address=unix:tmpdir=/tmp" (
+                  old.mesonFlags or [ ]
+                );
+                hasMergedInstallNameFix = inputs.nixpkgs.lib.hasInfix "@rpath/libdbus-1.3.dylib" (
+                  old.postInstall or ""
+                );
+              in
+              assert
+                (!(hasMergedSessionBusFix || hasMergedInstallNameFix))
+                || throw ''
+                  dbus Darwin backport for https://github.com/NixOS/nixpkgs/pull/485980 appears to be upstream now.
+                  Remove the temporary dbus override from overlays/default.nix.
+                '';
+              {
+                mesonFlags = (old.mesonFlags or [ ]) ++ [
+                  # D-Bus defaults to launchd activation on Darwin, but that requires a
+                  # launch agent and breaks dbus-run-session in tests.
+                  "-Ddbus_session_bus_listen_address=unix:tmpdir=/tmp"
+                ];
+
+                postInstall = (old.postInstall or "") + ''
+                  # Match nixpkgs#485980 install_name fixup on Darwin.
+                  for exe in bin/dbus-daemon bin/dbus-run-session libexec/dbus-daemon-launch-helper; do
+                    install_name_tool "$out/$exe" \
+                      -change "@rpath/libdbus-1.3.dylib" "$lib/lib/libdbus-1.3.dylib"
+                  done
+                '';
+              }
+            );
+          in
+          {
+            jeepney = python-prev.jeepney.override {
+              dbus = dbusForJeepney;
+            };
+
+            accelerate = python-prev.accelerate.overridePythonAttrs (
+              old:
+              let
+                hasMergedTransformersCheckInput = builtins.any (
+                  dep:
+                  builtins.isAttrs dep
+                  && (
+                    (dep ? pname && dep.pname == "transformers")
+                    || (dep ? name && inputs.nixpkgs.lib.hasInfix "transformers" dep.name)
+                  )
+                ) (old.checkInputs or [ ]);
+              in
+              assert
+                (!hasMergedTransformersCheckInput)
+                || throw ''
+                  accelerate Darwin backport for https://github.com/NixOS/nixpkgs/pull/496019 appears to be upstream now.
+                  Remove the temporary accelerate override from overlays/default.nix.
+                '';
+              {
+                # pytest fails without this on Darwin.
+                checkInputs = (old.checkInputs or [ ]) ++ [ python-final.transformers ];
+              }
+            );
+          }
+        )
       ];
     };
 }
