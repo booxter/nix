@@ -125,5 +125,35 @@
           '';
         }
       );
+
+      # Backport until this lands in our pinned nixpkgs:
+      # https://github.com/NixOS/nixpkgs/pull/496019
+      pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
+        (python-final: python-prev: {
+          accelerate = python-prev.accelerate.overridePythonAttrs (
+            old:
+            let
+              hasMergedTransformersCheckInput = builtins.any (
+                dep:
+                builtins.isAttrs dep
+                && (
+                  (dep ? pname && dep.pname == "transformers")
+                  || (dep ? name && inputs.nixpkgs.lib.hasInfix "transformers" dep.name)
+                )
+              ) (old.checkInputs or [ ]);
+            in
+            assert
+              (!hasMergedTransformersCheckInput)
+              || throw ''
+                accelerate Darwin backport for https://github.com/NixOS/nixpkgs/pull/496019 appears to be upstream now.
+                Remove the temporary accelerate override from overlays/default.nix.
+              '';
+            {
+              # pytest fails without this on Darwin.
+              checkInputs = (old.checkInputs or [ ]) ++ [ python-final.transformers ];
+            }
+          );
+        })
+      ];
     };
 }
