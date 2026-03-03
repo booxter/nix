@@ -41,6 +41,7 @@ let
   requiresMediaMount = {
     RequiresMountsFor = mediaPath;
   };
+  servarrUMask = lib.mkForce "0002";
 in
 {
   imports = [
@@ -58,33 +59,25 @@ in
 
   users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
 
+  # Service-specific systemd tweaks.
   systemd.services.radarr = {
-    serviceConfig = {
-      UMask = "0002";
-    };
+    serviceConfig.UMask = servarrUMask;
+    unitConfig = requiresMediaMount;
   };
-
   systemd.services.sonarr = {
-    serviceConfig = {
-      UMask = "0002";
-    };
+    serviceConfig.UMask = servarrUMask;
+    unitConfig = requiresMediaMount;
   };
-
   systemd.services.bazarr = {
-    serviceConfig = {
-      UMask = "0002";
-    };
+    serviceConfig.UMask = servarrUMask;
+    unitConfig = requiresMediaMount;
   };
-
-  # make all services that r/w to nfs mount require the mount
+  # Make services that r/w to NFS require the media mount.
   systemd.services.audiobookshelf.unitConfig = requiresMediaMount;
-  systemd.services.bazarr.unitConfig = requiresMediaMount;
   systemd.services.jellyseerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
-  systemd.services.radarr.unitConfig = requiresMediaMount;
   systemd.services.readarr.unitConfig = requiresMediaMount;
   systemd.services.readarr-audiobook.unitConfig = requiresMediaMount;
-  systemd.services.sonarr.unitConfig = requiresMediaMount;
   systemd.services.transmission.unitConfig = wgUnitDepsWithMount;
   systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
 
