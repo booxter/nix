@@ -90,5 +90,40 @@
       # https://github.com/NixOS/nixpkgs/pull/491935
       xquartz = pkgsQuartzWm.xquartz;
       quartz-wm = pkgsQuartzWm."quartz-wm";
+
+      # Backport until this lands in our pinned nixpkgs:
+      # https://github.com/NixOS/nixpkgs/pull/485980
+      dbus = prev.dbus.overrideAttrs (
+        old:
+        let
+          hasMergedSessionBusFix = builtins.elem "-Ddbus_session_bus_listen_address=unix:tmpdir=/tmp" (
+            old.mesonFlags or [ ]
+          );
+          hasMergedInstallNameFix = inputs.nixpkgs.lib.hasInfix "@rpath/libdbus-1.3.dylib" (
+            old.postInstall or ""
+          );
+        in
+        assert
+          (!(hasMergedSessionBusFix || hasMergedInstallNameFix))
+          || throw ''
+            dbus Darwin backport for nixpkgs#485980 appears to be upstream now.
+            Remove the temporary dbus override from overlays/default.nix.
+          '';
+        {
+          mesonFlags = (old.mesonFlags or [ ]) ++ [
+            # D-Bus defaults to launchd activation on Darwin, but that requires a
+            # launch agent and breaks dbus-run-session in tests.
+            "-Ddbus_session_bus_listen_address=unix:tmpdir=/tmp"
+          ];
+
+          postInstall = (old.postInstall or "") + ''
+            # Match nixpkgs#485980 install_name fixup on Darwin.
+            for exe in bin/dbus-daemon bin/dbus-run-session libexec/dbus-daemon-launch-helper; do
+              install_name_tool "$out/$exe" \
+                -change "@rpath/libdbus-1.3.dylib" "$lib/lib/libdbus-1.3.dylib"
+            done
+          '';
+        }
+      );
     };
 }
