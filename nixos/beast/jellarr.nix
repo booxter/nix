@@ -39,6 +39,9 @@
           processThreads = 10;
         };
       };
+      network = {
+        knownProxies = [ "127.0.0.1" ];
+      };
       encoding = {
         # TODO: revisit subtitle hardcoding policy once jellarr module exposes
         # explicit subtitle-mode/burn-in options declaratively.
