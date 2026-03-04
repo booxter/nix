@@ -147,8 +147,9 @@
                   Remove the temporary accelerate override from overlays/default.nix.
                 '';
               {
-                # pytest fails without this on Darwin.
-                checkInputs = (old.checkInputs or [ ]) ++ [ python-final.transformers ];
+                # ImportError: cannot import name 'PretrainedConfig' from
+                # transformers.modeling_utils (matches nixpkgs#494591).
+                disabledTests = (old.disabledTests or [ ]) ++ [ "test_nested_hook" ];
               }
             );
           }
