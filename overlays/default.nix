@@ -17,13 +17,10 @@
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
+      pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
-      releaseTransmission =
-        if prev.lib.strings.hasPrefix "4.0." pkgsRelease.transmission_4.version then
-          pkgsRelease.transmission_4
-        else
-          throw "Expected transmission_4 from nixpkgs-25_11 to be 4.0.x, got ${pkgsRelease.transmission_4.version}";
+      pinnedTransmission = pkgsTransmission.transmission_4;
       # Temporary Darwin firefox wrapper backport:
       # in our pinned nixpkgs revision, wrapper logic copies only *.dylib symlinks.
       # Some shared libraries are Mach-O dylibs without that suffix, which leaves them
@@ -61,11 +58,11 @@
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
 
-      # Pull Sonarr/Readarr and pin Transmission to 4.0.x from release-25.11.
+      # Pull Sonarr/Readarr from release-25.11 and pin Transmission via a dedicated nixpkgs input.
       # TODO: report issues; investigate; fix
       inherit (pkgsRelease) readarr sonarr;
-      transmission_4 = releaseTransmission;
-      transmission = releaseTransmission;
+      transmission_4 = pinnedTransmission;
+      transmission = pinnedTransmission;
 
       jellyfin = prev.jellyfin.overrideAttrs (old: {
         patches = old.patches or [ ] ++ [

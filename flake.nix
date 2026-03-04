@@ -6,6 +6,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-25_11.url = "github:NixOS/nixpkgs/release-25.11";
+    # Keep Transmission pinned independently from the moving release-25.11 branch.
+    # TODO: remove this input when trackers allow 4.1.0+.
+    nixpkgs-transmission.url = "github:NixOS/nixpkgs/12d60a4f2d5f2cc96e93ae5615328245d49ac2e8";
 
     # Use staging-next if needed
     #nixpkgs-staging-next.url = "github:NixOS/nixpkgs/staging-next";
