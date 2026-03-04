@@ -34,8 +34,8 @@
           }
         ];
         trickplayOptions = {
-          enableHwAcceleration = false;
-          enableHwEncoding = false;
+          enableHwAcceleration = true;
+          enableHwEncoding = true;
           processThreads = 10;
         };
       };

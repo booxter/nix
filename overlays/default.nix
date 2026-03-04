@@ -3,7 +3,7 @@
   additions = final: _prev: import ../pkgs final.pkgs;
 
   modifications =
-    _final: prev:
+    final: prev:
     let
       getPkgs =
         np:
@@ -19,6 +19,8 @@
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
+      pkgsFirefoxUnwrapped = getPkgs inputs.nixpkgs-firefox-unwrapped;
+      pkgsThunderbirdUnwrapped = getPkgs inputs.nixpkgs-thunderbird-unwrapped;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
       # Temporary Darwin firefox wrapper backport:
@@ -75,8 +77,12 @@
       });
     }
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
+      "firefox-unwrapped" = pkgsFirefoxUnwrapped."firefox-unwrapped";
+      "thunderbird-unwrapped" = pkgsThunderbirdUnwrapped."thunderbird-unwrapped";
+
       # Backport until https://github.com/NixOS/nixpkgs/pull/488112 lands in our pinned nixpkgs.
-      firefox = patchFirefoxDarwinWrapper prev.firefox;
+      firefox = patchFirefoxDarwinWrapper (prev.wrapFirefox final."firefox-unwrapped" { });
+      thunderbird = prev.wrapThunderbird final."thunderbird-unwrapped" { };
 
       # Pull XQuartz stack from a fork until quartz-wm changes are merged:
       # https://github.com/NixOS/nixpkgs/pull/491935
