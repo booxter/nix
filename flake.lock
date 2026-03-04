@@ -436,6 +436,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-transmission": {
+      "locked": {
+        "lastModified": 1771235854,
+        "narHash": "sha256-Lk8AsOBtk1SlGHGOWh4PavyHkix/XPmHPWg7br6r3Hs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "12d60a4f2d5f2cc96e93ae5615328245d49ac2e8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "12d60a4f2d5f2cc96e93ae5615328245d49ac2e8",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1761765539,
@@ -626,6 +642,7 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-25_11": "nixpkgs-25_11",
+        "nixpkgs-transmission": "nixpkgs-transmission",
         "nixpkgs-quartz-wm": "nixpkgs-quartz-wm",
         "nixvim": "nixvim",
         "nur": "nur",
