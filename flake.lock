@@ -436,19 +436,19 @@
         "type": "github"
       }
     },
-    "nixpkgs-transmission": {
+    "nixpkgs-firefox-unwrapped": {
       "locked": {
-        "lastModified": 1771235854,
-        "narHash": "sha256-Lk8AsOBtk1SlGHGOWh4PavyHkix/XPmHPWg7br6r3Hs=",
+        "lastModified": 1771147098,
+        "narHash": "sha256-jpfPdBjKO232s5NueoNEvvVzpndiUzPLNYcH4/Ov0gY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "12d60a4f2d5f2cc96e93ae5615328245d49ac2e8",
+        "rev": "e3cb16bccd9facebae3ba29c6a76a4cc1b73462a",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "12d60a4f2d5f2cc96e93ae5615328245d49ac2e8",
+        "rev": "e3cb16bccd9facebae3ba29c6a76a4cc1b73462a",
         "type": "github"
       }
     },
@@ -512,6 +512,38 @@
         "owner": "NixOS",
         "ref": "nixos-25.11",
         "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-thunderbird-unwrapped": {
+      "locked": {
+        "lastModified": 1771147098,
+        "narHash": "sha256-jpfPdBjKO232s5NueoNEvvVzpndiUzPLNYcH4/Ov0gY=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e3cb16bccd9facebae3ba29c6a76a4cc1b73462a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e3cb16bccd9facebae3ba29c6a76a4cc1b73462a",
+        "type": "github"
+      }
+    },
+    "nixpkgs-transmission": {
+      "locked": {
+        "lastModified": 1771235854,
+        "narHash": "sha256-Lk8AsOBtk1SlGHGOWh4PavyHkix/XPmHPWg7br6r3Hs=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "12d60a4f2d5f2cc96e93ae5615328245d49ac2e8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "12d60a4f2d5f2cc96e93ae5615328245d49ac2e8",
         "type": "github"
       }
     },
@@ -642,8 +674,10 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-25_11": "nixpkgs-25_11",
-        "nixpkgs-transmission": "nixpkgs-transmission",
+        "nixpkgs-firefox-unwrapped": "nixpkgs-firefox-unwrapped",
         "nixpkgs-quartz-wm": "nixpkgs-quartz-wm",
+        "nixpkgs-thunderbird-unwrapped": "nixpkgs-thunderbird-unwrapped",
+        "nixpkgs-transmission": "nixpkgs-transmission",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos",
