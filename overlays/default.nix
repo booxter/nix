@@ -19,16 +19,7 @@
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
-      releaseTransmission = pkgsRelease.transmission_4.overrideAttrs (_old: rec {
-        version = "4.0.6";
-        src = prev.fetchFromGitHub {
-          owner = "transmission";
-          repo = "transmission";
-          tag = version;
-          hash = "sha256-KBXvBFgrJ3njIoXrxHbHHLsiocwfd7Eba/GNI8uZA38=";
-          fetchSubmodules = true;
-        };
-      });
+      releaseTransmission = prev.callPackage ../pkgs/transmission_4/default.nix { };
       # Temporary Darwin firefox wrapper backport:
       # in our pinned nixpkgs revision, wrapper logic copies only *.dylib symlinks.
       # Some shared libraries are Mach-O dylibs without that suffix, which leaves them
