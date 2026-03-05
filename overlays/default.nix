@@ -23,33 +23,6 @@
       pkgsThunderbirdUnwrapped = getPkgs inputs.nixpkgs-thunderbird-unwrapped;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
-      # Temporary Darwin firefox wrapper backport:
-      # in our pinned nixpkgs revision, wrapper logic copies only *.dylib symlinks.
-      # Some shared libraries are Mach-O dylibs without that suffix, which leaves them
-      # symlinked and breaks runtime features (e.g. Crypto API / media codecs).
-      # Drop this once nixpkgs PR #488112 (or equivalent) is in the pinned input.
-      patchFirefoxDarwinWrapper =
-        pkg:
-        pkg.overrideAttrs (old: {
-          buildCommand = old.buildCommand + ''
-            # Backport nixpkgs#488112 with otool-based dylib detection.
-            cd "$out/Applications/Firefox.app"
-
-            find . -type l -print0 | while IFS= read -r -d $'\0' file; do
-              case "$(basename "$file")" in
-                omni.ja)
-                  ;;
-                *)
-                  otool -l "$file" 2>/dev/null | grep -q 'LC_ID_DYLIB' || continue
-                  ;;
-              esac
-
-              target="$(readlink -f "$file")"
-              rm "$file"
-              cp "$target" "$file"
-            done
-          '';
-        });
     in
     {
       inherit (llmAgentsPkgs) codex claude-code;
@@ -77,16 +50,11 @@
       });
     }
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
-      "firefox-unwrapped" = pkgsFirefoxUnwrapped."firefox-unwrapped";
-      "thunderbird-unwrapped" = pkgsThunderbirdUnwrapped."thunderbird-unwrapped";
-
-      # Backport until https://github.com/NixOS/nixpkgs/pull/488112 lands in our pinned nixpkgs.
-      firefox = patchFirefoxDarwinWrapper (prev.wrapFirefox final."firefox-unwrapped" { });
-      thunderbird = prev.wrapThunderbird final."thunderbird-unwrapped" { };
+      inherit (pkgsFirefoxUnwrapped) firefox-unwrapped;
+      inherit (pkgsThunderbirdUnwrapped) thunderbird-unwrapped;
 
       # Pull XQuartz stack from a fork until quartz-wm changes are merged:
       # https://github.com/NixOS/nixpkgs/pull/491935
-      xquartz = pkgsQuartzWm.xquartz;
-      quartz-wm = pkgsQuartzWm."quartz-wm";
+      inherit (pkgsQuartzWm) quartz-wm xquartz;
     };
 }
