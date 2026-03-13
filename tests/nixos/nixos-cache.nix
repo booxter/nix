@@ -13,13 +13,10 @@ pkgs.testers.runNixOSTest {
       fsType = "tmpfs";
       options = [ "mode=0755" ];
     };
-    services.atticd.environmentFile = lib.mkForce "/run/atticd.env";
-    systemd.services.atticd.preStart = lib.mkBefore ''
-      umask 077
-      printf 'ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64=%s\n' \
-        "$(${pkgs.openssl}/bin/openssl genrsa -traditional 2048 | ${pkgs.coreutils}/bin/base64 -w0)" \
-        > /run/atticd.env
-    '';
+    systemd.tmpfiles.rules = [
+      "d /cache 0755 root root -"
+    ];
+    environment.etc."atticd.env".source = ./fixtures/atticd.env;
 
     environment.systemPackages = [ pkgs.curl ];
   };
