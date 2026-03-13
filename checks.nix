@@ -52,7 +52,4 @@ helpers.forAllSystems (
       '';
     };
   }
-  // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-    nixos-cache = import ./tests/nixos/nixos-cache.nix { inherit pkgs; };
-  }
 )

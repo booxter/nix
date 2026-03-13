@@ -345,6 +345,7 @@
       );
 
       checks = import ./checks.nix { inherit inputs helpers; };
+      nixosTests = import ./nixos-tests.nix { inherit inputs helpers; };
 
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (

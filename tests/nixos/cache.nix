@@ -1,6 +1,6 @@
 { pkgs }:
 pkgs.testers.runNixOSTest {
-  name = "nixos-cache";
+  name = "cache";
 
   nodes.cache =
     { lib, pkgs, ... }:

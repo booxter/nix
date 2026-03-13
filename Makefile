@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help nixos darwin linux-home darwin-home check
+.PHONY: help nixos darwin linux-home darwin-home check check-nixos
 
 ARGS = -L --show-trace
 USERNAME ?= ihrachyshka
@@ -73,6 +73,7 @@ help:
 	@echo "  make nixos WHAT=<host> [REMOTE=false]"
 	@echo "  make darwin WHAT=<host> [REMOTE=false]"
 	@echo "  make check [WHAT=<check-name>] [REMOTE=false]"
+	@echo "  make check-nixos [WHAT=<nixos-check-name>] [REMOTE=false]"
 	@echo "  make linux-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 	@echo "  make darwin-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 
@@ -105,29 +106,59 @@ darwin-home:
 
 check:
 	@system="$$(nix eval --impure --raw --expr builtins.currentSystem)"; \
+	known_native="$$(nix eval --json ".#checks.$$system" --apply builtins.attrNames | jq -r '.[]')"; \
+	nixos_system="$$system"; \
+	case "$$system" in \
+		*-darwin) nixos_system="$${system%-darwin}-linux" ;; \
+	esac; \
+	known_nixos="$$(nix eval --json ".#nixosTests.$$nixos_system" --apply builtins.attrNames | jq -r '.[]')"; \
+	if [ "x$(WHAT)" = "x" ]; then \
+		if [ -z "$$known_native" ]; then \
+			echo "No checks for $$system."; \
+			exit 0; \
+		fi; \
+		for check_name in $$known_native; do \
+			echo "Running $$check_name on $$system..."; \
+			$(call maybe-nom-build,$(call builder-opts) ".#checks.$$system.$$check_name") || exit $$?; \
+		done; \
+		exit 0; \
+	fi; \
+	if ! printf '%s\n' "$$known_native" | grep -Fxq "$(WHAT)"; then \
+		echo "Unknown check: $(WHAT)"; \
+		echo; \
+		echo "Available checks for $$system:"; \
+		printf '%s\n' "$$known_native"; \
+		if printf '%s\n' "$$known_nixos" | grep -Fxq "$(WHAT)"; then \
+			echo; \
+			echo "Hint: use make check-nixos WHAT=$(WHAT)"; \
+		fi; \
+		exit 1; \
+	fi; \
+	$(call maybe-nom-build,$(call builder-opts) ".#checks.$$system.$(WHAT)")
+
+check-nixos:
+	@system="$$(nix eval --impure --raw --expr builtins.currentSystem)"; \
 	check_system="$$system"; \
 	case "$$system" in \
 		*-darwin) check_system="$${system%-darwin}-linux" ;; \
 	esac; \
-	known_native="$$(nix eval --json ".#checks.$$system" --apply builtins.attrNames | jq -r '.[]')"; \
-	known_linux="$$known_native"; \
-	if [ "$$check_system" != "$$system" ]; then \
-		known_linux="$$(nix eval --json ".#checks.$$check_system" --apply builtins.attrNames | jq -r '.[]')"; \
-	fi; \
+	nixos_checks="$$(nix eval --json ".#nixosTests.$$check_system" --apply builtins.attrNames | jq -r '.[]')"; \
 	if [ "x$(WHAT)" = "x" ]; then \
-		nix flake check $(call builder-opts) $(ARGS); \
-		exit $$?; \
+		if [ -z "$$nixos_checks" ]; then \
+			echo "No nixos checks for $$check_system."; \
+			exit 0; \
+		fi; \
+		for check_name in $$nixos_checks; do \
+			echo "Running $$check_name on $$check_system..."; \
+			$(call maybe-nom-build,$(call builder-opts) ".#nixosTests.$$check_system.$$check_name") || exit $$?; \
+		done; \
+		exit 0; \
 	fi; \
-	selected_system="$$system"; \
-	if printf '%s\n' "$$known_native" | grep -Fxq "$(WHAT)"; then \
-		selected_system="$$system"; \
-	elif [ "$$check_system" != "$$system" ] && printf '%s\n' "$$known_linux" | grep -Fxq "$(WHAT)"; then \
-		selected_system="$$check_system"; \
-	else \
-		echo "Unknown check: $(WHAT)"; \
+	if ! printf '%s\n' "$$nixos_checks" | grep -Fxq "$(WHAT)"; then \
+		echo "Unknown nixos check: $(WHAT)"; \
 		echo; \
-		echo "Available checks:"; \
-		{ printf '%s\n' "$$known_native"; printf '%s\n' "$$known_linux"; } | awk 'NF' | LC_ALL=C sort -u; \
+		echo "Available nixos checks for $$check_system:"; \
+		printf '%s\n' "$$nixos_checks"; \
 		exit 1; \
 	fi; \
-	$(call maybe-nom-build,$(call builder-opts) ".#checks.$$selected_system.$(WHAT)")
+	$(call maybe-nom-build,$(call builder-opts) ".#nixosTests.$$check_system.$(WHAT)")
