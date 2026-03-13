@@ -17,6 +17,14 @@ define builder-opts
 $(if $(filter false,$(REMOTE)),--option builders '$(LOCAL_LOCAL_BUILDERS)',)
 endef
 
+define maybe-nom-build
+if command -v nom >/dev/null 2>&1; then \
+	nom build $(1) $(ARGS); \
+	else \
+	nix build $(1) $(ARGS); \
+	fi
+endef
+
 define config-hosts
 nix eval --json $(1) --apply builtins.attrNames | jq -r '.[]'
 endef
@@ -57,7 +65,7 @@ define standalone-home-build-action
 		exit 1; \
 	fi
 
-	nix build $(call builder-opts) .#homeConfigurations.$(USERNAME)@$(TARGET).activationPackage $(ARGS)
+		$(call maybe-nom-build,$(call builder-opts) .#homeConfigurations.$(USERNAME)@$(TARGET).activationPackage)
 endef
 
 help:
@@ -77,16 +85,16 @@ nixos:
 				resolved="$$candidate"; \
 				break; \
 			fi; \
-			done; \
-		fi; \
+		done; \
+	fi; \
 	$(call require-known-host,nixos,$$resolved) \
-	nix build $(call builder-opts) ".#nixosConfigurations.$$resolved.config.system.build.toplevel" $(ARGS)
+	$(call maybe-nom-build,$(call builder-opts) ".#nixosConfigurations.$$resolved.config.system.build.toplevel")
 
 darwin:
 	@known="$$($(call config-hosts,.#darwinConfigurations))"; \
 	$(call require-what-and-list-hosts,darwin) \
 	$(call require-known-host,darwin,$(WHAT)) \
-	nix build $(call builder-opts) ".#darwinConfigurations.$(WHAT).system" $(ARGS)
+	$(call maybe-nom-build,$(call builder-opts) ".#darwinConfigurations.$(WHAT).system")
 
 linux-home:
 	$(call standalone-home-build-action,linux,x86_64-linux)
