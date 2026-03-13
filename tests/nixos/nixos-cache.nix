@@ -2,24 +2,26 @@
 pkgs.testers.runNixOSTest {
   name = "nixos-cache";
 
-  nodes.cache = { lib, pkgs, ... }: {
-    imports = [
-      ../../nixos/cachevm/default.nix
-    ];
+  nodes.cache =
+    { lib, pkgs, ... }:
+    {
+      imports = [
+        ../../nixos/cachevm/default.nix
+      ];
 
-    # Test-only overrides: avoid external dependencies from the production host.
-    fileSystems."/cache" = lib.mkForce {
-      device = "tmpfs";
-      fsType = "tmpfs";
-      options = [ "mode=0755" ];
+      # Test-only overrides: avoid external dependencies from the production host.
+      fileSystems."/cache" = lib.mkForce {
+        device = "tmpfs";
+        fsType = "tmpfs";
+        options = [ "mode=0755" ];
+      };
+      systemd.tmpfiles.rules = [
+        "d /cache 0755 root root -"
+      ];
+      environment.etc."atticd.env".source = ./fixtures/atticd.env;
+
+      environment.systemPackages = [ pkgs.curl ];
     };
-    systemd.tmpfiles.rules = [
-      "d /cache 0755 root root -"
-    ];
-    environment.etc."atticd.env".source = ./fixtures/atticd.env;
-
-    environment.systemPackages = [ pkgs.curl ];
-  };
 
   testScript = ''
     start_all()
