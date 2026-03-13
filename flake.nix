@@ -52,8 +52,6 @@
     #jellarr.url = "github:venkyr77/jellarr/v0.1.0";
     jellarr.inputs.nixpkgs.follows = "nixpkgs";
 
-    nixpkgs-quartz-wm.url = "github:booxter/nixpkgs/quartz-wm-darwin";
-
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
 

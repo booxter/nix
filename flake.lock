@@ -559,22 +559,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-quartz-wm": {
-      "locked": {
-        "lastModified": 1771462627,
-        "narHash": "sha256-d9hnSYVzBntqw94fbPsIatTCPTfwdVzXoLUbokn+is4=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "59db8b663c9c0d9936b5ce73372c50540aee1357",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "ref": "quartz-wm-darwin",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1769318308,
@@ -751,7 +735,6 @@
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-25_11": "nixpkgs-25_11",
         "nixpkgs-firefox-unwrapped": "nixpkgs-firefox-unwrapped",
-        "nixpkgs-quartz-wm": "nixpkgs-quartz-wm",
         "nixpkgs-thunderbird-unwrapped": "nixpkgs-thunderbird-unwrapped",
         "nixpkgs-transmission": "nixpkgs-transmission",
         "nixvim": "nixvim",

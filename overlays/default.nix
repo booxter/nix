@@ -18,7 +18,6 @@
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
-      pkgsQuartzWm = getPkgs inputs.nixpkgs-quartz-wm;
       pkgsFirefoxUnwrapped = getPkgs inputs.nixpkgs-firefox-unwrapped;
       pkgsThunderbirdUnwrapped = getPkgs inputs.nixpkgs-thunderbird-unwrapped;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
@@ -52,9 +51,5 @@
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
       inherit (pkgsFirefoxUnwrapped) firefox-unwrapped;
       inherit (pkgsThunderbirdUnwrapped) thunderbird-unwrapped;
-
-      # Pull XQuartz stack from a fork until quartz-wm changes are merged:
-      # https://github.com/NixOS/nixpkgs/pull/491935
-      inherit (pkgsQuartzWm) quartz-wm xquartz;
     };
 }
