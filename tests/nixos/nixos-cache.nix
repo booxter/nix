@@ -1,6 +1,6 @@
 { pkgs }:
 pkgs.testers.runNixOSTest {
-  name = "cachevm-atticd";
+  name = "nixos-cache";
 
   nodes.cache = { lib, pkgs, ... }: {
     imports = [

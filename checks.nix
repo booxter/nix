@@ -52,7 +52,7 @@ helpers.forAllSystems (
       '';
     };
   }
-  // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-    cachevm-atticd = import ./tests/nixos/cachevm-atticd.nix { inherit pkgs; };
+  // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+    nixos-cache = import ./tests/nixos/nixos-cache.nix { inherit pkgs; };
   }
 )

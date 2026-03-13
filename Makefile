@@ -105,16 +105,29 @@ darwin-home:
 
 check:
 	@system="$$(nix eval --impure --raw --expr builtins.currentSystem)"; \
-	known="$$(nix eval --json ".#checks.$$system" --apply builtins.attrNames | jq -r '.[]')"; \
+	check_system="$$system"; \
+	case "$$system" in \
+		*-darwin) check_system="$${system%-darwin}-linux" ;; \
+	esac; \
+	known_native="$$(nix eval --json ".#checks.$$system" --apply builtins.attrNames | jq -r '.[]')"; \
+	known_linux="$$known_native"; \
+	if [ "$$check_system" != "$$system" ]; then \
+		known_linux="$$(nix eval --json ".#checks.$$check_system" --apply builtins.attrNames | jq -r '.[]')"; \
+	fi; \
 	if [ "x$(WHAT)" = "x" ]; then \
 		nix flake check $(call builder-opts) $(ARGS); \
 		exit $$?; \
 	fi; \
-	if ! printf '%s\n' "$$known" | grep -Fxq "$(WHAT)"; then \
+	selected_system="$$system"; \
+	if printf '%s\n' "$$known_native" | grep -Fxq "$(WHAT)"; then \
+		selected_system="$$system"; \
+	elif [ "$$check_system" != "$$system" ] && printf '%s\n' "$$known_linux" | grep -Fxq "$(WHAT)"; then \
+		selected_system="$$check_system"; \
+	else \
 		echo "Unknown check: $(WHAT)"; \
 		echo; \
-		echo "Available checks for $$system:"; \
-		printf '%s\n' "$$known"; \
+		echo "Available checks:"; \
+		{ printf '%s\n' "$$known_native"; printf '%s\n' "$$known_linux"; } | awk 'NF' | LC_ALL=C sort -u; \
 		exit 1; \
 	fi; \
-	$(call maybe-nom-build,$(call builder-opts) ".#checks.$$system.$(WHAT)")
+	$(call maybe-nom-build,$(call builder-opts) ".#checks.$$selected_system.$(WHAT)")
