@@ -352,7 +352,7 @@ for host in "${HOSTS[@]}"; do
   fi
 
   status_color="$COLOR_GREEN"
-  if [[ "$ok" != "ok" ]]; then
+  if [[ "$ok" != ok* ]]; then
     status_color="$COLOR_RED"
   fi
   line="- ${COLOR_BLUE}${host}${COLOR_RESET} (${COLOR_DIM}${ssh_host}${COLOR_RESET}): ${status_color}${ok}${COLOR_RESET}"
