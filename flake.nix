@@ -70,8 +70,8 @@
     # the previous cached versions until cache catches up.
     # https://github.com/NixOS/infra/pull/950
     # TODO: remove these inputs when the Hydra issue is fixed.
-    nixpkgs-firefox-unwrapped.url = "github:NixOS/nixpkgs/5e4522be6bdf1600682a6f383434b057b2d77a37";
-    nixpkgs-thunderbird-unwrapped.url = "github:NixOS/nixpkgs/e3cb16bccd9facebae3ba29c6a76a4cc1b73462a";
+    nixpkgs-firefox-unwrapped.url = "github:NixOS/nixpkgs/b8197e259ad1b49d63789b7fdb8214644b1b05de";
+    nixpkgs-thunderbird-unwrapped.url = "github:NixOS/nixpkgs/eac9adc9cc293c4cec9686f9ae534cf21a5f7c7e";
   };
 
   outputs =
