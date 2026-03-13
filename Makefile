@@ -17,14 +17,28 @@ define builder-opts
 $(if $(filter false,$(REMOTE)),--option builders '$(LOCAL_LOCAL_BUILDERS)',)
 endef
 
-define nix-config-action
-	# $(1): build target attribute path
-	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
-		exit 1; \
-	fi
+define config-hosts
+nix eval --json $(1) --apply builtins.attrNames | jq -r '.[]'
+endef
 
-	nix build $(call builder-opts) $(1) $(ARGS)
+define require-what-and-list-hosts
+if [ "x$(WHAT)" = "x" ]; then \
+	echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
+	echo; \
+	echo "Available $(1) hosts:"; \
+	printf '%s\n' "$$known"; \
+	exit 1; \
+	fi;
+endef
+
+define require-known-host
+if ! printf '%s\n' "$$known" | grep -Fxq "$(2)"; then \
+	echo "Unknown $(1) host: $(WHAT)"; \
+	echo; \
+	echo "Available $(1) hosts:"; \
+	printf '%s\n' "$$known"; \
+	exit 1; \
+	fi;
 endef
 
 define standalone-home-build-action
@@ -54,31 +68,25 @@ help:
 	@echo "  make darwin-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 
 nixos:
-	@if [ "x$(WHAT)" = "x" ]; then \
-		echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
-		exit 1; \
-	fi
-	@resolved="$(WHAT)"; \
-	known="$$(nix eval --json .#nixosConfigurations --apply builtins.attrNames | jq -r '.[]')"; \
+	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
+	$(call require-what-and-list-hosts,nixos) \
+	resolved="$(WHAT)"; \
 	if ! printf '%s\n' "$$known" | grep -Fxq "$$resolved"; then \
 		for candidate in "prox-$(WHAT)vm" "local-$(WHAT)vm"; do \
 			if printf '%s\n' "$$known" | grep -Fxq "$$candidate"; then \
 				resolved="$$candidate"; \
 				break; \
 			fi; \
-		done; \
-	fi; \
-	if ! printf '%s\n' "$$known" | grep -Fxq "$$resolved"; then \
-		echo "Unknown nixos host: $(WHAT)"; \
-		echo; \
-		echo "Available nixos hosts:"; \
-		printf '%s\n' "$$known"; \
-		exit 1; \
-	fi; \
+			done; \
+		fi; \
+	$(call require-known-host,nixos,$$resolved) \
 	nix build $(call builder-opts) ".#nixosConfigurations.$$resolved.config.system.build.toplevel" $(ARGS)
 
 darwin:
-	$(call nix-config-action,.#darwinConfigurations.$(WHAT).system)
+	@known="$$($(call config-hosts,.#darwinConfigurations))"; \
+	$(call require-what-and-list-hosts,darwin) \
+	$(call require-known-host,darwin,$(WHAT)) \
+	nix build $(call builder-opts) ".#darwinConfigurations.$(WHAT).system" $(ARGS)
 
 linux-home:
 	$(call standalone-home-build-action,linux,x86_64-linux)
