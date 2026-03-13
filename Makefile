@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help nixos darwin linux-home darwin-home
+.PHONY: help nixos darwin linux-home darwin-home check
 
 ARGS = -L --show-trace
 USERNAME ?= ihrachyshka
@@ -72,6 +72,7 @@ help:
 	@echo "Available targets:"
 	@echo "  make nixos WHAT=<host> [REMOTE=false]"
 	@echo "  make darwin WHAT=<host> [REMOTE=false]"
+	@echo "  make check [WHAT=<check-name>] [REMOTE=false]"
 	@echo "  make linux-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 	@echo "  make darwin-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 
@@ -101,3 +102,19 @@ linux-home:
 
 darwin-home:
 	$(call standalone-home-build-action,darwin,aarch64-darwin)
+
+check:
+	@system="$$(nix eval --impure --raw --expr builtins.currentSystem)"; \
+	known="$$(nix eval --json ".#checks.$$system" --apply builtins.attrNames | jq -r '.[]')"; \
+	if [ "x$(WHAT)" = "x" ]; then \
+		nix flake check $(call builder-opts) $(ARGS); \
+		exit $$?; \
+	fi; \
+	if ! printf '%s\n' "$$known" | grep -Fxq "$(WHAT)"; then \
+		echo "Unknown check: $(WHAT)"; \
+		echo; \
+		echo "Available checks for $$system:"; \
+		printf '%s\n' "$$known"; \
+		exit 1; \
+	fi; \
+	$(call maybe-nom-build,$(call builder-opts) ".#checks.$$system.$(WHAT)")
