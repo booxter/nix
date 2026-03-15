@@ -10,6 +10,12 @@
       # and temporarily disable the rest of settings to pull the builder image
       # from cache
       ephemeral = true;
+      supportedFeatures = [
+        "kvm"
+        "benchmark"
+        "big-parallel"
+        "nixos-test"
+      ];
       systems = [
         "x86_64-linux"
         "aarch64-linux"

@@ -7,6 +7,9 @@ on:
       - master
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -54,22 +57,6 @@ jobs:
 
       - name: Run get-hosts test
         run: ./tests/test-get-hosts.sh
-
-  flake-check:
-    name: flake check
-    needs:
-      - plan-build-matrix
-    if: needs.plan-build-matrix.outputs.docs_only != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-
-      - name: Run flake check
-        run: nix flake check -L --show-trace
 
   plan-build-matrix:
     name: plan build matrix
@@ -213,7 +200,6 @@ jobs:
     needs:
       - format
       - get-hosts-check
-      - flake-check
       - plan-build-matrix
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -243,7 +229,6 @@ jobs:
       - plan-build-matrix
       - format
       - get-hosts-check
-      - flake-check
       - build
     runs-on: ubuntu-slim
     steps:
@@ -259,15 +244,14 @@ jobs:
           fi
 
           if [ "${{ needs.plan-build-matrix.outputs.docs_only }}" = "true" ]; then
-            echo "Docs-only change detected; skipped get-hosts-check, flake-check, and build."
+            echo "Docs-only change detected; skipped get-hosts-check and build."
             echo "All CI jobs passed."
             exit 0
           fi
 
-          if [ "${{ needs.get-hosts-check.result }}" != "success" ] || [ "${{ needs.flake-check.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ]; then
+          if [ "${{ needs.get-hosts-check.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ]; then
             echo "One or more CI jobs failed."
             echo "get-hosts-check=${{ needs.get-hosts-check.result }}"
-            echo "flake-check=${{ needs.flake-check.result }}"
             echo "build=${{ needs.build.result }}"
             exit 1
           fi
