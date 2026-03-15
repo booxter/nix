@@ -59,6 +59,7 @@ in
       gnused
       gzip
       htop
+      iftop
       ipcalc
       iperf3
       jq
