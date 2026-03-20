@@ -12,7 +12,7 @@ let
     "_netdev"
     "noatime"
     "x-systemd.automount"
-    "x-systemd.idle-timeout=5min"
+    "x-systemd.idle-timeout=0"
     "x-systemd.mount-timeout=30s"
     "x-systemd.requires=network-online.target"
     "x-systemd.after=network-online.target"
