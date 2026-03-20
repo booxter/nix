@@ -107,6 +107,9 @@ jobs:
 
             const paths = await planner.getChangedPaths({ context, github });
             core.info(`Changed files (${paths.length}): ${paths.join(", ")}`);
+            const nonDocPaths = planner.filterNonDocPaths(paths);
+            const selectionPaths = nonDocPaths.filter((p) => p !== "eslint.config.js");
+            core.info(`Selection files (${selectionPaths.length}): ${selectionPaths.join(", ")}`);
 
             const docsOnly = planner.isDocsOnly(paths);
             if (docsOnly) {
@@ -117,7 +120,7 @@ jobs:
             }
             core.setOutput("docs_only", "false");
 
-            const scoped = planner.scopeBuildInclude({ paths, include: fullMatrix.include });
+            const scoped = planner.scopeBuildInclude({ paths: selectionPaths, include: fullMatrix.include });
             let candidateInclude = scoped.include;
             if (scoped.reason === "darwin") {
               core.info(`Darwin-only change detected, scoping matrix to ${candidateInclude.length} macOS job(s).`);
@@ -154,7 +157,7 @@ jobs:
             ];
 
             const selection = planner.selectMachineSpecific({
-              paths,
+              paths: selectionPaths,
               include: candidateInclude,
               mapping: machinePathMap,
               field: "jobs",

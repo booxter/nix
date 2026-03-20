@@ -8,6 +8,10 @@ function isDocsOnly(paths) {
   return paths.length > 0 && paths.every(isDocPath);
 }
 
+function filterNonDocPaths(paths) {
+  return paths.filter((p) => !isDocPath(p));
+}
+
 function isOnlyUnder(paths, prefix) {
   return paths.length > 0 && paths.every((p) => p.startsWith(prefix));
 }
@@ -70,6 +74,7 @@ function selectMachineSpecific({ paths, include, mapping, field }) {
 }
 
 module.exports = {
+  filterNonDocPaths,
   getChangedPaths,
   isDocsOnly,
   isOnlyUnder,

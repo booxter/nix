@@ -65,6 +65,9 @@ jobs:
 
             const paths = await planner.getChangedPaths({ context, github });
             core.info(`Changed files (${paths.length}): ${paths.join(", ")}`);
+            const nonDocPaths = planner.filterNonDocPaths(paths);
+            const selectionPaths = nonDocPaths.filter((p) => p !== "eslint.config.js");
+            core.info(`Selection files (${selectionPaths.length}): ${selectionPaths.join(", ")}`);
 
             const docsOnly = planner.isDocsOnly(paths);
             if (docsOnly) {
@@ -74,7 +77,7 @@ jobs:
               return;
             }
 
-            const onlyDarwinPaths = planner.isOnlyUnder(paths, "darwin/");
+            const onlyDarwinPaths = planner.isOnlyUnder(selectionPaths, "darwin/");
             if (onlyDarwinPaths) {
               core.info("Darwin-only pull request detected, skipping NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
@@ -89,7 +92,7 @@ jobs:
             ];
 
             const selection = planner.selectMachineSpecific({
-              paths,
+              paths: selectionPaths,
               include: fullMatrix.include,
               mapping: machinePathMap,
               field: "tests",
