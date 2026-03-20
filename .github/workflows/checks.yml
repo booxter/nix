@@ -55,6 +55,11 @@ jobs:
                 { name: "NixOS test: cache", cmd: "nix build .#nixosTests.x86_64-linux.cache -L --show-trace" }
               ]
             };
+            const machinePathMap = [
+              { prefix: "nixos/cachevm/", tests: [ "NixOS test: cache" ] },
+              { prefix: "tests/nixos/cache.nix", tests: [ "NixOS test: cache" ] },
+              { prefix: "tests/nixos/fixtures/atticd.env", tests: [ "NixOS test: cache" ] }
+            ];
 
             if (context.eventName !== "pull_request") {
               core.info("Non-PR event, using full NixOS test matrix.");
@@ -63,49 +68,38 @@ jobs:
               return;
             }
 
-            const paths = await planner.getChangedPaths({ context, github });
-            core.info(`Changed files (${paths.length}): ${paths.join(", ")}`);
-            const nonDocPaths = planner.filterNonDocPaths(paths);
-            const selectionPaths = nonDocPaths.filter((p) => p !== "eslint.config.js");
-            core.info(`Selection files (${selectionPaths.length}): ${selectionPaths.join(", ")}`);
-
-            const docsOnly = planner.isDocsOnly(paths);
-            if (docsOnly) {
+            const result = await planner.planMatrix({
+              context,
+              github,
+              eventName: context.eventName,
+              fullMatrix,
+              machinePathMap,
+              mappingField: "tests",
+              skipWhenDocsOnly: true,
+              skipWhenOnlyDarwin: true,
+            });
+            core.info(`Changed files (${result.paths.length}): ${result.paths.join(", ")}`);
+            core.info(`Selection files (${result.selectionPaths.length}): ${result.selectionPaths.join(", ")}`);
+            if (result.docsOnly) {
               core.info("Docs-only pull request detected, skipping NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
               core.setOutput("has_tests", "false");
               return;
             }
-
-            const onlyDarwinPaths = planner.isOnlyUnder(selectionPaths, "darwin/");
-            if (onlyDarwinPaths) {
+            if (result.scopeReason === "darwin" && result.matrix.include.length === 0) {
               core.info("Darwin-only pull request detected, skipping NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
               core.setOutput("has_tests", "false");
               return;
             }
-
-            const machinePathMap = [
-              { prefix: "nixos/cachevm/", tests: [ "NixOS test: cache" ] },
-              { prefix: "tests/nixos/cache.nix", tests: [ "NixOS test: cache" ] },
-              { prefix: "tests/nixos/fixtures/atticd.env", tests: [ "NixOS test: cache" ] }
-            ];
-
-            const selection = planner.selectMachineSpecific({
-              paths: selectionPaths,
-              include: fullMatrix.include,
-              mapping: machinePathMap,
-              field: "tests",
-            });
-            const matrix = { include: selection.include };
             core.info(
-              selection.machineSpecific
-                ? `Using machine-specific NixOS test matrix with ${matrix.include.length} job(s).`
-                : `Using full NixOS test matrix with ${matrix.include.length} job(s).`
+              result.machineSpecific
+                ? `Using machine-specific NixOS test matrix with ${result.matrix.include.length} job(s).`
+                : `Using full NixOS test matrix with ${result.matrix.include.length} job(s).`
             );
 
-            core.setOutput("matrix", JSON.stringify(matrix));
-            core.setOutput("has_tests", matrix.include.length > 0 ? "true" : "false");
+            core.setOutput("matrix", JSON.stringify(result.matrix));
+            core.setOutput("has_tests", result.matrix.include.length > 0 ? "true" : "false");
 
   check-nixos:
     if: needs.plan-nixos-tests.outputs.has_tests == 'true'

@@ -73,11 +73,74 @@ function selectMachineSpecific({ paths, include, mapping, field }) {
   return { include, machineSpecific: false };
 }
 
+function defaultSelectionPathFilter(paths) {
+  return filterNonDocPaths(paths).filter((p) => p !== "eslint.config.js");
+}
+
+async function planMatrix({
+  context,
+  github,
+  eventName,
+  fullMatrix,
+  machinePathMap,
+  mappingField,
+  skipWhenDocsOnly = false,
+  skipWhenOnlyDarwin = false,
+  scopeByOs = false,
+  selectionPathFilter = defaultSelectionPathFilter,
+}) {
+  const paths = await getChangedPaths({ context, github });
+  const docsOnly = isDocsOnly(paths);
+  const selectionPaths = selectionPathFilter(paths);
+
+  const result = {
+    paths,
+    docsOnly,
+    selectionPaths,
+    scopeReason: "full",
+    machineSpecific: false,
+    matrix: { include: fullMatrix.include },
+  };
+
+  if (eventName !== "pull_request") {
+    return result;
+  }
+
+  if (docsOnly && skipWhenDocsOnly) {
+    return { ...result, matrix: { include: [] } };
+  }
+
+  if (skipWhenOnlyDarwin && isOnlyUnder(selectionPaths, "darwin/")) {
+    return { ...result, matrix: { include: [] }, scopeReason: "darwin" };
+  }
+
+  let candidateInclude = fullMatrix.include;
+  if (scopeByOs) {
+    const scoped = scopeBuildInclude({ paths: selectionPaths, include: fullMatrix.include });
+    candidateInclude = scoped.include;
+    result.scopeReason = scoped.reason;
+  }
+
+  const selection = selectMachineSpecific({
+    paths: selectionPaths,
+    include: candidateInclude,
+    mapping: machinePathMap,
+    field: mappingField,
+  });
+
+  return {
+    ...result,
+    machineSpecific: selection.machineSpecific,
+    matrix: { include: selection.include },
+  };
+}
+
 module.exports = {
   filterNonDocPaths,
   getChangedPaths,
   isDocsOnly,
   isOnlyUnder,
+  planMatrix,
   scopeBuildInclude,
   selectMachineSpecific,
 };
