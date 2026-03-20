@@ -73,8 +73,13 @@ function selectMachineSpecific({ paths, include, mapping, field }) {
   return { include, machineSpecific: false };
 }
 
+function filterSelectionPaths(paths, { ignore = [] } = {}) {
+  const ignored = new Set(ignore);
+  return filterNonDocPaths(paths).filter((p) => !ignored.has(p));
+}
+
 function defaultSelectionPathFilter(paths) {
-  return filterNonDocPaths(paths).filter((p) => p !== "eslint.config.js");
+  return filterSelectionPaths(paths, { ignore: ["eslint.config.js"] });
 }
 
 async function planMatrix({
@@ -85,6 +90,7 @@ async function planMatrix({
   machinePathMap,
   mappingField,
   skipWhenDocsOnly = false,
+  skipWhenSelectionEmpty = false,
   skipWhenOnlyDarwin = false,
   scopeByOs = false,
   selectionPathFilter = defaultSelectionPathFilter,
@@ -96,6 +102,7 @@ async function planMatrix({
   const result = {
     paths,
     docsOnly,
+    ignoredOnly: false,
     selectionPaths,
     scopeReason: "full",
     machineSpecific: false,
@@ -108,6 +115,10 @@ async function planMatrix({
 
   if (docsOnly && skipWhenDocsOnly) {
     return { ...result, matrix: { include: [] } };
+  }
+
+  if (skipWhenSelectionEmpty && selectionPaths.length === 0) {
+    return { ...result, ignoredOnly: true, scopeReason: "ignored", matrix: { include: [] } };
   }
 
   if (skipWhenOnlyDarwin && isOnlyUnder(selectionPaths, "darwin/")) {
@@ -136,6 +147,7 @@ async function planMatrix({
 }
 
 module.exports = {
+  filterSelectionPaths,
   filterNonDocPaths,
   getChangedPaths,
   isDocsOnly,

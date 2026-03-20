@@ -76,12 +76,19 @@ jobs:
               machinePathMap,
               mappingField: "tests",
               skipWhenDocsOnly: true,
+              skipWhenSelectionEmpty: true,
               skipWhenOnlyDarwin: true,
             });
             core.info(`Changed files (${result.paths.length}): ${result.paths.join(", ")}`);
             core.info(`Selection files (${result.selectionPaths.length}): ${result.selectionPaths.join(", ")}`);
             if (result.docsOnly) {
               core.info("Docs-only pull request detected, skipping NixOS tests.");
+              core.setOutput("matrix", JSON.stringify({ include: [] }));
+              core.setOutput("has_tests", "false");
+              return;
+            }
+            if (result.ignoredOnly) {
+              core.info("Only selection-neutral files changed, skipping NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
               core.setOutput("has_tests", "false");
               return;

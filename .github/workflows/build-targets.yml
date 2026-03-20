@@ -140,16 +140,24 @@ jobs:
               machinePathMap,
               mappingField: "jobs",
               skipWhenDocsOnly: true,
+              skipWhenSelectionEmpty: true,
               scopeByOs: true,
             });
             core.info(`Changed files (${result.paths.length}): ${result.paths.join(", ")}`);
             core.info(`Selection files (${result.selectionPaths.length}): ${result.selectionPaths.join(", ")}`);
-            core.setOutput("docs_only", result.docsOnly ? "true" : "false");
             if (result.docsOnly) {
+              core.setOutput("docs_only", "true");
               core.info("Docs-only pull request detected, skipping heavy build jobs.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
               return;
             }
+            if (result.ignoredOnly) {
+              core.setOutput("docs_only", "true");
+              core.info("Only selection-neutral files changed, skipping heavy build jobs.");
+              core.setOutput("matrix", JSON.stringify({ include: [] }));
+              return;
+            }
+            core.setOutput("docs_only", "false");
             if (result.scopeReason === "darwin") {
               core.info(`Darwin-only change detected, scoping matrix to ${result.matrix.include.length} macOS job(s).`);
             } else if (result.scopeReason === "nixos") {
