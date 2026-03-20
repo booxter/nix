@@ -407,13 +407,7 @@
             git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff check
             git ls-files -z -- '*.js' '**/*.js' | xargs -0 -r eslint \
               --no-config-lookup \
-              --global require \
-              --global module \
-              --global process \
-              --global console \
-              --global __dirname \
-              --rule no-undef:error \
-              --rule no-unused-vars:error
+              --config ./eslint.config.js
           '';
         }
       );
