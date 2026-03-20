@@ -41,11 +41,15 @@ jobs:
       matrix: ${{ steps.plan.outputs.matrix }}
       has_tests: ${{ steps.plan.outputs.has_tests }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Compute NixOS test matrix
         id: plan
         uses: actions/github-script@v8
         with:
           script: |
+            const planner = require("./.github/scripts/plan-ci-matrix.js");
             const fullMatrix = {
               include: [
                 { name: "NixOS test: cache", cmd: "nix build .#nixosTests.x86_64-linux.cache -L --show-trace" }
@@ -59,20 +63,10 @@ jobs:
               return;
             }
 
-            const changedFiles = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100
-            });
-            const paths = changedFiles.map((f) => f.filename);
+            const paths = await planner.getChangedPaths({ context, github });
             core.info(`Changed files (${paths.length}): ${paths.join(", ")}`);
 
-            const isDocPath = (path) =>
-              path === "README.md" ||
-              path.startsWith("docs/") ||
-              path.endsWith(".md");
-            const docsOnly = paths.length > 0 && paths.every(isDocPath);
+            const docsOnly = planner.isDocsOnly(paths);
             if (docsOnly) {
               core.info("Docs-only pull request detected, skipping NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
@@ -80,7 +74,7 @@ jobs:
               return;
             }
 
-            const onlyDarwinPaths = paths.length > 0 && paths.every((p) => p.startsWith("darwin/"));
+            const onlyDarwinPaths = planner.isOnlyUnder(paths, "darwin/");
             if (onlyDarwinPaths) {
               core.info("Darwin-only pull request detected, skipping NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
@@ -94,35 +88,18 @@ jobs:
               { prefix: "tests/nixos/fixtures/atticd.env", tests: [ "NixOS test: cache" ] }
             ];
 
-            const selected = new Set();
-            let onlyMachineSpecific = paths.length > 0;
-
-            for (const filePath of paths) {
-              let matched = false;
-              for (const mapping of machinePathMap) {
-                if (filePath.startsWith(mapping.prefix)) {
-                  for (const testName of mapping.tests) {
-                    selected.add(testName);
-                  }
-                  matched = true;
-                  break;
-                }
-              }
-              if (!matched) {
-                onlyMachineSpecific = false;
-                break;
-              }
-            }
-
-            let matrix = fullMatrix;
-            if (onlyMachineSpecific && selected.size > 0) {
-              matrix = {
-                include: fullMatrix.include.filter((item) => selected.has(item.name))
-              };
-              core.info(`Using machine-specific NixOS test matrix with ${matrix.include.length} job(s).`);
-            } else {
-              core.info(`Using full NixOS test matrix with ${matrix.include.length} job(s).`);
-            }
+            const selection = planner.selectMachineSpecific({
+              paths,
+              include: fullMatrix.include,
+              mapping: machinePathMap,
+              field: "tests",
+            });
+            const matrix = { include: selection.include };
+            core.info(
+              selection.machineSpecific
+                ? `Using machine-specific NixOS test matrix with ${matrix.include.length} job(s).`
+                : `Using full NixOS test matrix with ${matrix.include.length} job(s).`
+            );
 
             core.setOutput("matrix", JSON.stringify(matrix));
             core.setOutput("has_tests", matrix.include.length > 0 ? "true" : "false");

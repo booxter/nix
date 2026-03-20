@@ -65,11 +65,15 @@ jobs:
       docs_only: ${{ steps.plan.outputs.docs_only }}
       matrix: ${{ steps.plan.outputs.matrix }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Compute build matrix
         id: plan
         uses: actions/github-script@v8
         with:
           script: |
+            const planner = require("./.github/scripts/plan-ci-matrix.js");
             const fullMatrix = {
               include: [
                 { name: "frame (x86_64-linux)", cmd: "make nixos WHAT=frame", os: "ubuntu-latest" },
@@ -101,20 +105,10 @@ jobs:
               return;
             }
 
-            const changedFiles = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100
-            });
-            const paths = changedFiles.map((f) => f.filename);
+            const paths = await planner.getChangedPaths({ context, github });
             core.info(`Changed files (${paths.length}): ${paths.join(", ")}`);
 
-            const isDocPath = (path) =>
-              path === "README.md" ||
-              path.startsWith("docs/") ||
-              path.endsWith(".md");
-            const docsOnly = paths.length > 0 && paths.every(isDocPath);
+            const docsOnly = planner.isDocsOnly(paths);
             if (docsOnly) {
               core.info("Docs-only pull request detected, skipping heavy build jobs.");
               core.setOutput("docs_only", "true");
@@ -123,15 +117,11 @@ jobs:
             }
             core.setOutput("docs_only", "false");
 
-            const onlyDarwinPaths = paths.length > 0 && paths.every((p) => p.startsWith("darwin/"));
-            const onlyNixosPaths = paths.length > 0 && paths.every((p) => p.startsWith("nixos/"));
-
-            let candidateInclude = fullMatrix.include;
-            if (onlyDarwinPaths) {
-              candidateInclude = fullMatrix.include.filter((item) => item.os.startsWith("macos-"));
+            const scoped = planner.scopeBuildInclude({ paths, include: fullMatrix.include });
+            let candidateInclude = scoped.include;
+            if (scoped.reason === "darwin") {
               core.info(`Darwin-only change detected, scoping matrix to ${candidateInclude.length} macOS job(s).`);
-            } else if (onlyNixosPaths) {
-              candidateInclude = fullMatrix.include.filter((item) => !item.os.startsWith("macos-"));
+            } else if (scoped.reason === "nixos") {
               core.info(`NixOS-only change detected, scoping matrix to ${candidateInclude.length} Linux job(s).`);
             }
 
@@ -163,35 +153,18 @@ jobs:
               { prefix: "secrets/JGWXHWDL4X.yaml", jobs: [ "JGWXHWDL4X-ci (aarch64-darwin)" ] }
             ];
 
-            const selected = new Set();
-            let onlyMachineSpecific = paths.length > 0;
-
-            for (const filePath of paths) {
-              let matched = false;
-              for (const mapping of machinePathMap) {
-                if (filePath.startsWith(mapping.prefix)) {
-                  for (const jobName of mapping.jobs) {
-                    selected.add(jobName);
-                  }
-                  matched = true;
-                  break;
-                }
-              }
-              if (!matched) {
-                onlyMachineSpecific = false;
-                break;
-              }
-            }
-
-            let matrix = { include: candidateInclude };
-            if (onlyMachineSpecific && selected.size > 0) {
-              matrix = {
-                include: candidateInclude.filter((item) => selected.has(item.name))
-              };
-              core.info(`Using machine-specific build matrix with ${matrix.include.length} job(s).`);
-            } else {
-              core.info(`Using scoped/full build matrix with ${matrix.include.length} job(s).`);
-            }
+            const selection = planner.selectMachineSpecific({
+              paths,
+              include: candidateInclude,
+              mapping: machinePathMap,
+              field: "jobs",
+            });
+            const matrix = { include: selection.include };
+            core.info(
+              selection.machineSpecific
+                ? `Using machine-specific build matrix with ${matrix.include.length} job(s).`
+                : `Using scoped/full build matrix with ${matrix.include.length} job(s).`
+            );
 
             core.setOutput("matrix", JSON.stringify(matrix));
 
