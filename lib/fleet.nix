@@ -6,8 +6,8 @@ let
     meta = { inherit description; };
   };
 
-  fleetDeploy = pkgs.writeShellApplication {
-    name = "fleet-deploy";
+  deploy = pkgs.writeShellApplication {
+    name = "deploy";
     runtimeInputs = with pkgs; [
       bind
       git
@@ -24,14 +24,14 @@ let
       usage() {
         cat <<'EOF'
       Usage:
-        fleet-deploy [fleet deploy args]
-        fleet-deploy --home <target> [username]
-        fleet-deploy --disko <host> <device>
+        deploy [fleet deploy args]
+        deploy --home <target> [username]
+        deploy --disko <host> <device>
 
       Examples:
-        fleet-deploy -A --select
-        fleet-deploy --home nv ihrachyshka
-        fleet-deploy --disko frame /dev/sdX
+        deploy -A --select
+        deploy --home nv ihrachyshka
+        deploy --disko frame /dev/sdX
       EOF
       }
 
@@ -115,8 +115,7 @@ let
   };
 in
 {
-  "fleet-deploy" =
-    mkApp "${fleetDeploy}/bin/fleet-deploy" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
+  deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
   vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
