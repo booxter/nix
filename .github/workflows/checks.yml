@@ -34,9 +34,108 @@ jobs:
       - name: Run regular checks
         run: make check
 
+  plan-nixos-tests:
+    name: plan NixOS tests
+    runs-on: ubuntu-slim
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has_tests: ${{ steps.plan.outputs.has_tests }}
+    steps:
+      - name: Compute NixOS test matrix
+        id: plan
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fullMatrix = {
+              include: [
+                { name: "NixOS test: cache", cmd: "nix build .#nixosTests.x86_64-linux.cache -L --show-trace" }
+              ]
+            };
+
+            if (context.eventName !== "pull_request") {
+              core.info("Non-PR event, using full NixOS test matrix.");
+              core.setOutput("matrix", JSON.stringify(fullMatrix));
+              core.setOutput("has_tests", "true");
+              return;
+            }
+
+            const changedFiles = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100
+            });
+            const paths = changedFiles.map((f) => f.filename);
+            core.info(`Changed files (${paths.length}): ${paths.join(", ")}`);
+
+            const isDocPath = (path) =>
+              path === "README.md" ||
+              path.startsWith("docs/") ||
+              path.endsWith(".md");
+            const docsOnly = paths.length > 0 && paths.every(isDocPath);
+            if (docsOnly) {
+              core.info("Docs-only pull request detected, skipping NixOS tests.");
+              core.setOutput("matrix", JSON.stringify({ include: [] }));
+              core.setOutput("has_tests", "false");
+              return;
+            }
+
+            const onlyDarwinPaths = paths.length > 0 && paths.every((p) => p.startsWith("darwin/"));
+            if (onlyDarwinPaths) {
+              core.info("Darwin-only pull request detected, skipping NixOS tests.");
+              core.setOutput("matrix", JSON.stringify({ include: [] }));
+              core.setOutput("has_tests", "false");
+              return;
+            }
+
+            const machinePathMap = [
+              { prefix: "nixos/cachevm/", tests: [ "NixOS test: cache" ] },
+              { prefix: "tests/nixos/cache.nix", tests: [ "NixOS test: cache" ] },
+              { prefix: "tests/nixos/fixtures/atticd.env", tests: [ "NixOS test: cache" ] }
+            ];
+
+            const selected = new Set();
+            let onlyMachineSpecific = paths.length > 0;
+
+            for (const filePath of paths) {
+              let matched = false;
+              for (const mapping of machinePathMap) {
+                if (filePath.startsWith(mapping.prefix)) {
+                  for (const testName of mapping.tests) {
+                    selected.add(testName);
+                  }
+                  matched = true;
+                  break;
+                }
+              }
+              if (!matched) {
+                onlyMachineSpecific = false;
+                break;
+              }
+            }
+
+            let matrix = fullMatrix;
+            if (onlyMachineSpecific && selected.size > 0) {
+              matrix = {
+                include: fullMatrix.include.filter((item) => selected.has(item.name))
+              };
+              core.info(`Using machine-specific NixOS test matrix with ${matrix.include.length} job(s).`);
+            } else {
+              core.info(`Using full NixOS test matrix with ${matrix.include.length} job(s).`);
+            }
+
+            core.setOutput("matrix", JSON.stringify(matrix));
+            core.setOutput("has_tests", matrix.include.length > 0 ? "true" : "false");
+
   check-nixos:
-    name: NixOS tests
+    if: needs.plan-nixos-tests.outputs.has_tests == 'true'
+    needs:
+      - plan-nixos-tests
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan-nixos-tests.outputs.matrix) }}
     timeout-minutes: 180
     env:
       NIX_CONFIG: system-features = benchmark big-parallel kvm nixos-test
@@ -51,4 +150,4 @@ jobs:
         uses: ./.github/actions/prepare-nix-env
 
       - name: Run NixOS tests
-        run: make check-nixos
+        run: ${{ matrix.cmd }}
