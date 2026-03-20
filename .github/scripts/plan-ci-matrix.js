@@ -79,7 +79,13 @@ function filterSelectionPaths(paths, { ignore = [] } = {}) {
 }
 
 function defaultSelectionPathFilter(paths) {
-  return filterSelectionPaths(paths, { ignore: ["eslint.config.js"] });
+  return filterSelectionPaths(paths, {
+    ignore: [
+      "eslint.config.js",
+      "lib/fleet.nix",
+      ".github/scripts/plan-ci-matrix.js",
+    ],
+  });
 }
 
 async function planMatrix({
