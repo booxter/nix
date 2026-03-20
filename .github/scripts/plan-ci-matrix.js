@@ -101,6 +101,18 @@ async function planMatrix({
   scopeByOs = false,
   selectionPathFilter = defaultSelectionPathFilter,
 }) {
+  if (eventName !== "pull_request") {
+    return {
+      paths: [],
+      docsOnly: false,
+      ignoredOnly: false,
+      selectionPaths: [],
+      scopeReason: "full",
+      machineSpecific: false,
+      matrix: { include: fullMatrix.include },
+    };
+  }
+
   const paths = await getChangedPaths({ context, github });
   const docsOnly = isDocsOnly(paths);
   const selectionPaths = selectionPathFilter(paths);
@@ -114,10 +126,6 @@ async function planMatrix({
     machineSpecific: false,
     matrix: { include: fullMatrix.include },
   };
-
-  if (eventName !== "pull_request") {
-    return result;
-  }
 
   if (docsOnly && skipWhenDocsOnly) {
     return { ...result, matrix: { include: [] } };
