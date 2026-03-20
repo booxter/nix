@@ -21,27 +21,27 @@ nix run .#vm -- beast
 nix run .#prox-deploy -- srvarr prx1
 
 # Disk and image helpers
-nix run .#fleet-deploy -- --disko frame /dev/sdX
+nix run .#deploy -- --disko frame /dev/sdX
 nix build .#pi-image -o pi5.sd
 ```
 
 ## Fleet updates
 
-Update multiple machines over SSH with `nix run .#fleet-deploy` (defaults to
+Update multiple machines over SSH with `nix run .#deploy` (defaults to
 `--all`):
 
 ```sh
 # Update all personal machines (default)
-nix run .#fleet-deploy -- -A
+nix run .#deploy -- -A
 
 # Update all work machines
-nix run .#fleet-deploy -- -A --work
+nix run .#deploy -- -A --work
 
 # Update a subset interactively
-nix run .#fleet-deploy -- -A --select
+nix run .#deploy -- -A --select
 
 # Dry run (SSH check + disk estimate only)
-nix run .#fleet-deploy -- -A --dry-run
+nix run .#deploy -- -A --dry-run
 ```
 
 ## Secrets
@@ -73,7 +73,7 @@ nix run .#sops-copy -- mair prx1-lab attic
 ```sh
 make linux-home TARGET=nv
 make darwin-home TARGET=mair
-nix run .#fleet-deploy -- --home nv
+nix run .#deploy -- --home nv
 ```
 
 `TARGET` must match a standalone Home Manager profile from
