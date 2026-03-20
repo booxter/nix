@@ -389,6 +389,8 @@
             nixfmt-tree
             shellcheck
             ruff
+            nodejs
+            nodePackages.eslint
             mbake
             actionlint
             markdownlint-cli2
@@ -403,6 +405,9 @@
             git ls-files -z -- '*.md' '**/*.md' | xargs -0 -r markdownlint-cli2
             git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff format
             git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff check
+            git ls-files -z -- '*.js' '**/*.js' | xargs -0 -r eslint \
+              --no-config-lookup \
+              --config ./eslint.config.js
           '';
         }
       );

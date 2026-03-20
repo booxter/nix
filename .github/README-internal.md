@@ -10,7 +10,6 @@ For pull requests, CI runs:
 2. `format` always.
 3. Heavy jobs only when not docs-only:
    - `get-hosts-check`
-   - `flake-check`
    - `build` matrix (scoped dynamically)
 4. `ci-success` as the required final gate.
 
