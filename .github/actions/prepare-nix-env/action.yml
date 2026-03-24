@@ -18,6 +18,41 @@ runs:
       with:
         use-flakehub: false
 
+    - name: Verify required binary caches are enabled
+      shell: bash
+      run: |
+        set -euo pipefail
+
+        required_substituters=(
+          "https://cache.numtide.com"
+          "https://nixos-raspberrypi.cachix.org"
+          "https://cache.saumon.network/proxmox-nixos"
+        )
+        required_public_keys=(
+          "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
+          "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
+          "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM="
+        )
+
+        substituters="$(nix config show substituters)"
+        trusted_keys="$(nix config show trusted-public-keys)"
+
+        for substituter in "${required_substituters[@]}"; do
+          if ! grep -Fq "${substituter}" <<< "${substituters}"; then
+            echo "Missing required substituter: ${substituter}"
+            echo "Configured substituters: ${substituters}"
+            exit 1
+          fi
+        done
+
+        for key in "${required_public_keys[@]}"; do
+          if ! grep -Fq "${key}" <<< "${trusted_keys}"; then
+            echo "Missing required trusted key: ${key}"
+            echo "Configured trusted-public-keys: ${trusted_keys}"
+            exit 1
+          fi
+        done
+
     - name: Report Actions cache usage
       env:
         GH_TOKEN: ${{ github.token }}
