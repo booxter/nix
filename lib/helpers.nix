@@ -416,16 +416,192 @@ rec {
                   (
                     final: prev:
                     let
-                      patchedPveManager = prev.pve-manager.overrideAttrs (old: {
-                        patches = (old.patches or [ ]) ++ [
-                          ./patches/pve-manager-disable-subscription-popup.patch
-                        ];
-                      });
+                      # Work around proxmox-nixos ISO upload failures caused by
+                      # Crypt::OpenSSL::RSA 0.35 (`illegal or unsupported padding mode`).
+                      # Keep this until upstream PR #225 lands and is consumed here.
+                      basePerl540 = prev.pve-common.perlModule;
+                      patchedPerl540 = basePerl540.override {
+                        overrides = _: {
+                          CryptOpenSSLRSA = basePerl540.pkgs.CryptOpenSSLRSA.overrideAttrs (_: {
+                            version = "0.33";
+                            src = prev.fetchurl {
+                              url = "mirror://cpan/authors/id/T/TO/TODDR/Crypt-OpenSSL-RSA-0.33.tar.gz";
+                              hash = "sha256-vb5jD21vVAMldGrZmXcnKshmT/gb0Z8K2rptb0Xv2GQ=";
+                            };
+                          });
+                        };
+                      };
+                      patchedAuthenpam = prev.authenpam.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedFindbin = prev.findbin.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedMimebase32 = prev.mimebase32.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedMimebase64 = prev.mimebase64.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedNetsubnet = prev.netsubnet.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPosixstrptime = prev.posixstrptime.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedTermreadline = prev.termreadline.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedUuid = prev.uuid.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveApiClient = prev.pve-apiclient.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveRs = prev.pve-rs.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveRados2 = prev.pve-rados2.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveQemu = prev.pve-qemu.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveGuestCommon = prev.pve-guest-common.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveContainer = prev.pve-container.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveDocs = prev.pve-docs.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveHttpServer = prev.pve-http-server.override {
+                        perl540 = patchedPerl540;
+                      };
+                      patchedPveCommon = prev.pve-common.override {
+                        perl540 = patchedPerl540;
+                        mimebase32 = patchedMimebase32;
+                        mimebase64 = patchedMimebase64;
+                      };
+                      patchedPveAccessControl = prev.pve-access-control.override {
+                        perl540 = patchedPerl540;
+                        authenpam = patchedAuthenpam;
+                        pve-common = patchedPveCommon;
+                      };
+                      patchedPveCluster = prev.pve-cluster.override {
+                        perl540 = patchedPerl540;
+                        pve-access-control = patchedPveAccessControl;
+                        pve-apiclient = patchedPveApiClient;
+                        pve-rs = patchedPveRs;
+                      };
+                      patchedPveNetwork = prev.pve-network.override {
+                        perl540 = patchedPerl540;
+                        netsubnet = patchedNetsubnet;
+                        uuid = patchedUuid;
+                        pve-access-control = patchedPveAccessControl;
+                        pve-common = patchedPveCommon;
+                        pve-cluster = patchedPveCluster;
+                        pve-rs = patchedPveRs;
+                      };
+                      patchedPveFirewall = prev.pve-firewall.override {
+                        perl540 = patchedPerl540;
+                        pve-access-control = patchedPveAccessControl;
+                        pve-cluster = patchedPveCluster;
+                        pve-network = patchedPveNetwork;
+                        pve-rs = patchedPveRs;
+                      };
+                      patchedPveStorage =
+                        (prev.pve-storage.override {
+                          perl540 = patchedPerl540;
+                          posixstrptime = patchedPosixstrptime;
+                          pve-cluster = patchedPveCluster;
+                          pve-rados2 = patchedPveRados2;
+                          pve-qemu = patchedPveQemu;
+                        }).overrideAttrs
+                          (old: {
+                            # Proxmox tooling sometimes generates /usr/nix/store/* paths
+                            # for helper commands (e.g. vgesm), which are invalid on NixOS.
+                            postFixup = (old.postFixup or "") + ''
+                              find $out -type f | xargs sed -i \
+                                -e "s|/usr/nix/store/|/nix/store/|g" \
+                                -e "s|/usr/sbin/vgesm|$out/bin/pvesm|g" \
+                                -e "s|${prev.lvm2.bin}/bin/vgesm|$out/bin/pvesm|g"
+                              # TODO(upstream): proxmox-nixos pve-storage rewrite rules can mutate
+                              # pvesm -> vgesm via the /sbin/vg substitution. Keep this safeguard
+                              # until upstream fixes their sed replacement ordering/patterns.
+                              find $out -type f | xargs sed -E -i \
+                                -e "s|/nix/store/[^/]*-lvm2-[^/]*-bin/bin/vgesm|$out/bin/pvesm|g"
+                            '';
+                          });
+                      patchedPveQemuServer = prev.pve-qemu-server.override {
+                        perl540 = patchedPerl540;
+                        findbin = patchedFindbin;
+                        termreadline = patchedTermreadline;
+                        uuid = patchedUuid;
+                        pve-firewall = patchedPveFirewall;
+                        pve-qemu = patchedPveQemu;
+                      };
+                      patchedPveHaManager = prev.pve-ha-manager.override {
+                        perl540 = patchedPerl540;
+                        pve-container = patchedPveContainer;
+                        pve-firewall = patchedPveFirewall;
+                        pve-guest-common = patchedPveGuestCommon;
+                        pve-qemu-server = patchedPveQemuServer;
+                        pve-storage = patchedPveStorage;
+                        pve-qemu = patchedPveQemu;
+                      };
+                      patchedPveManager =
+                        (prev.pve-manager.override {
+                          perl540 = patchedPerl540;
+                          pve-docs = patchedPveDocs;
+                          pve-ha-manager = patchedPveHaManager;
+                          pve-http-server = patchedPveHttpServer;
+                          pve-network = patchedPveNetwork;
+                          pve-qemu = patchedPveQemu;
+                        }).overrideAttrs
+                          (old: {
+                            patches = (old.patches or [ ]) ++ [
+                              ./patches/pve-manager-disable-subscription-popup.patch
+                            ];
+                          });
                     in
                     {
+                      perl540 = patchedPerl540;
+                      authenpam = patchedAuthenpam;
+                      findbin = patchedFindbin;
+                      mimebase32 = patchedMimebase32;
+                      mimebase64 = patchedMimebase64;
+                      netsubnet = patchedNetsubnet;
+                      posixstrptime = patchedPosixstrptime;
+                      termreadline = patchedTermreadline;
+                      uuid = patchedUuid;
+                      pve-apiclient = patchedPveApiClient;
+                      pve-common = patchedPveCommon;
+                      pve-rs = patchedPveRs;
+                      pve-rados2 = patchedPveRados2;
+                      pve-qemu = patchedPveQemu;
+                      pve-guest-common = patchedPveGuestCommon;
+                      pve-container = patchedPveContainer;
+                      pve-docs = patchedPveDocs;
+                      pve-http-server = patchedPveHttpServer;
+                      pve-access-control = patchedPveAccessControl;
+                      pve-cluster = patchedPveCluster;
+                      pve-network = patchedPveNetwork;
+                      pve-firewall = patchedPveFirewall;
+                      pve-storage = patchedPveStorage;
+                      pve-qemu-server = patchedPveQemuServer;
+                      pve-ha-manager = patchedPveHaManager;
                       pve-manager = patchedPveManager;
                       proxmox-ve = prev.proxmox-ve.override {
+                        pve-access-control = patchedPveAccessControl;
+                        pve-cluster = patchedPveCluster;
+                        pve-container = patchedPveContainer;
+                        pve-firewall = patchedPveFirewall;
+                        pve-ha-manager = patchedPveHaManager;
                         pve-manager = patchedPveManager;
+                        pve-qemu-server = patchedPveQemuServer;
+                        pve-storage = patchedPveStorage;
                       };
                     }
                   )
