@@ -511,13 +511,29 @@ rec {
                         pve-network = patchedPveNetwork;
                         pve-rs = patchedPveRs;
                       };
-                      patchedPveStorage = prev.pve-storage.override {
-                        perl540 = patchedPerl540;
-                        posixstrptime = patchedPosixstrptime;
-                        pve-cluster = patchedPveCluster;
-                        pve-rados2 = patchedPveRados2;
-                        pve-qemu = patchedPveQemu;
-                      };
+                      patchedPveStorage =
+                        (prev.pve-storage.override {
+                          perl540 = patchedPerl540;
+                          posixstrptime = patchedPosixstrptime;
+                          pve-cluster = patchedPveCluster;
+                          pve-rados2 = patchedPveRados2;
+                          pve-qemu = patchedPveQemu;
+                        }).overrideAttrs
+                          (old: {
+                            # Proxmox tooling sometimes generates /usr/nix/store/* paths
+                            # for helper commands (e.g. vgesm), which are invalid on NixOS.
+                            postFixup = (old.postFixup or "") + ''
+                              find $out -type f | xargs sed -i \
+                                -e "s|/usr/nix/store/|/nix/store/|g" \
+                                -e "s|/usr/sbin/vgesm|$out/bin/pvesm|g" \
+                                -e "s|${prev.lvm2.bin}/bin/vgesm|$out/bin/pvesm|g"
+                              # TODO(upstream): proxmox-nixos pve-storage rewrite rules can mutate
+                              # pvesm -> vgesm via the /sbin/vg substitution. Keep this safeguard
+                              # until upstream fixes their sed replacement ordering/patterns.
+                              find $out -type f | xargs sed -E -i \
+                                -e "s|/nix/store/[^/]*-lvm2-[^/]*-bin/bin/vgesm|$out/bin/pvesm|g"
+                            '';
+                          });
                       patchedPveQemuServer = prev.pve-qemu-server.override {
                         perl540 = patchedPerl540;
                         findbin = patchedFindbin;
