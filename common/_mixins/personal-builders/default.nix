@@ -22,13 +22,13 @@ in
         publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICHqTUyXOeL1O4JPIDxf8EzUzgKLmkW4C2g9EezZMivL";
       };
       "prox-builder1vm" = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIe+cVdgGEOmj1UEN0knbfIqamE026a4s2DCynQ73pvf";
+        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIADgC19iVlCSjvzOZGCw0rwnPLGLFcSKzFDqqyMc5bhQ";
       };
       "prox-builder2vm" = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIABPgwULuju7C4KgCD1WLNJo/81FnBCdryVyWkzFzly7";
+        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILA7m9aXyQUMY+tMCpo6bDoS/Ei+FWxleBq5ytIIvSTC";
       };
       "prox-builder3vm" = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILgwtY+6kcer7n6M0kwQF8wMoYKD6jCYYH2MmpqmaTLc";
+        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICG1HuHAS0FyJORcsaOYvV2LlLfkT0f608r6JhUUbkvf";
       };
     };
     extraConfig =
