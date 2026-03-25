@@ -60,6 +60,41 @@ Disk-to-Bay layout with identifying info can be found on Google Drive under
 - NFSv4 is enabled; NFSv3 is disabled.
 - Firewall opens TCP/UDP 2049; `rpcbind` is forced off.
 
+### Jellyfin write access for mixed-owner media trees
+
+When download clients on other hosts create files with different owners/groups,
+Jellyfin metadata jobs (trickplay/previews) can fail to write under
+`/volume2/Media/library`.
+
+Apply this one-time ACL repair on `beast` (recommended, directory-only):
+
+```bash
+sudo find /volume2/Media/library -xdev -type d \
+  -exec setfacl -m u:jellyfin:rwx -m d:u:jellyfin:rwX {} +
+```
+
+Optional heavier pass (touches every file too):
+
+```bash
+sudo setfacl -R -m u:jellyfin:rwX /volume2/Media/library
+```
+
+Validation:
+
+```bash
+getfacl /volume2/Media/library | sed -n '1,20p'
+getfacl /volume2/Media/library/<path-to-sample-file> | sed -n '1,20p'
+```
+
+Expected:
+
+- Directories include both `user:jellyfin:rwx` and
+  `default:user:jellyfin:rwX` (inheritance).
+- New files created under those directories inherit `user:jellyfin:rw-`.
+
+This keeps existing owners/groups intact and avoids broad `chmod 777`. Re-run
+only if some later job strips ACLs.
+
 ## Maintenance and monitoring
 
 - Snapper timeline snapshots for `/volume2` (daily/weekly/monthly/yearly).
