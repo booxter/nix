@@ -81,6 +81,20 @@ jobs:
             });
             core.info(`Changed files (${result.paths.length}): ${result.paths.join(", ")}`);
             core.info(`Selection files (${result.selectionPaths.length}): ${result.selectionPaths.join(", ")}`);
+            const isHostSpecificNixosPath = (filePath) => {
+              const parts = filePath.split("/");
+              return parts.length >= 3 && parts[0] === "nixos" && !parts[1].startsWith("_");
+            };
+            const hasMappedPath = result.selectionPaths.some((filePath) =>
+              machinePathMap.some((entry) => filePath.startsWith(entry.prefix))
+            );
+            const onlyUnmappedHostSpecificNixosPaths =
+              !hasMappedPath &&
+              result.selectionPaths.length > 0 &&
+              result.selectionPaths.every((filePath) =>
+                !machinePathMap.some((entry) => filePath.startsWith(entry.prefix)) &&
+                isHostSpecificNixosPath(filePath)
+              );
             if (result.docsOnly) {
               core.info("Docs-only pull request detected, skipping NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
@@ -89,6 +103,12 @@ jobs:
             }
             if (result.ignoredOnly) {
               core.info("Only selection-neutral files changed, skipping NixOS tests.");
+              core.setOutput("matrix", JSON.stringify({ include: [] }));
+              core.setOutput("has_tests", "false");
+              return;
+            }
+            if (onlyUnmappedHostSpecificNixosPaths) {
+              core.info("Only non-cache host-specific NixOS paths changed, skipping cache NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
               core.setOutput("has_tests", "false");
               return;
