@@ -226,7 +226,7 @@
                 proxNode = "prx${idx'}-lab";
                 stateVersion = "25.11";
                 memorySize = 64;
-                diskSize = 300;
+                diskSize = 150;
                 cores = 24;
                 withHome = false;
               }
