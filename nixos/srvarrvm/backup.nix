@@ -78,7 +78,7 @@ in
       repository = "rclone:b2:ihar-restic-prod/hosts/srvarr";
       rcloneConfigFile = config.sops.templates."restic-srvarr-cloud-rclone.conf".path;
       rcloneOptions = {
-        bwlimit = "1M";
+        bwlimit = "500k";
       };
       paths = backupPaths;
       exclude = backupExclude;
