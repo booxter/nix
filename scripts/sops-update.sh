@@ -7,7 +7,8 @@ Usage:
   scripts/sops-update.sh [HOST]
   scripts/sops-update.sh --help
 
-Update secrets/HOST.yaml from template defaults in secrets/_template.yaml.
+Update secrets/HOST.yaml from template defaults in secrets/_template.yaml and,
+if present, secrets/_templates/HOST.yaml.
 
 If HOST is omitted, the current short hostname is used.
 Template keys are added only if missing; existing values win.
@@ -56,6 +57,7 @@ main() {
   local repo_root
   repo_root="$(resolve_repo_root)"
   template="${repo_root}/secrets/_template.yaml"
+  host_template="${repo_root}/secrets/_templates/${host}.yaml"
   secret="${repo_root}/secrets/${host}.yaml"
 
   if [[ ! -f "$template" ]]; then
@@ -76,10 +78,14 @@ main() {
 
   sops --decrypt "$secret" > "$tmp"
   yq -s '.[0] * .[1]' "$template" "$tmp" > "$merged"
+  if [[ -f "$host_template" ]]; then
+    mv "$merged" "$tmp"
+    yq -s '.[0] * .[1]' "$host_template" "$tmp" > "$merged"
+  fi
   sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$merged" > "$encrypted"
   mv "$encrypted" "$secret"
 
-  echo "Updated secret from template: $secret"
+  echo "Updated secret from templates: $secret"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

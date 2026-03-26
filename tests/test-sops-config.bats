@@ -101,6 +101,62 @@ EOF
   ! grep -q 'REPLACE_ME' "$workdir/secrets/beast.yaml"
 }
 
+@test "sops-update also merges missing keys from host template" {
+  workdir="$BATS_TMPDIR/sops-merge-host-template"
+  mkdir -p "$workdir/secrets/_templates"
+  cat > "$workdir/secrets/_template.yaml" <<'EOF'
+common:
+  shared: "TEMPLATE"
+EOF
+  cat > "$workdir/secrets/_templates/beast.yaml" <<'EOF'
+jellyfin:
+  apiKey: "REPLACE_ME"
+EOF
+  cat > "$workdir/secrets/beast.yaml" <<'EOF'
+common:
+  shared: "SECRET"
+sops:
+  dummy: true
+EOF
+  cd "$workdir"
+  git init -q
+
+  sops() {
+    if [[ "$1" == "--decrypt" ]]; then
+      cat "$2"
+      return 0
+    fi
+    if [[ "$1" == "--encrypt" ]]; then
+      local source_file="${@: -1}"
+      cat "$source_file"
+      return 0
+    fi
+    return 1
+  }
+
+  yq() {
+    if [[ "$1" == "-s" ]]; then
+      local file_a="$3"
+      local file_b="$4"
+      if [[ "$file_a" == *"/_template.yaml" ]]; then
+        printf '%s\n' 'common:' '  shared: "SECRET"'
+        return 0
+      fi
+      if [[ "$file_a" == *"/_templates/beast.yaml" ]]; then
+        printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
+        return 0
+      fi
+    fi
+    return 1
+  }
+
+  source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
+  run main beast
+  [ "$status" -eq 0 ]
+  grep -q 'shared: "SECRET"' "$workdir/secrets/beast.yaml"
+  grep -q 'apiKey: "REPLACE_ME"' "$workdir/secrets/beast.yaml"
+}
+
 @test "fails when secrets exist but .sops.yaml missing" {
   workdir="$BATS_TMPDIR/sops-missing"
   mkdir -p "$workdir/secrets"
