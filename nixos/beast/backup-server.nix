@@ -32,6 +32,8 @@ let
   mkBackupUser = name: "restic-${name}";
   mkBackupRepo = name: "${backupRoot}/hosts/${name}";
   mkCloudSecret = name: path: "backup/restic/${name}/cloud/${path}";
+  sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
+  sharedB2ApplicationKeySecret = "backup/restic/cloud/b2/applicationKey";
   mkCloudTemplate = name: "restic-${name}-cloud-rclone.conf";
   mkCloudOffloadScript =
     name:
@@ -122,38 +124,36 @@ let
 in
 {
   sops = {
-    secrets = builtins.listToAttrs (
-      lib.concatMap (name: [
-        {
-          name = mkCloudSecret name "localPassword";
-          value = {
-            group = cloudOffloadUser;
-            mode = "0440";
-          };
-        }
-        {
-          name = mkCloudSecret name "password";
-          value = {
-            group = cloudOffloadUser;
-            mode = "0440";
-          };
-        }
-        {
-          name = mkCloudSecret name "b2/applicationKeyId";
-          value = {
-            group = cloudOffloadUser;
-            mode = "0440";
-          };
-        }
-        {
-          name = mkCloudSecret name "b2/applicationKey";
-          value = {
-            group = cloudOffloadUser;
-            mode = "0440";
-          };
-        }
-      ]) (builtins.attrNames backupClients)
-    );
+    secrets =
+      (builtins.listToAttrs (
+        lib.concatMap (name: [
+          {
+            name = mkCloudSecret name "localPassword";
+            value = {
+              group = cloudOffloadUser;
+              mode = "0440";
+            };
+          }
+          {
+            name = mkCloudSecret name "password";
+            value = {
+              group = cloudOffloadUser;
+              mode = "0440";
+            };
+          }
+        ]) (builtins.attrNames backupClients)
+      ))
+      // {
+        # Shared cloud backend credentials; repo passwords remain per-host.
+        ${sharedB2ApplicationKeyIdSecret} = {
+          group = cloudOffloadUser;
+          mode = "0440";
+        };
+        ${sharedB2ApplicationKeySecret} = {
+          group = cloudOffloadUser;
+          mode = "0440";
+        };
+      };
 
     templates = builtins.listToAttrs (
       map (name: {
@@ -166,8 +166,8 @@ in
             [b2]
             type = s3
             provider = Other
-            access_key_id = ${config.sops.placeholder.${mkCloudSecret name "b2/applicationKeyId"}}
-            secret_access_key = ${config.sops.placeholder.${mkCloudSecret name "b2/applicationKey"}}
+            access_key_id = ${config.sops.placeholder.${sharedB2ApplicationKeyIdSecret}}
+            secret_access_key = ${config.sops.placeholder.${sharedB2ApplicationKeySecret}}
             endpoint = s3.us-east-005.backblazeb2.com
             no_check_bucket = true
           '';

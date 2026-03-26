@@ -82,7 +82,7 @@ Each source host keeps:
 - the corresponding public key in config for each backup client
 - the local repository password for each client's offload job
 - the cloud repository password for each client's offload job
-- the Backblaze B2 credentials for each client's offload job
+- the shared Backblaze B2 credentials for cloud offload
 
 ## Scheduling
 
