@@ -325,6 +325,15 @@
           sshPort = 10005;
           withHome = false;
         }
+        // VM {
+          name = "fana";
+          platform = "x86_64-linux";
+          cores = 8;
+          memorySize = 16;
+          diskSize = 300;
+          sshPort = 10006;
+          withHome = false;
+        }
         // toBuilder 1
         // toBuilder 2
         // toBuilder 3;

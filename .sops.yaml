@@ -50,6 +50,10 @@ creation_rules:
       - age:
           - age1vk0tas94m0gmfnvln3j6pcf9seasl9wuwafkjka7h8u0q84tuaqsh2dmxs
           - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
+  - path_regex: secrets/prox-fanavm\.yaml$
+    key_groups:
+      - age:
+          - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
   - path_regex: secrets/beast\.yaml$
     key_groups:
       - age:

@@ -124,7 +124,6 @@ in
   # Run DDNS updates from this host (instead of the router).
   sops = {
     defaultSopsFile = ../../secrets/beast.yaml;
-    age.keyFile = "/var/lib/sops-nix/key.txt";
     useSystemdActivation = true;
     secrets.ddnsDynuPassword = {
       key = "ddns/dynu/password";
