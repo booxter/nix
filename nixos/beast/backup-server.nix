@@ -7,7 +7,7 @@
 let
   backupRoot = "/volume2/backups/restic-prod";
   cloudOffloadUser = "restic-cloud";
-  cloudBackupRate = "500kbit";
+  cloudBackupRate = "4mbit";
   cloudBackupCeil = "10gbit";
   # Add future backup sources here. Each client gets a dedicated SSH-only user,
   # its own repository path, and its own public key in config.

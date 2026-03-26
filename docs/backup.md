@@ -311,7 +311,7 @@ To add another host later:
 ## Notes
 
 - The first backup run is full. Later runs are incremental.
-- Cloud offload runs from `beast` and is traffic-shaped there to `500kbit`.
+- Cloud offload runs from `beast` and is traffic-shaped there to `4mbit`.
 - `Ctrl-C` during `systemctl start ...` only detaches the terminal from
   waiting on the service; it does not stop the backup job.
 - The restic repository password is required to read or restore backups.
