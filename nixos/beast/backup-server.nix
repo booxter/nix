@@ -37,16 +37,14 @@ in
   );
 
   services.openssh.extraConfig = lib.concatStringsSep "\n" (
-    map (
-      name: ''
-        Match User ${mkBackupUser name}
-          ForceCommand internal-sftp
-          PasswordAuthentication no
-          PermitTTY no
-          X11Forwarding no
-          AllowTcpForwarding no
-      ''
-    ) (builtins.attrNames backupClients)
+    map (name: ''
+      Match User ${mkBackupUser name}
+        ForceCommand internal-sftp
+        PasswordAuthentication no
+        PermitTTY no
+        X11Forwarding no
+        AllowTcpForwarding no
+    '') (builtins.attrNames backupClients)
   );
 
   systemd.services = builtins.listToAttrs (

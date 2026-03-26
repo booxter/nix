@@ -100,13 +100,17 @@ auto-upgrade schedule definitions.
 Run the local backup for a host:
 
 ```sh
-ssh <host>.local "sudo systemctl start restic-backups-beast.service && sudo systemctl status restic-backups-beast.service --no-pager -n 80"
+ssh <host>.local \
+  'sudo systemctl start restic-backups-beast.service && \
+   sudo systemctl status restic-backups-beast.service --no-pager -n 80'
 ```
 
 Run the cloud backup for a host:
 
 ```sh
-ssh <host>.local "sudo systemctl start restic-backups-cloud.service && sudo systemctl status restic-backups-cloud.service --no-pager -n 80"
+ssh <host>.local \
+  'sudo systemctl start restic-backups-cloud.service && \
+   sudo systemctl status restic-backups-cloud.service --no-pager -n 80'
 ```
 
 Watch logs:
@@ -125,8 +129,12 @@ ssh <host>.local 'systemctl list-timers --all | rg restic'
 ### Example: `srvarr`
 
 ```sh
-ssh srvarr.local 'sudo systemctl start restic-backups-beast.service && sudo systemctl status restic-backups-beast.service --no-pager -n 80'
-ssh srvarr.local 'sudo systemctl start restic-backups-cloud.service && sudo systemctl status restic-backups-cloud.service --no-pager -n 80'
+ssh srvarr.local \
+  'sudo systemctl start restic-backups-beast.service && \
+   sudo systemctl status restic-backups-beast.service --no-pager -n 80'
+ssh srvarr.local \
+  'sudo systemctl start restic-backups-cloud.service && \
+   sudo systemctl status restic-backups-cloud.service --no-pager -n 80'
 ```
 
 ## Inspect Snapshots
@@ -182,7 +190,7 @@ ssh srvarr.local "sudo sh -c '
 Restore into a staging directory first. Do not restore directly into `/` until
 the snapshot contents are verified.
 
-### Generic Pattern
+### Generic Restore Pattern
 
 Local restore:
 
@@ -205,7 +213,7 @@ ssh <host>.local "sudo sh -c '
 '"
 ```
 
-### Example: `srvarr`
+### Restore Example: `srvarr`
 
 Local:
 
@@ -269,9 +277,13 @@ For a real restore:
 Example stop/start sequence for `srvarr`:
 
 ```sh
-ssh srvarr.local 'sudo systemctl stop radarr sonarr lidarr readarr readarr-audiobook bazarr prowlarr sabnzbd transmission jellyseerr audiobookshelf'
+ssh srvarr.local \
+  'sudo systemctl stop radarr sonarr lidarr readarr readarr-audiobook \
+   bazarr prowlarr sabnzbd transmission jellyseerr audiobookshelf'
 ssh srvarr.local 'sudo rsync -a /restore-test/data/.state/nixarr/ /data/.state/nixarr/'
-ssh srvarr.local 'sudo systemctl start radarr sonarr lidarr readarr readarr-audiobook bazarr prowlarr sabnzbd transmission jellyseerr audiobookshelf'
+ssh srvarr.local \
+  'sudo systemctl start radarr sonarr lidarr readarr readarr-audiobook \
+   bazarr prowlarr sabnzbd transmission jellyseerr audiobookshelf'
 ```
 
 ## Adoption Pattern for New Hosts
