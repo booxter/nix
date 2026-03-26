@@ -259,13 +259,13 @@ in
               RemainAfterExit = true;
               ExecStart = pkgs.writeShellScript "restic-${name}-backup-dir" ''
                 set -eu
-                # Parent directories must be traversable by backup users; keep
-                # per-client repository directories private instead.
-                install -d -m 0755 -o root -g root "${backupRoot}"
-                install -d -m 0755 -o root -g root "${backupRoot}/hosts"
-                install -d -m 0750 -o ${backupUser} -g ${backupUser} "${backupRepo}"
-                ${pkgs.acl}/bin/setfacl -R -m u:${cloudOffloadUser}:rX "${backupRepo}"
-                ${pkgs.findutils}/bin/find "${backupRepo}" -type d -exec ${pkgs.acl}/bin/setfacl -m d:u:${cloudOffloadUser}:rX {} +
+                  # Parent directories must be traversable by backup users; keep
+                  # per-client repository directories private instead.
+                  install -d -m 0755 -o root -g root "${backupRoot}"
+                  install -d -m 0755 -o root -g root "${backupRoot}/hosts"
+                  install -d -m 0750 -o ${backupUser} -g ${backupUser} "${backupRepo}"
+                  ${pkgs.acl}/bin/setfacl -R -m u:${cloudOffloadUser}:rwX "${backupRepo}"
+                  ${pkgs.findutils}/bin/find "${backupRepo}" -type d -exec ${pkgs.acl}/bin/setfacl -m d:u:${cloudOffloadUser}:rwX {} +
               '';
             };
           };
@@ -294,6 +294,8 @@ in
               Type = "oneshot";
               User = cloudOffloadUser;
               Group = cloudOffloadUser;
+              StateDirectory = "restic-cloud";
+              Environment = "RESTIC_CACHE_DIR=/var/lib/restic-cloud/cache";
               ExecStart = mkCloudOffloadScript name;
             };
           };
