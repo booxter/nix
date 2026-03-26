@@ -80,9 +80,10 @@ in
   ];
 
   # Keep cachevm upgrades on a separate schedule so they don't clash with
-  # machines that use this cache for their own auto-updates.
-  # Run inside the global reboot window (01:00-05:00).
-  system.autoUpgrade.dates = lib.mkForce "Sun 01:00";
+  # machines that use this cache for their own auto-updates, but still center
+  # them in the reboot window like the rest of the fleet.
+  system.autoUpgrade.dates = lib.mkForce "Sun 03:30";
+  system.autoUpgrade.randomizedDelaySec = lib.mkForce "15min";
 
   systemd.services.atticd.unitConfig.RequiresMountsFor = "/cache";
 }

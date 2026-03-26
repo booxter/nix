@@ -50,9 +50,9 @@ in
       exclude = backupExclude;
       pruneOpts = localPruneOpts;
       timerConfig = {
-        # Keep backups outside the 01:00-05:00 reboot window used by auto-upgrades.
-        OnCalendar = "06:15";
-        RandomizedDelaySec = "30m";
+        # Run after the 03:30±15m upgrade/reboot work has settled.
+        OnCalendar = "04:30";
+        RandomizedDelaySec = "15m";
       };
     };
   };
@@ -112,7 +112,7 @@ in
   systemd.timers.jellyseerr-backup = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnCalendar = "05:45";
+      OnCalendar = "04:15";
       RandomizedDelaySec = "0";
     };
   };

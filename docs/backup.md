@@ -90,8 +90,34 @@ Backups should be scheduled outside the NixOS auto-upgrade reboot window.
 
 In the current setup:
 
-- auto-upgrades run in the `01:00-05:00` reboot window
-- backups are scheduled after `05:00`
+- auto-upgrades are scheduled at `03:30` with up to `15m` random delay
+- local application-consistent prep jobs run around `04:15`
+- local host-to-`beast` backups run around `04:30` with up to `15m` random delay
+- cloud offload from `beast` runs around `05:30` with up to `30m` random delay
+
+### Backup Timeline
+
+The intended order is:
+
+1. Auto-upgrades start first, inside the reboot window.
+2. Hosts reboot and settle back into service.
+3. Application-specific prep jobs create consistent backup artifacts locally.
+4. Hosts push their local restic backups to `beast`.
+5. `beast` offloads those local repositories to cloud storage.
+
+This sequencing is intentional:
+
+- It avoids backing up while a host may still be shutting down or rebooting.
+- It gives application-specific prep jobs a chance to produce cleaner backup
+  inputs before restic runs.
+- It keeps cloud offload behind the local `host -> beast` step so `beast`
+  copies the newest local snapshots instead of racing with them.
+- It reduces lock contention on shared local repositories between client
+  backups and `beast`-side cloud offload jobs.
+
+When adding a new host or a new application-specific backup job, keep it in
+this same order: reboot window first, local prep second, local restic backup
+third, cloud offload last.
 
 This separation is documented both in the backup modules and in the
 auto-upgrade schedule definitions.
