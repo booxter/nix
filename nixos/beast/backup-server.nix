@@ -64,6 +64,7 @@ let
       fi
 
       ${pkgs.restic}/bin/restic \
+        -o 'rclone.args=serve restic --stdio --b2-hard-delete --transfers 1 --checkers 1 --tpslimit 2 --tpslimit-burst 1 --low-level-retries 20' \
         -r "$dst_repo" \
         --password-file "$dst_password_file" \
         copy \
