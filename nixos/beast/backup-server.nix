@@ -274,6 +274,8 @@ in
           name = "restic-${name}-cloud-offload";
           value = {
             description = "Offload ${name} restic backup repository to the cloud";
+            restartIfChanged = false;
+            stopIfChanged = false;
             wants = [
               "network-online.target"
               "restic-cloud-traffic-shaping.service"
