@@ -188,7 +188,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${pkgs.iproute2}/bin/ip netns exec wg ${pkgs.iproute2}/bin/tc qdisc replace dev wg0 root tbf rate ${wgUploadRate} burst 64kbit latency 50ms";
+      ExecStart = "${pkgs.iproute2}/bin/ip netns exec wg ${pkgs.iproute2}/bin/tc qdisc replace dev wg0 root cake bandwidth ${wgUploadRate} besteffort";
       ExecStop = "-${pkgs.iproute2}/bin/ip netns exec wg ${pkgs.iproute2}/bin/tc qdisc del dev wg0 root";
     };
   };
