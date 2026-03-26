@@ -1,7 +1,14 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   stateRoot = "/data/.state/nixarr";
   backupPaths = [ stateRoot ];
+  jellyseerrConfigDir = "${stateRoot}/jellyseerr";
+  jellyseerrBackupDir = "${stateRoot}/jellyseerr-backup/latest";
   backupExclude = [
     "${stateRoot}/*/logs"
     "${stateRoot}/*/logs/**"
@@ -12,11 +19,6 @@ let
     "--keep-daily 7"
     "--keep-weekly 8"
     "--keep-monthly 6"
-  ];
-  cloudPruneOpts = [
-    "--keep-daily 14"
-    "--keep-weekly 8"
-    "--keep-monthly 12"
   ];
   localSshKey = config.sops.secrets."backup/restic/local/ssh/privateKey".path;
 in
@@ -29,24 +31,6 @@ in
         group = "root";
         mode = "0400";
       };
-      "backup/restic/cloud/password" = { };
-      "backup/restic/cloud/b2/applicationKeyId" = { };
-      "backup/restic/cloud/b2/applicationKey" = { };
-    };
-
-    templates."restic-srvarr-cloud-rclone.conf" = {
-      owner = "root";
-      group = "root";
-      mode = "0400";
-      content = ''
-        [b2]
-        type = s3
-        provider = Other
-        access_key_id = ${config.sops.placeholder."backup/restic/cloud/b2/applicationKeyId"}
-        secret_access_key = ${config.sops.placeholder."backup/restic/cloud/b2/applicationKey"}
-        endpoint = s3.us-east-005.backblazeb2.com
-        no_check_bucket = true
-      '';
     };
   };
 
@@ -66,28 +50,75 @@ in
       exclude = backupExclude;
       pruneOpts = localPruneOpts;
       timerConfig = {
-        # Keep backups outside the 01:00-05:00 reboot window used by auto-upgrades.
-        OnCalendar = "06:15";
-        RandomizedDelaySec = "30m";
+        # Run after the 03:30±15m upgrade/reboot work has settled.
+        OnCalendar = "04:30";
+        RandomizedDelaySec = "15m";
       };
     };
+  };
 
-    cloud = {
-      initialize = true;
-      passwordFile = config.sops.secrets."backup/restic/cloud/password".path;
-      repository = "rclone:b2:ihar-restic-prod/hosts/srvarr";
-      rcloneConfigFile = config.sops.templates."restic-srvarr-cloud-rclone.conf".path;
-      rcloneOptions = {
-        bwlimit = "500k";
+  systemd.services.jellyseerr-backup = {
+    description = "Create a consistent Jellyseerr SQLite backup artifact";
+    before = [ "restic-backups-beast.service" ];
+    serviceConfig =
+      let
+        jellyseerrBackupScript = pkgs.writeShellApplication {
+          name = "jellyseerr-backup";
+          runtimeInputs = [
+            pkgs.coreutils
+            pkgs.sqlite
+          ];
+          text = ''
+            set -euo pipefail
+
+            src_dir="${jellyseerrConfigDir}"
+            dst_dir="${jellyseerrBackupDir}"
+            backup_root="$(dirname "$dst_dir")"
+            install -d -m 0750 "$backup_root"
+            tmp_dir="$(mktemp -d "${stateRoot}/jellyseerr-backup/.tmp.XXXXXX")"
+            trap 'rm -rf "$tmp_dir"' EXIT
+
+            install -d -m 0750 "$dst_dir"
+
+            if [ ! -f "$src_dir/db/db.sqlite3" ]; then
+              echo "missing Jellyseerr database at $src_dir/db/db.sqlite3" >&2
+              exit 1
+            fi
+
+            sqlite3 "$src_dir/db/db.sqlite3" ".backup '$tmp_dir/db.sqlite3'"
+
+            if [ -f "$src_dir/settings.json" ]; then
+              install -m 0640 "$src_dir/settings.json" "$tmp_dir/settings.json"
+            fi
+
+            date --iso-8601=seconds > "$tmp_dir/created-at.txt"
+
+            mv "$tmp_dir/db.sqlite3" "$dst_dir/db.sqlite3"
+            if [ -f "$tmp_dir/settings.json" ]; then
+              mv "$tmp_dir/settings.json" "$dst_dir/settings.json"
+            fi
+            mv "$tmp_dir/created-at.txt" "$dst_dir/created-at.txt"
+          '';
+        };
+      in
+      {
+        Type = "oneshot";
+        User = "root";
+        Group = "root";
+        ExecStart = lib.getExe jellyseerrBackupScript;
       };
-      paths = backupPaths;
-      exclude = backupExclude;
-      pruneOpts = cloudPruneOpts;
-      timerConfig = {
-        # Stagger cloud backup after the local copy and outside the auto-upgrade window.
-        OnCalendar = "07:15";
-        RandomizedDelaySec = "45m";
-      };
+  };
+
+  systemd.timers.jellyseerr-backup = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "04:15";
+      RandomizedDelaySec = "0";
     };
+  };
+
+  systemd.services.restic-backups-beast = {
+    after = [ "jellyseerr-backup.service" ];
+    wants = [ "jellyseerr-backup.service" ];
   };
 }

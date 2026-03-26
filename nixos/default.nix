@@ -75,10 +75,10 @@ in
       "-L"
       "--show-trace"
     ];
-    # Keep this inside the 01:00-05:00 reboot window and leave backup jobs to
-    # run after 05:00 so they do not overlap normal upgrade/reboot activity.
-    dates = lib.mkDefault "Sat 03:00";
-    randomizedDelaySec = "45min";
+    # Keep upgrades centered in the reboot window, then leave room for hosts to
+    # come back before local backups and later cloud offload jobs begin.
+    dates = lib.mkDefault "Sat 03:30";
+    randomizedDelaySec = "15min";
     persistent = false;
     allowReboot = true;
     rebootWindow = {
