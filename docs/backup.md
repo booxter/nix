@@ -3,7 +3,7 @@
 This repo supports a two-tier restic backup model:
 
 - local backup to `beast` over SSH/SFTP
-- offsite backup to Backblaze B2 through `rclone`
+- cloud offload from `beast` to Backblaze B2 through `rclone`
 
 Each host should have:
 
@@ -12,6 +12,7 @@ Each host should have:
 - its own local restic password
 - its own cloud restic password
 - its own SSH keypair for the local backup target
+- its cloud offload configured on `beast`
 
 `srvarr` is the first concrete example of this pattern.
 
@@ -75,11 +76,13 @@ Each source host keeps:
 
 - `backup.restic.local.password`
 - `backup.restic.local.ssh.privateKey`
-- `backup.restic.cloud.password`
-- `backup.restic.cloud.b2.applicationKeyId`
-- `backup.restic.cloud.b2.applicationKey`
 
-`beast` keeps the corresponding public key in config for each backup client.
+`beast` keeps:
+
+- the corresponding public key in config for each backup client
+- the local repository password for each client's offload job
+- the cloud repository password for each client's offload job
+- the Backblaze B2 credentials for each client's offload job
 
 ## Scheduling
 
@@ -105,25 +108,25 @@ ssh <host>.local \
    sudo systemctl status restic-backups-beast.service --no-pager -n 80'
 ```
 
-Run the cloud backup for a host:
+Run the cloud offload for a host on `beast`:
 
 ```sh
-ssh <host>.local \
-  'sudo systemctl start restic-backups-cloud.service && \
-   sudo systemctl status restic-backups-cloud.service --no-pager -n 80'
+ssh beast.local \
+  'sudo systemctl start restic-<host>-cloud-offload.service && \
+   sudo systemctl status restic-<host>-cloud-offload.service --no-pager -n 80'
 ```
 
 Watch logs:
 
 ```sh
 ssh <host>.local 'sudo journalctl -fu restic-backups-beast.service'
-ssh <host>.local 'sudo journalctl -fu restic-backups-cloud.service'
+ssh beast.local 'sudo journalctl -fu restic-<host>-cloud-offload.service'
 ```
 
 List timers:
 
 ```sh
-ssh <host>.local 'systemctl list-timers --all | rg restic'
+ssh beast.local 'systemctl list-timers --all | rg restic-.*cloud-offload'
 ```
 
 ### Example: `srvarr`
@@ -132,9 +135,9 @@ ssh <host>.local 'systemctl list-timers --all | rg restic'
 ssh srvarr.local \
   'sudo systemctl start restic-backups-beast.service && \
    sudo systemctl status restic-backups-beast.service --no-pager -n 80'
-ssh srvarr.local \
-  'sudo systemctl start restic-backups-cloud.service && \
-   sudo systemctl status restic-backups-cloud.service --no-pager -n 80'
+ssh beast.local \
+  'sudo systemctl start restic-srvarr-cloud-offload.service && \
+   sudo systemctl status restic-srvarr-cloud-offload.service --no-pager -n 80'
 ```
 
 ## Inspect Snapshots
@@ -163,12 +166,12 @@ ssh srvarr.local "sudo sh -c '
 
 ### Cloud Repository
 
-Generic pattern:
+Generic pattern from `beast`:
 
 ```sh
-ssh <host>.local "sudo sh -c '
+ssh beast.local "sudo sh -c '
   export RESTIC_REPOSITORY=\"rclone:b2:ihar-restic-prod/hosts/<host>\"
-  export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/cloud/password\"
+  export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/<host>/cloud/password\"
   export RCLONE_CONFIG=\"/run/secrets/rendered/restic-<host>-cloud-rclone.conf\"
   restic snapshots
 '"
@@ -177,9 +180,9 @@ ssh <host>.local "sudo sh -c '
 Example for `srvarr`:
 
 ```sh
-ssh srvarr.local "sudo sh -c '
+ssh beast.local "sudo sh -c '
   export RESTIC_REPOSITORY=\"rclone:b2:ihar-restic-prod/hosts/srvarr\"
-  export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/cloud/password\"
+  export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/srvarr/cloud/password\"
   export RCLONE_CONFIG=\"/run/secrets/rendered/restic-srvarr-cloud-rclone.conf\"
   restic snapshots
 '"
@@ -202,12 +205,12 @@ ssh <host>.local "sudo sh -c '
 '"
 ```
 
-Cloud restore:
+Cloud restore from `beast`:
 
 ```sh
-ssh <host>.local "sudo sh -c '
+ssh beast.local "sudo sh -c '
   export RESTIC_REPOSITORY=\"rclone:b2:ihar-restic-prod/hosts/<host>\"
-  export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/cloud/password\"
+  export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/<host>/cloud/password\"
   export RCLONE_CONFIG=\"/run/secrets/rendered/restic-<host>-cloud-rclone.conf\"
   restic restore latest --target /restore-test
 '"
@@ -228,9 +231,9 @@ ssh srvarr.local "sudo sh -c '
 Cloud:
 
 ```sh
-ssh srvarr.local "sudo sh -c '
+ssh beast.local "sudo sh -c '
   export RESTIC_REPOSITORY=\"rclone:b2:ihar-restic-prod/hosts/srvarr\"
-  export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/cloud/password\"
+  export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/srvarr/cloud/password\"
   export RCLONE_CONFIG=\"/run/secrets/rendered/restic-srvarr-cloud-rclone.conf\"
   restic restore latest --target /restore-test
 '"
@@ -308,7 +311,7 @@ To add another host later:
 ## Notes
 
 - The first backup run is full. Later runs are incremental.
-- Cloud backup is bandwidth-limited through `rclone`.
+- Cloud offload runs from `beast` and is traffic-shaped there to `500kbit`.
 - `Ctrl-C` during `systemctl start ...` only detaches the terminal from
   waiting on the service; it does not stop the backup job.
 - The restic repository password is required to read or restore backups.
