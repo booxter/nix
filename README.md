@@ -68,6 +68,8 @@ nix run .#sops-update -- mair
 nix run .#sops-copy -- mair prx1-lab attic
 ```
 
+Backup and restore procedures are documented in [docs/backup.md](docs/backup.md).
+
 ## Home Manager
 
 ```sh
