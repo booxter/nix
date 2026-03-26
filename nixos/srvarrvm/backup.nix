@@ -45,6 +45,7 @@ in
         access_key_id = ${config.sops.placeholder."backup/restic/cloud/b2/applicationKeyId"}
         secret_access_key = ${config.sops.placeholder."backup/restic/cloud/b2/applicationKey"}
         endpoint = s3.us-east-005.backblazeb2.com
+        no_check_bucket = true
       '';
     };
   };
