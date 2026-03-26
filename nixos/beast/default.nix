@@ -31,6 +31,7 @@ in
   imports = [
     (import ../../disko { })
     ./backup-server.nix
+    ./jellyfin-backup.nix
     ./jellarr.nix
   ];
 
