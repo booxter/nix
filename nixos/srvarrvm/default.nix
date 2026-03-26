@@ -32,6 +32,7 @@ let
   };
   wgBridgeAddress = "192.168.50.5";
   wgNamespaceAddress = "192.168.50.1";
+  wgUploadRate = "8mbit";
   wgUnitDepsBase = {
     After = [ "wg.service" ];
     BindsTo = [ "wg.service" ];
@@ -178,6 +179,18 @@ in
   vpnNamespaces.wg = {
     bridgeAddress = wgBridgeAddress;
     namespaceAddress = wgNamespaceAddress;
+  };
+
+  # Apply upload shaping on WireGuard interface inside the VPN netns.
+  systemd.services.wg-qos-upload = {
+    wantedBy = [ "multi-user.target" ];
+    unitConfig = wgUnitDepsBase;
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.iproute2}/bin/ip netns exec wg ${pkgs.iproute2}/bin/tc qdisc replace dev wg0 root tbf rate ${wgUploadRate} burst 64kbit latency 50ms";
+      ExecStop = "-${pkgs.iproute2}/bin/ip netns exec wg ${pkgs.iproute2}/bin/tc qdisc del dev wg0 root";
+    };
   };
 
   systemd.services."update-dynamic-ip" = {
