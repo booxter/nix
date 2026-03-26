@@ -92,14 +92,11 @@ let
     case "''${1:-start}" in
       start)
         ${pkgs.nftables}/bin/nft delete table inet backup_cloud_shaping 2>/dev/null || true
-        cat <<EOF | ${pkgs.nftables}/bin/nft -f -
-        table inet backup_cloud_shaping {
-          chain output {
-            type route hook output priority mangle; policy accept;
-            meta skuid $uid meta mark set 0x1
-          }
-        }
-        EOF
+        ${pkgs.nftables}/bin/nft add table inet backup_cloud_shaping
+        ${pkgs.nftables}/bin/nft \
+          "add chain inet backup_cloud_shaping output { type route hook output priority mangle; policy accept; }"
+        ${pkgs.nftables}/bin/nft \
+          add rule inet backup_cloud_shaping output meta skuid "$uid" meta mark set 0x1
 
         ${pkgs.iproute2}/bin/tc qdisc del dev "$iface" root 2>/dev/null || true
         ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" root handle 1: htb default 20 r2q 1000
