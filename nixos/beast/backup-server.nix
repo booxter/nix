@@ -69,8 +69,10 @@ in
             RemainAfterExit = true;
             ExecStart = pkgs.writeShellScript "restic-${name}-backup-dir" ''
               set -eu
-              install -d -m 0750 -o root -g root "${backupRoot}"
-              install -d -m 0750 -o root -g root "${backupRoot}/hosts"
+              # Parent directories must be traversable by backup users; keep
+              # per-client repository directories private instead.
+              install -d -m 0755 -o root -g root "${backupRoot}"
+              install -d -m 0755 -o root -g root "${backupRoot}/hosts"
               install -d -m 0750 -o ${backupUser} -g ${backupUser} "${backupRepo}"
             '';
           };
