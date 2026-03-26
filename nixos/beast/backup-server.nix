@@ -17,9 +17,9 @@ let
       cloud = {
         repository = "rclone:b2:ihar-restic-prod/hosts/srvarr";
         pruneOpts = [
-          "--keep-daily 14"
-          "--keep-weekly 8"
-          "--keep-monthly 12"
+          "--keep-daily=14"
+          "--keep-weekly=8"
+          "--keep-monthly=12"
         ];
         timerConfig = {
           # Stagger cloud offload after the client-side local backup.
