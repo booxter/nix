@@ -69,6 +69,8 @@ in
       ngrep
       procps
       pstree
+      rclone
+      restic
       ripgrep
       sops
       speedtest-cli
