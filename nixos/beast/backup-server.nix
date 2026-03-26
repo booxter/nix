@@ -7,25 +7,14 @@
 let
   backupRoot = "/volume2/backups/restic-prod";
   # Add future backup sources here. Each client gets a dedicated SSH-only user,
-  # its own repository path, and its own public key secret on beast.
+  # its own repository path, and its own public key in config.
   backupClients = {
-    srvarr = { };
+    srvarr.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ5uWCS2lW2JVBHPltnWuYtB5866DUSJ9Ayhz4hgY1T2";
   };
   mkBackupUser = name: "restic-${name}";
   mkBackupRepo = name: "${backupRoot}/hosts/${name}";
 in
 {
-  sops.secrets = builtins.listToAttrs (
-    map (name: {
-      name = "backup/restic/clients/${name}/ssh/publicKey";
-      value = {
-        owner = "root";
-        group = "root";
-        mode = "0400";
-      };
-    }) (builtins.attrNames backupClients)
-  );
-
   users.users = builtins.listToAttrs (
     map (name: {
       name = mkBackupUser name;
@@ -35,7 +24,7 @@ in
         createHome = false;
         home = backupRoot;
         shell = pkgs.bash;
-        openssh.authorizedKeys.keyFiles = [ config.sops.secrets."backup/restic/clients/${name}/ssh/publicKey".path ];
+        openssh.authorizedKeys.keys = [ backupClients.${name}.publicKey ];
       };
     }) (builtins.attrNames backupClients)
   );
