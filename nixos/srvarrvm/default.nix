@@ -33,6 +33,8 @@ let
   wgBridgeAddress = "192.168.50.5";
   wgNamespaceAddress = "192.168.50.1";
   wgUploadRate = "8mbit";
+  wgOuterLinkRate = "10gbit";
+  wgEndpointPort = 1637;
   wgUnitDepsBase = {
     After = [ "wg.service" ];
     BindsTo = [ "wg.service" ];
@@ -182,16 +184,56 @@ in
     namespaceAddress = wgNamespaceAddress;
   };
 
-  # Apply upload shaping on WireGuard interface inside the VPN netns.
+  # Apply upload shaping on the outer interface for WireGuard transport traffic.
   systemd.services.wg-qos-upload = {
     wantedBy = [ "multi-user.target" ];
     unitConfig = wgUnitDepsBase;
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.iproute2}/bin/ip netns exec wg ${pkgs.iproute2}/bin/tc qdisc replace dev wg0 root cake bandwidth ${wgUploadRate} besteffort";
-      ExecStop = "-${pkgs.iproute2}/bin/ip netns exec wg ${pkgs.iproute2}/bin/tc qdisc del dev wg0 root";
-    };
+    serviceConfig =
+      let
+        wgQosScript = pkgs.writeShellApplication {
+          name = "wg-qos-upload";
+          runtimeInputs = [
+            pkgs.gawk
+            pkgs.iproute2
+          ];
+          text = ''
+            set -euo pipefail
+
+            iface="$(${pkgs.iproute2}/bin/ip -o route get 1.1.1.1 | awk '{for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit }}')"
+            if [ -z "$iface" ]; then
+              echo "failed to determine default egress interface" >&2
+              exit 1
+            fi
+
+            case "''${1:-start}" in
+              start)
+                ${pkgs.iproute2}/bin/tc qdisc del dev "$iface" root 2>/dev/null || true
+                ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" root handle 1: htb default 20 r2q 1000
+                ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1: classid 1:1 htb rate ${wgOuterLinkRate} ceil ${wgOuterLinkRate}
+                ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:10 htb rate ${wgUploadRate} ceil ${wgUploadRate}
+                ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:20 htb rate ${wgOuterLinkRate} ceil ${wgOuterLinkRate}
+                ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:10 handle 10: cake bandwidth ${wgUploadRate} besteffort wash
+                ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:20 handle 20: fq_codel
+                ${pkgs.iproute2}/bin/tc filter add dev "$iface" protocol ip parent 1: prio 10 flower ip_proto udp dst_port ${toString wgEndpointPort} classid 1:10
+                ${pkgs.iproute2}/bin/tc filter add dev "$iface" protocol ipv6 parent 1: prio 11 flower ip_proto udp dst_port ${toString wgEndpointPort} classid 1:10
+                ;;
+              stop)
+                ${pkgs.iproute2}/bin/tc qdisc del dev "$iface" root || true
+                ;;
+              *)
+                echo "usage: $0 [start|stop]" >&2
+                exit 2
+                ;;
+            esac
+          '';
+        };
+      in
+      {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = "${lib.getExe wgQosScript} start";
+        ExecStop = "${lib.getExe wgQosScript} stop";
+      };
   };
 
   systemd.services."update-dynamic-ip" = {
