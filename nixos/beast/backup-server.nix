@@ -240,71 +240,34 @@ in
     };
   }
   // builtins.listToAttrs (
-    lib.concatMap (
-      name:
-      let
-        backupUser = mkBackupUser name;
-        backupRepo = mkBackupRepo name;
-      in
-      [
-        {
-          name = "restic-${name}-backup-dir";
-          value = {
-            description = "Ensure ${name} backup repository directory exists";
-            wantedBy = [ "multi-user.target" ];
-            # Keep the local backup target available independently of Beast's Monday
-            # 03:00 auto-upgrade slot; clients run backups only after the reboot window.
-            unitConfig.RequiresMountsFor = backupRoot;
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = pkgs.writeShellScript "restic-${name}-backup-dir" ''
-                set -eu
-                  # Parent directories must be traversable by backup users; keep
-                  # per-client repository directories private instead.
-                  install -d -m 0755 -o root -g root "${backupRoot}"
-                  install -d -m 0755 -o root -g root "${backupRoot}/hosts"
-                  install -d -m 0750 -o ${backupUser} -g ${backupUser} "${backupRepo}"
-                  ${pkgs.acl}/bin/setfacl -R -m u:${cloudOffloadUser}:rwX "${backupRepo}"
-                  ${pkgs.findutils}/bin/find "${backupRepo}" -type d -exec ${pkgs.acl}/bin/setfacl -m d:u:${cloudOffloadUser}:rwX {} +
-              '';
-            };
-          };
-        }
-        {
-          name = "restic-${name}-cloud-offload";
-          value = {
-            description = "Offload ${name} restic backup repository to the cloud";
-            restartIfChanged = false;
-            stopIfChanged = false;
-            wants = [
-              "network-online.target"
-              "restic-cloud-traffic-shaping.service"
-              "sops-install-secrets.service"
-            ];
-            after = [
-              "network-online.target"
-              "restic-${name}-backup-dir.service"
-              "restic-cloud-traffic-shaping.service"
-              "sops-install-secrets.service"
-            ];
-            requires = [
-              "restic-${name}-backup-dir.service"
-              "restic-cloud-traffic-shaping.service"
-            ];
-            unitConfig.RequiresMountsFor = backupRoot;
-            serviceConfig = {
-              Type = "oneshot";
-              User = cloudOffloadUser;
-              Group = cloudOffloadUser;
-              StateDirectory = "restic-cloud";
-              Environment = "RESTIC_CACHE_DIR=/var/lib/restic-cloud/cache";
-              ExecStart = mkCloudOffloadScript name;
-            };
-          };
-        }
-      ]
-    ) (builtins.attrNames backupClients)
+    (map (name: {
+      name = "restic-${name}-cloud-offload";
+      value = {
+        description = "Offload ${name} restic backup repository to the cloud";
+        restartIfChanged = false;
+        stopIfChanged = false;
+        wants = [
+          "network-online.target"
+          "restic-cloud-traffic-shaping.service"
+          "sops-install-secrets.service"
+        ];
+        after = [
+          "network-online.target"
+          "restic-cloud-traffic-shaping.service"
+          "sops-install-secrets.service"
+        ];
+        requires = [ "restic-cloud-traffic-shaping.service" ];
+        unitConfig.RequiresMountsFor = backupRoot;
+        serviceConfig = {
+          Type = "oneshot";
+          User = cloudOffloadUser;
+          Group = cloudOffloadUser;
+          StateDirectory = "restic-cloud";
+          Environment = "RESTIC_CACHE_DIR=/var/lib/restic-cloud/cache";
+          ExecStart = mkCloudOffloadScript name;
+        };
+      };
+    }) (builtins.attrNames backupClients))
   );
 
   systemd.timers = builtins.listToAttrs (
