@@ -47,11 +47,21 @@ let
         exit 1
       fi
 
+      chgrp restic-cloud "$backup_dir"
+      chmod 0750 "$backup_dir"
+      chgrp restic-cloud "$created_path"
+      chmod 0640 "$created_path"
+
       mapfile -t archives < <(
         find "$backup_dir" -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\n' \
           | sort -nr \
           | awk '{ print $2 }'
       )
+
+      for archive in "''${archives[@]}"; do
+        chgrp restic-cloud "$archive"
+        chmod 0640 "$archive"
+      done
 
       if [ "''${#archives[@]}" -le "$keep" ]; then
         exit 0
@@ -96,6 +106,7 @@ in
 
   services.restic.backups.beast = {
     initialize = true;
+    user = "restic-cloud";
     passwordFile = config.sops.secrets.${localRepoPasswordSecret}.path;
     repository = localRepo;
     paths = [ backupDir ];
