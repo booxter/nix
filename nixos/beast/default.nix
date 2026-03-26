@@ -30,6 +30,7 @@ in
 {
   imports = [
     (import ../../disko { })
+    ./backup-server.nix
     ./jellarr.nix
   ];
 
@@ -40,7 +41,8 @@ in
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Host critical services; keep upgrades on Monday, separate from the
-  # fleet's default Saturday schedule.
+  # fleet's default Saturday schedule. Backups are scheduled after the
+  # 01:00-05:00 reboot window to avoid colliding with this maintenance slot.
   system.autoUpgrade.dates = "Mon 03:00";
 
   # Assemble the existing RAID6 array from the previous NAS.

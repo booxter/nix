@@ -47,6 +47,7 @@ in
 {
   imports = [
     inputs.nixarr.nixosModules.default
+    ./backup.nix
   ];
 
   # NFS mounts with media
