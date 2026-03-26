@@ -137,6 +137,12 @@ let
   '';
 in
 {
+  systemd.tmpfiles.rules = builtins.concatLists (
+    map (name: [
+      "d ${mkBackupRepo name} 0750 ${cloudOffloadUser} ${cloudOffloadUser} - -"
+    ]) (builtins.attrNames backupClients)
+  );
+
   sops = {
     secrets =
       (builtins.listToAttrs (
