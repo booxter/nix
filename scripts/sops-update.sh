@@ -7,7 +7,8 @@ Usage:
   scripts/sops-update.sh [HOST]
   scripts/sops-update.sh --help
 
-Update secrets/HOST.yaml from template defaults in secrets/_template.yaml.
+Update secrets/HOST.yaml from template defaults in secrets/_template.yaml and,
+if present, secrets/_templates/HOST.yaml.
 
 If HOST is omitted, the current short hostname is used.
 Template keys are added only if missing; existing values win.
@@ -56,6 +57,7 @@ main() {
   local repo_root
   repo_root="$(resolve_repo_root)"
   template="${repo_root}/secrets/_template.yaml"
+  host_template="${repo_root}/secrets/_templates/${host}.yaml"
   secret="${repo_root}/secrets/${host}.yaml"
 
   if [[ ! -f "$template" ]]; then
@@ -69,17 +71,31 @@ main() {
   fi
 
   tmp="$(mktemp)"
+  base="$(mktemp)"
   merged="$(mktemp)"
+  sorted="$(mktemp)"
   encrypted="$(mktemp)"
 
-  trap 'rm -f "$tmp" "$merged" "$encrypted"' EXIT
+  trap 'rm -f "$tmp" "$base" "$merged" "$sorted" "$encrypted"' EXIT
 
   sops --decrypt "$secret" > "$tmp"
-  yq -s '.[0] * .[1]' "$template" "$tmp" > "$merged"
-  sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$merged" > "$encrypted"
+  cp "$template" "$base"
+  if [[ -f "$host_template" ]]; then
+    yq -s '.[0] * .[1]' "$base" "$host_template" > "$merged"
+    mv "$merged" "$base"
+  fi
+  yq -s '.[0] * .[1]' "$base" "$tmp" > "$merged"
+  # shellcheck disable=SC2016
+  yq '
+    (.sops // null) as $sops
+    | del(.sops)
+    | sort_keys(..)
+    | if $sops == null then . else . + {"sops": $sops} end
+  ' "$merged" > "$sorted"
+  sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$sorted" > "$encrypted"
   mv "$encrypted" "$secret"
 
-  echo "Updated secret from template: $secret"
+  echo "Updated secret from templates: $secret"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

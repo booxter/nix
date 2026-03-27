@@ -103,6 +103,33 @@ only if some later job strips ACLs.
 - Useful tools installed: `btrfs-progs`, `mdadm`, `smartmontools`, `nvme-cli`,
   `hdparm`, `lm_sensors`.
 
+## Jellyfin backups
+
+`beast` can trigger Jellyfin's built-in backup API and then offload the
+generated ZIP archives from `/var/lib/jellyfin/data/backups` into the local
+restic repository at `/volume2/backups/restic-prod/hosts/beast`, which is then
+offloaded to Backblaze B2 by the existing `beast` cloud sync flow.
+
+Secrets required in `secrets/beast.yaml`:
+
+- `jellyfin.apiKey`
+- `backup.restic.beast.cloud.localPassword`
+- `backup.restic.beast.cloud.password`
+
+Relevant units:
+
+- `jellyfin-built-in-backup.service`
+- `restic-backups-beast.service`
+- `restic-beast-cloud-offload.service`
+
+Manual trigger:
+
+```bash
+sudo systemctl start jellyfin-built-in-backup.service
+sudo systemctl start restic-backups-beast.service
+sudo systemctl start restic-beast-cloud-offload.service
+```
+
 ## Notes
 
 - Disk layout is managed via the shared `../../disko` import.

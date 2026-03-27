@@ -12,6 +12,21 @@ let
   # Add future backup sources here. Each client gets a dedicated SSH-only user,
   # its own repository path, and its own public key in config.
   backupClients = {
+    beast = {
+      publicKey = null;
+      cloud = {
+        repository = "rclone:b2:ihar-restic-prod/hosts/beast";
+        pruneOpts = [
+          "--keep-daily=14"
+          "--keep-weekly=8"
+          "--keep-monthly=12"
+        ];
+        timerConfig = {
+          OnCalendar = "05:30";
+          RandomizedDelaySec = "30m";
+        };
+      };
+    };
     srvarr = {
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ5uWCS2lW2JVBHPltnWuYtB5866DUSJ9Ayhz4hgY1T2";
       cloud = {
@@ -32,6 +47,7 @@ let
   mkBackupUser = name: "restic-${name}";
   mkBackupRepo = name: "${backupRoot}/hosts/${name}";
   mkCloudSecret = name: path: "backup/restic/${name}/cloud/${path}";
+  sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
   sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
   sharedB2ApplicationKeySecret = "backup/restic/cloud/b2/applicationKey";
   mkCloudTemplate = name: "restic-${name}-cloud-rclone.conf";
@@ -121,6 +137,18 @@ let
   '';
 in
 {
+  systemd.tmpfiles.rules = builtins.concatLists (
+    map (
+      name:
+      let
+        owner = if name == "beast" then cloudOffloadUser else mkBackupUser name;
+      in
+      [
+        "d ${mkBackupRepo name} 0750 ${owner} ${owner} - -"
+      ]
+    ) (builtins.attrNames backupClients)
+  );
+
   sops = {
     secrets =
       (builtins.listToAttrs (
@@ -181,7 +209,7 @@ in
         value = {
           isSystemUser = true;
           group = cloudOffloadUser;
-          extraGroups = map mkBackupUser (builtins.attrNames backupClients);
+          extraGroups = map mkBackupUser (builtins.attrNames sshBackupClients);
           createHome = false;
           home = backupRoot;
           shell = pkgs.bash;
@@ -196,9 +224,9 @@ in
         createHome = false;
         home = backupRoot;
         shell = pkgs.bash;
-        openssh.authorizedKeys.keys = [ backupClients.${name}.publicKey ];
+        openssh.authorizedKeys.keys = [ sshBackupClients.${name}.publicKey ];
       };
-    }) (builtins.attrNames backupClients)
+    }) (builtins.attrNames sshBackupClients)
   );
 
   users.groups = builtins.listToAttrs (
@@ -211,7 +239,7 @@ in
     ++ map (name: {
       name = mkBackupUser name;
       value = { };
-    }) (builtins.attrNames backupClients)
+    }) (builtins.attrNames sshBackupClients)
   );
 
   services.openssh.extraConfig = lib.concatStringsSep "\n" (
@@ -222,7 +250,7 @@ in
         PermitTTY no
         X11Forwarding no
         AllowTcpForwarding no
-    '') (builtins.attrNames backupClients)
+    '') (builtins.attrNames sshBackupClients)
   );
 
   systemd.services = {
