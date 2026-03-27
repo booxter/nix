@@ -138,9 +138,15 @@ let
 in
 {
   systemd.tmpfiles.rules = builtins.concatLists (
-    map (name: [
-      "d ${mkBackupRepo name} 0750 ${cloudOffloadUser} ${cloudOffloadUser} - -"
-    ]) (builtins.attrNames backupClients)
+    map (
+      name:
+      let
+        owner = if name == "beast" then cloudOffloadUser else mkBackupUser name;
+      in
+      [
+        "d ${mkBackupRepo name} 0750 ${owner} ${owner} - -"
+      ]
+    ) (builtins.attrNames backupClients)
   );
 
   sops = {
