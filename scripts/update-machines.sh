@@ -22,6 +22,8 @@ SELECT=false
 START_TS="$(date +%s)"
 MIN_DISK_GIB=20
 MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$MIN_DISK_GIB")"
+REMOTE_MIN_DISK_GIB=30
+REMOTE_MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$REMOTE_MIN_DISK_GIB")"
 GC_HEADROOM_GIB=5
 GC_HEADROOM_KB="$(calc_min_disk_kb_from_gib "$GC_HEADROOM_GIB")"
 SSH_HOST_OPTS=()
@@ -470,7 +472,7 @@ REMOTE
   if is_local_host "$host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
-    if "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB"; then
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -479,7 +481,7 @@ REMOTE
   fi
   # shellcheck disable=SC2029
   printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")
