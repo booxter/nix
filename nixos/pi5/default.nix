@@ -11,6 +11,8 @@ in
     ./ups.nix
   ];
 
+  host.dnsName = "dhcp";
+
   networking = {
     interfaces.end0 = {
       ipv4.addresses = [

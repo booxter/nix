@@ -41,6 +41,11 @@ in
     default = false;
   };
 
+  options.host.dnsName = lib.mkOption {
+    type = lib.types.str;
+    default = hostname;
+  };
+
   config = {
     networking.hostName = hostname;
     sops.age.keyFile = "/var/lib/sops-nix/key.txt";

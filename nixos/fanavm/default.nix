@@ -12,7 +12,8 @@ let
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
   lokiRetention = "${toString retentionHours}h";
-  remoteNodeTargets = map (name: "${name}:9100") (
+  remoteNodeTargetHost = name: outputs.nixosConfigurations.${name}.config.host.dnsName;
+  remoteNodeTargets = map (name: "${remoteNodeTargetHost name}:9100") (
     builtins.filter (
       name:
       !(lib.hasPrefix "local-" name)
