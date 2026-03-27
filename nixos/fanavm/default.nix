@@ -24,6 +24,12 @@ in
     group = "grafana";
     mode = "0400";
   };
+  sops.secrets.grafanaAdminPassword = {
+    key = "grafana/admin_password";
+    owner = "grafana";
+    group = "grafana";
+    mode = "0400";
+  };
 
   # Grafana provides the UI for dashboards and exploring metrics and logs.
   services.grafana = {
@@ -34,7 +40,11 @@ in
         http_port = grafanaPort;
         domain = "${config.services.avahi.hostName}.local";
       };
-      security.secret_key = "$__file{${config.sops.secrets.grafanaSecretKey.path}}";
+      security = {
+        admin_user = "admin";
+        admin_password = "$__file{${config.sops.secrets.grafanaAdminPassword.path}}";
+        secret_key = "$__file{${config.sops.secrets.grafanaSecretKey.path}}";
+      };
       analytics = {
         reporting_enabled = false;
         check_for_updates = false;
