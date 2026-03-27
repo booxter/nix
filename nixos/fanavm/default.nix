@@ -1,7 +1,6 @@
 {
   config,
-  hostname,
-  pkgs,
+  lib,
   ...
 }:
 let
@@ -14,6 +13,10 @@ let
   lokiRetention = "${toString retentionHours}h";
 in
 {
+  imports = [
+    ../_mixins/observability-client
+  ];
+
   sops = {
     defaultSopsFile = ../../secrets/prox-fanavm.yaml;
   };
@@ -85,15 +88,6 @@ in
     listenAddress = "127.0.0.1";
     port = prometheusPort;
     retentionTime = prometheusRetention;
-    # Node exporter exposes host-level Linux metrics for Prometheus to scrape.
-    exporters.node = {
-      enable = true;
-      listenAddress = "127.0.0.1";
-      enabledCollectors = [
-        "processes"
-        "systemd"
-      ];
-    };
     scrapeConfigs = [
       {
         job_name = "prometheus";
@@ -109,6 +103,9 @@ in
           {
             targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
           }
+          {
+            targets = [ "srvarr.local:9100" ];
+          }
         ];
       }
     ];
@@ -120,7 +117,7 @@ in
     configuration = {
       auth_enabled = false;
       server = {
-        http_listen_address = "127.0.0.1";
+        http_listen_address = "0.0.0.0";
         http_listen_port = lokiPort;
       };
       common = {
@@ -161,46 +158,17 @@ in
     };
   };
 
-  # Alloy reads the local journal and ships those logs into Loki.
-  services.alloy = {
+  host.observability.client = {
     enable = true;
-    configPath = pkgs.writeText "config.alloy" ''
-      loki.write "local" {
-        endpoint {
-          url = "http://127.0.0.1:${toString lokiPort}/loki/api/v1/push"
-        }
-      }
-
-      loki.relabel "journal" {
-        forward_to = []
-
-        rule {
-          source_labels = ["__journal__hostname"]
-          target_label  = "node_hostname"
-        }
-
-        rule {
-          source_labels = ["__journal__systemd_unit"]
-          target_label  = "systemd_unit"
-        }
-
-        rule {
-          source_labels = ["__journal_priority_keyword"]
-          target_label  = "level"
-        }
-      }
-
-      loki.source.journal "read" {
-        forward_to    = [loki.write.local.receiver]
-        relabel_rules = loki.relabel.journal.rules
-        max_age       = "12h"
-        labels = {
-          job  = "systemd-journal",
-          host = "${hostname}",
-        }
-      }
-    '';
+    lokiWriteUrl = "http://127.0.0.1:${toString lokiPort}/loki/api/v1/push";
+    nodeExporter = {
+      listenAddress = "127.0.0.1";
+      openFirewall = lib.mkForce false;
+    };
   };
 
-  networking.firewall.allowedTCPPorts = [ grafanaPort ];
+  networking.firewall.allowedTCPPorts = [
+    grafanaPort
+    lokiPort
+  ];
 }

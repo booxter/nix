@@ -8,6 +8,7 @@
 }:
 let
   mediaPath = "/data/media";
+  lokiPushUrl = "http://fana.local:3100/loki/api/v1/push";
   # Resilient NFS client behavior:
   # - hard: block I/O until the server is back (avoid soft I/O errors).
   # - nofail/_netdev/network-online: don't fail boot when NAS is down.
@@ -49,8 +50,11 @@ in
 {
   imports = [
     inputs.nixarr.nixosModules.default
+    ../_mixins/observability-client
     ./backup.nix
   ];
+
+  sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
 
   # NFS mounts with media
   boot.supportedFilesystems = [ "nfs" ];
@@ -257,6 +261,11 @@ in
   systemd.services.audiobookshelf.serviceConfig.ExecStart =
     lib.mkForce "${config.nixarr.audiobookshelf.package}/bin/audiobookshelf --host 0.0.0.0 --port ${toString config.nixarr.audiobookshelf.port}";
   networking.firewall.allowedTCPPorts = [ config.nixarr.audiobookshelf.port ];
+
+  host.observability.client = {
+    enable = true;
+    lokiWriteUrl = lokiPushUrl;
+  };
 
   services.glance = {
     enable = true;
