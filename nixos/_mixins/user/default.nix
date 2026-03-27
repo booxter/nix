@@ -1,10 +1,11 @@
-{ username, ... }:
+{ pkgs, username, ... }:
 {
   security.loginDefs.settings = {
     LOGIN_TIMEOUT = 180; # 3 minutes until login timeout (default: 60)
   };
 
   users.mutableUsers = false;
+  users.defaultUserShell = pkgs.zsh;
   users.users.${username} = {
     extraGroups = [
       "wheel"

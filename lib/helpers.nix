@@ -188,16 +188,6 @@ rec {
             stateVersion
             ;
         })
-
-        (
-          { ... }:
-          let
-            pkgs = nixpkgsInput.legacyPackages.${platform};
-          in
-          {
-            users.defaultUserShell = pkgs.zsh;
-          }
-        )
       ]
       ++ inputs.nixpkgs.lib.optionals (password != null) [
         (
