@@ -102,7 +102,7 @@ in
 
   # fwupd startup times out probing a Nordic USB receiver on /dev/hidraw0
   # (VID:PID 1915:1025) via the nordic_hid plugin.
-  services.fwupd.disabledPlugins = [ "nordic_hid" ];
+  services.fwupd.daemonSettings.DisabledPlugins = [ "nordic_hid" ];
 
   services.jellyfin = {
     enable = true;
