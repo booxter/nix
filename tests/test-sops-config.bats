@@ -163,6 +163,59 @@ EOF
   grep -q 'apiKey: "REPLACE_ME"' "$workdir/secrets/beast.yaml"
 }
 
+@test "sops-update skips re-encryption when secret is already up to date" {
+  workdir="$BATS_TMPDIR/sops-no-op"
+  mkdir -p "$workdir/secrets"
+  cat > "$workdir/secrets/_template.yaml" <<'EOF'
+a:
+  y: "SECRET"
+EOF
+  cat > "$workdir/secrets/beast.yaml" <<'EOF'
+a:
+  y: "SECRET"
+sops:
+  dummy: true
+EOF
+  cd "$workdir"
+  git init -q
+  encrypt_called="$workdir/encrypt-called"
+
+  sops() {
+    if [[ "$1" == "--decrypt" ]]; then
+      cat "$2"
+      return 0
+    fi
+    if [[ "$1" == "--encrypt" ]]; then
+      : > "$encrypt_called"
+      local source_file="${@: -1}"
+      cat "$source_file"
+      return 0
+    fi
+    return 1
+  }
+
+  yq() {
+    if [[ "$1" == "-s" ]]; then
+      printf '%s\n' \
+        'a:' '  y: "SECRET"'
+      return 0
+    fi
+    if [[ $# -eq 2 && -f "$2" ]]; then
+      [[ "$1" == *"def sort_deep"* ]]
+      printf '%s\n' \
+        'a:' '  y: "SECRET"'
+      return 0
+    fi
+    return 1
+  }
+
+  source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
+  run main beast
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Secret already up to date:"* ]]
+  [ ! -f "$encrypt_called" ]
+}
+
 @test "sops-update sorts keys and keeps sops last" {
   workdir="$BATS_TMPDIR/sops-sort-order"
   mkdir -p "$workdir/secrets"
@@ -209,11 +262,17 @@ EOF
         return 1
       fi
       [[ "$1" == *"def sort_deep"* ]]
-      printf '%s\n' \
-        'a:' '  y: "TEMPLATE"' \
-        'b:' '  z: "TEMPLATE"' \
-        'c:' '  x: "SECRET"' \
-        'sops:' '  dummy: true'
+      if grep -q 'z: "TEMPLATE"' "$2"; then
+        printf '%s\n' \
+          'a:' '  y: "TEMPLATE"' \
+          'b:' '  z: "TEMPLATE"' \
+          'c:' '  x: "SECRET"' \
+          'sops:' '  dummy: true'
+      else
+        printf '%s\n' \
+          'c:' '  x: "SECRET"' \
+          'sops:' '  dummy: true'
+      fi
       return 0
     fi
     return 1

@@ -74,9 +74,10 @@ main() {
   base="$(mktemp)"
   merged="$(mktemp)"
   sorted="$(mktemp)"
+  current_sorted="$(mktemp)"
   encrypted="$(mktemp)"
 
-  trap 'rm -f "$tmp" "$base" "$merged" "$sorted" "$encrypted"' EXIT
+  trap 'rm -f "$tmp" "$base" "$merged" "$sorted" "$current_sorted" "$encrypted"' EXIT
 
   sops --decrypt "$secret" > "$tmp"
   cp "$template" "$base"
@@ -104,6 +105,32 @@ main() {
     | sort_deep
     | if $sops == null then . else . + {"sops": $sops} end
   ' "$merged" > "$sorted"
+  # shellcheck disable=SC2016
+  yq '
+    def sort_deep:
+      if type == "object" then
+        to_entries
+        | sort_by(.key)
+        | map(.value |= sort_deep)
+        | from_entries
+      elif type == "array" then
+        map(sort_deep)
+      else
+        .
+      end;
+    (.sops // null) as $sops
+    | del(.sops)
+    | sort_deep
+    | if $sops == null then . else . + {"sops": $sops} end
+  ' "$tmp" > "$current_sorted"
+
+  if cmp -s "$current_sorted" "$sorted"; then
+    if [[ "${SOPS_UPDATE_QUIET:-0}" != "1" ]]; then
+      echo "Secret already up to date: $secret"
+    fi
+    return 0
+  fi
+
   sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$sorted" > "$encrypted"
   mv "$encrypted" "$secret"
 
