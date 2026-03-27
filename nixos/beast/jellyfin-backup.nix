@@ -143,5 +143,6 @@ in
     stopIfChanged = false;
     after = [ "jellyfin-built-in-backup.service" ];
     wants = [ "jellyfin-built-in-backup.service" ];
+    requires = [ "jellyfin-built-in-backup.service" ];
   };
 }
