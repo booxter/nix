@@ -1,0 +1,338 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Inbound Bandwidth By Host",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Outbound Bandwidth By Host",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance, device) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "legendFormat": "{{instance}} {{device}} rx",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Inbound Bandwidth By Interface",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance, device) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "legendFormat": "{{instance}} {{device}} tx",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Outbound Bandwidth By Interface",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "pps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_receive_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Errors And Drops",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "rate(node_netstat_Tcp_RetransSegs{instance=~\"beast:9100|prox-srvarrvm:9100\"}[5m])",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "TCP Retransmits",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": [
+    "fana",
+    "network",
+    "provisioned"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Network Overview",
+  "uid": "fana-network-overview",
+  "version": 1,
+  "weekStart": ""
+}
