@@ -9,6 +9,7 @@ let
       inputs,
       outputs,
       username,
+      hmFull,
       isDesktop,
       isWork,
       stateVersion,
@@ -19,6 +20,7 @@ let
           inputs
           outputs
           username
+          hmFull
           isDesktop
           isWork
           stateVersion
@@ -115,6 +117,7 @@ rec {
       stateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
+      hmFull ? true,
       isWork ? false,
       isDesktop ? false,
       extraModules ? [ ],
@@ -127,6 +130,7 @@ rec {
           outputs
           username
           platform
+          hmFull
           stateVersion
           isDesktop
           isWork
@@ -145,7 +149,7 @@ rec {
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
       virtPlatform ? platform,
-      withHome ? true,
+      hmFull ? true,
       isDesktop ? false,
       isWork ? false,
       isVM ? false,
@@ -175,14 +179,13 @@ rec {
         ../nixos
         inputs.disko.nixosModules.disko
         inputs.sops-nix.nixosModules.sops
-      ]
-      ++ nixpkgsInput.lib.optionals withHome [
         inputs.home-manager.nixosModules.home-manager
         (commonHMConfig {
           inherit
             inputs
             outputs
             username
+            hmFull
             isDesktop
             isWork
             stateVersion
@@ -385,7 +388,7 @@ rec {
       args
       // {
         inherit platform;
-        withHome = false;
+        hmFull = false;
         extraModules =
           extraModules
           ++ [

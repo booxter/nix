@@ -228,7 +228,7 @@
                 memorySize = 64;
                 diskSize = 150;
                 cores = 24;
-                withHome = false;
+                hmFull = false;
               }
             );
           BM = args: helpers.mkBM ({ inherit virtPlatform; } // args);
@@ -264,7 +264,7 @@
           stateVersion = "25.11";
           platform = "x86_64-linux";
           nixpkgsInput = inputs.nixpkgs-25_11;
-          withHome = false;
+          hmFull = false;
         }
         # ssh prx1-lab sudo pvecm create lab-cluster
         // BM {
@@ -312,7 +312,7 @@
         // VM {
           name = "cache";
           sshPort = 10004;
-          withHome = false;
+          hmFull = false;
           cores = 16;
           memorySize = 16;
           diskSize = 50; # actual cache is on NFS
@@ -323,7 +323,7 @@
           cores = 16;
           memorySize = 32;
           sshPort = 10005;
-          withHome = false;
+          hmFull = false;
         }
         // VM {
           name = "fana";
@@ -332,7 +332,7 @@
           memorySize = 16;
           diskSize = 300;
           sshPort = 10006;
-          withHome = false;
+          hmFull = false;
         }
         // toBuilder 1
         // toBuilder 2

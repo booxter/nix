@@ -4,6 +4,7 @@
   pkgs,
   stateVersion,
   username,
+  hmFull,
   isDesktop,
   isWork,
   ...
@@ -14,8 +15,9 @@ in
 {
   imports = [
     ../common/_mixins/nix
+    ./_mixins/zsh-basic
   ]
-  ++ [
+  ++ lib.optionals hmFull [
     ./_mixins/cli-tools
     ./_mixins/git-sync
     ./_mixins/gnupg
@@ -37,9 +39,16 @@ in
   ++ lib.optionals (!isWork && isDesktop) [
     ./_mixins/firefox
   ]
-  ++ lib.optionals isWork [
+  ++ lib.optionals (hmFull && isWork) [
     ./_mixins/krew
     ./_mixins/nv
+  ];
+
+  assertions = [
+    {
+      assertion = (!isDesktop) || hmFull;
+      message = "`isDesktop = true` requires `hmFull = true`.";
+    }
   ];
 
   nixpkgs.overlays = [
