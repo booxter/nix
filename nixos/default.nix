@@ -40,6 +40,7 @@ in
     ]
     ++ [
       ./_mixins/observability-client
+      ./_mixins/lan-wan-accounting
       ./_mixins/user
     ]
     ++ lib.optionals (lib.elem hostname upsClientsNAS) [

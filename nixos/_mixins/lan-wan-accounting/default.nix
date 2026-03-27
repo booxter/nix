@@ -1,0 +1,164 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.host.observability.lanWan;
+  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  tableName = "observability_lan_wan";
+  rulesFile = pkgs.writeText "lan-wan-accounting.nft" ''
+    table inet ${tableName} {
+      set lan_nets {
+        type ipv4_addr
+        flags interval
+        elements = { ${lib.concatStringsSep ", " cfg.lanSubnets} }
+      }
+
+      counter lan_in {}
+      counter wan_in {}
+      counter lan_out {}
+      counter wan_out {}
+
+      chain input {
+        type filter hook input priority mangle; policy accept;
+        iifname "lo" return
+        ip saddr @lan_nets counter name "lan_in" return
+        counter name "wan_in"
+      }
+
+      chain output {
+        type filter hook output priority mangle; policy accept;
+        oifname "lo" return
+        ip daddr @lan_nets counter name "lan_out" return
+        counter name "wan_out"
+      }
+    }
+  '';
+  installRules = pkgs.writeShellApplication {
+    name = "lan-wan-accounting-install";
+    runtimeInputs = [
+      pkgs.nftables
+    ];
+    text = ''
+      set -euo pipefail
+      nft delete table inet ${tableName} 2>/dev/null || true
+      nft -f ${rulesFile}
+    '';
+  };
+  removeRules = pkgs.writeShellApplication {
+    name = "lan-wan-accounting-remove";
+    runtimeInputs = [
+      pkgs.nftables
+    ];
+    text = ''
+      set -euo pipefail
+      nft delete table inet ${tableName} 2>/dev/null || true
+    '';
+  };
+  exportMetrics = pkgs.writeShellApplication {
+    name = "lan-wan-accounting-export";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gawk
+      pkgs.nftables
+    ];
+    text = ''
+      set -euo pipefail
+
+      tmp_file="$(mktemp ${textfileDir}/lan-wan.prom.XXXXXX)"
+      trap 'rm -f "$tmp_file"' EXIT
+
+      declare -A counter_bytes=(
+        [lan_in]=0
+        [wan_in]=0
+        [lan_out]=0
+        [wan_out]=0
+      )
+
+      while read -r counter_name counter_value; do
+        counter_bytes["$counter_name"]="$counter_value"
+      done < <(
+        nft list table inet ${tableName} | awk '
+          $1 == "counter" && $2 ~ /^(lan_in|wan_in|lan_out|wan_out)$/ {
+            for (i = 1; i <= NF; i++) {
+              if ($i == "bytes") {
+                gsub(/[^0-9]/, "", $(i + 1))
+                print $2, $(i + 1)
+                break
+              }
+            }
+          }
+        '
+      )
+
+      cat >"$tmp_file" <<EOF
+      # HELP host_observability_network_bytes_total Classified host network traffic in bytes.
+      # TYPE host_observability_network_bytes_total counter
+      host_observability_network_bytes_total{direction="receive",scope="lan"} ''${counter_bytes[lan_in]}
+      host_observability_network_bytes_total{direction="receive",scope="wan"} ''${counter_bytes[wan_in]}
+      host_observability_network_bytes_total{direction="transmit",scope="lan"} ''${counter_bytes[lan_out]}
+      host_observability_network_bytes_total{direction="transmit",scope="wan"} ''${counter_bytes[wan_out]}
+      EOF
+
+      mv "$tmp_file" ${textfileDir}/lan-wan.prom
+      trap - EXIT
+    '';
+  };
+in
+{
+  options.host.observability.lanWan = {
+    enable = lib.mkEnableOption "LAN/WAN traffic accounting for Prometheus";
+
+    lanSubnets = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = [ "192.168.0.0/16" ];
+      description = "IPv4 subnets that should be treated as LAN traffic.";
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    services.prometheus.exporters.node = {
+      enabledCollectors = [ "textfile" ];
+      extraFlags = [ "--collector.textfile.directory=${textfileDir}" ];
+    };
+
+    systemd.tmpfiles.rules = [
+      "d ${textfileDir} 0755 root root - -"
+    ];
+
+    systemd.services.observability-lan-wan-accounting = {
+      description = "Install nftables LAN/WAN accounting rules";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network-pre.target" ];
+      wants = [ "network-pre.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = lib.getExe installRules;
+        ExecStop = lib.getExe removeRules;
+      };
+    };
+
+    systemd.services.observability-lan-wan-export = {
+      description = "Export LAN/WAN accounting metrics for node exporter";
+      after = [ "observability-lan-wan-accounting.service" ];
+      requires = [ "observability-lan-wan-accounting.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        ExecStart = lib.getExe exportMetrics;
+      };
+    };
+
+    systemd.timers.observability-lan-wan-export = {
+      description = "Refresh LAN/WAN accounting metrics";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "30s";
+        OnUnitActiveSec = "15s";
+        Unit = "observability-lan-wan-export.service";
+      };
+    };
+  };
+}

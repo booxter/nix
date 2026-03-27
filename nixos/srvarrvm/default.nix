@@ -62,6 +62,8 @@ let
   servarrUMask = lib.mkForce "0002";
 in
 {
+  host.observability.lanWan.enable = true;
+
   imports = [
     inputs.nixarr.nixosModules.default
     ./backup.nix
