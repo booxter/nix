@@ -41,8 +41,14 @@ in
     default = false;
   };
 
+  options.host.dnsName = lib.mkOption {
+    type = lib.types.str;
+    default = hostname;
+  };
+
   config = {
     networking.hostName = hostname;
+    sops.age.keyFile = "/var/lib/sops-nix/key.txt";
 
     # Some packages that I'd like to have available on all my machines.
     environment.systemPackages = with pkgs; [
@@ -88,6 +94,10 @@ in
 
     users.users.${username} = {
       openssh.authorizedKeys.keys = workKeys ++ lib.optionals (!isWork) personalKeys;
+    };
+
+    environment.shellAliases = {
+      iftop = "sudo iftop -b -N -P -o 40s";
     };
 
     programs.zsh.enable = true;

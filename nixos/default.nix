@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   hostname,
@@ -38,6 +39,7 @@ in
       configName
     ]
     ++ [
+      ./_mixins/observability-client
       ./_mixins/user
     ]
     ++ lib.optionals (lib.elem hostname upsClientsNAS) [
@@ -87,6 +89,12 @@ in
     };
   };
 
+  # Auto-upgrade uses a GitHub flake URI, so skip the run cleanly until DNS is
+  # actually ready. This avoids failed deploys when the timer fires during
+  # activation on hosts that are still bringing networking up.
+  systemd.services.nixos-upgrade.serviceConfig.ExecCondition =
+    "${pkgs.glibc.bin}/bin/getent hosts api.github.com";
+
   time.timeZone = "America/New_York";
 
   services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)
@@ -107,6 +115,11 @@ in
       addresses = true;
     };
     hostName = avahiHostName;
+  };
+
+  host.observability.client = {
+    enable = lib.mkDefault (!config.host.isWork);
+    lokiWriteUrl = lib.mkDefault "http://prox-fanavm:3100/loki/api/v1/push";
   };
 
   # TODO: revisit hw sensor monitoring (sensord or alternative).

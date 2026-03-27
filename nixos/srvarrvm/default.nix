@@ -52,6 +52,8 @@ in
     ./backup.nix
   ];
 
+  sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
+
   # NFS mounts with media
   boot.supportedFilesystems = [ "nfs" ];
   services.rpcbind.enable = true;
@@ -296,6 +298,11 @@ in
                       title = "Jellyseerr";
                       url = "https://js.ihar.dev";
                       icon = "sh:jellyseerr";
+                    }
+                    {
+                      title = "Grafana";
+                      url = "http://fana.local:3000/";
+                      icon = "sh:grafana";
                     }
                     {
                       title = "Radarr";

@@ -6,6 +6,8 @@ let
     meta = { inherit description; };
   };
 
+  pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
+
   deploy = pkgs.writeShellApplication {
     name = "deploy";
     runtimeInputs = with pkgs; [
@@ -15,8 +17,7 @@ let
       jq
       nix
       openssh
-      python3
-      python3Packages.prompt-toolkit
+      pythonWithPromptToolkit
     ];
     text = ''
       set -euo pipefail

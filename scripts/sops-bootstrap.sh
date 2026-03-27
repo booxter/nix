@@ -83,9 +83,11 @@ fi
 ssh_target="${user}@${host}"
 remote_output="$(mktemp)"
 remote_script="/tmp/sops-bootstrap-$$.sh"
+remote_script_q="$(printf '%q' "$remote_script")"
 cleanup() {
   rm -f "$remote_output"
-  ssh "$ssh_target" /usr/bin/env bash -lc 'rm -f -- "$1"' bash "$remote_script" >/dev/null 2>&1 || true
+  # shellcheck disable=SC2029
+  ssh "$ssh_target" "rm -f -- ${remote_script_q}" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -138,8 +140,9 @@ echo "PUBKEY:${pubkey}"
 EOF
 )"
 
-printf '%s\n' "$remote_payload" | ssh "$ssh_target" /usr/bin/env bash -lc 'cat > "$1" && chmod +x "$1"' bash "$remote_script"
-ssh -tt "$ssh_target" "$remote_script" | tee "$remote_output"
+# shellcheck disable=SC2029
+printf '%s\n' "$remote_payload" | ssh "$ssh_target" "cat > ${remote_script_q} && chmod +x ${remote_script_q}"
+ssh -tt "$ssh_target" "/usr/bin/env bash ${remote_script_q}" | tee "$remote_output"
 
 pubkey="$(tr -d '\r' < "$remote_output" | sed -n 's/^PUBKEY://p' | tail -n1)"
 

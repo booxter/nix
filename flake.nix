@@ -34,6 +34,8 @@
 
     home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager-25_11.url = "github:nix-community/home-manager/release-25.11";
+    home-manager-25_11.inputs.nixpkgs.follows = "nixpkgs-25_11";
 
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
@@ -228,7 +230,7 @@
                 memorySize = 64;
                 diskSize = 150;
                 cores = 24;
-                withHome = false;
+                hmFull = false;
               }
             );
           BM = args: helpers.mkBM ({ inherit virtPlatform; } // args);
@@ -237,6 +239,8 @@
           mkHost = helpers.mkRaspberryPi;
           name = piHostname;
           stateVersion = piStateVersion;
+          homeManagerInput = inputs.home-manager-25_11;
+          hmFull = false;
         }
         // BM {
           mkHost = helpers.mkNixos;
@@ -264,7 +268,8 @@
           stateVersion = "25.11";
           platform = "x86_64-linux";
           nixpkgsInput = inputs.nixpkgs-25_11;
-          withHome = false;
+          homeManagerInput = inputs.home-manager-25_11;
+          hmFull = false;
         }
         # ssh prx1-lab sudo pvecm create lab-cluster
         // BM {
@@ -312,7 +317,7 @@
         // VM {
           name = "cache";
           sshPort = 10004;
-          withHome = false;
+          hmFull = false;
           cores = 16;
           memorySize = 16;
           diskSize = 50; # actual cache is on NFS
@@ -323,7 +328,16 @@
           cores = 16;
           memorySize = 32;
           sshPort = 10005;
-          withHome = false;
+          hmFull = false;
+        }
+        // VM {
+          name = "fana";
+          platform = "x86_64-linux";
+          cores = 8;
+          memorySize = 16;
+          diskSize = 300;
+          sshPort = 10006;
+          hmFull = false;
         }
         // toBuilder 1
         // toBuilder 2

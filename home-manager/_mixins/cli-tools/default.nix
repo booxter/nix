@@ -7,10 +7,6 @@
 }:
 {
   programs.zsh = {
-    enable = true;
-    defaultKeymap = "viins";
-    enableCompletion = false;
-
     autosuggestion = {
       enable = true;
       strategy = [
@@ -23,7 +19,6 @@
 
     initContent = ''
       [ -f /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
-      bindkey "^R" history-incremental-search-backward
 
       autoload -U compinit
       ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION"
@@ -59,15 +54,9 @@
       # cat images in kitty
       icat = "kitten icat";
 
-      # beatify ls
-      ll = "ls --hyperlink=auto --color=auto -Fal";
-      ls = "ls --hyperlink=auto --color=auto -F";
-
       # eza
       q = "eza";
       qq = "eza -l";
-
-      view = "nvim -R";
 
       # remove once https://github.com/nektos/act/issues/2329 is fixed
       act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04";

@@ -26,7 +26,6 @@ lib.mkMerge [
   (lib.optionalAttrs hasHostSecretFile {
     sops = {
       defaultSopsFile = hostSecretFile;
-      age.keyFile = "/var/lib/sops-nix/key.txt";
     }
     // lib.optionalAttrs manageAtticPushWithSops {
       secrets = {

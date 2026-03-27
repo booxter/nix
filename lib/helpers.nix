@@ -9,6 +9,7 @@ let
       inputs,
       outputs,
       username,
+      hmFull,
       isDesktop,
       isWork,
       stateVersion,
@@ -19,6 +20,7 @@ let
           inputs
           outputs
           username
+          hmFull
           isDesktop
           isWork
           stateVersion
@@ -115,11 +117,13 @@ rec {
       stateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
+      homeManagerInput ? inputs.home-manager,
+      hmFull ? true,
       isWork ? false,
       isDesktop ? false,
       extraModules ? [ ],
     }:
-    inputs.home-manager.lib.homeManagerConfiguration {
+    homeManagerInput.lib.homeManagerConfiguration {
       pkgs = inputs.nixpkgs.legacyPackages.${platform};
       extraSpecialArgs = {
         inherit
@@ -127,6 +131,7 @@ rec {
           outputs
           username
           platform
+          hmFull
           stateVersion
           isDesktop
           isWork
@@ -145,7 +150,8 @@ rec {
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
       virtPlatform ? platform,
-      withHome ? true,
+      homeManagerInput ? inputs.home-manager,
+      hmFull ? true,
       isDesktop ? false,
       isWork ? false,
       isVM ? false,
@@ -175,29 +181,18 @@ rec {
         ../nixos
         inputs.disko.nixosModules.disko
         inputs.sops-nix.nixosModules.sops
-      ]
-      ++ nixpkgsInput.lib.optionals withHome [
-        inputs.home-manager.nixosModules.home-manager
+        homeManagerInput.nixosModules.home-manager
         (commonHMConfig {
           inherit
             inputs
             outputs
             username
+            hmFull
             isDesktop
             isWork
             stateVersion
             ;
         })
-
-        (
-          { ... }:
-          let
-            pkgs = nixpkgsInput.legacyPackages.${platform};
-          in
-          {
-            users.defaultUserShell = pkgs.zsh;
-          }
-        )
       ]
       ++ inputs.nixpkgs.lib.optionals (password != null) [
         (
@@ -395,7 +390,7 @@ rec {
       args
       // {
         inherit platform;
-        withHome = false;
+        hmFull = false;
         extraModules =
           extraModules
           ++ [
@@ -692,6 +687,8 @@ rec {
       stateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-linux",
+      homeManagerInput ? inputs.home-manager,
+      hmFull ? true,
       isDesktop ? false,
       isWork ? false,
       isVM ? false,
@@ -706,6 +703,7 @@ rec {
           platform
           username
           stateVersion
+          hmFull
           isDesktop
           isWork
           isVM
@@ -717,6 +715,18 @@ rec {
         ../common
         ../nixos
         inputs.sops-nix.nixosModules.sops
+        homeManagerInput.nixosModules.home-manager
+        (commonHMConfig {
+          inherit
+            inputs
+            outputs
+            username
+            hmFull
+            isDesktop
+            isWork
+            stateVersion
+            ;
+        })
 
         # base hardware modules
         {
@@ -755,6 +765,8 @@ rec {
       hmStateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
+      homeManagerInput ? inputs.home-manager,
+      hmFull ? true,
       isDesktop ? false,
       isWork ? false,
       ci ? false,
@@ -770,6 +782,7 @@ rec {
           username
           stateVersion
           hmStateVersion
+          hmFull
           isDesktop
           isWork
           ci
@@ -783,12 +796,13 @@ rec {
         ../common
         ../darwin
 
-        inputs.home-manager.darwinModules.home-manager
+        homeManagerInput.darwinModules.home-manager
         (commonHMConfig {
           inherit
             inputs
             outputs
             username
+            hmFull
             isDesktop
             isWork
             ;

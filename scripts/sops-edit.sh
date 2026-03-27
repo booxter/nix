@@ -62,7 +62,7 @@ if [[ ! -f "$secret" ]]; then
 fi
 
 if [[ -f "$default_template" ]]; then
-  "${repo_root}/scripts/sops-update.sh" "$host"
+  SOPS_UPDATE_QUIET=1 "${repo_root}/scripts/sops-update.sh" "$host"
 fi
 
 sops "$secret"
