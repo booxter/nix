@@ -751,6 +751,7 @@ rec {
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
       homeManagerInput ? inputs.home-manager,
+      hmFull ? true,
       isDesktop ? false,
       isWork ? false,
       ci ? false,
@@ -766,6 +767,7 @@ rec {
           username
           stateVersion
           hmStateVersion
+          hmFull
           isDesktop
           isWork
           ci
@@ -782,12 +784,13 @@ rec {
         homeManagerInput.darwinModules.home-manager
         (commonHMConfig {
           inherit
-            inputs
-            outputs
-            username
-            isDesktop
-            isWork
-            ;
+          inputs
+          outputs
+          username
+          hmFull
+          isDesktop
+          isWork
+          ;
           stateVersion = hmStateVersion;
         })
       ]
