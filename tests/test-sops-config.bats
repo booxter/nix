@@ -146,10 +146,8 @@ EOF
         printf '%s\n' 'common:' '  shared: "TEMPLATE"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
         return 0
       fi
-      if [[ "$file_b" == *"/secrets/beast.yaml" ]]; then
-        printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
-        return 0
-      fi
+      printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
+      return 0
     fi
     if [[ $# -eq 2 && -f "$2" ]]; then
       cat "$2"
