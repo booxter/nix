@@ -71,18 +71,20 @@ main() {
   fi
 
   tmp="$(mktemp)"
+  base="$(mktemp)"
   merged="$(mktemp)"
   sorted="$(mktemp)"
   encrypted="$(mktemp)"
 
-  trap 'rm -f "$tmp" "$merged" "$sorted" "$encrypted"' EXIT
+  trap 'rm -f "$tmp" "$base" "$merged" "$sorted" "$encrypted"' EXIT
 
   sops --decrypt "$secret" > "$tmp"
-  yq -s '.[0] * .[1]' "$template" "$tmp" > "$merged"
+  cp "$template" "$base"
   if [[ -f "$host_template" ]]; then
-    mv "$merged" "$tmp"
-    yq -s '.[0] * .[1]' "$host_template" "$tmp" > "$merged"
+    yq -s '.[0] * .[1]' "$base" "$host_template" > "$merged"
+    mv "$merged" "$base"
   fi
+  yq -s '.[0] * .[1]' "$base" "$tmp" > "$merged"
   yq '
     (.sops // null) as $sops
     | del(.sops)
