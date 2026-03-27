@@ -89,6 +89,12 @@ in
     };
   };
 
+  # Auto-upgrade uses a GitHub flake URI, so skip the run cleanly until DNS is
+  # actually ready. This avoids failed deploys when the timer fires during
+  # activation on hosts that are still bringing networking up.
+  systemd.services.nixos-upgrade.serviceConfig.ExecCondition =
+    "${pkgs.glibc.bin}/bin/getent hosts api.github.com";
+
   time.timeZone = "America/New_York";
 
   services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)
