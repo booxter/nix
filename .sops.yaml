@@ -3,6 +3,7 @@ keys:
   - age15hqtgw2a6jxmk7hhrt479njv8h3rg6yv0vrw4xpkedl85keuj4gqgcdvt3
   - age15l7h4scc9fgprgpfnlfa00s6jz6hecqmuhud3qv38lsjvq8p43lqaqq6n7
   - age16qrt92g623x7espzpkxr4wj0gslh5uw8fupwph4kfas9ynd7eaxs9h2ejs
+  - age18ylrlkc40tncvmfvfm7sjag2awjve9gkcmypfkyu8gpmzhfl6fsqnh5cra
   - age1er3vv33n253havhsdn8gjmsyp3sgyceu46f2pshcerw608zkzfms7lv3y8
   - age1han6v77k79z6ay8dkrerq3crmqytvhgd8dd7huguaqad43g0uecqqew3cf
   - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
@@ -53,6 +54,7 @@ creation_rules:
   - path_regex: secrets/prox-fanavm\.yaml$
     key_groups:
       - age:
+          - age18ylrlkc40tncvmfvfm7sjag2awjve9gkcmypfkyu8gpmzhfl6fsqnh5cra
           - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
   - path_regex: secrets/beast\.yaml$
     key_groups:
