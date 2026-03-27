@@ -298,6 +298,11 @@ in
                       icon = "sh:jellyseerr";
                     }
                     {
+                      title = "Grafana";
+                      url = "http://fana.local:3000/";
+                      icon = "sh:grafana";
+                    }
+                    {
                       title = "Radarr";
                       url = "http://srvarr.local:7878/";
                       icon = "sh:radarr";
