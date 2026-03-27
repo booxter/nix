@@ -216,6 +216,59 @@ EOF
   [ ! -f "$encrypt_called" ]
 }
 
+@test "sops-update --force re-encrypts when secret content is unchanged" {
+  workdir="$BATS_TMPDIR/sops-force"
+  mkdir -p "$workdir/secrets"
+  cat > "$workdir/secrets/_template.yaml" <<'EOF'
+a:
+  y: "SECRET"
+EOF
+  cat > "$workdir/secrets/beast.yaml" <<'EOF'
+a:
+  y: "SECRET"
+sops:
+  dummy: true
+EOF
+  cd "$workdir"
+  git init -q
+  encrypt_called="$workdir/encrypt-called"
+
+  sops() {
+    if [[ "$1" == "--decrypt" ]]; then
+      cat "$2"
+      return 0
+    fi
+    if [[ "$1" == "--encrypt" ]]; then
+      : > "$encrypt_called"
+      local source_file="${@: -1}"
+      cat "$source_file"
+      return 0
+    fi
+    return 1
+  }
+
+  yq() {
+    if [[ "$1" == "-s" ]]; then
+      printf '%s\n' \
+        'a:' '  y: "SECRET"'
+      return 0
+    fi
+    if [[ $# -eq 2 && -f "$2" ]]; then
+      [[ "$1" == *"def sort_deep"* ]]
+      printf '%s\n' \
+        'a:' '  y: "SECRET"'
+      return 0
+    fi
+    return 1
+  }
+
+  source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
+  run main --force beast
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Re-encrypted secret:"* ]]
+  [ -f "$encrypt_called" ]
+}
+
 @test "sops-update sorts keys and keeps sops last" {
   workdir="$BATS_TMPDIR/sops-sort-order"
   mkdir -p "$workdir/secrets"

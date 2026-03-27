@@ -4,6 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
+  scripts/sops-update.sh --force [HOST]
   scripts/sops-update.sh [HOST]
   scripts/sops-update.sh --help
 
@@ -12,6 +13,7 @@ if present, secrets/_templates/HOST.yaml.
 
 If HOST is omitted, the current short hostname is used.
 Template keys are added only if missing; existing values win.
+With --force, the secret is re-encrypted even if decrypted content is unchanged.
 EOF
 }
 
@@ -27,8 +29,13 @@ resolve_repo_root() {
 
 main() {
   host=""
+  force=0
   while [[ $# -gt 0 ]]; do
     case "$1" in
+      --force)
+        force=1
+        shift
+        ;;
       -h | --help)
         usage
         exit 0
@@ -124,7 +131,7 @@ main() {
     | if $sops == null then . else . + {"sops": $sops} end
   ' "$tmp" > "$current_sorted"
 
-  if cmp -s "$current_sorted" "$sorted"; then
+  if [[ "$force" != "1" ]] && cmp -s "$current_sorted" "$sorted"; then
     if [[ "${SOPS_UPDATE_QUIET:-0}" != "1" ]]; then
       echo "Secret already up to date: $secret"
     fi
@@ -134,7 +141,11 @@ main() {
   sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$sorted" > "$encrypted"
   mv "$encrypted" "$secret"
 
-  echo "Updated secret from templates: $secret"
+  if [[ "$force" == "1" ]] && cmp -s "$current_sorted" "$sorted"; then
+    echo "Re-encrypted secret: $secret"
+  else
+    echo "Updated secret from templates: $secret"
+  fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
