@@ -142,11 +142,11 @@ EOF
     if [[ "$1" == "-s" ]]; then
       local file_a="$3"
       local file_b="$4"
-      if [[ "$file_a" == *"/_template.yaml" ]]; then
-        printf '%s\n' 'common:' '  shared: "SECRET"'
+      if [[ "$file_a" == *"/_template.yaml" && "$file_b" == *"/_templates/beast.yaml" ]]; then
+        printf '%s\n' 'common:' '  shared: "TEMPLATE"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
         return 0
       fi
-      if [[ "$file_a" == *"/_templates/beast.yaml" ]]; then
+      if [[ "$file_b" == *"/secrets/beast.yaml" ]]; then
         printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
         return 0
       fi
