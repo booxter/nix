@@ -5,8 +5,10 @@
   ...
 }:
 let
-  backupDir = "/var/lib/jellyfin/data/backups";
+  jellyfinBackupDir = "/var/lib/jellyfin/data/backups";
+  stagingDir = "/volume2/backups/staging/jellyfin";
   keepLocalBackups = 7;
+  keepJellyfinSourceBackups = 1;
   backupApiKeySecret = "jellyfin/apiKey";
   localRepoPasswordSecret = "backup/restic/beast/cloud/localPassword";
   localRepo = "/volume2/backups/restic-prod/hosts/beast";
@@ -23,8 +25,10 @@ let
     text = ''
       set -euo pipefail
 
-      backup_dir="${backupDir}"
+      backup_dir="${jellyfinBackupDir}"
+      staging_dir="${stagingDir}"
       keep="${toString keepLocalBackups}"
+      keep_source="${toString keepJellyfinSourceBackups}"
       api_key="$(tr -d '\n' < ${lib.escapeShellArg config.sops.secrets.${backupApiKeySecret}.path})"
 
       response="$(
@@ -47,27 +51,34 @@ let
         exit 1
       fi
 
-      chgrp restic-cloud "$backup_dir"
-      chmod 0750 "$backup_dir"
-      chgrp restic-cloud "$created_path"
-      chmod 0640 "$created_path"
+      install -d -m 0750 -o root -g restic-cloud "$staging_dir"
+      install -m 0640 -o root -g restic-cloud "$created_path" "$staging_dir/$(basename "$created_path")"
 
       mapfile -t archives < <(
-        find "$backup_dir" -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\n' \
+        find "$staging_dir" -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\n' \
           | sort -nr \
           | awk '{ print $2 }'
       )
-
-      for archive in "''${archives[@]}"; do
-        chgrp restic-cloud "$archive"
-        chmod 0640 "$archive"
-      done
 
       if [ "''${#archives[@]}" -le "$keep" ]; then
         exit 0
       fi
 
       for old_archive in "''${archives[@]:$keep}"; do
+        rm -f -- "$old_archive"
+      done
+
+      mapfile -t source_archives < <(
+        find "$backup_dir" -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\n' \
+          | sort -nr \
+          | awk '{ print $2 }'
+      )
+
+      if [ "''${#source_archives[@]}" -le "$keep_source" ]; then
+        exit 0
+      fi
+
+      for old_archive in "''${source_archives[@]:$keep_source}"; do
         rm -f -- "$old_archive"
       done
     '';
@@ -95,7 +106,10 @@ in
       "jellyfin.service"
       "sops-install-secrets.service"
     ];
-    unitConfig.RequiresMountsFor = backupDir;
+    unitConfig.RequiresMountsFor = [
+      jellyfinBackupDir
+      stagingDir
+    ];
     serviceConfig = {
       Type = "oneshot";
       User = "root";
@@ -109,7 +123,7 @@ in
     user = "restic-cloud";
     passwordFile = config.sops.secrets.${localRepoPasswordSecret}.path;
     repository = localRepo;
-    paths = [ backupDir ];
+    paths = [ stagingDir ];
     pruneOpts = [
       "--keep-daily 7"
       "--keep-weekly 8"
