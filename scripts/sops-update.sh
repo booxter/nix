@@ -85,6 +85,7 @@ main() {
     mv "$merged" "$base"
   fi
   yq -s '.[0] * .[1]' "$base" "$tmp" > "$merged"
+  # shellcheck disable=SC2016
   yq '
     (.sops // null) as $sops
     | del(.sops)

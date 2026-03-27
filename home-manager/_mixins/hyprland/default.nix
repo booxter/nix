@@ -1,5 +1,10 @@
 # TODO: refactor the module
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit (pkgs.stdenv.hostPlatform) isLinux;
   super = "MOD1";
