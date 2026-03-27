@@ -41,7 +41,7 @@ let
           --header "Authorization: MediaBrowser Token=\"$api_key\"" \
           --header "X-Emby-Token: $api_key" \
           --header 'Content-Type: application/json' \
-          --data '{"Database":true,"Metadata":true,"Subtitles":true,"Trickplay":false}'
+          --data '{"Database":true,"Metadata":false,"Subtitles":false,"Trickplay":false}'
       )"
 
       created_path="$(printf '%s' "$response" | jq -r '.Path // .path // empty')"
