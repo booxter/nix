@@ -97,6 +97,8 @@ in
 
   systemd.services.jellyfin-built-in-backup = {
     description = "Create a built-in Jellyfin backup archive";
+    restartIfChanged = false;
+    stopIfChanged = false;
     before = [ "restic-backups-beast.service" ];
     wants = [
       "jellyfin.service"
@@ -137,6 +139,8 @@ in
   };
 
   systemd.services.restic-backups-beast = {
+    restartIfChanged = false;
+    stopIfChanged = false;
     after = [ "jellyfin-built-in-backup.service" ];
     wants = [ "jellyfin-built-in-backup.service" ];
   };
