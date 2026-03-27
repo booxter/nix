@@ -177,7 +177,7 @@ in
         max_age       = "12h"
         labels = {
           job  = "systemd-journal",
-          host = "${hostname}"
+          host = "${hostname}",
         }
       }
     '';
