@@ -104,7 +104,7 @@ in
             targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
           }
           {
-            targets = [ "srvarr.local:9100" ];
+            targets = [ "prox-srvarrvm:9100" ];
           }
         ];
       }

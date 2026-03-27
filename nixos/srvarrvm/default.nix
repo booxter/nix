@@ -8,7 +8,7 @@
 }:
 let
   mediaPath = "/data/media";
-  lokiPushUrl = "http://fana.local:3100/loki/api/v1/push";
+  lokiPushUrl = "http://prox-fanavm:3100/loki/api/v1/push";
   # Resilient NFS client behavior:
   # - hard: block I/O until the server is back (avoid soft I/O errors).
   # - nofail/_netdev/network-online: don't fail boot when NAS is down.
