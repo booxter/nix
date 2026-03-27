@@ -90,6 +90,10 @@ EOF
       fi
       return 0
     fi
+    if [[ $# -eq 2 && -f "$2" ]]; then
+      cat "$2"
+      return 0
+    fi
     return 1
   }
 
@@ -147,6 +151,10 @@ EOF
         return 0
       fi
     fi
+    if [[ $# -eq 2 && -f "$2" ]]; then
+      cat "$2"
+      return 0
+    fi
     return 1
   }
 
@@ -155,6 +163,67 @@ EOF
   [ "$status" -eq 0 ]
   grep -q 'shared: "SECRET"' "$workdir/secrets/beast.yaml"
   grep -q 'apiKey: "REPLACE_ME"' "$workdir/secrets/beast.yaml"
+}
+
+@test "sops-update sorts keys and keeps sops last" {
+  workdir="$BATS_TMPDIR/sops-sort-order"
+  mkdir -p "$workdir/secrets"
+  cat > "$workdir/secrets/_template.yaml" <<'EOF'
+b:
+  z: "TEMPLATE"
+a:
+  y: "TEMPLATE"
+EOF
+  cat > "$workdir/secrets/beast.yaml" <<'EOF'
+sops:
+  dummy: true
+c:
+  x: "SECRET"
+EOF
+  cd "$workdir"
+  git init -q
+
+  sops() {
+    if [[ "$1" == "--decrypt" ]]; then
+      cat "$2"
+      return 0
+    fi
+    if [[ "$1" == "--encrypt" ]]; then
+      local source_file="${@: -1}"
+      cat "$source_file"
+      return 0
+    fi
+    return 1
+  }
+
+  yq() {
+    if [[ "$1" == "-s" ]]; then
+      printf '%s\n' \
+        'b:' '  z: "TEMPLATE"' \
+        'a:' '  y: "TEMPLATE"' \
+        'c:' '  x: "SECRET"' \
+        'sops:' '  dummy: true'
+      return 0
+    fi
+    if [[ $# -eq 2 && -f "$2" ]]; then
+      printf '%s\n' \
+        'a:' '  y: "TEMPLATE"' \
+        'b:' '  z: "TEMPLATE"' \
+        'c:' '  x: "SECRET"' \
+        'sops:' '  dummy: true'
+      return 0
+    fi
+    return 1
+  }
+
+  source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
+  run main beast
+  [ "$status" -eq 0 ]
+  mapfile -t keys < <(grep -E '^[a-z][a-zA-Z0-9_-]*:' "$workdir/secrets/beast.yaml" | cut -d: -f1)
+  [ "${keys[0]}" = "a" ]
+  [ "${keys[1]}" = "b" ]
+  [ "${keys[2]}" = "c" ]
+  [ "${keys[3]}" = "sops" ]
 }
 
 @test "fails when secrets exist but .sops.yaml missing" {

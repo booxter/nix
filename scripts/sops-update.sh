@@ -72,9 +72,10 @@ main() {
 
   tmp="$(mktemp)"
   merged="$(mktemp)"
+  sorted="$(mktemp)"
   encrypted="$(mktemp)"
 
-  trap 'rm -f "$tmp" "$merged" "$encrypted"' EXIT
+  trap 'rm -f "$tmp" "$merged" "$sorted" "$encrypted"' EXIT
 
   sops --decrypt "$secret" > "$tmp"
   yq -s '.[0] * .[1]' "$template" "$tmp" > "$merged"
@@ -82,7 +83,13 @@ main() {
     mv "$merged" "$tmp"
     yq -s '.[0] * .[1]' "$host_template" "$tmp" > "$merged"
   fi
-  sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$merged" > "$encrypted"
+  yq '
+    (.sops // null) as $sops
+    | del(.sops)
+    | sort_keys(..)
+    | if $sops == null then . else . + {"sops": $sops} end
+  ' "$merged" > "$sorted"
+  sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$sorted" > "$encrypted"
   mv "$encrypted" "$secret"
 
   echo "Updated secret from templates: $secret"
