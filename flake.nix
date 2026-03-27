@@ -239,6 +239,7 @@
           mkHost = helpers.mkRaspberryPi;
           name = piHostname;
           stateVersion = piStateVersion;
+          hmFull = false;
         }
         // BM {
           mkHost = helpers.mkNixos;

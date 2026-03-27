@@ -687,6 +687,8 @@ rec {
       stateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-linux",
+      homeManagerInput ? inputs.home-manager,
+      hmFull ? true,
       isDesktop ? false,
       isWork ? false,
       isVM ? false,
@@ -701,6 +703,7 @@ rec {
           platform
           username
           stateVersion
+          hmFull
           isDesktop
           isWork
           isVM
@@ -712,6 +715,18 @@ rec {
         ../common
         ../nixos
         inputs.sops-nix.nixosModules.sops
+        homeManagerInput.nixosModules.home-manager
+        (commonHMConfig {
+          inherit
+            inputs
+            outputs
+            username
+            hmFull
+            isDesktop
+            isWork
+            stateVersion
+            ;
+        })
 
         # base hardware modules
         {
@@ -784,13 +799,13 @@ rec {
         homeManagerInput.darwinModules.home-manager
         (commonHMConfig {
           inherit
-          inputs
-          outputs
-          username
-          hmFull
-          isDesktop
-          isWork
-          ;
+            inputs
+            outputs
+            username
+            hmFull
+            isDesktop
+            isWork
+            ;
           stateVersion = hmStateVersion;
         })
       ]

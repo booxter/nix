@@ -6,9 +6,7 @@ let
     meta = { inherit description; };
   };
 
-  pythonWithPromptToolkit = pkgs.python3.withPackages (
-    ps: [ ps."prompt-toolkit" ]
-  );
+  pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
 
   deploy = pkgs.writeShellApplication {
     name = "deploy";
