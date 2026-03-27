@@ -85,6 +85,20 @@ in
           }
         ];
       };
+      dashboards.settings = {
+        apiVersion = 1;
+        providers = [
+          {
+            name = "fana";
+            folder = "Fana";
+            type = "file";
+            disableDeletion = false;
+            editable = false;
+            updateIntervalSeconds = 30;
+            options.path = ./grafana/dashboards;
+          }
+        ];
+      };
     };
   };
 
