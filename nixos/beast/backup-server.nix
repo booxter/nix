@@ -203,7 +203,7 @@ in
         value = {
           isSystemUser = true;
           group = cloudOffloadUser;
-          extraGroups = map mkBackupUser (builtins.attrNames backupClients);
+          extraGroups = map mkBackupUser (builtins.attrNames sshBackupClients);
           createHome = false;
           home = backupRoot;
           shell = pkgs.bash;
