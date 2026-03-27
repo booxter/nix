@@ -60,7 +60,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -109,7 +109,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -158,7 +158,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance, device) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "expr": "sum by(instance, device) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
           "legendFormat": "{{instance}} {{device}} rx",
           "range": true,
           "refId": "A"
@@ -207,7 +207,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance, device) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "expr": "sum by(instance, device) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
           "legendFormat": "{{instance}} {{device}} tx",
           "range": true,
           "refId": "A"
@@ -256,7 +256,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_receive_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))",
+          "expr": "sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_receive_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
