@@ -1,4 +1,9 @@
-{ config, hostname, pkgs, ... }:
+{
+  config,
+  hostname,
+  pkgs,
+  ...
+}:
 let
   grafanaPort = 3000;
   prometheusPort = 9090;
