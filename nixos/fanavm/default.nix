@@ -48,6 +48,10 @@ in
       analytics = {
         reporting_enabled = false;
         check_for_updates = false;
+        check_for_plugin_updates = false;
+      };
+      plugins = {
+        preinstall_disabled = true;
       };
     };
     provision = {
