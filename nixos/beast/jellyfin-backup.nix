@@ -60,13 +60,11 @@ let
           | awk '{ print $2 }'
       )
 
-      if [ "''${#archives[@]}" -le "$keep" ]; then
-        exit 0
+      if [ "''${#archives[@]}" -gt "$keep" ]; then
+        for old_archive in "''${archives[@]:$keep}"; do
+          rm -f -- "$old_archive"
+        done
       fi
-
-      for old_archive in "''${archives[@]:$keep}"; do
-        rm -f -- "$old_archive"
-      done
 
       mapfile -t source_archives < <(
         find "$backup_dir" -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\n' \
@@ -74,13 +72,11 @@ let
           | awk '{ print $2 }'
       )
 
-      if [ "''${#source_archives[@]}" -le "$keep_source" ]; then
-        exit 0
+      if [ "''${#source_archives[@]}" -gt "$keep_source" ]; then
+        for old_archive in "''${source_archives[@]:$keep_source}"; do
+          rm -f -- "$old_archive"
+        done
       fi
-
-      for old_archive in "''${source_archives[@]:$keep_source}"; do
-        rm -f -- "$old_archive"
-      done
     '';
   };
 in
