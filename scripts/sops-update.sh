@@ -85,11 +85,23 @@ main() {
     mv "$merged" "$base"
   fi
   yq -s '.[0] * .[1]' "$base" "$tmp" > "$merged"
+  # Keep deterministic key ordering without relying on jq's non-portable sort_keys/1.
   # shellcheck disable=SC2016
   yq '
+    def sort_deep:
+      if type == "object" then
+        to_entries
+        | sort_by(.key)
+        | map(.value |= sort_deep)
+        | from_entries
+      elif type == "array" then
+        map(sort_deep)
+      else
+        .
+      end;
     (.sops // null) as $sops
     | del(.sops)
-    | sort_keys(..)
+    | sort_deep
     | if $sops == null then . else . + {"sops": $sops} end
   ' "$merged" > "$sorted"
   sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$sorted" > "$encrypted"

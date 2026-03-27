@@ -204,6 +204,11 @@ EOF
       return 0
     fi
     if [[ $# -eq 2 && -f "$2" ]]; then
+      if [[ "$1" == *"sort_keys("* ]]; then
+        echo "sort_keys/1 is unsupported in this test yq shim" >&2
+        return 1
+      fi
+      [[ "$1" == *"def sort_deep"* ]]
       printf '%s\n' \
         'a:' '  y: "TEMPLATE"' \
         'b:' '  z: "TEMPLATE"' \
