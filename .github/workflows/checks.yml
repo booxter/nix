@@ -52,7 +52,7 @@ jobs:
             const planner = require("./.github/scripts/plan-ci-matrix.js");
             const fullMatrix = {
               include: [
-                { name: "NixOS test: cache", cmd: "nix build .#packages.x86_64-linux.nixos-tests.cache -L --show-trace" }
+                { name: "NixOS test: cache", cmd: "nix build .#nixosTests.x86_64-linux.cache -L --show-trace" }
               ]
             };
             const machinePathMap = [
