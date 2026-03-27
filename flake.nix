@@ -239,6 +239,7 @@
           mkHost = helpers.mkRaspberryPi;
           name = piHostname;
           stateVersion = piStateVersion;
+          homeManagerInput = inputs.home-manager-25_11;
           hmFull = false;
         }
         // BM {
