@@ -1,5 +1,5 @@
 # TODO: refactor the module
-{ lib, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 let
   inherit (pkgs.stdenv.hostPlatform) isLinux;
   super = "MOD1";
@@ -50,6 +50,8 @@ in
       name = "palenight";
       package = pkgs.palenight-theme;
     };
+
+    gtk4.theme = config.gtk.theme;
 
     cursorTheme = {
       name = "Numix-Cursor";
