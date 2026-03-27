@@ -117,12 +117,13 @@ rec {
       stateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
+      homeManagerInput ? inputs.home-manager,
       hmFull ? true,
       isWork ? false,
       isDesktop ? false,
       extraModules ? [ ],
     }:
-    inputs.home-manager.lib.homeManagerConfiguration {
+    homeManagerInput.lib.homeManagerConfiguration {
       pkgs = inputs.nixpkgs.legacyPackages.${platform};
       extraSpecialArgs = {
         inherit
@@ -149,6 +150,7 @@ rec {
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
       virtPlatform ? platform,
+      homeManagerInput ? inputs.home-manager,
       hmFull ? true,
       isDesktop ? false,
       isWork ? false,
@@ -179,7 +181,7 @@ rec {
         ../nixos
         inputs.disko.nixosModules.disko
         inputs.sops-nix.nixosModules.sops
-        inputs.home-manager.nixosModules.home-manager
+        homeManagerInput.nixosModules.home-manager
         (commonHMConfig {
           inherit
             inputs
@@ -748,6 +750,7 @@ rec {
       hmStateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
+      homeManagerInput ? inputs.home-manager,
       isDesktop ? false,
       isWork ? false,
       ci ? false,
@@ -776,7 +779,7 @@ rec {
         ../common
         ../darwin
 
-        inputs.home-manager.darwinModules.home-manager
+        homeManagerInput.darwinModules.home-manager
         (commonHMConfig {
           inherit
             inputs

@@ -34,6 +34,8 @@
 
     home-manager.url = "github:nix-community/home-manager/master";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    home-manager-25_11.url = "github:nix-community/home-manager/release-25.11";
+    home-manager-25_11.inputs.nixpkgs.follows = "nixpkgs-25_11";
 
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
@@ -264,6 +266,7 @@
           stateVersion = "25.11";
           platform = "x86_64-linux";
           nixpkgsInput = inputs.nixpkgs-25_11;
+          homeManagerInput = inputs.home-manager-25_11;
           hmFull = false;
         }
         # ssh prx1-lab sudo pvecm create lab-cluster

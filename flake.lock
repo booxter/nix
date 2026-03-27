@@ -259,6 +259,27 @@
         "type": "github"
       }
     },
+    "home-manager-25_11": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs-25_11"
+        ]
+      },
+      "locked": {
+        "lastModified": 1774559029,
+        "narHash": "sha256-deix7yg3j6AhjMPnFDCmWB3f83LsajaaULP5HH2j34k=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "a0bb0d11514f92b639514220114ac8063c72d0a3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "ref": "release-25.11",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
     "homebrew-cask": {
       "flake": false,
       "locked": {
@@ -723,6 +744,7 @@
         "debugserver": "debugserver",
         "disko": "disko",
         "home-manager": "home-manager",
+        "home-manager-25_11": "home-manager-25_11",
         "homebrew-cask": "homebrew-cask",
         "homebrew-core": "homebrew-core",
         "jellarr": "jellarr",
