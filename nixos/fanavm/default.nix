@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  outputs,
   ...
 }:
 let
@@ -11,12 +12,16 @@ let
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
   lokiRetention = "${toString retentionHours}h";
+  remoteNodeTargets = map (name: "${name}:9100") (
+    builtins.filter (
+      name:
+      !(lib.hasPrefix "local-" name)
+      && name != "prox-fanavm"
+      && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
+    ) (builtins.attrNames outputs.nixosConfigurations)
+  );
 in
 {
-  imports = [
-    ../_mixins/observability-client
-  ];
-
   sops = {
     defaultSopsFile = ../../secrets/prox-fanavm.yaml;
   };
@@ -101,10 +106,10 @@ in
         job_name = "node";
         static_configs = [
           {
-            targets = [ "127.0.0.1:${toString config.services.prometheus.exporters.node.port}" ];
-          }
-          {
-            targets = [ "prox-srvarrvm:9100" ];
+            targets = [
+              "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
+            ]
+            ++ remoteNodeTargets;
           }
         ];
       }
@@ -159,7 +164,6 @@ in
   };
 
   host.observability.client = {
-    enable = true;
     lokiWriteUrl = "http://127.0.0.1:${toString lokiPort}/loki/api/v1/push";
     nodeExporter = {
       listenAddress = "127.0.0.1";

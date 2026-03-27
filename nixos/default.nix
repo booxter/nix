@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   hostname,
@@ -38,6 +39,7 @@ in
       configName
     ]
     ++ [
+      ./_mixins/observability-client
       ./_mixins/user
     ]
     ++ lib.optionals (lib.elem hostname upsClientsNAS) [
@@ -107,6 +109,11 @@ in
       addresses = true;
     };
     hostName = avahiHostName;
+  };
+
+  host.observability.client = {
+    enable = lib.mkDefault (!config.host.isWork);
+    lokiWriteUrl = lib.mkDefault "http://prox-fanavm:3100/loki/api/v1/push";
   };
 
   # TODO: revisit hw sensor monitoring (sensord or alternative).
