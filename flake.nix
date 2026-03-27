@@ -345,6 +345,7 @@
       );
 
       checks = import ./checks.nix { inherit inputs helpers; };
+      nixosTests = import ./nixos-tests.nix { inherit inputs helpers; };
 
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (
@@ -354,7 +355,6 @@
           fleetPackages = {
             pi-image = self.nixosConfigurations.pi5.config.system.build.sdImage;
           };
-          manualNixosTests = import ./nixos-tests.nix { inherit inputs helpers; };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;
           };
@@ -363,7 +363,6 @@
         // proxmox.packages
         // fleetPackages
         // {
-          nixos-tests = manualNixosTests.${system} or { };
           qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
         }
       );

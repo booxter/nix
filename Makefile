@@ -111,7 +111,7 @@ check:
 	case "$$system" in \
 		*-darwin) nixos_system="$${system%-darwin}-linux" ;; \
 	esac; \
-	known_nixos="$$(nix eval --json ".#packages.$$nixos_system.nixos-tests" --apply builtins.attrNames | jq -r '.[]')"; \
+	known_nixos="$$(nix eval --json ".#nixosTests.$$nixos_system" --apply builtins.attrNames | jq -r '.[]')"; \
 	if [ "x$(WHAT)" = "x" ]; then \
 		if [ -z "$$known_native" ]; then \
 			echo "No checks for $$system."; \
@@ -142,7 +142,7 @@ check-nixos:
 	case "$$system" in \
 		*-darwin) check_system="$${system%-darwin}-linux" ;; \
 	esac; \
-	nixos_checks="$$(nix eval --json ".#packages.$$check_system.nixos-tests" --apply builtins.attrNames | jq -r '.[]')"; \
+	nixos_checks="$$(nix eval --json ".#nixosTests.$$check_system" --apply builtins.attrNames | jq -r '.[]')"; \
 	if [ "x$(WHAT)" = "x" ]; then \
 		if [ -z "$$nixos_checks" ]; then \
 			echo "No nixos checks for $$check_system."; \
@@ -150,7 +150,7 @@ check-nixos:
 		fi; \
 		for check_name in $$nixos_checks; do \
 			echo "Running $$check_name on $$check_system..."; \
-			$(call maybe-nom-build,$(call builder-opts) ".#packages.$$check_system.nixos-tests.$$check_name") || exit $$?; \
+			$(call maybe-nom-build,$(call builder-opts) ".#nixosTests.$$check_system.$$check_name") || exit $$?; \
 		done; \
 		exit 0; \
 	fi; \
@@ -161,4 +161,4 @@ check-nixos:
 		printf '%s\n' "$$nixos_checks"; \
 		exit 1; \
 	fi; \
-	$(call maybe-nom-build,$(call builder-opts) ".#packages.$$check_system.nixos-tests.$(WHAT)")
+	$(call maybe-nom-build,$(call builder-opts) ".#nixosTests.$$check_system.$(WHAT)")
