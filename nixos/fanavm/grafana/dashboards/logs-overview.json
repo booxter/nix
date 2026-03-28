@@ -226,7 +226,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Logs Overview",
+  "title": "Logs",
   "uid": "fana-logs-overview",
   "version": 1,
   "weekStart": ""

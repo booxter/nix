@@ -443,7 +443,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Network Overview",
+  "title": "Network",
   "uid": "fana-network-overview",
   "version": 1,
   "weekStart": ""
