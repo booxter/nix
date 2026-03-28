@@ -24,13 +24,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "fillOpacity": 20,
-            "stacking": {
-              "group": "wan",
-              "mode": "normal"
-            }
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -41,292 +34,107 @@
               }
             ]
           },
-          "unit": "bps"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 6,
         "x": 0,
         "y": 0
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"wan\"}[5m])) * 8",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "WAN Inbound Bandwidth",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "fillOpacity": 20,
-            "stacking": {
-              "group": "wan",
-              "mode": "normal"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 0
-      },
-      "id": 11,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"wan\"}[5m])) * 8",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "WAN Outbound Bandwidth",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "id": 12,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"lan\"}[5m])) * 8",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "LAN Inbound Bandwidth",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 8
-      },
-      "id": 13,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"lan\"}[5m])) * 8",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "LAN Outbound Bandwidth",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 16
       },
       "id": 1,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "textMode": "auto"
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
-          "legendFormat": "{{instance}}",
-          "range": true,
+          "expr": "dnsmasq_leases{job=\"dnsmasq\"}",
+          "instant": true,
+          "legendFormat": "leases",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Inbound Bandwidth By Host",
-      "type": "timeseries"
+      "title": "Active DHCP Leases",
+      "type": "stat"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
           "mappings": [],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.8
               }
             ]
           },
-          "unit": "bps"
+          "unit": "percentunit"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
+        "w": 6,
+        "x": 6,
+        "y": 0
       },
       "id": 2,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "textMode": "auto"
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
-          "legendFormat": "{{instance}}",
-          "range": true,
+          "expr": "(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m])) / clamp_min(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_misses{job=\"dnsmasq\"}[5m])), 1e-9)) or vector(0)",
+          "instant": true,
+          "legendFormat": "hit ratio",
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "Outbound Bandwidth By Host",
-      "type": "timeseries"
+      "title": "DNS Cache Hit Ratio",
+      "type": "stat"
     },
     {
       "datasource": "Prometheus",
@@ -342,7 +150,113 @@
               }
             ]
           },
-          "unit": "pps"
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "dnsmasq_cachesize{job=\"dnsmasq\"}",
+          "instant": true,
+          "legendFormat": "cache size",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "DNS Cache Size",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "qps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_misses{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_auth{job=\"dnsmasq\"}[5m])) or vector(0)",
+          "instant": true,
+          "legendFormat": "queries",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "DNS Query Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "qps"
         },
         "overrides": []
       },
@@ -350,7 +264,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 8
       },
       "id": 5,
       "options": {
@@ -368,13 +282,78 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_receive_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))",
-          "legendFormat": "{{instance}}",
+          "expr": "avg_over_time(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m])[15m:])",
+          "legendFormat": "cache hits",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(rate(dnsmasq_misses{job=\"dnsmasq\"}[5m])[15m:])",
+          "legendFormat": "forwarded misses",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(rate(dnsmasq_auth{job=\"dnsmasq\"}[5m])[15m:])",
+          "legendFormat": "authoritative",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "DNS Queries By Outcome",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "qps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(rate(dnsmasq_servers_queries{job=\"dnsmasq\"}[5m])[15m:])",
+          "legendFormat": "{{server}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Errors And Drops",
+      "title": "Upstream DNS Query Rate By Server",
       "type": "timeseries"
     },
     {
@@ -398,10 +377,10 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 24
+        "x": 0,
+        "y": 16
       },
-      "id": 6,
+      "id": 7,
       "options": {
         "legend": {
           "displayMode": "list",
@@ -417,34 +396,92 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(node_netstat_Tcp_RetransSegs{instance=~\"beast:9100|prox-srvarrvm:9100\"}[5m])",
-          "legendFormat": "{{instance}}",
+          "expr": "avg_over_time(rate(dnsmasq_insertions{job=\"dnsmasq\"}[5m])[15m:])",
+          "legendFormat": "insertions",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(rate(dnsmasq_evictions{job=\"dnsmasq\"}[5m])[15m:])",
+          "legendFormat": "evictions",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "DNS Cache Churn",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "qps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 16
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(rate(dnsmasq_servers_queries_failed{job=\"dnsmasq\"}[5m])[15m:])",
+          "legendFormat": "{{server}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "TCP Retransmits",
+      "title": "Upstream DNS Failed Queries",
       "type": "timeseries"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": [
+    "dhcp",
+    "dns",
     "fana",
-    "network",
     "provisioned"
   ],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
-  "timezone": "browser",
-  "title": "Network",
-  "uid": "fana-network-overview",
+  "timezone": "",
+  "title": "DHCP / DNS",
+  "uid": "fana-dhcp-dns-overview",
   "version": 1,
   "weekStart": ""
 }

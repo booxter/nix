@@ -84,6 +84,7 @@ function defaultSelectionPathFilter(paths) {
       "eslint.config.js",
       "lib/fleet.nix",
       ".github/scripts/plan-ci-matrix.js",
+      "scripts/formatter.sh",
     ],
   });
 }

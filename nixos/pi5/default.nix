@@ -5,6 +5,7 @@ let
   gwAddr = "192.168.0.1";
   mainAddr = "192.168.1.1";
   guestAddr = "192.168.2.1";
+  dnsmasqExporterPort = 9153;
 in
 {
   imports = [
@@ -135,6 +136,16 @@ in
       ];
     };
   };
+  services.prometheus.exporters.dnsmasq = {
+    enable = true;
+    listenAddress = mainAddr;
+    openFirewall = false;
+    port = dnsmasqExporterPort;
+    dnsmasqListenAddress = "127.0.0.1:53";
+  };
+  networking.firewall.interfaces.${mainIface}.allowedTCPPorts = [
+    dnsmasqExporterPort
+  ];
   networking.firewall.allowedUDPPorts = [
     53 # DNS
     67 # DHCP
