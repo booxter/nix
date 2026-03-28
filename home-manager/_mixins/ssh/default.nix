@@ -1,6 +1,9 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 {
   services.ssh-agent.enable = pkgs.stdenv.isLinux;
+  # OpenSSH ssh-agent exits with status 2 on SIGTERM in this mode; treat that
+  # as a clean stop so short-lived user sessions do not look like failures.
+  systemd.user.services.ssh-agent.Service.SuccessExitStatus = lib.mkIf pkgs.stdenv.isLinux 2;
 
   programs.ssh = {
     enable = true;
