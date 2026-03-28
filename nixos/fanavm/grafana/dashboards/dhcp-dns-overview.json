@@ -64,8 +64,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "dnsmasq_leases{job=\"dnsmasq\"}",
+          "instant": true,
           "legendFormat": "leases",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -126,8 +127,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m])) / clamp_min(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_misses{job=\"dnsmasq\"}[5m])), 1e-9)) or vector(0)",
+          "instant": true,
           "legendFormat": "hit ratio",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -178,8 +180,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "dnsmasq_cachesize{job=\"dnsmasq\"}",
+          "instant": true,
           "legendFormat": "cache size",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -230,8 +233,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_misses{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_auth{job=\"dnsmasq\"}[5m])) or vector(0)",
+          "instant": true,
           "legendFormat": "queries",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
