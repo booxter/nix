@@ -61,7 +61,7 @@ let
     name = "lan-wan-accounting-export";
     runtimeInputs = [
       pkgs.coreutils
-      pkgs.gawk
+      pkgs.jq
       pkgs.nftables
     ];
     text = ''
@@ -80,16 +80,11 @@ let
       while read -r counter_name counter_value; do
         counter_bytes["$counter_name"]="$counter_value"
       done < <(
-        nft list table inet ${tableName} | awk '
-          $1 == "counter" && $2 ~ /^(lan_in|wan_in|lan_out|wan_out)$/ {
-            for (i = 1; i <= NF; i++) {
-              if ($i == "bytes") {
-                gsub(/[^0-9]/, "", $(i + 1))
-                print $2, $(i + 1)
-                break
-              }
-            }
-          }
+        nft -j list table inet ${tableName} | jq -r '
+          .nftables[]
+          | .counter?
+          | select(.name == "lan_in" or .name == "wan_in" or .name == "lan_out" or .name == "wan_out")
+          | "\(.name) \(.bytes)"
         '
       )
 
