@@ -5,6 +5,7 @@ let
   gwAddr = "192.168.0.1";
   mainAddr = "192.168.1.1";
   guestAddr = "192.168.2.1";
+  dnsmasqExporterPort = 9153;
 in
 {
   imports = [
@@ -134,6 +135,13 @@ in
         "netboot.xyz.efi"
       ];
     };
+  };
+  services.prometheus.exporters.dnsmasq = {
+    enable = true;
+    listenAddress = "0.0.0.0";
+    openFirewall = true;
+    port = dnsmasqExporterPort;
+    dnsmasqListenAddress = "127.0.0.1:53";
   };
   networking.firewall.allowedUDPPorts = [
     53 # DNS

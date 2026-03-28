@@ -176,6 +176,16 @@ in
           }
         ];
       }
+      {
+        job_name = "dnsmasq";
+        static_configs = [
+          {
+            targets = [
+              "${outputs.nixosConfigurations.pi5.config.host.dnsName}:${toString outputs.nixosConfigurations.pi5.config.services.prometheus.exporters.dnsmasq.port}"
+            ];
+          }
+        ];
+      }
     ];
   };
 
