@@ -60,7 +60,7 @@
         {
           "datasource": "Loki",
           "editorMode": "code",
-          "expr": "sum by (host) (count_over_time({job=\"systemd-journal\",level=~\"emerg|alert|crit|err\"}[5m]))",
+          "expr": "sum by (host) (count_over_time({job=\"systemd-journal\",level=~\"emerg|alert|crit|err\"}[15m])) or (sum by (host) (count_over_time({job=\"systemd-journal\"}[15m])) * 0)",
           "queryType": "range",
           "refId": "A"
         }
@@ -108,7 +108,7 @@
         {
           "datasource": "Loki",
           "editorMode": "code",
-          "expr": "sum by (host) (count_over_time({job=\"systemd-journal\",level=\"warning\"}[5m]))",
+          "expr": "sum by (host) (count_over_time({job=\"systemd-journal\",level=\"warning\"}[15m])) or (sum by (host) (count_over_time({job=\"systemd-journal\"}[15m])) * 0)",
           "queryType": "range",
           "refId": "A"
         }
