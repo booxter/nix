@@ -96,10 +96,6 @@ in
       openssh.authorizedKeys.keys = workKeys ++ lib.optionals (!isWork) personalKeys;
     };
 
-    environment.shellAliases = {
-      iftop = "sudo iftop -b -N -P -o 40s";
-    };
-
     programs.zsh.enable = true;
     host.isWork = isWork;
   };
