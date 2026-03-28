@@ -8,6 +8,12 @@ let
   cfg = config.host.observability.lanWan;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   tableName = "observability_lan_wan";
+  inputIfaceFilter = lib.optionalString (cfg.interface != null) ''
+    iifname != "${cfg.interface}" return
+  '';
+  outputIfaceFilter = lib.optionalString (cfg.interface != null) ''
+    oifname != "${cfg.interface}" return
+  '';
   rulesFile = pkgs.writeText "lan-wan-accounting.nft" ''
     table inet ${tableName} {
       set lan_nets {
@@ -24,6 +30,7 @@ let
       chain input {
         type filter hook input priority mangle; policy accept;
         iifname "lo" return
+        ${inputIfaceFilter}
         ip saddr @lan_nets counter name "lan_in" return
         counter name "wan_in"
       }
@@ -31,6 +38,7 @@ let
       chain output {
         type filter hook output priority mangle; policy accept;
         oifname "lo" return
+        ${outputIfaceFilter}
         ip daddr @lan_nets counter name "lan_out" return
         counter name "wan_out"
       }
@@ -111,6 +119,12 @@ in
       type = with lib.types; listOf str;
       default = [ "192.168.0.0/16" ];
       description = "IPv4 subnets that should be treated as LAN traffic.";
+    };
+
+    interface = lib.mkOption {
+      type = with lib.types; nullOr str;
+      default = null;
+      description = "If set, only account traffic entering or leaving through this interface.";
     };
   };
 

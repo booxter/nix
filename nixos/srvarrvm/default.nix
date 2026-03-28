@@ -62,7 +62,10 @@ let
   servarrUMask = lib.mkForce "0002";
 in
 {
-  host.observability.lanWan.enable = true;
+  host.observability.lanWan = {
+    enable = true;
+    interface = "ens18";
+  };
 
   imports = [
     inputs.nixarr.nixosModules.default
