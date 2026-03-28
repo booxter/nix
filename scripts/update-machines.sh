@@ -397,14 +397,22 @@ for host in "${HOSTS[@]}"; do
   remote_script="/tmp/update-nix-$$.sh"
   remote_payload="$(cat <<'REMOTE'
 set -euo pipefail
-trap 'rm -f "$0"' EXIT
+repo_dir=""
+cleanup() {
+  status=$?
+  if [[ -n "$repo_dir" ]]; then
+    rm -rf "$repo_dir" || true
+  fi
+  rm -f "$0" || true
+  return "$status"
+}
+trap cleanup EXIT
 MIN_DISK_KB="$1"
 MIN_DISK_GIB="$2"
 branch="$3"
 repo_url="$4"
 GC_HEADROOM_KB="$5"
 repo_dir="$(mktemp -d)"
-trap 'rm -rf "$repo_dir"' EXIT
 
 get_avail_path() {
   if [[ -d /nix/store ]]; then

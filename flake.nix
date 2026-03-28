@@ -418,8 +418,12 @@
             mbake format --config ./.bake.toml Makefile
             git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
             git ls-files -z -- '*.json' '**/*.json' | xargs -0 -r -n1 sh -c "
+              set -eu
               tmp=\$(mktemp)
+              trap 'rm -f \"\$tmp\"' EXIT
               jq -S --indent 2 . \"\$1\" > \"\$tmp\"
+              chmod --reference=\"\$1\" \"\$tmp\" 2>/dev/null || true
+              chown --reference=\"\$1\" \"\$tmp\" 2>/dev/null || true
               mv \"\$tmp\" \"\$1\"
             " _
             actionlint .github/workflows/*.yml
