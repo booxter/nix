@@ -1,4 +1,8 @@
+#!/usr/bin/env bash
 # shellcheck shell=bash
+
+set -euo pipefail
+
 treefmt "$@"
 mbake format --config ./.bake.toml Makefile
 git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
