@@ -282,7 +282,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(dnsmasq_hits{job=\"dnsmasq\"}[5m])",
+          "expr": "avg_over_time(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m])[15m:])",
           "legendFormat": "cache hits",
           "range": true,
           "refId": "A"
@@ -290,7 +290,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(dnsmasq_misses{job=\"dnsmasq\"}[5m])",
+          "expr": "avg_over_time(rate(dnsmasq_misses{job=\"dnsmasq\"}[5m])[15m:])",
           "legendFormat": "forwarded misses",
           "range": true,
           "refId": "B"
@@ -298,7 +298,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(dnsmasq_auth{job=\"dnsmasq\"}[5m])",
+          "expr": "avg_over_time(rate(dnsmasq_auth{job=\"dnsmasq\"}[5m])[15m:])",
           "legendFormat": "authoritative",
           "range": true,
           "refId": "C"
@@ -347,7 +347,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(dnsmasq_servers_queries{job=\"dnsmasq\"}[5m])",
+          "expr": "avg_over_time(rate(dnsmasq_servers_queries{job=\"dnsmasq\"}[5m])[15m:])",
           "legendFormat": "{{server}}",
           "range": true,
           "refId": "A"
@@ -396,7 +396,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(dnsmasq_insertions{job=\"dnsmasq\"}[5m])",
+          "expr": "avg_over_time(rate(dnsmasq_insertions{job=\"dnsmasq\"}[5m])[15m:])",
           "legendFormat": "insertions",
           "range": true,
           "refId": "A"
@@ -404,7 +404,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(dnsmasq_evictions{job=\"dnsmasq\"}[5m])",
+          "expr": "avg_over_time(rate(dnsmasq_evictions{job=\"dnsmasq\"}[5m])[15m:])",
           "legendFormat": "evictions",
           "range": true,
           "refId": "B"
@@ -453,7 +453,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(dnsmasq_servers_queries_failed{job=\"dnsmasq\"}[5m])",
+          "expr": "avg_over_time(rate(dnsmasq_servers_queries_failed{job=\"dnsmasq\"}[5m])[15m:])",
           "legendFormat": "{{server}}",
           "range": true,
           "refId": "A"
