@@ -396,6 +396,7 @@ for host in "${HOSTS[@]}"; do
   fi
   remote_script="/tmp/update-nix-$$.sh"
   remote_payload="$(cat <<'REMOTE'
+#!/usr/bin/env bash
 set -euo pipefail
 repo_dir=""
 cleanup() {
