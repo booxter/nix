@@ -342,104 +342,6 @@
               }
             ]
           },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 0,
-        "y": 24
-      },
-      "id": 3,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "sum by(instance, device) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
-          "legendFormat": "{{instance}} {{device}} rx",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Inbound Bandwidth By Interface",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 12,
-        "x": 12,
-        "y": 24
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "sum by(instance, device) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
-          "legendFormat": "{{instance}} {{device}} tx",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Outbound Bandwidth By Interface",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
           "unit": "pps"
         },
         "overrides": []
@@ -448,7 +350,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 24
       },
       "id": 5,
       "options": {
@@ -497,7 +399,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 24
       },
       "id": 6,
       "options": {
