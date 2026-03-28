@@ -60,7 +60,7 @@
         {
           "datasource": "Loki",
           "editorMode": "code",
-          "expr": "sum by (host) (count_over_time({job=\"systemd-journal\"} |~ \"(?i)error|failed|panic\" [5m]))",
+          "expr": "sum by (host) (count_over_time({job=\"systemd-journal\",level=~\"emerg|alert|crit|err\"}[5m]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -108,7 +108,7 @@
         {
           "datasource": "Loki",
           "editorMode": "code",
-          "expr": "sum by (host) (count_over_time({job=\"systemd-journal\"} |~ \"(?i)warn|warning\" [5m]))",
+          "expr": "sum by (host) (count_over_time({job=\"systemd-journal\",level=\"warning\"}[5m]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -139,7 +139,7 @@
         {
           "datasource": "Loki",
           "editorMode": "code",
-          "expr": "{job=\"systemd-journal\"} |~ \"(?i)error|failed|panic\"",
+          "expr": "{job=\"systemd-journal\",level=~\"emerg|alert|crit|err\"}",
           "queryType": "range",
           "refId": "A"
         }
@@ -170,7 +170,7 @@
         {
           "datasource": "Loki",
           "editorMode": "code",
-          "expr": "{job=\"systemd-journal\"} |~ \"(?i)warn|warning\"",
+          "expr": "{job=\"systemd-journal\",level=\"warning\"}",
           "queryType": "range",
           "refId": "A"
         }
