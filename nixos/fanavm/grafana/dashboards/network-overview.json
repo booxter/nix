@@ -24,6 +24,13 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "wan",
+              "mode": "normal"
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -73,6 +80,13 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "wan",
+              "mode": "normal"
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
