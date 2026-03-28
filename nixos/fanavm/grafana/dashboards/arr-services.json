@@ -137,12 +137,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "probe_duration_seconds{job=\"blackbox-arr\"}",
+          "expr": "avg_over_time(probe_duration_seconds{job=\"blackbox-arr\"}[5m])",
           "legendFormat": "{{service_title}}",
           "range": true,
           "refId": "A"
         }
       ],
+      "timeFrom": "4h",
       "title": "Probe Duration",
       "type": "timeseries"
     },
@@ -200,6 +201,7 @@
           "refId": "A"
         }
       ],
+      "timeFrom": "4h",
       "title": "HTTP Status Code",
       "type": "timeseries"
     },
