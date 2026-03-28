@@ -400,11 +400,13 @@
         pkgs.writeShellApplication {
           name = "formatter";
           runtimeInputs = with pkgs; [
+            coreutils
             nixfmt-tree
             shellcheck
             ruff
             nodejs
             nodePackages.eslint
+            jq
             mbake
             actionlint
             markdownlint-cli2
@@ -415,6 +417,11 @@
             treefmt "$@"
             mbake format --config ./.bake.toml Makefile
             git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
+            git ls-files -z -- '*.json' '**/*.json' | xargs -0 -r -n1 sh -c "
+              tmp=\$(mktemp)
+              jq -S --indent 2 . \"\$1\" > \"\$tmp\"
+              mv \"\$tmp\" \"\$1\"
+            " _
             actionlint .github/workflows/*.yml
             git ls-files -z -- '*.md' '**/*.md' | xargs -0 -r markdownlint-cli2
             git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff format

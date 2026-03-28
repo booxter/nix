@@ -7,6 +7,21 @@
   ...
 }:
 let
+  arrServices = import ../../lib/arr-services.nix {
+    srvarrDisplayHost = "${config.services.avahi.hostName}.local";
+    srvarrPorts = {
+      audiobookshelf = config.nixarr.audiobookshelf.port;
+      bazarr = config.nixarr.bazarr.port;
+      lidarr = config.nixarr.lidarr.port;
+      prowlarr = config.nixarr.prowlarr.port;
+      radarr = config.nixarr.radarr.port;
+      readarr = config.nixarr.readarr.port;
+      readarrAudio = config.nixarr.readarr-audiobook.port;
+      sabnzbd = config.nixarr.sabnzbd.guiPort;
+      sonarr = config.nixarr.sonarr.port;
+      transmission = config.nixarr.transmission.uiPort;
+    };
+  };
   mediaPath = "/data/media";
   # Resilient NFS client behavior:
   # - hard: block I/O until the server is back (avoid soft I/O errors).
@@ -47,6 +62,11 @@ let
   servarrUMask = lib.mkForce "0002";
 in
 {
+  host.observability.lanWan = {
+    enable = true;
+    interface = "ens18";
+  };
+
   imports = [
     inputs.nixarr.nixosModules.default
     ./backup.nix
@@ -79,7 +99,14 @@ in
     unitConfig = requiresMediaMount;
   };
   # Make services that r/w to NFS require the media mount.
-  systemd.services.audiobookshelf.unitConfig = requiresMediaMount;
+  systemd.services.audiobookshelf = {
+    # nixarr points Audiobookshelf at an absolute data dir under /data, but the
+    # upstream module passes that through to StateDirectory=. systemd ignores
+    # absolute StateDirectory paths and logs a warning on every unit reload, so
+    # clear just that directive and keep the rest of the service as generated.
+    serviceConfig.StateDirectory = lib.mkForce null;
+    unitConfig = requiresMediaMount;
+  };
   systemd.services.jellyseerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
   systemd.services.readarr.unitConfig = requiresMediaMount;
@@ -286,75 +313,13 @@ in
                   type = "monitor";
                   cache = "1m";
                   title = "Services";
-
-                  # TODO: extract port numbers from config
-                  sites = [
-                    {
-                      title = "Jellyfin";
-                      url = "https://jf.ihar.dev";
-                      icon = "sh:jellyfin";
-                    }
-                    {
-                      title = "Jellyseerr";
-                      url = "https://js.ihar.dev";
-                      icon = "sh:jellyseerr";
-                    }
-                    {
-                      title = "Grafana";
-                      url = "http://fana.local:3000/";
-                      icon = "sh:grafana";
-                    }
-                    {
-                      title = "Radarr";
-                      url = "http://srvarr.local:7878/";
-                      icon = "sh:radarr";
-                    }
-                    {
-                      title = "Sonarr";
-                      url = "http://srvarr.local:8989/";
-                      icon = "sh:sonarr";
-                    }
-                    {
-                      title = "Lidarr";
-                      url = "http://srvarr.local:8686/";
-                      icon = "sh:lidarr";
-                    }
-                    {
-                      title = "Audiobookshelf";
-                      url = "https://au.ihar.dev";
-                      icon = "sh:audiobookshelf";
-                    }
-                    {
-                      title = "Readarr";
-                      url = "http://srvarr.local:8787/";
-                      icon = "sh:readarr";
-                    }
-                    {
-                      title = "Readarr Audio";
-                      url = "http://srvarr.local:9494/";
-                      icon = "sh:readarr";
-                    }
-                    {
-                      title = "Bazarr";
-                      url = "http://srvarr.local:6767/";
-                      icon = "sh:bazarr";
-                    }
-                    {
-                      title = "Prowlarr";
-                      url = "http://srvarr.local:9696/";
-                      icon = "sh:prowlarr";
-                    }
-                    {
-                      title = "Transmission";
-                      url = "http://srvarr.local:9091/";
-                      icon = "sh:transmission";
-                    }
-                    {
-                      title = "SABNZB";
-                      url = "http://srvarr.local:6336/";
-                      icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
-                    }
-                  ];
+                  sites = map (service: {
+                    inherit (service)
+                      icon
+                      title
+                      url
+                      ;
+                  }) arrServices;
                 }
               ];
             }

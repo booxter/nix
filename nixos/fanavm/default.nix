@@ -2,9 +2,26 @@
   config,
   lib,
   outputs,
+  pkgs,
   ...
 }:
 let
+  arrServices = import ../../lib/arr-services.nix {
+    grafanaProbeUrl = "http://127.0.0.1:${toString grafanaPort}/";
+    srvarrProbeHost = outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName;
+    srvarrPorts = {
+      audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
+      bazarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.bazarr.port;
+      lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;
+      prowlarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.prowlarr.port;
+      radarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.radarr.port;
+      readarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.readarr.port;
+      readarrAudio = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.readarr-audiobook.port;
+      sabnzbd = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sabnzbd.guiPort;
+      sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
+      transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
+    };
+  };
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
@@ -85,6 +102,20 @@ in
           }
         ];
       };
+      dashboards.settings = {
+        apiVersion = 1;
+        providers = [
+          {
+            name = "fana";
+            folder = "Fana";
+            type = "file";
+            disableDeletion = false;
+            editable = false;
+            updateIntervalSeconds = 30;
+            options.path = ./grafana/dashboards;
+          }
+        ];
+      };
     };
   };
 
@@ -114,7 +145,54 @@ in
           }
         ];
       }
+      {
+        job_name = "blackbox-arr";
+        metrics_path = "/probe";
+        params.module = [ "http_service" ];
+        static_configs = map (service: {
+          labels = {
+            scope = service.scope;
+            service = service.id;
+            service_title = service.title;
+          };
+          targets = [ service.probeUrl ];
+        }) arrServices;
+        relabel_configs = [
+          {
+            source_labels = [ "__address__" ];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = [ "__param_target" ];
+            target_label = "target";
+          }
+          {
+            source_labels = [ "service" ];
+            target_label = "instance";
+          }
+          {
+            replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+            target_label = "__address__";
+          }
+        ];
+      }
     ];
+  };
+
+  # Blackbox exporter probes service endpoints to track reachability and latency.
+  services.prometheus.exporters.blackbox = {
+    enable = true;
+    listenAddress = "127.0.0.1";
+    configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
+      modules.http_service = {
+        http = {
+          follow_redirects = true;
+          preferred_ip_protocol = "ip4";
+        };
+        prober = "http";
+        timeout = "5s";
+      };
+    };
   };
 
   # Loki stores and indexes logs so Grafana can query them efficiently.

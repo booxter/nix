@@ -22,6 +22,10 @@ SELECT=false
 START_TS="$(date +%s)"
 MIN_DISK_GIB=20
 MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$MIN_DISK_GIB")"
+REMOTE_MIN_DISK_GIB=30
+REMOTE_MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$REMOTE_MIN_DISK_GIB")"
+GC_HEADROOM_GIB=5
+GC_HEADROOM_KB="$(calc_min_disk_kb_from_gib "$GC_HEADROOM_GIB")"
 SSH_HOST_OPTS=()
 
 resolve_ssh_host() {
@@ -161,7 +165,7 @@ get_local_avail_path() {
 }
 
 local_disk_cleanup_if_low() {
-  local avail_path avail_kb avail_gb
+  local avail_path avail_kb avail_gb gc_target_kb gc_target_gb
   avail_path="$(get_local_avail_path)"
   avail_kb="$(df -Pk "$avail_path" | awk 'NR==2 {print $4}')"
   if [[ -z "$avail_kb" ]]; then
@@ -170,8 +174,15 @@ local_disk_cleanup_if_low() {
   avail_gb="$(awk "BEGIN {printf \"%.1f\", ${avail_kb}/1024/1024}")"
   printf '%b\n' "${COLOR_DIM}Local available disk on ${avail_path}: ${avail_gb} GiB${COLOR_RESET}"
   if [[ "$avail_kb" -lt "$MIN_DISK_KB" ]]; then
-    echo "Low local disk space (<${MIN_DISK_GIB}GiB). Running nix-collect-garbage -d..."
-    sudo nix-collect-garbage -d
+    gc_target_kb="$((MIN_DISK_KB - avail_kb + GC_HEADROOM_KB))"
+    gc_target_gb="$(awk "BEGIN {printf \"%.1f\", ${gc_target_kb}/1024/1024}")"
+    echo "Low local disk space (<${MIN_DISK_GIB}GiB). Running bounded nix-collect-garbage -d --max-freed ${gc_target_gb}GiB..."
+    sudo nix-collect-garbage -d --max-freed "${gc_target_kb}K"
+    avail_kb="$(df -Pk "$avail_path" | awk 'NR==2 {print $4}')"
+    if [[ -n "$avail_kb" && "$avail_kb" -lt "$MIN_DISK_KB" ]]; then
+      echo "Bounded GC did not free enough space. Running full nix-collect-garbage -d..."
+      sudo nix-collect-garbage -d
+    fi
   fi
 }
 
@@ -391,6 +402,7 @@ MIN_DISK_KB="$1"
 MIN_DISK_GIB="$2"
 branch="$3"
 repo_url="$4"
+GC_HEADROOM_KB="$5"
 repo_dir="$(mktemp -d)"
 trap 'rm -rf "$repo_dir"' EXIT
 
@@ -420,10 +432,19 @@ if set_avail_gib; then
   printf '\033[1;33m%s\033[0m\n' "Available disk on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
 fi
 if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
-  echo "Low disk space (<${MIN_DISK_GIB}GiB). Running nix-collect-garbage -d..."
-  sudo nix-collect-garbage -d
+  GC_TARGET_KB="$((MIN_DISK_KB - AVAIL_KB + GC_HEADROOM_KB))"
+  GC_TARGET_GB="$(awk "BEGIN {printf \"%.1f\", ${GC_TARGET_KB}/1024/1024}")"
+  echo "Low disk space (<${MIN_DISK_GIB}GiB). Running bounded nix-collect-garbage -d --max-freed ${GC_TARGET_GB}GiB..."
+  sudo nix-collect-garbage -d --max-freed "${GC_TARGET_KB}K"
   if set_avail_gib; then
     printf '\033[1;33m%s\033[0m\n' "Available disk after cleanup on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
+  fi
+  if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
+    echo "Bounded GC did not free enough space. Running full nix-collect-garbage -d..."
+    sudo nix-collect-garbage -d
+    if set_avail_gib; then
+      printf '\033[1;33m%s\033[0m\n' "Available disk after full cleanup on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
+    fi
   fi
 fi
 
@@ -451,7 +472,7 @@ REMOTE
   if is_local_host "$host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
-    if "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL"; then
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -460,7 +481,7 @@ REMOTE
   fi
   # shellcheck disable=SC2029
   printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$MIN_DISK_KB" "$MIN_DISK_GIB" "$BRANCH" "$REPO_URL"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")
