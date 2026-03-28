@@ -102,6 +102,7 @@ let
       host_observability_network_bytes_total{direction="transmit",scope="wan"} ''${counter_bytes[wan_out]}
       EOF
 
+      chmod 0644 "$tmp_file"
       mv "$tmp_file" ${textfileDir}/lan-wan.prom
       trap - EXIT
     '';
