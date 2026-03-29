@@ -19,6 +19,7 @@
         dive
         gitlab-ci-local
         jinjanator
+        jira-cli-go
         kind
         kubectl
         kubevirt
