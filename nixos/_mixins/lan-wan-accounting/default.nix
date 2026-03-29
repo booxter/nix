@@ -87,6 +87,7 @@ let
     name = "lan-wan-accounting-export";
     runtimeInputs = [
       pkgs.coreutils
+      pkgs.gawk
       pkgs.jq
       pkgs.iproute2
       pkgs.nftables
