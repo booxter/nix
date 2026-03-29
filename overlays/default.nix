@@ -51,5 +51,29 @@
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
       inherit (pkgsFirefoxUnwrapped) firefox-unwrapped;
       inherit (pkgsThunderbirdUnwrapped) thunderbird-unwrapped;
+
+      # Mirror nixpkgs PR #501885 on Darwin without pulling a separate nixpkgs input.
+      # This is a local attempt to fix the Kitty crashes I am seeing on macOS.
+      kitty = prev.kitty.overrideAttrs (
+        old:
+        let
+          version = "0.46.2";
+          src = prev.fetchFromGitHub {
+            owner = "kovidgoyal";
+            repo = "kitty";
+            tag = "v${version}";
+            hash = "sha256-x+jBQrg3Iaj6PLMF1hIjS46odxv5GxPMcvC9JddYCHo=";
+          };
+        in
+        {
+          inherit version src;
+          goModules =
+            (prev.buildGo126Module {
+              pname = "kitty-go-modules";
+              inherit src version;
+              vendorHash = "sha256-FaSWBeQJlvw9vXcHJ/OaFd48K8d7X86X8w7wpG84Ltw=";
+            }).goModules;
+        }
+      );
     };
 }
