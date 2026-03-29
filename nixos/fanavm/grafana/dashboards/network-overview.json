@@ -283,7 +283,7 @@
           "refId": "A"
         }
       ],
-      "title": "SRVARR WAN Outbound Split",
+      "title": "SRVARR ens18 Egress Class Split (Stacked)",
       "type": "timeseries"
     },
     {
