@@ -795,7 +795,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) ((sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",host_network_charts=\"true\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\",host_network_charts=\"true\"} * 0) + (sum by(instance) (rate(node_network_transmit_errs_total{job=\"node\",host_network_charts=\"true\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\",host_network_charts=\"true\"} * 0) + (sum by(instance) (rate(node_network_receive_drop_total{job=\"node\",host_network_charts=\"true\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\",host_network_charts=\"true\"} * 0) + (sum by(instance) (rate(node_network_transmit_drop_total{job=\"node\",host_network_charts=\"true\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\",host_network_charts=\"true\"} * 0))",
+          "expr": "sum by(instance) (((sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",host_network_source=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\",host_network_source=\"node\"} * 0) + (sum by(instance) (rate(node_network_transmit_errs_total{job=\"node\",host_network_source=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\",host_network_source=\"node\"} * 0) + (sum by(instance) (rate(node_network_receive_drop_total{job=\"node\",host_network_source=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\",host_network_source=\"node\"} * 0) + (sum by(instance) (rate(node_network_transmit_drop_total{job=\"node\",host_network_source=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\",host_network_source=\"node\"} * 0)) or on(instance) (sum by(instance) (rate(host_observability_network_bytes_total{job=\"node\",host_network_source=\"classified\",direction=\"receive\"}[5m])) * 0))",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -844,7 +844,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_netstat_Tcp_RetransSegs{job=\"node\"}[5m]) and on(instance) max by(instance) (host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"}))",
+          "expr": "sum by(instance) (rate(node_netstat_Tcp_RetransSegs{job=\"node\"}[5m]) and on(instance) max by(instance) (host_observability_network_bytes_total{job=\"node\",direction=\"receive\",scope=\"wan\"}))",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
