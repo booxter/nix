@@ -29,8 +29,16 @@ let
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
   lokiRetention = "${toString retentionHours}h";
-  remoteNixosNodeTargets =
-    map (name: "${outputs.nixosConfigurations.${name}.config.host.dnsName}:9100")
+  remoteNixosNodeTargetConfigs =
+    map
+      (name: {
+        labels = {
+          host_network_charts = lib.boolToString (!outputs.nixosConfigurations.${name}.config.host.isProxmox);
+          host_network_source =
+            if outputs.nixosConfigurations.${name}.config.host.isProxmox then "classified" else "node";
+        };
+        targets = [ "${outputs.nixosConfigurations.${name}.config.host.dnsName}:9100" ];
+      })
       (
         builtins.filter (
           name:
@@ -39,8 +47,15 @@ let
           && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
         ) (builtins.attrNames outputs.nixosConfigurations)
       );
-  remoteDarwinNodeTargets =
-    map (name: "${outputs.darwinConfigurations.${name}.config.host.dnsName}:9100")
+  remoteDarwinNodeTargetConfigs =
+    map
+      (name: {
+        labels = {
+          host_network_charts = "true";
+          host_network_source = "node";
+        };
+        targets = [ "${outputs.darwinConfigurations.${name}.config.host.dnsName}:9100" ];
+      })
       (
         builtins.filter (
           name:
@@ -49,7 +64,7 @@ let
           && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
         ) (builtins.attrNames outputs.darwinConfigurations)
       );
-  remoteNodeTargets = remoteNixosNodeTargets ++ remoteDarwinNodeTargets;
+  remoteNodeTargetConfigs = remoteNixosNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
 in
 {
   sops = {
@@ -153,12 +168,14 @@ in
             targets = [
               "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
             ];
-            labels.instance = "${config.host.dnsName}:${toString config.services.prometheus.exporters.node.port}";
+            labels = {
+              host_network_charts = "true";
+              host_network_source = "node";
+              instance = "${config.host.dnsName}:${toString config.services.prometheus.exporters.node.port}";
+            };
           }
-          {
-            targets = remoteNodeTargets;
-          }
-        ];
+        ]
+        ++ remoteNodeTargetConfigs;
       }
       {
         job_name = "blackbox-arr";

@@ -8,6 +8,7 @@ let
   cfg = config.host.observability.lanWan;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   tableName = "observability_lan_wan";
+  interfacePathMode = cfg.mode == "interface-path";
   wanSubclassEnabled = cfg.wanUdpSubclass != null;
   wanTransmitTcClassEnabled = cfg.wanTransmitTcClass != null;
   inputIfaceFilter = lib.optionalString (cfg.interface != null) ''
@@ -41,8 +42,10 @@ let
       ${lib.optionalString wanSubclassEnabled "counter ${cfg.wanUdpSubclass.name}_out {}"}
       ${lib.optionalString wanSubclassEnabled "counter wan_other_out {}"}
 
-      chain prerouting {
-        type filter hook prerouting priority mangle; policy accept;
+      chain ${if interfacePathMode then "prerouting" else "input"} {
+        type filter hook ${
+          if interfacePathMode then "prerouting" else "input"
+        } priority mangle; policy accept;
         iifname "lo" return
         ${inputIfaceFilter}
         ip saddr @lan_nets counter name "lan_in" return
@@ -50,8 +53,10 @@ let
         counter name "wan_in"
       }
 
-      chain postrouting {
-        type filter hook postrouting priority mangle; policy accept;
+      chain ${if interfacePathMode then "postrouting" else "output"} {
+        type filter hook ${
+          if interfacePathMode then "postrouting" else "output"
+        } priority mangle; policy accept;
         oifname "lo" return
         ${outputIfaceFilter}
         ip daddr @lan_nets counter name "lan_out" return
@@ -164,6 +169,15 @@ in
 {
   options.host.observability.lanWan = {
     enable = lib.mkEnableOption "LAN/WAN traffic accounting for Prometheus";
+
+    mode = lib.mkOption {
+      type = lib.types.enum [
+        "interface-path"
+        "host-local"
+      ];
+      default = "interface-path";
+      description = "Whether to account traffic on the interface path or only traffic generated/consumed by the host itself.";
+    };
 
     lanSubnets = lib.mkOption {
       type = with lib.types; listOf str;
