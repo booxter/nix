@@ -9,6 +9,7 @@ let
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   tableName = "observability_lan_wan";
   wanSubclassEnabled = cfg.wanUdpSubclass != null;
+  wanTransmitTcClassEnabled = cfg.wanTransmitTcClass != null;
   inputIfaceFilter = lib.optionalString (cfg.interface != null) ''
     iifname != "${cfg.interface}" return
   '';
@@ -87,6 +88,7 @@ let
     runtimeInputs = [
       pkgs.coreutils
       pkgs.jq
+      pkgs.iproute2
       pkgs.nftables
     ];
     text = ''
@@ -120,6 +122,22 @@ let
           | "\(.name) \(.bytes)"
         '
       )
+
+      ${lib.optionalString wanTransmitTcClassEnabled ''
+        tc_wan_bytes="$(
+          tc -s class show dev ${cfg.interface} | awk '
+            /^class htb ${cfg.wanTransmitTcClass} / { getline; print $2; found = 1; exit }
+            END { if (!found) print 0 }
+          '
+        )"
+        ${lib.optionalString wanSubclassEnabled ''
+          counter_bytes[${cfg.wanUdpSubclass.name}_out]="$tc_wan_bytes"
+          counter_bytes[wan_out]="$(( tc_wan_bytes + counter_bytes[wan_other_out] ))"
+        ''}
+        ${lib.optionalString (!wanSubclassEnabled) ''
+          counter_bytes[wan_out]="$tc_wan_bytes"
+        ''}
+      ''}
 
       {
         printf '%s\n' '# HELP host_observability_network_bytes_total Classified network traffic observed on this host (per packet path/interface) in bytes.'
@@ -183,6 +201,12 @@ in
       default = null;
       description = "Optional explicit outbound WAN UDP subclass to count alongside the generic WAN counter.";
     };
+
+    wanTransmitTcClass = lib.mkOption {
+      type = with lib.types; nullOr str;
+      default = null;
+      description = "Optional tc class ID to use as the authoritative outbound WAN byte counter for this host.";
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -227,5 +251,16 @@ in
         Unit = "observability-lan-wan-export.service";
       };
     };
+
+    assertions = [
+      {
+        assertion = cfg.wanTransmitTcClass == null || cfg.interface != null;
+        message = "host.observability.lanWan.wanTransmitTcClass requires host.observability.lanWan.interface to be set.";
+      }
+      {
+        assertion = cfg.wanTransmitTcClass == null || cfg.wanUdpSubclass != null;
+        message = "host.observability.lanWan.wanTransmitTcClass requires host.observability.lanWan.wanUdpSubclass so WAN total can include unmatched WAN traffic.";
+      }
+    ];
   };
 }

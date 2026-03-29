@@ -64,6 +64,9 @@ in
 {
   host.observability.lanWan = {
     interface = "ens18";
+    # nft postrouting overcounts the WireGuard transport on this host, so use
+    # the shaped tc class as the authoritative WAN egress counter instead.
+    wanTransmitTcClass = "1:10";
     wanUdpSubclass = {
       name = "wg";
       port = wgEndpointPort;
