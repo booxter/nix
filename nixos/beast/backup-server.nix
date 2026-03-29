@@ -72,29 +72,41 @@ let
       src_password_file="${cloudSecret "localPassword"}"
       dst_password_file="${cloudSecret "password"}"
 
-      if ! ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" cat config >/dev/null 2>&1; then
-        ${pkgs.restic}/bin/restic \
-          -r "$dst_repo" \
-          --password-file "$dst_password_file" \
+      restic_dst() {
+        ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" "$@"
+      }
+
+      cleanup() {
+        exit_code=$?
+        if [ "$exit_code" -ne 0 ]; then
+          restic_dst unlock || true
+        fi
+      }
+      trap cleanup EXIT
+
+      if ! restic_dst cat config >/dev/null 2>&1; then
+        restic_dst \
           init \
           --from-repo "$src_repo" \
           --from-password-file "$src_password_file" \
           --copy-chunker-params
       fi
 
-      ${pkgs.restic}/bin/restic \
+      # The destination repo is only used by this offload job, so clear stale
+      # locks left behind by previously failed runs before starting new work.
+      restic_dst unlock || true
+
+      restic_dst \
         -o 'rclone.args=serve restic --stdio --b2-hard-delete --transfers 1 --checkers 1 --tpslimit 2 --tpslimit-burst 1 --low-level-retries 20' \
-        -r "$dst_repo" \
-        --password-file "$dst_password_file" \
         --pack-size ${cloudCopyPackSize} \
         copy \
         --from-repo "$src_repo" \
         --from-password-file "$src_password_file" \
         --verbose
 
-      ${pkgs.restic}/bin/restic \
-        -r "$dst_repo" \
-        --password-file "$dst_password_file" \
+      restic_dst unlock || true
+
+      restic_dst \
         forget \
         --prune \
         ${pruneArgs}
