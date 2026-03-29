@@ -627,7 +627,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(node_netstat_Tcp_RetransSegs[5m]) and on(instance) max by(instance) (host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"})",
+          "expr": "rate(node_netstat_Tcp_RetransSegs{job=\"node\"}[5m]) and on(instance) max by(instance) (host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"

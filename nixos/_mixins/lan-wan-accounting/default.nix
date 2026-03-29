@@ -105,7 +105,7 @@ let
       )
 
       {
-        printf '%s\n' '# HELP host_observability_network_bytes_total Classified host network traffic in bytes.'
+        printf '%s\n' '# HELP host_observability_network_bytes_total Classified network traffic observed on this host (per packet path/interface) in bytes.'
         printf '%s\n' '# TYPE host_observability_network_bytes_total counter'
         printf 'host_observability_network_bytes_total{direction="receive",scope="lan"} %s\n' "''${counter_bytes[lan_in]}"
         printf 'host_observability_network_bytes_total{direction="receive",scope="wan"} %s\n' "''${counter_bytes[wan_in]}"

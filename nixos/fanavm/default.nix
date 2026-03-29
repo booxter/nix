@@ -153,7 +153,7 @@ in
             targets = [
               "127.0.0.1:${toString config.services.prometheus.exporters.node.port}"
             ];
-            labels.instance = "${config.networking.hostName}:${toString config.services.prometheus.exporters.node.port}";
+            labels.instance = "${config.host.dnsName}:${toString config.services.prometheus.exporters.node.port}";
           }
           {
             targets = remoteNodeTargets;
