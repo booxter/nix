@@ -10,12 +10,10 @@ let
   tableName = "observability_lan_wan";
   qosInterface = if cfg.qos.interface != null then cfg.qos.interface else cfg.interface;
   qosClassMappings = lib.concatLines (
-    lib.mapAttrsToList (
-      label: classId: ''
-        qos_class_ids[${lib.escapeShellArg classId}]=${lib.escapeShellArg label}
-        qos_class_bytes[${lib.escapeShellArg label}]=0
-      ''
-    ) cfg.qos.classes
+    lib.mapAttrsToList (label: classId: ''
+      qos_class_ids[${lib.escapeShellArg classId}]=${lib.escapeShellArg label}
+      qos_class_bytes[${lib.escapeShellArg label}]=0
+    '') cfg.qos.classes
   );
   qosMetricLines = lib.concatLines (
     map (
@@ -42,16 +40,16 @@ let
       counter lan_out {}
       counter wan_out {}
 
-      chain input {
-        type filter hook input priority mangle; policy accept;
+      chain prerouting {
+        type filter hook prerouting priority mangle; policy accept;
         iifname "lo" return
         ${inputIfaceFilter}
         ip saddr @lan_nets counter name "lan_in" return
         counter name "wan_in"
       }
 
-      chain output {
-        type filter hook output priority mangle; policy accept;
+      chain postrouting {
+        type filter hook postrouting priority mangle; policy accept;
         oifname "lo" return
         ${outputIfaceFilter}
         ip daddr @lan_nets counter name "lan_out" return
