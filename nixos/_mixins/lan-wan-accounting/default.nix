@@ -35,6 +35,12 @@ let
         elements = { ${lib.concatStringsSep ", " cfg.lanSubnets} }
       }
 
+      set lan_nets6 {
+        type ipv6_addr
+        flags interval
+        elements = { ${lib.concatStringsSep ", " cfg.lanSubnets6} }
+      }
+
       counter lan_in {}
       counter wan_in {}
       counter lan_out {}
@@ -45,6 +51,7 @@ let
         iifname "lo" return
         ${inputIfaceFilter}
         ip saddr @lan_nets counter name "lan_in" return
+        ip6 saddr @lan_nets6 counter name "lan_in" return
         counter name "wan_in"
       }
 
@@ -53,6 +60,7 @@ let
         oifname "lo" return
         ${outputIfaceFilter}
         ip daddr @lan_nets counter name "lan_out" return
+        ip6 daddr @lan_nets6 counter name "lan_out" return
         counter name "wan_out"
       }
     }
@@ -164,6 +172,12 @@ in
       type = with lib.types; listOf str;
       default = [ "192.168.0.0/16" ];
       description = "IPv4 subnets that should be treated as LAN traffic.";
+    };
+
+    lanSubnets6 = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = [ "fe80::/10" ];
+      description = "IPv6 subnets that should be treated as LAN traffic.";
     };
 
     interface = lib.mkOption {
