@@ -12,14 +12,21 @@ let
   anchorName = "com.apple/${anchorLeaf}";
   anchorPath = "/etc/pf.anchors/${anchorLeaf}";
   iface = cfg.interface;
+  nodeExporterArgs = lib.escapeShellArgs (
+    [
+      "--web.listen-address"
+      "${nodeCfg.listenAddress}:${toString nodeCfg.port}"
+    ]
+    ++ nodeCfg.extraFlags
+  );
   pfRules = pkgs.writeText "darwin-lan-wan-accounting.pf" ''
-    pass in quick on ${iface} inet from { ${lib.concatStringsSep ", " cfg.lanSubnets} } to any no state label "lan_in"
-    pass in quick on ${iface} inet6 from { ${lib.concatStringsSep ", " cfg.lanSubnets6} } to any no state label "lan_in"
-    pass in quick on ${iface} all no state label "wan_in"
+    match in on ${iface} inet from { ${lib.concatStringsSep ", " cfg.lanSubnets} } to any label "lan_in"
+    match in on ${iface} inet6 from { ${lib.concatStringsSep ", " cfg.lanSubnets6} } to any label "lan_in"
+    match in on ${iface} all label "wan_in"
 
-    pass out quick on ${iface} inet from any to { ${lib.concatStringsSep ", " cfg.lanSubnets} } no state label "lan_out"
-    pass out quick on ${iface} inet6 from any to { ${lib.concatStringsSep ", " cfg.lanSubnets6} } no state label "lan_out"
-    pass out quick on ${iface} all no state label "wan_out"
+    match out on ${iface} inet from any to { ${lib.concatStringsSep ", " cfg.lanSubnets} } label "lan_out"
+    match out on ${iface} inet6 from any to { ${lib.concatStringsSep ", " cfg.lanSubnets6} } label "lan_out"
+    match out on ${iface} all label "wan_out"
   '';
   installRules = pkgs.writeShellApplication {
     name = "darwin-lan-wan-accounting-install";
@@ -115,7 +122,7 @@ in
     launchd.daemons.prometheus-node-exporter.serviceConfig.ProgramArguments = lib.mkForce [
       "/bin/sh"
       "-c"
-      "/bin/wait4path /nix/store && exec ${lib.getExe nodeCfg.package} --web.listen-address ${nodeCfg.listenAddress}:${toString nodeCfg.port} --collector.textfile --collector.textfile.directory=${textfileDir}"
+      "/bin/wait4path /nix/store && exec ${lib.getExe nodeCfg.package} ${nodeExporterArgs}"
     ];
 
     system.activationScripts.postActivation.text = lib.mkAfter ''
