@@ -80,6 +80,12 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "stacking": {
+              "group": "host-inbound",
+              "mode": "normal"
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -493,12 +499,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "stacking": {
-              "group": "host-inbound",
-              "mode": "normal"
-            }
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -541,56 +541,7 @@
           "refId": "A"
         }
       ],
-      "title": "Inbound Bandwidth By Host",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 40
-      },
-      "id": 22,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Outbound Bandwidth By Host (Stacked)",
+      "title": "Inbound Bandwidth By Host (Regular)",
       "type": "timeseries"
     },
     {
@@ -623,6 +574,55 @@
         "x": 0,
         "y": 40
       },
+      "id": 22,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Outbound Bandwidth By Host (Stacked)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
       "id": 2,
       "options": {
         "legend": {
@@ -645,13 +645,19 @@
           "refId": "A"
         }
       ],
-      "title": "Outbound Bandwidth By Host",
+      "title": "Outbound Bandwidth By Host (Regular)",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "stacking": {
+              "group": "host-total",
+              "mode": "normal"
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -701,12 +707,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "stacking": {
-              "group": "host-total",
-              "mode": "normal"
-            }
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -749,7 +749,7 @@
           "refId": "A"
         }
       ],
-      "title": "Total Bandwidth By Host",
+      "title": "Total Bandwidth By Host (Regular)",
       "type": "timeseries"
     },
     {
