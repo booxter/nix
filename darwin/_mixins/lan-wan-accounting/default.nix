@@ -62,7 +62,7 @@ let
           counter_bytes["$current_label"]="''${BASH_REMATCH[1]}"
           current_label=""
         fi
-      done < <(/sbin/pfctl -a ${anchorName} -s labels -v 2>/dev/null || true)
+      done < <(/sbin/pfctl -a ${anchorName} -sr -v 2>/dev/null || true)
 
       {
         printf '%s\n' '# HELP host_observability_network_bytes_total Classified host network traffic in bytes.'
@@ -110,6 +110,8 @@ in
       ];
     };
 
+    # Work around nix-darwin node-exporter flag joining until
+    # https://github.com/nix-darwin/nix-darwin/pull/1739 lands.
     launchd.daemons.prometheus-node-exporter.serviceConfig.ProgramArguments = lib.mkForce [
       "/bin/sh"
       "-c"
