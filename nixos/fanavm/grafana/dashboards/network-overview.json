@@ -134,6 +134,9 @@
             "stacking": {
               "group": "wan-out",
               "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -143,9 +146,14 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 30000000
               }
             ]
           },
+          "max": 40000000,
           "unit": "bps"
         },
         "overrides": []
@@ -185,6 +193,11 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -192,9 +205,14 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "orange",
+                "value": 30000000
               }
             ]
           },
+          "max": 40000000,
           "unit": "bps"
         },
         "overrides": []
