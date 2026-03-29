@@ -64,6 +64,10 @@ in
 {
   host.observability.lanWan = {
     interface = "ens18";
+    wanUdpSubclass = {
+      name = "wg";
+      port = wgEndpointPort;
+    };
   };
 
   imports = [
