@@ -237,62 +237,6 @@
           "custom": {
             "fillOpacity": 20,
             "stacking": {
-              "group": "srvarr-wan-qos",
-              "mode": "normal"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "bps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 16
-      },
-      "id": 18,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "rate(host_observability_qos_bytes_total{instance=\"prox-srvarrvm:9100\"}[5m]) * 8",
-          "legendFormat": "{{class}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "SRVARR ens18 Egress Class Split (Stacked)",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "fillOpacity": 20,
-            "stacking": {
               "group": "lan-in",
               "mode": "normal"
             }
@@ -315,7 +259,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 16
       },
       "id": 12,
       "options": {
@@ -364,7 +308,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 16
       },
       "id": 16,
       "options": {
@@ -420,7 +364,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 24
       },
       "id": 13,
       "options": {
@@ -469,7 +413,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 24
       },
       "id": 17,
       "options": {
@@ -518,7 +462,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 40
+        "y": 32
       },
       "id": 1,
       "options": {
@@ -567,7 +511,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 40
+        "y": 32
       },
       "id": 2,
       "options": {
@@ -616,7 +560,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 48
+        "y": 40
       },
       "id": 5,
       "options": {
@@ -665,7 +609,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 48
+        "y": 40
       },
       "id": 6,
       "options": {

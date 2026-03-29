@@ -8,19 +8,6 @@ let
   cfg = config.host.observability.lanWan;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   tableName = "observability_lan_wan";
-  qosInterface = if cfg.qos.interface != null then cfg.qos.interface else cfg.interface;
-  qosClassMappings = lib.concatLines (
-    lib.mapAttrsToList (label: classId: ''
-      qos_class_ids[${lib.escapeShellArg classId}]=${lib.escapeShellArg label}
-      qos_class_bytes[${lib.escapeShellArg label}]=0
-    '') cfg.qos.classes
-  );
-  qosMetricLines = lib.concatLines (
-    map (
-      label:
-      ''printf 'host_observability_qos_bytes_total{class="${label}",direction="transmit"} %s\n' "''${qos_class_bytes['${label}']}"''
-    ) (lib.attrNames cfg.qos.classes)
-  );
   inputIfaceFilter = lib.optionalString (cfg.interface != null) ''
     iifname != "${cfg.interface}" return
   '';
@@ -90,8 +77,6 @@ let
     name = "lan-wan-accounting-export";
     runtimeInputs = [
       pkgs.coreutils
-      pkgs.gawk
-      pkgs.iproute2
       pkgs.jq
       pkgs.nftables
     ];
@@ -119,31 +104,6 @@ let
         '
       )
 
-      ${lib.optionalString cfg.qos.enable ''
-        declare -A qos_class_ids=()
-        declare -A qos_class_bytes=()
-        ${qosClassMappings}
-
-        qos_iface=${lib.escapeShellArg (if qosInterface != null then qosInterface else "")}
-        if [[ -z "$qos_iface" ]]; then
-          qos_iface="$(
-            ip -o route show to default 2>/dev/null \
-              | awk '{for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit }}'
-          )"
-        fi
-
-        if [[ -n "$qos_iface" ]]; then
-          current_class=""
-          while read -r field1 field2 field3 rest; do
-            if [[ "$field1" == "class" ]]; then
-              current_class="$field3"
-            elif [[ "$field1" == "Sent" && -n "''${qos_class_ids[$current_class]:-}" ]]; then
-              qos_class_bytes["''${qos_class_ids[$current_class]}"]="$field2"
-            fi
-          done < <(tc -s class show dev "$qos_iface")
-        fi
-      ''}
-
       {
         printf '%s\n' '# HELP host_observability_network_bytes_total Classified host network traffic in bytes.'
         printf '%s\n' '# TYPE host_observability_network_bytes_total counter'
@@ -151,11 +111,6 @@ let
         printf 'host_observability_network_bytes_total{direction="receive",scope="wan"} %s\n' "''${counter_bytes[wan_in]}"
         printf 'host_observability_network_bytes_total{direction="transmit",scope="lan"} %s\n' "''${counter_bytes[lan_out]}"
         printf 'host_observability_network_bytes_total{direction="transmit",scope="wan"} %s\n' "''${counter_bytes[wan_out]}"
-        ${lib.optionalString cfg.qos.enable ''
-          printf '%s\n' '# HELP host_observability_qos_bytes_total Traffic matched to exported tc QoS classes in bytes.'
-          printf '%s\n' '# TYPE host_observability_qos_bytes_total counter'
-          ${qosMetricLines}
-        ''}
       } >"$tmp_file"
 
       chmod 0644 "$tmp_file"
@@ -184,26 +139,6 @@ in
       type = with lib.types; nullOr str;
       default = null;
       description = "If set, only account traffic entering or leaving through this interface.";
-    };
-
-    qos = {
-      enable = lib.mkEnableOption "export tc QoS class counters alongside LAN/WAN accounting";
-
-      interface = lib.mkOption {
-        type = with lib.types; nullOr str;
-        default = null;
-        description = "Interface to inspect for tc class counters; defaults to lanWan.interface.";
-      };
-
-      classes = lib.mkOption {
-        type = with lib.types; attrsOf str;
-        default = { };
-        example = {
-          wg_capped = "1:10";
-          other = "1:20";
-        };
-        description = "Mapping from exported metric label to tc class ID.";
-      };
     };
   };
 
