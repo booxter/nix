@@ -80,12 +80,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "stacking": {
-              "group": "host-inbound",
-              "mode": "normal"
-            }
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -450,6 +444,13 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "host-inbound",
+              "mode": "normal"
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -549,6 +550,7 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
+            "fillOpacity": 20,
             "stacking": {
               "group": "host-outbound",
               "mode": "normal"
@@ -653,6 +655,7 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
+            "fillOpacity": 20,
             "stacking": {
               "group": "host-total",
               "mode": "normal"
