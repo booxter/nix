@@ -28,8 +28,6 @@ let
   dynuUsername = "ihrachyshka";
 in
 {
-  host.observability.lanWan.enable = true;
-
   imports = [
     (import ../../disko { })
     ./backup-server.nix

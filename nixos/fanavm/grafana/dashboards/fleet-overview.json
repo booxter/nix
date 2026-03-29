@@ -184,7 +184,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "100 * (1 - (node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"}))",
+          "expr": "100 * ((1 - (node_memory_MemAvailable_bytes{job=\"node\"} / node_memory_MemTotal_bytes{job=\"node\"})) or (1 - ((node_memory_free_bytes{job=\"node\"} + node_memory_inactive_bytes{job=\"node\"}) / node_memory_total_bytes{job=\"node\"})))",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"

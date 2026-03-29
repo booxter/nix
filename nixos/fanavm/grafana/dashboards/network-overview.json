@@ -27,7 +27,7 @@
           "custom": {
             "fillOpacity": 20,
             "stacking": {
-              "group": "wan",
+              "group": "wan-in",
               "mode": "normal"
             }
           },
@@ -67,26 +67,19 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"wan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "WAN Inbound Bandwidth",
+      "title": "WAN Inbound Bandwidth (Stacked)",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "fillOpacity": 20,
-            "stacking": {
-              "group": "wan",
-              "mode": "normal"
-            }
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -107,6 +100,62 @@
         "x": 12,
         "y": 0
       },
+      "id": 14,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "WAN Inbound Bandwidth (Regular)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "wan-out",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
       "id": 11,
       "options": {
         "legend": {
@@ -123,13 +172,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"wan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",scope=\"wan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "WAN Outbound Bandwidth",
+      "title": "WAN Outbound Bandwidth (Stacked)",
       "type": "timeseries"
     },
     {
@@ -153,8 +202,64 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
+        "x": 12,
         "y": 8
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",scope=\"wan\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "WAN Outbound Bandwidth (Regular)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "lan-in",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
       },
       "id": 12,
       "options": {
@@ -172,13 +277,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"lan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",scope=\"lan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "LAN Inbound Bandwidth",
+      "title": "LAN Inbound Bandwidth (Stacked)",
       "type": "timeseries"
     },
     {
@@ -203,9 +308,9 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 16
       },
-      "id": 13,
+      "id": 16,
       "options": {
         "legend": {
           "displayMode": "list",
@@ -221,19 +326,26 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"lan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",scope=\"lan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "LAN Outbound Bandwidth",
+      "title": "LAN Inbound Bandwidth (Regular)",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "lan-out",
+              "mode": "normal"
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -252,9 +364,9 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 24
       },
-      "id": 1,
+      "id": 13,
       "options": {
         "legend": {
           "displayMode": "list",
@@ -270,13 +382,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",scope=\"lan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Inbound Bandwidth By Host",
+      "title": "LAN Outbound Bandwidth (Stacked)",
       "type": "timeseries"
     },
     {
@@ -301,7 +413,217 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 24
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",scope=\"lan\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "LAN Outbound Bandwidth (Regular)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "host-inbound",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Inbound Bandwidth By Host (Stacked)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 32
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Inbound Bandwidth By Host (Regular)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "host-outbound",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Outbound Bandwidth By Host (Stacked)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
       },
       "id": 2,
       "options": {
@@ -319,13 +641,118 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Outbound Bandwidth By Host",
+      "title": "Outbound Bandwidth By Host (Regular)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "host-total",
+              "mode": "normal"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "(sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) + sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total Bandwidth By Host (Stacked)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "(sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) + sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))) * 8",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Total Bandwidth By Host (Regular)",
       "type": "timeseries"
     },
     {
@@ -350,7 +777,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 56
       },
       "id": 5,
       "options": {
@@ -368,7 +795,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_receive_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))",
+          "expr": "(sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\"} * 0) + (sum by(instance) (rate(node_network_transmit_errs_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\"} * 0) + (sum by(instance) (rate(node_network_receive_drop_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\"} * 0) + (sum by(instance) (rate(node_network_transmit_drop_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) or on(instance) up{job=\"node\"} * 0)",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -399,7 +826,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 56
       },
       "id": 6,
       "options": {
@@ -417,7 +844,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(node_netstat_Tcp_RetransSegs{instance=~\"beast:9100|prox-srvarrvm:9100\"}[5m])",
+          "expr": "rate(node_netstat_Tcp_RetransSegs{job=\"node\"}[5m]) and on(instance) max by(instance) (host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"

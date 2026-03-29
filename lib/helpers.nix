@@ -397,6 +397,13 @@ rec {
             (mkPatchedProxmoxNixosModules platform).proxmox-ve
 
             (
+              { ... }:
+              {
+                host.isProxmox = true;
+              }
+            )
+
+            (
               { pkgs, ... }:
               let
                 brname = "vmbr0";
