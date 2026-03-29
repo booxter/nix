@@ -12,13 +12,16 @@ let
   # Keep cloud-copy uploads smaller so each B2 request finishes sooner under
   # the shaped uplink instead of timing out mid-pack.
   cloudCopyPackSize = "4";
+  # Keep native B2 uploads serialized to stay close to the previous single-
+  # transfer rclone path while we validate direct restic offload.
+  cloudB2Connections = "1";
   # Add future backup sources here. Each client gets a dedicated SSH-only user,
   # its own repository path, and its own public key in config.
   backupClients = {
     beast = {
       publicKey = null;
       cloud = {
-        repository = "rclone:b2:ihar-restic-prod/hosts/beast";
+        repository = "b2:ihar-restic-prod:hosts/beast";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
@@ -33,7 +36,7 @@ let
     srvarr = {
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ5uWCS2lW2JVBHPltnWuYtB5866DUSJ9Ayhz4hgY1T2";
       cloud = {
-        repository = "rclone:b2:ihar-restic-prod/hosts/srvarr";
+        repository = "b2:ihar-restic-prod:hosts/srvarr";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
@@ -53,24 +56,22 @@ let
   sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
   sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
   sharedB2ApplicationKeySecret = "backup/restic/cloud/b2/applicationKey";
-  mkCloudTemplate = name: "restic-${name}-cloud-rclone.conf";
   mkCloudOffloadScript =
     name:
     let
       backupRepo = mkBackupRepo name;
       cloudSecret = path: config.sops.secrets.${mkCloudSecret name path}.path;
-      rcloneConfigFile = config.sops.templates.${mkCloudTemplate name}.path;
       pruneArgs = lib.escapeShellArgs backupClients.${name}.cloud.pruneOpts;
     in
     pkgs.writeShellScript "restic-${name}-cloud-offload" ''
       set -euo pipefail
 
-      export RCLONE_CONFIG="${rcloneConfigFile}"
-
       dst_repo="${backupClients.${name}.cloud.repository}"
       src_repo="${backupRepo}"
       src_password_file="${cloudSecret "localPassword"}"
       dst_password_file="${cloudSecret "password"}"
+      export B2_ACCOUNT_ID="$(<${config.sops.secrets.${sharedB2ApplicationKeyIdSecret}.path})"
+      export B2_ACCOUNT_KEY="$(<${config.sops.secrets.${sharedB2ApplicationKeySecret}.path})"
 
       restic_dst() {
         ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" "$@"
@@ -97,7 +98,7 @@ let
       restic_dst unlock || true
 
       restic_dst \
-        -o 'rclone.args=serve restic --stdio --b2-hard-delete --transfers 1 --checkers 1 --tpslimit 2 --tpslimit-burst 1 --low-level-retries 20' \
+        -o b2.connections=${cloudB2Connections} \
         --pack-size ${cloudCopyPackSize} \
         copy \
         --from-repo "$src_repo" \
@@ -197,22 +198,6 @@ in
         };
       };
 
-    templates = builtins.listToAttrs (
-      map (name: {
-        name = mkCloudTemplate name;
-        value = {
-          owner = cloudOffloadUser;
-          group = cloudOffloadUser;
-          mode = "0400";
-          content = ''
-            [b2]
-            type = b2
-            account = ${config.sops.placeholder.${sharedB2ApplicationKeyIdSecret}}
-            key = ${config.sops.placeholder.${sharedB2ApplicationKeySecret}}
-          '';
-        };
-      }) (builtins.attrNames backupClients)
-    );
   };
 
   users.users = builtins.listToAttrs (
