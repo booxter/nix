@@ -64,6 +64,13 @@ in
 {
   host.observability.lanWan = {
     interface = "ens18";
+    qos = {
+      enable = true;
+      classes = {
+        wg_capped = "1:10";
+        other = "1:20";
+      };
+    };
   };
 
   imports = [
