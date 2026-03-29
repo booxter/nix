@@ -140,6 +140,7 @@
             }
           },
           "mappings": [],
+          "max": 40000000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -153,7 +154,6 @@
               }
             ]
           },
-          "max": 40000000,
           "unit": "bps"
         },
         "overrides": []
@@ -199,6 +199,7 @@
             }
           },
           "mappings": [],
+          "max": 40000000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -212,7 +213,6 @@
               }
             ]
           },
-          "max": 40000000,
           "unit": "bps"
         },
         "overrides": []

@@ -190,12 +190,9 @@ in
           mode = "0400";
           content = ''
             [b2]
-            type = s3
-            provider = Other
-            access_key_id = ${config.sops.placeholder.${sharedB2ApplicationKeyIdSecret}}
-            secret_access_key = ${config.sops.placeholder.${sharedB2ApplicationKeySecret}}
-            endpoint = s3.us-east-005.backblazeb2.com
-            no_check_bucket = true
+            type = b2
+            account = ${config.sops.placeholder.${sharedB2ApplicationKeyIdSecret}}
+            key = ${config.sops.placeholder.${sharedB2ApplicationKeySecret}}
           '';
         };
       }) (builtins.attrNames backupClients)
