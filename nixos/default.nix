@@ -123,7 +123,10 @@ in
     lokiWriteUrl = lib.mkDefault "http://prox-fanavm:3100/loki/api/v1/push";
   };
 
-  host.observability.lanWan.enable = lib.mkDefault (!config.host.isWork && !config.host.isProxmox);
+  host.observability.lanWan = {
+    enable = lib.mkDefault (!config.host.isWork);
+    mode = lib.mkDefault (if config.host.isProxmox then "host-local" else "interface-path");
+  };
 
   # TODO: revisit hw sensor monitoring (sensord or alternative).
 

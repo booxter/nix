@@ -7,8 +7,11 @@
 let
   backupRoot = "/volume2/backups/restic-prod";
   cloudOffloadUser = "restic-cloud";
-  cloudBackupRate = "4mbit";
+  cloudBackupRate = "10mbit";
   cloudBackupCeil = "10gbit";
+  # Keep cloud-copy uploads smaller so each B2 request finishes sooner under
+  # the shaped uplink instead of timing out mid-pack.
+  cloudCopyPackSize = "4";
   # Add future backup sources here. Each client gets a dedicated SSH-only user,
   # its own repository path, and its own public key in config.
   backupClients = {
@@ -83,6 +86,7 @@ let
         -o 'rclone.args=serve restic --stdio --b2-hard-delete --transfers 1 --checkers 1 --tpslimit 2 --tpslimit-burst 1 --low-level-retries 20' \
         -r "$dst_repo" \
         --password-file "$dst_password_file" \
+        --pack-size ${cloudCopyPackSize} \
         copy \
         --from-repo "$src_repo" \
         --from-password-file "$src_password_file" \
@@ -190,12 +194,9 @@ in
           mode = "0400";
           content = ''
             [b2]
-            type = s3
-            provider = Other
-            access_key_id = ${config.sops.placeholder.${sharedB2ApplicationKeyIdSecret}}
-            secret_access_key = ${config.sops.placeholder.${sharedB2ApplicationKeySecret}}
-            endpoint = s3.us-east-005.backblazeb2.com
-            no_check_bucket = true
+            type = b2
+            account = ${config.sops.placeholder.${sharedB2ApplicationKeyIdSecret}}
+            key = ${config.sops.placeholder.${sharedB2ApplicationKeySecret}}
           '';
         };
       }) (builtins.attrNames backupClients)
