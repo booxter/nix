@@ -63,7 +63,6 @@ let
 in
 {
   host.observability.lanWan = {
-    enable = true;
     interface = "ens18";
   };
 

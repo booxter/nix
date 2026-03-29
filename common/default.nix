@@ -41,6 +41,11 @@ in
     default = false;
   };
 
+  options.host.isProxmox = lib.mkOption {
+    type = lib.types.bool;
+    default = false;
+  };
+
   options.host.dnsName = lib.mkOption {
     type = lib.types.str;
     default = hostname;

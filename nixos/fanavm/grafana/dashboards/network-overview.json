@@ -67,7 +67,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"wan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -116,7 +116,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"wan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -172,7 +172,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"wan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",scope=\"wan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -221,7 +221,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"wan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",scope=\"wan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -277,7 +277,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"lan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",scope=\"lan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -326,7 +326,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"lan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"receive\",scope=\"lan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -382,7 +382,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"lan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",scope=\"lan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -431,7 +431,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",instance=~\"beast:9100|prox-srvarrvm:9100\",scope=\"lan\"}[5m])) * 8",
+          "expr": "sum by(instance) (rate(host_observability_network_bytes_total{direction=\"transmit\",scope=\"lan\"}[5m])) * 8",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -480,7 +480,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "expr": "(sum by(instance) (rate(node_network_receive_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8) and on(instance) max by(instance) (host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -529,7 +529,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8",
+          "expr": "(sum by(instance) (rate(node_network_transmit_bytes_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m])) * 8) and on(instance) max by(instance) (host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -578,7 +578,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_errs_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_receive_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_drop_total{job=\"node\",instance=~\"beast:9100|prox-srvarrvm:9100\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))",
+          "expr": "(sum by(instance) (rate(node_network_receive_errs_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_errs_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_receive_drop_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]) + rate(node_network_transmit_drop_total{job=\"node\",device!~\"lo|usb.*|veth.*|docker.*|br-.*|virbr.*|vnet.*|zt.*|tailscale.*|wg.*|tun.*\"}[5m]))) and on(instance) max by(instance) (host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -627,7 +627,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "rate(node_netstat_Tcp_RetransSegs{instance=~\"beast:9100|prox-srvarrvm:9100\"}[5m])",
+          "expr": "rate(node_netstat_Tcp_RetransSegs[5m]) and on(instance) max by(instance) (host_observability_network_bytes_total{direction=\"receive\",scope=\"wan\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
