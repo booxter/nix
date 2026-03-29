@@ -29,15 +29,27 @@ let
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
   lokiRetention = "${toString retentionHours}h";
-  remoteNodeTargetHost = name: outputs.nixosConfigurations.${name}.config.host.dnsName;
-  remoteNodeTargets = map (name: "${remoteNodeTargetHost name}:9100") (
-    builtins.filter (
-      name:
-      !(lib.hasPrefix "local-" name)
-      && name != "prox-fanavm"
-      && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
-    ) (builtins.attrNames outputs.nixosConfigurations)
-  );
+  remoteNixosNodeTargets =
+    map (name: "${outputs.nixosConfigurations.${name}.config.host.dnsName}:9100")
+      (
+        builtins.filter (
+          name:
+          !(lib.hasPrefix "local-" name)
+          && name != "prox-fanavm"
+          && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
+        ) (builtins.attrNames outputs.nixosConfigurations)
+      );
+  remoteDarwinNodeTargets =
+    map (name: "${outputs.darwinConfigurations.${name}.config.host.dnsName}:9100")
+      (
+        builtins.filter (
+          name:
+          !(lib.hasSuffix "-ci" name)
+          && (outputs.darwinConfigurations.${name}.config.host.observability.client.enable or false)
+          && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
+        ) (builtins.attrNames outputs.darwinConfigurations)
+      );
+  remoteNodeTargets = remoteNixosNodeTargets ++ remoteDarwinNodeTargets;
 in
 {
   sops = {

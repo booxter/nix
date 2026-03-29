@@ -20,6 +20,7 @@
       ./_mixins/homebrew
       (import ./_mixins/linux-builder { inherit lib ci; })
       ./_mixins/nix-gc
+      ./_mixins/observability-client
       ./_mixins/sudo
     ]
     ++ lib.optionals (!isWork) [
