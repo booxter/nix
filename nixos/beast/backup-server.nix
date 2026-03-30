@@ -12,13 +12,16 @@ let
   # Keep cloud-copy uploads smaller so each B2 request finishes sooner under
   # the shaped uplink instead of timing out mid-pack.
   cloudCopyPackSize = "4";
+  # Keep native B2 uploads serialized to stay close to the previous single-
+  # transfer rclone path while we validate direct restic offload.
+  cloudB2Connections = "1";
   # Add future backup sources here. Each client gets a dedicated SSH-only user,
   # its own repository path, and its own public key in config.
   backupClients = {
     beast = {
       publicKey = null;
       cloud = {
-        repository = "rclone:b2:ihar-restic-prod/hosts/beast";
+        repository = "b2:ihar-restic-prod:hosts/beast";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
@@ -33,7 +36,7 @@ let
     srvarr = {
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ5uWCS2lW2JVBHPltnWuYtB5866DUSJ9Ayhz4hgY1T2";
       cloud = {
-        repository = "rclone:b2:ihar-restic-prod/hosts/srvarr";
+        repository = "b2:ihar-restic-prod:hosts/srvarr";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
@@ -53,48 +56,58 @@ let
   sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
   sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
   sharedB2ApplicationKeySecret = "backup/restic/cloud/b2/applicationKey";
-  mkCloudTemplate = name: "restic-${name}-cloud-rclone.conf";
   mkCloudOffloadScript =
     name:
     let
       backupRepo = mkBackupRepo name;
       cloudSecret = path: config.sops.secrets.${mkCloudSecret name path}.path;
-      rcloneConfigFile = config.sops.templates.${mkCloudTemplate name}.path;
       pruneArgs = lib.escapeShellArgs backupClients.${name}.cloud.pruneOpts;
     in
     pkgs.writeShellScript "restic-${name}-cloud-offload" ''
       set -euo pipefail
 
-      export RCLONE_CONFIG="${rcloneConfigFile}"
-
       dst_repo="${backupClients.${name}.cloud.repository}"
       src_repo="${backupRepo}"
       src_password_file="${cloudSecret "localPassword"}"
       dst_password_file="${cloudSecret "password"}"
+      export B2_ACCOUNT_ID="$(<${config.sops.secrets.${sharedB2ApplicationKeyIdSecret}.path})"
+      export B2_ACCOUNT_KEY="$(<${config.sops.secrets.${sharedB2ApplicationKeySecret}.path})"
 
-      if ! ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" cat config >/dev/null 2>&1; then
-        ${pkgs.restic}/bin/restic \
-          -r "$dst_repo" \
-          --password-file "$dst_password_file" \
+      restic_dst() {
+        ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" "$@"
+      }
+
+      cleanup() {
+        exit_code=$?
+        if [ "$exit_code" -ne 0 ]; then
+          restic_dst unlock || true
+        fi
+      }
+      trap cleanup EXIT
+
+      if ! restic_dst cat config >/dev/null 2>&1; then
+        restic_dst \
           init \
           --from-repo "$src_repo" \
           --from-password-file "$src_password_file" \
           --copy-chunker-params
       fi
 
-      ${pkgs.restic}/bin/restic \
-        -o 'rclone.args=serve restic --stdio --b2-hard-delete --transfers 1 --checkers 1 --tpslimit 2 --tpslimit-burst 1 --low-level-retries 20' \
-        -r "$dst_repo" \
-        --password-file "$dst_password_file" \
+      # The destination repo is only used by this offload job, so clear stale
+      # locks left behind by previously failed runs before starting new work.
+      restic_dst unlock || true
+
+      restic_dst \
+        -o b2.connections=${cloudB2Connections} \
         --pack-size ${cloudCopyPackSize} \
         copy \
         --from-repo "$src_repo" \
         --from-password-file "$src_password_file" \
         --verbose
 
-      ${pkgs.restic}/bin/restic \
-        -r "$dst_repo" \
-        --password-file "$dst_password_file" \
+      restic_dst unlock || true
+
+      restic_dst \
         forget \
         --prune \
         ${pruneArgs}
@@ -124,7 +137,7 @@ let
         ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1: classid 1:1 htb rate ${cloudBackupCeil} ceil ${cloudBackupCeil}
         ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:10 htb rate ${cloudBackupRate} ceil ${cloudBackupRate}
         ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:20 htb rate ${cloudBackupCeil} ceil ${cloudBackupCeil}
-        ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:10 handle 10: cake bandwidth ${cloudBackupRate} besteffort wash
+        ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:10 handle 10: fq_codel
         ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:20 handle 20: fq_codel
         ${pkgs.iproute2}/bin/tc filter add dev "$iface" parent 1: protocol ip prio 10 handle 1 fw classid 1:10
         ${pkgs.iproute2}/bin/tc filter add dev "$iface" parent 1: protocol ipv6 prio 11 handle 1 fw classid 1:10
@@ -185,22 +198,6 @@ in
         };
       };
 
-    templates = builtins.listToAttrs (
-      map (name: {
-        name = mkCloudTemplate name;
-        value = {
-          owner = cloudOffloadUser;
-          group = cloudOffloadUser;
-          mode = "0400";
-          content = ''
-            [b2]
-            type = b2
-            account = ${config.sops.placeholder.${sharedB2ApplicationKeyIdSecret}}
-            key = ${config.sops.placeholder.${sharedB2ApplicationKeySecret}}
-          '';
-        };
-      }) (builtins.attrNames backupClients)
-    );
   };
 
   users.users = builtins.listToAttrs (

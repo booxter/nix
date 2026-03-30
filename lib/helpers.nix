@@ -246,7 +246,6 @@ rec {
               { ... }:
               {
                 services.getty.autologinUser = username;
-                security.sudo.wheelNeedsPassword = false;
               }
             )
 

@@ -45,11 +45,47 @@
             url = "https://github.com/jellyfin/jellyfin/commit/673f617994da6ff6a45cf428a3ea47de59edc6c5.patch";
             hash = "sha256-iHriDqPqJ5Xcdrq905sdSxMmEvr4hWmNrzU5CDFFJyY=";
           })
+          # Catch websocket keepalive send races.
+          # Upstream: https://github.com/jellyfin/jellyfin/issues/14837
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/jellyfin/commit/b5a385d185.patch";
+            hash = "sha256-maX9MLOK/lq/6LPpJi2Dw8ZZTvzSR9t15648JT0jS2Q=";
+          })
+          # Catch websocket close teardown races while testing fixes for Jellyfin coredumps.
+          # Upstream: https://github.com/jellyfin/jellyfin/issues/16512
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/jellyfin/commit/c64abc489e.patch";
+            hash = "sha256-/Y2QiBkeLY4Wi+RlgFcNuzLPuwOF1sRyf7hnBuUEzAM=";
+          })
         ];
       });
     }
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
       inherit (pkgsFirefoxUnwrapped) firefox-unwrapped;
       inherit (pkgsThunderbirdUnwrapped) thunderbird-unwrapped;
+
+      # Mirror nixpkgs PR #501885 on Darwin without pulling a separate nixpkgs input.
+      # This is a local attempt to fix the Kitty crashes I am seeing on macOS.
+      kitty = prev.kitty.overrideAttrs (
+        old:
+        let
+          version = "0.46.2";
+          src = prev.fetchFromGitHub {
+            owner = "kovidgoyal";
+            repo = "kitty";
+            tag = "v${version}";
+            hash = "sha256-x+jBQrg3Iaj6PLMF1hIjS46odxv5GxPMcvC9JddYCHo=";
+          };
+        in
+        {
+          inherit version src;
+          goModules =
+            (prev.buildGo126Module {
+              pname = "kitty-go-modules";
+              inherit src version;
+              vendorHash = "sha256-FaSWBeQJlvw9vXcHJ/OaFd48K8d7X86X8w7wpG84Ltw=";
+            }).goModules;
+        }
+      );
     };
 }
