@@ -79,6 +79,9 @@
         in
         {
           inherit version src;
+          patches = (old.patches or [ ]) ++ [
+            ../lib/patches/kitty-paused-rendering-selection.patch
+          ];
           goModules =
             (prev.buildGo126Module {
               pname = "kitty-go-modules";
