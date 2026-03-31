@@ -20,10 +20,7 @@ nix eval --impure --json --expr "
       let
         allNames = builtins.attrNames attrs;
         filteredAll = builtins.filter
-          (name:
-            (builtins.match \"^local-.*\" name) == null
-            && (builtins.match \".*-ci\$\" name) == null
-          )
+          (name: (builtins.match \"^local-.*\" name) == null)
           allNames;
         namesToUse =
           if requestedList == null

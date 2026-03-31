@@ -141,36 +141,18 @@
         ) (builtins.attrNames darwinHosts)
       );
 
-      darwinConfigurations =
-        let
-          base = builtins.listToAttrs (
-            map (
-              name:
-              let
-                cfg = darwinHosts.${name};
-              in
-              {
-                name = name;
-                value = helpers.mkDarwin cfg;
-              }
-            ) (builtins.attrNames darwinHosts)
-          );
-          ciVariants = builtins.listToAttrs (
-            map (
-              name:
-              let
-                cfg = darwinHosts.${name} // {
-                  ci = true;
-                };
-              in
-              {
-                name = "${name}-ci";
-                value = helpers.mkDarwin cfg;
-              }
-            ) (builtins.attrNames darwinHosts)
-          );
-        in
-        base // ciVariants;
+      darwinConfigurations = builtins.listToAttrs (
+        map (
+          name:
+          let
+            cfg = darwinHosts.${name};
+          in
+          {
+            name = name;
+            value = helpers.mkDarwin cfg;
+          }
+        ) (builtins.attrNames darwinHosts)
+      );
 
       nixosConfigurations =
         let

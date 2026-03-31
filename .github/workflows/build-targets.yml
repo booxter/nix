@@ -90,9 +90,9 @@ jobs:
                 { name: "nixos vm builder1 (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.system.build.vm -L --show-trace", os: "ubuntu-latest" },
                 { name: "home-manager nv (x86_64-linux)", cmd: "make linux-home TARGET=nv USERNAME=ihrachyshka", os: "ubuntu-latest" },
                 { name: "home-manager mair (aarch64-darwin)", cmd: "make darwin-home TARGET=mair USERNAME=ihrachyshka", os: "macos-26" },
-                { name: "mair-ci (aarch64-darwin)", cmd: "make darwin WHAT=mair-ci", os: "macos-26" },
-                { name: "mmini-ci (aarch64-darwin)", cmd: "make darwin WHAT=mmini-ci", os: "macos-26" },
-                { name: "JGWXHWDL4X-ci (aarch64-darwin)", cmd: "make darwin WHAT=JGWXHWDL4X-ci", os: "macos-26" },
+                { name: "mair (aarch64-darwin)", cmd: "make darwin WHAT=mair", os: "macos-26" },
+                { name: "mmini (aarch64-darwin)", cmd: "make darwin WHAT=mmini", os: "macos-26" },
+                { name: "JGWXHWDL4X (aarch64-darwin)", cmd: "make darwin WHAT=JGWXHWDL4X", os: "macos-26" },
                 { name: "nixos vm qemu (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.system.build.vmQemu -L --show-trace", os: "ubuntu-latest" },
                 { name: "nixos vm qemu (aarch64-darwin)", cmd: "nix build .#nixosConfigurations.local-builder1vm.config.system.build.vmQemu -L --show-trace", os: "macos-26" },
                 { name: "nixos vm proxmox iso (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.virtualisation.proxmox.iso -L --show-trace", os: "ubuntu-latest" }
@@ -109,9 +109,9 @@ jobs:
               { prefix: "nixos/srvarrvm/", jobs: [ "srvarr (x86_64-linux)" ] },
               { prefix: "nixos/fanavm/", jobs: [ "fana (x86_64-linux)" ] },
               { prefix: "nixos/cachevm/", jobs: [ "cache (x86_64-linux)" ] },
-              { prefix: "darwin/mair/", jobs: [ "mair-ci (aarch64-darwin)", "home-manager mair (aarch64-darwin)" ] },
-              { prefix: "darwin/mmini/", jobs: [ "mmini-ci (aarch64-darwin)" ] },
-              { prefix: "darwin/JGWXHWDL4X/", jobs: [ "JGWXHWDL4X-ci (aarch64-darwin)" ] },
+              { prefix: "darwin/mair/", jobs: [ "mair (aarch64-darwin)", "home-manager mair (aarch64-darwin)" ] },
+              { prefix: "darwin/mmini/", jobs: [ "mmini (aarch64-darwin)" ] },
+              { prefix: "darwin/JGWXHWDL4X/", jobs: [ "JGWXHWDL4X (aarch64-darwin)" ] },
               { prefix: "secrets/frame.yaml", jobs: [ "frame (x86_64-linux)" ] },
               { prefix: "secrets/prx1-lab.yaml", jobs: [ "prx1-lab (x86_64-linux)" ] },
               { prefix: "secrets/prx2-lab.yaml", jobs: [ "prx2-lab (x86_64-linux)" ] },
@@ -120,12 +120,12 @@ jobs:
               { prefix: "secrets/beast.yaml", jobs: [ "beast (x86_64-linux)" ] },
               { prefix: "secrets/prox-srvarrvm.yaml", jobs: [ "srvarr (x86_64-linux)" ] },
               { prefix: "secrets/prox-fanavm.yaml", jobs: [ "fana (x86_64-linux)" ] },
-              { prefix: "secrets/mair.yaml", jobs: [ "mair-ci (aarch64-darwin)" ] },
-              { prefix: "secrets/mmini.yaml", jobs: [ "mmini-ci (aarch64-darwin)" ] },
+              { prefix: "secrets/mair.yaml", jobs: [ "mair (aarch64-darwin)" ] },
+              { prefix: "secrets/mmini.yaml", jobs: [ "mmini (aarch64-darwin)" ] },
               { prefix: "secrets/nvws.yaml", jobs: [ "nvws (x86_64-linux)" ] },
               { prefix: "secrets/prox-builder1vm.yaml", jobs: [ "builder (x86_64-linux)" ] },
               { prefix: "secrets/prox-cachevm.yaml", jobs: [ "cache (x86_64-linux)" ] },
-              { prefix: "secrets/JGWXHWDL4X.yaml", jobs: [ "JGWXHWDL4X-ci (aarch64-darwin)" ] }
+              { prefix: "secrets/JGWXHWDL4X.yaml", jobs: [ "JGWXHWDL4X (aarch64-darwin)" ] }
             ];
 
             if (context.eventName !== "pull_request") {
