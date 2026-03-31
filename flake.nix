@@ -47,6 +47,10 @@
 
     disko.url = "github:nix-community/disko/latest";
 
+    # Keep Virby's own nixpkgs pin for now to maximize cache hits while bootstrapping
+    # the builder image on hosts switching to Virby.
+    virby.url = "github:quinneden/virby-nix-darwin/7628dd04c700bf035b54fe7d99e8ced18f097ec6";
+
     debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
 
     # TODO: switch to official when diff is contributed upstream

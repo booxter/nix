@@ -1,5 +1,6 @@
 {
   hostname,
+  inputs,
   lib,
   pkgs,
   username,
@@ -19,7 +20,7 @@
       ./_mixins/fonts
       ./_mixins/homebrew
       ./_mixins/lan-wan-accounting
-      (import ./_mixins/linux-builder { inherit lib ci; })
+      (import ./_mixins/virby { inherit inputs ci; })
       ./_mixins/nix-gc
       ./_mixins/observability-client
       ./_mixins/sudo
