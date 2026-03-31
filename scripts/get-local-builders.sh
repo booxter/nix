@@ -8,7 +8,7 @@ Usage: get-local-builders.sh [--local]
 
 Outputs builders from /etc/nix/nix.conf or /etc/nix/machines.
 
-  --local       Only localhost + linux-builder entries.
+  --local       Only localhost + local Darwin Linux builder entries.
 EOF
   exit 0
 elif [[ "${1:-}" == "--local" ]]; then
@@ -32,7 +32,7 @@ if [[ -z "$builders" ]]; then
 fi
 
 if [[ "$mode" == "local-only" ]]; then
-  echo "$builders" | tr ';' '\n' | awk '/localhost|linux-builder/ {print}' | paste -sd ';' -
+  echo "$builders" | tr ';' '\n' | awk '$0 == "localhost" || $0 == "virby-vm" {print}' | paste -sd ';' -
 else
   echo "$builders"
 fi

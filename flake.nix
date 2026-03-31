@@ -47,6 +47,10 @@
 
     disko.url = "github:nix-community/disko/latest";
 
+    # Keep Virby's own nixpkgs pin for now to maximize cache hits while bootstrapping
+    # the builder image on hosts switching to Virby.
+    virby.url = "github:quinneden/virby-nix-darwin/7628dd04c700bf035b54fe7d99e8ced18f097ec6";
+
     debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
 
     # TODO: switch to official when diff is contributed upstream
@@ -137,36 +141,18 @@
         ) (builtins.attrNames darwinHosts)
       );
 
-      darwinConfigurations =
-        let
-          base = builtins.listToAttrs (
-            map (
-              name:
-              let
-                cfg = darwinHosts.${name};
-              in
-              {
-                name = name;
-                value = helpers.mkDarwin cfg;
-              }
-            ) (builtins.attrNames darwinHosts)
-          );
-          ciVariants = builtins.listToAttrs (
-            map (
-              name:
-              let
-                cfg = darwinHosts.${name} // {
-                  ci = true;
-                };
-              in
-              {
-                name = "${name}-ci";
-                value = helpers.mkDarwin cfg;
-              }
-            ) (builtins.attrNames darwinHosts)
-          );
-        in
-        base // ciVariants;
+      darwinConfigurations = builtins.listToAttrs (
+        map (
+          name:
+          let
+            cfg = darwinHosts.${name};
+          in
+          {
+            name = name;
+            value = helpers.mkDarwin cfg;
+          }
+        ) (builtins.attrNames darwinHosts)
+      );
 
       nixosConfigurations =
         let
@@ -368,6 +354,7 @@
           basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
           fleetPackages = {
             pi-image = self.nixosConfigurations.pi5.config.system.build.sdImage;
+            inherit (inputs.disko.packages.${system}) disko-install;
           };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;

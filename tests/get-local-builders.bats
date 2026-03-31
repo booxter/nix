@@ -55,12 +55,12 @@ EOF
   [ "$output" = "builder1 x86_64-linux /etc/nix/id 4 1;builder2 aarch64-linux /etc/nix/id 2 1" ]
 }
 
-@test "local-only filters to localhost and linux-builder" {
+@test "local-only filters to localhost and virby-vm" {
   cat >"$tmpdir/nix.conf" <<'EOF'
-builders = remote1;localhost;linux-builder;remote2
+builders = remote1;localhost;virby-vm;remote2
 EOF
 
   run env NIX_CONF="$tmpdir/nix.conf" NIX_MACHINES="$tmpdir/machines" bash ./scripts/get-local-builders.sh --local
   [ "$status" -eq 0 ]
-  [ "$output" = "localhost;linux-builder" ]
+  [ "$output" = "localhost;virby-vm" ]
 }

@@ -59,8 +59,7 @@ let
       (
         builtins.filter (
           name:
-          !(lib.hasSuffix "-ci" name)
-          && (outputs.darwinConfigurations.${name}.config.host.observability.client.enable or false)
+          (outputs.darwinConfigurations.${name}.config.host.observability.client.enable or false)
           && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
         ) (builtins.attrNames outputs.darwinConfigurations)
       );

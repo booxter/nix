@@ -398,6 +398,11 @@ for host in "${HOSTS[@]}"; do
   remote_payload="$(cat <<'REMOTE'
 #!/usr/bin/env bash
 set -euo pipefail
+REMOTE
+)"
+  remote_payload+=$'\n'"$(declare -f find_darwin_rebuild)"$'\n'
+  remote_payload+=$'\n'"$(declare -f run_darwin_switch_from_repo)"$'\n'
+  remote_payload+="$(cat <<'REMOTE'
 repo_dir=""
 cleanup() {
   status=$?
@@ -466,7 +471,7 @@ os="$(uname -s)"
 host_name="$(hostname)"
 case "$os" in
   Darwin)
-    sudo -H nix run nix-darwin -- switch --flake ".#${host_name}" -L --show-trace
+    run_darwin_switch_from_repo "$host_name"
     ;;
   Linux)
     sudo nixos-rebuild switch --flake ".#${host_name}" -L --show-trace

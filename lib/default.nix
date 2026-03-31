@@ -2,7 +2,6 @@
   inputs,
   outputs,
   username,
-  ci ? false,
   ...
 }:
 let
@@ -11,7 +10,6 @@ let
       inputs
       outputs
       username
-      ci
       ;
   };
 in

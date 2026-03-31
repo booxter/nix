@@ -74,7 +74,7 @@ let
           run
           -L
           --show-trace
-          "github:nix-community/disko/latest#disko-install"
+          "${../.}#disko-install"
           --
           --flake "${../.}#''${host}"
           --disk main

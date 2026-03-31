@@ -1,12 +1,12 @@
 {
   hostname,
+  inputs,
   lib,
   pkgs,
   username,
   platform,
   stateVersion,
   isWork,
-  ci ? false,
   ...
 }:
 {
@@ -15,11 +15,11 @@
       ./${hostname}
     ]
     ++ [
+      inputs.virby.darwinModules.default
       ./_mixins/defaults
       ./_mixins/fonts
       ./_mixins/homebrew
       ./_mixins/lan-wan-accounting
-      (import ./_mixins/linux-builder { inherit lib ci; })
       ./_mixins/nix-gc
       ./_mixins/observability-client
       ./_mixins/sudo
@@ -52,6 +52,16 @@
         "Wi-Fi"
       ];
     dhcpClientId = hostname;
+  };
+
+  services.virby = {
+    enable = true;
+    cores = 8;
+    memory = 12 * 1024;
+    diskSize = "80GiB";
+    rosetta = false;
+    onDemand.enable = true;
+    onDemand.ttl = 180;
   };
 
   system = {

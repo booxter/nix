@@ -775,7 +775,6 @@ rec {
       hmFull ? true,
       isDesktop ? false,
       isWork ? false,
-      ci ? false,
       extraModules ? [ ],
     }:
     inputs.nix-darwin.lib.darwinSystem {
@@ -791,7 +790,6 @@ rec {
           hmFull
           isDesktop
           isWork
-          ci
           ;
         # If we ever add macOS VMs, thread isVM here and compute accordingly.
         upsShutdownDelaySeconds = upsShutdownDelaySeconds false;

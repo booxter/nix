@@ -30,11 +30,13 @@
           "https://cache.numtide.com"
           "https://nixos-raspberrypi.cachix.org"
           "https://cache.saumon.network/proxmox-nixos"
+          "https://virby-nix-darwin.cachix.org"
         ];
         extra-trusted-public-keys = [
           "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
           "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
           "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM="
+          "virby-nix-darwin.cachix.org-1:z9GiEZeBU5bEeoDQjyfHPMGPBaIQJOOvYOOjGMKIlLo="
         ];
       }
       // lib.optionalAttrs (!isWork) {
