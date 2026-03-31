@@ -60,3 +60,102 @@ setup() {
   expected=$'nvws\nprx2-lab\nzeta\nalpha\nprox-cachevm'
   [ "$output" = "$expected" ]
 }
+
+@test "run_darwin_switch_from_repo uses installed darwin-rebuild" {
+  workdir="$BATS_TMPDIR/darwin-rebuild-in-path"
+  mkdir -p "$workdir/bin"
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$SUDO_ARGS_OUT"
+if [[ "$1" = "-H" ]]; then
+  shift
+fi
+"$@"
+EOF
+  } > "$workdir/bin/sudo"
+  chmod +x "$workdir/bin/sudo"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$DARWIN_REBUILD_ARGS_OUT"
+EOF
+  } > "$workdir/bin/darwin-rebuild"
+  chmod +x "$workdir/bin/darwin-rebuild"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+echo "unexpected nix invocation" >&2
+exit 99
+EOF
+  } > "$workdir/bin/nix"
+  chmod +x "$workdir/bin/nix"
+
+  export PATH="$workdir/bin:$PATH"
+  export SUDO_ARGS_OUT="$workdir/sudo.args"
+  export DARWIN_REBUILD_ARGS_OUT="$workdir/darwin-rebuild.args"
+
+  run run_darwin_switch_from_repo JGWXHWDL4X
+
+  [ "$status" -eq 0 ]
+  [ "$(cat "$SUDO_ARGS_OUT")" = "-H $workdir/bin/darwin-rebuild switch --flake .#JGWXHWDL4X -L --show-trace" ]
+  [ "$(cat "$DARWIN_REBUILD_ARGS_OUT")" = "switch --flake .#JGWXHWDL4X -L --show-trace" ]
+}
+
+@test "run_darwin_switch_from_repo falls back to repo-pinned darwin-rebuild build" {
+  workdir="$BATS_TMPDIR/darwin-rebuild-build"
+  mkdir -p "$workdir/bin" "$workdir/system/sw/bin"
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$SUDO_ARGS_OUT"
+if [[ "$1" = "-H" ]]; then
+  shift
+fi
+"$@"
+EOF
+  } > "$workdir/bin/sudo"
+  chmod +x "$workdir/bin/sudo"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$NIX_ARGS_OUT"
+printf '%s\n' "$DARWIN_SYSTEM_OUT"
+EOF
+  } > "$workdir/bin/nix"
+  chmod +x "$workdir/bin/nix"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$DARWIN_REBUILD_ARGS_OUT"
+EOF
+  } > "$workdir/system/sw/bin/darwin-rebuild"
+  chmod +x "$workdir/system/sw/bin/darwin-rebuild"
+
+  export PATH="$workdir/bin:/usr/bin:/bin"
+  export SUDO_ARGS_OUT="$workdir/sudo.args"
+  export NIX_ARGS_OUT="$workdir/nix.args"
+  export DARWIN_REBUILD_ARGS_OUT="$workdir/darwin-rebuild.args"
+  export DARWIN_SYSTEM_OUT="$workdir/system"
+
+  run run_darwin_switch_from_repo JGWXHWDL4X
+
+  [ "$status" -eq 0 ]
+  [ "$(cat "$NIX_ARGS_OUT")" = "build --no-link --print-out-paths .#darwinConfigurations.JGWXHWDL4X.system -L --show-trace" ]
+  [ "$(cat "$SUDO_ARGS_OUT")" = "-H $workdir/system/sw/bin/darwin-rebuild switch --flake .#JGWXHWDL4X -L --show-trace" ]
+  [ "$(cat "$DARWIN_REBUILD_ARGS_OUT")" = "switch --flake .#JGWXHWDL4X -L --show-trace" ]
+}

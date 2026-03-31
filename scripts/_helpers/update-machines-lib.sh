@@ -82,3 +82,35 @@ prioritize_hosts() {
 
   printf '%s\n' "${prioritized[@]}" "${normal[@]}" "${deferred[@]}"
 }
+
+find_darwin_rebuild() {
+  command -v darwin-rebuild 2>/dev/null || true
+}
+
+run_darwin_switch_from_repo() {
+  local host_name="$1"
+  local darwin_rebuild system_path
+
+  darwin_rebuild="$(find_darwin_rebuild)"
+  if [[ -n "$darwin_rebuild" ]]; then
+    sudo -H "$darwin_rebuild" switch --flake ".#${host_name}" -L --show-trace
+    return 0
+  fi
+
+  system_path="$(
+    nix build --no-link --print-out-paths ".#darwinConfigurations.${host_name}.system" -L --show-trace \
+      | tail -n1
+  )"
+  if [[ -z "$system_path" ]]; then
+    echo "Failed to build darwin system for ${host_name}." >&2
+    return 1
+  fi
+
+  darwin_rebuild="${system_path}/sw/bin/darwin-rebuild"
+  if [[ ! -x "$darwin_rebuild" ]]; then
+    echo "Failed to locate darwin-rebuild in ${system_path}." >&2
+    return 1
+  fi
+
+  sudo -H "$darwin_rebuild" switch --flake ".#${host_name}" -L --show-trace
+}
