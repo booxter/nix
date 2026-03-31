@@ -368,6 +368,7 @@
           basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
           fleetPackages = {
             pi-image = self.nixosConfigurations.pi5.config.system.build.sdImage;
+            inherit (inputs.disko.packages.${system}) disko-install;
           };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;
