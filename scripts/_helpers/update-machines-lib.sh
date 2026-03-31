@@ -98,8 +98,7 @@ run_darwin_switch_from_repo() {
   fi
 
   system_path="$(
-    nix build --no-link --print-out-paths ".#darwinConfigurations.${host_name}.system" -L --show-trace \
-      | tail -n1
+    nix build --no-link --print-out-paths ".#darwinConfigurations.${host_name}.system" -L --show-trace
   )"
   if [[ -z "$system_path" ]]; then
     echo "Failed to build darwin system for ${host_name}." >&2

@@ -105,8 +105,8 @@ EOF
   run run_darwin_switch_from_repo JGWXHWDL4X
 
   [ "$status" -eq 0 ]
-  [ "$(cat "$SUDO_ARGS_OUT")" = "-H $workdir/bin/darwin-rebuild switch --flake .#JGWXHWDL4X -L --show-trace" ]
-  [ "$(cat "$DARWIN_REBUILD_ARGS_OUT")" = "switch --flake .#JGWXHWDL4X -L --show-trace" ]
+  [ "$(<"$SUDO_ARGS_OUT")" = "-H $workdir/bin/darwin-rebuild switch --flake .#JGWXHWDL4X -L --show-trace" ]
+  [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "switch --flake .#JGWXHWDL4X -L --show-trace" ]
 }
 
 @test "run_darwin_switch_from_repo falls back to repo-pinned darwin-rebuild build" {
@@ -146,7 +146,7 @@ EOF
   } > "$workdir/system/sw/bin/darwin-rebuild"
   chmod +x "$workdir/system/sw/bin/darwin-rebuild"
 
-  export PATH="$workdir/bin:/usr/bin:/bin"
+  export PATH="$workdir/bin"
   export SUDO_ARGS_OUT="$workdir/sudo.args"
   export NIX_ARGS_OUT="$workdir/nix.args"
   export DARWIN_REBUILD_ARGS_OUT="$workdir/darwin-rebuild.args"
@@ -155,7 +155,7 @@ EOF
   run run_darwin_switch_from_repo JGWXHWDL4X
 
   [ "$status" -eq 0 ]
-  [ "$(cat "$NIX_ARGS_OUT")" = "build --no-link --print-out-paths .#darwinConfigurations.JGWXHWDL4X.system -L --show-trace" ]
-  [ "$(cat "$SUDO_ARGS_OUT")" = "-H $workdir/system/sw/bin/darwin-rebuild switch --flake .#JGWXHWDL4X -L --show-trace" ]
-  [ "$(cat "$DARWIN_REBUILD_ARGS_OUT")" = "switch --flake .#JGWXHWDL4X -L --show-trace" ]
+  [ "$(<"$NIX_ARGS_OUT")" = "build --no-link --print-out-paths .#darwinConfigurations.JGWXHWDL4X.system -L --show-trace" ]
+  [ "$(<"$SUDO_ARGS_OUT")" = "-H $workdir/system/sw/bin/darwin-rebuild switch --flake .#JGWXHWDL4X -L --show-trace" ]
+  [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "switch --flake .#JGWXHWDL4X -L --show-trace" ]
 }
