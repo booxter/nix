@@ -25,6 +25,7 @@ let
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
+  smartctlExporterPort = 9633;
   retentionDays = 14;
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
@@ -214,6 +215,17 @@ in
             targets = [
               "${outputs.nixosConfigurations.pi5.config.host.dnsName}:${toString outputs.nixosConfigurations.pi5.config.services.prometheus.exporters.dnsmasq.port}"
             ];
+          }
+        ];
+      }
+      {
+        job_name = "smartctl";
+        static_configs = [
+          {
+            targets = [
+              "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString smartctlExporterPort}"
+            ];
+            labels.instance = outputs.nixosConfigurations.beast.config.host.dnsName;
           }
         ];
       }

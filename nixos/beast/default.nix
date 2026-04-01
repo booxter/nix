@@ -6,6 +6,7 @@
 }:
 let
   nfsSubnet = "192.168.0.0/16";
+  smartctlExporterPort = 9633;
   # Pin export IDs so clients see stable export identities across server restarts.
   mkNfsExport =
     { path, fsid }: "${path} ${nfsSubnet}(rw,async,no_subtree_check,fsid=${toString fsid})";
@@ -201,6 +202,7 @@ in
   networking.firewall.allowedTCPPorts = nfsPorts ++ [
     80
     443
+    smartctlExporterPort
   ];
   networking.firewall.allowedUDPPorts = nfsPorts;
 
@@ -252,6 +254,17 @@ in
   services.smartd = {
     enable = true;
     autodetect = true;
+  };
+
+  services.prometheus.exporters.smartctl = {
+    enable = true;
+    port = smartctlExporterPort;
+    listenAddress = "0.0.0.0";
+    openFirewall = false;
+    extraFlags = [
+      "--smartctl.path=${pkgs.smartmontools}/bin/smartctl"
+      "--smartctl.device-include=^(sd[a-z]+)$"
+    ];
   };
 
   environment.systemPackages = with pkgs; [
