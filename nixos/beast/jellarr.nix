@@ -290,10 +290,10 @@
                 enableAllFolders = allLibraries;
                 enableCollectionManagement = allowWrite || isAdmin;
                 loginAttemptsBeforeLockout = 3;
-                # 7 Mbps (Jellyfin policy expects bits/sec).
+                # 10 Mbps (Jellyfin policy expects bits/sec).
                 # Spectrum upload is maxed at 35 Mbps, so this should
                 # accommodate a few maxed out streams plus backups etc.
-                remoteClientBitrateLimit = 7 * 1000 * 1000;
+                remoteClientBitrateLimit = 10 * 1000 * 1000;
               }
               // lib.optionalAttrs isGuest {
                 maxActiveSessions = 2;
