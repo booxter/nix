@@ -1,14 +1,108 @@
-{ lib, inputs, ... }:
+{
+  config,
+  lib,
+  inputs,
+  ...
+}:
+let
+  mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
+  jellyfinSecretFile = {
+    owner = "jellyfin";
+    group = "jellyfin";
+    mode = "0400";
+  };
+  userDefinitions = [
+    {
+      name = "Ihar";
+      isAdmin = true;
+      isAdult = true;
+      allowWrite = true;
+    }
+    {
+      name = "jellyfin";
+      isAdmin = false;
+      isAdult = false;
+    }
+    {
+      name = "Kasia";
+      isAdult = true;
+      allowWrite = true;
+    }
+    {
+      name = "Vatslau";
+      isKid = true;
+    }
+    {
+      name = "Guest";
+      isAdmin = false;
+      isAdult = false;
+      allowWrite = false;
+    }
+    {
+      name = "DZ";
+      isAdmin = false;
+      isKid = false;
+      isAdult = false;
+      isGuest = true;
+      allLibraries = false;
+    }
+    {
+      name = "ZD";
+      isAdmin = false;
+      isKid = false;
+      isAdult = true;
+      isGuest = true;
+      allLibraries = true;
+    }
+    {
+      name = "ZS";
+      isAdmin = false;
+      isKid = false;
+      isAdult = false;
+      isGuest = true;
+      allLibraries = false;
+      extraLibraries = [ "Attic" ];
+    }
+    {
+      name = "Olga";
+      isAdmin = false;
+      isKid = false;
+      isAdult = false;
+      isGuest = true;
+      allLibraries = false;
+    }
+  ];
+in
 {
   imports = [
     inputs.jellarr.nixosModules.default
   ];
 
+  sops = {
+    secrets = builtins.listToAttrs (
+      map (user: {
+        name = mkJellyfinUserPasswordSecret user.name;
+        value = jellyfinSecretFile;
+      }) userDefinitions
+    );
+    templates."jellarr.env" = {
+      inherit (jellyfinSecretFile) owner group mode;
+      content = ''
+        JELLARR_API_KEY=${config.sops.placeholder."jellyfin/apiKey"}
+      '';
+    };
+  };
+
+  systemd.services.jellarr = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
+  };
+
   services.jellarr = {
     enable = true;
     user = "jellyfin";
     group = "jellyfin";
-    environmentFile = "/data/jellyfin.env"; # TODO: switch to sops
+    environmentFile = config.sops.templates."jellarr.env".path;
     config = {
       version = 1;
       base_url = "https://jf.ihar.dev:443";
@@ -266,15 +360,6 @@
           getUser =
             {
               name,
-              # It's ok-ish to keep it in plaintext here for now, since atm
-              # jellarr uses the password only on initial creation. Of course,
-              # after users are created, I have to update the passwords in UI
-              # manually to avoid exposure.
-              #
-              # May need to change the strategy if/when jellarr updates
-              # passwords for existing users:
-              # https://github.com/venkyr77/jellarr/issues/51
-              password ? "super-secret-" + name, # TODO: switch to sops
               isAdmin ? false,
               allowWrite ? false,
               isKid ? false,
@@ -284,19 +369,20 @@
               extraLibraries ? [ ],
             }:
             {
-              inherit name password;
+              inherit name;
+              passwordFile = config.sops.secrets.${mkJellyfinUserPasswordSecret name}.path;
               policy = {
                 isAdministrator = isAdmin;
                 enableAllFolders = allLibraries;
                 enableCollectionManagement = allowWrite || isAdmin;
                 loginAttemptsBeforeLockout = 3;
-                # 7 Mbps (Jellyfin policy expects bits/sec).
+                # 10 Mbps (Jellyfin policy expects bits/sec).
                 # Spectrum upload is maxed at 35 Mbps, so this should
                 # accommodate a few maxed out streams plus backups etc.
-                remoteClientBitrateLimit = 7 * 1000 * 1000;
+                remoteClientBitrateLimit = 10 * 1000 * 1000;
               }
               // lib.optionalAttrs isGuest {
-                maxActiveSessions = 2;
+                maxActiveSessions = 4;
               }
               // lib.optionalAttrs (!allLibraries) {
                 enabledLibraries = [
@@ -318,54 +404,8 @@
               displayMissingEpisodes = true;
               subtitleLanguagePreference = "eng";
             };
-          getGuestUser =
-            args:
-            getUser (
-              args
-              // {
-                isAdmin = false;
-                isKid = false;
-                isAdult = false;
-                isGuest = true;
-                allLibraries = false;
-              }
-            );
         in
-        [
-          (getUser {
-            name = "Ihar";
-            isAdmin = true;
-            isAdult = true;
-            allowWrite = true;
-          })
-          (getUser {
-            name = "jellyfin";
-            isAdmin = false;
-            isAdult = false;
-          })
-          (getUser {
-            name = "Kasia";
-            isAdult = true;
-            allowWrite = true;
-          })
-          (getUser {
-            name = "Vatslau";
-            isKid = true;
-          })
-          (getUser {
-            name = "Guest";
-            isAdmin = false;
-            isAdult = false;
-            allowWrite = false;
-          })
-
-          (getGuestUser { name = "DZ"; })
-          (getGuestUser {
-            name = "ZS";
-            extraLibraries = [ "Attic" ];
-          })
-          (getGuestUser { name = "Olga"; })
-        ];
+        map getUser userDefinitions;
       plugins = map (name: { inherit name; }) [
         "AudioDB"
         "Letterboxd Link on Movies"
