@@ -382,7 +382,7 @@ in
                 remoteClientBitrateLimit = 10 * 1000 * 1000;
               }
               // lib.optionalAttrs isGuest {
-                maxActiveSessions = 2;
+                maxActiveSessions = 4;
               }
               // lib.optionalAttrs (!allLibraries) {
                 enabledLibraries = [
