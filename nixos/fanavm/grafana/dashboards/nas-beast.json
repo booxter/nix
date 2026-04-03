@@ -201,7 +201,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "100 * node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"} / (node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2))",
+          "expr": "100 * scalar(node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}) * node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"} / (node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2))",
           "legendFormat": "",
           "range": true,
           "refId": "A"
