@@ -741,7 +741,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(device) (rate(node_disk_read_bytes_total{instance=\"beast:9100\",device=~\"sd[a-z]+\"}[5m]))",
+          "expr": "sum by(device) (rate(node_disk_read_bytes_total{instance=\"beast:9100\",device=~\"sd[a-z]+\"}[5m]) and on(device) smartctl_device_smart_status{instance=\"beast\"})",
           "legendFormat": "{{device}}",
           "range": true,
           "refId": "A"
@@ -793,7 +793,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(device) (rate(node_disk_written_bytes_total{instance=\"beast:9100\",device=~\"sd[a-z]+\"}[5m]))",
+          "expr": "sum by(device) (rate(node_disk_written_bytes_total{instance=\"beast:9100\",device=~\"sd[a-z]+\"}[5m]) and on(device) smartctl_device_smart_status{instance=\"beast\"})",
           "legendFormat": "{{device}}",
           "range": true,
           "refId": "A"
@@ -845,7 +845,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(device) (rate(node_disk_read_bytes_total{instance=\"beast:9100\",device=~\"sd[a-z]+\"}[5m]) + rate(node_disk_written_bytes_total{instance=\"beast:9100\",device=~\"sd[a-z]+\"}[5m]))",
+          "expr": "sum by(device) ((rate(node_disk_read_bytes_total{instance=\"beast:9100\",device=~\"sd[a-z]+\"}[5m]) + rate(node_disk_written_bytes_total{instance=\"beast:9100\",device=~\"sd[a-z]+\"}[5m])) and on(device) smartctl_device_smart_status{instance=\"beast\"})",
           "legendFormat": "{{device}}",
           "range": true,
           "refId": "A"
