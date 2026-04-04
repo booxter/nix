@@ -80,6 +80,7 @@
           "mappings": [],
           "max": 1,
           "min": 0,
+          "noValue": "Low query volume",
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -126,14 +127,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m])) / clamp_min(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_misses{job=\"dnsmasq\"}[5m])), 1e-9)) or vector(0)",
+          "expr": "((sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m])) / clamp_min(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_misses{job=\"dnsmasq\"}[5m])), 1e-9)) unless (sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_misses{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_auth{job=\"dnsmasq\"}[5m])) < 10))",
           "instant": true,
           "legendFormat": "hit ratio",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "DNS Cache Hit Ratio",
+      "title": "DNS Cache Efficiency (10+ qps)",
       "type": "stat"
     },
     {
