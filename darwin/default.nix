@@ -23,6 +23,7 @@
       ./_mixins/nix-gc
       ./_mixins/observability-client
       ./_mixins/sudo
+      ./_mixins/thermal-accounting
     ]
     ++ lib.optionals (!isWork) [
       ./_mixins/browser

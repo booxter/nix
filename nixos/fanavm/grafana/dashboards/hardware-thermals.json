@@ -75,7 +75,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "topk(1, max by(instance) (node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}))",
+          "expr": "topk(1, max by(instance) ((node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"}))",
           "instant": true,
           "legendFormat": "{{instance}}",
           "range": false,
@@ -139,14 +139,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "topk(1, max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"}))",
+          "expr": "topk(1, max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"}))",
           "instant": true,
           "legendFormat": "{{instance}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Hottest NVMe Composite",
+      "title": "Hottest Storage Sensor",
       "type": "stat"
     },
     {
@@ -253,7 +253,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance) (node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"})",
+          "expr": "max by(instance) ((node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -310,7 +310,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"})",
+          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"} or host_observability_darwin_temperature_max_celsius{job=\"node\",host_class=\"hardware\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -367,13 +367,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"})",
+          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "NVMe Composite Temperature",
+      "title": "Storage Temperature",
       "type": "timeseries"
     },
     {
@@ -485,6 +485,201 @@
       ],
       "title": "Beast HDD Temperatures",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "max": 2,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 2
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 31
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_darwin_thermal_warning_level{job=\"node\",host_class=\"hardware\"}",
+          "legendFormat": "{{instance}} thermal",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_darwin_performance_warning_level{job=\"node\",host_class=\"hardware\"}",
+          "legendFormat": "{{instance}} performance",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Darwin Thermal Warning Levels",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              },
+              {
+                "color": "red",
+                "value": 20
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 31
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_darwin_power_watts{job=\"node\",host_class=\"hardware\"}",
+          "legendFormat": "{{instance}} {{domain}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Darwin Power",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "stale"
+                },
+                "1": {
+                  "text": "ok"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 11,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_darwin_powermetrics_collect_success{job=\"node\",host_class=\"hardware\"}",
+          "instant": true,
+          "legendFormat": "{{instance}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Darwin Powermetrics Export",
+      "type": "stat"
     }
   ],
   "refresh": "30s",
