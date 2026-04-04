@@ -8,4 +8,6 @@ pkgs: {
 
   # to upstream?
   jinjanator = pkgs.callPackage ./jinjanator { };
+
+  ismc = pkgs.callPackage ./ismc { };
 }

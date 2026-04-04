@@ -71,8 +71,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "node_md_degraded{instance=\"beast:9100\",device=\"md127\"}",
+          "instant": true,
           "legendFormat": "",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -141,8 +142,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}",
+          "instant": true,
           "legendFormat": "",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -202,8 +204,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "100 * scalar(node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}) * node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"} / (node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2))",
+          "instant": true,
           "legendFormat": "",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -257,8 +260,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "(scalar(node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}) * scalar(clamp_min(((node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2)) - node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}) / deriv(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m]), 0))) / 3600",
+          "instant": true,
           "legendFormat": "",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
@@ -322,8 +326,9 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "100 * (1 - node_filesystem_avail_bytes{instance=\"beast:9100\",mountpoint=\"/volume2\",fstype=\"btrfs\"} / node_filesystem_size_bytes{instance=\"beast:9100\",mountpoint=\"/volume2\",fstype=\"btrfs\"})",
+          "instant": true,
           "legendFormat": "",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],

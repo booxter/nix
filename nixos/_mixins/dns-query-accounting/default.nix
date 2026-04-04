@@ -268,10 +268,6 @@ let
         mv "$tmp_metrics" ${textfileDir}/dns-query-accounting.prom
       }
 
-      process_journal_batch || true
-      build_domain_window
-      write_metrics
-
       while true; do
         process_journal_batch || true
         build_domain_window
