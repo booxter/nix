@@ -5,6 +5,8 @@
   ...
 }:
 let
+  mediaLibraries = import ./media-libraries.nix;
+  mediaPaths = import ./media-paths.nix;
   nfsSubnet = "192.168.0.0/16";
   smartctlExporterPort = 9633;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
@@ -384,7 +386,7 @@ in
 
   systemd.tmpfiles.rules = [
     "d ${textfileDir} 0755 root root - -"
-  ];
+  ] ++ map (library: "d ${mediaPaths.sourceLibraryRoot}/${library.path} 0775 root root - -") mediaLibraries;
 
   environment.systemPackages = with pkgs; [
     btrfs-progs

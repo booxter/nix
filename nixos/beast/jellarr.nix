@@ -5,6 +5,8 @@
   ...
 }:
 let
+  mediaLibraries = import ./media-libraries.nix;
+  mediaPaths = import ./media-paths.nix;
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {
     owner = "jellyfin";
@@ -275,7 +277,7 @@ in
               }:
               {
                 pathInfos = [
-                  { path = "/media/library/" + path; }
+                  { path = mediaPaths.jellyfinLibraryRoot + "/" + path; }
                 ];
 
                 typeOptions = getTypeOptions {
@@ -299,61 +301,14 @@ in
                 enableRealtimeMonitor = true;
               };
           in
-          [
-            # Movies and Shows
-            {
-              name = "Movies";
-              collectionType = "movies";
-              libraryOptions = getLibraryOptions { path = "movies"; };
-            }
-            {
-              name = "Shows";
-              collectionType = "tvshows";
-              libraryOptions = getLibraryOptions { path = "shows"; };
-            }
-            {
-              name = "Family";
-              collectionType = "movies";
-              libraryOptions = getLibraryOptions { path = "family"; };
-            }
-            {
-              name = "Anime";
-              collectionType = "movies";
-              libraryOptions = getLibraryOptions { path = "anime"; };
-            }
-            {
-              name = "Docu";
-              collectionType = "movies";
-              libraryOptions = getLibraryOptions { path = "docu"; };
-            }
-
-            # XXX
-            {
-              name = "Attic";
-              collectionType = "movies";
-              libraryOptions = getLibraryOptions {
-                path = "attic";
-                isAdult = true;
-                preferTmdb = true;
-              };
-            }
-            {
-              name = "Fruit";
-              collectionType = "movies";
-              libraryOptions = getLibraryOptions {
-                path = "xxx";
-                isAdult = true;
-                preferTmdb = true;
-              };
-            }
-
-            # Other
-            {
-              name = "Music";
-              collectionType = "music";
-              libraryOptions = getLibraryOptions { path = "music"; };
-            }
-          ];
+          map (library: {
+            inherit (library) name collectionType;
+            libraryOptions = getLibraryOptions {
+              inherit (library) path;
+              isAdult = library.isAdult or false;
+              preferTmdb = library.preferTmdb or false;
+            };
+          }) mediaLibraries;
       };
       users =
         let
@@ -393,6 +348,7 @@ in
                   "Shows"
                   "Anime"
                   "Docu"
+                  "Stand-up"
                   "Music"
                 ]
                 ++ lib.optionals isAdult [
