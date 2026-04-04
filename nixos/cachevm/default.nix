@@ -1,5 +1,6 @@
 { lib, pkgs, ... }:
 let
+  beastNfsAddress = "192.168.16.3";
   nfsPath = "/cache";
   # Same recovery semantics as other NFS clients:
   # - block writes/reads until NAS returns
@@ -18,7 +19,7 @@ let
     "x-systemd.after=network-online.target"
   ];
   cache = {
-    device = "beast:/volume2/nix-cache";
+    device = "${beastNfsAddress}:/volume2/nix-cache";
     fsType = "nfs";
     options = nfsMountOptions;
   };
