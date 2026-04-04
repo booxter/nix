@@ -18,47 +18,48 @@
   "editable": false,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": null,
   "links": [],
   "panels": [
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "decimals": 1,
+          "decimals": 0,
           "mappings": [],
+          "max": 2,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
                 "color": "orange",
-                "value": 60
+                "value": 1
               },
               {
-                "color": "red",
-                "value": 75
+                "color": "green",
+                "value": 3
               }
             ]
           },
-          "unit": "celsius"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 5,
-        "w": 8,
+        "w": 6,
         "x": 0,
         "y": 0
       },
       "id": 1,
       "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
@@ -67,429 +68,26 @@
           "fields": "",
           "values": false
         },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
+        "textMode": "auto"
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "topk(1, max by(instance) ((node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"}))",
+          "expr": "sum(network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=\"OL\"})",
           "instant": true,
-          "legendFormat": "{{instance}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Hottest CPU / Package",
+      "title": "UPSes Online",
       "type": "stat"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "decimals": 1,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 50
-              },
-              {
-                "color": "red",
-                "value": 65
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 8,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "topk(1, max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"}))",
-          "instant": true,
-          "legendFormat": "{{instance}}",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Hottest Storage Sensor",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 1,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 45
-              },
-              {
-                "color": "red",
-                "value": 50
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 16,
-        "y": 0
-      },
-      "id": 3,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "topk(1, max by(device) (smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"}))",
-          "instant": true,
-          "legendFormat": "{{device}}",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Hottest Beast HDD",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 5
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "max by(instance) ((node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"})",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "CPU / Package Temperature",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 60
-              },
-              {
-                "color": "red",
-                "value": 75
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 5
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"} or host_observability_darwin_temperature_max_celsius{job=\"node\",host_class=\"hardware\"})",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Hottest Exposed Sensor By Host",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 60
-              },
-              {
-                "color": "red",
-                "value": 75
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 13
-      },
-      "id": 6,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Storage Temperature",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 0
-              }
-            ]
-          },
-          "unit": "rpm"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 13
-      },
-      "id": 7,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_fan_rpm{job=\"node\",host_class=\"hardware\"})",
-          "legendFormat": "{{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Fan RPM",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 45
-              },
-              {
-                "color": "red",
-                "value": 50
-              }
-            ]
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 21
-      },
-      "id": 8,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"}",
-          "legendFormat": "{{device}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Beast HDD Temperatures",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
+          "decimals": 0,
           "mappings": [],
           "max": 2,
           "min": 0,
@@ -515,12 +113,194 @@
         "overrides": []
       },
       "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum(network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=\"OB\"})",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "UPSes On Battery",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "min(network_ups_tools_battery_charge{job=~\"nut-.*\",ups=~\".+\"})",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Lowest Battery Charge",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 0,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              },
+              {
+                "color": "green",
+                "value": 30
+              }
+            ]
+          },
+          "unit": "m"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "min"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "min(network_ups_tools_battery_runtime{job=~\"nut-.*\",ups=~\".+\"}) / 60",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Shortest Runtime",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 20
+              },
+              {
+                "color": "green",
+                "value": 50
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 31
+        "y": 5
       },
-      "id": 9,
+      "id": 5,
       "options": {
         "legend": {
           "displayMode": "list",
@@ -536,33 +316,76 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_darwin_thermal_warning_level{job=\"node\",host_class=\"hardware\"}",
-          "legendFormat": "{{instance}} thermal",
+          "expr": "network_ups_tools_battery_charge{job=~\"nut-.*\",ups=~\".+\"}",
+          "legendFormat": "{{ups}}",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "host_observability_darwin_performance_warning_level{job=\"node\",host_class=\"hardware\"}",
-          "legendFormat": "{{instance}} performance",
-          "range": true,
-          "refId": "B"
         }
       ],
-      "title": "Darwin Thermal Warning Levels",
+      "title": "Battery Charge",
       "type": "timeseries"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            }
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 10
+              },
+              {
+                "color": "green",
+                "value": 30
+              }
+            ]
           },
+          "unit": "m"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "network_ups_tools_battery_runtime{job=~\"nut-.*\",ups=~\".+\"} / 60",
+          "legendFormat": "{{ups}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Battery Runtime",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -573,25 +396,25 @@
               },
               {
                 "color": "orange",
-                "value": 10
+                "value": 50
               },
               {
                 "color": "red",
-                "value": 20
+                "value": 80
               }
             ]
           },
-          "unit": "watt"
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 31
+        "x": 0,
+        "y": 13
       },
-      "id": 10,
+      "id": 7,
       "options": {
         "legend": {
           "displayMode": "list",
@@ -607,23 +430,187 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_darwin_power_watts{job=\"node\",host_class=\"hardware\"}",
-          "legendFormat": "{{instance}} {{domain}}",
+          "expr": "network_ups_tools_ups_load{job=~\"nut-.*\",ups=~\".+\"}",
+          "legendFormat": "{{ups}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Darwin Power",
+      "title": "UPS Load",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 110
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          },
+          "unit": "volt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 13
+      },
+      "id": 8,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "network_ups_tools_input_voltage{job=~\"nut-.*\",ups=~\".+\"}",
+          "legendFormat": "{{ups}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Input Voltage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "text": "No"
+                },
+                "1": {
+                  "text": "Yes"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 9,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "UPS"
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=~\"OL|OB|LB|CHRG|DISCHRG\"}",
+          "format": "table",
+          "instant": true,
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Current UPS Flags",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "ups",
+                "flag",
+                "Value"
+              ]
+            }
+          }
+        },
+        {
+          "id": "groupingToMatrix",
+          "options": {
+            "columnField": "flag",
+            "rowField": "ups",
+            "valueField": "Value"
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
   "tags": [
     "fana",
-    "hardware",
-    "temperature",
-    "thermals",
+    "power",
+    "ups",
     "provisioned"
   ],
   "templating": {
@@ -635,8 +622,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Thermals",
-  "uid": "fana-hardware-thermals",
-  "version": 6,
+  "title": "Power",
+  "uid": "fana-ups-overview",
+  "version": 1,
   "weekStart": ""
 }

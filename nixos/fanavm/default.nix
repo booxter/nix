@@ -42,11 +42,24 @@ let
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
+  nutExporterPort = 9199;
   smartctlExporterPort = 9633;
   retentionDays = 14;
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
   lokiRetention = "${toString retentionHours}h";
+  grafanaPrometheusUid = "PBFA97CFB590B2093";
+  grafanaLokiUid = "P8E80F9AEF21F6940";
+  nutExporterVariables = lib.concatStringsSep "," [
+    "battery.charge"
+    "battery.charge.low"
+    "battery.runtime"
+    "battery.runtime.low"
+    "input.voltage"
+    "input.voltage.nominal"
+    "ups.load"
+    "ups.status"
+  ];
   isVirtualNodeName = name: lib.hasPrefix "prox-" name && lib.hasSuffix "vm" name;
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   remoteNixosNodeTargetConfigs =
@@ -88,6 +101,85 @@ let
         ) (builtins.attrNames outputs.darwinConfigurations)
       );
   remoteNodeTargetConfigs = remoteNixosNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
+  mkGrafanaPromRule =
+    {
+      uid,
+      title,
+      expr,
+      comparator,
+      threshold,
+      forDuration,
+      annotations,
+      labels ? { },
+      noDataState ? "NoData",
+    }:
+    {
+      inherit uid title annotations labels noDataState;
+      condition = "B";
+      data = [
+        {
+          refId = "A";
+          relativeTimeRange = {
+            from = 600;
+            to = 0;
+          };
+          datasourceUid = grafanaPrometheusUid;
+          model = {
+            datasource = {
+              type = "prometheus";
+              uid = grafanaPrometheusUid;
+            };
+            editorMode = "code";
+            expr = expr;
+            instant = true;
+            intervalMs = 1000;
+            legendFormat = "__auto";
+            maxDataPoints = 43200;
+            range = false;
+            refId = "A";
+          };
+        }
+        {
+          refId = "B";
+          relativeTimeRange = {
+            from = 0;
+            to = 0;
+          };
+          datasourceUid = "__expr__";
+          model = {
+            conditions = [
+              {
+                evaluator = {
+                  params = [ threshold ];
+                  type = comparator;
+                };
+                operator = {
+                  type = "and";
+                };
+                query = {
+                  params = [ "A" ];
+                };
+                reducer = {
+                  type = "last";
+                };
+                type = "query";
+              }
+            ];
+            datasource = {
+              type = "__expr__";
+              uid = "__expr__";
+            };
+            expression = "A";
+            intervalMs = 1000;
+            maxDataPoints = 43200;
+            refId = "B";
+            type = "classic_conditions";
+          };
+        }
+      ];
+      execErrState = "Alerting";
+      "for" = forDuration;
+    };
 in
 {
   sops = {
@@ -136,7 +228,7 @@ in
               settings:
                 bottoken: "${config.sops.placeholder.grafanaAlertingTelegramBotToken}"
                 chatid: "${config.sops.placeholder.grafanaAlertingTelegramChatId}"
-                uploadImage: true
+                uploadImage: false
     '';
     restartUnits = [ "grafana.service" ];
   };
@@ -171,6 +263,7 @@ in
         datasources = [
           {
             name = "Prometheus";
+            uid = grafanaPrometheusUid;
             type = "prometheus";
             access = "proxy";
             url = "http://127.0.0.1:${toString prometheusPort}";
@@ -179,6 +272,7 @@ in
           }
           {
             name = "Loki";
+            uid = grafanaLokiUid;
             type = "loki";
             access = "proxy";
             url = "http://127.0.0.1:${toString lokiPort}";
@@ -201,12 +295,215 @@ in
         ];
       };
       alerting.contactPoints.path = config.sops.templates."grafana-alerting-contact-points.yaml".path;
+      alerting.policies.settings = {
+        apiVersion = 1;
+        policies = [
+          {
+            orgId = 1;
+            receiver = "telegram-home";
+            group_by = [ "alertname" ];
+            group_wait = "5s";
+            group_interval = "5m";
+            repeat_interval = "12h";
+          }
+        ];
+      };
+      alerting.rules.settings = {
+        apiVersion = 1;
+        groups = [
+          {
+            orgId = 1;
+            name = "dns-health";
+            folder = "Fana";
+            interval = "30s";
+            rules = [
+              (mkGrafanaPromRule {
+                uid = "dns_probe_down";
+                title = "DNS Resolver Probe Down";
+                expr = "probe_success{job=\"blackbox-dns\"}";
+                comparator = "lt";
+                threshold = 1;
+                forDuration = "2m";
+                annotations = {
+                  summary = "DNS probe down: {{ $labels.resolver_title }}";
+                  description = "Resolver {{ $labels.resolver_title }} is failing blackbox DNS probes from fana.";
+                };
+                labels = {
+                  severity = "critical";
+                  category = "dns";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "dns_upstream_failures";
+                title = "DNS Upstream Failures";
+                expr = "sum by (instance) (rate(dnsmasq_servers_queries_failed{job=\"dnsmasq\"}[5m]))";
+                comparator = "gt";
+                threshold = 0;
+                forDuration = "10m";
+                annotations = {
+                  summary = "DNS upstream failures on {{ $labels.instance }}";
+                  description = "dnsmasq on {{ $labels.instance }} has been seeing upstream query failures for 10 minutes.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "dns";
+                };
+              })
+            ];
+          }
+          {
+            orgId = 1;
+            name = "thermal-health";
+            folder = "Fana";
+            interval = "30s";
+            rules = [
+              (mkGrafanaPromRule {
+                uid = "thermal_cpu_hot";
+                title = "CPU Temperature High";
+                expr = "max by(instance) ((node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"})";
+                comparator = "gt";
+                threshold = 85;
+                forDuration = "10m";
+                annotations = {
+                  summary = "CPU temperature high on {{ $labels.instance }}";
+                  description = "{{ $labels.instance }} has sustained CPU/package temperature above 85C for 10 minutes.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "thermal";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "thermal_storage_hot";
+                title = "Storage Temperature High";
+                expr = "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})";
+                comparator = "gt";
+                threshold = 75;
+                forDuration = "10m";
+                annotations = {
+                  summary = "Storage temperature high on {{ $labels.instance }}";
+                  description = "{{ $labels.instance }} has sustained storage temperature above 75C for 10 minutes.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "thermal";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "thermal_hdd_hot";
+                title = "HDD Temperature High";
+                expr = "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"}";
+                comparator = "gt";
+                threshold = 50;
+                forDuration = "30m";
+                annotations = {
+                  summary = "HDD temperature high on beast";
+                  description = "Drive {{ $labels.device }} on beast has sustained temperature above 50C for 30 minutes.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "thermal";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "darwin_ismc_export_failed";
+                title = "Darwin Thermal Export Failed";
+                expr = "host_observability_darwin_ismc_collect_success{job=\"node\",host_class=\"hardware\"}";
+                comparator = "lt";
+                threshold = 1;
+                forDuration = "10m";
+                annotations = {
+                  summary = "Darwin thermal export failed on {{ $labels.instance }}";
+                  description = "The iSMC-based thermal collector has not been exporting successfully on {{ $labels.instance }} for 10 minutes.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "thermal";
+                };
+              })
+            ];
+          }
+          {
+            orgId = 1;
+            name = "ups-health";
+            folder = "Fana";
+            interval = "30s";
+            rules = [
+              (mkGrafanaPromRule {
+                uid = "ups_exporter_down";
+                title = "UPS Exporter Down";
+                expr = "up{job=~\"nut-.*\"}";
+                comparator = "lt";
+                threshold = 1;
+                forDuration = "5m";
+                annotations = {
+                  summary = "UPS exporter down: {{ $labels.job }}";
+                  description = "Prometheus has been unable to scrape {{ $labels.job }} for 5 minutes.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "ups";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "ups_on_battery";
+                title = "UPS On Battery";
+                expr = "network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=\"OB\"}";
+                comparator = "gt";
+                threshold = 0;
+                forDuration = "2m";
+                annotations = {
+                  summary = "UPS on battery: {{ $labels.ups }}";
+                  description = "UPS {{ $labels.ups }} on {{ $labels.job }} has been on battery for 2 minutes.";
+                };
+                labels = {
+                  severity = "critical";
+                  category = "ups";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "ups_low_battery";
+                title = "UPS Low Battery";
+                expr = "network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=\"LB\"}";
+                comparator = "gt";
+                threshold = 0;
+                forDuration = "1m";
+                annotations = {
+                  summary = "UPS low battery: {{ $labels.ups }}";
+                  description = "UPS {{ $labels.ups }} is reporting low battery.";
+                };
+                labels = {
+                  severity = "critical";
+                  category = "ups";
+                };
+              })
+            ];
+          }
+        ];
+      };
     };
   };
 
   systemd.services.grafana = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
+  };
+
+  systemd.services.prometheus-nut-exporter = {
+    description = "Prometheus exporter for NUT UPS servers";
+    wantedBy = [ "multi-user.target" ];
+    wants = [ "network-online.target" ];
+    after = [ "network-online.target" ];
+    serviceConfig = {
+      ExecStart = "${pkgs.prometheus-nut-exporter}/bin/nut_exporter --web.listen-address=127.0.0.1:${toString nutExporterPort} --nut.vars_enable=${nutExporterVariables}";
+      DynamicUser = true;
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
+      Restart = "always";
+      RestartSec = "5s";
+    };
   };
 
   # Prometheus scrapes and stores time-series metrics from this machine.
@@ -241,6 +538,87 @@ in
           }
         ]
         ++ remoteNodeTargetConfigs;
+      }
+      {
+        job_name = "nut-prx1";
+        metrics_path = "/ups_metrics";
+        params = {
+          server = [ "prx1-lab" ];
+          ups = [ "PRX1-UPS" ];
+        };
+        static_configs = [
+          {
+            targets = [ "127.0.0.1:${toString nutExporterPort}" ];
+          }
+        ];
+        relabel_configs = [
+          {
+            source_labels = [ "__param_server" ];
+            target_label = "instance";
+          }
+          {
+            source_labels = [ "__param_server" ];
+            target_label = "ups_server";
+          }
+          {
+            source_labels = [ "__param_ups" ];
+            target_label = "ups";
+          }
+        ];
+      }
+      {
+        job_name = "nut-pi5";
+        metrics_path = "/ups_metrics";
+        params = {
+          server = [ "pi5.local" ];
+          ups = [ "PI5-UPS" ];
+        };
+        static_configs = [
+          {
+            targets = [ "127.0.0.1:${toString nutExporterPort}" ];
+          }
+        ];
+        relabel_configs = [
+          {
+            source_labels = [ "__param_server" ];
+            target_label = "instance";
+          }
+          {
+            source_labels = [ "__param_server" ];
+            target_label = "ups_server";
+          }
+          {
+            source_labels = [ "__param_ups" ];
+            target_label = "ups";
+          }
+        ];
+      }
+      {
+        job_name = "nut-frame";
+        metrics_path = "/ups_metrics";
+        params = {
+          server = [ "frame" ];
+          ups = [ "FRAME-UPS" ];
+        };
+        static_configs = [
+          {
+            targets = [ "127.0.0.1:${toString nutExporterPort}" ];
+          }
+        ];
+        relabel_configs = [
+          {
+            source_labels = [ "__param_server" ];
+            target_label = "instance";
+          }
+          {
+            source_labels = [ "__param_server" ];
+            target_label = "ups_server";
+          }
+          {
+            source_labels = [ "__param_ups" ];
+            target_label = "ups";
+          }
+        ];
       }
       {
         job_name = "blackbox-arr";
