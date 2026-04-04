@@ -73,6 +73,9 @@ in
       ];
 
       cache-size = 2000;
+      # Include requester IP in dnsmasq query logs so Loki can answer
+      # "which client generated this DNS traffic?"
+      log-queries = "extra";
       server = [ gwAddr ];
 
       domain-needed = true;
