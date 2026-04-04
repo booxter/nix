@@ -217,6 +217,12 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "custom": {
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
