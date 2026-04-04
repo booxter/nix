@@ -16,6 +16,7 @@ let
       pkgs.gawk
       pkgs.gnused
       pkgs.jq
+      pkgs.libpsl
       pkgs.systemd
     ];
     text = ''
@@ -23,11 +24,14 @@ let
 
       cursor_file="${stateDir}/journal.cursor"
       counts_file="${stateDir}/counts.tsv"
+      domain_counts_file="${stateDir}/domain-counts.tsv"
       leases_file="${cfg.leasesFile}"
       tmp_metrics="$(mktemp ${textfileDir}/dns-query-accounting.prom.XXXXXX)"
       tmp_events="$(mktemp ${stateDir}/events.tsv.XXXXXX)"
+      tmp_domain_events="$(mktemp ${stateDir}/domain-events.tsv.XXXXXX)"
       tmp_counts="$(mktemp ${stateDir}/counts.tsv.XXXXXX)"
-      trap 'rm -f "$tmp_metrics" "$tmp_events" "$tmp_counts"' EXIT
+      tmp_domain_counts="$(mktemp ${stateDir}/domain-counts.tsv.XXXXXX)"
+      trap 'rm -f "$tmp_metrics" "$tmp_events" "$tmp_domain_events" "$tmp_counts" "$tmp_domain_counts"' EXIT
 
       escape_label() {
         local value="$1"
@@ -37,8 +41,31 @@ let
         printf '%s' "$value"
       }
 
+      normalize_domain() {
+        local qname="$1"
+        local reg_domain
+
+        qname="''${qname,,}"
+        qname="''${qname%.}"
+
+        if [[ -z "$qname" || "$qname" != *.* ]]; then
+          return 1
+        fi
+
+        case "$qname" in
+          *.in-addr.arpa|*.ip6.arpa|*.local|localhost)
+            return 1
+            ;;
+        esac
+
+        reg_domain="$(printf '%s\n' "$qname" | psl --print-reg-domain --batch 2>/dev/null | head -n 1)"
+        [[ -n "$reg_domain" ]] || return 1
+        printf '%s\n' "$reg_domain"
+      }
+
       mkdir -p "${stateDir}" "${textfileDir}"
       touch "$counts_file"
+      touch "$domain_counts_file"
 
       if [[ ! -s "$cursor_file" ]]; then
         journalctl -u '${cfg.systemdUnit}' -n 0 --show-cursor --no-pager \
@@ -46,12 +73,19 @@ let
       else
         new_cursor=""
         while IFS=$'\t' read -r cursor message; do
+          domain=""
           new_cursor="$cursor"
 
-          if [[ "$message" =~ ^[0-9]+\ ([^/]+)/[^[:space:]]+\ query\[([^]]+)\]\  ]]; then
+          if [[ "$message" =~ ^[0-9]+\ ([^/]+)/[^[:space:]]+\ query\[([^]]+)\]\ ([^[:space:]]+)\ from\ [^[:space:]]+$ ]]; then
             printf 'query\t%s\t%s\t1\n' "''${BASH_REMATCH[1]}" "''${BASH_REMATCH[2]}" >>"$tmp_events"
-          elif [[ "$message" =~ ^[0-9]+\ ([^/]+)/[^[:space:]]+\ forwarded\  ]]; then
+            if domain="$(normalize_domain "''${BASH_REMATCH[3]}")"; then
+              printf 'query\t%s\t1\n' "$domain" >>"$tmp_domain_events"
+            fi
+          elif [[ "$message" =~ ^[0-9]+\ ([^/]+)/[^[:space:]]+\ forwarded\ ([^[:space:]]+)\ to\ [^[:space:]]+$ ]]; then
             printf 'forwarded\t%s\t-\t1\n' "''${BASH_REMATCH[1]}" >>"$tmp_events"
+            if domain="$(normalize_domain "''${BASH_REMATCH[2]}")"; then
+              printf 'forwarded\t%s\t1\n' "$domain" >>"$tmp_domain_events"
+            fi
           fi
         done < <(
           journalctl -u '${cfg.systemdUnit}' --after-cursor "$(<"$cursor_file")" -o json --no-pager \
@@ -83,6 +117,28 @@ let
 
         mv "$tmp_counts" "$counts_file"
         : >"$tmp_counts"
+
+        awk -F '\t' '
+          BEGIN { OFS = "\t" }
+          FNR == NR {
+            if (NF == 3) {
+              counts[$1 OFS $2] = $3
+            }
+            next
+          }
+          NF == 3 {
+            key = $1 OFS $2
+            counts[key] += $3
+          }
+          END {
+            for (key in counts) {
+              print key, counts[key]
+            }
+          }
+        ' "$domain_counts_file" "$tmp_domain_events" | sort >"$tmp_domain_counts"
+
+        mv "$tmp_domain_counts" "$domain_counts_file"
+        : >"$tmp_domain_counts"
       fi
 
       declare -A client_name_by_ip=()
@@ -116,6 +172,10 @@ let
         printf '%s\n' '# TYPE host_observability_dns_client_queries_total counter'
         printf '%s\n' '# HELP host_observability_dns_client_forwarded_total DNS queries forwarded upstream by dnsmasq by client IP and known lease name.'
         printf '%s\n' '# TYPE host_observability_dns_client_forwarded_total counter'
+        printf '%s\n' '# HELP host_observability_dns_domain_queries_total DNS queries observed in dnsmasq logs by normalized eTLD+1 domain.'
+        printf '%s\n' '# TYPE host_observability_dns_domain_queries_total counter'
+        printf '%s\n' '# HELP host_observability_dns_domain_forwarded_total DNS queries forwarded upstream by dnsmasq by normalized eTLD+1 domain.'
+        printf '%s\n' '# TYPE host_observability_dns_domain_forwarded_total counter'
 
         while IFS=$'\t' read -r kind ip qtype count; do
           [[ -z "$kind" || -z "$ip" || -z "$count" ]] && continue
@@ -131,6 +191,19 @@ let
               "$ip_label" "$name" "$count"
           fi
         done <"$counts_file"
+
+        while IFS=$'\t' read -r kind domain count; do
+          [[ -z "$kind" || -z "$domain" || -z "$count" ]] && continue
+          domain_label="$(escape_label "$domain")"
+
+          if [[ "$kind" == "query" ]]; then
+            printf 'host_observability_dns_domain_queries_total{domain="%s"} %s\n' \
+              "$domain_label" "$count"
+          elif [[ "$kind" == "forwarded" ]]; then
+            printf 'host_observability_dns_domain_forwarded_total{domain="%s"} %s\n' \
+              "$domain_label" "$count"
+          fi
+        done <"$domain_counts_file"
       } >"$tmp_metrics"
 
       chmod 0644 "$tmp_metrics"
