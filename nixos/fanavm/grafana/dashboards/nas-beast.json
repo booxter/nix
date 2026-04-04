@@ -214,7 +214,7 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "decimals": 0,
+          "decimals": 1,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -225,7 +225,7 @@
               }
             ]
           },
-          "unit": "s"
+          "unit": "none"
         },
         "overrides": []
       },
@@ -256,13 +256,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "scalar(node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}) * scalar(clamp_min(((node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2)) - node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}) / deriv(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m]), 0))",
+          "expr": "(scalar(node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}) * scalar(clamp_min(((node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2)) - node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}) / deriv(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m]), 0))) / 3600",
           "legendFormat": "",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "RAID ETA",
+      "title": "RAID ETA (hours)",
       "type": "stat"
     },
     {
