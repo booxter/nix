@@ -455,8 +455,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"}",
-          "legendFormat": "{{device}}",
+          "expr": "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast:9100\"}",
+          "legendFormat": "Bay {{bay}} ({{device}})",
           "range": true,
           "refId": "A"
         }
@@ -587,8 +587,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"}",
-          "legendFormat": "{{device}}",
+          "expr": "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast:9100\"}",
+          "legendFormat": "Bay {{bay}} ({{device}})",
           "range": true,
           "refId": "A"
         }
@@ -879,6 +879,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

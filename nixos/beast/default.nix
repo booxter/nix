@@ -7,6 +7,7 @@
 let
   nfsSubnet = "192.168.0.0/16";
   smartctlExporterPort = 9633;
+  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   # Pin export IDs so clients see stable export identities across server restarts.
   mkNfsExport =
     { path, fsid }: "${path} ${nfsSubnet}(rw,async,no_subtree_check,fsid=${toString fsid})";
@@ -27,6 +28,81 @@ let
   # DDNS provider target for public endpoints (jf/au/js).
   dynuHostname = "ihrachyshka-home.freeddns.org";
   dynuUsername = "ihrachyshka";
+  diskBayMappings = [
+    {
+      bay = "1";
+      serial = "ZYD01W48";
+      model = "ST24000NM000H-3KS103";
+    }
+    {
+      bay = "3";
+      serial = "ZYD0CASB";
+      model = "ST24000NM000H-3KS103";
+    }
+    {
+      bay = "5";
+      serial = "ZYD05Z4J";
+      model = "ST24000NM000H-3KS103";
+    }
+    {
+      bay = "6";
+      serial = "ZYD041CP";
+      model = "ST24000NM000H-3KS103";
+    }
+    {
+      bay = "7";
+      serial = "ZXA0RKFF";
+      model = "ST24000NM000C-3WD103";
+    }
+    {
+      bay = "9";
+      serial = "ZXA0B5K4";
+      model = "ST24000NM000C-3WD103";
+    }
+    {
+      bay = "10";
+      serial = "ZXA0FFNN";
+      model = "ST24000NM000C-3WD103";
+    }
+    {
+      bay = "11";
+      serial = "ZYD01W92";
+      model = "ST24000NM000H-3KS103";
+    }
+    {
+      bay = "13";
+      serial = "ZYD02EQQ";
+      model = "ST24000NM000H-3KS103";
+    }
+    {
+      bay = "15";
+      serial = "ZXA0GW38";
+      model = "ST24000NM000C-3WD103";
+    }
+  ];
+  diskBayExporter = pkgs.writeShellScript "beast-disk-bay-export" ''
+    set -euo pipefail
+
+    mkdir -p ${textfileDir}
+    tmp_file="$(mktemp ${textfileDir}/disk-bays.prom.XXXXXX)"
+    trap 'rm -f "$tmp_file"' EXIT
+
+    cat > "$tmp_file" <<'EOF'
+    # HELP host_observability_disk_bay_info Current mapping of beast disk device names to physical bays.
+    # TYPE host_observability_disk_bay_info gauge
+    EOF
+
+    ${lib.concatMapStringsSep "\n" (mapping: ''
+      device="$(${pkgs.util-linux}/bin/lsblk -dn -o NAME,SERIAL | ${pkgs.gawk}/bin/awk '$2 == "${mapping.serial}" { print $1; exit }')"
+      if [ -n "$device" ]; then
+        printf 'host_observability_disk_bay_info{device="%s",bay="${mapping.bay}",serial="${mapping.serial}",model="${mapping.model}"} 1\n' "$device" >> "$tmp_file"
+      fi
+    '') diskBayMappings}
+
+    chmod 0644 "$tmp_file"
+    mv "$tmp_file" ${textfileDir}/disk-bays.prom
+    trap - EXIT
+  '';
 in
 {
   imports = [
@@ -266,6 +342,29 @@ in
       "--smartctl.device-include=^(sd[a-z]+)$"
     ];
   };
+
+  services.prometheus.exporters.node = {
+    enabledCollectors = lib.mkForce [
+      "processes"
+      "systemd"
+      "textfile"
+    ];
+    extraFlags = lib.mkForce [ "--collector.textfile.directory=${textfileDir}" ];
+  };
+
+  systemd.services.beast-disk-bay-export = {
+    description = "Export beast disk bay mapping for node exporter";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "local-fs.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = diskBayExporter;
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d ${textfileDir} 0755 root root - -"
+  ];
 
   environment.systemPackages = with pkgs; [
     btrfs-progs
