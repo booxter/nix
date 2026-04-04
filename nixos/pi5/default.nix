@@ -47,6 +47,8 @@ in
 
   # TODO: enable ipv6
   # TODO: use secret management for internal info?
+  host.observability.dnsQueryAccounting.enable = true;
+
   services.dnsmasq = {
     enable = true;
     resolveLocalQueries = true;

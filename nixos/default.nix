@@ -40,6 +40,7 @@ in
     ]
     ++ [
       ./_mixins/observability-client
+      ./_mixins/dns-query-accounting
       ./_mixins/lan-wan-accounting
       ./_mixins/user
     ]
