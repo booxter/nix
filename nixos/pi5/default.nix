@@ -47,6 +47,8 @@ in
 
   # TODO: enable ipv6
   # TODO: use secret management for internal info?
+  host.observability.dnsQueryAccounting.enable = true;
+
   services.dnsmasq = {
     enable = true;
     resolveLocalQueries = true;
@@ -72,6 +74,10 @@ in
         "${guestIface},option:dns-server,${gwAddr}"
       ];
 
+      cache-size = 2000;
+      # Include requester IP in dnsmasq query logs so Loki can answer
+      # "which client generated this DNS traffic?"
+      log-queries = "extra";
       server = [ gwAddr ];
 
       domain-needed = true;

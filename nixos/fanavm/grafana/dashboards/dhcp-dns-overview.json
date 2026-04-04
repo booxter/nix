@@ -24,6 +24,133 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Down"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "Up"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "probe_success{job=\"blackbox-dns\"}",
+          "instant": true,
+          "legendFormat": "{{resolver_title}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Resolver Availability",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(probe_duration_seconds{job=\"blackbox-dns\"}[5m])",
+          "legendFormat": "{{resolver_title}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "4h",
+      "title": "DNS Probe Duration",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -84,16 +211,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
                 "color": "yellow",
-                "value": 0.5
+                "value": 0.001
               },
               {
-                "color": "green",
-                "value": 0.8
+                "color": "red",
+                "value": 0.01
               }
             ]
           },
@@ -126,14 +253,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m])) / clamp_min(sum(rate(dnsmasq_hits{job=\"dnsmasq\"}[5m]) + rate(dnsmasq_misses{job=\"dnsmasq\"}[5m])), 1e-9)) or vector(0)",
+          "expr": "sum(rate(dnsmasq_servers_queries_failed{job=\"dnsmasq\"}[5m])) / clamp_min(sum(rate(dnsmasq_servers_queries{job=\"dnsmasq\"}[5m])), 1e-9)",
           "instant": true,
-          "legendFormat": "hit ratio",
+          "legendFormat": "failure rate",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "DNS Cache Hit Ratio",
+      "title": "Upstream Failure Rate",
       "type": "stat"
     },
     {
@@ -141,23 +268,34 @@
       "fieldConfig": {
         "defaults": {
           "mappings": [],
+          "max": 1,
+          "min": 0,
+          "noValue": "No cache churn",
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.05
+              },
+              {
+                "color": "red",
+                "value": 0.2
               }
             ]
           },
-          "unit": "short"
+          "unit": "percentunit"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 12,
+        "x": 18,
         "y": 0
       },
       "id": 3,
@@ -179,14 +317,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "dnsmasq_cachesize{job=\"dnsmasq\"}",
+          "expr": "(sum(rate(dnsmasq_evictions{job=\"dnsmasq\"}[5m])) / clamp_min(sum(rate(dnsmasq_insertions{job=\"dnsmasq\"}[5m])), 1e-9)) unless (sum(rate(dnsmasq_insertions{job=\"dnsmasq\"}[5m])) < 0.1)",
           "instant": true,
-          "legendFormat": "cache size",
+          "legendFormat": "eviction pressure",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "DNS Cache Size",
+      "title": "Cache Eviction Pressure",
       "type": "stat"
     },
     {
@@ -210,7 +348,7 @@
       "gridPos": {
         "h": 8,
         "w": 6,
-        "x": 18,
+        "x": 12,
         "y": 0
       },
       "id": 4,
@@ -461,6 +599,233 @@
       ],
       "title": "Upstream DNS Failed Queries",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 40
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (client_ip, client_name) (increase(host_observability_dns_client_queries_total{job=\"node\",instance=\"dhcp:9100\"}[15m])))",
+          "legendFormat": "{{client_name}} ({{client_ip}})",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Top DNS Clients (15m)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 40
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "topk(10, sum by (client_ip, client_name) (increase(host_observability_dns_client_forwarded_total{job=\"node\",instance=\"dhcp:9100\"}[15m])))",
+          "legendFormat": "{{client_name}} ({{client_ip}})",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Top Forwarded Lookup Clients (15m)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 48
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "topk(10, host_observability_dns_domain_queries_15m{job=\"node\",instance=\"dhcp:9100\",domain!=\"other\"})",
+          "legendFormat": "{{domain}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Top Major Domains (15m)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 48
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "topk(10, host_observability_dns_domain_forwarded_15m{job=\"node\",instance=\"dhcp:9100\",domain!=\"other\"})",
+          "legendFormat": "{{domain}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Top Forwarded Major Domains (15m)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Loki",
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 56
+      },
+      "id": 11,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": "Loki",
+          "editorMode": "code",
+          "expr": "{host=\"pi5\",systemd_unit=\"dnsmasq.service\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "title": "Recent DNS Logs",
+      "type": "logs"
     }
   ],
   "refresh": "30s",
