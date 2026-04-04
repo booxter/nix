@@ -106,6 +106,40 @@ in
     group = "grafana";
     mode = "0400";
   };
+  sops.secrets.grafanaAlertingTelegramBotToken = {
+    key = "grafana/alerting/telegram/bot_token";
+    owner = "grafana";
+    group = "grafana";
+    mode = "0400";
+    restartUnits = [ "grafana.service" ];
+  };
+  sops.secrets.grafanaAlertingTelegramChatId = {
+    key = "grafana/alerting/telegram/chat_id";
+    owner = "grafana";
+    group = "grafana";
+    mode = "0400";
+    restartUnits = [ "grafana.service" ];
+  };
+  sops.templates."grafana-alerting-contact-points.yaml" = {
+    owner = "grafana";
+    group = "grafana";
+    mode = "0400";
+    content = ''
+      apiVersion: 1
+      contactPoints:
+        - orgId: 1
+          name: telegram-home
+          receivers:
+            - uid: telegram-home
+              type: telegram
+              disableResolveMessage: false
+              settings:
+                bottoken: "${config.sops.placeholder.grafanaAlertingTelegramBotToken}"
+                chatid: "${config.sops.placeholder.grafanaAlertingTelegramChatId}"
+                uploadImage: true
+    '';
+    restartUnits = [ "grafana.service" ];
+  };
 
   # Grafana provides the UI for dashboards and exploring metrics and logs.
   services.grafana = {
@@ -166,7 +200,13 @@ in
           }
         ];
       };
+      alerting.contactPoints.path = config.sops.templates."grafana-alerting-contact-points.yaml".path;
     };
+  };
+
+  systemd.services.grafana = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
   };
 
   # Prometheus scrapes and stores time-series metrics from this machine.
