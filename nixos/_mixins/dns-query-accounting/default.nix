@@ -24,14 +24,14 @@ let
 
       cursor_file="${stateDir}/journal.cursor"
       counts_file="${stateDir}/counts.tsv"
-      domain_counts_file="${stateDir}/domain-counts.tsv"
+      domain_events_file="${stateDir}/domain-events.tsv"
       leases_file="${cfg.leasesFile}"
       tmp_metrics="$(mktemp ${textfileDir}/dns-query-accounting.prom.XXXXXX)"
       tmp_events="$(mktemp ${stateDir}/events.tsv.XXXXXX)"
       tmp_domain_events="$(mktemp ${stateDir}/domain-events.tsv.XXXXXX)"
       tmp_counts="$(mktemp ${stateDir}/counts.tsv.XXXXXX)"
-      tmp_domain_counts="$(mktemp ${stateDir}/domain-counts.tsv.XXXXXX)"
-      trap 'rm -f "$tmp_metrics" "$tmp_events" "$tmp_domain_events" "$tmp_counts" "$tmp_domain_counts"' EXIT
+      tmp_domain_window="$(mktemp ${stateDir}/domain-window.tsv.XXXXXX)"
+      trap 'rm -f "$tmp_metrics" "$tmp_events" "$tmp_domain_events" "$tmp_counts" "$tmp_domain_window"' EXIT
 
       escape_label() {
         local value="$1"
@@ -65,7 +65,7 @@ let
 
       mkdir -p "${stateDir}" "${textfileDir}"
       touch "$counts_file"
-      touch "$domain_counts_file"
+      touch "$domain_events_file"
 
       merge_client_counts() {
         awk -F '\t' '
@@ -91,28 +91,25 @@ let
         : >"$tmp_counts"
       }
 
-      merge_domain_counts() {
-        awk -F '\t' '
-          BEGIN { OFS = "\t" }
-          FNR == NR {
-            if (NF == 3) {
-              counts[$1 OFS $2] = $3
-            }
-            next
-          }
-          NF == 3 {
-            key = $1 OFS $2
-            counts[key] += $3
-          }
-          END {
-            for (key in counts) {
-              print key, counts[key]
-            }
-          }
-        ' "$domain_counts_file" "$tmp_domain_events" | sort >"$tmp_domain_counts"
+      append_domain_events() {
+        cat "$tmp_domain_events" >>"$domain_events_file"
+        : >"$tmp_domain_events"
+      }
 
-        mv "$tmp_domain_counts" "$domain_counts_file"
-        : >"$tmp_domain_counts"
+      build_domain_window() {
+        local now_epoch cutoff_epoch
+
+        now_epoch="$(date +%s)"
+        cutoff_epoch="$((now_epoch - ${toString cfg.domainWindowSeconds}))"
+
+        awk -F '\t' -v cutoff="$cutoff_epoch" '
+          BEGIN { OFS = "\t" }
+          NF == 4 && $2 ~ /^[0-9]+$/ && $2 >= cutoff {
+            print $1, $2, $3, $4
+          }
+        ' "$domain_events_file" >"$tmp_domain_window"
+
+        mv "$tmp_domain_window" "$domain_events_file"
       }
 
       process_journal_batch() {
@@ -124,24 +121,25 @@ let
 
         local changed=1
         new_cursor=""
-        while IFS=$'\t' read -r cursor message; do
+        while IFS=$'\t' read -r cursor realtime_us message; do
           domain=""
           new_cursor="$cursor"
+          event_epoch="$((realtime_us / 1000000))"
 
           if [[ "$message" =~ ^[0-9]+\ ([^/]+)/[^[:space:]]+\ query\[([^]]+)\]\ ([^[:space:]]+)\ from\ [^[:space:]]+$ ]]; then
             printf 'query\t%s\t%s\t1\n' "''${BASH_REMATCH[1]}" "''${BASH_REMATCH[2]}" >>"$tmp_events"
             if domain="$(normalize_domain "''${BASH_REMATCH[3]}")"; then
-              printf 'query\t%s\t1\n' "$domain" >>"$tmp_domain_events"
+              printf 'query\t%s\t%s\t1\n' "$event_epoch" "$domain" >>"$tmp_domain_events"
             fi
           elif [[ "$message" =~ ^[0-9]+\ ([^/]+)/[^[:space:]]+\ forwarded\ ([^[:space:]]+)\ to\ [^[:space:]]+$ ]]; then
             printf 'forwarded\t%s\t-\t1\n' "''${BASH_REMATCH[1]}" >>"$tmp_events"
             if domain="$(normalize_domain "''${BASH_REMATCH[2]}")"; then
-              printf 'forwarded\t%s\t1\n' "$domain" >>"$tmp_domain_events"
+              printf 'forwarded\t%s\t%s\t1\n' "$event_epoch" "$domain" >>"$tmp_domain_events"
             fi
           fi
         done < <(
           journalctl -u '${cfg.systemdUnit}' --after-cursor "$(<"$cursor_file")" -o json --no-pager \
-            | jq -r 'select(.MESSAGE != null) | [."__CURSOR", .MESSAGE] | @tsv'
+            | jq -r 'select(.MESSAGE != null and ."__REALTIME_TIMESTAMP" != null) | [."__CURSOR", ."__REALTIME_TIMESTAMP", .MESSAGE] | @tsv'
         )
 
         if [[ -n "$new_cursor" ]]; then
@@ -154,7 +152,7 @@ let
         fi
 
         if [[ -s "$tmp_domain_events" ]]; then
-          merge_domain_counts
+          append_domain_events
         fi
 
         : >"$tmp_events"
@@ -194,10 +192,10 @@ let
           printf '%s\n' '# TYPE host_observability_dns_client_queries_total counter'
           printf '%s\n' '# HELP host_observability_dns_client_forwarded_total DNS queries forwarded upstream by dnsmasq by client IP and known lease name.'
           printf '%s\n' '# TYPE host_observability_dns_client_forwarded_total counter'
-          printf '%s\n' '# HELP host_observability_dns_domain_queries_total DNS queries observed in dnsmasq logs by normalized eTLD+1 domain.'
-          printf '%s\n' '# TYPE host_observability_dns_domain_queries_total counter'
-          printf '%s\n' '# HELP host_observability_dns_domain_forwarded_total DNS queries forwarded upstream by dnsmasq by normalized eTLD+1 domain.'
-          printf '%s\n' '# TYPE host_observability_dns_domain_forwarded_total counter'
+          printf '%s\n' '# HELP host_observability_dns_domain_queries_15m DNS queries observed in dnsmasq logs by normalized eTLD+1 domain over the recent 15 minute window.'
+          printf '%s\n' '# TYPE host_observability_dns_domain_queries_15m gauge'
+          printf '%s\n' '# HELP host_observability_dns_domain_forwarded_15m DNS queries forwarded upstream by dnsmasq by normalized eTLD+1 domain over the recent 15 minute window.'
+          printf '%s\n' '# TYPE host_observability_dns_domain_forwarded_15m gauge'
 
           while IFS=$'\t' read -r kind ip qtype count; do
             [[ -z "$kind" || -z "$ip" || -z "$count" ]] && continue
@@ -214,18 +212,56 @@ let
             fi
           done <"$counts_file"
 
-          while IFS=$'\t' read -r kind domain count; do
-            [[ -z "$kind" || -z "$domain" || -z "$count" ]] && continue
-            domain_label="$(escape_label "$domain")"
+          awk -F '\t' -v limit='${toString cfg.topDomainsLimit}' '
+            BEGIN { OFS = "\t" }
+            NF == 4 {
+              counts[$1, $3] += $4
+              totals[$1] += $4
+            }
+            END {
+              for (composite in counts) {
+                split(composite, parts, SUBSEP)
+                kind = parts[1]
+                domain = parts[2]
+                print kind, counts[composite], domain
+              }
+            }
+          ' "$domain_events_file" \
+            | sort -t $'\t' -k1,1 -k2,2nr -k3,3 \
+            | awk -F '\t' -v limit='${toString cfg.topDomainsLimit}' '
+                BEGIN { OFS = "\t" }
+                {
+                  kind = $1
+                  count = $2
+                  domain = $3
+                  seen[kind] += 1
+                  if (seen[kind] <= limit) {
+                    top_total[kind] += count
+                    print kind, domain, count
+                  } else {
+                    other[kind] += count
+                  }
+                }
+                END {
+                  for (kind in other) {
+                    if (other[kind] > 0) {
+                      print kind, "other", other[kind]
+                    }
+                  }
+                }
+              ' \
+            | while IFS=$'\t' read -r kind domain count; do
+                [[ -z "$kind" || -z "$domain" || -z "$count" ]] && continue
+                domain_label="$(escape_label "$domain")"
 
-            if [[ "$kind" == "query" ]]; then
-              printf 'host_observability_dns_domain_queries_total{domain="%s"} %s\n' \
-                "$domain_label" "$count"
-            elif [[ "$kind" == "forwarded" ]]; then
-              printf 'host_observability_dns_domain_forwarded_total{domain="%s"} %s\n' \
-                "$domain_label" "$count"
-            fi
-          done <"$domain_counts_file"
+                if [[ "$kind" == "query" ]]; then
+                  printf 'host_observability_dns_domain_queries_15m{domain="%s"} %s\n' \
+                    "$domain_label" "$count"
+                elif [[ "$kind" == "forwarded" ]]; then
+                  printf 'host_observability_dns_domain_forwarded_15m{domain="%s"} %s\n' \
+                    "$domain_label" "$count"
+                fi
+              done
         } >"$tmp_metrics"
 
         chmod 0644 "$tmp_metrics"
@@ -233,10 +269,12 @@ let
       }
 
       process_journal_batch || true
+      build_domain_window
       write_metrics
 
       while true; do
         process_journal_batch || true
+        build_domain_window
         write_metrics
         sleep '${cfg.interval}'
       done
@@ -263,6 +301,18 @@ in
       type = lib.types.str;
       default = "30s";
       description = "How often the long-running DNS accounting service polls the journal for new dnsmasq logs.";
+    };
+
+    domainWindowSeconds = lib.mkOption {
+      type = lib.types.int;
+      default = 15 * 60;
+      description = "Rolling time window, in seconds, used for exported per-domain gauges.";
+    };
+
+    topDomainsLimit = lib.mkOption {
+      type = lib.types.int;
+      default = 20;
+      description = "Number of per-domain series to retain per kind before aggregating the rest into other.";
     };
   };
 
