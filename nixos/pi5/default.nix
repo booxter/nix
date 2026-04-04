@@ -72,6 +72,7 @@ in
         "${guestIface},option:dns-server,${gwAddr}"
       ];
 
+      cache-size = 2000;
       server = [ gwAddr ];
 
       domain-needed = true;
