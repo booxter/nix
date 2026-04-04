@@ -90,6 +90,7 @@ in
   fileSystems."${mediaPath}" = media;
   virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
 
+  users.groups.media.gid = 169;
   users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
 
   # Service-specific systemd tweaks.

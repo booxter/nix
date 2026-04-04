@@ -207,7 +207,9 @@ in
     enable = true;
     openFirewall = true;
   };
+  users.groups.media.gid = 169;
   users.users.jellyfin.extraGroups = [
+    "media"
     "render"
     "video"
   ];
@@ -386,7 +388,10 @@ in
 
   systemd.tmpfiles.rules = [
     "d ${textfileDir} 0755 root root - -"
-  ] ++ map (library: "d ${mediaPaths.sourceLibraryRoot}/${library.path} 0775 root root - -") mediaLibraries;
+  ] ++ lib.concatMap (library: [
+    "d ${mediaPaths.sourceLibraryRoot}/${library.path} 2775 root media - -"
+    "z ${mediaPaths.sourceLibraryRoot}/${library.path} 2775 root media - -"
+  ]) mediaLibraries;
 
   environment.systemPackages = with pkgs; [
     btrfs-progs
