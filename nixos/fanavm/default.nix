@@ -47,6 +47,8 @@ let
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
   lokiRetention = "${toString retentionHours}h";
+  isVirtualNodeName = name: lib.hasPrefix "prox-" name && lib.hasSuffix "vm" name;
+  hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   remoteNixosNodeTargetConfigs =
     map
       (name: {
@@ -54,6 +56,8 @@ let
           host_network_charts = lib.boolToString (!outputs.nixosConfigurations.${name}.config.host.isProxmox);
           host_network_source =
             if outputs.nixosConfigurations.${name}.config.host.isProxmox then "classified" else "node";
+          host_class = hostClassForName name;
+          host_virtual = lib.boolToString (isVirtualNodeName name);
         };
         targets = [ "${outputs.nixosConfigurations.${name}.config.host.dnsName}:9100" ];
       })
@@ -71,6 +75,8 @@ let
         labels = {
           host_network_charts = "true";
           host_network_source = "node";
+          host_class = "hardware";
+          host_virtual = "false";
         };
         targets = [ "${outputs.darwinConfigurations.${name}.config.host.dnsName}:9100" ];
       })
@@ -188,6 +194,8 @@ in
             labels = {
               host_network_charts = "true";
               host_network_source = "node";
+              host_class = hostClassForName config.networking.hostName;
+              host_virtual = lib.boolToString (isVirtualNodeName config.networking.hostName);
               instance = "${config.host.dnsName}:${toString config.services.prometheus.exporters.node.port}";
             };
           }
