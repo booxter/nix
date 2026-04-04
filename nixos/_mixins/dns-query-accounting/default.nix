@@ -67,10 +67,62 @@ let
       touch "$counts_file"
       touch "$domain_counts_file"
 
-      if [[ ! -s "$cursor_file" ]]; then
-        journalctl -u '${cfg.systemdUnit}' -n 0 --show-cursor --no-pager \
-          | sed -n 's/^-- cursor: //p' >"$cursor_file"
-      else
+      merge_client_counts() {
+        awk -F '\t' '
+          BEGIN { OFS = "\t" }
+          FNR == NR {
+            if (NF == 4) {
+              counts[$1 OFS $2 OFS $3] = $4
+            }
+            next
+          }
+          NF == 4 {
+            key = $1 OFS $2 OFS $3
+            counts[key] += $4
+          }
+          END {
+            for (key in counts) {
+              print key, counts[key]
+            }
+          }
+        ' "$counts_file" "$tmp_events" | sort >"$tmp_counts"
+
+        mv "$tmp_counts" "$counts_file"
+        : >"$tmp_counts"
+      }
+
+      merge_domain_counts() {
+        awk -F '\t' '
+          BEGIN { OFS = "\t" }
+          FNR == NR {
+            if (NF == 3) {
+              counts[$1 OFS $2] = $3
+            }
+            next
+          }
+          NF == 3 {
+            key = $1 OFS $2
+            counts[key] += $3
+          }
+          END {
+            for (key in counts) {
+              print key, counts[key]
+            }
+          }
+        ' "$domain_counts_file" "$tmp_domain_events" | sort >"$tmp_domain_counts"
+
+        mv "$tmp_domain_counts" "$domain_counts_file"
+        : >"$tmp_domain_counts"
+      }
+
+      process_journal_batch() {
+        if [[ ! -s "$cursor_file" ]]; then
+          journalctl -u '${cfg.systemdUnit}' -n 0 --show-cursor --no-pager \
+            | sed -n 's/^-- cursor: //p' >"$cursor_file"
+          return 1
+        fi
+
+        local changed=1
         new_cursor=""
         while IFS=$'\t' read -r cursor message; do
           domain=""
@@ -94,121 +146,100 @@ let
 
         if [[ -n "$new_cursor" ]]; then
           printf '%s\n' "$new_cursor" >"$cursor_file"
+          changed=0
         fi
 
-        awk -F '\t' '
-          BEGIN { OFS = "\t" }
-          FNR == NR {
-            if (NF == 4) {
-              counts[$1 OFS $2 OFS $3] = $4
-            }
-            next
-          }
-          NF == 4 {
-            key = $1 OFS $2 OFS $3
-            counts[key] += $4
-          }
-          END {
-            for (key in counts) {
-              print key, counts[key]
-            }
-          }
-        ' "$counts_file" "$tmp_events" | sort >"$tmp_counts"
+        if [[ -s "$tmp_events" ]]; then
+          merge_client_counts
+        fi
 
-        mv "$tmp_counts" "$counts_file"
-        : >"$tmp_counts"
+        if [[ -s "$tmp_domain_events" ]]; then
+          merge_domain_counts
+        fi
 
-        awk -F '\t' '
-          BEGIN { OFS = "\t" }
-          FNR == NR {
-            if (NF == 3) {
-              counts[$1 OFS $2] = $3
-            }
-            next
-          }
-          NF == 3 {
-            key = $1 OFS $2
-            counts[key] += $3
-          }
-          END {
-            for (key in counts) {
-              print key, counts[key]
-            }
-          }
-        ' "$domain_counts_file" "$tmp_domain_events" | sort >"$tmp_domain_counts"
+        : >"$tmp_events"
+        : >"$tmp_domain_events"
+        return "$changed"
+      }
 
-        mv "$tmp_domain_counts" "$domain_counts_file"
-        : >"$tmp_domain_counts"
-      fi
+      write_metrics() {
+        declare -A client_name_by_ip=()
+        declare -A client_mac_by_ip=()
+        declare -A client_seen_by_ip=()
 
-      declare -A client_name_by_ip=()
-      declare -A client_mac_by_ip=()
-      declare -A client_seen_by_ip=()
+        if [[ -f "$leases_file" ]]; then
+          while read -r _expiry mac ip name _client_id; do
+            [[ -z "$ip" ]] && continue
+            client_seen_by_ip["$ip"]=1
+            if [[ -n "$name" && "$name" != "*" ]]; then
+              client_name_by_ip["$ip"]="$name"
+            fi
+            if [[ -n "$mac" && "$mac" != "*" ]]; then
+              client_mac_by_ip["$ip"]="$mac"
+            fi
+          done <"$leases_file"
+        fi
 
-      if [[ -f "$leases_file" ]]; then
-        while read -r _expiry mac ip name _client_id; do
-          [[ -z "$ip" ]] && continue
-          client_seen_by_ip["$ip"]=1
-          if [[ -n "$name" && "$name" != "*" ]]; then
-            client_name_by_ip["$ip"]="$name"
-          fi
-          if [[ -n "$mac" && "$mac" != "*" ]]; then
-            client_mac_by_ip["$ip"]="$mac"
-          fi
-        done <"$leases_file"
-      fi
+        {
+          printf '%s\n' '# HELP host_observability_dns_client_info Current dnsmasq lease metadata by client IP.'
+          printf '%s\n' '# TYPE host_observability_dns_client_info gauge'
+          for ip in "''${!client_seen_by_ip[@]}"; do
+            name="$(escape_label "''${client_name_by_ip[$ip]:-unknown}")"
+            mac="$(escape_label "''${client_mac_by_ip[$ip]:-unknown}")"
+            printf 'host_observability_dns_client_info{client_ip="%s",client_name="%s",client_mac="%s"} 1\n' \
+              "$(escape_label "$ip")" "$name" "$mac"
+          done
 
-      {
-        printf '%s\n' '# HELP host_observability_dns_client_info Current dnsmasq lease metadata by client IP.'
-        printf '%s\n' '# TYPE host_observability_dns_client_info gauge'
-        for ip in "''${!client_seen_by_ip[@]}"; do
-          name="$(escape_label "''${client_name_by_ip[$ip]:-unknown}")"
-          mac="$(escape_label "''${client_mac_by_ip[$ip]:-unknown}")"
-          printf 'host_observability_dns_client_info{client_ip="%s",client_name="%s",client_mac="%s"} 1\n' \
-            "$(escape_label "$ip")" "$name" "$mac"
-        done
+          printf '%s\n' '# HELP host_observability_dns_client_queries_total DNS queries observed in dnsmasq logs by client IP, known lease name, and query type.'
+          printf '%s\n' '# TYPE host_observability_dns_client_queries_total counter'
+          printf '%s\n' '# HELP host_observability_dns_client_forwarded_total DNS queries forwarded upstream by dnsmasq by client IP and known lease name.'
+          printf '%s\n' '# TYPE host_observability_dns_client_forwarded_total counter'
+          printf '%s\n' '# HELP host_observability_dns_domain_queries_total DNS queries observed in dnsmasq logs by normalized eTLD+1 domain.'
+          printf '%s\n' '# TYPE host_observability_dns_domain_queries_total counter'
+          printf '%s\n' '# HELP host_observability_dns_domain_forwarded_total DNS queries forwarded upstream by dnsmasq by normalized eTLD+1 domain.'
+          printf '%s\n' '# TYPE host_observability_dns_domain_forwarded_total counter'
 
-        printf '%s\n' '# HELP host_observability_dns_client_queries_total DNS queries observed in dnsmasq logs by client IP, known lease name, and query type.'
-        printf '%s\n' '# TYPE host_observability_dns_client_queries_total counter'
-        printf '%s\n' '# HELP host_observability_dns_client_forwarded_total DNS queries forwarded upstream by dnsmasq by client IP and known lease name.'
-        printf '%s\n' '# TYPE host_observability_dns_client_forwarded_total counter'
-        printf '%s\n' '# HELP host_observability_dns_domain_queries_total DNS queries observed in dnsmasq logs by normalized eTLD+1 domain.'
-        printf '%s\n' '# TYPE host_observability_dns_domain_queries_total counter'
-        printf '%s\n' '# HELP host_observability_dns_domain_forwarded_total DNS queries forwarded upstream by dnsmasq by normalized eTLD+1 domain.'
-        printf '%s\n' '# TYPE host_observability_dns_domain_forwarded_total counter'
+          while IFS=$'\t' read -r kind ip qtype count; do
+            [[ -z "$kind" || -z "$ip" || -z "$count" ]] && continue
+            raw_name="''${client_name_by_ip[$ip]:-unknown}"
+            name="$(escape_label "$raw_name")"
+            ip_label="$(escape_label "$ip")"
 
-        while IFS=$'\t' read -r kind ip qtype count; do
-          [[ -z "$kind" || -z "$ip" || -z "$count" ]] && continue
-          raw_name="''${client_name_by_ip[$ip]:-unknown}"
-          name="$(escape_label "$raw_name")"
-          ip_label="$(escape_label "$ip")"
+            if [[ "$kind" == "query" ]]; then
+              printf 'host_observability_dns_client_queries_total{client_ip="%s",client_name="%s",qtype="%s"} %s\n' \
+                "$ip_label" "$name" "$(escape_label "$qtype")" "$count"
+            elif [[ "$kind" == "forwarded" ]]; then
+              printf 'host_observability_dns_client_forwarded_total{client_ip="%s",client_name="%s"} %s\n' \
+                "$ip_label" "$name" "$count"
+            fi
+          done <"$counts_file"
 
-          if [[ "$kind" == "query" ]]; then
-            printf 'host_observability_dns_client_queries_total{client_ip="%s",client_name="%s",qtype="%s"} %s\n' \
-              "$ip_label" "$name" "$(escape_label "$qtype")" "$count"
-          elif [[ "$kind" == "forwarded" ]]; then
-            printf 'host_observability_dns_client_forwarded_total{client_ip="%s",client_name="%s"} %s\n' \
-              "$ip_label" "$name" "$count"
-          fi
-        done <"$counts_file"
+          while IFS=$'\t' read -r kind domain count; do
+            [[ -z "$kind" || -z "$domain" || -z "$count" ]] && continue
+            domain_label="$(escape_label "$domain")"
 
-        while IFS=$'\t' read -r kind domain count; do
-          [[ -z "$kind" || -z "$domain" || -z "$count" ]] && continue
-          domain_label="$(escape_label "$domain")"
+            if [[ "$kind" == "query" ]]; then
+              printf 'host_observability_dns_domain_queries_total{domain="%s"} %s\n' \
+                "$domain_label" "$count"
+            elif [[ "$kind" == "forwarded" ]]; then
+              printf 'host_observability_dns_domain_forwarded_total{domain="%s"} %s\n' \
+                "$domain_label" "$count"
+            fi
+          done <"$domain_counts_file"
+        } >"$tmp_metrics"
 
-          if [[ "$kind" == "query" ]]; then
-            printf 'host_observability_dns_domain_queries_total{domain="%s"} %s\n' \
-              "$domain_label" "$count"
-          elif [[ "$kind" == "forwarded" ]]; then
-            printf 'host_observability_dns_domain_forwarded_total{domain="%s"} %s\n' \
-              "$domain_label" "$count"
-          fi
-        done <"$domain_counts_file"
-      } >"$tmp_metrics"
+        chmod 0644 "$tmp_metrics"
+        mv "$tmp_metrics" ${textfileDir}/dns-query-accounting.prom
+      }
 
-      chmod 0644 "$tmp_metrics"
-      mv "$tmp_metrics" ${textfileDir}/dns-query-accounting.prom
-      trap - EXIT
+      process_journal_batch || true
+      write_metrics
+
+      while true; do
+        process_journal_batch || true
+        write_metrics
+        sleep '${cfg.interval}'
+      done
     '';
   };
 in
@@ -231,7 +262,7 @@ in
     interval = lib.mkOption {
       type = lib.types.str;
       default = "30s";
-      description = "How often to refresh DNS client accounting metrics.";
+      description = "How often the long-running DNS accounting service polls the journal for new dnsmasq logs.";
     };
   };
 
@@ -248,22 +279,15 @@ in
       ];
 
     systemd.services.observability-dns-query-accounting = {
-      description = "Export per-client dnsmasq accounting metrics for node exporter";
+      description = "Continuously export per-client dnsmasq accounting metrics for node exporter";
+      wantedBy = [ "multi-user.target" ];
       after = [ cfg.systemdUnit ];
       requires = [ cfg.systemdUnit ];
       serviceConfig = {
-        Type = "oneshot";
+        Restart = "always";
+        RestartSec = cfg.interval;
+        Type = "simple";
         ExecStart = lib.getExe exportMetrics;
-      };
-    };
-
-    systemd.timers.observability-dns-query-accounting = {
-      description = "Refresh per-client dnsmasq accounting metrics";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "30s";
-        OnUnitActiveSec = cfg.interval;
-        Unit = "observability-dns-query-accounting.service";
       };
     };
   };
