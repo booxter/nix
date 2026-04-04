@@ -22,6 +22,23 @@ let
       transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
     };
   };
+  dnsProbeTargets = [
+    {
+      resolver = "pi5";
+      resolver_title = "pi5 dnsmasq";
+      target = "192.168.1.1:53";
+    }
+    {
+      resolver = "upstream";
+      resolver_title = "upstream 192.168.0.1";
+      target = "192.168.0.1:53";
+    }
+    {
+      resolver = "google";
+      resolver_title = "Google 8.8.8.8";
+      target = "8.8.8.8:53";
+    }
+  ];
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
@@ -209,6 +226,36 @@ in
         ];
       }
       {
+        job_name = "blackbox-dns";
+        metrics_path = "/probe";
+        params.module = [ "dns_udp" ];
+        static_configs = map (resolver: {
+          labels = {
+            resolver = resolver.resolver;
+            resolver_title = resolver.resolver_title;
+          };
+          targets = [ resolver.target ];
+        }) dnsProbeTargets;
+        relabel_configs = [
+          {
+            source_labels = [ "__address__" ];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = [ "__param_target" ];
+            target_label = "target";
+          }
+          {
+            source_labels = [ "resolver" ];
+            target_label = "instance";
+          }
+          {
+            replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+            target_label = "__address__";
+          }
+        ];
+      }
+      {
         job_name = "dnsmasq";
         static_configs = [
           {
@@ -237,6 +284,17 @@ in
     enable = true;
     listenAddress = "127.0.0.1";
     configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
+      modules.dns_udp = {
+        dns = {
+          preferred_ip_protocol = "ip4";
+          query_name = "example.com";
+          query_type = "A";
+          transport_protocol = "udp";
+          valid_rcodes = [ "NOERROR" ];
+        };
+        prober = "dns";
+        timeout = "5s";
+      };
       modules.http_service = {
         http = {
           follow_redirects = true;

@@ -24,6 +24,133 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "color": "red",
+                  "index": 0,
+                  "text": "Down"
+                },
+                "1": {
+                  "color": "green",
+                  "index": 1,
+                  "text": "Up"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "max": 1,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "probe_success{job=\"blackbox-dns\"}",
+          "instant": true,
+          "legendFormat": "{{resolver_title}}",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Current Resolver Availability",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(probe_dns_lookup_time_seconds{job=\"blackbox-dns\"}[5m])",
+          "legendFormat": "{{resolver_title}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "timeFrom": "4h",
+      "title": "DNS Probe Lookup Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -495,7 +622,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 40
       },
       "id": 9,
       "options": {
@@ -544,7 +671,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 40
       },
       "id": 10,
       "options": {
@@ -593,7 +720,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 48
       },
       "id": 12,
       "options": {
@@ -642,7 +769,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 48
       },
       "id": 13,
       "options": {
@@ -675,7 +802,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 56
       },
       "id": 11,
       "options": {
