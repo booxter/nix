@@ -3,6 +3,7 @@
   lib,
   pkgs,
   hostname,
+  isWork,
   platform,
   stateVersion,
   upsShutdownDelaySeconds,
@@ -14,14 +15,10 @@ let
   configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
-  upsClientsNAS = [
+  isProxmoxVmHost = lib.hasPrefix "prox-" hostname && lib.hasSuffix "vm" hostname;
+  upsClientsPRX1 = [
     "prx2-lab"
     "prx3-lab"
-    "prox-cachevm"
-    "prox-builder1vm"
-    "prox-builder2vm"
-    "prox-builder3vm"
-    "prox-srvarrvm"
   ];
   upsCriticalHosts = [
     # UPS servers are always critical in their own configs.
@@ -30,8 +27,9 @@ let
   upsClientsPi5 = [
     "beast"
     "nvws"
-    "prox-nvvm"
   ];
+  usesPRX1Ups = (isProxmoxVmHost && !isWork) || lib.elem hostname upsClientsPRX1;
+  usesPi5Ups = (isProxmoxVmHost && isWork) || lib.elem hostname upsClientsPi5;
 in
 {
   imports =
@@ -43,7 +41,7 @@ in
       ./_mixins/lan-wan-accounting
       ./_mixins/user
     ]
-    ++ lib.optionals (lib.elem hostname upsClientsNAS) [
+    ++ lib.optionals usesPRX1Ups [
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
@@ -54,7 +52,7 @@ in
         passwordText = "upsslave123";
       })
     ]
-    ++ lib.optionals (lib.elem hostname upsClientsPi5) [
+    ++ lib.optionals usesPi5Ups [
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
