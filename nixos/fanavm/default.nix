@@ -114,7 +114,13 @@ let
       noDataState ? "NoData",
     }:
     {
-      inherit uid title annotations labels noDataState;
+      inherit
+        uid
+        title
+        annotations
+        labels
+        noDataState
+        ;
       condition = "B";
       data = [
         {

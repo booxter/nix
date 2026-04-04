@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.host.observability.thermal;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
