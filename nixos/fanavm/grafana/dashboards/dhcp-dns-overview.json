@@ -137,14 +137,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(probe_dns_lookup_time_seconds{job=\"blackbox-dns\"}[5m])",
+          "expr": "avg_over_time(probe_duration_seconds{job=\"blackbox-dns\"}[5m])",
           "legendFormat": "{{resolver_title}}",
           "range": true,
           "refId": "A"
         }
       ],
       "timeFrom": "4h",
-      "title": "DNS Probe Lookup Time",
+      "title": "DNS Probe Duration",
       "type": "timeseries"
     },
     {
