@@ -314,7 +314,12 @@ rec {
                       bridge = "vmbr0";
                     }
                   ];
-                  scsi = [ { file = "local:${toString diskSize}"; } ];
+                  scsi = [
+                    {
+                      file = "local:${toString diskSize}";
+                      discard = "on";
+                    }
+                  ];
                   onboot = true;
                 };
 
