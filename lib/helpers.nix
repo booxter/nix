@@ -308,13 +308,24 @@ rec {
                   autoInstall = true;
                   memory = memorySize * 1024;
                   cpu.cputype = "host";
+                  agent = {
+                    enabled = true;
+                    type = "virtio";
+                    freeze_fs_on_backup = true;
+                    fstrim_cloned_disks = true;
+                  };
                   net = [
                     {
                       model = "virtio";
                       bridge = "vmbr0";
                     }
                   ];
-                  scsi = [ { file = "local:${toString diskSize}"; } ];
+                  scsi = [
+                    {
+                      file = "local:${toString diskSize}";
+                      discard = "on";
+                    }
+                  ];
                   onboot = true;
                 };
 
