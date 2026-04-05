@@ -308,6 +308,12 @@ rec {
                   autoInstall = true;
                   memory = memorySize * 1024;
                   cpu.cputype = "host";
+                  agent = {
+                    enabled = true;
+                    type = "virtio";
+                    freeze_fs_on_backup = true;
+                    fstrim_cloned_disks = true;
+                  };
                   net = [
                     {
                       model = "virtio";
