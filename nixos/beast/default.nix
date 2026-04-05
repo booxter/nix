@@ -388,7 +388,8 @@ in
 
   systemd.tmpfiles.rules = [
     "d ${textfileDir} 0755 root root - -"
-  ] ++ lib.concatMap (library: [
+  ]
+  ++ lib.concatMap (library: [
     "d ${mediaPaths.sourceLibraryRoot}/${library.path} 2775 root media - -"
     "z ${mediaPaths.sourceLibraryRoot}/${library.path} 2775 root media - -"
   ]) mediaLibraries;
