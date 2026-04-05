@@ -143,6 +143,9 @@ in
   # Host critical services; keep upgrades on Monday, separate from the fleet's
   # default Saturday schedule, but still leave room for local backups and later
   # cloud offload jobs after the reboot window work settles.
+  # Disable automatic upgrades while RAID recovery/debugging is in progress.
+  # Re-enable after the array is healthy again.
+  system.autoUpgrade.enable = lib.mkForce false;
   system.autoUpgrade.dates = "Mon 03:30";
   system.autoUpgrade.randomizedDelaySec = "15min";
 
