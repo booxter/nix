@@ -647,6 +647,28 @@ rec {
                   ResolveUnicastSingleLabel = true;
                 };
 
+                systemd.tmpfiles.rules = [
+                  # Proxmox qmeventd still tries to exec /usr/sbin/qm for post-stop
+                  # cleanup/restart handling. On NixOS qm lives in /run/current-system/sw/bin.
+                  # TODO(upstream): contribute a proper fix to proxmox-nixos so qmeventd
+                  # does not depend on legacy FHS paths on NixOS.
+                  "L+ /usr/sbin/qm - - - - /run/current-system/sw/bin/qm"
+                ];
+
+                # qmeventd inherits a very small PATH from proxmox-nixos. That is enough
+                # to start the daemon, but not enough for the qm/qemu network helper path
+                # it triggers when rebooting a VM.
+                # TODO(upstream): contribute a proper qmeventd service PATH in proxmox-nixos
+                # so VM reboot/start helpers can find the networking tools they need.
+                systemd.services.qmeventd.path = with pkgs; [
+                  bridge-utils
+                  ebtables
+                  ethtool
+                  iproute2
+                  iptables
+                  nftables
+                ];
+
                 systemd.network.networks."10-lan" = {
                   matchConfig.Name = [ netIface ];
                   networkConfig = {
