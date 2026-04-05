@@ -266,7 +266,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(scalar(node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}) * scalar(clamp_min(((node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2)) - node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}) / deriv(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m]), 0))) / 3600",
+          "expr": "(((node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2)) - node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}) / deriv(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m])) / 3600 and on(instance,device) (node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"} == 1) and on(instance,device) (deriv(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m]) > 0) and on(instance,device) (resets(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m]) == 0)",
           "instant": true,
           "legendFormat": "",
           "range": false,

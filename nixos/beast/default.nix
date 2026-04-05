@@ -98,7 +98,7 @@ let
       bay = "15";
       row = "5";
       col = "3";
-      serial = "ZXA0GW38";
+      serial = "ZXA0ENE4";
       model = "ST24000NM000C-3WD103";
     }
   ];
