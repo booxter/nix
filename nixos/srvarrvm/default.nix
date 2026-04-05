@@ -7,6 +7,7 @@
   ...
 }:
 let
+  beastNfsAddress = "192.168.16.3";
   arrServices = import ../../lib/arr-services.nix {
     srvarrDisplayHost = "${config.services.avahi.hostName}.local";
     srvarrPorts = {
@@ -41,7 +42,7 @@ let
     "x-systemd.after=network-online.target"
   ];
   media = {
-    device = "beast:/volume2/Media";
+    device = "${beastNfsAddress}:/volume2/Media";
     fsType = "nfs";
     options = mediaMountOptions;
   };
@@ -89,6 +90,7 @@ in
   fileSystems."${mediaPath}" = media;
   virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
 
+  users.groups.media.gid = 169;
   users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
 
   # Service-specific systemd tweaks.
