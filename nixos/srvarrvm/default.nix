@@ -132,6 +132,7 @@ in
       wgConf = "/data/.secret/vpn/wg.conf";
       accessibleFrom = [
         "192.168.0.0/16"
+        "10.0.0.0/8"
       ];
     };
 
