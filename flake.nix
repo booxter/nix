@@ -9,6 +9,9 @@
     # Keep Transmission pinned independently from the moving release-25.11 branch.
     # TODO: remove this input when trackers allow 4.1.0+.
     nixpkgs-transmission.url = "github:NixOS/nixpkgs/12d60a4f2d5f2cc96e93ae5615328245d49ac2e8";
+    # Temporary Jellyfin 10.11.8 backport until it lands in the pinned nixpkgs.
+    # TODO: remove this input once the nixpkgs release branch includes Jellyfin 10.11.8+.
+    nixpkgs-jellyfin.url = "github:whispersofthedawn/nixpkgs/670522ebae401381a5fe85c5e419697cf62a811e";
 
     # Use staging-next if needed
     #nixpkgs-staging-next.url = "github:NixOS/nixpkgs/staging-next";
@@ -392,7 +395,7 @@
             shellcheck
             ruff
             nodejs
-            nodePackages.eslint
+            eslint
             jq
             mbake
             actionlint
