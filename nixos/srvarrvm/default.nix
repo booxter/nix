@@ -119,7 +119,12 @@ in
   systemd.services.lidarr.unitConfig = requiresMediaMount;
   systemd.services.readarr.unitConfig = requiresMediaMount;
   systemd.services.readarr-audiobook.unitConfig = requiresMediaMount;
-  systemd.services.transmission.unitConfig = wgUnitDepsWithMount;
+  systemd.services.transmission = {
+    unitConfig = wgUnitDepsWithMount;
+    # Transmission is currently inheriting a soft RLIMIT_NOFILE of 1024, which
+    # is too low for many active torrents and peers.
+    serviceConfig.LimitNOFILE = 65536;
+  };
   systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
 
   # Keep download dir locally to ease load on network and storage
