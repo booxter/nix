@@ -392,7 +392,7 @@
             shellcheck
             ruff
             nodejs
-            nodePackages.eslint
+            eslint
             jq
             mbake
             actionlint
