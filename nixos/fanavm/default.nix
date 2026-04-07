@@ -316,12 +316,6 @@ in
       };
       alerting.rules.settings = {
         apiVersion = 1;
-        deleteRules = [
-          {
-            orgId = 1;
-            uid = "telegram_test_1";
-          }
-        ];
         groups = [
           {
             orgId = 1;
