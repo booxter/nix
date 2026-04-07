@@ -18,72 +18,96 @@
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
+      pkgsJellyfin = getPkgs inputs.nixpkgs-jellyfin;
       pkgsFirefoxUnwrapped = getPkgs inputs.nixpkgs-firefox-unwrapped;
       pkgsThunderbirdUnwrapped = getPkgs inputs.nixpkgs-thunderbird-unwrapped;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
-    in
-    {
-      inherit (llmAgentsPkgs) codex claude-code;
-
-      # https://github.com/NixOS/nixpkgs/pull/374846
-      inherit (pkgsLldb) debugserver;
-
-      # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
-      inherit (pkgs) netbootxyz-efi;
-
-      # Pull Sonarr/Readarr from release-25.11 and pin Transmission via a dedicated nixpkgs input.
-      # TODO: report issues; investigate; fix
-      inherit (pkgsRelease) readarr sonarr;
-      transmission_4 = pinnedTransmission;
-      transmission = pinnedTransmission;
-
-      jellyfin = prev.jellyfin.overrideAttrs (old: {
-        patches = old.patches or [ ] ++ [
-          # Catch websocket keepalive send races.
-          # Upstream: https://github.com/jellyfin/jellyfin/issues/14837
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/jellyfin/commit/b5a385d185.patch";
-            hash = "sha256-maX9MLOK/lq/6LPpJi2Dw8ZZTvzSR9t15648JT0jS2Q=";
-          })
-          # Catch websocket close teardown races while testing fixes for Jellyfin coredumps.
-          # Upstream: https://github.com/jellyfin/jellyfin/issues/16512
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/jellyfin/commit/c64abc489e.patch";
-            hash = "sha256-/Y2QiBkeLY4Wi+RlgFcNuzLPuwOF1sRyf7hnBuUEzAM=";
-          })
-        ];
-      });
-    }
-    // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
-      inherit (pkgsFirefoxUnwrapped) firefox-unwrapped;
-      inherit (pkgsThunderbirdUnwrapped) thunderbird-unwrapped;
-
-      # Mirror nixpkgs PR #501885 on Darwin without pulling a separate nixpkgs input.
-      # This is a local attempt to fix the Kitty crashes I am seeing on macOS.
-      kitty = prev.kitty.overrideAttrs (
-        old:
+      releaseJellyfinVersion =
         let
-          version = "0.46.2";
-          src = prev.fetchFromGitHub {
-            owner = "kovidgoyal";
-            repo = "kitty";
-            tag = "v${version}";
-            hash = "sha256-x+jBQrg3Iaj6PLMF1hIjS46odxv5GxPMcvC9JddYCHo=";
-          };
+          pkgFile = builtins.readFile (inputs.nixpkgs-25_11 + "/pkgs/by-name/je/jellyfin/package.nix");
+          versionLine = prev.lib.findFirst (line: prev.lib.hasInfix "version = " line) null (
+            prev.lib.splitString "\n" pkgFile
+          );
+          match = builtins.match ".*version = \"([^\"]+)\".*" (
+            if versionLine == null then "" else versionLine
+          );
         in
-        {
-          inherit version src;
-          patches = (old.patches or [ ]) ++ [
-            ../lib/patches/kitty-paused-rendering-selection.patch
+        if match == null then
+          throw "Failed to extract jellyfin version from nixpkgs-25_11/pkgs/by-name/je/jellyfin/package.nix"
+        else
+          builtins.head match;
+    in
+    if prev.lib.versionAtLeast releaseJellyfinVersion "10.11.8" then
+      throw ''
+        Temporary nixpkgs-jellyfin override is stale: nixpkgs-25_11 already provides jellyfin ${releaseJellyfinVersion}.
+        Remove the nixpkgs-jellyfin input and the corresponding jellyfin/jellyfin-web overlay entries.
+      ''
+    else
+      {
+        inherit (llmAgentsPkgs) codex claude-code;
+
+        # https://github.com/NixOS/nixpkgs/pull/374846
+        inherit (pkgsLldb) debugserver;
+
+        # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
+        inherit (pkgs) netbootxyz-efi;
+
+        # Pull Sonarr/Readarr from release-25.11 and pin Transmission via a dedicated nixpkgs input.
+        # TODO: report issues; investigate; fix
+        inherit (pkgsRelease) readarr sonarr;
+        transmission_4 = pinnedTransmission;
+        transmission = pinnedTransmission;
+
+        # Carry the upstream Jellyfin 10.11.8 backport from nixpkgs PR #507426
+        # until it lands in the pinned nixpkgs input.
+        inherit (pkgsJellyfin) jellyfin-web;
+        jellyfin = pkgsJellyfin.jellyfin.overrideAttrs (old: {
+          patches = old.patches or [ ] ++ [
+            # Catch websocket keepalive send races.
+            # Upstream: https://github.com/jellyfin/jellyfin/issues/14837
+            (prev.fetchpatch {
+              url = "https://github.com/booxter/jellyfin/commit/b5a385d185.patch";
+              hash = "sha256-maX9MLOK/lq/6LPpJi2Dw8ZZTvzSR9t15648JT0jS2Q=";
+            })
+            # Catch websocket close teardown races while testing fixes for Jellyfin coredumps.
+            # Upstream: https://github.com/jellyfin/jellyfin/issues/16512
+            (prev.fetchpatch {
+              url = "https://github.com/booxter/jellyfin/commit/c64abc489e.patch";
+              hash = "sha256-/Y2QiBkeLY4Wi+RlgFcNuzLPuwOF1sRyf7hnBuUEzAM=";
+            })
           ];
-          goModules =
-            (prev.buildGo126Module {
-              pname = "kitty-go-modules";
-              inherit src version;
-              vendorHash = "sha256-FaSWBeQJlvw9vXcHJ/OaFd48K8d7X86X8w7wpG84Ltw=";
-            }).goModules;
-        }
-      );
-    };
+        });
+      }
+      // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
+        inherit (pkgsFirefoxUnwrapped) firefox-unwrapped;
+        inherit (pkgsThunderbirdUnwrapped) thunderbird-unwrapped;
+
+        # Mirror nixpkgs PR #501885 on Darwin without pulling a separate nixpkgs input.
+        # This is a local attempt to fix the Kitty crashes I am seeing on macOS.
+        kitty = prev.kitty.overrideAttrs (
+          old:
+          let
+            version = "0.46.2";
+            src = prev.fetchFromGitHub {
+              owner = "kovidgoyal";
+              repo = "kitty";
+              tag = "v${version}";
+              hash = "sha256-x+jBQrg3Iaj6PLMF1hIjS46odxv5GxPMcvC9JddYCHo=";
+            };
+          in
+          {
+            inherit version src;
+            patches = (old.patches or [ ]) ++ [
+              ../lib/patches/kitty-paused-rendering-selection.patch
+            ];
+            goModules =
+              (prev.buildGo126Module {
+                pname = "kitty-go-modules";
+                inherit src version;
+                vendorHash = "sha256-FaSWBeQJlvw9vXcHJ/OaFd48K8d7X86X8w7wpG84Ltw=";
+              }).goModules;
+          }
+        );
+      };
 }
