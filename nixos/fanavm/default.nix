@@ -549,6 +549,7 @@ in
         job_name = "nut-prx1";
         metrics_path = "/ups_metrics";
         params = {
+          # Use the stable LAN DNS hostname rather than .local/mDNS.
           server = [ "prx1-lab" ];
           ups = [ "PRX1-UPS" ];
         };
@@ -576,7 +577,8 @@ in
         job_name = "nut-pi5";
         metrics_path = "/ups_metrics";
         params = {
-          server = [ "pi5.local" ];
+          # Use the stable LAN DNS hostname rather than .local/mDNS.
+          server = [ "dhcp" ];
           ups = [ "PI5-UPS" ];
         };
         static_configs = [
@@ -603,6 +605,7 @@ in
         job_name = "nut-frame";
         metrics_path = "/ups_metrics";
         params = {
+          # Use the stable LAN DNS hostname rather than .local/mDNS.
           server = [ "frame" ];
           ups = [ "FRAME-UPS" ];
         };
