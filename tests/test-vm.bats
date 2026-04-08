@@ -11,6 +11,12 @@ setup() {
 set -euo pipefail
 
 if [[ "${1:-}" == "eval" && "${2:-}" == "--impure" && "${3:-}" == "--json" && "${4:-}" == "--expr" ]]; then
+  if [[ -n "${NIX_EVAL_STDERR:-}" ]]; then
+    printf '%s\n' "${NIX_EVAL_STDERR}" >&2
+  fi
+  if [[ -n "${NIX_EVAL_EXIT_CODE:-}" ]]; then
+    exit "${NIX_EVAL_EXIT_CODE}"
+  fi
   printf '%s\n' "${FLAKE_JSON:?}"
   exit 0
 fi
@@ -43,6 +49,16 @@ EOF
   grep -Fqx "  beast" <<<"$output"
   grep -Fqx "  prx1-lab" <<<"$output"
   ! grep -Fqx "  prox-srvarrvm" <<<"$output"
+}
+
+@test "vm --help exits non-zero when flake evaluation fails" {
+  export NIX_EVAL_EXIT_CODE=1
+  export NIX_EVAL_STDERR='boom'
+
+  run bash ./scripts/vm.sh --help
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Failed to evaluate flake for VM target discovery"* ]]
 }
 
 @test "vm --gui enables graphics for the resolved local vm" {
