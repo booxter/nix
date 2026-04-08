@@ -36,12 +36,24 @@ EOF
   run bash ./scripts/vm.sh --help
 
   [ "$status" -eq 0 ]
+  [[ "$output" == *"Usage: vm [--gui] <target-host>"* ]]
   [[ "$output" == *"Available target hosts"* ]]
   grep -Fqx "  builder1" <<<"$output"
   grep -Fqx "  srvarr" <<<"$output"
   grep -Fqx "  beast" <<<"$output"
   grep -Fqx "  prx1-lab" <<<"$output"
   ! grep -Fqx "  prox-srvarrvm" <<<"$output"
+}
+
+@test "vm --gui enables graphics for the resolved local vm" {
+  export FLAKE_JSON='{"nixosConfigurations":{"local-builder1vm":{},"builder1":{},"beast":{}}}'
+
+  run bash ./scripts/vm.sh --gui builder1
+
+  [ "$status" -eq 0 ]
+  grep -Fq -- "--expr" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "getAttr targetConfig f.nixosConfigurations" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "graphics = lib.mkForce true;" "$NIX_RUN_ARGS_OUT"
 }
 
 @test "vm resolves host via local-<host>vm" {
@@ -78,5 +90,5 @@ EOF
 
   [ "$status" -ne 0 ]
   [[ "$output" == *"Unknown target host: does-not-exist"* ]]
-  [[ "$output" == *"Usage: vm <target-host>"* ]]
+  [[ "$output" == *"Usage: vm [--gui] <target-host>"* ]]
 }

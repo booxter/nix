@@ -59,8 +59,9 @@ usage() {
 usage_from_flake() {
   local flake_json_data="$1"
   cat <<'EOF'
-Usage: vm <target-host>
+Usage: vm [--gui] <target-host>
 Example: vm builder1
+Example: vm --gui frame
 
 Available target hosts (resolved via local-<host>vm):
 EOF
@@ -68,17 +69,40 @@ EOF
 }
 
 main() {
-  if [ "$#" -eq 1 ] && [ "$1" = "--help" ]; then
-    usage
-    exit 0
-  fi
+  local gui=false
+  local target_host=""
 
-  if [ "$#" -ne 1 ]; then
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --help)
+        usage
+        exit 0
+        ;;
+      --gui)
+        gui=true
+        ;;
+      -*)
+        echo "Unknown option: $1" >&2
+        echo >&2
+        usage >&2
+        exit 1
+        ;;
+      *)
+        if [ -n "$target_host" ]; then
+          usage >&2
+          exit 1
+        fi
+        target_host="$1"
+        ;;
+    esac
+    shift
+  done
+
+  if [ -z "$target_host" ]; then
     usage >&2
     exit 1
   fi
 
-  local target_host="$1"
   local flake_json_data
   if ! flake_json_data="$(flake_json)"; then
     echo "Failed to evaluate flake for VM target discovery: ${FLAKE_REF}" >&2
@@ -92,6 +116,26 @@ main() {
     echo >&2
     usage_from_flake "${flake_json_data}" >&2
     exit 1
+  fi
+
+  if [ "$gui" = true ]; then
+    export VM_GUI_REPO_ROOT="${REPO_ROOT}"
+    export VM_GUI_TARGET_CONFIG="${target_config}"
+    exec nix run --impure --expr '
+      let
+        f = builtins.getFlake (builtins.getEnv "VM_GUI_REPO_ROOT");
+        lib = f.inputs.nixpkgs.lib;
+        targetConfig = builtins.getEnv "VM_GUI_TARGET_CONFIG";
+        cfg = (builtins.getAttr targetConfig f.nixosConfigurations).extendModules {
+          modules = [
+            {
+              virtualisation.vmVariant.virtualisation.graphics = lib.mkForce true;
+            }
+          ];
+        };
+      in
+      cfg.config.system.build.vm
+    ' -L --show-trace
   fi
 
   exec nix run "${REPO_ROOT}#nixosConfigurations.${target_config}.config.system.build.vm" -L --show-trace
