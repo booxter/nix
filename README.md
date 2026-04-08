@@ -14,6 +14,7 @@ make nixos WHAT=beast REMOTE=false
 # Local VMs (resolved via `local-<host>vm`)
 nix run .#vm -- --help
 nix run .#vm -- builder1
+nix run .#vm -- --gui frame
 nix run .#vm -- srvarr
 nix run .#vm -- fana
 nix run .#vm -- beast

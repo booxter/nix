@@ -65,7 +65,6 @@
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
 
     llm-agents.url = "github:numtide/llm-agents.nix";
-    llm-agents.inputs.nixpkgs.follows = "nixpkgs";
 
     tig = {
       url = "github:jonas/tig";
@@ -237,6 +236,20 @@
           password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
           stateVersion = "25.11";
           platform = "x86_64-linux";
+          localExtraModules = [
+            {
+              disabledModules = [
+                "${inputs.nixos-hardware}/common/gpu/amd"
+                "${inputs.nixos-hardware}/framework/framework-tool.nix"
+              ];
+            }
+            (
+              { lib, ... }:
+              {
+                hardware.cpu.amd.updateMicrocode = lib.mkForce false;
+              }
+            )
+          ];
           isDesktop = true;
         }
         # TODO: automatically sync ip-mac mapping with dhcp config
