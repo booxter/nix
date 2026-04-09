@@ -85,6 +85,7 @@ jobs:
                 { name: "cache (x86_64-linux)", cmd: "make nixos WHAT=prox-cachevm", os: "ubuntu-latest" },
                 { name: "pi5 dhcp (aarch64-linux)", cmd: "make nixos WHAT=pi5", os: "ubuntu-24.04-arm" },
                 { name: "beast (x86_64-linux)", cmd: "make nixos WHAT=beast", os: "ubuntu-latest" },
+                { name: "desk (aarch64-linux)", cmd: "make nixos WHAT=local-deskvm", os: "ubuntu-24.04-arm" },
                 { name: "srvarr (x86_64-linux)", cmd: "make nixos WHAT=prox-srvarrvm", os: "ubuntu-latest" },
                 { name: "fana (x86_64-linux)", cmd: "make nixos WHAT=prox-fanavm", os: "ubuntu-latest" },
                 { name: "nixos vm builder1 (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.system.build.vm -L --show-trace", os: "ubuntu-latest" },
@@ -100,6 +101,7 @@ jobs:
             };
             const machinePathMap = [
               { prefix: "nixos/frame/", jobs: [ "frame (x86_64-linux)" ] },
+              { prefix: "nixos/deskvm/", jobs: [ "desk (aarch64-linux)" ] },
               { prefix: "nixos/nvws/", jobs: [ "nvws (x86_64-linux)" ] },
               { prefix: "nixos/prx1-lab/", jobs: [ "prx1-lab (x86_64-linux)" ] },
               { prefix: "nixos/prx2-lab/", jobs: [ "prx2-lab (x86_64-linux)" ] },

@@ -327,6 +327,14 @@
           sshPort = 10006;
           hmFull = false;
         }
+        // VM {
+          name = "desk";
+          cores = 4;
+          memorySize = 12;
+          diskSize = 80;
+          sshPort = 10007;
+          hmFull = false;
+        }
         // toBuilder 1
         // toBuilder 2
         // toBuilder 3;

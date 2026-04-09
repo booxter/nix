@@ -14,7 +14,7 @@ make nixos WHAT=beast REMOTE=false
 # Local VMs (resolved via `local-<host>vm`)
 nix run .#vm -- --help
 nix run .#vm -- builder1
-nix run .#vm -- --gui frame
+nix run .#vm -- --gui desk
 nix run .#vm -- srvarr
 nix run .#vm -- fana
 nix run .#vm -- beast
@@ -137,6 +137,7 @@ around `nixmoxer`).
 | `mmini` | macOS (aarch64-darwin) | Mac mini workstation. | [darwin/default.nix](darwin/default.nix) | [common](common), [darwin](darwin) |
 | `JGWXHWDL4X` | macOS (aarch64-darwin) | Work Mac. | [darwin/default.nix](darwin/default.nix) | [common](common), [darwin](darwin) |
 | `frame` | NixOS (x86_64-linux) | Desktop workstation. | [nixos/frame/default.nix](nixos/frame/default.nix) | [common](common), [nixos](nixos) |
+| `desk` | NixOS VM | Minimal Xfce desktop VM for local GUI testing. | [nixos/deskvm/default.nix](nixos/deskvm/default.nix) | [common](common), [nixos](nixos) |
 
 ### Media servers
 
