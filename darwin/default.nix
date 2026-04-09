@@ -57,7 +57,7 @@
 
   services.virby = {
     enable = true;
-    cores = 8;
+    cores = 2;
     memory = 12 * 1024;
     diskSize = "80GiB";
     rosetta = false;
