@@ -236,20 +236,6 @@
           password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
           stateVersion = "25.11";
           platform = "x86_64-linux";
-          localExtraModules = [
-            {
-              disabledModules = [
-                "${inputs.nixos-hardware}/common/gpu/amd"
-                "${inputs.nixos-hardware}/framework/framework-tool.nix"
-              ];
-            }
-            (
-              { lib, ... }:
-              {
-                hardware.cpu.amd.updateMicrocode = lib.mkForce false;
-              }
-            )
-          ];
           isDesktop = true;
         }
         # TODO: automatically sync ip-mac mapping with dhcp config
@@ -339,6 +325,14 @@
           memorySize = 16;
           diskSize = 300;
           sshPort = 10006;
+          hmFull = false;
+        }
+        // VM {
+          name = "desk";
+          cores = 4;
+          memorySize = 12;
+          diskSize = 80;
+          sshPort = 10007;
           hmFull = false;
         }
         // toBuilder 1
