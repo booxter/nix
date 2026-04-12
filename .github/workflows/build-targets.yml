@@ -88,6 +88,7 @@ jobs:
                 { name: "desk (aarch64-linux)", cmd: "make nixos WHAT=local-deskvm", os: "ubuntu-24.04-arm" },
                 { name: "srvarr (x86_64-linux)", cmd: "make nixos WHAT=prox-srvarrvm", os: "ubuntu-latest" },
                 { name: "fana (x86_64-linux)", cmd: "make nixos WHAT=prox-fanavm", os: "ubuntu-latest" },
+                { name: "gw (x86_64-linux)", cmd: "make nixos WHAT=prox-gwvm", os: "ubuntu-latest" },
                 { name: "nixos vm builder1 (x86_64-linux)", cmd: "nix build .#nixosConfigurations.prox-builder1vm.config.system.build.vm -L --show-trace", os: "ubuntu-latest" },
                 { name: "home-manager nv (x86_64-linux)", cmd: "make linux-home TARGET=nv USERNAME=ihrachyshka", os: "ubuntu-latest" },
                 { name: "home-manager mair (aarch64-darwin)", cmd: "make darwin-home TARGET=mair USERNAME=ihrachyshka", os: "macos-26" },
