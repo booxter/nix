@@ -57,10 +57,10 @@
 
   services.virby = {
     enable = true;
-    cores = 8;
+    cores = 2;
     memory = 12 * 1024;
     diskSize = "80GiB";
-    rosetta = false;
+    rosetta = true;
     onDemand.enable = true;
     onDemand.ttl = 180;
   };

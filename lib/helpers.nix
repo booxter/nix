@@ -355,10 +355,6 @@ rec {
       mkHost,
       name,
       virtPlatform,
-      localPlatform ? (
-        if inputs.nixpkgs.lib.hasSuffix "-darwin" virtPlatform then "aarch64-linux" else null
-      ),
-      localExtraModules ? [ ],
       ...
     }@args:
     let
@@ -366,28 +362,16 @@ rec {
         "mkHost"
         "name"
         "virtPlatform"
-        "localPlatform"
-        "localExtraModules"
       ];
       cfg = mkHost hostArgs;
       localName = "local-${name}vm";
       localCfg = builtins.tryEval (
         cfg.extendModules {
           modules = [
-            (
-              {
-                lib,
-                ...
-              }:
-              {
-                virtualisation.vmVariant.virtualisation = mkLocalVmVariantVirtualisation virtPlatform;
-              }
-              // lib.optionalAttrs (localPlatform != null) {
-                nixpkgs.hostPlatform = lib.mkForce localPlatform;
-              }
-            )
-          ]
-          ++ localExtraModules;
+            {
+              virtualisation.vmVariant.virtualisation = mkLocalVmVariantVirtualisation virtPlatform;
+            }
+          ];
         }
       );
     in
