@@ -62,6 +62,9 @@ let
                 url = "https://github.com/SaumonNet/proxmox-nixos/commit/0ebf346501f6b5c93f9c37537d296cd2187aaf78.patch";
                 hash = "sha256-JCYAL0dusUjLejj4TF2lw4PWxOi/ZOXMEJTUEM/UXUA=";
               })
+              # Temporary local fix: `agent.freeze-fs-on-backup` must use the
+              # Proxmox API key spelling.
+              ../patches/proxmox-nixos/0001-declarative-vms-fix-agent-freeze-fs-on-backup-key.patch
             ];
           }
         }/modules";
@@ -311,7 +314,6 @@ rec {
                   agent = {
                     enabled = true;
                     type = "virtio";
-                    freeze_fs_on_backup = true;
                     fstrim_cloned_disks = true;
                   };
                   net = [

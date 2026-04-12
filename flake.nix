@@ -338,6 +338,14 @@
           sshPort = 10007;
           hmFull = false;
         }
+        // VM {
+          name = "gw";
+          cores = 2;
+          memorySize = 8;
+          diskSize = 64;
+          sshPort = 10008;
+          hmFull = false;
+        }
         // toBuilder 1
         // toBuilder 2
         // toBuilder 3;
