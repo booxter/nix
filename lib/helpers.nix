@@ -433,6 +433,14 @@ rec {
               { pkgs, ... }:
               let
                 brname = "vmbr0";
+                pveDbusVmstateCompat = pkgs.runCommand "pve-dbus-vmstate-compat" { } ''
+                  mkdir -p "$out/lib/systemd/system"
+                  mkdir -p "$out/share/dbus-1/system.d"
+                  ln -s "${pkgs.pve-qemu-server}/lib/systemd/system/pve-dbus-vmstate@.service" \
+                    "$out/lib/systemd/system/pve-dbus-vmstate@.service"
+                  ln -s "${pkgs.pve-qemu-server}/share/dbus-1/system.d/org.qemu.VMState1.conf" \
+                    "$out/share/dbus-1/system.d/org.qemu.VMState1.conf"
+                '';
               in
               {
                 # Hypervisors upgrade on a separate schedule to avoid
@@ -548,9 +556,16 @@ rec {
                           pve-qemu = patchedPveQemu;
                         }).overrideAttrs
                           (old: {
+                            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.makeWrapper ];
                             # Proxmox tooling sometimes generates /usr/nix/store/* paths
                             # for helper commands (e.g. vgesm), which are invalid on NixOS.
                             postFixup = (old.postFixup or "") + ''
+                              pve_storage_perl_lib_path="${
+                                inputs.nixpkgs.lib.makeSearchPath "${patchedPerl540.libPrefix}/${patchedPerl540.version}" (
+                                  old.propagatedBuildInputs or [ ]
+                                )
+                              }"
+
                               find $out -type f | xargs sed -i \
                                 -e "s|/usr/nix/store/|/nix/store/|g" \
                                 -e "s|/usr/sbin/vgesm|$out/bin/pvesm|g" \
@@ -560,25 +575,134 @@ rec {
                               # until upstream fixes their sed replacement ordering/patterns.
                               find $out -type f | xargs sed -E -i \
                                 -e "s|/nix/store/[^/]*-lvm2-[^/]*-bin/bin/vgesm|$out/bin/pvesm|g"
+
+                              patchShebangs "$out/bin/"
+
+                              for bin in "$out"/bin/*; do
+                                wrapProgram "$bin" \
+                                  --prefix PATH : ${inputs.nixpkgs.lib.makeBinPath [ patchedPveQemu ]} \
+                                  --prefix PERL5LIB : "$out/${patchedPerl540.libPrefix}/${patchedPerl540.version}:$pve_storage_perl_lib_path"
+                              done
                             '';
                           });
-                      patchedPveQemuServer = prev.pve-qemu-server.override {
-                        perl540 = patchedPerl540;
-                        findbin = patchedFindbin;
-                        termreadline = patchedTermreadline;
-                        uuid = patchedUuid;
-                        pve-firewall = patchedPveFirewall;
-                        pve-qemu = patchedPveQemu;
-                      };
-                      patchedPveHaManager = prev.pve-ha-manager.override {
-                        perl540 = patchedPerl540;
-                        pve-container = patchedPveContainer;
-                        pve-firewall = patchedPveFirewall;
-                        pve-guest-common = patchedPveGuestCommon;
-                        pve-qemu-server = patchedPveQemuServer;
-                        pve-storage = patchedPveStorage;
-                        pve-qemu = patchedPveQemu;
-                      };
+                      patchedPveQemuServer =
+                        (prev.pve-qemu-server.override {
+                          perl540 = patchedPerl540;
+                          findbin = patchedFindbin;
+                          termreadline = patchedTermreadline;
+                          uuid = patchedUuid;
+                          pve-firewall = patchedPveFirewall;
+                          pve-qemu = patchedPveQemu;
+                        }).overrideAttrs
+                          (old: {
+                            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ prev.makeWrapper ];
+                            postFixup = (old.postFixup or "") + ''
+                              qemu_server_perl_root_lib_path="${
+                                inputs.nixpkgs.lib.makeSearchPath "${patchedPerl540.libPrefix}" (
+                                  (old.propagatedBuildInputs or [ ])
+                                  ++ [
+                                    patchedPveApiClient
+                                    patchedPveCluster
+                                    patchedPveCommon
+                                    patchedPveGuestCommon
+                                    patchedPveStorage
+                                  ]
+                                  ++ builtins.concatMap (pkg: pkg.propagatedBuildInputs or [ ]) (
+                                    (old.propagatedBuildInputs or [ ])
+                                    ++ [
+                                      patchedPveApiClient
+                                      patchedPveCluster
+                                      patchedPveCommon
+                                      patchedPveGuestCommon
+                                      patchedPveStorage
+                                    ]
+                                  )
+                                  ++ [ patchedPerl540.pkgs.ClassMethodMaker ]
+                                )
+                              }"
+                              qemu_server_perl_lib_path="${
+                                inputs.nixpkgs.lib.makeSearchPath "${patchedPerl540.libPrefix}/${patchedPerl540.version}" (
+                                  (old.propagatedBuildInputs or [ ])
+                                  ++ [
+                                    patchedPveApiClient
+                                    patchedPveCluster
+                                    patchedPveCommon
+                                    patchedPveGuestCommon
+                                    patchedPveStorage
+                                  ]
+                                  ++ builtins.concatMap (pkg: pkg.propagatedBuildInputs or [ ]) (
+                                    (old.propagatedBuildInputs or [ ])
+                                    ++ [
+                                      patchedPveApiClient
+                                      patchedPveCluster
+                                      patchedPveCommon
+                                      patchedPveGuestCommon
+                                      patchedPveStorage
+                                    ]
+                                  )
+                                  ++ [ patchedPerl540.pkgs.ClassMethodMaker ]
+                                )
+                              }"
+
+                              mkdir -p "$out/lib/systemd/system"
+                              mkdir -p "$out/share/dbus-1/system.d"
+
+                              mv "$out"/usr/lib/systemd/system/* "$out/lib/systemd/system/"
+                              mv "$out"/usr/share/dbus-1/system.d/* "$out/share/dbus-1/system.d/"
+
+                              find "$out/lib/systemd/system" -type f | xargs sed -i \
+                                -e "s|/usr/libexec/qemu-server|$out/libexec/qemu-server|"
+
+                              # TODO(upstream): patch proxmox-nixos pve-qemu-server so QemuMigrate
+                              # does not rely on bare `pvesh` being present in PATH on NixOS.
+                              sed -i "$out/${patchedPerl540.libPrefix}/${patchedPerl540.version}/PVE/QemuMigrate.pm" \
+                                -e "s|'pvesh'|'/run/current-system/sw/bin/pvesh'|"
+
+                              patchShebangs "$out/.bin/"
+                              patchShebangs "$out/lib/"
+                              patchShebangs "$out/libexec/"
+
+                              find "$out/.bin" "$out/libexec/qemu-server" -type f -executable ! -name dbus-vmstate | while read -r bin; do
+                                wrapProgram "$bin" \
+                                  --prefix PATH : ${inputs.nixpkgs.lib.makeBinPath [ patchedPveQemu ]} \
+                                  --prefix PERL5LIB : "$out/${patchedPerl540.libPrefix}:$out/${patchedPerl540.libPrefix}/${patchedPerl540.version}:$qemu_server_perl_root_lib_path:$qemu_server_perl_lib_path"
+                              done
+
+                              wrapProgram "$out/libexec/qemu-server/dbus-vmstate" \
+                                --prefix PATH : ${
+                                  inputs.nixpkgs.lib.makeBinPath [
+                                    prev.conntrack-tools
+                                    patchedPveQemu
+                                  ]
+                                } \
+                                --prefix PERL5LIB : "$out/${patchedPerl540.libPrefix}:$out/${patchedPerl540.libPrefix}/${patchedPerl540.version}:$qemu_server_perl_root_lib_path:$qemu_server_perl_lib_path"
+                            '';
+                          });
+                      patchedPveHaManager =
+                        (prev.pve-ha-manager.override {
+                          perl540 = patchedPerl540;
+                          pve-container = patchedPveContainer;
+                          pve-firewall = patchedPveFirewall;
+                          pve-guest-common = patchedPveGuestCommon;
+                          pve-qemu-server = patchedPveQemuServer;
+                          pve-storage = patchedPveStorage;
+                          pve-qemu = patchedPveQemu;
+                        }).overrideAttrs
+                          (old: {
+                            postFixup = ''
+                              ha_manager_perl_lib_path="${
+                                inputs.nixpkgs.lib.makeSearchPath "${patchedPerl540.libPrefix}/${patchedPerl540.version}" (
+                                  old.propagatedBuildInputs or [ ]
+                                )
+                              }"
+
+                              for bin in "$out"/bin/*; do
+                                wrapProgram "$bin" \
+                                  --prefix PATH : ${inputs.nixpkgs.lib.makeBinPath [ patchedPveQemu ]} \
+                                  --prefix PERL5LIB : "$out/${patchedPerl540.libPrefix}/${patchedPerl540.version}:$ha_manager_perl_lib_path"
+                              done
+                            '';
+                          });
                       patchedPveManager =
                         (prev.pve-manager.override {
                           perl540 = patchedPerl540;
@@ -651,6 +775,9 @@ rec {
                 environment.systemPackages = with pkgs; [
                   bridge-utils
                 ];
+
+                systemd.packages = [ pveDbusVmstateCompat ];
+                services.dbus.packages = [ pveDbusVmstateCompat ];
 
                 # Bridge to the LAN, while retaining IP address on the main
                 # interface, with its MAC address - as expected by DHCP server.
