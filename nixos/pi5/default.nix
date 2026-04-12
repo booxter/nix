@@ -5,6 +5,7 @@ let
   gwAddr = "192.168.0.1";
   mainAddr = "192.168.1.1";
   guestAddr = "192.168.2.1";
+  lanDomain = "home.arpa";
   dnsmasqExporterPort = 9153;
 in
 {
@@ -71,6 +72,8 @@ in
       dhcp-option = [
         "option:router,${gwAddr}"
         "${mainIface},option:dns-server,${mainAddr}"
+        "${mainIface},option:domain-name,${lanDomain}"
+        "${mainIface},option:domain-search,${lanDomain}"
         "${guestIface},option:dns-server,${gwAddr}"
       ];
 
@@ -81,6 +84,9 @@ in
       server = [ gwAddr ];
 
       domain-needed = true;
+      domain = lanDomain;
+      expand-hosts = true;
+      local = "/${lanDomain}/";
       cname = [
         "nix-cache,prox-cachevm"
       ];
