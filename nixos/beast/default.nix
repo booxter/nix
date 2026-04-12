@@ -209,7 +209,18 @@ in
     "render"
     "video"
   ];
-  users.groups.ddclient-secrets = { };
+  # Keep ddclient on a stable system user instead of DynamicUser. During
+  # switch-to-configuration we observed a transient startup failure where the
+  # generated preStart script tried to chown runtime files to "ddclient" before
+  # the dynamic user/runtime state was ready.
+  users.groups = {
+    ddclient = { };
+    ddclient-secrets = { };
+  };
+  users.users.ddclient = {
+    isSystemUser = true;
+    group = "ddclient";
+  };
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
 
   # Reverse proxy with automatic TLS.
@@ -246,6 +257,9 @@ in
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
     serviceConfig = {
+      DynamicUser = lib.mkForce false;
+      User = "ddclient";
+      Group = "ddclient";
       SupplementaryGroups = [ "ddclient-secrets" ];
     };
   };
