@@ -314,6 +314,7 @@ rec {
                   agent = {
                     enabled = true;
                     type = "virtio";
+                    freeze-fs-on-backup = true;
                     fstrim_cloned_disks = true;
                   };
                   net = [
