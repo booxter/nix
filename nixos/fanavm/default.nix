@@ -79,6 +79,7 @@ let
           name:
           !(lib.hasPrefix "local-" name)
           && name != "prox-fanavm"
+          && name != "prox-deskvm"
           && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
         ) (builtins.attrNames outputs.nixosConfigurations)
       );

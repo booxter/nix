@@ -1,0 +1,13 @@
+diff --git a/modules/declarative-vms/options.nix b/modules/declarative-vms/options.nix
+index 2ece419..c773ccf 100644
+--- a/modules/declarative-vms/options.nix
++++ b/modules/declarative-vms/options.nix
+@@ -303,7 +303,7 @@ in
+         types.submodule {
+           options = {
+             enabled = mkEnableOption "Enable or disable communication with the QEMU Guest Agent.";
+-            freeze_fs_on_backup = mkEnableOption "Freeze file systems on backup.";
++            freeze-fs-on-backup = mkEnableOption "Freeze file systems on backup.";
+             fstrim_cloned_disks = mkEnableOption "Enable or disable fstrim on cloned disks.";
+             type = mkOption {
+               type = types.enum [

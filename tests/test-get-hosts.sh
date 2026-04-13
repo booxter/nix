@@ -18,6 +18,7 @@ expected_json='{
     "prox-cachevm": false,
     "prox-deskvm": false,
     "prox-fanavm": false,
+    "prox-gwvm": false,
     "prox-nvvm": true,
     "prox-srvarrvm": false,
     "prx1-lab": false,
