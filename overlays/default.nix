@@ -17,6 +17,7 @@
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
+      pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       pkgsDiffSoFancy = getPkgs inputs.nixpkgs-diff-so-fancy;
       pkgsFirefoxUnwrapped = getPkgs inputs.nixpkgs-firefox-unwrapped;
@@ -82,6 +83,9 @@
         inherit (pkgsDiffSoFancy) diff-so-fancy;
       }
       // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
+        # Carry nixpkgs PR #509497 until it lands in the pinned nixpkgs input.
+        inherit (pkgsMaster) vscode;
+        inherit (pkgsMaster) code-cursor;
         inherit (pkgsFirefoxUnwrapped) firefox-unwrapped;
         inherit (pkgsThunderbirdUnwrapped) thunderbird-unwrapped;
 

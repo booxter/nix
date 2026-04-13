@@ -594,6 +594,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-master": {
+      "locked": {
+        "lastModified": 1776118802,
+        "narHash": "sha256-adHWGjYEUbAZuaxrPLPalacvH2EIBwkehaBNs2Z/o98=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "53b82b7ab8625f3b6ade44b4b4d91aa73361c409",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1769318308,
@@ -804,6 +820,7 @@
         "nixpkgs-25_11": "nixpkgs-25_11",
         "nixpkgs-diff-so-fancy": "nixpkgs-diff-so-fancy",
         "nixpkgs-firefox-unwrapped": "nixpkgs-firefox-unwrapped",
+        "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-thunderbird-unwrapped": "nixpkgs-thunderbird-unwrapped",
         "nixpkgs-transmission": "nixpkgs-transmission",
         "nixvim": "nixvim",
