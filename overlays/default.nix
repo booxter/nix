@@ -18,7 +18,6 @@
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
-      pkgsJellyfin = getPkgs inputs.nixpkgs-jellyfin;
       pkgsDiffSoFancy = getPkgs inputs.nixpkgs-diff-so-fancy;
       pkgsFirefoxUnwrapped = getPkgs inputs.nixpkgs-firefox-unwrapped;
       pkgsThunderbirdUnwrapped = getPkgs inputs.nixpkgs-thunderbird-unwrapped;
@@ -39,15 +38,9 @@
           throw "Failed to extract version from ${packagePath}"
         else
           builtins.head match;
-      releaseJellyfinVersion = getPackageVersion inputs.nixpkgs-25_11 "/pkgs/by-name/je/jellyfin/package.nix";
       nixpkgsDiffSoFancyVersion = getPackageVersion inputs.nixpkgs "/pkgs/by-name/di/diff-so-fancy/package.nix";
     in
-    if prev.lib.versionAtLeast releaseJellyfinVersion "10.11.8" then
-      throw ''
-        Temporary nixpkgs-jellyfin override is stale: nixpkgs-25_11 already provides jellyfin ${releaseJellyfinVersion}.
-        Remove the nixpkgs-jellyfin input and the corresponding jellyfin/jellyfin-web overlay entries.
-      ''
-    else if prev.lib.versionAtLeast nixpkgsDiffSoFancyVersion "1.4.10" then
+    if prev.lib.versionAtLeast nixpkgsDiffSoFancyVersion "1.4.10" then
       throw ''
         Temporary nixpkgs-diff-so-fancy override is stale: nixpkgs already provides diff-so-fancy ${nixpkgsDiffSoFancyVersion}.
         Remove the nixpkgs-diff-so-fancy input and the corresponding diff-so-fancy overlay entry.
@@ -68,10 +61,7 @@
         transmission_4 = pinnedTransmission;
         transmission = pinnedTransmission;
 
-        # Carry the upstream Jellyfin 10.11.8 backport from nixpkgs PR #507426
-        # until it lands in the pinned nixpkgs input.
-        inherit (pkgsJellyfin) jellyfin-web;
-        jellyfin = pkgsJellyfin.jellyfin.overrideAttrs (old: {
+        jellyfin = prev.jellyfin.overrideAttrs (old: {
           patches = old.patches or [ ] ++ [
             # Catch websocket keepalive send races.
             # Upstream: https://github.com/jellyfin/jellyfin/issues/14837

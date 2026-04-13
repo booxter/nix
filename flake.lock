@@ -563,22 +563,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-jellyfin": {
-      "locked": {
-        "lastModified": 1775519863,
-        "narHash": "sha256-KOA7DkC5KeF30fDFIldXgpf9MzEg4SAie6QQoKIaRVU=",
-        "owner": "whispersofthedawn",
-        "repo": "nixpkgs",
-        "rev": "670522ebae401381a5fe85c5e419697cf62a811e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "whispersofthedawn",
-        "repo": "nixpkgs",
-        "rev": "670522ebae401381a5fe85c5e419697cf62a811e",
-        "type": "github"
-      }
-    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1761765539,
@@ -820,7 +804,6 @@
         "nixpkgs-25_11": "nixpkgs-25_11",
         "nixpkgs-diff-so-fancy": "nixpkgs-diff-so-fancy",
         "nixpkgs-firefox-unwrapped": "nixpkgs-firefox-unwrapped",
-        "nixpkgs-jellyfin": "nixpkgs-jellyfin",
         "nixpkgs-thunderbird-unwrapped": "nixpkgs-thunderbird-unwrapped",
         "nixpkgs-transmission": "nixpkgs-transmission",
         "nixvim": "nixvim",
