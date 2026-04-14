@@ -787,16 +787,16 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1775228763,
-        "narHash": "sha256-8fKOEOouCaPZLBTdWPS+uU0bxsPp1OmfloDNoNSiu8w=",
-        "owner": "SaumonNet",
+        "lastModified": 1776127047,
+        "narHash": "sha256-TES8G2OZWdID+6TcQeGkK73S097jZlLOOelnMemIPG0=",
+        "owner": "booxter",
         "repo": "proxmox-nixos",
-        "rev": "e803cb839e5e5207fa37d92bc6ac7290f4dba633",
+        "rev": "5282a8d8e52a7ce838aac69cccc7b4a5c7ec6dfe",
         "type": "github"
       },
       "original": {
-        "owner": "SaumonNet",
-        "ref": "main",
+        "owner": "booxter",
+        "ref": "my-fork",
         "repo": "proxmox-nixos",
         "type": "github"
       }
