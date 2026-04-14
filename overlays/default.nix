@@ -80,7 +80,16 @@
         });
 
         # Carry nixpkgs PR #508799 until it lands in the pinned nixpkgs input.
-        inherit (pkgsDiffSoFancy) diff-so-fancy;
+        # Also carry the partial rename chunk fix until it lands upstream.
+        # TODO: report upstream and drop this extra patch once it is released.
+        diff-so-fancy = pkgsDiffSoFancy.diff-so-fancy.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            (prev.fetchpatch {
+              url = "https://github.com/booxter/diff-so-fancy/commit/e9d375a3730366deb3d395dd693da86ad11e3368.patch";
+              hash = "sha256-3kI5fYOycVMub7sHrJnQfIZtKC026TpQIGSb4NCpreg=";
+            })
+          ];
+        });
       }
       // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
         # Carry nixpkgs PR #509497 until it lands in the pinned nixpkgs input.
