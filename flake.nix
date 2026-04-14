@@ -346,6 +346,15 @@
           sshPort = 10008;
           hmFull = false;
         }
+        // VM {
+          name = "org";
+          platform = "x86_64-linux";
+          cores = 4;
+          memorySize = 8;
+          diskSize = 80;
+          sshPort = 10009;
+          hmFull = false;
+        }
         // toBuilder 1
         // toBuilder 2
         // toBuilder 3;

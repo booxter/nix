@@ -44,6 +44,8 @@ let
   lokiPort = 3100;
   nutExporterPort = 9199;
   smartctlExporterPort = 9633;
+  vikunjaHost = outputs.nixosConfigurations.prox-orgvm.config.host.dnsName;
+  vikunjaPort = outputs.nixosConfigurations.prox-orgvm.config.services.vikunja.port;
   retentionDays = 14;
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
@@ -709,6 +711,16 @@ in
               "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString smartctlExporterPort}"
             ];
             labels.instance = outputs.nixosConfigurations.beast.config.host.dnsName;
+          }
+        ];
+      }
+      {
+        job_name = "vikunja";
+        metrics_path = "/api/v1/metrics";
+        static_configs = [
+          {
+            targets = [ "${vikunjaHost}:${toString vikunjaPort}" ];
+            labels.instance = vikunjaHost;
           }
         ];
       }
