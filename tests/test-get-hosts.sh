@@ -20,6 +20,7 @@ expected_json='{
     "prox-fanavm": false,
     "prox-gwvm": false,
     "prox-nvvm": true,
+    "prox-orgvm": false,
     "prox-srvarrvm": false,
     "prx1-lab": false,
     "prx2-lab": false,

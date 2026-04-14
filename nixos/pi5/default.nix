@@ -133,6 +133,7 @@ in
         # hardcode IP for VM port forwarding
         "id:prox-srvarrvm,prox-srvarrvm,192.168.20.2"
         "id:prox-gwvm,prox-gwvm,192.168.20.3"
+        "id:prox-orgvm,prox-orgvm,192.168.20.4"
       ];
 
       enable-tftp = true;

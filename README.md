@@ -18,12 +18,14 @@ nix run .#vm -- --gui desk
 nix run .#vm -- srvarr
 nix run .#vm -- fana
 nix run .#vm -- gw
+nix run .#vm -- org
 nix run .#vm -- beast
 
 # Proxmox VM deploy
 nix run .#prox-deploy -- srvarr prx1
 nix run .#prox-deploy -- fana prx1
 nix run .#prox-deploy -- gw prx1
+nix run .#prox-deploy -- org prx1
 
 # Disk and image helpers
 nix run .#deploy -- --disko frame /dev/sdX
@@ -155,3 +157,4 @@ Jellyfin and Jellarr run on `beast`.
 | --- | --- | --- | --- | --- |
 | `fana` | NixOS VM | Local Grafana stack (Grafana + Prometheus + Loki + Alloy log shipping). | [nixos/fanavm/default.nix](nixos/fanavm/default.nix) | [common](common), [nixos](nixos) |
 | `gw` | Network VM | Minimal WireGuard gateway VM for remote LAN access. | [nixos/gwvm/default.nix](nixos/gwvm/default.nix) | [common](common), [nixos](nixos) |
+| `org` | NixOS VM | Org software VM. Starter service: Vikunja with Prometheus metrics scraped by `fana`. | [nixos/orgvm/default.nix](nixos/orgvm/default.nix) | [common](common), [nixos](nixos) |
