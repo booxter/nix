@@ -163,3 +163,131 @@ index 99c677254..8db4372df 100644
  	})
  	t.Run("Empty payload", func(t *testing.T) {
  		_, err := newTestRequest(t, http.MethodPost, apiv1.RegisterUser, `{}`, nil, nil)
+diff --git a/pkg/cmd/user.go b/pkg/cmd/user.go
+index d0f569610..5400c068d 100644
+--- a/pkg/cmd/user.go
++++ b/pkg/cmd/user.go
+@@ -396,6 +396,8 @@ var userDeleteCmd = &cobra.Command{
+ 			log.Fatalf("Error saving everything: %s", err)
+ 		}
+ 
++		events.DispatchPending(s)
++
+ 		if userFlagDeleteNow {
+ 			fmt.Println("User deleted successfully.")
+ 		} else {
+diff --git a/pkg/models/user_delete.go b/pkg/models/user_delete.go
+index 8cdba1e0d..2917e5316 100644
+--- a/pkg/models/user_delete.go
++++ b/pkg/models/user_delete.go
+@@ -21,6 +21,7 @@ import (
+ 
+ 	"code.vikunja.io/api/pkg/cron"
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/log"
+ 	"code.vikunja.io/api/pkg/notifications"
+ 	"code.vikunja.io/api/pkg/user"
+@@ -82,6 +83,8 @@ func deleteUsers() {
+ 			if err != nil {
+ 				log.Errorf("Could not commit transaction: %s", err)
+ 			}
++
++			events.DispatchPending(us)
+ 		}()
+ 	}
+ }
+@@ -177,6 +180,11 @@ func DeleteUser(s *xorm.Session, u *user.User) (err error) {
+ 	}
+ 
+ 	_, err = s.Where("id = ?", u.ID).Delete(&user.User{})
++	if err != nil {
++		return err
++	}
++
++	events.DispatchOnCommit(s, &user.DeletedEvent{User: u})
+ 	return err
+ }
+ 
+diff --git a/pkg/models/user_delete_test.go b/pkg/models/user_delete_test.go
+index d705616b3..c021646cf 100644
+--- a/pkg/models/user_delete_test.go
++++ b/pkg/models/user_delete_test.go
+@@ -20,6 +20,7 @@ import (
+ 	"testing"
+ 
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/notifications"
+ 	"code.vikunja.io/api/pkg/user"
+ 
+@@ -121,4 +122,21 @@ func TestDeleteUser(t *testing.T) {
+ 		db.AssertMissing(t, "subscriptions", map[string]interface{}{"user_id": 4})
+ 		db.AssertMissing(t, "team_members", map[string]interface{}{"user_id": 4})
+ 	})
++	t.Run("dispatches user deleted event after commit", func(t *testing.T) {
++		db.LoadAndAssertFixtures(t)
++		s := db.NewSession()
++		defer s.Close()
++		notifications.Fake()
++		events.ClearDispatchedEvents()
++
++		err := DeleteUser(s, &user.User{ID: 4})
++		require.NoError(t, err)
++		require.Equal(t, 0, events.CountDispatchedEvents("user.deleted"))
++
++		require.NoError(t, s.Commit())
++		require.Equal(t, 0, events.CountDispatchedEvents("user.deleted"))
++
++		events.DispatchPending(s)
++		require.Equal(t, 1, events.CountDispatchedEvents("user.deleted"))
++	})
+ }
+diff --git a/pkg/user/events.go b/pkg/user/events.go
+index ff7866149..7e13cf66f 100644
+--- a/pkg/user/events.go
++++ b/pkg/user/events.go
+@@ -25,3 +25,13 @@ type CreatedEvent struct {
+ func (t *CreatedEvent) Name() string {
+ 	return "user.created"
+ }
++
++// DeletedEvent represents a DeletedEvent event
++type DeletedEvent struct {
++	User *User
++}
++
++// Name defines the name for DeletedEvent
++func (t *DeletedEvent) Name() string {
++	return "user.deleted"
++}
+diff --git a/pkg/user/listeners.go b/pkg/user/listeners.go
+index 7fdbe61a3..756b83103 100644
+--- a/pkg/user/listeners.go
++++ b/pkg/user/listeners.go
+@@ -25,6 +25,7 @@ import (
+ 
+ func RegisterListeners() {
+ 	events.RegisterListener((&CreatedEvent{}).Name(), &IncreaseUserCounter{})
++	events.RegisterListener((&DeletedEvent{}).Name(), &DecreaseUserCounter{})
+ }
+ 
+ ///////
+@@ -43,3 +44,17 @@ func (s *IncreaseUserCounter) Name() string {
+ func (s *IncreaseUserCounter) Handle(_ *message.Message) (err error) {
+ 	return keyvalue.IncrBy(metrics.UserCountKey, 1)
+ }
++
++// DecreaseUserCounter represents a listener
++type DecreaseUserCounter struct {
++}
++
++// Name defines the name for the DecreaseUserCounter listener
++func (s *DecreaseUserCounter) Name() string {
++	return "decrease.user.counter"
++}
++
++// Handle is executed when the event DecreaseUserCounter listens on is fired
++func (s *DecreaseUserCounter) Handle(_ *message.Message) (err error) {
++	return keyvalue.DecrBy(metrics.UserCountKey, 1)
++}
