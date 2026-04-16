@@ -16,7 +16,10 @@ in
         week_start = 1;
       };
       metrics.enabled = true;
-      service.timezone = vikunjaTimezone;
+      service = {
+        timezone = vikunjaTimezone;
+        enableregistration = false;
+      };
     };
   };
 
