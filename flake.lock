@@ -531,22 +531,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-diff-so-fancy": {
-      "locked": {
-        "lastModified": 1775866547,
-        "narHash": "sha256-DM7yGDMoZfRyGFb91Uf9NNc/cWlji0AeaV0HlFBmM74=",
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "e523d5636f2edfa5688d5fa05b3adc64ef6d9a89",
-        "type": "github"
-      },
-      "original": {
-        "owner": "booxter",
-        "repo": "nixpkgs",
-        "rev": "e523d5636f2edfa5688d5fa05b3adc64ef6d9a89",
-        "type": "github"
-      }
-    },
     "nixpkgs-firefox-unwrapped": {
       "locked": {
         "lastModified": 1772896522,
@@ -818,7 +802,6 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-25_11": "nixpkgs-25_11",
-        "nixpkgs-diff-so-fancy": "nixpkgs-diff-so-fancy",
         "nixpkgs-firefox-unwrapped": "nixpkgs-firefox-unwrapped",
         "nixpkgs-master": "nixpkgs-master",
         "nixpkgs-thunderbird-unwrapped": "nixpkgs-thunderbird-unwrapped",
