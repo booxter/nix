@@ -1,0 +1,105 @@
+diff --git a/pkg/cmd/user.go b/pkg/cmd/user.go
+index abd7c8c27..d0f569610 100644
+--- a/pkg/cmd/user.go
++++ b/pkg/cmd/user.go
+@@ -25,6 +25,7 @@ import (
+ 	"time"
+ 
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/initialize"
+ 	"code.vikunja.io/api/pkg/log"
+ 	"code.vikunja.io/api/pkg/models"
+@@ -227,6 +228,8 @@ var userCreateCmd = &cobra.Command{
+ 			log.Fatalf("Error saving everything: %s", err)
+ 		}
+ 
++		events.DispatchPending(s)
++
+ 		fmt.Printf("\nUser was created successfully.\n")
+ 	},
+ }
+diff --git a/pkg/metrics/metrics.go b/pkg/metrics/metrics.go
+index 00dce43eb..1d38252f7 100644
+--- a/pkg/metrics/metrics.go
++++ b/pkg/metrics/metrics.go
+@@ -66,7 +66,7 @@ func InitMetrics() {
+ 	GetRegistry()
+ 
+ 	registerPromMetric(ProjectCountKey, "The number of projects on this instance")
+-	registerPromMetric(UserCountKey, "The total number of shares on this instance")
++	registerPromMetric(UserCountKey, "The total number of users on this instance")
+ 	registerPromMetric(TaskCountKey, "The total number of tasks on this instance")
+ 	registerPromMetric(TeamCountKey, "The total number of teams on this instance")
+ 	registerPromMetric(FilesCountKey, "The total number of files on this instance")
+diff --git a/pkg/modules/auth/openid/openid.go b/pkg/modules/auth/openid/openid.go
+index 381570f42..e22f6fc9f 100644
+--- a/pkg/modules/auth/openid/openid.go
++++ b/pkg/modules/auth/openid/openid.go
+@@ -27,6 +27,7 @@ import (
+ 	"strings"
+ 
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/log"
+ 	"code.vikunja.io/api/pkg/models"
+ 	"code.vikunja.io/api/pkg/modules/auth"
+@@ -212,6 +213,8 @@ func HandleCallback(c *echo.Context) error {
+ 	if err := enforceTOTPIfRequired(s, u, cb.TOTPPasscode); err != nil {
+ 		if commitErr := s.Commit(); commitErr != nil {
+ 			log.Errorf("Error committing session after failed OIDC TOTP attempt for user %d: %v", u.ID, commitErr)
++		} else {
++			events.DispatchPending(s)
+ 		}
+ 		if user.IsErrInvalidTOTPPasscode(err) {
+ 			user.HandleFailedTOTPAuth(u)
+@@ -233,6 +236,8 @@ func HandleCallback(c *echo.Context) error {
+ 		return err
+ 	}
+ 
++	events.DispatchPending(s)
++
+ 	// Create token
+ 	return auth.NewUserAuthTokenResponse(u, c, false)
+ }
+diff --git a/pkg/routes/api/v1/login.go b/pkg/routes/api/v1/login.go
+index e13074bb2..b08e6593b 100644
+--- a/pkg/routes/api/v1/login.go
++++ b/pkg/routes/api/v1/login.go
+@@ -21,6 +21,7 @@ import (
+ 
+ 	"code.vikunja.io/api/pkg/config"
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/models"
+ 	"code.vikunja.io/api/pkg/modules/auth"
+ 	"code.vikunja.io/api/pkg/modules/auth/ldap"
+@@ -116,6 +117,8 @@ func Login(c *echo.Context) (err error) {
+ 		return err
+ 	}
+ 
++	events.DispatchPending(s)
++
+ 	// Create token
+ 	return auth.NewUserAuthTokenResponse(user, c, u.LongToken)
+ }
+diff --git a/pkg/routes/api/v1/user_register.go b/pkg/routes/api/v1/user_register.go
+index f358811cf..05f9ae8bd 100644
+--- a/pkg/routes/api/v1/user_register.go
++++ b/pkg/routes/api/v1/user_register.go
+@@ -22,6 +22,7 @@ import (
+ 
+ 	"code.vikunja.io/api/pkg/config"
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/models"
+ 	"code.vikunja.io/api/pkg/user"
+ 
+@@ -93,5 +94,7 @@ func RegisterUser(c *echo.Context) error {
+ 		return err
+ 	}
+ 
++	events.DispatchPending(s)
++
+ 	return c.JSON(http.StatusOK, newUser)
+ }

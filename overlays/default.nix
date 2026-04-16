@@ -90,6 +90,13 @@
             })
           ];
         });
+
+        # Carry local fixes for broken user-count metrics until upstream releases them.
+        vikunja = prev.vikunja.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
+          ];
+        });
       }
       // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
         # Carry nixpkgs PR #509497 until it lands in the pinned nixpkgs input.
