@@ -103,3 +103,63 @@ index f358811cf..05f9ae8bd 100644
 +
  	return c.JSON(http.StatusOK, newUser)
  }
+diff --git a/pkg/user/user_test.go b/pkg/user/user_test.go
+index 842de3ffc..5af27742a 100644
+--- a/pkg/user/user_test.go
++++ b/pkg/user/user_test.go
+@@ -19,6 +19,7 @@ import (
+ 	"testing"
+ 
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+@@ -35,9 +36,18 @@ func TestCreateUser(t *testing.T) {
+ 		db.LoadAndAssertFixtures(t)
+ 		s := db.NewSession()
+ 		defer s.Close()
++		events.ClearDispatchedEvents()
+ 
+ 		createdUser, err := CreateUser(s, dummyuser)
+ 		require.NoError(t, err)
+ 		assert.NotZero(t, createdUser.Created)
++		assert.Equal(t, 0, events.CountDispatchedEvents("user.created"))
++
++		err = s.Commit()
++		require.NoError(t, err)
++		assert.Equal(t, 0, events.CountDispatchedEvents("user.created"))
++
++		events.DispatchPending(s)
++		assert.Equal(t, 1, events.CountDispatchedEvents("user.created"))
+ 	})
+ 	t.Run("already existing", func(t *testing.T) {
+ 		db.LoadAndAssertFixtures(t)
+diff --git a/pkg/webtests/register_test.go b/pkg/webtests/register_test.go
+index 99c677254..8db4372df 100644
+--- a/pkg/webtests/register_test.go
++++ b/pkg/webtests/register_test.go
+@@ -19,6 +19,7 @@ import (
+ 	"net/http"
+ 	"testing"
+ 
++	"code.vikunja.io/api/pkg/events"
+ 	apiv1 "code.vikunja.io/api/pkg/routes/api/v1"
+ 	"code.vikunja.io/api/pkg/user"
+ 
+@@ -29,12 +30,14 @@ import (
+ 
+ func TestRegister(t *testing.T) {
+ 	t.Run("normal register", func(t *testing.T) {
++		events.ClearDispatchedEvents()
+ 		rec, err := newTestRequest(t, http.MethodPost, apiv1.RegisterUser, `{
+   "username": "newUser",
+   "password": "12345678",
+   "email": "email@example.com"
+ }`, nil, nil)
+ 		require.NoError(t, err)
+ 		assert.Contains(t, rec.Body.String(), `"username":"newUser"`)
++		assert.Equal(t, 1, events.CountDispatchedEvents("user.created"))
+ 	})
+ 	t.Run("Empty payload", func(t *testing.T) {
+ 		_, err := newTestRequest(t, http.MethodPost, apiv1.RegisterUser, `{}`, nil, nil)
