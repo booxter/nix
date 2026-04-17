@@ -75,7 +75,6 @@ let
   mkOffloadUser = name: if name == "beast" then cloudOffloadUser else "restic-${name}-offload";
   mkCloudStateDir = name: "restic-cloud-${name}";
   mkCloudSecret = name: path: "backup/restic/${name}/cloud/${path}";
-  mkCloudEnvTemplate = name: "restic-${name}-cloud-offload.env";
   sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
   sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
   sharedB2ApplicationKeySecret = "backup/restic/cloud/b2/applicationKey";
@@ -84,18 +83,23 @@ let
     let
       backupRepo = mkBackupRepo name;
       pruneArgs = lib.escapeShellArgs backupClients.${name}.cloud.pruneOpts;
+      srcPasswordFile = config.sops.secrets.${mkCloudSecret name "localPassword"}.path;
+      dstPasswordFile = config.sops.secrets.${mkCloudSecret name "password"}.path;
+      b2AccountIdFile = config.sops.secrets.${sharedB2ApplicationKeyIdSecret}.path;
+      b2AccountKeyFile = config.sops.secrets.${sharedB2ApplicationKeySecret}.path;
     in
     pkgs.writeShellScript "restic-${name}-cloud-offload" ''
       set -euo pipefail
 
       dst_repo="${backupClients.${name}.cloud.repository}"
       src_repo="${backupRepo}"
-      export RESTIC_FROM_PASSWORD="$RESTIC_SRC_PASSWORD"
-      export RESTIC_PASSWORD="$RESTIC_DST_PASSWORD"
-      unset RESTIC_SRC_PASSWORD RESTIC_DST_PASSWORD
+      src_password_file="${srcPasswordFile}"
+      dst_password_file="${dstPasswordFile}"
+      export B2_ACCOUNT_ID="$(${pkgs.coreutils}/bin/cat ${b2AccountIdFile})"
+      export B2_ACCOUNT_KEY="$(${pkgs.coreutils}/bin/cat ${b2AccountKeyFile})"
 
       restic_dst() {
-        ${pkgs.restic}/bin/restic -r "$dst_repo" "$@"
+        ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" "$@"
       }
 
       cleanup() {
@@ -110,6 +114,7 @@ let
         restic_dst \
           init \
           --from-repo "$src_repo" \
+          --from-password-file "$src_password_file" \
           --copy-chunker-params
       fi
 
@@ -122,6 +127,7 @@ let
         --pack-size ${cloudCopyPackSize} \
         copy \
         --from-repo "$src_repo" \
+        --from-password-file "$src_password_file" \
         --verbose
 
       restic_dst unlock || true
@@ -192,36 +198,33 @@ in
         lib.concatMap (name: [
           {
             name = mkCloudSecret name "localPassword";
-            value = { };
+            value = {
+              owner = mkOffloadUser name;
+              group = mkOffloadUser name;
+              mode = "0400";
+            };
           }
           {
             name = mkCloudSecret name "password";
-            value = { };
+            value = {
+              owner = mkOffloadUser name;
+              group = mkOffloadUser name;
+              mode = "0400";
+            };
           }
         ]) (builtins.attrNames backupClients)
       ))
       // {
         # Shared cloud backend credentials; repo passwords remain per-host.
-        ${sharedB2ApplicationKeyIdSecret} = { };
-        ${sharedB2ApplicationKeySecret} = { };
-      };
-    templates = builtins.listToAttrs (
-      map (name: {
-        name = mkCloudEnvTemplate name;
-        value = {
-          owner = "root";
-          group = "root";
-          mode = "0400";
-          content = ''
-            RESTIC_SRC_PASSWORD=${config.sops.placeholder.${mkCloudSecret name "localPassword"}}
-            RESTIC_DST_PASSWORD=${config.sops.placeholder.${mkCloudSecret name "password"}}
-            B2_ACCOUNT_ID=${config.sops.placeholder.${sharedB2ApplicationKeyIdSecret}}
-            B2_ACCOUNT_KEY=${config.sops.placeholder.${sharedB2ApplicationKeySecret}}
-          '';
+        ${sharedB2ApplicationKeyIdSecret} = {
+          group = cloudOffloadUser;
+          mode = "0440";
         };
-      }) (builtins.attrNames backupClients)
-    );
-
+        ${sharedB2ApplicationKeySecret} = {
+          group = cloudOffloadUser;
+          mode = "0440";
+        };
+      };
   };
 
   users.users = builtins.listToAttrs (
@@ -245,6 +248,7 @@ in
         createHome = false;
         home = backupRoot;
         shell = pkgs.bash;
+        extraGroups = [ cloudOffloadUser ];
       };
     }) (builtins.attrNames sshBackupClients)
     ++ map (name: {
@@ -372,7 +376,6 @@ in
             Group = mkOffloadUser name;
             StateDirectory = mkCloudStateDir name;
             Environment = "RESTIC_CACHE_DIR=/var/lib/${mkCloudStateDir name}/cache";
-            EnvironmentFile = config.sops.templates.${mkCloudEnvTemplate name}.path;
             ExecStart = mkCloudOffloadScript name;
           };
         };
