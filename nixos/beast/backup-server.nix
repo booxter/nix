@@ -49,6 +49,21 @@ let
         };
       };
     };
+    orgvm = {
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF0906WU3WLoVgNE8B0HRyV0gDGQihj0LHPMZ2pTiV/B ihrachyshka@mair";
+      cloud = {
+        repository = "b2:ihar-restic-prod:hosts/orgvm";
+        pruneOpts = [
+          "--keep-daily=14"
+          "--keep-weekly=8"
+          "--keep-monthly=12"
+        ];
+        timerConfig = {
+          OnCalendar = "05:30";
+          RandomizedDelaySec = "30m";
+        };
+      };
+    };
   };
   mkBackupUser = name: "restic-${name}";
   mkBackupRepo = name: "${backupRoot}/hosts/${name}";

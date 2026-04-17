@@ -5,6 +5,10 @@ let
   vikunjaTimezone = "America/New_York";
 in
 {
+  imports = [
+    ./backup.nix
+  ];
+
   sops.defaultSopsFile = ../../secrets/prox-orgvm.yaml;
 
   sops.secrets.vikunjaMailerPassword = {
