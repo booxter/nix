@@ -154,13 +154,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "1000 * histogram_quantile(0.95, sum by (le) (rate(handler_execution_time_seconds_bucket{job=\"vikunja\"}[5m])))",
+          "expr": "max_over_time(vikunja_active_users{job=\"vikunja\"}[5m]) or vector(0)",
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Handler p95",
+      "title": "Active Users (5m)",
       "type": "stat"
     },
     {
@@ -293,7 +293,7 @@
               }
             ]
           },
-          "unit": "reqps"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -319,13 +319,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(rate(http_request_duration_seconds_count{job=\"vikunja\"}[5m]))",
-          "legendFormat": "requests",
+          "expr": "max(vikunja_active_users{job=\"vikunja\"}) or vector(0)",
+          "legendFormat": "active users",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "HTTP Request Rate",
+      "title": "Active Users",
       "type": "timeseries"
     },
     {
@@ -494,6 +494,6 @@
   "timezone": "",
   "title": "Org Services",
   "uid": "fana-org-services",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
