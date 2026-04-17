@@ -30,6 +30,14 @@ let
   # DDNS provider target for public endpoints (jf/au/js).
   dynuHostname = "ihrachyshka-home.freeddns.org";
   dynuUsername = "ihrachyshka";
+  mkPublicProxyVhost = proxyPass: {
+    forceSSL = true;
+    enableACME = true;
+    locations."/" = {
+      proxyPass = proxyPass;
+      proxyWebsockets = true;
+    };
+  };
   diskBayMappings = [
     {
       bay = "1";
@@ -269,32 +277,11 @@ in
     recommendedProxySettings = true;
     recommendedTlsSettings = true;
     virtualHosts = {
-      "au.ihar.dev" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/" = {
-          # Use fixed VM IP to avoid boot-time DNS dependency.
-          proxyPass = "http://192.168.20.2:9292";
-          proxyWebsockets = true;
-        };
-      };
-      "jf.ihar.dev" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:8096";
-          proxyWebsockets = true;
-        };
-      };
-      "js.ihar.dev" = {
-        forceSSL = true;
-        enableACME = true;
-        locations."/" = {
-          # Use fixed VM IP to avoid boot-time DNS dependency.
-          proxyPass = "http://192.168.20.2:5055";
-          proxyWebsockets = true;
-        };
-      };
+      # Use fixed VM IPs to avoid boot-time DNS dependency.
+      "au.ihar.dev" = mkPublicProxyVhost "http://192.168.20.2:9292";
+      "jf.ihar.dev" = mkPublicProxyVhost "http://127.0.0.1:8096";
+      "js.ihar.dev" = mkPublicProxyVhost "http://192.168.20.2:5055";
+      "vi.ihar.dev" = mkPublicProxyVhost "http://192.168.20.4:3456";
     };
   };
 

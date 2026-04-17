@@ -22,8 +22,8 @@ in
   services.vikunja = {
     enable = true;
     environmentFiles = [ config.sops.templates."vikunja-mailer.env".path ];
-    frontendScheme = "http";
-    frontendHostname = "${config.services.avahi.hostName}.local:${toString vikunjaPort}";
+    frontendScheme = "https";
+    frontendHostname = "vi.ihar.dev";
     port = vikunjaPort;
     settings = {
       defaultsettings = {
