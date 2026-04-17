@@ -67,6 +67,7 @@ let
   };
   mkBackupUser = name: "restic-${name}";
   mkBackupRepo = name: "${backupRoot}/hosts/${name}";
+  mkOffloadUser = name: if name == "beast" then cloudOffloadUser else mkBackupUser name;
   mkCloudSecret = name: path: "backup/restic/${name}/cloud/${path}";
   sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
   sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
@@ -234,6 +235,7 @@ in
       value = {
         isSystemUser = true;
         group = mkBackupUser name;
+        extraGroups = [ cloudOffloadUser ];
         createHome = false;
         home = backupRoot;
         shell = pkgs.bash;
@@ -301,8 +303,8 @@ in
         unitConfig.RequiresMountsFor = backupRoot;
         serviceConfig = {
           Type = "oneshot";
-          User = cloudOffloadUser;
-          Group = cloudOffloadUser;
+          User = mkOffloadUser name;
+          Group = mkOffloadUser name;
           StateDirectory = "restic-cloud";
           Environment = "RESTIC_CACHE_DIR=/var/lib/restic-cloud/cache";
           ExecStart = mkCloudOffloadScript name;
