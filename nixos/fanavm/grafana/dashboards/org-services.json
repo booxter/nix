@@ -146,7 +146,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max_over_time(vikunja_active_users{job=\"vikunja\"}[5m]) or vector(0)",
+          "expr": "max(max_over_time(vikunja_active_users{job=\"vikunja\"}[5m])) or vector(0)",
           "legendFormat": "active users (5m)",
           "range": false,
           "refId": "A"
