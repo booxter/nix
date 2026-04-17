@@ -50,7 +50,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
+        "w": 5,
         "x": 0,
         "y": 0
       },
@@ -114,8 +114,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 6,
+        "w": 5,
+        "x": 5,
         "y": 0
       },
       "id": 11,
@@ -178,8 +178,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 12,
+        "w": 5,
+        "x": 10,
         "y": 0
       },
       "id": 2,
@@ -242,8 +242,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 18,
+        "w": 4,
+        "x": 15,
         "y": 0
       },
       "id": 3,
@@ -579,43 +579,50 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 31
+        "h": 5,
+        "w": 5,
+        "x": 19,
+        "y": 0
       },
       "id": 9,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "host_observability_darwin_thermal_warning_level{job=\"node\",host_class=\"hardware\"}",
+          "instant": true,
           "legendFormat": "{{instance}} thermal",
-          "range": true,
+          "range": false,
           "refId": "A"
         },
         {
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "host_observability_darwin_performance_warning_level{job=\"node\",host_class=\"hardware\"}",
+          "instant": true,
           "legendFormat": "{{instance}} performance",
-          "range": true,
+          "range": false,
           "refId": "B"
         }
       ],
-      "title": "Darwin Thermal Warning Levels",
-      "type": "timeseries"
+      "title": "Darwin Thermal Warning Status",
+      "type": "stat"
     },
     {
       "datasource": "Prometheus",
@@ -651,8 +658,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 24,
+        "x": 0,
         "y": 31
       },
       "id": 10,
@@ -758,6 +765,6 @@
   "timezone": "",
   "title": "Thermals",
   "uid": "fana-hardware-thermals",
-  "version": 11,
+  "version": 13,
   "weekStart": ""
 }
