@@ -52,7 +52,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 5,
+        "w": 4,
         "x": 0,
         "y": 0
       },
@@ -91,19 +91,7 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "text": "Idle"
-                },
-                "1": {
-                  "text": "Recovering"
-                }
-              },
-              "type": "value"
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -123,13 +111,13 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 5,
-        "x": 5,
+        "w": 4,
+        "x": 4,
         "y": 0
       },
       "id": 2,
       "options": {
-        "colorMode": "background",
+        "colorMode": "none",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -141,21 +129,21 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "value",
+        "textMode": "name",
         "wideLayout": true
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}",
+          "expr": "host_observability_md_sync_action_info{instance=\"beast:9100\",device=\"md127\"}",
           "instant": true,
-          "legendFormat": "",
+          "legendFormat": "{{action_title}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "RAID Recovery State",
+      "title": "RAID Action",
       "type": "stat"
     },
     {
@@ -186,7 +174,7 @@
       "gridPos": {
         "h": 5,
         "w": 4,
-        "x": 10,
+        "x": 8,
         "y": 0
       },
       "id": 3,
@@ -210,14 +198,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "100 * scalar(node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"}) * node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"} / (node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2))",
+          "expr": "host_observability_md_sync_progress_percent{instance=\"beast:9100\",device=\"md127\"}",
           "instant": true,
           "legendFormat": "",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "RAID Sync Progress",
+      "title": "RAID Reshape Progress",
       "type": "stat"
     },
     {
@@ -241,8 +229,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 5,
-        "x": 14,
+        "w": 4,
+        "x": 12,
         "y": 0
       },
       "id": 11,
@@ -266,7 +254,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(((node_md_blocks{instance=\"beast:9100\",device=\"md127\"} / (node_md_raid_disks{instance=\"beast:9100\",device=\"md127\"} - 2)) - node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}) / deriv(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m])) / 3600 and on(instance,device) (node_md_state{instance=\"beast:9100\",device=\"md127\",state=\"recovering\"} == 1) and on(instance,device) (deriv(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m]) > 0) and on(instance,device) (resets(node_md_blocks_synced{instance=\"beast:9100\",device=\"md127\"}[15m]) == 0)",
+          "expr": "host_observability_md_sync_eta_seconds{instance=\"beast:9100\",device=\"md127\"} / 3600",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -274,6 +262,62 @@
         }
       ],
       "title": "RAID ETA (hours)",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_md_sync_speed_bytes_per_second{instance=\"beast:9100\",device=\"md127\"}",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "RAID Speed",
       "type": "stat"
     },
     {
@@ -307,8 +351,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 5,
-        "x": 19,
+        "w": 4,
+        "x": 20,
         "y": 0
       },
       "id": 4,
@@ -3396,6 +3440,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 19,
+  "version": 20,
   "weekStart": ""
 }
