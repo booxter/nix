@@ -9,6 +9,7 @@ keys:
   - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
   - age1mgqfwy4r3vr60hv0lm2uz0dqy7jhuh944lzlq6n0s4us4p7t893ssakp9h
   - age1vk0tas94m0gmfnvln3j6pcf9seasl9wuwafkjka7h8u0q84tuaqsh2dmxs
+  - age1vu6052uexls0ful4jlq3ex5ngv8k5kk4hhp6ucpe9hf3l59asq7sah9vsk
   - age1zha8umledk8vcsqpvkkfsm65wyk7q8gk4y245nzrytyj7hlkffpsact628
 creation_rules:
   - path_regex: secrets/mair\.yaml$
@@ -60,4 +61,9 @@ creation_rules:
     key_groups:
       - age:
           - age15l7h4scc9fgprgpfnlfa00s6jz6hecqmuhud3qv38lsjvq8p43lqaqq6n7
+          - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
+  - path_regex: secrets/prox-orgvm\.yaml$
+    key_groups:
+      - age:
+          - age1vu6052uexls0ful4jlq3ex5ngv8k5kk4hhp6ucpe9hf3l59asq7sah9vsk
           - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv

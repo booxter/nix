@@ -1,0 +1,293 @@
+diff --git a/pkg/cmd/user.go b/pkg/cmd/user.go
+index abd7c8c27..d0f569610 100644
+--- a/pkg/cmd/user.go
++++ b/pkg/cmd/user.go
+@@ -25,6 +25,7 @@ import (
+ 	"time"
+ 
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/initialize"
+ 	"code.vikunja.io/api/pkg/log"
+ 	"code.vikunja.io/api/pkg/models"
+@@ -227,6 +228,8 @@ var userCreateCmd = &cobra.Command{
+ 			log.Fatalf("Error saving everything: %s", err)
+ 		}
+ 
++		events.DispatchPending(s)
++
+ 		fmt.Printf("\nUser was created successfully.\n")
+ 	},
+ }
+diff --git a/pkg/metrics/metrics.go b/pkg/metrics/metrics.go
+index 00dce43eb..1d38252f7 100644
+--- a/pkg/metrics/metrics.go
++++ b/pkg/metrics/metrics.go
+@@ -66,7 +66,7 @@ func InitMetrics() {
+ 	GetRegistry()
+ 
+ 	registerPromMetric(ProjectCountKey, "The number of projects on this instance")
+-	registerPromMetric(UserCountKey, "The total number of shares on this instance")
++	registerPromMetric(UserCountKey, "The total number of users on this instance")
+ 	registerPromMetric(TaskCountKey, "The total number of tasks on this instance")
+ 	registerPromMetric(TeamCountKey, "The total number of teams on this instance")
+ 	registerPromMetric(FilesCountKey, "The total number of files on this instance")
+diff --git a/pkg/modules/auth/openid/openid.go b/pkg/modules/auth/openid/openid.go
+index 381570f42..e22f6fc9f 100644
+--- a/pkg/modules/auth/openid/openid.go
++++ b/pkg/modules/auth/openid/openid.go
+@@ -27,6 +27,7 @@ import (
+ 	"strings"
+ 
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/log"
+ 	"code.vikunja.io/api/pkg/models"
+ 	"code.vikunja.io/api/pkg/modules/auth"
+@@ -212,6 +213,8 @@ func HandleCallback(c *echo.Context) error {
+ 	if err := enforceTOTPIfRequired(s, u, cb.TOTPPasscode); err != nil {
+ 		if commitErr := s.Commit(); commitErr != nil {
+ 			log.Errorf("Error committing session after failed OIDC TOTP attempt for user %d: %v", u.ID, commitErr)
++		} else {
++			events.DispatchPending(s)
+ 		}
+ 		if user.IsErrInvalidTOTPPasscode(err) {
+ 			user.HandleFailedTOTPAuth(u)
+@@ -233,6 +236,8 @@ func HandleCallback(c *echo.Context) error {
+ 		return err
+ 	}
+ 
++	events.DispatchPending(s)
++
+ 	// Create token
+ 	return auth.NewUserAuthTokenResponse(u, c, false)
+ }
+diff --git a/pkg/routes/api/v1/login.go b/pkg/routes/api/v1/login.go
+index e13074bb2..b08e6593b 100644
+--- a/pkg/routes/api/v1/login.go
++++ b/pkg/routes/api/v1/login.go
+@@ -21,6 +21,7 @@ import (
+ 
+ 	"code.vikunja.io/api/pkg/config"
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/models"
+ 	"code.vikunja.io/api/pkg/modules/auth"
+ 	"code.vikunja.io/api/pkg/modules/auth/ldap"
+@@ -116,6 +117,8 @@ func Login(c *echo.Context) (err error) {
+ 		return err
+ 	}
+ 
++	events.DispatchPending(s)
++
+ 	// Create token
+ 	return auth.NewUserAuthTokenResponse(user, c, u.LongToken)
+ }
+diff --git a/pkg/routes/api/v1/user_register.go b/pkg/routes/api/v1/user_register.go
+index f358811cf..05f9ae8bd 100644
+--- a/pkg/routes/api/v1/user_register.go
++++ b/pkg/routes/api/v1/user_register.go
+@@ -22,6 +22,7 @@ import (
+ 
+ 	"code.vikunja.io/api/pkg/config"
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/models"
+ 	"code.vikunja.io/api/pkg/user"
+ 
+@@ -93,5 +94,7 @@ func RegisterUser(c *echo.Context) error {
+ 		return err
+ 	}
+ 
++	events.DispatchPending(s)
++
+ 	return c.JSON(http.StatusOK, newUser)
+ }
+diff --git a/pkg/user/user_test.go b/pkg/user/user_test.go
+index 842de3ffc..5af27742a 100644
+--- a/pkg/user/user_test.go
++++ b/pkg/user/user_test.go
+@@ -19,6 +19,7 @@ import (
+ 	"testing"
+ 
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 
+ 	"github.com/stretchr/testify/assert"
+ 	"github.com/stretchr/testify/require"
+@@ -35,9 +36,18 @@ func TestCreateUser(t *testing.T) {
+ 		db.LoadAndAssertFixtures(t)
+ 		s := db.NewSession()
+ 		defer s.Close()
++		events.ClearDispatchedEvents()
+ 
+ 		createdUser, err := CreateUser(s, dummyuser)
+ 		require.NoError(t, err)
+ 		assert.NotZero(t, createdUser.Created)
++		assert.Equal(t, 0, events.CountDispatchedEvents("user.created"))
++
++		err = s.Commit()
++		require.NoError(t, err)
++		assert.Equal(t, 0, events.CountDispatchedEvents("user.created"))
++
++		events.DispatchPending(s)
++		assert.Equal(t, 1, events.CountDispatchedEvents("user.created"))
+ 	})
+ 	t.Run("already existing", func(t *testing.T) {
+ 		db.LoadAndAssertFixtures(t)
+diff --git a/pkg/webtests/register_test.go b/pkg/webtests/register_test.go
+index 99c677254..8db4372df 100644
+--- a/pkg/webtests/register_test.go
++++ b/pkg/webtests/register_test.go
+@@ -19,6 +19,7 @@ import (
+ 	"net/http"
+ 	"testing"
+ 
++	"code.vikunja.io/api/pkg/events"
+ 	apiv1 "code.vikunja.io/api/pkg/routes/api/v1"
+ 	"code.vikunja.io/api/pkg/user"
+ 
+@@ -29,12 +30,14 @@ import (
+ 
+ func TestRegister(t *testing.T) {
+ 	t.Run("normal register", func(t *testing.T) {
++		events.ClearDispatchedEvents()
+ 		rec, err := newTestRequest(t, http.MethodPost, apiv1.RegisterUser, `{
+   "username": "newUser",
+   "password": "12345678",
+   "email": "email@example.com"
+ }`, nil, nil)
+ 		require.NoError(t, err)
+ 		assert.Contains(t, rec.Body.String(), `"username":"newUser"`)
++		assert.Equal(t, 1, events.CountDispatchedEvents("user.created"))
+ 	})
+ 	t.Run("Empty payload", func(t *testing.T) {
+ 		_, err := newTestRequest(t, http.MethodPost, apiv1.RegisterUser, `{}`, nil, nil)
+diff --git a/pkg/cmd/user.go b/pkg/cmd/user.go
+index d0f569610..5400c068d 100644
+--- a/pkg/cmd/user.go
++++ b/pkg/cmd/user.go
+@@ -396,6 +396,8 @@ var userDeleteCmd = &cobra.Command{
+ 			log.Fatalf("Error saving everything: %s", err)
+ 		}
+ 
++		events.DispatchPending(s)
++
+ 		if userFlagDeleteNow {
+ 			fmt.Println("User deleted successfully.")
+ 		} else {
+diff --git a/pkg/models/user_delete.go b/pkg/models/user_delete.go
+index 8cdba1e0d..2917e5316 100644
+--- a/pkg/models/user_delete.go
++++ b/pkg/models/user_delete.go
+@@ -21,6 +21,7 @@ import (
+ 
+ 	"code.vikunja.io/api/pkg/cron"
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/log"
+ 	"code.vikunja.io/api/pkg/notifications"
+ 	"code.vikunja.io/api/pkg/user"
+@@ -82,6 +83,8 @@ func deleteUsers() {
+ 			if err != nil {
+ 				log.Errorf("Could not commit transaction: %s", err)
+ 			}
++
++			events.DispatchPending(us)
+ 		}()
+ 	}
+ }
+@@ -177,6 +180,11 @@ func DeleteUser(s *xorm.Session, u *user.User) (err error) {
+ 	}
+ 
+ 	_, err = s.Where("id = ?", u.ID).Delete(&user.User{})
++	if err != nil {
++		return err
++	}
++
++	events.DispatchOnCommit(s, &user.DeletedEvent{User: u})
+ 	return err
+ }
+ 
+diff --git a/pkg/models/user_delete_test.go b/pkg/models/user_delete_test.go
+index d705616b3..c021646cf 100644
+--- a/pkg/models/user_delete_test.go
++++ b/pkg/models/user_delete_test.go
+@@ -20,6 +20,7 @@ import (
+ 	"testing"
+ 
+ 	"code.vikunja.io/api/pkg/db"
++	"code.vikunja.io/api/pkg/events"
+ 	"code.vikunja.io/api/pkg/notifications"
+ 	"code.vikunja.io/api/pkg/user"
+ 
+@@ -121,4 +122,21 @@ func TestDeleteUser(t *testing.T) {
+ 		db.AssertMissing(t, "subscriptions", map[string]interface{}{"user_id": 4})
+ 		db.AssertMissing(t, "team_members", map[string]interface{}{"user_id": 4})
+ 	})
++	t.Run("dispatches user deleted event after commit", func(t *testing.T) {
++		db.LoadAndAssertFixtures(t)
++		s := db.NewSession()
++		defer s.Close()
++		notifications.Fake()
++		events.ClearDispatchedEvents()
++
++		err := DeleteUser(s, &user.User{ID: 4})
++		require.NoError(t, err)
++		require.Equal(t, 0, events.CountDispatchedEvents("user.deleted"))
++
++		require.NoError(t, s.Commit())
++		require.Equal(t, 0, events.CountDispatchedEvents("user.deleted"))
++
++		events.DispatchPending(s)
++		require.Equal(t, 1, events.CountDispatchedEvents("user.deleted"))
++	})
+ }
+diff --git a/pkg/user/events.go b/pkg/user/events.go
+index ff7866149..7e13cf66f 100644
+--- a/pkg/user/events.go
++++ b/pkg/user/events.go
+@@ -25,3 +25,13 @@ type CreatedEvent struct {
+ func (t *CreatedEvent) Name() string {
+ 	return "user.created"
+ }
++
++// DeletedEvent represents a DeletedEvent event
++type DeletedEvent struct {
++	User *User
++}
++
++// Name defines the name for DeletedEvent
++func (t *DeletedEvent) Name() string {
++	return "user.deleted"
++}
+diff --git a/pkg/user/listeners.go b/pkg/user/listeners.go
+index 7fdbe61a3..756b83103 100644
+--- a/pkg/user/listeners.go
++++ b/pkg/user/listeners.go
+@@ -25,6 +25,7 @@ import (
+ 
+ func RegisterListeners() {
+ 	events.RegisterListener((&CreatedEvent{}).Name(), &IncreaseUserCounter{})
++	events.RegisterListener((&DeletedEvent{}).Name(), &DecreaseUserCounter{})
+ }
+ 
+ ///////
+@@ -43,3 +44,17 @@ func (s *IncreaseUserCounter) Name() string {
+ func (s *IncreaseUserCounter) Handle(_ *message.Message) (err error) {
+ 	return keyvalue.IncrBy(metrics.UserCountKey, 1)
+ }
++
++// DecreaseUserCounter represents a listener
++type DecreaseUserCounter struct {
++}
++
++// Name defines the name for the DecreaseUserCounter listener
++func (s *DecreaseUserCounter) Name() string {
++	return "decrease.user.counter"
++}
++
++// Handle is executed when the event DecreaseUserCounter listens on is fired
++func (s *DecreaseUserCounter) Handle(_ *message.Message) (err error) {
++	return keyvalue.DecrBy(metrics.UserCountKey, 1)
++}

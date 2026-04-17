@@ -12,10 +12,6 @@
     # Keep Transmission pinned independently from the moving release-25.11 branch.
     # TODO: remove this input when trackers allow 4.1.0+.
     nixpkgs-transmission.url = "github:NixOS/nixpkgs/12d60a4f2d5f2cc96e93ae5615328245d49ac2e8";
-    # Temporary diff-so-fancy 1.4.10 backport until it lands in nixpkgs-unstable.
-    # TODO: remove this input once nixpkgs includes diff-so-fancy 1.4.10+.
-    nixpkgs-diff-so-fancy.url = "github:booxter/nixpkgs/e523d5636f2edfa5688d5fa05b3adc64ef6d9a89";
-
     # Use staging-next if needed
     #nixpkgs-staging-next.url = "github:NixOS/nixpkgs/staging-next";
     #nixpkgs = nixpkgs-staging-next;

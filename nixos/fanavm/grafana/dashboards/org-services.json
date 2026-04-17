@@ -154,13 +154,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "1000 * histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"vikunja\"}[5m])))",
+          "expr": "1000 * histogram_quantile(0.95, sum by (le) (rate(handler_execution_time_seconds_bucket{job=\"vikunja\"}[5m])))",
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "HTTP p95",
+      "title": "Handler p95",
       "type": "stat"
     },
     {
