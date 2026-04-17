@@ -484,8 +484,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_fan_rpm{job=\"node\",host_class=\"hardware\"})",
-          "legendFormat": "{{instance}}",
+          "expr": "label_replace(node_hwmon_fan_rpm{job=\"node\",host_class=\"hardware\"}, \"fan\", \"$1\", \"sensor\", \"(.*)\") or label_replace(ipmi_fan_speed_rpm{job=\"ipmi\",host_class=\"hardware\"}, \"fan\", \"$1\", \"name\", \"(.*)\")",
+          "legendFormat": "{{instance}} {{fan}}",
           "range": true,
           "refId": "A"
         }

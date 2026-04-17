@@ -372,6 +372,18 @@ in
     ];
   };
 
+  services.prometheus.exporters.ipmi = {
+    enable = true;
+    listenAddress = "0.0.0.0";
+    openFirewall = false;
+    configFile = (pkgs.formats.yaml { }).generate "ipmi-local.yml" {
+      modules.default.collectors = [
+        "ipmi"
+        "chassis"
+      ];
+    };
+  };
+
   services.prometheus.exporters.node = {
     enabledCollectors = lib.mkForce [
       "processes"
@@ -389,6 +401,14 @@ in
       Type = "oneshot";
       ExecStart = diskBayExporter;
     };
+  };
+
+  # Host-local IPMI metrics need direct access to the BMC device interface.
+  systemd.services.prometheus-ipmi-exporter.serviceConfig = {
+    DynamicUser = lib.mkForce false;
+    User = lib.mkForce "root";
+    Group = lib.mkForce "root";
+    PrivateDevices = lib.mkForce false;
   };
 
   systemd.tmpfiles.rules = [

@@ -743,6 +743,21 @@ in
         ];
       }
       {
+        job_name = "ipmi";
+        static_configs = [
+          {
+            targets = [
+              "${outputs.nixosConfigurations.beast.config.host.dnsName}:9290"
+            ];
+            labels = {
+              host_class = "hardware";
+              host_virtual = "false";
+              instance = "${outputs.nixosConfigurations.beast.config.host.dnsName}:9100";
+            };
+          }
+        ];
+      }
+      {
         job_name = "vikunja";
         metrics_path = "/api/v1/metrics";
         static_configs = [
