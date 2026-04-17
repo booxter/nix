@@ -20,12 +20,7 @@ let
     "prx2-lab"
     "prx3-lab"
   ];
-  upsCriticalHosts = [
-    # UPS servers are always critical in their own configs.
-    "beast"
-  ];
   upsClientsPi5 = [
-    "beast"
     "nvws"
   ];
   usesPRX1Ups = (isProxmoxVmHost && !isWork) || lib.elem hostname upsClientsPRX1;
@@ -46,7 +41,6 @@ in
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
-        isCriticalNode = lib.elem hostname upsCriticalHosts;
         monitorName = "nas";
         system = "PRX1-UPS@prx1-lab";
         user = "upsslave";

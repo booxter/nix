@@ -48,9 +48,7 @@ curl -I https://js.ihar.dev
 - `/volume2` is a Btrfs filesystem mounted with `compress=zstd`, `noatime`, and
   `nofail`.
 - A `.snapshots` subvolume is ensured on boot for Snapper.
-
-Disk-to-Bay layout with identifying info can be found on Google Drive under
-`hdd-NAS` directory.
+- Disk-to-bay mapping is maintained in `nixos/beast/default.nix`.
 
 ## NFS
 

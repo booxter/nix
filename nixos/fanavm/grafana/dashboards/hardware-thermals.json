@@ -50,7 +50,7 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
+        "w": 5,
         "x": 0,
         "y": 0
       },
@@ -114,8 +114,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 6,
+        "w": 5,
+        "x": 5,
         "y": 0
       },
       "id": 11,
@@ -178,8 +178,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 12,
+        "w": 5,
+        "x": 10,
         "y": 0
       },
       "id": 2,
@@ -242,8 +242,8 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 6,
-        "x": 18,
+        "w": 4,
+        "x": 15,
         "y": 0
       },
       "id": 3,
@@ -317,13 +317,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time((max by(instance) (node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"}))[2m:30s])",
+          "expr": "avg_over_time((max by(instance) (node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"}))[5m:30s])",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "CPU / Package Temperature",
+      "title": "Linux CPU / Package Temperature",
       "type": "timeseries"
     },
     {
@@ -374,7 +374,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"} or host_observability_darwin_temperature_max_celsius{job=\"node\",host_class=\"hardware\"})",
+          "expr": "avg_over_time((max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"} or host_observability_darwin_temperature_max_celsius{job=\"node\",host_class=\"hardware\"}))[5m:30s])",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -484,8 +484,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_fan_rpm{job=\"node\",host_class=\"hardware\"})",
-          "legendFormat": "{{instance}}",
+          "expr": "label_replace(node_hwmon_fan_rpm{job=\"node\",host_class=\"hardware\"}, \"fan\", \"$1\", \"sensor\", \"(.*)\") or label_replace(ipmi_fan_speed_rpm{job=\"ipmi\",host_class=\"hardware\"}, \"fan\", \"$1\", \"name\", \"(.*)\")",
+          "legendFormat": "{{instance}} {{fan}}",
           "range": true,
           "refId": "A"
         }
@@ -520,8 +520,8 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
-        "w": 24,
+        "h": 8,
+        "w": 12,
         "x": 0,
         "y": 21
       },
@@ -579,49 +579,57 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 31
+        "h": 5,
+        "w": 5,
+        "x": 19,
+        "y": 0
       },
       "id": 9,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "host_observability_darwin_thermal_warning_level{job=\"node\",host_class=\"hardware\"}",
+          "instant": true,
           "legendFormat": "{{instance}} thermal",
-          "range": true,
+          "range": false,
           "refId": "A"
         },
         {
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "host_observability_darwin_performance_warning_level{job=\"node\",host_class=\"hardware\"}",
+          "instant": true,
           "legendFormat": "{{instance}} performance",
-          "range": true,
+          "range": false,
           "refId": "B"
         }
       ],
-      "title": "Darwin Thermal Warning Levels",
-      "type": "timeseries"
+      "title": "Darwin Thermal Warning Status",
+      "type": "stat"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
           "custom": {
+            "fillOpacity": 16,
             "stacking": {
               "group": "A",
               "mode": "normal"
@@ -653,7 +661,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 31
+        "y": 21
       },
       "id": 10,
       "options": {
@@ -671,13 +679,70 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_darwin_power_watts{job=\"node\",host_class=\"hardware\"}",
+          "expr": "avg_over_time(host_observability_darwin_power_watts{job=\"node\",host_class=\"hardware\"}[20m])",
           "legendFormat": "{{instance}} {{domain}}",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "Darwin Power",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 45
+              },
+              {
+                "color": "red",
+                "value": 60
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 29
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "ipmi_temperature_celsius{job=\"ipmi\",host_class=\"hardware\",name=~\"MB Temperature|VRM Temperature|CPU Temperature|CPU Package Temp\"}",
+          "legendFormat": "{{instance}} BMC / {{name}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "BMC / IPMI Board Temperature",
       "type": "timeseries"
     }
   ],
@@ -701,6 +766,6 @@
   "timezone": "",
   "title": "Thermals",
   "uid": "fana-hardware-thermals",
-  "version": 7,
+  "version": 18,
   "weekStart": ""
 }

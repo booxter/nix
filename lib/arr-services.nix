@@ -47,6 +47,7 @@ in
   (mkExternal "audiobookshelf" "Audiobookshelf" "https://au.ihar.dev" "sh:audiobookshelf"
     "https://au.ihar.dev"
   )
+  (mkExternal "vikunja" "Vikunja" "https://vi.ihar.dev" "sh:vikunja" "https://vi.ihar.dev")
   (mkInternal "readarr" "Readarr" srvarrPorts.readarr "sh:readarr" "/login")
   (mkInternal "readarr-audio" "Readarr Audio" srvarrPorts.readarrAudio "sh:readarr" "/login")
   (mkInternal "bazarr" "Bazarr" srvarrPorts.bazarr "sh:bazarr" "/")

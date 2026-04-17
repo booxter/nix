@@ -605,6 +605,34 @@ in
         ];
       }
       {
+        job_name = "nut-beast";
+        metrics_path = "/ups_metrics";
+        params = {
+          # Use the stable LAN DNS hostname rather than .local/mDNS.
+          server = [ "beast" ];
+          ups = [ "BEAST-UPS" ];
+        };
+        static_configs = [
+          {
+            targets = [ "127.0.0.1:${toString nutExporterPort}" ];
+          }
+        ];
+        relabel_configs = [
+          {
+            source_labels = [ "__param_server" ];
+            target_label = "instance";
+          }
+          {
+            source_labels = [ "__param_server" ];
+            target_label = "ups_server";
+          }
+          {
+            source_labels = [ "__param_ups" ];
+            target_label = "ups";
+          }
+        ];
+      }
+      {
         job_name = "nut-frame";
         metrics_path = "/ups_metrics";
         params = {
@@ -711,6 +739,21 @@ in
               "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString smartctlExporterPort}"
             ];
             labels.instance = outputs.nixosConfigurations.beast.config.host.dnsName;
+          }
+        ];
+      }
+      {
+        job_name = "ipmi";
+        static_configs = [
+          {
+            targets = [
+              "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString outputs.nixosConfigurations.beast.config.services.prometheus.exporters.ipmi.port}"
+            ];
+            labels = {
+              host_class = "hardware";
+              host_virtual = "false";
+              instance = "${outputs.nixosConfigurations.beast.config.host.dnsName}:9100";
+            };
           }
         ];
       }
