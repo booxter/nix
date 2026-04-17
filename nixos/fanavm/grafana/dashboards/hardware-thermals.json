@@ -629,6 +629,7 @@
       "fieldConfig": {
         "defaults": {
           "custom": {
+            "fillOpacity": 16,
             "stacking": {
               "group": "A",
               "mode": "normal"
@@ -765,6 +766,6 @@
   "timezone": "",
   "title": "Thermals",
   "uid": "fana-hardware-thermals",
-  "version": 16,
+  "version": 17,
   "weekStart": ""
 }
