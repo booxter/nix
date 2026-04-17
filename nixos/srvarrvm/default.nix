@@ -376,25 +376,13 @@ in
                   type = "monitor";
                   cache = "1m";
                   title = "Services";
-                  sites =
-                    map
-                      (service: {
-                        inherit (service)
-                          icon
-                          title
-                          url
-                          ;
-                      })
-                      (
-                        arrServices
-                        ++ [
-                          {
-                            icon = "sh:vikunja";
-                            title = "Vikunja";
-                            url = "https://vi.ihar.dev";
-                          }
-                        ]
-                      );
+                  sites = map (service: {
+                    inherit (service)
+                      icon
+                      title
+                      url
+                      ;
+                  }) arrServices;
                 }
               ];
             }
