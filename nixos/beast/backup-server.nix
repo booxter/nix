@@ -73,6 +73,7 @@ let
   # offload secrets on the server, so non-local repos get a dedicated local-only
   # offload user plus explicit ACLs on the repository path.
   mkOffloadUser = name: if name == "beast" then cloudOffloadUser else "restic-${name}-offload";
+  mkCloudStateDir = name: "restic-cloud-${name}";
   mkCloudSecret = name: path: "backup/restic/${name}/cloud/${path}";
   mkCloudEnvTemplate = name: "restic-${name}-cloud-offload.env";
   sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
@@ -363,18 +364,18 @@ in
             "sops-install-secrets.service"
           ]
           ++ repoAclDeps;
-          requires = [ "restic-cloud-traffic-shaping.service" ];
-          unitConfig.RequiresMountsFor = backupRoot;
-          serviceConfig = {
-            Type = "oneshot";
-            User = mkOffloadUser name;
-            Group = mkOffloadUser name;
-            StateDirectory = "restic-cloud";
-            Environment = "RESTIC_CACHE_DIR=/var/lib/restic-cloud/cache";
-            EnvironmentFile = config.sops.templates.${mkCloudEnvTemplate name}.path;
-            ExecStart = mkCloudOffloadScript name;
-          };
-        };
+              requires = [ "restic-cloud-traffic-shaping.service" ];
+              unitConfig.RequiresMountsFor = backupRoot;
+              serviceConfig = {
+                Type = "oneshot";
+                User = mkOffloadUser name;
+                Group = mkOffloadUser name;
+                StateDirectory = mkCloudStateDir name;
+                Environment = "RESTIC_CACHE_DIR=/var/lib/${mkCloudStateDir name}/cache";
+                EnvironmentFile = config.sops.templates.${mkCloudEnvTemplate name}.path;
+                ExecStart = mkCloudOffloadScript name;
+              };
+            };
       }
     ) (builtins.attrNames backupClients))
   );
