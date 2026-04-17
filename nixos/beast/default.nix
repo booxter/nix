@@ -375,7 +375,7 @@ in
   services.prometheus.exporters.ipmi = {
     enable = true;
     listenAddress = "0.0.0.0";
-    openFirewall = false;
+    openFirewall = true;
     configFile = (pkgs.formats.yaml { }).generate "ipmi-local.yml" {
       modules.default.collectors = [
         "ipmi"
