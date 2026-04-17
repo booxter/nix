@@ -384,6 +384,20 @@ in
     };
   };
 
+  users.users.ipmi-exporter = {
+    description = "Prometheus ipmi exporter service user";
+    isSystemUser = true;
+    group = "ipmi-exporter";
+    extraGroups = [ "ipmi-exporter-access" ];
+  };
+
+  users.groups.ipmi-exporter = { };
+  users.groups.ipmi-exporter-access = { };
+
+  services.udev.extraRules = ''
+    KERNEL=="ipmi[0-9]*", SUBSYSTEM=="ipmi", GROUP="ipmi-exporter-access", MODE="0660"
+  '';
+
   services.prometheus.exporters.node = {
     enabledCollectors = lib.mkForce [
       "processes"
@@ -403,12 +417,13 @@ in
     };
   };
 
-  # Host-local IPMI metrics need direct access to the BMC device interface.
   systemd.services.prometheus-ipmi-exporter.serviceConfig = {
     DynamicUser = lib.mkForce false;
-    User = lib.mkForce "root";
-    Group = lib.mkForce "root";
-    PrivateDevices = lib.mkForce false;
+    User = lib.mkForce "ipmi-exporter";
+    Group = lib.mkForce "ipmi-exporter";
+    SupplementaryGroups = [ "ipmi-exporter-access" ];
+    BindPaths = [ "/dev/ipmi0" ];
+    DeviceAllow = [ "/dev/ipmi0 rw" ];
   };
 
   systemd.tmpfiles.rules = [
