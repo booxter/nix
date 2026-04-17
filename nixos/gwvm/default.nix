@@ -6,12 +6,11 @@ let
   lanInterface = "ens18";
 
   vpnPeers = [
-    # Add peers here after generating each client's public key, for example:
-    # {
-    #   name = "iphone";
-    #   publicKey = "BASE64_PUBLIC_KEY";
-    #   address = "10.83.0.10";
-    # }
+    {
+      name = "mair";
+      publicKey = "j3TbXthVhDk2TVAag6Cr0MRLiCTaOPfBL8UeecG9Sx4=";
+      address = "10.83.0.10";
+    }
   ];
 
   mkPeer = peer: {
