@@ -323,7 +323,7 @@
           "refId": "A"
         }
       ],
-      "title": "CPU / Package Temperature",
+      "title": "Linux CPU / Package Temperature",
       "type": "timeseries"
     },
     {
@@ -729,12 +729,12 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "ipmi_temperature_celsius{job=\"ipmi\",host_class=\"hardware\",name=~\"MB Temperature|VRM Temperature|CPU Temperature|CPU Package Temp\"}",
-          "legendFormat": "{{instance}} {{name}}",
+          "legendFormat": "{{instance}} BMC / {{name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "IPMI Board Temperature",
+      "title": "BMC / IPMI Board Temperature",
       "type": "timeseries"
     }
   ],
@@ -758,6 +758,6 @@
   "timezone": "",
   "title": "Thermals",
   "uid": "fana-hardware-thermals",
-  "version": 8,
+  "version": 9,
   "weekStart": ""
 }

@@ -3250,12 +3250,12 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "ipmi_temperature_celsius{job=\"ipmi\",instance=\"beast:9100\",name=~\"MB Temperature|VRM Temperature|CPU Temperature|CPU Package Temp\"}",
-          "legendFormat": "{{name}}",
+          "legendFormat": "BMC / {{name}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Board Temperature (IPMI)",
+      "title": "BMC / Board Temperature (IPMI)",
       "type": "timeseries"
     },
     {
@@ -3310,6 +3310,71 @@
       ],
       "title": "Fan RPM (IPMI)",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      },
+      "id": 47,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "node_hwmon_temp_celsius{job=\"node\",instance=\"beast:9100\",chip=\"platform_coretemp_0\",sensor=\"temp1\"}",
+          "legendFormat": "Linux coretemp / Package id 0",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "ipmi_temperature_celsius{job=\"ipmi\",instance=\"beast:9100\",name=\"CPU Package Temp\"}",
+          "legendFormat": "BMC / CPU Package Temp",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "CPU Package Sensor Comparison",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -3331,6 +3396,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 18,
+  "version": 19,
   "weekStart": ""
 }
