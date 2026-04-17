@@ -747,7 +747,7 @@ in
         static_configs = [
           {
             targets = [
-              "${outputs.nixosConfigurations.beast.config.host.dnsName}:9290"
+              "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString outputs.nixosConfigurations.beast.config.services.prometheus.exporters.ipmi.port}"
             ];
             labels = {
               host_class = "hardware";
