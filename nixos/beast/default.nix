@@ -140,6 +140,7 @@ in
     ./backup-server.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
+    ./ups.nix
   ];
 
   # Pin this host to the latest stable release channel (critical infra).
