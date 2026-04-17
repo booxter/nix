@@ -284,6 +284,8 @@ in
   # Auto-assembly should work; add explicit mdadm config only if needed.
   boot.swraid.enable = true;
   boot.swraid.mdadmConf = "PROGRAM ${pkgs.util-linux}/bin/logger -t mdadm-monitor";
+  # Keep md reshape/recovery background I/O gentle so media serving stays responsive.
+  boot.kernel.sysctl."dev.raid.speed_limit_max" = 20000;
 
   boot.supportedFilesystems = [ "btrfs" ];
 
