@@ -25,7 +25,8 @@ The build matrix is selected in this order:
    - Run only Linux build jobs.
 4. **Machine-specific PR** (all changed files match known machine prefixes):
    - Run only mapped jobs for those machines.
-   - Includes host secrets files under `secrets/<host>.yaml` for mapped hosts.
+   - Includes host secrets files under `secrets/<host>.yaml` and
+     `secrets/_templates/<host>.yaml` for mapped hosts.
 5. **Fallback**:
    - Run full build matrix.
 

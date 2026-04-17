@@ -49,9 +49,31 @@ let
         };
       };
     };
+    orgvm = {
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF0906WU3WLoVgNE8B0HRyV0gDGQihj0LHPMZ2pTiV/B ihrachyshka@mair";
+      cloud = {
+        repository = "b2:ihar-restic-prod:hosts/orgvm";
+        pruneOpts = [
+          "--keep-daily=14"
+          "--keep-weekly=8"
+          "--keep-monthly=12"
+        ];
+        timerConfig = {
+          OnCalendar = "05:30";
+          RandomizedDelaySec = "30m";
+        };
+      };
+    };
   };
   mkBackupUser = name: "restic-${name}";
   mkBackupRepo = name: "${backupRoot}/hosts/${name}";
+  # Keep SSH/SFTP ingest and cloud offload as separate identities. The ingest
+  # users are remote entry points, while offload users need access to cloud
+  # credentials. Reusing the same account would let an SSH-exposed user read
+  # offload secrets on the server, so non-local repos get a dedicated local-only
+  # offload user plus explicit ACLs on the repository path.
+  mkOffloadUser = name: if name == "beast" then cloudOffloadUser else "restic-${name}-offload";
+  mkCloudStateDir = name: "restic-cloud-${name}";
   mkCloudSecret = name: path: "backup/restic/${name}/cloud/${path}";
   sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
   sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
@@ -60,18 +82,21 @@ let
     name:
     let
       backupRepo = mkBackupRepo name;
-      cloudSecret = path: config.sops.secrets.${mkCloudSecret name path}.path;
       pruneArgs = lib.escapeShellArgs backupClients.${name}.cloud.pruneOpts;
+      srcPasswordFile = config.sops.secrets.${mkCloudSecret name "localPassword"}.path;
+      dstPasswordFile = config.sops.secrets.${mkCloudSecret name "password"}.path;
+      b2AccountIdFile = config.sops.secrets.${sharedB2ApplicationKeyIdSecret}.path;
+      b2AccountKeyFile = config.sops.secrets.${sharedB2ApplicationKeySecret}.path;
     in
     pkgs.writeShellScript "restic-${name}-cloud-offload" ''
       set -euo pipefail
 
       dst_repo="${backupClients.${name}.cloud.repository}"
       src_repo="${backupRepo}"
-      src_password_file="${cloudSecret "localPassword"}"
-      dst_password_file="${cloudSecret "password"}"
-      export B2_ACCOUNT_ID="$(<${config.sops.secrets.${sharedB2ApplicationKeyIdSecret}.path})"
-      export B2_ACCOUNT_KEY="$(<${config.sops.secrets.${sharedB2ApplicationKeySecret}.path})"
+      src_password_file="${srcPasswordFile}"
+      dst_password_file="${dstPasswordFile}"
+      export B2_ACCOUNT_ID="$(${pkgs.coreutils}/bin/cat ${b2AccountIdFile})"
+      export B2_ACCOUNT_KEY="$(${pkgs.coreutils}/bin/cat ${b2AccountKeyFile})"
 
       restic_dst() {
         ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" "$@"
@@ -121,16 +146,17 @@ let
       exit 1
     fi
 
-    uid="$(${pkgs.coreutils}/bin/id -u ${cloudOffloadUser})"
-
     case "''${1:-start}" in
       start)
         ${pkgs.nftables}/bin/nft delete table inet backup_cloud_shaping 2>/dev/null || true
         ${pkgs.nftables}/bin/nft add table inet backup_cloud_shaping
         ${pkgs.nftables}/bin/nft \
           "add chain inet backup_cloud_shaping output { type route hook output priority mangle; policy accept; }"
-        ${pkgs.nftables}/bin/nft \
-          add rule inet backup_cloud_shaping output meta skuid "$uid" meta mark set 0x1
+        ${lib.concatMapStringsSep "\n" (name: ''
+          uid="$(${pkgs.coreutils}/bin/id -u ${mkOffloadUser name})"
+          ${pkgs.nftables}/bin/nft \
+            add rule inet backup_cloud_shaping output meta skuid "$uid" meta mark set 0x1
+        '') (builtins.attrNames backupClients)}
 
         ${pkgs.iproute2}/bin/tc qdisc del dev "$iface" root 2>/dev/null || true
         ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" root handle 1: htb default 20 r2q 1000
@@ -173,15 +199,17 @@ in
           {
             name = mkCloudSecret name "localPassword";
             value = {
-              group = cloudOffloadUser;
-              mode = "0440";
+              owner = mkOffloadUser name;
+              group = mkOffloadUser name;
+              mode = "0400";
             };
           }
           {
             name = mkCloudSecret name "password";
             value = {
-              group = cloudOffloadUser;
-              mode = "0440";
+              owner = mkOffloadUser name;
+              group = mkOffloadUser name;
+              mode = "0400";
             };
           }
         ]) (builtins.attrNames backupClients)
@@ -197,7 +225,6 @@ in
           mode = "0440";
         };
       };
-
   };
 
   users.users = builtins.listToAttrs (
@@ -207,13 +234,23 @@ in
         value = {
           isSystemUser = true;
           group = cloudOffloadUser;
-          extraGroups = map mkBackupUser (builtins.attrNames sshBackupClients);
           createHome = false;
           home = backupRoot;
           shell = pkgs.bash;
         };
       }
     ]
+    ++ map (name: {
+      name = mkOffloadUser name;
+      value = {
+        isSystemUser = true;
+        group = mkOffloadUser name;
+        createHome = false;
+        home = backupRoot;
+        shell = pkgs.bash;
+        extraGroups = [ cloudOffloadUser ];
+      };
+    }) (builtins.attrNames sshBackupClients)
     ++ map (name: {
       name = mkBackupUser name;
       value = {
@@ -234,6 +271,10 @@ in
         value = { };
       }
     ]
+    ++ map (name: {
+      name = mkOffloadUser name;
+      value = { };
+    }) (builtins.attrNames sshBackupClients)
     ++ map (name: {
       name = mkBackupUser name;
       value = { };
@@ -267,33 +308,79 @@ in
   }
   // builtins.listToAttrs (
     (map (name: {
-      name = "restic-${name}-cloud-offload";
+      name = "restic-${name}-repo-acl";
       value = {
-        description = "Offload ${name} restic backup repository to the cloud";
-        restartIfChanged = false;
-        stopIfChanged = false;
-        wants = [
-          "network-online.target"
-          "restic-cloud-traffic-shaping.service"
-          "sops-install-secrets.service"
-        ];
-        after = [
-          "network-online.target"
-          "restic-cloud-traffic-shaping.service"
-          "sops-install-secrets.service"
-        ];
-        requires = [ "restic-cloud-traffic-shaping.service" ];
+        description = "Grant ${mkOffloadUser name} access to ${name} restic repository";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "local-fs.target" ];
         unitConfig.RequiresMountsFor = backupRoot;
         serviceConfig = {
           Type = "oneshot";
-          User = cloudOffloadUser;
-          Group = cloudOffloadUser;
-          StateDirectory = "restic-cloud";
-          Environment = "RESTIC_CACHE_DIR=/var/lib/restic-cloud/cache";
-          ExecStart = mkCloudOffloadScript name;
+          User = "root";
+          Group = "root";
+          ExecStart = pkgs.writeShellScript "restic-${name}-repo-acl" ''
+            set -euo pipefail
+
+            repo="${mkBackupRepo name}"
+            offload_user="${mkOffloadUser name}"
+            marker="$repo/.offload-acl-initialized"
+
+            if [ ! -d "$repo" ]; then
+              exit 0
+            fi
+
+            # New repo content inherits from directory default ACLs, so a full
+            # recursive ACL rewrite is only needed once for pre-existing data.
+            # Later boots just refresh the top-level/default ACLs cheaply.
+            ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwx" "$repo"
+            ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx" "$repo"
+
+            if [ ! -e "$marker" ]; then
+              ${pkgs.acl}/bin/setfacl -R -m "u:$offload_user:rwx" "$repo"
+              ${pkgs.findutils}/bin/find "$repo" -type d -exec \
+                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx" '{}' +
+              ${pkgs.coreutils}/bin/touch "$marker"
+            fi
+          '';
         };
       };
-    }) (builtins.attrNames backupClients))
+    }) (builtins.attrNames sshBackupClients))
+    ++ (map (
+      name:
+      let
+        repoAclDeps = lib.optional (builtins.hasAttr name sshBackupClients) "restic-${name}-repo-acl.service";
+      in
+      {
+        name = "restic-${name}-cloud-offload";
+        value = {
+          description = "Offload ${name} restic backup repository to the cloud";
+          restartIfChanged = false;
+          stopIfChanged = false;
+          wants = [
+            "network-online.target"
+            "restic-cloud-traffic-shaping.service"
+            "sops-install-secrets.service"
+          ]
+          ++ repoAclDeps;
+          after = [
+            "network-online.target"
+            "restic-cloud-traffic-shaping.service"
+            "sops-install-secrets.service"
+          ]
+          ++ repoAclDeps;
+          requires = [ "restic-cloud-traffic-shaping.service" ];
+          unitConfig.RequiresMountsFor = backupRoot;
+          serviceConfig = {
+            Type = "oneshot";
+            User = mkOffloadUser name;
+            Group = mkOffloadUser name;
+            StateDirectory = mkCloudStateDir name;
+            Environment = "RESTIC_CACHE_DIR=/var/lib/${mkCloudStateDir name}/cache";
+            ExecStart = mkCloudOffloadScript name;
+          };
+        };
+      }
+    ) (builtins.attrNames backupClients))
   );
 
   systemd.timers = builtins.listToAttrs (

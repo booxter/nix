@@ -111,18 +111,10 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "orange",
-                "value": 500
-              },
-              {
-                "color": "red",
-                "value": 2000
               }
             ]
           },
-          "unit": "ms"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -147,20 +139,20 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "auto",
+        "textMode": "value",
         "wideLayout": true
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "1000 * histogram_quantile(0.95, sum by (le) (rate(handler_execution_time_seconds_bucket{job=\"vikunja\"}[5m])))",
-          "legendFormat": "__auto",
+          "expr": "max(max_over_time(vikunja_active_users{job=\"vikunja\"}[5m])) or vector(0)",
+          "legendFormat": "active users (5m)",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Handler p95",
+      "title": "Active Users (5m)",
       "type": "stat"
     },
     {
@@ -293,55 +285,6 @@
               }
             ]
           },
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": false
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "sum(rate(http_request_duration_seconds_count{job=\"vikunja\"}[5m]))",
-          "legendFormat": "requests",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "HTTP Request Rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
           "unit": "bytes"
         },
         "overrides": []
@@ -349,7 +292,7 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
+        "x": 0,
         "y": 8
       },
       "id": 6,
@@ -494,6 +437,6 @@
   "timezone": "",
   "title": "Org Services",
   "uid": "fana-org-services",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

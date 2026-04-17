@@ -74,6 +74,23 @@ jobs:
         with:
           script: |
             const planner = require("./.github/scripts/plan-ci-matrix.js");
+            const hostJobMap = [
+              { host: "frame", jobs: [ "frame (x86_64-linux)" ] },
+              { host: "nvws", jobs: [ "nvws (x86_64-linux)" ] },
+              { host: "prx1-lab", jobs: [ "prx1-lab (x86_64-linux)" ] },
+              { host: "prx2-lab", jobs: [ "prx2-lab (x86_64-linux)" ] },
+              { host: "prx3-lab", jobs: [ "prx3-lab (x86_64-linux)" ] },
+              { host: "pi5", jobs: [ "pi5 dhcp (aarch64-linux)" ] },
+              { host: "beast", jobs: [ "beast (x86_64-linux)" ] },
+              { host: "prox-srvarrvm", jobs: [ "srvarr (x86_64-linux)" ] },
+              { host: "prox-fanavm", jobs: [ "fana (x86_64-linux)" ] },
+              { host: "prox-orgvm", jobs: [ "org (x86_64-linux)" ] },
+              { host: "mair", jobs: [ "mair (aarch64-darwin)", "home-manager mair (aarch64-darwin)" ] },
+              { host: "mmini", jobs: [ "mmini (aarch64-darwin)" ] },
+              { host: "JGWXHWDL4X", jobs: [ "JGWXHWDL4X (aarch64-darwin)" ] },
+              { host: "prox-builder1vm", jobs: [ "builder (x86_64-linux)" ] },
+              { host: "prox-cachevm", jobs: [ "cache (x86_64-linux)" ] }
+            ];
             const fullMatrix = {
               include: [
                 { name: "frame (x86_64-linux)", cmd: "make nixos WHAT=frame", os: "ubuntu-latest" },
@@ -117,20 +134,10 @@ jobs:
               { prefix: "darwin/mair/", jobs: [ "mair (aarch64-darwin)", "home-manager mair (aarch64-darwin)" ] },
               { prefix: "darwin/mmini/", jobs: [ "mmini (aarch64-darwin)" ] },
               { prefix: "darwin/JGWXHWDL4X/", jobs: [ "JGWXHWDL4X (aarch64-darwin)" ] },
-              { prefix: "secrets/frame.yaml", jobs: [ "frame (x86_64-linux)" ] },
-              { prefix: "secrets/prx1-lab.yaml", jobs: [ "prx1-lab (x86_64-linux)" ] },
-              { prefix: "secrets/prx2-lab.yaml", jobs: [ "prx2-lab (x86_64-linux)" ] },
-              { prefix: "secrets/prx3-lab.yaml", jobs: [ "prx3-lab (x86_64-linux)" ] },
-              { prefix: "secrets/pi5.yaml", jobs: [ "pi5 dhcp (aarch64-linux)" ] },
-              { prefix: "secrets/beast.yaml", jobs: [ "beast (x86_64-linux)" ] },
-              { prefix: "secrets/prox-srvarrvm.yaml", jobs: [ "srvarr (x86_64-linux)" ] },
-              { prefix: "secrets/prox-fanavm.yaml", jobs: [ "fana (x86_64-linux)" ] },
-              { prefix: "secrets/mair.yaml", jobs: [ "mair (aarch64-darwin)" ] },
-              { prefix: "secrets/mmini.yaml", jobs: [ "mmini (aarch64-darwin)" ] },
-              { prefix: "secrets/nvws.yaml", jobs: [ "nvws (x86_64-linux)" ] },
-              { prefix: "secrets/prox-builder1vm.yaml", jobs: [ "builder (x86_64-linux)" ] },
-              { prefix: "secrets/prox-cachevm.yaml", jobs: [ "cache (x86_64-linux)" ] },
-              { prefix: "secrets/JGWXHWDL4X.yaml", jobs: [ "JGWXHWDL4X (aarch64-darwin)" ] }
+              ...hostJobMap.flatMap(({ host, jobs }) => ([
+                { prefix: `secrets/${host}.yaml`, jobs },
+                { prefix: `secrets/_templates/${host}.yaml`, jobs },
+              ])),
             ];
 
             if (context.eventName !== "pull_request") {
