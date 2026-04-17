@@ -318,14 +318,24 @@ in
 
             repo="${mkBackupRepo name}"
             offload_user="${mkOffloadUser name}"
+            marker="$repo/.offload-acl-initialized"
 
             if [ ! -d "$repo" ]; then
               exit 0
             fi
 
-            ${pkgs.acl}/bin/setfacl -R -m "u:$offload_user:rwx" "$repo"
-            ${pkgs.findutils}/bin/find "$repo" -type d -exec \
-              ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx" '{}' +
+            # New repo content inherits from directory default ACLs, so a full
+            # recursive ACL rewrite is only needed once for pre-existing data.
+            # Later boots just refresh the top-level/default ACLs cheaply.
+            ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwx" "$repo"
+            ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx" "$repo"
+
+            if [ ! -e "$marker" ]; then
+              ${pkgs.acl}/bin/setfacl -R -m "u:$offload_user:rwx" "$repo"
+              ${pkgs.findutils}/bin/find "$repo" -type d -exec \
+                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx" '{}' +
+              ${pkgs.coreutils}/bin/touch "$marker"
+            fi
           '';
         };
       };
