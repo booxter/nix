@@ -96,6 +96,13 @@ let
       model = "ST24000NM000H-3KS103";
     }
     {
+      bay = "12";
+      row = "2";
+      col = "3";
+      serial = "ZXA0GW38";
+      model = "ST24000NM000C-3WD103";
+    }
+    {
       bay = "13";
       row = "3";
       col = "3";
