@@ -364,18 +364,18 @@ in
             "sops-install-secrets.service"
           ]
           ++ repoAclDeps;
-              requires = [ "restic-cloud-traffic-shaping.service" ];
-              unitConfig.RequiresMountsFor = backupRoot;
-              serviceConfig = {
-                Type = "oneshot";
-                User = mkOffloadUser name;
-                Group = mkOffloadUser name;
-                StateDirectory = mkCloudStateDir name;
-                Environment = "RESTIC_CACHE_DIR=/var/lib/${mkCloudStateDir name}/cache";
-                EnvironmentFile = config.sops.templates.${mkCloudEnvTemplate name}.path;
-                ExecStart = mkCloudOffloadScript name;
-              };
-            };
+          requires = [ "restic-cloud-traffic-shaping.service" ];
+          unitConfig.RequiresMountsFor = backupRoot;
+          serviceConfig = {
+            Type = "oneshot";
+            User = mkOffloadUser name;
+            Group = mkOffloadUser name;
+            StateDirectory = mkCloudStateDir name;
+            Environment = "RESTIC_CACHE_DIR=/var/lib/${mkCloudStateDir name}/cache";
+            EnvironmentFile = config.sops.templates.${mkCloudEnvTemplate name}.path;
+            ExecStart = mkCloudOffloadScript name;
+          };
+        };
       }
     ) (builtins.attrNames backupClients))
   );
