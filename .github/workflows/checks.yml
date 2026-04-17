@@ -55,10 +55,17 @@ jobs:
                 { name: "NixOS test: cache", cmd: "nix build .#nixosTests.x86_64-linux.cache -L --show-trace" }
               ]
             };
+            const hostTestMap = [
+              { host: "prox-cachevm", tests: [ "NixOS test: cache" ] }
+            ];
             const machinePathMap = [
               { prefix: "nixos/cachevm/", tests: [ "NixOS test: cache" ] },
               { prefix: "tests/nixos/cache.nix", tests: [ "NixOS test: cache" ] },
-              { prefix: "tests/nixos/fixtures/atticd.env", tests: [ "NixOS test: cache" ] }
+              { prefix: "tests/nixos/fixtures/atticd.env", tests: [ "NixOS test: cache" ] },
+              ...hostTestMap.flatMap(({ host, tests }) => ([
+                { prefix: `secrets/${host}.yaml`, tests },
+                { prefix: `secrets/_templates/${host}.yaml`, tests },
+              ])),
             ];
 
             if (context.eventName !== "pull_request") {
@@ -81,19 +88,25 @@ jobs:
             });
             core.info(`Changed files (${result.paths.length}): ${result.paths.join(", ")}`);
             core.info(`Selection files (${result.selectionPaths.length}): ${result.selectionPaths.join(", ")}`);
-            const isHostSpecificNixosPath = (filePath) => {
+            const isHostSpecificMachinePath = (filePath) => {
               const parts = filePath.split("/");
-              return parts.length >= 3 && parts[0] === "nixos" && !parts[1].startsWith("_");
+              if (parts.length >= 3 && parts[0] === "nixos" && !parts[1].startsWith("_")) {
+                return true;
+              }
+              if (parts.length === 2 && parts[0] === "secrets" && parts[1] !== "_template.yaml") {
+                return true;
+              }
+              return parts.length === 3 && parts[0] === "secrets" && parts[1] === "_templates";
             };
             const hasMappedPath = result.selectionPaths.some((filePath) =>
               machinePathMap.some((entry) => filePath.startsWith(entry.prefix))
             );
-            const onlyUnmappedHostSpecificNixosPaths =
+            const onlyUnmappedHostSpecificMachinePaths =
               !hasMappedPath &&
               result.selectionPaths.length > 0 &&
               result.selectionPaths.every((filePath) =>
                 !machinePathMap.some((entry) => filePath.startsWith(entry.prefix)) &&
-                isHostSpecificNixosPath(filePath)
+                isHostSpecificMachinePath(filePath)
               );
             if (result.docsOnly) {
               core.info("Docs-only pull request detected, skipping NixOS tests.");
@@ -107,8 +120,8 @@ jobs:
               core.setOutput("has_tests", "false");
               return;
             }
-            if (onlyUnmappedHostSpecificNixosPaths) {
-              core.info("Only non-cache host-specific NixOS paths changed, skipping cache NixOS tests.");
+            if (onlyUnmappedHostSpecificMachinePaths) {
+              core.info("Only non-cache host-specific machine paths changed, skipping cache NixOS tests.");
               core.setOutput("matrix", JSON.stringify({ include: [] }));
               core.setOutput("has_tests", "false");
               return;
