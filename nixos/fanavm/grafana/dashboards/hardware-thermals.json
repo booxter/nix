@@ -679,7 +679,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_darwin_power_watts{job=\"node\",host_class=\"hardware\"}[10m])",
+          "expr": "avg_over_time(host_observability_darwin_power_watts{job=\"node\",host_class=\"hardware\"}[20m])",
           "legendFormat": "{{instance}} {{domain}}",
           "range": true,
           "refId": "A"
@@ -766,6 +766,6 @@
   "timezone": "",
   "title": "Thermals",
   "uid": "fana-hardware-thermals",
-  "version": 17,
+  "version": 18,
   "weekStart": ""
 }
