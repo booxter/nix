@@ -111,18 +111,10 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "orange",
-                "value": 500
-              },
-              {
-                "color": "red",
-                "value": 2000
               }
             ]
           },
-          "unit": "ms"
+          "unit": "short"
         },
         "overrides": []
       },
@@ -147,7 +139,7 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "auto",
+        "textMode": "value",
         "wideLayout": true
       },
       "targets": [
@@ -155,7 +147,7 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "max_over_time(vikunja_active_users{job=\"vikunja\"}[5m]) or vector(0)",
-          "legendFormat": "__auto",
+          "legendFormat": "active users (5m)",
           "range": false,
           "refId": "A"
         }
