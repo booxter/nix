@@ -317,7 +317,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time((max by(instance) (node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"}))[2m:30s])",
+          "expr": "avg_over_time((max by(instance) (node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"}))[5m:30s])",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -374,7 +374,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time((max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"} or host_observability_darwin_temperature_max_celsius{job=\"node\",host_class=\"hardware\"}))[2m:30s])",
+          "expr": "avg_over_time((max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"} or host_observability_darwin_temperature_max_celsius{job=\"node\",host_class=\"hardware\"}))[5m:30s])",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -678,7 +678,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_darwin_power_watts{job=\"node\",host_class=\"hardware\"}[2m])",
+          "expr": "avg_over_time(host_observability_darwin_power_watts{job=\"node\",host_class=\"hardware\"}[10m])",
           "legendFormat": "{{instance}} {{domain}}",
           "range": true,
           "refId": "A"
@@ -765,6 +765,6 @@
   "timezone": "",
   "title": "Thermals",
   "uid": "fana-hardware-thermals",
-  "version": 14,
+  "version": 16,
   "weekStart": ""
 }
