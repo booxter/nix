@@ -16,7 +16,6 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
-      pkgsRelease = getPkgs inputs.nixpkgs-25_11;
       pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       pkgsFirefoxUnwrapped = getPkgs inputs.nixpkgs-firefox-unwrapped;
@@ -33,9 +32,7 @@
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
 
-      # Pull Sonarr/Readarr from release-25.11 and pin Transmission via a dedicated nixpkgs input.
-      # TODO: report issues; investigate; fix
-      inherit (pkgsRelease) readarr sonarr;
+      inherit (pkgs) readarr sonarr;
       transmission_4 = pinnedTransmission;
       transmission = pinnedTransmission;
 
