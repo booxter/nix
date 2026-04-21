@@ -67,33 +67,15 @@
           ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
         ];
       });
-    }
-    // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
-      # Mirror nixpkgs PR #501885 on Darwin without pulling a separate nixpkgs input.
-      # This is a local attempt to fix the Kitty crashes I am seeing on macOS.
-      kitty = prev.kitty.overrideAttrs (
-        old:
-        let
-          version = "0.46.2";
-          src = prev.fetchFromGitHub {
-            owner = "kovidgoyal";
-            repo = "kitty";
-            tag = "v${version}";
-            hash = "sha256-x+jBQrg3Iaj6PLMF1hIjS46odxv5GxPMcvC9JddYCHo=";
-          };
-        in
-        {
-          inherit version src;
-          patches = (old.patches or [ ]) ++ [
-            ../lib/patches/kitty-paused-rendering-selection.patch
-          ];
-          goModules =
-            (prev.buildGo126Module {
-              pname = "kitty-go-modules";
-              inherit src version;
-              vendorHash = "sha256-FaSWBeQJlvw9vXcHJ/OaFd48K8d7X86X8w7wpG84Ltw=";
-            }).goModules;
-        }
-      );
+
+      # Carry the upstream fix for paused-rendering selection crashes until it lands.
+      kitty = prev.kitty.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (prev.fetchpatch {
+            url = "https://github.com/kovidgoyal/kitty/commit/774b9af9e36181ef68163adc31eeda56e6154666.patch";
+            hash = "sha256-U+iNCUyAtj18PBue3hZdNqI3cb0Tpm65h0QFJp31n8k=";
+          })
+        ];
+      });
     };
 }
