@@ -343,11 +343,13 @@ in
     openFirewall = true;
   };
   users.groups.media.gid = 169;
-  users.users.jellyfin.extraGroups = [
-    "media"
-    "render"
-    "video"
-  ];
+  users.users.jellyfin = lib.mkIf config.services.jellyfin.enable {
+    extraGroups = [
+      "media"
+      "render"
+      "video"
+    ];
+  };
   # Keep ddclient on a stable system user instead of DynamicUser. During
   # switch-to-configuration we observed a transient startup failure where the
   # generated preStart script tried to chown runtime files to "ddclient" before
@@ -360,7 +362,7 @@ in
     isSystemUser = true;
     group = "ddclient";
   };
-  systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
+  systemd.services.jellyfin.unitConfig.RequiresMountsFor = lib.mkIf config.services.jellyfin.enable "/media";
 
   # Reverse proxy with automatic TLS.
   security.acme = {
