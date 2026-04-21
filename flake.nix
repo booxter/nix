@@ -70,15 +70,6 @@
       flake = false;
     };
 
-    # Pin Darwin Mozilla unwrapped builds while Hydra can time out long-running jobs
-    # when no output is produced (missing "silence timer" support). When that
-    # happens, build jobs fail and the artifacts are not cached.
-    # Building these packages locally/CI is too expensive, so we must stay on
-    # the previous cached versions until cache catches up.
-    # https://github.com/NixOS/infra/pull/950
-    # TODO: remove these inputs when the Hydra issue is fixed.
-    nixpkgs-firefox-unwrapped.url = "github:NixOS/nixpkgs/b8197e259ad1b49d63789b7fdb8214644b1b05de";
-    nixpkgs-thunderbird-unwrapped.url = "github:NixOS/nixpkgs/eac9adc9cc293c4cec9686f9ae534cf21a5f7c7e";
   };
 
   outputs =
