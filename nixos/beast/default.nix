@@ -280,9 +280,10 @@ in
   system.autoUpgrade.dates = "Mon 03:30";
   system.autoUpgrade.randomizedDelaySec = "15min";
 
-  # Assemble the existing RAID6 array from the previous NAS.
-  # Auto-assembly should work; add explicit mdadm config only if needed.
-  boot.swraid.enable = true;
+  # Temporary RAID maintenance boot profile. Keep storage down on boot so the
+  # interrupted reshape can be inspected and recovered manually after a cold
+  # power cycle.
+  boot.swraid.enable = lib.mkForce false;
   boot.swraid.mdadmConf = "PROGRAM ${pkgs.util-linux}/bin/logger -t mdadm-monitor";
   # Keep md reshape/recovery background I/O gentle so media serving stays responsive.
   boot.kernel.sysctl."dev.raid.speed_limit_max" = 20000;
@@ -294,6 +295,8 @@ in
     device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
     fsType = "btrfs";
     options = [
+      "ro"
+      "noauto"
       "compress=zstd"
       "noatime"
       "nofail"
@@ -308,7 +311,7 @@ in
 
   # NFS exports matching existing clients.
   services.nfs.server = {
-    enable = true;
+    enable = lib.mkForce false;
     exports = ''
       ${mkNfsExport {
         path = "/volume2/Media";
@@ -336,7 +339,7 @@ in
   services.rpcbind.enable = lib.mkForce false;
 
   services.jellyfin = {
-    enable = true;
+    enable = lib.mkForce false;
     openFirewall = true;
   };
   users.groups.media.gid = 169;
@@ -419,6 +422,8 @@ in
     fsType = "none";
     options = [
       "bind"
+      "ro"
+      "noauto"
       "nofail"
       "x-systemd.requires-mounts-for=/volume2"
     ];
