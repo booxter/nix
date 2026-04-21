@@ -16,7 +16,6 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
-      pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
@@ -70,10 +69,6 @@
       });
     }
     // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
-      # Carry nixpkgs PR #509497 until it lands in the pinned nixpkgs input.
-      inherit (pkgsMaster) vscode;
-      inherit (pkgsMaster) code-cursor;
-
       # Mirror nixpkgs PR #501885 on Darwin without pulling a separate nixpkgs input.
       # This is a local attempt to fix the Kitty crashes I am seeing on macOS.
       kitty = prev.kitty.overrideAttrs (
