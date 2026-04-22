@@ -524,7 +524,12 @@ in
       "systemd"
       "textfile"
     ];
-    extraFlags = lib.mkForce [ "--collector.textfile.directory=${textfileDir}" ];
+    # The built-in mdadm collector cannot parse reshape states like "11 (10)".
+    # Keep using the textfile exporter for md visibility during grow/shrink work.
+    extraFlags = lib.mkForce [
+      "--collector.textfile.directory=${textfileDir}"
+      "--no-collector.mdadm"
+    ];
   };
 
   systemd.services.beast-disk-bay-export = {
