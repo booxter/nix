@@ -444,8 +444,8 @@ in
 
   # Link on TL2-F7120 can drop intermittently; disabling pause frames here
   # has helped stability. Flow control is also disabled on the switch port.
-  systemd.services.ethtool-enp10s0-disable-pause = mkDisablePauseService "enp10s0";
-  systemd.services.ethtool-enp11s0-disable-pause = mkDisablePauseService "enp11s0";
+  systemd.services.ethtool-enp6s0-disable-pause = mkDisablePauseService "enp6s0";
+  systemd.services.ethtool-enp7s0-disable-pause = mkDisablePauseService "enp7s0";
 
   # Snapshot schedule for /volume2. This creates /volume2/.snapshots.
   services.snapper.configs.volume2 = {
