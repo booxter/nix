@@ -396,7 +396,10 @@
       apps = helpers.forAllSystems (
         system:
         let
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
+          pkgs = import inputs.nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
           sopsApps = import ./lib/sops.nix { inherit pkgs; };
           fleetApps = import ./lib/fleet.nix { inherit pkgs; };
           proxmox = import ./lib/proxmox-apps.nix {

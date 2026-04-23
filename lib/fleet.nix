@@ -8,6 +8,36 @@ let
 
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
 
+  broadcomSas3flashP15 = pkgs.fetchzip {
+    pname = "broadcom-sas3flash";
+    version = "p15";
+    url = "https://docs.broadcom.com/docs-and-downloads/host-bus-adapters/host-bus-adapters-common-files/sas_sata_12g_p15/SAS3FLASH_P15.zip";
+    hash = "sha256-60NPMEhHR4Q10TJ5yMcsa/NR3fwvN3piL6g387EC93k=";
+    stripRoot = false;
+    meta = with pkgs.lib; {
+      description = "Broadcom SAS3FLASH utility bundle for 12Gb SAS/SATA HBAs";
+      homepage = "https://docs.broadcom.com/";
+      license = licenses.unfreeRedistributableFirmware;
+      sourceProvenance = [ sourceTypes.binaryNativeCode ];
+      platforms = platforms.all;
+    };
+  };
+
+  broadcomSas9305_24iP16_12 = pkgs.fetchzip {
+    pname = "broadcom-sas9305-24i-firmware";
+    version = "16.00.12.00";
+    url = "https://docs.broadcom.com/docs-and-downloads/host-bus-adapters/host-bus-adapters-common-files/sas_sata_12g_p16.12_cutlass_point_release/9305_24i_Pkg_P16.12_IT_FW_BIOS_for_MSDOS_Windows.zip";
+    hash = "sha256-CcBdBTwONvZ22QmcKC7aUyJCbAkYWQxEgoWSsC+3ZoY=";
+    stripRoot = false;
+    meta = with pkgs.lib; {
+      description = "Broadcom SAS9305-24i IT firmware bundle";
+      homepage = "https://docs.broadcom.com/";
+      license = licenses.unfreeRedistributableFirmware;
+      sourceProvenance = [ sourceTypes.binaryNativeCode ];
+      platforms = platforms.all;
+    };
+  };
+
   deploy = pkgs.writeShellApplication {
     name = "deploy";
     runtimeInputs = with pkgs; [
@@ -114,10 +144,31 @@ let
       exec ${../scripts/get-local-builders.sh} "$@"
     '';
   };
+
+  hbaFlash = pkgs.writeShellApplication {
+    name = "hba-flash";
+    runtimeInputs = with pkgs; [
+      bash
+      coreutils
+      findutils
+      gnugrep
+      gnused
+      openssh
+      unzip
+      util-linux
+    ];
+    text = ''
+      export HBA_FLASH_DEFAULT_SAS3FLASH_BUNDLE="${broadcomSas3flashP15}"
+      export HBA_FLASH_DEFAULT_FIRMWARE_BUNDLE="${broadcomSas9305_24iP16_12}"
+    ''
+    + builtins.readFile ../scripts/hba-flash.sh;
+  };
 in
 {
   deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
   vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+  "hba-flash" =
+    mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
 }
