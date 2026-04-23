@@ -533,7 +533,13 @@ in
       "systemd"
       "textfile"
     ];
-    extraFlags = lib.mkForce [ "--collector.textfile.directory=${textfileDir}" ];
+    # node_exporter 1.10.x cannot parse md raid_disks values like "11 (10)"
+    # during reshape, so keep md visibility on this host through our custom
+    # textfile exporter instead of the built-in mdadm collector.
+    extraFlags = lib.mkForce [
+      "--collector.textfile.directory=${textfileDir}"
+      "--no-collector.mdadm"
+    ];
   };
 
   systemd.services.beast-disk-bay-export = {

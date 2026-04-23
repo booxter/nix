@@ -476,6 +476,7 @@ def write_atomic(path, content):
     ) as handle:
         handle.write(content)
         tmp_name = handle.name
+    os.chmod(tmp_name, 0o644)
     os.replace(tmp_name, out_path)
 
 
