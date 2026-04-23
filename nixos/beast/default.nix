@@ -258,6 +258,15 @@ let
     mv "$tmp_file" ${textfileDir}/md-sync.prom
     trap - EXIT
   '';
+  hbaBayMapFile = pkgs.writeText "beast-hba-bay-map.json" (builtins.toJSON diskBayMappings);
+  hbaExporter = pkgs.writeShellScript "beast-hba-export" ''
+    set -euo pipefail
+
+    exec ${pkgs.python3}/bin/python3 ${./hba-exporter.py} \
+      --storcli-path ${pkgs.storcli}/bin/storcli \
+      --bay-map ${hbaBayMapFile} \
+      --output-file ${textfileDir}/hba.prom
+  '';
 in
 {
   imports = [
@@ -552,6 +561,24 @@ in
       OnBootSec = "30s";
       OnUnitActiveSec = "1min";
       Unit = "beast-md-sync-export.service";
+    };
+  };
+
+  systemd.services.beast-hba-export = {
+    description = "Export beast HBA metrics for node exporter";
+    after = [ "local-fs.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = hbaExporter;
+    };
+  };
+
+  systemd.timers.beast-hba-export = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "45s";
+      OnUnitActiveSec = "1min";
+      Unit = "beast-hba-export.service";
     };
   };
 

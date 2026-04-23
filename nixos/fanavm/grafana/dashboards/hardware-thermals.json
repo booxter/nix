@@ -203,7 +203,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "topk(1, max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"}))",
+          "expr": "topk(1, max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=\"node\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"}))",
           "instant": true,
           "legendFormat": "{{instance}}",
           "range": false,
@@ -374,7 +374,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time((max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"} or host_observability_darwin_temperature_max_celsius{job=\"node\",host_class=\"hardware\"}))[5m:30s])",
+          "expr": "avg_over_time((max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\"} or host_observability_hba_temperature_celsius{job=\"node\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_max_celsius{job=\"node\",host_class=\"hardware\"}))[5m:30s])",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -431,7 +431,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})",
+          "expr": "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=\"node\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"

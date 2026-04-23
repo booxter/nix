@@ -385,13 +385,29 @@ in
               (mkGrafanaPromRule {
                 uid = "thermal_storage_hot";
                 title = "Storage Temperature High";
-                expr = "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})";
+                expr = "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=\"node\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})";
                 comparator = "gt";
                 threshold = 75;
                 forDuration = "10m";
                 annotations = {
                   summary = "Storage temperature high on {{ $labels.instance }}";
                   description = "{{ $labels.instance }} has sustained storage temperature above 75C for 10 minutes.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "thermal";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "thermal_hba_export_failed";
+                title = "HBA Thermal Export Failed";
+                expr = "host_observability_hba_collect_success{job=\"node\",host_class=\"hardware\"}";
+                comparator = "lt";
+                threshold = 1;
+                forDuration = "10m";
+                annotations = {
+                  summary = "HBA thermal export failed on {{ $labels.instance }}";
+                  description = "The StorCLI-based HBA collector has not been exporting successfully on {{ $labels.instance }} for 10 minutes.";
                 };
                 labels = {
                   severity = "warning";
