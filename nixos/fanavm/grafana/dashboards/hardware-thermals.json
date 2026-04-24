@@ -744,6 +744,63 @@
       ],
       "title": "BMC / IPMI Board Temperature",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 29
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_hba_temperature_celsius{job=\"node\",host_class=\"hardware\",sensor=\"roc\"}",
+          "legendFormat": "{{instance}} HBA / ROC",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "HBA Temperature",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -766,6 +823,6 @@
   "timezone": "",
   "title": "Thermals",
   "uid": "fana-hardware-thermals",
-  "version": 18,
+  "version": 19,
   "weekStart": ""
 }

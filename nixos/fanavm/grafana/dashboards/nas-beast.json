@@ -3273,7 +3273,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 8,
         "x": 0,
         "y": 39
       },
@@ -3326,8 +3326,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 8,
+        "x": 16,
         "y": 39
       },
       "id": 46,
@@ -3353,6 +3353,63 @@
         }
       ],
       "title": "Fan RPM (IPMI)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 60
+              },
+              {
+                "color": "red",
+                "value": 75
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 39
+      },
+      "id": 48,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_hba_temperature_celsius{job=\"node\",instance=\"beast:9100\",sensor=\"roc\"}",
+          "legendFormat": "HBA / ROC",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "HBA Temperature",
       "type": "timeseries"
     },
     {
@@ -3440,6 +3497,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 20,
+  "version": 21,
   "weekStart": ""
 }
