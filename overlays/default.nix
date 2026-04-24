@@ -19,6 +19,7 @@
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
+      isMainNixpkgs = prev.lib.version == pkgs.lib.version;
     in
     {
       inherit (llmAgentsPkgs) codex claude-code;
@@ -68,14 +69,18 @@
         ];
       });
 
-      # Carry the upstream fix for paused-rendering selection crashes until it lands.
-      kitty = prev.kitty.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            url = "https://github.com/kovidgoyal/kitty/commit/774b9af9e36181ef68163adc31eeda56e6154666.patch";
-            hash = "sha256-QwPdnxiY7hMzSpAi7yRKXsW1Ew8AX/4Rr2Phx6Kj1mo=";
+      kitty =
+        if isMainNixpkgs then
+          # Carry the upstream fix for paused-rendering selection crashes until it lands.
+          prev.kitty.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              (prev.fetchpatch {
+                url = "https://github.com/kovidgoyal/kitty/commit/774b9af9e36181ef68163adc31eeda56e6154666.patch";
+                hash = "sha256-QwPdnxiY7hMzSpAi7yRKXsW1Ew8AX/4Rr2Phx6Kj1mo=";
+              })
+            ];
           })
-        ];
-      });
+        else
+          prev.kitty;
     };
 }
