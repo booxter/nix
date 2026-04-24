@@ -232,7 +232,13 @@ def drive_identifier(controller, enclosure, slot):
 
 def parse_visible_drive(controller_id, basic_drive, detail_map, bay_map):
     enclosure_slot = clean(basic_drive.get("EID:Slt"))
-    enclosure, slot = [clean(part) for part in enclosure_slot.split(":", 1)]
+    enclosure = ""
+    slot = ""
+    if enclosure_slot:
+        if ":" in enclosure_slot:
+            enclosure, slot = [clean(part) for part in enclosure_slot.split(":", 1)]
+        else:
+            slot = enclosure_slot
     drive_key = drive_identifier(controller_id, enclosure, slot)
     detail = detail_map.get(f"{drive_key} - Detailed Information", {})
     state = detail.get(f"{drive_key} State", {})
@@ -285,7 +291,12 @@ def render_metrics(data, bay_map):
 
     for controller in data.get("Controllers", []):
         command_status = controller.get("Command Status", {})
+        controller_id = clean(command_status.get("Controller", "unknown"))
+        controller_labels = {"controller": controller_id}
         if clean(command_status.get("Status")) != "Success":
+            emit_metric(
+                lines, "host_observability_hba_collect_success", 0, controller_labels
+            )
             continue
 
         response = controller.get("Response Data", {})
@@ -293,9 +304,7 @@ def render_metrics(data, bay_map):
         version = response.get("Version", {})
         status = response.get("Status", {})
         hwcfg = response.get("HwCfg", {})
-        controller_id = clean(
-            basics.get("Controller", command_status.get("Controller", "unknown"))
-        )
+        controller_id = clean(basics.get("Controller", controller_id))
         controller_labels = {"controller": controller_id}
         controller_status = clean(status.get("Controller Status"))
         healthy, degraded, failed = hba_state_metrics(controller_status)
@@ -372,7 +381,8 @@ def render_metrics(data, bay_map):
         )
 
         for drive in visible_devices:
-            visible_by_serial[drive["serial"]] = drive
+            if drive["serial"]:
+                visible_by_serial[drive["serial"]] = drive
             common_labels = {
                 "bay": drive["bay"],
                 "bay_col": drive["bay_col"],
@@ -482,12 +492,14 @@ def write_atomic(path, content):
 
 def main():
     args = parse_args()
-    bay_map = load_bay_map(args.bay_map)
+    error = None
 
     try:
+        bay_map = load_bay_map(args.bay_map)
         storcli_json = load_storcli_json(args)
         content = render_metrics(storcli_json, bay_map)
-    except Exception:
+    except Exception as exc:
+        error = exc
         content = (
             "\n".join(
                 metric_headers()
@@ -497,6 +509,9 @@ def main():
         )
 
     write_atomic(args.output_file, content)
+    if error is not None:
+        print(f"hba-exporter: {error}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

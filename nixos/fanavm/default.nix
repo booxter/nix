@@ -406,8 +406,8 @@ in
                 threshold = 1;
                 forDuration = "10m";
                 annotations = {
-                  summary = "HBA thermal export failed on {{ $labels.instance }}";
-                  description = "The StorCLI-based HBA collector has not been exporting successfully on {{ $labels.instance }} for 10 minutes.";
+                  summary = "HBA thermal export failed on {{ $labels.instance }} (controller {{ $labels.controller }})";
+                  description = "The StorCLI-based HBA collector has not been exporting successfully for controller {{ $labels.controller }} on {{ $labels.instance }} for 10 minutes.";
                 };
                 labels = {
                   severity = "warning";

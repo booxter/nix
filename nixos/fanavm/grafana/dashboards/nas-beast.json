@@ -77,7 +77,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_md_degraded{instance=\"beast:9100\",device=\"md127\"}",
+          "expr": "host_observability_md_degraded{instance=\"beast:9100\",device=\"md127\"}",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -3404,7 +3404,7 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "host_observability_hba_temperature_celsius{job=\"node\",instance=\"beast:9100\",sensor=\"roc\"}",
-          "legendFormat": "HBA / ROC",
+          "legendFormat": "HBA / ROC {{controller}}",
           "range": true,
           "refId": "A"
         }

@@ -794,7 +794,7 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "host_observability_hba_temperature_celsius{job=\"node\",host_class=\"hardware\",sensor=\"roc\"}",
-          "legendFormat": "{{instance}} HBA / ROC",
+          "legendFormat": "{{instance}} HBA / ROC {{controller}}",
           "range": true,
           "refId": "A"
         }
