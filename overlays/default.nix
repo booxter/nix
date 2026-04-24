@@ -16,12 +16,10 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
-      pkgsMaster = getPkgs inputs.nixpkgs-master;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
-      pkgsFirefoxUnwrapped = getPkgs inputs.nixpkgs-firefox-unwrapped;
-      pkgsThunderbirdUnwrapped = getPkgs inputs.nixpkgs-thunderbird-unwrapped;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
+      isMainNixpkgs = prev.lib.version == pkgs.lib.version;
     in
     {
       inherit (llmAgentsPkgs) codex claude-code;
@@ -70,39 +68,19 @@
           ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
         ];
       });
-    }
-    // inputs.nixpkgs.lib.optionalAttrs prev.stdenv.isDarwin {
-      # Carry nixpkgs PR #509497 until it lands in the pinned nixpkgs input.
-      inherit (pkgsMaster) vscode;
-      inherit (pkgsMaster) code-cursor;
-      inherit (pkgsFirefoxUnwrapped) firefox-unwrapped;
-      inherit (pkgsThunderbirdUnwrapped) thunderbird-unwrapped;
 
-      # Mirror nixpkgs PR #501885 on Darwin without pulling a separate nixpkgs input.
-      # This is a local attempt to fix the Kitty crashes I am seeing on macOS.
-      kitty = prev.kitty.overrideAttrs (
-        old:
-        let
-          version = "0.46.2";
-          src = prev.fetchFromGitHub {
-            owner = "kovidgoyal";
-            repo = "kitty";
-            tag = "v${version}";
-            hash = "sha256-x+jBQrg3Iaj6PLMF1hIjS46odxv5GxPMcvC9JddYCHo=";
-          };
-        in
-        {
-          inherit version src;
-          patches = (old.patches or [ ]) ++ [
-            ../lib/patches/kitty-paused-rendering-selection.patch
-          ];
-          goModules =
-            (prev.buildGo126Module {
-              pname = "kitty-go-modules";
-              inherit src version;
-              vendorHash = "sha256-FaSWBeQJlvw9vXcHJ/OaFd48K8d7X86X8w7wpG84Ltw=";
-            }).goModules;
-        }
-      );
+      kitty =
+        if isMainNixpkgs then
+          # Carry the upstream fix for paused-rendering selection crashes until it lands.
+          prev.kitty.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              (prev.fetchpatch {
+                url = "https://github.com/kovidgoyal/kitty/commit/774b9af9e36181ef68163adc31eeda56e6154666.patch";
+                hash = "sha256-QwPdnxiY7hMzSpAi7yRKXsW1Ew8AX/4Rr2Phx6Kj1mo=";
+              })
+            ];
+          })
+        else
+          prev.kitty;
     };
 }

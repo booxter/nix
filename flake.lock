@@ -532,22 +532,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-firefox-unwrapped": {
-      "locked": {
-        "lastModified": 1772896522,
-        "narHash": "sha256-QV019LymWIOIcHyMzH8praQvvyUaaJ0hex/h0Bq6h3Y=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "b8197e259ad1b49d63789b7fdb8214644b1b05de",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "b8197e259ad1b49d63789b7fdb8214644b1b05de",
-        "type": "github"
-      }
-    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1761765539,
@@ -579,22 +563,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-master": {
-      "locked": {
-        "lastModified": 1776681012,
-        "narHash": "sha256-OOpdhuBkpfcJ/+WI1WUEFIskdZn5W1TAH3KuAQeqBig=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "69aeb505fdd5f04bbdac49aac03b91274169d26f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1769318308,
@@ -608,22 +576,6 @@
         "owner": "NixOS",
         "ref": "nixos-25.11",
         "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-thunderbird-unwrapped": {
-      "locked": {
-        "lastModified": 1773291389,
-        "narHash": "sha256-YNZvel3oDduw6WdmSQWOMLy7KR7hp2hyuUZzpfzVzcs=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "eac9adc9cc293c4cec9686f9ae534cf21a5f7c7e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "eac9adc9cc293c4cec9686f9ae534cf21a5f7c7e",
         "type": "github"
       }
     },
@@ -803,9 +755,6 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-25_11": "nixpkgs-25_11",
-        "nixpkgs-firefox-unwrapped": "nixpkgs-firefox-unwrapped",
-        "nixpkgs-master": "nixpkgs-master",
-        "nixpkgs-thunderbird-unwrapped": "nixpkgs-thunderbird-unwrapped",
         "nixpkgs-transmission": "nixpkgs-transmission",
         "nixvim": "nixvim",
         "nur": "nur",
