@@ -258,6 +258,15 @@ let
     mv "$tmp_file" ${textfileDir}/md-sync.prom
     trap - EXIT
   '';
+  hbaBayMapFile = pkgs.writeText "beast-hba-bay-map.json" (builtins.toJSON diskBayMappings);
+  hbaExporter = pkgs.writeShellScript "beast-hba-export" ''
+    set -euo pipefail
+
+    exec ${pkgs.python3}/bin/python3 ${./hba-exporter.py} \
+      --storcli-path ${pkgs.storcli}/bin/storcli \
+      --bay-map ${hbaBayMapFile} \
+      --output-file ${textfileDir}/hba.prom
+  '';
 in
 {
   imports = [
@@ -435,8 +444,8 @@ in
 
   # Link on TL2-F7120 can drop intermittently; disabling pause frames here
   # has helped stability. Flow control is also disabled on the switch port.
-  systemd.services.ethtool-enp10s0-disable-pause = mkDisablePauseService "enp10s0";
-  systemd.services.ethtool-enp11s0-disable-pause = mkDisablePauseService "enp11s0";
+  systemd.services.ethtool-enp6s0-disable-pause = mkDisablePauseService "enp6s0";
+  systemd.services.ethtool-enp7s0-disable-pause = mkDisablePauseService "enp7s0";
 
   # Snapshot schedule for /volume2. This creates /volume2/.snapshots.
   services.snapper.configs.volume2 = {
@@ -524,7 +533,13 @@ in
       "systemd"
       "textfile"
     ];
-    extraFlags = lib.mkForce [ "--collector.textfile.directory=${textfileDir}" ];
+    # node_exporter 1.10.x cannot parse md raid_disks values like "11 (10)"
+    # during reshape, so keep md visibility on this host through our custom
+    # textfile exporter instead of the built-in mdadm collector.
+    extraFlags = lib.mkForce [
+      "--collector.textfile.directory=${textfileDir}"
+      "--no-collector.mdadm"
+    ];
   };
 
   systemd.services.beast-disk-bay-export = {
@@ -552,6 +567,24 @@ in
       OnBootSec = "30s";
       OnUnitActiveSec = "1min";
       Unit = "beast-md-sync-export.service";
+    };
+  };
+
+  systemd.services.beast-hba-export = {
+    description = "Export beast HBA metrics for node exporter";
+    after = [ "local-fs.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = hbaExporter;
+    };
+  };
+
+  systemd.timers.beast-hba-export = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "45s";
+      OnUnitActiveSec = "1min";
+      Unit = "beast-hba-export.service";
     };
   };
 
