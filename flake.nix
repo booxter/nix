@@ -76,32 +76,79 @@
       username = "ihrachyshka";
       helpers = import ./lib { inherit inputs outputs username; };
 
-      darwinHosts = {
-        mair = {
-          stateVersion = 6;
-          hmStateVersion = "25.11";
-          hostname = "mair";
-          platform = "aarch64-darwin";
-          isDesktop = true;
-        };
-        mmini = {
-          stateVersion = 5;
-          hmStateVersion = "25.11";
-          hostname = "mmini";
-          platform = "aarch64-darwin";
-          isDesktop = true;
-        };
-        JGWXHWDL4X = {
-          stateVersion = 5;
-          hmStateVersion = "25.11";
-          hostname = "JGWXHWDL4X";
-          platform = "aarch64-darwin";
-          isDesktop = true;
-          isWork = true;
-        };
+      hostSpecs = import ./lib/host-specs.nix { inherit username; };
+      inherit (hostSpecs)
+        darwinHosts
+        nixosHostSpecs
+        toVmName
+        virtPlatform
+        ;
+
+      hostKindToMkHost = {
+        nixos = helpers.mkNixos;
+        proxmox = helpers.mkProxmox;
+        raspberryPi = helpers.mkRaspberryPi;
       };
+
+      VM =
+        args@{
+          name,
+          stateVersion ? "25.11",
+          platform ? "aarch64-linux",
+          ...
+        }:
+        let
+          vmname = toVmName name;
+          localName = "local-${vmname}";
+          proxName = "prox-${vmname}";
+        in
+        {
+          "${localName}" = helpers.mkVM (
+            args
+            // {
+              inherit platform stateVersion virtPlatform;
+              hostname = localName;
+              vmMode = "qemu";
+            }
+          );
+
+          "${proxName}" = helpers.mkVM (
+            args
+            // {
+              inherit stateVersion;
+              hostname = proxName;
+              platform = "x86_64-linux";
+              virtPlatform = "x86_64-linux";
+              vmMode = "proxmox";
+            }
+          );
+        };
+
+      BM = args: helpers.mkBM ({ inherit virtPlatform; } // args);
+
+      specToNixosConfigs =
+        spec:
+        let
+          args = builtins.removeAttrs spec [
+            "type"
+            "hostKind"
+            "homeManagerInput"
+            "nixpkgsInput"
+          ];
+          inputArgs =
+            (if spec ? homeManagerInput then { homeManagerInput = inputs.${spec.homeManagerInput}; } else { })
+            // (if spec ? nixpkgsInput then { nixpkgsInput = inputs.${spec.nixpkgsInput}; } else { });
+        in
+        if spec.type == "bm" then
+          BM (args // inputArgs // { mkHost = hostKindToMkHost.${spec.hostKind}; })
+        else if spec.type == "vm" then
+          VM args
+        else
+          throw "Unsupported NixOS host spec type `${spec.type}`";
     in
     {
+      hostWorkMap = import ./lib/host-work-map.nix { inherit username; };
+
       homeConfigurations = {
         # nv dev env
         "${username}@nv" = helpers.mkHome {
@@ -143,205 +190,9 @@
         ) (builtins.attrNames darwinHosts)
       );
 
-      nixosConfigurations =
-        let
-          virtPlatform = "aarch64-darwin";
-
-          prxStateVersion = "25.11";
-          prxNetIface = "enp5s0f0np0";
-          prxPassword = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
-
-          piStateVersion = "25.11";
-          piHostname = "pi5";
-
-          frame = "frame";
-          nvws = "nvws";
-
-          toVmName = name: "${name}vm";
-
-          VM =
-            args@{
-              name,
-              stateVersion ? "25.11",
-              platform ? "aarch64-linux",
-              ...
-            }:
-            let
-              vmname = toVmName name;
-              localName = "local-${vmname}";
-              proxName = "prox-${vmname}";
-            in
-            {
-              "${localName}" = helpers.mkVM (
-                args
-                // {
-                  inherit platform stateVersion virtPlatform;
-                  hostname = localName;
-                  vmMode = "qemu";
-                }
-              );
-
-              "${proxName}" = helpers.mkVM (
-                args
-                // {
-                  inherit stateVersion;
-                  hostname = proxName;
-                  platform = "x86_64-linux";
-                  virtPlatform = "x86_64-linux";
-                  vmMode = "proxmox";
-                }
-              );
-            };
-          toBuilder =
-            idx:
-            VM (
-              let
-                idx' = toString idx;
-              in
-              {
-                name = "builder${idx'}";
-                proxNode = "prx${idx'}-lab";
-                stateVersion = "25.11";
-                memorySize = 64;
-                diskSize = 150;
-                cores = 24;
-                hmFull = false;
-              }
-            );
-          BM = args: helpers.mkBM ({ inherit virtPlatform; } // args);
-        in
-        BM {
-          mkHost = helpers.mkRaspberryPi;
-          name = piHostname;
-          stateVersion = piStateVersion;
-          homeManagerInput = inputs.home-manager-25_11;
-          hmFull = false;
-        }
-        // BM {
-          mkHost = helpers.mkNixos;
-          name = frame;
-          password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
-          stateVersion = "25.11";
-          platform = "x86_64-linux";
-          isDesktop = true;
-        }
-        # TODO: automatically sync ip-mac mapping with dhcp config
-        // BM {
-          mkHost = helpers.mkProxmox;
-          name = nvws;
-          inherit username;
-          isWork = true;
-          password = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
-          stateVersion = "25.11";
-          netIface = "enp3s0f0";
-          ipAddress = "192.168.15.100";
-          macAddress = "ac:b4:80:40:05:2e";
-        }
-        // BM {
-          mkHost = helpers.mkNixos;
-          name = "beast";
-          stateVersion = "25.11";
-          platform = "x86_64-linux";
-          nixpkgsInput = inputs.nixpkgs-25_11;
-          homeManagerInput = inputs.home-manager-25_11;
-          hmFull = false;
-        }
-        # ssh prx1-lab sudo pvecm create lab-cluster
-        // BM {
-          mkHost = helpers.mkProxmox;
-          name = "prx1-lab";
-          inherit username;
-          password = prxPassword;
-          stateVersion = prxStateVersion;
-          netIface = prxNetIface;
-          ipAddress = "192.168.15.10";
-          macAddress = "38:05:25:30:7d:89";
-        }
-        # ssh prx2-lab sudo pvecm add prx1-lab
-        // BM {
-          mkHost = helpers.mkProxmox;
-          name = "prx2-lab";
-          inherit username;
-          password = prxPassword;
-          stateVersion = prxStateVersion;
-          netIface = prxNetIface;
-          ipAddress = "192.168.15.11";
-          macAddress = "38:05:25:30:7f:7d";
-        }
-        # ssh prx3-lab sudo pvecm add prx1-lab
-        // BM {
-          mkHost = helpers.mkProxmox;
-          name = "prx3-lab";
-          inherit username;
-          password = prxPassword;
-          stateVersion = prxStateVersion;
-          netIface = prxNetIface;
-          ipAddress = "192.168.15.12";
-          macAddress = "38:05:25:30:7d:69";
-        }
-        # TODO: calculate stable ssh port numbers based on hostnames, somehow
-        # TODO: then, configure ssh config aliases for each of them
-        // VM {
-          name = "nv";
-          isWork = true;
-          cores = 64;
-          memorySize = 128;
-          sshPort = 10000;
-          proxNode = "nvws";
-        }
-        // VM {
-          name = "cache";
-          sshPort = 10004;
-          hmFull = false;
-          cores = 16;
-          memorySize = 16;
-          diskSize = 50; # actual cache is on NFS
-        }
-        // VM {
-          name = "srvarr";
-          platform = "x86_64-linux";
-          cores = 16;
-          memorySize = 32;
-          sshPort = 10005;
-          hmFull = false;
-        }
-        // VM {
-          name = "fana";
-          platform = "x86_64-linux";
-          cores = 8;
-          memorySize = 16;
-          diskSize = 300;
-          sshPort = 10006;
-          hmFull = false;
-        }
-        // VM {
-          name = "desk";
-          cores = 4;
-          memorySize = 12;
-          diskSize = 80;
-          sshPort = 10007;
-          hmFull = false;
-        }
-        // VM {
-          name = "gw";
-          cores = 2;
-          memorySize = 8;
-          diskSize = 64;
-          sshPort = 10008;
-          hmFull = false;
-        }
-        // VM {
-          name = "org";
-          platform = "x86_64-linux";
-          cores = 4;
-          memorySize = 8;
-          diskSize = 80;
-          sshPort = 10009;
-          hmFull = false;
-        }
-        // toBuilder 1
-        // toBuilder 2
-        // toBuilder 3;
+      nixosConfigurations = builtins.foldl' (
+        acc: spec: acc // specToNixosConfigs spec
+      ) { } nixosHostSpecs;
 
       devShells = helpers.forAllSystems (
         system:
