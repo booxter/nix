@@ -13,9 +13,8 @@ fi
 
 nix eval --impure --json --expr "
   let
-    f = builtins.getFlake \"${REPO_ROOT}\";
+    hostWorkMap = import \"${REPO_ROOT}/lib/host-work-map.nix\" {};
     requestedHosts = ${HOSTS_NIX};
-    toWork = cfg: cfg.config.host.isWork or false;
     filterNames = attrs: requestedList:
       let
         allNames = builtins.attrNames attrs;
@@ -37,7 +36,7 @@ nix eval --impure --json --expr "
       );
   in
   {
-    nixos = builtins.mapAttrs (_: toWork) (filterNames f.nixosConfigurations requestedHosts);
-    darwin = builtins.mapAttrs (_: toWork) (filterNames f.darwinConfigurations requestedHosts);
+    nixos = filterNames hostWorkMap.nixos requestedHosts;
+    darwin = filterNames hostWorkMap.darwin requestedHosts;
   }
 "
