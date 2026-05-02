@@ -483,6 +483,10 @@ in
     fileSystems = [ "/volume2" ];
     interval = "monthly";
   };
+  systemd.services."btrfs-scrub-volume2" = {
+    after = [ "volume2.mount" ];
+    requires = [ "volume2.mount" ];
+  };
 
   # Local disk health monitoring (logs to journal; email relay can be added later).
   services.smartd = {
