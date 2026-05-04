@@ -16,9 +16,8 @@ let
       lidarr = config.nixarr.lidarr.port;
       prowlarr = config.nixarr.prowlarr.port;
       radarr = config.nixarr.radarr.port;
-      readarr = config.nixarr.readarr.port;
-      readarrAudio = config.nixarr.readarr-audiobook.port;
       sabnzbd = config.nixarr.sabnzbd.guiPort;
+      shelfmark = config.nixarr.shelfmark.port;
       sonarr = config.nixarr.sonarr.port;
       transmission = config.nixarr.transmission.uiPort;
     };
@@ -120,8 +119,7 @@ in
   };
   systemd.services.jellyseerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
-  systemd.services.readarr.unitConfig = requiresMediaMount;
-  systemd.services.readarr-audiobook.unitConfig = requiresMediaMount;
+  systemd.services.shelfmark.unitConfig = requiresMediaMount;
   systemd.services.transmission = {
     unitConfig = wgUnitDepsWithMount;
     # Transmission is currently inheriting a soft RLIMIT_NOFILE of 1024, which
@@ -148,8 +146,11 @@ in
     prowlarr.enable = true;
     radarr.enable = true;
     lidarr.enable = true;
-    readarr.enable = true;
-    readarr-audiobook.enable = true;
+    shelfmark = {
+      enable = true;
+      host = "0.0.0.0";
+      openFirewall = true;
+    };
     sonarr.enable = true;
     bazarr.enable = true;
     audiobookshelf.enable = true;

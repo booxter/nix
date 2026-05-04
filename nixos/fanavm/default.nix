@@ -15,9 +15,8 @@ let
       lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;
       prowlarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.prowlarr.port;
       radarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.radarr.port;
-      readarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.readarr.port;
-      readarrAudio = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.readarr-audiobook.port;
       sabnzbd = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sabnzbd.guiPort;
+      shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
       sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
       transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
     };

@@ -48,8 +48,7 @@ in
     "https://au.ihar.dev"
   )
   (mkExternal "vikunja" "Vikunja" "https://vi.ihar.dev" "sh:vikunja" "https://vi.ihar.dev")
-  (mkInternal "readarr" "Readarr" srvarrPorts.readarr "sh:readarr" "/login")
-  (mkInternal "readarr-audio" "Readarr Audio" srvarrPorts.readarrAudio "sh:readarr" "/login")
+  (mkInternal "shelfmark" "Shelfmark" srvarrPorts.shelfmark "sh:shelfmark" "/")
   (mkInternal "bazarr" "Bazarr" srvarrPorts.bazarr "sh:bazarr" "/")
   (mkInternal "prowlarr" "Prowlarr" srvarrPorts.prowlarr "sh:prowlarr" "/login")
   (mkInternal "transmission" "Transmission" srvarrPorts.transmission "sh:transmission"
