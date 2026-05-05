@@ -50,8 +50,12 @@ let
   wgUploadRate = "8mbit";
   wgOuterLinkRate = "10gbit";
   wgEndpointPort = 1637;
-  wgUnitDepsBase = {
-    After = [ "wg.service" ];
+  networkOnlineUnitDeps = {
+    Wants = [ "network-online.target" ];
+    After = [ "network-online.target" ];
+  };
+  wgUnitDepsBase = networkOnlineUnitDeps // {
+    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
     BindsTo = [ "wg.service" ];
     PartOf = [ "wg.service" ];
   };
@@ -59,7 +63,7 @@ let
     After = [ "wg.service" ];
   };
   wgUnitDepsWithMount = wgUnitDepsBase // requiresMediaMount;
-  requiresMediaMount = {
+  requiresMediaMount = networkOnlineUnitDeps // {
     RequiresMountsFor = mediaPath;
   };
   servarrUMask = lib.mkForce "0002";
@@ -119,6 +123,7 @@ in
   };
   systemd.services.jellyseerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
+  systemd.services.prowlarr.unitConfig = networkOnlineUnitDeps;
   systemd.services.shelfmark.unitConfig = requiresMediaMount;
   systemd.services.transmission = {
     unitConfig = wgUnitDepsWithMount;
@@ -142,18 +147,40 @@ in
       ];
     };
 
-    jellyseerr.enable = true;
-    prowlarr.enable = true;
-    radarr.enable = true;
-    lidarr.enable = true;
+    jellyseerr = {
+      enable = true;
+      openFirewall = true;
+    };
+    prowlarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    radarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    lidarr = {
+      enable = true;
+      openFirewall = true;
+    };
     shelfmark = {
       enable = true;
       host = "0.0.0.0";
       openFirewall = true;
     };
-    sonarr.enable = true;
-    bazarr.enable = true;
-    audiobookshelf.enable = true;
+    sonarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    bazarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    audiobookshelf = {
+      enable = true;
+      host = "0.0.0.0";
+      openFirewall = true;
+    };
 
     # usenet
     sabnzbd = {
@@ -345,11 +372,6 @@ in
       Unit = "update-dynamic-ip.service";
     };
   };
-
-  # expose to lan
-  systemd.services.audiobookshelf.serviceConfig.ExecStart =
-    lib.mkForce "${config.nixarr.audiobookshelf.package}/bin/audiobookshelf --host 0.0.0.0 --port ${toString config.nixarr.audiobookshelf.port}";
-  networking.firewall.allowedTCPPorts = [ config.nixarr.audiobookshelf.port ];
 
   services.glance = {
     enable = true;
