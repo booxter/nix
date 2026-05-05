@@ -748,16 +748,19 @@ in
   ]
   ++ lib.concatMap (spec: mkTmpfilesDir spec.path spec.mode spec.user spec.group) mediaDirSpecs;
 
-  environment.systemPackages = with pkgs; [
-    btrfs-progs
-    hdparm
-    intel-gpu-tools
-    libva-utils
-    lm_sensors
-    mdadm
-    nvme-cli
-    smartmontools
-  ] ++ [ joinMediaParts ];
+  environment.systemPackages =
+    with pkgs;
+    [
+      btrfs-progs
+      hdparm
+      intel-gpu-tools
+      libva-utils
+      lm_sensors
+      mdadm
+      nvme-cli
+      smartmontools
+    ]
+    ++ [ joinMediaParts ];
 
   # Acceleration setup: https://nixos.wiki/wiki/Jellyfin
   hardware.graphics = {
