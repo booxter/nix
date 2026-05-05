@@ -95,80 +95,82 @@ in
     };
 
     preBackupServices = lib.mkOption {
-      type = with lib.types; attrsOf (submodule {
-        options = {
-          description = lib.mkOption {
-            type = str;
-            description = "systemd description for this pre-backup oneshot.";
-          };
+      type =
+        with lib.types;
+        attrsOf (submodule {
+          options = {
+            description = lib.mkOption {
+              type = str;
+              description = "systemd description for this pre-backup oneshot.";
+            };
 
-          script = lib.mkOption {
-            type = package;
-            description = "Executable package to run before restic starts.";
-          };
+            script = lib.mkOption {
+              type = package;
+              description = "Executable package to run before restic starts.";
+            };
 
-          timerConfig = lib.mkOption {
-            type = attrsOf anything;
-            default = defaultPreBackupTimerConfig;
-            description = "Timer settings for this generated pre-backup timer.";
-          };
+            timerConfig = lib.mkOption {
+              type = attrsOf anything;
+              default = defaultPreBackupTimerConfig;
+              description = "Timer settings for this generated pre-backup timer.";
+            };
 
-          user = lib.mkOption {
-            type = str;
-            default = "root";
-            description = "User to run the pre-backup service as.";
-          };
+            user = lib.mkOption {
+              type = str;
+              default = "root";
+              description = "User to run the pre-backup service as.";
+            };
 
-          group = lib.mkOption {
-            type = str;
-            default = "root";
-            description = "Group to run the pre-backup service as.";
-          };
+            group = lib.mkOption {
+              type = str;
+              default = "root";
+              description = "Group to run the pre-backup service as.";
+            };
 
-          serviceConfig = lib.mkOption {
-            type = attrsOf anything;
-            default = { };
-            description = "Extra serviceConfig fields merged into the generated oneshot.";
-          };
+            serviceConfig = lib.mkOption {
+              type = attrsOf anything;
+              default = { };
+              description = "Extra serviceConfig fields merged into the generated oneshot.";
+            };
 
-          unitConfig = lib.mkOption {
-            type = attrsOf anything;
-            default = { };
-            description = "Extra unitConfig fields merged into the generated oneshot.";
+            unitConfig = lib.mkOption {
+              type = attrsOf anything;
+              default = { };
+              description = "Extra unitConfig fields merged into the generated oneshot.";
+            };
           };
-        };
-      });
+        });
       default = { };
       description = "Optional oneshot services to run before restic starts, each with its own timer.";
     };
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = cfg.paths != [ ];
-          message = "host.backups.beast.paths must be non-empty when host.backups.beast.enable = true.";
-        }
-      ];
+  config = lib.mkIf cfg.enable (
+    lib.mkMerge [
+      {
+        assertions = [
+          {
+            assertion = cfg.paths != [ ];
+            message = "host.backups.beast.paths must be non-empty when host.backups.beast.enable = true.";
+          }
+        ];
 
-      sops.secrets = {
-        "${localPasswordSecret}" = { };
-        "${localSshKeySecret}" = {
-          owner = "root";
-          group = "root";
-          mode = "0400";
+        sops.secrets = {
+          "${localPasswordSecret}" = { };
+          "${localSshKeySecret}" = {
+            owner = "root";
+            group = "root";
+            mode = "0400";
+          };
         };
-      };
 
-      programs.ssh.extraConfig = lib.mkAfter ''
-        Host beast
-          IdentityFile ${localSshKey}
-          IdentitiesOnly yes
-      '';
+        programs.ssh.extraConfig = lib.mkAfter ''
+          Host beast
+            IdentityFile ${localSshKey}
+            IdentitiesOnly yes
+        '';
 
-      services.restic.backups.beast =
-        {
+        services.restic.backups.beast = {
           inherit (cfg)
             initialize
             paths
@@ -182,8 +184,7 @@ in
           inherit (cfg) exclude;
         };
 
-      systemd.services.restic-backups-beast =
-        {
+        systemd.services.restic-backups-beast = {
           postStop = lib.mkAfter ''
             ${lib.getExe reapResticSshHelper}
           '';
@@ -192,32 +193,26 @@ in
           after = map (name: "${name}.service") preBackupServiceNames;
           wants = map (name: "${name}.service") preBackupServiceNames;
         };
-    }
+      }
 
-    {
-      systemd.services = builtins.mapAttrs (
-        name: service:
-        {
+      {
+        systemd.services = builtins.mapAttrs (name: service: {
           inherit (service) description unitConfig;
           before = [ "restic-backups-beast.service" ];
-          serviceConfig =
-            {
-              Type = "oneshot";
-              User = service.user;
-              Group = service.group;
-              ExecStart = lib.getExe service.script;
-            }
-            // service.serviceConfig;
-        }
-      ) cfg.preBackupServices;
+          serviceConfig = {
+            Type = "oneshot";
+            User = service.user;
+            Group = service.group;
+            ExecStart = lib.getExe service.script;
+          }
+          // service.serviceConfig;
+        }) cfg.preBackupServices;
 
-      systemd.timers = builtins.mapAttrs (
-        _: service:
-        {
+        systemd.timers = builtins.mapAttrs (_: service: {
           wantedBy = [ "timers.target" ];
           inherit (service) timerConfig;
-        }
-      ) cfg.preBackupServices;
-    }
-  ]);
+        }) cfg.preBackupServices;
+      }
+    ]
+  );
 }
