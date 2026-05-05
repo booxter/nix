@@ -580,6 +580,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-telegram-desktop": {
+      "locked": {
+        "lastModified": 1776949667,
+        "narHash": "sha256-GMSVw35Q+294GlrTUKlx087E31z7KurReQ1YHSKp5iw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "01fbdeef22b76df85ea168fbfe1bfd9e63681b30",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "01fbdeef22b76df85ea168fbfe1bfd9e63681b30",
+        "type": "github"
+      }
+    },
     "nixpkgs-transmission": {
       "locked": {
         "lastModified": 1771235854,
@@ -757,6 +773,7 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-25_11": "nixpkgs-25_11",
         "nixpkgs-ramalama": "nixpkgs-ramalama",
+        "nixpkgs-telegram-desktop": "nixpkgs-telegram-desktop",
         "nixpkgs-transmission": "nixpkgs-transmission",
         "nixvim": "nixvim",
         "nur": "nur",
