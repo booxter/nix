@@ -408,6 +408,7 @@ let
       --bay-map ${hbaBayMapFile} \
       --output-file ${textfileDir}/hba.prom
   '';
+  joinMediaParts = pkgs.callPackage ../../pkgs/join-media-parts { };
 in
 {
   imports = [
@@ -756,7 +757,7 @@ in
     mdadm
     nvme-cli
     smartmontools
-  ];
+  ] ++ [ joinMediaParts ];
 
   # Acceleration setup: https://nixos.wiki/wiki/Jellyfin
   hardware.graphics = {
