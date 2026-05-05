@@ -98,6 +98,18 @@ in
     ./backup.nix
   ];
 
+  host.externalService = {
+    ddns = {
+      enable = true;
+      hostname = "ihrachyshka-home.freeddns.org";
+      username = "ihrachyshka";
+    };
+    virtualHosts = {
+      "au.ihar.dev".proxyPass = "http://127.0.0.1:${toString config.nixarr.audiobookshelf.port}";
+      "js.ihar.dev".proxyPass = "http://127.0.0.1:5055";
+    };
+  };
+
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
 
   # NFS mounts with media

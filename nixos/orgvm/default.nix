@@ -9,6 +9,15 @@ in
     ./backup.nix
   ];
 
+  host.externalService = {
+    ddns = {
+      enable = true;
+      hostname = "ihrachyshka-home.freeddns.org";
+      username = "ihrachyshka";
+    };
+    virtualHosts."vi.ihar.dev".proxyPass = "http://127.0.0.1:${toString vikunjaPort}";
+  };
+
   sops.defaultSopsFile = ../../secrets/prox-orgvm.yaml;
 
   sops.secrets.vikunjaMailerPassword = {

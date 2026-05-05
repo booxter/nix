@@ -94,8 +94,10 @@ in
       host-record = [
         "egress,${gwAddr}"
         "dhcp,${mainAddr}"
-        # Split DNS: keep internal clients on LAN path for external service domains.
-        "jf.ihar.dev,au.ihar.dev,js.ihar.dev,vi.ihar.dev,192.168.16.3"
+        # Split DNS: send external service domains straight to the owning host.
+        "au.ihar.dev,js.ihar.dev,192.168.20.2"
+        "jf.ihar.dev,192.168.16.3"
+        "vi.ihar.dev,192.168.20.4"
       ];
 
       # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix

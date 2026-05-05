@@ -168,17 +168,6 @@ let
   nfsPorts = [
     2049 # nfsd
   ];
-  # DDNS provider target for public endpoints (jf/au/js).
-  dynuHostname = "ihrachyshka-home.freeddns.org";
-  dynuUsername = "ihrachyshka";
-  mkPublicProxyVhost = proxyPass: {
-    forceSSL = true;
-    enableACME = true;
-    locations."/" = {
-      proxyPass = proxyPass;
-      proxyWebsockets = true;
-    };
-  };
   diskBayMappings = [
     {
       bay = "1";
@@ -496,72 +485,19 @@ in
     "render"
     "video"
   ];
-  # Keep ddclient on a stable system user instead of DynamicUser. During
-  # switch-to-configuration we observed a transient startup failure where the
-  # generated preStart script tried to chown runtime files to "ddclient" before
-  # the dynamic user/runtime state was ready.
-  users.groups = {
-    ddclient = { };
-    ddclient-secrets = { };
-  };
-  users.users.ddclient = {
-    isSystemUser = true;
-    group = "ddclient";
-  };
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
 
-  # Reverse proxy with automatic TLS.
-  security.acme = {
-    acceptTerms = true;
-    defaults.email = "ihar.hrachyshka@gmail.com";
+  host.externalService = {
+    ddns = {
+      enable = true;
+      hostname = "ihrachyshka-home.freeddns.org";
+      username = "ihrachyshka";
+    };
+    virtualHosts."jf.ihar.dev".proxyPass = "http://127.0.0.1:8096";
   };
 
-  # Run DDNS updates from this host (instead of the router).
   sops = {
     defaultSopsFile = ../../secrets/beast.yaml;
-    useSystemdActivation = true;
-    secrets.ddnsDynuPassword = {
-      key = "ddns/dynu/password";
-      group = "ddclient-secrets";
-      mode = "0440";
-    };
-  };
-
-  services.ddclient = {
-    enable = true;
-    interval = "1min";
-    protocol = "dyndns2";
-    server = "api.dynu.com";
-    username = dynuUsername;
-    passwordFile = config.sops.secrets.ddnsDynuPassword.path;
-    domains = [ dynuHostname ];
-    ssl = true;
-    quiet = true;
-    usev4 = "webv4,webv4=checkip.dynu.com/,webv4-skip='IP Address'";
-    usev6 = "";
-  };
-  systemd.services.ddclient = {
-    wants = [ "sops-install-secrets.service" ];
-    after = [ "sops-install-secrets.service" ];
-    serviceConfig = {
-      DynamicUser = lib.mkForce false;
-      User = "ddclient";
-      Group = "ddclient";
-      SupplementaryGroups = [ "ddclient-secrets" ];
-    };
-  };
-
-  services.nginx = {
-    enable = true;
-    recommendedProxySettings = true;
-    recommendedTlsSettings = true;
-    virtualHosts = {
-      # Use fixed VM IPs to avoid boot-time DNS dependency.
-      "au.ihar.dev" = mkPublicProxyVhost "http://192.168.20.2:9292";
-      "jf.ihar.dev" = mkPublicProxyVhost "http://127.0.0.1:8096";
-      "js.ihar.dev" = mkPublicProxyVhost "http://192.168.20.2:5055";
-      "vi.ihar.dev" = mkPublicProxyVhost "http://192.168.20.4:3456";
-    };
   };
 
   # Keep the existing /media path expected by Jellyfin/Jellarr.
@@ -576,8 +512,6 @@ in
   };
 
   networking.firewall.allowedTCPPorts = nfsPorts ++ [
-    80
-    443
     smartctlExporterPort
   ];
   networking.firewall.allowedUDPPorts = nfsPorts;
