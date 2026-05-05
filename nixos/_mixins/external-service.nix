@@ -48,7 +48,7 @@ in
 
       interval = lib.mkOption {
         type = lib.types.str;
-        default = "1min";
+        default = "3min";
         description = "ddclient update interval.";
       };
     };
