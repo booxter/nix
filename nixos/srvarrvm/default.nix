@@ -67,6 +67,19 @@ let
     RequiresMountsFor = mediaPath;
   };
   servarrUMask = lib.mkForce "0002";
+  isNfsMediaTmpfilesRule =
+    rule:
+    let
+      fields = builtins.filter (field: field != "") (lib.splitString " " rule);
+      pathToken = if builtins.length fields > 1 then builtins.elemAt fields 1 else "";
+    in
+    builtins.any (prefix: lib.hasPrefix prefix pathToken) [
+      mediaPath
+      "'${mediaPath}"
+    ];
+  filteredTmpfilesRules = builtins.filter (
+    rule: !isNfsMediaTmpfilesRule rule
+  ) config.systemd.tmpfiles.rules;
 in
 {
   host.observability.lanWan = {
@@ -95,6 +108,13 @@ in
   # TODO: move this special handling for FS to mkVM?
   fileSystems."${mediaPath}" = media;
   virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
+  environment.etc."tmpfiles.d/00-nixos.conf".text = ''
+    # This file is created automatically and should not be modified.
+    # Please change the option `systemd.tmpfiles.rules` instead.
+    # Filtered on srvarr: /data/media is an NFS export managed on beast.
+
+    ${lib.concatStringsSep "\n" filteredTmpfilesRules}
+  '';
 
   users.groups.media.gid = 169;
   users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
