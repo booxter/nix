@@ -16,6 +16,7 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
+      pkgsRamalama = getPkgs inputs.nixpkgs-ramalama;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
@@ -31,6 +32,7 @@
       inherit (pkgs) netbootxyz-efi;
 
       inherit (pkgs) readarr sonarr;
+      ramalama = if prev.stdenv.hostPlatform.isDarwin then pkgsRamalama.ramalama else prev.ramalama;
       transmission_4 = pinnedTransmission;
       transmission = pinnedTransmission;
 
