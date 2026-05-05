@@ -61,6 +61,41 @@ setup() {
   [ "$output" = "$expected" ]
 }
 
+@test "run_nixos_rebuild_from_repo uses requested rebuild action" {
+  workdir="$BATS_TMPDIR/nixos-rebuild-action"
+  mkdir -p "$workdir/bin"
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$SUDO_ARGS_OUT"
+"$@"
+EOF
+  } > "$workdir/bin/sudo"
+  chmod +x "$workdir/bin/sudo"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$NIXOS_REBUILD_ARGS_OUT"
+EOF
+  } > "$workdir/bin/nixos-rebuild"
+  chmod +x "$workdir/bin/nixos-rebuild"
+
+  export PATH="$workdir/bin:$PATH"
+  export SUDO_ARGS_OUT="$workdir/sudo.args"
+  export NIXOS_REBUILD_ARGS_OUT="$workdir/nixos-rebuild.args"
+
+  run run_nixos_rebuild_from_repo boot prox-srvarrvm
+
+  [ "$status" -eq 0 ]
+  [ "$(<"$SUDO_ARGS_OUT")" = "nixos-rebuild boot --flake .#prox-srvarrvm -L --show-trace" ]
+  [ "$(<"$NIXOS_REBUILD_ARGS_OUT")" = "boot --flake .#prox-srvarrvm -L --show-trace" ]
+}
+
 @test "run_darwin_switch_from_repo uses installed darwin-rebuild" {
   workdir="$BATS_TMPDIR/darwin-rebuild-in-path"
   mkdir -p "$workdir/bin"

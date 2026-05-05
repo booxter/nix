@@ -10,4 +10,6 @@ pkgs: {
   jinjanator = pkgs.callPackage ./jinjanator { };
 
   ismc = pkgs.callPackage ./ismc { };
+
+  join-media-parts = pkgs.callPackage ./join-media-parts { };
 }

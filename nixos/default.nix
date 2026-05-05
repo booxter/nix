@@ -35,6 +35,7 @@ in
       ./_mixins/observability-client
       ./_mixins/dns-query-accounting
       ./_mixins/lan-wan-accounting
+      ./_mixins/restic-beast-client.nix
       ./_mixins/user
     ]
     ++ lib.optionals usesPRX1Ups [

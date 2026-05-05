@@ -16,6 +16,8 @@
 
       pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
+      pkgsRamalama = getPkgs inputs.nixpkgs-ramalama;
+      pkgsTelegramDesktop = getPkgs inputs.nixpkgs-telegram-desktop;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
@@ -31,6 +33,12 @@
       inherit (pkgs) netbootxyz-efi;
 
       inherit (pkgs) readarr sonarr;
+      ramalama = if prev.stdenv.hostPlatform.isDarwin then pkgsRamalama.ramalama else prev.ramalama;
+      telegram-desktop =
+        if prev.stdenv.hostPlatform.isDarwin then
+          pkgsTelegramDesktop.telegram-desktop
+        else
+          prev.telegram-desktop;
       transmission_4 = pinnedTransmission;
       transmission = pinnedTransmission;
 

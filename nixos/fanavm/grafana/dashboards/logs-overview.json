@@ -21,7 +21,10 @@
   "links": [],
   "panels": [
     {
-      "datasource": "Loki",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -58,7 +61,10 @@
       },
       "targets": [
         {
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
           "editorMode": "code",
           "expr": "sum by (host) (count_over_time({job=\"systemd-journal\",level=~\"emerg|alert|crit|err\"}[15m])) or (sum by (host) (count_over_time({job=\"systemd-journal\"}[15m])) * 0)",
           "queryType": "range",
@@ -69,7 +75,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
       "fieldConfig": {
         "defaults": {
           "mappings": [],
@@ -106,7 +115,10 @@
       },
       "targets": [
         {
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
           "editorMode": "code",
           "expr": "sum by (host) (count_over_time({job=\"systemd-journal\",level=\"warning\"}[15m])) or (sum by (host) (count_over_time({job=\"systemd-journal\"}[15m])) * 0)",
           "queryType": "range",
@@ -117,7 +129,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
       "gridPos": {
         "h": 12,
         "w": 12,
@@ -137,7 +152,10 @@
       },
       "targets": [
         {
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
           "editorMode": "code",
           "expr": "{job=\"systemd-journal\",level=~\"emerg|alert|crit|err\"}",
           "queryType": "range",
@@ -148,7 +166,10 @@
       "type": "logs"
     },
     {
-      "datasource": "Loki",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
       "gridPos": {
         "h": 12,
         "w": 12,
@@ -168,7 +189,10 @@
       },
       "targets": [
         {
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
           "editorMode": "code",
           "expr": "{job=\"systemd-journal\",level=\"warning\"}",
           "queryType": "range",
@@ -179,7 +203,10 @@
       "type": "logs"
     },
     {
-      "datasource": "Loki",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
       "gridPos": {
         "h": 12,
         "w": 24,
@@ -199,7 +226,10 @@
       },
       "targets": [
         {
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
           "editorMode": "code",
           "expr": "{job=\"systemd-journal\"}",
           "queryType": "range",

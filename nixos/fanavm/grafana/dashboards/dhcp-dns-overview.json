@@ -797,7 +797,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": "Loki",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
       "gridPos": {
         "h": 12,
         "w": 24,
@@ -817,7 +820,10 @@
       },
       "targets": [
         {
-          "datasource": "Loki",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
           "editorMode": "code",
           "expr": "{host=\"pi5\",systemd_unit=\"dnsmasq.service\"}",
           "queryType": "range",

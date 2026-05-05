@@ -9,6 +9,12 @@
     # Keep Transmission pinned independently from the moving release-25.11 branch.
     # TODO: remove this input when trackers allow 4.1.0+.
     nixpkgs-transmission.url = "github:NixOS/nixpkgs/12d60a4f2d5f2cc96e93ae5615328245d49ac2e8";
+    # Keep Darwin ramalama on the latest Hydra-green nixpkgs revision until
+    # accelerate is fixed upstream for current nixpkgs-unstable.
+    nixpkgs-ramalama.url = "github:NixOS/nixpkgs/4cae1b7d09491c263445c33fe3b96a8283a90588";
+    # Keep Darwin telegram-desktop on the latest nixpkgs revision with a
+    # successful aarch64-darwin Hydra build until unstable catches up again.
+    nixpkgs-telegram-desktop.url = "github:NixOS/nixpkgs/01fbdeef22b76df85ea168fbfe1bfd9e63681b30";
     # Use staging-next if needed
     #nixpkgs-staging-next.url = "github:NixOS/nixpkgs/staging-next";
     #nixpkgs = nixpkgs-staging-next;

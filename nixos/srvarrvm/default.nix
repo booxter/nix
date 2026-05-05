@@ -16,9 +16,8 @@ let
       lidarr = config.nixarr.lidarr.port;
       prowlarr = config.nixarr.prowlarr.port;
       radarr = config.nixarr.radarr.port;
-      readarr = config.nixarr.readarr.port;
-      readarrAudio = config.nixarr.readarr-audiobook.port;
       sabnzbd = config.nixarr.sabnzbd.guiPort;
+      shelfmark = config.nixarr.shelfmark.port;
       sonarr = config.nixarr.sonarr.port;
       transmission = config.nixarr.transmission.uiPort;
     };
@@ -51,8 +50,12 @@ let
   wgUploadRate = "8mbit";
   wgOuterLinkRate = "10gbit";
   wgEndpointPort = 1637;
-  wgUnitDepsBase = {
-    After = [ "wg.service" ];
+  networkOnlineUnitDeps = {
+    Wants = [ "network-online.target" ];
+    After = [ "network-online.target" ];
+  };
+  wgUnitDepsBase = networkOnlineUnitDeps // {
+    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
     BindsTo = [ "wg.service" ];
     PartOf = [ "wg.service" ];
   };
@@ -60,10 +63,23 @@ let
     After = [ "wg.service" ];
   };
   wgUnitDepsWithMount = wgUnitDepsBase // requiresMediaMount;
-  requiresMediaMount = {
+  requiresMediaMount = networkOnlineUnitDeps // {
     RequiresMountsFor = mediaPath;
   };
   servarrUMask = lib.mkForce "0002";
+  isNfsMediaTmpfilesRule =
+    rule:
+    let
+      fields = builtins.filter (field: field != "") (lib.splitString " " rule);
+      pathToken = if builtins.length fields > 1 then builtins.elemAt fields 1 else "";
+    in
+    builtins.any (prefix: lib.hasPrefix prefix pathToken) [
+      mediaPath
+      "'${mediaPath}"
+    ];
+  filteredTmpfilesRules = builtins.filter (
+    rule: !isNfsMediaTmpfilesRule rule
+  ) config.systemd.tmpfiles.rules;
 in
 {
   host.observability.lanWan = {
@@ -92,6 +108,13 @@ in
   # TODO: move this special handling for FS to mkVM?
   fileSystems."${mediaPath}" = media;
   virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
+  environment.etc."tmpfiles.d/00-nixos.conf".text = ''
+    # This file is created automatically and should not be modified.
+    # Please change the option `systemd.tmpfiles.rules` instead.
+    # Filtered on srvarr: /data/media is an NFS export managed on beast.
+
+    ${lib.concatStringsSep "\n" filteredTmpfilesRules}
+  '';
 
   users.groups.media.gid = 169;
   users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
@@ -120,8 +143,8 @@ in
   };
   systemd.services.jellyseerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
-  systemd.services.readarr.unitConfig = requiresMediaMount;
-  systemd.services.readarr-audiobook.unitConfig = requiresMediaMount;
+  systemd.services.prowlarr.unitConfig = networkOnlineUnitDeps;
+  systemd.services.shelfmark.unitConfig = requiresMediaMount;
   systemd.services.transmission = {
     unitConfig = wgUnitDepsWithMount;
     # Transmission is currently inheriting a soft RLIMIT_NOFILE of 1024, which
@@ -144,15 +167,40 @@ in
       ];
     };
 
-    jellyseerr.enable = true;
-    prowlarr.enable = true;
-    radarr.enable = true;
-    lidarr.enable = true;
-    readarr.enable = true;
-    readarr-audiobook.enable = true;
-    sonarr.enable = true;
-    bazarr.enable = true;
-    audiobookshelf.enable = true;
+    jellyseerr = {
+      enable = true;
+      openFirewall = true;
+    };
+    prowlarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    radarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    lidarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    shelfmark = {
+      enable = true;
+      host = "0.0.0.0";
+      openFirewall = true;
+    };
+    sonarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    bazarr = {
+      enable = true;
+      openFirewall = true;
+    };
+    audiobookshelf = {
+      enable = true;
+      host = "0.0.0.0";
+      openFirewall = true;
+    };
 
     # usenet
     sabnzbd = {
@@ -344,11 +392,6 @@ in
       Unit = "update-dynamic-ip.service";
     };
   };
-
-  # expose to lan
-  systemd.services.audiobookshelf.serviceConfig.ExecStart =
-    lib.mkForce "${config.nixarr.audiobookshelf.package}/bin/audiobookshelf --host 0.0.0.0 --port ${toString config.nixarr.audiobookshelf.port}";
-  networking.firewall.allowedTCPPorts = [ config.nixarr.audiobookshelf.port ];
 
   services.glance = {
     enable = true;
