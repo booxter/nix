@@ -87,6 +87,12 @@ find_darwin_rebuild() {
   command -v darwin-rebuild 2>/dev/null || true
 }
 
+run_nixos_rebuild_from_repo() {
+  local rebuild_action="$1"
+  local host_name="$2"
+  sudo nixos-rebuild "$rebuild_action" --flake ".#${host_name}" -L --show-trace
+}
+
 run_darwin_switch_from_repo() {
   local host_name="$1"
   local darwin_rebuild system_path

@@ -5,6 +5,7 @@ set -euo pipefail
 
 REPO_URL="github.com:booxter/nix"
 BRANCH="master"
+REBUILD_ACTION="switch"
 ALL=true
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -189,8 +190,8 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/update-machines.sh [-A|--all] [--branch BRANCH] [--personal|--work|--both]
-  scripts/update-machines.sh [--branch BRANCH] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
+  scripts/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot] [--personal|--work|--both]
+  scripts/update-machines.sh [--branch BRANCH] [--switch|--boot] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
 
 Options:
   -A, --all         Update all hosts discovered from flake outputs (default).
@@ -198,6 +199,8 @@ Options:
   --work            Update only work machines.
   --both            Update all machines (work + personal).
   --branch BRANCH   Git branch to deploy (default: master).
+  --switch          Switch into the new configuration immediately (default).
+  --boot            Stage the new configuration for the next boot.
   --dry-run         Only check SSH and print the hosts that would be updated.
   --select          Interactively select hosts from the filtered list.
 
@@ -223,6 +226,14 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       shift 2
+      ;;
+    --switch)
+      REBUILD_ACTION="switch"
+      shift
+      ;;
+    --boot)
+      REBUILD_ACTION="boot"
+      shift
       ;;
     --work)
       MODE="work"
@@ -400,6 +411,7 @@ for host in "${HOSTS[@]}"; do
 set -euo pipefail
 REMOTE
 )"
+  remote_payload+=$'\n'"$(declare -f run_nixos_rebuild_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f find_darwin_rebuild)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_darwin_switch_from_repo)"$'\n'
   remote_payload+="$(cat <<'REMOTE'
@@ -418,6 +430,7 @@ MIN_DISK_GIB="$2"
 branch="$3"
 repo_url="$4"
 GC_HEADROOM_KB="$5"
+rebuild_action="$6"
 repo_dir="$(mktemp -d)"
 
 get_avail_path() {
@@ -471,10 +484,14 @@ os="$(uname -s)"
 host_name="$(hostname)"
 case "$os" in
   Darwin)
+    if [[ "$rebuild_action" != "switch" ]]; then
+      echo "Unsupported deploy action on Darwin: ${rebuild_action}. Use --switch." >&2
+      exit 1
+    fi
     run_darwin_switch_from_repo "$host_name"
     ;;
   Linux)
-    sudo nixos-rebuild switch --flake ".#${host_name}" -L --show-trace
+    run_nixos_rebuild_from_repo "$rebuild_action" "$host_name"
     ;;
   *)
     echo "Unsupported OS: $os" >&2
@@ -486,7 +503,7 @@ REMOTE
   if is_local_host "$host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
-    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB"; then
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -495,7 +512,7 @@ REMOTE
   fi
   # shellcheck disable=SC2029
   printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")

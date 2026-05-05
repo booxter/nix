@@ -61,6 +61,7 @@ let
 
       Examples:
         deploy -A --select
+        deploy --branch ci/flake-update --boot prox-srvarrvm
         deploy --home nv ihrachyshka
         deploy --disko frame /dev/sdX
       EOF
