@@ -79,7 +79,7 @@ EOF
   }
 
   yq() {
-    if [[ "$1" == "-s" ]]; then
+    if [[ "$1" == "eval-all" ]]; then
       # Minimal merge: keep secret value if present, otherwise take template.
       local file_a="$3"
       local file_b="$4"
@@ -90,8 +90,8 @@ EOF
       fi
       return 0
     fi
-    if [[ $# -eq 2 && -f "$2" ]]; then
-      cat "$2"
+    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
+      cat "$3"
       return 0
     fi
     return 1
@@ -139,7 +139,7 @@ EOF
   }
 
   yq() {
-    if [[ "$1" == "-s" ]]; then
+    if [[ "$1" == "eval-all" ]]; then
       local file_a="$3"
       local file_b="$4"
       if [[ "$file_a" == *"/_template.yaml" && "$file_b" == *"/_templates/beast.yaml" ]]; then
@@ -149,8 +149,8 @@ EOF
       printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
       return 0
     fi
-    if [[ $# -eq 2 && -f "$2" ]]; then
-      cat "$2"
+    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
+      cat "$3"
       return 0
     fi
     return 1
@@ -195,13 +195,13 @@ EOF
   }
 
   yq() {
-    if [[ "$1" == "-s" ]]; then
+    if [[ "$1" == "eval-all" ]]; then
       printf '%s\n' \
         'a:' '  y: "SECRET"'
       return 0
     fi
-    if [[ $# -eq 2 && -f "$2" ]]; then
-      [[ "$1" == *"def sort_deep"* ]]
+    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
+      [[ "$2" == *"def sort_deep"* ]]
       printf '%s\n' \
         'a:' '  y: "SECRET"'
       return 0
@@ -248,13 +248,13 @@ EOF
   }
 
   yq() {
-    if [[ "$1" == "-s" ]]; then
+    if [[ "$1" == "eval-all" ]]; then
       printf '%s\n' \
         'a:' '  y: "SECRET"'
       return 0
     fi
-    if [[ $# -eq 2 && -f "$2" ]]; then
-      [[ "$1" == *"def sort_deep"* ]]
+    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
+      [[ "$2" == *"def sort_deep"* ]]
       printf '%s\n' \
         'a:' '  y: "SECRET"'
       return 0
@@ -301,7 +301,7 @@ EOF
   }
 
   yq() {
-    if [[ "$1" == "-s" ]]; then
+    if [[ "$1" == "eval-all" ]]; then
       printf '%s\n' \
         'b:' '  z: "TEMPLATE"' \
         'a:' '  y: "TEMPLATE"' \
@@ -309,13 +309,13 @@ EOF
         'sops:' '  dummy: true'
       return 0
     fi
-    if [[ $# -eq 2 && -f "$2" ]]; then
-      if [[ "$1" == *"sort_keys("* ]]; then
+    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
+      if [[ "$2" == *"sort_keys("* ]]; then
         echo "sort_keys/1 is unsupported in this test yq shim" >&2
         return 1
       fi
-      [[ "$1" == *"def sort_deep"* ]]
-      if grep -q 'z: "TEMPLATE"' "$2"; then
+      [[ "$2" == *"def sort_deep"* ]]
+      if grep -q 'z: "TEMPLATE"' "$3"; then
         printf '%s\n' \
           'a:' '  y: "TEMPLATE"' \
           'b:' '  z: "TEMPLATE"' \
@@ -339,6 +339,73 @@ EOF
   [ "${keys[1]}" = "b" ]
   [ "${keys[2]}" = "c" ]
   [ "${keys[3]}" = "sops" ]
+}
+
+@test "sops-update uses yq v4 eval commands" {
+  workdir="$BATS_TMPDIR/sops-yq-v4"
+  mkdir -p "$workdir/secrets/_templates"
+  cat > "$workdir/secrets/_template.yaml" <<'EOF'
+common:
+  shared: "TEMPLATE"
+EOF
+  cat > "$workdir/secrets/_templates/beast.yaml" <<'EOF'
+jellyfin:
+  apiKey: "REPLACE_ME"
+EOF
+  cat > "$workdir/secrets/beast.yaml" <<'EOF'
+common:
+  shared: "SECRET"
+sops:
+  dummy: true
+EOF
+  cd "$workdir"
+  git init -q
+
+  sops() {
+    if [[ "$1" == "--decrypt" ]]; then
+      cat "$2"
+      return 0
+    fi
+    if [[ "$1" == "--encrypt" ]]; then
+      local source_file="${@: -1}"
+      cat "$source_file"
+      return 0
+    fi
+    return 1
+  }
+
+  yq() {
+    if [[ "$1" == "-s" || "$1" == *"def sort_deep"* ]]; then
+      echo "unexpected legacy yq invocation: $*" >&2
+      return 1
+    fi
+    if [[ "$1" == "eval-all" ]]; then
+      local file_a="$3"
+      local file_b="$4"
+      if [[ "$file_a" == *"/_template.yaml" && "$file_b" == *"/_templates/beast.yaml" ]]; then
+        printf '%s\n' 'common:' '  shared: "TEMPLATE"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
+        return 0
+      fi
+      printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"' 'sops:' '  dummy: true'
+      return 0
+    fi
+    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
+      [[ "$2" == *"def sort_deep"* ]]
+      if grep -q 'apiKey: "REPLACE_ME"' "$3"; then
+        printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"' 'sops:' '  dummy: true'
+      else
+        printf '%s\n' 'common:' '  shared: "SECRET"' 'sops:' '  dummy: true'
+      fi
+      return 0
+    fi
+    return 1
+  }
+
+  source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
+  run main beast
+  [ "$status" -eq 0 ]
+  grep -q 'shared: "SECRET"' "$workdir/secrets/beast.yaml"
+  grep -q 'apiKey: "REPLACE_ME"' "$workdir/secrets/beast.yaml"
 }
 
 @test "fails when secrets exist but .sops.yaml missing" {
