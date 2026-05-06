@@ -10,6 +10,7 @@ let
     grafanaProbeUrl = "http://127.0.0.1:${toString grafanaPort}/";
     srvarrProbeHost = outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName;
     srvarrPorts = {
+      aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
       audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
       bazarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.bazarr.port;
       lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;

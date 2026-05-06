@@ -23,7 +23,8 @@ Current mapping:
 
 - `ihrachyshka-beast.freeddns.org` is updated from `beast`
 - `jf.ihar.dev` proxies locally on `beast`
-- `au.ihar.dev`, `js.ihar.dev`, and `shelf.ihar.dev` proxy from `beast` to `srvarr`
+- `au.ihar.dev`, `js.ihar.dev`, `mu.ihar.dev`, and `shelf.ihar.dev`
+  proxy from `beast` to `srvarr`
 - `vi.ihar.dev` proxies from `beast` to `org`
 
 WireGuard can keep its own DDNS hostname separately on `gw`.
@@ -36,6 +37,7 @@ Validation:
 dig +short jf.ihar.dev CNAME
 dig +short au.ihar.dev CNAME
 dig +short js.ihar.dev CNAME
+dig +short mu.ihar.dev CNAME
 dig +short shelf.ihar.dev CNAME
 dig +short vi.ihar.dev CNAME
 dig +short ihrachyshka-beast.freeddns.org A
@@ -44,6 +46,7 @@ journalctl -u ddclient -n 100 --no-pager
 curl -I https://jf.ihar.dev
 curl -I https://au.ihar.dev
 curl -I https://js.ihar.dev
+curl -I https://mu.ihar.dev
 curl -I https://shelf.ihar.dev
 curl -I https://vi.ihar.dev
 ```

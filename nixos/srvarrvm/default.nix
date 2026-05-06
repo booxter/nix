@@ -11,6 +11,7 @@ let
   arrServices = import ../../lib/arr-services.nix {
     srvarrDisplayHost = "${config.services.avahi.hostName}.local";
     srvarrPorts = {
+      aurral = config.systemd.services.aurral.environment.PORT;
       audiobookshelf = config.nixarr.audiobookshelf.port;
       bazarr = config.nixarr.bazarr.port;
       lidarr = config.nixarr.lidarr.port;
@@ -95,6 +96,7 @@ in
 
   imports = [
     inputs.nixarr.nixosModules.default
+    ./aurral.nix
     ./backup.nix
   ];
 
