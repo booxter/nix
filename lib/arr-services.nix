@@ -47,7 +47,9 @@ in
   (mkExternal "audiobookshelf" "Audiobookshelf" "https://au.ihar.dev" "sh:audiobookshelf"
     "https://au.ihar.dev"
   )
-  (mkExternal "shelfmark" "Shelfmark" "https://shelf.ihar.dev" "sh:shelfmark" "https://shelf.ihar.dev/")
+  (mkExternal "shelfmark" "Shelfmark" "https://shelf.ihar.dev" "sh:shelfmark"
+    "https://shelf.ihar.dev/"
+  )
   (mkExternal "vikunja" "Vikunja" "https://vi.ihar.dev" "sh:vikunja" "https://vi.ihar.dev")
   (mkInternal "bazarr" "Bazarr" srvarrPorts.bazarr "sh:bazarr" "/")
   (mkInternal "prowlarr" "Prowlarr" srvarrPorts.prowlarr "sh:prowlarr" "/login")
