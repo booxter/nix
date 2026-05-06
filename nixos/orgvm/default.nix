@@ -12,7 +12,7 @@ in
   host.externalService = {
     ddns = {
       enable = true;
-      hostname = "ihrachyshka-home.freeddns.org";
+      hostname = "ihrachyshka-org.freeddns.org";
       username = "ihrachyshka";
     };
     virtualHosts."vi.ihar.dev".proxyPass = "http://127.0.0.1:${toString vikunjaPort}";

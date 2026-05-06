@@ -490,7 +490,7 @@ in
   host.externalService = {
     ddns = {
       enable = true;
-      hostname = "ihrachyshka-home.freeddns.org";
+      hostname = "ihrachyshka-beast.freeddns.org";
       username = "ihrachyshka";
     };
     virtualHosts."jf.ihar.dev".proxyPass = "http://127.0.0.1:8096";

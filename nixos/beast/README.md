@@ -13,21 +13,18 @@ This host is a storage/NAS node. The host-specific configuration lives in
 - Snapper timelines and scheduled Btrfs scrubs for data hygiene.
 - SMART monitoring for disk health.
 
-## DDNS rollout (`jf.ihar.dev`, `au.ihar.dev`, `js.ihar.dev`)
+## DDNS and public ingress
 
-`nixos/beast/default.nix` runs `services.ddclient` to update Dynu directly from
-this host (instead of router-managed DDNS).
+Public ingress now uses one Dynu hostname per serving host through
+`host.externalService.ddns`, rather than a single shared DDNS name.
 
-1. Create a Dynu hostname (current: `ihrachyshka-home.freeddns.org`).
-1. In `nixos/beast/default.nix`, set:
-   - `dynuHostname = "ihrachyshka-home.freeddns.org";`
-   - `dynuUsername = "ihrachyshka";`
-1. Add `ddns.dynu.password` to `secrets/beast.yaml` via `sops`.
-1. Rebuild on beast.
-1. At your registrar DNS, repoint:
-   - `jf.ihar.dev CNAME <dynu-hostname>`
-   - `au.ihar.dev CNAME <dynu-hostname>`
-   - `js.ihar.dev CNAME <dynu-hostname>`
+Current mapping:
+
+- `beast` updates `ihrachyshka-beast.freeddns.org` for `jf.ihar.dev`
+- `srvarr` updates `ihrachyshka-srvarr.freeddns.org` for `au.ihar.dev` and `js.ihar.dev`
+- `org` updates `ihrachyshka-org.freeddns.org` for `vi.ihar.dev`
+
+The shared module currently checks every `3min`.
 
 Validation:
 
@@ -35,12 +32,16 @@ Validation:
 dig +short jf.ihar.dev CNAME
 dig +short au.ihar.dev CNAME
 dig +short js.ihar.dev CNAME
-dig +short ihrachyshka-home.freeddns.org A
+dig +short vi.ihar.dev CNAME
+dig +short ihrachyshka-beast.freeddns.org A
+dig +short ihrachyshka-srvarr.freeddns.org A
+dig +short ihrachyshka-org.freeddns.org A
 systemctl status ddclient
 journalctl -u ddclient -n 100 --no-pager
 curl -I https://jf.ihar.dev
 curl -I https://au.ihar.dev
 curl -I https://js.ihar.dev
+curl -I https://vi.ihar.dev
 ```
 
 ## Storage

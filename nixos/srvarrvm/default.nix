@@ -101,7 +101,7 @@ in
   host.externalService = {
     ddns = {
       enable = true;
-      hostname = "ihrachyshka-home.freeddns.org";
+      hostname = "ihrachyshka-srvarr.freeddns.org";
       username = "ihrachyshka";
     };
     virtualHosts = {
