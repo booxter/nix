@@ -95,6 +95,7 @@ in
 
   imports = [
     inputs.nixarr.nixosModules.default
+    ./aurral.nix
     ./backup.nix
   ];
 

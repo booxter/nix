@@ -57,6 +57,12 @@ let
       group = "media";
     }
     {
+      path = "${mediaPaths.sourceLibraryRoot}/flows";
+      mode = "2775";
+      user = "root";
+      group = "media";
+    }
+    {
       path = mediaTorrentRoot;
       mode = "0755";
       user = "70";
