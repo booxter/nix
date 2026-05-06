@@ -503,10 +503,15 @@ in
       "au.ihar.dev".proxyPass = "http://192.168.20.2:9292";
       "jf.ihar.dev".proxyPass = "http://127.0.0.1:8096";
       "js.ihar.dev".proxyPass = "http://192.168.20.2:5055";
+      "mu.ihar.dev".proxyPass = "http://192.168.20.2:3001";
       "shelf.ihar.dev".proxyPass = "http://192.168.20.2:8084";
       "vi.ihar.dev".proxyPass = "http://192.168.20.4:3456";
     };
   };
+
+  services.nginx.virtualHosts."mu.ihar.dev".locations."/".extraConfig = ''
+    proxy_set_header X-Forwarded-For $remote_addr;
+  '';
 
   sops = {
     defaultSopsFile = ../../secrets/beast.yaml;

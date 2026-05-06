@@ -123,7 +123,9 @@ in
       DOWNLOAD_FOLDER = aurralFlowDir;
       WEEKLY_FLOW_FOLDER = aurralFlowDir;
       PORT = toString aurralPort;
-      TRUST_PROXY = "true";
+      # Public access traverses beast nginx first and then the local srvarr
+      # nginx proxy in front of the app.
+      TRUST_PROXY = "2";
     };
     serviceConfig = {
       ExecStart = lib.getExe pkgs.aurral;
