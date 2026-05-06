@@ -44,7 +44,7 @@ in
   (mkInternal "radarr" "Radarr" srvarrPorts.radarr "sh:radarr" "/login")
   (mkInternal "sonarr" "Sonarr" srvarrPorts.sonarr "sh:sonarr" "/login")
   (mkInternal "lidarr" "Lidarr" srvarrPorts.lidarr "sh:lidarr" "/")
-  (mkInternal "aurral" "Aurral" srvarrPorts.aurral "sh:aurral" "/api/health")
+  (mkExternal "aurral" "Aurral" "https://mu.ihar.dev" "sh:aurral" "https://mu.ihar.dev/api/health")
   (mkExternal "audiobookshelf" "Audiobookshelf" "https://au.ihar.dev" "sh:audiobookshelf"
     "https://au.ihar.dev"
   )
