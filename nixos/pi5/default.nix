@@ -95,7 +95,7 @@ in
         "egress,${gwAddr}"
         "dhcp,${mainAddr}"
         # Split DNS: send external service domains straight to the owning host.
-        "au.ihar.dev,js.ihar.dev,192.168.20.2"
+        "au.ihar.dev,js.ihar.dev,shelf.ihar.dev,192.168.20.2"
         "jf.ihar.dev,192.168.16.3"
         "vi.ihar.dev,192.168.20.4"
       ];

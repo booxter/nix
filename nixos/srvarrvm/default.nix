@@ -107,6 +107,7 @@ in
     virtualHosts = {
       "au.ihar.dev".proxyPass = "http://127.0.0.1:${toString config.nixarr.audiobookshelf.port}";
       "js.ihar.dev".proxyPass = "http://127.0.0.1:5055";
+      "shelf.ihar.dev".proxyPass = "http://127.0.0.1:${toString config.nixarr.shelfmark.port}";
     };
   };
 
