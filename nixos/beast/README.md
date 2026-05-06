@@ -15,14 +15,18 @@ This host is a storage/NAS node. The host-specific configuration lives in
 
 ## DDNS and public ingress
 
-Public ingress now uses one Dynu hostname per serving host through
-`host.externalService.ddns`, rather than a single shared DDNS name.
+`beast` is the centralized public web ingress host. The router forwards public
+HTTP(S) traffic to `beast`, and `beast` terminates TLS and proxies to the
+service-owning VM when needed.
 
 Current mapping:
 
-- `beast` updates `ihrachyshka-beast.freeddns.org` for `jf.ihar.dev`
-- `srvarr` updates `ihrachyshka-srvarr.freeddns.org` for `au.ihar.dev` and `js.ihar.dev`
-- `org` updates `ihrachyshka-org.freeddns.org` for `vi.ihar.dev`
+- `ihrachyshka-beast.freeddns.org` is updated from `beast`
+- `jf.ihar.dev` proxies locally on `beast`
+- `au.ihar.dev`, `js.ihar.dev`, and `shelf.ihar.dev` proxy from `beast` to `srvarr`
+- `vi.ihar.dev` proxies from `beast` to `org`
+
+WireGuard can keep its own DDNS hostname separately on `gw`.
 
 The shared module currently checks every `3min`.
 
@@ -32,15 +36,15 @@ Validation:
 dig +short jf.ihar.dev CNAME
 dig +short au.ihar.dev CNAME
 dig +short js.ihar.dev CNAME
+dig +short shelf.ihar.dev CNAME
 dig +short vi.ihar.dev CNAME
 dig +short ihrachyshka-beast.freeddns.org A
-dig +short ihrachyshka-srvarr.freeddns.org A
-dig +short ihrachyshka-org.freeddns.org A
 systemctl status ddclient
 journalctl -u ddclient -n 100 --no-pager
 curl -I https://jf.ihar.dev
 curl -I https://au.ihar.dev
 curl -I https://js.ihar.dev
+curl -I https://shelf.ihar.dev
 curl -I https://vi.ihar.dev
 ```
 
