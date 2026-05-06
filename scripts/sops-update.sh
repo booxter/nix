@@ -89,13 +89,13 @@ main() {
   sops --decrypt "$secret" > "$tmp"
   cp "$template" "$base"
   if [[ -f "$host_template" ]]; then
-    yq -s '.[0] * .[1]' "$base" "$host_template" > "$merged"
+    yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' "$base" "$host_template" > "$merged"
     mv "$merged" "$base"
   fi
-  yq -s '.[0] * .[1]' "$base" "$tmp" > "$merged"
+  yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' "$base" "$tmp" > "$merged"
   # Keep deterministic key ordering without relying on jq's non-portable sort_keys/1.
   # shellcheck disable=SC2016
-  yq '
+  yq eval '
     def sort_deep:
       if type == "object" then
         to_entries
@@ -113,7 +113,7 @@ main() {
     | if $sops == null then . else . + {"sops": $sops} end
   ' "$merged" > "$sorted"
   # shellcheck disable=SC2016
-  yq '
+  yq eval '
     def sort_deep:
       if type == "object" then
         to_entries

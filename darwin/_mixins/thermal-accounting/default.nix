@@ -256,8 +256,8 @@ in
     '';
 
     launchd.daemons.observability-thermal-export = {
+      command = lib.escapeShellArg (lib.getExe exportMetrics);
       serviceConfig = {
-        ProgramArguments = [ (lib.getExe exportMetrics) ];
         RunAtLoad = true;
         StartInterval = cfg.intervalSeconds;
         StandardOutPath = "/var/log/observability-thermal-export.log";

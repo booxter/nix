@@ -53,13 +53,14 @@ let
         fi
 
         case "$qname" in
-          *.in-addr.arpa|*.ip6.arpa|*.local|localhost)
+          *.in-addr.arpa|*.ip6.arpa|home.arpa|*.home.arpa|*.local|localhost)
             return 1
             ;;
         esac
 
         reg_domain="$(printf '%s\n' "$qname" | psl --print-reg-domain --batch 2>/dev/null | head -n 1)"
         [[ -n "$reg_domain" ]] || return 1
+        [[ "$reg_domain" != "home.arpa" ]] || return 1
         printf '%s\n' "$reg_domain"
       }
 

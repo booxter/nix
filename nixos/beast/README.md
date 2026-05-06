@@ -13,21 +13,22 @@ This host is a storage/NAS node. The host-specific configuration lives in
 - Snapper timelines and scheduled Btrfs scrubs for data hygiene.
 - SMART monitoring for disk health.
 
-## DDNS rollout (`jf.ihar.dev`, `au.ihar.dev`, `js.ihar.dev`)
+## DDNS and public ingress
 
-`nixos/beast/default.nix` runs `services.ddclient` to update Dynu directly from
-this host (instead of router-managed DDNS).
+`beast` is the centralized public web ingress host. The router forwards public
+HTTP(S) traffic to `beast`, and `beast` terminates TLS and proxies to the
+service-owning VM when needed.
 
-1. Create a Dynu hostname (current: `ihrachyshka-home.freeddns.org`).
-1. In `nixos/beast/default.nix`, set:
-   - `dynuHostname = "ihrachyshka-home.freeddns.org";`
-   - `dynuUsername = "ihrachyshka";`
-1. Add `ddns.dynu.password` to `secrets/beast.yaml` via `sops`.
-1. Rebuild on beast.
-1. At your registrar DNS, repoint:
-   - `jf.ihar.dev CNAME <dynu-hostname>`
-   - `au.ihar.dev CNAME <dynu-hostname>`
-   - `js.ihar.dev CNAME <dynu-hostname>`
+Current mapping:
+
+- `ihrachyshka-beast.freeddns.org` is updated from `beast`
+- `jf.ihar.dev` proxies locally on `beast`
+- `au.ihar.dev`, `js.ihar.dev`, and `shelf.ihar.dev` proxy from `beast` to `srvarr`
+- `vi.ihar.dev` proxies from `beast` to `org`
+
+WireGuard can keep its own DDNS hostname separately on `gw`.
+
+The shared module currently checks every `3min`.
 
 Validation:
 
@@ -35,12 +36,16 @@ Validation:
 dig +short jf.ihar.dev CNAME
 dig +short au.ihar.dev CNAME
 dig +short js.ihar.dev CNAME
-dig +short ihrachyshka-home.freeddns.org A
+dig +short shelf.ihar.dev CNAME
+dig +short vi.ihar.dev CNAME
+dig +short ihrachyshka-beast.freeddns.org A
 systemctl status ddclient
 journalctl -u ddclient -n 100 --no-pager
 curl -I https://jf.ihar.dev
 curl -I https://au.ihar.dev
 curl -I https://js.ihar.dev
+curl -I https://shelf.ihar.dev
+curl -I https://vi.ihar.dev
 ```
 
 ## Storage
@@ -134,6 +139,9 @@ sudo systemctl start restic-beast-cloud-offload.service
 
 ## IPMI quirks
 
+- TODO: Re-enable the Prometheus IPMI exporter after the local IPMI card is
+  reinserted and `/dev/ipmi0` exists again. It is intentionally disabled for
+  now because the missing device breaks `nixos-rebuild switch`.
 - If the BMC gets into a broken state, run: `sudo ipmitool raw 0x32 0x66`.
 - On first setup, use a simple password (no special characters) or later
   logins can fail.

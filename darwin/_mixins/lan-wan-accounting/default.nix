@@ -131,8 +131,8 @@ in
     '';
 
     launchd.daemons.observability-lan-wan-accounting = {
+      command = lib.escapeShellArg (lib.getExe installRules);
       serviceConfig = {
-        ProgramArguments = [ (lib.getExe installRules) ];
         RunAtLoad = true;
         StandardOutPath = "/var/log/observability-lan-wan-accounting.log";
         StandardErrorPath = "/var/log/observability-lan-wan-accounting.log";
@@ -140,8 +140,8 @@ in
     };
 
     launchd.daemons.observability-lan-wan-export = {
+      command = lib.escapeShellArg (lib.getExe exportMetrics);
       serviceConfig = {
-        ProgramArguments = [ (lib.getExe exportMetrics) ];
         RunAtLoad = true;
         StartInterval = 15;
         StandardOutPath = "/var/log/observability-lan-wan-export.log";

@@ -34,6 +34,7 @@ in
     ++ [
       ./_mixins/observability-client
       ./_mixins/dns-query-accounting
+      ./_mixins/external-service.nix
       ./_mixins/lan-wan-accounting
       ./_mixins/restic-beast-client.nix
       ./_mixins/user

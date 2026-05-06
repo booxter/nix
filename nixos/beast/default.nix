@@ -168,17 +168,6 @@ let
   nfsPorts = [
     2049 # nfsd
   ];
-  # DDNS provider target for public endpoints (jf/au/js).
-  dynuHostname = "ihrachyshka-home.freeddns.org";
-  dynuUsername = "ihrachyshka";
-  mkPublicProxyVhost = proxyPass: {
-    forceSSL = true;
-    enableACME = true;
-    locations."/" = {
-      proxyPass = proxyPass;
-      proxyWebsockets = true;
-    };
-  };
   diskBayMappings = [
     {
       bay = "1";
@@ -496,72 +485,25 @@ in
     "render"
     "video"
   ];
-  # Keep ddclient on a stable system user instead of DynamicUser. During
-  # switch-to-configuration we observed a transient startup failure where the
-  # generated preStart script tried to chown runtime files to "ddclient" before
-  # the dynamic user/runtime state was ready.
-  users.groups = {
-    ddclient = { };
-    ddclient-secrets = { };
-  };
-  users.users.ddclient = {
-    isSystemUser = true;
-    group = "ddclient";
-  };
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
 
-  # Reverse proxy with automatic TLS.
-  security.acme = {
-    acceptTerms = true;
-    defaults.email = "ihar.hrachyshka@gmail.com";
+  host.externalService = {
+    ddns = {
+      enable = true;
+      hostname = "ihrachyshka-beast.freeddns.org";
+      username = "ihrachyshka";
+    };
+    virtualHosts = {
+      "au.ihar.dev".proxyPass = "http://192.168.20.2:9292";
+      "jf.ihar.dev".proxyPass = "http://127.0.0.1:8096";
+      "js.ihar.dev".proxyPass = "http://192.168.20.2:5055";
+      "shelf.ihar.dev".proxyPass = "http://192.168.20.2:8084";
+      "vi.ihar.dev".proxyPass = "http://192.168.20.4:3456";
+    };
   };
 
-  # Run DDNS updates from this host (instead of the router).
   sops = {
     defaultSopsFile = ../../secrets/beast.yaml;
-    useSystemdActivation = true;
-    secrets.ddnsDynuPassword = {
-      key = "ddns/dynu/password";
-      group = "ddclient-secrets";
-      mode = "0440";
-    };
-  };
-
-  services.ddclient = {
-    enable = true;
-    interval = "1min";
-    protocol = "dyndns2";
-    server = "api.dynu.com";
-    username = dynuUsername;
-    passwordFile = config.sops.secrets.ddnsDynuPassword.path;
-    domains = [ dynuHostname ];
-    ssl = true;
-    quiet = true;
-    usev4 = "webv4,webv4=checkip.dynu.com/,webv4-skip='IP Address'";
-    usev6 = "";
-  };
-  systemd.services.ddclient = {
-    wants = [ "sops-install-secrets.service" ];
-    after = [ "sops-install-secrets.service" ];
-    serviceConfig = {
-      DynamicUser = lib.mkForce false;
-      User = "ddclient";
-      Group = "ddclient";
-      SupplementaryGroups = [ "ddclient-secrets" ];
-    };
-  };
-
-  services.nginx = {
-    enable = true;
-    recommendedProxySettings = true;
-    recommendedTlsSettings = true;
-    virtualHosts = {
-      # Use fixed VM IPs to avoid boot-time DNS dependency.
-      "au.ihar.dev" = mkPublicProxyVhost "http://192.168.20.2:9292";
-      "jf.ihar.dev" = mkPublicProxyVhost "http://127.0.0.1:8096";
-      "js.ihar.dev" = mkPublicProxyVhost "http://192.168.20.2:5055";
-      "vi.ihar.dev" = mkPublicProxyVhost "http://192.168.20.4:3456";
-    };
   };
 
   # Keep the existing /media path expected by Jellyfin/Jellarr.
@@ -576,8 +518,6 @@ in
   };
 
   networking.firewall.allowedTCPPorts = nfsPorts ++ [
-    80
-    443
     smartctlExporterPort
   ];
   networking.firewall.allowedUDPPorts = nfsPorts;
@@ -647,31 +587,9 @@ in
     ];
   };
 
-  services.prometheus.exporters.ipmi = {
-    enable = true;
-    listenAddress = "0.0.0.0";
-    openFirewall = true;
-    configFile = (pkgs.formats.yaml { }).generate "ipmi-local.yml" {
-      modules.default.collectors = [
-        "ipmi"
-        "chassis"
-      ];
-    };
-  };
-
-  users.users.ipmi-exporter = {
-    description = "Prometheus ipmi exporter service user";
-    isSystemUser = true;
-    group = "ipmi-exporter";
-    extraGroups = [ "ipmi-exporter-access" ];
-  };
-
-  users.groups.ipmi-exporter = { };
-  users.groups.ipmi-exporter-access = { };
-
-  services.udev.extraRules = ''
-    KERNEL=="ipmi[0-9]*", SUBSYSTEM=="ipmi", GROUP="ipmi-exporter-access", MODE="0660"
-  '';
+  # TODO: Re-enable the IPMI exporter when the local IPMI card is back and
+  # /dev/ipmi0 exists again. Right now the device is absent, so the exporter
+  # fails during systemd namespace setup and blocks deploys.
 
   services.prometheus.exporters.node = {
     enabledCollectors = lib.mkForce [
@@ -732,15 +650,6 @@ in
       OnUnitActiveSec = "1min";
       Unit = "beast-hba-export.service";
     };
-  };
-
-  systemd.services.prometheus-ipmi-exporter.serviceConfig = {
-    DynamicUser = lib.mkForce false;
-    User = lib.mkForce "ipmi-exporter";
-    Group = lib.mkForce "ipmi-exporter";
-    SupplementaryGroups = [ "ipmi-exporter-access" ];
-    BindPaths = [ "/dev/ipmi0" ];
-    DeviceAllow = [ "/dev/ipmi0 rw" ];
   };
 
   systemd.tmpfiles.rules = [
