@@ -19,6 +19,12 @@ let
   };
 in
 {
+  host.externalService.ddns = {
+    enable = true;
+    hostname = "ihrachyshka-gw.freeddns.org";
+    username = "ihrachyshka";
+  };
+
   assertions = [
     {
       assertion =
