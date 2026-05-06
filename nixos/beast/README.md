@@ -23,7 +23,8 @@ Current mapping:
 
 - `ihrachyshka-beast.freeddns.org` is updated from `beast`
 - `jf.ihar.dev` proxies locally on `beast`
-- `au.ihar.dev`, `js.ihar.dev`, `mu.ihar.dev`, and `shelf.ihar.dev` proxy from `beast` to `srvarr`
+- `au.ihar.dev`, `js.ihar.dev`, `mu.ihar.dev`, and `shelf.ihar.dev`
+  proxy from `beast` to `srvarr`
 - `vi.ihar.dev` proxies from `beast` to `org`
 
 WireGuard can keep its own DDNS hostname separately on `gw`.
