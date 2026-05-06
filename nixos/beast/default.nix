@@ -587,31 +587,9 @@ in
     ];
   };
 
-  services.prometheus.exporters.ipmi = {
-    enable = true;
-    listenAddress = "0.0.0.0";
-    openFirewall = true;
-    configFile = (pkgs.formats.yaml { }).generate "ipmi-local.yml" {
-      modules.default.collectors = [
-        "ipmi"
-        "chassis"
-      ];
-    };
-  };
-
-  users.users.ipmi-exporter = {
-    description = "Prometheus ipmi exporter service user";
-    isSystemUser = true;
-    group = "ipmi-exporter";
-    extraGroups = [ "ipmi-exporter-access" ];
-  };
-
-  users.groups.ipmi-exporter = { };
-  users.groups.ipmi-exporter-access = { };
-
-  services.udev.extraRules = ''
-    KERNEL=="ipmi[0-9]*", SUBSYSTEM=="ipmi", GROUP="ipmi-exporter-access", MODE="0660"
-  '';
+  # TODO: Re-enable the IPMI exporter when the local IPMI card is back and
+  # /dev/ipmi0 exists again. Right now the device is absent, so the exporter
+  # fails during systemd namespace setup and blocks deploys.
 
   services.prometheus.exporters.node = {
     enabledCollectors = lib.mkForce [
@@ -672,15 +650,6 @@ in
       OnUnitActiveSec = "1min";
       Unit = "beast-hba-export.service";
     };
-  };
-
-  systemd.services.prometheus-ipmi-exporter.serviceConfig = {
-    DynamicUser = lib.mkForce false;
-    User = lib.mkForce "ipmi-exporter";
-    Group = lib.mkForce "ipmi-exporter";
-    SupplementaryGroups = [ "ipmi-exporter-access" ];
-    BindPaths = [ "/dev/ipmi0" ];
-    DeviceAllow = [ "/dev/ipmi0 rw" ];
   };
 
   systemd.tmpfiles.rules = [

@@ -139,6 +139,9 @@ sudo systemctl start restic-beast-cloud-offload.service
 
 ## IPMI quirks
 
+- TODO: Re-enable the Prometheus IPMI exporter after the local IPMI card is
+  reinserted and `/dev/ipmi0` exists again. It is intentionally disabled for
+  now because the missing device breaks `nixos-rebuild switch`.
 - If the BMC gets into a broken state, run: `sudo ipmitool raw 0x32 0x66`.
 - On first setup, use a simple password (no special characters) or later
   logins can fail.

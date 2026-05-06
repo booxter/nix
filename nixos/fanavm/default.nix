@@ -757,21 +757,8 @@ in
           }
         ];
       }
-      {
-        job_name = "ipmi";
-        static_configs = [
-          {
-            targets = [
-              "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString outputs.nixosConfigurations.beast.config.services.prometheus.exporters.ipmi.port}"
-            ];
-            labels = {
-              host_class = "hardware";
-              host_virtual = "false";
-              instance = "${outputs.nixosConfigurations.beast.config.host.dnsName}:9100";
-            };
-          }
-        ];
-      }
+      # TODO: Restore the beast IPMI scrape target when the local IPMI card is
+      # back and the exporter is re-enabled on beast.
       {
         job_name = "vikunja";
         metrics_path = "/api/v1/metrics";
