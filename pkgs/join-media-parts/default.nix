@@ -157,6 +157,22 @@ writeShellApplication {
     echo "joining ''${#part_files[@]} .$input_ext parts from $input_dir"
     printf '  %s\n' "''${part_files[@]}"
 
+    write_concat_file() {
+      local destination="$1"
+      shift
+
+      : > "$destination"
+      for part_file in "$@"; do
+        case "$part_file" in
+          *"'"*)
+            echo "filenames containing single quotes are not supported: $part_file" >&2
+            exit 1
+            ;;
+        esac
+        printf "file '%s'\n" "$part_file" >> "$destination"
+      done
+    }
+
     output_ext="''${output_path##*.}"
     output_ext="''${output_ext,,}"
 
@@ -177,20 +193,30 @@ writeShellApplication {
           ;;
       esac
     else
-      concat_file="$tmp_dir/concat.txt"
-      for part_file in "''${part_files[@]}"; do
-        case "$part_file" in
-          *"'"*)
-            echo "filenames containing single quotes are not supported: $part_file" >&2
-            exit 1
-            ;;
-        esac
-        printf "file '%s'\n" "$part_file" >> "$concat_file"
+      normalized_dir="$tmp_dir/normalized"
+      mkdir -p "$normalized_dir"
+      normalized_files=()
+
+      for idx in "''${!part_files[@]}"; do
+        part_file="''${part_files[$idx]}"
+        normalized_part="$normalized_dir/$(printf '%04d.mkv' "$((idx + 1))")"
+        echo "normalizing timestamps for $(basename "$part_file")"
+        ffmpeg -hide_banner -loglevel warning -y \
+          -fflags +genpts+igndts \
+          -i "$part_file" \
+          -map 0 \
+          -c copy \
+          -avoid_negative_ts make_zero \
+          "$normalized_part"
+        normalized_files+=( "$normalized_part" )
       done
+
+      concat_file="$tmp_dir/concat.txt"
+      write_concat_file "$concat_file" "''${normalized_files[@]}"
 
       case "$output_ext" in
         mkv|mp4)
-          ffmpeg -hide_banner -loglevel warning -y -f concat -safe 0 -i "$concat_file" -c copy "$output_path"
+          ffmpeg -hide_banner -loglevel warning -y -f concat -safe 0 -i "$concat_file" -map 0 -c copy "$output_path"
           ;;
         *)
           echo "unsupported output extension for .$input_ext input: .$output_ext (expected .mkv or .mp4)" >&2
