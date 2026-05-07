@@ -1,4 +1,10 @@
-{ lib, username, ... }:
+{
+  config,
+  inputs,
+  lib,
+  username,
+  ...
+}:
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''
     if [ -x /usr/bin/xcodebuild ] && [ -x /usr/bin/xcode-select ]; then
@@ -17,6 +23,10 @@
   homebrew = {
     enable = true;
     onActivation.autoUpdate = true;
+    # Use pinned local taps during activation because our pinned brew can lag
+    # behind Homebrew's API schema for casks.
+    onActivation.extraEnv.HOMEBREW_NO_INSTALL_FROM_API = "1";
+    taps = builtins.attrNames config.nix-homebrew.taps;
     casks = [
       "docker-desktop"
       "element"
@@ -30,5 +40,9 @@
   nix-homebrew = {
     enable = true;
     user = username;
+    taps = {
+      "homebrew/homebrew-core" = inputs.homebrew-core;
+      "homebrew/homebrew-cask" = inputs.homebrew-cask;
+    };
   };
 }
