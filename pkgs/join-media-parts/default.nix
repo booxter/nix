@@ -173,6 +173,76 @@ writeShellApplication {
       done
     }
 
+    remux_ts_streams() {
+      local input_path="$1"
+      local output_path="$2"
+      local output_ext="$3"
+      local stream_index=""
+      local codec_type=""
+      local codec_name=""
+      local -a selected_maps=()
+      local -a av_maps=()
+      local -a skipped_streams=()
+
+      while IFS=, read -r stream_index codec_name codec_type; do
+        [ -n "$stream_index" ] || continue
+        case "$codec_type" in
+          video|audio)
+            selected_maps+=( -map "0:$stream_index" )
+            av_maps+=( -map "0:$stream_index" )
+            ;;
+          subtitle)
+            case "$output_ext:$codec_name" in
+              mkv:dvb_teletext|mp4:*)
+                skipped_streams+=( "$codec_type stream $stream_index ($codec_name)" )
+                ;;
+              *)
+                selected_maps+=( -map "0:$stream_index" )
+                ;;
+            esac
+            ;;
+          *)
+            skipped_streams+=( "$codec_type stream $stream_index ($codec_name)" )
+            ;;
+        esac
+      done < <(
+        ffprobe -hide_banner -loglevel error \
+          -show_entries stream=index,codec_type,codec_name \
+          -of csv=p=0 \
+          "$input_path"
+      )
+
+      if [ "''${#av_maps[@]}" -eq 0 ]; then
+        echo "could not find any audio or video streams in $input_path" >&2
+        exit 1
+      fi
+
+      if [ "''${#skipped_streams[@]}" -gt 0 ]; then
+        printf 'skipping incompatible streams for .%s output:\n' "$output_ext" >&2
+        printf '  %s\n' "''${skipped_streams[@]}" >&2
+      fi
+
+      if ffmpeg -hide_banner -loglevel warning -y \
+        -i "$input_path" \
+        "''${selected_maps[@]}" \
+        -c copy \
+        "$output_path"
+      then
+        return 0
+      fi
+
+      if [ "''${#selected_maps[@]}" -eq "''${#av_maps[@]}" ]; then
+        return 1
+      fi
+
+      echo "remux failed with subtitle streams; retrying with video/audio streams only" >&2
+      ffmpeg -hide_banner -loglevel warning -y \
+        -i "$input_path" \
+        "''${av_maps[@]}" \
+        -c copy \
+        "$output_path"
+    }
+
     output_ext="''${output_path##*.}"
     output_ext="''${output_ext,,}"
 
@@ -185,7 +255,7 @@ writeShellApplication {
           mv "$joined_ts" "$output_path"
           ;;
         mkv|mp4)
-          ffmpeg -hide_banner -loglevel warning -y -i "$joined_ts" -c copy "$output_path"
+          remux_ts_streams "$joined_ts" "$output_path" "$output_ext"
           ;;
         *)
           echo "unsupported output extension for TS input: .$output_ext (expected .mkv, .mp4, or .ts)" >&2
