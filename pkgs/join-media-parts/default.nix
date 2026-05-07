@@ -174,9 +174,10 @@ writeShellApplication {
     }
 
     remux_ts_streams() {
-      local input_path="$1"
-      local output_path="$2"
-      local output_ext="$3"
+      local output_path="$1"
+      local output_ext="$2"
+      shift 2
+      local -a input_args=( "$@" )
       local stream_index=""
       local codec_type=""
       local codec_name=""
@@ -209,11 +210,11 @@ writeShellApplication {
         ffprobe -hide_banner -loglevel error \
           -show_entries stream=index,codec_type,codec_name \
           -of csv=p=0 \
-          "$input_path"
+          "''${input_args[@]}"
       )
 
       if [ "''${#av_maps[@]}" -eq 0 ]; then
-        echo "could not find any audio or video streams in $input_path" >&2
+        echo "could not find any audio or video streams in input TS parts" >&2
         exit 1
       fi
 
@@ -223,7 +224,7 @@ writeShellApplication {
       fi
 
       if ffmpeg -hide_banner -loglevel warning -y \
-        -i "$input_path" \
+        "''${input_args[@]}" \
         "''${selected_maps[@]}" \
         -c copy \
         "$output_path"
@@ -237,7 +238,7 @@ writeShellApplication {
 
       echo "remux failed with subtitle streams; retrying with video/audio streams only" >&2
       ffmpeg -hide_banner -loglevel warning -y \
-        -i "$input_path" \
+        "''${input_args[@]}" \
         "''${av_maps[@]}" \
         -c copy \
         "$output_path"
@@ -247,15 +248,16 @@ writeShellApplication {
     output_ext="''${output_ext,,}"
 
     if [ "$input_ext" = "ts" ]; then
-      joined_ts="$tmp_dir/joined.ts"
-      cat "''${part_files[@]}" > "$joined_ts"
-
       case "$output_ext" in
         ts)
+          joined_ts="$tmp_dir/joined.ts"
+          cat "''${part_files[@]}" > "$joined_ts"
           mv "$joined_ts" "$output_path"
           ;;
         mkv|mp4)
-          remux_ts_streams "$joined_ts" "$output_path" "$output_ext"
+          concat_file="$tmp_dir/concat.txt"
+          write_concat_file "$concat_file" "''${part_files[@]}"
+          remux_ts_streams "$output_path" "$output_ext" -f concat -safe 0 -i "$concat_file"
           ;;
         *)
           echo "unsupported output extension for TS input: .$output_ext (expected .mkv, .mp4, or .ts)" >&2

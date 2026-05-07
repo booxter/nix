@@ -65,15 +65,24 @@ helpers.forAllSystems (
         mkdir 'ts case'
         ffmpeg -hide_banner -loglevel error -y \
           -f lavfi -i color=c=black:s=64x64:r=25:d=1 \
+          -f lavfi -i sine=frequency=440:sample_rate=48000:d=1 \
           -c:v libx264 -pix_fmt yuv420p -f mpegts \
+          -c:a mp2 -shortest \
           'ts case/01_part.ts'
         ffmpeg -hide_banner -loglevel error -y \
           -f lavfi -i color=c=blue:s=64x64:r=25:d=1 \
+          -f lavfi -i sine=frequency=880:sample_rate=48000:d=1 \
           -c:v libx264 -pix_fmt yuv420p -f mpegts \
+          -c:a mp2 -shortest \
           'ts case/02_part.ts'
         join-media-parts 'ts case'
         test -f 'ts case/ts case.mkv'
         ffprobe -hide_banner -loglevel error 'ts case/ts case.mkv' >/dev/null
+        ffprobe -hide_banner -loglevel error \
+          -show_entries stream=codec_type \
+          -of csv=p=0 \
+          'ts case/ts case.mkv' \
+          | awk 'BEGIN { video = 0; audio = 0 } $0 == "video" { video++ } $0 == "audio" { audio++ } END { exit !(video == 1 && audio == 1) }'
 
         mkdir 'mp4 case (sample)'
         ffmpeg -hide_banner -loglevel error -y \
