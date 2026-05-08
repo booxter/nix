@@ -157,19 +157,107 @@ writeShellApplication {
     echo "joining ''${#part_files[@]} .$input_ext parts from $input_dir"
     printf '  %s\n' "''${part_files[@]}"
 
+    write_concat_file() {
+      local destination="$1"
+      shift
+
+      : > "$destination"
+      for part_file in "$@"; do
+        case "$part_file" in
+          *"'"*)
+            echo "filenames containing single quotes are not supported: $part_file" >&2
+            exit 1
+            ;;
+        esac
+        printf "file '%s'\n" "$part_file" >> "$destination"
+      done
+    }
+
+    remux_ts_streams() {
+      local output_path="$1"
+      local output_ext="$2"
+      shift 2
+      local -a input_args=( "$@" )
+      local stream_index=""
+      local codec_type=""
+      local codec_name=""
+      local -a selected_maps=()
+      local -a av_maps=()
+      local -a skipped_streams=()
+
+      while IFS=, read -r stream_index codec_name codec_type; do
+        [ -n "$stream_index" ] || continue
+        case "$codec_type" in
+          video|audio)
+            selected_maps+=( -map "0:$stream_index" )
+            av_maps+=( -map "0:$stream_index" )
+            ;;
+          subtitle)
+            case "$output_ext:$codec_name" in
+              mkv:dvb_teletext|mp4:*)
+                skipped_streams+=( "$codec_type stream $stream_index ($codec_name)" )
+                ;;
+              *)
+                selected_maps+=( -map "0:$stream_index" )
+                ;;
+            esac
+            ;;
+          *)
+            skipped_streams+=( "$codec_type stream $stream_index ($codec_name)" )
+            ;;
+        esac
+      done < <(
+        ffprobe -hide_banner -loglevel error \
+          -show_entries stream=index,codec_type,codec_name \
+          -of csv=p=0 \
+          "''${input_args[@]}"
+      )
+
+      if [ "''${#av_maps[@]}" -eq 0 ]; then
+        echo "could not find any audio or video streams in input TS parts" >&2
+        exit 1
+      fi
+
+      if [ "''${#skipped_streams[@]}" -gt 0 ]; then
+        printf 'skipping incompatible streams for .%s output:\n' "$output_ext" >&2
+        printf '  %s\n' "''${skipped_streams[@]}" >&2
+      fi
+
+      if ffmpeg -hide_banner -loglevel warning -y \
+        "''${input_args[@]}" \
+        "''${selected_maps[@]}" \
+        -c copy \
+        "$output_path"
+      then
+        return 0
+      fi
+
+      if [ "''${#selected_maps[@]}" -eq "''${#av_maps[@]}" ]; then
+        return 1
+      fi
+
+      echo "remux failed with subtitle streams; retrying with video/audio streams only" >&2
+      ffmpeg -hide_banner -loglevel warning -y \
+        "''${input_args[@]}" \
+        "''${av_maps[@]}" \
+        -c copy \
+        "$output_path"
+    }
+
     output_ext="''${output_path##*.}"
     output_ext="''${output_ext,,}"
 
     if [ "$input_ext" = "ts" ]; then
-      joined_ts="$tmp_dir/joined.ts"
-      cat "''${part_files[@]}" > "$joined_ts"
-
       case "$output_ext" in
         ts)
+          joined_ts="$tmp_dir/joined.ts"
+          cat "''${part_files[@]}" > "$joined_ts"
           mv "$joined_ts" "$output_path"
           ;;
         mkv|mp4)
-          ffmpeg -hide_banner -loglevel warning -y -i "$joined_ts" -c copy "$output_path"
+          concat_file="$tmp_dir/concat.txt"
+          write_concat_file "$concat_file" "''${part_files[@]}"
+          remux_ts_streams "$output_path" "$output_ext" -f concat -safe 0 -i "$concat_file"
           ;;
         *)
           echo "unsupported output extension for TS input: .$output_ext (expected .mkv, .mp4, or .ts)" >&2
@@ -177,20 +265,30 @@ writeShellApplication {
           ;;
       esac
     else
-      concat_file="$tmp_dir/concat.txt"
-      for part_file in "''${part_files[@]}"; do
-        case "$part_file" in
-          *"'"*)
-            echo "filenames containing single quotes are not supported: $part_file" >&2
-            exit 1
-            ;;
-        esac
-        printf "file '%s'\n" "$part_file" >> "$concat_file"
+      normalized_dir="$tmp_dir/normalized"
+      mkdir -p "$normalized_dir"
+      normalized_files=()
+
+      for idx in "''${!part_files[@]}"; do
+        part_file="''${part_files[$idx]}"
+        normalized_part="$normalized_dir/$(printf '%04d.mkv' "$((idx + 1))")"
+        echo "normalizing timestamps for $(basename "$part_file")"
+        ffmpeg -hide_banner -loglevel warning -y \
+          -fflags +genpts+igndts \
+          -i "$part_file" \
+          -map 0 \
+          -c copy \
+          -avoid_negative_ts make_zero \
+          "$normalized_part"
+        normalized_files+=( "$normalized_part" )
       done
+
+      concat_file="$tmp_dir/concat.txt"
+      write_concat_file "$concat_file" "''${normalized_files[@]}"
 
       case "$output_ext" in
         mkv|mp4)
-          ffmpeg -hide_banner -loglevel warning -y -f concat -safe 0 -i "$concat_file" -c copy "$output_path"
+          ffmpeg -hide_banner -loglevel warning -y -f concat -safe 0 -i "$concat_file" -map 0 -c copy "$output_path"
           ;;
         *)
           echo "unsupported output extension for .$input_ext input: .$output_ext (expected .mkv or .mp4)" >&2
