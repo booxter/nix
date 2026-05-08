@@ -107,7 +107,7 @@
               }
             ]
           },
-          "unit": "Bps"
+          "unit": "Mbps"
         },
         "overrides": []
       },
@@ -224,7 +224,7 @@
               }
             ]
           },
-          "unit": "Bps"
+          "unit": "Mbps"
         },
         "overrides": []
       },
@@ -250,7 +250,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}[3m]) * 8 / 1000000",
           "legendFormat": "Private Upload Throughput",
           "range": true,
           "refId": "A"
@@ -258,7 +258,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}[3m]) * 8 / 1000000",
           "legendFormat": "Public Upload Throughput",
           "range": true,
           "refId": "B"
@@ -3932,6 +3932,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 26,
+  "version": 27,
   "weekStart": ""
 }
