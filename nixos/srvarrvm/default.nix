@@ -98,6 +98,7 @@ in
     inputs.nixarr.nixosModules.default
     ./aurral.nix
     ./backup.nix
+    ./transmission-tracker-prioritizer.nix
   ];
 
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;

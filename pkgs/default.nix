@@ -14,4 +14,8 @@ pkgs: {
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
   aurral = pkgs.callPackage ./aurral { };
+
+  transmission-tracker-prioritizer =
+    pkgs.callPackage ./transmission-private-tracker-prioritizer
+      { };
 }

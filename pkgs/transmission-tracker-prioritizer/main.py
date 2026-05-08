@@ -1,0 +1,350 @@
+#!/usr/bin/env python3
+
+import argparse
+import json
+import logging
+import os
+import socket
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from pathlib import Path
+from typing import Iterable
+
+
+LOG = logging.getLogger("transmission-tracker-prioritizer")
+TR_PRI_NORMAL = 0
+TR_PRI_HIGH = 1
+
+
+class TransmissionRpcError(RuntimeError):
+    pass
+
+
+class TransmissionRpcClient:
+    def __init__(self, rpc_url: str, timeout_seconds: float) -> None:
+        self.rpc_url = rpc_url
+        self.timeout_seconds = timeout_seconds
+        self.session_id: str | None = None
+
+    def call(self, method: str, arguments: dict | None = None) -> dict:
+        payload = json.dumps(
+            {
+                "method": method,
+                "arguments": arguments or {},
+            }
+        ).encode("utf-8")
+
+        for attempt in range(2):
+            headers = {
+                "Content-Type": "application/json",
+            }
+            if self.session_id is not None:
+                headers["X-Transmission-Session-Id"] = self.session_id
+
+            request = urllib.request.Request(
+                self.rpc_url,
+                data=payload,
+                headers=headers,
+                method="POST",
+            )
+
+            try:
+                with urllib.request.urlopen(
+                    request, timeout=self.timeout_seconds
+                ) as response:
+                    body = response.read().decode("utf-8")
+            except urllib.error.HTTPError as exc:
+                if exc.code == 409 and attempt == 0:
+                    session_id = exc.headers.get("X-Transmission-Session-Id")
+                    if session_id:
+                        self.session_id = session_id
+                        continue
+                raise TransmissionRpcError(
+                    f"HTTP {exc.code} from Transmission RPC"
+                ) from exc
+            except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
+                raise TransmissionRpcError(
+                    f"request to Transmission RPC failed: {exc}"
+                ) from exc
+
+            try:
+                parsed = json.loads(body)
+            except json.JSONDecodeError as exc:
+                raise TransmissionRpcError(
+                    "Transmission RPC returned invalid JSON"
+                ) from exc
+
+            result = parsed.get("result")
+            if result != "success":
+                raise TransmissionRpcError(f"Transmission RPC returned {result!r}")
+
+            return parsed.get("arguments", {})
+
+        raise TransmissionRpcError("failed to negotiate Transmission session id")
+
+
+def normalize_tracker_host(raw_value: str) -> str:
+    value = raw_value.strip()
+    if not value:
+        return ""
+
+    if "://" in value:
+        parsed = urllib.parse.urlparse(value)
+        return (parsed.hostname or "").lower()
+
+    if value.startswith("[") and "]" in value:
+        return value[1 : value.index("]")].lower()
+
+    value = value.rsplit("@", 1)[-1]
+    value = value.split("/", 1)[0]
+    value = value.split(":", 1)[0]
+    return value.lower()
+
+
+def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
+    if not trackers_file.exists():
+        return None
+
+    try:
+        lines = trackers_file.read_text().splitlines()
+    except OSError as exc:
+        LOG.warning("unable to read tracker host file %s: %s", trackers_file, exc)
+        return None
+
+    hosts: set[str] = set()
+    for line_number, raw_line in enumerate(lines, start=1):
+        line = raw_line.split("#", 1)[0].strip()
+        if not line:
+            continue
+
+        host = normalize_tracker_host(line)
+        if not host:
+            LOG.warning("ignoring empty tracker host entry on line %s", line_number)
+            continue
+        hosts.add(host)
+
+    return hosts
+
+
+def load_managed_hashes(state_file: Path) -> set[str]:
+    if not state_file.exists():
+        return set()
+
+    try:
+        state = json.loads(state_file.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        LOG.warning("discarding unreadable state file %s: %s", state_file, exc)
+        return set()
+
+    hashes = state.get("managed_hashes", [])
+    if not isinstance(hashes, list):
+        return set()
+    return {value for value in hashes if isinstance(value, str)}
+
+
+def save_managed_hashes(state_file: Path, managed_hashes: Iterable[str]) -> None:
+    state_file.parent.mkdir(parents=True, exist_ok=True)
+    tmp_file = state_file.with_suffix(".tmp")
+    payload = {
+        "managed_hashes": sorted(set(managed_hashes)),
+    }
+    tmp_file.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    os.replace(tmp_file, state_file)
+
+
+def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
+    for tracker in torrent.get("trackerStats", []):
+        if not isinstance(tracker, dict):
+            continue
+        host = normalize_tracker_host(str(tracker.get("host", "")))
+        if host and host in tracker_hosts:
+            return True
+
+        announce = tracker.get("announce")
+        if isinstance(announce, str):
+            host = normalize_tracker_host(announce)
+            if host and host in tracker_hosts:
+                return True
+
+    return False
+
+
+def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
+    arguments = client.call(
+        "torrent-get",
+        {
+            "fields": [
+                "id",
+                "name",
+                "hashString",
+                "bandwidthPriority",
+                "trackerStats",
+            ]
+        },
+    )
+    torrents = arguments.get("torrents", [])
+    if not isinstance(torrents, list):
+        raise TransmissionRpcError("Transmission RPC returned an invalid torrent list")
+    return torrents
+
+
+def rpc_set_bandwidth_priority(
+    client: TransmissionRpcClient,
+    torrent_hashes: list[str],
+    priority: int,
+) -> None:
+    if not torrent_hashes:
+        return
+
+    client.call(
+        "torrent-set",
+        {
+            "ids": torrent_hashes,
+            "bandwidthPriority": priority,
+        },
+    )
+
+
+def run_iteration(
+    client: TransmissionRpcClient,
+    trackers_file: Path,
+    state_file: Path,
+    last_tracker_status: str | None,
+) -> str | None:
+    tracker_hosts = load_tracker_hosts(trackers_file)
+    if tracker_hosts is None:
+        status = f"missing:{trackers_file}"
+        if status != last_tracker_status:
+            LOG.warning(
+                "tracker host file %s does not exist yet; skipping until it is created",
+                trackers_file,
+            )
+        return status
+
+    torrents = rpc_get_torrents(client)
+    managed_hashes = load_managed_hashes(state_file)
+
+    current_preferred_hashes: set[str] = set()
+    priorities_by_hash: dict[str, int] = {}
+
+    for torrent in torrents:
+        torrent_hash = torrent.get("hashString")
+        if not isinstance(torrent_hash, str) or not torrent_hash:
+            continue
+
+        is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
+        if is_preferred:
+            current_preferred_hashes.add(torrent_hash)
+
+        priority = torrent.get("bandwidthPriority")
+        priorities_by_hash[torrent_hash] = (
+            priority if isinstance(priority, int) else TR_PRI_NORMAL
+        )
+
+    to_promote = sorted(
+        torrent_hash
+        for torrent_hash in current_preferred_hashes
+        if priorities_by_hash.get(torrent_hash) != TR_PRI_HIGH
+    )
+    to_demote = sorted(
+        torrent_hash
+        for torrent_hash in managed_hashes - current_preferred_hashes
+        if priorities_by_hash.get(torrent_hash) == TR_PRI_HIGH
+    )
+
+    rpc_set_bandwidth_priority(client, to_promote, TR_PRI_HIGH)
+    rpc_set_bandwidth_priority(client, to_demote, TR_PRI_NORMAL)
+    save_managed_hashes(state_file, current_preferred_hashes)
+
+    LOG.info(
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s promoted=%s demoted=%s",
+        len(tracker_hosts),
+        len(current_preferred_hashes),
+        len(to_promote),
+        len(to_demote),
+    )
+    return f"loaded:{len(tracker_hosts)}"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Continuously raise Transmission bandwidth priority for torrents on selected trackers.",
+    )
+    parser.add_argument(
+        "--rpc-url",
+        default="http://127.0.0.1:9091/transmission/rpc",
+        help="Transmission RPC URL.",
+    )
+    parser.add_argument(
+        "--trackers-file",
+        required=True,
+        help="Path to a file containing one tracker host or announce URL per line.",
+    )
+    parser.add_argument(
+        "--state-file",
+        required=True,
+        help="Path to the JSON state file used to track previously managed torrents.",
+    )
+    parser.add_argument(
+        "--interval-seconds",
+        type=float,
+        default=60.0,
+        help="Delay between iterations.",
+    )
+    parser.add_argument(
+        "--request-timeout-seconds",
+        type=float,
+        default=15.0,
+        help="Per-request timeout when talking to Transmission.",
+    )
+    parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Logging verbosity.",
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = parse_args()
+    logging.basicConfig(
+        level=getattr(logging, args.log_level),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+
+    client = TransmissionRpcClient(
+        rpc_url=args.rpc_url,
+        timeout_seconds=args.request_timeout_seconds,
+    )
+    trackers_file = Path(args.trackers_file)
+    state_file = Path(args.state_file)
+    last_tracker_status: str | None = None
+
+    while True:
+        started_at = time.monotonic()
+        try:
+            last_tracker_status = run_iteration(
+                client=client,
+                trackers_file=trackers_file,
+                state_file=state_file,
+                last_tracker_status=last_tracker_status,
+            )
+        except TransmissionRpcError as exc:
+            LOG.warning("skipping iteration after Transmission RPC failure: %s", exc)
+        except Exception:
+            LOG.exception("skipping iteration after unexpected failure")
+
+        sleep_for = max(0.0, args.interval_seconds - (time.monotonic() - started_at))
+        time.sleep(sleep_for)
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except KeyboardInterrupt:
+        print("", file=sys.stderr)
+        raise SystemExit(0)
