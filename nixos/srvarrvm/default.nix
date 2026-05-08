@@ -178,6 +178,9 @@ in
     jellyseerr = {
       enable = true;
       openFirewall = true;
+      # nixarr still defaults to pkgs.jellyseerr, which now forwards to
+      # pkgs.seerr with a rename warning.
+      package = pkgs.seerr;
     };
     prowlarr = {
       enable = true;
