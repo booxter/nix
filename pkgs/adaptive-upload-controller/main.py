@@ -110,8 +110,12 @@ class TransmissionRpcClient:
 
 
 def now_utc_iso8601() -> str:
+    return datetime_to_utc_iso8601(datetime.datetime.now(datetime.timezone.utc))
+
+
+def datetime_to_utc_iso8601(value: datetime.datetime) -> str:
     return (
-        datetime.datetime.now(datetime.timezone.utc)
+        value.astimezone(datetime.timezone.utc)
         .replace(microsecond=0)
         .isoformat()
         .replace("+00:00", "Z")
@@ -307,46 +311,217 @@ def collect_video_stream_counts(
     return total_streams, external_streams
 
 
-def decide_policy_state(args: argparse.Namespace) -> dict:
+def observed_policy_state_from_stream_counts(
+    args: argparse.Namespace,
+    total_video_streams: int,
+    active_external_video_streams: int,
+) -> dict:
+    if active_external_video_streams == 0:
+        target_mbit = args.no_streams_mbit
+        reason = "no_active_video_streams"
+    elif active_external_video_streams == 1:
+        target_mbit = args.one_stream_mbit
+        reason = "one_active_video_stream"
+    else:
+        target_mbit = args.many_streams_mbit
+        reason = "multiple_active_video_streams"
+
+    return {
+        "active_external_video_streams": active_external_video_streams,
+        "active_video_streams_total": total_video_streams,
+        "exporter_ok": True,
+        "reason": reason,
+        "target_mbit": target_mbit,
+    }
+
+
+def fallback_observed_policy_state(args: argparse.Namespace, reason: str) -> dict:
+    return {
+        "active_external_video_streams": None,
+        "active_video_streams_total": None,
+        "exporter_ok": False,
+        "reason": reason,
+        "target_mbit": args.many_streams_mbit,
+    }
+
+
+def target_rank(args: argparse.Namespace, target_mbit: int) -> int:
+    if target_mbit == args.no_streams_mbit:
+        return 0
+    if target_mbit == args.one_stream_mbit:
+        return 1
+    if target_mbit == args.many_streams_mbit:
+        return 2
+    raise ControllerError(f"unknown target_mbit {target_mbit}")
+
+
+def load_decider_state(
+    state_file: Path, args: argparse.Namespace
+) -> tuple[int | None, int | None, datetime.datetime | None]:
+    try:
+        parsed = json.loads(state_file.read_text())
+    except (OSError, json.JSONDecodeError):
+        return None, None, None
+
+    if not isinstance(parsed, dict):
+        return None, None, None
+
+    effective_target_mbit = parsed.get("target_mbit")
+    if not isinstance(effective_target_mbit, int) or effective_target_mbit not in {
+        args.no_streams_mbit,
+        args.one_stream_mbit,
+        args.many_streams_mbit,
+    }:
+        effective_target_mbit = None
+
+    pending_target_mbit = parsed.get("relaxation_pending_target_mbit")
+    pending_since = parsed.get("relaxation_pending_since")
+    if (
+        not isinstance(pending_target_mbit, int)
+        or pending_target_mbit
+        not in {args.no_streams_mbit, args.one_stream_mbit, args.many_streams_mbit}
+        or not isinstance(pending_since, str)
+    ):
+        return effective_target_mbit, None, None
+
+    parsed_pending_since = parse_utc_iso8601(pending_since)
+    if parsed_pending_since is None:
+        return effective_target_mbit, None, None
+
+    return effective_target_mbit, pending_target_mbit, parsed_pending_since
+
+
+def build_policy_state(
+    *,
+    args: argparse.Namespace,
+    observed_state: dict,
+    effective_target_mbit: int,
+    effective_reason: str,
+    relaxation_pending_target_mbit: int | None,
+    relaxation_pending_since: datetime.datetime | None,
+) -> dict:
+    transmission_upload_limit_kbps = calculate_transmission_upload_limit_kbps(
+        effective_target_mbit, args.transmission_headroom_fraction
+    )
+    return {
+        "active_external_video_streams": observed_state[
+            "active_external_video_streams"
+        ],
+        "active_video_streams_total": observed_state["active_video_streams_total"],
+        "exporter_ok": observed_state["exporter_ok"],
+        "observed_reason": observed_state["reason"],
+        "observed_target_mbit": observed_state["target_mbit"],
+        "public_group_upload_limit_kbps": calculate_public_group_limit_kbps(
+            transmission_upload_limit_kbps, args.public_group_fraction
+        ),
+        "reason": effective_reason,
+        "relaxation_hold_seconds": args.relaxation_hold_seconds,
+        "relaxation_pending_since": (
+            datetime_to_utc_iso8601(relaxation_pending_since)
+            if relaxation_pending_since is not None
+            else None
+        ),
+        "relaxation_pending_target_mbit": relaxation_pending_target_mbit,
+        "target_mbit": effective_target_mbit,
+        "target_tc_rate": f"{effective_target_mbit}mbit",
+        "transmission_upload_limit_kbps": transmission_upload_limit_kbps,
+        "updated_at": now_utc_iso8601(),
+    }
+
+
+def decide_observed_policy_state(args: argparse.Namespace) -> dict:
     try:
         metrics_text = fetch_url_text(args.exporter_url, args.request_timeout_seconds)
         total_video_streams, active_external_video_streams = (
             collect_video_stream_counts(metrics_text, set(args.video_types))
         )
-        if active_external_video_streams == 0:
-            target_mbit = args.no_streams_mbit
-            reason = "no_active_video_streams"
-        elif active_external_video_streams == 1:
-            target_mbit = args.one_stream_mbit
-            reason = "one_active_video_stream"
-        else:
-            target_mbit = args.many_streams_mbit
-            reason = "multiple_active_video_streams"
-        exporter_ok = True
+        return observed_policy_state_from_stream_counts(
+            args=args,
+            total_video_streams=total_video_streams,
+            active_external_video_streams=active_external_video_streams,
+        )
     except ControllerError as exc:
         LOG.warning("using conservative fallback after exporter failure: %s", exc)
-        target_mbit = args.many_streams_mbit
-        total_video_streams = None
-        active_external_video_streams = None
-        reason = "exporter_unreachable"
-        exporter_ok = False
+        return fallback_observed_policy_state(args, "exporter_unreachable")
 
-    transmission_upload_limit_kbps = calculate_transmission_upload_limit_kbps(
-        target_mbit, args.transmission_headroom_fraction
+
+def decide_effective_policy_state(args: argparse.Namespace, state_file: Path) -> dict:
+    observed_state = decide_observed_policy_state(args)
+    now = datetime.datetime.now(datetime.timezone.utc)
+    (
+        current_effective_target_mbit,
+        relaxation_pending_target_mbit,
+        relaxation_pending_since,
+    ) = load_decider_state(state_file, args)
+
+    observed_target_mbit = observed_state["target_mbit"]
+
+    if current_effective_target_mbit is None:
+        return build_policy_state(
+            args=args,
+            observed_state=observed_state,
+            effective_target_mbit=observed_target_mbit,
+            effective_reason=observed_state["reason"],
+            relaxation_pending_target_mbit=None,
+            relaxation_pending_since=None,
+        )
+
+    current_rank = target_rank(args, current_effective_target_mbit)
+    observed_rank = target_rank(args, observed_target_mbit)
+
+    if observed_rank > current_rank:
+        return build_policy_state(
+            args=args,
+            observed_state=observed_state,
+            effective_target_mbit=observed_target_mbit,
+            effective_reason=observed_state["reason"],
+            relaxation_pending_target_mbit=None,
+            relaxation_pending_since=None,
+        )
+
+    if observed_rank == current_rank:
+        return build_policy_state(
+            args=args,
+            observed_state=observed_state,
+            effective_target_mbit=current_effective_target_mbit,
+            effective_reason=observed_state["reason"],
+            relaxation_pending_target_mbit=None,
+            relaxation_pending_since=None,
+        )
+
+    if (
+        relaxation_pending_target_mbit != observed_target_mbit
+        or relaxation_pending_since is None
+    ):
+        return build_policy_state(
+            args=args,
+            observed_state=observed_state,
+            effective_target_mbit=current_effective_target_mbit,
+            effective_reason=(
+                f"holding_before_relaxation_to_{observed_state['reason']}"
+            ),
+            relaxation_pending_target_mbit=observed_target_mbit,
+            relaxation_pending_since=now,
+        )
+
+    if (now - relaxation_pending_since).total_seconds() >= args.relaxation_hold_seconds:
+        return build_policy_state(
+            args=args,
+            observed_state=observed_state,
+            effective_target_mbit=observed_target_mbit,
+            effective_reason=observed_state["reason"],
+            relaxation_pending_target_mbit=None,
+            relaxation_pending_since=None,
+        )
+
+    return build_policy_state(
+        args=args,
+        observed_state=observed_state,
+        effective_target_mbit=current_effective_target_mbit,
+        effective_reason=f"holding_before_relaxation_to_{observed_state['reason']}",
+        relaxation_pending_target_mbit=relaxation_pending_target_mbit,
+        relaxation_pending_since=relaxation_pending_since,
     )
-    return {
-        "active_external_video_streams": active_external_video_streams,
-        "active_video_streams_total": total_video_streams,
-        "exporter_ok": exporter_ok,
-        "public_group_upload_limit_kbps": calculate_public_group_limit_kbps(
-            transmission_upload_limit_kbps, args.public_group_fraction
-        ),
-        "reason": reason,
-        "target_mbit": target_mbit,
-        "target_tc_rate": f"{target_mbit}mbit",
-        "transmission_upload_limit_kbps": transmission_upload_limit_kbps,
-        "updated_at": now_utc_iso8601(),
-    }
 
 
 def load_policy_state(
@@ -450,27 +625,35 @@ def run_decider(args: argparse.Namespace) -> int:
     while True:
         started_at = time.monotonic()
         try:
-            state = decide_policy_state(args)
+            state = decide_effective_policy_state(args, state_file)
             signature = (
                 state["target_mbit"],
+                state["observed_target_mbit"],
                 state["transmission_upload_limit_kbps"],
                 state["public_group_upload_limit_kbps"],
                 state["active_external_video_streams"],
                 state["active_video_streams_total"],
                 state["reason"],
+                state["observed_reason"],
                 state["exporter_ok"],
+                state["relaxation_pending_target_mbit"],
+                state["relaxation_pending_since"],
             )
             write_json_atomic(state_file, state)
             if signature != last_signature:
                 LOG.info(
-                    "policy updated: target_mbit=%s transmission_upload_limit_kbps=%s public_group_upload_limit_kbps=%s active_external_video_streams=%s active_video_streams_total=%s reason=%s exporter_ok=%s",
+                    "policy updated: observed_target_mbit=%s target_mbit=%s transmission_upload_limit_kbps=%s public_group_upload_limit_kbps=%s active_external_video_streams=%s active_video_streams_total=%s reason=%s observed_reason=%s exporter_ok=%s relaxation_pending_target_mbit=%s relaxation_pending_since=%s",
+                    state["observed_target_mbit"],
                     state["target_mbit"],
                     state["transmission_upload_limit_kbps"],
                     state["public_group_upload_limit_kbps"],
                     state["active_external_video_streams"],
                     state["active_video_streams_total"],
                     state["reason"],
+                    state["observed_reason"],
                     state["exporter_ok"],
+                    state["relaxation_pending_target_mbit"],
+                    state["relaxation_pending_since"],
                 )
                 last_signature = signature
         except Exception:
@@ -769,6 +952,7 @@ def parse_args() -> argparse.Namespace:
     decider.add_argument("--no-streams-mbit", type=int, default=20)
     decider.add_argument("--one-stream-mbit", type=int, default=15)
     decider.add_argument("--many-streams-mbit", type=int, default=8)
+    decider.add_argument("--relaxation-hold-seconds", type=float, default=300.0)
     decider.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
     decider.add_argument("--public-group-fraction", type=float, default=0.4)
     decider.add_argument(

@@ -91,6 +91,69 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 16
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      },
+      "id": 52,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\",state=\"getting_from_us\"}",
+          "legendFormat": "Private Upload Peers",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\",state=\"getting_from_us\"}",
+          "legendFormat": "Public Upload Peers",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Transmission Upload Peers By Tracker Class",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -3275,7 +3338,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 39
+        "y": 60
       },
       "id": 45,
       "options": {
@@ -3328,7 +3391,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 39
+        "y": 60
       },
       "id": 46,
       "options": {
@@ -3385,7 +3448,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 39
+        "y": 60
       },
       "id": 48,
       "options": {
@@ -3442,7 +3505,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 68
       },
       "id": 47,
       "options": {
@@ -3689,6 +3752,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 21,
+  "version": 25,
   "weekStart": ""
 }

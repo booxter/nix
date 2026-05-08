@@ -3,8 +3,10 @@
 import argparse
 import json
 import logging
+import os
 import socket
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.parse
@@ -153,6 +155,63 @@ def load_public_group_upload_limit_kbps(state_file: Path) -> int | None:
     return public_group_upload_limit_kbps
 
 
+def write_text_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.chmod(tmp_path, 0o644)
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
+def nonnegative_int(value: object) -> int:
+    return value if isinstance(value, int) and value >= 0 else 0
+
+
+def render_metrics_text(
+    *,
+    torrent_counts: dict[str, int],
+    peer_counts: dict[str, dict[str, int]],
+    preferred_upload_active: bool,
+) -> str:
+    lines = [
+        "# HELP host_observability_transmission_torrent_count Number of Transmission torrents by tracker-priority class.",
+        "# TYPE host_observability_transmission_torrent_count gauge",
+    ]
+    for torrent_class in ("private", "public"):
+        lines.append(
+            f'host_observability_transmission_torrent_count{{class="{torrent_class}"}} {torrent_counts[torrent_class]}'
+        )
+
+    lines.extend(
+        [
+            "# HELP host_observability_transmission_peer_count Number of Transmission peers by tracker-priority class and relationship.",
+            "# TYPE host_observability_transmission_peer_count gauge",
+        ]
+    )
+    for torrent_class in ("private", "public"):
+        for state in ("connected", "getting_from_us", "sending_to_us"):
+            lines.append(
+                f'host_observability_transmission_peer_count{{class="{torrent_class}",state="{state}"}} {peer_counts[torrent_class][state]}'
+            )
+
+    lines.extend(
+        [
+            "# HELP host_observability_transmission_preferred_upload_active Whether any preferred torrent is actively uploading to peers.",
+            "# TYPE host_observability_transmission_preferred_upload_active gauge",
+            f"host_observability_transmission_preferred_upload_active {1 if preferred_upload_active else 0}",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
     for tracker in torrent.get("trackerStats", []):
         if not isinstance(tracker, dict):
@@ -180,7 +239,9 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
                 "hashString",
                 "bandwidthPriority",
                 "group",
+                "peersConnected",
                 "peersGettingFromUs",
+                "peersSendingToUs",
                 "rateUpload",
                 "trackerStats",
             ]
@@ -236,6 +297,7 @@ def run_iteration(
     public_group_name: str | None,
     public_group_upload_limit_kbps: int | None,
     bandwidth_state_file: Path | None,
+    metrics_file: Path | None,
     last_tracker_status: str | None,
 ) -> str | None:
     tracker_hosts = load_tracker_hosts(trackers_file)
@@ -251,6 +313,22 @@ def run_iteration(
     torrents = rpc_get_torrents(client)
     current_preferred_hashes: set[str] = set()
     preferred_upload_active = False
+    torrent_counts = {
+        "private": 0,
+        "public": 0,
+    }
+    peer_counts = {
+        "private": {
+            "connected": 0,
+            "getting_from_us": 0,
+            "sending_to_us": 0,
+        },
+        "public": {
+            "connected": 0,
+            "getting_from_us": 0,
+            "sending_to_us": 0,
+        },
+    }
     to_prefer: list[str] = []
     to_make_public: list[str] = []
 
@@ -260,6 +338,17 @@ def run_iteration(
             continue
 
         is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
+        torrent_class = "private" if is_preferred else "public"
+        torrent_counts[torrent_class] += 1
+        peer_counts[torrent_class]["connected"] += nonnegative_int(
+            torrent.get("peersConnected")
+        )
+        peer_counts[torrent_class]["getting_from_us"] += nonnegative_int(
+            torrent.get("peersGettingFromUs")
+        )
+        peer_counts[torrent_class]["sending_to_us"] += nonnegative_int(
+            torrent.get("peersSendingToUs")
+        )
         priority = torrent.get("bandwidthPriority")
         current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
         group = torrent.get("group")
@@ -319,6 +408,16 @@ def run_iteration(
         public_fields["group"] = public_group_name
     rpc_set_torrent_fields(client, sorted(to_make_public), public_fields)
 
+    if metrics_file is not None:
+        write_text_atomic(
+            metrics_file,
+            render_metrics_text(
+                torrent_counts=torrent_counts,
+                peer_counts=peer_counts,
+                preferred_upload_active=preferred_upload_active,
+            ),
+        )
+
     LOG.info(
         "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_updates=%s public_updates=%s",
         len(tracker_hosts),
@@ -373,6 +472,11 @@ def parse_args() -> argparse.Namespace:
         help="Optional adaptive upload policy state file used to scale the public group cap.",
     )
     parser.add_argument(
+        "--metrics-file",
+        default="",
+        help="Optional Prometheus textfile path for exported private/public torrent metrics.",
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -399,6 +503,9 @@ def main() -> int:
     bandwidth_state_file = Path(args.bandwidth_state_file.strip())
     if args.bandwidth_state_file.strip() == "":
         bandwidth_state_file = None
+    metrics_file = Path(args.metrics_file.strip())
+    if args.metrics_file.strip() == "":
+        metrics_file = None
     public_group_upload_limit_kbps = args.public_group_upload_limit_kbps
     if (
         public_group_upload_limit_kbps is not None
@@ -416,6 +523,7 @@ def main() -> int:
                 public_group_name=public_group_name,
                 public_group_upload_limit_kbps=public_group_upload_limit_kbps,
                 bandwidth_state_file=bandwidth_state_file,
+                metrics_file=metrics_file,
                 last_tracker_status=last_tracker_status,
             )
         except TransmissionRpcError as exc:

@@ -17,6 +17,7 @@ let
   decisionIntervalSeconds = toString decisionIntervalSecondsInt;
   applierIntervalSecondsInt = 5;
   applierIntervalSeconds = toString applierIntervalSecondsInt;
+  relaxationHoldSeconds = "300";
   maxStateAgeSeconds = toString (decisionIntervalSecondsInt * 3);
   publicGroupFraction = "0.5";
   stateFile = "/run/adaptive-upload-policy/state.json";
@@ -50,6 +51,8 @@ in
         "15"
         "--many-streams-mbit"
         (toString fallbackUploadRateMbit)
+        "--relaxation-hold-seconds"
+        relaxationHoldSeconds
         "--public-group-fraction"
         publicGroupFraction
       ];

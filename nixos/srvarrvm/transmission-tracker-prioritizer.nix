@@ -5,6 +5,8 @@
   ...
 }:
 let
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  metricsFile = "${nodeExporterTextfileDir}/transmission-tracker-prioritizer.prom";
   # Keep the public-group reserve tied to Transmission's own upload ceiling so
   # changing the base uplink budget automatically retunes both limits together.
   publicGroupUploadLimitKBps = builtins.floor (
@@ -12,6 +14,10 @@ let
   );
 in
 {
+  systemd.tmpfiles.rules = [
+    "z ${nodeExporterTextfileDir} 0775 root media - -"
+  ];
+
   sops.secrets.transmissionTrackerHosts = {
     key = "transmission/private_tracker_hosts";
     owner = "transmission";
@@ -45,6 +51,8 @@ in
         (toString publicGroupUploadLimitKBps)
         "--bandwidth-state-file"
         "/run/adaptive-upload-policy/state.json"
+        "--metrics-file"
+        metricsFile
         "--interval-seconds"
         "60"
         "--request-timeout-seconds"
