@@ -157,7 +157,36 @@ in
     unitConfig = wgUnitDepsWithMount;
     # Transmission is currently inheriting a soft RLIMIT_NOFILE of 1024, which
     # is too low for many active torrents and peers.
-    serviceConfig.LimitNOFILE = 65536;
+    serviceConfig = {
+      LimitNOFILE = 65536;
+      # nixpkgs binds both download-dir and incomplete-dir into the service's
+      # RootDirectory. When incomplete-dir is a child of download-dir, Linux
+      # treats completion moves across those bind mount points as EXDEV, so
+      # Transmission falls back to copy+delete for large files. Report/fix
+      # upstream in the nixpkgs Transmission module.
+      BindPaths = lib.mkForce (
+        let
+          transmissionSettingsDir = "${config.services.transmission.home}/.config/transmission-daemon";
+          transmissionDownloadDir = config.services.transmission.settings.download-dir;
+          transmissionIncompleteDir = config.services.transmission.settings.incomplete-dir;
+          transmissionWatchDir = config.services.transmission.settings.watch-dir;
+          incompleteDirNeedsOwnBind =
+            config.services.transmission.settings.incomplete-dir-enabled
+            && transmissionIncompleteDir != transmissionDownloadDir
+            && !lib.hasPrefix "${transmissionDownloadDir}/" transmissionIncompleteDir;
+        in
+        [
+          transmissionSettingsDir
+          transmissionDownloadDir
+          "/run"
+        ]
+        ++ lib.optional incompleteDirNeedsOwnBind transmissionIncompleteDir
+        ++ lib.optional (
+          config.services.transmission.settings.watch-dir-enabled
+          && config.services.transmission.settings.trash-original-torrent-files
+        ) transmissionWatchDir
+      );
+    };
   };
   systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
 
