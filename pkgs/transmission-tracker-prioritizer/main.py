@@ -3,6 +3,7 @@
 import argparse
 import json
 import logging
+import math
 import os
 import socket
 import sys
@@ -155,6 +156,32 @@ def load_public_group_upload_limit_kbps(state_file: Path) -> int | None:
     return public_group_upload_limit_kbps
 
 
+def load_transmission_upload_limit_kbps(state_file: Path) -> int | None:
+    if not state_file.exists():
+        return None
+
+    try:
+        parsed = json.loads(state_file.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        LOG.warning("unable to read bandwidth state file %s: %s", state_file, exc)
+        return None
+
+    if not isinstance(parsed, dict):
+        LOG.warning(
+            "bandwidth state file %s does not contain a JSON object", state_file
+        )
+        return None
+
+    transmission_upload_limit_kbps = parsed.get("transmission_upload_limit_kbps")
+    if (
+        not isinstance(transmission_upload_limit_kbps, int)
+        or transmission_upload_limit_kbps <= 0
+    ):
+        return None
+
+    return transmission_upload_limit_kbps
+
+
 def write_text_atomic(path: Path, content: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.")
@@ -175,11 +202,163 @@ def nonnegative_int(value: object) -> int:
     return value if isinstance(value, int) and value >= 0 else 0
 
 
+def kilobytes_per_second_from_bytes_per_second(rate_bytes_per_second: int) -> int:
+    if rate_bytes_per_second <= 0:
+        return 0
+    return math.ceil(rate_bytes_per_second / 1000.0)
+
+
+def calculate_observed_public_group_upload_limit_kbps(
+    *,
+    transmission_upload_limit_kbps: int,
+    preferred_upload_bytes_per_second: int,
+    minimum_private_headroom_fraction: float,
+    preferred_upload_headroom_fraction: float,
+) -> int:
+    preferred_upload_kbps = kilobytes_per_second_from_bytes_per_second(
+        preferred_upload_bytes_per_second
+    )
+    reserved_private_kbps = max(
+        1,
+        math.ceil(transmission_upload_limit_kbps * minimum_private_headroom_fraction),
+        math.ceil(preferred_upload_kbps * (1.0 + preferred_upload_headroom_fraction)),
+    )
+    return max(1, transmission_upload_limit_kbps - reserved_private_kbps)
+
+
+def decide_public_group_upload_limit_kbps(
+    *,
+    now_monotonic: float,
+    preferred_upload_active: bool,
+    preferred_upload_bytes_per_second: int,
+    transmission_upload_limit_kbps: int | None,
+    conservative_public_group_upload_limit_kbps: int | None,
+    current_public_group_upload_limit_kbps: int | None,
+    pending_relaxed_public_group_upload_limit_kbps: int | None,
+    pending_relaxed_since_monotonic: float | None,
+    minimum_private_headroom_fraction: float,
+    preferred_upload_headroom_fraction: float,
+    relaxation_hold_seconds: float,
+) -> tuple[int | None, int | None, int | None, float | None, int | None, str]:
+    if not preferred_upload_active:
+        return None, None, None, None, None, "preferred_inactive"
+
+    if transmission_upload_limit_kbps is None:
+        return (
+            conservative_public_group_upload_limit_kbps,
+            conservative_public_group_upload_limit_kbps,
+            None,
+            None,
+            None,
+            "missing_transmission_limit",
+        )
+
+    observed_public_group_upload_limit_kbps = (
+        calculate_observed_public_group_upload_limit_kbps(
+            transmission_upload_limit_kbps=transmission_upload_limit_kbps,
+            preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
+            minimum_private_headroom_fraction=minimum_private_headroom_fraction,
+            preferred_upload_headroom_fraction=preferred_upload_headroom_fraction,
+        )
+    )
+    bootstrap_public_group_upload_limit_kbps = (
+        observed_public_group_upload_limit_kbps
+        if conservative_public_group_upload_limit_kbps is None
+        else min(
+            conservative_public_group_upload_limit_kbps,
+            observed_public_group_upload_limit_kbps,
+        )
+    )
+
+    if current_public_group_upload_limit_kbps is None:
+        if (
+            observed_public_group_upload_limit_kbps
+            > bootstrap_public_group_upload_limit_kbps
+        ):
+            return (
+                bootstrap_public_group_upload_limit_kbps,
+                bootstrap_public_group_upload_limit_kbps,
+                observed_public_group_upload_limit_kbps,
+                now_monotonic,
+                observed_public_group_upload_limit_kbps,
+                "holding_before_public_relaxation",
+            )
+        return (
+            bootstrap_public_group_upload_limit_kbps,
+            bootstrap_public_group_upload_limit_kbps,
+            None,
+            None,
+            observed_public_group_upload_limit_kbps,
+            "preferred_active_bootstrap",
+        )
+
+    if observed_public_group_upload_limit_kbps < current_public_group_upload_limit_kbps:
+        return (
+            observed_public_group_upload_limit_kbps,
+            observed_public_group_upload_limit_kbps,
+            None,
+            None,
+            observed_public_group_upload_limit_kbps,
+            "tightening_for_preferred_upload",
+        )
+
+    if (
+        observed_public_group_upload_limit_kbps
+        == current_public_group_upload_limit_kbps
+    ):
+        return (
+            current_public_group_upload_limit_kbps,
+            current_public_group_upload_limit_kbps,
+            None,
+            None,
+            observed_public_group_upload_limit_kbps,
+            "preferred_upload_stable",
+        )
+
+    if (
+        pending_relaxed_public_group_upload_limit_kbps is None
+        or pending_relaxed_public_group_upload_limit_kbps
+        != observed_public_group_upload_limit_kbps
+        or pending_relaxed_since_monotonic is None
+    ):
+        return (
+            current_public_group_upload_limit_kbps,
+            current_public_group_upload_limit_kbps,
+            observed_public_group_upload_limit_kbps,
+            now_monotonic,
+            observed_public_group_upload_limit_kbps,
+            "holding_before_public_relaxation",
+        )
+
+    if now_monotonic - pending_relaxed_since_monotonic >= relaxation_hold_seconds:
+        return (
+            observed_public_group_upload_limit_kbps,
+            observed_public_group_upload_limit_kbps,
+            None,
+            None,
+            observed_public_group_upload_limit_kbps,
+            "relaxed_for_sustained_low_preferred_upload",
+        )
+
+    return (
+        current_public_group_upload_limit_kbps,
+        current_public_group_upload_limit_kbps,
+        pending_relaxed_public_group_upload_limit_kbps,
+        pending_relaxed_since_monotonic,
+        observed_public_group_upload_limit_kbps,
+        "holding_before_public_relaxation",
+    )
+
+
 def render_metrics_text(
     *,
     torrent_counts: dict[str, int],
     peer_counts: dict[str, dict[str, int]],
+    upload_bytes_per_second: dict[str, int],
     preferred_upload_active: bool,
+    preferred_upload_bytes_per_second: int,
+    public_group_upload_limit_kbps: int | None,
+    observed_public_group_upload_limit_kbps: int | None,
 ) -> str:
     lines = [
         "# HELP host_observability_transmission_torrent_count Number of Transmission torrents by tracker-priority class.",
@@ -204,9 +383,29 @@ def render_metrics_text(
 
     lines.extend(
         [
+            "# HELP host_observability_transmission_upload_bytes_per_second Current aggregate upload rate for Transmission torrents by tracker-priority class.",
+            "# TYPE host_observability_transmission_upload_bytes_per_second gauge",
+        ]
+    )
+    for torrent_class in ("private", "public"):
+        lines.append(
+            f'host_observability_transmission_upload_bytes_per_second{{class="{torrent_class}"}} {upload_bytes_per_second[torrent_class]}'
+        )
+
+    lines.extend(
+        [
             "# HELP host_observability_transmission_preferred_upload_active Whether any preferred torrent is actively uploading to peers.",
             "# TYPE host_observability_transmission_preferred_upload_active gauge",
             f"host_observability_transmission_preferred_upload_active {1 if preferred_upload_active else 0}",
+            "# HELP host_observability_transmission_preferred_upload_bytes_per_second Current aggregate upload rate for preferred torrents.",
+            "# TYPE host_observability_transmission_preferred_upload_bytes_per_second gauge",
+            f"host_observability_transmission_preferred_upload_bytes_per_second {preferred_upload_bytes_per_second}",
+            "# HELP host_observability_transmission_public_group_upload_limit_bytes_per_second Effective upload cap for the managed public torrent group.",
+            "# TYPE host_observability_transmission_public_group_upload_limit_bytes_per_second gauge",
+            f"host_observability_transmission_public_group_upload_limit_bytes_per_second {0 if public_group_upload_limit_kbps is None else public_group_upload_limit_kbps * 1000}",
+            "# HELP host_observability_transmission_observed_public_group_upload_limit_bytes_per_second Throughput-derived observed upload cap for the managed public torrent group before hysteresis is applied.",
+            "# TYPE host_observability_transmission_observed_public_group_upload_limit_bytes_per_second gauge",
+            f"host_observability_transmission_observed_public_group_upload_limit_bytes_per_second {0 if observed_public_group_upload_limit_kbps is None else observed_public_group_upload_limit_kbps * 1000}",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -299,7 +498,13 @@ def run_iteration(
     bandwidth_state_file: Path | None,
     metrics_file: Path | None,
     last_tracker_status: str | None,
-) -> str | None:
+    current_public_group_upload_limit_kbps: int | None,
+    pending_relaxed_public_group_upload_limit_kbps: int | None,
+    pending_relaxed_since_monotonic: float | None,
+    minimum_private_headroom_fraction: float,
+    preferred_upload_headroom_fraction: float,
+    public_group_relaxation_hold_seconds: float,
+) -> tuple[str | None, int | None, int | None, float | None]:
     tracker_hosts = load_tracker_hosts(trackers_file)
     if tracker_hosts is None:
         status = f"missing:{trackers_file}"
@@ -308,11 +513,17 @@ def run_iteration(
                 "tracker host file %s does not exist yet; skipping until it is created",
                 trackers_file,
             )
-        return status
+        return (
+            status,
+            current_public_group_upload_limit_kbps,
+            pending_relaxed_public_group_upload_limit_kbps,
+            pending_relaxed_since_monotonic,
+        )
 
     torrents = rpc_get_torrents(client)
     current_preferred_hashes: set[str] = set()
     preferred_upload_active = False
+    preferred_upload_bytes_per_second = 0
     torrent_counts = {
         "private": 0,
         "public": 0,
@@ -328,6 +539,10 @@ def run_iteration(
             "getting_from_us": 0,
             "sending_to_us": 0,
         },
+    }
+    upload_bytes_per_second = {
+        "private": 0,
+        "public": 0,
     }
     to_prefer: list[str] = []
     to_make_public: list[str] = []
@@ -349,6 +564,9 @@ def run_iteration(
         peer_counts[torrent_class]["sending_to_us"] += nonnegative_int(
             torrent.get("peersSendingToUs")
         )
+        upload_bytes_per_second[torrent_class] += nonnegative_int(
+            torrent.get("rateUpload")
+        )
         priority = torrent.get("bandwidthPriority")
         current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
         group = torrent.get("group")
@@ -358,6 +576,8 @@ def run_iteration(
             current_preferred_hashes.add(torrent_hash)
             peers_getting_from_us = torrent.get("peersGettingFromUs")
             rate_upload = torrent.get("rateUpload")
+            if isinstance(rate_upload, int) and rate_upload > 0:
+                preferred_upload_bytes_per_second += rate_upload
             if (
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
@@ -373,24 +593,52 @@ def run_iteration(
         ):
             to_make_public.append(torrent_hash)
 
-    effective_public_group_upload_limit_kbps = public_group_upload_limit_kbps
+    conservative_public_group_upload_limit_kbps = public_group_upload_limit_kbps
+    transmission_upload_limit_kbps = None
     if bandwidth_state_file is not None:
         dynamic_public_group_upload_limit_kbps = load_public_group_upload_limit_kbps(
             bandwidth_state_file
         )
         if dynamic_public_group_upload_limit_kbps is not None:
-            effective_public_group_upload_limit_kbps = (
+            conservative_public_group_upload_limit_kbps = (
                 dynamic_public_group_upload_limit_kbps
             )
+        transmission_upload_limit_kbps = load_transmission_upload_limit_kbps(
+            bandwidth_state_file
+        )
 
+    effective_public_group_upload_limit_kbps = None
+    observed_public_group_upload_limit_kbps = None
+    public_group_reason = "public_group_disabled"
     if public_group_name:
-        active_public_group_upload_limit_kbps = (
-            effective_public_group_upload_limit_kbps
-            if preferred_upload_active
-            else None
+        (
+            effective_public_group_upload_limit_kbps,
+            current_public_group_upload_limit_kbps,
+            pending_relaxed_public_group_upload_limit_kbps,
+            pending_relaxed_since_monotonic,
+            observed_public_group_upload_limit_kbps,
+            public_group_reason,
+        ) = decide_public_group_upload_limit_kbps(
+            now_monotonic=time.monotonic(),
+            preferred_upload_active=preferred_upload_active,
+            preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
+            transmission_upload_limit_kbps=transmission_upload_limit_kbps,
+            conservative_public_group_upload_limit_kbps=(
+                conservative_public_group_upload_limit_kbps
+            ),
+            current_public_group_upload_limit_kbps=(
+                current_public_group_upload_limit_kbps
+            ),
+            pending_relaxed_public_group_upload_limit_kbps=(
+                pending_relaxed_public_group_upload_limit_kbps
+            ),
+            pending_relaxed_since_monotonic=pending_relaxed_since_monotonic,
+            minimum_private_headroom_fraction=minimum_private_headroom_fraction,
+            preferred_upload_headroom_fraction=preferred_upload_headroom_fraction,
+            relaxation_hold_seconds=public_group_relaxation_hold_seconds,
         )
         rpc_configure_bandwidth_group(
-            client, public_group_name, active_public_group_upload_limit_kbps
+            client, public_group_name, effective_public_group_upload_limit_kbps
         )
 
     rpc_set_torrent_fields(
@@ -414,19 +662,35 @@ def run_iteration(
             render_metrics_text(
                 torrent_counts=torrent_counts,
                 peer_counts=peer_counts,
+                upload_bytes_per_second=upload_bytes_per_second,
                 preferred_upload_active=preferred_upload_active,
+                preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
+                public_group_upload_limit_kbps=effective_public_group_upload_limit_kbps,
+                observed_public_group_upload_limit_kbps=(
+                    observed_public_group_upload_limit_kbps
+                ),
             ),
         )
 
     LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_updates=%s public_updates=%s",
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s transmission_upload_limit_kbps=%s observed_public_group_upload_limit_kbps=%s effective_public_group_upload_limit_kbps=%s public_group_reason=%s preferred_updates=%s public_updates=%s",
         len(tracker_hosts),
         len(current_preferred_hashes),
         preferred_upload_active,
+        preferred_upload_bytes_per_second,
+        transmission_upload_limit_kbps,
+        observed_public_group_upload_limit_kbps,
+        effective_public_group_upload_limit_kbps,
+        public_group_reason,
         len(to_prefer),
         len(to_make_public),
     )
-    return f"loaded:{len(tracker_hosts)}"
+    return (
+        f"loaded:{len(tracker_hosts)}",
+        current_public_group_upload_limit_kbps,
+        pending_relaxed_public_group_upload_limit_kbps,
+        pending_relaxed_since_monotonic,
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -469,7 +733,25 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--bandwidth-state-file",
         default="",
-        help="Optional adaptive upload policy state file used to scale the public group cap.",
+        help="Optional adaptive upload policy state file used to derive current Transmission upload limits for public-group throttling.",
+    )
+    parser.add_argument(
+        "--minimum-private-headroom-fraction",
+        type=float,
+        default=0.1,
+        help="Minimum fraction of the current Transmission upload limit to keep reserved for preferred torrents while any preferred upload is active.",
+    )
+    parser.add_argument(
+        "--preferred-upload-headroom-fraction",
+        type=float,
+        default=0.3,
+        help="Extra headroom above the current preferred upload rate when deriving the public-group cap.",
+    )
+    parser.add_argument(
+        "--public-group-relaxation-hold-seconds",
+        type=float,
+        default=45.0,
+        help="How long a more generous observed public-group cap must remain stable before it is applied.",
     )
     parser.add_argument(
         "--metrics-file",
@@ -513,11 +795,19 @@ def main() -> int:
     ):
         public_group_upload_limit_kbps = None
     last_tracker_status: str | None = None
+    current_public_group_upload_limit_kbps: int | None = None
+    pending_relaxed_public_group_upload_limit_kbps: int | None = None
+    pending_relaxed_since_monotonic: float | None = None
 
     while True:
         started_at = time.monotonic()
         try:
-            last_tracker_status = run_iteration(
+            (
+                last_tracker_status,
+                current_public_group_upload_limit_kbps,
+                pending_relaxed_public_group_upload_limit_kbps,
+                pending_relaxed_since_monotonic,
+            ) = run_iteration(
                 client=client,
                 trackers_file=trackers_file,
                 public_group_name=public_group_name,
@@ -525,6 +815,22 @@ def main() -> int:
                 bandwidth_state_file=bandwidth_state_file,
                 metrics_file=metrics_file,
                 last_tracker_status=last_tracker_status,
+                current_public_group_upload_limit_kbps=(
+                    current_public_group_upload_limit_kbps
+                ),
+                pending_relaxed_public_group_upload_limit_kbps=(
+                    pending_relaxed_public_group_upload_limit_kbps
+                ),
+                pending_relaxed_since_monotonic=pending_relaxed_since_monotonic,
+                minimum_private_headroom_fraction=(
+                    args.minimum_private_headroom_fraction
+                ),
+                preferred_upload_headroom_fraction=(
+                    args.preferred_upload_headroom_fraction
+                ),
+                public_group_relaxation_hold_seconds=(
+                    args.public_group_relaxation_hold_seconds
+                ),
             )
         except TransmissionRpcError as exc:
             LOG.warning("skipping iteration after Transmission RPC failure: %s", exc)

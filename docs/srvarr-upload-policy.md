@@ -62,19 +62,23 @@ Current values:
   - adaptive applier: `20s`
   - tracker prioritizer: `20s`
 - preferred tracker match refresh: `60s`
+- public-group relaxation hold time: `45s`
+- minimum preferred-torrent reserve while preferred uploads are active: `10%`
+- preferred upload rate headroom for public-cap derivation: `30%`
 
 Derived limits:
 
 - Transmission session upload limit = `95%` of the selected target
-- public torrent group upload limit = `50%` of the current Transmission limit
+- public torrent group bootstrap limit = `50%` of the current Transmission
+  limit while preferred uploads are active
 
 Examples:
 
-- `24mbit` target -> Transmission `2850 kB/s`, public group `1425 kB/s`
-- `15mbit` target -> Transmission `1781 kB/s`, public group `890 kB/s`
-- `8mbit` fallback -> Transmission `950 kB/s`, public group `475 kB/s`
+- `24mbit` target -> Transmission `2850 kB/s`, public-group bootstrap `1425 kB/s`
+- `15mbit` target -> Transmission `1781 kB/s`, public-group bootstrap `890 kB/s`
+- `8mbit` fallback -> Transmission `950 kB/s`, public-group bootstrap `475 kB/s`
 - `2mbit` minimum computed target -> Transmission `237 kB/s`,
-  public group `118 kB/s`
+  public-group bootstrap `118 kB/s`
 
 ## Inputs
 
@@ -272,6 +276,23 @@ The managed public group cap is enabled only when any preferred torrent is
 actively uploading. When no preferred torrents are actively uploading, the
 group cap is disabled so public torrents can use the full current Transmission
 budget.
+
+When preferred uploads are active, the cap is no longer a fixed `50%` split.
+Instead:
+
+1. the adaptive policy state provides the current Transmission session limit
+   plus a conservative bootstrap public-group cap equal to `50%` of that limit
+2. the tracker prioritizer sums current `rateUpload` across preferred torrents
+3. it derives an observed public cap by reserving the larger of:
+   - `10%` of the current Transmission limit
+   - `130%` of the currently observed preferred upload rate
+4. if that observed cap is tighter than the current applied cap, it tightens
+   immediately
+5. if that observed cap is more generous, it waits `45s` before relaxing
+   upward
+
+This keeps the system conservative when preferred uploads first appear, but
+lets public torrents reclaim bandwidth when preferred leechers stay slow.
 
 This gives the desired behavior:
 

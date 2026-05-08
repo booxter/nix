@@ -95,6 +95,76 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "transmission-upload-class",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Bps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 47
+      },
+      "id": 53,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}",
+          "legendFormat": "Private Upload Throughput",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}",
+          "legendFormat": "Public Upload Throughput",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Transmission Upload Throughput By Tracker Class",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
             "fillOpacity": 16
           },
           "mappings": [],
@@ -115,7 +185,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 47
+        "y": 55
       },
       "id": 52,
       "options": {
@@ -3338,7 +3408,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 60
+        "y": 68
       },
       "id": 45,
       "options": {
@@ -3391,7 +3461,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 60
+        "y": 68
       },
       "id": 46,
       "options": {
@@ -3448,7 +3518,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 60
+        "y": 68
       },
       "id": 48,
       "options": {
@@ -3505,7 +3575,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 68
+        "y": 76
       },
       "id": 47,
       "options": {
@@ -3571,7 +3641,7 @@
         "h": 5,
         "w": 8,
         "x": 0,
-        "y": 55
+        "y": 63
       },
       "id": 49,
       "options": {
@@ -3635,7 +3705,7 @@
         "h": 5,
         "w": 8,
         "x": 8,
-        "y": 55
+        "y": 63
       },
       "id": 50,
       "options": {
@@ -3699,7 +3769,7 @@
         "h": 5,
         "w": 8,
         "x": 16,
-        "y": 55
+        "y": 63
       },
       "id": 51,
       "options": {

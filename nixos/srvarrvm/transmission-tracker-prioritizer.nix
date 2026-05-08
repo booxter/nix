@@ -7,11 +7,13 @@
 let
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/transmission-tracker-prioritizer.prom";
-  # Keep the public-group reserve tied to Transmission's own upload ceiling so
-  # changing the base uplink budget automatically retunes both limits together.
-  publicGroupUploadLimitKBps = builtins.floor (
-    config.nixarr.transmission.extraSettings."speed-limit-up" * 0.4
+  # Conservative fallback when the adaptive policy state is unavailable.
+  fallbackPublicGroupUploadLimitKBps = builtins.floor (
+    config.nixarr.transmission.extraSettings."speed-limit-up" * 0.5
   );
+  minimumPrivateHeadroomFraction = "0.1";
+  preferredUploadHeadroomFraction = "0.3";
+  publicGroupRelaxationHoldSeconds = "30";
 in
 {
   systemd.tmpfiles.rules = [
@@ -48,13 +50,19 @@ in
         "--public-group-name"
         "public-low-priority"
         "--public-group-upload-limit-kbps"
-        (toString publicGroupUploadLimitKBps)
+        (toString fallbackPublicGroupUploadLimitKBps)
         "--bandwidth-state-file"
         "/run/adaptive-upload-policy/state.json"
+        "--minimum-private-headroom-fraction"
+        minimumPrivateHeadroomFraction
+        "--preferred-upload-headroom-fraction"
+        preferredUploadHeadroomFraction
+        "--public-group-relaxation-hold-seconds"
+        publicGroupRelaxationHoldSeconds
         "--metrics-file"
         metricsFile
         "--interval-seconds"
-        "60"
+        "30"
         "--request-timeout-seconds"
         "20"
       ];
