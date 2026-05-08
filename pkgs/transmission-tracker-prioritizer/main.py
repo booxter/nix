@@ -3,7 +3,6 @@
 import argparse
 import json
 import logging
-import os
 import socket
 import sys
 import time
@@ -11,7 +10,6 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Iterable
 
 
 LOG = logging.getLogger("transmission-tracker-prioritizer")
@@ -129,32 +127,6 @@ def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
     return hosts
 
 
-def load_managed_hashes(state_file: Path) -> set[str]:
-    if not state_file.exists():
-        return set()
-
-    try:
-        state = json.loads(state_file.read_text())
-    except (OSError, json.JSONDecodeError) as exc:
-        LOG.warning("discarding unreadable state file %s: %s", state_file, exc)
-        return set()
-
-    hashes = state.get("managed_hashes", [])
-    if not isinstance(hashes, list):
-        return set()
-    return {value for value in hashes if isinstance(value, str)}
-
-
-def save_managed_hashes(state_file: Path, managed_hashes: Iterable[str]) -> None:
-    state_file.parent.mkdir(parents=True, exist_ok=True)
-    tmp_file = state_file.with_suffix(".tmp")
-    payload = {
-        "managed_hashes": sorted(set(managed_hashes)),
-    }
-    tmp_file.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
-    os.replace(tmp_file, state_file)
-
-
 def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
     for tracker in torrent.get("trackerStats", []):
         if not isinstance(tracker, dict):
@@ -181,6 +153,9 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
                 "name",
                 "hashString",
                 "bandwidthPriority",
+                "group",
+                "peersGettingFromUs",
+                "rateUpload",
                 "trackerStats",
             ]
         },
@@ -191,27 +166,49 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
     return torrents
 
 
-def rpc_set_bandwidth_priority(
+def rpc_set_torrent_fields(
     client: TransmissionRpcClient,
     torrent_hashes: list[str],
-    priority: int,
+    fields: dict,
 ) -> None:
-    if not torrent_hashes:
+    if not torrent_hashes or not fields:
         return
 
+    arguments = {
+        "ids": torrent_hashes,
+    }
+    arguments.update(fields)
     client.call(
         "torrent-set",
-        {
-            "ids": torrent_hashes,
-            "bandwidthPriority": priority,
-        },
+        arguments,
     )
+
+
+def rpc_configure_bandwidth_group(
+    client: TransmissionRpcClient,
+    group_name: str,
+    upload_limit_kbps: int | None,
+) -> None:
+    arguments: dict[str, str | int | bool] = {
+        "name": group_name,
+        "honors_session_limits": True,
+        "speed_limit_down_enabled": False,
+    }
+
+    if upload_limit_kbps is None:
+        arguments["speed_limit_up_enabled"] = False
+    else:
+        arguments["speed_limit_up"] = upload_limit_kbps
+        arguments["speed_limit_up_enabled"] = True
+
+    client.call("group-set", arguments)
 
 
 def run_iteration(
     client: TransmissionRpcClient,
     trackers_file: Path,
-    state_file: Path,
+    public_group_name: str | None,
+    public_group_upload_limit_kbps: int | None,
     last_tracker_status: str | None,
 ) -> str | None:
     tracker_hosts = load_tracker_hosts(trackers_file)
@@ -225,10 +222,10 @@ def run_iteration(
         return status
 
     torrents = rpc_get_torrents(client)
-    managed_hashes = load_managed_hashes(state_file)
-
     current_preferred_hashes: set[str] = set()
-    priorities_by_hash: dict[str, int] = {}
+    preferred_upload_active = False
+    to_prefer: list[str] = []
+    to_make_public: list[str] = []
 
     for torrent in torrents:
         torrent_hash = torrent.get("hashString")
@@ -236,35 +233,60 @@ def run_iteration(
             continue
 
         is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
+        priority = torrent.get("bandwidthPriority")
+        current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
+        group = torrent.get("group")
+        current_group = group if isinstance(group, str) else ""
+
         if is_preferred:
             current_preferred_hashes.add(torrent_hash)
+            peers_getting_from_us = torrent.get("peersGettingFromUs")
+            rate_upload = torrent.get("rateUpload")
+            if (
+                isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
+            ) or (isinstance(rate_upload, int) and rate_upload > 0):
+                preferred_upload_active = True
+            if current_priority != TR_PRI_HIGH or (
+                public_group_name is not None and current_group != ""
+            ):
+                to_prefer.append(torrent_hash)
+            continue
 
-        priority = torrent.get("bandwidthPriority")
-        priorities_by_hash[torrent_hash] = (
-            priority if isinstance(priority, int) else TR_PRI_NORMAL
+        if current_priority != TR_PRI_NORMAL or (
+            public_group_name is not None and current_group != public_group_name
+        ):
+            to_make_public.append(torrent_hash)
+
+    if public_group_name:
+        active_public_group_upload_limit_kbps = (
+            public_group_upload_limit_kbps if preferred_upload_active else None
+        )
+        rpc_configure_bandwidth_group(
+            client, public_group_name, active_public_group_upload_limit_kbps
         )
 
-    to_promote = sorted(
-        torrent_hash
-        for torrent_hash in current_preferred_hashes
-        if priorities_by_hash.get(torrent_hash) != TR_PRI_HIGH
+    rpc_set_torrent_fields(
+        client,
+        sorted(to_prefer),
+        {
+            "bandwidthPriority": TR_PRI_HIGH,
+            "group": "",
+        },
     )
-    to_demote = sorted(
-        torrent_hash
-        for torrent_hash in managed_hashes - current_preferred_hashes
-        if priorities_by_hash.get(torrent_hash) == TR_PRI_HIGH
-    )
-
-    rpc_set_bandwidth_priority(client, to_promote, TR_PRI_HIGH)
-    rpc_set_bandwidth_priority(client, to_demote, TR_PRI_NORMAL)
-    save_managed_hashes(state_file, current_preferred_hashes)
+    public_fields = {
+        "bandwidthPriority": TR_PRI_NORMAL,
+    }
+    if public_group_name is not None:
+        public_fields["group"] = public_group_name
+    rpc_set_torrent_fields(client, sorted(to_make_public), public_fields)
 
     LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s promoted=%s demoted=%s",
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_updates=%s public_updates=%s",
         len(tracker_hosts),
         len(current_preferred_hashes),
-        len(to_promote),
-        len(to_demote),
+        preferred_upload_active,
+        len(to_prefer),
+        len(to_make_public),
     )
     return f"loaded:{len(tracker_hosts)}"
 
@@ -284,11 +306,6 @@ def parse_args() -> argparse.Namespace:
         help="Path to a file containing one tracker host or announce URL per line.",
     )
     parser.add_argument(
-        "--state-file",
-        required=True,
-        help="Path to the JSON state file used to track previously managed torrents.",
-    )
-    parser.add_argument(
         "--interval-seconds",
         type=float,
         default=60.0,
@@ -299,6 +316,17 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=15.0,
         help="Per-request timeout when talking to Transmission.",
+    )
+    parser.add_argument(
+        "--public-group-name",
+        default="",
+        help="Bandwidth group name to assign to non-priority torrents.",
+    )
+    parser.add_argument(
+        "--public-group-upload-limit-kbps",
+        type=int,
+        default=None,
+        help="Upload cap, in kB/s, for the managed public bandwidth group.",
     )
     parser.add_argument(
         "--log-level",
@@ -321,7 +349,15 @@ def main() -> int:
         timeout_seconds=args.request_timeout_seconds,
     )
     trackers_file = Path(args.trackers_file)
-    state_file = Path(args.state_file)
+    public_group_name = args.public_group_name.strip()
+    if public_group_name == "":
+        public_group_name = None
+    public_group_upload_limit_kbps = args.public_group_upload_limit_kbps
+    if (
+        public_group_upload_limit_kbps is not None
+        and public_group_upload_limit_kbps <= 0
+    ):
+        public_group_upload_limit_kbps = None
     last_tracker_status: str | None = None
 
     while True:
@@ -330,7 +366,8 @@ def main() -> int:
             last_tracker_status = run_iteration(
                 client=client,
                 trackers_file=trackers_file,
-                state_file=state_file,
+                public_group_name=public_group_name,
+                public_group_upload_limit_kbps=public_group_upload_limit_kbps,
                 last_tracker_status=last_tracker_status,
             )
         except TransmissionRpcError as exc:

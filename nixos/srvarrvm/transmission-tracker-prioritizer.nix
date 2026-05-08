@@ -5,8 +5,11 @@
   ...
 }:
 let
-  stateDir = "/var/lib/transmission-tracker-prioritizer";
-  managedTorrentsStateFile = "${stateDir}/managed-torrents.json";
+  # Keep the public-group reserve tied to Transmission's own upload ceiling so
+  # changing the base uplink budget automatically retunes both limits together.
+  publicGroupUploadLimitKBps = builtins.floor (
+    config.nixarr.transmission.extraSettings."speed-limit-up" * 0.4
+  );
 in
 {
   sops.secrets.transmissionTrackerHosts = {
@@ -36,8 +39,10 @@ in
         "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc"
         "--trackers-file"
         config.sops.secrets.transmissionTrackerHosts.path
-        "--state-file"
-        managedTorrentsStateFile
+        "--public-group-name"
+        "public-low-priority"
+        "--public-group-upload-limit-kbps"
+        (toString publicGroupUploadLimitKBps)
         "--interval-seconds"
         "60"
         "--request-timeout-seconds"
@@ -45,8 +50,6 @@ in
       ];
       Restart = "always";
       RestartSec = "10s";
-      StateDirectory = "transmission-tracker-prioritizer";
-      StateDirectoryMode = "0750";
       # The daemon rereads the tracker file every iteration, so secret updates
       # are picked up without an activation-time systemd restart hook.
       User = "transmission";
