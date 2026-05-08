@@ -5,6 +5,7 @@ import json
 import logging
 import math
 import os
+import re
 import socket
 import sys
 import tempfile
@@ -18,9 +19,30 @@ from pathlib import Path
 LOG = logging.getLogger("transmission-tracker-prioritizer")
 TR_PRI_NORMAL = 0
 TR_PRI_HIGH = 1
+PROMETHEUS_SAMPLE_RE_TEMPLATE = (
+    r"^{metric}(?:\{{(?P<labels>.*)\}})?\s+"
+    r"(?P<value>[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"
+    r"(?:\s+\d+)?$"
+)
+LABEL_PAIR_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_]*)="((?:[^"\\]|\\.)*)"')
+SABNZBD_PAUSED_METRIC_RE = re.compile(
+    PROMETHEUS_SAMPLE_RE_TEMPLATE.format(metric="sabnzbd_paused")
+)
+SABNZBD_QUEUE_SIZE_METRIC_RE = re.compile(
+    PROMETHEUS_SAMPLE_RE_TEMPLATE.format(metric="sabnzbd_queue_size")
+)
+SABNZBD_QUEUE_DOWNLOAD_RATE_METRIC_RE = re.compile(
+    PROMETHEUS_SAMPLE_RE_TEMPLATE.format(
+        metric="sabnzbd_queue_download_rate_bytes_per_second"
+    )
+)
 
 
 class TransmissionRpcError(RuntimeError):
+    pass
+
+
+class ExporterError(RuntimeError):
     pass
 
 
@@ -103,6 +125,93 @@ def normalize_tracker_host(raw_value: str) -> str:
     value = value.split("/", 1)[0]
     value = value.split(":", 1)[0]
     return value.lower()
+
+
+def decode_prometheus_label_value(value: str) -> str:
+    return (
+        value.replace(r"\\", "\\")
+        .replace(r"\"", '"')
+        .replace(r"\n", "\n")
+        .replace(r"\t", "\t")
+    )
+
+
+def parse_prometheus_labels(label_text: str) -> dict[str, str]:
+    labels: dict[str, str] = {}
+    for match in LABEL_PAIR_RE.finditer(label_text):
+        labels[match.group(1)] = decode_prometheus_label_value(match.group(2))
+    return labels
+
+
+def fetch_url_text(url: str, timeout_seconds: float) -> str:
+    request = urllib.request.Request(url, method="GET")
+    try:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+            return response.read().decode("utf-8")
+    except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
+        raise ExporterError(f"request to exporter failed: {exc}") from exc
+
+
+def parse_prometheus_metric_value(
+    metric_re: re.Pattern[str],
+    text: str,
+    required_labels: dict[str, str] | None = None,
+) -> float | None:
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        match = metric_re.match(line)
+        if match is None:
+            continue
+        label_text = match.group("labels") or ""
+        labels = parse_prometheus_labels(label_text)
+        if required_labels is not None and any(
+            labels.get(key) != value for key, value in required_labels.items()
+        ):
+            continue
+        try:
+            return float(match.group("value"))
+        except ValueError:
+            continue
+    return None
+
+
+def load_sabnzbd_state(
+    exporter_url: str, timeout_seconds: float, exporter_instance: str | None
+) -> dict | None:
+    required_labels = None
+    if exporter_instance is not None:
+        required_labels = {"sabnzbd_instance": exporter_instance}
+
+    metrics_text = fetch_url_text(exporter_url, timeout_seconds)
+    paused_value = parse_prometheus_metric_value(
+        SABNZBD_PAUSED_METRIC_RE, metrics_text, required_labels
+    )
+    queue_size_value = parse_prometheus_metric_value(
+        SABNZBD_QUEUE_SIZE_METRIC_RE, metrics_text, required_labels
+    )
+    download_rate_value = parse_prometheus_metric_value(
+        SABNZBD_QUEUE_DOWNLOAD_RATE_METRIC_RE, metrics_text, required_labels
+    )
+
+    if paused_value is None or queue_size_value is None:
+        raise ExporterError(
+            "SABnzbd exporter did not expose sabnzbd_paused and sabnzbd_queue_size"
+        )
+
+    paused = paused_value >= 0.5
+    queue_size = max(0, int(round(queue_size_value)))
+    download_rate_bytes_per_second = max(
+        0,
+        int(round(0.0 if download_rate_value is None else download_rate_value)),
+    )
+    return {
+        "active": not paused and queue_size > 0,
+        "download_rate_bytes_per_second": download_rate_bytes_per_second,
+        "paused": paused,
+        "queue_size": queue_size,
+    }
 
 
 def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
@@ -224,6 +333,14 @@ def calculate_observed_public_group_upload_limit_kbps(
         math.ceil(preferred_upload_kbps * (1.0 + preferred_upload_headroom_fraction)),
     )
     return max(1, transmission_upload_limit_kbps - reserved_private_kbps)
+
+
+def calculate_sabnzbd_public_group_upload_limit_kbps(
+    transmission_upload_limit_kbps: int, sabnzbd_public_group_fraction: float
+) -> int:
+    return max(
+        1, math.ceil(transmission_upload_limit_kbps * sabnzbd_public_group_fraction)
+    )
 
 
 def decide_public_group_upload_limit_kbps(
@@ -496,6 +613,10 @@ def run_iteration(
     public_group_name: str | None,
     public_group_upload_limit_kbps: int | None,
     bandwidth_state_file: Path | None,
+    sabnzbd_exporter_url: str | None,
+    sabnzbd_exporter_timeout_seconds: float,
+    sabnzbd_exporter_instance: str | None,
+    sabnzbd_public_group_fraction: float,
     metrics_file: Path | None,
     last_tracker_status: str | None,
     current_public_group_upload_limit_kbps: int | None,
@@ -607,8 +728,20 @@ def run_iteration(
             bandwidth_state_file
         )
 
+    sabnzbd_state = None
+    if sabnzbd_exporter_url is not None:
+        try:
+            sabnzbd_state = load_sabnzbd_state(
+                sabnzbd_exporter_url,
+                sabnzbd_exporter_timeout_seconds,
+                sabnzbd_exporter_instance,
+            )
+        except ExporterError as exc:
+            LOG.warning("ignoring SABnzbd exporter state for this iteration: %s", exc)
+
     effective_public_group_upload_limit_kbps = None
     observed_public_group_upload_limit_kbps = None
+    sabnzbd_public_group_upload_limit_kbps = None
     public_group_reason = "public_group_disabled"
     if public_group_name:
         (
@@ -637,6 +770,43 @@ def run_iteration(
             preferred_upload_headroom_fraction=preferred_upload_headroom_fraction,
             relaxation_hold_seconds=public_group_relaxation_hold_seconds,
         )
+        if sabnzbd_state is not None and sabnzbd_state["active"]:
+            if transmission_upload_limit_kbps is not None:
+                sabnzbd_public_group_upload_limit_kbps = (
+                    calculate_sabnzbd_public_group_upload_limit_kbps(
+                        transmission_upload_limit_kbps,
+                        sabnzbd_public_group_fraction,
+                    )
+                )
+            elif conservative_public_group_upload_limit_kbps is not None:
+                sabnzbd_public_group_upload_limit_kbps = max(
+                    1,
+                    min(
+                        conservative_public_group_upload_limit_kbps,
+                        calculate_sabnzbd_public_group_upload_limit_kbps(
+                            conservative_public_group_upload_limit_kbps,
+                            sabnzbd_public_group_fraction,
+                        ),
+                    ),
+                )
+            if sabnzbd_public_group_upload_limit_kbps is not None:
+                if (
+                    effective_public_group_upload_limit_kbps is None
+                    or sabnzbd_public_group_upload_limit_kbps
+                    < effective_public_group_upload_limit_kbps
+                ):
+                    effective_public_group_upload_limit_kbps = (
+                        sabnzbd_public_group_upload_limit_kbps
+                    )
+                    public_group_reason = (
+                        "sabnzbd_active"
+                        if public_group_reason == "preferred_inactive"
+                        else f"{public_group_reason}+sabnzbd_active"
+                    )
+                else:
+                    public_group_reason = (
+                        f"{public_group_reason}+sabnzbd_active_nonbinding"
+                    )
         rpc_configure_bandwidth_group(
             client, public_group_name, effective_public_group_upload_limit_kbps
         )
@@ -673,13 +843,20 @@ def run_iteration(
         )
 
     LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s transmission_upload_limit_kbps=%s observed_public_group_upload_limit_kbps=%s effective_public_group_upload_limit_kbps=%s public_group_reason=%s preferred_updates=%s public_updates=%s",
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s sabnzbd_active=%s sabnzbd_paused=%s sabnzbd_queue_size=%s sabnzbd_download_rate_bytes_per_second=%s transmission_upload_limit_kbps=%s observed_public_group_upload_limit_kbps=%s sabnzbd_public_group_upload_limit_kbps=%s effective_public_group_upload_limit_kbps=%s public_group_reason=%s preferred_updates=%s public_updates=%s",
         len(tracker_hosts),
         len(current_preferred_hashes),
         preferred_upload_active,
         preferred_upload_bytes_per_second,
+        None if sabnzbd_state is None else sabnzbd_state["active"],
+        None if sabnzbd_state is None else sabnzbd_state["paused"],
+        None if sabnzbd_state is None else sabnzbd_state["queue_size"],
+        None
+        if sabnzbd_state is None
+        else sabnzbd_state["download_rate_bytes_per_second"],
         transmission_upload_limit_kbps,
         observed_public_group_upload_limit_kbps,
+        sabnzbd_public_group_upload_limit_kbps,
         effective_public_group_upload_limit_kbps,
         public_group_reason,
         len(to_prefer),
@@ -759,6 +936,28 @@ def parse_args() -> argparse.Namespace:
         help="Optional Prometheus textfile path for exported private/public torrent metrics.",
     )
     parser.add_argument(
+        "--sabnzbd-exporter-url",
+        default="",
+        help="Optional SABnzbd exporter /metrics endpoint used to suppress public torrent uploads while SABnzbd has active queue work.",
+    )
+    parser.add_argument(
+        "--sabnzbd-exporter-instance",
+        default="",
+        help="Optional sabnzbd_instance label value to match within the SABnzbd exporter metrics.",
+    )
+    parser.add_argument(
+        "--sabnzbd-exporter-timeout-seconds",
+        type=float,
+        default=5.0,
+        help="Per-request timeout when talking to the SABnzbd exporter.",
+    )
+    parser.add_argument(
+        "--sabnzbd-public-group-fraction",
+        type=float,
+        default=0.1,
+        help="Fraction of the current Transmission upload limit to leave available to public torrents while SABnzbd is active.",
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -785,6 +984,12 @@ def main() -> int:
     bandwidth_state_file = Path(args.bandwidth_state_file.strip())
     if args.bandwidth_state_file.strip() == "":
         bandwidth_state_file = None
+    sabnzbd_exporter_url = args.sabnzbd_exporter_url.strip()
+    if sabnzbd_exporter_url == "":
+        sabnzbd_exporter_url = None
+    sabnzbd_exporter_instance = args.sabnzbd_exporter_instance.strip()
+    if sabnzbd_exporter_instance == "":
+        sabnzbd_exporter_instance = None
     metrics_file = Path(args.metrics_file.strip())
     if args.metrics_file.strip() == "":
         metrics_file = None
@@ -813,6 +1018,12 @@ def main() -> int:
                 public_group_name=public_group_name,
                 public_group_upload_limit_kbps=public_group_upload_limit_kbps,
                 bandwidth_state_file=bandwidth_state_file,
+                sabnzbd_exporter_url=sabnzbd_exporter_url,
+                sabnzbd_exporter_timeout_seconds=(
+                    args.sabnzbd_exporter_timeout_seconds
+                ),
+                sabnzbd_exporter_instance=sabnzbd_exporter_instance,
+                sabnzbd_public_group_fraction=args.sabnzbd_public_group_fraction,
                 metrics_file=metrics_file,
                 last_tracker_status=last_tracker_status,
                 current_public_group_upload_limit_kbps=(

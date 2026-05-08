@@ -2,8 +2,9 @@
 
 This document describes the adaptive upload policy on `srvarr`: how Jellyfin
 viewer activity affects the WireGuard upload budget, how Transmission is kept
-in sync with that budget, and how private-tracker torrents are favored within
-the remaining Transmission bandwidth.
+in sync with that budget, how private-tracker torrents are favored within the
+remaining Transmission bandwidth, and how active SABnzbd downloads suppress
+public torrent uploads.
 
 ## Goals
 
@@ -11,11 +12,12 @@ the remaining Transmission bandwidth.
 - let torrents use more of the uplink when Jellyfin is idle
 - favor uploads for selected private trackers over public torrents
 - make the decision logic observable and easy to debug
+- let SABnzbd outrank public torrent uploads without penalizing private torrents
 - fail safe when upstream signals are missing or stale
 
 ## High-Level Design
 
-The design is split into one decider and several enforcers:
+The design is split into one global decider and several enforcers:
 
 - `jellyfin-upload-policy`
   - polls Jellyfin exporter metrics from `beast`
@@ -32,19 +34,24 @@ The design is split into one decider and several enforcers:
 
 - `transmission-tracker-prioritizer`
   - reads a secret list of tracker hosts to prefer
+  - reads the local SABnzbd exporter
   - marks matching torrents as high priority
   - puts all other torrents into a managed public bandwidth group
   - scales that public group cap from the same shared state file
+  - further suppresses that public group while SABnzbd has queued work
 
 The key design choice is that only the decider talks to Jellyfin exporter.
-Everything else consumes the local state file. This keeps policy computation in
-one place and makes it possible to inspect the effective decision directly.
+Transmission-specific shaping still happens in one place, but
+`transmission-tracker-prioritizer` is also allowed to read the local SABnzbd
+exporter because that signal only affects the public torrent group, not the
+global host upload budget.
 
 ## Current Wiring
 
 Host wiring lives in:
 
 - [nixos/srvarrvm/adaptive-upload-policy.nix](../nixos/srvarrvm/adaptive-upload-policy.nix)
+- [nixos/srvarrvm/sabnzbd-exporter.nix](../nixos/srvarrvm/sabnzbd-exporter.nix)
 - [nixos/srvarrvm/transmission-tracker-prioritizer.nix](../nixos/srvarrvm/transmission-tracker-prioritizer.nix)
 
 Current values:
@@ -61,10 +68,12 @@ Current values:
 - Transmission RPC timeout:
   - adaptive applier: `20s`
   - tracker prioritizer: `20s`
-- preferred tracker match refresh: `60s`
-- public-group relaxation hold time: `45s`
+- preferred tracker match refresh: `30s`
+- public-group relaxation hold time: `30s`
 - minimum preferred-torrent reserve while preferred uploads are active: `10%`
 - preferred upload rate headroom for public-cap derivation: `30%`
+- SABnzbd exporter request timeout: `5s`
+- SABnzbd-active public-group cap: `10%` of the current Transmission limit
 
 Derived limits:
 
@@ -130,6 +139,24 @@ Preferred trackers are stored as a sops secret and read from:
 
 The tracker prioritizer reloads this file every loop. Each line may be a host
 or a full announce URL. Matching is normalized to the tracker host name.
+
+### SABnzbd Exporter
+
+The tracker prioritizer also reads the local SABnzbd exporter on `srvarr`.
+
+For the current boolean policy it only needs three metrics:
+
+- `sabnzbd_paused`
+- `sabnzbd_queue_size`
+- `sabnzbd_queue_download_rate_bytes_per_second`
+
+The active check is intentionally simple:
+
+- SABnzbd is treated as active if `sabnzbd_paused == 0` and
+  `sabnzbd_queue_size > 0`
+
+The download-rate metric is logged for observability now and is reserved for
+future throughput-aware refinement.
 
 ## Decision Model
 
@@ -288,7 +315,7 @@ Instead:
    - `130%` of the currently observed preferred upload rate
 4. if that observed cap is tighter than the current applied cap, it tightens
    immediately
-5. if that observed cap is more generous, it waits `45s` before relaxing
+5. if that observed cap is more generous, it waits `30s` before relaxing
    upward
 
 This keeps the system conservative when preferred uploads first appear, but
@@ -298,6 +325,29 @@ This gives the desired behavior:
 
 - reserve capacity for private torrents only when they are actually using it
 - otherwise let public torrents borrow the headroom
+
+### SABnzbd Override
+
+After the private/public cap is derived, the tracker prioritizer applies a
+simple SABnzbd override:
+
+1. read `sabnzbd_paused` and `sabnzbd_queue_size` from the local exporter
+2. if SABnzbd is paused or its queue is empty, do nothing
+3. if SABnzbd is not paused and the queue is non-empty:
+   - derive a hard public-group cap equal to `10%` of the current
+     Transmission session limit
+   - apply the stricter of:
+     - the private-tracker-derived public cap
+     - the SABnzbd-derived public cap
+
+This means:
+
+- private torrents remain first priority
+- SABnzbd comes next
+- public torrents get whatever is left
+
+The SABnzbd override is boolean for now. It does not yet scale from actual
+SABnzbd throughput.
 
 ## Failure Behavior
 
@@ -327,6 +377,11 @@ If the tracker secret is missing:
 - the tracker prioritizer logs and skips that iteration
 - it retries on the next loop
 
+If the SABnzbd exporter fails:
+
+- the tracker prioritizer ignores the SAB signal for that iteration
+- private-tracker prioritization still continues normally
+
 ## Observability
 
 There are two main ways to inspect the system:
@@ -342,6 +397,12 @@ There are two main ways to inspect the system:
 The tracker prioritizer also exports Prometheus textfile metrics for private
 vs public torrent counts and peer counts. These are used in Grafana to compare
 private/public upload demand against WAN outbound bandwidth.
+
+SABnzbd exporter metrics are scraped directly by Prometheus under job
+`sabnzbd` and are surfaced on the NAS dashboard with:
+
+- `SABnzbd Download Rate`
+- `SABnzbd Queue Remaining`
 
 ## Practical Latency
 
@@ -369,6 +430,9 @@ That comes from:
   active.
 - Tracker prioritization is torrent-level, not tracker-level. If a torrent has
   a preferred tracker, the whole torrent is boosted.
+- SABnzbd suppression is currently boolean. If SABnzbd has any queued work and
+  is not paused, public torrents are capped hard even if SABnzbd is only using
+  a small amount of bandwidth.
 - Public deprioritization uses both a soft bias (`bandwidthPriority`) and a
   hard group cap. The hard cap is what makes the private/public separation
   noticeable under contention.
@@ -382,4 +446,5 @@ That comes from:
 - [pkgs/transmission-tracker-prioritizer/default.nix](../pkgs/transmission-tracker-prioritizer/default.nix)
 - [pkgs/transmission-tracker-prioritizer/main.py](../pkgs/transmission-tracker-prioritizer/main.py)
 - [nixos/srvarrvm/adaptive-upload-policy.nix](../nixos/srvarrvm/adaptive-upload-policy.nix)
+- [nixos/srvarrvm/sabnzbd-exporter.nix](../nixos/srvarrvm/sabnzbd-exporter.nix)
 - [nixos/srvarrvm/transmission-tracker-prioritizer.nix](../nixos/srvarrvm/transmission-tracker-prioritizer.nix)
