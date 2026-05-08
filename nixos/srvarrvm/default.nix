@@ -48,7 +48,12 @@ let
   };
   wgBridgeAddress = "192.168.50.5";
   wgNamespaceAddress = "192.168.50.1";
-  wgUploadRate = "8mbit";
+  wgUploadRateMbit = 8;
+  wgUploadRate = "${toString wgUploadRateMbit}mbit";
+  # Keep Transmission a little below tc's WireGuard ceiling so Transmission's
+  # own scheduler remains the bottleneck and can favor private-tracker torrents
+  # before traffic hits the kernel shaper.
+  transmissionUploadLimitKBps = builtins.floor ((wgUploadRateMbit * 1000.0 / 8.0) * 0.95);
   wgOuterLinkRate = "10gbit";
   wgEndpointPort = 1637;
   networkOnlineUnitDeps = {
@@ -223,6 +228,8 @@ in
         rpc-bind-address = wgNamespaceAddress;
         rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
         sort-mode = "progress";
+        speed-limit-up = transmissionUploadLimitKBps;
+        speed-limit-up-enabled = true;
       };
     };
 
