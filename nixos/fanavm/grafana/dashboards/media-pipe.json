@@ -248,7 +248,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}[3m]) * 8 / 1000000",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}[5m]) * 8 / 1000000",
           "legendFormat": "Private Upload Throughput",
           "range": true,
           "refId": "A"
@@ -256,7 +256,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}[3m]) * 8 / 1000000",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}[5m]) * 8 / 1000000",
           "legendFormat": "Public Upload Throughput",
           "range": true,
           "refId": "B"
@@ -539,6 +539,6 @@
   "timezone": "",
   "title": "Media Pipe",
   "uid": "fana-media-pipe",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
