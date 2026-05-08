@@ -43,6 +43,8 @@ let
   prometheusPort = 9090;
   lokiPort = 3100;
   jellyfinExporterPort = 9594;
+  sabnzbdExporterPort =
+    outputs.nixosConfigurations.prox-srvarrvm.config.services.prometheus.exporters.sabnzbd.port;
   nutExporterPort = 9199;
   smartctlExporterPort = 9633;
   vikunjaHost = outputs.nixosConfigurations.prox-orgvm.config.host.dnsName;
@@ -767,6 +769,17 @@ in
               "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString jellyfinExporterPort}"
             ];
             labels.instance = outputs.nixosConfigurations.beast.config.host.dnsName;
+          }
+        ];
+      }
+      {
+        job_name = "sabnzbd";
+        static_configs = [
+          {
+            targets = [
+              "${outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName}:${toString sabnzbdExporterPort}"
+            ];
+            labels.instance = outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName;
           }
         ];
       }

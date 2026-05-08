@@ -5,6 +5,7 @@ import datetime
 import ipaddress
 import json
 import logging
+import math
 import os
 import re
 import socket
@@ -18,7 +19,9 @@ from pathlib import Path
 
 
 LOG = logging.getLogger("adaptive-upload-controller")
-DEFAULT_VIDEO_TYPES = {
+DEFAULT_MEDIA_TYPES = {
+    "audio",
+    "audiobook",
     "episode",
     "movie",
     "musicvideo",
@@ -31,6 +34,7 @@ PLAYING_METRIC_RE = re.compile(
     r"(?:\s+\d+)?$"
 )
 LABEL_PAIR_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_]*)="((?:[^"\\]|\\.)*)"')
+TARGET_MBIT_EPSILON = 0.05
 
 
 class ControllerError(RuntimeError):
@@ -155,8 +159,16 @@ def write_json_atomic(path: Path, data: dict) -> None:
         raise
 
 
+def round_target_mbit(target_mbit: float) -> float:
+    return round(target_mbit, 1)
+
+
+def format_target_mbit(target_mbit: float) -> str:
+    return f"{round_target_mbit(target_mbit):.1f}".rstrip("0").rstrip(".")
+
+
 def calculate_transmission_upload_limit_kbps(
-    target_mbit: int, headroom_fraction: float
+    target_mbit: float, headroom_fraction: float
 ) -> int:
     return max(1, int((target_mbit * 1000.0 / 8.0) * headroom_fraction))
 
@@ -168,26 +180,29 @@ def calculate_public_group_limit_kbps(
 
 
 def default_policy_state(
-    fallback_mbit: int,
+    fallback_mbit: float,
     transmission_headroom_fraction: float,
     public_group_fraction: float,
     reason: str,
     exporter_ok: bool,
-    active_external_video_streams: int | None,
+    active_external_media_streams: int | None,
 ) -> dict:
     transmission_upload_limit_kbps = calculate_transmission_upload_limit_kbps(
         fallback_mbit, transmission_headroom_fraction
     )
     return {
-        "active_external_video_streams": active_external_video_streams,
-        "active_video_streams_total": active_external_video_streams,
+        "active_external_media_streams": active_external_media_streams,
+        "active_external_media_bitrate_bits_per_second": None,
+        "active_media_streams_total": active_external_media_streams,
         "exporter_ok": exporter_ok,
+        "missing_external_media_bitrate_sessions": None,
         "public_group_upload_limit_kbps": calculate_public_group_limit_kbps(
             transmission_upload_limit_kbps, public_group_fraction
         ),
         "reason": reason,
-        "target_mbit": fallback_mbit,
-        "target_tc_rate": f"{fallback_mbit}mbit",
+        "reserved_external_media_bandwidth_mbit": None,
+        "target_mbit": float(fallback_mbit),
+        "target_tc_rate": f"{format_target_mbit(fallback_mbit)}mbit",
         "transmission_upload_limit_kbps": transmission_upload_limit_kbps,
         "updated_at": now_utc_iso8601(),
     }
@@ -246,11 +261,12 @@ def fetch_url_text(url: str, timeout_seconds: float) -> str:
         raise ControllerError(f"request to {url} failed: {exc}") from exc
 
 
-def collect_video_stream_counts(
-    metrics_text: str, video_types: set[str]
-) -> tuple[int, int]:
+def collect_media_stream_stats(
+    metrics_text: str, media_types: set[str]
+) -> tuple[int, int, int, int]:
     external_session_keys: set[tuple[str, str, str]] = set()
-    playing_video_session_keys: list[tuple[str, str, str]] = []
+    playing_media_session_keys: set[tuple[str, str, str]] = set()
+    bitrate_by_session_key: dict[tuple[str, str, str], int] = {}
 
     for raw_line in metrics_text.splitlines():
         line = raw_line.strip()
@@ -278,6 +294,35 @@ def collect_video_stream_counts(
                 external_session_keys.add(session_key)
             continue
 
+        if line.startswith("jellyfin_now_playing_bitrate_bits_per_second{"):
+            match = PLAYING_METRIC_RE.match(
+                line.replace(
+                    "jellyfin_now_playing_bitrate_bits_per_second{",
+                    "jellyfin_now_playing_state{",
+                    1,
+                )
+            )
+            if match is None:
+                continue
+            try:
+                value = float(match.group("value"))
+            except ValueError:
+                continue
+            if value <= 0:
+                continue
+            labels = parse_prometheus_labels(match.group("labels"))
+            media_type = labels.get("type", "").lower()
+            if media_type not in media_types:
+                continue
+            session_key = (
+                labels.get("user_id", ""),
+                labels.get("username", ""),
+                labels.get("device", ""),
+            )
+            if session_key[0] and session_key[1] and session_key[2]:
+                bitrate_by_session_key[session_key] = int(value)
+            continue
+
         if not line.startswith("jellyfin_now_playing_state{"):
             continue
 
@@ -293,71 +338,106 @@ def collect_video_stream_counts(
 
         labels = parse_prometheus_labels(match.group("labels"))
         media_type = labels.get("type", "").lower()
-        if media_type in video_types:
+        if media_type in media_types:
             session_key = (
                 labels.get("user_id", ""),
                 labels.get("username", ""),
                 labels.get("device", ""),
             )
             if session_key[0] and session_key[1] and session_key[2]:
-                playing_video_session_keys.append(session_key)
+                playing_media_session_keys.add(session_key)
 
-    total_streams = len(playing_video_session_keys)
-    external_streams = sum(
-        1
-        for session_key in playing_video_session_keys
+    total_streams = len(playing_media_session_keys)
+    active_external_media_session_keys = {
+        session_key
+        for session_key in playing_media_session_keys
         if session_key in external_session_keys
+    }
+    external_streams = len(active_external_media_session_keys)
+
+    total_external_media_bitrate_bps = 0
+    missing_external_media_bitrate_sessions = 0
+    for session_key in active_external_media_session_keys:
+        bitrate_bps = bitrate_by_session_key.get(session_key)
+        if bitrate_bps is None or bitrate_bps <= 0:
+            missing_external_media_bitrate_sessions += 1
+            continue
+        total_external_media_bitrate_bps += bitrate_bps
+
+    return (
+        total_streams,
+        external_streams,
+        total_external_media_bitrate_bps,
+        missing_external_media_bitrate_sessions,
     )
-    return total_streams, external_streams
 
 
-def observed_policy_state_from_stream_counts(
+def observed_policy_state_from_stream_stats(
     args: argparse.Namespace,
-    total_video_streams: int,
-    active_external_video_streams: int,
+    total_media_streams: int,
+    active_external_media_streams: int,
+    active_external_media_bitrate_bits_per_second: int,
+    missing_external_media_bitrate_sessions: int,
 ) -> dict:
-    if active_external_video_streams == 0:
-        target_mbit = args.no_streams_mbit
-        reason = "no_active_video_streams"
-    elif active_external_video_streams == 1:
-        target_mbit = args.one_stream_mbit
-        reason = "one_active_video_stream"
+    if active_external_media_streams == 0:
+        target_mbit = float(args.no_streams_mbit)
+        reason = "no_active_media_streams"
+        reserved_external_media_bandwidth_mbit = 0.0
+    elif missing_external_media_bitrate_sessions > 0:
+        target_mbit = float(args.minimum_streams_mbit)
+        reason = "active_media_streams_missing_bitrate"
+        reserved_external_media_bandwidth_mbit = None
     else:
-        target_mbit = args.many_streams_mbit
-        reason = "multiple_active_video_streams"
+        reserved_external_media_bandwidth_mbit = round_target_mbit(
+            (active_external_media_bitrate_bits_per_second / 1_000_000.0)
+            * (1.0 + args.stream_bitrate_headroom_fraction)
+        )
+        target_mbit = round_target_mbit(
+            min(
+                float(args.no_streams_mbit),
+                max(
+                    float(args.minimum_streams_mbit),
+                    float(args.no_streams_mbit)
+                    - reserved_external_media_bandwidth_mbit,
+                ),
+            )
+        )
+        reason = "bitrate_based_active_media_streams"
 
     return {
-        "active_external_video_streams": active_external_video_streams,
-        "active_video_streams_total": total_video_streams,
+        "active_external_media_bitrate_bits_per_second": (
+            active_external_media_bitrate_bits_per_second
+        ),
+        "active_external_media_streams": active_external_media_streams,
+        "active_media_streams_total": total_media_streams,
         "exporter_ok": True,
+        "missing_external_media_bitrate_sessions": (
+            missing_external_media_bitrate_sessions
+        ),
         "reason": reason,
+        "reserved_external_media_bandwidth_mbit": (
+            reserved_external_media_bandwidth_mbit
+        ),
         "target_mbit": target_mbit,
     }
 
 
 def fallback_observed_policy_state(args: argparse.Namespace, reason: str) -> dict:
     return {
-        "active_external_video_streams": None,
-        "active_video_streams_total": None,
+        "active_external_media_bitrate_bits_per_second": None,
+        "active_external_media_streams": None,
+        "active_media_streams_total": None,
         "exporter_ok": False,
+        "missing_external_media_bitrate_sessions": None,
         "reason": reason,
-        "target_mbit": args.many_streams_mbit,
+        "reserved_external_media_bandwidth_mbit": None,
+        "target_mbit": float(args.fallback_mbit),
     }
-
-
-def target_rank(args: argparse.Namespace, target_mbit: int) -> int:
-    if target_mbit == args.no_streams_mbit:
-        return 0
-    if target_mbit == args.one_stream_mbit:
-        return 1
-    if target_mbit == args.many_streams_mbit:
-        return 2
-    raise ControllerError(f"unknown target_mbit {target_mbit}")
 
 
 def load_decider_state(
     state_file: Path, args: argparse.Namespace
-) -> tuple[int | None, int | None, datetime.datetime | None]:
+) -> tuple[float | None, float | None, datetime.datetime | None]:
     try:
         parsed = json.loads(state_file.read_text())
     except (OSError, json.JSONDecodeError):
@@ -367,20 +447,35 @@ def load_decider_state(
         return None, None, None
 
     effective_target_mbit = parsed.get("target_mbit")
-    if not isinstance(effective_target_mbit, int) or effective_target_mbit not in {
-        args.no_streams_mbit,
-        args.one_stream_mbit,
-        args.many_streams_mbit,
-    }:
+    if (
+        not isinstance(effective_target_mbit, (int, float))
+        or isinstance(effective_target_mbit, bool)
+        or not math.isfinite(float(effective_target_mbit))
+    ):
         effective_target_mbit = None
+    else:
+        effective_target_mbit = round_target_mbit(float(effective_target_mbit))
+        if (
+            effective_target_mbit
+            < float(args.minimum_streams_mbit) - TARGET_MBIT_EPSILON
+            or effective_target_mbit > float(args.no_streams_mbit) + TARGET_MBIT_EPSILON
+        ):
+            effective_target_mbit = None
 
     pending_target_mbit = parsed.get("relaxation_pending_target_mbit")
     pending_since = parsed.get("relaxation_pending_since")
     if (
-        not isinstance(pending_target_mbit, int)
-        or pending_target_mbit
-        not in {args.no_streams_mbit, args.one_stream_mbit, args.many_streams_mbit}
+        not isinstance(pending_target_mbit, (int, float))
+        or isinstance(pending_target_mbit, bool)
+        or not math.isfinite(float(pending_target_mbit))
         or not isinstance(pending_since, str)
+    ):
+        return effective_target_mbit, None, None
+
+    pending_target_mbit = round_target_mbit(float(pending_target_mbit))
+    if (
+        pending_target_mbit < float(args.minimum_streams_mbit) - TARGET_MBIT_EPSILON
+        or pending_target_mbit > float(args.no_streams_mbit) + TARGET_MBIT_EPSILON
     ):
         return effective_target_mbit, None, None
 
@@ -395,20 +490,27 @@ def build_policy_state(
     *,
     args: argparse.Namespace,
     observed_state: dict,
-    effective_target_mbit: int,
+    effective_target_mbit: float,
     effective_reason: str,
-    relaxation_pending_target_mbit: int | None,
+    relaxation_pending_target_mbit: float | None,
     relaxation_pending_since: datetime.datetime | None,
 ) -> dict:
+    effective_target_mbit = round_target_mbit(effective_target_mbit)
     transmission_upload_limit_kbps = calculate_transmission_upload_limit_kbps(
         effective_target_mbit, args.transmission_headroom_fraction
     )
     return {
-        "active_external_video_streams": observed_state[
-            "active_external_video_streams"
+        "active_external_media_bitrate_bits_per_second": observed_state[
+            "active_external_media_bitrate_bits_per_second"
         ],
-        "active_video_streams_total": observed_state["active_video_streams_total"],
+        "active_external_media_streams": observed_state[
+            "active_external_media_streams"
+        ],
+        "active_media_streams_total": observed_state["active_media_streams_total"],
         "exporter_ok": observed_state["exporter_ok"],
+        "missing_external_media_bitrate_sessions": observed_state[
+            "missing_external_media_bitrate_sessions"
+        ],
         "observed_reason": observed_state["reason"],
         "observed_target_mbit": observed_state["target_mbit"],
         "public_group_upload_limit_kbps": calculate_public_group_limit_kbps(
@@ -421,9 +523,16 @@ def build_policy_state(
             if relaxation_pending_since is not None
             else None
         ),
-        "relaxation_pending_target_mbit": relaxation_pending_target_mbit,
+        "relaxation_pending_target_mbit": (
+            round_target_mbit(relaxation_pending_target_mbit)
+            if relaxation_pending_target_mbit is not None
+            else None
+        ),
+        "reserved_external_media_bandwidth_mbit": observed_state[
+            "reserved_external_media_bandwidth_mbit"
+        ],
         "target_mbit": effective_target_mbit,
-        "target_tc_rate": f"{effective_target_mbit}mbit",
+        "target_tc_rate": f"{format_target_mbit(effective_target_mbit)}mbit",
         "transmission_upload_limit_kbps": transmission_upload_limit_kbps,
         "updated_at": now_utc_iso8601(),
     }
@@ -432,13 +541,22 @@ def build_policy_state(
 def decide_observed_policy_state(args: argparse.Namespace) -> dict:
     try:
         metrics_text = fetch_url_text(args.exporter_url, args.request_timeout_seconds)
-        total_video_streams, active_external_video_streams = (
-            collect_video_stream_counts(metrics_text, set(args.video_types))
-        )
-        return observed_policy_state_from_stream_counts(
+        (
+            total_media_streams,
+            active_external_media_streams,
+            active_external_media_bitrate_bits_per_second,
+            missing_external_media_bitrate_sessions,
+        ) = collect_media_stream_stats(metrics_text, set(args.media_types))
+        return observed_policy_state_from_stream_stats(
             args=args,
-            total_video_streams=total_video_streams,
-            active_external_video_streams=active_external_video_streams,
+            total_media_streams=total_media_streams,
+            active_external_media_streams=active_external_media_streams,
+            active_external_media_bitrate_bits_per_second=(
+                active_external_media_bitrate_bits_per_second
+            ),
+            missing_external_media_bitrate_sessions=(
+                missing_external_media_bitrate_sessions
+            ),
         )
     except ControllerError as exc:
         LOG.warning("using conservative fallback after exporter failure: %s", exc)
@@ -466,10 +584,7 @@ def decide_effective_policy_state(args: argparse.Namespace, state_file: Path) ->
             relaxation_pending_since=None,
         )
 
-    current_rank = target_rank(args, current_effective_target_mbit)
-    observed_rank = target_rank(args, observed_target_mbit)
-
-    if observed_rank > current_rank:
+    if observed_target_mbit < current_effective_target_mbit - TARGET_MBIT_EPSILON:
         return build_policy_state(
             args=args,
             observed_state=observed_state,
@@ -479,7 +594,7 @@ def decide_effective_policy_state(args: argparse.Namespace, state_file: Path) ->
             relaxation_pending_since=None,
         )
 
-    if observed_rank == current_rank:
+    if abs(observed_target_mbit - current_effective_target_mbit) <= TARGET_MBIT_EPSILON:
         return build_policy_state(
             args=args,
             observed_state=observed_state,
@@ -490,7 +605,9 @@ def decide_effective_policy_state(args: argparse.Namespace, state_file: Path) ->
         )
 
     if (
-        relaxation_pending_target_mbit != observed_target_mbit
+        relaxation_pending_target_mbit is None
+        or abs(relaxation_pending_target_mbit - observed_target_mbit)
+        > TARGET_MBIT_EPSILON
         or relaxation_pending_since is None
     ):
         return build_policy_state(
@@ -526,7 +643,7 @@ def decide_effective_policy_state(args: argparse.Namespace, state_file: Path) ->
 
 def load_policy_state(
     state_file: Path,
-    fallback_mbit: int,
+    fallback_mbit: float,
     transmission_headroom_fraction: float,
     public_group_fraction: float,
     max_state_age_seconds: float | None,
@@ -537,7 +654,7 @@ def load_policy_state(
         public_group_fraction=public_group_fraction,
         reason="missing_or_invalid_state_file",
         exporter_ok=False,
-        active_external_video_streams=None,
+        active_external_media_streams=None,
     )
 
     try:
@@ -560,8 +677,9 @@ def load_policy_state(
     transmission_upload_limit_kbps = parsed.get("transmission_upload_limit_kbps")
     public_group_upload_limit_kbps = parsed.get("public_group_upload_limit_kbps")
     if (
-        not isinstance(target_mbit, int)
-        or target_mbit <= 0
+        not isinstance(target_mbit, (int, float))
+        or isinstance(target_mbit, bool)
+        or float(target_mbit) <= 0
         or not isinstance(transmission_upload_limit_kbps, int)
         or transmission_upload_limit_kbps <= 0
         or not isinstance(public_group_upload_limit_kbps, int)
@@ -631,24 +749,30 @@ def run_decider(args: argparse.Namespace) -> int:
                 state["observed_target_mbit"],
                 state["transmission_upload_limit_kbps"],
                 state["public_group_upload_limit_kbps"],
-                state["active_external_video_streams"],
-                state["active_video_streams_total"],
+                state["active_external_media_streams"],
+                state["active_external_media_bitrate_bits_per_second"],
+                state["active_media_streams_total"],
+                state["missing_external_media_bitrate_sessions"],
                 state["reason"],
                 state["observed_reason"],
                 state["exporter_ok"],
                 state["relaxation_pending_target_mbit"],
                 state["relaxation_pending_since"],
+                state["reserved_external_media_bandwidth_mbit"],
             )
             write_json_atomic(state_file, state)
             if signature != last_signature:
                 LOG.info(
-                    "policy updated: observed_target_mbit=%s target_mbit=%s transmission_upload_limit_kbps=%s public_group_upload_limit_kbps=%s active_external_video_streams=%s active_video_streams_total=%s reason=%s observed_reason=%s exporter_ok=%s relaxation_pending_target_mbit=%s relaxation_pending_since=%s",
+                    "policy updated: observed_target_mbit=%s target_mbit=%s transmission_upload_limit_kbps=%s public_group_upload_limit_kbps=%s active_external_media_streams=%s active_external_media_bitrate_bits_per_second=%s active_media_streams_total=%s missing_external_media_bitrate_sessions=%s reserved_external_media_bandwidth_mbit=%s reason=%s observed_reason=%s exporter_ok=%s relaxation_pending_target_mbit=%s relaxation_pending_since=%s",
                     state["observed_target_mbit"],
                     state["target_mbit"],
                     state["transmission_upload_limit_kbps"],
                     state["public_group_upload_limit_kbps"],
-                    state["active_external_video_streams"],
-                    state["active_video_streams_total"],
+                    state["active_external_media_streams"],
+                    state["active_external_media_bitrate_bits_per_second"],
+                    state["active_media_streams_total"],
+                    state["missing_external_media_bitrate_sessions"],
+                    state["reserved_external_media_bandwidth_mbit"],
                     state["reason"],
                     state["observed_reason"],
                     state["exporter_ok"],
@@ -742,49 +866,12 @@ def run_command(
 def apply_tc_shape(
     iface: str,
     tc_rate: str,
-    outer_link_rate: str,
-    endpoint_port: int,
 ) -> None:
-    # Rebuild the tree on changes because `tc qdisc replace` on the existing
-    # CAKE leaf returns "Change operation not supported by specified qdisc".
-    run_command(["tc", "qdisc", "del", "dev", iface, "root"], check=False)
-
     commands = [
         [
             "tc",
-            "qdisc",
-            "add",
-            "dev",
-            iface,
-            "root",
-            "handle",
-            "1:",
-            "htb",
-            "default",
-            "20",
-            "r2q",
-            "1000",
-        ],
-        [
-            "tc",
             "class",
-            "add",
-            "dev",
-            iface,
-            "parent",
-            "1:",
-            "classid",
-            "1:1",
-            "htb",
-            "rate",
-            outer_link_rate,
-            "ceil",
-            outer_link_rate,
-        ],
-        [
-            "tc",
-            "class",
-            "add",
+            "change",
             "dev",
             iface,
             "parent",
@@ -799,24 +886,8 @@ def apply_tc_shape(
         ],
         [
             "tc",
-            "class",
-            "add",
-            "dev",
-            iface,
-            "parent",
-            "1:1",
-            "classid",
-            "1:20",
-            "htb",
-            "rate",
-            outer_link_rate,
-            "ceil",
-            outer_link_rate,
-        ],
-        [
-            "tc",
             "qdisc",
-            "add",
+            "change",
             "dev",
             iface,
             "parent",
@@ -828,58 +899,6 @@ def apply_tc_shape(
             tc_rate,
             "besteffort",
             "wash",
-        ],
-        [
-            "tc",
-            "qdisc",
-            "add",
-            "dev",
-            iface,
-            "parent",
-            "1:20",
-            "handle",
-            "20:",
-            "fq_codel",
-        ],
-        [
-            "tc",
-            "filter",
-            "add",
-            "dev",
-            iface,
-            "protocol",
-            "ip",
-            "parent",
-            "1:",
-            "prio",
-            "10",
-            "flower",
-            "ip_proto",
-            "udp",
-            "dst_port",
-            str(endpoint_port),
-            "classid",
-            "1:10",
-        ],
-        [
-            "tc",
-            "filter",
-            "add",
-            "dev",
-            iface,
-            "protocol",
-            "ipv6",
-            "parent",
-            "1:",
-            "prio",
-            "11",
-            "flower",
-            "ip_proto",
-            "udp",
-            "dst_port",
-            str(endpoint_port),
-            "classid",
-            "1:10",
         ],
     ]
 
@@ -908,8 +927,6 @@ def run_tc_applier(args: argparse.Namespace) -> int:
                 apply_tc_shape(
                     iface=iface,
                     tc_rate=tc_rate,
-                    outer_link_rate=args.outer_link_rate,
-                    endpoint_port=args.endpoint_port,
                 )
                 LOG.info(
                     "updated tc WireGuard upload shaping on %s to %s (reason=%s)",
@@ -949,17 +966,18 @@ def parse_args() -> argparse.Namespace:
     )
     decider.add_argument("--interval-seconds", type=float, default=30.0)
     decider.add_argument("--request-timeout-seconds", type=float, default=10.0)
-    decider.add_argument("--no-streams-mbit", type=int, default=20)
-    decider.add_argument("--one-stream-mbit", type=int, default=15)
-    decider.add_argument("--many-streams-mbit", type=int, default=8)
+    decider.add_argument("--no-streams-mbit", type=float, default=24.0)
+    decider.add_argument("--minimum-streams-mbit", type=float, default=2.0)
+    decider.add_argument("--fallback-mbit", type=float, default=8.0)
+    decider.add_argument("--stream-bitrate-headroom-fraction", type=float, default=0.2)
     decider.add_argument("--relaxation-hold-seconds", type=float, default=300.0)
     decider.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
     decider.add_argument("--public-group-fraction", type=float, default=0.4)
     decider.add_argument(
-        "--video-types",
+        "--media-types",
         nargs="+",
-        default=sorted(DEFAULT_VIDEO_TYPES),
-        help="Jellyfin media types that count as active video streams.",
+        default=sorted(DEFAULT_MEDIA_TYPES),
+        help="Jellyfin media types that count toward adaptive uplink budgeting.",
     )
 
     transmission = subparsers.add_parser(
@@ -972,7 +990,7 @@ def parse_args() -> argparse.Namespace:
     )
     transmission.add_argument("--interval-seconds", type=float, default=30.0)
     transmission.add_argument("--request-timeout-seconds", type=float, default=15.0)
-    transmission.add_argument("--fallback-mbit", type=int, default=8)
+    transmission.add_argument("--fallback-mbit", type=float, default=8.0)
     transmission.add_argument(
         "--transmission-headroom-fraction", type=float, default=0.95
     )
@@ -987,7 +1005,7 @@ def parse_args() -> argparse.Namespace:
         "--state-file", required=True, help="Path to the shared state JSON file."
     )
     tc_applier.add_argument("--interval-seconds", type=float, default=30.0)
-    tc_applier.add_argument("--fallback-mbit", type=int, default=8)
+    tc_applier.add_argument("--fallback-mbit", type=float, default=8.0)
     tc_applier.add_argument(
         "--transmission-headroom-fraction", type=float, default=0.95
     )
