@@ -89,47 +89,14 @@ main() {
   sops --decrypt "$secret" > "$tmp"
   cp "$template" "$base"
   if [[ -f "$host_template" ]]; then
-    yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' "$base" "$host_template" > "$merged"
+    yq -y -s '.[0] * .[1]' "$base" "$host_template" > "$merged"
     mv "$merged" "$base"
   fi
-  yq eval-all 'select(fileIndex == 0) * select(fileIndex == 1)' "$base" "$tmp" > "$merged"
-  # Keep deterministic key ordering without relying on jq's non-portable sort_keys/1.
-  # shellcheck disable=SC2016
-  yq eval '
-    def sort_deep:
-      if type == "object" then
-        to_entries
-        | sort_by(.key)
-        | map(.value |= sort_deep)
-        | from_entries
-      elif type == "array" then
-        map(sort_deep)
-      else
-        .
-      end;
-    (.sops // null) as $sops
-    | del(.sops)
-    | sort_deep
-    | if $sops == null then . else . + {"sops": $sops} end
-  ' "$merged" > "$sorted"
-  # shellcheck disable=SC2016
-  yq eval '
-    def sort_deep:
-      if type == "object" then
-        to_entries
-        | sort_by(.key)
-        | map(.value |= sort_deep)
-        | from_entries
-      elif type == "array" then
-        map(sort_deep)
-      else
-        .
-      end;
-    (.sops // null) as $sops
-    | del(.sops)
-    | sort_deep
-    | if $sops == null then . else . + {"sops": $sops} end
-  ' "$tmp" > "$current_sorted"
+  yq -y -s '.[0] * .[1]' "$base" "$tmp" > "$merged"
+
+  # Normalize to JSON and sort keys recursively for deterministic comparisons.
+  yq '.' "$merged" | jq -S 'del(.sops)' > "$sorted"
+  yq '.' "$tmp" | jq -S 'del(.sops)' > "$current_sorted"
 
   if [[ "$force" != "1" ]] && cmp -s "$current_sorted" "$sorted"; then
     if [[ "${SOPS_UPDATE_QUIET:-0}" != "1" ]]; then
@@ -138,7 +105,7 @@ main() {
     return 0
   fi
 
-  sops --encrypt --filename-override "$secret" --input-type yaml --output-type yaml "$sorted" > "$encrypted"
+  sops --encrypt --filename-override "$secret" --input-type json --output-type yaml "$sorted" > "$encrypted"
   mv "$encrypted" "$secret"
 
   if [[ "$force" == "1" ]] && cmp -s "$current_sorted" "$sorted"; then

@@ -15,7 +15,5 @@ pkgs: {
 
   aurral = pkgs.callPackage ./aurral { };
 
-  transmission-tracker-prioritizer =
-    pkgs.callPackage ./transmission-private-tracker-prioritizer
-      { };
+  transmission-tracker-prioritizer = pkgs.callPackage ./transmission-tracker-prioritizer { };
 }
