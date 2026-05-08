@@ -233,6 +233,10 @@ in
         sort-mode = "progress";
         speed-limit-up = transmissionUploadLimitKBps;
         speed-limit-up-enabled = true;
+        # On an 8 Mbit uplink, the default 8 slots tends to spread each swarm's
+        # upload across too many peers. Lowering this keeps per-peer throughput
+        # healthier and makes the private-tracker priority more noticeable.
+        upload-slots-per-torrent = 4;
       };
     };
 
