@@ -43,6 +43,8 @@ in
         "public-low-priority"
         "--public-group-upload-limit-kbps"
         (toString publicGroupUploadLimitKBps)
+        "--bandwidth-state-file"
+        "/run/adaptive-upload-policy/state.json"
         "--interval-seconds"
         "60"
         "--request-timeout-seconds"

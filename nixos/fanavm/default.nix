@@ -42,6 +42,7 @@ let
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
+  jellyfinExporterPort = 9594;
   nutExporterPort = 9199;
   smartctlExporterPort = 9633;
   vikunjaHost = outputs.nixosConfigurations.prox-orgvm.config.host.dnsName;
@@ -753,6 +754,17 @@ in
           {
             targets = [
               "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString smartctlExporterPort}"
+            ];
+            labels.instance = outputs.nixosConfigurations.beast.config.host.dnsName;
+          }
+        ];
+      }
+      {
+        job_name = "jellyfin";
+        static_configs = [
+          {
+            targets = [
+              "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString jellyfinExporterPort}"
             ];
             labels.instance = outputs.nixosConfigurations.beast.config.host.dnsName;
           }

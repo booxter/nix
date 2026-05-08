@@ -409,6 +409,7 @@ in
   imports = [
     (import ../../disko { })
     ./backup-server.nix
+    ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
     ./ups.nix

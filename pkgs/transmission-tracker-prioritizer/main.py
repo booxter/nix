@@ -127,6 +127,32 @@ def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
     return hosts
 
 
+def load_public_group_upload_limit_kbps(state_file: Path) -> int | None:
+    if not state_file.exists():
+        return None
+
+    try:
+        parsed = json.loads(state_file.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        LOG.warning("unable to read bandwidth state file %s: %s", state_file, exc)
+        return None
+
+    if not isinstance(parsed, dict):
+        LOG.warning(
+            "bandwidth state file %s does not contain a JSON object", state_file
+        )
+        return None
+
+    public_group_upload_limit_kbps = parsed.get("public_group_upload_limit_kbps")
+    if (
+        not isinstance(public_group_upload_limit_kbps, int)
+        or public_group_upload_limit_kbps <= 0
+    ):
+        return None
+
+    return public_group_upload_limit_kbps
+
+
 def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
     for tracker in torrent.get("trackerStats", []):
         if not isinstance(tracker, dict):
@@ -191,15 +217,15 @@ def rpc_configure_bandwidth_group(
 ) -> None:
     arguments: dict[str, str | int | bool] = {
         "name": group_name,
-        "honors_session_limits": True,
-        "speed_limit_down_enabled": False,
+        "honorsSessionLimits": True,
+        "speed-limit-down-enabled": False,
     }
 
     if upload_limit_kbps is None:
-        arguments["speed_limit_up_enabled"] = False
+        arguments["speed-limit-up-enabled"] = False
     else:
-        arguments["speed_limit_up"] = upload_limit_kbps
-        arguments["speed_limit_up_enabled"] = True
+        arguments["speed-limit-up"] = upload_limit_kbps
+        arguments["speed-limit-up-enabled"] = True
 
     client.call("group-set", arguments)
 
@@ -209,6 +235,7 @@ def run_iteration(
     trackers_file: Path,
     public_group_name: str | None,
     public_group_upload_limit_kbps: int | None,
+    bandwidth_state_file: Path | None,
     last_tracker_status: str | None,
 ) -> str | None:
     tracker_hosts = load_tracker_hosts(trackers_file)
@@ -257,9 +284,21 @@ def run_iteration(
         ):
             to_make_public.append(torrent_hash)
 
+    effective_public_group_upload_limit_kbps = public_group_upload_limit_kbps
+    if bandwidth_state_file is not None:
+        dynamic_public_group_upload_limit_kbps = load_public_group_upload_limit_kbps(
+            bandwidth_state_file
+        )
+        if dynamic_public_group_upload_limit_kbps is not None:
+            effective_public_group_upload_limit_kbps = (
+                dynamic_public_group_upload_limit_kbps
+            )
+
     if public_group_name:
         active_public_group_upload_limit_kbps = (
-            public_group_upload_limit_kbps if preferred_upload_active else None
+            effective_public_group_upload_limit_kbps
+            if preferred_upload_active
+            else None
         )
         rpc_configure_bandwidth_group(
             client, public_group_name, active_public_group_upload_limit_kbps
@@ -329,6 +368,11 @@ def parse_args() -> argparse.Namespace:
         help="Upload cap, in kB/s, for the managed public bandwidth group.",
     )
     parser.add_argument(
+        "--bandwidth-state-file",
+        default="",
+        help="Optional adaptive upload policy state file used to scale the public group cap.",
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -352,6 +396,9 @@ def main() -> int:
     public_group_name = args.public_group_name.strip()
     if public_group_name == "":
         public_group_name = None
+    bandwidth_state_file = Path(args.bandwidth_state_file.strip())
+    if args.bandwidth_state_file.strip() == "":
+        bandwidth_state_file = None
     public_group_upload_limit_kbps = args.public_group_upload_limit_kbps
     if (
         public_group_upload_limit_kbps is not None
@@ -368,6 +415,7 @@ def main() -> int:
                 trackers_file=trackers_file,
                 public_group_name=public_group_name,
                 public_group_upload_limit_kbps=public_group_upload_limit_kbps,
+                bandwidth_state_file=bandwidth_state_file,
                 last_tracker_status=last_tracker_status,
             )
         except TransmissionRpcError as exc:
