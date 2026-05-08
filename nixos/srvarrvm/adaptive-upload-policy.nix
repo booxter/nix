@@ -17,9 +17,12 @@ let
   decisionIntervalSeconds = toString decisionIntervalSecondsInt;
   applierIntervalSecondsInt = 5;
   applierIntervalSeconds = toString applierIntervalSecondsInt;
+  idleUploadRateMbit = "24";
+  minimumStreamUploadRateMbit = "2";
   relaxationHoldSeconds = "300";
   maxStateAgeSeconds = toString (decisionIntervalSecondsInt * 3);
   publicGroupFraction = "0.5";
+  streamBitrateHeadroomFraction = "0.2";
   stateFile = "/run/adaptive-upload-policy/state.json";
   stateDir = dirOf stateFile;
   transmissionRpcUrl = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc";
@@ -46,11 +49,13 @@ in
         "--request-timeout-seconds"
         "10"
         "--no-streams-mbit"
-        "20"
-        "--one-stream-mbit"
-        "15"
-        "--many-streams-mbit"
+        idleUploadRateMbit
+        "--minimum-streams-mbit"
+        minimumStreamUploadRateMbit
+        "--fallback-mbit"
         (toString fallbackUploadRateMbit)
+        "--stream-bitrate-headroom-fraction"
+        streamBitrateHeadroomFraction
         "--relaxation-hold-seconds"
         relaxationHoldSeconds
         "--public-group-fraction"

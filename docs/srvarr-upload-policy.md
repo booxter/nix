@@ -53,29 +53,28 @@ Current values:
 - applier poll interval: `5s`
 - stale state cutoff for appliers: `60s`
 - relaxation hold time: `300s`
+- idle uplink ceiling with no remote playback: `24mbit`
+- minimum computed target with healthy exporter data: `2mbit`
+- conservative fallback target on exporter failure: `8mbit`
+- remote media stream bitrate safety headroom: `20%`
 - Jellyfin exporter request timeout: `10s`
 - Transmission RPC timeout:
   - adaptive applier: `20s`
   - tracker prioritizer: `20s`
 - preferred tracker match refresh: `60s`
 
-Current tier mapping:
-
-- `0` external active video streams -> `20mbit`
-- `1` external active video stream -> `15mbit`
-- `2+` external active video streams -> `8mbit`
-- exporter failure -> `8mbit`
-
 Derived limits:
 
-- Transmission session upload limit = `95%` of the selected tier
+- Transmission session upload limit = `95%` of the selected target
 - public torrent group upload limit = `50%` of the current Transmission limit
 
 Examples:
 
-- `20mbit` tier -> Transmission `2375 kB/s`, public group `1187 kB/s`
-- `15mbit` tier -> Transmission `1781 kB/s`, public group `890 kB/s`
-- `8mbit` tier -> Transmission `950 kB/s`, public group `475 kB/s`
+- `24mbit` target -> Transmission `2850 kB/s`, public group `1425 kB/s`
+- `15mbit` target -> Transmission `1781 kB/s`, public group `890 kB/s`
+- `8mbit` fallback -> Transmission `950 kB/s`, public group `475 kB/s`
+- `2mbit` minimum computed target -> Transmission `237 kB/s`,
+  public group `118 kB/s`
 
 ## Inputs
 
@@ -83,9 +82,12 @@ Examples:
 
 The decider reads the exporter metrics endpoint on `beast`.
 
-It counts only active video playback sessions:
+It counts active media playback sessions and requires per-session bitrate
+data:
 
 - media types:
+  - `audio`
+  - `audiobook`
   - `episode`
   - `movie`
   - `musicvideo`
@@ -93,9 +95,16 @@ It counts only active video playback sessions:
   - `video`
 - only `jellyfin_now_playing_state > 0.5` counts as active playback
 
+The bitrate-aware logic depends on three exporter metrics:
+
+- `jellyfin_now_playing_state`
+- `jellyfin_now_playing_bitrate_bits_per_second`
+- `jellyfin_user_active`
+
 It also tries to ignore LAN/local viewers by correlating:
 
 - `jellyfin_now_playing_state`
+- `jellyfin_now_playing_bitrate_bits_per_second`
 - `jellyfin_user_active`
 
 and treating these client addresses as internal:
@@ -133,15 +142,45 @@ The decider computes two states:
 
 This split exists to support hysteresis.
 
+### Bitrate Budgeting
+
+The observed target is derived from summed active remote media bitrate, not
+just stream count:
+
+1. sum `jellyfin_now_playing_bitrate_bits_per_second` for all active external
+   media sessions
+2. add `20%` headroom to that total
+3. subtract the reserved amount from the `24mbit` idle ceiling
+4. clamp the result to the healthy-exporter range `[2, 24]`
+5. round the resulting target to `0.1mbit`
+
+In formula form:
+
+- `reserved_mbit = remote_media_bitrate_mbit * 1.2`
+- `target_mbit = clamp(2, 24, 24 - reserved_mbit)`
+
+Examples:
+
+- no external media playback -> `24mbit`
+- one remote `4mbit` stream -> reserve `4.8mbit` -> target `19.2mbit`
+- two remote streams totaling `10mbit` -> reserve `12mbit` -> target `12mbit`
+- a very high bitrate session that would leave less than `2mbit` -> clamp to
+  `2mbit`
+
+If any active external media session is missing bitrate data, the exporter is
+still reachable, so the decider stays aggressive and clamps to the minimum
+computed target of `2mbit`.
+
 ### Tightening
 
 When observed demand goes up, the effective state tightens immediately.
 
 Examples:
 
-- `20 -> 15`
-- `15 -> 8`
-- any tier -> `8` when exporter becomes unreachable
+- `24 -> 19.2`
+- `19.2 -> 12`
+- any target -> `8` when exporter becomes unreachable
+- any target -> `2` when an active external media session is missing bitrate
 
 ### Relaxing
 
@@ -168,8 +207,11 @@ Important fields:
 - `target_mbit`
 - `reason`
 - `observed_reason`
-- `active_external_video_streams`
-- `active_video_streams_total`
+- `active_external_media_streams`
+- `active_external_media_bitrate_bits_per_second`
+- `active_media_streams_total`
+- `missing_external_media_bitrate_sessions`
+- `reserved_external_media_bandwidth_mbit`
 - `transmission_upload_limit_kbps`
 - `public_group_upload_limit_kbps`
 - `target_tc_rate`
@@ -242,7 +284,12 @@ The system is designed to fail conservative.
 
 If Jellyfin exporter fails:
 
-- decider writes the conservative `8mbit` tier
+- decider writes the conservative `8mbit` floor
+
+If active external media playback is detected but bitrate data is missing for
+one or more of those sessions:
+
+- decider writes the aggressive minimum computed target of `2mbit`
 
 If the state file is missing, invalid, or stale:
 
@@ -295,6 +342,10 @@ That comes from:
 
 - LAN-vs-WAN detection depends on Jellyfin exporter exposing the real client IP
   and not only a reverse proxy address.
+- The bitrate-based decider assumes the deployed exporter exposes
+  `jellyfin_now_playing_bitrate_bits_per_second`. If that metric disappears,
+  the policy will fall back to the conservative floor while remote playback is
+  active.
 - Tracker prioritization is torrent-level, not tracker-level. If a torrent has
   a preferred tracker, the whole torrent is boosted.
 - Public deprioritization uses both a soft bias (`bandwidthPriority`) and a
