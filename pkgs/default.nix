@@ -14,4 +14,10 @@ pkgs: {
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
   aurral = pkgs.callPackage ./aurral { };
+
+  adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
+
+  jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
+
+  transmission-tracker-prioritizer = pkgs.callPackage ./transmission-tracker-prioritizer { };
 }

@@ -25,6 +25,7 @@ let
     runtimeInputs = with pkgs; [
       coreutils
       git
+      jq
       sops
       yq
     ];
@@ -39,6 +40,7 @@ let
     runtimeInputs = with pkgs; [
       coreutils
       git
+      jq
       sops
       yq
     ];
@@ -53,6 +55,7 @@ let
     runtimeInputs = with pkgs; [
       coreutils
       git
+      jq
       sops
       yq
     ];
@@ -67,6 +70,7 @@ let
     runtimeInputs = with pkgs; [
       age
       gnugrep
+      jq
       openssh
       ripgrep
       sops

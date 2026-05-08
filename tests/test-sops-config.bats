@@ -72,26 +72,8 @@ EOF
     fi
     if [[ "$1" == "--encrypt" ]]; then
       local source_file="${@: -1}"
-      cat "$source_file"
-      return 0
-    fi
-    return 1
-  }
-
-  yq() {
-    if [[ "$1" == "eval-all" ]]; then
-      # Minimal merge: keep secret value if present, otherwise take template.
-      local file_a="$3"
-      local file_b="$4"
-      if grep -q 'gmail_password: "SECRET"' "$file_b"; then
-        printf '%s\n' 'msmtp:' '  gmail_password: "SECRET"' 'other:' '  key: "TEMPLATE"'
-      else
-        cat "$file_a"
-      fi
-      return 0
-    fi
-    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
-      cat "$3"
+      yq -y '.' "$source_file"
+      printf '%s\n' 'sops:' '  dummy: true'
       return 0
     fi
     return 1
@@ -100,8 +82,8 @@ EOF
   source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
   run main beast
   [ "$status" -eq 0 ]
-  grep -q 'gmail_password: "SECRET"' "$workdir/secrets/beast.yaml"
-  grep -q 'key: "TEMPLATE"' "$workdir/secrets/beast.yaml"
+  grep -q 'gmail_password: SECRET' "$workdir/secrets/beast.yaml"
+  grep -q 'key: TEMPLATE' "$workdir/secrets/beast.yaml"
   ! grep -q 'REPLACE_ME' "$workdir/secrets/beast.yaml"
 }
 
@@ -132,25 +114,8 @@ EOF
     fi
     if [[ "$1" == "--encrypt" ]]; then
       local source_file="${@: -1}"
-      cat "$source_file"
-      return 0
-    fi
-    return 1
-  }
-
-  yq() {
-    if [[ "$1" == "eval-all" ]]; then
-      local file_a="$3"
-      local file_b="$4"
-      if [[ "$file_a" == *"/_template.yaml" && "$file_b" == *"/_templates/beast.yaml" ]]; then
-        printf '%s\n' 'common:' '  shared: "TEMPLATE"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
-        return 0
-      fi
-      printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
-      return 0
-    fi
-    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
-      cat "$3"
+      yq -y '.' "$source_file"
+      printf '%s\n' 'sops:' '  dummy: true'
       return 0
     fi
     return 1
@@ -159,8 +124,8 @@ EOF
   source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
   run main beast
   [ "$status" -eq 0 ]
-  grep -q 'shared: "SECRET"' "$workdir/secrets/beast.yaml"
-  grep -q 'apiKey: "REPLACE_ME"' "$workdir/secrets/beast.yaml"
+  grep -q 'shared: SECRET' "$workdir/secrets/beast.yaml"
+  grep -q 'apiKey: REPLACE_ME' "$workdir/secrets/beast.yaml"
 }
 
 @test "sops-update skips re-encryption when secret is already up to date" {
@@ -188,22 +153,8 @@ EOF
     if [[ "$1" == "--encrypt" ]]; then
       : > "$encrypt_called"
       local source_file="${@: -1}"
-      cat "$source_file"
-      return 0
-    fi
-    return 1
-  }
-
-  yq() {
-    if [[ "$1" == "eval-all" ]]; then
-      printf '%s\n' \
-        'a:' '  y: "SECRET"'
-      return 0
-    fi
-    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
-      [[ "$2" == *"def sort_deep"* ]]
-      printf '%s\n' \
-        'a:' '  y: "SECRET"'
+      yq -y '.' "$source_file"
+      printf '%s\n' 'sops:' '  dummy: true'
       return 0
     fi
     return 1
@@ -241,22 +192,8 @@ EOF
     if [[ "$1" == "--encrypt" ]]; then
       : > "$encrypt_called"
       local source_file="${@: -1}"
-      cat "$source_file"
-      return 0
-    fi
-    return 1
-  }
-
-  yq() {
-    if [[ "$1" == "eval-all" ]]; then
-      printf '%s\n' \
-        'a:' '  y: "SECRET"'
-      return 0
-    fi
-    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
-      [[ "$2" == *"def sort_deep"* ]]
-      printf '%s\n' \
-        'a:' '  y: "SECRET"'
+      yq -y '.' "$source_file"
+      printf '%s\n' 'sops:' '  dummy: true'
       return 0
     fi
     return 1
@@ -294,38 +231,8 @@ EOF
     fi
     if [[ "$1" == "--encrypt" ]]; then
       local source_file="${@: -1}"
-      cat "$source_file"
-      return 0
-    fi
-    return 1
-  }
-
-  yq() {
-    if [[ "$1" == "eval-all" ]]; then
-      printf '%s\n' \
-        'b:' '  z: "TEMPLATE"' \
-        'a:' '  y: "TEMPLATE"' \
-        'c:' '  x: "SECRET"' \
-        'sops:' '  dummy: true'
-      return 0
-    fi
-    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
-      if [[ "$2" == *"sort_keys("* ]]; then
-        echo "sort_keys/1 is unsupported in this test yq shim" >&2
-        return 1
-      fi
-      [[ "$2" == *"def sort_deep"* ]]
-      if grep -q 'z: "TEMPLATE"' "$3"; then
-        printf '%s\n' \
-          'a:' '  y: "TEMPLATE"' \
-          'b:' '  z: "TEMPLATE"' \
-          'c:' '  x: "SECRET"' \
-          'sops:' '  dummy: true'
-      else
-        printf '%s\n' \
-          'c:' '  x: "SECRET"' \
-          'sops:' '  dummy: true'
-      fi
+      yq -y '.' "$source_file"
+      printf '%s\n' 'sops:' '  dummy: true'
       return 0
     fi
     return 1
@@ -341,8 +248,8 @@ EOF
   [ "${keys[3]}" = "sops" ]
 }
 
-@test "sops-update uses yq v4 eval commands" {
-  workdir="$BATS_TMPDIR/sops-yq-v4"
+@test "sops-update avoids yq eval/eval-all and uses portable yq+jq flow" {
+  workdir="$BATS_TMPDIR/sops-yq-portable"
   mkdir -p "$workdir/secrets/_templates"
   cat > "$workdir/secrets/_template.yaml" <<'EOF'
 common:
@@ -360,6 +267,8 @@ sops:
 EOF
   cd "$workdir"
   git init -q
+  mkdir -p "$workdir/bin"
+  bash_path="$(command -v bash)"
 
   sops() {
     if [[ "$1" == "--decrypt" ]]; then
@@ -368,44 +277,68 @@ EOF
     fi
     if [[ "$1" == "--encrypt" ]]; then
       local source_file="${@: -1}"
-      cat "$source_file"
+      yq -y '.' "$source_file"
+      printf '%s\n' 'sops:' '  dummy: true'
       return 0
     fi
     return 1
   }
 
-  yq() {
-    if [[ "$1" == "-s" || "$1" == *"def sort_deep"* ]]; then
-      echo "unexpected legacy yq invocation: $*" >&2
-      return 1
-    fi
-    if [[ "$1" == "eval-all" ]]; then
-      local file_a="$3"
-      local file_b="$4"
-      if [[ "$file_a" == *"/_template.yaml" && "$file_b" == *"/_templates/beast.yaml" ]]; then
-        printf '%s\n' 'common:' '  shared: "TEMPLATE"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
-        return 0
-      fi
-      printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"' 'sops:' '  dummy: true'
-      return 0
-    fi
-    if [[ "$1" == "eval" && $# -eq 3 && -f "$3" ]]; then
-      [[ "$2" == *"def sort_deep"* ]]
-      if grep -q 'apiKey: "REPLACE_ME"' "$3"; then
-        printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"' 'sops:' '  dummy: true'
-      else
-        printf '%s\n' 'common:' '  shared: "SECRET"' 'sops:' '  dummy: true'
-      fi
-      return 0
-    fi
-    return 1
-  }
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+if [[ "$1" == "eval" || "$1" == "eval-all" ]]; then
+  echo "unexpected yq v4 invocation: $*" >&2
+  exit 1
+fi
+if [[ "$1" == "-y" && "$2" == "-s" ]]; then
+  file_a="$4"
+  file_b="$5"
+  if [[ "$file_a" == *"/_template.yaml" && "$file_b" == *"/_templates/beast.yaml" ]]; then
+    printf '%s\n' 'common:' '  shared: "TEMPLATE"' 'jellyfin:' '  apiKey: "REPLACE_ME"'
+    exit 0
+  fi
+  printf '%s\n' 'common:' '  shared: "SECRET"' 'jellyfin:' '  apiKey: "REPLACE_ME"' 'sops:' '  dummy: true'
+  exit 0
+fi
+if [[ "$1" == "-y" && "$2" == "." && -f "$3" ]]; then
+  if grep -q 'apiKey' "$3"; then
+    printf '%s\n' 'common:' '  shared: SECRET' 'jellyfin:' '  apiKey: REPLACE_ME'
+  else
+    printf '%s\n' 'common:' '  shared: SECRET'
+  fi
+  exit 0
+fi
+if [[ "$1" == "." && -f "$2" ]]; then
+  if grep -q 'apiKey: "REPLACE_ME"' "$2"; then
+    printf '%s\n' '{"common":{"shared":"SECRET"},"jellyfin":{"apiKey":"REPLACE_ME"}}'
+  else
+    printf '%s\n' '{"common":{"shared":"SECRET"}}'
+  fi
+  exit 0
+fi
+exit 1
+EOF
+  } > "$workdir/bin/yq"
+  chmod +x "$workdir/bin/yq"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+cat
+EOF
+  } > "$workdir/bin/jq"
+  chmod +x "$workdir/bin/jq"
+
+  export PATH="$workdir/bin:$PATH"
 
   source "$BATS_TEST_DIRNAME/../scripts/sops-update.sh"
   run main beast
   [ "$status" -eq 0 ]
-  grep -q 'shared: "SECRET"' "$workdir/secrets/beast.yaml"
-  grep -q 'apiKey: "REPLACE_ME"' "$workdir/secrets/beast.yaml"
+  grep -q 'shared: SECRET' "$workdir/secrets/beast.yaml"
+  grep -q 'apiKey: REPLACE_ME' "$workdir/secrets/beast.yaml"
 }
 
 @test "fails when secrets exist but .sops.yaml missing" {
