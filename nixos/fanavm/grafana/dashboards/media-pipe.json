@@ -203,7 +203,14 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 16
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "transmission-seeding-activity",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -258,7 +265,14 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 16
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "transmission-downloading-activity",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
           },
           "mappings": [],
           "thresholds": {
