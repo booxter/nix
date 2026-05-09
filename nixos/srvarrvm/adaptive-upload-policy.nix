@@ -13,16 +13,17 @@
   ...
 }:
 let
-  decisionIntervalSecondsInt = 20;
+  decisionIntervalSecondsInt = 5;
   decisionIntervalSeconds = toString decisionIntervalSecondsInt;
   applierIntervalSecondsInt = 5;
   applierIntervalSeconds = toString applierIntervalSecondsInt;
-  idleUploadRateMbit = "24";
+  idleUploadRateMbit = "25";
   minimumStreamUploadRateMbit = "2";
-  relaxationHoldSeconds = "300";
+  relaxationHoldSeconds = "90";
   maxStateAgeSeconds = toString (decisionIntervalSecondsInt * 3);
   publicGroupFraction = "0.5";
-  streamBitrateHeadroomFraction = "0.2";
+  # The idle ceiling already bakes in enough slack for new stream startup.
+  streamBitrateHeadroomFraction = "0.0";
   stateFile = "/run/adaptive-upload-policy/state.json";
   stateDir = dirOf stateFile;
   transmissionRpcUrl = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc";

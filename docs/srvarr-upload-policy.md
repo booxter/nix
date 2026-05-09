@@ -56,14 +56,14 @@ Host wiring lives in:
 
 Current values:
 
-- decider poll interval: `20s`
+- decider poll interval: `5s`
 - applier poll interval: `5s`
-- stale state cutoff for appliers: `60s`
-- relaxation hold time: `300s`
-- idle uplink ceiling with no remote playback: `24mbit`
+- stale state cutoff for appliers: `15s`
+- relaxation hold time: `90s`
+- idle uplink ceiling with no remote playback: `25mbit`
 - minimum computed target with healthy exporter data: `2mbit`
 - conservative fallback target on exporter failure: `8mbit`
-- remote media stream bitrate safety headroom: `20%`
+- remote media stream bitrate safety headroom: `0%`
 - Jellyfin exporter request timeout: `10s`
 - Transmission RPC timeout:
   - adaptive applier: `20s`
@@ -83,7 +83,7 @@ Derived limits:
 
 Examples:
 
-- `24mbit` target -> Transmission `2850 kB/s`, public-group bootstrap `1425 kB/s`
+- `25mbit` target -> Transmission `2968 kB/s`, public-group bootstrap `1484 kB/s`
 - `15mbit` target -> Transmission `1781 kB/s`, public-group bootstrap `890 kB/s`
 - `8mbit` fallback -> Transmission `950 kB/s`, public-group bootstrap `475 kB/s`
 - `2mbit` minimum computed target -> Transmission `237 kB/s`,
@@ -180,21 +180,21 @@ just stream count:
 
 1. sum `jellyfin_now_playing_bitrate_bits_per_second` for all active external
    media sessions
-2. add `20%` headroom to that total
-3. subtract the reserved amount from the `24mbit` idle ceiling
-4. clamp the result to the healthy-exporter range `[2, 24]`
+2. reserve exactly that total
+3. subtract the reserved amount from the `25mbit` idle ceiling
+4. clamp the result to the healthy-exporter range `[2, 25]`
 5. round the resulting target to `0.1mbit`
 
 In formula form:
 
-- `reserved_mbit = remote_media_bitrate_mbit * 1.2`
-- `target_mbit = clamp(2, 24, 24 - reserved_mbit)`
+- `reserved_mbit = remote_media_bitrate_mbit`
+- `target_mbit = clamp(2, 25, 25 - reserved_mbit)`
 
 Examples:
 
-- no external media playback -> `24mbit`
-- one remote `4mbit` stream -> reserve `4.8mbit` -> target `19.2mbit`
-- two remote streams totaling `10mbit` -> reserve `12mbit` -> target `12mbit`
+- no external media playback -> `25mbit`
+- one remote `4mbit` stream -> reserve `4mbit` -> target `21mbit`
+- two remote streams totaling `10mbit` -> reserve `10mbit` -> target `15mbit`
 - a very high bitrate session that would leave less than `2mbit` -> clamp to
   `2mbit`
 
@@ -208,8 +208,8 @@ When observed demand goes up, the effective state tightens immediately.
 
 Examples:
 
-- `24 -> 19.2`
-- `19.2 -> 12`
+- `25 -> 21`
+- `21 -> 15`
 - any target -> `8` when exporter becomes unreachable
 - any target -> `2` when an active external media session is missing bitrate
 
@@ -220,7 +220,7 @@ immediately. Instead:
 
 1. the decider records the lower target as a pending relaxation
 2. it keeps enforcing the stricter current tier
-3. if the lower observed target remains stable for `300s`, it relaxes
+3. if the lower observed target remains stable for `90s`, it relaxes
 4. if demand rises again before the hold expires, the pending relaxation is
    dropped
 
@@ -410,15 +410,15 @@ With the current polling values:
 
 - tighten latency:
   - best case: a few seconds
-  - worst case: about `25s`
+  - worst case: about `10s`
 - relax latency:
-  - worst case: about `5m25s`
+  - worst case: about `1m40s`
 
 That comes from:
 
-- `20s` decider polling
+- `5s` decider polling
 - `5s` applier polling
-- `300s` relaxation hold
+- `90s` relaxation hold
 
 ## Tradeoffs and Limitations
 
