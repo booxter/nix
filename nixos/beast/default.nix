@@ -21,6 +21,8 @@ let
           Override = {
             Microsoft = "Warning";
             System = "Warning";
+            "Jellyfin.Api.Controllers.DynamicHlsController" = "Debug";
+            "Jellyfin.Api.Helpers.HlsHelpers" = "Debug";
             "Emby.Server.Implementations.HttpServer" = "Debug";
             "Emby.Server.Implementations.Session" = "Debug";
           };
