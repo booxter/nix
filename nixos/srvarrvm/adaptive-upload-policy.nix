@@ -13,7 +13,7 @@
   ...
 }:
 let
-  decisionIntervalSecondsInt = 20;
+  decisionIntervalSecondsInt = 5;
   decisionIntervalSeconds = toString decisionIntervalSecondsInt;
   applierIntervalSecondsInt = 5;
   applierIntervalSeconds = toString applierIntervalSecondsInt;

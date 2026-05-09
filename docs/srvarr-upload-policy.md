@@ -56,9 +56,9 @@ Host wiring lives in:
 
 Current values:
 
-- decider poll interval: `20s`
+- decider poll interval: `5s`
 - applier poll interval: `5s`
-- stale state cutoff for appliers: `60s`
+- stale state cutoff for appliers: `15s`
 - relaxation hold time: `300s`
 - idle uplink ceiling with no remote playback: `25mbit`
 - minimum computed target with healthy exporter data: `2mbit`
@@ -410,13 +410,13 @@ With the current polling values:
 
 - tighten latency:
   - best case: a few seconds
-  - worst case: about `25s`
+  - worst case: about `10s`
 - relax latency:
-  - worst case: about `5m25s`
+  - worst case: about `5m10s`
 
 That comes from:
 
-- `20s` decider polling
+- `5s` decider polling
 - `5s` applier polling
 - `300s` relaxation hold
 
