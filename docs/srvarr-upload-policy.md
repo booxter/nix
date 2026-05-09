@@ -73,7 +73,7 @@ Current values:
 - minimum preferred-torrent reserve while preferred uploads are active: `10%`
 - preferred upload rate headroom for public-cap derivation: `30%`
 - SABnzbd exporter request timeout: `5s`
-- SABnzbd-active public-group cap: `25%` of the current Transmission limit
+- SABnzbd-driven public-group suppression: disabled on this host
 
 Derived limits:
 
@@ -327,6 +327,9 @@ This gives the desired behavior:
 - otherwise let public torrents borrow the headroom
 
 ### SABnzbd Override
+
+The code supports an SABnzbd-based public-torrent suppression layer, but it is
+currently disabled in `srvarr` host wiring.
 
 After the private/public cap is derived, the tracker prioritizer applies a
 simple SABnzbd override:

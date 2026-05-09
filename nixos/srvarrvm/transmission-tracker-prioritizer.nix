@@ -7,6 +7,7 @@
 let
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/transmission-tracker-prioritizer.prom";
+  sabnzbdPublicGroupSuppressionEnabled = false;
   sabnzbdBaseUrl = "http://127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}";
   sabnzbdExporterUrl = "http://127.0.0.1:${toString config.services.prometheus.exporters.sabnzbd.port}/metrics";
   # Conservative fallback when the adaptive policy state is unavailable.
@@ -36,49 +37,57 @@ in
     after = [
       "network-online.target"
       "nginx.service"
-      "prometheus-sabnzbd-exporter.service"
       "transmission.service"
+    ]
+    ++ lib.optionals sabnzbdPublicGroupSuppressionEnabled [
+      "prometheus-sabnzbd-exporter.service"
     ];
     wants = [
       "network-online.target"
       "nginx.service"
-      "prometheus-sabnzbd-exporter.service"
       "transmission.service"
+    ]
+    ++ lib.optionals sabnzbdPublicGroupSuppressionEnabled [
+      "prometheus-sabnzbd-exporter.service"
     ];
     serviceConfig = {
-      ExecStart = lib.concatStringsSep " " [
-        (lib.getExe pkgs.transmission-tracker-prioritizer)
-        "--rpc-url"
-        "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc"
-        "--trackers-file"
-        config.sops.secrets.transmissionTrackerHosts.path
-        "--public-group-name"
-        "public-low-priority"
-        "--public-group-upload-limit-kbps"
-        (toString fallbackPublicGroupUploadLimitKBps)
-        "--bandwidth-state-file"
-        "/run/adaptive-upload-policy/state.json"
-        "--minimum-private-headroom-fraction"
-        minimumPrivateHeadroomFraction
-        "--preferred-upload-headroom-fraction"
-        preferredUploadHeadroomFraction
-        "--public-group-relaxation-hold-seconds"
-        publicGroupRelaxationHoldSeconds
-        "--sabnzbd-exporter-url"
-        sabnzbdExporterUrl
-        "--sabnzbd-exporter-instance"
-        sabnzbdBaseUrl
-        "--sabnzbd-exporter-timeout-seconds"
-        "5"
-        "--sabnzbd-public-group-fraction"
-        sabnzbdPublicGroupFraction
-        "--metrics-file"
-        metricsFile
-        "--interval-seconds"
-        "30"
-        "--request-timeout-seconds"
-        "20"
-      ];
+      ExecStart = lib.concatStringsSep " " (
+        [
+          (lib.getExe pkgs.transmission-tracker-prioritizer)
+          "--rpc-url"
+          "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc"
+          "--trackers-file"
+          config.sops.secrets.transmissionTrackerHosts.path
+          "--public-group-name"
+          "public-low-priority"
+          "--public-group-upload-limit-kbps"
+          (toString fallbackPublicGroupUploadLimitKBps)
+          "--bandwidth-state-file"
+          "/run/adaptive-upload-policy/state.json"
+          "--minimum-private-headroom-fraction"
+          minimumPrivateHeadroomFraction
+          "--preferred-upload-headroom-fraction"
+          preferredUploadHeadroomFraction
+          "--public-group-relaxation-hold-seconds"
+          publicGroupRelaxationHoldSeconds
+          "--metrics-file"
+          metricsFile
+          "--interval-seconds"
+          "30"
+          "--request-timeout-seconds"
+          "20"
+        ]
+        ++ lib.optionals sabnzbdPublicGroupSuppressionEnabled [
+          "--sabnzbd-exporter-url"
+          sabnzbdExporterUrl
+          "--sabnzbd-exporter-instance"
+          sabnzbdBaseUrl
+          "--sabnzbd-exporter-timeout-seconds"
+          "5"
+          "--sabnzbd-public-group-fraction"
+          sabnzbdPublicGroupFraction
+        ]
+      );
       Restart = "always";
       RestartSec = "10s";
       # The daemon rereads the tracker file every iteration, so secret updates
