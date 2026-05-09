@@ -60,7 +60,7 @@ Current values:
 - applier poll interval: `5s`
 - stale state cutoff for appliers: `15s`
 - relaxation hold time: `90s`
-- idle uplink ceiling with no remote playback: `20mbit`
+- idle uplink ceiling with no remote playback: `25mbit`
 - minimum computed target with healthy exporter data: `0.5mbit`
 - conservative fallback target on exporter failure: `8mbit`
 - remote media stream bitrate safety headroom: `10%`
@@ -73,7 +73,7 @@ Current values:
 - minimum preferred-torrent reserve while preferred uploads are active: `10%`
 - preferred upload rate headroom for public-cap derivation: `30%`
 - SABnzbd exporter request timeout: `5s`
-- SABnzbd-active public-group cap: `25%` of the current Transmission limit
+- SABnzbd-driven public-group suppression: disabled on this host
 
 Derived limits:
 
@@ -83,7 +83,7 @@ Derived limits:
 
 Examples:
 
-- `20mbit` target -> Transmission `2375 kB/s`, public-group bootstrap `1187 kB/s`
+- `25mbit` target -> Transmission `2968 kB/s`, public-group bootstrap `1484 kB/s`
 - `15mbit` target -> Transmission `1781 kB/s`, public-group bootstrap `890 kB/s`
 - `8mbit` fallback -> Transmission `950 kB/s`, public-group bootstrap `475 kB/s`
 - `0.5mbit` minimum computed target -> Transmission `59 kB/s`,
@@ -181,20 +181,20 @@ just stream count:
 1. sum `jellyfin_now_playing_bitrate_bits_per_second` for all active external
    media sessions
 2. reserve that total plus `10%` headroom
-3. subtract the reserved amount from the `20mbit` idle ceiling
-4. clamp the result to the healthy-exporter range `[2, 20]`
+3. subtract the reserved amount from the `25mbit` idle ceiling
+4. clamp the result to the healthy-exporter range `[0.5, 25]`
 5. round the resulting target to `0.1mbit`
 
 In formula form:
 
 - `reserved_mbit = remote_media_bitrate_mbit * 1.1`
-- `target_mbit = clamp(0.5, 20, 20 - reserved_mbit)`
+- `target_mbit = clamp(0.5, 25, 25 - reserved_mbit)`
 
 Examples:
 
-- no external media playback -> `20mbit`
-- one remote `4mbit` stream -> reserve `4.4mbit` -> target `15.6mbit`
-- two remote streams totaling `10mbit` -> reserve `11mbit` -> target `9mbit`
+- no external media playback -> `25mbit`
+- one remote `4mbit` stream -> reserve `4.4mbit` -> target `20.6mbit`
+- two remote streams totaling `10mbit` -> reserve `11mbit` -> target `14mbit`
 - a very high bitrate session that would leave less than `0.5mbit` -> clamp to
   `0.5mbit`
 
@@ -327,6 +327,9 @@ This gives the desired behavior:
 - otherwise let public torrents borrow the headroom
 
 ### SABnzbd Override
+
+The code supports an SABnzbd-based public-torrent suppression layer, but it is
+currently disabled in `srvarr` host wiring.
 
 After the private/public cap is derived, the tracker prioritizer applies a
 simple SABnzbd override:

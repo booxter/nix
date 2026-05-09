@@ -17,7 +17,7 @@ let
   decisionIntervalSeconds = toString decisionIntervalSecondsInt;
   applierIntervalSecondsInt = 5;
   applierIntervalSeconds = toString applierIntervalSecondsInt;
-  idleUploadRateMbit = "20";
+  idleUploadRateMbit = "25";
   minimumStreamUploadRateMbit = "0.5";
   relaxationHoldSeconds = "90";
   maxStateAgeSeconds = toString (decisionIntervalSecondsInt * 3);
