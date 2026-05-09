@@ -73,7 +73,7 @@ Current values:
 - minimum preferred-torrent reserve while preferred uploads are active: `10%`
 - preferred upload rate headroom for public-cap derivation: `30%`
 - SABnzbd exporter request timeout: `5s`
-- SABnzbd-active public-group cap: `10%` of the current Transmission limit
+- SABnzbd-active public-group cap: `25%` of the current Transmission limit
 
 Derived limits:
 
@@ -311,7 +311,7 @@ Instead:
    plus a conservative bootstrap public-group cap equal to `50%` of that limit
 2. the tracker prioritizer sums current `rateUpload` across preferred torrents
 3. it derives an observed public cap by reserving the larger of:
-   - `10%` of the current Transmission limit
+   - `25%` of the current Transmission limit
    - `130%` of the currently observed preferred upload rate
 4. if that observed cap is tighter than the current applied cap, it tightens
    immediately
@@ -334,7 +334,7 @@ simple SABnzbd override:
 1. read `sabnzbd_paused` and `sabnzbd_queue_size` from the local exporter
 2. if SABnzbd is paused or its queue is empty, do nothing
 3. if SABnzbd is not paused and the queue is non-empty:
-   - derive a hard public-group cap equal to `10%` of the current
+   - derive a hard public-group cap equal to `25%` of the current
      Transmission session limit
    - apply the stricter of:
      - the private-tracker-derived public cap
