@@ -116,6 +116,7 @@ in
     })
     ./backup.nix
     ./sabnzbd-exporter.nix
+    ./transmission-torrent-cleaner.nix
     ./transmission-tracker-prioritizer.nix
   ];
 
