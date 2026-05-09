@@ -470,6 +470,7 @@ def decide_public_group_upload_limit_kbps(
 def render_metrics_text(
     *,
     torrent_counts: dict[str, int],
+    torrent_activity_counts: dict[str, dict[str, int]],
     peer_counts: dict[str, dict[str, int]],
     download_bytes_per_second: dict[str, int],
     upload_bytes_per_second: dict[str, int],
@@ -486,6 +487,18 @@ def render_metrics_text(
         lines.append(
             f'host_observability_transmission_torrent_count{{class="{torrent_class}"}} {torrent_counts[torrent_class]}'
         )
+
+    lines.extend(
+        [
+            "# HELP host_observability_transmission_torrent_activity_count Number of Transmission torrents by transfer direction and activity state.",
+            "# TYPE host_observability_transmission_torrent_activity_count gauge",
+        ]
+    )
+    for direction in ("seeding", "downloading"):
+        for activity in ("active", "inactive"):
+            lines.append(
+                f'host_observability_transmission_torrent_activity_count{{direction="{direction}",activity="{activity}"}} {torrent_activity_counts[direction][activity]}'
+            )
 
     lines.extend(
         [
@@ -570,6 +583,7 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
                 "peersConnected",
                 "peersGettingFromUs",
                 "peersSendingToUs",
+                "leftUntilDone",
                 "rateDownload",
                 "rateUpload",
                 "trackerStats",
@@ -662,6 +676,16 @@ def run_iteration(
         "private": 0,
         "public": 0,
     }
+    torrent_activity_counts = {
+        "seeding": {
+            "active": 0,
+            "inactive": 0,
+        },
+        "downloading": {
+            "active": 0,
+            "inactive": 0,
+        },
+    }
     peer_counts = {
         "private": {
             "connected": 0,
@@ -708,6 +732,26 @@ def run_iteration(
         upload_bytes_per_second[torrent_class] += nonnegative_int(
             torrent.get("rateUpload")
         )
+        left_until_done = torrent.get("leftUntilDone")
+        peers_getting_from_us = torrent.get("peersGettingFromUs")
+        peers_sending_to_us = torrent.get("peersSendingToUs")
+        rate_download = torrent.get("rateDownload")
+        rate_upload = torrent.get("rateUpload")
+        if isinstance(left_until_done, int):
+            if left_until_done > 0:
+                is_active_downloading = (
+                    isinstance(peers_sending_to_us, int) and peers_sending_to_us > 0
+                ) or (isinstance(rate_download, int) and rate_download > 0)
+                torrent_activity_counts["downloading"][
+                    "active" if is_active_downloading else "inactive"
+                ] += 1
+            else:
+                is_active_seeding = (
+                    isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
+                ) or (isinstance(rate_upload, int) and rate_upload > 0)
+                torrent_activity_counts["seeding"][
+                    "active" if is_active_seeding else "inactive"
+                ] += 1
         priority = torrent.get("bandwidthPriority")
         current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
         group = torrent.get("group")
@@ -715,8 +759,6 @@ def run_iteration(
 
         if is_preferred:
             current_preferred_hashes.add(torrent_hash)
-            peers_getting_from_us = torrent.get("peersGettingFromUs")
-            rate_upload = torrent.get("rateUpload")
             if isinstance(rate_upload, int) and rate_upload > 0:
                 preferred_upload_bytes_per_second += rate_upload
             if (
@@ -851,6 +893,7 @@ def run_iteration(
             metrics_file,
             render_metrics_text(
                 torrent_counts=torrent_counts,
+                torrent_activity_counts=torrent_activity_counts,
                 peer_counts=peer_counts,
                 download_bytes_per_second=download_bytes_per_second,
                 upload_bytes_per_second=upload_bytes_per_second,

@@ -113,7 +113,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 29
+        "y": 37
       },
       "id": 54,
       "options": {
@@ -168,7 +168,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 29
+        "y": 37
       },
       "id": 55,
       "options": {
@@ -193,6 +193,116 @@
         }
       ],
       "title": "SABnzbd Queue Remaining",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 16
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 29
+      },
+      "id": 61,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_torrent_activity_count{job=\"node\",instance=\"prox-srvarrvm:9100\",direction=\"seeding\"}",
+          "legendFormat": "{{activity}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Transmission Seeding Torrents",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 16
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 29
+      },
+      "id": 62,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_torrent_activity_count{job=\"node\",instance=\"prox-srvarrvm:9100\",direction=\"downloading\"}",
+          "legendFormat": "{{activity}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Transmission Downloading Torrents",
       "type": "timeseries"
     },
     {
@@ -840,6 +950,6 @@
   "timezone": "",
   "title": "Media Pipe",
   "uid": "fana-media-pipe",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }
