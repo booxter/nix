@@ -61,7 +61,7 @@ Current values:
 - stale state cutoff for appliers: `15s`
 - relaxation hold time: `90s`
 - idle uplink ceiling with no remote playback: `20mbit`
-- minimum computed target with healthy exporter data: `2mbit`
+- minimum computed target with healthy exporter data: `0.5mbit`
 - conservative fallback target on exporter failure: `8mbit`
 - remote media stream bitrate safety headroom: `10%`
 - Jellyfin exporter request timeout: `10s`
@@ -86,8 +86,8 @@ Examples:
 - `20mbit` target -> Transmission `2375 kB/s`, public-group bootstrap `1187 kB/s`
 - `15mbit` target -> Transmission `1781 kB/s`, public-group bootstrap `890 kB/s`
 - `8mbit` fallback -> Transmission `950 kB/s`, public-group bootstrap `475 kB/s`
-- `2mbit` minimum computed target -> Transmission `237 kB/s`,
-  public-group bootstrap `118 kB/s`
+- `0.5mbit` minimum computed target -> Transmission `59 kB/s`,
+  public-group bootstrap `29 kB/s`
 
 ## Inputs
 
@@ -188,19 +188,19 @@ just stream count:
 In formula form:
 
 - `reserved_mbit = remote_media_bitrate_mbit * 1.1`
-- `target_mbit = clamp(2, 20, 20 - reserved_mbit)`
+- `target_mbit = clamp(0.5, 20, 20 - reserved_mbit)`
 
 Examples:
 
 - no external media playback -> `20mbit`
 - one remote `4mbit` stream -> reserve `4.4mbit` -> target `15.6mbit`
 - two remote streams totaling `10mbit` -> reserve `11mbit` -> target `9mbit`
-- a very high bitrate session that would leave less than `2mbit` -> clamp to
-  `2mbit`
+- a very high bitrate session that would leave less than `0.5mbit` -> clamp to
+  `0.5mbit`
 
 If any active external media session is missing bitrate data, the exporter is
 still reachable, so the decider stays aggressive and clamps to the minimum
-computed target of `2mbit`.
+computed target of `0.5mbit`.
 
 ### Tightening
 
@@ -360,7 +360,7 @@ If Jellyfin exporter fails:
 If active external media playback is detected but bitrate data is missing for
 one or more of those sessions:
 
-- decider writes the aggressive minimum computed target of `2mbit`
+- decider writes the aggressive minimum computed target of `0.5mbit`
 
 If the state file is missing, invalid, or stale:
 
