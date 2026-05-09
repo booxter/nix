@@ -382,7 +382,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"})",
+          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -446,7 +446,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"} * on(user_id, username, device) group_left(ip_address) jellyfin_user_active{job=\"jellyfin\",instance=\"beast\",ip_address!~\"^(10\\\\..*|192\\\\.168\\\\..*|172\\\\.(1[6-9]|2[0-9]|3[01])\\\\..*|127\\\\..*|169\\\\.254\\\\..*|\\\\[?::1(?:\\\\])?$|\\\\[?fe80:.*|\\\\[?fc.*|\\\\[?fd.*)$\"})",
+          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"} * on(user_id, username, device) group_left(ip_address) jellyfin_user_active{job=\"jellyfin\",instance=\"beast\",ip_address!~\"^(10\\\\..*|192\\\\.168\\\\..*|172\\\\.(1[6-9]|2[0-9]|3[01])\\\\..*|127\\\\..*|169\\\\.254\\\\..*|\\\\[?::1(?:\\\\])?$|\\\\[?fe80:.*|\\\\[?fc.*|\\\\[?fd.*)$\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -510,7 +510,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "jellyfin_transcoding_active{job=\"jellyfin\",instance=\"beast\"}",
+          "expr": "sum(jellyfin_transcoding_active{job=\"jellyfin\",instance=\"beast\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
