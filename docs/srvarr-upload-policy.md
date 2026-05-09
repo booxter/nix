@@ -63,7 +63,7 @@ Current values:
 - idle uplink ceiling with no remote playback: `25mbit`
 - minimum computed target with healthy exporter data: `2mbit`
 - conservative fallback target on exporter failure: `8mbit`
-- remote media stream bitrate safety headroom: `20%`
+- remote media stream bitrate safety headroom: `0%`
 - Jellyfin exporter request timeout: `10s`
 - Transmission RPC timeout:
   - adaptive applier: `20s`
@@ -180,21 +180,21 @@ just stream count:
 
 1. sum `jellyfin_now_playing_bitrate_bits_per_second` for all active external
    media sessions
-2. add `20%` headroom to that total
+2. reserve exactly that total
 3. subtract the reserved amount from the `25mbit` idle ceiling
 4. clamp the result to the healthy-exporter range `[2, 25]`
 5. round the resulting target to `0.1mbit`
 
 In formula form:
 
-- `reserved_mbit = remote_media_bitrate_mbit * 1.2`
+- `reserved_mbit = remote_media_bitrate_mbit`
 - `target_mbit = clamp(2, 25, 25 - reserved_mbit)`
 
 Examples:
 
 - no external media playback -> `25mbit`
-- one remote `4mbit` stream -> reserve `4.8mbit` -> target `20.2mbit`
-- two remote streams totaling `10mbit` -> reserve `12mbit` -> target `13mbit`
+- one remote `4mbit` stream -> reserve `4mbit` -> target `21mbit`
+- two remote streams totaling `10mbit` -> reserve `10mbit` -> target `15mbit`
 - a very high bitrate session that would leave less than `2mbit` -> clamp to
   `2mbit`
 
@@ -208,8 +208,8 @@ When observed demand goes up, the effective state tightens immediately.
 
 Examples:
 
-- `25 -> 20.2`
-- `20.2 -> 13`
+- `25 -> 21`
+- `21 -> 15`
 - any target -> `8` when exporter becomes unreachable
 - any target -> `2` when an active external media session is missing bitrate
 
