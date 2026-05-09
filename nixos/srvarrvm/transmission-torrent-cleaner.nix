@@ -6,7 +6,7 @@
 }:
 {
   systemd.services.transmission-torrent-cleaner = {
-    description = "Dry-run cleanup for old high-ratio public Transmission torrents";
+    description = "Cleanup for old high-ratio public Transmission torrents";
     after = [
       "network-online.target"
       "nginx.service"
@@ -33,6 +33,7 @@
         "3.0"
         "--request-timeout-seconds"
         "20"
+        "--delete"
       ];
       User = "transmission";
       Group = "media";
@@ -40,7 +41,7 @@
   };
 
   systemd.timers.transmission-torrent-cleaner = {
-    description = "Periodic dry-run cleanup scan for old public Transmission torrents";
+    description = "Periodic cleanup scan for old public Transmission torrents";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "15m";
