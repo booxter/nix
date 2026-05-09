@@ -151,6 +151,10 @@
               {
                 "color": "orange",
                 "value": 30000000
+              },
+              {
+                "color": "red",
+                "value": 40000000
               }
             ]
           },
