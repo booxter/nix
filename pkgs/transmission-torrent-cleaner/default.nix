@@ -11,7 +11,7 @@ writeShellApplication {
   '';
 
   meta = {
-    description = "Dry-run cleaner for old high-ratio non-priority Transmission torrents";
+    description = "Cleanup utility for old high-ratio non-priority Transmission torrents";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "transmission-torrent-cleaner";
