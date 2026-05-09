@@ -58,7 +58,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 5
       },
       "id": 15,
       "options": {
@@ -113,7 +113,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 21
       },
       "id": 54,
       "options": {
@@ -168,7 +168,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 21
       },
       "id": 55,
       "options": {
@@ -230,7 +230,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 13
       },
       "id": 53,
       "options": {
@@ -293,7 +293,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 13
       },
       "id": 52,
       "options": {
@@ -332,6 +332,174 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 56,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum(host_observability_adaptive_upload_target_mbit{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "VPN Upload Cap",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 57,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum(host_observability_adaptive_upload_observed_target_mbit{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "VPN Observed Cap",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 58,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum(host_observability_adaptive_upload_reserved_external_media_bandwidth_mbit{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "VPN Reserved Bitrate",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "decimals": 0,
           "mappings": [],
           "thresholds": {
@@ -357,9 +525,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 0,
-        "y": 24
+        "w": 4,
+        "x": 12,
+        "y": 0
       },
       "id": 49,
       "options": {
@@ -421,9 +589,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 8,
-        "y": 24
+        "w": 4,
+        "x": 16,
+        "y": 0
       },
       "id": 50,
       "options": {
@@ -485,9 +653,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 16,
-        "y": 24
+        "w": 4,
+        "x": 20,
+        "y": 0
       },
       "id": 51,
       "options": {
@@ -539,6 +707,6 @@
   "timezone": "",
   "title": "Media Pipe",
   "uid": "fana-media-pipe",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }

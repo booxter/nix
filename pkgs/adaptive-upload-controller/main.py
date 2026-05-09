@@ -159,6 +159,22 @@ def write_json_atomic(path: Path, data: dict) -> None:
         raise
 
 
+def write_text_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        os.chmod(tmp_path, 0o644)
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
 def round_target_mbit(target_mbit: float) -> float:
     return round(target_mbit, 1)
 
@@ -177,6 +193,76 @@ def calculate_public_group_limit_kbps(
     transmission_upload_limit_kbps: int, public_group_fraction: float
 ) -> int:
     return max(1, int(transmission_upload_limit_kbps * public_group_fraction))
+
+
+def nonnegative_int(value: object) -> int:
+    return value if isinstance(value, int) and value >= 0 else 0
+
+
+def nonnegative_float(value: object) -> float:
+    if (
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or not math.isfinite(float(value))
+        or float(value) < 0
+    ):
+        return 0.0
+    return float(value)
+
+
+def render_metrics_text(state: dict) -> str:
+    transmission_upload_limit_kbps = nonnegative_int(
+        state.get("transmission_upload_limit_kbps")
+    )
+    public_group_upload_limit_kbps = nonnegative_int(
+        state.get("public_group_upload_limit_kbps")
+    )
+    relaxation_pending_target_mbit = state.get("relaxation_pending_target_mbit")
+    relaxation_pending = (
+        isinstance(relaxation_pending_target_mbit, (int, float))
+        and not isinstance(relaxation_pending_target_mbit, bool)
+        and math.isfinite(float(relaxation_pending_target_mbit))
+    )
+
+    lines = [
+        "# HELP host_observability_adaptive_upload_target_mbit Effective adaptive WireGuard upload cap in megabits per second.",
+        "# TYPE host_observability_adaptive_upload_target_mbit gauge",
+        f"host_observability_adaptive_upload_target_mbit {nonnegative_float(state.get('target_mbit'))}",
+        "# HELP host_observability_adaptive_upload_observed_target_mbit Most recently observed adaptive upload cap before hysteresis in megabits per second.",
+        "# TYPE host_observability_adaptive_upload_observed_target_mbit gauge",
+        f"host_observability_adaptive_upload_observed_target_mbit {nonnegative_float(state.get('observed_target_mbit'))}",
+        "# HELP host_observability_adaptive_upload_reserved_external_media_bandwidth_mbit External media bitrate reserved by the adaptive upload controller in megabits per second.",
+        "# TYPE host_observability_adaptive_upload_reserved_external_media_bandwidth_mbit gauge",
+        f"host_observability_adaptive_upload_reserved_external_media_bandwidth_mbit {nonnegative_float(state.get('reserved_external_media_bandwidth_mbit'))}",
+        "# HELP host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second Effective Transmission session upload cap derived from the adaptive upload controller.",
+        "# TYPE host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second gauge",
+        f"host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second {transmission_upload_limit_kbps * 1000}",
+        "# HELP host_observability_adaptive_upload_public_group_upload_limit_bytes_per_second Conservative public torrent upload cap derived from the adaptive upload controller.",
+        "# TYPE host_observability_adaptive_upload_public_group_upload_limit_bytes_per_second gauge",
+        f"host_observability_adaptive_upload_public_group_upload_limit_bytes_per_second {public_group_upload_limit_kbps * 1000}",
+        "# HELP host_observability_adaptive_upload_active_external_media_streams Active external Jellyfin media streams counted by the controller.",
+        "# TYPE host_observability_adaptive_upload_active_external_media_streams gauge",
+        f"host_observability_adaptive_upload_active_external_media_streams {nonnegative_int(state.get('active_external_media_streams'))}",
+        "# HELP host_observability_adaptive_upload_active_media_streams_total Total active Jellyfin media streams counted by the controller.",
+        "# TYPE host_observability_adaptive_upload_active_media_streams_total gauge",
+        f"host_observability_adaptive_upload_active_media_streams_total {nonnegative_int(state.get('active_media_streams_total'))}",
+        "# HELP host_observability_adaptive_upload_missing_external_media_bitrate_sessions Active external Jellyfin sessions missing bitrate data.",
+        "# TYPE host_observability_adaptive_upload_missing_external_media_bitrate_sessions gauge",
+        f"host_observability_adaptive_upload_missing_external_media_bitrate_sessions {nonnegative_int(state.get('missing_external_media_bitrate_sessions'))}",
+        "# HELP host_observability_adaptive_upload_external_media_bitrate_bits_per_second Summed active external Jellyfin media bitrate seen by the controller in bits per second.",
+        "# TYPE host_observability_adaptive_upload_external_media_bitrate_bits_per_second gauge",
+        f"host_observability_adaptive_upload_external_media_bitrate_bits_per_second {nonnegative_int(state.get('active_external_media_bitrate_bits_per_second'))}",
+        "# HELP host_observability_adaptive_upload_exporter_ok Whether the Jellyfin exporter fetch succeeded for the current controller state.",
+        "# TYPE host_observability_adaptive_upload_exporter_ok gauge",
+        f"host_observability_adaptive_upload_exporter_ok {1 if state.get('exporter_ok') else 0}",
+        "# HELP host_observability_adaptive_upload_relaxation_pending Whether a more generous observed target is currently waiting out the relaxation hold timer.",
+        "# TYPE host_observability_adaptive_upload_relaxation_pending gauge",
+        f"host_observability_adaptive_upload_relaxation_pending {1 if relaxation_pending else 0}",
+        "# HELP host_observability_adaptive_upload_relaxation_pending_target_mbit Pending relaxed adaptive upload cap in megabits per second.",
+        "# TYPE host_observability_adaptive_upload_relaxation_pending_target_mbit gauge",
+        f"host_observability_adaptive_upload_relaxation_pending_target_mbit {nonnegative_float(relaxation_pending_target_mbit)}",
+    ]
+    return "\n".join(lines) + "\n"
 
 
 def default_policy_state(
@@ -738,6 +824,7 @@ def transmission_get_current_upload_limit_enabled(
 
 def run_decider(args: argparse.Namespace) -> int:
     state_file = Path(args.state_file)
+    metrics_file = Path(args.metrics_file.strip()) if args.metrics_file.strip() else None
     last_signature: tuple | None = None
 
     while True:
@@ -761,6 +848,8 @@ def run_decider(args: argparse.Namespace) -> int:
                 state["reserved_external_media_bandwidth_mbit"],
             )
             write_json_atomic(state_file, state)
+            if metrics_file is not None:
+                write_text_atomic(metrics_file, render_metrics_text(state))
             if signature != last_signature:
                 LOG.info(
                     "policy updated: observed_target_mbit=%s target_mbit=%s transmission_upload_limit_kbps=%s public_group_upload_limit_kbps=%s active_external_media_streams=%s active_external_media_bitrate_bits_per_second=%s active_media_streams_total=%s missing_external_media_bitrate_sessions=%s reserved_external_media_bandwidth_mbit=%s reason=%s observed_reason=%s exporter_ok=%s relaxation_pending_target_mbit=%s relaxation_pending_since=%s",
@@ -973,6 +1062,11 @@ def parse_args() -> argparse.Namespace:
     decider.add_argument("--relaxation-hold-seconds", type=float, default=300.0)
     decider.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
     decider.add_argument("--public-group-fraction", type=float, default=0.4)
+    decider.add_argument(
+        "--metrics-file",
+        default="",
+        help="Optional Prometheus textfile path for exported adaptive upload policy metrics.",
+    )
     decider.add_argument(
         "--media-types",
         nargs="+",

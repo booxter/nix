@@ -26,11 +26,14 @@ let
   streamBitrateHeadroomFraction = "0.1";
   stateFile = "/run/adaptive-upload-policy/state.json";
   stateDir = dirOf stateFile;
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  metricsFile = "${nodeExporterTextfileDir}/adaptive-upload-policy.prom";
   transmissionRpcUrl = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc";
 in
 {
   systemd.tmpfiles.rules = [
     "d ${stateDir} 0755 transmission media -"
+    "z ${nodeExporterTextfileDir} 0775 root media - -"
   ];
 
   systemd.services.jellyfin-upload-policy = {
@@ -45,6 +48,8 @@ in
         jellyfinExporterUrl
         "--state-file"
         stateFile
+        "--metrics-file"
+        metricsFile
         "--interval-seconds"
         decisionIntervalSeconds
         "--request-timeout-seconds"
