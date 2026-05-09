@@ -19,7 +19,7 @@ let
   applierIntervalSeconds = toString applierIntervalSecondsInt;
   idleUploadRateMbit = "25";
   minimumStreamUploadRateMbit = "2";
-  relaxationHoldSeconds = "300";
+  relaxationHoldSeconds = "90";
   maxStateAgeSeconds = toString (decisionIntervalSecondsInt * 3);
   publicGroupFraction = "0.5";
   # The idle ceiling already bakes in enough slack for new stream startup.

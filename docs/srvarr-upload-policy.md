@@ -59,7 +59,7 @@ Current values:
 - decider poll interval: `5s`
 - applier poll interval: `5s`
 - stale state cutoff for appliers: `15s`
-- relaxation hold time: `300s`
+- relaxation hold time: `90s`
 - idle uplink ceiling with no remote playback: `25mbit`
 - minimum computed target with healthy exporter data: `2mbit`
 - conservative fallback target on exporter failure: `8mbit`
@@ -220,7 +220,7 @@ immediately. Instead:
 
 1. the decider records the lower target as a pending relaxation
 2. it keeps enforcing the stricter current tier
-3. if the lower observed target remains stable for `300s`, it relaxes
+3. if the lower observed target remains stable for `90s`, it relaxes
 4. if demand rises again before the hold expires, the pending relaxation is
    dropped
 
@@ -412,13 +412,13 @@ With the current polling values:
   - best case: a few seconds
   - worst case: about `10s`
 - relax latency:
-  - worst case: about `5m10s`
+  - worst case: about `1m40s`
 
 That comes from:
 
 - `5s` decider polling
 - `5s` applier polling
-- `300s` relaxation hold
+- `90s` relaxation hold
 
 ## Tradeoffs and Limitations
 
