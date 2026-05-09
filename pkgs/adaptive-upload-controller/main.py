@@ -966,7 +966,7 @@ def parse_args() -> argparse.Namespace:
     )
     decider.add_argument("--interval-seconds", type=float, default=30.0)
     decider.add_argument("--request-timeout-seconds", type=float, default=10.0)
-    decider.add_argument("--no-streams-mbit", type=float, default=24.0)
+    decider.add_argument("--no-streams-mbit", type=float, default=25.0)
     decider.add_argument("--minimum-streams-mbit", type=float, default=2.0)
     decider.add_argument("--fallback-mbit", type=float, default=8.0)
     decider.add_argument("--stream-bitrate-headroom-fraction", type=float, default=0.2)
