@@ -274,6 +274,7 @@ in
                 path,
                 isAdult ? false,
                 preferTmdb ? false,
+                saveLyricsWithMedia ? false,
               }:
               {
                 pathInfos = [
@@ -294,6 +295,7 @@ in
                 enableTrickplayImageExtraction = true;
 
                 saveTrickplayWithMedia = true;
+                inherit saveLyricsWithMedia;
                 metadataSavers = [ "Nfo" ];
                 saveLocalMetadata = true;
 
@@ -307,6 +309,7 @@ in
               inherit (library) path;
               isAdult = library.isAdult or false;
               preferTmdb = library.preferTmdb or false;
+              saveLyricsWithMedia = library.collectionType == "music";
             };
           }) mediaLibraries;
       };
@@ -365,6 +368,7 @@ in
       plugins = map (name: { inherit name; }) [
         "AudioDB"
         "Letterboxd Link on Movies"
+        "LrcLib Lyrics"
         "MusicBrainz"
         "OMDb"
         "Studio Images"
