@@ -471,6 +471,7 @@ def render_metrics_text(
     *,
     torrent_counts: dict[str, int],
     peer_counts: dict[str, dict[str, int]],
+    download_bytes_per_second: dict[str, int],
     upload_bytes_per_second: dict[str, int],
     preferred_upload_active: bool,
     preferred_upload_bytes_per_second: int,
@@ -497,6 +498,17 @@ def render_metrics_text(
             lines.append(
                 f'host_observability_transmission_peer_count{{class="{torrent_class}",state="{state}"}} {peer_counts[torrent_class][state]}'
             )
+
+    lines.extend(
+        [
+            "# HELP host_observability_transmission_download_bytes_per_second Current aggregate download rate for Transmission torrents by tracker-priority class.",
+            "# TYPE host_observability_transmission_download_bytes_per_second gauge",
+        ]
+    )
+    for torrent_class in ("private", "public"):
+        lines.append(
+            f'host_observability_transmission_download_bytes_per_second{{class="{torrent_class}"}} {download_bytes_per_second[torrent_class]}'
+        )
 
     lines.extend(
         [
@@ -558,6 +570,7 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
                 "peersConnected",
                 "peersGettingFromUs",
                 "peersSendingToUs",
+                "rateDownload",
                 "rateUpload",
                 "trackerStats",
             ]
@@ -665,6 +678,10 @@ def run_iteration(
         "private": 0,
         "public": 0,
     }
+    download_bytes_per_second = {
+        "private": 0,
+        "public": 0,
+    }
     to_prefer: list[str] = []
     to_make_public: list[str] = []
 
@@ -684,6 +701,9 @@ def run_iteration(
         )
         peer_counts[torrent_class]["sending_to_us"] += nonnegative_int(
             torrent.get("peersSendingToUs")
+        )
+        download_bytes_per_second[torrent_class] += nonnegative_int(
+            torrent.get("rateDownload")
         )
         upload_bytes_per_second[torrent_class] += nonnegative_int(
             torrent.get("rateUpload")
@@ -832,6 +852,7 @@ def run_iteration(
             render_metrics_text(
                 torrent_counts=torrent_counts,
                 peer_counts=peer_counts,
+                download_bytes_per_second=download_bytes_per_second,
                 upload_bytes_per_second=upload_bytes_per_second,
                 preferred_upload_active=preferred_upload_active,
                 preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,

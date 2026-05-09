@@ -824,7 +824,9 @@ def transmission_get_current_upload_limit_enabled(
 
 def run_decider(args: argparse.Namespace) -> int:
     state_file = Path(args.state_file)
-    metrics_file = Path(args.metrics_file.strip()) if args.metrics_file.strip() else None
+    metrics_file = (
+        Path(args.metrics_file.strip()) if args.metrics_file.strip() else None
+    )
     last_signature: tuple | None = None
 
     while True:

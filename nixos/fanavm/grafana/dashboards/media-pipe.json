@@ -113,7 +113,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 21
+        "y": 29
       },
       "id": 54,
       "options": {
@@ -168,7 +168,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 21
+        "y": 29
       },
       "id": 55,
       "options": {
@@ -326,6 +326,139 @@
         }
       ],
       "title": "Transmission Upload Peers By Tracker Class",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "transmission-download-class",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 21
+      },
+      "id": 59,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}[5m]) * 8 / 1000000",
+          "legendFormat": "Private Download Throughput",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}[5m]) * 8 / 1000000",
+          "legendFormat": "Public Download Throughput",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Transmission Download Throughput By Tracker Class",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 16
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 21
+      },
+      "id": 60,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\",state=\"sending_to_us\"}",
+          "legendFormat": "Private Download Peers",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\",state=\"sending_to_us\"}",
+          "legendFormat": "Public Download Peers",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Transmission Download Peers By Tracker Class",
       "type": "timeseries"
     },
     {
@@ -707,6 +840,6 @@
   "timezone": "",
   "title": "Media Pipe",
   "uid": "fana-media-pipe",
-  "version": 4,
+  "version": 5,
   "weekStart": ""
 }
