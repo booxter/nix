@@ -381,7 +381,7 @@
           "refId": "A"
         }
       ],
-      "title": "VPN Upload Cap",
+      "title": "VPN Enforced Cap",
       "type": "stat"
     },
     {
@@ -437,7 +437,7 @@
           "refId": "A"
         }
       ],
-      "title": "VPN Observed Cap",
+      "title": "VPN Target Cap",
       "type": "stat"
     },
     {
