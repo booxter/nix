@@ -58,7 +58,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 10
       },
       "id": 15,
       "options": {
@@ -105,7 +105,7 @@
               }
             ]
           },
-          "unit": "Mbps"
+          "unit": "Bps"
         },
         "overrides": []
       },
@@ -113,7 +113,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 16
+        "y": 42
       },
       "id": 54,
       "options": {
@@ -168,7 +168,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 16
+        "y": 42
       },
       "id": 55,
       "options": {
@@ -193,6 +193,130 @@
         }
       ],
       "title": "SABnzbd Queue Remaining",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "transmission-seeding-activity",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 34
+      },
+      "id": 61,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_torrent_activity_count{job=\"node\",instance=\"prox-srvarrvm:9100\",direction=\"seeding\"}",
+          "legendFormat": "{{activity}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Transmission Seeding Torrents",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "transmission-downloading-activity",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 34
+      },
+      "id": 62,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_torrent_activity_count{job=\"node\",instance=\"prox-srvarrvm:9100\",direction=\"downloading\"}",
+          "legendFormat": "{{activity}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Transmission Downloading Torrents",
       "type": "timeseries"
     },
     {
@@ -230,7 +354,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 18
       },
       "id": 53,
       "options": {
@@ -293,7 +417,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 18
       },
       "id": 52,
       "options": {
@@ -332,6 +456,429 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 20,
+            "stacking": {
+              "group": "transmission-download-class",
+              "mode": "normal"
+            },
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 26
+      },
+      "id": 59,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}[5m]) * 8 / 1000000",
+          "legendFormat": "Private Download Throughput",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}[5m]) * 8 / 1000000",
+          "legendFormat": "Public Download Throughput",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Transmission Download Throughput By Tracker Class",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "fillOpacity": 16
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 26
+      },
+      "id": 60,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\",state=\"sending_to_us\"}",
+          "legendFormat": "Private Download Peers",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\",state=\"sending_to_us\"}",
+          "legendFormat": "Public Download Peers",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Transmission Download Peers By Tracker Class",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [
+            {
+              "options": {
+                "0": {
+                  "index": 0,
+                  "text": "Unlimited"
+                }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 0,
+        "y": 5
+      },
+      "id": 63,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "(sum(host_observability_transmission_public_group_upload_limit_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)) * 8 / 1000000",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Public Upload Cap",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 12,
+        "x": 12,
+        "y": 5
+      },
+      "id": 64,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "clamp_min((((sum(host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)) - (sum(host_observability_transmission_public_group_upload_limit_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0))) * 8 / 1000000), 0) * ((sum(host_observability_transmission_public_group_upload_limit_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)) > bool 0)",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "Private Upload Reserve",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 0,
+        "y": 0
+      },
+      "id": 56,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum(host_observability_adaptive_upload_target_mbit{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "VPN Enforced Cap",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 4,
+        "y": 0
+      },
+      "id": 57,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum(host_observability_adaptive_upload_observed_target_mbit{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "VPN Target Cap",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "Mbps"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 4,
+        "x": 8,
+        "y": 0
+      },
+      "id": 58,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "sum(host_observability_adaptive_upload_reserved_external_media_bandwidth_mbit{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)",
+          "instant": true,
+          "legendFormat": "",
+          "range": false,
+          "refId": "A"
+        }
+      ],
+      "title": "VPN Reserved Bitrate",
+      "type": "stat"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
           "decimals": 0,
           "mappings": [],
           "thresholds": {
@@ -357,9 +904,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 0,
-        "y": 24
+        "w": 4,
+        "x": 12,
+        "y": 0
       },
       "id": 49,
       "options": {
@@ -382,7 +929,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"})",
+          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -421,9 +968,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 8,
-        "y": 24
+        "w": 4,
+        "x": 16,
+        "y": 0
       },
       "id": 50,
       "options": {
@@ -446,7 +993,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"} * on(user_id, username, device) group_left(ip_address) jellyfin_user_active{job=\"jellyfin\",instance=\"beast\",ip_address!~\"^(10\\\\.|192\\\\.168\\\\.|172\\\\.(1[6-9]|2[0-9]|3[01])\\\\.|127\\\\.|169\\\\.254\\\\.|\\\\[?::1(?:\\\\]|:|$)|\\\\[?fe80:|\\\\[?fc|\\\\[?fd)\"})",
+          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"} * on(user_id, username, device) group_left(ip_address) jellyfin_user_active{job=\"jellyfin\",instance=\"beast\",ip_address!~\"^(10\\\\..*|192\\\\.168\\\\..*|172\\\\.(1[6-9]|2[0-9]|3[01])\\\\..*|127\\\\..*|169\\\\.254\\\\..*|\\\\[?::1(?:\\\\])?$|\\\\[?fe80:.*|\\\\[?fc.*|\\\\[?fd.*)$\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -485,9 +1032,9 @@
       },
       "gridPos": {
         "h": 5,
-        "w": 8,
-        "x": 16,
-        "y": 24
+        "w": 4,
+        "x": 20,
+        "y": 0
       },
       "id": 51,
       "options": {
@@ -510,7 +1057,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "jellyfin_transcoding_active{job=\"jellyfin\",instance=\"beast\"}",
+          "expr": "count(jellyfin_transcoding_session_info{job=\"jellyfin\",instance=\"beast\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -539,6 +1086,6 @@
   "timezone": "",
   "title": "Media Pipe",
   "uid": "fana-media-pipe",
-  "version": 3,
+  "version": 8,
   "weekStart": ""
 }

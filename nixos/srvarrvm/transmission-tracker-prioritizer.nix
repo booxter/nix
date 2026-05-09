@@ -16,7 +16,7 @@ let
   minimumPrivateHeadroomFraction = "0.1";
   preferredUploadHeadroomFraction = "0.3";
   publicGroupRelaxationHoldSeconds = "30";
-  sabnzbdPublicGroupFraction = "0.1";
+  sabnzbdPublicGroupFraction = "0.25";
 in
 {
   systemd.tmpfiles.rules = [

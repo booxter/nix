@@ -17,20 +17,23 @@ let
   decisionIntervalSeconds = toString decisionIntervalSecondsInt;
   applierIntervalSecondsInt = 5;
   applierIntervalSeconds = toString applierIntervalSecondsInt;
-  idleUploadRateMbit = "25";
-  minimumStreamUploadRateMbit = "2";
+  idleUploadRateMbit = "20";
+  minimumStreamUploadRateMbit = "0.5";
   relaxationHoldSeconds = "90";
   maxStateAgeSeconds = toString (decisionIntervalSecondsInt * 3);
   publicGroupFraction = "0.5";
-  # The idle ceiling already bakes in enough slack for new stream startup.
-  streamBitrateHeadroomFraction = "0.0";
+  # Reserve some slack for stream startup and bitrate spikes.
+  streamBitrateHeadroomFraction = "0.1";
   stateFile = "/run/adaptive-upload-policy/state.json";
   stateDir = dirOf stateFile;
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  metricsFile = "${nodeExporterTextfileDir}/adaptive-upload-policy.prom";
   transmissionRpcUrl = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc";
 in
 {
   systemd.tmpfiles.rules = [
     "d ${stateDir} 0755 transmission media -"
+    "z ${nodeExporterTextfileDir} 0775 root media - -"
   ];
 
   systemd.services.jellyfin-upload-policy = {
@@ -45,6 +48,8 @@ in
         jellyfinExporterUrl
         "--state-file"
         stateFile
+        "--metrics-file"
+        metricsFile
         "--interval-seconds"
         decisionIntervalSeconds
         "--request-timeout-seconds"

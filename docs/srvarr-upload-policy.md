@@ -60,10 +60,10 @@ Current values:
 - applier poll interval: `5s`
 - stale state cutoff for appliers: `15s`
 - relaxation hold time: `90s`
-- idle uplink ceiling with no remote playback: `25mbit`
-- minimum computed target with healthy exporter data: `2mbit`
+- idle uplink ceiling with no remote playback: `20mbit`
+- minimum computed target with healthy exporter data: `0.5mbit`
 - conservative fallback target on exporter failure: `8mbit`
-- remote media stream bitrate safety headroom: `0%`
+- remote media stream bitrate safety headroom: `10%`
 - Jellyfin exporter request timeout: `10s`
 - Transmission RPC timeout:
   - adaptive applier: `20s`
@@ -73,7 +73,7 @@ Current values:
 - minimum preferred-torrent reserve while preferred uploads are active: `10%`
 - preferred upload rate headroom for public-cap derivation: `30%`
 - SABnzbd exporter request timeout: `5s`
-- SABnzbd-active public-group cap: `10%` of the current Transmission limit
+- SABnzbd-active public-group cap: `25%` of the current Transmission limit
 
 Derived limits:
 
@@ -83,11 +83,11 @@ Derived limits:
 
 Examples:
 
-- `25mbit` target -> Transmission `2968 kB/s`, public-group bootstrap `1484 kB/s`
+- `20mbit` target -> Transmission `2375 kB/s`, public-group bootstrap `1187 kB/s`
 - `15mbit` target -> Transmission `1781 kB/s`, public-group bootstrap `890 kB/s`
 - `8mbit` fallback -> Transmission `950 kB/s`, public-group bootstrap `475 kB/s`
-- `2mbit` minimum computed target -> Transmission `237 kB/s`,
-  public-group bootstrap `118 kB/s`
+- `0.5mbit` minimum computed target -> Transmission `59 kB/s`,
+  public-group bootstrap `29 kB/s`
 
 ## Inputs
 
@@ -180,27 +180,27 @@ just stream count:
 
 1. sum `jellyfin_now_playing_bitrate_bits_per_second` for all active external
    media sessions
-2. reserve exactly that total
-3. subtract the reserved amount from the `25mbit` idle ceiling
-4. clamp the result to the healthy-exporter range `[2, 25]`
+2. reserve that total plus `10%` headroom
+3. subtract the reserved amount from the `20mbit` idle ceiling
+4. clamp the result to the healthy-exporter range `[2, 20]`
 5. round the resulting target to `0.1mbit`
 
 In formula form:
 
-- `reserved_mbit = remote_media_bitrate_mbit`
-- `target_mbit = clamp(2, 25, 25 - reserved_mbit)`
+- `reserved_mbit = remote_media_bitrate_mbit * 1.1`
+- `target_mbit = clamp(0.5, 20, 20 - reserved_mbit)`
 
 Examples:
 
-- no external media playback -> `25mbit`
-- one remote `4mbit` stream -> reserve `4mbit` -> target `21mbit`
-- two remote streams totaling `10mbit` -> reserve `10mbit` -> target `15mbit`
-- a very high bitrate session that would leave less than `2mbit` -> clamp to
-  `2mbit`
+- no external media playback -> `20mbit`
+- one remote `4mbit` stream -> reserve `4.4mbit` -> target `15.6mbit`
+- two remote streams totaling `10mbit` -> reserve `11mbit` -> target `9mbit`
+- a very high bitrate session that would leave less than `0.5mbit` -> clamp to
+  `0.5mbit`
 
 If any active external media session is missing bitrate data, the exporter is
 still reachable, so the decider stays aggressive and clamps to the minimum
-computed target of `2mbit`.
+computed target of `0.5mbit`.
 
 ### Tightening
 
@@ -208,8 +208,8 @@ When observed demand goes up, the effective state tightens immediately.
 
 Examples:
 
-- `25 -> 21`
-- `21 -> 15`
+- `20 -> 16`
+- `16 -> 10`
 - any target -> `8` when exporter becomes unreachable
 - any target -> `2` when an active external media session is missing bitrate
 
@@ -311,7 +311,7 @@ Instead:
    plus a conservative bootstrap public-group cap equal to `50%` of that limit
 2. the tracker prioritizer sums current `rateUpload` across preferred torrents
 3. it derives an observed public cap by reserving the larger of:
-   - `10%` of the current Transmission limit
+   - `25%` of the current Transmission limit
    - `130%` of the currently observed preferred upload rate
 4. if that observed cap is tighter than the current applied cap, it tightens
    immediately
@@ -334,7 +334,7 @@ simple SABnzbd override:
 1. read `sabnzbd_paused` and `sabnzbd_queue_size` from the local exporter
 2. if SABnzbd is paused or its queue is empty, do nothing
 3. if SABnzbd is not paused and the queue is non-empty:
-   - derive a hard public-group cap equal to `10%` of the current
+   - derive a hard public-group cap equal to `25%` of the current
      Transmission session limit
    - apply the stricter of:
      - the private-tracker-derived public cap
@@ -360,7 +360,7 @@ If Jellyfin exporter fails:
 If active external media playback is detected but bitrate data is missing for
 one or more of those sessions:
 
-- decider writes the aggressive minimum computed target of `2mbit`
+- decider writes the aggressive minimum computed target of `0.5mbit`
 
 If the state file is missing, invalid, or stale:
 
