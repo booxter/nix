@@ -1057,7 +1057,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "count(jellyfin_transcoding_session_info{job=\"jellyfin\",instance=\"beast\"}) or vector(0)",
+          "expr": "sum(jellyfin_now_playing_state{job=\"jellyfin\",instance=\"beast\",method=\"transcode\",type=~\"Movie|Episode|Video|MusicVideo|Trailer\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
