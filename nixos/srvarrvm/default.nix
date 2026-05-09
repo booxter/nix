@@ -115,6 +115,7 @@ in
         ;
     })
     ./backup.nix
+    ./nightly-speedtest.nix
     ./sabnzbd-exporter.nix
     ./transmission-torrent-cleaner.nix
     ./transmission-tracker-prioritizer.nix

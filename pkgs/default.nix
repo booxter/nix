@@ -19,6 +19,8 @@ pkgs: {
 
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
 
+  nightly-speedtest-probe = pkgs.callPackage ./nightly-speedtest-probe { };
+
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner { };
 
   transmission-tracker-prioritizer = pkgs.callPackage ./transmission-tracker-prioritizer { };
