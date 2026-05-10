@@ -67,6 +67,16 @@
             url = "https://github.com/booxter/jellyfin/commit/c64abc489e.patch";
             hash = "sha256-/Y2QiBkeLY4Wi+RlgFcNuzLPuwOF1sRyf7hnBuUEzAM=";
           })
+          # Ignore stale playback callbacks after the original session is gone.
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/jellyfin/commit/fa992be8f438d7cce1d8d8d3a0b534e7309e6dc7.patch";
+            hash = "sha256-Vq0oFhaLwt6Oweq+xnIsIg3vJPgQb7G32MBDg0IPPUo=";
+          })
+          # Clear orphaned transcode progress instead of flipping it to direct play.
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/jellyfin/commit/070f0919d1130c3ce5729f87700e2b6b23483bf0.patch";
+            hash = "sha256-4UXJ2Ut9yXEL5JXpNVqaUw++X7iC7terL/WywA5MQXQ=";
+          })
         ];
       });
 

@@ -13,6 +13,23 @@ let
   nfsSubnet = "192.168.0.0/16";
   smartctlExporterPort = 9633;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (
+    builtins.toJSON {
+      Serilog = {
+        MinimumLevel = {
+          Default = "Information";
+          Override = {
+            Microsoft = "Warning";
+            System = "Warning";
+            "Jellyfin.Api.Controllers.DynamicHlsController" = "Debug";
+            "Jellyfin.Api.Helpers.HlsHelpers" = "Debug";
+            "Emby.Server.Implementations.HttpServer" = "Debug";
+            "Emby.Server.Implementations.Session" = "Debug";
+          };
+        };
+      };
+    }
+  );
   # Pin export IDs so clients see stable export identities across server restarts.
   mkNfsExport =
     { path, fsid }: "${path} ${nfsSubnet}(rw,async,no_subtree_check,fsid=${toString fsid})";
@@ -486,6 +503,10 @@ in
     enable = true;
     openFirewall = true;
   };
+  system.activationScripts.jellyfinLoggingConfig.text = ''
+    ${pkgs.coreutils}/bin/install -d -m 0700 -o jellyfin -g jellyfin /var/lib/jellyfin/config
+    ${pkgs.coreutils}/bin/install -m 0600 -o jellyfin -g jellyfin ${jellyfinLoggingConfig} /var/lib/jellyfin/config/logging.json
+  '';
   users.groups.media.gid = 169;
   users.users.jellyfin.extraGroups = [
     "media"
@@ -493,6 +514,7 @@ in
     "video"
   ];
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
+  systemd.services.jellyfin.restartTriggers = [ jellyfinLoggingConfig ];
 
   host.externalService = {
     ddns = {

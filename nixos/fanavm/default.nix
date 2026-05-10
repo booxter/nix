@@ -763,6 +763,7 @@ in
       }
       {
         job_name = "jellyfin";
+        scrape_interval = "5s";
         static_configs = [
           {
             targets = [
