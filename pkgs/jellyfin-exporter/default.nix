@@ -5,14 +5,14 @@
 }:
 buildGoModule rec {
   pname = "jellyfin-exporter";
-  version = "1.5.0-unstable-2026-05-08";
-  rev = "f70ea2010fbd27e8b3ffa0dd77304275eedeb581";
+  version = "1.5.0-unstable-2026-05-09";
+  rev = "b8d2a8887095ad10a4635d7685a67fe1a8b41e4f";
 
   src = fetchFromGitHub {
     owner = "booxter";
     repo = "jellyfin_exporter";
     inherit rev;
-    sha256 = "12h8vg8q4dpx07alphy5pz9z92n2b4abkn46xk52bc2xanhbqkb2";
+    sha256 = "0rjmxk2mvhp70nqzz34936p2nc2855n827yq04ldvn33qdmxqxp1";
   };
 
   vendorHash = "sha256-p/6wv5XExUg1B8G2RiXXGAwxWyoIXmB4Y63hNGFRZJs=";
