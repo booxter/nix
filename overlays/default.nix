@@ -21,6 +21,16 @@
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
+      patchedTransmission = pinnedTransmission.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Prefer selected trackers once their announces are already due,
+          # without changing tracker-provided announce cadence.
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/transmission/commit/7c93a460601cb2a2b2653f11144c321d49f39931.patch";
+            hash = "sha256-IOixkw06k0OFrnb0vE2V9+UxRlFjtR6ntsBNS8IKpBo=";
+          })
+        ];
+      });
       isMainNixpkgs = prev.lib.version == pkgs.lib.version;
     in
     {
@@ -39,8 +49,8 @@
           pkgsTelegramDesktop.telegram-desktop
         else
           prev.telegram-desktop;
-      transmission_4 = pinnedTransmission;
-      transmission = pinnedTransmission;
+      transmission_4 = patchedTransmission;
+      transmission = patchedTransmission;
 
       # Carry the partial rename chunk fix until it lands upstream.
       # TODO: report upstream and drop this extra patch once it is released.
