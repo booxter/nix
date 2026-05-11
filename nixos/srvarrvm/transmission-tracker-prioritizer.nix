@@ -17,6 +17,7 @@ let
   minimumPrivateHeadroomFraction = "0.2";
   preferredUploadHeadroomFraction = "0.3";
   preferredActiveHoldSeconds = "45";
+  preferredUploadPeakWindowSeconds = "120";
   publicGroupRelaxationHoldSeconds = "120";
   sabnzbdPublicGroupFraction = "0.25";
 in
@@ -71,6 +72,8 @@ in
           preferredUploadHeadroomFraction
           "--preferred-active-hold-seconds"
           preferredActiveHoldSeconds
+          "--preferred-upload-peak-window-seconds"
+          preferredUploadPeakWindowSeconds
           "--public-group-relaxation-hold-seconds"
           publicGroupRelaxationHoldSeconds
           "--metrics-file"
