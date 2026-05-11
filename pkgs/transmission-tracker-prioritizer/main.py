@@ -338,21 +338,42 @@ def update_windowed_peak_bytes_per_second(
     return max((sample_value for _, sample_value in samples), default=0)
 
 
-def calculate_observed_public_group_upload_limit_kbps(
+def calculate_reserved_private_kbps(
     *,
     transmission_upload_limit_kbps: int,
     preferred_upload_bytes_per_second: int,
+    bootstrap_private_headroom_enabled: bool,
     minimum_private_headroom_fraction: float,
     preferred_upload_headroom_fraction: float,
 ) -> int:
     preferred_upload_kbps = kilobytes_per_second_from_bytes_per_second(
         preferred_upload_bytes_per_second
     )
-    reserved_private_kbps = max(
-        1,
-        math.ceil(transmission_upload_limit_kbps * minimum_private_headroom_fraction),
-        math.ceil(preferred_upload_kbps * (1.0 + preferred_upload_headroom_fraction)),
-    )
+    if preferred_upload_kbps > 0:
+        return max(
+            1,
+            math.ceil(
+                preferred_upload_kbps * (1.0 + preferred_upload_headroom_fraction)
+            ),
+        )
+
+    if bootstrap_private_headroom_enabled:
+        return max(
+            1,
+            math.ceil(
+                transmission_upload_limit_kbps * minimum_private_headroom_fraction
+            ),
+        )
+
+    reserved_private_kbps = 0
+    return reserved_private_kbps
+
+
+def calculate_observed_public_group_upload_limit_kbps(
+    *,
+    transmission_upload_limit_kbps: int,
+    reserved_private_kbps: int,
+) -> int:
     return max(1, transmission_upload_limit_kbps - reserved_private_kbps)
 
 
@@ -367,6 +388,7 @@ def calculate_sabnzbd_public_group_upload_limit_kbps(
 def decide_public_group_upload_limit_kbps(
     *,
     now_monotonic: float,
+    preferred_policy_active: bool,
     preferred_upload_active: bool,
     preferred_upload_bytes_per_second: int,
     transmission_upload_limit_kbps: int | None,
@@ -374,12 +396,15 @@ def decide_public_group_upload_limit_kbps(
     current_public_group_upload_limit_kbps: int | None,
     pending_relaxed_public_group_upload_limit_kbps: int | None,
     pending_relaxed_since_monotonic: float | None,
+    bootstrap_private_headroom_enabled: bool,
     minimum_private_headroom_fraction: float,
     preferred_upload_headroom_fraction: float,
     relaxation_hold_seconds: float,
-) -> tuple[int | None, int | None, int | None, float | None, int | None, str]:
-    if not preferred_upload_active:
-        return None, None, None, None, None, "preferred_inactive"
+) -> tuple[
+    int | None, int | None, int | None, float | None, int | None, str, int | None
+]:
+    if not preferred_policy_active:
+        return None, None, None, None, None, "preferred_inactive", None
 
     if transmission_upload_limit_kbps is None:
         return (
@@ -389,14 +414,20 @@ def decide_public_group_upload_limit_kbps(
             None,
             None,
             "missing_transmission_limit",
+            None,
         )
 
+    reserved_private_kbps = calculate_reserved_private_kbps(
+        transmission_upload_limit_kbps=transmission_upload_limit_kbps,
+        preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
+        bootstrap_private_headroom_enabled=bootstrap_private_headroom_enabled,
+        minimum_private_headroom_fraction=minimum_private_headroom_fraction,
+        preferred_upload_headroom_fraction=preferred_upload_headroom_fraction,
+    )
     observed_public_group_upload_limit_kbps = (
         calculate_observed_public_group_upload_limit_kbps(
             transmission_upload_limit_kbps=transmission_upload_limit_kbps,
-            preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
-            minimum_private_headroom_fraction=minimum_private_headroom_fraction,
-            preferred_upload_headroom_fraction=preferred_upload_headroom_fraction,
+            reserved_private_kbps=reserved_private_kbps,
         )
     )
     bootstrap_public_group_upload_limit_kbps = (
@@ -420,6 +451,7 @@ def decide_public_group_upload_limit_kbps(
                 now_monotonic,
                 observed_public_group_upload_limit_kbps,
                 "holding_before_public_relaxation",
+                reserved_private_kbps,
             )
         return (
             bootstrap_public_group_upload_limit_kbps,
@@ -428,6 +460,7 @@ def decide_public_group_upload_limit_kbps(
             None,
             observed_public_group_upload_limit_kbps,
             "preferred_active_bootstrap",
+            reserved_private_kbps,
         )
 
     if observed_public_group_upload_limit_kbps < current_public_group_upload_limit_kbps:
@@ -438,6 +471,7 @@ def decide_public_group_upload_limit_kbps(
             None,
             observed_public_group_upload_limit_kbps,
             "tightening_for_preferred_upload",
+            reserved_private_kbps,
         )
 
     if (
@@ -451,6 +485,7 @@ def decide_public_group_upload_limit_kbps(
             None,
             observed_public_group_upload_limit_kbps,
             "preferred_upload_stable",
+            reserved_private_kbps,
         )
 
     if (
@@ -466,6 +501,7 @@ def decide_public_group_upload_limit_kbps(
             now_monotonic,
             observed_public_group_upload_limit_kbps,
             "holding_before_public_relaxation",
+            reserved_private_kbps,
         )
 
     if now_monotonic - pending_relaxed_since_monotonic >= relaxation_hold_seconds:
@@ -476,6 +512,7 @@ def decide_public_group_upload_limit_kbps(
             None,
             observed_public_group_upload_limit_kbps,
             "relaxed_for_sustained_low_preferred_upload",
+            reserved_private_kbps,
         )
 
     return (
@@ -485,6 +522,7 @@ def decide_public_group_upload_limit_kbps(
         pending_relaxed_since_monotonic,
         observed_public_group_upload_limit_kbps,
         "holding_before_public_relaxation",
+        reserved_private_kbps,
     )
 
 
@@ -495,9 +533,11 @@ def render_metrics_text(
     peer_counts: dict[str, dict[str, int]],
     download_bytes_per_second: dict[str, int],
     upload_bytes_per_second: dict[str, int],
+    preferred_bootstrap_active: bool,
     preferred_upload_active: bool,
     preferred_upload_bytes_per_second: int,
     preferred_upload_peak_bytes_per_second: int,
+    reserved_private_kbps: int | None,
     public_group_upload_limit_kbps: int | None,
     observed_public_group_upload_limit_kbps: int | None,
 ) -> str:
@@ -561,12 +601,18 @@ def render_metrics_text(
             "# HELP host_observability_transmission_preferred_upload_active Whether any preferred torrent is actively uploading to peers.",
             "# TYPE host_observability_transmission_preferred_upload_active gauge",
             f"host_observability_transmission_preferred_upload_active {1 if preferred_upload_active else 0}",
+            "# HELP host_observability_transmission_preferred_bootstrap_active Whether any preferred torrent currently has connected peers and therefore qualifies for bootstrap private headroom.",
+            "# TYPE host_observability_transmission_preferred_bootstrap_active gauge",
+            f"host_observability_transmission_preferred_bootstrap_active {1 if preferred_bootstrap_active else 0}",
             "# HELP host_observability_transmission_preferred_upload_bytes_per_second Current aggregate upload rate for preferred torrents.",
             "# TYPE host_observability_transmission_preferred_upload_bytes_per_second gauge",
             f"host_observability_transmission_preferred_upload_bytes_per_second {preferred_upload_bytes_per_second}",
             "# HELP host_observability_transmission_preferred_upload_peak_bytes_per_second Peak aggregate upload rate for preferred torrents observed within the configured policy window.",
             "# TYPE host_observability_transmission_preferred_upload_peak_bytes_per_second gauge",
             f"host_observability_transmission_preferred_upload_peak_bytes_per_second {preferred_upload_peak_bytes_per_second}",
+            "# HELP host_observability_transmission_reserved_private_upload_bytes_per_second Reserved session upload capacity currently held for preferred torrents by the public-group cap policy.",
+            "# TYPE host_observability_transmission_reserved_private_upload_bytes_per_second gauge",
+            f"host_observability_transmission_reserved_private_upload_bytes_per_second {0 if reserved_private_kbps is None else reserved_private_kbps * 1000}",
             "# HELP host_observability_transmission_public_group_upload_limit_bytes_per_second Effective upload cap for the managed public torrent group.",
             "# TYPE host_observability_transmission_public_group_upload_limit_bytes_per_second gauge",
             f"host_observability_transmission_public_group_upload_limit_bytes_per_second {0 if public_group_upload_limit_kbps is None else public_group_upload_limit_kbps * 1000}",
@@ -702,6 +748,7 @@ def run_iteration(
     torrents = rpc_get_torrents(client)
     current_preferred_hashes: set[str] = set()
     preferred_upload_observed_active = False
+    preferred_bootstrap_active = False
     preferred_upload_active = False
     preferred_upload_bytes_per_second = 0
     torrent_counts = {
@@ -796,7 +843,9 @@ def run_iteration(
             if (
                 isinstance(torrent.get("peersConnected"), int)
                 and torrent["peersConnected"] > 0
-            ) or (
+            ):
+                preferred_bootstrap_active = True
+            if (
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
                 preferred_upload_observed_active = True
@@ -857,8 +906,10 @@ def run_iteration(
 
     effective_public_group_upload_limit_kbps = None
     observed_public_group_upload_limit_kbps = None
+    reserved_private_kbps = None
     sabnzbd_public_group_upload_limit_kbps = None
     public_group_reason = "public_group_disabled"
+    preferred_policy_active = preferred_upload_active or preferred_bootstrap_active
     if public_group_name:
         (
             effective_public_group_upload_limit_kbps,
@@ -867,8 +918,10 @@ def run_iteration(
             pending_relaxed_since_monotonic,
             observed_public_group_upload_limit_kbps,
             public_group_reason,
+            reserved_private_kbps,
         ) = decide_public_group_upload_limit_kbps(
             now_monotonic=now_monotonic,
+            preferred_policy_active=preferred_policy_active,
             preferred_upload_active=preferred_upload_active,
             preferred_upload_bytes_per_second=preferred_upload_peak_bytes_per_second,
             transmission_upload_limit_kbps=transmission_upload_limit_kbps,
@@ -882,6 +935,9 @@ def run_iteration(
                 pending_relaxed_public_group_upload_limit_kbps
             ),
             pending_relaxed_since_monotonic=pending_relaxed_since_monotonic,
+            bootstrap_private_headroom_enabled=(
+                preferred_bootstrap_active and not preferred_upload_active
+            ),
             minimum_private_headroom_fraction=minimum_private_headroom_fraction,
             preferred_upload_headroom_fraction=preferred_upload_headroom_fraction,
             relaxation_hold_seconds=public_group_relaxation_hold_seconds,
@@ -951,9 +1007,11 @@ def run_iteration(
                 peer_counts=peer_counts,
                 download_bytes_per_second=download_bytes_per_second,
                 upload_bytes_per_second=upload_bytes_per_second,
+                preferred_bootstrap_active=preferred_bootstrap_active,
                 preferred_upload_active=preferred_upload_active,
                 preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
                 preferred_upload_peak_bytes_per_second=preferred_upload_peak_bytes_per_second,
+                reserved_private_kbps=reserved_private_kbps,
                 public_group_upload_limit_kbps=effective_public_group_upload_limit_kbps,
                 observed_public_group_upload_limit_kbps=(
                     observed_public_group_upload_limit_kbps
@@ -962,13 +1020,16 @@ def run_iteration(
         )
 
     LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_upload_observed_active=%s preferred_upload_bytes_per_second=%s preferred_upload_peak_bytes_per_second=%s sabnzbd_active=%s sabnzbd_paused=%s sabnzbd_queue_size=%s sabnzbd_download_rate_bytes_per_second=%s transmission_upload_limit_kbps=%s observed_public_group_upload_limit_kbps=%s sabnzbd_public_group_upload_limit_kbps=%s effective_public_group_upload_limit_kbps=%s public_group_reason=%s preferred_updates=%s public_updates=%s",
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_policy_active=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_observed_active=%s preferred_upload_bytes_per_second=%s preferred_upload_peak_bytes_per_second=%s reserved_private_kbps=%s sabnzbd_active=%s sabnzbd_paused=%s sabnzbd_queue_size=%s sabnzbd_download_rate_bytes_per_second=%s transmission_upload_limit_kbps=%s observed_public_group_upload_limit_kbps=%s sabnzbd_public_group_upload_limit_kbps=%s effective_public_group_upload_limit_kbps=%s public_group_reason=%s preferred_updates=%s public_updates=%s",
         len(tracker_hosts),
         len(current_preferred_hashes),
+        preferred_policy_active,
+        preferred_bootstrap_active,
         preferred_upload_active,
         preferred_upload_observed_active,
         preferred_upload_bytes_per_second,
         preferred_upload_peak_bytes_per_second,
+        reserved_private_kbps,
         None if sabnzbd_state is None else sabnzbd_state["active"],
         None if sabnzbd_state is None else sabnzbd_state["paused"],
         None if sabnzbd_state is None else sabnzbd_state["queue_size"],
