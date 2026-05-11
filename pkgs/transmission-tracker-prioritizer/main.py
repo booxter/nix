@@ -762,6 +762,9 @@ def run_iteration(
             if isinstance(rate_upload, int) and rate_upload > 0:
                 preferred_upload_bytes_per_second += rate_upload
             if (
+                isinstance(torrent.get("peersConnected"), int)
+                and torrent["peersConnected"] > 0
+            ) or (
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
                 preferred_upload_active = True
