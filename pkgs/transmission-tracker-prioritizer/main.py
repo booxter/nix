@@ -649,10 +649,12 @@ def run_iteration(
     current_public_group_upload_limit_kbps: int | None,
     pending_relaxed_public_group_upload_limit_kbps: int | None,
     pending_relaxed_since_monotonic: float | None,
+    last_preferred_activity_monotonic: float | None,
     minimum_private_headroom_fraction: float,
     preferred_upload_headroom_fraction: float,
+    preferred_active_hold_seconds: float,
     public_group_relaxation_hold_seconds: float,
-) -> tuple[str | None, int | None, int | None, float | None]:
+) -> tuple[str | None, int | None, int | None, float | None, float | None]:
     tracker_hosts = load_tracker_hosts(trackers_file)
     if tracker_hosts is None:
         status = f"missing:{trackers_file}"
@@ -666,10 +668,13 @@ def run_iteration(
             current_public_group_upload_limit_kbps,
             pending_relaxed_public_group_upload_limit_kbps,
             pending_relaxed_since_monotonic,
+            last_preferred_activity_monotonic,
         )
 
+    now_monotonic = time.monotonic()
     torrents = rpc_get_torrents(client)
     current_preferred_hashes: set[str] = set()
+    preferred_upload_observed_active = False
     preferred_upload_active = False
     preferred_upload_bytes_per_second = 0
     torrent_counts = {
@@ -767,7 +772,7 @@ def run_iteration(
             ) or (
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
-                preferred_upload_active = True
+                preferred_upload_observed_active = True
             if current_priority != TR_PRI_HIGH or (
                 public_group_name is not None and current_group != ""
             ):
@@ -778,6 +783,18 @@ def run_iteration(
             public_group_name is not None and current_group != public_group_name
         ):
             to_make_public.append(torrent_hash)
+
+    if preferred_upload_observed_active:
+        preferred_upload_active = True
+        last_preferred_activity_monotonic = now_monotonic
+    elif (
+        last_preferred_activity_monotonic is not None
+        and now_monotonic - last_preferred_activity_monotonic
+        < preferred_active_hold_seconds
+    ):
+        preferred_upload_active = True
+    else:
+        last_preferred_activity_monotonic = None
 
     conservative_public_group_upload_limit_kbps = public_group_upload_limit_kbps
     transmission_upload_limit_kbps = None
@@ -817,7 +834,7 @@ def run_iteration(
             observed_public_group_upload_limit_kbps,
             public_group_reason,
         ) = decide_public_group_upload_limit_kbps(
-            now_monotonic=time.monotonic(),
+            now_monotonic=now_monotonic,
             preferred_upload_active=preferred_upload_active,
             preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
             transmission_upload_limit_kbps=transmission_upload_limit_kbps,
@@ -910,10 +927,11 @@ def run_iteration(
         )
 
     LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s sabnzbd_active=%s sabnzbd_paused=%s sabnzbd_queue_size=%s sabnzbd_download_rate_bytes_per_second=%s transmission_upload_limit_kbps=%s observed_public_group_upload_limit_kbps=%s sabnzbd_public_group_upload_limit_kbps=%s effective_public_group_upload_limit_kbps=%s public_group_reason=%s preferred_updates=%s public_updates=%s",
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_upload_active=%s preferred_upload_observed_active=%s preferred_upload_bytes_per_second=%s sabnzbd_active=%s sabnzbd_paused=%s sabnzbd_queue_size=%s sabnzbd_download_rate_bytes_per_second=%s transmission_upload_limit_kbps=%s observed_public_group_upload_limit_kbps=%s sabnzbd_public_group_upload_limit_kbps=%s effective_public_group_upload_limit_kbps=%s public_group_reason=%s preferred_updates=%s public_updates=%s",
         len(tracker_hosts),
         len(current_preferred_hashes),
         preferred_upload_active,
+        preferred_upload_observed_active,
         preferred_upload_bytes_per_second,
         None if sabnzbd_state is None else sabnzbd_state["active"],
         None if sabnzbd_state is None else sabnzbd_state["paused"],
@@ -934,6 +952,7 @@ def run_iteration(
         current_public_group_upload_limit_kbps,
         pending_relaxed_public_group_upload_limit_kbps,
         pending_relaxed_since_monotonic,
+        last_preferred_activity_monotonic,
     )
 
 
@@ -990,6 +1009,12 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=0.3,
         help="Extra headroom above the current preferred upload rate when deriving the public-group cap.",
+    )
+    parser.add_argument(
+        "--preferred-active-hold-seconds",
+        type=float,
+        default=45.0,
+        help="How long preferred torrents remain considered active after their last observed connected peer or upload activity.",
     )
     parser.add_argument(
         "--public-group-relaxation-hold-seconds",
@@ -1070,6 +1095,7 @@ def main() -> int:
     current_public_group_upload_limit_kbps: int | None = None
     pending_relaxed_public_group_upload_limit_kbps: int | None = None
     pending_relaxed_since_monotonic: float | None = None
+    last_preferred_activity_monotonic: float | None = None
 
     while True:
         started_at = time.monotonic()
@@ -1079,6 +1105,7 @@ def main() -> int:
                 current_public_group_upload_limit_kbps,
                 pending_relaxed_public_group_upload_limit_kbps,
                 pending_relaxed_since_monotonic,
+                last_preferred_activity_monotonic,
             ) = run_iteration(
                 client=client,
                 trackers_file=trackers_file,
@@ -1100,12 +1127,14 @@ def main() -> int:
                     pending_relaxed_public_group_upload_limit_kbps
                 ),
                 pending_relaxed_since_monotonic=pending_relaxed_since_monotonic,
+                last_preferred_activity_monotonic=last_preferred_activity_monotonic,
                 minimum_private_headroom_fraction=(
                     args.minimum_private_headroom_fraction
                 ),
                 preferred_upload_headroom_fraction=(
                     args.preferred_upload_headroom_fraction
                 ),
+                preferred_active_hold_seconds=args.preferred_active_hold_seconds,
                 public_group_relaxation_hold_seconds=(
                     args.public_group_relaxation_hold_seconds
                 ),

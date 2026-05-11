@@ -16,6 +16,7 @@ let
   );
   minimumPrivateHeadroomFraction = "0.2";
   preferredUploadHeadroomFraction = "0.3";
+  preferredActiveHoldSeconds = "45";
   publicGroupRelaxationHoldSeconds = "30";
   sabnzbdPublicGroupFraction = "0.25";
 in
@@ -68,6 +69,8 @@ in
           minimumPrivateHeadroomFraction
           "--preferred-upload-headroom-fraction"
           preferredUploadHeadroomFraction
+          "--preferred-active-hold-seconds"
+          preferredActiveHoldSeconds
           "--public-group-relaxation-hold-seconds"
           publicGroupRelaxationHoldSeconds
           "--metrics-file"
