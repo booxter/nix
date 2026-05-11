@@ -62,7 +62,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 10
+        "y": 5
       },
       "id": 15,
       "options": {
@@ -117,7 +117,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 42
+        "y": 37
       },
       "id": 54,
       "options": {
@@ -172,7 +172,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 42
+        "y": 37
       },
       "id": 55,
       "options": {
@@ -234,7 +234,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 29
       },
       "id": 61,
       "options": {
@@ -296,7 +296,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 34
+        "y": 29
       },
       "id": 62,
       "options": {
@@ -358,7 +358,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 13
       },
       "id": 53,
       "options": {
@@ -421,7 +421,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 13
       },
       "id": 52,
       "options": {
@@ -491,7 +491,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 21
       },
       "id": 59,
       "options": {
@@ -554,7 +554,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 21
       },
       "id": 60,
       "options": {
@@ -588,128 +588,6 @@
       ],
       "title": "Transmission Download Peers By Tracker Class",
       "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 1,
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "index": 0,
-                  "text": "Unlimited"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "Mbps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 12,
-        "x": 0,
-        "y": 5
-      },
-      "id": 63,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "(sum(host_observability_transmission_public_group_upload_limit_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)) * 8 / 1000000",
-          "instant": true,
-          "legendFormat": "",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Public Upload Cap",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 1,
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "Mbps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 12,
-        "x": 12,
-        "y": 5
-      },
-      "id": 64,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "clamp_min((((sum(host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)) - (sum(host_observability_transmission_public_group_upload_limit_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0))) * 8 / 1000000), 0) * ((sum(host_observability_transmission_public_group_upload_limit_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\"}) or vector(0)) > bool 0)",
-          "instant": true,
-          "legendFormat": "",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Private Upload Reserve",
-      "type": "stat"
     },
     {
       "datasource": "Prometheus",
@@ -1090,6 +968,6 @@
   "timezone": "",
   "title": "Media Pipe",
   "uid": "fana-media-pipe",
-  "version": 8,
+  "version": 9,
   "weekStart": ""
 }
