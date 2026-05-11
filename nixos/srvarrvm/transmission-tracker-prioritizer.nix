@@ -18,7 +18,7 @@ let
   preferredUploadHeadroomFraction = "0.3";
   preferredActiveHoldSeconds = "45";
   preferredUploadPeakWindowSeconds = "120";
-  publicGroupRelaxationHoldSeconds = "120";
+  publicGroupRelaxationHoldSeconds = "45";
   sabnzbdPublicGroupFraction = "0.25";
 in
 {
