@@ -189,12 +189,6 @@ def calculate_transmission_upload_limit_kbps(
     return max(1, int((target_mbit * 1000.0 / 8.0) * headroom_fraction))
 
 
-def calculate_public_group_limit_kbps(
-    transmission_upload_limit_kbps: int, public_group_fraction: float
-) -> int:
-    return max(1, int(transmission_upload_limit_kbps * public_group_fraction))
-
-
 def nonnegative_int(value: object) -> int:
     return value if isinstance(value, int) and value >= 0 else 0
 
@@ -213,9 +207,6 @@ def nonnegative_float(value: object) -> float:
 def render_metrics_text(state: dict) -> str:
     transmission_upload_limit_kbps = nonnegative_int(
         state.get("transmission_upload_limit_kbps")
-    )
-    public_group_upload_limit_kbps = nonnegative_int(
-        state.get("public_group_upload_limit_kbps")
     )
     relaxation_pending_target_mbit = state.get("relaxation_pending_target_mbit")
     relaxation_pending = (
@@ -237,9 +228,6 @@ def render_metrics_text(state: dict) -> str:
         "# HELP host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second Effective Transmission session upload cap derived from the adaptive upload controller.",
         "# TYPE host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second gauge",
         f"host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second {transmission_upload_limit_kbps * 1000}",
-        "# HELP host_observability_adaptive_upload_public_group_upload_limit_bytes_per_second Conservative public torrent upload cap derived from the adaptive upload controller.",
-        "# TYPE host_observability_adaptive_upload_public_group_upload_limit_bytes_per_second gauge",
-        f"host_observability_adaptive_upload_public_group_upload_limit_bytes_per_second {public_group_upload_limit_kbps * 1000}",
         "# HELP host_observability_adaptive_upload_active_external_media_streams Active external Jellyfin media streams counted by the controller.",
         "# TYPE host_observability_adaptive_upload_active_external_media_streams gauge",
         f"host_observability_adaptive_upload_active_external_media_streams {nonnegative_int(state.get('active_external_media_streams'))}",
@@ -268,7 +256,6 @@ def render_metrics_text(state: dict) -> str:
 def default_policy_state(
     fallback_mbit: float,
     transmission_headroom_fraction: float,
-    public_group_fraction: float,
     reason: str,
     exporter_ok: bool,
     active_external_media_streams: int | None,
@@ -282,9 +269,6 @@ def default_policy_state(
         "active_media_streams_total": active_external_media_streams,
         "exporter_ok": exporter_ok,
         "missing_external_media_bitrate_sessions": None,
-        "public_group_upload_limit_kbps": calculate_public_group_limit_kbps(
-            transmission_upload_limit_kbps, public_group_fraction
-        ),
         "reason": reason,
         "reserved_external_media_bandwidth_mbit": None,
         "target_mbit": float(fallback_mbit),
@@ -599,9 +583,6 @@ def build_policy_state(
         ],
         "observed_reason": observed_state["reason"],
         "observed_target_mbit": observed_state["target_mbit"],
-        "public_group_upload_limit_kbps": calculate_public_group_limit_kbps(
-            transmission_upload_limit_kbps, args.public_group_fraction
-        ),
         "reason": effective_reason,
         "relaxation_hold_seconds": args.relaxation_hold_seconds,
         "relaxation_pending_since": (
@@ -731,13 +712,11 @@ def load_policy_state(
     state_file: Path,
     fallback_mbit: float,
     transmission_headroom_fraction: float,
-    public_group_fraction: float,
     max_state_age_seconds: float | None,
 ) -> dict:
     fallback_state = default_policy_state(
         fallback_mbit=fallback_mbit,
         transmission_headroom_fraction=transmission_headroom_fraction,
-        public_group_fraction=public_group_fraction,
         reason="missing_or_invalid_state_file",
         exporter_ok=False,
         active_external_media_streams=None,
@@ -761,15 +740,12 @@ def load_policy_state(
 
     target_mbit = parsed.get("target_mbit")
     transmission_upload_limit_kbps = parsed.get("transmission_upload_limit_kbps")
-    public_group_upload_limit_kbps = parsed.get("public_group_upload_limit_kbps")
     if (
         not isinstance(target_mbit, (int, float))
         or isinstance(target_mbit, bool)
         or float(target_mbit) <= 0
         or not isinstance(transmission_upload_limit_kbps, int)
         or transmission_upload_limit_kbps <= 0
-        or not isinstance(public_group_upload_limit_kbps, int)
-        or public_group_upload_limit_kbps <= 0
     ):
         LOG.warning(
             "state file %s is missing expected numeric policy fields", state_file
@@ -837,7 +813,6 @@ def run_decider(args: argparse.Namespace) -> int:
                 state["target_mbit"],
                 state["observed_target_mbit"],
                 state["transmission_upload_limit_kbps"],
-                state["public_group_upload_limit_kbps"],
                 state["active_external_media_streams"],
                 state["active_external_media_bitrate_bits_per_second"],
                 state["active_media_streams_total"],
@@ -854,11 +829,10 @@ def run_decider(args: argparse.Namespace) -> int:
                 write_text_atomic(metrics_file, render_metrics_text(state))
             if signature != last_signature:
                 LOG.info(
-                    "policy updated: observed_target_mbit=%s target_mbit=%s transmission_upload_limit_kbps=%s public_group_upload_limit_kbps=%s active_external_media_streams=%s active_external_media_bitrate_bits_per_second=%s active_media_streams_total=%s missing_external_media_bitrate_sessions=%s reserved_external_media_bandwidth_mbit=%s reason=%s observed_reason=%s exporter_ok=%s relaxation_pending_target_mbit=%s relaxation_pending_since=%s",
+                    "policy updated: observed_target_mbit=%s target_mbit=%s transmission_upload_limit_kbps=%s active_external_media_streams=%s active_external_media_bitrate_bits_per_second=%s active_media_streams_total=%s missing_external_media_bitrate_sessions=%s reserved_external_media_bandwidth_mbit=%s reason=%s observed_reason=%s exporter_ok=%s relaxation_pending_target_mbit=%s relaxation_pending_since=%s",
                     state["observed_target_mbit"],
                     state["target_mbit"],
                     state["transmission_upload_limit_kbps"],
-                    state["public_group_upload_limit_kbps"],
                     state["active_external_media_streams"],
                     state["active_external_media_bitrate_bits_per_second"],
                     state["active_media_streams_total"],
@@ -893,7 +867,6 @@ def run_transmission_applier(args: argparse.Namespace) -> int:
                 state_file=state_file,
                 fallback_mbit=args.fallback_mbit,
                 transmission_headroom_fraction=args.transmission_headroom_fraction,
-                public_group_fraction=args.public_group_fraction,
                 max_state_age_seconds=args.max_state_age_seconds,
             )
             target_limit = state["transmission_upload_limit_kbps"]
@@ -1008,7 +981,6 @@ def run_tc_applier(args: argparse.Namespace) -> int:
                 state_file=state_file,
                 fallback_mbit=args.fallback_mbit,
                 transmission_headroom_fraction=args.transmission_headroom_fraction,
-                public_group_fraction=args.public_group_fraction,
                 max_state_age_seconds=args.max_state_age_seconds,
             )
             iface = determine_default_egress_interface(args.route_probe_address)
@@ -1063,7 +1035,6 @@ def parse_args() -> argparse.Namespace:
     decider.add_argument("--stream-bitrate-headroom-fraction", type=float, default=0.2)
     decider.add_argument("--relaxation-hold-seconds", type=float, default=300.0)
     decider.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
-    decider.add_argument("--public-group-fraction", type=float, default=0.4)
     decider.add_argument(
         "--metrics-file",
         default="",
@@ -1090,7 +1061,6 @@ def parse_args() -> argparse.Namespace:
     transmission.add_argument(
         "--transmission-headroom-fraction", type=float, default=0.95
     )
-    transmission.add_argument("--public-group-fraction", type=float, default=0.4)
     transmission.add_argument("--max-state-age-seconds", type=float, default=90.0)
 
     tc_applier = subparsers.add_parser(
@@ -1105,7 +1075,6 @@ def parse_args() -> argparse.Namespace:
     tc_applier.add_argument(
         "--transmission-headroom-fraction", type=float, default=0.95
     )
-    tc_applier.add_argument("--public-group-fraction", type=float, default=0.4)
     tc_applier.add_argument("--max-state-age-seconds", type=float, default=90.0)
     tc_applier.add_argument(
         "--outer-link-rate",

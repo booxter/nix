@@ -71,8 +71,8 @@ Shared state file:
 
 - `/run/adaptive-upload-policy/state.json`
 
-The only fields that matter for current enforcement are the adaptive target,
-reason, timestamps, and `transmission_upload_limit_kbps`.
+The main active fields are the adaptive target, reason, timestamps, and
+`transmission_upload_limit_kbps`.
 
 ### 2. Native Transmission Tracker Prioritization
 
@@ -132,12 +132,6 @@ are now compatibility metrics only. The simplified helper exports them as `0`.
 
 The obsolete `Public Upload Cap` and `Private Upload Reserve` Grafana panels
 were removed from the `Media Pipe` dashboard.
-
-## Legacy / Compatibility
-
-The adaptive controller still emits `public_group_upload_limit_kbps` and the
-related Prometheus metric because older tooling expected them, but nothing in
-the current `srvarr` enforcement path consumes that value.
 
 ## Related Files
 

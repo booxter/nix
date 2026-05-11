@@ -21,7 +21,6 @@ let
   minimumStreamUploadRateMbit = "0.5";
   relaxationHoldSeconds = "90";
   maxStateAgeSeconds = toString (decisionIntervalSecondsInt * 3);
-  publicGroupFraction = "0.5";
   # Reserve some slack for stream startup and bitrate spikes.
   streamBitrateHeadroomFraction = "0.1";
   stateFile = "/run/adaptive-upload-policy/state.json";
@@ -64,8 +63,6 @@ in
         streamBitrateHeadroomFraction
         "--relaxation-hold-seconds"
         relaxationHoldSeconds
-        "--public-group-fraction"
-        publicGroupFraction
       ];
       Restart = "always";
       RestartSec = "10s";
@@ -103,8 +100,6 @@ in
         "20"
         "--fallback-mbit"
         (toString fallbackUploadRateMbit)
-        "--public-group-fraction"
-        publicGroupFraction
         "--max-state-age-seconds"
         maxStateAgeSeconds
       ];
@@ -138,8 +133,6 @@ in
         applierIntervalSeconds
         "--fallback-mbit"
         (toString fallbackUploadRateMbit)
-        "--public-group-fraction"
-        publicGroupFraction
         "--max-state-age-seconds"
         maxStateAgeSeconds
         "--outer-link-rate"

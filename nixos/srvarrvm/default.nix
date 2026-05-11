@@ -122,6 +122,12 @@ in
   ];
 
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
+  sops.secrets.transmissionTrackerHosts = {
+    key = "transmission/private_tracker_hosts";
+    owner = "transmission";
+    group = "media";
+    mode = "0400";
+  };
 
   # NFS mounts with media
   boot.supportedFilesystems = [ "nfs" ];
