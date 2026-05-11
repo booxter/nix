@@ -29,6 +29,13 @@
             url = "https://github.com/booxter/transmission/commit/7c93a460601cb2a2b2653f11144c321d49f39931.patch";
             hash = "sha256-IOixkw06k0OFrnb0vE2V9+UxRlFjtR6ntsBNS8IKpBo=";
           })
+          # Fix the 4.0.6 HTTP announce bug where a later failed sibling
+          # response could overwrite an earlier successful announce.
+          # Upstream: https://github.com/transmission/transmission/pull/7086
+          (prev.fetchpatch {
+            url = "https://github.com/transmission/transmission/commit/036174aa0e3d1f878e2a629ffe3709942a947c06.patch";
+            hash = "sha256-VekP2wwynCFX8QE3g1Eb1rynRPR+AZDnfR2ey9i3yJs=";
+          })
         ];
       });
       isMainNixpkgs = prev.lib.version == pkgs.lib.version;
