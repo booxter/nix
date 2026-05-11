@@ -283,11 +283,6 @@ in
         sort-mode = "progress";
         speed-limit-up = transmissionConservativeUploadLimitKBps;
         speed-limit-up-enabled = true;
-        # On the conservative 8 Mbit floor, the default 8 slots tends to spread
-        # each swarm's upload across too many peers. Lowering this keeps
-        # per-peer throughput healthier and makes the private-tracker priority
-        # more noticeable.
-        upload-slots-per-torrent = 4;
       };
     };
 
