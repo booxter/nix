@@ -17,6 +17,7 @@ from pathlib import Path
 
 
 LOG = logging.getLogger("transmission-tracker-prioritizer")
+TR_PRI_LOW = -1
 TR_PRI_NORMAL = 0
 TR_PRI_HIGH = 1
 PROMETHEUS_SAMPLE_RE_TEMPLATE = (
@@ -992,7 +993,7 @@ def run_iteration(
         },
     )
     public_fields = {
-        "bandwidthPriority": TR_PRI_NORMAL,
+        "bandwidthPriority": TR_PRI_LOW,
     }
     if public_group_name is not None:
         public_fields["group"] = public_group_name
