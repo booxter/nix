@@ -14,7 +14,7 @@ let
   fallbackPublicGroupUploadLimitKBps = builtins.floor (
     config.nixarr.transmission.extraSettings."speed-limit-up" * 0.5
   );
-  minimumPrivateHeadroomFraction = "0.1";
+  minimumPrivateHeadroomFraction = "0.2";
   preferredUploadHeadroomFraction = "0.3";
   publicGroupRelaxationHoldSeconds = "30";
   sabnzbdPublicGroupFraction = "0.25";
