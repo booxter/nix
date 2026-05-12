@@ -284,6 +284,7 @@ in
         rpc-bind-address = wgNamespaceAddress;
         rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
         sort-mode = "progress";
+        message-level = 6; # TR_LOG_TRACE
         speed-limit-up = transmissionConservativeUploadLimitKBps;
         speed-limit-up-enabled = true;
       };
