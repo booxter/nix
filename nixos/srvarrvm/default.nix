@@ -122,6 +122,12 @@ in
   ];
 
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
+  sops.secrets.transmissionTrackerHosts = {
+    key = "transmission/private_tracker_hosts";
+    owner = "transmission";
+    group = "media";
+    mode = "0400";
+  };
 
   # NFS mounts with media
   boot.supportedFilesystems = [ "nfs" ];
@@ -278,11 +284,6 @@ in
         sort-mode = "progress";
         speed-limit-up = transmissionConservativeUploadLimitKBps;
         speed-limit-up-enabled = true;
-        # On the conservative 8 Mbit floor, the default 8 slots tends to spread
-        # each swarm's upload across too many peers. Lowering this keeps
-        # per-peer throughput healthier and makes the private-tracker priority
-        # more noticeable.
-        upload-slots-per-torrent = 4;
       };
     };
 
