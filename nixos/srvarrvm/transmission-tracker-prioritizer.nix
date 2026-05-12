@@ -14,7 +14,7 @@ in
   ];
 
   systemd.services.transmission-tracker-prioritizer = {
-    description = "Prefer uploads for torrents on selected private trackers";
+    description = "Apply FORCE torrent priority for torrents on selected private trackers";
     wantedBy = [ "multi-user.target" ];
     after = [
       "network-online.target"

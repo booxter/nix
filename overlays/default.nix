@@ -23,10 +23,11 @@
       pinnedTransmission = pkgsTransmission.transmission_4;
       patchedTransmission = pinnedTransmission.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
-          # Prefer selected trackers.
+          # Add per-torrent FORCE priority so the helper can promote
+          # selected torrents ahead of the rest of the swarm.
           (prev.fetchpatch {
-            url = "https://github.com/booxter/transmission/commit/1e3fe82f29b028c0356ec0d4d6521a1be3b7f2d1.patch";
-            hash = "sha256-qsjZW0r6KD79bV9vmIzH2XfWTZWNre47afQ46NheqlU=";
+            url = "https://github.com/booxter/transmission/commit/c5216b4313a62da90721a8e26f6bacebe7b713ab.patch";
+            hash = "sha256-5IZUfnojP/OO7wsGQJyb8xY2KGbMaC6mL9uXV+L+LfY=";
           })
           # Fix the 4.0.6 HTTP announce bug where a later failed sibling
           # response could overwrite an earlier successful announce.

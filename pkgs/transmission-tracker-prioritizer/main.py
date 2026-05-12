@@ -15,9 +15,10 @@ from pathlib import Path
 
 
 LOG = logging.getLogger("transmission-tracker-prioritizer")
-TR_PRI_LOW = -1
-TR_PRI_NORMAL = 0
-TR_PRI_HIGH = 1
+TR_TOR_PRI_LOW = -1
+TR_TOR_PRI_NORMAL = 0
+TR_TOR_PRI_HIGH = 1
+TR_TOR_PRI_FORCE = 2
 
 
 class TransmissionRpcError(RuntimeError):
@@ -227,15 +228,6 @@ def render_metrics_text(
             "# HELP host_observability_transmission_preferred_upload_bytes_per_second Current aggregate upload rate for preferred torrents.",
             "# TYPE host_observability_transmission_preferred_upload_bytes_per_second gauge",
             f"host_observability_transmission_preferred_upload_bytes_per_second {preferred_upload_bytes_per_second}",
-            "# HELP host_observability_transmission_reserved_private_upload_bytes_per_second Reserved session upload capacity currently held for preferred torrents by the public-group cap policy. This service no longer manages that cap and therefore exports zero.",
-            "# TYPE host_observability_transmission_reserved_private_upload_bytes_per_second gauge",
-            "host_observability_transmission_reserved_private_upload_bytes_per_second 0",
-            "# HELP host_observability_transmission_public_group_upload_limit_bytes_per_second Effective upload cap for the managed public torrent group. This service no longer manages that cap and therefore exports zero.",
-            "# TYPE host_observability_transmission_public_group_upload_limit_bytes_per_second gauge",
-            "host_observability_transmission_public_group_upload_limit_bytes_per_second 0",
-            "# HELP host_observability_transmission_observed_public_group_upload_limit_bytes_per_second Throughput-derived observed upload cap for the managed public torrent group before hysteresis is applied. This service no longer manages that cap and therefore exports zero.",
-            "# TYPE host_observability_transmission_observed_public_group_upload_limit_bytes_per_second gauge",
-            "host_observability_transmission_observed_public_group_upload_limit_bytes_per_second 0",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -403,7 +395,7 @@ def run_iteration(
                     "active" if is_active_seeding else "inactive"
                 ] += 1
         priority = torrent.get("bandwidthPriority")
-        current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
+        current_priority = priority if isinstance(priority, int) else TR_TOR_PRI_NORMAL
 
         if is_preferred:
             current_preferred_hashes.add(torrent_hash)
@@ -418,11 +410,11 @@ def run_iteration(
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
                 preferred_upload_observed_active = True
-            if current_priority != TR_PRI_HIGH:
+            if current_priority != TR_TOR_PRI_FORCE:
                 to_prefer.append(torrent_hash)
             continue
 
-        if current_priority != TR_PRI_LOW:
+        if current_priority != TR_TOR_PRI_LOW:
             to_make_public.append(torrent_hash)
 
     preferred_upload_active = preferred_upload_observed_active
@@ -431,11 +423,11 @@ def run_iteration(
         client,
         sorted(to_prefer),
         {
-            "bandwidthPriority": TR_PRI_HIGH,
+            "bandwidthPriority": TR_TOR_PRI_FORCE,
         },
     )
     public_fields = {
-        "bandwidthPriority": TR_PRI_LOW,
+        "bandwidthPriority": TR_TOR_PRI_LOW,
     }
     rpc_set_torrent_fields(client, sorted(to_make_public), public_fields)
 
