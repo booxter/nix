@@ -7,18 +7,13 @@ This document describes the current upload-control model on `srvarr`.
 There are two active control layers:
 
 - adaptive global upload budgeting from Jellyfin playback
-- native private-tracker prioritization inside the patched Transmission daemon
+- helper-driven per-torrent FORCE priority inside the patched Transmission daemon
 
 There is no public/private sub-cap split.
 
-`transmission-tracker-prioritizer` still exists in-tree, but on `srvarr` it is
-currently **disabled**. If re-enabled, it only:
-
-- marks preferred torrents `bandwidthPriority = high`
-- marks other torrents `bandwidthPriority = low`
-- exports per-class metrics for Prometheus / Grafana
-
-It does not manage bandwidth groups, public caps, or SABnzbd suppression.
+`transmission-tracker-prioritizer` is active on `srvarr`. It classifies torrents
+by tracker host, sets torrent priority, and exports per-class metrics for
+Prometheus / Grafana.
 
 ## Active Pieces
 
@@ -27,19 +22,15 @@ Host wiring:
 - [nixos/srvarrvm/adaptive-upload-policy.nix](../nixos/srvarrvm/adaptive-upload-policy.nix)
 - [nixos/srvarrvm/default.nix](../nixos/srvarrvm/default.nix)
 - [overlays/default.nix](../overlays/default.nix)
-
-Optional helper module:
-
 - [nixos/srvarrvm/transmission-tracker-prioritizer.nix](../nixos/srvarrvm/transmission-tracker-prioritizer.nix)
 
 Important current facts:
 
 - `srvarr` imports `adaptive-upload-policy.nix`
-- `srvarr` does **not** currently import `transmission-tracker-prioritizer.nix`
-- Transmission gets:
-  - `TR_TRACKER_PRIORITY_FILE=/run/secrets/transmissionTrackerHosts`
+- `srvarr` imports `transmission-tracker-prioritizer.nix`
 - the preferred tracker host secret lives at:
   - `/run/secrets/transmissionTrackerHosts`
+  - it is used by `transmission-tracker-prioritizer` and `transmission-torrent-cleaner`
 
 ## Current Behavior
 
@@ -74,33 +65,39 @@ Shared state file:
 The main active fields are the adaptive target, reason, timestamps, and
 `transmission_upload_limit_kbps`.
 
-### 2. Native Transmission Tracker Prioritization
-
-Transmission is patched to honor `TR_TRACKER_PRIORITY_FILE`.
+### 2. Per-Torrent FORCE Priority
 
 Current behavior:
 
-- preferred tracker hosts are loaded from that file
-- already-due announces for preferred trackers are dispatched first
-- peers learned from preferred trackers are treated as preferred in peer
-  scheduling
-- tracker-provided announce cadence is not overridden
+- the helper loads preferred tracker hosts from `/run/secrets/transmissionTrackerHosts`
+- torrents matching those hosts are set to `bandwidthPriority = FORCE`
+- non-preferred downloading torrents are set to `bandwidthPriority = HIGH`
+- non-preferred seeding torrents below ratio `3.0` are set to
+  `bandwidthPriority = NORMAL`
+- non-preferred seeding torrents at ratio `3.0+` are set to
+  `bandwidthPriority = LOW`
+- the patched Transmission daemon gives FORCE torrents first access to
+  upload/download scheduling
 
 This is now the main private-tracker preference mechanism.
 
-## Optional Helper
+## Helper
 
 Implementation:
 
 - [pkgs/transmission-tracker-prioritizer/main.py](../pkgs/transmission-tracker-prioritizer/main.py)
 
-If re-enabled, the helper only:
+The helper:
 
 - classifies torrents by preferred tracker host
 - sets:
-  - preferred torrents -> `bandwidthPriority = high`
-  - non-preferred torrents -> `bandwidthPriority = low`
+  - preferred torrents -> `bandwidthPriority = force`
+  - non-preferred downloading torrents -> `bandwidthPriority = high`
+  - non-preferred seeding torrents with ratio `< 3.0` -> `bandwidthPriority = normal`
+  - non-preferred seeding torrents with ratio `>= 3.0` -> `bandwidthPriority = low`
 - exports private/public class metrics
+
+The `3.0` ratio threshold is shared with `transmission-torrent-cleaner`.
 
 It does **not**:
 
@@ -118,17 +115,10 @@ Primary places to inspect the system:
   - `jellyfin-upload-policy`
   - `jellyfin-upload-policy-transmission`
   - `jellyfin-upload-policy-tc`
+  - `transmission-tracker-prioritizer`
 
-If the optional helper is re-enabled, it also exports per-class torrent, peer,
-download, and upload metrics through the node exporter textfile directory.
-
-Important note:
-
-- `host_observability_transmission_public_group_upload_limit_bytes_per_second`
-- `host_observability_transmission_observed_public_group_upload_limit_bytes_per_second`
-- `host_observability_transmission_reserved_private_upload_bytes_per_second`
-
-are now compatibility metrics only. The simplified helper exports them as `0`.
+The helper exports per-class torrent, peer, download, and upload metrics
+through the node exporter textfile directory.
 
 The obsolete `Public Upload Cap` and `Private Upload Reserve` Grafana panels
 were removed from the `Media Pipe` dashboard.
