@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  transmissionPublicSeedingLowRatio,
   ...
 }:
 let
@@ -37,6 +38,8 @@ in
         metricsFile
         "--interval-seconds"
         "30"
+        "--low-seeding-ratio-threshold"
+        transmissionPublicSeedingLowRatio
         "--request-timeout-seconds"
         "20"
       ]);

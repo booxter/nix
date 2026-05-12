@@ -56,6 +56,7 @@ let
   transmissionConservativeUploadLimitKBps = builtins.floor (
     (wgConservativeUploadRateMbit * 1000.0 / 8.0) * 0.95
   );
+  transmissionPublicSeedingLowRatio = "3.0";
   wgOuterLinkRate = "10gbit";
   wgEndpointPort = 1637;
   networkOnlineUnitDeps = {
@@ -90,6 +91,8 @@ let
   ) config.systemd.tmpfiles.rules;
 in
 {
+  _module.args.transmissionPublicSeedingLowRatio = transmissionPublicSeedingLowRatio;
+
   host.observability.lanWan = {
     interface = "ens18";
     # nft postrouting overcounts the WireGuard transport on this host, so use

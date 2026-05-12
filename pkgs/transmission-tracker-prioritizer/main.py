@@ -265,6 +265,7 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
                 "leftUntilDone",
                 "rateDownload",
                 "rateUpload",
+                "uploadRatio",
                 "trackerStats",
             ]
         },
@@ -293,10 +294,28 @@ def rpc_set_torrent_fields(
     )
 
 
+def desired_nonpreferred_priority(
+    torrent: dict, low_seeding_ratio_threshold: float
+) -> int:
+    left_until_done = torrent.get("leftUntilDone")
+    if isinstance(left_until_done, int) and left_until_done > 0:
+        return TR_TOR_PRI_HIGH
+
+    upload_ratio = torrent.get("uploadRatio")
+    if (
+        isinstance(upload_ratio, (int, float))
+        and float(upload_ratio) >= low_seeding_ratio_threshold
+    ):
+        return TR_TOR_PRI_LOW
+
+    return TR_TOR_PRI_NORMAL
+
+
 def run_iteration(
     client: TransmissionRpcClient,
     trackers_file: Path,
     metrics_file: Path | None,
+    low_seeding_ratio_threshold: float,
     last_tracker_status: str | None,
 ) -> str | None:
     tracker_hosts = load_tracker_hosts(trackers_file)
@@ -348,8 +367,10 @@ def run_iteration(
         "private": 0,
         "public": 0,
     }
-    to_prefer: list[str] = []
-    to_make_public: list[str] = []
+    to_force: list[str] = []
+    to_set_high: list[str] = []
+    to_set_normal: list[str] = []
+    to_set_low: list[str] = []
 
     for torrent in torrents:
         torrent_hash = torrent.get("hashString")
@@ -411,25 +432,52 @@ def run_iteration(
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
                 preferred_upload_observed_active = True
             if current_priority != TR_TOR_PRI_FORCE:
-                to_prefer.append(torrent_hash)
+                to_force.append(torrent_hash)
             continue
 
-        if current_priority != TR_TOR_PRI_LOW:
-            to_make_public.append(torrent_hash)
+        desired_priority = desired_nonpreferred_priority(
+            torrent, low_seeding_ratio_threshold
+        )
+        if current_priority == desired_priority:
+            continue
+
+        if desired_priority == TR_TOR_PRI_HIGH:
+            to_set_high.append(torrent_hash)
+        elif desired_priority == TR_TOR_PRI_NORMAL:
+            to_set_normal.append(torrent_hash)
+        else:
+            to_set_low.append(torrent_hash)
 
     preferred_upload_active = preferred_upload_observed_active
 
     rpc_set_torrent_fields(
         client,
-        sorted(to_prefer),
+        sorted(to_force),
         {
             "bandwidthPriority": TR_TOR_PRI_FORCE,
         },
     )
-    public_fields = {
-        "bandwidthPriority": TR_TOR_PRI_LOW,
-    }
-    rpc_set_torrent_fields(client, sorted(to_make_public), public_fields)
+    rpc_set_torrent_fields(
+        client,
+        sorted(to_set_high),
+        {
+            "bandwidthPriority": TR_TOR_PRI_HIGH,
+        },
+    )
+    rpc_set_torrent_fields(
+        client,
+        sorted(to_set_normal),
+        {
+            "bandwidthPriority": TR_TOR_PRI_NORMAL,
+        },
+    )
+    rpc_set_torrent_fields(
+        client,
+        sorted(to_set_low),
+        {
+            "bandwidthPriority": TR_TOR_PRI_LOW,
+        },
+    )
 
     if metrics_file is not None:
         write_text_atomic(
@@ -447,14 +495,16 @@ def run_iteration(
         )
 
     LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s preferred_updates=%s public_updates=%s",
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s force_updates=%s high_updates=%s normal_updates=%s low_updates=%s",
         len(tracker_hosts),
         len(current_preferred_hashes),
         preferred_bootstrap_active,
         preferred_upload_active,
         preferred_upload_bytes_per_second,
-        len(to_prefer),
-        len(to_make_public),
+        len(to_force),
+        len(to_set_high),
+        len(to_set_normal),
+        len(to_set_low),
     )
     return f"loaded:{len(tracker_hosts)}"
 
@@ -491,6 +541,12 @@ def parse_args() -> argparse.Namespace:
         help="Optional Prometheus textfile path for exported private/public torrent metrics.",
     )
     parser.add_argument(
+        "--low-seeding-ratio-threshold",
+        type=float,
+        default=3.0,
+        help="Non-preferred seeding torrents at or above this ratio are downgraded to low priority.",
+    )
+    parser.add_argument(
         "--log-level",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -523,6 +579,7 @@ def main() -> int:
                 client=client,
                 trackers_file=trackers_file,
                 metrics_file=metrics_file,
+                low_seeding_ratio_threshold=args.low_seeding_ratio_threshold,
                 last_tracker_status=last_tracker_status,
             )
         except TransmissionRpcError as exc:

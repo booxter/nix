@@ -71,7 +71,11 @@ Current behavior:
 
 - the helper loads preferred tracker hosts from `/run/secrets/transmissionTrackerHosts`
 - torrents matching those hosts are set to `bandwidthPriority = FORCE`
-- non-preferred torrents are set to `bandwidthPriority = LOW`
+- non-preferred downloading torrents are set to `bandwidthPriority = HIGH`
+- non-preferred seeding torrents below ratio `3.0` are set to
+  `bandwidthPriority = NORMAL`
+- non-preferred seeding torrents at ratio `3.0+` are set to
+  `bandwidthPriority = LOW`
 - the patched Transmission daemon gives FORCE torrents first access to
   upload/download scheduling
 
@@ -88,8 +92,12 @@ The helper:
 - classifies torrents by preferred tracker host
 - sets:
   - preferred torrents -> `bandwidthPriority = force`
-  - non-preferred torrents -> `bandwidthPriority = low`
+  - non-preferred downloading torrents -> `bandwidthPriority = high`
+  - non-preferred seeding torrents with ratio `< 3.0` -> `bandwidthPriority = normal`
+  - non-preferred seeding torrents with ratio `>= 3.0` -> `bandwidthPriority = low`
 - exports private/public class metrics
+
+The `3.0` ratio threshold is shared with `transmission-torrent-cleaner`.
 
 It does **not**:
 
