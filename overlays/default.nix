@@ -26,8 +26,8 @@
           # Add per-torrent FORCE priority so the helper can promote
           # selected torrents ahead of the rest of the swarm.
           (prev.fetchpatch {
-            url = "https://github.com/booxter/transmission/commit/f1fb1e85d0275ee2f02e960aacff228bb40699f5.patch";
-            hash = "sha256-ZOENe/biS8NeBhIrd47/FqJP1w9eF0rKR/FYN/KZBy8=";
+            url = "https://github.com/booxter/transmission/commit/e0116445550b4fe4c55e9c6974fc1bf7d8e7ad74.patch";
+            hash = "sha256-mGGrWCtJFhkz4LGaOBxreqVkh0IAFLJAO8cx2WTjeck=";
           })
           # Fix the 4.0.6 HTTP announce bug where a later failed sibling
           # response could overwrite an earlier successful announce.
