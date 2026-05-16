@@ -175,7 +175,7 @@ in
     serviceConfig.StateDirectory = lib.mkForce null;
     unitConfig = requiresMediaMount;
   };
-  systemd.services.jellyseerr.unitConfig = requiresMediaMount;
+  systemd.services.seerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
   systemd.services.prowlarr.unitConfig = networkOnlineUnitDeps;
   systemd.services.shelfmark.unitConfig = requiresMediaMount;
@@ -234,12 +234,9 @@ in
       ];
     };
 
-    jellyseerr = {
+    seerr = {
       enable = true;
       openFirewall = true;
-      # nixarr still defaults to pkgs.jellyseerr, which now forwards to
-      # pkgs.seerr with a rename warning.
-      package = pkgs.seerr;
     };
     prowlarr = {
       enable = true;
