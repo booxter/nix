@@ -140,6 +140,7 @@
             }
           },
           "mappings": [],
+          "softMax": 40000000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -157,7 +158,6 @@
               }
             ]
           },
-          "softMax": 40000000,
           "unit": "bps"
         },
         "overrides": [
