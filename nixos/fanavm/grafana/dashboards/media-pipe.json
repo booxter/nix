@@ -440,21 +440,6 @@
                 }
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Equal Split"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "#999999",
-                  "mode": "fixed"
-                }
-              }
-            ]
           }
         ]
       },
@@ -1314,6 +1299,14 @@
                   "fixedColor": "#999999",
                   "mode": "fixed"
                 }
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
               }
             ]
           }
@@ -1456,6 +1449,14 @@
                 "value": {
                   "fixedColor": "#999999",
                   "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
                 }
               }
             ]
