@@ -58,6 +58,7 @@ let
   );
   wgOuterLinkRate = "10gbit";
   wgEndpointPort = 1637;
+  transmissionNonPreferredLowPriorityRatio = 3.0;
   networkOnlineUnitDeps = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];
@@ -90,6 +91,10 @@ let
   ) config.systemd.tmpfiles.rules;
 in
 {
+  _module.args = {
+    inherit transmissionNonPreferredLowPriorityRatio;
+  };
+
   host.observability.lanWan = {
     interface = "ens18";
     # nft postrouting overcounts the WireGuard transport on this host, so use

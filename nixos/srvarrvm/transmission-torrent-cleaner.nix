@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  transmissionNonPreferredLowPriorityRatio,
   ...
 }:
 {
@@ -30,7 +31,7 @@
         "--minimum-age-days"
         "30"
         "--minimum-ratio"
-        "3.0"
+        (toString transmissionNonPreferredLowPriorityRatio)
         "--request-timeout-seconds"
         "20"
         "--delete"
