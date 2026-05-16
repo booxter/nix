@@ -22,12 +22,14 @@
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
       patchedTransmission = pinnedTransmission.overrideAttrs (old: {
+        src = prev.fetchFromGitHub {
+          owner = "booxter";
+          repo = "transmission";
+          rev = "b1e611a84eda4253fd7a5e4b2c71749c3633b269";
+          hash = "sha256-CMW6OmCKfYoNQWdQIIgAt9gV2EfYj6pzMNNxbYPGjd8=";
+          fetchSubmodules = true;
+        };
         patches = (old.patches or [ ]) ++ [
-          # Prefer selected trackers.
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/transmission/commit/1e3fe82f29b028c0356ec0d4d6521a1be3b7f2d1.patch";
-            hash = "sha256-qsjZW0r6KD79bV9vmIzH2XfWTZWNre47afQ46NheqlU=";
-          })
           # Fix the 4.0.6 HTTP announce bug where a later failed sibling
           # response could overwrite an earlier successful announce.
           # Upstream: https://github.com/transmission/transmission/pull/7086

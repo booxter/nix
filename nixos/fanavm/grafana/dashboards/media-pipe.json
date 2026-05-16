@@ -333,7 +333,7 @@
           "custom": {
             "fillOpacity": 20,
             "stacking": {
-              "group": "transmission-upload-class",
+              "group": "transmission-upload-priority",
               "mode": "normal"
             },
             "thresholdsStyle": {
@@ -352,7 +352,53 @@
           },
           "unit": "Mbps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "High"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#7EB26D",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Normal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#EAB839",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Low"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#6ED0E0",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -369,28 +415,36 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}[5m]) * 8 / 1000000",
-          "legendFormat": "Private Upload Throughput",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"high\"}[5m]) * 8 / 1000000",
+          "legendFormat": "High",
           "range": true,
           "refId": "A"
         },
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}[5m]) * 8 / 1000000",
-          "legendFormat": "Public Upload Throughput",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"normal\"}[5m]) * 8 / 1000000",
+          "legendFormat": "Normal",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"low\"}[5m]) * 8 / 1000000",
+          "legendFormat": "Low",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "Transmission Upload Throughput By Tracker Class",
+      "title": "Transmission Upload Throughput By Torrent Priority",
       "type": "timeseries"
     },
     {
@@ -401,7 +455,11 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 16
+            "fillOpacity": 16,
+            "stacking": {
+              "group": "transmission-upload-peers-priority",
+              "mode": "normal"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -415,7 +473,53 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "High"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#7EB26D",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Normal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#EAB839",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Low"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#6ED0E0",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -432,28 +536,36 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\",state=\"getting_from_us\"}",
-          "legendFormat": "Private Upload Peers",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"high\",state=\"getting_from_us\"}",
+          "legendFormat": "High",
           "range": true,
           "refId": "A"
         },
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\",state=\"getting_from_us\"}",
-          "legendFormat": "Public Upload Peers",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"normal\",state=\"getting_from_us\"}",
+          "legendFormat": "Normal",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"low\",state=\"getting_from_us\"}",
+          "legendFormat": "Low",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "Transmission Upload Peers By Tracker Class",
+      "title": "Transmission Upload Peers By Torrent Priority",
       "type": "timeseries"
     },
     {
@@ -466,7 +578,7 @@
           "custom": {
             "fillOpacity": 20,
             "stacking": {
-              "group": "transmission-download-class",
+              "group": "transmission-download-priority",
               "mode": "normal"
             },
             "thresholdsStyle": {
@@ -485,7 +597,53 @@
           },
           "unit": "Mbps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "High"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#7EB26D",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Normal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#EAB839",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Low"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#6ED0E0",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -502,28 +660,36 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\"}[5m]) * 8 / 1000000",
-          "legendFormat": "Private Download Throughput",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"high\"}[5m]) * 8 / 1000000",
+          "legendFormat": "High",
           "range": true,
           "refId": "A"
         },
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\"}[5m]) * 8 / 1000000",
-          "legendFormat": "Public Download Throughput",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"normal\"}[5m]) * 8 / 1000000",
+          "legendFormat": "Normal",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"low\"}[5m]) * 8 / 1000000",
+          "legendFormat": "Low",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "Transmission Download Throughput By Tracker Class",
+      "title": "Transmission Download Throughput By Torrent Priority",
       "type": "timeseries"
     },
     {
@@ -534,7 +700,11 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 16
+            "fillOpacity": 16,
+            "stacking": {
+              "group": "transmission-download-peers-priority",
+              "mode": "normal"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -548,7 +718,53 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "High"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#7EB26D",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Normal"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#EAB839",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Low"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#6ED0E0",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -565,28 +781,36 @@
         },
         "tooltip": {
           "mode": "multi",
-          "sort": "desc"
+          "sort": "none"
         }
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"private\",state=\"sending_to_us\"}",
-          "legendFormat": "Private Download Peers",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"high\",state=\"sending_to_us\"}",
+          "legendFormat": "High",
           "range": true,
           "refId": "A"
         },
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"public\",state=\"sending_to_us\"}",
-          "legendFormat": "Public Download Peers",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"normal\",state=\"sending_to_us\"}",
+          "legendFormat": "Normal",
           "range": true,
           "refId": "B"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "host_observability_transmission_peer_count{job=\"node\",instance=\"prox-srvarrvm:9100\",class=\"low\",state=\"sending_to_us\"}",
+          "legendFormat": "Low",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "Transmission Download Peers By Tracker Class",
+      "title": "Transmission Download Peers By Torrent Priority",
       "type": "timeseries"
     },
     {

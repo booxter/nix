@@ -18,6 +18,8 @@ LOG = logging.getLogger("transmission-tracker-prioritizer")
 TR_PRI_LOW = -1
 TR_PRI_NORMAL = 0
 TR_PRI_HIGH = 1
+PRIORITY_CLASSES = ("low", "normal", "high")
+DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD = 3.0
 
 
 class TransmissionRpcError(RuntimeError):
@@ -150,6 +152,37 @@ def nonnegative_int(value: object) -> int:
     return value if isinstance(value, int) and value >= 0 else 0
 
 
+def priority_class_name(priority: int) -> str:
+    if priority <= TR_PRI_LOW:
+        return "low"
+    if priority >= TR_PRI_HIGH:
+        return "high"
+    return "normal"
+
+
+def torrent_desired_priority(
+    torrent: dict,
+    is_preferred: bool,
+    non_preferred_low_priority_ratio_threshold: float,
+) -> int:
+    if is_preferred:
+        return TR_PRI_HIGH
+
+    left_until_done = torrent.get("leftUntilDone")
+    is_complete = isinstance(left_until_done, int) and left_until_done <= 0
+    if not is_complete:
+        return TR_PRI_NORMAL
+
+    upload_ratio = torrent.get("uploadRatio")
+    if (
+        isinstance(upload_ratio, (int, float))
+        and upload_ratio >= non_preferred_low_priority_ratio_threshold
+    ):
+        return TR_PRI_LOW
+
+    return TR_PRI_NORMAL
+
+
 def render_metrics_text(
     *,
     torrent_counts: dict[str, int],
@@ -162,10 +195,10 @@ def render_metrics_text(
     preferred_upload_bytes_per_second: int,
 ) -> str:
     lines = [
-        "# HELP host_observability_transmission_torrent_count Number of Transmission torrents by tracker-priority class.",
+        "# HELP host_observability_transmission_torrent_count Number of Transmission torrents by torrent priority class.",
         "# TYPE host_observability_transmission_torrent_count gauge",
     ]
-    for torrent_class in ("private", "public"):
+    for torrent_class in PRIORITY_CLASSES:
         lines.append(
             f'host_observability_transmission_torrent_count{{class="{torrent_class}"}} {torrent_counts[torrent_class]}'
         )
@@ -184,11 +217,11 @@ def render_metrics_text(
 
     lines.extend(
         [
-            "# HELP host_observability_transmission_peer_count Number of Transmission peers by tracker-priority class and relationship.",
+            "# HELP host_observability_transmission_peer_count Number of Transmission peers by torrent priority class and relationship.",
             "# TYPE host_observability_transmission_peer_count gauge",
         ]
     )
-    for torrent_class in ("private", "public"):
+    for torrent_class in PRIORITY_CLASSES:
         for state in ("connected", "getting_from_us", "sending_to_us"):
             lines.append(
                 f'host_observability_transmission_peer_count{{class="{torrent_class}",state="{state}"}} {peer_counts[torrent_class][state]}'
@@ -196,22 +229,22 @@ def render_metrics_text(
 
     lines.extend(
         [
-            "# HELP host_observability_transmission_download_bytes_per_second Current aggregate download rate for Transmission torrents by tracker-priority class.",
+            "# HELP host_observability_transmission_download_bytes_per_second Current aggregate download rate for Transmission torrents by torrent priority class.",
             "# TYPE host_observability_transmission_download_bytes_per_second gauge",
         ]
     )
-    for torrent_class in ("private", "public"):
+    for torrent_class in PRIORITY_CLASSES:
         lines.append(
             f'host_observability_transmission_download_bytes_per_second{{class="{torrent_class}"}} {download_bytes_per_second[torrent_class]}'
         )
 
     lines.extend(
         [
-            "# HELP host_observability_transmission_upload_bytes_per_second Current aggregate upload rate for Transmission torrents by tracker-priority class.",
+            "# HELP host_observability_transmission_upload_bytes_per_second Current aggregate upload rate for Transmission torrents by torrent priority class.",
             "# TYPE host_observability_transmission_upload_bytes_per_second gauge",
         ]
     )
-    for torrent_class in ("private", "public"):
+    for torrent_class in PRIORITY_CLASSES:
         lines.append(
             f'host_observability_transmission_upload_bytes_per_second{{class="{torrent_class}"}} {upload_bytes_per_second[torrent_class]}'
         )
@@ -271,6 +304,7 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
                 "peersGettingFromUs",
                 "peersSendingToUs",
                 "leftUntilDone",
+                "uploadRatio",
                 "rateDownload",
                 "rateUpload",
                 "trackerStats",
@@ -306,6 +340,7 @@ def run_iteration(
     trackers_file: Path,
     metrics_file: Path | None,
     last_tracker_status: str | None,
+    non_preferred_low_priority_ratio_threshold: float,
 ) -> str | None:
     tracker_hosts = load_tracker_hosts(trackers_file)
     if tracker_hosts is None:
@@ -322,10 +357,7 @@ def run_iteration(
     preferred_upload_observed_active = False
     preferred_bootstrap_active = False
     preferred_upload_bytes_per_second = 0
-    torrent_counts = {
-        "private": 0,
-        "public": 0,
-    }
+    torrent_counts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
     torrent_activity_counts = {
         "seeding": {
             "active": 0,
@@ -337,27 +369,18 @@ def run_iteration(
         },
     }
     peer_counts = {
-        "private": {
+        torrent_class: {
             "connected": 0,
             "getting_from_us": 0,
             "sending_to_us": 0,
-        },
-        "public": {
-            "connected": 0,
-            "getting_from_us": 0,
-            "sending_to_us": 0,
-        },
+        }
+        for torrent_class in PRIORITY_CLASSES
     }
-    upload_bytes_per_second = {
-        "private": 0,
-        "public": 0,
-    }
-    download_bytes_per_second = {
-        "private": 0,
-        "public": 0,
-    }
+    upload_bytes_per_second = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
+    download_bytes_per_second = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
     to_prefer: list[str] = []
-    to_make_public: list[str] = []
+    to_make_normal_priority: list[str] = []
+    to_make_low_priority: list[str] = []
 
     for torrent in torrents:
         torrent_hash = torrent.get("hashString")
@@ -365,7 +388,9 @@ def run_iteration(
             continue
 
         is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
-        torrent_class = "private" if is_preferred else "public"
+        priority = torrent.get("bandwidthPriority")
+        current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
+        torrent_class = priority_class_name(current_priority)
         torrent_counts[torrent_class] += 1
         peer_counts[torrent_class]["connected"] += nonnegative_int(
             torrent.get("peersConnected")
@@ -402,9 +427,11 @@ def run_iteration(
                 torrent_activity_counts["seeding"][
                     "active" if is_active_seeding else "inactive"
                 ] += 1
-        priority = torrent.get("bandwidthPriority")
-        current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
-
+        desired_priority = torrent_desired_priority(
+            torrent,
+            is_preferred,
+            non_preferred_low_priority_ratio_threshold,
+        )
         if is_preferred:
             current_preferred_hashes.add(torrent_hash)
             if isinstance(rate_upload, int) and rate_upload > 0:
@@ -418,12 +445,16 @@ def run_iteration(
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
                 preferred_upload_observed_active = True
-            if current_priority != TR_PRI_HIGH:
+            if current_priority != desired_priority:
                 to_prefer.append(torrent_hash)
             continue
 
-        if current_priority != TR_PRI_LOW:
-            to_make_public.append(torrent_hash)
+        if desired_priority == TR_PRI_NORMAL and current_priority != TR_PRI_NORMAL:
+            to_make_normal_priority.append(torrent_hash)
+            continue
+
+        if desired_priority == TR_PRI_LOW and current_priority != TR_PRI_LOW:
+            to_make_low_priority.append(torrent_hash)
 
     preferred_upload_active = preferred_upload_observed_active
 
@@ -434,10 +465,14 @@ def run_iteration(
             "bandwidthPriority": TR_PRI_HIGH,
         },
     )
-    public_fields = {
+    normal_fields = {
+        "bandwidthPriority": TR_PRI_NORMAL,
+    }
+    rpc_set_torrent_fields(client, sorted(to_make_normal_priority), normal_fields)
+    low_priority_fields = {
         "bandwidthPriority": TR_PRI_LOW,
     }
-    rpc_set_torrent_fields(client, sorted(to_make_public), public_fields)
+    rpc_set_torrent_fields(client, sorted(to_make_low_priority), low_priority_fields)
 
     if metrics_file is not None:
         write_text_atomic(
@@ -455,14 +490,15 @@ def run_iteration(
         )
 
     LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s preferred_updates=%s public_updates=%s",
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s preferred_updates=%s normal_priority_updates=%s low_priority_updates=%s",
         len(tracker_hosts),
         len(current_preferred_hashes),
         preferred_bootstrap_active,
         preferred_upload_active,
         preferred_upload_bytes_per_second,
         len(to_prefer),
-        len(to_make_public),
+        len(to_make_normal_priority),
+        len(to_make_low_priority),
     )
     return f"loaded:{len(tracker_hosts)}"
 
@@ -482,6 +518,12 @@ def parse_args() -> argparse.Namespace:
         help="Path to a file containing one tracker host or announce URL per line.",
     )
     parser.add_argument(
+        "--non-preferred-low-priority-ratio",
+        type=float,
+        default=DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD,
+        help="Upload ratio at which completed non-preferred torrents are demoted to low priority.",
+    )
+    parser.add_argument(
         "--interval-seconds",
         type=float,
         default=60.0,
@@ -496,7 +538,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--metrics-file",
         default="",
-        help="Optional Prometheus textfile path for exported private/public torrent metrics.",
+        help="Optional Prometheus textfile path for exported torrent priority metrics.",
     )
     parser.add_argument(
         "--log-level",
@@ -532,6 +574,7 @@ def main() -> int:
                 trackers_file=trackers_file,
                 metrics_file=metrics_file,
                 last_tracker_status=last_tracker_status,
+                non_preferred_low_priority_ratio_threshold=args.non_preferred_low_priority_ratio,
             )
         except TransmissionRpcError as exc:
             LOG.warning("skipping iteration after Transmission RPC failure: %s", exc)
