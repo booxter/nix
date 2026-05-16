@@ -187,6 +187,7 @@ def render_metrics_text(
     *,
     torrent_counts: dict[str, int],
     torrent_activity_counts: dict[str, dict[str, int]],
+    bandwidth_active_torrent_counts: dict[str, dict[str, int]],
     peer_counts: dict[str, dict[str, int]],
     download_bytes_per_second: dict[str, int],
     upload_bytes_per_second: dict[str, int],
@@ -196,6 +197,14 @@ def render_metrics_text(
     last_run_timestamp_seconds: float,
     last_success_timestamp_seconds: float | None,
 ) -> str:
+    total_bandwidth_active_torrent_counts = {
+        direction: sum(active_counts.values())
+        for direction, active_counts in bandwidth_active_torrent_counts.items()
+    }
+    total_bytes_per_second_by_direction = {
+        "download": sum(download_bytes_per_second.values()),
+        "upload": sum(upload_bytes_per_second.values()),
+    }
     lines = [
         "# HELP host_observability_transmission_torrent_count Number of Transmission torrents by torrent priority class.",
         "# TYPE host_observability_transmission_torrent_count gauge",
@@ -215,6 +224,18 @@ def render_metrics_text(
         for activity in ("active", "inactive"):
             lines.append(
                 f'host_observability_transmission_torrent_activity_count{{direction="{direction}",activity="{activity}"}} {torrent_activity_counts[direction][activity]}'
+            )
+
+    lines.extend(
+        [
+            "# HELP host_observability_transmission_bandwidth_active_torrent_count Number of Transmission torrents by torrent priority class currently active in the given bandwidth direction.",
+            "# TYPE host_observability_transmission_bandwidth_active_torrent_count gauge",
+        ]
+    )
+    for direction in ("download", "upload"):
+        for torrent_class in PRIORITY_CLASSES:
+            lines.append(
+                f'host_observability_transmission_bandwidth_active_torrent_count{{direction="{direction}",class="{torrent_class}"}} {bandwidth_active_torrent_counts[direction][torrent_class]}'
             )
 
     lines.extend(
@@ -250,6 +271,40 @@ def render_metrics_text(
         lines.append(
             f'host_observability_transmission_upload_bytes_per_second{{class="{torrent_class}"}} {upload_bytes_per_second[torrent_class]}'
         )
+
+    lines.extend(
+        [
+            "# HELP host_observability_transmission_bandwidth_fair_share_ratio Current bandwidth share for a torrent priority class divided by the equal-share baseline implied by that class's count of active torrents in the same direction.",
+            "# TYPE host_observability_transmission_bandwidth_fair_share_ratio gauge",
+        ]
+    )
+    for direction in ("download", "upload"):
+        total_bytes_per_second = total_bytes_per_second_by_direction[direction]
+        total_active_torrent_count = total_bandwidth_active_torrent_counts[direction]
+        bytes_per_second_by_class = (
+            download_bytes_per_second
+            if direction == "download"
+            else upload_bytes_per_second
+        )
+        for torrent_class in PRIORITY_CLASSES:
+            active_torrent_count = bandwidth_active_torrent_counts[direction][
+                torrent_class
+            ]
+            expected_bytes_per_second = 0.0
+            if total_active_torrent_count > 0:
+                expected_bytes_per_second = (
+                    total_bytes_per_second
+                    * active_torrent_count
+                    / total_active_torrent_count
+                )
+            fair_share_ratio = 0.0
+            if expected_bytes_per_second > 0:
+                fair_share_ratio = (
+                    bytes_per_second_by_class[torrent_class] / expected_bytes_per_second
+                )
+            lines.append(
+                f'host_observability_transmission_bandwidth_fair_share_ratio{{direction="{direction}",class="{torrent_class}"}} {fair_share_ratio}'
+            )
 
     lines.extend(
         [
@@ -440,6 +495,10 @@ def run_iteration(
             "inactive": 0,
         },
     }
+    bandwidth_active_torrent_counts = {
+        direction: {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
+        for direction in ("download", "upload")
+    }
     peer_counts = {
         torrent_class: {
             "connected": 0,
@@ -484,20 +543,24 @@ def run_iteration(
         peers_sending_to_us = torrent.get("peersSendingToUs")
         rate_download = torrent.get("rateDownload")
         rate_upload = torrent.get("rateUpload")
+        is_active_download = (
+            isinstance(peers_sending_to_us, int) and peers_sending_to_us > 0
+        ) or (isinstance(rate_download, int) and rate_download > 0)
+        is_active_upload = (
+            isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
+        ) or (isinstance(rate_upload, int) and rate_upload > 0)
+        if is_active_download:
+            bandwidth_active_torrent_counts["download"][torrent_class] += 1
+        if is_active_upload:
+            bandwidth_active_torrent_counts["upload"][torrent_class] += 1
         if isinstance(left_until_done, int):
             if left_until_done > 0:
-                is_active_downloading = (
-                    isinstance(peers_sending_to_us, int) and peers_sending_to_us > 0
-                ) or (isinstance(rate_download, int) and rate_download > 0)
                 torrent_activity_counts["downloading"][
-                    "active" if is_active_downloading else "inactive"
+                    "active" if is_active_download else "inactive"
                 ] += 1
             else:
-                is_active_seeding = (
-                    isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
-                ) or (isinstance(rate_upload, int) and rate_upload > 0)
                 torrent_activity_counts["seeding"][
-                    "active" if is_active_seeding else "inactive"
+                    "active" if is_active_upload else "inactive"
                 ] += 1
         desired_priority = torrent_desired_priority(
             torrent,
@@ -552,6 +615,7 @@ def run_iteration(
             render_metrics_text(
                 torrent_counts=torrent_counts,
                 torrent_activity_counts=torrent_activity_counts,
+                bandwidth_active_torrent_counts=bandwidth_active_torrent_counts,
                 peer_counts=peer_counts,
                 download_bytes_per_second=download_bytes_per_second,
                 upload_bytes_per_second=upload_bytes_per_second,
