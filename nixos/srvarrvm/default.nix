@@ -186,6 +186,9 @@ in
     # is too low for many active torrents and peers.
     serviceConfig = {
       LimitNOFILE = 65536;
+      # Not sure why nixpkgs leaves Restart unset for Transmission, but this is
+      # a long-running daemon and should come back after crashes.
+      Restart = "on-failure";
       # nixpkgs binds both download-dir and incomplete-dir into the service's
       # RootDirectory. When incomplete-dir is a child of download-dir, Linux
       # treats completion moves across those bind mount points as EXDEV, so
