@@ -6,16 +6,16 @@
 let
   stateRoot = "/data/.state/nixarr";
   backupPaths = [ stateRoot ];
-  jellyseerrConfigDir = "${stateRoot}/jellyseerr";
-  jellyseerrBackupDir = "${stateRoot}/jellyseerr-backup/latest";
+  seerrConfigDir = "${stateRoot}/seerr";
+  seerrBackupDir = "${stateRoot}/seerr-backup/latest";
   backupExclude = [
     "${stateRoot}/*/logs"
     "${stateRoot}/*/logs/**"
     "${stateRoot}/*/cache"
     "${stateRoot}/*/cache/**"
   ];
-  jellyseerrBackupScript = pkgs.writeShellApplication {
-    name = "jellyseerr-backup";
+  seerrBackupScript = pkgs.writeShellApplication {
+    name = "seerr-backup";
     runtimeInputs = [
       pkgs.coreutils
       pkgs.sqlite
@@ -23,17 +23,17 @@ let
     text = ''
       set -euo pipefail
 
-      src_dir="${jellyseerrConfigDir}"
-      dst_dir="${jellyseerrBackupDir}"
+      src_dir="${seerrConfigDir}"
+      dst_dir="${seerrBackupDir}"
       backup_root="$(dirname "$dst_dir")"
       install -d -m 0750 "$backup_root"
-      tmp_dir="$(mktemp -d "${stateRoot}/jellyseerr-backup/.tmp.XXXXXX")"
+      tmp_dir="$(mktemp -d "${stateRoot}/seerr-backup/.tmp.XXXXXX")"
       trap 'rm -rf "$tmp_dir"' EXIT
 
       install -d -m 0750 "$dst_dir"
 
       if [ ! -f "$src_dir/db/db.sqlite3" ]; then
-        echo "missing Jellyseerr database at $src_dir/db/db.sqlite3" >&2
+        echo "missing Seerr database at $src_dir/db/db.sqlite3" >&2
         exit 1
       fi
 
@@ -59,9 +59,9 @@ in
     repoName = "srvarr";
     paths = backupPaths;
     exclude = backupExclude;
-    preBackupServices."jellyseerr-backup" = {
-      description = "Create a consistent Jellyseerr SQLite backup artifact";
-      script = jellyseerrBackupScript;
+    preBackupServices."seerr-backup" = {
+      description = "Create a consistent Seerr SQLite backup artifact";
+      script = seerrBackupScript;
     };
   };
 }
