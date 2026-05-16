@@ -96,11 +96,13 @@ Implementation:
 
 If re-enabled, the helper only:
 
-- classifies torrents by preferred tracker host
+- classifies torrents by preferred tracker host when deciding which priorities
+  to enforce
 - sets:
   - preferred torrents -> `bandwidthPriority = high`
   - non-preferred torrents -> `bandwidthPriority = low`
-- exports private/public class metrics
+- exports `low` / `normal` / `high` torrent priority metrics based on current
+  `bandwidthPriority`
 
 It does **not**:
 
@@ -119,8 +121,9 @@ Primary places to inspect the system:
   - `jellyfin-upload-policy-transmission`
   - `jellyfin-upload-policy-tc`
 
-If the optional helper is re-enabled, it also exports per-class torrent, peer,
-download, and upload metrics through the node exporter textfile directory.
+If the optional helper is re-enabled, it also exports per-priority torrent,
+peer, download, and upload metrics through the node exporter textfile
+directory.
 
 Important note:
 
