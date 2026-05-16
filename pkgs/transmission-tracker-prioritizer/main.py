@@ -193,6 +193,8 @@ def render_metrics_text(
     preferred_bootstrap_active: bool,
     preferred_upload_active: bool,
     preferred_upload_bytes_per_second: int,
+    last_run_timestamp_seconds: float,
+    last_success_timestamp_seconds: float | None,
 ) -> str:
     lines = [
         "# HELP host_observability_transmission_torrent_count Number of Transmission torrents by torrent priority class.",
@@ -271,7 +273,76 @@ def render_metrics_text(
             "host_observability_transmission_observed_public_group_upload_limit_bytes_per_second 0",
         ]
     )
+    lines.extend(
+        health_metrics_lines(
+            exporter_ok=True,
+            last_run_timestamp_seconds=last_run_timestamp_seconds,
+            last_success_timestamp_seconds=last_success_timestamp_seconds,
+        )
+    )
     return "\n".join(lines) + "\n"
+
+
+def health_metrics_lines(
+    *,
+    exporter_ok: bool,
+    last_run_timestamp_seconds: float,
+    last_success_timestamp_seconds: float | None,
+) -> list[str]:
+    lines = [
+        "# HELP host_observability_transmission_exporter_ok Whether the latest Transmission metrics collection iteration succeeded.",
+        "# TYPE host_observability_transmission_exporter_ok gauge",
+        f"host_observability_transmission_exporter_ok {1 if exporter_ok else 0}",
+        "# HELP host_observability_transmission_exporter_last_run_timestamp_seconds Unix timestamp when the latest Transmission metrics collection iteration completed.",
+        "# TYPE host_observability_transmission_exporter_last_run_timestamp_seconds gauge",
+        f"host_observability_transmission_exporter_last_run_timestamp_seconds {last_run_timestamp_seconds}",
+    ]
+    if last_success_timestamp_seconds is not None:
+        lines.extend(
+            [
+                "# HELP host_observability_transmission_exporter_last_success_timestamp_seconds Unix timestamp when the latest successful Transmission metrics collection iteration completed.",
+                "# TYPE host_observability_transmission_exporter_last_success_timestamp_seconds gauge",
+                f"host_observability_transmission_exporter_last_success_timestamp_seconds {last_success_timestamp_seconds}",
+            ]
+        )
+    return lines
+
+
+def render_health_metrics_text(
+    *,
+    exporter_ok: bool,
+    last_run_timestamp_seconds: float,
+    last_success_timestamp_seconds: float | None,
+) -> str:
+    return (
+        "\n".join(
+            health_metrics_lines(
+                exporter_ok=exporter_ok,
+                last_run_timestamp_seconds=last_run_timestamp_seconds,
+                last_success_timestamp_seconds=last_success_timestamp_seconds,
+            )
+        )
+        + "\n"
+    )
+
+
+def write_health_metrics(
+    metrics_file: Path | None,
+    *,
+    exporter_ok: bool,
+    last_run_timestamp_seconds: float,
+    last_success_timestamp_seconds: float | None,
+) -> None:
+    if metrics_file is None:
+        return
+    write_text_atomic(
+        metrics_file,
+        render_health_metrics_text(
+            exporter_ok=exporter_ok,
+            last_run_timestamp_seconds=last_run_timestamp_seconds,
+            last_success_timestamp_seconds=last_success_timestamp_seconds,
+        ),
+    )
 
 
 def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
@@ -341,7 +412,8 @@ def run_iteration(
     metrics_file: Path | None,
     last_tracker_status: str | None,
     non_preferred_low_priority_ratio_threshold: float,
-) -> str | None:
+    metrics_timestamp_seconds: float,
+) -> tuple[str | None, bool]:
     tracker_hosts = load_tracker_hosts(trackers_file)
     if tracker_hosts is None:
         status = f"missing:{trackers_file}"
@@ -350,7 +422,7 @@ def run_iteration(
                 "tracker host file %s does not exist yet; skipping until it is created",
                 trackers_file,
             )
-        return status
+        return status, False
 
     torrents = rpc_get_torrents(client)
     current_preferred_hashes: set[str] = set()
@@ -486,6 +558,8 @@ def run_iteration(
                 preferred_bootstrap_active=preferred_bootstrap_active,
                 preferred_upload_active=preferred_upload_active,
                 preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
+                last_run_timestamp_seconds=metrics_timestamp_seconds,
+                last_success_timestamp_seconds=metrics_timestamp_seconds,
             ),
         )
 
@@ -500,7 +574,7 @@ def run_iteration(
         len(to_make_normal_priority),
         len(to_make_low_priority),
     )
-    return f"loaded:{len(tracker_hosts)}"
+    return f"loaded:{len(tracker_hosts)}", True
 
 
 def parse_args() -> argparse.Namespace:
@@ -565,21 +639,34 @@ def main() -> int:
     if args.metrics_file.strip() == "":
         metrics_file = None
     last_tracker_status: str | None = None
+    last_success_timestamp_seconds: float | None = None
 
     while True:
         started_at = time.monotonic()
+        iteration_timestamp_seconds = time.time()
+        iteration_succeeded = False
         try:
-            last_tracker_status = run_iteration(
+            last_tracker_status, iteration_succeeded = run_iteration(
                 client=client,
                 trackers_file=trackers_file,
                 metrics_file=metrics_file,
                 last_tracker_status=last_tracker_status,
                 non_preferred_low_priority_ratio_threshold=args.non_preferred_low_priority_ratio,
+                metrics_timestamp_seconds=iteration_timestamp_seconds,
             )
         except TransmissionRpcError as exc:
             LOG.warning("skipping iteration after Transmission RPC failure: %s", exc)
         except Exception:
             LOG.exception("skipping iteration after unexpected failure")
+        if iteration_succeeded:
+            last_success_timestamp_seconds = iteration_timestamp_seconds
+        else:
+            write_health_metrics(
+                metrics_file,
+                exporter_ok=False,
+                last_run_timestamp_seconds=iteration_timestamp_seconds,
+                last_success_timestamp_seconds=last_success_timestamp_seconds,
+            )
 
         sleep_for = max(0.0, args.interval_seconds - (time.monotonic() - started_at))
         time.sleep(sleep_for)
