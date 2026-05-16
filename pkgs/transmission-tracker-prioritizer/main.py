@@ -274,7 +274,7 @@ def render_metrics_text(
 
     lines.extend(
         [
-            "# HELP host_observability_transmission_bandwidth_fair_share_ratio Current bandwidth share for a torrent priority class divided by the equal-share baseline implied by that class's count of active torrents in the same direction. Classes with no active torrents in that direction export 1.0 as the neutral baseline.",
+            "# HELP host_observability_transmission_bandwidth_fair_share_ratio Current bandwidth share for a torrent priority class divided by the equal-share baseline implied by that class's count of active torrents in the same direction. Classes with no active torrents or no observed bandwidth in that direction export 1.0 as the neutral baseline.",
             "# TYPE host_observability_transmission_bandwidth_fair_share_ratio gauge",
         ]
     )
@@ -290,7 +290,8 @@ def render_metrics_text(
             active_torrent_count = bandwidth_active_torrent_counts[direction][
                 torrent_class
             ]
-            if active_torrent_count == 0:
+            actual_bytes_per_second = bytes_per_second_by_class[torrent_class]
+            if active_torrent_count == 0 or actual_bytes_per_second == 0:
                 lines.append(
                     f'host_observability_transmission_bandwidth_fair_share_ratio{{direction="{direction}",class="{torrent_class}"}} 1.0'
                 )
@@ -304,9 +305,7 @@ def render_metrics_text(
                 )
             fair_share_ratio = 0.0
             if expected_bytes_per_second > 0:
-                fair_share_ratio = (
-                    bytes_per_second_by_class[torrent_class] / expected_bytes_per_second
-                )
+                fair_share_ratio = actual_bytes_per_second / expected_bytes_per_second
             lines.append(
                 f'host_observability_transmission_bandwidth_fair_share_ratio{{direction="{direction}",class="{torrent_class}"}} {fair_share_ratio}'
             )
