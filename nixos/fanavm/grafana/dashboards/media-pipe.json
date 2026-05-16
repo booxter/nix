@@ -397,6 +397,21 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Equal Split"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#999999",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
@@ -1186,6 +1201,7 @@
           "decimals": 2,
           "mappings": [],
           "min": 0,
+          "softMax": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1238,6 +1254,21 @@
                 "id": "color",
                 "value": {
                   "fixedColor": "#6ED0E0",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Equal Split"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#999999",
                   "mode": "fixed"
                 }
               }
@@ -1287,6 +1318,14 @@
           "legendFormat": "Low",
           "range": true,
           "refId": "C"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "vector(1)",
+          "legendFormat": "Equal Split",
+          "range": true,
+          "refId": "D"
         }
       ],
       "title": "Transmission Upload Share Ratio Vs Equal Split",
@@ -1305,6 +1344,7 @@
           "decimals": 2,
           "mappings": [],
           "min": 0,
+          "softMax": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1361,6 +1401,21 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Equal Split"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#999999",
+                  "mode": "fixed"
+                }
+              }
+            ]
           }
         ]
       },
@@ -1406,6 +1461,14 @@
           "legendFormat": "Low",
           "range": true,
           "refId": "C"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "vector(1)",
+          "legendFormat": "Equal Split",
+          "range": true,
+          "refId": "D"
         }
       ],
       "title": "Transmission Download Share Ratio Vs Equal Split",
