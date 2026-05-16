@@ -97,7 +97,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 16
+            "fillOpacity": 0
           },
           "mappings": [],
           "thresholds": {
@@ -152,7 +152,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 16
+            "fillOpacity": 0
           },
           "mappings": [],
           "thresholds": {
@@ -1181,7 +1181,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 16
+            "fillOpacity": 0
           },
           "decimals": 2,
           "mappings": [],
@@ -1300,7 +1300,7 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "fillOpacity": 16
+            "fillOpacity": 0
           },
           "decimals": 2,
           "mappings": [],
