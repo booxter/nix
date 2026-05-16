@@ -36,7 +36,7 @@
             }
           },
           "mappings": [],
-          "max": 40000000,
+          "softMax": 40000000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -56,7 +56,42 @@
           },
           "unit": "bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "40 Mbit Reference"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "wan-out",
+                  "mode": "none"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -84,6 +119,14 @@
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "vector(40000000)",
+          "legendFormat": "40 Mbit Reference",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "WAN Outbound Bandwidth (Stacked)",
@@ -116,7 +159,7 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
+        "x": 12,
         "y": 45
       },
       "id": 54,
@@ -171,7 +214,7 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
+        "x": 0,
         "y": 45
       },
       "id": 55,
@@ -524,8 +567,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 13
+        "x": 0,
+        "y": 21
       },
       "id": 52,
       "options": {
@@ -648,8 +691,8 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 21
+        "x": 12,
+        "y": 13
       },
       "id": 59,
       "options": {
@@ -1186,6 +1229,7 @@
           "decimals": 2,
           "mappings": [],
           "min": 0,
+          "softMax": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1239,6 +1283,29 @@
                 "value": {
                   "fixedColor": "#6ED0E0",
                   "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Equal Split"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#999999",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
                 }
               }
             ]
@@ -1287,6 +1354,14 @@
           "legendFormat": "Low",
           "range": true,
           "refId": "C"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "vector(1)",
+          "legendFormat": "Equal Split",
+          "range": true,
+          "refId": "D"
         }
       ],
       "title": "Transmission Upload Share Ratio Vs Equal Split",
@@ -1305,6 +1380,7 @@
           "decimals": 2,
           "mappings": [],
           "min": 0,
+          "softMax": 2,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1361,6 +1437,29 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Equal Split"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "#999999",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              }
+            ]
           }
         ]
       },
@@ -1406,6 +1505,14 @@
           "legendFormat": "Low",
           "range": true,
           "refId": "C"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "vector(1)",
+          "legendFormat": "Equal Split",
+          "range": true,
+          "refId": "D"
         }
       ],
       "title": "Transmission Download Share Ratio Vs Equal Split",

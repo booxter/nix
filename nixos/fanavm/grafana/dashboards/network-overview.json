@@ -140,7 +140,7 @@
             }
           },
           "mappings": [],
-          "max": 40000000,
+          "softMax": 40000000,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -160,7 +160,42 @@
           },
           "unit": "bps"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "40 Mbit Reference"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              },
+              {
+                "id": "custom.stacking",
+                "value": {
+                  "group": "wan-out",
+                  "mode": "none"
+                }
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "legend": true,
+                  "tooltip": true,
+                  "viz": false
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -188,6 +223,14 @@
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "vector(40000000)",
+          "legendFormat": "40 Mbit Reference",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "WAN Outbound Bandwidth (Stacked)",
