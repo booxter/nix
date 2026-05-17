@@ -288,8 +288,9 @@ in
                 automaticallyAddToCollection = true;
 
                 enableChapterImageExtraction = true;
-                extractChapterImagesDuringLibraryScan = true;
-                extractTrickplayImagesDuringLibraryScan = true;
+                # Generate these on demand or via dedicated jobs, not during scans.
+                extractChapterImagesDuringLibraryScan = false;
+                extractTrickplayImagesDuringLibraryScan = false;
                 enableEmbeddedEpisodeInfos = true;
                 enableEmbeddedExtraTitles = true;
                 enableTrickplayImageExtraction = true;
