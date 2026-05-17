@@ -25,8 +25,8 @@
         src = prev.fetchFromGitHub {
           owner = "booxter";
           repo = "transmission";
-          rev = "822f7004d9280bbeee78c34b890c3b7b2c8557a3";
-          hash = "sha256-vQ4BEthOzu6EtgMx9pPRE85VQwoNtRj203AA2P5bJls=";
+          rev = "3fafde4d3c822a974faa2cd81bb5fb272201eb20";
+          hash = "sha256-PaE634RHEGJ2H2K2XysNMQyCbpYVOxNGkVUcMWGC/eY=";
           fetchSubmodules = true;
         };
         patches = (old.patches or [ ]) ++ [
