@@ -83,8 +83,6 @@ in
         "jellyfin-upload-policy.service"
         "transmission.service"
       ];
-      BindsTo = [ "transmission.service" ];
-      PartOf = [ "transmission.service" ];
     };
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " [
