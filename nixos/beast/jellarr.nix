@@ -132,7 +132,7 @@ in
         trickplayOptions = {
           enableHwAcceleration = true;
           enableHwEncoding = true;
-          processThreads = 10;
+          processThreads = 4;
         };
       };
       network = {
