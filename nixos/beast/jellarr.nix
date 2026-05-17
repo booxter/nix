@@ -111,6 +111,8 @@ in
       #base_url = "http://localhost:8096";
       system = {
         serverName = "main";
+        libraryScanFanoutConcurrency = 4;
+        parallelImageEncodingLimit = 2;
         enableMetrics = true;
         pluginRepositories = [
           {
