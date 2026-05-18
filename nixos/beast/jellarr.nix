@@ -111,6 +111,8 @@ in
       #base_url = "http://localhost:8096";
       system = {
         serverName = "main";
+        libraryScanFanoutConcurrency = 4;
+        parallelImageEncodingLimit = 2;
         enableMetrics = true;
         pluginRepositories = [
           {
@@ -132,7 +134,7 @@ in
         trickplayOptions = {
           enableHwAcceleration = true;
           enableHwEncoding = true;
-          processThreads = 10;
+          processThreads = 4;
         };
       };
       network = {
@@ -288,8 +290,9 @@ in
                 automaticallyAddToCollection = true;
 
                 enableChapterImageExtraction = true;
-                extractChapterImagesDuringLibraryScan = true;
-                extractTrickplayImagesDuringLibraryScan = true;
+                # Generate these on demand or via dedicated jobs, not during scans.
+                extractChapterImagesDuringLibraryScan = false;
+                extractTrickplayImagesDuringLibraryScan = false;
                 enableEmbeddedEpisodeInfos = true;
                 enableEmbeddedExtraTitles = true;
                 enableTrickplayImageExtraction = true;
