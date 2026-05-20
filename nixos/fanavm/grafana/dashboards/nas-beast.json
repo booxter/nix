@@ -3450,7 +3450,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_power_watt{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=~\"power total|power \\+12v|power \\+5v|power \\+3\\.3v\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_power_watt{job=\"node\",instance=\"beast\",sensor=~\"power[1-4]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3499,7 +3499,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_in_volts{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=~\"v_out \\+12v|v_out \\+5v|v_out \\+3\\.3v\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_in_volts{job=\"node\",instance=\"beast\",sensor=~\"in[123]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3548,7 +3548,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_curr_amps{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=~\"curr \\+12v|curr \\+5v|curr \\+3\\.3v\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_curr_amps{job=\"node\",instance=\"beast\",sensor=~\"curr[234]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3732,6 +3732,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 30,
+  "version": 31,
   "weekStart": ""
 }
