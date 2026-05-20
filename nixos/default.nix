@@ -87,10 +87,10 @@ in
     };
   };
 
-  # Auto-upgrade uses a GitHub flake URI, so skip the run cleanly until DNS is
-  # actually ready. This avoids failed deploys when the timer fires during
-  # activation on hosts that are still bringing networking up.
-  systemd.services.nixos-upgrade.serviceConfig.ExecCondition =
+  # Auto-upgrade uses a GitHub flake URI, so fail fast until DNS is actually
+  # ready. That keeps broken prerequisites visible in systemd instead of
+  # looking like a cleanly skipped upgrade.
+  systemd.services.nixos-upgrade.serviceConfig.ExecStartPre =
     "${pkgs.getent}/bin/getent hosts api.github.com";
 
   time.timeZone = "America/New_York";
