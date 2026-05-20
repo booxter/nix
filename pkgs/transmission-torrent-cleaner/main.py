@@ -168,10 +168,10 @@ def rpc_remove_torrents(
         return
 
     client.call(
-        "torrent_remove",
+        "torrent-remove",
         {
             "ids": torrent_hashes,
-            "delete_local_data": delete_local_data,
+            "delete-local-data": delete_local_data,
         },
     )
 
