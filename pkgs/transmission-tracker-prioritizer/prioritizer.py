@@ -36,7 +36,7 @@ def parse_args() -> argparse.Namespace:
         "--non-preferred-low-priority-ratio",
         type=float,
         default=DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD,
-        help="Upload ratio threshold for high-priority public torrents when no preferred torrents are present.",
+        help="Upload ratio threshold at or above which non-preferred torrents are demoted to low priority.",
     )
     parser.add_argument(
         "--interval-seconds",
@@ -85,13 +85,14 @@ def main() -> int:
             if state is not None:
                 apply_priority_updates(client, state)
                 LOG.info(
-                    "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s applied_high_priority_changes=%s applied_low_priority_changes=%s",
+                    "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s applied_high_priority_changes=%s applied_normal_priority_changes=%s applied_low_priority_changes=%s",
                     state.tracker_hosts_count,
                     state.preferred_torrent_count,
                     state.preferred_bootstrap_active,
                     state.preferred_upload_active,
                     state.preferred_upload_bytes_per_second,
                     len(state.high_priority_hashes),
+                    len(state.normal_priority_hashes),
                     len(state.low_priority_hashes),
                 )
         except TransmissionRpcError as exc:

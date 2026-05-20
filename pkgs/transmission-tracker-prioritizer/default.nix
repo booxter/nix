@@ -18,6 +18,15 @@ let
         export PYTHONPATH="${sourceDir}:''${PYTHONPATH:-}"
         exec ${python3}/bin/python3 ${script} "$@"
       '';
+      derivationArgs = {
+        doCheck = true;
+      };
+      checkPhase = ''
+        runHook preCheck
+        PYTHONPATH="${sourceDir}" \
+          ${python3}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
+        runHook postCheck
+      '';
 
       meta = {
         inherit description;

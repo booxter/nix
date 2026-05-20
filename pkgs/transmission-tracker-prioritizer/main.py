@@ -165,13 +165,18 @@ def torrent_desired_priority(
     if is_preferred:
         return TR_PRI_HIGH
 
-    if has_any_preferred_torrents:
-        return TR_PRI_LOW
-
     upload_ratio = torrent.get("uploadRatio")
-    if not isinstance(upload_ratio, (int, float)):
-        return TR_PRI_HIGH
-    if upload_ratio < non_preferred_low_priority_ratio_threshold:
+    baseline_non_preferred_priority = TR_PRI_NORMAL
+    if (
+        isinstance(upload_ratio, (int, float))
+        and upload_ratio >= non_preferred_low_priority_ratio_threshold
+    ):
+        baseline_non_preferred_priority = TR_PRI_LOW
+
+    if has_any_preferred_torrents:
+        return baseline_non_preferred_priority
+
+    if baseline_non_preferred_priority == TR_PRI_NORMAL:
         return TR_PRI_HIGH
 
     return TR_PRI_LOW
@@ -473,6 +478,7 @@ class IterationState:
     download_bytes_per_second: dict[str, int]
     upload_bytes_per_second: dict[str, int]
     high_priority_hashes: list[str]
+    normal_priority_hashes: list[str]
     low_priority_hashes: list[str]
 
 
@@ -534,6 +540,7 @@ def collect_iteration_state(
     upload_bytes_per_second = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
     download_bytes_per_second = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
     to_make_high_priority: list[str] = []
+    to_make_normal_priority: list[str] = []
     to_make_low_priority: list[str] = []
 
     for torrent, torrent_hash, is_preferred in torrent_entries:
@@ -603,6 +610,10 @@ def collect_iteration_state(
             to_make_high_priority.append(torrent_hash)
             continue
 
+        if desired_priority == TR_PRI_NORMAL and current_priority != TR_PRI_NORMAL:
+            to_make_normal_priority.append(torrent_hash)
+            continue
+
         if desired_priority == TR_PRI_LOW and current_priority != TR_PRI_LOW:
             to_make_low_priority.append(torrent_hash)
 
@@ -619,6 +630,7 @@ def collect_iteration_state(
         download_bytes_per_second=download_bytes_per_second,
         upload_bytes_per_second=upload_bytes_per_second,
         high_priority_hashes=sorted(to_make_high_priority),
+        normal_priority_hashes=sorted(to_make_normal_priority),
         low_priority_hashes=sorted(to_make_low_priority),
     )
 
@@ -632,6 +644,13 @@ def apply_priority_updates(
         state.high_priority_hashes,
         {
             "bandwidthPriority": TR_PRI_HIGH,
+        },
+    )
+    rpc_set_torrent_fields(
+        client,
+        state.normal_priority_hashes,
+        {
+            "bandwidthPriority": TR_PRI_NORMAL,
         },
     )
     rpc_set_torrent_fields(
