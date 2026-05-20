@@ -50,7 +50,6 @@ in
       extraFlags = [ "--collector.textfile.directory=${cfg.textfileDir}" ];
     };
 
-    systemd.tmpfiles.rules =
-      lib.optional textfileCollectorNeeded "d ${cfg.textfileDir} 0755 root root - -";
+    systemd.tmpfiles.rules = lib.optional textfileCollectorNeeded "d ${cfg.textfileDir} 0755 root root - -";
   };
 }
