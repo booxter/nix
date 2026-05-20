@@ -39,6 +39,35 @@ let
       target = "8.8.8.8:53";
     }
   ];
+  wanIcmpProbeTargets = [
+    {
+      probe = "gateway";
+      probe_title = "Gateway 192.168.1.1";
+      target = "192.168.1.1";
+    }
+    {
+      probe = "upstream";
+      probe_title = "Upstream 192.168.0.1";
+      target = "192.168.0.1";
+    }
+    {
+      probe = "cloudflare";
+      probe_title = "Cloudflare 1.1.1.1";
+      target = "1.1.1.1";
+    }
+  ];
+  wanTcpProbeTargets = [
+    {
+      probe = "gateway-dns";
+      probe_title = "Gateway DNS 192.168.1.1:53";
+      target = "192.168.1.1:53";
+    }
+    {
+      probe = "cloudflare-https";
+      probe_title = "Cloudflare 1.1.1.1:443";
+      target = "1.1.1.1:443";
+    }
+  ];
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
@@ -743,6 +772,68 @@ in
         ];
       }
       {
+        job_name = "blackbox-icmp";
+        metrics_path = "/probe";
+        params.module = [ "icmp_ipv4" ];
+        scrape_interval = "5s";
+        static_configs = map (probe: {
+          labels = {
+            probe = probe.probe;
+            probe_title = probe.probe_title;
+          };
+          targets = [ probe.target ];
+        }) wanIcmpProbeTargets;
+        relabel_configs = [
+          {
+            source_labels = [ "__address__" ];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = [ "__param_target" ];
+            target_label = "target";
+          }
+          {
+            source_labels = [ "probe" ];
+            target_label = "instance";
+          }
+          {
+            replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+            target_label = "__address__";
+          }
+        ];
+      }
+      {
+        job_name = "blackbox-tcp";
+        metrics_path = "/probe";
+        params.module = [ "tcp_connect_ipv4" ];
+        scrape_interval = "5s";
+        static_configs = map (probe: {
+          labels = {
+            probe = probe.probe;
+            probe_title = probe.probe_title;
+          };
+          targets = [ probe.target ];
+        }) wanTcpProbeTargets;
+        relabel_configs = [
+          {
+            source_labels = [ "__address__" ];
+            target_label = "__param_target";
+          }
+          {
+            source_labels = [ "__param_target" ];
+            target_label = "target";
+          }
+          {
+            source_labels = [ "probe" ];
+            target_label = "instance";
+          }
+          {
+            replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+            target_label = "__address__";
+          }
+        ];
+      }
+      {
         job_name = "dnsmasq";
         static_configs = [
           {
@@ -824,6 +915,16 @@ in
         };
         prober = "http";
         timeout = "5s";
+      };
+      modules.icmp_ipv4 = {
+        icmp.preferred_ip_protocol = "ip4";
+        prober = "icmp";
+        timeout = "3s";
+      };
+      modules.tcp_connect_ipv4 = {
+        prober = "tcp";
+        tcp.preferred_ip_protocol = "ip4";
+        timeout = "3s";
       };
     };
   };
