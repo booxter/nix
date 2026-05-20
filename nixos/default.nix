@@ -36,6 +36,7 @@ in
       ./_mixins/dns-query-accounting
       ./_mixins/external-service.nix
       ./_mixins/lan-wan-accounting
+      ./_mixins/nixos-upgrade-metrics
       ./_mixins/restic-beast-client.nix
       ./_mixins/user
     ]
@@ -86,11 +87,11 @@ in
     };
   };
 
-  # Auto-upgrade uses a GitHub flake URI, so skip the run cleanly until DNS is
-  # actually ready. This avoids failed deploys when the timer fires during
-  # activation on hosts that are still bringing networking up.
-  systemd.services.nixos-upgrade.serviceConfig.ExecCondition =
-    "${pkgs.glibc.bin}/bin/getent hosts api.github.com";
+  # Auto-upgrade uses a GitHub flake URI, so fail fast until DNS is actually
+  # ready. That keeps broken prerequisites visible in systemd instead of
+  # looking like a cleanly skipped upgrade.
+  systemd.services.nixos-upgrade.serviceConfig.ExecStartPre =
+    "${pkgs.getent}/bin/getent hosts api.github.com";
 
   time.timeZone = "America/New_York";
 
@@ -117,6 +118,11 @@ in
   host.observability.client = {
     enable = lib.mkDefault (!config.host.isWork);
     lokiWriteUrl = lib.mkDefault "http://prox-fanavm:3100/loki/api/v1/push";
+  };
+
+  host.observability.nixosUpgrade = {
+    enable = lib.mkDefault true;
+    exportToNodeExporter = lib.mkDefault (!config.host.isWork);
   };
 
   host.observability.lanWan = {
