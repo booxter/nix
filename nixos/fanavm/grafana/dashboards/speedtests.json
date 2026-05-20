@@ -88,7 +88,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(host_observability_speedtest_probe_success{job=\"node\",instance=\"prox-srvarrvm:9100\",scope=\"wg\"}) or vector(0)",
+          "expr": "max(host_observability_speedtest_probe_success{job=\"node\",instance=\"prox-srvarrvm\",scope=\"wg\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -144,7 +144,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(max(host_observability_speedtest_probe_download_bits_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",scope=\"wg\"}) or vector(0)) / 1000000",
+          "expr": "(max(host_observability_speedtest_probe_download_bits_per_second{job=\"node\",instance=\"prox-srvarrvm\",scope=\"wg\"}) or vector(0)) / 1000000",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -200,7 +200,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(max(host_observability_speedtest_probe_upload_bits_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",scope=\"wg\"}) or vector(0)) / 1000000",
+          "expr": "(max(host_observability_speedtest_probe_upload_bits_per_second{job=\"node\",instance=\"prox-srvarrvm\",scope=\"wg\"}) or vector(0)) / 1000000",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -256,7 +256,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(host_observability_speedtest_probe_latency_milliseconds{job=\"node\",instance=\"prox-srvarrvm:9100\",scope=\"wg\"}) or vector(0)",
+          "expr": "max(host_observability_speedtest_probe_latency_milliseconds{job=\"node\",instance=\"prox-srvarrvm\",scope=\"wg\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -333,7 +333,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(host_observability_speedtest_probe_success{job=\"node\",instance=\"prox-srvarrvm:9100\",scope=\"wan\"}) or vector(0)",
+          "expr": "max(host_observability_speedtest_probe_success{job=\"node\",instance=\"prox-srvarrvm\",scope=\"wan\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -389,7 +389,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(max(host_observability_speedtest_probe_download_bits_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",scope=\"wan\"}) or vector(0)) / 1000000",
+          "expr": "(max(host_observability_speedtest_probe_download_bits_per_second{job=\"node\",instance=\"prox-srvarrvm\",scope=\"wan\"}) or vector(0)) / 1000000",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -445,7 +445,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(max(host_observability_speedtest_probe_upload_bits_per_second{job=\"node\",instance=\"prox-srvarrvm:9100\",scope=\"wan\"}) or vector(0)) / 1000000",
+          "expr": "(max(host_observability_speedtest_probe_upload_bits_per_second{job=\"node\",instance=\"prox-srvarrvm\",scope=\"wan\"}) or vector(0)) / 1000000",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -501,7 +501,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(host_observability_speedtest_probe_latency_milliseconds{job=\"node\",instance=\"prox-srvarrvm:9100\",scope=\"wan\"}) or vector(0)",
+          "expr": "max(host_observability_speedtest_probe_latency_milliseconds{job=\"node\",instance=\"prox-srvarrvm\",scope=\"wan\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
