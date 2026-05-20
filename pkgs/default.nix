@@ -1,5 +1,9 @@
 # You can build them using 'nix build .#example'
-pkgs: {
+pkgs:
+let
+  transmissionTrackerTools = pkgs.callPackage ./transmission-tracker-prioritizer { };
+in
+{
   # private
   my-page = pkgs.callPackage ./page { };
 
@@ -23,5 +27,6 @@ pkgs: {
 
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner { };
 
-  transmission-tracker-prioritizer = pkgs.callPackage ./transmission-tracker-prioritizer { };
+  transmission-tracker-prioritizer = transmissionTrackerTools.prioritizer;
+  transmission-tracker-prioritizer-collector = transmissionTrackerTools.collector;
 }

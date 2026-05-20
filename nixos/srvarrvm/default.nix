@@ -281,21 +281,18 @@ in
       vpn.enable = true;
       peerPort = 45486;
       extraSettings = {
+        blocklist-enabled = false;
+        cache-size-mb = 256;
         compact-view = true;
         download-queue-enabled = true;
         download-queue-size = 100;
+        lpd-enabled = false;
         rpc-bind-address = wgNamespaceAddress;
         rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
         sort-mode = "progress";
         speed-limit-up = transmissionConservativeUploadLimitKBps;
         speed-limit-up-enabled = true;
-
-        bandwidth_allocator = "strict";
-        bandwidth_strict_limited_curve = "aggressive";
-        bandwidth_strict_limited_policy = "higher-aware";
-
-        bandwidth_strict_diagnostics_enabled = true;
-        message-level = 4;
+        utp-enabled = true;
       };
     };
 

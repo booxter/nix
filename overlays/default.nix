@@ -22,13 +22,6 @@
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
       patchedTransmission = pinnedTransmission.overrideAttrs (old: {
-        src = prev.fetchFromGitHub {
-          owner = "booxter";
-          repo = "transmission";
-          rev = "b9c08a7d3daf1577f20d22c49b14624eb14cc7a6";
-          hash = "sha256-GBLQ7ns/veoRiVEXxDgaWrx5te7RE6UKFuNkTEVaPOk=";
-          fetchSubmodules = true;
-        };
         patches = (old.patches or [ ]) ++ [
           # Fix the 4.0.6 HTTP announce bug where a later failed sibling
           # response could overwrite an earlier successful announce.

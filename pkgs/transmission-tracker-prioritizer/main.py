@@ -1,20 +1,16 @@
-#!/usr/bin/env python3
-
-import argparse
+from dataclasses import dataclass
 import json
 import logging
 import os
 import socket
-import sys
 import tempfile
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
 
-LOG = logging.getLogger("transmission-tracker-prioritizer")
+LOG = logging.getLogger("transmission-tracker-common")
 TR_PRI_LOW = -1
 TR_PRI_NORMAL = 0
 TR_PRI_HIGH = 1
@@ -163,24 +159,22 @@ def priority_class_name(priority: int) -> str:
 def torrent_desired_priority(
     torrent: dict,
     is_preferred: bool,
+    has_any_preferred_torrents: bool,
     non_preferred_low_priority_ratio_threshold: float,
 ) -> int:
     if is_preferred:
         return TR_PRI_HIGH
 
-    left_until_done = torrent.get("leftUntilDone")
-    is_complete = isinstance(left_until_done, int) and left_until_done <= 0
-    if not is_complete:
-        return TR_PRI_NORMAL
-
-    upload_ratio = torrent.get("uploadRatio")
-    if (
-        isinstance(upload_ratio, (int, float))
-        and upload_ratio >= non_preferred_low_priority_ratio_threshold
-    ):
+    if has_any_preferred_torrents:
         return TR_PRI_LOW
 
-    return TR_PRI_NORMAL
+    upload_ratio = torrent.get("uploadRatio")
+    if not isinstance(upload_ratio, (int, float)):
+        return TR_PRI_HIGH
+    if upload_ratio < non_preferred_low_priority_ratio_threshold:
+        return TR_PRI_HIGH
+
+    return TR_PRI_LOW
 
 
 def render_metrics_text(
@@ -465,14 +459,29 @@ def rpc_set_torrent_fields(
     )
 
 
-def run_iteration(
+@dataclass
+class IterationState:
+    tracker_hosts_count: int
+    preferred_torrent_count: int
+    preferred_bootstrap_active: bool
+    preferred_upload_active: bool
+    preferred_upload_bytes_per_second: int
+    torrent_counts: dict[str, int]
+    torrent_activity_counts: dict[str, dict[str, int]]
+    bandwidth_active_torrent_counts: dict[str, dict[str, int]]
+    peer_counts: dict[str, dict[str, int]]
+    download_bytes_per_second: dict[str, int]
+    upload_bytes_per_second: dict[str, int]
+    high_priority_hashes: list[str]
+    low_priority_hashes: list[str]
+
+
+def collect_iteration_state(
     client: TransmissionRpcClient,
     trackers_file: Path,
-    metrics_file: Path | None,
     last_tracker_status: str | None,
     non_preferred_low_priority_ratio_threshold: float,
-    metrics_timestamp_seconds: float,
-) -> tuple[str | None, bool]:
+) -> tuple[str | None, IterationState | None]:
     tracker_hosts = load_tracker_hosts(trackers_file)
     if tracker_hosts is None:
         status = f"missing:{trackers_file}"
@@ -481,10 +490,21 @@ def run_iteration(
                 "tracker host file %s does not exist yet; skipping until it is created",
                 trackers_file,
             )
-        return status, False
+        return status, None
 
     torrents = rpc_get_torrents(client)
+    torrent_entries: list[tuple[dict, str, bool]] = []
     current_preferred_hashes: set[str] = set()
+    for torrent in torrents:
+        torrent_hash = torrent.get("hashString")
+        if not isinstance(torrent_hash, str) or not torrent_hash:
+            continue
+        is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
+        if is_preferred:
+            current_preferred_hashes.add(torrent_hash)
+        torrent_entries.append((torrent, torrent_hash, is_preferred))
+
+    has_any_preferred_torrents = bool(current_preferred_hashes)
     preferred_upload_observed_active = False
     preferred_bootstrap_active = False
     preferred_upload_bytes_per_second = 0
@@ -513,16 +533,10 @@ def run_iteration(
     }
     upload_bytes_per_second = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
     download_bytes_per_second = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
-    to_prefer: list[str] = []
-    to_make_normal_priority: list[str] = []
+    to_make_high_priority: list[str] = []
     to_make_low_priority: list[str] = []
 
-    for torrent in torrents:
-        torrent_hash = torrent.get("hashString")
-        if not isinstance(torrent_hash, str) or not torrent_hash:
-            continue
-
-        is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
+    for torrent, torrent_hash, is_preferred in torrent_entries:
         priority = torrent.get("bandwidthPriority")
         current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
         torrent_class = priority_class_name(current_priority)
@@ -569,10 +583,10 @@ def run_iteration(
         desired_priority = torrent_desired_priority(
             torrent,
             is_preferred,
+            has_any_preferred_torrents,
             non_preferred_low_priority_ratio_threshold,
         )
         if is_preferred:
-            current_preferred_hashes.add(torrent_hash)
             if isinstance(rate_upload, int) and rate_upload > 0:
                 preferred_upload_bytes_per_second += rate_upload
             if (
@@ -584,165 +598,71 @@ def run_iteration(
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
                 preferred_upload_observed_active = True
-            if current_priority != desired_priority:
-                to_prefer.append(torrent_hash)
-            continue
 
-        if desired_priority == TR_PRI_NORMAL and current_priority != TR_PRI_NORMAL:
-            to_make_normal_priority.append(torrent_hash)
+        if desired_priority == TR_PRI_HIGH and current_priority != TR_PRI_HIGH:
+            to_make_high_priority.append(torrent_hash)
             continue
 
         if desired_priority == TR_PRI_LOW and current_priority != TR_PRI_LOW:
             to_make_low_priority.append(torrent_hash)
 
-    preferred_upload_active = preferred_upload_observed_active
+    return f"loaded:{len(tracker_hosts)}", IterationState(
+        tracker_hosts_count=len(tracker_hosts),
+        preferred_torrent_count=len(current_preferred_hashes),
+        preferred_bootstrap_active=preferred_bootstrap_active,
+        preferred_upload_active=preferred_upload_observed_active,
+        preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
+        torrent_counts=torrent_counts,
+        torrent_activity_counts=torrent_activity_counts,
+        bandwidth_active_torrent_counts=bandwidth_active_torrent_counts,
+        peer_counts=peer_counts,
+        download_bytes_per_second=download_bytes_per_second,
+        upload_bytes_per_second=upload_bytes_per_second,
+        high_priority_hashes=sorted(to_make_high_priority),
+        low_priority_hashes=sorted(to_make_low_priority),
+    )
 
+
+def apply_priority_updates(
+    client: TransmissionRpcClient,
+    state: IterationState,
+) -> None:
     rpc_set_torrent_fields(
         client,
-        sorted(to_prefer),
+        state.high_priority_hashes,
         {
             "bandwidthPriority": TR_PRI_HIGH,
         },
     )
-    normal_fields = {
-        "bandwidthPriority": TR_PRI_NORMAL,
-    }
-    rpc_set_torrent_fields(client, sorted(to_make_normal_priority), normal_fields)
-    low_priority_fields = {
-        "bandwidthPriority": TR_PRI_LOW,
-    }
-    rpc_set_torrent_fields(client, sorted(to_make_low_priority), low_priority_fields)
-
-    if metrics_file is not None:
-        write_text_atomic(
-            metrics_file,
-            render_metrics_text(
-                torrent_counts=torrent_counts,
-                torrent_activity_counts=torrent_activity_counts,
-                bandwidth_active_torrent_counts=bandwidth_active_torrent_counts,
-                peer_counts=peer_counts,
-                download_bytes_per_second=download_bytes_per_second,
-                upload_bytes_per_second=upload_bytes_per_second,
-                preferred_bootstrap_active=preferred_bootstrap_active,
-                preferred_upload_active=preferred_upload_active,
-                preferred_upload_bytes_per_second=preferred_upload_bytes_per_second,
-                last_run_timestamp_seconds=metrics_timestamp_seconds,
-                last_success_timestamp_seconds=metrics_timestamp_seconds,
-            ),
-        )
-
-    LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s preferred_updates=%s normal_priority_updates=%s low_priority_updates=%s",
-        len(tracker_hosts),
-        len(current_preferred_hashes),
-        preferred_bootstrap_active,
-        preferred_upload_active,
-        preferred_upload_bytes_per_second,
-        len(to_prefer),
-        len(to_make_normal_priority),
-        len(to_make_low_priority),
-    )
-    return f"loaded:{len(tracker_hosts)}", True
-
-
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Continuously raise Transmission bandwidth priority for torrents on selected trackers.",
-    )
-    parser.add_argument(
-        "--rpc-url",
-        default="http://127.0.0.1:9091/transmission/rpc",
-        help="Transmission RPC URL.",
-    )
-    parser.add_argument(
-        "--trackers-file",
-        required=True,
-        help="Path to a file containing one tracker host or announce URL per line.",
-    )
-    parser.add_argument(
-        "--non-preferred-low-priority-ratio",
-        type=float,
-        default=DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD,
-        help="Upload ratio at which completed non-preferred torrents are demoted to low priority.",
-    )
-    parser.add_argument(
-        "--interval-seconds",
-        type=float,
-        default=60.0,
-        help="Delay between iterations.",
-    )
-    parser.add_argument(
-        "--request-timeout-seconds",
-        type=float,
-        default=15.0,
-        help="Per-request timeout when talking to Transmission.",
-    )
-    parser.add_argument(
-        "--metrics-file",
-        default="",
-        help="Optional Prometheus textfile path for exported torrent priority metrics.",
-    )
-    parser.add_argument(
-        "--log-level",
-        default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        help="Logging verbosity.",
-    )
-    return parser.parse_args()
-
-
-def main() -> int:
-    args = parse_args()
-    logging.basicConfig(
-        level=getattr(logging, args.log_level),
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    rpc_set_torrent_fields(
+        client,
+        state.low_priority_hashes,
+        {
+            "bandwidthPriority": TR_PRI_LOW,
+        },
     )
 
-    client = TransmissionRpcClient(
-        rpc_url=args.rpc_url,
-        timeout_seconds=args.request_timeout_seconds,
+
+def write_iteration_metrics(
+    metrics_file: Path | None,
+    state: IterationState,
+    metrics_timestamp_seconds: float,
+) -> None:
+    if metrics_file is None:
+        return
+    write_text_atomic(
+        metrics_file,
+        render_metrics_text(
+            torrent_counts=state.torrent_counts,
+            torrent_activity_counts=state.torrent_activity_counts,
+            bandwidth_active_torrent_counts=state.bandwidth_active_torrent_counts,
+            peer_counts=state.peer_counts,
+            download_bytes_per_second=state.download_bytes_per_second,
+            upload_bytes_per_second=state.upload_bytes_per_second,
+            preferred_bootstrap_active=state.preferred_bootstrap_active,
+            preferred_upload_active=state.preferred_upload_active,
+            preferred_upload_bytes_per_second=state.preferred_upload_bytes_per_second,
+            last_run_timestamp_seconds=metrics_timestamp_seconds,
+            last_success_timestamp_seconds=metrics_timestamp_seconds,
+        ),
     )
-    trackers_file = Path(args.trackers_file)
-    metrics_file = Path(args.metrics_file.strip())
-    if args.metrics_file.strip() == "":
-        metrics_file = None
-    last_tracker_status: str | None = None
-    last_success_timestamp_seconds: float | None = None
-
-    while True:
-        started_at = time.monotonic()
-        iteration_timestamp_seconds = time.time()
-        iteration_succeeded = False
-        try:
-            last_tracker_status, iteration_succeeded = run_iteration(
-                client=client,
-                trackers_file=trackers_file,
-                metrics_file=metrics_file,
-                last_tracker_status=last_tracker_status,
-                non_preferred_low_priority_ratio_threshold=args.non_preferred_low_priority_ratio,
-                metrics_timestamp_seconds=iteration_timestamp_seconds,
-            )
-        except TransmissionRpcError as exc:
-            LOG.warning("skipping iteration after Transmission RPC failure: %s", exc)
-        except Exception:
-            LOG.exception("skipping iteration after unexpected failure")
-        if iteration_succeeded:
-            last_success_timestamp_seconds = iteration_timestamp_seconds
-        else:
-            write_health_metrics(
-                metrics_file,
-                exporter_ok=False,
-                last_run_timestamp_seconds=iteration_timestamp_seconds,
-                last_success_timestamp_seconds=last_success_timestamp_seconds,
-            )
-
-        sleep_for = max(0.0, args.interval_seconds - (time.monotonic() - started_at))
-        time.sleep(sleep_for)
-
-
-if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except KeyboardInterrupt:
-        print("", file=sys.stderr)
-        raise SystemExit(0)
