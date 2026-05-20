@@ -49,7 +49,7 @@ let
   smartctlExporterPort = 9633;
   vikunjaHost = outputs.nixosConfigurations.prox-orgvm.config.host.dnsName;
   vikunjaPort = outputs.nixosConfigurations.prox-orgvm.config.services.vikunja.port;
-  retentionDays = 14;
+  retentionDays = 365;
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
   lokiRetention = "${toString retentionHours}h";

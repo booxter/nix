@@ -109,6 +109,27 @@ only if some later job strips ACLs.
 - Useful tools installed: `btrfs-progs`, `mdadm`, `smartmontools`, `nvme-cli`,
   `hdparm`, `lm_sensors`.
 
+### Corsair PSU telemetry
+
+`beast` currently has a `CORSAIR HX1500i Power Supply` exposed to Linux through
+the kernel `corsair-psu` HID / hwmon driver.
+
+This telemetry is already scraped by node exporter via the default `hwmon`
+collector, so no extra exporter is required to graph it in Grafana.
+
+Available readings include:
+
+- total and per-rail power
+- per-rail output voltage and current
+- PSU VRM and case temperatures
+- PSU fan RPM
+- AC input voltage
+
+In Prometheus, the cleanest way to target it is to filter
+`node_hwmon_chip_names{chip_name="corsairpsu"}` and join the result with
+`node_hwmon_sensor_label` so dashboard legends use stable human labels like
+`power total`, `v_out +12v`, `curr +5v`, `vrm temp`, and `psu fan`.
+
 ## Jellyfin backups
 
 `beast` can trigger Jellyfin's built-in backup API and then offload the
