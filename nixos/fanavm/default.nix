@@ -76,6 +76,7 @@ let
             if outputs.nixosConfigurations.${name}.config.host.isProxmox then "classified" else "node";
           host_class = hostClassForName name;
           host_virtual = lib.boolToString (isVirtualNodeName name);
+          instance = outputs.nixosConfigurations.${name}.config.host.dnsName;
         };
         targets = [ "${outputs.nixosConfigurations.${name}.config.host.dnsName}:9100" ];
       })
@@ -96,6 +97,7 @@ let
           host_network_source = "node";
           host_class = "hardware";
           host_virtual = "false";
+          instance = outputs.darwinConfigurations.${name}.config.host.dnsName;
         };
         targets = [ "${outputs.darwinConfigurations.${name}.config.host.dnsName}:9100" ];
       })
@@ -561,7 +563,7 @@ in
               host_network_source = "node";
               host_class = hostClassForName config.networking.hostName;
               host_virtual = lib.boolToString (isVirtualNodeName config.networking.hostName);
-              instance = "${config.host.dnsName}:${toString config.services.prometheus.exporters.node.port}";
+              instance = config.host.dnsName;
             };
           }
         ]
