@@ -3,18 +3,41 @@
   python3,
   writeShellApplication,
 }:
-writeShellApplication {
-  name = "transmission-tracker-prioritizer";
-  runtimeInputs = [ python3 ];
-  text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
-  '';
+let
+  sourceDir = ./.;
+  mkTool =
+    {
+      name,
+      script,
+      description,
+    }:
+    writeShellApplication {
+      inherit name;
+      runtimeInputs = [ python3 ];
+      text = ''
+        export PYTHONPATH="${sourceDir}:''${PYTHONPATH:-}"
+        exec ${python3}/bin/python3 ${script} "$@"
+      '';
 
-  meta = {
+      meta = {
+        inherit description;
+        license = lib.licenses.mit;
+        maintainers = with lib.maintainers; [ booxter ];
+        mainProgram = name;
+        platforms = lib.platforms.linux;
+      };
+    };
+in
+{
+  prioritizer = mkTool {
+    name = "transmission-tracker-prioritizer";
+    script = ./prioritizer.py;
     description = "Continuously enforce Transmission bandwidth priority for torrents based on selected tracker hosts";
-    license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
-    mainProgram = "transmission-tracker-prioritizer";
-    platforms = lib.platforms.linux;
+  };
+
+  collector = mkTool {
+    name = "transmission-tracker-prioritizer-collector";
+    script = ./collector.py;
+    description = "Continuously collect Transmission torrent priority metrics based on selected tracker hosts";
   };
 }
