@@ -3409,6 +3409,308 @@
       ],
       "title": "CPU Package Sensor Comparison",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "watt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 55
+      },
+      "id": 49,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "node_hwmon_power_watt{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=~\"power total|power \\+12v|power \\+5v|power \\+3\\.3v\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "legendFormat": "{{label}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PSU Power",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "volt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 55
+      },
+      "id": 50,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "node_hwmon_in_volts{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=~\"v_out \\+12v|v_out \\+5v|v_out \\+3\\.3v\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "legendFormat": "{{label}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PSU Output Rails",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "amp"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 63
+      },
+      "id": 51,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "node_hwmon_curr_amps{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=~\"curr \\+12v|curr \\+5v|curr \\+3\\.3v\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "legendFormat": "{{label}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PSU Rail Current",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 55
+              },
+              {
+                "color": "red",
+                "value": 65
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 63
+      },
+      "id": 52,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "node_hwmon_temp_celsius{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=~\"vrm temp|case temp\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "legendFormat": "{{label}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PSU Temperatures",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "rpm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 71
+      },
+      "id": 53,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "node_hwmon_fan_rpm{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=\"psu fan\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "legendFormat": "{{label}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PSU Fan RPM",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "volt"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 71
+      },
+      "id": 54,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "node_hwmon_in_volts{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=\"v_in\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "legendFormat": "{{label}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "PSU Input Voltage",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -3430,6 +3732,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 29,
+  "version": 30,
   "weekStart": ""
 }
