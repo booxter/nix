@@ -289,13 +289,6 @@ in
         sort-mode = "progress";
         speed-limit-up = transmissionConservativeUploadLimitKBps;
         speed-limit-up-enabled = true;
-
-        bandwidth_allocator = "strict";
-        bandwidth_strict_limited_curve = "aggressive";
-        bandwidth_strict_limited_policy = "higher-aware";
-
-        bandwidth_strict_diagnostics_enabled = true;
-        message-level = 4;
       };
     };
 
