@@ -558,7 +558,7 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox-icmp\"} * 1000",
-          "legendFormat": "{{probe_title}}",
+          "legendFormat": "{{source}}: {{probe_title}}",
           "range": true,
           "refId": "A"
         }
@@ -615,7 +615,7 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "probe_duration_seconds{job=\"blackbox-tcp\"} * 1000",
-          "legendFormat": "{{probe_title}}",
+          "legendFormat": "{{source}}: {{probe_title}}",
           "range": true,
           "refId": "A"
         }
@@ -672,7 +672,7 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "100 * (1 - avg_over_time(probe_success{job=\"blackbox-icmp\"}[5m]))",
-          "legendFormat": "{{probe_title}}",
+          "legendFormat": "{{source}}: {{probe_title}}",
           "range": true,
           "refId": "A"
         }
@@ -729,7 +729,7 @@
           "datasource": "Prometheus",
           "editorMode": "code",
           "expr": "100 * (1 - avg_over_time(probe_success{job=\"blackbox-tcp\"}[5m]))",
-          "legendFormat": "{{probe_title}}",
+          "legendFormat": "{{source}}: {{probe_title}}",
           "range": true,
           "refId": "A"
         }
