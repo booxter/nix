@@ -91,7 +91,7 @@ in
   # actually ready. This avoids failed deploys when the timer fires during
   # activation on hosts that are still bringing networking up.
   systemd.services.nixos-upgrade.serviceConfig.ExecCondition =
-    "${pkgs.glibc.bin}/bin/getent hosts api.github.com";
+    "${pkgs.getent}/bin/getent hosts api.github.com";
 
   time.timeZone = "America/New_York";
 
