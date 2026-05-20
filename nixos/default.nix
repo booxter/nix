@@ -36,6 +36,7 @@ in
       ./_mixins/dns-query-accounting
       ./_mixins/external-service.nix
       ./_mixins/lan-wan-accounting
+      ./_mixins/nixos-upgrade-metrics
       ./_mixins/restic-beast-client.nix
       ./_mixins/user
     ]
@@ -117,6 +118,11 @@ in
   host.observability.client = {
     enable = lib.mkDefault (!config.host.isWork);
     lokiWriteUrl = lib.mkDefault "http://prox-fanavm:3100/loki/api/v1/push";
+  };
+
+  host.observability.nixosUpgrade = {
+    enable = lib.mkDefault true;
+    exportToNodeExporter = lib.mkDefault (!config.host.isWork);
   };
 
   host.observability.lanWan = {

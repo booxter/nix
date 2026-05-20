@@ -321,7 +321,7 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 24
       },
@@ -349,6 +349,55 @@
       ],
       "title": "Uptime",
       "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": "Prometheus",
+          "editorMode": "code",
+          "expr": "time() - node_nixos_upgrade_last_success_time_seconds{job=\"node\"}",
+          "legendFormat": "{{instance}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Time Since Last Successful NixOS Upgrade",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -368,6 +417,6 @@
   "timezone": "browser",
   "title": "Fleet",
   "uid": "fana-fleet-overview",
-  "version": 2,
+  "version": 4,
   "weekStart": ""
 }
