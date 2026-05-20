@@ -15,9 +15,11 @@ There is no public/private sub-cap split.
 currently **disabled**. If re-enabled, it only:
 
 - marks preferred torrents `bandwidthPriority = high`
-- marks other torrents `bandwidthPriority = normal`
-- demotes non-preferred completed torrents to `bandwidthPriority = low` once
-  `uploadRatio >= 3.0`
+- demotes all other torrents to `bandwidthPriority = low` whenever any
+  preferred torrent exists
+- if no preferred torrents exist, promotes public torrents with
+  `uploadRatio < 3.0` to `bandwidthPriority = high` and demotes the rest to
+  `bandwidthPriority = low`
 - exports per-class metrics for Prometheus / Grafana
 
 It does not manage bandwidth groups, public caps, or SABnzbd suppression.
@@ -102,9 +104,12 @@ If re-enabled, the helper only:
   to enforce
 - sets:
   - preferred torrents -> `bandwidthPriority = high`
-  - non-preferred incomplete or under-target torrents -> `bandwidthPriority = normal`
-  - non-preferred completed torrents with
-    `uploadRatio >= 3.0` -> `bandwidthPriority = low`
+  - if any preferred torrent exists:
+    `all non-preferred torrents -> bandwidthPriority = low`
+  - if no preferred torrents exist:
+    `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = high`
+  - if no preferred torrents exist:
+    `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
 - exports `low` / `normal` / `high` torrent priority metrics based on current
   `bandwidthPriority`
 

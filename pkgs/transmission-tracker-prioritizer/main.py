@@ -163,24 +163,22 @@ def priority_class_name(priority: int) -> str:
 def torrent_desired_priority(
     torrent: dict,
     is_preferred: bool,
+    has_any_preferred_torrents: bool,
     non_preferred_low_priority_ratio_threshold: float,
 ) -> int:
     if is_preferred:
         return TR_PRI_HIGH
 
-    left_until_done = torrent.get("leftUntilDone")
-    is_complete = isinstance(left_until_done, int) and left_until_done <= 0
-    if not is_complete:
-        return TR_PRI_NORMAL
-
-    upload_ratio = torrent.get("uploadRatio")
-    if (
-        isinstance(upload_ratio, (int, float))
-        and upload_ratio >= non_preferred_low_priority_ratio_threshold
-    ):
+    if has_any_preferred_torrents:
         return TR_PRI_LOW
 
-    return TR_PRI_NORMAL
+    upload_ratio = torrent.get("uploadRatio")
+    if not isinstance(upload_ratio, (int, float)):
+        return TR_PRI_HIGH
+    if upload_ratio < non_preferred_low_priority_ratio_threshold:
+        return TR_PRI_HIGH
+
+    return TR_PRI_LOW
 
 
 def render_metrics_text(
@@ -484,7 +482,18 @@ def run_iteration(
         return status, False
 
     torrents = rpc_get_torrents(client)
+    torrent_entries: list[tuple[dict, str, bool]] = []
     current_preferred_hashes: set[str] = set()
+    for torrent in torrents:
+        torrent_hash = torrent.get("hashString")
+        if not isinstance(torrent_hash, str) or not torrent_hash:
+            continue
+        is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
+        if is_preferred:
+            current_preferred_hashes.add(torrent_hash)
+        torrent_entries.append((torrent, torrent_hash, is_preferred))
+
+    has_any_preferred_torrents = bool(current_preferred_hashes)
     preferred_upload_observed_active = False
     preferred_bootstrap_active = False
     preferred_upload_bytes_per_second = 0
@@ -513,16 +522,10 @@ def run_iteration(
     }
     upload_bytes_per_second = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
     download_bytes_per_second = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
-    to_prefer: list[str] = []
-    to_make_normal_priority: list[str] = []
+    to_make_high_priority: list[str] = []
     to_make_low_priority: list[str] = []
 
-    for torrent in torrents:
-        torrent_hash = torrent.get("hashString")
-        if not isinstance(torrent_hash, str) or not torrent_hash:
-            continue
-
-        is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
+    for torrent, torrent_hash, is_preferred in torrent_entries:
         priority = torrent.get("bandwidthPriority")
         current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
         torrent_class = priority_class_name(current_priority)
@@ -569,10 +572,10 @@ def run_iteration(
         desired_priority = torrent_desired_priority(
             torrent,
             is_preferred,
+            has_any_preferred_torrents,
             non_preferred_low_priority_ratio_threshold,
         )
         if is_preferred:
-            current_preferred_hashes.add(torrent_hash)
             if isinstance(rate_upload, int) and rate_upload > 0:
                 preferred_upload_bytes_per_second += rate_upload
             if (
@@ -584,12 +587,9 @@ def run_iteration(
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):
                 preferred_upload_observed_active = True
-            if current_priority != desired_priority:
-                to_prefer.append(torrent_hash)
-            continue
 
-        if desired_priority == TR_PRI_NORMAL and current_priority != TR_PRI_NORMAL:
-            to_make_normal_priority.append(torrent_hash)
+        if desired_priority == TR_PRI_HIGH and current_priority != TR_PRI_HIGH:
+            to_make_high_priority.append(torrent_hash)
             continue
 
         if desired_priority == TR_PRI_LOW and current_priority != TR_PRI_LOW:
@@ -599,15 +599,11 @@ def run_iteration(
 
     rpc_set_torrent_fields(
         client,
-        sorted(to_prefer),
+        sorted(to_make_high_priority),
         {
             "bandwidthPriority": TR_PRI_HIGH,
         },
     )
-    normal_fields = {
-        "bandwidthPriority": TR_PRI_NORMAL,
-    }
-    rpc_set_torrent_fields(client, sorted(to_make_normal_priority), normal_fields)
     low_priority_fields = {
         "bandwidthPriority": TR_PRI_LOW,
     }
@@ -632,14 +628,13 @@ def run_iteration(
         )
 
     LOG.info(
-        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s preferred_updates=%s normal_priority_updates=%s low_priority_updates=%s",
+        "iteration complete: tracker_hosts=%s preferred_torrents=%s preferred_bootstrap_active=%s preferred_upload_active=%s preferred_upload_bytes_per_second=%s high_priority_updates=%s low_priority_updates=%s",
         len(tracker_hosts),
         len(current_preferred_hashes),
         preferred_bootstrap_active,
         preferred_upload_active,
         preferred_upload_bytes_per_second,
-        len(to_prefer),
-        len(to_make_normal_priority),
+        len(to_make_high_priority),
         len(to_make_low_priority),
     )
     return f"loaded:{len(tracker_hosts)}", True
@@ -647,7 +642,7 @@ def run_iteration(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Continuously raise Transmission bandwidth priority for torrents on selected trackers.",
+        description="Continuously enforce Transmission bandwidth priority for torrents based on selected trackers.",
     )
     parser.add_argument(
         "--rpc-url",
@@ -663,7 +658,7 @@ def parse_args() -> argparse.Namespace:
         "--non-preferred-low-priority-ratio",
         type=float,
         default=DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD,
-        help="Upload ratio at which completed non-preferred torrents are demoted to low priority.",
+        help="Upload ratio threshold for high-priority public torrents when no preferred torrents are present.",
     )
     parser.add_argument(
         "--interval-seconds",

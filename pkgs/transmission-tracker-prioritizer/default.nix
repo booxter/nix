@@ -11,7 +11,7 @@ writeShellApplication {
   '';
 
   meta = {
-    description = "Continuously raise Transmission bandwidth priority for torrents on selected tracker hosts";
+    description = "Continuously enforce Transmission bandwidth priority for torrents based on selected tracker hosts";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "transmission-tracker-prioritizer";
