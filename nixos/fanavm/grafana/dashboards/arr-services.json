@@ -143,7 +143,6 @@
           "refId": "A"
         }
       ],
-      "timeFrom": "4h",
       "title": "Probe Duration",
       "type": "timeseries"
     },
@@ -201,7 +200,6 @@
           "refId": "A"
         }
       ],
-      "timeFrom": "4h",
       "title": "HTTP Status Code",
       "type": "timeseries"
     },

@@ -158,6 +158,7 @@ in
     dnsmasqListenAddress = "127.0.0.1:53";
   };
   networking.firewall.interfaces.${mainIface}.allowedTCPPorts = [
+    53 # DNS over TCP fallback and observability probes
     dnsmasqExporterPort
   ];
   networking.firewall.allowedUDPPorts = [

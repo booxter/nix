@@ -39,6 +39,36 @@ let
       target = "8.8.8.8:53";
     }
   ];
+  wanIcmpProbeTargets = [
+    {
+      probe = "gateway";
+      probe_title = "Gateway 192.168.1.1";
+      target = "192.168.1.1";
+    }
+    {
+      probe = "upstream";
+      probe_title = "Upstream 192.168.0.1";
+      target = "192.168.0.1";
+    }
+    {
+      probe = "cloudflare";
+      probe_title = "Cloudflare 1.1.1.1";
+      target = "1.1.1.1";
+    }
+  ];
+  wanTcpProbeTargets = [
+    {
+      probe = "gateway-dns";
+      probe_title = "Gateway DNS 192.168.1.1:53";
+      target = "192.168.1.1:53";
+    }
+    {
+      probe = "cloudflare-https";
+      probe_title = "Cloudflare 1.1.1.1:443";
+      target = "1.1.1.1:443";
+    }
+  ];
+  blackboxModules = import ../../lib/prometheus-blackbox-modules.nix;
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
@@ -109,6 +139,66 @@ let
         ) (builtins.attrNames outputs.darwinConfigurations)
       );
   remoteNodeTargetConfigs = remoteNixosNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
+  mkBlackboxProbeSourceForConfig = hostConfig: {
+    exporter = "${hostConfig.host.dnsName}:${toString hostConfig.services.prometheus.exporters.blackbox.port}";
+    source = hostConfig.services.avahi.hostName;
+  };
+  remoteBlackboxProbeSourceConfigs =
+    map (name: mkBlackboxProbeSourceForConfig outputs.nixosConfigurations.${name}.config)
+      (
+        builtins.filter (
+          name:
+          !(lib.hasPrefix "local-" name)
+          && name != "prox-fanavm"
+          && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.enable
+        ) (builtins.attrNames outputs.nixosConfigurations)
+      );
+  blackboxProbeSourceConfigs = [
+    {
+      exporter = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+      source = config.services.avahi.hostName;
+    }
+  ]
+  ++ remoteBlackboxProbeSourceConfigs;
+  mkBlackboxStaticConfigs =
+    sources: probes:
+    lib.concatMap (
+      source:
+      map (probe: {
+        labels = {
+          prober_address = source.exporter;
+          inherit (source) source;
+          inherit (probe) probe probe_title;
+        };
+        targets = [ probe.target ];
+      }) probes
+    ) sources;
+  blackboxProbeRelabelConfigs = [
+    {
+      source_labels = [ "__address__" ];
+      target_label = "__param_target";
+    }
+    {
+      source_labels = [ "__param_target" ];
+      target_label = "target";
+    }
+    {
+      separator = ":";
+      source_labels = [
+        "source"
+        "probe"
+      ];
+      target_label = "instance";
+    }
+    {
+      source_labels = [ "prober_address" ];
+      target_label = "__address__";
+    }
+    {
+      action = "labeldrop";
+      regex = "prober_address";
+    }
+  ];
   mkGrafanaPromRule =
     {
       uid,
@@ -743,6 +833,22 @@ in
         ];
       }
       {
+        job_name = "blackbox-icmp";
+        metrics_path = "/probe";
+        params.module = [ "icmp_ipv4" ];
+        scrape_interval = "5s";
+        static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanIcmpProbeTargets;
+        relabel_configs = blackboxProbeRelabelConfigs;
+      }
+      {
+        job_name = "blackbox-tcp";
+        metrics_path = "/probe";
+        params.module = [ "tcp_connect_ipv4" ];
+        scrape_interval = "5s";
+        static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanTcpProbeTargets;
+        relabel_configs = blackboxProbeRelabelConfigs;
+      }
+      {
         job_name = "dnsmasq";
         static_configs = [
           {
@@ -806,25 +912,7 @@ in
     enable = true;
     listenAddress = "127.0.0.1";
     configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
-      modules.dns_udp = {
-        dns = {
-          preferred_ip_protocol = "ip4";
-          query_name = "example.com";
-          query_type = "A";
-          transport_protocol = "udp";
-          valid_rcodes = [ "NOERROR" ];
-        };
-        prober = "dns";
-        timeout = "5s";
-      };
-      modules.http_service = {
-        http = {
-          follow_redirects = true;
-          preferred_ip_protocol = "ip4";
-        };
-        prober = "http";
-        timeout = "5s";
-      };
+      modules = blackboxModules;
     };
   };
 

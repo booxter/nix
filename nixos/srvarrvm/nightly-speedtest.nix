@@ -92,7 +92,6 @@ in
   };
 
   systemd.timers.nightly-speedtest-probe = {
-    wantedBy = [ "timers.target" ];
     timerConfig = {
       OnCalendar = "04:00";
       AccuracySec = "1m";

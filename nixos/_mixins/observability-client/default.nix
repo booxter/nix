@@ -7,6 +7,7 @@
 let
   cfg = config.host.observability.client;
   hostLabel = config.services.avahi.hostName;
+  blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
 in
 {
   options.host.observability.client = {
@@ -29,6 +30,22 @@ in
         type = lib.types.bool;
         default = true;
         description = "Whether to open the firewall for the Prometheus node exporter.";
+      };
+    };
+
+    blackbox = {
+      enable = lib.mkEnableOption "host-side blackbox exporter probes";
+
+      listenAddress = lib.mkOption {
+        type = lib.types.str;
+        default = "0.0.0.0";
+        description = "Address for the Prometheus blackbox exporter to bind.";
+      };
+
+      openFirewall = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to open the firewall for the Prometheus blackbox exporter.";
       };
     };
   };
@@ -83,6 +100,16 @@ in
           }
         }
       '';
+    };
+
+    # Optional blackbox exporter lets Prometheus run the same reachability
+    # probes from other LAN nodes for WAN comparison.
+    services.prometheus.exporters.blackbox = lib.mkIf cfg.blackbox.enable {
+      enable = true;
+      inherit (cfg.blackbox) listenAddress openFirewall;
+      configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
+        modules = blackboxModules;
+      };
     };
   };
 }

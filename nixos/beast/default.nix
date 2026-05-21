@@ -536,6 +536,8 @@ in
     proxy_set_header X-Forwarded-For $remote_addr;
   '';
 
+  host.observability.client.blackbox.enable = true;
+
   sops = {
     defaultSopsFile = ../../secrets/beast.yaml;
   };
