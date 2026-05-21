@@ -144,8 +144,7 @@ let
     source = hostConfig.services.avahi.hostName;
   };
   remoteBlackboxProbeSourceConfigs =
-    map
-      (name: mkBlackboxProbeSourceForConfig outputs.nixosConfigurations.${name}.config)
+    map (name: mkBlackboxProbeSourceForConfig outputs.nixosConfigurations.${name}.config)
       (
         builtins.filter (
           name:
@@ -159,7 +158,8 @@ let
       exporter = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
       source = config.services.avahi.hostName;
     }
-  ] ++ remoteBlackboxProbeSourceConfigs;
+  ]
+  ++ remoteBlackboxProbeSourceConfigs;
   mkBlackboxStaticConfigs =
     sources: probes:
     lib.concatMap (
