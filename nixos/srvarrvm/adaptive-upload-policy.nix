@@ -120,6 +120,9 @@ in
         "jellyfin-upload-policy.service"
         "wg-qos-upload.service"
       ];
+      PartOf = (wgUnitDepsBase.PartOf or [ ]) ++ [
+        "wg-qos-upload.service"
+      ];
     };
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " [
