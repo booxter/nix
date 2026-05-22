@@ -1,4 +1,5 @@
 {
+  hostInventory,
   lib,
   pkgs,
   ...
@@ -188,7 +189,7 @@ in
   # - If BMC gets into a broken state, run: sudo ipmitool raw 0x32 0x66
   # - On first setup, use a simple password (no special chars) or later logins can fail.
 
-  users.groups.media.gid = 169;
+  users.groups.media.gid = hostInventory.site.gids.media;
 
   host.observability.client.blackbox.enable = true;
 

@@ -73,7 +73,7 @@ in
     ${lib.concatStringsSep "\n" filteredTmpfilesRules}
   '';
 
-  users.groups.media.gid = 169;
+  users.groups.media.gid = hostInventory.site.gids.media;
   users.users.${config.util-nixarr.globals.bazarr.user}.extraGroups = [ "media" ];
 
   # Make services that r/w to NFS require the media mount.

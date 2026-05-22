@@ -81,6 +81,10 @@ rec {
     };
 
   site = {
+    gids = {
+      media = 169;
+    };
+
     ports = {
       nfs = 2049;
     };
