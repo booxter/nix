@@ -28,7 +28,7 @@ HOST_BASE_MAP_JSON="$(
     cd "${REPO_ROOT}"
     nix eval --impure --json --expr "
       let
-        hostInventory = import ./lib/hosts.nix {
+        hostInventory = import ./lib/inventory.nix {
           lib = {
             strings.toUpper = s: s;
           };

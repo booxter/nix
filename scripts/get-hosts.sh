@@ -13,9 +13,9 @@ fi
 
 nix eval --impure --json --expr "
   let
-    hostInventory = import \"${REPO_ROOT}/lib/hosts.nix\" {
+    hostInventory = import \"${REPO_ROOT}/lib/inventory.nix\" {
       # get-hosts only needs VM naming and isWork flags. Keep this import cheap
-      # by stubbing the one lib function hosts.nix currently references for the
+      # by stubbing the one lib function inventory.nix currently references for the
       # unrelated UPS-name helper.
       lib = {
         strings.toUpper = s: s;

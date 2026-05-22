@@ -2,7 +2,7 @@
 
 This host is a minimal WireGuard gateway VM. Client peers are declared in
 `nixos/gwvm/default.nix`, while the shared tunnel topology lives in
-`lib/hosts.nix` under `site.wireguard.home` and `site.lan`.
+`lib/inventory.nix` under `site.wireguard.home` and `site.lan`.
 
 ## Client setup
 
@@ -13,7 +13,7 @@ umask 077
 wg genkey | tee client.key | wg pubkey > client.pub
 ```
 
-Pick a free address from `site.wireguard.home.cidr` in `lib/hosts.nix` and add
+Pick a free address from `site.wireguard.home.cidr` in `lib/inventory.nix` and add
 the peer to the `vpnPeers` list in `nixos/gwvm/default.nix`:
 
 ```nix

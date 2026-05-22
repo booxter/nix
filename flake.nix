@@ -80,7 +80,7 @@
     let
       inherit (self) outputs;
       username = "ihrachyshka";
-      hostInventory = import ./lib/hosts.nix {
+      hostInventory = import ./lib/inventory.nix {
         inherit username;
         lib = inputs.nixpkgs.lib;
       };

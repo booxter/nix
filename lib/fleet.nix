@@ -7,7 +7,7 @@ let
   };
 
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
-  hostInventory = import ../lib/hosts.nix { lib = pkgs.lib; };
+  hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
 
