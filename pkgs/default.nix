@@ -7,9 +7,6 @@ in
   # private
   my-page = pkgs.callPackage ./page { };
 
-  # https://github.com/NixOS/nixpkgs/pull/432971
-  air-sdk = pkgs.callPackage ./air-sdk { };
-
   # to upstream?
   jinjanator = pkgs.callPackage ./jinjanator { };
 
