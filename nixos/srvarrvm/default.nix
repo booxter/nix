@@ -12,7 +12,6 @@ let
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   serviceCatalog = import ../../lib/services.nix {
     inherit hostInventory;
-    srvarrDisplayHost = "${config.services.avahi.hostName}.local";
     srvarrPorts = {
       aurral = config.systemd.services.aurral.environment.PORT;
       audiobookshelf = config.nixarr.audiobookshelf.port;

@@ -15,7 +15,6 @@ let
   serviceCatalog = import ../../lib/services.nix {
     inherit hostInventory;
     grafanaProbeUrl = "http://127.0.0.1:${toString grafanaPort}/";
-    srvarrProbeHost = outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName;
     srvarrPorts = {
       aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
       audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
