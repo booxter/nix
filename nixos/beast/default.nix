@@ -50,17 +50,6 @@ let
   # Pin export IDs so clients see stable export identities across server restarts.
   mkNfsExport =
     { path, fsid }: "${path} ${nfsSubnet}(rw,async,no_subtree_check,fsid=${toString fsid})";
-  mkDisablePauseService = iface: {
-    description = "Disable Ethernet pause frames on ${iface}";
-    after = [ "network-pre.target" ];
-    wants = [ "network-pre.target" ];
-    wantedBy = [ "multi-user.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.ethtool}/bin/ethtool -A ${iface} autoneg off rx off tx off";
-      RemainAfterExit = true;
-    };
-  };
   mkTmpfilesDir = path: mode: user: group: [
     "d ${path} ${mode} ${user} ${group} - -"
     "z ${path} ${mode} ${user} ${group} - -"
@@ -446,6 +435,7 @@ in
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
+    ./pause.nix
     ./ups.nix
   ];
 
@@ -575,11 +565,6 @@ in
   networking.firewall.allowedUDPPorts = nfsPorts;
 
   networking.resolvconf.enable = true;
-
-  # Link on TL2-F7120 can drop intermittently; disabling pause frames here
-  # has helped stability. Flow control is also disabled on the switch port.
-  systemd.services.ethtool-enp6s0-disable-pause = mkDisablePauseService "enp6s0";
-  systemd.services.ethtool-enp7s0-disable-pause = mkDisablePauseService "enp7s0";
 
   # Snapshot schedule for /volume2. This creates /volume2/.snapshots.
   services.snapper.configs.volume2 = {
