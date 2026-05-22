@@ -38,6 +38,7 @@ jobs:
         run: |
           git status --short
           if ! git diff --quiet --exit-code; then
+            git --no-pager diff --stat --patch
             echo "Repository dirty after formatting. Please commit formatting changes."
             exit 1
           fi

@@ -4,12 +4,12 @@
   fetchFromGitHub,
   fetchNpmDeps,
   buildPackages,
-  nodejs_25,
+  nodejs_24,
   python3,
   makeWrapper,
 }:
 let
-  nodejs = nodejs_25;
+  nodejs = nodejs_24;
   npmHooks = buildPackages.npmHooks.override { inherit nodejs; };
   pname = "aurral";
   version = "1.60.3";

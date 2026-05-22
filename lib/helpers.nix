@@ -35,28 +35,7 @@ let
   upsNonVmShutdownDelaySeconds = 900;
   upsShutdownDelaySeconds =
     isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
-  mkVmHostPkgs =
-    virtPlatform:
-    import inputs.nixpkgs {
-      system = virtPlatform;
-      overlays = [
-        (final: prev: {
-          # Fix qemu hanging on beefy VMs due to fd limit exhaustion.
-          # Use heap based fdsets in g_poll.
-          glib = prev.glib.overrideAttrs (old: {
-            patches =
-              old.patches or [ ]
-              ++ prev.lib.optionals prev.stdenv.hostPlatform.isDarwin [
-                (prev.fetchpatch {
-                  url = "https://gitlab.gnome.org/ihar.hrachyshka/glib/-/commit/9bd63d0d265bd8128ffdee9cd5c3cc9821b37e92.patch";
-                  hash = "sha256-iwrqiTQbKP/PUEXZuOhQo6tBKCgelHNe0lFTC7hzxB8=";
-                  excludes = [ ".gitlab-ci.yml" ];
-                })
-              ];
-          });
-        })
-      ];
-    };
+  mkVmHostPkgs = virtPlatform: import inputs.nixpkgs { system = virtPlatform; };
   mkLocalVmVariantVirtualisation = virtPlatform: {
     host.pkgs = mkVmHostPkgs virtPlatform;
     graphics = false;
