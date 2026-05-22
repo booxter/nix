@@ -1,4 +1,5 @@
 {
+  hostInventory,
   inputs,
   outputs,
   ...
@@ -8,6 +9,7 @@ let
     {
       inputs,
       outputs,
+      hostInventory,
       username,
       hmFull,
       isDesktop,
@@ -19,6 +21,7 @@ let
         inherit
           inputs
           outputs
+          hostInventory
           username
           hmFull
           isDesktop
@@ -77,6 +80,7 @@ rec {
         inherit
           inputs
           outputs
+          hostInventory
           username
           platform
           hmFull
@@ -113,6 +117,7 @@ rec {
         inherit
           inputs
           outputs
+          hostInventory
           hostname
           platform
           virtPlatform
@@ -134,6 +139,7 @@ rec {
           inherit
             inputs
             outputs
+            hostInventory
             username
             hmFull
             isDesktop
@@ -488,6 +494,7 @@ rec {
         inherit
           inputs
           outputs
+          hostInventory
           hostname
           platform
           username
@@ -509,6 +516,7 @@ rec {
           inherit
             inputs
             outputs
+            hostInventory
             username
             hmFull
             isDesktop
@@ -565,6 +573,7 @@ rec {
         inherit
           inputs
           outputs
+          hostInventory
           hostname
           platform
           username
@@ -588,6 +597,7 @@ rec {
           inherit
             inputs
             outputs
+            hostInventory
             username
             hmFull
             isDesktop

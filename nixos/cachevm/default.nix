@@ -1,6 +1,5 @@
-{ lib, pkgs, username, ... }:
+{ lib, pkgs, hostInventory, ... }:
 let
-  hostInventory = import ../../lib/hosts.nix { inherit username; };
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   nfsPath = "/cache";
   # Same recovery semantics as other NFS clients:

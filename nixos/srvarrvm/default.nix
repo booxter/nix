@@ -4,11 +4,10 @@
   pkgs,
   inputs,
   hostname,
-  username,
+  hostInventory,
   ...
 }:
 let
-  hostInventory = import ../../lib/hosts.nix { inherit username; };
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   arrServices = import ../../lib/arr-services.nix {
     srvarrDisplayHost = "${config.services.avahi.hostName}.local";

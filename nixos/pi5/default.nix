@@ -1,6 +1,5 @@
-{ pkgs, username, ... }:
+{ pkgs, username, hostInventory, ... }:
 let
-  hostInventory = import ../../lib/hosts.nix { inherit username; };
   beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   renderDhcpReservation =
     reservation:

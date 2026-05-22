@@ -80,9 +80,17 @@
     let
       inherit (self) outputs;
       username = "ihrachyshka";
-      helpers = import ./lib { inherit inputs outputs username; };
+      hostInventory = import ./lib/hosts.nix { inherit username; };
+      helpers = import ./lib {
+        inherit
+          hostInventory
+          inputs
+          outputs
+          username
+          ;
+      };
 
-      hostSpecs = import ./lib/hosts.nix { inherit username; };
+      hostSpecs = hostInventory;
       inherit (hostSpecs)
         darwinHosts
         nixosHostSpecs

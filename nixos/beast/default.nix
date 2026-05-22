@@ -2,11 +2,10 @@
   config,
   lib,
   pkgs,
-  username,
+  hostInventory,
   ...
 }:
 let
-  hostInventory = import ../../lib/hosts.nix { inherit username; };
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
   mediaRoot = "/volume2/Media";
