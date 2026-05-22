@@ -13,6 +13,7 @@ let
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   serviceCatalog = import ../../lib/services.nix {
+    inherit hostInventory;
     grafanaProbeUrl = "http://127.0.0.1:${toString grafanaPort}/";
     srvarrProbeHost = outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName;
     srvarrPorts = {

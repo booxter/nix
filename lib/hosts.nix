@@ -96,6 +96,127 @@ rec {
     };
   };
 
+  services = [
+    {
+      id = "jellyfin";
+      title = "Jellyfin";
+      icon = "sh:jellyfin";
+      scope = "external";
+      owner = "beast";
+      publicHost = "jf.ihar.dev";
+      probePath = "/web/";
+    }
+    {
+      id = "jellyseerr";
+      title = "Jellyseerr";
+      icon = "sh:jellyseerr";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "js.ihar.dev";
+      probePath = "/login";
+    }
+    {
+      id = "grafana";
+      title = "Grafana";
+      icon = "sh:grafana";
+      scope = "internal";
+      owner = "fana";
+      probePath = "login";
+    }
+    {
+      id = "radarr";
+      title = "Radarr";
+      icon = "sh:radarr";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/login";
+    }
+    {
+      id = "sonarr";
+      title = "Sonarr";
+      icon = "sh:sonarr";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/login";
+    }
+    {
+      id = "lidarr";
+      title = "Lidarr";
+      icon = "sh:lidarr";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/";
+    }
+    {
+      id = "aurral";
+      title = "Aurral";
+      icon = "sh:aurral";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "mu.ihar.dev";
+      probePath = "/api/health";
+    }
+    {
+      id = "audiobookshelf";
+      title = "Audiobookshelf";
+      icon = "sh:audiobookshelf";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "au.ihar.dev";
+      probePath = "";
+    }
+    {
+      id = "shelfmark";
+      title = "Shelfmark";
+      icon = "sh:shelfmark";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "shelf.ihar.dev";
+      probePath = "/";
+    }
+    {
+      id = "vikunja";
+      title = "Vikunja";
+      icon = "sh:vikunja";
+      scope = "external";
+      owner = "org";
+      publicHost = "vi.ihar.dev";
+      probePath = "";
+    }
+    {
+      id = "bazarr";
+      title = "Bazarr";
+      icon = "sh:bazarr";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/";
+    }
+    {
+      id = "prowlarr";
+      title = "Prowlarr";
+      icon = "sh:prowlarr";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/login";
+    }
+    {
+      id = "transmission";
+      title = "Transmission";
+      icon = "sh:transmission";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/transmission/web/";
+    }
+    {
+      id = "sabnzbd";
+      title = "SABNZB";
+      icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/login/";
+    }
+  ];
+
   staticDhcpReservations = [
     {
       identifiers = [ "7c:b7:7b:04:05:99" ];
@@ -370,5 +491,14 @@ rec {
       name = spec.name;
       value = spec;
     }) nixosHostSpecs
+  );
+
+  publicServices = builtins.filter (service: service.scope == "external") services;
+
+  servicesById = builtins.listToAttrs (
+    map (service: {
+      name = service.id;
+      value = service;
+    }) services
   );
 }
