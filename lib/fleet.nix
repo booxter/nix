@@ -7,6 +7,9 @@ let
   };
 
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
+  hostInventory = import ../lib/hosts.nix { lib = pkgs.lib; };
+  lan = hostInventory.site.lan;
+  wgHome = hostInventory.site.wireguard.home;
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -164,6 +167,172 @@ let
     ''
     + builtins.readFile ../scripts/hba-flash.sh;
   };
+  wgHomeClientConfig = pkgs.writeShellApplication {
+    name = "wg-home-client-config";
+    runtimeInputs = with pkgs; [
+      coreutils
+      openssh
+      python3
+    ];
+    text = ''
+      set -euo pipefail
+
+      WG_HOME_CIDR='${wgHome.cidr}'
+      WG_HOME_DNS='${lan.gateway.address}'
+      WG_HOME_ENDPOINT='${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}'
+      WG_HOME_ALLOWED_IPS='${wgHome.cidr}, ${lan.cidr}'
+      WG_HOME_PEERS_JSON='${builtins.toJSON (pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers)}'
+
+      usage() {
+        cat <<'EOF'
+      Usage:
+        wg-home-client-config (--peer <inventory-peer-name> | --address <peer-address>/32) --private-key-file <path> [--output <path>] (--server-public-key <key> | --fetch-server-public-key)
+
+      Examples:
+        wg-home-client-config --peer mair --private-key-file ./client.key --fetch-server-public-key --output ./client.conf
+        wg-home-client-config --address 10.83.0.50/32 --private-key-file ./client.key --fetch-server-public-key --output ./client.conf
+        wg-home-client-config --address 10.83.0.50/32 --private-key-file ./client.key --server-public-key "$(<server.pub)"
+        Inventory-backed peers: ${pkgs.lib.concatStringsSep ", " (builtins.attrNames wgHome.peers)}
+      EOF
+      }
+
+      peer_name=""
+      address=""
+      private_key_file=""
+      server_public_key=""
+      fetch_server_public_key=false
+      output=""
+
+      while [ "$#" -gt 0 ]; do
+        case "$1" in
+          --help)
+            usage
+            exit 0
+            ;;
+          --peer)
+            shift
+            peer_name="''${1-}"
+            ;;
+          --address)
+            shift
+            address="''${1-}"
+            ;;
+          --private-key-file)
+            shift
+            private_key_file="''${1-}"
+            ;;
+          --server-public-key)
+            shift
+            server_public_key="''${1-}"
+            ;;
+          --fetch-server-public-key)
+            fetch_server_public_key=true
+            ;;
+          --output)
+            shift
+            output="''${1-}"
+            ;;
+          *)
+            echo "Unknown argument: $1" >&2
+            usage >&2
+            exit 1
+            ;;
+        esac
+        shift || true
+      done
+
+      if [ -z "$private_key_file" ]; then
+        usage >&2
+        exit 1
+      fi
+
+      if [ -n "$peer_name" ] && [ -n "$address" ]; then
+        echo "Use either --peer or --address, not both." >&2
+        exit 1
+      fi
+
+      if [ -z "$peer_name" ] && [ -z "$address" ]; then
+        echo "One of --peer or --address is required." >&2
+        usage >&2
+        exit 1
+      fi
+
+      if [ ! -f "$private_key_file" ]; then
+        echo "Private key file not found: $private_key_file" >&2
+        exit 1
+      fi
+
+      if [ -n "$server_public_key" ] && [ "$fetch_server_public_key" = true ]; then
+        echo "Use either --server-public-key or --fetch-server-public-key, not both." >&2
+        exit 1
+      fi
+
+      if [ -z "$server_public_key" ] && [ "$fetch_server_public_key" = false ]; then
+        echo "One of --server-public-key or --fetch-server-public-key is required." >&2
+        exit 1
+      fi
+
+      resolved_address="$(${pkgs.python3}/bin/python3 - "$peer_name" "$address" "$WG_HOME_CIDR" "$WG_HOME_PEERS_JSON" <<'PY'
+      import ipaddress
+      import json
+      import sys
+
+      peer_name, explicit, subnet_cidr, peers_json = sys.argv[1:5]
+      peers = json.loads(peers_json)
+
+      if peer_name:
+          if peer_name not in peers:
+              known = ", ".join(sorted(peers)) or "<none>"
+              raise SystemExit(f"unknown inventory peer {peer_name!r}; known peers: {known}")
+          explicit = peers[peer_name]
+
+      peer = ipaddress.ip_interface(explicit)
+      subnet = ipaddress.ip_network(subnet_cidr)
+
+      if peer.version != 4:
+          raise SystemExit("peer address must be IPv4")
+      if peer.network.prefixlen != 32:
+          raise SystemExit("peer address must use /32")
+      if peer.ip not in subnet:
+          raise SystemExit(f"peer address {peer.ip} is not inside {subnet}")
+      print(str(peer))
+      PY
+      )"
+
+      if [ "$fetch_server_public_key" = true ]; then
+        server_public_key="$(ssh prox-gwvm 'sudo wg pubkey < /var/lib/wireguard/wg0.key')"
+      fi
+
+      private_key="$(${pkgs.coreutils}/bin/tr -d '\n' < "$private_key_file")"
+      server_public_key="$(${pkgs.coreutils}/bin/printf '%s' "$server_public_key" | ${pkgs.coreutils}/bin/tr -d '\n')"
+
+      if [ -z "$private_key" ] || [ -z "$server_public_key" ]; then
+        echo "Private key and server public key must be non-empty." >&2
+        exit 1
+      fi
+
+      config_text="$(
+        printf '%s\n' \
+          '[Interface]' \
+          "PrivateKey = $private_key" \
+          "Address = $resolved_address" \
+          "DNS = $WG_HOME_DNS" \
+          "" \
+          '[Peer]' \
+          "PublicKey = $server_public_key" \
+          "Endpoint = $WG_HOME_ENDPOINT" \
+          "AllowedIPs = $WG_HOME_ALLOWED_IPS" \
+          'PersistentKeepalive = 25'
+      )"
+
+      if [ -n "$output" ]; then
+        umask 077
+        ${pkgs.coreutils}/bin/printf '%s\n' "$config_text" > "$output"
+      else
+        ${pkgs.coreutils}/bin/printf '%s\n' "$config_text"
+      fi
+    '';
+  };
   joinMediaParts = pkgs.callPackage ../pkgs/join-media-parts { };
 in
 {
@@ -175,4 +344,6 @@ in
     mkApp "${joinMediaParts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =
     mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
+  "wg-home-client-config" =
+    mkApp "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
 }

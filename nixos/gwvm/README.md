@@ -32,26 +32,18 @@ nix run .#prox-deploy -- gw prx1
 nix run .#deploy -- prox-gwvm
 ```
 
-Read the server public key from the VM:
+Generate a client config locally from the tracked topology:
 
 ```bash
-ssh prox-gwvm 'sudo wg pubkey < /var/lib/wireguard/wg0.key'
+nix run .#wg-home-client-config -- \
+  --peer <inventory-peer-name> \
+  --private-key-file ./client.key \
+  --fetch-server-public-key \
+  --output ./client.conf
 ```
 
-Create a client config locally:
-
-```ini
-[Interface]
-PrivateKey = <contents of client.key>
-Address = <peer-address>/32
-DNS = <site.lan.gateway.address>
-
-[Peer]
-PublicKey = <server public key from prox-gwvm>
-Endpoint = <site.wireguard.home.gateway.publicEndpoint>:<site.wireguard.home.gateway.listenPort>
-AllowedIPs = <site.wireguard.home.cidr>, <site.lan.cidr>
-PersistentKeepalive = 25
-```
+For a peer that is not modeled in `site.wireguard.home.peers`, use
+`--address <peer-address>/32` instead of `--peer`.
 
 Optional QR code for mobile clients:
 
