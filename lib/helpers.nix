@@ -385,7 +385,7 @@ rec {
               {
                 # Hypervisors upgrade on a separate schedule to avoid
                 # disrupting guest VMs running on top.
-                system.autoUpgrade.dates = "Sun 03:00";
+                system.autoUpgrade.dates = "Sun 04:00";
 
                 nixpkgs.overlays = [
                   inputs.proxmox-nixos.overlays.${platform}

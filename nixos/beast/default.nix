@@ -441,7 +441,7 @@ in
   # Host critical services; keep upgrades on Monday, separate from the fleet's
   # default Saturday schedule, but still leave room for local backups and later
   # cloud offload jobs after the reboot window work settles.
-  system.autoUpgrade.dates = "Mon 03:30";
+  system.autoUpgrade.dates = "Mon 04:00";
   system.autoUpgrade.randomizedDelaySec = "15min";
 
   # Assemble the existing RAID6 array from the previous NAS.

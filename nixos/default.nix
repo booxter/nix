@@ -77,7 +77,7 @@ in
     ];
     # Keep upgrades centered in the reboot window, then leave room for hosts to
     # come back before local backups and later cloud offload jobs begin.
-    dates = lib.mkDefault "Sat 03:30";
+    dates = lib.mkDefault "Sat 04:00";
     randomizedDelaySec = "15min";
     persistent = false;
     allowReboot = true;

@@ -128,7 +128,7 @@ in
       "--keep-monthly 6"
     ];
     timerConfig = {
-      OnCalendar = "04:30";
+      OnCalendar = "05:00";
       RandomizedDelaySec = "15m";
       Persistent = true;
     };

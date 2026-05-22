@@ -90,10 +90,10 @@ Backups should be scheduled outside the NixOS auto-upgrade reboot window.
 
 In the current setup:
 
-- auto-upgrades are scheduled at `03:30` with up to `15m` random delay
-- local application-consistent prep jobs run around `04:15`
-- local host-to-`beast` backups run around `04:30` with up to `15m` random delay
-- cloud offload from `beast` runs around `05:30` with up to `30m` random delay
+- auto-upgrades are scheduled at `04:00` with up to `15m` random delay
+- local application-consistent prep jobs run around `04:45`
+- local host-to-`beast` backups run around `05:00` with up to `15m` random delay
+- cloud offload from `beast` runs around `06:00` with up to `30m` random delay
 
 ### Backup Timeline
 

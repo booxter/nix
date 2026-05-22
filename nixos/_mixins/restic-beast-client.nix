@@ -14,12 +14,12 @@ let
     "--keep-monthly 6"
   ];
   defaultBackupTimerConfig = {
-    # Run after the 03:30±15m upgrade/reboot work has settled.
-    OnCalendar = "04:30";
+    # Run after the 04:00±15m upgrade/reboot work has settled.
+    OnCalendar = "05:00";
     RandomizedDelaySec = "15m";
   };
   defaultPreBackupTimerConfig = {
-    OnCalendar = "04:15";
+    OnCalendar = "04:45";
     RandomizedDelaySec = "0";
   };
   localSshKey = config.sops.secrets.${localSshKeySecret}.path;
