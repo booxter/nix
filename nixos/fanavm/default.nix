@@ -1,11 +1,14 @@
 {
   config,
   lib,
+  hostInventory,
   outputs,
   pkgs,
   ...
 }:
 let
+  pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
+  prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   arrServices = import ../../lib/arr-services.nix {
     grafanaProbeUrl = "http://127.0.0.1:${toString grafanaPort}/";
     srvarrProbeHost = outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName;
@@ -664,8 +667,8 @@ in
         metrics_path = "/ups_metrics";
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ "prx1-lab" ];
-          ups = [ "PRX1-UPS" ];
+          server = [ (prx1Spec.dnsName or prx1Spec.name) ];
+          ups = [ prx1Spec.upsName ];
         };
         static_configs = [
           {
@@ -692,8 +695,8 @@ in
         metrics_path = "/ups_metrics";
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ "dhcp" ];
-          ups = [ "PI5-UPS" ];
+          server = [ (pi5Spec.dnsName or pi5Spec.name) ];
+          ups = [ pi5Spec.upsName ];
         };
         static_configs = [
           {

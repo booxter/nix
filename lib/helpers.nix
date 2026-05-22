@@ -488,6 +488,7 @@ rec {
       isWork ? false,
       isVM ? false,
       extraModules ? [ ],
+      ...
     }:
     inputs.nixos-raspberrypi.lib.nixosSystem {
       specialArgs = {
@@ -567,6 +568,7 @@ rec {
       isDesktop ? false,
       isWork ? false,
       extraModules ? [ ],
+      ...
     }:
     inputs.nix-darwin.lib.darwinSystem {
       specialArgs = {

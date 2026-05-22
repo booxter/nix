@@ -3,6 +3,7 @@
   lib,
   pkgs,
   hostname,
+  hostInventory,
   isWork,
   platform,
   stateVersion,
@@ -12,6 +13,8 @@
 let
   removePrefix = lib.strings.removePrefix;
   removeSuffix = lib.strings.removeSuffix;
+  pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
+  prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
@@ -46,7 +49,7 @@ in
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
         monitorName = "nas";
-        system = "PRX1-UPS@prx1-lab";
+        system = "${prx1Spec.upsName}@${prx1Spec.dnsName or prx1Spec.name}";
         user = "upsslave";
         passwordText = "upsslave123";
       })
@@ -56,7 +59,7 @@ in
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
         monitorName = "pi5";
-        system = "PI5-UPS@192.168.1.1";
+        system = "${pi5Spec.upsName}@${pi5Spec.dnsName or pi5Spec.name}";
         user = "upsslave";
         passwordText = "upsslave123";
       })
