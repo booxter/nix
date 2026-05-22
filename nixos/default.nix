@@ -4,7 +4,6 @@
   pkgs,
   hostname,
   hostInventory,
-  isWork,
   platform,
   stateVersion,
   upsShutdownDelaySeconds,
@@ -18,7 +17,6 @@ let
   configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
-  isProxmoxVmHost = lib.hasPrefix "prox-" hostname && lib.hasSuffix "vm" hostname;
   isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
   upsServerName =
     if isLocalVmHost then null else hostSpec.upsHost or null;
