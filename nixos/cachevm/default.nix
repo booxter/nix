@@ -1,6 +1,7 @@
-{ lib, pkgs, ... }:
+{ lib, pkgs, username, ... }:
 let
-  beastNfsAddress = "192.168.16.3";
+  hostInventory = import ../../lib/hosts.nix { inherit username; };
+  beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   nfsPath = "/cache";
   # Same recovery semantics as other NFS clients:
   # - block writes/reads until NAS returns

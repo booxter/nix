@@ -28,7 +28,7 @@ let
       hmFull = false;
     };
 in
-{
+rec {
   virtPlatform = "aarch64-darwin";
 
   toVmName = name: "${name}vm";
@@ -243,4 +243,17 @@ in
     2
     3
   ];
+
+  dhcpReservationsByHostname = builtins.listToAttrs (
+    builtins.map (
+      spec:
+      let
+        reservation = spec.dhcpReservation;
+      in
+      {
+        name = reservation.hostname;
+        value = reservation;
+      }
+    ) (builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs)
+  );
 }
