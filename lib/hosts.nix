@@ -158,6 +158,7 @@ rec {
       hostKind = "raspberryPi";
       name = piHostname;
       dnsName = "dhcp";
+      upsMonitorName = "pi5";
       stateVersion = piStateVersion;
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
@@ -177,6 +178,7 @@ rec {
       name = nvws;
       inherit username;
       isWork = true;
+      upsHost = piHostname;
       password = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
       stateVersion = "25.11";
       netIface = "enp3s0f0";
@@ -209,6 +211,7 @@ rec {
       name = "prx1-lab";
       inherit username;
       password = prxPassword;
+      upsMonitorName = "nas";
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
       ipAddress = "192.168.15.10";
@@ -224,6 +227,7 @@ rec {
       hostKind = "proxmox";
       name = "prx2-lab";
       inherit username;
+      upsHost = "prx1-lab";
       password = prxPassword;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
@@ -240,6 +244,7 @@ rec {
       hostKind = "proxmox";
       name = "prx3-lab";
       inherit username;
+      upsHost = "prx1-lab";
       password = prxPassword;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
@@ -255,6 +260,7 @@ rec {
       type = "vm";
       name = "nv";
       isWork = true;
+      upsHost = piHostname;
       cores = 64;
       memorySize = 128;
       sshPort = 10000;
@@ -263,6 +269,7 @@ rec {
     {
       type = "vm";
       name = "cache";
+      upsHost = "prx1-lab";
       sshPort = 10004;
       hmFull = false;
       cores = 16;
@@ -273,6 +280,7 @@ rec {
       type = "vm";
       name = "srvarr";
       platform = "x86_64-linux";
+      upsHost = "prx1-lab";
       cores = 16;
       memorySize = 32;
       sshPort = 10005;
@@ -287,6 +295,7 @@ rec {
       type = "vm";
       name = "fana";
       platform = "x86_64-linux";
+      upsHost = "prx1-lab";
       cores = 8;
       memorySize = 16;
       diskSize = 300;
@@ -296,6 +305,7 @@ rec {
     {
       type = "vm";
       name = "desk";
+      upsHost = "prx1-lab";
       cores = 4;
       memorySize = 12;
       diskSize = 80;
@@ -305,6 +315,7 @@ rec {
     {
       type = "vm";
       name = "gw";
+      upsHost = "prx1-lab";
       cores = 2;
       memorySize = 8;
       diskSize = 64;
@@ -320,6 +331,7 @@ rec {
       type = "vm";
       name = "org";
       platform = "x86_64-linux";
+      upsHost = "prx1-lab";
       cores = 4;
       memorySize = 8;
       diskSize = 80;
@@ -332,7 +344,7 @@ rec {
       };
     }
   ]
-  ++ map builderSpec [
+  ++ map (idx: (builderSpec idx) // { upsHost = "prx1-lab"; }) [
     1
     2
     3

@@ -13,21 +13,17 @@
 let
   removePrefix = lib.strings.removePrefix;
   removeSuffix = lib.strings.removeSuffix;
-  pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
-  prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
+  hostSpecName = removeSuffix "vm" (removePrefix "prox-" (removePrefix "local-" hostname));
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
   isProxmoxVmHost = lib.hasPrefix "prox-" hostname && lib.hasSuffix "vm" hostname;
-  upsClientsPRX1 = [
-    "prx2-lab"
-    "prx3-lab"
-  ];
-  upsClientsPi5 = [
-    "nvws"
-  ];
-  usesPRX1Ups = (isProxmoxVmHost && !isWork) || lib.elem hostname upsClientsPRX1;
-  usesPi5Ups = (isProxmoxVmHost && isWork) || lib.elem hostname upsClientsPi5;
+  isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
+  upsServerName =
+    if isLocalVmHost then null else hostSpec.upsHost or null;
+  upsServerSpec =
+    if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
 in
 {
   imports =
@@ -44,22 +40,12 @@ in
       ./_mixins/restic-beast-client.nix
       ./_mixins/user
     ]
-    ++ lib.optionals usesPRX1Ups [
+    ++ lib.optionals (upsServerSpec != null) [
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
-        monitorName = "nas";
-        system = "${hostInventory.toUpsName prx1Spec.name}@${prx1Spec.dnsName or prx1Spec.name}";
-        user = "upsslave";
-        passwordText = "upsslave123";
-      })
-    ]
-    ++ lib.optionals usesPi5Ups [
-      # TODO: rotate this password and migrate to sops-managed secrets.
-      (import ./_mixins/ups-client {
-        inherit pkgs upsShutdownDelaySeconds;
-        monitorName = "pi5";
-        system = "${hostInventory.toUpsName pi5Spec.name}@${pi5Spec.dnsName or pi5Spec.name}";
+        monitorName = upsServerSpec.upsMonitorName or upsServerSpec.name;
+        system = "${hostInventory.toUpsName upsServerSpec.name}@${upsServerSpec.dnsName or upsServerSpec.name}";
         user = "upsslave";
         passwordText = "upsslave123";
       })
