@@ -20,10 +20,12 @@ split into two services:
 Together they:
 
 - mark preferred torrents `bandwidthPriority = high`
-- if any preferred torrent currently has connected peers, keep non-preferred
+- if any preferred torrent currently has peers actively downloading from us,
+  keep non-preferred
   torrents at `bandwidthPriority = normal` while `uploadRatio < 3.0` and
   demote the rest to `bandwidthPriority = low`
-- if no preferred torrent currently has connected peers, promote non-preferred
+- if no preferred torrent currently has peers actively downloading from us,
+  promote non-preferred
   torrents with
   `uploadRatio < 3.0` to `bandwidthPriority = high` and keep
   `uploadRatio >= 3.0` torrents at `bandwidthPriority = low`
@@ -122,13 +124,13 @@ with shared classification logic:
   priorities to enforce
 - sets:
   - preferred torrents -> `bandwidthPriority = high`
-  - if any preferred torrent currently has connected peers:
+  - if any preferred torrent currently has peers actively downloading from us:
     `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = normal`
-  - if any preferred torrent currently has connected peers:
+  - if any preferred torrent currently has peers actively downloading from us:
     `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
-  - if no preferred torrent currently has connected peers:
+  - if no preferred torrent currently has peers actively downloading from us:
     `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = high`
-  - if no preferred torrent currently has connected peers:
+  - if no preferred torrent currently has peers actively downloading from us:
     `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
   - if a non-preferred torrent is complete and `uploadRatio >= 6.0`:
     stop/pause the torrent

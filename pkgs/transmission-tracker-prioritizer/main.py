@@ -321,7 +321,7 @@ def render_metrics_text(
             "# HELP host_observability_transmission_preferred_upload_active Whether any preferred torrent is actively uploading to peers.",
             "# TYPE host_observability_transmission_preferred_upload_active gauge",
             f"host_observability_transmission_preferred_upload_active {1 if preferred_upload_active else 0}",
-            "# HELP host_observability_transmission_preferred_bootstrap_active Whether any preferred torrent currently has connected peers and therefore qualifies for bootstrap private headroom.",
+            "# HELP host_observability_transmission_preferred_bootstrap_active Whether any preferred torrent currently has peers actively downloading from us and therefore qualifies for bootstrap private headroom.",
             "# TYPE host_observability_transmission_preferred_bootstrap_active gauge",
             f"host_observability_transmission_preferred_bootstrap_active {1 if preferred_bootstrap_active else 0}",
             "# HELP host_observability_transmission_preferred_upload_bytes_per_second Current aggregate upload rate for preferred torrents.",
@@ -534,8 +534,8 @@ def collect_iteration_state(
 
     preferred_bootstrap_active = any(
         is_preferred
-        and isinstance(torrent.get("peersConnected"), int)
-        and torrent["peersConnected"] > 0
+        and isinstance(torrent.get("peersGettingFromUs"), int)
+        and torrent["peersGettingFromUs"] > 0
         for torrent, _torrent_hash, is_preferred in torrent_entries
     )
     preferred_upload_observed_active = False
@@ -634,9 +634,7 @@ def collect_iteration_state(
         if is_preferred:
             if isinstance(rate_upload, int) and rate_upload > 0:
                 preferred_upload_bytes_per_second += rate_upload
-            if (
-                isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
-            ) or (isinstance(rate_upload, int) and rate_upload > 0):
+            if isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0:
                 preferred_upload_observed_active = True
 
         if desired_priority == TR_PRI_HIGH and current_priority != TR_PRI_HIGH:

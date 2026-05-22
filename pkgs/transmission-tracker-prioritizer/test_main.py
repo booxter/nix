@@ -23,7 +23,7 @@ class TorrentDesiredPriorityTests(unittest.TestCase):
 
         self.assertEqual(desired_priority, TR_PRI_HIGH)
 
-    def test_non_preferred_under_threshold_stays_normal_when_preferred_have_peers(
+    def test_non_preferred_under_threshold_stays_normal_when_preferred_have_upload_peers(
         self,
     ) -> None:
         desired_priority = torrent_desired_priority(
@@ -35,7 +35,9 @@ class TorrentDesiredPriorityTests(unittest.TestCase):
 
         self.assertEqual(desired_priority, TR_PRI_NORMAL)
 
-    def test_non_preferred_at_threshold_is_low_when_preferred_have_peers(self) -> None:
+    def test_non_preferred_at_threshold_is_low_when_preferred_have_upload_peers(
+        self,
+    ) -> None:
         desired_priority = torrent_desired_priority(
             torrent={"uploadRatio": 3.0},
             is_preferred=False,
@@ -84,7 +86,7 @@ class FakeClient:
 
 
 class CollectIterationStateTests(unittest.TestCase):
-    def test_non_preferred_under_threshold_is_promoted_when_preferred_has_no_peers(
+    def test_non_preferred_under_threshold_is_promoted_when_preferred_has_no_upload_peers(
         self,
     ) -> None:
         torrents = [
@@ -122,7 +124,7 @@ class CollectIterationStateTests(unittest.TestCase):
         self.assertEqual(state.high_priority_hashes, ["public"])
         self.assertEqual(state.normal_priority_hashes, [])
 
-    def test_non_preferred_under_threshold_is_lowered_when_preferred_has_peers(
+    def test_non_preferred_under_threshold_is_promoted_when_preferred_has_only_idle_connected_peers(
         self,
     ) -> None:
         torrents = [
@@ -132,6 +134,45 @@ class CollectIterationStateTests(unittest.TestCase):
                 "uploadRatio": 0.1,
                 "peersConnected": 1,
                 "peersGettingFromUs": 0,
+                "peersSendingToUs": 0,
+                "leftUntilDone": 0,
+                "status": 6,
+                "rateDownload": 0,
+                "rateUpload": 0,
+                "trackerStats": [{"host": "preferred.example"}],
+            },
+            {
+                "hashString": "public",
+                "bandwidthPriority": TR_PRI_NORMAL,
+                "uploadRatio": 2.9,
+                "peersConnected": 0,
+                "peersGettingFromUs": 0,
+                "peersSendingToUs": 0,
+                "leftUntilDone": 0,
+                "status": 6,
+                "rateDownload": 0,
+                "rateUpload": 0,
+                "trackerStats": [{"host": "public.example"}],
+            },
+        ]
+
+        state = self.collect_state(torrents)
+
+        self.assertFalse(state.preferred_bootstrap_active)
+        self.assertFalse(state.preferred_upload_active)
+        self.assertEqual(state.high_priority_hashes, ["public"])
+        self.assertEqual(state.normal_priority_hashes, [])
+
+    def test_non_preferred_under_threshold_is_lowered_when_preferred_have_upload_peers(
+        self,
+    ) -> None:
+        torrents = [
+            {
+                "hashString": "preferred",
+                "bandwidthPriority": TR_PRI_HIGH,
+                "uploadRatio": 0.1,
+                "peersConnected": 1,
+                "peersGettingFromUs": 1,
                 "peersSendingToUs": 0,
                 "leftUntilDone": 0,
                 "status": 6,
@@ -157,8 +198,33 @@ class CollectIterationStateTests(unittest.TestCase):
         state = self.collect_state(torrents)
 
         self.assertTrue(state.preferred_bootstrap_active)
+        self.assertTrue(state.preferred_upload_active)
         self.assertEqual(state.high_priority_hashes, [])
         self.assertEqual(state.normal_priority_hashes, ["public"])
+
+    def test_preferred_upload_activity_requires_upload_peers_not_only_rate(
+        self,
+    ) -> None:
+        torrents = [
+            {
+                "hashString": "preferred",
+                "bandwidthPriority": TR_PRI_HIGH,
+                "uploadRatio": 0.1,
+                "peersConnected": 1,
+                "peersGettingFromUs": 0,
+                "peersSendingToUs": 0,
+                "leftUntilDone": 0,
+                "status": 6,
+                "rateDownload": 0,
+                "rateUpload": 12345,
+                "trackerStats": [{"host": "preferred.example"}],
+            },
+        ]
+
+        state = self.collect_state(torrents)
+
+        self.assertFalse(state.preferred_bootstrap_active)
+        self.assertFalse(state.preferred_upload_active)
 
     def test_complete_non_preferred_at_pause_ratio_is_stopped(self) -> None:
         torrents = [
