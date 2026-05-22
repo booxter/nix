@@ -63,6 +63,7 @@ in
       type = "bm";
       hostKind = "raspberryPi";
       name = piHostname;
+      dnsName = "dhcp";
       stateVersion = piStateVersion;
       homeManagerInput = "home-manager-25_11";
       hmFull = false;

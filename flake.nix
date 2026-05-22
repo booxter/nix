@@ -96,6 +96,15 @@
         raspberryPi = helpers.mkRaspberryPi;
       };
 
+      staticHostModule =
+        spec:
+        { lib, ... }:
+        {
+          config.host = lib.optionalAttrs (spec ? dnsName) {
+            dnsName = spec.dnsName;
+          };
+        };
+
       VM =
         args@{
           name,
@@ -135,20 +144,29 @@
       specToNixosConfigs =
         spec:
         let
+          extraModules = inputs.nixpkgs.lib.optionals (spec ? dnsName) [ (staticHostModule spec) ];
           args = builtins.removeAttrs spec [
             "type"
             "hostKind"
             "homeManagerInput"
             "nixpkgsInput"
+            "dnsName"
           ];
           inputArgs =
             (if spec ? homeManagerInput then { homeManagerInput = inputs.${spec.homeManagerInput}; } else { })
             // (if spec ? nixpkgsInput then { nixpkgsInput = inputs.${spec.nixpkgsInput}; } else { });
         in
         if spec.type == "bm" then
-          BM (args // inputArgs // { mkHost = hostKindToMkHost.${spec.hostKind}; })
+          BM (
+            args
+            // inputArgs
+            // {
+              mkHost = hostKindToMkHost.${spec.hostKind};
+              extraModules = (args.extraModules or [ ]) ++ extraModules;
+            }
+          )
         else if spec.type == "vm" then
-          VM args
+          VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
         else
           throw "Unsupported NixOS host spec type `${spec.type}`";
     in
