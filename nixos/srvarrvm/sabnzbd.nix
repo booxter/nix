@@ -1,14 +1,14 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
-  wgNamespaceAddress,
-  wgUnitDepsWithMount,
   ...
 }:
+let
+  wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
+in
 {
-  systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
-
   # Keep download dir locally to ease load on network and storage
   services.sabnzbd.allowConfigWrite = true;
 

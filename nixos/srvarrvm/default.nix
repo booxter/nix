@@ -1,44 +1,16 @@
 {
   inputs,
-  hostInventory,
   ...
 }:
 let
-  srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
-  wgBridgeAddress = srvarrSpec.wgNamespace.bridgeAddress;
-  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
   wgConservativeUploadRateMbit = 8;
-  # Keep Transmission a little below the conservative tc floor so
-  # Transmission's own scheduler remains the bottleneck and can favor
-  # private-tracker torrents before traffic hits the kernel shaper.
-  transmissionConservativeUploadLimitKBps = builtins.floor (
-    (wgConservativeUploadRateMbit * 1000.0 / 8.0) * 0.95
-  );
   transmissionNonPreferredLowPriorityRatio = 3.0;
-  networkOnlineUnitDeps = {
-    Wants = [ "network-online.target" ];
-    After = [ "network-online.target" ];
-  };
-  wgUnitDepsBase = networkOnlineUnitDeps // {
-    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
-    BindsTo = [ "wg.service" ];
-    PartOf = [ "wg.service" ];
-  };
-  wgTimerDeps = {
-    After = [ "wg.service" ];
-  };
 in
 {
   _module.args = {
     inherit
-      networkOnlineUnitDeps
-      transmissionConservativeUploadLimitKBps
       transmissionNonPreferredLowPriorityRatio
-      wgBridgeAddress
       wgConservativeUploadRateMbit
-      wgNamespaceAddress
-      wgTimerDeps
-      wgUnitDepsBase
       ;
   };
 
@@ -59,7 +31,10 @@ in
 
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
 
-  systemd.services.prowlarr.unitConfig = networkOnlineUnitDeps;
+  systemd.services.prowlarr.unitConfig = {
+    Wants = [ "network-online.target" ];
+    After = [ "network-online.target" ];
+  };
 
   nixarr = {
     enable = true;

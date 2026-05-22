@@ -1,12 +1,19 @@
 {
   config,
-  hostname,
+  hostInventory,
   lib,
-  transmissionConservativeUploadLimitKBps,
-  wgNamespaceAddress,
-  wgUnitDepsWithMount,
+  wgConservativeUploadRateMbit,
   ...
 }:
+let
+  wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
+  # Keep Transmission a little below the conservative tc floor so
+  # Transmission's own scheduler remains the bottleneck and can favor
+  # private-tracker torrents before traffic hits the kernel shaper.
+  transmissionConservativeUploadLimitKBps = builtins.floor (
+    (wgConservativeUploadRateMbit * 1000.0 / 8.0) * 0.95
+  );
+in
 {
   sops.secrets.transmissionTrackerHosts = {
     key = "transmission/private_tracker_hosts";
@@ -16,7 +23,6 @@
   };
 
   systemd.services.transmission = {
-    unitConfig = wgUnitDepsWithMount;
     environment.TR_TRACKER_PRIORITY_FILE = config.sops.secrets.transmissionTrackerHosts.path;
     # Transmission is currently inheriting a soft RLIMIT_NOFILE of 1024, which
     # is too low for many active torrents and peers.
@@ -67,7 +73,7 @@
       download-queue-size = 100;
       lpd-enabled = false;
       rpc-bind-address = wgNamespaceAddress;
-      rpc-host-whitelist = "${hostname},${config.services.avahi.hostName}.local";
+      rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
       sort-mode = "progress";
       speed-limit-up = transmissionConservativeUploadLimitKBps;
       speed-limit-up-enabled = true;

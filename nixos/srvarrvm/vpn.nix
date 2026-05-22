@@ -1,23 +1,33 @@
 {
   hostInventory,
   lib,
-  networkOnlineUnitDeps,
   pkgs,
-  wgBridgeAddress,
   wgConservativeUploadRateMbit,
-  wgNamespaceAddress,
-  wgTimerDeps,
-  wgUnitDepsBase,
   ...
 }:
 let
+  srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   beastNfsPort = hostInventory.site.ports.nfs;
   beastNfsRate = "1500mbit";
+  networkOnlineUnitDeps = {
+    Wants = [ "network-online.target" ];
+    After = [ "network-online.target" ];
+  };
+  wgBridgeAddress = srvarrSpec.wgNamespace.bridgeAddress;
+  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
   wgConservativeUploadRate = "${toString wgConservativeUploadRateMbit}mbit";
   wgConservativeDownloadRate = "400mbit";
   wgEndpointPort = 1637;
   wgOuterLinkRate = "10gbit";
+  wgUnitDepsBase = networkOnlineUnitDeps // {
+    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
+    BindsTo = [ "wg.service" ];
+    PartOf = [ "wg.service" ];
+  };
+  wgTimerDeps = {
+    After = [ "wg.service" ];
+  };
 in
 {
   boot.kernelModules = [ "ifb" ];

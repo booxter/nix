@@ -2,8 +2,6 @@
   config,
   hostInventory,
   lib,
-  networkOnlineUnitDeps,
-  wgUnitDepsBase,
   ...
 }:
 let
@@ -31,8 +29,17 @@ let
     fsType = "nfs";
     options = mediaMountOptions;
   };
+  networkOnlineUnitDeps = {
+    Wants = [ "network-online.target" ];
+    After = [ "network-online.target" ];
+  };
   requiresMediaMount = networkOnlineUnitDeps // {
     RequiresMountsFor = mediaPath;
+  };
+  wgUnitDepsBase = networkOnlineUnitDeps // {
+    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
+    BindsTo = [ "wg.service" ];
+    PartOf = [ "wg.service" ];
   };
   wgUnitDepsWithMount = wgUnitDepsBase // requiresMediaMount;
   servarrUMask = lib.mkForce "0002";
@@ -51,10 +58,6 @@ let
   ) config.systemd.tmpfiles.rules;
 in
 {
-  _module.args = {
-    inherit wgUnitDepsWithMount;
-  };
-
   boot.supportedFilesystems = [ "nfs" ];
   services.rpcbind.enable = true;
 
@@ -97,4 +100,6 @@ in
   systemd.services.seerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
   systemd.services.shelfmark.unitConfig = requiresMediaMount;
+  systemd.services.transmission.unitConfig = wgUnitDepsWithMount;
+  systemd.services.sabnzbd.unitConfig = wgUnitDepsWithMount;
 }
