@@ -16,7 +16,13 @@ COLOR_BLUE='\033[1;34m'
 COLOR_DIM='\033[2m'
 COLOR_GREEN='\033[1;32m'
 COLOR_RED='\033[1;31m'
-LAN_DNS_SERVER="192.168.1.1"
+LAN_DNS_SERVER="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --json .#nixosConfigurations.pi5.config.networking.interfaces.end0.ipv4.addresses \
+      | jq -r '.[0].address'
+  )
+)"
 WORK_MAP=""
 DRY_RUN=false
 SELECT=false
