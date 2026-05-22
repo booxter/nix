@@ -20,7 +20,6 @@ in
     ./backup.nix
     ./glance.nix
     ./nfs.nix
-    ./nightly-speedtest.nix
     ./sabnzbd.nix
     ./sabnzbd-exporter.nix
     ./transmission.nix
