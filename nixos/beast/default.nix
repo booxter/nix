@@ -202,6 +202,7 @@ in
     (import ../../disko { })
     ./backup-server.nix
     ./btrfs.nix
+    ./disk-bays.nix
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
