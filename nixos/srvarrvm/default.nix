@@ -24,7 +24,7 @@ in
     ./sabnzbd-exporter.nix
     ./transmission.nix
     ./transmission-torrent-cleaner.nix
-    ./transmission-tracker-prioritizer.nix
+    ./transmission-prioritizer.nix
     ./vpn.nix
   ];
 

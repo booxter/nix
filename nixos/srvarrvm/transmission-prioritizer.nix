@@ -53,9 +53,9 @@ in
   ];
 
   systemd.services = {
-    transmission-tracker-prioritizer = mkTrackerService {
+    transmission-prioritizer = mkTrackerService {
       description = "Enforce Transmission torrent priorities for selected private trackers";
-      package = pkgs.transmission-tracker-prioritizer;
+      package = pkgs.transmission-prioritizer;
     };
 
     transmission-collector = mkTrackerService {

@@ -15,12 +15,12 @@ from main import (
 )
 
 
-LOG = logging.getLogger("transmission-tracker-prioritizer")
+LOG = logging.getLogger("transmission-prioritizer")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Continuously enforce Transmission bandwidth priority for torrents based on selected trackers.",
+        description="Continuously enforce Transmission torrent priority for torrents based on selected trackers.",
     )
     parser.add_argument(
         "--rpc-url",

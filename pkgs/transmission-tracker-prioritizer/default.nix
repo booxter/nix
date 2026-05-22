@@ -39,9 +39,9 @@ let
 in
 {
   prioritizer = mkTool {
-    name = "transmission-tracker-prioritizer";
+    name = "transmission-prioritizer";
     script = ./prioritizer.py;
-    description = "Continuously enforce Transmission bandwidth priority for torrents based on selected tracker hosts";
+    description = "Continuously enforce Transmission torrent priority based on selected tracker hosts";
   };
 
   collector = mkTool {

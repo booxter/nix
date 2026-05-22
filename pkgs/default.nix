@@ -25,6 +25,6 @@ in
 
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner { };
 
-  transmission-tracker-prioritizer = transmissionTrackerTools.prioritizer;
+  transmission-prioritizer = transmissionTrackerTools.prioritizer;
   transmission-collector = transmissionTrackerTools.collector;
 }
