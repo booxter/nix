@@ -16,7 +16,49 @@ COLOR_BLUE='\033[1;34m'
 COLOR_DIM='\033[2m'
 COLOR_GREEN='\033[1;32m'
 COLOR_RED='\033[1;31m'
-LAN_DNS_SERVER="192.168.1.1"
+LAN_DNS_SERVER="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --json .#nixosConfigurations.pi5.config.networking.interfaces.end0.ipv4.addresses \
+      | jq -r '.[0].address'
+  )
+)"
+HOST_BASE_MAP_JSON="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --impure --json --expr "
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            strings.toUpper = s: s;
+          };
+        };
+        toVmName = hostInventory.toVmName;
+        nixos = builtins.foldl' (
+          acc: spec:
+          if spec.type == \"bm\" then
+            acc
+            // {
+              \${spec.name} = spec.dnsName or spec.name;
+            }
+          else if spec.type == \"vm\" then
+            let
+              proxName = \"prox-\${toVmName spec.name}\";
+            in
+            acc
+            // {
+              \${proxName} = spec.dnsName or (spec.dhcpReservation.hostname or proxName);
+            }
+          else
+            throw \"Unsupported NixOS host spec type \${spec.type}\"
+        ) { } hostInventory.nixosHostSpecs;
+        darwin = builtins.mapAttrs (_: cfg: cfg.hostname) hostInventory.darwinHosts;
+      in
+      nixos // darwin
+    "
+  )
+)"
+export HOST_BASE_MAP_JSON
 WORK_MAP=""
 DRY_RUN=false
 SELECT=false

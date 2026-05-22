@@ -1,37 +1,56 @@
 {
   config,
   lib,
+  hostInventory,
   outputs,
   pkgs,
   ...
 }:
 let
-  arrServices = import ../../lib/arr-services.nix {
-    grafanaProbeUrl = "http://127.0.0.1:${toString grafanaPort}/";
-    srvarrProbeHost = outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName;
-    srvarrPorts = {
-      aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
-      audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
-      bazarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.bazarr.port;
-      lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;
-      prowlarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.prowlarr.port;
-      radarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.radarr.port;
-      sabnzbd = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sabnzbd.guiPort;
-      shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
-      sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
-      transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
-    };
+  beastSpec = hostInventory.nixosHostSpecsByName.beast;
+  frameSpec = hostInventory.nixosHostSpecsByName.frame;
+  lan = hostInventory.site.lan;
+  pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
+  prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
+  srvarrPorts = {
+    aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
+    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
+    bazarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.bazarr.port;
+    lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;
+    prowlarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.prowlarr.port;
+    radarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.radarr.port;
+    sabnzbd = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sabnzbd.guiPort;
+    shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
+    sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
+    transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
   };
+  serviceCatalog = map (
+    service:
+    if service.scope == "external" then
+      service
+    else if service.owner == "fana" then
+      service
+      // {
+        probeUrl = "http://127.0.0.1:${toString grafanaPort}/${service.probePath}";
+        url = "http://${service.displayHost}:3000/";
+      }
+    else
+      service
+      // {
+        probeUrl = "http://${service.probeHost}:${toString srvarrPorts.${service.id}}${service.probePath}";
+        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}}/";
+      }
+  ) hostInventory.services;
   dnsProbeTargets = [
     {
       resolver = "pi5";
       resolver_title = "pi5 dnsmasq";
-      target = "192.168.1.1:53";
+      target = "${lan.gateway.address}:53";
     }
     {
       resolver = "upstream";
-      resolver_title = "upstream 192.168.0.1";
-      target = "192.168.0.1:53";
+      resolver_title = "upstream ${lan.upstreamGateway}";
+      target = "${lan.upstreamGateway}:53";
     }
     {
       resolver = "google";
@@ -42,13 +61,13 @@ let
   wanIcmpProbeTargets = [
     {
       probe = "gateway";
-      probe_title = "Gateway 192.168.1.1";
-      target = "192.168.1.1";
+      probe_title = "Gateway ${lan.gateway.address}";
+      target = lan.gateway.address;
     }
     {
       probe = "upstream";
-      probe_title = "Upstream 192.168.0.1";
-      target = "192.168.0.1";
+      probe_title = "Upstream ${lan.upstreamGateway}";
+      target = lan.upstreamGateway;
     }
     {
       probe = "cloudflare";
@@ -59,8 +78,8 @@ let
   wanTcpProbeTargets = [
     {
       probe = "gateway-dns";
-      probe_title = "Gateway DNS 192.168.1.1:53";
-      target = "192.168.1.1:53";
+      probe_title = "Gateway DNS ${lan.gateway.address}:53";
+      target = "${lan.gateway.address}:53";
     }
     {
       probe = "cloudflare-https";
@@ -664,8 +683,8 @@ in
         metrics_path = "/ups_metrics";
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ "prx1-lab" ];
-          ups = [ "PRX1-UPS" ];
+          server = [ (prx1Spec.dnsName or prx1Spec.name) ];
+          ups = [ (hostInventory.toUpsName prx1Spec.name) ];
         };
         static_configs = [
           {
@@ -692,8 +711,8 @@ in
         metrics_path = "/ups_metrics";
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ "dhcp" ];
-          ups = [ "PI5-UPS" ];
+          server = [ (pi5Spec.dnsName or pi5Spec.name) ];
+          ups = [ (hostInventory.toUpsName pi5Spec.name) ];
         };
         static_configs = [
           {
@@ -720,8 +739,8 @@ in
         metrics_path = "/ups_metrics";
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ "beast" ];
-          ups = [ "BEAST-UPS" ];
+          server = [ (beastSpec.dnsName or beastSpec.name) ];
+          ups = [ (hostInventory.toUpsName beastSpec.name) ];
         };
         static_configs = [
           {
@@ -748,8 +767,8 @@ in
         metrics_path = "/ups_metrics";
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ "frame" ];
-          ups = [ "FRAME-UPS" ];
+          server = [ (frameSpec.dnsName or frameSpec.name) ];
+          ups = [ (hostInventory.toUpsName frameSpec.name) ];
         };
         static_configs = [
           {
@@ -782,7 +801,7 @@ in
             service_title = service.title;
           };
           targets = [ service.probeUrl ];
-        }) arrServices;
+        }) serviceCatalog;
         relabel_configs = [
           {
             source_labels = [ "__address__" ];

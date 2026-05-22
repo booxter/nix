@@ -11,11 +11,11 @@ There are two active control layers:
 
 There is no public/private sub-cap split.
 
-`transmission-tracker-prioritizer` is also active on `srvarr`, but it is now
+`transmission-prioritizer` is also active on `srvarr`, but it is now
 split into two services:
 
-- `transmission-tracker-prioritizer`: applies `bandwidthPriority` changes
-- `transmission-tracker-prioritizer-collector`: exports Prometheus metrics
+- `transmission-prioritizer`: applies `bandwidthPriority` changes
+- `transmission-collector`: exports Prometheus metrics without mutating torrents
 
 Together they:
 
@@ -40,14 +40,14 @@ Host wiring:
 
 Helper module:
 
-- [nixos/srvarrvm/transmission-tracker-prioritizer.nix](../nixos/srvarrvm/transmission-tracker-prioritizer.nix)
+- [nixos/srvarrvm/transmission-prioritizer.nix](../nixos/srvarrvm/transmission-prioritizer.nix)
 
 Important current facts:
 
 - `srvarr` imports `adaptive-upload-policy.nix`
-- `srvarr` imports `transmission-tracker-prioritizer.nix`
-- `transmission-tracker-prioritizer` can be stopped independently from
-  `transmission-tracker-prioritizer-collector`
+- `srvarr` imports `transmission-prioritizer.nix`
+- `transmission-prioritizer` can be stopped independently from
+  `transmission-collector`
 - Transmission gets:
   - `TR_TRACKER_PRIORITY_FILE=/run/secrets/transmissionTrackerHosts`
 - the preferred tracker host secret lives at:
@@ -111,8 +111,12 @@ Implementation:
 The helper code is split into separate collector and prioritizer entrypoints
 with shared classification logic:
 
-- classifies torrents by preferred tracker host when deciding which priorities
-  to enforce
+- `transmission-prioritizer`: classifies torrents and writes
+  `bandwidthPriority` updates back to Transmission
+- `transmission-collector`: runs the same classification logic but only exports
+  the observed state to Prometheus
+- both classify torrents by preferred tracker host when deciding which
+  priorities to enforce
 - sets:
   - preferred torrents -> `bandwidthPriority = high`
   - if any preferred torrent exists:
@@ -147,8 +151,8 @@ The collector exports per-priority torrent, peer, download, and upload metrics
 through the node exporter textfile directory.
 
 On `srvarr`, that export is handled by
-`transmission-tracker-prioritizer-collector`, so metrics continue updating even
-if `transmission-tracker-prioritizer` is stopped.
+`transmission-collector`, so metrics continue updating even if
+`transmission-prioritizer` is stopped.
 
 Important note:
 
@@ -169,5 +173,5 @@ were removed from the `Media Pipe` dashboard.
 - [pkgs/transmission-tracker-prioritizer/main.py](../pkgs/transmission-tracker-prioritizer/main.py)
 - [nixos/srvarrvm/adaptive-upload-policy.nix](../nixos/srvarrvm/adaptive-upload-policy.nix)
 - [nixos/srvarrvm/default.nix](../nixos/srvarrvm/default.nix)
-- [nixos/srvarrvm/transmission-tracker-prioritizer.nix](../nixos/srvarrvm/transmission-tracker-prioritizer.nix)
+- [nixos/srvarrvm/transmission-prioritizer.nix](../nixos/srvarrvm/transmission-prioritizer.nix)
 - [overlays/default.nix](../overlays/default.nix)

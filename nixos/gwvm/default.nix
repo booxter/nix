@@ -1,21 +1,22 @@
-{ lib, ... }:
+{ lib, hostInventory, ... }:
 let
+  wgHome = hostInventory.site.wireguard.home;
   wgInterface = "wg0";
-  wgListenPort = 51820;
-  wgAddress = "10.83.0.1/24";
+  wgListenPort = wgHome.gateway.listenPort;
+  wgAddress = wgHome.gateway.address;
   lanInterface = "ens18";
 
   vpnPeers = [
     {
       name = "mair";
       publicKey = "j3TbXthVhDk2TVAag6Cr0MRLiCTaOPfBL8UeecG9Sx4=";
-      address = "10.83.0.10";
+      address = wgHome.peers.mair.address;
     }
   ];
 
   mkPeer = peer: {
     inherit (peer) publicKey;
-    allowedIPs = [ "${peer.address}/32" ] ++ (peer.extraAllowedIPs or [ ]);
+    allowedIPs = [ peer.address ] ++ (peer.extraAllowedIPs or [ ]);
   };
 in
 {

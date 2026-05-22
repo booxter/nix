@@ -1,4 +1,5 @@
 {
+  hostInventory,
   inputs,
   outputs,
   ...
@@ -8,6 +9,7 @@ let
     {
       inputs,
       outputs,
+      hostInventory,
       username,
       hmFull,
       isDesktop,
@@ -19,6 +21,7 @@ let
         inherit
           inputs
           outputs
+          hostInventory
           username
           hmFull
           isDesktop
@@ -77,6 +80,7 @@ rec {
         inherit
           inputs
           outputs
+          hostInventory
           username
           platform
           hmFull
@@ -113,6 +117,7 @@ rec {
         inherit
           inputs
           outputs
+          hostInventory
           hostname
           platform
           virtPlatform
@@ -134,6 +139,7 @@ rec {
           inherit
             inputs
             outputs
+            hostInventory
             username
             hmFull
             isDesktop
@@ -385,7 +391,7 @@ rec {
               {
                 # Hypervisors upgrade on a separate schedule to avoid
                 # disrupting guest VMs running on top.
-                system.autoUpgrade.dates = "Sun 03:00";
+                system.autoUpgrade.dates = "Sun 04:00";
 
                 nixpkgs.overlays = [
                   inputs.proxmox-nixos.overlays.${platform}
@@ -482,12 +488,14 @@ rec {
       isWork ? false,
       isVM ? false,
       extraModules ? [ ],
+      ...
     }:
     inputs.nixos-raspberrypi.lib.nixosSystem {
       specialArgs = {
         inherit
           inputs
           outputs
+          hostInventory
           hostname
           platform
           username
@@ -509,6 +517,7 @@ rec {
           inherit
             inputs
             outputs
+            hostInventory
             username
             hmFull
             isDesktop
@@ -559,12 +568,14 @@ rec {
       isDesktop ? false,
       isWork ? false,
       extraModules ? [ ],
+      ...
     }:
     inputs.nix-darwin.lib.darwinSystem {
       specialArgs = {
         inherit
           inputs
           outputs
+          hostInventory
           hostname
           platform
           username
@@ -588,6 +599,7 @@ rec {
           inherit
             inputs
             outputs
+            hostInventory
             username
             hmFull
             isDesktop

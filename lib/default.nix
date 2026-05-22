@@ -1,4 +1,5 @@
 {
+  hostInventory,
   inputs,
   outputs,
   username,
@@ -7,6 +8,7 @@
 let
   helpers = import ./helpers.nix {
     inherit
+      hostInventory
       inputs
       outputs
       username

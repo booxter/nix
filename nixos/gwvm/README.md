@@ -1,7 +1,8 @@
 # gw (NixOS VM)
 
 This host is a minimal WireGuard gateway VM. Client peers are declared in
-`nixos/gwvm/default.nix`.
+`nixos/gwvm/default.nix`, while the shared tunnel topology lives in
+`lib/inventory.nix` under `site.wireguard.home` and `site.lan`.
 
 ## Client setup
 
@@ -12,14 +13,14 @@ umask 077
 wg genkey | tee client.key | wg pubkey > client.pub
 ```
 
-Pick a free address in `10.83.0.0/24` and add the peer to the `vpnPeers` list
-in `nixos/gwvm/default.nix`:
+Pick a free address from `site.wireguard.home.cidr` in `lib/inventory.nix` and add
+the peer to the `vpnPeers` list in `nixos/gwvm/default.nix`:
 
 ```nix
 {
   name = "iphone";
   publicKey = "<contents of client.pub>";
-  address = "10.83.0.10";
+  address = "<peer-address>/32";
 }
 ```
 
@@ -31,26 +32,18 @@ nix run .#prox-deploy -- gw prx1
 nix run .#deploy -- prox-gwvm
 ```
 
-Read the server public key from the VM:
+Generate a client config locally from the tracked topology:
 
 ```bash
-ssh prox-gwvm 'sudo wg pubkey < /var/lib/wireguard/wg0.key'
+nix run .#wg-home-client-config -- \
+  --peer <inventory-peer-name> \
+  --private-key-file ./client.key \
+  --fetch-server-public-key \
+  --output ./client.conf
 ```
 
-Create a client config locally:
-
-```ini
-[Interface]
-PrivateKey = <contents of client.key>
-Address = 10.83.0.10/32
-DNS = 192.168.1.1
-
-[Peer]
-PublicKey = <server public key from prox-gwvm>
-Endpoint = wg.ihar.dev:51820
-AllowedIPs = 10.83.0.0/24, 192.168.0.0/16
-PersistentKeepalive = 25
-```
+For a peer that is not modeled in `site.wireguard.home.peers`, use
+`--address <peer-address>/32` instead of `--peer`.
 
 Optional QR code for mobile clients:
 

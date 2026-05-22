@@ -1,19 +1,45 @@
-{ pkgs, username, ... }:
+{
+  lib,
+  pkgs,
+  username,
+  hostInventory,
+  ...
+}:
 let
+  lan = hostInventory.site.lan;
+  beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
+  dhcpRanges = import ../../lib/dhcp-ranges.nix { inherit lib; };
+  renderDhcpReservation =
+    reservation:
+    builtins.concatStringsSep "," (
+      (reservation.identifiers or [ reservation.match ])
+      ++ [
+        reservation.hostname
+        reservation.ip
+      ]
+    );
+  renderDhcpRange = iface: range: "${iface},${range.start},${range.end}";
   mainIface = "end0";
   guestIface = "wlan0";
-  gwAddr = "192.168.0.1";
-  mainAddr = "192.168.1.1";
-  guestAddr = "192.168.2.1";
-  lanDomain = "home.arpa";
+  gwAddr = lan.upstreamGateway;
+  mainAddr = lan.gateway.address;
+  guestAddr = lan.guest.address;
+  lanDomain = lan.domain;
   dnsmasqExporterPort = 9153;
+  publicServiceHosts = map (service: service.publicHost) hostInventory.publicServices;
+  staticDhcpHosts = map renderDhcpReservation hostInventory.staticDhcpReservations;
+  managedDhcpHosts = map renderDhcpReservation hostInventory.managedDhcpReservations;
+  mainDhcpRanges = map (renderDhcpRange mainIface) lan.dhcpRanges.main.ranges;
+  guestDhcpRanges = map (renderDhcpRange guestIface) lan.dhcpRanges.guest.ranges;
 in
 {
   imports = [
     ./ups.nix
   ];
 
-  host.dnsName = "dhcp";
+  assertions =
+    dhcpRanges.mkExclusionAssertions "main" lan.dhcpRanges.main
+    ++ dhcpRanges.mkExclusionAssertions "guest" lan.dhcpRanges.guest;
 
   networking = {
     interfaces.end0 = {
@@ -57,11 +83,7 @@ in
       dhcp-authoritative = true;
       dhcp-rapid-commit = true;
 
-      dhcp-range = [
-        # Keep DHCP ranges away from reserved VPN netns subnet (192.168.50.0/24).
-        "${mainIface},192.168.10.1,192.168.20.255"
-        "${guestIface},192.168.100.1,192.168.100.255"
-      ];
+      dhcp-range = mainDhcpRanges ++ guestDhcpRanges;
 
       listen-address = [
         "127.0.0.1"
@@ -95,46 +117,14 @@ in
         "egress,${gwAddr}"
         "dhcp,${mainAddr}"
         # Split DNS: send public web domains to the central ingress on beast.
-        "au.ihar.dev,jf.ihar.dev,js.ihar.dev,mu.ihar.dev,shelf.ihar.dev,vi.ihar.dev,192.168.16.3"
+        "${lib.concatStringsSep "," publicServiceHosts},${beastAddress}"
       ];
 
       # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix
       dhcp-host = [
-        # infra
-        "7c:b7:7b:04:05:99,mdx,192.168.10.100" # MDX-8
-
-        # better alias for work machine with forced client id
-        "id:JGWXHWDL4X,mlt,192.168.11.2"
-
-        # macos is insane and sends "Mac" in host name option regardless of
-        # what is set in scutil. Force ip address for mair.
-        "a2:65:a0:ce:9f:23,id:mair,mair,192.168.11.3"
-
-        # DON'T USE 192.168.15.0/24 for nixarr compatibility
-        # TODO: migrate all internal nodes out of .15 range for nixarr compatibility
-        # TODO: modify nixarr to allow using a different range for wg iface?
-
-        #---- lab ----
-        "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
-
-        # new NAS (client-id from dhcpcd extraConfig)
-        "id:beast,beast,192.168.16.3"
-        # NAS IPMI
-        "bc:fc:e7:3b:f5:99,beast-ipmi,192.168.16.4"
-
-        # mini-PC NUC nodes running proxmox
-        "38:05:25:30:7d:89,prx1-lab,192.168.15.10"
-        "38:05:25:30:7f:7d,prx2-lab,192.168.15.11"
-        "38:05:25:30:7d:69,prx3-lab,192.168.15.12"
-
-        # nv ws
-        "ac:b4:80:40:05:2e,nvws,192.168.15.100"
-
-        # hardcode IP for VM port forwarding
-        "id:prox-srvarrvm,prox-srvarrvm,192.168.20.2"
-        "id:prox-gwvm,prox-gwvm,192.168.20.3"
-        "id:prox-orgvm,prox-orgvm,192.168.20.4"
-      ];
+      ]
+      ++ staticDhcpHosts
+      ++ managedDhcpHosts;
 
       enable-tftp = true;
       tftp-root = "/var/lib/dnsmasq/tftp";

@@ -23,10 +23,8 @@ in
 
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
 
-  nightly-speedtest-probe = pkgs.callPackage ./nightly-speedtest-probe { };
-
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner { };
 
-  transmission-tracker-prioritizer = transmissionTrackerTools.prioritizer;
-  transmission-tracker-prioritizer-collector = transmissionTrackerTools.collector;
+  transmission-prioritizer = transmissionTrackerTools.prioritizer;
+  transmission-collector = transmissionTrackerTools.collector;
 }

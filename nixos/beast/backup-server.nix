@@ -28,7 +28,7 @@ let
           "--keep-monthly=12"
         ];
         timerConfig = {
-          OnCalendar = "05:30";
+          OnCalendar = "06:00";
           RandomizedDelaySec = "30m";
         };
       };
@@ -44,7 +44,7 @@ let
         ];
         timerConfig = {
           # Stagger cloud offload after host-side local backups have landed.
-          OnCalendar = "05:30";
+          OnCalendar = "06:00";
           RandomizedDelaySec = "30m";
         };
       };
@@ -59,7 +59,7 @@ let
           "--keep-monthly=12"
         ];
         timerConfig = {
-          OnCalendar = "05:30";
+          OnCalendar = "06:00";
           RandomizedDelaySec = "30m";
         };
       };

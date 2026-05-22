@@ -80,9 +80,20 @@
     let
       inherit (self) outputs;
       username = "ihrachyshka";
-      helpers = import ./lib { inherit inputs outputs username; };
+      hostInventory = import ./lib/inventory.nix {
+        inherit username;
+        lib = inputs.nixpkgs.lib;
+      };
+      helpers = import ./lib {
+        inherit
+          hostInventory
+          inputs
+          outputs
+          username
+          ;
+      };
 
-      hostSpecs = import ./lib/host-specs.nix { inherit username; };
+      hostSpecs = hostInventory;
       inherit (hostSpecs)
         darwinHosts
         nixosHostSpecs
@@ -95,6 +106,15 @@
         proxmox = helpers.mkProxmox;
         raspberryPi = helpers.mkRaspberryPi;
       };
+
+      staticHostModule =
+        spec:
+        { lib, ... }:
+        {
+          config.host = lib.optionalAttrs (spec ? dnsName) {
+            dnsName = spec.dnsName;
+          };
+        };
 
       VM =
         args@{
@@ -135,26 +155,34 @@
       specToNixosConfigs =
         spec:
         let
+          extraModules = inputs.nixpkgs.lib.optionals (spec ? dnsName) [ (staticHostModule spec) ];
           args = builtins.removeAttrs spec [
             "type"
             "hostKind"
             "homeManagerInput"
             "nixpkgsInput"
+            "dnsName"
           ];
           inputArgs =
             (if spec ? homeManagerInput then { homeManagerInput = inputs.${spec.homeManagerInput}; } else { })
             // (if spec ? nixpkgsInput then { nixpkgsInput = inputs.${spec.nixpkgsInput}; } else { });
         in
         if spec.type == "bm" then
-          BM (args // inputArgs // { mkHost = hostKindToMkHost.${spec.hostKind}; })
+          BM (
+            args
+            // inputArgs
+            // {
+              mkHost = hostKindToMkHost.${spec.hostKind};
+              extraModules = (args.extraModules or [ ]) ++ extraModules;
+            }
+          )
         else if spec.type == "vm" then
-          VM args
+          VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
         else
           throw "Unsupported NixOS host spec type `${spec.type}`";
+
     in
     {
-      hostWorkMap = import ./lib/host-work-map.nix { inherit username; };
-
       homeConfigurations = {
         # nv dev env
         "${username}@nv" = helpers.mkHome {
@@ -215,7 +243,13 @@
         }
       );
 
-      checks = import ./checks.nix { inherit inputs helpers; };
+      checks = import ./checks.nix {
+        inherit
+          helpers
+          inputs
+          outputs
+          ;
+      };
       nixosTests = import ./nixos-tests.nix { inherit inputs helpers; };
 
       overlays = import ./overlays { inherit inputs; };
@@ -244,6 +278,10 @@
           pkgs = import inputs.nixpkgs {
             inherit system;
             config.allowUnfree = true;
+            overlays = [
+              outputs.overlays.additions
+              outputs.overlays.modifications
+            ];
           };
           sopsApps = import ./lib/sops.nix { inherit pkgs; };
           fleetApps = import ./lib/fleet.nix { inherit pkgs; };

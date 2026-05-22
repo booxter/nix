@@ -3,7 +3,7 @@
   lib,
   pkgs,
   hostname,
-  isWork,
+  hostInventory,
   platform,
   stateVersion,
   upsShutdownDelaySeconds,
@@ -12,19 +12,15 @@
 let
   removePrefix = lib.strings.removePrefix;
   removeSuffix = lib.strings.removeSuffix;
+  hostSpecName = removeSuffix "vm" (removePrefix "prox-" (removePrefix "local-" hostname));
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
-  isProxmoxVmHost = lib.hasPrefix "prox-" hostname && lib.hasSuffix "vm" hostname;
-  upsClientsPRX1 = [
-    "prx2-lab"
-    "prx3-lab"
-  ];
-  upsClientsPi5 = [
-    "nvws"
-  ];
-  usesPRX1Ups = (isProxmoxVmHost && !isWork) || lib.elem hostname upsClientsPRX1;
-  usesPi5Ups = (isProxmoxVmHost && isWork) || lib.elem hostname upsClientsPi5;
+  isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
+  upsServerName = if isLocalVmHost then null else hostSpec.upsHost or null;
+  upsServerSpec =
+    if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
 in
 {
   imports =
@@ -36,26 +32,19 @@ in
       ./_mixins/dns-query-accounting
       ./_mixins/external-service.nix
       ./_mixins/lan-wan-accounting
+      ./_mixins/nixos-upgrade-holds
       ./_mixins/nixos-upgrade-metrics
       ./_mixins/restic-beast-client.nix
       ./_mixins/user
     ]
-    ++ lib.optionals usesPRX1Ups [
+    ++ lib.optionals (upsServerSpec != null) [
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
-        monitorName = "nas";
-        system = "PRX1-UPS@prx1-lab";
-        user = "upsslave";
-        passwordText = "upsslave123";
-      })
-    ]
-    ++ lib.optionals usesPi5Ups [
-      # TODO: rotate this password and migrate to sops-managed secrets.
-      (import ./_mixins/ups-client {
-        inherit pkgs upsShutdownDelaySeconds;
-        monitorName = "pi5";
-        system = "PI5-UPS@192.168.1.1";
+        monitorName = upsServerSpec.name;
+        system = "${hostInventory.toUpsName upsServerSpec.name}@${
+          upsServerSpec.dnsName or upsServerSpec.name
+        }";
         user = "upsslave";
         passwordText = "upsslave123";
       })
@@ -77,7 +66,7 @@ in
     ];
     # Keep upgrades centered in the reboot window, then leave room for hosts to
     # come back before local backups and later cloud offload jobs begin.
-    dates = lib.mkDefault "Sat 03:30";
+    dates = lib.mkDefault "Sat 04:00";
     randomizedDelaySec = "15min";
     persistent = false;
     allowReboot = true;
@@ -87,11 +76,12 @@ in
     };
   };
 
-  # Auto-upgrade uses a GitHub flake URI, so fail fast until DNS is actually
-  # ready. That keeps broken prerequisites visible in systemd instead of
-  # looking like a cleanly skipped upgrade.
-  systemd.services.nixos-upgrade.serviceConfig.ExecStartPre =
-    "${pkgs.getent}/bin/getent hosts api.github.com";
+  host.autoUpgrade.holds = [
+    {
+      startDate = "2026-06-08";
+      stopDate = "2026-06-28";
+    }
+  ];
 
   time.timeZone = "America/New_York";
 

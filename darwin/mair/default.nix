@@ -1,4 +1,8 @@
-{ config, ... }:
+{ config, hostInventory, ... }:
+let
+  lan = hostInventory.site.lan;
+  wgHome = hostInventory.site.wireguard.home;
+in
 {
   sops.secrets."wireguard/gwvm/privateKey" = {
     owner = "root";
@@ -10,17 +14,17 @@
     # Keep this as an on-demand tunnel on the laptop to avoid forcing it up on
     # every network. The interface is ready once deployed.
     autostart = false;
-    address = [ "10.83.0.10/32" ];
-    dns = [ "192.168.1.1" ];
+    address = [ wgHome.peers.mair.address ];
+    dns = [ lan.gateway.address ];
     privateKeyFile = config.sops.secrets."wireguard/gwvm/privateKey".path;
 
     peers = [
       {
         publicKey = "ftjXEviy3flbMlXVntXs/QDcDUWR9f38nIPAcDTe4Gc=";
-        endpoint = "wg.ihar.dev:51820";
+        endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
         allowedIPs = [
-          "10.83.0.0/24"
-          "192.168.0.0/16"
+          wgHome.cidr
+          lan.cidr
         ];
         persistentKeepalive = 25;
       }

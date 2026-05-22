@@ -11,12 +11,14 @@ setup() {
 }
 
 @test "resolve_base_host maps pi5 to dhcp" {
+  export HOST_BASE_MAP_JSON='{"pi5":"dhcp"}'
   run resolve_base_host pi5
   [ "$status" -eq 0 ]
   [ "$output" = "dhcp" ]
 }
 
 @test "resolve_base_host leaves other hosts unchanged" {
+  export HOST_BASE_MAP_JSON='{"pi5":"dhcp"}'
   run resolve_base_host nvws
   [ "$status" -eq 0 ]
   [ "$output" = "nvws" ]

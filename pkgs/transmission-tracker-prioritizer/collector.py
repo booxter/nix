@@ -16,12 +16,12 @@ from main import (
 )
 
 
-LOG = logging.getLogger("transmission-tracker-prioritizer-collector")
+LOG = logging.getLogger("transmission-collector")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Continuously collect Transmission torrent priority metrics based on selected trackers.",
+        description="Continuously collect Transmission torrent metrics based on selected trackers.",
     )
     parser.add_argument(
         "--rpc-url",
@@ -54,7 +54,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--metrics-file",
         required=True,
-        help="Prometheus textfile path for exported torrent priority metrics.",
+        help="Prometheus textfile path for exported torrent metrics.",
     )
     parser.add_argument(
         "--log-level",

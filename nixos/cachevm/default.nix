@@ -1,6 +1,11 @@
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  hostInventory,
+  ...
+}:
 let
-  beastNfsAddress = "192.168.16.3";
+  beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   nfsPath = "/cache";
   # Same recovery semantics as other NFS clients:
   # - block writes/reads until NAS returns
@@ -83,7 +88,7 @@ in
   # Keep cachevm upgrades on a separate schedule so they don't clash with
   # machines that use this cache for their own auto-updates, but still center
   # them in the reboot window like the rest of the fleet.
-  system.autoUpgrade.dates = lib.mkForce "Sun 03:30";
+  system.autoUpgrade.dates = lib.mkForce "Tue 04:00";
   system.autoUpgrade.randomizedDelaySec = lib.mkForce "15min";
 
   systemd.services.atticd.unitConfig.RequiresMountsFor = "/cache";
