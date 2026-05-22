@@ -44,7 +44,7 @@ in
       # TODO: rotate this password and migrate to sops-managed secrets.
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
-        monitorName = upsServerSpec.upsMonitorName or upsServerSpec.name;
+        monitorName = upsServerSpec.name;
         system = "${hostInventory.toUpsName upsServerSpec.name}@${upsServerSpec.dnsName or upsServerSpec.name}";
         user = "upsslave";
         passwordText = "upsslave123";

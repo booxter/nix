@@ -158,7 +158,6 @@ rec {
       hostKind = "raspberryPi";
       name = piHostname;
       dnsName = "dhcp";
-      upsMonitorName = "pi5";
       stateVersion = piStateVersion;
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
@@ -211,7 +210,6 @@ rec {
       name = "prx1-lab";
       inherit username;
       password = prxPassword;
-      upsMonitorName = "nas";
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
       ipAddress = "192.168.15.10";
