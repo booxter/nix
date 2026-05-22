@@ -9,23 +9,6 @@ let
   mediaRoot = "/volume2/Media";
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
-  jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (
-    builtins.toJSON {
-      Serilog = {
-        MinimumLevel = {
-          Default = "Information";
-          Override = {
-            Microsoft = "Warning";
-            System = "Warning";
-            "Jellyfin.Api.Controllers.DynamicHlsController" = "Debug";
-            "Jellyfin.Api.Helpers.HlsHelpers" = "Debug";
-            "Emby.Server.Implementations.HttpServer" = "Debug";
-            "Emby.Server.Implementations.Session" = "Debug";
-          };
-        };
-      };
-    }
-  );
   mkTmpfilesDir = path: mode: user: group: [
     "d ${path} ${mode} ${user} ${group} - -"
     "z ${path} ${mode} ${user} ${group} - -"
@@ -179,6 +162,7 @@ in
     ./btrfs.nix
     ./disk-bays.nix
     ./igpu.nix
+    ./jellyfin.nix
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
@@ -205,34 +189,12 @@ in
   # - If BMC gets into a broken state, run: sudo ipmitool raw 0x32 0x66
   # - On first setup, use a simple password (no special chars) or later logins can fail.
 
-  services.jellyfin = {
-    enable = true;
-    openFirewall = true;
-  };
-  system.activationScripts.jellyfinLoggingConfig.text = ''
-    ${pkgs.coreutils}/bin/install -d -m 0700 -o jellyfin -g jellyfin /var/lib/jellyfin/config
-    ${pkgs.coreutils}/bin/install -m 0600 -o jellyfin -g jellyfin ${jellyfinLoggingConfig} /var/lib/jellyfin/config/logging.json
-  '';
   users.groups.media.gid = 169;
-  users.users.jellyfin.extraGroups = [ "media" ];
-  systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
-  systemd.services.jellyfin.restartTriggers = [ jellyfinLoggingConfig ];
 
   host.observability.client.blackbox.enable = true;
 
   sops = {
     defaultSopsFile = ../../secrets/beast.yaml;
-  };
-
-  # Keep the existing /media path expected by Jellyfin/Jellarr.
-  fileSystems."/media" = {
-    device = "/volume2/Media";
-    fsType = "none";
-    options = [
-      "bind"
-      "nofail"
-      "x-systemd.requires-mounts-for=/volume2"
-    ];
   };
 
   networking.resolvconf.enable = true;
