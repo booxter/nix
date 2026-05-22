@@ -159,7 +159,7 @@ def priority_class_name(priority: int) -> str:
 def torrent_desired_priority(
     torrent: dict,
     is_preferred: bool,
-    has_any_preferred_torrents: bool,
+    preferred_bootstrap_active: bool,
     non_preferred_low_priority_ratio_threshold: float,
 ) -> int:
     if is_preferred:
@@ -173,7 +173,7 @@ def torrent_desired_priority(
     ):
         baseline_non_preferred_priority = TR_PRI_LOW
 
-    if has_any_preferred_torrents:
+    if preferred_bootstrap_active:
         return baseline_non_preferred_priority
 
     if baseline_non_preferred_priority == TR_PRI_NORMAL:
@@ -510,9 +510,13 @@ def collect_iteration_state(
             current_preferred_hashes.add(torrent_hash)
         torrent_entries.append((torrent, torrent_hash, is_preferred))
 
-    has_any_preferred_torrents = bool(current_preferred_hashes)
+    preferred_bootstrap_active = any(
+        is_preferred
+        and isinstance(torrent.get("peersConnected"), int)
+        and torrent["peersConnected"] > 0
+        for torrent, _torrent_hash, is_preferred in torrent_entries
+    )
     preferred_upload_observed_active = False
-    preferred_bootstrap_active = False
     preferred_upload_bytes_per_second = 0
     torrent_counts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
     torrent_activity_counts = {
@@ -590,17 +594,12 @@ def collect_iteration_state(
         desired_priority = torrent_desired_priority(
             torrent,
             is_preferred,
-            has_any_preferred_torrents,
+            preferred_bootstrap_active,
             non_preferred_low_priority_ratio_threshold,
         )
         if is_preferred:
             if isinstance(rate_upload, int) and rate_upload > 0:
                 preferred_upload_bytes_per_second += rate_upload
-            if (
-                isinstance(torrent.get("peersConnected"), int)
-                and torrent["peersConnected"] > 0
-            ):
-                preferred_bootstrap_active = True
             if (
                 isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
             ) or (isinstance(rate_upload, int) and rate_upload > 0):

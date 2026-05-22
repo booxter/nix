@@ -20,10 +20,11 @@ split into two services:
 Together they:
 
 - mark preferred torrents `bandwidthPriority = high`
-- if any preferred torrent exists, keep non-preferred torrents at
-  `bandwidthPriority = normal` while `uploadRatio < 3.0` and demote the rest
-  to `bandwidthPriority = low`
-- if no preferred torrents exist, promote non-preferred torrents with
+- if any preferred torrent currently has connected peers, keep non-preferred
+  torrents at `bandwidthPriority = normal` while `uploadRatio < 3.0` and
+  demote the rest to `bandwidthPriority = low`
+- if no preferred torrent currently has connected peers, promote non-preferred
+  torrents with
   `uploadRatio < 3.0` to `bandwidthPriority = high` and keep
   `uploadRatio >= 3.0` torrents at `bandwidthPriority = low`
 - exports per-class metrics for Prometheus / Grafana
@@ -119,13 +120,13 @@ with shared classification logic:
   priorities to enforce
 - sets:
   - preferred torrents -> `bandwidthPriority = high`
-  - if any preferred torrent exists:
+  - if any preferred torrent currently has connected peers:
     `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = normal`
-  - if any preferred torrent exists:
+  - if any preferred torrent currently has connected peers:
     `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
-  - if no preferred torrents exist:
+  - if no preferred torrent currently has connected peers:
     `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = high`
-  - if no preferred torrents exist:
+  - if no preferred torrent currently has connected peers:
     `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
 - exports `low` / `normal` / `high` torrent priority metrics based on current
   `bandwidthPriority`
