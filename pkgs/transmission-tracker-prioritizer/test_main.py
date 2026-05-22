@@ -7,6 +7,7 @@ from main import (
     TR_PRI_LOW,
     TR_PRI_NORMAL,
     collect_iteration_state,
+    apply_priority_updates,
     torrent_desired_priority,
 )
 
@@ -72,11 +73,13 @@ class TorrentDesiredPriorityTests(unittest.TestCase):
 class FakeClient:
     def __init__(self, torrents: list[dict]) -> None:
         self.torrents = torrents
+        self.calls: list[tuple[str, dict | None]] = []
 
     def call(self, method: str, arguments: dict | None = None) -> dict:
+        self.calls.append((method, arguments))
         self.last_call = (method, arguments)
         if method != "torrent-get":
-            raise AssertionError(f"unexpected RPC method {method!r}")
+            return {}
         return {"torrents": self.torrents}
 
 
@@ -93,6 +96,7 @@ class CollectIterationStateTests(unittest.TestCase):
                 "peersGettingFromUs": 0,
                 "peersSendingToUs": 0,
                 "leftUntilDone": 0,
+                "status": 6,
                 "rateDownload": 0,
                 "rateUpload": 0,
                 "trackerStats": [{"host": "preferred.example"}],
@@ -105,6 +109,7 @@ class CollectIterationStateTests(unittest.TestCase):
                 "peersGettingFromUs": 0,
                 "peersSendingToUs": 0,
                 "leftUntilDone": 0,
+                "status": 6,
                 "rateDownload": 0,
                 "rateUpload": 0,
                 "trackerStats": [{"host": "public.example"}],
@@ -129,6 +134,7 @@ class CollectIterationStateTests(unittest.TestCase):
                 "peersGettingFromUs": 0,
                 "peersSendingToUs": 0,
                 "leftUntilDone": 0,
+                "status": 6,
                 "rateDownload": 0,
                 "rateUpload": 0,
                 "trackerStats": [{"host": "preferred.example"}],
@@ -141,6 +147,7 @@ class CollectIterationStateTests(unittest.TestCase):
                 "peersGettingFromUs": 0,
                 "peersSendingToUs": 0,
                 "leftUntilDone": 0,
+                "status": 6,
                 "rateDownload": 0,
                 "rateUpload": 0,
                 "trackerStats": [{"host": "public.example"}],
@@ -153,6 +160,70 @@ class CollectIterationStateTests(unittest.TestCase):
         self.assertEqual(state.high_priority_hashes, [])
         self.assertEqual(state.normal_priority_hashes, ["public"])
 
+    def test_complete_non_preferred_at_pause_ratio_is_stopped(self) -> None:
+        torrents = [
+            {
+                "hashString": "public",
+                "bandwidthPriority": TR_PRI_NORMAL,
+                "uploadRatio": 6.0,
+                "peersConnected": 0,
+                "peersGettingFromUs": 0,
+                "peersSendingToUs": 0,
+                "leftUntilDone": 0,
+                "status": 6,
+                "rateDownload": 0,
+                "rateUpload": 0,
+                "trackerStats": [{"host": "public.example"}],
+            },
+        ]
+
+        state = self.collect_state(torrents)
+
+        self.assertEqual(state.low_priority_hashes, ["public"])
+        self.assertEqual(state.stop_hashes, ["public"])
+
+    def test_complete_non_preferred_already_stopped_is_not_stopped_again(self) -> None:
+        torrents = [
+            {
+                "hashString": "public",
+                "bandwidthPriority": TR_PRI_LOW,
+                "uploadRatio": 6.0,
+                "peersConnected": 0,
+                "peersGettingFromUs": 0,
+                "peersSendingToUs": 0,
+                "leftUntilDone": 0,
+                "status": 0,
+                "rateDownload": 0,
+                "rateUpload": 0,
+                "trackerStats": [{"host": "public.example"}],
+            },
+        ]
+
+        state = self.collect_state(torrents)
+
+        self.assertEqual(state.stop_hashes, [])
+
+    def test_preferred_torrent_at_pause_ratio_is_not_stopped(self) -> None:
+        torrents = [
+            {
+                "hashString": "preferred",
+                "bandwidthPriority": TR_PRI_HIGH,
+                "uploadRatio": 6.0,
+                "peersConnected": 0,
+                "peersGettingFromUs": 0,
+                "peersSendingToUs": 0,
+                "leftUntilDone": 0,
+                "status": 6,
+                "rateDownload": 0,
+                "rateUpload": 0,
+                "trackerStats": [{"host": "preferred.example"}],
+            },
+        ]
+
+        state = self.collect_state(torrents)
+
+        self.assertEqual(state.stop_hashes, [])
+
     def collect_state(self, torrents: list[dict]):
         with tempfile.TemporaryDirectory() as tmp_dir:
             trackers_file = Path(tmp_dir) / "trackers.txt"
@@ -162,11 +233,82 @@ class CollectIterationStateTests(unittest.TestCase):
                 trackers_file=trackers_file,
                 last_tracker_status=None,
                 non_preferred_low_priority_ratio_threshold=3.0,
+                non_preferred_pause_ratio_threshold=6.0,
             )
 
         if state is None:
             self.fail("expected iteration state")
         return state
+
+
+class ApplyPriorityUpdatesTests(unittest.TestCase):
+    def test_stop_actions_are_sent_to_transmission(self) -> None:
+        client = FakeClient([])
+        state = self.build_state(stop_hashes=["public"])
+
+        apply_priority_updates(client, state)
+
+        self.assertEqual(
+            client.calls,
+            [
+                ("torrent-stop", {"ids": ["public"]}),
+            ],
+        )
+
+    def test_priority_changes_are_applied_before_stop_actions(self) -> None:
+        client = FakeClient([])
+        state = self.build_state(low_priority_hashes=["public"], stop_hashes=["public"])
+
+        apply_priority_updates(client, state)
+
+        self.assertEqual(
+            client.calls,
+            [
+                (
+                    "torrent-set",
+                    {"ids": ["public"], "bandwidthPriority": TR_PRI_LOW},
+                ),
+                ("torrent-stop", {"ids": ["public"]}),
+            ],
+        )
+
+    def build_state(
+        self,
+        *,
+        high_priority_hashes: list[str] | None = None,
+        normal_priority_hashes: list[str] | None = None,
+        low_priority_hashes: list[str] | None = None,
+        stop_hashes: list[str] | None = None,
+    ):
+        from main import IterationState
+
+        return IterationState(
+            tracker_hosts_count=1,
+            preferred_torrent_count=0,
+            preferred_bootstrap_active=False,
+            preferred_upload_active=False,
+            preferred_upload_bytes_per_second=0,
+            torrent_counts={"low": 0, "normal": 0, "high": 0},
+            torrent_activity_counts={
+                "seeding": {"active": 0, "inactive": 0},
+                "downloading": {"active": 0, "inactive": 0},
+            },
+            bandwidth_active_torrent_counts={
+                "download": {"low": 0, "normal": 0, "high": 0},
+                "upload": {"low": 0, "normal": 0, "high": 0},
+            },
+            peer_counts={
+                "low": {"connected": 0, "getting_from_us": 0, "sending_to_us": 0},
+                "normal": {"connected": 0, "getting_from_us": 0, "sending_to_us": 0},
+                "high": {"connected": 0, "getting_from_us": 0, "sending_to_us": 0},
+            },
+            download_bytes_per_second={"low": 0, "normal": 0, "high": 0},
+            upload_bytes_per_second={"low": 0, "normal": 0, "high": 0},
+            high_priority_hashes=high_priority_hashes or [],
+            normal_priority_hashes=normal_priority_hashes or [],
+            low_priority_hashes=low_priority_hashes or [],
+            stop_hashes=stop_hashes or [],
+        )
 
 
 if __name__ == "__main__":

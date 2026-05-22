@@ -3,6 +3,7 @@
   lib,
   pkgs,
   transmissionNonPreferredLowPriorityRatio,
+  transmissionNonPreferredPauseRatio,
   ...
 }:
 let
@@ -20,6 +21,8 @@ let
     config.sops.secrets.transmissionTrackerHosts.path
     "--non-preferred-low-priority-ratio"
     (toString transmissionNonPreferredLowPriorityRatio)
+    "--non-preferred-pause-ratio"
+    (toString transmissionNonPreferredPauseRatio)
     "--interval-seconds"
     "30"
     "--request-timeout-seconds"

@@ -27,6 +27,8 @@ Together they:
   torrents with
   `uploadRatio < 3.0` to `bandwidthPriority = high` and keep
   `uploadRatio >= 3.0` torrents at `bandwidthPriority = low`
+- if a completed non-preferred torrent reaches `uploadRatio >= 6.0`, pause it
+  so the cleaner can remove it once it is old enough
 - exports per-class metrics for Prometheus / Grafana
 
 It does not manage bandwidth groups, public caps, or SABnzbd suppression.
@@ -128,6 +130,8 @@ with shared classification logic:
     `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = high`
   - if no preferred torrent currently has connected peers:
     `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
+  - if a non-preferred torrent is complete and `uploadRatio >= 6.0`:
+    stop/pause the torrent
 - exports `low` / `normal` / `high` torrent priority metrics based on current
   `bandwidthPriority`
 
