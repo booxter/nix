@@ -1,9 +1,7 @@
 {
   config,
   lib,
-  outputs,
   pkgs,
-  hostInventory,
   ...
 }:
 let
@@ -12,7 +10,6 @@ let
   mediaRoot = "/volume2/Media";
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
-  nfsSubnet = hostInventory.site.lan.cidr;
   jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (
     builtins.toJSON {
       Serilog = {
@@ -30,9 +27,6 @@ let
       };
     }
   );
-  # Pin export IDs so clients see stable export identities across server restarts.
-  mkNfsExport =
-    { path, fsid }: "${path} ${nfsSubnet}(rw,async,no_subtree_check,fsid=${toString fsid})";
   mkTmpfilesDir = path: mode: user: group: [
     "d ${path} ${mode} ${user} ${group} - -"
     "z ${path} ${mode} ${user} ${group} - -"
@@ -177,9 +171,6 @@ let
     user = "root";
     group = "media";
   }) mediaLibraries;
-  nfsPorts = [
-    hostInventory.site.ports.nfs # nfsd
-  ];
   joinMediaParts = pkgs.callPackage ../../pkgs/join-media-parts { };
 in
 {
@@ -191,6 +182,7 @@ in
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
+    ./nfs.nix
     ./nginx.nix
     ./pause.nix
     ./raid.nix
@@ -212,35 +204,6 @@ in
   # IPMI quirks (beast):
   # - If BMC gets into a broken state, run: sudo ipmitool raw 0x32 0x66
   # - On first setup, use a simple password (no special chars) or later logins can fail.
-
-  # NFS exports matching existing clients.
-  services.nfs.server = {
-    enable = true;
-    exports = ''
-      ${mkNfsExport {
-        path = "/volume2/Media";
-        fsid = 10; # media export
-      }}
-      ${mkNfsExport {
-        path = "/volume2/nix-cache";
-        fsid = 11; # binary cache export
-      }}
-    '';
-  };
-  systemd.services.nfs-server.unitConfig.RequiresMountsFor = [
-    "/volume2"
-    "/volume2/Media"
-    "/volume2/nix-cache"
-  ];
-
-  services.nfs.settings = {
-    nfsd = {
-      vers3 = "n";
-      vers4 = "y";
-    };
-  };
-
-  services.rpcbind.enable = lib.mkForce false;
 
   services.jellyfin = {
     enable = true;
@@ -275,9 +238,6 @@ in
       "x-systemd.requires-mounts-for=/volume2"
     ];
   };
-
-  networking.firewall.allowedTCPPorts = nfsPorts;
-  networking.firewall.allowedUDPPorts = nfsPorts;
 
   networking.resolvconf.enable = true;
 
