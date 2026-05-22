@@ -83,12 +83,6 @@ in
     }
   ];
 
-  # Auto-upgrade uses a GitHub flake URI, so fail fast until DNS is actually
-  # ready. That keeps broken prerequisites visible in systemd instead of
-  # looking like a cleanly skipped upgrade.
-  systemd.services.nixos-upgrade.serviceConfig.ExecStartPre =
-    "${pkgs.getent}/bin/getent hosts api.github.com";
-
   time.timeZone = "America/New_York";
 
   services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)
