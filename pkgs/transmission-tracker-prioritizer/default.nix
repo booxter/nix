@@ -45,8 +45,8 @@ in
   };
 
   collector = mkTool {
-    name = "transmission-tracker-prioritizer-collector";
+    name = "transmission-collector";
     script = ./collector.py;
-    description = "Continuously collect Transmission torrent priority metrics based on selected tracker hosts";
+    description = "Continuously collect Transmission torrent metrics based on selected tracker hosts";
   };
 }

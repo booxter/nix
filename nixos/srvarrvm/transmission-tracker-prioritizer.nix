@@ -7,7 +7,7 @@
 }:
 let
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
-  metricsFile = "${nodeExporterTextfileDir}/transmission-tracker-prioritizer.prom";
+  metricsFile = "${nodeExporterTextfileDir}/transmission-collector.prom";
   serviceDeps = [
     "network-online.target"
     "nginx.service"
@@ -58,9 +58,9 @@ in
       package = pkgs.transmission-tracker-prioritizer;
     };
 
-    transmission-tracker-prioritizer-collector = mkTrackerService {
-      description = "Collect Transmission torrent priority metrics";
-      package = pkgs.transmission-tracker-prioritizer-collector;
+    transmission-collector = mkTrackerService {
+      description = "Collect Transmission torrent metrics";
+      package = pkgs.transmission-collector;
       extraArgs = [
         "--metrics-file"
         metricsFile
