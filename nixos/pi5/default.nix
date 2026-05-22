@@ -18,8 +18,8 @@ let
   guestAddr = lan.guest.address;
   lanDomain = lan.domain;
   dnsmasqExporterPort = 9153;
-  staticDhcpHosts = builtins.map renderDhcpReservation hostInventory.staticDhcpReservations;
-  managedDhcpHosts = builtins.map renderDhcpReservation hostInventory.managedDhcpReservations;
+  staticDhcpHosts = map renderDhcpReservation hostInventory.staticDhcpReservations;
+  managedDhcpHosts = map renderDhcpReservation hostInventory.managedDhcpReservations;
 in
 {
   imports = [

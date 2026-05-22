@@ -313,18 +313,18 @@ rec {
       };
     }
   ]
-  ++ builtins.map builderSpec [
+  ++ map builderSpec [
     1
     2
     3
   ];
 
-  managedDhcpReservations = builtins.map (
+  managedDhcpReservations = map (
     spec: spec.dhcpReservation
   ) (builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs);
 
   dhcpReservationsByHostname = builtins.listToAttrs (
-    builtins.map (
+    map (
       reservation: {
         name = reservation.hostname;
         value = reservation;
@@ -333,7 +333,7 @@ rec {
   );
 
   nixosHostSpecsByName = builtins.listToAttrs (
-    builtins.map (spec: {
+    map (spec: {
       name = spec.name;
       value = spec;
     }) nixosHostSpecs
