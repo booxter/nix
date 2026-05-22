@@ -28,6 +28,32 @@ let
       cores = 24;
       hmFull = false;
     };
+
+  capitalize =
+    str:
+    "${lib.strings.toUpper (builtins.substring 0 1 str)}${builtins.substring 1 ((builtins.stringLength str) - 1) str}";
+
+  mkService =
+    {
+      id,
+      scope,
+      owner,
+      probePath,
+      publicHost ? null,
+      title ? capitalize id,
+      icon ? "sh:${id}",
+    }:
+    {
+      inherit
+        icon
+        id
+        owner
+        probePath
+        scope
+        title
+        ;
+    }
+    // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
 in
 rec {
   virtPlatform = "aarch64-darwin";
@@ -97,124 +123,98 @@ rec {
   };
 
   services = [
-    {
+    (mkService {
       id = "jellyfin";
-      title = "Jellyfin";
-      icon = "sh:jellyfin";
       scope = "external";
       owner = "beast";
       publicHost = "jf.ihar.dev";
       probePath = "/web/";
-    }
-    {
+    })
+    (mkService {
       id = "jellyseerr";
-      title = "Jellyseerr";
-      icon = "sh:jellyseerr";
       scope = "external";
       owner = "srvarr";
       publicHost = "js.ihar.dev";
       probePath = "/login";
-    }
-    {
+    })
+    (mkService {
       id = "grafana";
-      title = "Grafana";
-      icon = "sh:grafana";
       scope = "internal";
       owner = "fana";
       probePath = "login";
-    }
-    {
+    })
+    (mkService {
       id = "radarr";
-      title = "Radarr";
-      icon = "sh:radarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/login";
-    }
-    {
+    })
+    (mkService {
       id = "sonarr";
-      title = "Sonarr";
-      icon = "sh:sonarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/login";
-    }
-    {
+    })
+    (mkService {
       id = "lidarr";
-      title = "Lidarr";
-      icon = "sh:lidarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/";
-    }
-    {
+    })
+    (mkService {
       id = "aurral";
-      title = "Aurral";
-      icon = "sh:aurral";
       scope = "external";
       owner = "srvarr";
       publicHost = "mu.ihar.dev";
       probePath = "/api/health";
-    }
-    {
+    })
+    (mkService {
       id = "audiobookshelf";
-      title = "Audiobookshelf";
-      icon = "sh:audiobookshelf";
       scope = "external";
       owner = "srvarr";
       publicHost = "au.ihar.dev";
       probePath = "";
-    }
-    {
+    })
+    (mkService {
       id = "shelfmark";
-      title = "Shelfmark";
-      icon = "sh:shelfmark";
       scope = "external";
       owner = "srvarr";
       publicHost = "shelf.ihar.dev";
       probePath = "/";
-    }
-    {
+    })
+    (mkService {
       id = "vikunja";
-      title = "Vikunja";
-      icon = "sh:vikunja";
       scope = "external";
       owner = "org";
       publicHost = "vi.ihar.dev";
       probePath = "";
-    }
-    {
+    })
+    (mkService {
       id = "bazarr";
-      title = "Bazarr";
-      icon = "sh:bazarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/";
-    }
-    {
+    })
+    (mkService {
       id = "prowlarr";
-      title = "Prowlarr";
-      icon = "sh:prowlarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/login";
-    }
-    {
+    })
+    (mkService {
       id = "transmission";
-      title = "Transmission";
-      icon = "sh:transmission";
       scope = "internal";
       owner = "srvarr";
       probePath = "/transmission/web/";
-    }
-    {
+    })
+    (mkService {
       id = "sabnzbd";
       title = "SABNZB";
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
       scope = "internal";
       owner = "srvarr";
       probePath = "/login/";
-    }
+    })
   ];
 
   staticDhcpReservations = [

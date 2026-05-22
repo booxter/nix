@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  outputs,
   pkgs,
   hostInventory,
   ...
@@ -14,6 +15,19 @@ let
   nfsSubnet = hostInventory.site.lan.cidr;
   arrVmAddress = hostInventory.dhcpReservationsByHostname.prox-srvarrvm.ip;
   orgVmAddress = hostInventory.dhcpReservationsByHostname.prox-orgvm.ip;
+  publicServiceBackendAddresses = {
+    beast = "127.0.0.1";
+    srvarr = arrVmAddress;
+    org = orgVmAddress;
+  };
+  publicServicePorts = {
+    jellyfin = 8096;
+    jellyseerr = outputs.nixosConfigurations.prox-srvarrvm.config.services.seerr.port;
+    aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
+    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
+    shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
+    vikunja = outputs.nixosConfigurations.prox-orgvm.config.services.vikunja.port;
+  };
   smartctlExporterPort = 9633;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (
@@ -525,17 +539,16 @@ in
       hostname = "ihrachyshka-beast.freeddns.org";
       username = "ihrachyshka";
     };
-    virtualHosts = {
-      "au.ihar.dev".proxyPass = "http://${arrVmAddress}:9292";
-      "jf.ihar.dev".proxyPass = "http://127.0.0.1:8096";
-      "js.ihar.dev".proxyPass = "http://${arrVmAddress}:5055";
-      "mu.ihar.dev".proxyPass = "http://${arrVmAddress}:3001";
-      "shelf.ihar.dev".proxyPass = "http://${arrVmAddress}:8084";
-      "vi.ihar.dev".proxyPass = "http://${orgVmAddress}:3456";
-    };
+    virtualHosts = builtins.listToAttrs (
+      map (service: {
+        name = service.publicHost;
+        value.proxyPass =
+          "http://${publicServiceBackendAddresses.${service.owner}}:${toString publicServicePorts.${service.id}}";
+      }) hostInventory.publicServices
+    );
   };
 
-  services.nginx.virtualHosts."mu.ihar.dev".locations."/".extraConfig = ''
+  services.nginx.virtualHosts.${hostInventory.servicesById.aurral.publicHost}.locations."/".extraConfig = ''
     proxy_set_header X-Forwarded-For $remote_addr;
   '';
 

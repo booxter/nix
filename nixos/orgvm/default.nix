@@ -1,5 +1,6 @@
-{ config, ... }:
+{ config, hostInventory, ... }:
 let
+  vikunjaService = hostInventory.servicesById.vikunja;
   vikunjaPort = 3456;
   # Vikunja expects an IANA tz database name here, not a fixed abbreviation.
   vikunjaTimezone = "America/New_York";
@@ -27,7 +28,7 @@ in
     enable = true;
     environmentFiles = [ config.sops.templates."vikunja-mailer.env".path ];
     frontendScheme = "https";
-    frontendHostname = "vi.ihar.dev";
+    frontendHostname = vikunjaService.publicHost;
     port = vikunjaPort;
     settings = {
       defaultsettings = {

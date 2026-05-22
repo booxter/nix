@@ -20,6 +20,7 @@ let
   guestAddr = lan.guest.address;
   lanDomain = lan.domain;
   dnsmasqExporterPort = 9153;
+  publicServiceHosts = map (service: service.publicHost) hostInventory.publicServices;
   staticDhcpHosts = map renderDhcpReservation hostInventory.staticDhcpReservations;
   managedDhcpHosts = map renderDhcpReservation hostInventory.managedDhcpReservations;
   mainDhcpRanges = map (renderDhcpRange mainIface) lan.dhcpRanges.main.ranges;
@@ -110,7 +111,7 @@ in
         "egress,${gwAddr}"
         "dhcp,${mainAddr}"
         # Split DNS: send public web domains to the central ingress on beast.
-        "au.ihar.dev,jf.ihar.dev,js.ihar.dev,mu.ihar.dev,shelf.ihar.dev,vi.ihar.dev,${beastAddress}"
+        "${lib.concatStringsSep "," publicServiceHosts},${beastAddress}"
       ];
 
       # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix
