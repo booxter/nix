@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   ...
@@ -179,6 +178,7 @@ in
     ./backup-server.nix
     ./btrfs.nix
     ./disk-bays.nix
+    ./igpu.nix
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
@@ -214,11 +214,7 @@ in
     ${pkgs.coreutils}/bin/install -m 0600 -o jellyfin -g jellyfin ${jellyfinLoggingConfig} /var/lib/jellyfin/config/logging.json
   '';
   users.groups.media.gid = 169;
-  users.users.jellyfin.extraGroups = [
-    "media"
-    "render"
-    "video"
-  ];
+  users.users.jellyfin.extraGroups = [ "media" ];
   systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
   systemd.services.jellyfin.restartTriggers = [ jellyfinLoggingConfig ];
 
@@ -247,19 +243,5 @@ in
 
   environment.systemPackages =
     with pkgs;
-    [
-      intel-gpu-tools
-      libva-utils
-    ]
-    ++ [ joinMediaParts ];
-
-  # Acceleration setup: https://nixos.wiki/wiki/Jellyfin
-  hardware.graphics = {
-    enable = true;
-    extraPackages = with pkgs; [
-      intel-media-driver
-      intel-compute-runtime
-      vpl-gpu-rt
-    ];
-  };
+    [ joinMediaParts ];
 }
