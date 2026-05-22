@@ -52,6 +52,9 @@ let
   wgConservativeUploadRate = "${toString wgConservativeUploadRateMbit}mbit";
   wgConservativeDownloadRateMbit = 400;
   wgConservativeDownloadRate = "${toString wgConservativeDownloadRateMbit}mbit";
+  beastNfsRateMbit = 1500;
+  beastNfsRate = "${toString beastNfsRateMbit}mbit";
+  beastNfsPort = 2049;
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.
@@ -355,8 +358,10 @@ in
   };
 
   # Apply a conservative bidirectional shaping baseline on the outer interface
-  # for WireGuard transport traffic. The adaptive Jellyfin-aware controller can
-  # still raise the upload ceiling at runtime when the uplink is otherwise idle.
+  # for WireGuard transport traffic. Also keep NFS writes to beast below the
+  # unstable single-flow ceiling observed on this path.
+  # The adaptive Jellyfin-aware controller can still raise the WireGuard upload
+  # ceiling at runtime when the uplink is otherwise idle.
   systemd.services.wg-qos-upload = {
     wantedBy = [ "multi-user.target" ];
     unitConfig = wgUnitDepsBase;
@@ -389,11 +394,14 @@ in
                 ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" root handle 1: htb default 20 r2q 1000
                 ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1: classid 1:1 htb rate ${wgOuterLinkRate} ceil ${wgOuterLinkRate}
                 ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:10 htb rate ${wgConservativeUploadRate} ceil ${wgConservativeUploadRate}
+                ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:15 htb rate ${beastNfsRate} ceil ${beastNfsRate}
                 ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:20 htb rate ${wgOuterLinkRate} ceil ${wgOuterLinkRate}
                 ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:10 handle 10: cake bandwidth ${wgConservativeUploadRate} besteffort wash
+                ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:15 handle 15: fq_codel
                 ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:20 handle 20: fq_codel
                 ${pkgs.iproute2}/bin/tc filter add dev "$iface" protocol ip parent 1: prio 10 flower ip_proto udp dst_port ${toString wgEndpointPort} classid 1:10
                 ${pkgs.iproute2}/bin/tc filter add dev "$iface" protocol ipv6 parent 1: prio 11 flower ip_proto udp dst_port ${toString wgEndpointPort} classid 1:10
+                ${pkgs.iproute2}/bin/tc filter add dev "$iface" protocol ip parent 1: prio 15 flower ip_proto tcp dst_ip ${beastNfsAddress} dst_port ${toString beastNfsPort} classid 1:15
 
                 ${pkgs.iproute2}/bin/tc qdisc del dev "$ifb_iface" root 2>/dev/null || true
                 ${pkgs.iproute2}/bin/tc qdisc add dev "$ifb_iface" root cake bandwidth ${wgConservativeDownloadRate} besteffort wash ingress
