@@ -243,7 +243,13 @@
         }
       );
 
-      checks = import ./checks.nix { inherit inputs helpers; };
+      checks = import ./checks.nix {
+        inherit
+          helpers
+          inputs
+          outputs
+          ;
+      };
       nixosTests = import ./nixos-tests.nix { inherit inputs helpers; };
 
       overlays = import ./overlays { inherit inputs; };
@@ -272,6 +278,10 @@
           pkgs = import inputs.nixpkgs {
             inherit system;
             config.allowUnfree = true;
+            overlays = [
+              outputs.overlays.additions
+              outputs.overlays.modifications
+            ];
           };
           sopsApps = import ./lib/sops.nix { inherit pkgs; };
           fleetApps = import ./lib/fleet.nix { inherit pkgs; };

@@ -153,7 +153,6 @@ let
     user = "root";
     group = "media";
   }) mediaLibraries;
-  joinMediaParts = pkgs.callPackage ../../pkgs/join-media-parts { };
 in
 {
   imports = [
@@ -203,7 +202,5 @@ in
   ]
   ++ lib.concatMap (spec: mkTmpfilesDir spec.path spec.mode spec.user spec.group) mediaDirSpecs;
 
-  environment.systemPackages =
-    with pkgs;
-    [ joinMediaParts ];
+  environment.systemPackages = [ pkgs.join-media-parts ];
 }

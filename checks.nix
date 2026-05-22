@@ -1,9 +1,15 @@
-{ inputs, helpers }:
+{ inputs, helpers, outputs }:
 helpers.forAllSystems (
   system:
   let
-    pkgs = import inputs.nixpkgs { inherit system; };
-    customPackages = import ./pkgs pkgs;
+    pkgs = import inputs.nixpkgs {
+      inherit system;
+      config.allowUnfree = true;
+      overlays = [
+        outputs.overlays.additions
+        outputs.overlays.modifications
+      ];
+    };
     fleetApps = import ./lib/fleet.nix { inherit pkgs; };
     mkCheck =
       {
@@ -55,9 +61,9 @@ helpers.forAllSystems (
     };
     join-media-parts = mkCheck {
       name = "join-media-parts-tests";
-      nativeBuildInputs = with pkgs; [
-        ffmpeg
-        customPackages."join-media-parts"
+      nativeBuildInputs = [
+        pkgs.ffmpeg
+        pkgs.join-media-parts
       ];
       buildPhase = ''
         mkdir -p work

@@ -333,7 +333,6 @@ let
       fi
     '';
   };
-  joinMediaParts = pkgs.callPackage ../pkgs/join-media-parts { };
 in
 {
   deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
@@ -341,7 +340,7 @@ in
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
   "join-media-parts" =
-    mkApp "${joinMediaParts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
+    mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =
     mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
   "wg-home-client-config" =
