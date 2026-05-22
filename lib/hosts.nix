@@ -59,6 +59,22 @@ rec {
         };
       };
     };
+
+    wireguard.home = {
+      cidr = "10.83.0.0/24";
+      gateway = {
+        host = "gw";
+        address = "10.83.0.1/24";
+        listenPort = 51820;
+        publicEndpoint = "wg.ihar.dev";
+      };
+      peers = {
+        mair = {
+          host = "mair";
+          address = "10.83.0.10/32";
+        };
+      };
+    };
   };
 
   staticDhcpReservations = [
