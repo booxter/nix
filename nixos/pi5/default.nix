@@ -1,5 +1,6 @@
 { pkgs, username, hostInventory, ... }:
 let
+  lan = hostInventory.site.lan;
   beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   renderDhcpReservation =
     reservation:
@@ -12,10 +13,10 @@ let
     );
   mainIface = "end0";
   guestIface = "wlan0";
-  gwAddr = "192.168.0.1";
-  mainAddr = "192.168.1.1";
-  guestAddr = "192.168.2.1";
-  lanDomain = "home.arpa";
+  gwAddr = lan.upstreamGateway;
+  mainAddr = lan.gateway.address;
+  guestAddr = lan.guest.address;
+  lanDomain = lan.domain;
   dnsmasqExporterPort = 9153;
   staticDhcpHosts = builtins.map renderDhcpReservation hostInventory.staticDhcpReservations;
   managedDhcpHosts = builtins.map renderDhcpReservation hostInventory.managedDhcpReservations;
@@ -69,8 +70,8 @@ in
 
       dhcp-range = [
         # Keep DHCP ranges away from reserved VPN netns subnet (192.168.50.0/24).
-        "${mainIface},192.168.10.1,192.168.20.255"
-        "${guestIface},192.168.100.1,192.168.100.255"
+        "${mainIface},${lan.dhcpRanges.main.start},${lan.dhcpRanges.main.end}"
+        "${guestIface},${lan.dhcpRanges.guest.start},${lan.dhcpRanges.guest.end}"
       ];
 
       listen-address = [

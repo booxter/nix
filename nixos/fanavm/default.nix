@@ -9,6 +9,7 @@
 let
   beastSpec = hostInventory.nixosHostSpecsByName.beast;
   frameSpec = hostInventory.nixosHostSpecsByName.frame;
+  lan = hostInventory.site.lan;
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   arrServices = import ../../lib/arr-services.nix {
@@ -31,12 +32,12 @@ let
     {
       resolver = "pi5";
       resolver_title = "pi5 dnsmasq";
-      target = "192.168.1.1:53";
+      target = "${lan.gateway.address}:53";
     }
     {
       resolver = "upstream";
-      resolver_title = "upstream 192.168.0.1";
-      target = "192.168.0.1:53";
+      resolver_title = "upstream ${lan.upstreamGateway}";
+      target = "${lan.upstreamGateway}:53";
     }
     {
       resolver = "google";
@@ -47,13 +48,13 @@ let
   wanIcmpProbeTargets = [
     {
       probe = "gateway";
-      probe_title = "Gateway 192.168.1.1";
-      target = "192.168.1.1";
+      probe_title = "Gateway ${lan.gateway.address}";
+      target = lan.gateway.address;
     }
     {
       probe = "upstream";
-      probe_title = "Upstream 192.168.0.1";
-      target = "192.168.0.1";
+      probe_title = "Upstream ${lan.upstreamGateway}";
+      target = lan.upstreamGateway;
     }
     {
       probe = "cloudflare";
@@ -64,8 +65,8 @@ let
   wanTcpProbeTargets = [
     {
       probe = "gateway-dns";
-      probe_title = "Gateway DNS 192.168.1.1:53";
-      target = "192.168.1.1:53";
+      probe_title = "Gateway DNS ${lan.gateway.address}:53";
+      target = "${lan.gateway.address}:53";
     }
     {
       probe = "cloudflare-https";

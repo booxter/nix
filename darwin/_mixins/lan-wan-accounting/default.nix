@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
@@ -92,7 +93,7 @@ in
 
     lanSubnets = lib.mkOption {
       type = with lib.types; listOf str;
-      default = [ "192.168.0.0/16" ];
+      default = [ hostInventory.site.lan.cidr ];
       description = "IPv4 subnets that should be treated as LAN traffic.";
     };
 

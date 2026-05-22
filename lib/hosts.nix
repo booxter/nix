@@ -35,6 +35,32 @@ rec {
   toVmName = name: "${name}vm";
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
 
+  site = {
+    lan = {
+      cidr = "192.168.0.0/16";
+      domain = "home.arpa";
+      upstreamGateway = "192.168.0.1";
+      gateway = {
+        host = piHostname;
+        address = "192.168.1.1";
+      };
+      guest = {
+        host = piHostname;
+        address = "192.168.2.1";
+      };
+      dhcpRanges = {
+        main = {
+          start = "192.168.10.1";
+          end = "192.168.20.255";
+        };
+        guest = {
+          start = "192.168.100.1";
+          end = "192.168.100.255";
+        };
+      };
+    };
+  };
+
   staticDhcpReservations = [
     {
       identifiers = [ "7c:b7:7b:04:05:99" ];

@@ -11,7 +11,7 @@ let
   mediaRoot = "/volume2/Media";
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
-  nfsSubnet = "192.168.0.0/16";
+  nfsSubnet = hostInventory.site.lan.cidr;
   arrVmAddress = hostInventory.dhcpReservationsByHostname.prox-srvarrvm.ip;
   orgVmAddress = hostInventory.dhcpReservationsByHostname.prox-orgvm.ip;
   smartctlExporterPort = 9633;
