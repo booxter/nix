@@ -12,22 +12,35 @@ let
   lan = hostInventory.site.lan;
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
-  serviceCatalog = import ../../lib/services.nix {
-    inherit hostInventory;
-    grafanaProbeUrl = "http://127.0.0.1:${toString grafanaPort}/";
-    srvarrPorts = {
-      aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
-      audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
-      bazarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.bazarr.port;
-      lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;
-      prowlarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.prowlarr.port;
-      radarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.radarr.port;
-      sabnzbd = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sabnzbd.guiPort;
-      shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
-      sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
-      transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
-    };
+  srvarrPorts = {
+    aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
+    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
+    bazarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.bazarr.port;
+    lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;
+    prowlarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.prowlarr.port;
+    radarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.radarr.port;
+    sabnzbd = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sabnzbd.guiPort;
+    shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
+    sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
+    transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
   };
+  serviceCatalog = map (
+    service:
+    if service.scope == "external" then
+      service
+    else if service.owner == "fana" then
+      service
+      // {
+        probeUrl = "http://127.0.0.1:${toString grafanaPort}/${service.probePath}";
+        url = "http://${service.displayHost}:3000/";
+      }
+    else
+      service
+      // {
+        probeUrl = "http://${service.probeHost}:${toString srvarrPorts.${service.id}}${service.probePath}";
+        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}}/";
+      }
+  ) hostInventory.services;
   dnsProbeTargets = [
     {
       resolver = "pi5";
