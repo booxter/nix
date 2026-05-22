@@ -1,5 +1,6 @@
 { pkgs, username, ... }:
 let
+  hostInventory = import ../../lib/hosts.nix { inherit username; };
   mainIface = "end0";
   guestIface = "wlan0";
   gwAddr = "192.168.0.1";
@@ -7,6 +8,13 @@ let
   guestAddr = "192.168.2.1";
   lanDomain = "home.arpa";
   dnsmasqExporterPort = 9153;
+  managedDhcpHosts = builtins.map (
+    spec:
+    let
+      reservation = spec.dhcpReservation;
+    in
+    "${reservation.match},${reservation.hostname},${reservation.ip}"
+  ) (builtins.filter (spec: spec ? dhcpReservation) hostInventory.nixosHostSpecs);
 in
 {
   imports = [
@@ -116,25 +124,9 @@ in
 
         #---- lab ----
         "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
-
-        # new NAS (client-id from dhcpcd extraConfig)
-        "id:beast,beast,192.168.16.3"
         # NAS IPMI
         "bc:fc:e7:3b:f5:99,beast-ipmi,192.168.16.4"
-
-        # mini-PC NUC nodes running proxmox
-        "38:05:25:30:7d:89,prx1-lab,192.168.15.10"
-        "38:05:25:30:7f:7d,prx2-lab,192.168.15.11"
-        "38:05:25:30:7d:69,prx3-lab,192.168.15.12"
-
-        # nv ws
-        "ac:b4:80:40:05:2e,nvws,192.168.15.100"
-
-        # hardcode IP for VM port forwarding
-        "id:prox-srvarrvm,prox-srvarrvm,192.168.20.2"
-        "id:prox-gwvm,prox-gwvm,192.168.20.3"
-        "id:prox-orgvm,prox-orgvm,192.168.20.4"
-      ];
+      ] ++ managedDhcpHosts;
 
       enable-tftp = true;
       tftp-root = "/var/lib/dnsmasq/tftp";

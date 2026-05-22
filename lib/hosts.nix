@@ -87,6 +87,11 @@ in
       netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
+      dhcpReservation = {
+        match = "ac:b4:80:40:05:2e";
+        hostname = "nvws";
+        ip = "192.168.15.100";
+      };
     }
     {
       type = "bm";
@@ -97,6 +102,11 @@ in
       nixpkgsInput = "nixpkgs-25_11";
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
+      dhcpReservation = {
+        match = "id:beast";
+        hostname = "beast";
+        ip = "192.168.16.3";
+      };
     }
     {
       type = "bm";
@@ -108,6 +118,11 @@ in
       netIface = prxNetIface;
       ipAddress = "192.168.15.10";
       macAddress = "38:05:25:30:7d:89";
+      dhcpReservation = {
+        match = "38:05:25:30:7d:89";
+        hostname = "prx1-lab";
+        ip = "192.168.15.10";
+      };
     }
     {
       type = "bm";
@@ -119,6 +134,11 @@ in
       netIface = prxNetIface;
       ipAddress = "192.168.15.11";
       macAddress = "38:05:25:30:7f:7d";
+      dhcpReservation = {
+        match = "38:05:25:30:7f:7d";
+        hostname = "prx2-lab";
+        ip = "192.168.15.11";
+      };
     }
     {
       type = "bm";
@@ -130,6 +150,11 @@ in
       netIface = prxNetIface;
       ipAddress = "192.168.15.12";
       macAddress = "38:05:25:30:7d:69";
+      dhcpReservation = {
+        match = "38:05:25:30:7d:69";
+        hostname = "prx3-lab";
+        ip = "192.168.15.12";
+      };
     }
     {
       type = "vm";
@@ -157,6 +182,11 @@ in
       memorySize = 32;
       sshPort = 10005;
       hmFull = false;
+      dhcpReservation = {
+        match = "id:prox-srvarrvm";
+        hostname = "prox-srvarrvm";
+        ip = "192.168.20.2";
+      };
     }
     {
       type = "vm";
@@ -185,6 +215,11 @@ in
       diskSize = 64;
       sshPort = 10008;
       hmFull = false;
+      dhcpReservation = {
+        match = "id:prox-gwvm";
+        hostname = "prox-gwvm";
+        ip = "192.168.20.3";
+      };
     }
     {
       type = "vm";
@@ -195,6 +230,11 @@ in
       diskSize = 80;
       sshPort = 10009;
       hmFull = false;
+      dhcpReservation = {
+        match = "id:prox-orgvm";
+        hostname = "prox-orgvm";
+        ip = "192.168.20.4";
+      };
     }
   ]
   ++ builtins.map builderSpec [
