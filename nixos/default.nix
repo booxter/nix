@@ -49,7 +49,7 @@ in
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
         monitorName = "nas";
-        system = "${prx1Spec.upsName}@${prx1Spec.dnsName or prx1Spec.name}";
+        system = "${hostInventory.toUpsName prx1Spec.name}@${prx1Spec.dnsName or prx1Spec.name}";
         user = "upsslave";
         passwordText = "upsslave123";
       })
@@ -59,7 +59,7 @@ in
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
         monitorName = "pi5";
-        system = "${pi5Spec.upsName}@${pi5Spec.dnsName or pi5Spec.name}";
+        system = "${hostInventory.toUpsName pi5Spec.name}@${pi5Spec.dnsName or pi5Spec.name}";
         user = "upsslave";
         passwordText = "upsslave123";
       })

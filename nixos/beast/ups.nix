@@ -7,7 +7,7 @@ in
   imports = [
     (import ../_mixins/ups-server.nix {
       inherit pkgs;
-      upsName = beastSpec.upsName;
+      upsName = hostInventory.toUpsName beastSpec.name;
       upsDescription = "APC Back-UPS RS 1500MS2";
       upsmonPasswordText = "upsmon123";
       upsslavePasswordText = "upsslave123";

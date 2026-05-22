@@ -1,4 +1,5 @@
 {
+  lib,
   username ? "ihrachyshka",
 }:
 let
@@ -32,6 +33,7 @@ rec {
   virtPlatform = "aarch64-darwin";
 
   toVmName = name: "${name}vm";
+  toUpsName = name: "${lib.strings.toUpper name}-UPS";
 
   staticDhcpReservations = [
     {
@@ -95,7 +97,6 @@ rec {
       hostKind = "raspberryPi";
       name = piHostname;
       dnsName = "dhcp";
-      upsName = "PI5-UPS";
       stateVersion = piStateVersion;
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
@@ -104,7 +105,6 @@ rec {
       type = "bm";
       hostKind = "nixos";
       name = frame;
-      upsName = "FRAME-UPS";
       password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
       stateVersion = "25.11";
       platform = "x86_64-linux";
@@ -131,7 +131,6 @@ rec {
       type = "bm";
       hostKind = "nixos";
       name = "beast";
-      upsName = "BEAST-UPS";
       stateVersion = "25.11";
       platform = "x86_64-linux";
       nixpkgsInput = "nixpkgs-25_11";
@@ -147,7 +146,6 @@ rec {
       type = "bm";
       hostKind = "proxmox";
       name = "prx1-lab";
-      upsName = "PRX1-UPS";
       inherit username;
       password = prxPassword;
       stateVersion = prxStateVersion;

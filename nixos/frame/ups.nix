@@ -7,7 +7,7 @@ in
   imports = [
     (import ../_mixins/ups-server.nix {
       inherit pkgs;
-      upsName = frameSpec.upsName;
+      upsName = hostInventory.toUpsName frameSpec.name;
       upsDescription = "APC UPS 1500VA";
       upsShutdownDelaySeconds = 600;
       upsmonPasswordText = "upsmon234";

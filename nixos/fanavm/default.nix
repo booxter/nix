@@ -7,6 +7,8 @@
   ...
 }:
 let
+  beastSpec = hostInventory.nixosHostSpecsByName.beast;
+  frameSpec = hostInventory.nixosHostSpecsByName.frame;
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   arrServices = import ../../lib/arr-services.nix {
@@ -668,7 +670,7 @@ in
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
           server = [ (prx1Spec.dnsName or prx1Spec.name) ];
-          ups = [ prx1Spec.upsName ];
+          ups = [ (hostInventory.toUpsName prx1Spec.name) ];
         };
         static_configs = [
           {
@@ -696,7 +698,7 @@ in
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
           server = [ (pi5Spec.dnsName or pi5Spec.name) ];
-          ups = [ pi5Spec.upsName ];
+          ups = [ (hostInventory.toUpsName pi5Spec.name) ];
         };
         static_configs = [
           {
@@ -723,8 +725,8 @@ in
         metrics_path = "/ups_metrics";
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ "beast" ];
-          ups = [ "BEAST-UPS" ];
+          server = [ (beastSpec.dnsName or beastSpec.name) ];
+          ups = [ (hostInventory.toUpsName beastSpec.name) ];
         };
         static_configs = [
           {
@@ -751,8 +753,8 @@ in
         metrics_path = "/ups_metrics";
         params = {
           # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ "frame" ];
-          ups = [ "FRAME-UPS" ];
+          server = [ (frameSpec.dnsName or frameSpec.name) ];
+          ups = [ (hostInventory.toUpsName frameSpec.name) ];
         };
         static_configs = [
           {
