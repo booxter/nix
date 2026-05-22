@@ -33,6 +33,37 @@ rec {
 
   toVmName = name: "${name}vm";
 
+  staticDhcpReservations = [
+    {
+      identifiers = [ "7c:b7:7b:04:05:99" ];
+      hostname = "mdx";
+      ip = "192.168.10.100";
+    }
+    {
+      identifiers = [ "id:JGWXHWDL4X" ];
+      hostname = "mlt";
+      ip = "192.168.11.2";
+    }
+    {
+      identifiers = [
+        "a2:65:a0:ce:9f:23"
+        "id:mair"
+      ];
+      hostname = "mair";
+      ip = "192.168.11.3";
+    }
+    {
+      identifiers = [ "78:2d:7e:24:2d:f9" ];
+      hostname = "sw-lab";
+      ip = "192.168.15.1";
+    }
+    {
+      identifiers = [ "bc:fc:e7:3b:f5:99" ];
+      hostname = "beast-ipmi";
+      ip = "192.168.16.4";
+    }
+  ];
+
   darwinHosts = {
     mair = {
       stateVersion = 6;
@@ -244,16 +275,16 @@ rec {
     3
   ];
 
+  managedDhcpReservations = builtins.map (
+    spec: spec.dhcpReservation
+  ) (builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs);
+
   dhcpReservationsByHostname = builtins.listToAttrs (
     builtins.map (
-      spec:
-      let
-        reservation = spec.dhcpReservation;
-      in
-      {
+      reservation: {
         name = reservation.hostname;
         value = reservation;
       }
-    ) (builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs)
+    ) (managedDhcpReservations ++ staticDhcpReservations)
   );
 }

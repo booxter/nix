@@ -2,6 +2,15 @@
 let
   hostInventory = import ../../lib/hosts.nix { inherit username; };
   beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
+  renderDhcpReservation =
+    reservation:
+    builtins.concatStringsSep "," (
+      (reservation.identifiers or [ reservation.match ])
+      ++ [
+        reservation.hostname
+        reservation.ip
+      ]
+    );
   mainIface = "end0";
   guestIface = "wlan0";
   gwAddr = "192.168.0.1";
@@ -9,13 +18,8 @@ let
   guestAddr = "192.168.2.1";
   lanDomain = "home.arpa";
   dnsmasqExporterPort = 9153;
-  managedDhcpHosts = builtins.map (
-    spec:
-    let
-      reservation = spec.dhcpReservation;
-    in
-    "${reservation.match},${reservation.hostname},${reservation.ip}"
-  ) (builtins.filter (spec: spec ? dhcpReservation) hostInventory.nixosHostSpecs);
+  staticDhcpHosts = builtins.map renderDhcpReservation hostInventory.staticDhcpReservations;
+  managedDhcpHosts = builtins.map renderDhcpReservation hostInventory.managedDhcpReservations;
 in
 {
   imports = [
@@ -107,25 +111,10 @@ in
 
       # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix
       dhcp-host = [
-        # infra
-        "7c:b7:7b:04:05:99,mdx,192.168.10.100" # MDX-8
-
-        # better alias for work machine with forced client id
-        "id:JGWXHWDL4X,mlt,192.168.11.2"
-
-        # macos is insane and sends "Mac" in host name option regardless of
-        # what is set in scutil. Force ip address for mair.
-        "a2:65:a0:ce:9f:23,id:mair,mair,192.168.11.3"
-
         # DON'T USE 192.168.15.0/24 for nixarr compatibility
         # TODO: migrate all internal nodes out of .15 range for nixarr compatibility
         # TODO: modify nixarr to allow using a different range for wg iface?
-
-        #---- lab ----
-        "78:2d:7e:24:2d:f9,sw-lab,192.168.15.1" # switch
-        # NAS IPMI
-        "bc:fc:e7:3b:f5:99,beast-ipmi,192.168.16.4"
-      ] ++ managedDhcpHosts;
+      ] ++ staticDhcpHosts ++ managedDhcpHosts;
 
       enable-tftp = true;
       tftp-root = "/var/lib/dnsmasq/tftp";
