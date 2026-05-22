@@ -1,4 +1,10 @@
-{ lib, pkgs, username, hostInventory, ... }:
+{
+  lib,
+  pkgs,
+  username,
+  hostInventory,
+  ...
+}:
 let
   lan = hostInventory.site.lan;
   beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
@@ -116,7 +122,9 @@ in
 
       # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix
       dhcp-host = [
-      ] ++ staticDhcpHosts ++ managedDhcpHosts;
+      ]
+      ++ staticDhcpHosts
+      ++ managedDhcpHosts;
 
       enable-tftp = true;
       tftp-root = "/var/lib/dnsmasq/tftp";

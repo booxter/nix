@@ -18,8 +18,7 @@ let
   # TODO: for now just avahi but maybe consider simplifying hostnames in general
   avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
   isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
-  upsServerName =
-    if isLocalVmHost then null else hostSpec.upsHost or null;
+  upsServerName = if isLocalVmHost then null else hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
 in
@@ -43,7 +42,9 @@ in
       (import ./_mixins/ups-client {
         inherit pkgs upsShutdownDelaySeconds;
         monitorName = upsServerSpec.name;
-        system = "${hostInventory.toUpsName upsServerSpec.name}@${upsServerSpec.dnsName or upsServerSpec.name}";
+        system = "${hostInventory.toUpsName upsServerSpec.name}@${
+          upsServerSpec.dnsName or upsServerSpec.name
+        }";
         user = "upsslave";
         passwordText = "upsslave123";
       })

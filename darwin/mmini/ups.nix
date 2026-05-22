@@ -20,7 +20,9 @@ in
   # TODO: rotate this password and migrate to sops-managed secrets.
   environment.etc."nut/upsmon.conf".text = ''
     MINSUPPLIES 1
-    MONITOR ${hostInventory.toUpsName frameSpec.name}@${frameSpec.dnsName or frameSpec.name} 1 upsslave upsslave234 slave
+    MONITOR ${hostInventory.toUpsName frameSpec.name}@${
+      frameSpec.dnsName or frameSpec.name
+    } 1 upsslave upsslave234 slave
     NOTIFYCMD ${pkgs.nut}/bin/upssched
     NOTIFYFLAG ONBATT SYSLOG+EXEC
     NOTIFYFLAG ONLINE SYSLOG+EXEC

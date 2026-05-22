@@ -1,8 +1,6 @@
 { lib }:
 rec {
-  ipToInt =
-    ip:
-    lib.foldl' (acc: octet: acc * 256 + octet) 0 (map lib.toInt (lib.splitString "." ip));
+  ipToInt = ip: lib.foldl' (acc: octet: acc * 256 + octet) 0 (map lib.toInt (lib.splitString "." ip));
 
   pow2 = n: if n == 0 then 1 else 2 * pow2 (n - 1);
 

@@ -26,13 +26,15 @@ in
     virtualHosts = builtins.listToAttrs (
       map (service: {
         name = service.publicHost;
-        value.proxyPass =
-          "http://${publicServiceBackendAddresses.${service.owner}}:${toString publicServicePorts.${service.id}}";
+        value.proxyPass = "http://${publicServiceBackendAddresses.${service.owner}}:${
+          toString publicServicePorts.${service.id}
+        }";
       }) hostInventory.publicServices
     );
   };
 
-  services.nginx.virtualHosts.${hostInventory.servicesById.aurral.publicHost}.locations."/".extraConfig = ''
-    proxy_set_header X-Forwarded-For $remote_addr;
-  '';
+  services.nginx.virtualHosts.${hostInventory.servicesById.aurral.publicHost}.locations."/".extraConfig =
+    ''
+      proxy_set_header X-Forwarded-For $remote_addr;
+    '';
 }

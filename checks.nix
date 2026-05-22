@@ -1,4 +1,8 @@
-{ inputs, helpers, outputs }:
+{
+  inputs,
+  helpers,
+  outputs,
+}:
 helpers.forAllSystems (
   system:
   let
@@ -120,22 +124,30 @@ helpers.forAllSystems (
         printf '%s\n' "$help_output" | grep -F -- '--peer mair' >/dev/null
         printf '%s\n' "$help_output" | grep -F -- 'Inventory-backed peers: mair' >/dev/null
 
-        peer_output="$(${fleetApps."wg-home-client-config".program} --peer mair --private-key-file "$private_key_file" --server-public-key test-server-pubkey)"
+        peer_output="$(${
+          fleetApps."wg-home-client-config".program
+        } --peer mair --private-key-file "$private_key_file" --server-public-key test-server-pubkey)"
         printf '%s\n' "$peer_output" | grep -F -- 'Address = 10.83.0.10/32' >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'DNS = 192.168.1.1' >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'Endpoint = wg.ihar.dev:51820' >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'AllowedIPs = 10.83.0.0/24, 192.168.0.0/16' >/dev/null
 
-        explicit_output="$(${fleetApps."wg-home-client-config".program} --address 10.83.0.50/32 --private-key-file "$private_key_file" --server-public-key test-server-pubkey)"
+        explicit_output="$(${
+          fleetApps."wg-home-client-config".program
+        } --address 10.83.0.50/32 --private-key-file "$private_key_file" --server-public-key test-server-pubkey)"
         printf '%s\n' "$explicit_output" | grep -F -- 'Address = 10.83.0.50/32' >/dev/null
 
-        if ${fleetApps."wg-home-client-config".program} --peer nope --private-key-file "$private_key_file" --server-public-key test-server-pubkey >unknown.out 2>unknown.err; then
+        if ${
+          fleetApps."wg-home-client-config".program
+        } --peer nope --private-key-file "$private_key_file" --server-public-key test-server-pubkey >unknown.out 2>unknown.err; then
           echo "expected unknown peer resolution to fail" >&2
           exit 1
         fi
         grep -F -- "unknown inventory peer 'nope'" unknown.err >/dev/null
 
-        if ${fleetApps."wg-home-client-config".program} --address 10.84.0.50/32 --private-key-file "$private_key_file" --server-public-key test-server-pubkey >subnet.out 2>subnet.err; then
+        if ${
+          fleetApps."wg-home-client-config".program
+        } --address 10.84.0.50/32 --private-key-file "$private_key_file" --server-public-key test-server-pubkey >subnet.out 2>subnet.err; then
           echo "expected out-of-subnet peer address to fail" >&2
           exit 1
         fi

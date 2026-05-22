@@ -31,7 +31,9 @@ let
 
   capitalize =
     str:
-    "${lib.strings.toUpper (builtins.substring 0 1 str)}${builtins.substring 1 ((builtins.stringLength str) - 1) str}";
+    "${lib.strings.toUpper (builtins.substring 0 1 str)}${
+      builtins.substring 1 ((builtins.stringLength str) - 1) str
+    }";
 
   mkService =
     {
@@ -63,13 +65,11 @@ rec {
   resolveService =
     service:
     service
-    // lib.optionalAttrs (service ? publicHost) (
-      rec {
-        inherit (service) publicHost;
-        url = "https://${publicHost}";
-        probeUrl = "${url}${service.probePath}";
-      }
-    )
+    // lib.optionalAttrs (service ? publicHost) (rec {
+      inherit (service) publicHost;
+      url = "https://${publicHost}";
+      probeUrl = "${url}${service.probePath}";
+    })
     // lib.optionalAttrs (service.scope == "internal") {
       displayHost = "${nixosHostSpecsByName.${service.owner}.name}.local";
       probeHost =
@@ -500,17 +500,15 @@ rec {
     3
   ];
 
-  managedDhcpReservations = map (
-    spec: spec.dhcpReservation
-  ) (builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs);
+  managedDhcpReservations = map (spec: spec.dhcpReservation) (
+    builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs
+  );
 
   dhcpReservationsByHostname = builtins.listToAttrs (
-    map (
-      reservation: {
-        name = reservation.hostname;
-        value = reservation;
-      }
-    ) (managedDhcpReservations ++ staticDhcpReservations)
+    map (reservation: {
+      name = reservation.hostname;
+      value = reservation;
+    }) (managedDhcpReservations ++ staticDhcpReservations)
   );
 
   nixosHostSpecsByName = builtins.listToAttrs (

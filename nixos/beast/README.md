@@ -60,7 +60,8 @@ curl -I https://vi.ihar.dev
 
 ## NFS
 
-- Exports are restricted to `site.lan.cidr` from `lib/inventory.nix` and currently include:
+- Exports are restricted to `site.lan.cidr` from `lib/inventory.nix` and
+  currently include:
   - `/volume2/Media`
   - `/volume2/nix-cache`
 - NFSv4 is enabled; NFSv3 is disabled.

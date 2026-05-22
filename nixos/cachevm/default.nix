@@ -1,4 +1,9 @@
-{ lib, pkgs, hostInventory, ... }:
+{
+  lib,
+  pkgs,
+  hostInventory,
+  ...
+}:
 let
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   nfsPath = "/cache";
