@@ -2,15 +2,19 @@
   config,
   lib,
   pkgs,
+  username,
   ...
 }:
 let
+  hostInventory = import ../../lib/hosts.nix { inherit username; };
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
   mediaRoot = "/volume2/Media";
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
   nfsSubnet = "192.168.0.0/16";
+  arrVmAddress = hostInventory.dhcpReservationsByHostname.prox-srvarrvm.ip;
+  orgVmAddress = hostInventory.dhcpReservationsByHostname.prox-orgvm.ip;
   smartctlExporterPort = 9633;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (
@@ -523,12 +527,12 @@ in
       username = "ihrachyshka";
     };
     virtualHosts = {
-      "au.ihar.dev".proxyPass = "http://192.168.20.2:9292";
+      "au.ihar.dev".proxyPass = "http://${arrVmAddress}:9292";
       "jf.ihar.dev".proxyPass = "http://127.0.0.1:8096";
-      "js.ihar.dev".proxyPass = "http://192.168.20.2:5055";
-      "mu.ihar.dev".proxyPass = "http://192.168.20.2:3001";
-      "shelf.ihar.dev".proxyPass = "http://192.168.20.2:8084";
-      "vi.ihar.dev".proxyPass = "http://192.168.20.4:3456";
+      "js.ihar.dev".proxyPass = "http://${arrVmAddress}:5055";
+      "mu.ihar.dev".proxyPass = "http://${arrVmAddress}:3001";
+      "shelf.ihar.dev".proxyPass = "http://${arrVmAddress}:8084";
+      "vi.ihar.dev".proxyPass = "http://${orgVmAddress}:3456";
     };
   };
 
