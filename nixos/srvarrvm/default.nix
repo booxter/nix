@@ -9,7 +9,7 @@
 }:
 let
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
-  arrServices = import ../../lib/arr-services.nix {
+  serviceCatalog = import ../../lib/services.nix {
     srvarrDisplayHost = "${config.services.avahi.hostName}.local";
     srvarrPorts = {
       aurral = config.systemd.services.aurral.environment.PORT;
@@ -530,7 +530,7 @@ in
                       title
                       url
                       ;
-                  }) arrServices;
+                  }) serviceCatalog;
                 }
               ];
             }
