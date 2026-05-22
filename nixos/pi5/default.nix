@@ -1,6 +1,7 @@
 { pkgs, username, ... }:
 let
   hostInventory = import ../../lib/hosts.nix { inherit username; };
+  beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   mainIface = "end0";
   guestIface = "wlan0";
   gwAddr = "192.168.0.1";
@@ -101,7 +102,7 @@ in
         "egress,${gwAddr}"
         "dhcp,${mainAddr}"
         # Split DNS: send public web domains to the central ingress on beast.
-        "au.ihar.dev,jf.ihar.dev,js.ihar.dev,mu.ihar.dev,shelf.ihar.dev,vi.ihar.dev,192.168.16.3"
+        "au.ihar.dev,jf.ihar.dev,js.ihar.dev,mu.ihar.dev,shelf.ihar.dev,vi.ihar.dev,${beastAddress}"
       ];
 
       # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix
