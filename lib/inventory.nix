@@ -60,6 +60,25 @@ rec {
 
   toVmName = name: "${name}vm";
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
+  resolveService =
+    service:
+    service
+    // lib.optionalAttrs (service ? publicHost) (
+      rec {
+        inherit (service) publicHost;
+        url = "https://${publicHost}";
+        probeUrl = "${url}${service.probePath}";
+      }
+    )
+    // lib.optionalAttrs (service.scope == "internal") {
+      displayHost = "${nixosHostSpecsByName.${service.owner}.name}.local";
+      probeHost =
+        let
+          spec = nixosHostSpecsByName.${service.owner};
+          proxVmHost = "prox-${toVmName spec.name}";
+        in
+        spec.dnsName or (spec.dhcpReservation.hostname or proxVmHost);
+    };
 
   site = {
     lan = {
@@ -123,98 +142,98 @@ rec {
   };
 
   services = [
-    (mkService {
+    (resolveService (mkService {
       id = "jellyfin";
       scope = "external";
       owner = "beast";
       publicHost = "jf.ihar.dev";
       probePath = "/web/";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "jellyseerr";
       scope = "external";
       owner = "srvarr";
       publicHost = "js.ihar.dev";
       probePath = "/login";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "grafana";
       scope = "internal";
       owner = "fana";
       probePath = "login";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "radarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/login";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "sonarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/login";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "lidarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "aurral";
       scope = "external";
       owner = "srvarr";
       publicHost = "mu.ihar.dev";
       probePath = "/api/health";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "audiobookshelf";
       scope = "external";
       owner = "srvarr";
       publicHost = "au.ihar.dev";
       probePath = "";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "shelfmark";
       scope = "external";
       owner = "srvarr";
       publicHost = "shelf.ihar.dev";
       probePath = "/";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "vikunja";
       scope = "external";
       owner = "org";
       publicHost = "vi.ihar.dev";
       probePath = "";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "bazarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "prowlarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/login";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "transmission";
       scope = "internal";
       owner = "srvarr";
       probePath = "/transmission/web/";
-    })
-    (mkService {
+    }))
+    (resolveService (mkService {
       id = "sabnzbd";
       title = "SABNZB";
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
       scope = "internal";
       owner = "srvarr";
       probePath = "/login/";
-    })
+    }))
   ];
 
   staticDhcpReservations = [
