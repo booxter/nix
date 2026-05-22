@@ -36,6 +36,7 @@ in
       ./_mixins/dns-query-accounting
       ./_mixins/external-service.nix
       ./_mixins/lan-wan-accounting
+      ./_mixins/nixos-upgrade-holds
       ./_mixins/nixos-upgrade-metrics
       ./_mixins/restic-beast-client.nix
       ./_mixins/user
@@ -86,6 +87,13 @@ in
       upper = "05:00";
     };
   };
+
+  host.autoUpgrade.holds = [
+    {
+      startDate = "2026-06-08";
+      stopDate = "2026-06-28";
+    }
+  ];
 
   # Auto-upgrade uses a GitHub flake URI, so fail fast until DNS is actually
   # ready. That keeps broken prerequisites visible in systemd instead of
