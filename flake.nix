@@ -180,13 +180,9 @@
           VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
         else
           throw "Unsupported NixOS host spec type `${spec.type}`";
+
     in
     {
-      hostWorkMap = import ./lib/host-work-map.nix {
-        lib = inputs.nixpkgs.lib;
-        inherit username;
-      };
-
       homeConfigurations = {
         # nv dev env
         "${username}@nv" = helpers.mkHome {
