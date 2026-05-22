@@ -81,6 +81,10 @@ rec {
     };
 
   site = {
+    ports = {
+      nfs = 2049;
+    };
+
     lan = {
       cidr = "192.168.0.0/16";
       domain = "home.arpa";

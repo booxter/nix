@@ -12,7 +12,7 @@
 }:
 let
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
-  beastNfsPort = 2049;
+  beastNfsPort = hostInventory.site.ports.nfs;
   beastNfsRate = "1500mbit";
   wgConservativeUploadRate = "${toString wgConservativeUploadRateMbit}mbit";
   wgConservativeDownloadRate = "400mbit";

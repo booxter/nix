@@ -206,7 +206,7 @@ let
     group = "media";
   }) mediaLibraries;
   nfsPorts = [
-    2049 # nfsd
+    hostInventory.site.ports.nfs # nfsd
   ];
   diskBayMappings = [
     {
