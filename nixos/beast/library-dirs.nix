@@ -1,4 +1,4 @@
-{ lib }:
+{ lib, ... }:
 let
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
@@ -152,4 +152,8 @@ let
     group = "media";
   }) mediaLibraries;
 in
-lib.concatMap (spec: mkTmpfilesDir spec.path spec.mode spec.user spec.group) mediaDirSpecs
+{
+  systemd.tmpfiles.rules = lib.concatMap (
+    spec: mkTmpfilesDir spec.path spec.mode spec.user spec.group
+  ) mediaDirSpecs;
+}

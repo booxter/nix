@@ -1,13 +1,9 @@
 {
   hostInventory,
-  lib,
   pkgs,
   username,
   ...
 }:
-let
-  libraryDirRules = import ./library-dirs.nix { inherit lib; };
-in
 {
   imports = [
     (import ../../disko { })
@@ -19,6 +15,7 @@ in
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
+    ./library-dirs.nix
     ./nfs.nix
     ./nginx.nix
     ./pause.nix
@@ -47,8 +44,6 @@ in
   };
 
   networking.resolvconf.enable = true;
-
-  systemd.tmpfiles.rules = libraryDirRules;
 
   environment.systemPackages = [ pkgs.join-media-parts ];
 }
