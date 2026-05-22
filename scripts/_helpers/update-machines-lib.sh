@@ -8,15 +8,12 @@ calc_min_disk_kb_from_gib() {
 
 resolve_base_host() {
   local host="$1"
-  case "$host" in
-    pi5)
-      # TODO: add DNS alias so "pi5" resolves, then remove this mapping.
-      printf '%s' "dhcp"
-      ;;
-    *)
-      printf '%s' "$host"
-      ;;
-  esac
+  if [[ -z "${HOST_BASE_MAP_JSON:-}" ]]; then
+    printf '%s' "$host"
+    return 0
+  fi
+
+  jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_BASE_MAP_JSON"
 }
 
 is_work_host() {
