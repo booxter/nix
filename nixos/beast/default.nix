@@ -2,6 +2,7 @@
   hostInventory,
   lib,
   pkgs,
+  username,
   ...
 }:
 let
@@ -174,7 +175,7 @@ in
   ];
 
   # Pin this host to the latest stable release channel (critical infra).
-  users.users.ihrachyshka.hashedPassword = "$6$gQ7Gm5b2aq7qPn7W$dcuDT19.SJ88xPA4tQHbscdJDMo3wK.UXGhffrohh7YU4QAzcmRk3GKPNku.BnGrkgDYvZXm/4tBfT.NP6eF.1";
+  users.users.${username}.hashedPassword = "$6$gQ7Gm5b2aq7qPn7W$dcuDT19.SJ88xPA4tQHbscdJDMo3wK.UXGhffrohh7YU4QAzcmRk3GKPNku.BnGrkgDYvZXm/4tBfT.NP6eF.1";
 
   # Use the freshest kernel available on the stable channel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
