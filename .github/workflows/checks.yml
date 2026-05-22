@@ -50,23 +50,12 @@ jobs:
         with:
           script: |
             const planner = require("./.github/scripts/plan-ci-matrix.js");
+            const targetInventory = require("./.github/scripts/ci-target-inventory.js");
+            const nixosTests = targetInventory.inventory.nixosTests;
             const fullMatrix = {
-              include: [
-                { name: "NixOS test: cache", cmd: "nix build .#nixosTests.x86_64-linux.cache -L --show-trace" }
-              ]
+              include: targetInventory.toBuildMatrixEntries(nixosTests)
             };
-            const hostTestMap = [
-              { host: "prox-cachevm", tests: [ "NixOS test: cache" ] }
-            ];
-            const machinePathMap = [
-              { prefix: "nixos/cachevm/", tests: [ "NixOS test: cache" ] },
-              { prefix: "tests/nixos/cache.nix", tests: [ "NixOS test: cache" ] },
-              { prefix: "tests/nixos/fixtures/atticd.env", tests: [ "NixOS test: cache" ] },
-              ...hostTestMap.flatMap(({ host, tests }) => ([
-                { prefix: `secrets/${host}.yaml`, tests },
-                { prefix: `secrets/_templates/${host}.yaml`, tests },
-              ])),
-            ];
+            const machinePathMap = targetInventory.buildMachinePathMap(nixosTests, "tests");
 
             if (context.eventName !== "pull_request") {
               core.info("Non-PR event, using full NixOS test matrix.");

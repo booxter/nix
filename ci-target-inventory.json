@@ -1,0 +1,380 @@
+{
+  "buildTargets": [
+    {
+      "attr": "nixosConfigurations.frame.config.system.build.toplevel",
+      "name": "frame (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "frame"
+        ],
+        "prefixes": [
+          "nixos/frame/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.nvws.config.system.build.toplevel",
+      "name": "nvws (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "nvws"
+        ],
+        "prefixes": [
+          "nixos/nvws/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prx1-lab.config.system.build.toplevel",
+      "name": "prx1-lab (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prx1-lab"
+        ],
+        "prefixes": [
+          "nixos/prx1-lab/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prx2-lab.config.system.build.toplevel",
+      "name": "prx2-lab (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prx2-lab"
+        ],
+        "prefixes": [
+          "nixos/prx2-lab/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prx3-lab.config.system.build.toplevel",
+      "name": "prx3-lab (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prx3-lab"
+        ],
+        "prefixes": [
+          "nixos/prx3-lab/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prox-builder1vm.config.system.build.toplevel",
+      "name": "builder (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-builder1vm"
+        ],
+        "prefixes": []
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prox-cachevm.config.system.build.toplevel",
+      "name": "cache (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-cachevm"
+        ],
+        "prefixes": [
+          "nixos/cachevm/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.pi5.config.system.build.toplevel",
+      "name": "pi5 dhcp (aarch64-linux)",
+      "runner": "ubuntu-24.04-arm",
+      "selection": {
+        "hosts": [
+          "pi5"
+        ],
+        "prefixes": [
+          "nixos/pi5/"
+        ]
+      },
+      "system": "aarch64-linux",
+      "warm": false
+    },
+    {
+      "attr": "nixosConfigurations.beast.config.system.build.toplevel",
+      "name": "beast (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "beast"
+        ],
+        "prefixes": [
+          "nixos/beast/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.local-deskvm.config.system.build.toplevel",
+      "name": "desk (aarch64-linux)",
+      "runner": "ubuntu-24.04-arm",
+      "selection": {
+        "hosts": [],
+        "prefixes": [
+          "nixos/deskvm/"
+        ]
+      },
+      "system": "aarch64-linux",
+      "warm": false
+    },
+    {
+      "attr": "nixosConfigurations.prox-srvarrvm.config.system.build.toplevel",
+      "name": "srvarr (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-srvarrvm"
+        ],
+        "prefixes": [
+          "nixos/srvarrvm/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prox-fanavm.config.system.build.toplevel",
+      "name": "fana (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-fanavm"
+        ],
+        "prefixes": [
+          "nixos/fanavm/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prox-gwvm.config.system.build.toplevel",
+      "name": "gw (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-gwvm"
+        ],
+        "prefixes": [
+          "nixos/gwvm/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prox-orgvm.config.system.build.toplevel",
+      "name": "org (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-orgvm"
+        ],
+        "prefixes": [
+          "nixos/orgvm/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prox-builder1vm.config.system.build.vm",
+      "name": "nixos vm builder1 (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-builder1vm"
+        ],
+        "prefixes": []
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "homeConfigurations.ihrachyshka@nv.activationPackage",
+      "name": "home-manager nv (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [],
+        "prefixes": []
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "homeConfigurations.ihrachyshka@mair.activationPackage",
+      "name": "home-manager mair (aarch64-darwin)",
+      "runner": "macos-26",
+      "selection": {
+        "hosts": [
+          "mair"
+        ],
+        "prefixes": [
+          "darwin/mair/"
+        ]
+      },
+      "system": "aarch64-darwin",
+      "warm": true
+    },
+    {
+      "attr": "darwinConfigurations.mair.system",
+      "name": "mair (aarch64-darwin)",
+      "runner": "macos-26",
+      "selection": {
+        "hosts": [
+          "mair"
+        ],
+        "prefixes": [
+          "darwin/mair/"
+        ]
+      },
+      "system": "aarch64-darwin",
+      "warm": true
+    },
+    {
+      "attr": "darwinConfigurations.mmini.system",
+      "name": "mmini (aarch64-darwin)",
+      "runner": "macos-26",
+      "selection": {
+        "hosts": [
+          "mmini"
+        ],
+        "prefixes": [
+          "darwin/mmini/"
+        ]
+      },
+      "system": "aarch64-darwin",
+      "warm": true
+    },
+    {
+      "attr": "darwinConfigurations.JGWXHWDL4X.system",
+      "name": "JGWXHWDL4X (aarch64-darwin)",
+      "runner": "macos-26",
+      "selection": {
+        "hosts": [
+          "JGWXHWDL4X"
+        ],
+        "prefixes": [
+          "darwin/JGWXHWDL4X/"
+        ]
+      },
+      "system": "aarch64-darwin",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prox-builder1vm.config.system.build.vmQemu",
+      "name": "nixos vm qemu (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-builder1vm"
+        ],
+        "prefixes": []
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.local-builder1vm.config.system.build.vmQemu",
+      "name": "nixos vm qemu (aarch64-darwin)",
+      "runner": "macos-26",
+      "selection": {
+        "hosts": [],
+        "prefixes": []
+      },
+      "system": "aarch64-darwin",
+      "warm": true
+    },
+    {
+      "attr": "nixosConfigurations.prox-builder1vm.config.virtualisation.proxmox.iso",
+      "name": "nixos vm proxmox iso (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-builder1vm"
+        ],
+        "prefixes": []
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    }
+  ],
+  "nixosTests": [
+    {
+      "attr": "nixosTests.x86_64-linux.cache",
+      "name": "NixOS test: cache",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-cachevm"
+        ],
+        "prefixes": [
+          "nixos/cachevm/",
+          "tests/nixos/cache.nix",
+          "tests/nixos/fixtures/atticd.env"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    }
+  ],
+  "regularChecks": [
+    {
+      "attr": "checks.x86_64-linux.bats-tests",
+      "name": "bats-tests",
+      "runner": "ubuntu-latest",
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "checks.x86_64-linux.box-py",
+      "name": "box-py",
+      "runner": "ubuntu-latest",
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "checks.x86_64-linux.join-media-parts",
+      "name": "join-media-parts",
+      "runner": "ubuntu-latest",
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
+      "attr": "checks.x86_64-linux.wg-home-client-config",
+      "name": "wg-home-client-config",
+      "runner": "ubuntu-latest",
+      "system": "x86_64-linux",
+      "warm": true
+    }
+  ]
+}
