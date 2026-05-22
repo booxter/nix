@@ -198,9 +198,9 @@ in
 
   networking.resolvconf.enable = true;
 
-  systemd.tmpfiles.rules = [
-  ]
-  ++ lib.concatMap (spec: mkTmpfilesDir spec.path spec.mode spec.user spec.group) mediaDirSpecs;
+  systemd.tmpfiles.rules = lib.concatMap (
+    spec: mkTmpfilesDir spec.path spec.mode spec.user spec.group
+  ) mediaDirSpecs;
 
   environment.systemPackages = [ pkgs.join-media-parts ];
 }
