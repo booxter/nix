@@ -279,6 +279,10 @@ rec {
       name = "srvarr";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
+      wgNamespace = {
+        bridgeAddress = "192.168.50.5";
+        namespaceAddress = "192.168.50.1";
+      };
       cores = 16;
       memorySize = 32;
       sshPort = 10005;

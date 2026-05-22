@@ -8,6 +8,7 @@
   ...
 }:
 let
+  srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   serviceCatalog = import ../../lib/services.nix {
     srvarrDisplayHost = "${config.services.avahi.hostName}.local";
@@ -47,8 +48,8 @@ let
     fsType = "nfs";
     options = mediaMountOptions;
   };
-  wgBridgeAddress = "192.168.50.5";
-  wgNamespaceAddress = "192.168.50.1";
+  wgBridgeAddress = srvarrSpec.wgNamespace.bridgeAddress;
+  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
   wgConservativeUploadRateMbit = 8;
   wgConservativeUploadRate = "${toString wgConservativeUploadRateMbit}mbit";
   wgConservativeDownloadRateMbit = 400;
