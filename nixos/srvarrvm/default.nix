@@ -105,7 +105,6 @@ in
 
   # NFS mounts with media
   boot.supportedFilesystems = [ "nfs" ];
-  boot.kernelModules = [ "ifb" ];
   services.rpcbind.enable = true;
 
   # local qemu vms override filesystems

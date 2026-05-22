@@ -20,6 +20,8 @@ let
   wgOuterLinkRate = "10gbit";
 in
 {
+  boot.kernelModules = [ "ifb" ];
+
   imports = [
     (import ./adaptive-upload-policy.nix {
       jellyfinExporterUrl = "http://${beastNfsAddress}:9594/metrics";
