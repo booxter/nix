@@ -82,7 +82,7 @@
       username = "ihrachyshka";
       helpers = import ./lib { inherit inputs outputs username; };
 
-      hostSpecs = import ./lib/host-specs.nix { inherit username; };
+      hostSpecs = import ./lib/hosts.nix { inherit username; };
       inherit (hostSpecs)
         darwinHosts
         nixosHostSpecs
