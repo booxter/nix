@@ -182,7 +182,10 @@
           throw "Unsupported NixOS host spec type `${spec.type}`";
     in
     {
-      hostWorkMap = import ./lib/host-work-map.nix { inherit username; };
+      hostWorkMap = import ./lib/host-work-map.nix {
+        lib = inputs.nixpkgs.lib;
+        inherit username;
+      };
 
       homeConfigurations = {
         # nv dev env

@@ -1,8 +1,11 @@
 {
+  lib,
   username ? "ihrachyshka",
 }:
 let
-  hostSpecs = import ./host-specs.nix { inherit username; };
+  hostSpecs = import ./hosts.nix {
+    inherit lib username;
+  };
   inherit (hostSpecs) toVmName;
 
   specToNixosWorkMap =
