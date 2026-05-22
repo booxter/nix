@@ -1,7 +1,41 @@
-{ pkgs, username, hostInventory, ... }:
+{ lib, pkgs, username, hostInventory, ... }:
 let
   lan = hostInventory.site.lan;
   beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
+  ipToInt =
+    ip:
+    lib.foldl' (acc: octet: acc * 256 + octet) 0 (map lib.toInt (lib.splitString "." ip));
+  pow2 = n: if n == 0 then 1 else 2 * pow2 (n - 1);
+  cidrToRange =
+    cidr:
+    let
+      parts = lib.splitString "/" cidr;
+      address = builtins.elemAt parts 0;
+      prefixLength = lib.toInt (builtins.elemAt parts 1);
+      networkSize = pow2 (32 - prefixLength);
+      start = builtins.div (ipToInt address) networkSize * networkSize;
+    in
+    {
+      inherit start;
+      end = start + networkSize - 1;
+    };
+  rangeToIntBounds = range: {
+    start = ipToInt range.start;
+    end = ipToInt range.end;
+  };
+  rangeOverlapsCidr =
+    range: cidr:
+    let
+      rangeBounds = rangeToIntBounds range;
+      cidrBounds = cidrToRange cidr;
+    in
+    rangeBounds.start <= cidrBounds.end && cidrBounds.start <= rangeBounds.end;
+  mkDhcpRangeExclusionAssertions =
+    name: dhcpRange:
+    map (excludeRange: {
+      assertion = builtins.all (range: !(rangeOverlapsCidr range excludeRange)) dhcpRange.ranges;
+      message = "LAN DHCP pool `${name}` must not overlap excluded subnet `${excludeRange}`.";
+    }) dhcpRange.excludeRanges;
   renderDhcpReservation =
     reservation:
     builtins.concatStringsSep "," (
@@ -11,6 +45,7 @@ let
         reservation.ip
       ]
     );
+  renderDhcpRange = iface: range: "${iface},${range.start},${range.end}";
   mainIface = "end0";
   guestIface = "wlan0";
   gwAddr = lan.upstreamGateway;
@@ -20,11 +55,17 @@ let
   dnsmasqExporterPort = 9153;
   staticDhcpHosts = map renderDhcpReservation hostInventory.staticDhcpReservations;
   managedDhcpHosts = map renderDhcpReservation hostInventory.managedDhcpReservations;
+  mainDhcpRanges = map (renderDhcpRange mainIface) lan.dhcpRanges.main.ranges;
+  guestDhcpRanges = map (renderDhcpRange guestIface) lan.dhcpRanges.guest.ranges;
 in
 {
   imports = [
     ./ups.nix
   ];
+
+  assertions =
+    mkDhcpRangeExclusionAssertions "main" lan.dhcpRanges.main
+    ++ mkDhcpRangeExclusionAssertions "guest" lan.dhcpRanges.guest;
 
   networking = {
     interfaces.end0 = {
@@ -68,11 +109,7 @@ in
       dhcp-authoritative = true;
       dhcp-rapid-commit = true;
 
-      dhcp-range = [
-        # Keep DHCP ranges away from reserved VPN netns subnet (192.168.50.0/24).
-        "${mainIface},${lan.dhcpRanges.main.start},${lan.dhcpRanges.main.end}"
-        "${guestIface},${lan.dhcpRanges.guest.start},${lan.dhcpRanges.guest.end}"
-      ];
+      dhcp-range = mainDhcpRanges ++ guestDhcpRanges;
 
       listen-address = [
         "127.0.0.1"
@@ -111,9 +148,6 @@ in
 
       # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix
       dhcp-host = [
-        # DON'T USE 192.168.15.0/24 for nixarr compatibility
-        # TODO: migrate all internal nodes out of .15 range for nixarr compatibility
-        # TODO: modify nixarr to allow using a different range for wg iface?
       ] ++ staticDhcpHosts ++ managedDhcpHosts;
 
       enable-tftp = true;
