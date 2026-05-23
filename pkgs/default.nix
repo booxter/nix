@@ -18,6 +18,8 @@ in
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
+  issue-observability-cert = pkgs.callPackage ./issue-observability-cert { };
+
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };

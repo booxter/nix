@@ -169,6 +169,7 @@ let
     + builtins.readFile ../scripts/hba-flash.sh;
   };
   unifiSyncPackage = pkgs.unifi-sync;
+  issueObservabilityCertPackage = pkgs.issue-observability-cert;
   unifiSyncApp = pkgs.writeShellApplication {
     name = "unifi-sync-app";
     runtimeInputs = [ unifiSyncPackage ];
@@ -179,6 +180,13 @@ let
         ) unifiSyncEnv.environment
       )}
       exec ${unifiSyncPackage}/bin/unifi-sync "$@"
+    '';
+  };
+  issueObservabilityCertApp = pkgs.writeShellApplication {
+    name = "issue-observability-cert-app";
+    runtimeInputs = [ issueObservabilityCertPackage ];
+    text = ''
+      exec ${issueObservabilityCertPackage}/bin/issue-observability-cert "$@"
     '';
   };
   wgHomeClientConfig = pkgs.writeShellApplication {
@@ -355,6 +363,9 @@ in
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
   "unifi-sync" =
     mkApp "${unifiSyncApp}/bin/unifi-sync-app" "Sync UniFi DHCP, reservations, and split DNS from inventory.";
+  "issue-observability-cert" = mkApp
+    "${issueObservabilityCertApp}/bin/issue-observability-cert-app"
+    "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =

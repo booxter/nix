@@ -207,6 +207,7 @@ def issue_endpoint(host, endpoint, *, ca_host):
 
 def main():
     parser = argparse.ArgumentParser(
+        prog="issue-observability-cert",
         description="Issue internal PKI certs for Prometheus mTLS endpoints and store them in host sops secrets."
     )
     parser.add_argument("--host", required=True, help="Inventory host name, e.g. beast or prox-orgvm")
