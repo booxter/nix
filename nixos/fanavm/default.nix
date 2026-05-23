@@ -9,6 +9,7 @@
 let
   beastSpec = hostInventory.nixosHostSpecsByName.beast;
   frameSpec = hostInventory.nixosHostSpecsByName.frame;
+  internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
   lan = hostInventory.site.lan;
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
@@ -116,28 +117,44 @@ let
   ];
   isVirtualNodeName = name: lib.hasPrefix "prox-" name && lib.hasSuffix "vm" name;
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
-  remoteNixosNodeTargetConfigs =
-    map
-      (name: {
-        labels = {
-          host_network_charts = lib.boolToString (!outputs.nixosConfigurations.${name}.config.host.isProxmox);
-          host_network_source =
-            if outputs.nixosConfigurations.${name}.config.host.isProxmox then "classified" else "node";
-          host_class = hostClassForName name;
-          host_virtual = lib.boolToString (isVirtualNodeName name);
-          instance = outputs.nixosConfigurations.${name}.config.host.dnsName;
-        };
-        targets = [ "${outputs.nixosConfigurations.${name}.config.host.dnsName}:9100" ];
-      })
-      (
-        builtins.filter (
-          name:
-          !(lib.hasPrefix "local-" name)
-          && name != "prox-fanavm"
-          && name != "prox-deskvm"
-          && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
-        ) (builtins.attrNames outputs.nixosConfigurations)
-      );
+  mkRemoteNixosNodeTargetConfig =
+    name:
+    let
+      hostConfig = outputs.nixosConfigurations.${name}.config;
+    in
+    {
+      labels = {
+        host_network_charts = lib.boolToString (!hostConfig.host.isProxmox);
+        host_network_source = if hostConfig.host.isProxmox then "classified" else "node";
+        host_class = hostClassForName name;
+        host_virtual = lib.boolToString (isVirtualNodeName name);
+        instance = hostConfig.host.dnsName;
+      };
+      targets = [ "${hostConfig.host.dnsName}:9100" ];
+    };
+  nixosNodeExporterTargetNames = builtins.filter (
+    name:
+    !(lib.hasPrefix "local-" name)
+    && name != "prox-deskvm"
+    && name != "prox-fanavm"
+    && (outputs.nixosConfigurations.${name}.config.host.observability.client.enable or false)
+    && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
+  ) (builtins.attrNames outputs.nixosConfigurations);
+  remoteNixosMtlsNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig (
+    builtins.filter (
+      name:
+      outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
+        or false
+    ) nixosNodeExporterTargetNames
+  );
+  remoteNixosPlainNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig (
+    builtins.filter (
+      name:
+      !(outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
+        or false
+      )
+    ) nixosNodeExporterTargetNames
+  );
   remoteDarwinNodeTargetConfigs =
     map
       (name: {
@@ -157,7 +174,7 @@ let
           && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
         ) (builtins.attrNames outputs.darwinConfigurations)
       );
-  remoteNodeTargetConfigs = remoteNixosNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
+  remotePlainNodeTargetConfigs = remoteNixosPlainNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
   mkBlackboxProbeSourceForConfig = hostConfig: {
     exporter = "${hostConfig.host.dnsName}:${toString hostConfig.services.prometheus.exporters.blackbox.port}";
     source = hostConfig.services.avahi.hostName;
@@ -335,6 +352,20 @@ in
     mode = "0400";
     restartUnits = [ "grafana.service" ];
   };
+  sops.secrets.prometheusScrapeNodeClientCrt = {
+    key = "prometheus/scrape_node/client_crt";
+    owner = "prometheus";
+    group = "prometheus";
+    mode = "0400";
+    restartUnits = [ "prometheus.service" ];
+  };
+  sops.secrets.prometheusScrapeNodeClientKey = {
+    key = "prometheus/scrape_node/client_key";
+    owner = "prometheus";
+    group = "prometheus";
+    mode = "0400";
+    restartUnits = [ "prometheus.service" ];
+  };
   sops.templates."grafana-alerting-contact-points.yaml" = {
     owner = "grafana";
     group = "grafana";
@@ -483,7 +514,7 @@ in
               (mkGrafanaPromRule {
                 uid = "thermal_cpu_hot";
                 title = "CPU Temperature High";
-                expr = "max by(instance) ((node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"})";
+                expr = "max by(instance) ((node_thermal_zone_temp{job=~\"node|node-mtls\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",group=\"cpu\"})";
                 comparator = "gt";
                 threshold = 85;
                 forDuration = "10m";
@@ -499,7 +530,7 @@ in
               (mkGrafanaPromRule {
                 uid = "thermal_storage_hot";
                 title = "Storage Temperature High";
-                expr = "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=\"node\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})";
+                expr = "max by(instance) (node_hwmon_temp_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",group=\"storage\"})";
                 comparator = "gt";
                 threshold = 75;
                 forDuration = "10m";
@@ -515,7 +546,7 @@ in
               (mkGrafanaPromRule {
                 uid = "thermal_hba_export_failed";
                 title = "HBA Thermal Export Failed";
-                expr = "host_observability_hba_collect_success{job=\"node\",host_class=\"hardware\"}";
+                expr = "host_observability_hba_collect_success{job=~\"node|node-mtls\",host_class=\"hardware\"}";
                 comparator = "lt";
                 threshold = 1;
                 forDuration = "10m";
@@ -547,7 +578,7 @@ in
               (mkGrafanaPromRule {
                 uid = "darwin_ismc_export_failed";
                 title = "Darwin Thermal Export Failed";
-                expr = "host_observability_darwin_ismc_collect_success{job=\"node\",host_class=\"hardware\"}";
+                expr = "host_observability_darwin_ismc_collect_success{job=~\"node|node-mtls\",host_class=\"hardware\"}";
                 comparator = "lt";
                 threshold = 1;
                 forDuration = "10m";
@@ -627,6 +658,10 @@ in
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
   };
+  systemd.services.prometheus = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
+  };
 
   systemd.services.prometheus-nut-exporter = {
     description = "Prometheus exporter for NUT UPS servers";
@@ -648,6 +683,7 @@ in
   # Prometheus scrapes and stores time-series metrics from this machine.
   services.prometheus = {
     enable = true;
+    checkConfig = "syntax-only";
     listenAddress = "127.0.0.1";
     port = prometheusPort;
     retentionTime = prometheusRetention;
@@ -676,7 +712,17 @@ in
             };
           }
         ]
-        ++ remoteNodeTargetConfigs;
+        ++ remotePlainNodeTargetConfigs;
+      }
+      {
+        job_name = "node-mtls";
+        scheme = "https";
+        tls_config = {
+          ca_file = toString internalPkiRootCaPath;
+          cert_file = config.sops.secrets.prometheusScrapeNodeClientCrt.path;
+          key_file = config.sops.secrets.prometheusScrapeNodeClientKey.path;
+        };
+        static_configs = remoteNixosMtlsNodeTargetConfigs;
       }
       {
         job_name = "nut-prx1";

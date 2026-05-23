@@ -68,6 +68,9 @@ in
   };
 
   networking.wireless.enable = true;
+  # brcmfmac on the Pi 5 repeatedly fails wpa_supplicant scheduled background
+  # scans after the uplink drops, which spams the journal and stalls recovery.
+  networking.wireless.scanOnLowSignal = false;
   networking.wireless.networks = {
     booxter-guest = { };
   };

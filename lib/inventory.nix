@@ -493,6 +493,22 @@ rec {
         ip = "192.168.20.4";
       };
     }
+    {
+      type = "vm";
+      name = "pki";
+      platform = "x86_64-linux";
+      upsHost = "prx1-lab";
+      cores = 2;
+      memorySize = 4;
+      diskSize = 40;
+      sshPort = 10010;
+      hmFull = false;
+      dhcpReservation = {
+        match = "id:prox-pkivm";
+        hostname = "prox-pkivm";
+        ip = "192.168.20.5";
+      };
+    }
   ]
   ++ map (idx: (builderSpec idx) // { upsHost = "prx1-lab"; }) [
     1

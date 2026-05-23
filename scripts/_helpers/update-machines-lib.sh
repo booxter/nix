@@ -80,6 +80,21 @@ prioritize_hosts() {
   printf '%s\n' "${prioritized[@]}" "${normal[@]}" "${deferred[@]}"
 }
 
+format_host_list() {
+  local host
+
+  if [[ $# -eq 0 ]]; then
+    return 0
+  fi
+
+  printf '%s' "$1"
+  shift
+
+  for host in "$@"; do
+    printf ', %s' "$host"
+  done
+}
+
 find_darwin_rebuild() {
   command -v darwin-rebuild 2>/dev/null || true
 }

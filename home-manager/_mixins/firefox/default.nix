@@ -5,6 +5,8 @@ in
 {
   programs.firefox = {
     enable = true;
+    # TODO: migrate the profile to the XDG path and switch this to config.xdg.configHome.
+    configPath = ".mozilla/firefox";
     nativeMessagingHosts = [
       pkgs.browserpass
     ];

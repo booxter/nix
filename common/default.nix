@@ -23,6 +23,7 @@ in
 {
   imports = [
     ./_mixins/attic
+    ./_mixins/internal-pki
     ./_mixins/nix
     ./_mixins/nix-gc
     ./_mixins/ssh

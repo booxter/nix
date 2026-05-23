@@ -27,7 +27,7 @@ the peer to the `vpnPeers` list in `nixos/gwvm/default.nix`:
 Deploy or redeploy the VM:
 
 ```bash
-nix run .#prox-deploy -- gw prx1
+nix run .#prox-deploy -- gw prx1-lab
 # or, after the VM already exists
 nix run .#deploy -- prox-gwvm
 ```

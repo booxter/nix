@@ -135,6 +135,7 @@ in
 
   wayland.windowManager.hyprland = {
     enable = isLinux;
+    configType = "hyprlang";
     xwayland.enable = true;
     systemd.enable = true;
     settings = {

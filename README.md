@@ -22,10 +22,10 @@ nix run .#vm -- org
 nix run .#vm -- beast
 
 # Proxmox VM deploy
-nix run .#prox-deploy -- srvarr prx1
-nix run .#prox-deploy -- fana prx1
-nix run .#prox-deploy -- gw prx1
-nix run .#prox-deploy -- org prx1
+nix run .#prox-deploy -- srvarr prx1-lab
+nix run .#prox-deploy -- fana prx1-lab
+nix run .#prox-deploy -- gw prx1-lab
+nix run .#prox-deploy -- org prx1-lab
 
 # Disk and image helpers
 nix run .#deploy -- --disko frame /dev/sdX
