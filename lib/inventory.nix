@@ -98,21 +98,16 @@ rec {
       };
       dhcpRanges = {
         main = {
-          excludeRanges = [
-            # nixarr still assumes 192.168.15.0/24 for its WireGuard-facing proxy.
-            "192.168.15.0/24"
-            # Reserve the VPN netns subnet for srvarr's local wg bridge.
-            "192.168.50.0/24"
-          ];
           ranges = [
             {
+              # Keep the pool below 192.168.15.0/24 because nixarr still assumes
+              # that subnet for its WireGuard-facing proxy.
               start = "192.168.10.1";
               end = "192.168.14.255";
             }
           ];
         };
         guest = {
-          excludeRanges = [ ];
           ranges = [
             {
               start = "192.168.100.1";

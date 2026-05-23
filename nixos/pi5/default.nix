@@ -9,7 +9,6 @@
 let
   lan = hostInventory.site.lan;
   beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
-  dhcpRanges = import ../../lib/dhcp-ranges.nix { inherit lib; };
   renderDhcpReservation =
     reservation:
     builtins.concatStringsSep "," (
@@ -38,10 +37,6 @@ in
   imports = [
     ./ups.nix
   ];
-
-  assertions =
-    dhcpRanges.mkExclusionAssertions "main" lan.dhcpRanges.main
-    ++ dhcpRanges.mkExclusionAssertions "guest" lan.dhcpRanges.guest;
 
   networking = {
     interfaces.end0 = {

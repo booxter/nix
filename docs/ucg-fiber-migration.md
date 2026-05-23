@@ -28,9 +28,8 @@ Important current values:
 - `pi5` guest-side address: `192.168.2.1`
 - main DHCP pools:
   - `192.168.10.1 - 192.168.14.255`
-- excluded subnets:
-  - `192.168.15.0/24`
-  - `192.168.50.0/24`
+  - kept below `192.168.15.0/24` because nixarr still assumes that subnet for
+    its WireGuard-facing proxy
 - guest DHCP pool:
   - `192.168.100.1 - 192.168.100.255`
 
