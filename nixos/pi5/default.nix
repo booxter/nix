@@ -23,8 +23,9 @@ let
   mainIface = "end0";
   guestIface = "wlan0";
   gwAddr = lan.gateway.address;
-  mainAddr = hostInventory.nixosHostSpecsByName.${config.networking.hostName}.lanAddress;
-  guestAddr = lan.guest.address;
+  hostSpec = hostInventory.nixosHostSpecsByName.${config.networking.hostName};
+  mainAddr = hostSpec.lanAddress;
+  guestAddr = hostSpec.guestAddress;
   lanDomain = lan.domain;
   dnsmasqExporterPort = 9153;
   publicServiceHosts = map (service: service.publicHost) hostInventory.publicServices;

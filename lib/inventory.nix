@@ -96,10 +96,6 @@ rec {
         host = "gateway";
         address = "192.168.0.1";
       };
-      guest = {
-        host = piHostname;
-        address = "192.168.2.1";
-      };
       dhcpRanges = {
         main = {
           excludeRanges = [
@@ -298,6 +294,7 @@ rec {
       hostKind = "raspberryPi";
       name = piHostname;
       lanAddress = "192.168.1.1";
+      guestAddress = "192.168.2.1";
       stateVersion = piStateVersion;
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
