@@ -179,6 +179,25 @@ EOF
   [ "$output" = "20971520" ]
 }
 
+@test "lan_dns_lookup_candidates adds the LAN domain for bare hostnames" {
+  run lan_dns_lookup_candidates pi5 home.arpa
+  [ "$status" -eq 0 ]
+  expected=$'pi5\npi5.home.arpa'
+  [ "$output" = "$expected" ]
+}
+
+@test "lan_dns_lookup_candidates leaves FQDNs unchanged" {
+  run lan_dns_lookup_candidates pi5.home.arpa home.arpa
+  [ "$status" -eq 0 ]
+  [ "$output" = "pi5.home.arpa" ]
+}
+
+@test "lan_dns_lookup_candidates leaves IPv4 addresses unchanged" {
+  run lan_dns_lookup_candidates 192.168.1.1 home.arpa
+  [ "$status" -eq 0 ]
+  [ "$output" = "192.168.1.1" ]
+}
+
 @test "resolve_base_host leaves pi5 unchanged" {
   export HOST_BASE_MAP_JSON='{"pi5":"pi5"}'
   run resolve_base_host pi5

@@ -31,6 +31,21 @@ LAN_DNS_SERVER="$(
     '
   )
 )"
+LAN_DOMAIN="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --impure --raw --expr '
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            strings.toUpper = s: s;
+          };
+        };
+      in
+      hostInventory.site.lan.domain
+    '
+  )
+)"
 HOST_BASE_MAP_JSON="$(
   (
     cd "${REPO_ROOT}"
@@ -106,12 +121,14 @@ resolve_ssh_host() {
     return
   fi
 
-  resolved="$(dig +short +time=1 +tries=1 "@${LAN_DNS_SERVER}" "$ssh_lookup_host" A | head -n1)"
-  if [[ -n "$resolved" ]]; then
-    SSH_HOST_OPTS=(-o HostName="$resolved" -o HostKeyAlias="$ssh_lookup_host")
-    printf '%s' "$ssh_lookup_host"
-    return
-  fi
+  while IFS= read -r dns_candidate; do
+    resolved="$(dig +short +time=1 +tries=1 "@${LAN_DNS_SERVER}" "$dns_candidate" A | head -n1)"
+    if [[ -n "$resolved" ]]; then
+      SSH_HOST_OPTS=(-o HostName="$resolved" -o HostKeyAlias="$ssh_lookup_host")
+      printf '%s' "$ssh_lookup_host"
+      return
+    fi
+  done < <(lan_dns_lookup_candidates "$ssh_lookup_host" "$LAN_DOMAIN")
 
   printf '%s' "$ssh_lookup_host"
 }
