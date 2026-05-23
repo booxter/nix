@@ -95,8 +95,7 @@ nix run .#unifi-sync -- --debug
   real guest VLAN on the UCG Fiber
 - [ ] Move UPS / NUT from `pi5` to `nvws`
 - [ ] Keep `pi5` only as a TFTP host if netboot is still needed
-- [ ] Remove `pi5` `dnsmasq`-specific observability from `fana` once trusted-LAN
-  DNS/DHCP is no longer on `pi5`
+- [x] Remove `pi5` `dnsmasq`-specific observability from `fana`
 - [ ] Remove or repurpose the remaining `pi5` network role after guest / TFTP /
   UPS dependencies are gone
 
