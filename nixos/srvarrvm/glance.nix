@@ -1,10 +1,10 @@
 {
   config,
   hostInventory,
-  lib,
   ...
 }:
 let
+  glanceInternalPort = 18080;
   srvarrPorts = {
     aurral = config.systemd.services.aurral.environment.PORT;
     audiobookshelf = config.nixarr.audiobookshelf.port;
@@ -36,11 +36,11 @@ in
 {
   services.glance = {
     enable = true;
-    openFirewall = true;
+    openFirewall = false;
     settings = {
       server = {
-        host = "0.0.0.0";
-        port = 80;
+        host = "127.0.0.1";
+        port = glanceInternalPort;
       };
       pages = [
         {
@@ -76,11 +76,8 @@ in
     };
   };
 
-  # Allow glance to bind to lower port, 80
-  systemd.services.glance.serviceConfig = {
-    AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
-    CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-    NoNewPrivileges = false;
-    PrivateUsers = lib.mkForce false;
+  host.internalHttps.services.glance = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString glanceInternalPort}";
   };
 }

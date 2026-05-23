@@ -170,6 +170,7 @@ let
     + builtins.readFile ../scripts/hba-flash.sh;
   };
   unifiSyncPackage = pkgs.unifi-sync;
+  issueInternalServiceCertPackage = pkgs.issue-internal-service-cert;
   issueObservabilityCertPackage = pkgs.issue-observability-cert;
   unifiSyncApp = pkgs.writeShellApplication {
     name = "unifi-sync-app";
@@ -188,6 +189,13 @@ let
     runtimeInputs = [ issueObservabilityCertPackage ];
     text = ''
       exec ${issueObservabilityCertPackage}/bin/issue-observability-cert "$@"
+    '';
+  };
+  issueInternalServiceCertApp = pkgs.writeShellApplication {
+    name = "issue-internal-service-cert-app";
+    runtimeInputs = [ issueInternalServiceCertPackage ];
+    text = ''
+      exec ${issueInternalServiceCertPackage}/bin/issue-internal-service-cert "$@"
     '';
   };
   wgHomeClientConfig = pkgs.writeShellApplication {
@@ -367,6 +375,9 @@ in
   "issue-observability-cert" = mkApp
     "${issueObservabilityCertApp}/bin/issue-observability-cert-app"
     "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+  "issue-internal-service-cert" = mkApp
+    "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app"
+    "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =
