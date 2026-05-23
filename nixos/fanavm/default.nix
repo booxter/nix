@@ -477,22 +477,6 @@ in
                   category = "dns";
                 };
               })
-              (mkGrafanaPromRule {
-                uid = "dns_upstream_failures";
-                title = "DNS Upstream Failures";
-                expr = "sum by (instance) (rate(dnsmasq_servers_queries_failed{job=\"dnsmasq\"}[5m]))";
-                comparator = "gt";
-                threshold = 0;
-                forDuration = "10m";
-                annotations = {
-                  summary = "DNS upstream failures on {{ $labels.instance }}";
-                  description = "dnsmasq on {{ $labels.instance }} has been seeing upstream query failures for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "dns";
-                };
-              })
             ];
           }
           {
@@ -902,16 +886,6 @@ in
         scrape_interval = "5s";
         static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanTcpProbeTargets;
         relabel_configs = blackboxProbeRelabelConfigs;
-      }
-      {
-        job_name = "dnsmasq";
-        static_configs = [
-          {
-            targets = [
-              "${outputs.nixosConfigurations.pi5.config.host.dnsName}:${toString outputs.nixosConfigurations.pi5.config.services.prometheus.exporters.dnsmasq.port}"
-            ];
-          }
-        ];
       }
       {
         job_name = "smartctl";

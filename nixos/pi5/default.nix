@@ -26,7 +26,6 @@ let
   mainAddr = hostSpec.lanAddress;
   guestAddr = hostSpec.guestAddress;
   lanDomain = lan.domain;
-  dnsmasqExporterPort = 9153;
   publicServiceHosts = map (service: service.publicHost) hostInventory.publicServices;
   staticDhcpHosts = map renderDhcpReservation hostInventory.staticDhcpReservations;
   managedDhcpHosts = map renderDhcpReservation hostInventory.managedDhcpReservations;
@@ -74,8 +73,6 @@ in
 
   # TODO: enable ipv6
   # TODO: use secret management for internal info?
-  host.observability.dnsQueryAccounting.enable = true;
-
   services.dnsmasq = {
     enable = true;
     resolveLocalQueries = true;
@@ -100,9 +97,6 @@ in
       ];
 
       cache-size = 2000;
-      # Include requester IP in dnsmasq query logs so Loki can answer
-      # "which client generated this DNS traffic?"
-      log-queries = "extra";
       server = [ gwAddr ];
 
       domain-needed = true;
@@ -138,16 +132,8 @@ in
       ];
     };
   };
-  services.prometheus.exporters.dnsmasq = {
-    enable = true;
-    listenAddress = mainAddr;
-    openFirewall = false;
-    port = dnsmasqExporterPort;
-    dnsmasqListenAddress = "127.0.0.1:53";
-  };
   networking.firewall.interfaces.${mainIface}.allowedTCPPorts = [
     53 # DNS over TCP fallback and observability probes
-    dnsmasqExporterPort
   ];
   networking.firewall.allowedUDPPorts = [
     53 # DNS
