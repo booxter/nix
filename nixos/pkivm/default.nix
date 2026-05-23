@@ -66,6 +66,10 @@ let
   '';
 in
 {
+  imports = [
+    ./unifi-sync.nix
+  ];
+
   # Keep the PKI host off the existing plaintext exporter setup until mTLS is in place.
   host.observability.client.enable = false;
 
