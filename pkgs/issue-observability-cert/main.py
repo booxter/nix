@@ -14,6 +14,7 @@ import yaml
 
 DEFAULT_CA_HOST = "prox-pkivm"
 DEFAULT_PROVISIONER = "bootstrap@home.arpa"
+DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
 
 
@@ -150,20 +151,21 @@ def issue_remote_cert(*, ca_host, common_name, sans):
     san_args = " ".join(f"--san {shlex.quote(san)}" for san in sans)
     script = f"""
 set -euo pipefail
-tmpdir="$(mktemp -d)"
+tmpdir="$(sudo -u step-ca mktemp -d)"
 cleanup() {{
-  sudo rm -rf "$tmpdir"
+  sudo -u step-ca rm -rf "$tmpdir"
 }}
 trap cleanup EXIT
-sudo step ca certificate {shlex.quote(common_name)} "$tmpdir/server.crt" "$tmpdir/server.key" \
+sudo -u step-ca env HOME={shlex.quote(DEFAULT_STEP_PATH)} STEPPATH={shlex.quote(DEFAULT_STEP_PATH)} \\
+  step ca certificate {shlex.quote(common_name)} "$tmpdir/server.crt" "$tmpdir/server.key" \
   {san_args} \
   --provisioner {shlex.quote(DEFAULT_PROVISIONER)} \
   --provisioner-password-file {shlex.quote(DEFAULT_PROVISIONER_PASSWORD_FILE)} \
   >/dev/null
 printf '%s\\n' '__CERT__'
-sudo cat "$tmpdir/server.crt"
+sudo -u step-ca cat "$tmpdir/server.crt"
 printf '%s\\n' '__KEY__'
-sudo cat "$tmpdir/server.key"
+sudo -u step-ca cat "$tmpdir/server.key"
 """
     output = run(["ssh", ca_host, "bash", "-lc", script], cwd=None)
     cert_marker = "__CERT__\n"
