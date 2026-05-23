@@ -13,8 +13,8 @@ write_update_machines_test_stubs() {
     printf '#!%s\n' "$bash_path"
     cat <<'EOF'
 set -euo pipefail
-if [[ "$*" == *".#nixosConfigurations.pi5.config.networking.interfaces.end0.ipv4.addresses"* ]]; then
-  printf '%s\n' '[{"address":"127.0.0.1"}]'
+if [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
+  printf '%s\n' '127.0.0.1'
 elif [[ "$*" == *"hostInventory = import ./lib/inventory.nix"* ]]; then
   printf '%s\n' '{"alpha":"alpha","beta":"beta","gamma":"gamma"}'
 else
@@ -179,15 +179,15 @@ EOF
   [ "$output" = "20971520" ]
 }
 
-@test "resolve_base_host maps pi5 to dhcp" {
-  export HOST_BASE_MAP_JSON='{"pi5":"dhcp"}'
+@test "resolve_base_host leaves pi5 unchanged" {
+  export HOST_BASE_MAP_JSON='{"pi5":"pi5"}'
   run resolve_base_host pi5
   [ "$status" -eq 0 ]
-  [ "$output" = "dhcp" ]
+  [ "$output" = "pi5" ]
 }
 
 @test "resolve_base_host leaves other hosts unchanged" {
-  export HOST_BASE_MAP_JSON='{"pi5":"dhcp"}'
+  export HOST_BASE_MAP_JSON='{"pi5":"pi5"}'
   run resolve_base_host nvws
   [ "$status" -eq 0 ]
   [ "$output" = "nvws" ]

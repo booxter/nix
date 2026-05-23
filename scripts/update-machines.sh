@@ -19,8 +19,16 @@ COLOR_RED='\033[1;31m'
 LAN_DNS_SERVER="$(
   (
     cd "${REPO_ROOT}"
-    nix eval --json .#nixosConfigurations.pi5.config.networking.interfaces.end0.ipv4.addresses \
-      | jq -r '.[0].address'
+    nix eval --impure --raw --expr '
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            strings.toUpper = s: s;
+          };
+        };
+      in
+      hostInventory.site.lan.gateway.address
+    '
   )
 )"
 HOST_BASE_MAP_JSON="$(

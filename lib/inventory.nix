@@ -92,10 +92,9 @@ rec {
     lan = {
       cidr = "192.168.0.0/16";
       domain = "home.arpa";
-      upstreamGateway = "192.168.0.1";
       gateway = {
-        host = piHostname;
-        address = "192.168.1.1";
+        host = "gateway";
+        address = "192.168.0.1";
       };
       guest = {
         host = piHostname;
@@ -298,7 +297,7 @@ rec {
       type = "bm";
       hostKind = "raspberryPi";
       name = piHostname;
-      dnsName = "dhcp";
+      lanAddress = "192.168.1.1";
       stateVersion = piStateVersion;
       homeManagerInput = "home-manager-25_11";
       hmFull = false;

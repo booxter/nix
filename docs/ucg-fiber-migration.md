@@ -23,12 +23,11 @@ Important current values:
 
 - LAN CIDR: `192.168.0.0/16`
 - LAN domain: `home.arpa`
-- upstream gateway: `192.168.0.1`
+- LAN DNS/DHCP endpoint: `192.168.0.1`
 - `pi5` LAN address: `192.168.1.1`
 - `pi5` guest-side address: `192.168.2.1`
 - main DHCP pools:
   - `192.168.10.1 - 192.168.14.255`
-  - `192.168.16.1 - 192.168.20.255`
 - excluded subnets:
   - `192.168.15.0/24`
   - `192.168.50.0/24`
@@ -46,7 +45,6 @@ Source:
 - DHCP for the Pi-hosted guest network
 - DNS for `home.arpa`
 - local host aliases:
-  - `dhcp -> 192.168.1.1`
   - `nix-cache -> prox-cachevm`
 - split DNS for public service names to local `beast`
 - PXE/TFTP for `netboot.xyz.efi`

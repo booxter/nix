@@ -129,7 +129,7 @@ helpers.forAllSystems (
           fleetApps."wg-home-client-config".program
         } --peer mair --private-key-file "$private_key_file" --server-public-key test-server-pubkey)"
         printf '%s\n' "$peer_output" | grep -F -- 'Address = 10.83.0.10/32' >/dev/null
-        printf '%s\n' "$peer_output" | grep -F -- 'DNS = 192.168.1.1' >/dev/null
+        printf '%s\n' "$peer_output" | grep -F -- 'DNS = 192.168.0.1' >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'Endpoint = wg.ihar.dev:51820' >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'AllowedIPs = 10.83.0.0/24, 192.168.0.0/16' >/dev/null
 

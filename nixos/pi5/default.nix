@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   username,
@@ -21,8 +22,8 @@ let
   renderDhcpRange = iface: range: "${iface},${range.start},${range.end}";
   mainIface = "end0";
   guestIface = "wlan0";
-  gwAddr = lan.upstreamGateway;
-  mainAddr = lan.gateway.address;
+  gwAddr = lan.gateway.address;
+  mainAddr = hostInventory.nixosHostSpecsByName.${config.networking.hostName}.lanAddress;
   guestAddr = lan.guest.address;
   lanDomain = lan.domain;
   dnsmasqExporterPort = 9153;
@@ -96,7 +97,7 @@ in
 
       dhcp-option = [
         "option:router,${gwAddr}"
-        "${mainIface},option:dns-server,${mainAddr}"
+        "${mainIface},option:dns-server,${gwAddr}"
         "${mainIface},option:domain-name,${lanDomain}"
         "${mainIface},option:domain-search,${lanDomain}"
         "${guestIface},option:dns-server,${gwAddr}"
@@ -117,7 +118,6 @@ in
       ];
 
       host-record = [
-        "dhcp,${mainAddr}"
         # Split DNS: send public web domains to the central ingress on beast.
         "${lib.concatStringsSep "," publicServiceHosts},${beastAddress}"
       ];

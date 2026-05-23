@@ -44,14 +44,9 @@ let
   ) hostInventory.services;
   dnsProbeTargets = [
     {
-      resolver = "pi5";
-      resolver_title = "pi5 dnsmasq";
+      resolver = "gateway";
+      resolver_title = "gateway ${lan.gateway.address}";
       target = "${lan.gateway.address}:53";
-    }
-    {
-      resolver = "upstream";
-      resolver_title = "upstream ${lan.upstreamGateway}";
-      target = "${lan.upstreamGateway}:53";
     }
     {
       resolver = "google";
@@ -64,11 +59,6 @@ let
       probe = "gateway";
       probe_title = "Gateway ${lan.gateway.address}";
       target = lan.gateway.address;
-    }
-    {
-      probe = "upstream";
-      probe_title = "Upstream ${lan.upstreamGateway}";
-      target = lan.upstreamGateway;
     }
     {
       probe = "cloudflare";
