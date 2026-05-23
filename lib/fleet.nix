@@ -34,6 +34,7 @@ let
   unifiMainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcpRanges.main.ranges 0);
   unifiMainDomainName = lan.domain;
   unifiMainDomainSearchJson = builtins.toJSON [ lan.domain ];
+  unifiDnsRecordsJson = builtins.toJSON hostInventory.site.lan.dnsRecords;
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -202,6 +203,7 @@ let
       export UNIFI_NETWORK_DHCP_RANGE_JSON='${unifiMainDhcpRangeJson}'
       export UNIFI_NETWORK_DOMAIN_NAME='${unifiMainDomainName}'
       export UNIFI_NETWORK_DOMAIN_SEARCH_JSON='${unifiMainDomainSearchJson}'
+      export UNIFI_DNS_RECORDS_JSON='${unifiDnsRecordsJson}'
       exec ${unifiFixedReservation}/bin/unifi-fixed-reservation "$@"
     '';
   };

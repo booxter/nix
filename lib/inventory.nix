@@ -56,6 +56,40 @@ let
         ;
     }
     // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
+
+  mkDnsARecord =
+    domain: ipv4Address: {
+      type = "A_RECORD";
+      inherit domain ipv4Address;
+    };
+
+  mkDnsCnameRecord =
+    domain: targetDomain: {
+      type = "CNAME_RECORD";
+      inherit domain targetDomain;
+    };
+
+  canonicalLocalHostname =
+    spec:
+    if spec ? dnsName then
+      spec.dnsName
+    else if spec ? dhcpReservation then
+      spec.dhcpReservation.hostname
+    else if spec.type == "vm" then
+      "prox-${spec.name}vm"
+    else
+      spec.name;
+
+  aliasIpv4Address =
+    spec:
+    if spec ? dhcpReservation then
+      spec.dhcpReservation.ip
+    else if spec ? lanAddress then
+      spec.lanAddress
+    else if spec ? ipAddress then
+      spec.ipAddress
+    else
+      throw "host ${spec.name} does not have a stable IPv4 address for A-record aliases";
 in
 rec {
   virtPlatform = "aarch64-darwin";
@@ -80,7 +114,7 @@ rec {
         spec.dnsName or (spec.dhcpReservation.hostname or proxVmHost);
     };
 
-  site = {
+  site = rec {
     gids = {
       media = 169;
     };
@@ -116,6 +150,24 @@ rec {
           ];
         };
       };
+
+      dnsRecords =
+        let
+          lanDomain = lan.domain;
+          renderHostDnsRecords =
+            spec:
+            (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
+            ++ map
+              (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec))
+              (spec.localDnsAliases or [ ])
+            ++ map
+              (domain: mkDnsCnameRecord domain "${canonicalLocalHostname spec}.${lanDomain}")
+              (spec.dnsCnameAliases or [ ])
+            ++ map
+              (label: mkDnsCnameRecord "${label}.${lanDomain}" "${canonicalLocalHostname spec}.${lanDomain}")
+              (spec.localDnsCnameAliases or [ ]);
+        in
+        builtins.concatMap renderHostDnsRecords nixosHostSpecs;
     };
 
     wireguard.home = {
@@ -290,6 +342,7 @@ rec {
       name = piHostname;
       lanAddress = "192.168.1.1";
       guestAddress = "192.168.2.1";
+      localDnsAliases = [ piHostname ];
       stateVersion = piStateVersion;
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
@@ -327,6 +380,7 @@ rec {
       name = "beast";
       stateVersion = "25.11";
       platform = "x86_64-linux";
+      dnsAliases = map (service: service.publicHost) publicServices;
       nixpkgsInput = "nixpkgs-25_11";
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
@@ -400,6 +454,7 @@ rec {
       type = "vm";
       name = "cache";
       upsHost = "prx1-lab";
+      localDnsCnameAliases = [ "nix-cache" ];
       sshPort = 10004;
       hmFull = false;
       cores = 16;
