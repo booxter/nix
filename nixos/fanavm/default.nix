@@ -132,16 +132,28 @@ let
       };
       targets = [ "${hostConfig.host.dnsName}:9100" ];
     };
-  orgvmMtlsNodeTargetConfig = mkRemoteNixosNodeTargetConfig "prox-orgvm";
-  remoteNixosNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig (
+  nixosNodeExporterTargetNames = builtins.filter (
+    name:
+    !(lib.hasPrefix "local-" name)
+    && name != "prox-deskvm"
+    && name != "prox-fanavm"
+    && (outputs.nixosConfigurations.${name}.config.host.observability.client.enable or false)
+    && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
+  ) (builtins.attrNames outputs.nixosConfigurations);
+  remoteNixosMtlsNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig (
     builtins.filter (
       name:
-      !(lib.hasPrefix "local-" name)
-      && name != "prox-fanavm"
-      && name != "prox-deskvm"
-      && name != "prox-orgvm"
-      && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
-    ) (builtins.attrNames outputs.nixosConfigurations)
+      outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
+        or false
+    ) nixosNodeExporterTargetNames
+  );
+  remoteNixosPlainNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig (
+    builtins.filter (
+      name:
+      !(outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
+        or false
+      )
+    ) nixosNodeExporterTargetNames
   );
   remoteDarwinNodeTargetConfigs =
     map
@@ -162,7 +174,7 @@ let
           && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
         ) (builtins.attrNames outputs.darwinConfigurations)
       );
-  remoteNodeTargetConfigs = remoteNixosNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
+  remotePlainNodeTargetConfigs = remoteNixosPlainNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
   mkBlackboxProbeSourceForConfig = hostConfig: {
     exporter = "${hostConfig.host.dnsName}:${toString hostConfig.services.prometheus.exporters.blackbox.port}";
     source = hostConfig.services.avahi.hostName;
@@ -340,15 +352,15 @@ in
     mode = "0400";
     restartUnits = [ "grafana.service" ];
   };
-  sops.secrets.prometheusScrapeOrgvmNodeClientCrt = {
-    key = "prometheus/scrape_orgvm_node/client_crt";
+  sops.secrets.prometheusScrapeNodeClientCrt = {
+    key = "prometheus/scrape_node/client_crt";
     owner = "prometheus";
     group = "prometheus";
     mode = "0400";
     restartUnits = [ "prometheus.service" ];
   };
-  sops.secrets.prometheusScrapeOrgvmNodeClientKey = {
-    key = "prometheus/scrape_orgvm_node/client_key";
+  sops.secrets.prometheusScrapeNodeClientKey = {
+    key = "prometheus/scrape_node/client_key";
     owner = "prometheus";
     group = "prometheus";
     mode = "0400";
@@ -700,18 +712,17 @@ in
             };
           }
         ]
-        ++ remoteNodeTargetConfigs;
+        ++ remotePlainNodeTargetConfigs;
       }
       {
-        job_name = "node-orgvm";
+        job_name = "node-mtls";
         scheme = "https";
         tls_config = {
           ca_file = toString internalPkiRootCaPath;
-          cert_file = config.sops.secrets.prometheusScrapeOrgvmNodeClientCrt.path;
-          key_file = config.sops.secrets.prometheusScrapeOrgvmNodeClientKey.path;
-          server_name = outputs.nixosConfigurations.prox-orgvm.config.host.dnsName;
+          cert_file = config.sops.secrets.prometheusScrapeNodeClientCrt.path;
+          key_file = config.sops.secrets.prometheusScrapeNodeClientKey.path;
         };
-        static_configs = [ orgvmMtlsNodeTargetConfig ];
+        static_configs = remoteNixosMtlsNodeTargetConfigs;
       }
       {
         job_name = "nut-prx1";
