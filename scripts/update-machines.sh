@@ -257,8 +257,8 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot] [--personal|--work|--both]
-  scripts/update-machines.sh [--branch BRANCH] [--switch|--boot] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
+  scripts/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both]
+  scripts/update-machines.sh [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
 
 Options:
   -A, --all         Update all hosts discovered from flake outputs (default).
@@ -268,11 +268,13 @@ Options:
   --branch BRANCH   Git branch to deploy (default: master).
   --switch          Switch into the new configuration immediately (default).
   --boot            Stage the new configuration for the next boot.
+  --test            Activate the new configuration without changing the boot default.
   --dry-run         Only check SSH and print the hosts that would be updated.
   --select          Interactively select hosts from the filtered list.
 
 Notes:
   - Passing explicit host names disables --all.
+  - --test still activates the new config and may restart services.
   -h, --help        Show this help.
 
 Environment:
@@ -300,6 +302,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --boot)
       REBUILD_ACTION="boot"
+      shift
+      ;;
+    --test)
+      REBUILD_ACTION="test"
       shift
       ;;
     --work)
