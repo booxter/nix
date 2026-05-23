@@ -5,6 +5,7 @@
   ...
 }:
 let
+  jellyfinExporterInternalPort = 19594;
   jellyfinExporterPort = 9594;
 in
 {
@@ -35,7 +36,7 @@ in
       EnvironmentFile = config.sops.templates."jellyfin-exporter.env".path;
       ExecStart = lib.concatStringsSep " " [
         (lib.getExe pkgs.jellyfin-exporter)
-        "--web.listen-address=0.0.0.0:${toString jellyfinExporterPort}"
+        "--web.listen-address=127.0.0.1:${toString jellyfinExporterInternalPort}"
         "--collector.transcoding"
       ];
       DynamicUser = true;
@@ -48,5 +49,9 @@ in
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ jellyfinExporterPort ];
+  host.observability.client.prometheusMtlsEndpoints.jellyfin = {
+    enable = true;
+    port = jellyfinExporterPort;
+    upstream = "http://127.0.0.1:${toString jellyfinExporterInternalPort}/metrics";
+  };
 }

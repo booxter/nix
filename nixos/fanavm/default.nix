@@ -82,13 +82,19 @@ let
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
-  jellyfinExporterPort = 9594;
-  sabnzbdExporterPort =
-    outputs.nixosConfigurations.prox-srvarrvm.config.services.prometheus.exporters.sabnzbd.port;
   nutExporterPort = 9199;
-  smartctlExporterPort = 9633;
-  vikunjaHost = outputs.nixosConfigurations.prox-orgvm.config.host.dnsName;
-  vikunjaPort = outputs.nixosConfigurations.prox-orgvm.config.services.vikunja.port;
+  beastHostConfig = outputs.nixosConfigurations.beast.config;
+  beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
+  sabnzbdHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
+  sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
+  prometheusMtlsTlsConfig = {
+    ca_file = toString internalPkiRootCaPath;
+    cert_file = config.sops.secrets.prometheusScrapeNodeClientCrt.path;
+    key_file = config.sops.secrets.prometheusScrapeNodeClientKey.path;
+  };
+  vikunjaHostConfig = outputs.nixosConfigurations.prox-orgvm.config;
+  vikunjaHost = vikunjaHostConfig.host.dnsName;
+  vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
   retentionDays = 365;
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
@@ -165,10 +171,24 @@ let
         ) (builtins.attrNames outputs.darwinConfigurations)
       );
   remotePlainNodeTargetConfigs = remoteNixosPlainNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
-  mkBlackboxProbeSourceForConfig = hostConfig: {
-    exporter = "${hostConfig.host.dnsName}:${toString hostConfig.services.prometheus.exporters.blackbox.port}";
-    source = hostConfig.services.avahi.hostName;
-  };
+  mkBlackboxProbeSourceForConfig =
+    hostConfig:
+    let
+      mtlsEndpoint =
+        if hostConfig.host.observability.client.prometheusMtlsEndpoints ? blackbox then
+          hostConfig.host.observability.client.prometheusMtlsEndpoints.blackbox
+        else
+          null;
+    in
+    {
+      exporter =
+        if mtlsEndpoint != null && mtlsEndpoint.enable then
+          "${hostConfig.host.dnsName}:${toString mtlsEndpoint.port}"
+        else
+          "${hostConfig.host.dnsName}:${toString hostConfig.services.prometheus.exporters.blackbox.port}";
+      scheme = if mtlsEndpoint != null && mtlsEndpoint.enable then "https" else "http";
+      source = hostConfig.services.avahi.hostName;
+    };
   remoteBlackboxProbeSourceConfigs =
     map (name: mkBlackboxProbeSourceForConfig outputs.nixosConfigurations.${name}.config)
       (
@@ -182,6 +202,7 @@ let
   blackboxProbeSourceConfigs = [
     {
       exporter = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+      scheme = "http";
       source = config.services.avahi.hostName;
     }
   ]
@@ -193,6 +214,7 @@ let
       map (probe: {
         labels = {
           prober_address = source.exporter;
+          prober_scheme = source.scheme;
           inherit (source) source;
           inherit (probe) probe probe_title;
         };
@@ -221,8 +243,12 @@ let
       target_label = "__address__";
     }
     {
+      source_labels = [ "prober_scheme" ];
+      target_label = "__scheme__";
+    }
+    {
       action = "labeldrop";
-      regex = "prober_address";
+      regex = "prober_address|prober_scheme";
     }
   ];
   mkGrafanaPromRule =
@@ -691,11 +717,7 @@ in
       {
         job_name = "node-mtls";
         scheme = "https";
-        tls_config = {
-          ca_file = toString internalPkiRootCaPath;
-          cert_file = config.sops.secrets.prometheusScrapeNodeClientCrt.path;
-          key_file = config.sops.secrets.prometheusScrapeNodeClientKey.path;
-        };
+        tls_config = prometheusMtlsTlsConfig;
         static_configs = remoteNixosMtlsNodeTargetConfigs;
       }
       {
@@ -876,6 +898,7 @@ in
         metrics_path = "/probe";
         params.module = [ "icmp_ipv4" ];
         scrape_interval = "5s";
+        tls_config = prometheusMtlsTlsConfig;
         static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanIcmpProbeTargets;
         relabel_configs = blackboxProbeRelabelConfigs;
       }
@@ -884,40 +907,47 @@ in
         metrics_path = "/probe";
         params.module = [ "tcp_connect_ipv4" ];
         scrape_interval = "5s";
+        tls_config = prometheusMtlsTlsConfig;
         static_configs = mkBlackboxStaticConfigs blackboxProbeSourceConfigs wanTcpProbeTargets;
         relabel_configs = blackboxProbeRelabelConfigs;
       }
       {
         job_name = "smartctl";
+        scheme = "https";
+        tls_config = prometheusMtlsTlsConfig;
         static_configs = [
           {
             targets = [
-              "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString smartctlExporterPort}"
+              "${beastHostConfig.host.dnsName}:${toString beastPrometheusEndpoints.smartctl.port}"
             ];
-            labels.instance = outputs.nixosConfigurations.beast.config.host.dnsName;
+            labels.instance = beastHostConfig.host.dnsName;
           }
         ];
       }
       {
         job_name = "jellyfin";
         scrape_interval = "5s";
+        scheme = "https";
+        tls_config = prometheusMtlsTlsConfig;
         static_configs = [
           {
             targets = [
-              "${outputs.nixosConfigurations.beast.config.host.dnsName}:${toString jellyfinExporterPort}"
+              "${beastHostConfig.host.dnsName}:${toString beastPrometheusEndpoints.jellyfin.port}"
             ];
-            labels.instance = outputs.nixosConfigurations.beast.config.host.dnsName;
+            labels.instance = beastHostConfig.host.dnsName;
           }
         ];
       }
       {
         job_name = "sabnzbd";
+        scheme = "https";
+        tls_config = prometheusMtlsTlsConfig;
         static_configs = [
           {
             targets = [
-              "${outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName}:${toString sabnzbdExporterPort}"
+              "${sabnzbdHostConfig.host.dnsName}:${toString sabnzbdEndpoint.port}"
             ];
-            labels.instance = outputs.nixosConfigurations.prox-srvarrvm.config.host.dnsName;
+            labels.instance = sabnzbdHostConfig.host.dnsName;
           }
         ];
       }
@@ -925,10 +955,12 @@ in
       # back and the exporter is re-enabled on beast.
       {
         job_name = "vikunja";
-        metrics_path = "/api/v1/metrics";
+        metrics_path = vikunjaEndpoint.path;
+        scheme = "https";
+        tls_config = prometheusMtlsTlsConfig;
         static_configs = [
           {
-            targets = [ "${vikunjaHost}:${toString vikunjaPort}" ];
+            targets = [ "${vikunjaHost}:${toString vikunjaEndpoint.port}" ];
             labels.instance = vikunjaHost;
           }
         ];

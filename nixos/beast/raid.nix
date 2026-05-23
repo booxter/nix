@@ -5,6 +5,7 @@
   ...
 }:
 let
+  smartctlExporterInternalPort = 19633;
   smartctlExporterPort = 9633;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   mdSyncExporter = pkgs.writeShellScript "beast-md-sync-export" ''
@@ -142,8 +143,6 @@ in
   # Keep md reshape/recovery background I/O gentle so media serving stays responsive.
   boot.kernel.sysctl."dev.raid.speed_limit_max" = 20000;
 
-  networking.firewall.allowedTCPPorts = [ smartctlExporterPort ];
-
   # Local disk health monitoring (logs to journal; email relay can be added later).
   services.smartd = {
     enable = true;
@@ -152,13 +151,19 @@ in
 
   services.prometheus.exporters.smartctl = {
     enable = true;
-    port = smartctlExporterPort;
-    listenAddress = "0.0.0.0";
+    port = smartctlExporterInternalPort;
+    listenAddress = "127.0.0.1";
     openFirewall = false;
     extraFlags = [
       "--smartctl.path=${pkgs.smartmontools}/bin/smartctl"
       "--smartctl.device-include=^(sd[a-z]+)$"
     ];
+  };
+
+  host.observability.client.prometheusMtlsEndpoints.smartctl = {
+    enable = true;
+    port = smartctlExporterPort;
+    upstream = "http://127.0.0.1:${toString smartctlExporterInternalPort}/metrics";
   };
 
   services.prometheus.exporters.node = {
