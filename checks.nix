@@ -39,17 +39,18 @@ helpers.forAllSystems (
     bats-tests = mkCheck {
       name = "bats-tests";
       nativeBuildInputs = with pkgs; [
+        age
         bats
         git
         jq
         python3
-        yq
+        sops
+        yq-go
       ];
       buildPhase = ''
         bats tests/get-local-builders.bats
         bats tests/test-prox-deploy.bats
-        bats tests/test-sops-config.bats
-        bats tests/test-sops-copy.bats
+        bash tests/check-sops-helpers.sh
         bats tests/test-vm.bats
         bats tests/update-machines.bats
       '';

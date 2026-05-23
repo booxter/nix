@@ -190,28 +190,28 @@ else
     echo "yq not found. Install yq to patch .sops.yaml safely."
     exit 1
   fi
-  if [[ "$(yq -r 'type' "$sops_yaml")" != "object" ]]; then
+  if [[ "$(yq -r 'type' "$sops_yaml")" != "!!map" ]]; then
     echo ".sops.yaml must be a YAML map at top-level."
     exit 1
   fi
-  if [[ "$(yq -r '.keys | type' "$sops_yaml")" != "array" ]]; then
+  if [[ "$(yq -r '.keys | type' "$sops_yaml")" != "!!seq" ]]; then
     echo ".sops.yaml must contain a top-level 'keys' sequence."
     exit 1
   fi
-  if [[ "$(yq -r '.creation_rules | type' "$sops_yaml")" != "array" ]]; then
+  if [[ "$(yq -r '.creation_rules | type' "$sops_yaml")" != "!!seq" ]]; then
     echo ".sops.yaml must contain a top-level 'creation_rules' sequence."
     exit 1
   fi
 
   if ! (command -v rg >/dev/null 2>&1 && rg -q "secrets/${host}\\\\.yaml" "$sops_yaml") \
     && ! grep -q "secrets/${host}\\.yaml" "$sops_yaml"; then
-    yq -y --in-place ".keys += [\"${pubkey}\",\"${local_pubkey}\"] | .keys |= unique" "$sops_yaml"
-    yq -y --in-place ".creation_rules += [{\"path_regex\":\"secrets/${host}\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${pubkey}\",\"${local_pubkey}\"]}]}]" "$sops_yaml"
+    yq -i ".keys += [\"${pubkey}\",\"${local_pubkey}\"] | .keys |= unique" "$sops_yaml"
+    yq -i ".creation_rules += [{\"path_regex\":\"secrets/${host}\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${pubkey}\",\"${local_pubkey}\"]}]}]" "$sops_yaml"
     echo "Updated $sops_yaml."
   else
-    yq -y --in-place ".keys += [\"${pubkey}\",\"${local_pubkey}\"] | .keys |= unique" "$sops_yaml"
-    yq -y --in-place "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${pubkey}\",\"${local_pubkey}\"]" "$sops_yaml"
-    yq -y --in-place "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+    yq -i ".keys += [\"${pubkey}\",\"${local_pubkey}\"] | .keys |= unique" "$sops_yaml"
+    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${pubkey}\",\"${local_pubkey}\"]" "$sops_yaml"
+    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
     echo "Updated $sops_yaml."
   fi
 fi

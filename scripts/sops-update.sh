@@ -89,14 +89,14 @@ main() {
   sops --decrypt "$secret" > "$tmp"
   cp "$template" "$base"
   if [[ -f "$host_template" ]]; then
-    yq -y -s '.[0] * .[1]' "$base" "$host_template" > "$merged"
+    yq ea 'select(fileIndex == 0) * select(fileIndex == 1)' "$base" "$host_template" > "$merged"
     mv "$merged" "$base"
   fi
-  yq -y -s '.[0] * .[1]' "$base" "$tmp" > "$merged"
+  yq ea 'select(fileIndex == 0) * select(fileIndex == 1)' "$base" "$tmp" > "$merged"
 
   # Normalize to JSON and sort keys recursively for deterministic comparisons.
-  yq '.' "$merged" | jq -S 'del(.sops)' > "$sorted"
-  yq '.' "$tmp" | jq -S 'del(.sops)' > "$current_sorted"
+  yq -o=json '.' "$merged" | jq -S 'del(.sops)' > "$sorted"
+  yq -o=json '.' "$tmp" | jq -S 'del(.sops)' > "$current_sorted"
 
   if [[ "$force" != "1" ]] && cmp -s "$current_sorted" "$sorted"; then
     if [[ "${SOPS_UPDATE_QUIET:-0}" != "1" ]]; then

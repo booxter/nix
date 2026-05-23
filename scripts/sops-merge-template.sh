@@ -64,7 +64,7 @@ main() {
   trap 'rm -f "$tmp" "$merged"' EXIT
 
   sops --decrypt "$secret" > "$tmp"
-  yq -s '.[0] * .[1]' "$template" "$tmp" > "$merged"
+  yq ea 'select(fileIndex == 0) * select(fileIndex == 1)' "$template" "$tmp" > "$merged"
   sops --encrypt --input-type yaml --output-type yaml "$merged" > "$secret"
 
   echo "Updated secret from template: $secret"
