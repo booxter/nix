@@ -497,7 +497,6 @@ rec {
       type = "vm";
       name = "pki";
       platform = "x86_64-linux";
-      dnsName = "pki";
       upsHost = "prx1-lab";
       cores = 2;
       memorySize = 4;
@@ -506,7 +505,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "id:prox-pkivm";
-        hostname = "pki";
+        hostname = "prox-pkivm";
         ip = "192.168.20.5";
       };
     }
