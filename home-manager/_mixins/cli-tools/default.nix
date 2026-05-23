@@ -113,7 +113,6 @@
       go
       hydra-check
       (lima.override { withAdditionalGuestAgents = true; })
-      lnav # log viewer
       mkpasswd
       (my-page.override { neovim = config.programs.nixvim.build.package; })
       nix-init
@@ -130,8 +129,6 @@
 
       # python
       python313
-      python313Packages.ipython
-      python313Packages.tox
     ]
     ++ lib.optionals (!isWork) [
       ramalama
