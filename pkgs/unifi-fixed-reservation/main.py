@@ -33,6 +33,12 @@ class ReservationSpec:
     fixed_ip: ipaddress.IPv4Address
 
 
+@dataclass(frozen=True)
+class DhcpRangeSpec:
+    start: ipaddress.IPv4Address
+    end: ipaddress.IPv4Address
+
+
 def normalize_mac(mac: str) -> str:
     cleaned = re.sub(r"[^0-9a-fA-F]", "", mac)
     if len(cleaned) != 12:
@@ -125,6 +131,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-local-dns-record",
         action="store_true",
         help="Do not touch the Local DNS Record field.",
+    )
+    parser.add_argument(
+        "--dhcp-range-json",
+        default=os.environ.get("UNIFI_NETWORK_DHCP_RANGE_JSON", ""),
+        help=(
+            "Optional JSON object with start/end DHCP addresses for the target network. "
+            "Defaults to UNIFI_NETWORK_DHCP_RANGE_JSON."
+        ),
+    )
+    parser.add_argument(
+        "--no-dhcp-range-update",
+        action="store_true",
+        help="Do not update the network DHCP range.",
     )
     return parser
 
@@ -267,6 +286,13 @@ class UnifiLegacyClient:
             {"_id": client_id, **payload},
         )
 
+    def update_network(self, network_id: str, payload: dict[str, Any]) -> Any:
+        return self.request(
+            "PUT",
+            f"/api/s/{self.site}/rest/networkconf/{urllib.parse.quote(network_id, safe='')}",
+            {"_id": network_id, **payload},
+        )
+
 
 def _id(item: dict[str, Any]) -> str:
     value = item.get("_id")
@@ -400,6 +426,33 @@ def parse_inventory_reservations(raw_json: str) -> list[ReservationSpec]:
     return reservations
 
 
+def parse_dhcp_range(raw_json: str) -> DhcpRangeSpec | None:
+    if not raw_json:
+        return None
+
+    try:
+        decoded = json.loads(raw_json)
+    except json.JSONDecodeError as error:
+        raise UnifiError(f"invalid DHCP range JSON: {error}") from error
+
+    if not isinstance(decoded, dict):
+        raise UnifiError("DHCP range JSON must be an object")
+
+    start = decoded.get("start")
+    end = decoded.get("end")
+    if not isinstance(start, str) or not isinstance(end, str):
+        raise UnifiError("DHCP range JSON must contain string start and end fields")
+
+    start_ip = ipaddress.ip_address(start)
+    end_ip = ipaddress.ip_address(end)
+    if not isinstance(start_ip, ipaddress.IPv4Address) or not isinstance(end_ip, ipaddress.IPv4Address):
+        raise UnifiError("only IPv4 DHCP ranges are supported by this tool")
+    if start_ip > end_ip:
+        raise UnifiError(f"invalid DHCP range: {start_ip} is after {end_ip}")
+
+    return DhcpRangeSpec(start=start_ip, end=end_ip)
+
+
 def build_single_reservation(args: argparse.Namespace) -> ReservationSpec:
     if not args.mac and not args.ip and not args.hostname:
         raise UnifiError("single-client mode requires at least --mac and --ip")
@@ -440,12 +493,21 @@ def build_update_payload(
     return payload
 
 
+def build_network_dhcp_payload(dhcp_range: DhcpRangeSpec) -> dict[str, Any]:
+    return {
+        "dhcpd_enabled": True,
+        "dhcpd_start": str(dhcp_range.start),
+        "dhcpd_stop": str(dhcp_range.end),
+    }
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
     try:
         mode, reservations = load_reservations(args)
+        dhcp_range = None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
 
         client = UnifiLegacyClient(
             base_url=args.base_url,
@@ -458,6 +520,32 @@ def main() -> int:
         networks = client.list_networks()
         clients = client.list_known_clients()
         clients_by_mac = build_clients_by_mac(clients)
+        dhcp_range_result = None
+
+        if dhcp_range is not None:
+            selected_dhcp_network = (
+                next((network for network in networks if network.get("_id") == args.network_id), None)
+                if args.network_id
+                else choose_network_by_ip(networks, dhcp_range.start)
+            )
+            if selected_dhcp_network is None:
+                raise UnifiError(f"network not found: {args.network_id}")
+
+            dhcp_network_id = _id(selected_dhcp_network)
+            if dhcp_network_id == "<missing-id>":
+                raise UnifiError("selected DHCP network has no _id")
+
+            dhcp_result = client.update_network(
+                network_id=dhcp_network_id,
+                payload=build_network_dhcp_payload(dhcp_range),
+            )
+            dhcp_range_result = {
+                "network_id": dhcp_network_id,
+                "network_name": selected_dhcp_network.get("name"),
+                "start": str(dhcp_range.start),
+                "end": str(dhcp_range.end),
+                "result": dhcp_result,
+            }
 
         selected_group: dict[str, Any] | None = None
         allow_inventory_placeholders = mode == "inventory" and not args.no_create_known_clients
@@ -534,6 +622,7 @@ def main() -> int:
             "site": args.site,
             "mode": mode,
             "count": len(results),
+            "dhcp_range_update": dhcp_range_result,
             "results": results,
         }
         print(format_json(summary))

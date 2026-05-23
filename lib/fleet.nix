@@ -31,6 +31,7 @@ let
           (hostInventory.managedDhcpReservations ++ hostInventory.staticDhcpReservations)
       )
   );
+  unifiMainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcpRanges.main.ranges 0);
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -194,6 +195,7 @@ let
     runtimeInputs = [ unifiFixedReservation ];
     text = ''
       export UNIFI_RESERVATION_INVENTORY_JSON='${unifiReservationInventoryJson}'
+      export UNIFI_NETWORK_DHCP_RANGE_JSON='${unifiMainDhcpRangeJson}'
       exec ${unifiFixedReservation}/bin/unifi-fixed-reservation "$@"
     '';
   };
