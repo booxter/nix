@@ -122,6 +122,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Print request flow details.",
     )
     parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show planned UniFi changes without applying them.",
+    )
+    parser.add_argument(
         "--inventory-json",
         default=os.environ.get("UNIFI_RESERVATION_INVENTORY_JSON", ""),
         help=(
@@ -555,22 +560,6 @@ def load_reservations(args: argparse.Namespace) -> tuple[str, list[ReservationSp
     return "inventory", parse_inventory_reservations(args.inventory_json)
 
 
-def build_update_payload(
-    network_id: str,
-    fixed_ip: ipaddress.IPv4Address,
-    local_dns_record: str | None,
-) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "use_fixedip": True,
-        "network_id": network_id,
-        "fixed_ip": str(fixed_ip),
-    }
-    if local_dns_record is not None:
-        payload["local_dns_record_enabled"] = True
-        payload["local_dns_record"] = local_dns_record
-    return payload
-
-
 def build_network_dhcp_payload(dhcp_range: DhcpRangeSpec) -> dict[str, Any]:
     return {
         "dhcpd_enabled": True,
@@ -596,40 +585,138 @@ def build_network_settings(
     )
 
 
+def stringify(value: Any) -> str | None:
+    return None if value is None else str(value)
+
+
+def build_change(current: Any, desired: Any) -> dict[str, Any]:
+    return {
+        "current": current,
+        "desired": desired,
+    }
+
+
+def option_number_matches(option: dict[str, Any], number: int) -> bool:
+    return str(option.get("optionNumber", option.get("option_number", ""))) == str(number)
+
+
+def get_current_dhcp_options(current_network: dict[str, Any]) -> list[dict[str, Any]]:
+    current_options = current_network.get("dhcpd_options", [])
+    if current_options is None:
+        return []
+    if not isinstance(current_options, list):
+        raise UnifiError("unexpected dhcpd_options shape on selected network")
+    return current_options
+
+
+def merge_dhcp_option(
+    current_options: list[dict[str, Any]],
+    option_number: int,
+    value: str,
+) -> list[dict[str, Any]]:
+    merged_options = [
+        option
+        for option in current_options
+        if not (isinstance(option, dict) and option_number_matches(option, option_number))
+    ]
+    merged_options.append(
+        {
+            "optionNumber": option_number,
+            "value": value,
+        }
+    )
+    return merged_options
+
+
+def get_dhcp_option_value(current_network: dict[str, Any], option_number: int) -> str | None:
+    for option in get_current_dhcp_options(current_network):
+        if not isinstance(option, dict) or not option_number_matches(option, option_number):
+            continue
+        return stringify(option.get("value"))
+    return None
+
+
+def build_client_update_plan(
+    existing_client: dict[str, Any],
+    network_id: str,
+    fixed_ip: ipaddress.IPv4Address,
+    local_dns_record: str | None,
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    payload: dict[str, Any] = {}
+    changes: dict[str, Any] = {}
+
+    desired_fixed_ip = str(fixed_ip)
+    current_use_fixedip = bool(existing_client.get("use_fixedip"))
+    current_network_id = stringify(existing_client.get("network_id"))
+    current_fixed_ip = stringify(existing_client.get("fixed_ip"))
+
+    if not current_use_fixedip:
+        payload["use_fixedip"] = True
+        changes["use_fixedip"] = build_change(current_use_fixedip, True)
+    if current_network_id != network_id:
+        payload["network_id"] = network_id
+        changes["network_id"] = build_change(current_network_id, network_id)
+    if current_fixed_ip != desired_fixed_ip:
+        payload["fixed_ip"] = desired_fixed_ip
+        changes["fixed_ip"] = build_change(current_fixed_ip, desired_fixed_ip)
+
+    if local_dns_record is not None:
+        current_local_dns_enabled = bool(existing_client.get("local_dns_record_enabled"))
+        current_local_dns_record = stringify(existing_client.get("local_dns_record"))
+        if not current_local_dns_enabled:
+            payload["local_dns_record_enabled"] = True
+            changes["local_dns_record_enabled"] = build_change(current_local_dns_enabled, True)
+        if current_local_dns_record != local_dns_record:
+            payload["local_dns_record"] = local_dns_record
+            changes["local_dns_record"] = build_change(current_local_dns_record, local_dns_record)
+
+    return payload, changes
+
+
 def build_network_update_payload(
     settings: NetworkDhcpSettingsSpec,
     current_network: dict[str, Any],
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], dict[str, Any]]:
     payload: dict[str, Any] = {}
+    changes: dict[str, Any] = {}
     if settings.dhcp_range is not None:
-        payload.update(build_network_dhcp_payload(settings.dhcp_range))
-    if settings.domain_name is not None:
-        payload["domain_name"] = settings.domain_name
-    if settings.domain_search is not None:
-        # `dhcpd_options` is inferred from UniFi's legacy DHCP option naming. Preserve any
-        # existing options and replace only option 119.
-        current_options = current_network.get("dhcpd_options", [])
-        if current_options is None:
-            current_options = []
-        if not isinstance(current_options, list):
-            raise UnifiError("unexpected dhcpd_options shape on selected network")
+        desired_start = str(settings.dhcp_range.start)
+        desired_stop = str(settings.dhcp_range.end)
+        current_enabled = bool(current_network.get("dhcpd_enabled"))
+        current_start = stringify(current_network.get("dhcpd_start"))
+        current_stop = stringify(current_network.get("dhcpd_stop"))
 
-        merged_options = [
-            option
-            for option in current_options
-            if not (
-                isinstance(option, dict)
-                and str(option.get("optionNumber", option.get("option_number", ""))) == "119"
-            )
-        ]
-        merged_options.append(
-            {
-                "optionNumber": 119,
-                "value": encode_domain_search_option(settings.domain_search),
+        if not current_enabled or current_start != desired_start or current_stop != desired_stop:
+            payload.update(build_network_dhcp_payload(settings.dhcp_range))
+        if not current_enabled:
+            changes["dhcpd_enabled"] = build_change(current_enabled, True)
+        if current_start != desired_start:
+            changes["dhcpd_start"] = build_change(current_start, desired_start)
+        if current_stop != desired_stop:
+            changes["dhcpd_stop"] = build_change(current_stop, desired_stop)
+
+    if settings.domain_name is not None:
+        current_domain_name = stringify(current_network.get("domain_name"))
+        if current_domain_name != settings.domain_name:
+            payload["domain_name"] = settings.domain_name
+            changes["domain_name"] = build_change(current_domain_name, settings.domain_name)
+
+    if settings.domain_search is not None:
+        desired_option_value = encode_domain_search_option(settings.domain_search)
+        current_option_value = get_dhcp_option_value(current_network, 119)
+        if current_option_value != desired_option_value:
+            current_options = get_current_dhcp_options(current_network)
+            payload["dhcpd_options"] = merge_dhcp_option(current_options, 119, desired_option_value)
+            changes["dhcpd_options[119]"] = {
+                "current_hex": (
+                    current_option_value.encode("latin1").hex()
+                    if current_option_value is not None
+                    else None
+                ),
+                "desired_hex": desired_option_value.encode("latin1").hex(),
+                "desired_domains": list(settings.domain_search),
             }
-        )
-        payload["dhcpd_options"] = merged_options
-    return payload
+    return payload, changes
 
 
 def main() -> int:
@@ -671,13 +758,23 @@ def main() -> int:
             if dhcp_network_id == "<missing-id>":
                 raise UnifiError("selected DHCP network has no _id")
 
-            dhcp_result = client.update_network(
-                network_id=dhcp_network_id,
-                payload=build_network_update_payload(network_settings, selected_dhcp_network),
+            dhcp_payload, dhcp_changes = build_network_update_payload(
+                network_settings,
+                selected_dhcp_network,
             )
+            dhcp_changed = bool(dhcp_payload)
+            dhcp_result = None
+            if dhcp_changed and not args.dry_run:
+                dhcp_result = client.update_network(
+                    network_id=dhcp_network_id,
+                    payload=dhcp_payload,
+                )
             dhcp_range_result = {
                 "network_id": dhcp_network_id,
                 "network_name": selected_dhcp_network.get("name"),
+                "changed": dhcp_changed,
+                "dry_run": args.dry_run,
+                "changes": dhcp_changes,
                 "start": (
                     str(network_settings.dhcp_range.start)
                     if network_settings.dhcp_range is not None
@@ -726,17 +823,51 @@ def main() -> int:
                 if selected_group is None:
                     groups = client.list_usergroups()
                     selected_group = choose_usergroup(groups, args.usergroup_id)
-                client.create_known_client(
-                    mac=reservation.mac,
-                    usergroup_id=_id(selected_group),
-                    client_name=reservation.hostname or args.client_name,
-                )
-                created_placeholder = True
-                clients = client.list_known_clients()
-                clients_by_mac = build_clients_by_mac(clients)
-                existing_client = clients_by_mac.get(reservation.mac)
+                if not args.dry_run:
+                    client.create_known_client(
+                        mac=reservation.mac,
+                        usergroup_id=_id(selected_group),
+                        client_name=reservation.hostname or args.client_name,
+                    )
+                    created_placeholder = True
+                    clients = client.list_known_clients()
+                    clients_by_mac = build_clients_by_mac(clients)
+                    existing_client = clients_by_mac.get(reservation.mac)
 
             if existing_client is None:
+                if should_create_placeholder and args.dry_run:
+                    payload, changes = build_client_update_plan(
+                        existing_client={},
+                        network_id=network_id,
+                        fixed_ip=reservation.fixed_ip,
+                        local_dns_record=(
+                            reservation.hostname
+                            if not args.no_local_dns_record and reservation.hostname is not None
+                            else None
+                        ),
+                    )
+                    results.append(
+                        {
+                            "hostname": reservation.hostname,
+                            "mac": reservation.mac,
+                            "fixed_ip": str(reservation.fixed_ip),
+                            "client_id": None,
+                            "network_id": network_id,
+                            "network_name": selected_network.get("name"),
+                            "created_placeholder": False,
+                            "would_create_placeholder": True,
+                            "changed": bool(payload),
+                            "dry_run": True,
+                            "changes": changes,
+                            "local_dns_record": (
+                                reservation.hostname
+                                if not args.no_local_dns_record and reservation.hostname is not None
+                                else None
+                            ),
+                            "result": None,
+                        }
+                    )
+                    continue
                 raise UnifiError(
                     f"known client not found for {reservation.mac}. "
                     "Retry with --create-known-client or without --no-create-known-clients."
@@ -750,14 +881,19 @@ def main() -> int:
             if not args.no_local_dns_record and reservation.hostname is not None:
                 local_dns_record = reservation.hostname
 
-            result = client.update_client(
-                client_id=client_id,
-                payload=build_update_payload(
-                    network_id=network_id,
-                    fixed_ip=reservation.fixed_ip,
-                    local_dns_record=local_dns_record,
-                ),
+            payload, changes = build_client_update_plan(
+                existing_client=existing_client,
+                network_id=network_id,
+                fixed_ip=reservation.fixed_ip,
+                local_dns_record=local_dns_record,
             )
+            changed = bool(payload)
+            result = None
+            if changed and not args.dry_run:
+                result = client.update_client(
+                    client_id=client_id,
+                    payload=payload,
+                )
 
             results.append(
                 {
@@ -768,6 +904,10 @@ def main() -> int:
                     "network_id": network_id,
                     "network_name": selected_network.get("name"),
                     "created_placeholder": created_placeholder,
+                    "would_create_placeholder": False,
+                    "changed": changed,
+                    "dry_run": args.dry_run,
+                    "changes": changes,
                     "local_dns_record": local_dns_record,
                     "result": result,
                 }
@@ -776,7 +916,9 @@ def main() -> int:
         summary = {
             "site": args.site,
             "mode": mode,
+            "dry_run": args.dry_run,
             "count": len(results),
+            "changed_count": sum(1 for result in results if result["changed"]),
             "dhcp_range_update": dhcp_range_result,
             "results": results,
         }
