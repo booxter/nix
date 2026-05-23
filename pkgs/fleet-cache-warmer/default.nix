@@ -54,15 +54,18 @@ writeShellApplication {
               --apply 'xs: builtins.concatStringsSep "\n" xs' \
               --raw 2>/dev/null
           ) && [ "''${#target_suffixes[@]}" -gt 0 ]; then
+            inventory_source=flake
             printf 'Loaded %s warm target(s) from %s\n' "''${#target_suffixes[@]}" "$inventory_ref" >&2
             return 0
           fi
 
           echo "fleet-cache-warmer: failed to load target inventory from $inventory_ref; falling back to embedded target list" >&2
+          inventory_source=embedded
           target_suffixes=()
           ${embeddedTargetAssignments}
         }
 
+        inventory_source=embedded
         declare -a target_suffixes=()
         load_target_suffixes
 
@@ -93,17 +96,22 @@ writeShellApplication {
 
         declare -a buildable_targets=()
         skipped_inventory_count=0
-        printf 'Resolving %s warm target(s) from %s\n' "''${#targets[@]}" "$flake_ref" >&2
-        for i in "''${!targets[@]}"; do
-          target="''${targets[$i]}"
-          printf 'Resolving target %s/%s: %s\n' "$((i + 1))" "''${#targets[@]}" "$target" >&2
-          if ${lib.getExe nix} eval --raw "$target.outPath" >/dev/null 2>&1; then
-            buildable_targets+=("$target")
-          else
-            skipped_inventory_count=$((skipped_inventory_count + 1))
-            printf 'fleet-cache-warmer: target is missing or does not evaluate, skipping: %s\n' "$target" >&2
-          fi
-        done
+        if [ "$inventory_source" = "flake" ]; then
+          buildable_targets=("''${targets[@]}")
+          printf 'Using %s warm target(s) directly from %s inventory; skipping preflight evaluation\n' "''${#buildable_targets[@]}" "$flake_ref" >&2
+        else
+          printf 'Resolving %s warm target(s) from %s\n' "''${#targets[@]}" "$flake_ref" >&2
+          for i in "''${!targets[@]}"; do
+            target="''${targets[$i]}"
+            printf 'Resolving target %s/%s: %s\n' "$((i + 1))" "''${#targets[@]}" "$target" >&2
+            if ${lib.getExe nix} eval --raw "$target.outPath" >/dev/null 2>&1; then
+              buildable_targets+=("$target")
+            else
+              skipped_inventory_count=$((skipped_inventory_count + 1))
+              printf 'fleet-cache-warmer: target is missing or does not evaluate, skipping: %s\n' "$target" >&2
+            fi
+          done
+        fi
 
         if [ "''${#buildable_targets[@]}" -eq 0 ]; then
           echo "fleet-cache-warmer: no warm targets resolved successfully; skipping cache push" >&2
