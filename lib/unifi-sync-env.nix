@@ -31,6 +31,11 @@ let
   mainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcpRanges.main.ranges 0);
   mainDomainName = lan.domain;
   mainDomainSearchJson = builtins.toJSON [ lan.domain ];
+  domainSearchOption =
+    if lan ? customDhcpOptions && lan.customDhcpOptions ? domainSearch then
+      lan.customDhcpOptions.domainSearch
+    else
+      null;
 
   networkTftpServer =
     if netbootHost ? lanAddress then
@@ -59,15 +64,26 @@ in
     dnsRecordsJson
     ;
 
-  environment = {
-    UNIFI_BASE_URL = baseUrl;
-    UNIFI_SITE = site;
-    UNIFI_RESERVATION_INVENTORY_JSON = reservationInventoryJson;
-    UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
-    UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
-    UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
-    UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
-    UNIFI_NETWORK_BOOTFILE = networkBootfile;
-    UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
-  };
+  environment =
+    {
+      UNIFI_BASE_URL = baseUrl;
+      UNIFI_SITE = site;
+      UNIFI_RESERVATION_INVENTORY_JSON = reservationInventoryJson;
+      UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
+      UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
+      UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
+      UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
+      UNIFI_NETWORK_BOOTFILE = networkBootfile;
+      UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
+    }
+    // (
+      if domainSearchOption != null then
+        {
+          UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_FIELD = domainSearchOption.field;
+          UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_ENCODING =
+            domainSearchOption.encoding or "hex";
+        }
+      else
+        { }
+    );
 }
