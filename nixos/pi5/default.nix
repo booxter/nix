@@ -60,6 +60,7 @@ in
   # TODO: use secret management for internal info?
   services.dnsmasq = {
     enable = true;
+    resolveLocalQueries = false;
     settings = {
       bind-interfaces = true;
       dhcp-authoritative = true;
