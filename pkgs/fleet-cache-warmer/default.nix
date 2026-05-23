@@ -91,32 +91,56 @@ writeShellApplication {
         out_paths_file="$(${coreutils}/bin/mktemp -t fleet-cache-warmer.XXXXXX)"
         trap '${coreutils}/bin/rm -f "$out_paths_file"' EXIT
 
-        success_count=0
-        failed_count=0
-
-        printf 'Building %s CI-validated warm target(s) from %s\n' "''${#targets[@]}" "$flake_ref" >&2
-        : >"$out_paths_file"
+        declare -a buildable_targets=()
+        skipped_inventory_count=0
         for target in "''${targets[@]}"; do
-          printf 'Warming %s\n' "$target" >&2
-          if ${lib.getExe nix} build -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
-            success_count=$((success_count + 1))
+          if ${lib.getExe nix} eval --raw "$target.outPath" >/dev/null 2>&1; then
+            buildable_targets+=("$target")
           else
-            failed_count=$((failed_count + 1))
-            printf 'fleet-cache-warmer: target failed, skipping: %s\n' "$target" >&2
+            skipped_inventory_count=$((skipped_inventory_count + 1))
+            printf 'fleet-cache-warmer: target is missing or does not evaluate, skipping: %s\n' "$target" >&2
           fi
         done
+
+        if [ "''${#buildable_targets[@]}" -eq 0 ]; then
+          echo "fleet-cache-warmer: no warm targets resolved successfully; skipping cache push" >&2
+          exit 0
+        fi
+
+        printf 'Building %s resolved warm target(s) from %s\n' "''${#buildable_targets[@]}" "$flake_ref" >&2
+        : >"$out_paths_file"
+        if ! ${lib.getExe nix} build -L --keep-going --no-link --print-out-paths "''${buildable_targets[@]}" >>"$out_paths_file"; then
+          echo "fleet-cache-warmer: batched build reported failures; continuing with any successful outputs" >&2
+        fi
+
+        fallback_failed_count=0
+        if ! ${coreutils}/bin/test -s "$out_paths_file"; then
+          echo "fleet-cache-warmer: batched build produced no successful outputs; retrying target-by-target" >&2
+          for target in "''${buildable_targets[@]}"; do
+            printf 'Warming %s\n' "$target" >&2
+            if ! ${lib.getExe nix} build -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
+              fallback_failed_count=$((fallback_failed_count + 1))
+              printf 'fleet-cache-warmer: target failed, skipping: %s\n' "$target" >&2
+            fi
+          done
+        fi
 
         if ! ${coreutils}/bin/test -s "$out_paths_file"; then
           echo "fleet-cache-warmer: no targets built successfully; skipping cache push" >&2
           exit 0
         fi
 
-        printf 'Pushing warmed closures for %s successful target(s) to Attic cache %s\n' "$success_count" "$attic_cache" >&2
+        realized_output_count="$(${coreutils}/bin/sort -u "$out_paths_file" | ${coreutils}/bin/wc -l | ${coreutils}/bin/tr -d ' ')"
+        printf 'Pushing %s warmed output path(s) to Attic cache %s\n' "$realized_output_count" "$attic_cache" >&2
         ${coreutils}/bin/sort -u "$out_paths_file" \
           | ${lib.getExe attic-client} push --ignore-upstream-cache-filter --stdin "$attic_cache"
 
-        if [ "$failed_count" -gt 0 ]; then
-          printf 'fleet-cache-warmer: completed with %s skipped target failure(s)\n' "$failed_count" >&2
+        if [ "$skipped_inventory_count" -gt 0 ]; then
+          printf 'fleet-cache-warmer: skipped %s missing or unevaluable inventory target(s)\n' "$skipped_inventory_count" >&2
+        fi
+
+        if [ "$fallback_failed_count" -gt 0 ]; then
+          printf 'fleet-cache-warmer: completed with %s skipped target failure(s) after batch fallback\n' "$fallback_failed_count" >&2
         fi
   '';
 }

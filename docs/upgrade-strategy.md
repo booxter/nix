@@ -72,11 +72,17 @@ The daily warmup procedure is:
 1. `launchd` starts `fleet-cache-warmer` on `mmini` at `07:30`.
 2. The warmer reads the warm target inventory from the same flake revision it is
    about to build from `github:booxter/nix`.
-3. The warmer builds those targets one by one. Missing or broken targets are
-   logged and skipped so one failure does not abort the whole run.
-4. The warmer explicitly pushes the resulting store paths into the `default`
+3. The warmer first filters out inventory entries that no longer evaluate at
+   that flake revision.
+4. The warmer builds the remaining targets in one `nix build --keep-going`
+   invocation so Nix can schedule work across the available builders. If that
+   batched build produces no successful outputs, it falls back to target-by-target
+   builds.
+5. Missing or broken targets are logged and skipped so one failure does not
+   abort the whole run.
+6. The warmer explicitly pushes the resulting store paths into the `default`
    Attic cache with `--ignore-upstream-cache-filter`.
-5. Later fleet upgrades substitute from `http://nix-cache:8080/default/` when
+7. Later fleet upgrades substitute from `http://nix-cache:8080/default/` when
    those closures are needed.
 
 The explicit `attic push` step matters. The repo's `post-build-hook` is not
