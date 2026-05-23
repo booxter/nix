@@ -145,7 +145,7 @@ avail_gb_local() {
 
 avail_gb_remote_cmd() {
   local path_literal="$1"
-  printf '%s\n' "df -Pk \"$path_literal\" | awk 'NR==2 {printf \"%.1f\", \\$4/1024/1024}'"
+  printf '%s\n' "df -Pk \"$path_literal\" | awk 'NR==2 {printf \"%.1f\", \$4/1024/1024}'"
 }
 
 print_lines_if_any() {
