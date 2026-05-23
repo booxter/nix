@@ -284,6 +284,7 @@ in
             endpointName: endpoint:
             lib.nameValuePair "prometheus-mtls-${endpointName}" {
               serverName = endpoint.serverName;
+              onlySSL = true;
               listen = [
                 {
                   addr = endpoint.listenAddress;
