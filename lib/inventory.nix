@@ -156,7 +156,7 @@ rec {
           name = "DomainSearch";
           type = "text";
           signed = false;
-          encoding = "hex";
+          encoding = "text";
         };
       };
 

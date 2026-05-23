@@ -203,7 +203,7 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Optional JSON object describing the custom DHCP option definition used to carry "
             "the domain-search list, for example "
-            '{"code":119,"name":"DomainSearch","type":"text","signed":false,"encoding":"hex"}. '
+            '{"code":119,"name":"DomainSearch","type":"text","signed":false,"encoding":"text"}. '
             "Defaults to UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON."
         ),
     )
@@ -221,7 +221,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=os.environ.get("UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_ENCODING", ""),
         help=(
             "Encoding to use when writing the custom DHCP option slot named by "
-            "--domain-search-option-field. Supported values: hex, latin1. Defaults to "
+            "--domain-search-option-field. Supported values: hex, latin1, text. Defaults to "
             "UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_ENCODING or hex."
         ),
     )
@@ -746,10 +746,13 @@ def normalize_domain_search_option_encoding(value: str) -> str:
         "hexadecimal": "hex",
         "latin1": "latin1",
         "raw": "latin1",
+        "text": "text",
+        "string": "text",
+        "plain": "text",
     }
     if normalized not in aliases:
         raise UnifiError(
-            "domain-search option encoding must be one of: hex, hexadecimal, latin1, raw"
+            "domain-search option encoding must be one of: hex, hexadecimal, latin1, raw, text, string, plain"
         )
     return aliases[normalized]
 
@@ -1322,14 +1325,20 @@ def build_network_update_payload(
             if settings.domain_search_option is None:
                 raise UnifiError("internal error: domain_search present without option spec")
 
-            if settings.domain_search_option.encoding == "hex":
-                desired_networkconf_value = desired_option_value.encode("latin1").hex()
-            elif settings.domain_search_option.encoding == "latin1":
-                desired_networkconf_value = desired_option_value
-            else:
+        if settings.domain_search_option.encoding == "hex":
+            desired_networkconf_value = desired_option_value.encode("latin1").hex()
+        elif settings.domain_search_option.encoding == "latin1":
+            desired_networkconf_value = desired_option_value
+        elif settings.domain_search_option.encoding == "text":
+            if len(settings.domain_search) != 1:
                 raise UnifiError(
-                    f"unsupported domain-search option encoding: {settings.domain_search_option.encoding}"
+                    "text domain-search option encoding currently supports exactly one domain"
                 )
+            desired_networkconf_value = settings.domain_search[0]
+        else:
+            raise UnifiError(
+                f"unsupported domain-search option encoding: {settings.domain_search_option.encoding}"
+            )
 
             if current_option_value != desired_networkconf_value:
                 payload[domain_search_option_field] = desired_networkconf_value
