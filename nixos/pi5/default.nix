@@ -1,6 +1,5 @@
 {
   config,
-  lib,
   pkgs,
   username,
   hostInventory,
@@ -8,16 +7,6 @@
 }:
 let
   lan = hostInventory.site.lan;
-  beastAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
-  renderDhcpReservation =
-    reservation:
-    builtins.concatStringsSep "," (
-      (reservation.identifiers or [ reservation.match ])
-      ++ [
-        reservation.hostname
-        reservation.ip
-      ]
-    );
   renderDhcpRange = iface: range: "${iface},${range.start},${range.end}";
   mainIface = "end0";
   guestIface = "wlan0";
@@ -25,11 +14,6 @@ let
   hostSpec = hostInventory.nixosHostSpecsByName.${config.networking.hostName};
   mainAddr = hostSpec.lanAddress;
   guestAddr = hostSpec.guestAddress;
-  lanDomain = lan.domain;
-  publicServiceHosts = map (service: service.publicHost) hostInventory.publicServices;
-  staticDhcpHosts = map renderDhcpReservation hostInventory.staticDhcpReservations;
-  managedDhcpHosts = map renderDhcpReservation hostInventory.managedDhcpReservations;
-  mainDhcpRanges = map (renderDhcpRange mainIface) lan.dhcpRanges.main.ranges;
   guestDhcpRanges = map (renderDhcpRange guestIface) lan.dhcpRanges.guest.ranges;
 in
 {
@@ -75,73 +59,49 @@ in
   # TODO: use secret management for internal info?
   services.dnsmasq = {
     enable = true;
-    resolveLocalQueries = true;
     settings = {
       dhcp-authoritative = true;
       dhcp-rapid-commit = true;
 
-      dhcp-range = mainDhcpRanges ++ guestDhcpRanges;
+      dhcp-range = guestDhcpRanges;
 
       listen-address = [
-        "127.0.0.1"
-        mainAddr
         guestAddr
       ];
 
       dhcp-option = [
-        "option:router,${gwAddr}"
-        "${mainIface},option:dns-server,${gwAddr}"
-        "${mainIface},option:domain-name,${lanDomain}"
-        "${mainIface},option:domain-search,${lanDomain}"
-        "${guestIface},option:dns-server,${gwAddr}"
+        "${guestIface},option:router,${gwAddr}"
+        "${guestIface},option:dns-server,${guestAddr}"
       ];
 
       cache-size = 2000;
       server = [ gwAddr ];
 
       domain-needed = true;
-      domain = lanDomain;
-      expand-hosts = true;
-      local = "/${lanDomain}/";
-      cname = [
-        "nix-cache,prox-cachevm"
-      ];
-
-      host-record = [
-        # Split DNS: send public web domains to the central ingress on beast.
-        "${lib.concatStringsSep "," publicServiceHosts},${beastAddress}"
-      ];
-
-      # TODO: parametrize, eg.: https://github.com/kradalby/dotfiles/blob/6bae60204e1caab84262b2b1b7be013eeec80547/machines/dev.ldn/dnsmasq.nix
-      dhcp-host = [
-      ]
-      ++ staticDhcpHosts
-      ++ managedDhcpHosts;
-
-      enable-tftp = true;
-      tftp-root = "/var/lib/dnsmasq/tftp";
-
-      # Note: disable Secure Boot in BIOS.
-      #
-      # For proxmox VMs, the following configuration is required:
-      # - Select EFI BIOS
-      # - Add UEFI disk (don't enroll keys)
-      # - Add virtio RNG device
-      dhcp-boot = [
-        "netboot.xyz.efi"
-      ];
     };
   };
-  networking.firewall.interfaces.${mainIface}.allowedTCPPorts = [
-    53 # DNS over TCP fallback and observability probes
-  ];
-  networking.firewall.allowedUDPPorts = [
-    53 # DNS
-    67 # DHCP
+  services.atftpd = {
+    enable = true;
+    root = "/var/lib/tftp";
+    extraOptions = [
+      "--bind-address"
+      mainAddr
+    ];
+  };
+  networking.firewall.interfaces.${guestIface} = {
+    allowedTCPPorts = [
+      53 # DNS over TCP fallback for guest clients
+    ];
+    allowedUDPPorts = [
+      53 # DNS
+      67 # DHCP
+    ];
+  };
+  networking.firewall.interfaces.${mainIface}.allowedUDPPorts = [
     69 # TFTP
   ];
   systemd.tmpfiles.rules = [
-    "L+ /var/lib/dnsmasq/tftp/netboot.xyz.efi - - - - ${pkgs.netbootxyz-efi}"
+    "L+ /var/lib/tftp/netboot.xyz.efi - - - - ${pkgs.netbootxyz-efi}"
   ];
 
   users.users.${username} = {
