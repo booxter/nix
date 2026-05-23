@@ -152,7 +152,10 @@ rec {
       };
       customDhcpOptions = {
         domainSearch = {
-          field = "dhcpd_user_option_6a121ed7dabf6f2de9e97962";
+          code = 119;
+          name = "DomainSearch";
+          type = "text";
+          signed = false;
           encoding = "hex";
         };
       };

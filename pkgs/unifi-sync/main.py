@@ -45,8 +45,7 @@ class NetworkDhcpSettingsSpec:
     dhcp_range: DhcpRangeSpec | None
     domain_name: str | None
     domain_search: tuple[str, ...] | None
-    domain_search_option_field: str | None
-    domain_search_option_encoding: str | None
+    domain_search_option: DhcpCustomOptionSpec | None
     tftp_server: str | None
     bootfile: str | None
 
@@ -58,6 +57,16 @@ class DnsRecordSpec:
     ttl_seconds: int
     ipv4_address: ipaddress.IPv4Address | None = None
     target_domain: str | None = None
+
+
+@dataclass(frozen=True)
+class DhcpCustomOptionSpec:
+    code: int | None
+    name: str | None
+    option_type: str | None
+    signed: bool | None
+    encoding: str
+    field_name: str | None = None
 
 
 def normalize_mac(mac: str) -> str:
@@ -186,6 +195,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Optional JSON string or array of DHCP domain-search suffixes. Defaults to "
             "UNIFI_NETWORK_DOMAIN_SEARCH_JSON."
+        ),
+    )
+    parser.add_argument(
+        "--domain-search-option-json",
+        default=os.environ.get("UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON", ""),
+        help=(
+            "Optional JSON object describing the custom DHCP option definition used to carry "
+            "the domain-search list, for example "
+            '{"code":119,"name":"DomainSearch","type":"text","signed":false,"encoding":"hex"}. '
+            "Defaults to UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON."
         ),
     )
     parser.add_argument(
@@ -357,6 +376,18 @@ class UnifiLegacyClient:
         if not isinstance(data, list):
             raise UnifiError("unexpected response shape for networks")
         return data
+
+    def list_dhcp_options(self) -> list[dict[str, Any]]:
+        data = self.request("GET", f"/api/s/{self.site}/rest/dhcpoption")
+        if not isinstance(data, list):
+            raise UnifiError("unexpected response shape for DHCP options")
+        return data
+
+    def create_dhcp_option(self, payload: dict[str, Any]) -> dict[str, Any]:
+        data = self.request("POST", f"/api/s/{self.site}/rest/dhcpoption", payload)
+        if not isinstance(data, list) or len(data) != 1 or not isinstance(data[0], dict):
+            raise UnifiError("unexpected response shape when creating DHCP option")
+        return data[0]
 
     def create_known_client(
         self,
@@ -723,6 +754,64 @@ def normalize_domain_search_option_encoding(value: str) -> str:
     return aliases[normalized]
 
 
+def normalize_dhcp_option_name(value: str) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise UnifiError("DHCP option name must not be empty")
+    if not re.fullmatch(r"[A-Za-z0-9]+", normalized):
+        raise UnifiError(
+            f"DHCP option name must contain only letters and numbers: {value}"
+        )
+    return normalized
+
+
+def normalize_dhcp_option_type(value: str) -> str:
+    normalized = value.strip().lower()
+    if not normalized:
+        raise UnifiError("DHCP option type must not be empty")
+    if not re.fullmatch(r"[a-z]+", normalized):
+        raise UnifiError(f"invalid DHCP option type: {value}")
+    return normalized
+
+
+def normalize_dhcp_option_code(value: Any) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise UnifiError(f"DHCP option code must be an integer, got: {value!r}")
+    if value < 1 or value > 254:
+        raise UnifiError(f"DHCP option code must be between 1 and 254, got: {value}")
+    return value
+
+
+def parse_domain_search_option_json(raw_json: str) -> DhcpCustomOptionSpec | None:
+    if not raw_json:
+        return None
+
+    try:
+        decoded = json.loads(raw_json)
+    except json.JSONDecodeError as error:
+        raise UnifiError(f"invalid domain-search option JSON: {error}") from error
+
+    if not isinstance(decoded, dict):
+        raise UnifiError("domain-search option JSON must be an object")
+
+    code = normalize_dhcp_option_code(decoded.get("code"))
+    name = normalize_dhcp_option_name(str(decoded.get("name", "")))
+    option_type = normalize_dhcp_option_type(str(decoded.get("type", "")))
+    signed = decoded.get("signed")
+    if not isinstance(signed, bool):
+        raise UnifiError("domain-search option JSON must contain boolean signed")
+
+    encoding = normalize_domain_search_option_encoding(str(decoded.get("encoding", "")))
+    return DhcpCustomOptionSpec(
+        code=code,
+        name=name,
+        option_type=option_type,
+        signed=signed,
+        encoding=encoding,
+        field_name=None,
+    )
+
+
 def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
     if not raw_json:
         return None
@@ -839,23 +928,34 @@ def build_network_settings(
     dhcp_range = None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
     domain_name = args.domain_name.strip() or None
     domain_search = parse_domain_search(args.domain_search_json)
-    domain_search_option_field = (
+    direct_field_name = (
         normalize_networkconf_field_name(args.domain_search_option_field)
         if args.domain_search_option_field.strip()
         else None
     )
-    domain_search_option_encoding = (
-        normalize_domain_search_option_encoding(args.domain_search_option_encoding)
-        if domain_search_option_field is not None
-        else None
-    )
+    json_option_spec = parse_domain_search_option_json(args.domain_search_option_json)
+    if direct_field_name is not None and json_option_spec is not None:
+        raise UnifiError(
+            "use either --domain-search-option-json or --domain-search-option-field, not both"
+        )
+    if direct_field_name is not None:
+        domain_search_option = DhcpCustomOptionSpec(
+            code=None,
+            name=None,
+            option_type=None,
+            signed=None,
+            encoding=normalize_domain_search_option_encoding(args.domain_search_option_encoding),
+            field_name=direct_field_name,
+        )
+    else:
+        domain_search_option = json_option_spec
     raw_tftp_server = None if args.no_netboot_update else (args.tftp_server.strip() or None)
     raw_bootfile = None if args.no_netboot_update else (args.bootfile.strip() or None)
     if (raw_tftp_server is None) != (raw_bootfile is None):
         raise UnifiError("network boot requires both --tftp-server and --bootfile together")
     tftp_server = normalize_tftp_server(raw_tftp_server) if raw_tftp_server is not None else None
     bootfile = normalize_bootfile(raw_bootfile) if raw_bootfile is not None else None
-    if domain_search is not None and domain_search_option_field is None:
+    if domain_search is not None and domain_search_option is None:
         domain_search = None
 
     if dhcp_range is None and domain_name is None and domain_search is None and tftp_server is None:
@@ -865,8 +965,7 @@ def build_network_settings(
         dhcp_range=dhcp_range,
         domain_name=domain_name,
         domain_search=domain_search,
-        domain_search_option_field=domain_search_option_field,
-        domain_search_option_encoding=domain_search_option_encoding,
+        domain_search_option=domain_search_option,
         tftp_server=tftp_server,
         bootfile=bootfile,
     )
@@ -1034,9 +1133,162 @@ def build_client_update_plan(
     return payload, changes
 
 
+def dhcp_option_field_name(option_id: str) -> str:
+    return f"dhcpd_user_option_{option_id}"
+
+
+def build_dhcp_options_by_code(
+    options: list[dict[str, Any]],
+) -> dict[int, list[dict[str, Any]]]:
+    by_code: dict[int, list[dict[str, Any]]] = {}
+    for option in options:
+        code = option.get("code")
+        if isinstance(code, bool) or not isinstance(code, int):
+            continue
+        by_code.setdefault(code, []).append(option)
+    return by_code
+
+
+def choose_existing_dhcp_option(
+    options_by_code: dict[int, list[dict[str, Any]]],
+    desired: DhcpCustomOptionSpec,
+) -> dict[str, Any] | None:
+    if desired.code is None:
+        return None
+
+    candidates = options_by_code.get(desired.code, [])
+    if not candidates:
+        return None
+
+    exact_matches = [
+        option
+        for option in candidates
+        if stringify(option.get("name")) == desired.name
+        and stringify(option.get("type")) == desired.option_type
+        and option.get("signed") == desired.signed
+    ]
+    if len(exact_matches) == 1:
+        return exact_matches[0]
+    if len(exact_matches) > 1:
+        raise UnifiError(
+            f"multiple UniFi DHCP option definitions match code {desired.code} and name {desired.name}"
+        )
+
+    if len(candidates) == 1:
+        return candidates[0]
+
+    choices = ", ".join(
+        f"{option.get('name', '<unnamed>')}({_id(option)} type={option.get('type')} signed={option.get('signed')})"
+        for option in candidates
+    )
+    raise UnifiError(
+        f"multiple UniFi DHCP option definitions share code {desired.code}; refine the desired definition. "
+        f"Available: {choices}"
+    )
+
+
+def ensure_domain_search_option(
+    client: UnifiLegacyClient,
+    desired: DhcpCustomOptionSpec,
+    dry_run: bool,
+) -> tuple[str | None, dict[str, Any]]:
+    if desired.field_name is not None:
+        return (
+            desired.field_name,
+            {
+                "field_name": desired.field_name,
+                "code": desired.code,
+                "name": desired.name,
+                "type": desired.option_type,
+                "signed": desired.signed,
+                "encoding": desired.encoding,
+                "changed": False,
+                "dry_run": dry_run,
+                "created": False,
+                "result": None,
+            },
+        )
+
+    options = client.list_dhcp_options()
+    options_by_code = build_dhcp_options_by_code(options)
+    existing = choose_existing_dhcp_option(options_by_code, desired)
+    if existing is not None:
+        option_id = _id(existing)
+        if option_id == "<missing-id>":
+            raise UnifiError(
+                f"existing UniFi DHCP option definition for code {desired.code} has no _id"
+            )
+        return (
+            dhcp_option_field_name(option_id),
+            {
+                "field_name": dhcp_option_field_name(option_id),
+                "code": desired.code,
+                "name": desired.name,
+                "type": desired.option_type,
+                "signed": desired.signed,
+                "encoding": desired.encoding,
+                "changed": False,
+                "dry_run": dry_run,
+                "created": False,
+                "option_id": option_id,
+                "result": None,
+            },
+        )
+
+    if dry_run:
+        return (
+            None,
+            {
+                "field_name": None,
+                "code": desired.code,
+                "name": desired.name,
+                "type": desired.option_type,
+                "signed": desired.signed,
+                "encoding": desired.encoding,
+                "changed": True,
+                "dry_run": True,
+                "created": False,
+                "would_create": True,
+                "result": None,
+            },
+        )
+
+    created = client.create_dhcp_option(
+        {
+            "code": desired.code,
+            "name": desired.name,
+            "type": desired.option_type,
+            "signed": desired.signed,
+        }
+    )
+    option_id = _id(created)
+    if option_id == "<missing-id>":
+        raise UnifiError(
+            f"created UniFi DHCP option definition for code {desired.code} has no _id"
+        )
+    return (
+        dhcp_option_field_name(option_id),
+        {
+            "field_name": dhcp_option_field_name(option_id),
+            "code": desired.code,
+            "name": desired.name,
+            "type": desired.option_type,
+            "signed": desired.signed,
+            "encoding": desired.encoding,
+            "changed": True,
+            "dry_run": False,
+            "created": True,
+            "would_create": False,
+            "option_id": option_id,
+            "result": created,
+        },
+    )
+
+
 def build_network_update_payload(
     settings: NetworkDhcpSettingsSpec,
     current_network: dict[str, Any],
+    domain_search_option_field: str | None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     payload: dict[str, Any] = {}
     changes: dict[str, Any] = {}
@@ -1065,29 +1317,28 @@ def build_network_update_payload(
 
     if settings.domain_search is not None:
         desired_option_value = encode_domain_search_option(settings.domain_search)
-        current_option_field = settings.domain_search_option_field
-        if current_option_field is None:
-            raise UnifiError("internal error: domain_search present without option field")
+        if domain_search_option_field is not None:
+            current_option_value = stringify(current_network.get(domain_search_option_field))
+            if settings.domain_search_option is None:
+                raise UnifiError("internal error: domain_search present without option spec")
 
-        current_option_value = stringify(current_network.get(current_option_field))
-        if settings.domain_search_option_encoding == "hex":
-            desired_networkconf_value = desired_option_value.encode("latin1").hex()
-        elif settings.domain_search_option_encoding == "latin1":
-            desired_networkconf_value = desired_option_value
-        else:
-            raise UnifiError(
-                f"unsupported domain-search option encoding: {settings.domain_search_option_encoding}"
-            )
+            if settings.domain_search_option.encoding == "hex":
+                desired_networkconf_value = desired_option_value.encode("latin1").hex()
+            elif settings.domain_search_option.encoding == "latin1":
+                desired_networkconf_value = desired_option_value
+            else:
+                raise UnifiError(
+                    f"unsupported domain-search option encoding: {settings.domain_search_option.encoding}"
+                )
 
-        if current_option_value != desired_networkconf_value:
-            payload[current_option_field] = desired_networkconf_value
-            changes[current_option_field] = {
-                "current": current_option_value,
-                "desired": desired_networkconf_value,
-                "desired_domains": list(settings.domain_search),
-                "encoding": settings.domain_search_option_encoding,
-            }
-
+            if current_option_value != desired_networkconf_value:
+                payload[domain_search_option_field] = desired_networkconf_value
+                changes[domain_search_option_field] = {
+                    "current": current_option_value,
+                    "desired": desired_networkconf_value,
+                    "desired_domains": list(settings.domain_search),
+                    "encoding": settings.domain_search_option.encoding,
+                }
     if settings.tftp_server is not None:
         current_boot_enabled = bool(current_network.get("dhcpd_boot_enabled"))
         current_boot_server = stringify(current_network.get("dhcpd_boot_server"))
@@ -1147,11 +1398,30 @@ def main() -> int:
             if dhcp_network_id == "<missing-id>":
                 raise UnifiError("selected DHCP network has no _id")
 
+            domain_search_option_field = None
+            domain_search_option_result = None
+            if network_settings.domain_search is not None:
+                if network_settings.domain_search_option is None:
+                    raise UnifiError(
+                        "internal error: domain_search present without option specification"
+                    )
+                (
+                    domain_search_option_field,
+                    domain_search_option_result,
+                ) = ensure_domain_search_option(
+                    client=client,
+                    desired=network_settings.domain_search_option,
+                    dry_run=args.dry_run,
+                )
+
             dhcp_payload, dhcp_changes = build_network_update_payload(
                 network_settings,
                 selected_dhcp_network,
+                domain_search_option_field=domain_search_option_field,
             )
-            dhcp_changed = bool(dhcp_payload)
+            dhcp_changed = bool(dhcp_payload) or bool(
+                domain_search_option_result is not None and domain_search_option_result["changed"]
+            )
             dhcp_result = None
             if dhcp_changed and not args.dry_run:
                 dhcp_result = client.update_network(
@@ -1178,6 +1448,7 @@ def main() -> int:
                 "domain_search": list(network_settings.domain_search)
                 if network_settings.domain_search is not None
                 else None,
+                "domain_search_option": domain_search_option_result,
                 "domain_search_option_119_hex": (
                     encode_domain_search_option(network_settings.domain_search)
                     .encode("latin1")
