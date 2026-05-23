@@ -72,7 +72,7 @@ nix run .#unifi-sync -- --debug
   - DHCP option `67` -> `netboot.xyz.efi`
   - DNS policies for:
     - `pi5.home.arpa`
-    - `nix-cache.home.arpa -> prox-cachevm.home.arpa`
+    - `nix-cache.home.arpa -> 192.168.20.7`
     - `jf.ihar.dev`
     - `js.ihar.dev`
     - `mu.ihar.dev`
@@ -107,6 +107,6 @@ nix run .#unifi-sync -- --debug
 - Internal access to the public `*.ihar.dev` services still needs a choice:
   local DNS overrides or hairpin NAT. The inventory and sync app are now set up
   for local overrides.
-- `nix-cache.home.arpa` is rendered as a CNAME to `prox-cachevm.home.arpa`, so
-  the target host name still needs to resolve on the gateway side.
+- `nix-cache.home.arpa` now resolves directly to the cache VM reservation, so
+  that name no longer depends on a second local-DNS record.
 - TFTP / netboot may not be worth preserving.

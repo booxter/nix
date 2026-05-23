@@ -65,13 +65,6 @@ let
       inherit domain ipv4Address;
     };
 
-  mkDnsCnameRecord =
-    domain: targetDomain: {
-      type = "CNAME_RECORD";
-      ttlSeconds = lanDnsRecordTtlSeconds;
-      inherit domain targetDomain;
-    };
-
   canonicalLocalHostname =
     spec:
     if spec ? dnsName then
@@ -166,13 +159,7 @@ rec {
             (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
             ++ map
               (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec))
-              (spec.localDnsAliases or [ ])
-            ++ map
-              (domain: mkDnsCnameRecord domain "${canonicalLocalHostname spec}.${lanDomain}")
-              (spec.dnsCnameAliases or [ ])
-            ++ map
-              (label: mkDnsCnameRecord "${label}.${lanDomain}" "${canonicalLocalHostname spec}.${lanDomain}")
-              (spec.localDnsCnameAliases or [ ]);
+              (spec.localDnsAliases or [ ]);
         in
         builtins.concatMap renderHostDnsRecords nixosHostSpecs;
     };
@@ -461,7 +448,7 @@ rec {
       type = "vm";
       name = "cache";
       upsHost = "prx1-lab";
-      localDnsCnameAliases = [ "nix-cache" ];
+      localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
         hostname = "prox-cachevm";
