@@ -228,21 +228,6 @@
         acc: spec: acc // specToNixosConfigs spec
       ) { } nixosHostSpecs;
 
-      devShells = helpers.forAllSystems (
-        system:
-        let
-          pkgs = import inputs.nixpkgs { inherit system; };
-        in
-        {
-          air-sdk = pkgs.mkShell {
-            buildInputs = with pkgs; [
-              python3
-              outputs.packages.${system}.air-sdk
-            ];
-          };
-        }
-      );
-
       checks = import ./checks.nix {
         inherit
           helpers

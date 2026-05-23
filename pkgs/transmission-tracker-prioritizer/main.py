@@ -14,8 +14,10 @@ LOG = logging.getLogger("transmission-tracker-common")
 TR_PRI_LOW = -1
 TR_PRI_NORMAL = 0
 TR_PRI_HIGH = 1
+TR_STATUS_STOPPED = 0
 PRIORITY_CLASSES = ("low", "normal", "high")
 DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD = 3.0
+DEFAULT_NON_PREFERRED_PAUSE_RATIO_THRESHOLD = 6.0
 
 
 class TransmissionRpcError(RuntimeError):
@@ -156,10 +158,15 @@ def priority_class_name(priority: int) -> str:
     return "normal"
 
 
+def torrent_is_complete(torrent: dict) -> bool:
+    left_until_done = torrent.get("leftUntilDone")
+    return isinstance(left_until_done, int) and left_until_done == 0
+
+
 def torrent_desired_priority(
     torrent: dict,
     is_preferred: bool,
-    has_any_preferred_torrents: bool,
+    preferred_bootstrap_active: bool,
     non_preferred_low_priority_ratio_threshold: float,
 ) -> int:
     if is_preferred:
@@ -173,7 +180,7 @@ def torrent_desired_priority(
     ):
         baseline_non_preferred_priority = TR_PRI_LOW
 
-    if has_any_preferred_torrents:
+    if preferred_bootstrap_active:
         return baseline_non_preferred_priority
 
     if baseline_non_preferred_priority == TR_PRI_NORMAL:
@@ -314,7 +321,7 @@ def render_metrics_text(
             "# HELP host_observability_transmission_preferred_upload_active Whether any preferred torrent is actively uploading to peers.",
             "# TYPE host_observability_transmission_preferred_upload_active gauge",
             f"host_observability_transmission_preferred_upload_active {1 if preferred_upload_active else 0}",
-            "# HELP host_observability_transmission_preferred_bootstrap_active Whether any preferred torrent currently has connected peers and therefore qualifies for bootstrap private headroom.",
+            "# HELP host_observability_transmission_preferred_bootstrap_active Whether any preferred torrent currently has peers actively downloading from us and therefore qualifies for bootstrap private headroom.",
             "# TYPE host_observability_transmission_preferred_bootstrap_active gauge",
             f"host_observability_transmission_preferred_bootstrap_active {1 if preferred_bootstrap_active else 0}",
             "# HELP host_observability_transmission_preferred_upload_bytes_per_second Current aggregate upload rate for preferred torrents.",
@@ -433,6 +440,7 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
                 "peersGettingFromUs",
                 "peersSendingToUs",
                 "leftUntilDone",
+                "status",
                 "uploadRatio",
                 "rateDownload",
                 "rateUpload",
@@ -464,6 +472,18 @@ def rpc_set_torrent_fields(
     )
 
 
+def rpc_stop_torrents(client: TransmissionRpcClient, torrent_hashes: list[str]) -> None:
+    if not torrent_hashes:
+        return
+
+    client.call(
+        "torrent-stop",
+        {
+            "ids": torrent_hashes,
+        },
+    )
+
+
 @dataclass
 class IterationState:
     tracker_hosts_count: int
@@ -480,6 +500,7 @@ class IterationState:
     high_priority_hashes: list[str]
     normal_priority_hashes: list[str]
     low_priority_hashes: list[str]
+    stop_hashes: list[str]
 
 
 def collect_iteration_state(
@@ -487,6 +508,7 @@ def collect_iteration_state(
     trackers_file: Path,
     last_tracker_status: str | None,
     non_preferred_low_priority_ratio_threshold: float,
+    non_preferred_pause_ratio_threshold: float,
 ) -> tuple[str | None, IterationState | None]:
     tracker_hosts = load_tracker_hosts(trackers_file)
     if tracker_hosts is None:
@@ -510,9 +532,13 @@ def collect_iteration_state(
             current_preferred_hashes.add(torrent_hash)
         torrent_entries.append((torrent, torrent_hash, is_preferred))
 
-    has_any_preferred_torrents = bool(current_preferred_hashes)
+    preferred_bootstrap_active = any(
+        is_preferred
+        and isinstance(torrent.get("peersGettingFromUs"), int)
+        and torrent["peersGettingFromUs"] > 0
+        for torrent, _torrent_hash, is_preferred in torrent_entries
+    )
     preferred_upload_observed_active = False
-    preferred_bootstrap_active = False
     preferred_upload_bytes_per_second = 0
     torrent_counts = {torrent_class: 0 for torrent_class in PRIORITY_CLASSES}
     torrent_activity_counts = {
@@ -542,10 +568,13 @@ def collect_iteration_state(
     to_make_high_priority: list[str] = []
     to_make_normal_priority: list[str] = []
     to_make_low_priority: list[str] = []
+    to_stop: list[str] = []
 
     for torrent, torrent_hash, is_preferred in torrent_entries:
         priority = torrent.get("bandwidthPriority")
         current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
+        status = torrent.get("status")
+        current_status = status if isinstance(status, int) else None
         torrent_class = priority_class_name(current_priority)
         torrent_counts[torrent_class] += 1
         peer_counts[torrent_class]["connected"] += nonnegative_int(
@@ -568,6 +597,7 @@ def collect_iteration_state(
         peers_sending_to_us = torrent.get("peersSendingToUs")
         rate_download = torrent.get("rateDownload")
         rate_upload = torrent.get("rateUpload")
+        upload_ratio = torrent.get("uploadRatio")
         is_active_download = (
             isinstance(peers_sending_to_us, int) and peers_sending_to_us > 0
         ) or (isinstance(rate_download, int) and rate_download > 0)
@@ -587,23 +617,24 @@ def collect_iteration_state(
                 torrent_activity_counts["seeding"][
                     "active" if is_active_upload else "inactive"
                 ] += 1
+        if (
+            not is_preferred
+            and torrent_is_complete(torrent)
+            and isinstance(upload_ratio, (int, float))
+            and upload_ratio >= non_preferred_pause_ratio_threshold
+            and current_status != TR_STATUS_STOPPED
+        ):
+            to_stop.append(torrent_hash)
         desired_priority = torrent_desired_priority(
             torrent,
             is_preferred,
-            has_any_preferred_torrents,
+            preferred_bootstrap_active,
             non_preferred_low_priority_ratio_threshold,
         )
         if is_preferred:
             if isinstance(rate_upload, int) and rate_upload > 0:
                 preferred_upload_bytes_per_second += rate_upload
-            if (
-                isinstance(torrent.get("peersConnected"), int)
-                and torrent["peersConnected"] > 0
-            ):
-                preferred_bootstrap_active = True
-            if (
-                isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0
-            ) or (isinstance(rate_upload, int) and rate_upload > 0):
+            if isinstance(peers_getting_from_us, int) and peers_getting_from_us > 0:
                 preferred_upload_observed_active = True
 
         if desired_priority == TR_PRI_HIGH and current_priority != TR_PRI_HIGH:
@@ -632,6 +663,7 @@ def collect_iteration_state(
         high_priority_hashes=sorted(to_make_high_priority),
         normal_priority_hashes=sorted(to_make_normal_priority),
         low_priority_hashes=sorted(to_make_low_priority),
+        stop_hashes=sorted(to_stop),
     )
 
 
@@ -660,6 +692,7 @@ def apply_priority_updates(
             "bandwidthPriority": TR_PRI_LOW,
         },
     )
+    rpc_stop_torrents(client, state.stop_hashes)
 
 
 def write_iteration_metrics(

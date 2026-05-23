@@ -7,9 +7,6 @@ in
   # private
   my-page = pkgs.callPackage ./page { };
 
-  # https://github.com/NixOS/nixpkgs/pull/432971
-  air-sdk = pkgs.callPackage ./air-sdk { };
-
   # to upstream?
   jinjanator = pkgs.callPackage ./jinjanator { };
 
@@ -20,6 +17,8 @@ in
   aurral = pkgs.callPackage ./aurral { };
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
+
+  fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
 
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
 

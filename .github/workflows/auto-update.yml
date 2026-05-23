@@ -3,7 +3,8 @@ name: Auto update flake
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 1 * * *"
+    - cron: "0 5 * * *"
+      timezone: "America/New_York"
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"

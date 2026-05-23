@@ -20,12 +20,17 @@ split into two services:
 Together they:
 
 - mark preferred torrents `bandwidthPriority = high`
-- if any preferred torrent exists, keep non-preferred torrents at
-  `bandwidthPriority = normal` while `uploadRatio < 3.0` and demote the rest
-  to `bandwidthPriority = low`
-- if no preferred torrents exist, promote non-preferred torrents with
+- if any preferred torrent currently has peers actively downloading from us,
+  keep non-preferred
+  torrents at `bandwidthPriority = normal` while `uploadRatio < 3.0` and
+  demote the rest to `bandwidthPriority = low`
+- if no preferred torrent currently has peers actively downloading from us,
+  promote non-preferred
+  torrents with
   `uploadRatio < 3.0` to `bandwidthPriority = high` and keep
   `uploadRatio >= 3.0` torrents at `bandwidthPriority = low`
+- if a completed non-preferred torrent reaches `uploadRatio >= 6.0`, pause it
+  so the cleaner can remove it once it is old enough
 - exports per-class metrics for Prometheus / Grafana
 
 It does not manage bandwidth groups, public caps, or SABnzbd suppression.
@@ -119,14 +124,16 @@ with shared classification logic:
   priorities to enforce
 - sets:
   - preferred torrents -> `bandwidthPriority = high`
-  - if any preferred torrent exists:
+  - if any preferred torrent currently has peers actively downloading from us:
     `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = normal`
-  - if any preferred torrent exists:
+  - if any preferred torrent currently has peers actively downloading from us:
     `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
-  - if no preferred torrents exist:
+  - if no preferred torrent currently has peers actively downloading from us:
     `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = high`
-  - if no preferred torrents exist:
+  - if no preferred torrent currently has peers actively downloading from us:
     `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
+  - if a non-preferred torrent is complete and `uploadRatio >= 6.0`:
+    stop/pause the torrent
 - exports `low` / `normal` / `high` torrent priority metrics based on current
   `bandwidthPriority`
 
