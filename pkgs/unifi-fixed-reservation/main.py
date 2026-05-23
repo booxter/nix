@@ -43,6 +43,7 @@ class DhcpRangeSpec:
 class NetworkDhcpSettingsSpec:
     dhcp_range: DhcpRangeSpec | None
     domain_name: str | None
+    domain_search: tuple[str, ...] | None
 
 
 def normalize_mac(mac: str) -> str:
@@ -157,6 +158,14 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Optional DHCP domain name for the target network. Defaults to "
             "UNIFI_NETWORK_DOMAIN_NAME."
+        ),
+    )
+    parser.add_argument(
+        "--domain-search-json",
+        default=os.environ.get("UNIFI_NETWORK_DOMAIN_SEARCH_JSON", ""),
+        help=(
+            "Optional JSON string or array of DHCP domain-search suffixes. Defaults to "
+            "UNIFI_NETWORK_DOMAIN_SEARCH_JSON."
         ),
     )
     return parser
@@ -467,6 +476,61 @@ def parse_dhcp_range(raw_json: str) -> DhcpRangeSpec | None:
     return DhcpRangeSpec(start=start_ip, end=end_ip)
 
 
+def parse_domain_search(raw_json: str) -> tuple[str, ...] | None:
+    if not raw_json:
+        return None
+
+    try:
+        decoded = json.loads(raw_json)
+    except json.JSONDecodeError:
+        decoded = raw_json
+
+    if isinstance(decoded, str):
+        values = [decoded]
+    elif isinstance(decoded, list):
+        values = decoded
+    else:
+        raise UnifiError("domain-search must be a JSON string or array of strings")
+
+    parsed: list[str] = []
+    for index, item in enumerate(values):
+        if not isinstance(item, str):
+            raise UnifiError(f"domain-search item {index} is not a string")
+
+        domain = item.strip().rstrip(".")
+        if not domain:
+            raise UnifiError(f"domain-search item {index} is empty")
+
+        labels = domain.split(".")
+        for label in labels:
+            if not label:
+                raise UnifiError(f"domain-search item {index} has an empty label: {domain}")
+            if len(label.encode("idna")) > 63:
+                raise UnifiError(f"domain-search label is too long in {domain}")
+
+        encoded_length = sum(len(label.encode("idna")) + 1 for label in labels) + 1
+        if encoded_length > 255:
+            raise UnifiError(f"domain-search item {index} is too long: {domain}")
+
+        parsed.append(domain.lower())
+
+    if not parsed:
+        return None
+
+    return tuple(parsed)
+
+
+def encode_domain_search_option(domains: tuple[str, ...]) -> str:
+    encoded = bytearray()
+    for domain in domains:
+        for label in domain.split("."):
+            label_bytes = label.encode("idna")
+            encoded.append(len(label_bytes))
+            encoded.extend(label_bytes)
+        encoded.append(0)
+    return bytes(encoded).decode("latin1")
+
+
 def build_single_reservation(args: argparse.Namespace) -> ReservationSpec:
     if not args.mac and not args.ip and not args.hostname:
         raise UnifiError("single-client mode requires at least --mac and --ip")
@@ -520,22 +584,51 @@ def build_network_settings(
 ) -> NetworkDhcpSettingsSpec | None:
     dhcp_range = None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
     domain_name = args.domain_name.strip() or None
+    domain_search = parse_domain_search(args.domain_search_json)
 
-    if dhcp_range is None and domain_name is None:
+    if dhcp_range is None and domain_name is None and domain_search is None:
         return None
 
     return NetworkDhcpSettingsSpec(
         dhcp_range=dhcp_range,
         domain_name=domain_name,
+        domain_search=domain_search,
     )
 
 
-def build_network_update_payload(settings: NetworkDhcpSettingsSpec) -> dict[str, Any]:
+def build_network_update_payload(
+    settings: NetworkDhcpSettingsSpec,
+    current_network: dict[str, Any],
+) -> dict[str, Any]:
     payload: dict[str, Any] = {}
     if settings.dhcp_range is not None:
         payload.update(build_network_dhcp_payload(settings.dhcp_range))
     if settings.domain_name is not None:
         payload["domain_name"] = settings.domain_name
+    if settings.domain_search is not None:
+        # `dhcpd_options` is inferred from UniFi's legacy DHCP option naming. Preserve any
+        # existing options and replace only option 119.
+        current_options = current_network.get("dhcpd_options", [])
+        if current_options is None:
+            current_options = []
+        if not isinstance(current_options, list):
+            raise UnifiError("unexpected dhcpd_options shape on selected network")
+
+        merged_options = [
+            option
+            for option in current_options
+            if not (
+                isinstance(option, dict)
+                and str(option.get("optionNumber", option.get("option_number", ""))) == "119"
+            )
+        ]
+        merged_options.append(
+            {
+                "optionNumber": 119,
+                "value": encode_domain_search_option(settings.domain_search),
+            }
+        )
+        payload["dhcpd_options"] = merged_options
     return payload
 
 
@@ -580,7 +673,7 @@ def main() -> int:
 
             dhcp_result = client.update_network(
                 network_id=dhcp_network_id,
-                payload=build_network_update_payload(network_settings),
+                payload=build_network_update_payload(network_settings, selected_dhcp_network),
             )
             dhcp_range_result = {
                 "network_id": dhcp_network_id,
@@ -596,6 +689,16 @@ def main() -> int:
                     else None
                 ),
                 "domain_name": network_settings.domain_name,
+                "domain_search": list(network_settings.domain_search)
+                if network_settings.domain_search is not None
+                else None,
+                "domain_search_option_119_hex": (
+                    encode_domain_search_option(network_settings.domain_search)
+                    .encode("latin1")
+                    .hex()
+                    if network_settings.domain_search is not None
+                    else None
+                ),
                 "result": dhcp_result,
             }
 
