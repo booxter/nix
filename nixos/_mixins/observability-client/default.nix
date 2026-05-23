@@ -259,8 +259,8 @@ in
           endpointName: endpoint:
           lib.nameValuePair "${endpointSecretAttrName endpointName}-server-crt" {
             key = "${endpoint.secretPrefix}/server_crt";
-            owner = "root";
-            group = "root";
+            owner = config.services.nginx.user;
+            group = config.services.nginx.group;
             mode = "0400";
             restartUnits = [ "nginx.service" ];
           }
@@ -269,8 +269,8 @@ in
           endpointName: endpoint:
           lib.nameValuePair "${endpointSecretAttrName endpointName}-server-key" {
             key = "${endpoint.secretPrefix}/server_key";
-            owner = "root";
-            group = "root";
+            owner = config.services.nginx.user;
+            group = config.services.nginx.group;
             mode = "0400";
             restartUnits = [ "nginx.service" ];
           }
