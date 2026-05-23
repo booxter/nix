@@ -251,15 +251,12 @@ rec {
       ip = "192.168.10.100";
     }
     {
-      identifiers = [ "id:JGWXHWDL4X" ];
+      identifiers = [ "06:b5:a3:b9:6b:e0" ];
       hostname = "mlt";
       ip = "192.168.11.2";
     }
     {
-      identifiers = [
-        "a2:65:a0:ce:9f:23"
-        "id:mair"
-      ];
+      identifiers = [ "a2:65:a0:ce:9f:23" ];
       hostname = "mair";
       ip = "192.168.11.3";
     }
@@ -347,7 +344,7 @@ rec {
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
       dhcpReservation = {
-        match = "id:beast";
+        match = "bc:fc:e7:3b:fe:da";
         hostname = "beast";
         ip = "192.168.16.3";
       };
@@ -436,7 +433,7 @@ rec {
       sshPort = 10005;
       hmFull = false;
       dhcpReservation = {
-        match = "id:prox-srvarrvm";
+        match = "bc:24:11:19:4d:d1";
         hostname = "prox-srvarrvm";
         ip = "192.168.20.2";
       };
@@ -472,7 +469,7 @@ rec {
       sshPort = 10008;
       hmFull = false;
       dhcpReservation = {
-        match = "id:prox-gwvm";
+        match = "bc:24:11:91:b5:77";
         hostname = "prox-gwvm";
         ip = "192.168.20.3";
       };
@@ -488,7 +485,7 @@ rec {
       sshPort = 10009;
       hmFull = false;
       dhcpReservation = {
-        match = "id:prox-orgvm";
+        match = "bc:24:11:fd:eb:9c";
         hostname = "prox-orgvm";
         ip = "192.168.20.4";
       };
@@ -504,7 +501,7 @@ rec {
       sshPort = 10010;
       hmFull = false;
       dhcpReservation = {
-        match = "id:prox-pkivm";
+        match = "bc:24:11:c6:ab:fc";
         hostname = "prox-pkivm";
         ip = "192.168.20.5";
       };
