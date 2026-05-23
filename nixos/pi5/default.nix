@@ -117,7 +117,6 @@ in
       ];
 
       host-record = [
-        "egress,${gwAddr}"
         "dhcp,${mainAddr}"
         # Split DNS: send public web domains to the central ingress on beast.
         "${lib.concatStringsSep "," publicServiceHosts},${beastAddress}"

@@ -46,7 +46,6 @@ Source:
 - DHCP for the Pi-hosted guest network
 - DNS for `home.arpa`
 - local host aliases:
-  - `egress -> 192.168.0.1`
   - `dhcp -> 192.168.1.1`
   - `nix-cache -> prox-cachevm`
 - split DNS for public service names to local `beast`
@@ -279,7 +278,6 @@ First-pass assumption:
 
 Names currently worth preserving explicitly:
 
-- `egress`
 - `beast`
 - `beast-ipmi`
 - `nvws`
