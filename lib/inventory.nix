@@ -150,6 +150,12 @@ rec {
         host = piHostname;
         bootfile = "netboot.xyz.efi";
       };
+      customDhcpOptions = {
+        domainSearch = {
+          field = "dhcpd_user_option_6a121ed7dabf6f2de9e97962";
+          encoding = "hex";
+        };
+      };
 
       dnsRecords =
         let
