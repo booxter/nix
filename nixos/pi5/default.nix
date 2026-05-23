@@ -7,6 +7,7 @@
 }:
 let
   lan = hostInventory.site.lan;
+  netboot = lan.netboot;
   renderDhcpRange = iface: range: "${iface},${range.start},${range.end}";
   mainIface = "end0";
   guestIface = "wlan0";
@@ -101,7 +102,7 @@ in
     69 # TFTP
   ];
   systemd.tmpfiles.rules = [
-    "L+ /var/lib/tftp/netboot.xyz.efi - - - - ${pkgs.netbootxyz-efi}"
+    "L+ /var/lib/tftp/${netboot.bootfile} - - - - ${pkgs.netbootxyz-efi}"
   ];
 
   users.users.${username} = {

@@ -45,6 +45,8 @@ class NetworkDhcpSettingsSpec:
     dhcp_range: DhcpRangeSpec | None
     domain_name: str | None
     domain_search: tuple[str, ...] | None
+    tftp_server: str | None
+    bootfile: str | None
 
 
 @dataclass(frozen=True)
@@ -182,6 +184,27 @@ def build_parser() -> argparse.ArgumentParser:
             "Optional JSON string or array of DHCP domain-search suffixes. Defaults to "
             "UNIFI_NETWORK_DOMAIN_SEARCH_JSON."
         ),
+    )
+    parser.add_argument(
+        "--tftp-server",
+        default=os.environ.get("UNIFI_NETWORK_TFTP_SERVER", ""),
+        help=(
+            "Optional TFTP server hostname or IPv4 address for DHCP option 66. "
+            "Defaults to UNIFI_NETWORK_TFTP_SERVER."
+        ),
+    )
+    parser.add_argument(
+        "--bootfile",
+        default=os.environ.get("UNIFI_NETWORK_BOOTFILE", ""),
+        help=(
+            "Optional network-boot filename for DHCP option 67. Defaults to "
+            "UNIFI_NETWORK_BOOTFILE."
+        ),
+    )
+    parser.add_argument(
+        "--no-netboot-update",
+        action="store_true",
+        help="Do not update DHCP options 66 and 67 for network boot.",
     )
     parser.add_argument(
         "--dns-records-json",
@@ -626,6 +649,32 @@ def normalize_dns_name(value: str) -> str:
     return normalized
 
 
+def normalize_tftp_server(value: str) -> str:
+    normalized = value.strip().rstrip(".")
+    if not normalized:
+        raise UnifiError("TFTP server must not be empty")
+
+    try:
+        parsed_ip = ipaddress.ip_address(normalized)
+    except ValueError:
+        return normalize_dns_name(normalized)
+
+    if not isinstance(parsed_ip, ipaddress.IPv4Address):
+        raise UnifiError(f"TFTP server must be an IPv4 address or hostname: {value}")
+    return str(parsed_ip)
+
+
+def normalize_bootfile(value: str) -> str:
+    normalized = value.strip()
+    if not normalized:
+        raise UnifiError("bootfile must not be empty")
+    if any(ord(character) < 32 for character in normalized):
+        raise UnifiError("bootfile must not contain control characters")
+    if len(normalized.encode("utf-8")) > 256:
+        raise UnifiError("bootfile is too long")
+    return normalized
+
+
 def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
     if not raw_json:
         return None
@@ -737,14 +786,22 @@ def build_network_settings(
     dhcp_range = None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
     domain_name = args.domain_name.strip() or None
     domain_search = parse_domain_search(args.domain_search_json)
+    raw_tftp_server = None if args.no_netboot_update else (args.tftp_server.strip() or None)
+    raw_bootfile = None if args.no_netboot_update else (args.bootfile.strip() or None)
+    if (raw_tftp_server is None) != (raw_bootfile is None):
+        raise UnifiError("network boot requires both --tftp-server and --bootfile together")
+    tftp_server = normalize_tftp_server(raw_tftp_server) if raw_tftp_server is not None else None
+    bootfile = normalize_bootfile(raw_bootfile) if raw_bootfile is not None else None
 
-    if dhcp_range is None and domain_name is None and domain_search is None:
+    if dhcp_range is None and domain_name is None and domain_search is None and tftp_server is None:
         return None
 
     return NetworkDhcpSettingsSpec(
         dhcp_range=dhcp_range,
         domain_name=domain_name,
         domain_search=domain_search,
+        tftp_server=tftp_server,
+        bootfile=bootfile,
     )
 
 
@@ -952,6 +1009,29 @@ def build_network_update_payload(
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     payload: dict[str, Any] = {}
     changes: dict[str, Any] = {}
+    current_options = get_current_dhcp_options(current_network)
+    merged_options = list(current_options)
+    options_changed = False
+
+    def sync_dhcp_option(
+        option_number: int,
+        desired_value: str,
+        change_payload: dict[str, Any] | None = None,
+    ) -> None:
+        nonlocal merged_options, options_changed
+
+        current_value = get_dhcp_option_value(current_network, option_number)
+        if current_value == desired_value:
+            return
+
+        merged_options = merge_dhcp_option(merged_options, option_number, desired_value)
+        options_changed = True
+        changes[f"dhcpd_options[{option_number}]"] = (
+            change_payload
+            if change_payload is not None
+            else build_change(current_value, desired_value)
+        )
+
     if settings.dhcp_range is not None:
         desired_start = str(settings.dhcp_range.start)
         desired_stop = str(settings.dhcp_range.end)
@@ -977,18 +1057,25 @@ def build_network_update_payload(
     if settings.domain_search is not None:
         desired_option_value = encode_domain_search_option(settings.domain_search)
         current_option_value = get_dhcp_option_value(current_network, 119)
-        if current_option_value != desired_option_value:
-            current_options = get_current_dhcp_options(current_network)
-            payload["dhcpd_options"] = merge_dhcp_option(current_options, 119, desired_option_value)
-            changes["dhcpd_options[119]"] = {
+        sync_dhcp_option(
+            119,
+            desired_option_value,
+            {
                 "current_hex": (
-                    current_option_value.encode("latin1").hex()
-                    if current_option_value is not None
-                    else None
+                    current_option_value.encode("latin1").hex() if current_option_value is not None else None
                 ),
                 "desired_hex": desired_option_value.encode("latin1").hex(),
                 "desired_domains": list(settings.domain_search),
-            }
+            },
+        )
+
+    if settings.tftp_server is not None:
+        sync_dhcp_option(66, settings.tftp_server)
+    if settings.bootfile is not None:
+        sync_dhcp_option(67, settings.bootfile)
+
+    if options_changed:
+        payload["dhcpd_options"] = merged_options
     return payload, changes
 
 
@@ -1071,6 +1158,8 @@ def main() -> int:
                     if network_settings.domain_search is not None
                     else None
                 ),
+                "tftp_server": network_settings.tftp_server,
+                "bootfile": network_settings.bootfile,
                 "result": dhcp_result,
             }
 

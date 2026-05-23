@@ -9,6 +9,8 @@ let
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
   hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
+  netboot = lan.netboot;
+  netbootHost = hostInventory.nixosHostSpecsByName.${netboot.host};
   wgHome = hostInventory.site.wireguard.home;
   isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
   reservationIdentifiers =
@@ -34,6 +36,14 @@ let
   unifiMainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcpRanges.main.ranges 0);
   unifiMainDomainName = lan.domain;
   unifiMainDomainSearchJson = builtins.toJSON [ lan.domain ];
+  unifiNetworkTftpServer =
+    if netbootHost ? lanAddress then
+      netbootHost.lanAddress
+    else if netbootHost ? ipAddress then
+      netbootHost.ipAddress
+    else
+      throw "netboot host ${netboot.host} does not expose a stable IPv4 address";
+  unifiNetworkBootfile = netboot.bootfile;
   unifiDnsRecordsJson = builtins.toJSON hostInventory.site.lan.dnsRecords;
 
   broadcomSas3flashP15 = pkgs.fetchzip {
@@ -203,6 +213,8 @@ let
       export UNIFI_NETWORK_DHCP_RANGE_JSON='${unifiMainDhcpRangeJson}'
       export UNIFI_NETWORK_DOMAIN_NAME='${unifiMainDomainName}'
       export UNIFI_NETWORK_DOMAIN_SEARCH_JSON='${unifiMainDomainSearchJson}'
+      export UNIFI_NETWORK_TFTP_SERVER='${unifiNetworkTftpServer}'
+      export UNIFI_NETWORK_BOOTFILE='${unifiNetworkBootfile}'
       export UNIFI_DNS_RECORDS_JSON='${unifiDnsRecordsJson}'
       exec ${unifiSyncPackage}/bin/unifi-sync "$@"
     '';

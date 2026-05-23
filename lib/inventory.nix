@@ -150,6 +150,10 @@ rec {
           ];
         };
       };
+      netboot = {
+        host = piHostname;
+        bootfile = "netboot.xyz.efi";
+      };
 
       dnsRecords =
         let
