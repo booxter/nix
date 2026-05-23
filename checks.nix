@@ -42,6 +42,7 @@ helpers.forAllSystems (
         bats
         git
         jq
+        python3
         yq
       ];
       buildPhase = ''

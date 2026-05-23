@@ -387,6 +387,7 @@ mapfile -t HOSTS < <(prioritize_hosts "${HOSTS[@]}")
 
 echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."
 failed=0
+unreachable_hosts=()
 host_status_lines=()
 for host in "${HOSTS[@]}"; do
   ssh_host="$(resolve_ssh_host "$host")"
@@ -398,6 +399,7 @@ for host in "${HOSTS[@]}"; do
     else
       ok="failed"
       failed=$((failed + 1))
+      unreachable_hosts+=("$host")
     fi
   fi
 
@@ -430,6 +432,7 @@ print_lines_if_any "${host_status_lines[@]}"
 
 if [[ $failed -ne 0 ]]; then
   echo "Aborting: $failed host(s) unreachable." >&2
+  echo "Unreachable hosts: $(format_host_list "${unreachable_hosts[@]}")" >&2
   exit 1
 fi
 
@@ -553,7 +556,11 @@ REMOTE
     continue
   fi
   # shellcheck disable=SC2029
-  printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""
+  if ! printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""; then
+    echo "Failed to upload deploy script to ${host}." >&2
+    failed_hosts+=("$host")
+    continue
+  fi
   if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION"; then
     ok_hosts+=("$host")
   else
@@ -567,6 +574,10 @@ printf '\n'
 
 failed_list=""
 if [[ ${#failed_hosts[@]} -gt 0 ]]; then
-  failed_list="$(printf '%s' "${failed_hosts[*]}")"
+  failed_list="$(format_host_list "${failed_hosts[@]}")"
 fi
 print_summary_box "${#HOSTS[@]}" "${#ok_hosts[@]}" "${#failed_hosts[@]}" "$elapsed" "$failed_list"
+
+if [[ ${#failed_hosts[@]} -gt 0 ]]; then
+  exit 1
+fi
