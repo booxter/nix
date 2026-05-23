@@ -10,6 +10,27 @@ let
   hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
+  isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
+  reservationIdentifiers =
+    reservation:
+    if reservation ? identifiers then
+      reservation.identifiers
+    else if reservation ? match then
+      [ reservation.match ]
+    else
+      [ ];
+  unifiReservationInventoryJson = builtins.toJSON (
+    map
+      (reservation: {
+        inherit (reservation) hostname ip;
+        mac = builtins.head (builtins.filter isMacAddress (reservationIdentifiers reservation));
+      })
+      (
+        builtins.filter
+          (reservation: builtins.any isMacAddress (reservationIdentifiers reservation))
+          (hostInventory.managedDhcpReservations ++ hostInventory.staticDhcpReservations)
+      )
+  );
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -166,6 +187,15 @@ let
       export HBA_FLASH_DEFAULT_FIRMWARE_BUNDLE="${broadcomSas9305_24iP16_12}"
     ''
     + builtins.readFile ../scripts/hba-flash.sh;
+  };
+  unifiFixedReservation = pkgs.unifi-fixed-reservation;
+  unifiFixedReservationApp = pkgs.writeShellApplication {
+    name = "unifi-fixed-reservation-app";
+    runtimeInputs = [ unifiFixedReservation ];
+    text = ''
+      export UNIFI_RESERVATION_INVENTORY_JSON='${unifiReservationInventoryJson}'
+      exec ${unifiFixedReservation}/bin/unifi-fixed-reservation "$@"
+    '';
   };
   wgHomeClientConfig = pkgs.writeShellApplication {
     name = "wg-home-client-config";
@@ -339,6 +369,10 @@ in
   vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+  "unifi-fixed-reservation" =
+    mkApp
+      "${unifiFixedReservationApp}/bin/unifi-fixed-reservation-app"
+      "Sync MAC-backed UniFi reservations from inventory or update a single client through the legacy UniFi OS API.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =

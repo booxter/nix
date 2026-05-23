@@ -18,6 +18,8 @@ in
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
+  unifi-fixed-reservation = pkgs.callPackage ./unifi-fixed-reservation { };
+
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
 
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
