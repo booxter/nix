@@ -455,6 +455,11 @@ rec {
       name = "cache";
       upsHost = "prx1-lab";
       localDnsCnameAliases = [ "nix-cache" ];
+      dhcpReservation = {
+        match = "bc:24:11:0d:85:41";
+        hostname = "prox-cachevm";
+        ip = "192.168.12.24";
+      };
       sshPort = 10004;
       hmFull = false;
       cores = 16;
