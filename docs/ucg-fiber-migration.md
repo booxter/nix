@@ -33,7 +33,7 @@ Keep `pi5` only for roles that still need it during the transition:
 - [x] Point the repo-wide LAN DNS/DHCP endpoint to `192.168.0.1`
 - [x] Convert DHCP reservations from client-id matching to MAC-based matching
 - [x] Simplify the main DHCP pool to one UniFi-friendly range
-- [x] Build `nix run .#unifi-fixed-reservation`
+- [x] Build `nix run .#unifi-sync`
 - [x] Sync through that app:
   - fixed reservations
   - `Local DNS Record`
@@ -53,7 +53,7 @@ export UNIFI_BASE_URL='https://192.168.0.1'
 export UNIFI_API_KEY='...'
 export UNIFI_SITE='default'
 
-nix run .#unifi-fixed-reservation -- --debug
+nix run .#unifi-sync -- --debug
 ```
 
 - [ ] Verify in UniFi that the trusted LAN now has:

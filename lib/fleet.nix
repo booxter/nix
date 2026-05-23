@@ -193,7 +193,7 @@ let
   };
   unifiFixedReservation = pkgs.unifi-fixed-reservation;
   unifiFixedReservationApp = pkgs.writeShellApplication {
-    name = "unifi-fixed-reservation-app";
+    name = "unifi-sync-app";
     runtimeInputs = [ unifiFixedReservation ];
     text = ''
       export UNIFI_BASE_URL='https://${lan.gateway.address}'
@@ -377,10 +377,10 @@ in
   vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
-  "unifi-fixed-reservation" =
+  "unifi-sync" =
     mkApp
-      "${unifiFixedReservationApp}/bin/unifi-fixed-reservation-app"
-      "Sync MAC-backed UniFi reservations from inventory or update a single client through the legacy UniFi OS API.";
+      "${unifiFixedReservationApp}/bin/unifi-sync-app"
+      "Sync UniFi DHCP and reservation state from inventory through the legacy UniFi OS API.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =

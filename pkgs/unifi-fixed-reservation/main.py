@@ -63,7 +63,7 @@ def format_json(data: Any) -> str:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="unifi-fixed-reservation",
+        prog="unifi-sync",
         description=(
             "Set UniFi fixed reservations through the legacy UniFi OS API, either "
             "for one client or for every MAC-backed reservation exported from inventory."
