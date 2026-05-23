@@ -196,6 +196,8 @@ let
     name = "unifi-fixed-reservation-app";
     runtimeInputs = [ unifiFixedReservation ];
     text = ''
+      export UNIFI_BASE_URL='https://${lan.gateway.address}'
+      export UNIFI_SITE='default'
       export UNIFI_RESERVATION_INVENTORY_JSON='${unifiReservationInventoryJson}'
       export UNIFI_NETWORK_DHCP_RANGE_JSON='${unifiMainDhcpRangeJson}'
       export UNIFI_NETWORK_DOMAIN_NAME='${unifiMainDomainName}'
