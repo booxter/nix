@@ -192,10 +192,10 @@ let
     ''
     + builtins.readFile ../scripts/hba-flash.sh;
   };
-  unifiFixedReservation = pkgs.unifi-fixed-reservation;
-  unifiFixedReservationApp = pkgs.writeShellApplication {
+  unifiSyncPackage = pkgs.unifi-sync;
+  unifiSyncApp = pkgs.writeShellApplication {
     name = "unifi-sync-app";
-    runtimeInputs = [ unifiFixedReservation ];
+    runtimeInputs = [ unifiSyncPackage ];
     text = ''
       export UNIFI_BASE_URL='https://${lan.gateway.address}'
       export UNIFI_SITE='default'
@@ -204,7 +204,7 @@ let
       export UNIFI_NETWORK_DOMAIN_NAME='${unifiMainDomainName}'
       export UNIFI_NETWORK_DOMAIN_SEARCH_JSON='${unifiMainDomainSearchJson}'
       export UNIFI_DNS_RECORDS_JSON='${unifiDnsRecordsJson}'
-      exec ${unifiFixedReservation}/bin/unifi-fixed-reservation "$@"
+      exec ${unifiSyncPackage}/bin/unifi-sync "$@"
     '';
   };
   wgHomeClientConfig = pkgs.writeShellApplication {
@@ -380,9 +380,9 @@ in
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
   "unifi-sync" =
-    mkApp
-      "${unifiFixedReservationApp}/bin/unifi-sync-app"
-      "Sync UniFi DHCP and reservation state from inventory through the legacy UniFi OS API.";
+      mkApp
+      "${unifiSyncApp}/bin/unifi-sync-app"
+      "Sync UniFi DHCP, reservations, and split DNS from inventory.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =

@@ -18,7 +18,7 @@ in
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
-  unifi-fixed-reservation = pkgs.callPackage ./unifi-fixed-reservation { };
+  unifi-sync = pkgs.callPackage ./unifi-sync { };
 
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
 

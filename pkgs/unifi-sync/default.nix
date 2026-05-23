@@ -4,7 +4,7 @@
   writeShellApplication,
 }:
 writeShellApplication {
-  name = "unifi-fixed-reservation";
+  name = "unifi-sync";
   runtimeInputs = [ python3 ];
   text = ''
     exec ${python3}/bin/python3 ${./main.py} "$@"
@@ -14,7 +14,7 @@ writeShellApplication {
     description = "Sync UniFi client reservations from inventory or set a single client through the legacy UniFi OS API";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
-    mainProgram = "unifi-fixed-reservation";
+    mainProgram = "unifi-sync";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }
