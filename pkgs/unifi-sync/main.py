@@ -1159,6 +1159,8 @@ def main() -> int:
             created_placeholder = False
             should_create_placeholder = args.create_known_client if mode == "single" else allow_inventory_placeholders
             if existing_client is None and should_create_placeholder:
+                # TODO: Re-check on a live UCG whether placeholder-only known clients
+                # behave identically to observed clients for fixed IP + Local DNS Record.
                 if selected_group is None:
                     groups = client.list_usergroups()
                     selected_group = choose_usergroup(groups, args.usergroup_id)
