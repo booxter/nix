@@ -4,7 +4,7 @@ This repo uses a two-stage flow:
 
 1. GitHub bumps flake inputs on a fixed morning schedule.
 2. `mmini` warms the LAN Attic cache by building and pushing the same
-   CI-validated outputs, except `aarch64-linux` targets for now.
+   CI-validated outputs.
 
 The point of the warmup is to make the next upgrade window and later interactive
 work substitute from the LAN cache instead of rebuilding or downloading on
@@ -34,6 +34,7 @@ on schedule but does not auto-reboot.
 `fleet-cache-warmer` builds and pushes the CI-validated Nix outputs below:
 
 - `x86_64-linux` NixOS system closures
+- `aarch64-linux` NixOS system closures
 - `x86_64-linux` VM artifacts used by CI
 - `x86_64-linux` Home Manager activation for `nv`
 - `aarch64-darwin` system, Home Manager, and VM outputs that CI validates
@@ -42,7 +43,6 @@ on schedule but does not auto-reboot.
 
 It intentionally excludes:
 
-- `aarch64-linux` outputs for now
 - formatting checks such as `nix fmt`
 - shell-only CI steps such as `./tests/test-get-hosts.sh`
 

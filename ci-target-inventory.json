@@ -116,7 +116,7 @@
         ]
       },
       "system": "aarch64-linux",
-      "warm": false
+      "warm": true
     },
     {
       "attr": "nixosConfigurations.beast.config.system.build.toplevel",
@@ -144,7 +144,7 @@
         ]
       },
       "system": "aarch64-linux",
-      "warm": false
+      "warm": true
     },
     {
       "attr": "nixosConfigurations.prox-srvarrvm.config.system.build.toplevel",

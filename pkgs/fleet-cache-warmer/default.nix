@@ -34,9 +34,8 @@ writeShellApplication {
           cat <<'EOF'
     Usage: fleet-cache-warmer [--print-targets]
 
-    Build and push the CI-validated fleet outputs to the local Attic cache,
-    excluding aarch64-linux targets for now. The flake reference and cache name
-    can be overridden with:
+    Build and push the CI-validated fleet outputs to the local Attic cache.
+    The flake reference and cache name can be overridden with:
 
       FLEET_CACHE_WARMER_FLAKE
       FLEET_CACHE_WARMER_ATTIC_CACHE
