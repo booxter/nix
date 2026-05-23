@@ -1,9 +1,9 @@
-# Observability mTLS Plan
+# Observability mTLS
 
 ## Scope
 
-This plan covers migrating the remaining remote Prometheus scrapes for
-NixOS-hosted services to mTLS.
+This document covers the non-node Prometheus scrapes that are now wired for
+mTLS in NixOS config.
 
 Current exclusions:
 
@@ -11,203 +11,187 @@ Current exclusions:
 - Darwin scrapes such as `mmini`
 - UPS / NUT jobs that Prometheus reaches through the local exporter on `fana`
 
-The target model is:
+Rollout is still pending. This file describes the implemented shape in the repo
+and the remaining deployment order.
 
-- `prox-fanavm` keeps using its existing Prometheus client certificate
-- every remote NixOS-hosted scrape endpoint requires client-cert auth
-- Prometheus talks to those endpoints over `https`
+## Implemented Shape
 
-## Current Remote Scrapes Without mTLS
+### Shared host-side mTLS endpoint model
 
-### Remote node scrape still plain
+Remote NixOS scrapes now use a shared host-side abstraction:
 
-- `node`
-  - `mmini:9100`
-  - Darwin, out of scope for this phase
+- host metadata lives under
+  `host.observability.client.prometheusMtlsEndpoints`
+- each endpoint declares:
+  - LAN-visible port
+  - scrape path
+  - local upstream URL
+  - `sops` secret prefix for the server certificate and key
+- nginx fronts each endpoint with:
+  - HTTPS
+  - client-certificate auth
+  - the internal PKI root as client CA
 
-### Remote blackbox exporters
+The shared implementation lives in:
 
-- `blackbox-icmp`
-  - `beast:9115`
-  - `frame:9115`
-- `blackbox-tcp`
-  - `beast:9115`
-  - `frame:9115`
+- [nixos/_mixins/observability-client/default.nix](../_mixins/observability-client/default.nix)
 
-### Remote service exporters and app metrics
+### Prometheus client certificate reuse
+
+`prox-fanavm` still uses the existing Prometheus client certificate that was
+already in place for `node-mtls`.
+
+That same client cert/key is now also used for:
 
 - `smartctl`
-  - `beast:9633`
 - `jellyfin`
-  - `beast:9594`
 - `sabnzbd`
-  - `prox-srvarrvm:9387`
 - `vikunja`
-  - `prox-orgvm:3456`
+- remote `blackbox-icmp`
+- remote `blackbox-tcp`
 
-## Already Using mTLS
+## Implemented Endpoints
 
-- `node-mtls`
-  - `beast`
-  - `frame`
-  - `pi5`
-  - `prox-builder1vm`
-  - `prox-builder2vm`
-  - `prox-builder3vm`
-  - `prox-cachevm`
-  - `prox-gwvm`
-  - `prox-orgvm`
-  - `prox-pkivm`
-  - `prox-srvarrvm`
-  - `prx1-lab`
-  - `prx2-lab`
-  - `prx3-lab`
+### `frame`
 
-This means the internal PKI and Prometheus client certificate flow already work
-for node exporter and should be reused.
+- `blackbox`
+  - public mTLS endpoint: `https://frame:9115/probe`
+  - local upstream: `http://127.0.0.1:19115/probe`
+  - secret prefix: `prometheus/blackbox`
 
-## Desired End State
+### `beast`
 
-- `prox-fanavm` has only:
-  - local loopback HTTP scrapes
-  - remote HTTPS scrapes with client-cert auth
-- no remote NixOS exporter or app metrics endpoint is scraped over plain HTTP
-- mTLS secret handling stays host-local through `sops`
-- Prometheus scrape config generation stays declarative from host config
+- `blackbox`
+  - public mTLS endpoint: `https://beast:9115/probe`
+  - local upstream: `http://127.0.0.1:19115/probe`
+  - secret prefix: `prometheus/blackbox`
+- `smartctl`
+  - public mTLS endpoint: `https://beast:9633/metrics`
+  - local upstream: `http://127.0.0.1:19633/metrics`
+  - secret prefix: `prometheus/smartctl`
+- `jellyfin`
+  - public mTLS endpoint: `https://beast:9594/metrics`
+  - local upstream: `http://127.0.0.1:19594/metrics`
+  - secret prefix: `prometheus/jellyfin`
+
+### `prox-srvarrvm`
+
+- `sabnzbd`
+  - public mTLS endpoint: `https://prox-srvarrvm:9387/metrics`
+  - local upstream: `http://127.0.0.1:19387/metrics`
+  - secret prefix: `prometheus/sabnzbd`
+
+### `prox-orgvm`
+
+- `vikunja`
+  - public mTLS endpoint: `https://prox-orgvm:9345/metrics`
+  - local upstream: `http://127.0.0.1:3456/api/v1/metrics`
+  - secret prefix: `prometheus/vikunja`
+
+## Prometheus Changes
+
+`prox-fanavm` now scrapes these endpoints over `https` with client-cert auth.
+
+Notable details:
+
+- `node-mtls` is unchanged
+- `smartctl`, `jellyfin`, `sabnzbd`, and `vikunja` now use endpoint metadata
+  instead of exporter-internal ports
+- remote blackbox probe sources can now mix:
+  - local plain HTTP from `fana`
+  - remote HTTPS+mTLS from other NixOS hosts
+
+The relevant config is in:
+
+- [nixos/fanavm/default.nix](../fanavm/default.nix)
+
+## Grafana
+
+Grafana now has a dedicated scrape-transport board:
+
+- [nixos/fanavm/grafana/dashboards/scrape-health.json](../fanavm/grafana/dashboards/scrape-health.json)
+
+It is meant to answer:
+
+- is Prometheus reaching the mTLS-wrapped exporters/apps at all
+- is the remote blackbox exporter transport healthy by probe source
+
+This is separate from the service-specific dashboards that consume the scraped
+metrics afterward.
+
+## Secret Layout
+
+The host templates now expect per-endpoint server certs:
+
+- `frame`
+  - `prometheus.blackbox.server_crt`
+  - `prometheus.blackbox.server_key`
+- `beast`
+  - `prometheus.blackbox.server_crt`
+  - `prometheus.blackbox.server_key`
+  - `prometheus.smartctl.server_crt`
+  - `prometheus.smartctl.server_key`
+  - `prometheus.jellyfin.server_crt`
+  - `prometheus.jellyfin.server_key`
+- `prox-srvarrvm`
+  - `prometheus.sabnzbd.server_crt`
+  - `prometheus.sabnzbd.server_key`
+- `prox-orgvm`
+  - `prometheus.vikunja.server_crt`
+  - `prometheus.vikunja.server_key`
+
+## Certificate Issuance App
+
+There is now a flake app to issue these certificates from `prox-pkivm` and
+write them into the target host secret:
+
+```bash
+nix run .#issue-observability-cert -- --host frame --endpoint blackbox
+nix run .#issue-observability-cert -- --host prox-srvarrvm --endpoint sabnzbd
+nix run .#issue-observability-cert -- --host prox-orgvm --endpoint vikunja
+```
+
+If `--endpoint` is omitted, the app issues certs for every configured
+`prometheusMtlsEndpoints` entry on that host.
+
+The app:
+
+- reads endpoint metadata from the NixOS config
+- SSHes to `prox-pkivm`
+- runs `step ca certificate` there with the bootstrap provisioner
+- runs `sops-update` for the target host secret
+- writes the issued cert/key into the configured secret prefix
+
+Source:
+
+- [pkgs/issue-observability-cert/main.py](../../pkgs/issue-observability-cert/main.py)
 
 ## Maintenance Window Constraint
 
-`beast` changes are postponed for now.
+`beast` implementation is present in the repo, but deployment is intentionally
+deferred.
 
 Anything that touches `beast` for this migration needs a separate maintenance
-window, so the first implementation phase should avoid deploying `beast`.
+window, so rollout should start with:
 
-## Implementation Strategy
+- `frame`
+- `prox-srvarrvm`
+- `prox-orgvm`
+- `prox-fanavm`
 
-### 1. Reusable mTLS server helper for non-node endpoints
+and leave `beast` for a later dedicated window.
 
-Add a reusable mixin or helper that can:
+## Pending Rollout
 
-- install per-host server cert and key from `sops`
-- render a small web config or reverse-proxy config
-- expose a stable `https` endpoint with:
-  - server cert
-  - `RequireAndVerifyClientCert`
-  - internal PKI CA as client CA
+Implementation is done. What remains is rollout:
 
-For Prometheus exporters that already support the exporter-toolkit
-`--web.config.file` pattern, prefer that over an extra reverse proxy.
+1. Issue certs for `frame`, `prox-srvarrvm`, and `prox-orgvm`
+2. Deploy those hosts
+3. Deploy `prox-fanavm`
+4. Verify the new Grafana scrape-health board and Prometheus targets
+5. Schedule a separate maintenance window for `beast`
+6. Issue `beast` certs
+7. Deploy `beast`
 
-For services that do not support exporter-toolkit natively, front them with a
-small local reverse proxy bound to the LAN address and keep the upstream app on
-loopback.
-
-### 2. Extend host metadata so `fana` knows which jobs are mTLS
-
-Today only node exporter has an mTLS flag.
-
-Add service-specific metadata so `prox-fanavm` can split remote scrape targets
-into:
-
-- plain HTTP
-- HTTPS with mTLS
-
-The scrape generator should not hard-code hostnames and ports in multiple
-places once these jobs move.
-
-### 3. Convert service families in order
-
-#### A. Blackbox exporter on `frame`
-
-Why first:
-
-- it already uses the shared observability client mixin
-- the NixOS module exposes `services.prometheus.exporters.blackbox.extraFlags`
-- this is a simple exporter endpoint, so it is the cleanest non-node migration
-- it avoids `beast`, which is deferred to a dedicated maintenance window
-
-Planned shape:
-
-- enable exporter-toolkit style mTLS directly on blackbox exporter if supported
-- otherwise front `127.0.0.1:9115` with a tiny mTLS reverse proxy
-- update `blackboxProbeSourceConfigs` in `fana` to use `https://host:9115`
-
-#### B. `sabnzbd` exporter on `prox-srvarrvm`
-
-Planned shape:
-
-- same decision as other exporters:
-  - direct exporter-toolkit mTLS if supported
-  - otherwise loopback exporter plus shared mTLS proxy
-
-#### C. `vikunja` metrics on `prox-orgvm`
-
-This is an application endpoint, not a Prometheus exporter.
-
-Planned shape:
-
-- keep Vikunja bound as it is or move metrics exposure to loopback if practical
-- add a dedicated mTLS reverse proxy path for `/api/v1/metrics`
-- update the `vikunja` scrape job in `fana` to use `https`
-
-#### D. Deferred `beast` work
-
-The following `beast` changes stay out of the first rollout and should be done
-only during a dedicated maintenance window:
-
-- blackbox exporter on `beast`
-- `smartctl` exporter on `beast`
-- `jellyfin` exporter on `beast`
-
-Planned shape for the deferred `beast` work:
-
-- blackbox exporter:
-  - direct exporter-toolkit mTLS if supported
-  - otherwise loopback exporter plus the shared mTLS proxy
-- `smartctl` exporter:
-  - direct exporter-toolkit mTLS if supported
-  - otherwise loopback exporter plus the shared mTLS proxy
-
-The `jellyfin` exporter is custom service wiring, not a stock NixOS exporter
-module.
-
-Planned shape:
-
-- likely keep the exporter itself on loopback
-- front it with the shared mTLS proxy on `9594`
-
-## Suggested Rollout Order
-
-1. Add the shared non-node mTLS server helper
-2. Convert blackbox exporter on `frame`
-3. Convert `sabnzbd` on `prox-srvarrvm`
-4. Convert `vikunja` metrics on `prox-orgvm`
-5. Schedule a separate maintenance window for all `beast` scraper changes
-6. During that window, convert `beast` blackbox, `smartctl`, and `jellyfin`
-7. Update `fana` scrape configs after each service family so Prometheus never
-   expects HTTPS before the target is ready
-
-## Secrets Impact
-
-Each migrated NixOS host will need additional `sops` material for the new
-endpoint if the existing node-exporter certificate is not reused.
-
-Decision to make during implementation:
-
-- either reuse one host-level observability server certificate for multiple
-  exporter ports
-- or issue distinct cert/key pairs per service endpoint
-
-The simpler path is one host-level observability certificate reused across all
-Prometheus-facing endpoints on that host.
-
-## Open Questions
-
-- Which exporter packages already support `--web.config.file` cleanly:
-  - blackbox exporter
-  - smartctl exporter
-  - sabnzbd exporter
-- Whether `vikunja` metrics should stay on the main app port or move behind a
-  dedicated local proxy path
-- Whether local loopback self-scrapes on `fana` should remain plain permanently
-  or also be standardized later
+After that, the remaining non-mTLS Prometheus scrapes should only be the
+explicit out-of-scope set from the top of this file.
