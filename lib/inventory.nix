@@ -58,12 +58,11 @@ let
     }
     // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
 
-  mkDnsARecord =
-    domain: ipv4Address: {
-      type = "A_RECORD";
-      ttlSeconds = lanDnsRecordTtlSeconds;
-      inherit domain ipv4Address;
-    };
+  mkDnsARecord = domain: ipv4Address: {
+    type = "A_RECORD";
+    ttlSeconds = lanDnsRecordTtlSeconds;
+    inherit domain ipv4Address;
+  };
 
   canonicalLocalHostname =
     spec:
@@ -166,9 +165,9 @@ rec {
           renderHostDnsRecords =
             spec:
             (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
-            ++ map
-              (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec))
-              (spec.localDnsAliases or [ ]);
+            ++ map (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec)) (
+              spec.localDnsAliases or [ ]
+            );
         in
         builtins.concatMap renderHostDnsRecords nixosHostSpecs;
     };

@@ -22,9 +22,9 @@ let
         mac = builtins.head (builtins.filter isMacAddress (reservationIdentifiers reservation));
       })
       (
-        builtins.filter
-          (reservation: builtins.any isMacAddress (reservationIdentifiers reservation))
-          (hostInventory.managedDhcpReservations ++ hostInventory.staticDhcpReservations)
+        builtins.filter (reservation: builtins.any isMacAddress (reservationIdentifiers reservation)) (
+          hostInventory.managedDhcpReservations ++ hostInventory.staticDhcpReservations
+        )
       )
   );
 
@@ -64,19 +64,17 @@ in
     dnsRecordsJson
     ;
 
-  environment =
-    {
-      UNIFI_BASE_URL = baseUrl;
-      UNIFI_SITE = site;
-      UNIFI_RESERVATION_INVENTORY_JSON = reservationInventoryJson;
-      UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
-      UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
-      UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
-      UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON =
-        if domainSearchOption != null then builtins.toJSON domainSearchOption else "";
-      UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
-      UNIFI_NETWORK_BOOTFILE = networkBootfile;
-      UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
-    }
-    ;
+  environment = {
+    UNIFI_BASE_URL = baseUrl;
+    UNIFI_SITE = site;
+    UNIFI_RESERVATION_INVENTORY_JSON = reservationInventoryJson;
+    UNIFI_NETWORK_DHCP_RANGE_JSON = mainDhcpRangeJson;
+    UNIFI_NETWORK_DOMAIN_NAME = mainDomainName;
+    UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
+    UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON =
+      if domainSearchOption != null then builtins.toJSON domainSearchOption else "";
+    UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
+    UNIFI_NETWORK_BOOTFILE = networkBootfile;
+    UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
+  };
 }

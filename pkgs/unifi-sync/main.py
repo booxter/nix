@@ -263,11 +263,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 class UnifiLegacyClient:
-    def __init__(self, base_url: str, api_key: str, site: str, verify_tls: bool, debug: bool):
+    def __init__(
+        self, base_url: str, api_key: str, site: str, verify_tls: bool, debug: bool
+    ):
         if not base_url:
-            raise UnifiError("missing UniFi base URL; pass --base-url or set UNIFI_BASE_URL")
+            raise UnifiError(
+                "missing UniFi base URL; pass --base-url or set UNIFI_BASE_URL"
+            )
         if not api_key:
-            raise UnifiError("missing UniFi API key; pass --api-key or set UNIFI_API_KEY")
+            raise UnifiError(
+                "missing UniFi API key; pass --api-key or set UNIFI_API_KEY"
+            )
 
         self.base_url = base_url.rstrip("/")
         self.api_key = api_key
@@ -347,7 +353,9 @@ class UnifiLegacyClient:
         try:
             decoded = json.loads(body)
         except json.JSONDecodeError as error:
-            raise UnifiError(f"{method} {url} returned invalid JSON:\n{body}") from error
+            raise UnifiError(
+                f"{method} {url} returned invalid JSON:\n{body}"
+            ) from error
 
         meta = decoded.get("meta")
         if isinstance(meta, dict) and meta.get("rc") not in (None, "ok"):
@@ -385,7 +393,11 @@ class UnifiLegacyClient:
 
     def create_dhcp_option(self, payload: dict[str, Any]) -> dict[str, Any]:
         data = self.request("POST", f"/api/s/{self.site}/rest/dhcpoption", payload)
-        if not isinstance(data, list) or len(data) != 1 or not isinstance(data[0], dict):
+        if (
+            not isinstance(data, list)
+            or len(data) != 1
+            or not isinstance(data[0], dict)
+        ):
             raise UnifiError("unexpected response shape when creating DHCP option")
         return data[0]
 
@@ -438,7 +450,9 @@ class UnifiLegacyClient:
             payload,
         )
 
-    def update_dns_policy(self, site_id: str, policy_id: str, payload: dict[str, Any]) -> Any:
+    def update_dns_policy(
+        self, site_id: str, policy_id: str, payload: dict[str, Any]
+    ) -> Any:
         return self.request_json(
             "PUT",
             (
@@ -484,7 +498,9 @@ def _id(item: dict[str, Any]) -> str:
     return str(value) if value is not None else "<missing-id>"
 
 
-def choose_network_by_ip(networks: list[dict[str, Any]], fixed_ip: ipaddress.IPv4Address) -> dict[str, Any]:
+def choose_network_by_ip(
+    networks: list[dict[str, Any]], fixed_ip: ipaddress.IPv4Address
+) -> dict[str, Any]:
     matches: list[tuple[int, dict[str, Any]]] = []
     for network in networks:
         subnet = network.get("ip_subnet")
@@ -517,7 +533,9 @@ def choose_network_by_ip(networks: list[dict[str, Any]], fixed_ip: ipaddress.IPv
     return best[0]
 
 
-def find_client_by_mac(clients: list[dict[str, Any]], mac: str) -> dict[str, Any] | None:
+def find_client_by_mac(
+    clients: list[dict[str, Any]], mac: str
+) -> dict[str, Any] | None:
     for client in clients:
         candidate = client.get("mac")
         if isinstance(candidate, str) and candidate.lower() == mac:
@@ -552,7 +570,8 @@ def choose_usergroup(groups: list[dict[str, Any]], explicit_id: str) -> dict[str
     default_matches = [
         group
         for group in groups
-        if isinstance(group.get("name"), str) and group["name"].strip().lower() in DEFAULT_GROUP_NAMES
+        if isinstance(group.get("name"), str)
+        and group["name"].strip().lower() in DEFAULT_GROUP_NAMES
     ]
     if len(default_matches) == 1:
         return default_matches[0]
@@ -598,7 +617,9 @@ def parse_inventory_reservations(raw_json: str) -> list[ReservationSpec]:
 
         parsed_ip = ipaddress.ip_address(fixed_ip)
         if not isinstance(parsed_ip, ipaddress.IPv4Address):
-            raise UnifiError(f"inventory item {index} uses non-IPv4 address: {fixed_ip}")
+            raise UnifiError(
+                f"inventory item {index} uses non-IPv4 address: {fixed_ip}"
+            )
 
         reservations.append(
             ReservationSpec(
@@ -630,7 +651,9 @@ def parse_dhcp_range(raw_json: str) -> DhcpRangeSpec | None:
 
     start_ip = ipaddress.ip_address(start)
     end_ip = ipaddress.ip_address(end)
-    if not isinstance(start_ip, ipaddress.IPv4Address) or not isinstance(end_ip, ipaddress.IPv4Address):
+    if not isinstance(start_ip, ipaddress.IPv4Address) or not isinstance(
+        end_ip, ipaddress.IPv4Address
+    ):
         raise UnifiError("only IPv4 DHCP ranges are supported by this tool")
     if start_ip > end_ip:
         raise UnifiError(f"invalid DHCP range: {start_ip} is after {end_ip}")
@@ -666,7 +689,9 @@ def parse_domain_search(raw_json: str) -> tuple[str, ...] | None:
         labels = domain.split(".")
         for label in labels:
             if not label:
-                raise UnifiError(f"domain-search item {index} has an empty label: {domain}")
+                raise UnifiError(
+                    f"domain-search item {index} has an empty label: {domain}"
+                )
             if len(label.encode("idna")) > 63:
                 raise UnifiError(f"domain-search label is too long in {domain}")
 
@@ -840,7 +865,9 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
         if not isinstance(domain, str):
             raise UnifiError(f"DNS record item {index} is missing domain")
         if not isinstance(ttl_seconds, int) or ttl_seconds < 0:
-            raise UnifiError(f"DNS record item {index} is missing non-negative integer ttlSeconds")
+            raise UnifiError(
+                f"DNS record item {index} is missing non-negative integer ttlSeconds"
+            )
 
         normalized_type = record_type.strip().upper()
         if normalized_type not in SUPPORTED_DNS_RECORD_TYPES:
@@ -856,7 +883,9 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
                 raise UnifiError(f"DNS A record item {index} is missing ipv4Address")
             parsed_ip = ipaddress.ip_address(ipv4_address)
             if not isinstance(parsed_ip, ipaddress.IPv4Address):
-                raise UnifiError(f"DNS A record item {index} is not IPv4: {ipv4_address}")
+                raise UnifiError(
+                    f"DNS A record item {index} is not IPv4: {ipv4_address}"
+                )
             records.append(
                 DnsRecordSpec(
                     record_type=normalized_type,
@@ -928,7 +957,9 @@ def build_network_dhcp_payload(dhcp_range: DhcpRangeSpec) -> dict[str, Any]:
 def build_network_settings(
     args: argparse.Namespace,
 ) -> NetworkDhcpSettingsSpec | None:
-    dhcp_range = None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
+    dhcp_range = (
+        None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
+    )
     domain_name = args.domain_name.strip() or None
     domain_search = parse_domain_search(args.domain_search_json)
     direct_field_name = (
@@ -947,21 +978,34 @@ def build_network_settings(
             name=None,
             option_type=None,
             signed=None,
-            encoding=normalize_domain_search_option_encoding(args.domain_search_option_encoding),
+            encoding=normalize_domain_search_option_encoding(
+                args.domain_search_option_encoding
+            ),
             field_name=direct_field_name,
         )
     else:
         domain_search_option = json_option_spec
-    raw_tftp_server = None if args.no_netboot_update else (args.tftp_server.strip() or None)
+    raw_tftp_server = (
+        None if args.no_netboot_update else (args.tftp_server.strip() or None)
+    )
     raw_bootfile = None if args.no_netboot_update else (args.bootfile.strip() or None)
     if (raw_tftp_server is None) != (raw_bootfile is None):
-        raise UnifiError("network boot requires both --tftp-server and --bootfile together")
-    tftp_server = normalize_tftp_server(raw_tftp_server) if raw_tftp_server is not None else None
+        raise UnifiError(
+            "network boot requires both --tftp-server and --bootfile together"
+        )
+    tftp_server = (
+        normalize_tftp_server(raw_tftp_server) if raw_tftp_server is not None else None
+    )
     bootfile = normalize_bootfile(raw_bootfile) if raw_bootfile is not None else None
     if domain_search is not None and domain_search_option is None:
         domain_search = None
 
-    if dhcp_range is None and domain_name is None and domain_search is None and tftp_server is None:
+    if (
+        dhcp_range is None
+        and domain_name is None
+        and domain_search is None
+        and tftp_server is None
+    ):
         return None
 
     return NetworkDhcpSettingsSpec(
@@ -1022,7 +1066,9 @@ def dns_policy_key(record_type: str, domain: str) -> tuple[str, str]:
     return record_type.upper(), normalize_dns_name(domain)
 
 
-def build_dns_policies_by_key(policies: list[dict[str, Any]]) -> dict[tuple[str, str], dict[str, Any]]:
+def build_dns_policies_by_key(
+    policies: list[dict[str, Any]],
+) -> dict[tuple[str, str], dict[str, Any]]:
     by_key: dict[tuple[str, str], dict[str, Any]] = {}
     for policy in policies:
         record_type = policy.get("type")
@@ -1124,14 +1170,20 @@ def build_client_update_plan(
         changes["fixed_ip"] = build_change(current_fixed_ip, desired_fixed_ip)
 
     if local_dns_record is not None:
-        current_local_dns_enabled = bool(existing_client.get("local_dns_record_enabled"))
+        current_local_dns_enabled = bool(
+            existing_client.get("local_dns_record_enabled")
+        )
         current_local_dns_record = stringify(existing_client.get("local_dns_record"))
         if not current_local_dns_enabled:
             payload["local_dns_record_enabled"] = True
-            changes["local_dns_record_enabled"] = build_change(current_local_dns_enabled, True)
+            changes["local_dns_record_enabled"] = build_change(
+                current_local_dns_enabled, True
+            )
         if current_local_dns_record != local_dns_record:
             payload["local_dns_record"] = local_dns_record
-            changes["local_dns_record"] = build_change(current_local_dns_record, local_dns_record)
+            changes["local_dns_record"] = build_change(
+                current_local_dns_record, local_dns_record
+            )
 
     return payload, changes
 
@@ -1303,7 +1355,11 @@ def build_network_update_payload(
         current_start = stringify(current_network.get("dhcpd_start"))
         current_stop = stringify(current_network.get("dhcpd_stop"))
 
-        if not current_enabled or current_start != desired_start or current_stop != desired_stop:
+        if (
+            not current_enabled
+            or current_start != desired_start
+            or current_stop != desired_stop
+        ):
             payload.update(build_network_dhcp_payload(settings.dhcp_range))
         if not current_enabled:
             changes["dhcpd_enabled"] = build_change(current_enabled, True)
@@ -1316,14 +1372,20 @@ def build_network_update_payload(
         current_domain_name = stringify(current_network.get("domain_name"))
         if current_domain_name != settings.domain_name:
             payload["domain_name"] = settings.domain_name
-            changes["domain_name"] = build_change(current_domain_name, settings.domain_name)
+            changes["domain_name"] = build_change(
+                current_domain_name, settings.domain_name
+            )
 
     if settings.domain_search is not None:
         desired_option_value = encode_domain_search_option(settings.domain_search)
         if domain_search_option_field is not None:
-            current_option_value = stringify(current_network.get(domain_search_option_field))
+            current_option_value = stringify(
+                current_network.get(domain_search_option_field)
+            )
             if settings.domain_search_option is None:
-                raise UnifiError("internal error: domain_search present without option spec")
+                raise UnifiError(
+                    "internal error: domain_search present without option spec"
+                )
 
         if settings.domain_search_option.encoding == "hex":
             desired_networkconf_value = desired_option_value.encode("latin1").hex()
@@ -1356,12 +1418,16 @@ def build_network_update_payload(
             changes["dhcpd_boot_enabled"] = build_change(current_boot_enabled, True)
         if current_boot_server != settings.tftp_server:
             payload["dhcpd_boot_server"] = settings.tftp_server
-            changes["dhcpd_boot_server"] = build_change(current_boot_server, settings.tftp_server)
+            changes["dhcpd_boot_server"] = build_change(
+                current_boot_server, settings.tftp_server
+            )
     if settings.bootfile is not None:
         current_bootfile = stringify(current_network.get("dhcpd_boot_filename"))
         if current_bootfile != settings.bootfile:
             payload["dhcpd_boot_filename"] = settings.bootfile
-            changes["dhcpd_boot_filename"] = build_change(current_bootfile, settings.bootfile)
+            changes["dhcpd_boot_filename"] = build_change(
+                current_bootfile, settings.bootfile
+            )
 
     return payload, changes
 
@@ -1373,7 +1439,11 @@ def main() -> int:
     try:
         mode, reservations = load_reservations(args)
         network_settings = build_network_settings(args)
-        dns_records = None if args.no_dns_records_update else parse_dns_records(args.dns_records_json)
+        dns_records = (
+            None
+            if args.no_dns_records_update
+            else parse_dns_records(args.dns_records_json)
+        )
 
         client = UnifiLegacyClient(
             base_url=args.base_url,
@@ -1396,7 +1466,14 @@ def main() -> int:
                 else reservations[0].fixed_ip
             )
             selected_dhcp_network = (
-                next((network for network in networks if network.get("_id") == args.network_id), None)
+                next(
+                    (
+                        network
+                        for network in networks
+                        if network.get("_id") == args.network_id
+                    ),
+                    None,
+                )
                 if args.network_id
                 else choose_network_by_ip(networks, lookup_ip)
             )
@@ -1429,7 +1506,8 @@ def main() -> int:
                 domain_search_option_field=domain_search_option_field,
             )
             dhcp_changed = bool(dhcp_payload) or bool(
-                domain_search_option_result is not None and domain_search_option_result["changed"]
+                domain_search_option_result is not None
+                and domain_search_option_result["changed"]
             )
             dhcp_result = None
             if dhcp_changed and not args.dry_run:
@@ -1501,7 +1579,9 @@ def main() -> int:
                                 raise UnifiError(
                                     f"existing UniFi DNS policy for {record.domain} has no id"
                                 )
-                            result = client.update_dns_policy(site_id, policy_id, payload)
+                            result = client.update_dns_policy(
+                                site_id, policy_id, payload
+                            )
 
                     dns_results.append(
                         {
@@ -1524,9 +1604,13 @@ def main() -> int:
 
             dns_records_result = {
                 "site_id": site_id,
-                "site_name": selected_site.get("name") if selected_site is not None else None,
+                "site_name": selected_site.get("name")
+                if selected_site is not None
+                else None,
                 "site_internal_reference": (
-                    selected_site.get("internalReference") if selected_site is not None else None
+                    selected_site.get("internalReference")
+                    if selected_site is not None
+                    else None
                 ),
                 "dry_run": args.dry_run,
                 "count": len(dns_results),
@@ -1535,12 +1619,21 @@ def main() -> int:
             }
 
         selected_group: dict[str, Any] | None = None
-        allow_inventory_placeholders = mode == "inventory" and not args.no_create_known_clients
+        allow_inventory_placeholders = (
+            mode == "inventory" and not args.no_create_known_clients
+        )
         results: list[dict[str, Any]] = []
 
         for reservation in reservations:
             selected_network = (
-                next((network for network in networks if network.get("_id") == args.network_id), None)
+                next(
+                    (
+                        network
+                        for network in networks
+                        if network.get("_id") == args.network_id
+                    ),
+                    None,
+                )
                 if args.network_id
                 else choose_network_by_ip(networks, reservation.fixed_ip)
             )
@@ -1553,7 +1646,11 @@ def main() -> int:
 
             existing_client = clients_by_mac.get(reservation.mac)
             created_placeholder = False
-            should_create_placeholder = args.create_known_client if mode == "single" else allow_inventory_placeholders
+            should_create_placeholder = (
+                args.create_known_client
+                if mode == "single"
+                else allow_inventory_placeholders
+            )
             if existing_client is None and should_create_placeholder:
                 # TODO: Re-check on a live UCG whether placeholder-only known clients
                 # behave identically to observed clients for fixed IP + Local DNS Record.
@@ -1579,7 +1676,8 @@ def main() -> int:
                         fixed_ip=reservation.fixed_ip,
                         local_dns_record=(
                             reservation.hostname
-                            if not args.no_local_dns_record and reservation.hostname is not None
+                            if not args.no_local_dns_record
+                            and reservation.hostname is not None
                             else None
                         ),
                     )
@@ -1598,7 +1696,8 @@ def main() -> int:
                             "changes": changes,
                             "local_dns_record": (
                                 reservation.hostname
-                                if not args.no_local_dns_record and reservation.hostname is not None
+                                if not args.no_local_dns_record
+                                and reservation.hostname is not None
                                 else None
                             ),
                             "result": None,
@@ -1655,10 +1754,16 @@ def main() -> int:
             "mode": mode,
             "dry_run": args.dry_run,
             "count": len(results),
-            "reservation_changed_count": sum(1 for result in results if result["changed"]),
+            "reservation_changed_count": sum(
+                1 for result in results if result["changed"]
+            ),
             "changed_count": (
                 sum(1 for result in results if result["changed"])
-                + (1 if dhcp_range_result is not None and dhcp_range_result["changed"] else 0)
+                + (
+                    1
+                    if dhcp_range_result is not None and dhcp_range_result["changed"]
+                    else 0
+                )
                 + (
                     dns_records_result["changed_count"]
                     if dns_records_result is not None
