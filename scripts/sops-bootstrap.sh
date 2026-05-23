@@ -142,7 +142,7 @@ EOF
 
 # shellcheck disable=SC2029
 printf '%s\n' "$remote_payload" | ssh "$ssh_target" "cat > ${remote_script_q} && chmod +x ${remote_script_q}"
-ssh -tt "$ssh_target" "/usr/bin/env bash ${remote_script_q}" | tee "$remote_output"
+ssh -tt "$ssh_target" "bash ${remote_script_q}" | tee "$remote_output"
 
 pubkey="$(tr -d '\r' < "$remote_output" | sed -n 's/^PUBKEY://p' | tail -n1)"
 

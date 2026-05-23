@@ -204,8 +204,8 @@ EOF
 
   log "edit a secret through sops without losing merged template keys"
   cat > "$WORKDIR/editor.sh" <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 yq -i '.attic.token = "EDITED_TOKEN" | .editorTouched = true' "$1"
 EOF
   chmod +x "$WORKDIR/editor.sh"
