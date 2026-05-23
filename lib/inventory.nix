@@ -6,6 +6,7 @@ let
   prxStateVersion = "25.11";
   prxNetIface = "enp5s0f0np0";
   prxPassword = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
+  lanDnsRecordTtlSeconds = 300;
 
   piStateVersion = "25.11";
   piHostname = "pi5";
@@ -60,12 +61,14 @@ let
   mkDnsARecord =
     domain: ipv4Address: {
       type = "A_RECORD";
+      ttlSeconds = lanDnsRecordTtlSeconds;
       inherit domain ipv4Address;
     };
 
   mkDnsCnameRecord =
     domain: targetDomain: {
       type = "CNAME_RECORD";
+      ttlSeconds = lanDnsRecordTtlSeconds;
       inherit domain targetDomain;
     };
 

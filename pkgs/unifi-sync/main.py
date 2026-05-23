@@ -53,6 +53,7 @@ class NetworkDhcpSettingsSpec:
 class DnsRecordSpec:
     record_type: str
     domain: str
+    ttl_seconds: int
     ipv4_address: ipaddress.IPv4Address | None = None
     target_domain: str | None = None
 
@@ -694,10 +695,13 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
 
         record_type = item.get("type")
         domain = item.get("domain")
+        ttl_seconds = item.get("ttlSeconds")
         if not isinstance(record_type, str):
             raise UnifiError(f"DNS record item {index} is missing type")
         if not isinstance(domain, str):
             raise UnifiError(f"DNS record item {index} is missing domain")
+        if not isinstance(ttl_seconds, int) or ttl_seconds < 0:
+            raise UnifiError(f"DNS record item {index} is missing non-negative integer ttlSeconds")
 
         normalized_type = record_type.strip().upper()
         if normalized_type not in SUPPORTED_DNS_RECORD_TYPES:
@@ -718,6 +722,7 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
                 DnsRecordSpec(
                     record_type=normalized_type,
                     domain=normalized_domain,
+                    ttl_seconds=ttl_seconds,
                     ipv4_address=parsed_ip,
                 )
             )
@@ -730,6 +735,7 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
             DnsRecordSpec(
                 record_type=normalized_type,
                 domain=normalized_domain,
+                ttl_seconds=ttl_seconds,
                 target_domain=normalize_dns_name(target_domain),
             )
         )
@@ -915,6 +921,7 @@ def build_dns_policy_payload(record: DnsRecordSpec) -> dict[str, Any]:
         "enabled": True,
         "type": record.record_type,
         "domain": record.domain,
+        "ttlSeconds": record.ttl_seconds,
     }
     if record.record_type == "A_RECORD":
         payload["ipv4Address"] = str(record.ipv4_address)
@@ -945,25 +952,28 @@ def build_dns_policy_update_plan(
 
     current_domain = stringify(existing_policy.get("domain"))
     if current_domain != record.domain:
-        payload["domain"] = record.domain
         changes["domain"] = build_change(current_domain, record.domain)
+
+    current_ttl_seconds = existing_policy.get("ttlSeconds")
+    if current_ttl_seconds != record.ttl_seconds:
+        changes["ttlSeconds"] = build_change(current_ttl_seconds, record.ttl_seconds)
 
     if record.record_type == "A_RECORD":
         desired_ipv4 = str(record.ipv4_address)
         current_ipv4 = stringify(existing_policy.get("ipv4Address"))
         if current_ipv4 != desired_ipv4:
-            payload["ipv4Address"] = desired_ipv4
             changes["ipv4Address"] = build_change(current_ipv4, desired_ipv4)
     elif record.record_type == "CNAME_RECORD":
         current_target = stringify(existing_policy.get("targetDomain"))
         desired_target = record.target_domain
         if current_target != desired_target:
-            payload["targetDomain"] = desired_target
             changes["targetDomain"] = build_change(current_target, desired_target)
     else:
         raise UnifiError(f"unsupported DNS record type: {record.record_type}")
 
-    return ("update" if payload else "noop"), payload, changes
+    if changes:
+        return "update", desired_payload, changes
+    return "noop", {}, changes
 
 
 def build_client_update_plan(
