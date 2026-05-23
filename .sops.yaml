@@ -11,6 +11,7 @@ keys:
   - age1jrl97t4dywjmg93mqtcazx8ect2waatl2rw5lazcdm2ywjln8vmq98y4ga
   - age1mgqfwy4r3vr60hv0lm2uz0dqy7jhuh944lzlq6n0s4us4p7t893ssakp9h
   - age1nn0rlfq5hzmq7sx2wl4a9y7l2x2k0hwun20tjp94r84aywz05d8qq230mv
+  - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
   - age1sat0jxhmdm78x8n20tz5qp6dk7t3desq0c9l2vse4cg788v5pfqsv27yng
   - age1vk0tas94m0gmfnvln3j6pcf9seasl9wuwafkjka7h8u0q84tuaqsh2dmxs
   - age1vu6052uexls0ful4jlq3ex5ngv8k5kk4hhp6ucpe9hf3l59asq7sah9vsk
@@ -96,4 +97,9 @@ creation_rules:
     key_groups:
       - age:
           - age1jrl97t4dywjmg93mqtcazx8ect2waatl2rw5lazcdm2ywjln8vmq98y4ga
+          - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
+  - path_regex: secrets/prox-pkivm\.yaml$
+    key_groups:
+      - age:
+          - age1qjywxvyg7cmtz8qdz0z8nqh85kla05d23drddynr0xxqndd5w9zstj36k7
           - age1j7spzd26l7zryxsrf4r5f3jj7cv5tm7kastp6294fdl8qz975u3sku09hv
