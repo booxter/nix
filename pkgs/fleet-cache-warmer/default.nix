@@ -93,7 +93,10 @@ writeShellApplication {
 
         declare -a buildable_targets=()
         skipped_inventory_count=0
-        for target in "''${targets[@]}"; do
+        printf 'Resolving %s warm target(s) from %s\n' "''${#targets[@]}" "$flake_ref" >&2
+        for i in "''${!targets[@]}"; do
+          target="''${targets[$i]}"
+          printf 'Resolving target %s/%s: %s\n' "$((i + 1))" "''${#targets[@]}" "$target" >&2
           if ${lib.getExe nix} eval --raw "$target.outPath" >/dev/null 2>&1; then
             buildable_targets+=("$target")
           else
