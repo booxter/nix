@@ -268,13 +268,13 @@ Options:
   --branch BRANCH   Git branch to deploy (default: master).
   --switch          Switch into the new configuration immediately (default).
   --boot            Stage the new configuration for the next boot.
-  --test            Activate the new configuration without changing the boot default.
+  --test            Build and preview activation changes without activating them.
   --dry-run         Only check SSH and print the hosts that would be updated.
   --select          Interactively select hosts from the filtered list.
 
 Notes:
   - Passing explicit host names disables --all.
-  - --test still activates the new config and may restart services.
+  - --test is NixOS-only and maps to nixos-rebuild dry-activate.
   -h, --help        Show this help.
 
 Environment:
@@ -305,7 +305,7 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     --test)
-      REBUILD_ACTION="test"
+      REBUILD_ACTION="dry-activate"
       shift
       ;;
     --work)
