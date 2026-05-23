@@ -465,7 +465,7 @@ rec {
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
         hostname = "prox-cachevm";
-        ip = "192.168.20.6";
+        ip = "192.168.20.7";
       };
       sshPort = 10004;
       hmFull = false;
