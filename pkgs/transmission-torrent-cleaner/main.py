@@ -13,6 +13,7 @@ from pathlib import Path
 
 
 LOG = logging.getLogger("transmission-torrent-cleaner")
+TR_STATUS_SEEDING = 6
 
 
 class TransmissionRpcError(RuntimeError):
@@ -150,6 +151,7 @@ def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
                 "leftUntilDone",
                 "percentDone",
                 "sizeWhenDone",
+                "status",
                 "trackerStats",
                 "uploadRatio",
             ]
@@ -201,6 +203,23 @@ def torrent_completion_timestamp(torrent: dict) -> int | None:
     return None
 
 
+def torrent_added_timestamp(torrent: dict) -> int | None:
+    added_date = torrent.get("addedDate")
+    if isinstance(added_date, int) and added_date > 0:
+        return added_date
+
+    done_date = torrent.get("doneDate")
+    if isinstance(done_date, int) and done_date > 0:
+        return done_date
+
+    return None
+
+
+def torrent_is_seeding(torrent: dict) -> bool:
+    status = torrent.get("status")
+    return isinstance(status, int) and status == TR_STATUS_SEEDING
+
+
 def format_size_gib(size_bytes: int) -> str:
     return f"{size_bytes / (1024.0**3):.2f} GiB"
 
@@ -217,6 +236,7 @@ def run_once(args: argparse.Namespace) -> int:
     )
     now = time.time()
     minimum_age_seconds = args.minimum_age_days * 86400.0
+    stale_nonseeding_age_seconds = args.stale_nonseeding_age_days * 86400.0
     minimum_ratio = args.minimum_ratio
 
     torrents = rpc_get_torrents(client)
@@ -233,37 +253,54 @@ def run_once(args: argparse.Namespace) -> int:
         if torrent_matches_tracker_hosts(torrent, tracker_hosts):
             continue
 
-        if not torrent_is_complete(torrent):
-            continue
-
-        completion_timestamp = torrent_completion_timestamp(torrent)
-        if completion_timestamp is None:
-            continue
-
-        age_seconds = now - completion_timestamp
-        if age_seconds < minimum_age_seconds:
-            continue
-
         upload_ratio = torrent.get("uploadRatio")
-        if not isinstance(upload_ratio, (int, float)) or upload_ratio < minimum_ratio:
-            continue
-
         size_when_done = torrent.get("sizeWhenDone")
         size_bytes = size_when_done if isinstance(size_when_done, int) else 0
-        age_days = age_seconds / 86400.0
+        age_days: float | None = None
+        reasons: list[str] = []
+
+        if not torrent_is_seeding(torrent):
+            added_timestamp = torrent_added_timestamp(torrent)
+            if added_timestamp is not None:
+                stale_age_seconds = now - added_timestamp
+                if stale_age_seconds >= stale_nonseeding_age_seconds:
+                    reasons.append("stale-nonseeding")
+                    age_days = stale_age_seconds / 86400.0
+
+        if torrent_is_complete(torrent):
+            completion_timestamp = torrent_completion_timestamp(torrent)
+            if completion_timestamp is not None:
+                completion_age_seconds = now - completion_timestamp
+                if (
+                    completion_age_seconds >= minimum_age_seconds
+                    and isinstance(upload_ratio, (int, float))
+                    and upload_ratio >= minimum_ratio
+                ):
+                    reasons.append("high-ratio")
+                    if age_days is None:
+                        age_days = completion_age_seconds / 86400.0
+
+        if not reasons or age_days is None:
+            continue
+
         candidates.append(
             {
                 "hash": torrent_hash,
                 "name": name,
-                "ratio": float(upload_ratio),
+                "ratio": (
+                    float(upload_ratio)
+                    if isinstance(upload_ratio, (int, float))
+                    else None
+                ),
                 "age_days": age_days,
+                "reasons": reasons,
                 "size_bytes": size_bytes,
             }
         )
 
     candidates.sort(
         key=lambda candidate: (
-            -candidate["ratio"],
+            -(candidate["ratio"] if isinstance(candidate["ratio"], float) else 0.0),
             -candidate["age_days"],
             candidate["name"].lower(),
         )
@@ -271,13 +308,14 @@ def run_once(args: argparse.Namespace) -> int:
 
     mode = "delete" if args.delete else "dry-run"
     LOG.info(
-        "scan complete: torrents=%s tracker_hosts=%s eligible=%s mode=%s minimum_age_days=%s minimum_ratio=%.2f",
+        "scan complete: torrents=%s tracker_hosts=%s eligible=%s mode=%s minimum_age_days=%s minimum_ratio=%.2f stale_nonseeding_age_days=%s",
         len(torrents),
         len(tracker_hosts),
         len(candidates),
         mode,
         args.minimum_age_days,
         minimum_ratio,
+        args.stale_nonseeding_age_days,
     )
 
     if not candidates:
@@ -286,12 +324,14 @@ def run_once(args: argparse.Namespace) -> int:
     total_size_bytes = 0
     for candidate in candidates:
         total_size_bytes += candidate["size_bytes"]
+        ratio = candidate["ratio"]
         LOG.info(
-            "%s candidate: name=%r hash=%s ratio=%.2f age=%s size=%s",
+            "%s candidate: reasons=%s name=%r hash=%s ratio=%s age=%s size=%s",
             "delete" if args.delete else "would delete",
+            ",".join(candidate["reasons"]),
             candidate["name"],
             candidate["hash"],
-            candidate["ratio"],
+            f"{ratio:.2f}" if isinstance(ratio, float) else "n/a",
             format_age_days(candidate["age_days"]),
             format_size_gib(candidate["size_bytes"]),
         )
@@ -319,7 +359,7 @@ def run_once(args: argparse.Namespace) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Delete or dry-run old high-ratio non-priority Transmission torrents.",
+        description="Delete or dry-run old high-ratio or stale non-seeding non-priority Transmission torrents.",
     )
     parser.add_argument(
         "--rpc-url",
@@ -342,6 +382,12 @@ def parse_args() -> argparse.Namespace:
         type=float,
         default=3.0,
         help="Minimum upload ratio before a torrent becomes eligible.",
+    )
+    parser.add_argument(
+        "--stale-nonseeding-age-days",
+        type=float,
+        default=365.0,
+        help="Minimum torrent age in days before a non-seeding torrent becomes eligible regardless of completion or ratio.",
     )
     parser.add_argument(
         "--request-timeout-seconds",
