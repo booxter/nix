@@ -9,42 +9,8 @@ let
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
   hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
-  netboot = lan.netboot;
-  netbootHost = hostInventory.nixosHostSpecsByName.${netboot.host};
   wgHome = hostInventory.site.wireguard.home;
-  isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
-  reservationIdentifiers =
-    reservation:
-    if reservation ? identifiers then
-      reservation.identifiers
-    else if reservation ? match then
-      [ reservation.match ]
-    else
-      [ ];
-  unifiReservationInventoryJson = builtins.toJSON (
-    map
-      (reservation: {
-        inherit (reservation) hostname ip;
-        mac = builtins.head (builtins.filter isMacAddress (reservationIdentifiers reservation));
-      })
-      (
-        builtins.filter
-          (reservation: builtins.any isMacAddress (reservationIdentifiers reservation))
-          (hostInventory.managedDhcpReservations ++ hostInventory.staticDhcpReservations)
-      )
-  );
-  unifiMainDhcpRangeJson = builtins.toJSON (builtins.elemAt lan.dhcpRanges.main.ranges 0);
-  unifiMainDomainName = lan.domain;
-  unifiMainDomainSearchJson = builtins.toJSON [ lan.domain ];
-  unifiNetworkTftpServer =
-    if netbootHost ? lanAddress then
-      netbootHost.lanAddress
-    else if netbootHost ? ipAddress then
-      netbootHost.ipAddress
-    else
-      throw "netboot host ${netboot.host} does not expose a stable IPv4 address";
-  unifiNetworkBootfile = netboot.bootfile;
-  unifiDnsRecordsJson = builtins.toJSON hostInventory.site.lan.dnsRecords;
+  unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -207,15 +173,11 @@ let
     name = "unifi-sync-app";
     runtimeInputs = [ unifiSyncPackage ];
     text = ''
-      export UNIFI_BASE_URL='https://${lan.gateway.address}'
-      export UNIFI_SITE='default'
-      export UNIFI_RESERVATION_INVENTORY_JSON='${unifiReservationInventoryJson}'
-      export UNIFI_NETWORK_DHCP_RANGE_JSON='${unifiMainDhcpRangeJson}'
-      export UNIFI_NETWORK_DOMAIN_NAME='${unifiMainDomainName}'
-      export UNIFI_NETWORK_DOMAIN_SEARCH_JSON='${unifiMainDomainSearchJson}'
-      export UNIFI_NETWORK_TFTP_SERVER='${unifiNetworkTftpServer}'
-      export UNIFI_NETWORK_BOOTFILE='${unifiNetworkBootfile}'
-      export UNIFI_DNS_RECORDS_JSON='${unifiDnsRecordsJson}'
+      ${pkgs.lib.concatLines (
+        pkgs.lib.mapAttrsToList (
+          name: value: "export ${name}=${pkgs.lib.escapeShellArg value}"
+        ) unifiSyncEnv.environment
+      )}
       exec ${unifiSyncPackage}/bin/unifi-sync "$@"
     '';
   };
