@@ -6,6 +6,7 @@
 }:
 let
   caName = "Home Internal PKI";
+  certLifetime = "720h0m0s";
   caPort = 8443;
   caProvisioner = "bootstrap@home.arpa";
   stepStateDir = "/var/lib/step-ca";
@@ -22,29 +23,46 @@ let
     set -eu
     umask 077
 
-    if [ -s "${stepStateDir}/config/ca.json" ]; then
-      exit 0
+    if [ ! -s "${stepStateDir}/config/ca.json" ]; then
+      if [ ! -s "${stepPasswordFile}" ]; then
+        ${pkgs.openssl}/bin/openssl rand -base64 48 > "${stepPasswordFile}"
+        chmod 600 "${stepPasswordFile}"
+      fi
+
+      if [ ! -s "${stepProvisionerPasswordFile}" ]; then
+        ${pkgs.openssl}/bin/openssl rand -base64 48 > "${stepProvisionerPasswordFile}"
+        chmod 600 "${stepProvisionerPasswordFile}"
+      fi
+
+      ${pkgs.step-cli}/bin/step ca init \
+        --deployment-type standalone \
+        --name ${lib.escapeShellArg caName} \
+        ${caDnsArgs} \
+        --address ${lib.escapeShellArg ":${toString caPort}"} \
+        --provisioner ${lib.escapeShellArg caProvisioner} \
+        --password-file ${lib.escapeShellArg stepPasswordFile} \
+        --provisioner-password-file ${lib.escapeShellArg stepProvisionerPasswordFile} \
+        --acme
     fi
 
-    if [ ! -s "${stepPasswordFile}" ]; then
-      ${pkgs.openssl}/bin/openssl rand -base64 48 > "${stepPasswordFile}"
-      chmod 600 "${stepPasswordFile}"
-    fi
-
-    if [ ! -s "${stepProvisionerPasswordFile}" ]; then
-      ${pkgs.openssl}/bin/openssl rand -base64 48 > "${stepProvisionerPasswordFile}"
-      chmod 600 "${stepProvisionerPasswordFile}"
-    fi
-
-    exec ${pkgs.step-cli}/bin/step ca init \
-      --deployment-type standalone \
-      --name ${lib.escapeShellArg caName} \
-      ${caDnsArgs} \
-      --address ${lib.escapeShellArg ":${toString caPort}"} \
-      --provisioner ${lib.escapeShellArg caProvisioner} \
-      --password-file ${lib.escapeShellArg stepPasswordFile} \
-      --provisioner-password-file ${lib.escapeShellArg stepProvisionerPasswordFile} \
-      --acme
+    tmp_json="$(mktemp)"
+    ${pkgs.jq}/bin/jq \
+      --arg provisioner ${lib.escapeShellArg caProvisioner} \
+      --arg cert_lifetime ${lib.escapeShellArg certLifetime} \
+      '
+        .authority.provisioners |= map(
+          if .name == $provisioner then
+            .claims = ((.claims // {}) + {
+              defaultTLSCertDuration: $cert_lifetime,
+              maxTLSCertDuration: $cert_lifetime
+            })
+          else
+            .
+          end
+        )
+      ' \
+      "${stepStateDir}/config/ca.json" > "$tmp_json"
+    mv "$tmp_json" "${stepStateDir}/config/ca.json"
   '';
 in
 {

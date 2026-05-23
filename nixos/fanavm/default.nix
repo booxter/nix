@@ -9,6 +9,7 @@
 let
   beastSpec = hostInventory.nixosHostSpecsByName.beast;
   frameSpec = hostInventory.nixosHostSpecsByName.frame;
+  internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
   lan = hostInventory.site.lan;
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
@@ -116,28 +117,32 @@ let
   ];
   isVirtualNodeName = name: lib.hasPrefix "prox-" name && lib.hasSuffix "vm" name;
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
-  remoteNixosNodeTargetConfigs =
-    map
-      (name: {
-        labels = {
-          host_network_charts = lib.boolToString (!outputs.nixosConfigurations.${name}.config.host.isProxmox);
-          host_network_source =
-            if outputs.nixosConfigurations.${name}.config.host.isProxmox then "classified" else "node";
-          host_class = hostClassForName name;
-          host_virtual = lib.boolToString (isVirtualNodeName name);
-          instance = outputs.nixosConfigurations.${name}.config.host.dnsName;
-        };
-        targets = [ "${outputs.nixosConfigurations.${name}.config.host.dnsName}:9100" ];
-      })
-      (
-        builtins.filter (
-          name:
-          !(lib.hasPrefix "local-" name)
-          && name != "prox-fanavm"
-          && name != "prox-deskvm"
-          && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
-        ) (builtins.attrNames outputs.nixosConfigurations)
-      );
+  mkRemoteNixosNodeTargetConfig =
+    name:
+    let
+      hostConfig = outputs.nixosConfigurations.${name}.config;
+    in
+    {
+      labels = {
+        host_network_charts = lib.boolToString (!hostConfig.host.isProxmox);
+        host_network_source = if hostConfig.host.isProxmox then "classified" else "node";
+        host_class = hostClassForName name;
+        host_virtual = lib.boolToString (isVirtualNodeName name);
+        instance = hostConfig.host.dnsName;
+      };
+      targets = [ "${hostConfig.host.dnsName}:9100" ];
+    };
+  orgvmMtlsNodeTargetConfig = mkRemoteNixosNodeTargetConfig "prox-orgvm";
+  remoteNixosNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig (
+    builtins.filter (
+      name:
+      !(lib.hasPrefix "local-" name)
+      && name != "prox-fanavm"
+      && name != "prox-deskvm"
+      && name != "prox-orgvm"
+      && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
+    ) (builtins.attrNames outputs.nixosConfigurations)
+  );
   remoteDarwinNodeTargetConfigs =
     map
       (name: {
@@ -334,6 +339,20 @@ in
     group = "grafana";
     mode = "0400";
     restartUnits = [ "grafana.service" ];
+  };
+  sops.secrets.prometheusScrapeOrgvmNodeClientCrt = {
+    key = "prometheus/scrape_orgvm_node/client_crt";
+    owner = "prometheus";
+    group = "prometheus";
+    mode = "0400";
+    restartUnits = [ "prometheus.service" ];
+  };
+  sops.secrets.prometheusScrapeOrgvmNodeClientKey = {
+    key = "prometheus/scrape_orgvm_node/client_key";
+    owner = "prometheus";
+    group = "prometheus";
+    mode = "0400";
+    restartUnits = [ "prometheus.service" ];
   };
   sops.templates."grafana-alerting-contact-points.yaml" = {
     owner = "grafana";
@@ -627,6 +646,10 @@ in
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
   };
+  systemd.services.prometheus = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
+  };
 
   systemd.services.prometheus-nut-exporter = {
     description = "Prometheus exporter for NUT UPS servers";
@@ -648,6 +671,7 @@ in
   # Prometheus scrapes and stores time-series metrics from this machine.
   services.prometheus = {
     enable = true;
+    checkConfig = "syntax-only";
     listenAddress = "127.0.0.1";
     port = prometheusPort;
     retentionTime = prometheusRetention;
@@ -677,6 +701,17 @@ in
           }
         ]
         ++ remoteNodeTargetConfigs;
+      }
+      {
+        job_name = "node-orgvm";
+        scheme = "https";
+        tls_config = {
+          ca_file = toString internalPkiRootCaPath;
+          cert_file = config.sops.secrets.prometheusScrapeOrgvmNodeClientCrt.path;
+          key_file = config.sops.secrets.prometheusScrapeOrgvmNodeClientKey.path;
+          server_name = outputs.nixosConfigurations.prox-orgvm.config.host.dnsName;
+        };
+        static_configs = [ orgvmMtlsNodeTargetConfig ];
       }
       {
         job_name = "nut-prx1";
