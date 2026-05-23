@@ -75,6 +75,13 @@ for node exporter and should be reused.
 - mTLS secret handling stays host-local through `sops`
 - Prometheus scrape config generation stays declarative from host config
 
+## Maintenance Window Constraint
+
+`beast` changes are postponed for now.
+
+Anything that touches `beast` for this migration needs a separate maintenance
+window, so the first implementation phase should avoid deploying `beast`.
+
 ## Implementation Strategy
 
 ### 1. Reusable mTLS server helper for non-node endpoints
@@ -110,14 +117,14 @@ places once these jobs move.
 
 ### 3. Convert service families in order
 
-#### A. Blackbox exporter on `beast` and `frame`
+#### A. Blackbox exporter on `frame`
 
 Why first:
 
-- both already use the shared observability client mixin
+- it already uses the shared observability client mixin
 - the NixOS module exposes `services.prometheus.exporters.blackbox.extraFlags`
-- these are simple exporter endpoints, so they are the cleanest non-node
-  migration
+- this is a simple exporter endpoint, so it is the cleanest non-node migration
+- it avoids `beast`, which is deferred to a dedicated maintenance window
 
 Planned shape:
 
@@ -125,33 +132,15 @@ Planned shape:
 - otherwise front `127.0.0.1:9115` with a tiny mTLS reverse proxy
 - update `blackboxProbeSourceConfigs` in `fana` to use `https://host:9115`
 
-#### B. `smartctl` exporter on `beast`
+#### B. `sabnzbd` exporter on `prox-srvarrvm`
 
 Planned shape:
 
-- check whether the smartctl exporter package supports exporter-toolkit style
-  TLS flags
-- if yes, enable direct mTLS on `9633`
-- otherwise keep exporter on loopback and front it with the shared mTLS proxy
-
-#### C. `sabnzbd` exporter on `prox-srvarrvm`
-
-Planned shape:
-
-- same decision as `smartctl`:
+- same decision as other exporters:
   - direct exporter-toolkit mTLS if supported
   - otherwise loopback exporter plus shared mTLS proxy
 
-#### D. `jellyfin` exporter on `beast`
-
-This one is custom service wiring, not a stock NixOS exporter module.
-
-Planned shape:
-
-- likely keep the exporter itself on loopback
-- front it with the shared mTLS proxy on `9594`
-
-#### E. `vikunja` metrics on `prox-orgvm`
+#### C. `vikunja` metrics on `prox-orgvm`
 
 This is an application endpoint, not a Prometheus exporter.
 
@@ -161,14 +150,40 @@ Planned shape:
 - add a dedicated mTLS reverse proxy path for `/api/v1/metrics`
 - update the `vikunja` scrape job in `fana` to use `https`
 
+#### D. Deferred `beast` work
+
+The following `beast` changes stay out of the first rollout and should be done
+only during a dedicated maintenance window:
+
+- blackbox exporter on `beast`
+- `smartctl` exporter on `beast`
+- `jellyfin` exporter on `beast`
+
+Planned shape for the deferred `beast` work:
+
+- blackbox exporter:
+  - direct exporter-toolkit mTLS if supported
+  - otherwise loopback exporter plus the shared mTLS proxy
+- `smartctl` exporter:
+  - direct exporter-toolkit mTLS if supported
+  - otherwise loopback exporter plus the shared mTLS proxy
+
+The `jellyfin` exporter is custom service wiring, not a stock NixOS exporter
+module.
+
+Planned shape:
+
+- likely keep the exporter itself on loopback
+- front it with the shared mTLS proxy on `9594`
+
 ## Suggested Rollout Order
 
 1. Add the shared non-node mTLS server helper
-2. Convert blackbox exporter on `beast` and `frame`
-3. Convert `smartctl` on `beast`
-4. Convert `sabnzbd` on `prox-srvarrvm`
-5. Convert `jellyfin` exporter on `beast`
-6. Convert `vikunja` metrics on `prox-orgvm`
+2. Convert blackbox exporter on `frame`
+3. Convert `sabnzbd` on `prox-srvarrvm`
+4. Convert `vikunja` metrics on `prox-orgvm`
+5. Schedule a separate maintenance window for all `beast` scraper changes
+6. During that window, convert `beast` blackbox, `smartctl`, and `jellyfin`
 7. Update `fana` scrape configs after each service family so Prometheus never
    expects HTTPS before the target is ready
 

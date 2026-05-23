@@ -1,4 +1,4 @@
-# UCG Trusted-LAN DNS and DHCP
+# UniFi Sync Service
 
 ## Scope
 
