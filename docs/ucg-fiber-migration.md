@@ -5,108 +5,73 @@
 Move trusted-LAN DHCP and DNS from `pi5` to the UniFi Cloud Gateway Fiber at
 `192.168.0.1`.
 
-Keep `pi5` only for roles that still need it during the transition:
-
-- TFTP / netboot, if it is still needed
-
 Guest-network and UPS / NUT migration are out of scope for this document.
 
-## Current Decisions
+## Current State
 
-- LAN DNS/DHCP endpoint in the repo: `192.168.0.1`
-- LAN domain: `home.arpa`
-- Main DHCP range: `192.168.10.1 - 192.168.14.255`
-- Keep the main range below `192.168.15.0/24` because nixarr still assumes
+- Trusted-LAN DHCP and DNS are live on the UCG at `192.168.0.1`
+- Repo-wide LAN DNS/DHCP endpoint is `192.168.0.1`
+- LAN domain is `home.arpa`
+- Main DHCP range is `192.168.10.1 - 192.168.14.255`
+- The main range stays below `192.168.15.0/24` because nixarr still assumes
   that subnet for its WireGuard-facing proxy
-- Reservations are MAC-based only; do not preserve DHCP option `61` matching
-- Trusted-LAN DHCP/DNS is still actually running on `pi5` until cutover
+- Reservations are MAC-based only
 - `pi5` still has:
   - LAN address `192.168.1.1`
-- `pi5` is planned to keep:
-  - guest-only `dnsmasq`
-  - standalone TFTP on the main-side address
+  - guest address `192.168.2.1`
+- `pi5` now serves:
+  - guest-only `dnsmasq` on `wlan0`
+  - standalone TFTP / netboot on `192.168.1.1`
+- `unifi-sync` runs on `prox-pkivm` as a systemd timer and keeps UniFi in sync
 
-## Checklist
+## What UniFi Is Managing
 
-### Done In Repo
+- Fixed IP reservations for MAC-backed hosts
+- `Local DNS Record` for those hosts
+- DHCP `domain-name`:
+  - `home.arpa`
+- DHCP `domain-search` via option `119`
+  - UniFi stores this as plain text `home.arpa`
+  - UniFi then emits the correct RFC3397 wire encoding
+- DHCP network-boot options:
+  - option `66` / next-server -> `192.168.1.1`
+  - option `67` / boot file -> `netboot.xyz.efi`
+- Split DNS records:
+  - `pi5.home.arpa -> 192.168.1.1`
+  - `nix-cache.home.arpa -> 192.168.20.7`
+  - `jf.ihar.dev -> 192.168.16.3`
+  - `js.ihar.dev -> 192.168.16.3`
+  - `mu.ihar.dev -> 192.168.16.3`
+  - `au.ihar.dev -> 192.168.16.3`
+  - `shelf.ihar.dev -> 192.168.16.3`
+  - `vi.ihar.dev -> 192.168.16.3`
 
-- [x] Point the repo-wide LAN DNS/DHCP endpoint to `192.168.0.1`
-- [x] Convert DHCP reservations from client-id matching to MAC-based matching
-- [x] Simplify the main DHCP pool to one UniFi-friendly range
-- [x] Build `nix run .#unifi-sync`
-- [x] Sync through that app:
-  - fixed reservations
-  - `Local DNS Record`
-  - DHCP range
-  - DHCP `domain-name`
-  - DHCP `domain-search` via option `119`
-  - DHCP network-boot options:
-    - option `66` -> `192.168.1.1`
-    - option `67` -> `netboot.xyz.efi`
-  - inventory-driven split-DNS records through UniFi DNS policies
-- [x] Move `pi5` LAN and guest addresses into the `pi5` host record
-- [x] Remove dead DHCP exclusion support from the repo
-- [x] Move split-DNS aliases into host inventory and derive rendered DNS records
-- [x] Split `pi5` into guest-only `dnsmasq` plus standalone TFTP
+## Validation That Was Completed
 
-### Apply On UCG Fiber
+- Trusted-LAN clients renew from `192.168.0.1`
+- Trusted-LAN clients get DNS `192.168.0.1`
+- Local hostnames resolve through gateway DNS
+- `nix-cache.home.arpa` resolves directly to the cache VM
+- Public split-DNS overrides resolve internally to `beast`
+- `pi5` no longer serves trusted-LAN DHCP
+- Raw DHCP capture confirmed:
+  - option `15` / domain-name
+  - option `66` / next-server
+  - option `67` / boot file
+- A non-invasive DHCP probe confirmed option `119` is emitted correctly when
+  UniFi stores the value as plain text `home.arpa`
 
-- [ ] Create or rotate a UniFi API key
-- [ ] Run the sync app against the gateway:
+## Operational Notes
 
-```bash
-export UNIFI_BASE_URL='https://192.168.0.1'
-export UNIFI_API_KEY='...'
-export UNIFI_SITE='default'
+- `unifi-sync` should be treated as the source of truth for trusted-LAN
+  reservations, DHCP settings, and split DNS
+- If UniFi custom DHCP option `119` is deleted in the UI, `unifi-sync` will
+  recreate the DHCP option definition and repopulate its value
+- For UniFi option `119`, the stored value should be plain text `home.arpa`,
+  not a hex string
 
-nix run .#unifi-sync -- --debug
-```
+## Optional Follow-Ups
 
-- [ ] Verify in UniFi that the trusted LAN now has:
-  - fixed IP reservations for MAC-backed hosts
-  - `Local DNS Record` set for those hosts
-  - DHCP range `192.168.10.1 - 192.168.14.255`
-  - DHCP domain name `home.arpa`
-  - DHCP domain search `home.arpa`
-  - DHCP option `66` -> `192.168.1.1`
-  - DHCP option `67` -> `netboot.xyz.efi`
-  - DNS policies for:
-    - `pi5.home.arpa`
-    - `nix-cache.home.arpa -> 192.168.20.7`
-    - `jf.ihar.dev`
-    - `js.ihar.dev`
-    - `mu.ihar.dev`
-    - `au.ihar.dev`
-    - `shelf.ihar.dev`
-    - `vi.ihar.dev`
-- [ ] Verify that the gateway itself is the DNS server handed out to trusted-LAN
-  clients
-
-### Cut Over The Trusted LAN
-
-- [ ] Disable main-LAN DHCP on `pi5`
-- [ ] Stop using `pi5` as the trusted-LAN DNS server
-- [ ] Renew leases on a small set of clients and verify:
-  - gateway/DNS is `192.168.0.1`
-  - local hostnames resolve
-  - `nix-cache` resolves
-  - internal access to public services works as expected
-- [ ] Verify WireGuard client configs still pick up `192.168.0.1`
-- [ ] Verify `scripts/update-machines.sh` can still resolve hosts through the
-  gateway DNS
-
-### Remaining `pi5` Role
-
-- [ ] Keep `pi5` only as a TFTP host if netboot is still needed
-- [x] Remove `pi5` `dnsmasq`-specific observability from `fana`
-
-## Risks / Open Questions
-
-- UniFi should not be assumed to auto-register every DHCP hostname the way
-  `dnsmasq` does. Important names must be made explicit.
-- Internal access to the public `*.ihar.dev` services still needs a choice:
-  local DNS overrides or hairpin NAT. The inventory and sync app are now set up
-  for local overrides.
-- `nix-cache.home.arpa` now resolves directly to the cache VM reservation, so
-  that name no longer depends on a second local-DNS record.
-- TFTP / netboot may not be worth preserving.
+- Keep or remove TFTP / netboot on `pi5`
+- Extend mTLS to non-node Prometheus scrapers if desired
+- Rotate UniFi API keys when needed

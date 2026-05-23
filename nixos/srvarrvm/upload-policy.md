@@ -39,13 +39,13 @@ It does not manage bandwidth groups, public caps, or SABnzbd suppression.
 
 Host wiring:
 
-- [nixos/srvarrvm/adaptive-upload-policy.nix](../nixos/srvarrvm/adaptive-upload-policy.nix)
-- [nixos/srvarrvm/default.nix](../nixos/srvarrvm/default.nix)
-- [overlays/default.nix](../overlays/default.nix)
+- [adaptive-upload-policy.nix](./adaptive-upload-policy.nix)
+- [default.nix](./default.nix)
+- [overlays/default.nix](../../overlays/default.nix)
 
 Helper module:
 
-- [nixos/srvarrvm/transmission-prioritizer.nix](../nixos/srvarrvm/transmission-prioritizer.nix)
+- [transmission-prioritizer.nix](./transmission-prioritizer.nix)
 
 Important current facts:
 
@@ -109,9 +109,9 @@ This is now the main private-tracker preference mechanism.
 
 Implementation:
 
-- [pkgs/transmission-tracker-prioritizer/prioritizer.py](../pkgs/transmission-tracker-prioritizer/prioritizer.py)
-- [pkgs/transmission-tracker-prioritizer/collector.py](../pkgs/transmission-tracker-prioritizer/collector.py)
-- [pkgs/transmission-tracker-prioritizer/main.py](../pkgs/transmission-tracker-prioritizer/main.py)
+- [pkgs/transmission-tracker-prioritizer/prioritizer.py](../../pkgs/transmission-tracker-prioritizer/prioritizer.py)
+- [pkgs/transmission-tracker-prioritizer/collector.py](../../pkgs/transmission-tracker-prioritizer/collector.py)
+- [pkgs/transmission-tracker-prioritizer/main.py](../../pkgs/transmission-tracker-prioritizer/main.py)
 
 The helper code is split into separate collector and prioritizer entrypoints
 with shared classification logic:
@@ -174,11 +174,11 @@ were removed from the `Media Pipe` dashboard.
 
 ## Related Files
 
-- [pkgs/adaptive-upload-controller/main.py](../pkgs/adaptive-upload-controller/main.py)
-- [pkgs/transmission-tracker-prioritizer/prioritizer.py](../pkgs/transmission-tracker-prioritizer/prioritizer.py)
-- [pkgs/transmission-tracker-prioritizer/collector.py](../pkgs/transmission-tracker-prioritizer/collector.py)
-- [pkgs/transmission-tracker-prioritizer/main.py](../pkgs/transmission-tracker-prioritizer/main.py)
-- [nixos/srvarrvm/adaptive-upload-policy.nix](../nixos/srvarrvm/adaptive-upload-policy.nix)
-- [nixos/srvarrvm/default.nix](../nixos/srvarrvm/default.nix)
-- [nixos/srvarrvm/transmission-prioritizer.nix](../nixos/srvarrvm/transmission-prioritizer.nix)
-- [overlays/default.nix](../overlays/default.nix)
+- [pkgs/adaptive-upload-controller/main.py](../../pkgs/adaptive-upload-controller/main.py)
+- [pkgs/transmission-tracker-prioritizer/prioritizer.py](../../pkgs/transmission-tracker-prioritizer/prioritizer.py)
+- [pkgs/transmission-tracker-prioritizer/collector.py](../../pkgs/transmission-tracker-prioritizer/collector.py)
+- [pkgs/transmission-tracker-prioritizer/main.py](../../pkgs/transmission-tracker-prioritizer/main.py)
+- [adaptive-upload-policy.nix](./adaptive-upload-policy.nix)
+- [default.nix](./default.nix)
+- [transmission-prioritizer.nix](./transmission-prioritizer.nix)
+- [overlays/default.nix](../../overlays/default.nix)
