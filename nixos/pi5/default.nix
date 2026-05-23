@@ -61,10 +61,12 @@ in
   services.dnsmasq = {
     enable = true;
     settings = {
+      bind-interfaces = true;
       dhcp-authoritative = true;
       dhcp-rapid-commit = true;
 
       dhcp-range = guestDhcpRanges;
+      interface = [ guestIface ];
 
       listen-address = [
         guestAddr
