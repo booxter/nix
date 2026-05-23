@@ -25,7 +25,7 @@ if builtins.hasAttr system inputs.proxmox-nixos.packages then
         usage() {
           cat <<'EOF'
         Usage: prox-deploy <vm-type> <proxmox-host>
-        Example: prox-deploy srvarr prx1
+        Example: prox-deploy srvarr prx1-lab
         EOF
         }
 
