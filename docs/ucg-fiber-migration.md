@@ -40,6 +40,9 @@ Guest-network and UPS / NUT migration are out of scope for this document.
   - DHCP range
   - DHCP `domain-name`
   - DHCP `domain-search` via option `119`
+  - DHCP network-boot options:
+    - option `66` -> `192.168.1.1`
+    - option `67` -> `netboot.xyz.efi`
   - inventory-driven split-DNS records through UniFi DNS policies
 - [x] Move `pi5` LAN and guest addresses into the `pi5` host record
 - [x] Remove dead DHCP exclusion support from the repo
@@ -65,6 +68,8 @@ nix run .#unifi-sync -- --debug
   - DHCP range `192.168.10.1 - 192.168.14.255`
   - DHCP domain name `home.arpa`
   - DHCP domain search `home.arpa`
+  - DHCP option `66` -> `192.168.1.1`
+  - DHCP option `67` -> `netboot.xyz.efi`
   - DNS policies for:
     - `pi5.home.arpa`
     - `nix-cache.home.arpa -> prox-cachevm.home.arpa`
