@@ -514,7 +514,7 @@ in
               (mkGrafanaPromRule {
                 uid = "thermal_cpu_hot";
                 title = "CPU Temperature High";
-                expr = "max by(instance) ((node_thermal_zone_temp{job=\"node\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"cpu\"})";
+                expr = "max by(instance) ((node_thermal_zone_temp{job=~\"node|node-mtls\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",group=\"cpu\"})";
                 comparator = "gt";
                 threshold = 85;
                 forDuration = "10m";
@@ -530,7 +530,7 @@ in
               (mkGrafanaPromRule {
                 uid = "thermal_storage_hot";
                 title = "Storage Temperature High";
-                expr = "max by(instance) (node_hwmon_temp_celsius{job=\"node\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=\"node\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=\"node\",host_class=\"hardware\",group=\"storage\"})";
+                expr = "max by(instance) (node_hwmon_temp_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",group=\"storage\"})";
                 comparator = "gt";
                 threshold = 75;
                 forDuration = "10m";
@@ -546,7 +546,7 @@ in
               (mkGrafanaPromRule {
                 uid = "thermal_hba_export_failed";
                 title = "HBA Thermal Export Failed";
-                expr = "host_observability_hba_collect_success{job=\"node\",host_class=\"hardware\"}";
+                expr = "host_observability_hba_collect_success{job=~\"node|node-mtls\",host_class=\"hardware\"}";
                 comparator = "lt";
                 threshold = 1;
                 forDuration = "10m";
@@ -578,7 +578,7 @@ in
               (mkGrafanaPromRule {
                 uid = "darwin_ismc_export_failed";
                 title = "Darwin Thermal Export Failed";
-                expr = "host_observability_darwin_ismc_collect_success{job=\"node\",host_class=\"hardware\"}";
+                expr = "host_observability_darwin_ismc_collect_success{job=~\"node|node-mtls\",host_class=\"hardware\"}";
                 comparator = "lt";
                 threshold = 1;
                 forDuration = "10m";

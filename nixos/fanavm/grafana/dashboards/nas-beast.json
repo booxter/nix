@@ -3336,7 +3336,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_hba_temperature_celsius{job=\"node\",instance=\"beast\",sensor=\"roc\"}",
+          "expr": "host_observability_hba_temperature_celsius{job=~\"node|node-mtls\",instance=\"beast\",sensor=\"roc\"}",
           "legendFormat": "HBA / ROC {{controller}}",
           "range": true,
           "refId": "A"
@@ -3393,7 +3393,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_temp_celsius{job=\"node\",instance=\"beast\",chip=\"platform_coretemp_0\",sensor=\"temp1\"}",
+          "expr": "node_hwmon_temp_celsius{job=~\"node|node-mtls\",instance=\"beast\",chip=\"platform_coretemp_0\",sensor=\"temp1\"}",
           "legendFormat": "Linux coretemp / Package id 0",
           "range": true,
           "refId": "A"
@@ -3450,7 +3450,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_power_watt{job=\"node\",instance=\"beast\",sensor=~\"power[1-4]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_power_watt{job=~\"node|node-mtls\",instance=\"beast\",sensor=~\"power[1-4]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3499,7 +3499,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_in_volts{job=\"node\",instance=\"beast\",sensor=~\"in[123]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_in_volts{job=~\"node|node-mtls\",instance=\"beast\",sensor=~\"in[123]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3548,7 +3548,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_curr_amps{job=\"node\",instance=\"beast\",sensor=~\"curr[234]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_curr_amps{job=~\"node|node-mtls\",instance=\"beast\",sensor=~\"curr[234]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3605,7 +3605,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_temp_celsius{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=~\"vrm temp|case temp\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_temp_celsius{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\",label=~\"vrm temp|case temp\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3654,7 +3654,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_fan_rpm{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=\"psu fan\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_fan_rpm{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\",label=\"psu fan\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3703,7 +3703,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_in_volts{job=\"node\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=\"node\",instance=\"beast\",label=\"v_in\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=\"node\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "node_hwmon_in_volts{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\",label=\"v_in\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
