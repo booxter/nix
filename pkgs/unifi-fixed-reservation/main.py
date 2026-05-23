@@ -39,6 +39,12 @@ class DhcpRangeSpec:
     end: ipaddress.IPv4Address
 
 
+@dataclass(frozen=True)
+class NetworkDhcpSettingsSpec:
+    dhcp_range: DhcpRangeSpec | None
+    domain_name: str | None
+
+
 def normalize_mac(mac: str) -> str:
     cleaned = re.sub(r"[^0-9a-fA-F]", "", mac)
     if len(cleaned) != 12:
@@ -144,6 +150,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-dhcp-range-update",
         action="store_true",
         help="Do not update the network DHCP range.",
+    )
+    parser.add_argument(
+        "--domain-name",
+        default=os.environ.get("UNIFI_NETWORK_DOMAIN_NAME", ""),
+        help=(
+            "Optional DHCP domain name for the target network. Defaults to "
+            "UNIFI_NETWORK_DOMAIN_NAME."
+        ),
     )
     return parser
 
@@ -501,13 +515,37 @@ def build_network_dhcp_payload(dhcp_range: DhcpRangeSpec) -> dict[str, Any]:
     }
 
 
+def build_network_settings(
+    args: argparse.Namespace,
+) -> NetworkDhcpSettingsSpec | None:
+    dhcp_range = None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
+    domain_name = args.domain_name.strip() or None
+
+    if dhcp_range is None and domain_name is None:
+        return None
+
+    return NetworkDhcpSettingsSpec(
+        dhcp_range=dhcp_range,
+        domain_name=domain_name,
+    )
+
+
+def build_network_update_payload(settings: NetworkDhcpSettingsSpec) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    if settings.dhcp_range is not None:
+        payload.update(build_network_dhcp_payload(settings.dhcp_range))
+    if settings.domain_name is not None:
+        payload["domain_name"] = settings.domain_name
+    return payload
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
 
     try:
         mode, reservations = load_reservations(args)
-        dhcp_range = None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
+        network_settings = build_network_settings(args)
 
         client = UnifiLegacyClient(
             base_url=args.base_url,
@@ -522,11 +560,16 @@ def main() -> int:
         clients_by_mac = build_clients_by_mac(clients)
         dhcp_range_result = None
 
-        if dhcp_range is not None:
+        if network_settings is not None:
+            lookup_ip = (
+                network_settings.dhcp_range.start
+                if network_settings.dhcp_range is not None
+                else reservations[0].fixed_ip
+            )
             selected_dhcp_network = (
                 next((network for network in networks if network.get("_id") == args.network_id), None)
                 if args.network_id
-                else choose_network_by_ip(networks, dhcp_range.start)
+                else choose_network_by_ip(networks, lookup_ip)
             )
             if selected_dhcp_network is None:
                 raise UnifiError(f"network not found: {args.network_id}")
@@ -537,13 +580,22 @@ def main() -> int:
 
             dhcp_result = client.update_network(
                 network_id=dhcp_network_id,
-                payload=build_network_dhcp_payload(dhcp_range),
+                payload=build_network_update_payload(network_settings),
             )
             dhcp_range_result = {
                 "network_id": dhcp_network_id,
                 "network_name": selected_dhcp_network.get("name"),
-                "start": str(dhcp_range.start),
-                "end": str(dhcp_range.end),
+                "start": (
+                    str(network_settings.dhcp_range.start)
+                    if network_settings.dhcp_range is not None
+                    else None
+                ),
+                "end": (
+                    str(network_settings.dhcp_range.end)
+                    if network_settings.dhcp_range is not None
+                    else None
+                ),
+                "domain_name": network_settings.domain_name,
                 "result": dhcp_result,
             }
 
