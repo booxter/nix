@@ -40,8 +40,10 @@ Keep `pi5` only for roles that still need it during the transition:
   - DHCP range
   - DHCP `domain-name`
   - DHCP `domain-search` via option `119`
+  - inventory-driven split-DNS records through UniFi DNS policies
 - [x] Move `pi5` LAN and guest addresses into the `pi5` host record
 - [x] Remove dead DHCP exclusion support from the repo
+- [x] Move split-DNS aliases into host inventory and derive rendered DNS records
 
 ### Apply On UCG Fiber
 
@@ -62,22 +64,17 @@ nix run .#unifi-sync -- --debug
   - DHCP range `192.168.10.1 - 192.168.14.255`
   - DHCP domain name `home.arpa`
   - DHCP domain search `home.arpa`
+  - DNS policies for:
+    - `pi5.home.arpa`
+    - `nix-cache.home.arpa -> prox-cachevm.home.arpa`
+    - `jf.ihar.dev`
+    - `js.ihar.dev`
+    - `mu.ihar.dev`
+    - `au.ihar.dev`
+    - `shelf.ihar.dev`
+    - `vi.ihar.dev`
 - [ ] Verify that the gateway itself is the DNS server handed out to trusted-LAN
   clients
-
-### Add DNS Records That Are Not Reservation-Backed
-
-- [ ] Add `nix-cache -> prox-cachevm`
-- [ ] Add a local record for `pi5` if name-based repo workflows should keep
-  resolving `pi5` through gateway DNS
-- [ ] Decide whether to add local overrides for these public service names to
-  `beast`, or rely on hairpin NAT instead:
-  - `jf.ihar.dev`
-  - `js.ihar.dev`
-  - `mu.ihar.dev`
-  - `au.ihar.dev`
-  - `shelf.ihar.dev`
-  - `vi.ihar.dev`
 
 ### Cut Over The Trusted LAN
 
@@ -111,5 +108,8 @@ nix run .#unifi-sync -- --debug
   VLAN. If the current mesh cannot do that while bridged, `pi5` stays in the
   picture or the guest network goes away.
 - Internal access to the public `*.ihar.dev` services still needs a choice:
-  local DNS overrides or hairpin NAT.
+  local DNS overrides or hairpin NAT. The inventory and sync app are now set up
+  for local overrides.
+- `nix-cache.home.arpa` is rendered as a CNAME to `prox-cachevm.home.arpa`, so
+  the target host name still needs to resolve on the gateway side.
 - TFTP / netboot may not be worth preserving.
