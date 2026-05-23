@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import os
 import pathlib
 import re
 import shlex
@@ -11,10 +12,43 @@ import tempfile
 import yaml
 
 
-REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
 DEFAULT_CA_HOST = "prox-pkivm"
 DEFAULT_PROVISIONER = "bootstrap@home.arpa"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
+
+
+def find_repo_root():
+    env_root = os.environ.get("ISSUE_OBSERVABILITY_CERT_REPO_ROOT")
+    if env_root:
+        candidate = pathlib.Path(env_root).expanduser().resolve()
+        if (candidate / "flake.nix").exists():
+            return candidate
+        raise SystemExit(
+            f"ISSUE_OBSERVABILITY_CERT_REPO_ROOT does not point to a flake checkout: {candidate}"
+        )
+
+    for start in [pathlib.Path.cwd().resolve(), pathlib.Path(__file__).resolve().parent]:
+        for candidate in [start, *start.parents]:
+            if (candidate / "flake.nix").exists():
+                return candidate
+
+    proc = subprocess.run(
+        ["git", "rev-parse", "--show-toplevel"],
+        cwd=pathlib.Path.cwd(),
+        text=True,
+        capture_output=True,
+    )
+    if proc.returncode == 0:
+        candidate = pathlib.Path(proc.stdout.strip()).resolve()
+        if (candidate / "flake.nix").exists():
+            return candidate
+
+    raise SystemExit(
+        "could not determine repo root; run from the checkout or set ISSUE_OBSERVABILITY_CERT_REPO_ROOT"
+    )
+
+
+REPO_ROOT = find_repo_root()
 
 
 def run(cmd, *, cwd=REPO_ROOT, input_text=None):
