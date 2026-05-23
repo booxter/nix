@@ -136,21 +136,13 @@ let
     && (outputs.nixosConfigurations.${name}.config.host.observability.client.enable or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
   ) (builtins.attrNames outputs.nixosConfigurations);
-  remoteNixosMtlsNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig (
-    builtins.filter (
-      name:
-      outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
-        or false
-    ) nixosNodeExporterTargetNames
-  );
-  remoteNixosPlainNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig (
-    builtins.filter (
-      name:
-      !(outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
-        or false
-      )
-    ) nixosNodeExporterTargetNames
-  );
+  remoteNixosNonMtlsNodeTargetNames = builtins.filter (
+    name:
+    !(outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
+      or false
+    )
+  ) nixosNodeExporterTargetNames;
+  remoteNixosNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig nixosNodeExporterTargetNames;
   mkRemoteDarwinNodeTargetConfig =
     name:
     let
@@ -171,52 +163,38 @@ let
     (outputs.darwinConfigurations.${name}.config.host.observability.client.enable or false)
     && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
   ) (builtins.attrNames outputs.darwinConfigurations);
-  remoteDarwinMtlsNodeTargetConfigs = map mkRemoteDarwinNodeTargetConfig (
-    builtins.filter (
-      name:
-      outputs.darwinConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
-        or false
-    ) darwinNodeExporterTargetNames
-  );
-  remoteDarwinPlainNodeTargetConfigs = map mkRemoteDarwinNodeTargetConfig (
-    builtins.filter (
-      name:
-      !(outputs.darwinConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
-        or false
-      )
-    ) darwinNodeExporterTargetNames
-  );
-  remoteMtlsNodeTargetConfigs = remoteNixosMtlsNodeTargetConfigs ++ remoteDarwinMtlsNodeTargetConfigs;
-  remotePlainNodeTargetConfigs =
-    remoteNixosPlainNodeTargetConfigs ++ remoteDarwinPlainNodeTargetConfigs;
-  mkBlackboxProbeSourceForConfig =
-    hostConfig:
+  remoteDarwinNonMtlsNodeTargetNames = builtins.filter (
+    name:
+    !(outputs.darwinConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
+      or false
+    )
+  ) darwinNodeExporterTargetNames;
+  remoteDarwinNodeTargetConfigs = map mkRemoteDarwinNodeTargetConfig darwinNodeExporterTargetNames;
+  remoteNodeTargetConfigs = remoteNixosNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
+  remoteBlackboxProbeSourceNames = builtins.filter (
+    name:
+    !(lib.hasPrefix "local-" name)
+    && name != "prox-fanavm"
+    && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.enable
+  ) (builtins.attrNames outputs.nixosConfigurations);
+  remotePlainBlackboxProbeSourceNames = builtins.filter (
+    name:
+    !(outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.mtls.enable
+      or false
+    )
+  ) remoteBlackboxProbeSourceNames;
+  mkRemoteBlackboxProbeSourceConfig =
+    name:
     let
-      mtlsEndpoint =
-        if hostConfig.host.observability.client.prometheusMtlsEndpoints ? blackbox then
-          hostConfig.host.observability.client.prometheusMtlsEndpoints.blackbox
-        else
-          null;
+      hostConfig = outputs.nixosConfigurations.${name}.config;
+      mtlsEndpoint = hostConfig.host.observability.client.prometheusMtlsEndpoints.blackbox;
     in
     {
-      exporter =
-        if mtlsEndpoint != null && mtlsEndpoint.enable then
-          "${hostConfig.host.dnsName}:${toString mtlsEndpoint.port}"
-        else
-          "${hostConfig.host.dnsName}:${toString hostConfig.services.prometheus.exporters.blackbox.port}";
-      scheme = if mtlsEndpoint != null && mtlsEndpoint.enable then "https" else "http";
+      exporter = "${hostConfig.host.dnsName}:${toString mtlsEndpoint.port}";
+      scheme = "https";
       source = hostConfig.services.avahi.hostName;
     };
-  remoteBlackboxProbeSourceConfigs =
-    map (name: mkBlackboxProbeSourceForConfig outputs.nixosConfigurations.${name}.config)
-      (
-        builtins.filter (
-          name:
-          !(lib.hasPrefix "local-" name)
-          && name != "prox-fanavm"
-          && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.enable
-        ) (builtins.attrNames outputs.nixosConfigurations)
-      );
+  remoteBlackboxProbeSourceConfigs = map mkRemoteBlackboxProbeSourceConfig remoteBlackboxProbeSourceNames;
   blackboxProbeSourceConfigs = [
     {
       exporter = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
@@ -356,6 +334,21 @@ let
     };
 in
 {
+  assertions = [
+    {
+      assertion = remoteNixosNonMtlsNodeTargetNames == [ ];
+      message = "All non-local NixOS Prometheus node scrape targets must use mTLS. Offenders: ${lib.concatStringsSep ", " remoteNixosNonMtlsNodeTargetNames}";
+    }
+    {
+      assertion = remoteDarwinNonMtlsNodeTargetNames == [ ];
+      message = "All Darwin Prometheus node scrape targets must use mTLS. Offenders: ${lib.concatStringsSep ", " remoteDarwinNonMtlsNodeTargetNames}";
+    }
+    {
+      assertion = remotePlainBlackboxProbeSourceNames == [ ];
+      message = "All remote blackbox probe sources must use mTLS. Offenders: ${lib.concatStringsSep ", " remotePlainBlackboxProbeSourceNames}";
+    }
+  ];
+
   sops = {
     defaultSopsFile = ../../secrets/prox-fanavm.yaml;
   };
@@ -729,14 +722,13 @@ in
               instance = config.host.dnsName;
             };
           }
-        ]
-        ++ remotePlainNodeTargetConfigs;
+        ];
       }
       {
         job_name = "node-mtls";
         scheme = "https";
         tls_config = prometheusMtlsTlsConfig;
-        static_configs = remoteMtlsNodeTargetConfigs;
+        static_configs = remoteNodeTargetConfigs;
       }
       {
         job_name = "nut-prx1";

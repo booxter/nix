@@ -192,18 +192,15 @@ in
         # probes from other LAN nodes for WAN comparison.
         services.prometheus.exporters.blackbox = lib.mkIf cfg.blackbox.enable {
           enable = true;
-          listenAddress =
-            if cfg.blackbox.mtls.enable then "127.0.0.1" else cfg.blackbox.listenAddress;
-          openFirewall = if cfg.blackbox.mtls.enable then false else cfg.blackbox.openFirewall;
-          port = if cfg.blackbox.mtls.enable then cfg.blackbox.mtls.internalPort else 9115;
+          listenAddress = "127.0.0.1";
+          openFirewall = false;
+          port = cfg.blackbox.mtls.internalPort;
           configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
             modules = blackboxModules;
           };
         };
 
-        host.observability.client.prometheusMtlsEndpoints.blackbox = lib.mkIf (
-          cfg.blackbox.enable && cfg.blackbox.mtls.enable
-        ) {
+        host.observability.client.prometheusMtlsEndpoints.blackbox = lib.mkIf cfg.blackbox.enable {
           enable = true;
           listenAddress = cfg.blackbox.listenAddress;
           port = cfg.blackbox.mtls.publicPort;
@@ -319,6 +316,14 @@ in
           after = [ "sops-install-secrets.service" ];
         };
       })
+      {
+        assertions = [
+          {
+            assertion = !(cfg.blackbox.enable && !cfg.blackbox.mtls.enable);
+            message = "host.observability.client.blackbox now requires mTLS; set host.observability.client.blackbox.mtls.enable = true.";
+          }
+        ];
+      }
     ]
   );
 }

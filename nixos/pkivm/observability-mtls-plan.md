@@ -13,6 +13,9 @@ Current exclusions:
 - loopback-only scrapes on `prox-fanavm`
 - UPS / NUT jobs that Prometheus reaches through the local exporter on `fana`
 
+Remote plain-HTTP scraping is no longer part of the repo shape. Anything
+outside loopback is expected to use mTLS.
+
 Rollout is still pending. This file describes the implemented shape in the repo
 and the remaining deployment order.
 
@@ -118,9 +121,10 @@ Notable details:
 - Darwin node exporter can now join `node-mtls`
 - `smartctl`, `jellyfin`, `sabnzbd`, and `vikunja` now use endpoint metadata
   instead of exporter-internal ports
-- remote blackbox probe sources can now mix:
-  - local plain HTTP from `fana`
-  - remote HTTPS+mTLS from other NixOS hosts
+- the `node` job is now loopback-only on `fana`
+- all remote node exporters now belong in `node-mtls`
+- remote blackbox probe sources are now mTLS-only
+- only the local `fana` blackbox exporter remains plain HTTP
 
 The relevant config is in:
 
