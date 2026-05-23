@@ -8,7 +8,11 @@ let
   cfg = config.host.observability.client;
   hostLabel = config.services.avahi.hostName;
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
-  internalPkiRootCaPath = ../../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
+  nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix;
+  inherit (nodeExporterMtls)
+    internalPkiRootCaPath
+    nodeExporterSecretPrefix
+    ;
   nodeExporterGroup = config.services.prometheus.exporters.node.group;
   nodeExporterUser = config.services.prometheus.exporters.node.user;
   enabledPrometheusMtlsEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.prometheusMtlsEndpoints;
@@ -210,14 +214,14 @@ in
       }
       (lib.mkIf cfg.nodeExporter.mtls.enable {
         sops.secrets.prometheusNodeExporterServerCrt = {
-          key = "prometheus/node_exporter/server_crt";
+          key = "${nodeExporterSecretPrefix}/server_crt";
           owner = nodeExporterUser;
           group = nodeExporterGroup;
           mode = "0400";
           restartUnits = [ "prometheus-node-exporter.service" ];
         };
         sops.secrets.prometheusNodeExporterServerKey = {
-          key = "prometheus/node_exporter/server_key";
+          key = "${nodeExporterSecretPrefix}/server_key";
           owner = nodeExporterUser;
           group = nodeExporterGroup;
           mode = "0400";
@@ -228,13 +232,10 @@ in
           owner = nodeExporterUser;
           group = nodeExporterGroup;
           mode = "0400";
-          content = ''
-            tls_server_config:
-              cert_file: ${config.sops.secrets.prometheusNodeExporterServerCrt.path}
-              key_file: ${config.sops.secrets.prometheusNodeExporterServerKey.path}
-              client_auth_type: RequireAndVerifyClientCert
-              client_ca_file: ${internalPkiRootCaPath}
-          '';
+          content = nodeExporterMtls.mkNodeExporterWebConfig {
+            certFile = config.sops.secrets.prometheusNodeExporterServerCrt.path;
+            keyFile = config.sops.secrets.prometheusNodeExporterServerKey.path;
+          };
           restartUnits = [ "prometheus-node-exporter.service" ];
         };
 

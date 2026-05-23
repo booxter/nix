@@ -2,13 +2,15 @@
 
 ## Scope
 
-This document covers the non-node Prometheus scrapes that are now wired for
-mTLS in NixOS config.
+This document covers the Prometheus scrape mTLS rollout that is now implemented
+in repo for:
+
+- remote NixOS-hosted non-node scrapes
+- node exporter on Darwin `mmini`
 
 Current exclusions:
 
 - loopback-only scrapes on `prox-fanavm`
-- Darwin scrapes such as `mmini`
 - UPS / NUT jobs that Prometheus reaches through the local exporter on `fana`
 
 Rollout is still pending. This file describes the implemented shape in the repo
@@ -50,6 +52,19 @@ That same client cert/key is now also used for:
 - remote `blackbox-icmp`
 - remote `blackbox-tcp`
 
+### Shared node-exporter mTLS model
+
+`node_exporter` mTLS is now shared between NixOS and Darwin hosts:
+
+- same secret prefix: `prometheus/node_exporter`
+- same node-exporter web config format
+- same internal PKI client CA
+- same Prometheus client cert on `prox-fanavm`
+
+The shared helper lives in:
+
+- [lib/prometheus-node-exporter-mtls.nix](../../lib/prometheus-node-exporter-mtls.nix)
+
 ## Implemented Endpoints
 
 ### `frame`
@@ -88,13 +103,19 @@ That same client cert/key is now also used for:
   - local upstream: `http://127.0.0.1:3456/api/v1/metrics`
   - secret prefix: `prometheus/vikunja`
 
+### `mmini`
+
+- `node_exporter`
+  - public mTLS endpoint: `https://mmini:9100/metrics`
+  - secret prefix: `prometheus/node_exporter`
+
 ## Prometheus Changes
 
 `prox-fanavm` now scrapes these endpoints over `https` with client-cert auth.
 
 Notable details:
 
-- `node-mtls` is unchanged
+- Darwin node exporter can now join `node-mtls`
 - `smartctl`, `jellyfin`, `sabnzbd`, and `vikunja` now use endpoint metadata
   instead of exporter-internal ports
 - remote blackbox probe sources can now mix:
@@ -139,6 +160,9 @@ The host templates now expect per-endpoint server certs:
 - `prox-orgvm`
   - `prometheus.vikunja.server_crt`
   - `prometheus.vikunja.server_key`
+- `mmini`
+  - `prometheus.node_exporter.server_crt`
+  - `prometheus.node_exporter.server_key`
 
 ## Certificate Issuance App
 
@@ -146,17 +170,18 @@ There is now a flake app to issue these certificates from `prox-pkivm` and
 write them into the target host secret:
 
 ```bash
+nix run .#issue-observability-cert -- --host mmini --endpoint node_exporter
 nix run .#issue-observability-cert -- --host frame --endpoint blackbox
 nix run .#issue-observability-cert -- --host prox-srvarrvm --endpoint sabnzbd
 nix run .#issue-observability-cert -- --host prox-orgvm --endpoint vikunja
 ```
 
-If `--endpoint` is omitted, the app issues certs for every configured
-`prometheusMtlsEndpoints` entry on that host.
+If `--endpoint` is omitted, the app issues certs for every configured mTLS
+scrape endpoint on that host, including `node_exporter` when enabled.
 
 The app:
 
-- reads endpoint metadata from the NixOS config
+- reads endpoint metadata from the NixOS or Darwin config
 - SSHes to `prox-pkivm`
 - runs `step ca certificate` there with the bootstrap provisioner
 - runs `sops-update` for the target host secret
@@ -174,6 +199,7 @@ deferred.
 Anything that touches `beast` for this migration needs a separate maintenance
 window, so rollout should start with:
 
+- `mmini`
 - `frame`
 - `prox-srvarrvm`
 - `prox-orgvm`
@@ -185,7 +211,7 @@ and leave `beast` for a later dedicated window.
 
 Implementation is done. What remains is rollout:
 
-1. Issue certs for `frame`, `prox-srvarrvm`, and `prox-orgvm`
+1. Issue certs for `mmini`, `frame`, `prox-srvarrvm`, and `prox-orgvm`
 2. Deploy those hosts
 3. Deploy `prox-fanavm`
 4. Verify the new Grafana scrape-health board and Prometheus targets

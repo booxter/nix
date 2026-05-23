@@ -151,26 +151,44 @@ let
       )
     ) nixosNodeExporterTargetNames
   );
-  remoteDarwinNodeTargetConfigs =
-    map
-      (name: {
-        labels = {
-          host_network_charts = "true";
-          host_network_source = "node";
-          host_class = "hardware";
-          host_virtual = "false";
-          instance = outputs.darwinConfigurations.${name}.config.host.dnsName;
-        };
-        targets = [ "${outputs.darwinConfigurations.${name}.config.host.dnsName}:9100" ];
-      })
-      (
-        builtins.filter (
-          name:
-          (outputs.darwinConfigurations.${name}.config.host.observability.client.enable or false)
-          && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
-        ) (builtins.attrNames outputs.darwinConfigurations)
-      );
-  remotePlainNodeTargetConfigs = remoteNixosPlainNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;
+  mkRemoteDarwinNodeTargetConfig =
+    name:
+    let
+      hostConfig = outputs.darwinConfigurations.${name}.config;
+    in
+    {
+      labels = {
+        host_network_charts = "true";
+        host_network_source = "node";
+        host_class = "hardware";
+        host_virtual = "false";
+        instance = hostConfig.host.dnsName;
+      };
+      targets = [ "${hostConfig.host.dnsName}:9100" ];
+    };
+  darwinNodeExporterTargetNames = builtins.filter (
+    name:
+    (outputs.darwinConfigurations.${name}.config.host.observability.client.enable or false)
+    && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
+  ) (builtins.attrNames outputs.darwinConfigurations);
+  remoteDarwinMtlsNodeTargetConfigs = map mkRemoteDarwinNodeTargetConfig (
+    builtins.filter (
+      name:
+      outputs.darwinConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
+        or false
+    ) darwinNodeExporterTargetNames
+  );
+  remoteDarwinPlainNodeTargetConfigs = map mkRemoteDarwinNodeTargetConfig (
+    builtins.filter (
+      name:
+      !(outputs.darwinConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
+        or false
+      )
+    ) darwinNodeExporterTargetNames
+  );
+  remoteMtlsNodeTargetConfigs = remoteNixosMtlsNodeTargetConfigs ++ remoteDarwinMtlsNodeTargetConfigs;
+  remotePlainNodeTargetConfigs =
+    remoteNixosPlainNodeTargetConfigs ++ remoteDarwinPlainNodeTargetConfigs;
   mkBlackboxProbeSourceForConfig =
     hostConfig:
     let
@@ -718,7 +736,7 @@ in
         job_name = "node-mtls";
         scheme = "https";
         tls_config = prometheusMtlsTlsConfig;
-        static_configs = remoteNixosMtlsNodeTargetConfigs;
+        static_configs = remoteMtlsNodeTargetConfigs;
       }
       {
         job_name = "nut-prx1";

@@ -16,6 +16,8 @@ DEFAULT_CA_HOST = "prox-pkivm"
 DEFAULT_PROVISIONER = "bootstrap@home.arpa"
 DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
+NODE_EXPORTER_ENDPOINT = "node_exporter"
+NODE_EXPORTER_SECRET_PREFIX = "prometheus/node_exporter"
 
 
 def find_repo_root():
@@ -66,6 +68,18 @@ def run(cmd, *, cwd=REPO_ROOT, input_text=None):
     return proc.stdout
 
 
+def run_optional(cmd, *, cwd=REPO_ROOT):
+    proc = subprocess.run(
+        cmd,
+        cwd=cwd,
+        text=True,
+        capture_output=True,
+    )
+    if proc.returncode != 0:
+        return None
+    return proc.stdout
+
+
 def nix_segment(name):
     if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
         return name
@@ -83,6 +97,20 @@ def nix_eval_json(*segments):
 
 def nix_eval_raw(*segments):
     return run(["nix", "eval", "--raw", nix_attr_path(*segments)]).strip()
+
+
+def nix_eval_json_optional(*segments):
+    raw = run_optional(["nix", "eval", "--json", nix_attr_path(*segments)])
+    if raw is None:
+        return None
+    return json.loads(raw)
+
+
+def nix_eval_raw_optional(*segments):
+    raw = run_optional(["nix", "eval", "--raw", nix_attr_path(*segments)])
+    if raw is None:
+        return None
+    return raw.strip()
 
 
 def secret_path_for_host(host):
@@ -111,22 +139,71 @@ def unique_strings(values):
     return result
 
 
-def endpoint_names_for_host(host):
-    endpoint_map = nix_eval_json(
-        "nixosConfigurations",
+def host_config_root(host):
+    for root in ("nixosConfigurations", "darwinConfigurations"):
+        if nix_eval_raw_optional(root, host, "config", "host", "dnsName") is not None:
+            return root
+    raise SystemExit(f"host {host} not found in nixosConfigurations or darwinConfigurations")
+
+
+def node_exporter_endpoint_enabled(root, host):
+    enabled = nix_eval_json_optional(
+        root,
         host,
         "config",
         "host",
         "observability",
         "client",
-        "prometheusMtlsEndpoints",
+        "nodeExporter",
+        "mtls",
+        "enable",
     )
-    return sorted(name for name, endpoint in endpoint_map.items() if endpoint.get("enable"))
+    return bool(enabled)
+
+
+def endpoint_names_for_host(host):
+    root = host_config_root(host)
+    endpoints = []
+    if node_exporter_endpoint_enabled(root, host):
+        endpoints.append(NODE_EXPORTER_ENDPOINT)
+
+    endpoint_map = (
+        nix_eval_json_optional(
+            root,
+            host,
+            "config",
+            "host",
+            "observability",
+            "client",
+            "prometheusMtlsEndpoints",
+        )
+        or {}
+    )
+    endpoints.extend(
+        sorted(
+            name
+            for name, endpoint in endpoint_map.items()
+            if name != NODE_EXPORTER_ENDPOINT and endpoint.get("enable")
+        )
+    )
+    return endpoints
 
 
 def endpoint_config(host, endpoint):
+    root = host_config_root(host)
+    if endpoint == NODE_EXPORTER_ENDPOINT:
+        if not node_exporter_endpoint_enabled(root, host):
+            raise SystemExit(f"host {host} does not have node_exporter mTLS enabled")
+        return {
+            "enable": True,
+            "port": nix_eval_json(
+                root, host, "config", "services", "prometheus", "exporters", "node", "port"
+            ),
+            "secretPrefix": NODE_EXPORTER_SECRET_PREFIX,
+        }
+
     return nix_eval_json(
-        "nixosConfigurations",
+        root,
         host,
         "config",
         "host",
@@ -138,12 +215,14 @@ def endpoint_config(host, endpoint):
 
 
 def host_identity(host):
+    root = host_config_root(host)
+    dns_name = nix_eval_raw(root, host, "config", "host", "dnsName")
+    networking_name = nix_eval_raw(root, host, "config", "networking", "hostName")
+    avahi_name = nix_eval_raw_optional(root, host, "config", "services", "avahi", "hostName") or dns_name
     return {
-        "dns_name": nix_eval_raw("nixosConfigurations", host, "config", "host", "dnsName"),
-        "avahi_name": nix_eval_raw("nixosConfigurations", host, "config", "services", "avahi", "hostName"),
-        "networking_name": nix_eval_raw(
-            "nixosConfigurations", host, "config", "networking", "hostName"
-        ),
+        "dns_name": dns_name,
+        "avahi_name": avahi_name,
+        "networking_name": networking_name,
     }
 
 
