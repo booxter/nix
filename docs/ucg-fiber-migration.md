@@ -7,9 +7,9 @@ Move trusted-LAN DHCP and DNS from `pi5` to the UniFi Cloud Gateway Fiber at
 
 Keep `pi5` only for roles that still need it during the transition:
 
-- guest network, if the WiFi layer cannot do a proper guest VLAN yet
 - TFTP / netboot, if it is still needed
-- UPS / NUT, until that role moves to `nvws`
+
+Guest-network and UPS / NUT migration are out of scope for this document.
 
 ## Current Decisions
 
@@ -18,13 +18,10 @@ Keep `pi5` only for roles that still need it during the transition:
 - Main DHCP range: `192.168.10.1 - 192.168.14.255`
 - Keep the main range below `192.168.15.0/24` because nixarr still assumes
   that subnet for its WireGuard-facing proxy
-- Guest DHCP range on `pi5`: `192.168.100.1 - 192.168.100.255`
 - Reservations are MAC-based only; do not preserve DHCP option `61` matching
-- UPS / NUT target host: `nvws`
 - Trusted-LAN DHCP/DNS is still actually running on `pi5` until cutover
 - `pi5` still has:
   - LAN address `192.168.1.1`
-  - guest-side address `192.168.2.1`
 - `pi5` is planned to keep:
   - guest-only `dnsmasq`
   - standalone TFTP on the main-side address
@@ -93,23 +90,15 @@ nix run .#unifi-sync -- --debug
 - [ ] Verify `scripts/update-machines.sh` can still resolve hosts through the
   gateway DNS
 
-### Clean Up Remaining `pi5` Roles
+### Remaining `pi5` Role
 
-- [ ] Decide whether the guest network stays on `pi5` temporarily or moves to a
-  real guest VLAN on the UCG Fiber
-- [ ] Move UPS / NUT from `pi5` to `nvws`
 - [ ] Keep `pi5` only as a TFTP host if netboot is still needed
 - [x] Remove `pi5` `dnsmasq`-specific observability from `fana`
-- [ ] Remove or repurpose the remaining `pi5` network role after guest / TFTP /
-  UPS dependencies are gone
 
 ## Risks / Open Questions
 
 - UniFi should not be assumed to auto-register every DHCP hostname the way
   `dnsmasq` does. Important names must be made explicit.
-- Guest isolation still depends on the WiFi layer being able to carry a guest
-  VLAN. If the current mesh cannot do that while bridged, `pi5` stays in the
-  picture or the guest network goes away.
 - Internal access to the public `*.ihar.dev` services still needs a choice:
   local DNS overrides or hairpin NAT. The inventory and sync app are now set up
   for local overrides.
