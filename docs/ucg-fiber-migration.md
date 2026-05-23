@@ -25,6 +25,9 @@ Keep `pi5` only for roles that still need it during the transition:
 - `pi5` still has:
   - LAN address `192.168.1.1`
   - guest-side address `192.168.2.1`
+- `pi5` is planned to keep:
+  - guest-only `dnsmasq`
+  - standalone TFTP on the main-side address
 
 ## Checklist
 
@@ -44,6 +47,7 @@ Keep `pi5` only for roles that still need it during the transition:
 - [x] Move `pi5` LAN and guest addresses into the `pi5` host record
 - [x] Remove dead DHCP exclusion support from the repo
 - [x] Move split-DNS aliases into host inventory and derive rendered DNS records
+- [x] Split `pi5` into guest-only `dnsmasq` plus standalone TFTP
 
 ### Apply On UCG Fiber
 
