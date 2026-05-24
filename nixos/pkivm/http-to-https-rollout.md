@@ -22,21 +22,22 @@ Already done:
 ### 2. Beast Backend Hops
 
 - keep split DNS for the public names (`js.ihar.dev`, `mu.ihar.dev`, `au.ihar.dev`,
-  `shelf.ihar.dev`, `vi.ihar.dev`)
+  `shelf.ihar.dev`)
 - keep `beast` as the only WAN-facing ingress on `:443`
 - move each backend app to a private internal HTTPS vhost on its origin host
 - require mTLS on that backend hop:
   - `beast` presents a dedicated client cert for the backend service
   - the backend nginx vhost verifies that client cert against the internal PKI
-- switch `beast` public nginx upstreams from plain HTTP to internal HTTPS+mTLS
-- switch `beast` public nginx upstreams from plain HTTP to internal HTTPS for:
+- use the `vikunja` path as the reusable pattern:
+  - public `vi.ihar.dev` stays on `beast`
+  - backend `vikunja.home.arpa` is internal HTTPS+mTLS only
+  - direct backend access without a client cert returns `400`
+- switch the remaining `beast` public nginx upstreams from plain HTTP to internal
+  HTTPS+mTLS for:
   - `js.ihar.dev`
   - `mu.ihar.dev`
   - `au.ihar.dev`
   - `shelf.ihar.dev`
-  - `vi.ihar.dev`
-- start with `vikunja`, then reuse the same pattern for the remaining public
-  backend services
 - validate public behavior stays unchanged
 
 ### 3. Final Plain-Port Cleanup
@@ -55,4 +56,5 @@ Already done:
 
 ## Constraint
 
-- `beast` ingress work still needs a maintenance window
+- check for active Jellyfin playback on `beast` before any deploy that restarts
+  `nginx`
