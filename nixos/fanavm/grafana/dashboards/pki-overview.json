@@ -195,34 +195,77 @@
       },
       "id": 3,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
           "fields": "",
-          "values": false
+          "reducer": [
+            "sum"
+          ],
+          "show": false
         },
-        "showPercentChange": false,
-        "textMode": "value_and_name",
-        "wideLayout": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "Days Remaining"
+          }
+        ]
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sort(host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"})",
+          "expr": "host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"}",
+          "format": "table",
           "instant": true,
-          "legendFormat": "{{host}} / {{category}} / {{cert_name}}",
           "range": false,
           "refId": "A"
         }
       ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "host",
+                "category",
+                "cert_name",
+                "Value"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "host": 0,
+              "category": 1,
+              "cert_name": 2,
+              "Value": 3
+            },
+            "renameByName": {
+              "Value": "Days Remaining",
+              "category": "Kind",
+              "cert_name": "Certificate",
+              "host": "Host"
+            }
+          }
+        }
+      ],
       "title": "Internal Days Remaining",
-      "type": "stat"
+      "type": "table"
     },
     {
       "datasource": "Prometheus",
@@ -286,146 +329,6 @@
       ],
       "title": "Public TLS Certificate Days Remaining",
       "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "Failed"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "OK"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 26
-      },
-      "id": 5,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value_and_name",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "host_observability_pki_rotation_last_success{job=\"node-mtls\",instance=\"prox-pkivm\"}",
-          "instant": true,
-          "legendFormat": "rotation controller",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Last Rotation Result",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "decimals": 1,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 24
-              },
-              {
-                "color": "red",
-                "value": 36
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 26
-      },
-      "id": 6,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value_and_name",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "(time() - host_observability_pki_rotation_last_run_timestamp_seconds{job=\"node-mtls\",instance=\"prox-pkivm\"}) / 3600",
-          "instant": true,
-          "legendFormat": "hours since last run",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Rotation Run Age (Hours)",
-      "type": "stat"
     }
   ],
   "refresh": "1m",
@@ -445,6 +348,6 @@
   "timezone": "",
   "title": "PKI / TLS",
   "uid": "pki-overview",
-  "version": 3,
+  "version": 5,
   "weekStart": ""
 }
