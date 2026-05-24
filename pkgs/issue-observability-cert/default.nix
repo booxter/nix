@@ -1,4 +1,5 @@
 {
+  bash,
   git,
   jq,
   lib,
@@ -15,6 +16,7 @@ in
 writeShellApplication {
   name = "issue-observability-cert";
   runtimeInputs = [
+    bash
     git
     jq
     nix
