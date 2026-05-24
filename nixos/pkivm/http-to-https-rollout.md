@@ -8,6 +8,8 @@ Already done:
 - `glance.home.arpa`
 - `grafana.home.arpa`
 - internal HTTPS for `radarr`, `sonarr`, `lidarr`, `bazarr`, and `prowlarr`
+- internal HTTPS for `tmission.home.arpa`
+- internal HTTPS for `sabnzbd.home.arpa`
 
 ## Remaining Work
 
@@ -17,13 +19,7 @@ Already done:
 - switch Nix substituter and Attic client URLs to HTTPS
 - verify cache reads and pushes over HTTPS
 
-### 2. Remaining Internal `srvarr` UIs
-
-- move SABnzbd UI to `https://sabnzbd.home.arpa`
-- update Glance links and blackbox probes
-- close the old plain LAN ports afterward
-
-### 3. Beast Backend Hops
+### 2. Beast Backend Hops
 
 - switch `beast` public nginx upstreams from plain HTTP to internal HTTPS for:
   - `js.ihar.dev`
@@ -33,7 +29,7 @@ Already done:
   - `vi.ihar.dev`
 - validate public behavior stays unchanged
 
-### 4. Final Plain-Port Cleanup
+### 3. Final Plain-Port Cleanup
 
 - retire Jellyfin plain LAN access on `:8096` if it is no longer needed
 - retire any remaining direct LAN HTTP app ports
