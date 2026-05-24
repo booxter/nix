@@ -12,6 +12,7 @@ let
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
   caPort = 8443;
   caProvisioner = "bootstrap@home.arpa";
+  pkiRotationBaseBranch = "more-https-work";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   repoRoot = ../..;
@@ -147,7 +148,11 @@ in
     ];
     serviceConfig = {
       Type = "oneshot";
-      Environment = "PKI_ROTATION_REPO_ROOT=${repoRoot}";
+      Environment = [
+        "HOME=/root"
+        "PKI_ROTATION_REPO_ROOT=${repoRoot}"
+        "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
+      ];
       ExecStart = ''
         ${pkgs.pki-rotation}/bin/pki-rotation \
           --repo-root ${repoRoot} \
@@ -185,12 +190,17 @@ in
     ];
     serviceConfig = {
       Type = "oneshot";
-      Environment = "PKI_ROTATION_REPO_ROOT=${repoRoot}";
+      Environment = [
+        "HOME=/root"
+        "PKI_ROTATION_REPO_ROOT=${repoRoot}"
+        "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
+      ];
       ExecStart = ''
         ${pkgs.pki-rotation}/bin/pki-rotation \
           --rotation-window-days 45 \
           --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
           --sops-age-key-file /var/lib/sops-nix/key.txt \
+          --base-branch ${pkiRotationBaseBranch} \
           rotate \
           --github-token-file ${config.sops.secrets.pkiRotationGithubToken.path} \
           --metrics-output ${pkiRotationMetricsPath}
