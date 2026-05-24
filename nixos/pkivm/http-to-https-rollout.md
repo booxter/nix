@@ -21,12 +21,22 @@ Already done:
 
 ### 2. Beast Backend Hops
 
+- keep split DNS for the public names (`js.ihar.dev`, `mu.ihar.dev`, `au.ihar.dev`,
+  `shelf.ihar.dev`, `vi.ihar.dev`)
+- keep `beast` as the only WAN-facing ingress on `:443`
+- move each backend app to a private internal HTTPS vhost on its origin host
+- require mTLS on that backend hop:
+  - `beast` presents a dedicated client cert for the backend service
+  - the backend nginx vhost verifies that client cert against the internal PKI
+- switch `beast` public nginx upstreams from plain HTTP to internal HTTPS+mTLS
 - switch `beast` public nginx upstreams from plain HTTP to internal HTTPS for:
   - `js.ihar.dev`
   - `mu.ihar.dev`
   - `au.ihar.dev`
   - `shelf.ihar.dev`
   - `vi.ihar.dev`
+- start with `vikunja`, then reuse the same pattern for the remaining public
+  backend services
 - validate public behavior stays unchanged
 
 ### 3. Final Plain-Port Cleanup
