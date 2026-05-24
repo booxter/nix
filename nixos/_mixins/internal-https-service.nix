@@ -8,7 +8,9 @@ let
   cfg = config.host.internalHttps;
   internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
   enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
-  enabledServerNames = map (service: service.serverName) (builtins.attrValues enabledServices);
+  enabledServerNames = builtins.concatMap (
+    service: [ service.serverName ] ++ service.serverAliases
+  ) (builtins.attrValues enabledServices);
   secretAttrName = serviceName: "internal-https-${serviceName}";
 in
 {
@@ -21,6 +23,12 @@ in
           type = str;
           default = "${name}.${hostInventory.site.lan.domain}";
           description = "DNS name presented by the internal HTTPS vhost.";
+        };
+
+        serverAliases = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ name ];
+          description = "Additional hostnames served by the internal HTTPS vhost.";
         };
 
         listenAddress = lib.mkOption {
@@ -112,6 +120,7 @@ in
         serviceName: service:
         lib.nameValuePair "internal-https-${serviceName}" {
           serverName = service.serverName;
+          serverAliases = service.serverAliases;
           onlySSL = true;
           listen = [
             {
