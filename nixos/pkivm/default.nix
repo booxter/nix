@@ -8,7 +8,8 @@ let
   hostSecretFile = ../../secrets + "/${config.networking.hostName}.yaml";
   hasHostSecretFile = builtins.pathExists hostSecretFile;
   caName = "Home Internal PKI";
-  certLifetime = "${toString (180 * 24)}h0m0s";
+  certLifetimeDays = 180;
+  certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
   caPort = 8443;
   caProvisioner = "bootstrap@home.arpa";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
