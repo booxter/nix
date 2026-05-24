@@ -12,27 +12,27 @@ let
   nodejs = nodejs_24;
   npmHooks = buildPackages.npmHooks.override { inherit nodejs; };
   pname = "aurral";
-  version = "1.60.3";
+  version = "1.76.17";
   src = fetchFromGitHub {
     owner = "lklynet";
     repo = "aurral";
     tag = "v${version}";
-    sha256 = "1v4bgyq9ys3mwcml73534f3ch5l5299spi8rvip7vsn8qcpaqr1b";
+    sha256 = "sha256-gat/6y2aEaHX9ZwE5lT7n65clO6IBmKEaTT0v9GxVlU=";
   };
   npmDeps = fetchNpmDeps {
     name = "${pname}-${version}-npm-deps";
     inherit src;
-    hash = "sha256-HmW/B3FpwtCzbhHf3u6hdgdhRBKj5Rynk8LeLypY/Q0=";
+    hash = "sha256-i3pH8DkbVMVAPCdW69S3svywzwpiyG3oxbpNt4u0zj4=";
   };
   frontendNpmDeps = fetchNpmDeps {
     name = "${pname}-${version}-frontend-npm-deps";
     src = "${src}/frontend";
-    hash = "sha256-rwy8A0dE4gycZu995bhS9RjciuVv0/Vu1Nde3MDZyRY=";
+    hash = "sha256-TKbc1k7nqndv5yBxBbqms10Nx67egBtOhFOVTnsCun4=";
   };
   backendNpmDeps = fetchNpmDeps {
     name = "${pname}-${version}-backend-npm-deps";
     src = "${src}/backend";
-    hash = "sha256-IiANiFuDbGQJEUVQaVOEgfxSQxL13jMVqpt0TFCzNik=";
+    hash = "sha256-/0gVUwBgjmO0teri7WIz/+I4jcGlz2O8mha0DF2E+VI=";
   };
   runtimeStateDir = "/data/.state/nixarr/aurral";
   runtimeFlowDir = "/data/media/library/flows";
