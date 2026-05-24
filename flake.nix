@@ -47,7 +47,7 @@
     # TODO: switch to official when diff is contributed upstream
     jellarr.url = "github:booxter/jellarr/my-fork-plus-fix-plugin-404";
     #jellarr.url = "github:venkyr77/jellarr/v0.1.0";
-    jellarr.inputs.nixpkgs.follows = "nixpkgs-25_11";
+    jellarr.inputs.nixpkgs.follows = "nixpkgs";
 
     nixarr.url = "github:rasmus-kirk/nixarr";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";

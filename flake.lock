@@ -315,7 +315,7 @@
       "inputs": {
         "flake-parts": "flake-parts",
         "nixpkgs": [
-          "nixpkgs-25_11"
+          "nixpkgs"
         ],
         "systems": "systems",
         "treefmt-nix": "treefmt-nix"
