@@ -413,6 +413,7 @@ def load_cert_text(spec, *, repo_root, sops_age_key_file, secret_cache):
 def scan_certs(
     repo_root, *, intermediate_cert_path, rotation_window_days, sops_age_key_file
 ):
+    repo_root = normalize_repo_root(repo_root)
     now = dt.datetime.now(dt.timezone.utc)
     secret_cache = {}
     records = []
@@ -1132,7 +1133,8 @@ def build_parser():
 def main():
     parser = build_parser()
     args = parser.parse_args()
-    args.repo_root = normalize_repo_root(args.repo_root)
+    if args.repo_root is not None:
+        args.repo_root = normalize_repo_root(args.repo_root)
     args.func(args)
 
 
