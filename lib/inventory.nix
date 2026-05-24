@@ -543,6 +543,7 @@ rec {
       type = "vm";
       name = "org";
       platform = "x86_64-linux";
+      localDnsAliases = [ "vikunja" ];
       upsHost = "prx1-lab";
       cores = 4;
       memorySize = 8;

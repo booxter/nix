@@ -88,6 +88,16 @@ in
                 default = "";
                 description = "Extra nginx location config for this service.";
               };
+
+              mtls = {
+                enable = lib.mkEnableOption "client certificate authentication for this internal HTTPS service";
+
+                trustedCaCertificate = lib.mkOption {
+                  type = path;
+                  default = internalPkiRootCaPath;
+                  description = "CA certificate bundle trusted for inbound client certificate verification.";
+                };
+              };
             };
           }
         )
@@ -137,6 +147,10 @@ in
           serverName = service.serverName;
           serverAliases = service.serverAliases;
           onlySSL = true;
+          extraConfig = lib.optionalString service.mtls.enable ''
+            ssl_client_certificate ${service.mtls.trustedCaCertificate};
+            ssl_verify_client on;
+          '';
           listen = [
             {
               addr = service.listenAddress;

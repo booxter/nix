@@ -23,12 +23,26 @@ in
       hostname = "ihrachyshka-beast.freeddns.org";
       username = "ihrachyshka";
     };
+    mtlsClients.vikunja.enable = true;
     virtualHosts = builtins.listToAttrs (
       map (service: {
         name = service.publicHost;
-        value.proxyPass = "http://${publicServiceBackendAddresses.${service.owner}}:${
-          toString publicServicePorts.${service.id}
-        }";
+        value =
+          if service.id == "vikunja" then
+            {
+              proxyPass = "https://vikunja.${hostInventory.site.lan.domain}";
+              upstreamTls = {
+                enable = true;
+                clientName = "vikunja";
+                serverName = "vikunja.${hostInventory.site.lan.domain}";
+              };
+            }
+          else
+            {
+              proxyPass = "http://${publicServiceBackendAddresses.${service.owner}}:${
+                toString publicServicePorts.${service.id}
+              }";
+            };
       }) hostInventory.publicServices
     );
   };
