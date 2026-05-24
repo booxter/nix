@@ -2,6 +2,7 @@
   config,
   lib,
   inputs,
+  pkgs,
   ...
 }:
 let
@@ -102,6 +103,7 @@ in
 
   services.jellarr = {
     enable = true;
+    package = pkgs.jellarr;
     user = "jellyfin";
     group = "jellyfin";
     environmentFile = config.sops.templates."jellarr.env".path;

@@ -383,8 +383,6 @@ rec {
       stateVersion = "25.11";
       platform = "x86_64-linux";
       dnsAliases = map (service: service.publicHost) publicServices;
-      nixpkgsInput = "nixpkgs-25_11";
-      homeManagerInput = "home-manager-25_11";
       hmFull = false;
       dhcpReservation = {
         match = "bc:fc:e7:3b:fe:da";
