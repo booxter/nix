@@ -2,11 +2,39 @@
   config,
   hostInventory,
   lib,
+  pkgs,
   wgConservativeUploadRateMbit,
   ...
 }:
 let
+  wgBridgeAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.bridgeAddress;
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
+  transmissionUiBridgeAccess = pkgs.writeShellApplication {
+    name = "transmission-ui-bridge-access";
+    runtimeInputs = [
+      pkgs.iproute2
+      pkgs.iptables
+    ];
+    text = ''
+      set -euo pipefail
+
+      rule=(-s ${wgBridgeAddress}/32 -p tcp --dport ${toString config.nixarr.transmission.uiPort} -j ACCEPT)
+
+      case "''${1:-start}" in
+        start)
+          ip netns exec wg iptables -C INPUT "''${rule[@]}" 2>/dev/null \
+            || ip netns exec wg iptables -I INPUT 1 "''${rule[@]}"
+          ;;
+        stop)
+          ip netns exec wg iptables -D INPUT "''${rule[@]}" 2>/dev/null || true
+          ;;
+        *)
+          echo "usage: $0 [start|stop]" >&2
+          exit 2
+          ;;
+      esac
+    '';
+  };
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.
@@ -94,6 +122,24 @@ in
       to = config.nixarr.sabnzbd.guiPort;
     }
   ];
+
+  # Allow the host bridge to reach Transmission inside the WireGuard
+  # namespace so localhost automation and the HTTPS frontend can proxy into
+  # the UI without restoring the direct LAN DNAT on :9091.
+  systemd.services.wg-transmission-ui-bridge-access = {
+    wantedBy = [ "multi-user.target" ];
+    unitConfig = {
+      After = [ "wg.service" ];
+      BindsTo = [ "wg.service" ];
+      PartOf = [ "wg.service" ];
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${lib.getExe transmissionUiBridgeAccess} start";
+      ExecStop = "${lib.getExe transmissionUiBridgeAccess} stop";
+    };
+  };
 
   # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
   services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}" = {
