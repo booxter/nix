@@ -14,7 +14,10 @@ in
 
   nixarr.sabnzbd = {
     enable = true;
-    vpn.enable = true;
+    vpn = {
+      enable = true;
+      configureNginx = false;
+    };
   };
 
   systemd.services.sabnzbd.serviceConfig.ExecStartPre =
@@ -53,8 +56,26 @@ in
       (lib.getExe sabnzbdSetHost)
     ];
 
-  # nixarr hardcodes sabnzbd nginx proxy to 192.168.15.1; override to wg subnet.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}".locations."/" = {
-    proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.sabnzbd.guiPort}";
+  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.nixarr.sabnzbd.guiPort ];
+
+  # nixarr hardcodes sabnzbd nginx proxy to 192.168.15.1; keep the host-local
+  # helper on loopback, but target the actual namespace address directly.
+  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}" = {
+    listen = lib.mkForce [
+      {
+        addr = "127.0.0.1";
+        port = config.nixarr.sabnzbd.guiPort;
+      }
+    ];
+    locations."/" = {
+      recommendedProxySettings = true;
+      proxyWebsockets = true;
+      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.sabnzbd.guiPort}";
+    };
+  };
+
+  host.internalHttps.services.sabnzbd = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}";
   };
 }

@@ -29,6 +29,7 @@ in
     ./transmission-torrent-cleaner.nix
     ./transmission-prioritizer.nix
     ./vpn.nix
+    ./wg-bridge-access.nix
   ];
 
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
@@ -87,6 +88,11 @@ in
     lidarr.settings.server.bindaddress = "127.0.0.1";
     prowlarr.settings.server.bindaddress = "127.0.0.1";
   };
+
+  # Both VPN-confined UIs are now fronted either by localhost-only proxies or
+  # dedicated internal HTTPS vhosts. Retire nixarr's default LAN DNAT for the
+  # UI ports entirely.
+  vpnNamespaces.wg.portMappings = inputs.nixpkgs.lib.mkForce [ ];
 
   host.internalHttps.services = {
     radarr = {

@@ -480,6 +480,7 @@ rec {
         "lidarr"
         "bazarr"
         "prowlarr"
+        "sabnzbd"
         "tmission"
       ];
       wgNamespace = {
