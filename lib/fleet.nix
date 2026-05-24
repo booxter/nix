@@ -172,6 +172,7 @@ let
   unifiSyncPackage = pkgs.unifi-sync;
   issueInternalServiceCertPackage = pkgs.issue-internal-service-cert;
   issueObservabilityCertPackage = pkgs.issue-observability-cert;
+  pkiRotationPackage = pkgs.pki-rotation;
   unifiSyncApp = pkgs.writeShellApplication {
     name = "unifi-sync-app";
     runtimeInputs = [ unifiSyncPackage ];
@@ -196,6 +197,14 @@ let
     runtimeInputs = [ issueInternalServiceCertPackage ];
     text = ''
       exec ${issueInternalServiceCertPackage}/bin/issue-internal-service-cert "$@"
+    '';
+  };
+  pkiRotationApp = pkgs.writeShellApplication {
+    name = "pki-rotation-app";
+    runtimeInputs = [ pkiRotationPackage ];
+    text = ''
+      export PKI_ROTATION_REPO_ROOT="${../.}"
+      exec ${pkiRotationPackage}/bin/pki-rotation "$@"
     '';
   };
   wgHomeClientConfig = pkgs.writeShellApplication {
@@ -376,6 +385,8 @@ in
     mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
   "issue-internal-service-cert" =
     mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+  "pki-rotation" =
+    mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =

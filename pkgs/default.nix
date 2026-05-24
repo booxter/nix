@@ -22,6 +22,8 @@ in
 
   issue-observability-cert = pkgs.callPackage ./issue-observability-cert { };
 
+  pki-rotation = pkgs.callPackage ./pki-rotation { };
+
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
