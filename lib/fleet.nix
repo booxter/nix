@@ -372,12 +372,10 @@ in
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
   "unifi-sync" =
     mkApp "${unifiSyncApp}/bin/unifi-sync-app" "Sync UniFi DHCP, reservations, and split DNS from inventory.";
-  "issue-observability-cert" = mkApp
-    "${issueObservabilityCertApp}/bin/issue-observability-cert-app"
-    "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
-  "issue-internal-service-cert" = mkApp
-    "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app"
-    "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+  "issue-observability-cert" =
+    mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+  "issue-internal-service-cert" =
+    mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =

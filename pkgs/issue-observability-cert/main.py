@@ -30,7 +30,10 @@ def find_repo_root():
             f"ISSUE_OBSERVABILITY_CERT_REPO_ROOT does not point to a flake checkout: {candidate}"
         )
 
-    for start in [pathlib.Path.cwd().resolve(), pathlib.Path(__file__).resolve().parent]:
+    for start in [
+        pathlib.Path.cwd().resolve(),
+        pathlib.Path(__file__).resolve().parent,
+    ]:
         for candidate in [start, *start.parents]:
             if (candidate / "flake.nix").exists():
                 return candidate
@@ -143,7 +146,9 @@ def host_config_root(host):
     for root in ("nixosConfigurations", "darwinConfigurations"):
         if nix_eval_raw_optional(root, host, "config", "host", "dnsName") is not None:
             return root
-    raise SystemExit(f"host {host} not found in nixosConfigurations or darwinConfigurations")
+    raise SystemExit(
+        f"host {host} not found in nixosConfigurations or darwinConfigurations"
+    )
 
 
 def node_exporter_endpoint_enabled(root, host):
@@ -214,7 +219,14 @@ def endpoint_config(host, endpoint):
         return {
             "enable": True,
             "port": nix_eval_json(
-                root, host, "config", "services", "prometheus", "exporters", "node", "port"
+                root,
+                host,
+                "config",
+                "services",
+                "prometheus",
+                "exporters",
+                "node",
+                "port",
             ),
             "secretPrefix": NODE_EXPORTER_SECRET_PREFIX,
         }
@@ -249,7 +261,10 @@ def host_identity(host):
     root = host_config_root(host)
     dns_name = nix_eval_raw(root, host, "config", "host", "dnsName")
     networking_name = nix_eval_raw(root, host, "config", "networking", "hostName")
-    avahi_name = nix_eval_raw_optional(root, host, "config", "services", "avahi", "hostName") or dns_name
+    avahi_name = (
+        nix_eval_raw_optional(root, host, "config", "services", "avahi", "hostName")
+        or dns_name
+    )
     return {
         "dns_name": dns_name,
         "avahi_name": avahi_name,
@@ -301,9 +316,9 @@ def update_secret_file(host, secret_prefix, cert_field, key_field, cert_text, ke
     set_nested(data, prefix + [key_field], key_text.rstrip("\n"))
 
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
-      json.dump(data, handle, sort_keys=True)
-      handle.write("\n")
-      payload_path = handle.name
+        json.dump(data, handle, sort_keys=True)
+        handle.write("\n")
+        payload_path = handle.name
 
     try:
         encrypted = run(
@@ -332,11 +347,13 @@ def issue_endpoint(host, endpoint, *, ca_host):
             identity["dns_name"],
             identity["networking_name"],
             identity["avahi_name"],
-            f'{identity["avahi_name"]}.local',
+            f"{identity['avahi_name']}.local",
         ]
     )
     common_name = f"prometheus-{endpoint}.{identity['dns_name']}"
-    cert_text, key_text = issue_remote_cert(ca_host=ca_host, common_name=common_name, sans=sans)
+    cert_text, key_text = issue_remote_cert(
+        ca_host=ca_host, common_name=common_name, sans=sans
+    )
     update_secret_file(
         host,
         endpoint_cfg["secretPrefix"],
@@ -362,7 +379,9 @@ def issue_endpoint(host, endpoint, *, ca_host):
 def issue_client(host, client, *, ca_host):
     client_cfg = client_config(host, client)
     if not client_cfg.get("enable"):
-        raise SystemExit(f"Prometheus mTLS client {client} on host {host} is not enabled")
+        raise SystemExit(
+            f"Prometheus mTLS client {client} on host {host} is not enabled"
+        )
 
     common_name = client_cfg["commonName"]
     sans = client_cfg.get("sans", [])
@@ -396,12 +415,21 @@ def issue_client(host, client, *, ca_host):
 def main():
     parser = argparse.ArgumentParser(
         prog="issue-observability-cert",
-        description="Issue internal PKI certs for Prometheus mTLS endpoints and store them in host sops secrets."
+        description="Issue internal PKI certs for Prometheus mTLS endpoints and store them in host sops secrets.",
     )
-    parser.add_argument("--host", required=True, help="Inventory host name, e.g. beast or prox-orgvm")
-    parser.add_argument("--endpoint", help="Prometheus mTLS endpoint name, e.g. blackbox or smartctl")
-    parser.add_argument("--client", help="Prometheus mTLS client identity name, e.g. jellyfin-upload-policy")
-    parser.add_argument("--ca-host", default=DEFAULT_CA_HOST, help="SSH host running step-ca")
+    parser.add_argument(
+        "--host", required=True, help="Inventory host name, e.g. beast or prox-orgvm"
+    )
+    parser.add_argument(
+        "--endpoint", help="Prometheus mTLS endpoint name, e.g. blackbox or smartctl"
+    )
+    parser.add_argument(
+        "--client",
+        help="Prometheus mTLS client identity name, e.g. jellyfin-upload-policy",
+    )
+    parser.add_argument(
+        "--ca-host", default=DEFAULT_CA_HOST, help="SSH host running step-ca"
+    )
     args = parser.parse_args()
     if args.endpoint and args.client:
         raise SystemExit("--endpoint and --client are mutually exclusive")

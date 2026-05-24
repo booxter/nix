@@ -20,7 +20,7 @@ assert_eq() {
   local actual="$2"
   local message="${3:-}"
   if [[ "$expected" != "$actual" ]]; then
-    fail "${message:-expected '$expected' but got '$actual'}"
+    fail "${message:-expected \"$expected\" but got \"$actual\"}"
   fi
 }
 
@@ -29,7 +29,7 @@ assert_contains() {
   local needle="$2"
   local message="${3:-}"
   if [[ "$haystack" != *"$needle"* ]]; then
-    fail "${message:-expected output to contain '$needle'}"
+    fail "${message:-expected output to contain \"$needle\"}"
   fi
 }
 
@@ -38,7 +38,7 @@ assert_not_contains() {
   local needle="$2"
   local message="${3:-}"
   if [[ "$haystack" == *"$needle"* ]]; then
-    fail "${message:-expected output not to contain '$needle'}"
+    fail "${message:-expected output not to contain \"$needle\"}"
   fi
 }
 
@@ -47,7 +47,7 @@ assert_file_contains() {
   local needle="$2"
   local message="${3:-}"
   if ! grep -Fq -- "$needle" "$file"; then
-    fail "${message:-expected '$file' to contain '$needle'}"
+    fail "${message:-expected \"$file\" to contain \"$needle\"}"
   fi
 }
 
@@ -60,11 +60,14 @@ decrypt_secret_file() {
 encrypt_secret_file() {
   local host="$1"
   local plain_file="$2"
+  local tmp_file
+  tmp_file="$(mktemp)"
   sops --encrypt \
     --filename-override "secrets/${host}.yaml" \
     --input-type yaml \
     --output-type yaml \
-    "$plain_file" > "secrets/${host}.yaml"
+    "$plain_file" > "$tmp_file"
+  mv "$tmp_file" "secrets/${host}.yaml"
 }
 
 setup_repo() {

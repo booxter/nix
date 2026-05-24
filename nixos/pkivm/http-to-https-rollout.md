@@ -237,7 +237,8 @@ Current note:
 
 Changes that touch beast ingress or Jellyfin-adjacent nginx need a maintenance window.
 
-Do not combine beast work with the earlier phases unless needed. The preferred order is:
+Do not combine beast work with the earlier phases unless needed.
+The preferred order is:
 
 1. cache
 2. dashboards

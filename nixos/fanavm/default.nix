@@ -30,13 +30,19 @@ let
   srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
   httpsServiceFor =
     service:
-    if builtins.hasAttr service.id srvarrHttpsServices && (builtins.getAttr service.id srvarrHttpsServices).enable then
+    if
+      builtins.hasAttr service.id srvarrHttpsServices
+      && (builtins.getAttr service.id srvarrHttpsServices).enable
+    then
       builtins.getAttr service.id srvarrHttpsServices
     else
       null;
   localHttpsServiceFor =
     service:
-    if builtins.hasAttr service.id localHttpsServices && (builtins.getAttr service.id localHttpsServices).enable then
+    if
+      builtins.hasAttr service.id localHttpsServices
+      && (builtins.getAttr service.id localHttpsServices).enable
+    then
       builtins.getAttr service.id localHttpsServices
     else
       null;
@@ -210,8 +216,7 @@ let
   ) (builtins.attrNames outputs.nixosConfigurations);
   remotePlainBlackboxProbeSourceNames = builtins.filter (
     name:
-    !(outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.mtls.enable
-      or false
+    !(outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.mtls.enable or false
     )
   ) remoteBlackboxProbeSourceNames;
   mkRemoteBlackboxProbeSourceConfig =

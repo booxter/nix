@@ -15,9 +15,13 @@ let
     ;
   nodeExporterGroup = config.services.prometheus.exporters.node.group;
   nodeExporterUser = config.services.prometheus.exporters.node.user;
-  enabledPrometheusMtlsEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.prometheusMtlsEndpoints;
+  enabledPrometheusMtlsEndpoints = lib.filterAttrs (
+    _: endpoint: endpoint.enable
+  ) cfg.prometheusMtlsEndpoints;
   endpointSecretAttrName = endpointName: "prometheus-mtls-${endpointName}";
-  endpointPortValues = map (endpoint: endpoint.port) (builtins.attrValues enabledPrometheusMtlsEndpoints);
+  endpointPortValues = map (endpoint: endpoint.port) (
+    builtins.attrValues enabledPrometheusMtlsEndpoints
+  );
 in
 {
   options.host.observability.client = {
@@ -78,85 +82,99 @@ in
     };
 
     prometheusMtlsEndpoints = lib.mkOption {
-      type = with lib.types; attrsOf (submodule ({ name, ... }: {
-        options = {
-          enable = lib.mkEnableOption "mTLS-protected Prometheus scrape endpoint";
+      type =
+        with lib.types;
+        attrsOf (
+          submodule (
+            { name, ... }:
+            {
+              options = {
+                enable = lib.mkEnableOption "mTLS-protected Prometheus scrape endpoint";
 
-          listenAddress = lib.mkOption {
-            type = str;
-            default = "0.0.0.0";
-            description = "Address for the mTLS endpoint to bind.";
-          };
+                listenAddress = lib.mkOption {
+                  type = str;
+                  default = "0.0.0.0";
+                  description = "Address for the mTLS endpoint to bind.";
+                };
 
-          port = lib.mkOption {
-            type = port;
-            description = "LAN-visible port for the mTLS endpoint.";
-          };
+                port = lib.mkOption {
+                  type = port;
+                  description = "LAN-visible port for the mTLS endpoint.";
+                };
 
-          path = lib.mkOption {
-            type = str;
-            default = "/metrics";
-            description = "HTTP path exposed by the mTLS endpoint.";
-          };
+                path = lib.mkOption {
+                  type = str;
+                  default = "/metrics";
+                  description = "HTTP path exposed by the mTLS endpoint.";
+                };
 
-          upstream = lib.mkOption {
-            type = str;
-            description = "Upstream URL that nginx proxies to after mTLS auth.";
-          };
+                upstream = lib.mkOption {
+                  type = str;
+                  description = "Upstream URL that nginx proxies to after mTLS auth.";
+                };
 
-          openFirewall = lib.mkOption {
-            type = bool;
-            default = true;
-            description = "Whether to open the firewall for the mTLS endpoint.";
-          };
+                openFirewall = lib.mkOption {
+                  type = bool;
+                  default = true;
+                  description = "Whether to open the firewall for the mTLS endpoint.";
+                };
 
-          serverName = lib.mkOption {
-            type = str;
-            default = config.host.dnsName;
-            description = "Server name presented by the nginx vhost for this endpoint.";
-          };
+                serverName = lib.mkOption {
+                  type = str;
+                  default = config.host.dnsName;
+                  description = "Server name presented by the nginx vhost for this endpoint.";
+                };
 
-          secretPrefix = lib.mkOption {
-            type = str;
-            default = "prometheus/${name}";
-            description = "Secret prefix containing server_crt and server_key for this endpoint.";
-          };
+                secretPrefix = lib.mkOption {
+                  type = str;
+                  default = "prometheus/${name}";
+                  description = "Secret prefix containing server_crt and server_key for this endpoint.";
+                };
 
-          locationExtraConfig = lib.mkOption {
-            type = lines;
-            default = "";
-            description = "Extra nginx location config for this endpoint.";
-          };
-        };
-      }));
+                locationExtraConfig = lib.mkOption {
+                  type = lines;
+                  default = "";
+                  description = "Extra nginx location config for this endpoint.";
+                };
+              };
+            }
+          )
+        );
       default = { };
       description = "Additional nginx-fronted mTLS endpoints for remote Prometheus scrapes.";
     };
 
     prometheusMtlsClients = lib.mkOption {
-      type = with lib.types; attrsOf (submodule ({ name, ... }: {
-        options = {
-          enable = lib.mkEnableOption "mTLS client certificate for consuming protected Prometheus-style endpoints";
+      type =
+        with lib.types;
+        attrsOf (
+          submodule (
+            { name, ... }:
+            {
+              options = {
+                enable = lib.mkEnableOption "mTLS client certificate for consuming protected Prometheus-style endpoints";
 
-          secretPrefix = lib.mkOption {
-            type = str;
-            default = "prometheus/clients/${name}";
-            description = "Secret prefix containing client_crt and client_key for this client identity.";
-          };
+                secretPrefix = lib.mkOption {
+                  type = str;
+                  default = "prometheus/clients/${name}";
+                  description = "Secret prefix containing client_crt and client_key for this client identity.";
+                };
 
-          commonName = lib.mkOption {
-            type = str;
-            default = "${name}.${config.host.dnsName}";
-            description = "Leaf certificate common name to issue for this client identity.";
-          };
+                commonName = lib.mkOption {
+                  type = str;
+                  default = "${name}.${config.host.dnsName}";
+                  description = "Leaf certificate common name to issue for this client identity.";
+                };
 
-          sans = lib.mkOption {
-            type = listOf str;
-            default = [ ];
-            description = "Optional SANs for this client certificate.";
-          };
-        };
-      }));
+                sans = lib.mkOption {
+                  type = listOf str;
+                  default = [ ];
+                  description = "Optional SANs for this client certificate.";
+                };
+              };
+            }
+          )
+        );
       default = { };
       description = "Host-local mTLS client identities used to consume protected Prometheus-style endpoints.";
     };
@@ -276,31 +294,33 @@ in
       (lib.mkIf (enabledPrometheusMtlsEndpoints != { }) {
         assertions = [
           {
-            assertion = (builtins.length endpointPortValues) == (builtins.length (lib.unique endpointPortValues));
+            assertion =
+              (builtins.length endpointPortValues) == (builtins.length (lib.unique endpointPortValues));
             message = "host.observability.client.prometheusMtlsEndpoints must not reuse listen ports on the same host.";
           }
         ];
 
-        sops.secrets = lib.mapAttrs' (
-          endpointName: endpoint:
-          lib.nameValuePair "${endpointSecretAttrName endpointName}-server-crt" {
-            key = "${endpoint.secretPrefix}/server_crt";
-            owner = config.services.nginx.user;
-            group = config.services.nginx.group;
-            mode = "0400";
-            restartUnits = [ "nginx.service" ];
-          }
-        ) enabledPrometheusMtlsEndpoints
-        // lib.mapAttrs' (
-          endpointName: endpoint:
-          lib.nameValuePair "${endpointSecretAttrName endpointName}-server-key" {
-            key = "${endpoint.secretPrefix}/server_key";
-            owner = config.services.nginx.user;
-            group = config.services.nginx.group;
-            mode = "0400";
-            restartUnits = [ "nginx.service" ];
-          }
-        ) enabledPrometheusMtlsEndpoints;
+        sops.secrets =
+          lib.mapAttrs' (
+            endpointName: endpoint:
+            lib.nameValuePair "${endpointSecretAttrName endpointName}-server-crt" {
+              key = "${endpoint.secretPrefix}/server_crt";
+              owner = config.services.nginx.user;
+              group = config.services.nginx.group;
+              mode = "0400";
+              restartUnits = [ "nginx.service" ];
+            }
+          ) enabledPrometheusMtlsEndpoints
+          // lib.mapAttrs' (
+            endpointName: endpoint:
+            lib.nameValuePair "${endpointSecretAttrName endpointName}-server-key" {
+              key = "${endpoint.secretPrefix}/server_key";
+              owner = config.services.nginx.user;
+              group = config.services.nginx.group;
+              mode = "0400";
+              restartUnits = [ "nginx.service" ];
+            }
+          ) enabledPrometheusMtlsEndpoints;
 
         services.nginx = {
           enable = true;
@@ -334,9 +354,9 @@ in
         };
 
         networking.firewall.allowedTCPPorts = lib.unique (
-          builtins.concatMap (
-            endpoint: lib.optional endpoint.openFirewall endpoint.port
-          ) (builtins.attrValues enabledPrometheusMtlsEndpoints)
+          builtins.concatMap (endpoint: lib.optional endpoint.openFirewall endpoint.port) (
+            builtins.attrValues enabledPrometheusMtlsEndpoints
+          )
         );
 
         systemd.services.nginx = {

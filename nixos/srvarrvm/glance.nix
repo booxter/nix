@@ -23,13 +23,19 @@ let
   };
   httpsServiceFor =
     service:
-    if builtins.hasAttr service.id srvarrHttpsServices && (builtins.getAttr service.id srvarrHttpsServices).enable then
+    if
+      builtins.hasAttr service.id srvarrHttpsServices
+      && (builtins.getAttr service.id srvarrHttpsServices).enable
+    then
       builtins.getAttr service.id srvarrHttpsServices
     else
       null;
   fanaHttpsServiceFor =
     service:
-    if builtins.hasAttr service.id fanaHttpsServices && (builtins.getAttr service.id fanaHttpsServices).enable then
+    if
+      builtins.hasAttr service.id fanaHttpsServices
+      && (builtins.getAttr service.id fanaHttpsServices).enable
+    then
       builtins.getAttr service.id fanaHttpsServices
     else
       null;

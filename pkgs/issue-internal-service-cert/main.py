@@ -28,7 +28,10 @@ def find_repo_root():
             f"ISSUE_INTERNAL_SERVICE_CERT_REPO_ROOT does not point to a flake checkout: {candidate}"
         )
 
-    for start in [pathlib.Path.cwd().resolve(), pathlib.Path(__file__).resolve().parent]:
+    for start in [
+        pathlib.Path.cwd().resolve(),
+        pathlib.Path(__file__).resolve().parent,
+    ]:
         for candidate in [start, *start.parents]:
             if (candidate / "flake.nix").exists():
                 return candidate
@@ -130,7 +133,9 @@ def host_config_root(host):
     for root in ("nixosConfigurations", "darwinConfigurations"):
         if nix_eval_raw_optional(root, host, "config", "host", "dnsName") is not None:
             return root
-    raise SystemExit(f"host {host} not found in nixosConfigurations or darwinConfigurations")
+    raise SystemExit(
+        f"host {host} not found in nixosConfigurations or darwinConfigurations"
+    )
 
 
 def service_names_for_host(host):
@@ -138,12 +143,16 @@ def service_names_for_host(host):
     service_map = (
         nix_eval_json(root, host, "config", "host", "internalHttps", "services") or {}
     )
-    return sorted(name for name, service in service_map.items() if service.get("enable"))
+    return sorted(
+        name for name, service in service_map.items() if service.get("enable")
+    )
 
 
 def service_config(host, service):
     root = host_config_root(host)
-    return nix_eval_json(root, host, "config", "host", "internalHttps", "services", service)
+    return nix_eval_json(
+        root, host, "config", "host", "internalHttps", "services", service
+    )
 
 
 def issue_remote_cert(*, ca_host, common_name, sans):
@@ -216,11 +225,15 @@ def update_secret_file(host, service, service_cfg, cert_text, key_text):
 def issue_service(host, service, *, ca_host):
     service_cfg = service_config(host, service)
     if not service_cfg.get("enable"):
-        raise SystemExit(f"internal HTTPS service {service} on host {host} is not enabled")
+        raise SystemExit(
+            f"internal HTTPS service {service} on host {host} is not enabled"
+        )
 
     sans = unique_strings([service, service_cfg["serverName"]])
     common_name = service_cfg["serverName"]
-    cert_text, key_text = issue_remote_cert(ca_host=ca_host, common_name=common_name, sans=sans)
+    cert_text, key_text = issue_remote_cert(
+        ca_host=ca_host, common_name=common_name, sans=sans
+    )
     update_secret_file(host, service, service_cfg, cert_text, key_text)
     print(
         json.dumps(
@@ -241,9 +254,13 @@ def main():
         prog="issue-internal-service-cert",
         description="Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.",
     )
-    parser.add_argument("--host", required=True, help="Inventory host name, e.g. prox-srvarrvm")
+    parser.add_argument(
+        "--host", required=True, help="Inventory host name, e.g. prox-srvarrvm"
+    )
     parser.add_argument("--service", help="Internal HTTPS service name, e.g. glance")
-    parser.add_argument("--ca-host", default=DEFAULT_CA_HOST, help="SSH host running step-ca")
+    parser.add_argument(
+        "--ca-host", default=DEFAULT_CA_HOST, help="SSH host running step-ca"
+    )
     args = parser.parse_args()
 
     services = [args.service] if args.service else service_names_for_host(args.host)

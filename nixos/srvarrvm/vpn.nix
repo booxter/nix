@@ -37,8 +37,7 @@ in
 
   imports = [
     (import ./adaptive-upload-policy.nix {
-      jellyfinExporterUrl =
-        "https://${beastHostConfig.host.dnsName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
+      jellyfinExporterUrl = "https://${beastHostConfig.host.dnsName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
       fallbackUploadRateMbit = wgConservativeUploadRateMbit;
       inherit
         networkOnlineUnitDeps

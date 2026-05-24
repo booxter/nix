@@ -58,10 +58,12 @@ in
   systemd.services.jellyfin-upload-policy = {
     description = "Decide adaptive torrent upload policy from Jellyfin playback";
     wantedBy = [ "multi-user.target" ];
-    unitConfig = networkOnlineUnitDeps // lib.optionalAttrs jellyfinUploadPolicyMtlsClient.enable {
-      Wants = (networkOnlineUnitDeps.Wants or [ ]) ++ [ "sops-install-secrets.service" ];
-      After = (networkOnlineUnitDeps.After or [ ]) ++ [ "sops-install-secrets.service" ];
-    };
+    unitConfig =
+      networkOnlineUnitDeps
+      // lib.optionalAttrs jellyfinUploadPolicyMtlsClient.enable {
+        Wants = (networkOnlineUnitDeps.Wants or [ ]) ++ [ "sops-install-secrets.service" ];
+        After = (networkOnlineUnitDeps.After or [ ]) ++ [ "sops-install-secrets.service" ];
+      };
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " (
         [
