@@ -6,8 +6,8 @@ let
   enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
   enabledUpstreamTlsVhosts = lib.filterAttrs (_: vhost: vhost.upstreamTls.enable) cfg.virtualHosts;
   mtlsClientSecretAttrName = clientName: "external-service-mtls-${clientName}";
-  recommendedProxyHeaders = ''
-    proxy_set_header Host $host;
+  recommendedProxyHeaders = hostHeader: ''
+    proxy_set_header Host ${hostHeader};
     proxy_set_header X-Real-IP $remote_addr;
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
@@ -25,7 +25,11 @@ let
           vhost.proxyPass;
       proxyWebsockets = vhost.proxyWebsockets;
       recommendedProxySettings = false;
-      extraConfig = recommendedProxyHeaders + vhost.locationExtraConfig;
+      extraConfig =
+        recommendedProxyHeaders (
+          if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host"
+        )
+        + vhost.locationExtraConfig;
     };
   };
 in
