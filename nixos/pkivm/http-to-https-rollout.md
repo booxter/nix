@@ -6,6 +6,13 @@ Move remaining LAN-facing HTTP service endpoints to HTTPS with the internal PKI.
 
 This document is the execution checklist for that work.
 
+Current status:
+
+- shared internal HTTPS host pattern is implemented
+- internal service cert issuance app is implemented
+- UniFi DNS sync can publish service aliases from inventory
+- `glance.home.arpa` is live on internal HTTPS
+
 Out of scope:
 
 - loopback-only HTTP between processes on the same host
@@ -76,6 +83,11 @@ Required changes:
 - update inventory/UI links to the HTTPS names
 - update blackbox probes to HTTPS
 - close the plain LAN ports afterward
+
+Status:
+
+- Glance is complete
+- Grafana is still pending
 
 ### Group 3: Internal Media/Admin UIs
 
@@ -160,9 +172,9 @@ The desired flow is the same as current observability cert issuance:
 ### Phase 0: Prereqs
 
 - verify the internal PKI root is trusted on every client that will hit these services
-- decide the inventory schema for internal service aliases
-- build the reusable internal HTTPS host pattern
-- build the matching cert issuance path
+- done: inventory schema for internal service aliases
+- done: reusable internal HTTPS host pattern
+- done: matching cert issuance path
 
 ### Phase 1: Cache
 
@@ -174,8 +186,8 @@ The desired flow is the same as current observability cert issuance:
 
 ### Phase 2: Dashboards
 
-- move Grafana to `https://grafana.home.arpa`
-- move Glance to `https://glance.home.arpa`
+- pending: move Grafana to `https://grafana.home.arpa`
+- done: move Glance to `https://glance.home.arpa`
 - update service catalog and probes
 - close plain LAN access
 
