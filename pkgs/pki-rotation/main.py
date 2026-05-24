@@ -8,6 +8,9 @@ import re
 import subprocess
 import sys
 import tempfile
+import urllib.error
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass
 
 import yaml
@@ -562,6 +565,51 @@ def metrics_text(records):
     return "\n".join(lines) + "\n"
 
 
+def rotation_metrics_text(summary):
+    labels = {
+        "branch": summary["branch"],
+        "base_branch": summary["base_branch"],
+    }
+    lines = [
+        "# HELP host_observability_pki_rotation_last_run_timestamp_seconds Last completion time of the PKI rotation controller.",
+        "# TYPE host_observability_pki_rotation_last_run_timestamp_seconds gauge",
+        format_metric(
+            "host_observability_pki_rotation_last_run_timestamp_seconds",
+            summary["run_timestamp_seconds"],
+            labels,
+        ),
+        "# HELP host_observability_pki_rotation_last_success Whether the last PKI rotation controller run completed successfully.",
+        "# TYPE host_observability_pki_rotation_last_success gauge",
+        format_metric(
+            "host_observability_pki_rotation_last_success",
+            1 if summary["success"] else 0,
+            labels,
+        ),
+        "# HELP host_observability_pki_rotation_last_due_count Number of certificates inside the rotation window on the last controller run.",
+        "# TYPE host_observability_pki_rotation_last_due_count gauge",
+        format_metric(
+            "host_observability_pki_rotation_last_due_count",
+            summary["due_count"],
+            labels,
+        ),
+        "# HELP host_observability_pki_rotation_last_rotated_count Number of certificates actually reissued on the last controller run.",
+        "# TYPE host_observability_pki_rotation_last_rotated_count gauge",
+        format_metric(
+            "host_observability_pki_rotation_last_rotated_count",
+            summary["rotated_count"],
+            labels,
+        ),
+        "# HELP host_observability_pki_rotation_last_pr_open Whether the controller left an open PR branch to review.",
+        "# TYPE host_observability_pki_rotation_last_pr_open gauge",
+        format_metric(
+            "host_observability_pki_rotation_last_pr_open",
+            1 if summary["pr_url"] else 0,
+            labels,
+        ),
+    ]
+    return "\n".join(lines) + "\n"
+
+
 def write_atomic(path, content):
     target = pathlib.Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -574,6 +622,359 @@ def write_atomic(path, content):
         handle.write(content)
         tmp_path = pathlib.Path(handle.name)
     tmp_path.replace(target)
+
+
+def rotation_candidates(records):
+    return [
+        record
+        for record in records
+        if record["category"] != "ca" and record["rotation_due"] == 1
+    ]
+
+
+def issue_command_for_record(record):
+    category = record["category"]
+    if category == "internal_https_server":
+        return [
+            "issue-internal-service-cert",
+            "--host",
+            record["host"],
+            "--service",
+            record["cert_name"],
+        ]
+    if category == "external_service_client":
+        return [
+            "issue-internal-service-cert",
+            "--host",
+            record["host"],
+            "--client",
+            record["cert_name"],
+        ]
+    if category == "observability_endpoint_server":
+        return [
+            "issue-observability-cert",
+            "--host",
+            record["host"],
+            "--endpoint",
+            record["cert_name"],
+        ]
+    if category == "observability_client":
+        return [
+            "issue-observability-cert",
+            "--host",
+            record["host"],
+            "--client",
+            record["cert_name"],
+        ]
+    raise SystemExit(f"unsupported rotation category: {category}")
+
+
+def apply_rotations(candidates, *, repo_root, sops_age_key_file):
+    env = os.environ.copy()
+    env["ISSUE_CERT_LOCAL_CA"] = "1"
+    if sops_age_key_file:
+        env["SOPS_AGE_KEY_FILE"] = sops_age_key_file
+
+    rotated = []
+    for record in candidates:
+        output = run(issue_command_for_record(record), cwd=repo_root, env=env)
+        payload = {}
+        if output.strip():
+            try:
+                payload = json.loads(output.strip().splitlines()[-1])
+            except json.JSONDecodeError:
+                payload = {"raw_output": output.strip()}
+        rotated.append(record | {"issuer_result": payload})
+    return rotated
+
+
+def git_has_changes(repo_root):
+    return bool(run(["git", "status", "--short"], cwd=repo_root).strip())
+
+
+def read_token(token_file):
+    token = pathlib.Path(token_file).read_text().strip()
+    if not token:
+        raise SystemExit(f"token file is empty: {token_file}")
+    return token
+
+
+def prepare_git_auth_env(token_file):
+    env = os.environ.copy()
+    cleanup_paths = []
+    if not token_file:
+        return env, cleanup_paths
+
+    token_path = pathlib.Path(token_file).resolve()
+    with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as handle:
+        handle.write(
+            """#!/bin/sh
+case "$1" in
+  *sername*) printf '%s\\n' 'x-access-token' ;;
+  *assword*) cat "$PKI_ROTATION_GITHUB_TOKEN_FILE" ;;
+  *) printf '\\n' ;;
+esac
+"""
+        )
+        askpass_path = pathlib.Path(handle.name)
+    askpass_path.chmod(0o700)
+    cleanup_paths.append(askpass_path)
+    env.update(
+        {
+            "GIT_ASKPASS": str(askpass_path),
+            "GIT_TERMINAL_PROMPT": "0",
+            "PKI_ROTATION_GITHUB_TOKEN_FILE": str(token_path),
+        }
+    )
+    return env, cleanup_paths
+
+
+def github_api_json(method, path, *, token, payload=None):
+    data = None
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
+    if payload is not None:
+        data = json.dumps(payload).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    request = urllib.request.Request(
+        f"https://api.github.com{path}",
+        data=data,
+        headers=headers,
+        method=method,
+    )
+    try:
+        with urllib.request.urlopen(request) as response:
+            body = response.read()
+    except urllib.error.HTTPError as exc:
+        details = exc.read().decode("utf-8", errors="replace")
+        raise SystemExit(f"GitHub API request failed: {exc} {details}") from exc
+
+    if not body:
+        return None
+    return json.loads(body.decode("utf-8"))
+
+
+def find_open_pr(owner, repo_name, *, branch, base_branch, token):
+    query = urllib.parse.urlencode(
+        {
+            "state": "open",
+            "head": f"{owner}:{branch}",
+            "base": base_branch,
+        }
+    )
+    pulls = github_api_json(
+        "GET",
+        f"/repos/{owner}/{repo_name}/pulls?{query}",
+        token=token,
+    )
+    if not pulls:
+        return None
+    return pulls[0]
+
+
+def format_expiry(record):
+    if record.get("parse_success") != 1:
+        return "unparsable"
+    return dt.datetime.fromtimestamp(
+        record["not_after_timestamp_seconds"], tz=dt.timezone.utc
+    ).date().isoformat()
+
+
+def build_pr_body(rotated_records, records_after, *, rotation_window_days):
+    lookup = {
+        (record["host"], record["category"], record["cert_name"]): record
+        for record in records_after
+    }
+    lines = [
+        "## Summary",
+        f"- rotate {len(rotated_records)} managed internal PKI leaf cert(s)",
+        "- leaf lifetime: 180d",
+        f"- rotation window: {rotation_window_days}d",
+        "",
+        "## Rotated Certificates",
+    ]
+    for record in rotated_records:
+        refreshed = lookup[(record["host"], record["category"], record["cert_name"])]
+        lines.append(
+            f"- `{record['host']}` / `{record['category']}` / `{record['cert_name']}` -> expires `{format_expiry(refreshed)}`"
+        )
+    lines.extend(
+        [
+            "",
+            "This PR was created automatically by `prox-pkivm`.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def cmd_rotate(args):
+    run_timestamp = dt.datetime.now(dt.timezone.utc).timestamp()
+
+    if args.dry_run:
+        records = scan_certs(
+            args.repo_root,
+            intermediate_cert_path=args.intermediate_cert_path,
+            rotation_window_days=args.rotation_window_days,
+            sops_age_key_file=args.sops_age_key_file,
+        )
+        candidates = rotation_candidates(records)
+        summary = {
+            "success": True,
+            "dry_run": True,
+            "branch": args.branch,
+            "base_branch": args.base_branch,
+            "run_timestamp_seconds": run_timestamp,
+            "due_count": len(candidates),
+            "rotated_count": 0,
+            "pr_url": None,
+            "candidates": candidates,
+        }
+        if args.metrics_output:
+            write_atomic(args.metrics_output, rotation_metrics_text(summary))
+        print(json.dumps(summary, indent=2, sort_keys=True))
+        return
+
+    if not args.github_token_file:
+        raise SystemExit("--github-token-file is required unless --dry-run is used")
+
+    token = read_token(args.github_token_file)
+    open_pr = find_open_pr(
+        args.repo_owner,
+        args.repo_name,
+        branch=args.branch,
+        base_branch=args.base_branch,
+        token=token,
+    )
+
+    git_env, cleanup_paths = prepare_git_auth_env(args.github_token_file)
+    try:
+        with tempfile.TemporaryDirectory(prefix="pki-rotation-") as tmpdir:
+            worktree = pathlib.Path(tmpdir) / "repo"
+            clone_branch = args.branch if open_pr else args.base_branch
+            run(
+                [
+                    "git",
+                    "clone",
+                    "--branch",
+                    clone_branch,
+                    "--single-branch",
+                    args.repo_url,
+                    str(worktree),
+                ],
+                cwd=None,
+                env=git_env,
+            )
+            if not open_pr:
+                run(["git", "switch", "-c", args.branch], cwd=worktree, env=git_env)
+
+            records_before = scan_certs(
+                worktree,
+                intermediate_cert_path=args.intermediate_cert_path,
+                rotation_window_days=args.rotation_window_days,
+                sops_age_key_file=args.sops_age_key_file,
+            )
+            candidates = rotation_candidates(records_before)
+
+            if candidates:
+                rotated = apply_rotations(
+                    candidates,
+                    repo_root=worktree,
+                    sops_age_key_file=args.sops_age_key_file,
+                )
+            else:
+                rotated = []
+
+            records_after = scan_certs(
+                worktree,
+                intermediate_cert_path=args.intermediate_cert_path,
+                rotation_window_days=args.rotation_window_days,
+                sops_age_key_file=args.sops_age_key_file,
+            )
+
+            pr_url = open_pr["html_url"] if open_pr else None
+            rotated_count = len(rotated)
+
+            if rotated and git_has_changes(worktree):
+                run(
+                    ["git", "config", "user.name", args.commit_user_name],
+                    cwd=worktree,
+                    env=git_env,
+                )
+                run(
+                    ["git", "config", "user.email", args.commit_user_email],
+                    cwd=worktree,
+                    env=git_env,
+                )
+                run(["git", "add", "secrets"], cwd=worktree, env=git_env)
+                run(
+                    [
+                        "git",
+                        "commit",
+                        "-m",
+                        "chore: rotate internal PKI leaf certs",
+                    ],
+                    cwd=worktree,
+                    env=git_env,
+                )
+                run(
+                    [
+                        "git",
+                        "push",
+                        "--force-with-lease",
+                        "origin",
+                        f"HEAD:{args.branch}",
+                    ],
+                    cwd=worktree,
+                    env=git_env,
+                )
+
+                if open_pr is None:
+                    created_pr = github_api_json(
+                        "POST",
+                        f"/repos/{args.repo_owner}/{args.repo_name}/pulls",
+                        token=token,
+                        payload={
+                            "title": "chore: rotate internal PKI leaf certs",
+                            "head": args.branch,
+                            "base": args.base_branch,
+                            "body": build_pr_body(
+                                rotated,
+                                records_after,
+                                rotation_window_days=args.rotation_window_days,
+                            ),
+                        },
+                    )
+                    pr_url = created_pr["html_url"]
+                else:
+                    pr_url = open_pr["html_url"]
+
+            summary = {
+                "success": True,
+                "dry_run": False,
+                "branch": args.branch,
+                "base_branch": args.base_branch,
+                "run_timestamp_seconds": run_timestamp,
+                "due_count": len(candidates),
+                "rotated_count": rotated_count,
+                "pr_url": pr_url,
+                "rotated": [
+                    {
+                        "host": record["host"],
+                        "category": record["category"],
+                        "cert_name": record["cert_name"],
+                    }
+                    for record in rotated
+                ],
+            }
+            if args.metrics_output:
+                write_atomic(args.metrics_output, rotation_metrics_text(summary))
+            print(json.dumps(summary, indent=2, sort_keys=True))
+    finally:
+        for path in cleanup_paths:
+            path.unlink(missing_ok=True)
 
 
 def cmd_scan(args):
@@ -642,6 +1043,60 @@ def build_parser():
         help="Write Prometheus metrics atomically to this path instead of stdout.",
     )
     export_parser.set_defaults(func=cmd_export_metrics)
+
+    rotate_parser = subparsers.add_parser(
+        "rotate",
+        help="Rotate due managed leaf certificates and open a review PR.",
+    )
+    rotate_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report due certificates without cloning, reissuing, or opening a PR.",
+    )
+    rotate_parser.add_argument(
+        "--github-token-file",
+        help="Secret file containing a GitHub token able to push a branch and create a PR.",
+    )
+    rotate_parser.add_argument(
+        "--repo-url",
+        default="https://github.com/booxter/nix.git",
+        help="Git URL used for the writable rotation checkout.",
+    )
+    rotate_parser.add_argument(
+        "--repo-owner",
+        default="booxter",
+        help="GitHub repository owner used for PR lookup and creation.",
+    )
+    rotate_parser.add_argument(
+        "--repo-name",
+        default="nix",
+        help="GitHub repository name used for PR lookup and creation.",
+    )
+    rotate_parser.add_argument(
+        "--base-branch",
+        default="master",
+        help="Base branch the rotation PR should target.",
+    )
+    rotate_parser.add_argument(
+        "--branch",
+        default="ci/pki-rotate",
+        help="Automation branch used for the rotation PR.",
+    )
+    rotate_parser.add_argument(
+        "--commit-user-name",
+        default="PKI Rotation Bot",
+        help="Git commit author name for automated rotation commits.",
+    )
+    rotate_parser.add_argument(
+        "--commit-user-email",
+        default="pki-rotation@home.arpa",
+        help="Git commit author email for automated rotation commits.",
+    )
+    rotate_parser.add_argument(
+        "--metrics-output",
+        help="Optional Prometheus textfile path for controller run metrics.",
+    )
+    rotate_parser.set_defaults(func=cmd_rotate)
 
     return parser
 

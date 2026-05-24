@@ -1,5 +1,7 @@
 {
   git,
+  issueInternalServiceCert,
+  issueObservabilityCert,
   jq,
   lib,
   nix,
@@ -21,6 +23,8 @@ writeShellApplication {
   name = "pki-rotation";
   runtimeInputs = [
     git
+    issueInternalServiceCert
+    issueObservabilityCert
     jq
     nix
     openssh
