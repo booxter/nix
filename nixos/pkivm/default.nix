@@ -8,7 +8,7 @@ let
   hostSecretFile = ../../secrets + "/${config.networking.hostName}.yaml";
   hasHostSecretFile = builtins.pathExists hostSecretFile;
   caName = "Home Internal PKI";
-  certLifetime = "4320h0m0s";
+  certLifetime = "${toString (180 * 24)}h0m0s";
   caPort = 8443;
   caProvisioner = "bootstrap@home.arpa";
   stepStateDir = "/var/lib/step-ca";
