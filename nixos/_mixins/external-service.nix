@@ -5,14 +5,24 @@ let
   internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
   enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
   mtlsClientSecretAttrName = clientName: "external-service-mtls-${clientName}";
+  recommendedProxyHeaders = ''
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $hostname;
+  '';
   mkPublicVhost = vhost: {
     forceSSL = vhost.forceSSL;
     enableACME = vhost.enableACME;
     locations."/" = {
       proxyPass = vhost.proxyPass;
       proxyWebsockets = vhost.proxyWebsockets;
+      recommendedProxySettings = false;
       extraConfig =
-        lib.optionalString vhost.upstreamTls.enable ''
+        recommendedProxyHeaders
+        + lib.optionalString vhost.upstreamTls.enable ''
           proxy_set_header Host ${vhost.upstreamTls.serverName};
           proxy_ssl_server_name on;
           proxy_ssl_name ${vhost.upstreamTls.serverName};
