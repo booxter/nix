@@ -19,7 +19,6 @@ Already done:
 
 ### 2. Remaining Internal `srvarr` UIs
 
-- move Transmission UI to `https://tmission.home.arpa`
 - move SABnzbd UI to `https://sabnzbd.home.arpa`
 - update Glance links and blackbox probes
 - close the old plain LAN ports afterward
