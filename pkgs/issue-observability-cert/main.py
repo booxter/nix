@@ -16,6 +16,7 @@ DEFAULT_CA_HOST = "prox-pkivm"
 DEFAULT_PROVISIONER = "bootstrap@home.arpa"
 DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
+LOCAL_CA_ENV = "ISSUE_CERT_LOCAL_CA"
 NODE_EXPORTER_ENDPOINT = "node_exporter"
 NODE_EXPORTER_SECRET_PREFIX = "prometheus/node_exporter"
 
@@ -292,7 +293,10 @@ sudo -u step-ca cat "$tmpdir/server.crt"
 printf '%s\\n' '__KEY__'
 sudo -u step-ca cat "$tmpdir/server.key"
 """
-    output = run(["ssh", ca_host, "bash", "-lc", script], cwd=None)
+    if os.environ.get(LOCAL_CA_ENV) == "1":
+        output = run(["bash", "-lc", script], cwd=None)
+    else:
+        output = run(["ssh", ca_host, "bash", "-lc", script], cwd=None)
     cert_marker = "__CERT__\n"
     key_marker = "\n__KEY__\n"
     if not output.startswith(cert_marker) or key_marker not in output:
