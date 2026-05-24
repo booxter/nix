@@ -1,6 +1,8 @@
 # You can build them using 'nix build .#example'
 pkgs:
 let
+  issueInternalServiceCert = pkgs.callPackage ./issue-internal-service-cert { };
+  issueObservabilityCert = pkgs.callPackage ./issue-observability-cert { };
   transmissionTrackerTools = pkgs.callPackage ./transmission-tracker-prioritizer { };
 in
 {
@@ -18,9 +20,13 @@ in
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
-  issue-internal-service-cert = pkgs.callPackage ./issue-internal-service-cert { };
+  issue-internal-service-cert = issueInternalServiceCert;
 
-  issue-observability-cert = pkgs.callPackage ./issue-observability-cert { };
+  issue-observability-cert = issueObservabilityCert;
+
+  pki-rotation = pkgs.callPackage ./pki-rotation {
+    inherit issueInternalServiceCert issueObservabilityCert;
+  };
 
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 

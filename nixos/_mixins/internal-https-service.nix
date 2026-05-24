@@ -71,6 +71,12 @@ in
                 description = "Whether to enable websocket proxy headers.";
               };
 
+              recommendedProxySettings = lib.mkOption {
+                type = bool;
+                default = true;
+                description = "Whether to apply NixOS nginx recommended proxy headers automatically.";
+              };
+
               secretPrefix = lib.mkOption {
                 type = str;
                 default = "internal_https/${name}";
@@ -81,6 +87,16 @@ in
                 type = lines;
                 default = "";
                 description = "Extra nginx location config for this service.";
+              };
+
+              mtls = {
+                enable = lib.mkEnableOption "client certificate authentication for this internal HTTPS service";
+
+                trustedCaCertificate = lib.mkOption {
+                  type = path;
+                  default = internalPkiRootCaPath;
+                  description = "CA certificate bundle trusted for inbound client certificate verification.";
+                };
               };
             };
           }
@@ -131,6 +147,10 @@ in
           serverName = service.serverName;
           serverAliases = service.serverAliases;
           onlySSL = true;
+          extraConfig = lib.optionalString service.mtls.enable ''
+            ssl_client_certificate ${service.mtls.trustedCaCertificate};
+            ssl_verify_client on;
+          '';
           listen = [
             {
               addr = service.listenAddress;
@@ -144,6 +164,7 @@ in
           locations.${service.path} = {
             proxyPass = service.upstream;
             proxyWebsockets = service.proxyWebsockets;
+            recommendedProxySettings = service.recommendedProxySettings;
             extraConfig = service.locationExtraConfig;
           };
         }

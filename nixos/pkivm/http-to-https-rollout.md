@@ -5,39 +5,25 @@ This file only tracks the remaining HTTP-to-HTTPS work.
 Already done:
 
 - internal PKI trust on Darwin
+- `nix-cache.home.arpa` for Nix substituters and Attic push
 - `glance.home.arpa`
 - `grafana.home.arpa`
+- `loki.home.arpa` with mTLS log shipping from non-work NixOS hosts
 - internal HTTPS for `radarr`, `sonarr`, `lidarr`, `bazarr`, and `prowlarr`
-
-## Remaining Work
-
-### 1. Cache
-
-- put `atticd` behind internal HTTPS at `nix-cache.home.arpa`
-- switch Nix substituter and Attic client URLs to HTTPS
-- verify cache reads and pushes over HTTPS
-
-### 2. Remaining Internal `srvarr` UIs
-
-- move Transmission UI to `https://tmission.home.arpa`
-- move SABnzbd UI to `https://sabnzbd.home.arpa`
-- update Glance links and blackbox probes
-- close the old plain LAN ports afterward
-
-### 3. Beast Backend Hops
-
-- switch `beast` public nginx upstreams from plain HTTP to internal HTTPS for:
+- internal HTTPS for `tmission.home.arpa`
+- internal HTTPS for `sabnzbd.home.arpa`
+- backend mTLS for the public `beast` ingress:
   - `js.ihar.dev`
   - `mu.ihar.dev`
   - `au.ihar.dev`
   - `shelf.ihar.dev`
   - `vi.ihar.dev`
-- validate public behavior stays unchanged
 
-### 4. Final Plain-Port Cleanup
+## Remaining Work
+
+### 1. Final Plain-Port Cleanup
 
 - retire Jellyfin plain LAN access on `:8096` if it is no longer needed
-- retire any remaining direct LAN HTTP app ports
 - verify that intentional HTTP is loopback-only
 
 ## Follow-Up Cleanup
@@ -50,4 +36,5 @@ Already done:
 
 ## Constraint
 
-- `beast` ingress work still needs a maintenance window
+- check for active Jellyfin playback on `beast` before any deploy that restarts
+  `nginx`

@@ -63,7 +63,10 @@ in
 
   nixarr.transmission = {
     enable = true;
-    vpn.enable = true;
+    vpn = {
+      enable = true;
+      configureNginx = false;
+    };
     peerPort = 45486;
     extraSettings = {
       blocklist-enabled = false;
@@ -81,9 +84,38 @@ in
     };
   };
 
+  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.nixarr.transmission.uiPort ];
+
   # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}".locations."/" =
-    {
+  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}" = {
+    listen = lib.mkForce [
+      {
+        addr = "127.0.0.1";
+        port = config.nixarr.transmission.uiPort;
+      }
+    ];
+    locations."/" = {
+      recommendedProxySettings = true;
+      proxyWebsockets = true;
       proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
     };
+  };
+
+  host.internalHttps.services.transmission = {
+    enable = true;
+    serverName = "tmission.${hostInventory.site.lan.domain}";
+    serverAliases = [ "tmission" ];
+    upstream = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}";
+    recommendedProxySettings = false;
+    # Transmission RPC rejects the public LAN hostname, so preserve the
+    # existing whitelisted host on the upstream hop.
+    locationExtraConfig = ''
+      proxy_set_header Host ${config.networking.hostName};
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
+      proxy_set_header X-Forwarded-Server $hostname;
+    '';
+  };
 }

@@ -6,8 +6,7 @@
 }:
 let
   cfg = config.host.observability.nixosUpgrade;
-  textfileCollectorHandledByOtherMixin =
-    config.host.observability.lanWan.enable || config.host.observability.dnsQueryAccounting.enable;
+  textfileCollectorHandledByOtherMixin = config.host.observability.lanWan.enable;
   textfileCollectorNeeded = cfg.exportToNodeExporter && !textfileCollectorHandledByOtherMixin;
   writeSuccessMetric = pkgs.writeShellScript "write-nixos-upgrade-success-metric" ''
     set -euo pipefail
@@ -22,6 +21,7 @@ let
     node_nixos_upgrade_last_success_time_seconds $(${pkgs.coreutils}/bin/date +%s)
     EOF
 
+    ${pkgs.coreutils}/bin/chmod 0644 "$tmp_file"
     ${pkgs.coreutils}/bin/mv "$tmp_file" ${cfg.textfileDir}/nixos-upgrade.prom
   '';
 in
@@ -50,6 +50,8 @@ in
       extraFlags = [ "--collector.textfile.directory=${cfg.textfileDir}" ];
     };
 
-    systemd.tmpfiles.rules = lib.optional textfileCollectorNeeded "d ${cfg.textfileDir} 0755 root root - -";
+    systemd.tmpfiles.rules =
+      lib.optional cfg.exportToNodeExporter "d ${cfg.textfileDir} 0755 root root - -"
+      ++ lib.optional cfg.exportToNodeExporter "z ${cfg.textfileDir}/nixos-upgrade.prom 0644 root root - -";
   };
 }

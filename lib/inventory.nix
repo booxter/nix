@@ -475,11 +475,17 @@ rec {
       upsHost = "prx1-lab";
       localDnsAliases = [
         "glance"
+        "jellyseerr"
         "radarr"
         "sonarr"
         "lidarr"
         "bazarr"
         "prowlarr"
+        "aurral"
+        "audiobookshelf"
+        "shelfmark"
+        "sabnzbd"
+        "tmission"
       ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
@@ -500,7 +506,10 @@ rec {
       name = "fana";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
-      localDnsAliases = [ "grafana" ];
+      localDnsAliases = [
+        "grafana"
+        "loki"
+      ];
       cores = 8;
       memorySize = 16;
       diskSize = 300;
@@ -541,6 +550,7 @@ rec {
       type = "vm";
       name = "org";
       platform = "x86_64-linux";
+      localDnsAliases = [ "vikunja" ];
       upsHost = "prx1-lab";
       cores = 4;
       memorySize = 8;

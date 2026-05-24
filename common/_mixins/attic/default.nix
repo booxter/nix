@@ -38,7 +38,7 @@ lib.mkMerge [
         content = ''
           default-server = "local"
           [servers.local]
-          endpoint = "http://nix-cache:8080"
+          endpoint = "https://nix-cache.home.arpa"
           token = "${config.sops.placeholder."attic/token"}"
         '';
       };

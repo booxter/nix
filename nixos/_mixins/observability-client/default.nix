@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
@@ -15,6 +16,7 @@ let
     ;
   nodeExporterGroup = config.services.prometheus.exporters.node.group;
   nodeExporterUser = config.services.prometheus.exporters.node.user;
+  enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
   enabledPrometheusMtlsEndpoints = lib.filterAttrs (
     _: endpoint: endpoint.enable
   ) cfg.prometheusMtlsEndpoints;
@@ -22,6 +24,21 @@ let
   endpointPortValues = map (endpoint: endpoint.port) (
     builtins.attrValues enabledPrometheusMtlsEndpoints
   );
+  lokiClientCertCredentialPath = "/run/credentials/alloy.service/loki-client.crt";
+  lokiClientKeyCredentialPath = "/run/credentials/alloy.service/loki-client.key";
+  lokiMtlsClient =
+    if cfg.loki.mtls.enable && builtins.hasAttr cfg.loki.mtls.clientName enabledMtlsClients then
+      enabledMtlsClients.${cfg.loki.mtls.clientName}
+    else
+      null;
+  lokiTlsConfig = lib.optionalString cfg.loki.mtls.enable ''
+    tls_config {
+      ca_file = "${cfg.loki.mtls.trustedCaCertificate}"
+      cert_file = "${lokiClientCertCredentialPath}"
+      key_file = "${lokiClientKeyCredentialPath}"
+      server_name = "${cfg.loki.mtls.serverName}"
+    }
+  '';
 in
 {
   options.host.observability.client = {
@@ -31,6 +48,28 @@ in
       type = with lib.types; nullOr str;
       default = null;
       description = "Loki push endpoint URL for journal log shipping.";
+    };
+
+    loki.mtls = {
+      enable = lib.mkEnableOption "mTLS authentication for Loki log shipping";
+
+      clientName = lib.mkOption {
+        type = lib.types.str;
+        default = "loki";
+        description = "Name of the host.observability.client.mtlsClients entry used for Loki writes.";
+      };
+
+      serverName = lib.mkOption {
+        type = lib.types.str;
+        default = "loki.${hostInventory.site.lan.domain}";
+        description = "TLS server name used for Loki writes.";
+      };
+
+      trustedCaCertificate = lib.mkOption {
+        type = lib.types.path;
+        default = internalPkiRootCaPath;
+        description = "CA bundle used to verify the Loki writer endpoint.";
+      };
     };
 
     nodeExporter = {
@@ -144,7 +183,7 @@ in
       description = "Additional nginx-fronted mTLS endpoints for remote Prometheus scrapes.";
     };
 
-    prometheusMtlsClients = lib.mkOption {
+    mtlsClients = lib.mkOption {
       type =
         with lib.types;
         attrsOf (
@@ -176,7 +215,7 @@ in
           )
         );
       default = { };
-      description = "Host-local mTLS client identities used to consume protected Prometheus-style endpoints.";
+      description = "Host-local mTLS client identities used to consume protected internal HTTPS endpoints.";
     };
   };
 
@@ -197,40 +236,41 @@ in
         services.alloy = lib.mkIf (cfg.lokiWriteUrl != null) {
           enable = true;
           configPath = pkgs.writeText "config.alloy" ''
-            loki.write "default" {
-              endpoint {
-                url = "${cfg.lokiWriteUrl}"
-              }
-            }
+                        loki.write "default" {
+                          endpoint {
+                            url = "${cfg.lokiWriteUrl}"
+            ${lokiTlsConfig}
+                          }
+                        }
 
-            loki.relabel "journal" {
-              forward_to = []
+                        loki.relabel "journal" {
+                          forward_to = []
 
-              rule {
-                source_labels = ["__journal__hostname"]
-                target_label  = "node_hostname"
-              }
+                          rule {
+                            source_labels = ["__journal__hostname"]
+                            target_label  = "node_hostname"
+                          }
 
-              rule {
-                source_labels = ["__journal__systemd_unit"]
-                target_label  = "systemd_unit"
-              }
+                          rule {
+                            source_labels = ["__journal__systemd_unit"]
+                            target_label  = "systemd_unit"
+                          }
 
-              rule {
-                source_labels = ["__journal_priority_keyword"]
-                target_label  = "level"
-              }
-            }
+                          rule {
+                            source_labels = ["__journal_priority_keyword"]
+                            target_label  = "level"
+                          }
+                        }
 
-            loki.source.journal "read" {
-              forward_to    = [loki.write.default.receiver]
-              relabel_rules = loki.relabel.journal.rules
-              max_age       = "12h"
-              labels = {
-                job  = "systemd-journal",
-                host = "${hostLabel}",
-              }
-            }
+                        loki.source.journal "read" {
+                          forward_to    = [loki.write.default.receiver]
+                          relabel_rules = loki.relabel.journal.rules
+                          max_age       = "12h"
+                          labels = {
+                            job  = "systemd-journal",
+                            host = "${hostLabel}",
+                          }
+                        }
           '';
         };
 
@@ -255,6 +295,35 @@ in
           openFirewall = cfg.blackbox.openFirewall;
         };
       }
+      (lib.mkIf (cfg.lokiWriteUrl != null && cfg.loki.mtls.enable) {
+        assertions = [
+          {
+            assertion = lokiMtlsClient != null;
+            message = "host.observability.client.loki.mtls.clientName must reference an enabled host.observability.client.mtlsClients entry.";
+          }
+        ];
+
+        sops.secrets.observabilityLokiClientCrt = {
+          key = "${lokiMtlsClient.secretPrefix}/client_crt";
+          mode = "0400";
+          restartUnits = [ "alloy.service" ];
+        };
+
+        sops.secrets.observabilityLokiClientKey = {
+          key = "${lokiMtlsClient.secretPrefix}/client_key";
+          mode = "0400";
+          restartUnits = [ "alloy.service" ];
+        };
+
+        systemd.services.alloy = {
+          wants = [ "sops-install-secrets.service" ];
+          after = [ "sops-install-secrets.service" ];
+          serviceConfig.LoadCredential = [
+            "loki-client.crt:${config.sops.secrets.observabilityLokiClientCrt.path}"
+            "loki-client.key:${config.sops.secrets.observabilityLokiClientKey.path}"
+          ];
+        };
+      })
       (lib.mkIf cfg.nodeExporter.mtls.enable {
         sops.secrets.prometheusNodeExporterServerCrt = {
           key = "${nodeExporterSecretPrefix}/server_crt";

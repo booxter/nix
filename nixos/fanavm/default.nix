@@ -528,6 +528,12 @@ in
       };
       alerting.rules.settings = {
         apiVersion = 1;
+        deleteRules = [
+          {
+            orgId = 1;
+            uid = "dns_upstream_failures";
+          }
+        ];
         groups = [
           {
             orgId = 1;
@@ -697,6 +703,128 @@ in
               })
             ];
           }
+          {
+            orgId = 1;
+            name = "pki-health";
+            folder = "Fana";
+            interval = "30s";
+            rules = [
+              (mkGrafanaPromRule {
+                uid = "internal_pki_cert_missing";
+                title = "Internal PKI Cert Missing";
+                expr = "host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"}";
+                comparator = "lt";
+                threshold = 1;
+                forDuration = "10m";
+                annotations = {
+                  summary = "Managed PKI cert missing: {{ $labels.host }} / {{ $labels.cert_name }}";
+                  description = "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.category }}) is expected but missing or unparsable in the repo-managed PKI inventory.";
+                };
+                labels = {
+                  severity = "critical";
+                  category = "pki";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "internal_pki_cert_expiry_warning";
+                title = "Internal PKI Cert Expiring Soon";
+                expr = "host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"}";
+                comparator = "lt";
+                threshold = 30;
+                forDuration = "30m";
+                annotations = {
+                  summary = "Managed PKI cert expiring soon: {{ $labels.host }} / {{ $labels.cert_name }}";
+                  description = "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.category }}) has less than 30 days remaining.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "pki";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "internal_pki_cert_expiry_critical";
+                title = "Internal PKI Cert Expiring Critically Soon";
+                expr = "host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"}";
+                comparator = "lt";
+                threshold = 14;
+                forDuration = "30m";
+                annotations = {
+                  summary = "Managed PKI cert expiring critically soon: {{ $labels.host }} / {{ $labels.cert_name }}";
+                  description = "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.category }}) has less than 14 days remaining.";
+                };
+                labels = {
+                  severity = "critical";
+                  category = "pki";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "public_tls_cert_expiry_warning";
+                title = "Public TLS Cert Expiring Soon";
+                expr = "((probe_ssl_earliest_cert_expiry{job=\"blackbox-arr\",scope=\"external\"} - time()) / 86400)";
+                comparator = "lt";
+                threshold = 30;
+                forDuration = "30m";
+                annotations = {
+                  summary = "Public TLS cert expiring soon: {{ $labels.instance }}";
+                  description = "The public HTTPS endpoint {{ $labels.instance }} has less than 30 days remaining on its leaf certificate.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "pki";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "public_tls_cert_expiry_critical";
+                title = "Public TLS Cert Expiring Critically Soon";
+                expr = "((probe_ssl_earliest_cert_expiry{job=\"blackbox-arr\",scope=\"external\"} - time()) / 86400)";
+                comparator = "lt";
+                threshold = 14;
+                forDuration = "30m";
+                annotations = {
+                  summary = "Public TLS cert expiring critically soon: {{ $labels.instance }}";
+                  description = "The public HTTPS endpoint {{ $labels.instance }} has less than 14 days remaining on its leaf certificate.";
+                };
+                labels = {
+                  severity = "critical";
+                  category = "pki";
+                };
+              })
+              (mkGrafanaPromRule {
+                uid = "pki_rotation_controller_failed";
+                title = "PKI Rotation Controller Failed";
+                expr = "host_observability_pki_rotation_last_success{job=\"node-mtls\",instance=\"prox-pkivm\"}";
+                comparator = "lt";
+                threshold = 1;
+                forDuration = "2h";
+                annotations = {
+                  summary = "PKI rotation controller failed on prox-pkivm";
+                  description = "The most recent scheduled PKI rotation controller run on prox-pkivm did not complete successfully.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "pki";
+                };
+                noDataState = "OK";
+              })
+              (mkGrafanaPromRule {
+                uid = "pki_rotation_controller_stale";
+                title = "PKI Rotation Controller Stale";
+                expr = "((time() - host_observability_pki_rotation_last_run_timestamp_seconds{job=\"node-mtls\",instance=\"prox-pkivm\"}) / 3600)";
+                comparator = "gt";
+                threshold = 36;
+                forDuration = "2h";
+                annotations = {
+                  summary = "PKI rotation controller stale on prox-pkivm";
+                  description = "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "pki";
+                };
+                noDataState = "OK";
+              })
+            ];
+          }
         ];
       };
     };
@@ -705,6 +833,16 @@ in
   host.internalHttps.services.grafana = {
     enable = true;
     upstream = "http://127.0.0.1:${toString grafanaPort}";
+  };
+
+  host.internalHttps.services.loki = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString lokiPort}";
+    mtls.enable = true;
+    locationExtraConfig = ''
+      client_max_body_size 0;
+      proxy_request_buffering off;
+    '';
   };
 
   systemd.services.grafana = {
@@ -1035,7 +1173,7 @@ in
     configuration = {
       auth_enabled = false;
       server = {
-        http_listen_address = "0.0.0.0";
+        http_listen_address = "127.0.0.1";
         http_listen_port = lokiPort;
       };
       common = {
@@ -1077,14 +1215,9 @@ in
   };
 
   host.observability.client = {
-    lokiWriteUrl = "http://127.0.0.1:${toString lokiPort}/loki/api/v1/push";
     nodeExporter = {
       listenAddress = "127.0.0.1";
       openFirewall = lib.mkForce false;
     };
   };
-
-  networking.firewall.allowedTCPPorts = [
-    lokiPort
-  ];
 }

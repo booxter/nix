@@ -2,12 +2,32 @@
 let
   cfg = config.host.externalService;
   hasPublicVhosts = cfg.virtualHosts != { };
+  internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
+  enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
+  enabledUpstreamTlsVhosts = lib.filterAttrs (_: vhost: vhost.upstreamTls.enable) cfg.virtualHosts;
+  mtlsClientSecretAttrName = clientName: "external-service-mtls-${clientName}";
+  recommendedProxyHeaders = hostHeader: ''
+    proxy_set_header Host ${hostHeader};
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $hostname;
+  '';
   mkPublicVhost = vhost: {
     forceSSL = vhost.forceSSL;
     enableACME = vhost.enableACME;
     locations."/" = {
-      proxyPass = vhost.proxyPass;
+      proxyPass =
+        if vhost.upstreamTls.enable then
+          "http://127.0.0.1:${toString vhost.upstreamTls.localPort}"
+        else
+          vhost.proxyPass;
       proxyWebsockets = vhost.proxyWebsockets;
+      recommendedProxySettings = false;
+      extraConfig =
+        recommendedProxyHeaders (if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host")
+        + vhost.locationExtraConfig;
     };
   };
 in
@@ -53,6 +73,39 @@ in
       };
     };
 
+    mtlsClients = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule (
+          { name, ... }:
+          {
+            options = {
+              enable = lib.mkEnableOption "internal PKI mTLS client identity";
+
+              secretPrefix = lib.mkOption {
+                type = lib.types.str;
+                default = "internal_https/clients/${name}";
+                description = "Secret prefix containing client_crt and client_key for this client identity.";
+              };
+
+              commonName = lib.mkOption {
+                type = lib.types.str;
+                default = "${name}.${config.host.dnsName}";
+                description = "Leaf certificate common name to issue for this client identity.";
+              };
+
+              sans = lib.mkOption {
+                type = with lib.types; listOf str;
+                default = [ ];
+                description = "Optional SANs for this client certificate.";
+              };
+            };
+          }
+        )
+      );
+      default = { };
+      description = "mTLS client identities used by public ingress when proxying to internal backends.";
+    };
+
     virtualHosts = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
@@ -79,6 +132,40 @@ in
               default = true;
               description = "Whether to enable websocket proxy headers.";
             };
+
+            locationExtraConfig = lib.mkOption {
+              type = lib.types.lines;
+              default = "";
+              description = "Extra nginx location config appended after the generated proxy settings.";
+            };
+
+            upstreamTls = {
+              enable = lib.mkEnableOption "mTLS-authenticated HTTPS to the upstream";
+
+              clientName = lib.mkOption {
+                type = lib.types.str;
+                default = "";
+                description = "Name of the host.externalService.mtlsClients entry used for the upstream connection.";
+              };
+
+              serverName = lib.mkOption {
+                type = lib.types.str;
+                default = "";
+                description = "TLS server name used for upstream SNI and certificate verification.";
+              };
+
+              localPort = lib.mkOption {
+                type = with lib.types; nullOr port;
+                default = null;
+                description = "Loopback port on this host where the local mTLS tunnel listens.";
+              };
+
+              trustedCaCertificate = lib.mkOption {
+                type = lib.types.path;
+                default = internalPkiRootCaPath;
+                description = "CA bundle used to verify the upstream TLS certificate.";
+              };
+            };
           };
         }
       );
@@ -89,16 +176,40 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = lib.optionals cfg.ddns.enable [
-        {
-          assertion = cfg.ddns.username != "";
-          message = "host.externalService.ddns.username must be set when DDNS is enabled.";
-        }
-        {
-          assertion = cfg.ddns.hostname != "";
-          message = "host.externalService.ddns.hostname must be set when DDNS is enabled.";
-        }
-      ];
+      assertions =
+        lib.optionals cfg.ddns.enable [
+          {
+            assertion = cfg.ddns.username != "";
+            message = "host.externalService.ddns.username must be set when DDNS is enabled.";
+          }
+          {
+            assertion = cfg.ddns.hostname != "";
+            message = "host.externalService.ddns.hostname must be set when DDNS is enabled.";
+          }
+        ]
+        ++ builtins.concatLists (
+          lib.mapAttrsToList (
+            hostName: vhost:
+            lib.optionals vhost.upstreamTls.enable [
+              {
+                assertion = vhost.upstreamTls.clientName != "";
+                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must be set when upstream mTLS is enabled.";
+              }
+              {
+                assertion = vhost.upstreamTls.serverName != "";
+                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.serverName must be set when upstream mTLS is enabled.";
+              }
+              {
+                assertion = vhost.upstreamTls.localPort != null;
+                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.localPort must be set when upstream mTLS is enabled.";
+              }
+              {
+                assertion = builtins.hasAttr vhost.upstreamTls.clientName enabledMtlsClients;
+                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled host.externalService.mtlsClients entry.";
+              }
+            ]
+          ) cfg.virtualHosts
+        );
     }
 
     (lib.mkIf cfg.ddns.enable {
@@ -150,6 +261,41 @@ in
     })
 
     (lib.mkIf hasPublicVhosts {
+      assertions = [
+        {
+          assertion =
+            let
+              ports = builtins.map (vhost: vhost.upstreamTls.localPort) (
+                builtins.attrValues enabledUpstreamTlsVhosts
+              );
+            in
+            (builtins.length ports) == (builtins.length (lib.unique ports));
+          message = "host.externalService upstream mTLS tunnels must use unique local ports.";
+        }
+      ];
+
+      sops.secrets =
+        lib.mapAttrs' (
+          clientName: client:
+          lib.nameValuePair "${mtlsClientSecretAttrName clientName}-crt" {
+            key = "${client.secretPrefix}/client_crt";
+            owner = "root";
+            group = "root";
+            mode = "0400";
+            restartUnits = [ "stunnel.service" ];
+          }
+        ) enabledMtlsClients
+        // lib.mapAttrs' (
+          clientName: client:
+          lib.nameValuePair "${mtlsClientSecretAttrName clientName}-key" {
+            key = "${client.secretPrefix}/client_key";
+            owner = "root";
+            group = "root";
+            mode = "0400";
+            restartUnits = [ "stunnel.service" ];
+          }
+        ) enabledMtlsClients;
+
       security.acme = {
         acceptTerms = true;
         defaults.email = cfg.acmeEmail;
@@ -160,6 +306,28 @@ in
         recommendedProxySettings = true;
         recommendedTlsSettings = true;
         virtualHosts = lib.mapAttrs (_: mkPublicVhost) cfg.virtualHosts;
+      };
+
+      services.stunnel = lib.mkIf (enabledUpstreamTlsVhosts != { }) {
+        enable = true;
+        user = null;
+        group = null;
+        clients = lib.mapAttrs (_: vhost: {
+          accept = "127.0.0.1:${toString vhost.upstreamTls.localPort}";
+          connect = "${vhost.upstreamTls.serverName}:443";
+          cert = config.sops.secrets."${mtlsClientSecretAttrName vhost.upstreamTls.clientName}-crt".path;
+          key = config.sops.secrets."${mtlsClientSecretAttrName vhost.upstreamTls.clientName}-key".path;
+          checkHost = vhost.upstreamTls.serverName;
+          sni = vhost.upstreamTls.serverName;
+          CAFile = toString vhost.upstreamTls.trustedCaCertificate;
+          verifyChain = true;
+          OCSPaia = false;
+        }) enabledUpstreamTlsVhosts;
+      };
+
+      systemd.services.stunnel = lib.mkIf (enabledUpstreamTlsVhosts != { }) {
+        wants = [ "sops-install-secrets.service" ];
+        after = [ "sops-install-secrets.service" ];
       };
 
       networking.firewall.allowedTCPPorts = lib.optionals cfg.openFirewall [

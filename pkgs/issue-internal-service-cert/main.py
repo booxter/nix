@@ -16,6 +16,7 @@ DEFAULT_CA_HOST = "prox-pkivm"
 DEFAULT_PROVISIONER = "bootstrap@home.arpa"
 DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
+LOCAL_CA_ENV = "ISSUE_CERT_LOCAL_CA"
 
 
 def find_repo_root():
@@ -155,6 +156,22 @@ def service_config(host, service):
     )
 
 
+def client_names_for_host(host):
+    root = host_config_root(host)
+    client_map = (
+        nix_eval_json(root, host, "config", "host", "externalService", "mtlsClients")
+        or {}
+    )
+    return sorted(name for name, client in client_map.items() if client.get("enable"))
+
+
+def client_config(host, client):
+    root = host_config_root(host)
+    return nix_eval_json(
+        root, host, "config", "host", "externalService", "mtlsClients", client
+    )
+
+
 def issue_remote_cert(*, ca_host, common_name, sans):
     san_args = " ".join(f"--san {shlex.quote(san)}" for san in sans)
     script = f"""
@@ -175,7 +192,10 @@ sudo -u step-ca cat "$tmpdir/server.crt"
 printf '%s\\n' '__KEY__'
 sudo -u step-ca cat "$tmpdir/server.key"
 """
-    output = run(["ssh", ca_host, "bash", "-lc", script], cwd=None)
+    if os.environ.get(LOCAL_CA_ENV) == "1":
+        output = run(["bash", "-lc", script], cwd=None)
+    else:
+        output = run(["ssh", ca_host, "bash", "-lc", script], cwd=None)
     cert_marker = "__CERT__\n"
     key_marker = "\n__KEY__\n"
     if not output.startswith(cert_marker) or key_marker not in output:
@@ -229,7 +249,9 @@ def issue_service(host, service, *, ca_host):
             f"internal HTTPS service {service} on host {host} is not enabled"
         )
 
-    sans = unique_strings([service, service_cfg["serverName"]])
+    sans = unique_strings(
+        [service, service_cfg["serverName"], *service_cfg.get("serverAliases", [])]
+    )
     common_name = service_cfg["serverName"]
     cert_text, key_text = issue_remote_cert(
         ca_host=ca_host, common_name=common_name, sans=sans
@@ -249,6 +271,69 @@ def issue_service(host, service, *, ca_host):
     )
 
 
+def update_client_secret_file(host, client_cfg, cert_text, key_text):
+    secret_path = secret_path_for_host(host)
+    if not secret_path.exists():
+        raise SystemExit(f"secret file not found: {secret_path}")
+
+    run([str(REPO_ROOT / "scripts" / "sops-update.sh"), host])
+    decrypted = run(["sops", "--decrypt", str(secret_path)])
+    data = yaml.safe_load(decrypted) or {}
+
+    prefix = client_cfg["secretPrefix"].split("/")
+    set_nested(data, prefix + ["client_crt"], cert_text.rstrip("\n"))
+    set_nested(data, prefix + ["client_key"], key_text.rstrip("\n"))
+
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
+        json.dump(data, handle, sort_keys=True)
+        handle.write("\n")
+        payload_path = handle.name
+
+    try:
+        encrypted = run(
+            [
+                "sops",
+                "--encrypt",
+                "--filename-override",
+                str(secret_path),
+                "--input-type",
+                "json",
+                "--output-type",
+                "yaml",
+                payload_path,
+            ]
+        )
+        secret_path.write_text(encrypted)
+    finally:
+        pathlib.Path(payload_path).unlink(missing_ok=True)
+
+
+def issue_client(host, client, *, ca_host):
+    client_cfg = client_config(host, client)
+    if not client_cfg.get("enable"):
+        raise SystemExit(
+            f"internal HTTPS client {client} on host {host} is not enabled"
+        )
+
+    sans = unique_strings([client_cfg["commonName"], *client_cfg.get("sans", [])])
+    common_name = client_cfg["commonName"]
+    cert_text, key_text = issue_remote_cert(
+        ca_host=ca_host, common_name=common_name, sans=sans
+    )
+    update_client_secret_file(host, client_cfg, cert_text, key_text)
+    print(
+        json.dumps(
+            {
+                "host": host,
+                "client": client,
+                "secret_prefix": client_cfg["secretPrefix"],
+                "common_name": common_name,
+                "sans": sans,
+            }
+        )
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="issue-internal-service-cert",
@@ -259,9 +344,25 @@ def main():
     )
     parser.add_argument("--service", help="Internal HTTPS service name, e.g. glance")
     parser.add_argument(
+        "--client", help="Internal HTTPS mTLS client identity name, e.g. vikunja"
+    )
+    parser.add_argument(
         "--ca-host", default=DEFAULT_CA_HOST, help="SSH host running step-ca"
     )
     args = parser.parse_args()
+
+    if args.service and args.client:
+        raise SystemExit("--service and --client are mutually exclusive")
+
+    if args.client:
+        clients = [args.client]
+        if not clients:
+            raise SystemExit(
+                f"host {args.host} has no configured internal HTTPS mTLS clients"
+            )
+        for client in clients:
+            issue_client(args.host, client, ca_host=args.ca_host)
+        return
 
     services = [args.service] if args.service else service_names_for_host(args.host)
     if not services:

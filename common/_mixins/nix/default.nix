@@ -9,7 +9,7 @@
 {
   nix =
     let
-      cacheUrl = "http://nix-cache:8080/default?priority=30";
+      cacheHttpsUrl = "https://nix-cache.home.arpa/default?priority=30";
       cacheKey = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
     in
     {
@@ -41,11 +41,11 @@
       }
       // lib.optionalAttrs (!isWork) {
         # attic
-        substituters = [
+        substituters = lib.mkForce [
           "https://cache.nixos.org/"
-          cacheUrl
+          cacheHttpsUrl
         ];
-        trusted-public-keys = [
+        trusted-public-keys = lib.mkForce [
           "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
           cacheKey
         ];

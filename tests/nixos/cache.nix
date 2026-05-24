@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, ... }:
 pkgs.testers.runNixOSTest {
   name = "cache";
 
@@ -9,18 +9,32 @@ pkgs.testers.runNixOSTest {
         ../../nixos/cachevm/default.nix
       ];
 
-      # Test-only overrides: avoid external dependencies from the production host.
-      fileSystems."/cache" = lib.mkForce {
-        device = "tmpfs";
-        fsType = "tmpfs";
-        options = [ "mode=0755" ];
+      options.host = lib.mkOption {
+        type = lib.types.submodule {
+          freeformType = lib.types.attrsOf lib.types.anything;
+        };
+        default = { };
       };
-      systemd.tmpfiles.rules = [
-        "d /cache 0755 root root -"
-      ];
-      environment.etc."atticd.env".source = ./fixtures/atticd.env;
 
-      environment.systemPackages = [ pkgs.curl ];
+      config = {
+        _module.args.hostInventory = {
+          dhcpReservationsByHostname.beast.ip = "127.0.0.1";
+          site.lan.domain = "home.arpa";
+        };
+
+        # Test-only overrides: avoid external dependencies from the production host.
+        fileSystems."/cache" = lib.mkForce {
+          device = "tmpfs";
+          fsType = "tmpfs";
+          options = [ "mode=0755" ];
+        };
+        systemd.tmpfiles.rules = [
+          "d /cache 0755 root root -"
+        ];
+        environment.etc."atticd.env".source = ./fixtures/atticd.env;
+
+        environment.systemPackages = [ pkgs.curl ];
+      };
     };
 
   testScript = ''

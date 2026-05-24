@@ -51,7 +51,12 @@ in
     };
   };
 
-  networking.firewall.allowedTCPPorts = [ vikunjaPort ];
+  host.internalHttps.services.vikunja = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString vikunjaPort}";
+    serverAliases = [ vikunjaService.publicHost ];
+    mtls.enable = true;
+  };
 
   host.observability.client.prometheusMtlsEndpoints.vikunja = {
     enable = true;

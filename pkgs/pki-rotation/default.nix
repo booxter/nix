@@ -1,6 +1,7 @@
 {
-  bash,
   git,
+  issueInternalServiceCert,
+  issueObservabilityCert,
   jq,
   lib,
   nix,
@@ -11,13 +12,17 @@
   yq-go,
 }:
 let
-  pythonWithDeps = python3.withPackages (ps: [ ps.pyyaml ]);
+  pythonWithDeps = python3.withPackages (ps: [
+    ps.cryptography
+    ps.pyyaml
+  ]);
 in
 writeShellApplication {
-  name = "issue-observability-cert";
+  name = "pki-rotation";
   runtimeInputs = [
-    bash
     git
+    issueInternalServiceCert
+    issueObservabilityCert
     jq
     nix
     openssh
@@ -30,10 +35,10 @@ writeShellApplication {
   '';
 
   meta = {
-    description = "Issue internal PKI certs for Prometheus mTLS endpoints and store them in host sops secrets";
+    description = "Inspect and rotate repo-managed internal PKI certificates";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
-    mainProgram = "issue-observability-cert";
+    mainProgram = "pki-rotation";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }

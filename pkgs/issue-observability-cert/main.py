@@ -16,6 +16,7 @@ DEFAULT_CA_HOST = "prox-pkivm"
 DEFAULT_PROVISIONER = "bootstrap@home.arpa"
 DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
+LOCAL_CA_ENV = "ISSUE_CERT_LOCAL_CA"
 NODE_EXPORTER_ENDPOINT = "node_exporter"
 NODE_EXPORTER_SECRET_PREFIX = "prometheus/node_exporter"
 
@@ -204,7 +205,7 @@ def client_names_for_host(host):
             "host",
             "observability",
             "client",
-            "prometheusMtlsClients",
+            "mtlsClients",
         )
         or {}
     )
@@ -252,7 +253,7 @@ def client_config(host, client):
         "host",
         "observability",
         "client",
-        "prometheusMtlsClients",
+        "mtlsClients",
         client,
     )
 
@@ -292,7 +293,10 @@ sudo -u step-ca cat "$tmpdir/server.crt"
 printf '%s\\n' '__KEY__'
 sudo -u step-ca cat "$tmpdir/server.key"
 """
-    output = run(["ssh", ca_host, "bash", "-lc", script], cwd=None)
+    if os.environ.get(LOCAL_CA_ENV) == "1":
+        output = run(["bash", "-lc", script], cwd=None)
+    else:
+        output = run(["ssh", ca_host, "bash", "-lc", script], cwd=None)
     cert_marker = "__CERT__\n"
     key_marker = "\n__KEY__\n"
     if not output.startswith(cert_marker) or key_marker not in output:
@@ -380,7 +384,7 @@ def issue_client(host, client, *, ca_host):
     client_cfg = client_config(host, client)
     if not client_cfg.get("enable"):
         raise SystemExit(
-            f"Prometheus mTLS client {client} on host {host} is not enabled"
+            f"observability mTLS client {client} on host {host} is not enabled"
         )
 
     common_name = client_cfg["commonName"]
@@ -415,7 +419,7 @@ def issue_client(host, client, *, ca_host):
 def main():
     parser = argparse.ArgumentParser(
         prog="issue-observability-cert",
-        description="Issue internal PKI certs for Prometheus mTLS endpoints and store them in host sops secrets.",
+        description="Issue internal PKI certs for observability mTLS endpoints and clients and store them in host sops secrets.",
     )
     parser.add_argument(
         "--host", required=True, help="Inventory host name, e.g. beast or prox-orgvm"
@@ -425,7 +429,7 @@ def main():
     )
     parser.add_argument(
         "--client",
-        help="Prometheus mTLS client identity name, e.g. jellyfin-upload-policy",
+        help="Observability mTLS client identity name, e.g. loki or jellyfin-upload-policy",
     )
     parser.add_argument(
         "--ca-host", default=DEFAULT_CA_HOST, help="SSH host running step-ca"
@@ -446,7 +450,7 @@ def main():
     clients = client_names_for_host(args.host)
     if not endpoints and not clients:
         raise SystemExit(
-            f"host {args.host} has no configured Prometheus mTLS endpoints or clients"
+            f"host {args.host} has no configured observability mTLS endpoints or clients"
         )
 
     for endpoint in endpoints:

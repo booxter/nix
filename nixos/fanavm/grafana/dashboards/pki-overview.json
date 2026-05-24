@@ -27,22 +27,15 @@
           "mappings": [
             {
               "options": {
-                "0": {
+                "-1": {
                   "color": "red",
                   "index": 0,
-                  "text": "Down"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "Up"
+                  "text": "Missing"
                 }
               },
               "type": "value"
             }
           ],
-          "max": 1,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -51,12 +44,16 @@
                 "value": null
               },
               {
+                "color": "orange",
+                "value": 7
+              },
+              {
                 "color": "green",
-                "value": 1
+                "value": 30
               }
             ]
           },
-          "unit": "short"
+          "unit": "d"
         },
         "overrides": []
       },
@@ -87,14 +84,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "probe_success{job=\"blackbox-arr\"}",
+          "expr": "min by (host) ((((host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} == bool 0) * -1) != 0) or on(host,category,cert_name) host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"})",
           "instant": true,
-          "legendFormat": "{{service_title}}",
+          "legendFormat": "{{host}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Current Availability",
+      "title": "Private TLS Certificate Days Remaining",
       "type": "stat"
     },
     {
@@ -106,110 +103,66 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 8
-      },
-      "id": 2,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "avg_over_time(probe_duration_seconds{job=\"blackbox-arr\"}[5m])",
-          "legendFormat": "{{service_title}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Probe Duration",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
                 "color": "orange",
-                "value": 300
+                "value": 7
               },
               {
-                "color": "red",
-                "value": 400
+                "color": "green",
+                "value": 30
               }
             ]
           },
-          "unit": "short"
+          "unit": "d"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
-        "x": 12,
+        "w": 24,
+        "x": 0,
         "y": 8
       },
-      "id": 3,
+      "id": 4,
       "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
         },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "probe_http_status_code{job=\"blackbox-arr\"}",
+          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox-arr\",scope=\"external\"} - time()) / 86400",
+          "instant": true,
           "legendFormat": "{{service_title}}",
-          "range": true,
+          "range": false,
           "refId": "A"
         }
       ],
-      "title": "HTTP Status Code",
-      "type": "timeseries"
+      "title": "Public TLS Certificate Days Remaining",
+      "type": "stat"
     }
   ],
   "refresh": "1m",
-  "schemaVersion": 41,
+  "schemaVersion": 39,
   "tags": [
-    "arr",
-    "blackbox",
-    "services"
+    "pki",
+    "tls"
   ],
   "templating": {
     "list": []
@@ -220,7 +173,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Services",
-  "uid": "arr-services",
-  "version": 3
+  "title": "PKI / TLS",
+  "uid": "pki-overview",
+  "version": 7,
+  "weekStart": ""
 }

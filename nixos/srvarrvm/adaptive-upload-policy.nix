@@ -30,7 +30,7 @@ let
   metricsFile = "${nodeExporterTextfileDir}/adaptive-upload-policy.prom";
   transmissionRpcUrl = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc";
   jellyfinUploadPolicyMtlsClient =
-    config.host.observability.client.prometheusMtlsClients."jellyfin-upload-policy";
+    config.host.observability.client.mtlsClients."jellyfin-upload-policy";
 in
 {
   systemd.tmpfiles.rules = [
