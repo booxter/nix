@@ -1,10 +1,13 @@
 {
   config,
   hostInventory,
+  outputs,
   ...
 }:
 let
   glanceInternalPort = 18080;
+  fanaHostConfig = outputs.nixosConfigurations.prox-fanavm.config;
+  fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
   srvarrHttpsServices = config.host.internalHttps.services;
   srvarrPorts = {
     aurral = config.systemd.services.aurral.environment.PORT;
@@ -24,13 +27,25 @@ let
       builtins.getAttr service.id srvarrHttpsServices
     else
       null;
+  fanaHttpsServiceFor =
+    service:
+    if builtins.hasAttr service.id fanaHttpsServices && (builtins.getAttr service.id fanaHttpsServices).enable then
+      builtins.getAttr service.id fanaHttpsServices
+    else
+      null;
   serviceCatalog = map (
     service:
     let
       httpsService = httpsServiceFor service;
+      fanaHttpsService = fanaHttpsServiceFor service;
     in
     if service.scope == "external" then
       service
+    else if service.owner == "fana" && fanaHttpsService != null then
+      service
+      // {
+        url = "https://${fanaHttpsService.serverName}/";
+      }
     else if service.owner == "fana" then
       service
       // {

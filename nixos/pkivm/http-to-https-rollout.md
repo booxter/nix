@@ -12,6 +12,7 @@ Current status:
 - internal service cert issuance app is implemented
 - UniFi DNS sync can publish service aliases from inventory
 - `glance.home.arpa` is live on internal HTTPS
+- `grafana.home.arpa` is live on internal HTTPS
 - Darwin installs the internal root CA into the macOS System keychain
 - Darwin Firefox imports enterprise roots for the internal PKI
 
@@ -89,7 +90,7 @@ Required changes:
 Status:
 
 - Glance is complete
-- Grafana is still pending
+- Grafana is complete
 
 ### Group 3: Internal Media/Admin UIs
 
@@ -190,7 +191,7 @@ The desired flow is the same as current observability cert issuance:
 
 ### Phase 2: Dashboards
 
-- pending: move Grafana to `https://grafana.home.arpa`
+- done: move Grafana to `https://grafana.home.arpa`
 - done: move Glance to `https://glance.home.arpa`
 - update service catalog and probes
 - close plain LAN access

@@ -13,6 +13,7 @@ let
   lan = hostInventory.site.lan;
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
+  localHttpsServices = config.host.internalHttps.services;
   srvarrPorts = {
     aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
     audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
@@ -33,13 +34,26 @@ let
       builtins.getAttr service.id srvarrHttpsServices
     else
       null;
+  localHttpsServiceFor =
+    service:
+    if builtins.hasAttr service.id localHttpsServices && (builtins.getAttr service.id localHttpsServices).enable then
+      builtins.getAttr service.id localHttpsServices
+    else
+      null;
   serviceCatalog = map (
     service:
     let
       httpsService = httpsServiceFor service;
+      localHttpsService = localHttpsServiceFor service;
     in
     if service.scope == "external" then
       service
+    else if service.owner == "fana" && localHttpsService != null then
+      service
+      // {
+        probeUrl = "https://${localHttpsService.serverName}${service.probePath}";
+        url = "https://${localHttpsService.serverName}/";
+      }
     else if service.owner == "fana" then
       service
       // {
@@ -436,9 +450,10 @@ in
     enable = true;
     settings = {
       server = {
-        http_addr = "0.0.0.0";
+        http_addr = "127.0.0.1";
         http_port = grafanaPort;
-        domain = "${config.services.avahi.hostName}.local";
+        domain = "grafana.${lan.domain}";
+        root_url = "https://grafana.${lan.domain}/";
       };
       security = {
         admin_user = "admin";
@@ -680,6 +695,11 @@ in
         ];
       };
     };
+  };
+
+  host.internalHttps.services.grafana = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString grafanaPort}";
   };
 
   systemd.services.grafana = {
@@ -1060,7 +1080,6 @@ in
   };
 
   networking.firewall.allowedTCPPorts = [
-    grafanaPort
     lokiPort
   ];
 }

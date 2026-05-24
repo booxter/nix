@@ -500,6 +500,7 @@ rec {
       name = "fana";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
+      localDnsAliases = [ "grafana" ];
       cores = 8;
       memorySize = 16;
       diskSize = 300;
