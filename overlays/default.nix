@@ -40,7 +40,6 @@
       # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
       inherit (pkgs) netbootxyz-efi;
 
-      inherit (pkgs) readarr sonarr;
       mesa =
         if prev.stdenv.hostPlatform.isDarwin then
           prev.mesa.overrideAttrs (old: {
