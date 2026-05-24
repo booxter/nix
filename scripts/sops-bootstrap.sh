@@ -40,6 +40,23 @@ resolve_local_pubkey() {
   printf '%s' "$local_key"
 }
 
+resolve_control_plane_pubkey() {
+  local sops_yaml="$1"
+  local local_pubkey="$2"
+  local control_host="prox-pkivm"
+
+  if [[ ! -f "$sops_yaml" ]]; then
+    return 0
+  fi
+
+  if ! command -v yq >/dev/null 2>&1; then
+    return 0
+  fi
+
+  yq -r ".creation_rules[] | select(.path_regex == \"secrets/${control_host}\\\\.yaml$\") | .key_groups[]?.age[]" "$sops_yaml" \
+    | awk -v local_key="$local_pubkey" '$0 != local_key { print; exit }'
+}
+
 host=""
 user="${USER:-$(whoami)}"
 
@@ -157,12 +174,25 @@ if [[ -z "$local_pubkey" ]]; then
   exit 1
 fi
 
+control_plane_pubkey="$(resolve_control_plane_pubkey "$sops_yaml" "$local_pubkey" || true)"
+if [[ "$control_plane_pubkey" == "$pubkey" || "$control_plane_pubkey" == "$local_pubkey" ]]; then
+  control_plane_pubkey=""
+fi
+
 if [[ "$local_pubkey" == "$pubkey" ]]; then
   local_top_key_line=""
   local_rule_key_line=""
 else
   local_top_key_line="  - ${local_pubkey}"
   local_rule_key_line="          - ${local_pubkey}"
+fi
+
+if [[ -z "$control_plane_pubkey" ]]; then
+  control_top_key_line=""
+  control_rule_key_line=""
+else
+  control_top_key_line="  - ${control_plane_pubkey}"
+  control_rule_key_line="          - ${control_plane_pubkey}"
 fi
 
 secrets_dir="secrets"
@@ -177,12 +207,14 @@ if [[ ! -f "$sops_yaml" ]]; then
 keys:
   - ${pubkey}
 ${local_top_key_line}
+${control_top_key_line}
 creation_rules:
   - path_regex: secrets/${host}\\.yaml\$
     key_groups:
       - age:
           - ${pubkey}
 ${local_rule_key_line}
+${control_rule_key_line}
 EOF
   echo "Created $sops_yaml."
 else
@@ -206,12 +238,26 @@ else
   if ! (command -v rg >/dev/null 2>&1 && rg -q "secrets/${host}\\\\.yaml" "$sops_yaml") \
     && ! grep -q "secrets/${host}\\.yaml" "$sops_yaml"; then
     yq -i ".keys += [\"${pubkey}\",\"${local_pubkey}\"] | .keys |= unique" "$sops_yaml"
+    if [[ -n "$control_plane_pubkey" ]]; then
+      yq -i ".keys += [\"${control_plane_pubkey}\"] | .keys |= unique" "$sops_yaml"
+    fi
     yq -i ".creation_rules += [{\"path_regex\":\"secrets/${host}\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${pubkey}\",\"${local_pubkey}\"]}]}]" "$sops_yaml"
+    if [[ -n "$control_plane_pubkey" ]]; then
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+    fi
     echo "Updated $sops_yaml."
   else
     yq -i ".keys += [\"${pubkey}\",\"${local_pubkey}\"] | .keys |= unique" "$sops_yaml"
+    if [[ -n "$control_plane_pubkey" ]]; then
+      yq -i ".keys += [\"${control_plane_pubkey}\"] | .keys |= unique" "$sops_yaml"
+    fi
     yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${pubkey}\",\"${local_pubkey}\"]" "$sops_yaml"
     yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+    if [[ -n "$control_plane_pubkey" ]]; then
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+    fi
     echo "Updated $sops_yaml."
   fi
 fi
