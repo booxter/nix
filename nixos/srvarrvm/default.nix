@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   inputs,
   ...
 }:
@@ -7,6 +8,10 @@ let
   wgConservativeUploadRateMbit = 8;
   transmissionNonPreferredLowPriorityRatio = 3.0;
   transmissionNonPreferredPauseRatio = 6.0;
+  jellyseerrService = hostInventory.servicesById.jellyseerr;
+  aurralService = hostInventory.servicesById.aurral;
+  audiobookshelfService = hostInventory.servicesById.audiobookshelf;
+  shelfmarkService = hostInventory.servicesById.shelfmark;
 in
 {
   _module.args = {
@@ -118,21 +123,25 @@ in
     jellyseerr = {
       enable = true;
       upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
+      serverAliases = [ jellyseerrService.publicHost ];
       mtls.enable = true;
     };
     aurral = {
       enable = true;
       upstream = "http://127.0.0.1:${toString config.systemd.services.aurral.environment.PORT}";
+      serverAliases = [ aurralService.publicHost ];
       mtls.enable = true;
     };
     audiobookshelf = {
       enable = true;
       upstream = "http://127.0.0.1:${toString config.nixarr.audiobookshelf.port}";
+      serverAliases = [ audiobookshelfService.publicHost ];
       mtls.enable = true;
     };
     shelfmark = {
       enable = true;
       upstream = "http://127.0.0.1:${toString config.nixarr.shelfmark.port}";
+      serverAliases = [ shelfmarkService.publicHost ];
       mtls.enable = true;
     };
   };

@@ -9,19 +9,38 @@ let
   orgVmAddress = hostInventory.dhcpReservationsByHostname.prox-orgvm.ip;
   backendMtlsServices = builtins.listToAttrs (
     map
-      (id: {
-        name = id;
-        value = {
-          clientName = id;
-          serverName = "${id}.${hostInventory.site.lan.domain}";
-        };
-      })
+      (
+        { id, localPort }:
+        {
+          name = id;
+          value = {
+            clientName = id;
+            serverName = "${id}.${hostInventory.site.lan.domain}";
+            inherit localPort;
+          };
+        }
+      )
       [
-        "jellyseerr"
-        "aurral"
-        "audiobookshelf"
-        "shelfmark"
-        "vikunja"
+        {
+          id = "jellyseerr";
+          localPort = 15055;
+        }
+        {
+          id = "aurral";
+          localPort = 13001;
+        }
+        {
+          id = "audiobookshelf";
+          localPort = 19292;
+        }
+        {
+          id = "shelfmark";
+          localPort = 18084;
+        }
+        {
+          id = "vikunja";
+          localPort = 13456;
+        }
       ]
   );
   publicServiceBackendAddresses = {
@@ -60,7 +79,11 @@ in
               proxyPass = "https://${backend.serverName}";
               upstreamTls = {
                 enable = true;
-                inherit (backend) clientName serverName;
+                inherit (backend)
+                  clientName
+                  serverName
+                  localPort
+                  ;
               };
               locationExtraConfig = lib.optionalString (service.id == "aurral") ''
                 proxy_set_header X-Forwarded-For $remote_addr;
