@@ -87,9 +87,10 @@ stdenv.mkDerivation {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out/bin" "$out/lib/${pname}/backend" "$out/lib/${pname}/frontend"
+    mkdir -p "$out/bin" "$out/lib/${pname}/backend" "$out/lib/${pname}/frontend" "$out/lib/${pname}/lib"
 
     cp package.json loadEnv.js server.js "$out/lib/${pname}/"
+    cp -r lib "$out/lib/${pname}/"
     cp -r node_modules "$out/lib/${pname}/"
     cp backend/package.json "$out/lib/${pname}/backend/"
     cp -r backend/config \
