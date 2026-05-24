@@ -39,6 +39,7 @@ let
 in
 stdenv.mkDerivation {
   inherit pname version src;
+  patches = [ ./disable-local-network-bypass.patch ];
 
   nativeBuildInputs = [
     nodejs
