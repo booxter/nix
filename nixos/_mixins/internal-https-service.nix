@@ -71,6 +71,12 @@ in
                 description = "Whether to enable websocket proxy headers.";
               };
 
+              recommendedProxySettings = lib.mkOption {
+                type = bool;
+                default = true;
+                description = "Whether to apply NixOS nginx recommended proxy headers automatically.";
+              };
+
               secretPrefix = lib.mkOption {
                 type = str;
                 default = "internal_https/${name}";
@@ -144,6 +150,7 @@ in
           locations.${service.path} = {
             proxyPass = service.upstream;
             proxyWebsockets = service.proxyWebsockets;
+            recommendedProxySettings = service.recommendedProxySettings;
             extraConfig = service.locationExtraConfig;
           };
         }

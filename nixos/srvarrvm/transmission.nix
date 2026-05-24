@@ -92,10 +92,16 @@ in
     serverName = "tmission.${hostInventory.site.lan.domain}";
     serverAliases = [ "tmission" ];
     upstream = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}";
+    recommendedProxySettings = false;
     # Transmission RPC rejects the public LAN hostname, so preserve the
     # existing whitelisted host on the upstream hop.
     locationExtraConfig = ''
       proxy_set_header Host ${config.networking.hostName};
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host $host;
+      proxy_set_header X-Forwarded-Server $hostname;
     '';
   };
 }
