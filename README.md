@@ -161,5 +161,6 @@ Jellyfin and Jellarr run on `beast`.
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
 | `fana` | NixOS VM | Local Grafana stack (Grafana + Prometheus + Loki + Alloy log shipping). | [nixos/fanavm/default.nix](nixos/fanavm/default.nix) | [common](common), [nixos](nixos) |
+| `pki` | NixOS VM | Home fleet control-plane VM for internal PKI, PKI rotation, and UniFi state sync. | [nixos/pkivm/default.nix](nixos/pkivm/default.nix) | [common](common), [nixos](nixos) |
 | `gw` | Network VM | Minimal WireGuard gateway VM for remote LAN access. | [nixos/gwvm/default.nix](nixos/gwvm/default.nix) | [common](common), [nixos](nixos) |
 | `org` | NixOS VM | Org software VM. Starter service: Vikunja with Prometheus metrics scraped by `fana`. | [nixos/orgvm/default.nix](nixos/orgvm/default.nix) | [common](common), [nixos](nixos) |
