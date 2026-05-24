@@ -32,6 +32,7 @@ in
         "browser.tabs.closeWindowWithLastTab" = true;
         "accessibility.typeaheadfind.enablesound" = false;
         "browser.tabs.tabmanager.enabled" = true;
+        "browser.fixup.dns_first_for_single_words" = true;
 
         # don't pollute home for no reason
         "browser.download.start_downloads_in_tmp_dir" = true;
