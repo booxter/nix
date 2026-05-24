@@ -26,9 +26,7 @@ let
       proxyWebsockets = vhost.proxyWebsockets;
       recommendedProxySettings = false;
       extraConfig =
-        recommendedProxyHeaders (
-          if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host"
-        )
+        recommendedProxyHeaders (if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host")
         + vhost.locationExtraConfig;
     };
   };
