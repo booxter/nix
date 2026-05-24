@@ -28,83 +28,6 @@
             {
               "options": {
                 "0": {
-                  "color": "green",
-                  "index": 0,
-                  "text": "Clear"
-                },
-                "1": {
-                  "color": "yellow",
-                  "index": 1,
-                  "text": "Rotate"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 0
-      },
-      "id": 1,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value_and_name",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "host_observability_pki_cert_rotation_due{job=\"node-mtls\",instance=\"prox-pkivm\"}",
-          "instant": true,
-          "legendFormat": "{{host}} / {{category}} / {{cert_name}}",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Internal Rotation Window",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
                   "color": "red",
                   "index": 0,
                   "text": "Missing"
@@ -112,7 +35,12 @@
                 "1": {
                   "color": "green",
                   "index": 1,
-                  "text": "Present"
+                  "text": "OK"
+                },
+                "2": {
+                  "color": "yellow",
+                  "index": 2,
+                  "text": "Due"
                 }
               },
               "type": "value"
@@ -130,6 +58,10 @@
               {
                 "color": "green",
                 "value": 1
+              },
+              {
+                "color": "yellow",
+                "value": 2
               }
             ]
           },
@@ -138,47 +70,102 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 8,
+        "h": 10,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 0
       },
-      "id": 2,
+      "id": 1,
       "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
           "fields": "",
-          "values": false
+          "reducer": [
+            "sum"
+          ],
+          "show": false
         },
-        "showPercentChange": false,
-        "textMode": "value_and_name",
-        "wideLayout": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "State"
+          },
+          {
+            "desc": false,
+            "displayName": "Host"
+          },
+          {
+            "desc": false,
+            "displayName": "Kind"
+          },
+          {
+            "desc": false,
+            "displayName": "Certificate"
+          }
+        ]
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"}",
+          "expr": "host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} * (1 + host_observability_pki_cert_rotation_due{job=\"node-mtls\",instance=\"prox-pkivm\"})",
+          "format": "table",
           "instant": true,
-          "legendFormat": "{{host}} / {{category}} / {{cert_name}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Internal Cert Parse Health",
-      "type": "stat"
+      "title": "Internal Certificate State",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "host",
+                "category",
+                "cert_name",
+                "Value"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true
+            },
+            "indexByName": {
+              "Value": 0,
+              "host": 1,
+              "category": 2,
+              "cert_name": 3
+            },
+            "renameByName": {
+              "Value": "State",
+              "category": "Kind",
+              "cert_name": "Certificate",
+              "host": "Host"
+            }
+          }
+        }
+      ],
+      "type": "table"
     },
     {
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "decimals": 1,
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -187,8 +174,8 @@
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 14
+                "color": "orange",
+                "value": 7
               },
               {
                 "color": "green",
@@ -196,7 +183,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "d"
         },
         "overrides": []
       },
@@ -204,7 +191,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 10
       },
       "id": 3,
       "options": {
@@ -241,7 +228,7 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "decimals": 1,
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -250,8 +237,8 @@
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 14
+                "color": "orange",
+                "value": 7
               },
               {
                 "color": "green",
@@ -259,7 +246,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "d"
         },
         "overrides": []
       },
@@ -267,11 +254,11 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 18
       },
       "id": 4,
       "options": {
-        "colorMode": "value",
+        "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
@@ -290,14 +277,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sort((probe_ssl_earliest_cert_expiry{job=\"blackbox-arr\",scope=\"external\"} - time()) / 86400)",
+          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox-arr\",scope=\"external\"} - time()) / 86400",
           "instant": true,
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{service_title}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Public HTTPS Days Remaining",
+      "title": "Public TLS Certificate Days Remaining",
       "type": "stat"
     },
     {
@@ -344,7 +331,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 32
+        "y": 26
       },
       "id": 5,
       "options": {
@@ -407,7 +394,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 32
+        "y": 26
       },
       "id": 6,
       "options": {
@@ -458,6 +445,6 @@
   "timezone": "",
   "title": "PKI / TLS",
   "uid": "pki-overview",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }
