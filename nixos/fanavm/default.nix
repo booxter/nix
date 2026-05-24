@@ -789,6 +789,40 @@ in
                   category = "pki";
                 };
               })
+              (mkGrafanaPromRule {
+                uid = "pki_rotation_controller_failed";
+                title = "PKI Rotation Controller Failed";
+                expr = "host_observability_pki_rotation_last_success{job=\"node-mtls\",instance=\"prox-pkivm\"}";
+                comparator = "lt";
+                threshold = 1;
+                forDuration = "2h";
+                annotations = {
+                  summary = "PKI rotation controller failed on prox-pkivm";
+                  description = "The most recent scheduled PKI rotation controller run on prox-pkivm did not complete successfully.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "pki";
+                };
+                noDataState = "OK";
+              })
+              (mkGrafanaPromRule {
+                uid = "pki_rotation_controller_stale";
+                title = "PKI Rotation Controller Stale";
+                expr = "((time() - host_observability_pki_rotation_last_run_timestamp_seconds{job=\"node-mtls\",instance=\"prox-pkivm\"}) / 3600)";
+                comparator = "gt";
+                threshold = 36;
+                forDuration = "2h";
+                annotations = {
+                  summary = "PKI rotation controller stale on prox-pkivm";
+                  description = "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours.";
+                };
+                labels = {
+                  severity = "warning";
+                  category = "pki";
+                };
+                noDataState = "OK";
+              })
             ];
           }
         ];
