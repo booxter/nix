@@ -473,7 +473,14 @@ rec {
       name = "srvarr";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
-      localDnsAliases = [ "glance" ];
+      localDnsAliases = [
+        "glance"
+        "radarr"
+        "sonarr"
+        "lidarr"
+        "bazarr"
+        "prowlarr"
+      ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
         namespaceAddress = "192.168.50.1";

@@ -5,6 +5,7 @@
 }:
 let
   glanceInternalPort = 18080;
+  srvarrHttpsServices = config.host.internalHttps.services;
   srvarrPorts = {
     aurral = config.systemd.services.aurral.environment.PORT;
     audiobookshelf = config.nixarr.audiobookshelf.port;
@@ -17,14 +18,28 @@ let
     sonarr = config.nixarr.sonarr.port;
     transmission = config.nixarr.transmission.uiPort;
   };
+  httpsServiceFor =
+    service:
+    if builtins.hasAttr service.id srvarrHttpsServices && (builtins.getAttr service.id srvarrHttpsServices).enable then
+      builtins.getAttr service.id srvarrHttpsServices
+    else
+      null;
   serviceCatalog = map (
     service:
+    let
+      httpsService = httpsServiceFor service;
+    in
     if service.scope == "external" then
       service
     else if service.owner == "fana" then
       service
       // {
         url = "http://${service.displayHost}:3000/";
+      }
+    else if httpsService != null then
+      service
+      // {
+        url = "https://${httpsService.serverName}/";
       }
     else
       service

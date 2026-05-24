@@ -208,6 +208,14 @@ The desired flow is the same as current observability cert issuance:
 - update Glance and blackbox probes
 - close direct HTTP access
 
+Current note:
+
+- Bazarr is the one exception in this group for now: the current NixOS module
+  via `nixarr` only passes `--config`, `--port`, and `--no-update`, with no
+  host/bind-address option, so the immediate rollout uses firewall closure
+  plus HTTPS fronting rather than a true loopback bind. This should be cleaned
+  up later, ideally by contributing the missing knob upstream.
+
 ### Phase 4: Beast Backend Hops
 
 - switch beast public nginx upstreams to internal HTTPS backends

@@ -25,8 +25,19 @@ let
     sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
     transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
   };
+  srvarrHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
+  srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
+  httpsServiceFor =
+    service:
+    if builtins.hasAttr service.id srvarrHttpsServices && (builtins.getAttr service.id srvarrHttpsServices).enable then
+      builtins.getAttr service.id srvarrHttpsServices
+    else
+      null;
   serviceCatalog = map (
     service:
+    let
+      httpsService = httpsServiceFor service;
+    in
     if service.scope == "external" then
       service
     else if service.owner == "fana" then
@@ -34,6 +45,12 @@ let
       // {
         probeUrl = "http://127.0.0.1:${toString grafanaPort}/${service.probePath}";
         url = "http://${service.displayHost}:3000/";
+      }
+    else if httpsService != null then
+      service
+      // {
+        probeUrl = "https://${httpsService.serverName}${service.probePath}";
+        url = "https://${httpsService.serverName}/";
       }
     else
       service
@@ -85,7 +102,7 @@ let
   nutExporterPort = 9199;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
-  sabnzbdHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
+  sabnzbdHostConfig = srvarrHostConfig;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
   prometheusMtlsTlsConfig = {
     ca_file = toString internalPkiRootCaPath;
