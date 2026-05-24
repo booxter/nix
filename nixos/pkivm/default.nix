@@ -200,8 +200,8 @@ in
           --rotation-window-days 45 \
           --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
           --sops-age-key-file /var/lib/sops-nix/key.txt \
-          --base-branch ${pkiRotationBaseBranch} \
           rotate \
+          --base-branch ${pkiRotationBaseBranch} \
           --github-token-file ${config.sops.secrets.pkiRotationGithubToken.path} \
           --metrics-output ${pkiRotationMetricsPath}
       '';
