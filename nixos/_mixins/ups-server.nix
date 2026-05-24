@@ -28,7 +28,7 @@
     openFirewall = true;
 
     ups.${upsName} = {
-      driver = "usbhid-ups"; # TODO: confirm the driver for this APC model.
+      driver = "usbhid-ups";
       port = "auto";
       description = upsDescription;
     };

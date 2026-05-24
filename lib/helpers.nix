@@ -366,6 +366,7 @@ rec {
               { pkgs, ... }:
               let
                 brname = "vmbr0";
+                lanDomain = hostInventory.site.lan.domain;
               in
               {
                 # Hypervisors upgrade on a separate schedule to avoid
@@ -374,13 +375,22 @@ rec {
 
                 nixpkgs.overlays = [
                   inputs.proxmox-nixos.overlays.${platform}
-                  (final: prev: {
-                    pve-manager = prev.pve-manager.overrideAttrs (old: {
-                      patches = (old.patches or [ ]) ++ [
-                        ./patches/pve-manager-disable-subscription-popup.patch
-                      ];
-                    });
-                  })
+                  (
+                    _final: prev:
+                    let
+                      patchedPveManager = prev.pve-manager.overrideAttrs (old: {
+                        patches = (old.patches or [ ]) ++ [
+                          ./patches/pve-manager-disable-subscription-popup.patch
+                        ];
+                      });
+                    in
+                    {
+                      pve-manager = patchedPveManager;
+                      proxmox-ve = prev.proxmox-ve.override {
+                        pve-manager = patchedPveManager;
+                      };
+                    }
+                  )
                 ];
 
                 services.proxmox-ve = {
@@ -426,6 +436,11 @@ rec {
                   networkConfig = {
                     IPv6AcceptRA = true;
                     DHCP = "ipv4";
+                  };
+                  dhcpV4Config = {
+                    # systemd-networkd receives DOMAINNAME=home.arpa from DHCP,
+                    # but does not install it as a search domain unless enabled.
+                    UseDomains = true;
                   };
                   linkConfig = {
                     RequiredForOnline = "routable";
