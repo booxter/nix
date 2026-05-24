@@ -1,0 +1,17 @@
+diff --git a/backend/services/imageProxyService.js b/backend/services/imageProxyService.js
+index 2623402..389e96a 100644
+--- a/backend/services/imageProxyService.js
++++ b/backend/services/imageProxyService.js
+@@ -9,7 +9,11 @@ const __filename = fileURLToPath(import.meta.url);
+ const __dirname = path.dirname(__filename);
+ 
+ const IMAGE_PROXY_ROUTE = "/api/image-proxy";
+-const IMAGE_PROXY_DIR = path.join(__dirname, "..", "data", "image-proxy");
++const DEFAULT_DATA_DIR = path.join(__dirname, "..", "data");
++const DATA_DIR = process.env.AURRAL_DATA_DIR
++  ? path.resolve(process.env.AURRAL_DATA_DIR)
++  : DEFAULT_DATA_DIR;
++const IMAGE_PROXY_DIR = path.join(DATA_DIR, "image-proxy");
+ const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+ const FETCH_TIMEOUT_MS = 25000;
+ const OPTIMIZED_IMAGE_MAX_BYTES = 1024 * 1024;
