@@ -5,7 +5,7 @@ This file only tracks the remaining HTTP-to-HTTPS work.
 Already done:
 
 - internal PKI trust on Darwin
-- `nix-cache.home.arpa` for Nix substituters
+- `nix-cache.home.arpa` for Nix substituters and Attic push
 - `glance.home.arpa`
 - `grafana.home.arpa`
 - internal HTTPS for `radarr`, `sonarr`, `lidarr`, `bazarr`, and `prowlarr`
@@ -22,7 +22,6 @@ Already done:
 
 ### 1. Final Plain-Port Cleanup
 
-- finish the Attic push transition and retire the temporary cache HTTP fallback
 - retire Jellyfin plain LAN access on `:8096` if it is no longer needed
 - retire any remaining direct LAN HTTP app ports
 - verify that intentional HTTP is loopback-only
