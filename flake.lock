@@ -930,17 +930,16 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1774499868,
-        "narHash": "sha256-WyVSszhfDAb0erT5yQKhEZefuOA2n0j2pn2assc+GeE=",
+        "lastModified": 1776406961,
+        "narHash": "sha256-tEC8oqQ5qpZJJa2amUgVd/J706R6fmP3QjawOZaBRcA=",
         "owner": "quinneden",
         "repo": "virby-nix-darwin",
-        "rev": "7628dd04c700bf035b54fe7d99e8ced18f097ec6",
+        "rev": "6ad5c37179391ccddaabe8fe64750cb0fc4b5670",
         "type": "github"
       },
       "original": {
         "owner": "quinneden",
         "repo": "virby-nix-darwin",
-        "rev": "7628dd04c700bf035b54fe7d99e8ced18f097ec6",
         "type": "github"
       }
     },
