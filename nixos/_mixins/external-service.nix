@@ -13,6 +13,7 @@ let
       proxyWebsockets = vhost.proxyWebsockets;
       extraConfig =
         lib.optionalString vhost.upstreamTls.enable ''
+          proxy_set_header Host ${vhost.upstreamTls.serverName};
           proxy_ssl_server_name on;
           proxy_ssl_name ${vhost.upstreamTls.serverName};
           proxy_ssl_verify on;
