@@ -5,6 +5,7 @@ This file only tracks the remaining HTTP-to-HTTPS work.
 Already done:
 
 - internal PKI trust on Darwin
+- `nix-cache.home.arpa` for both Nix substituters and Attic push
 - `glance.home.arpa`
 - `grafana.home.arpa`
 - internal HTTPS for `radarr`, `sonarr`, `lidarr`, `bazarr`, and `prowlarr`
@@ -19,26 +20,7 @@ Already done:
 
 ## Remaining Work
 
-### 1. Cache
-
-Transition plan:
-
-1. Add `https://nix-cache.home.arpa` in front of `atticd`, but keep the current
-   LAN HTTP endpoint alive.
-2. Move Attic push clients to the HTTPS endpoint first.
-3. Verify there is no remaining HTTP push traffic.
-4. Only then decide whether to keep HTTP read-only for pull or move pull to
-   HTTPS too.
-
-Current implementation target:
-
-- `atticd` reachable on both:
-  - `http://nix-cache:8080`
-  - `https://nix-cache.home.arpa`
-- pull clients use only the HTTPS substituter
-- push clients still unchanged until the dual-endpoint server is live
-
-### 2. Final Plain-Port Cleanup
+### 1. Final Plain-Port Cleanup
 
 - retire Jellyfin plain LAN access on `:8096` if it is no longer needed
 - retire any remaining direct LAN HTTP app ports
