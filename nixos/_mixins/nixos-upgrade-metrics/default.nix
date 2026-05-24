@@ -6,8 +6,7 @@
 }:
 let
   cfg = config.host.observability.nixosUpgrade;
-  textfileCollectorHandledByOtherMixin =
-    config.host.observability.lanWan.enable || config.host.observability.dnsQueryAccounting.enable;
+  textfileCollectorHandledByOtherMixin = config.host.observability.lanWan.enable;
   textfileCollectorNeeded = cfg.exportToNodeExporter && !textfileCollectorHandledByOtherMixin;
   writeSuccessMetric = pkgs.writeShellScript "write-nixos-upgrade-success-metric" ''
     set -euo pipefail

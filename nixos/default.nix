@@ -32,7 +32,6 @@ in
       ++ [
         ./_mixins/internal-https-service.nix
         ./_mixins/observability-client
-        ./_mixins/dns-query-accounting
         ./_mixins/external-service.nix
         ./_mixins/lan-wan-accounting
         ./_mixins/nixos-upgrade-holds
