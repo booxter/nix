@@ -1,7 +1,29 @@
-{ hostInventory, outputs, ... }:
+{
+  hostInventory,
+  lib,
+  outputs,
+  ...
+}:
 let
   arrVmAddress = hostInventory.dhcpReservationsByHostname.prox-srvarrvm.ip;
   orgVmAddress = hostInventory.dhcpReservationsByHostname.prox-orgvm.ip;
+  backendMtlsServices = builtins.listToAttrs (
+    map
+      (id: {
+        name = id;
+        value = {
+          clientName = id;
+          serverName = "${id}.${hostInventory.site.lan.domain}";
+        };
+      })
+      [
+        "jellyseerr"
+        "aurral"
+        "audiobookshelf"
+        "shelfmark"
+        "vikunja"
+      ]
+  );
   publicServiceBackendAddresses = {
     beast = "127.0.0.1";
     srvarr = arrVmAddress;
@@ -23,19 +45,26 @@ in
       hostname = "ihrachyshka-beast.freeddns.org";
       username = "ihrachyshka";
     };
-    mtlsClients.vikunja.enable = true;
+    mtlsClients = builtins.mapAttrs (_: _: {
+      enable = true;
+    }) backendMtlsServices;
     virtualHosts = builtins.listToAttrs (
       map (service: {
         name = service.publicHost;
         value =
-          if service.id == "vikunja" then
+          if builtins.hasAttr service.id backendMtlsServices then
+            let
+              backend = backendMtlsServices.${service.id};
+            in
             {
-              proxyPass = "https://vikunja.${hostInventory.site.lan.domain}";
+              proxyPass = "https://${backend.serverName}";
               upstreamTls = {
                 enable = true;
-                clientName = "vikunja";
-                serverName = "vikunja.${hostInventory.site.lan.domain}";
+                inherit (backend) clientName serverName;
               };
+              locationExtraConfig = lib.optionalString (service.id == "aurral") ''
+                proxy_set_header X-Forwarded-For $remote_addr;
+              '';
             }
           else
             {
@@ -47,8 +76,4 @@ in
     );
   };
 
-  services.nginx.virtualHosts.${hostInventory.servicesById.aurral.publicHost}.locations."/".extraConfig =
-    ''
-      proxy_set_header X-Forwarded-For $remote_addr;
-    '';
 }

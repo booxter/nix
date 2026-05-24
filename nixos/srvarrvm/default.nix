@@ -43,7 +43,7 @@ in
     enable = true;
     seerr = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
     };
     prowlarr = {
       enable = true;
@@ -59,8 +59,8 @@ in
     };
     shelfmark = {
       enable = true;
-      host = "0.0.0.0";
-      openFirewall = true;
+      host = "127.0.0.1";
+      openFirewall = false;
     };
     sonarr = {
       enable = true;
@@ -76,8 +76,8 @@ in
     };
     audiobookshelf = {
       enable = true;
-      host = "0.0.0.0";
-      openFirewall = true;
+      host = "127.0.0.1";
+      openFirewall = false;
     };
 
   };
@@ -114,6 +114,26 @@ in
     prowlarr = {
       enable = true;
       upstream = "http://127.0.0.1:${toString config.nixarr.prowlarr.port}";
+    };
+    jellyseerr = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
+      mtls.enable = true;
+    };
+    aurral = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.systemd.services.aurral.environment.PORT}";
+      mtls.enable = true;
+    };
+    audiobookshelf = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.nixarr.audiobookshelf.port}";
+      mtls.enable = true;
+    };
+    shelfmark = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.nixarr.shelfmark.port}";
+      mtls.enable = true;
     };
   };
 

@@ -11,19 +11,21 @@ let
     locations."/" = {
       proxyPass = vhost.proxyPass;
       proxyWebsockets = vhost.proxyWebsockets;
-      extraConfig = lib.optionalString vhost.upstreamTls.enable ''
-        proxy_ssl_server_name on;
-        proxy_ssl_name ${vhost.upstreamTls.serverName};
-        proxy_ssl_verify on;
-        proxy_ssl_verify_depth 2;
-        proxy_ssl_trusted_certificate ${vhost.upstreamTls.trustedCaCertificate};
-        proxy_ssl_certificate ${
-          config.sops.secrets."${mtlsClientSecretAttrName vhost.upstreamTls.clientName}-crt".path
-        };
-        proxy_ssl_certificate_key ${
-          config.sops.secrets."${mtlsClientSecretAttrName vhost.upstreamTls.clientName}-key".path
-        };
-      '';
+      extraConfig =
+        lib.optionalString vhost.upstreamTls.enable ''
+          proxy_ssl_server_name on;
+          proxy_ssl_name ${vhost.upstreamTls.serverName};
+          proxy_ssl_verify on;
+          proxy_ssl_verify_depth 2;
+          proxy_ssl_trusted_certificate ${vhost.upstreamTls.trustedCaCertificate};
+          proxy_ssl_certificate ${
+            config.sops.secrets."${mtlsClientSecretAttrName vhost.upstreamTls.clientName}-crt".path
+          };
+          proxy_ssl_certificate_key ${
+            config.sops.secrets."${mtlsClientSecretAttrName vhost.upstreamTls.clientName}-key".path
+          };
+        ''
+        + vhost.locationExtraConfig;
     };
   };
 in
@@ -127,6 +129,12 @@ in
               type = lib.types.bool;
               default = true;
               description = "Whether to enable websocket proxy headers.";
+            };
+
+            locationExtraConfig = lib.mkOption {
+              type = lib.types.lines;
+              default = "";
+              description = "Extra nginx location config appended after the generated proxy settings.";
             };
 
             upstreamTls = {

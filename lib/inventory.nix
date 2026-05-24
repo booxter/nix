@@ -475,11 +475,15 @@ rec {
       upsHost = "prx1-lab";
       localDnsAliases = [
         "glance"
+        "jellyseerr"
         "radarr"
         "sonarr"
         "lidarr"
         "bazarr"
         "prowlarr"
+        "aurral"
+        "audiobookshelf"
+        "shelfmark"
         "sabnzbd"
         "tmission"
       ];

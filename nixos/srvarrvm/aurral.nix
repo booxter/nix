@@ -28,8 +28,6 @@ in
     "z ${aurralStateDir} 0750 aurral aurral - -"
   ];
 
-  networking.firewall.allowedTCPPorts = [ aurralPort ];
-
   systemd.services.aurral = {
     description = "Aurral music discovery and flow download service";
     wantedBy = [ "multi-user.target" ];
