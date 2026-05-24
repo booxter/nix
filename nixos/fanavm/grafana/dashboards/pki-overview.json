@@ -110,14 +110,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} * (1 + host_observability_pki_cert_rotation_due{job=\"node-mtls\",instance=\"prox-pkivm\"})",
+          "expr": "(host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} * (1 + host_observability_pki_cert_rotation_due{job=\"node-mtls\",instance=\"prox-pkivm\"})) != 1",
           "format": "table",
           "instant": true,
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Internal Certificate State",
+      "title": "Internal Certificate Issues",
       "transformations": [
         {
           "id": "labelsToFields",
@@ -445,6 +445,6 @@
   "timezone": "",
   "title": "PKI / TLS",
   "uid": "pki-overview",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
