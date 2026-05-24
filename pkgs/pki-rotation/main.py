@@ -71,10 +71,14 @@ def find_repo_root():
     )
 
 
-REPO_ROOT = find_repo_root()
+def normalize_repo_root(repo_root):
+    if repo_root is None:
+        return find_repo_root()
+    return pathlib.Path(repo_root).expanduser().resolve()
 
 
-def run(cmd, *, cwd=REPO_ROOT, env=None, input_text=None):
+def run(cmd, *, cwd=None, env=None, input_text=None):
+    cwd = normalize_repo_root(cwd)
     proc = subprocess.run(
         cmd,
         cwd=cwd,
@@ -89,7 +93,8 @@ def run(cmd, *, cwd=REPO_ROOT, env=None, input_text=None):
     return proc.stdout
 
 
-def run_optional(cmd, *, cwd=REPO_ROOT, env=None):
+def run_optional(cmd, *, cwd=None, env=None):
+    cwd = normalize_repo_root(cwd)
     proc = subprocess.run(
         cmd,
         cwd=cwd,
@@ -112,12 +117,14 @@ def nix_attr_path(*segments):
     return ".#" + ".".join(nix_segment(segment) for segment in segments)
 
 
-def nix_eval_json(*segments, repo_root=REPO_ROOT):
+def nix_eval_json(*segments, repo_root=None):
+    repo_root = normalize_repo_root(repo_root)
     raw = run(["nix", "eval", "--json", nix_attr_path(*segments)], cwd=repo_root)
     return json.loads(raw)
 
 
-def nix_eval_json_optional(*segments, repo_root=REPO_ROOT):
+def nix_eval_json_optional(*segments, repo_root=None):
+    repo_root = normalize_repo_root(repo_root)
     raw = run_optional(
         ["nix", "eval", "--json", nix_attr_path(*segments)],
         cwd=repo_root,
@@ -127,7 +134,8 @@ def nix_eval_json_optional(*segments, repo_root=REPO_ROOT):
     return json.loads(raw)
 
 
-def nix_eval_raw_optional(*segments, repo_root=REPO_ROOT):
+def nix_eval_raw_optional(*segments, repo_root=None):
+    repo_root = normalize_repo_root(repo_root)
     raw = run_optional(
         ["nix", "eval", "--raw", nix_attr_path(*segments)],
         cwd=repo_root,
@@ -137,7 +145,8 @@ def nix_eval_raw_optional(*segments, repo_root=REPO_ROOT):
     return raw.strip()
 
 
-def host_config_root(host, *, repo_root=REPO_ROOT):
+def host_config_root(host, *, repo_root=None):
+    repo_root = normalize_repo_root(repo_root)
     for root in ("nixosConfigurations", "darwinConfigurations"):
         if (
             nix_eval_raw_optional(
@@ -1023,8 +1032,11 @@ def build_parser():
     parser.add_argument(
         "--repo-root",
         type=pathlib.Path,
-        default=REPO_ROOT,
-        help=f"Flake checkout to inspect (default: {REPO_ROOT})",
+        default=None,
+        help=(
+            "Flake checkout to inspect. Defaults to the current checkout or "
+            f"${DEFAULT_REPO_ROOT_ENV}."
+        ),
     )
     parser.add_argument(
         "--rotation-window-days",
@@ -1120,7 +1132,7 @@ def build_parser():
 def main():
     parser = build_parser()
     args = parser.parse_args()
-    args.repo_root = args.repo_root.resolve()
+    args.repo_root = normalize_repo_root(args.repo_root)
     args.func(args)
 
 
