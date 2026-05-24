@@ -72,6 +72,13 @@
         ];
       });
 
+      # Override the jellarr package to refresh the pnpm dependency store hash
+      # for the repo's current nixpkgs branch, while consuming the pinned flake
+      # source from the jellarr input.
+      jellarr = prev.callPackage ../pkgs/jellarr {
+        src = inputs.jellarr;
+      };
+
       jellyfin = prev.jellyfin.overrideAttrs (old: {
         patches = old.patches or [ ] ++ [
           # Catch websocket keepalive send races.
