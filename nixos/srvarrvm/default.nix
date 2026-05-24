@@ -111,4 +111,6 @@ in
     };
   };
 
+  host.observability.client.prometheusMtlsClients."jellyfin-upload-policy".enable = true;
+
 }

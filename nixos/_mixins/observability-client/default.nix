@@ -132,6 +132,34 @@ in
       default = { };
       description = "Additional nginx-fronted mTLS endpoints for remote Prometheus scrapes.";
     };
+
+    prometheusMtlsClients = lib.mkOption {
+      type = with lib.types; attrsOf (submodule ({ name, ... }: {
+        options = {
+          enable = lib.mkEnableOption "mTLS client certificate for consuming protected Prometheus-style endpoints";
+
+          secretPrefix = lib.mkOption {
+            type = str;
+            default = "prometheus/clients/${name}";
+            description = "Secret prefix containing client_crt and client_key for this client identity.";
+          };
+
+          commonName = lib.mkOption {
+            type = str;
+            default = "${name}.${config.host.dnsName}";
+            description = "Leaf certificate common name to issue for this client identity.";
+          };
+
+          sans = lib.mkOption {
+            type = listOf str;
+            default = [ ];
+            description = "Optional SANs for this client certificate.";
+          };
+        };
+      }));
+      default = { };
+      description = "Host-local mTLS client identities used to consume protected Prometheus-style endpoints.";
+    };
   };
 
   config = lib.mkIf cfg.enable (

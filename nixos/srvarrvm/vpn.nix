@@ -1,6 +1,7 @@
 {
   hostInventory,
   lib,
+  outputs,
   pkgs,
   wgConservativeUploadRateMbit,
   ...
@@ -8,6 +9,8 @@
 let
   srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
+  beastHostConfig = outputs.nixosConfigurations.beast.config;
+  beastJellyfinEndpoint = beastHostConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;
   beastNfsPort = hostInventory.site.ports.nfs;
   beastNfsRate = "1500mbit";
   networkOnlineUnitDeps = {
@@ -34,7 +37,8 @@ in
 
   imports = [
     (import ./adaptive-upload-policy.nix {
-      jellyfinExporterUrl = "http://${beastNfsAddress}:9594/metrics";
+      jellyfinExporterUrl =
+        "https://${beastHostConfig.host.dnsName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
       fallbackUploadRateMbit = wgConservativeUploadRateMbit;
       inherit
         networkOnlineUnitDeps

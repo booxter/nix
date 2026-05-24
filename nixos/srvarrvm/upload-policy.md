@@ -62,8 +62,9 @@ Important current facts:
 
 ### 1. Adaptive Global Cap
 
-`jellyfin-upload-policy` reads Jellyfin exporter metrics from `beast` and
-computes a host-wide upload target.
+`jellyfin-upload-policy` reads Jellyfin exporter metrics from `beast` over the
+internal Prometheus mTLS endpoint on `https://beast:9594/metrics` and computes
+a host-wide upload target.
 
 Current values:
 
@@ -149,6 +150,9 @@ It does **not**:
 Primary places to inspect the system:
 
 - `/run/adaptive-upload-policy/state.json`
+- mTLS client material:
+  - `/run/secrets/jellyfinUploadPolicyClientCrt`
+  - `/run/secrets/jellyfinUploadPolicyClientKey`
 - logs:
   - `jellyfin-upload-policy`
   - `jellyfin-upload-policy-transmission`

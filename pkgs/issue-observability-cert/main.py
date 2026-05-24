@@ -189,6 +189,23 @@ def endpoint_names_for_host(host):
     return endpoints
 
 
+def client_names_for_host(host):
+    root = host_config_root(host)
+    client_map = (
+        nix_eval_json_optional(
+            root,
+            host,
+            "config",
+            "host",
+            "observability",
+            "client",
+            "prometheusMtlsClients",
+        )
+        or {}
+    )
+    return sorted(name for name, client in client_map.items() if client.get("enable"))
+
+
 def endpoint_config(host, endpoint):
     root = host_config_root(host)
     if endpoint == NODE_EXPORTER_ENDPOINT:
@@ -211,6 +228,20 @@ def endpoint_config(host, endpoint):
         "client",
         "prometheusMtlsEndpoints",
         endpoint,
+    )
+
+
+def client_config(host, client):
+    root = host_config_root(host)
+    return nix_eval_json(
+        root,
+        host,
+        "config",
+        "host",
+        "observability",
+        "client",
+        "prometheusMtlsClients",
+        client,
     )
 
 
@@ -256,7 +287,7 @@ sudo -u step-ca cat "$tmpdir/server.key"
     return cert_text.strip() + "\n", key_text.strip() + "\n"
 
 
-def update_secret_file(host, endpoint, endpoint_cfg, cert_text, key_text):
+def update_secret_file(host, secret_prefix, cert_field, key_field, cert_text, key_text):
     secret_path = secret_path_for_host(host)
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
@@ -265,9 +296,9 @@ def update_secret_file(host, endpoint, endpoint_cfg, cert_text, key_text):
     decrypted = run(["sops", "--decrypt", str(secret_path)])
     data = yaml.safe_load(decrypted) or {}
 
-    prefix = endpoint_cfg["secretPrefix"].split("/")
-    set_nested(data, prefix + ["server_crt"], cert_text.rstrip("\n"))
-    set_nested(data, prefix + ["server_key"], key_text.rstrip("\n"))
+    prefix = secret_prefix.split("/")
+    set_nested(data, prefix + [cert_field], cert_text.rstrip("\n"))
+    set_nested(data, prefix + [key_field], key_text.rstrip("\n"))
 
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
       json.dump(data, handle, sort_keys=True)
@@ -306,14 +337,56 @@ def issue_endpoint(host, endpoint, *, ca_host):
     )
     common_name = f"prometheus-{endpoint}.{identity['dns_name']}"
     cert_text, key_text = issue_remote_cert(ca_host=ca_host, common_name=common_name, sans=sans)
-    update_secret_file(host, endpoint, endpoint_cfg, cert_text, key_text)
+    update_secret_file(
+        host,
+        endpoint_cfg["secretPrefix"],
+        "server_crt",
+        "server_key",
+        cert_text,
+        key_text,
+    )
     print(
         json.dumps(
             {
+                "kind": "endpoint",
                 "host": host,
                 "endpoint": endpoint,
                 "secret_prefix": endpoint_cfg["secretPrefix"],
                 "port": endpoint_cfg["port"],
+                "sans": sans,
+            }
+        )
+    )
+
+
+def issue_client(host, client, *, ca_host):
+    client_cfg = client_config(host, client)
+    if not client_cfg.get("enable"):
+        raise SystemExit(f"Prometheus mTLS client {client} on host {host} is not enabled")
+
+    common_name = client_cfg["commonName"]
+    sans = client_cfg.get("sans", [])
+    cert_text, key_text = issue_remote_cert(
+        ca_host=ca_host,
+        common_name=common_name,
+        sans=sans,
+    )
+    update_secret_file(
+        host,
+        client_cfg["secretPrefix"],
+        "client_crt",
+        "client_key",
+        cert_text,
+        key_text,
+    )
+    print(
+        json.dumps(
+            {
+                "kind": "client",
+                "host": host,
+                "client": client,
+                "common_name": common_name,
+                "secret_prefix": client_cfg["secretPrefix"],
                 "sans": sans,
             }
         )
@@ -327,15 +400,31 @@ def main():
     )
     parser.add_argument("--host", required=True, help="Inventory host name, e.g. beast or prox-orgvm")
     parser.add_argument("--endpoint", help="Prometheus mTLS endpoint name, e.g. blackbox or smartctl")
+    parser.add_argument("--client", help="Prometheus mTLS client identity name, e.g. jellyfin-upload-policy")
     parser.add_argument("--ca-host", default=DEFAULT_CA_HOST, help="SSH host running step-ca")
     args = parser.parse_args()
+    if args.endpoint and args.client:
+        raise SystemExit("--endpoint and --client are mutually exclusive")
 
-    endpoints = [args.endpoint] if args.endpoint else endpoint_names_for_host(args.host)
-    if not endpoints:
-        raise SystemExit(f"host {args.host} has no configured Prometheus mTLS endpoints")
+    if args.endpoint:
+        issue_endpoint(args.host, args.endpoint, ca_host=args.ca_host)
+        return
+
+    if args.client:
+        issue_client(args.host, args.client, ca_host=args.ca_host)
+        return
+
+    endpoints = endpoint_names_for_host(args.host)
+    clients = client_names_for_host(args.host)
+    if not endpoints and not clients:
+        raise SystemExit(
+            f"host {args.host} has no configured Prometheus mTLS endpoints or clients"
+        )
 
     for endpoint in endpoints:
         issue_endpoint(args.host, endpoint, ca_host=args.ca_host)
+    for client in clients:
+        issue_client(args.host, client, ca_host=args.ca_host)
 
 
 if __name__ == "__main__":
