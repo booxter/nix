@@ -27,27 +27,15 @@
           "mappings": [
             {
               "options": {
-                "0": {
+                "-1": {
                   "color": "red",
                   "index": 0,
                   "text": "Missing"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "OK"
-                },
-                "2": {
-                  "color": "yellow",
-                  "index": 2,
-                  "text": "Due"
                 }
               },
               "type": "value"
             }
           ],
-          "max": 1,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -56,16 +44,20 @@
                 "value": null
               },
               {
-                "color": "green",
-                "value": 1
+                "color": "orange",
+                "value": 0
               },
               {
                 "color": "yellow",
-                "value": 2
+                "value": 7
+              },
+              {
+                "color": "green",
+                "value": 30
               }
             ]
           },
-          "unit": "short"
+          "unit": "d"
         },
         "overrides": []
       },
@@ -110,7 +102,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} * (1 + host_observability_pki_cert_rotation_due{job=\"node-mtls\",instance=\"prox-pkivm\"})) != 1",
+          "expr": "(((host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} == bool 0) * -1) != 0) or on(host,category,cert_name) (host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"} <= 45)",
           "format": "table",
           "instant": true,
           "range": false,
@@ -145,13 +137,13 @@
               "Time": true
             },
             "indexByName": {
-              "Value": 0,
-              "host": 1,
-              "category": 2,
-              "cert_name": 3
+              "host": 0,
+              "category": 1,
+              "cert_name": 2,
+              "Value": 3
             },
             "renameByName": {
-              "Value": "State",
+              "Value": "Days / State",
               "category": "Kind",
               "cert_name": "Certificate",
               "host": "Host"
@@ -192,112 +184,6 @@
         "w": 24,
         "x": 0,
         "y": 10
-      },
-      "id": 3,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "Days Remaining"
-          }
-        ]
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"}",
-          "format": "table",
-          "instant": true,
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {
-            "mode": "columns"
-          }
-        },
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "host",
-                "category",
-                "cert_name",
-                "Value"
-              ]
-            }
-          }
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true
-            },
-            "indexByName": {
-              "host": 0,
-              "category": 1,
-              "cert_name": 2,
-              "Value": 3
-            },
-            "renameByName": {
-              "Value": "Days Remaining",
-              "category": "Kind",
-              "cert_name": "Certificate",
-              "host": "Host"
-            }
-          }
-        }
-      ],
-      "title": "Internal Days Remaining",
-      "type": "table"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 7
-              },
-              {
-                "color": "green",
-                "value": 30
-              }
-            ]
-          },
-          "unit": "d"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 18
       },
       "id": 4,
       "options": {
@@ -348,6 +234,6 @@
   "timezone": "",
   "title": "PKI / TLS",
   "uid": "pki-overview",
-  "version": 5,
+  "version": 6,
   "weekStart": ""
 }
