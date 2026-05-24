@@ -13,6 +13,7 @@ Current status:
 - UniFi DNS sync can publish service aliases from inventory
 - `glance.home.arpa` is live on internal HTTPS
 - Darwin installs the internal root CA into the macOS System keychain
+- Darwin Firefox imports enterprise roots for the internal PKI
 
 Out of scope:
 
@@ -177,7 +178,7 @@ The desired flow is the same as current observability cert issuance:
 - done: reusable internal HTTPS host pattern
 - done: matching cert issuance path
 - done: Darwin System keychain trust for the internal root CA
-- pending: Firefox trust of the internal root CA on Darwin
+- done: Firefox trust of the internal root CA on Darwin
 
 ### Phase 1: Cache
 

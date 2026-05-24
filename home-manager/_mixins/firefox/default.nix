@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
 in
@@ -94,6 +94,12 @@ in
         ublock-origin
         vimium
       ];
+    };
+
+    policies = lib.optionalAttrs isDarwin {
+      Certificates = {
+        ImportEnterpriseRoots = true;
+      };
     };
   };
   programs.browserpass = {
