@@ -11,6 +11,7 @@ let
   certLifetime = "${toString (180 * 24)}h0m0s";
   caPort = 8443;
   caProvisioner = "bootstrap@home.arpa";
+  pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   stepStateDir = "/var/lib/step-ca";
   stepPasswordFile = "${stepStateDir}/password.txt";
   stepProvisionerPasswordFile = "${stepStateDir}/provisioner-password.txt";
@@ -80,6 +81,7 @@ in
   networking.firewall.allowedTCPPorts = [ caPort ];
 
   environment.systemPackages = with pkgs; [
+    pki-rotation
     step-ca
     step-cli
   ];
@@ -117,6 +119,49 @@ in
       RestartSec = "5s";
       NoNewPrivileges = true;
       PrivateTmp = true;
+    };
+  };
+
+  services.prometheus.exporters.node = {
+    enabledCollectors = lib.mkAfter [ "textfile" ];
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/prometheus-node-exporter-textfile 0755 root root - -"
+  ];
+
+  systemd.services.pki-status-export = {
+    description = "Export internal PKI status metrics for node exporter";
+    wants = [
+      "network-online.target"
+      "step-ca.service"
+    ];
+    after = [
+      "network-online.target"
+      "step-ca.service"
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = ''
+        ${pkgs.pki-rotation}/bin/pki-rotation \
+          --repo-root ${../..} \
+          --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
+          --sops-age-key-file /var/lib/sops-nix/key.txt \
+          export-metrics \
+          --output ${pkiStatusMetricsPath}
+      '';
+    };
+  };
+
+  systemd.timers.pki-status-export = {
+    description = "Refresh internal PKI status metrics";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "5m";
+      OnUnitActiveSec = "1h";
+      RandomizedDelaySec = "5m";
+      Persistent = true;
+      Unit = "pki-status-export.service";
     };
   };
 }
