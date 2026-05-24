@@ -39,17 +39,18 @@ helpers.forAllSystems (
     bats-tests = mkCheck {
       name = "bats-tests";
       nativeBuildInputs = with pkgs; [
+        age
         bats
         git
         jq
         python3
-        yq
+        sops
+        yq-go
       ];
       buildPhase = ''
         bats tests/get-local-builders.bats
         bats tests/test-prox-deploy.bats
-        bats tests/test-sops-config.bats
-        bats tests/test-sops-copy.bats
+        bash tests/check-sops-helpers.sh
         bats tests/test-vm.bats
         bats tests/update-machines.bats
       '';
@@ -129,7 +130,7 @@ helpers.forAllSystems (
           fleetApps."wg-home-client-config".program
         } --peer mair --private-key-file "$private_key_file" --server-public-key test-server-pubkey)"
         printf '%s\n' "$peer_output" | grep -F -- 'Address = 10.83.0.10/32' >/dev/null
-        printf '%s\n' "$peer_output" | grep -F -- 'DNS = 192.168.1.1' >/dev/null
+        printf '%s\n' "$peer_output" | grep -F -- 'DNS = 192.168.0.1' >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'Endpoint = wg.ihar.dev:51820' >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'AllowedIPs = 10.83.0.0/24, 192.168.0.0/16' >/dev/null
 

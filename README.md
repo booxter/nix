@@ -78,9 +78,9 @@ nix run .#sops-update -- mair
 nix run .#sops-copy -- mair prx1-lab attic
 ```
 
-Backup and restore procedures are documented in [docs/backup.md](docs/backup.md).
+Backup and restore procedures are documented in [common/backup.md](common/backup.md).
 `srvarr`'s adaptive upload policy and tracker prioritization are documented in
-[docs/srvarr-upload-policy.md](docs/srvarr-upload-policy.md).
+[nixos/srvarrvm/upload-policy.md](nixos/srvarrvm/upload-policy.md).
 
 ## Home Manager
 

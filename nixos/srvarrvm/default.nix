@@ -1,4 +1,5 @@
 {
+  config,
   inputs,
   ...
 }:
@@ -45,15 +46,15 @@ in
     };
     prowlarr = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
     };
     radarr = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
     };
     lidarr = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
     };
     shelfmark = {
       enable = true;
@@ -62,11 +63,15 @@ in
     };
     sonarr = {
       enable = true;
-      openFirewall = true;
+      openFirewall = false;
     };
     bazarr = {
       enable = true;
-      openFirewall = true;
+      # TODO: Upstream a nixarr.bazarr bind-address/host knob. The current
+      # nixarr Bazarr module only passes --config/--port/--no-update, so we
+      # keep the process bound broadly for now and rely on the firewall plus
+      # the HTTPS frontend to retire plain LAN access.
+      openFirewall = false;
     };
     audiobookshelf = {
       enable = true;
@@ -75,5 +80,37 @@ in
     };
 
   };
+
+  services = {
+    radarr.settings.server.bindaddress = "127.0.0.1";
+    sonarr.settings.server.bindaddress = "127.0.0.1";
+    lidarr.settings.server.bindaddress = "127.0.0.1";
+    prowlarr.settings.server.bindaddress = "127.0.0.1";
+  };
+
+  host.internalHttps.services = {
+    radarr = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.nixarr.radarr.port}";
+    };
+    sonarr = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.nixarr.sonarr.port}";
+    };
+    lidarr = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.nixarr.lidarr.port}";
+    };
+    bazarr = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.nixarr.bazarr.port}";
+    };
+    prowlarr = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString config.nixarr.prowlarr.port}";
+    };
+  };
+
+  host.observability.client.prometheusMtlsClients."jellyfin-upload-policy".enable = true;
 
 }

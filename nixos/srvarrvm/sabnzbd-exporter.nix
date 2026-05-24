@@ -4,12 +4,15 @@
   ...
 }:
 let
+  sabnzbdExporterInternalPort = 19387;
   sabnzbdApiKeyFile = "/run/prometheus-sabnzbd-exporter/apikey";
 in
 {
   services.prometheus.exporters.sabnzbd = {
     enable = true;
-    openFirewall = true;
+    listenAddress = "127.0.0.1";
+    openFirewall = false;
+    port = sabnzbdExporterInternalPort;
     servers = [
       {
         baseUrl = "http://127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}";
@@ -35,5 +38,11 @@ in
       sed -n 's/^api_key = //p' ${config.nixarr.sabnzbd.stateDir}/sabnzbd.ini > ${sabnzbdApiKeyFile}
       test -s ${sabnzbdApiKeyFile}
     '';
+  };
+
+  host.observability.client.prometheusMtlsEndpoints.sabnzbd = {
+    enable = true;
+    port = 9387;
+    upstream = "http://127.0.0.1:${toString sabnzbdExporterInternalPort}/metrics";
   };
 }

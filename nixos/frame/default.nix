@@ -9,6 +9,7 @@
   # This host needs manual unlock after boot; never auto-reboot on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.client.blackbox.enable = true;
+  host.observability.client.blackbox.mtls.enable = true;
 
   networking.wireless.enable = false;
   networking.wireless.secretsFile = "/etc/wireless.secrets";

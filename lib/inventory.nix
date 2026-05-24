@@ -6,6 +6,7 @@ let
   prxStateVersion = "25.11";
   prxNetIface = "enp5s0f0np0";
   prxPassword = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
+  lanDnsRecordTtlSeconds = 300;
 
   piStateVersion = "25.11";
   piHostname = "pi5";
@@ -56,6 +57,34 @@ let
         ;
     }
     // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
+
+  mkDnsARecord = domain: ipv4Address: {
+    type = "A_RECORD";
+    ttlSeconds = lanDnsRecordTtlSeconds;
+    inherit domain ipv4Address;
+  };
+
+  canonicalLocalHostname =
+    spec:
+    if spec ? dnsName then
+      spec.dnsName
+    else if spec ? dhcpReservation then
+      spec.dhcpReservation.hostname
+    else if spec.type == "vm" then
+      "prox-${spec.name}vm"
+    else
+      spec.name;
+
+  aliasIpv4Address =
+    spec:
+    if spec ? dhcpReservation then
+      spec.dhcpReservation.ip
+    else if spec ? lanAddress then
+      spec.lanAddress
+    else if spec ? ipAddress then
+      spec.ipAddress
+    else
+      throw "host ${spec.name} does not have a stable IPv4 address for A-record aliases";
 in
 rec {
   virtPlatform = "aarch64-darwin";
@@ -80,7 +109,7 @@ rec {
         spec.dnsName or (spec.dhcpReservation.hostname or proxVmHost);
     };
 
-  site = {
+  site = rec {
     gids = {
       media = 169;
     };
@@ -92,36 +121,22 @@ rec {
     lan = {
       cidr = "192.168.0.0/16";
       domain = "home.arpa";
-      upstreamGateway = "192.168.0.1";
       gateway = {
-        host = piHostname;
-        address = "192.168.1.1";
-      };
-      guest = {
-        host = piHostname;
-        address = "192.168.2.1";
+        host = "gateway";
+        address = "192.168.0.1";
       };
       dhcpRanges = {
         main = {
-          excludeRanges = [
-            # nixarr still assumes 192.168.15.0/24 for its WireGuard-facing proxy.
-            "192.168.15.0/24"
-            # Reserve the VPN netns subnet for srvarr's local wg bridge.
-            "192.168.50.0/24"
-          ];
           ranges = [
             {
+              # Keep the pool below 192.168.15.0/24 because nixarr still assumes
+              # that subnet for its WireGuard-facing proxy.
               start = "192.168.10.1";
               end = "192.168.14.255";
-            }
-            {
-              start = "192.168.16.1";
-              end = "192.168.20.255";
             }
           ];
         };
         guest = {
-          excludeRanges = [ ];
           ranges = [
             {
               start = "192.168.100.1";
@@ -130,6 +145,31 @@ rec {
           ];
         };
       };
+      netboot = {
+        host = piHostname;
+        bootfile = "netboot.xyz.efi";
+      };
+      customDhcpOptions = {
+        domainSearch = {
+          code = 119;
+          name = "DomainSearch";
+          type = "text";
+          signed = false;
+          encoding = "text";
+        };
+      };
+
+      dnsRecords =
+        let
+          lanDomain = lan.domain;
+          renderHostDnsRecords =
+            spec:
+            (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
+            ++ map (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec)) (
+              spec.localDnsAliases or [ ]
+            );
+        in
+        builtins.concatMap renderHostDnsRecords nixosHostSpecs;
     };
 
     wireguard.home = {
@@ -168,7 +208,7 @@ rec {
       id = "grafana";
       scope = "internal";
       owner = "fana";
-      probePath = "login";
+      probePath = "/login";
     }))
     (resolveService (mkService {
       id = "radarr";
@@ -251,15 +291,12 @@ rec {
       ip = "192.168.10.100";
     }
     {
-      identifiers = [ "id:JGWXHWDL4X" ];
+      identifiers = [ "06:b5:a3:b9:6b:e0" ];
       hostname = "mlt";
       ip = "192.168.11.2";
     }
     {
-      identifiers = [
-        "a2:65:a0:ce:9f:23"
-        "id:mair"
-      ];
+      identifiers = [ "a2:65:a0:ce:9f:23" ];
       hostname = "mair";
       ip = "192.168.11.3";
     }
@@ -305,7 +342,9 @@ rec {
       type = "bm";
       hostKind = "raspberryPi";
       name = piHostname;
-      dnsName = "dhcp";
+      lanAddress = "192.168.1.1";
+      guestAddress = "192.168.2.1";
+      localDnsAliases = [ piHostname ];
       stateVersion = piStateVersion;
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
@@ -343,11 +382,12 @@ rec {
       name = "beast";
       stateVersion = "25.11";
       platform = "x86_64-linux";
+      dnsAliases = map (service: service.publicHost) publicServices;
       nixpkgsInput = "nixpkgs-25_11";
       homeManagerInput = "home-manager-25_11";
       hmFull = false;
       dhcpReservation = {
-        match = "id:beast";
+        match = "bc:fc:e7:3b:fe:da";
         hostname = "beast";
         ip = "192.168.16.3";
       };
@@ -416,6 +456,12 @@ rec {
       type = "vm";
       name = "cache";
       upsHost = "prx1-lab";
+      localDnsAliases = [ "nix-cache" ];
+      dhcpReservation = {
+        match = "bc:24:11:0d:85:41";
+        hostname = "prox-cachevm";
+        ip = "192.168.20.7";
+      };
       sshPort = 10004;
       hmFull = false;
       cores = 16;
@@ -427,6 +473,14 @@ rec {
       name = "srvarr";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
+      localDnsAliases = [
+        "glance"
+        "radarr"
+        "sonarr"
+        "lidarr"
+        "bazarr"
+        "prowlarr"
+      ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
         namespaceAddress = "192.168.50.1";
@@ -436,7 +490,7 @@ rec {
       sshPort = 10005;
       hmFull = false;
       dhcpReservation = {
-        match = "id:prox-srvarrvm";
+        match = "bc:24:11:19:4d:d1";
         hostname = "prox-srvarrvm";
         ip = "192.168.20.2";
       };
@@ -446,11 +500,17 @@ rec {
       name = "fana";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
+      localDnsAliases = [ "grafana" ];
       cores = 8;
       memorySize = 16;
       diskSize = 300;
       sshPort = 10006;
       hmFull = false;
+      dhcpReservation = {
+        match = "bc:24:11:06:e8:8b";
+        hostname = "prox-fanavm";
+        ip = "192.168.13.110";
+      };
     }
     {
       type = "vm";
@@ -472,7 +532,7 @@ rec {
       sshPort = 10008;
       hmFull = false;
       dhcpReservation = {
-        match = "id:prox-gwvm";
+        match = "bc:24:11:91:b5:77";
         hostname = "prox-gwvm";
         ip = "192.168.20.3";
       };
@@ -488,7 +548,7 @@ rec {
       sshPort = 10009;
       hmFull = false;
       dhcpReservation = {
-        match = "id:prox-orgvm";
+        match = "bc:24:11:fd:eb:9c";
         hostname = "prox-orgvm";
         ip = "192.168.20.4";
       };
@@ -504,7 +564,7 @@ rec {
       sshPort = 10010;
       hmFull = false;
       dhcpReservation = {
-        match = "id:prox-pkivm";
+        match = "bc:24:11:c6:ab:fc";
         hostname = "prox-pkivm";
         ip = "192.168.20.5";
       };

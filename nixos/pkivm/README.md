@@ -1,49 +1,62 @@
-# prox-pkivm
+# `prox-pkivm`
 
-## Goal
+`prox-pkivm` is the home fleet control-plane VM for internal PKI and UniFi
+state sync. It runs `step-ca`, keeps the CA state in `/var/lib/step-ca`, and
+is the machine from which we issue internal HTTPS and Prometheus mTLS leaf
+certificates into host `sops` secrets. It also runs the `unifi-sync` timer so
+trusted-LAN DHCP and split DNS stay converged with inventory.
 
-This VM is the dedicated internal PKI host for the home fleet.
+## PKI Use
 
-The practical starting design is:
+- CA service: `step-ca` on TCP `8443`
+- CA state: `/var/lib/step-ca`
+- Root trust anchor distributed from:
+  - [common/_mixins/internal-pki/home-internal-pki-root-ca.crt](../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt)
+- UniFi sync service docs:
+  - [unifi-sync.md](./unifi-sync.md)
 
-- root and intermediate CA material stored on `prox-pkivm`
-- short-lived leaf certificates
-- internal ACME plus mTLS for internal services
+## PKI Apps
 
-The later hardening path is:
+- `nix run .#issue-internal-service-cert`
+  - issue server certs for internal HTTPS services like `glance`, `grafana`,
+    `radarr`, `sonarr`, and similar nginx-fronted LAN endpoints
+- `nix run .#issue-observability-cert`
+  - issue server certs for Prometheus mTLS scrape endpoints and client certs
+    for mTLS consumers such as `jellyfin-upload-policy`
+- `nix run .#deploy`
+  - roll updated secrets and service config to the target host
 
-- move the same root key offline
-- rotate to a new online intermediate on `prox-pkivm`
-- keep the already-distributed root trust anchor unchanged
+## Common Flows
 
-## Phase 1
+Internal HTTPS service cert:
 
-The first step is intentionally narrower:
+```bash
+nix run .#issue-internal-service-cert -- --host prox-fanavm --service grafana
+nix run .#deploy -- --branch dhcp-unifi prox-fanavm
+```
 
-- stand up `step-ca` on `prox-pkivm`
-- bootstrap the CA state locally on first boot into `/var/lib/step-ca`
-- keep this host off the current plaintext exporter pattern
-- validate issuance and trust distribution before changing scrape traffic
+Prometheus mTLS endpoint cert:
 
-This is the intended initial trust model for now, not an accident. The root key
-starts online so the fleet can learn the operational path first. The key follow-up
-is to move that root key offline later without changing the root certificate that
-clients already trust.
+```bash
+nix run .#issue-observability-cert -- --host beast --endpoint jellyfin
+nix run .#deploy -- --branch dhcp-unifi beast
+```
 
-## Follow-Up Path
+Prometheus mTLS client cert:
 
-Once the first CA server is up, the next steps are:
+```bash
+nix run .#issue-observability-cert -- --host prox-srvarrvm --client jellyfin-upload-policy
+nix run .#deploy -- --branch dhcp-unifi prox-srvarrvm
+```
 
-1. back up `/var/lib/step-ca` before relying on the CA for anything important
-2. integrate one end-to-end mTLS path first
-3. move the current root key offline and rotate to a new intermediate
-4. reuse that pattern for the rest of the fleet
+## Secret Handling
 
-## Initial Scope
+- Issuers update the target host secret file in `secrets/<host>.yaml`
+- They run `sops-update` automatically before rewriting the encrypted file
+- If a host does not have its secret file yet, bootstrap it first with the
+  usual `sops` helpers
 
-- `step-ca` listens on TCP `8443`
-- ACME is enabled for later certificate issuance
-- no exporter migration is included yet
-- no fleet-wide trust distribution is included yet
-- the CA should not be treated as durable until `/var/lib/step-ca`
-  is covered by backups
+## Related Docs
+
+- [unifi-sync.md](./unifi-sync.md)
+- [http-to-https-rollout.md](./http-to-https-rollout.md)

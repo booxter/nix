@@ -6,7 +6,7 @@ enable_strict_mode() {
 
 resolve_yq() {
   if command -v yq >/dev/null 2>&1; then
-    echo "yq"
+    command -v yq
     return 0
   fi
   if ! command -v nix >/dev/null 2>&1; then
@@ -14,7 +14,7 @@ resolve_yq() {
     return 1
   fi
   local yq_store
-  yq_store="$(nix build nixpkgs#yq --no-link --print-out-paths)"
+  yq_store="$(nix build nixpkgs#yq-go --no-link --print-out-paths)"
   echo "${yq_store}/bin/yq"
 }
 
@@ -37,11 +37,11 @@ assert_sops_yaml_present() {
 
 check_sops_yaml_structure() {
   if [[ -f .sops.yaml ]]; then
-    if [[ "$(yq -r 'type' .sops.yaml)" != "object" ]]; then
+    if [[ "$(yq -r 'type' .sops.yaml)" != "!!map" ]]; then
       echo ".sops.yaml must be a YAML map at top-level."
       return 1
     fi
-    if [[ "$(yq -r '.keys | type' .sops.yaml)" != "array" ]]; then
+    if [[ "$(yq -r '.keys | type' .sops.yaml)" != "!!seq" ]]; then
       echo ".sops.yaml must contain a top-level 'keys' sequence."
       return 1
     fi
@@ -49,7 +49,7 @@ check_sops_yaml_structure() {
       echo ".sops.yaml 'keys' sequence must not be empty."
       return 1
     fi
-    if [[ "$(yq -r '.creation_rules | type' .sops.yaml)" != "array" ]]; then
+    if [[ "$(yq -r '.creation_rules | type' .sops.yaml)" != "!!seq" ]]; then
       echo ".sops.yaml must contain a top-level 'creation_rules' sequence."
       return 1
     fi

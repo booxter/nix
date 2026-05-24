@@ -39,6 +39,7 @@
   users.groups.media.gid = hostInventory.site.gids.media;
 
   host.observability.client.blackbox.enable = true;
+  host.observability.client.blackbox.mtls.enable = true;
 
   sops = {
     defaultSopsFile = ../../secrets/beast.yaml;

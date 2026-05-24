@@ -19,8 +19,31 @@ COLOR_RED='\033[1;31m'
 LAN_DNS_SERVER="$(
   (
     cd "${REPO_ROOT}"
-    nix eval --json .#nixosConfigurations.pi5.config.networking.interfaces.end0.ipv4.addresses \
-      | jq -r '.[0].address'
+    nix eval --impure --raw --expr '
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            strings.toUpper = s: s;
+          };
+        };
+      in
+      hostInventory.site.lan.gateway.address
+    '
+  )
+)"
+LAN_DOMAIN="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --impure --raw --expr '
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            strings.toUpper = s: s;
+          };
+        };
+      in
+      hostInventory.site.lan.domain
+    '
   )
 )"
 HOST_BASE_MAP_JSON="$(
@@ -98,12 +121,14 @@ resolve_ssh_host() {
     return
   fi
 
-  resolved="$(dig +short +time=1 +tries=1 "@${LAN_DNS_SERVER}" "$ssh_lookup_host" A | head -n1)"
-  if [[ -n "$resolved" ]]; then
-    SSH_HOST_OPTS=(-o HostName="$resolved" -o HostKeyAlias="$ssh_lookup_host")
-    printf '%s' "$ssh_lookup_host"
-    return
-  fi
+  while IFS= read -r dns_candidate; do
+    resolved="$(dig +short +time=1 +tries=1 "@${LAN_DNS_SERVER}" "$dns_candidate" A | head -n1)"
+    if [[ -n "$resolved" ]]; then
+      SSH_HOST_OPTS=(-o HostName="$resolved" -o HostKeyAlias="$ssh_lookup_host")
+      printf '%s' "$ssh_lookup_host"
+      return
+    fi
+  done < <(lan_dns_lookup_candidates "$ssh_lookup_host" "$LAN_DOMAIN")
 
   printf '%s' "$ssh_lookup_host"
 }
@@ -120,7 +145,7 @@ avail_gb_local() {
 
 avail_gb_remote_cmd() {
   local path_literal="$1"
-  printf '%s\n' "df -Pk \"$path_literal\" | awk 'NR==2 {printf \"%.1f\", \\$4/1024/1024}'"
+  printf '%s\n' "df -Pk \"$path_literal\" | awk 'NR==2 {printf \"%.1f\", \$4/1024/1024}'"
 }
 
 print_lines_if_any() {
@@ -232,8 +257,8 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot] [--personal|--work|--both]
-  scripts/update-machines.sh [--branch BRANCH] [--switch|--boot] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
+  scripts/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both]
+  scripts/update-machines.sh [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
 
 Options:
   -A, --all         Update all hosts discovered from flake outputs (default).
@@ -243,11 +268,13 @@ Options:
   --branch BRANCH   Git branch to deploy (default: master).
   --switch          Switch into the new configuration immediately (default).
   --boot            Stage the new configuration for the next boot.
+  --test            Build and preview activation changes without activating them.
   --dry-run         Only check SSH and print the hosts that would be updated.
   --select          Interactively select hosts from the filtered list.
 
 Notes:
   - Passing explicit host names disables --all.
+  - --test is NixOS-only and maps to nixos-rebuild dry-activate.
   -h, --help        Show this help.
 
 Environment:
@@ -275,6 +302,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --boot)
       REBUILD_ACTION="boot"
+      shift
+      ;;
+    --test)
+      REBUILD_ACTION="dry-activate"
       shift
       ;;
     --work)

@@ -27,7 +27,7 @@ let
       git
       jq
       sops
-      yq
+      yq-go
     ];
     text = ''
       exec ${../scripts/sops-edit.sh} "$@"
@@ -42,7 +42,7 @@ let
       git
       jq
       sops
-      yq
+      yq-go
     ];
     text = ''
       exec ${../scripts/sops-update.sh} "$@"
@@ -57,7 +57,7 @@ let
       git
       jq
       sops
-      yq
+      yq-go
     ];
     text = ''
       exec ${../scripts/sops-copy.sh} "$@"
@@ -74,7 +74,7 @@ let
       openssh
       ripgrep
       sops
-      yq
+      yq-go
     ];
     text = ''
       exec ${../scripts/sops-bootstrap.sh} "$@"

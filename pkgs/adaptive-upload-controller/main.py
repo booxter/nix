@@ -9,12 +9,14 @@ import math
 import os
 import re
 import socket
+import ssl
 import subprocess
 import sys
 import tempfile
 import time
 import urllib.error
 import urllib.request
+import urllib.parse
 from pathlib import Path
 
 
@@ -322,10 +324,42 @@ def is_internal_remote_endpoint(endpoint: str) -> bool:
     )
 
 
-def fetch_url_text(url: str, timeout_seconds: float) -> str:
-    request = urllib.request.Request(url, method="GET")
+def build_https_context(
+    ca_file: str | None, client_cert_file: str | None, client_key_file: str | None
+) -> ssl.SSLContext:
     try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+        context = ssl.create_default_context(cafile=ca_file or None)
+        if client_cert_file or client_key_file:
+            if not client_cert_file or not client_key_file:
+                raise ControllerError(
+                    "both client certificate and key must be configured together"
+                )
+            context.load_cert_chain(client_cert_file, client_key_file)
+    except (OSError, ssl.SSLError) as exc:
+        raise ControllerError(f"failed to build HTTPS client context: {exc}") from exc
+    return context
+
+
+def fetch_url_text(
+    url: str,
+    timeout_seconds: float,
+    *,
+    ca_file: str | None = None,
+    client_cert_file: str | None = None,
+    client_key_file: str | None = None,
+) -> str:
+    request = urllib.request.Request(url, method="GET")
+    kwargs: dict[str, object] = {}
+    if urllib.parse.urlsplit(url).scheme == "https":
+        kwargs["context"] = build_https_context(
+            ca_file,
+            client_cert_file,
+            client_key_file,
+        )
+    try:
+        with urllib.request.urlopen(
+            request, timeout=timeout_seconds, **kwargs
+        ) as response:
             return response.read().decode("utf-8")
     except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
         raise ControllerError(f"request to {url} failed: {exc}") from exc
@@ -607,7 +641,13 @@ def build_policy_state(
 
 def decide_observed_policy_state(args: argparse.Namespace) -> dict:
     try:
-        metrics_text = fetch_url_text(args.exporter_url, args.request_timeout_seconds)
+        metrics_text = fetch_url_text(
+            args.exporter_url,
+            args.request_timeout_seconds,
+            ca_file=args.ca_file,
+            client_cert_file=args.client_cert_file,
+            client_key_file=args.client_key_file,
+        )
         (
             total_media_streams,
             active_external_media_streams,
@@ -1029,6 +1069,21 @@ def parse_args() -> argparse.Namespace:
     )
     decider.add_argument("--interval-seconds", type=float, default=30.0)
     decider.add_argument("--request-timeout-seconds", type=float, default=10.0)
+    decider.add_argument(
+        "--ca-file",
+        default="",
+        help="Optional CA bundle path used when polling an HTTPS exporter.",
+    )
+    decider.add_argument(
+        "--client-cert-file",
+        default="",
+        help="Optional client certificate path used for HTTPS exporter mTLS.",
+    )
+    decider.add_argument(
+        "--client-key-file",
+        default="",
+        help="Optional client key path used for HTTPS exporter mTLS.",
+    )
     decider.add_argument("--no-streams-mbit", type=float, default=25.0)
     decider.add_argument("--minimum-streams-mbit", type=float, default=2.0)
     decider.add_argument("--fallback-mbit", type=float, default=8.0)
@@ -1097,6 +1152,11 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
+    if args.command == "decide":
+        if bool(args.client_cert_file) != bool(args.client_key_file):
+            raise SystemExit(
+                "--client-cert-file and --client-key-file must be provided together"
+            )
     logging.basicConfig(
         level=getattr(logging, args.log_level),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",

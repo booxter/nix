@@ -18,6 +18,12 @@ in
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
+  issue-internal-service-cert = pkgs.callPackage ./issue-internal-service-cert { };
+
+  issue-observability-cert = pkgs.callPackage ./issue-observability-cert { };
+
+  unifi-sync = pkgs.callPackage ./unifi-sync { };
+
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
 
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };

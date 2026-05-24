@@ -1,10 +1,14 @@
 {
   config,
   hostInventory,
-  lib,
+  outputs,
   ...
 }:
 let
+  glanceInternalPort = 18080;
+  fanaHostConfig = outputs.nixosConfigurations.prox-fanavm.config;
+  fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
+  srvarrHttpsServices = config.host.internalHttps.services;
   srvarrPorts = {
     aurral = config.systemd.services.aurral.environment.PORT;
     audiobookshelf = config.nixarr.audiobookshelf.port;
@@ -17,14 +21,46 @@ let
     sonarr = config.nixarr.sonarr.port;
     transmission = config.nixarr.transmission.uiPort;
   };
+  httpsServiceFor =
+    service:
+    if
+      builtins.hasAttr service.id srvarrHttpsServices
+      && (builtins.getAttr service.id srvarrHttpsServices).enable
+    then
+      builtins.getAttr service.id srvarrHttpsServices
+    else
+      null;
+  fanaHttpsServiceFor =
+    service:
+    if
+      builtins.hasAttr service.id fanaHttpsServices
+      && (builtins.getAttr service.id fanaHttpsServices).enable
+    then
+      builtins.getAttr service.id fanaHttpsServices
+    else
+      null;
   serviceCatalog = map (
     service:
+    let
+      httpsService = httpsServiceFor service;
+      fanaHttpsService = fanaHttpsServiceFor service;
+    in
     if service.scope == "external" then
       service
+    else if service.owner == "fana" && fanaHttpsService != null then
+      service
+      // {
+        url = "https://${fanaHttpsService.serverName}/";
+      }
     else if service.owner == "fana" then
       service
       // {
         url = "http://${service.displayHost}:3000/";
+      }
+    else if httpsService != null then
+      service
+      // {
+        url = "https://${httpsService.serverName}/";
       }
     else
       service
@@ -36,11 +72,11 @@ in
 {
   services.glance = {
     enable = true;
-    openFirewall = true;
+    openFirewall = false;
     settings = {
       server = {
-        host = "0.0.0.0";
-        port = 80;
+        host = "127.0.0.1";
+        port = glanceInternalPort;
       };
       pages = [
         {
@@ -76,11 +112,8 @@ in
     };
   };
 
-  # Allow glance to bind to lower port, 80
-  systemd.services.glance.serviceConfig = {
-    AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
-    CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
-    NoNewPrivileges = false;
-    PrivateUsers = lib.mkForce false;
+  host.internalHttps.services.glance = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString glanceInternalPort}";
   };
 }

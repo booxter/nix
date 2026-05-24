@@ -1,6 +1,7 @@
 { ... }:
 {
   host.observability.client.enable = true;
+  host.observability.client.nodeExporter.mtls.enable = true;
   host.observability.thermal.enable = true;
   host.observability.lanWan = {
     enable = true;

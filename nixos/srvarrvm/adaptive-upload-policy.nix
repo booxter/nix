@@ -13,6 +13,7 @@
   ...
 }:
 let
+  internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
   decisionIntervalSecondsInt = 5;
   decisionIntervalSeconds = toString decisionIntervalSecondsInt;
   applierIntervalSecondsInt = 5;
@@ -28,6 +29,8 @@ let
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/adaptive-upload-policy.prom";
   transmissionRpcUrl = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc";
+  jellyfinUploadPolicyMtlsClient =
+    config.host.observability.client.prometheusMtlsClients."jellyfin-upload-policy";
 in
 {
   systemd.tmpfiles.rules = [
@@ -35,35 +38,69 @@ in
     "z ${nodeExporterTextfileDir} 0775 root media - -"
   ];
 
+  sops.secrets = lib.mkIf jellyfinUploadPolicyMtlsClient.enable {
+    jellyfinUploadPolicyClientCrt = {
+      key = "${jellyfinUploadPolicyMtlsClient.secretPrefix}/client_crt";
+      owner = "transmission";
+      group = "media";
+      mode = "0400";
+      restartUnits = [ "jellyfin-upload-policy.service" ];
+    };
+    jellyfinUploadPolicyClientKey = {
+      key = "${jellyfinUploadPolicyMtlsClient.secretPrefix}/client_key";
+      owner = "transmission";
+      group = "media";
+      mode = "0400";
+      restartUnits = [ "jellyfin-upload-policy.service" ];
+    };
+  };
+
   systemd.services.jellyfin-upload-policy = {
     description = "Decide adaptive torrent upload policy from Jellyfin playback";
     wantedBy = [ "multi-user.target" ];
-    unitConfig = networkOnlineUnitDeps;
+    unitConfig =
+      networkOnlineUnitDeps
+      // lib.optionalAttrs jellyfinUploadPolicyMtlsClient.enable {
+        Wants = (networkOnlineUnitDeps.Wants or [ ]) ++ [ "sops-install-secrets.service" ];
+        After = (networkOnlineUnitDeps.After or [ ]) ++ [ "sops-install-secrets.service" ];
+      };
     serviceConfig = {
-      ExecStart = lib.concatStringsSep " " [
-        (lib.getExe pkgs.adaptive-upload-controller)
-        "decide"
-        "--exporter-url"
-        jellyfinExporterUrl
-        "--state-file"
-        stateFile
-        "--metrics-file"
-        metricsFile
-        "--interval-seconds"
-        decisionIntervalSeconds
-        "--request-timeout-seconds"
-        "10"
-        "--no-streams-mbit"
-        idleUploadRateMbit
-        "--minimum-streams-mbit"
-        minimumStreamUploadRateMbit
-        "--fallback-mbit"
-        (toString fallbackUploadRateMbit)
-        "--stream-bitrate-headroom-fraction"
-        streamBitrateHeadroomFraction
-        "--relaxation-hold-seconds"
-        relaxationHoldSeconds
-      ];
+      ExecStart = lib.concatStringsSep " " (
+        [
+          (lib.getExe pkgs.adaptive-upload-controller)
+          "decide"
+          "--exporter-url"
+          jellyfinExporterUrl
+          "--state-file"
+          stateFile
+          "--metrics-file"
+          metricsFile
+          "--interval-seconds"
+          decisionIntervalSeconds
+          "--request-timeout-seconds"
+          "10"
+        ]
+        ++ lib.optionals jellyfinUploadPolicyMtlsClient.enable [
+          "--ca-file"
+          (toString internalPkiRootCaPath)
+          "--client-cert-file"
+          config.sops.secrets.jellyfinUploadPolicyClientCrt.path
+          "--client-key-file"
+          config.sops.secrets.jellyfinUploadPolicyClientKey.path
+        ]
+        ++ [
+          "--no-streams-mbit"
+          idleUploadRateMbit
+          "--minimum-streams-mbit"
+          minimumStreamUploadRateMbit
+          "--fallback-mbit"
+          (toString fallbackUploadRateMbit)
+          "--stream-bitrate-headroom-fraction"
+          streamBitrateHeadroomFraction
+          "--relaxation-hold-seconds"
+          relaxationHoldSeconds
+        ]
+      );
       Restart = "always";
       RestartSec = "10s";
       User = "transmission";

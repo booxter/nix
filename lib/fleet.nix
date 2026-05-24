@@ -10,6 +10,7 @@ let
   hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
+  unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -65,6 +66,7 @@ let
       Examples:
         deploy -A --select
         deploy --branch ci/flake-update --boot prox-srvarrvm
+        deploy --branch dhcp-unifi --test beast
         deploy --home nv ihrachyshka
         deploy --disko frame /dev/sdX
       EOF
@@ -166,6 +168,35 @@ let
       export HBA_FLASH_DEFAULT_FIRMWARE_BUNDLE="${broadcomSas9305_24iP16_12}"
     ''
     + builtins.readFile ../scripts/hba-flash.sh;
+  };
+  unifiSyncPackage = pkgs.unifi-sync;
+  issueInternalServiceCertPackage = pkgs.issue-internal-service-cert;
+  issueObservabilityCertPackage = pkgs.issue-observability-cert;
+  unifiSyncApp = pkgs.writeShellApplication {
+    name = "unifi-sync-app";
+    runtimeInputs = [ unifiSyncPackage ];
+    text = ''
+      ${pkgs.lib.concatLines (
+        pkgs.lib.mapAttrsToList (
+          name: value: "export ${name}=${pkgs.lib.escapeShellArg value}"
+        ) unifiSyncEnv.environment
+      )}
+      exec ${unifiSyncPackage}/bin/unifi-sync "$@"
+    '';
+  };
+  issueObservabilityCertApp = pkgs.writeShellApplication {
+    name = "issue-observability-cert-app";
+    runtimeInputs = [ issueObservabilityCertPackage ];
+    text = ''
+      exec ${issueObservabilityCertPackage}/bin/issue-observability-cert "$@"
+    '';
+  };
+  issueInternalServiceCertApp = pkgs.writeShellApplication {
+    name = "issue-internal-service-cert-app";
+    runtimeInputs = [ issueInternalServiceCertPackage ];
+    text = ''
+      exec ${issueInternalServiceCertPackage}/bin/issue-internal-service-cert "$@"
+    '';
   };
   wgHomeClientConfig = pkgs.writeShellApplication {
     name = "wg-home-client-config";
@@ -339,6 +370,12 @@ in
   vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+  "unifi-sync" =
+    mkApp "${unifiSyncApp}/bin/unifi-sync-app" "Sync UniFi DHCP, reservations, and split DNS from inventory.";
+  "issue-observability-cert" =
+    mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+  "issue-internal-service-cert" =
+    mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =

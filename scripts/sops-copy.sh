@@ -13,6 +13,28 @@ Example:
 EOF
 }
 
+copy_top_level_yaml_path() {
+  local src_plain="$1"
+  local dst_plain="$2"
+  local out="$3"
+  local src_json
+  local dst_json
+  local merged_json
+
+  src_json="$(mktemp)"
+  dst_json="$(mktemp)"
+  merged_json="$(mktemp)"
+  yq -o=json '.' "$src_plain" > "$src_json"
+  yq -o=json '.' "$dst_plain" > "$dst_json"
+  jq -n \
+    --slurpfile src "$src_json" \
+    --slurpfile dst "$dst_json" \
+    --argjson path "${key_path_array}" \
+    '$dst[0] | setpath($path; ($src[0] | getpath($path)))' > "$merged_json"
+  yq -P '.' "$merged_json" > "$out"
+  rm -f "$src_json" "$dst_json" "$merged_json"
+}
+
 resolve_repo_root() {
   if git -C "$PWD" rev-parse --show-toplevel >/dev/null 2>&1; then
     git -C "$PWD" rev-parse --show-toplevel
@@ -21,35 +43,6 @@ resolve_repo_root() {
   local script_dir
   script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
   cd -- "${script_dir}/.." && pwd
-}
-
-path_to_yq_expr() {
-  local raw="$1"
-  local expr
-  local segment
-  local escaped
-
-  raw="${raw#.}"
-  raw="${raw#/}"
-  if [[ -z "$raw" ]]; then
-    echo "KEY_PATH must not be empty."
-    return 1
-  fi
-
-  expr=""
-  while IFS='/' read -r segment || [[ -n "$segment" ]]; do
-    [[ -z "$segment" ]] && continue
-    escaped="${segment//\\/\\\\}"
-    escaped="${escaped//\"/\\\"}"
-    expr="${expr}.\"${escaped}\""
-  done <<< "$raw"
-
-  if [[ -z "$expr" ]]; then
-    echo "KEY_PATH must not be empty."
-    return 1
-  fi
-
-  printf '%s' "$expr"
 }
 
 path_to_jq_array() {
@@ -123,9 +116,7 @@ main() {
     exit 1
   fi
 
-  local key_expr
   local key_path_array
-  key_expr="$(path_to_yq_expr "$key_path")"
   key_path_array="$(path_to_jq_array "$key_path")"
 
   local repo_root
@@ -156,13 +147,12 @@ main() {
   sops --decrypt "$src_secret" > "$src_plain"
   sops --decrypt "$dst_secret" > "$dst_plain"
 
-  if ! yq -e "${key_expr} != null" "$src_plain" >/dev/null; then
+  if ! yq -o=json '.' "$src_plain" | jq -e --argjson path "${key_path_array}" 'getpath($path) != null' >/dev/null; then
     echo "Path not found in source secret: $key_path"
     exit 1
   fi
 
-  yq -y -s "(.[0] | getpath(${key_path_array})) as \$v | .[1] | setpath(${key_path_array}; \$v)" \
-    "$src_plain" "$dst_plain" > "$merged_plain"
+  copy_top_level_yaml_path "$src_plain" "$dst_plain" "$merged_plain"
 
   sops --encrypt --filename-override "$dst_secret" --input-type yaml --output-type yaml "$merged_plain" > "$encrypted"
   mv "$encrypted" "$dst_secret"

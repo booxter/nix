@@ -5,6 +5,8 @@
   ...
 }:
 let
+  hostSecretFile = ../../secrets + "/${config.networking.hostName}.yaml";
+  hasHostSecretFile = builtins.pathExists hostSecretFile;
   caName = "Home Internal PKI";
   certLifetime = "720h0m0s";
   caPort = 8443;
@@ -66,8 +68,14 @@ let
   '';
 in
 {
-  # Keep the PKI host off the existing plaintext exporter setup until mTLS is in place.
-  host.observability.client.enable = false;
+  imports = [
+    ./unifi-sync.nix
+  ];
+
+  # Keep the PKI host off observability until its host secret exists, then
+  # bring it up behind the standard node-exporter mTLS configuration.
+  host.observability.client.enable = hasHostSecretFile;
+  host.observability.client.nodeExporter.mtls.enable = hasHostSecretFile;
 
   networking.firewall.allowedTCPPorts = [ caPort ];
 
