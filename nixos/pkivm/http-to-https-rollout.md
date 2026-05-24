@@ -21,9 +21,21 @@ Already done:
 
 ### 1. Cache
 
-- put `atticd` behind internal HTTPS at `nix-cache.home.arpa`
-- switch Nix substituter and Attic client URLs to HTTPS
-- verify cache reads and pushes over HTTPS
+Transition plan:
+
+1. Add `https://nix-cache.home.arpa` in front of `atticd`, but keep the current
+   LAN HTTP endpoint alive.
+2. Move Attic push clients to the HTTPS endpoint first.
+3. Verify there is no remaining HTTP push traffic.
+4. Only then decide whether to keep HTTP read-only for pull or move pull to
+   HTTPS too.
+
+Current implementation target:
+
+- `atticd` reachable on both:
+  - `http://nix-cache:8080`
+  - `https://nix-cache.home.arpa`
+- push clients still unchanged until the dual-endpoint server is live
 
 ### 2. Final Plain-Port Cleanup
 
