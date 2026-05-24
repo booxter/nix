@@ -21,6 +21,7 @@ let
     node_nixos_upgrade_last_success_time_seconds $(${pkgs.coreutils}/bin/date +%s)
     EOF
 
+    ${pkgs.coreutils}/bin/chmod 0644 "$tmp_file"
     ${pkgs.coreutils}/bin/mv "$tmp_file" ${cfg.textfileDir}/nixos-upgrade.prom
   '';
 in
