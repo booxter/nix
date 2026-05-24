@@ -35,6 +35,8 @@ Current implementation target:
 - `atticd` reachable on both:
   - `http://nix-cache:8080`
   - `https://nix-cache.home.arpa`
+- pull clients check both substituters, preferring HTTPS and falling back to
+  HTTP during transition
 - push clients still unchanged until the dual-endpoint server is live
 
 ### 2. Final Plain-Port Cleanup

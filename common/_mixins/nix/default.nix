@@ -9,7 +9,8 @@
 {
   nix =
     let
-      cacheUrl = "http://nix-cache:8080/default?priority=30";
+      cacheHttpsUrl = "https://nix-cache.home.arpa/default?priority=30";
+      cacheHttpUrl = "http://nix-cache:8080/default?priority=31";
       cacheKey = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
     in
     {
@@ -43,7 +44,9 @@
         # attic
         substituters = [
           "https://cache.nixos.org/"
-          cacheUrl
+          cacheHttpsUrl
+          # TODO: remove the plain HTTP fallback once all cache clients use HTTPS.
+          cacheHttpUrl
         ];
         trusted-public-keys = [
           "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
