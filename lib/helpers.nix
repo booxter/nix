@@ -366,6 +366,7 @@ rec {
               { pkgs, ... }:
               let
                 brname = "vmbr0";
+                lanDomain = hostInventory.site.lan.domain;
               in
               {
                 # Hypervisors upgrade on a separate schedule to avoid
@@ -435,6 +436,11 @@ rec {
                   networkConfig = {
                     IPv6AcceptRA = true;
                     DHCP = "ipv4";
+                  };
+                  dhcpV4Config = {
+                    # systemd-networkd receives DOMAINNAME=home.arpa from DHCP,
+                    # but does not install it as a search domain unless enabled.
+                    UseDomains = true;
                   };
                   linkConfig = {
                     RequiredForOnline = "routable";
