@@ -8,6 +8,7 @@ Already done:
 - `nix-cache.home.arpa` for Nix substituters and Attic push
 - `glance.home.arpa`
 - `grafana.home.arpa`
+- `loki.home.arpa` with mTLS log shipping from non-work NixOS hosts
 - internal HTTPS for `radarr`, `sonarr`, `lidarr`, `bazarr`, and `prowlarr`
 - internal HTTPS for `tmission.home.arpa`
 - internal HTTPS for `sabnzbd.home.arpa`
@@ -23,7 +24,6 @@ Already done:
 ### 1. Final Plain-Port Cleanup
 
 - retire Jellyfin plain LAN access on `:8096` if it is no longer needed
-- retire any remaining direct LAN HTTP app ports
 - verify that intentional HTTP is loopback-only
 
 ## Follow-Up Cleanup

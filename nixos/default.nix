@@ -110,7 +110,12 @@ in
 
     host.observability.client = {
       enable = lib.mkDefault (!config.host.isWork);
-      lokiWriteUrl = lib.mkDefault "http://prox-fanavm:3100/loki/api/v1/push";
+      lokiWriteUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
+      loki.mtls.enable = lib.mkDefault (!config.host.isWork && builtins.pathExists hostSecretFile);
+      mtlsClients.loki = {
+        enable = lib.mkDefault (!config.host.isWork && builtins.pathExists hostSecretFile);
+        secretPrefix = "observability/clients/loki";
+      };
       nodeExporter.mtls.enable = lib.mkDefault (
         !isLocalVmHost && hostname != "prox-fanavm" && builtins.pathExists hostSecretFile
       );

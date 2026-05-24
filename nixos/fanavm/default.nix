@@ -707,6 +707,16 @@ in
     upstream = "http://127.0.0.1:${toString grafanaPort}";
   };
 
+  host.internalHttps.services.loki = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString lokiPort}";
+    mtls.enable = true;
+    locationExtraConfig = ''
+      client_max_body_size 0;
+      proxy_request_buffering off;
+    '';
+  };
+
   systemd.services.grafana = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
@@ -1035,7 +1045,7 @@ in
     configuration = {
       auth_enabled = false;
       server = {
-        http_listen_address = "0.0.0.0";
+        http_listen_address = "127.0.0.1";
         http_listen_port = lokiPort;
       };
       common = {
@@ -1077,14 +1087,9 @@ in
   };
 
   host.observability.client = {
-    lokiWriteUrl = "http://127.0.0.1:${toString lokiPort}/loki/api/v1/push";
     nodeExporter = {
       listenAddress = "127.0.0.1";
       openFirewall = lib.mkForce false;
     };
   };
-
-  networking.firewall.allowedTCPPorts = [
-    lokiPort
-  ];
 }
