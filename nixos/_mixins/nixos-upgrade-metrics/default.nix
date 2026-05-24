@@ -50,6 +50,8 @@ in
       extraFlags = [ "--collector.textfile.directory=${cfg.textfileDir}" ];
     };
 
-    systemd.tmpfiles.rules = lib.optional textfileCollectorNeeded "d ${cfg.textfileDir} 0755 root root - -";
+    systemd.tmpfiles.rules =
+      lib.optional cfg.exportToNodeExporter "d ${cfg.textfileDir} 0755 root root - -"
+      ++ lib.optional cfg.exportToNodeExporter "z ${cfg.textfileDir}/nixos-upgrade.prom 0644 root root - -";
   };
 }
