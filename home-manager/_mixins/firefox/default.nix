@@ -5,8 +5,13 @@ in
 {
   programs.firefox = {
     enable = true;
-    # TODO: migrate the profile to the XDG path and switch this to config.xdg.configHome.
-    configPath = ".mozilla/firefox";
+    # Pin Firefox to the legacy on-disk profile root until we intentionally
+    # migrate existing state. macOS Firefox does not read ~/.mozilla/firefox.
+    configPath =
+      if isDarwin then
+        "Library/Application Support/Firefox"
+      else
+        ".mozilla/firefox";
     nativeMessagingHosts = [
       pkgs.browserpass
     ];
