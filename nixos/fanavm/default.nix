@@ -528,6 +528,12 @@ in
       };
       alerting.rules.settings = {
         apiVersion = 1;
+        deleteRules = [
+          {
+            orgId = 1;
+            uid = "dns_upstream_failures";
+          }
+        ];
         groups = [
           {
             orgId = 1;
