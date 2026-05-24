@@ -131,10 +131,6 @@ in
     };
   };
 
-  services.prometheus.exporters.node = {
-    enabledCollectors = lib.mkAfter [ "textfile" ];
-  };
-
   systemd.tmpfiles.rules = [
     "d /var/lib/prometheus-node-exporter-textfile 0755 root root - -"
   ];
