@@ -208,7 +208,7 @@ rec {
       id = "grafana";
       scope = "internal";
       owner = "fana";
-      probePath = "login";
+      probePath = "/login";
     }))
     (resolveService (mkService {
       id = "radarr";
