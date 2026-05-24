@@ -39,7 +39,10 @@ let
 in
 stdenv.mkDerivation {
   inherit pname version src;
-  patches = [ ./disable-local-network-bypass.patch ];
+  patches = [
+    ./disable-local-network-bypass.patch
+    ./use-aurral-data-dir-for-image-proxy.patch
+  ];
 
   nativeBuildInputs = [
     nodejs
