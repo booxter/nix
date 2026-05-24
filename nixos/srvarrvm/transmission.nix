@@ -82,10 +82,17 @@ in
   };
 
   # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}".locations."/" =
-    {
+  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}" = {
+    listen = lib.mkForce [
+      {
+        addr = "127.0.0.1";
+        port = config.nixarr.transmission.uiPort;
+      }
+    ];
+    locations."/" = {
       proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
     };
+  };
 
   host.internalHttps.services.transmission = {
     enable = true;
