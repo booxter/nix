@@ -44,6 +44,12 @@
     preferTmdb = true;
   }
   {
+    name = "Fruitsies";
+    path = "fruitsies";
+    collectionType = "tvshows";
+    isAdult = true;
+  }
+  {
     name = "Music";
     path = "music";
     collectionType = "music";

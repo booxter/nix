@@ -360,6 +360,7 @@ in
                 ++ lib.optionals isAdult [
                   "Attic"
                   "Fruit"
+                  "Fruitsies"
                 ]
                 ++ extraLibraries;
               };
