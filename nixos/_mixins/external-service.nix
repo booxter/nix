@@ -26,6 +26,7 @@ let
           proxy_set_header Host ${vhost.upstreamTls.serverName};
           proxy_ssl_server_name on;
           proxy_ssl_name ${vhost.upstreamTls.serverName};
+          proxy_ssl_session_reuse off;
           proxy_ssl_verify on;
           proxy_ssl_verify_depth 2;
           proxy_ssl_trusted_certificate ${vhost.upstreamTls.trustedCaCertificate};
