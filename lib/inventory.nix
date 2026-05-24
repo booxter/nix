@@ -506,6 +506,11 @@ rec {
       diskSize = 300;
       sshPort = 10006;
       hmFull = false;
+      dhcpReservation = {
+        match = "bc:24:11:06:e8:8b";
+        hostname = "prox-fanavm";
+        ip = "192.168.13.110";
+      };
     }
     {
       type = "vm";
