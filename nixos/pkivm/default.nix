@@ -12,6 +12,7 @@ let
   caPort = 8443;
   caProvisioner = "bootstrap@home.arpa";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
+  pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   stepStateDir = "/var/lib/step-ca";
   stepPasswordFile = "${stepStateDir}/password.txt";
   stepProvisionerPasswordFile = "${stepStateDir}/provisioner-password.txt";
@@ -72,6 +73,12 @@ in
   imports = [
     ./unifi-sync.nix
   ];
+
+  sops.secrets.pkiRotationGithubToken = {
+    key = "github/pki_rotation/token";
+    mode = "0400";
+    restartUnits = [ "pki-rotate.service" ];
+  };
 
   # Keep the PKI host off observability until its host secret exists, then
   # bring it up behind the standard node-exporter mTLS configuration.
@@ -162,6 +169,43 @@ in
       RandomizedDelaySec = "5m";
       Persistent = true;
       Unit = "pki-status-export.service";
+    };
+  };
+
+  systemd.services.pki-rotate = {
+    description = "Rotate due internal PKI leaf certs and open a review PR";
+    wants = [
+      "network-online.target"
+      "sops-install-secrets.service"
+      "step-ca.service"
+    ];
+    after = [
+      "network-online.target"
+      "sops-install-secrets.service"
+      "step-ca.service"
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = ''
+        ${pkgs.pki-rotation}/bin/pki-rotation \
+          --rotation-window-days 45 \
+          --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
+          --sops-age-key-file /var/lib/sops-nix/key.txt \
+          rotate \
+          --github-token-file ${config.sops.secrets.pkiRotationGithubToken.path} \
+          --metrics-output ${pkiRotationMetricsPath}
+      '';
+    };
+  };
+
+  systemd.timers.pki-rotate = {
+    description = "Run the internal PKI rotation controller";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "daily";
+      RandomizedDelaySec = "1h";
+      Persistent = true;
+      Unit = "pki-rotate.service";
     };
   };
 }
