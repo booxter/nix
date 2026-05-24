@@ -641,6 +641,7 @@ def write_atomic(path, content):
     ) as handle:
         handle.write(content)
         tmp_path = pathlib.Path(handle.name)
+    tmp_path.chmod(0o644)
     tmp_path.replace(target)
 
 
