@@ -45,10 +45,6 @@
               },
               {
                 "color": "orange",
-                "value": 0
-              },
-              {
-                "color": "yellow",
                 "value": 7
               },
               {
@@ -62,96 +58,41 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 10,
+        "h": 8,
         "w": 24,
         "x": 0,
         "y": 0
       },
       "id": 1,
       "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
           ],
-          "show": false
+          "fields": "",
+          "values": false
         },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "State"
-          },
-          {
-            "desc": false,
-            "displayName": "Host"
-          },
-          {
-            "desc": false,
-            "displayName": "Kind"
-          },
-          {
-            "desc": false,
-            "displayName": "Certificate"
-          }
-        ]
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(((host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} == bool 0) * -1) != 0) or on(host,category,cert_name) (host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"} <= 45)",
-          "format": "table",
+          "expr": "min by (host) ((((host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} == bool 0) * -1) != 0) or on(host,category,cert_name) host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"})",
           "instant": true,
+          "legendFormat": "{{host}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Internal Certificate Issues",
-      "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {
-            "mode": "columns"
-          }
-        },
-        {
-          "id": "filterFieldsByName",
-          "options": {
-            "include": {
-              "names": [
-                "host",
-                "category",
-                "cert_name",
-                "Value"
-              ]
-            }
-          }
-        },
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true
-            },
-            "indexByName": {
-              "host": 0,
-              "category": 1,
-              "cert_name": 2,
-              "Value": 3
-            },
-            "renameByName": {
-              "Value": "Days / State",
-              "category": "Kind",
-              "cert_name": "Certificate",
-              "host": "Host"
-            }
-          }
-        }
-      ],
-      "type": "table"
+      "title": "Private TLS Certificate Days Remaining",
+      "type": "stat"
     },
     {
       "datasource": "Prometheus",
@@ -183,7 +124,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 10
+        "y": 8
       },
       "id": 4,
       "options": {
@@ -234,6 +175,6 @@
   "timezone": "",
   "title": "PKI / TLS",
   "uid": "pki-overview",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }
