@@ -71,6 +71,7 @@ in
     enable = true;
     wgConf = "/data/.secret/vpn/wg.conf";
     accessibleFrom = [
+      wgBridgeAddress
       hostInventory.site.lan.cidr
       "10.0.0.0/8"
     ];
