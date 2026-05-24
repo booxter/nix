@@ -229,7 +229,9 @@ def issue_service(host, service, *, ca_host):
             f"internal HTTPS service {service} on host {host} is not enabled"
         )
 
-    sans = unique_strings([service, service_cfg["serverName"]])
+    sans = unique_strings(
+        [service, service_cfg["serverName"], *service_cfg.get("serverAliases", [])]
+    )
     common_name = service_cfg["serverName"]
     cert_text, key_text = issue_remote_cert(
         ca_host=ca_host, common_name=common_name, sans=sans

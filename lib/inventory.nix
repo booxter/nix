@@ -480,6 +480,7 @@ rec {
         "lidarr"
         "bazarr"
         "prowlarr"
+        "tmission"
       ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";

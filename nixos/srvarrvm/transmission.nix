@@ -86,4 +86,16 @@ in
     {
       proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
     };
+
+  host.internalHttps.services.transmission = {
+    enable = true;
+    serverName = "tmission.${hostInventory.site.lan.domain}";
+    serverAliases = [ "tmission" ];
+    upstream = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}";
+    # Transmission RPC rejects the public LAN hostname, so preserve the
+    # existing whitelisted host on the upstream hop.
+    locationExtraConfig = ''
+      proxy_set_header Host ${config.networking.hostName};
+    '';
+  };
 }
