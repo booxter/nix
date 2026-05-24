@@ -12,12 +12,10 @@
   yq-go,
 }:
 let
-  pythonWithDeps = python3.withPackages (
-    ps: [
-      ps.cryptography
-      ps.pyyaml
-    ]
-  );
+  pythonWithDeps = python3.withPackages (ps: [
+    ps.cryptography
+    ps.pyyaml
+  ]);
 in
 writeShellApplication {
   name = "pki-rotation";

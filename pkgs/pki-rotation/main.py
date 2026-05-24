@@ -140,7 +140,9 @@ def nix_eval_raw_optional(*segments, repo_root=REPO_ROOT):
 def host_config_root(host, *, repo_root=REPO_ROOT):
     for root in ("nixosConfigurations", "darwinConfigurations"):
         if (
-            nix_eval_raw_optional(root, host, "config", "host", "dnsName", repo_root=repo_root)
+            nix_eval_raw_optional(
+                root, host, "config", "host", "dnsName", repo_root=repo_root
+            )
             is not None
         ):
             return root
@@ -353,7 +355,11 @@ def cert_specs(repo_root, *, intermediate_cert_path):
         cert_name="root",
         source_kind="repo_file",
         file_path=str(
-            repo_root / "common" / "_mixins" / "internal-pki" / "home-internal-pki-root-ca.crt"
+            repo_root
+            / "common"
+            / "_mixins"
+            / "internal-pki"
+            / "home-internal-pki-root-ca.crt"
         ),
     )
     yield CertSpec(
@@ -395,7 +401,9 @@ def load_cert_text(spec, *, repo_root, sops_age_key_file, secret_cache):
     return value
 
 
-def scan_certs(repo_root, *, intermediate_cert_path, rotation_window_days, sops_age_key_file):
+def scan_certs(
+    repo_root, *, intermediate_cert_path, rotation_window_days, sops_age_key_file
+):
     now = dt.datetime.now(dt.timezone.utc)
     secret_cache = {}
     records = []
@@ -436,7 +444,9 @@ def scan_certs(repo_root, *, intermediate_cert_path, rotation_window_days, sops_
                 "not_before_timestamp_seconds": parsed["not_before"].timestamp(),
                 "not_after_timestamp_seconds": parsed["not_after"].timestamp(),
                 "days_remaining": seconds_remaining / 86400,
-                "rotation_due": 1 if seconds_remaining <= rotation_window_days * 86400 else 0,
+                "rotation_due": 1
+                if seconds_remaining <= rotation_window_days * 86400
+                else 0,
             }
         )
         records.append(record)
@@ -778,9 +788,13 @@ def find_open_pr(owner, repo_name, *, branch, base_branch, token):
 def format_expiry(record):
     if record.get("parse_success") != 1:
         return "unparsable"
-    return dt.datetime.fromtimestamp(
-        record["not_after_timestamp_seconds"], tz=dt.timezone.utc
-    ).date().isoformat()
+    return (
+        dt.datetime.fromtimestamp(
+            record["not_after_timestamp_seconds"], tz=dt.timezone.utc
+        )
+        .date()
+        .isoformat()
+    )
 
 
 def build_pr_body(rotated_records, records_after, *, rotation_window_days):
@@ -1031,7 +1045,9 @@ def build_parser():
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    scan_parser = subparsers.add_parser("scan", help="Print managed certificate inventory as JSON.")
+    scan_parser = subparsers.add_parser(
+        "scan", help="Print managed certificate inventory as JSON."
+    )
     scan_parser.set_defaults(func=cmd_scan)
 
     export_parser = subparsers.add_parser(

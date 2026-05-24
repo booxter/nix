@@ -13,19 +13,17 @@ converges from Git state via the normal review and upgrade flow.
 - Leaf client certs: `180d` lifetime
 - Rotation threshold: rotate any managed leaf cert with `<= 45d` remaining
 
-## Target Workflow
+## Secret Access Model
 
-1. A scheduled rotation job runs on `prox-pkivm`.
-2. It inventories all managed internal leaf certs from repo-managed host
-   secrets.
-3. If no cert is within the `45d` threshold, it exits with no repo changes.
-4. If one or more certs are due, it reissues them from `step-ca` and updates
-   the corresponding `secrets/*.yaml` files.
-5. Instead of pushing directly to the tracked branch, it creates a dedicated
-   branch and opens a PR for review.
-6. Normal CI runs on that PR.
-7. After merge, the existing NixOS upgrade/deploy flow rolls the new certs out
-   to hosts.
+`prox-pkivm` is a shared `sops` recipient for the fleet secrets. That lets the
+rotation controller decrypt and re-encrypt repo-managed host secrets without
+using a workstation-only age key.
+
+This is intentional:
+
+- the repo remains the source of truth for leaf certificates
+- rotation happens in Git, not ad hoc on individual hosts
+- normal review and rollout flow still applies to PKI changes
 
 ## Why PRs Instead Of Direct Push
 
@@ -34,55 +32,80 @@ converges from Git state via the normal review and upgrade flow.
 - Existing repo checks gate cert changes before they reach the fleet.
 - The source of truth remains the repo, not ad hoc state on individual hosts.
 
-## Rotation Controller On `pkivm`
+## Runtime Components
 
-The rotation controller should:
+`prox-pkivm` runs two PKI jobs:
 
-- run on a timer, likely daily
-- reuse the existing issuer logic for:
-  - internal HTTPS service certs
-  - observability server certs
-  - observability and service mTLS client certs
-- be idempotent
-- batch all due rotations into one PR
-- include a machine-readable summary of what was rotated and the new expiry
-  dates
+- `pki-status-export`
+  - scans managed certificates
+  - exports Prometheus textfile metrics through node exporter
+  - covers internal root/intermediate CA state plus repo-managed internal leaf
+    certs
+- `pki-rotate`
+  - runs on a timer
+  - reuses the existing issuer apps for internal HTTPS, observability server,
+    and mTLS client certs
+  - clones the repo to a temporary worktree
+  - updates encrypted host secrets for due leaf certs
+  - force-pushes a dedicated automation branch
+  - creates or updates a review PR instead of writing directly to the tracked
+    branch
 
-Operational prerequisites:
+The controller branch is `ci/pki-rotate`, targeting the fleet’s normal base
+branch.
 
-- `pkivm` needs GitHub credentials that can push a branch and open a PR
-- store that credential in `secrets/prox-pkivm.yaml` at
-  `github.pki_rotation.token`
-- the job should target the repo branch that the fleet normally follows after
-  review and merge
+## Rotation Flow
+
+1. `pki-rotate` scans the repo-managed internal leaf inventory.
+2. If no leaf cert is inside the `45d` rotation window, the run exits cleanly.
+3. If one or more leaf certs are due, `pki-rotate` reissues them from the local
+   `step-ca` on `prox-pkivm`.
+4. Updated certs are written back into the corresponding `secrets/*.yaml`
+   files.
+5. The controller commits those encrypted updates to `ci/pki-rotate`.
+6. It opens or updates a PR against the base branch.
+7. After review and merge, the existing upgrade and deploy flow rolls the new
+   certs out to the fleet.
+
+The controller is idempotent. If an open rotation PR already exists, the job
+works on that branch instead of re-creating the change from the base branch.
 
 ## Monitoring
 
-Rotation should be paired with PKI status monitoring on `pkivm`.
+PKI monitoring is split into internal managed cert state and public HTTPS state.
 
-Add a PKI status exporter or scheduled metrics collector that reports:
+Internal metrics come from `pki-status-export` on `prox-pkivm`:
 
-- internal root CA expiry
-- internal intermediate CA expiry
-- internal server leaf cert expiry
-- internal client leaf cert expiry
-- public Let’s Encrypt cert expiry for public endpoints
+- root CA expiry
+- intermediate CA expiry
+- internal HTTPS server cert expiry
+- Prometheus mTLS endpoint cert expiry
+- internal mTLS client cert expiry
+- cert parse/presence failures
+- whether a cert is already inside the `45d` rotation window
 
-That data should feed a Grafana board that shows:
+Public HTTPS expiry continues to come from the existing blackbox SSL probe
+metrics for public endpoints.
 
-- days remaining by certificate
-- certificates already inside the `45d` rotation window
-- certificates inside alert windows
-- last rotation run status
+Grafana uses both sources in one PKI/TLS dashboard:
+
+- internal cert parse health
+- internal cert days remaining
+- internal certs already inside the rotation window
+- public HTTPS days remaining
+- rotation controller last result and staleness
 
 Suggested alerts:
 
-- warning: `<= 30d` remaining
-- critical: `<= 14d` remaining
+- warning: managed or public cert `<= 30d`
+- critical: managed or public cert `<= 14d`
+- critical: managed cert missing or unparsable
+- warning: rotation controller failed
+- warning: rotation controller has gone stale
 
-## Scope Of Rotation
+## Managed Scope
 
-This plan covers repo-managed leaf certs only:
+This rotation design covers repo-managed leaf certs only:
 
 - internal HTTPS server certs
 - Prometheus mTLS endpoint certs
@@ -91,10 +114,12 @@ This plan covers repo-managed leaf certs only:
 
 It does not imply routine rotation of the root or intermediate CA.
 
-## Implementation Order
+## Operational Requirements
 
-1. Change leaf lifetime on `pkivm` from `30d` to `180d`.
-2. Add PKI status collection and Grafana visibility.
-3. Add expiry alerts.
-4. Implement the PR-based rotation controller on `pkivm`.
-5. Enable the timer once the dry-run and PR flow behave correctly.
+- `pkivm` needs GitHub credentials that can push a branch and open a PR
+- store that credential in `secrets/prox-pkivm.yaml` at
+  `github.pki_rotation.token`
+- the token only needs repository `Contents: Read and write` and `Pull requests:
+  Read and write` on `booxter/nix`
+- the controller depends on `step-ca`, `sops`, and the shared `pkivm` age key
+  being present on the host

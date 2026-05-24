@@ -23,6 +23,9 @@ trusted-LAN DHCP and split DNS stay converged with inventory.
 - `nix run .#issue-observability-cert`
   - issue server certs for Prometheus mTLS scrape endpoints and client certs
     for mTLS consumers such as `jellyfin-upload-policy`
+- `nix run .#pki-rotation`
+  - inspect managed PKI cert state, export Prometheus metrics, and run the
+    PR-based rotation controller flow
 - `nix run .#deploy`
   - roll updated secrets and service config to the target host
 
@@ -49,6 +52,20 @@ nix run .#issue-observability-cert -- --host prox-srvarrvm --client jellyfin-upl
 nix run .#deploy -- --branch dhcp-unifi prox-srvarrvm
 ```
 
+PKI status inventory:
+
+```bash
+SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt" \
+  nix run .#pki-rotation -- scan
+```
+
+PKI rotation dry-run:
+
+```bash
+SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt" \
+  nix run .#pki-rotation -- rotate --dry-run
+```
+
 ## Secret Handling
 
 - Issuers update the target host secret file in `secrets/<host>.yaml`
@@ -60,3 +77,4 @@ nix run .#deploy -- --branch dhcp-unifi prox-srvarrvm
 
 - [unifi-sync.md](./unifi-sync.md)
 - [http-to-https-rollout.md](./http-to-https-rollout.md)
+- [../../docs/pki-rotation-plan.md](../../docs/pki-rotation-plan.md)
