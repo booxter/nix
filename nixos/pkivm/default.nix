@@ -13,6 +13,7 @@ let
   caProvisioner = "bootstrap@home.arpa";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
+  repoRoot = ../..;
   stepStateDir = "/var/lib/step-ca";
   stepPasswordFile = "${stepStateDir}/password.txt";
   stepProvisionerPasswordFile = "${stepStateDir}/provisioner-password.txt";
@@ -149,9 +150,10 @@ in
     ];
     serviceConfig = {
       Type = "oneshot";
+      Environment = "PKI_ROTATION_REPO_ROOT=${repoRoot}";
       ExecStart = ''
         ${pkgs.pki-rotation}/bin/pki-rotation \
-          --repo-root ${../..} \
+          --repo-root ${repoRoot} \
           --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
           --sops-age-key-file /var/lib/sops-nix/key.txt \
           export-metrics \
@@ -186,6 +188,7 @@ in
     ];
     serviceConfig = {
       Type = "oneshot";
+      Environment = "PKI_ROTATION_REPO_ROOT=${repoRoot}";
       ExecStart = ''
         ${pkgs.pki-rotation}/bin/pki-rotation \
           --rotation-window-days 45 \
