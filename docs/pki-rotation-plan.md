@@ -51,6 +51,8 @@ The rotation controller should:
 Operational prerequisites:
 
 - `pkivm` needs GitHub credentials that can push a branch and open a PR
+- store that credential in `secrets/prox-pkivm.yaml` at
+  `github.pki_rotation.token`
 - the job should target the repo branch that the fleet normally follows after
   review and merge
 
