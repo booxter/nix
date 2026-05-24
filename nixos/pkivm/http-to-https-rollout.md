@@ -45,7 +45,7 @@ Planned internal names:
 - `lidarr.home.arpa`
 - `bazarr.home.arpa`
 - `prowlarr.home.arpa`
-- `transmission.home.arpa`
+- `tmission.home.arpa`
 - `sabnzbd.home.arpa`
 
 Existing public HTTPS names stay as-is:
@@ -204,7 +204,7 @@ The desired flow is the same as current observability cert issuance:
   - `lidarr.home.arpa`
   - `bazarr.home.arpa`
   - `prowlarr.home.arpa`
-  - `transmission.home.arpa`
+  - `tmission.home.arpa`
   - `sabnzbd.home.arpa`
 - update Glance and blackbox probes
 - close direct HTTP access
