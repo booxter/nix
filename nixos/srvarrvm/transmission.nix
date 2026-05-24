@@ -63,7 +63,10 @@ in
 
   nixarr.transmission = {
     enable = true;
-    vpn.enable = true;
+    vpn = {
+      enable = true;
+      configureNginx = false;
+    };
     peerPort = 45486;
     extraSettings = {
       blocklist-enabled = false;
@@ -80,6 +83,17 @@ in
       utp-enabled = true;
     };
   };
+
+  # nixarr also DNATs the Transmission UI port from the LAN into the WireGuard
+  # namespace. Keep only the SABnzbd port published until SABnzbd gets its own
+  # HTTPS migration; Transmission should be reachable via loopback or the
+  # dedicated internal HTTPS frontend only.
+  vpnNamespaces.wg.portMappings = lib.mkForce [
+    {
+      from = config.nixarr.sabnzbd.guiPort;
+      to = config.nixarr.sabnzbd.guiPort;
+    }
+  ];
 
   # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
   services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}" = {
