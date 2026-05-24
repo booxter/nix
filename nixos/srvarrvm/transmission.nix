@@ -104,6 +104,8 @@ in
       }
     ];
     locations."/" = {
+      recommendedProxySettings = true;
+      proxyWebsockets = true;
       proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
     };
   };
