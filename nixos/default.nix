@@ -114,14 +114,12 @@ in
     host.observability.client = {
       enable = lib.mkDefault (!config.host.isWork);
       lokiWriteUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
-      loki.mtls.enable = lib.mkDefault (!config.host.isWork && builtins.pathExists hostSecretFile);
+      loki.mtls.enable = lib.mkDefault (!config.host.isWork);
       mtlsClients.loki = {
-        enable = lib.mkDefault (!config.host.isWork && builtins.pathExists hostSecretFile);
+        enable = lib.mkDefault (!config.host.isWork);
         secretPrefix = "observability/clients/loki";
       };
-      nodeExporter.mtls.enable = lib.mkDefault (
-        !isLocalVmHost && hostname != "prox-fanavm" && builtins.pathExists hostSecretFile
-      );
+      nodeExporter.mtls.enable = lib.mkDefault (!isLocalVmHost && hostname != "prox-fanavm");
     };
 
     host.observability.nixosUpgrade = {
@@ -158,7 +156,7 @@ in
     services.fwupd.daemonSettings.DisabledPlugins = [ "nordic_hid" ];
 
   }
-  // lib.optionalAttrs (builtins.pathExists hostSecretFile) {
+  // {
     sops.defaultSopsFile = lib.mkDefault hostSecretFile;
   }
 )
