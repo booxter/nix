@@ -554,6 +554,7 @@ This is not the execution plan yet, but it is the intended order of maturity.
 - wire services with Nix modules
 
 Status:
+
 - complete on `fanavm`
 
 ### Phase 2: Migrate Existing Alerts
@@ -563,6 +564,7 @@ Status:
 - add `promtool` tests for each migrated rule group
 
 Status:
+
 - started
 - `DNSResolverProbeDown` is the first migrated alert
 
