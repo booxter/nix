@@ -1,17 +1,10 @@
 # Alerting Strategy
 
-This repo's current alerting is a proof of concept: Grafana-managed rules on
-`fanavm`, one notification path, and limited coverage. It is useful enough to
-show alerts in chat, but it is not yet a good long-term architecture.
+This document defines the repo's alerting architecture, ownership boundaries,
+testing strategy, authoring rules, and implementation constraints.
 
-This document defines the target architecture, ownership boundaries, testing
-strategy, authoring rules, and implementation constraints for a system that we
-can extend incrementally without rewriting it every time a new alert class is
-added.
-
-The goal is not to finalize every threshold or receiver today. The goal is to
-settle how alerting should be built so that adding or changing alerts later is
-predictable, testable, and reviewable.
+The goal is to keep alerting predictable, testable, and reviewable as coverage
+grows.
 
 ## Goals
 
@@ -389,12 +382,6 @@ Current runtime verification should include:
 - service health for `prometheus`, `alertmanager`, and `grafana`
 - notification-path proof when routing changes materially
 
-### Later Maturity Target: Pipeline Tests
-
-End-to-end synthetic pipeline testing is desirable later, but it is not a
-foundational requirement for the first implementation. If we add it, it should
-use a dedicated test route and receiver.
-
 ## CI And `flake check` Integration
 
 Alerting validation must be part of the normal repo gate, not an optional local
@@ -431,7 +418,7 @@ check suite instead of introducing a parallel workflow.
 
 ### Current Checks
 
-The first alerting checks already exist:
+Current alerting checks:
 
 - `fanavm-alertmanager-config`
 - `fanavm-prometheus-alerting`
@@ -448,8 +435,12 @@ catalog so the service config and flake checks stay in sync.
 Current scope:
 
 - availability alert rules
+- backup alert rules
 - control-plane alert rules
+- custom job alert rules
 - DNS alert rules
+- fleet alert rules
+- media-policy alert rules
 - network probe alert rules
 - UPS alert rules
 - PKI alert rules
@@ -584,77 +575,30 @@ Unsafe patterns:
 If a helper makes the rendered rule harder to understand than plain Prometheus
 YAML, the helper is too smart.
 
-## Recommended Implementation Phases
+## Current State
 
-This is not the execution plan yet, but it is the intended order of maturity.
+The implemented model on `fanavm` is:
 
-### Phase 1: Establish The Backbone
+- Prometheus evaluates the repo-managed metric alerts.
+- Alertmanager is the single notification plane.
+- Grafana is the UI for dashboards, inspection, and investigation.
+- Alert rules, routing config, and tests live in Git and are wired by Nix.
 
-- add Alertmanager
-- move alert definitions out of Grafana-managed-only ownership
-- define file layout for rules, tests, and routing
-- wire services with Nix modules
+Current coverage includes:
 
-Status:
-
-- complete on `fanavm`
-
-### Phase 2: Migrate Existing Alerts
-
-- port the current Grafana proof-of-concept alerts to Prometheus rules
-- keep semantics close to current behavior
-- add `promtool` tests for each migrated rule group
-
-Status:
-
-- complete on `fanavm`
-- migrated families: DNS, UPS, PKI, thermal
-- Grafana-managed Prometheus POC alerts removed from normal evaluation flow
-
-### Phase 3: Expand Coverage
-
-- add availability alerts for critical scrapes
-- add absence/freshness alerts where dashboards currently depend on missing
-  telemetry
-- add storage, service, and fleet health alerts incrementally
-
-Status:
-
-- materially implemented on `fanavm`
-- availability coverage added for node telemetry, DNS probe scrape
-  availability, SMART exporter availability, Beast HDD temperature telemetry,
-  and Beast disk bay mapping telemetry
-- single-plane control-plane coverage added for Prometheus config reload and
-  alert delivery errors, Prometheus rule evaluation failures, Alertmanager
-  scrape/reload/Telegram notification and request failures, and Grafana
-  metrics/API health
-- public service probe coverage added for `blackbox-arr` scrape availability
-  and external endpoint failures
-- direct application scrape coverage added for `jellyfin`, `sabnzbd`, and
-  `vikunja`
-- internal reachability coverage added for `blackbox-icmp` and `blackbox-tcp`
-  scrape availability plus per-probe failures
-- fleet health coverage added for root filesystem pressure and upgrade
-  staleness
-- custom job freshness coverage added for the `srvarrvm` policy jobs
-- backup coverage added for job failure and stale successful runs
-- media-policy coverage added for the existing repo-specific policy metrics
-- PKI coverage added for inventory presence, managed/internal and public TLS
-  expiry, controller failed/stale/incomplete runs, missing review PRs, and
-  controller telemetry presence
-- Beast storage coverage added for failed SMART state, per-drive SMART
-  freshness loss, SMART corruption attributes, RAID degraded state, RAID
-  recovery/resync activity, `/volume2` warning/critical capacity, Btrfs device
-  error growth, HBA controller degraded/failed state, HBA expected-drive
-  visibility, and HBA memory error counters
-
-Phase 3 is complete for the current signal set.
+- availability and missing-telemetry alerts
+- DNS, network probe, and service probe alerts
+- direct scrape health for critical applications
+- fleet health, backup health, and repo-specific policy jobs
+- PKI inventory, expiry, and controller workflow alerts
+- Beast storage, SMART, RAID, and HBA integrity alerts
+- observability control-plane alerts for Prometheus, Alertmanager, and Grafana
 
 Deliberate dashboard-only decisions:
 
-- `node_btrfs_used_bytes` metadata/system chunk ratios stay dashboard-only for
-  now. On the current Beast workload they sit close to fully allocated even in
-  a healthy state, so they are not a clean free-space pressure alert signal.
+- `node_btrfs_used_bytes` metadata/system chunk ratios stay dashboard-only.
+  On the current Beast workload they sit close to fully allocated even in a
+  healthy state, so they are not a clean free-space pressure alert signal.
 - `host_observability_pki_cert_rotation_due` stays dashboard/controller-summary
   only. Being inside the rotation window is expected while the controller has
   already rotated certs and left an open review PR, so per-cert alerts would
@@ -675,7 +619,7 @@ Deliberate dashboard-only decisions:
 
 ## Implementation Guardrails
 
-These are the constraints that should guide autonomous execution later.
+These are the constraints that should guide future changes.
 
 - Keep Prometheus rule logic close to native Prometheus format.
 - Keep Alertmanager routing close to native Alertmanager format.
