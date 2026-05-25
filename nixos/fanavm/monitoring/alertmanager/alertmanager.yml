@@ -15,15 +15,28 @@ receivers:
       - bot_token_file: /run/credentials/alertmanager.service/telegram-bot-token
         chat_id: $TELEGRAM_CHAT_ID
         message: |-
-          Alerts {{ if eq .Status "firing" }}Firing{{ else }}Resolved{{ end }}:
-          {{ range .Alerts }}
-          Labels:
-          {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
-          {{ end }}
-          Annotations:
-          {{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
-          {{ end }}
-          {{ end }}
-          Grafana: <a href="https://grafana.home.arpa/alerting/list">https://grafana.home.arpa/alerting/list</a>
+          {{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "critical" }}🚨{{ else if eq .CommonLabels.severity "warning" }}⚠️{{ else }}ℹ️{{ end }} <b>Alert firing</b>{{ else }}✅ <b>Alert resolved</b>{{ end }}
+          <b>{{ if .CommonAnnotations.summary }}{{ .CommonAnnotations.summary }}{{ else }}{{ .CommonLabels.alertname }}{{ end }}</b>
+          {{ if .CommonAnnotations.description }}
+
+          {{ .CommonAnnotations.description }}{{ end }}
+          {{ if or .CommonLabels.instance .CommonLabels.severity .CommonLabels.category .CommonLabels.job }}
+
+          <b>Details</b>
+          {{ if .CommonLabels.instance }}• Host: {{ .CommonLabels.instance }}
+          {{ end }}{{ if .CommonLabels.severity }}• Severity: {{ .CommonLabels.severity }}
+          {{ end }}{{ if .CommonLabels.category }}• Category: {{ .CommonLabels.category }}
+          {{ end }}{{ if .CommonLabels.job }}• Job: {{ .CommonLabels.job }}
+          {{ end }}{{ if gt (len .Alerts) 1 }}• Alerts in group: {{ len .Alerts }}
+          {{ end }}{{ end }}{{ if gt (len .Alerts) 1 }}
+
+          <b>Affected</b>
+          {{ range .Alerts }}{{ if .Labels.instance }}• {{ .Labels.instance }}
+          {{ else if .Labels.target }}• {{ .Labels.target }}
+          {{ else if .Labels.service_title }}• {{ .Labels.service_title }}
+          {{ else }}• {{ .Labels.alertname }}
+          {{ end }}{{ end }}{{ end }}
+
+          <a href="https://grafana.home.arpa/alerting/list">Open in Grafana</a>
         parse_mode: HTML
         send_resolved: true
