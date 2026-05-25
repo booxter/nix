@@ -84,9 +84,11 @@ The daily warmup procedure is:
 7. Later fleet upgrades substitute from `http://nix-cache:8080/default/` when
    those closures are needed.
 
-The explicit `attic push` step matters. The repo's `post-build-hook` is not
-enough for cache warming because substituted paths do not trigger Nix
-`post-build-hook`.
+The explicit `attic push` step matters. The repo's background
+`attic watch-store` service is enough for locally built outputs, but it still
+honors Attic's upstream cache filter. The warmer uses
+`--ignore-upstream-cache-filter` so already-substituted targets still get
+rehomed into the local cache.
 
 ## Manual Operation
 

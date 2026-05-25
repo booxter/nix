@@ -27,6 +27,7 @@
       ./_mixins/thermal-accounting
     ]
     ++ lib.optionals (!isWork) [
+      ./_mixins/attic
       ./_mixins/browser
     ];
 

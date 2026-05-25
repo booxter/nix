@@ -40,6 +40,9 @@ in
         ./_mixins/restic-beast-client.nix
         ./_mixins/user
       ]
+      ++ lib.optionals (!(hostSpec.isWork or false)) [
+        ./_mixins/attic
+      ]
       ++ lib.optionals (upsServerSpec != null) [
         # TODO: rotate this password and migrate to sops-managed secrets.
         (import ./_mixins/ups-client {
