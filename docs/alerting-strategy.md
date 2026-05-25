@@ -116,8 +116,14 @@ nixos/
       prometheus/
         rules/
           dns.rules.yml
+          pki.rules.yml
+          thermal.rules.yml
+          ups.rules.yml
         tests/
           dns.rules.test.yml
+          pki.rules.test.yml
+          thermal.rules.test.yml
+          ups.rules.test.yml
       catalog.nix
 ```
 
@@ -134,13 +140,16 @@ The first deployable slice is already in place on `fanavm`:
   and checks
 - `nixos/fanavm/monitoring/alertmanager/alertmanager.yml` is the repo-managed
   Alertmanager config
-- `nixos/fanavm/monitoring/prometheus/rules/dns.rules.yml` is the first
-  migrated Prometheus alert rule
-- `nixos/fanavm/monitoring/prometheus/tests/dns.rules.test.yml` is the first
-  `promtool` rule test
+- `nixos/fanavm/monitoring/prometheus/rules/{dns,pki,thermal,ups}.rules.yml`
+  hold the current migrated Prometheus alert families
+- `nixos/fanavm/monitoring/prometheus/tests/*.rules.test.yml` hold the
+  corresponding `promtool` rule tests
 
 This is the baseline pattern to extend. New alert families should join this
 structure rather than being added inline back into Grafana provisioning.
+
+Grafana no longer owns these Prometheus-based POC alerts. It remains the UI,
+and repo-managed Alertmanager is the notification plane.
 
 ### Formatting
 
@@ -416,6 +425,13 @@ They currently cover:
 New rule files and test files should be wired through the shared monitoring
 catalog so the service config and flake checks stay in sync.
 
+Current scope:
+
+- DNS alert rules
+- UPS alert rules
+- PKI alert rules
+- thermal alert rules
+
 ### Integration Tests In CI
 
 If we add runtime or service-level alerting tests later, they should fit into
@@ -565,14 +581,9 @@ Status:
 
 Status:
 
-- started
-- `DNSResolverProbeDown` is the first migrated alert
-
-Priority order for the remaining legacy Grafana-managed alerts:
-
-1. UPS health
-2. PKI health
-3. Thermal health
+- complete on `fanavm`
+- migrated families: DNS, UPS, PKI, thermal
+- Grafana-managed Prometheus POC alerts removed from normal evaluation flow
 
 ### Phase 3: Expand Coverage
 
