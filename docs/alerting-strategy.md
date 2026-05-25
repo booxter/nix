@@ -116,6 +116,7 @@ nixos/
       prometheus/
         rules/
           availability.rules.yml
+          backup.rules.yml
           control-plane.rules.yml
           custom-jobs.rules.yml
           dns.rules.yml
@@ -130,6 +131,7 @@ nixos/
           ups.rules.yml
         tests/
           availability.rules.test.yml
+          backup.rules.test.yml
           control-plane.rules.test.yml
           custom-jobs.rules.test.yml
           dns.rules.test.yml
@@ -158,7 +160,7 @@ The first deployable slice is already in place on `fanavm`:
   and checks
 - `nixos/fanavm/monitoring/alertmanager/alertmanager.yml` is the repo-managed
   Alertmanager config
-- `nixos/fanavm/monitoring/prometheus/rules/{availability,control-plane,custom-jobs,dns,fleet,media-policy,network-probes,pki,service-probes,service-scrapes,storage,thermal,ups}.rules.yml`
+- `nixos/fanavm/monitoring/prometheus/rules/{availability,backup,control-plane,custom-jobs,dns,fleet,media-policy,network-probes,pki,service-probes,service-scrapes,storage,thermal,ups}.rules.yml`
   hold the current repo-managed Prometheus alert families
 - `nixos/fanavm/monitoring/prometheus/tests/*.rules.test.yml` hold the
   corresponding `promtool` rule tests
@@ -618,8 +620,8 @@ Status:
 
 Status:
 
-- started on `fanavm`
-- initial availability coverage added for node telemetry, DNS probe scrape
+- materially implemented on `fanavm`
+- availability coverage added for node telemetry, DNS probe scrape
   availability, SMART exporter availability, Beast HDD temperature telemetry,
   and Beast disk bay mapping telemetry
 - single-plane control-plane coverage added for Prometheus config reload and
@@ -631,22 +633,50 @@ Status:
   `vikunja`
 - internal reachability coverage added for `blackbox-icmp` and `blackbox-tcp`
   scrape availability plus per-probe failures
-- initial Beast storage coverage added for failed SMART state, `/volume2`
-  capacity, and Btrfs device error growth
+- fleet health coverage added for root filesystem pressure and upgrade
+  staleness
+- custom job freshness coverage added for the `srvarrvm` policy jobs
+- backup coverage added for job failure and stale successful runs
+- media-policy coverage added for the existing repo-specific policy metrics
+- Beast storage coverage added for failed SMART state, SMART corruption
+  attributes, RAID degraded state, `/volume2` capacity, Btrfs device error
+  growth, and HBA controller degraded/failed state
 
 Initial backlog after the legacy migrations:
 
 1. Storage and NAS integrity refinements
-   This includes per-device freshness gaps, RAID visibility gaps, and any
-   additional Btrfs or filesystem signals that prove useful beyond the first
-   Beast slice.
+   Current concrete gaps:
+   - HBA expected-drive visibility is exported but not alerted
+     (`host_observability_hba_drive_visible`).
+   - HBA memory error counters are exported but not alerted
+     (`host_observability_hba_memory_correctable_errors`,
+     `host_observability_hba_memory_uncorrectable_errors`).
+   - md background work is visualized but not alerted
+     (`host_observability_md_sync_active`, `..._action_info`,
+     `..._progress_percent`, `..._eta_seconds`).
+   - Btrfs and filesystem pressure beyond the current `/volume2 > 90%` alert
+     still needs a decision, especially metadata/system pressure and whether a
+     second critical threshold is worth it.
 2. PKI control-plane freshness and controller health refinements
-   Existing PKI signals should be reviewed for missing-data handling and route
-   expectations.
+   Current concrete gaps:
+   - no absence/freshness alert yet for the PKI inventory metrics themselves
+     when `prox-pkivm` node telemetry is still up
+   - no absence/freshness alert yet for the rotation controller metrics
+   - controller summary metrics are exported but not yet used in alerts
+     (`host_observability_pki_rotation_last_due_count`,
+     `host_observability_pki_rotation_last_rotated_count`,
+     `host_observability_pki_rotation_last_pr_open`)
+   - per-cert rotation state is exported but not yet used in alerts
+     (`host_observability_pki_cert_rotation_due`)
 3. Control-plane refinements within the current single notification plane
-   Additional control-plane signals can still be added, but independent
-   self-notification guarantees remain out of scope while Alertmanager and
-   Telegram are single-homed on `fanavm`.
+   Current concrete gaps:
+   - we alert on Alertmanager Telegram failures, but not yet on notification
+     backlog/retry patterns beyond hard failures
+   - we alert on Grafana metrics reachability, but not on provisioning or other
+     app-level health beyond that scrape signal
+   - we should keep adding signals that help during partial failures, but
+     independent self-notification guarantees remain out of scope while
+     Alertmanager and Telegram are single-homed on `fanavm`
 
 ### Phase 4: Refine Shared Helpers
 
