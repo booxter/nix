@@ -47,6 +47,15 @@ groups:
         annotations:
           summary: "Reallocated sectors high on beast: {{ $labels.device }}"
           description: "Drive {{ $labels.device }} on beast has reported more than 30 reallocated sectors for 15 minutes."
+      - alert: BeastSMARTTelemetryMissingForDrive
+        expr: host_observability_disk_bay_info{instance="beast"} unless on(instance,device) smartctl_device_smart_status{instance="beast",device=~"sd[a-z]+"}
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "SMART telemetry missing on beast: bay {{ $labels.bay }}"
+          description: "The disk mapped to bay {{ $labels.bay }} on beast ({{ $labels.device }}) no longer has SMART telemetry even though the disk bay mapping is still present."
       - alert: BeastRAIDDegraded
         expr: host_observability_md_degraded{instance="beast"} > 0
         for: 5m
@@ -56,6 +65,15 @@ groups:
         annotations:
           summary: "Beast RAID degraded: {{ $labels.device }}"
           description: "The md array {{ $labels.device }} on beast has reported degraded members for 5 minutes."
+      - alert: BeastRAIDBackgroundRecoveryActive
+        expr: host_observability_md_sync_active{instance="beast",action=~"recover|recovering|resync|reshape|frozen"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast RAID background work active: {{ $labels.device }} / {{ $labels.action }}"
+          description: "The md array {{ $labels.device }} on beast has had {{ $labels.action }} background work active for 15 minutes."
       - alert: BeastVolume2UsageHigh
         expr: 100 * (1 - node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"} / node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"}) > 90
         for: 30m
@@ -65,6 +83,15 @@ groups:
         annotations:
           summary: "Beast volume2 usage high"
           description: "The /volume2 filesystem on beast has been above 90% used for 30 minutes."
+      - alert: BeastVolume2UsageCritical
+        expr: 100 * (1 - node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"} / node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"}) > 95
+        for: 15m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast volume2 usage critically high"
+          description: "The /volume2 filesystem on beast has been above 95% used for 15 minutes."
       - alert: BeastBtrfsDeviceErrors
         expr: increase(node_btrfs_device_errors_total{instance="beast",device="md127"}[15m]) > 0
         for: 5m

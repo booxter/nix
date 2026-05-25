@@ -53,6 +53,8 @@ tests:
         alertname: BeastDiskReportedUncorrect
       - eval_time: 15m
         alertname: BeastDiskReallocatedSectorsHigh
+      - eval_time: 15m
+        alertname: BeastSMARTTelemetryMissingForDrive
 
   - interval: 30s
     input_series:
@@ -144,11 +146,44 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_disk_bay_info{instance="beast",bay="3",device="sda"}'
+        values: "1x32"
+      - series: 'smartctl_device_smart_status{instance="beast",device="sda"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastSMARTTelemetryMissingForDrive
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_disk_bay_info{instance="beast",bay="3",device="sda"}'
+        values: "1x30 0x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: BeastSMARTTelemetryMissingForDrive
+      - eval_time: 15m
+        alertname: BeastSMARTTelemetryMissingForDrive
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastSMARTTelemetryMissingForDrive
+              bay: "3"
+              category: storage
+              device: sda
+              instance: beast
+              severity: warning
+            exp_annotations:
+              summary: "SMART telemetry missing on beast: bay 3"
+              description: "The disk mapped to bay 3 on beast (sda) no longer has SMART telemetry even though the disk bay mapping is still present."
+
+  - interval: 30s
+    input_series:
       - series: 'host_observability_md_degraded{instance="beast",device="md127"}'
         values: "0x12"
     alert_rule_test:
       - eval_time: 5m
         alertname: BeastRAIDDegraded
+      - eval_time: 15m
+        alertname: BeastRAIDBackgroundRecoveryActive
 
   - interval: 30s
     input_series:
@@ -172,6 +207,35 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_md_sync_active{instance="beast",device="md127",action="check"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastRAIDBackgroundRecoveryActive
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_md_sync_active{instance="beast",device="md127",action="resync"}'
+        values: "1x30 0x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: BeastRAIDBackgroundRecoveryActive
+      - eval_time: 15m
+        alertname: BeastRAIDBackgroundRecoveryActive
+        exp_alerts:
+          - exp_labels:
+              action: resync
+              alertname: BeastRAIDBackgroundRecoveryActive
+              category: storage
+              device: md127
+              instance: beast
+              severity: warning
+            exp_annotations:
+              summary: "Beast RAID background work active: md127 / resync"
+              description: "The md array md127 on beast has had resync background work active for 15 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
         values: "15x62"
       - series: 'node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
@@ -179,6 +243,8 @@ tests:
     alert_rule_test:
       - eval_time: 30m
         alertname: BeastVolume2UsageHigh
+      - eval_time: 15m
+        alertname: BeastVolume2UsageCritical
 
   - interval: 30s
     input_series:
@@ -205,6 +271,30 @@ tests:
               description: "The /volume2 filesystem on beast has been above 90% used for 30 minutes."
       - eval_time: 30m30s
         alertname: BeastVolume2UsageHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
+        values: "4x30 15x2"
+      - series: 'node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
+        values: "100x32"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: BeastVolume2UsageCritical
+      - eval_time: 15m
+        alertname: BeastVolume2UsageCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastVolume2UsageCritical
+              category: storage
+              device: /dev/md127
+              fstype: btrfs
+              instance: beast
+              mountpoint: /volume2
+              severity: critical
+            exp_annotations:
+              summary: "Beast volume2 usage critically high"
+              description: "The /volume2 filesystem on beast has been above 95% used for 15 minutes."
 
   - interval: 30s
     input_series:
