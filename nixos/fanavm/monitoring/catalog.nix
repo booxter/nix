@@ -1,5 +1,7 @@
 let
   alertmanagerConfigFile = ./alertmanager/alertmanager.yml;
+  backupRuleFile = ./prometheus/rules/backup.rules.yml;
+  backupTestFile = ./prometheus/tests/backup.rules.test.yml;
   controlPlaneRuleFile = ./prometheus/rules/control-plane.rules.yml;
   controlPlaneTestFile = ./prometheus/tests/control-plane.rules.test.yml;
   availabilityRuleFile = ./prometheus/rules/availability.rules.yml;
@@ -35,6 +37,7 @@ in
 
   prometheus = {
     ruleFiles = [
+      backupRuleFile
       controlPlaneRuleFile
       availabilityRuleFile
       customJobsRuleFile
@@ -50,6 +53,7 @@ in
       upsRuleFile
     ];
     ruleFilesRelative = [
+      "nixos/fanavm/monitoring/prometheus/rules/backup.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/control-plane.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/availability.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/custom-jobs.rules.yml"
@@ -65,6 +69,7 @@ in
       "nixos/fanavm/monitoring/prometheus/rules/ups.rules.yml"
     ];
     testFiles = [
+      backupTestFile
       controlPlaneTestFile
       availabilityTestFile
       customJobsTestFile
@@ -80,6 +85,7 @@ in
       upsTestFile
     ];
     testFilesRelative = [
+      "nixos/fanavm/monitoring/prometheus/tests/backup.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/control-plane.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/availability.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/custom-jobs.rules.test.yml"
