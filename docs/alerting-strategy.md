@@ -625,8 +625,9 @@ Status:
   availability, SMART exporter availability, Beast HDD temperature telemetry,
   and Beast disk bay mapping telemetry
 - single-plane control-plane coverage added for Prometheus config reload and
-  alert delivery errors, Alertmanager scrape/reload/Telegram notification
-  failures, and Grafana metrics scrape reachability
+  alert delivery errors, Prometheus rule evaluation failures, Alertmanager
+  scrape/reload/Telegram notification failures, and Grafana metrics scrape
+  reachability
 - public service probe coverage added for `blackbox-arr` scrape availability
   and external endpoint failures
 - direct application scrape coverage added for `jellyfin`, `sabnzbd`, and
@@ -640,28 +641,24 @@ Status:
 - media-policy coverage added for the existing repo-specific policy metrics
 - Beast storage coverage added for failed SMART state, SMART corruption
   attributes, RAID degraded state, `/volume2` capacity, Btrfs device error
-  growth, and HBA controller degraded/failed state
+  growth, HBA controller degraded/failed state, HBA expected-drive visibility,
+  and HBA memory error counters
 
 Initial backlog after the legacy migrations:
 
 1. Storage and NAS integrity refinements
    Current concrete gaps:
-   - HBA expected-drive visibility is exported but not alerted
-     (`host_observability_hba_drive_visible`).
-   - HBA memory error counters are exported but not alerted
-     (`host_observability_hba_memory_correctable_errors`,
-     `host_observability_hba_memory_uncorrectable_errors`).
    - md background work is visualized but not alerted
      (`host_observability_md_sync_active`, `..._action_info`,
      `..._progress_percent`, `..._eta_seconds`).
    - Btrfs and filesystem pressure beyond the current `/volume2 > 90%` alert
      still needs a decision, especially metadata/system pressure and whether a
      second critical threshold is worth it.
+   - per-device SMART freshness is still host-level rather than drive-level;
+     we alert if all Beast SMART telemetry disappears, but not yet if one
+     specific disk silently drops out while the exporter remains healthy.
 2. PKI control-plane freshness and controller health refinements
    Current concrete gaps:
-   - no absence/freshness alert yet for the PKI inventory metrics themselves
-     when `prox-pkivm` node telemetry is still up
-   - no absence/freshness alert yet for the rotation controller metrics
    - controller summary metrics are exported but not yet used in alerts
      (`host_observability_pki_rotation_last_due_count`,
      `host_observability_pki_rotation_last_rotated_count`,
