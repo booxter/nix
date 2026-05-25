@@ -118,5 +118,14 @@
           ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
         ];
       });
+
+      # Torrent-client jobs can legitimately sit queued/checking without progress
+      # or message churn for much longer than 5 minutes. Keep Shelfmark's stall
+      # canceller for direct downloads, but do not auto-cancel torrent jobs.
+      shelfmark = prev.shelfmark.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../lib/patches/shelfmark-disable-torrent-stall-cancel.patch
+        ];
+      });
     };
 }
