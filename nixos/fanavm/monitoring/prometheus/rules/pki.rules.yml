@@ -1,0 +1,67 @@
+groups:
+  - name: pki-health
+    interval: 30s
+    rules:
+      - alert: InternalPKICertMissing
+        expr: label_replace(host_observability_pki_cert_parse_success{job="node-mtls",instance="prox-pkivm"}, "cert_category", "$1", "category", "(.*)") < 1
+        for: 10m
+        labels:
+          severity: critical
+          category: pki
+        annotations:
+          summary: "Managed PKI cert missing: {{ $labels.host }} / {{ $labels.cert_name }}"
+          description: "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.cert_category }}) is expected but missing or unparsable in the repo-managed PKI inventory."
+      - alert: InternalPKICertExpiringSoon
+        expr: label_replace(host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm"}, "cert_category", "$1", "category", "(.*)") < 30
+        for: 30m
+        labels:
+          severity: warning
+          category: pki
+        annotations:
+          summary: "Managed PKI cert expiring soon: {{ $labels.host }} / {{ $labels.cert_name }}"
+          description: "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.cert_category }}) has less than 30 days remaining."
+      - alert: InternalPKICertExpiringCritical
+        expr: label_replace(host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm"}, "cert_category", "$1", "category", "(.*)") < 14
+        for: 30m
+        labels:
+          severity: critical
+          category: pki
+        annotations:
+          summary: "Managed PKI cert expiring critically soon: {{ $labels.host }} / {{ $labels.cert_name }}"
+          description: "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.cert_category }}) has less than 14 days remaining."
+      - alert: PublicTLSCertExpiringSoon
+        expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",scope="external"} - time()) / 86400) < 30
+        for: 30m
+        labels:
+          severity: warning
+          category: pki
+        annotations:
+          summary: "Public TLS cert expiring soon: {{ $labels.instance }}"
+          description: "The public HTTPS endpoint {{ $labels.instance }} has less than 30 days remaining on its leaf certificate."
+      - alert: PublicTLSCertExpiringCritical
+        expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",scope="external"} - time()) / 86400) < 14
+        for: 30m
+        labels:
+          severity: critical
+          category: pki
+        annotations:
+          summary: "Public TLS cert expiring critically soon: {{ $labels.instance }}"
+          description: "The public HTTPS endpoint {{ $labels.instance }} has less than 14 days remaining on its leaf certificate."
+      - alert: PKIRotationControllerFailed
+        expr: host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"} < 1
+        for: 2h
+        labels:
+          severity: warning
+          category: pki
+        annotations:
+          summary: "PKI rotation controller failed on prox-pkivm"
+          description: "The most recent scheduled PKI rotation controller run on prox-pkivm did not complete successfully."
+      - alert: PKIRotationControllerStale
+        expr: ((time() - host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}) / 3600) > 36
+        for: 2h
+        labels:
+          severity: warning
+          category: pki
+        annotations:
+          summary: "PKI rotation controller stale on prox-pkivm"
+          description: "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours."

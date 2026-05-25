@@ -1,0 +1,226 @@
+rule_files:
+  - ../rules/pki.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="prox-pkivm",host="beast",cert_name="vikunja",category="external_service_client"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: InternalPKICertMissing
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="prox-pkivm",host="beast",cert_name="vikunja",category="external_service_client"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: InternalPKICertMissing
+      - eval_time: 10m
+        alertname: InternalPKICertMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: InternalPKICertMissing
+              category: pki
+              cert_name: vikunja
+              cert_category: external_service_client
+              host: beast
+              instance: prox-pkivm
+              job: node-mtls
+              severity: critical
+            exp_annotations:
+              summary: "Managed PKI cert missing: beast / vikunja"
+              description: "The managed certificate vikunja for beast (external_service_client) is expected but missing or unparsable in the repo-managed PKI inventory."
+      - eval_time: 10m30s
+        alertname: InternalPKICertMissing
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+        values: "60x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: InternalPKICertExpiringSoon
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+        values: "29x60 40x2"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: InternalPKICertExpiringSoon
+      - eval_time: 30m
+        alertname: InternalPKICertExpiringSoon
+        exp_alerts:
+          - exp_labels:
+              alertname: InternalPKICertExpiringSoon
+              category: pki
+              cert_name: grafana
+              cert_category: internal_https_server
+              host: prox-fanavm
+              instance: prox-pkivm
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Managed PKI cert expiring soon: prox-fanavm / grafana"
+              description: "The managed certificate grafana for prox-fanavm (internal_https_server) has less than 30 days remaining."
+      - eval_time: 30m30s
+        alertname: InternalPKICertExpiringSoon
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+        values: "30x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: InternalPKICertExpiringCritical
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+        values: "13x60 20x2"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: InternalPKICertExpiringCritical
+      - eval_time: 30m
+        alertname: InternalPKICertExpiringCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: InternalPKICertExpiringCritical
+              category: pki
+              cert_name: grafana
+              cert_category: internal_https_server
+              host: prox-fanavm
+              instance: prox-pkivm
+              job: node-mtls
+              severity: critical
+            exp_annotations:
+              summary: "Managed PKI cert expiring critically soon: prox-fanavm / grafana"
+              description: "The managed certificate grafana for prox-fanavm (internal_https_server) has less than 14 days remaining."
+      - eval_time: 30m30s
+        alertname: InternalPKICertExpiringCritical
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
+        values: "3888000x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: PublicTLSCertExpiringSoon
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
+        values: "2505600x60 3456000x2"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: PublicTLSCertExpiringSoon
+      - eval_time: 30m
+        alertname: PublicTLSCertExpiringSoon
+        exp_alerts:
+          - exp_labels:
+              alertname: PublicTLSCertExpiringSoon
+              category: pki
+              instance: jellyfin
+              job: blackbox-arr
+              scope: external
+              severity: warning
+            exp_annotations:
+              summary: "Public TLS cert expiring soon: jellyfin"
+              description: "The public HTTPS endpoint jellyfin has less than 30 days remaining on its leaf certificate."
+      - eval_time: 30m30s
+        alertname: PublicTLSCertExpiringSoon
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
+        values: "1728000x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: PublicTLSCertExpiringCritical
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
+        values: "1123200x60 1728000x2"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: PublicTLSCertExpiringCritical
+      - eval_time: 30m
+        alertname: PublicTLSCertExpiringCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: PublicTLSCertExpiringCritical
+              category: pki
+              instance: jellyfin
+              job: blackbox-arr
+              scope: external
+              severity: critical
+            exp_annotations:
+              summary: "Public TLS cert expiring critically soon: jellyfin"
+              description: "The public HTTPS endpoint jellyfin has less than 14 days remaining on its leaf certificate."
+      - eval_time: 30m30s
+        alertname: PublicTLSCertExpiringCritical
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"}'
+        values: "1x242"
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: PKIRotationControllerFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"}'
+        values: "0x240 1x2"
+    alert_rule_test:
+      - eval_time: 1h30m
+        alertname: PKIRotationControllerFailed
+      - eval_time: 2h
+        alertname: PKIRotationControllerFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: PKIRotationControllerFailed
+              category: pki
+              instance: prox-pkivm
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "PKI rotation controller failed on prox-pkivm"
+              description: "The most recent scheduled PKI rotation controller run on prox-pkivm did not complete successfully."
+      - eval_time: 2h30m
+        alertname: PKIRotationControllerFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}'
+        values: "0x240"
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: PKIRotationControllerStale
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}'
+        values: "0x4620 140400x2"
+    alert_rule_test:
+      - eval_time: 38h
+        alertname: PKIRotationControllerStale
+      - eval_time: 38h30m
+        alertname: PKIRotationControllerStale
+        exp_alerts:
+          - exp_labels:
+              alertname: PKIRotationControllerStale
+              category: pki
+              instance: prox-pkivm
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "PKI rotation controller stale on prox-pkivm"
+              description: "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours."
+      - eval_time: 39h
+        alertname: PKIRotationControllerStale
