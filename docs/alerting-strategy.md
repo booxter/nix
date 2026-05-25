@@ -117,16 +117,20 @@ nixos/
         rules/
           availability.rules.yml
           dns.rules.yml
+          network-probes.rules.yml
           pki.rules.yml
           service-probes.rules.yml
+          service-scrapes.rules.yml
           storage.rules.yml
           thermal.rules.yml
           ups.rules.yml
         tests/
           availability.rules.test.yml
           dns.rules.test.yml
+          network-probes.rules.test.yml
           pki.rules.test.yml
           service-probes.rules.test.yml
+          service-scrapes.rules.test.yml
           storage.rules.test.yml
           thermal.rules.test.yml
           ups.rules.test.yml
@@ -146,7 +150,7 @@ The first deployable slice is already in place on `fanavm`:
   and checks
 - `nixos/fanavm/monitoring/alertmanager/alertmanager.yml` is the repo-managed
   Alertmanager config
-- `nixos/fanavm/monitoring/prometheus/rules/{availability,dns,pki,service-probes,storage,thermal,ups}.rules.yml`
+- `nixos/fanavm/monitoring/prometheus/rules/{availability,dns,network-probes,pki,service-probes,service-scrapes,storage,thermal,ups}.rules.yml`
   hold the current repo-managed Prometheus alert families
 - `nixos/fanavm/monitoring/prometheus/tests/*.rules.test.yml` hold the
   corresponding `promtool` rule tests
@@ -435,9 +439,11 @@ Current scope:
 
 - availability alert rules
 - DNS alert rules
+- network probe alert rules
 - UPS alert rules
 - PKI alert rules
 - service probe alert rules
+- service scrape alert rules
 - storage alert rules
 - thermal alert rules
 
@@ -609,24 +615,26 @@ Status:
   and Beast disk bay mapping telemetry
 - public service probe coverage added for `blackbox-arr` scrape availability
   and external endpoint failures
+- direct application scrape coverage added for `jellyfin`, `sabnzbd`, and
+  `vikunja`
+- internal reachability coverage added for `blackbox-icmp` and `blackbox-tcp`
+  scrape availability plus per-probe failures
 - initial Beast storage coverage added for failed SMART state, `/volume2`
   capacity, and Btrfs device error growth
 
 Initial backlog after the legacy migrations:
 
-1. Internal service and fleet probe alerts
-   Extend probe coverage beyond public `blackbox-arr` endpoints into internal
-   reachability and control-plane dependencies where it adds signal.
-2. Storage and NAS integrity refinements
+1. Storage and NAS integrity refinements
    This includes per-device freshness gaps, RAID visibility gaps, and any
    additional Btrfs or filesystem signals that prove useful beyond the first
    Beast slice.
-3. PKI control-plane freshness and controller health refinements
+2. PKI control-plane freshness and controller health refinements
    Existing PKI signals should be reviewed for missing-data handling and route
    expectations.
-4. Fleet-level control-plane alerts
+3. Fleet-level control-plane alerts
    Prometheus, Alertmanager, and Grafana should have their own health and
-   notification-path coverage.
+   notification-path coverage. Some of this remains structurally limited by the
+   current single notification plane and Telegram-only receiver model.
 
 ### Phase 4: Refine Shared Helpers
 
