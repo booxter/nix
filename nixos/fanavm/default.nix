@@ -602,6 +602,9 @@ in
   host.internalHttps.services.grafana = {
     enable = true;
     upstream = "http://127.0.0.1:${toString grafanaPort}";
+    locationExtraConfig = ''
+      rewrite ^/alerting/groups$ /alerting/notifications permanent;
+    '';
   };
 
   host.internalHttps.services.loki = {
