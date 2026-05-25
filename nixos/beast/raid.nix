@@ -148,6 +148,15 @@ in
     enable = true;
     autodetect = true;
   };
+  # smartd only discovers DEVICESCAN devices on start, and the exporter's
+  # built-in 10 minute rescan is too slow for RAID hotplug or late HBA attach.
+  # Similar smartd-only pattern:
+  # https://github.com/Zocker1999NET/server/blob/353caf1dae9b51e641731275f05e856b4d0dca08/nix/nixosProfiles/common.nix
+  # Restart both services when whole /dev/sdX disks change so they converge
+  # immediately after adds, removes, and replacements.
+  services.udev.extraRules = ''
+    ACTION=="add|change|move|remove", SUBSYSTEM=="block", ENV{DEVTYPE}=="disk", KERNEL=="sd*", RUN+="${config.systemd.package}/bin/systemctl --no-block restart smartd.service prometheus-smartctl-exporter.service"
+  '';
 
   services.prometheus.exporters.smartctl = {
     enable = true;
