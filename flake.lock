@@ -407,15 +407,16 @@
         "website-builder": "website-builder"
       },
       "locked": {
-        "lastModified": 1778908661,
-        "narHash": "sha256-eeRN0ew1VfutaVNxoaYvua7CHoqc7gI5vLPxUL5ko7k=",
-        "owner": "rasmus-kirk",
+        "lastModified": 1779738987,
+        "narHash": "sha256-+eMWLjjaOHCSZ1TL40TSI/n9LouND9Lj2cJ5/Da5Gko=",
+        "owner": "booxter",
         "repo": "nixarr",
-        "rev": "3bde55fe657ee3ec1c2b2c05294ff381cb8f2d43",
+        "rev": "ccc22035997cdcaa76f34fe128e60cdbcfa6408d",
         "type": "github"
       },
       "original": {
-        "owner": "rasmus-kirk",
+        "owner": "booxter",
+        "ref": "jf-new-version",
         "repo": "nixarr",
         "type": "github"
       }
