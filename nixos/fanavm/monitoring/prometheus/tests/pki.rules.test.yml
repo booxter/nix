@@ -203,6 +203,12 @@ tests:
         values: "1x242"
       - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}'
         values: "140400x32"
+      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "58x242"
+      - series: 'host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "58x242"
+      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "1x242"
       - series: 'up{job="node-mtls",instance="prox-pkivm"}'
         values: "1x242"
     alert_rule_test:
@@ -210,6 +216,10 @@ tests:
         alertname: PKIRotationControllerFailed
       - eval_time: 15m
         alertname: PKIRotationTelemetryMissing
+      - eval_time: 2h
+        alertname: PKIRotationControllerIncomplete
+      - eval_time: 2h
+        alertname: PKIRotationReviewPRMissing
 
   - interval: 30s
     input_series:
@@ -262,6 +272,68 @@ tests:
               description: "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours."
       - eval_time: 39h
         alertname: PKIRotationControllerStale
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "58x242"
+      - series: 'host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "40x242"
+    alert_rule_test:
+      - eval_time: 1h30m
+        alertname: PKIRotationControllerIncomplete
+      - eval_time: 2h
+        alertname: PKIRotationControllerIncomplete
+        exp_alerts:
+          - exp_labels:
+              alertname: PKIRotationControllerIncomplete
+              base_branch: main
+              branch: ci/pki-rotate
+              category: pki
+              instance: prox-pkivm
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "PKI rotation controller incomplete on prox-pkivm"
+              description: "The most recent scheduled PKI rotation controller run on prox-pkivm found more certificates inside the rotation window than it actually reissued."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "58x242"
+      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "1x242"
+      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "0x240 1x2"
+    alert_rule_test:
+      - eval_time: 1h30m
+        alertname: PKIRotationReviewPRMissing
+      - eval_time: 2h
+        alertname: PKIRotationReviewPRMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: PKIRotationReviewPRMissing
+              base_branch: main
+              branch: ci/pki-rotate
+              category: pki
+              instance: prox-pkivm
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "PKI rotation review PR missing on prox-pkivm"
+              description: "The most recent successful PKI rotation controller run on prox-pkivm found certificates inside the rotation window but did not leave an open review PR."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "58x242"
+      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "0x242"
+      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+        values: "0x242"
+    alert_rule_test:
+      - eval_time: 2h
+        alertname: PKIRotationReviewPRMissing
 
   - interval: 30s
     input_series:

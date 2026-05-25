@@ -74,6 +74,24 @@ groups:
         annotations:
           summary: "PKI rotation controller stale on prox-pkivm"
           description: "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours."
+      - alert: PKIRotationControllerIncomplete
+        expr: host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm"} > host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="prox-pkivm"}
+        for: 2h
+        labels:
+          severity: warning
+          category: pki
+        annotations:
+          summary: "PKI rotation controller incomplete on prox-pkivm"
+          description: "The most recent scheduled PKI rotation controller run on prox-pkivm found more certificates inside the rotation window than it actually reissued."
+      - alert: PKIRotationReviewPRMissing
+        expr: (host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm"} > 0) and on(instance,job,branch,base_branch) (host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"} == 1) and on(instance,job,branch,base_branch) (host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="prox-pkivm"} < 1)
+        for: 2h
+        labels:
+          severity: warning
+          category: pki
+        annotations:
+          summary: "PKI rotation review PR missing on prox-pkivm"
+          description: "The most recent successful PKI rotation controller run on prox-pkivm found certificates inside the rotation window but did not leave an open review PR."
       - alert: PKIRotationTelemetryMissing
         expr: absent(host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}) and on(instance) up{job="node-mtls",instance="prox-pkivm"} == 1
         for: 15m
