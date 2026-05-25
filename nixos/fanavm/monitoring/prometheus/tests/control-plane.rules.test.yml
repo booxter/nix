@@ -56,6 +56,28 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'prometheus_rule_evaluation_failures_total{job="prometheus",instance="127.0.0.1:9090",rule_group="/prometheus/rules/storage-health"}'
+        values: "0 1x40"
+      - series: 'prometheus_rule_evaluation_failures_total{job="prometheus",instance="127.0.0.1:9090",rule_group="/prometheus/rules/pki-health"}'
+        values: "0x41"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: PrometheusRuleEvaluationFailing
+      - eval_time: 5m30s
+        alertname: PrometheusRuleEvaluationFailing
+        exp_alerts:
+          - exp_labels:
+              alertname: PrometheusRuleEvaluationFailing
+              category: observability
+              instance: "127.0.0.1:9090"
+              job: prometheus
+              severity: warning
+            exp_annotations:
+              summary: "Prometheus rule evaluation failing"
+              description: "Prometheus on fanavm has seen rule evaluation failures within the last 15 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'up{job="alertmanager",instance="fanavm"}'
         values: "1x12"
       - series: 'up{job="grafana",instance="fanavm"}'

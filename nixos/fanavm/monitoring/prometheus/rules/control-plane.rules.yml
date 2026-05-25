@@ -20,6 +20,15 @@ groups:
         annotations:
           summary: "Prometheus alert delivery failing"
           description: "Prometheus on fanavm has seen alert delivery errors or drops while sending notifications to Alertmanager within the last 15 minutes."
+      - alert: PrometheusRuleEvaluationFailing
+        expr: sum by(instance, job) (increase(prometheus_rule_evaluation_failures_total{job="prometheus"}[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Prometheus rule evaluation failing"
+          description: "Prometheus on fanavm has seen rule evaluation failures within the last 15 minutes."
       - alert: AlertmanagerMetricsScrapeDown
         expr: up{job="alertmanager"} < 1
         for: 5m
