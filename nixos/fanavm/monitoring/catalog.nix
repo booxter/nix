@@ -4,6 +4,8 @@ let
   availabilityTestFile = ./prometheus/tests/availability.rules.test.yml;
   dnsRuleFile = ./prometheus/rules/dns.rules.yml;
   dnsTestFile = ./prometheus/tests/dns.rules.test.yml;
+  networkProbesRuleFile = ./prometheus/rules/network-probes.rules.yml;
+  networkProbesTestFile = ./prometheus/tests/network-probes.rules.test.yml;
   pkiRuleFile = ./prometheus/rules/pki.rules.yml;
   pkiTestFile = ./prometheus/tests/pki.rules.test.yml;
   serviceProbesRuleFile = ./prometheus/rules/service-probes.rules.yml;
@@ -27,6 +29,7 @@ in
     ruleFiles = [
       availabilityRuleFile
       dnsRuleFile
+      networkProbesRuleFile
       pkiRuleFile
       serviceProbesRuleFile
       serviceScrapesRuleFile
@@ -37,6 +40,7 @@ in
     ruleFilesRelative = [
       "nixos/fanavm/monitoring/prometheus/rules/availability.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/dns.rules.yml"
+      "nixos/fanavm/monitoring/prometheus/rules/network-probes.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/pki.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/service-probes.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/service-scrapes.rules.yml"
@@ -47,6 +51,7 @@ in
     testFiles = [
       availabilityTestFile
       dnsTestFile
+      networkProbesTestFile
       pkiTestFile
       serviceProbesTestFile
       serviceScrapesTestFile
@@ -57,6 +62,7 @@ in
     testFilesRelative = [
       "nixos/fanavm/monitoring/prometheus/tests/availability.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/dns.rules.test.yml"
+      "nixos/fanavm/monitoring/prometheus/tests/network-probes.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/pki.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/service-probes.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/service-scrapes.rules.test.yml"

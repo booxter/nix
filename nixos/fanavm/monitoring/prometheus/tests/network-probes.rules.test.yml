@@ -1,0 +1,95 @@
+rule_files:
+  - ../rules/network-probes.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'up{job="blackbox-icmp",instance="beast:gateway"}'
+        values: "1x12"
+      - series: 'up{job="blackbox-tcp",instance="beast:gateway-dns"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: BlackboxICMPScrapeDown
+      - eval_time: 5m
+        alertname: BlackboxTCPScrapeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="blackbox-icmp",instance="beast:gateway"}'
+        values: "0x10 1x2"
+      - series: 'up{job="blackbox-icmp",instance="fana:cloudflare"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: BlackboxICMPScrapeDown
+      - eval_time: 5m
+        alertname: BlackboxICMPScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: BlackboxICMPScrapeDown
+              category: observability
+              job: blackbox-icmp
+              severity: warning
+            exp_annotations:
+              summary: "ICMP probe scrape down"
+              description: "Prometheus has been unable to scrape any blackbox-icmp probe targets for 5 minutes."
+      - eval_time: 5m30s
+        alertname: BlackboxICMPScrapeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="blackbox-tcp",instance="beast:gateway-dns"}'
+        values: "0x10 1x2"
+      - series: 'up{job="blackbox-tcp",instance="fana:cloudflare-https"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: BlackboxTCPScrapeDown
+      - eval_time: 5m
+        alertname: BlackboxTCPScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: BlackboxTCPScrapeDown
+              category: observability
+              job: blackbox-tcp
+              severity: warning
+            exp_annotations:
+              summary: "TCP probe scrape down"
+              description: "Prometheus has been unable to scrape any blackbox-tcp probe targets for 5 minutes."
+      - eval_time: 5m30s
+        alertname: BlackboxTCPScrapeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-icmp",instance="beast:gateway",source="beast",probe="gateway",probe_title="Gateway 192.168.0.1",target="192.168.0.1"}'
+        values: "1x7"
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: NetworkProbeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-tcp",instance="fana:gateway-dns",source="fana",probe="gateway-dns",probe_title="Gateway DNS 192.168.0.1:53",target="192.168.0.1:53"}'
+        values: "0x5 1x2"
+    alert_rule_test:
+      - eval_time: 1m30s
+        alertname: NetworkProbeDown
+      - eval_time: 2m
+        alertname: NetworkProbeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: NetworkProbeDown
+              category: network
+              instance: fana:gateway-dns
+              job: blackbox-tcp
+              probe: gateway-dns
+              probe_title: "Gateway DNS 192.168.0.1:53"
+              severity: warning
+              source: fana
+              target: "192.168.0.1:53"
+            exp_annotations:
+              summary: "Network probe down: fana -> gateway-dns"
+              description: "The blackbox-tcp probe from fana to Gateway DNS 192.168.0.1:53 (192.168.0.1:53) has been failing for 2 minutes."

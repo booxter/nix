@@ -1,0 +1,31 @@
+groups:
+  - name: network-probes
+    interval: 30s
+    rules:
+      - alert: BlackboxICMPScrapeDown
+        expr: max by(job) (up{job="blackbox-icmp"}) < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "ICMP probe scrape down"
+          description: "Prometheus has been unable to scrape any blackbox-icmp probe targets for 5 minutes."
+      - alert: BlackboxTCPScrapeDown
+        expr: max by(job) (up{job="blackbox-tcp"}) < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "TCP probe scrape down"
+          description: "Prometheus has been unable to scrape any blackbox-tcp probe targets for 5 minutes."
+      - alert: NetworkProbeDown
+        expr: probe_success{job=~"blackbox-icmp|blackbox-tcp"} < 1
+        for: 2m
+        labels:
+          severity: warning
+          category: network
+        annotations:
+          summary: "Network probe down: {{ $labels.source }} -> {{ $labels.probe }}"
+          description: "The {{ $labels.job }} probe from {{ $labels.source }} to {{ $labels.probe_title }} ({{ $labels.target }}) has been failing for 2 minutes."
