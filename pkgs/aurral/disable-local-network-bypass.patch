@@ -1,0 +1,20 @@
+diff --git a/backend/middleware/auth.js b/backend/middleware/auth.js
+index 6546475..40295a6 100644
+--- a/backend/middleware/auth.js
++++ b/backend/middleware/auth.js
+@@ -322,7 +322,13 @@ export function getLocalNetworkBypassStatus(req) {
+   const onboardingDone = settings?.onboardingComplete === true;
+   const users = userOps.getAllUsers();
+   const soleUser = users.length === 1 ? users[0] : null;
+   const soleAdminUser = getSoleAdminUser();
+-  const subnet = inferTrustedLocalSubnet();
++  const subnet =
++    config.enabled &&
++    onboardingDone &&
++    users.length === 1 &&
++    soleUser?.role === "admin"
++      ? inferTrustedLocalSubnet()
++      : null;
+ 
+   let eligible = true;
+   let reason = null;
