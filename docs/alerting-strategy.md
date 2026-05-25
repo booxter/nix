@@ -98,9 +98,9 @@ The canonical artifacts should be:
 - Alertmanager config and templates
 - Nix modules that wire those artifacts into services
 
-### Suggested Layout
+### Repo Layout
 
-The implementation should live under `nixos/fanavm/monitoring/`:
+The implementation lives under `nixos/fanavm/monitoring/`:
 
 ```text
 docs/
@@ -113,25 +113,34 @@ nixos/
       alertmanager/
         alertmanager.yml
         templates/
-          default.tmpl
       prometheus/
         rules/
-          base.rules.yml
           dns.rules.yml
-          storage.rules.yml
-          pki.rules.yml
-          ups.rules.yml
         tests/
-          dns.test.yml
-          storage.test.yml
-          pki.test.yml
-          ups.test.yml
-      grafana/
-        dashboards/
+          dns.rules.test.yml
+      catalog.nix
 ```
 
 Keep host wiring in `nixos/fanavm/default.nix`, but keep rule files, tests, and
 Alertmanager config out of the main host file once the system grows.
+
+### Implemented Baseline
+
+The first deployable slice is already in place on `fanavm`:
+
+- `nixos/fanavm/monitoring/default.nix` wires local Alertmanager and Prometheus
+  rule files
+- `nixos/fanavm/monitoring/catalog.nix` is the shared manifest used by modules
+  and checks
+- `nixos/fanavm/monitoring/alertmanager/alertmanager.yml` is the repo-managed
+  Alertmanager config
+- `nixos/fanavm/monitoring/prometheus/rules/dns.rules.yml` is the first
+  migrated Prometheus alert rule
+- `nixos/fanavm/monitoring/prometheus/tests/dns.rules.test.yml` is the first
+  `promtool` rule test
+
+This is the baseline pattern to extend. New alert families should join this
+structure rather than being added inline back into Grafana provisioning.
 
 ### Formatting
 
@@ -327,6 +336,30 @@ For changes that touch real deployment wiring:
 
 These are operational smoke tests, not replacements for unit tests.
 
+### Operational Rollout Loop
+
+The normal rollout loop for this repo should be:
+
+1. change rules, tests, or routing in Git
+2. run local formatting and flake checks
+3. commit the change
+4. push the branch
+5. deploy `prox-fanavm` from that branch
+6. verify Prometheus, Alertmanager, and Grafana runtime state
+
+Current branch deployment command:
+
+```sh
+nix run .#deploy -- --branch <branch> prox-fanavm
+```
+
+Current runtime verification should include:
+
+- Prometheus rule load via `api/v1/rules`
+- Alertmanager config/status via `api/v2/status`
+- service health for `prometheus`, `alertmanager`, and `grafana`
+- notification-path proof when routing changes materially
+
 ### Later Maturity Target: Pipeline Tests
 
 End-to-end synthetic pipeline testing is desirable later, but it is not a
@@ -366,6 +399,22 @@ extending `checks.nix` with derivations that run:
 
 That keeps alert validation in the same path as the rest of the repo's regular
 check suite instead of introducing a parallel workflow.
+
+### Current Checks
+
+The first alerting checks already exist:
+
+- `fanavm-alertmanager-config`
+- `fanavm-prometheus-alerting`
+
+They currently cover:
+
+- `amtool check-config`
+- `promtool check rules`
+- `promtool test rules`
+
+New rule files and test files should be wired through the shared monitoring
+catalog so the service config and flake checks stay in sync.
 
 ### Integration Tests In CI
 
@@ -504,11 +553,24 @@ This is not the execution plan yet, but it is the intended order of maturity.
 - define file layout for rules, tests, and routing
 - wire services with Nix modules
 
+Status:
+- complete on `fanavm`
+
 ### Phase 2: Migrate Existing Alerts
 
 - port the current Grafana proof-of-concept alerts to Prometheus rules
 - keep semantics close to current behavior
 - add `promtool` tests for each migrated rule group
+
+Status:
+- started
+- `DNSResolverProbeDown` is the first migrated alert
+
+Priority order for the remaining legacy Grafana-managed alerts:
+
+1. UPS health
+2. PKI health
+3. Thermal health
 
 ### Phase 3: Expand Coverage
 
@@ -516,6 +578,24 @@ This is not the execution plan yet, but it is the intended order of maturity.
 - add absence/freshness alerts where dashboards currently depend on missing
   telemetry
 - add storage, service, and fleet health alerts incrementally
+
+Initial backlog after the legacy migrations:
+
+1. Critical scrape availability and missing-telemetry alerts
+   Targets include `node-mtls`, `smartctl`, `nut-*`, `blackbox-*`, and other
+   exporters that back important dashboards.
+2. Public and internal service probe alerts
+   Blackbox probes should alert on endpoint failure, not only certificate
+   expiry.
+3. Storage and NAS integrity alerts
+   This includes SMART freshness/absence, failed SMART state, RAID/Btrfs
+   degradation, and capacity signals already visible on dashboards.
+4. PKI control-plane freshness and controller health refinements
+   Existing PKI signals should be reviewed for missing-data handling and route
+   expectations.
+5. Fleet-level control-plane alerts
+   Prometheus, Alertmanager, and Grafana should have their own health and
+   notification-path coverage.
 
 ### Phase 4: Refine Shared Helpers
 
