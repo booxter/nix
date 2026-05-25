@@ -493,6 +493,9 @@ in
             type = "loki";
             access = "proxy";
             url = "http://127.0.0.1:${toString lokiPort}";
+            jsonData = {
+              manageAlerts = false;
+            };
             editable = false;
           }
         ];
