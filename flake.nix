@@ -275,6 +275,7 @@
             shellcheck
             ruff
             nodejs
+            prettier
             eslint
             jq
             mbake
