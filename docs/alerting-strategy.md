@@ -626,8 +626,8 @@ Status:
   and Beast disk bay mapping telemetry
 - single-plane control-plane coverage added for Prometheus config reload and
   alert delivery errors, Prometheus rule evaluation failures, Alertmanager
-  scrape/reload/Telegram notification failures, and Grafana metrics scrape
-  reachability
+  scrape/reload/Telegram notification and request failures, and Grafana
+  metrics/API health
 - public service probe coverage added for `blackbox-arr` scrape availability
   and external endpoint failures
 - direct application scrape coverage added for `jellyfin`, `sabnzbd`, and
@@ -639,41 +639,26 @@ Status:
 - custom job freshness coverage added for the `srvarrvm` policy jobs
 - backup coverage added for job failure and stale successful runs
 - media-policy coverage added for the existing repo-specific policy metrics
-- Beast storage coverage added for failed SMART state, SMART corruption
-  attributes, RAID degraded state, `/volume2` capacity, Btrfs device error
-  growth, HBA controller degraded/failed state, HBA expected-drive visibility,
-  and HBA memory error counters
+- PKI coverage added for inventory presence, managed/internal and public TLS
+  expiry, controller failed/stale/incomplete runs, missing review PRs, and
+  controller telemetry presence
+- Beast storage coverage added for failed SMART state, per-drive SMART
+  freshness loss, SMART corruption attributes, RAID degraded state, RAID
+  recovery/resync activity, `/volume2` warning/critical capacity, Btrfs device
+  error growth, HBA controller degraded/failed state, HBA expected-drive
+  visibility, and HBA memory error counters
 
-Initial backlog after the legacy migrations:
+Phase 3 is complete for the current signal set.
 
-1. Storage and NAS integrity refinements
-   Current concrete gaps:
-   - md background work is visualized but not alerted
-     (`host_observability_md_sync_active`, `..._action_info`,
-     `..._progress_percent`, `..._eta_seconds`).
-   - Btrfs and filesystem pressure beyond the current `/volume2 > 90%` alert
-     still needs a decision, especially metadata/system pressure and whether a
-     second critical threshold is worth it.
-   - per-device SMART freshness is still host-level rather than drive-level;
-     we alert if all Beast SMART telemetry disappears, but not yet if one
-     specific disk silently drops out while the exporter remains healthy.
-2. PKI control-plane freshness and controller health refinements
-   Current concrete gaps:
-   - controller summary metrics are exported but not yet used in alerts
-     (`host_observability_pki_rotation_last_due_count`,
-     `host_observability_pki_rotation_last_rotated_count`,
-     `host_observability_pki_rotation_last_pr_open`)
-   - per-cert rotation state is exported but not yet used in alerts
-     (`host_observability_pki_cert_rotation_due`)
-3. Control-plane refinements within the current single notification plane
-   Current concrete gaps:
-   - we alert on Alertmanager Telegram failures, but not yet on notification
-     backlog/retry patterns beyond hard failures
-   - we alert on Grafana metrics reachability, but not on provisioning or other
-     app-level health beyond that scrape signal
-   - we should keep adding signals that help during partial failures, but
-     independent self-notification guarantees remain out of scope while
-     Alertmanager and Telegram are single-homed on `fanavm`
+Deliberate dashboard-only decisions:
+
+- `node_btrfs_used_bytes` metadata/system chunk ratios stay dashboard-only for
+  now. On the current Beast workload they sit close to fully allocated even in
+  a healthy state, so they are not a clean free-space pressure alert signal.
+- `host_observability_pki_cert_rotation_due` stays dashboard/controller-summary
+  only. Being inside the rotation window is expected while the controller has
+  already rotated certs and left an open review PR, so per-cert alerts would
+  mostly page on normal workflow.
 
 ### Phase 4: Refine Shared Helpers
 
