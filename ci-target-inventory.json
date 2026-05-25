@@ -134,19 +134,6 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.local-deskvm.config.system.build.toplevel",
-      "name": "desk (aarch64-linux)",
-      "runner": "ubuntu-24.04-arm",
-      "selection": {
-        "hosts": [],
-        "prefixes": [
-          "nixos/deskvm/"
-        ]
-      },
-      "system": "aarch64-linux",
-      "warm": true
-    },
-    {
       "attr": "nixosConfigurations.prox-srvarrvm.config.system.build.toplevel",
       "name": "srvarr (x86_64-linux)",
       "runner": "ubuntu-latest",

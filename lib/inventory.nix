@@ -521,16 +521,6 @@ rec {
     }
     {
       type = "vm";
-      name = "desk";
-      upsHost = "prx1-lab";
-      cores = 4;
-      memorySize = 12;
-      diskSize = 80;
-      sshPort = 10007;
-      hmFull = false;
-    }
-    {
-      type = "vm";
       name = "gw";
       upsHost = "prx1-lab";
       cores = 2;

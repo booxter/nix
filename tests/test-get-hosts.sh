@@ -16,7 +16,6 @@ expected_json='{
     "prox-builder2vm": false,
     "prox-builder3vm": false,
     "prox-cachevm": false,
-    "prox-deskvm": false,
     "prox-fanavm": false,
     "prox-gwvm": false,
     "prox-nvvm": true,
