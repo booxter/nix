@@ -1,0 +1,100 @@
+rule_files:
+  - ../rules/storage.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'smartctl_device_smart_status{instance="beast",device="sda"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastDiskSMARTHealthFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'smartctl_device_smart_status{instance="beast",device="sda"}'
+        values: "0x30 1x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: BeastDiskSMARTHealthFailed
+      - eval_time: 15m
+        alertname: BeastDiskSMARTHealthFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastDiskSMARTHealthFailed
+              category: storage
+              device: sda
+              instance: beast
+              severity: critical
+            exp_annotations:
+              summary: "SMART health failed on beast: sda"
+              description: "Drive sda on beast has reported SMART health failure for 15 minutes."
+      - eval_time: 15m30s
+        alertname: BeastDiskSMARTHealthFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
+        values: "15x62"
+      - series: 'node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
+        values: "100x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: BeastVolume2UsageHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
+        values: "9x60 15x2"
+      - series: 'node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
+        values: "100x62"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: BeastVolume2UsageHigh
+      - eval_time: 30m
+        alertname: BeastVolume2UsageHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastVolume2UsageHigh
+              category: storage
+              device: /dev/md127
+              fstype: btrfs
+              instance: beast
+              mountpoint: /volume2
+              severity: warning
+            exp_annotations:
+              summary: "Beast volume2 usage high"
+              description: "The /volume2 filesystem on beast has been above 90% used for 30 minutes."
+      - eval_time: 30m30s
+        alertname: BeastVolume2UsageHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'node_btrfs_device_errors_total{instance="beast",device="md127",type="write"}'
+        values: "0x42"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: BeastBtrfsDeviceErrors
+
+  - interval: 30s
+    input_series:
+      - series: 'node_btrfs_device_errors_total{instance="beast",device="md127",type="write"}'
+        values: "0x20 1x22"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastBtrfsDeviceErrors
+      - eval_time: 15m30s
+        alertname: BeastBtrfsDeviceErrors
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastBtrfsDeviceErrors
+              category: storage
+              device: md127
+              instance: beast
+              severity: warning
+              type: write
+            exp_annotations:
+              summary: "Btrfs device errors on beast: write"
+              description: "The write btrfs device error counter on md127 for beast increased within the last 15 minutes."

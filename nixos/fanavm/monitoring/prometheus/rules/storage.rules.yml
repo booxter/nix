@@ -1,0 +1,31 @@
+groups:
+  - name: storage-health
+    interval: 30s
+    rules:
+      - alert: BeastDiskSMARTHealthFailed
+        expr: smartctl_device_smart_status{instance="beast",device=~"sd[a-z]+"} < 1
+        for: 15m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "SMART health failed on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported SMART health failure for 15 minutes."
+      - alert: BeastVolume2UsageHigh
+        expr: 100 * (1 - node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"} / node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"}) > 90
+        for: 30m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast volume2 usage high"
+          description: "The /volume2 filesystem on beast has been above 90% used for 30 minutes."
+      - alert: BeastBtrfsDeviceErrors
+        expr: increase(node_btrfs_device_errors_total{instance="beast",device="md127"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Btrfs device errors on beast: {{ $labels.type }}"
+          description: "The {{ $labels.type }} btrfs device error counter on {{ $labels.device }} for beast increased within the last 15 minutes."

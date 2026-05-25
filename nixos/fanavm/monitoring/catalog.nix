@@ -8,6 +8,8 @@ let
   pkiTestFile = ./prometheus/tests/pki.rules.test.yml;
   serviceProbesRuleFile = ./prometheus/rules/service-probes.rules.yml;
   serviceProbesTestFile = ./prometheus/tests/service-probes.rules.test.yml;
+  storageRuleFile = ./prometheus/rules/storage.rules.yml;
+  storageTestFile = ./prometheus/tests/storage.rules.test.yml;
   thermalRuleFile = ./prometheus/rules/thermal.rules.yml;
   thermalTestFile = ./prometheus/tests/thermal.rules.test.yml;
   upsRuleFile = ./prometheus/rules/ups.rules.yml;
@@ -25,6 +27,7 @@ in
       dnsRuleFile
       pkiRuleFile
       serviceProbesRuleFile
+      storageRuleFile
       thermalRuleFile
       upsRuleFile
     ];
@@ -33,6 +36,7 @@ in
       "nixos/fanavm/monitoring/prometheus/rules/dns.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/pki.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/service-probes.rules.yml"
+      "nixos/fanavm/monitoring/prometheus/rules/storage.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/thermal.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/ups.rules.yml"
     ];
@@ -41,6 +45,7 @@ in
       dnsTestFile
       pkiTestFile
       serviceProbesTestFile
+      storageTestFile
       thermalTestFile
       upsTestFile
     ];
@@ -49,6 +54,7 @@ in
       "nixos/fanavm/monitoring/prometheus/tests/dns.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/pki.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/service-probes.rules.test.yml"
+      "nixos/fanavm/monitoring/prometheus/tests/storage.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/thermal.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/ups.rules.test.yml"
     ];
