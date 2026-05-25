@@ -1,0 +1,66 @@
+rule_files:
+  - ../rules/media-policy.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="prox-srvarrvm",job="node-mtls",name="transmission-prioritizer.service",state="active"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: MediaPolicyUnitDown
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="prox-srvarrvm",job="node-mtls",name="transmission-prioritizer.service",state="active"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: MediaPolicyUnitDown
+      - eval_time: 5m
+        alertname: MediaPolicyUnitDown
+        exp_alerts:
+          - exp_labels:
+              alertname: MediaPolicyUnitDown
+              category: media
+              instance: prox-srvarrvm
+              job: node-mtls
+              name: transmission-prioritizer.service
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "Media policy unit down: transmission-prioritizer.service"
+              description: "The media pipeline policy unit transmission-prioritizer.service on prox-srvarrvm has not been active for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_adaptive_upload_active_external_media_streams{instance="prox-srvarrvm"}'
+        values: "1x22"
+      - series: 'host_observability_adaptive_upload_missing_external_media_bitrate_sessions{instance="prox-srvarrvm"}'
+        values: "0x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: AdaptiveUploadMissingRemoteBitrateData
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_adaptive_upload_active_external_media_streams{instance="prox-srvarrvm"}'
+        values: "1x20 0x2"
+      - series: 'host_observability_adaptive_upload_missing_external_media_bitrate_sessions{instance="prox-srvarrvm"}'
+        values: "2x20 0x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: AdaptiveUploadMissingRemoteBitrateData
+      - eval_time: 10m
+        alertname: AdaptiveUploadMissingRemoteBitrateData
+        exp_alerts:
+          - exp_labels:
+              alertname: AdaptiveUploadMissingRemoteBitrateData
+              category: media
+              instance: prox-srvarrvm
+              severity: warning
+            exp_annotations:
+              summary: "Adaptive upload missing remote bitrate data on prox-srvarrvm"
+              description: "The adaptive upload controller on prox-srvarrvm is seeing active external Jellyfin streams with missing bitrate data for at least 10 minutes."

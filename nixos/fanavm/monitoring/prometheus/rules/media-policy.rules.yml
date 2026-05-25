@@ -1,0 +1,22 @@
+groups:
+  - name: media-policy
+    interval: 30s
+    rules:
+      - alert: MediaPolicyUnitDown
+        expr: node_systemd_unit_state{job=~"node|node-mtls",instance="prox-srvarrvm",name=~"(jellyfin-upload-policy|jellyfin-upload-policy-transmission|jellyfin-upload-policy-tc|transmission-prioritizer)\\.service",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Media policy unit down: {{ $labels.name }}"
+          description: "The media pipeline policy unit {{ $labels.name }} on prox-srvarrvm has not been active for 5 minutes."
+      - alert: AdaptiveUploadMissingRemoteBitrateData
+        expr: host_observability_adaptive_upload_active_external_media_streams{instance="prox-srvarrvm"} > 0 and on(instance) host_observability_adaptive_upload_missing_external_media_bitrate_sessions{instance="prox-srvarrvm"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Adaptive upload missing remote bitrate data on prox-srvarrvm"
+          description: "The adaptive upload controller on prox-srvarrvm is seeing active external Jellyfin streams with missing bitrate data for at least 10 minutes."
