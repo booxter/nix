@@ -521,6 +521,19 @@ in
           }
         ];
       };
+      alerting.contactPoints.settings = {
+        apiVersion = 1;
+        deleteContactPoints = [
+          {
+            orgId = 1;
+            uid = "telegram-home";
+          }
+        ];
+      };
+      alerting.policies.settings = {
+        apiVersion = 1;
+        resetPolicies = [ 1 ];
+      };
       alerting.rules.settings = {
         apiVersion = 1;
         deleteRules = [
