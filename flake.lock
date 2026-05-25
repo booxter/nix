@@ -253,7 +253,7 @@
       },
       "original": {
         "owner": "nix-community",
-        "ref": "master",
+        "ref": "release-26.05",
         "repo": "home-manager",
         "type": "github"
       }
@@ -361,7 +361,7 @@
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
-          "nixpkgs"
+          "nixpkgs-darwin"
         ]
       },
       "locked": {
@@ -512,7 +512,23 @@
       },
       "original": {
         "owner": "NixOS",
-        "ref": "release-25.11",
+        "ref": "nixos-25.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-darwin": {
+      "locked": {
+        "lastModified": 1779622335,
+        "narHash": "sha256-ViA62qtL5za7V3d5I8OA9q9JcFhsVAiL5jVHwEclWqk=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "705e9929918b43bd7b715dc0a878ac870449bb03",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-26.05-darwin",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -623,7 +639,7 @@
       },
       "original": {
         "owner": "NixOS",
-        "ref": "release-26.05",
+        "ref": "nixos-26.05",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -740,6 +756,7 @@
         "nixos-raspberrypi": "nixos-raspberrypi",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-25_11": "nixpkgs-25_11",
+        "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-transmission": "nixpkgs-transmission",
         "nixvim": "nixvim",
         "nur": "nur",

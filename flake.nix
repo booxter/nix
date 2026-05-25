@@ -2,8 +2,9 @@
   description = "booxter Nix* flake configs";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/release-26.05";
-    nixpkgs-25_11.url = "github:NixOS/nixpkgs/release-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+    nixpkgs-25_11.url = "github:NixOS/nixpkgs/nixos-25.11";
     # Keep Transmission pinned independently from the moving release-25.11 branch.
     # TODO: remove this input when trackers allow 4.1.0+.
     nixpkgs-transmission.url = "github:NixOS/nixpkgs/12d60a4f2d5f2cc96e93ae5615328245d49ac2e8";
@@ -11,7 +12,7 @@
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     nix-darwin.url = "github:nix-darwin/nix-darwin/master";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
 
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -26,8 +27,7 @@
       flake = false;
     };
 
-    # Home Manager has not cut a release-26.05 branch yet.
-    home-manager.url = "github:nix-community/home-manager/master";
+    home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     home-manager-25_11.url = "github:nix-community/home-manager/release-25.11";
     home-manager-25_11.inputs.nixpkgs.follows = "nixpkgs-25_11";
