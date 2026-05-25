@@ -1,0 +1,13 @@
+groups:
+  - name: service-scrapes
+    interval: 30s
+    rules:
+      - alert: ApplicationMetricsScrapeDown
+        expr: up{job=~"jellyfin|sabnzbd|vikunja"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Application metrics scrape down: {{ $labels.job }} on {{ $labels.instance }}"
+          description: "Prometheus has been unable to scrape the {{ $labels.job }} metrics endpoint on {{ $labels.instance }} for 5 minutes."
