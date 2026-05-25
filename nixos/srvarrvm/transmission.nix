@@ -129,7 +129,8 @@ in
 
   host.vpnNamespaceBridgeAccess.tcpPorts = [ config.host.srvarr.services.transmission.port ];
 
-  # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
+  # Keep the host-local helper on loopback, but target the actual namespace
+  # address directly instead of the old fixed proxy address.
   services.nginx.virtualHosts."127.0.0.1:${toString config.host.srvarr.services.transmission.port}" = {
     listen = lib.mkForce [
       {

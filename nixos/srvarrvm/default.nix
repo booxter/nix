@@ -167,8 +167,8 @@ in
   };
 
   # Both VPN-confined UIs are now fronted either by localhost-only proxies or
-  # dedicated internal HTTPS vhosts. Retire nixarr's default LAN DNAT for the
-  # UI ports entirely.
+  # dedicated internal HTTPS vhosts. Retire the old LAN DNAT for the UI ports
+  # entirely.
   vpnNamespaces.wg.portMappings = inputs.nixpkgs.lib.mkForce [ ];
 
   host.internalHttps.services = {

@@ -95,10 +95,10 @@ in
     unitConfig = requiresMediaMount;
   };
   systemd.services.audiobookshelf = {
-    # nixarr points Audiobookshelf at an absolute data dir under /data, but the
-    # upstream module passes that through to StateDirectory=. systemd ignores
-    # absolute StateDirectory paths and logs a warning on every unit reload, so
-    # clear just that directive and keep the rest of the service as generated.
+    # Audiobookshelf uses an absolute data dir under /data, but the upstream
+    # module passes that through to StateDirectory=. systemd ignores absolute
+    # StateDirectory paths and logs a warning on every unit reload, so clear
+    # just that directive and keep the rest of the service as generated.
     serviceConfig.StateDirectory = lib.mkForce null;
     unitConfig = requiresMediaMount;
   };

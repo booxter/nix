@@ -150,8 +150,8 @@ in
 
   host.vpnNamespaceBridgeAccess.tcpPorts = [ cfg.port ];
 
-  # nixarr hardcodes sabnzbd nginx proxy to 192.168.15.1; keep the host-local
-  # helper on loopback, but target the actual namespace address directly.
+  # Keep the host-local helper on loopback, but target the actual namespace
+  # address directly instead of the old fixed proxy address.
   services.nginx.virtualHosts."127.0.0.1:${toString cfg.port}" = {
     listen = lib.mkForce [
       {

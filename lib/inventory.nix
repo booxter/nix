@@ -129,8 +129,8 @@ rec {
         main = {
           ranges = [
             {
-              # Keep the pool below 192.168.15.0/24 because nixarr still assumes
-              # that subnet for its WireGuard-facing proxy.
+              # Keep the pool below 192.168.15.0/24 because that block is
+              # reserved for the lab/proxmox segment.
               start = "192.168.10.1";
               end = "192.168.14.255";
             }
