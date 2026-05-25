@@ -764,7 +764,8 @@
         "proxmox-nixos": "proxmox-nixos",
         "sops-nix": "sops-nix",
         "tig": "tig",
-        "virby": "virby"
+        "virby": "virby",
+        "vpnconfinement": "vpnconfinement_2"
       }
     },
     "sops-nix": {
@@ -963,6 +964,21 @@
       }
     },
     "vpnconfinement": {
+      "locked": {
+        "lastModified": 1767604552,
+        "narHash": "sha256-FddhMxnc99KYOZ/S3YNqtDSoxisIhVtJ7L4s8XD2u0A=",
+        "owner": "Maroka-chan",
+        "repo": "VPN-Confinement",
+        "rev": "a6b2da727853886876fd1081d6bb2880752937f3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Maroka-chan",
+        "repo": "VPN-Confinement",
+        "type": "github"
+      }
+    },
+    "vpnconfinement_2": {
       "locked": {
         "lastModified": 1767604552,
         "narHash": "sha256-FddhMxnc99KYOZ/S3YNqtDSoxisIhVtJ7L4s8XD2u0A=",
