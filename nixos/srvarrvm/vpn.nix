@@ -67,19 +67,18 @@ in
     };
   };
 
-  nixarr.vpn = {
-    enable = true;
-    wgConf = "/data/.secret/vpn/wg.conf";
+  vpnNamespaces.wg = {
     accessibleFrom = [
+      "192.168.1.0/24"
+      "192.168.0.0/24"
+      "127.0.0.1"
       hostInventory.site.lan.cidr
       "10.0.0.0/8"
     ];
-  };
-
-  # Move VPN bridge off the lab subnet to avoid routing conflicts.
-  vpnNamespaces.wg = {
     bridgeAddress = wgBridgeAddress;
+    enable = true;
     namespaceAddress = wgNamespaceAddress;
+    wireguardConfigFile = "/data/.secret/vpn/wg.conf";
   };
 
   # Apply a conservative bidirectional shaping baseline on the outer interface

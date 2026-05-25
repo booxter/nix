@@ -8,10 +8,6 @@ let
   wgConservativeUploadRateMbit = 8;
   transmissionNonPreferredLowPriorityRatio = 3.0;
   transmissionNonPreferredPauseRatio = 6.0;
-  nixarrSource = builtins.path {
-    path = ../../vendor/nixarr-source;
-    name = "source";
-  };
   jellyseerrService = hostInventory.servicesById.jellyseerr;
   aurralService = hostInventory.servicesById.aurral;
   audiobookshelfService = hostInventory.servicesById.audiobookshelf;
@@ -27,7 +23,6 @@ in
   };
 
   imports = [
-    "${nixarrSource}/nixarr"
     inputs.vpnconfinement.nixosModules.default
     ./audiobookshelf.nix
     ./contract.nix
@@ -52,10 +47,6 @@ in
   systemd.services.prowlarr.unitConfig = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];
-  };
-
-  nixarr = {
-    enable = true;
   };
 
   services = {
