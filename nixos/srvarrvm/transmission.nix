@@ -26,13 +26,9 @@ in
 
   services.transmission = {
     enable = true;
-    credentialsFile = "/dev/null";
-    downloadDirPermissions = null;
     group = cfg.group;
     home = cfg.stateDir;
     openPeerPorts = true;
-    openRPCPort = false;
-    performanceNetParameters = false;
     settings = {
       anti-brute-force-enabled = true;
       anti-brute-force-threshold = 10;
@@ -73,7 +69,6 @@ in
       watch-dir-enabled = true;
     };
     user = cfg.user;
-    webHome = null;
   };
 
   systemd.services.transmission = {

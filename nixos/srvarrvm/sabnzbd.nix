@@ -104,7 +104,6 @@ in
 {
   # Keep download dir locally to ease load on network and storage.
   services.sabnzbd = {
-    allowConfigWrite = true;
     configFile = "${cfg.stateDir}/sabnzbd.ini";
     enable = true;
     group = cfg.group;

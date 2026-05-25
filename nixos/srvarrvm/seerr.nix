@@ -17,7 +17,6 @@ in
   };
 
   system.activationScripts.migrate-seerr-user = {
-    deps = [ ];
     text = ''
       if ${pkgs.gnugrep}/bin/grep -q '^jellyseerr:' /etc/passwd && ! ${pkgs.gnugrep}/bin/grep -q '^seerr:' /etc/passwd; then
         echo "srvarr: renaming jellyseerr user to seerr in /etc/passwd"

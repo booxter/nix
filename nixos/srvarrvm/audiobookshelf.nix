@@ -13,7 +13,6 @@ in
     enable = true;
     dataDir = cfg.stateDir;
     group = cfg.group;
-    host = "127.0.0.1";
     port = cfg.port;
     user = cfg.user;
   };

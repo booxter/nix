@@ -66,7 +66,6 @@ in
           mechanism = "external";
         };
       };
-      environmentFiles = [ ];
     };
     sonarr = {
       enable = true;
@@ -84,7 +83,6 @@ in
           mechanism = "external";
         };
       };
-      environmentFiles = [ ];
     };
     lidarr = {
       enable = true;
@@ -102,7 +100,6 @@ in
           mechanism = "external";
         };
       };
-      environmentFiles = [ ];
     };
     prowlarr = {
       enable = true;
@@ -117,7 +114,6 @@ in
           mechanism = "external";
         };
       };
-      environmentFiles = [ ];
     };
   };
 
@@ -161,11 +157,6 @@ in
       ${config.host.srvarr.services.lidarr.user}.isSystemUser = true;
     };
   };
-
-  # Both VPN-confined UIs are now fronted either by localhost-only proxies or
-  # dedicated internal HTTPS vhosts. Retire the old LAN DNAT for the UI ports
-  # entirely.
-  vpnNamespaces.wg.portMappings = inputs.nixpkgs.lib.mkForce [ ];
 
   host.internalHttps.services = {
     radarr = {
