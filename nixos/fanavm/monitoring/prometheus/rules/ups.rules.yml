@@ -1,0 +1,31 @@
+groups:
+  - name: ups-health
+    interval: 30s
+    rules:
+      - alert: UPSExporterDown
+        expr: up{job=~"nut-.*"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: ups
+        annotations:
+          summary: "UPS exporter down: {{ $labels.job }}"
+          description: "Prometheus has been unable to scrape {{ $labels.job }} for 5 minutes."
+      - alert: UPSOnBattery
+        expr: network_ups_tools_ups_status{job=~"nut-.*",ups=~".+",flag="OB"} > 0
+        for: 2m
+        labels:
+          severity: critical
+          category: ups
+        annotations:
+          summary: "UPS on battery: {{ $labels.ups }}"
+          description: "UPS {{ $labels.ups }} on {{ $labels.job }} has been on battery for 2 minutes."
+      - alert: UPSLowBattery
+        expr: network_ups_tools_ups_status{job=~"nut-.*",ups=~".+",flag="LB"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: ups
+        annotations:
+          summary: "UPS low battery: {{ $labels.ups }}"
+          description: "UPS {{ $labels.ups }} is reporting low battery."

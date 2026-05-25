@@ -545,6 +545,18 @@ in
             orgId = 1;
             uid = "dns_probe_down";
           }
+          {
+            orgId = 1;
+            uid = "ups_exporter_down";
+          }
+          {
+            orgId = 1;
+            uid = "ups_on_battery";
+          }
+          {
+            orgId = 1;
+            uid = "ups_low_battery";
+          }
         ];
         groups = [
           {
@@ -631,62 +643,6 @@ in
                 labels = {
                   severity = "warning";
                   category = "thermal";
-                };
-              })
-            ];
-          }
-          {
-            orgId = 1;
-            name = "ups-health";
-            folder = "Fana";
-            interval = "30s";
-            rules = [
-              (mkGrafanaPromRule {
-                uid = "ups_exporter_down";
-                title = "UPS Exporter Down";
-                expr = "up{job=~\"nut-.*\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "5m";
-                annotations = {
-                  summary = "UPS exporter down: {{ $labels.job }}";
-                  description = "Prometheus has been unable to scrape {{ $labels.job }} for 5 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "ups";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "ups_on_battery";
-                title = "UPS On Battery";
-                expr = "network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=\"OB\"}";
-                comparator = "gt";
-                threshold = 0;
-                forDuration = "2m";
-                annotations = {
-                  summary = "UPS on battery: {{ $labels.ups }}";
-                  description = "UPS {{ $labels.ups }} on {{ $labels.job }} has been on battery for 2 minutes.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "ups";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "ups_low_battery";
-                title = "UPS Low Battery";
-                expr = "network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=\"LB\"}";
-                comparator = "gt";
-                threshold = 0;
-                forDuration = "1m";
-                annotations = {
-                  summary = "UPS low battery: {{ $labels.ups }}";
-                  description = "UPS {{ $labels.ups }} is reporting low battery.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "ups";
                 };
               })
             ];
