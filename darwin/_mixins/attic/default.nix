@@ -7,7 +7,6 @@
 }:
 let
   hostSecretFile = ../../../secrets/${hostname}.yaml;
-  hasHostSecretFile = builtins.pathExists hostSecretFile;
   rootDir = "/private/var/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
   watchStore = pkgs.writeShellApplication {
@@ -23,8 +22,7 @@ let
   };
 in
 lib.mkMerge [
-  # Keep work outputs out of the personal cache to preserve corporate isolation boundaries.
-  (lib.optionalAttrs hasHostSecretFile {
+  {
     launchd.daemons.attic-watch-store = {
       command = lib.escapeShellArg (lib.getExe watchStore);
       serviceConfig = {
@@ -48,5 +46,5 @@ lib.mkMerge [
         config.sops.templates."attic-client-config.toml".path
       } "${atticConfigPath}"
     '';
-  })
+  }
 ]

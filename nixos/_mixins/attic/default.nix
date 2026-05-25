@@ -7,7 +7,6 @@
 }:
 let
   hostSecretFile = ../../../secrets/${hostname}.yaml;
-  hasHostSecretFile = builtins.pathExists hostSecretFile;
   rootDir = "/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
   watchStore = pkgs.writeShellApplication {
@@ -23,8 +22,7 @@ let
   };
 in
 lib.mkMerge [
-  # Keep work outputs out of the personal cache to preserve corporate isolation boundaries.
-  (lib.optionalAttrs hasHostSecretFile {
+  {
     systemd.services.attic-watch-store = {
       description = "Watch the Nix store and push new paths to Attic";
       wantedBy = [ "multi-user.target" ];
@@ -44,5 +42,5 @@ lib.mkMerge [
         config.sops.templates."attic-client-config.toml".path
       } "${atticConfigPath}"
     '';
-  })
+  }
 ]

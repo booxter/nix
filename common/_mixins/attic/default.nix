@@ -6,10 +6,9 @@
 }:
 let
   hostSecretFile = ../../../secrets/${hostname}.yaml;
-  hasHostSecretFile = builtins.pathExists hostSecretFile;
 in
 lib.mkMerge [
-  (lib.optionalAttrs hasHostSecretFile {
+  {
     sops = {
       defaultSopsFile = hostSecretFile;
     }
@@ -29,5 +28,5 @@ lib.mkMerge [
         '';
       };
     };
-  })
+  }
 ]
