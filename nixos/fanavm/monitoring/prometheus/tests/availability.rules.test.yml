@@ -1,0 +1,166 @@
+rule_files:
+  - ../rules/availability.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="beast"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: NodeTelemetryDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="beast"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: NodeTelemetryDown
+      - eval_time: 10m
+        alertname: NodeTelemetryDown
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeTelemetryDown
+              category: observability
+              instance: beast
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Node telemetry down: beast"
+              description: "Prometheus has been unable to scrape node-mtls on beast for 10 minutes."
+      - eval_time: 10m30s
+        alertname: NodeTelemetryDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="blackbox-dns",instance="gateway"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: DNSProbeScrapeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="blackbox-dns",instance="gateway"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: DNSProbeScrapeDown
+      - eval_time: 5m
+        alertname: DNSProbeScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: DNSProbeScrapeDown
+              category: observability
+              instance: gateway
+              job: blackbox-dns
+              severity: warning
+            exp_annotations:
+              summary: "DNS probe scrape down: gateway"
+              description: "Prometheus has been unable to scrape the blackbox DNS probe target gateway for 5 minutes."
+      - eval_time: 5m30s
+        alertname: DNSProbeScrapeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="smartctl",instance="beast"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: SmartctlExporterDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="smartctl",instance="beast"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: SmartctlExporterDown
+      - eval_time: 5m
+        alertname: SmartctlExporterDown
+        exp_alerts:
+          - exp_labels:
+              alertname: SmartctlExporterDown
+              category: storage
+              instance: beast
+              job: smartctl
+              severity: warning
+            exp_annotations:
+              summary: "SMART exporter down: beast"
+              description: "Prometheus has been unable to scrape the SMART exporter on beast for 5 minutes."
+      - eval_time: 5m30s
+        alertname: SmartctlExporterDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="smartctl",instance="beast"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastHDDTemperatureTelemetryMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastHDDTemperatureTelemetryMissing
+              category: storage
+              instance: beast
+              severity: warning
+              temperature_type: current
+            exp_annotations:
+              summary: "Beast HDD temperature telemetry missing"
+              description: "The SMART exporter on beast is reachable, but it has not been exporting HDD temperature metrics for /dev/sdX for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="smartctl",instance="beast"}'
+        values: "0x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastHDDTemperatureTelemetryMissing
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="smartctl",instance="beast"}'
+        values: "1x32"
+      - series: 'smartctl_device_temperature{instance="beast",temperature_type="current",device="sda"}'
+        values: "35x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastHDDTemperatureTelemetryMissing
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="beast"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastDiskBayMappingMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastDiskBayMappingMissing
+              category: storage
+              instance: beast
+              severity: warning
+            exp_annotations:
+              summary: "Beast disk bay mapping missing"
+              description: "The beast disk bay mapping metric is missing even though node telemetry is reachable."
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="beast"}'
+        values: "0x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastDiskBayMappingMissing
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="beast"}'
+        values: "1x32"
+      - series: 'host_observability_disk_bay_info{instance="beast",bay="3",device="sda"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastDiskBayMappingMissing

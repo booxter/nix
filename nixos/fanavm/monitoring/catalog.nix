@@ -1,5 +1,7 @@
 let
   alertmanagerConfigFile = ./alertmanager/alertmanager.yml;
+  availabilityRuleFile = ./prometheus/rules/availability.rules.yml;
+  availabilityTestFile = ./prometheus/tests/availability.rules.test.yml;
   dnsRuleFile = ./prometheus/rules/dns.rules.yml;
   dnsTestFile = ./prometheus/tests/dns.rules.test.yml;
   pkiRuleFile = ./prometheus/rules/pki.rules.yml;
@@ -17,24 +19,28 @@ in
 
   prometheus = {
     ruleFiles = [
+      availabilityRuleFile
       dnsRuleFile
       pkiRuleFile
       thermalRuleFile
       upsRuleFile
     ];
     ruleFilesRelative = [
+      "nixos/fanavm/monitoring/prometheus/rules/availability.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/dns.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/pki.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/thermal.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/ups.rules.yml"
     ];
     testFiles = [
+      availabilityTestFile
       dnsTestFile
       pkiTestFile
       thermalTestFile
       upsTestFile
     ];
     testFilesRelative = [
+      "nixos/fanavm/monitoring/prometheus/tests/availability.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/dns.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/pki.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/thermal.rules.test.yml"

@@ -1,0 +1,49 @@
+groups:
+  - name: observability-availability
+    interval: 30s
+    rules:
+      - alert: NodeTelemetryDown
+        expr: up{job=~"node|node-mtls"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Node telemetry down: {{ $labels.instance }}"
+          description: "Prometheus has been unable to scrape {{ $labels.job }} on {{ $labels.instance }} for 10 minutes."
+      - alert: DNSProbeScrapeDown
+        expr: up{job="blackbox-dns"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "DNS probe scrape down: {{ $labels.instance }}"
+          description: "Prometheus has been unable to scrape the blackbox DNS probe target {{ $labels.instance }} for 5 minutes."
+      - alert: SmartctlExporterDown
+        expr: up{job="smartctl"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "SMART exporter down: {{ $labels.instance }}"
+          description: "Prometheus has been unable to scrape the SMART exporter on {{ $labels.instance }} for 5 minutes."
+      - alert: BeastHDDTemperatureTelemetryMissing
+        expr: absent(smartctl_device_temperature{instance="beast",temperature_type="current",device=~"sd[a-z]+"}) and on(instance) up{job="smartctl",instance="beast"} == 1
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast HDD temperature telemetry missing"
+          description: "The SMART exporter on beast is reachable, but it has not been exporting HDD temperature metrics for /dev/sdX for 15 minutes."
+      - alert: BeastDiskBayMappingMissing
+        expr: absent(host_observability_disk_bay_info{instance="beast"}) and on(instance) up{job="node-mtls",instance="beast"} == 1
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast disk bay mapping missing"
+          description: "The beast disk bay mapping metric is missing even though node telemetry is reachable."
