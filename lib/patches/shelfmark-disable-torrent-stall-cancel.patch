@@ -1,0 +1,33 @@
+diff --git a/shelfmark/download/orchestrator.py b/shelfmark/download/orchestrator.py
+index 1dba345..78d1e35 100644
+--- a/shelfmark/download/orchestrator.py
++++ b/shelfmark/download/orchestrator.py
+@@ -860,6 +860,16 @@ def retry_download(book_id: str) -> tuple[bool, str | None]:
+     return True, None
+ 
+ 
++def _task_uses_torrent_client(task_id: str) -> bool:
++    """Return whether the queued task is managed by a torrent client."""
++    task = book_queue.get_task(task_id)
++    if task is None:
++        return False
++
++    protocol = (task.retry_download_protocol or "").strip().lower()
++    return protocol == "torrent"
++
++
+ def set_book_priority(book_id: str, priority: int) -> bool:
+     """Set priority for a queued book (lower = higher priority)."""
+     return book_queue.set_priority(book_id, priority)
+@@ -980,6 +990,11 @@ def concurrent_download_loop() -> None:
+                         if task_id in stalled_tasks:
+                             continue
+                         last_active = _last_activity.get(task_id, current_time)
++                        if _task_uses_torrent_client(task_id):
++                            # Torrent clients can legitimately sit in stable queued/checking
++                            # states for long periods without any progress or status-message
++                            # changes. Do not treat that as an orchestrator-side stall.
++                            continue
+                         if current_time - last_active > STALL_TIMEOUT:
+                             logger.warning("Download stalled for %s, cancelling", task_id)
+                             book_queue.cancel_download(task_id)
