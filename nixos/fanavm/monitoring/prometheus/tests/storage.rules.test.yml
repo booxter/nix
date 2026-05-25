@@ -36,6 +36,88 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Current_Pending_Sector",attribute_value_type="raw"}'
+        values: "0x32"
+      - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Offline_Uncorrectable",attribute_value_type="raw"}'
+        values: "0x32"
+      - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Reported_Uncorrect",attribute_value_type="raw"}'
+        values: "0x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: BeastDiskPendingSectors
+      - eval_time: 15m
+        alertname: BeastDiskOfflineUncorrectable
+      - eval_time: 15m
+        alertname: BeastDiskReportedUncorrect
+
+  - interval: 30s
+    input_series:
+      - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Current_Pending_Sector",attribute_value_type="raw"}'
+        values: "1x30 0x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: BeastDiskPendingSectors
+      - eval_time: 15m
+        alertname: BeastDiskPendingSectors
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastDiskPendingSectors
+              attribute_name: Current_Pending_Sector
+              attribute_value_type: raw
+              category: storage
+              device: sda
+              instance: beast
+              severity: critical
+            exp_annotations:
+              summary: "Pending sectors on beast: sda"
+              description: "Drive sda on beast has reported current pending sectors for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Offline_Uncorrectable",attribute_value_type="raw"}'
+        values: "1x30 0x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: BeastDiskOfflineUncorrectable
+      - eval_time: 15m
+        alertname: BeastDiskOfflineUncorrectable
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastDiskOfflineUncorrectable
+              attribute_name: Offline_Uncorrectable
+              attribute_value_type: raw
+              category: storage
+              device: sda
+              instance: beast
+              severity: critical
+            exp_annotations:
+              summary: "Offline uncorrectable sectors on beast: sda"
+              description: "Drive sda on beast has reported offline uncorrectable sectors for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Reported_Uncorrect",attribute_value_type="raw"}'
+        values: "1x30 0x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: BeastDiskReportedUncorrect
+      - eval_time: 15m
+        alertname: BeastDiskReportedUncorrect
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastDiskReportedUncorrect
+              attribute_name: Reported_Uncorrect
+              attribute_value_type: raw
+              category: storage
+              device: sda
+              instance: beast
+              severity: warning
+            exp_annotations:
+              summary: "Reported uncorrectable errors on beast: sda"
+              description: "Drive sda on beast has reported uncorrectable read or write errors for 15 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'host_observability_md_degraded{instance="beast",device="md127"}'
         values: "0x12"
     alert_rule_test:

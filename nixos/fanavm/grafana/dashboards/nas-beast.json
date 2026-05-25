@@ -3716,16 +3716,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "-1": {
-                  "text": "N/A"
-                }
-              },
-              "type": "value"
-            }
-          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -3734,8 +3724,12 @@
                 "value": null
               },
               {
-                "color": "red",
+                "color": "orange",
                 "value": 1
+              },
+              {
+                "color": "red",
+                "value": 10
               }
             ]
           },
@@ -3772,14 +3766,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_hba_drive_media_errors{instance=\"beast\"} or on(instance,bay,model,serial) (max by(instance,bay,model,serial) (host_observability_hba_drive_info{instance=\"beast\"}) * -1)",
+          "expr": "max by(instance,bay,serial,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Reallocated_Sector_Ct\",attribute_value_type=\"raw\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"})",
           "format": "table",
           "instant": true,
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "HBA Drive Media Errors",
+      "title": "SMART Reallocated Sectors",
       "transformations": [
         {
           "id": "labelsToFields",
@@ -3793,8 +3787,7 @@
             "include": {
               "names": [
                 "bay",
-                "model",
-                "serial",
+                "device",
                 "Value"
               ]
             }
@@ -3807,16 +3800,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "-1": {
-                  "text": "N/A"
-                }
-              },
-              "type": "value"
-            }
-          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -3863,14 +3846,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_hba_drive_other_errors{instance=\"beast\"} or on(instance,bay,model,serial) (max by(instance,bay,model,serial) (host_observability_hba_drive_info{instance=\"beast\"}) * -1)",
+          "expr": "max by(instance,bay,serial,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Current_Pending_Sector\",attribute_value_type=\"raw\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"})",
           "format": "table",
           "instant": true,
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "HBA Drive Other Errors",
+      "title": "SMART Pending Sectors",
       "transformations": [
         {
           "id": "labelsToFields",
@@ -3884,8 +3867,7 @@
             "include": {
               "names": [
                 "bay",
-                "model",
-                "serial",
+                "device",
                 "Value"
               ]
             }
@@ -3898,16 +3880,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "-1": {
-                  "text": "N/A"
-                }
-              },
-              "type": "value"
-            }
-          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -3954,14 +3926,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_hba_drive_predictive_errors{instance=\"beast\"} or on(instance,bay,model,serial) (max by(instance,bay,model,serial) (host_observability_hba_drive_info{instance=\"beast\"}) * -1)",
+          "expr": "max by(instance,bay,serial,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Offline_Uncorrectable\",attribute_value_type=\"raw\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"})",
           "format": "table",
           "instant": true,
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "HBA Drive Predictive Errors",
+      "title": "SMART Offline Uncorrectable",
       "transformations": [
         {
           "id": "labelsToFields",
@@ -3975,8 +3947,7 @@
             "include": {
               "names": [
                 "bay",
-                "model",
-                "serial",
+                "device",
                 "Value"
               ]
             }
@@ -3989,32 +3960,12 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "-1": {
-                  "text": "N/A"
-                },
-                "0": {
-                  "text": "No"
-                },
-                "1": {
-                  "text": "Yes"
-                }
-              },
-              "type": "value"
-            }
-          ],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "gray",
-                "value": null
-              },
-              {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -4055,14 +4006,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_hba_drive_smart_alerted{instance=\"beast\"} or on(instance,bay,model,serial) (max by(instance,bay,model,serial) (host_observability_hba_drive_info{instance=\"beast\"}) * -1)",
+          "expr": "max by(instance,bay,serial,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Reported_Uncorrect\",attribute_value_type=\"raw\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"})",
           "format": "table",
           "instant": true,
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "HBA Drive SMART Alert",
+      "title": "SMART Reported Uncorrect",
       "transformations": [
         {
           "id": "labelsToFields",
@@ -4076,8 +4027,7 @@
             "include": {
               "names": [
                 "bay",
-                "model",
-                "serial",
+                "device",
                 "Value"
               ]
             }
@@ -4106,6 +4056,6 @@
   "timezone": "",
   "title": "NAS Beast",
   "uid": "fana-nas-beast",
-  "version": 32,
+  "version": 33,
   "weekStart": ""
 }

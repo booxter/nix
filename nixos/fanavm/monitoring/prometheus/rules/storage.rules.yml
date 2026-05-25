@@ -11,6 +11,33 @@ groups:
         annotations:
           summary: "SMART health failed on beast: {{ $labels.device }}"
           description: "Drive {{ $labels.device }} on beast has reported SMART health failure for 15 minutes."
+      - alert: BeastDiskPendingSectors
+        expr: smartctl_device_attribute{instance="beast",device=~"sd[a-z]+",attribute_name="Current_Pending_Sector",attribute_value_type="raw"} > 0
+        for: 15m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Pending sectors on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported current pending sectors for 15 minutes."
+      - alert: BeastDiskOfflineUncorrectable
+        expr: smartctl_device_attribute{instance="beast",device=~"sd[a-z]+",attribute_name="Offline_Uncorrectable",attribute_value_type="raw"} > 0
+        for: 15m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Offline uncorrectable sectors on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported offline uncorrectable sectors for 15 minutes."
+      - alert: BeastDiskReportedUncorrect
+        expr: smartctl_device_attribute{instance="beast",device=~"sd[a-z]+",attribute_name="Reported_Uncorrect",attribute_value_type="raw"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Reported uncorrectable errors on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported uncorrectable read or write errors for 15 minutes."
       - alert: BeastRAIDDegraded
         expr: host_observability_md_degraded{instance="beast"} > 0
         for: 5m
