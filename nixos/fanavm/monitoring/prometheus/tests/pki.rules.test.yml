@@ -8,9 +8,15 @@ tests:
     input_series:
       - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="prox-pkivm",host="beast",cert_name="vikunja",category="external_service_client"}'
         values: "1x22"
+      - series: 'host_observability_pki_cert_expected{job="node-mtls",instance="prox-pkivm",host="beast",cert_name="vikunja",category="external_service_client"}'
+        values: "1x32"
+      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+        values: "1x32"
     alert_rule_test:
       - eval_time: 10m
         alertname: InternalPKICertMissing
+      - eval_time: 15m
+        alertname: PKIInventoryTelemetryMissing
 
   - interval: 30s
     input_series:
@@ -36,6 +42,32 @@ tests:
               description: "The managed certificate vikunja for beast (external_service_client) is expected but missing or unparsable in the repo-managed PKI inventory."
       - eval_time: 10m30s
         alertname: InternalPKICertMissing
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: PKIInventoryTelemetryMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: PKIInventoryTelemetryMissing
+              category: pki
+              instance: prox-pkivm
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "PKI inventory telemetry missing on prox-pkivm"
+              description: "The PKI inventory metrics are missing from prox-pkivm even though node telemetry is still reachable."
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+        values: "0x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: PKIInventoryTelemetryMissing
 
   - interval: 30s
     input_series:
@@ -169,9 +201,15 @@ tests:
     input_series:
       - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"}'
         values: "1x242"
+      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}'
+        values: "140400x32"
+      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+        values: "1x242"
     alert_rule_test:
       - eval_time: 2h
         alertname: PKIRotationControllerFailed
+      - eval_time: 15m
+        alertname: PKIRotationTelemetryMissing
 
   - interval: 30s
     input_series:
@@ -224,3 +262,29 @@ tests:
               description: "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours."
       - eval_time: 39h
         alertname: PKIRotationControllerStale
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: PKIRotationTelemetryMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: PKIRotationTelemetryMissing
+              category: pki
+              instance: prox-pkivm
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "PKI rotation telemetry missing on prox-pkivm"
+              description: "The PKI rotation controller metrics are missing from prox-pkivm even though node telemetry is still reachable."
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+        values: "0x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: PKIRotationTelemetryMissing
