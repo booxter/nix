@@ -11,6 +11,7 @@
 
   programs.nixvim = {
     enable = true;
+    nixpkgs.useGlobalPackages = true;
 
     defaultEditor = true;
 
