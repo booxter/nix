@@ -1,0 +1,13 @@
+groups:
+  - name: dns-health
+    interval: 30s
+    rules:
+      - alert: DNSResolverProbeDown
+        expr: probe_success{job="blackbox-dns"} < 1
+        for: 2m
+        labels:
+          severity: critical
+          category: dns
+        annotations:
+          summary: "DNS probe down: {{ $labels.resolver_title }}"
+          description: "Resolver {{ $labels.resolver_title }} is failing blackbox DNS probes from fana."

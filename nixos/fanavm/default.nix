@@ -370,6 +370,8 @@ let
     };
 in
 {
+  imports = [ ./monitoring ];
+
   assertions = [
     {
       assertion = remoteNixosNonMtlsNodeTargetNames == [ ];
@@ -406,14 +408,20 @@ in
     owner = "grafana";
     group = "grafana";
     mode = "0400";
-    restartUnits = [ "grafana.service" ];
+    restartUnits = [
+      "alertmanager.service"
+      "grafana.service"
+    ];
   };
   sops.secrets.grafanaAlertingTelegramChatId = {
     key = "grafana/alerting/telegram/chat_id";
     owner = "grafana";
     group = "grafana";
     mode = "0400";
-    restartUnits = [ "grafana.service" ];
+    restartUnits = [
+      "alertmanager.service"
+      "grafana.service"
+    ];
   };
   sops.secrets.prometheusScrapeNodeClientCrt = {
     key = "prometheus/scrape_node/client_crt";
@@ -533,32 +541,12 @@ in
             orgId = 1;
             uid = "dns_upstream_failures";
           }
-        ];
-        groups = [
           {
             orgId = 1;
-            name = "dns-health";
-            folder = "Fana";
-            interval = "30s";
-            rules = [
-              (mkGrafanaPromRule {
-                uid = "dns_probe_down";
-                title = "DNS Resolver Probe Down";
-                expr = "probe_success{job=\"blackbox-dns\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "2m";
-                annotations = {
-                  summary = "DNS probe down: {{ $labels.resolver_title }}";
-                  description = "Resolver {{ $labels.resolver_title }} is failing blackbox DNS probes from fana.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "dns";
-                };
-              })
-            ];
+            uid = "dns_probe_down";
           }
+        ];
+        groups = [
           {
             orgId = 1;
             name = "thermal-health";
