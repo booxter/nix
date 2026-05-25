@@ -116,6 +116,7 @@ nixos/
       prometheus/
         rules/
           availability.rules.yml
+          control-plane.rules.yml
           dns.rules.yml
           network-probes.rules.yml
           pki.rules.yml
@@ -126,6 +127,7 @@ nixos/
           ups.rules.yml
         tests/
           availability.rules.test.yml
+          control-plane.rules.test.yml
           dns.rules.test.yml
           network-probes.rules.test.yml
           pki.rules.test.yml
@@ -150,7 +152,7 @@ The first deployable slice is already in place on `fanavm`:
   and checks
 - `nixos/fanavm/monitoring/alertmanager/alertmanager.yml` is the repo-managed
   Alertmanager config
-- `nixos/fanavm/monitoring/prometheus/rules/{availability,dns,network-probes,pki,service-probes,service-scrapes,storage,thermal,ups}.rules.yml`
+- `nixos/fanavm/monitoring/prometheus/rules/{availability,control-plane,dns,network-probes,pki,service-probes,service-scrapes,storage,thermal,ups}.rules.yml`
   hold the current repo-managed Prometheus alert families
 - `nixos/fanavm/monitoring/prometheus/tests/*.rules.test.yml` hold the
   corresponding `promtool` rule tests
@@ -438,6 +440,7 @@ catalog so the service config and flake checks stay in sync.
 Current scope:
 
 - availability alert rules
+- control-plane alert rules
 - DNS alert rules
 - network probe alert rules
 - UPS alert rules
@@ -613,6 +616,9 @@ Status:
 - initial availability coverage added for node telemetry, DNS probe scrape
   availability, SMART exporter availability, Beast HDD temperature telemetry,
   and Beast disk bay mapping telemetry
+- single-plane control-plane coverage added for Prometheus config reload and
+  alert delivery errors, Alertmanager scrape/reload/Telegram notification
+  failures, and Grafana metrics scrape reachability
 - public service probe coverage added for `blackbox-arr` scrape availability
   and external endpoint failures
 - direct application scrape coverage added for `jellyfin`, `sabnzbd`, and
@@ -631,10 +637,10 @@ Initial backlog after the legacy migrations:
 2. PKI control-plane freshness and controller health refinements
    Existing PKI signals should be reviewed for missing-data handling and route
    expectations.
-3. Fleet-level control-plane alerts
-   Prometheus, Alertmanager, and Grafana should have their own health and
-   notification-path coverage. Some of this remains structurally limited by the
-   current single notification plane and Telegram-only receiver model.
+3. Control-plane refinements within the current single notification plane
+   Additional control-plane signals can still be added, but independent
+   self-notification guarantees remain out of scope while Alertmanager and
+   Telegram are single-homed on `fanavm`.
 
 ### Phase 4: Refine Shared Helpers
 
