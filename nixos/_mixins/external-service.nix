@@ -310,6 +310,9 @@ in
 
       services.stunnel = lib.mkIf (enabledUpstreamTlsVhosts != { }) {
         enable = true;
+        # Reverse-proxy mTLS tunnels are chatty at stunnel's upstream "info"
+        # default, logging each accepted connection and TLS session detail.
+        logLevel = lib.mkDefault "warning";
         user = null;
         group = null;
         clients = lib.mapAttrs (_: vhost: {
