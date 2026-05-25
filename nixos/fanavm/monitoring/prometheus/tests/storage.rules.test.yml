@@ -42,6 +42,8 @@ tests:
         values: "0x32"
       - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Reported_Uncorrect",attribute_value_type="raw"}'
         values: "0x32"
+      - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Reallocated_Sector_Ct",attribute_value_type="raw"}'
+        values: "20x32"
     alert_rule_test:
       - eval_time: 15m
         alertname: BeastDiskPendingSectors
@@ -49,6 +51,8 @@ tests:
         alertname: BeastDiskOfflineUncorrectable
       - eval_time: 15m
         alertname: BeastDiskReportedUncorrect
+      - eval_time: 15m
+        alertname: BeastDiskReallocatedSectorsHigh
 
   - interval: 30s
     input_series:
@@ -115,6 +119,28 @@ tests:
             exp_annotations:
               summary: "Reported uncorrectable errors on beast: sda"
               description: "Drive sda on beast has reported uncorrectable read or write errors for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'smartctl_device_attribute{instance="beast",device="sda",attribute_name="Reallocated_Sector_Ct",attribute_value_type="raw"}'
+        values: "31x30 0x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: BeastDiskReallocatedSectorsHigh
+      - eval_time: 15m
+        alertname: BeastDiskReallocatedSectorsHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastDiskReallocatedSectorsHigh
+              attribute_name: Reallocated_Sector_Ct
+              attribute_value_type: raw
+              category: storage
+              device: sda
+              instance: beast
+              severity: warning
+            exp_annotations:
+              summary: "Reallocated sectors high on beast: sda"
+              description: "Drive sda on beast has reported more than 30 reallocated sectors for 15 minutes."
 
   - interval: 30s
     input_series:

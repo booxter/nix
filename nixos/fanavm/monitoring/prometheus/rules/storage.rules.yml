@@ -38,6 +38,15 @@ groups:
         annotations:
           summary: "Reported uncorrectable errors on beast: {{ $labels.device }}"
           description: "Drive {{ $labels.device }} on beast has reported uncorrectable read or write errors for 15 minutes."
+      - alert: BeastDiskReallocatedSectorsHigh
+        expr: smartctl_device_attribute{instance="beast",device=~"sd[a-z]+",attribute_name="Reallocated_Sector_Ct",attribute_value_type="raw"} > 30
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Reallocated sectors high on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported more than 30 reallocated sectors for 15 minutes."
       - alert: BeastRAIDDegraded
         expr: host_observability_md_degraded{instance="beast"} > 0
         for: 5m
