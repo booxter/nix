@@ -1,5 +1,7 @@
 let
   alertmanagerConfigFile = ./alertmanager/alertmanager.yml;
+  controlPlaneRuleFile = ./prometheus/rules/control-plane.rules.yml;
+  controlPlaneTestFile = ./prometheus/tests/control-plane.rules.test.yml;
   availabilityRuleFile = ./prometheus/rules/availability.rules.yml;
   availabilityTestFile = ./prometheus/tests/availability.rules.test.yml;
   dnsRuleFile = ./prometheus/rules/dns.rules.yml;
@@ -27,6 +29,7 @@ in
 
   prometheus = {
     ruleFiles = [
+      controlPlaneRuleFile
       availabilityRuleFile
       dnsRuleFile
       networkProbesRuleFile
@@ -38,6 +41,7 @@ in
       upsRuleFile
     ];
     ruleFilesRelative = [
+      "nixos/fanavm/monitoring/prometheus/rules/control-plane.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/availability.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/dns.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/network-probes.rules.yml"
@@ -49,6 +53,7 @@ in
       "nixos/fanavm/monitoring/prometheus/rules/ups.rules.yml"
     ];
     testFiles = [
+      controlPlaneTestFile
       availabilityTestFile
       dnsTestFile
       networkProbesTestFile
@@ -60,6 +65,7 @@ in
       upsTestFile
     ];
     testFilesRelative = [
+      "nixos/fanavm/monitoring/prometheus/tests/control-plane.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/availability.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/dns.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/network-probes.rules.test.yml"

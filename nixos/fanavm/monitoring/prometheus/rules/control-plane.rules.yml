@@ -1,0 +1,58 @@
+groups:
+  - name: control-plane
+    interval: 30s
+    rules:
+      - alert: PrometheusConfigReloadFailed
+        expr: prometheus_config_last_reload_successful{job="prometheus"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Prometheus config reload failed"
+          description: "Prometheus on fanavm has not successfully reloaded its configuration for 5 minutes."
+      - alert: PrometheusAlertDeliveryFailing
+        expr: sum by(instance, job) (increase(prometheus_notifications_errors_total{job="prometheus"}[15m])) + sum by(instance, job) (increase(prometheus_notifications_dropped_total{job="prometheus"}[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Prometheus alert delivery failing"
+          description: "Prometheus on fanavm has seen alert delivery errors or drops while sending notifications to Alertmanager within the last 15 minutes."
+      - alert: AlertmanagerMetricsScrapeDown
+        expr: up{job="alertmanager"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Alertmanager metrics scrape down"
+          description: "Prometheus has been unable to scrape Alertmanager on fanavm for 5 minutes."
+      - alert: AlertmanagerConfigReloadFailed
+        expr: alertmanager_config_last_reload_successful{job="alertmanager"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Alertmanager config reload failed"
+          description: "Alertmanager on fanavm has not successfully reloaded its configuration for 5 minutes."
+      - alert: AlertmanagerTelegramNotificationsFailing
+        expr: sum by(instance, job) (increase(alertmanager_notifications_failed_total{job="alertmanager",integration="telegram"}[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Alertmanager Telegram notifications failing"
+          description: "Alertmanager on fanavm has seen failed Telegram notification deliveries within the last 15 minutes."
+      - alert: GrafanaMetricsScrapeDown
+        expr: up{job="grafana"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Grafana metrics scrape down"
+          description: "Prometheus has been unable to scrape Grafana on fanavm for 5 minutes."
