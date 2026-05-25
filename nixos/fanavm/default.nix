@@ -463,6 +463,9 @@ in
       plugins = {
         preinstall_disabled = true;
       };
+      feature_toggles = {
+        alertingNavigationV2 = true;
+      };
     };
     provision = {
       enable = true;
