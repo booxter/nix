@@ -1,12 +1,10 @@
 {
-  config,
   lib,
   ...
 }:
 let
-  mediaDir = config.nixarr.mediaDir;
-  stateDir = config.nixarr.stateDir;
-  globals = config.util-nixarr.globals;
+  mediaDir = "/data/media";
+  stateDir = "/data/.state/nixarr";
 in
 {
   options.host.srvarr = lib.mkOption {
@@ -25,55 +23,65 @@ in
         group = "aurral";
       };
       audiobookshelf = {
-        port = config.nixarr.audiobookshelf.port;
+        port = 9292;
         stateDir = "${stateDir}/audiobookshelf";
-        inherit (globals.audiobookshelf) user group;
+        user = "audiobookshelf";
+        group = "media";
       };
       bazarr = {
-        port = config.nixarr.bazarr.port;
+        port = 6767;
         stateDir = "${stateDir}/bazarr";
-        inherit (globals.bazarr) user group;
+        user = "bazarr";
+        group = "media";
       };
       lidarr = {
-        port = config.nixarr.lidarr.port;
+        port = 8686;
         stateDir = "${stateDir}/lidarr";
-        inherit (globals.lidarr) user group;
+        user = "lidarr";
+        group = "media";
       };
       prowlarr = {
-        port = config.nixarr.prowlarr.port;
+        port = 9696;
         stateDir = "${stateDir}/prowlarr";
-        inherit (globals.prowlarr) user group;
+        user = "prowlarr";
+        group = "prowlarr";
       };
       radarr = {
-        port = config.nixarr.radarr.port;
+        port = 7878;
         stateDir = "${stateDir}/radarr";
-        inherit (globals.radarr) user group;
+        user = "radarr";
+        group = "media";
       };
       sabnzbd = {
-        port = config.nixarr.sabnzbd.guiPort;
+        port = 6336;
         stateDir = "${stateDir}/sabnzbd";
-        inherit (globals.sabnzbd) user group;
+        user = "sabnzbd";
+        group = "media";
       };
       seerr = {
-        port = config.services.seerr.port;
+        port = 5055;
         stateDir = "${stateDir}/seerr";
-        inherit (globals.seerr) user group;
+        user = "seerr";
+        group = "seerr";
       };
       shelfmark = {
-        port = config.nixarr.shelfmark.port;
+        port = 8084;
         stateDir = "${stateDir}/shelfmark";
-        inherit (globals.shelfmark) user group;
+        user = "shelfmark";
+        group = "media";
       };
       sonarr = {
-        port = config.nixarr.sonarr.port;
+        port = 8989;
         stateDir = "${stateDir}/sonarr";
-        inherit (globals.sonarr) user group;
+        user = "sonarr";
+        group = "media";
       };
       transmission = {
-        port = config.nixarr.transmission.uiPort;
-        peerPort = config.nixarr.transmission.peerPort;
+        port = 9091;
+        peerPort = 45486;
         stateDir = "${stateDir}/transmission";
-        inherit (globals.transmission) user group;
+        user = "transmission";
+        group = "media";
       };
     };
   };
