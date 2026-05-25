@@ -49,7 +49,8 @@
     #jellarr.url = "github:venkyr77/jellarr/v0.1.0";
     jellarr.inputs.nixpkgs.follows = "nixpkgs";
 
-    nixarr.url = "github:rasmus-kirk/nixarr";
+    # TODO: switch back to upstream once Jellyfin 10.11.9/10.11.10 OpenAPI hashes land there.
+    nixarr.url = "github:booxter/nixarr/jf-new-version";
     nixarr.inputs.nixpkgs.follows = "nixpkgs";
 
     llm-agents.url = "github:numtide/llm-agents.nix";
