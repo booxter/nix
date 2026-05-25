@@ -160,10 +160,6 @@ in
     ];
   };
 
-  # smartctl on this HBA-backed host now needs syscalls that the upstream
-  # exporter seccomp profile blocks, which leaves the target "up" but empty.
-  systemd.services.prometheus-smartctl-exporter.serviceConfig.SystemCallFilter = lib.mkForce [ "" ];
-
   host.observability.client.prometheusMtlsEndpoints.smartctl = {
     enable = true;
     port = smartctlExporterPort;
