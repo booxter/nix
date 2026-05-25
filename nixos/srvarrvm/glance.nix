@@ -74,7 +74,6 @@ in
 {
   services.glance = {
     enable = true;
-    openFirewall = false;
     settings = {
       server = {
         host = "127.0.0.1";

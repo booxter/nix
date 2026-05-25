@@ -21,7 +21,6 @@ in
 {
   services.jellyfin = {
     enable = true;
-    openFirewall = false;
   };
 
   system.activationScripts.jellyfinLoggingConfig.text = ''

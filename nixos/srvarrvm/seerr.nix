@@ -13,7 +13,6 @@ in
   services.seerr = {
     enable = true;
     configDir = cfg.stateDir;
-    openFirewall = false;
     port = cfg.port;
   };
 

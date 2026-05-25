@@ -55,7 +55,6 @@ in
       dataDir = config.host.srvarr.services.radarr.stateDir;
       user = config.host.srvarr.services.radarr.user;
       group = config.host.srvarr.services.radarr.group;
-      openFirewall = false;
       settings = {
         log.analyticsEnabled = false;
         server = {
@@ -74,7 +73,6 @@ in
       dataDir = config.host.srvarr.services.sonarr.stateDir;
       user = config.host.srvarr.services.sonarr.user;
       group = config.host.srvarr.services.sonarr.group;
-      openFirewall = false;
       settings = {
         log.analyticsEnabled = false;
         server = {
@@ -93,7 +91,6 @@ in
       dataDir = config.host.srvarr.services.lidarr.stateDir;
       user = config.host.srvarr.services.lidarr.user;
       group = config.host.srvarr.services.lidarr.group;
-      openFirewall = false;
       settings = {
         log.analyticsEnabled = false;
         server = {
@@ -109,7 +106,6 @@ in
     };
     prowlarr = {
       enable = true;
-      openFirewall = false;
       settings = {
         log.analyticsEnabled = false;
         server = {

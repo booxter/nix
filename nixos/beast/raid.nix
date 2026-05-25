@@ -162,7 +162,6 @@ in
     enable = true;
     port = smartctlExporterInternalPort;
     listenAddress = "127.0.0.1";
-    openFirewall = false;
     extraFlags = [
       "--smartctl.path=${pkgs.smartmontools}/bin/smartctl"
       "--smartctl.device-include=^(sd[a-z]+)$"

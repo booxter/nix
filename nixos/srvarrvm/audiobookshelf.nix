@@ -14,7 +14,6 @@ in
     dataDir = cfg.stateDir;
     group = cfg.group;
     host = "127.0.0.1";
-    openFirewall = false;
     port = cfg.port;
     user = cfg.user;
   };

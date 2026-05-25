@@ -279,7 +279,6 @@ in
         services.prometheus.exporters.blackbox = lib.mkIf cfg.blackbox.enable {
           enable = true;
           listenAddress = "127.0.0.1";
-          openFirewall = false;
           port = cfg.blackbox.mtls.internalPort;
           configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
             modules = blackboxModules;

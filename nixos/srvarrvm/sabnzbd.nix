@@ -108,7 +108,6 @@ in
     configFile = "${cfg.stateDir}/sabnzbd.ini";
     enable = true;
     group = cfg.group;
-    openFirewall = false;
     user = cfg.user;
   };
 

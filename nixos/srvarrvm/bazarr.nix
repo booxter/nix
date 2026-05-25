@@ -13,7 +13,6 @@ in
     dataDir = cfg.stateDir;
     group = cfg.group;
     listenPort = cfg.port;
-    openFirewall = false;
     user = cfg.user;
   };
 

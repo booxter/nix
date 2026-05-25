@@ -16,7 +16,6 @@ in
       FLASK_HOST = "127.0.0.1";
       FLASK_PORT = cfg.port;
     };
-    openFirewall = false;
   };
 
   systemd.tmpfiles.rules = [
