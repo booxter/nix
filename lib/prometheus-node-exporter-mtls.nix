@@ -1,5 +1,5 @@
 rec {
-  internalPkiRootCaPath = ../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
+  internalPkiRootCaPath = import ./home-internal-pki-root-ca.nix;
   nodeExporterSecretPrefix = "prometheus/node_exporter";
 
   mkNodeExporterWebConfig =

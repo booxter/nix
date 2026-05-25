@@ -9,7 +9,7 @@
 let
   beastSpec = hostInventory.nixosHostSpecsByName.beast;
   frameSpec = hostInventory.nixosHostSpecsByName.frame;
-  internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
+  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   lan = hostInventory.site.lan;
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
