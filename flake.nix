@@ -11,7 +11,7 @@
 
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
-    nix-darwin.url = "github:nix-darwin/nix-darwin/master";
+    nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
     nix-darwin.inputs.nixpkgs.follows = "nixpkgs-darwin";
 
     sops-nix.url = "github:Mic92/sops-nix";
