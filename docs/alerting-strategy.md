@@ -115,13 +115,19 @@ nixos/
         templates/
       prometheus/
         rules/
+          availability.rules.yml
           dns.rules.yml
           pki.rules.yml
+          service-probes.rules.yml
+          storage.rules.yml
           thermal.rules.yml
           ups.rules.yml
         tests/
+          availability.rules.test.yml
           dns.rules.test.yml
           pki.rules.test.yml
+          service-probes.rules.test.yml
+          storage.rules.test.yml
           thermal.rules.test.yml
           ups.rules.test.yml
       catalog.nix
@@ -140,8 +146,8 @@ The first deployable slice is already in place on `fanavm`:
   and checks
 - `nixos/fanavm/monitoring/alertmanager/alertmanager.yml` is the repo-managed
   Alertmanager config
-- `nixos/fanavm/monitoring/prometheus/rules/{dns,pki,thermal,ups}.rules.yml`
-  hold the current migrated Prometheus alert families
+- `nixos/fanavm/monitoring/prometheus/rules/{availability,dns,pki,service-probes,storage,thermal,ups}.rules.yml`
+  hold the current repo-managed Prometheus alert families
 - `nixos/fanavm/monitoring/prometheus/tests/*.rules.test.yml` hold the
   corresponding `promtool` rule tests
 
@@ -427,9 +433,12 @@ catalog so the service config and flake checks stay in sync.
 
 Current scope:
 
+- availability alert rules
 - DNS alert rules
 - UPS alert rules
 - PKI alert rules
+- service probe alert rules
+- storage alert rules
 - thermal alert rules
 
 ### Integration Tests In CI
@@ -592,21 +601,30 @@ Status:
   telemetry
 - add storage, service, and fleet health alerts incrementally
 
+Status:
+
+- started on `fanavm`
+- initial availability coverage added for node telemetry, DNS probe scrape
+  availability, SMART exporter availability, Beast HDD temperature telemetry,
+  and Beast disk bay mapping telemetry
+- public service probe coverage added for `blackbox-arr` scrape availability
+  and external endpoint failures
+- initial Beast storage coverage added for failed SMART state, `/volume2`
+  capacity, and Btrfs device error growth
+
 Initial backlog after the legacy migrations:
 
-1. Critical scrape availability and missing-telemetry alerts
-   Targets include `node-mtls`, `smartctl`, `nut-*`, `blackbox-*`, and other
-   exporters that back important dashboards.
-2. Public and internal service probe alerts
-   Blackbox probes should alert on endpoint failure, not only certificate
-   expiry.
-3. Storage and NAS integrity alerts
-   This includes SMART freshness/absence, failed SMART state, RAID/Btrfs
-   degradation, and capacity signals already visible on dashboards.
-4. PKI control-plane freshness and controller health refinements
+1. Internal service and fleet probe alerts
+   Extend probe coverage beyond public `blackbox-arr` endpoints into internal
+   reachability and control-plane dependencies where it adds signal.
+2. Storage and NAS integrity refinements
+   This includes per-device freshness gaps, RAID visibility gaps, and any
+   additional Btrfs or filesystem signals that prove useful beyond the first
+   Beast slice.
+3. PKI control-plane freshness and controller health refinements
    Existing PKI signals should be reviewed for missing-data handling and route
    expectations.
-5. Fleet-level control-plane alerts
+4. Fleet-level control-plane alerts
    Prometheus, Alertmanager, and Grafana should have their own health and
    notification-path coverage.
 
