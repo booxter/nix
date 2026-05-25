@@ -8,6 +8,10 @@ let
   wgConservativeUploadRateMbit = 8;
   transmissionNonPreferredLowPriorityRatio = 3.0;
   transmissionNonPreferredPauseRatio = 6.0;
+  nixarrSource = builtins.path {
+    path = ../../vendor/nixarr-source;
+    name = "source";
+  };
   jellyseerrService = hostInventory.servicesById.jellyseerr;
   aurralService = hostInventory.servicesById.aurral;
   audiobookshelfService = hostInventory.servicesById.audiobookshelf;
@@ -23,7 +27,8 @@ in
   };
 
   imports = [
-    inputs.nixarr.nixosModules.default
+    "${nixarrSource}/nixarr"
+    inputs.vpnconfinement.nixosModules.default
     ./contract.nix
     ./aurral.nix
     ./backup.nix
