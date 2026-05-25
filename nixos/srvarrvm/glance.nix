@@ -9,20 +9,20 @@ let
   fanaHostConfig = outputs.nixosConfigurations.prox-fanavm.config;
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
   srvarrHttpsServices = config.host.internalHttps.services;
-  srvarrPorts = {
-    inherit (config.host.srvarr.services)
-      aurral
-      audiobookshelf
-      bazarr
-      lidarr
-      prowlarr
-      radarr
-      sabnzbd
-      shelfmark
-      sonarr
-      transmission
-      ;
-  };
+  srvarrPortFor =
+    serviceId:
+    {
+      aurral = config.host.srvarr.services.aurral.port;
+      audiobookshelf = config.services.audiobookshelf.port;
+      bazarr = config.services.bazarr.listenPort;
+      lidarr = config.services.lidarr.settings.server.port;
+      prowlarr = config.services.prowlarr.settings.server.port;
+      radarr = config.services.radarr.settings.server.port;
+      sabnzbd = config.host.srvarr.services.sabnzbd.port;
+      shelfmark = config.services.shelfmark.environment.FLASK_PORT;
+      sonarr = config.services.sonarr.settings.server.port;
+      transmission = config.services.transmission.settings.rpc-port;
+    }.${serviceId};
   httpsServiceFor =
     service:
     if
@@ -67,7 +67,7 @@ let
     else
       service
       // {
-        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}.port}/";
+        url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
   ) hostInventory.services;
 in

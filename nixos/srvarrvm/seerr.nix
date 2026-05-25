@@ -13,7 +13,6 @@ in
   services.seerr = {
     enable = true;
     configDir = cfg.stateDir;
-    port = cfg.port;
   };
 
   system.activationScripts.migrate-seerr-user = {

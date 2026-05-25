@@ -54,7 +54,6 @@ in
       rpc-authentication-required = false;
       rpc-bind-address = wgNamespaceAddress;
       rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
-      rpc-port = cfg.port;
       rpc-whitelist = "127.0.0.1,192.168.*,10.*";
       rpc-whitelist-enabled = true;
       script-torrent-done-enabled = false;
@@ -122,21 +121,21 @@ in
     }
   ];
 
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.host.srvarr.services.transmission.port ];
+  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.services.transmission.settings.rpc-port ];
 
   # Keep the host-local helper on loopback, but target the actual namespace
   # address directly instead of the old fixed proxy address.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.host.srvarr.services.transmission.port}" = {
+  services.nginx.virtualHosts."127.0.0.1:${toString config.services.transmission.settings.rpc-port}" = {
     listen = lib.mkForce [
       {
         addr = "127.0.0.1";
-        port = config.host.srvarr.services.transmission.port;
+        port = config.services.transmission.settings.rpc-port;
       }
     ];
     locations."/" = {
       recommendedProxySettings = true;
       proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.host.srvarr.services.transmission.port}";
+      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.services.transmission.settings.rpc-port}";
     };
   };
 
@@ -144,7 +143,7 @@ in
     enable = true;
     serverName = "tmission.${hostInventory.site.lan.domain}";
     serverAliases = [ "tmission" ];
-    upstream = "http://127.0.0.1:${toString config.host.srvarr.services.transmission.port}";
+    upstream = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}";
     recommendedProxySettings = false;
     # Transmission RPC rejects the public LAN hostname, so preserve the
     # existing whitelisted host on the upstream hop.

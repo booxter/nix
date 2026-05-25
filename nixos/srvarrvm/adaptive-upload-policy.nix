@@ -28,7 +28,7 @@ let
   stateDir = dirOf stateFile;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/adaptive-upload-policy.prom";
-  transmissionRpcUrl = "http://127.0.0.1:${toString config.host.srvarr.services.transmission.port}/transmission/rpc";
+  transmissionRpcUrl = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}/transmission/rpc";
   jellyfinUploadPolicyMtlsClient =
     config.host.observability.client.mtlsClients."jellyfin-upload-policy";
 in

@@ -59,7 +59,6 @@ in
         log.analyticsEnabled = false;
         server = {
           bindaddress = "127.0.0.1";
-          port = config.host.srvarr.services.radarr.port;
         };
         update = {
           automatically = false;
@@ -76,7 +75,6 @@ in
         log.analyticsEnabled = false;
         server = {
           bindaddress = "127.0.0.1";
-          port = config.host.srvarr.services.sonarr.port;
         };
         update = {
           automatically = false;
@@ -93,7 +91,6 @@ in
         log.analyticsEnabled = false;
         server = {
           bindaddress = "127.0.0.1";
-          port = config.host.srvarr.services.lidarr.port;
         };
         update = {
           automatically = false;
@@ -107,7 +104,6 @@ in
         log.analyticsEnabled = false;
         server = {
           bindaddress = "127.0.0.1";
-          port = config.host.srvarr.services.prowlarr.port;
         };
         update = {
           automatically = false;
@@ -161,27 +157,27 @@ in
   host.internalHttps.services = {
     radarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.radarr.port}";
+      upstream = "http://127.0.0.1:${toString config.services.radarr.settings.server.port}";
     };
     sonarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.sonarr.port}";
+      upstream = "http://127.0.0.1:${toString config.services.sonarr.settings.server.port}";
     };
     lidarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.lidarr.port}";
+      upstream = "http://127.0.0.1:${toString config.services.lidarr.settings.server.port}";
     };
     bazarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.bazarr.port}";
+      upstream = "http://127.0.0.1:${toString config.services.bazarr.listenPort}";
     };
     prowlarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.prowlarr.port}";
+      upstream = "http://127.0.0.1:${toString config.services.prowlarr.settings.server.port}";
     };
     jellyseerr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.seerr.port}";
+      upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
       serverAliases = [ jellyseerrService.publicHost ];
       mtls.enable = true;
     };
@@ -193,13 +189,13 @@ in
     };
     audiobookshelf = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.audiobookshelf.port}";
+      upstream = "http://127.0.0.1:${toString config.services.audiobookshelf.port}";
       serverAliases = [ audiobookshelfService.publicHost ];
       mtls.enable = true;
     };
     shelfmark = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.shelfmark.port}";
+      upstream = "http://127.0.0.1:${toString config.services.shelfmark.environment.FLASK_PORT}";
       serverAliases = [ shelfmarkService.publicHost ];
       mtls.enable = true;
     };

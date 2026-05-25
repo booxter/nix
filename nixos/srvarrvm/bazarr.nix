@@ -12,7 +12,6 @@ in
     enable = true;
     dataDir = cfg.stateDir;
     group = cfg.group;
-    listenPort = cfg.port;
     user = cfg.user;
   };
 
