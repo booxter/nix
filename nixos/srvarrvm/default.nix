@@ -56,25 +56,9 @@ in
       enable = true;
       openFirewall = false;
     };
-    prowlarr = {
-      enable = true;
-      openFirewall = false;
-    };
-    radarr = {
-      enable = true;
-      openFirewall = false;
-    };
-    lidarr = {
-      enable = true;
-      openFirewall = false;
-    };
     shelfmark = {
       enable = true;
       host = "127.0.0.1";
-      openFirewall = false;
-    };
-    sonarr = {
-      enable = true;
       openFirewall = false;
     };
     bazarr = {
@@ -94,10 +78,120 @@ in
   };
 
   services = {
-    radarr.settings.server.bindaddress = "127.0.0.1";
-    sonarr.settings.server.bindaddress = "127.0.0.1";
-    lidarr.settings.server.bindaddress = "127.0.0.1";
-    prowlarr.settings.server.bindaddress = "127.0.0.1";
+    radarr = {
+      enable = true;
+      dataDir = config.host.srvarr.services.radarr.stateDir;
+      user = config.host.srvarr.services.radarr.user;
+      group = config.host.srvarr.services.radarr.group;
+      openFirewall = false;
+      settings = {
+        log.analyticsEnabled = false;
+        server = {
+          bindaddress = "127.0.0.1";
+          port = config.host.srvarr.services.radarr.port;
+        };
+        update = {
+          automatically = false;
+          mechanism = "external";
+        };
+      };
+      environmentFiles = [ ];
+    };
+    sonarr = {
+      enable = true;
+      dataDir = config.host.srvarr.services.sonarr.stateDir;
+      user = config.host.srvarr.services.sonarr.user;
+      group = config.host.srvarr.services.sonarr.group;
+      openFirewall = false;
+      settings = {
+        log.analyticsEnabled = false;
+        server = {
+          bindaddress = "127.0.0.1";
+          port = config.host.srvarr.services.sonarr.port;
+        };
+        update = {
+          automatically = false;
+          mechanism = "external";
+        };
+      };
+      environmentFiles = [ ];
+    };
+    lidarr = {
+      enable = true;
+      dataDir = config.host.srvarr.services.lidarr.stateDir;
+      user = config.host.srvarr.services.lidarr.user;
+      group = config.host.srvarr.services.lidarr.group;
+      openFirewall = false;
+      settings = {
+        log.analyticsEnabled = false;
+        server = {
+          bindaddress = "127.0.0.1";
+          port = config.host.srvarr.services.lidarr.port;
+        };
+        update = {
+          automatically = false;
+          mechanism = "external";
+        };
+      };
+      environmentFiles = [ ];
+    };
+    prowlarr = {
+      enable = true;
+      openFirewall = false;
+      settings = {
+        log.analyticsEnabled = false;
+        server = {
+          bindaddress = "127.0.0.1";
+          port = config.host.srvarr.services.prowlarr.port;
+        };
+        update = {
+          automatically = false;
+          mechanism = "external";
+        };
+      };
+      environmentFiles = [ ];
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d '${config.host.srvarr.services.prowlarr.stateDir}' 0700 ${config.host.srvarr.services.prowlarr.user} root - -"
+  ];
+
+  systemd.services.prowlarr.serviceConfig = {
+    # `User` and `Group` override `DynamicUser = true` from the NixOS Prowlarr
+    # module because a matching static account exists.
+    User = config.host.srvarr.services.prowlarr.user;
+    Group = config.host.srvarr.services.prowlarr.group;
+    ExecStart = inputs.nixpkgs.lib.mkForce "${config.services.prowlarr.package}/bin/Prowlarr -nobrowser -data=${config.host.srvarr.services.prowlarr.stateDir}";
+    ReadWritePaths = [ config.host.srvarr.services.prowlarr.stateDir ];
+  };
+
+  users = {
+    groups = {
+      ${config.host.srvarr.services.prowlarr.group}.gid = 287;
+      lidarr-api = { };
+      prowlarr-api = { };
+      radarr-api = { };
+      sonarr-api = { };
+    };
+    users = {
+      ${config.host.srvarr.services.prowlarr.user} = {
+        isSystemUser = true;
+        group = config.host.srvarr.services.prowlarr.group;
+        home = "/var/empty";
+        uid = 293;
+        extraGroups = [ "prowlarr-api" ];
+      };
+      ${config.host.srvarr.services.radarr.user} = {
+        isSystemUser = true;
+        extraGroups = [ "radarr-api" ];
+      };
+      ${config.host.srvarr.services.sonarr.user} = {
+        isSystemUser = true;
+        extraGroups = [ "sonarr-api" ];
+      };
+      ${config.host.srvarr.services.lidarr.user}.isSystemUser = true;
+    };
   };
 
   # Both VPN-confined UIs are now fronted either by localhost-only proxies or
