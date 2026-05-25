@@ -159,6 +159,12 @@ in
       "--smartctl.device-include=^(sd[a-z]+)$"
     ];
   };
+  # Resolve the "sd" device group before the exporter service starts so the
+  # upstream DeviceAllow=block-sd rule is installed even on NVMe-root hosts.
+  systemd.services.prometheus-smartctl-exporter = {
+    wants = [ "modprobe@sd_mod.service" ];
+    after = [ "modprobe@sd_mod.service" ];
+  };
 
   host.observability.client.prometheusMtlsEndpoints.smartctl = {
     enable = true;
