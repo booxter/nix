@@ -9,7 +9,7 @@
 let
   beastSpec = hostInventory.nixosHostSpecsByName.beast;
   frameSpec = hostInventory.nixosHostSpecsByName.frame;
-  internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
+  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   lan = hostInventory.site.lan;
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
@@ -116,6 +116,7 @@ let
     }
   ];
   blackboxModules = import ../../lib/prometheus-blackbox-modules.nix;
+  alertmanagerPort = 9093;
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
@@ -136,6 +137,7 @@ let
   retentionHours = retentionDays * 24;
   prometheusRetention = "${toString retentionDays}d";
   lokiRetention = "${toString retentionHours}h";
+  grafanaAlertmanagerUid = "P3A7B7B4C0D9E6F1";
   grafanaPrometheusUid = "PBFA97CFB590B2093";
   grafanaLokiUid = "P8E80F9AEF21F6940";
   nutExporterVariables = lib.concatStringsSep "," [
@@ -417,6 +419,13 @@ in
     mode = "0400";
     restartUnits = [ "alertmanager.service" ];
   };
+  sops.templates."alertmanager.env" = {
+    mode = "0400";
+    content = ''
+      TELEGRAM_CHAT_ID=${config.sops.placeholder.grafanaAlertingTelegramChatId}
+    '';
+    restartUnits = [ "alertmanager.service" ];
+  };
   sops.secrets.prometheusScrapeNodeClientCrt = {
     key = "prometheus/scrape_node/client_crt";
     owner = "prometheus";
@@ -467,6 +476,22 @@ in
             access = "proxy";
             url = "http://127.0.0.1:${toString prometheusPort}";
             isDefault = true;
+            jsonData = {
+              manageAlerts = true;
+              alertmanagerUid = grafanaAlertmanagerUid;
+            };
+            editable = false;
+          }
+          {
+            name = "Alertmanager";
+            uid = grafanaAlertmanagerUid;
+            type = "alertmanager";
+            access = "proxy";
+            url = "http://127.0.0.1:${toString alertmanagerPort}";
+            jsonData = {
+              implementation = "prometheus";
+              handleGrafanaManagedAlerts = false;
+            };
             editable = false;
           }
           {
@@ -475,6 +500,9 @@ in
             type = "loki";
             access = "proxy";
             url = "http://127.0.0.1:${toString lokiPort}";
+            jsonData = {
+              manageAlerts = false;
+            };
             editable = false;
           }
         ];

@@ -13,7 +13,7 @@
   ...
 }:
 let
-  internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
+  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   decisionIntervalSecondsInt = 5;
   decisionIntervalSeconds = toString decisionIntervalSecondsInt;
   applierIntervalSecondsInt = 5;

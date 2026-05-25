@@ -163,10 +163,15 @@ helpers.forAllSystems (
     };
     fanavm-alertmanager-config = mkCheck {
       name = "fanavm-alertmanager-config";
-      nativeBuildInputs = [ pkgs.prometheus-alertmanager ];
+      nativeBuildInputs = with pkgs; [
+        gettext
+        prometheus-alertmanager
+      ];
       extraFileset = [ ./nixos/fanavm/monitoring ];
       buildPhase = ''
-        amtool check-config ${fanavmMonitoring.alertmanager.configRelative}
+        export TELEGRAM_CHAT_ID='-1000000000000'
+        envsubst < ${fanavmMonitoring.alertmanager.configRelative} > alertmanager.rendered.yml
+        amtool check-config alertmanager.rendered.yml
       '';
     };
     fanavm-prometheus-alerting = mkCheck {

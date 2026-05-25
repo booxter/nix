@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.internalHttps;
-  internalPkiRootCaPath = ../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
+  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
   enabledServerNames = builtins.concatMap (service: [ service.serverName ] ++ service.serverAliases) (
     builtins.attrValues enabledServices

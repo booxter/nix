@@ -79,6 +79,17 @@
         src = inputs.jellarr;
       };
 
+      # Backport Grafana fix for /alerting/groups showing a bogus 404 header.
+      # Upstream: https://github.com/grafana/grafana/pull/123286
+      grafana = prev.grafana.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (prev.fetchpatch {
+            url = "https://github.com/grafana/grafana/pull/123286.patch";
+            hash = "sha256-G9kIyw10aMq/SlSQ9kjdvZWtPFSwxIOnTygcaAmsHic=";
+          })
+        ];
+      });
+
       jellyfin = prev.jellyfin.overrideAttrs (old: {
         patches = old.patches or [ ] ++ [
           # Catch websocket keepalive send races.
