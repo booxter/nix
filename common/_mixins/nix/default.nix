@@ -1,4 +1,5 @@
 {
+  inputs,
   lib,
   pkgs,
   outputs,
@@ -54,6 +55,7 @@
 
   nixpkgs = {
     overlays = [
+      inputs.nur.overlays.default
       outputs.overlays.additions
       outputs.overlays.modifications
     ];
