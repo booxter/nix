@@ -408,20 +408,14 @@ in
     owner = "grafana";
     group = "grafana";
     mode = "0400";
-    restartUnits = [
-      "alertmanager.service"
-      "grafana.service"
-    ];
+    restartUnits = [ "alertmanager.service" ];
   };
   sops.secrets.grafanaAlertingTelegramChatId = {
     key = "grafana/alerting/telegram/chat_id";
     owner = "grafana";
     group = "grafana";
     mode = "0400";
-    restartUnits = [
-      "alertmanager.service"
-      "grafana.service"
-    ];
+    restartUnits = [ "alertmanager.service" ];
   };
   sops.secrets.prometheusScrapeNodeClientCrt = {
     key = "prometheus/scrape_node/client_crt";
@@ -437,27 +431,6 @@ in
     mode = "0400";
     restartUnits = [ "prometheus.service" ];
   };
-  sops.templates."grafana-alerting-contact-points.yaml" = {
-    owner = "grafana";
-    group = "grafana";
-    mode = "0400";
-    content = ''
-      apiVersion: 1
-      contactPoints:
-        - orgId: 1
-          name: telegram-home
-          receivers:
-            - uid: telegram-home
-              type: telegram
-              disableResolveMessage: false
-              settings:
-                bottoken: "${config.sops.placeholder.grafanaAlertingTelegramBotToken}"
-                chatid: "${config.sops.placeholder.grafanaAlertingTelegramChatId}"
-                uploadImage: false
-    '';
-    restartUnits = [ "grafana.service" ];
-  };
-
   # Grafana provides the UI for dashboards and exploring metrics and logs.
   services.grafana = {
     enable = true;
@@ -517,20 +490,6 @@ in
             editable = false;
             updateIntervalSeconds = 30;
             options.path = ./grafana/dashboards;
-          }
-        ];
-      };
-      alerting.contactPoints.path = config.sops.templates."grafana-alerting-contact-points.yaml".path;
-      alerting.policies.settings = {
-        apiVersion = 1;
-        policies = [
-          {
-            orgId = 1;
-            receiver = "telegram-home";
-            group_by = [ "alertname" ];
-            group_wait = "5s";
-            group_interval = "5m";
-            repeat_interval = "12h";
           }
         ];
       };
