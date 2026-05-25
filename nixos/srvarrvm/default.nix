@@ -29,13 +29,17 @@ in
   imports = [
     "${nixarrSource}/nixarr"
     inputs.vpnconfinement.nixosModules.default
+    ./audiobookshelf.nix
     ./contract.nix
     ./aurral.nix
     ./backup.nix
+    ./bazarr.nix
     ./glance.nix
     ./nfs.nix
     ./sabnzbd.nix
     ./sabnzbd-exporter.nix
+    ./seerr.nix
+    ./shelfmark.nix
     ./transmission.nix
     ./transmission-torrent-cleaner.nix
     ./transmission-prioritizer.nix
@@ -52,29 +56,6 @@ in
 
   nixarr = {
     enable = true;
-    seerr = {
-      enable = true;
-      openFirewall = false;
-    };
-    shelfmark = {
-      enable = true;
-      host = "127.0.0.1";
-      openFirewall = false;
-    };
-    bazarr = {
-      enable = true;
-      # TODO: Upstream a nixarr.bazarr bind-address/host knob. The current
-      # nixarr Bazarr module only passes --config/--port/--no-update, so we
-      # keep the process bound broadly for now and rely on the firewall plus
-      # the HTTPS frontend to retire plain LAN access.
-      openFirewall = false;
-    };
-    audiobookshelf = {
-      enable = true;
-      host = "127.0.0.1";
-      openFirewall = false;
-    };
-
   };
 
   services = {
