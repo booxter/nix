@@ -92,3 +92,30 @@ groups:
         annotations:
           summary: "Beast HBA failed: controller {{ $labels.controller }}"
           description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported failed state for 5 minutes."
+      - alert: BeastHBADriveMissing
+        expr: host_observability_hba_drive_visible{instance="beast"} < 1
+        for: 10m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast HBA drive missing: bay {{ $labels.bay }}"
+          description: "The expected drive in bay {{ $labels.bay }} on beast is no longer visible to the HBA. Serial: {{ $labels.serial }}. Model: {{ $labels.model }}."
+      - alert: BeastHBAMemoryCorrectableErrors
+        expr: host_observability_hba_memory_correctable_errors{instance="beast"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast HBA memory correctable errors: controller {{ $labels.controller }}"
+          description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported correctable memory errors for 10 minutes."
+      - alert: BeastHBAMemoryUncorrectableErrors
+        expr: host_observability_hba_memory_uncorrectable_errors{instance="beast"} > 0
+        for: 10m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast HBA memory uncorrectable errors: controller {{ $labels.controller }}"
+          description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported uncorrectable memory errors for 10 minutes."

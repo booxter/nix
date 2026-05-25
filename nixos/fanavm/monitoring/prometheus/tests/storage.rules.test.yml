@@ -241,11 +241,23 @@ tests:
         values: "0x22"
       - series: 'host_observability_hba_failed{instance="beast",controller="0"}'
         values: "0x12"
+      - series: 'host_observability_hba_drive_visible{instance="beast",controller="0",bay="1",bay_row="0",bay_col="0",model="ST24000NM000H-3KS103",serial="ZYD01W48"}'
+        values: "1x22"
+      - series: 'host_observability_hba_memory_correctable_errors{instance="beast",controller="0"}'
+        values: "0x22"
+      - series: 'host_observability_hba_memory_uncorrectable_errors{instance="beast",controller="0"}'
+        values: "0x22"
     alert_rule_test:
       - eval_time: 10m
         alertname: BeastHBAControllerDegraded
       - eval_time: 5m
         alertname: BeastHBAControllerFailed
+      - eval_time: 10m
+        alertname: BeastHBADriveMissing
+      - eval_time: 10m
+        alertname: BeastHBAMemoryCorrectableErrors
+      - eval_time: 10m
+        alertname: BeastHBAMemoryUncorrectableErrors
 
   - interval: 30s
     input_series:
@@ -286,3 +298,67 @@ tests:
             exp_annotations:
               summary: "Beast HBA failed: controller 0"
               description: "The Broadcom HBA controller 0 on beast has reported failed state for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_drive_visible{instance="beast",controller="",bay="1",bay_row="0",bay_col="0",model="ST24000NM000H-3KS103",serial="ZYD01W48"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: BeastHBADriveMissing
+      - eval_time: 10m
+        alertname: BeastHBADriveMissing
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastHBADriveMissing
+              bay: "1"
+              bay_col: "0"
+              bay_row: "0"
+              category: storage
+              instance: beast
+              model: ST24000NM000H-3KS103
+              serial: ZYD01W48
+              severity: critical
+            exp_annotations:
+              summary: "Beast HBA drive missing: bay 1"
+              description: "The expected drive in bay 1 on beast is no longer visible to the HBA. Serial: ZYD01W48. Model: ST24000NM000H-3KS103."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_memory_correctable_errors{instance="beast",controller="0"}'
+        values: "1x20 0x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: BeastHBAMemoryCorrectableErrors
+      - eval_time: 10m
+        alertname: BeastHBAMemoryCorrectableErrors
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastHBAMemoryCorrectableErrors
+              category: storage
+              controller: "0"
+              instance: beast
+              severity: warning
+            exp_annotations:
+              summary: "Beast HBA memory correctable errors: controller 0"
+              description: "The Broadcom HBA controller 0 on beast has reported correctable memory errors for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_memory_uncorrectable_errors{instance="beast",controller="0"}'
+        values: "1x20 0x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: BeastHBAMemoryUncorrectableErrors
+      - eval_time: 10m
+        alertname: BeastHBAMemoryUncorrectableErrors
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastHBAMemoryUncorrectableErrors
+              category: storage
+              controller: "0"
+              instance: beast
+              severity: critical
+            exp_annotations:
+              summary: "Beast HBA memory uncorrectable errors: controller 0"
+              description: "The Broadcom HBA controller 0 on beast has reported uncorrectable memory errors for 10 minutes."
