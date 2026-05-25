@@ -1,0 +1,41 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index 496de842..228c4a18 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -2048,6 +2048,15 @@ version = "1.3.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "42703706b716c37f96a77aea830392ad231f44c9e9a67872fa5548707e11b11c"
+ 
++[[package]]
++name = "fsevent-sys"
++version = "4.1.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "76ee7a02da4d231650c7cea31349b889be2f45ddb3ef3032d2ec8185f6313fd2"
++dependencies = [
++ "libc",
++]
++
+ [[package]]
+ name = "funty"
+ version = "2.0.0"
+@@ -3146,6 +3155,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "3163f59cd3fa0e9ef8c32f242966a7b9994fd7378366099593e0e73077cd8c97"
+ dependencies = [
+  "bitflags 2.9.1",
++ "fsevent-sys",
+  "inotify",
+  "kqueue",
+  "libc",
+diff --git a/client/Cargo.toml b/client/Cargo.toml
+index 6abdfb36..caf8e8e9 100644
+--- a/client/Cargo.toml
++++ b/client/Cargo.toml
+@@ -24,7 +24,7 @@ futures = "0.3.31"
+ humantime = "2.2.0"
+ indicatif = "0.18.0"
+ lazy_static = "1.5.0"
+-notify = { version = "8.1.0", default-features = false, features = ["macos_kqueue"] }
++notify = { version = "8.1.0", default-features = false, features = ["macos_fsevent"] }
+ regex = "1.11.1"
+ reqwest = { version = "0.12.22", default-features = false, features = ["json", "rustls-tls", "rustls-tls-native-roots", "stream"] }
+ serde = { version = "1.0.219", features = ["derive"] }

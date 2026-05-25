@@ -119,6 +119,27 @@
         ];
       });
 
+      # Use the upstream macOS FSEvents switch for Attic to fix `watch-store`
+      # reliability on Darwin while testing the async push issue locally.
+      attic-client =
+        if prev.stdenv.hostPlatform.isDarwin then
+          prev.attic-client.overrideAttrs (
+            old:
+            let
+              atticPatch = ../lib/patches/attic-client-use-fsevents.patch;
+            in
+            {
+              patches = (old.patches or [ ]) ++ [ atticPatch ];
+              cargoDeps = prev.rustPlatform.fetchCargoVendor {
+                inherit (old) src;
+                patches = [ atticPatch ];
+                hash = "sha256-LqE4jOIasxIG4DAhgZJMlTSyt/a900QR06wBFtRNRO8=";
+              };
+            }
+          )
+        else
+          prev.attic-client;
+
       # Torrent-client jobs can legitimately sit queued/checking without progress
       # or message churn for much longer than 5 minutes. Keep Shelfmark's stall
       # canceller for direct downloads, but do not auto-cancel torrent jobs.
