@@ -15,7 +15,7 @@ in
     port = sabnzbdExporterInternalPort;
     servers = [
       {
-        baseUrl = "http://127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}";
+        baseUrl = "http://127.0.0.1:${toString config.host.srvarr.services.sabnzbd.port}";
         apiKeyFile = sabnzbdApiKeyFile;
       }
     ];
@@ -35,7 +35,7 @@ in
     script = ''
       install -d -m 0700 /run/prometheus-sabnzbd-exporter
       umask 077
-      sed -n 's/^api_key = //p' ${config.nixarr.sabnzbd.stateDir}/sabnzbd.ini > ${sabnzbdApiKeyFile}
+      sed -n 's/^api_key = //p' ${config.host.srvarr.services.sabnzbd.stateDir}/sabnzbd.ini > ${sabnzbdApiKeyFile}
       test -s ${sabnzbdApiKeyFile}
     '';
   };

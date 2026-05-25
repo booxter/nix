@@ -34,7 +34,7 @@ in
           (pkgs.python3.withPackages (ps: [ ps.configobj ]))
         ];
         text = ''
-          cfg_file="${config.nixarr.sabnzbd.stateDir}/sabnzbd.ini"
+          cfg_file="${config.host.srvarr.services.sabnzbd.stateDir}/sabnzbd.ini"
           if [ ! -f "$cfg_file" ]; then
             exit 0
           fi
@@ -42,7 +42,7 @@ in
           from pathlib import Path
           from configobj import ConfigObj
 
-          cfg_path = Path("${config.nixarr.sabnzbd.stateDir}/sabnzbd.ini")
+          cfg_path = Path("${config.host.srvarr.services.sabnzbd.stateDir}/sabnzbd.ini")
           cfg = ConfigObj(str(cfg_path))
           cfg.setdefault("misc", {})
           cfg["misc"]["host"] = "${wgNamespaceAddress}"
@@ -56,26 +56,26 @@ in
       (lib.getExe sabnzbdSetHost)
     ];
 
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.nixarr.sabnzbd.guiPort ];
+  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.host.srvarr.services.sabnzbd.port ];
 
   # nixarr hardcodes sabnzbd nginx proxy to 192.168.15.1; keep the host-local
   # helper on loopback, but target the actual namespace address directly.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}" = {
+  services.nginx.virtualHosts."127.0.0.1:${toString config.host.srvarr.services.sabnzbd.port}" = {
     listen = lib.mkForce [
       {
         addr = "127.0.0.1";
-        port = config.nixarr.sabnzbd.guiPort;
+        port = config.host.srvarr.services.sabnzbd.port;
       }
     ];
     locations."/" = {
       recommendedProxySettings = true;
       proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.sabnzbd.guiPort}";
+      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.host.srvarr.services.sabnzbd.port}";
     };
   };
 
   host.internalHttps.services.sabnzbd = {
     enable = true;
-    upstream = "http://127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}";
+    upstream = "http://127.0.0.1:${toString config.host.srvarr.services.sabnzbd.port}";
   };
 }

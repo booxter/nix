@@ -84,20 +84,20 @@ in
     };
   };
 
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.nixarr.transmission.uiPort ];
+  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.host.srvarr.services.transmission.port ];
 
   # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}" = {
+  services.nginx.virtualHosts."127.0.0.1:${toString config.host.srvarr.services.transmission.port}" = {
     listen = lib.mkForce [
       {
         addr = "127.0.0.1";
-        port = config.nixarr.transmission.uiPort;
+        port = config.host.srvarr.services.transmission.port;
       }
     ];
     locations."/" = {
       recommendedProxySettings = true;
       proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
+      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.host.srvarr.services.transmission.port}";
     };
   };
 
@@ -105,7 +105,7 @@ in
     enable = true;
     serverName = "tmission.${hostInventory.site.lan.domain}";
     serverAliases = [ "tmission" ];
-    upstream = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}";
+    upstream = "http://127.0.0.1:${toString config.host.srvarr.services.transmission.port}";
     recommendedProxySettings = false;
     # Transmission RPC rejects the public LAN hostname, so preserve the
     # existing whitelisted host on the upstream hop.

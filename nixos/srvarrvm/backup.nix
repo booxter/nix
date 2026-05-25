@@ -1,10 +1,11 @@
 {
+  config,
   lib,
   pkgs,
   ...
 }:
 let
-  stateRoot = "/data/.state/nixarr";
+  stateRoot = config.host.srvarr.stateDir;
   backupPaths = [ stateRoot ];
   seerrConfigDir = "${stateRoot}/seerr";
   seerrBackupDir = "${stateRoot}/seerr-backup/latest";

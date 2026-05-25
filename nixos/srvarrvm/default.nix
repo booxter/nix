@@ -24,6 +24,7 @@ in
 
   imports = [
     inputs.nixarr.nixosModules.default
+    ./contract.nix
     ./aurral.nix
     ./backup.nix
     ./glance.nix
@@ -102,45 +103,45 @@ in
   host.internalHttps.services = {
     radarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.nixarr.radarr.port}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.radarr.port}";
     };
     sonarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.nixarr.sonarr.port}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.sonarr.port}";
     };
     lidarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.nixarr.lidarr.port}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.lidarr.port}";
     };
     bazarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.nixarr.bazarr.port}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.bazarr.port}";
     };
     prowlarr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.nixarr.prowlarr.port}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.prowlarr.port}";
     };
     jellyseerr = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.seerr.port}";
       serverAliases = [ jellyseerrService.publicHost ];
       mtls.enable = true;
     };
     aurral = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.systemd.services.aurral.environment.PORT}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.aurral.port}";
       serverAliases = [ aurralService.publicHost ];
       mtls.enable = true;
     };
     audiobookshelf = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.nixarr.audiobookshelf.port}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.audiobookshelf.port}";
       serverAliases = [ audiobookshelfService.publicHost ];
       mtls.enable = true;
     };
     shelfmark = {
       enable = true;
-      upstream = "http://127.0.0.1:${toString config.nixarr.shelfmark.port}";
+      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.shelfmark.port}";
       serverAliases = [ shelfmarkService.publicHost ];
       mtls.enable = true;
     };

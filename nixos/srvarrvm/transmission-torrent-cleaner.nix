@@ -25,7 +25,7 @@
       ExecStart = lib.concatStringsSep " " [
         (lib.getExe pkgs.transmission-torrent-cleaner)
         "--rpc-url"
-        "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc"
+        "http://127.0.0.1:${toString config.host.srvarr.services.transmission.port}/transmission/rpc"
         "--trackers-file"
         config.sops.secrets.transmissionTrackerHosts.path
         "--minimum-age-days"

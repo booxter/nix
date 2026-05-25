@@ -50,10 +50,10 @@ let
   };
   publicServicePorts = {
     jellyfin = 8096;
-    jellyseerr = outputs.nixosConfigurations.prox-srvarrvm.config.services.seerr.port;
-    aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
-    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
-    shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
+    jellyseerr = outputs.nixosConfigurations.prox-srvarrvm.config.host.srvarr.services.seerr.port;
+    aurral = outputs.nixosConfigurations.prox-srvarrvm.config.host.srvarr.services.aurral.port;
+    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.host.srvarr.services.audiobookshelf.port;
+    shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.host.srvarr.services.shelfmark.port;
     vikunja = outputs.nixosConfigurations.prox-orgvm.config.services.vikunja.port;
   };
 in

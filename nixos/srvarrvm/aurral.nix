@@ -6,8 +6,8 @@
 }:
 let
   aurralPort = 3001;
-  mediaPath = config.nixarr.mediaDir;
-  aurralStateDir = "${config.nixarr.stateDir}/aurral";
+  mediaPath = config.host.srvarr.mediaDir;
+  aurralStateDir = config.host.srvarr.services.aurral.stateDir;
   aurralFlowDir = "${mediaPath}/library/flows";
   aurralUnitDeps = {
     Wants = [ "network-online.target" ];

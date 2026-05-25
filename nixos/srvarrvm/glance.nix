@@ -10,16 +10,18 @@ let
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
   srvarrHttpsServices = config.host.internalHttps.services;
   srvarrPorts = {
-    aurral = config.systemd.services.aurral.environment.PORT;
-    audiobookshelf = config.nixarr.audiobookshelf.port;
-    bazarr = config.nixarr.bazarr.port;
-    lidarr = config.nixarr.lidarr.port;
-    prowlarr = config.nixarr.prowlarr.port;
-    radarr = config.nixarr.radarr.port;
-    sabnzbd = config.nixarr.sabnzbd.guiPort;
-    shelfmark = config.nixarr.shelfmark.port;
-    sonarr = config.nixarr.sonarr.port;
-    transmission = config.nixarr.transmission.uiPort;
+    inherit (config.host.srvarr.services)
+      aurral
+      audiobookshelf
+      bazarr
+      lidarr
+      prowlarr
+      radarr
+      sabnzbd
+      shelfmark
+      sonarr
+      transmission
+      ;
   };
   httpsServiceFor =
     service:
@@ -65,7 +67,7 @@ let
     else
       service
       // {
-        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}}/";
+        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}.port}/";
       }
   ) hostInventory.services;
 in

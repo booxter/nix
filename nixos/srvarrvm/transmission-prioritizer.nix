@@ -16,7 +16,7 @@ let
   ];
   commonExecStart = [
     "--rpc-url"
-    "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc"
+    "http://127.0.0.1:${toString config.host.srvarr.services.transmission.port}/transmission/rpc"
     "--trackers-file"
     config.sops.secrets.transmissionTrackerHosts.path
     "--non-preferred-low-priority-ratio"

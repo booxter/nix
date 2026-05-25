@@ -15,16 +15,18 @@ let
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   localHttpsServices = config.host.internalHttps.services;
   srvarrPorts = {
-    aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
-    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
-    bazarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.bazarr.port;
-    lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;
-    prowlarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.prowlarr.port;
-    radarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.radarr.port;
-    sabnzbd = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sabnzbd.guiPort;
-    shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
-    sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
-    transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
+    inherit (outputs.nixosConfigurations.prox-srvarrvm.config.host.srvarr.services)
+      aurral
+      audiobookshelf
+      bazarr
+      lidarr
+      prowlarr
+      radarr
+      sabnzbd
+      shelfmark
+      sonarr
+      transmission
+      ;
   };
   srvarrHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
   srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
@@ -75,8 +77,8 @@ let
     else
       service
       // {
-        probeUrl = "http://${service.probeHost}:${toString srvarrPorts.${service.id}}${service.probePath}";
-        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}}/";
+        probeUrl = "http://${service.probeHost}:${toString srvarrPorts.${service.id}.port}${service.probePath}";
+        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}.port}/";
       }
   ) hostInventory.services;
   dnsProbeTargets = [
