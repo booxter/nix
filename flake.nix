@@ -32,7 +32,7 @@
     home-manager-25_11.url = "github:nix-community/home-manager/release-25.11";
     home-manager-25_11.inputs.nixpkgs.follows = "nixpkgs-25_11";
 
-    nixvim.url = "github:nix-community/nixvim";
+    nixvim.url = "github:nix-community/nixvim/nixos-26.05";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
