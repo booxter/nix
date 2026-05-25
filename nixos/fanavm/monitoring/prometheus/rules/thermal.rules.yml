@@ -1,0 +1,49 @@
+groups:
+  - name: thermal-health
+    interval: 30s
+    rules:
+      - alert: CPUTemperatureHigh
+        expr: max by(instance) ((node_thermal_zone_temp{job=~"node|node-mtls",host_class="hardware",type=~"cpu-thermal|x86_pkg_temp"} or node_hwmon_temp_celsius{job=~"node|node-mtls",host_class="hardware",chip=~"platform_coretemp_0|pci0000:00_0000:00:18_3",sensor="temp1"}) or host_observability_darwin_temperature_group_max_celsius{job=~"node|node-mtls",host_class="hardware",group="cpu"}) > 85
+        for: 10m
+        labels:
+          severity: warning
+          category: thermal
+        annotations:
+          summary: "CPU temperature high on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has sustained CPU/package temperature above 85C for 10 minutes."
+      - alert: StorageTemperatureHigh
+        expr: max by(instance) (node_hwmon_temp_celsius{job=~"node|node-mtls",host_class="hardware",chip=~"nvme_.*",sensor="temp1"} or host_observability_hba_temperature_celsius{job=~"node|node-mtls",host_class="hardware",sensor="roc"} or host_observability_darwin_temperature_group_max_celsius{job=~"node|node-mtls",host_class="hardware",group="storage"}) > 75
+        for: 10m
+        labels:
+          severity: warning
+          category: thermal
+        annotations:
+          summary: "Storage temperature high on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has sustained storage temperature above 75C for 10 minutes."
+      - alert: HBAThermalExportFailed
+        expr: host_observability_hba_collect_success{job=~"node|node-mtls",host_class="hardware"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: thermal
+        annotations:
+          summary: "HBA thermal export failed on {{ $labels.instance }} (controller {{ $labels.controller }})"
+          description: "The StorCLI-based HBA collector has not been exporting successfully for controller {{ $labels.controller }} on {{ $labels.instance }} for 10 minutes."
+      - alert: HDDTemperatureHigh
+        expr: smartctl_device_temperature{instance="beast",temperature_type="current",device=~"sd[a-z]+"} > 50
+        for: 30m
+        labels:
+          severity: warning
+          category: thermal
+        annotations:
+          summary: "HDD temperature high on beast"
+          description: "Drive {{ $labels.device }} on beast has sustained temperature above 50C for 30 minutes."
+      - alert: DarwinThermalExportFailed
+        expr: host_observability_darwin_ismc_collect_success{job=~"node|node-mtls",host_class="hardware"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: thermal
+        annotations:
+          summary: "Darwin thermal export failed on {{ $labels.instance }}"
+          description: "The iSMC-based thermal collector has not been exporting successfully on {{ $labels.instance }} for 10 minutes."

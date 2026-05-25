@@ -1,0 +1,35 @@
+rule_files:
+  - ../rules/service-scrapes.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'up{job="jellyfin",instance="beast"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ApplicationMetricsScrapeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="sabnzbd",instance="prox-srvarrvm"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: ApplicationMetricsScrapeDown
+      - eval_time: 5m
+        alertname: ApplicationMetricsScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: ApplicationMetricsScrapeDown
+              category: service
+              instance: prox-srvarrvm
+              job: sabnzbd
+              severity: warning
+            exp_annotations:
+              summary: "Application metrics scrape down: sabnzbd on prox-srvarrvm"
+              description: "Prometheus has been unable to scrape the sabnzbd metrics endpoint on prox-srvarrvm for 5 minutes."
+      - eval_time: 5m30s
+        alertname: ApplicationMetricsScrapeDown

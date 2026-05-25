@@ -1,0 +1,31 @@
+groups:
+  - name: fleet-health
+    interval: 30s
+    rules:
+      - alert: RootFilesystemUsageHigh
+        expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node|node-mtls",mountpoint="/",fstype!=""})) > 85
+        for: 30m
+        labels:
+          severity: warning
+          category: capacity
+        annotations:
+          summary: "Root filesystem usage high on {{ $labels.instance }}"
+          description: "The root filesystem on {{ $labels.instance }} has been above 85% used for 30 minutes."
+      - alert: RootFilesystemUsageCritical
+        expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node|node-mtls",mountpoint="/",fstype!=""})) > 95
+        for: 15m
+        labels:
+          severity: critical
+          category: capacity
+        annotations:
+          summary: "Root filesystem usage critical on {{ $labels.instance }}"
+          description: "The root filesystem on {{ $labels.instance }} has been above 95% used for 15 minutes."
+      - alert: HostUpgradeStale
+        expr: ((time() - node_nixos_upgrade_last_success_time_seconds{job=~"node|node-mtls"}) / 86400) > 14
+        for: 24h
+        labels:
+          severity: warning
+          category: maintenance
+        annotations:
+          summary: "NixOS upgrades stale on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has not completed a successful NixOS upgrade for more than 14 days."

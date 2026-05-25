@@ -370,6 +370,8 @@ let
     };
 in
 {
+  imports = [ ./monitoring ];
+
   assertions = [
     {
       assertion = remoteNixosNonMtlsNodeTargetNames == [ ];
@@ -406,14 +408,14 @@ in
     owner = "grafana";
     group = "grafana";
     mode = "0400";
-    restartUnits = [ "grafana.service" ];
+    restartUnits = [ "alertmanager.service" ];
   };
   sops.secrets.grafanaAlertingTelegramChatId = {
     key = "grafana/alerting/telegram/chat_id";
     owner = "grafana";
     group = "grafana";
     mode = "0400";
-    restartUnits = [ "grafana.service" ];
+    restartUnits = [ "alertmanager.service" ];
   };
   sops.secrets.prometheusScrapeNodeClientCrt = {
     key = "prometheus/scrape_node/client_crt";
@@ -429,27 +431,6 @@ in
     mode = "0400";
     restartUnits = [ "prometheus.service" ];
   };
-  sops.templates."grafana-alerting-contact-points.yaml" = {
-    owner = "grafana";
-    group = "grafana";
-    mode = "0400";
-    content = ''
-      apiVersion: 1
-      contactPoints:
-        - orgId: 1
-          name: telegram-home
-          receivers:
-            - uid: telegram-home
-              type: telegram
-              disableResolveMessage: false
-              settings:
-                bottoken: "${config.sops.placeholder.grafanaAlertingTelegramBotToken}"
-                chatid: "${config.sops.placeholder.grafanaAlertingTelegramChatId}"
-                uploadImage: false
-    '';
-    restartUnits = [ "grafana.service" ];
-  };
-
   # Grafana provides the UI for dashboards and exploring metrics and logs.
   services.grafana = {
     enable = true;
@@ -512,20 +493,6 @@ in
           }
         ];
       };
-      alerting.contactPoints.path = config.sops.templates."grafana-alerting-contact-points.yaml".path;
-      alerting.policies.settings = {
-        apiVersion = 1;
-        policies = [
-          {
-            orgId = 1;
-            receiver = "telegram-home";
-            group_by = [ "alertname" ];
-            group_wait = "5s";
-            group_interval = "5m";
-            repeat_interval = "12h";
-          }
-        ];
-      };
       alerting.rules.settings = {
         apiVersion = 1;
         deleteRules = [
@@ -533,298 +500,72 @@ in
             orgId = 1;
             uid = "dns_upstream_failures";
           }
+          {
+            orgId = 1;
+            uid = "dns_probe_down";
+          }
+          {
+            orgId = 1;
+            uid = "ups_exporter_down";
+          }
+          {
+            orgId = 1;
+            uid = "ups_on_battery";
+          }
+          {
+            orgId = 1;
+            uid = "ups_low_battery";
+          }
+          {
+            orgId = 1;
+            uid = "internal_pki_cert_missing";
+          }
+          {
+            orgId = 1;
+            uid = "internal_pki_cert_expiry_warning";
+          }
+          {
+            orgId = 1;
+            uid = "internal_pki_cert_expiry_critical";
+          }
+          {
+            orgId = 1;
+            uid = "public_tls_cert_expiry_warning";
+          }
+          {
+            orgId = 1;
+            uid = "public_tls_cert_expiry_critical";
+          }
+          {
+            orgId = 1;
+            uid = "pki_rotation_controller_failed";
+          }
+          {
+            orgId = 1;
+            uid = "pki_rotation_controller_stale";
+          }
+          {
+            orgId = 1;
+            uid = "thermal_cpu_hot";
+          }
+          {
+            orgId = 1;
+            uid = "thermal_storage_hot";
+          }
+          {
+            orgId = 1;
+            uid = "thermal_hba_export_failed";
+          }
+          {
+            orgId = 1;
+            uid = "thermal_hdd_hot";
+          }
+          {
+            orgId = 1;
+            uid = "darwin_ismc_export_failed";
+          }
         ];
         groups = [
-          {
-            orgId = 1;
-            name = "dns-health";
-            folder = "Fana";
-            interval = "30s";
-            rules = [
-              (mkGrafanaPromRule {
-                uid = "dns_probe_down";
-                title = "DNS Resolver Probe Down";
-                expr = "probe_success{job=\"blackbox-dns\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "2m";
-                annotations = {
-                  summary = "DNS probe down: {{ $labels.resolver_title }}";
-                  description = "Resolver {{ $labels.resolver_title }} is failing blackbox DNS probes from fana.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "dns";
-                };
-              })
-            ];
-          }
-          {
-            orgId = 1;
-            name = "thermal-health";
-            folder = "Fana";
-            interval = "30s";
-            rules = [
-              (mkGrafanaPromRule {
-                uid = "thermal_cpu_hot";
-                title = "CPU Temperature High";
-                expr = "max by(instance) ((node_thermal_zone_temp{job=~\"node|node-mtls\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",group=\"cpu\"})";
-                comparator = "gt";
-                threshold = 85;
-                forDuration = "10m";
-                annotations = {
-                  summary = "CPU temperature high on {{ $labels.instance }}";
-                  description = "{{ $labels.instance }} has sustained CPU/package temperature above 85C for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "thermal_storage_hot";
-                title = "Storage Temperature High";
-                expr = "max by(instance) (node_hwmon_temp_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",group=\"storage\"})";
-                comparator = "gt";
-                threshold = 75;
-                forDuration = "10m";
-                annotations = {
-                  summary = "Storage temperature high on {{ $labels.instance }}";
-                  description = "{{ $labels.instance }} has sustained storage temperature above 75C for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "thermal_hba_export_failed";
-                title = "HBA Thermal Export Failed";
-                expr = "host_observability_hba_collect_success{job=~\"node|node-mtls\",host_class=\"hardware\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "10m";
-                annotations = {
-                  summary = "HBA thermal export failed on {{ $labels.instance }} (controller {{ $labels.controller }})";
-                  description = "The StorCLI-based HBA collector has not been exporting successfully for controller {{ $labels.controller }} on {{ $labels.instance }} for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "thermal_hdd_hot";
-                title = "HDD Temperature High";
-                expr = "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"}";
-                comparator = "gt";
-                threshold = 50;
-                forDuration = "30m";
-                annotations = {
-                  summary = "HDD temperature high on beast";
-                  description = "Drive {{ $labels.device }} on beast has sustained temperature above 50C for 30 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "darwin_ismc_export_failed";
-                title = "Darwin Thermal Export Failed";
-                expr = "host_observability_darwin_ismc_collect_success{job=~\"node|node-mtls\",host_class=\"hardware\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "10m";
-                annotations = {
-                  summary = "Darwin thermal export failed on {{ $labels.instance }}";
-                  description = "The iSMC-based thermal collector has not been exporting successfully on {{ $labels.instance }} for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-            ];
-          }
-          {
-            orgId = 1;
-            name = "ups-health";
-            folder = "Fana";
-            interval = "30s";
-            rules = [
-              (mkGrafanaPromRule {
-                uid = "ups_exporter_down";
-                title = "UPS Exporter Down";
-                expr = "up{job=~\"nut-.*\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "5m";
-                annotations = {
-                  summary = "UPS exporter down: {{ $labels.job }}";
-                  description = "Prometheus has been unable to scrape {{ $labels.job }} for 5 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "ups";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "ups_on_battery";
-                title = "UPS On Battery";
-                expr = "network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=\"OB\"}";
-                comparator = "gt";
-                threshold = 0;
-                forDuration = "2m";
-                annotations = {
-                  summary = "UPS on battery: {{ $labels.ups }}";
-                  description = "UPS {{ $labels.ups }} on {{ $labels.job }} has been on battery for 2 minutes.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "ups";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "ups_low_battery";
-                title = "UPS Low Battery";
-                expr = "network_ups_tools_ups_status{job=~\"nut-.*\",ups=~\".+\",flag=\"LB\"}";
-                comparator = "gt";
-                threshold = 0;
-                forDuration = "1m";
-                annotations = {
-                  summary = "UPS low battery: {{ $labels.ups }}";
-                  description = "UPS {{ $labels.ups }} is reporting low battery.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "ups";
-                };
-              })
-            ];
-          }
-          {
-            orgId = 1;
-            name = "pki-health";
-            folder = "Fana";
-            interval = "30s";
-            rules = [
-              (mkGrafanaPromRule {
-                uid = "internal_pki_cert_missing";
-                title = "Internal PKI Cert Missing";
-                expr = "host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "10m";
-                annotations = {
-                  summary = "Managed PKI cert missing: {{ $labels.host }} / {{ $labels.cert_name }}";
-                  description = "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.category }}) is expected but missing or unparsable in the repo-managed PKI inventory.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "pki";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "internal_pki_cert_expiry_warning";
-                title = "Internal PKI Cert Expiring Soon";
-                expr = "host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"}";
-                comparator = "lt";
-                threshold = 30;
-                forDuration = "30m";
-                annotations = {
-                  summary = "Managed PKI cert expiring soon: {{ $labels.host }} / {{ $labels.cert_name }}";
-                  description = "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.category }}) has less than 30 days remaining.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "pki";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "internal_pki_cert_expiry_critical";
-                title = "Internal PKI Cert Expiring Critically Soon";
-                expr = "host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"}";
-                comparator = "lt";
-                threshold = 14;
-                forDuration = "30m";
-                annotations = {
-                  summary = "Managed PKI cert expiring critically soon: {{ $labels.host }} / {{ $labels.cert_name }}";
-                  description = "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.category }}) has less than 14 days remaining.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "pki";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "public_tls_cert_expiry_warning";
-                title = "Public TLS Cert Expiring Soon";
-                expr = "((probe_ssl_earliest_cert_expiry{job=\"blackbox-arr\",scope=\"external\"} - time()) / 86400)";
-                comparator = "lt";
-                threshold = 30;
-                forDuration = "30m";
-                annotations = {
-                  summary = "Public TLS cert expiring soon: {{ $labels.instance }}";
-                  description = "The public HTTPS endpoint {{ $labels.instance }} has less than 30 days remaining on its leaf certificate.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "pki";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "public_tls_cert_expiry_critical";
-                title = "Public TLS Cert Expiring Critically Soon";
-                expr = "((probe_ssl_earliest_cert_expiry{job=\"blackbox-arr\",scope=\"external\"} - time()) / 86400)";
-                comparator = "lt";
-                threshold = 14;
-                forDuration = "30m";
-                annotations = {
-                  summary = "Public TLS cert expiring critically soon: {{ $labels.instance }}";
-                  description = "The public HTTPS endpoint {{ $labels.instance }} has less than 14 days remaining on its leaf certificate.";
-                };
-                labels = {
-                  severity = "critical";
-                  category = "pki";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "pki_rotation_controller_failed";
-                title = "PKI Rotation Controller Failed";
-                expr = "host_observability_pki_rotation_last_success{job=\"node-mtls\",instance=\"prox-pkivm\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "2h";
-                annotations = {
-                  summary = "PKI rotation controller failed on prox-pkivm";
-                  description = "The most recent scheduled PKI rotation controller run on prox-pkivm did not complete successfully.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "pki";
-                };
-                noDataState = "OK";
-              })
-              (mkGrafanaPromRule {
-                uid = "pki_rotation_controller_stale";
-                title = "PKI Rotation Controller Stale";
-                expr = "((time() - host_observability_pki_rotation_last_run_timestamp_seconds{job=\"node-mtls\",instance=\"prox-pkivm\"}) / 3600)";
-                comparator = "gt";
-                threshold = 36;
-                forDuration = "2h";
-                annotations = {
-                  summary = "PKI rotation controller stale on prox-pkivm";
-                  description = "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "pki";
-                };
-                noDataState = "OK";
-              })
-            ];
-          }
         ];
       };
     };

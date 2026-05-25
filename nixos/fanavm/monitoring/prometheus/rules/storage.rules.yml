@@ -1,0 +1,148 @@
+groups:
+  - name: storage-health
+    interval: 30s
+    rules:
+      - alert: BeastDiskSMARTHealthFailed
+        expr: smartctl_device_smart_status{instance="beast",device=~"sd[a-z]+"} < 1
+        for: 15m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "SMART health failed on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported SMART health failure for 15 minutes."
+      - alert: BeastDiskPendingSectors
+        expr: smartctl_device_attribute{instance="beast",device=~"sd[a-z]+",attribute_name="Current_Pending_Sector",attribute_value_type="raw"} > 0
+        for: 15m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Pending sectors on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported current pending sectors for 15 minutes."
+      - alert: BeastDiskOfflineUncorrectable
+        expr: smartctl_device_attribute{instance="beast",device=~"sd[a-z]+",attribute_name="Offline_Uncorrectable",attribute_value_type="raw"} > 0
+        for: 15m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Offline uncorrectable sectors on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported offline uncorrectable sectors for 15 minutes."
+      - alert: BeastDiskReportedUncorrect
+        expr: smartctl_device_attribute{instance="beast",device=~"sd[a-z]+",attribute_name="Reported_Uncorrect",attribute_value_type="raw"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Reported uncorrectable errors on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported uncorrectable read or write errors for 15 minutes."
+      - alert: BeastDiskReallocatedSectorsHigh
+        expr: smartctl_device_attribute{instance="beast",device=~"sd[a-z]+",attribute_name="Reallocated_Sector_Ct",attribute_value_type="raw"} > 30
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Reallocated sectors high on beast: {{ $labels.device }}"
+          description: "Drive {{ $labels.device }} on beast has reported more than 30 reallocated sectors for 15 minutes."
+      - alert: BeastSMARTTelemetryMissingForDrive
+        expr: host_observability_disk_bay_info{instance="beast"} unless on(instance,device) smartctl_device_smart_status{instance="beast",device=~"sd[a-z]+"}
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "SMART telemetry missing on beast: bay {{ $labels.bay }}"
+          description: "The disk mapped to bay {{ $labels.bay }} on beast ({{ $labels.device }}) no longer has SMART telemetry even though the disk bay mapping is still present."
+      - alert: BeastRAIDDegraded
+        expr: host_observability_md_degraded{instance="beast"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast RAID degraded: {{ $labels.device }}"
+          description: "The md array {{ $labels.device }} on beast has reported degraded members for 5 minutes."
+      - alert: BeastRAIDBackgroundRecoveryActive
+        expr: host_observability_md_sync_active{instance="beast",action=~"recover|recovering|resync|reshape|frozen"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast RAID background work active: {{ $labels.device }} / {{ $labels.action }}"
+          description: "The md array {{ $labels.device }} on beast has had {{ $labels.action }} background work active for 15 minutes."
+      - alert: BeastVolume2UsageHigh
+        expr: 100 * (1 - node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"} / node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"}) > 90
+        for: 30m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast volume2 usage high"
+          description: "The /volume2 filesystem on beast has been above 90% used for 30 minutes."
+      - alert: BeastVolume2UsageCritical
+        expr: 100 * (1 - node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"} / node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"}) > 95
+        for: 15m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast volume2 usage critically high"
+          description: "The /volume2 filesystem on beast has been above 95% used for 15 minutes."
+      - alert: BeastBtrfsDeviceErrors
+        expr: increase(node_btrfs_device_errors_total{instance="beast",device="md127"}[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Btrfs device errors on beast: {{ $labels.type }}"
+          description: "The {{ $labels.type }} btrfs device error counter on {{ $labels.device }} for beast increased within the last 15 minutes."
+      - alert: BeastHBAControllerDegraded
+        expr: host_observability_hba_degraded{instance="beast"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast HBA degraded: controller {{ $labels.controller }}"
+          description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported degraded state for 10 minutes."
+      - alert: BeastHBAControllerFailed
+        expr: host_observability_hba_failed{instance="beast"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast HBA failed: controller {{ $labels.controller }}"
+          description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported failed state for 5 minutes."
+      - alert: BeastHBADriveMissing
+        expr: host_observability_hba_drive_visible{instance="beast"} < 1
+        for: 10m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast HBA drive missing: bay {{ $labels.bay }}"
+          description: "The expected drive in bay {{ $labels.bay }} on beast is no longer visible to the HBA. Serial: {{ $labels.serial }}. Model: {{ $labels.model }}."
+      - alert: BeastHBAMemoryCorrectableErrors
+        expr: host_observability_hba_memory_correctable_errors{instance="beast"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast HBA memory correctable errors: controller {{ $labels.controller }}"
+          description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported correctable memory errors for 10 minutes."
+      - alert: BeastHBAMemoryUncorrectableErrors
+        expr: host_observability_hba_memory_uncorrectable_errors{instance="beast"} > 0
+        for: 10m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast HBA memory uncorrectable errors: controller {{ $labels.controller }}"
+          description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported uncorrectable memory errors for 10 minutes."

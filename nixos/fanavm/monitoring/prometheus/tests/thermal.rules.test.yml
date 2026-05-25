@@ -1,0 +1,157 @@
+rule_files:
+  - ../rules/thermal.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini"}'
+        values: "80x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: CPUTemperatureHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_darwin_temperature_group_max_celsius{job="node-mtls",host_class="hardware",group="cpu",instance="mmini"}'
+        values: "90x20 80x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: CPUTemperatureHigh
+      - eval_time: 10m
+        alertname: CPUTemperatureHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: CPUTemperatureHigh
+              category: thermal
+              instance: mmini
+              severity: warning
+            exp_annotations:
+              summary: "CPU temperature high on mmini"
+              description: "mmini has sustained CPU/package temperature above 85C for 10 minutes."
+      - eval_time: 10m30s
+        alertname: CPUTemperatureHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_temperature_celsius{job="node-mtls",host_class="hardware",sensor="roc",instance="beast",controller="0"}'
+        values: "70x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: StorageTemperatureHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_temperature_celsius{job="node-mtls",host_class="hardware",sensor="roc",instance="beast",controller="0"}'
+        values: "80x20 70x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: StorageTemperatureHigh
+      - eval_time: 10m
+        alertname: StorageTemperatureHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: StorageTemperatureHigh
+              category: thermal
+              instance: beast
+              severity: warning
+            exp_annotations:
+              summary: "Storage temperature high on beast"
+              description: "beast has sustained storage temperature above 75C for 10 minutes."
+      - eval_time: 10m30s
+        alertname: StorageTemperatureHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_collect_success{job="node-mtls",host_class="hardware",instance="beast",controller="0"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: HBAThermalExportFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_collect_success{job="node-mtls",host_class="hardware",instance="beast",controller="0"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: HBAThermalExportFailed
+      - eval_time: 10m
+        alertname: HBAThermalExportFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: HBAThermalExportFailed
+              category: thermal
+              controller: "0"
+              host_class: hardware
+              instance: beast
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "HBA thermal export failed on beast (controller 0)"
+              description: "The StorCLI-based HBA collector has not been exporting successfully for controller 0 on beast for 10 minutes."
+      - eval_time: 10m30s
+        alertname: HBAThermalExportFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'smartctl_device_temperature{instance="beast",temperature_type="current",device="sda"}'
+        values: "45x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: HDDTemperatureHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'smartctl_device_temperature{instance="beast",temperature_type="current",device="sda"}'
+        values: "55x60 45x2"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: HDDTemperatureHigh
+      - eval_time: 30m
+        alertname: HDDTemperatureHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: HDDTemperatureHigh
+              category: thermal
+              device: sda
+              instance: beast
+              severity: warning
+              temperature_type: current
+            exp_annotations:
+              summary: "HDD temperature high on beast"
+              description: "Drive sda on beast has sustained temperature above 50C for 30 minutes."
+      - eval_time: 30m30s
+        alertname: HDDTemperatureHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_darwin_ismc_collect_success{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: DarwinThermalExportFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_darwin_ismc_collect_success{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: DarwinThermalExportFailed
+      - eval_time: 10m
+        alertname: DarwinThermalExportFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: DarwinThermalExportFailed
+              category: thermal
+              host_class: hardware
+              instance: mmini
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Darwin thermal export failed on mmini"
+              description: "The iSMC-based thermal collector has not been exporting successfully on mmini for 10 minutes."
+      - eval_time: 10m30s
+        alertname: DarwinThermalExportFailed

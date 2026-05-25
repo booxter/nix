@@ -1,0 +1,101 @@
+rule_files:
+  - ../rules/fleet.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
+        values: "20x62"
+      - series: 'node_filesystem_size_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
+        values: "100x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: RootFilesystemUsageHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
+        values: "14x60 20x2"
+      - series: 'node_filesystem_size_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
+        values: "100x62"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: RootFilesystemUsageHigh
+      - eval_time: 30m
+        alertname: RootFilesystemUsageHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: RootFilesystemUsageHigh
+              category: capacity
+              fstype: ext4
+              instance: prox-builder2vm
+              job: node-mtls
+              mountpoint: /
+              severity: warning
+            exp_annotations:
+              summary: "Root filesystem usage high on prox-builder2vm"
+              description: "The root filesystem on prox-builder2vm has been above 85% used for 30 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
+        values: "6x32"
+      - series: 'node_filesystem_size_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
+        values: "100x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: RootFilesystemUsageCritical
+
+  - interval: 30s
+    input_series:
+      - series: 'node_filesystem_avail_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
+        values: "4x30 6x2"
+      - series: 'node_filesystem_size_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
+        values: "100x32"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: RootFilesystemUsageCritical
+      - eval_time: 15m
+        alertname: RootFilesystemUsageCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: RootFilesystemUsageCritical
+              category: capacity
+              fstype: ext4
+              instance: prox-builder2vm
+              job: node-mtls
+              mountpoint: /
+              severity: critical
+            exp_annotations:
+              summary: "Root filesystem usage critical on prox-builder2vm"
+              description: "The root filesystem on prox-builder2vm has been above 95% used for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_nixos_upgrade_last_success_time_seconds{instance="beast",job="node-mtls"}'
+        values: "86400x4322"
+    alert_rule_test:
+      - eval_time: 15d
+        alertname: HostUpgradeStale
+
+  - interval: 30s
+    input_series:
+      - series: 'node_nixos_upgrade_last_success_time_seconds{instance="beast",job="node-mtls"}'
+        values: "0x46082"
+    alert_rule_test:
+      - eval_time: 15d
+        alertname: HostUpgradeStale
+      - eval_time: 15d30s
+        alertname: HostUpgradeStale
+        exp_alerts:
+          - exp_labels:
+              alertname: HostUpgradeStale
+              category: maintenance
+              instance: beast
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "NixOS upgrades stale on beast"
+              description: "beast has not completed a successful NixOS upgrade for more than 14 days."

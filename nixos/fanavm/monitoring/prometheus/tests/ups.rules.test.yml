@@ -1,0 +1,97 @@
+rule_files:
+  - ../rules/ups.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'up{job="nut-beast",instance="beast"}'
+        values: "1 1 1 1 1 1 1 1 1 1 1 1 1"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: UPSExporterDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="nut-beast",instance="beast"}'
+        values: "0 0 0 0 0 0 0 0 0 0 0 1 1"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: UPSExporterDown
+      - eval_time: 5m
+        alertname: UPSExporterDown
+        exp_alerts:
+          - exp_labels:
+              alertname: UPSExporterDown
+              category: ups
+              instance: beast
+              job: nut-beast
+              severity: warning
+            exp_annotations:
+              summary: "UPS exporter down: nut-beast"
+              description: "Prometheus has been unable to scrape nut-beast for 5 minutes."
+      - eval_time: 5m30s
+        alertname: UPSExporterDown
+
+  - interval: 30s
+    input_series:
+      - series: 'network_ups_tools_ups_status{job="nut-frame",ups="FRAME-UPS",flag="OB"}'
+        values: "0 0 0 0 0 0 0"
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: UPSOnBattery
+
+  - interval: 30s
+    input_series:
+      - series: 'network_ups_tools_ups_status{job="nut-frame",ups="FRAME-UPS",flag="OB"}'
+        values: "1 1 1 1 1 0 0"
+    alert_rule_test:
+      - eval_time: 1m30s
+        alertname: UPSOnBattery
+      - eval_time: 2m
+        alertname: UPSOnBattery
+        exp_alerts:
+          - exp_labels:
+              alertname: UPSOnBattery
+              category: ups
+              flag: OB
+              job: nut-frame
+              severity: critical
+              ups: FRAME-UPS
+            exp_annotations:
+              summary: "UPS on battery: FRAME-UPS"
+              description: "UPS FRAME-UPS on nut-frame has been on battery for 2 minutes."
+      - eval_time: 2m30s
+        alertname: UPSOnBattery
+
+  - interval: 30s
+    input_series:
+      - series: 'network_ups_tools_ups_status{job="nut-pi5",ups="PI5-UPS",flag="LB"}'
+        values: "0 0 0 0 0"
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: UPSLowBattery
+
+  - interval: 30s
+    input_series:
+      - series: 'network_ups_tools_ups_status{job="nut-pi5",ups="PI5-UPS",flag="LB"}'
+        values: "1 1 1 0 0"
+    alert_rule_test:
+      - eval_time: 30s
+        alertname: UPSLowBattery
+      - eval_time: 1m
+        alertname: UPSLowBattery
+        exp_alerts:
+          - exp_labels:
+              alertname: UPSLowBattery
+              category: ups
+              flag: LB
+              job: nut-pi5
+              severity: critical
+              ups: PI5-UPS
+            exp_annotations:
+              summary: "UPS low battery: PI5-UPS"
+              description: "UPS PI5-UPS is reporting low battery."
+      - eval_time: 1m30s
+        alertname: UPSLowBattery

@@ -15,20 +15,25 @@ helpers.forAllSystems (
       ];
     };
     fleetApps = import ./lib/fleet.nix { inherit pkgs; };
+    fanavmMonitoring = import ./nixos/fanavm/monitoring/catalog.nix;
     mkCheck =
       {
         name,
         nativeBuildInputs,
         buildPhase,
+        extraFileset ? [ ],
       }:
       pkgs.stdenv.mkDerivation {
         inherit name nativeBuildInputs buildPhase;
         src = pkgs.lib.fileset.toSource {
           root = ./.;
-          fileset = pkgs.lib.fileset.unions [
-            ./scripts
-            ./tests
-          ];
+          fileset = pkgs.lib.fileset.unions (
+            [
+              ./scripts
+              ./tests
+            ]
+            ++ extraFileset
+          );
         };
         installPhase = ''
           touch "$out"
@@ -154,6 +159,33 @@ helpers.forAllSystems (
           exit 1
         fi
         grep -F -- 'is not inside 10.83.0.0/24' subnet.err >/dev/null
+      '';
+    };
+    fanavm-alertmanager-config = mkCheck {
+      name = "fanavm-alertmanager-config";
+      nativeBuildInputs = [ pkgs.prometheus-alertmanager ];
+      extraFileset = [ ./nixos/fanavm/monitoring ];
+      buildPhase = ''
+        amtool check-config ${fanavmMonitoring.alertmanager.configRelative}
+      '';
+    };
+    fanavm-prometheus-alerting = mkCheck {
+      name = "fanavm-prometheus-alerting";
+      nativeBuildInputs = [ pkgs.prometheus.cli ];
+      extraFileset = [ ./nixos/fanavm/monitoring ];
+      buildPhase = ''
+        for rule_file in ${pkgs.lib.concatStringsSep " " fanavmMonitoring.prometheus.ruleFilesRelative}; do
+          promtool check rules "$rule_file"
+        done
+
+        for test_file in ${pkgs.lib.concatStringsSep " " fanavmMonitoring.prometheus.testFilesRelative}; do
+          test_dir="$(dirname "$test_file")"
+          test_name="$(basename "$test_file")"
+          (
+            cd "$test_dir"
+            promtool test rules "$test_name"
+          )
+        done
       '';
     };
   }

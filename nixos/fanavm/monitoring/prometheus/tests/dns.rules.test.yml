@@ -1,0 +1,26 @@
+rule_files:
+  - ../rules/dns.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-dns",resolver="gateway",resolver_title="gateway 192.168.0.1"}'
+        values: "0 0 0 0 0"
+    alert_rule_test:
+      - eval_time: 1m30s
+        alertname: DNSResolverProbeDown
+      - eval_time: 2m
+        alertname: DNSResolverProbeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: DNSResolverProbeDown
+              category: dns
+              job: blackbox-dns
+              resolver: gateway
+              resolver_title: gateway 192.168.0.1
+              severity: critical
+            exp_annotations:
+              summary: "DNS probe down: gateway 192.168.0.1"
+              description: "Resolver gateway 192.168.0.1 is failing blackbox DNS probes from fana."

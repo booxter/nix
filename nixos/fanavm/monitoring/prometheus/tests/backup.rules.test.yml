@@ -1,0 +1,95 @@
+rule_files:
+  - ../rules/backup.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_backup_last_success{job="node",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+        values: "1x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: BackupJobFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_backup_last_success{job="node",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+        values: "0x61"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: BackupJobFailed
+      - eval_time: 30m
+        alertname: BackupJobFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: BackupJobFailed
+              backup_job: seerr-backup
+              backup_title: Create a consistent Seerr SQLite backup artifact
+              category: backup
+              instance: prox-srvarrvm
+              job: node
+              phase: prep
+              severity: warning
+              unit: seerr-backup.service
+            exp_annotations:
+              summary: "Backup job failed on prox-srvarrvm: Create a consistent Seerr SQLite backup artifact"
+              description: "The most recent prep backup job Create a consistent Seerr SQLite backup artifact on prox-srvarrvm failed and has not been followed by a successful run for 30 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node",instance="prox-orgvm",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
+        values: "3600x4600"
+    alert_rule_test:
+      - eval_time: 36h30m
+        alertname: BackupJobStale
+      - eval_time: 38h
+        alertname: BackupJobStale
+        exp_alerts:
+          - exp_labels:
+              alertname: BackupJobStale
+              backup_job: restic-beast-local
+              backup_title: Restic To Beast
+              category: backup
+              instance: prox-orgvm
+              job: node
+              phase: local
+              severity: warning
+              unit: restic-backups-beast.service
+            exp_annotations:
+              summary: "Backup job stale on prox-orgvm: Restic To Beast"
+              description: "The local backup job Restic To Beast on prox-orgvm has not completed a successful run for more than 36 hours."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="beast",backup_job="srvarr-cloud-offload",backup_title="srvarr Cloud Offload",phase="cloud",unit="restic-srvarr-cloud-offload.service"}'
+        values: "3600x7500"
+    alert_rule_test:
+      - eval_time: 60h30m
+        alertname: BackupJobStaleCritical
+      - eval_time: 62h
+        alertname: BackupJobStaleCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: BackupJobStaleCritical
+              backup_job: srvarr-cloud-offload
+              backup_title: srvarr Cloud Offload
+              category: backup
+              instance: beast
+              job: node-mtls
+              phase: cloud
+              severity: critical
+              unit: restic-srvarr-cloud-offload.service
+            exp_annotations:
+              summary: "Backup job critically stale on beast: srvarr Cloud Offload"
+              description: "The cloud backup job srvarr Cloud Offload on beast has not completed a successful run for more than 60 hours."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+        values: "0x5000"
+    alert_rule_test:
+      - eval_time: 72h
+        alertname: BackupJobStale
+      - eval_time: 72h
+        alertname: BackupJobStaleCritical

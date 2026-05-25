@@ -1,0 +1,40 @@
+groups:
+  - name: custom-jobs
+    interval: 30s
+    rules:
+      - alert: TransmissionCollectorFailed
+        expr: host_observability_transmission_exporter_ok{instance="prox-srvarrvm"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "Transmission collector failed on prox-srvarrvm"
+          description: "The Transmission metrics collector on prox-srvarrvm has been reporting unsuccessful iterations for 10 minutes."
+      - alert: TransmissionCollectorStale
+        expr: (time() - host_observability_transmission_exporter_last_success_timestamp_seconds{instance="prox-srvarrvm"}) > 600
+        for: 5m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "Transmission collector stale on prox-srvarrvm"
+          description: "The Transmission metrics collector on prox-srvarrvm has not completed a successful iteration for more than 10 minutes."
+      - alert: AdaptiveUploadPolicyExporterFailed
+        expr: host_observability_adaptive_upload_exporter_ok{instance="prox-srvarrvm"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "Adaptive upload controller exporter failed on prox-srvarrvm"
+          description: "The adaptive upload controller on prox-srvarrvm has been unable to fetch Jellyfin exporter state successfully for 10 minutes."
+      - alert: AdaptiveUploadPolicyMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{instance="prox-srvarrvm",file="/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy.prom"}) > 600
+        for: 5m
+        labels:
+          severity: warning
+          category: automation
+        annotations:
+          summary: "Adaptive upload metrics stale on prox-srvarrvm"
+          description: "The adaptive upload controller metrics file on prox-srvarrvm has not been refreshed for more than 10 minutes."

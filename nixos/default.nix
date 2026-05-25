@@ -31,6 +31,7 @@ in
       ]
       ++ [
         ./_mixins/internal-https-service.nix
+        ./_mixins/backup-metrics/default.nix
         ./_mixins/observability-client
         ./_mixins/external-service.nix
         ./_mixins/lan-wan-accounting
