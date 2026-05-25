@@ -1,7 +1,7 @@
 # Nix configs
 
 This repo provides flake apps and scripts as the primary interfaces. The
-`Makefile` is a convenience wrapper for a few host/home build commands.
+`Makefile` is a convenience wrapper for a few host build commands.
 
 ## Build and Deploy
 
@@ -81,17 +81,6 @@ nix run .#sops-copy -- mair prx1-lab attic
 Backup and restore procedures are documented in [common/backup.md](common/backup.md).
 `srvarr`'s adaptive upload policy and tracker prioritization are documented in
 [nixos/srvarrvm/upload-policy.md](nixos/srvarrvm/upload-policy.md).
-
-## Home Manager
-
-```sh
-make linux-home TARGET=nv
-make darwin-home TARGET=mair
-nix run .#deploy -- --home nv
-```
-
-`TARGET` must match a standalone Home Manager profile from
-`homeConfigurations` (the part after `${USERNAME}@`).
 
 ## Tests
 

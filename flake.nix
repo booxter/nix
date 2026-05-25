@@ -170,34 +170,6 @@
 
     in
     {
-      homeConfigurations = {
-        # nv dev env
-        "${username}@nv" = helpers.mkHome {
-          stateVersion = "25.11";
-          platform = "x86_64-linux";
-          isWork = true;
-        };
-      }
-      // builtins.listToAttrs (
-        map (
-          name:
-          let
-            cfg = darwinHosts.${name};
-          in
-          {
-            name = "${username}@${name}";
-            value = helpers.mkHome {
-              stateVersion = cfg.hmStateVersion;
-              inherit (cfg)
-                platform
-                isDesktop
-                ;
-              isWork = cfg.isWork or false;
-            };
-          }
-        ) (builtins.attrNames darwinHosts)
-      );
-
       darwinConfigurations = builtins.listToAttrs (
         map (
           name:

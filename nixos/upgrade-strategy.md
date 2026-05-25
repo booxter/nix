@@ -36,8 +36,7 @@ on schedule but does not auto-reboot.
 - `x86_64-linux` NixOS system closures
 - `aarch64-linux` NixOS system closures
 - `x86_64-linux` VM artifacts used by CI
-- `x86_64-linux` Home Manager activation for `nv`
-- `aarch64-darwin` system, Home Manager, and VM outputs that CI validates
+- `aarch64-darwin` system and VM outputs that CI validates
 - `x86_64-linux` regular checks from `.github/workflows/checks.yml`
 - `x86_64-linux` NixOS tests from `.github/workflows/checks.yml`
 
