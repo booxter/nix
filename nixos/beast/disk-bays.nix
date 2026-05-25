@@ -116,4 +116,13 @@ in
       ExecStart = diskBayExporter;
     };
   };
+
+  systemd.timers.beast-disk-bay-export = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "30s";
+      OnUnitActiveSec = "1min";
+      Unit = "beast-disk-bay-export.service";
+    };
+  };
 }
