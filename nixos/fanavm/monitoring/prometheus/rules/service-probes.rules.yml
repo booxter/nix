@@ -20,3 +20,12 @@ groups:
         annotations:
           summary: "Public service probe down: {{ $labels.instance }}"
           description: "The external blackbox probe for {{ $labels.instance }} has been failing for 5 minutes."
+      - alert: InternalServiceProbeDown
+        expr: probe_success{job="blackbox-arr",scope="internal"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Internal service probe down: {{ $labels.service_title }}"
+          description: "The internal blackbox probe for {{ $labels.service_title }} ({{ $labels.target }}) has been failing for 5 minutes."

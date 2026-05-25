@@ -67,3 +67,35 @@ tests:
               description: "The external blackbox probe for jellyfin has been failing for 5 minutes."
       - eval_time: 5m30s
         alertname: PublicServiceProbeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-arr",instance="radarr",scope="internal",service="radarr",service_title="Radarr",target="https://radarr.home.arpa/login"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: InternalServiceProbeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-arr",instance="radarr",scope="internal",service="radarr",service_title="Radarr",target="https://radarr.home.arpa/login"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: InternalServiceProbeDown
+      - eval_time: 5m
+        alertname: InternalServiceProbeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: InternalServiceProbeDown
+              category: service
+              instance: radarr
+              job: blackbox-arr
+              scope: internal
+              service: radarr
+              service_title: Radarr
+              severity: warning
+              target: https://radarr.home.arpa/login
+            exp_annotations:
+              summary: "Internal service probe down: Radarr"
+              description: "The internal blackbox probe for Radarr (https://radarr.home.arpa/login) has been failing for 5 minutes."

@@ -36,6 +36,34 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_md_degraded{instance="beast",device="md127"}'
+        values: "0x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: BeastRAIDDegraded
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_md_degraded{instance="beast",device="md127"}'
+        values: "1x10 0x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: BeastRAIDDegraded
+      - eval_time: 5m
+        alertname: BeastRAIDDegraded
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastRAIDDegraded
+              category: storage
+              device: md127
+              instance: beast
+              severity: critical
+            exp_annotations:
+              summary: "Beast RAID degraded: md127"
+              description: "The md array md127 on beast has reported degraded members for 5 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
         values: "15x62"
       - series: 'node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs",device="/dev/md127"}'
@@ -98,3 +126,55 @@ tests:
             exp_annotations:
               summary: "Btrfs device errors on beast: write"
               description: "The write btrfs device error counter on md127 for beast increased within the last 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_degraded{instance="beast",controller="0"}'
+        values: "0x22"
+      - series: 'host_observability_hba_failed{instance="beast",controller="0"}'
+        values: "0x12"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: BeastHBAControllerDegraded
+      - eval_time: 5m
+        alertname: BeastHBAControllerFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_degraded{instance="beast",controller="0"}'
+        values: "1x20 0x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: BeastHBAControllerDegraded
+      - eval_time: 10m
+        alertname: BeastHBAControllerDegraded
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastHBAControllerDegraded
+              category: storage
+              controller: "0"
+              instance: beast
+              severity: warning
+            exp_annotations:
+              summary: "Beast HBA degraded: controller 0"
+              description: "The Broadcom HBA controller 0 on beast has reported degraded state for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_hba_failed{instance="beast",controller="0"}'
+        values: "1x10 0x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: BeastHBAControllerFailed
+      - eval_time: 5m
+        alertname: BeastHBAControllerFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: BeastHBAControllerFailed
+              category: storage
+              controller: "0"
+              instance: beast
+              severity: critical
+            exp_annotations:
+              summary: "Beast HBA failed: controller 0"
+              description: "The Broadcom HBA controller 0 on beast has reported failed state for 5 minutes."

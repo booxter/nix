@@ -13,38 +13,19 @@ The intent is simple:
 This document is not the architecture source of truth. That remains
 [alerting-strategy.md](/Users/ihrachyshka/src/nix/docs/alerting-strategy.md).
 
-## Ready To Implement
-
-- Internal service blackbox probe alerts for `grafana`, `radarr`, `sonarr`,
-  `lidarr`, `bazarr`, `prowlarr`, `transmission`, and `sabnzbd`.
-- Beast RAID state alerts from `host_observability_md_*`.
-- Beast HBA health alerts from `host_observability_hba_collect_success`,
-  `host_observability_hba_healthy`, `host_observability_hba_degraded`, and
-  `host_observability_hba_failed`.
-- Fleet root filesystem usage alerts.
-- Fleet host upgrade staleness alerts from
-  `node_nixos_upgrade_last_success_time_seconds`.
-- `srvarrvm` custom job freshness alerts for the transmission collector and the
-  adaptive upload controller exporter.
-
-## Needs Signal Work Or Verification
-
-- Backup freshness and failure alerts for restic, Jellyfin backup, and Btrfs
-  scrub.
-- Generic failed systemd unit alerts once signal quality is verified fleetwide.
-- `transmission-prioritizer`, `unifi-sync`, and upload-policy applier
-  freshness/failure signals where no clean metrics exist yet.
-- HBA per-drive media, predictive, and SMART-alert counters once their live
-  Prometheus visibility is verified.
-- Loki or log-derived alerts for repeated unit errors or error bursts.
-- Network degradation alerts for sustained packet loss, retransmits, or drops
-  once thresholds are validated against real baseline behavior.
-- Media-pipeline policy alerts such as stuck SABnzbd queue or problematic
-  Jellyfin transcode load once desired behavior is defined.
-
 ## Done
 
 - Prometheus owns metric alert evaluation on `fanavm`.
 - Alertmanager owns notification routing on `fanavm`.
 - Existing POC alert families were migrated out of Grafana-managed rules into
   repo-managed Prometheus rules with `promtool` tests.
+- Internal blackbox service probes now alert for `grafana`, `radarr`,
+  `sonarr`, `lidarr`, `bazarr`, `prowlarr`, `transmission`, and `sabnzbd`.
+- Beast RAID degraded state now alerts from `host_observability_md_degraded`.
+- Beast HBA controller degraded and failed states now alert from
+  `host_observability_hba_degraded` and `host_observability_hba_failed`.
+- Fleet root filesystem usage now alerts at warning and critical thresholds.
+- Fleet host upgrade staleness now alerts from
+  `node_nixos_upgrade_last_success_time_seconds`.
+- `srvarrvm` Transmission collector and adaptive upload controller freshness and
+  failure states now alert from their existing metrics.

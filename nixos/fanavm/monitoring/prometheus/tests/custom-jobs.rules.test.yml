@@ -1,0 +1,98 @@
+rule_files:
+  - ../rules/custom-jobs.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_transmission_exporter_ok{instance="prox-srvarrvm"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: TransmissionCollectorFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_transmission_exporter_ok{instance="prox-srvarrvm"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: TransmissionCollectorFailed
+      - eval_time: 10m
+        alertname: TransmissionCollectorFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: TransmissionCollectorFailed
+              category: automation
+              instance: prox-srvarrvm
+              severity: warning
+            exp_annotations:
+              summary: "Transmission collector failed on prox-srvarrvm"
+              description: "The Transmission metrics collector on prox-srvarrvm has been reporting unsuccessful iterations for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_transmission_exporter_last_success_timestamp_seconds{instance="prox-srvarrvm"}'
+        values: "0x31"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: TransmissionCollectorStale
+      - eval_time: 15m30s
+        alertname: TransmissionCollectorStale
+        exp_alerts:
+          - exp_labels:
+              alertname: TransmissionCollectorStale
+              category: automation
+              instance: prox-srvarrvm
+              severity: warning
+            exp_annotations:
+              summary: "Transmission collector stale on prox-srvarrvm"
+              description: "The Transmission metrics collector on prox-srvarrvm has not completed a successful iteration for more than 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_adaptive_upload_exporter_ok{instance="prox-srvarrvm"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: AdaptiveUploadPolicyExporterFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_adaptive_upload_exporter_ok{instance="prox-srvarrvm"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: AdaptiveUploadPolicyExporterFailed
+      - eval_time: 10m
+        alertname: AdaptiveUploadPolicyExporterFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: AdaptiveUploadPolicyExporterFailed
+              category: automation
+              instance: prox-srvarrvm
+              severity: warning
+            exp_annotations:
+              summary: "Adaptive upload controller exporter failed on prox-srvarrvm"
+              description: "The adaptive upload controller on prox-srvarrvm has been unable to fetch Jellyfin exporter state successfully for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_textfile_mtime_seconds{instance="prox-srvarrvm",file="/var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy.prom"}'
+        values: "0x31"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: AdaptiveUploadPolicyMetricsStale
+      - eval_time: 15m30s
+        alertname: AdaptiveUploadPolicyMetricsStale
+        exp_alerts:
+          - exp_labels:
+              alertname: AdaptiveUploadPolicyMetricsStale
+              category: automation
+              file: /var/lib/prometheus-node-exporter-textfile/adaptive-upload-policy.prom
+              instance: prox-srvarrvm
+              severity: warning
+            exp_annotations:
+              summary: "Adaptive upload metrics stale on prox-srvarrvm"
+              description: "The adaptive upload controller metrics file on prox-srvarrvm has not been refreshed for more than 10 minutes."

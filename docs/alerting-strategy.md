@@ -117,7 +117,9 @@ nixos/
         rules/
           availability.rules.yml
           control-plane.rules.yml
+          custom-jobs.rules.yml
           dns.rules.yml
+          fleet.rules.yml
           network-probes.rules.yml
           pki.rules.yml
           service-probes.rules.yml
@@ -128,7 +130,9 @@ nixos/
         tests/
           availability.rules.test.yml
           control-plane.rules.test.yml
+          custom-jobs.rules.test.yml
           dns.rules.test.yml
+          fleet.rules.test.yml
           network-probes.rules.test.yml
           pki.rules.test.yml
           service-probes.rules.test.yml
@@ -152,7 +156,7 @@ The first deployable slice is already in place on `fanavm`:
   and checks
 - `nixos/fanavm/monitoring/alertmanager/alertmanager.yml` is the repo-managed
   Alertmanager config
-- `nixos/fanavm/monitoring/prometheus/rules/{availability,control-plane,dns,network-probes,pki,service-probes,service-scrapes,storage,thermal,ups}.rules.yml`
+- `nixos/fanavm/monitoring/prometheus/rules/{availability,control-plane,custom-jobs,dns,fleet,network-probes,pki,service-probes,service-scrapes,storage,thermal,ups}.rules.yml`
   hold the current repo-managed Prometheus alert families
 - `nixos/fanavm/monitoring/prometheus/tests/*.rules.test.yml` hold the
   corresponding `promtool` rule tests

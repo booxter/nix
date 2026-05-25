@@ -11,6 +11,15 @@ groups:
         annotations:
           summary: "SMART health failed on beast: {{ $labels.device }}"
           description: "Drive {{ $labels.device }} on beast has reported SMART health failure for 15 minutes."
+      - alert: BeastRAIDDegraded
+        expr: host_observability_md_degraded{instance="beast"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast RAID degraded: {{ $labels.device }}"
+          description: "The md array {{ $labels.device }} on beast has reported degraded members for 5 minutes."
       - alert: BeastVolume2UsageHigh
         expr: 100 * (1 - node_filesystem_avail_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"} / node_filesystem_size_bytes{instance="beast",mountpoint="/volume2",fstype="btrfs"}) > 90
         for: 30m
@@ -29,3 +38,21 @@ groups:
         annotations:
           summary: "Btrfs device errors on beast: {{ $labels.type }}"
           description: "The {{ $labels.type }} btrfs device error counter on {{ $labels.device }} for beast increased within the last 15 minutes."
+      - alert: BeastHBAControllerDegraded
+        expr: host_observability_hba_degraded{instance="beast"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Beast HBA degraded: controller {{ $labels.controller }}"
+          description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported degraded state for 10 minutes."
+      - alert: BeastHBAControllerFailed
+        expr: host_observability_hba_failed{instance="beast"} > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Beast HBA failed: controller {{ $labels.controller }}"
+          description: "The Broadcom HBA controller {{ $labels.controller }} on beast has reported failed state for 5 minutes."

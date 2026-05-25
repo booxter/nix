@@ -4,8 +4,12 @@ let
   controlPlaneTestFile = ./prometheus/tests/control-plane.rules.test.yml;
   availabilityRuleFile = ./prometheus/rules/availability.rules.yml;
   availabilityTestFile = ./prometheus/tests/availability.rules.test.yml;
+  customJobsRuleFile = ./prometheus/rules/custom-jobs.rules.yml;
+  customJobsTestFile = ./prometheus/tests/custom-jobs.rules.test.yml;
   dnsRuleFile = ./prometheus/rules/dns.rules.yml;
   dnsTestFile = ./prometheus/tests/dns.rules.test.yml;
+  fleetRuleFile = ./prometheus/rules/fleet.rules.yml;
+  fleetTestFile = ./prometheus/tests/fleet.rules.test.yml;
   networkProbesRuleFile = ./prometheus/rules/network-probes.rules.yml;
   networkProbesTestFile = ./prometheus/tests/network-probes.rules.test.yml;
   pkiRuleFile = ./prometheus/rules/pki.rules.yml;
@@ -31,7 +35,9 @@ in
     ruleFiles = [
       controlPlaneRuleFile
       availabilityRuleFile
+      customJobsRuleFile
       dnsRuleFile
+      fleetRuleFile
       networkProbesRuleFile
       pkiRuleFile
       serviceProbesRuleFile
@@ -43,7 +49,9 @@ in
     ruleFilesRelative = [
       "nixos/fanavm/monitoring/prometheus/rules/control-plane.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/availability.rules.yml"
+      "nixos/fanavm/monitoring/prometheus/rules/custom-jobs.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/dns.rules.yml"
+      "nixos/fanavm/monitoring/prometheus/rules/fleet.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/network-probes.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/pki.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/service-probes.rules.yml"
@@ -55,7 +63,9 @@ in
     testFiles = [
       controlPlaneTestFile
       availabilityTestFile
+      customJobsTestFile
       dnsTestFile
+      fleetTestFile
       networkProbesTestFile
       pkiTestFile
       serviceProbesTestFile
@@ -67,7 +77,9 @@ in
     testFilesRelative = [
       "nixos/fanavm/monitoring/prometheus/tests/control-plane.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/availability.rules.test.yml"
+      "nixos/fanavm/monitoring/prometheus/tests/custom-jobs.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/dns.rules.test.yml"
+      "nixos/fanavm/monitoring/prometheus/tests/fleet.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/network-probes.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/pki.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/service-probes.rules.test.yml"
