@@ -14,5 +14,16 @@ receivers:
     telegram_configs:
       - bot_token_file: /run/credentials/alertmanager.service/telegram-bot-token
         chat_id: $TELEGRAM_CHAT_ID
+        message: |-
+          Alerts {{ if eq .Status "firing" }}Firing{{ else }}Resolved{{ end }}:
+          {{ range .Alerts }}
+          Labels:
+          {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
+          {{ end }}
+          Annotations:
+          {{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }}
+          {{ end }}
+          {{ end }}
+          Grafana: <a href="https://grafana.home.arpa/alerting/list">https://grafana.home.arpa/alerting/list</a>
         parse_mode: HTML
         send_resolved: true
