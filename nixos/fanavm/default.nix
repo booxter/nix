@@ -585,96 +585,28 @@ in
             orgId = 1;
             uid = "pki_rotation_controller_stale";
           }
-        ];
-        groups = [
           {
             orgId = 1;
-            name = "thermal-health";
-            folder = "Fana";
-            interval = "30s";
-            rules = [
-              (mkGrafanaPromRule {
-                uid = "thermal_cpu_hot";
-                title = "CPU Temperature High";
-                expr = "max by(instance) ((node_thermal_zone_temp{job=~\"node|node-mtls\",host_class=\"hardware\",type=~\"cpu-thermal|x86_pkg_temp\"} or node_hwmon_temp_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",chip=~\"platform_coretemp_0|pci0000:00_0000:00:18_3\",sensor=\"temp1\"}) or host_observability_darwin_temperature_group_max_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",group=\"cpu\"})";
-                comparator = "gt";
-                threshold = 85;
-                forDuration = "10m";
-                annotations = {
-                  summary = "CPU temperature high on {{ $labels.instance }}";
-                  description = "{{ $labels.instance }} has sustained CPU/package temperature above 85C for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "thermal_storage_hot";
-                title = "Storage Temperature High";
-                expr = "max by(instance) (node_hwmon_temp_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",chip=~\"nvme_.*\",sensor=\"temp1\"} or host_observability_hba_temperature_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",sensor=\"roc\"} or host_observability_darwin_temperature_group_max_celsius{job=~\"node|node-mtls\",host_class=\"hardware\",group=\"storage\"})";
-                comparator = "gt";
-                threshold = 75;
-                forDuration = "10m";
-                annotations = {
-                  summary = "Storage temperature high on {{ $labels.instance }}";
-                  description = "{{ $labels.instance }} has sustained storage temperature above 75C for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "thermal_hba_export_failed";
-                title = "HBA Thermal Export Failed";
-                expr = "host_observability_hba_collect_success{job=~\"node|node-mtls\",host_class=\"hardware\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "10m";
-                annotations = {
-                  summary = "HBA thermal export failed on {{ $labels.instance }} (controller {{ $labels.controller }})";
-                  description = "The StorCLI-based HBA collector has not been exporting successfully for controller {{ $labels.controller }} on {{ $labels.instance }} for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "thermal_hdd_hot";
-                title = "HDD Temperature High";
-                expr = "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"}";
-                comparator = "gt";
-                threshold = 50;
-                forDuration = "30m";
-                annotations = {
-                  summary = "HDD temperature high on beast";
-                  description = "Drive {{ $labels.device }} on beast has sustained temperature above 50C for 30 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-              (mkGrafanaPromRule {
-                uid = "darwin_ismc_export_failed";
-                title = "Darwin Thermal Export Failed";
-                expr = "host_observability_darwin_ismc_collect_success{job=~\"node|node-mtls\",host_class=\"hardware\"}";
-                comparator = "lt";
-                threshold = 1;
-                forDuration = "10m";
-                annotations = {
-                  summary = "Darwin thermal export failed on {{ $labels.instance }}";
-                  description = "The iSMC-based thermal collector has not been exporting successfully on {{ $labels.instance }} for 10 minutes.";
-                };
-                labels = {
-                  severity = "warning";
-                  category = "thermal";
-                };
-              })
-            ];
+            uid = "thermal_cpu_hot";
           }
+          {
+            orgId = 1;
+            uid = "thermal_storage_hot";
+          }
+          {
+            orgId = 1;
+            uid = "thermal_hba_export_failed";
+          }
+          {
+            orgId = 1;
+            uid = "thermal_hdd_hot";
+          }
+          {
+            orgId = 1;
+            uid = "darwin_ismc_export_failed";
+          }
+        ];
+        groups = [
         ];
       };
     };
