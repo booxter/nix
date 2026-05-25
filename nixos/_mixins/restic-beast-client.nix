@@ -193,6 +193,19 @@ in
           after = map (name: "${name}.service") preBackupServiceNames;
           wants = map (name: "${name}.service") preBackupServiceNames;
         };
+
+        host.observability.backupMetrics.jobs = {
+          "restic-beast-local" = {
+            service = "restic-backups-beast";
+            title = "Restic To Beast";
+            phase = "local";
+          };
+        }
+        // builtins.mapAttrs (name: service: {
+          service = name;
+          title = service.description;
+          phase = "prep";
+        }) cfg.preBackupServices;
       }
 
       {

@@ -141,4 +141,17 @@ in
     wants = [ "jellyfin-built-in-backup.service" ];
     requires = [ "jellyfin-built-in-backup.service" ];
   };
+
+  host.observability.backupMetrics.jobs = {
+    "jellyfin-built-in-backup" = {
+      service = "jellyfin-built-in-backup";
+      title = "Jellyfin Built-In Backup";
+      phase = "prep";
+    };
+    "beast-restic-local" = {
+      service = "restic-backups-beast";
+      title = "Beast Local Restic";
+      phase = "local";
+    };
+  };
 }

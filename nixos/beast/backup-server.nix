@@ -392,4 +392,10 @@ in
       };
     }) (builtins.attrNames backupClients)
   );
+
+  host.observability.backupMetrics.jobs = builtins.mapAttrs (name: _: {
+    service = "restic-${name}-cloud-offload";
+    title = "${name} Cloud Offload";
+    phase = "cloud";
+  }) backupClients;
 }
