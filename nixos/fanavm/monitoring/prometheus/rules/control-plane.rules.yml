@@ -56,6 +56,15 @@ groups:
         annotations:
           summary: "Alertmanager Telegram notifications failing"
           description: "Alertmanager on fanavm has seen failed Telegram notification deliveries within the last 15 minutes."
+      - alert: AlertmanagerTelegramNotificationRequestsFailing
+        expr: sum by(instance, job) (increase(alertmanager_notification_requests_failed_total{job="alertmanager",integration="telegram"}[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Alertmanager Telegram notification requests failing"
+          description: "Alertmanager on fanavm has seen failed Telegram notification attempts within the last 15 minutes, even if a later retry eventually succeeded."
       - alert: GrafanaMetricsScrapeDown
         expr: up{job="grafana"} < 1
         for: 5m
@@ -65,3 +74,12 @@ groups:
         annotations:
           summary: "Grafana metrics scrape down"
           description: "Prometheus has been unable to scrape Grafana on fanavm for 5 minutes."
+      - alert: GrafanaAPIErrors
+        expr: sum by(instance, job) (increase(grafana_api_response_status_total{job="grafana",code="500"}[15m])) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Grafana API errors on fanavm"
+          description: "Grafana on fanavm has returned HTTP 500 responses within the last 15 minutes."
