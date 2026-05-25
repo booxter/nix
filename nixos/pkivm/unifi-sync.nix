@@ -7,10 +7,9 @@
 }:
 let
   hostSecretFile = ../../secrets + "/${config.networking.hostName}.yaml";
-  hasHostSecretFile = builtins.pathExists hostSecretFile;
   unifiSyncEnv = import ../../lib/unifi-sync-env.nix { inherit hostInventory; };
 in
-lib.mkIf hasHostSecretFile {
+{
   sops.defaultSopsFile = lib.mkDefault hostSecretFile;
 
   users.users.unifi-sync = {

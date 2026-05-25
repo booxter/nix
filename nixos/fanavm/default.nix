@@ -170,7 +170,6 @@ let
   nixosNodeExporterTargetNames = builtins.filter (
     name:
     !(lib.hasPrefix "local-" name)
-    && name != "prox-deskvm"
     && name != "prox-fanavm"
     && (outputs.nixosConfigurations.${name}.config.host.observability.client.enable or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)

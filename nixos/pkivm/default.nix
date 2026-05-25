@@ -6,7 +6,6 @@
 }:
 let
   hostSecretFile = ../../secrets + "/${config.networking.hostName}.yaml";
-  hasHostSecretFile = builtins.pathExists hostSecretFile;
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
@@ -83,10 +82,9 @@ in
     restartUnits = [ "pki-rotate.service" ];
   };
 
-  # Keep the PKI host off observability until its host secret exists, then
-  # bring it up behind the standard node-exporter mTLS configuration.
-  host.observability.client.enable = hasHostSecretFile;
-  host.observability.client.nodeExporter.mtls.enable = hasHostSecretFile;
+  # Run the PKI host behind the standard node-exporter mTLS configuration.
+  host.observability.client.enable = true;
+  host.observability.client.nodeExporter.mtls.enable = true;
 
   networking.firewall.allowedTCPPorts = [ caPort ];
 

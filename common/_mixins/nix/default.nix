@@ -1,7 +1,7 @@
 {
+  inputs,
   lib,
   pkgs,
-  outputs,
   username,
   isWork,
   ...
@@ -51,14 +51,4 @@
         ];
       };
     };
-
-  nixpkgs = {
-    overlays = [
-      outputs.overlays.additions
-      outputs.overlays.modifications
-    ];
-    config = {
-      allowUnfree = true;
-    };
-  };
 }

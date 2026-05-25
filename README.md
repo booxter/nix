@@ -1,7 +1,7 @@
 # Nix configs
 
 This repo provides flake apps and scripts as the primary interfaces. The
-`Makefile` is a convenience wrapper for a few host/home build commands.
+`Makefile` is a convenience wrapper for a few host build commands.
 
 ## Build and Deploy
 
@@ -82,17 +82,6 @@ Backup and restore procedures are documented in [common/backup.md](common/backup
 `srvarr`'s adaptive upload policy and tracker prioritization are documented in
 [nixos/srvarrvm/upload-policy.md](nixos/srvarrvm/upload-policy.md).
 
-## Home Manager
-
-```sh
-make linux-home TARGET=nv
-make darwin-home TARGET=mair
-nix run .#deploy -- --home nv
-```
-
-`TARGET` must match a standalone Home Manager profile from
-`homeConfigurations` (the part after `${USERNAME}@`).
-
 ## Tests
 
 Run Bats checks:
@@ -146,7 +135,6 @@ around `nixmoxer`).
 | `mmini` | macOS (aarch64-darwin) | Mac mini workstation. | [darwin/default.nix](darwin/default.nix) | [common](common), [darwin](darwin) |
 | `JGWXHWDL4X` | macOS (aarch64-darwin) | Work Mac. | [darwin/default.nix](darwin/default.nix) | [common](common), [darwin](darwin) |
 | `frame` | NixOS (x86_64-linux) | Desktop workstation. | [nixos/frame/default.nix](nixos/frame/default.nix) | [common](common), [nixos](nixos) |
-| `desk` | NixOS VM | Minimal Xfce desktop VM for local GUI testing. | [nixos/deskvm/default.nix](nixos/deskvm/default.nix) | [common](common), [nixos](nixos) |
 
 ### Media servers
 

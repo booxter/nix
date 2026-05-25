@@ -134,19 +134,6 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.local-deskvm.config.system.build.toplevel",
-      "name": "desk (aarch64-linux)",
-      "runner": "ubuntu-24.04-arm",
-      "selection": {
-        "hosts": [],
-        "prefixes": [
-          "nixos/deskvm/"
-        ]
-      },
-      "system": "aarch64-linux",
-      "warm": true
-    },
-    {
       "attr": "nixosConfigurations.prox-srvarrvm.config.system.build.toplevel",
       "name": "srvarr (x86_64-linux)",
       "runner": "ubuntu-latest",
@@ -217,32 +204,6 @@
         "prefixes": []
       },
       "system": "x86_64-linux",
-      "warm": true
-    },
-    {
-      "attr": "homeConfigurations.ihrachyshka@nv.activationPackage",
-      "name": "home-manager nv (x86_64-linux)",
-      "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [],
-        "prefixes": []
-      },
-      "system": "x86_64-linux",
-      "warm": true
-    },
-    {
-      "attr": "homeConfigurations.ihrachyshka@mair.activationPackage",
-      "name": "home-manager mair (aarch64-darwin)",
-      "runner": "macos-26",
-      "selection": {
-        "hosts": [
-          "mair"
-        ],
-        "prefixes": [
-          "darwin/mair/"
-        ]
-      },
-      "system": "aarch64-darwin",
       "warm": true
     },
     {

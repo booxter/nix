@@ -22,12 +22,15 @@ let
 in
 {
   imports = [
-    ./_mixins/attic
     ./_mixins/internal-pki
     ./_mixins/nix
+    ./_mixins/nixpkgs
     ./_mixins/nix-gc
     ./_mixins/ssh
     ./_mixins/terminfo
+  ]
+  ++ lib.optionals (!isWork) [
+    ./_mixins/attic
   ]
   ++ lib.optionals canUseBuilders [
     ./_mixins/community-builders

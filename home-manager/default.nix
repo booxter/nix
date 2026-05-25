@@ -51,10 +51,6 @@ in
     }
   ];
 
-  nixpkgs.overlays = [
-    inputs.nur.overlays.default
-  ];
-
   home = {
     inherit stateVersion;
     inherit username;

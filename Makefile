@@ -1,14 +1,7 @@
 .DEFAULT_GOAL := help
-.PHONY: help nixos darwin linux-home darwin-home check check-nixos
+.PHONY: help nixos darwin check check-nixos
 
 ARGS = -L --show-trace
-USERNAME ?= ihrachyshka
-
-define home-targets-for-system
-nix eval --json --apply 'hc: builtins.mapAttrs (_: v: v.activationPackage.drvAttrs.system) hc' .#homeConfigurations \
-	| jq -r 'to_entries[] | select(.value=="$(1)") | .key' \
-	| sed 's/^$(USERNAME)@//'
-endef
 
 REMOTE ?= true
 LOCAL_LOCAL_BUILDERS = $(shell nix run --quiet --option builders '' .#get-local-builders -- --local)
@@ -49,33 +42,12 @@ if ! printf '%s\n' "$$known" | grep -Fxq "$(2)"; then \
 	fi;
 endef
 
-define standalone-home-build-action
-	@if [ "x$(TARGET)" = "x" ]; then \
-		echo "Usage: make $@ TARGET=profile [USERNAME=<name>] [REMOTE=false]"; \
-		echo; \
-		echo "Available $(1) home profiles:"; \
-		$(call home-targets-for-system,$(2)); \
-		exit 1; \
-	fi
-	@if ! ($(call home-targets-for-system,$(2)) | grep -Fxq "$(TARGET)"); then \
-		echo "Unknown $(1) home profile: $(TARGET)"; \
-		echo; \
-		echo "Available $(1) home profiles:"; \
-		$(call home-targets-for-system,$(2)); \
-		exit 1; \
-	fi
-
-		$(call maybe-nom-build,$(call builder-opts) .#homeConfigurations.$(USERNAME)@$(TARGET).activationPackage)
-endef
-
 help:
 	@echo "Available targets:"
 	@echo "  make nixos WHAT=<host> [REMOTE=false]"
 	@echo "  make darwin WHAT=<host> [REMOTE=false]"
 	@echo "  make check [WHAT=<check-name>] [REMOTE=false]"
 	@echo "  make check-nixos [WHAT=<nixos-check-name>] [REMOTE=false]"
-	@echo "  make linux-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
-	@echo "  make darwin-home TARGET=<profile> [USERNAME=<name>] [REMOTE=false]"
 
 nixos:
 	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
@@ -97,12 +69,6 @@ darwin:
 	$(call require-what-and-list-hosts,darwin) \
 	$(call require-known-host,darwin,$(WHAT)) \
 	$(call maybe-nom-build,$(call builder-opts) ".#darwinConfigurations.$(WHAT).system")
-
-linux-home:
-	$(call standalone-home-build-action,linux,x86_64-linux)
-
-darwin-home:
-	$(call standalone-home-build-action,darwin,aarch64-darwin)
 
 check:
 	@system="$$(nix eval --impure --raw --expr builtins.currentSystem)"; \

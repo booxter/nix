@@ -18,7 +18,6 @@ in
 {
   inherit (helpers)
     mkDarwin
-    mkHome
     mkNixos
     mkRaspberryPi
     mkProxmox

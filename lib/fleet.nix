@@ -47,7 +47,6 @@ let
     runtimeInputs = with pkgs; [
       bind
       git
-      home-manager
       jq
       nix
       openssh
@@ -60,14 +59,12 @@ let
         cat <<'EOF'
       Usage:
         deploy [fleet deploy args]
-        deploy --home <target> [username]
         deploy --disko <host> <device>
 
       Examples:
         deploy -A --select
         deploy --branch ci/flake-update --boot prox-srvarrvm
         deploy --branch dhcp-unifi --test beast
-        deploy --home nv ihrachyshka
         deploy --disko frame /dev/sdX
       EOF
       }
@@ -75,23 +72,6 @@ let
       if [ "$#" -eq 1 ] && [ "$1" = "--help" ]; then
         usage
         exit 0
-      fi
-
-      if [ "$#" -gt 0 ] && [ "$1" = "--home" ]; then
-        shift
-
-        if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-          usage >&2
-          exit 1
-        fi
-
-        target="$1"
-        username="''${USERNAME:-ihrachyshka}"
-        if [ "$#" -eq 2 ]; then
-          username="$2"
-        fi
-
-        exec home-manager switch --flake "${../.}#''${username}@''${target}" -L --show-trace -b backup
       fi
 
       if [ "$#" -gt 0 ] && [ "$1" = "--disko" ]; then
@@ -375,7 +355,7 @@ let
   };
 in
 {
-  deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default), standalone Home Manager (--home), or disk provisioning (--disko).";
+  deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
   vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";

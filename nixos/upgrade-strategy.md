@@ -36,8 +36,7 @@ on schedule but does not auto-reboot.
 - `x86_64-linux` NixOS system closures
 - `aarch64-linux` NixOS system closures
 - `x86_64-linux` VM artifacts used by CI
-- `x86_64-linux` Home Manager activation for `nv`
-- `aarch64-darwin` system, Home Manager, and VM outputs that CI validates
+- `aarch64-darwin` system and VM outputs that CI validates
 - `x86_64-linux` regular checks from `.github/workflows/checks.yml`
 - `x86_64-linux` NixOS tests from `.github/workflows/checks.yml`
 
@@ -85,9 +84,11 @@ The daily warmup procedure is:
 7. Later fleet upgrades substitute from `http://nix-cache:8080/default/` when
    those closures are needed.
 
-The explicit `attic push` step matters. The repo's `post-build-hook` is not
-enough for cache warming because substituted paths do not trigger Nix
-`post-build-hook`.
+The explicit `attic push` step matters. The repo's background
+`attic watch-store` service is enough for locally built outputs, but it still
+honors Attic's upstream cache filter. The warmer uses
+`--ignore-upstream-cache-filter` so already-substituted targets still get
+rehomed into the local cache.
 
 ## Manual Operation
 

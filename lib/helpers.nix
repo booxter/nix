@@ -29,6 +29,7 @@ let
           stateVersion
           ;
       };
+      home-manager.useGlobalPkgs = true;
       home-manager.useUserPackages = true;
       home-manager.users.${username} = ../home-manager;
     };
@@ -42,38 +43,6 @@ let
   };
 in
 rec {
-  mkHome =
-    {
-      stateVersion,
-      username ? "ihrachyshka",
-      platform ? "aarch64-darwin",
-      homeManagerInput ? inputs.home-manager,
-      hmFull ? true,
-      isWork ? false,
-      isDesktop ? false,
-      extraModules ? [ ],
-    }:
-    homeManagerInput.lib.homeManagerConfiguration {
-      pkgs = inputs.nixpkgs.legacyPackages.${platform};
-      extraSpecialArgs = {
-        inherit
-          inputs
-          outputs
-          hostInventory
-          username
-          platform
-          hmFull
-          stateVersion
-          isDesktop
-          isWork
-          ;
-      };
-      modules = [
-        ../home-manager
-      ]
-      ++ extraModules;
-    };
-
   mkNixos =
     {
       hostname,
