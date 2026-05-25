@@ -1,12 +1,20 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
   catalog = import ./catalog.nix;
   alertmanagerPort = 9093;
   grafanaPort = config.services.grafana.settings.server.http_port;
+  validateAlertmanagerConfig = pkgs.writeShellApplication {
+    name = "validate-alertmanager-config";
+    runtimeInputs = [ config.services.prometheus.alertmanager.package ];
+    text = ''
+      exec amtool check-config /tmp/alert-manager-substituted.yaml
+    '';
+  };
 in
 {
   assertions = [
@@ -53,15 +61,19 @@ in
     enable = true;
     listenAddress = "127.0.0.1";
     port = alertmanagerPort;
+    checkConfig = false;
     configText = builtins.readFile catalog.alertmanager.configFile;
+    environmentFile = config.sops.templates."alertmanager.env".path;
   };
 
   systemd.services.alertmanager = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
-    serviceConfig.LoadCredential = [
-      "telegram-bot-token:${config.sops.secrets.grafanaAlertingTelegramBotToken.path}"
-      "telegram-chat-id:${config.sops.secrets.grafanaAlertingTelegramChatId.path}"
-    ];
+    serviceConfig = {
+      LoadCredential = [
+        "telegram-bot-token:${config.sops.secrets.grafanaAlertingTelegramBotToken.path}"
+      ];
+      ExecStartPre = lib.mkAfter [ (lib.getExe validateAlertmanagerConfig) ];
+    };
   };
 }

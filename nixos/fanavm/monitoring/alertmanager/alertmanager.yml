@@ -13,6 +13,6 @@ receivers:
   - name: telegram-home
     telegram_configs:
       - bot_token_file: /run/credentials/alertmanager.service/telegram-bot-token
-        chat_id_file: /run/credentials/alertmanager.service/telegram-chat-id
+        chat_id: $TELEGRAM_CHAT_ID
         parse_mode: HTML
         send_resolved: true
