@@ -58,7 +58,6 @@ in
 
     system.stateVersion = stateVersion;
     nixpkgs.hostPlatform = platform;
-    security.sudo.wheelNeedsPassword = config.host.isWork;
 
     nix.gc.dates = "Mon, 03:15";
     nix.optimise.dates = [ "Mon, 04:15" ];
