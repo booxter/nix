@@ -33,7 +33,6 @@ in
     ./nfs.nix
     ./qos.nix
     ./sabnzbd.nix
-    ./sabnzbd-exporter.nix
     ./seerr.nix
     ./shelfmark.nix
     ./transmission.nix

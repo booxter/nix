@@ -76,6 +76,10 @@ let
   ];
 in
 {
+  imports = [
+    ./sabnzbd-exporter.nix
+  ];
+
   sops.secrets = lib.genAttrs sabnzbdSecretNames (_: { });
 
   sops.templates."sabnzbd-secret.ini" = {
