@@ -42,13 +42,9 @@ in
       download-queue-size = 100;
       encryption = 1;
       incomplete-dir = "${mediaDir}/torrents/.incomplete";
-      incomplete-dir-enabled = true;
       lpd-enabled = false;
       message-level = 3;
       peer-port = cfg.peerPort;
-      peer-port-random-high = 65535;
-      peer-port-random-low = 65535;
-      peer-port-random-on-start = false;
       pex-enabled = true;
       port-forwarding-enabled = false;
       rpc-authentication-required = false;
@@ -56,14 +52,10 @@ in
       rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
       rpc-whitelist = "127.0.0.1,192.168.*,10.*";
       rpc-whitelist-enabled = true;
-      script-torrent-done-enabled = false;
-      script-torrent-done-filename = null;
       sort-mode = "progress";
       speed-limit-up = transmissionConservativeUploadLimitKBps;
       speed-limit-up-enabled = true;
-      trash-original-torrent-files = false;
       umask = "002";
-      utp-enabled = true;
       watch-dir = "${mediaDir}/torrents/.watch";
       watch-dir-enabled = true;
     };
