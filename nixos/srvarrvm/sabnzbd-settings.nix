@@ -20,7 +20,8 @@
     queue_complete_pers = 0;
     bandwidth_perc = 100;
     refresh_rate = 4;
-    interface_settings = "{\"dateFormat\":\"fromNow\",\"extraQueueColumns\":[],\"extraHistoryColumns\":[],\"displayCompact\":true,\"displayFullWidth\":true,\"displayTabbed\":true,\"confirmDeleteQueue\":true,\"confirmDeleteHistory\":true,\"keyboardShortcuts\":true}";
+    # ConfigObj expects this embedded JSON blob to remain quoted in the INI.
+    interface_settings = "'{\"dateFormat\":\"fromNow\",\"extraQueueColumns\":[],\"extraHistoryColumns\":[],\"displayCompact\":true,\"displayFullWidth\":true,\"displayTabbed\":true,\"confirmDeleteQueue\":true,\"confirmDeleteHistory\":true,\"keyboardShortcuts\":true}'";
     queue_limit = 20;
     config_lock = 0;
     fixed_ports = 1;
