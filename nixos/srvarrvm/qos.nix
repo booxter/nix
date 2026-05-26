@@ -30,6 +30,8 @@ in
 {
   boot.kernelModules = [ "ifb" ];
 
+  host.observability.client.mtlsClients."jellyfin-upload-policy".enable = true;
+
   imports = [
     (import ./adaptive-upload-policy.nix {
       jellyfinExporterUrl = "https://${beastHostConfig.host.dnsName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";

@@ -202,6 +202,4 @@ in
     };
   };
 
-  host.observability.client.mtlsClients."jellyfin-upload-policy".enable = true;
-
 }
