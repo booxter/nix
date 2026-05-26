@@ -19,8 +19,6 @@ in
 
   systemd.tmpfiles.rules = [
     "d '${cfg.stateDir}' 0700 ${cfg.user} root - -"
-    "d '${mediaDir}/library/audiobooks' 0775 root media - -"
-    "d '${mediaDir}/library/podcasts' 0775 root media - -"
   ];
 
   systemd.services.audiobookshelf.serviceConfig = {
