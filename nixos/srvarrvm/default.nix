@@ -7,7 +7,6 @@
     inputs.vpnconfinement.nixosModules.default
     ./arr.nix
     ./audiobookshelf.nix
-    ./contract.nix
     ./aurral.nix
     ./backup.nix
     ./glance.nix
