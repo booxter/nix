@@ -7,7 +7,7 @@
 let
   cfg = config.host.srvarr.services.transmission;
   mediaDir = config.host.srvarr.mediaDir;
-  tuning = config.host.srvarr.tuning;
+  tuning = config.host.srvarrTuning;
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor

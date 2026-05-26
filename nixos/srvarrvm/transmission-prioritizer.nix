@@ -5,7 +5,7 @@
   ...
 }:
 let
-  tuning = config.host.srvarr.tuning;
+  tuning = config.host.srvarrTuning;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/transmission-collector.prom";
   serviceDeps = [

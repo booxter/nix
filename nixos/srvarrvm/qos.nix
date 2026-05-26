@@ -8,7 +8,7 @@
 }:
 let
   srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
-  tuning = config.host.srvarr.tuning;
+  tuning = config.host.srvarrTuning;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastJellyfinEndpoint = beastHostConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;

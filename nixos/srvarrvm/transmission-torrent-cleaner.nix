@@ -30,7 +30,7 @@
         "--minimum-age-days"
         "30"
         "--minimum-ratio"
-        (toString config.host.srvarr.tuning.transmissionNonPreferredLowPriorityRatio)
+        (toString config.host.srvarrTuning.transmissionNonPreferredLowPriorityRatio)
         "--stale-nonseeding-age-days"
         "365"
         "--request-timeout-seconds"
