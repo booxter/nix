@@ -12,6 +12,7 @@
     ./backup.nix
     ./glance.nix
     ./nfs.nix
+    ./paths.nix
     ./qos.nix
     ./sabnzbd.nix
     ./seerr.nix

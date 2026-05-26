@@ -5,7 +5,7 @@
   ...
 }:
 let
-  stateRoot = config.host.srvarr.stateDir;
+  stateRoot = config.host.srvarrPaths.stateDir;
   backupPaths = [ stateRoot ];
   seerrConfigDir = "${stateRoot}/seerr";
   seerrBackupDir = "${stateRoot}/seerr-backup/latest";

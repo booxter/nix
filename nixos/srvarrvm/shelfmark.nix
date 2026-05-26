@@ -7,7 +7,7 @@
 let
   accounts = import ./accounts.nix;
   cfg = config.host.srvarr.services.shelfmark;
-  mediaDir = config.host.srvarr.mediaDir;
+  mediaDir = config.host.srvarrPaths.mediaDir;
   shelfmarkService = hostInventory.servicesById.shelfmark;
 in
 {

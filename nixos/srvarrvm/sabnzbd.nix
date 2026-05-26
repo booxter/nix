@@ -7,7 +7,7 @@
 let
   accounts = import ./accounts.nix;
   cfg = config.host.srvarr.services.sabnzbd;
-  mediaDir = config.host.srvarr.mediaDir;
+  mediaDir = config.host.srvarrPaths.mediaDir;
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
   sabnzbdServerNames = [
     "news.frugalusenet.com"

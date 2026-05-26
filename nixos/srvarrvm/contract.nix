@@ -3,9 +3,6 @@
   ...
 }:
 let
-  mediaDir = "/data/media";
-  # Preserve the historical state root so backups and existing service state
-  # continue to land in the same place.
   stateDir = "/data/.state/nixarr";
 in
 {
@@ -16,7 +13,6 @@ in
   };
 
   config.host.srvarr = {
-    inherit mediaDir stateDir;
     services = {
       aurral = {
         port = 3001;
