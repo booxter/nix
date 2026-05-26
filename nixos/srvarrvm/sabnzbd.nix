@@ -19,27 +19,24 @@ let
     "reader.easyusenet.nl"
   ];
   mkSabnzbdServerSecretName = server: field: "sabnzbd/servers/${server}/${field}";
-  sabnzbdSecretNames =
-    [
-      "sabnzbd/webUsername"
-      "sabnzbd/webPassword"
-      "sabnzbd/apiKey"
-      "sabnzbd/nzbKey"
+  sabnzbdSecretNames = [
+    "sabnzbd/webUsername"
+    "sabnzbd/webPassword"
+    "sabnzbd/apiKey"
+    "sabnzbd/nzbKey"
+  ]
+  ++ lib.concatMap (
+    server:
+    map (field: mkSabnzbdServerSecretName server field) [
+      "username"
+      "password"
     ]
-    ++ lib.concatMap (
-      server:
-      map (field: mkSabnzbdServerSecretName server field) [
-        "username"
-        "password"
-      ]
-    ) sabnzbdServerNames;
-  sabnzbdServerSecretIni = lib.concatMapStringsSep "\n\n" (
-    server: ''
-      [[${server}]]
-      username = ${builtins.getAttr (mkSabnzbdServerSecretName server "username") config.sops.placeholder}
-      password = ${builtins.getAttr (mkSabnzbdServerSecretName server "password") config.sops.placeholder}
-    ''
   ) sabnzbdServerNames;
+  sabnzbdServerSecretIni = lib.concatMapStringsSep "\n\n" (server: ''
+    [[${server}]]
+    username = ${builtins.getAttr (mkSabnzbdServerSecretName server "username") config.sops.placeholder}
+    password = ${builtins.getAttr (mkSabnzbdServerSecretName server "password") config.sops.placeholder}
+  '') sabnzbdServerNames;
   mkUsenetDirRule = mode: suffix: "d '${mediaDir}/usenet${suffix}' ${mode} ${user} media - -";
   usenetDirRules = [
     {

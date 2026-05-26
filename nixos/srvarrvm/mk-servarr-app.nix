@@ -29,13 +29,12 @@ in
     groups = lib.optionalAttrs (apiGroup != null) {
       ${apiGroup} = { };
     };
-    users.${user} =
-      {
-        isSystemUser = true;
-      }
-      // lib.optionalAttrs (apiGroup != null && addUserToApiGroup) {
-        extraGroups = [ apiGroup ];
-      };
+    users.${user} = {
+      isSystemUser = true;
+    }
+    // lib.optionalAttrs (apiGroup != null && addUserToApiGroup) {
+      extraGroups = [ apiGroup ];
+    };
   };
 
   host.internalHttps.services.${name} = {

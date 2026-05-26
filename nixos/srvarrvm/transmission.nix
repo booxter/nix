@@ -118,19 +118,20 @@ in
 
   # Keep the host-local helper on loopback, but target the actual namespace
   # address directly instead of the old fixed proxy address.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.services.transmission.settings.rpc-port}" = {
-    listen = lib.mkForce [
-      {
-        addr = "127.0.0.1";
-        port = config.services.transmission.settings.rpc-port;
-      }
-    ];
-    locations."/" = {
-      recommendedProxySettings = true;
-      proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.services.transmission.settings.rpc-port}";
+  services.nginx.virtualHosts."127.0.0.1:${toString config.services.transmission.settings.rpc-port}" =
+    {
+      listen = lib.mkForce [
+        {
+          addr = "127.0.0.1";
+          port = config.services.transmission.settings.rpc-port;
+        }
+      ];
+      locations."/" = {
+        recommendedProxySettings = true;
+        proxyWebsockets = true;
+        proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.services.transmission.settings.rpc-port}";
+      };
     };
-  };
 
   host.internalHttps.services.transmission = {
     enable = true;

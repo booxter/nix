@@ -22,7 +22,8 @@ let
       shelfmark = config.services.shelfmark.environment.FLASK_PORT;
       sonarr = config.services.sonarr.settings.server.port;
       transmission = config.services.transmission.settings.rpc-port;
-    }.${serviceId};
+    }
+    .${serviceId};
   httpsServiceFor =
     service:
     if
