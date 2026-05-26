@@ -22,6 +22,8 @@ in
   ];
 
   systemd.services.audiobookshelf.serviceConfig = {
+    # Keep the upstream unit shape, but add explicit hardening around the
+    # absolute state directory layout we use on srvarr.
     IOSchedulingPriority = 0;
     ProtectClock = true;
     ProtectControlGroups = true;
@@ -37,10 +39,8 @@ in
     NoNewPrivileges = true;
     ReadWritePaths = [ cfg.stateDir ];
     RemoveIPC = true;
-    Restart = "on-failure";
     RestrictRealtime = true;
     RestrictSUIDSGID = true;
-    StateDirectory = lib.mkForce null;
     WorkingDirectory = lib.mkForce cfg.stateDir;
   };
 
