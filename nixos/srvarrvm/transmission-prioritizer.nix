@@ -2,11 +2,10 @@
   config,
   lib,
   pkgs,
-  transmissionNonPreferredLowPriorityRatio,
-  transmissionNonPreferredPauseRatio,
   ...
 }:
 let
+  tuning = config.host.srvarr.tuning;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/transmission-collector.prom";
   serviceDeps = [
@@ -20,9 +19,9 @@ let
     "--trackers-file"
     config.sops.secrets.transmissionTrackerHosts.path
     "--non-preferred-low-priority-ratio"
-    (toString transmissionNonPreferredLowPriorityRatio)
+    (toString tuning.transmissionNonPreferredLowPriorityRatio)
     "--non-preferred-pause-ratio"
-    (toString transmissionNonPreferredPauseRatio)
+    (toString tuning.transmissionNonPreferredPauseRatio)
     "--interval-seconds"
     "30"
     "--request-timeout-seconds"

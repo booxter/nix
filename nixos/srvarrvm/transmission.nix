@@ -2,18 +2,18 @@
   config,
   hostInventory,
   lib,
-  wgConservativeUploadRateMbit,
   ...
 }:
 let
   cfg = config.host.srvarr.services.transmission;
   mediaDir = config.host.srvarr.mediaDir;
+  tuning = config.host.srvarr.tuning;
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.
   transmissionConservativeUploadLimitKBps = builtins.floor (
-    (wgConservativeUploadRateMbit * 1000.0 / 8.0) * 0.95
+    (tuning.wgConservativeUploadRateMbit * 1000.0 / 8.0) * 0.95
   );
 in
 {

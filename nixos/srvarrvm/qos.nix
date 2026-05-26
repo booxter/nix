@@ -1,13 +1,14 @@
 {
+  config,
   hostInventory,
   lib,
   outputs,
   pkgs,
-  wgConservativeUploadRateMbit,
   ...
 }:
 let
   srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
+  tuning = config.host.srvarr.tuning;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastJellyfinEndpoint = beastHostConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;
@@ -19,7 +20,7 @@ let
   };
   wgEndpointPort = 1637;
   wgOuterLinkRate = "10gbit";
-  wgConservativeUploadRate = "${toString wgConservativeUploadRateMbit}mbit";
+  wgConservativeUploadRate = "${toString tuning.wgConservativeUploadRateMbit}mbit";
   wgConservativeDownloadRate = "400mbit";
   wgUnitDepsBase = networkOnlineUnitDeps // {
     After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
@@ -35,7 +36,7 @@ in
   imports = [
     (import ./adaptive-upload-policy.nix {
       jellyfinExporterUrl = "https://${beastHostConfig.host.dnsName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
-      fallbackUploadRateMbit = wgConservativeUploadRateMbit;
+      fallbackUploadRateMbit = tuning.wgConservativeUploadRateMbit;
       inherit
         networkOnlineUnitDeps
         wgEndpointPort

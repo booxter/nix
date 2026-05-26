@@ -2,20 +2,7 @@
   inputs,
   ...
 }:
-let
-  wgConservativeUploadRateMbit = 8;
-  transmissionNonPreferredLowPriorityRatio = 3.0;
-  transmissionNonPreferredPauseRatio = 6.0;
-in
 {
-  _module.args = {
-    inherit
-      transmissionNonPreferredLowPriorityRatio
-      transmissionNonPreferredPauseRatio
-      wgConservativeUploadRateMbit
-      ;
-  };
-
   imports = [
     inputs.vpnconfinement.nixosModules.default
     ./arr.nix
@@ -29,6 +16,7 @@ in
     ./sabnzbd.nix
     ./seerr.nix
     ./shelfmark.nix
+    ./tuning.nix
     ./transmission.nix
     ./vpn.nix
   ];
