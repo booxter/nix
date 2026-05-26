@@ -17,6 +17,11 @@ let
   );
 in
 {
+  imports = [
+    ./transmission-torrent-cleaner.nix
+    ./transmission-prioritizer.nix
+  ];
+
   sops.secrets.transmissionTrackerHosts = {
     key = "transmission/private_tracker_hosts";
     owner = "transmission";

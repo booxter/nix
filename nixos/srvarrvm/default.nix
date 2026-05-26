@@ -41,8 +41,6 @@ in
     ./shelfmark.nix
     ./sonarr.nix
     ./transmission.nix
-    ./transmission-torrent-cleaner.nix
-    ./transmission-prioritizer.nix
     ./vpn.nix
   ];
 
