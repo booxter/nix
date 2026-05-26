@@ -24,22 +24,18 @@ in
 
   imports = [
     inputs.vpnconfinement.nixosModules.default
+    ./arr.nix
     ./audiobookshelf.nix
     ./contract.nix
     ./aurral.nix
     ./backup.nix
-    ./bazarr.nix
     ./glance.nix
-    ./lidarr.nix
     ./nfs.nix
-    ./prowlarr.nix
     ./qos.nix
-    ./radarr.nix
     ./sabnzbd.nix
     ./sabnzbd-exporter.nix
     ./seerr.nix
     ./shelfmark.nix
-    ./sonarr.nix
     ./transmission.nix
     ./vpn.nix
   ];
