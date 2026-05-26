@@ -9,6 +9,36 @@ let
   cfg = config.host.srvarr.services.sabnzbd;
   mediaDir = config.host.srvarr.mediaDir;
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
+  sabnzbdServerNames = [
+    "news.frugalusenet.com"
+    "news.newshosting.com"
+    "eunews.frugalusenet.com"
+    "bonus.frugalusenet.com"
+    "usnews.blocknews.net"
+    "reader.easyusenet.nl"
+  ];
+  mkSabnzbdServerSecretName = server: field: "sabnzbd/servers/${server}/${field}";
+  sabnzbdSecretNames =
+    [
+      "sabnzbd/webUsername"
+      "sabnzbd/webPassword"
+      "sabnzbd/apiKey"
+      "sabnzbd/nzbKey"
+    ]
+    ++ lib.concatMap (
+      server:
+      map (field: mkSabnzbdServerSecretName server field) [
+        "username"
+        "password"
+      ]
+    ) sabnzbdServerNames;
+  sabnzbdServerSecretIni = lib.concatMapStringsSep "\n\n" (
+    server: ''
+      [[${server}]]
+      username = ${builtins.getAttr (mkSabnzbdServerSecretName server "username") config.sops.placeholder}
+      password = ${builtins.getAttr (mkSabnzbdServerSecretName server "password") config.sops.placeholder}
+    ''
+  ) sabnzbdServerNames;
   mkUsenetDirRule = mode: suffix: "d '${mediaDir}/usenet${suffix}' ${mode} ${cfg.user} ${cfg.group} - -";
   usenetDirRules = [
     {
@@ -46,24 +76,7 @@ let
   ];
 in
 {
-  sops.secrets = {
-    "sabnzbd/webUsername" = { };
-    "sabnzbd/webPassword" = { };
-    "sabnzbd/apiKey" = { };
-    "sabnzbd/nzbKey" = { };
-    "sabnzbd/servers/news.frugalusenet.com/username" = { };
-    "sabnzbd/servers/news.frugalusenet.com/password" = { };
-    "sabnzbd/servers/news.newshosting.com/username" = { };
-    "sabnzbd/servers/news.newshosting.com/password" = { };
-    "sabnzbd/servers/eunews.frugalusenet.com/username" = { };
-    "sabnzbd/servers/eunews.frugalusenet.com/password" = { };
-    "sabnzbd/servers/bonus.frugalusenet.com/username" = { };
-    "sabnzbd/servers/bonus.frugalusenet.com/password" = { };
-    "sabnzbd/servers/usnews.blocknews.net/username" = { };
-    "sabnzbd/servers/usnews.blocknews.net/password" = { };
-    "sabnzbd/servers/reader.easyusenet.nl/username" = { };
-    "sabnzbd/servers/reader.easyusenet.nl/password" = { };
-  };
+  sops.secrets = lib.genAttrs sabnzbdSecretNames (_: { });
 
   sops.templates."sabnzbd-secret.ini" = {
     owner = "root";
@@ -77,29 +90,7 @@ in
       nzb_key = ${config.sops.placeholder."sabnzbd/nzbKey"}
 
       [servers]
-      [[news.frugalusenet.com]]
-      username = ${config.sops.placeholder."sabnzbd/servers/news.frugalusenet.com/username"}
-      password = ${config.sops.placeholder."sabnzbd/servers/news.frugalusenet.com/password"}
-
-      [[news.newshosting.com]]
-      username = ${config.sops.placeholder."sabnzbd/servers/news.newshosting.com/username"}
-      password = ${config.sops.placeholder."sabnzbd/servers/news.newshosting.com/password"}
-
-      [[eunews.frugalusenet.com]]
-      username = ${config.sops.placeholder."sabnzbd/servers/eunews.frugalusenet.com/username"}
-      password = ${config.sops.placeholder."sabnzbd/servers/eunews.frugalusenet.com/password"}
-
-      [[bonus.frugalusenet.com]]
-      username = ${config.sops.placeholder."sabnzbd/servers/bonus.frugalusenet.com/username"}
-      password = ${config.sops.placeholder."sabnzbd/servers/bonus.frugalusenet.com/password"}
-
-      [[usnews.blocknews.net]]
-      username = ${config.sops.placeholder."sabnzbd/servers/usnews.blocknews.net/username"}
-      password = ${config.sops.placeholder."sabnzbd/servers/usnews.blocknews.net/password"}
-
-      [[reader.easyusenet.nl]]
-      username = ${config.sops.placeholder."sabnzbd/servers/reader.easyusenet.nl/username"}
-      password = ${config.sops.placeholder."sabnzbd/servers/reader.easyusenet.nl/password"}
+      ${sabnzbdServerSecretIni}
     '';
   };
 
