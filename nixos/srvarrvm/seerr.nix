@@ -1,11 +1,13 @@
 {
   config,
+  hostInventory,
   lib,
   ...
 }:
 let
   accounts = import ./accounts.nix;
   cfg = config.host.srvarr.services.seerr;
+  seerrService = hostInventory.servicesById.seerr;
 in
 {
   services.seerr = {
@@ -31,5 +33,12 @@ in
     home = "/var/empty";
     isSystemUser = true;
     uid = accounts.uids.seerr;
+  };
+
+  host.internalHttps.services.seerr = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
+    serverAliases = [ seerrService.publicHost ];
+    mtls.enable = true;
   };
 }

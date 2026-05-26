@@ -1,6 +1,4 @@
 {
-  config,
-  hostInventory,
   inputs,
   ...
 }:
@@ -8,10 +6,6 @@ let
   wgConservativeUploadRateMbit = 8;
   transmissionNonPreferredLowPriorityRatio = 3.0;
   transmissionNonPreferredPauseRatio = 6.0;
-  seerrService = hostInventory.servicesById.seerr;
-  aurralService = hostInventory.servicesById.aurral;
-  audiobookshelfService = hostInventory.servicesById.audiobookshelf;
-  shelfmarkService = hostInventory.servicesById.shelfmark;
 in
 {
   _module.args = {
@@ -40,32 +34,4 @@ in
   ];
 
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
-
-  host.internalHttps.services = {
-    seerr = {
-      enable = true;
-      upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
-      serverAliases = [ seerrService.publicHost ];
-      mtls.enable = true;
-    };
-    aurral = {
-      enable = true;
-      upstream = "http://127.0.0.1:${toString config.host.srvarr.services.aurral.port}";
-      serverAliases = [ aurralService.publicHost ];
-      mtls.enable = true;
-    };
-    audiobookshelf = {
-      enable = true;
-      upstream = "http://127.0.0.1:${toString config.services.audiobookshelf.port}";
-      serverAliases = [ audiobookshelfService.publicHost ];
-      mtls.enable = true;
-    };
-    shelfmark = {
-      enable = true;
-      upstream = "http://127.0.0.1:${toString config.services.shelfmark.environment.FLASK_PORT}";
-      serverAliases = [ shelfmarkService.publicHost ];
-      mtls.enable = true;
-    };
-  };
-
 }

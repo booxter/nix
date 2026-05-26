@@ -1,11 +1,13 @@
 {
   config,
+  hostInventory,
   lib,
   ...
 }:
 let
   accounts = import ./accounts.nix;
   cfg = config.host.srvarr.services.audiobookshelf;
+  audiobookshelfService = hostInventory.servicesById.audiobookshelf;
 in
 {
   services.audiobookshelf = {
@@ -27,5 +29,12 @@ in
   users.users.${cfg.user} = {
     home = lib.mkForce "/var/empty";
     uid = accounts.uids.audiobookshelf;
+  };
+
+  host.internalHttps.services.audiobookshelf = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString cfg.port}";
+    serverAliases = [ audiobookshelfService.publicHost ];
+    mtls.enable = true;
   };
 }

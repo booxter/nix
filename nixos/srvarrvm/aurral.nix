@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
@@ -9,6 +10,7 @@ let
   mediaPath = config.host.srvarr.mediaDir;
   aurralStateDir = config.host.srvarr.services.aurral.stateDir;
   aurralFlowDir = "${mediaPath}/library/flows";
+  aurralService = hostInventory.servicesById.aurral;
   aurralUnitDeps = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];
@@ -82,5 +84,12 @@ in
       SystemCallArchitectures = "native";
       RemoveIPC = true;
     };
+  };
+
+  host.internalHttps.services.aurral = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString aurralPort}";
+    serverAliases = [ aurralService.publicHost ];
+    mtls.enable = true;
   };
 }
