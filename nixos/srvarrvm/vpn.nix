@@ -84,13 +84,13 @@ in
   # unstable single-flow ceiling observed on this path.
   # The adaptive Jellyfin-aware controller can still raise the WireGuard upload
   # ceiling at runtime when the uplink is otherwise idle.
-  systemd.services.wg-qos-upload = {
+  systemd.services.wg-qos = {
     wantedBy = [ "multi-user.target" ];
     unitConfig = wgUnitDepsBase;
     serviceConfig =
       let
         wgQosScript = pkgs.writeShellApplication {
-          name = "wg-qos-upload";
+          name = "wg-qos";
           runtimeInputs = [
             pkgs.gawk
             pkgs.iproute2

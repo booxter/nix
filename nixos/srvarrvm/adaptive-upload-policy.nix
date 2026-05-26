@@ -151,14 +151,14 @@ in
     unitConfig = wgUnitDepsBase // {
       Wants = (wgUnitDepsBase.Wants or [ ]) ++ [
         "jellyfin-upload-policy.service"
-        "wg-qos-upload.service"
+        "wg-qos.service"
       ];
       After = (wgUnitDepsBase.After or [ ]) ++ [
         "jellyfin-upload-policy.service"
-        "wg-qos-upload.service"
+        "wg-qos.service"
       ];
       PartOf = (wgUnitDepsBase.PartOf or [ ]) ++ [
-        "wg-qos-upload.service"
+        "wg-qos.service"
       ];
     };
     serviceConfig = {
