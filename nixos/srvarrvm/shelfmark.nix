@@ -25,7 +25,6 @@ in
   ];
 
   systemd.services.shelfmark.serviceConfig = {
-    DynamicUser = lib.mkForce false;
     Group = "media";
     ReadWritePaths = [
       stateDir
