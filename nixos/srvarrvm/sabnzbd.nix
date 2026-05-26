@@ -90,10 +90,8 @@ in
     if [ -d ${legacyStateDir} ] && [ ! -e /var/lib/sabnzbd/.migrated-from-legacy ]; then
       install -d -m 0750 -o ${cfg.user} -g ${cfg.group} /var/lib/sabnzbd
 
-      if [ -z "$(find /var/lib/sabnzbd -mindepth 1 -maxdepth 1 -print -quit)" ]; then
-        cp -a ${legacyStateDir}/. /var/lib/sabnzbd/
-        chown -R ${cfg.user}:${cfg.group} /var/lib/sabnzbd
-      fi
+      cp -a ${legacyStateDir}/. /var/lib/sabnzbd/
+      chown -R ${cfg.user}:${cfg.group} /var/lib/sabnzbd
 
       touch /var/lib/sabnzbd/.migrated-from-legacy
       chown ${cfg.user}:${cfg.group} /var/lib/sabnzbd/.migrated-from-legacy
