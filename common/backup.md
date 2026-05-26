@@ -307,10 +307,10 @@ Example stop/start sequence for `srvarr`:
 ssh srvarr.local 'sudo sh -c "
   STATE_ROOT=/data/.state/nixarr
   systemctl stop radarr sonarr lidarr readarr readarr-audiobook \
-    bazarr prowlarr sabnzbd transmission jellyseerr audiobookshelf
+    bazarr prowlarr sabnzbd transmission seerr audiobookshelf
   rsync -a \"/restore-test\$STATE_ROOT/\" \"\$STATE_ROOT/\"
   systemctl start radarr sonarr lidarr readarr readarr-audiobook \
-    bazarr prowlarr sabnzbd transmission jellyseerr audiobookshelf
+    bazarr prowlarr sabnzbd transmission seerr audiobookshelf
 "'
 ```
 

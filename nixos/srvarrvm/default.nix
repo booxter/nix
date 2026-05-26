@@ -8,7 +8,7 @@ let
   wgConservativeUploadRateMbit = 8;
   transmissionNonPreferredLowPriorityRatio = 3.0;
   transmissionNonPreferredPauseRatio = 6.0;
-  jellyseerrService = hostInventory.servicesById.jellyseerr;
+  seerrService = hostInventory.servicesById.seerr;
   aurralService = hostInventory.servicesById.aurral;
   audiobookshelfService = hostInventory.servicesById.audiobookshelf;
   shelfmarkService = hostInventory.servicesById.shelfmark;
@@ -50,10 +50,10 @@ in
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
 
   host.internalHttps.services = {
-    jellyseerr = {
+    seerr = {
       enable = true;
       upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
-      serverAliases = [ jellyseerrService.publicHost ];
+      serverAliases = [ seerrService.publicHost ];
       mtls.enable = true;
     };
     aurral = {

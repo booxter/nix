@@ -198,7 +198,7 @@ rec {
       probePath = "/web/";
     }))
     (resolveService (mkService {
-      id = "jellyseerr";
+      id = "seerr";
       scope = "external";
       owner = "srvarr";
       publicHost = "js.ihar.dev";
@@ -473,7 +473,7 @@ rec {
       upsHost = "prx1-lab";
       localDnsAliases = [
         "glance"
-        "jellyseerr"
+        "seerr"
         "radarr"
         "sonarr"
         "lidarr"
