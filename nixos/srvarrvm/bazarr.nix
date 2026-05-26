@@ -25,4 +25,9 @@ in
     isSystemUser = true;
     uid = accounts.uids.bazarr;
   };
+
+  host.internalHttps.services.bazarr = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString config.services.bazarr.listenPort}";
+  };
 }

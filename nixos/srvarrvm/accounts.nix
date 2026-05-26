@@ -1,5 +1,6 @@
 {
   gids = {
+    prowlarr = 287;
     seerr = 250;
   };
 
