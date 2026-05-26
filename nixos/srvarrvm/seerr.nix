@@ -22,7 +22,6 @@ in
   ];
 
   systemd.services.seerr.serviceConfig = {
-    DynamicUser = lib.mkForce false;
     Group = group;
     ReadWritePaths = [ stateDir ];
     StateDirectory = lib.mkForce "seerr";
