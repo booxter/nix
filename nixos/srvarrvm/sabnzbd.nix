@@ -99,7 +99,6 @@ in
   systemd.services.sabnzbd = {
     serviceConfig = {
       Restart = "on-failure";
-      StartLimitBurst = 5;
     };
     vpnConfinement = {
       enable = true;
@@ -108,8 +107,6 @@ in
   };
 
   users.users.${cfg.user} = {
-    home = lib.mkForce "/var/empty";
-    isSystemUser = true;
     uid = accounts.uids.sabnzbd;
   };
 
