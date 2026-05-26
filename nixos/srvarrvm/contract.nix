@@ -52,7 +52,6 @@ in
       };
       sabnzbd = {
         port = 6336;
-        stateDir = "${stateDir}/sabnzbd";
         user = "sabnzbd";
         group = "media";
       };
