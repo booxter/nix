@@ -9,6 +9,41 @@ let
   cfg = config.host.srvarr.services.sabnzbd;
   mediaDir = config.host.srvarr.mediaDir;
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
+  mkUsenetDirRule = mode: suffix: "d '${mediaDir}/usenet${suffix}' ${mode} ${cfg.user} ${cfg.group} - -";
+  usenetDirRules = [
+    {
+      mode = "0755";
+      suffix = "";
+    }
+    {
+      mode = "0755";
+      suffix = "/.incomplete";
+    }
+    {
+      mode = "0755";
+      suffix = "/watch";
+    }
+    {
+      mode = "0775";
+      suffix = "/manual";
+    }
+    {
+      mode = "0775";
+      suffix = "/lidarr";
+    }
+    {
+      mode = "0775";
+      suffix = "/radarr";
+    }
+    {
+      mode = "0775";
+      suffix = "/sonarr";
+    }
+    {
+      mode = "0775";
+      suffix = "/shelfmark";
+    }
+  ];
 in
 {
   sops.secrets = {
@@ -85,16 +120,7 @@ in
     user = cfg.user;
   };
 
-  systemd.tmpfiles.rules = [
-    "d '${mediaDir}/usenet'             0755 ${cfg.user} ${cfg.group} - -"
-    "d '${mediaDir}/usenet/.incomplete' 0755 ${cfg.user} ${cfg.group} - -"
-    "d '${mediaDir}/usenet/watch'       0755 ${cfg.user} ${cfg.group} - -"
-    "d '${mediaDir}/usenet/manual'      0775 ${cfg.user} ${cfg.group} - -"
-    "d '${mediaDir}/usenet/lidarr'      0775 ${cfg.user} ${cfg.group} - -"
-    "d '${mediaDir}/usenet/radarr'      0775 ${cfg.user} ${cfg.group} - -"
-    "d '${mediaDir}/usenet/sonarr'      0775 ${cfg.user} ${cfg.group} - -"
-    "d '${mediaDir}/usenet/shelfmark'   0775 ${cfg.user} ${cfg.group} - -"
-  ];
+  systemd.tmpfiles.rules = map (dir: mkUsenetDirRule dir.mode dir.suffix) usenetDirRules;
 
   systemd.services.sabnzbd = {
     serviceConfig = {
