@@ -6,7 +6,6 @@
 let
   accounts = import ./accounts.nix;
   cfg = config.host.srvarr.services.audiobookshelf;
-  mediaDir = config.host.srvarr.mediaDir;
 in
 {
   services.audiobookshelf = {
