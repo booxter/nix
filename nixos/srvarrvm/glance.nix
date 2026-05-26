@@ -12,13 +12,13 @@ let
   srvarrPortFor =
     serviceId:
     {
-      aurral = config.host.srvarr.services.aurral.port;
+      aurral = config.systemd.services.aurral.environment.PORT;
       audiobookshelf = config.services.audiobookshelf.port;
       bazarr = config.services.bazarr.listenPort;
       lidarr = config.services.lidarr.settings.server.port;
       prowlarr = config.services.prowlarr.settings.server.port;
       radarr = config.services.radarr.settings.server.port;
-      sabnzbd = config.host.srvarr.services.sabnzbd.port;
+      sabnzbd = config.services.sabnzbd.settings.misc.port;
       shelfmark = config.services.shelfmark.environment.FLASK_PORT;
       sonarr = config.services.sonarr.settings.server.port;
       transmission = config.services.transmission.settings.rpc-port;

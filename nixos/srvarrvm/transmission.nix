@@ -5,8 +5,9 @@
   ...
 }:
 let
-  cfg = config.host.srvarr.services.transmission;
   mediaDir = config.host.srvarrPaths.mediaDir;
+  peerPort = 45486;
+  stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
   tuning = config.host.srvarrTuning;
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
@@ -31,8 +32,8 @@ in
 
   services.transmission = {
     enable = true;
-    group = cfg.group;
-    home = cfg.stateDir;
+    group = "media";
+    home = stateDir;
     openPeerPorts = true;
     settings = {
       anti-brute-force-enabled = true;
@@ -45,7 +46,7 @@ in
       incomplete-dir = "${mediaDir}/torrents/.incomplete";
       lpd-enabled = false;
       message-level = 3;
-      peer-port = cfg.peerPort;
+      peer-port = peerPort;
       pex-enabled = true;
       port-forwarding-enabled = false;
       rpc-authentication-required = false;
@@ -59,7 +60,7 @@ in
       watch-dir = "${mediaDir}/torrents/.watch";
       watch-dir-enabled = true;
     };
-    user = cfg.user;
+    user = "transmission";
   };
 
   systemd.services.transmission = {
@@ -108,7 +109,7 @@ in
 
   vpnNamespaces.wg.openVPNPorts = [
     {
-      port = cfg.peerPort;
+      port = peerPort;
       protocol = "both";
     }
   ];

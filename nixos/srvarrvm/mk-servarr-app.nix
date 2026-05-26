@@ -5,15 +5,16 @@
   name,
 }:
 let
-  cfg = lib.getAttr name config.host.srvarr.services;
+  stateDir = "${config.host.srvarrPaths.stateDir}/${name}";
   serviceCfg = lib.getAttr name config.services;
+  user = name;
 in
 {
   services.${name} = {
     enable = true;
-    dataDir = cfg.stateDir;
-    user = cfg.user;
-    group = cfg.group;
+    dataDir = stateDir;
+    user = user;
+    group = "media";
     settings = {
       log.analyticsEnabled = false;
       server.bindaddress = "127.0.0.1";
@@ -28,7 +29,7 @@ in
     groups = lib.optionalAttrs (apiGroup != null) {
       ${apiGroup} = { };
     };
-    users.${cfg.user} =
+    users.${user} =
       {
         isSystemUser = true;
       }

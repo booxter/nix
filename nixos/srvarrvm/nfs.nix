@@ -79,7 +79,7 @@ in
   '';
 
   users.groups.media.gid = hostInventory.site.gids.media;
-  users.users.${config.host.srvarr.services.bazarr.user}.extraGroups = [ "media" ];
+  users.users.${config.services.bazarr.user}.extraGroups = [ "media" ];
 
   # Make services that r/w to NFS require the media mount.
   systemd.services.radarr = {

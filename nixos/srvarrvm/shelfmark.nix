@@ -6,36 +6,37 @@
 }:
 let
   accounts = import ./accounts.nix;
-  cfg = config.host.srvarr.services.shelfmark;
+  stateDir = "${config.host.srvarrPaths.stateDir}/shelfmark";
   mediaDir = config.host.srvarrPaths.mediaDir;
+  user = "shelfmark";
   shelfmarkService = hostInventory.servicesById.shelfmark;
 in
 {
   services.shelfmark = {
     enable = true;
     environment = {
-      CONFIG_DIR = cfg.stateDir;
+      CONFIG_DIR = stateDir;
       FLASK_HOST = "127.0.0.1";
     };
   };
 
   systemd.tmpfiles.rules = [
-    "d '${cfg.stateDir}' 0700 ${cfg.user} root - -"
+    "d '${stateDir}' 0700 ${user} root - -"
   ];
 
   systemd.services.shelfmark.serviceConfig = {
     DynamicUser = lib.mkForce false;
-    Group = cfg.group;
+    Group = "media";
     ReadWritePaths = [
-      cfg.stateDir
+      stateDir
       mediaDir
     ];
     StateDirectory = lib.mkForce "";
-    User = cfg.user;
+    User = user;
   };
 
-  users.users.${cfg.user} = {
-    group = cfg.group;
+  users.users.${user} = {
+    group = "media";
     home = "/var/empty";
     isSystemUser = true;
     uid = accounts.uids.shelfmark;

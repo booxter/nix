@@ -6,8 +6,9 @@
 }:
 let
   accounts = import ./accounts.nix;
-  cfg = config.host.srvarr.services.sabnzbd;
   mediaDir = config.host.srvarrPaths.mediaDir;
+  port = 6336;
+  user = "sabnzbd";
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
   sabnzbdServerNames = [
     "news.frugalusenet.com"
@@ -39,7 +40,7 @@ let
       password = ${builtins.getAttr (mkSabnzbdServerSecretName server "password") config.sops.placeholder}
     ''
   ) sabnzbdServerNames;
-  mkUsenetDirRule = mode: suffix: "d '${mediaDir}/usenet${suffix}' ${mode} ${cfg.user} ${cfg.group} - -";
+  mkUsenetDirRule = mode: suffix: "d '${mediaDir}/usenet${suffix}' ${mode} ${user} media - -";
   usenetDirRules = [
     {
       mode = "0755";
@@ -102,7 +103,7 @@ in
     enable = true;
     allowConfigWrite = false;
     configFile = null;
-    group = cfg.group;
+    group = "media";
     secretFiles = [ config.sops.templates."sabnzbd-secret.ini".path ];
     settings = import ./sabnzbd-settings.nix {
       hostName = config.networking.hostName;
@@ -110,9 +111,9 @@ in
         mediaDir
         wgNamespaceAddress
         ;
-      port = cfg.port;
+      port = port;
     };
-    user = cfg.user;
+    user = user;
   };
 
   systemd.tmpfiles.rules = map (dir: mkUsenetDirRule dir.mode dir.suffix) usenetDirRules;
@@ -127,28 +128,28 @@ in
     };
   };
 
-  users.users.${cfg.user} = {
+  users.users.${user} = {
     uid = accounts.uids.sabnzbd;
   };
 
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ cfg.port ];
+  host.vpnNamespaceBridgeAccess.tcpPorts = [ port ];
 
-  services.nginx.virtualHosts."127.0.0.1:${toString cfg.port}" = {
+  services.nginx.virtualHosts."127.0.0.1:${toString port}" = {
     listen = lib.mkForce [
       {
         addr = "127.0.0.1";
-        port = cfg.port;
+        port = port;
       }
     ];
     locations."/" = {
       recommendedProxySettings = true;
       proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString cfg.port}";
+      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString port}";
     };
   };
 
   host.internalHttps.services.sabnzbd = {
     enable = true;
-    upstream = "http://127.0.0.1:${toString cfg.port}";
+    upstream = "http://127.0.0.1:${toString port}";
   };
 }

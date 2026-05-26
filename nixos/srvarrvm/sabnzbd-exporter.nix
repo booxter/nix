@@ -21,7 +21,7 @@ in
     port = sabnzbdExporterInternalPort;
     servers = [
       {
-        baseUrl = "http://127.0.0.1:${toString config.host.srvarr.services.sabnzbd.port}";
+        baseUrl = "http://127.0.0.1:${toString config.services.sabnzbd.settings.misc.port}";
         apiKeyFile = config.sops.templates."sabnzbd-exporter.apikey".path;
       }
     ];

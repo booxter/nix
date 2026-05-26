@@ -5,21 +5,22 @@
 }:
 let
   accounts = import ./accounts.nix;
-  cfg = config.host.srvarr.services.bazarr;
+  stateDir = "${config.host.srvarrPaths.stateDir}/bazarr";
+  user = "bazarr";
 in
 {
   services.bazarr = {
     enable = true;
-    dataDir = cfg.stateDir;
-    group = cfg.group;
-    user = cfg.user;
+    dataDir = stateDir;
+    group = "media";
+    user = user;
   };
 
   systemd.tmpfiles.rules = [
-    "d '${cfg.stateDir}' 0700 ${cfg.user} root - -"
+    "d '${stateDir}' 0700 ${user} root - -"
   ];
 
-  users.users.${cfg.user} = {
+  users.users.${user} = {
     extraGroups = lib.mkForce [ "media" ];
     home = lib.mkForce "/var/empty";
     isSystemUser = true;

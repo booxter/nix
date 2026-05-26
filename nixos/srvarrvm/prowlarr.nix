@@ -5,7 +5,9 @@
 }:
 let
   accounts = import ./accounts.nix;
-  cfg = config.host.srvarr.services.prowlarr;
+  stateDir = "${config.host.srvarrPaths.stateDir}/prowlarr";
+  user = "prowlarr";
+  group = "prowlarr";
 in
 {
   services.prowlarr = {
@@ -21,7 +23,7 @@ in
   };
 
   systemd.tmpfiles.rules = [
-    "d '${cfg.stateDir}' 0700 ${cfg.user} root - -"
+    "d '${stateDir}' 0700 ${user} root - -"
   ];
 
   systemd.services.prowlarr = {
@@ -32,21 +34,21 @@ in
     serviceConfig = {
       # `User` and `Group` override `DynamicUser = true` from the NixOS
       # Prowlarr module because a matching static account exists.
-      User = cfg.user;
-      Group = cfg.group;
-      ExecStart = lib.mkForce "${config.services.prowlarr.package}/bin/Prowlarr -nobrowser -data=${cfg.stateDir}";
-      ReadWritePaths = [ cfg.stateDir ];
+      User = user;
+      Group = group;
+      ExecStart = lib.mkForce "${config.services.prowlarr.package}/bin/Prowlarr -nobrowser -data=${stateDir}";
+      ReadWritePaths = [ stateDir ];
     };
   };
 
   users = {
     groups = {
-      ${cfg.group}.gid = accounts.gids.prowlarr;
+      ${group}.gid = accounts.gids.prowlarr;
       prowlarr-api = { };
     };
-    users.${cfg.user} = {
+    users.${user} = {
       isSystemUser = true;
-      group = cfg.group;
+      group = group;
       home = "/var/empty";
       uid = accounts.uids.prowlarr;
       extraGroups = [ "prowlarr-api" ];

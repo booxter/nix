@@ -8,7 +8,7 @@
 let
   aurralPort = 3001;
   mediaPath = config.host.srvarrPaths.mediaDir;
-  aurralStateDir = config.host.srvarr.services.aurral.stateDir;
+  aurralStateDir = "${config.host.srvarrPaths.stateDir}/aurral";
   aurralFlowDir = "${mediaPath}/library/flows";
   aurralService = hostInventory.servicesById.aurral;
   aurralUnitDeps = {

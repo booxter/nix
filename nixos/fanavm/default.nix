@@ -19,13 +19,13 @@ let
   srvarrPortFor =
     serviceId:
     {
-      aurral = srvarrHostConfig.host.srvarr.services.aurral.port;
+      aurral = srvarrHostConfig.systemd.services.aurral.environment.PORT;
       audiobookshelf = srvarrHostConfig.services.audiobookshelf.port;
       bazarr = srvarrHostConfig.services.bazarr.listenPort;
       lidarr = srvarrHostConfig.services.lidarr.settings.server.port;
       prowlarr = srvarrHostConfig.services.prowlarr.settings.server.port;
       radarr = srvarrHostConfig.services.radarr.settings.server.port;
-      sabnzbd = srvarrHostConfig.host.srvarr.services.sabnzbd.port;
+      sabnzbd = srvarrHostConfig.services.sabnzbd.settings.misc.port;
       shelfmark = srvarrHostConfig.services.shelfmark.environment.FLASK_PORT;
       sonarr = srvarrHostConfig.services.sonarr.settings.server.port;
       transmission = srvarrHostConfig.services.transmission.settings.rpc-port;
