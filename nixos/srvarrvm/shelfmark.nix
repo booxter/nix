@@ -32,7 +32,6 @@ in
       mediaDir
     ];
     StateDirectory = lib.mkForce "";
-    UMask = lib.mkForce "0002";
     User = cfg.user;
   };
 

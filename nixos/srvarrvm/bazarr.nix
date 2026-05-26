@@ -19,8 +19,6 @@ in
     "d '${cfg.stateDir}' 0700 ${cfg.user} root - -"
   ];
 
-  systemd.services.bazarr.serviceConfig.UMask = lib.mkForce "0002";
-
   users.users.${cfg.user} = {
     extraGroups = lib.mkForce [ "media" ];
     home = lib.mkForce "/var/empty";
