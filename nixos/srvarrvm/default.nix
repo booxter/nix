@@ -31,6 +31,7 @@ in
     ./bazarr.nix
     ./glance.nix
     ./nfs.nix
+    ./qos.nix
     ./sabnzbd.nix
     ./sabnzbd-exporter.nix
     ./seerr.nix
