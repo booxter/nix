@@ -81,8 +81,8 @@ in
   sops.secrets = lib.genAttrs sabnzbdSecretNames (_: { });
 
   sops.templates."sabnzbd-secret.ini" = {
-    owner = "root";
-    group = "root";
+    owner = user;
+    group = "media";
     mode = "0400";
     content = ''
       [misc]
