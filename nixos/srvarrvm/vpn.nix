@@ -23,6 +23,7 @@ let
 in
 {
   imports = [
+    ./wg-bridge-access.nix
     (import ./update-dynamic-ip.nix {
       inherit
         lib

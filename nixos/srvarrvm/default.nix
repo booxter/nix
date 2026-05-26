@@ -44,7 +44,6 @@ in
     ./transmission-torrent-cleaner.nix
     ./transmission-prioritizer.nix
     ./vpn.nix
-    ./wg-bridge-access.nix
   ];
 
   sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
