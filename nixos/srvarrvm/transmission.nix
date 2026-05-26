@@ -32,13 +32,9 @@ in
     settings = {
       anti-brute-force-enabled = true;
       anti-brute-force-threshold = 10;
-      blocklist-enabled = false;
-      blocklist-url = "https://github.com/Naunter/BT_BlockLists/raw/master/bt_blocklists.gz";
       cache-size-mb = 256;
       compact-view = true;
-      dht-enabled = true;
       download-dir = "${mediaDir}/torrents";
-      download-queue-enabled = true;
       download-queue-size = 100;
       encryption = 1;
       incomplete-dir = "${mediaDir}/torrents/.incomplete";
@@ -51,7 +47,6 @@ in
       rpc-bind-address = wgNamespaceAddress;
       rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
       rpc-whitelist = "127.0.0.1,192.168.*,10.*";
-      rpc-whitelist-enabled = true;
       sort-mode = "progress";
       speed-limit-up = transmissionConservativeUploadLimitKBps;
       speed-limit-up-enabled = true;
