@@ -8,7 +8,6 @@ let
   accounts = import ./accounts.nix;
   cfg = config.host.srvarr.services.sabnzbd;
   mediaDir = config.host.srvarr.mediaDir;
-  legacyStateDir = "${config.host.srvarr.stateDir}/sabnzbd";
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
 in
 {
@@ -85,18 +84,6 @@ in
     };
     user = cfg.user;
   };
-
-  system.activationScripts."migrate-sabnzbd-state".text = ''
-    if [ -d ${legacyStateDir} ] && [ ! -e /var/lib/sabnzbd/.migrated-from-legacy ]; then
-      install -d -m 0750 -o ${cfg.user} -g ${cfg.group} /var/lib/sabnzbd
-
-      cp -a ${legacyStateDir}/. /var/lib/sabnzbd/
-      chown -R ${cfg.user}:${cfg.group} /var/lib/sabnzbd
-
-      touch /var/lib/sabnzbd/.migrated-from-legacy
-      chown ${cfg.user}:${cfg.group} /var/lib/sabnzbd/.migrated-from-legacy
-    fi
-  '';
 
   systemd.tmpfiles.rules = [
     "d '${mediaDir}/usenet'             0755 ${cfg.user} ${cfg.group} - -"
