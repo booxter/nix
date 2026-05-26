@@ -20,7 +20,7 @@ let
       suffix = "/.incomplete";
     }
     {
-      mode = "0755";
+      mode = "0775";
       suffix = "/watch";
     }
     {
