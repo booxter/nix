@@ -112,6 +112,19 @@
         ];
       });
 
+      # Track exact SAB cleanup artifacts at post-processing time so history
+      # deletion can safely remove sorted outputs and temporary unpack trees
+      # without carrying a private DB schema change.
+      # https://github.com/sabnzbd/sabnzbd/issues/2754
+      sabnzbd = prev.sabnzbd.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/sabnzbd/commit/2ee3243723ff613104f179167a8467025ec051b4.patch";
+            hash = "sha256-anr7OPO3ZgW3PSaw32eNpkcAKa+SXonUQU+K11dc414=";
+          })
+        ];
+      });
+
       # Carry local fixes for broken user-count metrics until upstream releases them.
       vikunja = prev.vikunja.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
