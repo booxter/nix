@@ -9,18 +9,21 @@ let
   fanaHostConfig = outputs.nixosConfigurations.prox-fanavm.config;
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
   srvarrHttpsServices = config.host.internalHttps.services;
-  srvarrPorts = {
-    aurral = config.systemd.services.aurral.environment.PORT;
-    audiobookshelf = config.nixarr.audiobookshelf.port;
-    bazarr = config.nixarr.bazarr.port;
-    lidarr = config.nixarr.lidarr.port;
-    prowlarr = config.nixarr.prowlarr.port;
-    radarr = config.nixarr.radarr.port;
-    sabnzbd = config.nixarr.sabnzbd.guiPort;
-    shelfmark = config.nixarr.shelfmark.port;
-    sonarr = config.nixarr.sonarr.port;
-    transmission = config.nixarr.transmission.uiPort;
-  };
+  srvarrPortFor =
+    serviceId:
+    {
+      aurral = config.systemd.services.aurral.environment.PORT;
+      audiobookshelf = config.services.audiobookshelf.port;
+      bazarr = config.services.bazarr.listenPort;
+      lidarr = config.services.lidarr.settings.server.port;
+      prowlarr = config.services.prowlarr.settings.server.port;
+      radarr = config.services.radarr.settings.server.port;
+      sabnzbd = config.services.sabnzbd.settings.misc.port;
+      shelfmark = config.services.shelfmark.environment.FLASK_PORT;
+      sonarr = config.services.sonarr.settings.server.port;
+      transmission = config.services.transmission.settings.rpc-port;
+    }
+    .${serviceId};
   httpsServiceFor =
     service:
     if
@@ -65,14 +68,13 @@ let
     else
       service
       // {
-        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}}/";
+        url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
   ) hostInventory.services;
 in
 {
   services.glance = {
     enable = true;
-    openFirewall = false;
     settings = {
       server = {
         host = "127.0.0.1";

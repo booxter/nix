@@ -2,11 +2,10 @@
   config,
   lib,
   pkgs,
-  transmissionNonPreferredLowPriorityRatio,
-  transmissionNonPreferredPauseRatio,
   ...
 }:
 let
+  tuning = config.host.srvarrTuning;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/transmission-collector.prom";
   serviceDeps = [
@@ -16,13 +15,13 @@ let
   ];
   commonExecStart = [
     "--rpc-url"
-    "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc"
+    "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}/transmission/rpc"
     "--trackers-file"
     config.sops.secrets.transmissionTrackerHosts.path
     "--non-preferred-low-priority-ratio"
-    (toString transmissionNonPreferredLowPriorityRatio)
+    (toString tuning.transmissionNonPreferredLowPriorityRatio)
     "--non-preferred-pause-ratio"
-    (toString transmissionNonPreferredPauseRatio)
+    (toString tuning.transmissionNonPreferredPauseRatio)
     "--interval-seconds"
     "30"
     "--request-timeout-seconds"

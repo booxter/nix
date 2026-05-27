@@ -28,7 +28,7 @@ Already done:
 
 ## Follow-Up Cleanup
 
-- Bazarr still does not bind to loopback cleanly through `nixarr`
+- Bazarr still does not bind to loopback cleanly through the current module
 - current state is acceptable because plain LAN access is closed by firewall
   and the UI is fronted by HTTPS
 - later, upstream a bind-address / host knob and switch Bazarr to a true

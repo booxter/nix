@@ -265,11 +265,8 @@ ssh beast.local "sudo sh -c '
 '"
 ```
 
-For `srvarr`, restored files appear under:
-
-```text
-/restore-test/data/.state/nixarr
-```
+For `srvarr`, restored files appear under the same legacy state root beneath
+`/restore-test`.
 
 ## Restore a Single Subtree
 
@@ -287,9 +284,10 @@ Example for `srvarr` restoring Radarr state:
 
 ```sh
 ssh srvarr.local "sudo sh -c '
+  STATE_ROOT=/data/.state/nixarr
   export RESTIC_REPOSITORY=\"sftp:restic-srvarr@beast:/volume2/backups/restic-prod/hosts/srvarr\"
   export RESTIC_PASSWORD_FILE=\"/run/secrets/backup/restic/local/password\"
-  restic restore latest --target /restore-test --include \"/data/.state/nixarr/radarr\"
+  restic restore latest --target /restore-test --include \"$STATE_ROOT/radarr\"
 '"
 ```
 
@@ -306,13 +304,14 @@ For a real restore:
 Example stop/start sequence for `srvarr`:
 
 ```sh
-ssh srvarr.local \
-  'sudo systemctl stop radarr sonarr lidarr readarr readarr-audiobook \
-   bazarr prowlarr sabnzbd transmission jellyseerr audiobookshelf'
-ssh srvarr.local 'sudo rsync -a /restore-test/data/.state/nixarr/ /data/.state/nixarr/'
-ssh srvarr.local \
-  'sudo systemctl start radarr sonarr lidarr readarr readarr-audiobook \
-   bazarr prowlarr sabnzbd transmission jellyseerr audiobookshelf'
+ssh srvarr.local 'sudo sh -c "
+  STATE_ROOT=/data/.state/nixarr
+  systemctl stop radarr sonarr lidarr readarr readarr-audiobook \
+    bazarr prowlarr sabnzbd transmission seerr audiobookshelf
+  rsync -a \"/restore-test\$STATE_ROOT/\" \"\$STATE_ROOT/\"
+  systemctl start radarr sonarr lidarr readarr readarr-audiobook \
+    bazarr prowlarr sabnzbd transmission seerr audiobookshelf
+"'
 ```
 
 ## Adoption Pattern for New Hosts

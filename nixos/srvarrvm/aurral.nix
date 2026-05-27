@@ -1,14 +1,16 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
 }:
 let
   aurralPort = 3001;
-  mediaPath = config.nixarr.mediaDir;
-  aurralStateDir = "${config.nixarr.stateDir}/aurral";
+  mediaPath = config.host.srvarrPaths.mediaDir;
+  aurralStateDir = "${config.host.srvarrPaths.stateDir}/aurral";
   aurralFlowDir = "${mediaPath}/library/flows";
+  aurralService = hostInventory.servicesById.aurral;
   aurralUnitDeps = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];
@@ -82,5 +84,12 @@ in
       SystemCallArchitectures = "native";
       RemoveIPC = true;
     };
+  };
+
+  host.internalHttps.services.aurral = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString aurralPort}";
+    serverAliases = [ aurralService.publicHost ];
+    mtls.enable = true;
   };
 }

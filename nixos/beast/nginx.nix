@@ -22,7 +22,7 @@ let
       )
       [
         {
-          id = "jellyseerr";
+          id = "seerr";
           localPort = 15055;
         }
         {
@@ -50,10 +50,11 @@ let
   };
   publicServicePorts = {
     jellyfin = 8096;
-    jellyseerr = outputs.nixosConfigurations.prox-srvarrvm.config.services.seerr.port;
+    seerr = outputs.nixosConfigurations.prox-srvarrvm.config.services.seerr.port;
     aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
-    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
-    shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
+    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.services.audiobookshelf.port;
+    shelfmark =
+      outputs.nixosConfigurations.prox-srvarrvm.config.services.shelfmark.environment.FLASK_PORT;
     vikunja = outputs.nixosConfigurations.prox-orgvm.config.services.vikunja.port;
   };
 in

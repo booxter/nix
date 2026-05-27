@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  transmissionNonPreferredLowPriorityRatio,
   ...
 }:
 {
@@ -25,13 +24,13 @@
       ExecStart = lib.concatStringsSep " " [
         (lib.getExe pkgs.transmission-torrent-cleaner)
         "--rpc-url"
-        "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc"
+        "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}/transmission/rpc"
         "--trackers-file"
         config.sops.secrets.transmissionTrackerHosts.path
         "--minimum-age-days"
         "30"
         "--minimum-ratio"
-        (toString transmissionNonPreferredLowPriorityRatio)
+        (toString config.host.srvarrTuning.transmissionNonPreferredLowPriorityRatio)
         "--stale-nonseeding-age-days"
         "365"
         "--request-timeout-seconds"

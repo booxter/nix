@@ -2,19 +2,27 @@
   config,
   hostInventory,
   lib,
-  wgConservativeUploadRateMbit,
   ...
 }:
 let
+  mediaDir = config.host.srvarrPaths.mediaDir;
+  peerPort = 45486;
+  stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
+  tuning = config.host.srvarrTuning;
   wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.
   transmissionConservativeUploadLimitKBps = builtins.floor (
-    (wgConservativeUploadRateMbit * 1000.0 / 8.0) * 0.95
+    (tuning.wgConservativeUploadRateMbit * 1000.0 / 8.0) * 0.95
   );
 in
 {
+  imports = [
+    ./transmission-torrent-cleaner.nix
+    ./transmission-prioritizer.nix
+  ];
+
   sops.secrets.transmissionTrackerHosts = {
     key = "transmission/private_tracker_hosts";
     owner = "transmission";
@@ -22,11 +30,45 @@ in
     mode = "0400";
   };
 
+  services.transmission = {
+    enable = true;
+    group = "media";
+    home = stateDir;
+    openPeerPorts = true;
+    settings = {
+      anti-brute-force-enabled = true;
+      anti-brute-force-threshold = 10;
+      cache-size-mb = 256;
+      compact-view = true;
+      download-dir = "${mediaDir}/torrents";
+      download-queue-size = 100;
+      encryption = 1;
+      incomplete-dir = "${mediaDir}/torrents/.incomplete";
+      lpd-enabled = false;
+      message-level = 3;
+      peer-port = peerPort;
+      pex-enabled = true;
+      port-forwarding-enabled = false;
+      rpc-authentication-required = false;
+      rpc-bind-address = wgNamespaceAddress;
+      rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
+      rpc-whitelist = "127.0.0.1,192.168.*,10.*";
+      sort-mode = "progress";
+      speed-limit-up = transmissionConservativeUploadLimitKBps;
+      speed-limit-up-enabled = true;
+      umask = "002";
+      watch-dir = "${mediaDir}/torrents/.watch";
+      watch-dir-enabled = true;
+    };
+    user = "transmission";
+  };
+
   systemd.services.transmission = {
     environment.TR_TRACKER_PRIORITY_FILE = config.sops.secrets.transmissionTrackerHosts.path;
     # Transmission is currently inheriting a soft RLIMIT_NOFILE of 1024, which
     # is too low for many active torrents and peers.
     serviceConfig = {
+      IOSchedulingPriority = 7;
       LimitNOFILE = 65536;
       # Not sure why nixpkgs leaves Restart unset for Transmission, but this is
       # a long-running daemon and should come back after crashes.
@@ -59,53 +101,43 @@ in
         ) transmissionWatchDir
       );
     };
-  };
-
-  nixarr.transmission = {
-    enable = true;
-    vpn = {
+    vpnConfinement = {
       enable = true;
-      configureNginx = false;
-    };
-    peerPort = 45486;
-    extraSettings = {
-      blocklist-enabled = false;
-      cache-size-mb = 256;
-      compact-view = true;
-      download-queue-enabled = true;
-      download-queue-size = 100;
-      lpd-enabled = false;
-      rpc-bind-address = wgNamespaceAddress;
-      rpc-host-whitelist = "${config.networking.hostName},${config.services.avahi.hostName}.local";
-      sort-mode = "progress";
-      speed-limit-up = transmissionConservativeUploadLimitKBps;
-      speed-limit-up-enabled = true;
-      utp-enabled = true;
+      vpnNamespace = "wg";
     };
   };
 
-  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.nixarr.transmission.uiPort ];
+  vpnNamespaces.wg.openVPNPorts = [
+    {
+      port = peerPort;
+      protocol = "both";
+    }
+  ];
 
-  # nixarr hardcodes transmission nginx proxy to 192.168.15.1; override to wg subnet.
-  services.nginx.virtualHosts."127.0.0.1:${toString config.nixarr.transmission.uiPort}" = {
-    listen = lib.mkForce [
-      {
-        addr = "127.0.0.1";
-        port = config.nixarr.transmission.uiPort;
-      }
-    ];
-    locations."/" = {
-      recommendedProxySettings = true;
-      proxyWebsockets = true;
-      proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.nixarr.transmission.uiPort}";
+  host.vpnNamespaceBridgeAccess.tcpPorts = [ config.services.transmission.settings.rpc-port ];
+
+  # Keep the host-local helper on loopback, but target the actual namespace
+  # address directly instead of the old fixed proxy address.
+  services.nginx.virtualHosts."127.0.0.1:${toString config.services.transmission.settings.rpc-port}" =
+    {
+      listen = lib.mkForce [
+        {
+          addr = "127.0.0.1";
+          port = config.services.transmission.settings.rpc-port;
+        }
+      ];
+      locations."/" = {
+        recommendedProxySettings = true;
+        proxyWebsockets = true;
+        proxyPass = lib.mkForce "http://${wgNamespaceAddress}:${toString config.services.transmission.settings.rpc-port}";
+      };
     };
-  };
 
   host.internalHttps.services.transmission = {
     enable = true;
     serverName = "tmission.${hostInventory.site.lan.domain}";
     serverAliases = [ "tmission" ];
-    upstream = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}";
+    upstream = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}";
     recommendedProxySettings = false;
     # Transmission RPC rejects the public LAN hostname, so preserve the
     # existing whitelisted host on the upstream hop.

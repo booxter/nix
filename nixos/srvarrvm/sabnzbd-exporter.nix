@@ -1,43 +1,30 @@
 {
   config,
-  pkgs,
   ...
 }:
 let
   sabnzbdExporterInternalPort = 19387;
-  sabnzbdApiKeyFile = "/run/prometheus-sabnzbd-exporter/apikey";
 in
 {
+  sops.templates."sabnzbd-exporter.apikey" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+    content = ''
+      ${config.sops.placeholder."sabnzbd/apiKey"}
+    '';
+  };
+
   services.prometheus.exporters.sabnzbd = {
     enable = true;
     listenAddress = "127.0.0.1";
-    openFirewall = false;
     port = sabnzbdExporterInternalPort;
     servers = [
       {
-        baseUrl = "http://127.0.0.1:${toString config.nixarr.sabnzbd.guiPort}";
-        apiKeyFile = sabnzbdApiKeyFile;
+        baseUrl = "http://127.0.0.1:${toString config.services.sabnzbd.settings.misc.port}";
+        apiKeyFile = config.sops.templates."sabnzbd-exporter.apikey".path;
       }
     ];
-  };
-
-  systemd.services.prometheus-sabnzbd-exporter-apikey = {
-    description = "Extract SABnzbd API key for Prometheus exporter";
-    requires = [ "sabnzbd.service" ];
-    after = [ "sabnzbd.service" ];
-    requiredBy = [ "prometheus-sabnzbd-exporter.service" ];
-    before = [ "prometheus-sabnzbd-exporter.service" ];
-    path = [
-      pkgs.coreutils
-      pkgs.gnused
-    ];
-    serviceConfig.Type = "oneshot";
-    script = ''
-      install -d -m 0700 /run/prometheus-sabnzbd-exporter
-      umask 077
-      sed -n 's/^api_key = //p' ${config.nixarr.sabnzbd.stateDir}/sabnzbd.ini > ${sabnzbdApiKeyFile}
-      test -s ${sabnzbdApiKeyFile}
-    '';
   };
 
   host.observability.client.prometheusMtlsEndpoints.sabnzbd = {

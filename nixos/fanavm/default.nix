@@ -14,20 +14,23 @@ let
   pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   localHttpsServices = config.host.internalHttps.services;
-  srvarrPorts = {
-    aurral = outputs.nixosConfigurations.prox-srvarrvm.config.systemd.services.aurral.environment.PORT;
-    audiobookshelf = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.audiobookshelf.port;
-    bazarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.bazarr.port;
-    lidarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.lidarr.port;
-    prowlarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.prowlarr.port;
-    radarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.radarr.port;
-    sabnzbd = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sabnzbd.guiPort;
-    shelfmark = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.shelfmark.port;
-    sonarr = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.sonarr.port;
-    transmission = outputs.nixosConfigurations.prox-srvarrvm.config.nixarr.transmission.uiPort;
-  };
   srvarrHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
   srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
+  srvarrPortFor =
+    serviceId:
+    {
+      aurral = srvarrHostConfig.systemd.services.aurral.environment.PORT;
+      audiobookshelf = srvarrHostConfig.services.audiobookshelf.port;
+      bazarr = srvarrHostConfig.services.bazarr.listenPort;
+      lidarr = srvarrHostConfig.services.lidarr.settings.server.port;
+      prowlarr = srvarrHostConfig.services.prowlarr.settings.server.port;
+      radarr = srvarrHostConfig.services.radarr.settings.server.port;
+      sabnzbd = srvarrHostConfig.services.sabnzbd.settings.misc.port;
+      shelfmark = srvarrHostConfig.services.shelfmark.environment.FLASK_PORT;
+      sonarr = srvarrHostConfig.services.sonarr.settings.server.port;
+      transmission = srvarrHostConfig.services.transmission.settings.rpc-port;
+    }
+    .${serviceId};
   httpsServiceFor =
     service:
     if
@@ -75,8 +78,8 @@ let
     else
       service
       // {
-        probeUrl = "http://${service.probeHost}:${toString srvarrPorts.${service.id}}${service.probePath}";
-        url = "http://${service.displayHost}:${toString srvarrPorts.${service.id}}/";
+        probeUrl = "http://${service.probeHost}:${toString (srvarrPortFor service.id)}${service.probePath}";
+        url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
   ) hostInventory.services;
   dnsProbeTargets = [

@@ -28,7 +28,7 @@ let
   stateDir = dirOf stateFile;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/adaptive-upload-policy.prom";
-  transmissionRpcUrl = "http://127.0.0.1:${toString config.nixarr.transmission.uiPort}/transmission/rpc";
+  transmissionRpcUrl = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}/transmission/rpc";
   jellyfinUploadPolicyMtlsClient =
     config.host.observability.client.mtlsClients."jellyfin-upload-policy";
 in
@@ -151,14 +151,14 @@ in
     unitConfig = wgUnitDepsBase // {
       Wants = (wgUnitDepsBase.Wants or [ ]) ++ [
         "jellyfin-upload-policy.service"
-        "wg-qos-upload.service"
+        "wg-qos.service"
       ];
       After = (wgUnitDepsBase.After or [ ]) ++ [
         "jellyfin-upload-policy.service"
-        "wg-qos-upload.service"
+        "wg-qos.service"
       ];
       PartOf = (wgUnitDepsBase.PartOf or [ ]) ++ [
-        "wg-qos-upload.service"
+        "wg-qos.service"
       ];
     };
     serviceConfig = {
