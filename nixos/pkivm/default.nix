@@ -11,7 +11,7 @@ let
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
   caPort = 8443;
   caProvisioner = "bootstrap@home.arpa";
-  pkiRotationBaseBranch = "more-https-work";
+  pkiRotationBaseBranch = "master";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   repoRoot = ../..;

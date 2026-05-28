@@ -630,6 +630,26 @@ def rotation_metrics_text(summary):
     return "\n".join(lines) + "\n"
 
 
+def write_rotation_failure_metrics(args):
+    if args.command != "rotate" or not args.metrics_output:
+        return
+
+    summary = {
+        "success": False,
+        "dry_run": getattr(args, "dry_run", False),
+        "branch": args.branch,
+        "base_branch": args.base_branch,
+        "run_timestamp_seconds": dt.datetime.now(dt.timezone.utc).timestamp(),
+        "due_count": 0,
+        "rotated_count": 0,
+        "pr_url": None,
+    }
+    try:
+        write_atomic(args.metrics_output, rotation_metrics_text(summary))
+    except Exception as exc:
+        sys.stderr.write(f"failed to write PKI rotation failure metrics: {exc}\n")
+
+
 def write_atomic(path, content):
     target = pathlib.Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -1136,7 +1156,11 @@ def main():
     args = parser.parse_args()
     if args.repo_root is not None:
         args.repo_root = normalize_repo_root(args.repo_root)
-    args.func(args)
+    try:
+        args.func(args)
+    except (SystemExit, Exception):
+        write_rotation_failure_metrics(args)
+        raise
 
 
 if __name__ == "__main__":
