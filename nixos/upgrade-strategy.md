@@ -10,6 +10,23 @@ The point of the warmup is to make the next upgrade window and later interactive
 work substitute from the LAN cache instead of rebuilding or downloading on
 demand.
 
+## Rationale
+
+The schedule is organized around a few ordering rules:
+
+- Update infrastructure first on Monday morning: Nix builder VMs, then
+  `cachevm`, then Proxmox nodes. These machines support or host the rest of the
+  fleet, so they get a separate maintenance lane.
+- Keep regular NixOS machines on a daily cadence. Hosts that inherit the default
+  `nixos/default.nix` schedule upgrade every morning instead of waiting for a
+  weekly batch.
+- Run local backup work before the daily upgrade window on machines that have
+  local backups. Application-specific prep runs first, then restic pushes to
+  `beast`, then those machines may enter the daily upgrade/reboot window.
+- Run the morning flake update after the upgrade windows. If the PR merges,
+  `mmini` warms the LAN cache later that morning so the resulting closures are
+  ready for the next upgrade window.
+
 ## Time Table
 
 All times below are in `America/New_York`.
@@ -17,15 +34,15 @@ All times below are in `America/New_York`.
 <!-- markdownlint-disable MD013 -->
 | Time | Event | Notes |
 | --- | --- | --- |
-| `05:00` daily | Flake input bump workflow | GitHub Actions runs `.github/workflows/auto-update.yml`, updates `flake.lock`, opens a PR, and enables auto-merge. |
-| `07:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized closures into Attic. |
-| `04:00` Saturday | Default NixOS upgrade window | Most NixOS hosts inherit this from `nixos/default.nix`. |
-| `04:00` Sunday | Proxmox hypervisor upgrade window | Set in `lib/helpers.nix` for Proxmox hosts. |
-| `04:00` Monday | `beast` upgrade window | Set in `nixos/beast/default.nix`. |
-| `04:00` Tuesday | `cachevm` upgrade window | Set in `nixos/cachevm/default.nix`. |
+| `06:00` daily | Flake input bump workflow | GitHub Actions runs `.github/workflows/auto-update.yml`, updates `flake.lock`, opens a PR, and enables auto-merge. |
+| `08:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized closures into Attic. |
+| `03:00` Monday | Nix builder VM upgrade window | Set in `lib/inventory.nix` for `prox-builder1vm`, `prox-builder2vm`, and `prox-builder3vm`. |
+| `03:30` Monday | `cachevm` upgrade window | Set in `nixos/cachevm/default.nix`. |
+| `04:00` Monday | Proxmox hypervisor upgrade window | Set in `lib/helpers.nix` for Proxmox hosts. |
+| `05:15` daily | Default NixOS upgrade window | Most NixOS hosts inherit this from `nixos/default.nix`. |
 <!-- markdownlint-enable MD013 -->
 
-`system.autoUpgrade.randomizedDelaySec = 15min` is enabled for the fleet, so
+`system.autoUpgrade.randomizedDelaySec = 5min` is enabled for the fleet, so
 actual upgrade start time may drift within that window. `frame` still upgrades
 on schedule but does not auto-reboot.
 
@@ -68,7 +85,7 @@ maintained in one place.
 
 The daily warmup procedure is:
 
-1. `launchd` starts `fleet-cache-warmer` on `mmini` at `07:30`.
+1. `launchd` starts `fleet-cache-warmer` on `mmini` at `08:30`.
 2. The warmer reads the warm target inventory from the same flake revision it is
    about to build from `github:booxter/nix`.
 3. The warmer first filters out inventory entries that no longer evaluate at

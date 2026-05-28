@@ -14,7 +14,7 @@
         (lib.getExe pkgs.fleet-cache-warmer)
       ];
       StartCalendarInterval = {
-        Hour = 7;
+        Hour = 8;
         Minute = 30;
       };
       WorkingDirectory = "/var/root";

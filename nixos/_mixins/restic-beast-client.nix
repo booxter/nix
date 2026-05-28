@@ -14,12 +14,12 @@ let
     "--keep-monthly 6"
   ];
   defaultBackupTimerConfig = {
-    # Run after the 04:00±15m upgrade/reboot work has settled.
-    OnCalendar = "05:00";
-    RandomizedDelaySec = "15m";
+    # Default local backup timer; keep this offset from auto-upgrade windows.
+    OnCalendar = "04:45";
+    RandomizedDelaySec = "5m";
   };
   defaultPreBackupTimerConfig = {
-    OnCalendar = "04:45";
+    OnCalendar = "04:30";
     RandomizedDelaySec = "0";
   };
   localSshKey = config.sops.secrets.${localSshKeySecret}.path;
