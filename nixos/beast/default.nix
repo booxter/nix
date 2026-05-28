@@ -33,12 +33,6 @@
   # carries an LTS kernel in the 7.x series.
   boot.kernelPackages = pkgs.linuxPackages_7_0;
 
-  # Host critical services; keep upgrades on Monday, separate from the fleet's
-  # default Saturday schedule, but still leave room for local backups and later
-  # cloud offload jobs after the reboot window work settles.
-  system.autoUpgrade.dates = "Mon 04:00";
-  system.autoUpgrade.randomizedDelaySec = "15min";
-
   users.groups.media.gid = hostInventory.site.gids.media;
 
   host.observability.client.blackbox.enable = true;

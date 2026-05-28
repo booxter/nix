@@ -62,6 +62,7 @@ in
 
     nix.gc.dates = "Mon, 03:15";
     nix.optimise.dates = [ "Mon, 04:15" ];
+    nix.optimise.randomizedDelaySec = "5min";
 
     system.autoUpgrade = {
       enable = true;
@@ -70,15 +71,14 @@ in
         "-L"
         "--show-trace"
       ];
-      # Keep upgrades centered in the reboot window, then leave room for hosts to
-      # come back before local backups and later cloud offload jobs begin.
-      dates = lib.mkDefault "Sat 04:00";
-      randomizedDelaySec = "15min";
+      # Run inherited daily upgrades after the Monday Proxmox node window.
+      dates = lib.mkDefault "05:15";
+      randomizedDelaySec = "5min";
       persistent = false;
       allowReboot = true;
       rebootWindow = {
         lower = "01:00";
-        upper = "05:00";
+        upper = "06:00";
       };
     };
 

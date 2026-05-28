@@ -86,28 +86,30 @@ Each source host keeps:
 
 ## Scheduling
 
-Backups should be scheduled outside the NixOS auto-upgrade reboot window.
+Backups should be scheduled outside the NixOS auto-upgrade reboot window and,
+for hosts that run daily auto-upgrades, before that host's daily upgrade starts.
 
 In the current setup:
 
-- auto-upgrades are scheduled at `04:00` with up to `15m` random delay
-- local application-consistent prep jobs run around `04:45`
-- local host-to-`beast` backups run around `05:00` with up to `15m` random delay
-- cloud offload from `beast` runs around `06:00` with up to `30m` random delay
+- auto-upgrades are scheduled at `05:15` with up to `5m` random delay
+- local application-consistent prep jobs run around `04:30`
+- local host-to-`beast` backups run around `04:45` with up to `5m` random delay
+- cloud offload from `beast` runs around `06:00` with up to `5m` random delay
 
 ### Backup Timeline
 
 The intended order is:
 
-1. Auto-upgrades start first, inside the reboot window.
-2. Hosts reboot and settle back into service.
-3. Application-specific prep jobs create consistent backup artifacts locally.
-4. Hosts push their local restic backups to `beast`.
-5. `beast` offloads those local repositories to cloud storage.
+1. Application-specific prep jobs create consistent backup artifacts locally.
+2. Hosts push their local restic backups to `beast`.
+3. Daily auto-upgrades start for those hosts.
+4. Hosts reboot and settle back into service if the upgrade needs a reboot.
+5. `beast` offloads local repositories to cloud storage.
 
 This sequencing is intentional:
 
-- It avoids backing up while a host may still be shutting down or rebooting.
+- It captures application state before the daily upgrade can restart services
+  or reboot the host.
 - It gives application-specific prep jobs a chance to produce cleaner backup
   inputs before restic runs.
 - It keeps cloud offload behind the local `host -> beast` step so `beast`
@@ -116,7 +118,7 @@ This sequencing is intentional:
   backups and `beast`-side cloud offload jobs.
 
 When adding a new host or a new application-specific backup job, keep it in
-this same order: reboot window first, local prep second, local restic backup
+this same order: local prep first, local restic backup second, daily upgrade
 third, cloud offload last.
 
 This separation is documented both in the backup modules and in the

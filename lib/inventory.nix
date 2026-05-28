@@ -28,6 +28,14 @@ let
       diskSize = 150;
       cores = 24;
       hmFull = false;
+      extraModules = [
+        (
+          { hostname, lib, ... }:
+          {
+            system.autoUpgrade.dates = lib.mkIf (lib.hasPrefix "prox-" hostname) "Mon 03:00";
+          }
+        )
+      ];
     };
 
   capitalize =
