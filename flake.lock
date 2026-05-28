@@ -702,11 +702,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1776127047,
-        "narHash": "sha256-TES8G2OZWdID+6TcQeGkK73S097jZlLOOelnMemIPG0=",
+        "lastModified": 1779928723,
+        "narHash": "sha256-oliJNkRlVodEcbgycz/vnO2Cmj3cNgkBYt3iWJsLEcU=",
         "owner": "booxter",
         "repo": "proxmox-nixos",
-        "rev": "5282a8d8e52a7ce838aac69cccc7b4a5c7ec6dfe",
+        "rev": "cdb0db3a4c820094603a7e84c7ef1d87bd3e903e",
         "type": "github"
       },
       "original": {
