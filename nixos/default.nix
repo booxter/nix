@@ -16,8 +16,6 @@ let
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
   hostSecretFile = ../secrets + "/${hostname}.yaml";
-  # TODO: for now just avahi but maybe consider simplifying hostnames in general
-  avahiHostName = removeSuffix "vm" (removePrefix "prox-" hostname);
   isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
   upsServerName = if isLocalVmHost then null else hostSpec.upsHost or null;
   upsServerSpec =
@@ -30,6 +28,7 @@ in
         configName
       ]
       ++ [
+        ./_mixins/avahi
         ./_mixins/internal-https-service.nix
         ./_mixins/backup-metrics/default.nix
         ./_mixins/observability-client
@@ -97,19 +96,6 @@ in
     networking.dhcpcd.extraConfig = ''
       clientid ${hostname}
     '';
-
-    services.avahi = {
-      enable = true;
-      # NixOS uses separate knobs for v4/v6 NSS.
-      nssmdns4 = true;
-      nssmdns6 = true;
-      # Ensure this host publishes its name/address over mDNS.
-      publish = {
-        enable = true;
-        addresses = true;
-      };
-      hostName = avahiHostName;
-    };
 
     host.observability.client = {
       enable = lib.mkDefault (!config.host.isWork);

@@ -85,7 +85,7 @@ in
   host.internalHttps.services.atticd = {
     enable = true;
     serverName = "nix-cache.${hostInventory.site.lan.domain}";
-    serverAliases = [ "nix-cache" ];
+    localAliases = [ "nix-cache" ];
     upstream = "http://127.0.0.1:8080";
     locationExtraConfig = ''
       client_max_body_size 0;

@@ -7,6 +7,7 @@
 let
   cfg = config.host.internalHttps;
   internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
+  localServerAliasesFor = aliases: aliases ++ builtins.map (alias: "${alias}.local") aliases;
   enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
   enabledServerNames = builtins.concatMap (service: [ service.serverName ] ++ service.serverAliases) (
     builtins.attrValues enabledServices
@@ -14,13 +15,21 @@ let
   secretAttrName = serviceName: "internal-https-${serviceName}";
 in
 {
+  options.host.internalHttps.localAliases = lib.mkOption {
+    type = with lib.types; listOf str;
+    default = [ ];
+    description = "Single-label local service names exported by enabled internal HTTPS services.";
+  };
+
   options.host.internalHttps.services = lib.mkOption {
     type =
       with lib.types;
       attrsOf (
         submodule (
-          { name, ... }:
+          { name, config, ... }:
           {
+            config.serverAliases = lib.mkBefore (localServerAliasesFor config.localAliases);
+
             options = {
               enable = lib.mkEnableOption "internal HTTPS service";
 
@@ -32,8 +41,14 @@ in
 
               serverAliases = lib.mkOption {
                 type = with lib.types; listOf str;
-                default = [ name ];
+                default = [ ];
                 description = "Additional hostnames served by the internal HTTPS vhost.";
+              };
+
+              localAliases = lib.mkOption {
+                type = with lib.types; listOf str;
+                default = [ name ];
+                description = "Single-label local service names to serve directly and as .local mDNS names.";
               };
 
               listenAddress = lib.mkOption {
@@ -107,6 +122,10 @@ in
   };
 
   config = lib.mkIf (enabledServices != { }) {
+    host.internalHttps.localAliases = lib.unique (
+      builtins.concatMap (service: service.localAliases) (builtins.attrValues enabledServices)
+    );
+
     assertions = [
       {
         assertion =
