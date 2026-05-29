@@ -21,6 +21,8 @@ in
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
+        users.users._prometheus-node-exporter.home = lib.mkForce "/private/var/lib/prometheus-node-exporter";
+
         services.prometheus.exporters.node = {
           enable = true;
           listenAddress = cfg.nodeExporter.listenAddress;
