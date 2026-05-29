@@ -165,7 +165,7 @@ in
         lib.nameValuePair "internal-https-${serviceName}" {
           serverName = service.serverName;
           serverAliases = service.serverAliases;
-          onlySSL = true;
+          forceSSL = true;
           extraConfig = lib.optionalString service.mtls.enable ''
             ssl_client_certificate ${service.mtls.trustedCaCertificate};
             ssl_verify_client on;
@@ -191,9 +191,13 @@ in
     };
 
     networking.firewall.allowedTCPPorts = lib.unique (
-      builtins.concatMap (service: lib.optional service.openFirewall service.port) (
-        builtins.attrValues enabledServices
-      )
+      builtins.concatMap (
+        service:
+        lib.optionals service.openFirewall [
+          80
+          service.port
+        ]
+      ) (builtins.attrValues enabledServices)
     );
 
     systemd.services.nginx = {
