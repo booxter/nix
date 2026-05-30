@@ -358,6 +358,27 @@
         "type": "github"
       }
     },
+    "lolek": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780108442,
+        "narHash": "sha256-Yl2ZTZA3wBv1MPrG0K283LFHMkn7n9RPaCrQZ0EWd2U=",
+        "owner": "booxter",
+        "repo": "lolek",
+        "rev": "510bf6a554489061c6c58d2f1fb270b9f117b4c3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "booxter",
+        "ref": "my-fork",
+        "repo": "lolek",
+        "type": "github"
+      }
+    },
     "nix-darwin": {
       "inputs": {
         "nixpkgs": [
@@ -726,6 +747,7 @@
         "homebrew-core": "homebrew-core",
         "jellarr": "jellarr",
         "llm-agents": "llm-agents",
+        "lolek": "lolek",
         "nix-darwin": "nix-darwin",
         "nix-homebrew": "nix-homebrew",
         "nixos-hardware": "nixos-hardware",

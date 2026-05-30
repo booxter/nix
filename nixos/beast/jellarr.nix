@@ -1,5 +1,7 @@
 {
   config,
+  hostInventory,
+  hostname,
   lib,
   inputs,
   pkgs,
@@ -8,6 +10,7 @@
 let
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {
     owner = "jellyfin";
@@ -147,7 +150,7 @@ in
         # explicit subtitle-mode/burn-in options declaratively.
         enableHardwareEncoding = true;
         hardwareAccelerationType = "qsv";
-        qsvDevice = "/dev/dri/renderD128";
+        qsvDevice = hostSpec.hardware.igpu.renderDevice;
         hardwareDecodingCodecs = [
           "h264"
           "hevc"

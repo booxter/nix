@@ -53,6 +53,11 @@
 
     llm-agents.url = "github:numtide/llm-agents.nix";
 
+    lolek = {
+      url = "github:booxter/lolek/my-fork";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     tig = {
       url = "github:jonas/tig";
       flake = false;
