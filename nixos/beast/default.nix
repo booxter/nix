@@ -16,6 +16,7 @@
     ./jellyfin-backup.nix
     ./jellarr.nix
     ./library-dirs.nix
+    ./lolek.nix
     ./nfs.nix
     ./nginx.nix
     ./pause.nix

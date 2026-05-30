@@ -392,6 +392,7 @@ rec {
       platform = "x86_64-linux";
       dnsAliases = map (service: service.publicHost) publicServices;
       hmFull = false;
+      hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
         match = "bc:fc:e7:3b:fe:da";
         hostname = "beast";
