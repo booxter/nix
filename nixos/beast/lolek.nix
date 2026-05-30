@@ -20,14 +20,14 @@ in
   };
 
   sops.secrets.lolekTelegramBotApiApiId = {
-    key = "lolek/telegramBotApi/apiId";
+    key = "lolek/telegramBotApiApiId";
     owner = "lolek";
     group = "lolek";
     mode = "0400";
   };
 
   sops.secrets.lolekTelegramBotApiApiHash = {
-    key = "lolek/telegramBotApi/apiHash";
+    key = "lolek/telegramBotApiApiHash";
     owner = "lolek";
     group = "lolek";
     mode = "0400";
