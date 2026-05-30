@@ -365,11 +365,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780112240,
-        "narHash": "sha256-ZtsYeGw5AFHnEa8cLZeu6HYJbBoD4gTMzKpTl2o6xcI=",
+        "lastModified": 1780112768,
+        "narHash": "sha256-EH6MhxQybHMcdcxuUGoIrS7ALypt/Bx8VIyRwBT10eg=",
         "owner": "booxter",
         "repo": "lolek",
-        "rev": "bcbc6e8aa65b00f4bbb7eb1b06a7d1c3785d8250",
+        "rev": "b7d6684ee0aececfad20c2ab2ceb5f7481e4603a",
         "type": "github"
       },
       "original": {
