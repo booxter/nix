@@ -54,7 +54,7 @@
     llm-agents.url = "github:numtide/llm-agents.nix";
 
     lolek = {
-      url = "github:booxter/lolek/my-fork";
+      url = "github:booxter/lolek/local-bot-api-uploads";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

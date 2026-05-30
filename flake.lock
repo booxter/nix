@@ -365,16 +365,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1780112768,
-        "narHash": "sha256-EH6MhxQybHMcdcxuUGoIrS7ALypt/Bx8VIyRwBT10eg=",
+        "lastModified": 1780114457,
+        "narHash": "sha256-8nf+H5Epp3KPBaTgBztgwjnvOVUYiRVQ+/esuA6WDWw=",
         "owner": "booxter",
         "repo": "lolek",
-        "rev": "b7d6684ee0aececfad20c2ab2ceb5f7481e4603a",
+        "rev": "2be35c416afad1ffecfc760582d0625460f15c68",
         "type": "github"
       },
       "original": {
         "owner": "booxter",
-        "ref": "my-fork",
+        "ref": "local-bot-api-uploads",
         "repo": "lolek",
         "type": "github"
       }
