@@ -49,6 +49,7 @@ in
     localTelegramBotApi = {
       enable = true;
       environmentFile = config.sops.templates."lolek-telegram-bot-api.env".path;
+      verbosity = 1;
     };
   };
 
