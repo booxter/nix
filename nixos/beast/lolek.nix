@@ -44,6 +44,8 @@ in
   services.lolek = {
     enable = true;
     botTokenFile = config.sops.secrets."lolek/botToken".path;
+    maxConcurrentDownloads = 4;
+    maxConcurrentDownloadsPerChat = 2;
     hardwareAcceleration.backend = "vaapi";
     hardwareAcceleration.device = hostSpec.hardware.igpu.renderDevice;
     localTelegramBotApi = {
