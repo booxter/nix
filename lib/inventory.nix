@@ -181,6 +181,9 @@ rec {
           host = "mair";
           address = "10.83.0.10/32";
         };
+        unifi-travel-router = {
+          address = "10.83.0.20/32";
+        };
       };
     };
   };
