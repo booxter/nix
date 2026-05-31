@@ -22,6 +22,7 @@ permissions:
   contents: read
   id-token: write
   actions: read
+  issues: write
   pull-requests: write
 
 jobs:
@@ -170,8 +171,8 @@ jobs:
           path: diff-output/*
           if-no-files-found: warn
 
-  update-pr-description:
-    name: update PR description
+  post-pr-comment:
+    name: post PR comment
     needs:
       - plan-diff-matrix
       - diff
@@ -192,18 +193,17 @@ jobs:
           path: diff-output
           merge-multiple: true
 
-      - name: Update PR body
+      - name: Post PR comment
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
             const fs = require("fs");
             const path = require("path");
 
-            const start = "<!-- flake-update-diffs:start -->";
-            const end = "<!-- flake-update-diffs:end -->";
             const diffDir = "diff-output";
 
             let diffEntries = [];
@@ -229,12 +229,13 @@ jobs:
 
             const baseSha = process.env.BASE_SHA;
             const headSha = process.env.HEAD_SHA;
-            const sectionLines = [
-              start,
+            const runUrl = process.env.RUN_URL;
+            const commentLines = [
               "## Config diffs",
               "",
               `Base: \`${baseSha}\``,
               `Head: \`${headSha}\``,
+              `Run: ${runUrl}`,
               "",
               "Advisory output from `nix run .#diff -- <machine> <base> <head>`.",
               "",
@@ -245,42 +246,19 @@ jobs:
                 : "_No machine produced package or closure-size changes._",
             ];
             if (unchangedEntries.length > 0) {
-              sectionLines.push(
+              commentLines.push(
                 "",
                 "### Unchanged machines",
                 "",
                 ...unchangedEntries.map((entry) => `- ${entry}`),
               );
             }
-            sectionLines.push(end);
-
-            const section = sectionLines.join("\n");
+            const body = commentLines.join("\n");
 
             const { owner, repo } = context.repo;
-            const pull_number = context.payload.pull_request.number;
-            const { data: pull } = await github.rest.pulls.get({
+            await github.rest.issues.createComment({
               owner,
               repo,
-              pull_number,
-            });
-
-            const currentBody = pull.body || "";
-            const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            const markerPattern = new RegExp(
-              `${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`
-            );
-            const nextBody = markerPattern.test(currentBody)
-              ? currentBody.replace(markerPattern, section)
-              : `${currentBody.trimEnd()}\n\n${section}`.trimStart();
-
-            if (nextBody === currentBody) {
-              core.info("PR body already contains the current config diff section.");
-              return;
-            }
-
-            await github.rest.pulls.update({
-              owner,
-              repo,
-              pull_number,
-              body: nextBody,
+              issue_number: context.payload.pull_request.number,
+              body,
             });
