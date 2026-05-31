@@ -230,35 +230,100 @@ jobs:
             const baseSha = process.env.BASE_SHA;
             const headSha = process.env.HEAD_SHA;
             const runUrl = process.env.RUN_URL;
-            const commentLines = [
-              "## Config diffs",
-              "",
-              `Base: \`${baseSha}\``,
-              `Head: \`${headSha}\``,
-              `Run: ${runUrl}`,
-              "",
-              "Advisory output from `nix run .#diff -- <machine> <base> <head>`.",
-              "",
-              "### Changed machines",
-              "",
-              diffEntries.length > 0
-                ? diffEntries.join("\n\n")
-                : "_No machine produced package or closure-size changes._",
-            ];
+            const maxCommentLength = 60000;
+            const chunkLength = 59000;
+
+            const truncateBlock = (block, limit) => {
+              if (block.length <= limit) {
+                return block;
+              }
+
+              const summary = block.match(/<summary>([^<]*)<\/summary>/)?.[1] || "diff";
+              const fenceStart = block.indexOf("```text\n");
+              const fenceEnd = block.lastIndexOf("\n```");
+              const content =
+                fenceStart >= 0 && fenceEnd > fenceStart
+                  ? block.slice(fenceStart + "```text\n".length, fenceEnd)
+                  : block;
+              const prefix = `<details>\n<summary>${summary}</summary>\n\n\`\`\`text\n`;
+              const suffix =
+                "\n\n[truncated; full output is available in the workflow artifacts.]\n```\n\n</details>";
+
+              if (prefix.length + suffix.length >= limit) {
+                return `[diff output for ${summary} truncated; see workflow artifacts]`.slice(
+                  0,
+                  limit,
+                );
+              }
+
+              return `${prefix}${content.slice(0, limit - prefix.length - suffix.length)}${suffix}`;
+            };
+
+            const chunks = [""];
+            const appendBlock = (block) => {
+              const normalized = truncateBlock(block, chunkLength);
+              const current = chunks[chunks.length - 1];
+
+              if (!current) {
+                chunks[chunks.length - 1] = normalized;
+                return;
+              }
+
+              if (current.length + 2 + normalized.length <= chunkLength) {
+                chunks[chunks.length - 1] = `${current}\n\n${normalized}`;
+                return;
+              }
+
+              chunks.push(normalized);
+            };
+
+            appendBlock("### Changed machines");
+            if (diffEntries.length > 0) {
+              for (const entry of diffEntries) {
+                appendBlock(entry);
+              }
+            } else {
+              appendBlock("_No machine produced package or closure-size changes._");
+            }
+
             if (unchangedEntries.length > 0) {
-              commentLines.push(
-                "",
-                "### Unchanged machines",
-                "",
-                ...unchangedEntries.map((entry) => `- ${entry}`),
+              appendBlock(
+                ["### Unchanged machines", "", ...unchangedEntries.map((entry) => `- ${entry}`)].join(
+                  "\n",
+                ),
               );
             }
-            const body = commentLines.join("\n");
 
             const { owner, repo } = context.repo;
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: context.payload.pull_request.number,
-              body,
+            const bodies = chunks.filter(Boolean).map((chunk, index, allChunks) => {
+              const part = allChunks.length > 1 ? ` (part ${index + 1}/${allChunks.length})` : "";
+              const header = [
+                `## Config diffs${part}`,
+                "",
+                `Base: \`${baseSha}\``,
+                `Head: \`${headSha}\``,
+                `Run: ${runUrl}`,
+                "",
+                "Advisory output from `nix run .#diff -- <machine> <base> <head>`.",
+                "",
+              ].join("\n");
+              const body = `${header}${chunk}`;
+
+              if (body.length > maxCommentLength) {
+                return `${body.slice(
+                  0,
+                  maxCommentLength - 100,
+                )}\n\n[truncated; full output is available in the workflow artifacts.]`;
+              }
+
+              return body;
             });
+
+            for (const body of bodies) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: context.payload.pull_request.number,
+                body,
+              });
+            }
