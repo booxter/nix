@@ -119,6 +119,21 @@ let
     '';
   };
 
+  diffConfig = pkgs.writeShellApplication {
+    name = "diff";
+    runtimeInputs = with pkgs; [
+      coreutils
+      dix
+      git
+      nh
+      nix
+    ];
+    text = ''
+      export DIFF_CONFIG_PROGRAM_NAME=diff
+      exec ${pkgs.bash}/bin/bash ${../scripts/diff-config.sh} "$@"
+    '';
+  };
+
   getLocalBuilders = pkgs.writeShellApplication {
     name = "get-local-builders";
     runtimeInputs = with pkgs; [
@@ -357,6 +372,7 @@ in
 {
   deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
   vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
+  diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
   "unifi-sync" =

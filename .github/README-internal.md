@@ -37,3 +37,15 @@ The build matrix is selected in this order:
 - `push` and `workflow_dispatch` use full matrix behavior (docs-only shortcut is
   PR-only).
 - If no machine-specific mapping applies cleanly, CI falls back to full scoped matrix.
+
+## Flake update diffs
+
+`.github/workflows/flake-update-diffs.yml` runs only for same-repository
+`ci/flake-update` pull requests that change `flake.lock`.
+
+It runs `nix run .#diff -- <machine> <base-sha> <head-sha>` in a separate
+advisory matrix for each toplevel NixOS and nix-darwin machine in
+`ci-target-inventory.json`. Each matrix job uploads one markdown artifact, and
+the final job replaces the marked `Config diffs` section in the PR body. The
+marker replacement keeps reruns idempotent and avoids duplicating the machine
+list.

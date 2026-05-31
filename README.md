@@ -21,6 +21,10 @@ nix run .#vm -- gw
 nix run .#vm -- org
 nix run .#vm -- beast
 
+# Config diff between two Git revisions
+nix run .#diff -- frame <old-rev> <new-rev>
+nix run .#diff -- mair <old-rev> <new-rev>
+
 # Proxmox VM deploy
 nix run .#prox-deploy -- srvarr prx1-lab
 nix run .#prox-deploy -- fana prx1-lab

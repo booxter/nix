@@ -54,6 +54,7 @@ helpers.forAllSystems (
       ];
       buildPhase = ''
         bats tests/get-local-builders.bats
+        bats tests/test-diff-config.bats
         bats tests/test-prox-deploy.bats
         bash tests/check-sops-helpers.sh
         bats tests/test-vm.bats

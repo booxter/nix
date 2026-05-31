@@ -1,0 +1,226 @@
+name: Flake update diffs
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - master
+    paths:
+      - flake.lock
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+  pull-requests: write
+
+jobs:
+  plan-diff-matrix:
+    name: plan diff matrix
+    if: >-
+      ${{
+        github.event.pull_request.head.ref == 'ci/flake-update' &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      }}
+    runs-on: ubuntu-slim
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      has_targets: ${{ steps.plan.outputs.has_targets }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Compute diff matrix
+        id: plan
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const targetInventory = require("./.github/scripts/ci-target-inventory.js");
+            const targets = targetInventory.toDiffMatrixEntries(targetInventory.inventory.buildTargets);
+
+            core.info(`Planned config diffs for ${targets.length} machine(s).`);
+            core.setOutput("matrix", JSON.stringify({ include: targets }));
+            core.setOutput("has_targets", targets.length > 0 ? "true" : "false");
+
+  diff:
+    name: diff ${{ matrix.name }}
+    needs:
+      - plan-diff-matrix
+    if: needs.plan-diff-matrix.outputs.has_targets == 'true'
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan-diff-matrix.outputs.matrix) }}
+    timeout-minutes: 180
+    steps:
+      - name: Checkout PR head
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Free disk space
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/free-disk-space
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
+
+      - name: Generate diff
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MACHINE: ${{ matrix.machine }}
+          MACHINE_NAME: ${{ matrix.name }}
+          ORDER: ${{ matrix.order }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p diff-output
+          safe_machine="$(
+            printf '%s' "${MACHINE}" \
+              | tr -c 'A-Za-z0-9._-' '-'
+          )"
+          output_file="diff-output/${ORDER}-${safe_machine}.md"
+          stdout_file="$(mktemp)"
+          stderr_file="$(mktemp)"
+
+          set +e
+          nix run .#diff -- "${MACHINE}" "${BASE_SHA}" "${HEAD_SHA}" >"${stdout_file}" 2>"${stderr_file}"
+          status="$?"
+          set -e
+
+          {
+            printf '<details>\n'
+            printf '<summary>%s</summary>\n\n' "${MACHINE_NAME}"
+            printf '```text\n'
+            if [ "${status}" -ne 0 ]; then
+              printf 'diff generation failed with exit code %s\n\n' "${status}"
+              if [ -s "${stderr_file}" ]; then
+                printf 'stderr:\n'
+                cat "${stderr_file}"
+                printf '\n'
+              fi
+              if [ -s "${stdout_file}" ]; then
+                printf 'stdout:\n'
+                cat "${stdout_file}"
+                printf '\n'
+              fi
+            elif [ -s "${stdout_file}" ]; then
+              cat "${stdout_file}"
+            else
+              printf 'No package or closure-size diff reported.\n'
+            fi
+            printf '```\n\n'
+            printf '</details>\n'
+          } >"${output_file}"
+
+      - name: Upload diff artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: flake-diff-${{ matrix.order }}-${{ matrix.machine }}
+          path: diff-output/*.md
+          if-no-files-found: warn
+
+  update-pr-description:
+    name: update PR description
+    needs:
+      - plan-diff-matrix
+      - diff
+    if: >-
+      ${{
+        always() &&
+        needs.plan-diff-matrix.result == 'success' &&
+        needs.plan-diff-matrix.outputs.has_targets == 'true'
+      }}
+    runs-on: ubuntu-slim
+    continue-on-error: true
+    steps:
+      - name: Download diff artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: flake-diff-*
+          path: diff-output
+          merge-multiple: true
+
+      - name: Update PR body
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          script: |
+            const fs = require("fs");
+            const path = require("path");
+
+            const start = "<!-- flake-update-diffs:start -->";
+            const end = "<!-- flake-update-diffs:end -->";
+            const diffDir = "diff-output";
+
+            let entries = [];
+            if (fs.existsSync(diffDir)) {
+              entries = fs
+                .readdirSync(diffDir)
+                .filter((name) => name.endsWith(".md"))
+                .sort()
+                .map((name) => fs.readFileSync(path.join(diffDir, name), "utf8").trim())
+                .filter(Boolean);
+            }
+
+            const baseSha = process.env.BASE_SHA;
+            const headSha = process.env.HEAD_SHA;
+            const section = [
+              start,
+              "## Config diffs",
+              "",
+              `Base: \`${baseSha}\``,
+              `Head: \`${headSha}\``,
+              "",
+              "Advisory output from `nix run .#diff -- <machine> <base> <head>`.",
+              "",
+              entries.length > 0 ? entries.join("\n\n") : "_No diff artifacts were produced._",
+              end,
+            ].join("\n");
+
+            const { owner, repo } = context.repo;
+            const pull_number = context.payload.pull_request.number;
+            const { data: pull } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number,
+            });
+
+            const currentBody = pull.body || "";
+            const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const markerPattern = new RegExp(
+              `${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`
+            );
+            const nextBody = markerPattern.test(currentBody)
+              ? currentBody.replace(markerPattern, section)
+              : `${currentBody.trimEnd()}\n\n${section}`.trimStart();
+
+            if (nextBody === currentBody) {
+              core.info("PR body already contains the current config diff section.");
+              return;
+            }
+
+            await github.rest.pulls.update({
+              owner,
+              repo,
+              pull_number,
+              body: nextBody,
+            });
