@@ -8,6 +8,9 @@ let
   glanceInternalPort = 18080;
   fanaHostConfig = outputs.nixosConfigurations.prox-fanavm.config;
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
+  pkiSpec = hostInventory.nixosHostSpecsByName.pki;
+  pkiCaServer = pkiSpec.caServer;
+  pkiRootCaUrl = "https://${pkiSpec.name}.local:" + toString pkiCaServer.port + pkiCaServer.rootsPath;
   srvarrHttpsServices = config.host.internalHttps.services;
   srvarrPortFor =
     serviceId:
@@ -71,6 +74,13 @@ let
         url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
   ) hostInventory.services;
+  utilityLinks = [
+    {
+      icon = "sh:smallstep";
+      title = "PKI Root CA";
+      url = pkiRootCaUrl;
+    }
+  ];
 in
 {
   services.glance = {
@@ -104,7 +114,7 @@ in
                       title
                       url
                       ;
-                  }) serviceCatalog;
+                  }) (serviceCatalog ++ utilityLinks);
                 }
               ];
             }
