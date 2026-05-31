@@ -48,10 +48,9 @@ Service source:
   - UniFi stores the value as plain text `home.arpa`
   - UniFi emits the correct RFC3397 encoding on the wire
 - DHCP network-boot settings:
-  - option `66` / next-server -> `192.168.1.1`
+  - option `66` / next-server -> `192.168.15.10`
   - option `67` / boot file -> `netboot.xyz.efi`
 - Split DNS records:
-  - `pi5.home.arpa -> 192.168.1.1`
   - `nix-cache.home.arpa -> 192.168.20.7`
   - `jf.ihar.dev -> 192.168.16.3`
   - `js.ihar.dev -> 192.168.16.3`
@@ -67,10 +66,7 @@ Service source:
 - Repo-wide LAN DNS/DHCP endpoint is `192.168.0.1`
 - LAN domain is `home.arpa`
 - Reservations are MAC-based only
-- `pi5` no longer serves trusted-LAN DHCP
-- `pi5` remains:
-  - guest-only `dnsmasq` on `wlan0`
-  - standalone TFTP / netboot on `192.168.1.1`
+- `prx1-lab` serves standalone TFTP / netboot on `192.168.15.10`
 
 ## Validation We Proved
 
@@ -97,6 +93,5 @@ Service source:
 
 ## Optional Follow-Ups
 
-- Keep or remove TFTP / netboot on `pi5`
 - Extend mTLS to non-node Prometheus scrapers if desired
 - Rotate UniFi API keys when needed

@@ -19,7 +19,6 @@ in
   inherit (helpers)
     mkDarwin
     mkNixos
-    mkRaspberryPi
     mkProxmox
     mkBM
     mkVM

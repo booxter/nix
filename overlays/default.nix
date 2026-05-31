@@ -14,7 +14,6 @@
           };
         };
 
-      pkgs = getPkgs inputs.nixpkgs;
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
@@ -36,9 +35,6 @@
 
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
-
-      # pull latest from nixpkgs; ignore what comes from rpi5 repo nixpkgs
-      inherit (pkgs) netbootxyz-efi;
 
       mesa =
         if prev.stdenv.hostPlatform.isDarwin then

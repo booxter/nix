@@ -7,9 +7,6 @@ let
   prxNetIface = "enp5s0f0np0";
   lanDnsRecordTtlSeconds = 300;
 
-  piStateVersion = "25.11";
-  piHostname = "pi5";
-
   frame = "frame";
   nvws = "nvws";
 
@@ -143,17 +140,9 @@ rec {
             }
           ];
         };
-        guest = {
-          ranges = [
-            {
-              start = "192.168.100.1";
-              end = "192.168.100.255";
-            }
-          ];
-        };
       };
       netboot = {
-        host = piHostname;
+        host = "prx1-lab";
         bootfile = "netboot.xyz.efi";
       };
       customDhcpOptions = {
@@ -347,17 +336,6 @@ rec {
   nixosHostSpecs = [
     {
       type = "bm";
-      hostKind = "raspberryPi";
-      name = piHostname;
-      lanAddress = "192.168.1.1";
-      guestAddress = "192.168.2.1";
-      localDnsAliases = [ piHostname ];
-      stateVersion = piStateVersion;
-      homeManagerInput = "home-manager-25_11";
-      hmFull = false;
-    }
-    {
-      type = "bm";
       hostKind = "nixos";
       name = frame;
       stateVersion = "25.11";
@@ -370,7 +348,6 @@ rec {
       name = nvws;
       inherit username;
       isWork = true;
-      upsHost = piHostname;
       stateVersion = "25.11";
       netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";
@@ -447,7 +424,7 @@ rec {
       type = "vm";
       name = "nv";
       isWork = true;
-      upsHost = piHostname;
+      upsHost = nvws;
       cores = 64;
       memorySize = 128;
       sshPort = 10000;
