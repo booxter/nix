@@ -263,7 +263,7 @@ SH
   [ "$status" -eq 0 ]
   [ "$(grep -c '^<--color=always>$' "$diff_log")" -eq 1 ]
   [[ "$output" == *"CHANGED"* ]]
-  [[ "$output" == *"Detailed config diff:"* ]]
+  [[ "$output" != *"Detailed config diff:"* ]]
   [[ "$output" == *"diff -ruN old/system/etc/nix/nix.conf new/system/etc/nix/nix.conf"* ]]
   [[ "$output" != *"old/system/etc/issue"* ]]
   [[ "$output" != *"home-configuration.nix.5"* ]]

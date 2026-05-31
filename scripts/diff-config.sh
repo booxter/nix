@@ -574,8 +574,6 @@ run_detail_diff() {
     return 1
   fi
 
-  printf '\nDetailed config diff:\n'
-
   set +e
   run_recursive_diff "${diff_root}"
   diff_status="$?"
