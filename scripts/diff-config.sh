@@ -222,7 +222,7 @@ filter_dix_output() {
 }
 
 normalize_store_paths() {
-  sed -E 's#/nix/store/[0-9a-z]{32}-#/nix/store/<hash>-#g'
+  sed -E "s#/nix/store/[0-9a-z]{32}-[^/[:space:]'\"<>]+#/nix/store/<path>#g"
 }
 
 generated_path_exists() {
