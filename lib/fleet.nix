@@ -123,8 +123,11 @@ let
     name = "diff";
     runtimeInputs = with pkgs; [
       coreutils
+      diffutils
       dix
       git
+      gnugrep
+      gnused
       nh
       nix
     ];

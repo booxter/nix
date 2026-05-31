@@ -16,6 +16,8 @@
       package = lib.mkForce pkgs.nixVersions.latest;
       settings = {
         experimental-features = "nix-command flakes";
+        warn-dirty = false;
+        nix-path = [ "nixpkgs=flake:nixpkgs" ];
         trusted-users = [
           "@admin"
           username

@@ -113,10 +113,13 @@ jobs:
                 lines[++n] = line
               }
               END {
-                if (n != 2) {
+                if (n != 2 && n != 3) {
                   exit 1
                 }
                 if (lines[1] !~ /^SIZE: / || lines[2] != "DIFF: 0 bytes") {
+                  exit 1
+                }
+                if (n == 3 && lines[3] != "No generated config differences.") {
                   exit 1
                 }
 
@@ -131,7 +134,7 @@ jobs:
           }
 
           set +e
-          nix run .#diff -- "${MACHINE}" "${BASE_SHA}" "${HEAD_SHA}" >"${stdout_file}" 2>"${stderr_file}"
+          nix run .#diff -- --details "${MACHINE}" "${BASE_SHA}" "${HEAD_SHA}" >"${stdout_file}" 2>"${stderr_file}"
           status="$?"
           set -e
 
@@ -284,7 +287,7 @@ jobs:
                 appendBlock(entry);
               }
             } else {
-              appendBlock("_No machine produced package or closure-size changes._");
+              appendBlock("_No machine produced package, closure-size, or generated config changes._");
             }
 
             if (unchangedEntries.length > 0) {
@@ -319,7 +322,7 @@ jobs:
                 `Head: \`${headSha}\``,
                 `Run: ${runUrl}`,
                 "",
-                "Advisory output from `nix run .#diff -- <machine> <base> <head>`.",
+                "Advisory output from `nix run .#diff -- --details <machine> <base> <head>`.",
                 "",
               ].join("\n");
               const body = `${header}${chunk}`;

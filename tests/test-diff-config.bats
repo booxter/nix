@@ -38,6 +38,7 @@ make_fake_bin() {
   rm -rf "$fake_bin"
   mkdir -p "$fake_bin"
   bash_path="$(command -v bash)"
+  diff_path="$(command -v diff)"
 
   {
     printf '#!%s\n' "$bash_path"
@@ -50,11 +51,12 @@ done
 printf '%s\n' '---' >>"$NH_ARGS_LOG"
 
 out_link=""
+last_arg=""
 while [ "$#" -gt 0 ]; do
+  last_arg="$1"
   if [ "$1" = "--out-link" ]; then
     shift
     out_link="${1:?}"
-    break
   fi
   shift
 done
@@ -64,7 +66,29 @@ if [ -z "$out_link" ]; then
   exit 2
 fi
 
-mkdir -p "$out_link"
+case "$out_link" in
+  */old) store_hash=11111111111111111111111111111111 ;;
+  *) store_hash=22222222222222222222222222222222 ;;
+esac
+
+mkdir -p \
+  "$out_link/generated" \
+  "$out_link/etc/nix" \
+  "$out_link/etc/nut" \
+  "$out_link/etc/profiles/per-user/ihrachyshka/share/man/man5" \
+  "$out_link/etc/terminfo/x~nix~case~hack~1"
+printf 'flake=%s\n' "$last_arg" >"$out_link/generated/nix.conf"
+printf 'store=/nix/store/%s-same-package/bin\n' "$store_hash" >>"$out_link/generated/nix.conf"
+chmod 0444 "$out_link/generated/nix.conf"
+printf 'Welcome to NixOS %s\n' "$last_arg" >"$out_link/etc/issue"
+printf 'readonly=true\n' >"$out_link/etc/nut/ups.conf"
+{
+  printf 'man-flake=%s\n' "$last_arg"
+  printf '\\fB/nix/store/%s\\-source/modules/generic/meta\\-maintainers\\&.nix\\fP\n' "$store_hash"
+} >"$out_link/etc/profiles/per-user/ihrachyshka/share/man/man5/home-configuration.nix.5"
+ln -s ../../generated/nix.conf "$out_link/etc/nix/nix.conf"
+ln -s missing-target "$out_link/etc/terminfo/x~nix~case~hack~1/xterm-xfree86"
+chmod 0555 "$out_link/etc/nut"
 SH
   } >"$fake_bin/nh"
   chmod +x "$fake_bin/nh"
@@ -75,8 +99,24 @@ SH
 set -euo pipefail
 
 printf '<%s>\n' "$@" >"$DIX_ARGS_LOG"
-printf '<<< %s\n' "$1"
-printf '>>> %s\n' "$2"
+
+old_path=""
+new_path=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --color)
+      shift 2
+      ;;
+    *)
+      old_path="$new_path"
+      new_path="$1"
+      shift
+      ;;
+  esac
+done
+
+printf '<<< %s\n' "$old_path"
+printf '>>> %s\n' "$new_path"
 printf '\n'
 printf 'CHANGED\n'
 printf '[U.] package 1.0 -> 2.0\n'
@@ -89,10 +129,59 @@ SH
 
   {
     printf '#!%s\n' "$bash_path"
+    printf 'real_diff=%q\n' "$diff_path"
     cat <<'SH'
 set -euo pipefail
 
-printf '%s\n' "${NIX_TARGET_KIND:-darwin}"
+args=()
+for arg in "$@"; do
+  if [ -n "${DIFF_ARGS_LOG:-}" ]; then
+    printf '<%s>\n' "$arg" >>"$DIFF_ARGS_LOG"
+  fi
+  case "$arg" in
+    --color | --color=*) ;;
+    *) args+=("$arg") ;;
+  esac
+done
+
+exec "$real_diff" "${args[@]}"
+SH
+  } >"$fake_bin/diff"
+  chmod +x "$fake_bin/diff"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'SH'
+set -euo pipefail
+
+is_build=false
+for arg in "$@"; do
+  if [ "$arg" = "build" ]; then
+    is_build=true
+    break
+  fi
+done
+
+if [ "$is_build" = true ]; then
+  mkdir -p "${HM_BUILD_ROOT:?}"
+  out="$(mktemp -d "${HM_BUILD_ROOT:?}/hm.XXXXXX")"
+  case "${DIFF_CONFIG_FLAKE_REF:?}" in
+    *"${DIFF_CONFIG_MACHINE:?}"*) store_hash=33333333333333333333333333333333 ;;
+    *) store_hash=44444444444444444444444444444444 ;;
+  esac
+  mkdir -p "$out/home-files/.config" "$out/LaunchAgents"
+  printf 'flake=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/home-files/.config/hm.conf"
+  printf 'store=/nix/store/%s-same-home-package/bin\n' "$store_hash" >>"$out/home-files/.config/hm.conf"
+  printf 'agent=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/LaunchAgents/org.example.hm.plist"
+  printf '%s\n' "$out"
+  exit 0
+fi
+
+if [ -n "${DIFF_CONFIG_TARGET_KIND:-}" ]; then
+  printf '%s\n' "${DIFF_CONFIG_HM_USERS:-ihrachyshka}"
+else
+  printf '%s\n' "${NIX_TARGET_KIND:-darwin}"
+fi
 SH
   } >"$fake_bin/nix"
   chmod +x "$fake_bin/nix"
@@ -102,7 +191,7 @@ SH
   run bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" --help
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Usage: diff-config <machine> <old-rev> <new-rev>"* ]]
+  [[ "$output" == *"Usage: diff-config [--details] [--path <relpath>] <machine> <old-rev> <new-rev>"* ]]
 }
 
 @test "diff-config builds both revisions with nh and diffs with dix" {
@@ -134,6 +223,8 @@ SH
   grep -F -- '<frame>' "$nh_log"
   grep -F -- "<git+file://$repo?rev=$old_rev>" "$nh_log"
   grep -F -- "<git+file://$repo?rev=$new_rev>" "$nh_log"
+  grep -F -- '<--color>' "$dix_log"
+  grep -F -- '<auto>' "$dix_log"
   grep -E '^<.*/old>$' "$dix_log"
   grep -E '^<.*/new>$' "$dix_log"
   [[ "$output" != *"<<< "* ]]
@@ -141,6 +232,61 @@ SH
   [[ "$output" == *"CHANGED"* ]]
   [[ "$output" == *"[U.] package 1.0 -> 2.0"* ]]
   [[ "$output" == *"SIZE: 1 -> 2"* ]]
+}
+
+@test "diff-config --details appends generated config diff" {
+  make_repo
+  make_fake_bin
+
+  nh_log="$BATS_TMPDIR/diff-config-nh-details-$BATS_TEST_NUMBER.log"
+  dix_log="$BATS_TMPDIR/diff-config-dix-details-$BATS_TEST_NUMBER.log"
+  diff_log="$BATS_TMPDIR/diff-config-diff-details-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log" "$diff_log"
+
+  run env \
+    DIFF_CONFIG_REPO_ROOT="$repo" \
+    DIFF_CONFIG_DIFF_COLOR=always \
+    XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-details-$BATS_TEST_NUMBER" \
+    HM_BUILD_ROOT="$BATS_TMPDIR/diff-config-hm-details-$BATS_TEST_NUMBER" \
+    NH_ARGS_LOG="$nh_log" \
+    DIX_ARGS_LOG="$dix_log" \
+    DIFF_ARGS_LOG="$diff_log" \
+    PATH="$fake_bin:$PATH" \
+    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    --details \
+    --path etc/nix/nix.conf \
+    --path etc/terminfo \
+    .#nixosConfigurations.frame.config.system.build.toplevel \
+    "$old_rev" \
+    "$new_rev"
+
+  [ "$status" -eq 0 ]
+  [ "$(grep -c '^<--color=always>$' "$diff_log")" -eq 1 ]
+  [[ "$output" == *"CHANGED"* ]]
+  [[ "$output" != *"Detailed config diff:"* ]]
+  [[ "$output" == *"diff -ruN old/system/etc/nix/nix.conf new/system/etc/nix/nix.conf"* ]]
+  [[ "$output" != *"old/system/etc/issue"* ]]
+  [[ "$output" != *"home-configuration.nix.5"* ]]
+  [[ "$output" != *"man-flake"* ]]
+  [[ "$output" == *"etc/nix/nix.conf"* ]]
+  [[ "$output" == *"-flake=git+file://$repo?rev=$old_rev"* ]]
+  [[ "$output" == *"+flake=git+file://$repo?rev=$new_rev"* ]]
+  [[ "$output" == *"/nix/store/<path>/bin"* ]]
+  [[ "$output" != *"Home Manager diff ("* ]]
+  [[ "$output" != *"Building Home Manager activation package"* ]]
+  [[ "$output" == *"diff -ruN old/home-manager/ihrachyshka/home-files/.config/hm.conf new/home-manager/ihrachyshka/home-files/.config/hm.conf"* ]]
+  [[ "$output" == *"home-files/.config/hm.conf"* ]]
+  [[ "$output" == *"LaunchAgents/org.example.hm.plist"* ]]
+  [[ "$output" == *"/nix/store/<path>/bin"* ]]
+  [[ "$output" != *"same-package"* ]]
+  [[ "$output" != *"same-home-package"* ]]
+  [[ "$output" != *"11111111111111111111111111111111"* ]]
+  [[ "$output" != *"22222222222222222222222222222222"* ]]
+  [[ "$output" != *"33333333333333333333333333333333"* ]]
+  [[ "$output" != *"44444444444444444444444444444444"* ]]
+  [[ "$output" != *"Permission denied"* ]]
+  [[ "$output" != *"cannot stat"* ]]
+  [[ "$output" != *"No such file or directory"* ]]
 }
 
 @test "diff-config detects bare darwin targets" {
