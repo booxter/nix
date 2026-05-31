@@ -45,5 +45,4 @@ in
   services.rpcbind.enable = lib.mkForce false;
 
   networking.firewall.allowedTCPPorts = [ nfsPort ];
-  networking.firewall.allowedUDPPorts = [ nfsPort ];
 }
