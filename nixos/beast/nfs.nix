@@ -1,11 +1,17 @@
 { hostInventory, lib, ... }:
 let
-  nfsSubnet = hostInventory.site.lan.cidr;
   nfsPort = hostInventory.site.ports.nfs;
+  srvarrNfsAddress = hostInventory.dhcpReservationsByHostname.prox-srvarrvm.ip;
+  cacheNfsAddress = hostInventory.dhcpReservationsByHostname.prox-cachevm.ip;
 
   # Pin export IDs so clients see stable export identities across server restarts.
   mkNfsExport =
-    { path, fsid }: "${path} ${nfsSubnet}(rw,async,no_subtree_check,fsid=${toString fsid})";
+    {
+      path,
+      client,
+      fsid,
+    }:
+    "${path} ${client}(rw,async,no_subtree_check,fsid=${toString fsid})";
 in
 {
   # NFS exports matching existing clients.
@@ -14,10 +20,12 @@ in
     exports = ''
       ${mkNfsExport {
         path = "/volume2/Media";
+        client = srvarrNfsAddress;
         fsid = 10; # media export
       }}
       ${mkNfsExport {
         path = "/volume2/nix-cache";
+        client = cacheNfsAddress;
         fsid = 11; # binary cache export
       }}
     '';
@@ -37,5 +45,4 @@ in
   services.rpcbind.enable = lib.mkForce false;
 
   networking.firewall.allowedTCPPorts = [ nfsPort ];
-  networking.firewall.allowedUDPPorts = [ nfsPort ];
 }

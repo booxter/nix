@@ -59,7 +59,6 @@ let
 in
 {
   boot.supportedFilesystems = [ "nfs" ];
-  services.rpcbind.enable = true;
   systemd.tmpfiles.rules = [
     # Keep the legacy media-root tmpfiles rule in eval for parity with the old
     # stack; the generated tmpfiles file below still filters NFS-managed paths.
