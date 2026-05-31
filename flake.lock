@@ -282,11 +282,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1780136646,
-        "narHash": "sha256-XluPd7+GPdiWSMg2JZaGn9kYtMPqoa5Q6rp1lfWkVYE=",
+        "lastModified": 1780223270,
+        "narHash": "sha256-shr9THDJWHose+3I3xVzpQmggoY3cxAPo/kuK1pktuY=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "7dca9018cb138dbd63026bd39944a818c0f9e3c2",
+        "rev": "5476d375de48f3b7fdc7a84a83b50ac877810972",
         "type": "github"
       },
       "original": {
@@ -298,11 +298,11 @@
     "homebrew-core": {
       "flake": false,
       "locked": {
-        "lastModified": 1780132561,
-        "narHash": "sha256-eLr9Bt+QPwe4A1xWPIxUXfFx3AnT+JKpdwabtWYISd4=",
+        "lastModified": 1780222199,
+        "narHash": "sha256-CaXQotCe8AkqC8Bs5M5lurjlIgaap5pyT0qHbntSJWo=",
         "owner": "homebrew",
         "repo": "homebrew-core",
-        "rev": "50257e0f9406ca9657e7e72f473ed126ff934ec9",
+        "rev": "b3ef7c27d70ac8597ad5863bef331be0f41333a4",
         "type": "github"
       },
       "original": {
@@ -345,11 +345,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1780119579,
-        "narHash": "sha256-EnWR9fQzTfmIkyWD8ynYdAM573x3wzkOzZuMagrEosQ=",
+        "lastModified": 1780206800,
+        "narHash": "sha256-MeaRZmdyd9FaM1BY+GIp/OkhYdqqYd03kIAmoNWlz0E=",
         "owner": "numtide",
         "repo": "llm-agents.nix",
-        "rev": "b8adcd1a8e45e6d84f511c1a3b12998634481204",
+        "rev": "2296793afdc076c2fd495ac21b914c26a9f2bf0e",
         "type": "github"
       },
       "original": {
@@ -365,11 +365,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780142905,
-        "narHash": "sha256-ieCY04+Lqikmz3FvyBozqUhwCCzjMC2K/YnJ9lhvKrA=",
+        "lastModified": 1780192801,
+        "narHash": "sha256-fJOUSc+446zHN4SoxvpwPmqb9BobE7t54oGygS6mrLw=",
         "owner": "booxter",
         "repo": "lolek",
-        "rev": "11457dce145b52f7516c2cb5d531c225ee550eb1",
+        "rev": "4218d6be7797b1b77f15e9a3fa13ba794632b6d8",
         "type": "github"
       },
       "original": {
@@ -598,11 +598,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1779955849,
-        "narHash": "sha256-31mhzm2HpzRr/rupWAFfWBmt9SUjzwr5+giv5Nmb/rA=",
+        "lastModified": 1780164493,
+        "narHash": "sha256-kAWygfPvwSp7fFkYABWDL002pb0HNzy6xIKtiwWWTsM=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "a2c6938835fca96e4a10c8561d461efd2f91d04f",
+        "rev": "01c8df74197a537d728921214ac2fd70e4ce1666",
         "type": "github"
       },
       "original": {
@@ -698,11 +698,11 @@
         "systems": "systems_3"
       },
       "locked": {
-        "lastModified": 1780080183,
-        "narHash": "sha256-zbYETlE9jmgdcL9YItLxjTUjs4Gj4iFBzo45OHuk9Eg=",
+        "lastModified": 1780214453,
+        "narHash": "sha256-Bfq9y0X6Vs4UPb67u7hN3jt7fJKHtl3+g0lBSDebRNg=",
         "owner": "nix-community",
         "repo": "nixvim",
-        "rev": "d02dc1ae7902cac908fe1ab3246888118f661ddd",
+        "rev": "167da56c3ab1e51751a6ae4a997ed66587f9edae",
         "type": "github"
       },
       "original": {
@@ -718,11 +718,11 @@
         "nixpkgs": "nixpkgs_6"
       },
       "locked": {
-        "lastModified": 1780135518,
-        "narHash": "sha256-MPhENIP8JJv+dvCntTKbyZ66we9Ve0cfni0xzuzveI8=",
+        "lastModified": 1780223682,
+        "narHash": "sha256-SF4a1tlKT3bhcpadtGhl5qLiy34qPc7FE3JHM2+B+CI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "ac2f162a73dc8dc3708f49c2f52a044cf8d7f3ff",
+        "rev": "0f020a742a1a71cc420d7b12eba4c356ffa7abeb",
         "type": "github"
       },
       "original": {
@@ -864,11 +864,11 @@
     "tig": {
       "flake": false,
       "locked": {
-        "lastModified": 1778521284,
-        "narHash": "sha256-5Kx9ZjRrgmSejgxT7CCQiheMitFGQiD8I3xQoe95b+U=",
+        "lastModified": 1779741958,
+        "narHash": "sha256-zcglUdSEUegMx/zz9N+GD/QPWtlDUf08YimAYfN8a80=",
         "owner": "jonas",
         "repo": "tig",
-        "rev": "70435f8b919e51fe8561b729493853ad038d6a98",
+        "rev": "38b53b68917244007a1cdcb83c87fe70f0191c63",
         "type": "github"
       },
       "original": {
