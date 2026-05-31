@@ -93,14 +93,51 @@ jobs:
             printf '%s' "${MACHINE}" \
               | tr -c 'A-Za-z0-9._-' '-'
           )"
-          output_file="diff-output/${ORDER}-${safe_machine}.md"
+          changed_file="diff-output/changed-${ORDER}-${safe_machine}.md"
+          unchanged_file="diff-output/unchanged-${ORDER}-${safe_machine}.txt"
           stdout_file="$(mktemp)"
           stderr_file="$(mktemp)"
+
+          is_noop_diff() {
+            local file="$1"
+
+            if [ ! -s "${file}" ]; then
+              return 0
+            fi
+
+            awk '
+              NF {
+                line = $0
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+                lines[++n] = line
+              }
+              END {
+                if (n != 2) {
+                  exit 1
+                }
+                if (lines[1] !~ /^SIZE: / || lines[2] != "DIFF: 0 bytes") {
+                  exit 1
+                }
+
+                size = lines[1]
+                sub(/^SIZE: /, "", size)
+                count = split(size, parts, / -> /)
+                if (count != 2 || parts[1] != parts[2]) {
+                  exit 1
+                }
+              }
+            ' "${file}"
+          }
 
           set +e
           nix run .#diff -- "${MACHINE}" "${BASE_SHA}" "${HEAD_SHA}" >"${stdout_file}" 2>"${stderr_file}"
           status="$?"
           set -e
+
+          if [ "${status}" -eq 0 ] && is_noop_diff "${stdout_file}"; then
+            printf '%s\n' "${MACHINE_NAME}" >"${unchanged_file}"
+            exit 0
+          fi
 
           {
             printf '<details>\n'
@@ -118,21 +155,19 @@ jobs:
                 cat "${stdout_file}"
                 printf '\n'
               fi
-            elif [ -s "${stdout_file}" ]; then
-              cat "${stdout_file}"
             else
-              printf 'No package or closure-size diff reported.\n'
+              cat "${stdout_file}"
             fi
             printf '```\n\n'
             printf '</details>\n'
-          } >"${output_file}"
+          } >"${changed_file}"
 
       - name: Upload diff artifact
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: flake-diff-${{ matrix.order }}-${{ matrix.machine }}
-          path: diff-output/*.md
+          path: diff-output/*
           if-no-files-found: warn
 
   update-pr-description:
@@ -171,19 +206,30 @@ jobs:
             const end = "<!-- flake-update-diffs:end -->";
             const diffDir = "diff-output";
 
-            let entries = [];
+            let diffEntries = [];
+            let unchangedEntries = [];
             if (fs.existsSync(diffDir)) {
-              entries = fs
-                .readdirSync(diffDir)
+              const files = fs.readdirSync(diffDir).sort();
+              diffEntries = files
                 .filter((name) => name.endsWith(".md"))
-                .sort()
-                .map((name) => fs.readFileSync(path.join(diffDir, name), "utf8").trim())
+                .map((name) =>
+                  fs.readFileSync(path.join(diffDir, name), "utf8").trim()
+                )
                 .filter(Boolean);
+              unchangedEntries = files
+                .filter((name) => name.endsWith(".txt"))
+                .flatMap((name) =>
+                  fs
+                    .readFileSync(path.join(diffDir, name), "utf8")
+                    .split(/\r?\n/)
+                    .map((line) => line.trim())
+                    .filter(Boolean)
+                );
             }
 
             const baseSha = process.env.BASE_SHA;
             const headSha = process.env.HEAD_SHA;
-            const section = [
+            const sectionLines = [
               start,
               "## Config diffs",
               "",
@@ -192,9 +238,23 @@ jobs:
               "",
               "Advisory output from `nix run .#diff -- <machine> <base> <head>`.",
               "",
-              entries.length > 0 ? entries.join("\n\n") : "_No diff artifacts were produced._",
-              end,
-            ].join("\n");
+              "### Changed machines",
+              "",
+              diffEntries.length > 0
+                ? diffEntries.join("\n\n")
+                : "_No machine produced package or closure-size changes._",
+            ];
+            if (unchangedEntries.length > 0) {
+              sectionLines.push(
+                "",
+                "### Unchanged machines",
+                "",
+                ...unchangedEntries.map((entry) => `- ${entry}`),
+              );
+            }
+            sectionLines.push(end);
+
+            const section = sectionLines.join("\n");
 
             const { owner, repo } = context.repo;
             const pull_number = context.payload.pull_request.number;
