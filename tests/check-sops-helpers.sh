@@ -163,10 +163,21 @@ other:
   keep: "dst"
 EOF
 
+  cat > "$repo/prox-gwvm.plain.yaml" <<'EOF'
+users:
+  root:
+    hashedPassword: "REPLACE_ME"
+  ihrachyshka:
+    hashedPassword: "REPLACE_ME"
+other:
+  keep: "gw"
+EOF
+
   cd "$repo"
   encrypt_secret_file beast "$repo/beast.plain.yaml"
   encrypt_secret_file mair "$repo/mair.plain.yaml"
   encrypt_secret_file prx1-lab "$repo/prx1-lab.plain.yaml"
+  encrypt_secret_file prox-gwvm "$repo/prox-gwvm.plain.yaml"
 
   log "validate encrypted secret layout"
   run_and_capture "$out" bash "$repo/tests/test-sops-config.sh"
@@ -231,6 +242,49 @@ EOF
   esac
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "other login password should not be touched"
   assert_eq "beast" "$(yq -r '.other.keep' "$after")" "unrelated data should survive password update"
+
+  log "generate login password in pass using canonical host names"
+  mkdir -p "$WORKDIR/fake-bin" "$WORKDIR/pass-store"
+  cat > "$WORKDIR/fake-bin/pass" <<'EOF'
+#!/bin/sh
+set -eu
+
+cmd="$1"
+shift
+
+case "$cmd" in
+  generate)
+    if [ "${1:-}" = "--force" ]; then
+      shift
+    fi
+    entry="$1"
+    mkdir -p "$PASS_TEST_STORE/$(dirname "$entry")"
+    printf 'generated-password-for-%s\n' "$entry" > "$PASS_TEST_STORE/$entry"
+    printf 'generated-password-for-%s\n' "$entry"
+    ;;
+  show)
+    entry="$1"
+    cat "$PASS_TEST_STORE/$entry"
+    ;;
+  *)
+    echo "unexpected pass command: $cmd" >&2
+    exit 2
+    ;;
+esac
+EOF
+  chmod +x "$WORKDIR/fake-bin/pass"
+  run_and_capture "$out" env \
+    PASS_TEST_STORE="$WORKDIR/pass-store" \
+    PATH="$WORKDIR/fake-bin:$PATH" \
+    bash "$repo/scripts/sops-pass.sh" --gen prox-gwvm root
+  assert_contains "$(cat "$out")" "Generated host/gw/root."
+  test -f "$WORKDIR/pass-store/host/gw/root" || fail "pass entry should use canonical prox VM host name"
+  decrypt_secret_file prox-gwvm "$after"
+  case "$(yq -r '.users.root.hashedPassword' "$after")" in
+    "${sha512_prefix}"*) ;;
+    *) fail "generated root password hash should use sha-512 crypt format" ;;
+  esac
+  assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "generated password should only update requested user"
 
   log "reject unsupported login users before prompting"
   run_expect_failure "$out" bash "$repo/scripts/sops-pass.sh" beast nobody

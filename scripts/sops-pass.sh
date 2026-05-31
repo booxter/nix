@@ -4,11 +4,19 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-pass.sh HOST USER
+  scripts/sops-pass.sh [--gen] HOST USER
   scripts/sops-pass.sh --help
 
 Hash a login password with mkpasswd and store it in secrets/HOST.yaml.
 USER must be either root or ihrachyshka.
+
+With --gen, generate the password in pass first, under
+host/CANONICAL_HOST/USER. Proxmox VM names are canonicalized, so prox-gwvm
+uses host/gw/USER.
+
+Environment:
+  SOPS_PASS_PREFIX            pass prefix for --gen entries (default: host)
+  SOPS_PASS_GENERATE_LENGTH   generated password length (default: 32)
 EOF
 }
 
@@ -22,8 +30,30 @@ resolve_repo_root() {
   cd -- "${script_dir}/.." && pwd
 }
 
+pass_machine_name() {
+  local machine="$1"
+  if [[ "${machine}" == prox-*vm ]]; then
+    machine="${machine#prox-}"
+    machine="${machine%vm}"
+  fi
+  printf '%s\n' "${machine}"
+}
+
 read_passwords() {
   local password_fd="${SOPS_PASS_PASSWORD_FD:-}"
+
+  if [[ "${generate_password}" == "1" ]]; then
+    local pass_prefix="${SOPS_PASS_PREFIX:-host}"
+    local password_length="${SOPS_PASS_GENERATE_LENGTH:-32}"
+    local pass_host
+    pass_host="$(pass_machine_name "${host}")"
+    pass_entry="${pass_prefix}/${pass_host}/${user}"
+
+    pass generate --force "${pass_entry}" "${password_length}" >/dev/null
+    read -r password < <(pass show "${pass_entry}")
+    confirm="${password}"
+    return
+  fi
 
   if [[ -n "$password_fd" ]]; then
     read -r password <&"$password_fd"
@@ -44,8 +74,14 @@ read_passwords() {
 
 host=""
 user=""
+generate_password=0
+pass_entry=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --gen)
+      generate_password=1
+      shift
+      ;;
     -h | --help)
       usage
       exit 0
@@ -136,3 +172,6 @@ sops --encrypt --filename-override "$secret" --input-type json --output-type yam
 mv "$encrypted" "$secret"
 
 echo "Updated users/${user}/hashedPassword in ${secret}."
+if [[ -n "${pass_entry}" ]]; then
+  echo "Generated ${pass_entry}."
+fi

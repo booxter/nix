@@ -72,6 +72,7 @@ let
       git
       jq
       mkpasswd
+      pass
       sops
       yq-go
     ];
