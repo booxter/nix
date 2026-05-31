@@ -123,6 +123,7 @@ let
     name = "diff";
     runtimeInputs = with pkgs; [
       coreutils
+      diffutils
       dix
       git
       nh

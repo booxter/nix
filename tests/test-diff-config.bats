@@ -50,11 +50,12 @@ done
 printf '%s\n' '---' >>"$NH_ARGS_LOG"
 
 out_link=""
+last_arg=""
 while [ "$#" -gt 0 ]; do
+  last_arg="$1"
   if [ "$1" = "--out-link" ]; then
     shift
     out_link="${1:?}"
-    break
   fi
   shift
 done
@@ -64,7 +65,9 @@ if [ -z "$out_link" ]; then
   exit 2
 fi
 
-mkdir -p "$out_link"
+mkdir -p "$out_link/generated" "$out_link/etc/nix"
+printf 'flake=%s\n' "$last_arg" >"$out_link/generated/nix.conf"
+ln -s ../../generated/nix.conf "$out_link/etc/nix/nix.conf"
 SH
   } >"$fake_bin/nh"
   chmod +x "$fake_bin/nh"
@@ -102,7 +105,7 @@ SH
   run bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" --help
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"Usage: diff-config <machine> <old-rev> <new-rev>"* ]]
+  [[ "$output" == *"Usage: diff-config [--details] [--path <relpath>] <machine> <old-rev> <new-rev>"* ]]
 }
 
 @test "diff-config builds both revisions with nh and diffs with dix" {
@@ -141,6 +144,35 @@ SH
   [[ "$output" == *"CHANGED"* ]]
   [[ "$output" == *"[U.] package 1.0 -> 2.0"* ]]
   [[ "$output" == *"SIZE: 1 -> 2"* ]]
+}
+
+@test "diff-config --details appends generated config diff" {
+  make_repo
+  make_fake_bin
+
+  nh_log="$BATS_TMPDIR/diff-config-nh-details-$BATS_TEST_NUMBER.log"
+  dix_log="$BATS_TMPDIR/diff-config-dix-details-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log"
+
+  run env \
+    DIFF_CONFIG_REPO_ROOT="$repo" \
+    XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-details-$BATS_TEST_NUMBER" \
+    NH_ARGS_LOG="$nh_log" \
+    DIX_ARGS_LOG="$dix_log" \
+    PATH="$fake_bin:$PATH" \
+    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    --details \
+    --path etc/nix/nix.conf \
+    .#nixosConfigurations.frame.config.system.build.toplevel \
+    "$old_rev" \
+    "$new_rev"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"CHANGED"* ]]
+  [[ "$output" == *"Generated config diff (etc/nix/nix.conf):"* ]]
+  [[ "$output" == *"etc/nix/nix.conf"* ]]
+  [[ "$output" == *"-flake=git+file://$repo?rev=$old_rev"* ]]
+  [[ "$output" == *"+flake=git+file://$repo?rev=$new_rev"* ]]
 }
 
 @test "diff-config detects bare darwin targets" {

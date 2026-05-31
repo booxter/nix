@@ -7,14 +7,23 @@ program_name="${DIFF_CONFIG_PROGRAM_NAME:-diff-config}"
 
 usage() {
   cat <<EOF
-Usage: ${program_name} <machine> <old-rev> <new-rev>
+Usage: ${program_name} [--details] [--path <relpath>] <machine> <old-rev> <new-rev>
 
 Build the NixOS or nix-darwin configuration for <machine> at two Git revisions
 with nh, then render the package and closure-size diff with dix, the diff
 backend used by nh.
 
+With --details, also diff generated target configuration files from the built
+toplevels. By default this covers:
+  NixOS:       etc
+  nix-darwin:  etc, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
+
+Repeat --path with --details to override the default generated paths.
+
 Examples:
   ${program_name} frame origin/master HEAD
+  ${program_name} --details frame origin/master HEAD
+  ${program_name} --details --path etc/nix/nix.conf frame origin/master HEAD
   ${program_name} mair origin/master HEAD
   ${program_name} prox-srvarrvm 1a2b3c4 5d6e7f8
 EOF
@@ -45,6 +54,17 @@ parse_target() {
   fi
 
   machine="${attr}"
+}
+
+validate_relpath() {
+  local relpath="$1"
+
+  case "${relpath}" in
+    "" | /* | .. | ../* | */.. | */../*)
+      echo "generated path must be a relative path without '..': ${relpath}" >&2
+      return 1
+      ;;
+  esac
 }
 
 resolve_git_rev() {
@@ -122,6 +142,30 @@ resolve_target_kind() {
   target_kind="${new_kind}"
 }
 
+default_generated_paths() {
+  if [[ "${#generated_paths[@]}" -gt 0 ]]; then
+    return 0
+  fi
+
+  case "${target_kind}" in
+    nixos)
+      generated_paths=(etc)
+      ;;
+    darwin)
+      generated_paths=(
+        etc
+        Library/LaunchAgents
+        Library/LaunchDaemons
+        user/Library/LaunchAgents
+      )
+      ;;
+    *)
+      echo "Unsupported target kind: ${target_kind}" >&2
+      return 1
+      ;;
+  esac
+}
+
 build_config() {
   local label="$1"
   local rev="$2"
@@ -176,21 +220,140 @@ filter_dix_output() {
   done
 }
 
-if [[ "$#" -eq 1 && ( "$1" == "-h" || "$1" == "--help" ) ]]; then
-  usage
-  exit 0
-fi
+generated_path_exists() {
+  local root="$1"
+  local relpath="$2"
+  local path="${root}/${relpath}"
 
-if [[ "$#" -ne 3 ]]; then
+  [[ -e "${path}" || -L "${path}" ]]
+}
+
+copy_generated_path() {
+  local source_root="$1"
+  local dest_root="$2"
+  local relpath="$3"
+  local source="${source_root}/${relpath}"
+  local dest="${dest_root}/${relpath}"
+  local parent="${relpath%/*}"
+
+  if ! generated_path_exists "${source_root}" "${relpath}"; then
+    return 0
+  fi
+
+  if [[ "${parent}" != "${relpath}" ]]; then
+    mkdir -p "${dest_root}/${parent}"
+  fi
+
+  cp -R -L -p "${source}" "${dest}"
+}
+
+materialize_generated_paths() {
+  local source_root="$1"
+  local dest_root="$2"
+  local relpath=""
+
+  mkdir -p "${dest_root}"
+
+  for relpath in "${generated_paths[@]}"; do
+    copy_generated_path "${source_root}" "${dest_root}" "${relpath}"
+  done
+}
+
+run_generated_diff() {
+  local old_tree="${tmpdir}/old-generated"
+  local new_tree="${tmpdir}/new-generated"
+  local relpath=""
+  local found_any=false
+  local diff_status=0
+
+  for relpath in "${generated_paths[@]}"; do
+    if generated_path_exists "${old_link}" "${relpath}" || generated_path_exists "${new_link}" "${relpath}"; then
+      found_any=true
+    else
+      echo "Skipping missing generated path in both revisions: ${relpath}" >&2
+    fi
+  done
+
+  if [[ "${found_any}" == false ]]; then
+    echo "None of the selected generated paths exist: ${generated_paths[*]}" >&2
+    return 1
+  fi
+
+  materialize_generated_paths "${old_link}" "${old_tree}"
+  materialize_generated_paths "${new_link}" "${new_tree}"
+
+  printf '\nGenerated config diff (%s):\n' "${generated_paths[*]}"
+
+  set +e
+  diff -ruN "${old_tree}" "${new_tree}"
+  diff_status="$?"
+  set -e
+
+  if [[ "${diff_status}" -eq 0 ]]; then
+    printf 'No generated config differences.\n'
+    return 0
+  fi
+
+  if [[ "${diff_status}" -eq 1 ]]; then
+    return 0
+  fi
+
+  return "${diff_status}"
+}
+
+details=false
+generated_paths=()
+args=()
+
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    --details)
+      details=true
+      shift
+      ;;
+    --path)
+      if [[ -z "${2:-}" ]]; then
+        echo "--path requires an argument" >&2
+        exit 1
+      fi
+      validate_relpath "$2"
+      details=true
+      generated_paths+=("$2")
+      shift 2
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    --)
+      shift
+      while [[ "$#" -gt 0 ]]; do
+        args+=("$1")
+        shift
+      done
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage >&2
+      exit 1
+      ;;
+    *)
+      args+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [[ "${#args[@]}" -ne 3 ]]; then
   usage >&2
   exit 1
 fi
 
 machine=""
 target_kind=""
-parse_target "$1"
-old_input="$2"
-new_input="$3"
+parse_target "${args[0]}"
+old_input="${args[1]}"
+new_input="${args[2]}"
 
 repo_root="${DIFF_CONFIG_REPO_ROOT:-}"
 if [[ -z "${repo_root}" ]]; then
@@ -217,6 +380,9 @@ old_flake="$(flake_ref_for_rev "${old_rev}")"
 new_flake="$(flake_ref_for_rev "${new_rev}")"
 
 resolve_target_kind
+if [[ "${details}" == true ]]; then
+  default_generated_paths
+fi
 
 tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/diff-config.XXXXXX")"
 cleanup() {
@@ -236,3 +402,7 @@ build_config new "${new_rev}" "${new_flake}" "${new_link}"
 
 echo "Diffing ${target_kind} configuration ${machine}: ${old_rev} -> ${new_rev}" >&2
 dix "${old_link}" "${new_link}" | filter_dix_output
+
+if [[ "${details}" == true ]]; then
+  run_generated_diff
+fi
