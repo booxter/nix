@@ -271,7 +271,7 @@ copy_generated_node() {
 
   if [[ -L "${source}" && ! -e "${source}" ]]; then
     target="$(readlink "${source}")"
-    ln -s "${target}" "${dest}"
+    printf 'broken symlink -> %s\n' "${target}" >"${dest}"
   elif [[ -d "${source}" ]]; then
     copy_generated_directory "${source}" "${dest}"
   else

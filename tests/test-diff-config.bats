@@ -189,13 +189,14 @@ SH
     bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
     --details \
     --path etc/nix/nix.conf \
+    --path etc/terminfo \
     .#nixosConfigurations.frame.config.system.build.toplevel \
     "$old_rev" \
     "$new_rev"
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"CHANGED"* ]]
-  [[ "$output" == *"Generated config diff (etc/nix/nix.conf):"* ]]
+  [[ "$output" == *"Generated config diff (etc/nix/nix.conf etc/terminfo):"* ]]
   [[ "$output" == *"etc/nix/nix.conf"* ]]
   [[ "$output" == *"-flake=git+file://$repo?rev=$old_rev"* ]]
   [[ "$output" == *"+flake=git+file://$repo?rev=$new_rev"* ]]
@@ -204,6 +205,7 @@ SH
   [[ "$output" == *"LaunchAgents/org.example.hm.plist"* ]]
   [[ "$output" != *"Permission denied"* ]]
   [[ "$output" != *"cannot stat"* ]]
+  [[ "$output" != *"No such file or directory"* ]]
 }
 
 @test "diff-config detects bare darwin targets" {
