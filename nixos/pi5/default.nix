@@ -1,13 +1,10 @@
 {
   config,
-  pkgs,
-  username,
   hostInventory,
   ...
 }:
 let
   lan = hostInventory.site.lan;
-  netboot = lan.netboot;
   renderDhcpRange = iface: range: "${iface},${range.start},${range.end}";
   mainIface = "end0";
   guestIface = "wlan0";
@@ -78,14 +75,6 @@ in
       domain-needed = true;
     };
   };
-  services.atftpd = {
-    enable = true;
-    root = "/var/lib/tftp";
-    extraOptions = [
-      "--bind-address"
-      mainAddr
-    ];
-  };
   networking.firewall.interfaces.${guestIface} = {
     allowedTCPPorts = [
       53 # DNS over TCP fallback for guest clients
@@ -95,11 +84,5 @@ in
       67 # DHCP
     ];
   };
-  networking.firewall.interfaces.${mainIface}.allowedUDPPorts = [
-    69 # TFTP
-  ];
-  systemd.tmpfiles.rules = [
-    "L+ /var/lib/tftp/${netboot.bootfile} - - - - ${pkgs.netbootxyz-efi}"
-  ];
 
 }

@@ -119,10 +119,10 @@ around `nixmoxer`).
 
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
-| `pi5` | NixOS (Raspberry Pi) | DHCP and network services for the lab. | [nixos/pi5/default.nix](nixos/pi5/default.nix) | [common](common), [nixos](nixos) |
+| `pi5` | NixOS (Raspberry Pi) | Guest Wi-Fi DHCP/DNS helper. | [nixos/pi5/default.nix](nixos/pi5/default.nix) | [common](common), [nixos](nixos) |
 | `beast` | NixOS (x86_64-linux) | NAS storage + Jellyfin/Jellarr server. | [nixos/beast/default.nix](nixos/beast/default.nix) | [common](common), [nixos](nixos) |
 | `nvws` | Proxmox host | Work Proxmox node configuration. Single node. Also serves as a remote x86_64-linux builder for work machines. | [nixos/nvws/default.nix](nixos/nvws/default.nix) | [common](common), [nixos](nixos) |
-| `prx1-lab` | Proxmox host | Lab Proxmox node (cluster leader). | [nixos/prx1-lab/default.nix](nixos/prx1-lab/default.nix) | [common](common), [nixos](nixos) |
+| `prx1-lab` | Proxmox host | Lab Proxmox node (cluster leader) and TFTP/netboot host. | [nixos/prx1-lab/default.nix](nixos/prx1-lab/default.nix) | [common](common), [nixos](nixos) |
 | `prx2-lab` | Proxmox host | Lab Proxmox node (cluster member). | [nixos/prx2-lab/default.nix](nixos/prx2-lab/default.nix) | [common](common), [nixos](nixos) |
 | `prx3-lab` | Proxmox host | Lab Proxmox node (cluster member). | [nixos/prx3-lab/default.nix](nixos/prx3-lab/default.nix) | [common](common), [nixos](nixos) |
 

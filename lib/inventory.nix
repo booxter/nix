@@ -153,7 +153,7 @@ rec {
         };
       };
       netboot = {
-        host = piHostname;
+        host = "prx1-lab";
         bootfile = "netboot.xyz.efi";
       };
       customDhcpOptions = {
