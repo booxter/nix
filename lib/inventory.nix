@@ -7,9 +7,6 @@ let
   prxNetIface = "enp5s0f0np0";
   lanDnsRecordTtlSeconds = 300;
 
-  piStateVersion = "25.11";
-  piHostname = "pi5";
-
   frame = "frame";
   nvws = "nvws";
 
@@ -140,14 +137,6 @@ rec {
               # reserved for the lab/proxmox segment.
               start = "192.168.10.1";
               end = "192.168.14.255";
-            }
-          ];
-        };
-        guest = {
-          ranges = [
-            {
-              start = "192.168.100.1";
-              end = "192.168.100.255";
             }
           ];
         };
@@ -345,17 +334,6 @@ rec {
   };
 
   nixosHostSpecs = [
-    {
-      type = "bm";
-      hostKind = "raspberryPi";
-      name = piHostname;
-      lanAddress = "192.168.1.1";
-      guestAddress = "192.168.2.1";
-      localDnsAliases = [ piHostname ];
-      stateVersion = piStateVersion;
-      homeManagerInput = "home-manager-25_11";
-      hmFull = false;
-    }
     {
       type = "bm";
       hostKind = "nixos";

@@ -4,7 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
-    nixpkgs-25_11.url = "github:NixOS/nixpkgs/nixos-25.11";
     # Keep Transmission pinned independently from the moving release-25.11 branch.
     # TODO: remove this input when trackers allow 4.1.0+.
     nixpkgs-transmission.url = "github:NixOS/nixpkgs/12d60a4f2d5f2cc96e93ae5615328245d49ac2e8";
@@ -29,14 +28,11 @@
 
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    home-manager-25_11.url = "github:nix-community/home-manager/release-25.11";
-    home-manager-25_11.inputs.nixpkgs.follows = "nixpkgs-25_11";
 
     nixvim.url = "github:nix-community/nixvim/nixos-26.05";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
-    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/main";
 
     proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
 
@@ -94,7 +90,6 @@
       hostKindToMkHost = {
         nixos = helpers.mkNixos;
         proxmox = helpers.mkProxmox;
-        raspberryPi = helpers.mkRaspberryPi;
       };
 
       staticHostModule =
@@ -205,7 +200,6 @@
         let
           basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
           fleetPackages = {
-            pi-image = self.nixosConfigurations.pi5.config.system.build.sdImage;
             inherit (inputs.disko.packages.${system}) disko-install;
           };
           proxmox = import ./lib/proxmox-apps.nix {

@@ -11,7 +11,6 @@ expected_json='{
     "beast": false,
     "frame": false,
     "nvws": true,
-    "pi5": false,
     "prox-builder1vm": false,
     "prox-builder2vm": false,
     "prox-builder3vm": false,
@@ -64,13 +63,13 @@ expected_filtered='{
     "mair": false
   },
   "nixos": {
-    "nvws": true,
-    "pi5": false
+    "beast": false,
+    "nvws": true
   }
 }'
 
 stderr_file="$(mktemp)"
-if ! filtered_json="$(./scripts/get-hosts.sh mair nvws pi5 2>"$stderr_file")"; then
+if ! filtered_json="$(./scripts/get-hosts.sh mair nvws beast 2>"$stderr_file")"; then
   echo "get-hosts.sh with args failed" >&2
   cat "$stderr_file" >&2 || true
   rm -f "$stderr_file"

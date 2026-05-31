@@ -86,9 +86,7 @@ prioritize_hosts() {
   local -a normal=()
 
   for host in "$@"; do
-    if [[ "$host" == "pi5" ]]; then
-      prioritized+=("$host")
-    elif [[ "$host" =~ ^prx[0-9]+-lab$ || "$host" == "nvws" ]]; then
+    if [[ "$host" =~ ^prx[0-9]+-lab$ || "$host" == "nvws" ]]; then
       prioritized+=("$host")
     elif [[ "$host" == *cachevm* ]]; then
       deferred+=("$host")

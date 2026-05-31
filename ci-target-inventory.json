@@ -104,21 +104,6 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.pi5.config.system.build.toplevel",
-      "name": "pi5 (aarch64-linux)",
-      "runner": "ubuntu-24.04-arm",
-      "selection": {
-        "hosts": [
-          "pi5"
-        ],
-        "prefixes": [
-          "nixos/pi5/"
-        ]
-      },
-      "system": "aarch64-linux",
-      "warm": true
-    },
-    {
       "attr": "nixosConfigurations.beast.config.system.build.toplevel",
       "name": "beast (x86_64-linux)",
       "runner": "ubuntu-latest",

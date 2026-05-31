@@ -31,9 +31,8 @@ nix run .#prox-deploy -- fana prx1-lab
 nix run .#prox-deploy -- gw prx1-lab
 nix run .#prox-deploy -- org prx1-lab
 
-# Disk and image helpers
+# Disk helpers
 nix run .#deploy -- --disko frame /dev/sdX
-nix build .#pi-image -o pi5.sd
 ```
 
 ## Fleet updates
@@ -119,7 +118,6 @@ around `nixmoxer`).
 
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
-| `pi5` | NixOS (Raspberry Pi) | Guest Wi-Fi DHCP/DNS helper. | [nixos/pi5/default.nix](nixos/pi5/default.nix) | [common](common), [nixos](nixos) |
 | `beast` | NixOS (x86_64-linux) | NAS storage + Jellyfin/Jellarr server. | [nixos/beast/default.nix](nixos/beast/default.nix) | [common](common), [nixos](nixos) |
 | `nvws` | Proxmox host | Work Proxmox node configuration. Single node. Also serves as a remote x86_64-linux builder for work machines. | [nixos/nvws/default.nix](nixos/nvws/default.nix) | [common](common), [nixos](nixos) |
 | `prx1-lab` | Proxmox host | Lab Proxmox node (cluster leader) and TFTP/netboot host. | [nixos/prx1-lab/default.nix](nixos/prx1-lab/default.nix) | [common](common), [nixos](nixos) |

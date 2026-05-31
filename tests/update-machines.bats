@@ -180,67 +180,67 @@ EOF
 }
 
 @test "lan_dns_lookup_candidates adds the LAN domain for bare hostnames" {
-  run lan_dns_lookup_candidates pi5 home.arpa
+  run lan_dns_lookup_candidates beast home.arpa
   [ "$status" -eq 0 ]
-  expected=$'pi5\npi5.home.arpa'
+  expected=$'beast\nbeast.home.arpa'
   [ "$output" = "$expected" ]
 }
 
 @test "lan_dns_lookup_candidates leaves FQDNs unchanged" {
-  run lan_dns_lookup_candidates pi5.home.arpa home.arpa
+  run lan_dns_lookup_candidates beast.home.arpa home.arpa
   [ "$status" -eq 0 ]
-  [ "$output" = "pi5.home.arpa" ]
+  [ "$output" = "beast.home.arpa" ]
 }
 
 @test "lan_dns_lookup_candidates leaves IPv4 addresses unchanged" {
-  run lan_dns_lookup_candidates 192.168.1.1 home.arpa
+  run lan_dns_lookup_candidates 192.168.15.10 home.arpa
   [ "$status" -eq 0 ]
-  [ "$output" = "192.168.1.1" ]
+  [ "$output" = "192.168.15.10" ]
 }
 
-@test "resolve_base_host leaves pi5 unchanged" {
-  export HOST_BASE_MAP_JSON='{"pi5":"pi5"}'
-  run resolve_base_host pi5
+@test "resolve_base_host leaves bare-metal hosts unchanged" {
+  export HOST_BASE_MAP_JSON='{"beast":"beast"}'
+  run resolve_base_host beast
   [ "$status" -eq 0 ]
-  [ "$output" = "pi5" ]
+  [ "$output" = "beast" ]
 }
 
 @test "resolve_base_host leaves other hosts unchanged" {
-  export HOST_BASE_MAP_JSON='{"pi5":"pi5"}'
+  export HOST_BASE_MAP_JSON='{"beast":"beast"}'
   run resolve_base_host nvws
   [ "$status" -eq 0 ]
   [ "$output" = "nvws" ]
 }
 
 @test "hosts_from_work_map returns sorted unique hosts" {
-  work_map='{"darwin":{"mmini":false},"nixos":{"nvws":true,"pi5":false}}'
+  work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
   run hosts_from_work_map "$work_map"
   [ "$status" -eq 0 ]
-  expected=$'mmini\nnvws\npi5'
+  expected=$'beast\nmmini\nnvws'
   [ "$output" = "$expected" ]
 }
 
 @test "filter_hosts_by_mode includes only personal hosts" {
-  work_map='{"darwin":{"mmini":false},"nixos":{"nvws":true,"pi5":false}}'
-  run filter_hosts_by_mode personal "$work_map" nvws pi5 mmini
+  work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
+  run filter_hosts_by_mode personal "$work_map" nvws beast mmini
   [ "$status" -eq 0 ]
-  expected=$'pi5\nmmini'
+  expected=$'beast\nmmini'
   [ "$output" = "$expected" ]
 }
 
 @test "filter_hosts_by_mode includes only work hosts" {
-  work_map='{"darwin":{"mmini":false},"nixos":{"nvws":true,"pi5":false}}'
-  run filter_hosts_by_mode work "$work_map" nvws pi5 mmini
+  work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
+  run filter_hosts_by_mode work "$work_map" nvws beast mmini
   [ "$status" -eq 0 ]
   expected=$'nvws'
   [ "$output" = "$expected" ]
 }
 
 @test "filter_hosts_by_mode includes all hosts for both" {
-  work_map='{"darwin":{"mmini":false},"nixos":{"nvws":true,"pi5":false}}'
-  run filter_hosts_by_mode both "$work_map" nvws pi5 mmini
+  work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
+  run filter_hosts_by_mode both "$work_map" nvws beast mmini
   [ "$status" -eq 0 ]
-  expected=$'nvws\npi5\nmmini'
+  expected=$'nvws\nbeast\nmmini'
   [ "$output" = "$expected" ]
 }
 

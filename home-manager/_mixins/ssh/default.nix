@@ -12,7 +12,7 @@
     package = pkgs.openssh_gssapi;
 
     # TODO(home-manager release-26.05): switch to programs.ssh.settings once we
-    # no longer need compatibility with home-manager-25_11, where matchBlocks
+    # no longer need compatibility with older home-manager, where matchBlocks
     # is still the active interface.
     matchBlocks."*" = {
       # agent forwarding to remotes
