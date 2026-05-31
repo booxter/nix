@@ -22,6 +22,7 @@ permissions:
   contents: read
   id-token: write
   actions: read
+  issues: write
   pull-requests: write
 
 jobs:
@@ -93,14 +94,51 @@ jobs:
             printf '%s' "${MACHINE}" \
               | tr -c 'A-Za-z0-9._-' '-'
           )"
-          output_file="diff-output/${ORDER}-${safe_machine}.md"
+          changed_file="diff-output/changed-${ORDER}-${safe_machine}.md"
+          unchanged_file="diff-output/unchanged-${ORDER}-${safe_machine}.txt"
           stdout_file="$(mktemp)"
           stderr_file="$(mktemp)"
+
+          is_noop_diff() {
+            local file="$1"
+
+            if [ ! -s "${file}" ]; then
+              return 0
+            fi
+
+            awk '
+              NF {
+                line = $0
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+                lines[++n] = line
+              }
+              END {
+                if (n != 2) {
+                  exit 1
+                }
+                if (lines[1] !~ /^SIZE: / || lines[2] != "DIFF: 0 bytes") {
+                  exit 1
+                }
+
+                size = lines[1]
+                sub(/^SIZE: /, "", size)
+                count = split(size, parts, / -> /)
+                if (count != 2 || parts[1] != parts[2]) {
+                  exit 1
+                }
+              }
+            ' "${file}"
+          }
 
           set +e
           nix run .#diff -- "${MACHINE}" "${BASE_SHA}" "${HEAD_SHA}" >"${stdout_file}" 2>"${stderr_file}"
           status="$?"
           set -e
+
+          if [ "${status}" -eq 0 ] && is_noop_diff "${stdout_file}"; then
+            printf '%s\n' "${MACHINE_NAME}" >"${unchanged_file}"
+            exit 0
+          fi
 
           {
             printf '<details>\n'
@@ -118,25 +156,23 @@ jobs:
                 cat "${stdout_file}"
                 printf '\n'
               fi
-            elif [ -s "${stdout_file}" ]; then
-              cat "${stdout_file}"
             else
-              printf 'No package or closure-size diff reported.\n'
+              cat "${stdout_file}"
             fi
             printf '```\n\n'
             printf '</details>\n'
-          } >"${output_file}"
+          } >"${changed_file}"
 
       - name: Upload diff artifact
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: flake-diff-${{ matrix.order }}-${{ matrix.machine }}
-          path: diff-output/*.md
+          path: diff-output/*
           if-no-files-found: warn
 
-  update-pr-description:
-    name: update PR description
+  post-pr-comment:
+    name: post PR comment
     needs:
       - plan-diff-matrix
       - diff
@@ -157,70 +193,152 @@ jobs:
           path: diff-output
           merge-multiple: true
 
-      - name: Update PR body
+      - name: Post PR comment
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
             const fs = require("fs");
             const path = require("path");
 
-            const start = "<!-- flake-update-diffs:start -->";
-            const end = "<!-- flake-update-diffs:end -->";
             const diffDir = "diff-output";
 
-            let entries = [];
+            let diffEntries = [];
+            let unchangedEntries = [];
             if (fs.existsSync(diffDir)) {
-              entries = fs
-                .readdirSync(diffDir)
+              const files = fs.readdirSync(diffDir).sort();
+              diffEntries = files
                 .filter((name) => name.endsWith(".md"))
-                .sort()
-                .map((name) => fs.readFileSync(path.join(diffDir, name), "utf8").trim())
+                .map((name) =>
+                  fs.readFileSync(path.join(diffDir, name), "utf8").trim()
+                )
                 .filter(Boolean);
+              unchangedEntries = files
+                .filter((name) => name.endsWith(".txt"))
+                .flatMap((name) =>
+                  fs
+                    .readFileSync(path.join(diffDir, name), "utf8")
+                    .split(/\r?\n/)
+                    .map((line) => line.trim())
+                    .filter(Boolean)
+                );
             }
 
             const baseSha = process.env.BASE_SHA;
             const headSha = process.env.HEAD_SHA;
-            const section = [
-              start,
-              "## Config diffs",
-              "",
-              `Base: \`${baseSha}\``,
-              `Head: \`${headSha}\``,
-              "",
-              "Advisory output from `nix run .#diff -- <machine> <base> <head>`.",
-              "",
-              entries.length > 0 ? entries.join("\n\n") : "_No diff artifacts were produced._",
-              end,
-            ].join("\n");
+            const runUrl = process.env.RUN_URL;
+            const maxCommentLength = 60000;
+            const maxComments = 10;
+            const chunkLength = 59000;
 
-            const { owner, repo } = context.repo;
-            const pull_number = context.payload.pull_request.number;
-            const { data: pull } = await github.rest.pulls.get({
-              owner,
-              repo,
-              pull_number,
-            });
+            const truncateBlock = (block, limit) => {
+              if (block.length <= limit) {
+                return block;
+              }
 
-            const currentBody = pull.body || "";
-            const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            const markerPattern = new RegExp(
-              `${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`
-            );
-            const nextBody = markerPattern.test(currentBody)
-              ? currentBody.replace(markerPattern, section)
-              : `${currentBody.trimEnd()}\n\n${section}`.trimStart();
+              const summary = block.match(/<summary>([^<]*)<\/summary>/)?.[1] || "diff";
+              const fenceStart = block.indexOf("```text\n");
+              const fenceEnd = block.lastIndexOf("\n```");
+              const content =
+                fenceStart >= 0 && fenceEnd > fenceStart
+                  ? block.slice(fenceStart + "```text\n".length, fenceEnd)
+                  : block;
+              const prefix = `<details>\n<summary>${summary}</summary>\n\n\`\`\`text\n`;
+              const suffix =
+                "\n\n[truncated; full output is available in the workflow artifacts.]\n```\n\n</details>";
 
-            if (nextBody === currentBody) {
-              core.info("PR body already contains the current config diff section.");
-              return;
+              if (prefix.length + suffix.length >= limit) {
+                return `[diff output for ${summary} truncated; see workflow artifacts]`.slice(
+                  0,
+                  limit,
+                );
+              }
+
+              return `${prefix}${content.slice(0, limit - prefix.length - suffix.length)}${suffix}`;
+            };
+
+            const chunks = [""];
+            const appendBlock = (block) => {
+              const normalized = truncateBlock(block, chunkLength);
+              const current = chunks[chunks.length - 1];
+
+              if (!current) {
+                chunks[chunks.length - 1] = normalized;
+                return;
+              }
+
+              if (current.length + 2 + normalized.length <= chunkLength) {
+                chunks[chunks.length - 1] = `${current}\n\n${normalized}`;
+                return;
+              }
+
+              chunks.push(normalized);
+            };
+
+            appendBlock("### Changed machines");
+            if (diffEntries.length > 0) {
+              for (const entry of diffEntries) {
+                appendBlock(entry);
+              }
+            } else {
+              appendBlock("_No machine produced package or closure-size changes._");
             }
 
-            await github.rest.pulls.update({
-              owner,
-              repo,
-              pull_number,
-              body: nextBody,
+            if (unchangedEntries.length > 0) {
+              appendBlock(
+                ["### Unchanged machines", "", ...unchangedEntries.map((entry) => `- ${entry}`)].join(
+                  "\n",
+                ),
+              );
+            }
+
+            const rawChunks = chunks.filter(Boolean);
+            const omittedChunks = Math.max(0, rawChunks.length - maxComments);
+            const visibleChunks = rawChunks.slice(0, maxComments);
+            if (omittedChunks > 0) {
+              visibleChunks[maxComments - 1] = [
+                visibleChunks[maxComments - 1],
+                "",
+                `[${omittedChunks} additional comment part(s) omitted; full output is available in the workflow artifacts.]`,
+              ].join("\n");
+            }
+
+            const { owner, repo } = context.repo;
+            const bodies = visibleChunks.map((chunk, index) => {
+              const part =
+                rawChunks.length > 1
+                  ? ` (part ${index + 1}/${Math.min(rawChunks.length, maxComments)})`
+                  : "";
+              const header = [
+                `## Config diffs${part}`,
+                "",
+                `Base: \`${baseSha}\``,
+                `Head: \`${headSha}\``,
+                `Run: ${runUrl}`,
+                "",
+                "Advisory output from `nix run .#diff -- <machine> <base> <head>`.",
+                "",
+              ].join("\n");
+              const body = `${header}${chunk}`;
+
+              if (body.length > maxCommentLength) {
+                return `${body.slice(
+                  0,
+                  maxCommentLength - 100,
+                )}\n\n[truncated; full output is available in the workflow artifacts.]`;
+              }
+
+              return body;
             });
+
+            for (const body of bodies) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: context.payload.pull_request.number,
+                body,
+              });
+            }
