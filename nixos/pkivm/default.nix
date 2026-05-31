@@ -1,15 +1,17 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
 }:
 let
   hostSecretFile = ../../secrets + "/${config.networking.hostName}.yaml";
+  caServer = hostInventory.nixosHostSpecsByName.pki.caServer;
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
-  caPort = 8443;
+  caPort = caServer.port;
   caProvisioner = "bootstrap@home.arpa";
   pkiRotationBaseBranch = "master";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
