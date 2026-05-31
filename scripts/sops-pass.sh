@@ -8,7 +8,7 @@ Usage:
   scripts/sops-pass.sh --help
 
 Hash a login password with mkpasswd and store it in secrets/HOST.yaml.
-USER must be either root or ihrachyshka.
+USER must be root, ihrachyshka, or both.
 
 By default, insert the password into pass first, under host/CANONICAL_HOST/USER,
 then hash the stored password. With --gen, generate the pass entry instead.
@@ -114,10 +114,10 @@ if [[ -z "$host" || -z "$user" ]]; then
 fi
 
 case "$user" in
-  root | ihrachyshka) ;;
+  root | ihrachyshka | both) ;;
   *)
     echo "Unsupported user: $user" >&2
-    echo "Expected one of: root, ihrachyshka" >&2
+    echo "Expected one of: root, ihrachyshka, both" >&2
     exit 1
     ;;
 esac
@@ -163,12 +163,23 @@ yq -o=json '.' "$plain" \
   | jq \
     --arg user "$user" \
     --rawfile hash "$hash_file" \
-    'setpath(["users", $user, "hashedPassword"]; $hash)' > "$merged_json"
+    '
+      if $user == "both" then
+        setpath(["users", "root", "hashedPassword"]; $hash)
+        | setpath(["users", "ihrachyshka", "hashedPassword"]; $hash)
+      else
+        setpath(["users", $user, "hashedPassword"]; $hash)
+      end
+    ' > "$merged_json"
 
 sops --encrypt --filename-override "$secret" --input-type json --output-type yaml "$merged_json" > "$encrypted"
 mv "$encrypted" "$secret"
 
-echo "Updated users/${user}/hashedPassword in ${secret}."
+if [[ "${user}" == "both" ]]; then
+  echo "Updated users/root/hashedPassword and users/ihrachyshka/hashedPassword in ${secret}."
+else
+  echo "Updated users/${user}/hashedPassword in ${secret}."
+fi
 if [[ -n "${pass_entry}" ]]; then
   echo "${pass_action} ${pass_entry}."
 fi

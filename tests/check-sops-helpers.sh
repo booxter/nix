@@ -302,6 +302,25 @@ EOF
     *) fail "canonical host name should update the prox VM secret" ;;
   esac
 
+  log "update both login users with one generated password"
+  run_and_capture "$out" env \
+    PASS_TEST_STORE="$WORKDIR/pass-store" \
+    PATH="$WORKDIR/fake-bin:$PATH" \
+    bash "$repo/scripts/sops-pass.sh" --gen gw both
+  assert_contains "$(cat "$out")" "Generated host/gw/both."
+  assert_contains "$(cat "$out")" "Updated users/root/hashedPassword and users/ihrachyshka/hashedPassword"
+  test -f "$WORKDIR/pass-store/host/gw/both" || fail "both user should use a shared pass entry"
+  decrypt_secret_file prox-gwvm "$after"
+  local root_hash
+  local user_hash
+  root_hash="$(yq -r '.users.root.hashedPassword' "$after")"
+  user_hash="$(yq -r '.users.ihrachyshka.hashedPassword' "$after")"
+  case "$root_hash" in
+    "${sha512_prefix}"*) ;;
+    *) fail "both user root hash should use sha-512 crypt format" ;;
+  esac
+  assert_eq "$root_hash" "$user_hash" "both user should write the same hash to both accounts"
+
   log "reject unsupported login users before prompting"
   run_expect_failure "$out" bash "$repo/scripts/sops-pass.sh" beast nobody
   assert_contains "$(cat "$out")" "Unsupported user: nobody"

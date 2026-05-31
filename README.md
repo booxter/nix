@@ -79,6 +79,7 @@ nix run .#sops-edit -- mair
 nix run .#sops-update -- mair
 nix run .#sops-pass -- beast root
 nix run .#sops-pass -- --gen gw root
+nix run .#sops-pass -- --gen gw both
 nix run .#sops-pass -- beast ihrachyshka
 
 # Copy one section between host secrets
