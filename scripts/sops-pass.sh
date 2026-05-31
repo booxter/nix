@@ -12,7 +12,8 @@ USER must be either root or ihrachyshka.
 
 By default, insert the password into pass first, under host/CANONICAL_HOST/USER,
 then hash the stored password. With --gen, generate the pass entry instead.
-Proxmox VM names are canonicalized, so prox-gwvm uses host/gw/USER.
+Proxmox VM names are canonicalized, so both gw and prox-gwvm use
+host/gw/USER and update secrets/prox-gwvm.yaml.
 
 Environment:
   SOPS_PASS_PREFIX            pass prefix for entries (default: host)
@@ -36,6 +37,22 @@ pass_machine_name() {
     machine="${machine#prox-}"
     machine="${machine%vm}"
   fi
+  printf '%s\n' "${machine}"
+}
+
+resolve_secret_host() {
+  local machine="$1"
+  if [[ -f "${repo_root}/secrets/${machine}.yaml" ]]; then
+    printf '%s\n' "${machine}"
+    return
+  fi
+
+  local prox_machine="prox-${machine}vm"
+  if [[ -f "${repo_root}/secrets/${prox_machine}.yaml" ]]; then
+    printf '%s\n' "${prox_machine}"
+    return
+  fi
+
   printf '%s\n' "${machine}"
 }
 
@@ -106,11 +123,12 @@ case "$user" in
 esac
 
 repo_root="$(resolve_repo_root)"
-secret="${repo_root}/secrets/${host}.yaml"
+secret_host="$(resolve_secret_host "${host}")"
+secret="${repo_root}/secrets/${secret_host}.yaml"
 
 if [[ ! -f "$secret" ]]; then
-  echo "Secret not found: $secret" >&2
-  echo "Bootstrap it first with: nix run .#sops-bootstrap -- ${host}" >&2
+  echo "Secret not found for host ${host}: ${secret}" >&2
+  echo "Bootstrap it first with: nix run .#sops-bootstrap -- ${secret_host}" >&2
   exit 1
 fi
 

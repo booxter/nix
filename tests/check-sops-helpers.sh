@@ -289,6 +289,19 @@ EOF
   esac
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "generated password should only update requested user"
 
+  log "accept canonical prox VM host names"
+  run_and_capture "$out" env \
+    PASS_TEST_STORE="$WORKDIR/pass-store" \
+    PATH="$WORKDIR/fake-bin:$PATH" \
+    bash "$repo/scripts/sops-pass.sh" --gen gw ihrachyshka
+  assert_contains "$(cat "$out")" "Generated host/gw/ihrachyshka."
+  test -f "$WORKDIR/pass-store/host/gw/ihrachyshka" || fail "canonical host name should use canonical pass entry"
+  decrypt_secret_file prox-gwvm "$after"
+  case "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" in
+    "${sha512_prefix}"*) ;;
+    *) fail "canonical host name should update the prox VM secret" ;;
+  esac
+
   log "reject unsupported login users before prompting"
   run_expect_failure "$out" bash "$repo/scripts/sops-pass.sh" beast nobody
   assert_contains "$(cat "$out")" "Unsupported user: nobody"
