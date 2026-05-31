@@ -67,7 +67,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'network_ups_tools_ups_status{job="nut-pi5",ups="PI5-UPS",flag="LB"}'
+      - series: 'network_ups_tools_ups_status{job="nut-prx1",ups="PRX1-LAB-UPS",flag="LB"}'
         values: "0 0 0 0 0"
     alert_rule_test:
       - eval_time: 1m
@@ -75,7 +75,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'network_ups_tools_ups_status{job="nut-pi5",ups="PI5-UPS",flag="LB"}'
+      - series: 'network_ups_tools_ups_status{job="nut-prx1",ups="PRX1-LAB-UPS",flag="LB"}'
         values: "1 1 1 0 0"
     alert_rule_test:
       - eval_time: 30s
@@ -87,11 +87,11 @@ tests:
               alertname: UPSLowBattery
               category: ups
               flag: LB
-              job: nut-pi5
+              job: nut-prx1
               severity: critical
-              ups: PI5-UPS
+              ups: PRX1-LAB-UPS
             exp_annotations:
-              summary: "UPS low battery: PI5-UPS"
-              description: "UPS PI5-UPS is reporting low battery."
+              summary: "UPS low battery: PRX1-LAB-UPS"
+              description: "UPS PRX1-LAB-UPS is reporting low battery."
       - eval_time: 1m30s
         alertname: UPSLowBattery

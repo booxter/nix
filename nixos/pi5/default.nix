@@ -18,10 +18,6 @@ let
   guestDhcpRanges = map (renderDhcpRange guestIface) lan.dhcpRanges.guest.ranges;
 in
 {
-  imports = [
-    ./ups.nix
-  ];
-
   networking = {
     interfaces.end0 = {
       ipv4.addresses = [

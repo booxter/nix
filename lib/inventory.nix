@@ -370,7 +370,6 @@ rec {
       name = nvws;
       inherit username;
       isWork = true;
-      upsHost = piHostname;
       stateVersion = "25.11";
       netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";
@@ -447,7 +446,7 @@ rec {
       type = "vm";
       name = "nv";
       isWork = true;
-      upsHost = piHostname;
+      upsHost = nvws;
       cores = 64;
       memorySize = 128;
       sshPort = 10000;

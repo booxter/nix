@@ -2,6 +2,7 @@
 {
   imports = [
     (import ../../disko { })
+    ./ups.nix
   ];
 
   # Work machines do not use sops-managed login passwords.

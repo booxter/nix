@@ -11,7 +11,6 @@ let
   frameSpec = hostInventory.nixosHostSpecsByName.frame;
   internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   lan = hostInventory.site.lan;
-  pi5Spec = hostInventory.nixosHostSpecsByName.pi5;
   prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   localHttpsServices = config.host.internalHttps.services;
   srvarrHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
@@ -688,34 +687,6 @@ in
           # Use the stable LAN DNS hostname rather than .local/mDNS.
           server = [ (prx1Spec.dnsName or prx1Spec.name) ];
           ups = [ (hostInventory.toUpsName prx1Spec.name) ];
-        };
-        static_configs = [
-          {
-            targets = [ "127.0.0.1:${toString nutExporterPort}" ];
-          }
-        ];
-        relabel_configs = [
-          {
-            source_labels = [ "__param_server" ];
-            target_label = "instance";
-          }
-          {
-            source_labels = [ "__param_server" ];
-            target_label = "ups_server";
-          }
-          {
-            source_labels = [ "__param_ups" ];
-            target_label = "ups";
-          }
-        ];
-      }
-      {
-        job_name = "nut-pi5";
-        metrics_path = "/ups_metrics";
-        params = {
-          # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ (pi5Spec.dnsName or pi5Spec.name) ];
-          ups = [ (hostInventory.toUpsName pi5Spec.name) ];
         };
         static_configs = [
           {
