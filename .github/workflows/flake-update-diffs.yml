@@ -231,6 +231,7 @@ jobs:
             const headSha = process.env.HEAD_SHA;
             const runUrl = process.env.RUN_URL;
             const maxCommentLength = 60000;
+            const maxComments = 10;
             const chunkLength = 59000;
 
             const truncateBlock = (block, limit) => {
@@ -294,9 +295,23 @@ jobs:
               );
             }
 
+            const rawChunks = chunks.filter(Boolean);
+            const omittedChunks = Math.max(0, rawChunks.length - maxComments);
+            const visibleChunks = rawChunks.slice(0, maxComments);
+            if (omittedChunks > 0) {
+              visibleChunks[maxComments - 1] = [
+                visibleChunks[maxComments - 1],
+                "",
+                `[${omittedChunks} additional comment part(s) omitted; full output is available in the workflow artifacts.]`,
+              ].join("\n");
+            }
+
             const { owner, repo } = context.repo;
-            const bodies = chunks.filter(Boolean).map((chunk, index, allChunks) => {
-              const part = allChunks.length > 1 ? ` (part ${index + 1}/${allChunks.length})` : "";
+            const bodies = visibleChunks.map((chunk, index) => {
+              const part =
+                rawChunks.length > 1
+                  ? ` (part ${index + 1}/${Math.min(rawChunks.length, maxComments)})`
+                  : "";
               const header = [
                 `## Config diffs${part}`,
                 "",
