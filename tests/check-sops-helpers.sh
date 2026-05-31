@@ -235,9 +235,35 @@ shift
 
 case "$cmd" in
   insert)
+    multiline=0
+    while [ "$#" -gt 0 ]; do
+      case "$1" in
+        --multiline | -m)
+          multiline=1
+          shift
+          ;;
+        --force | -f)
+          shift
+          ;;
+        --echo | -e)
+          shift
+          ;;
+        -*)
+          echo "unexpected pass insert option: $1" >&2
+          exit 2
+          ;;
+        *)
+          break
+          ;;
+      esac
+    done
     entry="$1"
     mkdir -p "$PASS_TEST_STORE/$(dirname "$entry")"
-    printf 'inserted-password-for-%s\n' "$entry" > "$PASS_TEST_STORE/$entry"
+    if [ "$multiline" = 1 ]; then
+      cat > "$PASS_TEST_STORE/$entry"
+    else
+      printf 'inserted-password-for-%s\n' "$entry" > "$PASS_TEST_STORE/$entry"
+    fi
     ;;
   generate)
     if [ "${1:-}" = "--force" ]; then
@@ -307,9 +333,10 @@ EOF
     PASS_TEST_STORE="$WORKDIR/pass-store" \
     PATH="$WORKDIR/fake-bin:$PATH" \
     bash "$repo/scripts/sops-pass.sh" --gen gw both
-  assert_contains "$(cat "$out")" "Generated host/gw/both."
+  assert_contains "$(cat "$out")" "Generated host/gw/root and host/gw/ihrachyshka."
   assert_contains "$(cat "$out")" "Updated users/root/hashedPassword and users/ihrachyshka/hashedPassword"
-  test -f "$WORKDIR/pass-store/host/gw/both" || fail "both user should use a shared pass entry"
+  test ! -f "$WORKDIR/pass-store/host/gw/both" || fail "both should not create a synthetic pass user"
+  assert_eq "$(cat "$WORKDIR/pass-store/host/gw/root")" "$(cat "$WORKDIR/pass-store/host/gw/ihrachyshka")" "both should write the same pass value to both real users"
   decrypt_secret_file prox-gwvm "$after"
   local root_hash
   local user_hash

@@ -61,7 +61,12 @@ load_password_from_pass() {
   local password_length="${SOPS_PASS_GENERATE_LENGTH:-32}"
   local pass_host
   pass_host="$(pass_machine_name "${host}")"
-  pass_entry="${pass_prefix}/${pass_host}/${user}"
+
+  local source_user="$user"
+  if [[ "$user" == "both" ]]; then
+    source_user="root"
+  fi
+  pass_entry="${pass_prefix}/${pass_host}/${source_user}"
 
   if [[ "${generate_password}" == "1" ]]; then
     pass generate --force "${pass_entry}" "${password_length}" >/dev/null
@@ -72,12 +77,18 @@ load_password_from_pass() {
   fi
 
   read -r password < <(pass show "${pass_entry}")
+
+  if [[ "$user" == "both" ]]; then
+    pass_extra_entry="${pass_prefix}/${pass_host}/ihrachyshka"
+    printf '%s\n' "$password" | pass insert --multiline --force "${pass_extra_entry}" >/dev/null
+  fi
 }
 
 host=""
 user=""
 generate_password=0
 pass_entry=""
+pass_extra_entry=""
 pass_action=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -181,5 +192,9 @@ else
   echo "Updated users/${user}/hashedPassword in ${secret}."
 fi
 if [[ -n "${pass_entry}" ]]; then
-  echo "${pass_action} ${pass_entry}."
+  if [[ -n "${pass_extra_entry}" ]]; then
+    echo "${pass_action} ${pass_entry} and ${pass_extra_entry}."
+  else
+    echo "${pass_action} ${pass_entry}."
+  fi
 fi
