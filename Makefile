@@ -2,6 +2,7 @@
 .PHONY: help nixos darwin check check-nixos
 
 ARGS = -L --show-trace
+NH_ARGS = --print-build-logs --show-trace
 
 REMOTE ?= true
 LOCAL_LOCAL_BUILDERS = $(shell nix run --quiet --option builders '' .#get-local-builders -- --local)
@@ -10,12 +11,20 @@ define builder-opts
 $(if $(filter false,$(REMOTE)),--option builders '$(LOCAL_LOCAL_BUILDERS)',)
 endef
 
-define maybe-nom-build
-if command -v nom >/dev/null 2>&1; then \
-	nom build $(1) $(ARGS); \
-	else \
-	nix build $(1) $(ARGS); \
-	fi
+define nh-builder-opts
+$(if $(filter false,$(REMOTE)),--builders '$(LOCAL_LOCAL_BUILDERS)',)
+endef
+
+define run-nh
+nix shell $(call builder-opts) --inputs-from . nixpkgs#nh -c nh $(1)
+endef
+
+define nh-config-build
+$(call run-nh,$(1) build $(call nh-builder-opts) --hostname "$(2)" $(NH_ARGS) ".#")
+endef
+
+define nom-build
+nix shell $(call builder-opts) --inputs-from . nixpkgs#nix-output-monitor -c nom build $(call builder-opts) $(1) $(ARGS)
 endef
 
 define config-hosts
@@ -62,13 +71,13 @@ nixos:
 		done; \
 	fi; \
 	$(call require-known-host,nixos,$$resolved) \
-	$(call maybe-nom-build,$(call builder-opts) ".#nixosConfigurations.$$resolved.config.system.build.toplevel")
+	$(call nh-config-build,os,$$resolved)
 
 darwin:
 	@known="$$($(call config-hosts,.#darwinConfigurations))"; \
 	$(call require-what-and-list-hosts,darwin) \
 	$(call require-known-host,darwin,$(WHAT)) \
-	$(call maybe-nom-build,$(call builder-opts) ".#darwinConfigurations.$(WHAT).system")
+	$(call nh-config-build,darwin,$(WHAT))
 
 check:
 	@system="$$(nix eval --impure --raw --expr builtins.currentSystem)"; \
@@ -85,7 +94,7 @@ check:
 		fi; \
 		for check_name in $$known_native; do \
 			echo "Running $$check_name on $$system..."; \
-			$(call maybe-nom-build,$(call builder-opts) ".#checks.$$system.$$check_name") || exit $$?; \
+			$(call nom-build,".#checks.$$system.$$check_name") || exit $$?; \
 		done; \
 		exit 0; \
 	fi; \
@@ -100,7 +109,7 @@ check:
 		fi; \
 		exit 1; \
 	fi; \
-	$(call maybe-nom-build,$(call builder-opts) ".#checks.$$system.$(WHAT)")
+	$(call nom-build,".#checks.$$system.$(WHAT)")
 
 check-nixos:
 	@system="$$(nix eval --impure --raw --expr builtins.currentSystem)"; \
@@ -116,7 +125,7 @@ check-nixos:
 		fi; \
 		for check_name in $$nixos_checks; do \
 			echo "Running $$check_name on $$check_system..."; \
-			$(call maybe-nom-build,$(call builder-opts) ".#nixosTests.$$check_system.$$check_name") || exit $$?; \
+			$(call nom-build,".#nixosTests.$$check_system.$$check_name") || exit $$?; \
 		done; \
 		exit 0; \
 	fi; \
@@ -127,4 +136,4 @@ check-nixos:
 		printf '%s\n' "$$nixos_checks"; \
 		exit 1; \
 	fi; \
-	$(call maybe-nom-build,$(call builder-opts) ".#nixosTests.$$check_system.$(WHAT)")
+	$(call nom-build,".#nixosTests.$$check_system.$(WHAT)")
