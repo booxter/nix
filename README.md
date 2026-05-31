@@ -95,7 +95,7 @@ Run Bats checks:
 
 ```sh
 system="$(nix eval --impure --raw --expr builtins.currentSystem)"
-nix build ".#checks.${system}.bats-tests" --no-link
+nix build ".#checks.${system}.bats" --no-link
 ```
 
 Run full flake checks (same entrypoint used in CI):

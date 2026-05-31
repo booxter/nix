@@ -295,8 +295,8 @@
   ],
   "regularChecks": [
     {
-      "attr": "checks.x86_64-linux.bats-tests",
-      "name": "bats-tests",
+      "attr": "checks.x86_64-linux.bats",
+      "name": "bats",
       "runner": "ubuntu-latest",
       "system": "x86_64-linux",
       "warm": true
