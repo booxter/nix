@@ -65,10 +65,11 @@ if [ -z "$out_link" ]; then
   exit 2
 fi
 
-mkdir -p "$out_link/generated" "$out_link/etc/nix" "$out_link/etc/nut"
+mkdir -p "$out_link/generated" "$out_link/etc/nix" "$out_link/etc/nut" "$out_link/etc/terminfo/x~nix~case~hack~1"
 printf 'flake=%s\n' "$last_arg" >"$out_link/generated/nix.conf"
 printf 'readonly=true\n' >"$out_link/etc/nut/ups.conf"
 ln -s ../../generated/nix.conf "$out_link/etc/nix/nix.conf"
+ln -s missing-target "$out_link/etc/terminfo/x~nix~case~hack~1/xterm-xfree86"
 chmod 0555 "$out_link/etc/nut"
 SH
   } >"$fake_bin/nh"
@@ -202,6 +203,7 @@ SH
   [[ "$output" == *"home-files/.config/hm.conf"* ]]
   [[ "$output" == *"LaunchAgents/org.example.hm.plist"* ]]
   [[ "$output" != *"Permission denied"* ]]
+  [[ "$output" != *"cannot stat"* ]]
 }
 
 @test "diff-config detects bare darwin targets" {

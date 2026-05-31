@@ -245,7 +245,38 @@ copy_generated_path() {
     mkdir -p "${dest_root}/${parent}"
   fi
 
-  cp -R -L -p "${source}" "${dest}"
+  copy_generated_node "${source}" "${dest}"
+}
+
+copy_generated_directory() {
+  local source="$1"
+  local dest="$2"
+  local entry=""
+
+  mkdir -p "${dest}"
+
+  for entry in "${source}"/* "${source}"/.[!.]* "${source}"/..?*; do
+    if [[ ! -e "${entry}" && ! -L "${entry}" ]]; then
+      continue
+    fi
+
+    copy_generated_node "${entry}" "${dest}/$(basename "${entry}")"
+  done
+}
+
+copy_generated_node() {
+  local source="$1"
+  local dest="$2"
+  local target=""
+
+  if [[ -L "${source}" && ! -e "${source}" ]]; then
+    target="$(readlink "${source}")"
+    ln -s "${target}" "${dest}"
+  elif [[ -d "${source}" ]]; then
+    copy_generated_directory "${source}" "${dest}"
+  else
+    cp -p "${source}" "${dest}"
+  fi
 }
 
 materialize_generated_paths() {
