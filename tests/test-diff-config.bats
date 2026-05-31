@@ -81,8 +81,24 @@ SH
 set -euo pipefail
 
 printf '<%s>\n' "$@" >"$DIX_ARGS_LOG"
-printf '<<< %s\n' "$1"
-printf '>>> %s\n' "$2"
+
+old_path=""
+new_path=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --color)
+      shift 2
+      ;;
+    *)
+      old_path="$new_path"
+      new_path="$1"
+      shift
+      ;;
+  esac
+done
+
+printf '<<< %s\n' "$old_path"
+printf '>>> %s\n' "$new_path"
 printf '\n'
 printf 'CHANGED\n'
 printf '[U.] package 1.0 -> 2.0\n'
@@ -162,6 +178,8 @@ SH
   grep -F -- '<frame>' "$nh_log"
   grep -F -- "<git+file://$repo?rev=$old_rev>" "$nh_log"
   grep -F -- "<git+file://$repo?rev=$new_rev>" "$nh_log"
+  grep -F -- '<--color>' "$dix_log"
+  grep -F -- '<auto>' "$dix_log"
   grep -E '^<.*/old>$' "$dix_log"
   grep -E '^<.*/new>$' "$dix_log"
   [[ "$output" != *"<<< "* ]]

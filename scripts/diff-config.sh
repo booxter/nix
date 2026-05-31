@@ -642,12 +642,17 @@ trap cleanup EXIT
 
 old_link="${tmpdir}/old"
 new_link="${tmpdir}/new"
+dix_color="${DIFF_CONFIG_DIX_COLOR:-auto}"
+
+if [[ -z "${DIFF_CONFIG_DIX_COLOR:-}" && -t 1 ]]; then
+  dix_color="always"
+fi
 
 build_config old "${old_rev}" "${old_flake}" "${old_link}"
 build_config new "${new_rev}" "${new_flake}" "${new_link}"
 
 echo "Diffing ${target_kind} configuration ${machine}: ${old_rev} -> ${new_rev}" >&2
-dix "${old_link}" "${new_link}" | filter_dix_output
+dix --color "${dix_color}" "${old_link}" "${new_link}" | filter_dix_output
 
 if [[ "${details}" == true ]]; then
   run_generated_diff
