@@ -300,8 +300,9 @@ materialize_generated_paths() {
 }
 
 run_generated_diff() {
-  local old_tree="${tmpdir}/old-generated"
-  local new_tree="${tmpdir}/new-generated"
+  local diff_root="${tmpdir}/generated"
+  local old_tree="${diff_root}/old"
+  local new_tree="${diff_root}/new"
   local relpath=""
   local found_any=false
   local diff_status=0
@@ -325,7 +326,7 @@ run_generated_diff() {
   printf '\nGenerated config diff (%s):\n' "${generated_paths[*]}"
 
   set +e
-  diff -ruN "${old_tree}" "${new_tree}"
+  (cd "${diff_root}" && diff -ruN old new)
   diff_status="$?"
   set -e
 
@@ -492,8 +493,9 @@ diff_home_manager_user() {
   local user="$1"
   local old_activation=""
   local new_activation=""
-  local old_tree="${tmpdir}/old-home-manager/${user}"
-  local new_tree="${tmpdir}/new-home-manager/${user}"
+  local diff_root="${tmpdir}/home-manager/${user}"
+  local old_tree="${diff_root}/old"
+  local new_tree="${diff_root}/new"
   local diff_status=0
 
   if array_contains "${user}" "${old_home_manager_users[@]}"; then
@@ -514,7 +516,7 @@ diff_home_manager_user() {
   printf '\nHome Manager diff (%s; paths: %s):\n' "${user}" "${home_manager_generated_paths[*]}"
 
   set +e
-  diff -ruN "${old_tree}" "${new_tree}"
+  (cd "${diff_root}" && diff -ruN old new)
   diff_status="$?"
   set -e
 
