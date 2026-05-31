@@ -314,13 +314,11 @@ materialize_generated_paths() {
   done
 }
 
-run_generated_diff() {
-  local diff_root="${tmpdir}/generated"
-  local old_tree="${diff_root}/old"
-  local new_tree="${diff_root}/new"
+materialize_system_details() {
+  local old_detail_root="$1"
+  local new_detail_root="$2"
   local relpath=""
   local found_any=false
-  local diff_status=0
 
   for relpath in "${generated_paths[@]}"; do
     if generated_path_exists "${old_link}" "${relpath}" || generated_path_exists "${new_link}" "${relpath}"; then
@@ -331,30 +329,12 @@ run_generated_diff() {
   done
 
   if [[ "${found_any}" == false ]]; then
-    echo "None of the selected generated paths exist: ${generated_paths[*]}" >&2
-    return 1
-  fi
-
-  materialize_generated_paths "${old_link}" "${old_tree}"
-  materialize_generated_paths "${new_link}" "${new_tree}"
-
-  printf '\nGenerated config diff (%s):\n' "${generated_paths[*]}"
-
-  set +e
-  run_recursive_diff "${diff_root}"
-  diff_status="$?"
-  set -e
-
-  if [[ "${diff_status}" -eq 0 ]]; then
-    printf 'No generated config differences.\n'
     return 0
   fi
 
-  if [[ "${diff_status}" -eq 1 ]]; then
-    return 0
-  fi
-
-  return "${diff_status}"
+  materialize_generated_paths "${old_link}" "${old_detail_root}/system"
+  materialize_generated_paths "${new_link}" "${new_detail_root}/system"
+  detail_found=true
 }
 
 eval_home_manager_users() {
@@ -455,8 +435,6 @@ build_home_manager_activation() {
   local user="$4"
   local activation=""
 
-  echo "Building Home Manager activation package for ${user} at ${label} (${rev})" >&2
-
   if ! activation="$(
     DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
       DIFF_CONFIG_MACHINE="${machine}" \
@@ -504,14 +482,14 @@ materialize_home_manager_paths() {
   done
 }
 
-diff_home_manager_user() {
+materialize_home_manager_user_details() {
   local user="$1"
+  local old_detail_root="$2"
+  local new_detail_root="$3"
   local old_activation=""
   local new_activation=""
-  local diff_root="${tmpdir}/home-manager/${user}"
-  local old_tree="${diff_root}/old"
-  local new_tree="${diff_root}/new"
-  local diff_status=0
+  local old_tree="${old_detail_root}/home-manager/${user}"
+  local new_tree="${new_detail_root}/home-manager/${user}"
 
   if array_contains "${user}" "${old_home_manager_users[@]}"; then
     old_activation="$(build_home_manager_activation old "${old_rev}" "${old_flake}" "${user}")"
@@ -527,27 +505,12 @@ diff_home_manager_user() {
 
   materialize_home_manager_paths "${old_activation}" "${old_tree}"
   materialize_home_manager_paths "${new_activation}" "${new_tree}"
-
-  printf '\nHome Manager diff (%s; paths: %s):\n' "${user}" "${home_manager_generated_paths[*]}"
-
-  set +e
-  run_recursive_diff "${diff_root}"
-  diff_status="$?"
-  set -e
-
-  if [[ "${diff_status}" -eq 0 ]]; then
-    printf 'No Home Manager generated config differences for %s.\n' "${user}"
-    return 0
-  fi
-
-  if [[ "${diff_status}" -eq 1 ]]; then
-    return 0
-  fi
-
-  return "${diff_status}"
+  detail_found=true
 }
 
-run_home_manager_diff() {
+materialize_home_manager_details() {
+  local old_detail_root="$1"
+  local new_detail_root="$2"
   local user=""
 
   old_home_manager_users=()
@@ -562,13 +525,48 @@ run_home_manager_diff() {
   load_home_manager_users new "${new_flake}"
 
   if [[ "${#home_manager_users[@]}" -eq 0 ]]; then
-    echo "No embedded Home Manager users found in either revision." >&2
     return 0
   fi
 
   for user in "${home_manager_users[@]}"; do
-    diff_home_manager_user "${user}"
+    materialize_home_manager_user_details "${user}" "${old_detail_root}" "${new_detail_root}"
   done
+}
+
+run_detail_diff() {
+  local diff_root="${tmpdir}/details"
+  local old_detail_root="${diff_root}/old"
+  local new_detail_root="${diff_root}/new"
+  local diff_status=0
+
+  detail_found=false
+  mkdir -p "${old_detail_root}" "${new_detail_root}"
+
+  materialize_system_details "${old_detail_root}" "${new_detail_root}"
+  materialize_home_manager_details "${old_detail_root}" "${new_detail_root}"
+
+  if [[ "${detail_found}" == false ]]; then
+    echo "No generated detail paths found." >&2
+    return 1
+  fi
+
+  printf '\nDetailed config diff:\n'
+
+  set +e
+  run_recursive_diff "${diff_root}"
+  diff_status="$?"
+  set -e
+
+  if [[ "${diff_status}" -eq 0 ]]; then
+    printf 'No generated config differences.\n'
+    return 0
+  fi
+
+  if [[ "${diff_status}" -eq 1 ]]; then
+    return 0
+  fi
+
+  return "${diff_status}"
 }
 
 details=false
@@ -685,6 +683,5 @@ echo "Diffing ${target_kind} configuration ${machine}: ${old_rev} -> ${new_rev}"
 dix --color "${dix_color}" "${old_link}" "${new_link}" | filter_dix_output
 
 if [[ "${details}" == true ]]; then
-  run_generated_diff
-  run_home_manager_diff
+  run_detail_diff
 fi

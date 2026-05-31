@@ -251,16 +251,17 @@ SH
     "$new_rev"
 
   [ "$status" -eq 0 ]
-  grep -F -- '<--color=always>' "$diff_log"
+  [ "$(grep -c '^<--color=always>$' "$diff_log")" -eq 1 ]
   [[ "$output" == *"CHANGED"* ]]
-  [[ "$output" == *"Generated config diff (etc/nix/nix.conf etc/terminfo):"* ]]
-  [[ "$output" == *"diff -ruN old/etc/nix/nix.conf new/etc/nix/nix.conf"* ]]
+  [[ "$output" == *"Detailed config diff:"* ]]
+  [[ "$output" == *"diff -ruN old/system/etc/nix/nix.conf new/system/etc/nix/nix.conf"* ]]
   [[ "$output" == *"etc/nix/nix.conf"* ]]
   [[ "$output" == *"-flake=git+file://$repo?rev=$old_rev"* ]]
   [[ "$output" == *"+flake=git+file://$repo?rev=$new_rev"* ]]
   [[ "$output" == *"/nix/store/<path>/bin"* ]]
-  [[ "$output" == *"Home Manager diff (ihrachyshka; paths: home-files LaunchAgents):"* ]]
-  [[ "$output" == *"diff -ruN old/home-files/.config/hm.conf new/home-files/.config/hm.conf"* ]]
+  [[ "$output" != *"Home Manager diff ("* ]]
+  [[ "$output" != *"Building Home Manager activation package"* ]]
+  [[ "$output" == *"diff -ruN old/home-manager/ihrachyshka/home-files/.config/hm.conf new/home-manager/ihrachyshka/home-files/.config/hm.conf"* ]]
   [[ "$output" == *"home-files/.config/hm.conf"* ]]
   [[ "$output" == *"LaunchAgents/org.example.hm.plist"* ]]
   [[ "$output" == *"/nix/store/<path>/bin"* ]]
