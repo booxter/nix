@@ -221,6 +221,10 @@ filter_dix_output() {
   done
 }
 
+normalize_store_paths() {
+  sed -E 's#/nix/store/[0-9a-z]{32}-#/nix/store/<hash>-#g'
+}
+
 generated_path_exists() {
   local root="$1"
   local relpath="$2"
@@ -271,11 +275,15 @@ copy_generated_node() {
 
   if [[ -L "${source}" && ! -e "${source}" ]]; then
     target="$(readlink "${source}")"
-    printf 'broken symlink -> %s\n' "${target}" >"${dest}"
+    printf 'broken symlink -> %s\n' "${target}" | normalize_store_paths >"${dest}"
   elif [[ -d "${source}" ]]; then
     copy_generated_directory "${source}" "${dest}"
   else
     cp -p "${source}" "${dest}"
+    if LC_ALL=C grep -Iq . "${source}"; then
+      chmod u+w "${dest}"
+      normalize_store_paths <"${source}" >"${dest}"
+    fi
   fi
 }
 

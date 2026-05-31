@@ -65,8 +65,15 @@ if [ -z "$out_link" ]; then
   exit 2
 fi
 
+case "$out_link" in
+  */old) store_hash=11111111111111111111111111111111 ;;
+  *) store_hash=22222222222222222222222222222222 ;;
+esac
+
 mkdir -p "$out_link/generated" "$out_link/etc/nix" "$out_link/etc/nut" "$out_link/etc/terminfo/x~nix~case~hack~1"
 printf 'flake=%s\n' "$last_arg" >"$out_link/generated/nix.conf"
+printf 'store=/nix/store/%s-same-package/bin\n' "$store_hash" >>"$out_link/generated/nix.conf"
+chmod 0444 "$out_link/generated/nix.conf"
 printf 'readonly=true\n' >"$out_link/etc/nut/ups.conf"
 ln -s ../../generated/nix.conf "$out_link/etc/nix/nix.conf"
 ln -s missing-target "$out_link/etc/terminfo/x~nix~case~hack~1/xterm-xfree86"
@@ -125,8 +132,13 @@ done
 if [ "$is_build" = true ]; then
   mkdir -p "${HM_BUILD_ROOT:?}"
   out="$(mktemp -d "${HM_BUILD_ROOT:?}/hm.XXXXXX")"
+  case "${DIFF_CONFIG_FLAKE_REF:?}" in
+    *"${DIFF_CONFIG_MACHINE:?}"*) store_hash=33333333333333333333333333333333 ;;
+    *) store_hash=44444444444444444444444444444444 ;;
+  esac
   mkdir -p "$out/home-files/.config" "$out/LaunchAgents"
   printf 'flake=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/home-files/.config/hm.conf"
+  printf 'store=/nix/store/%s-same-home-package/bin\n' "$store_hash" >>"$out/home-files/.config/hm.conf"
   printf 'agent=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/LaunchAgents/org.example.hm.plist"
   printf '%s\n' "$out"
   exit 0
@@ -218,9 +230,15 @@ SH
   [[ "$output" == *"etc/nix/nix.conf"* ]]
   [[ "$output" == *"-flake=git+file://$repo?rev=$old_rev"* ]]
   [[ "$output" == *"+flake=git+file://$repo?rev=$new_rev"* ]]
+  [[ "$output" == *"/nix/store/<hash>-same-package/bin"* ]]
   [[ "$output" == *"Home Manager diff (ihrachyshka; paths: home-files LaunchAgents):"* ]]
   [[ "$output" == *"home-files/.config/hm.conf"* ]]
   [[ "$output" == *"LaunchAgents/org.example.hm.plist"* ]]
+  [[ "$output" == *"/nix/store/<hash>-same-home-package/bin"* ]]
+  [[ "$output" != *"11111111111111111111111111111111"* ]]
+  [[ "$output" != *"22222222222222222222222222222222"* ]]
+  [[ "$output" != *"33333333333333333333333333333333"* ]]
+  [[ "$output" != *"44444444444444444444444444444444"* ]]
   [[ "$output" != *"Permission denied"* ]]
   [[ "$output" != *"cannot stat"* ]]
   [[ "$output" != *"No such file or directory"* ]]

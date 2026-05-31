@@ -126,6 +126,8 @@ let
       diffutils
       dix
       git
+      gnugrep
+      gnused
       nh
       nix
     ];
