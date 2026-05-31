@@ -335,7 +335,7 @@ let
       )"
 
       if [ "$fetch_server_public_key" = true ]; then
-        server_public_key="$(ssh prox-gwvm 'sudo wg pubkey < /var/lib/wireguard/wg0.key')"
+        server_public_key="$(ssh prox-gwvm "sudo sh -c 'wg pubkey < /var/lib/wireguard/wg0.key'")"
       fi
 
       private_key="$(${pkgs.coreutils}/bin/tr -d '\n' < "$private_key_file")"
