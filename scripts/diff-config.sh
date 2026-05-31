@@ -18,6 +18,8 @@ toplevels and embedded Home Manager users. By default this covers:
   NixOS:       etc
   nix-darwin:  etc, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
   Home Manager users: home-files, LaunchAgents
+  Profile/manpage trees and release metadata files are skipped because those
+  changes are already covered by the dix output.
 
 Repeat --path with --details to override the default system generated paths.
 
@@ -222,7 +224,7 @@ filter_dix_output() {
 }
 
 normalize_store_paths() {
-  sed -E "s#/nix/store/[0-9a-z]{32}-[^/[:space:]'\"<>]+#/nix/store/<path>#g"
+  sed -E "s#/nix/store/[0-9a-z]{32}\\\\-[^/[:space:]'\"<>]+#/nix/store/<path>#g; s#/nix/store/[0-9a-z]{32}-[^/[:space:]'\"<>]+#/nix/store/<path>#g"
 }
 
 diff_supports_color() {
@@ -248,6 +250,20 @@ generated_path_exists() {
   [[ -e "${path}" || -L "${path}" ]]
 }
 
+should_skip_generated_source() {
+  local source="$1"
+
+  case "${source}" in
+    */etc/profiles | */etc/profiles/* | */share/man | */share/man/* | \
+      */etc/issue | */etc/issue.net | */etc/os-release | */etc/lsb-release)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
 copy_generated_path() {
   local source_root="$1"
   local dest_root="$2"
@@ -257,6 +273,10 @@ copy_generated_path() {
   local parent="${relpath%/*}"
 
   if ! generated_path_exists "${source_root}" "${relpath}"; then
+    return 0
+  fi
+
+  if should_skip_generated_source "${source}"; then
     return 0
   fi
 
@@ -276,6 +296,10 @@ copy_generated_directory() {
 
   for entry in "${source}"/* "${source}"/.[!.]* "${source}"/..?*; do
     if [[ ! -e "${entry}" && ! -L "${entry}" ]]; then
+      continue
+    fi
+
+    if should_skip_generated_source "${entry}"; then
       continue
     fi
 

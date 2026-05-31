@@ -71,11 +71,21 @@ case "$out_link" in
   *) store_hash=22222222222222222222222222222222 ;;
 esac
 
-mkdir -p "$out_link/generated" "$out_link/etc/nix" "$out_link/etc/nut" "$out_link/etc/terminfo/x~nix~case~hack~1"
+mkdir -p \
+  "$out_link/generated" \
+  "$out_link/etc/nix" \
+  "$out_link/etc/nut" \
+  "$out_link/etc/profiles/per-user/ihrachyshka/share/man/man5" \
+  "$out_link/etc/terminfo/x~nix~case~hack~1"
 printf 'flake=%s\n' "$last_arg" >"$out_link/generated/nix.conf"
 printf 'store=/nix/store/%s-same-package/bin\n' "$store_hash" >>"$out_link/generated/nix.conf"
 chmod 0444 "$out_link/generated/nix.conf"
+printf 'Welcome to NixOS %s\n' "$last_arg" >"$out_link/etc/issue"
 printf 'readonly=true\n' >"$out_link/etc/nut/ups.conf"
+{
+  printf 'man-flake=%s\n' "$last_arg"
+  printf '\\fB/nix/store/%s\\-source/modules/generic/meta\\-maintainers\\&.nix\\fP\n' "$store_hash"
+} >"$out_link/etc/profiles/per-user/ihrachyshka/share/man/man5/home-configuration.nix.5"
 ln -s ../../generated/nix.conf "$out_link/etc/nix/nix.conf"
 ln -s missing-target "$out_link/etc/terminfo/x~nix~case~hack~1/xterm-xfree86"
 chmod 0555 "$out_link/etc/nut"
@@ -255,6 +265,9 @@ SH
   [[ "$output" == *"CHANGED"* ]]
   [[ "$output" == *"Detailed config diff:"* ]]
   [[ "$output" == *"diff -ruN old/system/etc/nix/nix.conf new/system/etc/nix/nix.conf"* ]]
+  [[ "$output" != *"old/system/etc/issue"* ]]
+  [[ "$output" != *"home-configuration.nix.5"* ]]
+  [[ "$output" != *"man-flake"* ]]
   [[ "$output" == *"etc/nix/nix.conf"* ]]
   [[ "$output" == *"-flake=git+file://$repo?rev=$old_rev"* ]]
   [[ "$output" == *"+flake=git+file://$repo?rev=$new_rev"* ]]
