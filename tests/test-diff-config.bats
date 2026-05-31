@@ -38,6 +38,7 @@ make_fake_bin() {
   rm -rf "$fake_bin"
   mkdir -p "$fake_bin"
   bash_path="$(command -v bash)"
+  diff_path="$(command -v diff)"
 
   {
     printf '#!%s\n' "$bash_path"
@@ -115,6 +116,28 @@ printf 'DIFF: 1\n'
 SH
   } >"$fake_bin/dix"
   chmod +x "$fake_bin/dix"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    printf 'real_diff=%q\n' "$diff_path"
+    cat <<'SH'
+set -euo pipefail
+
+args=()
+for arg in "$@"; do
+  if [ -n "${DIFF_ARGS_LOG:-}" ]; then
+    printf '<%s>\n' "$arg" >>"$DIFF_ARGS_LOG"
+  fi
+  case "$arg" in
+    --color | --color=*) ;;
+    *) args+=("$arg") ;;
+  esac
+done
+
+exec "$real_diff" "${args[@]}"
+SH
+  } >"$fake_bin/diff"
+  chmod +x "$fake_bin/diff"
 
   {
     printf '#!%s\n' "$bash_path"
@@ -207,14 +230,17 @@ SH
 
   nh_log="$BATS_TMPDIR/diff-config-nh-details-$BATS_TEST_NUMBER.log"
   dix_log="$BATS_TMPDIR/diff-config-dix-details-$BATS_TEST_NUMBER.log"
-  rm -f "$nh_log" "$dix_log"
+  diff_log="$BATS_TMPDIR/diff-config-diff-details-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log" "$diff_log"
 
   run env \
     DIFF_CONFIG_REPO_ROOT="$repo" \
+    DIFF_CONFIG_DIFF_COLOR=always \
     XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-details-$BATS_TEST_NUMBER" \
     HM_BUILD_ROOT="$BATS_TMPDIR/diff-config-hm-details-$BATS_TEST_NUMBER" \
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
+    DIFF_ARGS_LOG="$diff_log" \
     PATH="$fake_bin:$PATH" \
     bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
     --details \
@@ -225,6 +251,7 @@ SH
     "$new_rev"
 
   [ "$status" -eq 0 ]
+  grep -F -- '<--color=always>' "$diff_log"
   [[ "$output" == *"CHANGED"* ]]
   [[ "$output" == *"Generated config diff (etc/nix/nix.conf etc/terminfo):"* ]]
   [[ "$output" == *"diff -ruN old/etc/nix/nix.conf new/etc/nix/nix.conf"* ]]

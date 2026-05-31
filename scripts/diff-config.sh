@@ -225,6 +225,21 @@ normalize_store_paths() {
   sed -E "s#/nix/store/[0-9a-z]{32}-[^/[:space:]'\"<>]+#/nix/store/<path>#g"
 }
 
+diff_supports_color() {
+  diff --color=never -q /dev/null /dev/null >/dev/null 2>&1
+}
+
+run_recursive_diff() {
+  local diff_root="$1"
+  local -a diff_cmd=(diff -ruN)
+
+  if [[ -n "${detail_diff_color}" ]] && diff_supports_color; then
+    diff_cmd=(diff "--color=${detail_diff_color}" -ruN)
+  fi
+
+  (cd "${diff_root}" && "${diff_cmd[@]}" old new)
+}
+
 generated_path_exists() {
   local root="$1"
   local relpath="$2"
@@ -326,7 +341,7 @@ run_generated_diff() {
   printf '\nGenerated config diff (%s):\n' "${generated_paths[*]}"
 
   set +e
-  (cd "${diff_root}" && diff -ruN old new)
+  run_recursive_diff "${diff_root}"
   diff_status="$?"
   set -e
 
@@ -516,7 +531,7 @@ diff_home_manager_user() {
   printf '\nHome Manager diff (%s; paths: %s):\n' "${user}" "${home_manager_generated_paths[*]}"
 
   set +e
-  (cd "${diff_root}" && diff -ruN old new)
+  run_recursive_diff "${diff_root}"
   diff_status="$?"
   set -e
 
@@ -653,9 +668,14 @@ trap cleanup EXIT
 old_link="${tmpdir}/old"
 new_link="${tmpdir}/new"
 dix_color="${DIFF_CONFIG_DIX_COLOR:-auto}"
+detail_diff_color="${DIFF_CONFIG_DIFF_COLOR:-}"
 
 if [[ -z "${DIFF_CONFIG_DIX_COLOR:-}" && -t 1 ]]; then
   dix_color="always"
+fi
+
+if [[ -z "${DIFF_CONFIG_DIFF_COLOR:-}" && -t 1 ]]; then
+  detail_diff_color="always"
 fi
 
 build_config old "${old_rev}" "${old_flake}" "${old_link}"
