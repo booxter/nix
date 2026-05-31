@@ -155,7 +155,7 @@ build_config() {
   )
 
   echo "Building ${target_kind} configuration ${machine} at ${label} (${rev})" >&2
-  "${nh_cmd[@]}"
+  "${nh_cmd[@]}" >&2
 }
 
 filter_dix_output() {
