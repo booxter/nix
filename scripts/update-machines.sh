@@ -274,7 +274,7 @@ Options:
 
 Notes:
   - Passing explicit host names disables --all.
-  - --test is NixOS-only and maps to nixos-rebuild dry-activate.
+  - --test is NixOS-only and keeps using nixos-rebuild dry-activate.
   -h, --help        Show this help.
 
 Environment:
@@ -487,8 +487,8 @@ for host in "${HOSTS[@]}"; do
 set -euo pipefail
 REMOTE
 )"
+  remote_payload+=$'\n'"$(declare -f run_nh_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nixos_rebuild_from_repo)"$'\n'
-  remote_payload+=$'\n'"$(declare -f find_darwin_rebuild)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_darwin_switch_from_repo)"$'\n'
   remote_payload+="$(cat <<'REMOTE'
 repo_dir=""

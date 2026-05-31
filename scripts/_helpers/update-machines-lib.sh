@@ -113,39 +113,37 @@ format_host_list() {
   done
 }
 
-find_darwin_rebuild() {
-  command -v darwin-rebuild 2>/dev/null || true
+run_nh_from_repo() {
+  nix shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh "$@"
 }
 
 run_nixos_rebuild_from_repo() {
   local rebuild_action="$1"
   local host_name="$2"
-  sudo nixos-rebuild "$rebuild_action" --flake ".#${host_name}" -L --show-trace
+
+  if [[ "$rebuild_action" == "dry-activate" ]]; then
+    sudo nixos-rebuild "$rebuild_action" --flake ".#${host_name}" -L --show-trace
+    return 0
+  fi
+
+  if [[ "$rebuild_action" != "switch" && "$rebuild_action" != "boot" ]]; then
+    echo "Unsupported NixOS deploy action: ${rebuild_action}." >&2
+    return 1
+  fi
+
+  run_nh_from_repo os "$rebuild_action" \
+    --hostname "$host_name" \
+    --print-build-logs \
+    --show-trace \
+    ".#"
 }
 
 run_darwin_switch_from_repo() {
   local host_name="$1"
-  local darwin_rebuild system_path
 
-  darwin_rebuild="$(find_darwin_rebuild)"
-  if [[ -n "$darwin_rebuild" ]]; then
-    sudo -H "$darwin_rebuild" switch --flake ".#${host_name}" -L --show-trace
-    return 0
-  fi
-
-  system_path="$(
-    nix build --no-link --print-out-paths ".#darwinConfigurations.${host_name}.system" -L --show-trace
-  )"
-  if [[ -z "$system_path" ]]; then
-    echo "Failed to build darwin system for ${host_name}." >&2
-    return 1
-  fi
-
-  darwin_rebuild="${system_path}/sw/bin/darwin-rebuild"
-  if [[ ! -x "$darwin_rebuild" ]]; then
-    echo "Failed to locate darwin-rebuild in ${system_path}." >&2
-    return 1
-  fi
-
-  sudo -H "$darwin_rebuild" switch --flake ".#${host_name}" -L --show-trace
+  run_nh_from_repo darwin switch \
+    --hostname "$host_name" \
+    --print-build-logs \
+    --show-trace \
+    ".#"
 }
