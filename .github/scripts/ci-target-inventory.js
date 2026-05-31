@@ -14,6 +14,44 @@ function toBuildMatrixEntries(targets) {
   }));
 }
 
+function diffMachineForAttr(attr) {
+  const nixosMatch = attr.match(
+    /^nixosConfigurations\.([^.]+)\.config\.system\.build\.toplevel$/,
+  );
+  if (nixosMatch) {
+    return nixosMatch[1];
+  }
+
+  const darwinMatch = attr.match(/^darwinConfigurations\.([^.]+)\.system$/);
+  if (darwinMatch) {
+    return darwinMatch[1];
+  }
+
+  return null;
+}
+
+function toDiffMatrixEntries(targets) {
+  const seen = new Set();
+  const entries = [];
+
+  for (const target of targets) {
+    const machine = diffMachineForAttr(target.attr);
+    if (!machine || seen.has(machine)) {
+      continue;
+    }
+
+    seen.add(machine);
+    entries.push({
+      machine,
+      name: target.name,
+      order: String(entries.length).padStart(3, "0"),
+      os: target.runner,
+    });
+  }
+
+  return entries;
+}
+
 function appendMapping(mapping, prefix, field, name) {
   if (!prefix) {
     return;
@@ -37,7 +75,12 @@ function buildMachinePathMap(targets, field) {
 
     for (const host of selection.hosts || []) {
       appendMapping(mapping, `secrets/${host}.yaml`, field, target.name);
-      appendMapping(mapping, `secrets/_templates/${host}.yaml`, field, target.name);
+      appendMapping(
+        mapping,
+        `secrets/_templates/${host}.yaml`,
+        field,
+        target.name,
+      );
     }
   }
 
@@ -52,4 +95,5 @@ module.exports = {
   inventory,
   nixBuildCmd,
   toBuildMatrixEntries,
+  toDiffMatrixEntries,
 };
