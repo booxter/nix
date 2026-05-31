@@ -1,4 +1,4 @@
-name: Flake update diffs
+name: Config diffs
 
 on:
   pull_request:
@@ -8,8 +8,6 @@ on:
       - synchronize
     branches:
       - master
-    paths:
-      - flake.lock
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -28,11 +26,6 @@ permissions:
 jobs:
   plan-diff-matrix:
     name: plan diff matrix
-    if: >-
-      ${{
-        github.event.pull_request.head.ref == 'ci/flake-update' &&
-        github.event.pull_request.head.repo.full_name == github.repository
-      }}
     runs-on: ubuntu-slim
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}

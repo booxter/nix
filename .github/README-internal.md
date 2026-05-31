@@ -38,14 +38,12 @@ The build matrix is selected in this order:
   PR-only).
 - If no machine-specific mapping applies cleanly, CI falls back to full scoped matrix.
 
-## Flake update diffs
+## Config diffs
 
-`.github/workflows/flake-update-diffs.yml` runs only for same-repository
-`ci/flake-update` pull requests that change `flake.lock`.
+`.github/workflows/flake-update-diffs.yml` runs for pull requests.
 
 It runs `nix run .#diff -- --details <machine> <base-sha> <head-sha>` in a separate
 advisory matrix for each toplevel NixOS and nix-darwin machine in
 `ci-target-inventory.json`. Each matrix job uploads one markdown artifact, and
-the final job replaces the marked `Config diffs` section in the PR body. The
-marker replacement keeps reruns idempotent and avoids duplicating the machine
-list.
+the final job posts one or more `Config diffs` comments with the collected
+output. The main CI workflow waits for this advisory workflow on pull requests.

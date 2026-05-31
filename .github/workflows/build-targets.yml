@@ -156,48 +156,23 @@ jobs:
         run: ${{ matrix.cmd }}
 
   wait-flake-update-diffs:
-    name: wait flake update diffs
-    runs-on: ubuntu-slim
+    name: wait config diffs
+    runs-on: ubuntu-latest
     timeout-minutes: 190
     steps:
-      - name: Wait for flake update diffs
+      - name: Wait for config diffs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
 
             if (context.eventName !== "pull_request") {
-              core.info("Not a pull request event; no flake diff workflow to wait for.");
-              return;
-            }
-
-            const pull = context.payload.pull_request;
-            if (
-              pull.head.ref !== "ci/flake-update" ||
-              pull.head.repo.full_name !== `${owner}/${repo}`
-            ) {
-              core.info("Not a same-repository flake update PR; no flake diff workflow to wait for.");
-              return;
-            }
-
-            try {
-              const files = await github.paginate(github.rest.pulls.listFiles, {
-                owner,
-                repo,
-                pull_number: pull.number,
-                per_page: 100,
-              });
-              if (!files.some((file) => file.filename === "flake.lock")) {
-                core.info("Flake update PR does not change flake.lock; no flake diff workflow to wait for.");
-                return;
-              }
-            } catch (error) {
-              core.warning(`Could not inspect changed files; not blocking CI: ${error.message}`);
+              core.info("Not a pull request event; no config diff workflow to wait for.");
               return;
             }
 
             const workflowId = "flake-update-diffs.yml";
-            const headSha = pull.head.sha;
+            const headSha = context.payload.pull_request.head.sha;
             const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
             const deadline = Date.now() + 185 * 60 * 1000;
             let lastRunId = null;
@@ -219,7 +194,7 @@ jobs:
                 );
                 runs = response.data.workflow_runs || [];
               } catch (error) {
-                core.warning(`Could not list flake diff workflow runs; retrying: ${error.message}`);
+                core.warning(`Could not list config diff workflow runs; retrying: ${error.message}`);
                 await sleep(30 * 1000);
                 continue;
               }
@@ -228,28 +203,28 @@ jobs:
                 (left, right) => new Date(right.created_at) - new Date(left.created_at),
               )[0];
               if (!run) {
-                core.info("Flake diff workflow run has not appeared yet.");
+                core.info("Config diff workflow run has not appeared yet.");
                 await sleep(20 * 1000);
                 continue;
               }
 
               if (run.id !== lastRunId) {
-                core.info(`Watching flake diff workflow run ${run.html_url}`);
+                core.info(`Watching config diff workflow run ${run.html_url}`);
                 lastRunId = run.id;
               }
 
               if (run.status === "completed") {
                 core.info(
-                  `Flake diff workflow completed with conclusion: ${run.conclusion || "unknown"}.`,
+                  `Config diff workflow completed with conclusion: ${run.conclusion || "unknown"}.`,
                 );
                 return;
               }
 
-              core.info(`Flake diff workflow status is ${run.status}; waiting.`);
+              core.info(`Config diff workflow status is ${run.status}; waiting.`);
               await sleep(30 * 1000);
             }
 
-            core.warning("Timed out waiting for flake diff workflow; not blocking CI.");
+            core.warning("Timed out waiting for config diff workflow; not blocking CI.");
 
   ci-success:
     name: CI (all jobs)
