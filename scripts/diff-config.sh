@@ -14,11 +14,12 @@ with nh, then render the package and closure-size diff with dix, the diff
 backend used by nh.
 
 With --details, also diff generated target configuration files from the built
-toplevels. By default this covers:
+toplevels and embedded Home Manager users. By default this covers:
   NixOS:       etc
   nix-darwin:  etc, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
+  Home Manager users: home-files, LaunchAgents
 
-Repeat --path with --details to override the default generated paths.
+Repeat --path with --details to override the default system generated paths.
 
 Examples:
   ${program_name} frame origin/master HEAD
@@ -301,6 +302,219 @@ run_generated_diff() {
   return "${diff_status}"
 }
 
+eval_home_manager_users() {
+  local label="$1"
+  local flake_ref="$2"
+  local users=""
+
+  if ! users="$(
+    DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
+      DIFF_CONFIG_MACHINE="${machine}" \
+      DIFF_CONFIG_TARGET_KIND="${target_kind}" \
+      nix --extra-experimental-features "nix-command flakes" eval --impure --raw --expr '
+        let
+          f = builtins.getFlake (builtins.getEnv "DIFF_CONFIG_FLAKE_REF");
+          kind = builtins.getEnv "DIFF_CONFIG_TARGET_KIND";
+          name = builtins.getEnv "DIFF_CONFIG_MACHINE";
+          configs =
+            if kind == "nixos" then f.nixosConfigurations
+            else if kind == "darwin" then f.darwinConfigurations
+            else { };
+          cfg = builtins.getAttr name configs;
+          hm =
+            if builtins.hasAttr "home-manager" cfg.config
+            then cfg.config."home-manager"
+            else { };
+          users =
+            if builtins.hasAttr "users" hm
+            then builtins.attrNames hm.users
+            else [ ];
+        in
+          builtins.concatStringsSep "\n" users
+      '
+  )"; then
+    echo "Unable to inspect Home Manager users in ${label} revision for machine '${machine}'." >&2
+    return 1
+  fi
+
+  printf '%s\n' "${users}"
+}
+
+add_home_manager_user() {
+  local user="$1"
+  local existing=""
+
+  for existing in "${home_manager_users[@]}"; do
+    if [[ "${existing}" == "${user}" ]]; then
+      return 0
+    fi
+  done
+
+  home_manager_users+=("${user}")
+}
+
+array_contains() {
+  local needle="$1"
+  local item=""
+  shift
+
+  for item in "$@"; do
+    if [[ "${item}" == "${needle}" ]]; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+load_home_manager_users() {
+  local label="$1"
+  local flake_ref="$2"
+  local users_text=""
+  local user=""
+
+  users_text="$(eval_home_manager_users "${label}" "${flake_ref}")"
+
+  while IFS= read -r user; do
+    if [[ -z "${user}" ]]; then
+      continue
+    fi
+
+    case "${label}" in
+      old) old_home_manager_users+=("${user}") ;;
+      new) new_home_manager_users+=("${user}") ;;
+      *)
+        echo "Unsupported Home Manager side: ${label}" >&2
+        return 1
+        ;;
+    esac
+
+    add_home_manager_user "${user}"
+  done <<<"${users_text}"
+}
+
+build_home_manager_activation() {
+  local label="$1"
+  local rev="$2"
+  local flake_ref="$3"
+  local user="$4"
+  local activation=""
+
+  echo "Building Home Manager activation package for ${user} at ${label} (${rev})" >&2
+
+  if ! activation="$(
+    DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
+      DIFF_CONFIG_MACHINE="${machine}" \
+      DIFF_CONFIG_TARGET_KIND="${target_kind}" \
+      DIFF_CONFIG_HM_USER="${user}" \
+      nix --extra-experimental-features "nix-command flakes" build \
+        --impure \
+        --no-link \
+        --print-out-paths \
+        --expr '
+          let
+            f = builtins.getFlake (builtins.getEnv "DIFF_CONFIG_FLAKE_REF");
+            kind = builtins.getEnv "DIFF_CONFIG_TARGET_KIND";
+            name = builtins.getEnv "DIFF_CONFIG_MACHINE";
+            user = builtins.getEnv "DIFF_CONFIG_HM_USER";
+            configs =
+              if kind == "nixos" then f.nixosConfigurations
+              else if kind == "darwin" then f.darwinConfigurations
+              else { };
+            cfg = builtins.getAttr name configs;
+          in
+            (builtins.getAttr user cfg.config."home-manager".users).home.activationPackage
+        '
+  )"; then
+    echo "Unable to build Home Manager activation package for ${user} in ${label} revision." >&2
+    return 1
+  fi
+
+  printf '%s\n' "${activation}"
+}
+
+materialize_home_manager_paths() {
+  local activation="$1"
+  local dest_root="$2"
+  local relpath=""
+
+  mkdir -p "${dest_root}"
+
+  if [[ -z "${activation}" ]]; then
+    return 0
+  fi
+
+  for relpath in "${home_manager_generated_paths[@]}"; do
+    copy_generated_path "${activation}" "${dest_root}" "${relpath}"
+  done
+}
+
+diff_home_manager_user() {
+  local user="$1"
+  local old_activation=""
+  local new_activation=""
+  local old_tree="${tmpdir}/old-home-manager/${user}"
+  local new_tree="${tmpdir}/new-home-manager/${user}"
+  local diff_status=0
+
+  if array_contains "${user}" "${old_home_manager_users[@]}"; then
+    old_activation="$(build_home_manager_activation old "${old_rev}" "${old_flake}" "${user}")"
+  else
+    echo "Home Manager user ${user} is missing in old revision; diffing against an empty tree." >&2
+  fi
+
+  if array_contains "${user}" "${new_home_manager_users[@]}"; then
+    new_activation="$(build_home_manager_activation new "${new_rev}" "${new_flake}" "${user}")"
+  else
+    echo "Home Manager user ${user} is missing in new revision; diffing against an empty tree." >&2
+  fi
+
+  materialize_home_manager_paths "${old_activation}" "${old_tree}"
+  materialize_home_manager_paths "${new_activation}" "${new_tree}"
+
+  printf '\nHome Manager diff (%s; paths: %s):\n' "${user}" "${home_manager_generated_paths[*]}"
+
+  set +e
+  diff -ruN "${old_tree}" "${new_tree}"
+  diff_status="$?"
+  set -e
+
+  if [[ "${diff_status}" -eq 0 ]]; then
+    printf 'No Home Manager generated config differences for %s.\n' "${user}"
+    return 0
+  fi
+
+  if [[ "${diff_status}" -eq 1 ]]; then
+    return 0
+  fi
+
+  return "${diff_status}"
+}
+
+run_home_manager_diff() {
+  local user=""
+
+  old_home_manager_users=()
+  new_home_manager_users=()
+  home_manager_users=()
+  home_manager_generated_paths=(
+    home-files
+    LaunchAgents
+  )
+
+  load_home_manager_users old "${old_flake}"
+  load_home_manager_users new "${new_flake}"
+
+  if [[ "${#home_manager_users[@]}" -eq 0 ]]; then
+    echo "No embedded Home Manager users found in either revision." >&2
+    return 0
+  fi
+
+  for user in "${home_manager_users[@]}"; do
+    diff_home_manager_user "${user}"
+  done
+}
+
 details=false
 generated_paths=()
 args=()
@@ -405,4 +619,5 @@ dix "${old_link}" "${new_link}" | filter_dix_output
 
 if [[ "${details}" == true ]]; then
   run_generated_diff
+  run_home_manager_diff
 fi

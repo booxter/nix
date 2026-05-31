@@ -95,7 +95,29 @@ SH
     cat <<'SH'
 set -euo pipefail
 
-printf '%s\n' "${NIX_TARGET_KIND:-darwin}"
+is_build=false
+for arg in "$@"; do
+  if [ "$arg" = "build" ]; then
+    is_build=true
+    break
+  fi
+done
+
+if [ "$is_build" = true ]; then
+  mkdir -p "${HM_BUILD_ROOT:?}"
+  out="$(mktemp -d "${HM_BUILD_ROOT:?}/hm.XXXXXX")"
+  mkdir -p "$out/home-files/.config" "$out/LaunchAgents"
+  printf 'flake=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/home-files/.config/hm.conf"
+  printf 'agent=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/LaunchAgents/org.example.hm.plist"
+  printf '%s\n' "$out"
+  exit 0
+fi
+
+if [ -n "${DIFF_CONFIG_TARGET_KIND:-}" ]; then
+  printf '%s\n' "${DIFF_CONFIG_HM_USERS:-ihrachyshka}"
+else
+  printf '%s\n' "${NIX_TARGET_KIND:-darwin}"
+fi
 SH
   } >"$fake_bin/nix"
   chmod +x "$fake_bin/nix"
@@ -157,6 +179,7 @@ SH
   run env \
     DIFF_CONFIG_REPO_ROOT="$repo" \
     XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-details-$BATS_TEST_NUMBER" \
+    HM_BUILD_ROOT="$BATS_TMPDIR/diff-config-hm-details-$BATS_TEST_NUMBER" \
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
@@ -173,6 +196,9 @@ SH
   [[ "$output" == *"etc/nix/nix.conf"* ]]
   [[ "$output" == *"-flake=git+file://$repo?rev=$old_rev"* ]]
   [[ "$output" == *"+flake=git+file://$repo?rev=$new_rev"* ]]
+  [[ "$output" == *"Home Manager diff (ihrachyshka; paths: home-files LaunchAgents):"* ]]
+  [[ "$output" == *"home-files/.config/hm.conf"* ]]
+  [[ "$output" == *"LaunchAgents/org.example.hm.plist"* ]]
 }
 
 @test "diff-config detects bare darwin targets" {
