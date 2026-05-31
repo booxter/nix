@@ -76,6 +76,7 @@ setup_repo() {
   cp "$REPO_ROOT/scripts/sops-update.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-copy.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-edit.sh" "$repo_dir/scripts/"
+  cp "$REPO_ROOT/scripts/sops-pass.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/tests/test-sops-config.sh" "$repo_dir/tests/"
   cd "$repo_dir"
   git init -q
@@ -128,6 +129,11 @@ common:
 attic:
   token: "REPLACE_ME"
   endpoint: "http://nix-cache:8080"
+users:
+  root:
+    hashedPassword: "REPLACE_ME"
+  ihrachyshka:
+    hashedPassword: "REPLACE_ME"
 EOF
 
   cat > "$repo/secrets/_templates/beast.yaml" <<'EOF'
@@ -173,6 +179,8 @@ EOF
   assert_eq "SECRET" "$(yq -r '.common.shared' "$after")" "beast shared value should be preserved"
   assert_eq "beast" "$(yq -r '.other.keep' "$after")" "beast unrelated data should survive update"
   assert_eq "REPLACE_ME" "$(yq -r '.attic.token' "$after")" "default template block should be added"
+  assert_eq "REPLACE_ME" "$(yq -r '.users.root.hashedPassword' "$after")" "root password placeholder should be added"
+  assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "user password placeholder should be added"
   assert_eq "REPLACE_ME" "$(yq -r '.jellyfin.apiKey' "$after")" "host template block should be added"
   assert_file_contains "secrets/beast.yaml" "sops:"
 
@@ -204,6 +212,29 @@ EOF
   log "fail cleanly when source path is missing"
   run_expect_failure "$out" bash "$repo/scripts/sops-copy.sh" mair prx1-lab missing
   assert_contains "$(cat "$out")" "Path not found in source secret: missing"
+
+  log "set a login password hash without losing existing secret data"
+  cat > "$WORKDIR/passwords.txt" <<'EOF'
+test-login-password
+test-login-password
+EOF
+  if ! SOPS_PASS_PASSWORD_FD=3 bash "$repo/scripts/sops-pass.sh" beast root >"$out" 2>&1 3< "$WORKDIR/passwords.txt"; then
+    cat "$out" >&2
+    fail "sops-pass failed"
+  fi
+  assert_contains "$(cat "$out")" "Updated users/root/hashedPassword"
+  decrypt_secret_file beast "$after"
+  local sha512_prefix="\$6\$"
+  case "$(yq -r '.users.root.hashedPassword' "$after")" in
+    "${sha512_prefix}"*) ;;
+    *) fail "root password hash should use sha-512 crypt format" ;;
+  esac
+  assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "other login password should not be touched"
+  assert_eq "beast" "$(yq -r '.other.keep' "$after")" "unrelated data should survive password update"
+
+  log "reject unsupported login users before prompting"
+  run_expect_failure "$out" bash "$repo/scripts/sops-pass.sh" beast nobody
+  assert_contains "$(cat "$out")" "Unsupported user: nobody"
 
   log "edit a secret through sops without losing merged template keys"
   cat > "$WORKDIR/editor.sh" <<'EOF'

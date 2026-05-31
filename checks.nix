@@ -48,6 +48,7 @@ helpers.forAllSystems (
         bats
         git
         jq
+        mkpasswd
         python3
         sops
         yq-go

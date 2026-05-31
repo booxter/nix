@@ -1,6 +1,7 @@
 { username, ... }:
 {
-  # TODO: revert once a password is set for this host (currently no hashedPassword is configured).
+  # Work machines do not use sops-managed login passwords; this VM does not
+  # currently configure a login password.
   security.sudo.wheelNeedsPassword = false;
 
   boot.kernelParams = [
