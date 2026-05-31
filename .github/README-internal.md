@@ -43,7 +43,7 @@ The build matrix is selected in this order:
 `.github/workflows/flake-update-diffs.yml` runs only for same-repository
 `ci/flake-update` pull requests that change `flake.lock`.
 
-It runs `nix run .#diff -- <machine> <base-sha> <head-sha>` in a separate
+It runs `nix run .#diff -- --details <machine> <base-sha> <head-sha>` in a separate
 advisory matrix for each toplevel NixOS and nix-darwin machine in
 `ci-target-inventory.json`. Each matrix job uploads one markdown artifact, and
 the final job replaces the marked `Config diffs` section in the PR body. The
