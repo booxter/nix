@@ -24,10 +24,6 @@
     ./ups.nix
   ];
 
-  # Pin this host to the latest stable release channel (critical infra).
-  users.users.${username}.hashedPassword =
-    "$6$gQ7Gm5b2aq7qPn7W$dcuDT19.SJ88xPA4tQHbscdJDMo3wK.UXGhffrohh7YU4QAzcmRk3GKPNku.BnGrkgDYvZXm/4tBfT.NP6eF.1";
-
   # Pin the host to the current stable branch's 7.0 kernel line instead of
   # tracking the moving `linuxPackages_latest` alias.
   # TODO: switch to a versioned LTS kernel package once the stable branch

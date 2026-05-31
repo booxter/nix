@@ -5,7 +5,6 @@
 let
   prxStateVersion = "25.11";
   prxNetIface = "enp5s0f0np0";
-  prxPassword = "$6$CfXpVD4RDVuPrP1r$sQ8DQgErhyPNmVsRB0cJPwiF/UM3yFC2ZTYRCdtrBAYQXG63GlnLIyOc5vZ2jswJb66KGwitwErNXmUnBWy0R.";
   lanDnsRecordTtlSeconds = 300;
 
   piStateVersion = "25.11";
@@ -361,7 +360,6 @@ rec {
       type = "bm";
       hostKind = "nixos";
       name = frame;
-      password = "$6$yJXP9KwAM7LaQrtn$K5ybpfl1xxjRTRMXj6CxSFspEdDcWeEVzhc6Wq0PX7G/y9Tvt1QWq5F6ycR0wy4TseTXeom9DdzK4XrBwym2Q/";
       stateVersion = "25.11";
       platform = "x86_64-linux";
       isDesktop = true;
@@ -373,7 +371,6 @@ rec {
       inherit username;
       isWork = true;
       upsHost = piHostname;
-      password = "$6$zoSR/.ZJMjOtERiO$Dm3aOpCiAMRlHT/SQ2mzIANa2zGZNUq2Iwuh35BTS.TtaTaKh7Y0aNxP4lxrsfXtcykMNhadUgMwXgf2c/7pz0";
       stateVersion = "25.11";
       netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";
@@ -404,7 +401,6 @@ rec {
       hostKind = "proxmox";
       name = "prx1-lab";
       inherit username;
-      password = prxPassword;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
       ipAddress = "192.168.15.10";
@@ -421,7 +417,6 @@ rec {
       name = "prx2-lab";
       inherit username;
       upsHost = "prx1-lab";
-      password = prxPassword;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
       ipAddress = "192.168.15.11";
@@ -438,7 +433,6 @@ rec {
       name = "prx3-lab";
       inherit username;
       upsHost = "prx1-lab";
-      password = prxPassword;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
       ipAddress = "192.168.15.12";

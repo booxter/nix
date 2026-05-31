@@ -64,6 +64,23 @@ let
     '';
   };
 
+  # Hash and store a NixOS login password in a host secret.
+  sops-pass = pkgs.writeShellApplication {
+    name = "sops-pass";
+    runtimeInputs = with pkgs; [
+      coreutils
+      git
+      jq
+      mkpasswd
+      pass
+      sops
+      yq-go
+    ];
+    text = ''
+      exec ${pkgs.bash}/bin/bash ${../scripts/sops-pass.sh} "$@"
+    '';
+  };
+
   # Bootstrap a remote host over SSH and initialize its encrypted secret file.
   sops-bootstrap = pkgs.writeShellApplication {
     name = "sops-bootstrap";
@@ -89,4 +106,5 @@ in
   "sops-update" =
     mkApp "${sops-update}/bin/sops-update" "Merge missing template keys into a host secret.";
   "sops-copy" = mkApp "${sops-copy}/bin/sops-copy" "Copy a top-level key path between host secrets.";
+  "sops-pass" = mkApp "${sops-pass}/bin/sops-pass" "Hash and store a NixOS login password.";
 }

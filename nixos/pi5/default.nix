@@ -106,7 +106,4 @@ in
     "L+ /var/lib/tftp/${netboot.bootfile} - - - - ${pkgs.netbootxyz-efi}"
   ];
 
-  users.users.${username} = {
-    hashedPassword = "$6$cgM30pIRZnRi0o21$qMkHs50CF.4Af4UWT.l/INY2nq3zAValESyaWj6mi.cvROO7cOjNXdttwCaEyQMaQAGzRlUJkkmJHUd.DFNxY0";
-  };
 }

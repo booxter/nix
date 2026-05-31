@@ -57,7 +57,6 @@ rec {
       isVM ? false,
       nixpkgsInput ? inputs.nixpkgs,
       extraModules ? [ ],
-      password ? null,
       ...
     }:
     nixpkgsInput.lib.nixosSystem {
@@ -95,17 +94,6 @@ rec {
             stateVersion
             ;
         })
-      ]
-      ++ inputs.nixpkgs.lib.optionals (password != null) [
-        (
-          { ... }:
-          {
-            users.users = {
-              root.hashedPassword = password;
-              ${username}.hashedPassword = password;
-            };
-          }
-        )
       ]
       ++ extraModules;
     };
