@@ -224,26 +224,7 @@ EOF
   run_expect_failure "$out" bash "$repo/scripts/sops-copy.sh" mair prx1-lab missing
   assert_contains "$(cat "$out")" "Path not found in source secret: missing"
 
-  log "set a login password hash without losing existing secret data"
-  cat > "$WORKDIR/passwords.txt" <<'EOF'
-test-login-password
-test-login-password
-EOF
-  if ! SOPS_PASS_PASSWORD_FD=3 bash "$repo/scripts/sops-pass.sh" beast root >"$out" 2>&1 3< "$WORKDIR/passwords.txt"; then
-    cat "$out" >&2
-    fail "sops-pass failed"
-  fi
-  assert_contains "$(cat "$out")" "Updated users/root/hashedPassword"
-  decrypt_secret_file beast "$after"
-  local sha512_prefix="\$6\$"
-  case "$(yq -r '.users.root.hashedPassword' "$after")" in
-    "${sha512_prefix}"*) ;;
-    *) fail "root password hash should use sha-512 crypt format" ;;
-  esac
-  assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "other login password should not be touched"
-  assert_eq "beast" "$(yq -r '.other.keep' "$after")" "unrelated data should survive password update"
-
-  log "generate login password in pass using canonical host names"
+  log "set a login password hash from pass without losing existing secret data"
   mkdir -p "$WORKDIR/fake-bin" "$WORKDIR/pass-store"
   cat > "$WORKDIR/fake-bin/pass" <<'EOF'
 #!/bin/sh
@@ -253,6 +234,11 @@ cmd="$1"
 shift
 
 case "$cmd" in
+  insert)
+    entry="$1"
+    mkdir -p "$PASS_TEST_STORE/$(dirname "$entry")"
+    printf 'inserted-password-for-%s\n' "$entry" > "$PASS_TEST_STORE/$entry"
+    ;;
   generate)
     if [ "${1:-}" = "--force" ]; then
       shift
@@ -273,6 +259,23 @@ case "$cmd" in
 esac
 EOF
   chmod +x "$WORKDIR/fake-bin/pass"
+  run_and_capture "$out" env \
+    PASS_TEST_STORE="$WORKDIR/pass-store" \
+    PATH="$WORKDIR/fake-bin:$PATH" \
+    bash "$repo/scripts/sops-pass.sh" beast root
+  assert_contains "$(cat "$out")" "Updated users/root/hashedPassword"
+  assert_contains "$(cat "$out")" "Inserted host/beast/root."
+  decrypt_secret_file beast "$after"
+  local sha512_prefix="\$6\$"
+  case "$(yq -r '.users.root.hashedPassword' "$after")" in
+    "${sha512_prefix}"*) ;;
+    *) fail "root password hash should use sha-512 crypt format" ;;
+  esac
+  assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "other login password should not be touched"
+  assert_eq "beast" "$(yq -r '.other.keep' "$after")" "unrelated data should survive password update"
+  test -f "$WORKDIR/pass-store/host/beast/root" || fail "default sops-pass should insert into pass"
+
+  log "generate login password in pass using canonical host names"
   run_and_capture "$out" env \
     PASS_TEST_STORE="$WORKDIR/pass-store" \
     PATH="$WORKDIR/fake-bin:$PATH" \

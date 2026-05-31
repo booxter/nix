@@ -10,12 +10,12 @@ Usage:
 Hash a login password with mkpasswd and store it in secrets/HOST.yaml.
 USER must be either root or ihrachyshka.
 
-With --gen, generate the password in pass first, under
-host/CANONICAL_HOST/USER. Proxmox VM names are canonicalized, so prox-gwvm
-uses host/gw/USER.
+By default, insert the password into pass first, under host/CANONICAL_HOST/USER,
+then hash the stored password. With --gen, generate the pass entry instead.
+Proxmox VM names are canonicalized, so prox-gwvm uses host/gw/USER.
 
 Environment:
-  SOPS_PASS_PREFIX            pass prefix for --gen entries (default: host)
+  SOPS_PASS_PREFIX            pass prefix for entries (default: host)
   SOPS_PASS_GENERATE_LENGTH   generated password length (default: 32)
 EOF
 }
@@ -39,43 +39,29 @@ pass_machine_name() {
   printf '%s\n' "${machine}"
 }
 
-read_passwords() {
-  local password_fd="${SOPS_PASS_PASSWORD_FD:-}"
+load_password_from_pass() {
+  local pass_prefix="${SOPS_PASS_PREFIX:-host}"
+  local password_length="${SOPS_PASS_GENERATE_LENGTH:-32}"
+  local pass_host
+  pass_host="$(pass_machine_name "${host}")"
+  pass_entry="${pass_prefix}/${pass_host}/${user}"
 
   if [[ "${generate_password}" == "1" ]]; then
-    local pass_prefix="${SOPS_PASS_PREFIX:-host}"
-    local password_length="${SOPS_PASS_GENERATE_LENGTH:-32}"
-    local pass_host
-    pass_host="$(pass_machine_name "${host}")"
-    pass_entry="${pass_prefix}/${pass_host}/${user}"
-
     pass generate --force "${pass_entry}" "${password_length}" >/dev/null
-    read -r password < <(pass show "${pass_entry}")
-    confirm="${password}"
-    return
+    pass_action="Generated"
+  else
+    pass insert "${pass_entry}"
+    pass_action="Inserted"
   fi
 
-  if [[ -n "$password_fd" ]]; then
-    read -r password <&"$password_fd"
-    read -r confirm <&"$password_fd"
-    return
-  fi
-
-  if [[ ! -t 0 ]]; then
-    echo "Error: no TTY available for password input." >&2
-    exit 1
-  fi
-
-  read -r -s -p "Password for ${user}@${host}: " password
-  printf '\n'
-  read -r -s -p "Confirm password for ${user}@${host}: " confirm
-  printf '\n'
+  read -r password < <(pass show "${pass_entry}")
 }
 
 host=""
 user=""
 generate_password=0
 pass_entry=""
+pass_action=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --gen)
@@ -135,22 +121,15 @@ hash_file="$(mktemp)"
 trap 'rm -f "${plain:-}" "${merged_json:-}" "${encrypted:-}" "${hash_file:-}"' EXIT
 
 password=""
-confirm=""
-read_passwords
+load_password_from_pass
 
 if [[ -z "$password" ]]; then
-  echo "Password must not be empty." >&2
-  exit 1
-fi
-
-if [[ "$password" != "$confirm" ]]; then
-  echo "Passwords do not match." >&2
+  echo "Stored password must not be empty: ${pass_entry}" >&2
   exit 1
 fi
 
 hash="$(printf '%s\n' "$password" | mkpasswd --method=sha-512 --stdin)"
 password=""
-confirm=""
 
 sha512_prefix="\$6\$"
 if [[ ! "$hash" == "${sha512_prefix}"* ]]; then
@@ -173,5 +152,5 @@ mv "$encrypted" "$secret"
 
 echo "Updated users/${user}/hashedPassword in ${secret}."
 if [[ -n "${pass_entry}" ]]; then
-  echo "Generated ${pass_entry}."
+  echo "${pass_action} ${pass_entry}."
 fi
