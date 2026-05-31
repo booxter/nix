@@ -603,6 +603,7 @@ cleanup() {
   if [[ "${DIFF_CONFIG_KEEP_TMP:-}" == "1" ]]; then
     echo "Keeping temporary output links in ${tmpdir}" >&2
   else
+    chmod -R u+rwX "${tmpdir}" 2>/dev/null || true
     rm -rf "${tmpdir}"
   fi
 }
