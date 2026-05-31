@@ -41,8 +41,8 @@ helpers.forAllSystems (
       };
   in
   {
-    bats-tests = mkCheck {
-      name = "bats-tests";
+    bats = mkCheck {
+      name = "bats";
       nativeBuildInputs = with pkgs; [
         age
         bats

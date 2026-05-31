@@ -20,8 +20,9 @@ while IFS= read -r -d '' file; do
   case "$file" in
   secrets/*.yaml) continue ;;
   esac
-  prettier --write "$file"
-done < <(git ls-files -z -- '*.yaml' '**/*.yaml' '*.yml' '**/*.yml')
+  printf '%s\0' "$file"
+done < <(git ls-files -z -- '*.yaml' '**/*.yaml' '*.yml' '**/*.yml') |
+  xargs -0 -r prettier --write --log-level warn
 git ls-files -z -- '*.md' '**/*.md' | xargs -0 -r markdownlint-cli2
 git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff format
 git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff check

@@ -257,8 +257,31 @@ EOF
   [ "$output" = "alpha, beta, gamma" ]
 }
 
-@test "run_nixos_rebuild_from_repo uses requested rebuild action" {
-  workdir="$BATS_TMPDIR/nixos-rebuild-action"
+@test "run_nixos_rebuild_from_repo uses pinned nh for switch and boot" {
+  workdir="$BATS_TMPDIR/nixos-nh-action"
+  mkdir -p "$workdir/bin"
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$NIX_ARGS_OUT"
+EOF
+  } > "$workdir/bin/nix"
+  chmod +x "$workdir/bin/nix"
+
+  export PATH="$workdir/bin:$PATH"
+  export NIX_ARGS_OUT="$workdir/nix.args"
+
+  run run_nixos_rebuild_from_repo boot prox-srvarrvm
+
+  [ "$status" -eq 0 ]
+  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname prox-srvarrvm --print-build-logs --show-trace .#" ]
+}
+
+@test "run_nixos_rebuild_from_repo keeps dry-activate on nixos-rebuild" {
+  workdir="$BATS_TMPDIR/nixos-dry-activate"
   mkdir -p "$workdir/bin"
   bash_path="$(command -v bash)"
 
@@ -285,15 +308,15 @@ EOF
   export SUDO_ARGS_OUT="$workdir/sudo.args"
   export NIXOS_REBUILD_ARGS_OUT="$workdir/nixos-rebuild.args"
 
-  run run_nixos_rebuild_from_repo boot prox-srvarrvm
+  run run_nixos_rebuild_from_repo dry-activate prox-srvarrvm
 
   [ "$status" -eq 0 ]
-  [ "$(<"$SUDO_ARGS_OUT")" = "nixos-rebuild boot --flake .#prox-srvarrvm -L --show-trace" ]
-  [ "$(<"$NIXOS_REBUILD_ARGS_OUT")" = "boot --flake .#prox-srvarrvm -L --show-trace" ]
+  [ "$(<"$SUDO_ARGS_OUT")" = "nixos-rebuild dry-activate --flake .#prox-srvarrvm -L --show-trace" ]
+  [ "$(<"$NIXOS_REBUILD_ARGS_OUT")" = "dry-activate --flake .#prox-srvarrvm -L --show-trace" ]
 }
 
-@test "run_darwin_switch_from_repo uses installed darwin-rebuild" {
-  workdir="$BATS_TMPDIR/darwin-rebuild-in-path"
+@test "run_darwin_switch_from_repo uses pinned nh" {
+  workdir="$BATS_TMPDIR/darwin-nh"
   mkdir -p "$workdir/bin"
   bash_path="$(command -v bash)"
 
@@ -301,94 +324,18 @@ EOF
     printf '#!%s\n' "$bash_path"
     cat <<'EOF'
 set -euo pipefail
-printf '%s\n' "$*" > "$SUDO_ARGS_OUT"
-if [[ "$1" = "-H" ]]; then
-  shift
-fi
-"$@"
-EOF
-  } > "$workdir/bin/sudo"
-  chmod +x "$workdir/bin/sudo"
-
-  {
-    printf '#!%s\n' "$bash_path"
-    cat <<'EOF'
-set -euo pipefail
-printf '%s\n' "$*" > "$DARWIN_REBUILD_ARGS_OUT"
-EOF
-  } > "$workdir/bin/darwin-rebuild"
-  chmod +x "$workdir/bin/darwin-rebuild"
-
-  {
-    printf '#!%s\n' "$bash_path"
-    cat <<'EOF'
-set -euo pipefail
-echo "unexpected nix invocation" >&2
-exit 99
+printf '%s\n' "$*" > "$NIX_ARGS_OUT"
 EOF
   } > "$workdir/bin/nix"
   chmod +x "$workdir/bin/nix"
 
   export PATH="$workdir/bin:$PATH"
-  export SUDO_ARGS_OUT="$workdir/sudo.args"
-  export DARWIN_REBUILD_ARGS_OUT="$workdir/darwin-rebuild.args"
-
-  run run_darwin_switch_from_repo JGWXHWDL4X
-
-  [ "$status" -eq 0 ]
-  [ "$(<"$SUDO_ARGS_OUT")" = "-H $workdir/bin/darwin-rebuild switch --flake .#JGWXHWDL4X -L --show-trace" ]
-  [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "switch --flake .#JGWXHWDL4X -L --show-trace" ]
-}
-
-@test "run_darwin_switch_from_repo falls back to repo-pinned darwin-rebuild build" {
-  workdir="$BATS_TMPDIR/darwin-rebuild-build"
-  mkdir -p "$workdir/bin" "$workdir/system/sw/bin"
-  bash_path="$(command -v bash)"
-
-  {
-    printf '#!%s\n' "$bash_path"
-    cat <<'EOF'
-set -euo pipefail
-printf '%s\n' "$*" > "$SUDO_ARGS_OUT"
-if [[ "$1" = "-H" ]]; then
-  shift
-fi
-"$@"
-EOF
-  } > "$workdir/bin/sudo"
-  chmod +x "$workdir/bin/sudo"
-
-  {
-    printf '#!%s\n' "$bash_path"
-    cat <<'EOF'
-set -euo pipefail
-printf '%s\n' "$*" > "$NIX_ARGS_OUT"
-printf '%s\n' "$DARWIN_SYSTEM_OUT"
-EOF
-  } > "$workdir/bin/nix"
-  chmod +x "$workdir/bin/nix"
-
-  {
-    printf '#!%s\n' "$bash_path"
-    cat <<'EOF'
-set -euo pipefail
-printf '%s\n' "$*" > "$DARWIN_REBUILD_ARGS_OUT"
-EOF
-  } > "$workdir/system/sw/bin/darwin-rebuild"
-  chmod +x "$workdir/system/sw/bin/darwin-rebuild"
-
-  export PATH="$workdir/bin"
-  export SUDO_ARGS_OUT="$workdir/sudo.args"
   export NIX_ARGS_OUT="$workdir/nix.args"
-  export DARWIN_REBUILD_ARGS_OUT="$workdir/darwin-rebuild.args"
-  export DARWIN_SYSTEM_OUT="$workdir/system"
 
   run run_darwin_switch_from_repo JGWXHWDL4X
 
   [ "$status" -eq 0 ]
-  [ "$(<"$NIX_ARGS_OUT")" = "build --no-link --print-out-paths .#darwinConfigurations.JGWXHWDL4X.system -L --show-trace" ]
-  [ "$(<"$SUDO_ARGS_OUT")" = "-H $workdir/system/sw/bin/darwin-rebuild switch --flake .#JGWXHWDL4X -L --show-trace" ]
-  [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "switch --flake .#JGWXHWDL4X -L --show-trace" ]
+  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin switch --hostname JGWXHWDL4X --print-build-logs --show-trace .#" ]
 }
 
 @test "update-machines reports all failed deploy hosts and exits nonzero" {
