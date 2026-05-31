@@ -115,6 +115,7 @@
       (lima.override { withAdditionalGuestAgents = true; })
       mkpasswd
       (my-page.override { neovim = config.programs.nixvim.build.package; })
+      nh
       nix-init
       nix-search-cli
       nix-tree
