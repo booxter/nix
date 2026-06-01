@@ -22,7 +22,7 @@ let
 in
 {
   imports = [
-    ../nixos-upgrade-holds
+    ./holds.nix
   ];
 
   config = lib.mkMerge [
