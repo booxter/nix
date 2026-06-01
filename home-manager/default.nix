@@ -71,6 +71,8 @@ in
     ]
     ++ lib.optionals (isDesktop && isDarwin) [
       vlc-bin
+    ]
+    ++ lib.optionals (!isWork && isDesktop && isDarwin) [
       xquartz
     ]
     ++ lib.optionals (isDesktop && !isDarwin) [
