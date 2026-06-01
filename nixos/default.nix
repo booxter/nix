@@ -34,7 +34,7 @@ in
         ./_mixins/observability-client
         ./_mixins/external-service.nix
         ./_mixins/lan-wan-accounting
-        ./_mixins/nixos-upgrade-holds
+        ./_mixins/auto-upgrade
         ./_mixins/nixos-upgrade-metrics
         ./_mixins/restic-beast-client.nix
         ./_mixins/user
@@ -58,35 +58,11 @@ in
     system.stateVersion = stateVersion;
     nixpkgs.hostPlatform = platform;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.isWork;
+    host.isCritical = lib.mkDefault (hostSpec.critical or false);
 
     nix.gc.dates = "Mon, 03:15";
     nix.optimise.dates = [ "Mon, 04:15" ];
     nix.optimise.randomizedDelaySec = "5min";
-
-    system.autoUpgrade = {
-      enable = true;
-      flake = "github:booxter/nix";
-      flags = [
-        "-L"
-        "--show-trace"
-      ];
-      # Run inherited daily upgrades after the Monday Proxmox node window.
-      dates = lib.mkDefault "05:15";
-      randomizedDelaySec = "5min";
-      persistent = false;
-      allowReboot = true;
-      rebootWindow = {
-        lower = "04:00";
-        upper = "06:00";
-      };
-    };
-
-    host.autoUpgrade.holds = [
-      {
-        startDate = "2026-06-08";
-        stopDate = "2026-06-28";
-      }
-    ];
 
     time.timeZone = "America/New_York";
 

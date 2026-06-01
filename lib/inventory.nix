@@ -367,6 +367,7 @@ rec {
       name = "beast";
       stateVersion = "25.11";
       platform = "x86_64-linux";
+      critical = true;
       dnsAliases = map (service: service.publicHost) publicServices;
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
