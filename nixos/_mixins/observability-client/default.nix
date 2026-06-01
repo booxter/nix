@@ -1,5 +1,6 @@
 {
   config,
+  hostname,
   hostInventory,
   lib,
   pkgs,
@@ -7,6 +8,7 @@
 }:
 let
   cfg = config.host.observability.client;
+  isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
   hostLabel = config.services.avahi.hostName;
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
   nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix;
@@ -219,227 +221,246 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable (
-    lib.mkMerge [
-      {
-        # Node exporter exposes host-level Linux metrics for Prometheus to scrape.
-        services.prometheus.exporters.node = {
-          enable = true;
-          inherit (cfg.nodeExporter) listenAddress openFirewall;
-          enabledCollectors = [
-            "processes"
-            "systemd"
-          ];
+  config = lib.mkMerge [
+    {
+      host.observability.client = {
+        enable = lib.mkDefault (!config.host.isWork);
+        lokiWriteUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
+        loki.mtls.enable = lib.mkDefault (!config.host.isWork);
+        mtlsClients.loki = {
+          enable = lib.mkDefault (!config.host.isWork);
+          secretPrefix = "observability/clients/loki";
         };
+        nodeExporter.mtls.enable = lib.mkDefault (!isLocalVmHost && hostname != "prox-fanavm");
+      };
 
-        # Alloy reads the local journal and ships those logs into Loki.
-        services.alloy = lib.mkIf (cfg.lokiWriteUrl != null) {
-          enable = true;
-          configPath = pkgs.writeText "config.alloy" ''
-                        loki.write "default" {
-                          endpoint {
-                            url = "${cfg.lokiWriteUrl}"
-            ${lokiTlsConfig}
-                          }
-                        }
-
-                        loki.relabel "journal" {
-                          forward_to = []
-
-                          rule {
-                            source_labels = ["__journal__hostname"]
-                            target_label  = "node_hostname"
-                          }
-
-                          rule {
-                            source_labels = ["__journal__systemd_unit"]
-                            target_label  = "systemd_unit"
-                          }
-
-                          rule {
-                            source_labels = ["__journal_priority_keyword"]
-                            target_label  = "level"
-                          }
-                        }
-
-                        loki.source.journal "read" {
-                          forward_to    = [loki.write.default.receiver]
-                          relabel_rules = loki.relabel.journal.rules
-                          max_age       = "12h"
-                          labels = {
-                            job  = "systemd-journal",
-                            host = "${hostLabel}",
-                          }
-                        }
-          '';
-        };
-
-        # Optional blackbox exporter lets Prometheus run the same reachability
-        # probes from other LAN nodes for WAN comparison.
-        services.prometheus.exporters.blackbox = lib.mkIf cfg.blackbox.enable {
-          enable = true;
-          listenAddress = "127.0.0.1";
-          port = cfg.blackbox.mtls.internalPort;
-          configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
-            modules = blackboxModules;
+      host.observability.lanWan = {
+        enable = lib.mkDefault (!config.host.isWork);
+        mode = lib.mkDefault (if config.host.isProxmox then "host-local" else "interface-path");
+      };
+    }
+    (lib.mkIf cfg.enable (
+      lib.mkMerge [
+        {
+          # Node exporter exposes host-level Linux metrics for Prometheus to scrape.
+          services.prometheus.exporters.node = {
+            enable = true;
+            inherit (cfg.nodeExporter) listenAddress openFirewall;
+            enabledCollectors = [
+              "processes"
+              "systemd"
+            ];
           };
-        };
 
-        host.observability.client.prometheusMtlsEndpoints.blackbox = lib.mkIf cfg.blackbox.enable {
-          enable = true;
-          listenAddress = cfg.blackbox.listenAddress;
-          port = cfg.blackbox.mtls.publicPort;
-          path = "/probe";
-          upstream = "http://127.0.0.1:${toString cfg.blackbox.mtls.internalPort}/probe";
-          openFirewall = cfg.blackbox.openFirewall;
-        };
-      }
-      (lib.mkIf (cfg.lokiWriteUrl != null && cfg.loki.mtls.enable) {
-        assertions = [
-          {
-            assertion = lokiMtlsClient != null;
-            message = "host.observability.client.loki.mtls.clientName must reference an enabled host.observability.client.mtlsClients entry.";
-          }
-        ];
+          # Alloy reads the local journal and ships those logs into Loki.
+          services.alloy = lib.mkIf (cfg.lokiWriteUrl != null) {
+            enable = true;
+            configPath = pkgs.writeText "config.alloy" ''
+                          loki.write "default" {
+                            endpoint {
+                              url = "${cfg.lokiWriteUrl}"
+              ${lokiTlsConfig}
+                            }
+                          }
 
-        sops.secrets.observabilityLokiClientCrt = {
-          key = "${lokiMtlsClient.secretPrefix}/client_crt";
-          mode = "0400";
-          restartUnits = [ "alloy.service" ];
-        };
+                          loki.relabel "journal" {
+                            forward_to = []
 
-        sops.secrets.observabilityLokiClientKey = {
-          key = "${lokiMtlsClient.secretPrefix}/client_key";
-          mode = "0400";
-          restartUnits = [ "alloy.service" ];
-        };
+                            rule {
+                              source_labels = ["__journal__hostname"]
+                              target_label  = "node_hostname"
+                            }
 
-        systemd.services.alloy = {
-          wants = [ "sops-install-secrets.service" ];
-          after = [ "sops-install-secrets.service" ];
-          serviceConfig.LoadCredential = [
-            "loki-client.crt:${config.sops.secrets.observabilityLokiClientCrt.path}"
-            "loki-client.key:${config.sops.secrets.observabilityLokiClientKey.path}"
-          ];
-        };
-      })
-      (lib.mkIf cfg.nodeExporter.mtls.enable {
-        sops.secrets.prometheusNodeExporterServerCrt = {
-          key = "${nodeExporterSecretPrefix}/server_crt";
-          owner = nodeExporterUser;
-          group = nodeExporterGroup;
-          mode = "0400";
-          restartUnits = [ "prometheus-node-exporter.service" ];
-        };
-        sops.secrets.prometheusNodeExporterServerKey = {
-          key = "${nodeExporterSecretPrefix}/server_key";
-          owner = nodeExporterUser;
-          group = nodeExporterGroup;
-          mode = "0400";
-          restartUnits = [ "prometheus-node-exporter.service" ];
-        };
+                            rule {
+                              source_labels = ["__journal__systemd_unit"]
+                              target_label  = "systemd_unit"
+                            }
 
-        sops.templates."node-exporter-web-config.yaml" = {
-          owner = nodeExporterUser;
-          group = nodeExporterGroup;
-          mode = "0400";
-          content = nodeExporterMtls.mkNodeExporterWebConfig {
-            certFile = config.sops.secrets.prometheusNodeExporterServerCrt.path;
-            keyFile = config.sops.secrets.prometheusNodeExporterServerKey.path;
+                            rule {
+                              source_labels = ["__journal_priority_keyword"]
+                              target_label  = "level"
+                            }
+                          }
+
+                          loki.source.journal "read" {
+                            forward_to    = [loki.write.default.receiver]
+                            relabel_rules = loki.relabel.journal.rules
+                            max_age       = "12h"
+                            labels = {
+                              job  = "systemd-journal",
+                              host = "${hostLabel}",
+                            }
+                          }
+            '';
           };
-          restartUnits = [ "prometheus-node-exporter.service" ];
-        };
 
-        services.prometheus.exporters.node.extraFlags = [
-          "--web.config.file=${config.sops.templates."node-exporter-web-config.yaml".path}"
-        ];
+          # Optional blackbox exporter lets Prometheus run the same reachability
+          # probes from other LAN nodes for WAN comparison.
+          services.prometheus.exporters.blackbox = lib.mkIf cfg.blackbox.enable {
+            enable = true;
+            listenAddress = "127.0.0.1";
+            port = cfg.blackbox.mtls.internalPort;
+            configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
+              modules = blackboxModules;
+            };
+          };
 
-        systemd.services.prometheus-node-exporter = {
-          wants = [ "sops-install-secrets.service" ];
-          after = [ "sops-install-secrets.service" ];
-        };
-      })
-      (lib.mkIf (enabledPrometheusMtlsEndpoints != { }) {
-        assertions = [
-          {
-            assertion =
-              (builtins.length endpointPortValues) == (builtins.length (lib.unique endpointPortValues));
-            message = "host.observability.client.prometheusMtlsEndpoints must not reuse listen ports on the same host.";
-          }
-        ];
-
-        sops.secrets =
-          lib.mapAttrs' (
-            endpointName: endpoint:
-            lib.nameValuePair "${endpointSecretAttrName endpointName}-server-crt" {
-              key = "${endpoint.secretPrefix}/server_crt";
-              owner = config.services.nginx.user;
-              group = config.services.nginx.group;
-              mode = "0400";
-              restartUnits = [ "nginx.service" ];
+          host.observability.client.prometheusMtlsEndpoints.blackbox = lib.mkIf cfg.blackbox.enable {
+            enable = true;
+            listenAddress = cfg.blackbox.listenAddress;
+            port = cfg.blackbox.mtls.publicPort;
+            path = "/probe";
+            upstream = "http://127.0.0.1:${toString cfg.blackbox.mtls.internalPort}/probe";
+            openFirewall = cfg.blackbox.openFirewall;
+          };
+        }
+        (lib.mkIf (cfg.lokiWriteUrl != null && cfg.loki.mtls.enable) {
+          assertions = [
+            {
+              assertion = lokiMtlsClient != null;
+              message = "host.observability.client.loki.mtls.clientName must reference an enabled host.observability.client.mtlsClients entry.";
             }
-          ) enabledPrometheusMtlsEndpoints
-          // lib.mapAttrs' (
-            endpointName: endpoint:
-            lib.nameValuePair "${endpointSecretAttrName endpointName}-server-key" {
-              key = "${endpoint.secretPrefix}/server_key";
-              owner = config.services.nginx.user;
-              group = config.services.nginx.group;
-              mode = "0400";
-              restartUnits = [ "nginx.service" ];
+          ];
+
+          sops.secrets.observabilityLokiClientCrt = {
+            key = "${lokiMtlsClient.secretPrefix}/client_crt";
+            mode = "0400";
+            restartUnits = [ "alloy.service" ];
+          };
+
+          sops.secrets.observabilityLokiClientKey = {
+            key = "${lokiMtlsClient.secretPrefix}/client_key";
+            mode = "0400";
+            restartUnits = [ "alloy.service" ];
+          };
+
+          systemd.services.alloy = {
+            wants = [ "sops-install-secrets.service" ];
+            after = [ "sops-install-secrets.service" ];
+            serviceConfig.LoadCredential = [
+              "loki-client.crt:${config.sops.secrets.observabilityLokiClientCrt.path}"
+              "loki-client.key:${config.sops.secrets.observabilityLokiClientKey.path}"
+            ];
+          };
+        })
+        (lib.mkIf cfg.nodeExporter.mtls.enable {
+          sops.secrets.prometheusNodeExporterServerCrt = {
+            key = "${nodeExporterSecretPrefix}/server_crt";
+            owner = nodeExporterUser;
+            group = nodeExporterGroup;
+            mode = "0400";
+            restartUnits = [ "prometheus-node-exporter.service" ];
+          };
+          sops.secrets.prometheusNodeExporterServerKey = {
+            key = "${nodeExporterSecretPrefix}/server_key";
+            owner = nodeExporterUser;
+            group = nodeExporterGroup;
+            mode = "0400";
+            restartUnits = [ "prometheus-node-exporter.service" ];
+          };
+
+          sops.templates."node-exporter-web-config.yaml" = {
+            owner = nodeExporterUser;
+            group = nodeExporterGroup;
+            mode = "0400";
+            content = nodeExporterMtls.mkNodeExporterWebConfig {
+              certFile = config.sops.secrets.prometheusNodeExporterServerCrt.path;
+              keyFile = config.sops.secrets.prometheusNodeExporterServerKey.path;
+            };
+            restartUnits = [ "prometheus-node-exporter.service" ];
+          };
+
+          services.prometheus.exporters.node.extraFlags = [
+            "--web.config.file=${config.sops.templates."node-exporter-web-config.yaml".path}"
+          ];
+
+          systemd.services.prometheus-node-exporter = {
+            wants = [ "sops-install-secrets.service" ];
+            after = [ "sops-install-secrets.service" ];
+          };
+        })
+        (lib.mkIf (enabledPrometheusMtlsEndpoints != { }) {
+          assertions = [
+            {
+              assertion =
+                (builtins.length endpointPortValues) == (builtins.length (lib.unique endpointPortValues));
+              message = "host.observability.client.prometheusMtlsEndpoints must not reuse listen ports on the same host.";
             }
-          ) enabledPrometheusMtlsEndpoints;
+          ];
 
-        services.nginx = {
-          enable = true;
-          recommendedProxySettings = true;
-          recommendedTlsSettings = true;
-          virtualHosts = lib.mapAttrs' (
-            endpointName: endpoint:
-            lib.nameValuePair "prometheus-mtls-${endpointName}" {
-              serverName = endpoint.serverName;
-              onlySSL = true;
-              listen = [
-                {
-                  addr = endpoint.listenAddress;
-                  port = endpoint.port;
-                  ssl = true;
-                }
-              ];
-              sslCertificate = config.sops.secrets."${endpointSecretAttrName endpointName}-server-crt".path;
-              sslCertificateKey = config.sops.secrets."${endpointSecretAttrName endpointName}-server-key".path;
-              sslTrustedCertificate = internalPkiRootCaPath;
-              extraConfig = ''
-                ssl_client_certificate ${internalPkiRootCaPath};
-                ssl_verify_client on;
-              '';
-              locations.${endpoint.path} = {
-                proxyPass = endpoint.upstream;
-                extraConfig = endpoint.locationExtraConfig;
-              };
+          sops.secrets =
+            lib.mapAttrs' (
+              endpointName: endpoint:
+              lib.nameValuePair "${endpointSecretAttrName endpointName}-server-crt" {
+                key = "${endpoint.secretPrefix}/server_crt";
+                owner = config.services.nginx.user;
+                group = config.services.nginx.group;
+                mode = "0400";
+                restartUnits = [ "nginx.service" ];
+              }
+            ) enabledPrometheusMtlsEndpoints
+            // lib.mapAttrs' (
+              endpointName: endpoint:
+              lib.nameValuePair "${endpointSecretAttrName endpointName}-server-key" {
+                key = "${endpoint.secretPrefix}/server_key";
+                owner = config.services.nginx.user;
+                group = config.services.nginx.group;
+                mode = "0400";
+                restartUnits = [ "nginx.service" ];
+              }
+            ) enabledPrometheusMtlsEndpoints;
+
+          services.nginx = {
+            enable = true;
+            recommendedProxySettings = true;
+            recommendedTlsSettings = true;
+            virtualHosts = lib.mapAttrs' (
+              endpointName: endpoint:
+              lib.nameValuePair "prometheus-mtls-${endpointName}" {
+                serverName = endpoint.serverName;
+                onlySSL = true;
+                listen = [
+                  {
+                    addr = endpoint.listenAddress;
+                    port = endpoint.port;
+                    ssl = true;
+                  }
+                ];
+                sslCertificate = config.sops.secrets."${endpointSecretAttrName endpointName}-server-crt".path;
+                sslCertificateKey = config.sops.secrets."${endpointSecretAttrName endpointName}-server-key".path;
+                sslTrustedCertificate = internalPkiRootCaPath;
+                extraConfig = ''
+                  ssl_client_certificate ${internalPkiRootCaPath};
+                  ssl_verify_client on;
+                '';
+                locations.${endpoint.path} = {
+                  proxyPass = endpoint.upstream;
+                  extraConfig = endpoint.locationExtraConfig;
+                };
+              }
+            ) enabledPrometheusMtlsEndpoints;
+          };
+
+          networking.firewall.allowedTCPPorts = lib.unique (
+            builtins.concatMap (endpoint: lib.optional endpoint.openFirewall endpoint.port) (
+              builtins.attrValues enabledPrometheusMtlsEndpoints
+            )
+          );
+
+          systemd.services.nginx = {
+            wants = [ "sops-install-secrets.service" ];
+            after = [ "sops-install-secrets.service" ];
+          };
+        })
+        {
+          assertions = [
+            {
+              assertion = !(cfg.blackbox.enable && !cfg.blackbox.mtls.enable);
+              message = "host.observability.client.blackbox now requires mTLS; set host.observability.client.blackbox.mtls.enable = true.";
             }
-          ) enabledPrometheusMtlsEndpoints;
-        };
-
-        networking.firewall.allowedTCPPorts = lib.unique (
-          builtins.concatMap (endpoint: lib.optional endpoint.openFirewall endpoint.port) (
-            builtins.attrValues enabledPrometheusMtlsEndpoints
-          )
-        );
-
-        systemd.services.nginx = {
-          wants = [ "sops-install-secrets.service" ];
-          after = [ "sops-install-secrets.service" ];
-        };
-      })
-      {
-        assertions = [
-          {
-            assertion = !(cfg.blackbox.enable && !cfg.blackbox.mtls.enable);
-            message = "host.observability.client.blackbox now requires mTLS; set host.observability.client.blackbox.mtls.enable = true.";
-          }
-        ];
-      }
-    ]
-  );
+          ];
+        }
+      ]
+    ))
+  ];
 }

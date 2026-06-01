@@ -75,22 +75,6 @@ in
     # NFS filesystems, but rpcbind is only needed for legacy NFSv3/RPC helpers.
     services.rpcbind.enable = lib.mkOverride 75 false;
 
-    host.observability.client = {
-      enable = lib.mkDefault (!config.host.isWork);
-      lokiWriteUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
-      loki.mtls.enable = lib.mkDefault (!config.host.isWork);
-      mtlsClients.loki = {
-        enable = lib.mkDefault (!config.host.isWork);
-        secretPrefix = "observability/clients/loki";
-      };
-      nodeExporter.mtls.enable = lib.mkDefault (!isLocalVmHost && hostname != "prox-fanavm");
-    };
-
-    host.observability.lanWan = {
-      enable = lib.mkDefault (!config.host.isWork);
-      mode = lib.mkDefault (if config.host.isProxmox then "host-local" else "interface-path");
-    };
-
     # TODO: revisit hw sensor monitoring (sensord or alternative).
 
     environment.systemPackages = with pkgs; [
