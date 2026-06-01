@@ -34,6 +34,7 @@ in
         ./_mixins/external-service.nix
         ./_mixins/internal-https-service.nix
         ./_mixins/lan-wan-accounting
+        ./_mixins/nix
         ./_mixins/observability-client
         ./_mixins/restic-beast-client.nix
         ./_mixins/user
@@ -59,10 +60,6 @@ in
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.isWork;
     host.isCritical = lib.mkDefault (hostSpec.critical or false);
 
-    nix.gc.dates = "Mon, 03:15";
-    nix.optimise.dates = [ "Mon, 04:15" ];
-    nix.optimise.randomizedDelaySec = "5min";
-
     time.timeZone = "America/New_York";
 
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)
@@ -82,12 +79,6 @@ in
       pciutils
       psmisc
     ];
-
-    systemd.services.nix-daemon.serviceConfig = {
-      MemoryAccounting = true;
-      MemoryMax = "90%";
-      OOMScoreAdjust = 500;
-    };
 
     hardware.enableRedistributableFirmware = true;
     hardware.cpu.intel.updateMicrocode = lib.mkIf (
