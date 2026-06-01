@@ -288,6 +288,7 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BUILD_MATRIX: ${{ needs.plan-build-matrix.outputs.matrix }}
           HEAD_SHA: ${{ github.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
@@ -297,10 +298,33 @@ jobs:
 
             const diffDir = "diff-output";
 
+            let plannedMatrix = { include: [] };
+            try {
+              plannedMatrix = JSON.parse(process.env.BUILD_MATRIX || "{\"include\":[]}");
+            } catch (error) {
+              core.warning(`Could not parse planned build matrix: ${error.message}`);
+            }
+
+            const safeMachineName = (machine) => machine.replace(/[^A-Za-z0-9._-]/g, "-");
+            const expectedDiffEntries = (plannedMatrix.include || [])
+              .filter((entry) => entry.diff_machine)
+              .map((entry) => ({
+                key: `${entry.diff_order}-${safeMachineName(entry.diff_machine)}`,
+                machine: entry.diff_machine,
+                name: entry.name,
+              }));
+
+            const artifactKeys = new Set();
             let diffEntries = [];
             let unchangedEntries = [];
             if (fs.existsSync(diffDir)) {
               const files = fs.readdirSync(diffDir).sort();
+              for (const name of files) {
+                const match = name.match(/^(?:changed|unchanged)-(.+)\.(?:md|txt)$/);
+                if (match) {
+                  artifactKeys.add(match[1]);
+                }
+              }
               diffEntries = files
                 .filter((name) => name.endsWith(".md"))
                 .map((name) =>
@@ -317,6 +341,9 @@ jobs:
                     .filter(Boolean)
                 );
             }
+            const missingEntries = expectedDiffEntries.filter(
+              (entry) => !artifactKeys.has(entry.key),
+            );
 
             const baseSha = process.env.BASE_SHA;
             const headSha = process.env.HEAD_SHA;
@@ -374,8 +401,8 @@ jobs:
               for (const entry of diffEntries) {
                 appendBlock(entry);
               }
-            } else if (unchangedEntries.length > 0) {
-              appendBlock("_No machine produced package, closure-size, or generated config changes._");
+            } else if (expectedDiffEntries.length > 0) {
+              appendBlock("_No uploaded machine diff reported package, closure-size, or generated config changes._");
             } else {
               appendBlock("_No selected build target has config diff support._");
             }
@@ -385,6 +412,18 @@ jobs:
                 ["### Unchanged machines", "", ...unchangedEntries.map((entry) => `- ${entry}`)].join(
                   "\n",
                 ),
+              );
+            }
+
+            if (missingEntries.length > 0) {
+              appendBlock(
+                [
+                  "### Missing diff artifacts",
+                  "",
+                  ...missingEntries.map(
+                    (entry) => `- ${entry.name}: no diff artifact was downloaded for \`${entry.machine}\``
+                  ),
+                ].join("\n"),
               );
             }
 
