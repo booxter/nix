@@ -34,7 +34,6 @@ in
         ./_mixins/external-service.nix
         ./_mixins/internal-https-service.nix
         ./_mixins/lan-wan-accounting
-        ./_mixins/nixos-upgrade-metrics
         ./_mixins/observability-client
         ./_mixins/restic-beast-client.nix
         ./_mixins/user
@@ -85,11 +84,6 @@ in
         secretPrefix = "observability/clients/loki";
       };
       nodeExporter.mtls.enable = lib.mkDefault (!isLocalVmHost && hostname != "prox-fanavm");
-    };
-
-    host.observability.nixosUpgrade = {
-      enable = lib.mkDefault true;
-      exportToNodeExporter = lib.mkDefault (!config.host.isWork);
     };
 
     host.observability.lanWan = {

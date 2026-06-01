@@ -23,6 +23,7 @@ in
 {
   imports = [
     ./holds.nix
+    ./metrics.nix
   ];
 
   config = lib.mkMerge [
