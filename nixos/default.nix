@@ -29,13 +29,13 @@ in
       ]
       ++ [
         ./_mixins/avahi
-        ./_mixins/internal-https-service.nix
-        ./_mixins/backup-metrics/default.nix
-        ./_mixins/observability-client
-        ./_mixins/external-service.nix
-        ./_mixins/lan-wan-accounting
         ./_mixins/auto-upgrade
+        ./_mixins/backup-metrics/default.nix
+        ./_mixins/external-service.nix
+        ./_mixins/internal-https-service.nix
+        ./_mixins/lan-wan-accounting
         ./_mixins/nixos-upgrade-metrics
+        ./_mixins/observability-client
         ./_mixins/restic-beast-client.nix
         ./_mixins/user
       ]
