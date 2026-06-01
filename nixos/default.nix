@@ -32,6 +32,7 @@ in
         ./_mixins/auto-upgrade
         ./_mixins/backup-metrics/default.nix
         ./_mixins/external-service.nix
+        ./_mixins/firmware
         ./_mixins/internal-https-service.nix
         ./_mixins/lan-wan-accounting
         ./_mixins/nix
@@ -79,15 +80,6 @@ in
       pciutils
       psmisc
     ];
-
-    hardware.enableRedistributableFirmware = true;
-    hardware.cpu.intel.updateMicrocode = lib.mkIf (
-      pkgs.stdenv.hostPlatform.isx86_64 || pkgs.stdenv.hostPlatform.isi686
-    ) true;
-    services.fwupd.enable = true;
-    # A Nordic 2.4 GHz USB receiver (VID:PID 1915:1025) can hang fwupd startup
-    # via the nordic_hid plugin when it is plugged into a host.
-    services.fwupd.daemonSettings.DisabledPlugins = [ "nordic_hid" ];
 
   }
   // {
