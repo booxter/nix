@@ -31,11 +31,16 @@ in
     '';
   };
 
-  systemd.services.nfs-server.unitConfig.RequiresMountsFor = [
-    "/volume2"
-    "/volume2/Media"
-    "/volume2/nix-cache"
-  ];
+  systemd.services.nfs-server = {
+    # If /volume2 misses the initial boot transaction but mounts later, pull
+    # NFS back up with it instead of leaving clients stuck until manual repair.
+    wantedBy = [ "volume2.mount" ];
+    unitConfig.RequiresMountsFor = [
+      "/volume2"
+      "/volume2/Media"
+      "/volume2/nix-cache"
+    ];
+  };
 
   services.nfs.settings.nfsd = {
     vers3 = "n";
