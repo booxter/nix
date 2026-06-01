@@ -42,16 +42,24 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    systemd.services.nixos-upgrade.serviceConfig.ExecStartPost = "${writeSuccessMetric}";
+  config = lib.mkMerge [
+    {
+      host.observability.nixosUpgrade = {
+        enable = lib.mkDefault true;
+        exportToNodeExporter = lib.mkDefault (!config.host.isWork);
+      };
+    }
+    (lib.mkIf cfg.enable {
+      systemd.services.nixos-upgrade.serviceConfig.ExecStartPost = "${writeSuccessMetric}";
 
-    services.prometheus.exporters.node = lib.mkIf textfileCollectorNeeded {
-      enabledCollectors = [ "textfile" ];
-      extraFlags = [ "--collector.textfile.directory=${cfg.textfileDir}" ];
-    };
+      services.prometheus.exporters.node = lib.mkIf textfileCollectorNeeded {
+        enabledCollectors = [ "textfile" ];
+        extraFlags = [ "--collector.textfile.directory=${cfg.textfileDir}" ];
+      };
 
-    systemd.tmpfiles.rules =
-      lib.optional cfg.exportToNodeExporter "d ${cfg.textfileDir} 0755 root root - -"
-      ++ lib.optional cfg.exportToNodeExporter "z ${cfg.textfileDir}/nixos-upgrade.prom 0644 root root - -";
-  };
+      systemd.tmpfiles.rules =
+        lib.optional cfg.exportToNodeExporter "d ${cfg.textfileDir} 0755 root root - -"
+        ++ lib.optional cfg.exportToNodeExporter "z ${cfg.textfileDir}/nixos-upgrade.prom 0644 root root - -";
+    })
+  ];
 }

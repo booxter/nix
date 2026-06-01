@@ -50,6 +50,12 @@ in
     default = false;
   };
 
+  options.host.isCritical = lib.mkOption {
+    type = lib.types.bool;
+    default = false;
+    description = "Whether this host should avoid frequent unattended reboots.";
+  };
+
   options.host.dnsName = lib.mkOption {
     type = lib.types.str;
     default = hostname;
