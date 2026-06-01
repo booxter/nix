@@ -30,8 +30,14 @@ in
 
   users.users.jellyfin.extraGroups = [ "media" ];
 
-  systemd.services.jellyfin.unitConfig.RequiresMountsFor = "/media";
-  systemd.services.jellyfin.restartTriggers = [ jellyfinLoggingConfig ];
+  systemd.services.jellyfin = {
+    # If /volume2 is slow during boot and /media mounts later, bring Jellyfin
+    # back with the media bind mount instead of leaving nginx with a dead
+    # upstream.
+    wantedBy = [ "media.mount" ];
+    unitConfig.RequiresMountsFor = "/media";
+    restartTriggers = [ jellyfinLoggingConfig ];
+  };
 
   # Keep the existing /media path expected by Jellyfin/Jellarr.
   fileSystems."/media" = {
@@ -41,6 +47,7 @@ in
       "bind"
       "nofail"
       "x-systemd.requires-mounts-for=/volume2"
+      "x-systemd.wanted-by=volume2.mount"
     ];
   };
 }
