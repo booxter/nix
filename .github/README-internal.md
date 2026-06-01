@@ -46,6 +46,11 @@ blocking `nix build`. Diff generation is advisory: failures are captured in the
 uploaded artifact and PR comment, but the build job result is still determined
 by the blocking build.
 
+Pull request jobs explicitly check out GitHub's generated merge ref
+(`refs/pull/<number>/merge`). The diff head is the checked-out merge commit, not
+the raw PR branch tip, so diffs reflect the revision CI built after applying the
+PR to the current base branch.
+
 The build matrix selection controls which machines get diffs. Machine-specific
 PRs only diff the selected machine jobs, while scoped or full matrix PRs diff
 the toplevel machine jobs included in that matrix. VM, QEMU, ISO, and other

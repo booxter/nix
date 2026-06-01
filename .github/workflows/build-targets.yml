@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
@@ -52,6 +54,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
@@ -68,6 +72,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
 
       - name: Compute build matrix
         id: plan
@@ -146,6 +152,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
+          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
           fetch-depth: 0
 
       - name: Free disk space
@@ -157,13 +164,19 @@ jobs:
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
 
+      - name: Resolve checked-out revision
+        if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
+        id: checked-out-revision
+        shell: bash
+        run: printf 'sha=%s\n' "$(git rev-parse HEAD)" >>"${GITHUB_OUTPUT}"
+
       - name: Generate config diff
         if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
         continue-on-error: true
         shell: bash
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          HEAD_SHA: ${{ github.sha }}
+          HEAD_SHA: ${{ steps.checked-out-revision.outputs.sha }}
           MACHINE: ${{ matrix.diff_machine }}
           MACHINE_NAME: ${{ matrix.name }}
           ORDER: ${{ matrix.diff_order }}
@@ -289,7 +302,8 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           BUILD_MATRIX: ${{ needs.plan-build-matrix.outputs.matrix }}
-          HEAD_SHA: ${{ github.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
@@ -347,6 +361,7 @@ jobs:
 
             const baseSha = process.env.BASE_SHA;
             const headSha = process.env.HEAD_SHA;
+            const prHeadSha = process.env.PR_HEAD_SHA;
             const runUrl = process.env.RUN_URL;
             const maxCommentLength = 60000;
             const maxComments = 10;
@@ -449,6 +464,7 @@ jobs:
                 "",
                 `Base: \`${baseSha}\``,
                 `Head: \`${headSha}\``,
+                `PR head: \`${prHeadSha}\``,
                 `Run: ${runUrl}`,
                 "",
                 "Advisory output from `nix run .#diff -- --details <machine> <base> <head>`.",
