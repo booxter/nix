@@ -145,6 +145,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
 
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
@@ -155,76 +157,283 @@ jobs:
       - name: Build ${{ matrix.name }}
         run: ${{ matrix.cmd }}
 
-  wait-flake-update-diffs:
-    name: wait config diffs
-    runs-on: ubuntu-latest
-    timeout-minutes: 190
+      - name: Generate config diff
+        if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
+        continue-on-error: true
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          MACHINE: ${{ matrix.diff_machine }}
+          MACHINE_NAME: ${{ matrix.name }}
+          ORDER: ${{ matrix.diff_order }}
+        run: |
+          set -euo pipefail
+
+          mkdir -p diff-output
+          safe_machine="$(
+            printf '%s' "${MACHINE}" \
+              | tr -c 'A-Za-z0-9._-' '-'
+          )"
+          changed_file="diff-output/changed-${ORDER}-${safe_machine}.md"
+          unchanged_file="diff-output/unchanged-${ORDER}-${safe_machine}.txt"
+          stdout_file="$(mktemp)"
+          stderr_file="$(mktemp)"
+
+          is_noop_diff() {
+            local file="$1"
+
+            if [ ! -s "${file}" ]; then
+              return 0
+            fi
+
+            awk '
+              NF {
+                line = $0
+                gsub(/^[[:space:]]+|[[:space:]]+$/, "", line)
+                lines[++n] = line
+              }
+              END {
+                if (n != 2 && n != 3) {
+                  exit 1
+                }
+                if (lines[1] !~ /^SIZE: / || lines[2] != "DIFF: 0 bytes") {
+                  exit 1
+                }
+                if (n == 3 && lines[3] != "No generated config differences.") {
+                  exit 1
+                }
+
+                size = lines[1]
+                sub(/^SIZE: /, "", size)
+                count = split(size, parts, / -> /)
+                if (count != 2 || parts[1] != parts[2]) {
+                  exit 1
+                }
+              }
+            ' "${file}"
+          }
+
+          set +e
+          nix run .#diff -- --details "${MACHINE}" "${BASE_SHA}" "${HEAD_SHA}" >"${stdout_file}" 2>"${stderr_file}"
+          status="$?"
+          set -e
+
+          if [ "${status}" -eq 0 ] && is_noop_diff "${stdout_file}"; then
+            printf '%s\n' "${MACHINE_NAME}" >"${unchanged_file}"
+            exit 0
+          fi
+
+          {
+            printf '<details>\n'
+            printf '<summary>%s</summary>\n\n' "${MACHINE_NAME}"
+            printf '```text\n'
+            if [ "${status}" -ne 0 ]; then
+              printf 'diff generation failed with exit code %s\n\n' "${status}"
+              if [ -s "${stderr_file}" ]; then
+                printf 'stderr:\n'
+                cat "${stderr_file}"
+                printf '\n'
+              fi
+              if [ -s "${stdout_file}" ]; then
+                printf 'stdout:\n'
+                cat "${stdout_file}"
+                printf '\n'
+              fi
+            else
+              cat "${stdout_file}"
+            fi
+            printf '```\n\n'
+            printf '</details>\n'
+          } >"${changed_file}"
+
+      - name: Upload config diff artifact
+        if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: config-diff-${{ matrix.diff_order }}-${{ matrix.diff_machine }}
+          path: diff-output/*
+          if-no-files-found: warn
+
+  post-config-diffs:
+    name: post config diffs
+    needs:
+      - plan-build-matrix
+      - build
+    if: >-
+      ${{
+        always() &&
+        github.event_name == 'pull_request' &&
+        needs.plan-build-matrix.result == 'success' &&
+        needs.plan-build-matrix.outputs.docs_only != 'true'
+      }}
+    runs-on: ubuntu-slim
+    continue-on-error: true
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+      pull-requests: read
     steps:
-      - name: Wait for config diffs
+      - name: Download config diff artifacts
+        continue-on-error: true
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: config-diff-*
+          path: diff-output
+          merge-multiple: true
+
+      - name: Post config diffs
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
           script: |
-            const { owner, repo } = context.repo;
+            const fs = require("fs");
+            const path = require("path");
 
-            if (context.eventName !== "pull_request") {
-              core.info("Not a pull request event; no config diff workflow to wait for.");
-              return;
+            const diffDir = "diff-output";
+
+            let diffEntries = [];
+            let unchangedEntries = [];
+            if (fs.existsSync(diffDir)) {
+              const files = fs.readdirSync(diffDir).sort();
+              diffEntries = files
+                .filter((name) => name.endsWith(".md"))
+                .map((name) =>
+                  fs.readFileSync(path.join(diffDir, name), "utf8").trim()
+                )
+                .filter(Boolean);
+              unchangedEntries = files
+                .filter((name) => name.endsWith(".txt"))
+                .flatMap((name) =>
+                  fs
+                    .readFileSync(path.join(diffDir, name), "utf8")
+                    .split(/\r?\n/)
+                    .map((line) => line.trim())
+                    .filter(Boolean)
+                );
             }
 
-            const workflowId = "flake-update-diffs.yml";
-            const headSha = context.payload.pull_request.head.sha;
-            const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-            const deadline = Date.now() + 185 * 60 * 1000;
-            let lastRunId = null;
+            const baseSha = process.env.BASE_SHA;
+            const headSha = process.env.HEAD_SHA;
+            const runUrl = process.env.RUN_URL;
+            const maxCommentLength = 60000;
+            const maxComments = 10;
+            const chunkLength = 59000;
 
-            core.info(`Waiting for ${workflowId} on ${headSha}.`);
-            while (Date.now() < deadline) {
-              let runs = [];
-              try {
-                const response = await github.request(
-                  "GET /repos/{owner}/{repo}/actions/workflows/{workflow_id}/runs",
-                  {
-                    owner,
-                    repo,
-                    workflow_id: workflowId,
-                    event: "pull_request",
-                    head_sha: headSha,
-                    per_page: 10,
-                  },
+            const truncateBlock = (block, limit) => {
+              if (block.length <= limit) {
+                return block;
+              }
+
+              const summary = block.match(/<summary>([^<]*)<\/summary>/)?.[1] || "diff";
+              const fenceStart = block.indexOf("```text\n");
+              const fenceEnd = block.lastIndexOf("\n```");
+              const content =
+                fenceStart >= 0 && fenceEnd > fenceStart
+                  ? block.slice(fenceStart + "```text\n".length, fenceEnd)
+                  : block;
+              const prefix = `<details>\n<summary>${summary}</summary>\n\n\`\`\`text\n`;
+              const suffix =
+                "\n\n[truncated; full output is available in the workflow artifacts.]\n```\n\n</details>";
+
+              if (prefix.length + suffix.length >= limit) {
+                return `[diff output for ${summary} truncated; see workflow artifacts]`.slice(
+                  0,
+                  limit,
                 );
-                runs = response.data.workflow_runs || [];
-              } catch (error) {
-                core.warning(`Could not list config diff workflow runs; retrying: ${error.message}`);
-                await sleep(30 * 1000);
-                continue;
               }
 
-              const run = runs.sort(
-                (left, right) => new Date(right.created_at) - new Date(left.created_at),
-              )[0];
-              if (!run) {
-                core.info("Config diff workflow run has not appeared yet.");
-                await sleep(20 * 1000);
-                continue;
-              }
+              return `${prefix}${content.slice(0, limit - prefix.length - suffix.length)}${suffix}`;
+            };
 
-              if (run.id !== lastRunId) {
-                core.info(`Watching config diff workflow run ${run.html_url}`);
-                lastRunId = run.id;
-              }
+            const chunks = [""];
+            const appendBlock = (block) => {
+              const normalized = truncateBlock(block, chunkLength);
+              const current = chunks[chunks.length - 1];
 
-              if (run.status === "completed") {
-                core.info(
-                  `Config diff workflow completed with conclusion: ${run.conclusion || "unknown"}.`,
-                );
+              if (!current) {
+                chunks[chunks.length - 1] = normalized;
                 return;
               }
 
-              core.info(`Config diff workflow status is ${run.status}; waiting.`);
-              await sleep(30 * 1000);
+              if (current.length + 2 + normalized.length <= chunkLength) {
+                chunks[chunks.length - 1] = `${current}\n\n${normalized}`;
+                return;
+              }
+
+              chunks.push(normalized);
+            };
+
+            appendBlock("### Changed machines");
+            if (diffEntries.length > 0) {
+              for (const entry of diffEntries) {
+                appendBlock(entry);
+              }
+            } else if (unchangedEntries.length > 0) {
+              appendBlock("_No machine produced package, closure-size, or generated config changes._");
+            } else {
+              appendBlock("_No selected build target has config diff support._");
             }
 
-            core.warning("Timed out waiting for config diff workflow; not blocking CI.");
+            if (unchangedEntries.length > 0) {
+              appendBlock(
+                ["### Unchanged machines", "", ...unchangedEntries.map((entry) => `- ${entry}`)].join(
+                  "\n",
+                ),
+              );
+            }
+
+            const rawChunks = chunks.filter(Boolean);
+            const omittedChunks = Math.max(0, rawChunks.length - maxComments);
+            const visibleChunks = rawChunks.slice(0, maxComments);
+            if (omittedChunks > 0) {
+              visibleChunks[maxComments - 1] = [
+                visibleChunks[maxComments - 1],
+                "",
+                `[${omittedChunks} additional comment part(s) omitted; full output is available in the workflow artifacts.]`,
+              ].join("\n");
+            }
+
+            const { owner, repo } = context.repo;
+            const bodies = visibleChunks.map((chunk, index) => {
+              const part =
+                rawChunks.length > 1
+                  ? ` (part ${index + 1}/${Math.min(rawChunks.length, maxComments)})`
+                  : "";
+              const header = [
+                `## Config diffs${part}`,
+                "",
+                `Base: \`${baseSha}\``,
+                `Head: \`${headSha}\``,
+                `Run: ${runUrl}`,
+                "",
+                "Advisory output from `nix run .#diff -- --details <machine> <base> <head>`.",
+                "",
+              ].join("\n");
+              const body = `${header}${chunk}`;
+
+              if (body.length > maxCommentLength) {
+                return `${body.slice(
+                  0,
+                  maxCommentLength - 100,
+                )}\n\n[truncated; full output is available in the workflow artifacts.]`;
+              }
+
+              return body;
+            });
+
+            for (const body of bodies) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: context.payload.pull_request.number,
+                body,
+              });
+            }
 
   ci-success:
     name: CI (all jobs)
@@ -234,7 +443,7 @@ jobs:
       - format
       - get-hosts-check
       - build
-      - wait-flake-update-diffs
+      - post-config-diffs
     runs-on: ubuntu-slim
     steps:
       - name: Check job results

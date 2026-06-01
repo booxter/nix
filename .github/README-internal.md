@@ -40,10 +40,13 @@ The build matrix is selected in this order:
 
 ## Config diffs
 
-`.github/workflows/flake-update-diffs.yml` runs for pull requests.
+Pull request build jobs that target a toplevel NixOS or nix-darwin machine also
+run `nix run .#diff -- --details <machine> <base-sha> <head-sha>` after the
+blocking `nix build`. Diff generation is advisory: failures are captured in the
+uploaded artifact and PR comment, but the build job result is still determined
+by the blocking build.
 
-It runs `nix run .#diff -- --details <machine> <base-sha> <head-sha>` in a separate
-advisory matrix for each toplevel NixOS and nix-darwin machine in
-`ci-target-inventory.json`. Each matrix job uploads one markdown artifact, and
-the final job posts one or more `Config diffs` comments with the collected
-output. The main CI workflow waits for this advisory workflow on pull requests.
+The build matrix selection controls which machines get diffs. Machine-specific
+PRs only diff the selected machine jobs, while scoped or full matrix PRs diff
+the toplevel machine jobs included in that matrix. VM, QEMU, ISO, and other
+non-toplevel targets remain build-only.
