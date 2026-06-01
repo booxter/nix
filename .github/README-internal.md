@@ -38,14 +38,20 @@ The build matrix is selected in this order:
   PR-only).
 - If no machine-specific mapping applies cleanly, CI falls back to full scoped matrix.
 
-## Flake update diffs
+## Config diffs
 
-`.github/workflows/flake-update-diffs.yml` runs only for same-repository
-`ci/flake-update` pull requests that change `flake.lock`.
+Pull request build jobs that target a toplevel NixOS or nix-darwin machine also
+run `nix run .#diff -- --details <machine> <base-sha> <head-sha>` after the
+blocking `nix build`. Diff generation is advisory: failures are captured in the
+uploaded artifact and PR comment, but the build job result is still determined
+by the blocking build.
 
-It runs `nix run .#diff -- --details <machine> <base-sha> <head-sha>` in a separate
-advisory matrix for each toplevel NixOS and nix-darwin machine in
-`ci-target-inventory.json`. Each matrix job uploads one markdown artifact, and
-the final job replaces the marked `Config diffs` section in the PR body. The
-marker replacement keeps reruns idempotent and avoids duplicating the machine
-list.
+Pull request jobs explicitly check out GitHub's generated merge ref
+(`refs/pull/<number>/merge`). The diff head is the checked-out merge commit, not
+the raw PR branch tip, so diffs reflect the revision CI built after applying the
+PR to the current base branch.
+
+The build matrix selection controls which machines get diffs. Machine-specific
+PRs only diff the selected machine jobs, while scoped or full matrix PRs diff
+the toplevel machine jobs included in that matrix. VM, QEMU, ISO, and other
+non-toplevel targets remain build-only.

@@ -6,14 +6,6 @@ function nixBuildCmd(attr) {
   return `nix build .#${attr} -L --show-trace`;
 }
 
-function toBuildMatrixEntries(targets) {
-  return targets.map((target) => ({
-    name: target.name,
-    cmd: nixBuildCmd(target.attr),
-    os: target.runner,
-  }));
-}
-
 function diffMachineForAttr(attr) {
   const nixosMatch = attr.match(
     /^nixosConfigurations\.([^.]+)\.config\.system\.build\.toplevel$/,
@@ -30,26 +22,25 @@ function diffMachineForAttr(attr) {
   return null;
 }
 
-function toDiffMatrixEntries(targets) {
+function toBuildMatrixEntries(targets) {
   const seen = new Set();
-  const entries = [];
 
-  for (const target of targets) {
+  return targets.map((target, index) => {
     const machine = diffMachineForAttr(target.attr);
-    if (!machine || seen.has(machine)) {
-      continue;
+    const shouldDiff = machine && !seen.has(machine);
+
+    if (shouldDiff) {
+      seen.add(machine);
     }
 
-    seen.add(machine);
-    entries.push({
-      machine,
+    return {
       name: target.name,
-      order: String(entries.length).padStart(3, "0"),
+      cmd: nixBuildCmd(target.attr),
+      diff_machine: shouldDiff ? machine : "",
+      diff_order: shouldDiff ? String(index).padStart(3, "0") : "",
       os: target.runner,
-    });
-  }
-
-  return entries;
+    };
+  });
 }
 
 function appendMapping(mapping, prefix, field, name) {
@@ -95,5 +86,4 @@ module.exports = {
   inventory,
   nixBuildCmd,
   toBuildMatrixEntries,
-  toDiffMatrixEntries,
 };
