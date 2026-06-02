@@ -20,6 +20,8 @@
       WorkingDirectory = "/var/root";
       EnvironmentVariables = {
         HOME = "/var/root";
+        NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
+        SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
       };
       ProcessType = "Background";
       StandardOutPath = "/var/log/fleet-cache-warmer.log";
