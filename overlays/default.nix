@@ -36,24 +36,6 @@
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
-      mesa =
-        if prev.stdenv.hostPlatform.isDarwin then
-          prev.mesa.overrideAttrs (old: {
-            postPatch = (old.postPatch or "") + ''
-              # Carry the Darwin timeout fix from nixpkgs PR #519195 until
-              # the pinned nixpkgs input picks it up.
-              # Darwin only installs `swrast_dri.so`; stop waiting for a
-              # nonexistent `.dylib` name in the megadriver install script.
-              substituteInPlace bin/install_megadrivers.py \
-                --replace-fail "            while ext != '.' + args.libname_suffix" "            while ext != '.so'"
-
-              # Darwin uses `st_mtimespec` instead of `st_mtim`.
-              substituteInPlace src/gallium/drivers/llvmpipe/lp_context.c \
-                --replace-fail 'st_mtim.' 'st_mtimespec.'
-            '';
-          })
-        else
-          prev.mesa;
       transmission_4 = patchedTransmission;
       transmission = patchedTransmission;
 
