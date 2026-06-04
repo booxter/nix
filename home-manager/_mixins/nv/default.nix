@@ -18,6 +18,7 @@
         devspace
         dive
         gitlab-ci-local
+        gpclient
         jinjanator
         kind
         kubectl
