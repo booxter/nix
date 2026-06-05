@@ -507,6 +507,7 @@ branch="$3"
 repo_url="$4"
 GC_HEADROOM_KB="$5"
 rebuild_action="$6"
+target_host_name="$7"
 repo_dir="$(mktemp -d)"
 
 get_avail_path() {
@@ -557,17 +558,21 @@ git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
 cd "$repo_dir"
 
 os="$(uname -s)"
-host_name="$(hostname)"
+host_name="$(hostname -s 2>/dev/null || hostname)"
+if [[ "$host_name" != "$target_host_name" ]]; then
+  echo "Refusing to deploy ${target_host_name}: SSH landed on ${host_name}." >&2
+  exit 1
+fi
 case "$os" in
   Darwin)
     if [[ "$rebuild_action" != "switch" ]]; then
       echo "Unsupported deploy action on Darwin: ${rebuild_action}. Use --switch." >&2
       exit 1
     fi
-    run_darwin_switch_from_repo "$host_name"
+    run_darwin_switch_from_repo "$target_host_name"
     ;;
   Linux)
-    run_nixos_rebuild_from_repo "$rebuild_action" "$host_name"
+    run_nixos_rebuild_from_repo "$rebuild_action" "$target_host_name"
     ;;
   *)
     echo "Unsupported OS: $os" >&2
@@ -579,7 +584,7 @@ REMOTE
   if is_local_host "$host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
-    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION"; then
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -592,7 +597,7 @@ REMOTE
     failed_hosts+=("$host")
     continue
   fi
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")
