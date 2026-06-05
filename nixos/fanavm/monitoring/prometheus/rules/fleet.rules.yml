@@ -21,7 +21,10 @@ groups:
           summary: "Root filesystem usage critical on {{ $labels.instance }}"
           description: "The root filesystem on {{ $labels.instance }} has been above 95% used for 15 minutes."
       - alert: HostUpgradeStale
-        expr: ((time() - node_nixos_upgrade_last_success_time_seconds{job=~"node|node-mtls"}) / 86400) > 14
+        expr: |
+          ((time() - node_nixos_upgrade_last_success_time_seconds{job=~"node|node-mtls"}) / 86400) > 14
+            unless on(instance)
+          (node_nixos_upgrade_hold_active{job=~"node|node-mtls"} == 1)
         for: 24h
         labels:
           severity: warning

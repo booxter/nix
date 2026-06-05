@@ -99,3 +99,13 @@ tests:
             exp_annotations:
               summary: "NixOS upgrades stale on beast"
               description: "beast has not completed a successful NixOS upgrade for more than 14 days."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_nixos_upgrade_last_success_time_seconds{instance="beast",job="node-mtls"}'
+        values: "0x46082"
+      - series: 'node_nixos_upgrade_hold_active{instance="beast",job="node-mtls"}'
+        values: "1x46082"
+    alert_rule_test:
+      - eval_time: 15d30s
+        alertname: HostUpgradeStale
