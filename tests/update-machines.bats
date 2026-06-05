@@ -102,6 +102,11 @@ if [[ "$joined" == "true" ]]; then
 fi
 
 if [[ "$joined" == cat\ \>* ]]; then
+  if [[ -n "${SSH_UPLOADED_SCRIPT_OUT:-}" ]]; then
+    cat > "$SSH_UPLOADED_SCRIPT_OUT"
+  else
+    cat >/dev/null
+  fi
   exit 0
 fi
 
@@ -345,9 +350,12 @@ EOF
 
   export PATH="$workdir/bin:$PATH"
   export SSH_TEST_MODE="deploy-fail"
+  export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
 
   run script -q /dev/null bash ./scripts/update-machines.sh alpha beta
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
+  grep -Fq 'target_host_name="$7"' "$SSH_UPLOADED_SCRIPT_OUT"
+  grep -Fq 'run_nixos_rebuild_from_repo "$rebuild_action" "$target_host_name"' "$SSH_UPLOADED_SCRIPT_OUT"
 }
