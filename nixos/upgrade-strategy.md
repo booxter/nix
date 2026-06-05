@@ -46,6 +46,10 @@ All times below are in `America/New_York`.
 actual upgrade start time may drift within that window. `frame` still upgrades
 on schedule but does not auto-reboot.
 
+The early Monday builder and cache windows allow auto-reboots from `02:59` until
+`06:00`, so kernel, initrd, or module changes staged during those early windows
+can activate without waiting for manual intervention.
+
 ## Warmup Scope
 
 `fleet-cache-warmer` builds and pushes the CI-validated Nix outputs below:

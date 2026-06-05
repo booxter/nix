@@ -28,7 +28,13 @@ let
         (
           { hostname, lib, ... }:
           {
-            system.autoUpgrade.dates = lib.mkIf (lib.hasPrefix "prox-" hostname) "Mon 03:00";
+            system.autoUpgrade = lib.mkIf (lib.hasPrefix "prox-" hostname) {
+              dates = "Mon 03:00";
+              rebootWindow = {
+                lower = lib.mkForce "02:59";
+                upper = lib.mkForce "06:00";
+              };
+            };
           }
         )
       ];

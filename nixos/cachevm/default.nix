@@ -100,6 +100,10 @@ in
   # ready before machines that may consume it during their own auto-updates.
   system.autoUpgrade.dates = lib.mkForce "Mon 03:30";
   system.autoUpgrade.randomizedDelaySec = lib.mkForce "5min";
+  system.autoUpgrade.rebootWindow = {
+    lower = lib.mkForce "02:59";
+    upper = lib.mkForce "06:00";
+  };
 
   systemd.services.atticd.unitConfig.RequiresMountsFor = "/cache";
 }
