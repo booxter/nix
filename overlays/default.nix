@@ -137,6 +137,9 @@
       shelfmark = prev.shelfmark.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../lib/patches/shelfmark-disable-torrent-stall-cancel.patch
+          ../lib/patches/shelfmark-add-download-poll-debug-state.patch
+          ../lib/patches/shelfmark-add-download-diagnostic-signal.patch
+          ../lib/patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
         ];
       });
     };

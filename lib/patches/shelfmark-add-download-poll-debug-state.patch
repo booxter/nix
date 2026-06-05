@@ -1,0 +1,181 @@
+diff --git a/shelfmark/download/clients/base_handler.py b/shelfmark/download/clients/base_handler.py
+index 0d26c1d..173b00d 100644
+--- a/shelfmark/download/clients/base_handler.py
++++ b/shelfmark/download/clients/base_handler.py
+@@ -22,6 +22,12 @@ from shelfmark.download.clients import (
+     list_configured_clients,
+ )
+ from shelfmark.download.fs import run_blocking_io
++from shelfmark.download.poll_debug import (
++    clear_poll_debug_state,
++    record_poll_error,
++    record_poll_result,
++    record_poll_start,
++)
+ from shelfmark.download.permissions_debug import log_path_permission_context
+ from shelfmark.release_sources import DownloadHandler
+ 
+@@ -755,7 +761,19 @@ class ExternalClientHandler(DownloadHandler, ABC):
+             result: str | None = None
+             logger.debug("Starting poll for %s (content_type=%s)", download_id, task.content_type)
+             while not cancel_flag.is_set():
+-                status = client.get_status(download_id)
++                record_poll_start(
++                    task_id=task.task_id,
++                    client_name=client.name,
++                    download_id=download_id,
++                    content_type=task.content_type,
++                )
++                try:
++                    status = client.get_status(download_id)
++                except Exception as e:
++                    record_poll_error(task.task_id, e)
++                    raise
++                record_poll_result(task.task_id, status)
++
+                 progress_callback(status.progress)
+ 
+                 # Check for completion
+@@ -881,6 +898,8 @@ class ExternalClientHandler(DownloadHandler, ABC):
+             status_callback("error", str(e))
+             self._safe_remove_download(client, download_id, protocol, "polling exception")
+             return None
++        finally:
++            clear_poll_debug_state(task.task_id)
+ 
+         # Clean up on success
+         if result:
+ 
+     def _handle_completed_file(
+diff --git a/shelfmark/download/poll_debug.py b/shelfmark/download/poll_debug.py
+new file mode 100644
+index 0000000..fe271e4
+--- /dev/null
++++ b/shelfmark/download/poll_debug.py
+@@ -0,0 +1,126 @@
++"""Diagnostic state for external download-client polling."""
++
++from __future__ import annotations
++
++import time
++from threading import Lock
++from typing import Any
++
++_poll_debug_lock = Lock()
++_poll_debug_state: dict[str, dict[str, Any]] = {}
++
++
++def _coerce_float(value: object) -> float | None:
++    if isinstance(value, bool):
++        return None
++    if isinstance(value, (int, float)):
++        return float(value)
++    return None
++
++
++def _stringify(value: object) -> str | None:
++    if value is None:
++        return None
++    if hasattr(value, "value"):
++        enum_value = getattr(value, "value")
++        return str(enum_value)
++    return str(value)
++
++
++def _copy_with_ages(entry: dict[str, Any], now: float) -> dict[str, Any]:
++    copied = dict(entry)
++    for key in (
++        "created_at",
++        "last_poll_started_at",
++        "last_poll_finished_at",
++        "last_poll_error_at",
++    ):
++        timestamp = copied.get(key)
++        if isinstance(timestamp, (int, float)):
++            copied[f"{key}_age_seconds"] = round(now - timestamp, 3)
++    return copied
++
++
++def record_poll_start(
++    *,
++    task_id: str,
++    client_name: str,
++    download_id: str,
++    content_type: str | None,
++) -> None:
++    """Record that a download-client poll is about to run."""
++    now = time.time()
++    with _poll_debug_lock:
++        entry = _poll_debug_state.setdefault(
++            task_id,
++            {
++                "task_id": task_id,
++                "created_at": now,
++                "poll_count": 0,
++            },
++        )
++        entry.update(
++            {
++                "task_id": task_id,
++                "client": client_name,
++                "download_id": download_id,
++                "content_type": content_type,
++                "last_poll_started_at": now,
++                "poll_in_flight": True,
++            }
++        )
++        entry["poll_count"] = int(entry.get("poll_count") or 0) + 1
++        entry.pop("last_error", None)
++
++
++def record_poll_result(task_id: str, status: object) -> None:
++    """Record the result returned by a download-client poll."""
++    now = time.time()
++    with _poll_debug_lock:
++        entry = _poll_debug_state.setdefault(
++            task_id,
++            {
++                "task_id": task_id,
++                "created_at": now,
++                "poll_count": 0,
++            },
++        )
++        entry.update(
++            {
++                "last_poll_finished_at": now,
++                "poll_in_flight": False,
++                "last_progress": _coerce_float(getattr(status, "progress", None)),
++                "last_state": _stringify(getattr(status, "state", None)),
++                "last_message": _stringify(getattr(status, "message", None)),
++                "last_complete": bool(getattr(status, "complete", False)),
++                "last_download_speed": _coerce_float(getattr(status, "download_speed", None)),
++                "last_eta": getattr(status, "eta", None),
++            }
++        )
++
++
++def record_poll_error(task_id: str, error: BaseException) -> None:
++    """Record that a download-client poll raised."""
++    now = time.time()
++    with _poll_debug_lock:
++        entry = _poll_debug_state.setdefault(task_id, {"task_id": task_id, "created_at": now})
++        entry.update(
++            {
++                "last_poll_error_at": now,
++                "poll_in_flight": False,
++                "last_error": f"{type(error).__name__}: {error}",
++            }
++        )
++
++
++def clear_poll_debug_state(task_id: str) -> None:
++    """Drop diagnostic state for a task after its polling function exits."""
++    with _poll_debug_lock:
++        _poll_debug_state.pop(task_id, None)
++
++
++def get_poll_debug_snapshot() -> list[dict[str, Any]]:
++    """Return a snapshot of active poll diagnostics."""
++    now = time.time()
++    with _poll_debug_lock:
++        return [_copy_with_ages(entry, now) for entry in _poll_debug_state.values()]

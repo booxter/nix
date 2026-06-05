@@ -1,0 +1,120 @@
+diff --git a/shelfmark/download/orchestrator.py b/shelfmark/download/orchestrator.py
+index 78d1e35..d04b656 100644
+--- a/shelfmark/download/orchestrator.py
++++ b/shelfmark/download/orchestrator.py
+@@ -4,19 +4,23 @@ with archive extraction and custom script support.
+ """
+ 
+ import os
+ import random
++import signal
++import sys
+ import threading
+ import time
++import traceback
+ from concurrent.futures import Future, ThreadPoolExecutor
+ from email.utils import parseaddr
+ from pathlib import Path
+ from threading import Event, Lock
+ from typing import Any
+ 
+ from shelfmark.core.config import config
+ from shelfmark.core.logger import setup_logger
+ from shelfmark.core.models import DownloadTask, QueueStatus, SearchMode
+ from shelfmark.core.queue import book_queue
++from shelfmark.download.poll_debug import get_poll_debug_snapshot
+ from shelfmark.core.request_helpers import (
+     normalize_optional_text,
+     normalize_positive_int,
+@@ -66,6 +70,91 @@ _PROGRESS_BROADCAST_COMPLETE_PERCENT = 99
+ _PROGRESS_BROADCAST_MIN_DELTA = 10
+ 
+ 
++def _download_debug_signal_number() -> int | None:
++    """Pick a diagnostic signal that avoids Gunicorn's USR1/USR2 handlers."""
++    realtime_min = getattr(signal, "SIGRTMIN", None)
++    realtime_max = getattr(signal, "SIGRTMAX", None)
++    if realtime_min is not None and realtime_max is not None:
++        try:
++            signum = int(realtime_min) + 3
++            realtime_max_int = int(realtime_max)
++        except (TypeError, ValueError):
++            pass
++        else:
++            if signum <= realtime_max_int:
++                return signum
++    fallback = getattr(signal, "SIGUSR2", None)
++    if fallback is not None:
++        try:
++            return int(fallback)
++        except (TypeError, ValueError):
++            pass
++    return None
++
++
++def _format_current_python_threads() -> str:
++    frames = sys._current_frames()
++    sections: list[str] = []
++    for thread in threading.enumerate():
++        frame = frames.get(thread.ident)
++        native_id = getattr(thread, "native_id", None)
++        sections.append(
++            (
++                f"Thread name={thread.name!r} ident={thread.ident} "
++                f"native_id={native_id} daemon={thread.daemon} alive={thread.is_alive()}"
++            )
++        )
++        if frame is not None:
++            sections.append("".join(traceback.format_stack(frame)).rstrip())
++        else:
++            sections.append("No Python frame available")
++    return "\n\n".join(sections)
++
++
++def _format_gevent_run_info() -> str:
++    try:
++        from gevent import util as gevent_util
++    except ImportError:
++        return "gevent is not importable"
++
++    try:
++        run_info = gevent_util.format_run_info()
++    except Exception as e:
++        return f"gevent run info unavailable: {type(e).__name__}: {e}"
++
++    if isinstance(run_info, list):
++        return "".join(str(part) for part in run_info)
++    return str(run_info)
++
++
++def _handle_download_debug_signal(signum: int, frame: object) -> None:
++    logger.warning("Received download diagnostic signal %s; dumping worker state", signum)
++    poll_snapshot = get_poll_debug_snapshot()
++    if poll_snapshot:
++        for entry in poll_snapshot:
++            logger.warning("Download poll diagnostic: %s", entry)
++    else:
++        logger.warning("Download poll diagnostic: no active poll state recorded")
++    logger.warning("Python thread dump:\n%s", _format_current_python_threads())
++    logger.warning("Gevent run info:\n%s", _format_gevent_run_info())
++
++
++def _register_download_debug_signal() -> None:
++    signum = _download_debug_signal_number()
++    if signum is None:
++        logger.warning("Download diagnostic signal unavailable on this platform")
++        return
++    try:
++        signal.signal(signum, _handle_download_debug_signal)
++    except (OSError, RuntimeError, ValueError) as e:
++        logger.warning("Unable to register download diagnostic signal %s: %s", signum, e)
++    else:
++        logger.info("Download diagnostic signal registered as signal %s", signum)
++
++
++_register_download_debug_signal()
++
++
+ def _is_plain_email_address(value: str) -> bool:
+     parsed = parseaddr(value or "")[1]
+     return bool(parsed) and "@" in parsed and parsed == value

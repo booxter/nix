@@ -1,0 +1,77 @@
+diff --git a/shelfmark/download/clients/base_handler.py b/shelfmark/download/clients/base_handler.py
+index 173b00d..a2bfe87 100644
+--- a/shelfmark/download/clients/base_handler.py
++++ b/shelfmark/download/clients/base_handler.py
+@@ -23,6 +23,7 @@ from shelfmark.download.clients import (
+ )
+ from shelfmark.download.fs import run_blocking_io
+ from shelfmark.download.poll_debug import (
++    maybe_log_poll_heartbeat,
+     clear_poll_debug_state,
+     record_poll_error,
+     record_poll_result,
+@@ -776,6 +777,7 @@ class ExternalClientHandler(DownloadHandler, ABC):
+                     raise
+                 record_poll_result(task.task_id, status)
+ 
++                maybe_log_poll_heartbeat(task.task_id, logger)
+                 progress_callback(status.progress)
+ 
+                 # Check for completion
+diff --git a/shelfmark/download/poll_debug.py b/shelfmark/download/poll_debug.py
+index fe271e4..b973f17 100644
+--- a/shelfmark/download/poll_debug.py
++++ b/shelfmark/download/poll_debug.py
+@@ -6,8 +6,10 @@ import time
+ from threading import Lock
+ from typing import Any
+ 
++POLL_HEARTBEAT_LOG_INTERVAL = 60.0
+ _poll_debug_lock = Lock()
+ _poll_debug_state: dict[str, dict[str, Any]] = {}
++_poll_heartbeat_last_logged_at: dict[str, float] = {}
+ 
+ 
+ def _coerce_float(value: object) -> float | None:
+@@ -117,10 +119,41 @@ def clear_poll_debug_state(task_id: str) -> None:
+     """Drop diagnostic state for a task after its polling function exits."""
+     with _poll_debug_lock:
+         _poll_debug_state.pop(task_id, None)
++        _poll_heartbeat_last_logged_at.pop(task_id, None)
+ 
+ 
+ def get_poll_debug_snapshot() -> list[dict[str, Any]]:
+     """Return a snapshot of active poll diagnostics."""
+     now = time.time()
+     with _poll_debug_lock:
+         return [_copy_with_ages(entry, now) for entry in _poll_debug_state.values()]
++
++
++def maybe_log_poll_heartbeat(task_id: str, logger: Any) -> None:
++    """Log a throttled heartbeat for a task that is actively polling a client."""
++    now = time.time()
++    with _poll_debug_lock:
++        last_logged_at = _poll_heartbeat_last_logged_at.get(task_id, 0.0)
++        if now - last_logged_at < POLL_HEARTBEAT_LOG_INTERVAL:
++            return
++        _poll_heartbeat_last_logged_at[task_id] = now
++        entry = _copy_with_ages(_poll_debug_state.get(task_id, {"task_id": task_id}), now)
++
++    logger.info(
++        (
++            "Download poll heartbeat task=%s client=%s download_id=%s "
++            "poll_count=%s in_flight=%s progress=%s state=%s complete=%s "
++            "last_poll_started_age=%s last_poll_finished_age=%s message=%s"
++        ),
++        entry.get("task_id"),
++        entry.get("client"),
++        entry.get("download_id"),
++        entry.get("poll_count"),
++        entry.get("poll_in_flight"),
++        entry.get("last_progress"),
++        entry.get("last_state"),
++        entry.get("last_complete"),
++        entry.get("last_poll_started_at_age_seconds"),
++        entry.get("last_poll_finished_at_age_seconds"),
++        entry.get("last_message"),
++    )
