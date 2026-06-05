@@ -31,6 +31,21 @@
       "warm": true
     },
     {
+      "attr": "nixosConfigurations.prox-nvvm.config.system.build.toplevel",
+      "name": "nvvm (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "prox-nvvm"
+        ],
+        "prefixes": [
+          "nixos/nvvm/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
       "attr": "nixosConfigurations.prx1-lab.config.system.build.toplevel",
       "name": "prx1-lab (x86_64-linux)",
       "runner": "ubuntu-latest",
