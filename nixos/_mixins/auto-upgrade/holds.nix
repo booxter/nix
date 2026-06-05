@@ -16,7 +16,7 @@ let
 
     ${lib.concatMapStringsSep "\n" (hold: ''
       if [[ ! "$today" < "${hold.startDate}" && ! "$today" > "${hold.stopDate}" ]]; then
-        echo "Skipping nixos-upgrade on ${hostname}: ''${today} is within hold ${hold.startDate}..${hold.stopDate}." >&2
+        echo "Skipping NixOS auto-upgrade maintenance on ${hostname}: ''${today} is within hold ${hold.startDate}..${hold.stopDate}." >&2
         exit 1
       fi
     '') cfg.holds}
@@ -87,9 +87,10 @@ in
         }
       ];
       description = ''
-        Inclusive local-date ranges during which `nixos-upgrade.service` should
-        be skipped. Timers still fire on schedule, but the upgrade service exits
-        cleanly before it starts the actual upgrade.
+        Inclusive local-date ranges during which unattended NixOS auto-upgrade
+        maintenance should be skipped. Timers still fire on schedule, but the
+        upgrade service and delayed critical-host reboot service exit cleanly
+        before they perform changes.
       '';
     };
   };
@@ -113,6 +114,9 @@ in
     }
     (lib.mkIf (cfg.holds != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
+    })
+    (lib.mkIf (cfg.holds != [ ] && config.host.isCritical && config.system.autoUpgrade.enable) {
+      systemd.services.nixos-weekly-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
     (lib.mkIf metricsCfg.enable {
       # Update immediately on switch so adding or removing a hold changes alert
