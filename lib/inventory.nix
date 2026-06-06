@@ -301,11 +301,6 @@ rec {
       ip = "192.168.11.2";
     }
     {
-      identifiers = [ "a2:65:a0:ce:9f:23" ];
-      hostname = "mair";
-      ip = "192.168.11.3";
-    }
-    {
       identifiers = [ "78:2d:7e:24:2d:f9" ];
       hostname = "sw-lab";
       ip = "192.168.15.1";

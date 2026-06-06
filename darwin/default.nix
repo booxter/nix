@@ -21,6 +21,7 @@
       ./_mixins/homebrew
       ./_mixins/internal-pki
       ./_mixins/lan-wan-accounting
+      ./_mixins/logs-client
       ./_mixins/nix-gc
       ./_mixins/observability-client
       ./_mixins/sudo
@@ -54,7 +55,13 @@
       ++ [
         "Wi-Fi"
       ];
+    computerName = hostname;
     dhcpClientId = hostname;
+  };
+
+  system.defaults.smb = lib.optionalAttrs (!isWork) {
+    NetBIOSName = hostname;
+    ServerDescription = hostname;
   };
 
   services.virby = {
