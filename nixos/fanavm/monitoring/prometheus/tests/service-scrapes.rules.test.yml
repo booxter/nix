@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="sabnzbd",instance="prox-srvarrvm"}'
+      - series: 'up{job="lolek",instance="beast"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
@@ -25,11 +25,11 @@ tests:
           - exp_labels:
               alertname: ApplicationMetricsScrapeDown
               category: service
-              instance: prox-srvarrvm
-              job: sabnzbd
+              instance: beast
+              job: lolek
               severity: warning
             exp_annotations:
-              summary: "Application metrics scrape down: sabnzbd on prox-srvarrvm"
-              description: "Prometheus has been unable to scrape the sabnzbd metrics endpoint on prox-srvarrvm for 5 minutes."
+              summary: "Application metrics scrape down: lolek on beast"
+              description: "Prometheus has been unable to scrape the lolek metrics endpoint on beast for 5 minutes."
       - eval_time: 5m30s
         alertname: ApplicationMetricsScrapeDown

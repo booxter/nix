@@ -7,6 +7,8 @@
 }:
 let
   hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
+  lolekMetricsInternalPort = 19568;
+  lolekMetricsMtlsPort = 9568;
 in
 {
   imports = [
@@ -49,11 +51,21 @@ in
     postSourceCaption = true;
     hardwareAcceleration.backend = "qsv";
     hardwareAcceleration.device = hostSpec.hardware.igpu.renderDevice;
+    metrics = {
+      enable = true;
+      port = lolekMetricsInternalPort;
+    };
     localTelegramBotApi = {
       enable = true;
       environmentFile = config.sops.templates."lolek-telegram-bot-api.env".path;
       verbosity = 1;
     };
+  };
+
+  host.observability.client.prometheusMtlsEndpoints.lolek = {
+    enable = true;
+    port = lolekMetricsMtlsPort;
+    upstream = "http://127.0.0.1:${toString lolekMetricsInternalPort}/metrics";
   };
 
   systemd.services.lolek = {
