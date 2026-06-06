@@ -66,7 +66,7 @@
             "uid": "P8E80F9AEF21F6940"
           },
           "editorMode": "code",
-          "expr": "sum by (host) ((count_over_time({job=\"systemd-journal\",level=~\"emerg|alert|crit|err\"}[15m]) or count_over_time({job=\"darwin-file-log\"} | detected_level=~\"critical|error|fatal\" [15m]))) or (sum by (host) (count_over_time({job=~\"systemd-journal|darwin-file-log\"}[15m])) * 0)",
+          "expr": "sum by (host) ((count_over_time({job=\"systemd-journal\",level=~\"emerg|alert|crit|err|error\"}[15m]) or count_over_time({job=\"darwin-file-log\"} | detected_level=~\"critical|error|fatal\" [15m]))) or (sum by (host) (count_over_time({job=~\"systemd-journal|darwin-file-log\"}[15m])) * 0)",
           "queryType": "range",
           "refId": "A"
         }
@@ -157,7 +157,7 @@
             "uid": "P8E80F9AEF21F6940"
           },
           "editorMode": "code",
-          "expr": "{job=~\"systemd-journal|darwin-file-log\"} | (level=~\"emerg|alert|crit|err\" or detected_level=~\"critical|error|fatal\")",
+          "expr": "{job=~\"systemd-journal|darwin-file-log\"} | (level=~\"emerg|alert|crit|err|error\" or detected_level=~\"critical|error|fatal\")",
           "queryType": "range",
           "refId": "A"
         }
@@ -295,6 +295,6 @@
   "timezone": "browser",
   "title": "Logs",
   "uid": "fana-logs-overview",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
