@@ -22,10 +22,8 @@
       ./_mixins/internal-pki
       ./_mixins/lan-wan-accounting
       ./_mixins/logs-client
-      ./_mixins/networking
       ./_mixins/nix-gc
       ./_mixins/observability-client
-      ./_mixins/private-wifi-address
       ./_mixins/sudo
       ./_mixins/thermal-accounting
     ]
@@ -45,6 +43,25 @@
     createHome = true;
     description = "Ihar Hrachyshka";
     shell = pkgs.zsh;
+  };
+
+  # Can't configure networking on managed work devices
+  networking = lib.optionalAttrs (!isWork) {
+    knownNetworkServices =
+      # mair - laptop - doesn't have builtin ethernet
+      lib.optionals (hostname != "mair") [
+        "Ethernet"
+      ]
+      ++ [
+        "Wi-Fi"
+      ];
+    computerName = hostname;
+    dhcpClientId = hostname;
+  };
+
+  system.defaults.smb = lib.optionalAttrs (!isWork) {
+    NetBIOSName = hostname;
+    ServerDescription = hostname;
   };
 
   services.virby = {
