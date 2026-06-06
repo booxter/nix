@@ -267,6 +267,13 @@ in
                             forward_to = []
 
                             rule {
+                              source_labels = ["__journal_coredump_gid", "__journal_coredump_exe"]
+                              separator     = ";"
+                              regex         = "30000;/build/.*"
+                              action        = "drop"
+                            }
+
+                            rule {
                               source_labels = ["__journal__hostname"]
                               target_label  = "node_hostname"
                             }
