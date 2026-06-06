@@ -71,6 +71,7 @@ in
           services.prometheus.exporters.node = {
             enable = true;
             listenAddress = cfg.nodeExporter.listenAddress;
+            disabledCollectors = lib.mkIf config.host.observability.thermal.enable [ "thermal" ];
           };
         }
         (lib.mkIf cfg.nodeExporter.mtls.enable (
