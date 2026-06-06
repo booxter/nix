@@ -18,6 +18,8 @@ let
       "--web.listen-address"
       "${nodeCfg.listenAddress}:${toString nodeCfg.port}"
     ]
+    ++ map (collector: "--collector.${collector}") nodeCfg.enabledCollectors
+    ++ map (collector: "--no-collector.${collector}") nodeCfg.disabledCollectors
     ++ nodeCfg.extraFlags
   );
   pfRules = pkgs.writeText "darwin-lan-wan-accounting.pf" ''
