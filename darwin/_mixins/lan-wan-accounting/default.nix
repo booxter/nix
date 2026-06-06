@@ -18,16 +18,23 @@ let
       "--web.listen-address"
       "${nodeCfg.listenAddress}:${toString nodeCfg.port}"
     ]
+    ++ map (collector: "--collector.${collector}") nodeCfg.enabledCollectors
+    ++ map (collector: "--no-collector.${collector}") nodeCfg.disabledCollectors
     ++ nodeCfg.extraFlags
   );
   pfRules = pkgs.writeText "darwin-lan-wan-accounting.pf" ''
-    match in on ${iface} inet from { ${lib.concatStringsSep ", " cfg.lanSubnets} } to any label "lan_in"
-    match in on ${iface} inet6 from { ${lib.concatStringsSep ", " cfg.lanSubnets6} } to any label "lan_in"
-    match in on ${iface} all label "wan_in"
+    table <lan_nets> const { ${lib.concatStringsSep ", " cfg.lanSubnets} }
+    table <lan_nets6> const { ${lib.concatStringsSep ", " cfg.lanSubnets6} }
 
-    match out on ${iface} inet from any to { ${lib.concatStringsSep ", " cfg.lanSubnets} } label "lan_out"
-    match out on ${iface} inet6 from any to { ${lib.concatStringsSep ", " cfg.lanSubnets6} } label "lan_out"
-    match out on ${iface} all label "wan_out"
+    pass in on ${iface} inet from <lan_nets> to any no state label "lan_in"
+    pass in on ${iface} inet from ! <lan_nets> to any no state label "wan_in"
+    pass in on ${iface} inet6 from <lan_nets6> to any no state label "lan_in"
+    pass in on ${iface} inet6 from ! <lan_nets6> to any no state label "wan_in"
+
+    pass out on ${iface} inet from any to <lan_nets> no state label "lan_out"
+    pass out on ${iface} inet from any to ! <lan_nets> no state label "wan_out"
+    pass out on ${iface} inet6 from any to <lan_nets6> no state label "lan_out"
+    pass out on ${iface} inet6 from any to ! <lan_nets6> no state label "wan_out"
   '';
   installRules = pkgs.writeShellApplication {
     name = "darwin-lan-wan-accounting-install";
@@ -67,7 +74,12 @@ let
         fi
 
         if [[ -n "$current_label" && "$line" =~ Bytes:[[:space:]]*([0-9]+) ]]; then
-          counter_bytes["$current_label"]="''${BASH_REMATCH[1]}"
+          case "$current_label" in
+            lan_in|wan_in|lan_out|wan_out)
+              bytes="''${BASH_REMATCH[1]}"
+              counter_bytes["$current_label"]="$(( ''${counter_bytes[$current_label]} + bytes ))"
+              ;;
+          esac
           current_label=""
         fi
       done < <(/sbin/pfctl -a ${anchorName} -sr -v 2>/dev/null || true)
