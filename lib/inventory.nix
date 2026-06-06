@@ -128,6 +128,16 @@ rec {
       nfs = 2049;
     };
 
+    wifi = {
+      privateWifiAddressDisabledSsids = [
+        "booxter-Router-5X"
+        "booxter"
+        "booxter-5g"
+        "booxter-Router-5G"
+        "booxter-Router-2X"
+      ];
+    };
+
     lan = {
       cidr = "192.168.0.0/16";
       domain = "home.arpa";

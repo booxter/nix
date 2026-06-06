@@ -1,6 +1,5 @@
 {
   config,
-  hostname,
   hostInventory,
   lib,
   pkgs,
@@ -8,7 +7,6 @@
 }:
 let
   cfg = config.host.observability.lanWan;
-  hostSpec = hostInventory.darwinHosts.${hostname};
   nodeCfg = config.services.prometheus.exporters.node;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   anchorLeaf = "booxter_observability_lan_wan";
@@ -107,7 +105,7 @@ in
 
     interface = lib.mkOption {
       type = lib.types.str;
-      default = hostSpec.mainInterface or "en0";
+      default = config.host.networking.mainInterface;
       example = "en0";
       description = "Primary network interface to classify traffic on.";
     };
