@@ -20,6 +20,8 @@ in
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
+  darwin-lan-wan-bpf = pkgs.callPackage ./darwin-lan-wan-bpf { };
+
   issue-internal-service-cert = issueInternalServiceCert;
 
   issue-observability-cert = issueObservabilityCert;
