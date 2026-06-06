@@ -125,6 +125,7 @@ let
   nutExporterPort = 9199;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
+  lolekEndpoint = beastPrometheusEndpoints.lolek;
   sabnzbdHostConfig = srvarrHostConfig;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
   prometheusMtlsTlsConfig = {
@@ -865,6 +866,20 @@ in
           {
             targets = [
               "${beastHostConfig.host.dnsName}:${toString beastPrometheusEndpoints.jellyfin.port}"
+            ];
+            labels.instance = beastHostConfig.host.dnsName;
+          }
+        ];
+      }
+      {
+        job_name = "lolek";
+        metrics_path = lolekEndpoint.path;
+        scheme = "https";
+        tls_config = prometheusMtlsTlsConfig;
+        static_configs = [
+          {
+            targets = [
+              "${beastHostConfig.host.dnsName}:${toString lolekEndpoint.port}"
             ];
             labels.instance = beastHostConfig.host.dnsName;
           }
