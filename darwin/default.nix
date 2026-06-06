@@ -58,6 +58,11 @@
     dhcpClientId = hostname;
   };
 
+  system.defaults.smb = lib.optionalAttrs (!isWork) {
+    NetBIOSName = hostname;
+    ServerDescription = hostname;
+  };
+
   services.virby = {
     enable = true;
     cores = 8;
