@@ -3,6 +3,7 @@
   pkgs,
   username,
   hostname,
+  isLaptop ? false,
   isWork,
   ...
 }:
@@ -54,6 +55,12 @@ in
     type = lib.types.bool;
     default = false;
     description = "Whether this host should avoid frequent unattended reboots.";
+  };
+
+  options.host.isLaptop = lib.mkOption {
+    type = lib.types.bool;
+    default = false;
+    description = "Whether this host is intermittently available like a laptop.";
   };
 
   options.host.dnsName = lib.mkOption {
@@ -112,6 +119,7 @@ in
     };
 
     programs.zsh.enable = true;
+    host.isLaptop = lib.mkDefault isLaptop;
     host.isWork = isWork;
   };
 }

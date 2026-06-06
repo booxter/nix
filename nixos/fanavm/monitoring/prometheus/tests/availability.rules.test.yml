@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="beast"}'
+      - series: 'up{job="node-mtls",instance="beast",scrape_expectation="always"}'
         values: "1x22"
     alert_rule_test:
       - eval_time: 10m
@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="beast"}'
+      - series: 'up{job="node-mtls",instance="beast",scrape_expectation="always"}'
         values: "0x20 1x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -32,6 +32,32 @@ tests:
               summary: "Node telemetry down: beast"
               description: "Prometheus has been unable to scrape node-mtls on beast for 10 minutes."
       - eval_time: 10m30s
+        alertname: NodeTelemetryDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="beast"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: NodeTelemetryDown
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeTelemetryDown
+              category: observability
+              instance: beast
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Node telemetry down: beast"
+              description: "Prometheus has been unable to scrape node-mtls on beast for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'up{job="node-mtls",instance="mair",scrape_expectation="intermittent"}'
+        values: "0x22"
+    alert_rule_test:
+      - eval_time: 10m
         alertname: NodeTelemetryDown
 
   - interval: 30s
