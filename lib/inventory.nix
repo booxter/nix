@@ -324,6 +324,7 @@ rec {
       hostname = "mair";
       platform = "aarch64-darwin";
       isDesktop = true;
+      isLaptop = true;
     };
     mmini = {
       stateVersion = 5;

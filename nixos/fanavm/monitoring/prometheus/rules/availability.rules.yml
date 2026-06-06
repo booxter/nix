@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: NodeTelemetryDown
-        expr: up{job=~"node|node-mtls"} < 1
+        expr: max without (scrape_expectation) (up{job=~"node|node-mtls",scrape_expectation!="intermittent"}) < 1
         for: 10m
         labels:
           severity: warning

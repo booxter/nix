@@ -13,6 +13,7 @@ let
       username,
       hmFull,
       isDesktop,
+      isLaptop,
       isWork,
       stateVersion,
     }:
@@ -25,6 +26,7 @@ let
           username
           hmFull
           isDesktop
+          isLaptop
           isWork
           stateVersion
           ;
@@ -53,6 +55,7 @@ rec {
       homeManagerInput ? inputs.home-manager,
       hmFull ? true,
       isDesktop ? false,
+      isLaptop ? false,
       isWork ? false,
       isVM ? false,
       nixpkgsInput ? inputs.nixpkgs,
@@ -72,6 +75,7 @@ rec {
           stateVersion
           isVM
           isDesktop
+          isLaptop
           isWork
           ;
         upsShutdownDelaySeconds = upsShutdownDelaySeconds isVM;
@@ -90,6 +94,7 @@ rec {
             username
             hmFull
             isDesktop
+            isLaptop
             isWork
             stateVersion
             ;
@@ -437,6 +442,7 @@ rec {
       homeManagerInput ? inputs.home-manager,
       hmFull ? true,
       isDesktop ? false,
+      isLaptop ? false,
       isWork ? false,
       extraModules ? [ ],
       ...
@@ -454,6 +460,7 @@ rec {
           hmStateVersion
           hmFull
           isDesktop
+          isLaptop
           isWork
           ;
         # If we ever add macOS VMs, thread isVM here and compute accordingly.
@@ -474,6 +481,7 @@ rec {
             username
             hmFull
             isDesktop
+            isLaptop
             isWork
             ;
           stateVersion = hmStateVersion;

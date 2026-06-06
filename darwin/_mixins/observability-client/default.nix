@@ -18,52 +18,63 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable (
-    lib.mkMerge [
-      {
-        users.users._prometheus-node-exporter.home = lib.mkForce "/private/var/lib/prometheus-node-exporter";
+  config = lib.mkMerge [
+    {
+      host.observability.client = {
+        enable = lib.mkDefault (!config.host.isWork);
+        nodeExporter.mtls.enable = lib.mkDefault (!config.host.isWork);
+      };
 
-        services.prometheus.exporters.node = {
-          enable = true;
-          listenAddress = cfg.nodeExporter.listenAddress;
-        };
-      }
-      (lib.mkIf cfg.nodeExporter.mtls.enable (
-        let
-          nodeExporterDaemon = config.launchd.daemons.prometheus-node-exporter.serviceConfig;
-          nodeExporterUser = nodeExporterDaemon.UserName;
-          nodeExporterGroup = nodeExporterDaemon.GroupName;
-        in
+      host.observability.lanWan.enable = lib.mkDefault (!config.host.isWork);
+      host.observability.thermal.enable = lib.mkDefault (!config.host.isWork);
+    }
+    (lib.mkIf cfg.enable (
+      lib.mkMerge [
         {
-          sops.secrets.prometheusNodeExporterServerCrt = {
-            key = "${nodeExporterMtls.nodeExporterSecretPrefix}/server_crt";
-            owner = nodeExporterUser;
-            group = nodeExporterGroup;
-            mode = "0400";
-          };
+          users.users._prometheus-node-exporter.home = lib.mkForce "/private/var/lib/prometheus-node-exporter";
 
-          sops.secrets.prometheusNodeExporterServerKey = {
-            key = "${nodeExporterMtls.nodeExporterSecretPrefix}/server_key";
-            owner = nodeExporterUser;
-            group = nodeExporterGroup;
-            mode = "0400";
+          services.prometheus.exporters.node = {
+            enable = true;
+            listenAddress = cfg.nodeExporter.listenAddress;
           };
-
-          sops.templates."node-exporter-web-config.yaml" = {
-            owner = nodeExporterUser;
-            group = nodeExporterGroup;
-            mode = "0400";
-            content = nodeExporterMtls.mkNodeExporterWebConfig {
-              certFile = config.sops.secrets.prometheusNodeExporterServerCrt.path;
-              keyFile = config.sops.secrets.prometheusNodeExporterServerKey.path;
-            };
-          };
-
-          services.prometheus.exporters.node.extraFlags = [
-            "--web.config.file=${config.sops.templates."node-exporter-web-config.yaml".path}"
-          ];
         }
-      ))
-    ]
-  );
+        (lib.mkIf cfg.nodeExporter.mtls.enable (
+          let
+            nodeExporterDaemon = config.launchd.daemons.prometheus-node-exporter.serviceConfig;
+            nodeExporterUser = nodeExporterDaemon.UserName;
+            nodeExporterGroup = nodeExporterDaemon.GroupName;
+          in
+          {
+            sops.secrets.prometheusNodeExporterServerCrt = {
+              key = "${nodeExporterMtls.nodeExporterSecretPrefix}/server_crt";
+              owner = nodeExporterUser;
+              group = nodeExporterGroup;
+              mode = "0400";
+            };
+
+            sops.secrets.prometheusNodeExporterServerKey = {
+              key = "${nodeExporterMtls.nodeExporterSecretPrefix}/server_key";
+              owner = nodeExporterUser;
+              group = nodeExporterGroup;
+              mode = "0400";
+            };
+
+            sops.templates."node-exporter-web-config.yaml" = {
+              owner = nodeExporterUser;
+              group = nodeExporterGroup;
+              mode = "0400";
+              content = nodeExporterMtls.mkNodeExporterWebConfig {
+                certFile = config.sops.secrets.prometheusNodeExporterServerCrt.path;
+                keyFile = config.sops.secrets.prometheusNodeExporterServerKey.path;
+              };
+            };
+
+            services.prometheus.exporters.node.extraFlags = [
+              "--web.config.file=${config.sops.templates."node-exporter-web-config.yaml".path}"
+            ];
+          }
+        ))
+      ]
+    ))
+  ];
 }

@@ -155,6 +155,8 @@ let
   ];
   isVirtualNodeName = name: lib.hasPrefix "prox-" name && lib.hasSuffix "vm" name;
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
+  scrapeExpectationForHostConfig =
+    hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";
   mkRemoteNixosNodeTargetConfig =
     name:
     let
@@ -167,6 +169,7 @@ let
         host_class = hostClassForName name;
         host_virtual = lib.boolToString (isVirtualNodeName name);
         instance = hostConfig.host.dnsName;
+        scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
       targets = [ "${hostConfig.host.dnsName}:9100" ];
     };
@@ -196,6 +199,7 @@ let
         host_class = "hardware";
         host_virtual = "false";
         instance = hostConfig.host.dnsName;
+        scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
       targets = [ "${hostConfig.host.dnsName}:9100" ];
     };
@@ -671,6 +675,7 @@ in
               host_class = hostClassForName config.networking.hostName;
               host_virtual = lib.boolToString (isVirtualNodeName config.networking.hostName);
               instance = config.host.dnsName;
+              scrape_expectation = scrapeExpectationForHostConfig config;
             };
           }
         ];
