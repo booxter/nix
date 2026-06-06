@@ -115,7 +115,7 @@ in
     };
     users.knownUsers = [ serviceUser ];
 
-    system.activationScripts.postActivation.text = lib.mkAfter ''
+    system.activationScripts.launchd.text = lib.mkBefore ''
       access_bpf_gid="$(/usr/bin/dscacheutil -q group -a name ${accessBpfGroup} | /usr/bin/awk '/^gid:/ { print $2; exit }')"
       if [ "$access_bpf_gid" != "${toString accessBpfGid}" ]; then
         echo "Expected ${accessBpfGroup} gid ${toString accessBpfGid}, got ''${access_bpf_gid:-missing}" >&2
@@ -141,6 +141,7 @@ in
         KeepAlive = true;
         UserName = serviceUser;
         GroupName = accessBpfGroup;
+        InitGroups = false;
         ProcessType = "Background";
         LowPriorityIO = true;
         StandardOutPath = "${stateDir}/lan-wan.log";
