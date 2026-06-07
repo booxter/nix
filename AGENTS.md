@@ -78,3 +78,9 @@ nix run .#sops-bootstrap -- <host>
 `sops-update` only merges template keys, `sops-cat` prints decrypted secrets,
 `sops-copy` copies one key path between hosts, `sops-pass` writes password
 hashes, and `sops-bootstrap` initializes a host secret and recipients.
+
+## Monitoring
+
+Grafana dashboards and alert rules cover fleet and service health. When adding
+or changing a service, consider whether dashboards, Prometheus rules, alert
+tests, or service metadata need updates too.
