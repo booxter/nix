@@ -83,6 +83,7 @@ nix run .#sops-pass -- beast ihrachyshka
 
 # Copy one section between host secrets
 nix run .#sops-copy -- mair prx1-lab attic
+nix run .#sops-copy -- mair prx1-lab flakehub
 ```
 
 Backup and restore procedures are documented in [common/backup.md](common/backup.md).

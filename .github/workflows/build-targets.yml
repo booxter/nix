@@ -234,6 +234,8 @@ jobs:
 
           if [ "${status}" -eq 0 ] && is_noop_diff "${stdout_file}"; then
             printf '%s\n' "${MACHINE_NAME}" >"${unchanged_file}"
+            printf 'Config diff for %s: no changes\n\n' "${MACHINE_NAME}"
+            cat "${stdout_file}"
             exit 0
           fi
 
@@ -259,6 +261,9 @@ jobs:
             printf '```\n\n'
             printf '</details>\n'
           } >"${changed_file}"
+
+          printf 'Config diff for %s:\n\n' "${MACHINE_NAME}"
+          cat "${changed_file}"
 
       - name: Upload config diff artifact
         if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
@@ -311,7 +316,22 @@ jobs:
             const fs = require("fs");
             const path = require("path");
 
+            const { owner, repo } = context.repo;
             const diffDir = "diff-output";
+
+            const pull = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const currentPrHeadSha = pull.data.head.sha;
+            const runPrHeadSha = process.env.PR_HEAD_SHA;
+            if (currentPrHeadSha !== runPrHeadSha) {
+              core.notice(
+                `Skipping config diff comment for stale PR head ${runPrHeadSha}; current head is ${currentPrHeadSha}.`,
+              );
+              return;
+            }
 
             let plannedMatrix = { include: [] };
             try {
@@ -454,7 +474,6 @@ jobs:
               ].join("\n");
             }
 
-            const { owner, repo } = context.repo;
             const bodies = visibleChunks.map((chunk, index) => {
               const part =
                 rawChunks.length > 1

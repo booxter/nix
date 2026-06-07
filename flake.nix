@@ -49,6 +49,11 @@
 
     llm-agents.url = "github:numtide/llm-agents.nix";
 
+    determinate-nix-installer = {
+      url = "github:DeterminateSystems/nix-installer";
+      flake = false;
+    };
+
     lolek = {
       url = "github:booxter/lolek/local-bot-api-uploads";
       inputs.nixpkgs.follows = "nixpkgs";

@@ -1,5 +1,4 @@
 {
-  inputs,
   lib,
   pkgs,
   username,
@@ -40,7 +39,6 @@
         ];
       }
       // lib.optionalAttrs (!isWork) {
-        # attic
         substituters = lib.mkForce [
           "https://cache.nixos.org/"
           cacheHttpsUrl

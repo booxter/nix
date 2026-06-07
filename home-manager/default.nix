@@ -15,7 +15,7 @@ let
 in
 {
   imports = [
-    ../common/_mixins/nix
+    ./_mixins/nix
     ./_mixins/zsh-basic
   ]
   ++ lib.optionals hmFull [
