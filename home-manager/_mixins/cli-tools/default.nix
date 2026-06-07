@@ -105,6 +105,7 @@
       ack
       act
       age
+      age-plugin-se
       bc
       curl
       delve # go debugger
