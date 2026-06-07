@@ -132,7 +132,9 @@ in
   wayland.windowManager.hyprland = {
     enable = true;
     configType = "hyprlang";
-    package = null;
+    # NixOS owns portal packages/config for the desktop session. Keep Home
+    # Manager from exposing a second per-user portal view while still letting it
+    # manage Hyprland config and reload hooks.
     portalPackage = null;
     xwayland.enable = true;
     systemd.enable = true;
