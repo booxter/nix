@@ -30,6 +30,7 @@
     ++ lib.optionals (!isWork) [
       ./_mixins/attic
       ./_mixins/browser
+      ./_mixins/secretive
     ];
 
   nixpkgs.hostPlatform = lib.mkDefault platform;

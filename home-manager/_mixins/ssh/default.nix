@@ -20,10 +20,6 @@ in
   # as a clean stop so short-lived user sessions do not look like failures.
   systemd.user.services.ssh-agent.Service.SuccessExitStatus = lib.mkIf pkgs.stdenv.isLinux 2;
 
-  home.packages = lib.optionals useSecretive [
-    pkgs.secretive
-  ];
-
   programs.bash = lib.mkIf useSecretive {
     profileExtra = lib.mkOrder 900 secretiveAuthSockInit;
     initExtra = lib.mkOrder 900 secretiveAuthSockInit;
