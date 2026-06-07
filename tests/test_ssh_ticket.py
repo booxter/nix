@@ -98,3 +98,16 @@ def test_existing_ticket_valid_uses_metadata(tmp_path):
         },
     )
     assert ssh_ticket.existing_ticket_valid(target, paths)
+
+
+def test_ssht_command_does_not_add_ticket_key_to_agent(tmp_path):
+    cmd = ssh_ticket.ssht_ssh_command(
+        types.SimpleNamespace(
+            key=str(tmp_path / "id_ed25519"), ssh_args=["--", "true"]
+        ),
+        {"sshHost": "prox-srvarrvm"},
+        {"cert": tmp_path / "id_ed25519-cert.pub"},
+    )
+
+    assert "AddKeysToAgent=no" in cmd
+    assert cmd[-2:] == ["prox-srvarrvm", "true"]

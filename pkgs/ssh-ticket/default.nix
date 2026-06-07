@@ -3,6 +3,7 @@
   nix,
   openssh,
   python3,
+  stdenv,
   symlinkJoin,
   writeShellApplication,
   repoRoot ? ../..,
@@ -16,6 +17,9 @@ let
   ];
   commonEnv = ''
     export SSHT_REPO_ROOT="${repoRoot}"
+  ''
+  + lib.optionalString stdenv.hostPlatform.isDarwin ''
+    export SSH_AUTH_SOCK="''${SSHT_SECRETIVE_SOCKET:-$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh}"
   '';
   sshTicket = writeShellApplication {
     name = "ssh-ticket";

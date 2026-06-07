@@ -537,10 +537,16 @@ def cmd_ssht(args):
     targets = load_targets(repo_root_arg(args.repo_root))
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     paths = ensure_ticket(args, target)
+    cmd = ssht_ssh_command(args, target, paths)
+    os.execvp("ssh", cmd)
+    raise AssertionError("unreachable")
+
+
+def ssht_ssh_command(args, target, paths):
     ssh_args = list(args.ssh_args)
     if ssh_args and ssh_args[0] == "--":
         ssh_args = ssh_args[1:]
-    cmd = [
+    return [
         "ssh",
         "-o",
         "IdentitiesOnly=yes",
@@ -551,13 +557,13 @@ def cmd_ssht(args):
         "-o",
         "ForwardAgent=no",
         "-o",
+        "AddKeysToAgent=no",
+        "-o",
         "ControlMaster=no",
         "-o",
         "ControlPath=none",
         target["sshHost"],
     ] + ssh_args
-    os.execvp("ssh", cmd)
-    raise AssertionError("unreachable")
 
 
 def add_common_options(parser):
