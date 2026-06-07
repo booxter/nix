@@ -1,8 +1,60 @@
 #!/usr/bin/env bash
 
 iface="${1:-en0}"
+scope="${NETWORK_SCOPE:-wan}"
+metrics_file="${LAN_WAN_METRICS_FILE:-/var/lib/prometheus-node-exporter-textfile/lan-wan.prom}"
+metrics_max_age_seconds="${LAN_WAN_METRICS_MAX_AGE_SECONDS:-90}"
 Ibytes_Column=7
 Obytes_Column=8
+
+if ! [[ "$metrics_max_age_seconds" =~ ^[0-9]+$ ]]; then
+  metrics_max_age_seconds=90
+fi
+
+stat_mtime() {
+  local mtime
+
+  mtime="$(/usr/bin/stat -f %m "$1" 2>/dev/null)"
+  if [[ "$mtime" =~ ^[0-9]+$ ]]; then
+    echo "$mtime"
+    return
+  fi
+
+  stat -c %Y "$1" 2>/dev/null
+}
+
+metrics_fresh() {
+  [[ -r "$metrics_file" ]] || return 1
+
+  local mtime now age
+  mtime="$(stat_mtime "$metrics_file")" || return 1
+  [[ "$mtime" =~ ^[0-9]+$ ]] || return 1
+
+  now="$(date +%s)"
+  age=$(( now - mtime ))
+  (( age >= 0 && age <= metrics_max_age_seconds ))
+}
+
+read_rate_metric() {
+  local direction="$1"
+
+  metrics_fresh || return 1
+  awk -v direction="$direction" -v scope="$scope" '
+    $1 ~ /^host_observability_network_bytes_per_second\{/ &&
+    $1 ~ "direction=\"" direction "\"" &&
+    $1 ~ "scope=\"" scope "\"" {
+      print $2
+      found = 1
+      exit
+    }
+    END { if (!found) exit 1 }
+  ' "$metrics_file"
+}
+
+read_bpf_rates() {
+  DOWN="$(read_rate_metric receive)" || return 1
+  UP="$(read_rate_metric transmit)" || return 1
+}
 
 get_bytes() {
   netstat -bI "$iface" 2>/dev/null | awk -v i="$iface" -v col="$1" '
@@ -32,7 +84,8 @@ get_delta() {
 
   # Basic validation
   if [[ -z "$b1" || -z "$b2" ]]; then
-    echo "-1"
+    echo "0"
+    return
   fi
 
   # Handle normal case; if a rare counter wrap makes this negative, clamp to 0.
@@ -41,34 +94,34 @@ get_delta() {
   echo "$delta"
 }
 
-UP=$(measure_obw)
-DOWN=$(measure_ibw)
-
 human_readable() {
-    local abbrevs=(
-        $((1 << 60)):Z
-        $((1 << 50)):E
-        $((1 << 40)):T
-        $((1 << 30)):G
-        $((1 << 20)):M
-        $((1 << 10)):K
-        $((1)):B
-    )
+  local bytes="${1}"
+  local precision="${2}"
 
-    local bytes="${1}"
-    local precision="${2}"
-
-    for item in "${abbrevs[@]}"; do
-        local factor="${item%:*}"
-        local abbrev="${item#*:}"
-        if [[ "${bytes}" -ge "${factor}" ]]; then
-            local size
-            size="$(bc -l <<< "${bytes} / ${factor}")"
-            printf "%.*f%s\n" "${precision}" "${size}" "${abbrev}"
-            break
-        fi
-    done
+  awk -v bytes="$bytes" -v precision="$precision" '
+    BEGIN {
+      split("B K M G T E Z", units, " ")
+      if (bytes < 0) {
+        bytes = 0
+      }
+      unit = 1
+      while (bytes >= 1024 && unit < 7) {
+        bytes /= 1024
+        unit++
+      }
+      if (unit == 1) {
+        printf "%.0f%s\n", bytes, units[unit]
+      } else {
+        printf "%.*f%s\n", precision, bytes, units[unit]
+      }
+    }
+  '
 }
+
+if ! read_bpf_rates; then
+  UP=$(measure_obw)
+  DOWN=$(measure_ibw)
+fi
 
 DOWN_FORMAT=$(human_readable "$DOWN" 1)
 UP_FORMAT=$(human_readable "$UP" 1)

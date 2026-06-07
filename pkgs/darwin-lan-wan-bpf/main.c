@@ -19,6 +19,7 @@
 #define DEFAULT_LAN6_CIDR "fe80::/10"
 #define DEFAULT_PROMETHEUS_METRIC "host_observability_network_bpf_bytes_total"
 #define DEFAULT_TEXTFILE_METRIC "host_observability_network_bytes_total"
+#define DEFAULT_TEXTFILE_RATE_METRIC "host_observability_network_bytes_per_second"
 #define ETH_ADDR_LEN 6
 #define ETH_HEADER_LEN 14
 #define ETHERTYPE_IPV4 0x0800
@@ -473,7 +474,14 @@ static void print_prometheus_metrics(FILE *stream, const struct context *ctx) {
   fflush(stream);
 }
 
-static void print_textfile_metrics(FILE *stream, const struct context *ctx) {
+static void print_textfile_metrics(FILE *stream, const struct context *ctx,
+                                   const struct counters *previous,
+                                   time_t previous_at, time_t now) {
+  double interval = difftime(now, previous_at);
+  if (interval <= 0.0) {
+    interval = 1.0;
+  }
+
   fprintf(stream,
           "# HELP %s Classified host network traffic in bytes.\n",
           ctx->metric_name);
@@ -485,9 +493,31 @@ static void print_textfile_metrics(FILE *stream, const struct context *ctx) {
               ctx->counters.bytes[direction][scope]);
     }
   }
+
+  fprintf(stream,
+          "# HELP %s Recent classified host network traffic rate in bytes per second.\n",
+          DEFAULT_TEXTFILE_RATE_METRIC);
+  fprintf(stream, "# TYPE %s gauge\n", DEFAULT_TEXTFILE_RATE_METRIC);
+  for (enum direction direction = 0; direction < DIR_COUNT; direction++) {
+    for (enum scope scope = 0; scope < SCOPE_COUNT; scope++) {
+      double bytes_per_second = 0.0;
+      if (previous != NULL) {
+        bytes_per_second =
+            (double)counter_delta(ctx->counters.bytes[direction][scope],
+                                  previous->bytes[direction][scope]) /
+            interval;
+      }
+
+      fprintf(stream, "%s{direction=\"%s\",scope=\"%s\"} %.3f\n",
+              DEFAULT_TEXTFILE_RATE_METRIC, direction_label(direction),
+              scope_label(scope), bytes_per_second);
+    }
+  }
 }
 
-static bool write_textfile_metrics(const struct context *ctx) {
+static bool write_textfile_metrics(const struct context *ctx,
+                                   const struct counters *previous,
+                                   time_t previous_at, time_t now) {
   char temp_path[4096];
 
   if (snprintf(temp_path, sizeof(temp_path), "%s.%ld.tmp", ctx->textfile_path,
@@ -502,7 +532,7 @@ static bool write_textfile_metrics(const struct context *ctx) {
     return false;
   }
 
-  print_textfile_metrics(stream, ctx);
+  print_textfile_metrics(stream, ctx, previous, previous_at, now);
 
   if (fflush(stream) != 0) {
     fprintf(stderr, "flush %s: %s\n", temp_path, strerror(errno));
@@ -805,12 +835,15 @@ int main(int argc, char **argv) {
   signal(SIGINT, request_stop);
   signal(SIGTERM, request_stop);
 
+  struct counters previous_counters = ctx.counters;
+  time_t previous_print = time(NULL);
+
   if (ctx.output_format == OUTPUT_PROMETHEUS) {
     print_status(stderr, &ctx);
     print_prometheus_metrics(stdout, &ctx);
   } else if (ctx.output_format == OUTPUT_TEXTFILE) {
     print_status(stderr, &ctx);
-    if (!write_textfile_metrics(&ctx)) {
+    if (!write_textfile_metrics(&ctx, NULL, previous_print, previous_print)) {
       pcap_close(ctx.pcap);
       return 1;
     }
@@ -818,8 +851,6 @@ int main(int argc, char **argv) {
     print_human_header(&ctx);
   }
 
-  struct counters previous_counters = ctx.counters;
-  time_t previous_print = time(NULL);
   time_t next_print = previous_print + (time_t)ctx.print_interval_seconds;
   while (!stop_requested) {
     int rc = pcap_dispatch(ctx.pcap, -1, handle_packet, (u_char *)&ctx);
@@ -839,10 +870,13 @@ int main(int argc, char **argv) {
       if (ctx.output_format == OUTPUT_PROMETHEUS) {
         print_prometheus_metrics(stdout, &ctx);
       } else if (ctx.output_format == OUTPUT_TEXTFILE) {
-        if (!write_textfile_metrics(&ctx)) {
+        if (!write_textfile_metrics(&ctx, &previous_counters, previous_print,
+                                    now)) {
           pcap_close(ctx.pcap);
           return 1;
         }
+        previous_counters = ctx.counters;
+        previous_print = now;
       } else {
         print_human_line(&ctx, &previous_counters, previous_print, now);
         previous_counters = ctx.counters;
@@ -858,7 +892,8 @@ int main(int argc, char **argv) {
   if (ctx.output_format == OUTPUT_PROMETHEUS) {
     print_prometheus_metrics(stdout, &ctx);
   } else if (ctx.output_format == OUTPUT_TEXTFILE) {
-    if (!write_textfile_metrics(&ctx)) {
+    if (!write_textfile_metrics(&ctx, &previous_counters, previous_print,
+                                final_print)) {
       pcap_close(ctx.pcap);
       return 1;
     }
