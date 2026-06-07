@@ -195,7 +195,7 @@ rec {
   };
 
   sshTicket = {
-    userCaPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHu98szjqlyDEwnvLjAcVKAWEycQHM+5Un1S558edjq2 fleet-user-ca";
+    userCaPublicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJs0Zx3pG8L1SaGQSyD9Jqljt15KD7txMUrgu9lP85qRY89wjF7if3QQnp22jTBjgfuWrUW2GdFWwAbGmzvWDg8= ca-key-nix-infra@secretive.mair.local";
   };
 
   services = [
