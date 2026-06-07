@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  isDesktop,
+  lib,
+  ...
+}:
 let
   cfg = config.host.observability.client;
   nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix;
@@ -60,7 +65,7 @@ in
         nodeExporter.mtls.enable = lib.mkDefault (!config.host.isWork);
       };
 
-      host.observability.lanWan.enable = lib.mkDefault (!config.host.isWork);
+      host.observability.lanWan.enable = lib.mkDefault isDesktop;
       host.observability.thermal.enable = lib.mkDefault (!config.host.isWork);
     }
     (lib.mkIf cfg.enable (

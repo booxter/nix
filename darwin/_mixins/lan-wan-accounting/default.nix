@@ -52,7 +52,13 @@ let
 in
 {
   options.host.observability.lanWan = {
-    enable = lib.mkEnableOption "LAN/WAN traffic accounting for Prometheus on Darwin";
+    enable = lib.mkEnableOption "LAN/WAN traffic accounting on Darwin";
+
+    exportToNodeExporter = lib.mkOption {
+      type = lib.types.bool;
+      default = !config.host.isWork;
+      description = "Whether to expose LAN/WAN accounting through node exporter's textfile collector.";
+    };
 
     package = lib.mkOption {
       type = lib.types.package;
@@ -89,20 +95,18 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ cfg.package ];
 
-    services.prometheus.exporters.node = {
+    services.prometheus.exporters.node = lib.mkIf cfg.exportToNodeExporter {
       extraFlags = [
         "--collector.textfile"
         "--collector.textfile.directory=${textfileDir}"
       ];
     };
 
-    # Work around nix-darwin node-exporter flag joining until
-    # https://github.com/nix-darwin/nix-darwin/pull/1739 lands.
-    launchd.daemons.prometheus-node-exporter.serviceConfig.ProgramArguments = lib.mkForce [
-      "/bin/sh"
-      "-c"
-      "/bin/wait4path /nix/store && exec ${lib.getExe nodeCfg.package} ${nodeExporterArgs}"
-    ];
+    # Work around nix-darwin node-exporter flag joining while still letting
+    # nix-darwin generate the wait4path wrapper from launchd.command.
+    launchd.daemons.prometheus-node-exporter.command = lib.mkIf cfg.exportToNodeExporter (
+      lib.mkForce "${lib.getExe nodeCfg.package} ${nodeExporterArgs}"
+    );
 
     ids.uids.${serviceUser} = serviceUid;
 
