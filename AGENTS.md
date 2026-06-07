@@ -7,7 +7,7 @@ Scope: the whole repository.
 - Create local commits for completed changes. Do not push branches or deploy
   machines unless the user explicitly asks for that action.
 - Prefer the flake apps and repo scripts over ad hoc commands. Run `nix fmt`
-  after Nix or Markdown edits.
+  after edits; it applies the repo's format and lint rules.
 - Keep unrelated working tree changes intact.
 
 ## SSH Access
