@@ -15,9 +15,9 @@ backend used by nh.
 
 With --details, also diff generated target configuration files from the built
 toplevels and embedded Home Manager users. By default this covers:
-  NixOS:       etc
-  nix-darwin:  etc, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
-  Home Manager users: home-files, LaunchAgents
+  NixOS:       etc, activate, bin/switch-to-configuration
+  nix-darwin:  etc, activate, activate-user, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
+  Home Manager users: activate, home-files, LaunchAgents, session-vars
   Profile/manpage trees and release metadata files are skipped because those
   changes are already covered by the dix output.
 
@@ -287,6 +287,28 @@ copy_generated_path() {
   copy_generated_node "${source}" "${dest}"
 }
 
+copy_generated_store_path() {
+  local source="$1"
+  local dest_root="$2"
+  local relpath="$3"
+  local dest="${dest_root}/${relpath}"
+  local parent="${relpath%/*}"
+
+  if [[ -z "${source}" || (! -e "${source}" && ! -L "${source}") ]]; then
+    return 0
+  fi
+
+  if should_skip_generated_source "${source}"; then
+    return 0
+  fi
+
+  if [[ "${parent}" != "${relpath}" ]]; then
+    mkdir -p "${dest_root}/${parent}"
+  fi
+
+  copy_generated_node "${source}" "${dest}"
+}
+
 copy_generated_directory() {
   local source="$1"
   local dest="$2"
@@ -343,6 +365,22 @@ materialize_system_details() {
   local new_detail_root="$2"
   local relpath=""
   local found_any=false
+  local -a artifact_paths=(
+    activate
+  )
+
+  case "${target_kind}" in
+    nixos)
+      artifact_paths+=(
+        bin/switch-to-configuration
+      )
+      ;;
+    darwin)
+      artifact_paths+=(
+        activate-user
+      )
+      ;;
+  esac
 
   for relpath in "${generated_paths[@]}"; do
     if generated_path_exists "${old_link}" "${relpath}" || generated_path_exists "${new_link}" "${relpath}"; then
@@ -352,12 +390,24 @@ materialize_system_details() {
     fi
   done
 
+  for relpath in "${artifact_paths[@]}"; do
+    if generated_path_exists "${old_link}" "${relpath}" || generated_path_exists "${new_link}" "${relpath}"; then
+      found_any=true
+    fi
+  done
+
   if [[ "${found_any}" == false ]]; then
     return 0
   fi
 
   materialize_generated_paths "${old_link}" "${old_detail_root}/system"
   materialize_generated_paths "${new_link}" "${new_detail_root}/system"
+
+  for relpath in "${artifact_paths[@]}"; do
+    copy_generated_path "${old_link}" "${old_detail_root}/system" "${relpath}"
+    copy_generated_path "${new_link}" "${new_detail_root}/system" "${relpath}"
+  done
+
   detail_found=true
 }
 
@@ -490,6 +540,44 @@ build_home_manager_activation() {
   printf '%s\n' "${activation}"
 }
 
+build_home_manager_session_variables() {
+  local label="$1"
+  local rev="$2"
+  local flake_ref="$3"
+  local user="$4"
+  local session_variables=""
+
+  if ! session_variables="$(
+    DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
+      DIFF_CONFIG_MACHINE="${machine}" \
+      DIFF_CONFIG_TARGET_KIND="${target_kind}" \
+      DIFF_CONFIG_HM_USER="${user}" \
+      nix --extra-experimental-features "nix-command flakes" build \
+        --impure \
+        --no-link \
+        --print-out-paths \
+        --expr '
+          let
+            f = builtins.getFlake (builtins.getEnv "DIFF_CONFIG_FLAKE_REF");
+            kind = builtins.getEnv "DIFF_CONFIG_TARGET_KIND";
+            name = builtins.getEnv "DIFF_CONFIG_MACHINE";
+            user = builtins.getEnv "DIFF_CONFIG_HM_USER";
+            configs =
+              if kind == "nixos" then f.nixosConfigurations
+              else if kind == "darwin" then f.darwinConfigurations
+              else { };
+            cfg = builtins.getAttr name configs;
+          in
+            (builtins.getAttr user cfg.config."home-manager".users).home.sessionVariablesPackage
+        '
+  )"; then
+    echo "Unable to build Home Manager session variables package for ${user} in ${label} revision." >&2
+    return 1
+  fi
+
+  printf '%s\n' "${session_variables}"
+}
+
 materialize_home_manager_paths() {
   local activation="$1"
   local dest_root="$2"
@@ -512,23 +600,29 @@ materialize_home_manager_user_details() {
   local new_detail_root="$3"
   local old_activation=""
   local new_activation=""
+  local old_session_variables=""
+  local new_session_variables=""
   local old_tree="${old_detail_root}/home-manager/${user}"
   local new_tree="${new_detail_root}/home-manager/${user}"
 
   if array_contains "${user}" "${old_home_manager_users[@]}"; then
     old_activation="$(build_home_manager_activation old "${old_rev}" "${old_flake}" "${user}")"
+    old_session_variables="$(build_home_manager_session_variables old "${old_rev}" "${old_flake}" "${user}")"
   else
     echo "Home Manager user ${user} is missing in old revision; diffing against an empty tree." >&2
   fi
 
   if array_contains "${user}" "${new_home_manager_users[@]}"; then
     new_activation="$(build_home_manager_activation new "${new_rev}" "${new_flake}" "${user}")"
+    new_session_variables="$(build_home_manager_session_variables new "${new_rev}" "${new_flake}" "${user}")"
   else
     echo "Home Manager user ${user} is missing in new revision; diffing against an empty tree." >&2
   fi
 
   materialize_home_manager_paths "${old_activation}" "${old_tree}"
   materialize_home_manager_paths "${new_activation}" "${new_tree}"
+  copy_generated_store_path "${old_session_variables}" "${old_tree}" session-vars
+  copy_generated_store_path "${new_session_variables}" "${new_tree}" session-vars
   detail_found=true
 }
 
@@ -541,6 +635,7 @@ materialize_home_manager_details() {
   new_home_manager_users=()
   home_manager_users=()
   home_manager_generated_paths=(
+    activate
     home-files
     LaunchAgents
   )
