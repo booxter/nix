@@ -171,6 +171,7 @@ let
   issueInternalServiceCertPackage = pkgs.issue-internal-service-cert;
   issueObservabilityCertPackage = pkgs.issue-observability-cert;
   pkiRotationPackage = pkgs.pki-rotation;
+  sshTicketPackage = pkgs.ssh-ticket;
   unifiSyncApp = pkgs.writeShellApplication {
     name = "unifi-sync-app";
     runtimeInputs = [ unifiSyncPackage ];
@@ -203,6 +204,22 @@ let
     text = ''
       export PKI_ROTATION_REPO_ROOT="${../.}"
       exec ${pkiRotationPackage}/bin/pki-rotation "$@"
+    '';
+  };
+  sshTicketApp = pkgs.writeShellApplication {
+    name = "ssh-ticket-app";
+    runtimeInputs = [ sshTicketPackage ];
+    text = ''
+      export SSHT_REPO_ROOT="${../.}"
+      exec ${sshTicketPackage}/bin/ssh-ticket "$@"
+    '';
+  };
+  sshtApp = pkgs.writeShellApplication {
+    name = "ssht-app";
+    runtimeInputs = [ sshTicketPackage ];
+    text = ''
+      export SSHT_REPO_ROOT="${../.}"
+      exec ${sshTicketPackage}/bin/ssht "$@"
     '';
   };
   wgHomeClientConfig = pkgs.writeShellApplication {
@@ -386,6 +403,9 @@ in
     mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
   "pki-rotation" =
     mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
+  "ssh-ticket" =
+    mkApp "${sshTicketApp}/bin/ssh-ticket-app" "Manage per-host short-lived SSH user certificates.";
+  ssht = mkApp "${sshtApp}/bin/ssht-app" "SSH through a per-host short-lived user certificate.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =
