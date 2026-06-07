@@ -48,6 +48,7 @@ let
     "--textfile"
     textfilePath
   ];
+  command = lib.escapeShellArgs programArguments;
 in
 {
   options.host.observability.lanWan = {
@@ -135,8 +136,8 @@ in
     '';
 
     launchd.daemons.observability-lan-wan-accounting = {
+      inherit command;
       serviceConfig = {
-        ProgramArguments = programArguments;
         RunAtLoad = true;
         KeepAlive = true;
         UserName = serviceUser;
