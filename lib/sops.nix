@@ -10,6 +10,7 @@ let
   sops-cat = pkgs.writeShellApplication {
     name = "sops-cat";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       sops
@@ -23,6 +24,7 @@ let
   sops-edit = pkgs.writeShellApplication {
     name = "sops-edit";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       jq
@@ -38,6 +40,7 @@ let
   sops-update = pkgs.writeShellApplication {
     name = "sops-update";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       jq
@@ -53,6 +56,7 @@ let
   sops-copy = pkgs.writeShellApplication {
     name = "sops-copy";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       jq
@@ -68,6 +72,7 @@ let
   sops-pass = pkgs.writeShellApplication {
     name = "sops-pass";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       jq
@@ -86,6 +91,7 @@ let
     name = "sops-bootstrap";
     runtimeInputs = with pkgs; [
       age
+      age-plugin-se
       gnugrep
       jq
       openssh
