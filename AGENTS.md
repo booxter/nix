@@ -26,22 +26,23 @@ Scope: the whole repository.
 
 ## SSH Access
 
-- Use `ssht` for SSH access to managed NixOS nodes:
+- Use normal OpenSSH for access to managed hosts:
 
   ```sh
-  ssht <target> [command ...]
+  ssh <target> [command ...]
   ssh-ticket status [target]
   ssh-ticket targets
   ```
 
-- `ssht` issues short-lived user certificates and may open a macOS TTL approval
+- On configured clients, OpenSSH runs `ssh-ticket ensure` for known fleet hosts.
+  It issues short-lived user certificates and may open a macOS TTL approval
   dialog followed by a Secretive/Touch ID prompt. Wait for user approval rather
-  than falling back to raw SSH.
+  than bypassing the ticket flow.
 - Existing valid tickets are reused. Use `--force` only when intentionally
   testing ticket issuance.
 - `ssh-ticket` manages ticket targets, status, and explicit ticket issuance;
-  `ssht` is the normal SSH wrapper that issues or reuses a ticket and then runs
-  `ssh`.
+  `ssht` remains available for explicit ticket debugging or targets not rendered
+  into the OpenSSH config.
 
 ## Deploys
 
