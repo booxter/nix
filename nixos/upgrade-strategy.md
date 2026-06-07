@@ -23,7 +23,7 @@ The schedule is organized around a few ordering rules:
 - Run local backup work before the daily upgrade window on machines that have
   local backups. Application-specific prep runs first, then restic pushes to
   `beast`, then those machines may enter the daily upgrade/reboot window.
-- Run the morning flake update after the upgrade windows. If the PR merges,
+- Run the morning flake update after the upgrade windows. Once the PR is merged,
   `mmini` warms the LAN cache later that morning so the resulting closures are
   ready for the next upgrade window.
 
@@ -34,7 +34,7 @@ All times below are in `America/New_York`.
 <!-- markdownlint-disable MD013 -->
 | Time | Event | Notes |
 | --- | --- | --- |
-| `06:00` daily | Flake input bump workflow | GitHub Actions runs `.github/workflows/auto-update.yml`, updates `flake.lock`, opens a PR, and enables auto-merge. |
+| `06:00` daily | Flake input bump workflow | GitHub Actions runs `.github/workflows/auto-update.yml`, updates `flake.lock`, and opens a PR. |
 | `08:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized closures into Attic. |
 | `03:00` Monday | Nix builder VM upgrade window | Set in `lib/inventory.nix` for `prox-builder1vm`, `prox-builder2vm`, and `prox-builder3vm`. |
 | `03:30` Monday | `cachevm` upgrade window | Set in `nixos/cachevm/default.nix`. |
