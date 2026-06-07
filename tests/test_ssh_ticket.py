@@ -38,6 +38,20 @@ def test_applescript_list_quotes_values():
     )
 
 
+def test_osascript_approval_prompt_activates_system_events():
+    script = ssh_ticket.osascript_approval_script("Approve?")
+    assert 'tell application "System Events"' in script
+    assert "activate" in script
+    assert "display dialog" in script
+
+
+def test_osascript_ttl_selector_activates_system_events():
+    script = ssh_ticket.osascript_ttl_selector_script("Approve?", ["30m", "1h"], "30m")
+    assert 'tell application "System Events"' in script
+    assert "activate" in script
+    assert "choose from list" in script
+
+
 def test_ttl_choices_include_common_values_allowed_by_max():
     assert [
         ssh_ticket.format_duration(ttl) for ttl in ssh_ticket.ttl_choices(1800, 7200)

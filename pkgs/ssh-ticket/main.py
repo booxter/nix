@@ -70,6 +70,27 @@ def applescript_list(values):
     return "{" + ", ".join(applescript_quote(value) for value in values) + "}"
 
 
+def osascript_approval_script(message):
+    return f"""
+      tell application "System Events"
+        activate
+        set response to display dialog {applescript_string(message)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
+        return button returned of response
+      end tell
+    """
+
+
+def osascript_ttl_selector_script(message, choices, default_answer):
+    return f"""
+      tell application "System Events"
+        activate
+        set response to choose from list {applescript_list(choices)} with title "ssht" with prompt {applescript_string(message)} default items {{{applescript_quote(default_answer)}}} OK button name "Approve" cancel button name "Deny"
+      end tell
+      if response is false then error number -128
+      return item 1 of response
+    """
+
+
 def parse_duration(value):
     if isinstance(value, int):
         return value
@@ -356,10 +377,7 @@ def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
             f"Principal: {target['principal']}\n"
             f"TTL: {default_answer}"
         )
-        script = f"""
-          set response to display dialog {applescript_string(message)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
-          return button returned of response
-        """
+        script = osascript_approval_script(message)
         result = subprocess.run(
             [osascript, "-e", script], text=True, capture_output=True
         )
@@ -373,11 +391,7 @@ def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
         f"Select TTL, max {format_duration(max_ttl)}."
     )
     choices = [format_duration(ttl) for ttl in ttl_choices(default_ttl, max_ttl)]
-    script = f"""
-      set response to choose from list {applescript_list(choices)} with title "ssht" with prompt {applescript_string(message)} default items {{{applescript_quote(default_answer)}}} OK button name "Approve" cancel button name "Deny"
-      if response is false then error number -128
-      return item 1 of response
-    """
+    script = osascript_ttl_selector_script(message, choices, default_answer)
     result = subprocess.run([osascript, "-e", script], text=True, capture_output=True)
     if result.returncode != 0:
         raise Error("ticket request denied")
