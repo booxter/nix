@@ -33,6 +33,10 @@ def default_state_dir():
     return expand_path("~/.local/state/ssh-ticket")
 
 
+def state_dir_arg(args):
+    return expand_path(args.state_dir) if args.state_dir else default_state_dir()
+
+
 def run(cmd, *, input_text=None, capture=True):
     proc = subprocess.run(
         cmd,
@@ -399,6 +403,15 @@ def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
     return default_ttl if ttl_text == "" else parse_duration(ttl_text)
 
 
+def prompt_gui(target, default_ttl, max_ttl, ttl_was_explicit):
+    ttl = prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit)
+    if ttl is None:
+        ttl = prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit)
+    if ttl is None:
+        raise Error("cannot prompt for approval without SSH_ASKPASS or osascript")
+    return ttl
+
+
 def approved_ttl(args, target):
     default_ttl = parse_duration(args.ttl or target["defaultTtl"])
     max_ttl = parse_duration(target["maxTtl"])
@@ -409,16 +422,12 @@ def approved_ttl(args, target):
         )
     if args.yes:
         return default_ttl
-    if sys.stdin.isatty():
+    if getattr(args, "gui", False):
+        ttl = prompt_gui(target, default_ttl, max_ttl, ttl_was_explicit)
+    elif sys.stdin.isatty():
         ttl = prompt_tty(target, default_ttl, max_ttl, ttl_was_explicit)
     else:
-        ttl = prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit)
-        if ttl is None:
-            ttl = prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit)
-        if ttl is None:
-            raise Error(
-                "cannot prompt for approval without a TTY, SSH_ASKPASS, or osascript"
-            )
+        ttl = prompt_gui(target, default_ttl, max_ttl, ttl_was_explicit)
     if ttl > max_ttl:
         raise Error(
             f"approved TTL {format_duration(ttl)} exceeds max TTL {format_duration(max_ttl)} for {target['name']}"
@@ -482,12 +491,25 @@ def issue_ticket(args, target, state_dir, key_path):
 
 
 def ensure_ticket(args, target):
-    state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
+    state_dir = state_dir_arg(args)
     key_path = expand_path(args.key)
     paths = target_paths(target, state_dir)
     if not args.force and existing_ticket_valid(target, paths):
         return paths
     return issue_ticket(args, target, state_dir, key_path)
+
+
+def write_ticket_alias(paths, alias, state_dir):
+    alias_paths = target_paths({"name": alias}, state_dir)
+    if alias_paths["cert"] == paths["cert"]:
+        return alias_paths
+    state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    for key in ("public", "cert", "metadata"):
+        if paths[key].exists():
+            alias_paths[key].write_text(
+                paths[key].read_text(encoding="utf-8"), encoding="utf-8"
+            )
+    return alias_paths
 
 
 def cmd_targets(args):
@@ -551,6 +573,18 @@ def cmd_issue(args):
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     paths = issue_ticket(args, target, state_dir, expand_path(args.key))
     print(str(paths["cert"]))
+    return 0
+
+
+def cmd_ensure(args):
+    targets = load_targets(repo_root_arg(args.repo_root))
+    target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
+    state_dir = state_dir_arg(args)
+    paths = ensure_ticket(args, target)
+    cert_alias = args.cert_alias or args.target
+    alias_paths = write_ticket_alias(paths, cert_alias, state_dir)
+    if not args.quiet:
+        print(str(alias_paths["cert"]))
     return 0
 
 
@@ -629,6 +663,11 @@ def add_common_options(parser):
         "--yes", action="store_true", help="issue without an approval prompt"
     )
     parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="use SSH_ASKPASS or osascript instead of terminal input",
+    )
+    parser.add_argument(
         "--force", action="store_true", help="ignore an existing valid ticket"
     )
     parser.add_argument(
@@ -668,6 +707,20 @@ def build_parser():
     add_common_options(issue)
     issue.add_argument("target", help="target or alias")
     issue.set_defaults(func=cmd_issue)
+
+    ensure = subparsers.add_parser(
+        "ensure", help="issue or reuse a ticket without connecting"
+    )
+    add_common_options(ensure)
+    ensure.add_argument("target", help="target or alias")
+    ensure.add_argument(
+        "--cert-alias",
+        help="also write the certificate to this state-dir alias for ssh_config",
+    )
+    ensure.add_argument(
+        "--quiet", action="store_true", help="do not print the cert path"
+    )
+    ensure.set_defaults(func=cmd_ensure)
 
     init_key = subparsers.add_parser(
         "init-key", help="create the reusable ticket keypair"
