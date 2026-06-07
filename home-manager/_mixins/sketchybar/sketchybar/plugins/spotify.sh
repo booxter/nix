@@ -39,14 +39,20 @@ shuffle ()
   fi
 }
 
+spotify_info_field ()
+{
+  # Keep truncation UTF-8 aware; cut can split bytes under SketchyBar's launch locale.
+  jq -r --arg field "$1" '.[$field] // "" | .[:20]' <<<"$INFO"
+}
+
 update ()
 {
   PLAYING=1
-  if [ "$(echo "$INFO" | jq -r '.["Player State"]')" = "Playing" ]; then
+  if [ "$(jq -r '.["Player State"] // ""' <<<"$INFO")" = "Playing" ]; then
     PLAYING=0
-    TRACK="$(echo "$INFO" | jq -r .Name | cut -c1-20)"
-    ARTIST="$(echo "$INFO" | jq -r .Artist | cut -c1-20)"
-    ALBUM="$(echo "$INFO" | jq -r .Album | cut -c1-20)"
+    TRACK="$(spotify_info_field Name)"
+    ARTIST="$(spotify_info_field Artist)"
+    ALBUM="$(spotify_info_field Album)"
     SHUFFLE=$(osascript -e 'tell application "Spotify" to get shuffling')
     REPEAT=$(osascript -e 'tell application "Spotify" to get repeating')
   fi

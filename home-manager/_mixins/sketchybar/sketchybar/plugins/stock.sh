@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
 
-data=$(curl -s https://groww.in/us-stocks/nvda)
+SYMBOL="${STOCK_SYMBOL:-NVDA}"
+QUOTE_URL="https://api.nasdaq.com/api/quote/${SYMBOL}/info?assetclass=stocks"
 
-lastPrice=$(echo "$data" | grep -oP '"lastPrice":\K[0-9.]*')
-openingPrice=$(echo "$data" | grep -oP '"openingPrice":\K[0-9.]*')
+if ! data="$(
+  curl -fsSL \
+    -H 'Accept: application/json' \
+    -H 'User-Agent: Mozilla/5.0' \
+    "$QUOTE_URL"
+)"; then
+  sketchybar --set "$NAME" icon="􀇿" icon.color="0xffe0af68" label="$SYMBOL"
+  exit 0
+fi
 
-if (( $(echo "$lastPrice < $openingPrice" | bc -l) )); then
+last_price="$(jq -r '.data.primaryData.lastSalePrice // empty' <<<"$data" 2>/dev/null)"
+direction="$(jq -r '.data.primaryData.deltaIndicator // empty' <<<"$data" 2>/dev/null)"
+
+if [ -z "$last_price" ]; then
+  sketchybar --set "$NAME" icon="􀇿" icon.color="0xffe0af68" label="$SYMBOL"
+  exit 0
+fi
+
+if [ "$direction" = "down" ]; then
 	COLOR="0xffff0000"
 	ICON="􀁩"
 else
@@ -16,4 +32,4 @@ fi
 sketchybar --set "$NAME" \
 	icon="$ICON" \
 	icon.color="$COLOR" \
-	label="${lastPrice}"
+	label="${last_price}"

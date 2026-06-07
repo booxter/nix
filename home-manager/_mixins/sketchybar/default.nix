@@ -14,6 +14,7 @@ in
       aerospace
       gnugrep
       curl
+      jq
     ];
   };
 }
