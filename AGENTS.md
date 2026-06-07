@@ -12,6 +12,18 @@ Scope: the whole repository.
   flags.
 - Keep unrelated working tree changes intact.
 
+## Repository Structure
+
+- Host-specific configuration lives under `nixos/<host>/` and
+  `darwin/<host>/`. Add machine-local service/config changes there.
+- Shared modules live in `common/_mixins/`, `nixos/_mixins/`,
+  `darwin/_mixins/`, and `home-manager/_mixins/`.
+- Static fleet facts belong in `lib/inventory.nix`: host lists, addresses,
+  aliases, DNS/service metadata, and shared public keys.
+- Custom packages and tools live under `pkgs/`, script entrypoints under
+  `scripts/`, encrypted host secrets under `secrets/`, and checks under
+  `tests/` or `checks.nix`.
+
 ## SSH Access
 
 - Use `ssht` for SSH access to managed NixOS nodes:
