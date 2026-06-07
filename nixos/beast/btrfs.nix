@@ -1,4 +1,34 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
+let
+  volume2 = "/volume2";
+  btrfs = "${pkgs.btrfs-progs}/bin/btrfs";
+  scrubStartOrResume = pkgs.writeShellScript "btrfs-scrub-start-or-resume-volume2" ''
+    ${btrfs} scrub resume -B ${volume2}
+    status=$?
+
+    if [ "$status" -eq 0 ]; then
+      exit 0
+    fi
+
+    if [ "$status" -eq 2 ]; then
+      exec ${btrfs} scrub start -B ${volume2}
+    fi
+
+    exit "$status"
+  '';
+  scrubResumeIfInterrupted = pkgs.writeShellScript "btrfs-scrub-resume-if-interrupted-volume2" ''
+    status="$(${btrfs} scrub status ${volume2} || true)"
+
+    case "$status" in
+      *"Status:"*"interrupted"*|*"Status:"*"cancelled"*|*"Status:"*"canceled"*)
+        exec ${btrfs} scrub resume -B ${volume2}
+        ;;
+      *)
+        exit 0
+        ;;
+    esac
+  '';
+in
 {
   boot.supportedFilesystems = [ "btrfs" ];
 
@@ -54,6 +84,35 @@
   systemd.services."btrfs-scrub-volume2" = {
     after = [ "volume2.mount" ];
     requires = [ "volume2.mount" ];
+    serviceConfig.ExecStart = lib.mkForce scrubStartOrResume;
+  };
+
+  systemd.services."btrfs-scrub-resume-volume2" = {
+    description = "Resume interrupted btrfs scrub on /volume2";
+    after = [ "volume2.mount" ];
+    before = [
+      "shutdown.target"
+      "sleep.target"
+    ];
+    conflicts = [
+      "shutdown.target"
+      "sleep.target"
+    ];
+    requires = [ "volume2.mount" ];
+    serviceConfig = {
+      Type = "simple";
+      ExecStart = scrubResumeIfInterrupted;
+      IOSchedulingClass = "idle";
+      Nice = 19;
+    };
+  };
+
+  systemd.timers."btrfs-scrub-resume-volume2" = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "5min";
+      Unit = "btrfs-scrub-resume-volume2.service";
+    };
   };
 
   environment.systemPackages = [
