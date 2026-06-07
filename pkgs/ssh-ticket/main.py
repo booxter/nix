@@ -56,6 +56,14 @@ def shell_quote(value):
     return "'" + value.replace("'", "'\\''") + "'"
 
 
+def applescript_quote(value):
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def applescript_string(value):
+    return " & linefeed & ".join(applescript_quote(part) for part in value.split("\n"))
+
+
 def parse_duration(value):
     if isinstance(value, int):
         return value
@@ -312,12 +320,12 @@ def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
     default_answer = format_duration(default_ttl)
     if ttl_was_explicit:
         message = (
-            f"Approve SSH ticket for {target['name']}?\\n\\n"
-            f"Principal: {target['principal']}\\n"
+            f"Approve SSH ticket for {target['name']}?\n\n"
+            f"Principal: {target['principal']}\n"
             f"TTL: {default_answer}"
         )
         script = f"""
-          set response to display dialog {json.dumps(message)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
+          set response to display dialog {applescript_string(message)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
           return button returned of response
         """
         result = subprocess.run(
@@ -328,12 +336,12 @@ def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
         return default_ttl
 
     message = (
-        f"Approve SSH ticket for {target['name']}?\\n\\n"
-        f"Principal: {target['principal']}\\n"
+        f"Approve SSH ticket for {target['name']}?\n\n"
+        f"Principal: {target['principal']}\n"
         f"Max TTL: {format_duration(max_ttl)}"
     )
     script = f"""
-      set response to display dialog {json.dumps(message)} default answer {json.dumps(default_answer)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
+      set response to display dialog {applescript_string(message)} default answer {applescript_quote(default_answer)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
       return (button returned of response) & linefeed & (text returned of response)
     """
     result = subprocess.run([osascript, "-e", script], text=True, capture_output=True)

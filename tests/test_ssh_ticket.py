@@ -25,6 +25,12 @@ def test_parse_duration_rejects_invalid_values(value):
         ssh_ticket.parse_duration(value)
 
 
+def test_applescript_string_renders_newlines_as_linefeed():
+    expr = ssh_ticket.applescript_string('one\n\nquoted "value"')
+    assert "\\n" not in expr
+    assert expr == '"one" & linefeed & "" & linefeed & "quoted \\"value\\""'
+
+
 def test_resolve_target_accepts_unique_alias():
     targets = [
         {
