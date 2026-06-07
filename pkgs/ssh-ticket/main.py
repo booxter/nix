@@ -11,7 +11,8 @@ import sys
 import time
 
 
-DEFAULT_CA_KEY = "~/.ssh/fleet-user-ca"
+DEFAULT_CA_PRIVATE_KEY = "~/.ssh/fleet-user-ca"
+DEFAULT_CA_PUBLIC_KEY = "~/.ssh/fleet-user-ca.pub"
 DEFAULT_KEY = "~/.ssh/fleet-ticket/id_ed25519"
 MIN_VALID_SECONDS = 60
 
@@ -118,6 +119,23 @@ def repo_root_arg(value):
     if env_root:
         return expand_path(env_root)
     return pathlib.Path.cwd().resolve()
+
+
+def env_flag(name):
+    value = os.environ.get(name)
+    if value is None:
+        return None
+    return value.strip().lower() in ("1", "true", "yes", "on")
+
+
+def resolved_ca_key(args):
+    ca_agent = args.ca_agent
+    if ca_agent is None:
+        ca_agent = args.ca_key is None
+    ca_key = args.ca_key or (
+        DEFAULT_CA_PUBLIC_KEY if ca_agent else DEFAULT_CA_PRIVATE_KEY
+    )
+    return ca_agent, expand_path(ca_key)
 
 
 def nix_targets_expr(repo_root):
@@ -390,11 +408,11 @@ def issue_ticket(args, target, state_dir, key_path):
     paths["public"].write_text(public_text, encoding="utf-8")
     paths["cert"].unlink(missing_ok=True)
 
-    ca_key = expand_path(args.ca_key)
+    ca_agent, ca_key = resolved_ca_key(args)
     serial = int(time.time())
     identity = f"ssht:{target['name']}:{serial}"
     cmd = ["ssh-keygen", "-q"]
-    if args.ca_agent:
+    if ca_agent:
         cmd.extend(["-U", "-s", str(ca_key)])
     else:
         cmd.extend(["-s", str(ca_key)])
@@ -429,6 +447,8 @@ def issue_ticket(args, target, state_dir, key_path):
         "ttl": ttl,
         "certificateFile": str(paths["cert"]),
         "identityFile": str(key_path),
+        "caAgent": ca_agent,
+        "caKey": str(ca_key),
     }
     write_json(paths["metadata"], metadata)
     return paths
@@ -554,15 +574,23 @@ def add_common_options(parser):
     )
     parser.add_argument(
         "--ca-key",
-        default=os.environ.get("SSHT_CA_KEY", DEFAULT_CA_KEY),
-        help="SSH user CA key path",
+        default=os.environ.get("SSHT_CA_KEY"),
+        help="SSH user CA key path; defaults to ~/.ssh/fleet-user-ca.pub with agent signing",
     )
-    parser.add_argument(
+    ca_agent = parser.add_mutually_exclusive_group()
+    ca_agent.add_argument(
         "--ca-agent",
+        dest="ca_agent",
         action="store_true",
-        default=os.environ.get("SSHT_CA_AGENT") == "1",
-        help="ask ssh-keygen to sign with a CA key loaded in ssh-agent; --ca-key should point to the CA public key",
+        help="sign with a CA key loaded in ssh-agent",
     )
+    ca_agent.add_argument(
+        "--no-ca-agent",
+        dest="ca_agent",
+        action="store_false",
+        help="sign with a CA private key file",
+    )
+    parser.set_defaults(ca_agent=env_flag("SSHT_CA_AGENT"))
     parser.add_argument("--ttl", help="ticket lifetime, e.g. 30m, 2h, 1h30m")
     parser.add_argument(
         "--yes", action="store_true", help="issue without an approval prompt"

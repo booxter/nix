@@ -1,6 +1,7 @@
 import importlib.util
 import pathlib
 import time
+import types
 
 import pytest
 
@@ -29,6 +30,22 @@ def test_applescript_string_renders_newlines_as_linefeed():
     expr = ssh_ticket.applescript_string('one\n\nquoted "value"')
     assert "\\n" not in expr
     assert expr == '"one" & linefeed & "" & linefeed & "quoted \\"value\\""'
+
+
+def test_resolved_ca_key_defaults_to_agent_public_key():
+    ca_agent, ca_key = ssh_ticket.resolved_ca_key(
+        types.SimpleNamespace(ca_agent=None, ca_key=None)
+    )
+    assert ca_agent
+    assert ca_key.name == "fleet-user-ca.pub"
+
+
+def test_resolved_ca_key_treats_explicit_key_as_private_file():
+    ca_agent, ca_key = ssh_ticket.resolved_ca_key(
+        types.SimpleNamespace(ca_agent=None, ca_key="~/.ssh/custom-ca")
+    )
+    assert not ca_agent
+    assert ca_key.name == "custom-ca"
 
 
 def test_resolve_target_accepts_unique_alias():
