@@ -39,6 +39,16 @@
       transmission_4 = patchedTransmission;
       transmission = patchedTransmission;
 
+      # NixOS can expose the same D-Bus service file through both direct package
+      # paths and system-path symlinks. Do not let dbus-broker report those
+      # same-file duplicates at error level.
+      # https://github.com/NixOS/nixpkgs/issues/303078
+      dbus-broker = prev.dbus-broker.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../lib/patches/dbus-broker-ignore-duplicate-canonical-service-paths.patch
+        ];
+      });
+
       # Carry the partial rename chunk fix until it lands upstream.
       # TODO: report upstream and drop this extra patch once it is released.
       diff-so-fancy = prev.diff-so-fancy.overrideAttrs (old: {

@@ -6,23 +6,19 @@
   ...
 }:
 let
-  inherit (pkgs.stdenv.hostPlatform) isLinux;
   super = "MOD1";
   cmdButton = "MOD4";
 in
 {
-  home.packages = lib.mkIf isLinux (
-    with pkgs;
-    [
-      wev
-      wl-clipboard
-      wlrctl
-      wtype
-    ]
-  );
+  home.packages = with pkgs; [
+    wev
+    wl-clipboard
+    wlrctl
+    wtype
+  ];
 
   services.hypridle = {
-    enable = isLinux;
+    enable = true;
     settings =
       let
         hyprctl = "${pkgs.hyprland}/bin/hyprctl";
@@ -44,7 +40,7 @@ in
 
   # TODO: rename module?
   gtk = {
-    enable = isLinux;
+    enable = true;
 
     iconTheme = {
       name = "Papirus-Dark";
@@ -85,7 +81,7 @@ in
   };
 
   programs.waybar = {
-    enable = isLinux;
+    enable = true;
     settings = {
       mainBar = {
         layer = "top";
@@ -134,8 +130,12 @@ in
   };
 
   wayland.windowManager.hyprland = {
-    enable = isLinux;
+    enable = true;
     configType = "hyprlang";
+    # NixOS owns portal packages/config for the desktop session. Keep Home
+    # Manager from exposing a second per-user portal view while still letting it
+    # manage Hyprland config and reload hooks.
+    portalPackage = null;
     xwayland.enable = true;
     systemd.enable = true;
     settings = {

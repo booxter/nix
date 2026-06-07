@@ -72,11 +72,14 @@ case "$out_link" in
 esac
 
 mkdir -p \
+  "$out_link/bin" \
   "$out_link/generated" \
   "$out_link/etc/nix" \
   "$out_link/etc/nut" \
   "$out_link/etc/profiles/per-user/ihrachyshka/share/man/man5" \
   "$out_link/etc/terminfo/x~nix~case~hack~1"
+printf 'activate=%s\n' "$last_arg" >"$out_link/activate"
+printf 'switch=%s\n' "$last_arg" >"$out_link/bin/switch-to-configuration"
 printf 'flake=%s\n' "$last_arg" >"$out_link/generated/nix.conf"
 printf 'store=/nix/store/%s-same-package/bin\n' "$store_hash" >>"$out_link/generated/nix.conf"
 chmod 0444 "$out_link/generated/nix.conf"
@@ -155,11 +158,14 @@ SH
 set -euo pipefail
 
 is_build=false
+wants_session_variables=false
 for arg in "$@"; do
   if [ "$arg" = "build" ]; then
     is_build=true
-    break
   fi
+  case "$arg" in
+    *sessionVariablesPackage*) wants_session_variables=true ;;
+  esac
 done
 
 if [ "$is_build" = true ]; then
@@ -169,7 +175,18 @@ if [ "$is_build" = true ]; then
     *"${DIFF_CONFIG_MACHINE:?}"*) store_hash=33333333333333333333333333333333 ;;
     *) store_hash=44444444444444444444444444444444 ;;
   esac
+
+  if [ "$wants_session_variables" = true ]; then
+    mkdir -p "$out/etc/profile.d"
+    printf 'session=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/etc/profile.d/hm-session-vars.sh"
+    printf 'store=/nix/store/%s-same-session-package/bin\n' "$store_hash" >>"$out/etc/profile.d/hm-session-vars.sh"
+    printf '%s\n' "$out"
+    exit 0
+  fi
+
   mkdir -p "$out/home-files/.config" "$out/LaunchAgents"
+  printf 'activate=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/activate"
+  printf 'store=/nix/store/%s-same-activation-package/bin\n' "$store_hash" >>"$out/activate"
   printf 'flake=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/home-files/.config/hm.conf"
   printf 'store=/nix/store/%s-same-home-package/bin\n' "$store_hash" >>"$out/home-files/.config/hm.conf"
   printf 'agent=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$out/LaunchAgents/org.example.hm.plist"
@@ -265,6 +282,8 @@ SH
   [[ "$output" == *"CHANGED"* ]]
   [[ "$output" != *"Detailed config diff:"* ]]
   [[ "$output" == *"diff -ruN old/system/etc/nix/nix.conf new/system/etc/nix/nix.conf"* ]]
+  [[ "$output" == *"diff -ruN old/system/activate new/system/activate"* ]]
+  [[ "$output" == *"diff -ruN old/system/bin/switch-to-configuration new/system/bin/switch-to-configuration"* ]]
   [[ "$output" != *"old/system/etc/issue"* ]]
   [[ "$output" != *"home-configuration.nix.5"* ]]
   [[ "$output" != *"man-flake"* ]]
@@ -274,12 +293,17 @@ SH
   [[ "$output" == *"/nix/store/<path>/bin"* ]]
   [[ "$output" != *"Home Manager diff ("* ]]
   [[ "$output" != *"Building Home Manager activation package"* ]]
+  [[ "$output" == *"diff -ruN old/home-manager/ihrachyshka/activate new/home-manager/ihrachyshka/activate"* ]]
   [[ "$output" == *"diff -ruN old/home-manager/ihrachyshka/home-files/.config/hm.conf new/home-manager/ihrachyshka/home-files/.config/hm.conf"* ]]
+  [[ "$output" == *"diff -ruN old/home-manager/ihrachyshka/session-vars/etc/profile.d/hm-session-vars.sh new/home-manager/ihrachyshka/session-vars/etc/profile.d/hm-session-vars.sh"* ]]
   [[ "$output" == *"home-files/.config/hm.conf"* ]]
   [[ "$output" == *"LaunchAgents/org.example.hm.plist"* ]]
+  [[ "$output" == *"session-vars/etc/profile.d/hm-session-vars.sh"* ]]
   [[ "$output" == *"/nix/store/<path>/bin"* ]]
   [[ "$output" != *"same-package"* ]]
   [[ "$output" != *"same-home-package"* ]]
+  [[ "$output" != *"same-session-package"* ]]
+  [[ "$output" != *"same-activation-package"* ]]
   [[ "$output" != *"11111111111111111111111111111111"* ]]
   [[ "$output" != *"22222222222222222222222222222222"* ]]
   [[ "$output" != *"33333333333333333333333333333333"* ]]
