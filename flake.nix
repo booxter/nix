@@ -226,11 +226,20 @@
           };
           sopsApps = import ./lib/sops.nix { inherit pkgs; };
           fleetApps = import ./lib/fleet.nix { inherit pkgs; };
+          basePackages = import ./pkgs pkgs;
+          mkApp = program: description: {
+            type = "app";
+            inherit program;
+            meta = { inherit description; };
+          };
+          darwinApps = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+            lan-wan-bpf = mkApp "${basePackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
+          };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;
           };
         in
-        sopsApps // fleetApps // proxmox.apps
+        sopsApps // fleetApps // proxmox.apps // darwinApps
       );
       formatter = helpers.forAllSystems (
         system:

@@ -1,5 +1,6 @@
 {
   config,
+  hostname,
   hostInventory,
   lib,
   pkgs,
@@ -7,12 +8,18 @@
 }:
 let
   cfg = config.host.observability.lanWan;
+  hostSpec = hostInventory.darwinHosts.${hostname};
   nodeCfg = config.services.prometheus.exporters.node;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
-  anchorLeaf = "booxter_observability_lan_wan";
-  anchorName = "com.apple/${anchorLeaf}";
-  anchorPath = "/etc/pf.anchors/${anchorLeaf}";
-  iface = cfg.interface;
+  textfilePath = "${textfileDir}/lan-wan.prom";
+  stateDir = "/var/lib/observability-lan-wan";
+  serviceUser = "_observability-lan-wan";
+  # macOS exposes /dev/bpf* as root:access_bpf 0660. Make this the service
+  # account's primary group instead of running the capture daemon as root.
+  accessBpfGroup = "access_bpf";
+  accessBpfGid = 101;
+  serviceUid = 536;
+  lanWanPackage = pkgs.darwin-lan-wan-bpf;
   nodeExporterArgs = lib.escapeShellArgs (
     [
       "--web.listen-address"
@@ -22,86 +29,36 @@ let
     ++ map (collector: "--no-collector.${collector}") nodeCfg.disabledCollectors
     ++ nodeCfg.extraFlags
   );
-  pfRules = pkgs.writeText "darwin-lan-wan-accounting.pf" ''
-    table <lan_nets> const { ${lib.concatStringsSep ", " cfg.lanSubnets} }
-    table <lan_nets6> const { ${lib.concatStringsSep ", " cfg.lanSubnets6} }
-
-    pass in on ${iface} inet from <lan_nets> to any no state label "lan_in"
-    pass in on ${iface} inet from ! <lan_nets> to any no state label "wan_in"
-    pass in on ${iface} inet6 from <lan_nets6> to any no state label "lan_in"
-    pass in on ${iface} inet6 from ! <lan_nets6> to any no state label "wan_in"
-
-    pass out on ${iface} inet from any to <lan_nets> no state label "lan_out"
-    pass out on ${iface} inet from any to ! <lan_nets> no state label "wan_out"
-    pass out on ${iface} inet6 from any to <lan_nets6> no state label "lan_out"
-    pass out on ${iface} inet6 from any to ! <lan_nets6> no state label "wan_out"
-  '';
-  installRules = pkgs.writeShellApplication {
-    name = "darwin-lan-wan-accounting-install";
-    text = ''
-      set -euo pipefail
-
-      mkdir -p ${textfileDir} /etc/pf.anchors
-      install -m 0644 ${pfRules} ${anchorPath}
-
-      /sbin/pfctl -E >/dev/null 2>&1 || true
-      /sbin/pfctl -a ${anchorName} -f ${anchorPath}
-    '';
-  };
-  exportMetrics = pkgs.writeShellApplication {
-    name = "darwin-lan-wan-accounting-export";
-    runtimeInputs = [
-      pkgs.coreutils
-    ];
-    text = ''
-      set -euo pipefail
-
-      tmp_file="$(mktemp ${textfileDir}/lan-wan.prom.XXXXXX)"
-      trap 'rm -f "$tmp_file"' EXIT
-
-      declare -A counter_bytes=(
-        [lan_in]=0
-        [wan_in]=0
-        [lan_out]=0
-        [wan_out]=0
-      )
-
-      current_label=""
-      while IFS= read -r line; do
-        if [[ "$line" =~ label[[:space:]]+\"([^\"]+)\" ]]; then
-          current_label="''${BASH_REMATCH[1]}"
-          continue
-        fi
-
-        if [[ -n "$current_label" && "$line" =~ Bytes:[[:space:]]*([0-9]+) ]]; then
-          case "$current_label" in
-            lan_in|wan_in|lan_out|wan_out)
-              bytes="''${BASH_REMATCH[1]}"
-              counter_bytes["$current_label"]="$(( ''${counter_bytes[$current_label]} + bytes ))"
-              ;;
-          esac
-          current_label=""
-        fi
-      done < <(/sbin/pfctl -a ${anchorName} -sr -v 2>/dev/null || true)
-
-      {
-        printf '%s\n' '# HELP host_observability_network_bytes_total Classified host network traffic in bytes.'
-        printf '%s\n' '# TYPE host_observability_network_bytes_total counter'
-        printf 'host_observability_network_bytes_total{direction="receive",scope="lan"} %s\n' "''${counter_bytes[lan_in]}"
-        printf 'host_observability_network_bytes_total{direction="receive",scope="wan"} %s\n' "''${counter_bytes[wan_in]}"
-        printf 'host_observability_network_bytes_total{direction="transmit",scope="lan"} %s\n' "''${counter_bytes[lan_out]}"
-        printf 'host_observability_network_bytes_total{direction="transmit",scope="wan"} %s\n' "''${counter_bytes[wan_out]}"
-      } >"$tmp_file"
-
-      chmod 0644 "$tmp_file"
-      mv "$tmp_file" ${textfileDir}/lan-wan.prom
-      trap - EXIT
-    '';
-  };
+  programArguments = [
+    (lib.getExe cfg.package)
+    "-i"
+    cfg.interface
+    "-p"
+    (toString cfg.intervalSeconds)
+  ]
+  ++ lib.concatMap (cidr: [
+    "-l"
+    cidr
+  ]) cfg.lanSubnets
+  ++ lib.concatMap (cidr: [
+    "-6"
+    cidr
+  ]) cfg.lanSubnets6
+  ++ [
+    "--textfile"
+    textfilePath
+  ];
+  command = lib.escapeShellArgs programArguments;
 in
 {
   options.host.observability.lanWan = {
     enable = lib.mkEnableOption "LAN/WAN traffic accounting for Prometheus on Darwin";
+
+    package = lib.mkOption {
+      type = lib.types.package;
+      default = lanWanPackage;
+      description = "Package providing the Darwin LAN/WAN BPF accounting daemon.";
+    };
 
     lanSubnets = lib.mkOption {
       type = with lib.types; listOf str;
@@ -117,13 +74,21 @@ in
 
     interface = lib.mkOption {
       type = lib.types.str;
-      default = config.host.networking.mainInterface;
+      default = hostSpec.mainInterface or "en0";
       example = "en0";
       description = "Primary network interface to classify traffic on.";
+    };
+
+    intervalSeconds = lib.mkOption {
+      type = lib.types.ints.positive;
+      default = 15;
+      description = "How often to refresh the node-exporter textfile metrics.";
     };
   };
 
   config = lib.mkIf cfg.enable {
+    environment.systemPackages = [ cfg.package ];
+
     services.prometheus.exporters.node = {
       extraFlags = [
         "--collector.textfile"
@@ -139,27 +104,49 @@ in
       "/bin/wait4path /nix/store && exec ${lib.getExe nodeCfg.package} ${nodeExporterArgs}"
     ];
 
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      mkdir -p ${textfileDir}
-      chmod 0755 ${textfileDir}
+    ids.uids.${serviceUser} = serviceUid;
+
+    users.users.${serviceUser} = {
+      uid = config.ids.uids.${serviceUser};
+      gid = accessBpfGid;
+      home = stateDir;
+      createHome = true;
+      shell = "/usr/bin/false";
+      description = "System user for Darwin LAN/WAN BPF accounting";
+    };
+    users.knownUsers = [ serviceUser ];
+
+    system.activationScripts.launchd.text = lib.mkBefore ''
+      access_bpf_gid="$(/usr/bin/dscacheutil -q group -a name ${accessBpfGroup} | /usr/bin/awk '/^gid:/ { print $2; exit }')"
+      if [ "$access_bpf_gid" != "${toString accessBpfGid}" ]; then
+        echo "Expected ${accessBpfGroup} gid ${toString accessBpfGid}, got ''${access_bpf_gid:-missing}" >&2
+        exit 1
+      fi
+
+      bpf_group="$(/usr/bin/stat -f '%Sg' /dev/bpf0)"
+      bpf_mode="$(/usr/bin/stat -f '%OLp' /dev/bpf0)"
+      if [ "$bpf_group" != "${accessBpfGroup}" ] || [ "$bpf_mode" != "660" ]; then
+        echo "Expected /dev/bpf0 to be root:${accessBpfGroup} 660, got group=$bpf_group mode=$bpf_mode" >&2
+        exit 1
+      fi
+
+      mkdir -p ${textfileDir} ${stateDir}
+      chown ${serviceUser}:${accessBpfGroup} ${textfileDir} ${stateDir}
+      chmod 0755 ${textfileDir} ${stateDir}
     '';
 
     launchd.daemons.observability-lan-wan-accounting = {
-      command = lib.escapeShellArg (lib.getExe installRules);
+      inherit command;
       serviceConfig = {
         RunAtLoad = true;
-        StandardOutPath = "/var/log/observability-lan-wan-accounting.log";
-        StandardErrorPath = "/var/log/observability-lan-wan-accounting.log";
-      };
-    };
-
-    launchd.daemons.observability-lan-wan-export = {
-      command = lib.escapeShellArg (lib.getExe exportMetrics);
-      serviceConfig = {
-        RunAtLoad = true;
-        StartInterval = 15;
-        StandardOutPath = "/var/log/observability-lan-wan-export.log";
-        StandardErrorPath = "/var/log/observability-lan-wan-export.log";
+        KeepAlive = true;
+        UserName = serviceUser;
+        GroupName = accessBpfGroup;
+        InitGroups = false;
+        ProcessType = "Background";
+        LowPriorityIO = true;
+        StandardOutPath = "${stateDir}/lan-wan.log";
+        StandardErrorPath = "${stateDir}/lan-wan.log";
       };
     };
   };
