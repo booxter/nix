@@ -8,6 +8,8 @@ Scope: the whole repository.
   machines unless the user explicitly asks for that action.
 - Prefer the flake apps and repo scripts over ad hoc commands. Run `nix fmt`
   after edits; it applies the repo's format and lint rules.
+- Most flake apps and scripts support `--help`; check that before guessing
+  flags.
 - Keep unrelated working tree changes intact.
 
 ## SSH Access
