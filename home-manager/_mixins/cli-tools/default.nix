@@ -123,6 +123,7 @@
       openssl
       podman
       pre-commit
+      ssh-ticket
       sops
       wget
       yq-go
