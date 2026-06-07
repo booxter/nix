@@ -155,6 +155,34 @@ def test_existing_ticket_valid_uses_metadata(tmp_path):
     assert ssh_ticket.existing_ticket_valid(target, paths)
 
 
+def test_write_ticket_alias_copies_cert_material(tmp_path):
+    paths = ssh_ticket.target_paths({"name": "prox-orgvm"}, tmp_path)
+    paths["public"].write_text("public\n", encoding="utf-8")
+    paths["cert"].write_text("cert\n", encoding="utf-8")
+    paths["metadata"].write_text('{"target":"prox-orgvm"}\n', encoding="utf-8")
+
+    alias_paths = ssh_ticket.write_ticket_alias(paths, "org", tmp_path)
+
+    assert alias_paths["public"].name == "org.pub"
+    assert alias_paths["cert"].name == "org-cert.pub"
+    assert alias_paths["cert"].read_text(encoding="utf-8") == "cert\n"
+    assert alias_paths["metadata"].read_text(encoding="utf-8") == (
+        '{"target":"prox-orgvm"}\n'
+    )
+
+
+def test_parser_has_ensure_command():
+    args = ssh_ticket.build_parser().parse_args(
+        ["ensure", "--quiet", "--gui", "--cert-alias", "org", "prox-orgvm"]
+    )
+
+    assert args.func == ssh_ticket.cmd_ensure
+    assert args.quiet
+    assert args.gui
+    assert args.cert_alias == "org"
+    assert args.target == "prox-orgvm"
+
+
 def test_ssht_command_does_not_add_ticket_key_to_agent(tmp_path):
     cmd = ssh_ticket.ssht_ssh_command(
         types.SimpleNamespace(

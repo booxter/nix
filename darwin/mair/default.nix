@@ -1,9 +1,16 @@
-{ config, hostInventory, ... }:
+{
+  config,
+  hostInventory,
+  username,
+  ...
+}:
 let
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
 in
 {
+  home-manager.users.${username}.programs.sshTicket.enableKnownHosts = true;
+
   sops.secrets."wireguard/gwvm/privateKey" = {
     owner = "root";
     group = "wheel";
