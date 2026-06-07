@@ -8,8 +8,8 @@ Usage:
   scripts/sops-edit.sh --help
 
 If HOST is omitted, the current short hostname is used.
-If a template exists for HOST, merge it into the secret first.
-Then open the secret for editing with sops.
+Open the host secret for editing with sops.
+Run sops-update separately when template keys should be merged.
 EOF
 }
 
@@ -53,16 +53,11 @@ if [[ -z "$host" ]]; then
   host="$(hostname -s)"
 fi
 
-default_template="${repo_root}/secrets/_template.yaml"
 secret="${repo_root}/secrets/${host}.yaml"
 
 if [[ ! -f "$secret" ]]; then
   echo "Secret not found: $secret"
   exit 1
-fi
-
-if [[ -f "$default_template" ]]; then
-  SOPS_UPDATE_QUIET=1 bash "${repo_root}/scripts/sops-update.sh" "$host"
 fi
 
 sops "$secret"

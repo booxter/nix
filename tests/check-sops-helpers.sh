@@ -355,7 +355,7 @@ EOF
   run_expect_failure "$out" bash "$repo/scripts/sops-pass.sh" beast nobody
   assert_contains "$(cat "$out")" "Unsupported user: nobody"
 
-  log "edit a secret through sops without losing merged template keys"
+  log "edit a secret through sops without merging template keys"
   cat > "$WORKDIR/editor.sh" <<'EOF'
 #!/bin/sh
 set -eu
@@ -367,6 +367,7 @@ EOF
   assert_eq "EDITED_TOKEN" "$(yq -r '.attic.token' "$edited")"
   assert_eq "dst" "$(yq -r '.other.keep' "$edited")"
   assert_eq "true" "$(yq -r '.editorTouched' "$edited")"
+  assert_eq "null" "$(yq -r '.flakehub.token' "$edited")" "sops-edit should not merge template-only keys"
 
   log "preserve encryption after sequential helper calls"
   decrypt_secret_file beast "$before"

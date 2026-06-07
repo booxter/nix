@@ -75,10 +75,10 @@ nix run .#sops-pass -- [--gen] <host> <user|both>
 nix run .#sops-bootstrap -- <host>
 ```
 
-`sops-edit` merges missing template keys before opening the editor.
-`sops-update` only merges template keys, `sops-cat` prints decrypted secrets,
-`sops-copy` copies one key path between hosts, `sops-pass` writes password
-hashes, and `sops-bootstrap` initializes a host secret and recipients.
+`sops-edit` opens the host secret for editing. `sops-update` explicitly merges
+template keys, `sops-cat` prints decrypted secrets, `sops-copy` copies one key
+path between hosts, `sops-pass` writes password hashes, and `sops-bootstrap`
+initializes a host secret and recipients.
 
 ## Monitoring
 

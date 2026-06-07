@@ -86,6 +86,9 @@ nix run .#sops-copy -- mair prx1-lab attic
 nix run .#sops-copy -- mair prx1-lab flakehub
 ```
 
+Run `sops-update` when a host secret should receive missing template keys.
+`sops-edit` only opens the selected secret for editing.
+
 Backup and restore procedures are documented in [common/backup.md](common/backup.md).
 `srvarr`'s adaptive upload policy and tracker prioritization are documented in
 [nixos/srvarrvm/upload-policy.md](nixos/srvarrvm/upload-policy.md).
