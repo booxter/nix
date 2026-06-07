@@ -8,6 +8,11 @@
 let
   useSecretive = pkgs.stdenv.isDarwin && !isWork;
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
+  secretiveAuthSockInit = ''
+    if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
+      export SSH_AUTH_SOCK="${secretiveSocket}"
+    fi
+  '';
 in
 {
   services.ssh-agent.enable = pkgs.stdenv.isLinux;
@@ -19,13 +24,12 @@ in
     pkgs.secretive
   ];
 
-  programs.zsh.envExtra = lib.mkIf useSecretive (
-    lib.mkOrder 900 ''
-      if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
-        export SSH_AUTH_SOCK="${secretiveSocket}"
-      fi
-    ''
-  );
+  programs.bash = lib.mkIf useSecretive {
+    profileExtra = lib.mkOrder 900 secretiveAuthSockInit;
+    initExtra = lib.mkOrder 900 secretiveAuthSockInit;
+  };
+
+  programs.zsh.envExtra = lib.mkIf useSecretive (lib.mkOrder 900 secretiveAuthSockInit);
 
   programs.ssh = {
     enable = true;

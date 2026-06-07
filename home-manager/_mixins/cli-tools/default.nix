@@ -6,6 +6,8 @@
   ...
 }:
 {
+  programs.bash.enable = true;
+
   programs.zsh = {
     autosuggestion = {
       enable = true;
