@@ -11,6 +11,7 @@ let
       outputs,
       hostInventory,
       username,
+      platform,
       hmFull,
       isDesktop,
       isLaptop,
@@ -24,6 +25,7 @@ let
           outputs
           hostInventory
           username
+          platform
           hmFull
           isDesktop
           isLaptop
@@ -92,6 +94,7 @@ rec {
             outputs
             hostInventory
             username
+            platform
             hmFull
             isDesktop
             isLaptop
@@ -479,6 +482,7 @@ rec {
             outputs
             hostInventory
             username
+            platform
             hmFull
             isDesktop
             isLaptop

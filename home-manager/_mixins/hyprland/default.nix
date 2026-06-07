@@ -6,23 +6,19 @@
   ...
 }:
 let
-  inherit (pkgs.stdenv.hostPlatform) isLinux;
   super = "MOD1";
   cmdButton = "MOD4";
 in
 {
-  home.packages = lib.mkIf isLinux (
-    with pkgs;
-    [
-      wev
-      wl-clipboard
-      wlrctl
-      wtype
-    ]
-  );
+  home.packages = with pkgs; [
+    wev
+    wl-clipboard
+    wlrctl
+    wtype
+  ];
 
   services.hypridle = {
-    enable = isLinux;
+    enable = true;
     settings =
       let
         hyprctl = "${pkgs.hyprland}/bin/hyprctl";
@@ -44,7 +40,7 @@ in
 
   # TODO: rename module?
   gtk = {
-    enable = isLinux;
+    enable = true;
 
     iconTheme = {
       name = "Papirus-Dark";
@@ -85,7 +81,7 @@ in
   };
 
   programs.waybar = {
-    enable = isLinux;
+    enable = true;
     settings = {
       mainBar = {
         layer = "top";
@@ -134,8 +130,10 @@ in
   };
 
   wayland.windowManager.hyprland = {
-    enable = isLinux;
+    enable = true;
     configType = "hyprlang";
+    package = null;
+    portalPackage = null;
     xwayland.enable = true;
     systemd.enable = true;
     settings = {

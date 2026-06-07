@@ -2,6 +2,7 @@
   inputs,
   lib,
   pkgs,
+  platform,
   stateVersion,
   username,
   hmFull,
@@ -10,7 +11,7 @@
   ...
 }:
 let
-  inherit (pkgs.stdenv) isDarwin;
+  isDarwin = builtins.match ".*-darwin" platform != null;
 in
 {
   imports = [
@@ -31,10 +32,12 @@ in
     ./_mixins/aerospace
     ./_mixins/email
     ./_mixins/fonts
-    ./_mixins/hyprland
     ./_mixins/jankyborders
     ./_mixins/kitty
     ./_mixins/sketchybar
+  ]
+  ++ lib.optionals (isDesktop && !isDarwin) [
+    ./_mixins/hyprland
   ]
   ++ lib.optionals (!isWork && isDesktop) [
     ./_mixins/firefox
