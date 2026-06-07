@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: NodeTelemetryDown
-        expr: max without (scrape_expectation) (up{job=~"node|node-mtls",scrape_expectation!="intermittent"}) < 1
+        expr: max without (scrape_expectation) (up{job=~"node-local|node-mtls",scrape_expectation!="intermittent"}) < 1
         for: 10m
         labels:
           severity: warning
@@ -39,7 +39,7 @@ groups:
           summary: "Beast HDD temperature telemetry missing"
           description: "The SMART exporter on beast is reachable, but it has not been exporting HDD temperature metrics for /dev/sdX for 15 minutes."
       - alert: BeastDiskBayMappingMissing
-        expr: absent(host_observability_disk_bay_info{instance="beast"}) and on(instance) up{job="node-mtls",instance="beast"} == 1
+        expr: absent(host_observability_disk_bay_info{job="node-mtls",instance="beast"}) and on(instance) up{job="node-mtls",instance="beast"} == 1
         for: 15m
         labels:
           severity: warning

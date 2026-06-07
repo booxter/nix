@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: RootFilesystemUsageHigh
-        expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node|node-mtls",mountpoint="/",fstype!=""})) > 85
+        expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""})) > 85
         for: 30m
         labels:
           severity: warning
@@ -12,7 +12,7 @@ groups:
           summary: "Root filesystem usage high on {{ $labels.instance }}"
           description: "The root filesystem on {{ $labels.instance }} has been above 85% used for 30 minutes."
       - alert: RootFilesystemUsageCritical
-        expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node|node-mtls",mountpoint="/",fstype!=""})) > 95
+        expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""})) > 95
         for: 15m
         labels:
           severity: critical
@@ -22,9 +22,9 @@ groups:
           description: "The root filesystem on {{ $labels.instance }} has been above 95% used for 15 minutes."
       - alert: HostUpgradeStale
         expr: |
-          ((time() - node_nixos_upgrade_last_success_time_seconds{job=~"node|node-mtls"}) / 86400) > 14
+          ((time() - node_nixos_upgrade_last_success_time_seconds{job=~"node-local|node-mtls"}) / 86400) > 14
             unless on(instance)
-          (node_nixos_upgrade_hold_active{job=~"node|node-mtls"} == 1)
+          (node_nixos_upgrade_hold_active{job=~"node-local|node-mtls"} == 1)
         for: 24h
         labels:
           severity: warning

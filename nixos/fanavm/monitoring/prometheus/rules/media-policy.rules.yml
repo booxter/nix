@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: MediaPolicyUnitDown
-        expr: node_systemd_unit_state{job=~"node|node-mtls",instance="prox-srvarrvm",name=~"(jellyfin-upload-policy|jellyfin-upload-policy-transmission|jellyfin-upload-policy-tc|transmission-prioritizer)\\.service",state="active"} < 1
+        expr: node_systemd_unit_state{job="node-mtls",instance="prox-srvarrvm",name=~"(jellyfin-upload-policy|jellyfin-upload-policy-transmission|jellyfin-upload-policy-tc|transmission-prioritizer)\\.service",state="active"} < 1
         for: 5m
         labels:
           severity: warning

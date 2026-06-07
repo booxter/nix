@@ -146,7 +146,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_disk_bay_info{instance="beast",bay="3",device="sda"}'
+      - series: 'host_observability_disk_bay_info{job="node-mtls",instance="beast",bay="3",device="sda"}'
         values: "1x32"
       - series: 'smartctl_device_smart_status{instance="beast",device="sda"}'
         values: "1x32"
@@ -156,7 +156,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_disk_bay_info{instance="beast",bay="3",device="sda"}'
+      - series: 'host_observability_disk_bay_info{job="node-mtls",instance="beast",bay="3",device="sda"}'
         values: "1x30 0x2"
     alert_rule_test:
       - eval_time: 14m30s

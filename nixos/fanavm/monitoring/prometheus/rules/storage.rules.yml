@@ -48,7 +48,7 @@ groups:
           summary: "Reallocated sectors high on beast: {{ $labels.device }}"
           description: "Drive {{ $labels.device }} on beast has reported more than 30 reallocated sectors for 15 minutes."
       - alert: BeastSMARTTelemetryMissingForDrive
-        expr: host_observability_disk_bay_info{instance="beast"} unless on(instance,device) smartctl_device_smart_status{instance="beast",device=~"sd[a-z]+"}
+        expr: max by(instance,device,bay) (host_observability_disk_bay_info{job="node-mtls",instance="beast"}) unless on(instance,device) smartctl_device_smart_status{instance="beast",device=~"sd[a-z]+"}
         for: 15m
         labels:
           severity: warning

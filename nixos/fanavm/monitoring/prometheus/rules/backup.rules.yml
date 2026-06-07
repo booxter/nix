@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: BackupJobFailed
-        expr: host_observability_backup_last_success{job=~"node|node-mtls"} < 1
+        expr: host_observability_backup_last_success{job="node-mtls"} < 1
         for: 30m
         labels:
           severity: warning
@@ -12,7 +12,7 @@ groups:
           summary: "Backup job failed on {{ $labels.instance }}: {{ $labels.backup_title }}"
           description: "The most recent {{ $labels.phase }} backup job {{ $labels.backup_title }} on {{ $labels.instance }} failed and has not been followed by a successful run for 30 minutes."
       - alert: BackupJobStale
-        expr: ((time() - host_observability_backup_last_success_timestamp_seconds{job=~"node|node-mtls"}) / 3600) > 36 and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_success_timestamp_seconds{job=~"node|node-mtls"} > 0
+        expr: ((time() - host_observability_backup_last_success_timestamp_seconds{job="node-mtls"}) / 3600) > 36 and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_success_timestamp_seconds{job="node-mtls"} > 0
         for: 30m
         labels:
           severity: warning
@@ -21,7 +21,7 @@ groups:
           summary: "Backup job stale on {{ $labels.instance }}: {{ $labels.backup_title }}"
           description: "The {{ $labels.phase }} backup job {{ $labels.backup_title }} on {{ $labels.instance }} has not completed a successful run for more than 36 hours."
       - alert: BackupJobStaleCritical
-        expr: ((time() - host_observability_backup_last_success_timestamp_seconds{job=~"node|node-mtls"}) / 3600) > 60 and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_success_timestamp_seconds{job=~"node|node-mtls"} > 0
+        expr: ((time() - host_observability_backup_last_success_timestamp_seconds{job="node-mtls"}) / 3600) > 60 and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_success_timestamp_seconds{job="node-mtls"} > 0
         for: 30m
         labels:
           severity: critical

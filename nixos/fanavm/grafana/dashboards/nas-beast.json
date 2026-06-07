@@ -588,7 +588,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"1\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"1\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -665,7 +665,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"6\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"6\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -742,7 +742,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"11\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"11\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -819,7 +819,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"2\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"2\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -896,7 +896,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"7\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"7\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -973,7 +973,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"12\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"12\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1050,7 +1050,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"3\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"3\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1127,7 +1127,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"8\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"8\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1204,7 +1204,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"13\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"13\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1281,7 +1281,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"4\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"4\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1358,7 +1358,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"9\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"9\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1435,7 +1435,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"14\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"14\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1512,7 +1512,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"5\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"5\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1589,7 +1589,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"10\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"10\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1666,7 +1666,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"15\"}) or vector(-1)",
+          "expr": "max(smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"15\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1744,7 +1744,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"1\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"1\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1822,7 +1822,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"6\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"6\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1900,7 +1900,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"11\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"11\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1978,7 +1978,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"2\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"2\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2056,7 +2056,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"7\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"7\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2134,7 +2134,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"12\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"12\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2212,7 +2212,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"3\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"3\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2290,7 +2290,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"8\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"8\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2368,7 +2368,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"13\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"13\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2446,7 +2446,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"4\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"4\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2524,7 +2524,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"9\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"9\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2602,7 +2602,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"14\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"14\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2680,7 +2680,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"5\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"5\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2758,7 +2758,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"10\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"10\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2836,7 +2836,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) host_observability_disk_bay_info{instance=\"beast\",bay=\"15\"}) or vector(-1)",
+          "expr": "max(smartctl_device_smart_status{instance=\"beast\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\",bay=\"15\"})) or vector(-1)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -2906,7 +2906,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"}",
+          "expr": "smartctl_device_temperature{instance=\"beast\",temperature_type=\"current\",device=~\"sd[a-z]+\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\"})",
           "legendFormat": "Bay {{bay}} ({{device}})",
           "range": true,
           "refId": "A"
@@ -3336,7 +3336,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_hba_temperature_celsius{job=~\"node|node-mtls\",instance=\"beast\",sensor=\"roc\"}",
+          "expr": "max by(instance,controller,sensor) (host_observability_hba_temperature_celsius{job=\"node-mtls\",instance=\"beast\",sensor=\"roc\"})",
           "legendFormat": "HBA / ROC {{controller}}",
           "range": true,
           "refId": "A"
@@ -3393,7 +3393,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_temp_celsius{job=~\"node|node-mtls\",instance=\"beast\",chip=\"platform_coretemp_0\",sensor=\"temp1\"}",
+          "expr": "max by(instance,chip,sensor) (node_hwmon_temp_celsius{job=\"node-mtls\",instance=\"beast\",chip=\"platform_coretemp_0\",sensor=\"temp1\"})",
           "legendFormat": "Linux coretemp / Package id 0",
           "range": true,
           "refId": "A"
@@ -3450,7 +3450,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_power_watt{job=~\"node|node-mtls\",instance=\"beast\",sensor=~\"power[1-4]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "max by(instance,chip,sensor) (node_hwmon_power_watt{job=\"node-mtls\",instance=\"beast\",sensor=~\"power[1-4]\"}) * on(instance,chip,sensor) group_left(label) max by(instance,chip,sensor,label) (node_hwmon_sensor_label{job=\"node-mtls\",instance=\"beast\"}) * on(instance,chip) group_left() max by(instance,chip) (node_hwmon_chip_names{job=\"node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"})",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3499,7 +3499,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_in_volts{job=~\"node|node-mtls\",instance=\"beast\",sensor=~\"in[123]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "max by(instance,chip,sensor) (node_hwmon_in_volts{job=\"node-mtls\",instance=\"beast\",sensor=~\"in[123]\"}) * on(instance,chip,sensor) group_left(label) max by(instance,chip,sensor,label) (node_hwmon_sensor_label{job=\"node-mtls\",instance=\"beast\"}) * on(instance,chip) group_left() max by(instance,chip) (node_hwmon_chip_names{job=\"node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"})",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3548,7 +3548,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_curr_amps{job=~\"node|node-mtls\",instance=\"beast\",sensor=~\"curr[234]\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "max by(instance,chip,sensor) (node_hwmon_curr_amps{job=\"node-mtls\",instance=\"beast\",sensor=~\"curr[234]\"}) * on(instance,chip,sensor) group_left(label) max by(instance,chip,sensor,label) (node_hwmon_sensor_label{job=\"node-mtls\",instance=\"beast\"}) * on(instance,chip) group_left() max by(instance,chip) (node_hwmon_chip_names{job=\"node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"})",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3605,7 +3605,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_temp_celsius{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\",label=~\"vrm temp|case temp\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "max by(instance,chip,sensor) (node_hwmon_temp_celsius{job=\"node-mtls\",instance=\"beast\"}) * on(instance,chip,sensor) group_left(label) max by(instance,chip,sensor,label) (node_hwmon_sensor_label{job=\"node-mtls\",instance=\"beast\",label=~\"vrm temp|case temp\"}) * on(instance,chip) group_left() max by(instance,chip) (node_hwmon_chip_names{job=\"node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"})",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3654,7 +3654,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_fan_rpm{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\",label=\"psu fan\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "max by(instance,chip,sensor) (node_hwmon_fan_rpm{job=\"node-mtls\",instance=\"beast\"}) * on(instance,chip,sensor) group_left(label) max by(instance,chip,sensor,label) (node_hwmon_sensor_label{job=\"node-mtls\",instance=\"beast\",label=\"psu fan\"}) * on(instance,chip) group_left() max by(instance,chip) (node_hwmon_chip_names{job=\"node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"})",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3703,7 +3703,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_hwmon_in_volts{job=~\"node|node-mtls\",instance=\"beast\"} * on(instance,chip,sensor) group_left(label) node_hwmon_sensor_label{job=~\"node|node-mtls\",instance=\"beast\",label=\"v_in\"} * on(instance,chip) group_left() node_hwmon_chip_names{job=~\"node|node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"}",
+          "expr": "max by(instance,chip,sensor) (node_hwmon_in_volts{job=\"node-mtls\",instance=\"beast\"}) * on(instance,chip,sensor) group_left(label) max by(instance,chip,sensor,label) (node_hwmon_sensor_label{job=\"node-mtls\",instance=\"beast\",label=\"v_in\"}) * on(instance,chip) group_left() max by(instance,chip) (node_hwmon_chip_names{job=\"node-mtls\",instance=\"beast\",chip_name=\"corsairpsu\"})",
           "legendFormat": "{{label}}",
           "range": true,
           "refId": "A"
@@ -3766,7 +3766,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance,bay,serial,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Reallocated_Sector_Ct\",attribute_value_type=\"raw\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"})",
+          "expr": "max by(instance,bay,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Reallocated_Sector_Ct\",attribute_value_type=\"raw\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\"}))",
           "format": "table",
           "instant": true,
           "range": false,
@@ -3846,7 +3846,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance,bay,serial,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Current_Pending_Sector\",attribute_value_type=\"raw\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"})",
+          "expr": "max by(instance,bay,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Current_Pending_Sector\",attribute_value_type=\"raw\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\"}))",
           "format": "table",
           "instant": true,
           "range": false,
@@ -3926,7 +3926,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance,bay,serial,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Offline_Uncorrectable\",attribute_value_type=\"raw\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"})",
+          "expr": "max by(instance,bay,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Offline_Uncorrectable\",attribute_value_type=\"raw\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\"}))",
           "format": "table",
           "instant": true,
           "range": false,
@@ -4006,7 +4006,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by(instance,bay,serial,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Reported_Uncorrect\",attribute_value_type=\"raw\"} * on(device) group_left(bay,serial) host_observability_disk_bay_info{instance=\"beast\"})",
+          "expr": "max by(instance,bay,device) (smartctl_device_attribute{instance=\"beast\",device=~\"sd[a-z]+\",attribute_name=\"Reported_Uncorrect\",attribute_value_type=\"raw\"} * on(device) group_left(bay) max by(device,bay) (host_observability_disk_bay_info{job=\"node-mtls\",instance=\"beast\"}))",
           "format": "table",
           "instant": true,
           "range": false,

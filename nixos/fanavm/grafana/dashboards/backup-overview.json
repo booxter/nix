@@ -71,7 +71,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(1 - host_observability_backup_last_success{job=~\"node|node-mtls\"}) or vector(0)",
+          "expr": "sum(1 - host_observability_backup_last_success{job=\"node-mtls\"}) or vector(0)",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -134,7 +134,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max((time() - host_observability_backup_last_success_timestamp_seconds{job=~\"node|node-mtls\"}) / 3600) or vector(0)",
+          "expr": "max((time() - host_observability_backup_last_success_timestamp_seconds{job=\"node-mtls\"}) / 3600) or vector(0)",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -189,7 +189,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_backup_last_result_info{job=~\"node|node-mtls\"}",
+          "expr": "host_observability_backup_last_result_info{job=\"node-mtls\"}",
           "format": "table",
           "instant": true,
           "range": false,
@@ -269,7 +269,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(time() - host_observability_backup_last_success_timestamp_seconds{job=~\"node|node-mtls\"}) / 3600",
+          "expr": "(time() - host_observability_backup_last_success_timestamp_seconds{job=\"node-mtls\"}) / 3600",
           "format": "table",
           "instant": true,
           "range": false,
@@ -347,7 +347,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_backup_last_duration_seconds{job=~\"node|node-mtls\"} / 60",
+          "expr": "host_observability_backup_last_duration_seconds{job=\"node-mtls\"} / 60",
           "format": "table",
           "instant": true,
           "range": false,

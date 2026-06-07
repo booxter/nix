@@ -663,7 +663,7 @@ in
         ];
       }
       {
-        job_name = "node";
+        job_name = "node-local";
         static_configs = [
           {
             targets = [
