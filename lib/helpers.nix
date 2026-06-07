@@ -16,6 +16,8 @@ let
       isDesktop,
       isLaptop,
       isWork,
+      isDarwin,
+      isLinux,
       stateVersion,
     }:
     {
@@ -30,6 +32,8 @@ let
           isDesktop
           isLaptop
           isWork
+          isDarwin
+          isLinux
           stateVersion
           ;
       };
@@ -64,6 +68,10 @@ rec {
       extraModules ? [ ],
       ...
     }:
+    let
+      isDarwin = false;
+      isLinux = true;
+    in
     nixpkgsInput.lib.nixosSystem {
       specialArgs = {
         inherit
@@ -79,6 +87,8 @@ rec {
           isDesktop
           isLaptop
           isWork
+          isDarwin
+          isLinux
           ;
         upsShutdownDelaySeconds = upsShutdownDelaySeconds isVM;
       };
@@ -99,6 +109,8 @@ rec {
             isDesktop
             isLaptop
             isWork
+            isDarwin
+            isLinux
             stateVersion
             ;
         })
@@ -450,6 +462,10 @@ rec {
       extraModules ? [ ],
       ...
     }:
+    let
+      isDarwin = true;
+      isLinux = false;
+    in
     inputs.nix-darwin.lib.darwinSystem {
       specialArgs = {
         inherit
@@ -465,6 +481,8 @@ rec {
           isDesktop
           isLaptop
           isWork
+          isDarwin
+          isLinux
           ;
         # If we ever add macOS VMs, thread isVM here and compute accordingly.
         upsShutdownDelaySeconds = upsShutdownDelaySeconds false;
@@ -487,6 +505,8 @@ rec {
             isDesktop
             isLaptop
             isWork
+            isDarwin
+            isLinux
             ;
           stateVersion = hmStateVersion;
         })

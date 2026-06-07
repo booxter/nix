@@ -2,17 +2,14 @@
   inputs,
   lib,
   pkgs,
-  platform,
   stateVersion,
   username,
   hmFull,
+  isDarwin,
   isDesktop,
   isWork,
   ...
 }:
-let
-  isDarwin = builtins.match ".*-darwin" platform != null;
-in
 {
   imports = [
     ./_mixins/nix

@@ -1,9 +1,10 @@
 {
   config,
   hostInventory,
+  isDarwin,
+  isLinux,
   isWork,
   lib,
-  options,
   username,
   ...
 }:
@@ -11,11 +12,6 @@ let
   cfg = config.host.sshTicket;
   caPublicKeyPath = "/etc/ssh/fleet-user-ca.pub";
   inventoryCaPublicKey = hostInventory.sshTicket.userCaPublicKey;
-  hasOpenSshSettings = lib.hasAttrByPath [
-    "services"
-    "openssh"
-    "settings"
-  ] options;
   hostName = config.networking.hostName;
   shortProxVmAliases = lib.optionals (lib.hasPrefix "prox-" hostName && lib.hasSuffix "vm" hostName) [
     (builtins.substring 5 ((builtins.stringLength hostName) - 7) hostName)
@@ -74,11 +70,12 @@ in
       host.sshTicket.enable = lib.mkDefault (!isWork);
       host.sshTicket.caPublicKey = lib.mkIf cfg.enable (lib.mkDefault inventoryCaPublicKey);
     }
-    (lib.optionalAttrs hasOpenSshSettings {
+    {
       environment.etc."ssh/fleet-user-ca.pub" = lib.mkIf (cfg.enable && cfg.caPublicKey != null) {
         text = "${cfg.caPublicKey}\n";
       };
-
+    }
+    (lib.optionalAttrs isLinux {
       services.openssh.settings.TrustedUserCAKeys = lib.mkIf (
         cfg.enable && cfg.caPublicKey != null
       ) caPublicKeyPath;
@@ -86,6 +83,16 @@ in
       users.users.${username}.openssh.authorizedPrincipals = lib.mkIf cfg.enable [
         cfg.principal
       ];
+    })
+    (lib.optionalAttrs isDarwin {
+      environment.etc."ssh/authorized_principals.d/${username}" = lib.mkIf cfg.enable {
+        text = "${cfg.principal}\n";
+      };
+
+      services.openssh.extraConfig = lib.mkIf (cfg.enable && cfg.caPublicKey != null) ''
+        TrustedUserCAKeys ${caPublicKeyPath}
+        AuthorizedPrincipalsFile /etc/ssh/authorized_principals.d/%u
+      '';
     })
   ];
 }

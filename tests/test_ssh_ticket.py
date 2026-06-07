@@ -38,6 +38,20 @@ def test_applescript_list_quotes_values():
     )
 
 
+def test_osascript_approval_prompt_activates_system_events():
+    script = ssh_ticket.osascript_approval_script("Approve?")
+    assert 'tell application "System Events"' in script
+    assert "activate" in script
+    assert "display dialog" in script
+
+
+def test_osascript_ttl_selector_activates_system_events():
+    script = ssh_ticket.osascript_ttl_selector_script("Approve?", ["30m", "1h"], "30m")
+    assert 'tell application "System Events"' in script
+    assert "activate" in script
+    assert "choose from list" in script
+
+
 def test_ttl_choices_include_common_values_allowed_by_max():
     assert [
         ssh_ticket.format_duration(ttl) for ttl in ssh_ticket.ttl_choices(1800, 7200)
@@ -81,6 +95,12 @@ def test_resolved_ca_key_treats_explicit_key_as_private_file():
     )
     assert not ca_agent
     assert ca_key.name == "custom-ca"
+
+
+def test_target_expression_includes_nixos_and_darwin_configs(tmp_path):
+    expr = ssh_ticket.nix_targets_expr(tmp_path)
+    assert 'render "nixos") f.nixosConfigurations' in expr
+    assert 'render "darwin") f.darwinConfigurations' in expr
 
 
 def test_resolve_target_accepts_unique_alias():
