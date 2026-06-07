@@ -27,6 +27,9 @@ Scope: the whole repository.
   than falling back to raw SSH.
 - Existing valid tickets are reused. Use `--force` only when intentionally
   testing ticket issuance.
+- `ssh-ticket` manages ticket targets, status, and explicit ticket issuance;
+  `ssht` is the normal SSH wrapper that issues or reuses a ticket and then runs
+  `ssh`.
 
 ## Deploys
 
@@ -41,6 +44,9 @@ Scope: the whole repository.
   `--branch`; otherwise the remote host will not see the changes.
 - The default deploy branch is `master`. Use `--dry-run` for SSH/disk checks and
   `--test` for NixOS dry activation.
+- `deploy` updates existing NixOS/nix-darwin machines over SSH. `prox-deploy`
+  creates or updates Proxmox VMs. `vm` runs local VM variants. `diff` compares
+  generated system configs between Git revisions.
 
 ## Secrets
 
@@ -57,3 +63,6 @@ nix run .#sops-bootstrap -- <host>
 ```
 
 `sops-edit` merges missing template keys before opening the editor.
+`sops-update` only merges template keys, `sops-cat` prints decrypted secrets,
+`sops-copy` copies one key path between hosts, `sops-pass` writes password
+hashes, and `sops-bootstrap` initializes a host secret and recipients.
