@@ -126,7 +126,7 @@ def nix_targets_expr(repo_root):
           {{
             inherit kind name;
             sshHost = name;
-            enabled = (ticket.enable or false) && !(lib.hasPrefix "local-" name);
+            enabled = ticket.enable or false;
             principal = ticket.principal or "";
             aliases = ticket.aliases or [];
             defaultTtl = ticket.defaultTtl or "30m";

@@ -194,6 +194,10 @@ rec {
     };
   };
 
+  sshTicket = {
+    userCaPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHu98szjqlyDEwnvLjAcVKAWEycQHM+5Un1S558edjq2 fleet-user-ca";
+  };
+
   services = [
     (resolveService (mkService {
       id = "jellyfin";

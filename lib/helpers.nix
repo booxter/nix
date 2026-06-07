@@ -278,7 +278,6 @@ rec {
                 ...
               }:
               {
-                host.sshTicket.enable = lib.mkForce false;
                 virtualisation.vmVariant.virtualisation = mkLocalVmVariantVirtualisation virtPlatform;
               }
               // lib.optionalAttrs (localPlatform != null) {

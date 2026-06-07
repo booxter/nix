@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   username,
@@ -123,8 +122,5 @@ in
     programs.zsh.enable = true;
     host.isLaptop = lib.mkDefault isLaptop;
     host.isWork = isWork;
-    host.sshTicket.enable = lib.mkDefault (
-      !isWork && !lib.hasPrefix "local-" config.networking.hostName
-    );
   };
 }

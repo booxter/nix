@@ -1,5 +1,7 @@
 {
   config,
+  hostInventory,
+  isWork,
   lib,
   options,
   username,
@@ -8,6 +10,7 @@
 let
   cfg = config.host.sshTicket;
   caPublicKeyPath = "/etc/ssh/fleet-user-ca.pub";
+  inventoryCaPublicKey = hostInventory.sshTicket.userCaPublicKey;
   hasOpenSshSettings = lib.hasAttrByPath [
     "services"
     "openssh"
@@ -66,17 +69,23 @@ in
     };
   };
 
-  config = lib.optionalAttrs hasOpenSshSettings {
-    environment.etc."ssh/fleet-user-ca.pub" = lib.mkIf (cfg.enable && cfg.caPublicKey != null) {
-      text = "${cfg.caPublicKey}\n";
-    };
+  config = lib.mkMerge [
+    {
+      host.sshTicket.enable = lib.mkDefault (!isWork);
+      host.sshTicket.caPublicKey = lib.mkIf cfg.enable (lib.mkDefault inventoryCaPublicKey);
+    }
+    (lib.optionalAttrs hasOpenSshSettings {
+      environment.etc."ssh/fleet-user-ca.pub" = lib.mkIf (cfg.enable && cfg.caPublicKey != null) {
+        text = "${cfg.caPublicKey}\n";
+      };
 
-    services.openssh.settings.TrustedUserCAKeys = lib.mkIf (
-      cfg.enable && cfg.caPublicKey != null
-    ) caPublicKeyPath;
+      services.openssh.settings.TrustedUserCAKeys = lib.mkIf (
+        cfg.enable && cfg.caPublicKey != null
+      ) caPublicKeyPath;
 
-    users.users.${username}.openssh.authorizedPrincipals = lib.mkIf cfg.enable [
-      cfg.principal
-    ];
-  };
+      users.users.${username}.openssh.authorizedPrincipals = lib.mkIf cfg.enable [
+        cfg.principal
+      ];
+    })
+  ];
 }
