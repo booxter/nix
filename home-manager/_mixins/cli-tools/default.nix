@@ -104,8 +104,6 @@
       (ripgrep.override { withPCRE2 = true; })
       ack
       act
-      age
-      age-plugin-se
       bc
       curl
       delve # go debugger
@@ -126,8 +124,6 @@
       openssl
       podman
       pre-commit
-      ssh-ticket
-      sops
       wget
       yq-go
       zstd
@@ -136,13 +132,19 @@
       python313
     ]
     ++ lib.optionals (!isWork) [
+      age
+      age-plugin-se
       ramalama
+      ssh-ticket
+      sops
     ];
 
   home.sessionVariables = {
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
     CONTAINERS_MACHINE_PROVIDER = "libkrun";
+  }
+  // lib.optionalAttrs (!isWork) {
     SOPS_AGE_KEY_FILE = lib.mkDefault "${config.home.homeDirectory}/.config/sops/age/keys.txt.age";
   };
 
