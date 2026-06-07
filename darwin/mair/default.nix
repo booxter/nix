@@ -9,7 +9,10 @@ let
   wgHome = hostInventory.site.wireguard.home;
 in
 {
-  home-manager.users.${username}.programs.sshTicket.enableKnownHosts = true;
+  home-manager.users.${username} = {
+    home.sessionVariables.SOPS_AGE_KEY_FILE = "/Users/${username}/.config/sops/age/mair-se.txt";
+    programs.sshTicket.enableKnownHosts = true;
+  };
 
   sops.secrets."wireguard/gwvm/privateKey" = {
     owner = "root";
