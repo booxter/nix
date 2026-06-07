@@ -15,6 +15,7 @@ DEFAULT_CA_PRIVATE_KEY = "~/.ssh/fleet-user-ca"
 DEFAULT_CA_PUBLIC_KEY = "~/.ssh/fleet-user-ca.pub"
 DEFAULT_KEY = "~/.ssh/fleet-ticket/id_ed25519"
 MIN_VALID_SECONDS = 60
+COMMON_TTL_CHOICES = (30 * 60, 60 * 60, 2 * 60 * 60, 12 * 60 * 60)
 
 
 class Error(Exception):
@@ -65,6 +66,10 @@ def applescript_string(value):
     return " & linefeed & ".join(applescript_quote(part) for part in value.split("\n"))
 
 
+def applescript_list(values):
+    return "{" + ", ".join(applescript_quote(value) for value in values) + "}"
+
+
 def parse_duration(value):
     if isinstance(value, int):
         return value
@@ -105,6 +110,14 @@ def format_time(epoch):
     return (
         dt.datetime.fromtimestamp(epoch).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
     )
+
+
+def ttl_choices(default_ttl, max_ttl):
+    choices = {
+        int(default_ttl),
+        *(choice for choice in COMMON_TTL_CHOICES if choice <= max_ttl),
+    }
+    return sorted(choices)
 
 
 def safe_name(value):
@@ -356,19 +369,18 @@ def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
     message = (
         f"Approve SSH ticket for {target['name']}?\n\n"
         f"Principal: {target['principal']}\n"
-        f"Max TTL: {format_duration(max_ttl)}"
+        f"Select TTL, max {format_duration(max_ttl)}."
     )
+    choices = [format_duration(ttl) for ttl in ttl_choices(default_ttl, max_ttl)]
     script = f"""
-      set response to display dialog {applescript_string(message)} default answer {applescript_quote(default_answer)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
-      return (button returned of response) & linefeed & (text returned of response)
+      set response to choose from list {applescript_list(choices)} with title "ssht" with prompt {applescript_string(message)} default items {{{applescript_quote(default_answer)}}} OK button name "Approve" cancel button name "Deny"
+      if response is false then error number -128
+      return item 1 of response
     """
     result = subprocess.run([osascript, "-e", script], text=True, capture_output=True)
     if result.returncode != 0:
         raise Error("ticket request denied")
-    lines = result.stdout.splitlines()
-    if not lines or lines[0].strip() != "Approve":
-        raise Error("ticket request denied")
-    ttl_text = lines[1].strip() if len(lines) > 1 else default_answer
+    ttl_text = result.stdout.strip() or default_answer
     return default_ttl if ttl_text == "" else parse_duration(ttl_text)
 
 

@@ -32,6 +32,41 @@ def test_applescript_string_renders_newlines_as_linefeed():
     assert expr == '"one" & linefeed & "" & linefeed & "quoted \\"value\\""'
 
 
+def test_applescript_list_quotes_values():
+    assert ssh_ticket.applescript_list(["30m", 'quoted "value"']) == (
+        '{"30m", "quoted \\"value\\""}'
+    )
+
+
+def test_ttl_choices_include_common_values_allowed_by_max():
+    assert [
+        ssh_ticket.format_duration(ttl) for ttl in ssh_ticket.ttl_choices(1800, 7200)
+    ] == [
+        "30m",
+        "1h",
+        "2h",
+    ]
+    assert [
+        ssh_ticket.format_duration(ttl) for ttl in ssh_ticket.ttl_choices(1800, 43200)
+    ] == [
+        "30m",
+        "1h",
+        "2h",
+        "12h",
+    ]
+
+
+def test_ttl_choices_include_nonstandard_default():
+    assert [
+        ssh_ticket.format_duration(ttl) for ttl in ssh_ticket.ttl_choices(2700, 7200)
+    ] == [
+        "30m",
+        "45m",
+        "1h",
+        "2h",
+    ]
+
+
 def test_resolved_ca_key_defaults_to_agent_public_key():
     ca_agent, ca_key = ssh_ticket.resolved_ca_key(
         types.SimpleNamespace(ca_agent=None, ca_key=None)
