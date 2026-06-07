@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_last_success{job="node",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+      - series: 'host_observability_backup_last_success{job="node-mtls",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "1x62"
     alert_rule_test:
       - eval_time: 30m
@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_last_success{job="node",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+      - series: 'host_observability_backup_last_success{job="node-mtls",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "0x61"
     alert_rule_test:
       - eval_time: 29m30s
@@ -28,7 +28,7 @@ tests:
               backup_title: Create a consistent Seerr SQLite backup artifact
               category: backup
               instance: prox-srvarrvm
-              job: node
+              job: node-mtls
               phase: prep
               severity: warning
               unit: seerr-backup.service
@@ -38,7 +38,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node",instance="prox-orgvm",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="prox-orgvm",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
         values: "3600x4600"
     alert_rule_test:
       - eval_time: 36h30m
@@ -52,7 +52,7 @@ tests:
               backup_title: Restic To Beast
               category: backup
               instance: prox-orgvm
-              job: node
+              job: node-mtls
               phase: local
               severity: warning
               unit: restic-backups-beast.service
@@ -86,7 +86,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "0x5000"
     alert_rule_test:
       - eval_time: 72h

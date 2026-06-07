@@ -66,7 +66,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "up{job=~\"node|node-mtls\"}",
+          "expr": "up{job=~\"node-local|node-mtls\"}",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -125,7 +125,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{job=~\"node|node-mtls\",mode=\"idle\"}[5m])) * 100)",
+          "expr": "100 - (avg by(instance) (rate(node_cpu_seconds_total{job=~\"node-local|node-mtls\",mode=\"idle\"}[5m])) * 100)",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -184,7 +184,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "100 * ((1 - (node_memory_MemAvailable_bytes{job=~\"node|node-mtls\"} / node_memory_MemTotal_bytes{job=~\"node|node-mtls\"})) or (1 - ((node_memory_free_bytes{job=~\"node|node-mtls\"} + node_memory_inactive_bytes{job=~\"node|node-mtls\"}) / node_memory_total_bytes{job=~\"node|node-mtls\"})))",
+          "expr": "100 * ((1 - (node_memory_MemAvailable_bytes{job=~\"node-local|node-mtls\"} / node_memory_MemTotal_bytes{job=~\"node-local|node-mtls\"})) or (1 - ((node_memory_free_bytes{job=~\"node-local|node-mtls\"} + node_memory_inactive_bytes{job=~\"node-local|node-mtls\"}) / node_memory_total_bytes{job=~\"node-local|node-mtls\"})))",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -243,7 +243,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "100 * (1 - (node_filesystem_avail_bytes{job=~\"node|node-mtls\",mountpoint=\"/\",fstype!=\"\"} / node_filesystem_size_bytes{job=~\"node|node-mtls\",mountpoint=\"/\",fstype!=\"\"}))",
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{job=~\"node-local|node-mtls\",mountpoint=\"/\",fstype!=\"\"} / node_filesystem_size_bytes{job=~\"node-local|node-mtls\",mountpoint=\"/\",fstype!=\"\"}))",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -292,7 +292,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by(instance) (rate(node_disk_read_bytes_total{job=~\"node|node-mtls\"}[5m]) + rate(node_disk_written_bytes_total{job=~\"node|node-mtls\"}[5m]))",
+          "expr": "sum by(instance) (rate(node_disk_read_bytes_total{job=~\"node-local|node-mtls\"}[5m]) + rate(node_disk_written_bytes_total{job=~\"node-local|node-mtls\"}[5m]))",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -341,7 +341,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "time() - node_boot_time_seconds{job=~\"node|node-mtls\"}",
+          "expr": "time() - node_boot_time_seconds{job=~\"node-local|node-mtls\"}",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
@@ -390,7 +390,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "time() - node_nixos_upgrade_last_success_time_seconds{job=~\"node|node-mtls\"}",
+          "expr": "time() - node_nixos_upgrade_last_success_time_seconds{job=~\"node-local|node-mtls\"}",
           "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"

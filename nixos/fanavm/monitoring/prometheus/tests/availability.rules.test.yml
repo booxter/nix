@@ -168,6 +168,7 @@ tests:
               alertname: BeastDiskBayMappingMissing
               category: storage
               instance: beast
+              job: node-mtls
               severity: warning
             exp_annotations:
               summary: "Beast disk bay mapping missing"
@@ -185,7 +186,7 @@ tests:
     input_series:
       - series: 'up{job="node-mtls",instance="beast"}'
         values: "1x32"
-      - series: 'host_observability_disk_bay_info{instance="beast",bay="3",device="sda"}'
+      - series: 'host_observability_disk_bay_info{job="node-mtls",instance="beast",bay="3",device="sda"}'
         values: "1x32"
     alert_rule_test:
       - eval_time: 15m
