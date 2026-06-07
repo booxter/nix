@@ -1,0 +1,24 @@
+diff --git a/src/launch/launcher.c b/src/launch/launcher.c
+index 5985712..c9fef52 100644
+--- a/src/launch/launcher.c
++++ b/src/launch/launcher.c
+@@ -737,6 +737,19 @@ static int launcher_load_service_file(Launcher *launcher, const char *path, cons
+                         if (r)
+                                 return error_trace(r);
+                 } else {
++                        _c_cleanup_(c_freep) char *canonical_path = NULL;
++                        _c_cleanup_(c_freep) char *canonical_old_path = NULL;
++
++                        /*
++                         * Keep warning about different files that claim the
++                         * same D-Bus name, but silently ignore the same file
++                         * seen twice through different paths.
++                         */
++                        canonical_path = realpath(path, NULL);
++                        canonical_old_path = realpath(old_service->data->path, NULL);
++                        if (canonical_path && canonical_old_path && !strcmp(canonical_path, canonical_old_path))
++                                return LAUNCHER_E_INVALID_SERVICE_FILE;
++
+                         log_append_here(&launcher->log, LOG_ERR, 0, DBUS_BROKER_CATALOG_SERVICE_INVALID);
+                         log_append_service_path(&launcher->log, path);
+                         log_append_service_name(&launcher->log, name);
