@@ -278,14 +278,18 @@ jobs:
     name: post config diffs
     needs:
       - plan-build-matrix
+      - format
+      - get-hosts-check
       - build
     if: >-
       ${{
         always() &&
         github.event_name == 'pull_request' &&
         needs.plan-build-matrix.result == 'success' &&
+        needs.format.result == 'success' &&
+        needs.get-hosts-check.result == 'success' &&
         needs.plan-build-matrix.outputs.docs_only != 'true' &&
-        needs.build.result != 'cancelled'
+        needs.build.result == 'success'
       }}
     runs-on: ubuntu-slim
     continue-on-error: true
@@ -379,6 +383,15 @@ jobs:
             const missingEntries = expectedDiffEntries.filter(
               (entry) => !artifactKeys.has(entry.key),
             );
+            if (missingEntries.length > 0) {
+              core.notice(
+                `Skipping config diff comment because ${missingEntries.length} expected diff artifact(s) were not downloaded.`,
+              );
+              for (const entry of missingEntries) {
+                core.notice(`Missing config diff artifact for ${entry.name} (${entry.machine}).`);
+              }
+              return;
+            }
 
             const baseSha = process.env.BASE_SHA;
             const headSha = process.env.HEAD_SHA;
@@ -448,18 +461,6 @@ jobs:
                 ["### Unchanged machines", "", ...unchangedEntries.map((entry) => `- ${entry}`)].join(
                   "\n",
                 ),
-              );
-            }
-
-            if (missingEntries.length > 0) {
-              appendBlock(
-                [
-                  "### Missing diff artifacts",
-                  "",
-                  ...missingEntries.map(
-                    (entry) => `- ${entry.name}: no diff artifact was downloaded for \`${entry.machine}\``
-                  ),
-                ].join("\n"),
               );
             }
 
