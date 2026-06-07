@@ -129,6 +129,8 @@ common:
 attic:
   token: "REPLACE_ME"
   endpoint: "http://nix-cache:8080"
+flakehub:
+  token: "REPLACE_ME"
 users:
   root:
     hashedPassword: "REPLACE_ME"
@@ -190,6 +192,7 @@ EOF
   assert_eq "SECRET" "$(yq -r '.common.shared' "$after")" "beast shared value should be preserved"
   assert_eq "beast" "$(yq -r '.other.keep' "$after")" "beast unrelated data should survive update"
   assert_eq "REPLACE_ME" "$(yq -r '.attic.token' "$after")" "default template block should be added"
+  assert_eq "REPLACE_ME" "$(yq -r '.flakehub.token' "$after")" "flakehub token placeholder should be added"
   assert_eq "REPLACE_ME" "$(yq -r '.users.root.hashedPassword' "$after")" "root password placeholder should be added"
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "user password placeholder should be added"
   assert_eq "REPLACE_ME" "$(yq -r '.jellyfin.apiKey' "$after")" "host template block should be added"

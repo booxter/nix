@@ -32,6 +32,7 @@ in
   ]
   ++ lib.optionals (!isWork) [
     ./_mixins/attic
+    ./_mixins/flakehub-cache
   ]
   ++ lib.optionals canUseBuilders [
     ./_mixins/community-builders

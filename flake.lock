@@ -91,6 +91,22 @@
         "type": "github"
       }
     },
+    "determinate-nix-installer": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779477100,
+        "narHash": "sha256-6O4P1+vTN1msx7uSNLZHS1d7UZMDmSJyvKUFL2VS62U=",
+        "owner": "DeterminateSystems",
+        "repo": "nix-installer",
+        "rev": "9a5e37a9ad25e62337dda5be777007c70c470bfc",
+        "type": "github"
+      },
+      "original": {
+        "owner": "DeterminateSystems",
+        "repo": "nix-installer",
+        "type": "github"
+      }
+    },
     "disko": {
       "inputs": {
         "nixpkgs": "nixpkgs"
@@ -624,6 +640,7 @@
     "root": {
       "inputs": {
         "debugserver": "debugserver",
+        "determinate-nix-installer": "determinate-nix-installer",
         "disko": "disko",
         "home-manager": "home-manager",
         "homebrew-cask": "homebrew-cask",
