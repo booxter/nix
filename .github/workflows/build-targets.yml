@@ -279,7 +279,8 @@ jobs:
         always() &&
         github.event_name == 'pull_request' &&
         needs.plan-build-matrix.result == 'success' &&
-        needs.plan-build-matrix.outputs.docs_only != 'true'
+        needs.plan-build-matrix.outputs.docs_only != 'true' &&
+        needs.build.result != 'cancelled'
       }}
     runs-on: ubuntu-slim
     continue-on-error: true

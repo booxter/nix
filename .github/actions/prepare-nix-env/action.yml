@@ -1,22 +1,19 @@
 name: Prepare Nix environment
-description: Checkout the repo, install Nix, and configure magic Nix cache.
+description: Checkout the repo, install Determinate Nix, and configure FlakeHub Cache.
 runs:
   using: composite
   steps:
-    - name: Install Nix
-      uses: DeterminateSystems/nix-installer-action@ef8a148080ab6020fd15196c2084a2eea5ff2d25 # v22
+    - name: Install Determinate Nix
+      uses: DeterminateSystems/determinate-nix-action@4eea0b33e3d1f02ecfe37cf16e7204c424009606 # v3
       with:
         extra-conf: |
           trusted-users = root runner
           allowed-users = root runner
           extra-substituters = https://cache.numtide.com https://nixos-raspberrypi.cachix.org https://cache.saumon.network/proxmox-nixos https://virby-nix-darwin.cachix.org
           extra-trusted-public-keys = niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI= proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM= virby-nix-darwin.cachix.org-1:z9GiEZeBU5bEeoDQjyfHPMGPBaIQJOOvYOOjGMKIlLo=
-        determinate: false
 
-    - name: Setup magic Nix cache
-      uses: DeterminateSystems/magic-nix-cache-action@565684385bcd71bad329742eefe8d12f2e765b39 # v13
-      with:
-        use-flakehub: false
+    - name: Setup FlakeHub Cache
+      uses: DeterminateSystems/flakehub-cache-action@146f476c94460cb634f9ade79470fcbc3f7e5b36 # v1
 
     - name: Verify required binary caches are enabled
       shell: bash
@@ -54,19 +51,6 @@ runs:
             exit 1
           fi
         done
-
-    - name: Report Actions cache usage
-      env:
-        GH_TOKEN: ${{ github.token }}
-      shell: bash
-      run: |
-        set -euo pipefail
-        gib_bytes="$((1024*1024*1024))"
-        gh api -H "Accept: application/vnd.github+json" \
-          "/repos/${GITHUB_REPOSITORY}/actions/cache/usage" \
-          --jq "(.active_caches_size_in_bytes // 0) as \$active
-            | (\$active * 100 / ${gib_bytes} | floor) as \$active_hundredths
-            | \"Actions cache usage: \(\$active_hundredths / 100) GiB\""
 
     - name: Dump nix daemon config
       shell: bash
