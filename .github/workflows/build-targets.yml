@@ -234,6 +234,8 @@ jobs:
 
           if [ "${status}" -eq 0 ] && is_noop_diff "${stdout_file}"; then
             printf '%s\n' "${MACHINE_NAME}" >"${unchanged_file}"
+            printf 'Config diff for %s: no changes\n\n' "${MACHINE_NAME}"
+            cat "${stdout_file}"
             exit 0
           fi
 
@@ -259,6 +261,9 @@ jobs:
             printf '```\n\n'
             printf '</details>\n'
           } >"${changed_file}"
+
+          printf 'Config diff for %s:\n\n' "${MACHINE_NAME}"
+          cat "${changed_file}"
 
       - name: Upload config diff artifact
         if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
