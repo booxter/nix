@@ -1,5 +1,6 @@
-{ ... }:
 {
+  imports = [ ./ticket.nix ];
+
   services.openssh.enable = true;
 
   programs.ssh.knownHosts = {
