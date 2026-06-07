@@ -83,6 +83,12 @@ def test_resolved_ca_key_treats_explicit_key_as_private_file():
     assert ca_key.name == "custom-ca"
 
 
+def test_target_expression_includes_nixos_and_darwin_configs(tmp_path):
+    expr = ssh_ticket.nix_targets_expr(tmp_path)
+    assert 'render "nixos") f.nixosConfigurations' in expr
+    assert 'render "darwin") f.darwinConfigurations' in expr
+
+
 def test_resolve_target_accepts_unique_alias():
     targets = [
         {

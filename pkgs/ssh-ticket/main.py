@@ -174,6 +174,7 @@ def nix_targets_expr(repo_root):
           }};
       in
         lib.mapAttrsToList (render "nixos") f.nixosConfigurations
+        ++ lib.mapAttrsToList (render "darwin") f.darwinConfigurations
     """
 
 
