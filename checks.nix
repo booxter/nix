@@ -69,8 +69,9 @@ helpers.forAllSystems (
         python3Packages.pytest
       ];
       buildPhase = ''
-        pytest -q tests/test_box.py
+        pytest -q tests/test_box.py tests/test_ssh_ticket.py
       '';
+      extraFileset = [ ./pkgs/ssh-ticket ];
     };
     join-media-parts = mkCheck {
       name = "join-media-parts-tests";

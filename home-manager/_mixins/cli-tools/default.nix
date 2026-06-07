@@ -6,6 +6,8 @@
   ...
 }:
 {
+  programs.bash.enable = true;
+
   programs.zsh = {
     autosuggestion = {
       enable = true;
@@ -123,6 +125,7 @@
       openssl
       podman
       pre-commit
+      ssh-ticket
       sops
       wget
       yq-go

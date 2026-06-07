@@ -30,6 +30,8 @@ in
     inherit issueInternalServiceCert issueObservabilityCert;
   };
 
+  ssh-ticket = pkgs.callPackage ./ssh-ticket { };
+
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
