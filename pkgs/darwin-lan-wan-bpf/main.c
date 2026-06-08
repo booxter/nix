@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/select.h>
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
@@ -30,6 +31,8 @@
 #define IPV4_MIN_HEADER_LEN 20
 #define IPV6_HEADER_LEN 40
 #define MAX_CIDRS 32
+#define MAX_INTERFACES 16
+#define INTERFACE_LABEL_LEN 256
 
 enum direction {
   DIR_RECEIVE = 0,
@@ -69,9 +72,19 @@ struct counters {
   uint64_t ignored_short;
 };
 
+struct context;
+
+struct capture_interface {
+  const char *name;
+  uint8_t mac[ETH_ADDR_LEN];
+  pcap_t *pcap;
+  struct context *ctx;
+};
+
 struct context {
-  const char *interface;
-  uint8_t interface_mac[ETH_ADDR_LEN];
+  struct capture_interface interfaces[MAX_INTERFACES];
+  size_t interface_count;
+  char interface_label[INTERFACE_LABEL_LEN];
   struct cidr cidrs[MAX_CIDRS];
   size_t cidr_count;
   struct cidr6 cidrs6[MAX_CIDRS];
@@ -84,7 +97,6 @@ struct context {
   const char *metric_name;
   bool metric_name_set;
   struct counters counters;
-  pcap_t *pcap;
 };
 
 static volatile sig_atomic_t stop_requested = 0;
@@ -241,6 +253,46 @@ static bool add_cidr6(struct context *ctx, const char *text) {
   return true;
 }
 
+static bool add_interface(struct context *ctx, const char *name) {
+  if (ctx->interface_count >= MAX_INTERFACES) {
+    fprintf(stderr, "too many interfaces, max is %u\n", MAX_INTERFACES);
+    return false;
+  }
+
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    if (strcmp(ctx->interfaces[i].name, name) == 0) {
+      return true;
+    }
+  }
+
+  struct capture_interface *iface = &ctx->interfaces[ctx->interface_count++];
+  iface->name = name;
+  iface->ctx = ctx;
+  return true;
+}
+
+static void build_interface_label(struct context *ctx) {
+  size_t used = 0;
+
+  ctx->interface_label[0] = '\0';
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    int written = snprintf(ctx->interface_label + used,
+                           sizeof(ctx->interface_label) - used, "%s%s",
+                           i == 0 ? "" : ",", ctx->interfaces[i].name);
+    if (written < 0) {
+      ctx->interface_label[0] = '\0';
+      return;
+    }
+
+    if ((size_t)written >= sizeof(ctx->interface_label) - used) {
+      ctx->interface_label[sizeof(ctx->interface_label) - 1] = '\0';
+      return;
+    }
+
+    used += (size_t)written;
+  }
+}
+
 static bool cidr_contains(const struct cidr *cidr, uint32_t address) {
   return (address & cidr->mask) == cidr->network;
 }
@@ -369,9 +421,16 @@ static uint64_t counter_delta(uint64_t current, uint64_t previous) {
 }
 
 static void print_human_header(const struct context *ctx) {
-  printf("listening on %s (", ctx->interface);
-  print_mac(stdout, ctx->interface_mac);
-  printf("), LAN ");
+  printf("listening on ");
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    if (i > 0) {
+      printf("; ");
+    }
+    printf("%s (", ctx->interfaces[i].name);
+    print_mac(stdout, ctx->interfaces[i].mac);
+    printf(")");
+  }
+  printf(", LAN ");
   for (size_t i = 0; i < ctx->cidr_count; i++) {
     printf("%s%s", i == 0 ? "" : ",", ctx->cidrs[i].text);
   }
@@ -449,27 +508,27 @@ static void print_prometheus_metrics(FILE *stream, const struct context *ctx) {
       fprintf(stream,
               "%s{interface=\"%s\",direction=\"%s\",scope=\"%s\"} %" PRIu64
               "\n",
-              ctx->metric_name, ctx->interface, direction_label(direction),
+              ctx->metric_name, ctx->interface_label, direction_label(direction),
               scope_label(scope), ctx->counters.bytes[direction][scope]);
       fprintf(stream,
               "host_observability_network_bpf_packets_total{interface=\"%s\",direction=\"%s\",scope=\"%s\"} %" PRIu64
               "\n",
-              ctx->interface, direction_label(direction), scope_label(scope),
+              ctx->interface_label, direction_label(direction), scope_label(scope),
               ctx->counters.packets[direction][scope]);
     }
   }
   fprintf(stream,
           "host_observability_network_bpf_ignored_packets_total{interface=\"%s\",reason=\"not_ip\"} %" PRIu64
           "\n",
-          ctx->interface, ctx->counters.ignored_not_ip);
+          ctx->interface_label, ctx->counters.ignored_not_ip);
   fprintf(stream,
           "host_observability_network_bpf_ignored_packets_total{interface=\"%s\",reason=\"not_self\"} %" PRIu64
           "\n",
-          ctx->interface, ctx->counters.ignored_not_self);
+          ctx->interface_label, ctx->counters.ignored_not_self);
   fprintf(stream,
           "host_observability_network_bpf_ignored_packets_total{interface=\"%s\",reason=\"short\"} %" PRIu64
           "\n",
-          ctx->interface, ctx->counters.ignored_short);
+          ctx->interface_label, ctx->counters.ignored_short);
   fprintf(stream, "\n");
   fflush(stream);
 }
@@ -571,8 +630,14 @@ static bool write_textfile_metrics(const struct context *ctx,
 }
 
 static void print_status(FILE *stream, const struct context *ctx) {
-  fprintf(stream, "listening on %s, MAC ", ctx->interface);
-  print_mac(stream, ctx->interface_mac);
+  fprintf(stream, "listening on ");
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    if (i > 0) {
+      fprintf(stream, "; ");
+    }
+    fprintf(stream, "%s, MAC ", ctx->interfaces[i].name);
+    print_mac(stream, ctx->interfaces[i].mac);
+  }
   fprintf(stream, ", LAN CIDRs: ");
   for (size_t i = 0; i < ctx->cidr_count; i++) {
     fprintf(stream, "%s%s", i == 0 ? "" : ", ", ctx->cidrs[i].text);
@@ -584,9 +649,84 @@ static void print_status(FILE *stream, const struct context *ctx) {
   fprintf(stream, "\n");
 }
 
+static void close_capture_interfaces(struct context *ctx) {
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    if (ctx->interfaces[i].pcap != NULL) {
+      pcap_close(ctx->interfaces[i].pcap);
+      ctx->interfaces[i].pcap = NULL;
+    }
+  }
+}
+
+static bool open_capture_interface(struct capture_interface *iface) {
+  if (!get_interface_mac(iface->name, iface->mac)) {
+    return false;
+  }
+
+  char errbuf[PCAP_ERRBUF_SIZE];
+  iface->pcap = pcap_open_live(iface->name, 65535, 0, 1000, errbuf);
+  if (iface->pcap == NULL) {
+    fprintf(stderr, "pcap_open_live(%s): %s\n", iface->name, errbuf);
+    return false;
+  }
+
+  if (pcap_datalink(iface->pcap) != DLT_EN10MB) {
+    fprintf(stderr, "unsupported datalink type on %s: %s\n", iface->name,
+            pcap_datalink_val_to_name(pcap_datalink(iface->pcap)));
+    return false;
+  }
+
+  struct bpf_program filter;
+  if (pcap_compile(iface->pcap, &filter, "ip or ip6", 1,
+                   PCAP_NETMASK_UNKNOWN) != 0) {
+    fprintf(stderr, "pcap_compile(%s): %s\n", iface->name,
+            pcap_geterr(iface->pcap));
+    return false;
+  }
+
+  if (pcap_setfilter(iface->pcap, &filter) != 0) {
+    fprintf(stderr, "pcap_setfilter(%s): %s\n", iface->name,
+            pcap_geterr(iface->pcap));
+    pcap_freecode(&filter);
+    return false;
+  }
+  pcap_freecode(&filter);
+
+  if (pcap_setnonblock(iface->pcap, 1, errbuf) != 0) {
+    fprintf(stderr, "pcap_setnonblock(%s): %s\n", iface->name, errbuf);
+    return false;
+  }
+
+  return true;
+}
+
+static bool open_capture_interfaces(struct context *ctx) {
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    if (!open_capture_interface(&ctx->interfaces[i])) {
+      close_capture_interfaces(ctx);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+static uint64_t total_packets(const struct counters *counters) {
+  uint64_t total = 0;
+
+  for (enum direction direction = 0; direction < DIR_COUNT; direction++) {
+    for (enum scope scope = 0; scope < SCOPE_COUNT; scope++) {
+      total += counters->packets[direction][scope];
+    }
+  }
+
+  return total;
+}
+
 static void handle_packet(u_char *user, const struct pcap_pkthdr *header,
                           const u_char *packet) {
-  struct context *ctx = (struct context *)user;
+  struct capture_interface *iface = (struct capture_interface *)user;
+  struct context *ctx = iface->ctx;
 
   if (header->caplen < ETH_HEADER_LEN) {
     ctx->counters.ignored_short++;
@@ -597,10 +737,10 @@ static void handle_packet(u_char *user, const struct pcap_pkthdr *header,
   const uint8_t *src_mac = packet + ETH_ADDR_LEN;
   enum direction direction;
 
-  if (mac_equal(src_mac, ctx->interface_mac)) {
+  if (mac_equal(src_mac, iface->mac)) {
     direction = DIR_TRANSMIT;
-  } else if (mac_equal(dst_mac, ctx->interface_mac) ||
-             mac_is_broadcast(dst_mac) || mac_is_multicast(dst_mac)) {
+  } else if (mac_equal(dst_mac, iface->mac) || mac_is_broadcast(dst_mac) ||
+             mac_is_multicast(dst_mac)) {
     direction = DIR_RECEIVE;
   } else {
     ctx->counters.ignored_not_self++;
@@ -680,19 +820,20 @@ static void handle_packet(u_char *user, const struct pcap_pkthdr *header,
 
   if (ctx->max_accounted_packets > 0 &&
       ctx->accounted_packets >= ctx->max_accounted_packets) {
-    pcap_breakloop(ctx->pcap);
+    stop_requested = 1;
+    pcap_breakloop(iface->pcap);
   }
 }
 
 static void usage(FILE *stream, const char *program_name) {
   fprintf(stream,
-          "Usage: %s [-i interface] [-l cidr] [-p seconds] [-n packets]\n"
+          "Usage: %s [-i interface]... [-l cidr] [-p seconds] [-n packets]\n"
           "\n"
           "Capture IP packets on a Darwin interface with libpcap/BPF and\n"
           "emit LAN/WAN byte and packet counters.\n"
           "\n"
           "Options:\n"
-          "  -i interface  Interface to capture, default: %s\n"
+          "  -i interface  Interface to capture. Repeatable. Default: %s\n"
           "  -l cidr       LAN IPv4 CIDR. Repeatable. Default: %s\n"
           "  -6 cidr       LAN IPv6 CIDR. Repeatable. Default: %s\n"
           "  -p seconds    Print interval, default: 5\n"
@@ -709,7 +850,6 @@ static void usage(FILE *stream, const char *program_name) {
 
 int main(int argc, char **argv) {
   struct context ctx = {
-      .interface = DEFAULT_INTERFACE,
       .print_interval_seconds = 5,
       .metric_name = DEFAULT_PROMETHEUS_METRIC,
   };
@@ -726,7 +866,9 @@ int main(int argc, char **argv) {
         usage(stderr, argv[0]);
         return 2;
       }
-      ctx.interface = argv[i];
+      if (!add_interface(&ctx, argv[i])) {
+        return 2;
+      }
     } else if (strcmp(argv[i], "-l") == 0) {
       if (++i >= argc) {
         fprintf(stderr, "-l requires an IPv4 CIDR\n");
@@ -794,43 +936,18 @@ int main(int argc, char **argv) {
     return 2;
   }
 
+  if (ctx.interface_count == 0 && !add_interface(&ctx, DEFAULT_INTERFACE)) {
+    return 2;
+  }
+  build_interface_label(&ctx);
+
   if (ctx.output_format == OUTPUT_TEXTFILE && !ctx.metric_name_set) {
     ctx.metric_name = DEFAULT_TEXTFILE_METRIC;
   }
 
-  if (!get_interface_mac(ctx.interface, ctx.interface_mac)) {
+  if (!open_capture_interfaces(&ctx)) {
     return 1;
   }
-
-  char errbuf[PCAP_ERRBUF_SIZE];
-  ctx.pcap = pcap_open_live(ctx.interface, 65535, 0, 1000, errbuf);
-  if (ctx.pcap == NULL) {
-    fprintf(stderr, "pcap_open_live(%s): %s\n", ctx.interface, errbuf);
-    return 1;
-  }
-
-  if (pcap_datalink(ctx.pcap) != DLT_EN10MB) {
-    fprintf(stderr, "unsupported datalink type on %s: %s\n", ctx.interface,
-            pcap_datalink_val_to_name(pcap_datalink(ctx.pcap)));
-    pcap_close(ctx.pcap);
-    return 1;
-  }
-
-  struct bpf_program filter;
-  if (pcap_compile(ctx.pcap, &filter, "ip or ip6", 1, PCAP_NETMASK_UNKNOWN) !=
-      0) {
-    fprintf(stderr, "pcap_compile: %s\n", pcap_geterr(ctx.pcap));
-    pcap_close(ctx.pcap);
-    return 1;
-  }
-
-  if (pcap_setfilter(ctx.pcap, &filter) != 0) {
-    fprintf(stderr, "pcap_setfilter: %s\n", pcap_geterr(ctx.pcap));
-    pcap_freecode(&filter);
-    pcap_close(ctx.pcap);
-    return 1;
-  }
-  pcap_freecode(&filter);
 
   signal(SIGINT, request_stop);
   signal(SIGTERM, request_stop);
@@ -844,7 +961,7 @@ int main(int argc, char **argv) {
   } else if (ctx.output_format == OUTPUT_TEXTFILE) {
     print_status(stderr, &ctx);
     if (!write_textfile_metrics(&ctx, NULL, previous_print, previous_print)) {
-      pcap_close(ctx.pcap);
+      close_capture_interfaces(&ctx);
       return 1;
     }
   } else {
@@ -853,16 +970,59 @@ int main(int argc, char **argv) {
 
   time_t next_print = previous_print + (time_t)ctx.print_interval_seconds;
   while (!stop_requested) {
-    int rc = pcap_dispatch(ctx.pcap, -1, handle_packet, (u_char *)&ctx);
+    fd_set readfds;
+    FD_ZERO(&readfds);
 
-    if (rc == PCAP_ERROR_BREAK) {
-      break;
+    int max_fd = -1;
+    for (size_t i = 0; i < ctx.interface_count; i++) {
+      int fd = pcap_get_selectable_fd(ctx.interfaces[i].pcap);
+      if (fd >= 0) {
+        FD_SET(fd, &readfds);
+        if (fd > max_fd) {
+          max_fd = fd;
+        }
+      }
     }
 
-    if (rc == PCAP_ERROR) {
-      fprintf(stderr, "pcap_dispatch: %s\n", pcap_geterr(ctx.pcap));
-      pcap_close(ctx.pcap);
+    time_t before_select = time(NULL);
+    time_t wait_seconds = next_print > before_select
+                              ? next_print - before_select
+                              : 0;
+    struct timeval timeout = {
+        .tv_sec = wait_seconds,
+        .tv_usec = 0,
+    };
+
+    int ready = select(max_fd + 1, &readfds, NULL, NULL, &timeout);
+    if (ready < 0) {
+      if (errno == EINTR) {
+        continue;
+      }
+
+      fprintf(stderr, "select: %s\n", strerror(errno));
+      close_capture_interfaces(&ctx);
       return 1;
+    }
+
+    for (size_t i = 0; i < ctx.interface_count; i++) {
+      struct capture_interface *iface = &ctx.interfaces[i];
+      int fd = pcap_get_selectable_fd(iface->pcap);
+
+      if (fd >= 0 && (ready == 0 || !FD_ISSET(fd, &readfds))) {
+        continue;
+      }
+
+      int rc = pcap_dispatch(iface->pcap, -1, handle_packet, (u_char *)iface);
+      if (rc == PCAP_ERROR_BREAK) {
+        break;
+      }
+
+      if (rc == PCAP_ERROR) {
+        fprintf(stderr, "pcap_dispatch(%s): %s\n", iface->name,
+                pcap_geterr(iface->pcap));
+        close_capture_interfaces(&ctx);
+        return 1;
+      }
     }
 
     time_t now = time(NULL);
@@ -872,7 +1032,7 @@ int main(int argc, char **argv) {
       } else if (ctx.output_format == OUTPUT_TEXTFILE) {
         if (!write_textfile_metrics(&ctx, &previous_counters, previous_print,
                                     now)) {
-          pcap_close(ctx.pcap);
+          close_capture_interfaces(&ctx);
           return 1;
         }
         previous_counters = ctx.counters;
@@ -894,16 +1054,13 @@ int main(int argc, char **argv) {
   } else if (ctx.output_format == OUTPUT_TEXTFILE) {
     if (!write_textfile_metrics(&ctx, &previous_counters, previous_print,
                                 final_print)) {
-      pcap_close(ctx.pcap);
+      close_capture_interfaces(&ctx);
       return 1;
     }
   } else if (final_print > previous_print ||
-             ctx.accounted_packets > previous_counters.packets[DIR_RECEIVE][SCOPE_LAN] +
-                                       previous_counters.packets[DIR_RECEIVE][SCOPE_WAN] +
-                                       previous_counters.packets[DIR_TRANSMIT][SCOPE_LAN] +
-                                       previous_counters.packets[DIR_TRANSMIT][SCOPE_WAN]) {
+             ctx.accounted_packets > total_packets(&previous_counters)) {
     print_human_line(&ctx, &previous_counters, previous_print, final_print);
   }
-  pcap_close(ctx.pcap);
+  close_capture_interfaces(&ctx);
   return 0;
 }

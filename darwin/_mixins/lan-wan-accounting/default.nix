@@ -31,8 +31,12 @@ let
   );
   programArguments = [
     (lib.getExe cfg.package)
+  ]
+  ++ lib.concatMap (interface: [
     "-i"
-    cfg.interface
+    interface
+  ]) cfg.interfaces
+  ++ [
     "-p"
     (toString cfg.intervalSeconds)
   ]
@@ -78,11 +82,14 @@ in
       description = "IPv6 subnets that should be treated as LAN traffic.";
     };
 
-    interface = lib.mkOption {
-      type = lib.types.str;
-      default = hostSpec.mainInterface or "en0";
-      example = "en0";
-      description = "Primary network interface to classify traffic on.";
+    interfaces = lib.mkOption {
+      type = with lib.types; nonEmptyListOf str;
+      default = hostSpec.lanWanInterfaces or [ "en0" ];
+      example = [
+        "en0"
+        "en1"
+      ];
+      description = "Network interfaces to classify traffic on.";
     };
 
     intervalSeconds = lib.mkOption {
@@ -114,7 +121,7 @@ in
       uid = config.ids.uids.${serviceUser};
       gid = accessBpfGid;
       home = stateDir;
-      createHome = true;
+      createHome = false;
       shell = "/usr/bin/false";
       description = "System user for Darwin LAN/WAN BPF accounting";
     };
