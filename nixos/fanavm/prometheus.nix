@@ -36,6 +36,7 @@ let
   };
   proxmoxScrapes = import ./scrapes/proxmox.nix {
     inherit
+      config
       lib
       outputs
       prometheusMtlsTlsConfig
