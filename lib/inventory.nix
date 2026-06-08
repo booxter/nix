@@ -68,17 +68,6 @@ let
     inherit domain ipv4Address;
   };
 
-  canonicalLocalHostname =
-    spec:
-    if spec ? dnsName then
-      spec.dnsName
-    else if spec ? dhcpReservation then
-      spec.dhcpReservation.hostname
-    else if spec.type == "vm" then
-      "prox-${spec.name}vm"
-    else
-      spec.name;
-
   aliasIpv4Address =
     spec:
     if spec ? dhcpReservation then
