@@ -114,7 +114,7 @@ in
       uid = config.ids.uids.${serviceUser};
       gid = accessBpfGid;
       home = stateDir;
-      createHome = true;
+      createHome = false;
       shell = "/usr/bin/false";
       description = "System user for Darwin LAN/WAN BPF accounting";
     };
