@@ -40,12 +40,6 @@ let
       ];
     };
 
-  capitalize =
-    str:
-    "${lib.strings.toUpper (builtins.substring 0 1 str)}${
-      builtins.substring 1 ((builtins.stringLength str) - 1) str
-    }";
-
   mkService =
     {
       id,
@@ -53,7 +47,7 @@ let
       owner,
       probePath,
       publicHost ? null,
-      title ? capitalize id,
+      title ? lib.strings.toSentenceCase id,
       icon ? "sh:${id}",
     }:
     {
