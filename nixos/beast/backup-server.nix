@@ -7,6 +7,7 @@
 let
   backupRoot = "/volume2/backups/restic-prod";
   cloudOffloadUser = "restic-cloud";
+  cloudBucketName = "ihar-restic-prod";
   cloudBackupRate = "10mbit";
   cloudBackupCeil = "10gbit";
   # Keep cloud-copy uploads smaller so each B2 request finishes sooner under
@@ -21,7 +22,8 @@ let
     beast = {
       publicKey = null;
       cloud = {
-        repository = "b2:ihar-restic-prod:hosts/beast";
+        repository = "b2:${cloudBucketName}:hosts/beast";
+        prefix = "hosts/beast";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
@@ -36,7 +38,8 @@ let
     srvarr = {
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ5uWCS2lW2JVBHPltnWuYtB5866DUSJ9Ayhz4hgY1T2";
       cloud = {
-        repository = "b2:ihar-restic-prod:hosts/srvarr";
+        repository = "b2:${cloudBucketName}:hosts/srvarr";
+        prefix = "hosts/srvarr";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
@@ -52,7 +55,8 @@ let
     orgvm = {
       publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF0906WU3WLoVgNE8B0HRyV0gDGQihj0LHPMZ2pTiV/B ihrachyshka@mair";
       cloud = {
-        repository = "b2:ihar-restic-prod:hosts/orgvm";
+        repository = "b2:${cloudBucketName}:hosts/orgvm";
+        prefix = "hosts/orgvm";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
@@ -180,6 +184,18 @@ let
   '';
 in
 {
+  imports = [
+    (import ./restic-cloud-usage.nix {
+      inherit
+        backupClients
+        cloudBucketName
+        mkCloudSecret
+        sharedB2ApplicationKeyIdSecret
+        sharedB2ApplicationKeySecret
+        ;
+    })
+  ];
+
   systemd.tmpfiles.rules = builtins.concatLists (
     map (
       name:

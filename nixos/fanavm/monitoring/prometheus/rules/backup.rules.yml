@@ -29,3 +29,21 @@ groups:
         annotations:
           summary: "Backup job critically stale on {{ $labels.instance }}: {{ $labels.backup_title }}"
           description: "The {{ $labels.phase }} backup job {{ $labels.backup_title }} on {{ $labels.instance }} has not completed a successful run for more than 60 hours."
+      - alert: B2BackupStorageHigh
+        expr: host_observability_b2_bucket_total_size_bytes{job="node-mtls"} > 100000000000
+        for: 30m
+        labels:
+          severity: warning
+          category: backup
+        annotations:
+          summary: "B2 backup storage usage high on {{ $labels.instance }}: {{ $labels.bucket }}"
+          description: "B2 bucket {{ $labels.bucket }} on {{ $labels.instance }} reports more than 100 GB of stored backup data."
+      - alert: B2BackupUsageDataStale
+        expr: ((time() - host_observability_b2_bucket_usage_last_success_timestamp_seconds{job="node-mtls"}) / 3600) > 48 and on(instance, job, bucket) host_observability_b2_bucket_usage_last_success_timestamp_seconds{job="node-mtls"} > 0
+        for: 30m
+        labels:
+          severity: warning
+          category: backup
+        annotations:
+          summary: "B2 backup usage data stale on {{ $labels.instance }}: {{ $labels.bucket }}"
+          description: "B2 usage metrics for bucket {{ $labels.bucket }} on {{ $labels.instance }} have not been refreshed successfully for more than 48 hours."

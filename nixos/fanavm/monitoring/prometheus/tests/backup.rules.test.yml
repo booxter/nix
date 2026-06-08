@@ -93,3 +93,61 @@ tests:
         alertname: BackupJobStale
       - eval_time: 72h
         alertname: BackupJobStaleCritical
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_b2_bucket_total_size_bytes{job="node-mtls",instance="beast",bucket="ihar-restic-prod"}'
+        values: "100000000000x122"
+    alert_rule_test:
+      - eval_time: 1h
+        alertname: B2BackupStorageHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_b2_bucket_total_size_bytes{job="node-mtls",instance="beast",bucket="ihar-restic-prod"}'
+        values: "110000000000x122"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: B2BackupStorageHigh
+      - eval_time: 30m
+        alertname: B2BackupStorageHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: B2BackupStorageHigh
+              bucket: ihar-restic-prod
+              category: backup
+              instance: beast
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "B2 backup storage usage high on beast: ihar-restic-prod"
+              description: "B2 bucket ihar-restic-prod on beast reports more than 100 GB of stored backup data."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_b2_bucket_usage_last_success_timestamp_seconds{job="node-mtls",instance="beast",bucket="ihar-restic-prod"}'
+        values: "3600x6200"
+    alert_rule_test:
+      - eval_time: 48h30m
+        alertname: B2BackupUsageDataStale
+      - eval_time: 50h
+        alertname: B2BackupUsageDataStale
+        exp_alerts:
+          - exp_labels:
+              alertname: B2BackupUsageDataStale
+              bucket: ihar-restic-prod
+              category: backup
+              instance: beast
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "B2 backup usage data stale on beast: ihar-restic-prod"
+              description: "B2 usage metrics for bucket ihar-restic-prod on beast have not been refreshed successfully for more than 48 hours."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_b2_bucket_usage_last_success_timestamp_seconds{job="node-mtls",instance="beast",bucket="ihar-restic-prod"}'
+        values: "0x6200"
+    alert_rule_test:
+      - eval_time: 72h
+        alertname: B2BackupUsageDataStale
