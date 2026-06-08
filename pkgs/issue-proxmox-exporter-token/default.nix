@@ -1,5 +1,6 @@
 {
   bash,
+  age-plugin-se,
   git,
   jq,
   lib,
@@ -17,6 +18,7 @@ writeShellApplication {
   name = "issue-proxmox-exporter-token";
   runtimeInputs = [
     bash
+    age-plugin-se
     git
     jq
     nix

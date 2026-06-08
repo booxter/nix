@@ -200,6 +200,14 @@ role={shlex.quote(role)}
 acl_path={shlex.quote(acl_path)}
 replace={shlex.quote(replace_value)}
 
+pveum() {{
+  if [ "$(id -u)" -eq 0 ]; then
+    command pveum "$@"
+  else
+    sudo -n pveum "$@"
+  fi
+}}
+
 if ! pveum user list --output-format json | grep -F "\\"$api_user\\"" >/dev/null; then
   pveum user add "$api_user" --comment {quoted_comment} >/dev/null
 fi
