@@ -220,7 +220,7 @@ sudo -u step-ca cat "$tmpdir/server.key"
     if os.environ.get(LOCAL_CA_ENV) == "1":
         output = run(["bash", "-lc", script], cwd=None)
     else:
-        output = run(["ssh", ca_host, "bash", "-lc", script], cwd=None)
+        output = run(["ssh", ca_host, "bash", "-s"], cwd=None, input_text=script)
     cert_marker = "__CERT__\n"
     key_marker = "\n__KEY__\n"
     if not output.startswith(cert_marker) or key_marker not in output:
