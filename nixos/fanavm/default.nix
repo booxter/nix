@@ -86,27 +86,6 @@ in
     group = "grafana";
     mode = "0400";
   };
-  sops.secrets.grafanaAlertingTelegramBotToken = {
-    key = "grafana/alerting/telegram/bot_token";
-    owner = "grafana";
-    group = "grafana";
-    mode = "0400";
-    restartUnits = [ "alertmanager.service" ];
-  };
-  sops.secrets.grafanaAlertingTelegramChatId = {
-    key = "grafana/alerting/telegram/chat_id";
-    owner = "grafana";
-    group = "grafana";
-    mode = "0400";
-    restartUnits = [ "alertmanager.service" ];
-  };
-  sops.templates."alertmanager.env" = {
-    mode = "0400";
-    content = ''
-      TELEGRAM_CHAT_ID=${config.sops.placeholder.grafanaAlertingTelegramChatId}
-    '';
-    restartUnits = [ "alertmanager.service" ];
-  };
   sops.secrets.prometheusScrapeNodeClientCrt = {
     key = "prometheus/scrape_node/client_crt";
     owner = "prometheus";
