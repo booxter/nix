@@ -10,6 +10,7 @@ let
   sops-cat = pkgs.writeShellApplication {
     name = "sops-cat";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       sops
@@ -19,15 +20,14 @@ let
     '';
   };
 
-  # Merge default template keys into a host secret, then open it in sops editor.
+  # Open a host secret in sops editor.
   sops-edit = pkgs.writeShellApplication {
     name = "sops-edit";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
-      jq
       sops
-      yq-go
     ];
     text = ''
       exec ${../scripts/sops-edit.sh} "$@"
@@ -38,6 +38,7 @@ let
   sops-update = pkgs.writeShellApplication {
     name = "sops-update";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       jq
@@ -53,6 +54,7 @@ let
   sops-copy = pkgs.writeShellApplication {
     name = "sops-copy";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       jq
@@ -68,6 +70,7 @@ let
   sops-pass = pkgs.writeShellApplication {
     name = "sops-pass";
     runtimeInputs = with pkgs; [
+      age-plugin-se
       coreutils
       git
       jq
@@ -86,6 +89,7 @@ let
     name = "sops-bootstrap";
     runtimeInputs = with pkgs; [
       age
+      age-plugin-se
       gnugrep
       jq
       openssh
@@ -102,7 +106,7 @@ in
   "sops-bootstrap" =
     mkApp "${sops-bootstrap}/bin/sops-bootstrap" "Bootstrap host sops secrets and key recipients.";
   "sops-cat" = mkApp "${sops-cat}/bin/sops-cat" "Decrypt and print a host secret.";
-  "sops-edit" = mkApp "${sops-edit}/bin/sops-edit" "Edit a host secret and merge template keys.";
+  "sops-edit" = mkApp "${sops-edit}/bin/sops-edit" "Edit a host secret.";
   "sops-update" =
     mkApp "${sops-update}/bin/sops-update" "Merge missing template keys into a host secret.";
   "sops-copy" = mkApp "${sops-copy}/bin/sops-copy" "Copy a top-level key path between host secrets.";

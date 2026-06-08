@@ -73,47 +73,51 @@ in
     networking.hostName = hostname;
     sops.age.keyFile = "/var/lib/sops-nix/key.txt";
 
-    # Some packages that I'd like to have available on all my machines.
-    environment.systemPackages = with pkgs; [
-      age
-      bind.dnsutils
-      coreutils
-      dig
-      file
-      findutils
-      gawk
-      git
-      gnugrep
-      gnumake
-      gnused
-      gzip
-      htop
-      iftop
-      ipcalc
-      iperf3
-      jq
-      lsof
-      man-pages
-      moreutils
-      ngrep
-      procps
-      pstree
-      rclone
-      restic
-      ripgrep
-      sops
-      speedtest-cli
-      tcpdump
-      tmux
-      tree
-      unzip
-      viddy
-      vim
-      watch
-      yq
-      zip
-      ipmitool
-    ];
+    # Some packages that I'd like to have available on managed machines.
+    environment.systemPackages =
+      with pkgs;
+      [
+        bind.dnsutils
+        coreutils
+        dig
+        file
+        findutils
+        gawk
+        git
+        gnugrep
+        gnumake
+        gnused
+        gzip
+        htop
+        iftop
+        ipcalc
+        iperf3
+        jq
+        lsof
+        man-pages
+        moreutils
+        ngrep
+        procps
+        pstree
+        rclone
+        ripgrep
+        speedtest-cli
+        tcpdump
+        tmux
+        tree
+        unzip
+        viddy
+        vim
+        watch
+        yq
+        zip
+        ipmitool
+      ]
+      ++ lib.optionals (!isWork) [
+        age
+        restic
+        sops
+      ];
 
     users.users.${username} = {
       openssh.authorizedKeys.keys = workKeys ++ lib.optionals (!isWork) personalKeys;
