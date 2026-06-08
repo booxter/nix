@@ -149,12 +149,27 @@ in
         ];
         script = ''
           set -euo pipefail
-          install -D -o root -g root -m 0444 \
-            ${config.sops.secrets.proxmoxApiServerCrt.path} \
-            ${lib.escapeShellArg (toString cfg.certificatePath)}
-          install -D -o root -g root -m 0400 \
-            ${config.sops.secrets.proxmoxApiServerKey.path} \
-            ${lib.escapeShellArg (toString cfg.keyPath)}
+          cert_path=${lib.escapeShellArg (toString cfg.certificatePath)}
+          key_path=${lib.escapeShellArg (toString cfg.keyPath)}
+
+          cleanup() {
+            rm -f "$cert_path.tmp.$$" "$key_path.tmp.$$"
+          }
+          trap cleanup EXIT
+
+          # /etc/pve is Proxmox pmxcfs, which rejects normal chmod/chown
+          # operations. Copy files into it and let pmxcfs assign its own
+          # root:www-data permissions.
+          copy_pmxcfs() {
+            src="$1"
+            dst="$2"
+            tmp="$dst.tmp.$$"
+            cp "$src" "$tmp"
+            mv -f "$tmp" "$dst"
+          }
+
+          copy_pmxcfs ${config.sops.secrets.proxmoxApiServerCrt.path} "$cert_path"
+          copy_pmxcfs ${config.sops.secrets.proxmoxApiServerKey.path} "$key_path"
         '';
         serviceConfig = {
           Type = "oneshot";
