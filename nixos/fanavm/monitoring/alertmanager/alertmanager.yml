@@ -8,6 +8,11 @@ route:
   group_wait: 5s
   group_interval: 5m
   repeat_interval: 12h
+  routes:
+    - receiver: telegram-home
+      matchers:
+        - category="service"
+      group_wait: 1m
 
 receivers:
   - name: telegram-home
@@ -27,15 +32,23 @@ receivers:
           {{ end }}{{ if .CommonLabels.severity }}• Severity: {{ .CommonLabels.severity }}
           {{ end }}{{ if .CommonLabels.category }}• Category: {{ .CommonLabels.category }}
           {{ end }}{{ if .CommonLabels.job }}• Job: {{ .CommonLabels.job }}
-          {{ end }}{{ if gt (len .Alerts) 1 }}• Alerts in group: {{ len .Alerts }}
-          {{ end }}{{ end }}{{ if gt (len .Alerts) 1 }}
+          {{ end }}{{ if gt (len .Alerts.Firing) 1 }}• Firing alerts in group: {{ len .Alerts.Firing }}
+          {{ end }}{{ if gt (len .Alerts.Resolved) 0 }}• Resolved alerts in group: {{ len .Alerts.Resolved }}
+          {{ end }}{{ end }}{{ if or (gt (len .Alerts.Firing) 1) (gt (len .Alerts.Resolved) 0) }}
 
-          <b>Affected</b>
-          {{ range .Alerts }}{{ if .Labels.instance }}• {{ .Labels.instance }}
+          {{ if gt (len .Alerts.Firing) 0 }}<b>Firing</b>
+          {{ range .Alerts.Firing }}{{ if .Labels.instance }}• {{ .Labels.instance }}
           {{ else if .Labels.target }}• {{ .Labels.target }}
           {{ else if .Labels.service_title }}• {{ .Labels.service_title }}
           {{ else }}• {{ .Labels.alertname }}
-          {{ end }}{{ end }}{{ end }}
+          {{ end }}{{ end }}{{ end }}{{ if gt (len .Alerts.Resolved) 0 }}
+
+          <b>Resolved</b>
+          {{ range .Alerts.Resolved }}{{ if .Labels.instance }}• {{ .Labels.instance }}
+          {{ else if .Labels.target }}• {{ .Labels.target }}
+          {{ else if .Labels.service_title }}• {{ .Labels.service_title }}
+          {{ else }}• {{ .Labels.alertname }}
+          {{ end }}{{ end }}{{ end }}{{ end }}
 
           <a href="https://grafana.home.arpa/alerting/groups">Open active alerts in Grafana</a>
         parse_mode: HTML
