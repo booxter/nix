@@ -1,0 +1,111 @@
+rule_files:
+  - ../rules/proxmox.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'up{job="proxmox-pve-node",instance="prx2-lab.home.arpa"}'
+        values: "0 0 0 0 0 0 0 0 0 0 0 1 1"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: ProxmoxExporterScrapeDown
+      - eval_time: 5m
+        alertname: ProxmoxExporterScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: ProxmoxExporterScrapeDown
+              category: proxmox
+              instance: prx2-lab.home.arpa
+              job: proxmox-pve-node
+              severity: warning
+            exp_annotations:
+              summary: "Proxmox scrape down: prx2-lab.home.arpa"
+              description: "Prometheus has been unable to scrape proxmox-pve-node on prx2-lab.home.arpa for 5 minutes."
+      - eval_time: 5m30s
+        alertname: ProxmoxExporterScrapeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'pve_up{job="proxmox-pve-cluster",instance="prx1-lab.home.arpa",id="cluster/lab"}'
+        values: "0 0 0 0 0 0 0 0 0 0 0 1 1"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ProxmoxClusterNotQuorate
+        exp_alerts:
+          - exp_labels:
+              alertname: ProxmoxClusterNotQuorate
+              category: proxmox
+              id: cluster/lab
+              instance: prx1-lab.home.arpa
+              job: proxmox-pve-cluster
+              severity: critical
+            exp_annotations:
+              summary: "Proxmox cluster is not quorate"
+              description: "Cluster cluster/lab reported not up through prx1-lab.home.arpa for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'pve_up{job="proxmox-pve-cluster",instance="prx1-lab.home.arpa",id="node/prx2-lab"}'
+        values: "0 0 0 0 0 0 0 0 0 0 0 1 1"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: ProxmoxNodeOffline
+        exp_alerts:
+          - exp_labels:
+              alertname: ProxmoxNodeOffline
+              category: proxmox
+              id: node/prx2-lab
+              instance: prx1-lab.home.arpa
+              job: proxmox-pve-cluster
+              severity: critical
+            exp_annotations:
+              summary: "Proxmox node offline: node/prx2-lab"
+              description: "Proxmox node node/prx2-lab has been offline in the cluster API for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'pve_up{job="proxmox-pve-cluster",instance="prx1-lab.home.arpa",id="qemu/100"}'
+        values: "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1"
+      - series: 'pve_onboot_status{job="proxmox-pve-node",instance="prx2-lab.home.arpa",id="qemu/100"}'
+        values: "1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: ProxmoxOnbootGuestDown
+      - eval_time: 10m
+        alertname: ProxmoxOnbootGuestDown
+        exp_alerts:
+          - exp_labels:
+              alertname: ProxmoxOnbootGuestDown
+              category: proxmox
+              id: qemu/100
+              instance: prx1-lab.home.arpa
+              job: proxmox-pve-cluster
+              severity: warning
+            exp_annotations:
+              summary: "Proxmox on-boot guest down: qemu/100"
+              description: "Guest qemu/100 is configured to start on boot but has been down for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'pve_disk_usage_bytes{job="proxmox-pve-cluster",instance="prx1-lab.home.arpa",id="storage/prx1-lab/local"}'
+        values: "90x62"
+      - series: 'pve_disk_size_bytes{job="proxmox-pve-cluster",instance="prx1-lab.home.arpa",id="storage/prx1-lab/local"}'
+        values: "100x62"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: ProxmoxStorageUsageHigh
+      - eval_time: 30m
+        alertname: ProxmoxStorageUsageHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: ProxmoxStorageUsageHigh
+              category: proxmox
+              id: storage/prx1-lab/local
+              instance: prx1-lab.home.arpa
+              job: proxmox-pve-cluster
+              severity: warning
+            exp_annotations:
+              summary: "Proxmox storage high: storage/prx1-lab/local"
+              description: "Proxmox storage storage/prx1-lab/local has been above 85% usage for 30 minutes."

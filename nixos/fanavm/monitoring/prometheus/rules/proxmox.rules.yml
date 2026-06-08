@@ -1,0 +1,49 @@
+groups:
+  - name: proxmox-health
+    interval: 30s
+    rules:
+      - alert: ProxmoxExporterScrapeDown
+        expr: up{job=~"proxmox-pve-(cluster|node|exporter)"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: proxmox
+        annotations:
+          summary: "Proxmox scrape down: {{ $labels.instance }}"
+          description: "Prometheus has been unable to scrape {{ $labels.job }} on {{ $labels.instance }} for 5 minutes."
+      - alert: ProxmoxClusterNotQuorate
+        expr: pve_up{job="proxmox-pve-cluster",id=~"cluster/.*"} < 1
+        for: 5m
+        labels:
+          severity: critical
+          category: proxmox
+        annotations:
+          summary: "Proxmox cluster is not quorate"
+          description: "Cluster {{ $labels.id }} reported not up through {{ $labels.instance }} for 5 minutes."
+      - alert: ProxmoxNodeOffline
+        expr: pve_up{job="proxmox-pve-cluster",id=~"node/.*"} < 1
+        for: 5m
+        labels:
+          severity: critical
+          category: proxmox
+        annotations:
+          summary: "Proxmox node offline: {{ $labels.id }}"
+          description: "Proxmox node {{ $labels.id }} has been offline in the cluster API for 5 minutes."
+      - alert: ProxmoxOnbootGuestDown
+        expr: (pve_up{job="proxmox-pve-cluster",id=~"(qemu|lxc)/.*"} == 0) and on(id) (max by (id) (pve_onboot_status{job="proxmox-pve-node"} == 1))
+        for: 10m
+        labels:
+          severity: warning
+          category: proxmox
+        annotations:
+          summary: "Proxmox on-boot guest down: {{ $labels.id }}"
+          description: "Guest {{ $labels.id }} is configured to start on boot but has been down for 10 minutes."
+      - alert: ProxmoxStorageUsageHigh
+        expr: pve_disk_usage_bytes{job="proxmox-pve-cluster",id=~"storage/.*"} / pve_disk_size_bytes{job="proxmox-pve-cluster",id=~"storage/.*"} > 0.85
+        for: 30m
+        labels:
+          severity: warning
+          category: proxmox
+        annotations:
+          summary: "Proxmox storage high: {{ $labels.id }}"
+          description: "Proxmox storage {{ $labels.id }} has been above 85% usage for 30 minutes."
