@@ -39,6 +39,7 @@ in
         ./_mixins/lan-wan-accounting
         ./_mixins/nix
         ./_mixins/observability-client
+        ./_mixins/proxmox
         ./_mixins/restic-beast-client.nix
         ./_mixins/user
       ]

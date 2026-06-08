@@ -17,6 +17,7 @@ DEFAULT_PROVISIONER = "bootstrap@home.arpa"
 DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
 LOCAL_CA_ENV = "ISSUE_CERT_LOCAL_CA"
+PROXMOX_API_SERVICE = "proxmox-api"
 
 
 def find_repo_root():
@@ -144,16 +145,40 @@ def service_names_for_host(host):
     service_map = (
         nix_eval_json(root, host, "config", "host", "internalHttps", "services") or {}
     )
-    return sorted(
+    services = sorted(
         name for name, service in service_map.items() if service.get("enable")
     )
+    if proxmox_api_service_enabled(root, host):
+        services.append(PROXMOX_API_SERVICE)
+    return services
 
 
 def service_config(host, service):
     root = host_config_root(host)
+    if service == PROXMOX_API_SERVICE:
+        return proxmox_api_service_config(root, host)
     return nix_eval_json(
         root, host, "config", "host", "internalHttps", "services", service
     )
+
+
+def proxmox_api_service_enabled(root, host):
+    enabled = nix_eval_raw_optional(
+        root,
+        host,
+        "config",
+        "host",
+        "proxmox",
+        "apiCertificate",
+        "enable",
+    )
+    return enabled == "true"
+
+
+def proxmox_api_service_config(root, host):
+    cfg = nix_eval_json(root, host, "config", "host", "proxmox", "apiCertificate")
+    sans = unique_strings([cfg["serverName"], *cfg.get("serverAliases", [])])
+    return cfg | {"sans": sans}
 
 
 def client_names_for_host(host):
@@ -250,7 +275,8 @@ def issue_service(host, service, *, ca_host):
         )
 
     sans = unique_strings(
-        [service, service_cfg["serverName"], *service_cfg.get("serverAliases", [])]
+        service_cfg.get("sans")
+        or [service, service_cfg["serverName"], *service_cfg.get("serverAliases", [])]
     )
     common_name = service_cfg["serverName"]
     cert_text, key_text = issue_remote_cert(

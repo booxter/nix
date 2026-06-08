@@ -249,6 +249,29 @@ def internal_https_service_specs(host, root, *, repo_root):
         )
 
 
+def proxmox_api_certificate_specs(host, root, *, repo_root):
+    service_cfg = nix_eval_json_optional(
+        root,
+        host,
+        "config",
+        "host",
+        "proxmox",
+        "apiCertificate",
+        repo_root=repo_root,
+    )
+    if not service_cfg or not service_cfg.get("enable"):
+        return
+    yield CertSpec(
+        host=host,
+        category="internal_https_server",
+        cert_name="proxmox-api",
+        source_kind="repo_secret",
+        secret_host=host,
+        secret_prefix=service_cfg["secretPrefix"],
+        cert_field="server_crt",
+    )
+
+
 def observability_endpoint_specs(host, root, *, repo_root):
     node_exporter_enabled = bool(
         nix_eval_json_optional(
@@ -384,6 +407,7 @@ def cert_specs(repo_root, *, intermediate_cert_path):
         if root is None:
             continue
         yield from internal_https_service_specs(host, root, repo_root=repo_root)
+        yield from proxmox_api_certificate_specs(host, root, repo_root=repo_root)
         yield from observability_endpoint_specs(host, root, repo_root=repo_root)
         yield from observability_client_specs(host, root, repo_root=repo_root)
         yield from external_service_client_specs(host, root, repo_root=repo_root)
