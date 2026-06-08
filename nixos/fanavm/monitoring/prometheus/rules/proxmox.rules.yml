@@ -2,24 +2,6 @@ groups:
   - name: proxmox-health
     interval: 30s
     rules:
-      - alert: ProxmoxApiHttpsProbeScrapeDown
-        expr: up{job="blackbox-proxmox-api"} < 1
-        for: 5m
-        labels:
-          severity: warning
-          category: proxmox
-        annotations:
-          summary: "Proxmox API HTTPS probe scrape down: {{ $labels.instance }}"
-          description: "Prometheus has been unable to scrape the Proxmox API HTTPS probe for {{ $labels.instance }} for 5 minutes."
-      - alert: ProxmoxApiHttpsProbeFailed
-        expr: probe_success{job="blackbox-proxmox-api"} < 1
-        for: 5m
-        labels:
-          severity: warning
-          category: proxmox
-        annotations:
-          summary: "Proxmox API HTTPS probe failed: {{ $labels.instance }}"
-          description: "The Proxmox API HTTPS probe to {{ $labels.target }} has been failing for 5 minutes."
       - alert: ProxmoxExporterScrapeDown
         expr: up{job=~"proxmox-pve-(cluster|node|exporter)"} < 1
         for: 5m

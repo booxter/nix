@@ -1,11 +1,9 @@
 {
-  config,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
-  httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
   proxmoxLabNodeNames = builtins.filter (
     name:
     !(lib.hasPrefix "local-" name)
@@ -30,52 +28,15 @@ let
     };
   proxmoxPveTargetConfigs = map mkProxmoxPveTargetConfig proxmoxLabNodeNames;
   proxmoxClusterTargetConfigs = [ (mkProxmoxPveTargetConfig proxmoxClusterScrapeNodeName) ];
-  mkProxmoxApiTargetConfig =
-    name:
-    let
-      hostConfig = outputs.nixosConfigurations.${name}.config;
-      apiCertificate = hostConfig.host.proxmox.apiCertificate;
-    in
-    {
-      labels = {
-        instance = hostConfig.host.dnsName;
-        proxmox_node = hostConfig.networking.hostName;
-      };
-      targets = [
-        (httpsUrlFor apiCertificate.serverName apiCertificate.publicPort)
-      ];
-    };
-  proxmoxApiTargetConfigs = map mkProxmoxApiTargetConfig proxmoxLabNodeNames;
   proxmoxPveRelabelConfigs = [
     {
       source_labels = [ "pve_target" ];
       target_label = "__param_target";
     }
   ];
-  proxmoxApiRelabelConfigs = [
-    {
-      source_labels = [ "__address__" ];
-      target_label = "__param_target";
-    }
-    {
-      source_labels = [ "__param_target" ];
-      target_label = "target";
-    }
-    {
-      replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
-      target_label = "__address__";
-    }
-  ];
 in
 {
   scrapeConfigs = [
-    {
-      job_name = "blackbox-proxmox-api";
-      metrics_path = "/probe";
-      params.module = [ "http_service" ];
-      static_configs = proxmoxApiTargetConfigs;
-      relabel_configs = proxmoxApiRelabelConfigs;
-    }
     {
       job_name = "proxmox-pve-cluster";
       metrics_path = "/pve";

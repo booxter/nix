@@ -9,6 +9,7 @@
 }:
 let
   lan = hostInventory.site.lan;
+  httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
   localHttpsServices = config.host.internalHttps.services;
   srvarrHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
   srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
@@ -45,7 +46,7 @@ let
       builtins.getAttr service.id localHttpsServices
     else
       null;
-  serviceCatalog = map (
+  inventoryServiceCatalog = map (
     service:
     let
       httpsService = httpsServiceFor service;
@@ -78,6 +79,29 @@ let
         url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
   ) hostInventory.services;
+  proxmoxLabNodeNames = builtins.filter (
+    name:
+    !(lib.hasPrefix "local-" name)
+    && (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
+    && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
+    && (outputs.nixosConfigurations.${name}.config.host.proxmox.apiCertificate.enable or false)
+  ) (builtins.attrNames outputs.nixosConfigurations);
+  proxmoxServiceCatalog = map (
+    name:
+    let
+      hostConfig = outputs.nixosConfigurations.${name}.config;
+      apiCertificate = hostConfig.host.proxmox.apiCertificate;
+      url = httpsUrlFor apiCertificate.serverName apiCertificate.publicPort;
+    in
+    {
+      id = "proxmox-${hostConfig.networking.hostName}";
+      scope = "internal";
+      title = "Proxmox ${hostConfig.networking.hostName}";
+      probeUrl = url;
+      inherit url;
+    }
+  ) proxmoxLabNodeNames;
+  serviceCatalog = inventoryServiceCatalog ++ proxmoxServiceCatalog;
   dnsProbeTargets = [
     {
       resolver = "gateway";
