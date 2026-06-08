@@ -59,7 +59,8 @@ nix run .#deploy -- -A --dry-run
 
 ## Secrets
 
-Secrets are managed via sops-nix, with one encrypted YAML per host under `secrets/`.
+Secrets for non-work machines are managed via sops-nix, with one encrypted YAML
+per host under `secrets/`.
 Use these commands:
 
 ```sh
