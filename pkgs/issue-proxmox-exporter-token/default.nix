@@ -2,33 +2,26 @@
   bash,
   age-plugin-se,
   git,
-  jq,
   lib,
   nix,
   openssh,
   python3,
   sops,
   writeShellApplication,
-  yq-go,
 }:
-let
-  pythonWithDeps = python3.withPackages (ps: [ ps.pyyaml ]);
-in
 writeShellApplication {
   name = "issue-proxmox-exporter-token";
   runtimeInputs = [
     bash
     age-plugin-se
     git
-    jq
     nix
     openssh
-    pythonWithDeps
+    python3
     sops
-    yq-go
   ];
   text = ''
-    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
+    exec ${python3}/bin/python3 ${./main.py} "$@"
   '';
 
   meta = {

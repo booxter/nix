@@ -7,9 +7,6 @@ import re
 import shlex
 import subprocess
 import sys
-import tempfile
-
-import yaml
 
 
 DEFAULT_REPO_ROOT_ENV = "ISSUE_PROXMOX_EXPORTER_TOKEN_REPO_ROOT"
@@ -88,15 +85,8 @@ def secret_path_for_host(host):
     return REPO_ROOT / "secrets" / f"{host}.yaml"
 
 
-def set_nested(mapping, dotted_path, value):
-    cursor = mapping
-    for key in dotted_path[:-1]:
-        next_value = cursor.get(key)
-        if not isinstance(next_value, dict):
-            next_value = {}
-            cursor[key] = next_value
-        cursor = next_value
-    cursor[dotted_path[-1]] = value
+def sops_index_path(secret_key):
+    return "".join(f"[{json.dumps(segment)}]" for segment in secret_key.split("/"))
 
 
 def enabled_exporter_hosts():
@@ -229,34 +219,20 @@ def update_secret_file(host, secret_key, token_value):
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
 
-    run([str(REPO_ROOT / "scripts" / "sops-update.sh"), host])
-    decrypted = run(["sops", "--decrypt", str(secret_path)])
-    data = yaml.safe_load(decrypted) or {}
-
-    set_nested(data, secret_key.split("/"), token_value)
-
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
-        json.dump(data, handle, sort_keys=True)
-        handle.write("\n")
-        payload_path = handle.name
-
-    try:
-        encrypted = run(
-            [
-                "sops",
-                "--encrypt",
-                "--filename-override",
-                str(secret_path),
-                "--input-type",
-                "json",
-                "--output-type",
-                "yaml",
-                payload_path,
-            ]
-        )
-        secret_path.write_text(encrypted)
-    finally:
-        pathlib.Path(payload_path).unlink(missing_ok=True)
+    run(
+        [
+            "sops",
+            "set",
+            "--input-type",
+            "yaml",
+            "--output-type",
+            "yaml",
+            "--value-stdin",
+            str(secret_path),
+            sops_index_path(secret_key),
+        ],
+        input_text=json.dumps(token_value),
+    )
 
 
 def main():
