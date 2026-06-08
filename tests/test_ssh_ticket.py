@@ -126,11 +126,11 @@ def test_resolve_target_rejects_ambiguous_alias():
             "sshHost": "beast",
         },
         {
-            "name": "local-beastvm",
+            "name": "beast-alt",
             "enabled": True,
             "aliases": ["beast-alias"],
             "principal": "ihrachyshka@beast",
-            "sshHost": "local-beastvm",
+            "sshHost": "beast-alt",
         },
     ]
     with pytest.raises(ssh_ticket.Error):

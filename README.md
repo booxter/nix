@@ -11,10 +11,10 @@ make nixos WHAT=frame
 make darwin WHAT=mair
 make nixos WHAT=beast REMOTE=false
 
-# Local VMs (resolved via `local-<host>vm`)
+# Local VMs
 nix run .#vm -- --help
 nix run .#vm -- builder1
-nix run .#vm -- --gui desk
+nix run .#vm -- --gui frame
 nix run .#vm -- srvarr
 nix run .#vm -- fana
 nix run .#vm -- gw

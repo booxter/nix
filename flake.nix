@@ -110,24 +110,13 @@
         args@{
           name,
           stateVersion ? "25.11",
-          platform ? "aarch64-linux",
           ...
         }:
         let
           vmname = toVmName name;
-          localName = "local-${vmname}";
           proxName = "prox-${vmname}";
         in
         {
-          "${localName}" = helpers.mkVM (
-            args
-            // {
-              inherit platform stateVersion virtPlatform;
-              hostname = localName;
-              vmMode = "qemu";
-            }
-          );
-
           "${proxName}" = helpers.mkVM (
             args
             // {
@@ -135,12 +124,11 @@
               hostname = proxName;
               platform = "x86_64-linux";
               virtPlatform = "x86_64-linux";
-              vmMode = "proxmox";
             }
           );
         };
 
-      BM = args: helpers.mkBM ({ inherit virtPlatform; } // args);
+      BM = args: helpers.mkBM args;
 
       specToNixosConfigs =
         spec:

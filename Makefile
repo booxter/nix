@@ -63,12 +63,10 @@ nixos:
 	$(call require-what-and-list-hosts,nixos) \
 	resolved="$(WHAT)"; \
 	if ! printf '%s\n' "$$known" | grep -Fxq "$$resolved"; then \
-		for candidate in "prox-$(WHAT)vm" "local-$(WHAT)vm"; do \
-			if printf '%s\n' "$$known" | grep -Fxq "$$candidate"; then \
-				resolved="$$candidate"; \
-				break; \
-			fi; \
-		done; \
+		candidate="prox-$(WHAT)vm"; \
+		if printf '%s\n' "$$known" | grep -Fxq "$$candidate"; then \
+			resolved="$$candidate"; \
+		fi; \
 	fi; \
 	$(call require-known-host,nixos,$$resolved) \
 	$(call nh-config-build,os,$$resolved)

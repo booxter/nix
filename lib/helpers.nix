@@ -121,7 +121,6 @@ rec {
   mkVM =
     args@{
       extraModules ? [ ],
-      vmMode ? "proxmox",
       sshPort ? null,
       username ? "ihrachyshka",
       platform ? "x86_64-linux",
@@ -133,18 +132,6 @@ rec {
       proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
       ...
     }:
-    let
-      _ =
-        if
-          builtins.elem vmMode [
-            "qemu"
-            "proxmox"
-          ]
-        then
-          null
-        else
-          throw "Unsupported mkVM vmMode `${vmMode}`; expected one of: qemu, proxmox";
-    in
     mkNixos (
       args
       // {
@@ -189,21 +176,7 @@ rec {
               }
             )
           ]
-          ++ inputs.nixpkgs.lib.optionals (vmMode == "qemu") [
-            (
-              { lib, ... }:
-              {
-                # Keep qemu-mode VM configs evaluable when system.build.toplevel is requested.
-                fileSystems."/" = lib.mkDefault {
-                  device = "/dev/disk/by-label/nixos";
-                  fsType = "ext4";
-                };
-                boot.loader.grub.devices = lib.mkDefault [ "nodev" ];
-              }
-            )
-          ]
-          ++ inputs.nixpkgs.lib.optionals (vmMode == "proxmox") [
-            # proxmox vms
+          ++ [
             inputs.proxmox-nixos.nixosModules.declarative-vms
             (
               { ... }:
@@ -261,53 +234,16 @@ rec {
     );
 
   mkBM =
-    {
-      mkHost,
-      name,
-      virtPlatform,
-      localPlatform ? (
-        if inputs.nixpkgs.lib.hasSuffix "-darwin" virtPlatform then "aarch64-linux" else null
-      ),
-      localExtraModules ? [ ],
-      ...
-    }@args:
+    { mkHost, name, ... }@args:
     let
       hostArgs = removeAttrs (args // { hostname = args.hostname or name; }) [
         "mkHost"
         "name"
-        "virtPlatform"
-        "localPlatform"
-        "localExtraModules"
       ];
       cfg = mkHost hostArgs;
-      localName = "local-${name}vm";
-      localCfg = builtins.tryEval (
-        cfg.extendModules {
-          modules = [
-            (
-              {
-                lib,
-                ...
-              }:
-              {
-                virtualisation.vmVariant.virtualisation = mkLocalVmVariantVirtualisation virtPlatform;
-              }
-              // lib.optionalAttrs (localPlatform != null) {
-                nixpkgs.hostPlatform = lib.mkForce localPlatform;
-              }
-            )
-          ]
-          ++ localExtraModules;
-        }
-      );
     in
     {
       "${name}" = cfg;
-      "${localName}" =
-        if localCfg.success then
-          localCfg.value
-        else
-          throw "Cannot derive `${localName}` from `${name}`; expected a nixosSystem with extendModules support.";
     };
 
   mkProxmox =

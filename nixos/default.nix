@@ -12,12 +12,11 @@
 let
   removePrefix = lib.strings.removePrefix;
   removeSuffix = lib.strings.removeSuffix;
-  hostSpecName = removeSuffix "vm" (removePrefix "prox-" (removePrefix "local-" hostname));
+  hostSpecName = removeSuffix "vm" (removePrefix "prox-" hostname);
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
-  configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
+  configName = ./${removePrefix "prox-" hostname};
   hostSecretFile = ../secrets + "/${hostname}.yaml";
-  isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
-  upsServerName = if isLocalVmHost then null else hostSpec.upsHost or null;
+  upsServerName = hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
   useLiteralUpsPassword =

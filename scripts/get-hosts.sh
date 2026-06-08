@@ -33,12 +33,10 @@ nix eval --impure --json --expr "
           acc
           // {
             \${spec.name} = isWork;
-            \${\"local-\${spec.name}vm\"} = isWork;
           }
         else if spec.type == \"vm\" then
           acc
           // {
-            \${\"local-\${toVmName spec.name}\"} = isWork;
             \${\"prox-\${toVmName spec.name}\"} = isWork;
           }
         else
@@ -49,12 +47,9 @@ nix eval --impure --json --expr "
     filterNames = attrs: requestedList:
       let
         allNames = builtins.attrNames attrs;
-        filteredAll = builtins.filter
-          (name: (builtins.match \"^local-.*\" name) == null)
-          allNames;
         namesToUse =
           if requestedList == null
-          then filteredAll
+          then allNames
           else builtins.filter (name: builtins.elem name allNames) requestedList;
       in
       builtins.listToAttrs (

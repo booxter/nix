@@ -265,7 +265,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.local-builder1vm.config.system.build.vmQemu",
+      "attr": "packages.aarch64-darwin.qemu-host-package",
       "name": "nixos vm qemu (aarch64-darwin)",
       "runner": "macos-26",
       "selection": {

@@ -8,7 +8,6 @@
 }:
 let
   cfg = config.host.observability.client;
-  isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
   hostLabel = config.services.avahi.hostName;
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
   nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix;
@@ -231,7 +230,7 @@ in
           enable = lib.mkDefault (!config.host.isWork);
           secretPrefix = "observability/clients/loki";
         };
-        nodeExporter.mtls.enable = lib.mkDefault (!isLocalVmHost && hostname != "prox-fanavm");
+        nodeExporter.mtls.enable = lib.mkDefault (hostname != "prox-fanavm");
       };
 
       host.observability.lanWan = {
