@@ -4,19 +4,23 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-copy.sh SRC_HOST DST_HOST KEY_PATH
+  scripts/sops-copy.sh SRC_HOST DST_HOST SRC_KEY_PATH [DST_KEY_PATH]
   scripts/sops-copy.sh --help
 
-Copy KEY_PATH from secrets/SRC_HOST.yaml into secrets/DST_HOST.yaml.
+Copy SRC_KEY_PATH from secrets/SRC_HOST.yaml into secrets/DST_HOST.yaml.
+If DST_KEY_PATH is omitted, SRC_KEY_PATH is used in the destination too.
 Example:
   scripts/sops-copy.sh mair prx1-lab attic
+  scripts/sops-copy.sh prx1-lab prox-gwvm nut/users/upsslave/password nut/monitors/prx1-lab/password
 EOF
 }
 
-copy_top_level_yaml_path() {
+copy_yaml_path() {
   local src_plain="$1"
   local dst_plain="$2"
   local out="$3"
+  local src_path_array="$4"
+  local dst_path_array="$5"
   local src_json
   local dst_json
   local merged_json
@@ -29,8 +33,9 @@ copy_top_level_yaml_path() {
   jq -n \
     --slurpfile src "$src_json" \
     --slurpfile dst "$dst_json" \
-    --argjson path "${key_path_array}" \
-    '$dst[0] | setpath($path; ($src[0] | getpath($path)))' > "$merged_json"
+    --argjson srcPath "${src_path_array}" \
+    --argjson dstPath "${dst_path_array}" \
+    '$dst[0] | setpath($dstPath; ($src[0] | getpath($srcPath)))' > "$merged_json"
   yq -P '.' "$merged_json" > "$out"
   rm -f "$src_json" "$dst_json" "$merged_json"
 }
@@ -48,6 +53,7 @@ resolve_repo_root() {
 path_to_jq_array() {
   local raw="$1"
   local segment
+  local -a segments
   local escaped
   local array="["
   local first="1"
@@ -59,7 +65,8 @@ path_to_jq_array() {
     return 1
   fi
 
-  while IFS='/' read -r segment || [[ -n "$segment" ]]; do
+  IFS='/' read -r -a segments <<< "$raw"
+  for segment in "${segments[@]}"; do
     [[ -z "$segment" ]] && continue
     escaped="${segment//\\/\\\\}"
     escaped="${escaped//\"/\\\"}"
@@ -69,7 +76,7 @@ path_to_jq_array() {
       array+=","
     fi
     array+="\"${escaped}\""
-  done <<< "$raw"
+  done
 
   array+="]"
   if [[ "$array" == "[]" ]]; then
@@ -82,7 +89,8 @@ path_to_jq_array() {
 main() {
   local src_host=""
   local dst_host=""
-  local key_path=""
+  local src_key_path=""
+  local dst_key_path=""
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -100,8 +108,10 @@ main() {
           src_host="$1"
         elif [[ -z "$dst_host" ]]; then
           dst_host="$1"
-        elif [[ -z "$key_path" ]]; then
-          key_path="$1"
+        elif [[ -z "$src_key_path" ]]; then
+          src_key_path="$1"
+        elif [[ -z "$dst_key_path" ]]; then
+          dst_key_path="$1"
         else
           usage >&2
           exit 1
@@ -111,13 +121,18 @@ main() {
     esac
   done
 
-  if [[ -z "$src_host" || -z "$dst_host" || -z "$key_path" ]]; then
+  if [[ -z "$src_host" || -z "$dst_host" || -z "$src_key_path" ]]; then
     usage >&2
     exit 1
   fi
+  if [[ -z "$dst_key_path" ]]; then
+    dst_key_path="$src_key_path"
+  fi
 
-  local key_path_array
-  key_path_array="$(path_to_jq_array "$key_path")"
+  local src_key_path_array
+  local dst_key_path_array
+  src_key_path_array="$(path_to_jq_array "$src_key_path")"
+  dst_key_path_array="$(path_to_jq_array "$dst_key_path")"
 
   local repo_root
   repo_root="$(resolve_repo_root)"
@@ -147,17 +162,21 @@ main() {
   sops --decrypt "$src_secret" > "$src_plain"
   sops --decrypt "$dst_secret" > "$dst_plain"
 
-  if ! yq -o=json '.' "$src_plain" | jq -e --argjson path "${key_path_array}" 'getpath($path) != null' >/dev/null; then
-    echo "Path not found in source secret: $key_path"
+  if ! yq -o=json '.' "$src_plain" | jq -e --argjson path "${src_key_path_array}" 'getpath($path) != null' >/dev/null; then
+    echo "Path not found in source secret: $src_key_path"
     exit 1
   fi
 
-  copy_top_level_yaml_path "$src_plain" "$dst_plain" "$merged_plain"
+  copy_yaml_path "$src_plain" "$dst_plain" "$merged_plain" "$src_key_path_array" "$dst_key_path_array"
 
   sops --encrypt --filename-override "$dst_secret" --input-type yaml --output-type yaml "$merged_plain" > "$encrypted"
   mv "$encrypted" "$dst_secret"
 
-  echo "Copied ${key_path} from ${src_host} to ${dst_host}."
+  if [[ "$src_key_path" == "$dst_key_path" ]]; then
+    echo "Copied ${src_key_path} from ${src_host} to ${dst_host}."
+  else
+    echo "Copied ${src_key_path} from ${src_host} to ${dst_host}:${dst_key_path}."
+  fi
 }
 
 if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then

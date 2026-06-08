@@ -5,6 +5,10 @@ let
     inherit program;
     meta = { inherit description; };
   };
+  upsClientsByServer = import ./ups-clients.nix { lib = pkgs.lib; };
+  upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
+    builtins.toJSON upsClientsByServer
+  );
 
   # Decrypt and print a host secret (defaults to current short hostname).
   sops-cat = pkgs.writeShellApplication {
@@ -66,6 +70,23 @@ let
     '';
   };
 
+  # Sync NUT secondary-user passwords from UPS servers into client secrets.
+  sops-ups-sync = pkgs.writeShellApplication {
+    name = "sops-ups-sync";
+    runtimeInputs = with pkgs; [
+      age-plugin-se
+      coreutils
+      git
+      jq
+      sops
+      yq-go
+    ];
+    text = ''
+      export UPS_CLIENTS_BY_SERVER_FILE=${upsClientsByServerFile}
+      exec ${pkgs.bash}/bin/bash ${../scripts/sops-ups-sync.sh} "$@"
+    '';
+  };
+
   # Hash and store a NixOS login password in a host secret.
   sops-pass = pkgs.writeShellApplication {
     name = "sops-pass";
@@ -110,5 +131,7 @@ in
   "sops-update" =
     mkApp "${sops-update}/bin/sops-update" "Merge missing template keys into a host secret.";
   "sops-copy" = mkApp "${sops-copy}/bin/sops-copy" "Copy a top-level key path between host secrets.";
+  "sops-ups-sync" =
+    mkApp "${sops-ups-sync}/bin/sops-ups-sync" "Sync NUT UPS server passwords into client secrets.";
   "sops-pass" = mkApp "${sops-pass}/bin/sops-pass" "Hash and store a NixOS login password.";
 }

@@ -331,6 +331,7 @@ rec {
       hostname = "mmini";
       platform = "aarch64-darwin";
       isDesktop = true;
+      upsHost = frame;
     };
     JGWXHWDL4X = {
       stateVersion = 5;
