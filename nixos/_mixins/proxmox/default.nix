@@ -12,6 +12,7 @@ let
   internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
   pveExporterUser = config.services.prometheus.exporters.pve.user;
+  sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
 in
 {
   options.host.proxmox.apiCertificate = {
@@ -141,14 +142,8 @@ in
         wantedBy = [ "multi-user.target" ];
         requiredBy = [ "pveproxy.service" ];
         before = [ "pveproxy.service" ];
-        requires = [
-          "pve-cluster.service"
-          "sops-install-secrets.service"
-        ];
-        after = [
-          "pve-cluster.service"
-          "sops-install-secrets.service"
-        ];
+        requires = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
+        after = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
         path = with pkgs; [
           coreutils
         ];
@@ -207,13 +202,13 @@ in
         wants = [
           certInstallUnit
           "pveproxy.service"
-          "sops-install-secrets.service"
-        ];
+        ]
+        ++ sopsInstallSecretsUnit;
         after = [
           certInstallUnit
           "pveproxy.service"
-          "sops-install-secrets.service"
-        ];
+        ]
+        ++ sopsInstallSecretsUnit;
         environment.REQUESTS_CA_BUNDLE = toString internalPkiRootCaPath;
       };
 
