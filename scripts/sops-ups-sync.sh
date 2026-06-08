@@ -83,7 +83,7 @@ sync_server() {
 
   local client
   for client in "${clients[@]}"; do
-    "${repo_root}/scripts/sops-copy.sh" \
+    "${BASH}" "${repo_root}/scripts/sops-copy.sh" \
       "$server" \
       "$client" \
       "nut/users/upsslave/password" \
