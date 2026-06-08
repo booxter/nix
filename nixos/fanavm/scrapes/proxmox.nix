@@ -5,6 +5,7 @@
   prometheusMtlsTlsConfig,
 }:
 let
+  httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
   proxmoxLabNodeNames = builtins.filter (
     name:
     !(lib.hasPrefix "local-" name)
@@ -41,7 +42,7 @@ let
         proxmox_node = hostConfig.networking.hostName;
       };
       targets = [
-        "https://${apiCertificate.serverName}:${toString apiCertificate.port}/"
+        (httpsUrlFor apiCertificate.serverName apiCertificate.publicPort)
       ];
     };
   proxmoxApiTargetConfigs = map mkProxmoxApiTargetConfig proxmoxLabNodeNames;

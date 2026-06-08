@@ -40,6 +40,12 @@ in
       description = "Proxmox VE API HTTPS port.";
     };
 
+    publicPort = lib.mkOption {
+      type = lib.types.port;
+      default = 443;
+      description = "LAN-visible HTTPS port fronted by nginx for browser and blackbox access.";
+    };
+
     secretPrefix = lib.mkOption {
       type = lib.types.str;
       default = "proxmox/api";
@@ -119,6 +125,24 @@ in
           message = "host.proxmox.apiCertificate requires services.proxmox-ve.enable.";
         }
       ];
+
+      # TODO: revisit whether direct LAN access to pveproxy's fixed 8006 port
+      # is still needed after browser/API access has settled on nginx/443.
+      host.internalHttps.services.proxmox = {
+        enable = true;
+        serverName = cfg.serverName;
+        serverAliases = builtins.filter (alias: alias != cfg.serverName) cfg.serverAliases;
+        localAliases = [ ];
+        port = cfg.publicPort;
+        secretPrefix = cfg.secretPrefix;
+        upstream = "https://127.0.0.1:${toString cfg.port}";
+        locationExtraConfig = ''
+          proxy_ssl_name ${cfg.serverName};
+          proxy_ssl_server_name on;
+          proxy_ssl_trusted_certificate ${internalPkiRootCaPath};
+          proxy_ssl_verify on;
+        '';
+      };
 
       sops.secrets.proxmoxApiServerCrt = {
         key = "${cfg.secretPrefix}/server_crt";

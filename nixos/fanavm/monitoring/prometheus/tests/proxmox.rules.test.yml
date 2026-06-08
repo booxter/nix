@@ -28,7 +28,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-proxmox-api",instance="prx1-lab",proxmox_node="prx1-lab",target="https://prx1-lab:8006/"}'
+      - series: 'probe_success{job="blackbox-proxmox-api",instance="prx1-lab",proxmox_node="prx1-lab",target="https://prx1-lab/"}'
         values: "0 0 0 0 0 0 0 0 0 0 0 1 1"
     alert_rule_test:
       - eval_time: 4m30s
@@ -43,10 +43,10 @@ tests:
               job: blackbox-proxmox-api
               proxmox_node: prx1-lab
               severity: warning
-              target: "https://prx1-lab:8006/"
+              target: "https://prx1-lab/"
             exp_annotations:
               summary: "Proxmox API HTTPS probe failed: prx1-lab"
-              description: "The Proxmox API HTTPS probe to https://prx1-lab:8006/ has been failing for 5 minutes."
+              description: "The Proxmox API HTTPS probe to https://prx1-lab/ has been failing for 5 minutes."
       - eval_time: 5m30s
         alertname: ProxmoxApiHttpsProbeFailed
 
