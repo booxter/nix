@@ -75,6 +75,7 @@ setup_repo() {
   mkdir -p "$repo_dir/secrets/_templates" "$repo_dir/scripts" "$repo_dir/tests"
   cp "$REPO_ROOT/scripts/sops-update.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-copy.sh" "$repo_dir/scripts/"
+  cp "$REPO_ROOT/scripts/sops-ups-sync.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-edit.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-pass.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/tests/test-sops-config.sh" "$repo_dir/tests/"
@@ -161,8 +162,26 @@ EOF
   cat > "$repo/prx1-lab.plain.yaml" <<'EOF'
 attic:
   token: "OLD_TOKEN"
+nut:
+  users:
+    upsslave:
+      password: "LAB_UPS_PASS"
 other:
   keep: "dst"
+EOF
+
+  cat > "$repo/prox-cachevm.plain.yaml" <<'EOF'
+nut:
+  monitors:
+    prx1-lab:
+      password: "OLD_UPS_PASS"
+other:
+  keep: "cache"
+EOF
+
+  cat > "$repo/prox-fanavm.plain.yaml" <<'EOF'
+other:
+  keep: "fana"
 EOF
 
   cat > "$repo/prox-gwvm.plain.yaml" <<'EOF'
@@ -179,6 +198,8 @@ EOF
   encrypt_secret_file beast "$repo/beast.plain.yaml"
   encrypt_secret_file mair "$repo/mair.plain.yaml"
   encrypt_secret_file prx1-lab "$repo/prx1-lab.plain.yaml"
+  encrypt_secret_file prox-cachevm "$repo/prox-cachevm.plain.yaml"
+  encrypt_secret_file prox-fanavm "$repo/prox-fanavm.plain.yaml"
   encrypt_secret_file prox-gwvm "$repo/prox-gwvm.plain.yaml"
 
   log "validate encrypted secret layout"
@@ -222,6 +243,28 @@ EOF
   assert_eq "NEW_TOKEN" "$(yq -r '.attic.token' "$copied")"
   assert_eq "http://nix-cache:8080" "$(yq -r '.attic.endpoint' "$copied")"
   assert_eq "dst" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive copy"
+  assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.users.upsslave.password' "$copied")" "destination secret values should survive copy"
+
+  log "copy a secret value to a different destination path"
+  run_and_capture "$out" bash "$repo/scripts/sops-copy.sh" \
+    prx1-lab prox-cachevm \
+    nut/users/upsslave/password \
+    nut/monitors/prx1-lab/password
+  assert_contains "$(cat "$out")" "Copied nut/users/upsslave/password from prx1-lab to prox-cachevm:nut/monitors/prx1-lab/password."
+  decrypt_secret_file prox-cachevm "$copied"
+  assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
+  assert_eq "cache" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive copy"
+
+  log "sync UPS monitor password through helper"
+  cat > "$repo/ups-clients-by-server.json" <<'EOF'
+{"prx1-lab":["prox-fanavm"]}
+EOF
+  run_and_capture "$out" env UPS_CLIENTS_BY_SERVER_FILE="$repo/ups-clients-by-server.json" \
+    bash "$repo/scripts/sops-ups-sync.sh" prx1-lab
+  assert_contains "$(cat "$out")" "Synced prx1-lab UPS password to prox-fanavm."
+  decrypt_secret_file prox-fanavm "$copied"
+  assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
+  assert_eq "fana" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive sync"
 
   log "fail cleanly when source path is missing"
   run_expect_failure "$out" bash "$repo/scripts/sops-copy.sh" mair prx1-lab missing
