@@ -84,7 +84,7 @@ in
 
     interfaces = lib.mkOption {
       type = with lib.types; nonEmptyListOf str;
-      default = [ (hostSpec.mainInterface or "en0") ];
+      default = hostSpec.lanWanInterfaces or [ "en0" ];
       example = [
         "en0"
         "en1"

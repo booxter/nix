@@ -324,6 +324,7 @@ rec {
       platform = "aarch64-darwin";
       isDesktop = true;
       isLaptop = true;
+      lanWanInterfaces = [ "en0" ];
     };
     mmini = {
       stateVersion = 5;
@@ -332,6 +333,7 @@ rec {
       platform = "aarch64-darwin";
       isDesktop = true;
       upsHost = frame;
+      lanWanInterfaces = [ "en0" ];
     };
     JGWXHWDL4X = {
       stateVersion = 5;
@@ -340,6 +342,10 @@ rec {
       platform = "aarch64-darwin";
       isDesktop = true;
       isWork = true;
+      lanWanInterfaces = [
+        "en0"
+        "en7"
+      ];
     };
   };
 
