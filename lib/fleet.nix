@@ -170,6 +170,7 @@ let
   unifiSyncPackage = pkgs.unifi-sync;
   issueInternalServiceCertPackage = pkgs.issue-internal-service-cert;
   issueObservabilityCertPackage = pkgs.issue-observability-cert;
+  issueProxmoxExporterTokenPackage = pkgs.issue-proxmox-exporter-token;
   pkiRotationPackage = pkgs.pki-rotation;
   sshTicketPackage = pkgs.ssh-ticket;
   unifiSyncApp = pkgs.writeShellApplication {
@@ -196,6 +197,13 @@ let
     runtimeInputs = [ issueInternalServiceCertPackage ];
     text = ''
       exec ${issueInternalServiceCertPackage}/bin/issue-internal-service-cert "$@"
+    '';
+  };
+  issueProxmoxExporterTokenApp = pkgs.writeShellApplication {
+    name = "issue-proxmox-exporter-token-app";
+    runtimeInputs = [ issueProxmoxExporterTokenPackage ];
+    text = ''
+      exec ${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token "$@"
     '';
   };
   pkiRotationApp = pkgs.writeShellApplication {
@@ -401,6 +409,8 @@ in
     mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
   "issue-internal-service-cert" =
     mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+  "issue-proxmox-exporter-token" =
+    mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
   "pki-rotation" =
     mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
   "ssh-ticket" =
