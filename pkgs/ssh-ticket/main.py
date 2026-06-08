@@ -182,24 +182,71 @@ def nix_targets_expr(repo_root):
       let
         f = builtins.getFlake {json.dumps(repo_ref)};
         lib = f.inputs.nixpkgs.lib;
-        render = kind: name: cfg:
+        username = "ihrachyshka";
+        inventory = import {json.dumps(str(repo_root / "lib" / "inventory.nix"))} {{
+          inherit lib username;
+        }};
+        hasCaPublicKey = inventory.sshTicket.userCaPublicKey != null;
+        mkTarget =
+          {{
+            kind,
+            name,
+            sshHost ? name,
+            dnsName ? sshHost,
+            aliases ? [ name ],
+            isWork ? false,
+          }}:
           let
-            ticket = cfg.config.host.sshTicket;
-            caPublicKey = ticket.caPublicKey or null;
+            enabled = !isWork;
           in
           {{
-            inherit kind name;
-            sshHost = name;
-            enabled = ticket.enable or false;
-            principal = ticket.principal or "";
-            aliases = ticket.aliases or [];
-            defaultTtl = ticket.defaultTtl or "30m";
-            maxTtl = ticket.maxTtl or "2h";
-            caPublicKeyConfigured = caPublicKey != null;
+            inherit kind name sshHost enabled;
+            principal = if enabled then "${{username}}@${{dnsName}}" else "";
+            aliases = lib.unique ([ name ] ++ aliases);
+            defaultTtl = "30m";
+            maxTtl = "2h";
+            caPublicKeyConfigured = enabled && hasCaPublicKey;
+          }};
+        mkNixosTarget =
+          spec:
+          if spec.type == "bm" then
+            mkTarget {{
+              kind = "nixos";
+              name = spec.name;
+              aliases = [
+                (spec.hostname or spec.name)
+                (spec.dnsName or (spec.hostname or spec.name))
+              ];
+              dnsName = spec.dnsName or (spec.hostname or spec.name);
+              isWork = spec.isWork or false;
+            }}
+          else if spec.type == "vm" then
+            let
+              name = "prox-${{inventory.toVmName spec.name}}";
+            in
+            mkTarget {{
+              kind = "nixos";
+              inherit name;
+              aliases = [ spec.name ];
+              isWork = spec.isWork or false;
+            }}
+          else
+            throw "Unsupported NixOS host spec type `${{spec.type}}` for SSH ticket targets.";
+        mkDarwinTarget =
+          name: spec:
+          mkTarget {{
+            kind = "darwin";
+            inherit name;
+            aliases = [
+              (spec.hostname or name)
+              (spec.dnsName or (spec.hostname or name))
+            ];
+            dnsName = spec.dnsName or (spec.hostname or name);
+            isWork = spec.isWork or false;
           }};
       in
-        lib.mapAttrsToList (render "nixos") f.nixosConfigurations
-        ++ lib.mapAttrsToList (render "darwin") f.darwinConfigurations
+        builtins.map mkNixosTarget inventory.nixosHostSpecs
+        ++ lib.mapAttrsToList mkDarwinTarget inventory.darwinHosts
     """
 
 
