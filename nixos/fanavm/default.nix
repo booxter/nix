@@ -7,17 +7,13 @@
   ...
 }:
 let
-  beastSpec = hostInventory.nixosHostSpecsByName.beast;
-  frameSpec = hostInventory.nixosHostSpecsByName.frame;
   internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   lan = hostInventory.site.lan;
-  prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
   srvarrHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
   alertmanagerPort = 9093;
   grafanaPort = 3000;
   prometheusPort = 9090;
   lokiPort = 3100;
-  nutExporterPort = 9199;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
@@ -54,6 +50,13 @@ let
       prometheusMtlsTlsConfig
       ;
   };
+  nutScrapes = import ./scrapes/nut.nix {
+    inherit
+      hostInventory
+      lib
+      pkgs
+      ;
+  };
   vikunjaHostConfig = outputs.nixosConfigurations.prox-orgvm.config;
   vikunjaHost = vikunjaHostConfig.host.dnsName;
   vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
@@ -64,16 +67,6 @@ let
   grafanaAlertmanagerUid = "P3A7B7B4C0D9E6F1";
   grafanaPrometheusUid = "PBFA97CFB590B2093";
   grafanaLokiUid = "P8E80F9AEF21F6940";
-  nutExporterVariables = lib.concatStringsSep "," [
-    "battery.charge"
-    "battery.charge.low"
-    "battery.runtime"
-    "battery.runtime.low"
-    "input.voltage"
-    "input.voltage.nominal"
-    "ups.load"
-    "ups.status"
-  ];
   mkGrafanaPromRule =
     {
       uid,
@@ -399,22 +392,7 @@ in
     after = [ "sops-install-secrets.service" ];
   };
 
-  systemd.services.prometheus-nut-exporter = {
-    description = "Prometheus exporter for NUT UPS servers";
-    wantedBy = [ "multi-user.target" ];
-    wants = [ "network-online.target" ];
-    after = [ "network-online.target" ];
-    serviceConfig = {
-      ExecStart = "${pkgs.prometheus-nut-exporter}/bin/nut_exporter --web.listen-address=127.0.0.1:${toString nutExporterPort} --nut.vars_enable=${nutExporterVariables}";
-      DynamicUser = true;
-      NoNewPrivileges = true;
-      PrivateTmp = true;
-      ProtectHome = true;
-      ProtectSystem = "strict";
-      Restart = "always";
-      RestartSec = "5s";
-    };
-  };
+  systemd.services.prometheus-nut-exporter = nutScrapes.exporterService;
 
   # Prometheus scrapes and stores time-series metrics from this machine.
   services.prometheus = {
@@ -435,92 +413,7 @@ in
     ]
     ++ nodeScrapes.scrapeConfigs
     ++ proxmoxScrapes.scrapeConfigs
-    ++ [
-      {
-        job_name = "nut-prx1";
-        metrics_path = "/ups_metrics";
-        params = {
-          # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ (prx1Spec.dnsName or prx1Spec.name) ];
-          ups = [ (hostInventory.toUpsName prx1Spec.name) ];
-        };
-        static_configs = [
-          {
-            targets = [ "127.0.0.1:${toString nutExporterPort}" ];
-          }
-        ];
-        relabel_configs = [
-          {
-            source_labels = [ "__param_server" ];
-            target_label = "instance";
-          }
-          {
-            source_labels = [ "__param_server" ];
-            target_label = "ups_server";
-          }
-          {
-            source_labels = [ "__param_ups" ];
-            target_label = "ups";
-          }
-        ];
-      }
-      {
-        job_name = "nut-beast";
-        metrics_path = "/ups_metrics";
-        params = {
-          # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ (beastSpec.dnsName or beastSpec.name) ];
-          ups = [ (hostInventory.toUpsName beastSpec.name) ];
-        };
-        static_configs = [
-          {
-            targets = [ "127.0.0.1:${toString nutExporterPort}" ];
-          }
-        ];
-        relabel_configs = [
-          {
-            source_labels = [ "__param_server" ];
-            target_label = "instance";
-          }
-          {
-            source_labels = [ "__param_server" ];
-            target_label = "ups_server";
-          }
-          {
-            source_labels = [ "__param_ups" ];
-            target_label = "ups";
-          }
-        ];
-      }
-      {
-        job_name = "nut-frame";
-        metrics_path = "/ups_metrics";
-        params = {
-          # Use the stable LAN DNS hostname rather than .local/mDNS.
-          server = [ (frameSpec.dnsName or frameSpec.name) ];
-          ups = [ (hostInventory.toUpsName frameSpec.name) ];
-        };
-        static_configs = [
-          {
-            targets = [ "127.0.0.1:${toString nutExporterPort}" ];
-          }
-        ];
-        relabel_configs = [
-          {
-            source_labels = [ "__param_server" ];
-            target_label = "instance";
-          }
-          {
-            source_labels = [ "__param_server" ];
-            target_label = "ups_server";
-          }
-          {
-            source_labels = [ "__param_ups" ];
-            target_label = "ups";
-          }
-        ];
-      }
-    ]
+    ++ nutScrapes.scrapeConfigs
     ++ blackboxScrapes.scrapeConfigs
     ++ [
       {
