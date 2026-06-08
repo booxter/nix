@@ -99,3 +99,25 @@ tests:
             exp_annotations:
               summary: "Internal service probe down: Radarr"
               description: "The internal blackbox probe for Radarr (https://radarr.home.arpa/login) has been failing for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-arr",instance="proxmox-prx1-lab",scope="internal",service="proxmox-prx1-lab",service_title="Proxmox prx1-lab",target="https://prx1-lab/"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: InternalServiceProbeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: InternalServiceProbeDown
+              category: service
+              instance: proxmox-prx1-lab
+              job: blackbox-arr
+              scope: internal
+              service: proxmox-prx1-lab
+              service_title: Proxmox prx1-lab
+              severity: warning
+              target: https://prx1-lab/
+            exp_annotations:
+              summary: "Internal service probe down: Proxmox prx1-lab"
+              description: "The internal blackbox probe for Proxmox prx1-lab (https://prx1-lab/) has been failing for 5 minutes."

@@ -3,6 +3,7 @@ pkgs:
 let
   issueInternalServiceCert = pkgs.callPackage ./issue-internal-service-cert { };
   issueObservabilityCert = pkgs.callPackage ./issue-observability-cert { };
+  issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token { };
   transmissionTrackerTools = pkgs.callPackage ./transmission-tracker-prioritizer { };
 in
 {
@@ -25,6 +26,8 @@ in
   issue-internal-service-cert = issueInternalServiceCert;
 
   issue-observability-cert = issueObservabilityCert;
+
+  issue-proxmox-exporter-token = issueProxmoxExporterToken;
 
   pki-rotation = pkgs.callPackage ./pki-rotation {
     inherit issueInternalServiceCert issueObservabilityCert;

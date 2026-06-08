@@ -2,40 +2,33 @@
   bash,
   age-plugin-se,
   git,
-  jq,
   lib,
   nix,
   openssh,
   python3,
   sops,
   writeShellApplication,
-  yq-go,
 }:
-let
-  pythonWithDeps = python3.withPackages (ps: [ ps.pyyaml ]);
-in
 writeShellApplication {
-  name = "issue-observability-cert";
+  name = "issue-proxmox-exporter-token";
   runtimeInputs = [
     bash
     age-plugin-se
     git
-    jq
     nix
     openssh
-    pythonWithDeps
+    python3
     sops
-    yq-go
   ];
   text = ''
-    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
+    exec ${python3}/bin/python3 ${./main.py} "$@"
   '';
 
   meta = {
-    description = "Issue internal PKI certs for Prometheus mTLS endpoints and store them in host sops secrets";
+    description = "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
-    mainProgram = "issue-observability-cert";
+    mainProgram = "issue-proxmox-exporter-token";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }

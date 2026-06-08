@@ -18,6 +18,8 @@ let
   networkProbesTestFile = ./prometheus/tests/network-probes.rules.test.yml;
   pkiRuleFile = ./prometheus/rules/pki.rules.yml;
   pkiTestFile = ./prometheus/tests/pki.rules.test.yml;
+  proxmoxRuleFile = ./prometheus/rules/proxmox.rules.yml;
+  proxmoxTestFile = ./prometheus/tests/proxmox.rules.test.yml;
   serviceProbesRuleFile = ./prometheus/rules/service-probes.rules.yml;
   serviceProbesTestFile = ./prometheus/tests/service-probes.rules.test.yml;
   serviceScrapesRuleFile = ./prometheus/rules/service-scrapes.rules.yml;
@@ -46,6 +48,7 @@ in
       mediaPolicyRuleFile
       networkProbesRuleFile
       pkiRuleFile
+      proxmoxRuleFile
       serviceProbesRuleFile
       serviceScrapesRuleFile
       storageRuleFile
@@ -62,6 +65,7 @@ in
       "nixos/fanavm/monitoring/prometheus/rules/media-policy.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/network-probes.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/pki.rules.yml"
+      "nixos/fanavm/monitoring/prometheus/rules/proxmox.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/service-probes.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/service-scrapes.rules.yml"
       "nixos/fanavm/monitoring/prometheus/rules/storage.rules.yml"
@@ -78,6 +82,7 @@ in
       mediaPolicyTestFile
       networkProbesTestFile
       pkiTestFile
+      proxmoxTestFile
       serviceProbesTestFile
       serviceScrapesTestFile
       storageTestFile
@@ -94,6 +99,7 @@ in
       "nixos/fanavm/monitoring/prometheus/tests/media-policy.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/network-probes.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/pki.rules.test.yml"
+      "nixos/fanavm/monitoring/prometheus/tests/proxmox.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/service-probes.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/service-scrapes.rules.test.yml"
       "nixos/fanavm/monitoring/prometheus/tests/storage.rules.test.yml"

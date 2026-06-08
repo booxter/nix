@@ -6,6 +6,92 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
+      - series: 'node_cpu_seconds_total{instance="beast",job="node-mtls",cpu="0",mode="idle"}'
+        values: "0+4.5x13"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: NodeCpuUsageHigh
+      - eval_time: 5m30s
+        alertname: NodeCpuUsageHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeCpuUsageHigh
+              category: capacity
+              instance: beast
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Node CPU usage high on beast"
+              description: "beast CPU busy has been above 80% for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_cpu_seconds_total{instance="beast",job="node-mtls",cpu="0",mode="idle"}'
+        values: "0+1.5x13"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: NodeCpuUsageCritical
+      - eval_time: 5m30s
+        alertname: NodeCpuUsageCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeCpuUsageCritical
+              category: capacity
+              instance: beast
+              job: node-mtls
+              severity: critical
+            exp_annotations:
+              summary: "Node CPU usage critical on beast"
+              description: "beast CPU busy has been above 90% for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_memory_free_bytes{instance="mmini",job="node-mtls"}'
+        values: "10x12"
+      - series: 'node_memory_inactive_bytes{instance="mmini",job="node-mtls"}'
+        values: "5x12"
+      - series: 'node_memory_total_bytes{instance="mmini",job="node-mtls"}'
+        values: "100x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: NodeMemoryUsageHigh
+      - eval_time: 5m
+        alertname: NodeMemoryUsageHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeMemoryUsageHigh
+              category: capacity
+              instance: mmini
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Node memory usage high on mmini"
+              description: "mmini memory usage has been above 80% for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_memory_MemAvailable_bytes{instance="beast",job="node-mtls"}'
+        values: "5x12"
+      - series: 'node_memory_MemTotal_bytes{instance="beast",job="node-mtls"}'
+        values: "100x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: NodeMemoryUsageCritical
+      - eval_time: 5m
+        alertname: NodeMemoryUsageCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeMemoryUsageCritical
+              category: capacity
+              instance: beast
+              job: node-mtls
+              severity: critical
+            exp_annotations:
+              summary: "Node memory usage critical on beast"
+              description: "beast memory usage has been above 90% for 5 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'node_filesystem_avail_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'
         values: "20x62"
       - series: 'node_filesystem_size_bytes{instance="prox-builder2vm",job="node-mtls",mountpoint="/",fstype="ext4"}'

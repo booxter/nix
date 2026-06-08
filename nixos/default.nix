@@ -39,6 +39,7 @@ in
         ./_mixins/lan-wan-accounting
         ./_mixins/nix
         ./_mixins/observability-client
+        ./_mixins/proxmox
         ./_mixins/restic-beast-client.nix
         ./_mixins/user
       ]
@@ -89,5 +90,9 @@ in
   }
   // {
     sops.defaultSopsFile = lib.mkDefault hostSecretFile;
+    # Install regular secrets through a sysinit unit so services that consume
+    # them can order themselves after sops-install-secrets.service. Password
+    # secrets marked neededForUsers still use the early users activation path.
+    sops.useSystemdActivation = lib.mkDefault true;
   }
 )
