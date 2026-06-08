@@ -3,7 +3,7 @@ let
   nvwsSpec = hostInventory.nixosHostSpecsByName.nvws;
 in
 {
-  # TODO: rotate these passwords and migrate to sops-managed secrets.
+  # Work UPS credentials intentionally stay literal.
   imports = [
     (import ../_mixins/ups-server.nix {
       inherit pkgs;

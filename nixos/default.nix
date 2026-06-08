@@ -20,6 +20,8 @@ let
   upsServerName = if isLocalVmHost then null else hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
+  useLiteralUpsPassword =
+    upsServerSpec != null && ((hostSpec.isWork or false) || (upsServerSpec.isWork or false));
 in
 (
   {
@@ -44,16 +46,19 @@ in
         ./_mixins/attic
       ]
       ++ lib.optionals (upsServerSpec != null) [
-        # TODO: rotate this password and migrate to sops-managed secrets.
-        (import ./_mixins/ups-client {
-          inherit pkgs upsShutdownDelaySeconds;
-          monitorName = upsServerSpec.name;
-          system = "${hostInventory.toUpsName upsServerSpec.name}@${
-            upsServerSpec.dnsName or upsServerSpec.name
-          }";
-          user = "upsslave";
-          passwordText = "upsslave123";
-        })
+        (import ./_mixins/ups-client (
+          {
+            inherit pkgs upsShutdownDelaySeconds;
+            monitorName = upsServerSpec.name;
+            system = "${hostInventory.toUpsName upsServerSpec.name}@${
+              upsServerSpec.dnsName or upsServerSpec.name
+            }";
+            user = "upsslave";
+          }
+          // lib.optionalAttrs useLiteralUpsPassword {
+            passwordText = "upsslave123";
+          }
+        ))
       ];
 
     system.stateVersion = stateVersion;

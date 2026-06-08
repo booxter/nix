@@ -4,23 +4,54 @@
   upsDescription,
   upsShutdownDelaySeconds ? 600,
   isCriticalNode ? false,
-  upsmonPasswordText,
-  upsslavePasswordText,
+  upsmonPasswordText ? null,
+  upsslavePasswordText ? null,
   ...
 }:
+{ config, lib, ... }:
+let
+  upsmonPasswordFile =
+    if upsmonPasswordText == null then
+      config.sops.secrets."nut/users/upsmon/password".path
+    else
+      "/etc/nut/upsmon.pass";
+  upsslavePasswordFile =
+    if upsslavePasswordText == null then
+      config.sops.secrets."nut/users/upsslave/password".path
+    else
+      "/etc/nut/upsslave.pass";
+in
 {
   imports = [
     (import ./ups-sched.nix { inherit pkgs upsShutdownDelaySeconds isCriticalNode; })
   ];
 
-  environment.etc."nut/upsmon.pass" = {
+  environment.etc."nut/upsmon.pass" = lib.mkIf (upsmonPasswordText != null) {
     text = "${upsmonPasswordText}\n";
     mode = "0600";
   };
-  environment.etc."nut/upsslave.pass" = {
+  environment.etc."nut/upsslave.pass" = lib.mkIf (upsslavePasswordText != null) {
     text = "${upsslavePasswordText}\n";
     mode = "0600";
   };
+
+  sops.secrets = lib.mkMerge [
+    (lib.mkIf (upsmonPasswordText == null) {
+      "nut/users/upsmon/password" = {
+        mode = "0400";
+        restartUnits = [
+          "upsd.service"
+          "upsmon.service"
+        ];
+      };
+    })
+    (lib.mkIf (upsslavePasswordText == null) {
+      "nut/users/upsslave/password" = {
+        mode = "0400";
+        restartUnits = [ "upsd.service" ];
+      };
+    })
+  ];
 
   power.ups = {
     enable = true;
@@ -40,11 +71,11 @@
 
     users = {
       upsmon = {
-        passwordFile = "/etc/nut/upsmon.pass";
+        passwordFile = upsmonPasswordFile;
         upsmon = "primary";
       };
       upsslave = {
-        passwordFile = "/etc/nut/upsslave.pass";
+        passwordFile = upsslavePasswordFile;
         upsmon = "secondary";
       };
     };
@@ -53,6 +84,17 @@
       system = upsName;
       user = "upsmon";
       type = "master";
+    };
+  };
+
+  systemd.services = lib.mkIf (upsmonPasswordText == null || upsslavePasswordText == null) {
+    upsd = {
+      wants = [ "sops-install-secrets.service" ];
+      after = [ "sops-install-secrets.service" ];
+    };
+    upsmon = {
+      wants = [ "sops-install-secrets.service" ];
+      after = [ "sops-install-secrets.service" ];
     };
   };
 }

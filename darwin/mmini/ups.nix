@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   hostInventory,
@@ -7,6 +8,8 @@
 }:
 let
   frameSpec = hostInventory.nixosHostSpecsByName.frame;
+  monitorName = frameSpec.name;
+  monitorPasswordSecret = "nut/monitors/${monitorName}/password";
 in
 {
   environment.systemPackages = [
@@ -17,20 +20,32 @@ in
     MODE = netclient
   '';
 
-  # TODO: rotate this password and migrate to sops-managed secrets.
-  environment.etc."nut/upsmon.conf".text = ''
-    MINSUPPLIES 1
-    MONITOR ${hostInventory.toUpsName frameSpec.name}@${
-      frameSpec.dnsName or frameSpec.name
-    } 1 upsslave upsslave234 slave
-    NOTIFYCMD ${pkgs.nut}/bin/upssched
-    NOTIFYFLAG ONBATT SYSLOG+EXEC
-    NOTIFYFLAG ONLINE SYSLOG+EXEC
-    NOTIFYFLAG LOWBATT SYSLOG+EXEC
-    POWERDOWNFLAG /var/lib/nut/upsmon.powerdown
-    RUN_AS_USER root
-    SHUTDOWNCMD /sbin/shutdown -h now
-  '';
+  environment.etc."nut/upsmon.conf".source = config.sops.templates."nut-upsmon.conf".path;
+
+  sops.secrets.${monitorPasswordSecret} = {
+    owner = "root";
+    group = "wheel";
+    mode = "0400";
+  };
+
+  sops.templates."nut-upsmon.conf" = {
+    owner = "root";
+    group = "wheel";
+    mode = "0400";
+    content = ''
+      MINSUPPLIES 1
+      MONITOR ${hostInventory.toUpsName frameSpec.name}@${
+        frameSpec.dnsName or frameSpec.name
+      } 1 upsslave ${config.sops.placeholder.${monitorPasswordSecret}} slave
+      NOTIFYCMD ${pkgs.nut}/bin/upssched
+      NOTIFYFLAG ONBATT SYSLOG+EXEC
+      NOTIFYFLAG ONLINE SYSLOG+EXEC
+      NOTIFYFLAG LOWBATT SYSLOG+EXEC
+      POWERDOWNFLAG /var/lib/nut/upsmon.powerdown
+      RUN_AS_USER root
+      SHUTDOWNCMD /sbin/shutdown -h now
+    '';
+  };
 
   environment.etc."nut/upssched.conf".text = ''
     CMDSCRIPT /etc/nut/upssched-cmd
