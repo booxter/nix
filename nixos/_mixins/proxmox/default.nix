@@ -200,6 +200,14 @@ in
           RemainAfterExit = true;
         };
       };
+
+      systemd.services.pveproxy = {
+        # proxmox-nixos starts pveproxy as a weak dependency of other Proxmox
+        # units, but switch activation may stop changed services without
+        # re-starting units that are not directly wanted. Keep the API proxy a
+        # first-class boot target because nginx/443 and exporters depend on it.
+        wantedBy = [ "multi-user.target" ];
+      };
     })
     (lib.mkIf exporterCfg.enable {
       assertions = [
