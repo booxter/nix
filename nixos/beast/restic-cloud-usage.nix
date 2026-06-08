@@ -66,7 +66,7 @@ in
   systemd.timers.restic-cloud-usage-export = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
-      OnCalendar = "09:00";
+      OnCalendar = "*-*-* 00/4:00:00";
       RandomizedDelaySec = "10m";
       Persistent = true;
       Unit = "restic-cloud-usage-export.service";
