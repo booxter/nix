@@ -40,9 +40,9 @@ EOF
   export NIX_RUN_ARGS_OUT="$workdir/nix-run.args"
 }
 
-@test "vm --help lists real hosts and short prox-vm aliases" {
+@test "vm --help lists available target hosts" {
   export FLAKE_JSON='{
-    "nixosConfigurations":{"builder1":{},"prox-builder1vm":{},"srvarr":{},"prox-srvarrvm":{},"beast":{},"prx1-lab":{}},
+    "nixosConfigurations":{"builder1":{},"srvarr":{},"beast":{},"prx1-lab":{}},
     "targetAliases":{"builder1":"builder1","srvarr":"srvarr","beast":"beast","prx1-lab":"prx1-lab"},
     "targetDisplayNames":["builder1","srvarr","beast","prx1-lab"]
   }'
@@ -56,7 +56,6 @@ EOF
   grep -Fqx "  srvarr" <<<"$output"
   grep -Fqx "  beast" <<<"$output"
   grep -Fqx "  prx1-lab" <<<"$output"
-  ! grep -Fqx "  prox-srvarrvm" <<<"$output"
 }
 
 @test "vm --help exits non-zero when flake evaluation fails" {
@@ -71,7 +70,7 @@ EOF
 
 @test "vm --gui enables graphics for the resolved vm" {
   export FLAKE_JSON='{
-    "nixosConfigurations":{"builder1":{},"prox-builder1vm":{},"beast":{}},
+    "nixosConfigurations":{"builder1":{},"beast":{}},
     "targetAliases":{"builder1":"builder1"}
   }'
 
@@ -86,9 +85,9 @@ EOF
   grep -Fq "graphics = lib.mkForce true;" "$NIX_RUN_ARGS_OUT"
 }
 
-@test "vm resolves short prox-vm alias to real config" {
+@test "vm resolves short VM name to config" {
   export FLAKE_JSON='{
-    "nixosConfigurations":{"builder1":{},"prox-builder1vm":{},"beast":{}},
+    "nixosConfigurations":{"builder1":{},"beast":{}},
     "targetAliases":{"builder1":"builder1","beast":"beast"},
     "targetDisplayNames":["builder1","beast"]
   }'
@@ -102,21 +101,12 @@ EOF
 }
 
 @test "vm resolves real host directly" {
-  export FLAKE_JSON='{"nixosConfigurations":{"beast":{},"prox-srvarrvm":{}}}'
+  export FLAKE_JSON='{"nixosConfigurations":{"beast":{}}}'
 
   run bash ./scripts/vm.sh beast
 
   [ "$status" -eq 0 ]
   grep -Fq "VM_TARGET_CONFIG=beast" "$NIX_RUN_ARGS_OUT"
-}
-
-@test "vm rejects direct prox-vm config name" {
-  export FLAKE_JSON='{"nixosConfigurations":{"beast":{},"prx1-lab":{},"prox-srvarrvm":{}}}'
-
-  run bash ./scripts/vm.sh prox-srvarrvm
-
-  [ "$status" -ne 0 ]
-  [[ "$output" == *"Unknown target host: prox-srvarrvm"* ]]
 }
 
 @test "vm reports unknown target host" {

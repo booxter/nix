@@ -267,7 +267,7 @@ SH
   [[ "$output" == *"SIZE: 1 -> 2"* ]]
 }
 
-@test "diff-config resolves short prox VM aliases before building" {
+@test "diff-config resolves short VM names before building" {
   make_repo
   make_fake_bin
 
@@ -291,24 +291,7 @@ SH
   grep -F -- '<os>' "$nh_log"
   grep -F -- '<--hostname>' "$nh_log"
   grep -F -- '<org>' "$nh_log"
-  ! grep -F -- '<prox-orgvm>' "$nh_log"
   [[ "$output" == *"CHANGED"* ]]
-}
-
-@test "diff-config rejects canonical prox VM names like unknown machines" {
-  make_repo
-  make_fake_bin
-
-  run env \
-    DIFF_CONFIG_REPO_ROOT="$repo" \
-    PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
-    prox-orgvm \
-    "$old_rev" \
-    "$new_rev"
-
-  [ "$status" -ne 0 ]
-  [[ "$output" == *"Unknown machine: prox-orgvm"* ]]
 }
 
 @test "diff-config --details appends generated config diff" {

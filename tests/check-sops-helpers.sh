@@ -357,13 +357,13 @@ EOF
   assert_eq "beast" "$(yq -r '.other.keep' "$after")" "unrelated data should survive password update"
   test -f "$WORKDIR/pass-store/host/beast/root" || fail "default sops-pass should insert into pass"
 
-  log "generate login password in pass using a short prox VM host name"
+  log "generate login password in pass using a short VM host name"
   run_and_capture "$out" env \
     PASS_TEST_STORE="$WORKDIR/pass-store" \
     PATH="$WORKDIR/fake-bin:$PATH" \
     bash "$repo/scripts/sops-pass.sh" --gen gw root
   assert_contains "$(cat "$out")" "Generated host/gw/root."
-  test -f "$WORKDIR/pass-store/host/gw/root" || fail "pass entry should use short prox VM host name"
+  test -f "$WORKDIR/pass-store/host/gw/root" || fail "pass entry should use short VM host name"
   decrypt_secret_file gw "$after"
   case "$(yq -r '.users.root.hashedPassword' "$after")" in
     "${sha512_prefix}"*) ;;
@@ -371,18 +371,10 @@ EOF
   esac
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "generated password should only update requested user"
 
-  log "decrypt a prox VM secret by short name"
+  log "decrypt a VM secret by short name"
   run_and_capture "$out" bash "$repo/scripts/sops-cat.sh" gw
   assert_contains "$(cat "$out")" "other:"
   assert_contains "$(cat "$out")" "keep: gw"
-
-  log "reject canonical prox VM host names like missing secrets"
-  run_expect_failure "$out" env \
-    PASS_TEST_STORE="$WORKDIR/pass-store" \
-    PATH="$WORKDIR/fake-bin:$PATH" \
-    bash "$repo/scripts/sops-pass.sh" --gen prox-gwvm ihrachyshka
-  assert_contains "$(cat "$out")" "Secret not found for host prox-gwvm:"
-  test ! -f "$WORKDIR/pass-store/host/prox-gwvm/ihrachyshka" || fail "canonical prox VM host should not create a pass entry"
 
   log "update both login users with one generated password"
   run_and_capture "$out" env \

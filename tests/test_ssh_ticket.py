@@ -116,8 +116,6 @@ def test_resolve_target_accepts_unique_alias():
         }
     ]
     assert ssh_ticket.resolve_target(targets, "srvarr")["name"] == "srvarr"
-    with pytest.raises(ssh_ticket.Error):
-        ssh_ticket.resolve_target(targets, "prox-srvarrvm")
 
 
 def test_display_target_name_returns_target_name():
