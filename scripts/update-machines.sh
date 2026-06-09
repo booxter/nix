@@ -127,6 +127,34 @@ HOST_ALIAS_MAP_JSON="$(
   )
 )"
 export HOST_ALIAS_MAP_JSON
+HOST_DISPLAY_MAP_JSON="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --impure --json --expr "
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            strings.toUpper = s: s;
+          };
+        };
+        nixos = builtins.foldl' (
+          acc: spec:
+          let
+            configName = hostInventory.toNixosConfigName spec;
+            displayName = if spec.type == \"vm\" then spec.name else configName;
+          in
+          acc
+          // {
+            \${configName} = displayName;
+          }
+        ) { } hostInventory.nixosHostSpecs;
+        darwin = builtins.mapAttrs (name: _: name) hostInventory.darwinHosts;
+      in
+      nixos // darwin
+    "
+  )
+)"
+export HOST_DISPLAY_MAP_JSON
 WORK_MAP=""
 DRY_RUN=false
 SELECT=false
@@ -468,6 +496,7 @@ unreachable_hosts=()
 host_status_lines=()
 for host in "${HOSTS[@]}"; do
   ssh_host="$(resolve_ssh_host "$host")"
+  display_host="$(display_host_name "$host")"
   if is_local_host "$host"; then
     ok="ok (local)"
   else
@@ -498,7 +527,7 @@ for host in "${HOSTS[@]}"; do
   if [[ "$ok" != ok* ]]; then
     status_color="$COLOR_RED"
   fi
-  line="- ${COLOR_BLUE}${host}${COLOR_RESET} (${COLOR_DIM}${ssh_host}${COLOR_RESET}): ${status_color}${ok}${COLOR_RESET}"
+  line="- ${COLOR_BLUE}${display_host}${COLOR_RESET} (${COLOR_DIM}${ssh_host}${COLOR_RESET}): ${status_color}${ok}${COLOR_RESET}"
   if [[ -n "$avail_gb" ]]; then
     line="${line}, ${avail_gb} GiB"
   fi
@@ -509,7 +538,7 @@ print_lines_if_any "${host_status_lines[@]}"
 
 if [[ $failed -ne 0 ]]; then
   echo "Aborting: $failed host(s) unreachable." >&2
-  echo "Unreachable hosts: $(format_host_list "${unreachable_hosts[@]}")" >&2
+  echo "Unreachable hosts: $(format_display_host_list "${unreachable_hosts[@]}")" >&2
   exit 1
 fi
 
@@ -522,9 +551,10 @@ ok_hosts=()
 failed_hosts=()
 for host in "${HOSTS[@]}"; do
   ssh_host="$(resolve_ssh_host "$host")"
-  printf '%b\n' "${COLOR_HOST}==> ${host}${COLOR_RESET}"
+  display_host="$(display_host_name "$host")"
+  printf '%b\n' "${COLOR_HOST}==> ${display_host}${COLOR_RESET}"
   if ! [ -t 0 ]; then
-    echo "Error: no TTY available for sudo on ${host}. Run this script from a real terminal." >&2
+    echo "Error: no TTY available for sudo on ${display_host}. Run this script from a real terminal." >&2
     exit 1
   fi
   remote_script="/tmp/update-nix-$$.sh"
@@ -639,7 +669,7 @@ REMOTE
   fi
   # shellcheck disable=SC2029
   if ! printf '%s\n' "$remote_payload" | ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_script\" && chmod +x \"$remote_script\""; then
-    echo "Failed to upload deploy script to ${host}." >&2
+    echo "Failed to upload deploy script to ${display_host}." >&2
     failed_hosts+=("$host")
     continue
   fi
@@ -656,7 +686,7 @@ printf '\n'
 
 failed_list=""
 if [[ ${#failed_hosts[@]} -gt 0 ]]; then
-  failed_list="$(format_host_list "${failed_hosts[@]}")"
+  failed_list="$(format_display_host_list "${failed_hosts[@]}")"
 fi
 print_summary_box "${#HOSTS[@]}" "${#ok_hosts[@]}" "${#failed_hosts[@]}" "$elapsed" "$failed_list"
 

@@ -27,22 +27,45 @@ nix eval --impure --json --expr "
         acc: spec:
         let
           isWork = spec.isWork or false;
-          name = hostInventory.toNixosConfigName spec;
+          configName = hostInventory.toNixosConfigName spec;
+          displayName = if spec.type == \"vm\" then spec.name else configName;
         in
         acc
         // {
-          \${name} = isWork;
+          \${displayName} = isWork;
         }
       ) { } hostInventory.nixosHostSpecs;
     };
+    nixosAliases = builtins.foldl' (
+      acc: spec:
+      let
+        configName = hostInventory.toNixosConfigName spec;
+        displayName = if spec.type == \"vm\" then spec.name else configName;
+      in
+      acc
+      // {
+        \${displayName} = displayName;
+      }
+      // (
+        if configName == displayName then
+          { }
+        else
+          {
+            \${configName} = displayName;
+          }
+      )
+    ) { } hostInventory.nixosHostSpecs;
+    darwinAliases = builtins.mapAttrs (name: _: name) hostInventory.darwinHosts;
     requestedHosts = ${HOSTS_NIX};
-    filterNames = attrs: requestedList:
+    filterNames = attrs: aliases: requestedList:
       let
         allNames = builtins.attrNames attrs;
         namesToUse =
           if requestedList == null
           then allNames
-          else builtins.filter (name: builtins.elem name allNames) requestedList;
+          else builtins.filter (name: builtins.elem name allNames) (
+            map (name: aliases.\${name} or name) requestedList
+          );
       in
       builtins.listToAttrs (
         map
@@ -54,7 +77,7 @@ nix eval --impure --json --expr "
       );
   in
   {
-    nixos = filterNames hostWorkMap.nixos requestedHosts;
-    darwin = filterNames hostWorkMap.darwin requestedHosts;
+    nixos = filterNames hostWorkMap.nixos nixosAliases requestedHosts;
+    darwin = filterNames hostWorkMap.darwin darwinAliases requestedHosts;
   }
 "

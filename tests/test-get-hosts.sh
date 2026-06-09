@@ -9,21 +9,21 @@ expected_json='{
   },
   "nixos": {
     "beast": false,
+    "builder1": false,
+    "builder2": false,
+    "builder3": false,
+    "cache": false,
+    "fana": false,
     "frame": false,
+    "gw": false,
+    "nv": true,
     "nvws": true,
-    "prox-builder1vm": false,
-    "prox-builder2vm": false,
-    "prox-builder3vm": false,
-    "prox-cachevm": false,
-    "prox-fanavm": false,
-    "prox-gwvm": false,
-    "prox-nvvm": true,
-    "prox-orgvm": false,
-    "prox-pkivm": false,
-    "prox-srvarrvm": false,
+    "org": false,
+    "pki": false,
     "prx1-lab": false,
     "prx2-lab": false,
-    "prx3-lab": false
+    "prx3-lab": false,
+    "srvarr": false
   }
 }'
 
@@ -93,3 +93,38 @@ if [[ "$filtered_norm" != "$expected_filtered_norm" ]]; then
 fi
 
 echo "get-hosts.sh with args output matches expected filtered map."
+
+# Canonical prox VM arguments are still accepted but displayed as short names.
+expected_canonical_filtered='{
+  "darwin": {},
+  "nixos": {
+    "org": false,
+    "srvarr": false
+  }
+}'
+
+stderr_file="$(mktemp)"
+if ! canonical_filtered_json="$(./scripts/get-hosts.sh prox-orgvm srvarr 2>"$stderr_file")"; then
+  echo "get-hosts.sh with canonical VM args failed" >&2
+  cat "$stderr_file" >&2 || true
+  rm -f "$stderr_file"
+  exit 1
+fi
+if [[ -z "$canonical_filtered_json" ]]; then
+  echo "get-hosts.sh with canonical VM args produced no output" >&2
+  cat "$stderr_file" >&2 || true
+  rm -f "$stderr_file"
+  exit 1
+fi
+rm -f "$stderr_file"
+
+canonical_filtered_norm="$(printf '%s' "$canonical_filtered_json" | normalize_json)"
+expected_canonical_filtered_norm="$(printf '%s' "$expected_canonical_filtered" | normalize_json)"
+
+if [[ "$canonical_filtered_norm" != "$expected_canonical_filtered_norm" ]]; then
+  echo "get-hosts.sh with canonical VM args output mismatch" >&2
+  diff -u <(printf '%s\n' "$expected_canonical_filtered_norm") <(printf '%s\n' "$canonical_filtered_norm") || true
+  exit 1
+fi
+
+echo "get-hosts.sh with canonical VM args output matches expected filtered map."

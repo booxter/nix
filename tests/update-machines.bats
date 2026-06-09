@@ -232,6 +232,20 @@ EOF
   [ "$output" = "$expected" ]
 }
 
+@test "display_host_name maps canonical prox VM configs to short names" {
+  export HOST_DISPLAY_MAP_JSON='{"prox-orgvm":"org","prox-srvarrvm":"srvarr","beast":"beast"}'
+  run display_host_name prox-orgvm
+  [ "$status" -eq 0 ]
+  [ "$output" = "org" ]
+}
+
+@test "format_display_host_list joins display names" {
+  export HOST_DISPLAY_MAP_JSON='{"prox-orgvm":"org","prox-srvarrvm":"srvarr","beast":"beast"}'
+  run format_display_host_list prox-orgvm beast prox-srvarrvm
+  [ "$status" -eq 0 ]
+  [ "$output" = "org, beast, srvarr" ]
+}
+
 @test "hosts_from_work_map returns sorted unique hosts" {
   work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
   run hosts_from_work_map "$work_map"

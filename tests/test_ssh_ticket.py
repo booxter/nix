@@ -118,6 +118,27 @@ def test_resolve_target_accepts_unique_alias():
     assert ssh_ticket.resolve_target(targets, "srvarr")["name"] == "prox-srvarrvm"
 
 
+def test_display_target_name_prefers_short_prox_vm_alias():
+    assert (
+        ssh_ticket.display_target_name(
+            {
+                "name": "prox-srvarrvm",
+                "aliases": ["prox-srvarrvm", "srvarr"],
+            }
+        )
+        == "srvarr"
+    )
+    assert (
+        ssh_ticket.display_target_name(
+            {
+                "name": "beast",
+                "aliases": ["beast"],
+            }
+        )
+        == "beast"
+    )
+
+
 def test_resolve_target_rejects_ambiguous_alias():
     targets = [
         {

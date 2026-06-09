@@ -58,6 +58,30 @@ canonicalize_hosts() {
   done
 }
 
+display_host_name() {
+  local host="$1"
+  local display
+
+  if [[ -z "${HOST_DISPLAY_MAP_JSON:-}" ]]; then
+    printf '%s' "$host"
+    return 0
+  fi
+
+  display="$(jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_DISPLAY_MAP_JSON")"
+  printf '%s' "$display"
+}
+
+format_display_host_list() {
+  local host
+  local -a display_hosts=()
+
+  for host in "$@"; do
+    display_hosts+=("$(display_host_name "$host")")
+  done
+
+  format_host_list "${display_hosts[@]}"
+}
+
 is_work_host() {
   local host="$1"
   local work_map="$2"

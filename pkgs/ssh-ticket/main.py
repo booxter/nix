@@ -299,6 +299,16 @@ def resolve_target(targets, requested, *, allow_disabled=False):
     return target
 
 
+def display_target_name(target):
+    name = target["name"]
+    if not (name.startswith("prox-") and name.endswith("vm")):
+        return name
+    for alias in target.get("aliases", []):
+        if alias != name:
+            return alias
+    return name
+
+
 def target_paths(target, state_dir):
     base = state_dir / safe_name(target["name"])
     return {
@@ -571,7 +581,7 @@ def cmd_targets(args):
         return 0
     rows = [
         (
-            target["name"],
+            display_target_name(target),
             "yes" if target.get("enabled") else "no",
             target["principal"],
             ",".join(target.get("aliases", [])),
@@ -610,7 +620,7 @@ def cmd_status(args):
             detail = f"expired {format_time(status['validBefore'])}"
         else:
             detail = "missing"
-        print(f"{status['name']}: {status['status']} ({detail})")
+        print(f"{display_target_name(status)}: {status['status']} ({detail})")
     return 0
 
 
