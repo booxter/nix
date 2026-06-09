@@ -1,5 +1,6 @@
 {
   config,
+  hostSpecName,
   hostInventory,
   lib,
   pkgs,
@@ -7,6 +8,7 @@
 }:
 let
   caServer = hostInventory.nixosHostSpecsByName.pki.caServer;
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
@@ -19,12 +21,15 @@ let
   stepStateDir = "/var/lib/step-ca";
   stepPasswordFile = "${stepStateDir}/password.txt";
   stepProvisionerPasswordFile = "${stepStateDir}/provisioner-password.txt";
-  caDnsNames = [
-    config.networking.hostName
-    config.host.dnsName
-    config.services.avahi.hostName
-    "${config.services.avahi.hostName}.local"
-  ];
+  caDnsNames = lib.unique (
+    hostInventory.toNixosHostCertificateDnsNames hostSpec
+    ++ [
+      config.networking.hostName
+      config.host.dnsName
+      config.services.avahi.hostName
+      "${config.services.avahi.hostName}.local"
+    ]
+  );
   caDnsArgs = lib.concatMapStringsSep " " (name: "--dns ${lib.escapeShellArg name}") caDnsNames;
   bootstrapScript = pkgs.writeShellScript "step-ca-bootstrap" ''
     set -eu

@@ -1,5 +1,6 @@
 {
   config,
+  hostSpecName,
   hostInventory,
   lib,
   pkgs,
@@ -8,6 +9,8 @@
 let
   cfg = config.host.proxmox.apiCertificate;
   exporterCfg = config.host.proxmox.prometheusExporter;
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
+  hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   certInstallUnit = "proxmox-api-certificate.service";
   internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
@@ -26,11 +29,7 @@ in
 
     serverAliases = lib.mkOption {
       type = with lib.types; listOf str;
-      default = lib.unique [
-        config.networking.hostName
-        "${config.networking.hostName}.${hostInventory.site.lan.domain}"
-        "${config.services.avahi.hostName}.local"
-      ];
+      default = lib.unique ([ "${config.services.avahi.hostName}.local" ] ++ hostCertificateDnsNames);
       description = "Additional DNS names included in the Proxmox VE API certificate.";
     };
 

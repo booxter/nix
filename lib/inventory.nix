@@ -113,6 +113,14 @@ rec {
   toNixosShortDnsName = toNixosStableHostName;
   toNixosMigrationDnsNames =
     spec: lib.unique ([ (toNixosShortDnsName spec) ] ++ toNixosAllDnsNames spec);
+  toNixosHostCertificateDnsNames =
+    spec:
+    let
+      names = toNixosMigrationDnsNames spec;
+    in
+    lib.unique (
+      names ++ map (name: "${name}.${site.lan.domain}") names ++ [ "${toNixosShortDnsName spec}.local" ]
+    );
   toNixosLanDnsAliasLabels =
     spec:
     lib.unique (
