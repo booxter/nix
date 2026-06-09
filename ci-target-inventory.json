@@ -194,6 +194,21 @@
       "warm": true
     },
     {
+      "attr": "nixosConfigurations.pki.config.system.build.toplevel",
+      "name": "pki (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "pki"
+        ],
+        "prefixes": [
+          "nixos/pkivm/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
       "attr": "nixosConfigurations.builder1.config.system.build.vm",
       "name": "nixos vm builder1 (x86_64-linux)",
       "runner": "ubuntu-latest",
