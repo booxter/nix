@@ -1,6 +1,6 @@
 {
   config,
-  hostname,
+  hostSpecName,
   hostInventory,
   lib,
   pkgs,
@@ -230,7 +230,7 @@ in
           enable = lib.mkDefault (!config.host.isWork);
           secretPrefix = "observability/clients/loki";
         };
-        nodeExporter.mtls.enable = lib.mkDefault (hostname != "prox-fanavm");
+        nodeExporter.mtls.enable = lib.mkDefault (hostSpecName != "fana");
       };
 
       host.observability.lanWan = {
