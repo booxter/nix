@@ -16,7 +16,6 @@ let
       idx' = toString idx;
     in
     {
-      type = "vm";
       isVM = true;
       name = "builder${idx'}";
       proxNode = "prx${idx'}-lab";
@@ -90,7 +89,7 @@ rec {
 
   toVmName = name: "${name}vm";
   toProxVmName = name: "prox-${toVmName name}";
-  isNixosVM = spec: (spec.isVM or false) || (spec.type or null) == "vm";
+  isNixosVM = spec: spec.isVM or false;
   isNixosBM = spec: !(isNixosVM spec);
   toNixosConfigName = spec: spec.name;
   toNixosRuntimeHostName =
@@ -352,7 +351,6 @@ rec {
 
   nixosHostSpecs = [
     {
-      type = "bm";
       hostKind = "nixos";
       name = frame;
       stateVersion = "25.11";
@@ -360,7 +358,6 @@ rec {
       isDesktop = true;
     }
     {
-      type = "bm";
       hostKind = "proxmox";
       name = nvws;
       inherit username;
@@ -376,7 +373,6 @@ rec {
       };
     }
     {
-      type = "bm";
       hostKind = "nixos";
       name = "beast";
       stateVersion = "25.11";
@@ -392,7 +388,6 @@ rec {
       };
     }
     {
-      type = "bm";
       hostKind = "proxmox";
       name = "prx1-lab";
       inherit username;
@@ -407,7 +402,6 @@ rec {
       };
     }
     {
-      type = "bm";
       hostKind = "proxmox";
       name = "prx2-lab";
       inherit username;
@@ -423,7 +417,6 @@ rec {
       };
     }
     {
-      type = "bm";
       hostKind = "proxmox";
       name = "prx3-lab";
       inherit username;
@@ -439,7 +432,6 @@ rec {
       };
     }
     {
-      type = "vm";
       isVM = true;
       name = "nv";
       isWork = true;
@@ -450,7 +442,6 @@ rec {
       proxNode = "nvws";
     }
     {
-      type = "vm";
       isVM = true;
       name = "cache";
       upsHost = "prx1-lab";
@@ -467,7 +458,6 @@ rec {
       diskSize = 50; # actual cache is on NFS
     }
     {
-      type = "vm";
       isVM = true;
       name = "srvarr";
       platform = "x86_64-linux";
@@ -501,7 +491,6 @@ rec {
       };
     }
     {
-      type = "vm";
       isVM = true;
       name = "fana";
       platform = "x86_64-linux";
@@ -522,7 +511,6 @@ rec {
       };
     }
     {
-      type = "vm";
       isVM = true;
       name = "gw";
       upsHost = "prx1-lab";
@@ -538,7 +526,6 @@ rec {
       };
     }
     {
-      type = "vm";
       isVM = true;
       name = "org";
       platform = "x86_64-linux";
@@ -556,7 +543,6 @@ rec {
       };
     }
     {
-      type = "vm";
       isVM = true;
       name = "pki";
       platform = "x86_64-linux";

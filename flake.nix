@@ -134,8 +134,8 @@
         let
           extraModules = inputs.nixpkgs.lib.optionals (spec ? dnsName) [ (staticHostModule spec) ];
           args = builtins.removeAttrs spec [
-            "type"
             "hostKind"
+            "isVM"
             "homeManagerInput"
             "nixpkgsInput"
             "dnsName"
