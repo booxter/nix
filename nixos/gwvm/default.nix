@@ -1,4 +1,9 @@
-{ lib, hostInventory, ... }:
+{
+  config,
+  lib,
+  hostInventory,
+  ...
+}:
 let
   wgHome = hostInventory.site.wireguard.home;
   wgInterface = "wg0";
@@ -38,7 +43,7 @@ in
           addresses = map (peer: peer.address) vpnPeers;
         in
         lib.length addresses == lib.length (lib.unique addresses);
-      message = "WireGuard peers on prox-gwvm must use unique tunnel IP addresses.";
+      message = "WireGuard peers on ${config.networking.hostName} must use unique tunnel IP addresses.";
     }
   ];
 
