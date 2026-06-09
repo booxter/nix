@@ -5,8 +5,8 @@
   ...
 }:
 let
-  arrVmAddress = hostInventory.dhcpReservationsByHostname.prox-srvarrvm.ip;
-  orgVmAddress = hostInventory.dhcpReservationsByHostname.prox-orgvm.ip;
+  arrVmAddress = hostInventory.toNixosHostIpv4Address "srvarr";
+  orgVmAddress = hostInventory.toNixosHostIpv4Address "org";
   backendMtlsServices = builtins.listToAttrs (
     map
       (

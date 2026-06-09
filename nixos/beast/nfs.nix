@@ -1,8 +1,8 @@
 { hostInventory, lib, ... }:
 let
   nfsPort = hostInventory.site.ports.nfs;
-  srvarrNfsAddress = hostInventory.dhcpReservationsByHostname.prox-srvarrvm.ip;
-  cacheNfsAddress = hostInventory.dhcpReservationsByHostname.prox-cachevm.ip;
+  srvarrNfsAddress = hostInventory.toNixosHostIpv4Address "srvarr";
+  cacheNfsAddress = hostInventory.toNixosHostIpv4Address "cache";
 
   # Pin export IDs so clients see stable export identities across server restarts.
   mkNfsExport =

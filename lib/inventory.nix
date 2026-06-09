@@ -113,6 +113,8 @@ rec {
     else
       throw "Unsupported NixOS host spec type `${spec.type}`";
   toNixosSshHostName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
+  toHostIpv4Address = aliasIpv4Address;
+  toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
   resolveService =
     service:
