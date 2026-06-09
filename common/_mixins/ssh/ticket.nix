@@ -14,6 +14,19 @@ let
   cfg = config.host.sshTicket;
   caPublicKeyPath = "/etc/ssh/fleet-user-ca.pub";
   inventoryCaPublicKey = hostInventory.sshTicket.userCaPublicKey;
+  nixosHostSpec =
+    if builtins.hasAttr hostSpecName hostInventory.nixosHostSpecsByName then
+      hostInventory.nixosHostSpecsByName.${hostSpecName}
+    else
+      null;
+  defaultPrincipalNames = lib.unique (
+    [
+      config.host.dnsName
+      config.networking.hostName
+      hostSpecName
+    ]
+    ++ lib.optionals (nixosHostSpec != null) (hostInventory.toNixosMigrationDnsNames nixosHostSpec)
+  );
 in
 {
   options.host.sshTicket = {
@@ -35,6 +48,34 @@ in
       default = "${username}@${config.host.dnsName}";
       defaultText = lib.literalExpression ''"${username}@${config.host.dnsName}"'';
       description = "Certificate principal accepted for ${username} on this host.";
+    };
+
+    principalNames = lib.mkOption {
+      type = lib.types.listOf lib.types.singleLineStr;
+      default = defaultPrincipalNames;
+      defaultText = lib.literalExpression ''
+        lib.unique (
+          [
+            config.host.dnsName
+            config.networking.hostName
+            hostSpecName
+          ]
+          ++ hostInventory.toNixosMigrationDnsNames nixosHostSpec
+        )
+      '';
+      description = "Host identity names accepted as SSH certificate principals for ${username}.";
+    };
+
+    principals = lib.mkOption {
+      type = lib.types.listOf lib.types.singleLineStr;
+      default = lib.unique ([ cfg.principal ] ++ map (name: "${username}@${name}") cfg.principalNames);
+      defaultText = lib.literalExpression ''
+        lib.unique (
+          [ config.host.sshTicket.principal ]
+          ++ map (name: username + "@" + name) config.host.sshTicket.principalNames
+        )
+      '';
+      description = "Full SSH certificate principals accepted for ${username}.";
     };
 
     aliases = lib.mkOption {
@@ -76,13 +117,11 @@ in
         cfg.enable && cfg.caPublicKey != null
       ) caPublicKeyPath;
 
-      users.users.${username}.openssh.authorizedPrincipals = lib.mkIf cfg.enable [
-        cfg.principal
-      ];
+      users.users.${username}.openssh.authorizedPrincipals = lib.mkIf cfg.enable cfg.principals;
     })
     (lib.optionalAttrs isDarwin {
       environment.etc."ssh/authorized_principals.d/${username}" = lib.mkIf cfg.enable {
-        text = "${cfg.principal}\n";
+        text = lib.concatMapStrings (principal: "${principal}\n") cfg.principals;
       };
 
       services.openssh.extraConfig = lib.mkIf (cfg.enable && cfg.caPublicKey != null) ''
