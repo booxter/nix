@@ -10,6 +10,7 @@ let
   hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
+  wireguardGatewaySshHost = hostInventory.toNixosSshHostName hostInventory.nixosHostSpecsByName.gw;
   unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
@@ -363,7 +364,7 @@ let
       )"
 
       if [ "$fetch_server_public_key" = true ]; then
-        server_public_key="$(ssh prox-gwvm "sudo sh -c 'wg pubkey < /var/lib/wireguard/wg0.key'")"
+        server_public_key="$(ssh ${wireguardGatewaySshHost} "sudo sh -c 'wg pubkey < /var/lib/wireguard/wg0.key'")"
       fi
 
       private_key="$(${pkgs.coreutils}/bin/tr -d '\n' < "$private_key_file")"
