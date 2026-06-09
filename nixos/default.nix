@@ -3,6 +3,7 @@
   lib,
   pkgs,
   hostname,
+  hostSpecName,
   hostInventory,
   platform,
   stateVersion,
@@ -10,7 +11,6 @@
   ...
 }:
 let
-  hostSpecName = hostInventory.nixosConfigNameToSpecName hostname;
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   configName = ./${hostInventory.toNixosModuleDirName hostSpec};
   hostSecretFile = ../secrets + "/${hostSpecName}.yaml";

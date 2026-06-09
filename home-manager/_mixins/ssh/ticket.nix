@@ -45,7 +45,7 @@ let
       }
     else if spec.type == "vm" then
       let
-        sshHost = hostInventory.toNixosConfigName spec;
+        sshHost = hostInventory.toNixosSshHostName spec;
       in
       mkTarget {
         name = spec.name;

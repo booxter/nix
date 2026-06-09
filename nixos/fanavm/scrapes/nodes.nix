@@ -7,7 +7,13 @@
 }:
 let
   nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
-  isVirtualNodeName = hostInventory.isProxVmName;
+  isVirtualNodeName =
+    name:
+    let
+      specName = hostInventory.nixosConfigNameToSpecName name;
+    in
+    builtins.hasAttr specName hostInventory.nixosHostSpecsByName
+    && hostInventory.nixosHostSpecsByName.${specName}.type == "vm";
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   scrapeExpectationForHostConfig =
     hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";
@@ -29,7 +35,7 @@ let
     };
   nixosNodeExporterTargetNames = builtins.filter (
     name:
-    name != "prox-fanavm"
+    name != "fana"
     && (outputs.nixosConfigurations.${name}.config.host.observability.client.enable or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
   ) nixosConfigNames;

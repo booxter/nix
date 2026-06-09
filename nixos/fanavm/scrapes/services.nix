@@ -6,9 +6,9 @@ let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
-  sabnzbdHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
+  sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
-  vikunjaHostConfig = outputs.nixosConfigurations.prox-orgvm.config;
+  vikunjaHostConfig = outputs.nixosConfigurations.org.config;
   vikunjaHost = vikunjaHostConfig.host.dnsName;
   vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in

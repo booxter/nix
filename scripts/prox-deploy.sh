@@ -12,7 +12,7 @@ user="$2"
 password=$(pass "$3")
 vm_name="$4"
 
-flake_target="prox-${vm_name}vm"
+flake_target="$vm_name"
 
 CONFIG_FILE="nixmoxer.conf"
 

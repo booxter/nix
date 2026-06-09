@@ -204,7 +204,7 @@ fi
 
 if [ -n "${DIFF_CONFIG_RESOLVE_MACHINE_ALIAS:-}" ]; then
   case "${DIFF_CONFIG_MACHINE:-}" in
-    org) printf '%s\n' prox-orgvm ;;
+    org) printf '%s\n' org ;;
     *) printf '%s\n' "${DIFF_CONFIG_MACHINE:-}" ;;
   esac
   exit 0
@@ -290,8 +290,8 @@ SH
   [ "$status" -eq 0 ]
   grep -F -- '<os>' "$nh_log"
   grep -F -- '<--hostname>' "$nh_log"
-  grep -F -- '<prox-orgvm>' "$nh_log"
-  ! grep -F -- '<org>' "$nh_log"
+  grep -F -- '<org>' "$nh_log"
+  ! grep -F -- '<prox-orgvm>' "$nh_log"
   [[ "$output" == *"CHANGED"* ]]
 }
 

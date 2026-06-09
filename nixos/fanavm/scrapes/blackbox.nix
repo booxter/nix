@@ -12,7 +12,7 @@ let
   nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
   localHttpsServices = config.host.internalHttps.services;
-  srvarrHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
+  srvarrHostConfig = outputs.nixosConfigurations.srvarr.config;
   srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
   srvarrPortFor =
     serviceId:
@@ -141,7 +141,7 @@ let
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
   remoteBlackboxProbeSourceNames = builtins.filter (
     name:
-    name != "prox-fanavm"
+    name != "fana"
     && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.enable
   ) nixosConfigNames;
   remotePlainBlackboxProbeSourceNames = builtins.filter (

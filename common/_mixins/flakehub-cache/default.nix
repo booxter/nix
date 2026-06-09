@@ -5,10 +5,10 @@
   lib,
   pkgs,
   hostname,
+  hostSpecName ? hostname,
   ...
 }:
 let
-  hostSpecName = hostInventory.nixosConfigNameToSpecName hostname;
   hostSecretName =
     if builtins.hasAttr hostSpecName hostInventory.nixosHostSpecsByName then hostSpecName else hostname;
   hostSecretFile = ../../../secrets/${hostSecretName}.yaml;

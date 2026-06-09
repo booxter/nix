@@ -218,37 +218,37 @@ EOF
 }
 
 @test "resolve_host_alias maps short prox VM names to canonical configs" {
-  export HOST_ALIAS_MAP_JSON='{"org":"prox-orgvm","beast":"beast"}'
+  export HOST_ALIAS_MAP_JSON='{"org":"org","beast":"beast"}'
   run resolve_host_alias org
   [ "$status" -eq 0 ]
-  [ "$output" = "prox-orgvm" ]
+  [ "$output" = "org" ]
 }
 
 @test "resolve_host_alias rejects canonical prox VM names like unknown hosts" {
-  export HOST_ALIAS_MAP_JSON='{"org":"prox-orgvm","beast":"beast"}'
+  export HOST_ALIAS_MAP_JSON='{"org":"org","beast":"beast"}'
   run resolve_host_alias prox-orgvm
   [ "$status" -ne 0 ]
   [[ "$output" == *"Unknown host: prox-orgvm"* ]]
 }
 
 @test "canonicalize_hosts preserves order after alias resolution" {
-  export HOST_ALIAS_MAP_JSON='{"org":"prox-orgvm","srvarr":"prox-srvarrvm","beast":"beast"}'
+  export HOST_ALIAS_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
   run canonicalize_hosts org beast srvarr
   [ "$status" -eq 0 ]
-  expected=$'prox-orgvm\nbeast\nprox-srvarrvm'
+  expected=$'org\nbeast\nsrvarr'
   [ "$output" = "$expected" ]
 }
 
-@test "display_host_name maps canonical prox VM configs to short names" {
-  export HOST_DISPLAY_MAP_JSON='{"prox-orgvm":"org","prox-srvarrvm":"srvarr","beast":"beast"}'
-  run display_host_name prox-orgvm
+@test "display_host_name keeps canonical short VM configs displayable" {
+  export HOST_DISPLAY_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
+  run display_host_name org
   [ "$status" -eq 0 ]
   [ "$output" = "org" ]
 }
 
 @test "format_display_host_list joins display names" {
-  export HOST_DISPLAY_MAP_JSON='{"prox-orgvm":"org","prox-srvarrvm":"srvarr","beast":"beast"}'
-  run format_display_host_list prox-orgvm beast prox-srvarrvm
+  export HOST_DISPLAY_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
+  run format_display_host_list org beast srvarr
   [ "$status" -eq 0 ]
   [ "$output" = "org, beast, srvarr" ]
 }
@@ -286,9 +286,9 @@ EOF
 }
 
 @test "prioritize_hosts orders priority, normal, deferred" {
-  run prioritize_hosts prox-cachevm nvws zeta prx2-lab alpha
+  run prioritize_hosts cache nvws zeta prx2-lab alpha
   [ "$status" -eq 0 ]
-  expected=$'nvws\nprx2-lab\nzeta\nalpha\nprox-cachevm'
+  expected=$'nvws\nprx2-lab\nzeta\nalpha\ncache'
   [ "$output" = "$expected" ]
 }
 
@@ -315,10 +315,10 @@ EOF
   export PATH="$workdir/bin:$PATH"
   export NIX_ARGS_OUT="$workdir/nix.args"
 
-  run run_nixos_rebuild_from_repo boot prox-srvarrvm
+  run run_nixos_rebuild_from_repo boot srvarr
 
   [ "$status" -eq 0 ]
-  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname prox-srvarrvm --print-build-logs --show-trace .#" ]
+  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname srvarr --print-build-logs --show-trace .#" ]
 }
 
 @test "run_nixos_rebuild_from_repo keeps dry-activate on nixos-rebuild" {
@@ -349,11 +349,11 @@ EOF
   export SUDO_ARGS_OUT="$workdir/sudo.args"
   export NIXOS_REBUILD_ARGS_OUT="$workdir/nixos-rebuild.args"
 
-  run run_nixos_rebuild_from_repo dry-activate prox-srvarrvm
+  run run_nixos_rebuild_from_repo dry-activate srvarr
 
   [ "$status" -eq 0 ]
-  [ "$(<"$SUDO_ARGS_OUT")" = "nixos-rebuild dry-activate --flake .#prox-srvarrvm -L --show-trace" ]
-  [ "$(<"$NIXOS_REBUILD_ARGS_OUT")" = "dry-activate --flake .#prox-srvarrvm -L --show-trace" ]
+  [ "$(<"$SUDO_ARGS_OUT")" = "nixos-rebuild dry-activate --flake .#srvarr -L --show-trace" ]
+  [ "$(<"$NIXOS_REBUILD_ARGS_OUT")" = "dry-activate --flake .#srvarr -L --show-trace" ]
 }
 
 @test "run_darwin_switch_from_repo uses pinned nh" {
@@ -392,6 +392,7 @@ EOF
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
-  grep -Fq 'target_host_name="$7"' "$SSH_UPLOADED_SCRIPT_OUT"
-  grep -Fq 'run_nixos_rebuild_from_repo "$rebuild_action" "$target_host_name"' "$SSH_UPLOADED_SCRIPT_OUT"
+  grep -Fq 'target_config_name="$7"' "$SSH_UPLOADED_SCRIPT_OUT"
+  grep -Fq 'target_runtime_host="$8"' "$SSH_UPLOADED_SCRIPT_OUT"
+  grep -Fq 'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"' "$SSH_UPLOADED_SCRIPT_OUT"
 }

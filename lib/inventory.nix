@@ -89,12 +89,21 @@ rec {
   nixosConfigNameToSpecName = name: if isProxVmName name then proxVmNameToSpecName name else name;
   toNixosConfigName =
     spec:
-    if spec.type == "bm" then
+    if spec.type == "bm" || spec.type == "vm" then
       spec.name
-    else if spec.type == "vm" then
-      toProxVmName spec.name
     else
       throw "Unsupported NixOS host spec type `${spec.type}`";
+  toNixosRuntimeHostName =
+    spec:
+    spec.hostname or (spec.dhcpReservation.hostname or (
+      if spec.type == "vm" then
+        toProxVmName spec.name
+      else if spec.type == "bm" then
+        spec.name
+      else
+        throw "Unsupported NixOS host spec type `${spec.type}`"
+    )
+    );
   toNixosModuleDirName =
     spec:
     if spec.type == "bm" then
@@ -103,8 +112,7 @@ rec {
       toVmName spec.name
     else
       throw "Unsupported NixOS host spec type `${spec.type}`";
-  toNixosSshHostName =
-    spec: spec.dnsName or (spec.dhcpReservation.hostname or (toNixosConfigName spec));
+  toNixosSshHostName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
   resolveService =
     service:

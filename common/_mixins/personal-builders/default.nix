@@ -9,7 +9,7 @@
 }:
 let
   builderSpec = n: hostInventory.nixosHostSpecsByName."builder${toString n}";
-  toBuilderName = n: hostInventory.toNixosConfigName (builderSpec n);
+  toBuilderName = n: hostInventory.toNixosSshHostName (builderSpec n);
 in
 {
   programs.ssh = {

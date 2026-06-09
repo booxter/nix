@@ -35,7 +35,7 @@ EOF
 
   [ "$status" -eq 0 ]
   [ "$(cat "$PASS_ARGS_OUT")" = "priv/lab-prx1" ]
-  [ "$(cat "$NIXMOXER_ARGS_OUT")" = "--flake prox-srvarrvm" ]
+  [ "$(cat "$NIXMOXER_ARGS_OUT")" = "--flake srvarr" ]
 
   grep -q '^host=prx1:8006$' "$NIXMOXER_CONF_OUT"
   grep -q '^user=root@pam$' "$NIXMOXER_CONF_OUT"

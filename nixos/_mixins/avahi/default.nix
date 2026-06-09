@@ -1,13 +1,13 @@
 {
   config,
   hostname,
+  hostSpecName,
   hostInventory,
   lib,
   pkgs,
   ...
 }:
 let
-  hostSpecName = hostInventory.nixosConfigNameToSpecName hostname;
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
 
   aliasAddress =

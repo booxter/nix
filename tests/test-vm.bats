@@ -42,8 +42,8 @@ EOF
 
 @test "vm --help lists real hosts and short prox-vm aliases" {
   export FLAKE_JSON='{
-    "nixosConfigurations":{"prox-builder1vm":{},"prox-srvarrvm":{},"beast":{},"prx1-lab":{}},
-    "targetAliases":{"builder1":"prox-builder1vm","srvarr":"prox-srvarrvm","beast":"beast","prx1-lab":"prx1-lab"},
+    "nixosConfigurations":{"builder1":{},"prox-builder1vm":{},"srvarr":{},"prox-srvarrvm":{},"beast":{},"prx1-lab":{}},
+    "targetAliases":{"builder1":"builder1","srvarr":"srvarr","beast":"beast","prx1-lab":"prx1-lab"},
     "targetDisplayNames":["builder1","srvarr","beast","prx1-lab"]
   }'
 
@@ -71,14 +71,14 @@ EOF
 
 @test "vm --gui enables graphics for the resolved vm" {
   export FLAKE_JSON='{
-    "nixosConfigurations":{"prox-builder1vm":{},"beast":{}},
-    "targetAliases":{"builder1":"prox-builder1vm"}
+    "nixosConfigurations":{"builder1":{},"prox-builder1vm":{},"beast":{}},
+    "targetAliases":{"builder1":"builder1"}
   }'
 
   run bash ./scripts/vm.sh --gui builder1
 
   [ "$status" -eq 0 ]
-  grep -Fq "VM_TARGET_CONFIG=prox-builder1vm" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "VM_TARGET_CONFIG=builder1" "$NIX_RUN_ARGS_OUT"
   grep -Fq "VM_GUI=1" "$NIX_RUN_ARGS_OUT"
   grep -Fq -- "--expr" "$NIX_RUN_ARGS_OUT"
   grep -Fq "getAttr targetConfig f.nixosConfigurations" "$NIX_RUN_ARGS_OUT"
@@ -88,15 +88,15 @@ EOF
 
 @test "vm resolves short prox-vm alias to real config" {
   export FLAKE_JSON='{
-    "nixosConfigurations":{"prox-builder1vm":{},"beast":{}},
-    "targetAliases":{"builder1":"prox-builder1vm","beast":"beast"},
+    "nixosConfigurations":{"builder1":{},"prox-builder1vm":{},"beast":{}},
+    "targetAliases":{"builder1":"builder1","beast":"beast"},
     "targetDisplayNames":["builder1","beast"]
   }'
 
   run bash ./scripts/vm.sh builder1
 
   [ "$status" -eq 0 ]
-  grep -Fq "VM_TARGET_CONFIG=prox-builder1vm" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "VM_TARGET_CONFIG=builder1" "$NIX_RUN_ARGS_OUT"
   grep -Fq "VM_GUI=0" "$NIX_RUN_ARGS_OUT"
   grep -Fq "cfg.config.system.build.vm" "$NIX_RUN_ARGS_OUT"
 }

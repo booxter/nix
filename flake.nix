@@ -113,14 +113,15 @@
           ...
         }:
         let
-          proxName = toProxVmName name;
+          runtimeHostname = toProxVmName name;
         in
         {
-          "${proxName}" = helpers.mkVM (
+          "${name}" = helpers.mkVM (
             args
             // {
               inherit stateVersion;
-              hostname = proxName;
+              hostSpecName = name;
+              hostname = runtimeHostname;
               platform = "x86_64-linux";
               virtPlatform = "x86_64-linux";
             }
@@ -162,17 +163,6 @@
         acc: spec: acc // specToNixosConfigs spec
       ) { } nixosHostSpecs;
 
-      nixosConfigurationAliases = builtins.foldl' (
-        acc: spec:
-        if spec.type == "vm" && !(builtins.hasAttr spec.name canonicalNixosConfigurations) then
-          acc
-          // {
-            ${spec.name} = canonicalNixosConfigurations.${hostInventory.toNixosConfigName spec};
-          }
-        else
-          acc
-      ) { } nixosHostSpecs;
-
     in
     {
       darwinConfigurations = builtins.listToAttrs (
@@ -188,7 +178,7 @@
         ) (builtins.attrNames darwinHosts)
       );
 
-      nixosConfigurations = canonicalNixosConfigurations // nixosConfigurationAliases;
+      nixosConfigurations = canonicalNixosConfigurations;
 
       checks = import ./checks.nix {
         inherit

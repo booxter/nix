@@ -139,7 +139,7 @@ prioritize_hosts() {
   for host in "$@"; do
     if [[ "$host" =~ ^prx[0-9]+-lab$ || "$host" == "nvws" ]]; then
       prioritized+=("$host")
-    elif [[ "$host" == *cachevm* ]]; then
+    elif [[ "$host" == "cache" || "$host" == *cachevm* ]]; then
       deferred+=("$host")
     else
       normal+=("$host")

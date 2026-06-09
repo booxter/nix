@@ -6,7 +6,7 @@
 }:
 let
   glanceInternalPort = 18080;
-  fanaHostConfig = outputs.nixosConfigurations.prox-fanavm.config;
+  fanaHostConfig = outputs.nixosConfigurations.fana.config;
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
   pkiSpec = hostInventory.nixosHostSpecsByName.pki;
   pkiCaServer = pkiSpec.caServer;
