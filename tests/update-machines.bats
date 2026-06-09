@@ -6,8 +6,9 @@ setup() {
 
 write_update_machines_test_stubs() {
   local stub_dir="$1"
-  local bash_path
+  local bash_path python_path
   bash_path="$(command -v bash)"
+  python_path="$(command -v python3)"
 
   {
     printf '#!%s\n' "$bash_path"
@@ -135,6 +136,7 @@ EOF
 
   {
     printf '#!%s\n' "$bash_path"
+    printf 'python_path=%q\n' "$python_path"
     cat <<'EOF'
 set -euo pipefail
 if [[ "${1-}" == "-q" ]]; then
@@ -145,7 +147,7 @@ if [[ $# -lt 2 ]]; then
   exit 64
 fi
 shift
-python3 - "$@" <<'PY'
+"$python_path" - "$@" <<'PY'
 import os
 import pty
 import subprocess
@@ -215,6 +217,13 @@ EOF
   run resolve_base_host nvws
   [ "$status" -eq 0 ]
   [ "$output" = "nvws" ]
+}
+
+@test "resolve_runtime_host can differ from connection host" {
+  export HOST_RUNTIME_MAP_JSON='{"fana":"prox-fanavm"}'
+  run resolve_runtime_host fana
+  [ "$status" -eq 0 ]
+  [ "$output" = "prox-fanavm" ]
 }
 
 @test "resolve_host_alias maps host aliases" {

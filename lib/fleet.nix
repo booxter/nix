@@ -10,7 +10,7 @@ let
   hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
-  wireguardGatewaySshHost = hostInventory.toNixosSshHostName hostInventory.nixosHostSpecsByName.gw;
+  wireguardGatewaySshHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.gw;
   unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
 
   broadcomSas3flashP15 = pkgs.fetchzip {

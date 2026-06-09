@@ -149,6 +149,8 @@ let
     !(outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.mtls.enable or false
     )
   ) remoteBlackboxProbeSourceNames;
+  targetHostForNixosName =
+    name: hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.${name};
   mkRemoteBlackboxProbeSourceConfig =
     name:
     let
@@ -156,7 +158,7 @@ let
       mtlsEndpoint = hostConfig.host.observability.client.prometheusMtlsEndpoints.blackbox;
     in
     {
-      exporter = "${hostConfig.host.dnsName}:${toString mtlsEndpoint.port}";
+      exporter = "${targetHostForNixosName name}:${toString mtlsEndpoint.port}";
       scheme = "https";
       source = hostConfig.services.avahi.hostName;
     };

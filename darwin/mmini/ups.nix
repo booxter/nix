@@ -72,6 +72,12 @@ in
     esac
   '';
 
+  system.activationScripts.preActivation.text = lib.mkAfter ''
+    if [ -L /etc/nut/upsmon.conf ] && [ ! -e /etc/nut/upsmon.conf ]; then
+      rm /etc/nut/upsmon.conf
+    fi
+  '';
+
   system.activationScripts.postActivation.text = lib.mkAfter ''
     mkdir -p /var/lib/nut
     chmod 700 /var/lib/nut

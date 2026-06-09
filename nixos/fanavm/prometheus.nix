@@ -46,6 +46,7 @@ let
   };
   serviceScrapes = import ./scrapes/services.nix {
     inherit
+      hostInventory
       outputs
       prometheusMtlsTlsConfig
       ;

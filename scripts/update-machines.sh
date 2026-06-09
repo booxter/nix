@@ -63,7 +63,7 @@ HOST_BASE_MAP_JSON="$(
           in
           acc
           // {
-            \${configName} = hostInventory.toNixosSshHostName spec;
+            \${configName} = hostInventory.toNixosShortDnsName spec;
           }
         ) { } hostInventory.nixosHostSpecs;
         darwin = builtins.mapAttrs (_: cfg: cfg.hostname) hostInventory.darwinHosts;
@@ -73,6 +73,33 @@ HOST_BASE_MAP_JSON="$(
   )
 )"
 export HOST_BASE_MAP_JSON
+HOST_RUNTIME_MAP_JSON="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --impure --json --expr "
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            strings.toUpper = s: s;
+          };
+        };
+        nixos = builtins.foldl' (
+          acc: spec:
+          let
+            configName = hostInventory.toNixosConfigName spec;
+          in
+          acc
+          // {
+            \${configName} = hostInventory.toNixosRuntimeHostName spec;
+          }
+        ) { } hostInventory.nixosHostSpecs;
+        darwin = builtins.mapAttrs (_: cfg: cfg.hostname) hostInventory.darwinHosts;
+      in
+      nixos // darwin
+    "
+  )
+)"
+export HOST_RUNTIME_MAP_JSON
 HOST_ALIAS_MAP_JSON="$(
   (
     cd "${REPO_ROOT}"
@@ -541,7 +568,7 @@ ok_hosts=()
 failed_hosts=()
 for host in "${HOSTS[@]}"; do
   ssh_host="$(resolve_ssh_host "$host")"
-  runtime_host="$(resolve_base_host "$host")"
+  runtime_host="$(resolve_runtime_host "$host")"
   display_host="$(display_host_name "$host")"
   printf '%b\n' "${COLOR_HOST}==> ${display_host}${COLOR_RESET}"
   if ! [ -t 0 ]; then

@@ -101,6 +101,7 @@ def test_target_expression_includes_nixos_and_darwin_configs(tmp_path):
     expr = ssh_ticket.nix_targets_expr(tmp_path)
     assert "inventory.nixosHostSpecs" in expr
     assert "inventory.darwinHosts" in expr
+    assert "sshHost = inventory.toNixosShortDnsName spec;" in expr
     assert "f.nixosConfigurations" not in expr
     assert "f.darwinConfigurations" not in expr
 
@@ -111,8 +112,8 @@ def test_resolve_target_accepts_unique_alias():
             "name": "srvarr",
             "enabled": True,
             "aliases": ["srvarr"],
-            "principal": "ihrachyshka@prox-srvarrvm",
-            "sshHost": "prox-srvarrvm",
+            "principal": "ihrachyshka@srvarr",
+            "sshHost": "srvarr",
         }
     ]
     assert ssh_ticket.resolve_target(targets, "srvarr")["name"] == "srvarr"
@@ -147,7 +148,7 @@ def test_resolve_target_rejects_ambiguous_alias():
 def test_existing_ticket_valid_uses_metadata(tmp_path):
     target = {
         "name": "srvarr",
-        "principal": "ihrachyshka@prox-srvarrvm",
+        "principal": "ihrachyshka@srvarr",
     }
     paths = ssh_ticket.target_paths(target, tmp_path)
     paths["cert"].write_text("not a real cert\n", encoding="utf-8")
@@ -193,9 +194,9 @@ def test_ssht_command_does_not_add_ticket_key_to_agent(tmp_path):
         types.SimpleNamespace(
             key=str(tmp_path / "id_ed25519"), ssh_args=["--", "true"]
         ),
-        {"sshHost": "prox-srvarrvm"},
+        {"sshHost": "srvarr"},
         {"cert": tmp_path / "id_ed25519-cert.pub"},
     )
 
     assert "AddKeysToAgent=no" in cmd
-    assert cmd[-2:] == ["prox-srvarrvm", "true"]
+    assert cmd[-2:] == ["srvarr", "true"]
