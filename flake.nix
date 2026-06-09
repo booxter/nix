@@ -88,7 +88,6 @@
       inherit (hostSpecs)
         darwinHosts
         nixosHostSpecs
-        toProxVmName
         virtPlatform
         ;
 
@@ -113,7 +112,7 @@
           ...
         }:
         let
-          runtimeHostname = toProxVmName name;
+          runtimeHostname = hostInventory.toNixosRuntimeHostName hostInventory.nixosHostSpecsByName.${name};
         in
         {
           "${name}" = helpers.mkVM (
