@@ -31,7 +31,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-nvvm.config.system.build.toplevel",
+      "attr": "nixosConfigurations.nv.config.system.build.toplevel",
       "name": "nvvm (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -91,7 +91,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-builder1vm.config.system.build.toplevel",
+      "attr": "nixosConfigurations.builder1.config.system.build.toplevel",
       "name": "builder (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -104,7 +104,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-cachevm.config.system.build.toplevel",
+      "attr": "nixosConfigurations.cache.config.system.build.toplevel",
       "name": "cache (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -134,7 +134,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-srvarrvm.config.system.build.toplevel",
+      "attr": "nixosConfigurations.srvarr.config.system.build.toplevel",
       "name": "srvarr (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -149,7 +149,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-fanavm.config.system.build.toplevel",
+      "attr": "nixosConfigurations.fana.config.system.build.toplevel",
       "name": "fana (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -164,7 +164,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-gwvm.config.system.build.toplevel",
+      "attr": "nixosConfigurations.gw.config.system.build.toplevel",
       "name": "gw (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -179,7 +179,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-orgvm.config.system.build.toplevel",
+      "attr": "nixosConfigurations.org.config.system.build.toplevel",
       "name": "org (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -194,7 +194,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-builder1vm.config.system.build.vm",
+      "attr": "nixosConfigurations.builder1.config.system.build.vm",
       "name": "nixos vm builder1 (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -252,7 +252,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-builder1vm.config.system.build.vmQemu",
+      "attr": "nixosConfigurations.builder1.config.system.build.vmQemu",
       "name": "nixos vm qemu (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
@@ -276,7 +276,7 @@
       "warm": true
     },
     {
-      "attr": "nixosConfigurations.prox-builder1vm.config.virtualisation.proxmox.iso",
+      "attr": "nixosConfigurations.builder1.config.virtualisation.proxmox.iso",
       "name": "nixos vm proxmox iso (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {

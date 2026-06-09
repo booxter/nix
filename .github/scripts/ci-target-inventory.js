@@ -26,6 +26,9 @@ function toBuildMatrixEntries(targets) {
   const seen = new Set();
 
   return targets.map((target, index) => {
+    // TODO: Make config diff targets explicit in ci-target-inventory.json
+    // instead of deriving them from the build attr. The diff app currently
+    // canonicalizes short VM aliases like "org" back to runtime names.
     const machine = diffMachineForAttr(target.attr);
     const shouldDiff = machine && !seen.has(machine);
 
