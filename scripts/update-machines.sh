@@ -87,11 +87,10 @@ HOST_ALIAS_MAP_JSON="$(
           acc: spec:
           let
             configName = hostInventory.toNixosConfigName spec;
-            displayName = if spec.type == \"vm\" then spec.name else configName;
           in
           acc
           // {
-            \${displayName} = configName;
+            \${configName} = configName;
           }
         ) { } hostInventory.nixosHostSpecs;
         darwin = builtins.foldl' (
@@ -133,11 +132,10 @@ HOST_DISPLAY_MAP_JSON="$(
           acc: spec:
           let
             configName = hostInventory.toNixosConfigName spec;
-            displayName = if spec.type == \"vm\" then spec.name else configName;
           in
           acc
           // {
-            \${configName} = displayName;
+            \${configName} = configName;
           }
         ) { } hostInventory.nixosHostSpecs;
         darwin = builtins.mapAttrs (name: _: name) hostInventory.darwinHosts;

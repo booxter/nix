@@ -23,10 +23,10 @@ flake_json() {
           spec:
           let
             configName = hostInventory.toNixosConfigName spec;
-            displayName = if spec.type == \"vm\" then spec.name else configName;
           in
           {
-            inherit configName displayName;
+            inherit configName;
+            displayName = configName;
           }
         ) hostInventory.nixosHostSpecs
       );

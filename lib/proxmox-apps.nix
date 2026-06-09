@@ -5,7 +5,7 @@
 let
   pkgs = inputs.nixpkgs.legacyPackages.${system};
   hostInventory = import ./inventory.nix { lib = pkgs.lib; };
-  vmSpecs = builtins.filter (spec: spec.type == "vm") hostInventory.nixosHostSpecs;
+  vmSpecs = builtins.filter hostInventory.isNixosVM hostInventory.nixosHostSpecs;
   vmTargetCases = pkgs.lib.concatMapStringsSep "\n" (spec: ''
     ${pkgs.lib.escapeShellArg spec.name})
       ;;

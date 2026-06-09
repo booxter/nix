@@ -34,16 +34,7 @@ let
     };
   mkNixosTarget =
     spec:
-    if spec.type == "bm" then
-      mkTarget {
-        name = spec.name;
-        aliases = [
-          (spec.hostname or spec.name)
-          (spec.dnsName or (spec.hostname or spec.name))
-        ];
-        isWork = spec.isWork or false;
-      }
-    else if spec.type == "vm" then
+    if hostInventory.isNixosVM spec then
       let
         sshHost = hostInventory.toNixosSshHostName spec;
       in
@@ -54,7 +45,14 @@ let
         isWork = spec.isWork or false;
       }
     else
-      throw "Unsupported NixOS host spec type `${spec.type}` for SSH ticket client config.";
+      mkTarget {
+        name = spec.name;
+        aliases = [
+          (spec.hostname or spec.name)
+          (spec.dnsName or (spec.hostname or spec.name))
+        ];
+        isWork = spec.isWork or false;
+      };
   ticketTargets =
     map mkNixosTarget hostInventory.nixosHostSpecs
     ++ lib.mapAttrsToList mkDarwinTarget hostInventory.darwinHosts;

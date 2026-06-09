@@ -144,7 +144,9 @@
             (if spec ? homeManagerInput then { homeManagerInput = inputs.${spec.homeManagerInput}; } else { })
             // (if spec ? nixpkgsInput then { nixpkgsInput = inputs.${spec.nixpkgsInput}; } else { });
         in
-        if spec.type == "bm" then
+        if hostInventory.isNixosVM spec then
+          VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
+        else
           BM (
             args
             // inputArgs
@@ -152,11 +154,7 @@
               mkHost = hostKindToMkHost.${spec.hostKind};
               extraModules = (args.extraModules or [ ]) ++ extraModules;
             }
-          )
-        else if spec.type == "vm" then
-          VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
-        else
-          throw "Unsupported NixOS host spec type `${spec.type}`";
+          );
 
       canonicalNixosConfigurations = builtins.foldl' (
         acc: spec: acc // specToNixosConfigs spec

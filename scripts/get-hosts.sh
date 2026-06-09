@@ -28,11 +28,10 @@ nix eval --impure --json --expr "
         let
           isWork = spec.isWork or false;
           configName = hostInventory.toNixosConfigName spec;
-          displayName = if spec.type == \"vm\" then spec.name else configName;
         in
         acc
         // {
-          \${displayName} = isWork;
+          \${configName} = isWork;
         }
       ) { } hostInventory.nixosHostSpecs;
     };
@@ -40,11 +39,10 @@ nix eval --impure --json --expr "
       acc: spec:
       let
         configName = hostInventory.toNixosConfigName spec;
-        displayName = if spec.type == \"vm\" then spec.name else configName;
       in
       acc
       // {
-        \${displayName} = displayName;
+        \${configName} = configName;
       }
     ) { } hostInventory.nixosHostSpecs;
     darwinAliases = builtins.mapAttrs (name: _: name) hostInventory.darwinHosts;

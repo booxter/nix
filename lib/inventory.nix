@@ -92,31 +92,13 @@ rec {
   toProxVmName = name: "prox-${toVmName name}";
   isNixosVM = spec: (spec.isVM or false) || (spec.type or null) == "vm";
   isNixosBM = spec: !(isNixosVM spec);
-  toNixosConfigName =
-    spec:
-    if spec.type == "bm" || spec.type == "vm" then
-      spec.name
-    else
-      throw "Unsupported NixOS host spec type `${spec.type}`";
+  toNixosConfigName = spec: spec.name;
   toNixosRuntimeHostName =
     spec:
-    spec.hostname or (spec.dhcpReservation.hostname or (
-      if spec.type == "vm" then
-        toProxVmName spec.name
-      else if spec.type == "bm" then
-        spec.name
-      else
-        throw "Unsupported NixOS host spec type `${spec.type}`"
-    )
-    );
-  toNixosModuleDirName =
-    spec:
-    if spec.type == "bm" then
-      spec.name
-    else if spec.type == "vm" then
-      toVmName spec.name
-    else
-      throw "Unsupported NixOS host spec type `${spec.type}`";
+    spec.hostname
+      or (spec.dhcpReservation.hostname or (if isNixosVM spec then toProxVmName spec.name else spec.name)
+      );
+  toNixosModuleDirName = spec: if isNixosVM spec then toVmName spec.name else spec.name;
   toNixosSshHostName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};

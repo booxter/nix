@@ -209,18 +209,7 @@ def nix_targets_expr(repo_root):
           }};
         mkNixosTarget =
           spec:
-          if spec.type == "bm" then
-            mkTarget {{
-              kind = "nixos";
-              name = spec.name;
-              aliases = [
-                (spec.hostname or spec.name)
-                (spec.dnsName or (spec.hostname or spec.name))
-              ];
-              dnsName = spec.dnsName or (spec.hostname or spec.name);
-              isWork = spec.isWork or false;
-            }}
-          else if spec.type == "vm" then
+          if inventory.isNixosVM spec then
             let
               sshHost = inventory.toNixosSshHostName spec;
             in
@@ -232,7 +221,16 @@ def nix_targets_expr(repo_root):
               isWork = spec.isWork or false;
             }}
           else
-            throw "Unsupported NixOS host spec type `${{spec.type}}` for SSH ticket targets.";
+            mkTarget {{
+              kind = "nixos";
+              name = spec.name;
+              aliases = [
+                (spec.hostname or spec.name)
+                (spec.dnsName or (spec.hostname or spec.name))
+              ];
+              dnsName = spec.dnsName or (spec.hostname or spec.name);
+              isWork = spec.isWork or false;
+            }};
         mkDarwinTarget =
           name: spec:
           mkTarget {{
