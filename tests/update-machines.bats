@@ -217,6 +217,21 @@ EOF
   [ "$output" = "nvws" ]
 }
 
+@test "resolve_host_alias maps short prox VM names to canonical configs" {
+  export HOST_ALIAS_MAP_JSON='{"org":"prox-orgvm","prox-orgvm":"prox-orgvm","beast":"beast"}'
+  run resolve_host_alias org
+  [ "$status" -eq 0 ]
+  [ "$output" = "prox-orgvm" ]
+}
+
+@test "canonicalize_hosts preserves order after alias resolution" {
+  export HOST_ALIAS_MAP_JSON='{"org":"prox-orgvm","srvarr":"prox-srvarrvm","beast":"beast"}'
+  run canonicalize_hosts org beast srvarr
+  [ "$status" -eq 0 ]
+  expected=$'prox-orgvm\nbeast\nprox-srvarrvm'
+  [ "$output" = "$expected" ]
+}
+
 @test "hosts_from_work_map returns sorted unique hosts" {
   work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
   run hosts_from_work_map "$work_map"

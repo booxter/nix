@@ -73,6 +73,60 @@ HOST_BASE_MAP_JSON="$(
   )
 )"
 export HOST_BASE_MAP_JSON
+HOST_ALIAS_MAP_JSON="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --impure --json --expr "
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            strings.toUpper = s: s;
+          };
+        };
+        nixos = builtins.foldl' (
+          acc: spec:
+          let
+            configName = hostInventory.toNixosConfigName spec;
+            displayName = if spec.type == \"vm\" then spec.name else configName;
+          in
+          acc
+          // {
+            \${displayName} = configName;
+          }
+          // (
+            if configName == displayName then
+              { }
+            else
+              {
+                \${configName} = configName;
+              }
+          )
+        ) { } hostInventory.nixosHostSpecs;
+        darwin = builtins.foldl' (
+          acc: name:
+          let
+            cfg = hostInventory.darwinHosts.\${name};
+            hostname = cfg.hostname or name;
+          in
+          acc
+          // {
+            \${name} = name;
+          }
+          // (
+            if hostname == name then
+              { }
+            else
+              {
+                \${hostname} = name;
+              }
+          )
+        ) { } (builtins.attrNames hostInventory.darwinHosts);
+      in
+      nixos // darwin
+    "
+  )
+)"
+export HOST_ALIAS_MAP_JSON
 WORK_MAP=""
 DRY_RUN=false
 SELECT=false
@@ -405,6 +459,7 @@ if [[ "$SELECT" == "true" ]]; then
   HOSTS=("${selected[@]}")
 fi
 
+mapfile -t HOSTS < <(canonicalize_hosts "${HOSTS[@]}")
 mapfile -t HOSTS < <(prioritize_hosts "${HOSTS[@]}")
 
 echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."

@@ -36,6 +36,28 @@ resolve_base_host() {
   jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_BASE_MAP_JSON"
 }
 
+resolve_host_alias() {
+  local host="$1"
+  local resolved
+
+  if [[ -z "${HOST_ALIAS_MAP_JSON:-}" ]]; then
+    printf '%s' "$host"
+    return 0
+  fi
+
+  resolved="$(jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_ALIAS_MAP_JSON")"
+  printf '%s' "$resolved"
+}
+
+canonicalize_hosts() {
+  local host
+
+  for host in "$@"; do
+    resolve_host_alias "$host"
+    printf '\n'
+  done
+}
+
 is_work_host() {
   local host="$1"
   local work_map="$2"
