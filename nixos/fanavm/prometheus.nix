@@ -37,6 +37,7 @@ let
   };
   proxmoxScrapes = import ./scrapes/proxmox.nix {
     inherit
+      hostInventory
       outputs
       prometheusMtlsTlsConfig
       ;

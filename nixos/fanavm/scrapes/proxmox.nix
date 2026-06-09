@@ -1,14 +1,16 @@
 {
+  hostInventory,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
+  nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
     && (outputs.nixosConfigurations.${name}.config.host.proxmox.prometheusExporter.enable or false)
-  ) (builtins.attrNames outputs.nixosConfigurations);
+  ) nixosConfigNames;
   proxmoxClusterScrapeNodeName = "prx1-lab";
   mkProxmoxPveTargetConfig =
     name:

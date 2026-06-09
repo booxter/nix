@@ -158,6 +158,21 @@
         else
           throw "Unsupported NixOS host spec type `${spec.type}`";
 
+      canonicalNixosConfigurations = builtins.foldl' (
+        acc: spec: acc // specToNixosConfigs spec
+      ) { } nixosHostSpecs;
+
+      nixosConfigurationAliases = builtins.foldl' (
+        acc: spec:
+        if spec.type == "vm" && !(builtins.hasAttr spec.name canonicalNixosConfigurations) then
+          acc
+          // {
+            ${spec.name} = canonicalNixosConfigurations.${hostInventory.toNixosConfigName spec};
+          }
+        else
+          acc
+      ) { } nixosHostSpecs;
+
     in
     {
       darwinConfigurations = builtins.listToAttrs (
@@ -173,9 +188,7 @@
         ) (builtins.attrNames darwinHosts)
       );
 
-      nixosConfigurations = builtins.foldl' (
-        acc: spec: acc // specToNixosConfigs spec
-      ) { } nixosHostSpecs;
+      nixosConfigurations = canonicalNixosConfigurations // nixosConfigurationAliases;
 
       checks = import ./checks.nix {
         inherit

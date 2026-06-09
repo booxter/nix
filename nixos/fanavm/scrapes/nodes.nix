@@ -6,6 +6,7 @@
   prometheusMtlsTlsConfig,
 }:
 let
+  nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
   isVirtualNodeName = hostInventory.isProxVmName;
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   scrapeExpectationForHostConfig =
@@ -31,7 +32,7 @@ let
     name != "prox-fanavm"
     && (outputs.nixosConfigurations.${name}.config.host.observability.client.enable or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
-  ) (builtins.attrNames outputs.nixosConfigurations);
+  ) nixosConfigNames;
   remoteNixosNonMtlsNodeTargetNames = builtins.filter (
     name:
     !(outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
