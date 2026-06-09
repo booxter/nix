@@ -12,6 +12,8 @@ let
     && (outputs.nixosConfigurations.${name}.config.host.proxmox.prometheusExporter.enable or false)
   ) nixosConfigNames;
   proxmoxClusterScrapeNodeName = "prx1-lab";
+  targetHostForNixosName =
+    name: hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.${name};
   mkProxmoxPveTargetConfig =
     name:
     let
@@ -24,7 +26,7 @@ let
         proxmox_node = hostConfig.networking.hostName;
         pve_target = hostConfig.host.proxmox.apiCertificate.serverName;
       };
-      targets = [ "${hostConfig.host.dnsName}:${toString endpoint.port}" ];
+      targets = [ "${targetHostForNixosName name}:${toString endpoint.port}" ];
     };
   proxmoxPveTargetConfigs = map mkProxmoxPveTargetConfig proxmoxLabNodeNames;
   proxmoxClusterTargetConfigs = [ (mkProxmoxPveTargetConfig proxmoxClusterScrapeNodeName) ];

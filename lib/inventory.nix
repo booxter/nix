@@ -150,7 +150,7 @@ rec {
         let
           spec = nixosHostSpecsByName.${service.owner};
         in
-        toNixosSshHostName spec;
+        toNixosShortDnsName spec;
     };
 
   site = rec {

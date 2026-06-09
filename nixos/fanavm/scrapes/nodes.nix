@@ -15,6 +15,8 @@ let
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   scrapeExpectationForHostConfig =
     hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";
+  targetHostForNixosName =
+    name: hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.${name};
   mkRemoteNixosNodeTargetConfig =
     name:
     let
@@ -29,7 +31,7 @@ let
         instance = name;
         scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
-      targets = [ "${hostConfig.host.dnsName}:9100" ];
+      targets = [ "${targetHostForNixosName name}:9100" ];
     };
   nixosNodeExporterTargetNames = builtins.filter (
     name:

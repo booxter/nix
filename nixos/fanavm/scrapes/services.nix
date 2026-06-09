@@ -1,15 +1,18 @@
 {
+  hostInventory,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
+  beastTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.beast;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
+  sabnzbdTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.srvarr;
   vikunjaHostConfig = outputs.nixosConfigurations.org.config;
-  vikunjaTargetHost = vikunjaHostConfig.host.dnsName;
+  vikunjaTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
   vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
@@ -21,7 +24,7 @@ in
       static_configs = [
         {
           targets = [
-            "${beastHostConfig.host.dnsName}:${toString beastPrometheusEndpoints.smartctl.port}"
+            "${beastTargetHost}:${toString beastPrometheusEndpoints.smartctl.port}"
           ];
           labels.instance = "beast";
         }
@@ -35,7 +38,7 @@ in
       static_configs = [
         {
           targets = [
-            "${beastHostConfig.host.dnsName}:${toString beastPrometheusEndpoints.jellyfin.port}"
+            "${beastTargetHost}:${toString beastPrometheusEndpoints.jellyfin.port}"
           ];
           labels.instance = "beast";
         }
@@ -49,7 +52,7 @@ in
       static_configs = [
         {
           targets = [
-            "${beastHostConfig.host.dnsName}:${toString lolekEndpoint.port}"
+            "${beastTargetHost}:${toString lolekEndpoint.port}"
           ];
           labels.instance = "beast";
         }
@@ -62,7 +65,7 @@ in
       static_configs = [
         {
           targets = [
-            "${sabnzbdHostConfig.host.dnsName}:${toString sabnzbdEndpoint.port}"
+            "${sabnzbdTargetHost}:${toString sabnzbdEndpoint.port}"
           ];
           labels.instance = "srvarr";
         }
