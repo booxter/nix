@@ -10,6 +10,24 @@ let
   frame = "frame";
   nvws = "nvws";
 
+  builderDhcpReservations = {
+    "1" = {
+      match = "bc:24:11:49:bf:fc";
+      hostname = "prox-builder1vm";
+      ip = "192.168.12.106";
+    };
+    "2" = {
+      match = "bc:24:11:dc:ea:2c";
+      hostname = "prox-builder2vm";
+      ip = "192.168.13.243";
+    };
+    "3" = {
+      match = "bc:24:11:2a:ee:d7";
+      hostname = "prox-builder3vm";
+      ip = "192.168.11.114";
+    };
+  };
+
   builderSpec =
     idx:
     let
@@ -19,6 +37,7 @@ let
       isVM = true;
       name = "builder${idx'}";
       proxNode = "prx${idx'}-lab";
+      dhcpReservation = builderDhcpReservations.${idx'};
       stateVersion = "25.11";
       memorySize = 64;
       diskSize = 150;
