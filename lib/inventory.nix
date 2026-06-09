@@ -26,9 +26,14 @@ let
       hmFull = false;
       extraModules = [
         (
-          { hostname, lib, ... }:
           {
-            system.autoUpgrade = lib.mkIf (lib.hasPrefix "prox-" hostname) {
+            hostname,
+            hostSpecName ? hostname,
+            lib,
+            ...
+          }:
+          {
+            system.autoUpgrade = lib.mkIf (lib.hasPrefix "builder" hostSpecName) {
               dates = "Mon 03:00";
               rebootWindow = {
                 lower = lib.mkForce "02:59";
