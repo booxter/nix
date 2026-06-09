@@ -217,6 +217,13 @@ EOF
   [ "$output" = "nvws" ]
 }
 
+@test "resolve_runtime_host can differ from connection host" {
+  export HOST_RUNTIME_MAP_JSON='{"fana":"prox-fanavm"}'
+  run resolve_runtime_host fana
+  [ "$status" -eq 0 ]
+  [ "$output" = "prox-fanavm" ]
+}
+
 @test "resolve_host_alias maps host aliases" {
   export HOST_ALIAS_MAP_JSON='{"org":"org","beast":"beast"}'
   run resolve_host_alias org

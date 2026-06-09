@@ -36,6 +36,16 @@ resolve_base_host() {
   jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_BASE_MAP_JSON"
 }
 
+resolve_runtime_host() {
+  local host="$1"
+  if [[ -z "${HOST_RUNTIME_MAP_JSON:-}" ]]; then
+    printf '%s' "$host"
+    return 0
+  fi
+
+  jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_RUNTIME_MAP_JSON"
+}
+
 resolve_host_alias() {
   local host="$1"
   local resolved
