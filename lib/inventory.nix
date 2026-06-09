@@ -17,6 +17,7 @@ let
     in
     {
       type = "vm";
+      isVM = true;
       name = "builder${idx'}";
       proxNode = "prx${idx'}-lab";
       stateVersion = "25.11";
@@ -89,6 +90,8 @@ rec {
 
   toVmName = name: "${name}vm";
   toProxVmName = name: "prox-${toVmName name}";
+  isNixosVM = spec: (spec.isVM or false) || (spec.type or null) == "vm";
+  isNixosBM = spec: !(isNixosVM spec);
   toNixosConfigName =
     spec:
     if spec.type == "bm" || spec.type == "vm" then
@@ -455,6 +458,7 @@ rec {
     }
     {
       type = "vm";
+      isVM = true;
       name = "nv";
       isWork = true;
       upsHost = nvws;
@@ -465,6 +469,7 @@ rec {
     }
     {
       type = "vm";
+      isVM = true;
       name = "cache";
       upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
@@ -481,6 +486,7 @@ rec {
     }
     {
       type = "vm";
+      isVM = true;
       name = "srvarr";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
@@ -514,6 +520,7 @@ rec {
     }
     {
       type = "vm";
+      isVM = true;
       name = "fana";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
@@ -534,6 +541,7 @@ rec {
     }
     {
       type = "vm";
+      isVM = true;
       name = "gw";
       upsHost = "prx1-lab";
       cores = 2;
@@ -549,6 +557,7 @@ rec {
     }
     {
       type = "vm";
+      isVM = true;
       name = "org";
       platform = "x86_64-linux";
       localDnsAliases = [ "vikunja" ];
@@ -566,6 +575,7 @@ rec {
     }
     {
       type = "vm";
+      isVM = true;
       name = "pki";
       platform = "x86_64-linux";
       caServer = {
