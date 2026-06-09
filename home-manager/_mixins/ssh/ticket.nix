@@ -36,7 +36,7 @@ let
     spec:
     if hostInventory.isNixosVM spec then
       let
-        sshHost = hostInventory.toNixosSshHostName spec;
+        sshHost = hostInventory.toNixosShortDnsName spec;
       in
       mkTarget {
         name = spec.name;
@@ -67,6 +67,7 @@ let
       value = lib.hm.dag.entryBefore [ "*" ] {
         header = "Host ${lib.concatStringsSep " " patterns}";
         HostName = target.sshHost;
+        HostKeyAlias = target.name;
         User = username;
         IdentitiesOnly = true;
         IdentityFile = ticketKeyPath;
