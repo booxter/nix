@@ -46,14 +46,6 @@ nix eval --impure --json --expr "
       // {
         \${displayName} = displayName;
       }
-      // (
-        if configName == displayName then
-          { }
-        else
-          {
-            \${configName} = displayName;
-          }
-      )
     ) { } hostInventory.nixosHostSpecs;
     darwinAliases = builtins.mapAttrs (name: _: name) hostInventory.darwinHosts;
     requestedHosts = ${HOSTS_NIX};

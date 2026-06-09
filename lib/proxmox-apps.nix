@@ -6,17 +6,10 @@ let
   pkgs = inputs.nixpkgs.legacyPackages.${system};
   hostInventory = import ./inventory.nix { lib = pkgs.lib; };
   vmSpecs = builtins.filter (spec: spec.type == "vm") hostInventory.nixosHostSpecs;
-  vmTargetCases = pkgs.lib.concatMapStringsSep "\n" (
-    spec:
-    let
-      flakeTarget = hostInventory.toNixosConfigName spec;
-    in
-    ''
-      ${pkgs.lib.escapeShellArg spec.name}|${pkgs.lib.escapeShellArg flakeTarget})
-        flake_target=${pkgs.lib.escapeShellArg flakeTarget}
-        ;;
-    ''
-  ) vmSpecs;
+  vmTargetCases = pkgs.lib.concatMapStringsSep "\n" (spec: ''
+    ${pkgs.lib.escapeShellArg spec.name})
+      ;;
+  '') vmSpecs;
   mkApp = program: description: {
     type = "app";
     inherit program;
@@ -67,7 +60,7 @@ if builtins.hasAttr system inputs.proxmox-nixos.packages then
           "$proxmox_host" \
           "root" \
           "priv/lab-''${proxmox_host}" \
-          "$flake_target"
+          "$vm_type"
       '';
     };
   in

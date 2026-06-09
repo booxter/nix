@@ -94,8 +94,8 @@ fi
 
 echo "get-hosts.sh with args output matches expected filtered map."
 
-# Canonical prox VM arguments are still accepted but displayed as short names.
-expected_canonical_filtered='{
+# Short prox VM arguments are accepted and displayed as short names.
+expected_vm_filtered='{
   "darwin": {},
   "nixos": {
     "org": false,
@@ -104,27 +104,27 @@ expected_canonical_filtered='{
 }'
 
 stderr_file="$(mktemp)"
-if ! canonical_filtered_json="$(./scripts/get-hosts.sh prox-orgvm srvarr 2>"$stderr_file")"; then
-  echo "get-hosts.sh with canonical VM args failed" >&2
+if ! vm_filtered_json="$(./scripts/get-hosts.sh org srvarr 2>"$stderr_file")"; then
+  echo "get-hosts.sh with short VM args failed" >&2
   cat "$stderr_file" >&2 || true
   rm -f "$stderr_file"
   exit 1
 fi
-if [[ -z "$canonical_filtered_json" ]]; then
-  echo "get-hosts.sh with canonical VM args produced no output" >&2
+if [[ -z "$vm_filtered_json" ]]; then
+  echo "get-hosts.sh with short VM args produced no output" >&2
   cat "$stderr_file" >&2 || true
   rm -f "$stderr_file"
   exit 1
 fi
 rm -f "$stderr_file"
 
-canonical_filtered_norm="$(printf '%s' "$canonical_filtered_json" | normalize_json)"
-expected_canonical_filtered_norm="$(printf '%s' "$expected_canonical_filtered" | normalize_json)"
+vm_filtered_norm="$(printf '%s' "$vm_filtered_json" | normalize_json)"
+expected_vm_filtered_norm="$(printf '%s' "$expected_vm_filtered" | normalize_json)"
 
-if [[ "$canonical_filtered_norm" != "$expected_canonical_filtered_norm" ]]; then
-  echo "get-hosts.sh with canonical VM args output mismatch" >&2
-  diff -u <(printf '%s\n' "$expected_canonical_filtered_norm") <(printf '%s\n' "$canonical_filtered_norm") || true
+if [[ "$vm_filtered_norm" != "$expected_vm_filtered_norm" ]]; then
+  echo "get-hosts.sh with short VM args output mismatch" >&2
+  diff -u <(printf '%s\n' "$expected_vm_filtered_norm") <(printf '%s\n' "$vm_filtered_norm") || true
   exit 1
 fi
 
-echo "get-hosts.sh with canonical VM args output matches expected filtered map."
+echo "get-hosts.sh with short VM args output matches expected filtered map."

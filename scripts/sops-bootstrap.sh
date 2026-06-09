@@ -175,10 +175,6 @@ if [[ -z "$local_pubkey" ]]; then
 fi
 
 secret_host="${host}"
-if [[ "${secret_host}" == prox-*vm ]]; then
-  secret_host="${secret_host#prox-}"
-  secret_host="${secret_host%vm}"
-fi
 
 secrets_dir="secrets"
 secrets_file="${secrets_dir}/${secret_host}.yaml"

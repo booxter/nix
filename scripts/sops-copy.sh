@@ -11,7 +11,7 @@ Copy SRC_KEY_PATH from secrets/SRC_HOST.yaml into secrets/DST_HOST.yaml.
 If DST_KEY_PATH is omitted, SRC_KEY_PATH is used in the destination too.
 Example:
   scripts/sops-copy.sh mair prx1-lab attic
-  scripts/sops-copy.sh prx1-lab prox-gwvm nut/users/upsslave/password nut/monitors/prx1-lab/password
+  scripts/sops-copy.sh prx1-lab gw nut/users/upsslave/password nut/monitors/prx1-lab/password
 EOF
 }
 

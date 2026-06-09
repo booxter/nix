@@ -12,7 +12,7 @@ import tempfile
 import yaml
 
 
-DEFAULT_CA_HOST = "prox-pkivm"
+DEFAULT_CA_HOST = "pki"
 DEFAULT_PROVISIONER = "bootstrap@home.arpa"
 DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
@@ -117,33 +117,48 @@ def nix_eval_raw_optional(*segments):
     return raw.strip()
 
 
-def canonical_host_name(host):
-    expr = f"""
+def secret_path_for_host(host):
+    return REPO_ROOT / "secrets" / f"{host}.yaml"
+
+
+_KNOWN_INVENTORY_HOSTS = None
+
+
+def known_inventory_hosts():
+    global _KNOWN_INVENTORY_HOSTS
+    if _KNOWN_INVENTORY_HOSTS is None:
+        expr = f"""
 let
   f = builtins.getFlake {json.dumps(str(REPO_ROOT))};
   inventory = import {json.dumps(str(REPO_ROOT / "lib/inventory.nix"))} {{
     lib = f.inputs.nixpkgs.lib;
   }};
-  name = {json.dumps(host)};
-  specName = inventory.nixosConfigNameToSpecName name;
 in
-  if builtins.hasAttr specName inventory.nixosHostSpecsByName then
-    inventory.toNixosConfigName (builtins.getAttr specName inventory.nixosHostSpecsByName)
-  else
-    name
+  builtins.attrNames inventory.nixosHostSpecsByName
+  ++ builtins.attrNames inventory.darwinHosts
 """
-    return run(["nix", "eval", "--impure", "--raw", "--expr", expr]).strip()
+        _KNOWN_INVENTORY_HOSTS = set(
+            json.loads(
+                run(
+                    [
+                        "nix",
+                        "--extra-experimental-features",
+                        "nix-command flakes",
+                        "eval",
+                        "--impure",
+                        "--json",
+                        "--expr",
+                        expr,
+                    ]
+                )
+            )
+        )
+    return _KNOWN_INVENTORY_HOSTS
 
 
-def secret_name_for_host(host):
-    match = re.fullmatch(r"prox-(.+)vm", host)
-    if match:
-        return match.group(1)
-    return host
-
-
-def secret_path_for_host(host):
-    return REPO_ROOT / "secrets" / f"{secret_name_for_host(host)}.yaml"
+def validate_inventory_host(host):
+    if host not in known_inventory_hosts():
+        raise SystemExit(f"Unknown host: {host}")
 
 
 def set_nested(mapping, dotted_path, value):
@@ -463,8 +478,10 @@ def main():
     if args.endpoint and args.client:
         raise SystemExit("--endpoint and --client are mutually exclusive")
 
-    host = canonical_host_name(args.host)
-    ca_host = canonical_host_name(args.ca_host)
+    validate_inventory_host(args.host)
+    validate_inventory_host(args.ca_host)
+    host = args.host
+    ca_host = args.ca_host
 
     if args.endpoint:
         issue_endpoint(host, args.endpoint, ca_host=ca_host)

@@ -366,13 +366,13 @@ The normal rollout loop for this repo should be:
 2. run local formatting and flake checks
 3. commit the change
 4. push the branch
-5. deploy `prox-fanavm` from that branch
+5. deploy `fana` from that branch
 6. verify Prometheus, Alertmanager, and Grafana runtime state
 
 Current branch deployment command:
 
 ```sh
-nix run .#deploy -- --branch <branch> prox-fanavm
+nix run .#deploy -- --branch <branch> fana
 ```
 
 Current runtime verification should include:

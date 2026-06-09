@@ -45,7 +45,7 @@ Update multiple machines over SSH with `nix run .#deploy` (defaults to
 nix run .#deploy -- -A
 
 # Stage a NixOS config for reboot instead of switching immediately
-nix run .#deploy -- --branch ci/flake-update --boot prox-srvarrvm
+nix run .#deploy -- --branch ci/flake-update --boot srvarr
 
 # Update all work machines
 nix run .#deploy -- -A --work

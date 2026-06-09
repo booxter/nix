@@ -218,10 +218,17 @@ EOF
 }
 
 @test "resolve_host_alias maps short prox VM names to canonical configs" {
-  export HOST_ALIAS_MAP_JSON='{"org":"prox-orgvm","prox-orgvm":"prox-orgvm","beast":"beast"}'
+  export HOST_ALIAS_MAP_JSON='{"org":"prox-orgvm","beast":"beast"}'
   run resolve_host_alias org
   [ "$status" -eq 0 ]
   [ "$output" = "prox-orgvm" ]
+}
+
+@test "resolve_host_alias rejects canonical prox VM names like unknown hosts" {
+  export HOST_ALIAS_MAP_JSON='{"org":"prox-orgvm","beast":"beast"}'
+  run resolve_host_alias prox-orgvm
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Unknown host: prox-orgvm"* ]]
 }
 
 @test "canonicalize_hosts preserves order after alias resolution" {

@@ -93,14 +93,6 @@ HOST_ALIAS_MAP_JSON="$(
           // {
             \${displayName} = configName;
           }
-          // (
-            if configName == displayName then
-              { }
-            else
-              {
-                \${configName} = configName;
-              }
-          )
         ) { } hostInventory.nixosHostSpecs;
         darwin = builtins.foldl' (
           acc: name:

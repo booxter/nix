@@ -29,7 +29,7 @@ Deploy or redeploy the VM:
 ```bash
 nix run .#prox-deploy -- gw prx1-lab
 # or, after the VM already exists
-nix run .#deploy -- prox-gwvm
+nix run .#deploy -- gw
 ```
 
 Generate a client config locally from the tracked topology:

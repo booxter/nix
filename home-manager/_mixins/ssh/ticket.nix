@@ -45,10 +45,11 @@ let
       }
     else if spec.type == "vm" then
       let
-        name = hostInventory.toNixosConfigName spec;
+        sshHost = hostInventory.toNixosConfigName spec;
       in
       mkTarget {
-        inherit name;
+        name = spec.name;
+        inherit sshHost;
         aliases = [ spec.name ];
         isWork = spec.isWork or false;
       }

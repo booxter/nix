@@ -222,11 +222,12 @@ def nix_targets_expr(repo_root):
             }}
           else if spec.type == "vm" then
             let
-              name = inventory.toNixosConfigName spec;
+              sshHost = inventory.toNixosConfigName spec;
             in
             mkTarget {{
               kind = "nixos";
-              inherit name;
+              name = spec.name;
+              inherit sshHost;
               aliases = [ spec.name ];
               isWork = spec.isWork or false;
             }}
@@ -276,7 +277,6 @@ def resolve_target(targets, requested, *, allow_disabled=False):
         matches = []
         for target in targets:
             aliases = set(target.get("aliases", []))
-            aliases.add(target["sshHost"])
             if requested in aliases:
                 matches.append(target)
         unique = {match["name"]: match for match in matches}
@@ -300,13 +300,7 @@ def resolve_target(targets, requested, *, allow_disabled=False):
 
 
 def display_target_name(target):
-    name = target["name"]
-    if not (name.startswith("prox-") and name.endswith("vm")):
-        return name
-    for alias in target.get("aliases", []):
-        if alias != name:
-            return alias
-    return name
+    return target["name"]
 
 
 def target_paths(target, state_dir):

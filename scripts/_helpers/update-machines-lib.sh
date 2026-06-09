@@ -45,7 +45,12 @@ resolve_host_alias() {
     return 0
   fi
 
-  resolved="$(jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_ALIAS_MAP_JSON")"
+  resolved="$(jq -r --arg h "$host" 'if has($h) then .[$h] else empty end' <<<"$HOST_ALIAS_MAP_JSON")"
+  if [[ -z "$resolved" ]]; then
+    echo "Unknown host: ${host}" >&2
+    return 1
+  fi
+
   printf '%s' "$resolved"
 }
 

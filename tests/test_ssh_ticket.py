@@ -108,35 +108,21 @@ def test_target_expression_includes_nixos_and_darwin_configs(tmp_path):
 def test_resolve_target_accepts_unique_alias():
     targets = [
         {
-            "name": "prox-srvarrvm",
+            "name": "srvarr",
             "enabled": True,
-            "aliases": ["prox-srvarrvm", "srvarr"],
+            "aliases": ["srvarr"],
             "principal": "ihrachyshka@prox-srvarrvm",
             "sshHost": "prox-srvarrvm",
         }
     ]
-    assert ssh_ticket.resolve_target(targets, "srvarr")["name"] == "prox-srvarrvm"
+    assert ssh_ticket.resolve_target(targets, "srvarr")["name"] == "srvarr"
+    with pytest.raises(ssh_ticket.Error):
+        ssh_ticket.resolve_target(targets, "prox-srvarrvm")
 
 
-def test_display_target_name_prefers_short_prox_vm_alias():
-    assert (
-        ssh_ticket.display_target_name(
-            {
-                "name": "prox-srvarrvm",
-                "aliases": ["prox-srvarrvm", "srvarr"],
-            }
-        )
-        == "srvarr"
-    )
-    assert (
-        ssh_ticket.display_target_name(
-            {
-                "name": "beast",
-                "aliases": ["beast"],
-            }
-        )
-        == "beast"
-    )
+def test_display_target_name_returns_target_name():
+    assert ssh_ticket.display_target_name({"name": "srvarr"}) == "srvarr"
+    assert ssh_ticket.display_target_name({"name": "beast"}) == "beast"
 
 
 def test_resolve_target_rejects_ambiguous_alias():
@@ -162,7 +148,7 @@ def test_resolve_target_rejects_ambiguous_alias():
 
 def test_existing_ticket_valid_uses_metadata(tmp_path):
     target = {
-        "name": "prox-srvarrvm",
+        "name": "srvarr",
         "principal": "ihrachyshka@prox-srvarrvm",
     }
     paths = ssh_ticket.target_paths(target, tmp_path)
@@ -179,31 +165,29 @@ def test_existing_ticket_valid_uses_metadata(tmp_path):
 
 
 def test_write_ticket_alias_copies_cert_material(tmp_path):
-    paths = ssh_ticket.target_paths({"name": "prox-orgvm"}, tmp_path)
+    paths = ssh_ticket.target_paths({"name": "org"}, tmp_path)
     paths["public"].write_text("public\n", encoding="utf-8")
     paths["cert"].write_text("cert\n", encoding="utf-8")
-    paths["metadata"].write_text('{"target":"prox-orgvm"}\n', encoding="utf-8")
+    paths["metadata"].write_text('{"target":"org"}\n', encoding="utf-8")
 
-    alias_paths = ssh_ticket.write_ticket_alias(paths, "org", tmp_path)
+    alias_paths = ssh_ticket.write_ticket_alias(paths, "org.home.arpa", tmp_path)
 
-    assert alias_paths["public"].name == "org.pub"
-    assert alias_paths["cert"].name == "org-cert.pub"
+    assert alias_paths["public"].name == "org.home.arpa.pub"
+    assert alias_paths["cert"].name == "org.home.arpa-cert.pub"
     assert alias_paths["cert"].read_text(encoding="utf-8") == "cert\n"
-    assert alias_paths["metadata"].read_text(encoding="utf-8") == (
-        '{"target":"prox-orgvm"}\n'
-    )
+    assert alias_paths["metadata"].read_text(encoding="utf-8") == ('{"target":"org"}\n')
 
 
 def test_parser_has_ensure_command():
     args = ssh_ticket.build_parser().parse_args(
-        ["ensure", "--quiet", "--gui", "--cert-alias", "org", "prox-orgvm"]
+        ["ensure", "--quiet", "--gui", "--cert-alias", "org", "org"]
     )
 
     assert args.func == ssh_ticket.cmd_ensure
     assert args.quiet
     assert args.gui
     assert args.cert_alias == "org"
-    assert args.target == "prox-orgvm"
+    assert args.target == "org"
 
 
 def test_ssht_command_does_not_add_ticket_key_to_agent(tmp_path):

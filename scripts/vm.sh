@@ -36,16 +36,10 @@ flake_json() {
           value = target.configName;
         }) inventoryTargets
       );
-      canonicalAliases = builtins.listToAttrs (
-        map (target: {
-          name = target.configName;
-          value = target.configName;
-        }) inventoryTargets
-      );
     in
     {
       nixosConfigurations = cfgs;
-      targetAliases = displayAliases // canonicalAliases;
+      targetAliases = displayAliases;
       targetDisplayNames = builtins.attrNames displayAliases;
     }
   "
@@ -83,10 +77,8 @@ resolve_target_config_from_flake() {
         | (.targetAliases // {}) as $aliases
         | if ($aliases | has($host)) then
             $aliases[$host]
-          elif ($cfgs | has($host)) then
+          elif (($host | test("^prox-.*vm$") | not) and ($cfgs | has($host))) then
             $host
-          elif ($cfgs | has("prox-\($host)vm")) then
-            "prox-\($host)vm"
           else
             empty
           end

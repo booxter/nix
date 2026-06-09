@@ -28,7 +28,7 @@ Examples:
   ${program_name} --details frame origin/master HEAD
   ${program_name} --details --path etc/nix/nix.conf frame origin/master HEAD
   ${program_name} mair origin/master HEAD
-  ${program_name} prox-srvarrvm 1a2b3c4 5d6e7f8
+  ${program_name} srvarr 1a2b3c4 5d6e7f8
 EOF
 }
 
@@ -102,10 +102,9 @@ resolve_machine_alias() {
           inventory = import "${repoRoot}/lib/inventory.nix" {
             lib = f.inputs.nixpkgs.lib;
           };
-          specName = inventory.nixosConfigNameToSpecName name;
         in
-          if builtins.hasAttr specName inventory.nixosHostSpecsByName then
-            inventory.toNixosConfigName inventory.nixosHostSpecsByName.${specName}
+          if builtins.hasAttr name inventory.nixosHostSpecsByName then
+            inventory.toNixosConfigName inventory.nixosHostSpecsByName.${name}
           else
             name
       '
@@ -115,6 +114,39 @@ resolve_machine_alias() {
   fi
 
   machine="${resolved}"
+}
+
+validate_machine_name() {
+  local known=""
+
+  # shellcheck disable=SC2016
+  if ! known="$(
+    DIFF_CONFIG_REPO_ROOT="${repo_root}" DIFF_CONFIG_MACHINE="${machine}" \
+      DIFF_CONFIG_VALIDATE_MACHINE=1 \
+      nix --extra-experimental-features "nix-command flakes" eval --impure --raw --expr '
+        let
+          repoRoot = builtins.getEnv "DIFF_CONFIG_REPO_ROOT";
+          name = builtins.getEnv "DIFF_CONFIG_MACHINE";
+          f = builtins.getFlake repoRoot;
+          inventory = import "${repoRoot}/lib/inventory.nix" {
+            lib = f.inputs.nixpkgs.lib;
+          };
+        in
+          if builtins.hasAttr name inventory.nixosHostSpecsByName
+             || builtins.hasAttr name inventory.darwinHosts then
+            "true"
+          else
+            "false"
+      '
+  )"; then
+    echo "Unable to validate machine '${machine}' from current inventory." >&2
+    return 1
+  fi
+
+  if [[ "$known" != "true" ]]; then
+    echo "Unknown machine: ${machine}" >&2
+    return 1
+  fi
 }
 
 flake_ref_for_rev() {
@@ -792,6 +824,7 @@ if [[ ! -f "${repo_root}/flake.nix" ]]; then
   exit 1
 fi
 
+validate_machine_name
 resolve_machine_alias
 
 old_rev="$(resolve_git_rev old "${old_input}")"

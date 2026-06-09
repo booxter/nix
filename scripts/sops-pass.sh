@@ -10,10 +10,8 @@ Usage:
 Hash a login password with mkpasswd and store it in secrets/HOST.yaml.
 USER must be root, ihrachyshka, or both.
 
-By default, insert the password into pass first, under host/CANONICAL_HOST/USER,
+By default, insert the password into pass first, under host/HOST/USER,
 then hash the stored password. With --gen, generate the pass entry instead.
-Proxmox VM names are canonicalized, so both gw and prox-gwvm use
-host/gw/USER and update secrets/gw.yaml.
 
 Environment:
   SOPS_PASS_PREFIX            pass prefix for entries (default: host)
@@ -34,8 +32,7 @@ resolve_repo_root() {
 load_password_from_pass() {
   local pass_prefix="${SOPS_PASS_PREFIX:-host}"
   local password_length="${SOPS_PASS_GENERATE_LENGTH:-32}"
-  local pass_host
-  pass_host="$(short_prox_vm_name "${host}")"
+  local pass_host="$host"
 
   local source_user="$user"
   if [[ "$user" == "both" ]]; then
