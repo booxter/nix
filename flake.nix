@@ -170,7 +170,7 @@
           in
           {
             name = name;
-            value = helpers.mkDarwin cfg;
+            value = helpers.mkDarwin (cfg // { hostSpecName = name; });
           }
         ) (builtins.attrNames darwinHosts)
       );

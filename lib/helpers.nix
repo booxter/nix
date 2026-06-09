@@ -12,6 +12,7 @@ let
       hostInventory,
       username,
       platform,
+      hostSpecName,
       hmFull,
       isDesktop,
       isLaptop,
@@ -28,6 +29,7 @@ let
           hostInventory
           username
           platform
+          hostSpecName
           hmFull
           isDesktop
           isLaptop
@@ -107,6 +109,7 @@ rec {
             hostInventory
             username
             platform
+            hostSpecName
             hmFull
             isDesktop
             isLaptop
@@ -401,6 +404,7 @@ rec {
       hmStateVersion,
       username ? "ihrachyshka",
       platform ? "aarch64-darwin",
+      hostSpecName ? hostname,
       homeManagerInput ? inputs.home-manager,
       hmFull ? true,
       isDesktop ? false,
@@ -420,6 +424,7 @@ rec {
           outputs
           hostInventory
           hostname
+          hostSpecName
           platform
           username
           stateVersion
@@ -448,6 +453,7 @@ rec {
             hostInventory
             username
             platform
+            hostSpecName
             hmFull
             isDesktop
             isLaptop
