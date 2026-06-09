@@ -63,7 +63,7 @@ HOST_BASE_MAP_JSON="$(
           in
           acc
           // {
-            \${configName} = hostInventory.toNixosSshHostName spec;
+            \${configName} = hostInventory.toNixosShortDnsName spec;
           }
         ) { } hostInventory.nixosHostSpecs;
         darwin = builtins.mapAttrs (_: cfg: cfg.hostname) hostInventory.darwinHosts;
