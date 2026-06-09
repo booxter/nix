@@ -211,7 +211,7 @@ def nix_targets_expr(repo_root):
           spec:
           if inventory.isNixosVM spec then
             let
-              sshHost = inventory.toNixosSshHostName spec;
+              sshHost = inventory.toNixosShortDnsName spec;
             in
             mkTarget {{
               kind = "nixos";
