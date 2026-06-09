@@ -83,6 +83,40 @@ resolve_git_rev() {
   printf '%s\n' "${resolved}"
 }
 
+resolve_machine_alias() {
+  local resolved=""
+
+  if [[ "${target_kind}" == "darwin" ]]; then
+    return 0
+  fi
+
+  # shellcheck disable=SC2016
+  if ! resolved="$(
+    DIFF_CONFIG_REPO_ROOT="${repo_root}" DIFF_CONFIG_MACHINE="${machine}" \
+      DIFF_CONFIG_RESOLVE_MACHINE_ALIAS=1 \
+      nix --extra-experimental-features "nix-command flakes" eval --impure --raw --expr '
+        let
+          repoRoot = builtins.getEnv "DIFF_CONFIG_REPO_ROOT";
+          name = builtins.getEnv "DIFF_CONFIG_MACHINE";
+          f = builtins.getFlake repoRoot;
+          inventory = import "${repoRoot}/lib/inventory.nix" {
+            lib = f.inputs.nixpkgs.lib;
+          };
+          specName = inventory.nixosConfigNameToSpecName name;
+        in
+          if builtins.hasAttr specName inventory.nixosHostSpecsByName then
+            inventory.toNixosConfigName inventory.nixosHostSpecsByName.${specName}
+          else
+            name
+      '
+  )"; then
+    echo "Unable to resolve machine alias '${machine}' from current inventory." >&2
+    return 1
+  fi
+
+  machine="${resolved}"
+}
+
 flake_ref_for_rev() {
   local rev="$1"
 
@@ -757,6 +791,8 @@ if [[ ! -f "${repo_root}/flake.nix" ]]; then
   echo "Repo root does not contain flake.nix: ${repo_root}" >&2
   exit 1
 fi
+
+resolve_machine_alias
 
 old_rev="$(resolve_git_rev old "${old_input}")"
 new_rev="$(resolve_git_rev new "${new_input}")"

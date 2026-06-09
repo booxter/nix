@@ -194,6 +194,14 @@ if [ "$is_build" = true ]; then
   exit 0
 fi
 
+if [ -n "${DIFF_CONFIG_RESOLVE_MACHINE_ALIAS:-}" ]; then
+  case "${DIFF_CONFIG_MACHINE:-}" in
+    org) printf '%s\n' prox-orgvm ;;
+    *) printf '%s\n' "${DIFF_CONFIG_MACHINE:-}" ;;
+  esac
+  exit 0
+fi
+
 if [ -n "${DIFF_CONFIG_TARGET_KIND:-}" ]; then
   printf '%s\n' "${DIFF_CONFIG_HM_USERS:-ihrachyshka}"
 else
@@ -249,6 +257,34 @@ SH
   [[ "$output" == *"CHANGED"* ]]
   [[ "$output" == *"[U.] package 1.0 -> 2.0"* ]]
   [[ "$output" == *"SIZE: 1 -> 2"* ]]
+}
+
+@test "diff-config resolves short prox VM aliases before building" {
+  make_repo
+  make_fake_bin
+
+  nh_log="$BATS_TMPDIR/diff-config-nh-alias-$BATS_TEST_NUMBER.log"
+  dix_log="$BATS_TMPDIR/diff-config-dix-alias-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log"
+
+  run env \
+    DIFF_CONFIG_REPO_ROOT="$repo" \
+    XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-alias-$BATS_TEST_NUMBER" \
+    NH_ARGS_LOG="$nh_log" \
+    DIX_ARGS_LOG="$dix_log" \
+    NIX_TARGET_KIND=nixos \
+    PATH="$fake_bin:$PATH" \
+    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    org \
+    "$old_rev" \
+    "$new_rev"
+
+  [ "$status" -eq 0 ]
+  grep -F -- '<os>' "$nh_log"
+  grep -F -- '<--hostname>' "$nh_log"
+  grep -F -- '<prox-orgvm>' "$nh_log"
+  ! grep -F -- '<org>' "$nh_log"
+  [[ "$output" == *"CHANGED"* ]]
 }
 
 @test "diff-config --details appends generated config diff" {
