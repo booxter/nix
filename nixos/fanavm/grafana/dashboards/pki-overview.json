@@ -84,7 +84,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "min by (host) ((((host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"prox-pkivm\"} == bool 0) * -1) != 0) or on(host,category,cert_name) host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"prox-pkivm\"})",
+          "expr": "min by (host) ((((host_observability_pki_cert_parse_success{job=\"node-mtls\",instance=\"pki\"} == bool 0) * -1) != 0) or on(host,category,cert_name) host_observability_pki_cert_days_remaining{job=\"node-mtls\",instance=\"pki\"})",
           "instant": true,
           "legendFormat": "{{host}}",
           "range": false,

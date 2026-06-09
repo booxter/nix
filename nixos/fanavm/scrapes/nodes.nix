@@ -26,7 +26,7 @@ let
         host_network_source = if hostConfig.host.isProxmox then "classified" else "node";
         host_class = hostClassForName name;
         host_virtual = lib.boolToString (isVirtualNodeName name);
-        instance = hostConfig.host.dnsName;
+        instance = name;
         scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
       targets = [ "${hostConfig.host.dnsName}:9100" ];
@@ -55,7 +55,7 @@ let
         host_network_source = "node";
         host_class = "hardware";
         host_virtual = "false";
-        instance = hostConfig.host.dnsName;
+        instance = name;
         scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
       targets = [ "${hostConfig.host.dnsName}:9100" ];
@@ -99,7 +99,7 @@ in
             host_network_source = "node";
             host_class = hostClassForName hostSpecName;
             host_virtual = lib.boolToString (isVirtualNodeName hostSpecName);
-            instance = config.host.dnsName;
+            instance = hostSpecName;
             scrape_expectation = scrapeExpectationForHostConfig config;
           };
         }

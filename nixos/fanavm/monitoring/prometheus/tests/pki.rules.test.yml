@@ -6,11 +6,11 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="prox-pkivm",host="beast",cert_name="vikunja",category="external_service_client"}'
+      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="external_service_client"}'
         values: "1x22"
-      - series: 'host_observability_pki_cert_expected{job="node-mtls",instance="prox-pkivm",host="beast",cert_name="vikunja",category="external_service_client"}'
+      - series: 'host_observability_pki_cert_expected{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="external_service_client"}'
         values: "1x32"
-      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'up{job="node-mtls",instance="pki"}'
         values: "1x32"
     alert_rule_test:
       - eval_time: 10m
@@ -20,7 +20,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="prox-pkivm",host="beast",cert_name="vikunja",category="external_service_client"}'
+      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="external_service_client"}'
         values: "0x20 1x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -34,7 +34,7 @@ tests:
               cert_name: vikunja
               cert_category: external_service_client
               host: beast
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: critical
             exp_annotations:
@@ -45,7 +45,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'up{job="node-mtls",instance="pki"}'
         values: "1x32"
     alert_rule_test:
       - eval_time: 15m
@@ -54,16 +54,16 @@ tests:
           - exp_labels:
               alertname: PKIInventoryTelemetryMissing
               category: pki
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "PKI inventory telemetry missing on prox-pkivm"
-              description: "The PKI inventory metrics are missing from prox-pkivm even though node telemetry is still reachable."
+              summary: "PKI inventory telemetry missing on pki"
+              description: "The PKI inventory metrics are missing from pki even though node telemetry is still reachable."
 
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'up{job="node-mtls",instance="pki"}'
         values: "0x32"
     alert_rule_test:
       - eval_time: 15m
@@ -71,7 +71,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
         values: "60x62"
     alert_rule_test:
       - eval_time: 30m
@@ -79,7 +79,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
         values: "29x60 40x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -93,7 +93,7 @@ tests:
               cert_name: grafana
               cert_category: internal_https_server
               host: prox-fanavm
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: warning
             exp_annotations:
@@ -104,7 +104,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
         values: "30x62"
     alert_rule_test:
       - eval_time: 30m
@@ -112,7 +112,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
         values: "13x60 20x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -126,7 +126,7 @@ tests:
               cert_name: grafana
               cert_category: internal_https_server
               host: prox-fanavm
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: critical
             exp_annotations:
@@ -199,17 +199,17 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="pki"}'
         values: "1x242"
-      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="pki"}'
         values: "140400x32"
-      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "58x242"
-      - series: 'host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "58x242"
-      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "1x242"
-      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'up{job="node-mtls",instance="pki"}'
         values: "1x242"
     alert_rule_test:
       - eval_time: 2h
@@ -223,7 +223,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="pki"}'
         values: "0x240 1x2"
     alert_rule_test:
       - eval_time: 1h30m
@@ -234,18 +234,18 @@ tests:
           - exp_labels:
               alertname: PKIRotationControllerFailed
               category: pki
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "PKI rotation controller failed on prox-pkivm"
-              description: "The most recent scheduled PKI rotation controller run on prox-pkivm did not complete successfully."
+              summary: "PKI rotation controller failed on pki"
+              description: "The most recent scheduled PKI rotation controller run on pki did not complete successfully."
       - eval_time: 2h30m
         alertname: PKIRotationControllerFailed
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="pki"}'
         values: "0x240"
     alert_rule_test:
       - eval_time: 2h
@@ -253,7 +253,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="pki"}'
         values: "0x4620 140400x2"
     alert_rule_test:
       - eval_time: 38h
@@ -264,20 +264,20 @@ tests:
           - exp_labels:
               alertname: PKIRotationControllerStale
               category: pki
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "PKI rotation controller stale on prox-pkivm"
-              description: "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours."
+              summary: "PKI rotation controller stale on pki"
+              description: "The scheduled PKI rotation controller on pki has not completed a run for more than 36 hours."
       - eval_time: 39h
         alertname: PKIRotationControllerStale
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "58x242"
-      - series: 'host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "40x242"
     alert_rule_test:
       - eval_time: 1h30m
@@ -290,20 +290,20 @@ tests:
               base_branch: main
               branch: ci/pki-rotate
               category: pki
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "PKI rotation controller incomplete on prox-pkivm"
-              description: "The most recent scheduled PKI rotation controller run on prox-pkivm found more certificates inside the rotation window than it actually reissued."
+              summary: "PKI rotation controller incomplete on pki"
+              description: "The most recent scheduled PKI rotation controller run on pki found more certificates inside the rotation window than it actually reissued."
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "58x242"
-      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "1x242"
-      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "0x240 1x2"
     alert_rule_test:
       - eval_time: 1h30m
@@ -316,20 +316,20 @@ tests:
               base_branch: main
               branch: ci/pki-rotate
               category: pki
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "PKI rotation review PR missing on prox-pkivm"
-              description: "The most recent successful PKI rotation controller run on prox-pkivm found certificates inside the rotation window but did not leave an open review PR."
+              summary: "PKI rotation review PR missing on pki"
+              description: "The most recent successful PKI rotation controller run on pki found certificates inside the rotation window but did not leave an open review PR."
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_due_count{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "58x242"
-      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_success{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "0x242"
-      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="prox-pkivm",branch="ci/pki-rotate",base_branch="main"}'
+      - series: 'host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="pki",branch="ci/pki-rotate",base_branch="main"}'
         values: "0x242"
     alert_rule_test:
       - eval_time: 2h
@@ -337,7 +337,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'up{job="node-mtls",instance="pki"}'
         values: "1x32"
     alert_rule_test:
       - eval_time: 15m
@@ -346,16 +346,16 @@ tests:
           - exp_labels:
               alertname: PKIRotationTelemetryMissing
               category: pki
-              instance: prox-pkivm
+              instance: pki
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "PKI rotation telemetry missing on prox-pkivm"
-              description: "The PKI rotation controller metrics are missing from prox-pkivm even though node telemetry is still reachable."
+              summary: "PKI rotation telemetry missing on pki"
+              description: "The PKI rotation controller metrics are missing from pki even though node telemetry is still reachable."
 
   - interval: 30s
     input_series:
-      - series: 'up{job="node-mtls",instance="prox-pkivm"}'
+      - series: 'up{job="node-mtls",instance="pki"}'
         values: "0x32"
     alert_rule_test:
       - eval_time: 15m
