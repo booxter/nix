@@ -1,11 +1,12 @@
 {
   config,
+  hostInventory,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
-  isVirtualNodeName = name: lib.hasPrefix "prox-" name && lib.hasSuffix "vm" name;
+  isVirtualNodeName = hostInventory.isProxVmName;
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   scrapeExpectationForHostConfig =
     hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";
@@ -27,8 +28,7 @@ let
     };
   nixosNodeExporterTargetNames = builtins.filter (
     name:
-    !(lib.hasPrefix "local-" name)
-    && name != "prox-fanavm"
+    name != "prox-fanavm"
     && (outputs.nixosConfigurations.${name}.config.host.observability.client.enable or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
   ) (builtins.attrNames outputs.nixosConfigurations);

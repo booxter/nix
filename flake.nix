@@ -88,7 +88,7 @@
       inherit (hostSpecs)
         darwinHosts
         nixosHostSpecs
-        toVmName
+        toProxVmName
         virtPlatform
         ;
 
@@ -113,8 +113,7 @@
           ...
         }:
         let
-          vmname = toVmName name;
-          proxName = "prox-${vmname}";
+          proxName = toProxVmName name;
         in
         {
           "${proxName}" = helpers.mkVM (

@@ -45,7 +45,7 @@ let
       }
     else if spec.type == "vm" then
       let
-        name = "prox-${spec.name}vm";
+        name = hostInventory.toNixosConfigName spec;
       in
       mkTarget {
         inherit name;

@@ -21,26 +21,18 @@ nix eval --impure --json --expr "
         strings.toUpper = s: s;
       };
     };
-    toVmName = hostInventory.toVmName;
     hostWorkMap = {
       darwin = builtins.mapAttrs (_: cfg: cfg.isWork or false) hostInventory.darwinHosts;
       nixos = builtins.foldl' (
         acc: spec:
         let
           isWork = spec.isWork or false;
+          name = hostInventory.toNixosConfigName spec;
         in
-        if spec.type == \"bm\" then
-          acc
-          // {
-            \${spec.name} = isWork;
-          }
-        else if spec.type == \"vm\" then
-          acc
-          // {
-            \${\"prox-\${toVmName spec.name}\"} = isWork;
-          }
-        else
-          throw \"Unsupported NixOS host spec type \${spec.type}\"
+        acc
+        // {
+          \${name} = isWork;
+        }
       ) { } hostInventory.nixosHostSpecs;
     };
     requestedHosts = ${HOSTS_NIX};

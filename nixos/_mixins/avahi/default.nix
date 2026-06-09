@@ -7,9 +7,7 @@
   ...
 }:
 let
-  removePrefix = lib.strings.removePrefix;
-  removeSuffix = lib.strings.removeSuffix;
-  hostSpecName = removeSuffix "vm" (removePrefix "prox-" (removePrefix "local-" hostname));
+  hostSpecName = hostInventory.nixosConfigNameToSpecName hostname;
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
 
   aliasAddress =
@@ -49,7 +47,7 @@ in
       userServices = true;
       addresses = true;
     };
-    hostName = removeSuffix "vm" (removePrefix "prox-" hostname);
+    hostName = hostSpec.name;
   };
 
   systemd.services.avahi-aliases = lib.mkIf (aliases != [ ]) {

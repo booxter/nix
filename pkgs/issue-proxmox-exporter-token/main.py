@@ -94,8 +94,7 @@ def enabled_exporter_hosts():
 configs:
 builtins.filter
   (name:
-    !(builtins.match "local-.*" name != null)
-    && !((configs.${name}.config.host.isWork or false))
+    !((configs.${name}.config.host.isWork or false))
     && ((configs.${name}.config.host.proxmox.prometheusExporter.enable or false) == true))
   (builtins.attrNames configs)
 """

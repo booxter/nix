@@ -10,11 +10,9 @@
   ...
 }:
 let
-  removePrefix = lib.strings.removePrefix;
-  removeSuffix = lib.strings.removeSuffix;
-  hostSpecName = removeSuffix "vm" (removePrefix "prox-" hostname);
+  hostSpecName = hostInventory.nixosConfigNameToSpecName hostname;
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
-  configName = ./${removePrefix "prox-" hostname};
+  configName = ./${hostInventory.toNixosModuleDirName hostSpec};
   hostSecretFile = ../secrets + "/${hostname}.yaml";
   upsServerName = hostSpec.upsHost or null;
   upsServerSpec =

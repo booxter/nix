@@ -9,14 +9,44 @@ flake_json() {
     let
       f = builtins.getFlake \"${REPO_ROOT}\";
       names = builtins.attrNames f.nixosConfigurations;
-    in
-    {
-      nixosConfigurations = builtins.listToAttrs (
+      cfgs = builtins.listToAttrs (
         map (name: {
           inherit name;
           value = null;
         }) names
       );
+      hostInventory = import \"${REPO_ROOT}/lib/inventory.nix\" {
+        lib = f.inputs.nixpkgs.lib;
+      };
+      inventoryTargets = builtins.filter (target: builtins.hasAttr target.configName cfgs) (
+        map (
+          spec:
+          let
+            configName = hostInventory.toNixosConfigName spec;
+            displayName = if spec.type == \"vm\" then spec.name else configName;
+          in
+          {
+            inherit configName displayName;
+          }
+        ) hostInventory.nixosHostSpecs
+      );
+      displayAliases = builtins.listToAttrs (
+        map (target: {
+          name = target.displayName;
+          value = target.configName;
+        }) inventoryTargets
+      );
+      canonicalAliases = builtins.listToAttrs (
+        map (target: {
+          name = target.configName;
+          value = target.configName;
+        }) inventoryTargets
+      );
+    in
+    {
+      nixosConfigurations = cfgs;
+      targetAliases = displayAliases // canonicalAliases;
+      targetDisplayNames = builtins.attrNames displayAliases;
     }
   "
 }
@@ -25,16 +55,20 @@ list_target_hosts_from_flake() {
   local flake_json_data="$1"
   printf '%s\n' "${flake_json_data}" \
     | jq -r '
-        .nixosConfigurations as $cfgs
-        | [
-            $cfgs
-            | keys[]
-            | if test("^prox-.*vm$") then
-                capture("^prox-(?<host>.*)vm$").host
-              else
-                .
-              end
-          ]
+        if (.targetDisplayNames? | type) == "array" then
+          .targetDisplayNames
+        else
+          .nixosConfigurations as $cfgs
+          | [
+              $cfgs
+              | keys[]
+              | if test("^prox-.*vm$") then
+                  capture("^prox-(?<host>.*)vm$").host
+                else
+                  .
+                end
+            ]
+        end
         | unique[]
       ' \
     | sort -u
@@ -46,7 +80,10 @@ resolve_target_config_from_flake() {
   printf '%s\n' "${flake_json_data}" \
     | jq -r --arg host "$target_host" '
         .nixosConfigurations as $cfgs
-        | if ($cfgs | has($host)) then
+        | (.targetAliases // {}) as $aliases
+        | if ($aliases | has($host)) then
+            $aliases[$host]
+          elif ($cfgs | has($host)) then
             $host
           elif ($cfgs | has("prox-\($host)vm")) then
             "prox-\($host)vm"

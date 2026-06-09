@@ -83,6 +83,28 @@ rec {
   virtPlatform = "aarch64-darwin";
 
   toVmName = name: "${name}vm";
+  toProxVmName = name: "prox-${toVmName name}";
+  isProxVmName = name: lib.hasPrefix "prox-" name && lib.hasSuffix "vm" name;
+  proxVmNameToSpecName = name: lib.strings.removeSuffix "vm" (lib.strings.removePrefix "prox-" name);
+  nixosConfigNameToSpecName = name: if isProxVmName name then proxVmNameToSpecName name else name;
+  toNixosConfigName =
+    spec:
+    if spec.type == "bm" then
+      spec.name
+    else if spec.type == "vm" then
+      toProxVmName spec.name
+    else
+      throw "Unsupported NixOS host spec type `${spec.type}`";
+  toNixosModuleDirName =
+    spec:
+    if spec.type == "bm" then
+      spec.name
+    else if spec.type == "vm" then
+      toVmName spec.name
+    else
+      throw "Unsupported NixOS host spec type `${spec.type}`";
+  toNixosSshHostName =
+    spec: spec.dnsName or (spec.dhcpReservation.hostname or (toNixosConfigName spec));
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
   resolveService =
     service:
@@ -97,9 +119,8 @@ rec {
       probeHost =
         let
           spec = nixosHostSpecsByName.${service.owner};
-          proxVmHost = "prox-${toVmName spec.name}";
         in
-        spec.dnsName or (spec.dhcpReservation.hostname or proxVmHost);
+        toNixosSshHostName spec;
     };
 
   site = rec {

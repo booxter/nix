@@ -41,7 +41,11 @@ EOF
 }
 
 @test "vm --help lists real hosts and short prox-vm aliases" {
-  export FLAKE_JSON='{"nixosConfigurations":{"prox-builder1vm":{},"prox-srvarrvm":{},"beast":{},"prx1-lab":{}}}'
+  export FLAKE_JSON='{
+    "nixosConfigurations":{"prox-builder1vm":{},"prox-srvarrvm":{},"beast":{},"prx1-lab":{}},
+    "targetAliases":{"builder1":"prox-builder1vm","prox-builder1vm":"prox-builder1vm","srvarr":"prox-srvarrvm","prox-srvarrvm":"prox-srvarrvm","beast":"beast","prx1-lab":"prx1-lab"},
+    "targetDisplayNames":["builder1","srvarr","beast","prx1-lab"]
+  }'
 
   run bash ./scripts/vm.sh --help
 
@@ -80,7 +84,11 @@ EOF
 }
 
 @test "vm resolves short prox-vm alias to real config" {
-  export FLAKE_JSON='{"nixosConfigurations":{"prox-builder1vm":{},"beast":{}}}'
+  export FLAKE_JSON='{
+    "nixosConfigurations":{"prox-builder1vm":{},"beast":{}},
+    "targetAliases":{"builder1":"prox-builder1vm","prox-builder1vm":"prox-builder1vm","beast":"beast"},
+    "targetDisplayNames":["builder1","beast"]
+  }'
 
   run bash ./scripts/vm.sh builder1
 

@@ -81,8 +81,7 @@ let
   ) hostInventory.services;
   proxmoxLabNodeNames = builtins.filter (
     name:
-    !(lib.hasPrefix "local-" name)
-    && (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
+    (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
     && (outputs.nixosConfigurations.${name}.config.host.proxmox.apiCertificate.enable or false)
   ) (builtins.attrNames outputs.nixosConfigurations);
@@ -141,8 +140,7 @@ let
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
   remoteBlackboxProbeSourceNames = builtins.filter (
     name:
-    !(lib.hasPrefix "local-" name)
-    && name != "prox-fanavm"
+    name != "prox-fanavm"
     && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.enable
   ) (builtins.attrNames outputs.nixosConfigurations);
   remotePlainBlackboxProbeSourceNames = builtins.filter (

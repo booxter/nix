@@ -222,7 +222,7 @@ def nix_targets_expr(repo_root):
             }}
           else if spec.type == "vm" then
             let
-              name = "prox-${{inventory.toVmName spec.name}}";
+              name = inventory.toNixosConfigName spec;
             in
             mkTarget {{
               kind = "nixos";

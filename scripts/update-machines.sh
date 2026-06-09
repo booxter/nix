@@ -56,24 +56,15 @@ HOST_BASE_MAP_JSON="$(
             strings.toUpper = s: s;
           };
         };
-        toVmName = hostInventory.toVmName;
         nixos = builtins.foldl' (
           acc: spec:
-          if spec.type == \"bm\" then
-            acc
-            // {
-              \${spec.name} = spec.dnsName or spec.name;
-            }
-          else if spec.type == \"vm\" then
-            let
-              proxName = \"prox-\${toVmName spec.name}\";
-            in
-            acc
-            // {
-              \${proxName} = spec.dnsName or (spec.dhcpReservation.hostname or proxName);
-            }
-          else
-            throw \"Unsupported NixOS host spec type \${spec.type}\"
+          let
+            configName = hostInventory.toNixosConfigName spec;
+          in
+          acc
+          // {
+            \${configName} = hostInventory.toNixosSshHostName spec;
+          }
         ) { } hostInventory.nixosHostSpecs;
         darwin = builtins.mapAttrs (_: cfg: cfg.hostname) hostInventory.darwinHosts;
       in

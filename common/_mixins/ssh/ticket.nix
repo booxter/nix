@@ -13,8 +13,8 @@ let
   caPublicKeyPath = "/etc/ssh/fleet-user-ca.pub";
   inventoryCaPublicKey = hostInventory.sshTicket.userCaPublicKey;
   hostName = config.networking.hostName;
-  shortProxVmAliases = lib.optionals (lib.hasPrefix "prox-" hostName && lib.hasSuffix "vm" hostName) [
-    (builtins.substring 5 ((builtins.stringLength hostName) - 7) hostName)
+  shortProxVmAliases = lib.optionals (hostInventory.isProxVmName hostName) [
+    (hostInventory.proxVmNameToSpecName hostName)
   ];
 in
 {
