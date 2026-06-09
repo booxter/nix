@@ -178,7 +178,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sabnzbd_queue_download_rate_bytes_per_second{job=\"sabnzbd\",instance=\"prox-srvarrvm\"}",
+          "expr": "sabnzbd_queue_download_rate_bytes_per_second{job=\"sabnzbd\",instance=\"srvarr\"}",
           "legendFormat": "SABnzbd Download Rate",
           "range": true,
           "refId": "A"
@@ -233,7 +233,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sabnzbd_queue_remaining_bytes{job=\"sabnzbd\",instance=\"prox-srvarrvm\"}",
+          "expr": "sabnzbd_queue_remaining_bytes{job=\"sabnzbd\",instance=\"srvarr\"}",
           "legendFormat": "SABnzbd Queue Remaining",
           "range": true,
           "refId": "A"
@@ -295,7 +295,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_torrent_activity_count{job=\"node-mtls\",instance=\"prox-srvarrvm\",direction=\"seeding\"}",
+          "expr": "host_observability_transmission_torrent_activity_count{job=\"node-mtls\",instance=\"srvarr\",direction=\"seeding\"}",
           "legendFormat": "{{activity}}",
           "range": true,
           "refId": "A"
@@ -357,7 +357,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_torrent_activity_count{job=\"node-mtls\",instance=\"prox-srvarrvm\",direction=\"downloading\"}",
+          "expr": "host_observability_transmission_torrent_activity_count{job=\"node-mtls\",instance=\"srvarr\",direction=\"downloading\"}",
           "legendFormat": "{{activity}}",
           "range": true,
           "refId": "A"
@@ -465,7 +465,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"high\"}[5m]) * 8 / 1000000",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node-mtls\",instance=\"srvarr\",class=\"high\"}[5m]) * 8 / 1000000",
           "legendFormat": "High",
           "range": true,
           "refId": "A"
@@ -473,7 +473,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"normal\"}[5m]) * 8 / 1000000",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node-mtls\",instance=\"srvarr\",class=\"normal\"}[5m]) * 8 / 1000000",
           "legendFormat": "Normal",
           "range": true,
           "refId": "B"
@@ -481,7 +481,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"low\"}[5m]) * 8 / 1000000",
+          "expr": "avg_over_time(host_observability_transmission_upload_bytes_per_second{job=\"node-mtls\",instance=\"srvarr\",class=\"low\"}[5m]) * 8 / 1000000",
           "legendFormat": "Low",
           "range": true,
           "refId": "C"
@@ -586,7 +586,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"high\",state=\"getting_from_us\"}",
+          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"srvarr\",class=\"high\",state=\"getting_from_us\"}",
           "legendFormat": "High",
           "range": true,
           "refId": "A"
@@ -594,7 +594,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"normal\",state=\"getting_from_us\"}",
+          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"srvarr\",class=\"normal\",state=\"getting_from_us\"}",
           "legendFormat": "Normal",
           "range": true,
           "refId": "B"
@@ -602,7 +602,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"low\",state=\"getting_from_us\"}",
+          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"srvarr\",class=\"low\",state=\"getting_from_us\"}",
           "legendFormat": "Low",
           "range": true,
           "refId": "C"
@@ -710,7 +710,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"high\"}[5m]) * 8 / 1000000",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node-mtls\",instance=\"srvarr\",class=\"high\"}[5m]) * 8 / 1000000",
           "legendFormat": "High",
           "range": true,
           "refId": "A"
@@ -718,7 +718,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"normal\"}[5m]) * 8 / 1000000",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node-mtls\",instance=\"srvarr\",class=\"normal\"}[5m]) * 8 / 1000000",
           "legendFormat": "Normal",
           "range": true,
           "refId": "B"
@@ -726,7 +726,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"low\"}[5m]) * 8 / 1000000",
+          "expr": "avg_over_time(host_observability_transmission_download_bytes_per_second{job=\"node-mtls\",instance=\"srvarr\",class=\"low\"}[5m]) * 8 / 1000000",
           "legendFormat": "Low",
           "range": true,
           "refId": "C"
@@ -831,7 +831,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"high\",state=\"sending_to_us\"}",
+          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"srvarr\",class=\"high\",state=\"sending_to_us\"}",
           "legendFormat": "High",
           "range": true,
           "refId": "A"
@@ -839,7 +839,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"normal\",state=\"sending_to_us\"}",
+          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"srvarr\",class=\"normal\",state=\"sending_to_us\"}",
           "legendFormat": "Normal",
           "range": true,
           "refId": "B"
@@ -847,7 +847,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"prox-srvarrvm\",class=\"low\",state=\"sending_to_us\"}",
+          "expr": "host_observability_transmission_peer_count{job=\"node-mtls\",instance=\"srvarr\",class=\"low\",state=\"sending_to_us\"}",
           "legendFormat": "Low",
           "range": true,
           "refId": "C"
@@ -902,7 +902,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(host_observability_adaptive_upload_target_mbit{job=\"node-mtls\",instance=\"prox-srvarrvm\"}) or vector(0)",
+          "expr": "sum(host_observability_adaptive_upload_target_mbit{job=\"node-mtls\",instance=\"srvarr\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -958,7 +958,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(host_observability_adaptive_upload_observed_target_mbit{job=\"node-mtls\",instance=\"prox-srvarrvm\"}) or vector(0)",
+          "expr": "sum(host_observability_adaptive_upload_observed_target_mbit{job=\"node-mtls\",instance=\"srvarr\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
@@ -1014,7 +1014,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(host_observability_adaptive_upload_reserved_external_media_bandwidth_mbit{job=\"node-mtls\",instance=\"prox-srvarrvm\"}) or vector(0)",
+          "expr": "sum(host_observability_adaptive_upload_reserved_external_media_bandwidth_mbit{job=\"node-mtls\",instance=\"srvarr\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,

@@ -9,7 +9,7 @@ let
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
   vikunjaHostConfig = outputs.nixosConfigurations.org.config;
-  vikunjaHost = vikunjaHostConfig.host.dnsName;
+  vikunjaTargetHost = vikunjaHostConfig.host.dnsName;
   vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
@@ -23,7 +23,7 @@ in
           targets = [
             "${beastHostConfig.host.dnsName}:${toString beastPrometheusEndpoints.smartctl.port}"
           ];
-          labels.instance = beastHostConfig.host.dnsName;
+          labels.instance = "beast";
         }
       ];
     }
@@ -37,7 +37,7 @@ in
           targets = [
             "${beastHostConfig.host.dnsName}:${toString beastPrometheusEndpoints.jellyfin.port}"
           ];
-          labels.instance = beastHostConfig.host.dnsName;
+          labels.instance = "beast";
         }
       ];
     }
@@ -51,7 +51,7 @@ in
           targets = [
             "${beastHostConfig.host.dnsName}:${toString lolekEndpoint.port}"
           ];
-          labels.instance = beastHostConfig.host.dnsName;
+          labels.instance = "beast";
         }
       ];
     }
@@ -64,7 +64,7 @@ in
           targets = [
             "${sabnzbdHostConfig.host.dnsName}:${toString sabnzbdEndpoint.port}"
           ];
-          labels.instance = sabnzbdHostConfig.host.dnsName;
+          labels.instance = "srvarr";
         }
       ];
     }
@@ -77,8 +77,8 @@ in
       tls_config = prometheusMtlsTlsConfig;
       static_configs = [
         {
-          targets = [ "${vikunjaHost}:${toString vikunjaEndpoint.port}" ];
-          labels.instance = vikunjaHost;
+          targets = [ "${vikunjaTargetHost}:${toString vikunjaEndpoint.port}" ];
+          labels.instance = "org";
         }
       ];
     }

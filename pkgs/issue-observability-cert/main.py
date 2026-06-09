@@ -270,6 +270,7 @@ def endpoint_config(host, endpoint):
                 "port",
             ),
             "secretPrefix": NODE_EXPORTER_SECRET_PREFIX,
+            "sans": observability_server_sans(host),
         }
 
     return nix_eval_json(
@@ -295,6 +296,19 @@ def client_config(host, client):
         "client",
         "mtlsClients",
         client,
+    )
+
+
+def observability_server_sans(host):
+    root = host_config_root(host)
+    return nix_eval_json(
+        root,
+        host,
+        "config",
+        "host",
+        "observability",
+        "client",
+        "prometheusMtlsServerSans",
     )
 
 
@@ -386,14 +400,13 @@ def update_secret_file(host, secret_prefix, cert_field, key_field, cert_text, ke
 def issue_endpoint(host, endpoint, *, ca_host):
     endpoint_cfg = endpoint_config(host, endpoint)
     identity = host_identity(host)
-    sans = unique_strings(
-        [
-            identity["dns_name"],
-            identity["networking_name"],
-            identity["avahi_name"],
-            f"{identity['avahi_name']}.local",
-        ]
-    )
+    fallback_sans = [
+        identity["dns_name"],
+        identity["networking_name"],
+        identity["avahi_name"],
+        f"{identity['avahi_name']}.local",
+    ]
+    sans = unique_strings(endpoint_cfg.get("sans") or fallback_sans)
     common_name = f"prometheus-{endpoint}.{identity['dns_name']}"
     cert_text, key_text = issue_remote_cert(
         ca_host=ca_host, common_name=common_name, sans=sans

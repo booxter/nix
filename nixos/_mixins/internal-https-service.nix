@@ -45,6 +45,18 @@ in
                 description = "Additional hostnames served by the internal HTTPS vhost.";
               };
 
+              sans = lib.mkOption {
+                type = with lib.types; listOf str;
+                default = lib.unique (
+                  [
+                    name
+                    config.serverName
+                  ]
+                  ++ config.serverAliases
+                );
+                description = "DNS SANs to include when issuing this service certificate.";
+              };
+
               localAliases = lib.mkOption {
                 type = with lib.types; listOf str;
                 default = [ name ];

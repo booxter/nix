@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: InternalPKICertMissing
-        expr: label_replace(host_observability_pki_cert_parse_success{job="node-mtls",instance="prox-pkivm"}, "cert_category", "$1", "category", "(.*)") < 1
+        expr: label_replace(host_observability_pki_cert_parse_success{job="node-mtls",instance="pki"}, "cert_category", "$1", "category", "(.*)") < 1
         for: 10m
         labels:
           severity: critical
@@ -12,16 +12,16 @@ groups:
           summary: "Managed PKI cert missing: {{ $labels.host }} / {{ $labels.cert_name }}"
           description: "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.cert_category }}) is expected but missing or unparsable in the repo-managed PKI inventory."
       - alert: PKIInventoryTelemetryMissing
-        expr: absent(host_observability_pki_cert_expected{job="node-mtls",instance="prox-pkivm"}) and on(instance) up{job="node-mtls",instance="prox-pkivm"} == 1
+        expr: absent(host_observability_pki_cert_expected{job="node-mtls",instance="pki"}) and on(instance) up{job="node-mtls",instance="pki"} == 1
         for: 15m
         labels:
           severity: warning
           category: pki
         annotations:
-          summary: "PKI inventory telemetry missing on prox-pkivm"
-          description: "The PKI inventory metrics are missing from prox-pkivm even though node telemetry is still reachable."
+          summary: "PKI inventory telemetry missing on pki"
+          description: "The PKI inventory metrics are missing from pki even though node telemetry is still reachable."
       - alert: InternalPKICertExpiringSoon
-        expr: label_replace(host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm"}, "cert_category", "$1", "category", "(.*)") < 30
+        expr: label_replace(host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki"}, "cert_category", "$1", "category", "(.*)") < 30
         for: 30m
         labels:
           severity: warning
@@ -30,7 +30,7 @@ groups:
           summary: "Managed PKI cert expiring soon: {{ $labels.host }} / {{ $labels.cert_name }}"
           description: "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.cert_category }}) has less than 30 days remaining."
       - alert: InternalPKICertExpiringCritical
-        expr: label_replace(host_observability_pki_cert_days_remaining{job="node-mtls",instance="prox-pkivm"}, "cert_category", "$1", "category", "(.*)") < 14
+        expr: label_replace(host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki"}, "cert_category", "$1", "category", "(.*)") < 14
         for: 30m
         labels:
           severity: critical
@@ -57,47 +57,47 @@ groups:
           summary: "Public TLS cert expiring critically soon: {{ $labels.instance }}"
           description: "The public HTTPS endpoint {{ $labels.instance }} has less than 14 days remaining on its leaf certificate."
       - alert: PKIRotationControllerFailed
-        expr: host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"} < 1
+        expr: host_observability_pki_rotation_last_success{job="node-mtls",instance="pki"} < 1
         for: 2h
         labels:
           severity: warning
           category: pki
         annotations:
-          summary: "PKI rotation controller failed on prox-pkivm"
-          description: "The most recent scheduled PKI rotation controller run on prox-pkivm did not complete successfully."
+          summary: "PKI rotation controller failed on pki"
+          description: "The most recent scheduled PKI rotation controller run on pki did not complete successfully."
       - alert: PKIRotationControllerStale
-        expr: ((time() - host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}) / 3600) > 36
+        expr: ((time() - host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="pki"}) / 3600) > 36
         for: 2h
         labels:
           severity: warning
           category: pki
         annotations:
-          summary: "PKI rotation controller stale on prox-pkivm"
-          description: "The scheduled PKI rotation controller on prox-pkivm has not completed a run for more than 36 hours."
+          summary: "PKI rotation controller stale on pki"
+          description: "The scheduled PKI rotation controller on pki has not completed a run for more than 36 hours."
       - alert: PKIRotationControllerIncomplete
-        expr: host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm"} > host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="prox-pkivm"}
+        expr: host_observability_pki_rotation_last_due_count{job="node-mtls",instance="pki"} > host_observability_pki_rotation_last_rotated_count{job="node-mtls",instance="pki"}
         for: 2h
         labels:
           severity: warning
           category: pki
         annotations:
-          summary: "PKI rotation controller incomplete on prox-pkivm"
-          description: "The most recent scheduled PKI rotation controller run on prox-pkivm found more certificates inside the rotation window than it actually reissued."
+          summary: "PKI rotation controller incomplete on pki"
+          description: "The most recent scheduled PKI rotation controller run on pki found more certificates inside the rotation window than it actually reissued."
       - alert: PKIRotationReviewPRMissing
-        expr: (host_observability_pki_rotation_last_due_count{job="node-mtls",instance="prox-pkivm"} > 0) and on(instance,job,branch,base_branch) (host_observability_pki_rotation_last_success{job="node-mtls",instance="prox-pkivm"} == 1) and on(instance,job,branch,base_branch) (host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="prox-pkivm"} < 1)
+        expr: (host_observability_pki_rotation_last_due_count{job="node-mtls",instance="pki"} > 0) and on(instance,job,branch,base_branch) (host_observability_pki_rotation_last_success{job="node-mtls",instance="pki"} == 1) and on(instance,job,branch,base_branch) (host_observability_pki_rotation_last_pr_open{job="node-mtls",instance="pki"} < 1)
         for: 2h
         labels:
           severity: warning
           category: pki
         annotations:
-          summary: "PKI rotation review PR missing on prox-pkivm"
-          description: "The most recent successful PKI rotation controller run on prox-pkivm found certificates inside the rotation window but did not leave an open review PR."
+          summary: "PKI rotation review PR missing on pki"
+          description: "The most recent successful PKI rotation controller run on pki found certificates inside the rotation window but did not leave an open review PR."
       - alert: PKIRotationTelemetryMissing
-        expr: absent(host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="prox-pkivm"}) and on(instance) up{job="node-mtls",instance="prox-pkivm"} == 1
+        expr: absent(host_observability_pki_rotation_last_run_timestamp_seconds{job="node-mtls",instance="pki"}) and on(instance) up{job="node-mtls",instance="pki"} == 1
         for: 15m
         labels:
           severity: warning
           category: pki
         annotations:
-          summary: "PKI rotation telemetry missing on prox-pkivm"
-          description: "The PKI rotation controller metrics are missing from prox-pkivm even though node telemetry is still reachable."
+          summary: "PKI rotation telemetry missing on pki"
+          description: "The PKI rotation controller metrics are missing from pki even though node telemetry is still reachable."

@@ -91,14 +91,48 @@ rec {
   toProxVmName = name: "prox-${toVmName name}";
   isNixosVM = spec: spec.isVM or false;
   isNixosBM = spec: !(isNixosVM spec);
+  hasStableIpv4Address = spec: spec ? dhcpReservation || spec ? lanAddress || spec ? ipAddress;
   toNixosConfigName = spec: spec.name;
+  toNixosStableHostName = spec: spec.name;
   toNixosRuntimeHostName =
     spec:
     spec.hostname
       or (spec.dhcpReservation.hostname or (if isNixosVM spec then toProxVmName spec.name else spec.name)
       );
+  toNixosPrimaryDnsName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
+  toNixosLegacyDnsNames =
+    spec:
+    lib.unique (
+      (spec.legacyDnsNames or [ ])
+      ++ lib.optionals (isNixosVM spec && toNixosPrimaryDnsName spec != toProxVmName spec.name) [
+        (toProxVmName spec.name)
+      ]
+    );
+  toNixosAllDnsNames =
+    spec: lib.unique ([ (toNixosPrimaryDnsName spec) ] ++ toNixosLegacyDnsNames spec);
+  toNixosShortDnsName = toNixosStableHostName;
+  toNixosMigrationDnsNames =
+    spec: lib.unique ([ (toNixosShortDnsName spec) ] ++ toNixosAllDnsNames spec);
+  toNixosHostCertificateDnsNames =
+    spec:
+    let
+      names = toNixosMigrationDnsNames spec;
+    in
+    lib.unique (
+      names ++ map (name: "${name}.${site.lan.domain}") names ++ [ "${toNixosShortDnsName spec}.local" ]
+    );
+  toNixosLanDnsAliasLabels =
+    spec:
+    lib.unique (
+      lib.optionals (
+        isNixosVM spec
+        && hasStableIpv4Address spec
+        && toNixosShortDnsName spec != toNixosPrimaryDnsName spec
+      ) [ (toNixosShortDnsName spec) ]
+      ++ (spec.localDnsAliases or [ ])
+    );
   toNixosModuleDirName = spec: if isNixosVM spec then toVmName spec.name else spec.name;
-  toNixosSshHostName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
+  toNixosSshHostName = toNixosPrimaryDnsName;
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
@@ -168,7 +202,7 @@ rec {
             spec:
             (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
             ++ map (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec)) (
-              spec.localDnsAliases or [ ]
+              toNixosLanDnsAliasLabels spec
             );
         in
         builtins.concatMap renderHostDnsRecords nixosHostSpecs;

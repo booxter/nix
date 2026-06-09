@@ -20,7 +20,7 @@ let
     in
     {
       labels = {
-        instance = hostConfig.host.dnsName;
+        instance = name;
         proxmox_node = hostConfig.networking.hostName;
         pve_target = hostConfig.host.proxmox.apiCertificate.serverName;
       };

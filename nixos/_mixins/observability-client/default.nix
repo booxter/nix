@@ -8,6 +8,8 @@
 }:
 let
   cfg = config.host.observability.client;
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
+  hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   hostLabel = config.services.avahi.hostName;
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
   nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix;
@@ -165,6 +167,12 @@ in
                   description = "Server name presented by the nginx vhost for this endpoint.";
                 };
 
+                sans = lib.mkOption {
+                  type = listOf str;
+                  default = cfg.prometheusMtlsServerSans;
+                  description = "DNS SANs to include when issuing this endpoint certificate.";
+                };
+
                 secretPrefix = lib.mkOption {
                   type = str;
                   default = "prometheus/${name}";
@@ -182,6 +190,12 @@ in
         );
       default = { };
       description = "Additional nginx-fronted mTLS endpoints for remote Prometheus scrapes.";
+    };
+
+    prometheusMtlsServerSans = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = hostCertificateDnsNames;
+      description = "Default DNS SANs for host-level Prometheus mTLS server certificates.";
     };
 
     mtlsClients = lib.mkOption {

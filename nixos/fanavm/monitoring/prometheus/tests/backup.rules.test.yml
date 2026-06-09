@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_last_success{job="node-mtls",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+      - series: 'host_observability_backup_last_success{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "1x62"
     alert_rule_test:
       - eval_time: 30m
@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_last_success{job="node-mtls",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+      - series: 'host_observability_backup_last_success{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "0x61"
     alert_rule_test:
       - eval_time: 29m30s
@@ -27,18 +27,18 @@ tests:
               backup_job: seerr-backup
               backup_title: Create a consistent Seerr SQLite backup artifact
               category: backup
-              instance: prox-srvarrvm
+              instance: srvarr
               job: node-mtls
               phase: prep
               severity: warning
               unit: seerr-backup.service
             exp_annotations:
-              summary: "Backup job failed on prox-srvarrvm: Create a consistent Seerr SQLite backup artifact"
-              description: "The most recent prep backup job Create a consistent Seerr SQLite backup artifact on prox-srvarrvm failed and has not been followed by a successful run for 30 minutes."
+              summary: "Backup job failed on srvarr: Create a consistent Seerr SQLite backup artifact"
+              description: "The most recent prep backup job Create a consistent Seerr SQLite backup artifact on srvarr failed and has not been followed by a successful run for 30 minutes."
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="prox-orgvm",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="org",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
         values: "3600x4600"
     alert_rule_test:
       - eval_time: 36h30m
@@ -51,14 +51,14 @@ tests:
               backup_job: restic-beast-local
               backup_title: Restic To Beast
               category: backup
-              instance: prox-orgvm
+              instance: org
               job: node-mtls
               phase: local
               severity: warning
               unit: restic-backups-beast.service
             exp_annotations:
-              summary: "Backup job stale on prox-orgvm: Restic To Beast"
-              description: "The local backup job Restic To Beast on prox-orgvm has not completed a successful run for more than 36 hours."
+              summary: "Backup job stale on org: Restic To Beast"
+              description: "The local backup job Restic To Beast on org has not completed a successful run for more than 36 hours."
 
   - interval: 30s
     input_series:
@@ -86,7 +86,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="prox-srvarrvm",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "0x5000"
     alert_rule_test:
       - eval_time: 72h
