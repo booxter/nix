@@ -51,6 +51,9 @@ if [[ -z "$host" ]]; then
 fi
 
 repo_root="$(resolve_repo_root)"
+# shellcheck disable=SC1091
+source "${repo_root}/scripts/_helpers/host-aliases.sh"
+host="$(canonical_secret_host "$repo_root" "$host")"
 secret="${repo_root}/secrets/${host}.yaml"
 
 if [[ ! -f "$secret" ]]; then

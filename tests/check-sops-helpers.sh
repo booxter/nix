@@ -72,7 +72,9 @@ encrypt_secret_file() {
 
 setup_repo() {
   local repo_dir="$1"
-  mkdir -p "$repo_dir/secrets/_templates" "$repo_dir/scripts" "$repo_dir/tests"
+  mkdir -p "$repo_dir/secrets/_templates" "$repo_dir/scripts/_helpers" "$repo_dir/tests"
+  cp "$REPO_ROOT/scripts/_helpers/host-aliases.sh" "$repo_dir/scripts/_helpers/"
+  cp "$REPO_ROOT/scripts/sops-cat.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-update.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-copy.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-ups-sync.sh" "$repo_dir/scripts/"
@@ -245,9 +247,16 @@ EOF
   assert_eq "dst" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive copy"
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.users.upsslave.password' "$copied")" "destination secret values should survive copy"
 
+  log "update a prox VM secret by short name"
+  run_and_capture "$out" bash "$repo/scripts/sops-update.sh" gw
+  assert_contains "$(cat "$out")" "Updated secret from templates: $repo/secrets/prox-gwvm.yaml"
+  decrypt_secret_file prox-gwvm "$after"
+  assert_eq "REPLACE_ME" "$(yq -r '.attic.token' "$after")" "short prox VM update should merge templates into canonical secret"
+  assert_eq "gw" "$(yq -r '.other.keep' "$after")" "short prox VM update should preserve canonical secret data"
+
   log "copy a secret value to a different destination path"
   run_and_capture "$out" bash "$repo/scripts/sops-copy.sh" \
-    prx1-lab prox-cachevm \
+    prx1-lab cache \
     nut/users/upsslave/password \
     nut/monitors/prx1-lab/password
   assert_contains "$(cat "$out")" "Copied nut/users/upsslave/password from prx1-lab to prox-cachevm:nut/monitors/prx1-lab/password."
@@ -360,6 +369,11 @@ EOF
     *) fail "generated root password hash should use sha-512 crypt format" ;;
   esac
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "generated password should only update requested user"
+
+  log "decrypt a prox VM secret by short name"
+  run_and_capture "$out" bash "$repo/scripts/sops-cat.sh" gw
+  assert_contains "$(cat "$out")" "other:"
+  assert_contains "$(cat "$out")" "keep: gw"
 
   log "accept canonical prox VM host names"
   run_and_capture "$out" env \

@@ -31,36 +31,11 @@ resolve_repo_root() {
   cd -- "${script_dir}/.." && pwd
 }
 
-pass_machine_name() {
-  local machine="$1"
-  if [[ "${machine}" == prox-*vm ]]; then
-    machine="${machine#prox-}"
-    machine="${machine%vm}"
-  fi
-  printf '%s\n' "${machine}"
-}
-
-resolve_secret_host() {
-  local machine="$1"
-  if [[ -f "${repo_root}/secrets/${machine}.yaml" ]]; then
-    printf '%s\n' "${machine}"
-    return
-  fi
-
-  local prox_machine="prox-${machine}vm"
-  if [[ -f "${repo_root}/secrets/${prox_machine}.yaml" ]]; then
-    printf '%s\n' "${prox_machine}"
-    return
-  fi
-
-  printf '%s\n' "${machine}"
-}
-
 load_password_from_pass() {
   local pass_prefix="${SOPS_PASS_PREFIX:-host}"
   local password_length="${SOPS_PASS_GENERATE_LENGTH:-32}"
   local pass_host
-  pass_host="$(pass_machine_name "${host}")"
+  pass_host="$(short_prox_vm_name "${host}")"
 
   local source_user="$user"
   if [[ "$user" == "both" ]]; then
@@ -134,7 +109,9 @@ case "$user" in
 esac
 
 repo_root="$(resolve_repo_root)"
-secret_host="$(resolve_secret_host "${host}")"
+# shellcheck disable=SC1091
+source "${repo_root}/scripts/_helpers/host-aliases.sh"
+secret_host="$(canonical_secret_host "$repo_root" "${host}")"
 secret="${repo_root}/secrets/${secret_host}.yaml"
 
 if [[ ! -f "$secret" ]]; then

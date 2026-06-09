@@ -136,6 +136,10 @@ main() {
 
   local repo_root
   repo_root="$(resolve_repo_root)"
+  # shellcheck disable=SC1091
+  source "${repo_root}/scripts/_helpers/host-aliases.sh"
+  src_host="$(canonical_secret_host "$repo_root" "$src_host")"
+  dst_host="$(canonical_secret_host "$repo_root" "$dst_host")"
 
   local src_secret="${repo_root}/secrets/${src_host}.yaml"
   local dst_secret="${repo_root}/secrets/${dst_host}.yaml"

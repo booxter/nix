@@ -117,6 +117,24 @@ def nix_eval_raw_optional(*segments):
     return raw.strip()
 
 
+def canonical_host_name(host):
+    expr = f"""
+let
+  f = builtins.getFlake {json.dumps(str(REPO_ROOT))};
+  inventory = import {json.dumps(str(REPO_ROOT / "lib/inventory.nix"))} {{
+    lib = f.inputs.nixpkgs.lib;
+  }};
+  name = {json.dumps(host)};
+  specName = inventory.nixosConfigNameToSpecName name;
+in
+  if builtins.hasAttr specName inventory.nixosHostSpecsByName then
+    inventory.toNixosConfigName (builtins.getAttr specName inventory.nixosHostSpecsByName)
+  else
+    name
+"""
+    return run(["nix", "eval", "--impure", "--raw", "--expr", expr]).strip()
+
+
 def secret_path_for_host(host):
     return REPO_ROOT / "secrets" / f"{host}.yaml"
 
@@ -422,7 +440,7 @@ def main():
         description="Issue internal PKI certs for observability mTLS endpoints and clients and store them in host sops secrets.",
     )
     parser.add_argument(
-        "--host", required=True, help="Inventory host name, e.g. beast or prox-orgvm"
+        "--host", required=True, help="Inventory host name, e.g. beast or org"
     )
     parser.add_argument(
         "--endpoint", help="Prometheus mTLS endpoint name, e.g. blackbox or smartctl"
@@ -438,25 +456,28 @@ def main():
     if args.endpoint and args.client:
         raise SystemExit("--endpoint and --client are mutually exclusive")
 
+    host = canonical_host_name(args.host)
+    ca_host = canonical_host_name(args.ca_host)
+
     if args.endpoint:
-        issue_endpoint(args.host, args.endpoint, ca_host=args.ca_host)
+        issue_endpoint(host, args.endpoint, ca_host=ca_host)
         return
 
     if args.client:
-        issue_client(args.host, args.client, ca_host=args.ca_host)
+        issue_client(host, args.client, ca_host=ca_host)
         return
 
-    endpoints = endpoint_names_for_host(args.host)
-    clients = client_names_for_host(args.host)
+    endpoints = endpoint_names_for_host(host)
+    clients = client_names_for_host(host)
     if not endpoints and not clients:
         raise SystemExit(
-            f"host {args.host} has no configured observability mTLS endpoints or clients"
+            f"host {host} has no configured observability mTLS endpoints or clients"
         )
 
     for endpoint in endpoints:
-        issue_endpoint(args.host, endpoint, ca_host=args.ca_host)
+        issue_endpoint(host, endpoint, ca_host=ca_host)
     for client in clients:
-        issue_client(args.host, client, ca_host=args.ca_host)
+        issue_client(host, client, ca_host=ca_host)
 
 
 if __name__ == "__main__":
