@@ -155,13 +155,14 @@ flake_ref_for_rev() {
   printf 'git+file://%s?rev=%s\n' "${repo_root}" "${rev}"
 }
 
-detect_target_kind() {
+detect_target_kind_for_name() {
   local label="$1"
   local flake_ref="$2"
+  local candidate="$3"
   local detected=""
 
   if ! detected="$(
-    DIFF_CONFIG_FLAKE_REF="${flake_ref}" DIFF_CONFIG_MACHINE="${machine}" \
+    DIFF_CONFIG_FLAKE_REF="${flake_ref}" DIFF_CONFIG_MACHINE="${candidate}" \
       nix --extra-experimental-features "nix-command flakes" eval --impure --raw --expr '
         let
           f = builtins.getFlake (builtins.getEnv "DIFF_CONFIG_FLAKE_REF");
@@ -185,20 +186,65 @@ detect_target_kind() {
   printf '%s\n' "${detected}"
 }
 
-resolve_target_kind() {
-  local old_kind=""
-  local new_kind=""
+legacy_nixos_vm_attr() {
+  local name="$1"
 
-  if [[ -n "${target_kind}" ]]; then
-    return 0
+  printf 'prox-%svm\n' "${name}"
+}
+
+resolve_revision_target() {
+  local label="$1"
+  local flake_ref="$2"
+  local candidate=""
+  local detected=""
+  local -a candidates=("${machine}")
+
+  if [[ "${target_kind}" != "darwin" ]]; then
+    candidates+=("$(legacy_nixos_vm_attr "${machine}")")
   fi
 
-  old_kind="$(detect_target_kind old "${old_flake}")"
-  new_kind="$(detect_target_kind new "${new_flake}")"
+  for candidate in "${candidates[@]}"; do
+    if [[ "${candidate}" != "${machine}" && "${candidate}" != prox-*vm ]]; then
+      continue
+    fi
+
+    detected="$(detect_target_kind_for_name "${label}" "${flake_ref}" "${candidate}")"
+    if [[ "${detected}" == "missing" ]]; then
+      continue
+    fi
+
+    if [[ -n "${target_kind}" && "${detected}" != "${target_kind}" ]]; then
+      continue
+    fi
+
+    printf '%s %s\n' "${detected}" "${candidate}"
+    return 0
+  done
+
+  printf 'missing %s\n' "${machine}"
+}
+
+resolve_target_kind() {
+  local old_target=""
+  local new_target=""
+
+  old_target="$(resolve_revision_target old "${old_flake}")"
+  new_target="$(resolve_revision_target new "${new_flake}")"
+  read -r old_kind old_machine <<<"${old_target}"
+  read -r new_kind new_machine <<<"${new_target}"
 
   if [[ "${old_kind}" == "missing" || "${new_kind}" == "missing" ]]; then
-    echo "Machine '${machine}' must exist in both revisions." >&2
-    echo "old revision: ${old_kind}; new revision: ${new_kind}" >&2
+    if [[ "${old_kind}" == "missing" && "${new_kind}" != "missing" ]]; then
+      missing_revision_message="Machine '${machine}' is present only in the new revision; no old configuration exists to diff."
+      return 0
+    fi
+
+    if [[ "${old_kind}" != "missing" && "${new_kind}" == "missing" ]]; then
+      missing_revision_message="Machine '${machine}' is present only in the old revision; no new configuration exists to diff."
+      return 0
+    fi
+
+    echo "Machine '${machine}' must exist in at least one revision." >&2
     return 1
   fi
 
@@ -240,6 +286,7 @@ build_config() {
   local rev="$2"
   local flake_ref="$3"
   local out_link="$4"
+  local machine_attr="$5"
   local nh_kind=""
 
   case "${target_kind}" in
@@ -259,7 +306,7 @@ build_config() {
     --diff
     never
     --hostname
-    "${machine}"
+    "${machine_attr}"
     --out-link
     "${out_link}"
     --print-build-logs
@@ -267,8 +314,25 @@ build_config() {
     "${flake_ref}"
   )
 
-  echo "Building ${target_kind} configuration ${machine} at ${label} (${rev})" >&2
+  if [[ "${machine_attr}" == "${machine}" ]]; then
+    echo "Building ${target_kind} configuration ${machine} at ${label} (${rev})" >&2
+  else
+    echo "Building ${target_kind} configuration ${machine} as ${machine_attr} at ${label} (${rev})" >&2
+  fi
   "${nh_cmd[@]}" >&2
+}
+
+machine_attr_for_label() {
+  local label="$1"
+
+  case "${label}" in
+    old) printf '%s\n' "${old_machine}" ;;
+    new) printf '%s\n' "${new_machine}" ;;
+    *)
+      echo "Unsupported revision label: ${label}" >&2
+      return 1
+      ;;
+  esac
 }
 
 filter_dix_output() {
@@ -480,11 +544,14 @@ materialize_system_details() {
 eval_home_manager_users() {
   local label="$1"
   local flake_ref="$2"
+  local machine_attr=""
   local users=""
+
+  machine_attr="$(machine_attr_for_label "${label}")"
 
   if ! users="$(
     DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
-      DIFF_CONFIG_MACHINE="${machine}" \
+      DIFF_CONFIG_MACHINE="${machine_attr}" \
       DIFF_CONFIG_TARGET_KIND="${target_kind}" \
       nix --extra-experimental-features "nix-command flakes" eval --impure --raw --expr '
         let
@@ -573,11 +640,14 @@ build_home_manager_activation() {
   local rev="$2"
   local flake_ref="$3"
   local user="$4"
+  local machine_attr=""
   local activation=""
+
+  machine_attr="$(machine_attr_for_label "${label}")"
 
   if ! activation="$(
     DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
-      DIFF_CONFIG_MACHINE="${machine}" \
+      DIFF_CONFIG_MACHINE="${machine_attr}" \
       DIFF_CONFIG_TARGET_KIND="${target_kind}" \
       DIFF_CONFIG_HM_USER="${user}" \
       nix --extra-experimental-features "nix-command flakes" build \
@@ -611,11 +681,14 @@ build_home_manager_session_variables() {
   local rev="$2"
   local flake_ref="$3"
   local user="$4"
+  local machine_attr=""
   local session_variables=""
+
+  machine_attr="$(machine_attr_for_label "${label}")"
 
   if ! session_variables="$(
     DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
-      DIFF_CONFIG_MACHINE="${machine}" \
+      DIFF_CONFIG_MACHINE="${machine_attr}" \
       DIFF_CONFIG_TARGET_KIND="${target_kind}" \
       DIFF_CONFIG_HM_USER="${user}" \
       nix --extra-experimental-features "nix-command flakes" build \
@@ -802,6 +875,11 @@ fi
 
 machine=""
 target_kind=""
+old_kind=""
+new_kind=""
+old_machine=""
+new_machine=""
+missing_revision_message=""
 parse_target "${args[0]}"
 old_input="${args[1]}"
 new_input="${args[2]}"
@@ -834,6 +912,11 @@ old_flake="$(flake_ref_for_rev "${old_rev}")"
 new_flake="$(flake_ref_for_rev "${new_rev}")"
 
 resolve_target_kind
+if [[ -n "${missing_revision_message}" ]]; then
+  printf '%s\n' "${missing_revision_message}"
+  exit 0
+fi
+
 if [[ "${details}" == true ]]; then
   default_generated_paths
 fi
@@ -862,10 +945,14 @@ if [[ -z "${DIFF_CONFIG_DIFF_COLOR:-}" && -t 1 ]]; then
   detail_diff_color="always"
 fi
 
-build_config old "${old_rev}" "${old_flake}" "${old_link}"
-build_config new "${new_rev}" "${new_flake}" "${new_link}"
+build_config old "${old_rev}" "${old_flake}" "${old_link}" "${old_machine}"
+build_config new "${new_rev}" "${new_flake}" "${new_link}" "${new_machine}"
 
-echo "Diffing ${target_kind} configuration ${machine}: ${old_rev} -> ${new_rev}" >&2
+if [[ "${old_machine}" == "${new_machine}" ]]; then
+  echo "Diffing ${target_kind} configuration ${machine}: ${old_rev} -> ${new_rev}" >&2
+else
+  echo "Diffing ${target_kind} configuration ${machine} (${old_machine} -> ${new_machine}): ${old_rev} -> ${new_rev}" >&2
+fi
 dix --color "${dix_color}" "${old_link}" "${new_link}" | filter_dix_output
 
 if [[ "${details}" == true ]]; then
