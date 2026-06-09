@@ -2,6 +2,7 @@
   config,
   lib,
   hostInventory,
+  hostSpecName,
   outputs,
   pkgs,
   ...
@@ -19,6 +20,7 @@ let
     inherit
       config
       hostInventory
+      hostSpecName
       lib
       outputs
       prometheusMtlsTlsConfig

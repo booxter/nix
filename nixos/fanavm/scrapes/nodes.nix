@@ -1,6 +1,7 @@
 {
   config,
   hostInventory,
+  hostSpecName,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
@@ -9,11 +10,8 @@ let
   nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
   isVirtualNodeName =
     name:
-    let
-      specName = hostInventory.nixosConfigNameToSpecName name;
-    in
-    builtins.hasAttr specName hostInventory.nixosHostSpecsByName
-    && hostInventory.nixosHostSpecsByName.${specName}.type == "vm";
+    builtins.hasAttr name hostInventory.nixosHostSpecsByName
+    && hostInventory.nixosHostSpecsByName.${name}.type == "vm";
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   scrapeExpectationForHostConfig =
     hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";
@@ -99,8 +97,8 @@ in
           labels = {
             host_network_charts = "true";
             host_network_source = "node";
-            host_class = hostClassForName config.networking.hostName;
-            host_virtual = lib.boolToString (isVirtualNodeName config.networking.hostName);
+            host_class = hostClassForName hostSpecName;
+            host_virtual = lib.boolToString (isVirtualNodeName hostSpecName);
             instance = config.host.dnsName;
             scrape_expectation = scrapeExpectationForHostConfig config;
           };

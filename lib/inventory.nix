@@ -84,9 +84,6 @@ rec {
 
   toVmName = name: "${name}vm";
   toProxVmName = name: "prox-${toVmName name}";
-  isProxVmName = name: lib.hasPrefix "prox-" name && lib.hasSuffix "vm" name;
-  proxVmNameToSpecName = name: lib.strings.removeSuffix "vm" (lib.strings.removePrefix "prox-" name);
-  nixosConfigNameToSpecName = name: if isProxVmName name then proxVmNameToSpecName name else name;
   toNixosConfigName =
     spec:
     if spec.type == "bm" || spec.type == "vm" then
