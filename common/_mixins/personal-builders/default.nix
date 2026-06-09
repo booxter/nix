@@ -1,13 +1,15 @@
 {
   lib,
   config,
+  hostInventory,
   pkgs,
   username,
   hostname,
   ...
 }:
 let
-  toBuilderName = n: "prox-builder${toString n}vm";
+  builderSpec = n: hostInventory.nixosHostSpecsByName."builder${toString n}";
+  toBuilderName = n: hostInventory.toNixosSshHostName (builderSpec n);
 in
 {
   programs.ssh = {
@@ -21,13 +23,13 @@ in
       "mair" = {
         publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICHqTUyXOeL1O4JPIDxf8EzUzgKLmkW4C2g9EezZMivL";
       };
-      "prox-builder1vm" = {
+      ${toBuilderName 1} = {
         publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIADgC19iVlCSjvzOZGCw0rwnPLGLFcSKzFDqqyMc5bhQ";
       };
-      "prox-builder2vm" = {
+      ${toBuilderName 2} = {
         publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILA7m9aXyQUMY+tMCpo6bDoS/Ei+FWxleBq5ytIIvSTC";
       };
-      "prox-builder3vm" = {
+      ${toBuilderName 3} = {
         publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICG1HuHAS0FyJORcsaOYvV2LlLfkT0f608r6JhUUbkvf";
       };
     };

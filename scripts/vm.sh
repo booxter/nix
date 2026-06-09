@@ -9,14 +9,38 @@ flake_json() {
     let
       f = builtins.getFlake \"${REPO_ROOT}\";
       names = builtins.attrNames f.nixosConfigurations;
-    in
-    {
-      nixosConfigurations = builtins.listToAttrs (
+      cfgs = builtins.listToAttrs (
         map (name: {
           inherit name;
           value = null;
         }) names
       );
+      hostInventory = import \"${REPO_ROOT}/lib/inventory.nix\" {
+        lib = f.inputs.nixpkgs.lib;
+      };
+      inventoryTargets = builtins.filter (target: builtins.hasAttr target.configName cfgs) (
+        map (
+          spec:
+          let
+            configName = hostInventory.toNixosConfigName spec;
+          in
+          {
+            inherit configName;
+            displayName = configName;
+          }
+        ) hostInventory.nixosHostSpecs
+      );
+      displayAliases = builtins.listToAttrs (
+        map (target: {
+          name = target.displayName;
+          value = target.configName;
+        }) inventoryTargets
+      );
+    in
+    {
+      nixosConfigurations = cfgs;
+      targetAliases = displayAliases;
+      targetDisplayNames = builtins.attrNames displayAliases;
     }
   "
 }
@@ -25,8 +49,20 @@ list_target_hosts_from_flake() {
   local flake_json_data="$1"
   printf '%s\n' "${flake_json_data}" \
     | jq -r '
-        .nixosConfigurations as $cfgs
-        | [ $cfgs | keys[] | select(test("^local-.*vm$")) | capture("^local-(?<host>.*)vm$").host ]
+        if (.targetDisplayNames? | type) == "array" then
+          .targetDisplayNames
+        else
+          .nixosConfigurations as $cfgs
+          | [
+              $cfgs
+              | keys[]
+              | if test("^prox-.*vm$") then
+                  capture("^prox-(?<host>.*)vm$").host
+                else
+                  .
+                end
+            ]
+        end
         | unique[]
       ' \
     | sort -u
@@ -38,8 +74,11 @@ resolve_target_config_from_flake() {
   printf '%s\n' "${flake_json_data}" \
     | jq -r --arg host "$target_host" '
         .nixosConfigurations as $cfgs
-        | if ($cfgs | has("local-\($host)vm")) then
-            "local-\($host)vm"
+        | (.targetAliases // {}) as $aliases
+        | if ($aliases | has($host)) then
+            $aliases[$host]
+          elif (($host | test("^prox-.*vm$") | not) and ($cfgs | has($host))) then
+            $host
           else
             empty
           end
@@ -63,7 +102,7 @@ Usage: vm [--gui] <target-host>
 Example: vm builder1
 Example: vm --gui frame
 
-Available target hosts (resolved via local-<host>vm):
+Available target hosts:
 EOF
   list_target_hosts_from_flake "${flake_json_data}" | sed 's/^/  /'
 }
@@ -118,27 +157,34 @@ main() {
     exit 1
   fi
 
+  export VM_REPO_ROOT="${REPO_ROOT}"
+  export VM_TARGET_CONFIG="${target_config}"
   if [ "$gui" = true ]; then
-    export VM_GUI_REPO_ROOT="${REPO_ROOT}"
-    export VM_GUI_TARGET_CONFIG="${target_config}"
-    exec nix run --impure --expr '
-      let
-        f = builtins.getFlake (builtins.getEnv "VM_GUI_REPO_ROOT");
-        lib = f.inputs.nixpkgs.lib;
-        targetConfig = builtins.getEnv "VM_GUI_TARGET_CONFIG";
-        cfg = (builtins.getAttr targetConfig f.nixosConfigurations).extendModules {
-          modules = [
-            {
-              virtualisation.vmVariant.virtualisation.graphics = lib.mkForce true;
-            }
-          ];
-        };
-      in
-      cfg.config.system.build.vm
-    ' -L --show-trace
+    export VM_GUI=1
+  else
+    export VM_GUI=0
   fi
 
-  exec nix run "${REPO_ROOT}#nixosConfigurations.${target_config}.config.system.build.vm" -L --show-trace
+  exec nix run --impure --expr '
+    let
+      f = builtins.getFlake (builtins.getEnv "VM_REPO_ROOT");
+      lib = f.inputs.nixpkgs.lib;
+      targetConfig = builtins.getEnv "VM_TARGET_CONFIG";
+      hostPkgs = import f.inputs.nixpkgs { system = builtins.currentSystem; };
+      gui = builtins.getEnv "VM_GUI" == "1";
+      cfg = (builtins.getAttr targetConfig f.nixosConfigurations).extendModules {
+        modules = [
+          {
+            virtualisation.vmVariant.virtualisation.host.pkgs = lib.mkForce hostPkgs;
+          }
+        ]
+        ++ lib.optional gui {
+          virtualisation.vmVariant.virtualisation.graphics = lib.mkForce true;
+        };
+      };
+    in
+    cfg.config.system.build.vm
+  ' -L --show-trace
 }
 
 main "$@"

@@ -16,7 +16,7 @@ let
       idx' = toString idx;
     in
     {
-      type = "vm";
+      isVM = true;
       name = "builder${idx'}";
       proxNode = "prx${idx'}-lab";
       stateVersion = "25.11";
@@ -26,9 +26,14 @@ let
       hmFull = false;
       extraModules = [
         (
-          { hostname, lib, ... }:
           {
-            system.autoUpgrade = lib.mkIf (lib.hasPrefix "prox-" hostname) {
+            hostname,
+            hostSpecName ? hostname,
+            lib,
+            ...
+          }:
+          {
+            system.autoUpgrade = lib.mkIf (lib.hasPrefix "builder" hostSpecName) {
               dates = "Mon 03:00";
               rebootWindow = {
                 lower = lib.mkForce "02:59";
@@ -40,12 +45,6 @@ let
       ];
     };
 
-  capitalize =
-    str:
-    "${lib.strings.toUpper (builtins.substring 0 1 str)}${
-      builtins.substring 1 ((builtins.stringLength str) - 1) str
-    }";
-
   mkService =
     {
       id,
@@ -53,7 +52,7 @@ let
       owner,
       probePath,
       publicHost ? null,
-      title ? capitalize id,
+      title ? lib.strings.toSentenceCase id,
       icon ? "sh:${id}",
     }:
     {
@@ -74,17 +73,6 @@ let
     inherit domain ipv4Address;
   };
 
-  canonicalLocalHostname =
-    spec:
-    if spec ? dnsName then
-      spec.dnsName
-    else if spec ? dhcpReservation then
-      spec.dhcpReservation.hostname
-    else if spec.type == "vm" then
-      "prox-${spec.name}vm"
-    else
-      spec.name;
-
   aliasIpv4Address =
     spec:
     if spec ? dhcpReservation then
@@ -100,6 +88,19 @@ rec {
   virtPlatform = "aarch64-darwin";
 
   toVmName = name: "${name}vm";
+  toProxVmName = name: "prox-${toVmName name}";
+  isNixosVM = spec: spec.isVM or false;
+  isNixosBM = spec: !(isNixosVM spec);
+  toNixosConfigName = spec: spec.name;
+  toNixosRuntimeHostName =
+    spec:
+    spec.hostname
+      or (spec.dhcpReservation.hostname or (if isNixosVM spec then toProxVmName spec.name else spec.name)
+      );
+  toNixosModuleDirName = spec: if isNixosVM spec then toVmName spec.name else spec.name;
+  toNixosSshHostName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
+  toHostIpv4Address = aliasIpv4Address;
+  toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
   resolveService =
     service:
@@ -114,9 +115,8 @@ rec {
       probeHost =
         let
           spec = nixosHostSpecsByName.${service.owner};
-          proxVmHost = "prox-${toVmName spec.name}";
         in
-        spec.dnsName or (spec.dhcpReservation.hostname or proxVmHost);
+        toNixosSshHostName spec;
     };
 
   site = rec {
@@ -351,7 +351,6 @@ rec {
 
   nixosHostSpecs = [
     {
-      type = "bm";
       hostKind = "nixos";
       name = frame;
       stateVersion = "25.11";
@@ -359,7 +358,6 @@ rec {
       isDesktop = true;
     }
     {
-      type = "bm";
       hostKind = "proxmox";
       name = nvws;
       inherit username;
@@ -375,7 +373,6 @@ rec {
       };
     }
     {
-      type = "bm";
       hostKind = "nixos";
       name = "beast";
       stateVersion = "25.11";
@@ -391,7 +388,6 @@ rec {
       };
     }
     {
-      type = "bm";
       hostKind = "proxmox";
       name = "prx1-lab";
       inherit username;
@@ -406,7 +402,6 @@ rec {
       };
     }
     {
-      type = "bm";
       hostKind = "proxmox";
       name = "prx2-lab";
       inherit username;
@@ -422,7 +417,6 @@ rec {
       };
     }
     {
-      type = "bm";
       hostKind = "proxmox";
       name = "prx3-lab";
       inherit username;
@@ -438,7 +432,7 @@ rec {
       };
     }
     {
-      type = "vm";
+      isVM = true;
       name = "nv";
       isWork = true;
       upsHost = nvws;
@@ -448,7 +442,7 @@ rec {
       proxNode = "nvws";
     }
     {
-      type = "vm";
+      isVM = true;
       name = "cache";
       upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
@@ -464,7 +458,7 @@ rec {
       diskSize = 50; # actual cache is on NFS
     }
     {
-      type = "vm";
+      isVM = true;
       name = "srvarr";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
@@ -497,7 +491,7 @@ rec {
       };
     }
     {
-      type = "vm";
+      isVM = true;
       name = "fana";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
@@ -517,7 +511,7 @@ rec {
       };
     }
     {
-      type = "vm";
+      isVM = true;
       name = "gw";
       upsHost = "prx1-lab";
       cores = 2;
@@ -532,7 +526,7 @@ rec {
       };
     }
     {
-      type = "vm";
+      isVM = true;
       name = "org";
       platform = "x86_64-linux";
       localDnsAliases = [ "vikunja" ];
@@ -549,7 +543,7 @@ rec {
       };
     }
     {
-      type = "vm";
+      isVM = true;
       name = "pki";
       platform = "x86_64-linux";
       caServer = {

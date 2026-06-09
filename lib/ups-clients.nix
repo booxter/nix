@@ -7,12 +7,9 @@ let
 
   includeClient = spec: spec ? upsHost && !(spec.isWork or false) && !(serverIsWork spec.upsHost);
 
-  nixosClientName =
-    spec: if spec.type == "vm" then "prox-${hostInventory.toVmName spec.name}" else spec.name;
-
   nixosEntries = map (spec: {
     server = spec.upsHost;
-    client = nixosClientName spec;
+    client = hostInventory.toNixosConfigName spec;
   }) (builtins.filter includeClient hostInventory.nixosHostSpecs);
 
   darwinEntries = lib.mapAttrsToList (_: spec: {

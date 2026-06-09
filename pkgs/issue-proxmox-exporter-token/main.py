@@ -85,29 +85,77 @@ def secret_path_for_host(host):
     return REPO_ROOT / "secrets" / f"{host}.yaml"
 
 
+_KNOWN_INVENTORY_HOSTS = None
+
+
+def known_inventory_hosts():
+    global _KNOWN_INVENTORY_HOSTS
+    if _KNOWN_INVENTORY_HOSTS is None:
+        expr = f"""
+let
+  f = builtins.getFlake {json.dumps(str(REPO_ROOT))};
+  inventory = import {json.dumps(str(REPO_ROOT / "lib/inventory.nix"))} {{
+    lib = f.inputs.nixpkgs.lib;
+  }};
+in
+  builtins.attrNames inventory.nixosHostSpecsByName
+  ++ builtins.attrNames inventory.darwinHosts
+"""
+        _KNOWN_INVENTORY_HOSTS = set(
+            json.loads(
+                run(
+                    [
+                        "nix",
+                        "--extra-experimental-features",
+                        "nix-command flakes",
+                        "eval",
+                        "--impure",
+                        "--json",
+                        "--expr",
+                        expr,
+                    ]
+                )
+            )
+        )
+    return _KNOWN_INVENTORY_HOSTS
+
+
+def validate_inventory_host(host):
+    if host not in known_inventory_hosts():
+        raise SystemExit(f"Unknown host: {host}")
+
+
 def sops_index_path(secret_key):
     return "".join(f"[{json.dumps(segment)}]" for segment in secret_key.split("/"))
 
 
 def enabled_exporter_hosts():
-    apply_expr = """
-configs:
-builtins.filter
-  (name:
-    !(builtins.match "local-.*" name != null)
-    && !((configs.${name}.config.host.isWork or false))
-    && ((configs.${name}.config.host.proxmox.prometheusExporter.enable or false) == true))
-  (builtins.attrNames configs)
+    expr = f"""
+let
+  f = builtins.getFlake {json.dumps(str(REPO_ROOT))};
+  inventory = import {json.dumps(str(REPO_ROOT / "lib/inventory.nix"))} {{
+    lib = f.inputs.nixpkgs.lib;
+  }};
+  configs = f.nixosConfigurations;
+in
+  builtins.filter
+    (name:
+      builtins.hasAttr name configs
+      && !((configs.${{name}}.config.host.isWork or false))
+      && ((configs.${{name}}.config.host.proxmox.prometheusExporter.enable or false) == true))
+    (builtins.attrNames inventory.nixosHostSpecsByName)
 """
     return json.loads(
         run(
             [
                 "nix",
+                "--extra-experimental-features",
+                "nix-command flakes",
                 "eval",
                 "--json",
-                "--apply",
-                apply_expr,
-                ".#nixosConfigurations",
+                "--impure",
+                "--expr",
+                expr,
             ]
         )
     )
@@ -278,7 +326,11 @@ def main():
     if args.token_value and args.token_value_file:
         raise SystemExit("--token-value and --token-value-file are mutually exclusive")
 
+    if args.issuer_host:
+        validate_inventory_host(args.issuer_host)
     secret_hosts = args.secret_hosts or enabled_exporter_hosts()
+    for host in secret_hosts:
+        validate_inventory_host(host)
     host_configs = validate_secret_hosts(
         secret_hosts, api_user=args.user, token_name=args.token_name
     )

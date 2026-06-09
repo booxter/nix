@@ -1,6 +1,8 @@
 {
   config,
   hostInventory,
+  hostname,
+  hostSpecName ? hostname,
   isDarwin,
   isLinux,
   isWork,
@@ -12,10 +14,6 @@ let
   cfg = config.host.sshTicket;
   caPublicKeyPath = "/etc/ssh/fleet-user-ca.pub";
   inventoryCaPublicKey = hostInventory.sshTicket.userCaPublicKey;
-  hostName = config.networking.hostName;
-  shortProxVmAliases = lib.optionals (lib.hasPrefix "prox-" hostName && lib.hasSuffix "vm" hostName) [
-    (builtins.substring 5 ((builtins.stringLength hostName) - 7) hostName)
-  ];
 in
 {
   options.host.sshTicket = {
@@ -41,14 +39,12 @@ in
 
     aliases = lib.mkOption {
       type = lib.types.listOf lib.types.singleLineStr;
-      default = lib.unique (
-        [
-          config.networking.hostName
-          config.host.dnsName
-        ]
-        ++ shortProxVmAliases
-      );
-      defaultText = lib.literalExpression "[ config.networking.hostName config.host.dnsName ] ++ shortProxVmAliases";
+      default = lib.unique ([
+        config.networking.hostName
+        config.host.dnsName
+        hostSpecName
+      ]);
+      defaultText = lib.literalExpression "[ config.networking.hostName config.host.dnsName hostSpecName ]";
       description = "Client-side names that resolve to this ticket scope.";
     };
 

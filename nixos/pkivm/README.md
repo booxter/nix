@@ -34,8 +34,8 @@ trusted-LAN DHCP and split DNS stay converged with inventory.
 Internal HTTPS service cert:
 
 ```bash
-nix run .#issue-internal-service-cert -- --host prox-fanavm --service grafana
-nix run .#deploy -- --branch dhcp-unifi prox-fanavm
+nix run .#issue-internal-service-cert -- --host fana --service grafana
+nix run .#deploy -- --branch dhcp-unifi fana
 ```
 
 Prometheus mTLS endpoint cert:
@@ -48,8 +48,8 @@ nix run .#deploy -- --branch dhcp-unifi beast
 Prometheus mTLS client cert:
 
 ```bash
-nix run .#issue-observability-cert -- --host prox-srvarrvm --client jellyfin-upload-policy
-nix run .#deploy -- --branch dhcp-unifi prox-srvarrvm
+nix run .#issue-observability-cert -- --host srvarr --client jellyfin-upload-policy
+nix run .#deploy -- --branch dhcp-unifi srvarr
 ```
 
 PKI status inventory:

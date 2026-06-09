@@ -117,7 +117,7 @@ It does not imply routine rotation of the root or intermediate CA.
 ## Operational Requirements
 
 - `pkivm` needs GitHub credentials that can push a branch and open a PR
-- store that credential in `secrets/prox-pkivm.yaml` at
+- store that credential in `secrets/pki.yaml` at
   `github.pki_rotation.token`
 - the token only needs repository `Contents: Read and write` and `Pull requests:
   Read and write` on `booxter/nix`

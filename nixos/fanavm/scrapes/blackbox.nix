@@ -9,9 +9,10 @@
 }:
 let
   lan = hostInventory.site.lan;
+  nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
   localHttpsServices = config.host.internalHttps.services;
-  srvarrHostConfig = outputs.nixosConfigurations.prox-srvarrvm.config;
+  srvarrHostConfig = outputs.nixosConfigurations.srvarr.config;
   srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
   srvarrPortFor =
     serviceId:
@@ -81,11 +82,10 @@ let
   ) hostInventory.services;
   proxmoxLabNodeNames = builtins.filter (
     name:
-    !(lib.hasPrefix "local-" name)
-    && (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
+    (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
     && (outputs.nixosConfigurations.${name}.config.host.proxmox.apiCertificate.enable or false)
-  ) (builtins.attrNames outputs.nixosConfigurations);
+  ) nixosConfigNames;
   proxmoxServiceCatalog = map (
     name:
     let
@@ -141,10 +141,9 @@ let
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
   remoteBlackboxProbeSourceNames = builtins.filter (
     name:
-    !(lib.hasPrefix "local-" name)
-    && name != "prox-fanavm"
+    name != "fana"
     && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.enable
-  ) (builtins.attrNames outputs.nixosConfigurations);
+  ) nixosConfigNames;
   remotePlainBlackboxProbeSourceNames = builtins.filter (
     name:
     !(outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.mtls.enable or false

@@ -72,7 +72,9 @@ encrypt_secret_file() {
 
 setup_repo() {
   local repo_dir="$1"
-  mkdir -p "$repo_dir/secrets/_templates" "$repo_dir/scripts" "$repo_dir/tests"
+  mkdir -p "$repo_dir/secrets/_templates" "$repo_dir/scripts/_helpers" "$repo_dir/tests"
+  cp "$REPO_ROOT/scripts/_helpers/host-aliases.sh" "$repo_dir/scripts/_helpers/"
+  cp "$REPO_ROOT/scripts/sops-cat.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-update.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-copy.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-ups-sync.sh" "$repo_dir/scripts/"
@@ -170,7 +172,7 @@ other:
   keep: "dst"
 EOF
 
-  cat > "$repo/prox-cachevm.plain.yaml" <<'EOF'
+  cat > "$repo/cache.plain.yaml" <<'EOF'
 nut:
   monitors:
     prx1-lab:
@@ -179,12 +181,12 @@ other:
   keep: "cache"
 EOF
 
-  cat > "$repo/prox-fanavm.plain.yaml" <<'EOF'
+  cat > "$repo/fana.plain.yaml" <<'EOF'
 other:
   keep: "fana"
 EOF
 
-  cat > "$repo/prox-gwvm.plain.yaml" <<'EOF'
+  cat > "$repo/gw.plain.yaml" <<'EOF'
 users:
   root:
     hashedPassword: "REPLACE_ME"
@@ -198,9 +200,9 @@ EOF
   encrypt_secret_file beast "$repo/beast.plain.yaml"
   encrypt_secret_file mair "$repo/mair.plain.yaml"
   encrypt_secret_file prx1-lab "$repo/prx1-lab.plain.yaml"
-  encrypt_secret_file prox-cachevm "$repo/prox-cachevm.plain.yaml"
-  encrypt_secret_file prox-fanavm "$repo/prox-fanavm.plain.yaml"
-  encrypt_secret_file prox-gwvm "$repo/prox-gwvm.plain.yaml"
+  encrypt_secret_file cache "$repo/cache.plain.yaml"
+  encrypt_secret_file fana "$repo/fana.plain.yaml"
+  encrypt_secret_file gw "$repo/gw.plain.yaml"
 
   log "validate encrypted secret layout"
   run_and_capture "$out" bash "$repo/tests/test-sops-config.sh"
@@ -245,24 +247,32 @@ EOF
   assert_eq "dst" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive copy"
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.users.upsslave.password' "$copied")" "destination secret values should survive copy"
 
+  log "update a prox VM secret by short name"
+  run_and_capture "$out" bash "$repo/scripts/sops-update.sh" gw
+  assert_contains "$(cat "$out")" "Updated secret from templates:"
+  assert_contains "$(cat "$out")" "secrets/gw.yaml"
+  decrypt_secret_file gw "$after"
+  assert_eq "REPLACE_ME" "$(yq -r '.attic.token' "$after")" "short prox VM update should merge templates into short secret"
+  assert_eq "gw" "$(yq -r '.other.keep' "$after")" "short prox VM update should preserve short secret data"
+
   log "copy a secret value to a different destination path"
   run_and_capture "$out" bash "$repo/scripts/sops-copy.sh" \
-    prx1-lab prox-cachevm \
+    prx1-lab cache \
     nut/users/upsslave/password \
     nut/monitors/prx1-lab/password
-  assert_contains "$(cat "$out")" "Copied nut/users/upsslave/password from prx1-lab to prox-cachevm:nut/monitors/prx1-lab/password."
-  decrypt_secret_file prox-cachevm "$copied"
+  assert_contains "$(cat "$out")" "Copied nut/users/upsslave/password from prx1-lab to cache:nut/monitors/prx1-lab/password."
+  decrypt_secret_file cache "$copied"
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
   assert_eq "cache" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive copy"
 
   log "sync UPS monitor password through helper"
   cat > "$repo/ups-clients-by-server.json" <<'EOF'
-{"prx1-lab":["prox-fanavm"]}
+{"prx1-lab":["fana"]}
 EOF
   run_and_capture "$out" env UPS_CLIENTS_BY_SERVER_FILE="$repo/ups-clients-by-server.json" \
     bash "$repo/scripts/sops-ups-sync.sh" prx1-lab
-  assert_contains "$(cat "$out")" "Synced prx1-lab UPS password to prox-fanavm."
-  decrypt_secret_file prox-fanavm "$copied"
+  assert_contains "$(cat "$out")" "Synced prx1-lab UPS password to fana."
+  decrypt_secret_file fana "$copied"
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
   assert_eq "fana" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive sync"
 
@@ -347,32 +357,24 @@ EOF
   assert_eq "beast" "$(yq -r '.other.keep' "$after")" "unrelated data should survive password update"
   test -f "$WORKDIR/pass-store/host/beast/root" || fail "default sops-pass should insert into pass"
 
-  log "generate login password in pass using canonical host names"
+  log "generate login password in pass using a short VM host name"
   run_and_capture "$out" env \
     PASS_TEST_STORE="$WORKDIR/pass-store" \
     PATH="$WORKDIR/fake-bin:$PATH" \
-    bash "$repo/scripts/sops-pass.sh" --gen prox-gwvm root
+    bash "$repo/scripts/sops-pass.sh" --gen gw root
   assert_contains "$(cat "$out")" "Generated host/gw/root."
-  test -f "$WORKDIR/pass-store/host/gw/root" || fail "pass entry should use canonical prox VM host name"
-  decrypt_secret_file prox-gwvm "$after"
+  test -f "$WORKDIR/pass-store/host/gw/root" || fail "pass entry should use short VM host name"
+  decrypt_secret_file gw "$after"
   case "$(yq -r '.users.root.hashedPassword' "$after")" in
     "${sha512_prefix}"*) ;;
     *) fail "generated root password hash should use sha-512 crypt format" ;;
   esac
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "generated password should only update requested user"
 
-  log "accept canonical prox VM host names"
-  run_and_capture "$out" env \
-    PASS_TEST_STORE="$WORKDIR/pass-store" \
-    PATH="$WORKDIR/fake-bin:$PATH" \
-    bash "$repo/scripts/sops-pass.sh" --gen gw ihrachyshka
-  assert_contains "$(cat "$out")" "Generated host/gw/ihrachyshka."
-  test -f "$WORKDIR/pass-store/host/gw/ihrachyshka" || fail "canonical host name should use canonical pass entry"
-  decrypt_secret_file prox-gwvm "$after"
-  case "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" in
-    "${sha512_prefix}"*) ;;
-    *) fail "canonical host name should update the prox VM secret" ;;
-  esac
+  log "decrypt a VM secret by short name"
+  run_and_capture "$out" bash "$repo/scripts/sops-cat.sh" gw
+  assert_contains "$(cat "$out")" "other:"
+  assert_contains "$(cat "$out")" "keep: gw"
 
   log "update both login users with one generated password"
   run_and_capture "$out" env \
@@ -383,7 +385,7 @@ EOF
   assert_contains "$(cat "$out")" "Updated users/root/hashedPassword and users/ihrachyshka/hashedPassword"
   test ! -f "$WORKDIR/pass-store/host/gw/both" || fail "both should not create a synthetic pass user"
   assert_eq "$(cat "$WORKDIR/pass-store/host/gw/root")" "$(cat "$WORKDIR/pass-store/host/gw/ihrachyshka")" "both should write the same pass value to both real users"
-  decrypt_secret_file prox-gwvm "$after"
+  decrypt_secret_file gw "$after"
   local root_hash
   local user_hash
   root_hash="$(yq -r '.users.root.hashedPassword' "$after")"

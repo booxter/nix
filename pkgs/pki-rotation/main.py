@@ -23,6 +23,7 @@ DEFAULT_INTERMEDIATE_CERT_PATH = "/var/lib/step-ca/certs/intermediate_ca.crt"
 DEFAULT_SOPS_AGE_KEY_FILE = "/var/lib/sops-nix/key.txt"
 NODE_EXPORTER_ENDPOINT = "node_exporter"
 NODE_EXPORTER_SECRET_PREFIX = "prometheus/node_exporter"
+PKI_HOST_SPEC_NAME = "pki"
 
 
 @dataclass(frozen=True)
@@ -143,6 +144,20 @@ def nix_eval_raw_optional(*segments, repo_root=None):
     if raw is None:
         return None
     return raw.strip()
+
+
+def nixos_runtime_hostname(host, *, repo_root=None):
+    return (
+        nix_eval_raw_optional(
+            "nixosConfigurations",
+            host,
+            "config",
+            "networking",
+            "hostName",
+            repo_root=repo_root,
+        )
+        or host
+    )
 
 
 def host_config_root(host, *, repo_root=None):
@@ -381,8 +396,9 @@ def external_service_client_specs(host, root, *, repo_root):
 
 
 def cert_specs(repo_root, *, intermediate_cert_path):
+    pki_host = nixos_runtime_hostname(PKI_HOST_SPEC_NAME, repo_root=repo_root)
     yield CertSpec(
-        host="prox-pkivm",
+        host=pki_host,
         category="ca",
         cert_name="root",
         source_kind="repo_file",
@@ -395,7 +411,7 @@ def cert_specs(repo_root, *, intermediate_cert_path):
         ),
     )
     yield CertSpec(
-        host="prox-pkivm",
+        host=pki_host,
         category="ca",
         cert_name="intermediate",
         source_kind="host_file",
@@ -852,7 +868,9 @@ def format_expiry(record):
     )
 
 
-def build_pr_body(rotated_records, records_after, *, rotation_window_days):
+def build_pr_body(
+    rotated_records, records_after, *, rotation_window_days, created_by_host
+):
     lookup = {
         (record["host"], record["category"], record["cert_name"]): record
         for record in records_after
@@ -873,7 +891,7 @@ def build_pr_body(rotated_records, records_after, *, rotation_window_days):
     lines.extend(
         [
             "",
-            "This PR was created automatically by `prox-pkivm`.",
+            f"This PR was created automatically by `{created_by_host}`.",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -1013,6 +1031,9 @@ def cmd_rotate(args):
                                 rotated,
                                 records_after,
                                 rotation_window_days=args.rotation_window_days,
+                                created_by_host=nixos_runtime_hostname(
+                                    PKI_HOST_SPEC_NAME, repo_root=worktree
+                                ),
                             ),
                         },
                     )

@@ -88,7 +88,6 @@
       inherit (hostSpecs)
         darwinHosts
         nixosHostSpecs
-        toVmName
         virtPlatform
         ;
 
@@ -110,45 +109,33 @@
         args@{
           name,
           stateVersion ? "25.11",
-          platform ? "aarch64-linux",
           ...
         }:
         let
-          vmname = toVmName name;
-          localName = "local-${vmname}";
-          proxName = "prox-${vmname}";
+          runtimeHostname = hostInventory.toNixosRuntimeHostName hostInventory.nixosHostSpecsByName.${name};
         in
         {
-          "${localName}" = helpers.mkVM (
-            args
-            // {
-              inherit platform stateVersion virtPlatform;
-              hostname = localName;
-              vmMode = "qemu";
-            }
-          );
-
-          "${proxName}" = helpers.mkVM (
+          "${name}" = helpers.mkVM (
             args
             // {
               inherit stateVersion;
-              hostname = proxName;
+              hostSpecName = name;
+              hostname = runtimeHostname;
               platform = "x86_64-linux";
               virtPlatform = "x86_64-linux";
-              vmMode = "proxmox";
             }
           );
         };
 
-      BM = args: helpers.mkBM ({ inherit virtPlatform; } // args);
+      BM = args: helpers.mkBM args;
 
       specToNixosConfigs =
         spec:
         let
           extraModules = inputs.nixpkgs.lib.optionals (spec ? dnsName) [ (staticHostModule spec) ];
           args = builtins.removeAttrs spec [
-            "type"
             "hostKind"
+            "isVM"
             "homeManagerInput"
             "nixpkgsInput"
             "dnsName"
@@ -157,7 +144,9 @@
             (if spec ? homeManagerInput then { homeManagerInput = inputs.${spec.homeManagerInput}; } else { })
             // (if spec ? nixpkgsInput then { nixpkgsInput = inputs.${spec.nixpkgsInput}; } else { });
         in
-        if spec.type == "bm" then
+        if hostInventory.isNixosVM spec then
+          VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
+        else
           BM (
             args
             // inputArgs
@@ -165,11 +154,11 @@
               mkHost = hostKindToMkHost.${spec.hostKind};
               extraModules = (args.extraModules or [ ]) ++ extraModules;
             }
-          )
-        else if spec.type == "vm" then
-          VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
-        else
-          throw "Unsupported NixOS host spec type `${spec.type}`";
+          );
+
+      canonicalNixosConfigurations = builtins.foldl' (
+        acc: spec: acc // specToNixosConfigs spec
+      ) { } nixosHostSpecs;
 
     in
     {
@@ -181,14 +170,12 @@
           in
           {
             name = name;
-            value = helpers.mkDarwin cfg;
+            value = helpers.mkDarwin (cfg // { hostSpecName = name; });
           }
         ) (builtins.attrNames darwinHosts)
       );
 
-      nixosConfigurations = builtins.foldl' (
-        acc: spec: acc // specToNixosConfigs spec
-      ) { } nixosHostSpecs;
+      nixosConfigurations = canonicalNixosConfigurations;
 
       checks = import ./checks.nix {
         inherit

@@ -217,6 +217,35 @@ EOF
   [ "$output" = "nvws" ]
 }
 
+@test "resolve_host_alias maps host aliases" {
+  export HOST_ALIAS_MAP_JSON='{"org":"org","beast":"beast"}'
+  run resolve_host_alias org
+  [ "$status" -eq 0 ]
+  [ "$output" = "org" ]
+}
+
+@test "canonicalize_hosts preserves order after alias resolution" {
+  export HOST_ALIAS_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
+  run canonicalize_hosts org beast srvarr
+  [ "$status" -eq 0 ]
+  expected=$'org\nbeast\nsrvarr'
+  [ "$output" = "$expected" ]
+}
+
+@test "display_host_name keeps canonical short VM configs displayable" {
+  export HOST_DISPLAY_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
+  run display_host_name org
+  [ "$status" -eq 0 ]
+  [ "$output" = "org" ]
+}
+
+@test "format_display_host_list joins display names" {
+  export HOST_DISPLAY_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
+  run format_display_host_list org beast srvarr
+  [ "$status" -eq 0 ]
+  [ "$output" = "org, beast, srvarr" ]
+}
+
 @test "hosts_from_work_map returns sorted unique hosts" {
   work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
   run hosts_from_work_map "$work_map"
@@ -250,9 +279,9 @@ EOF
 }
 
 @test "prioritize_hosts orders priority, normal, deferred" {
-  run prioritize_hosts prox-cachevm nvws zeta prx2-lab alpha
+  run prioritize_hosts cache nvws zeta prx2-lab alpha
   [ "$status" -eq 0 ]
-  expected=$'nvws\nprx2-lab\nzeta\nalpha\nprox-cachevm'
+  expected=$'nvws\nprx2-lab\nzeta\nalpha\ncache'
   [ "$output" = "$expected" ]
 }
 
@@ -279,10 +308,10 @@ EOF
   export PATH="$workdir/bin:$PATH"
   export NIX_ARGS_OUT="$workdir/nix.args"
 
-  run run_nixos_rebuild_from_repo boot prox-srvarrvm
+  run run_nixos_rebuild_from_repo boot srvarr
 
   [ "$status" -eq 0 ]
-  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname prox-srvarrvm --print-build-logs --show-trace .#" ]
+  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname srvarr --print-build-logs --show-trace .#" ]
 }
 
 @test "run_nixos_rebuild_from_repo keeps dry-activate on nixos-rebuild" {
@@ -313,11 +342,11 @@ EOF
   export SUDO_ARGS_OUT="$workdir/sudo.args"
   export NIXOS_REBUILD_ARGS_OUT="$workdir/nixos-rebuild.args"
 
-  run run_nixos_rebuild_from_repo dry-activate prox-srvarrvm
+  run run_nixos_rebuild_from_repo dry-activate srvarr
 
   [ "$status" -eq 0 ]
-  [ "$(<"$SUDO_ARGS_OUT")" = "nixos-rebuild dry-activate --flake .#prox-srvarrvm -L --show-trace" ]
-  [ "$(<"$NIXOS_REBUILD_ARGS_OUT")" = "dry-activate --flake .#prox-srvarrvm -L --show-trace" ]
+  [ "$(<"$SUDO_ARGS_OUT")" = "nixos-rebuild dry-activate --flake .#srvarr -L --show-trace" ]
+  [ "$(<"$NIXOS_REBUILD_ARGS_OUT")" = "dry-activate --flake .#srvarr -L --show-trace" ]
 }
 
 @test "run_darwin_switch_from_repo uses pinned nh" {
@@ -356,6 +385,7 @@ EOF
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
-  grep -Fq 'target_host_name="$7"' "$SSH_UPLOADED_SCRIPT_OUT"
-  grep -Fq 'run_nixos_rebuild_from_repo "$rebuild_action" "$target_host_name"' "$SSH_UPLOADED_SCRIPT_OUT"
+  grep -Fq 'target_config_name="$7"' "$SSH_UPLOADED_SCRIPT_OUT"
+  grep -Fq 'target_runtime_host="$8"' "$SSH_UPLOADED_SCRIPT_OUT"
+  grep -Fq 'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"' "$SSH_UPLOADED_SCRIPT_OUT"
 }

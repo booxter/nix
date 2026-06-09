@@ -10,6 +10,7 @@ let
   hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
+  wireguardGatewaySshHost = hostInventory.toNixosSshHostName hostInventory.nixosHostSpecsByName.gw;
   unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
@@ -63,7 +64,7 @@ let
 
       Examples:
         deploy -A --select
-        deploy --branch ci/flake-update --boot prox-srvarrvm
+        deploy --branch ci/flake-update --boot srvarr
         deploy --branch dhcp-unifi --test beast
         deploy --disko frame /dev/sdX
       EOF
@@ -363,7 +364,7 @@ let
       )"
 
       if [ "$fetch_server_public_key" = true ]; then
-        server_public_key="$(ssh prox-gwvm "sudo sh -c 'wg pubkey < /var/lib/wireguard/wg0.key'")"
+        server_public_key="$(ssh ${wireguardGatewaySshHost} "sudo sh -c 'wg pubkey < /var/lib/wireguard/wg0.key'")"
       fi
 
       private_key="$(${pkgs.coreutils}/bin/tr -d '\n' < "$private_key_file")"
@@ -399,7 +400,7 @@ let
 in
 {
   deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
-  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host via local-<target-host>vm.";
+  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
   diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";

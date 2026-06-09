@@ -22,7 +22,11 @@ if [[ "${1:-}" == "eval" && "${2:-}" == "--impure" && "${3:-}" == "--json" && "$
 fi
 
 if [[ "${1:-}" == "run" ]]; then
-  printf '%s\n' "$*" > "${NIX_RUN_ARGS_OUT:?}"
+  {
+    printf 'VM_TARGET_CONFIG=%s\n' "${VM_TARGET_CONFIG:-}"
+    printf 'VM_GUI=%s\n' "${VM_GUI:-}"
+    printf '%s\n' "$*"
+  } > "${NIX_RUN_ARGS_OUT:?}"
   exit "${NIX_RUN_EXIT_CODE:-0}"
 fi
 
@@ -36,8 +40,12 @@ EOF
   export NIX_RUN_ARGS_OUT="$workdir/nix-run.args"
 }
 
-@test "vm --help lists local-vm targets and regular hosts" {
-  export FLAKE_JSON='{"nixosConfigurations":{"local-builder1vm":{},"local-srvarrvm":{},"local-beastvm":{},"local-prx1-labvm":{},"prox-srvarrvm":{},"beast":{},"prx1-lab":{}}}'
+@test "vm --help lists available target hosts" {
+  export FLAKE_JSON='{
+    "nixosConfigurations":{"builder1":{},"srvarr":{},"beast":{},"prx1-lab":{}},
+    "targetAliases":{"builder1":"builder1","srvarr":"srvarr","beast":"beast","prx1-lab":"prx1-lab"},
+    "targetDisplayNames":["builder1","srvarr","beast","prx1-lab"]
+  }'
 
   run bash ./scripts/vm.sh --help
 
@@ -48,7 +56,6 @@ EOF
   grep -Fqx "  srvarr" <<<"$output"
   grep -Fqx "  beast" <<<"$output"
   grep -Fqx "  prx1-lab" <<<"$output"
-  ! grep -Fqx "  prox-srvarrvm" <<<"$output"
 }
 
 @test "vm --help exits non-zero when flake evaluation fails" {
@@ -61,42 +68,45 @@ EOF
   [[ "$output" == *"Failed to evaluate flake for VM target discovery"* ]]
 }
 
-@test "vm --gui enables graphics for the resolved local vm" {
-  export FLAKE_JSON='{"nixosConfigurations":{"local-builder1vm":{},"builder1":{},"beast":{}}}'
+@test "vm --gui enables graphics for the resolved vm" {
+  export FLAKE_JSON='{
+    "nixosConfigurations":{"builder1":{},"beast":{}},
+    "targetAliases":{"builder1":"builder1"}
+  }'
 
   run bash ./scripts/vm.sh --gui builder1
 
   [ "$status" -eq 0 ]
+  grep -Fq "VM_TARGET_CONFIG=builder1" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "VM_GUI=1" "$NIX_RUN_ARGS_OUT"
   grep -Fq -- "--expr" "$NIX_RUN_ARGS_OUT"
   grep -Fq "getAttr targetConfig f.nixosConfigurations" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "virtualisation.vmVariant.virtualisation.host.pkgs = lib.mkForce hostPkgs;" "$NIX_RUN_ARGS_OUT"
   grep -Fq "graphics = lib.mkForce true;" "$NIX_RUN_ARGS_OUT"
 }
 
-@test "vm resolves host via local-<host>vm" {
-  export FLAKE_JSON='{"nixosConfigurations":{"local-builder1vm":{},"builder1":{},"beast":{}}}'
+@test "vm resolves short VM name to config" {
+  export FLAKE_JSON='{
+    "nixosConfigurations":{"builder1":{},"beast":{}},
+    "targetAliases":{"builder1":"builder1","beast":"beast"},
+    "targetDisplayNames":["builder1","beast"]
+  }'
 
   run bash ./scripts/vm.sh builder1
 
   [ "$status" -eq 0 ]
-  grep -Fq "#nixosConfigurations.local-builder1vm.config.system.build.vm" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "VM_TARGET_CONFIG=builder1" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "VM_GUI=0" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "cfg.config.system.build.vm" "$NIX_RUN_ARGS_OUT"
 }
 
-@test "vm resolves beast via local-beastvm" {
-  export FLAKE_JSON='{"nixosConfigurations":{"local-beastvm":{},"beast":{},"prox-srvarrvm":{}}}'
+@test "vm resolves real host directly" {
+  export FLAKE_JSON='{"nixosConfigurations":{"beast":{}}}'
 
   run bash ./scripts/vm.sh beast
 
   [ "$status" -eq 0 ]
-  grep -Fq "#nixosConfigurations.local-beastvm.config.system.build.vm" "$NIX_RUN_ARGS_OUT"
-}
-
-@test "vm rejects host without local-<host>vm target" {
-  export FLAKE_JSON='{"nixosConfigurations":{"beast":{},"prx1-lab":{},"prox-srvarrvm":{}}}'
-
-  run bash ./scripts/vm.sh beast
-
-  [ "$status" -ne 0 ]
-  [[ "$output" == *"Unknown target host: beast"* ]]
+  grep -Fq "VM_TARGET_CONFIG=beast" "$NIX_RUN_ARGS_OUT"
 }
 
 @test "vm reports unknown target host" {

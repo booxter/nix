@@ -63,6 +63,9 @@ main() {
 
   local repo_root
   repo_root="$(resolve_repo_root)"
+  # shellcheck disable=SC1091
+  source "${repo_root}/scripts/_helpers/host-aliases.sh"
+  host="$(canonical_secret_host "$repo_root" "$host")"
   template="${repo_root}/secrets/_template.yaml"
   host_template="${repo_root}/secrets/_templates/${host}.yaml"
   secret="${repo_root}/secrets/${host}.yaml"

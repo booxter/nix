@@ -10,10 +10,6 @@
     ./monitoring
   ];
 
-  sops = {
-    defaultSopsFile = ../../secrets/prox-fanavm.yaml;
-  };
-
   host.observability.client = {
     nodeExporter = {
       listenAddress = "127.0.0.1";

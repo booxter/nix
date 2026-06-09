@@ -3,6 +3,7 @@
   lib,
   pkgs,
   hostname,
+  hostSpecName,
   hostInventory,
   platform,
   stateVersion,
@@ -10,14 +11,10 @@
   ...
 }:
 let
-  removePrefix = lib.strings.removePrefix;
-  removeSuffix = lib.strings.removeSuffix;
-  hostSpecName = removeSuffix "vm" (removePrefix "prox-" (removePrefix "local-" hostname));
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
-  configName = ./${removePrefix "prox-" (removePrefix "local-" hostname)};
-  hostSecretFile = ../secrets + "/${hostname}.yaml";
-  isLocalVmHost = lib.hasPrefix "local-" hostname && lib.hasSuffix "vm" hostname;
-  upsServerName = if isLocalVmHost then null else hostSpec.upsHost or null;
+  configName = ./${hostInventory.toNixosModuleDirName hostSpec};
+  hostSecretFile = ../secrets + "/${hostSpecName}.yaml";
+  upsServerName = hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
   useLiteralUpsPassword =

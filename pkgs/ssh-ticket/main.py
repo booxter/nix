@@ -182,24 +182,70 @@ def nix_targets_expr(repo_root):
       let
         f = builtins.getFlake {json.dumps(repo_ref)};
         lib = f.inputs.nixpkgs.lib;
-        render = kind: name: cfg:
+        username = "ihrachyshka";
+        inventory = import {json.dumps(str(repo_root / "lib" / "inventory.nix"))} {{
+          inherit lib username;
+        }};
+        hasCaPublicKey = inventory.sshTicket.userCaPublicKey != null;
+        mkTarget =
+          {{
+            kind,
+            name,
+            sshHost ? name,
+            dnsName ? sshHost,
+            aliases ? [ name ],
+            isWork ? false,
+          }}:
           let
-            ticket = cfg.config.host.sshTicket;
-            caPublicKey = ticket.caPublicKey or null;
+            enabled = !isWork;
           in
           {{
-            inherit kind name;
-            sshHost = name;
-            enabled = ticket.enable or false;
-            principal = ticket.principal or "";
-            aliases = ticket.aliases or [];
-            defaultTtl = ticket.defaultTtl or "30m";
-            maxTtl = ticket.maxTtl or "2h";
-            caPublicKeyConfigured = caPublicKey != null;
+            inherit kind name sshHost enabled;
+            principal = if enabled then "${{username}}@${{dnsName}}" else "";
+            aliases = lib.unique ([ name ] ++ aliases);
+            defaultTtl = "30m";
+            maxTtl = "2h";
+            caPublicKeyConfigured = enabled && hasCaPublicKey;
+          }};
+        mkNixosTarget =
+          spec:
+          if inventory.isNixosVM spec then
+            let
+              sshHost = inventory.toNixosSshHostName spec;
+            in
+            mkTarget {{
+              kind = "nixos";
+              name = spec.name;
+              inherit sshHost;
+              aliases = [ spec.name ];
+              isWork = spec.isWork or false;
+            }}
+          else
+            mkTarget {{
+              kind = "nixos";
+              name = spec.name;
+              aliases = [
+                (spec.hostname or spec.name)
+                (spec.dnsName or (spec.hostname or spec.name))
+              ];
+              dnsName = spec.dnsName or (spec.hostname or spec.name);
+              isWork = spec.isWork or false;
+            }};
+        mkDarwinTarget =
+          name: spec:
+          mkTarget {{
+            kind = "darwin";
+            inherit name;
+            aliases = [
+              (spec.hostname or name)
+              (spec.dnsName or (spec.hostname or name))
+            ];
+            dnsName = spec.dnsName or (spec.hostname or name);
+            isWork = spec.isWork or false;
           }};
       in
-        lib.mapAttrsToList (render "nixos") f.nixosConfigurations
-        ++ lib.mapAttrsToList (render "darwin") f.darwinConfigurations
+        builtins.map mkNixosTarget inventory.nixosHostSpecs
+        ++ lib.mapAttrsToList mkDarwinTarget inventory.darwinHosts
     """
 
 
@@ -229,7 +275,6 @@ def resolve_target(targets, requested, *, allow_disabled=False):
         matches = []
         for target in targets:
             aliases = set(target.get("aliases", []))
-            aliases.add(target["sshHost"])
             if requested in aliases:
                 matches.append(target)
         unique = {match["name"]: match for match in matches}
@@ -250,6 +295,10 @@ def resolve_target(targets, requested, *, allow_disabled=False):
             f"ticket target {target['name']} exists but host.sshTicket.enable is false"
         )
     return target
+
+
+def display_target_name(target):
+    return target["name"]
 
 
 def target_paths(target, state_dir):
@@ -524,7 +573,7 @@ def cmd_targets(args):
         return 0
     rows = [
         (
-            target["name"],
+            display_target_name(target),
             "yes" if target.get("enabled") else "no",
             target["principal"],
             ",".join(target.get("aliases", [])),
@@ -563,7 +612,7 @@ def cmd_status(args):
             detail = f"expired {format_time(status['validBefore'])}"
         else:
             detail = "missing"
-        print(f"{status['name']}: {status['status']} ({detail})")
+        print(f"{display_target_name(status)}: {status['status']} ({detail})")
     return 0
 
 

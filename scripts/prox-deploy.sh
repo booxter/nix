@@ -12,6 +12,8 @@ user="$2"
 password=$(pass "$3")
 vm_name="$4"
 
+flake_target="$vm_name"
+
 CONFIG_FILE="nixmoxer.conf"
 
 trap 'rm -f "$CONFIG_FILE"' EXIT
@@ -23,4 +25,4 @@ trap 'rm -f "$CONFIG_FILE"' EXIT
 	echo "verify_ssl=0"
 } > "$CONFIG_FILE"
 
-nixmoxer --flake "$vm_name"
+nixmoxer --flake "$flake_target"

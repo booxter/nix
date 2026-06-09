@@ -12,7 +12,7 @@ import tempfile
 import yaml
 
 
-DEFAULT_CA_HOST = "prox-pkivm"
+DEFAULT_CA_HOST = "pki"
 DEFAULT_PROVISIONER = "bootstrap@home.arpa"
 DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
@@ -107,6 +107,46 @@ def nix_eval_raw_optional(*segments):
 
 def secret_path_for_host(host):
     return REPO_ROOT / "secrets" / f"{host}.yaml"
+
+
+_KNOWN_INVENTORY_HOSTS = None
+
+
+def known_inventory_hosts():
+    global _KNOWN_INVENTORY_HOSTS
+    if _KNOWN_INVENTORY_HOSTS is None:
+        expr = f"""
+let
+  f = builtins.getFlake {json.dumps(str(REPO_ROOT))};
+  inventory = import {json.dumps(str(REPO_ROOT / "lib/inventory.nix"))} {{
+    lib = f.inputs.nixpkgs.lib;
+  }};
+in
+  builtins.attrNames inventory.nixosHostSpecsByName
+  ++ builtins.attrNames inventory.darwinHosts
+"""
+        _KNOWN_INVENTORY_HOSTS = set(
+            json.loads(
+                run(
+                    [
+                        "nix",
+                        "--extra-experimental-features",
+                        "nix-command flakes",
+                        "eval",
+                        "--impure",
+                        "--json",
+                        "--expr",
+                        expr,
+                    ]
+                )
+            )
+        )
+    return _KNOWN_INVENTORY_HOSTS
+
+
+def validate_inventory_host(host):
+    if host not in known_inventory_hosts():
+        raise SystemExit(f"Unknown host: {host}")
 
 
 def set_nested(mapping, dotted_path, value):
@@ -366,7 +406,7 @@ def main():
         description="Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.",
     )
     parser.add_argument(
-        "--host", required=True, help="Inventory host name, e.g. prox-srvarrvm"
+        "--host", required=True, help="Inventory host name, e.g. srvarr"
     )
     parser.add_argument("--service", help="Internal HTTPS service name, e.g. glance")
     parser.add_argument(
@@ -380,22 +420,27 @@ def main():
     if args.service and args.client:
         raise SystemExit("--service and --client are mutually exclusive")
 
+    validate_inventory_host(args.host)
+    validate_inventory_host(args.ca_host)
+    host = args.host
+    ca_host = args.ca_host
+
     if args.client:
         clients = [args.client]
         if not clients:
             raise SystemExit(
-                f"host {args.host} has no configured internal HTTPS mTLS clients"
+                f"host {host} has no configured internal HTTPS mTLS clients"
             )
         for client in clients:
-            issue_client(args.host, client, ca_host=args.ca_host)
+            issue_client(host, client, ca_host=ca_host)
         return
 
-    services = [args.service] if args.service else service_names_for_host(args.host)
+    services = [args.service] if args.service else service_names_for_host(host)
     if not services:
-        raise SystemExit(f"host {args.host} has no configured internal HTTPS services")
+        raise SystemExit(f"host {host} has no configured internal HTTPS services")
 
     for service in services:
-        issue_service(args.host, service, ca_host=args.ca_host)
+        issue_service(host, service, ca_host=ca_host)
 
 
 if __name__ == "__main__":

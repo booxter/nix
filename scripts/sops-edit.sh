@@ -26,6 +26,8 @@ resolve_repo_root() {
 }
 
 repo_root="$(resolve_repo_root)"
+# shellcheck disable=SC1091
+source "${repo_root}/scripts/_helpers/host-aliases.sh"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h | --help)
@@ -53,6 +55,7 @@ if [[ -z "$host" ]]; then
   host="$(hostname -s)"
 fi
 
+host="$(canonical_secret_host "$repo_root" "$host")"
 secret="${repo_root}/secrets/${host}.yaml"
 
 if [[ ! -f "$secret" ]]; then

@@ -11,10 +11,10 @@ make nixos WHAT=frame
 make darwin WHAT=mair
 make nixos WHAT=beast REMOTE=false
 
-# Local VMs (resolved via `local-<host>vm`)
+# Local VMs
 nix run .#vm -- --help
 nix run .#vm -- builder1
-nix run .#vm -- --gui desk
+nix run .#vm -- --gui frame
 nix run .#vm -- srvarr
 nix run .#vm -- fana
 nix run .#vm -- gw
@@ -45,7 +45,7 @@ Update multiple machines over SSH with `nix run .#deploy` (defaults to
 nix run .#deploy -- -A
 
 # Stage a NixOS config for reboot instead of switching immediately
-nix run .#deploy -- --branch ci/flake-update --boot prox-srvarrvm
+nix run .#deploy -- --branch ci/flake-update --boot srvarr
 
 # Update all work machines
 nix run .#deploy -- -A --work

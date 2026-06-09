@@ -194,10 +194,49 @@ if [ "$is_build" = true ]; then
   exit 0
 fi
 
+if [ -n "${DIFF_CONFIG_VALIDATE_MACHINE:-}" ]; then
+  case "${DIFF_CONFIG_MACHINE:-}" in
+    frame | mair | org | srvarr | builder1 | fana) printf '%s\n' true ;;
+    *) printf '%s\n' false ;;
+  esac
+  exit 0
+fi
+
+if [ -n "${DIFF_CONFIG_RESOLVE_MACHINE_ALIAS:-}" ]; then
+  case "${DIFF_CONFIG_MACHINE:-}" in
+    org) printf '%s\n' org ;;
+    *) printf '%s\n' "${DIFF_CONFIG_MACHINE:-}" ;;
+  esac
+  exit 0
+fi
+
 if [ -n "${DIFF_CONFIG_TARGET_KIND:-}" ]; then
   printf '%s\n' "${DIFF_CONFIG_HM_USERS:-ihrachyshka}"
 else
-  printf '%s\n' "${NIX_TARGET_KIND:-darwin}"
+  if [ -n "${FAKE_OLD_REV:-}" ] && [[ "${DIFF_CONFIG_FLAKE_REF:-}" == *"rev=${FAKE_OLD_REV}"* ]]; then
+    case "${DIFF_CONFIG_MACHINE:-}" in
+      builder1 | fana | prox-fanavm)
+        printf '%s\n' missing
+        exit 0
+        ;;
+      prox-builder1vm)
+        printf '%s\n' nixos
+        exit 0
+        ;;
+    esac
+  fi
+
+  case "${DIFF_CONFIG_MACHINE:-}" in
+    frame | org | srvarr | builder1 | fana)
+      printf '%s\n' nixos
+      ;;
+    mair)
+      printf '%s\n' darwin
+      ;;
+    *)
+      printf '%s\n' "${NIX_TARGET_KIND:-darwin}"
+      ;;
+  esac
 fi
 SH
   } >"$fake_bin/nix"
@@ -249,6 +288,87 @@ SH
   [[ "$output" == *"CHANGED"* ]]
   [[ "$output" == *"[U.] package 1.0 -> 2.0"* ]]
   [[ "$output" == *"SIZE: 1 -> 2"* ]]
+}
+
+@test "diff-config resolves short VM names before building" {
+  make_repo
+  make_fake_bin
+
+  nh_log="$BATS_TMPDIR/diff-config-nh-alias-$BATS_TEST_NUMBER.log"
+  dix_log="$BATS_TMPDIR/diff-config-dix-alias-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log"
+
+  run env \
+    DIFF_CONFIG_REPO_ROOT="$repo" \
+    XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-alias-$BATS_TEST_NUMBER" \
+    NH_ARGS_LOG="$nh_log" \
+    DIX_ARGS_LOG="$dix_log" \
+    NIX_TARGET_KIND=nixos \
+    PATH="$fake_bin:$PATH" \
+    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    org \
+    "$old_rev" \
+    "$new_rev"
+
+  [ "$status" -eq 0 ]
+  grep -F -- '<os>' "$nh_log"
+  grep -F -- '<--hostname>' "$nh_log"
+  grep -F -- '<org>' "$nh_log"
+  [[ "$output" == *"CHANGED"* ]]
+}
+
+@test "diff-config compares old prox VM attrs with new short attrs" {
+  make_repo
+  make_fake_bin
+
+  nh_log="$BATS_TMPDIR/diff-config-nh-legacy-vm-$BATS_TEST_NUMBER.log"
+  dix_log="$BATS_TMPDIR/diff-config-dix-legacy-vm-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log"
+
+  run env \
+    DIFF_CONFIG_REPO_ROOT="$repo" \
+    XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-legacy-vm-$BATS_TEST_NUMBER" \
+    FAKE_OLD_REV="$old_rev" \
+    NH_ARGS_LOG="$nh_log" \
+    DIX_ARGS_LOG="$dix_log" \
+    PATH="$fake_bin:$PATH" \
+    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    builder1 \
+    "$old_rev" \
+    "$new_rev"
+
+  [ "$status" -eq 0 ]
+  [ "$(grep -c '^---$' "$nh_log")" -eq 2 ]
+  grep -F -- '<--hostname>' "$nh_log"
+  grep -F -- '<prox-builder1vm>' "$nh_log"
+  grep -F -- '<builder1>' "$nh_log"
+  [[ "$output" == *"CHANGED"* ]]
+}
+
+@test "diff-config reports new-only machines without failing" {
+  make_repo
+  make_fake_bin
+
+  nh_log="$BATS_TMPDIR/diff-config-nh-new-only-$BATS_TEST_NUMBER.log"
+  dix_log="$BATS_TMPDIR/diff-config-dix-new-only-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log"
+
+  run env \
+    DIFF_CONFIG_REPO_ROOT="$repo" \
+    XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-new-only-$BATS_TEST_NUMBER" \
+    FAKE_OLD_REV="$old_rev" \
+    NH_ARGS_LOG="$nh_log" \
+    DIX_ARGS_LOG="$dix_log" \
+    PATH="$fake_bin:$PATH" \
+    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    fana \
+    "$old_rev" \
+    "$new_rev"
+
+  [ "$status" -eq 0 ]
+  [ "$output" = "Machine 'fana' is present only in the new revision; no old configuration exists to diff." ]
+  [ ! -e "$nh_log" ]
+  [ ! -e "$dix_log" ]
 }
 
 @test "diff-config --details appends generated config diff" {

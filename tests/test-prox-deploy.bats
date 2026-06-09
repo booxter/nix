@@ -31,11 +31,11 @@ EOF
   export NIXMOXER_CONF_OUT="$workdir/nixmoxer.conf.snapshot"
 
   cd "$workdir"
-  run bash "$BATS_TEST_DIRNAME/../scripts/prox-deploy.sh" prx1 root priv/lab-prx1 prox-srvarrvm
+  run bash "$BATS_TEST_DIRNAME/../scripts/prox-deploy.sh" prx1 root priv/lab-prx1 srvarr
 
   [ "$status" -eq 0 ]
   [ "$(cat "$PASS_ARGS_OUT")" = "priv/lab-prx1" ]
-  [ "$(cat "$NIXMOXER_ARGS_OUT")" = "--flake prox-srvarrvm" ]
+  [ "$(cat "$NIXMOXER_ARGS_OUT")" = "--flake srvarr" ]
 
   grep -q '^host=prx1:8006$' "$NIXMOXER_CONF_OUT"
   grep -q '^user=root@pam$' "$NIXMOXER_CONF_OUT"
@@ -78,7 +78,7 @@ EOF
   export PATH="$workdir/bin:$PATH"
 
   cd "$workdir"
-  run bash "$BATS_TEST_DIRNAME/../scripts/prox-deploy.sh" prx1 root priv/lab-prx1 prox-srvarrvm
+  run bash "$BATS_TEST_DIRNAME/../scripts/prox-deploy.sh" prx1 root priv/lab-prx1 srvarr
 
   [ "$status" -eq 7 ]
   [ ! -e "$workdir/nixmoxer.conf" ]

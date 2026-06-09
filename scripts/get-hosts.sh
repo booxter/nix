@@ -21,41 +21,41 @@ nix eval --impure --json --expr "
         strings.toUpper = s: s;
       };
     };
-    toVmName = hostInventory.toVmName;
     hostWorkMap = {
       darwin = builtins.mapAttrs (_: cfg: cfg.isWork or false) hostInventory.darwinHosts;
       nixos = builtins.foldl' (
         acc: spec:
         let
           isWork = spec.isWork or false;
+          configName = hostInventory.toNixosConfigName spec;
         in
-        if spec.type == \"bm\" then
-          acc
-          // {
-            \${spec.name} = isWork;
-            \${\"local-\${spec.name}vm\"} = isWork;
-          }
-        else if spec.type == \"vm\" then
-          acc
-          // {
-            \${\"local-\${toVmName spec.name}\"} = isWork;
-            \${\"prox-\${toVmName spec.name}\"} = isWork;
-          }
-        else
-          throw \"Unsupported NixOS host spec type \${spec.type}\"
+        acc
+        // {
+          \${configName} = isWork;
+        }
       ) { } hostInventory.nixosHostSpecs;
     };
+    nixosAliases = builtins.foldl' (
+      acc: spec:
+      let
+        configName = hostInventory.toNixosConfigName spec;
+      in
+      acc
+      // {
+        \${configName} = configName;
+      }
+    ) { } hostInventory.nixosHostSpecs;
+    darwinAliases = builtins.mapAttrs (name: _: name) hostInventory.darwinHosts;
     requestedHosts = ${HOSTS_NIX};
-    filterNames = attrs: requestedList:
+    filterNames = attrs: aliases: requestedList:
       let
         allNames = builtins.attrNames attrs;
-        filteredAll = builtins.filter
-          (name: (builtins.match \"^local-.*\" name) == null)
-          allNames;
         namesToUse =
           if requestedList == null
-          then filteredAll
-          else builtins.filter (name: builtins.elem name allNames) requestedList;
+          then allNames
+          else builtins.filter (name: builtins.elem name allNames) (
+            map (name: aliases.\${name} or name) requestedList
+          );
       in
       builtins.listToAttrs (
         map
@@ -67,7 +67,7 @@ nix eval --impure --json --expr "
       );
   in
   {
-    nixos = filterNames hostWorkMap.nixos requestedHosts;
-    darwin = filterNames hostWorkMap.darwin requestedHosts;
+    nixos = filterNames hostWorkMap.nixos nixosAliases requestedHosts;
+    darwin = filterNames hostWorkMap.darwin darwinAliases requestedHosts;
   }
 "

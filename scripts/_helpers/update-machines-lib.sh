@@ -36,6 +36,57 @@ resolve_base_host() {
   jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_BASE_MAP_JSON"
 }
 
+resolve_host_alias() {
+  local host="$1"
+  local resolved
+
+  if [[ -z "${HOST_ALIAS_MAP_JSON:-}" ]]; then
+    printf '%s' "$host"
+    return 0
+  fi
+
+  resolved="$(jq -r --arg h "$host" 'if has($h) then .[$h] else empty end' <<<"$HOST_ALIAS_MAP_JSON")"
+  if [[ -z "$resolved" ]]; then
+    echo "Unknown host: ${host}" >&2
+    return 1
+  fi
+
+  printf '%s' "$resolved"
+}
+
+canonicalize_hosts() {
+  local host
+
+  for host in "$@"; do
+    resolve_host_alias "$host"
+    printf '\n'
+  done
+}
+
+display_host_name() {
+  local host="$1"
+  local display
+
+  if [[ -z "${HOST_DISPLAY_MAP_JSON:-}" ]]; then
+    printf '%s' "$host"
+    return 0
+  fi
+
+  display="$(jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_DISPLAY_MAP_JSON")"
+  printf '%s' "$display"
+}
+
+format_display_host_list() {
+  local host
+  local -a display_hosts=()
+
+  for host in "$@"; do
+    display_hosts+=("$(display_host_name "$host")")
+  done
+
+  format_host_list "${display_hosts[@]}"
+}
+
 is_work_host() {
   local host="$1"
   local work_map="$2"
@@ -88,7 +139,7 @@ prioritize_hosts() {
   for host in "$@"; do
     if [[ "$host" =~ ^prx[0-9]+-lab$ || "$host" == "nvws" ]]; then
       prioritized+=("$host")
-    elif [[ "$host" == *cachevm* ]]; then
+    elif [[ "$host" == "cache" || "$host" == *cachevm* ]]; then
       deferred+=("$host")
     else
       normal+=("$host")

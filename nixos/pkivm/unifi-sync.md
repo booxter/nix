@@ -26,7 +26,7 @@ Current timer behavior:
 
 Secret wiring:
 
-- API key comes from `secrets/prox-pkivm.yaml`
+- API key comes from `secrets/pki.yaml`
 - `sops` key path: `unifi/api_key`
 - runtime env file: `sops.templates."unifi-sync.env"`
 

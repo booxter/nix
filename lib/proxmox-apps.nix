@@ -4,6 +4,12 @@
 }:
 let
   pkgs = inputs.nixpkgs.legacyPackages.${system};
+  hostInventory = import ./inventory.nix { lib = pkgs.lib; };
+  vmSpecs = builtins.filter hostInventory.isNixosVM hostInventory.nixosHostSpecs;
+  vmTargetCases = pkgs.lib.concatMapStringsSep "\n" (spec: ''
+    ${pkgs.lib.escapeShellArg spec.name})
+      ;;
+  '') vmSpecs;
   mkApp = program: description: {
     type = "app";
     inherit program;
@@ -41,13 +47,20 @@ if builtins.hasAttr system inputs.proxmox-nixos.packages then
 
         vm_type="$1"
         proxmox_host="$2"
-        flake_target="prox-''${vm_type}vm"
+        case "$vm_type" in
+        ${vmTargetCases}
+          *)
+            echo "Unknown VM type: $vm_type" >&2
+            usage >&2
+            exit 1
+            ;;
+        esac
 
         exec ${../scripts/prox-deploy.sh} \
           "$proxmox_host" \
           "root" \
           "priv/lab-''${proxmox_host}" \
-          "$flake_target"
+          "$vm_type"
       '';
     };
   in
