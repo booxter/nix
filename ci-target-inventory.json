@@ -96,7 +96,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-builder1vm"
+          "builder1"
         ],
         "prefixes": []
       },
@@ -109,7 +109,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-cachevm"
+          "cache"
         ],
         "prefixes": [
           "nixos/cachevm/"
@@ -139,7 +139,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-srvarrvm"
+          "srvarr"
         ],
         "prefixes": [
           "nixos/srvarrvm/"
@@ -154,7 +154,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-fanavm"
+          "fana"
         ],
         "prefixes": [
           "nixos/fanavm/"
@@ -169,7 +169,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-gwvm"
+          "gw"
         ],
         "prefixes": [
           "nixos/gwvm/"
@@ -184,7 +184,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-orgvm"
+          "org"
         ],
         "prefixes": [
           "nixos/orgvm/"
@@ -199,7 +199,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-builder1vm"
+          "builder1"
         ],
         "prefixes": []
       },
@@ -257,7 +257,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-builder1vm"
+          "builder1"
         ],
         "prefixes": []
       },
@@ -281,7 +281,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-builder1vm"
+          "builder1"
         ],
         "prefixes": []
       },
@@ -296,7 +296,7 @@
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
-          "prox-cachevm"
+          "cache"
         ],
         "prefixes": [
           "nixos/cachevm/",

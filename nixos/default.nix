@@ -13,7 +13,7 @@ let
   hostSpecName = hostInventory.nixosConfigNameToSpecName hostname;
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   configName = ./${hostInventory.toNixosModuleDirName hostSpec};
-  hostSecretFile = ../secrets + "/${hostname}.yaml";
+  hostSecretFile = ../secrets + "/${hostSpecName}.yaml";
   upsServerName = hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};

@@ -13,15 +13,17 @@ short_prox_vm_name() {
 canonical_secret_host() {
   local repo_root="$1"
   local machine="$2"
+  local short_machine
+
+  short_machine="$(short_prox_vm_name "${machine}")"
 
   if [[ -f "${repo_root}/secrets/${machine}.yaml" ]]; then
     printf '%s\n' "${machine}"
     return
   fi
 
-  local prox_machine="prox-${machine}vm"
-  if [[ -f "${repo_root}/secrets/${prox_machine}.yaml" ]]; then
-    printf '%s\n' "${prox_machine}"
+  if [[ "${short_machine}" != "${machine}" && -f "${repo_root}/secrets/${short_machine}.yaml" ]]; then
+    printf '%s\n' "${short_machine}"
     return
   fi
 

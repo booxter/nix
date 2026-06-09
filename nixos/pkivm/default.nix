@@ -6,7 +6,6 @@
   ...
 }:
 let
-  hostSecretFile = ../../secrets + "/${config.networking.hostName}.yaml";
   caServer = hostInventory.nixosHostSpecsByName.pki.caServer;
   caName = "Home Internal PKI";
   certLifetimeDays = 180;

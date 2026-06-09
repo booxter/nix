@@ -81,8 +81,15 @@ def nix_eval_json(*segments):
     return json.loads(run(["nix", "eval", "--json", nix_attr_path(*segments)]))
 
 
+def secret_name_for_host(host):
+    match = re.fullmatch(r"prox-(.+)vm", host)
+    if match:
+        return match.group(1)
+    return host
+
+
 def secret_path_for_host(host):
-    return REPO_ROOT / "secrets" / f"{host}.yaml"
+    return REPO_ROOT / "secrets" / f"{secret_name_for_host(host)}.yaml"
 
 
 def sops_index_path(secret_key):

@@ -20,6 +20,4 @@
     ./transmission.nix
     ./vpn.nix
   ];
-
-  sops.defaultSopsFile = ../../secrets/prox-srvarrvm.yaml;
 }

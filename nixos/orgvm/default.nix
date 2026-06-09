@@ -11,8 +11,6 @@ in
     ./backup.nix
   ];
 
-  sops.defaultSopsFile = ../../secrets/prox-orgvm.yaml;
-
   sops.secrets.vikunjaMailerPassword = {
     key = "vikunja/mailer/password";
     restartUnits = [ "vikunja.service" ];

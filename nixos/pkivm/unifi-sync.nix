@@ -6,12 +6,9 @@
   ...
 }:
 let
-  hostSecretFile = ../../secrets + "/${config.networking.hostName}.yaml";
   unifiSyncEnv = import ../../lib/unifi-sync-env.nix { inherit hostInventory; };
 in
 {
-  sops.defaultSopsFile = lib.mkDefault hostSecretFile;
-
   users.users.unifi-sync = {
     isSystemUser = true;
     group = "unifi-sync";

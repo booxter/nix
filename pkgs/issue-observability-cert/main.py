@@ -135,8 +135,15 @@ in
     return run(["nix", "eval", "--impure", "--raw", "--expr", expr]).strip()
 
 
+def secret_name_for_host(host):
+    match = re.fullmatch(r"prox-(.+)vm", host)
+    if match:
+        return match.group(1)
+    return host
+
+
 def secret_path_for_host(host):
-    return REPO_ROOT / "secrets" / f"{host}.yaml"
+    return REPO_ROOT / "secrets" / f"{secret_name_for_host(host)}.yaml"
 
 
 def set_nested(mapping, dotted_path, value):

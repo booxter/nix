@@ -13,7 +13,7 @@ USER must be root, ihrachyshka, or both.
 By default, insert the password into pass first, under host/CANONICAL_HOST/USER,
 then hash the stored password. With --gen, generate the pass entry instead.
 Proxmox VM names are canonicalized, so both gw and prox-gwvm use
-host/gw/USER and update secrets/prox-gwvm.yaml.
+host/gw/USER and update secrets/gw.yaml.
 
 Environment:
   SOPS_PASS_PREFIX            pass prefix for entries (default: host)
