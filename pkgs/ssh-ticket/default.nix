@@ -6,7 +6,6 @@
   stdenv,
   symlinkJoin,
   writeShellApplication,
-  repoRoot ? ../..,
 }:
 let
   python = python3;
@@ -15,10 +14,7 @@ let
     openssh
     python
   ];
-  commonEnv = ''
-    export SSHT_REPO_ROOT="${repoRoot}"
-  ''
-  + lib.optionalString stdenv.hostPlatform.isDarwin ''
+  commonEnv = lib.optionalString stdenv.hostPlatform.isDarwin ''
     export SSH_AUTH_SOCK="''${SSHT_SECRETIVE_SOCKET:-$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh}"
   '';
   sshTicket = writeShellApplication {
