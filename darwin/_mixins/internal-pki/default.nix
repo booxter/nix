@@ -5,7 +5,7 @@
   ...
 }:
 let
-  rootCertPath = ../../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt;
+  rootCertPath = import ../../../lib/home-internal-pki-root-ca.nix;
 in
 {
   system.activationScripts.postActivation.text = lib.mkIf (!config.host.isWork) (
