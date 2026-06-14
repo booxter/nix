@@ -59,3 +59,6 @@ non-toplevel targets remain build-only.
 The PR comment groups diff results into machines with package or generated
 config changes, machines with closure-size-only changes, and machines with no
 changes.
+Per-machine artifacts are prefixed with `package-or-config-`, `size-only-`, or
+`unchanged-`; the post job uses those prefixes when assembling the grouped
+comment.
