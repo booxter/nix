@@ -55,3 +55,7 @@ The build matrix selection controls which machines get diffs. Machine-specific
 PRs only diff the selected machine jobs, while scoped or full matrix PRs diff
 the toplevel machine jobs included in that matrix. VM, QEMU, ISO, and other
 non-toplevel targets remain build-only.
+
+The PR comment groups diff results into machines with package or generated
+config changes, machines with closure-size-only changes, and machines with no
+changes.

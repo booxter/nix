@@ -427,6 +427,41 @@ jobs:
               return `${prefix}${content.slice(0, limit - prefix.length - suffix.length)}${suffix}`;
             };
 
+            const diffContent = (block) => {
+              const fenceStart = block.indexOf("```text\n");
+              const fenceEnd = block.lastIndexOf("\n```");
+              if (fenceStart >= 0 && fenceEnd > fenceStart) {
+                return block.slice(fenceStart + "```text\n".length, fenceEnd);
+              }
+              return block;
+            };
+
+            const hasPackageRows = (content) =>
+              content
+                .split(/\r?\n/)
+                .some((line) => /^\[[A-Z.]{2}\]\s+\S/.test(line.trim()));
+
+            const hasGeneratedConfigDiff = (content) => {
+              if (content.includes("No generated config differences.")) {
+                return false;
+              }
+
+              return /^(diff -ruN |Only in |Files .* differ|Binary files .* differ|--- |\+\+\+ |@@ )/m.test(
+                content,
+              );
+            };
+
+            const isSizeOnlyDiff = (block) => {
+              const content = diffContent(block);
+              return (
+                !content.includes("diff generation failed with exit code") &&
+                !hasPackageRows(content) &&
+                !hasGeneratedConfigDiff(content) &&
+                /^SIZE: .+ -> .+$/m.test(content) &&
+                /^DIFF: .+$/m.test(content)
+              );
+            };
+
             const chunks = [""];
             const appendBlock = (block) => {
               const normalized = truncateBlock(block, chunkLength);
@@ -445,23 +480,43 @@ jobs:
               chunks.push(normalized);
             };
 
-            appendBlock("### Changed machines");
-            if (diffEntries.length > 0) {
-              for (const entry of diffEntries) {
+            const packageChangeEntries = [];
+            const sizeOnlyEntries = [];
+            for (const entry of diffEntries) {
+              if (isSizeOnlyDiff(entry)) {
+                sizeOnlyEntries.push(entry);
+              } else {
+                packageChangeEntries.push(entry);
+              }
+            }
+
+            appendBlock("### Package or generated config changes");
+            if (packageChangeEntries.length > 0) {
+              for (const entry of packageChangeEntries) {
                 appendBlock(entry);
               }
             } else if (expectedDiffEntries.length > 0) {
-              appendBlock("_No uploaded machine diff reported package, closure-size, or generated config changes._");
+              appendBlock("_None._");
             } else {
               appendBlock("_No selected build target has config diff support._");
             }
 
+            appendBlock("### Size-only changes");
+            if (sizeOnlyEntries.length > 0) {
+              for (const entry of sizeOnlyEntries) {
+                appendBlock(entry);
+              }
+            } else {
+              appendBlock("_None._");
+            }
+
+            appendBlock("### No changes");
             if (unchangedEntries.length > 0) {
               appendBlock(
-                ["### Unchanged machines", "", ...unchangedEntries.map((entry) => `- ${entry}`)].join(
-                  "\n",
-                ),
+                unchangedEntries.map((entry) => `- ${entry}`).join("\n"),
               );
+            } else {
+              appendBlock("_None._");
             }
 
             const rawChunks = chunks.filter(Boolean);
