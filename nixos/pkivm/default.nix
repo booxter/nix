@@ -196,7 +196,6 @@ in
       Type = "oneshot";
       Environment = [
         "HOME=/root"
-        "PKI_ROTATION_REPO_ROOT=${repoRoot}"
         "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
       ];
       ExecStart = ''
