@@ -393,6 +393,57 @@ static void print_mac(FILE *stream, const uint8_t mac[ETH_ADDR_LEN]) {
           mac[3], mac[4], mac[5]);
 }
 
+static bool refresh_interface_mac(struct capture_interface *iface) {
+  uint8_t current_mac[ETH_ADDR_LEN];
+
+  if (!get_interface_mac(iface->name, current_mac) ||
+      mac_equal(current_mac, iface->mac)) {
+    return false;
+  }
+
+  fprintf(stderr, "interface %s MAC changed from ", iface->name);
+  print_mac(stderr, iface->mac);
+  fprintf(stderr, " to ");
+  print_mac(stderr, current_mac);
+  fprintf(stderr, "; refreshing packet classification\n");
+  fflush(stderr);
+
+  memcpy(iface->mac, current_mac, ETH_ADDR_LEN);
+  return true;
+}
+
+static bool classify_packet_direction(struct capture_interface *iface,
+                                      const uint8_t *dst_mac,
+                                      const uint8_t *src_mac,
+                                      enum direction *direction) {
+  if (mac_equal(src_mac, iface->mac)) {
+    *direction = DIR_TRANSMIT;
+    return true;
+  }
+
+  if (mac_equal(dst_mac, iface->mac) || mac_is_broadcast(dst_mac) ||
+      mac_is_multicast(dst_mac)) {
+    *direction = DIR_RECEIVE;
+    return true;
+  }
+
+  if (!refresh_interface_mac(iface)) {
+    return false;
+  }
+
+  if (mac_equal(src_mac, iface->mac)) {
+    *direction = DIR_TRANSMIT;
+    return true;
+  }
+
+  if (mac_equal(dst_mac, iface->mac)) {
+    *direction = DIR_RECEIVE;
+    return true;
+  }
+
+  return false;
+}
+
 static void format_bytes(double bytes, char *out, size_t out_size) {
   static const char *units[] = {"B", "KiB", "MiB", "GiB", "TiB"};
   size_t unit = 0;
@@ -737,12 +788,7 @@ static void handle_packet(u_char *user, const struct pcap_pkthdr *header,
   const uint8_t *src_mac = packet + ETH_ADDR_LEN;
   enum direction direction;
 
-  if (mac_equal(src_mac, iface->mac)) {
-    direction = DIR_TRANSMIT;
-  } else if (mac_equal(dst_mac, iface->mac) || mac_is_broadcast(dst_mac) ||
-             mac_is_multicast(dst_mac)) {
-    direction = DIR_RECEIVE;
-  } else {
+  if (!classify_packet_direction(iface, dst_mac, src_mac, &direction)) {
     ctx->counters.ignored_not_self++;
     return;
   }

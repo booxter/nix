@@ -442,6 +442,121 @@ jobs:
             const maxCommentLength = 60000;
             const maxComments = 10;
             const chunkLength = 59000;
+            const commentMarker = "<!-- nix-config-diffs-comment -->";
+            const commentSignature =
+              "Advisory output from `nix run .#diff -- --details <machine> <base> <head>`.";
+
+            const isConfigDiffComment = (body) =>
+              body.includes(commentMarker) ||
+              (body.startsWith("## Config diffs") && body.includes(commentSignature));
+
+            const fetchBotLogin = async () => {
+              try {
+                const result = await github.graphql(`
+                  query {
+                    viewer {
+                      login
+                    }
+                  }
+                `);
+                return result.viewer.login;
+              } catch (error) {
+                core.warning(`Could not resolve authenticated bot user: ${error.message}`);
+                return "github-actions[bot]";
+              }
+            };
+
+            const fetchPullRequestComments = async () => {
+              const comments = [];
+              let cursor = null;
+              let hasNextPage = true;
+
+              while (hasNextPage) {
+                const result = await github.graphql(
+                  `
+                    query($owner: String!, $repo: String!, $number: Int!, $cursor: String) {
+                      repository(owner: $owner, name: $repo) {
+                        pullRequest(number: $number) {
+                          comments(first: 100, after: $cursor) {
+                            nodes {
+                              id
+                              body
+                              isMinimized
+                              url
+                              author {
+                                login
+                              }
+                            }
+                            pageInfo {
+                              hasNextPage
+                              endCursor
+                            }
+                          }
+                        }
+                      }
+                    }
+                  `,
+                  {
+                    owner,
+                    repo,
+                    number: context.payload.pull_request.number,
+                    cursor,
+                  },
+                );
+
+                const connection = result.repository.pullRequest.comments;
+                comments.push(...connection.nodes);
+                hasNextPage = connection.pageInfo.hasNextPage;
+                cursor = connection.pageInfo.endCursor;
+              }
+
+              return comments;
+            };
+
+            const markPreviousConfigDiffCommentsObsolete = async () => {
+              let previousComments = [];
+              try {
+                const botLogin = await fetchBotLogin();
+                const comments = await fetchPullRequestComments();
+                previousComments = comments.filter(
+                  (comment) =>
+                    !comment.isMinimized &&
+                    comment.author?.login === botLogin &&
+                    isConfigDiffComment(comment.body || ""),
+                );
+              } catch (error) {
+                core.warning(`Could not inspect previous config diff comments: ${error.message}`);
+                return;
+              }
+
+              if (previousComments.length === 0) {
+                return;
+              }
+
+              core.notice(
+                `Marking ${previousComments.length} previous config diff comment(s) as outdated.`,
+              );
+              for (const comment of previousComments) {
+                try {
+                  await github.graphql(
+                    `
+                      mutation($subjectId: ID!) {
+                        minimizeComment(input: {subjectId: $subjectId, classifier: OUTDATED}) {
+                          minimizedComment {
+                            isMinimized
+                          }
+                        }
+                      }
+                    `,
+                    { subjectId: comment.id },
+                  );
+                } catch (error) {
+                  core.warning(
+                    `Could not mark previous config diff comment ${comment.url} as outdated: ${error.message}`,
+                  );
+                }
+              }
+            };
 
             const truncateBlock = (block, limit) => {
               if (block.length <= limit) {
@@ -534,6 +649,7 @@ jobs:
                   ? ` (part ${index + 1}/${Math.min(rawChunks.length, maxComments)})`
                   : "";
               const header = [
+                commentMarker,
                 `## Config diffs${part}`,
                 "",
                 `Base: \`${baseSha}\``,
@@ -541,7 +657,7 @@ jobs:
                 `PR head: \`${prHeadSha}\``,
                 `Run: ${runUrl}`,
                 "",
-                "Advisory output from `nix run .#diff -- --details <machine> <base> <head>`.",
+                commentSignature,
                 "",
               ].join("\n");
               const body = `${header}${chunk}`;
@@ -555,6 +671,8 @@ jobs:
 
               return body;
             });
+
+            await markPreviousConfigDiffCommentsObsolete();
 
             for (const body of bodies) {
               await github.rest.issues.createComment({
