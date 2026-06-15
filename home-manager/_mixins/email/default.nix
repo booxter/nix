@@ -1,10 +1,15 @@
 {
+  config,
   lib,
   pkgs,
   username,
+  isDarwin,
   isWork,
   ...
 }:
+let
+  thunderbirdProfilesPath = if isDarwin then "Library/Thunderbird/Profiles" else ".thunderbird";
+in
 {
   # Thunderbird
   programs.thunderbird = {
@@ -52,6 +57,10 @@
           enable = true;
           settings = id: {
             "mail.server.server_${id}.authMethod" = 10; # OAuth2
+            # Thunderbird treats this as a filesystem path during folder/filter
+            # validation; keep it absolute.
+            "mail.server.server_${id}.directory" =
+              "${config.home.homeDirectory}/${thunderbirdProfilesPath}/default/ImapMail/${id}";
             "mail.smtpserver.smtp_${id}.authMethod" =
               if isWork then
                 3 # plain
