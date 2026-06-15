@@ -328,7 +328,7 @@ jobs:
     continue-on-error: true
     permissions:
       actions: read
-      contents: read
+      contents: write
       issues: write
       pull-requests: write
     steps:
@@ -445,6 +445,8 @@ jobs:
             const commentMarker = "<!-- nix-config-diffs-comment -->";
             const commentSignature =
               "Advisory output from `nix run .#diff -- --details <machine> <base> <head>`.";
+            const shouldAutoMerge =
+              expectedDiffEntries.length > 0 && packageChangeEntries.length === 0;
 
             const isConfigDiffComment = (body) =>
               body.includes(commentMarker) ||
@@ -555,6 +557,48 @@ jobs:
                     `Could not mark previous config diff comment ${comment.url} as outdated: ${error.message}`,
                   );
                 }
+              }
+            };
+
+            const enableAutoMerge = async () => {
+              if (!shouldAutoMerge) {
+                if (packageChangeEntries.length > 0) {
+                  core.notice("Skipping auto-merge because major config diff changes were detected.");
+                } else {
+                  core.notice("Skipping auto-merge because no config diff-capable targets were selected.");
+                }
+                return;
+              }
+
+              if (pull.data.draft) {
+                core.notice("Skipping auto-merge because the pull request is a draft.");
+                return;
+              }
+
+              if (pull.data.state !== "open") {
+                core.notice(`Skipping auto-merge because the pull request is ${pull.data.state}.`);
+                return;
+              }
+
+              try {
+                await github.graphql(
+                  `
+                    mutation($pullRequestId: ID!) {
+                      enablePullRequestAutoMerge(input: {pullRequestId: $pullRequestId}) {
+                        pullRequest {
+                          number
+                          autoMergeRequest {
+                            enabledAt
+                          }
+                        }
+                      }
+                    }
+                  `,
+                  { pullRequestId: pull.data.node_id },
+                );
+                core.notice("Enabled auto-merge because no major config diff changes were detected.");
+              } catch (error) {
+                core.warning(`Could not enable auto-merge: ${error.message}`);
               }
             };
 
@@ -682,6 +726,8 @@ jobs:
                 body,
               });
             }
+
+            await enableAutoMerge();
 
   ci-success:
     name: CI (all jobs)
