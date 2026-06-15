@@ -97,13 +97,30 @@ def test_resolved_ca_key_treats_explicit_key_as_private_file():
     assert ca_key.name == "custom-ca"
 
 
-def test_target_expression_includes_nixos_and_darwin_configs(tmp_path):
-    expr = ssh_ticket.nix_targets_expr(tmp_path)
-    assert "inventory.nixosHostSpecs" in expr
-    assert "inventory.darwinHosts" in expr
-    assert "sshHost = inventory.toNixosShortDnsName spec;" in expr
-    assert "f.nixosConfigurations" not in expr
-    assert "f.darwinConfigurations" not in expr
+def test_load_targets_requires_metadata_source(monkeypatch):
+    monkeypatch.delenv("SSHT_TARGETS_FILE", raising=False)
+
+    with pytest.raises(ssh_ticket.Error):
+        ssh_ticket.load_targets()
+
+
+def test_load_targets_reads_env_file(tmp_path, monkeypatch):
+    targets_file = tmp_path / "targets.json"
+    targets_file.write_text(
+        """
+        [
+          {"name": "srvarr", "enabled": true},
+          {"name": "beast", "enabled": true}
+        ]
+        """,
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("SSHT_TARGETS_FILE", str(targets_file))
+
+    assert [target["name"] for target in ssh_ticket.load_targets()] == [
+        "beast",
+        "srvarr",
+    ]
 
 
 def test_resolve_target_accepts_unique_alias():
@@ -117,6 +134,19 @@ def test_resolve_target_accepts_unique_alias():
         }
     ]
     assert ssh_ticket.resolve_target(targets, "srvarr")["name"] == "srvarr"
+
+
+def test_resolve_target_accepts_local_alias():
+    targets = [
+        {
+            "name": "srvarr",
+            "enabled": True,
+            "aliases": ["srvarr", "srvarr.local"],
+            "principal": "ihrachyshka@srvarr",
+            "sshHost": "srvarr",
+        }
+    ]
+    assert ssh_ticket.resolve_target(targets, "srvarr.local")["name"] == "srvarr"
 
 
 def test_display_target_name_returns_target_name():

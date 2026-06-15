@@ -217,7 +217,9 @@
             ];
           };
           sopsApps = import ./lib/sops.nix { inherit pkgs; };
-          fleetApps = import ./lib/fleet.nix { inherit pkgs; };
+          fleetApps = import ./lib/fleet.nix {
+            inherit pkgs username;
+          };
           basePackages = import ./pkgs pkgs;
           mkApp = program: description: {
             type = "app";

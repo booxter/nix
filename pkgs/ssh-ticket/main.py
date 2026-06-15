@@ -151,15 +151,6 @@ def safe_name(value):
     return safe or "target"
 
 
-def repo_root_arg(value):
-    if value:
-        return expand_path(value)
-    env_root = os.environ.get("SSHT_REPO_ROOT")
-    if env_root:
-        return expand_path(env_root)
-    return pathlib.Path.cwd().resolve()
-
-
 def targets_file_arg(value):
     if value:
         return expand_path(value)
@@ -186,97 +177,6 @@ def resolved_ca_key(args):
     return ca_agent, expand_path(ca_key)
 
 
-def nix_targets_expr(repo_root):
-    repo_ref = f"path:{repo_root}"
-    return f"""
-      let
-        f = builtins.getFlake {json.dumps(repo_ref)};
-        lib = f.inputs.nixpkgs.lib;
-        username = "ihrachyshka";
-        inventory = import {json.dumps(str(repo_root / "lib" / "inventory.nix"))} {{
-          inherit lib username;
-        }};
-        hasCaPublicKey = inventory.sshTicket.userCaPublicKey != null;
-        mkTarget =
-          {{
-            kind,
-            name,
-            sshHost ? name,
-            dnsName ? sshHost,
-            aliases ? [ name ],
-            isWork ? false,
-          }}:
-          let
-            enabled = !isWork;
-          in
-          {{
-            inherit kind name sshHost enabled;
-            principal = if enabled then "${{username}}@${{dnsName}}" else "";
-            aliases = lib.unique ([ name ] ++ aliases);
-            defaultTtl = "30m";
-            maxTtl = "2h";
-            caPublicKeyConfigured = enabled && hasCaPublicKey;
-          }};
-        mkNixosTarget =
-          spec:
-          if inventory.isNixosVM spec then
-            let
-              sshHost = inventory.toNixosShortDnsName spec;
-            in
-            mkTarget {{
-              kind = "nixos";
-              name = spec.name;
-              inherit sshHost;
-              aliases = [ spec.name ];
-              isWork = spec.isWork or false;
-            }}
-          else
-            mkTarget {{
-              kind = "nixos";
-              name = spec.name;
-              aliases = [
-                (spec.hostname or spec.name)
-                (spec.dnsName or (spec.hostname or spec.name))
-              ];
-              dnsName = spec.dnsName or (spec.hostname or spec.name);
-              isWork = spec.isWork or false;
-            }};
-        mkDarwinTarget =
-          name: spec:
-          mkTarget {{
-            kind = "darwin";
-            inherit name;
-            aliases = [
-              (spec.hostname or name)
-              (spec.dnsName or (spec.hostname or name))
-            ];
-            dnsName = spec.dnsName or (spec.hostname or name);
-            isWork = spec.isWork or false;
-          }};
-      in
-        builtins.map mkNixosTarget inventory.nixosHostSpecs
-        ++ lib.mapAttrsToList mkDarwinTarget inventory.darwinHosts
-    """
-
-
-def load_targets_from_repo(repo_root):
-    output = run(
-        [
-            "nix",
-            "--extra-experimental-features",
-            "nix-command flakes",
-            "eval",
-            "--json",
-            "--impure",
-            "--expr",
-            nix_targets_expr(repo_root),
-        ]
-    )
-    targets = json.loads(output)
-    targets.sort(key=lambda item: item["name"])
-    return targets
-
-
 def load_targets_from_file(targets_file):
     try:
         targets = json.loads(targets_file.read_text(encoding="utf-8"))
@@ -293,11 +193,11 @@ def load_targets_from_file(targets_file):
     return targets
 
 
-def load_targets(repo_root=None, targets_file=None):
+def load_targets(targets_file=None):
     targets_path = targets_file_arg(targets_file)
-    if targets_path is not None:
-        return load_targets_from_file(targets_path)
-    return load_targets_from_repo(repo_root_arg(repo_root))
+    if targets_path is None:
+        raise Error(f"target metadata requires --targets-file or ${TARGETS_FILE_ENV}")
+    return load_targets_from_file(targets_path)
 
 
 def resolve_target(targets, requested, *, allow_disabled=False):
@@ -595,7 +495,7 @@ def write_ticket_alias(paths, alias, state_dir):
 
 
 def cmd_targets(args):
-    targets = load_targets(args.repo_root, args.targets_file)
+    targets = load_targets(args.targets_file)
     if not args.all:
         targets = [target for target in targets if target.get("enabled")]
     if args.json:
@@ -628,7 +528,7 @@ def cmd_targets(args):
 
 
 def cmd_status(args):
-    targets = load_targets(args.repo_root, args.targets_file)
+    targets = load_targets(args.targets_file)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     if args.target:
         targets = [resolve_target(targets, args.target, allow_disabled=args.all)]
@@ -650,7 +550,7 @@ def cmd_status(args):
 
 
 def cmd_issue(args):
-    targets = load_targets(args.repo_root, args.targets_file)
+    targets = load_targets(args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     paths = issue_ticket(args, target, state_dir, expand_path(args.key))
@@ -659,7 +559,7 @@ def cmd_issue(args):
 
 
 def cmd_ensure(args):
-    targets = load_targets(args.repo_root, args.targets_file)
+    targets = load_targets(args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     state_dir = state_dir_arg(args)
     paths = ensure_ticket(args, target)
@@ -677,7 +577,7 @@ def cmd_init_key(args):
 
 
 def cmd_ssht(args):
-    targets = load_targets(args.repo_root, args.targets_file)
+    targets = load_targets(args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     paths = ensure_ticket(args, target)
     cmd = ssht_ssh_command(args, target, paths)
@@ -710,9 +610,6 @@ def ssht_ssh_command(args, target, paths):
 
 
 def add_target_source_options(parser):
-    parser.add_argument(
-        "--repo-root", help="flake checkout to read ticket target metadata from"
-    )
     parser.add_argument(
         "--targets-file",
         help=f"JSON target metadata file; defaults to ${TARGETS_FILE_ENV} when set",
