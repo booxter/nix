@@ -38,18 +38,25 @@ let
     };
   mkDarwinTarget =
     name: spec:
+    let
+      sshHost = spec.hostname or name;
+    in
     mkTarget {
       kind = "darwin";
       inherit name;
       aliases = [
-        (spec.hostname or name)
-        (spec.dnsName or (spec.hostname or name))
+        sshHost
+        "${sshHost}.local"
+        (spec.dnsName or sshHost)
       ];
-      dnsName = spec.dnsName or (spec.hostname or name);
+      dnsName = spec.dnsName or sshHost;
       isWork = spec.isWork or false;
     };
   mkNixosTarget =
     spec:
+    let
+      localSshHost = "${hostInventory.toNixosShortDnsName spec}.local";
+    in
     if hostInventory.isNixosVM spec then
       let
         sshHost = hostInventory.toNixosShortDnsName spec;
@@ -58,7 +65,10 @@ let
         kind = "nixos";
         name = spec.name;
         inherit sshHost;
-        aliases = [ spec.name ];
+        aliases = [
+          spec.name
+          localSshHost
+        ];
         isWork = spec.isWork or false;
       }
     else
@@ -67,6 +77,7 @@ let
         name = spec.name;
         aliases = [
           (spec.hostname or spec.name)
+          localSshHost
           (spec.dnsName or (spec.hostname or spec.name))
         ];
         dnsName = spec.dnsName or (spec.hostname or spec.name);

@@ -102,6 +102,8 @@ def test_target_expression_includes_nixos_and_darwin_configs(tmp_path):
     assert "inventory.nixosHostSpecs" in expr
     assert "inventory.darwinHosts" in expr
     assert "sshHost = inventory.toNixosShortDnsName spec;" in expr
+    assert '"${inventory.toNixosShortDnsName spec}.local"' in expr
+    assert '"${sshHost}.local"' in expr
     assert "f.nixosConfigurations" not in expr
     assert "f.darwinConfigurations" not in expr
 
@@ -117,6 +119,19 @@ def test_resolve_target_accepts_unique_alias():
         }
     ]
     assert ssh_ticket.resolve_target(targets, "srvarr")["name"] == "srvarr"
+
+
+def test_resolve_target_accepts_local_alias():
+    targets = [
+        {
+            "name": "srvarr",
+            "enabled": True,
+            "aliases": ["srvarr", "srvarr.local"],
+            "principal": "ihrachyshka@srvarr",
+            "sshHost": "srvarr",
+        }
+    ]
+    assert ssh_ticket.resolve_target(targets, "srvarr.local")["name"] == "srvarr"
 
 
 def test_display_target_name_returns_target_name():
