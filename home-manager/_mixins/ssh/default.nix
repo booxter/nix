@@ -15,7 +15,7 @@ let
   '';
 in
 {
-  imports = lib.optionals (!isWork) [ ./ticket.nix ];
+  imports = lib.optionals (!isWork) [ ./ticket-client.nix ];
 
   config = {
     services.ssh-agent.enable = pkgs.stdenv.isLinux;
