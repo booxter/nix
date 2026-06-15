@@ -64,3 +64,7 @@ Per-machine artifacts are prefixed with `package-or-config-`, `size-only-`, or
 comment.
 Before posting a new config diff comment batch, the post job marks earlier
 bot-authored config diff comments on the same pull request as outdated.
+If at least one selected target produced a config diff artifact and no
+package-or-config entries were found, the post job enables GitHub auto-merge for
+the pull request. Closure-size-only and unchanged diffs are considered safe for
+this auto-merge path.
