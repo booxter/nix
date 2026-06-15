@@ -20,6 +20,8 @@ from cryptography.x509.oid import NameOID
 
 DEFAULT_REPO_ROOT_ENV = "PKI_ROTATION_REPO_ROOT"
 DEFAULT_INTERMEDIATE_CERT_PATH = "/var/lib/step-ca/certs/intermediate_ca.crt"
+DEFAULT_REPO_URL = "https://github.com/booxter/nix.git"
+DEFAULT_BASE_BRANCH = "master"
 DEFAULT_SOPS_AGE_KEY_FILE = "/var/lib/sops-nix/key.txt"
 NODE_EXPORTER_ENDPOINT = "node_exporter"
 NODE_EXPORTER_SECRET_PREFIX = "prometheus/node_exporter"
@@ -79,7 +81,8 @@ def normalize_repo_root(repo_root):
 
 
 def run(cmd, *, cwd=None, env=None, input_text=None):
-    cwd = normalize_repo_root(cwd)
+    if cwd is not None:
+        cwd = normalize_repo_root(cwd)
     proc = subprocess.run(
         cmd,
         cwd=cwd,
@@ -95,7 +98,8 @@ def run(cmd, *, cwd=None, env=None, input_text=None):
 
 
 def run_optional(cmd, *, cwd=None, env=None):
-    cwd = normalize_repo_root(cwd)
+    if cwd is not None:
+        cwd = normalize_repo_root(cwd)
     proc = subprocess.run(
         cmd,
         cwd=cwd,
@@ -773,6 +777,22 @@ def git_has_changes(repo_root):
     return bool(run(["git", "status", "--short"], cwd=repo_root).strip())
 
 
+def clone_checkout(repo_url, branch, worktree, *, env=None):
+    run(
+        [
+            "git",
+            "clone",
+            "--branch",
+            branch,
+            "--single-branch",
+            repo_url,
+            str(worktree),
+        ],
+        cwd=None,
+        env=env,
+    )
+
+
 def read_token(token_file):
     token = pathlib.Path(token_file).read_text().strip()
     if not token:
@@ -941,19 +961,7 @@ def cmd_rotate(args):
         with tempfile.TemporaryDirectory(prefix="pki-rotation-") as tmpdir:
             worktree = pathlib.Path(tmpdir) / "repo"
             clone_branch = args.branch if open_pr else args.base_branch
-            run(
-                [
-                    "git",
-                    "clone",
-                    "--branch",
-                    clone_branch,
-                    "--single-branch",
-                    args.repo_url,
-                    str(worktree),
-                ],
-                cwd=None,
-                env=git_env,
-            )
+            clone_checkout(args.repo_url, clone_branch, worktree, env=git_env)
             if not open_pr:
                 run(["git", "switch", "-c", args.branch], cwd=worktree, env=git_env)
 
@@ -1078,17 +1086,41 @@ def cmd_scan(args):
 
 
 def cmd_export_metrics(args):
-    records = scan_certs(
-        args.repo_root,
-        intermediate_cert_path=args.intermediate_cert_path,
-        rotation_window_days=args.rotation_window_days,
-        sops_age_key_file=args.sops_age_key_file,
-    )
+    if args.repo_root is None:
+        with tempfile.TemporaryDirectory(prefix="pki-status-export-") as tmpdir:
+            worktree = pathlib.Path(tmpdir) / "repo"
+            clone_checkout(args.repo_url, args.base_branch, worktree)
+            records = scan_certs(
+                worktree,
+                intermediate_cert_path=args.intermediate_cert_path,
+                rotation_window_days=args.rotation_window_days,
+                sops_age_key_file=args.sops_age_key_file,
+            )
+    else:
+        records = scan_certs(
+            args.repo_root,
+            intermediate_cert_path=args.intermediate_cert_path,
+            rotation_window_days=args.rotation_window_days,
+            sops_age_key_file=args.sops_age_key_file,
+        )
     content = metrics_text(records)
     if args.output:
         write_atomic(args.output, content)
     else:
         sys.stdout.write(content)
+
+
+def add_repo_fetch_options(parser, *, repo_url_help, base_branch_help):
+    parser.add_argument(
+        "--repo-url",
+        default=DEFAULT_REPO_URL,
+        help=repo_url_help,
+    )
+    parser.add_argument(
+        "--base-branch",
+        default=DEFAULT_BASE_BRANCH,
+        help=base_branch_help,
+    )
 
 
 def build_parser():
@@ -1101,8 +1133,8 @@ def build_parser():
         type=pathlib.Path,
         default=None,
         help=(
-            "Flake checkout to inspect. Defaults to the current checkout or "
-            f"${DEFAULT_REPO_ROOT_ENV}."
+            "Flake checkout to inspect. Commands that do not fetch a checkout "
+            f"default to the current checkout or ${DEFAULT_REPO_ROOT_ENV}."
         ),
     )
     parser.add_argument(
@@ -1137,6 +1169,11 @@ def build_parser():
         "--output",
         help="Write Prometheus metrics atomically to this path instead of stdout.",
     )
+    add_repo_fetch_options(
+        export_parser,
+        repo_url_help="Git URL used for the read-only status checkout.",
+        base_branch_help="Branch to inspect when --repo-root is not provided.",
+    )
     export_parser.set_defaults(func=cmd_export_metrics)
 
     rotate_parser = subparsers.add_parser(
@@ -1152,10 +1189,10 @@ def build_parser():
         "--github-token-file",
         help="Secret file containing a GitHub token able to push a branch and create a PR.",
     )
-    rotate_parser.add_argument(
-        "--repo-url",
-        default="https://github.com/booxter/nix.git",
-        help="Git URL used for the writable rotation checkout.",
+    add_repo_fetch_options(
+        rotate_parser,
+        repo_url_help="Git URL used for the writable rotation checkout.",
+        base_branch_help="Base branch the rotation PR should target.",
     )
     rotate_parser.add_argument(
         "--repo-owner",
@@ -1166,11 +1203,6 @@ def build_parser():
         "--repo-name",
         default="nix",
         help="GitHub repository name used for PR lookup and creation.",
-    )
-    rotate_parser.add_argument(
-        "--base-branch",
-        default="master",
-        help="Base branch the rotation PR should target.",
     )
     rotate_parser.add_argument(
         "--branch",

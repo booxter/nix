@@ -188,7 +188,8 @@ jobs:
             printf '%s' "${MACHINE}" \
               | tr -c 'A-Za-z0-9._-' '-'
           )"
-          changed_file="diff-output/changed-${ORDER}-${safe_machine}.md"
+          package_or_config_file="diff-output/package-or-config-${ORDER}-${safe_machine}.md"
+          size_only_file="diff-output/size-only-${ORDER}-${safe_machine}.md"
           unchanged_file="diff-output/unchanged-${ORDER}-${safe_machine}.txt"
           stdout_file="$(mktemp)"
           stderr_file="$(mktemp)"
@@ -227,6 +228,31 @@ jobs:
             ' "${file}"
           }
 
+          has_package_rows() {
+            local file="$1"
+
+            grep -Eq '^\[[A-Z.][A-Z.]\][[:space:]]+[^[:space:]]' "${file}"
+          }
+
+          has_generated_config_diff() {
+            local file="$1"
+
+            if grep -Fq 'No generated config differences.' "${file}"; then
+              return 1
+            fi
+
+            grep -Eq '^(diff -ruN |Only in |Files .* differ|Binary files .* differ|--- |\+\+\+ |@@ )' "${file}"
+          }
+
+          is_size_only_diff() {
+            local file="$1"
+
+            grep -Eq '^SIZE: .+ -> .+$' "${file}" \
+              && grep -Eq '^DIFF: .+$' "${file}" \
+              && ! has_package_rows "${file}" \
+              && ! has_generated_config_diff "${file}"
+          }
+
           set +e
           nix run .#diff -- --details "${MACHINE}" "${BASE_SHA}" "${HEAD_SHA}" >"${stdout_file}" 2>"${stderr_file}"
           status="$?"
@@ -239,8 +265,15 @@ jobs:
             exit 0
           fi
 
+          diff_file="${package_or_config_file}"
+          details_tag="<details open>"
+          if [ "${status}" -eq 0 ] && is_size_only_diff "${stdout_file}"; then
+            diff_file="${size_only_file}"
+            details_tag="<details>"
+          fi
+
           {
-            printf '<details>\n'
+            printf '%s\n' "${details_tag}"
             printf '<summary>%s</summary>\n\n' "${MACHINE_NAME}"
             printf '```text\n'
             if [ "${status}" -ne 0 ]; then
@@ -260,10 +293,10 @@ jobs:
             fi
             printf '```\n\n'
             printf '</details>\n'
-          } >"${changed_file}"
+          } >"${diff_file}"
 
           printf 'Config diff for %s:\n\n' "${MACHINE_NAME}"
-          cat "${changed_file}"
+          cat "${diff_file}"
 
       - name: Upload config diff artifact
         if: ${{ github.event_name == 'pull_request' && matrix.diff_machine != '' }}
@@ -354,18 +387,27 @@ jobs:
               }));
 
             const artifactKeys = new Set();
-            let diffEntries = [];
+            let packageChangeEntries = [];
+            let sizeOnlyEntries = [];
             let unchangedEntries = [];
             if (fs.existsSync(diffDir)) {
               const files = fs.readdirSync(diffDir).sort();
               for (const name of files) {
-                const match = name.match(/^(?:changed|unchanged)-(.+)\.(?:md|txt)$/);
+                const match = name.match(
+                  /^(?:changed|package-or-config|size-only|unchanged)-(.+)\.(?:md|txt)$/,
+                );
                 if (match) {
                   artifactKeys.add(match[1]);
                 }
               }
-              diffEntries = files
-                .filter((name) => name.endsWith(".md"))
+              packageChangeEntries = files
+                .filter((name) => /^(?:changed|package-or-config)-.+\.md$/.test(name))
+                .map((name) =>
+                  fs.readFileSync(path.join(diffDir, name), "utf8").trim()
+                )
+                .filter(Boolean);
+              sizeOnlyEntries = files
+                .filter((name) => /^size-only-.+\.md$/.test(name))
                 .map((name) =>
                   fs.readFileSync(path.join(diffDir, name), "utf8").trim()
                 )
@@ -413,7 +455,8 @@ jobs:
                 fenceStart >= 0 && fenceEnd > fenceStart
                   ? block.slice(fenceStart + "```text\n".length, fenceEnd)
                   : block;
-              const prefix = `<details>\n<summary>${summary}</summary>\n\n\`\`\`text\n`;
+              const detailsOpen = block.startsWith("<details open>") ? " open" : "";
+              const prefix = `<details${detailsOpen}>\n<summary>${summary}</summary>\n\n\`\`\`text\n`;
               const suffix =
                 "\n\n[truncated; full output is available in the workflow artifacts.]\n```\n\n</details>";
 
@@ -445,23 +488,33 @@ jobs:
               chunks.push(normalized);
             };
 
-            appendBlock("### Changed machines");
-            if (diffEntries.length > 0) {
-              for (const entry of diffEntries) {
+            appendBlock("### Major changes");
+            if (packageChangeEntries.length > 0) {
+              for (const entry of packageChangeEntries) {
                 appendBlock(entry);
               }
             } else if (expectedDiffEntries.length > 0) {
-              appendBlock("_No uploaded machine diff reported package, closure-size, or generated config changes._");
+              appendBlock("_None._");
             } else {
               appendBlock("_No selected build target has config diff support._");
             }
 
+            appendBlock("### Minor changes");
+            if (sizeOnlyEntries.length > 0) {
+              for (const entry of sizeOnlyEntries) {
+                appendBlock(entry);
+              }
+            } else {
+              appendBlock("_None._");
+            }
+
+            appendBlock("### No changes");
             if (unchangedEntries.length > 0) {
               appendBlock(
-                ["### Unchanged machines", "", ...unchangedEntries.map((entry) => `- ${entry}`)].join(
-                  "\n",
-                ),
+                unchangedEntries.map((entry) => `- ${entry}`).join("\n"),
               );
+            } else {
+              appendBlock("_None._");
             }
 
             const rawChunks = chunks.filter(Boolean);

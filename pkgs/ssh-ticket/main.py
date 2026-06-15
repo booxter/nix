@@ -14,6 +14,7 @@ import time
 DEFAULT_CA_PRIVATE_KEY = "~/.ssh/fleet-user-ca"
 DEFAULT_CA_PUBLIC_KEY = "~/.ssh/fleet-user-ca.pub"
 DEFAULT_KEY = "~/.ssh/fleet-ticket/id_ed25519"
+TARGETS_FILE_ENV = "SSHT_TARGETS_FILE"
 MIN_VALID_SECONDS = 60
 COMMON_TTL_CHOICES = (30 * 60, 60 * 60, 2 * 60 * 60, 12 * 60 * 60)
 
@@ -159,6 +160,15 @@ def repo_root_arg(value):
     return pathlib.Path.cwd().resolve()
 
 
+def targets_file_arg(value):
+    if value:
+        return expand_path(value)
+    env_targets_file = os.environ.get(TARGETS_FILE_ENV)
+    if env_targets_file:
+        return expand_path(env_targets_file)
+    return None
+
+
 def env_flag(name):
     value = os.environ.get(name)
     if value is None:
@@ -249,7 +259,7 @@ def nix_targets_expr(repo_root):
     """
 
 
-def load_targets(repo_root):
+def load_targets_from_repo(repo_root):
     output = run(
         [
             "nix",
@@ -265,6 +275,29 @@ def load_targets(repo_root):
     targets = json.loads(output)
     targets.sort(key=lambda item: item["name"])
     return targets
+
+
+def load_targets_from_file(targets_file):
+    try:
+        targets = json.loads(targets_file.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise Error(f"failed to read targets file {targets_file}: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise Error(f"failed to parse targets file {targets_file}: {exc}") from exc
+    if not isinstance(targets, list) or not all(
+        isinstance(target, dict) and isinstance(target.get("name"), str)
+        for target in targets
+    ):
+        raise Error(f"targets file {targets_file} must contain a JSON list of targets")
+    targets.sort(key=lambda item: item["name"])
+    return targets
+
+
+def load_targets(repo_root=None, targets_file=None):
+    targets_path = targets_file_arg(targets_file)
+    if targets_path is not None:
+        return load_targets_from_file(targets_path)
+    return load_targets_from_repo(repo_root_arg(repo_root))
 
 
 def resolve_target(targets, requested, *, allow_disabled=False):
@@ -562,7 +595,7 @@ def write_ticket_alias(paths, alias, state_dir):
 
 
 def cmd_targets(args):
-    targets = load_targets(repo_root_arg(args.repo_root))
+    targets = load_targets(args.repo_root, args.targets_file)
     if not args.all:
         targets = [target for target in targets if target.get("enabled")]
     if args.json:
@@ -595,7 +628,7 @@ def cmd_targets(args):
 
 
 def cmd_status(args):
-    targets = load_targets(repo_root_arg(args.repo_root))
+    targets = load_targets(args.repo_root, args.targets_file)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     if args.target:
         targets = [resolve_target(targets, args.target, allow_disabled=args.all)]
@@ -617,7 +650,7 @@ def cmd_status(args):
 
 
 def cmd_issue(args):
-    targets = load_targets(repo_root_arg(args.repo_root))
+    targets = load_targets(args.repo_root, args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     paths = issue_ticket(args, target, state_dir, expand_path(args.key))
@@ -626,7 +659,7 @@ def cmd_issue(args):
 
 
 def cmd_ensure(args):
-    targets = load_targets(repo_root_arg(args.repo_root))
+    targets = load_targets(args.repo_root, args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     state_dir = state_dir_arg(args)
     paths = ensure_ticket(args, target)
@@ -644,7 +677,7 @@ def cmd_init_key(args):
 
 
 def cmd_ssht(args):
-    targets = load_targets(repo_root_arg(args.repo_root))
+    targets = load_targets(args.repo_root, args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     paths = ensure_ticket(args, target)
     cmd = ssht_ssh_command(args, target, paths)
@@ -676,10 +709,18 @@ def ssht_ssh_command(args, target, paths):
     ] + ssh_args
 
 
-def add_common_options(parser):
+def add_target_source_options(parser):
     parser.add_argument(
         "--repo-root", help="flake checkout to read ticket target metadata from"
     )
+    parser.add_argument(
+        "--targets-file",
+        help=f"JSON target metadata file; defaults to ${TARGETS_FILE_ENV} when set",
+    )
+
+
+def add_common_options(parser):
+    add_target_source_options(parser)
     parser.add_argument(
         "--state-dir", help="directory for per-host certificates and metadata"
     )
@@ -733,18 +774,14 @@ def build_parser():
     targets = subparsers.add_parser(
         "targets", help="list configured SSH ticket targets"
     )
-    targets.add_argument(
-        "--repo-root", help="flake checkout to read ticket target metadata from"
-    )
+    add_target_source_options(targets)
     targets.add_argument("--all", action="store_true", help="include disabled targets")
     targets.add_argument("--json", action="store_true", help="emit JSON")
     targets.set_defaults(func=cmd_targets)
 
     status = subparsers.add_parser("status", help="show local ticket status")
     status.add_argument("target", nargs="?", help="target or alias")
-    status.add_argument(
-        "--repo-root", help="flake checkout to read ticket target metadata from"
-    )
+    add_target_source_options(status)
     status.add_argument(
         "--state-dir", help="directory for per-host certificates and metadata"
     )

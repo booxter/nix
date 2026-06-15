@@ -17,7 +17,6 @@ let
   pkiRotationBaseBranch = "master";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
-  repoRoot = ../..;
   stepStateDir = "/var/lib/step-ca";
   stepPasswordFile = "${stepStateDir}/password.txt";
   stepProvisionerPasswordFile = "${stepStateDir}/provisioner-password.txt";
@@ -154,15 +153,14 @@ in
       Type = "oneshot";
       Environment = [
         "HOME=/root"
-        "PKI_ROTATION_REPO_ROOT=${repoRoot}"
         "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
       ];
       ExecStart = ''
         ${pkgs.pki-rotation}/bin/pki-rotation \
-          --repo-root ${repoRoot} \
           --intermediate-cert-path ${stepStateDir}/certs/intermediate_ca.crt \
           --sops-age-key-file /var/lib/sops-nix/key.txt \
           export-metrics \
+          --base-branch ${pkiRotationBaseBranch} \
           --output ${pkiStatusMetricsPath}
       '';
     };
@@ -196,7 +194,6 @@ in
       Type = "oneshot";
       Environment = [
         "HOME=/root"
-        "PKI_ROTATION_REPO_ROOT=${repoRoot}"
         "SOPS_AGE_KEY_FILE=/var/lib/sops-nix/key.txt"
       ];
       ExecStart = ''
