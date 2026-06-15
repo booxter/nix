@@ -1,4 +1,7 @@
-{ pkgs }:
+{
+  pkgs,
+  username ? "ihrachyshka",
+}:
 let
   mkApp = program: description: {
     type = "app";
@@ -7,7 +10,10 @@ let
   };
 
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
-  hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
+  hostInventory = import ../lib/inventory.nix {
+    inherit username;
+    lib = pkgs.lib;
+  };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wireguardGatewaySshHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.gw;
@@ -174,6 +180,14 @@ let
   issueProxmoxExporterTokenPackage = pkgs.issue-proxmox-exporter-token;
   pkiRotationPackage = pkgs.pki-rotation;
   sshTicketPackage = pkgs.ssh-ticket;
+  sshTicketTargets = import ./ssh-ticket-targets.nix {
+    inherit
+      hostInventory
+      username
+      ;
+    lib = pkgs.lib;
+  };
+  sshTicketTargetsFile = pkgs.writeText "ssh-ticket-targets.json" (builtins.toJSON sshTicketTargets);
   unifiSyncApp = pkgs.writeShellApplication {
     name = "unifi-sync-app";
     runtimeInputs = [ unifiSyncPackage ];
@@ -219,7 +233,7 @@ let
     name = "ssh-ticket-app";
     runtimeInputs = [ sshTicketPackage ];
     text = ''
-      export SSHT_REPO_ROOT="${../.}"
+      export SSHT_TARGETS_FILE="${sshTicketTargetsFile}"
       exec ${sshTicketPackage}/bin/ssh-ticket "$@"
     '';
   };
@@ -227,7 +241,7 @@ let
     name = "ssht-app";
     runtimeInputs = [ sshTicketPackage ];
     text = ''
-      export SSHT_REPO_ROOT="${../.}"
+      export SSHT_TARGETS_FILE="${sshTicketTargetsFile}"
       exec ${sshTicketPackage}/bin/ssht "$@"
     '';
   };
