@@ -488,7 +488,7 @@ jobs:
               chunks.push(normalized);
             };
 
-            appendBlock("### Package or generated config changes");
+            appendBlock("### Major changes");
             if (packageChangeEntries.length > 0) {
               for (const entry of packageChangeEntries) {
                 appendBlock(entry);
@@ -499,7 +499,7 @@ jobs:
               appendBlock("_No selected build target has config diff support._");
             }
 
-            appendBlock("### Size-only changes");
+            appendBlock("### Minor changes");
             if (sizeOnlyEntries.length > 0) {
               for (const entry of sizeOnlyEntries) {
                 appendBlock(entry);
