@@ -1,5 +1,6 @@
+{ isWork, lib, ... }:
 {
-  imports = [ ./ticket.nix ];
+  imports = lib.optionals (!isWork) [ ./ticket.nix ];
 
   services.openssh.enable = true;
 

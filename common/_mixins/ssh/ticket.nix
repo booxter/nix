@@ -5,7 +5,6 @@
   hostSpecName ? hostname,
   isDarwin,
   isLinux,
-  isWork,
   lib,
   username,
   ...
@@ -104,7 +103,7 @@ in
 
   config = lib.mkMerge [
     {
-      host.sshTicket.enable = lib.mkDefault (!isWork);
+      host.sshTicket.enable = lib.mkDefault true;
       host.sshTicket.caPublicKey = lib.mkIf cfg.enable (lib.mkDefault inventoryCaPublicKey);
     }
     {
