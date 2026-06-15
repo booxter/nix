@@ -5,7 +5,7 @@ scope="${NETWORK_SCOPE:-wan}"
 metrics_file="${LAN_WAN_METRICS_FILE:-/var/lib/prometheus-node-exporter-textfile/lan-wan.prom}"
 metrics_max_age_seconds="${LAN_WAN_METRICS_MAX_AGE_SECONDS:-90}"
 Ibytes_Column=7
-Obytes_Column=8
+Obytes_Column=10
 
 if ! [[ "$metrics_max_age_seconds" =~ ^[0-9]+$ ]]; then
   metrics_max_age_seconds=90
