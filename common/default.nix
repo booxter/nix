@@ -97,7 +97,6 @@ in
         man-pages
         moreutils
         ngrep
-        procps
         pstree
         rclone
         ripgrep
