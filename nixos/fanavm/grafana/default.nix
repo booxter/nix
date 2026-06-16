@@ -30,6 +30,12 @@ in
   services.grafana = {
     enable = true;
     settings = {
+      database = {
+        # Reduce transient SQLITE_BUSY failures during concurrent dashboard refreshes.
+        wal = true;
+        query_retries = 5;
+        transaction_retries = 10;
+      };
       server = {
         http_addr = "127.0.0.1";
         http_port = grafanaPort;
