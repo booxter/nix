@@ -9,6 +9,8 @@ let
   wgHome = hostInventory.site.wireguard.home;
 in
 {
+  imports = [ ./nix-cache-preference.nix ];
+
   home-manager.users.${username} = {
     home.sessionVariables.SOPS_AGE_KEY_FILE = "/Users/${username}/.config/sops/age/mair-se.txt";
     programs.sshTicket.enableKnownHosts = true;

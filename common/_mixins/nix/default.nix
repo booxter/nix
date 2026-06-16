@@ -1,4 +1,5 @@
 {
+  hostInventory,
   lib,
   pkgs,
   username,
@@ -8,8 +9,7 @@
 {
   nix =
     let
-      cacheHttpsUrl = "https://nix-cache.home.arpa/default?priority=30";
-      cacheKey = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
+      nixCaches = hostInventory.site.nixCaches;
     in
     {
       package = lib.mkForce pkgs.nixVersions.latest;
@@ -40,12 +40,12 @@
       }
       // lib.optionalAttrs (!isWork) {
         substituters = lib.mkForce [
-          "https://cache.nixos.org/"
-          cacheHttpsUrl
+          nixCaches.nixos.url
+          nixCaches.home.defaultUrl
         ];
         trusted-public-keys = lib.mkForce [
-          "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-          cacheKey
+          nixCaches.nixos.key
+          nixCaches.home.key
         ];
       };
     };

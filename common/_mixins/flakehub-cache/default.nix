@@ -32,7 +32,7 @@ lib.mkMerge [
   {
     nix.settings = {
       netrc-file = config.sops.templates."flakehub-netrc".path;
-      extra-substituters = [ "https://cache.flakehub.com" ];
+      extra-substituters = [ hostInventory.site.nixCaches.flakehub.url ];
       extra-trusted-public-keys = flakehubCacheKeys;
     };
 
