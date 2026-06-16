@@ -256,7 +256,7 @@ let
       set -euo pipefail
 
       WG_HOME_CIDR='${wgHome.cidr}'
-      WG_HOME_DNS='${lan.gateway.address}'
+      WG_HOME_DNS='${lan.gateway.address}, ${lan.domain}'
       WG_HOME_ENDPOINT='${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}'
       WG_HOME_ALLOWED_IPS='${wgHome.cidr}, ${lan.cidr}'
       WG_HOME_PEERS_JSON='${builtins.toJSON (pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers)}'
