@@ -45,6 +45,9 @@ nix run .#wg-home-client-config -- \
 For a peer that is not modeled in `site.wireguard.home.peers`, use
 `--address <peer-address>/32` instead of `--peer`.
 
+Generated client configs use the LAN DNS server plus the `home.arpa` search
+domain, so short hostnames resolve over the VPN the same way they do on the LAN.
+
 Optional QR code for mobile clients:
 
 ```bash

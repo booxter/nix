@@ -25,7 +25,10 @@ in
     # every network. The interface is ready once deployed.
     autostart = false;
     address = [ wgHome.peers.mair.address ];
-    dns = [ lan.gateway.address ];
+    dns = [
+      lan.gateway.address
+      lan.domain
+    ];
     privateKeyFile = config.sops.secrets."wireguard/gwvm/privateKey".path;
 
     peers = [
