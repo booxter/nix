@@ -18,6 +18,11 @@
       scrollback_lines = 100000;
       hide_window_decorations = "titlebar-only";
     };
+    keybindings = {
+      "cmd+с" = "copy_to_clipboard";
+      "cmd+м" = "paste_from_clipboard";
+      "cmd+ч" = "cut_to_clipboard";
+    };
   };
   home.file = {
     ".config/kitty/open-actions.conf".source = ./kitty-open-actions.conf;
