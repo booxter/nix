@@ -11,3 +11,12 @@ groups:
         annotations:
           summary: "DNS probe down: {{ $labels.resolver_title }}"
           description: "Resolver {{ $labels.resolver_title }} is failing blackbox DNS probes from fana."
+      - alert: PublicServiceDNSProbeDown
+        expr: max by(service, service_title, public_host) (probe_success{job="blackbox-public-dns"}) < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: dns
+        annotations:
+          summary: "Public service DNS probe down: {{ $labels.service_title }}"
+          description: "No configured public resolver is returning the expected DNS chain for {{ $labels.public_host }}."

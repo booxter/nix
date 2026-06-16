@@ -11,6 +11,14 @@ let
   lan = hostInventory.site.lan;
   nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
+  beastHostConfig = outputs.nixosConfigurations.beast.config;
+  publicWanHost = beastHostConfig.host.externalService.ddns.hostname;
+  publicServiceCatalog = hostInventory.publicServices;
+  publicWanProbeUrlFor = service: "https://${publicWanHost}${service.probePath}";
+  publicDnsModuleNameFor = service: "dns_public_${service.id}";
+  publicDnsCnameRegexpFor =
+    service:
+    "^${lib.escapeRegex "${service.publicHost}."}\\s+[0-9]+\\s+IN\\s+CNAME\\s+${lib.escapeRegex "${publicWanHost}."}$";
   localHttpsServices = config.host.internalHttps.services;
   srvarrHostConfig = outputs.nixosConfigurations.srvarr.config;
   srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
@@ -114,6 +122,18 @@ let
       target = "8.8.8.8:53";
     }
   ];
+  publicDnsProbeTargets = [
+    {
+      resolver = "cloudflare";
+      resolver_title = "Cloudflare 1.1.1.1";
+      target = "1.1.1.1:53";
+    }
+    {
+      resolver = "google";
+      resolver_title = "Google 8.8.8.8";
+      target = "8.8.8.8:53";
+    }
+  ];
   wanIcmpProbeTargets = [
     {
       probe = "gateway";
@@ -138,7 +158,24 @@ let
       target = "1.1.1.1:443";
     }
   ];
-  blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
+  publicDnsBlackboxModules = builtins.listToAttrs (
+    map (service: {
+      name = publicDnsModuleNameFor service;
+      value = {
+        dns = {
+          preferred_ip_protocol = "ip4";
+          query_name = service.publicHost;
+          query_type = "CNAME";
+          transport_protocol = "udp";
+          valid_rcodes = [ "NOERROR" ];
+          validate_answer_rrs.fail_if_none_matches_regexp = [ (publicDnsCnameRegexpFor service) ];
+        };
+        prober = "dns";
+        timeout = "5s";
+      };
+    }) publicServiceCatalog
+  );
+  blackboxModules = (import ../../../lib/prometheus-blackbox-modules.nix) // publicDnsBlackboxModules;
   remoteBlackboxProbeSourceNames = builtins.filter (
     name:
     name != "fana"
@@ -185,6 +222,20 @@ let
         targets = [ probe.target ];
       }) probes
     ) sources;
+  publicDnsStaticConfigs = lib.concatMap (
+    resolver:
+    map (service: {
+      labels = {
+        scope = "external";
+        service = service.id;
+        service_title = service.title;
+        public_host = service.publicHost;
+        module = publicDnsModuleNameFor service;
+        inherit (resolver) resolver resolver_title;
+      };
+      targets = [ resolver.target ];
+    }) publicServiceCatalog
+  ) publicDnsProbeTargets;
   blackboxProbeRelabelConfigs = [
     {
       source_labels = [ "__address__" ];
@@ -265,6 +316,42 @@ in
       ];
     }
     {
+      job_name = "blackbox-public-wan";
+      metrics_path = "/probe";
+      params.module = [ "http_service" ];
+      static_configs = map (service: {
+        labels = {
+          scope = "external";
+          service = service.id;
+          service_title = service.title;
+          public_host = service.publicHost;
+        };
+        targets = [ (publicWanProbeUrlFor service) ];
+      }) publicServiceCatalog;
+      relabel_configs = [
+        {
+          source_labels = [ "__address__" ];
+          target_label = "__param_target";
+        }
+        {
+          source_labels = [ "public_host" ];
+          target_label = "__param_hostname";
+        }
+        {
+          source_labels = [ "__param_target" ];
+          target_label = "target";
+        }
+        {
+          source_labels = [ "service" ];
+          target_label = "instance";
+        }
+        {
+          replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+          target_label = "__address__";
+        }
+      ];
+    }
+    {
       job_name = "blackbox-dns";
       metrics_path = "/probe";
       params.module = [ "dns_udp" ];
@@ -291,6 +378,41 @@ in
         {
           replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
           target_label = "__address__";
+        }
+      ];
+    }
+    {
+      job_name = "blackbox-public-dns";
+      metrics_path = "/probe";
+      static_configs = publicDnsStaticConfigs;
+      relabel_configs = [
+        {
+          source_labels = [ "module" ];
+          target_label = "__param_module";
+        }
+        {
+          source_labels = [ "__address__" ];
+          target_label = "__param_target";
+        }
+        {
+          source_labels = [ "__param_target" ];
+          target_label = "target";
+        }
+        {
+          separator = ":";
+          source_labels = [
+            "service"
+            "resolver"
+          ];
+          target_label = "instance";
+        }
+        {
+          replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+          target_label = "__address__";
+        }
+        {
+          action = "labeldrop";
+          regex = "module";
         }
       ];
     }
