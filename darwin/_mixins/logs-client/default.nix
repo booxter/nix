@@ -49,11 +49,43 @@ let
       }
     }
 
+    loki.process "darwin_service_labels" {
+      forward_to = [loki.write.default.receiver]
+
+      // Raw launchd stdout/stderr logs often have no process prefix; use the
+      // basename as a fallback and let line parsers below override it.
+      stage.regex {
+        source     = "filename"
+        expression = "^.+/(?P<service_name>[^/]+)\\.log$"
+      }
+
+      // /var/log/wifi.log style: Tue Jun 16 09:40:42.876 [airport]/671 ...
+      stage.regex {
+        expression = "^[A-Z][a-z]{2} [A-Z][a-z]{2} [ 0-9][0-9] [0-9:.]+ \\[(?P<service_name>[^]/]+)\\]/[0-9]+"
+      }
+
+      // /var/log/system.log style: Jun 16 09:40:42 host process[123]: ...
+      stage.regex {
+        expression = "^[A-Z][a-z]{2} [ 0-9][0-9] [0-9:.]+ [^ ]+ (?P<service_name>[^\\s\\[:]+)(?:\\[[0-9]+\\])?:"
+      }
+
+      // install.log and launchd stdout/stderr style: 2026-06-16 09:40:42 host process[123]: ...
+      stage.regex {
+        expression = "^[0-9]{4}-[0-9]{2}-[0-9]{2}[ T][0-9:.+-]+(?: [^ ]+)? (?P<service_name>[^\\s\\[:]+)(?:\\[[0-9]+\\])?:"
+      }
+
+      stage.labels {
+        values = {
+          service_name = "",
+        }
+      }
+    }
+
     loki.source.file "darwin_files" {
       targets = [
         ${lib.concatMapStringsSep "\n    " (target: "${renderLabelMap target},") logTargets}
       ]
-      forward_to    = [loki.write.default.receiver]
+      forward_to    = [loki.process.darwin_service_labels.receiver]
       tail_from_end = true
 
       file_match {
