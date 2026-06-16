@@ -39,6 +39,27 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'up{job="blackbox-public-wan",instance="jellyfin"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: BlackboxPublicWANScrapeDown
+      - eval_time: 5m
+        alertname: BlackboxPublicWANScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: BlackboxPublicWANScrapeDown
+              category: observability
+              job: blackbox-public-wan
+              severity: warning
+            exp_annotations:
+              summary: "Public WAN service probe scrape down"
+              description: "Prometheus has been unable to scrape any blackbox-public-wan probe targets for 5 minutes."
+      - eval_time: 5m30s
+        alertname: BlackboxPublicWANScrapeDown
+
+  - interval: 30s
+    input_series:
       - series: 'probe_success{job="blackbox-arr",instance="jellyfin",scope="external"}'
         values: "1x12"
     alert_rule_test:
@@ -63,10 +84,45 @@ tests:
               scope: external
               severity: warning
             exp_annotations:
-              summary: "Public service probe down: jellyfin"
-              description: "The external blackbox probe for jellyfin has been failing for 5 minutes."
+              summary: "Public service split-DNS probe down: jellyfin"
+              description: "The split-DNS blackbox probe for jellyfin has been failing for 5 minutes."
       - eval_time: 5m30s
         alertname: PublicServiceProbeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-public-wan",instance="jellyfin",scope="external",service="jellyfin",service_title="Jellyfin",public_host="jf.ihar.dev",target="https://ihrachyshka-beast.freeddns.org/web/"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: PublicServiceWANProbeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-public-wan",instance="jellyfin",scope="external",service="jellyfin",service_title="Jellyfin",public_host="jf.ihar.dev",target="https://ihrachyshka-beast.freeddns.org/web/"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: PublicServiceWANProbeDown
+      - eval_time: 5m
+        alertname: PublicServiceWANProbeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: PublicServiceWANProbeDown
+              category: service
+              instance: jellyfin
+              job: blackbox-public-wan
+              public_host: jf.ihar.dev
+              scope: external
+              service: jellyfin
+              service_title: Jellyfin
+              severity: warning
+              target: https://ihrachyshka-beast.freeddns.org/web/
+            exp_annotations:
+              summary: "Public service WAN probe down: Jellyfin"
+              description: "The WAN blackbox probe for Jellyfin (jf.ihar.dev via https://ihrachyshka-beast.freeddns.org/web/) has been failing for 5 minutes."
+      - eval_time: 5m30s
+        alertname: PublicServiceWANProbeDown
 
   - interval: 30s
     input_series:

@@ -560,6 +560,33 @@ jobs:
               }
             };
 
+            const isDailyFlakeInputUpdatePullRequest = async () => {
+              if (pull.data.head.ref !== "ci/flake-update") {
+                return false;
+              }
+
+              if (pull.data.title !== "flake: update inputs") {
+                return false;
+              }
+
+              const body = pull.data.body || "";
+              if (
+                !body.includes("Automated update of flake inputs.") ||
+                !body.includes("Trigger: schedule")
+              ) {
+                return false;
+              }
+
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                owner,
+                repo,
+                pull_number: context.payload.pull_request.number,
+                per_page: 100,
+              });
+              const changedPaths = files.map((file) => file.filename).sort();
+              return changedPaths.length === 1 && changedPaths[0] === "flake.lock";
+            };
+
             const enableAutoMerge = async () => {
               if (!shouldAutoMerge) {
                 if (packageChangeEntries.length > 0) {
@@ -567,6 +594,18 @@ jobs:
                 } else {
                   core.notice("Skipping auto-merge because no config diff-capable targets were selected.");
                 }
+                return;
+              }
+
+              let dailyFlakeInputUpdate = false;
+              try {
+                dailyFlakeInputUpdate = await isDailyFlakeInputUpdatePullRequest();
+              } catch (error) {
+                core.warning(`Could not identify daily flake update pull request: ${error.message}`);
+                return;
+              }
+              if (!dailyFlakeInputUpdate) {
+                core.notice("Skipping auto-merge because this is not a scheduled flake input update PR.");
                 return;
               }
 

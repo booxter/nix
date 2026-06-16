@@ -24,3 +24,38 @@ tests:
             exp_annotations:
               summary: "DNS probe down: gateway 192.168.0.1"
               description: "Resolver gateway 192.168.0.1 is failing blackbox DNS probes from fana."
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-public-dns",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="cloudflare",resolver_title="Cloudflare 1.1.1.1"}'
+        values: "0x12"
+      - series: 'probe_success{job="blackbox-public-dns",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="google",resolver_title="Google 8.8.8.8"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: PublicServiceDNSProbeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-public-dns",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="cloudflare",resolver_title="Cloudflare 1.1.1.1"}'
+        values: "0x10 1x2"
+      - series: 'probe_success{job="blackbox-public-dns",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="google",resolver_title="Google 8.8.8.8"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: PublicServiceDNSProbeDown
+      - eval_time: 5m
+        alertname: PublicServiceDNSProbeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: PublicServiceDNSProbeDown
+              category: dns
+              public_host: vi.ihar.dev
+              service: vikunja
+              service_title: Vikunja
+              severity: warning
+            exp_annotations:
+              summary: "Public service DNS probe down: Vikunja"
+              description: "No configured public resolver is returning the expected DNS chain for vi.ihar.dev."
+      - eval_time: 5m30s
+        alertname: PublicServiceDNSProbeDown
