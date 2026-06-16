@@ -30,6 +30,10 @@ let
   };
 in
 {
+  imports = [
+    ./qos.nix
+  ];
+
   host.externalService.ddns = {
     enable = true;
     hostname = "ihrachyshka-gw.freeddns.org";
