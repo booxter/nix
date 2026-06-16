@@ -71,10 +71,6 @@ in
     (lib.mkIf cfg.enable (
       lib.mkMerge [
         {
-          # TODO(nix-darwin): Report and revisit after upstream handles /var vs
-          # /private/var user-home aliases during activation.
-          users.users._prometheus-node-exporter.home = lib.mkForce "/private/var/lib/prometheus-node-exporter";
-
           services.prometheus.exporters.node = {
             enable = true;
             listenAddress = cfg.nodeExporter.listenAddress;

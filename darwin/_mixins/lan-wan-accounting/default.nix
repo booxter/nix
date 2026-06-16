@@ -12,9 +12,7 @@ let
   nodeCfg = config.services.prometheus.exporters.node;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   textfilePath = "${textfileDir}/lan-wan.prom";
-  # TODO(nix-darwin): Report and revisit after upstream handles /var vs
-  # /private/var user-home aliases during activation.
-  stateDir = "/private/var/lib/observability-lan-wan";
+  stateDir = "/var/lib/observability-lan-wan";
   serviceUser = "_observability-lan-wan";
   # macOS exposes /dev/bpf* as root:access_bpf 0660. Make this the service
   # account's primary group instead of running the capture daemon as root.
@@ -122,7 +120,6 @@ in
     users.users.${serviceUser} = {
       uid = config.ids.uids.${serviceUser};
       gid = accessBpfGid;
-      home = stateDir;
       createHome = false;
       shell = "/usr/bin/false";
       description = "System user for Darwin LAN/WAN BPF accounting";
