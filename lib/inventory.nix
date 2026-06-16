@@ -91,6 +91,7 @@ let
     ttlSeconds = lanDnsRecordTtlSeconds;
     inherit domain ipv4Address;
   };
+  nixCacheUrlWithPriority = url: priority: "${url}?priority=${toString priority}";
 
   aliasIpv4Address =
     spec:
@@ -180,6 +181,30 @@ rec {
     ports = {
       nfs = 2049;
     };
+
+    nixCaches =
+      let
+        homeUrl = "https://nix-cache.${lan.domain}/default";
+        flakehubUrl = "https://cache.flakehub.com";
+      in
+      {
+        nixos = {
+          url = "https://cache.nixos.org/";
+          key = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
+        };
+        home = {
+          url = homeUrl;
+          key = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
+          defaultUrl = nixCacheUrlWithPriority homeUrl 30;
+          lanUrl = nixCacheUrlWithPriority homeUrl 10;
+          vpnUrl = nixCacheUrlWithPriority homeUrl 30;
+        };
+        flakehub = {
+          url = flakehubUrl;
+          lanUrl = nixCacheUrlWithPriority flakehubUrl 30;
+          vpnUrl = nixCacheUrlWithPriority flakehubUrl 10;
+        };
+      };
 
     lan = {
       cidr = "192.168.0.0/16";
