@@ -81,6 +81,7 @@ in
     environment.systemPackages = with pkgs; [
       ethtool
       pciutils
+      procps
       psmisc
     ];
 
