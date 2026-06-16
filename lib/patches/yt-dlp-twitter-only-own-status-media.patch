@@ -1,0 +1,16 @@
+diff --git a/yt_dlp/extractor/twitter.py b/yt_dlp/extractor/twitter.py
+index 9f3c4e0..671c1a4 100644
+--- a/yt_dlp/extractor/twitter.py
++++ b/yt_dlp/extractor/twitter.py
+@@ -1173 +1173 @@ class TwitterIE(TwitterBaseIE):
+-        for detail in traverse_obj(status, ((None, 'quoted_tweet'), 'mediaDetails', ..., {dict})):
++        for detail in traverse_obj(status, ('mediaDetails', ..., {dict})):
+@@ -1205 +1205 @@ class TwitterIE(TwitterBaseIE):
+-        return traverse_obj(status, 'retweeted_status', None, expected_type=dict) or {}
++        return status
+@@ -1348 +1348 @@ class TwitterIE(TwitterBaseIE):
+-            (None, 'quoted_status'), 'extended_entities', 'media', lambda _, m: m['type'] != 'photo', {dict}))
++            'extended_entities', 'media', lambda _, m: m['type'] != 'photo', {dict}))
+@@ -1354 +1354 @@ class TwitterIE(TwitterBaseIE):
+-                (None, 'quoted_status'), 'extended_entities', 'media', int(selected_index) - 1, {dict}), get_all=False)
++                'extended_entities', 'media', int(selected_index) - 1, {dict}), get_all=False)

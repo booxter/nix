@@ -18,6 +18,12 @@
       pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       pinnedTransmission = pkgsTransmission.transmission_4;
+      lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
+      lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../lib/patches/yt-dlp-twitter-only-own-status-media.patch
+        ];
+      });
       patchedTransmission = pinnedTransmission.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           # Fix the 4.0.6 HTTP announce bug where a later failed sibling
@@ -35,6 +41,10 @@
 
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
+
+      lolek = lolekPackage.override {
+        yt-dlp = lolekYtDlp;
+      };
 
       transmission_4 = patchedTransmission;
       transmission = patchedTransmission;
