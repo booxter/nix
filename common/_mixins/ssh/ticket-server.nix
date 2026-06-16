@@ -6,6 +6,7 @@
   isDarwin,
   isLinux,
   lib,
+  pkgs,
   username,
   ...
 }:
@@ -13,6 +14,10 @@ let
   cfg = config.host.sshTicket;
   caPublicKeyPath = "/etc/ssh/fleet-user-ca.pub";
   inventoryCaPublicKey = hostInventory.sshTicket.userCaPublicKey;
+  caPublicKeyFile = pkgs.writeText "fleet-user-ca.pub" "${cfg.caPublicKey}\n";
+  principalsFile = pkgs.writeText "${username}-authorized_principals" (
+    lib.concatMapStrings (principal: "${principal}\n") cfg.principals
+  );
   nixosHostSpec =
     if builtins.hasAttr hostSpecName hostInventory.nixosHostSpecsByName then
       hostInventory.nixosHostSpecsByName.${hostSpecName}
@@ -106,11 +111,11 @@ in
       host.sshTicket.enable = lib.mkDefault true;
       host.sshTicket.caPublicKey = lib.mkIf cfg.enable (lib.mkDefault inventoryCaPublicKey);
     }
-    {
+    (lib.optionalAttrs isLinux {
       environment.etc."ssh/fleet-user-ca.pub" = lib.mkIf (cfg.enable && cfg.caPublicKey != null) {
-        text = "${cfg.caPublicKey}\n";
+        source = caPublicKeyFile;
       };
-    }
+    })
     (lib.optionalAttrs isLinux {
       services.openssh.settings.TrustedUserCAKeys = lib.mkIf (
         cfg.enable && cfg.caPublicKey != null
@@ -119,14 +124,33 @@ in
       users.users.${username}.openssh.authorizedPrincipals = lib.mkIf cfg.enable cfg.principals;
     })
     (lib.optionalAttrs isDarwin {
-      environment.etc."ssh/authorized_principals.d/${username}" = lib.mkIf cfg.enable {
-        text = lib.concatMapStrings (principal: "${principal}\n") cfg.principals;
-      };
-
       services.openssh.extraConfig = lib.mkIf (cfg.enable && cfg.caPublicKey != null) ''
         TrustedUserCAKeys ${caPublicKeyPath}
         AuthorizedPrincipalsFile /etc/ssh/authorized_principals.d/%u
       '';
+
+      system.activationScripts.etc.text = lib.mkIf (cfg.enable && cfg.caPublicKey != null) (
+        lib.mkAfter ''
+          # nix-darwin environment.etc only creates symlinks. Mirror NixOS'
+          # copied /etc files here because sshd StrictModes rejects cert auth
+          # files reached through group-writable /nix/store parents.
+          # TODO: expand nix-darwin environment.etc to support NixOS-style
+          # copy mode/owner semantics, then replace this targeted workaround.
+          install -d -m 0755 -o root -g wheel /etc/ssh/authorized_principals.d
+
+          install -m 0444 -o root -g wheel \
+            "${caPublicKeyFile}" \
+            /etc/ssh/fleet-user-ca.pub.tmp
+          mv -f /etc/ssh/fleet-user-ca.pub.tmp /etc/ssh/fleet-user-ca.pub
+
+          install -m 0444 -o root -g wheel \
+            "${principalsFile}" \
+            /etc/ssh/authorized_principals.d/${username}.tmp
+          mv -f \
+            /etc/ssh/authorized_principals.d/${username}.tmp \
+            /etc/ssh/authorized_principals.d/${username}
+        ''
+      );
     })
   ];
 }
