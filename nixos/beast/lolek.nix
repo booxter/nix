@@ -3,6 +3,7 @@
   hostInventory,
   hostname,
   inputs,
+  pkgs,
   ...
 }:
 let
@@ -45,6 +46,7 @@ in
 
   services.lolek = {
     enable = true;
+    package = pkgs.lolek;
     botTokenFile = config.sops.secrets."lolek/botToken".path;
     maxConcurrentDownloads = 4;
     maxConcurrentDownloadsPerChat = 2;
