@@ -329,16 +329,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1780711999,
-        "narHash": "sha256-b1In8HUqg0ECMBXS4HP6mLonxEY/iUeqNsXcoIxYklU=",
-        "owner": "booxter",
+        "lastModified": 1781082457,
+        "narHash": "sha256-XpdAI+O6VU5kW6QgJtU4vkbEmkiw7nhf2NsMxI3ddG8=",
+        "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "f62c9d3cd82267566b416501b6d70453d3e6bb72",
+        "rev": "ab7af7a931406eba380d3137e8ab5d6355114e05",
         "type": "github"
       },
       "original": {
-        "owner": "booxter",
-        "ref": "local-bot-api-uploads",
+        "owner": "dziaineka",
         "repo": "lolek",
         "type": "github"
       }

@@ -49,6 +49,7 @@ in
     maxConcurrentDownloads = 4;
     maxConcurrentDownloadsPerChat = 2;
     postSourceCaption = true;
+    postRequesterCaption = true;
     hardwareAcceleration.backend = "qsv";
     hardwareAcceleration.device = hostSpec.hardware.igpu.renderDevice;
     metrics = {
