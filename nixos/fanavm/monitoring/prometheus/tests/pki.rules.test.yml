@@ -138,7 +138,7 @@ tests:
   - interval: 30s
     input_series:
       - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
-        values: "3888000x62"
+        values: "1900800x62"
     alert_rule_test:
       - eval_time: 30m
         alertname: PublicTLSCertExpiringSoon
@@ -146,7 +146,7 @@ tests:
   - interval: 30s
     input_series:
       - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
-        values: "2505600x60 3456000x2"
+        values: "1728000x60 3456000x2"
     alert_rule_test:
       - eval_time: 29m30s
         alertname: PublicTLSCertExpiringSoon
@@ -162,7 +162,7 @@ tests:
               severity: warning
             exp_annotations:
               summary: "Public TLS cert expiring soon: jellyfin"
-              description: "The public HTTPS endpoint jellyfin has less than 30 days remaining on its leaf certificate."
+              description: "The public HTTPS endpoint jellyfin has less than 21 days remaining on its leaf certificate."
       - eval_time: 30m30s
         alertname: PublicTLSCertExpiringSoon
 

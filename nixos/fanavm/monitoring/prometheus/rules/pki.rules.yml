@@ -39,14 +39,14 @@ groups:
           summary: "Managed PKI cert expiring critically soon: {{ $labels.host }} / {{ $labels.cert_name }}"
           description: "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.cert_category }}) has less than 14 days remaining."
       - alert: PublicTLSCertExpiringSoon
-        expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",scope="external"} - time()) / 86400) < 30
+        expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",scope="external"} - time()) / 86400) < 21
         for: 30m
         labels:
           severity: warning
           category: pki
         annotations:
           summary: "Public TLS cert expiring soon: {{ $labels.instance }}"
-          description: "The public HTTPS endpoint {{ $labels.instance }} has less than 30 days remaining on its leaf certificate."
+          description: "The public HTTPS endpoint {{ $labels.instance }} has less than 21 days remaining on its leaf certificate."
       - alert: PublicTLSCertExpiringCritical
         expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",scope="external"} - time()) / 86400) < 14
         for: 30m
