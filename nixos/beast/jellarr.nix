@@ -280,8 +280,8 @@ in
               {
                 path,
                 isAdult ? false,
+                isMusic ? false,
                 preferTmdb ? false,
-                saveLyricsWithMedia ? false,
               }:
               {
                 pathInfos = [
@@ -303,12 +303,17 @@ in
                 enableTrickplayImageExtraction = true;
 
                 saveTrickplayWithMedia = true;
-                inherit saveLyricsWithMedia;
                 metadataSavers = [ "Nfo" ];
                 saveLocalMetadata = true;
 
                 automaticRefreshIntervalDays = 14;
                 enableRealtimeMonitor = true;
+              }
+              // lib.optionalAttrs isMusic {
+                saveLyricsWithMedia = true;
+                useCustomTagDelimiters = true;
+                customTagDelimiters = [ ";" ];
+                delimiterWhitelist = [ ];
               };
           in
           map (library: {
@@ -316,8 +321,8 @@ in
             libraryOptions = getLibraryOptions {
               inherit (library) path;
               isAdult = library.isAdult or false;
+              isMusic = library.collectionType == "music";
               preferTmdb = library.preferTmdb or false;
-              saveLyricsWithMedia = library.collectionType == "music";
             };
           }) mediaLibraries;
       };
