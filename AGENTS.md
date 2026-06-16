@@ -6,6 +6,10 @@ Scope: the whole repository.
 
 - Create local commits for completed changes. Do not push branches or deploy
   machines unless the user explicitly asks for that action.
+- Avoid live, in-place changes on managed hosts, including the local machine.
+  Prefer declarative changes in this Nix repository and let activation/deploy
+  apply them. Only run imperative host changes when the user explicitly asks for
+  that specific live action.
 - Prefer the flake apps and repo scripts over ad hoc commands. Run `nix fmt`
   after edits; it applies the repo's format and lint rules.
 - Most flake apps and scripts support `--help`; check that before guessing
