@@ -480,8 +480,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "topk(10, pve_cpu_usage_ratio{job=\"proxmox-pve-cluster\",id=~\"(qemu|lxc)/.*\"} * 100)",
-          "legendFormat": "{{id}}",
+          "expr": "topk(10, pve_cpu_usage_ratio{job=\"proxmox-pve-cluster\",id=~\"(qemu|lxc)/.*\"} * on(id) group_left(name,node,type,tags) pve_guest_info{job=\"proxmox-pve-cluster\"} * 100)",
+          "legendFormat": "{{name}}",
           "range": true,
           "refId": "A"
         }
@@ -535,7 +535,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "name"
+          }
+        ]
       },
       "pluginVersion": "11.6.3",
       "targets": [
@@ -550,6 +556,29 @@
         }
       ],
       "title": "Guest State",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "name",
+                "id",
+                "node",
+                "type",
+                "tags",
+                "Value"
+              ]
+            }
+          }
+        }
+      ],
       "type": "table"
     }
   ],
