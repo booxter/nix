@@ -55,6 +55,7 @@ class DnsRecordSpec:
     record_type: str
     domain: str
     ttl_seconds: int
+    enabled: bool = True
     ipv4_address: ipaddress.IPv4Address | None = None
     target_domain: str | None = None
 
@@ -166,6 +167,11 @@ def build_parser() -> argparse.ArgumentParser:
             "JSON array of inventory reservations. If --mac/--ip are omitted, the app uses this "
             "to sync all MAC-backed entries. Defaults to UNIFI_RESERVATION_INVENTORY_JSON."
         ),
+    )
+    parser.add_argument(
+        "--no-reservations-update",
+        action="store_true",
+        help="Do not update UniFi known-client reservations.",
     )
     parser.add_argument(
         "--no-create-known-clients",
@@ -898,6 +904,7 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
         record_type = item.get("type")
         domain = item.get("domain")
         ttl_seconds = item.get("ttlSeconds")
+        enabled = item.get("enabled", True)
         if not isinstance(record_type, str):
             raise UnifiError(f"DNS record item {index} is missing type")
         if not isinstance(domain, str):
@@ -906,6 +913,8 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
             raise UnifiError(
                 f"DNS record item {index} is missing non-negative integer ttlSeconds"
             )
+        if not isinstance(enabled, bool):
+            raise UnifiError(f"DNS record item {index} enabled must be boolean")
 
         normalized_type = record_type.strip().upper()
         if normalized_type not in SUPPORTED_DNS_RECORD_TYPES:
@@ -929,6 +938,7 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
                     record_type=normalized_type,
                     domain=normalized_domain,
                     ttl_seconds=ttl_seconds,
+                    enabled=enabled,
                     ipv4_address=parsed_ip,
                 )
             )
@@ -942,6 +952,7 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
                 record_type=normalized_type,
                 domain=normalized_domain,
                 ttl_seconds=ttl_seconds,
+                enabled=enabled,
                 target_domain=normalize_dns_name(target_domain),
             )
         )
@@ -1043,6 +1054,12 @@ def build_single_reservation(args: argparse.Namespace) -> ReservationSpec:
 
 
 def load_reservations(args: argparse.Namespace) -> tuple[str, list[ReservationSpec]]:
+    if args.no_reservations_update:
+        if args.mac or args.ip or args.hostname:
+            raise UnifiError(
+                "use either --no-reservations-update or single-client reservation arguments, not both"
+            )
+        return "disabled", []
     if args.mac or args.ip or args.hostname:
         return "single", [build_single_reservation(args)]
     return "inventory", parse_inventory_reservations(args.inventory_json)
@@ -1189,7 +1206,7 @@ def build_dns_policies_by_key(
 
 def build_dns_policy_payload(record: DnsRecordSpec) -> dict[str, Any]:
     payload: dict[str, Any] = {
-        "enabled": True,
+        "enabled": record.enabled,
         "type": record.record_type,
         "domain": record.domain,
         "ttlSeconds": record.ttl_seconds,
@@ -1217,9 +1234,9 @@ def build_dns_policy_update_plan(
 
     payload: dict[str, Any] = {}
     current_enabled = bool(existing_policy.get("enabled"))
-    if not current_enabled:
-        payload["enabled"] = True
-        changes["enabled"] = build_change(current_enabled, True)
+    if current_enabled != record.enabled:
+        payload["enabled"] = record.enabled
+        changes["enabled"] = build_change(current_enabled, record.enabled)
 
     current_domain = stringify(existing_policy.get("domain"))
     if current_domain != record.domain:
@@ -1685,11 +1702,14 @@ def main() -> int:
         static_routes_result = None
 
         if network_settings is not None:
-            lookup_ip = (
-                network_settings.dhcp_range.start
-                if network_settings.dhcp_range is not None
-                else reservations[0].fixed_ip
-            )
+            if network_settings.dhcp_range is not None:
+                lookup_ip = network_settings.dhcp_range.start
+            elif reservations:
+                lookup_ip = reservations[0].fixed_ip
+            else:
+                raise UnifiError(
+                    "network settings without DHCP range require reservations to choose a network"
+                )
             selected_dhcp_network = (
                 next(
                     (
@@ -1812,6 +1832,7 @@ def main() -> int:
                         {
                             "type": record.record_type,
                             "domain": record.domain,
+                            "enabled": record.enabled,
                             "policy_id": stringify(existing_policy.get("id"))
                             if existing_policy is not None
                             else None,

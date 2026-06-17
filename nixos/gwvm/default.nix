@@ -10,19 +10,7 @@ let
   wgListenPort = wgHome.gateway.listenPort;
   wgAddress = wgHome.gateway.address;
   lanInterface = "ens18";
-
-  vpnPeers = [
-    {
-      name = "mair";
-      publicKey = "j3TbXthVhDk2TVAag6Cr0MRLiCTaOPfBL8UeecG9Sx4=";
-      address = wgHome.peers.mair.address;
-    }
-    {
-      name = "unifi-travel-router";
-      publicKey = "B+s4ysMFr3GrIdXdKP4SxXM3JZ9ziCUVJXkLwEvPX1E=";
-      address = wgHome.peers.unifi-travel-router.address;
-    }
-  ];
+  vpnPeers = import ./wg-home-peers.nix { inherit hostInventory; };
 
   mkPeer = peer: {
     inherit (peer) publicKey;
@@ -32,6 +20,7 @@ in
 {
   imports = [
     ./qos.nix
+    ./wg-home-exporter.nix
   ];
 
   host.externalService.ddns = {

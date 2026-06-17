@@ -47,9 +47,24 @@ For a peer that is not modeled in `site.wireguard.home.peers`, use
 
 Generated client configs use the LAN DNS server plus the `home.arpa` search
 domain, so short hostnames resolve over the VPN the same way they do on the LAN.
+They also set `PersistentKeepalive = 25`, which keeps peer handshakes fresh
+enough for the status exporter to identify connected peers.
 
 Optional QR code for mobile clients:
 
 ```bash
 qrencode -t ansiutf8 < client.conf
 ```
+
+## Peer status exporter
+
+`gw` exposes inventory-backed WireGuard peer status for the DNS automation on
+`pki`:
+
+- service: `wg-home-exporter.service`
+- listener: `192.168.20.3:9586`
+- JSON endpoint: `/peers.json`
+- Prometheus endpoint: `/metrics`
+
+The exporter marks a peer connected when its latest WireGuard handshake is no
+older than 180 seconds.

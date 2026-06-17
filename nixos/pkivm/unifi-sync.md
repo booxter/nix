@@ -17,6 +17,11 @@ Guest networking and UPS / NUT are out of scope here.
 - `systemd` oneshot service: `unifi-sync.service`
 - `systemd` timer: `unifi-sync.timer`
 
+It also runs WireGuard DNS override sync as:
+
+- `systemd` oneshot service: `wg-home-dns-sync.service`
+- `systemd` timer: `wg-home-dns-sync.timer`
+
 Current timer behavior:
 
 - `OnBootSec=10m`
@@ -55,6 +60,9 @@ Service source:
 - Split DNS records:
   - `nix-cache.home.arpa -> 192.168.20.7`
   - `jf.ihar.dev -> 192.168.16.3`
+- WireGuard DNS overrides:
+  - `mair.home.arpa -> 10.83.0.10` when the `mair` WireGuard peer is connected
+  - the same UniFi DNS policy is disabled when the peer is not connected
   - `js.ihar.dev -> 192.168.16.3`
   - `mu.ihar.dev -> 192.168.16.3`
   - `au.ihar.dev -> 192.168.16.3`
@@ -68,6 +76,7 @@ Service source:
 - Repo-wide LAN DNS/DHCP endpoint is `192.168.0.1`
 - LAN domain is `home.arpa`
 - LAN clients route `10.83.0.0/24` through `gw` at `192.168.20.3`
+- `wg-home-dns-sync` polls `http://192.168.20.3:9586/peers.json`
 - Reservations are MAC-based only
 - `prx1-lab` serves standalone TFTP / netboot on `192.168.15.10`
 
@@ -89,6 +98,8 @@ Service source:
 
 - Treat `unifi-sync` as the source of truth for trusted-LAN reservations, DHCP
   settings, split DNS, and inventory-backed static routes
+- Treat `wg-home-dns-sync` as the source of truth for WireGuard peer DNS
+  overrides; it intentionally runs separately from the hourly inventory sync
 - If UniFi custom DHCP option `119` is deleted in the UI, `unifi-sync` will
   recreate the DHCP option definition and repopulate its value
 - For UniFi option `119`, the stored value should be plain text `home.arpa`,
