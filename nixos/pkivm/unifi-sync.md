@@ -50,6 +50,8 @@ Service source:
 - DHCP network-boot settings:
   - option `66` / next-server -> `192.168.15.10`
   - option `67` / boot file -> `netboot.xyz.efi`
+- Static routes:
+  - `10.83.0.0/24 -> 192.168.20.3` for home WireGuard peers via `gw`
 - Split DNS records:
   - `nix-cache.home.arpa -> 192.168.20.7`
   - `jf.ihar.dev -> 192.168.16.3`
@@ -65,6 +67,7 @@ Service source:
 - Trusted-LAN clients get DNS `192.168.0.1`
 - Repo-wide LAN DNS/DHCP endpoint is `192.168.0.1`
 - LAN domain is `home.arpa`
+- LAN clients route `10.83.0.0/24` through `gw` at `192.168.20.3`
 - Reservations are MAC-based only
 - `prx1-lab` serves standalone TFTP / netboot on `192.168.15.10`
 
@@ -85,7 +88,7 @@ Service source:
 ## Operational Notes
 
 - Treat `unifi-sync` as the source of truth for trusted-LAN reservations, DHCP
-  settings, and split DNS
+  settings, split DNS, and inventory-backed static routes
 - If UniFi custom DHCP option `119` is deleted in the UI, `unifi-sync` will
   recreate the DHCP option definition and repopulate its value
 - For UniFi option `119`, the stored value should be plain text `home.arpa`,

@@ -47,6 +47,7 @@ let
 
   networkBootfile = netboot.bootfile;
   dnsRecordsJson = builtins.toJSON lan.dnsRecords;
+  staticRoutesJson = builtins.toJSON (lan.staticRoutes or [ ]);
 
   baseUrl = "https://${lan.gateway.address}";
   site = "default";
@@ -62,6 +63,7 @@ in
     networkTftpServer
     networkBootfile
     dnsRecordsJson
+    staticRoutesJson
     ;
 
   environment = {
@@ -76,5 +78,6 @@ in
     UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
     UNIFI_NETWORK_BOOTFILE = networkBootfile;
     UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
+    UNIFI_STATIC_ROUTES_JSON = staticRoutesJson;
   };
 }

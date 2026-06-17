@@ -60,6 +60,15 @@ class DnsRecordSpec:
 
 
 @dataclass(frozen=True)
+class StaticRouteSpec:
+    name: str
+    destination: ipaddress.IPv4Network
+    next_hop: ipaddress.IPv4Address
+    distance: int
+    enabled: bool = True
+
+
+@dataclass(frozen=True)
 class DhcpCustomOptionSpec:
     code: int | None
     name: str | None
@@ -259,6 +268,19 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Do not update UniFi DNS policies.",
     )
+    parser.add_argument(
+        "--static-routes-json",
+        default=os.environ.get("UNIFI_STATIC_ROUTES_JSON", ""),
+        help=(
+            "Optional JSON array of static routes to upsert through the legacy UniFi "
+            "routing API. Defaults to UNIFI_STATIC_ROUTES_JSON."
+        ),
+    )
+    parser.add_argument(
+        "--no-static-routes-update",
+        action="store_true",
+        help="Do not update UniFi static routes.",
+    )
     return parser
 
 
@@ -433,6 +455,22 @@ class UnifiLegacyClient:
             "PUT",
             f"/api/s/{self.site}/rest/networkconf/{urllib.parse.quote(network_id, safe='')}",
             {"_id": network_id, **payload},
+        )
+
+    def list_static_routes(self) -> list[dict[str, Any]]:
+        data = self.request("GET", f"/api/s/{self.site}/rest/routing")
+        if not isinstance(data, list):
+            raise UnifiError("unexpected response shape for static routes")
+        return data
+
+    def create_static_route(self, payload: dict[str, Any]) -> Any:
+        return self.request("POST", f"/api/s/{self.site}/rest/routing", payload)
+
+    def update_static_route(self, route_id: str, payload: dict[str, Any]) -> Any:
+        return self.request(
+            "PUT",
+            f"/api/s/{self.site}/rest/routing/{urllib.parse.quote(route_id, safe='')}",
+            {"_id": route_id, **payload},
         )
 
     def list_sites(self) -> list[dict[str, Any]]:
@@ -911,6 +949,70 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
     return records
 
 
+def parse_static_routes(raw_json: str) -> list[StaticRouteSpec] | None:
+    if not raw_json:
+        return None
+
+    try:
+        decoded = json.loads(raw_json)
+    except json.JSONDecodeError as error:
+        raise UnifiError(f"invalid static routes JSON: {error}") from error
+
+    if not isinstance(decoded, list):
+        raise UnifiError("static routes JSON must be a list")
+
+    routes: list[StaticRouteSpec] = []
+    for index, item in enumerate(decoded):
+        if not isinstance(item, dict):
+            raise UnifiError(f"static route item {index} is not an object")
+
+        name = item.get("name")
+        destination = item.get("destination", item.get("network"))
+        next_hop = item.get("nextHop", item.get("next_hop"))
+        distance = item.get("distance", 1)
+        enabled = item.get("enabled", True)
+
+        if not isinstance(name, str) or not name.strip():
+            raise UnifiError(f"static route item {index} is missing name")
+        if not isinstance(destination, str):
+            raise UnifiError(f"static route item {index} is missing destination")
+        if not isinstance(next_hop, str):
+            raise UnifiError(f"static route item {index} is missing nextHop")
+        if isinstance(distance, bool) or not isinstance(distance, int):
+            raise UnifiError(
+                f"static route item {index} has non-integer distance: {distance!r}"
+            )
+        if distance < 1 or distance > 255:
+            raise UnifiError(
+                f"static route item {index} distance must be between 1 and 255"
+            )
+        if not isinstance(enabled, bool):
+            raise UnifiError(f"static route item {index} enabled must be boolean")
+
+        parsed_destination = ipaddress.ip_network(destination, strict=False)
+        if not isinstance(parsed_destination, ipaddress.IPv4Network):
+            raise UnifiError(
+                f"static route item {index} destination is not IPv4: {destination}"
+            )
+        parsed_next_hop = ipaddress.ip_address(next_hop)
+        if not isinstance(parsed_next_hop, ipaddress.IPv4Address):
+            raise UnifiError(
+                f"static route item {index} nextHop is not IPv4: {next_hop}"
+            )
+
+        routes.append(
+            StaticRouteSpec(
+                name=name.strip(),
+                destination=parsed_destination,
+                next_hop=parsed_next_hop,
+                distance=distance,
+                enabled=enabled,
+            )
+        )
+
+    return routes
+
+
 def encode_domain_search_option(domains: tuple[str, ...]) -> str:
     encoded = bytearray()
     for domain in domains:
@@ -1139,6 +1241,123 @@ def build_dns_policy_update_plan(
             changes["targetDomain"] = build_change(current_target, desired_target)
     else:
         raise UnifiError(f"unsupported DNS record type: {record.record_type}")
+
+    if changes:
+        return "update", desired_payload, changes
+    return "noop", {}, changes
+
+
+def static_route_key(destination: ipaddress.IPv4Network) -> str:
+    return str(destination)
+
+
+def get_static_route_destination(route: dict[str, Any]) -> ipaddress.IPv4Network | None:
+    for key in ("static-route_network", "network", "destination"):
+        value = route.get(key)
+        if not isinstance(value, str):
+            continue
+        try:
+            parsed = ipaddress.ip_network(value, strict=False)
+        except ValueError:
+            continue
+        if isinstance(parsed, ipaddress.IPv4Network):
+            return parsed
+    return None
+
+
+def build_static_routes_by_destination(
+    routes: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    by_destination: dict[str, dict[str, Any]] = {}
+    for route in routes:
+        destination = get_static_route_destination(route)
+        if destination is None:
+            continue
+
+        key = static_route_key(destination)
+        if key in by_destination:
+            first = by_destination[key]
+            raise UnifiError(
+                "multiple UniFi static routes share destination "
+                f"{key}: {_id(first)}, {_id(route)}"
+            )
+        by_destination[key] = route
+    return by_destination
+
+
+def build_static_route_payload(route: StaticRouteSpec) -> dict[str, Any]:
+    return {
+        "enabled": route.enabled,
+        "name": route.name,
+        "type": "static-route",
+        "static-route_network": str(route.destination),
+        "static-route_type": "nexthop-route",
+        "static-route_nexthop": str(route.next_hop),
+        "static-route_distance": str(route.distance),
+    }
+
+
+def build_static_route_update_plan(
+    existing_route: dict[str, Any] | None,
+    route: StaticRouteSpec,
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    desired_payload = build_static_route_payload(route)
+    changes: dict[str, Any] = {}
+
+    if existing_route is None:
+        for key, value in desired_payload.items():
+            changes[key] = build_change(None, value)
+        return "create", desired_payload, changes
+
+    payload: dict[str, Any] = {}
+
+    current_enabled = bool(existing_route.get("enabled"))
+    if current_enabled != route.enabled:
+        payload["enabled"] = route.enabled
+        changes["enabled"] = build_change(current_enabled, route.enabled)
+
+    current_name = stringify(existing_route.get("name"))
+    if current_name != route.name:
+        payload["name"] = route.name
+        changes["name"] = build_change(current_name, route.name)
+
+    current_type = stringify(existing_route.get("type"))
+    if current_type != "static-route":
+        payload["type"] = "static-route"
+        changes["type"] = build_change(current_type, "static-route")
+
+    desired_network = str(route.destination)
+    current_network = stringify(
+        existing_route.get("static-route_network", existing_route.get("network"))
+    )
+    if current_network != desired_network:
+        payload["static-route_network"] = desired_network
+        changes["static-route_network"] = build_change(current_network, desired_network)
+
+    current_route_type = stringify(existing_route.get("static-route_type"))
+    if current_route_type != "nexthop-route":
+        payload["static-route_type"] = "nexthop-route"
+        changes["static-route_type"] = build_change(current_route_type, "nexthop-route")
+
+    desired_next_hop = str(route.next_hop)
+    current_next_hop = stringify(
+        existing_route.get("static-route_nexthop", existing_route.get("nexthop"))
+    )
+    if current_next_hop != desired_next_hop:
+        payload["static-route_nexthop"] = desired_next_hop
+        changes["static-route_nexthop"] = build_change(
+            current_next_hop, desired_next_hop
+        )
+
+    desired_distance = str(route.distance)
+    current_distance = stringify(
+        existing_route.get("static-route_distance", existing_route.get("distance"))
+    )
+    if current_distance != desired_distance:
+        payload["static-route_distance"] = desired_distance
+        changes["static-route_distance"] = build_change(
+            current_distance, desired_distance
+        )
 
     if changes:
         return "update", desired_payload, changes
@@ -1444,6 +1663,11 @@ def main() -> int:
             if args.no_dns_records_update
             else parse_dns_records(args.dns_records_json)
         )
+        static_routes = (
+            None
+            if args.no_static_routes_update
+            else parse_static_routes(args.static_routes_json)
+        )
 
         client = UnifiLegacyClient(
             base_url=args.base_url,
@@ -1458,6 +1682,7 @@ def main() -> int:
         clients_by_mac = build_clients_by_mac(clients)
         dhcp_range_result = None
         dns_records_result = None
+        static_routes_result = None
 
         if network_settings is not None:
             lookup_ip = (
@@ -1618,6 +1843,61 @@ def main() -> int:
                 "results": dns_results,
             }
 
+        if static_routes is not None:
+            existing_static_routes = client.list_static_routes()
+            existing_routes_by_destination = build_static_routes_by_destination(
+                existing_static_routes
+            )
+
+            static_route_results: list[dict[str, Any]] = []
+            for route in static_routes:
+                existing_route = existing_routes_by_destination.get(
+                    static_route_key(route.destination)
+                )
+                action, payload, changes = build_static_route_update_plan(
+                    existing_route=existing_route,
+                    route=route,
+                )
+                changed = bool(payload)
+                result = None
+                if changed and not args.dry_run:
+                    if existing_route is None:
+                        result = client.create_static_route(payload)
+                    else:
+                        route_id = _id(existing_route)
+                        if route_id == "<missing-id>":
+                            raise UnifiError(
+                                f"existing UniFi static route for {route.destination} has no _id"
+                            )
+                        result = client.update_static_route(route_id, payload)
+
+                static_route_results.append(
+                    {
+                        "name": route.name,
+                        "destination": str(route.destination),
+                        "next_hop": str(route.next_hop),
+                        "distance": route.distance,
+                        "enabled": route.enabled,
+                        "route_id": _id(existing_route)
+                        if existing_route is not None
+                        else None,
+                        "action": action,
+                        "changed": changed,
+                        "dry_run": args.dry_run,
+                        "changes": changes,
+                        "result": result,
+                    }
+                )
+
+            static_routes_result = {
+                "dry_run": args.dry_run,
+                "count": len(static_route_results),
+                "changed_count": sum(
+                    1 for result in static_route_results if result["changed"]
+                ),
+                "results": static_route_results,
+            }
+
         selected_group: dict[str, Any] | None = None
         allow_inventory_placeholders = (
             mode == "inventory" and not args.no_create_known_clients
@@ -1769,9 +2049,15 @@ def main() -> int:
                     if dns_records_result is not None
                     else 0
                 )
+                + (
+                    static_routes_result["changed_count"]
+                    if static_routes_result is not None
+                    else 0
+                )
             ),
             "dhcp_range_update": dhcp_range_result,
             "dns_records_update": dns_records_result,
+            "static_routes_update": static_routes_result,
             "results": results,
         }
         print(format_json(summary))

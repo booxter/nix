@@ -11,7 +11,7 @@ writeShellApplication {
   '';
 
   meta = {
-    description = "Sync UniFi client reservations from inventory or set a single client through the legacy UniFi OS API";
+    description = "Sync UniFi reservations, DHCP settings, DNS records, and static routes from inventory";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "unifi-sync";

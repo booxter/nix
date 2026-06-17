@@ -229,6 +229,14 @@ rec {
         host = "prx1-lab";
         bootfile = "netboot.xyz.efi";
       };
+      staticRoutes = [
+        {
+          name = "wg-home";
+          destination = wireguard.home.cidr;
+          nextHop = toNixosHostIpv4Address wireguard.home.gateway.host;
+          distance = 1;
+        }
+      ];
       customDhcpOptions = {
         domainSearch = {
           code = 119;
