@@ -60,6 +60,24 @@ def test_classless_static_routes_option_rejects_hex_encoding():
         )
 
 
+def test_domain_search_option_rejects_hex_encoding():
+    with pytest.raises(
+        unifi_sync.UnifiError,
+        match="domain-search option encoding must be text",
+    ):
+        unifi_sync.parse_domain_search_option_json(
+            """
+            {
+              "code": 119,
+              "name": "DomainSearch",
+              "type": "text",
+              "signed": false,
+              "encoding": "hex"
+            }
+            """
+        )
+
+
 def test_build_network_update_payload_writes_custom_option_fields():
     settings = unifi_sync.NetworkDhcpSettingsSpec(
         dhcp_range=None,

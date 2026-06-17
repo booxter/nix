@@ -797,48 +797,21 @@ def normalize_bootfile(value: str) -> str:
     return normalized
 
 
-def normalize_dhcp_option_value_encoding(
-    value: str, *, label: str, allow_text: bool
-) -> str:
-    normalized = value.strip().lower()
-    if not normalized:
-        return "hex"
-
-    aliases = {
-        "hex": "hex",
-        "hexadecimal": "hex",
-        "latin1": "latin1",
-        "raw": "latin1",
-    }
-    if allow_text:
-        aliases.update(
-            {
-                "text": "text",
-                "string": "text",
-                "plain": "text",
-            }
-        )
-    if normalized not in aliases:
-        supported = "hex, hexadecimal, latin1, raw"
-        if allow_text:
-            supported += ", text, string, plain"
-        raise UnifiError(f"{label} option encoding must be one of: {supported}")
-    return aliases[normalized]
-
-
-def normalize_domain_search_option_encoding(value: str) -> str:
-    return normalize_dhcp_option_value_encoding(
-        value, label="domain-search", allow_text=True
-    )
-
-
-def normalize_classless_static_routes_option_encoding(value: str) -> str:
+def normalize_text_dhcp_option_encoding(value: str, *, label: str) -> str:
     normalized = value.strip().lower()
     if not normalized:
         return "text"
     if normalized in {"text", "string", "plain"}:
         return "text"
-    raise UnifiError("classless-static-routes option encoding must be text")
+    raise UnifiError(f"{label} option encoding must be text")
+
+
+def normalize_domain_search_option_encoding(value: str) -> str:
+    return normalize_text_dhcp_option_encoding(value, label="domain-search")
+
+
+def normalize_classless_static_routes_option_encoding(value: str) -> str:
+    return normalize_text_dhcp_option_encoding(value, label="classless-static-routes")
 
 
 def normalize_dhcp_option_name(value: str) -> str:
@@ -1121,17 +1094,6 @@ def parse_classless_static_routes(
         return None
 
     return tuple(routes)
-
-
-def encode_domain_search_option(domains: tuple[str, ...]) -> str:
-    encoded = bytearray()
-    for domain in domains:
-        for label in domain.split("."):
-            label_bytes = label.encode("idna")
-            encoded.append(len(label_bytes))
-            encoded.extend(label_bytes)
-        encoded.append(0)
-    return bytes(encoded).decode("latin1")
 
 
 def render_classless_static_routes_option(
@@ -1702,26 +1664,18 @@ def build_network_update_payload(
                 "internal error: domain_search present without option spec"
             )
 
-        desired_option_value = encode_domain_search_option(settings.domain_search)
         if domain_search_option_field is not None:
             current_option_value = stringify(
                 current_network.get(domain_search_option_field)
             )
 
-            if settings.domain_search_option.encoding == "hex":
-                desired_networkconf_value = desired_option_value.encode("latin1").hex()
-            elif settings.domain_search_option.encoding == "latin1":
-                desired_networkconf_value = desired_option_value
-            elif settings.domain_search_option.encoding == "text":
-                if len(settings.domain_search) != 1:
-                    raise UnifiError(
-                        "text domain-search option encoding currently supports exactly one domain"
-                    )
-                desired_networkconf_value = settings.domain_search[0]
-            else:
+            if settings.domain_search_option.encoding != "text":
+                raise UnifiError("domain-search option encoding must be text")
+            if len(settings.domain_search) != 1:
                 raise UnifiError(
-                    f"unsupported domain-search option encoding: {settings.domain_search_option.encoding}"
+                    "domain-search option currently supports exactly one domain"
                 )
+            desired_networkconf_value = settings.domain_search[0]
 
             if current_option_value != desired_networkconf_value:
                 payload[domain_search_option_field] = desired_networkconf_value
@@ -1921,10 +1875,8 @@ def main() -> int:
                 if network_settings.domain_search is not None
                 else None,
                 "domain_search_option": domain_search_option_result,
-                "domain_search_option_119_hex": (
-                    encode_domain_search_option(network_settings.domain_search)
-                    .encode("latin1")
-                    .hex()
+                "domain_search_option_value": (
+                    network_settings.domain_search[0]
                     if network_settings.domain_search is not None
                     else None
                 ),
