@@ -37,6 +37,8 @@ in
 
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 
+  wg-home-dns-sync = pkgs.callPackage ./wg-home-dns-sync { };
+
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
 
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };

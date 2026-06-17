@@ -36,6 +36,11 @@ let
       lan.customDhcpOptions.domainSearch
     else
       null;
+  classlessStaticRoutesOption =
+    if lan ? customDhcpOptions && lan.customDhcpOptions ? classlessStaticRoutes then
+      lan.customDhcpOptions.classlessStaticRoutes
+    else
+      null;
 
   networkTftpServer =
     if netbootHost ? lanAddress then
@@ -47,6 +52,17 @@ let
 
   networkBootfile = netboot.bootfile;
   dnsRecordsJson = builtins.toJSON lan.dnsRecords;
+  staticRoutesJson = builtins.toJSON (lan.staticRoutes or [ ]);
+  classlessStaticRoutesJson = builtins.toJSON (
+    (builtins.filter (route: route.enabled or true) (lan.staticRoutes or [ ]))
+    ++ [
+      {
+        name = "default";
+        destination = "0.0.0.0/0";
+        nextHop = lan.gateway.address;
+      }
+    ]
+  );
 
   baseUrl = "https://${lan.gateway.address}";
   site = "default";
@@ -62,6 +78,8 @@ in
     networkTftpServer
     networkBootfile
     dnsRecordsJson
+    staticRoutesJson
+    classlessStaticRoutesJson
     ;
 
   environment = {
@@ -73,8 +91,12 @@ in
     UNIFI_NETWORK_DOMAIN_SEARCH_JSON = mainDomainSearchJson;
     UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_JSON =
       if domainSearchOption != null then builtins.toJSON domainSearchOption else "";
+    UNIFI_CLASSLESS_STATIC_ROUTES_JSON = classlessStaticRoutesJson;
+    UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON =
+      if classlessStaticRoutesOption != null then builtins.toJSON classlessStaticRoutesOption else "";
     UNIFI_NETWORK_TFTP_SERVER = networkTftpServer;
     UNIFI_NETWORK_BOOTFILE = networkBootfile;
     UNIFI_DNS_RECORDS_JSON = dnsRecordsJson;
+    UNIFI_STATIC_ROUTES_JSON = staticRoutesJson;
   };
 }

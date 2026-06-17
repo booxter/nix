@@ -229,10 +229,25 @@ rec {
         host = "prx1-lab";
         bootfile = "netboot.xyz.efi";
       };
+      staticRoutes = [
+        {
+          name = "wg-home";
+          destination = wireguard.home.cidr;
+          nextHop = toNixosHostIpv4Address wireguard.home.gateway.host;
+          distance = 1;
+        }
+      ];
       customDhcpOptions = {
         domainSearch = {
           code = 119;
           name = "DomainSearch";
+          type = "text";
+          signed = false;
+          encoding = "text";
+        };
+        classlessStaticRoutes = {
+          code = 121;
+          name = "ClasslessStaticRoutes";
           type = "text";
           signed = false;
           encoding = "text";
@@ -264,9 +279,11 @@ rec {
         mair = {
           host = "mair";
           address = "10.83.0.10/32";
+          publicKey = "j3TbXthVhDk2TVAag6Cr0MRLiCTaOPfBL8UeecG9Sx4=";
         };
         unifi-travel-router = {
           address = "10.83.0.20/32";
+          publicKey = "B+s4ysMFr3GrIdXdKP4SxXM3JZ9ziCUVJXkLwEvPX1E=";
         };
       };
     };

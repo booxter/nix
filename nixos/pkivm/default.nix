@@ -79,6 +79,7 @@ in
 {
   imports = [
     ./unifi-sync.nix
+    ./wg-home-dns-sync.nix
   ];
 
   sops.secrets.pkiRotationGithubToken = {

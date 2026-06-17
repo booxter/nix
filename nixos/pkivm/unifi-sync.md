@@ -1,97 +1,62 @@
 # UniFi Sync Service
 
-## Scope
+## Goal
 
-Trusted-LAN DHCP and DNS run on the UniFi Cloud Gateway Fiber at
-`192.168.0.1`.
+`unifi-sync` keeps UniFi DHCP, local DNS, and inventory-backed routing state in
+sync with this repository. It lets the Nix inventory remain the source of truth
+while UniFi continues to serve the network-facing DHCP and DNS behavior.
 
-This document describes the current `unifi-sync` service on `prox-pkivm` that
-keeps the UCG configuration converged with inventory.
+The service is intentionally narrow: it reconciles declarative fleet data into
+UniFi and avoids carrying hand-maintained network values in operational notes.
+Exact addresses, domains, routes, and option definitions belong in inventory and
+the generated service environment.
 
-Guest networking and UPS / NUT are out of scope here.
+## Architecture
 
-## Current Service
+`prox-pkivm` runs `unifi-sync` as a systemd oneshot with a timer. The service
+uses a UniFi API key from sops-managed secrets and calls the UniFi Network API
+to converge the configured site.
 
-`prox-pkivm` runs `unifi-sync` as:
+The data path is:
 
-- `systemd` oneshot service: `unifi-sync.service`
-- `systemd` timer: `unifi-sync.timer`
+1. Fleet facts are defined in [inventory.nix](../../lib/inventory.nix).
+2. [unifi-sync-env.nix](../../lib/unifi-sync-env.nix) renders those facts into
+   the environment consumed by the service.
+3. [unifi-sync.nix](./unifi-sync.nix) wires the package, secrets, systemd unit,
+   and timer.
+4. [main.py](../../pkgs/unifi-sync/main.py) reads the environment, compares it
+   with UniFi state, and applies only the required changes.
 
-Current timer behavior:
+## Managed State
 
-- `OnBootSec=10m`
-- `OnUnitActiveSec=1h`
-- `RandomizedDelaySec=10m`
-- `Persistent=true`
+The sync covers the UniFi-owned parts of trusted-LAN configuration:
 
-Secret wiring:
+- fixed DHCP reservations for inventory hosts
+- local DNS records and split DNS records
+- DHCP network settings, including custom option definitions and values
+- inventory-backed static routes
+- network boot settings
 
-- API key comes from `secrets/pki.yaml`
-- `sops` key path: `unifi/api_key`
-- runtime env file: `sops.templates."unifi-sync.env"`
+Classless static route DHCP data is calculated from structured route inventory.
+The repository should not store manually encoded DHCP payloads as configuration.
 
-Service source:
+## WireGuard DNS
 
-- [unifi-sync.nix](./unifi-sync.nix)
-- [lib/unifi-sync-env.nix](../../lib/unifi-sync-env.nix)
-- [pkgs/unifi-sync/main.py](../../pkgs/unifi-sync/main.py)
+WireGuard peer DNS overrides are handled by `wg-home-dns-sync`, a separate
+systemd service on the same host. It observes WireGuard exporter metrics over
+mTLS, derives which peer-specific DNS overrides should exist, and invokes
+`unifi-sync` to apply that DNS subset.
 
-## UCG State Managed By The Service
+Keeping this logic separate lets normal inventory sync run on its timer while
+WireGuard DNS can react on a shorter polling loop.
 
-- Fixed IP reservations for MAC-backed hosts
-- `Local DNS Record` for those hosts
-- DHCP range:
-  - `192.168.10.1 - 192.168.14.255`
-- DHCP domain name:
-  - `home.arpa`
-- DHCP domain search via option `119`
-  - UniFi stores the value as plain text `home.arpa`
-  - UniFi emits the correct RFC3397 encoding on the wire
-- DHCP network-boot settings:
-  - option `66` / next-server -> `192.168.15.10`
-  - option `67` / boot file -> `netboot.xyz.efi`
-- Split DNS records:
-  - `nix-cache.home.arpa -> 192.168.20.7`
-  - `jf.ihar.dev -> 192.168.16.3`
-  - `js.ihar.dev -> 192.168.16.3`
-  - `mu.ihar.dev -> 192.168.16.3`
-  - `au.ihar.dev -> 192.168.16.3`
-  - `shelf.ihar.dev -> 192.168.16.3`
-  - `vi.ihar.dev -> 192.168.16.3`
+## Operating Notes
 
-## Trusted-LAN Runtime State
+Treat the Nix inventory and generated environment as the source of truth. If a
+managed UniFi object is changed or deleted in the UniFi UI, the next sync should
+recreate or restore it from repository state.
 
-- Trusted-LAN clients renew from `192.168.0.1`
-- Trusted-LAN clients get DNS `192.168.0.1`
-- Repo-wide LAN DNS/DHCP endpoint is `192.168.0.1`
-- LAN domain is `home.arpa`
-- Reservations are MAC-based only
-- `prx1-lab` serves standalone TFTP / netboot on `192.168.15.10`
-
-## Validation We Proved
-
-- Local hostnames resolve through gateway DNS
-- `nix-cache.home.arpa` resolves directly to the cache VM
-- Public split-DNS overrides resolve internally to `beast`
-- Raw DHCP capture confirmed:
-  - option `15` / domain-name
-  - option `66` / next-server
-  - option `67` / boot file
-- Non-invasive DHCP probing confirmed option `119` is emitted correctly when
-  UniFi stores the value as plain text `home.arpa`
-- `unifi-sync.service` on `prox-pkivm` runs successfully and converges to
-  `changed_count: 0`
-
-## Operational Notes
-
-- Treat `unifi-sync` as the source of truth for trusted-LAN reservations, DHCP
-  settings, and split DNS
-- If UniFi custom DHCP option `119` is deleted in the UI, `unifi-sync` will
-  recreate the DHCP option definition and repopulate its value
-- For UniFi option `119`, the stored value should be plain text `home.arpa`,
-  not a hex string
-
-## Optional Follow-Ups
-
-- Extend mTLS to non-node Prometheus scrapers if desired
-- Rotate UniFi API keys when needed
+Use `unifi-sync --dry-run` when checking what the service would change before a
+deployment or live run. Add tests for encoding or payload behavior in
+[test_unifi_sync.py](../../tests/test_unifi_sync.py) rather than documenting
+sample encoded values here.

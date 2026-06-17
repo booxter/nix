@@ -46,6 +46,8 @@ class NetworkDhcpSettingsSpec:
     domain_name: str | None
     domain_search: tuple[str, ...] | None
     domain_search_option: DhcpCustomOptionSpec | None
+    classless_static_routes: tuple[ClasslessStaticRouteSpec, ...] | None
+    classless_static_routes_option: DhcpCustomOptionSpec | None
     tftp_server: str | None
     bootfile: str | None
 
@@ -55,18 +57,33 @@ class DnsRecordSpec:
     record_type: str
     domain: str
     ttl_seconds: int
+    enabled: bool = True
     ipv4_address: ipaddress.IPv4Address | None = None
     target_domain: str | None = None
 
 
 @dataclass(frozen=True)
+class StaticRouteSpec:
+    name: str
+    destination: ipaddress.IPv4Network
+    next_hop: ipaddress.IPv4Address
+    distance: int
+    enabled: bool = True
+
+
+@dataclass(frozen=True)
+class ClasslessStaticRouteSpec:
+    destination: ipaddress.IPv4Network
+    next_hop: ipaddress.IPv4Address
+
+
+@dataclass(frozen=True)
 class DhcpCustomOptionSpec:
-    code: int | None
-    name: str | None
-    option_type: str | None
-    signed: bool | None
+    code: int
+    name: str
+    option_type: str
+    signed: bool
     encoding: str
-    field_name: str | None = None
 
 
 def normalize_mac(mac: str) -> str:
@@ -159,6 +176,11 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--no-reservations-update",
+        action="store_true",
+        help="Do not update UniFi known-client reservations.",
+    )
+    parser.add_argument(
         "--no-create-known-clients",
         action="store_true",
         help="Do not create placeholder known clients for missing inventory MACs.",
@@ -208,21 +230,25 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
-        "--domain-search-option-field",
-        default=os.environ.get("UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_FIELD", ""),
+        "--classless-static-routes-json",
+        default=os.environ.get("UNIFI_CLASSLESS_STATIC_ROUTES_JSON", ""),
         help=(
-            "Optional generated UniFi networkconf field name for the custom DHCP option slot "
-            "used to carry the domain-search list, for example dhcpd_user_option_<id>. "
-            "Defaults to UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_FIELD."
+            "Optional JSON array of RFC 3442 classless static routes to publish via DHCP option 121. "
+            "Defaults to UNIFI_CLASSLESS_STATIC_ROUTES_JSON."
         ),
     )
     parser.add_argument(
-        "--domain-search-option-encoding",
-        default=os.environ.get("UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_ENCODING", ""),
+        "--no-classless-static-routes-update",
+        action="store_true",
+        help="Do not update DHCP option 121 classless static routes.",
+    )
+    parser.add_argument(
+        "--classless-static-routes-option-json",
+        default=os.environ.get("UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON", ""),
         help=(
-            "Encoding to use when writing the custom DHCP option slot named by "
-            "--domain-search-option-field. Supported values: hex, latin1, text. Defaults to "
-            "UNIFI_NETWORK_DOMAIN_SEARCH_OPTION_ENCODING or hex."
+            "Optional UniFi custom DHCP option definition for classless static routes, for example "
+            '{"code":121,"name":"ClasslessStaticRoutes","type":"text","signed":false,"encoding":"text"}. '
+            "Defaults to UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON."
         ),
     )
     parser.add_argument(
@@ -258,6 +284,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-dns-records-update",
         action="store_true",
         help="Do not update UniFi DNS policies.",
+    )
+    parser.add_argument(
+        "--static-routes-json",
+        default=os.environ.get("UNIFI_STATIC_ROUTES_JSON", ""),
+        help=(
+            "Optional JSON array of static routes to upsert through the legacy UniFi "
+            "routing API. Defaults to UNIFI_STATIC_ROUTES_JSON."
+        ),
+    )
+    parser.add_argument(
+        "--no-static-routes-update",
+        action="store_true",
+        help="Do not update UniFi static routes.",
     )
     return parser
 
@@ -435,6 +474,22 @@ class UnifiLegacyClient:
             {"_id": network_id, **payload},
         )
 
+    def list_static_routes(self) -> list[dict[str, Any]]:
+        data = self.request("GET", f"/api/s/{self.site}/rest/routing")
+        if not isinstance(data, list):
+            raise UnifiError("unexpected response shape for static routes")
+        return data
+
+    def create_static_route(self, payload: dict[str, Any]) -> Any:
+        return self.request("POST", f"/api/s/{self.site}/rest/routing", payload)
+
+    def update_static_route(self, route_id: str, payload: dict[str, Any]) -> Any:
+        return self.request(
+            "PUT",
+            f"/api/s/{self.site}/rest/routing/{urllib.parse.quote(route_id, safe='')}",
+            {"_id": route_id, **payload},
+        )
+
     def list_sites(self) -> list[dict[str, Any]]:
         return self._list_paginated("/integration/v1/sites")
 
@@ -531,16 +586,6 @@ def choose_network_by_ip(
         )
 
     return best[0]
-
-
-def find_client_by_mac(
-    clients: list[dict[str, Any]], mac: str
-) -> dict[str, Any] | None:
-    for client in clients:
-        candidate = client.get("mac")
-        if isinstance(candidate, str) and candidate.lower() == mac:
-            return client
-    return None
 
 
 def build_clients_by_mac(clients: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
@@ -752,34 +797,21 @@ def normalize_bootfile(value: str) -> str:
     return normalized
 
 
-def normalize_networkconf_field_name(value: str) -> str:
-    normalized = value.strip()
+def normalize_text_dhcp_option_encoding(value: str, *, label: str) -> str:
+    normalized = value.strip().lower()
     if not normalized:
-        raise UnifiError("networkconf field name must not be empty")
-    if not re.fullmatch(r"[A-Za-z0-9_]+", normalized):
-        raise UnifiError(f"invalid networkconf field name: {value}")
-    return normalized
+        return "text"
+    if normalized in {"text", "string", "plain"}:
+        return "text"
+    raise UnifiError(f"{label} option encoding must be text")
 
 
 def normalize_domain_search_option_encoding(value: str) -> str:
-    normalized = value.strip().lower()
-    if not normalized:
-        return "hex"
+    return normalize_text_dhcp_option_encoding(value, label="domain-search")
 
-    aliases = {
-        "hex": "hex",
-        "hexadecimal": "hex",
-        "latin1": "latin1",
-        "raw": "latin1",
-        "text": "text",
-        "string": "text",
-        "plain": "text",
-    }
-    if normalized not in aliases:
-        raise UnifiError(
-            "domain-search option encoding must be one of: hex, hexadecimal, latin1, raw, text, string, plain"
-        )
-    return aliases[normalized]
+
+def normalize_classless_static_routes_option_encoding(value: str) -> str:
+    return normalize_text_dhcp_option_encoding(value, label="classless-static-routes")
 
 
 def normalize_dhcp_option_name(value: str) -> str:
@@ -810,33 +842,55 @@ def normalize_dhcp_option_code(value: Any) -> int:
     return value
 
 
-def parse_domain_search_option_json(raw_json: str) -> DhcpCustomOptionSpec | None:
+def parse_dhcp_custom_option_json(
+    raw_json: str,
+    *,
+    label: str,
+    normalize_encoding: Any,
+) -> DhcpCustomOptionSpec | None:
     if not raw_json:
         return None
 
     try:
         decoded = json.loads(raw_json)
     except json.JSONDecodeError as error:
-        raise UnifiError(f"invalid domain-search option JSON: {error}") from error
+        raise UnifiError(f"invalid {label} option JSON: {error}") from error
 
     if not isinstance(decoded, dict):
-        raise UnifiError("domain-search option JSON must be an object")
+        raise UnifiError(f"{label} option JSON must be an object")
 
     code = normalize_dhcp_option_code(decoded.get("code"))
     name = normalize_dhcp_option_name(str(decoded.get("name", "")))
     option_type = normalize_dhcp_option_type(str(decoded.get("type", "")))
     signed = decoded.get("signed")
     if not isinstance(signed, bool):
-        raise UnifiError("domain-search option JSON must contain boolean signed")
+        raise UnifiError(f"{label} option JSON must contain boolean signed")
 
-    encoding = normalize_domain_search_option_encoding(str(decoded.get("encoding", "")))
+    encoding = normalize_encoding(str(decoded.get("encoding", "")))
     return DhcpCustomOptionSpec(
         code=code,
         name=name,
         option_type=option_type,
         signed=signed,
         encoding=encoding,
-        field_name=None,
+    )
+
+
+def parse_domain_search_option_json(raw_json: str) -> DhcpCustomOptionSpec | None:
+    return parse_dhcp_custom_option_json(
+        raw_json,
+        label="domain-search",
+        normalize_encoding=normalize_domain_search_option_encoding,
+    )
+
+
+def parse_classless_static_routes_option_json(
+    raw_json: str,
+) -> DhcpCustomOptionSpec | None:
+    return parse_dhcp_custom_option_json(
+        raw_json,
+        label="classless-static-routes",
+        normalize_encoding=normalize_classless_static_routes_option_encoding,
     )
 
 
@@ -860,6 +914,7 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
         record_type = item.get("type")
         domain = item.get("domain")
         ttl_seconds = item.get("ttlSeconds")
+        enabled = item.get("enabled", True)
         if not isinstance(record_type, str):
             raise UnifiError(f"DNS record item {index} is missing type")
         if not isinstance(domain, str):
@@ -868,6 +923,8 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
             raise UnifiError(
                 f"DNS record item {index} is missing non-negative integer ttlSeconds"
             )
+        if not isinstance(enabled, bool):
+            raise UnifiError(f"DNS record item {index} enabled must be boolean")
 
         normalized_type = record_type.strip().upper()
         if normalized_type not in SUPPORTED_DNS_RECORD_TYPES:
@@ -891,6 +948,7 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
                     record_type=normalized_type,
                     domain=normalized_domain,
                     ttl_seconds=ttl_seconds,
+                    enabled=enabled,
                     ipv4_address=parsed_ip,
                 )
             )
@@ -904,6 +962,7 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
                 record_type=normalized_type,
                 domain=normalized_domain,
                 ttl_seconds=ttl_seconds,
+                enabled=enabled,
                 target_domain=normalize_dns_name(target_domain),
             )
         )
@@ -911,15 +970,139 @@ def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
     return records
 
 
-def encode_domain_search_option(domains: tuple[str, ...]) -> str:
-    encoded = bytearray()
-    for domain in domains:
-        for label in domain.split("."):
-            label_bytes = label.encode("idna")
-            encoded.append(len(label_bytes))
-            encoded.extend(label_bytes)
-        encoded.append(0)
-    return bytes(encoded).decode("latin1")
+def parse_static_routes(raw_json: str) -> list[StaticRouteSpec] | None:
+    if not raw_json:
+        return None
+
+    try:
+        decoded = json.loads(raw_json)
+    except json.JSONDecodeError as error:
+        raise UnifiError(f"invalid static routes JSON: {error}") from error
+
+    if not isinstance(decoded, list):
+        raise UnifiError("static routes JSON must be a list")
+
+    routes: list[StaticRouteSpec] = []
+    for index, item in enumerate(decoded):
+        if not isinstance(item, dict):
+            raise UnifiError(f"static route item {index} is not an object")
+
+        name = item.get("name")
+        destination = item.get("destination", item.get("network"))
+        next_hop = item.get("nextHop", item.get("next_hop"))
+        distance = item.get("distance", 1)
+        enabled = item.get("enabled", True)
+
+        if not isinstance(name, str) or not name.strip():
+            raise UnifiError(f"static route item {index} is missing name")
+        if not isinstance(destination, str):
+            raise UnifiError(f"static route item {index} is missing destination")
+        if not isinstance(next_hop, str):
+            raise UnifiError(f"static route item {index} is missing nextHop")
+        if isinstance(distance, bool) or not isinstance(distance, int):
+            raise UnifiError(
+                f"static route item {index} has non-integer distance: {distance!r}"
+            )
+        if distance < 1 or distance > 255:
+            raise UnifiError(
+                f"static route item {index} distance must be between 1 and 255"
+            )
+        if not isinstance(enabled, bool):
+            raise UnifiError(f"static route item {index} enabled must be boolean")
+
+        parsed_destination = ipaddress.ip_network(destination, strict=False)
+        if not isinstance(parsed_destination, ipaddress.IPv4Network):
+            raise UnifiError(
+                f"static route item {index} destination is not IPv4: {destination}"
+            )
+        parsed_next_hop = ipaddress.ip_address(next_hop)
+        if not isinstance(parsed_next_hop, ipaddress.IPv4Address):
+            raise UnifiError(
+                f"static route item {index} nextHop is not IPv4: {next_hop}"
+            )
+
+        routes.append(
+            StaticRouteSpec(
+                name=name.strip(),
+                destination=parsed_destination,
+                next_hop=parsed_next_hop,
+                distance=distance,
+                enabled=enabled,
+            )
+        )
+
+    return routes
+
+
+def parse_classless_static_routes(
+    raw_json: str,
+) -> tuple[ClasslessStaticRouteSpec, ...] | None:
+    if not raw_json:
+        return None
+
+    try:
+        decoded = json.loads(raw_json)
+    except json.JSONDecodeError as error:
+        raise UnifiError(f"invalid classless static routes JSON: {error}") from error
+
+    if not isinstance(decoded, list):
+        raise UnifiError("classless static routes JSON must be a list")
+
+    routes: list[ClasslessStaticRouteSpec] = []
+    for index, item in enumerate(decoded):
+        if not isinstance(item, dict):
+            raise UnifiError(f"classless static route item {index} is not an object")
+
+        enabled = item.get("enabled", True)
+        if not isinstance(enabled, bool):
+            raise UnifiError(
+                f"classless static route item {index} enabled must be boolean"
+            )
+        if not enabled:
+            continue
+
+        destination = item.get("destination", item.get("network"))
+        next_hop = item.get("nextHop", item.get("next_hop", item.get("router")))
+
+        if not isinstance(destination, str):
+            raise UnifiError(
+                f"classless static route item {index} is missing destination"
+            )
+        if not isinstance(next_hop, str):
+            raise UnifiError(f"classless static route item {index} is missing nextHop")
+
+        parsed_destination = ipaddress.ip_network(destination, strict=False)
+        if not isinstance(parsed_destination, ipaddress.IPv4Network):
+            raise UnifiError(
+                f"classless static route item {index} destination is not IPv4: {destination}"
+            )
+
+        parsed_next_hop = ipaddress.ip_address(next_hop)
+        if not isinstance(parsed_next_hop, ipaddress.IPv4Address):
+            raise UnifiError(
+                f"classless static route item {index} nextHop is not IPv4: {next_hop}"
+            )
+
+        routes.append(
+            ClasslessStaticRouteSpec(
+                destination=parsed_destination,
+                next_hop=parsed_next_hop,
+            )
+        )
+
+    if not routes:
+        return None
+
+    return tuple(routes)
+
+
+def render_classless_static_routes_option(
+    routes: tuple[ClasslessStaticRouteSpec, ...],
+) -> str:
+    values: list[str] = []
+    for route in routes:
+        values.extend([str(route.destination), str(route.next_hop)])
+    return ",".join(values)
 
 
 def build_single_reservation(args: argparse.Namespace) -> ReservationSpec:
@@ -941,6 +1124,12 @@ def build_single_reservation(args: argparse.Namespace) -> ReservationSpec:
 
 
 def load_reservations(args: argparse.Namespace) -> tuple[str, list[ReservationSpec]]:
+    if args.no_reservations_update:
+        if args.mac or args.ip or args.hostname:
+            raise UnifiError(
+                "use either --no-reservations-update or single-client reservation arguments, not both"
+            )
+        return "disabled", []
     if args.mac or args.ip or args.hostname:
         return "single", [build_single_reservation(args)]
     return "inventory", parse_inventory_reservations(args.inventory_json)
@@ -962,29 +1151,19 @@ def build_network_settings(
     )
     domain_name = args.domain_name.strip() or None
     domain_search = parse_domain_search(args.domain_search_json)
-    direct_field_name = (
-        normalize_networkconf_field_name(args.domain_search_option_field)
-        if args.domain_search_option_field.strip()
-        else None
+    domain_search_option = parse_domain_search_option_json(
+        args.domain_search_option_json
     )
-    json_option_spec = parse_domain_search_option_json(args.domain_search_option_json)
-    if direct_field_name is not None and json_option_spec is not None:
-        raise UnifiError(
-            "use either --domain-search-option-json or --domain-search-option-field, not both"
-        )
-    if direct_field_name is not None:
-        domain_search_option = DhcpCustomOptionSpec(
-            code=None,
-            name=None,
-            option_type=None,
-            signed=None,
-            encoding=normalize_domain_search_option_encoding(
-                args.domain_search_option_encoding
-            ),
-            field_name=direct_field_name,
-        )
-    else:
-        domain_search_option = json_option_spec
+
+    classless_static_routes = (
+        None
+        if args.no_classless_static_routes_update
+        else parse_classless_static_routes(args.classless_static_routes_json)
+    )
+    classless_static_routes_option = parse_classless_static_routes_option_json(
+        args.classless_static_routes_option_json
+    )
+
     raw_tftp_server = (
         None if args.no_netboot_update else (args.tftp_server.strip() or None)
     )
@@ -999,11 +1178,14 @@ def build_network_settings(
     bootfile = normalize_bootfile(raw_bootfile) if raw_bootfile is not None else None
     if domain_search is not None and domain_search_option is None:
         domain_search = None
+    if classless_static_routes is not None and classless_static_routes_option is None:
+        classless_static_routes = None
 
     if (
         dhcp_range is None
         and domain_name is None
         and domain_search is None
+        and classless_static_routes is None
         and tftp_server is None
     ):
         return None
@@ -1013,6 +1195,8 @@ def build_network_settings(
         domain_name=domain_name,
         domain_search=domain_search,
         domain_search_option=domain_search_option,
+        classless_static_routes=classless_static_routes,
+        classless_static_routes_option=classless_static_routes_option,
         tftp_server=tftp_server,
         bootfile=bootfile,
     )
@@ -1087,7 +1271,7 @@ def build_dns_policies_by_key(
 
 def build_dns_policy_payload(record: DnsRecordSpec) -> dict[str, Any]:
     payload: dict[str, Any] = {
-        "enabled": True,
+        "enabled": record.enabled,
         "type": record.record_type,
         "domain": record.domain,
         "ttlSeconds": record.ttl_seconds,
@@ -1115,9 +1299,9 @@ def build_dns_policy_update_plan(
 
     payload: dict[str, Any] = {}
     current_enabled = bool(existing_policy.get("enabled"))
-    if not current_enabled:
-        payload["enabled"] = True
-        changes["enabled"] = build_change(current_enabled, True)
+    if current_enabled != record.enabled:
+        payload["enabled"] = record.enabled
+        changes["enabled"] = build_change(current_enabled, record.enabled)
 
     current_domain = stringify(existing_policy.get("domain"))
     if current_domain != record.domain:
@@ -1139,6 +1323,123 @@ def build_dns_policy_update_plan(
             changes["targetDomain"] = build_change(current_target, desired_target)
     else:
         raise UnifiError(f"unsupported DNS record type: {record.record_type}")
+
+    if changes:
+        return "update", desired_payload, changes
+    return "noop", {}, changes
+
+
+def static_route_key(destination: ipaddress.IPv4Network) -> str:
+    return str(destination)
+
+
+def get_static_route_destination(route: dict[str, Any]) -> ipaddress.IPv4Network | None:
+    for key in ("static-route_network", "network", "destination"):
+        value = route.get(key)
+        if not isinstance(value, str):
+            continue
+        try:
+            parsed = ipaddress.ip_network(value, strict=False)
+        except ValueError:
+            continue
+        if isinstance(parsed, ipaddress.IPv4Network):
+            return parsed
+    return None
+
+
+def build_static_routes_by_destination(
+    routes: list[dict[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    by_destination: dict[str, dict[str, Any]] = {}
+    for route in routes:
+        destination = get_static_route_destination(route)
+        if destination is None:
+            continue
+
+        key = static_route_key(destination)
+        if key in by_destination:
+            first = by_destination[key]
+            raise UnifiError(
+                "multiple UniFi static routes share destination "
+                f"{key}: {_id(first)}, {_id(route)}"
+            )
+        by_destination[key] = route
+    return by_destination
+
+
+def build_static_route_payload(route: StaticRouteSpec) -> dict[str, Any]:
+    return {
+        "enabled": route.enabled,
+        "name": route.name,
+        "type": "static-route",
+        "static-route_network": str(route.destination),
+        "static-route_type": "nexthop-route",
+        "static-route_nexthop": str(route.next_hop),
+        "static-route_distance": str(route.distance),
+    }
+
+
+def build_static_route_update_plan(
+    existing_route: dict[str, Any] | None,
+    route: StaticRouteSpec,
+) -> tuple[str, dict[str, Any], dict[str, Any]]:
+    desired_payload = build_static_route_payload(route)
+    changes: dict[str, Any] = {}
+
+    if existing_route is None:
+        for key, value in desired_payload.items():
+            changes[key] = build_change(None, value)
+        return "create", desired_payload, changes
+
+    payload: dict[str, Any] = {}
+
+    current_enabled = bool(existing_route.get("enabled"))
+    if current_enabled != route.enabled:
+        payload["enabled"] = route.enabled
+        changes["enabled"] = build_change(current_enabled, route.enabled)
+
+    current_name = stringify(existing_route.get("name"))
+    if current_name != route.name:
+        payload["name"] = route.name
+        changes["name"] = build_change(current_name, route.name)
+
+    current_type = stringify(existing_route.get("type"))
+    if current_type != "static-route":
+        payload["type"] = "static-route"
+        changes["type"] = build_change(current_type, "static-route")
+
+    desired_network = str(route.destination)
+    current_network = stringify(
+        existing_route.get("static-route_network", existing_route.get("network"))
+    )
+    if current_network != desired_network:
+        payload["static-route_network"] = desired_network
+        changes["static-route_network"] = build_change(current_network, desired_network)
+
+    current_route_type = stringify(existing_route.get("static-route_type"))
+    if current_route_type != "nexthop-route":
+        payload["static-route_type"] = "nexthop-route"
+        changes["static-route_type"] = build_change(current_route_type, "nexthop-route")
+
+    desired_next_hop = str(route.next_hop)
+    current_next_hop = stringify(
+        existing_route.get("static-route_nexthop", existing_route.get("nexthop"))
+    )
+    if current_next_hop != desired_next_hop:
+        payload["static-route_nexthop"] = desired_next_hop
+        changes["static-route_nexthop"] = build_change(
+            current_next_hop, desired_next_hop
+        )
+
+    desired_distance = str(route.distance)
+    current_distance = stringify(
+        existing_route.get("static-route_distance", existing_route.get("distance"))
+    )
+    if current_distance != desired_distance:
+        payload["static-route_distance"] = desired_distance
+        changes["static-route_distance"] = build_change(
+            current_distance, desired_distance
+        )
 
     if changes:
         return "update", desired_payload, changes
@@ -1208,9 +1509,6 @@ def choose_existing_dhcp_option(
     options_by_code: dict[int, list[dict[str, Any]]],
     desired: DhcpCustomOptionSpec,
 ) -> dict[str, Any] | None:
-    if desired.code is None:
-        return None
-
     candidates = options_by_code.get(desired.code, [])
     if not candidates:
         return None
@@ -1242,28 +1540,11 @@ def choose_existing_dhcp_option(
     )
 
 
-def ensure_domain_search_option(
+def ensure_dhcp_custom_option(
     client: UnifiLegacyClient,
     desired: DhcpCustomOptionSpec,
     dry_run: bool,
 ) -> tuple[str | None, dict[str, Any]]:
-    if desired.field_name is not None:
-        return (
-            desired.field_name,
-            {
-                "field_name": desired.field_name,
-                "code": desired.code,
-                "name": desired.name,
-                "type": desired.option_type,
-                "signed": desired.signed,
-                "encoding": desired.encoding,
-                "changed": False,
-                "dry_run": dry_run,
-                "created": False,
-                "result": None,
-            },
-        )
-
     options = client.list_dhcp_options()
     options_by_code = build_dhcp_options_by_code(options)
     existing = choose_existing_dhcp_option(options_by_code, desired)
@@ -1344,6 +1625,7 @@ def build_network_update_payload(
     settings: NetworkDhcpSettingsSpec,
     current_network: dict[str, Any],
     domain_search_option_field: str | None,
+    classless_static_routes_option_field: str | None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     payload: dict[str, Any] = {}
     changes: dict[str, Any] = {}
@@ -1377,30 +1659,23 @@ def build_network_update_payload(
             )
 
     if settings.domain_search is not None:
-        desired_option_value = encode_domain_search_option(settings.domain_search)
+        if settings.domain_search_option is None:
+            raise UnifiError(
+                "internal error: domain_search present without option spec"
+            )
+
         if domain_search_option_field is not None:
             current_option_value = stringify(
                 current_network.get(domain_search_option_field)
             )
-            if settings.domain_search_option is None:
-                raise UnifiError(
-                    "internal error: domain_search present without option spec"
-                )
 
-        if settings.domain_search_option.encoding == "hex":
-            desired_networkconf_value = desired_option_value.encode("latin1").hex()
-        elif settings.domain_search_option.encoding == "latin1":
-            desired_networkconf_value = desired_option_value
-        elif settings.domain_search_option.encoding == "text":
+            if settings.domain_search_option.encoding != "text":
+                raise UnifiError("domain-search option encoding must be text")
             if len(settings.domain_search) != 1:
                 raise UnifiError(
-                    "text domain-search option encoding currently supports exactly one domain"
+                    "domain-search option currently supports exactly one domain"
                 )
             desired_networkconf_value = settings.domain_search[0]
-        else:
-            raise UnifiError(
-                f"unsupported domain-search option encoding: {settings.domain_search_option.encoding}"
-            )
 
             if current_option_value != desired_networkconf_value:
                 payload[domain_search_option_field] = desired_networkconf_value
@@ -1409,6 +1684,39 @@ def build_network_update_payload(
                     "desired": desired_networkconf_value,
                     "desired_domains": list(settings.domain_search),
                     "encoding": settings.domain_search_option.encoding,
+                }
+
+    if settings.classless_static_routes is not None:
+        if settings.classless_static_routes_option is None:
+            raise UnifiError(
+                "internal error: classless_static_routes present without option spec"
+            )
+
+        if classless_static_routes_option_field is not None:
+            current_option_value = stringify(
+                current_network.get(classless_static_routes_option_field)
+            )
+            if settings.classless_static_routes_option.encoding != "text":
+                raise UnifiError("classless-static-routes option encoding must be text")
+            desired_networkconf_value = render_classless_static_routes_option(
+                settings.classless_static_routes
+            )
+
+            if current_option_value != desired_networkconf_value:
+                payload[classless_static_routes_option_field] = (
+                    desired_networkconf_value
+                )
+                changes[classless_static_routes_option_field] = {
+                    "current": current_option_value,
+                    "desired": desired_networkconf_value,
+                    "desired_routes": [
+                        {
+                            "destination": str(route.destination),
+                            "next_hop": str(route.next_hop),
+                        }
+                        for route in settings.classless_static_routes
+                    ],
+                    "encoding": settings.classless_static_routes_option.encoding,
                 }
     if settings.tftp_server is not None:
         current_boot_enabled = bool(current_network.get("dhcpd_boot_enabled"))
@@ -1444,6 +1752,11 @@ def main() -> int:
             if args.no_dns_records_update
             else parse_dns_records(args.dns_records_json)
         )
+        static_routes = (
+            None
+            if args.no_static_routes_update
+            else parse_static_routes(args.static_routes_json)
+        )
 
         client = UnifiLegacyClient(
             base_url=args.base_url,
@@ -1458,13 +1771,19 @@ def main() -> int:
         clients_by_mac = build_clients_by_mac(clients)
         dhcp_range_result = None
         dns_records_result = None
+        static_routes_result = None
 
         if network_settings is not None:
-            lookup_ip = (
-                network_settings.dhcp_range.start
-                if network_settings.dhcp_range is not None
-                else reservations[0].fixed_ip
-            )
+            if args.network_id:
+                lookup_ip = None
+            elif network_settings.dhcp_range is not None:
+                lookup_ip = network_settings.dhcp_range.start
+            elif reservations:
+                lookup_ip = reservations[0].fixed_ip
+            else:
+                raise UnifiError(
+                    "network settings without DHCP range require reservations or --network-id to choose a network"
+                )
             selected_dhcp_network = (
                 next(
                     (
@@ -1494,9 +1813,25 @@ def main() -> int:
                 (
                     domain_search_option_field,
                     domain_search_option_result,
-                ) = ensure_domain_search_option(
+                ) = ensure_dhcp_custom_option(
                     client=client,
                     desired=network_settings.domain_search_option,
+                    dry_run=args.dry_run,
+                )
+
+            classless_static_routes_option_field = None
+            classless_static_routes_option_result = None
+            if network_settings.classless_static_routes is not None:
+                if network_settings.classless_static_routes_option is None:
+                    raise UnifiError(
+                        "internal error: classless_static_routes present without option specification"
+                    )
+                (
+                    classless_static_routes_option_field,
+                    classless_static_routes_option_result,
+                ) = ensure_dhcp_custom_option(
+                    client=client,
+                    desired=network_settings.classless_static_routes_option,
                     dry_run=args.dry_run,
                 )
 
@@ -1504,11 +1839,15 @@ def main() -> int:
                 network_settings,
                 selected_dhcp_network,
                 domain_search_option_field=domain_search_option_field,
+                classless_static_routes_option_field=classless_static_routes_option_field,
             )
-            dhcp_changed = bool(dhcp_payload) or bool(
+            custom_options_changed = bool(
                 domain_search_option_result is not None
                 and domain_search_option_result["changed"]
+                or classless_static_routes_option_result is not None
+                and classless_static_routes_option_result["changed"]
             )
+            dhcp_changed = bool(dhcp_payload) or custom_options_changed
             dhcp_result = None
             if dhcp_changed and not args.dry_run:
                 dhcp_result = client.update_network(
@@ -1536,11 +1875,24 @@ def main() -> int:
                 if network_settings.domain_search is not None
                 else None,
                 "domain_search_option": domain_search_option_result,
-                "domain_search_option_119_hex": (
-                    encode_domain_search_option(network_settings.domain_search)
-                    .encode("latin1")
-                    .hex()
+                "domain_search_option_value": (
+                    network_settings.domain_search[0]
                     if network_settings.domain_search is not None
+                    else None
+                ),
+                "classless_static_routes": [
+                    {
+                        "destination": str(route.destination),
+                        "next_hop": str(route.next_hop),
+                    }
+                    for route in network_settings.classless_static_routes or ()
+                ],
+                "classless_static_routes_option": classless_static_routes_option_result,
+                "classless_static_routes_option_value": (
+                    render_classless_static_routes_option(
+                        network_settings.classless_static_routes
+                    )
+                    if network_settings.classless_static_routes is not None
                     else None
                 ),
                 "tftp_server": network_settings.tftp_server,
@@ -1587,6 +1939,7 @@ def main() -> int:
                         {
                             "type": record.record_type,
                             "domain": record.domain,
+                            "enabled": record.enabled,
                             "policy_id": stringify(existing_policy.get("id"))
                             if existing_policy is not None
                             else None,
@@ -1616,6 +1969,61 @@ def main() -> int:
                 "count": len(dns_results),
                 "changed_count": sum(1 for result in dns_results if result["changed"]),
                 "results": dns_results,
+            }
+
+        if static_routes is not None:
+            existing_static_routes = client.list_static_routes()
+            existing_routes_by_destination = build_static_routes_by_destination(
+                existing_static_routes
+            )
+
+            static_route_results: list[dict[str, Any]] = []
+            for route in static_routes:
+                existing_route = existing_routes_by_destination.get(
+                    static_route_key(route.destination)
+                )
+                action, payload, changes = build_static_route_update_plan(
+                    existing_route=existing_route,
+                    route=route,
+                )
+                changed = bool(payload)
+                result = None
+                if changed and not args.dry_run:
+                    if existing_route is None:
+                        result = client.create_static_route(payload)
+                    else:
+                        route_id = _id(existing_route)
+                        if route_id == "<missing-id>":
+                            raise UnifiError(
+                                f"existing UniFi static route for {route.destination} has no _id"
+                            )
+                        result = client.update_static_route(route_id, payload)
+
+                static_route_results.append(
+                    {
+                        "name": route.name,
+                        "destination": str(route.destination),
+                        "next_hop": str(route.next_hop),
+                        "distance": route.distance,
+                        "enabled": route.enabled,
+                        "route_id": _id(existing_route)
+                        if existing_route is not None
+                        else None,
+                        "action": action,
+                        "changed": changed,
+                        "dry_run": args.dry_run,
+                        "changes": changes,
+                        "result": result,
+                    }
+                )
+
+            static_routes_result = {
+                "dry_run": args.dry_run,
+                "count": len(static_route_results),
+                "changed_count": sum(
+                    1 for result in static_route_results if result["changed"]
+                ),
+                "results": static_route_results,
             }
 
         selected_group: dict[str, Any] | None = None
@@ -1769,9 +2177,15 @@ def main() -> int:
                     if dns_records_result is not None
                     else 0
                 )
+                + (
+                    static_routes_result["changed_count"]
+                    if static_routes_result is not None
+                    else 0
+                )
             ),
             "dhcp_range_update": dhcp_range_result,
             "dns_records_update": dns_records_result,
+            "static_routes_update": static_routes_result,
             "results": results,
         }
         print(format_json(summary))
