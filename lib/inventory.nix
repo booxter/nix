@@ -257,6 +257,9 @@ rec {
       dnsRecords =
         let
           lanDomain = lan.domain;
+          staticDnsRecords = [
+            (mkDnsARecord "unifi.${lanDomain}" lan.gateway.address)
+          ];
           renderHostDnsRecords =
             spec:
             (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
@@ -264,7 +267,7 @@ rec {
               toNixosLanDnsAliasLabels spec
             );
         in
-        builtins.concatMap renderHostDnsRecords nixosHostSpecs;
+        staticDnsRecords ++ builtins.concatMap renderHostDnsRecords nixosHostSpecs;
     };
 
     wireguard.home = {

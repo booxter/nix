@@ -199,7 +199,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://192.168.0.1/",tls_rotation="manual"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
         values: "2678400x62"
     alert_rule_test:
       - eval_time: 30m
@@ -207,7 +207,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://192.168.0.1/",tls_rotation="manual"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
         values: "2505600x60 3456000x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -224,17 +224,17 @@ tests:
               service: unifi
               service_title: UniFi Console
               severity: warning
-              target: "https://192.168.0.1/"
+              target: "https://unifi.home.arpa/"
               tls_rotation: manual
             exp_annotations:
               summary: "Manual TLS cert expiring soon: UniFi Console"
-              description: "The manually rotated TLS endpoint UniFi Console (https://192.168.0.1/) has less than 30 days remaining on its leaf certificate."
+              description: "The manually rotated TLS endpoint UniFi Console (https://unifi.home.arpa/) has less than 30 days remaining on its leaf certificate."
       - eval_time: 30m30s
         alertname: ManualTLSCertExpiringSoon
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://192.168.0.1/",tls_rotation="manual"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
         values: "1728000x62"
     alert_rule_test:
       - eval_time: 30m
@@ -242,7 +242,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://192.168.0.1/",tls_rotation="manual"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
         values: "1123200x60 1728000x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -259,11 +259,11 @@ tests:
               service: unifi
               service_title: UniFi Console
               severity: critical
-              target: "https://192.168.0.1/"
+              target: "https://unifi.home.arpa/"
               tls_rotation: manual
             exp_annotations:
               summary: "Manual TLS cert expiring critically soon: UniFi Console"
-              description: "The manually rotated TLS endpoint UniFi Console (https://192.168.0.1/) has less than 14 days remaining on its leaf certificate."
+              description: "The manually rotated TLS endpoint UniFi Console (https://unifi.home.arpa/) has less than 14 days remaining on its leaf certificate."
       - eval_time: 30m30s
         alertname: ManualTLSCertExpiringCritical
 

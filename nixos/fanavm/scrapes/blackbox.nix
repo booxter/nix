@@ -114,8 +114,8 @@ let
       id = "unifi";
       scope = "internal";
       title = "UniFi Console";
-      probeUrl = "https://${lan.gateway.address}/";
-      url = "https://${lan.gateway.address}/";
+      probeUrl = "https://unifi.${lan.domain}/";
+      url = "https://unifi.${lan.domain}/";
       tlsRotation = "manual";
     }
   ];
