@@ -106,14 +106,14 @@
             {
               "options": {
                 "0": {
-                  "color": "red",
+                  "color": "gray",
                   "index": 0,
-                  "text": "Stale"
+                  "text": "Not connected"
                 },
                 "1": {
                   "color": "green",
                   "index": 1,
-                  "text": "Current"
+                  "text": "Connected"
                 }
               },
               "type": "value"
@@ -125,7 +125,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "gray",
                 "value": null
               },
               {
@@ -172,7 +172,7 @@
           "refId": "A"
         }
       ],
-      "title": "Peer Handshake Freshness",
+      "title": "Peer Connection Status",
       "type": "stat"
     },
     {
@@ -192,7 +192,7 @@
                 "value": 60
               },
               {
-                "color": "red",
+                "color": "gray",
                 "value": 180
               }
             ]
@@ -315,7 +315,7 @@
                 "value": 60
               },
               {
-                "color": "red",
+                "color": "gray",
                 "value": 180
               }
             ]
@@ -429,7 +429,7 @@
                 "value": 60
               },
               {
-                "color": "red",
+                "color": "gray",
                 "value": 180
               }
             ]
