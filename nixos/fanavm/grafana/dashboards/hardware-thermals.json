@@ -632,7 +632,7 @@
             "fillOpacity": 16,
             "stacking": {
               "group": "A",
-              "mode": "normal"
+              "mode": "none"
             }
           },
           "mappings": [],
@@ -679,8 +679,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "avg_over_time(host_observability_darwin_power_watts{job=\"node-mtls\",host_class=\"hardware\"}[20m])",
-          "legendFormat": "{{instance}} {{domain}}",
+          "expr": "sum by(instance) (avg_over_time(host_observability_darwin_power_watts{job=\"node-mtls\",host_class=\"hardware\"}[20m]))",
+          "legendFormat": "{{instance}}",
           "range": true,
           "refId": "A"
         }
