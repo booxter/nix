@@ -28,6 +28,22 @@ Scope: the whole repository.
   `scripts/`, encrypted host secrets under `secrets/`, and checks under
   `tests/` or `checks.nix`.
 
+## Service-to-Service Security
+
+- Secure communication between services by default, including internal
+  node-to-node traffic. Prefer mTLS or a similarly authenticated and encrypted
+  transport for new service endpoints; avoid unauthenticated plaintext listeners
+  except for loopback-only endpoints or cases with an explicit, documented
+  rationale.
+- When adding a new communication channel between managed nodes, use the repo's
+  PKI helper tools to issue/register the needed certificates and secrets rather
+  than hand-rolling certificate material. Relevant flake apps include
+  `issue-internal-service-cert` for internal HTTPS endpoints and
+  `issue-observability-cert` for Prometheus/observability scrape channels.
+- Model certificate wiring and trust declaratively in this repository, including
+  any sops-nix secret material, service web configs, firewall exposure, and
+  operational docs for the channel.
+
 ## SSH Access
 
 - Use normal OpenSSH for access to managed hosts:
