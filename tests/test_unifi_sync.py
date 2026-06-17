@@ -2,6 +2,8 @@ import importlib.util
 import pathlib
 import sys
 
+import pytest
+
 
 MODULE_PATH = pathlib.Path(__file__).parents[1] / "pkgs" / "unifi-sync" / "main.py"
 SPEC = importlib.util.spec_from_file_location("unifi_sync", MODULE_PATH)
@@ -11,7 +13,7 @@ sys.modules[SPEC.name] = unifi_sync
 SPEC.loader.exec_module(unifi_sync)
 
 
-def test_encode_classless_static_routes_option():
+def test_render_classless_static_routes_option():
     routes = unifi_sync.parse_classless_static_routes(
         """
         [
@@ -21,9 +23,9 @@ def test_encode_classless_static_routes_option():
         """
     )
 
-    encoded = unifi_sync.encode_classless_static_routes_option(routes)
+    value = unifi_sync.render_classless_static_routes_option(routes)
 
-    assert encoded.encode("latin1").hex() == "080ac000020100c00002fe"
+    assert value == "10.0.0.0/8,192.0.2.1,0.0.0.0/0,192.0.2.254"
 
 
 def test_parse_classless_static_routes_skips_disabled_entries():
@@ -38,6 +40,24 @@ def test_parse_classless_static_routes_skips_disabled_entries():
 
     assert [str(route.destination) for route in routes] == ["0.0.0.0/0"]
     assert [str(route.next_hop) for route in routes] == ["192.0.2.254"]
+
+
+def test_classless_static_routes_option_rejects_hex_encoding():
+    with pytest.raises(
+        unifi_sync.UnifiError,
+        match="classless-static-routes option encoding must be text",
+    ):
+        unifi_sync.parse_classless_static_routes_option_json(
+            """
+            {
+              "code": 121,
+              "name": "ClasslessStaticRoutes",
+              "type": "text",
+              "signed": false,
+              "encoding": "hex"
+            }
+            """
+        )
 
 
 def test_build_network_update_payload_writes_custom_option_fields():
@@ -65,7 +85,7 @@ def test_build_network_update_payload_writes_custom_option_fields():
             name="ClasslessStaticRoutes",
             option_type="text",
             signed=False,
-            encoding="hex",
+            encoding="text",
         ),
         tftp_server=None,
         bootfile=None,
@@ -83,7 +103,7 @@ def test_build_network_update_payload_writes_custom_option_fields():
 
     assert payload == {
         "dhcpd_user_option_domain": "example.test",
-        "dhcpd_user_option_routes": "080ac000020100c00002fe",
+        "dhcpd_user_option_routes": "10.0.0.0/8,192.0.2.1,0.0.0.0/0,192.0.2.254",
     }
     assert changes["dhcpd_user_option_routes"]["desired_routes"] == [
         {"destination": "10.0.0.0/8", "next_hop": "192.0.2.1"},

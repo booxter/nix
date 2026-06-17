@@ -247,7 +247,7 @@ def build_parser() -> argparse.ArgumentParser:
         default=os.environ.get("UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON", ""),
         help=(
             "Optional UniFi custom DHCP option definition for classless static routes, for example "
-            '{"code":121,"name":"ClasslessStaticRoutes","type":"text","signed":false,"encoding":"hex"}. '
+            '{"code":121,"name":"ClasslessStaticRoutes","type":"text","signed":false,"encoding":"text"}. '
             "Defaults to UNIFI_CLASSLESS_STATIC_ROUTES_OPTION_JSON."
         ),
     )
@@ -833,9 +833,12 @@ def normalize_domain_search_option_encoding(value: str) -> str:
 
 
 def normalize_classless_static_routes_option_encoding(value: str) -> str:
-    return normalize_dhcp_option_value_encoding(
-        value, label="classless-static-routes", allow_text=False
-    )
+    normalized = value.strip().lower()
+    if not normalized:
+        return "text"
+    if normalized in {"text", "string", "plain"}:
+        return "text"
+    raise UnifiError("classless-static-routes option encoding must be text")
 
 
 def normalize_dhcp_option_name(value: str) -> str:
@@ -1131,26 +1134,13 @@ def encode_domain_search_option(domains: tuple[str, ...]) -> str:
     return bytes(encoded).decode("latin1")
 
 
-def encode_classless_static_routes_option(
+def render_classless_static_routes_option(
     routes: tuple[ClasslessStaticRouteSpec, ...],
 ) -> str:
-    encoded = bytearray()
+    values: list[str] = []
     for route in routes:
-        prefix_len = route.destination.prefixlen
-        significant_octets = (prefix_len + 7) // 8
-        network_octets = route.destination.network_address.packed
-        encoded.append(prefix_len)
-        encoded.extend(network_octets[:significant_octets])
-        encoded.extend(route.next_hop.packed)
-    return bytes(encoded).decode("latin1")
-
-
-def render_dhcp_option_value(value: str, encoding: str, *, label: str) -> str:
-    if encoding == "hex":
-        return value.encode("latin1").hex()
-    if encoding == "latin1":
-        return value
-    raise UnifiError(f"unsupported {label} option encoding: {encoding}")
+        values.extend([str(route.destination), str(route.next_hop)])
+    return ",".join(values)
 
 
 def build_single_reservation(args: argparse.Namespace) -> ReservationSpec:
@@ -1748,17 +1738,14 @@ def build_network_update_payload(
                 "internal error: classless_static_routes present without option spec"
             )
 
-        desired_option_value = encode_classless_static_routes_option(
-            settings.classless_static_routes
-        )
         if classless_static_routes_option_field is not None:
             current_option_value = stringify(
                 current_network.get(classless_static_routes_option_field)
             )
-            desired_networkconf_value = render_dhcp_option_value(
-                desired_option_value,
-                settings.classless_static_routes_option.encoding,
-                label="classless-static-routes",
+            if settings.classless_static_routes_option.encoding != "text":
+                raise UnifiError("classless-static-routes option encoding must be text")
+            desired_networkconf_value = render_classless_static_routes_option(
+                settings.classless_static_routes
             )
 
             if current_option_value != desired_networkconf_value:
@@ -1949,12 +1936,10 @@ def main() -> int:
                     for route in network_settings.classless_static_routes or ()
                 ],
                 "classless_static_routes_option": classless_static_routes_option_result,
-                "classless_static_routes_option_121_hex": (
-                    encode_classless_static_routes_option(
+                "classless_static_routes_option_value": (
+                    render_classless_static_routes_option(
                         network_settings.classless_static_routes
                     )
-                    .encode("latin1")
-                    .hex()
                     if network_settings.classless_static_routes is not None
                     else None
                 ),

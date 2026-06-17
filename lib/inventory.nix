@@ -250,7 +250,7 @@ rec {
           name = "ClasslessStaticRoutes";
           type = "text";
           signed = false;
-          encoding = "hex";
+          encoding = "text";
         };
       };
 
