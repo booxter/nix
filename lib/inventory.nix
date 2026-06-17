@@ -245,6 +245,13 @@ rec {
           signed = false;
           encoding = "text";
         };
+        classlessStaticRoutes = {
+          code = 121;
+          name = "ClasslessStaticRoutes";
+          type = "text";
+          signed = false;
+          encoding = "hex";
+        };
       };
 
       dnsRecords =

@@ -73,6 +73,17 @@ helpers.forAllSystems (
       '';
       extraFileset = [ ./pkgs/ssh-ticket ];
     };
+    unifi-sync-py = mkCheck {
+      name = "unifi-sync-py-tests";
+      nativeBuildInputs = with pkgs; [
+        python3
+        python3Packages.pytest
+      ];
+      buildPhase = ''
+        pytest -q tests/test_unifi_sync.py
+      '';
+      extraFileset = [ ./pkgs/unifi-sync ];
+    };
     join-media-parts = mkCheck {
       name = "join-media-parts-tests";
       nativeBuildInputs = [
