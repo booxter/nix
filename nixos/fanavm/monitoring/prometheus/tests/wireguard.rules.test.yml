@@ -59,3 +59,31 @@ tests:
             exp_annotations:
               summary: "WireGuard unit down: prometheus-wireguard-exporter.service"
               description: "The WireGuard unit prometheus-wireguard-exporter.service on gw has not been active for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'up{instance="gw",job="wireguard"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: WireGuardMetricsScrapeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'up{instance="gw",job="wireguard"}'
+        values: "0x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: WireGuardMetricsScrapeDown
+      - eval_time: 5m
+        alertname: WireGuardMetricsScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: WireGuardMetricsScrapeDown
+              category: observability
+              instance: gw
+              job: wireguard
+              severity: warning
+            exp_annotations:
+              summary: "WireGuard metrics scrape down: gw"
+              description: "Prometheus has been unable to scrape WireGuard metrics from gw for 5 minutes."
