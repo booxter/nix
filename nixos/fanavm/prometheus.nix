@@ -51,6 +51,14 @@ let
       prometheusMtlsTlsConfig
       ;
   };
+  wireguardScrapes = import ./scrapes/wireguard.nix {
+    inherit
+      hostInventory
+      lib
+      outputs
+      prometheusMtlsTlsConfig
+      ;
+  };
   nutScrapes = import ./scrapes/nut.nix {
     inherit
       hostInventory
@@ -107,7 +115,8 @@ in
     ++ proxmoxScrapes.scrapeConfigs
     ++ nutScrapes.scrapeConfigs
     ++ blackboxScrapes.scrapeConfigs
-    ++ serviceScrapes.scrapeConfigs;
+    ++ serviceScrapes.scrapeConfigs
+    ++ wireguardScrapes.scrapeConfigs;
   };
 
   # Blackbox exporter probes service endpoints to track reachability and latency.
