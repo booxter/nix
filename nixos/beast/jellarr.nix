@@ -135,6 +135,11 @@ in
             url = "https://raw.githubusercontent.com/zamhedonia/JellyfinLetterboxdLink/master/manifest.json";
             enabled = true;
           }
+          {
+            name = "Last.fm Stable";
+            url = "https://raw.githubusercontent.com/danielfariati/jellyfin-plugin-lastfm/refs/heads/master/manifest.json";
+            enabled = true;
+          }
         ];
         trickplayOptions = {
           enableHwAcceleration = true;
@@ -383,6 +388,7 @@ in
       plugins = map (name: { inherit name; }) [
         "AudioDB"
         "Letterboxd Link on Movies"
+        "Last.fm"
         "LrcLib Lyrics"
         "MusicBrainz"
         "OMDb"
