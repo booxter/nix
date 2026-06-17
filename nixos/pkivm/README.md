@@ -61,8 +61,8 @@ nix run .#issue-internal-service-cert -- --unifi --output-dir /private/tmp/unifi
 
 This writes `unifi.home.arpa.crt`, `unifi.home.arpa.key`, and
 `unifi.home.arpa.pem` into the output directory using the CA's configured leaf
-lifetime, currently 180 days. The `.pem` file is the bundled certificate plus
-private key next to the standalone private key file.
+lifetime, currently 180 days. The `.pem` file is the certificate plus private
+key next to the standalone private key file.
 
 PKI status inventory:
 

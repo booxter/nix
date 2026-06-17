@@ -287,9 +287,8 @@ def client_config(host, client):
     )
 
 
-def issue_remote_cert(*, ca_host, common_name, sans, bundle=False):
+def issue_remote_cert(*, ca_host, common_name, sans):
     san_args = " ".join(f"--san {shlex.quote(san)}" for san in sans)
-    bundle_arg = "--bundle" if bundle else ""
     script = f"""
 set -euo pipefail
 tmpdir="$(sudo -u step-ca mktemp -d)"
@@ -300,7 +299,6 @@ trap cleanup EXIT
 sudo -u step-ca env HOME={shlex.quote(DEFAULT_STEP_PATH)} STEPPATH={shlex.quote(DEFAULT_STEP_PATH)} \\
   step ca certificate {shlex.quote(common_name)} "$tmpdir/server.crt" "$tmpdir/server.key" \\
   {san_args} \\
-  {bundle_arg} \\
   --provisioner {shlex.quote(DEFAULT_PROVISIONER)} \\
   --provisioner-password-file {shlex.quote(DEFAULT_PROVISIONER_PASSWORD_FILE)} \\
   >/dev/null
@@ -380,7 +378,6 @@ def issue_unifi(args):
         ca_host=args.ca_host,
         common_name=common_name,
         sans=sans,
-        bundle=True,
     )
     combined_text = cert_text + "\n" + key_text
 
@@ -398,7 +395,6 @@ def issue_unifi(args):
                 "cert_file": str(cert_path),
                 "key_file": str(key_path),
                 "pem_file": str(pem_path),
-                "bundled": True,
             },
             sort_keys=True,
         )
