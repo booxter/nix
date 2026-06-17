@@ -76,7 +76,10 @@ Service source:
 - Repo-wide LAN DNS/DHCP endpoint is `192.168.0.1`
 - LAN domain is `home.arpa`
 - LAN clients route `10.83.0.0/24` through `gw` at `192.168.20.3`
-- `wg-home-dns-sync` polls `http://192.168.20.3:9586/peers.json`
+- `wg-home-dns-sync` polls `https://gw.home.arpa:9586/peers.json` with an mTLS
+  client certificate
+- WireGuard DNS sync client certificate secret prefix:
+  `prometheus/clients/wg-home-dns-sync`
 - Reservations are MAC-based only
 - `prx1-lab` serves standalone TFTP / netboot on `192.168.15.10`
 

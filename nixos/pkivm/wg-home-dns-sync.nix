@@ -6,11 +6,13 @@
   ...
 }:
 let
+  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   unifiSyncEnv = import ../../lib/unifi-sync-env.nix { inherit hostInventory; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wgHomeExporterPort = 9586;
-  wgHomeExporterAddress = hostInventory.toNixosHostIpv4Address wgHome.gateway.host;
+  wgHomeExporterHost = "gw.${lan.domain}";
+  wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";
   wgHomeDnsPeers = lib.mapAttrsToList (name: peer: {
     inherit name;
     address = builtins.head (lib.splitString "/" peer.address);
@@ -21,6 +23,27 @@ in
 {
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
+
+  host.observability.client.mtlsClients."wg-home-dns-sync" = {
+    enable = true;
+    secretPrefix = wgHomeDnsSyncClientSecretPrefix;
+  };
+
+  sops.secrets.wgHomeDnsSyncClientCrt = {
+    key = "${wgHomeDnsSyncClientSecretPrefix}/client_crt";
+    owner = "unifi-sync";
+    group = "unifi-sync";
+    mode = "0400";
+    restartUnits = [ "wg-home-dns-sync.service" ];
+  };
+
+  sops.secrets.wgHomeDnsSyncClientKey = {
+    key = "${wgHomeDnsSyncClientSecretPrefix}/client_key";
+    owner = "unifi-sync";
+    group = "unifi-sync";
+    mode = "0400";
+    restartUnits = [ "wg-home-dns-sync.service" ];
+  };
 
   systemd.services.wg-home-dns-sync = {
     description = "Sync home WireGuard peer DNS overrides to UniFi";
@@ -41,7 +64,7 @@ in
       User = "unifi-sync";
       Group = "unifi-sync";
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe pkgs.wg-home-dns-sync} --status-url http://${wgHomeExporterAddress}:${toString wgHomeExporterPort}/peers.json --peers-json-file ${wgHomeDnsPeersFile} --unifi-sync-command ${lib.getExe pkgs.unifi-sync}";
+      ExecStart = "${lib.getExe pkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/peers.json --ca-file ${internalPkiRootCaPath} --client-cert-file ${config.sops.secrets.wgHomeDnsSyncClientCrt.path} --client-key-file ${config.sops.secrets.wgHomeDnsSyncClientKey.path} --peers-json-file ${wgHomeDnsPeersFile} --unifi-sync-command ${lib.getExe pkgs.unifi-sync}";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;

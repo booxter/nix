@@ -6,9 +6,11 @@ import argparse
 import ipaddress
 import json
 import os
+import ssl
 import subprocess
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from dataclasses import dataclass
 from typing import Any
@@ -97,9 +99,52 @@ def load_peer_dns_specs(raw_json: str) -> list[PeerDnsSpec]:
     return peers
 
 
-def fetch_status(url: str, timeout_seconds: float) -> dict[str, Any]:
+def build_https_context(
+    url: str,
+    ca_file: str,
+    client_cert_file: str,
+    client_key_file: str,
+) -> ssl.SSLContext | None:
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme != "https":
+        return None
+
+    missing = [
+        name
+        for name, value in (
+            ("--ca-file", ca_file),
+            ("--client-cert-file", client_cert_file),
+            ("--client-key-file", client_key_file),
+        )
+        if not value
+    ]
+    if missing:
+        raise SyncError(f"HTTPS WireGuard status URL requires {', '.join(missing)}")
+
+    context = ssl.create_default_context(cafile=ca_file)
+    context.load_cert_chain(certfile=client_cert_file, keyfile=client_key_file)
+    return context
+
+
+def fetch_status(
+    url: str,
+    timeout_seconds: float,
+    ca_file: str,
+    client_cert_file: str,
+    client_key_file: str,
+) -> dict[str, Any]:
+    context = build_https_context(
+        url=url,
+        ca_file=ca_file,
+        client_cert_file=client_cert_file,
+        client_key_file=client_key_file,
+    )
     try:
-        with urllib.request.urlopen(url, timeout=timeout_seconds) as response:
+        with urllib.request.urlopen(
+            url,
+            timeout=timeout_seconds,
+            context=context,
+        ) as response:
             payload = response.read().decode("utf-8")
     except (urllib.error.URLError, TimeoutError) as error:
         raise SyncError(
@@ -207,7 +252,22 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--status-url",
         default=os.environ.get("WG_HOME_STATUS_URL", ""),
-        help="WireGuard exporter JSON URL, usually http://gateway:9586/peers.json.",
+        help="WireGuard exporter JSON URL, usually https://gw.home.arpa:9586/peers.json.",
+    )
+    parser.add_argument(
+        "--ca-file",
+        default=os.environ.get("WG_HOME_STATUS_CA_FILE", ""),
+        help="CA certificate used to verify an HTTPS WireGuard exporter.",
+    )
+    parser.add_argument(
+        "--client-cert-file",
+        default=os.environ.get("WG_HOME_STATUS_CLIENT_CERT_FILE", ""),
+        help="Client certificate used for WireGuard exporter mTLS.",
+    )
+    parser.add_argument(
+        "--client-key-file",
+        default=os.environ.get("WG_HOME_STATUS_CLIENT_KEY_FILE", ""),
+        help="Client key used for WireGuard exporter mTLS.",
     )
     parser.add_argument(
         "--timeout-seconds",
@@ -268,7 +328,13 @@ def main() -> int:
 
     try:
         peer_specs = load_peer_dns_specs(raw_peers_json)
-        status = fetch_status(args.status_url, timeout_seconds=args.timeout_seconds)
+        status = fetch_status(
+            args.status_url,
+            timeout_seconds=args.timeout_seconds,
+            ca_file=args.ca_file,
+            client_cert_file=args.client_cert_file,
+            client_key_file=args.client_key_file,
+        )
         dns_records = build_dns_records(
             peer_specs=peer_specs,
             status_by_name=build_status_by_name(status),
