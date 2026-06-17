@@ -61,12 +61,11 @@ qrencode -t ansiutf8 < client.conf
 `gw` exposes inventory-backed WireGuard peer status through an mTLS-protected
 nginx endpoint for the DNS automation on `pki`:
 
-- service: `wg-home-exporter.service`
+- service: `prometheus-wireguard-exporter.service`
 - local exporter listener: `127.0.0.1:9587`
 - mTLS listener: `gw.home.arpa:9586`
-- JSON endpoint: `/peers.json`
 - Prometheus endpoint: `/metrics`
 - server certificate secret prefix: `prometheus/wg-home`
 
-The exporter marks a peer connected when its latest WireGuard handshake is no
-older than 180 seconds.
+The DNS sync on `pki` marks a peer connected when
+`wireguard_latest_handshake_seconds` is no older than 180 seconds.

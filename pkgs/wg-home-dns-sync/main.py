@@ -9,6 +9,7 @@ import os
 import ssl
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -23,6 +24,7 @@ class SyncError(RuntimeError):
 @dataclass(frozen=True)
 class PeerDnsSpec:
     name: str
+    public_key: str
     domain: str
     address: ipaddress.IPv4Address
 
@@ -60,16 +62,20 @@ def load_peer_dns_specs(raw_json: str) -> list[PeerDnsSpec]:
 
     peers: list[PeerDnsSpec] = []
     seen_names: set[str] = set()
+    seen_public_keys: set[str] = set()
     seen_domains: set[str] = set()
     for index, item in enumerate(decoded):
         if not isinstance(item, dict):
             raise SyncError(f"peer DNS item {index} is not an object")
 
         name = item.get("name")
+        public_key = item.get("publicKey", item.get("public_key"))
         domain = item.get("domain")
         address = item.get("address")
         if not isinstance(name, str) or not name.strip():
             raise SyncError(f"peer DNS item {index} is missing name")
+        if not isinstance(public_key, str) or not public_key.strip():
+            raise SyncError(f"peer DNS item {index} is missing publicKey")
         if not isinstance(domain, str):
             raise SyncError(f"peer DNS item {index} is missing domain")
         if not isinstance(address, str):
@@ -80,17 +86,22 @@ def load_peer_dns_specs(raw_json: str) -> list[PeerDnsSpec]:
             raise SyncError(f"peer DNS item {index} address is not IPv4: {address}")
 
         normalized_name = name.strip()
+        normalized_public_key = public_key.strip()
         normalized_domain = normalize_dns_name(domain)
         if normalized_name in seen_names:
             raise SyncError(f"duplicate peer DNS name: {normalized_name}")
+        if normalized_public_key in seen_public_keys:
+            raise SyncError(f"duplicate peer DNS publicKey for {normalized_name}")
         if normalized_domain in seen_domains:
             raise SyncError(f"duplicate peer DNS domain: {normalized_domain}")
         seen_names.add(normalized_name)
+        seen_public_keys.add(normalized_public_key)
         seen_domains.add(normalized_domain)
 
         peers.append(
             PeerDnsSpec(
                 name=normalized_name,
+                public_key=normalized_public_key,
                 domain=normalized_domain,
                 address=parsed_address,
             )
@@ -126,13 +137,13 @@ def build_https_context(
     return context
 
 
-def fetch_status(
+def fetch_metrics(
     url: str,
     timeout_seconds: float,
     ca_file: str,
     client_cert_file: str,
     client_key_file: str,
-) -> dict[str, Any]:
+) -> str:
     context = build_https_context(
         url=url,
         ca_file=ca_file,
@@ -145,54 +156,239 @@ def fetch_status(
             timeout=timeout_seconds,
             context=context,
         ) as response:
-            payload = response.read().decode("utf-8")
+            return response.read().decode("utf-8")
     except (urllib.error.URLError, TimeoutError) as error:
         raise SyncError(
-            f"failed to fetch WireGuard status from {url}: {error}"
+            f"failed to fetch WireGuard metrics from {url}: {error}"
         ) from error
 
+
+def split_prometheus_sample(line: str) -> tuple[str, str]:
+    in_labels = False
+    in_quotes = False
+    escaped = False
+    for index, char in enumerate(line):
+        if in_quotes:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_quotes = False
+            continue
+
+        if char == '"':
+            in_quotes = True
+        elif char == "{":
+            in_labels = True
+        elif char == "}":
+            in_labels = False
+        elif char.isspace() and not in_labels:
+            sample = line[:index]
+            value = line[index:].strip()
+            if not sample or not value:
+                raise SyncError(f"invalid Prometheus metric line: {line}")
+            return sample, value
+
+    raise SyncError(f"Prometheus metric line is missing value: {line}")
+
+
+def decode_prometheus_label_value(raw_value: str, start: int) -> tuple[str, int]:
+    index = start
+    value: list[str] = []
+    while index < len(raw_value):
+        char = raw_value[index]
+        index += 1
+        if char == "\\":
+            if index >= len(raw_value):
+                raise SyncError("Prometheus label value ends with escape")
+            escaped = raw_value[index]
+            index += 1
+            if escaped == "n":
+                value.append("\n")
+            elif escaped in ('"', "\\"):
+                value.append(escaped)
+            else:
+                value.append(escaped)
+        elif char == '"':
+            return "".join(value), index
+        else:
+            value.append(char)
+
+    raise SyncError("Prometheus label value is missing closing quote")
+
+
+def parse_prometheus_labels(raw_labels: str) -> dict[str, str]:
+    labels: dict[str, str] = {}
+    index = 0
+    while index < len(raw_labels):
+        while index < len(raw_labels) and raw_labels[index].isspace():
+            index += 1
+        if index >= len(raw_labels):
+            break
+
+        equals_index = raw_labels.find("=", index)
+        if equals_index < 0:
+            raise SyncError(f"Prometheus label is missing '=': {raw_labels}")
+
+        name = raw_labels[index:equals_index].strip()
+        if not name:
+            raise SyncError(f"Prometheus label is missing name: {raw_labels}")
+
+        index = equals_index + 1
+        if index >= len(raw_labels) or raw_labels[index] != '"':
+            raise SyncError(f"Prometheus label {name} is missing quoted value")
+
+        value, index = decode_prometheus_label_value(raw_labels, index + 1)
+        if name in labels:
+            raise SyncError(f"duplicate Prometheus label: {name}")
+        labels[name] = value
+
+        while index < len(raw_labels) and raw_labels[index].isspace():
+            index += 1
+        if index >= len(raw_labels):
+            break
+        if raw_labels[index] != ",":
+            raise SyncError(f"Prometheus labels are not comma separated: {raw_labels}")
+        index += 1
+
+    return labels
+
+
+def parse_prometheus_metric_line(line: str) -> tuple[str, dict[str, str], float] | None:
+    stripped = line.strip()
+    if not stripped or stripped.startswith("#"):
+        return None
+
+    sample, value_text = split_prometheus_sample(stripped)
+    if "{" in sample:
+        name, raw_labels = sample.split("{", 1)
+        if not raw_labels.endswith("}"):
+            raise SyncError(f"Prometheus metric labels are not closed: {line}")
+        labels = parse_prometheus_labels(raw_labels[:-1])
+    else:
+        name = sample
+        labels = {}
+
     try:
-        decoded = json.loads(payload)
-    except json.JSONDecodeError as error:
-        raise SyncError(f"WireGuard status from {url} is not JSON: {error}") from error
+        value = float(value_text.split()[0])
+    except (IndexError, ValueError) as error:
+        raise SyncError(f"Prometheus metric value is invalid: {line}") from error
 
-    if not isinstance(decoded, dict):
-        raise SyncError(f"WireGuard status from {url} must be an object")
-    peers = decoded.get("peers")
-    if not isinstance(peers, list):
-        raise SyncError(f"WireGuard status from {url} must contain peers list")
-    return decoded
+    return name, labels, value
 
 
-def build_status_by_name(status: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    by_name: dict[str, dict[str, Any]] = {}
-    for index, item in enumerate(status["peers"]):
-        if not isinstance(item, dict):
-            raise SyncError(f"WireGuard status peer {index} is not an object")
-        name = item.get("name")
-        if not isinstance(name, str) or not name:
-            raise SyncError(f"WireGuard status peer {index} is missing name")
-        if name in by_name:
-            raise SyncError(f"WireGuard status has duplicate peer name: {name}")
-        by_name[name] = item
-    return by_name
+def build_status_by_public_key(
+    metrics_text: str,
+    now: int,
+    handshake_max_age_seconds: int,
+) -> dict[str, dict[str, Any]]:
+    by_public_key: dict[str, dict[str, Any]] = {}
+    seen_samples: set[tuple[str, str]] = set()
+    for line in metrics_text.splitlines():
+        parsed = parse_prometheus_metric_line(line)
+        if parsed is None:
+            continue
+
+        metric_name, labels, value = parsed
+        if metric_name not in (
+            "wireguard_latest_handshake_delay_seconds",
+            "wireguard_latest_handshake_seconds",
+        ):
+            continue
+
+        public_key = labels.get("public_key")
+        if not public_key:
+            raise SyncError(f"{metric_name} is missing public_key label")
+
+        sample_key = (metric_name, public_key)
+        if sample_key in seen_samples:
+            raise SyncError(
+                f"WireGuard metrics have duplicate {metric_name} sample for {public_key}"
+            )
+        seen_samples.add(sample_key)
+
+        status = by_public_key.setdefault(public_key, {"public_key": public_key})
+        allowed_ips = [
+            item.strip()
+            for item in labels.get("allowed_ips", "").split(",")
+            if item.strip()
+        ]
+        if allowed_ips and not status.get("allowed_ips"):
+            status["allowed_ips"] = allowed_ips
+
+        try:
+            metric_value = int(value)
+        except (OverflowError, ValueError) as error:
+            raise SyncError(
+                f"WireGuard metric {metric_name} value is not finite"
+            ) from error
+
+        if metric_name == "wireguard_latest_handshake_seconds":
+            status["latest_handshake_seconds"] = metric_value
+        else:
+            status["latest_handshake_age_seconds"] = max(0, metric_value)
+
+    if not by_public_key:
+        raise SyncError("WireGuard metrics did not include latest handshake samples")
+
+    for status in by_public_key.values():
+        latest_handshake_seconds = status.get("latest_handshake_seconds")
+        latest_handshake_age_seconds = status.get("latest_handshake_age_seconds")
+        if latest_handshake_age_seconds is None and isinstance(
+            latest_handshake_seconds, int
+        ):
+            if latest_handshake_seconds > 0:
+                latest_handshake_age_seconds = max(0, now - latest_handshake_seconds)
+            status["latest_handshake_age_seconds"] = latest_handshake_age_seconds
+
+        connected = (
+            latest_handshake_age_seconds is not None
+            and latest_handshake_age_seconds <= handshake_max_age_seconds
+        )
+        if isinstance(latest_handshake_seconds, int) and latest_handshake_seconds <= 0:
+            connected = False
+        status["connected"] = connected
+        status.setdefault("allowed_ips", [])
+        status.setdefault("latest_handshake_seconds", 0)
+
+    return by_public_key
+
+
+def allowed_ips_contain_address(
+    allowed_ips: list[str],
+    address: ipaddress.IPv4Address,
+) -> bool:
+    for allowed_ip in allowed_ips:
+        try:
+            if ipaddress.ip_interface(allowed_ip).ip == address:
+                return True
+        except ValueError as error:
+            raise SyncError(
+                f"WireGuard metric has invalid allowed IP: {allowed_ip}"
+            ) from error
+    return False
 
 
 def build_dns_records(
     peer_specs: list[PeerDnsSpec],
-    status_by_name: dict[str, dict[str, Any]],
+    status_by_public_key: dict[str, dict[str, Any]],
     ttl_seconds: int,
 ) -> list[dict[str, Any]]:
     records: list[dict[str, Any]] = []
     for peer in peer_specs:
-        status = status_by_name.get(peer.name)
+        status = status_by_public_key.get(peer.public_key)
         if status is None:
-            raise SyncError(f"WireGuard status is missing peer: {peer.name}")
+            raise SyncError(f"WireGuard metrics are missing peer: {peer.name}")
 
-        status_address = status.get("address")
-        if isinstance(status_address, str) and status_address != str(peer.address):
+        allowed_ips = status.get("allowed_ips")
+        if (
+            isinstance(allowed_ips, list)
+            and allowed_ips
+            and not allowed_ips_contain_address(allowed_ips, peer.address)
+        ):
             raise SyncError(
-                f"WireGuard status address for {peer.name} is {status_address}, expected {peer.address}"
+                f"WireGuard metrics allowed IPs for {peer.name} do not include {peer.address}"
             )
 
         connected = status.get("connected")
@@ -252,7 +448,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--status-url",
         default=os.environ.get("WG_HOME_STATUS_URL", ""),
-        help="WireGuard exporter JSON URL, usually https://gw.home.arpa:9586/peers.json.",
+        help="WireGuard exporter metrics URL, usually https://gw.home.arpa:9586/metrics.",
     )
     parser.add_argument(
         "--ca-file",
@@ -278,6 +474,12 @@ def build_parser() -> argparse.ArgumentParser:
         "--ttl-seconds",
         type=int,
         default=int(os.environ.get("WG_HOME_DNS_TTL_SECONDS", "60")),
+    )
+    parser.add_argument(
+        "--handshake-max-age-seconds",
+        type=int,
+        default=int(os.environ.get("WG_HOME_HANDSHAKE_MAX_AGE_SECONDS", "180")),
+        help="Maximum age of a latest WireGuard handshake before disabling DNS.",
     )
     parser.add_argument(
         "--peers-json",
@@ -320,6 +522,9 @@ def main() -> int:
     if args.ttl_seconds < 0:
         print("error: --ttl-seconds must be non-negative", file=sys.stderr)
         return 1
+    if args.handshake_max_age_seconds < 1:
+        print("error: --handshake-max-age-seconds must be positive", file=sys.stderr)
+        return 1
 
     raw_peers_json = args.peers_json
     if args.peers_json_file:
@@ -328,7 +533,7 @@ def main() -> int:
 
     try:
         peer_specs = load_peer_dns_specs(raw_peers_json)
-        status = fetch_status(
+        metrics_text = fetch_metrics(
             args.status_url,
             timeout_seconds=args.timeout_seconds,
             ca_file=args.ca_file,
@@ -337,7 +542,11 @@ def main() -> int:
         )
         dns_records = build_dns_records(
             peer_specs=peer_specs,
-            status_by_name=build_status_by_name(status),
+            status_by_public_key=build_status_by_public_key(
+                metrics_text=metrics_text,
+                now=int(time.time()),
+                handshake_max_age_seconds=args.handshake_max_age_seconds,
+            ),
             ttl_seconds=args.ttl_seconds,
         )
     except SyncError as error:

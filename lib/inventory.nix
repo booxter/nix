@@ -272,9 +272,11 @@ rec {
         mair = {
           host = "mair";
           address = "10.83.0.10/32";
+          publicKey = "j3TbXthVhDk2TVAag6Cr0MRLiCTaOPfBL8UeecG9Sx4=";
         };
         unifi-travel-router = {
           address = "10.83.0.20/32";
+          publicKey = "B+s4ysMFr3GrIdXdKP4SxXM3JZ9ziCUVJXkLwEvPX1E=";
         };
       };
     };

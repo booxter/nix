@@ -17,6 +17,7 @@ let
     inherit name;
     address = builtins.head (lib.splitString "/" peer.address);
     domain = "${peer.host}.${lan.domain}";
+    inherit (peer) publicKey;
   }) (lib.filterAttrs (_name: peer: peer ? host) wgHome.peers);
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
 in
@@ -64,7 +65,7 @@ in
       User = "unifi-sync";
       Group = "unifi-sync";
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe pkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/peers.json --ca-file ${internalPkiRootCaPath} --client-cert-file ${config.sops.secrets.wgHomeDnsSyncClientCrt.path} --client-key-file ${config.sops.secrets.wgHomeDnsSyncClientKey.path} --peers-json-file ${wgHomeDnsPeersFile} --unifi-sync-command ${lib.getExe pkgs.unifi-sync}";
+      ExecStart = "${lib.getExe pkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${config.sops.secrets.wgHomeDnsSyncClientCrt.path} --client-key-file ${config.sops.secrets.wgHomeDnsSyncClientKey.path} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile} --unifi-sync-command ${lib.getExe pkgs.unifi-sync}";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;
