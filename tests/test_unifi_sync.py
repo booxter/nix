@@ -13,6 +13,18 @@ sys.modules[SPEC.name] = unifi_sync
 SPEC.loader.exec_module(unifi_sync)
 
 
+def test_tls_verification_is_default():
+    args = unifi_sync.build_parser().parse_args([])
+
+    assert args.insecure_tls is False
+
+
+def test_insecure_tls_requires_explicit_option():
+    args = unifi_sync.build_parser().parse_args(["--insecure-tls"])
+
+    assert args.insecure_tls is True
+
+
 def test_render_classless_static_routes_option():
     routes = unifi_sync.parse_classless_static_routes(
         """

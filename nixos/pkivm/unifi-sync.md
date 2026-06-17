@@ -60,3 +60,6 @@ Use `unifi-sync --dry-run` when checking what the service would change before a
 deployment or live run. Add tests for encoding or payload behavior in
 [test_unifi_sync.py](../../tests/test_unifi_sync.py) rather than documenting
 sample encoded values here.
+
+TLS certificate verification is enabled by default. Use `--insecure-tls` only
+for temporary troubleshooting against an untrusted local console certificate.

@@ -18,6 +18,7 @@ DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
 LOCAL_CA_ENV = "ISSUE_CERT_LOCAL_CA"
 PROXMOX_API_SERVICE = "proxmox-api"
+DEFAULT_UNIFI_COMMON_NAME = "unifi.home.arpa"
 
 
 def find_repo_root():
@@ -171,6 +172,55 @@ def unique_strings(values):
     return result
 
 
+def unifi_common_name():
+    return os.environ.get(
+        "ISSUE_INTERNAL_SERVICE_CERT_UNIFI_COMMON_NAME",
+        DEFAULT_UNIFI_COMMON_NAME,
+    )
+
+
+def unifi_default_sans(common_name):
+    raw = os.environ.get("ISSUE_INTERNAL_SERVICE_CERT_UNIFI_SANS_JSON")
+    if not raw:
+        return [common_name]
+
+    try:
+        values = json.loads(raw)
+    except json.JSONDecodeError as error:
+        raise SystemExit(
+            f"ISSUE_INTERNAL_SERVICE_CERT_UNIFI_SANS_JSON is not valid JSON: {error}"
+        ) from error
+
+    if not isinstance(values, list) or not all(
+        isinstance(value, str) for value in values
+    ):
+        raise SystemExit(
+            "ISSUE_INTERNAL_SERVICE_CERT_UNIFI_SANS_JSON must be a JSON string list"
+        )
+    return values
+
+
+def validate_basename(value):
+    basename = pathlib.PurePath(value)
+    if basename.name != value or value in ("", ".", ".."):
+        raise SystemExit(f"invalid output basename: {value}")
+    return value
+
+
+def write_output(path, text, mode, *, force):
+    if path.exists() and not force:
+        raise SystemExit(f"refusing to overwrite existing file: {path}")
+
+    tmp_path = path.with_name(f".{path.name}.tmp")
+    try:
+        with tmp_path.open("w", encoding="utf-8") as handle:
+            handle.write(text)
+        os.chmod(tmp_path, mode)
+        os.replace(tmp_path, path)
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+
 def host_config_root(host):
     for root in ("nixosConfigurations", "darwinConfigurations"):
         if nix_eval_raw_optional(root, host, "config", "host", "dnsName") is not None:
@@ -307,6 +357,50 @@ def update_secret_file(host, service, service_cfg, cert_text, key_text):
         pathlib.Path(payload_path).unlink(missing_ok=True)
 
 
+def issue_unifi(args):
+    common_name = args.common_name or unifi_common_name()
+    sans = unique_strings(
+        [common_name, *unifi_default_sans(common_name), *(args.san or [])]
+    )
+    gateway_ip = os.environ.get("ISSUE_INTERNAL_SERVICE_CERT_UNIFI_GATEWAY_IP")
+    if args.include_gateway_ip and gateway_ip:
+        sans = unique_strings([*sans, gateway_ip])
+
+    basename = validate_basename(args.basename or common_name)
+    output_dir = args.output_dir.expanduser().resolve()
+    output_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+
+    cert_path = output_dir / f"{basename}.crt"
+    key_path = output_dir / f"{basename}.key"
+    pem_path = output_dir / f"{basename}.pem"
+
+    cert_text, key_text = issue_remote_cert(
+        ca_host=args.ca_host,
+        common_name=common_name,
+        sans=sans,
+    )
+    combined_text = cert_text + "\n" + key_text
+
+    write_output(cert_path, cert_text, 0o644, force=args.force)
+    write_output(key_path, key_text, 0o600, force=args.force)
+    write_output(pem_path, combined_text, 0o600, force=args.force)
+
+    print(
+        json.dumps(
+            {
+                "kind": "unifi",
+                "ca_host": args.ca_host,
+                "common_name": common_name,
+                "sans": sans,
+                "cert_file": str(cert_path),
+                "key_file": str(key_path),
+                "pem_file": str(pem_path),
+            },
+            sort_keys=True,
+        )
+    )
+
+
 def issue_service(host, service, *, ca_host):
     service_cfg = service_config(host, service)
     if not service_cfg.get("enable"):
@@ -403,14 +497,46 @@ def issue_client(host, client, *, ca_host):
 def main():
     parser = argparse.ArgumentParser(
         prog="issue-internal-service-cert",
-        description="Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.",
+        description="Issue internal PKI certs for internal HTTPS services, or local UniFi Console import files.",
     )
-    parser.add_argument(
-        "--host", required=True, help="Inventory host name, e.g. srvarr"
-    )
+    parser.add_argument("--host", help="Inventory host name, e.g. srvarr")
     parser.add_argument("--service", help="Internal HTTPS service name, e.g. glance")
     parser.add_argument(
         "--client", help="Internal HTTPS mTLS client identity name, e.g. vikunja"
+    )
+    parser.add_argument(
+        "--unifi",
+        action="store_true",
+        help="Issue a UniFi Console cert and write local import files instead of updating sops secrets.",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=pathlib.Path,
+        help="UniFi mode: directory where cert, private key, and combined PEM files are written.",
+    )
+    parser.add_argument(
+        "--common-name",
+        help=f"UniFi mode: certificate common name. Defaults to {unifi_common_name()}.",
+    )
+    parser.add_argument(
+        "--san",
+        action="append",
+        default=[],
+        help="UniFi mode: additional DNS or IP subjectAltName. May be passed more than once.",
+    )
+    parser.add_argument(
+        "--include-gateway-ip",
+        action="store_true",
+        help="UniFi mode: also include the inventory gateway IP as a certificate subjectAltName.",
+    )
+    parser.add_argument(
+        "--basename",
+        help="UniFi mode: output filename basename. Defaults to the common name.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="UniFi mode: overwrite existing output files.",
     )
     parser.add_argument(
         "--ca-host", default=DEFAULT_CA_HOST, help="SSH host running step-ca"
@@ -419,6 +545,32 @@ def main():
 
     if args.service and args.client:
         raise SystemExit("--service and --client are mutually exclusive")
+
+    if args.unifi:
+        if args.host or args.service or args.client:
+            raise SystemExit(
+                "--unifi cannot be combined with --host, --service, or --client"
+            )
+        if args.output_dir is None:
+            parser.error("--output-dir is required with --unifi")
+        validate_inventory_host(args.ca_host)
+        issue_unifi(args)
+        return
+
+    unifi_only_options_used = any(
+        [
+            args.output_dir is not None,
+            args.common_name is not None,
+            bool(args.san),
+            args.include_gateway_ip,
+            args.basename is not None,
+            args.force,
+        ]
+    )
+    if unifi_only_options_used:
+        raise SystemExit("UniFi output options require --unifi")
+    if args.host is None:
+        parser.error("--host is required unless --unifi is used")
 
     validate_inventory_host(args.host)
     validate_inventory_host(args.ca_host)

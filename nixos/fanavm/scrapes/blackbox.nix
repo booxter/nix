@@ -109,7 +109,17 @@ let
       inherit url;
     }
   ) proxmoxLabNodeNames;
-  serviceCatalog = inventoryServiceCatalog ++ proxmoxServiceCatalog;
+  manualTlsServiceCatalog = [
+    {
+      id = "unifi";
+      scope = "internal";
+      title = "UniFi Console";
+      probeUrl = "https://unifi.${lan.domain}/";
+      url = "https://unifi.${lan.domain}/";
+      tlsRotation = "manual";
+    }
+  ];
+  serviceCatalog = inventoryServiceCatalog ++ proxmoxServiceCatalog ++ manualTlsServiceCatalog;
   dnsProbeTargets = [
     {
       resolver = "gateway";
@@ -293,6 +303,9 @@ in
           scope = service.scope;
           service = service.id;
           service_title = service.title;
+        }
+        // lib.optionalAttrs (service ? tlsRotation) {
+          tls_rotation = service.tlsRotation;
         };
         targets = [ service.probeUrl ];
       }) serviceCatalog;

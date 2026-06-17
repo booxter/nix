@@ -64,7 +64,7 @@ let
     ]
   );
 
-  baseUrl = "https://${lan.gateway.address}";
+  baseUrl = "https://unifi";
   site = "default";
 in
 {

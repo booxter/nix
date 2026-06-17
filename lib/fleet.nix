@@ -211,6 +211,16 @@ let
     name = "issue-internal-service-cert-app";
     runtimeInputs = [ issueInternalServiceCertPackage ];
     text = ''
+      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_COMMON_NAME=${pkgs.lib.escapeShellArg "unifi.${lan.domain}"}
+      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_SANS_JSON=${
+        pkgs.lib.escapeShellArg (
+          builtins.toJSON [
+            "unifi.${lan.domain}"
+            "unifi"
+          ]
+        )
+      }
+      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_GATEWAY_IP=${pkgs.lib.escapeShellArg lan.gateway.address}
       exec ${issueInternalServiceCertPackage}/bin/issue-internal-service-cert "$@"
     '';
   };

@@ -153,9 +153,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional UniFi user group _id used for known-client creation.",
     )
     parser.add_argument(
-        "--strict-tls",
+        "--insecure-tls",
         action="store_true",
-        help="Verify the UniFi TLS certificate. Defaults to disabled for local self-signed consoles.",
+        help="Disable UniFi TLS certificate verification. Intended only for temporary local troubleshooting.",
     )
     parser.add_argument(
         "--debug",
@@ -1762,7 +1762,7 @@ def main() -> int:
             base_url=args.base_url,
             api_key=args.api_key,
             site=args.site,
-            verify_tls=args.strict_tls,
+            verify_tls=not args.insecure_tls,
             debug=args.debug,
         )
 
