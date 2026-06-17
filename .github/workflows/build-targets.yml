@@ -451,6 +451,7 @@ jobs:
             const isConfigDiffComment = (body) =>
               body.includes(commentMarker) ||
               (body.startsWith("## Config diffs") && body.includes(commentSignature));
+            const normalizeLogin = (login) => (login || "").replace(/\[bot\]$/, "");
 
             const fetchBotLogin = async () => {
               try {
@@ -523,7 +524,7 @@ jobs:
                 previousComments = comments.filter(
                   (comment) =>
                     !comment.isMinimized &&
-                    comment.author?.login === botLogin &&
+                    normalizeLogin(comment.author?.login) === normalizeLogin(botLogin) &&
                     isConfigDiffComment(comment.body || ""),
                 );
               } catch (error) {
