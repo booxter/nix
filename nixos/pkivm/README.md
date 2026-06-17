@@ -19,7 +19,8 @@ trusted-LAN DHCP and split DNS stay converged with inventory.
 
 - `nix run .#issue-internal-service-cert`
   - issue server certs for internal HTTPS services like `glance`, `grafana`,
-    `radarr`, `sonarr`, and similar nginx-fronted LAN endpoints
+    `radarr`, `sonarr`, and similar nginx-fronted LAN endpoints, plus local
+    cert/key files for manual UniFi Console import
 - `nix run .#issue-observability-cert`
   - issue server certs for Prometheus mTLS scrape endpoints and client certs
     for mTLS consumers such as `jellyfin-upload-policy`
@@ -51,6 +52,17 @@ Prometheus mTLS client cert:
 nix run .#issue-observability-cert -- --host srvarr --client jellyfin-upload-policy
 nix run .#deploy -- --branch dhcp-unifi srvarr
 ```
+
+UniFi Console certificate for manual import:
+
+```bash
+nix run .#issue-internal-service-cert -- --unifi --output-dir /private/tmp/unifi-cert
+```
+
+This writes `unifi.home.arpa.crt`, `unifi.home.arpa.key`, and
+`unifi.home.arpa.pem` into the output directory using the CA's configured leaf
+lifetime, currently 180 days. The `.pem` file is the bundled certificate plus
+private key next to the standalone private key file.
 
 PKI status inventory:
 
