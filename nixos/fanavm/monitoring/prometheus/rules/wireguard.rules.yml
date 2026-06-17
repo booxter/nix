@@ -1,0 +1,13 @@
+groups:
+  - name: wireguard
+    interval: 30s
+    rules:
+      - alert: WireGuardUnitDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="gw",name=~"(wireguard-wg0|prometheus-wireguard-exporter)\\.service",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: network
+        annotations:
+          summary: "WireGuard unit down: {{ $labels.name }}"
+          description: "The WireGuard unit {{ $labels.name }} on gw has not been active for 5 minutes."

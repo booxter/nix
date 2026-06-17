@@ -1,0 +1,61 @@
+rule_files:
+  - ../rules/wireguard.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="gw",job="node-mtls",name="wireguard-wg0.service",state="active"}'
+        values: "1x12"
+      - series: 'node_systemd_unit_state{instance="gw",job="node-mtls",name="prometheus-wireguard-exporter.service",state="active"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: WireGuardUnitDown
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="gw",job="node-mtls",name="wireguard-wg0.service",state="active"}'
+        values: "0x12"
+      - series: 'node_systemd_unit_state{instance="gw",job="node-mtls",name="prometheus-wireguard-exporter.service",state="active"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: WireGuardUnitDown
+      - eval_time: 5m
+        alertname: WireGuardUnitDown
+        exp_alerts:
+          - exp_labels:
+              alertname: WireGuardUnitDown
+              category: network
+              instance: gw
+              job: node-mtls
+              name: wireguard-wg0.service
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "WireGuard unit down: wireguard-wg0.service"
+              description: "The WireGuard unit wireguard-wg0.service on gw has not been active for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="gw",job="node-mtls",name="wireguard-wg0.service",state="active"}'
+        values: "1x12"
+      - series: 'node_systemd_unit_state{instance="gw",job="node-mtls",name="prometheus-wireguard-exporter.service",state="active"}'
+        values: "0x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: WireGuardUnitDown
+        exp_alerts:
+          - exp_labels:
+              alertname: WireGuardUnitDown
+              category: network
+              instance: gw
+              job: node-mtls
+              name: prometheus-wireguard-exporter.service
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "WireGuard unit down: prometheus-wireguard-exporter.service"
+              description: "The WireGuard unit prometheus-wireguard-exporter.service on gw has not been active for 5 minutes."
