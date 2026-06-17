@@ -184,8 +184,12 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "gray",
+                "color": "green",
                 "value": null
+              },
+              {
+                "color": "gray",
+                "value": 180.000001
               }
             ]
           },
