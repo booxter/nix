@@ -54,4 +54,10 @@
     path = "music";
     collectionType = "music";
   }
+  {
+    name = "Games";
+    path = "games";
+    collectionType = "books";
+    isGames = true;
+  }
 ]

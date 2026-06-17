@@ -10,6 +10,7 @@
 let
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
+  gamesLibraryPath = "${mediaPaths.jellyfinLibraryRoot}/games";
   hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {
@@ -140,6 +141,11 @@ in
             url = "https://raw.githubusercontent.com/danielfariati/jellyfin-plugin-lastfm/refs/heads/master/manifest.json";
             enabled = true;
           }
+          {
+            name = "Jellyfin-PG";
+            url = "https://raw.githubusercontent.com/Jellyfin-PG/Repository/refs/heads/main/manifest.json";
+            enabled = true;
+          }
         ];
         trickplayOptions = {
           enableHwAcceleration = true;
@@ -173,118 +179,138 @@ in
             getTypeOptions =
               {
                 isAdult ? false,
+                isGames ? false,
                 preferTmdb ? false,
               }:
-              [
-                (
+              if isGames then
+                [
                   {
-                    type = "Movie";
-                    metadataFetchers =
-                      lib.optionals isAdult [
+                    type = "Book";
+                    metadataFetchers = [
+                      "Local Rom Assets"
+                      "IGDB Metadata Provider"
+                      "RAWG Metadata Provider"
+                    ];
+                    imageFetchers = [
+                      "Local Rom Assets"
+                      "IGDB Metadata Provider"
+                      "RAWG Metadata Provider"
+                      "SteamGridDB Image Provider"
+                    ];
+                  }
+                ]
+              else
+                [
+                  (
+                    {
+                      type = "Movie";
+                      metadataFetchers =
+                        lib.optionals isAdult [
+                          "ThePornDB Movies"
+                          "ThePornDB Scenes"
+                          "ThePornDB JAV"
+                        ]
+                        ++ [
+                          "TheMovieDb"
+                          "The Open Movie Database"
+                        ];
+
+                      imageFetchers =
+                        lib.optionals isAdult [
+                          "ThePornDB"
+                        ]
+                        ++ [
+                          "TheMovieDb"
+                          "The Open Movie Database"
+                          "Embedded Image Extractor"
+                          "Screen Grabber"
+                        ];
+                    }
+                    // lib.optionalAttrs (isAdult && preferTmdb) {
+                      metadataFetcherOrder = [
+                        "TheMovieDb"
                         "ThePornDB Movies"
                         "ThePornDB Scenes"
                         "ThePornDB JAV"
-                      ]
-                      ++ [
-                        "TheMovieDb"
                         "The Open Movie Database"
                       ];
-
-                    imageFetchers =
-                      lib.optionals isAdult [
-                        "ThePornDB"
-                      ]
-                      ++ [
+                      imageFetcherOrder = [
                         "TheMovieDb"
+                        "ThePornDB"
                         "The Open Movie Database"
                         "Embedded Image Extractor"
                         "Screen Grabber"
                       ];
-                  }
-                  // lib.optionalAttrs (isAdult && preferTmdb) {
-                    metadataFetcherOrder = [
+                    }
+                  )
+                  {
+                    type = "Series";
+                    metadataFetchers = [
+                      "Missing Episode Fetcher"
+                      "TheTVDB"
                       "TheMovieDb"
-                      "ThePornDB Movies"
-                      "ThePornDB Scenes"
-                      "ThePornDB JAV"
                       "The Open Movie Database"
                     ];
-                    imageFetcherOrder = [
+                    imageFetchers = [
+                      "TheTVDB"
                       "TheMovieDb"
-                      "ThePornDB"
+                    ];
+                  }
+                  {
+                    type = "Season";
+                    metadataFetchers = [
+                      "TheTVDB"
+                      "TheMovieDb"
+                    ];
+                    imageFetchers = [
+                      "TheTVDB"
+                      "TheMovieDb"
+                    ];
+                  }
+                  {
+                    type = "Episode";
+                    metadataFetchers = [
+                      "TheTVDB"
+                      "TheMovieDb"
+                      "The Open Movie Database"
+                    ];
+                    imageFetchers = [
+                      "TheTVDB"
+                      "TheMovieDb"
                       "The Open Movie Database"
                       "Embedded Image Extractor"
                       "Screen Grabber"
                     ];
                   }
-                )
-                {
-                  type = "Series";
-                  metadataFetchers = [
-                    "Missing Episode Fetcher"
-                    "TheTVDB"
-                    "TheMovieDb"
-                    "The Open Movie Database"
-                  ];
-                  imageFetchers = [
-                    "TheTVDB"
-                    "TheMovieDb"
-                  ];
-                }
-                {
-                  type = "Season";
-                  metadataFetchers = [
-                    "TheTVDB"
-                    "TheMovieDb"
-                  ];
-                  imageFetchers = [
-                    "TheTVDB"
-                    "TheMovieDb"
-                  ];
-                }
-                {
-                  type = "Episode";
-                  metadataFetchers = [
-                    "TheTVDB"
-                    "TheMovieDb"
-                    "The Open Movie Database"
-                  ];
-                  imageFetchers = [
-                    "TheTVDB"
-                    "TheMovieDb"
-                    "The Open Movie Database"
-                    "Embedded Image Extractor"
-                    "Screen Grabber"
-                  ];
-                }
-                {
-                  type = "MusicArtist";
-                  metadataFetchers = [ "MusicBrainz" ];
-                  imageFetchers = [ "TheAudioDB" ];
-                }
-                {
-                  type = "MusicAlbum";
-                  metadataFetchers = [ "MusicBrainz" ];
-                  imageFetchers = [ "TheAudioDB" ];
-                }
-                {
-                  type = "Audio";
-                  metadataFetchers = [ ];
-                  imageFetchers = [ "Image Extractor" ];
-                }
-                {
-                  type = "MusicVideo";
-                  metadataFetchers = [ ];
-                  imageFetchers = [
-                    "Embedded Image Extractor"
-                    "Screen Grabber"
-                  ];
-                }
-              ];
+                  {
+                    type = "MusicArtist";
+                    metadataFetchers = [ "MusicBrainz" ];
+                    imageFetchers = [ "TheAudioDB" ];
+                  }
+                  {
+                    type = "MusicAlbum";
+                    metadataFetchers = [ "MusicBrainz" ];
+                    imageFetchers = [ "TheAudioDB" ];
+                  }
+                  {
+                    type = "Audio";
+                    metadataFetchers = [ ];
+                    imageFetchers = [ "Image Extractor" ];
+                  }
+                  {
+                    type = "MusicVideo";
+                    metadataFetchers = [ ];
+                    imageFetchers = [
+                      "Embedded Image Extractor"
+                      "Screen Grabber"
+                    ];
+                  }
+                ];
             getLibraryOptions =
               {
                 path,
                 isAdult ? false,
+                isGames ? false,
                 isMusic ? false,
                 preferTmdb ? false,
               }:
@@ -294,20 +320,20 @@ in
                 ];
 
                 typeOptions = getTypeOptions {
-                  inherit isAdult preferTmdb;
+                  inherit isAdult isGames preferTmdb;
                 };
 
-                automaticallyAddToCollection = true;
+                automaticallyAddToCollection = !isGames;
 
-                enableChapterImageExtraction = true;
+                enableChapterImageExtraction = !isGames;
                 # Generate these on demand or via dedicated jobs, not during scans.
                 extractChapterImagesDuringLibraryScan = false;
                 extractTrickplayImagesDuringLibraryScan = false;
-                enableEmbeddedEpisodeInfos = true;
-                enableEmbeddedExtraTitles = true;
-                enableTrickplayImageExtraction = true;
+                enableEmbeddedEpisodeInfos = !isGames;
+                enableEmbeddedExtraTitles = !isGames;
+                enableTrickplayImageExtraction = !isGames;
 
-                saveTrickplayWithMedia = true;
+                saveTrickplayWithMedia = !isGames;
                 metadataSavers = [ "Nfo" ];
                 saveLocalMetadata = true;
 
@@ -326,6 +352,7 @@ in
             libraryOptions = getLibraryOptions {
               inherit (library) path;
               isAdult = library.isAdult or false;
+              isGames = library.isGames or false;
               isMusic = library.collectionType == "music";
               preferTmdb = library.preferTmdb or false;
             };
@@ -372,6 +399,7 @@ in
                   "Docu"
                   "Stand-up"
                   "Music"
+                  "Games"
                 ]
                 ++ lib.optionals isAdult [
                   "Attic"
@@ -385,18 +413,31 @@ in
             };
         in
         map getUser userDefinitions;
-      plugins = map (name: { inherit name; }) [
-        "AudioDB"
-        "Letterboxd Link on Movies"
-        "Last.fm"
-        "LrcLib Lyrics"
-        "MusicBrainz"
-        "OMDb"
-        "Studio Images"
-        "ThePornDB"
-        "TheTVDB"
-        "TMDb"
-      ];
+      plugins =
+        (map (name: { inherit name; }) [
+          "AudioDB"
+          "Letterboxd Link on Movies"
+          "Last.fm"
+          "LrcLib Lyrics"
+          "MusicBrainz"
+          "OMDb"
+          "Studio Images"
+          "ThePornDB"
+          "TheTVDB"
+          "TMDb"
+          "File Transformation"
+        ])
+        ++ [
+          {
+            name = "JellyEmu";
+            configuration = {
+              MarketplaceConfigured = true;
+              MarketplaceFeedUrl = "https://raw.githubusercontent.com/Jellyfin-PG/JellyEmu-Resources/refs/heads/main/providers.json";
+              MarketplaceProviders = [ "https://vimm.net" ];
+              GamesLibraryPath = gamesLibraryPath;
+            };
+          }
+        ];
     };
   };
 }
