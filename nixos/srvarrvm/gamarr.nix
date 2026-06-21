@@ -21,7 +21,6 @@ let
 in
 {
   sops.secrets = {
-    "gamarr/authPassword" = { };
     "gamarr/apiKey" = { };
     "prowlarr/apiKey" = { };
   };
@@ -31,8 +30,6 @@ in
     group = "media";
     mode = "0400";
     content = ''
-      AUTH_PASSWORD=${config.sops.placeholder."gamarr/authPassword"}
-      API_KEY=${config.sops.placeholder."gamarr/apiKey"}
       TORZNAB_API_KEY=${config.sops.placeholder."gamarr/apiKey"}
       # Mirror the existing Prowlarr UI-generated API key. Do not use this
       # secret to override or rotate Prowlarr's own config.
@@ -82,7 +79,9 @@ in
       DATA_DIR = stateDir;
       GAMES_ROMS_PATH = romsPath;
       GAMES_VAULT_PATH = "${romsPath}/pc";
-      AUTH_USERNAME = "ihar";
+      # Leave Gamarr's app-level auth disabled. In v1.2.0 the bundled UI serves
+      # before a login flow and then calls authenticated config APIs, which
+      # makes external service links fall back to upstream's container defaults.
       # Gamarr defaults qBittorrent and Prowlarr to container hostnames.
       # Disable qBittorrent explicitly; this host uses Transmission/SABnzbd.
       QB_URL = "";
