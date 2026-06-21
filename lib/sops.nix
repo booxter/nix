@@ -70,6 +70,22 @@ let
     '';
   };
 
+  # Set a single key path in one host secret from stdin.
+  sops-set = pkgs.writeShellApplication {
+    name = "sops-set";
+    runtimeInputs = with pkgs; [
+      age-plugin-se
+      coreutils
+      git
+      jq
+      sops
+      yq-go
+    ];
+    text = ''
+      exec ${../scripts/sops-set.sh} "$@"
+    '';
+  };
+
   # Sync NUT secondary-user passwords from UPS servers into client secrets.
   sops-ups-sync = pkgs.writeShellApplication {
     name = "sops-ups-sync";
@@ -131,6 +147,7 @@ in
   "sops-update" =
     mkApp "${sops-update}/bin/sops-update" "Merge missing template keys into a host secret.";
   "sops-copy" = mkApp "${sops-copy}/bin/sops-copy" "Copy a top-level key path between host secrets.";
+  "sops-set" = mkApp "${sops-set}/bin/sops-set" "Set a single host secret key path from stdin.";
   "sops-ups-sync" =
     mkApp "${sops-ups-sync}/bin/sops-ups-sync" "Sync NUT UPS server passwords into client secrets.";
   "sops-pass" = mkApp "${sops-pass}/bin/sops-pass" "Hash and store a NixOS login password.";

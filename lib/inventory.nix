@@ -312,6 +312,14 @@ rec {
       probePath = "/login";
     }))
     (resolveService (mkService {
+      id = "romm";
+      title = "RomM";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "game.ihar.dev";
+      probePath = "/api/heartbeat";
+    }))
+    (resolveService (mkService {
       id = "grafana";
       scope = "internal";
       owner = "fana";
@@ -388,6 +396,13 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/login/";
+    }))
+    (resolveService (mkService {
+      id = "gamarr";
+      title = "Gamarr";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/api/health";
     }))
   ];
 
@@ -568,6 +583,8 @@ rec {
         "lidarr"
         "bazarr"
         "prowlarr"
+        "romm"
+        "gamarr"
         "aurral"
         "audiobookshelf"
         "shelfmark"

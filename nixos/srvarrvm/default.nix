@@ -10,8 +10,10 @@
     ./aurral.nix
     ./backup.nix
     ./glance.nix
+    ./gamarr.nix
     ./nfs.nix
     ./paths.nix
+    ./romm.nix
     ./qos.nix
     ./sabnzbd.nix
     ./seerr.nix
