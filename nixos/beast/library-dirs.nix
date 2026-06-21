@@ -8,7 +8,6 @@ let
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
   rommUser = toString servarrAccounts.uids.romm;
-  gamarrUser = toString servarrAccounts.uids.gamarr;
 
   mkTmpfilesDir = path: mode: user: group: [
     "d ${path} ${mode} ${user} ${group} - -"
@@ -87,7 +86,7 @@ let
     {
       path = "${mediaRommRoot}/library/roms/pc";
       mode = "2775";
-      user = gamarrUser;
+      user = rommUser;
       group = "media";
     }
     {

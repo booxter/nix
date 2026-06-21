@@ -19,8 +19,6 @@ in
 
   aurral = pkgs.callPackage ./aurral { };
 
-  gamarr = pkgs.callPackage ./gamarr { };
-
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
   darwin-lan-wan-bpf = pkgs.callPackage ./darwin-lan-wan-bpf { };

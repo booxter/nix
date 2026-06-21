@@ -397,13 +397,6 @@ rec {
       owner = "srvarr";
       probePath = "/login/";
     }))
-    (resolveService (mkService {
-      id = "gamarr";
-      title = "Gamarr";
-      scope = "internal";
-      owner = "srvarr";
-      probePath = "/api/health";
-    }))
   ];
 
   staticDhcpReservations = [
@@ -584,7 +577,6 @@ rec {
         "bazarr"
         "prowlarr"
         "romm"
-        "gamarr"
         "aurral"
         "audiobookshelf"
         "shelfmark"
