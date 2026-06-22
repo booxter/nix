@@ -176,7 +176,7 @@ in
                 secretPrefix = lib.mkOption {
                   type = str;
                   default = "prometheus/${name}";
-                  description = "Secret prefix containing server_crt and server_key for this endpoint.";
+                  description = "Secret prefix containing server_crt_unencrypted and server_key for this endpoint.";
                 };
 
                 locationExtraConfig = lib.mkOption {
@@ -211,7 +211,7 @@ in
                 secretPrefix = lib.mkOption {
                   type = str;
                   default = "prometheus/clients/${name}";
-                  description = "Secret prefix containing client_crt and client_key for this client identity.";
+                  description = "Secret prefix containing client_crt_unencrypted and client_key for this client identity.";
                 };
 
                 commonName = lib.mkOption {
@@ -343,7 +343,7 @@ in
           ];
 
           sops.secrets.observabilityLokiClientCrt = {
-            key = "${lokiMtlsClient.secretPrefix}/client_crt";
+            key = "${lokiMtlsClient.secretPrefix}/client_crt_unencrypted";
             mode = "0400";
             restartUnits = [ "alloy.service" ];
           };
@@ -365,7 +365,7 @@ in
         })
         (lib.mkIf cfg.nodeExporter.mtls.enable {
           sops.secrets.prometheusNodeExporterServerCrt = {
-            key = "${nodeExporterSecretPrefix}/server_crt";
+            key = "${nodeExporterSecretPrefix}/server_crt_unencrypted";
             owner = nodeExporterUser;
             group = nodeExporterGroup;
             mode = "0400";
@@ -412,7 +412,7 @@ in
             lib.mapAttrs' (
               endpointName: endpoint:
               lib.nameValuePair "${endpointSecretAttrName endpointName}-server-crt" {
-                key = "${endpoint.secretPrefix}/server_crt";
+                key = "${endpoint.secretPrefix}/server_crt_unencrypted";
                 owner = config.services.nginx.user;
                 group = config.services.nginx.group;
                 mode = "0400";

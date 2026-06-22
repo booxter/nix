@@ -48,7 +48,7 @@ in
     secretPrefix = lib.mkOption {
       type = lib.types.str;
       default = "proxmox/api";
-      description = "SOPS key prefix containing server_crt and server_key for pveproxy.";
+      description = "SOPS key prefix containing server_crt_unencrypted and server_key for pveproxy.";
     };
 
     certificatePath = lib.mkOption {
@@ -144,7 +144,7 @@ in
       };
 
       sops.secrets.proxmoxApiServerCrt = {
-        key = "${cfg.secretPrefix}/server_crt";
+        key = "${cfg.secretPrefix}/server_crt_unencrypted";
         mode = "0400";
         restartUnits = [
           certInstallUnit

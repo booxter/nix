@@ -414,7 +414,7 @@ def issue_endpoint(host, endpoint, *, ca_host):
     update_secret_file(
         host,
         endpoint_cfg["secretPrefix"],
-        "server_crt",
+        "server_crt_unencrypted",
         "server_key",
         cert_text,
         key_text,
@@ -450,7 +450,7 @@ def issue_client(host, client, *, ca_host):
     update_secret_file(
         host,
         client_cfg["secretPrefix"],
-        "client_crt",
+        "client_crt_unencrypted",
         "client_key",
         cert_text,
         key_text,

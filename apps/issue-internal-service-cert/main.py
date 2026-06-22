@@ -343,7 +343,7 @@ def update_secret_file(host, service, service_cfg, cert_text, key_text):
     data = yaml.safe_load(decrypted) or {}
 
     prefix = service_cfg["secretPrefix"].split("/")
-    set_nested(data, prefix + ["server_crt"], cert_text.rstrip("\n"))
+    set_nested(data, prefix + ["server_crt_unencrypted"], cert_text.rstrip("\n"))
     set_nested(data, prefix + ["server_key"], key_text.rstrip("\n"))
 
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
@@ -454,7 +454,7 @@ def update_client_secret_file(host, client_cfg, cert_text, key_text):
     data = yaml.safe_load(decrypted) or {}
 
     prefix = client_cfg["secretPrefix"].split("/")
-    set_nested(data, prefix + ["client_crt"], cert_text.rstrip("\n"))
+    set_nested(data, prefix + ["client_crt_unencrypted"], cert_text.rstrip("\n"))
     set_nested(data, prefix + ["client_key"], key_text.rstrip("\n"))
 
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:

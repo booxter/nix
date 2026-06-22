@@ -40,7 +40,7 @@ in
 
   sops.secrets = lib.mkIf jellyfinUploadPolicyMtlsClient.enable {
     jellyfinUploadPolicyClientCrt = {
-      key = "${jellyfinUploadPolicyMtlsClient.secretPrefix}/client_crt";
+      key = "${jellyfinUploadPolicyMtlsClient.secretPrefix}/client_crt_unencrypted";
       owner = "transmission";
       group = "media";
       mode = "0400";

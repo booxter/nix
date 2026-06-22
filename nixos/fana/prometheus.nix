@@ -80,7 +80,7 @@ in
   };
 
   sops.secrets.prometheusScrapeNodeClientCrt = {
-    key = "${prometheusScrapeClient.secretPrefix}/client_crt";
+    key = "${prometheusScrapeClient.secretPrefix}/client_crt_unencrypted";
     owner = "prometheus";
     group = "prometheus";
     mode = "0400";

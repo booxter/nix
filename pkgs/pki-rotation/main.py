@@ -195,6 +195,10 @@ def get_nested(mapping, dotted_path):
     return cursor
 
 
+def is_encrypted_sops_value(value):
+    return isinstance(value, str) and value.startswith("ENC[")
+
+
 def extract_first_pem_block(pem_text):
     match = re.search(
         r"-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----",
@@ -234,12 +238,12 @@ def parse_cert_text(cert_text):
     }
 
 
-def decrypt_secret(secret_path, *, repo_root, sops_age_key_file):
-    env = os.environ.copy()
-    if sops_age_key_file:
-        env["SOPS_AGE_KEY_FILE"] = sops_age_key_file
-    decrypted = run(["sops", "--decrypt", str(secret_path)], cwd=repo_root, env=env)
-    return yaml.safe_load(decrypted) or {}
+def load_encrypted_secret(secret_path, *, encrypted_secret_cache):
+    if secret_path not in encrypted_secret_cache:
+        encrypted_secret_cache[secret_path] = (
+            yaml.safe_load(secret_path.read_text()) or {}
+        )
+    return encrypted_secret_cache[secret_path]
 
 
 def internal_https_service_specs(host, root, *, repo_root):
@@ -272,7 +276,7 @@ def internal_https_service_specs(host, root, *, repo_root):
             source_kind="repo_secret",
             secret_host=host,
             secret_prefix=service_cfg["secretPrefix"],
-            cert_field="server_crt",
+            cert_field="server_crt_unencrypted",
         )
 
 
@@ -302,7 +306,7 @@ def proxmox_api_certificate_specs(host, root, *, repo_root):
         source_kind="repo_secret",
         secret_host=host,
         secret_prefix=service_cfg["secretPrefix"],
-        cert_field="server_crt",
+        cert_field="server_crt_unencrypted",
     )
 
 
@@ -329,7 +333,7 @@ def observability_endpoint_specs(host, root, *, repo_root):
             source_kind="repo_secret",
             secret_host=host,
             secret_prefix=NODE_EXPORTER_SECRET_PREFIX,
-            cert_field="server_crt",
+            cert_field="server_crt_unencrypted",
         )
 
     endpoint_map = (
@@ -355,7 +359,7 @@ def observability_endpoint_specs(host, root, *, repo_root):
             source_kind="repo_secret",
             secret_host=host,
             secret_prefix=endpoint_cfg["secretPrefix"],
-            cert_field="server_crt",
+            cert_field="server_crt_unencrypted",
         )
 
 
@@ -383,7 +387,7 @@ def observability_client_specs(host, root, *, repo_root):
             source_kind="repo_secret",
             secret_host=host,
             secret_prefix=client_cfg["secretPrefix"],
-            cert_field="client_crt",
+            cert_field="client_crt_unencrypted",
         )
 
 
@@ -410,7 +414,7 @@ def external_service_client_specs(host, root, *, repo_root):
             source_kind="repo_secret",
             secret_host=host,
             secret_prefix=client_cfg["secretPrefix"],
-            cert_field="client_crt",
+            cert_field="client_crt_unencrypted",
         )
 
 
@@ -448,33 +452,28 @@ def cert_specs(repo_root, *, intermediate_cert_path):
         yield from external_service_client_specs(host, root, repo_root=repo_root)
 
 
-def load_cert_text(spec, *, repo_root, sops_age_key_file, secret_cache):
+def load_cert_text(spec, *, repo_root, encrypted_secret_cache):
     if spec.source_kind in {"repo_file", "host_file"}:
         path = pathlib.Path(spec.file_path)
         if not path.exists():
             return None
         return path.read_text()
 
-    if spec.secret_host not in secret_cache:
-        secret_path = repo_root / "secrets" / f"{spec.secret_host}.yaml"
-        secret_cache[spec.secret_host] = decrypt_secret(
-            secret_path,
-            repo_root=repo_root,
-            sops_age_key_file=sops_age_key_file,
-        )
-    secret_data = secret_cache[spec.secret_host]
-    value = get_nested(secret_data, f"{spec.secret_prefix}/{spec.cert_field}")
-    if not isinstance(value, str):
-        return None
-    return value
+    secret_path = repo_root / "secrets" / f"{spec.secret_host}.yaml"
+    encrypted_secret_data = load_encrypted_secret(
+        secret_path,
+        encrypted_secret_cache=encrypted_secret_cache,
+    )
+    value = get_nested(encrypted_secret_data, f"{spec.secret_prefix}/{spec.cert_field}")
+    if isinstance(value, str) and not is_encrypted_sops_value(value):
+        return value
+    return None
 
 
-def scan_certs(
-    repo_root, *, intermediate_cert_path, rotation_window_days, sops_age_key_file
-):
+def scan_certs(repo_root, *, intermediate_cert_path, rotation_window_days):
     repo_root = normalize_repo_root(repo_root)
     now = dt.datetime.now(dt.timezone.utc)
-    secret_cache = {}
+    encrypted_secret_cache = {}
     records = []
     for spec in cert_specs(repo_root, intermediate_cert_path=intermediate_cert_path):
         record = {
@@ -490,8 +489,7 @@ def scan_certs(
         cert_text = load_cert_text(
             spec,
             repo_root=repo_root,
-            sops_age_key_file=sops_age_key_file,
-            secret_cache=secret_cache,
+            encrypted_secret_cache=encrypted_secret_cache,
         )
         if cert_text is None or cert_text.strip() in {"", "REPLACE_ME"}:
             records.append(record)
@@ -940,7 +938,6 @@ def cmd_rotate(args):
             args.repo_root,
             intermediate_cert_path=args.intermediate_cert_path,
             rotation_window_days=args.rotation_window_days,
-            sops_age_key_file=args.sops_age_key_file,
         )
         candidates = rotation_candidates(records)
         summary = {
@@ -984,7 +981,6 @@ def cmd_rotate(args):
                 worktree,
                 intermediate_cert_path=args.intermediate_cert_path,
                 rotation_window_days=args.rotation_window_days,
-                sops_age_key_file=args.sops_age_key_file,
             )
             candidates = rotation_candidates(records_before)
 
@@ -1001,7 +997,6 @@ def cmd_rotate(args):
                 worktree,
                 intermediate_cert_path=args.intermediate_cert_path,
                 rotation_window_days=args.rotation_window_days,
-                sops_age_key_file=args.sops_age_key_file,
             )
 
             pr_url = open_pr["html_url"] if open_pr else None
@@ -1095,7 +1090,6 @@ def cmd_scan(args):
         args.repo_root,
         intermediate_cert_path=args.intermediate_cert_path,
         rotation_window_days=args.rotation_window_days,
-        sops_age_key_file=args.sops_age_key_file,
     )
     print(json.dumps(records, indent=2, sort_keys=True))
 
@@ -1109,14 +1103,12 @@ def cmd_export_metrics(args):
                 worktree,
                 intermediate_cert_path=args.intermediate_cert_path,
                 rotation_window_days=args.rotation_window_days,
-                sops_age_key_file=args.sops_age_key_file,
             )
     else:
         records = scan_certs(
             args.repo_root,
             intermediate_cert_path=args.intermediate_cert_path,
             rotation_window_days=args.rotation_window_days,
-            sops_age_key_file=args.sops_age_key_file,
         )
     content = metrics_text(records)
     if args.output:

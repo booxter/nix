@@ -32,7 +32,7 @@ in
   };
 
   sops.secrets.wgHomeDnsSyncClientCrt = {
-    key = "${wgHomeDnsSyncClientSecretPrefix}/client_crt";
+    key = "${wgHomeDnsSyncClientSecretPrefix}/client_crt_unencrypted";
     owner = "unifi-sync";
     group = "unifi-sync";
     mode = "0400";

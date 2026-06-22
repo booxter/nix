@@ -107,7 +107,7 @@ in
               secretPrefix = lib.mkOption {
                 type = str;
                 default = "internal_https/${name}";
-                description = "SOPS key prefix containing server_crt and server_key for this service.";
+                description = "SOPS key prefix containing server_crt_unencrypted and server_key for this service.";
               };
 
               locationExtraConfig = lib.mkOption {
@@ -150,7 +150,7 @@ in
       lib.mapAttrs' (
         serviceName: service:
         lib.nameValuePair "${secretAttrName serviceName}-server-crt" {
-          key = "${service.secretPrefix}/server_crt";
+          key = "${service.secretPrefix}/server_crt_unencrypted";
           owner = config.services.nginx.user;
           group = config.services.nginx.group;
           mode = "0400";
