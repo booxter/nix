@@ -34,6 +34,7 @@ buildGoModule rec {
   meta = {
     description = "Apple SMC CLI for temperatures, fans, battery, power, voltage and current";
     homepage = "https://github.com/dkorunic/iSMC";
+    changelog = "https://github.com/dkorunic/iSMC/releases/tag/v${version}";
     license = lib.licenses.gpl3Only;
     mainProgram = "iSMC";
     platforms = lib.platforms.darwin;

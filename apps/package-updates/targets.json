@@ -1,0 +1,20 @@
+{
+  "targets": [
+    {
+      "attr": "aurral",
+      "nixUpdateArgs": [
+        "--src-only",
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "ismc",
+      "nixUpdateArgs": [
+        "--src-only",
+        "--use-github-releases"
+      ],
+      "system": "x86_64-darwin"
+    }
+  ]
+}

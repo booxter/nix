@@ -190,15 +190,24 @@
       packages = helpers.forAllSystems (
         system:
         let
-          basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
-          mminiPackages = import ./darwin/mmini/pkgs inputs.nixpkgs.legacyPackages.${system};
+          pkgs = inputs.nixpkgs.legacyPackages.${system};
+          basePackages = import ./pkgs pkgs;
+          mminiPackages = import ./darwin/mmini/pkgs pkgs;
           fleetPackages = {
             inherit (inputs.disko.packages.${system}) disko-install;
             inherit (mminiPackages) fleet-cache-warmer;
           };
+          updateTargetPackages =
+            pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
+            }
+            // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+              ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
+            };
         in
         basePackages
         // fleetPackages
+        // updateTargetPackages
         // {
           qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
         }
@@ -215,6 +224,7 @@
             ];
           };
           sopsApps = import ./apps/sops { inherit pkgs; };
+          packageUpdateApps = import ./apps/package-updates { inherit pkgs; };
           fleetApps = import ./apps/fleet.nix {
             inherit pkgs username;
           };
@@ -243,7 +253,7 @@
             inherit inputs system;
           };
         in
-        sopsApps // fleetApps // proxmox.apps // cookieApps // darwinApps
+        sopsApps // packageUpdateApps // fleetApps // proxmox.apps // cookieApps // darwinApps
       );
       formatter = helpers.forAllSystems (
         system:
