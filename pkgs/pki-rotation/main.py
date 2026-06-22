@@ -1146,7 +1146,7 @@ def build_parser():
     parser.add_argument(
         "--intermediate-cert-path",
         default=DEFAULT_INTERMEDIATE_CERT_PATH,
-        help="Path to the step-ca intermediate certificate on pkivm.",
+        help="Path to the step-ca intermediate certificate on pki.",
     )
     parser.add_argument(
         "--sops-age-key-file",

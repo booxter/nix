@@ -2,7 +2,7 @@
 
 This repo manages internal PKI leaf certificates through encrypted host
 secrets, so rotation should happen centrally from `prox-pkivm`, not on each
-host. `pkivm` already runs `step-ca` and the issuer apps, and the fleet already
+host. `pki` already runs `step-ca` and the issuer apps, and the fleet already
 converges from Git state via the normal review and upgrade flow.
 
 ## Policy
@@ -116,10 +116,10 @@ It does not imply routine rotation of the root or intermediate CA.
 
 ## Operational Requirements
 
-- `pkivm` needs GitHub credentials that can push a branch and open a PR
+- `pki` needs GitHub credentials that can push a branch and open a PR
 - store that credential in `secrets/pki.yaml` at
   `github.pki_rotation.token`
 - the token only needs repository `Contents: Read and write` and `Pull requests:
   Read and write` on `booxter/nix`
-- the controller depends on `step-ca`, `sops`, and the shared `pkivm` age key
+- the controller depends on `step-ca`, `sops`, and the shared `pki` age key
   being present on the host

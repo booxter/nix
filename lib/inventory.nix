@@ -152,7 +152,6 @@ rec {
       ) [ (toNixosShortDnsName spec) ]
       ++ (spec.localDnsAliases or [ ])
     );
-  toNixosModuleDirName = spec: if isNixosVM spec then toVmName spec.name else spec.name;
   toNixosSshHostName = toNixosPrimaryDnsName;
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};

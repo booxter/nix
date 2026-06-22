@@ -96,7 +96,7 @@ in
     '';
   };
 
-  # Upgrade cachevm before the Monday critical-infra window so the cache is
+  # Upgrade cache before the Monday critical-infra window so the cache is
   # ready before machines that may consume it during their own auto-updates.
   system.autoUpgrade.dates = lib.mkForce "Mon 03:30";
   system.autoUpgrade.randomizedDelaySec = lib.mkForce "5min";

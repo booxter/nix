@@ -2,7 +2,7 @@
   config,
   hostInventory,
   lib,
-  pkivmPkgs,
+  pkiPkgs,
   pkgs,
   ...
 }:
@@ -66,7 +66,7 @@ in
       User = "unifi-sync";
       Group = "unifi-sync";
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe pkivmPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${config.sops.secrets.wgHomeDnsSyncClientCrt.path} --client-key-file ${config.sops.secrets.wgHomeDnsSyncClientKey.path} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile} --unifi-sync-command ${lib.getExe pkivmPkgs.unifi-sync}";
+      ExecStart = "${lib.getExe pkiPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${config.sops.secrets.wgHomeDnsSyncClientCrt.path} --client-key-file ${config.sops.secrets.wgHomeDnsSyncClientKey.path} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile} --unifi-sync-command ${lib.getExe pkiPkgs.unifi-sync}";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;

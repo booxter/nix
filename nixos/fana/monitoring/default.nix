@@ -21,7 +21,7 @@ in
   assertions = [
     {
       assertion = lib.length config.services.prometheus.alertmanagers == 1;
-      message = "fanavm monitoring expects a single local Alertmanager target.";
+      message = "fana monitoring expects a single local Alertmanager target.";
     }
   ];
 

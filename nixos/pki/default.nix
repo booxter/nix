@@ -77,7 +77,7 @@ let
   '';
 in
 {
-  _module.args.pkivmPkgs = import ./pkgs pkgs;
+  _module.args.pkiPkgs = import ./pkgs pkgs;
 
   imports = [
     ./unifi-sync.nix

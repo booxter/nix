@@ -36,7 +36,7 @@ in
 {
   alertmanager = {
     configFile = alertmanagerConfigFile;
-    configRelative = "nixos/fanavm/monitoring/alertmanager/alertmanager.yml";
+    configRelative = "nixos/fana/monitoring/alertmanager/alertmanager.yml";
   };
 
   prometheus = {
@@ -59,22 +59,22 @@ in
       wireguardRuleFile
     ];
     ruleFilesRelative = [
-      "nixos/fanavm/monitoring/prometheus/rules/backup.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/control-plane.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/availability.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/custom-jobs.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/dns.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/fleet.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/media-policy.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/network-probes.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/pki.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/proxmox.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/service-probes.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/service-scrapes.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/storage.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/thermal.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/ups.rules.yml"
-      "nixos/fanavm/monitoring/prometheus/rules/wireguard.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/backup.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/control-plane.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/availability.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/custom-jobs.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/dns.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/fleet.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/media-policy.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/network-probes.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/pki.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/proxmox.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/service-probes.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/service-scrapes.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/storage.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/thermal.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/ups.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/wireguard.rules.yml"
     ];
     testFiles = [
       backupTestFile
@@ -95,22 +95,22 @@ in
       wireguardTestFile
     ];
     testFilesRelative = [
-      "nixos/fanavm/monitoring/prometheus/tests/backup.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/control-plane.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/availability.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/custom-jobs.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/dns.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/fleet.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/media-policy.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/network-probes.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/pki.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/proxmox.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/service-probes.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/service-scrapes.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/storage.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/thermal.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/ups.rules.test.yml"
-      "nixos/fanavm/monitoring/prometheus/tests/wireguard.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/backup.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/control-plane.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/availability.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/custom-jobs.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/dns.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/fleet.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/media-policy.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/network-probes.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/pki.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/proxmox.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/service-probes.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/service-scrapes.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/storage.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/thermal.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/ups.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/wireguard.rules.test.yml"
     ];
   };
 }

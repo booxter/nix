@@ -2,7 +2,7 @@
   config,
   hostInventory,
   lib,
-  pkivmPkgs,
+  pkiPkgs,
   pkgs,
   ...
 }:
@@ -51,7 +51,7 @@ in
       User = "unifi-sync";
       Group = "unifi-sync";
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = lib.getExe pkivmPkgs.unifi-sync;
+      ExecStart = lib.getExe pkiPkgs.unifi-sync;
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;

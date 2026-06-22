@@ -22,7 +22,7 @@ The data path is:
 1. Fleet facts are defined in [inventory.nix](../../lib/inventory.nix).
 2. [unifi-sync-env.nix](../../lib/unifi-sync-env.nix) renders those facts into
    the environment consumed by the service.
-3. [unifi-sync.nix](./unifi-sync.nix) wires the pkivm-local package, secrets,
+3. [unifi-sync.nix](./unifi-sync.nix) wires the pki-local package, secrets,
    systemd unit, and timer.
 4. [main.py](./pkgs/unifi-sync/main.py) reads the environment, compares it with
    UniFi state, and applies only the required changes.
@@ -56,7 +56,7 @@ Treat the Nix inventory and generated environment as the source of truth. If a
 managed UniFi object is changed or deleted in the UniFi UI, the next sync should
 recreate or restore it from repository state.
 
-For dry runs, inspect the pkivm service command and append `--dry-run` before a
+For dry runs, inspect the pki service command and append `--dry-run` before a
 deployment or live run. Add tests for encoding or payload behavior in
 [test_main.py](./pkgs/unifi-sync/test_main.py) rather than documenting sample
 encoded values here.

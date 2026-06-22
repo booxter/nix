@@ -15,7 +15,7 @@ helpers.forAllSystems (
       ];
     };
     fleetApps = import ./apps/fleet.nix { inherit pkgs; };
-    fanavmMonitoring = import ./nixos/fanavm/monitoring/catalog.nix;
+    fanaMonitoring = import ./nixos/fana/monitoring/catalog.nix;
     mkCheck =
       {
         name,
@@ -117,29 +117,29 @@ helpers.forAllSystems (
         grep -F -- 'is not inside 10.83.0.0/24' subnet.err >/dev/null
       '';
     };
-    fanavm-alertmanager-config = mkCheck {
-      name = "fanavm-alertmanager-config";
+    fana-alertmanager-config = mkCheck {
+      name = "fana-alertmanager-config";
       nativeBuildInputs = with pkgs; [
         gettext
         prometheus-alertmanager
       ];
-      extraFileset = [ ./nixos/fanavm/monitoring ];
+      extraFileset = [ ./nixos/fana/monitoring ];
       buildPhase = ''
         export TELEGRAM_CHAT_ID='-1000000000000'
-        envsubst < ${fanavmMonitoring.alertmanager.configRelative} > alertmanager.rendered.yml
+        envsubst < ${fanaMonitoring.alertmanager.configRelative} > alertmanager.rendered.yml
         amtool check-config alertmanager.rendered.yml
       '';
     };
-    fanavm-prometheus-alerting = mkCheck {
-      name = "fanavm-prometheus-alerting";
+    fana-prometheus-alerting = mkCheck {
+      name = "fana-prometheus-alerting";
       nativeBuildInputs = [ pkgs.prometheus.cli ];
-      extraFileset = [ ./nixos/fanavm/monitoring ];
+      extraFileset = [ ./nixos/fana/monitoring ];
       buildPhase = ''
-        for rule_file in ${pkgs.lib.concatStringsSep " " fanavmMonitoring.prometheus.ruleFilesRelative}; do
+        for rule_file in ${pkgs.lib.concatStringsSep " " fanaMonitoring.prometheus.ruleFilesRelative}; do
           promtool check rules "$rule_file"
         done
 
-        for test_file in ${pkgs.lib.concatStringsSep " " fanavmMonitoring.prometheus.testFilesRelative}; do
+        for test_file in ${pkgs.lib.concatStringsSep " " fanaMonitoring.prometheus.testFilesRelative}; do
           test_dir="$(dirname "$test_file")"
           test_name="$(basename "$test_file")"
           (

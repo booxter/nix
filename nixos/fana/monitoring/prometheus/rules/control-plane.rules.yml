@@ -10,7 +10,7 @@ groups:
           category: observability
         annotations:
           summary: "Prometheus config reload failed"
-          description: "Prometheus on fanavm has not successfully reloaded its configuration for 5 minutes."
+          description: "Prometheus on fana has not successfully reloaded its configuration for 5 minutes."
       - alert: PrometheusAlertDeliveryFailing
         expr: sum by(instance, job) (increase(prometheus_notifications_errors_total{job="prometheus"}[15m])) + sum by(instance, job) (increase(prometheus_notifications_dropped_total{job="prometheus"}[15m])) > 0
         for: 5m
@@ -19,7 +19,7 @@ groups:
           category: observability
         annotations:
           summary: "Prometheus alert delivery failing"
-          description: "Prometheus on fanavm has seen alert delivery errors or drops while sending notifications to Alertmanager within the last 15 minutes."
+          description: "Prometheus on fana has seen alert delivery errors or drops while sending notifications to Alertmanager within the last 15 minutes."
       - alert: PrometheusRuleEvaluationFailing
         expr: sum by(instance, job) (increase(prometheus_rule_evaluation_failures_total{job="prometheus"}[15m])) > 0
         for: 5m
@@ -28,7 +28,7 @@ groups:
           category: observability
         annotations:
           summary: "Prometheus rule evaluation failing"
-          description: "Prometheus on fanavm has seen rule evaluation failures within the last 15 minutes."
+          description: "Prometheus on fana has seen rule evaluation failures within the last 15 minutes."
       - alert: AlertmanagerMetricsScrapeDown
         expr: up{job="alertmanager"} < 1
         for: 5m
@@ -37,7 +37,7 @@ groups:
           category: observability
         annotations:
           summary: "Alertmanager metrics scrape down"
-          description: "Prometheus has been unable to scrape Alertmanager on fanavm for 5 minutes."
+          description: "Prometheus has been unable to scrape Alertmanager on fana for 5 minutes."
       - alert: AlertmanagerConfigReloadFailed
         expr: alertmanager_config_last_reload_successful{job="alertmanager"} < 1
         for: 5m
@@ -46,7 +46,7 @@ groups:
           category: observability
         annotations:
           summary: "Alertmanager config reload failed"
-          description: "Alertmanager on fanavm has not successfully reloaded its configuration for 5 minutes."
+          description: "Alertmanager on fana has not successfully reloaded its configuration for 5 minutes."
       - alert: AlertmanagerTelegramNotificationsFailing
         expr: sum by(instance, job) (increase(alertmanager_notifications_failed_total{job="alertmanager",integration="telegram"}[15m])) > 0
         for: 5m
@@ -55,7 +55,7 @@ groups:
           category: observability
         annotations:
           summary: "Alertmanager Telegram notifications failing"
-          description: "Alertmanager on fanavm has seen failed Telegram notification deliveries within the last 15 minutes."
+          description: "Alertmanager on fana has seen failed Telegram notification deliveries within the last 15 minutes."
       - alert: AlertmanagerTelegramNotificationRequestsFailing
         expr: sum by(instance, job) (increase(alertmanager_notification_requests_failed_total{job="alertmanager",integration="telegram"}[15m])) > 0
         for: 5m
@@ -64,7 +64,7 @@ groups:
           category: observability
         annotations:
           summary: "Alertmanager Telegram notification requests failing"
-          description: "Alertmanager on fanavm has seen failed Telegram notification attempts within the last 15 minutes, even if a later retry eventually succeeded."
+          description: "Alertmanager on fana has seen failed Telegram notification attempts within the last 15 minutes, even if a later retry eventually succeeded."
       - alert: GrafanaMetricsScrapeDown
         expr: up{job="grafana"} < 1
         for: 5m
@@ -73,7 +73,7 @@ groups:
           category: observability
         annotations:
           summary: "Grafana metrics scrape down"
-          description: "Prometheus has been unable to scrape Grafana on fanavm for 5 minutes."
+          description: "Prometheus has been unable to scrape Grafana on fana for 5 minutes."
       - alert: GrafanaAPIErrors
         expr: sum by(instance, job) (increase(grafana_api_response_status_total{job="grafana",code="500"}[15m])) > 0
         for: 5m
@@ -81,5 +81,5 @@ groups:
           severity: warning
           category: observability
         annotations:
-          summary: "Grafana API errors on fanavm"
-          description: "Grafana on fanavm has returned HTTP 500 responses within the last 15 minutes."
+          summary: "Grafana API errors on fana"
+          description: "Grafana on fana has returned HTTP 500 responses within the last 15 minutes."
