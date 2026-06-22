@@ -365,7 +365,7 @@ def update_secret_file(host, secret_prefix, cert_field, key_field, cert_text, ke
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
 
-    run([str(REPO_ROOT / "apps" / "sops-update.sh"), host])
+    run([str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"), host])
     decrypted = run(["sops", "--decrypt", str(secret_path)])
     data = yaml.safe_load(decrypted) or {}
 
