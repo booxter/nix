@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  pkgs,
+  srvarrPkgs,
   ...
 }:
 {
@@ -22,7 +22,7 @@
     serviceConfig = {
       Type = "oneshot";
       ExecStart = lib.concatStringsSep " " [
-        (lib.getExe pkgs.transmission-torrent-cleaner)
+        (lib.getExe srvarrPkgs.transmission-torrent-cleaner)
         "--rpc-url"
         "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}/transmission/rpc"
         "--trackers-file"

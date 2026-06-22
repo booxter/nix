@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  pkgs,
+  srvarrPkgs,
   ...
 }:
 let
@@ -57,12 +57,12 @@ in
   systemd.services = {
     transmission-prioritizer = mkTrackerService {
       description = "Enforce Transmission torrent priorities for selected private trackers";
-      package = pkgs.transmission-prioritizer;
+      package = srvarrPkgs.transmission-prioritizer;
     };
 
     transmission-collector = mkTrackerService {
       description = "Collect Transmission torrent metrics";
-      package = pkgs.transmission-collector;
+      package = srvarrPkgs.transmission-collector;
       extraArgs = [
         "--metrics-file"
         metricsFile

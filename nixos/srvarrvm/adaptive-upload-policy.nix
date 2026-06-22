@@ -9,7 +9,7 @@
 {
   config,
   lib,
-  pkgs,
+  srvarrPkgs,
   ...
 }:
 let
@@ -67,7 +67,7 @@ in
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " (
         [
-          (lib.getExe pkgs.adaptive-upload-controller)
+          (lib.getExe srvarrPkgs.adaptive-upload-controller)
           "decide"
           "--exporter-url"
           jellyfinExporterUrl
@@ -123,7 +123,7 @@ in
     };
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " [
-        (lib.getExe pkgs.adaptive-upload-controller)
+        (lib.getExe srvarrPkgs.adaptive-upload-controller)
         "apply-transmission"
         "--rpc-url"
         transmissionRpcUrl
@@ -163,7 +163,7 @@ in
     };
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " [
-        (lib.getExe pkgs.adaptive-upload-controller)
+        (lib.getExe srvarrPkgs.adaptive-upload-controller)
         "apply-tc"
         "--state-file"
         stateFile

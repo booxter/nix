@@ -1,8 +1,11 @@
 {
   inputs,
+  pkgs,
   ...
 }:
 {
+  _module.args.srvarrPkgs = import ./pkgs pkgs;
+
   imports = [
     inputs.vpnconfinement.nixosModules.default
     ./arr.nix

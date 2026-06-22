@@ -4,7 +4,6 @@ let
   issueInternalServiceCert = pkgs.callPackage ./issue-internal-service-cert { };
   issueObservabilityCert = pkgs.callPackage ./issue-observability-cert { };
   issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token { };
-  transmissionTrackerTools = pkgs.callPackage ./transmission-tracker-prioritizer { };
 in
 {
   # private
@@ -18,8 +17,6 @@ in
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
   aurral = pkgs.callPackage ./aurral { };
-
-  adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
   darwin-lan-wan-bpf = pkgs.callPackage ./darwin-lan-wan-bpf { };
 
@@ -42,9 +39,4 @@ in
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
 
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
-
-  transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner { };
-
-  transmission-prioritizer = transmissionTrackerTools.prioritizer;
-  transmission-collector = transmissionTrackerTools.collector;
 }
