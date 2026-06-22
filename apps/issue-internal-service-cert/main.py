@@ -18,6 +18,7 @@ DEFAULT_STEP_PATH = "/var/lib/step-ca"
 DEFAULT_PROVISIONER_PASSWORD_FILE = "/var/lib/step-ca/provisioner-password.txt"
 LOCAL_CA_ENV = "ISSUE_CERT_LOCAL_CA"
 PROXMOX_API_SERVICE = "proxmox-api"
+PROXMOX_INTERNAL_HTTPS_SERVICE = "proxmox"
 DEFAULT_UNIFI_COMMON_NAME = "unifi.home.arpa"
 
 
@@ -235,10 +236,22 @@ def service_names_for_host(host):
     service_map = (
         nix_eval_json(root, host, "config", "host", "internalHttps", "services") or {}
     )
-    services = sorted(
-        name for name, service in service_map.items() if service.get("enable")
+    proxmox_api_cfg = (
+        proxmox_api_service_config(root, host)
+        if proxmox_api_service_enabled(root, host)
+        else None
     )
-    if proxmox_api_service_enabled(root, host):
+    services = sorted(
+        name
+        for name, service in service_map.items()
+        if service.get("enable")
+        and not (
+            name == PROXMOX_INTERNAL_HTTPS_SERVICE
+            and proxmox_api_cfg is not None
+            and service["secretPrefix"] == proxmox_api_cfg["secretPrefix"]
+        )
+    )
+    if proxmox_api_cfg is not None:
         services.append(PROXMOX_API_SERVICE)
     return services
 

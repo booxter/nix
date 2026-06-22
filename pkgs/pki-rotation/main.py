@@ -26,6 +26,7 @@ DEFAULT_SOPS_AGE_KEY_FILE = "/var/lib/sops-nix/key.txt"
 NODE_EXPORTER_ENDPOINT = "node_exporter"
 NODE_EXPORTER_SECRET_PREFIX = "prometheus/node_exporter"
 PKI_HOST_SPEC_NAME = "pki"
+PROXMOX_INTERNAL_HTTPS_SERVICE = "proxmox"
 
 
 @dataclass(frozen=True)
@@ -254,8 +255,15 @@ def internal_https_service_specs(host, root, *, repo_root):
         )
         or {}
     )
+    proxmox_api_cfg = proxmox_api_certificate_config(host, root, repo_root=repo_root)
     for service_name, service_cfg in sorted(service_map.items()):
         if not service_cfg.get("enable"):
+            continue
+        if (
+            service_name == PROXMOX_INTERNAL_HTTPS_SERVICE
+            and proxmox_api_cfg is not None
+            and service_cfg["secretPrefix"] == proxmox_api_cfg["secretPrefix"]
+        ):
             continue
         yield CertSpec(
             host=host,
@@ -268,7 +276,7 @@ def internal_https_service_specs(host, root, *, repo_root):
         )
 
 
-def proxmox_api_certificate_specs(host, root, *, repo_root):
+def proxmox_api_certificate_config(host, root, *, repo_root):
     service_cfg = nix_eval_json_optional(
         root,
         host,
@@ -279,6 +287,13 @@ def proxmox_api_certificate_specs(host, root, *, repo_root):
         repo_root=repo_root,
     )
     if not service_cfg or not service_cfg.get("enable"):
+        return None
+    return service_cfg
+
+
+def proxmox_api_certificate_specs(host, root, *, repo_root):
+    service_cfg = proxmox_api_certificate_config(host, root, repo_root=repo_root)
+    if service_cfg is None:
         return
     yield CertSpec(
         host=host,
