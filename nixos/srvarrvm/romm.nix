@@ -12,7 +12,9 @@ let
   # library, resources, assets, config, sync, and launchbox.
   rommBasePath = "${mediaDir}/romm";
   stateDir = "${config.host.srvarrPaths.stateDir}/romm";
-  mysqlDataDir = "${config.host.srvarrPaths.stateDir}/romm-mysql";
+  # Host-local MariaDB singleton. RomM is the only current consumer, but keep
+  # the storage path neutral so future local databases can share it explicitly.
+  mysqlDataDir = "${config.host.srvarrPaths.stateDir}/mysql";
   webDir = "${stateDir}/web";
   nginxDir = "${stateDir}/nginx";
   valkeyDir = "${stateDir}/valkey";
