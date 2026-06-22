@@ -220,7 +220,7 @@
           fleetApps = import ./lib/fleet.nix {
             inherit pkgs username;
           };
-          basePackages = import ./pkgs pkgs;
+          darwinPackages = import ./darwin/pkgs pkgs;
           mkApp = program: description: {
             type = "app";
             inherit program;
@@ -239,7 +239,7 @@
             get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
           };
           darwinApps = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-            lan-wan-bpf = mkApp "${basePackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
+            lan-wan-bpf = mkApp "${darwinPackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
           };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;

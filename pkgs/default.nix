@@ -18,8 +18,6 @@ in
 
   aurral = pkgs.callPackage ./aurral { };
 
-  darwin-lan-wan-bpf = pkgs.callPackage ./darwin-lan-wan-bpf { };
-
   issue-internal-service-cert = issueInternalServiceCert;
 
   issue-observability-cert = issueObservabilityCert;
