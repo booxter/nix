@@ -70,13 +70,6 @@
         ];
       });
 
-      # Override the jellarr package to refresh the pnpm dependency store hash
-      # for the repo's current nixpkgs branch, while consuming the pinned flake
-      # source from the jellarr input.
-      jellarr = prev.callPackage ../pkgs/jellarr {
-        src = inputs.jellarr;
-      };
-
       # Backport Grafana fix for /alerting/groups showing a bogus 404 header.
       # Upstream: https://github.com/grafana/grafana/pull/123286
       grafana = prev.grafana.overrideAttrs (old: {
