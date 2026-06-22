@@ -4,12 +4,12 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops-set.sh HOST KEY_PATH
-  apps/sops-set.sh --help
+  apps/sops/sops-set.sh HOST KEY_PATH
+  apps/sops/sops-set.sh --help
 
 Set KEY_PATH in secrets/HOST.yaml to the exact value read from stdin.
 KEY_PATH is slash-separated, for example:
-  apps/sops-set.sh srvarr romm/authSecretKey < secret.txt
+  apps/sops/sops-set.sh srvarr romm/authSecretKey < secret.txt
 
 Values are read from stdin to avoid putting secrets in shell history or argv.
 One trailing newline is stripped, matching command-substitution behavior.
@@ -23,7 +23,7 @@ resolve_repo_root() {
   fi
   local script_dir
   script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  cd -- "${script_dir}/.." && pwd
+  cd -- "${script_dir}/../.." && pwd
 }
 
 path_to_jq_array() {

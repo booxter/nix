@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops-merge-template.sh [HOST]
+  apps/sops/sops-merge-template.sh [HOST]
 
 Update secrets/HOST.yaml from template defaults in secrets/_template.yaml.
 
@@ -20,7 +20,7 @@ resolve_repo_root() {
   fi
   local script_dir
   script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  cd -- "${script_dir}/.." && pwd
+  cd -- "${script_dir}/../.." && pwd
 }
 
 main() {

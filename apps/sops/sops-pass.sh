@@ -4,8 +4,8 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops-pass.sh [--gen] HOST USER
-  apps/sops-pass.sh --help
+  apps/sops/sops-pass.sh [--gen] HOST USER
+  apps/sops/sops-pass.sh --help
 
 Hash a login password with mkpasswd and store it in secrets/HOST.yaml.
 USER must be root, ihrachyshka, or both.
@@ -26,7 +26,7 @@ resolve_repo_root() {
   fi
   local script_dir
   script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  cd -- "${script_dir}/.." && pwd
+  cd -- "${script_dir}/../.." && pwd
 }
 
 load_password_from_pass() {

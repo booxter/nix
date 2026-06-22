@@ -5,7 +5,7 @@ let
     inherit program;
     meta = { inherit description; };
   };
-  upsClientsByServer = import ../lib/ups-clients.nix { lib = pkgs.lib; };
+  upsClientsByServer = import ../../lib/ups-clients.nix { lib = pkgs.lib; };
   upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
     builtins.toJSON upsClientsByServer
   );
@@ -20,7 +20,7 @@ let
       sops
     ];
     text = ''
-      exec ${../apps/sops-cat.sh} "$@"
+      exec ${./sops-cat.sh} "$@"
     '';
   };
 
@@ -34,7 +34,7 @@ let
       sops
     ];
     text = ''
-      exec ${../apps/sops-edit.sh} "$@"
+      exec ${./sops-edit.sh} "$@"
     '';
   };
 
@@ -50,7 +50,7 @@ let
       yq-go
     ];
     text = ''
-      exec ${../apps/sops-update.sh} "$@"
+      exec ${./sops-update.sh} "$@"
     '';
   };
 
@@ -66,7 +66,7 @@ let
       yq-go
     ];
     text = ''
-      exec ${../apps/sops-copy.sh} "$@"
+      exec ${./sops-copy.sh} "$@"
     '';
   };
 
@@ -82,7 +82,7 @@ let
       yq-go
     ];
     text = ''
-      exec ${../apps/sops-set.sh} "$@"
+      exec ${./sops-set.sh} "$@"
     '';
   };
 
@@ -99,7 +99,7 @@ let
     ];
     text = ''
       export UPS_CLIENTS_BY_SERVER_FILE=${upsClientsByServerFile}
-      exec ${pkgs.bash}/bin/bash ${../apps/sops-ups-sync.sh} "$@"
+      exec ${pkgs.bash}/bin/bash ${./sops-ups-sync.sh} "$@"
     '';
   };
 
@@ -117,7 +117,7 @@ let
       yq-go
     ];
     text = ''
-      exec ${pkgs.bash}/bin/bash ${../apps/sops-pass.sh} "$@"
+      exec ${pkgs.bash}/bin/bash ${./sops-pass.sh} "$@"
     '';
   };
 
@@ -135,7 +135,7 @@ let
       yq-go
     ];
     text = ''
-      exec ${../apps/sops-bootstrap.sh} "$@"
+      exec ${./sops-bootstrap.sh} "$@"
     '';
   };
 in

@@ -4,9 +4,9 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops-update.sh --force [HOST]
-  apps/sops-update.sh [HOST]
-  apps/sops-update.sh --help
+  apps/sops/sops-update.sh --force [HOST]
+  apps/sops/sops-update.sh [HOST]
+  apps/sops/sops-update.sh --help
 
 Update secrets/HOST.yaml from template defaults in secrets/_template.yaml and,
 if present, secrets/_templates/HOST.yaml.
@@ -24,7 +24,7 @@ resolve_repo_root() {
   fi
   local script_dir
   script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  cd -- "${script_dir}/.." && pwd
+  cd -- "${script_dir}/../.." && pwd
 }
 
 main() {

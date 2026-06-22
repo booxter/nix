@@ -4,14 +4,14 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops-copy.sh SRC_HOST DST_HOST SRC_KEY_PATH [DST_KEY_PATH]
-  apps/sops-copy.sh --help
+  apps/sops/sops-copy.sh SRC_HOST DST_HOST SRC_KEY_PATH [DST_KEY_PATH]
+  apps/sops/sops-copy.sh --help
 
 Copy SRC_KEY_PATH from secrets/SRC_HOST.yaml into secrets/DST_HOST.yaml.
 If DST_KEY_PATH is omitted, SRC_KEY_PATH is used in the destination too.
 Example:
-  apps/sops-copy.sh mair prx1-lab attic
-  apps/sops-copy.sh prx1-lab gw nut/users/upsslave/password nut/monitors/prx1-lab/password
+  apps/sops/sops-copy.sh mair prx1-lab attic
+  apps/sops/sops-copy.sh prx1-lab gw nut/users/upsslave/password nut/monitors/prx1-lab/password
 EOF
 }
 
@@ -47,7 +47,7 @@ resolve_repo_root() {
   fi
   local script_dir
   script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  cd -- "${script_dir}/.." && pwd
+  cd -- "${script_dir}/../.." && pwd
 }
 
 path_to_jq_array() {

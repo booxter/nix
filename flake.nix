@@ -214,7 +214,7 @@
               outputs.overlays.modifications
             ];
           };
-          sopsApps = import ./apps/sops.nix { inherit pkgs; };
+          sopsApps = import ./apps/sops { inherit pkgs; };
           fleetApps = import ./apps/fleet.nix {
             inherit pkgs username;
           };
