@@ -4,9 +4,6 @@ let
   appPackages = import ../apps pkgs;
 in
 {
-  # private
-  my-page = pkgs.callPackage ./page { };
-
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
   pki-rotation = pkgs.callPackage ./pki-rotation {
