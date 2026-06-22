@@ -77,6 +77,8 @@ let
   '';
 in
 {
+  _module.args.pkivmPkgs = import ./pkgs pkgs;
+
   imports = [
     ./unifi-sync.nix
     ./wg-home-dns-sync.nix
