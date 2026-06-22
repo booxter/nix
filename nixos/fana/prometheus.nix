@@ -11,6 +11,7 @@ let
   internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   grafanaPort = 3000;
   prometheusPort = 9090;
+  prometheusScrapeClient = config.host.observability.client.mtlsClients."prometheus-scrape-node";
   prometheusMtlsTlsConfig = {
     ca_file = toString internalPkiRootCaPath;
     cert_file = config.sops.secrets.prometheusScrapeNodeClientCrt.path;
@@ -72,15 +73,21 @@ in
 {
   assertions = nodeScrapes.assertions ++ blackboxScrapes.assertions;
 
+  host.observability.client.mtlsClients."prometheus-scrape-node" = {
+    enable = true;
+    secretPrefix = "prometheus/scrape_node";
+    commonName = "prometheus-node-scraper";
+  };
+
   sops.secrets.prometheusScrapeNodeClientCrt = {
-    key = "prometheus/scrape_node/client_crt";
+    key = "${prometheusScrapeClient.secretPrefix}/client_crt";
     owner = "prometheus";
     group = "prometheus";
     mode = "0400";
     restartUnits = [ "prometheus.service" ];
   };
   sops.secrets.prometheusScrapeNodeClientKey = {
-    key = "prometheus/scrape_node/client_key";
+    key = "${prometheusScrapeClient.secretPrefix}/client_key";
     owner = "prometheus";
     group = "prometheus";
     mode = "0400";
