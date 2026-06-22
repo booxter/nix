@@ -21,6 +21,4 @@ in
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 
   wg-home-dns-sync = pkgs.callPackage ./wg-home-dns-sync { };
-
-  jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
 }

@@ -1,10 +1,13 @@
 {
   hostInventory,
+  inputs,
   pkgs,
   username,
   ...
 }:
 {
+  _module.args.beastPkgs = import ./pkgs { inherit inputs pkgs; };
+
   imports = [
     (import ../../disko { })
     ./backup-server.nix

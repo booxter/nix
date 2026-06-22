@@ -1,4 +1,5 @@
 {
+  beastPkgs,
   config,
   lib,
   pkgs,
@@ -35,7 +36,7 @@ in
     serviceConfig = {
       EnvironmentFile = config.sops.templates."jellyfin-exporter.env".path;
       ExecStart = lib.concatStringsSep " " [
-        (lib.getExe pkgs.jellyfin-exporter)
+        (lib.getExe beastPkgs.jellyfin-exporter)
         "--web.listen-address=127.0.0.1:${toString jellyfinExporterInternalPort}"
         "--collector.transcoding"
       ];
