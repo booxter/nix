@@ -1,7 +1,7 @@
 { ... }:
 {
   imports = [
-    (import ../../disko { })
+    (import ../disko { })
     ./netboot.nix
     ./ups.nix
   ];

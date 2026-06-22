@@ -160,7 +160,7 @@ sudo systemctl start restic-beast-cloud-offload.service
 
 ## Notes
 
-- Disk layout is managed via the shared `../../disko` import.
+- Disk layout is managed via the shared `../disko` import.
 
 ## IPMI quirks
 
