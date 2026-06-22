@@ -32,7 +32,16 @@ let
         substituters=${lib.escapeShellArg lanSubstituters}
       fi
 
-      exec ${lib.getExe config.nix.package} --option substituters "$substituters" "$@"
+      # Keep wrapper options out of argv so NIX_GET_COMPLETIONS indexes from
+      # shell completion still refer to the user's original command words.
+      if [ -n "''${NIX_CONFIG:-}" ]; then
+        NIX_CONFIG="''${NIX_CONFIG}"$'\n'"substituters = $substituters"
+      else
+        NIX_CONFIG="substituters = $substituters"
+      fi
+      export NIX_CONFIG
+
+      exec ${lib.getExe config.nix.package} "$@"
     '';
   };
 in
