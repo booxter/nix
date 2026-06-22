@@ -7,8 +7,6 @@ in
   # private
   my-page = pkgs.callPackage ./page { };
 
-  ismc = pkgs.callPackage ./ismc { };
-
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
   pki-rotation = pkgs.callPackage ./pki-rotation {
