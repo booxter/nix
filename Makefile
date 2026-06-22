@@ -78,7 +78,7 @@ darwin:
 	$(call nh-config-build,darwin,$(WHAT))
 
 check:
-	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" scripts/run-check-target.sh checks checks check
+	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" apps/run-check-target.sh checks checks check
 
 check-nixos:
-	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" scripts/run-check-target.sh nixosTests "nixos checks" "nixos check"
+	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" apps/run-check-target.sh nixosTests "nixos checks" "nixos check"

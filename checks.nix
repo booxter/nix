@@ -14,7 +14,7 @@ helpers.forAllSystems (
         outputs.overlays.modifications
       ];
     };
-    fleetApps = import ./lib/fleet.nix { inherit pkgs; };
+    fleetApps = import ./apps/fleet.nix { inherit pkgs; };
     fanavmMonitoring = import ./nixos/fanavm/monitoring/catalog.nix;
     mkCheck =
       {
@@ -29,7 +29,7 @@ helpers.forAllSystems (
           root = ./.;
           fileset = pkgs.lib.fileset.unions (
             [
-              ./scripts
+              ./apps
               ./tests
             ]
             ++ extraFileset

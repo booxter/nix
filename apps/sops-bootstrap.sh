@@ -4,8 +4,8 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-bootstrap.sh HOST [--user USER]
-  scripts/sops-bootstrap.sh --help
+  apps/sops-bootstrap.sh HOST [--user USER]
+  apps/sops-bootstrap.sh --help
 
 This script:
   1) SSHes into HOST and generates /var/lib/sops-nix/key.txt (if missing)

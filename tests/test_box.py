@@ -5,7 +5,7 @@ import textwrap
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BOX_PATH = ROOT / "scripts" / "_helpers" / "box.py"
+BOX_PATH = ROOT / "apps" / "_helpers" / "box.py"
 
 
 def load_box_module():

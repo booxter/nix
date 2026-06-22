@@ -196,12 +196,8 @@
             inherit (inputs.disko.packages.${system}) disko-install;
             inherit (mminiPackages) fleet-cache-warmer;
           };
-          proxmox = import ./lib/proxmox-apps.nix {
-            inherit inputs system;
-          };
         in
         basePackages
-        // proxmox.packages
         // fleetPackages
         // {
           qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
@@ -218,8 +214,8 @@
               outputs.overlays.modifications
             ];
           };
-          sopsApps = import ./lib/sops.nix { inherit pkgs; };
-          fleetApps = import ./lib/fleet.nix {
+          sopsApps = import ./apps/sops.nix { inherit pkgs; };
+          fleetApps = import ./apps/fleet.nix {
             inherit pkgs username;
           };
           darwinPackages = import ./darwin/pkgs pkgs;
@@ -235,7 +231,7 @@
               gallery-dl
               gnugrep
             ];
-            text = builtins.readFile ./scripts/get-ff-cookie.sh;
+            text = builtins.readFile ./apps/get-ff-cookie.sh;
           };
           cookieApps = {
             get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
@@ -243,7 +239,7 @@
           darwinApps = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
             lan-wan-bpf = mkApp "${darwinPackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
           };
-          proxmox = import ./lib/proxmox-apps.nix {
+          proxmox = import ./apps/proxmox.nix {
             inherit inputs system;
           };
         in
@@ -271,7 +267,7 @@
             git
             findutils
           ];
-          text = builtins.readFile ./scripts/formatter.sh;
+          text = builtins.readFile ./apps/formatter.sh;
         }
       );
 

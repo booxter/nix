@@ -1,9 +1,7 @@
 # You can build them using 'nix build .#example'
 pkgs:
 let
-  issueInternalServiceCert = pkgs.callPackage ./issue-internal-service-cert { };
-  issueObservabilityCert = pkgs.callPackage ./issue-observability-cert { };
-  issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token { };
+  appPackages = import ../apps pkgs;
 in
 {
   # private
@@ -18,14 +16,9 @@ in
 
   aurral = pkgs.callPackage ./aurral { };
 
-  issue-internal-service-cert = issueInternalServiceCert;
-
-  issue-observability-cert = issueObservabilityCert;
-
-  issue-proxmox-exporter-token = issueProxmoxExporterToken;
-
   pki-rotation = pkgs.callPackage ./pki-rotation {
-    inherit issueInternalServiceCert issueObservabilityCert;
+    issueInternalServiceCert = appPackages.issue-internal-service-cert;
+    issueObservabilityCert = appPackages.issue-observability-cert;
   };
 
   ssh-ticket = pkgs.callPackage ./ssh-ticket { };

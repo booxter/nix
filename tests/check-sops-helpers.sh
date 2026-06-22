@@ -72,15 +72,15 @@ encrypt_secret_file() {
 
 setup_repo() {
   local repo_dir="$1"
-  mkdir -p "$repo_dir/secrets/_templates" "$repo_dir/scripts/_helpers" "$repo_dir/tests"
-  cp "$REPO_ROOT/scripts/_helpers/host-aliases.sh" "$repo_dir/scripts/_helpers/"
-  cp "$REPO_ROOT/scripts/sops-cat.sh" "$repo_dir/scripts/"
-  cp "$REPO_ROOT/scripts/sops-update.sh" "$repo_dir/scripts/"
-  cp "$REPO_ROOT/scripts/sops-copy.sh" "$repo_dir/scripts/"
-  cp "$REPO_ROOT/scripts/sops-set.sh" "$repo_dir/scripts/"
-  cp "$REPO_ROOT/scripts/sops-ups-sync.sh" "$repo_dir/scripts/"
-  cp "$REPO_ROOT/scripts/sops-edit.sh" "$repo_dir/scripts/"
-  cp "$REPO_ROOT/scripts/sops-pass.sh" "$repo_dir/scripts/"
+  mkdir -p "$repo_dir/secrets/_templates" "$repo_dir/apps/_helpers" "$repo_dir/tests"
+  cp "$REPO_ROOT/apps/_helpers/host-aliases.sh" "$repo_dir/apps/_helpers/"
+  cp "$REPO_ROOT/apps/sops-cat.sh" "$repo_dir/apps/"
+  cp "$REPO_ROOT/apps/sops-update.sh" "$repo_dir/apps/"
+  cp "$REPO_ROOT/apps/sops-copy.sh" "$repo_dir/apps/"
+  cp "$REPO_ROOT/apps/sops-set.sh" "$repo_dir/apps/"
+  cp "$REPO_ROOT/apps/sops-ups-sync.sh" "$repo_dir/apps/"
+  cp "$REPO_ROOT/apps/sops-edit.sh" "$repo_dir/apps/"
+  cp "$REPO_ROOT/apps/sops-pass.sh" "$repo_dir/apps/"
   cp "$REPO_ROOT/tests/test-sops-config.sh" "$repo_dir/tests/"
   cd "$repo_dir"
   git init -q
@@ -210,7 +210,7 @@ EOF
   assert_contains "$(cat "$out")" "sops config check passed."
 
   log "merge default and host template keys into beast"
-  run_and_capture "$out" bash "$repo/scripts/sops-update.sh" beast
+  run_and_capture "$out" bash "$repo/apps/sops-update.sh" beast
   assert_contains "$(cat "$out")" "Updated secret from templates:"
   decrypt_secret_file beast "$after"
   assert_eq "SECRET" "$(yq -r '.common.shared' "$after")" "beast shared value should be preserved"
@@ -224,14 +224,14 @@ EOF
 
   log "skip re-encryption when beast is already converged"
   cp "secrets/beast.yaml" "$before"
-  run_and_capture "$out" bash "$repo/scripts/sops-update.sh" beast
+  run_and_capture "$out" bash "$repo/apps/sops-update.sh" beast
   assert_contains "$(cat "$out")" "Secret already up to date:"
   cmp -s "$before" "secrets/beast.yaml" || fail "no-op update should not rewrite encrypted secret"
 
   log "force re-encrypt without changing decrypted content"
   decrypt_secret_file beast "$before"
   cp "secrets/beast.yaml" "$WORKDIR/before-force.yaml"
-  run_and_capture "$out" bash "$repo/scripts/sops-update.sh" --force beast
+  run_and_capture "$out" bash "$repo/apps/sops-update.sh" --force beast
   assert_contains "$(cat "$out")" "Re-encrypted secret:"
   decrypt_secret_file beast "$after"
   cmp -s "$before" "$after" || fail "forced re-encrypt changed decrypted beast secret"
@@ -240,7 +240,7 @@ EOF
   fi
 
   log "copy a secret block without losing destination data"
-  run_and_capture "$out" bash "$repo/scripts/sops-copy.sh" mair prx1-lab attic
+  run_and_capture "$out" bash "$repo/apps/sops-copy.sh" mair prx1-lab attic
   assert_contains "$(cat "$out")" "Copied attic from mair to prx1-lab."
   decrypt_secret_file prx1-lab "$copied"
   assert_eq "NEW_TOKEN" "$(yq -r '.attic.token' "$copied")"
@@ -249,7 +249,7 @@ EOF
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.users.upsslave.password' "$copied")" "destination secret values should survive copy"
 
   log "update a prox VM secret by short name"
-  run_and_capture "$out" bash "$repo/scripts/sops-update.sh" gw
+  run_and_capture "$out" bash "$repo/apps/sops-update.sh" gw
   assert_contains "$(cat "$out")" "Updated secret from templates:"
   assert_contains "$(cat "$out")" "secrets/gw.yaml"
   decrypt_secret_file gw "$after"
@@ -257,7 +257,7 @@ EOF
   assert_eq "gw" "$(yq -r '.other.keep' "$after")" "short prox VM update should preserve short secret data"
 
   log "copy a secret value to a different destination path"
-  run_and_capture "$out" bash "$repo/scripts/sops-copy.sh" \
+  run_and_capture "$out" bash "$repo/apps/sops-copy.sh" \
     prx1-lab cache \
     nut/users/upsslave/password \
     nut/monitors/prx1-lab/password
@@ -267,7 +267,7 @@ EOF
   assert_eq "cache" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive copy"
 
   log "set a secret value from stdin without losing destination data"
-  printf 'SET_FROM_STDIN\n' | run_and_capture "$out" bash "$repo/scripts/sops-set.sh" cache nested/new/value
+  printf 'SET_FROM_STDIN\n' | run_and_capture "$out" bash "$repo/apps/sops-set.sh" cache nested/new/value
   assert_contains "$(cat "$out")" "Updated cache:nested/new/value."
   decrypt_secret_file cache "$copied"
   assert_eq "SET_FROM_STDIN" "$(yq -r '.nested.new.value' "$copied")"
@@ -279,14 +279,14 @@ EOF
 {"prx1-lab":["fana"]}
 EOF
   run_and_capture "$out" env UPS_CLIENTS_BY_SERVER_FILE="$repo/ups-clients-by-server.json" \
-    bash "$repo/scripts/sops-ups-sync.sh" prx1-lab
+    bash "$repo/apps/sops-ups-sync.sh" prx1-lab
   assert_contains "$(cat "$out")" "Synced prx1-lab UPS password to fana."
   decrypt_secret_file fana "$copied"
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
   assert_eq "fana" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive sync"
 
   log "fail cleanly when source path is missing"
-  run_expect_failure "$out" bash "$repo/scripts/sops-copy.sh" mair prx1-lab missing
+  run_expect_failure "$out" bash "$repo/apps/sops-copy.sh" mair prx1-lab missing
   assert_contains "$(cat "$out")" "Path not found in source secret: missing"
 
   log "set a login password hash from pass without losing existing secret data"
@@ -353,7 +353,7 @@ EOF
   run_and_capture "$out" env \
     PASS_TEST_STORE="$WORKDIR/pass-store" \
     PATH="$WORKDIR/fake-bin:$PATH" \
-    bash "$repo/scripts/sops-pass.sh" beast root
+    bash "$repo/apps/sops-pass.sh" beast root
   assert_contains "$(cat "$out")" "Updated users/root/hashedPassword"
   assert_contains "$(cat "$out")" "Inserted host/beast/root."
   decrypt_secret_file beast "$after"
@@ -370,7 +370,7 @@ EOF
   run_and_capture "$out" env \
     PASS_TEST_STORE="$WORKDIR/pass-store" \
     PATH="$WORKDIR/fake-bin:$PATH" \
-    bash "$repo/scripts/sops-pass.sh" --gen gw root
+    bash "$repo/apps/sops-pass.sh" --gen gw root
   assert_contains "$(cat "$out")" "Generated host/gw/root."
   test -f "$WORKDIR/pass-store/host/gw/root" || fail "pass entry should use short VM host name"
   decrypt_secret_file gw "$after"
@@ -381,7 +381,7 @@ EOF
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "generated password should only update requested user"
 
   log "decrypt a VM secret by short name"
-  run_and_capture "$out" bash "$repo/scripts/sops-cat.sh" gw
+  run_and_capture "$out" bash "$repo/apps/sops-cat.sh" gw
   assert_contains "$(cat "$out")" "other:"
   assert_contains "$(cat "$out")" "keep: gw"
 
@@ -389,7 +389,7 @@ EOF
   run_and_capture "$out" env \
     PASS_TEST_STORE="$WORKDIR/pass-store" \
     PATH="$WORKDIR/fake-bin:$PATH" \
-    bash "$repo/scripts/sops-pass.sh" --gen gw both
+    bash "$repo/apps/sops-pass.sh" --gen gw both
   assert_contains "$(cat "$out")" "Generated host/gw/root and host/gw/ihrachyshka."
   assert_contains "$(cat "$out")" "Updated users/root/hashedPassword and users/ihrachyshka/hashedPassword"
   test ! -f "$WORKDIR/pass-store/host/gw/both" || fail "both should not create a synthetic pass user"
@@ -406,7 +406,7 @@ EOF
   assert_eq "$root_hash" "$user_hash" "both user should write the same hash to both accounts"
 
   log "reject unsupported login users before prompting"
-  run_expect_failure "$out" bash "$repo/scripts/sops-pass.sh" beast nobody
+  run_expect_failure "$out" bash "$repo/apps/sops-pass.sh" beast nobody
   assert_contains "$(cat "$out")" "Unsupported user: nobody"
 
   log "edit a secret through sops without merging template keys"
@@ -416,7 +416,7 @@ set -eu
 yq -i '.attic.token = "EDITED_TOKEN" | .editorTouched = true' "$1"
 EOF
   chmod +x "$WORKDIR/editor.sh"
-  run_and_capture "$out" env EDITOR="$WORKDIR/editor.sh" bash "$repo/scripts/sops-edit.sh" prx1-lab
+  run_and_capture "$out" env EDITOR="$WORKDIR/editor.sh" bash "$repo/apps/sops-edit.sh" prx1-lab
   decrypt_secret_file prx1-lab "$edited"
   assert_eq "EDITED_TOKEN" "$(yq -r '.attic.token' "$edited")"
   assert_eq "dst" "$(yq -r '.other.keep' "$edited")"

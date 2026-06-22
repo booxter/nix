@@ -17,7 +17,8 @@ let
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wireguardGatewaySshHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.gw;
-  unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
+  unifiSyncEnv = import ../lib/unifi-sync-env.nix { inherit hostInventory; };
+  appPackages = import ./default.nix pkgs;
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -110,7 +111,7 @@ let
         exec sudo "''${disko_cmd[@]}"
       fi
 
-      exec ${pkgs.bash}/bin/bash ${../.}/scripts/update-machines.sh "$@"
+      exec ${pkgs.bash}/bin/bash ${../.}/apps/update-machines.sh "$@"
     '';
   };
 
@@ -122,7 +123,7 @@ let
     ];
     text = ''
       export VM_REPO_ROOT="${../.}"
-      exec ${pkgs.bash}/bin/bash ${../scripts/vm.sh} "$@"
+      exec ${pkgs.bash}/bin/bash ${../apps/vm.sh} "$@"
     '';
   };
 
@@ -140,7 +141,7 @@ let
     ];
     text = ''
       export DIFF_CONFIG_PROGRAM_NAME=diff
-      exec ${pkgs.bash}/bin/bash ${../scripts/diff-config.sh} "$@"
+      exec ${pkgs.bash}/bin/bash ${../apps/diff-config.sh} "$@"
     '';
   };
 
@@ -152,7 +153,7 @@ let
       gawk
     ];
     text = ''
-      exec ${../scripts/get-local-builders.sh} "$@"
+      exec ${../apps/get-local-builders.sh} "$@"
     '';
   };
 
@@ -172,15 +173,15 @@ let
       export HBA_FLASH_DEFAULT_SAS3FLASH_BUNDLE="${broadcomSas3flashP15}"
       export HBA_FLASH_DEFAULT_FIRMWARE_BUNDLE="${broadcomSas9305_24iP16_12}"
     ''
-    + builtins.readFile ../scripts/hba-flash.sh;
+    + builtins.readFile ../apps/hba-flash.sh;
   };
   unifiSyncPackage = pkgs.unifi-sync;
-  issueInternalServiceCertPackage = pkgs.issue-internal-service-cert;
-  issueObservabilityCertPackage = pkgs.issue-observability-cert;
-  issueProxmoxExporterTokenPackage = pkgs.issue-proxmox-exporter-token;
+  issueInternalServiceCertPackage = appPackages.issue-internal-service-cert;
+  issueObservabilityCertPackage = appPackages.issue-observability-cert;
+  issueProxmoxExporterTokenPackage = appPackages.issue-proxmox-exporter-token;
   pkiRotationPackage = pkgs.pki-rotation;
   sshTicketPackage = pkgs.ssh-ticket;
-  sshTicketTargets = import ./ssh-ticket-targets.nix {
+  sshTicketTargets = import ../lib/ssh-ticket-targets.nix {
     inherit
       hostInventory
       username

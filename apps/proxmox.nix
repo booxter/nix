@@ -4,7 +4,7 @@
 }:
 let
   pkgs = inputs.nixpkgs.legacyPackages.${system};
-  hostInventory = import ./inventory.nix { lib = pkgs.lib; };
+  hostInventory = import ../lib/inventory.nix { lib = pkgs.lib; };
   vmSpecs = builtins.filter hostInventory.isNixosVM hostInventory.nixosHostSpecs;
   vmTargetCases = pkgs.lib.concatMapStringsSep "\n" (spec: ''
     ${pkgs.lib.escapeShellArg spec.name})
@@ -56,7 +56,7 @@ if builtins.hasAttr system inputs.proxmox-nixos.packages then
             ;;
         esac
 
-        exec ${../scripts/prox-deploy.sh} \
+        exec ${../apps/prox-deploy.sh} \
           "$proxmox_host" \
           "root" \
           "priv/lab-''${proxmox_host}" \
@@ -66,20 +66,15 @@ if builtins.hasAttr system inputs.proxmox-nixos.packages then
   in
   if builtins.hasAttr "nixmoxer" proxmoxPkgs then
     {
-      packages = {
-        prox-deploy = proxDeploy;
-      };
       apps = {
         prox-deploy = mkApp "${proxDeploy}/bin/prox-deploy" "Deploy a prox VM via nixmoxer.";
       };
     }
   else
     {
-      packages = { };
       apps = { };
     }
 else
   {
-    packages = { };
     apps = { };
   }

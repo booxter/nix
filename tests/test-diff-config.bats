@@ -244,7 +244,7 @@ SH
 }
 
 @test "diff-config shows usage" {
-  run bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" --help
+  run bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" --help
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage: diff-config [--details] [--path <relpath>] <machine> <old-rev> <new-rev>"* ]]
@@ -264,7 +264,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
     .#nixosConfigurations.frame.config.system.build.toplevel \
     "$old_rev" \
     "$new_rev"
@@ -305,7 +305,7 @@ SH
     DIX_ARGS_LOG="$dix_log" \
     NIX_TARGET_KIND=nixos \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
     org \
     "$old_rev" \
     "$new_rev"
@@ -332,7 +332,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
     builder1 \
     "$old_rev" \
     "$new_rev"
@@ -360,7 +360,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
     fana \
     "$old_rev" \
     "$new_rev"
@@ -389,7 +389,7 @@ SH
     DIX_ARGS_LOG="$dix_log" \
     DIFF_ARGS_LOG="$diff_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
     --details \
     --path etc/nix/nix.conf \
     --path etc/terminfo \
@@ -447,7 +447,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../scripts/diff-config.sh" \
+    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
     mair \
     "$old_rev" \
     "$new_rev"

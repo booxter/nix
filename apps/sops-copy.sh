@@ -4,14 +4,14 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-copy.sh SRC_HOST DST_HOST SRC_KEY_PATH [DST_KEY_PATH]
-  scripts/sops-copy.sh --help
+  apps/sops-copy.sh SRC_HOST DST_HOST SRC_KEY_PATH [DST_KEY_PATH]
+  apps/sops-copy.sh --help
 
 Copy SRC_KEY_PATH from secrets/SRC_HOST.yaml into secrets/DST_HOST.yaml.
 If DST_KEY_PATH is omitted, SRC_KEY_PATH is used in the destination too.
 Example:
-  scripts/sops-copy.sh mair prx1-lab attic
-  scripts/sops-copy.sh prx1-lab gw nut/users/upsslave/password nut/monitors/prx1-lab/password
+  apps/sops-copy.sh mair prx1-lab attic
+  apps/sops-copy.sh prx1-lab gw nut/users/upsslave/password nut/monitors/prx1-lab/password
 EOF
 }
 
@@ -137,7 +137,7 @@ main() {
   local repo_root
   repo_root="$(resolve_repo_root)"
   # shellcheck disable=SC1091
-  source "${repo_root}/scripts/_helpers/host-aliases.sh"
+  source "${repo_root}/apps/_helpers/host-aliases.sh"
   src_host="$(canonical_secret_host "$repo_root" "$src_host")"
   dst_host="$(canonical_secret_host "$repo_root" "$dst_host")"
 

@@ -4,9 +4,9 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-update.sh --force [HOST]
-  scripts/sops-update.sh [HOST]
-  scripts/sops-update.sh --help
+  apps/sops-update.sh --force [HOST]
+  apps/sops-update.sh [HOST]
+  apps/sops-update.sh --help
 
 Update secrets/HOST.yaml from template defaults in secrets/_template.yaml and,
 if present, secrets/_templates/HOST.yaml.
@@ -64,7 +64,7 @@ main() {
   local repo_root
   repo_root="$(resolve_repo_root)"
   # shellcheck disable=SC1091
-  source "${repo_root}/scripts/_helpers/host-aliases.sh"
+  source "${repo_root}/apps/_helpers/host-aliases.sh"
   host="$(canonical_secret_host "$repo_root" "$host")"
   template="${repo_root}/secrets/_template.yaml"
   host_template="${repo_root}/secrets/_templates/${host}.yaml"

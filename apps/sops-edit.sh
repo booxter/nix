@@ -4,13 +4,16 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-cat.sh [HOST]
-  scripts/sops-cat.sh --help
+  apps/sops-edit.sh [HOST]
+  apps/sops-edit.sh --help
 
-Decrypt and print secrets/HOST.yaml.
 If HOST is omitted, the current short hostname is used.
+Open the host secret for editing with sops.
+Run sops-update separately when template keys should be merged.
 EOF
 }
+
+host=""
 
 resolve_repo_root() {
   if git -C "$PWD" rev-parse --show-toplevel >/dev/null 2>&1; then
@@ -22,7 +25,9 @@ resolve_repo_root() {
   cd -- "${script_dir}/.." && pwd
 }
 
-host=""
+repo_root="$(resolve_repo_root)"
+# shellcheck disable=SC1091
+source "${repo_root}/apps/_helpers/host-aliases.sh"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h | --help)
@@ -50,9 +55,6 @@ if [[ -z "$host" ]]; then
   host="$(hostname -s)"
 fi
 
-repo_root="$(resolve_repo_root)"
-# shellcheck disable=SC1091
-source "${repo_root}/scripts/_helpers/host-aliases.sh"
 host="$(canonical_secret_host "$repo_root" "$host")"
 secret="${repo_root}/secrets/${host}.yaml"
 
@@ -61,4 +63,4 @@ if [[ ! -f "$secret" ]]; then
   exit 1
 fi
 
-sops --decrypt "$secret"
+sops "$secret"

@@ -31,7 +31,7 @@ EOF
   export NIXMOXER_CONF_OUT="$workdir/nixmoxer.conf.snapshot"
 
   cd "$workdir"
-  run bash "$BATS_TEST_DIRNAME/../scripts/prox-deploy.sh" prx1 root priv/lab-prx1 srvarr
+  run bash "$BATS_TEST_DIRNAME/../apps/prox-deploy.sh" prx1 root priv/lab-prx1 srvarr
 
   [ "$status" -eq 0 ]
   [ "$(cat "$PASS_ARGS_OUT")" = "priv/lab-prx1" ]
@@ -46,7 +46,7 @@ EOF
 }
 
 @test "prox-deploy validates argument count" {
-  run bash "$BATS_TEST_DIRNAME/../scripts/prox-deploy.sh" only three args
+  run bash "$BATS_TEST_DIRNAME/../apps/prox-deploy.sh" only three args
   [ "$status" -ne 0 ]
   [[ "$output" == *"Usage: "* ]]
 }
@@ -78,7 +78,7 @@ EOF
   export PATH="$workdir/bin:$PATH"
 
   cd "$workdir"
-  run bash "$BATS_TEST_DIRNAME/../scripts/prox-deploy.sh" prx1 root priv/lab-prx1 srvarr
+  run bash "$BATS_TEST_DIRNAME/../apps/prox-deploy.sh" prx1 root priv/lab-prx1 srvarr
 
   [ "$status" -eq 7 ]
   [ ! -e "$workdir/nixmoxer.conf" ]

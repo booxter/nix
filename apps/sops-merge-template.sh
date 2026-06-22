@@ -4,7 +4,7 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-merge-template.sh [HOST]
+  apps/sops-merge-template.sh [HOST]
 
 Update secrets/HOST.yaml from template defaults in secrets/_template.yaml.
 

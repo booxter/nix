@@ -28,7 +28,7 @@ expected_json='{
 }'
 
 stderr_file="$(mktemp)"
-if ! actual_json="$(./scripts/get-hosts.sh 2>"$stderr_file")"; then
+if ! actual_json="$(./apps/get-hosts.sh 2>"$stderr_file")"; then
   echo "get-hosts.sh failed" >&2
   cat "$stderr_file" >&2 || true
   rm -f "$stderr_file"
@@ -69,7 +69,7 @@ expected_filtered='{
 }'
 
 stderr_file="$(mktemp)"
-if ! filtered_json="$(./scripts/get-hosts.sh mair nvws beast 2>"$stderr_file")"; then
+if ! filtered_json="$(./apps/get-hosts.sh mair nvws beast 2>"$stderr_file")"; then
   echo "get-hosts.sh with args failed" >&2
   cat "$stderr_file" >&2 || true
   rm -f "$stderr_file"
@@ -104,7 +104,7 @@ expected_vm_filtered='{
 }'
 
 stderr_file="$(mktemp)"
-if ! vm_filtered_json="$(./scripts/get-hosts.sh org srvarr 2>"$stderr_file")"; then
+if ! vm_filtered_json="$(./apps/get-hosts.sh org srvarr 2>"$stderr_file")"; then
   echo "get-hosts.sh with short VM args failed" >&2
   cat "$stderr_file" >&2 || true
   rm -f "$stderr_file"

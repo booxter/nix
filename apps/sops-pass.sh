@@ -4,8 +4,8 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-pass.sh [--gen] HOST USER
-  scripts/sops-pass.sh --help
+  apps/sops-pass.sh [--gen] HOST USER
+  apps/sops-pass.sh --help
 
 Hash a login password with mkpasswd and store it in secrets/HOST.yaml.
 USER must be root, ihrachyshka, or both.
@@ -107,7 +107,7 @@ esac
 
 repo_root="$(resolve_repo_root)"
 # shellcheck disable=SC1091
-source "${repo_root}/scripts/_helpers/host-aliases.sh"
+source "${repo_root}/apps/_helpers/host-aliases.sh"
 secret_host="$(canonical_secret_host "$repo_root" "${host}")"
 secret="${repo_root}/secrets/${secret_host}.yaml"
 

@@ -4,12 +4,12 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-set.sh HOST KEY_PATH
-  scripts/sops-set.sh --help
+  apps/sops-set.sh HOST KEY_PATH
+  apps/sops-set.sh --help
 
 Set KEY_PATH in secrets/HOST.yaml to the exact value read from stdin.
 KEY_PATH is slash-separated, for example:
-  scripts/sops-set.sh srvarr romm/authSecretKey < secret.txt
+  apps/sops-set.sh srvarr romm/authSecretKey < secret.txt
 
 Values are read from stdin to avoid putting secrets in shell history or argv.
 One trailing newline is stripped, matching command-substitution behavior.
@@ -110,7 +110,7 @@ main() {
   local repo_root
   repo_root="$(resolve_repo_root)"
   # shellcheck disable=SC1091
-  source "${repo_root}/scripts/_helpers/host-aliases.sh"
+  source "${repo_root}/apps/_helpers/host-aliases.sh"
   host="$(canonical_secret_host "$repo_root" "$host")"
 
   local secret="${repo_root}/secrets/${host}.yaml"

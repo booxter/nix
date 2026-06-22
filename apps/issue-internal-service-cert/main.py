@@ -325,7 +325,7 @@ def update_secret_file(host, service, service_cfg, cert_text, key_text):
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
 
-    run([str(REPO_ROOT / "scripts" / "sops-update.sh"), host])
+    run([str(REPO_ROOT / "apps" / "sops-update.sh"), host])
     decrypted = run(["sops", "--decrypt", str(secret_path)])
     data = yaml.safe_load(decrypted) or {}
 
@@ -436,7 +436,7 @@ def update_client_secret_file(host, client_cfg, cert_text, key_text):
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
 
-    run([str(REPO_ROOT / "scripts" / "sops-update.sh"), host])
+    run([str(REPO_ROOT / "apps" / "sops-update.sh"), host])
     decrypted = run(["sops", "--decrypt", str(secret_path)])
     data = yaml.safe_load(decrypted) or {}
 

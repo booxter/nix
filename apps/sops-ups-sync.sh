@@ -4,9 +4,9 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/sops-ups-sync.sh --all
-  scripts/sops-ups-sync.sh SERVER [CLIENT...]
-  scripts/sops-ups-sync.sh --help
+  apps/sops-ups-sync.sh --all
+  apps/sops-ups-sync.sh SERVER [CLIENT...]
+  apps/sops-ups-sync.sh --help
 
 Copy a UPS server's nut/users/upsslave/password secret to each client's
 nut/monitors/SERVER/password secret.
@@ -83,7 +83,7 @@ sync_server() {
 
   local client
   for client in "${clients[@]}"; do
-    "${BASH}" "${repo_root}/scripts/sops-copy.sh" \
+    "${BASH}" "${repo_root}/apps/sops-copy.sh" \
       "$server" \
       "$client" \
       "nut/users/upsslave/password" \

@@ -9,7 +9,7 @@ REBUILD_ACTION="switch"
 ALL=true
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "${REPO_ROOT}/scripts/_helpers/update-machines-lib.sh"
+source "${REPO_ROOT}/apps/_helpers/update-machines-lib.sh"
 COLOR_RESET='\033[0m'
 COLOR_HOST='\033[1;36m'
 COLOR_BLUE='\033[1;34m'
@@ -262,7 +262,7 @@ run_selector() {
   fi
   tmpfile="$(mktemp)"
   printf '%s\n' "${items[@]}" >"$tmpfile"
-  if ! selection="$(python3 "${REPO_ROOT}/scripts/_helpers/selector.py" --file "$tmpfile")"; then
+  if ! selection="$(python3 "${REPO_ROOT}/apps/_helpers/selector.py" --file "$tmpfile")"; then
     rm -f "$tmpfile"
     echo "Selection canceled." >&2
     exit 1
@@ -297,7 +297,7 @@ Failed hosts: ${failed_list}"
     border_color=1
     text_color=1
   fi
-  printf '%s\n' "$summary_text" | python3 "${REPO_ROOT}/scripts/_helpers/box.py" \
+  printf '%s\n' "$summary_text" | python3 "${REPO_ROOT}/apps/_helpers/box.py" \
     --border-color "$border_color" \
     --text-color "$text_color" \
     --margin "1 2" \
@@ -347,8 +347,8 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both]
-  scripts/update-machines.sh [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
+  apps/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both]
+  apps/update-machines.sh [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
 
 Options:
   -A, --all         Update all hosts discovered from flake outputs (default).
@@ -457,7 +457,7 @@ if [[ "$ALL" == "true" ]]; then
     echo "Do not pass host names with -A." >&2
     exit 1
   fi
-  WORK_MAP="$("${REPO_ROOT}/scripts/get-hosts.sh" 2>/dev/null || echo '')"
+  WORK_MAP="$("${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
   if [[ -z "$WORK_MAP" ]]; then
     echo "Failed to read hosts from get-hosts.sh." >&2
     exit 1
