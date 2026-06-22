@@ -11,8 +11,6 @@ in
 
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
-  aurral = pkgs.callPackage ./aurral { };
-
   pki-rotation = pkgs.callPackage ./pki-rotation {
     issueInternalServiceCert = appPackages.issue-internal-service-cert;
     issueObservabilityCert = appPackages.issue-observability-cert;

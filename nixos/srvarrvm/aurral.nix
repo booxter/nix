@@ -3,6 +3,7 @@
   hostInventory,
   lib,
   pkgs,
+  srvarrPkgs,
   ...
 }:
 let
@@ -45,7 +46,7 @@ in
       TRUST_PROXY = "2";
     };
     serviceConfig = {
-      ExecStart = lib.getExe pkgs.aurral;
+      ExecStart = lib.getExe srvarrPkgs.aurral;
       User = "aurral";
       Group = "aurral";
       WorkingDirectory = aurralStateDir;
