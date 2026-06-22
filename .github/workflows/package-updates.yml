@@ -75,7 +75,3 @@ jobs:
           body: ${{ steps.update-sources.outputs.body }}
           branch: ci/package-updates
           delete-branch: true
-          add-paths: |
-            darwin/pkgs/ismc/default.nix
-            lib/oci-images.json
-            nixos/srvarr/pkgs/aurral/default.nix
