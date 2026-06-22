@@ -339,13 +339,6 @@
       "warm": true
     },
     {
-      "attr": "checks.x86_64-linux.join-media-parts",
-      "name": "join-media-parts",
-      "runner": "ubuntu-latest",
-      "system": "x86_64-linux",
-      "warm": true
-    },
-    {
       "attr": "checks.x86_64-linux.wg-home-client-config",
       "name": "wg-home-client-config",
       "runner": "ubuntu-latest",

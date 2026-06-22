@@ -58,8 +58,8 @@ recreate or restore it from repository state.
 
 For dry runs, inspect the pkivm service command and append `--dry-run` before a
 deployment or live run. Add tests for encoding or payload behavior in
-[test_unifi_sync.py](../../tests/test_unifi_sync.py) rather than documenting
-sample encoded values here.
+[test_main.py](./pkgs/unifi-sync/test_main.py) rather than documenting sample
+encoded values here.
 
 TLS certificate verification is enabled by default. Use `--insecure-tls` only
 for temporary troubleshooting against an untrusted local console certificate.

@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import pathlib
 import time
 import types
@@ -6,12 +7,8 @@ import types
 import pytest
 
 
-MODULE_PATH = (
-    pathlib.Path(__file__).resolve().parents[1]
-    / "home-manager"
-    / "pkgs"
-    / "ssh-ticket"
-    / "main.py"
+MODULE_PATH = pathlib.Path(
+    os.environ.get("SSH_TICKET_MAIN", pathlib.Path(__file__).with_name("main.py"))
 )
 SPEC = importlib.util.spec_from_file_location("ssh_ticket_main", MODULE_PATH)
 ssh_ticket = importlib.util.module_from_spec(SPEC)

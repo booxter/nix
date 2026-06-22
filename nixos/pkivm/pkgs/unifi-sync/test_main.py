@@ -1,17 +1,13 @@
 import importlib.util
+import os
 import pathlib
 import sys
 
 import pytest
 
 
-MODULE_PATH = (
-    pathlib.Path(__file__).parents[1]
-    / "nixos"
-    / "pkivm"
-    / "pkgs"
-    / "unifi-sync"
-    / "main.py"
+MODULE_PATH = pathlib.Path(
+    os.environ.get("UNIFI_SYNC_MAIN", pathlib.Path(__file__).with_name("main.py"))
 )
 SPEC = importlib.util.spec_from_file_location("unifi_sync", MODULE_PATH)
 unifi_sync = importlib.util.module_from_spec(SPEC)
