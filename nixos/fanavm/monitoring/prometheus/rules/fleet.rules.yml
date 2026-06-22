@@ -21,7 +21,7 @@ groups:
           summary: "Node CPU usage critical on {{ $labels.instance }}"
           description: "{{ $labels.instance }} CPU busy has been above 90% for 5 minutes."
       - alert: NodeMemoryUsageHigh
-        expr: 100 * ((1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls"})) or (1 - ((node_memory_free_bytes{job=~"node-local|node-mtls"} + node_memory_inactive_bytes{job=~"node-local|node-mtls"}) / node_memory_total_bytes{job=~"node-local|node-mtls"}))) > 80
+        expr: 100 * ((1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"})) or (1 - ((node_memory_free_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"} + node_memory_inactive_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"}) / node_memory_total_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"}))) > 80
         for: 5m
         labels:
           severity: warning
@@ -30,7 +30,7 @@ groups:
           summary: "Node memory usage high on {{ $labels.instance }}"
           description: "{{ $labels.instance }} memory usage has been above 80% for 5 minutes."
       - alert: NodeMemoryUsageCritical
-        expr: 100 * ((1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls"})) or (1 - ((node_memory_free_bytes{job=~"node-local|node-mtls"} + node_memory_inactive_bytes{job=~"node-local|node-mtls"}) / node_memory_total_bytes{job=~"node-local|node-mtls"}))) > 90
+        expr: 100 * ((1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"})) or (1 - ((node_memory_free_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"} + node_memory_inactive_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"}) / node_memory_total_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"}))) > 90
         for: 5m
         labels:
           severity: critical
@@ -38,6 +38,35 @@ groups:
         annotations:
           summary: "Node memory usage critical on {{ $labels.instance }}"
           description: "{{ $labels.instance }} memory usage has been above 90% for 5 minutes."
+      # Proxmox hosts run large QEMU processes whose RSS includes reclaimable
+      # guest page cache. On 128 GiB nodes, an 80% threshold can still leave
+      # about 25 GiB available, so alert them on low absolute headroom and a
+      # higher percentage threshold instead. PSI would be a cleaner pressure
+      # signal, but the node-exporter config does not export it today.
+      - alert: ProxmoxNodeMemoryHeadroomLow
+        expr: |
+          (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"} < 16 * 1024 * 1024 * 1024)
+          or
+          (100 * (1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"})) > 90)
+        for: 5m
+        labels:
+          severity: warning
+          category: capacity
+        annotations:
+          summary: "Proxmox node memory headroom low on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has less than 16 GiB available or is above 90% memory use for 5 minutes."
+      - alert: ProxmoxNodeMemoryHeadroomCritical
+        expr: |
+          (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"} < 8 * 1024 * 1024 * 1024)
+          or
+          (100 * (1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"})) > 95)
+        for: 5m
+        labels:
+          severity: critical
+          category: capacity
+        annotations:
+          summary: "Proxmox node memory headroom critical on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has less than 8 GiB available or is above 95% memory use for 5 minutes."
       - alert: RootFilesystemUsageHigh
         expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""})) > 85
         for: 30m

@@ -3,7 +3,7 @@
 
 set -euo pipefail
 
-treefmt "$@"
+treefmt --tree-root "$PWD" "$@"
 mbake format --config ./.bake.toml Makefile
 git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
 while IFS= read -r -d '' file; do

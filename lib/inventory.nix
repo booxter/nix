@@ -40,6 +40,7 @@ let
       dhcpReservation = builderDhcpReservations.${idx'};
       stateVersion = "25.11";
       memorySize = 64;
+      balloonSize = 48;
       diskSize = 150;
       cores = 24;
       hmFull = false;
@@ -312,6 +313,14 @@ rec {
       probePath = "/login";
     }))
     (resolveService (mkService {
+      id = "romm";
+      title = "RomM";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "game.ihar.dev";
+      probePath = "/api/heartbeat";
+    }))
+    (resolveService (mkService {
       id = "grafana";
       scope = "internal";
       owner = "fana";
@@ -568,6 +577,7 @@ rec {
         "lidarr"
         "bazarr"
         "prowlarr"
+        "romm"
         "aurral"
         "audiobookshelf"
         "shelfmark"

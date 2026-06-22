@@ -77,6 +77,7 @@ setup_repo() {
   cp "$REPO_ROOT/scripts/sops-cat.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-update.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-copy.sh" "$repo_dir/scripts/"
+  cp "$REPO_ROOT/scripts/sops-set.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-ups-sync.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-edit.sh" "$repo_dir/scripts/"
   cp "$REPO_ROOT/scripts/sops-pass.sh" "$repo_dir/scripts/"
@@ -264,6 +265,14 @@ EOF
   decrypt_secret_file cache "$copied"
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
   assert_eq "cache" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive copy"
+
+  log "set a secret value from stdin without losing destination data"
+  printf 'SET_FROM_STDIN\n' | run_and_capture "$out" bash "$repo/scripts/sops-set.sh" cache nested/new/value
+  assert_contains "$(cat "$out")" "Updated cache:nested/new/value."
+  decrypt_secret_file cache "$copied"
+  assert_eq "SET_FROM_STDIN" "$(yq -r '.nested.new.value' "$copied")"
+  assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
+  assert_eq "cache" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive set"
 
   log "sync UPS monitor password through helper"
   cat > "$repo/ups-clients-by-server.json" <<'EOF'
