@@ -92,6 +92,62 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls"}'
+        values: "25769803776x12"
+      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls"}'
+        values: "137438953472x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: NodeMemoryUsageHigh
+      - eval_time: 5m
+        alertname: ProxmoxNodeMemoryHeadroomLow
+
+  - interval: 30s
+    input_series:
+      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls"}'
+        values: "16106127360x12"
+      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls"}'
+        values: "137438953472x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: ProxmoxNodeMemoryHeadroomLow
+      - eval_time: 5m
+        alertname: ProxmoxNodeMemoryHeadroomLow
+        exp_alerts:
+          - exp_labels:
+              alertname: ProxmoxNodeMemoryHeadroomLow
+              category: capacity
+              instance: prx1-lab
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Proxmox node memory headroom low on prx1-lab"
+              description: "prx1-lab has less than 16 GiB available or is above 90% memory use for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls"}'
+        values: "7516192768x12"
+      - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls"}'
+        values: "137438953472x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: ProxmoxNodeMemoryHeadroomCritical
+      - eval_time: 5m
+        alertname: ProxmoxNodeMemoryHeadroomCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: ProxmoxNodeMemoryHeadroomCritical
+              category: capacity
+              instance: prx1-lab
+              job: node-mtls
+              severity: critical
+            exp_annotations:
+              summary: "Proxmox node memory headroom critical on prx1-lab"
+              description: "prx1-lab has less than 8 GiB available or is above 95% memory use for 5 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'node_filesystem_avail_bytes{instance="builder2",job="node-mtls",mountpoint="/",fstype="ext4"}'
         values: "20x62"
       - series: 'node_filesystem_size_bytes{instance="builder2",job="node-mtls",mountpoint="/",fstype="ext4"}'

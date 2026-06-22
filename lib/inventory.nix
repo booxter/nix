@@ -40,6 +40,7 @@ let
       dhcpReservation = builderDhcpReservations.${idx'};
       stateVersion = "25.11";
       memorySize = 64;
+      balloonSize = 48;
       diskSize = 150;
       cores = 24;
       hmFull = false;
