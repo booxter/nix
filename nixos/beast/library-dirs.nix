@@ -2,9 +2,12 @@
 let
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
+  servarrAccounts = import ../srvarrvm/accounts.nix;
   mediaRoot = "/volume2/Media";
+  mediaRommRoot = "${mediaRoot}/romm";
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
+  rommUser = toString servarrAccounts.uids.romm;
 
   mkTmpfilesDir = path: mode: user: group: [
     "d ${path} ${mode} ${user} ${group} - -"
@@ -34,6 +37,62 @@ let
       path = "${mediaPaths.sourceLibraryRoot}/flows";
       mode = "2775";
       user = "root";
+      group = "media";
+    }
+    # /volume2/Media is exported to srvarr. Use srvarr's numeric service IDs
+    # so ownership is meaningful on the NFS client.
+    {
+      path = mediaRommRoot;
+      mode = "2775";
+      user = rommUser;
+      group = "media";
+    }
+    {
+      path = "${mediaRommRoot}/assets";
+      mode = "2775";
+      user = rommUser;
+      group = "media";
+    }
+    {
+      path = "${mediaRommRoot}/config";
+      mode = "2775";
+      user = rommUser;
+      group = "media";
+    }
+    {
+      path = "${mediaRommRoot}/resources";
+      mode = "2775";
+      user = rommUser;
+      group = "media";
+    }
+    {
+      path = "${mediaRommRoot}/sync";
+      mode = "2775";
+      user = rommUser;
+      group = "media";
+    }
+    {
+      path = "${mediaRommRoot}/library";
+      mode = "2775";
+      user = rommUser;
+      group = "media";
+    }
+    {
+      path = "${mediaRommRoot}/library/roms";
+      mode = "2775";
+      user = rommUser;
+      group = "media";
+    }
+    {
+      path = "${mediaRommRoot}/library/roms/pc";
+      mode = "2775";
+      user = rommUser;
+      group = "media";
+    }
+    {
+      path = "${mediaRommRoot}/library/bios";
+      mode = "2775";
+      user = rommUser;
       group = "media";
     }
     {

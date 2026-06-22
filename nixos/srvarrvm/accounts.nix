@@ -9,6 +9,7 @@
     bazarr = 232;
     prowlarr = 293;
     radarr = 275;
+    romm = 295;
     sabnzbd = 38;
     seerr = 262;
     shelfmark = 250;
