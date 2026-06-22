@@ -191,8 +191,10 @@
         system:
         let
           basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
+          mminiPackages = import ./darwin/mmini/pkgs inputs.nixpkgs.legacyPackages.${system};
           fleetPackages = {
             inherit (inputs.disko.packages.${system}) disko-install;
+            inherit (mminiPackages) fleet-cache-warmer;
           };
           proxmox = import ./lib/proxmox-apps.nix {
             inherit inputs system;

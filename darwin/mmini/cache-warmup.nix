@@ -3,15 +3,18 @@
   pkgs,
   ...
 }:
+let
+  mminiPkgs = import ./pkgs pkgs;
+in
 {
   environment.systemPackages = [
-    pkgs.fleet-cache-warmer
+    mminiPkgs.fleet-cache-warmer
   ];
 
   launchd.daemons.fleet-cache-warmer = {
     serviceConfig = {
       ProgramArguments = [
-        (lib.getExe pkgs.fleet-cache-warmer)
+        (lib.getExe mminiPkgs.fleet-cache-warmer)
       ];
       StartCalendarInterval = {
         Hour = 8;

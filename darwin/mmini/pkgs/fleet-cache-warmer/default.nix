@@ -8,7 +8,7 @@
 }:
 
 let
-  inventory = builtins.fromJSON (builtins.readFile ../../ci-target-inventory.json);
+  inventory = builtins.fromJSON (builtins.readFile ../../../../ci-target-inventory.json);
   ciValidatedWarmTargets = map (target: target.attr) (
     lib.filter (target: target.warm) (
       inventory.buildTargets ++ inventory.regularChecks ++ inventory.nixosTests
