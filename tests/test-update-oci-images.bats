@@ -5,8 +5,9 @@ setup() {
   mkdir -p "$TEST_BIN"
   export PATH="${TEST_BIN}:${PATH}"
 
-  cat > "${TEST_BIN}/skopeo" <<'EOF'
-#!/usr/bin/env bash
+  {
+    printf '#!%s\n' "$(command -v bash)"
+    cat <<'EOF'
 set -euo pipefail
 
 if [[ "$1" != "list-tags" || "$2" != "docker://docker.io/example/romm" ]]; then
@@ -26,6 +27,7 @@ cat <<'JSON'
 }
 JSON
 EOF
+  } > "${TEST_BIN}/skopeo"
   chmod +x "${TEST_BIN}/skopeo"
 }
 
@@ -53,7 +55,10 @@ JSON
     --summary-file "$summary_file" \
     --target romm
 
-  [ "$status" -eq 0 ]
+  if [ "$status" -ne 0 ]; then
+    printf 'status: %s\n%s\n' "$status" "$output" >&3
+    return 1
+  fi
   [ "$(jq -r '.romm.tag' "$pins_file")" = "4.10.0" ]
   [ "$(jq -r '.other.tag' "$pins_file")" = "1.0.0" ]
   grep -F '| `romm` | `docker.io/example/romm` | `4.9.1 -> 4.10.0` | [link](https://example.invalid/releases/4.10.0) |' "$summary_file"
