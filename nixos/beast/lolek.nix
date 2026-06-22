@@ -28,13 +28,13 @@ in
     mode = "0400";
   };
 
-  sops.secrets.lolekTelegramBotApiApiId = {
+  sops.secrets."lolek/telegramBotApi/apiId" = {
     owner = "lolek";
     group = "lolek";
     mode = "0400";
   };
 
-  sops.secrets.lolekTelegramBotApiApiHash = {
+  sops.secrets."lolek/telegramBotApi/apiHash" = {
     owner = "lolek";
     group = "lolek";
     mode = "0400";
@@ -45,8 +45,8 @@ in
     group = "lolek";
     mode = "0400";
     content = ''
-      TELEGRAM_API_ID=${config.sops.placeholder.lolekTelegramBotApiApiId}
-      TELEGRAM_API_HASH=${config.sops.placeholder.lolekTelegramBotApiApiHash}
+      TELEGRAM_API_ID=${config.sops.placeholder."lolek/telegramBotApi/apiId"}
+      TELEGRAM_API_HASH=${config.sops.placeholder."lolek/telegramBotApi/apiHash"}
     '';
   };
 
