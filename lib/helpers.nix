@@ -132,6 +132,7 @@ rec {
       virtPlatform ? platform,
       cores ? 4,
       memorySize ? 8, # GB
+      balloonSize ? null, # GB
       diskSize ? 100, # GB
       hostname,
       proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
@@ -195,6 +196,7 @@ rec {
                   node = proxNode;
                   autoInstall = true;
                   memory = memorySize * 1024;
+                  balloon = if balloonSize == null then null else balloonSize * 1024;
                   cpu.cputype = "host";
                   agent = {
                     enabled = true;
