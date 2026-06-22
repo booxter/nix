@@ -226,6 +226,18 @@
             inherit program;
             meta = { inherit description; };
           };
+          get-ff-cookie = pkgs.writeShellApplication {
+            name = "get-ff-cookie";
+            runtimeInputs = with pkgs; [
+              coreutils
+              gallery-dl
+              gnugrep
+            ];
+            text = builtins.readFile ./scripts/get-ff-cookie.sh;
+          };
+          cookieApps = {
+            get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
+          };
           darwinApps = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
             lan-wan-bpf = mkApp "${basePackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
           };
@@ -233,7 +245,7 @@
             inherit inputs system;
           };
         in
-        sopsApps // fleetApps // proxmox.apps // darwinApps
+        sopsApps // fleetApps // proxmox.apps // cookieApps // darwinApps
       );
       formatter = helpers.forAllSystems (
         system:

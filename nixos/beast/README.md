@@ -171,6 +171,42 @@ sudo systemctl start restic-beast-cloud-offload.service
 - On first setup, use a simple password (no special characters) or later
   logins can fail.
 
+## Lolek gallery cookies
+
+`beast` runs Lolek with gallery downloading enabled. The gallery path uses
+upstream `gallery-dl` support for image/GIF/video galleries, and authenticated
+sites get cookies from the sops secret `lolek.galleryDlCookies`.
+
+Runtime wiring:
+
+- `services.lolek.galleryDownloadEnabled = true`
+- `LOLEK_GALLERY_DL_COOKIES_FILE` points at
+  `/run/secrets/lolek/galleryDlCookies`
+- the secret is owned by the `lolek` user and group
+
+Refresh the cookie from a local Firefox profile that is logged into Instagram:
+
+```bash
+nix run .#get-ff-cookie -- instagram.com \
+  | nix run .#sops-set -- beast lolek/galleryDlCookies
+```
+
+Run this once before deploying this config; `sops-set` creates the key when it
+is not already present and replaces it on later refreshes.
+
+For a non-default Firefox profile:
+
+```bash
+nix run .#get-ff-cookie -- --profile default-release instagram.com \
+  | nix run .#sops-set -- beast lolek/galleryDlCookies
+```
+
+`get-ff-cookie` uses `gallery-dl --cookies-from-browser firefox/<domain>` and
+prints a Netscape `cookies.txt` file to stdout. Diagnostics go to stderr so the
+stdout stream can be piped directly into `sops-set`. The command avoids browser
+extensions; if Firefox is not logged into the site, it exits without updating
+the secret.
+
 ## HBA firmware flashing
 
 As of the 2026-04 controller swap, `beast` uses a single Broadcom / LSI

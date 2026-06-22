@@ -22,6 +22,12 @@ in
     mode = "0400";
   };
 
+  sops.secrets."lolek/galleryDlCookies" = {
+    owner = "lolek";
+    group = "lolek";
+    mode = "0400";
+  };
+
   sops.secrets.lolekTelegramBotApiApiId = {
     owner = "lolek";
     group = "lolek";
@@ -52,6 +58,8 @@ in
     maxConcurrentDownloadsPerChat = 2;
     postSourceCaption = true;
     postRequesterCaption = true;
+    galleryDownloadEnabled = true;
+    environment.LOLEK_GALLERY_DL_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
     hardwareAcceleration.backend = "qsv";
     hardwareAcceleration.device = hostSpec.hardware.igpu.renderDevice;
     metrics = {
