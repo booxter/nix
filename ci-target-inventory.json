@@ -32,14 +32,14 @@
     },
     {
       "attr": "nixosConfigurations.nv.config.system.build.toplevel",
-      "name": "nvvm (x86_64-linux)",
+      "name": "nv (x86_64-linux)",
       "runner": "ubuntu-latest",
       "selection": {
         "hosts": [
           "nv"
         ],
         "prefixes": [
-          "nixos/nvvm/"
+          "nixos/nv/"
         ]
       },
       "system": "x86_64-linux",
@@ -112,7 +112,7 @@
           "cache"
         ],
         "prefixes": [
-          "nixos/cachevm/"
+          "nixos/cache/"
         ]
       },
       "system": "x86_64-linux",
@@ -142,7 +142,7 @@
           "srvarr"
         ],
         "prefixes": [
-          "nixos/srvarrvm/"
+          "nixos/srvarr/"
         ]
       },
       "system": "x86_64-linux",
@@ -157,7 +157,7 @@
           "fana"
         ],
         "prefixes": [
-          "nixos/fanavm/"
+          "nixos/fana/"
         ]
       },
       "system": "x86_64-linux",
@@ -172,7 +172,7 @@
           "gw"
         ],
         "prefixes": [
-          "nixos/gwvm/"
+          "nixos/gw/"
         ]
       },
       "system": "x86_64-linux",
@@ -187,7 +187,7 @@
           "org"
         ],
         "prefixes": [
-          "nixos/orgvm/"
+          "nixos/org/"
         ]
       },
       "system": "x86_64-linux",
@@ -202,7 +202,7 @@
           "pki"
         ],
         "prefixes": [
-          "nixos/pkivm/"
+          "nixos/pki/"
         ]
       },
       "system": "x86_64-linux",
@@ -314,7 +314,7 @@
           "cache"
         ],
         "prefixes": [
-          "nixos/cachevm/",
+          "nixos/cache/",
           "tests/nixos/cache.nix",
           "tests/nixos/fixtures/atticd.env"
         ]
@@ -334,13 +334,6 @@
     {
       "attr": "checks.x86_64-linux.box-py",
       "name": "box-py",
-      "runner": "ubuntu-latest",
-      "system": "x86_64-linux",
-      "warm": true
-    },
-    {
-      "attr": "checks.x86_64-linux.join-media-parts",
-      "name": "join-media-parts",
       "runner": "ubuntu-latest",
       "system": "x86_64-linux",
       "warm": true

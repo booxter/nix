@@ -106,12 +106,12 @@ runtime-name coupling.
    - remove old SSH principals
    - remove transitional SAN generation
    - remove `toProxVmName`
-   - optionally rename module directories such as `srvarrvm`
 
 ## Notes
 
 Builders and `nv` do not currently have DHCP reservations in inventory, so
 dual LAN DNS for those requires either reservations or a separate naming path.
 
-Module directory names like `nixos/srvarrvm` are repo shape, not runtime
-identity. Rename them after the runtime migration is stable.
+Module directory names like `nixos/srvarr` are repo shape, not runtime
+identity. They already use the short inventory names, while runtime identity
+still follows the migration plan above.

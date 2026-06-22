@@ -82,9 +82,9 @@ function defaultSelectionPathFilter(paths) {
   return filterSelectionPaths(paths, {
     ignore: [
       "eslint.config.js",
-      "lib/fleet.nix",
+      "apps/fleet.nix",
       ".github/scripts/plan-ci-matrix.js",
-      "scripts/formatter.sh",
+      "apps/formatter.sh",
     ],
   });
 }

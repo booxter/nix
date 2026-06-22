@@ -35,7 +35,7 @@ in
                 secretPrefix = lib.mkOption {
                   type = str;
                   default = "prometheus/clients/${name}";
-                  description = "Secret prefix containing client_crt and client_key for this client identity.";
+                  description = "Secret prefix containing client_crt_unencrypted and client_key for this client identity.";
                 };
 
                 commonName = lib.mkOption {
@@ -85,7 +85,7 @@ in
           in
           {
             sops.secrets.prometheusNodeExporterServerCrt = {
-              key = "${nodeExporterMtls.nodeExporterSecretPrefix}/server_crt";
+              key = "${nodeExporterMtls.nodeExporterSecretPrefix}/server_crt_unencrypted";
               owner = nodeExporterUser;
               group = nodeExporterGroup;
               mode = "0400";

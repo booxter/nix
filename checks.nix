@@ -14,8 +14,8 @@ helpers.forAllSystems (
         outputs.overlays.modifications
       ];
     };
-    fleetApps = import ./lib/fleet.nix { inherit pkgs; };
-    fanavmMonitoring = import ./nixos/fanavm/monitoring/catalog.nix;
+    fleetApps = import ./apps/fleet.nix { inherit pkgs; };
+    fanaMonitoring = import ./nixos/fana/monitoring/catalog.nix;
     mkCheck =
       {
         name,
@@ -29,7 +29,7 @@ helpers.forAllSystems (
           root = ./.;
           fileset = pkgs.lib.fileset.unions (
             [
-              ./scripts
+              ./apps
               ./tests
             ]
             ++ extraFileset
@@ -57,6 +57,7 @@ helpers.forAllSystems (
         bats tests/get-local-builders.bats
         bats tests/test-diff-config.bats
         bats tests/test-prox-deploy.bats
+        bats tests/test-update-oci-images.bats
         bash tests/check-sops-helpers.sh
         bats tests/test-vm.bats
         bats tests/update-machines.bats
@@ -69,65 +70,7 @@ helpers.forAllSystems (
         python3Packages.pytest
       ];
       buildPhase = ''
-        pytest -q tests/test_box.py tests/test_ssh_ticket.py
-      '';
-      extraFileset = [ ./pkgs/ssh-ticket ];
-    };
-    unifi-sync-py = mkCheck {
-      name = "unifi-sync-py-tests";
-      nativeBuildInputs = with pkgs; [
-        python3
-        python3Packages.pytest
-      ];
-      buildPhase = ''
-        pytest -q tests/test_unifi_sync.py
-      '';
-      extraFileset = [ ./pkgs/unifi-sync ];
-    };
-    join-media-parts = mkCheck {
-      name = "join-media-parts-tests";
-      nativeBuildInputs = [
-        pkgs.ffmpeg
-        pkgs.join-media-parts
-      ];
-      buildPhase = ''
-        mkdir -p work
-        cd work
-
-        mkdir 'ts case'
-        ffmpeg -hide_banner -loglevel error -y \
-          -f lavfi -i color=c=black:s=64x64:r=25:d=1 \
-          -f lavfi -i sine=frequency=440:sample_rate=48000:d=1 \
-          -c:v libx264 -pix_fmt yuv420p -f mpegts \
-          -c:a mp2 -shortest \
-          'ts case/01_part.ts'
-        ffmpeg -hide_banner -loglevel error -y \
-          -f lavfi -i color=c=blue:s=64x64:r=25:d=1 \
-          -f lavfi -i sine=frequency=880:sample_rate=48000:d=1 \
-          -c:v libx264 -pix_fmt yuv420p -f mpegts \
-          -c:a mp2 -shortest \
-          'ts case/02_part.ts'
-        join-media-parts 'ts case'
-        test -f 'ts case/ts case.mkv'
-        ffprobe -hide_banner -loglevel error 'ts case/ts case.mkv' >/dev/null
-        ffprobe -hide_banner -loglevel error \
-          -show_entries stream=codec_type \
-          -of csv=p=0 \
-          'ts case/ts case.mkv' \
-          | awk 'BEGIN { video = 0; audio = 0 } $0 == "video" { video++ } $0 == "audio" { audio++ } END { exit !(video == 1 && audio == 1) }'
-
-        mkdir 'mp4 case (sample)'
-        ffmpeg -hide_banner -loglevel error -y \
-          -f lavfi -i color=c=red:s=64x64:r=25:d=1 \
-          -c:v libx264 -pix_fmt yuv420p \
-          'mp4 case (sample)/Part 01 (sample).mp4'
-        ffmpeg -hide_banner -loglevel error -y \
-          -f lavfi -i color=c=green:s=64x64:r=25:d=1 \
-          -c:v libx264 -pix_fmt yuv420p \
-          'mp4 case (sample)/Part 02 (sample).mp4'
-        join-media-parts 'mp4 case (sample)'
-        test -f 'mp4 case (sample)/mp4 case (sample).mp4'
-        ffprobe -hide_banner -loglevel error 'mp4 case (sample)/mp4 case (sample).mp4' >/dev/null
+        pytest -q tests/test_box.py
       '';
     };
     wg-home-client-config = mkCheck {
@@ -175,29 +118,29 @@ helpers.forAllSystems (
         grep -F -- 'is not inside 10.83.0.0/24' subnet.err >/dev/null
       '';
     };
-    fanavm-alertmanager-config = mkCheck {
-      name = "fanavm-alertmanager-config";
+    fana-alertmanager-config = mkCheck {
+      name = "fana-alertmanager-config";
       nativeBuildInputs = with pkgs; [
         gettext
         prometheus-alertmanager
       ];
-      extraFileset = [ ./nixos/fanavm/monitoring ];
+      extraFileset = [ ./nixos/fana/monitoring ];
       buildPhase = ''
         export TELEGRAM_CHAT_ID='-1000000000000'
-        envsubst < ${fanavmMonitoring.alertmanager.configRelative} > alertmanager.rendered.yml
+        envsubst < ${fanaMonitoring.alertmanager.configRelative} > alertmanager.rendered.yml
         amtool check-config alertmanager.rendered.yml
       '';
     };
-    fanavm-prometheus-alerting = mkCheck {
-      name = "fanavm-prometheus-alerting";
+    fana-prometheus-alerting = mkCheck {
+      name = "fana-prometheus-alerting";
       nativeBuildInputs = [ pkgs.prometheus.cli ];
-      extraFileset = [ ./nixos/fanavm/monitoring ];
+      extraFileset = [ ./nixos/fana/monitoring ];
       buildPhase = ''
-        for rule_file in ${pkgs.lib.concatStringsSep " " fanavmMonitoring.prometheus.ruleFilesRelative}; do
+        for rule_file in ${pkgs.lib.concatStringsSep " " fanaMonitoring.prometheus.ruleFilesRelative}; do
           promtool check rules "$rule_file"
         done
 
-        for test_file in ${pkgs.lib.concatStringsSep " " fanavmMonitoring.prometheus.testFilesRelative}; do
+        for test_file in ${pkgs.lib.concatStringsSep " " fanaMonitoring.prometheus.testFilesRelative}; do
           test_dir="$(dirname "$test_file")"
           test_name="$(basename "$test_file")"
           (

@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  source ./scripts/_helpers/update-machines-lib.sh
+  source ./apps/_helpers/update-machines-lib.sh
 }
 
 write_update_machines_test_stubs() {
@@ -390,7 +390,7 @@ EOF
   export SSH_TEST_MODE="deploy-fail"
   export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
 
-  run script -q /dev/null bash ./scripts/update-machines.sh alpha beta
+  run script -q /dev/null bash ./apps/update-machines.sh alpha beta
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]

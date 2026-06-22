@@ -3,6 +3,7 @@
   writeShellApplication,
   coreutils,
   ffmpeg,
+  gawk,
   gnused,
 }:
 writeShellApplication {
@@ -12,6 +13,50 @@ writeShellApplication {
     ffmpeg
     gnused
   ];
+  checkPhase = ''
+    runHook preCheck
+
+    work="$(${coreutils}/bin/mktemp -d)"
+    trap '${coreutils}/bin/rm -rf "$work"' EXIT
+    cd "$work"
+
+    ${coreutils}/bin/mkdir 'ts case'
+    ${ffmpeg}/bin/ffmpeg -hide_banner -loglevel error -y \
+      -f lavfi -i color=c=black:s=64x64:r=25:d=1 \
+      -f lavfi -i sine=frequency=440:sample_rate=48000:d=1 \
+      -c:v libx264 -pix_fmt yuv420p -f mpegts \
+      -c:a mp2 -shortest \
+      'ts case/01_part.ts'
+    ${ffmpeg}/bin/ffmpeg -hide_banner -loglevel error -y \
+      -f lavfi -i color=c=blue:s=64x64:r=25:d=1 \
+      -f lavfi -i sine=frequency=880:sample_rate=48000:d=1 \
+      -c:v libx264 -pix_fmt yuv420p -f mpegts \
+      -c:a mp2 -shortest \
+      'ts case/02_part.ts'
+    "$target" 'ts case'
+    test -f 'ts case/ts case.mkv'
+    ${ffmpeg}/bin/ffprobe -hide_banner -loglevel error 'ts case/ts case.mkv' >/dev/null
+    ${ffmpeg}/bin/ffprobe -hide_banner -loglevel error \
+      -show_entries stream=codec_type \
+      -of csv=p=0 \
+      'ts case/ts case.mkv' \
+      | ${gawk}/bin/awk 'BEGIN { video = 0; audio = 0 } $0 == "video" { video++ } $0 == "audio" { audio++ } END { exit !(video == 1 && audio == 1) }'
+
+    ${coreutils}/bin/mkdir 'mp4 case (sample)'
+    ${ffmpeg}/bin/ffmpeg -hide_banner -loglevel error -y \
+      -f lavfi -i color=c=red:s=64x64:r=25:d=1 \
+      -c:v libx264 -pix_fmt yuv420p \
+      'mp4 case (sample)/Part 01 (sample).mp4'
+    ${ffmpeg}/bin/ffmpeg -hide_banner -loglevel error -y \
+      -f lavfi -i color=c=green:s=64x64:r=25:d=1 \
+      -c:v libx264 -pix_fmt yuv420p \
+      'mp4 case (sample)/Part 02 (sample).mp4'
+    "$target" 'mp4 case (sample)'
+    test -f 'mp4 case (sample)/mp4 case (sample).mp4'
+    ${ffmpeg}/bin/ffprobe -hide_banner -loglevel error 'mp4 case (sample)/mp4 case (sample).mp4' >/dev/null
+
+    runHook postCheck
+  '';
   text = ''
     set -euo pipefail
 

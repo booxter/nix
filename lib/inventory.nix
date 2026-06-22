@@ -108,8 +108,7 @@ in
 rec {
   virtPlatform = "aarch64-darwin";
 
-  toVmName = name: "${name}vm";
-  toProxVmName = name: "prox-${toVmName name}";
+  toProxVmName = name: "prox-${name}vm";
   isNixosVM = spec: spec.isVM or false;
   isNixosBM = spec: !(isNixosVM spec);
   hasStableIpv4Address = spec: spec ? dhcpReservation || spec ? lanAddress || spec ? ipAddress;
@@ -152,7 +151,6 @@ rec {
       ) [ (toNixosShortDnsName spec) ]
       ++ (spec.localDnsAliases or [ ])
     );
-  toNixosModuleDirName = spec: if isNixosVM spec then toVmName spec.name else spec.name;
   toNixosSshHostName = toNixosPrimaryDnsName;
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};

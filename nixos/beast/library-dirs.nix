@@ -2,7 +2,7 @@
 let
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
-  servarrAccounts = import ../srvarrvm/accounts.nix;
+  servarrAccounts = import ../srvarr/accounts.nix;
   mediaRoot = "/volume2/Media";
   mediaRommRoot = "${mediaRoot}/romm";
   mediaTorrentRoot = "${mediaRoot}/torrents";

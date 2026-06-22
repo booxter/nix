@@ -1,12 +1,15 @@
 {
   hostInventory,
+  inputs,
   pkgs,
   username,
   ...
 }:
 {
+  _module.args.beastPkgs = import ./pkgs { inherit inputs pkgs; };
+
   imports = [
-    (import ../../disko { })
+    (import ../disko { })
     ./backup-server.nix
     ./btrfs.nix
     ./disk-bays.nix

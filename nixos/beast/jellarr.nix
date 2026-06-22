@@ -1,10 +1,10 @@
 {
+  beastPkgs,
   config,
   hostInventory,
   hostname,
   lib,
   inputs,
-  pkgs,
   ...
 }:
 let
@@ -106,7 +106,7 @@ in
 
   services.jellarr = {
     enable = true;
-    package = pkgs.jellarr;
+    package = beastPkgs.jellarr;
     user = "jellyfin";
     group = "jellyfin";
     environmentFile = config.sops.templates."jellarr.env".path;

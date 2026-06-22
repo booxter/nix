@@ -1,7 +1,7 @@
 { inputs, lib, ... }:
 {
   imports = [
-    (import ../../disko/luks.nix { })
+    (import ../disko/luks.nix { })
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
     ./ups.nix
   ];

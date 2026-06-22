@@ -92,7 +92,7 @@ Run `sops-update` when a host secret should receive missing template keys.
 
 Backup and restore procedures are documented in [common/backup.md](common/backup.md).
 `srvarr`'s adaptive upload policy and tracker prioritization are documented in
-[nixos/srvarrvm/upload-policy.md](nixos/srvarrvm/upload-policy.md).
+[nixos/srvarr/upload-policy.md](nixos/srvarr/upload-policy.md).
 
 ## Tests
 
@@ -136,7 +136,7 @@ around `nixmoxer`).
 | `builder1` | CI VM | Primary builder VM for CI and heavy Nix builds. | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
 | `builder2` | CI VM | Additional builder VM (same profile as `builder1`). | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
 | `builder3` | CI VM | Additional builder VM (same profile as `builder1`). | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
-| `cache` | CI VM | Cache VM backed by NFS for binary caching. | [nixos/cachevm/default.nix](nixos/cachevm/default.nix) | [common](common), [nixos](nixos) |
+| `cache` | CI VM | Cache VM backed by NFS for binary caching. | [nixos/cache/default.nix](nixos/cache/default.nix) | [common](common), [nixos](nixos) |
 
 ### Clients (macs, frame)
 
@@ -153,13 +153,13 @@ Jellyfin and Jellarr run on `beast`.
 
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
-| `srvarr` | NixOS VM | Media automation stack (Arr suite). | [nixos/srvarrvm/default.nix](nixos/srvarrvm/default.nix) | [common](common), [nixos](nixos) |
+| `srvarr` | NixOS VM | Media automation stack (Arr suite). | [nixos/srvarr/default.nix](nixos/srvarr/default.nix) | [common](common), [nixos](nixos) |
 
 ### Infra services
 
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
-| `fana` | NixOS VM | Local Grafana stack (Grafana + Prometheus + Loki + Alloy log shipping). | [nixos/fanavm/default.nix](nixos/fanavm/default.nix) | [common](common), [nixos](nixos) |
-| `pki` | NixOS VM | Home fleet control-plane VM for internal PKI, PKI rotation, and UniFi state sync. | [nixos/pkivm/default.nix](nixos/pkivm/default.nix) | [common](common), [nixos](nixos) |
-| `gw` | Network VM | Minimal WireGuard gateway VM for remote LAN access. | [nixos/gwvm/default.nix](nixos/gwvm/default.nix) | [common](common), [nixos](nixos) |
-| `org` | NixOS VM | Org software VM. Starter service: Vikunja with Prometheus metrics scraped by `fana`. | [nixos/orgvm/default.nix](nixos/orgvm/default.nix) | [common](common), [nixos](nixos) |
+| `fana` | NixOS VM | Local Grafana stack (Grafana + Prometheus + Loki + Alloy log shipping). | [nixos/fana/default.nix](nixos/fana/default.nix) | [common](common), [nixos](nixos) |
+| `pki` | NixOS VM | Home fleet control-plane VM for internal PKI, PKI rotation, and UniFi state sync. | [nixos/pki/default.nix](nixos/pki/default.nix) | [common](common), [nixos](nixos) |
+| `gw` | Network VM | Minimal WireGuard gateway VM for remote LAN access. | [nixos/gw/default.nix](nixos/gw/default.nix) | [common](common), [nixos](nixos) |
+| `org` | NixOS VM | Org software VM. Starter service: Vikunja with Prometheus metrics scraped by `fana`. | [nixos/org/default.nix](nixos/org/default.nix) | [common](common), [nixos](nixos) |

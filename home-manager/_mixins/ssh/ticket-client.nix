@@ -7,6 +7,8 @@
   ...
 }:
 let
+  homeManagerPkgs = import ../../pkgs pkgs;
+  ticketPackage = homeManagerPkgs.ssh-ticket;
   cfg = config.programs.sshTicket;
   ticketStateDir = "${config.home.homeDirectory}/.local/state/ssh-ticket";
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
@@ -48,7 +50,7 @@ let
     target:
     let
       patterns = target.aliases;
-      ensureCommand = "${pkgs.ssh-ticket}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --gui --cert-alias %n ${target.name}";
+      ensureCommand = "${ticketPackage}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --gui --cert-alias %n ${target.name}";
     in
     {
       name = "ssh-ticket-ensure-${target.name}";
@@ -68,6 +70,8 @@ in
   options.programs.sshTicket.enableKnownHosts = lib.mkEnableOption "OpenSSH config for known ssh-ticket hosts";
 
   config = {
+    home.packages = [ ticketPackage ];
+
     home.sessionVariables.SSHT_TARGETS_FILE = "${ticketTargetsFile}";
 
     programs.ssh.settings = lib.mkIf cfg.enableKnownHosts ticketKnownHostSettings;

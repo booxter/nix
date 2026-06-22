@@ -6,7 +6,7 @@ pkgs.testers.runNixOSTest {
     { lib, pkgs, ... }:
     {
       imports = [
-        ../../nixos/cachevm/default.nix
+        ../../nixos/cache/default.nix
       ];
 
       options.host = lib.mkOption {

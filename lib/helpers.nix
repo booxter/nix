@@ -188,7 +188,7 @@ rec {
               { ... }:
               {
                 imports = [
-                  (import ../disko { device = "/dev/sda"; })
+                  (import ../nixos/disko { device = "/dev/sda"; })
                 ];
                 virtualisation.proxmox = {
                   inherit cores;

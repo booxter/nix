@@ -1,0 +1,77 @@
+name: Package updates
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Optional package attr from apps/package-updates/targets.json.
+        required: false
+        type: string
+      oci_target:
+        description: Optional OCI image target from lib/oci-images.json.
+        required: false
+        type: string
+  schedule:
+    - cron: "30 7 * * *"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+  actions: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Prepare Nix environment
+        uses: ./.github/actions/prepare-nix-env
+
+      - name: Update package sources and OCI tags
+        id: update-sources
+        shell: bash
+        env:
+          TARGET: ${{ github.event.inputs.target || '' }}
+          OCI_TARGET: ${{ github.event.inputs.oci_target || '' }}
+        run: |
+          set -euo pipefail
+
+          summary_file="${RUNNER_TEMP}/package-update-pr-body.md"
+          args=(--summary-file "${summary_file}")
+          if [[ -n "${TARGET}" ]]; then
+            args+=(--target "${TARGET}")
+          fi
+
+          nix run .#update-packages -- "${args[@]}"
+
+          oci_summary_file="${RUNNER_TEMP}/oci-image-update-pr-body.md"
+          oci_args=(--summary-file "${oci_summary_file}")
+          if [[ -n "${OCI_TARGET}" ]]; then
+            oci_args+=(--target "${OCI_TARGET}")
+          fi
+
+          nix run .#update-oci-images -- "${oci_args[@]}"
+
+          {
+            echo "body<<EOF"
+            cat "${summary_file}"
+            printf '\n'
+            cat "${oci_summary_file}"
+            echo "EOF"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        with:
+          token: ${{ secrets.CI_PR_TOKEN }}
+          commit-message: "packages: update sources and OCI tags"
+          title: "packages: update sources and OCI tags"
+          body: ${{ steps.update-sources.outputs.body }}
+          branch: ci/package-updates
+          delete-branch: true

@@ -217,7 +217,7 @@ in
           ];
 
           sops.secrets.observabilityLokiClientCrt = {
-            key = "${lokiMtlsClient.secretPrefix}/client_crt";
+            key = "${lokiMtlsClient.secretPrefix}/client_crt_unencrypted";
             owner = "root";
             group = "wheel";
             mode = "0400";

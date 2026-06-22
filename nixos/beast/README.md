@@ -160,7 +160,7 @@ sudo systemctl start restic-beast-cloud-offload.service
 
 ## Notes
 
-- Disk layout is managed via the shared `../../disko` import.
+- Disk layout is managed via the shared `../disko` import.
 
 ## IPMI quirks
 
@@ -299,4 +299,4 @@ nix run .#hba-flash -- --sas3flash /path/to/sas3flash \
 - If Linux `sas3flash` cannot access the controller, use a UEFI shell with
   `sas3flash.efi`.
 - If this host is moved to another HBA model later, update this section and the
-  pinned bundles in `lib/fleet.nix` together.
+  pinned bundles in `apps/fleet.nix` together.

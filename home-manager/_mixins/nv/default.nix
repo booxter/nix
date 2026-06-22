@@ -4,6 +4,9 @@
   isDesktop,
   ...
 }:
+let
+  homeManagerPkgs = import ../../pkgs pkgs;
+in
 {
   home.sessionPath = [
     "$HOME/src/ngn2-ssh-utils"
@@ -19,7 +22,7 @@
         dive
         gitlab-ci-local
         gpclient
-        jinjanator
+        homeManagerPkgs.jinjanator
         kind
         kubectl
         kubevirt

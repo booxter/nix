@@ -5,6 +5,7 @@
   ...
 }:
 let
+  darwinPkgs = import ../../pkgs pkgs;
   cfg = config.host.observability.thermal;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   stateDir = "/var/lib/observability-thermal";
@@ -229,7 +230,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
-      default = pkgs.ismc;
+      default = darwinPkgs.ismc;
       description = "iSMC package used to collect Darwin temperature sensors.";
     };
 

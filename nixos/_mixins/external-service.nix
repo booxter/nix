@@ -84,7 +84,7 @@ in
               secretPrefix = lib.mkOption {
                 type = lib.types.str;
                 default = "internal_https/clients/${name}";
-                description = "Secret prefix containing client_crt and client_key for this client identity.";
+                description = "Secret prefix containing client_crt_unencrypted and client_key for this client identity.";
               };
 
               commonName = lib.mkOption {
@@ -278,7 +278,7 @@ in
         lib.mapAttrs' (
           clientName: client:
           lib.nameValuePair "${mtlsClientSecretAttrName clientName}-crt" {
-            key = "${client.secretPrefix}/client_crt";
+            key = "${client.secretPrefix}/client_crt_unencrypted";
             owner = "root";
             group = "root";
             mode = "0400";

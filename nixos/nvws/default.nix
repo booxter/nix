@@ -1,7 +1,7 @@
 { username, ... }:
 {
   imports = [
-    (import ../../disko { })
+    (import ../disko { })
     ./ups.nix
   ];
 

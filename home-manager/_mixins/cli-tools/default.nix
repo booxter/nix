@@ -5,6 +5,9 @@
   isWork,
   ...
 }:
+let
+  homeManagerPkgs = import ../../pkgs pkgs;
+in
 {
   programs.bash.enable = true;
 
@@ -115,7 +118,7 @@
       hydra-check
       (lima.override { withAdditionalGuestAgents = true; })
       mkpasswd
-      (my-page.override { neovim = config.programs.nixvim.build.package; })
+      (homeManagerPkgs.page.override { neovim = config.programs.nixvim.build.package; })
       nh
       nix-init
       nix-search-cli
@@ -135,7 +138,6 @@
       age
       age-plugin-se
       ramalama
-      ssh-ticket
       sops
     ];
 

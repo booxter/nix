@@ -190,17 +190,24 @@
       packages = helpers.forAllSystems (
         system:
         let
-          basePackages = import ./pkgs inputs.nixpkgs.legacyPackages.${system};
+          pkgs = inputs.nixpkgs.legacyPackages.${system};
+          basePackages = import ./pkgs pkgs;
+          mminiPackages = import ./darwin/mmini/pkgs pkgs;
           fleetPackages = {
             inherit (inputs.disko.packages.${system}) disko-install;
+            inherit (mminiPackages) fleet-cache-warmer;
           };
-          proxmox = import ./lib/proxmox-apps.nix {
-            inherit inputs system;
-          };
+          updateTargetPackages =
+            pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
+            }
+            // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+              ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
+            };
         in
         basePackages
-        // proxmox.packages
         // fleetPackages
+        // updateTargetPackages
         // {
           qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
         }
@@ -216,11 +223,12 @@
               outputs.overlays.modifications
             ];
           };
-          sopsApps = import ./lib/sops.nix { inherit pkgs; };
-          fleetApps = import ./lib/fleet.nix {
+          sopsApps = import ./apps/sops { inherit pkgs; };
+          packageUpdateApps = import ./apps/package-updates { inherit pkgs; };
+          fleetApps = import ./apps/fleet.nix {
             inherit pkgs username;
           };
-          basePackages = import ./pkgs pkgs;
+          darwinPackages = import ./darwin/pkgs pkgs;
           mkApp = program: description: {
             type = "app";
             inherit program;
@@ -233,19 +241,19 @@
               gallery-dl
               gnugrep
             ];
-            text = builtins.readFile ./scripts/get-ff-cookie.sh;
+            text = builtins.readFile ./apps/get-ff-cookie.sh;
           };
           cookieApps = {
             get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
           };
           darwinApps = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-            lan-wan-bpf = mkApp "${basePackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
+            lan-wan-bpf = mkApp "${darwinPackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
           };
-          proxmox = import ./lib/proxmox-apps.nix {
+          proxmox = import ./apps/proxmox.nix {
             inherit inputs system;
           };
         in
-        sopsApps // fleetApps // proxmox.apps // cookieApps // darwinApps
+        sopsApps // packageUpdateApps // fleetApps // proxmox.apps // cookieApps // darwinApps
       );
       formatter = helpers.forAllSystems (
         system:
@@ -269,7 +277,7 @@
             git
             findutils
           ];
-          text = builtins.readFile ./scripts/formatter.sh;
+          text = builtins.readFile ./apps/formatter.sh;
         }
       );
 
