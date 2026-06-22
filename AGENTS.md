@@ -50,19 +50,15 @@ Scope: the whole repository.
 
   ```sh
   ssh <target> [command ...]
-  ssh-ticket status [target]
-  ssh-ticket targets
   ```
 
 - On configured clients, OpenSSH runs `ssh-ticket ensure` for known fleet hosts.
   It issues short-lived user certificates and may open a macOS TTL approval
   dialog followed by a Secretive/Touch ID prompt. Wait for user approval rather
   than bypassing the ticket flow.
-- Existing valid tickets are reused. Use `--force` only when intentionally
-  testing ticket issuance.
-- `ssh-ticket` manages ticket targets, status, and explicit ticket issuance;
-  `ssht` remains available for explicit ticket debugging or targets not rendered
-  into the OpenSSH config.
+- Existing valid tickets are reused automatically. Treat `ssh-ticket` and
+  `ssht` as implementation details of the generated SSH config unless the user
+  explicitly asks to debug ticket issuance.
 
 ## Deploys
 
