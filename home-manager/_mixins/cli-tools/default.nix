@@ -135,7 +135,6 @@
       age
       age-plugin-se
       ramalama
-      ssh-ticket
       sops
     ];
 

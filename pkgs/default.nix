@@ -14,8 +14,6 @@ in
     issueObservabilityCert = appPackages.issue-observability-cert;
   };
 
-  ssh-ticket = pkgs.callPackage ./ssh-ticket { };
-
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 
   wg-home-dns-sync = pkgs.callPackage ./wg-home-dns-sync { };

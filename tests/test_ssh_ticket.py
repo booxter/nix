@@ -7,7 +7,11 @@ import pytest
 
 
 MODULE_PATH = (
-    pathlib.Path(__file__).resolve().parents[1] / "pkgs" / "ssh-ticket" / "main.py"
+    pathlib.Path(__file__).resolve().parents[1]
+    / "home-manager"
+    / "pkgs"
+    / "ssh-ticket"
+    / "main.py"
 )
 SPEC = importlib.util.spec_from_file_location("ssh_ticket_main", MODULE_PATH)
 ssh_ticket = importlib.util.module_from_spec(SPEC)

@@ -71,7 +71,7 @@ helpers.forAllSystems (
       buildPhase = ''
         pytest -q tests/test_box.py tests/test_ssh_ticket.py
       '';
-      extraFileset = [ ./pkgs/ssh-ticket ];
+      extraFileset = [ ./home-manager/pkgs/ssh-ticket ];
     };
     unifi-sync-py = mkCheck {
       name = "unifi-sync-py-tests";
