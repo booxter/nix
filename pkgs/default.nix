@@ -13,6 +13,4 @@ in
     issueInternalServiceCert = appPackages.issue-internal-service-cert;
     issueObservabilityCert = appPackages.issue-observability-cert;
   };
-
-  unifi-sync = pkgs.callPackage ./unifi-sync { };
 }

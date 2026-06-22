@@ -17,7 +17,6 @@ let
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wireguardGatewaySshHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.gw;
-  unifiSyncEnv = import ../lib/unifi-sync-env.nix { inherit hostInventory; };
   appPackages = import ./default.nix pkgs;
 
   broadcomSas3flashP15 = pkgs.fetchzip {
@@ -175,23 +174,10 @@ let
     ''
     + builtins.readFile ../apps/hba-flash.sh;
   };
-  unifiSyncPackage = pkgs.unifi-sync;
   issueInternalServiceCertPackage = appPackages.issue-internal-service-cert;
   issueObservabilityCertPackage = appPackages.issue-observability-cert;
   issueProxmoxExporterTokenPackage = appPackages.issue-proxmox-exporter-token;
   pkiRotationPackage = pkgs.pki-rotation;
-  unifiSyncApp = pkgs.writeShellApplication {
-    name = "unifi-sync-app";
-    runtimeInputs = [ unifiSyncPackage ];
-    text = ''
-      ${pkgs.lib.concatLines (
-        pkgs.lib.mapAttrsToList (
-          name: value: "export ${name}=${pkgs.lib.escapeShellArg value}"
-        ) unifiSyncEnv.environment
-      )}
-      exec ${unifiSyncPackage}/bin/unifi-sync "$@"
-    '';
-  };
   issueObservabilityCertApp = pkgs.writeShellApplication {
     name = "issue-observability-cert-app";
     runtimeInputs = [ issueObservabilityCertPackage ];
@@ -404,8 +390,6 @@ in
   diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
   "get-local-builders" =
     mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
-  "unifi-sync" =
-    mkApp "${unifiSyncApp}/bin/unifi-sync-app" "Sync UniFi DHCP, reservations, and split DNS from inventory.";
   "issue-observability-cert" =
     mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
   "issue-internal-service-cert" =

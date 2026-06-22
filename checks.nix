@@ -82,7 +82,7 @@ helpers.forAllSystems (
       buildPhase = ''
         pytest -q tests/test_unifi_sync.py
       '';
-      extraFileset = [ ./pkgs/unifi-sync ];
+      extraFileset = [ ./nixos/pkivm/pkgs/unifi-sync ];
     };
     join-media-parts = mkCheck {
       name = "join-media-parts-tests";

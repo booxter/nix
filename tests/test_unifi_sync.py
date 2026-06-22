@@ -5,7 +5,14 @@ import sys
 import pytest
 
 
-MODULE_PATH = pathlib.Path(__file__).parents[1] / "pkgs" / "unifi-sync" / "main.py"
+MODULE_PATH = (
+    pathlib.Path(__file__).parents[1]
+    / "nixos"
+    / "pkivm"
+    / "pkgs"
+    / "unifi-sync"
+    / "main.py"
+)
 SPEC = importlib.util.spec_from_file_location("unifi_sync", MODULE_PATH)
 unifi_sync = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
