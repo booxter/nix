@@ -55,7 +55,7 @@
     };
 
     lolek = {
-      url = "github:booxter/lolek/main";
+      url = "github:dziaineka/lolek";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
