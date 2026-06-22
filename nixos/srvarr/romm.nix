@@ -21,7 +21,8 @@ let
   user = "romm";
   apiPort = 5081;
   redisPort = 6380;
-  rommImage = "docker.io/rommapp/romm:4.9.1";
+  ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
+  rommImage = "${ociImages.romm.image}:${ociImages.romm.tag}";
   rommService = hostInventory.servicesById.romm;
 
   commonEnvironment = {

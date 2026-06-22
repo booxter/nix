@@ -1,0 +1,8 @@
+{
+  "romm": {
+    "changelog": "https://github.com/rommapp/romm/releases/tag/{tag}",
+    "image": "docker.io/rommapp/romm",
+    "tag": "4.9.2",
+    "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+  }
+}
