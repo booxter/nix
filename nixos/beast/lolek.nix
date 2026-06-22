@@ -22,13 +22,19 @@ in
     mode = "0400";
   };
 
-  sops.secrets.lolekTelegramBotApiApiId = {
+  sops.secrets."lolek/galleryDlCookies" = {
     owner = "lolek";
     group = "lolek";
     mode = "0400";
   };
 
-  sops.secrets.lolekTelegramBotApiApiHash = {
+  sops.secrets."lolek/telegramBotApi/apiId" = {
+    owner = "lolek";
+    group = "lolek";
+    mode = "0400";
+  };
+
+  sops.secrets."lolek/telegramBotApi/apiHash" = {
     owner = "lolek";
     group = "lolek";
     mode = "0400";
@@ -39,8 +45,8 @@ in
     group = "lolek";
     mode = "0400";
     content = ''
-      TELEGRAM_API_ID=${config.sops.placeholder.lolekTelegramBotApiApiId}
-      TELEGRAM_API_HASH=${config.sops.placeholder.lolekTelegramBotApiApiHash}
+      TELEGRAM_API_ID=${config.sops.placeholder."lolek/telegramBotApi/apiId"}
+      TELEGRAM_API_HASH=${config.sops.placeholder."lolek/telegramBotApi/apiHash"}
     '';
   };
 
@@ -52,6 +58,8 @@ in
     maxConcurrentDownloadsPerChat = 2;
     postSourceCaption = true;
     postRequesterCaption = true;
+    galleryDownloadEnabled = true;
+    environment.LOLEK_GALLERY_DL_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
     hardwareAcceleration.backend = "qsv";
     hardwareAcceleration.device = hostSpec.hardware.igpu.renderDevice;
     metrics = {
