@@ -385,6 +385,7 @@ rec {
     (resolveService (mkService {
       id = "paperless";
       title = "Paperless";
+      icon = "sh:paperless-ngx";
       scope = "external";
       owner = "org";
       publicHost = "papers.ihar.dev";
@@ -393,6 +394,7 @@ rec {
     (resolveService (mkService {
       id = "llm";
       title = "LLM Gateway";
+      icon = "sh:litellm";
       scope = "external";
       owner = "org";
       publicHost = "llm.ihar.dev";
@@ -401,6 +403,7 @@ rec {
     (resolveService (mkService {
       id = "ai";
       title = "Open WebUI";
+      icon = "sh:open-webui";
       scope = "external";
       owner = "org";
       publicHost = "ai.ihar.dev";
