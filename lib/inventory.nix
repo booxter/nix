@@ -691,6 +691,7 @@ rec {
         "vikunja"
         "paperless"
         "llm"
+        "ai"
       ];
       upsHost = "prx1-lab";
       cores = 4;
