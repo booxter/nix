@@ -5,7 +5,7 @@
 }:
 let
   aiService = hostInventory.servicesById.ai;
-  litellmPort = config.services.litellm.port;
+  litellmPort = 4000;
   openWebuiPort = 8082;
 in
 {
@@ -61,11 +61,11 @@ in
 
   systemd.services.open-webui = {
     wants = [
-      "litellm.service"
+      "podman-litellm.service"
       "sops-install-secrets.service"
     ];
     after = [
-      "litellm.service"
+      "podman-litellm.service"
       "sops-install-secrets.service"
     ];
   };

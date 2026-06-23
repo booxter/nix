@@ -6,10 +6,53 @@
 }:
 let
   llmService = hostInventory.servicesById.llm;
+  ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
+  litellmImage = "${ociImages.litellm.image}:${ociImages.litellm.tag}";
   litellmDatabase = "litellm";
   litellmPort = 4000;
   litellmUser = "litellm";
   ollamaTunnelPort = 11435;
+  litellmConfig = (pkgs.formats.yaml { }).generate "litellm-config.yaml" {
+    model_list = [
+      {
+        model_name = "qwen3:8b";
+        litellm_params = {
+          model = "ollama_chat/qwen3:8b";
+          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
+          keep_alive = "30m";
+        };
+        model_info = {
+          mode = "chat";
+          supports_function_calling = true;
+          input_cost_per_token = 0.0;
+          output_cost_per_token = 0.0;
+        };
+      }
+      {
+        model_name = "minicpm-v:8b";
+        litellm_params = {
+          model = "ollama/minicpm-v:8b";
+          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
+          keep_alive = "30m";
+        };
+        model_info = {
+          mode = "chat";
+          supports_vision = true;
+          input_cost_per_token = 0.0;
+          output_cost_per_token = 0.0;
+        };
+      }
+    ];
+    general_settings = {
+      database_url = "os.environ/DATABASE_URL";
+      master_key = "os.environ/LITELLM_MASTER_KEY";
+    };
+    litellm_settings = {
+      drop_params = true;
+      num_retries = 1;
+      request_timeout = 600;
+    };
+  };
 in
 {
   sops.secrets = {
@@ -19,14 +62,14 @@ in
       mode = "0400";
       restartUnits = [
         "litellm-postgresql-password.service"
-        "litellm.service"
+        "podman-litellm.service"
       ];
     };
     "litellm/master-key" = {
       owner = "root";
       group = "root";
       mode = "0400";
-      restartUnits = [ "litellm.service" ];
+      restartUnits = [ "podman-litellm.service" ];
     };
   };
 
@@ -40,7 +83,7 @@ in
       }@127.0.0.1:5432/${litellmDatabase}
       LITELLM_MASTER_KEY=${config.sops.placeholder."litellm/master-key"}
     '';
-    restartUnits = [ "litellm.service" ];
+    restartUnits = [ "podman-litellm.service" ];
   };
 
   services.postgresql = {
@@ -53,51 +96,29 @@ in
     ];
   };
 
-  services.litellm = {
-    enable = true;
-    host = "127.0.0.1";
-    port = litellmPort;
-    environmentFile = config.sops.templates."litellm.env".path;
-    settings = {
-      model_list = [
-        {
-          model_name = "qwen3:8b";
-          litellm_params = {
-            model = "ollama_chat/qwen3:8b";
-            api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
-            keep_alive = "30m";
-          };
-          model_info = {
-            mode = "chat";
-            supports_function_calling = true;
-            input_cost_per_token = 0.0;
-            output_cost_per_token = 0.0;
-          };
-        }
-        {
-          model_name = "minicpm-v:8b";
-          litellm_params = {
-            model = "ollama/minicpm-v:8b";
-            api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
-            keep_alive = "30m";
-          };
-          model_info = {
-            mode = "chat";
-            supports_vision = true;
-            input_cost_per_token = 0.0;
-            output_cost_per_token = 0.0;
-          };
-        }
+  virtualisation.oci-containers = {
+    backend = "podman";
+    containers.litellm = {
+      # The nixpkgs LiteLLM service currently starts without the Prisma binaries
+      # needed for DB-backed proxy mode. Use the upstream database image until
+      # the Nix package grows a complete Prisma runtime.
+      image = litellmImage;
+      pull = "missing";
+      cmd = [
+        "--host"
+        "127.0.0.1"
+        "--port"
+        (toString litellmPort)
+        "--config"
+        "/app/config.yaml"
       ];
-      general_settings = {
-        database_url = "os.environ/DATABASE_URL";
-        master_key = "os.environ/LITELLM_MASTER_KEY";
-      };
-      litellm_settings = {
-        drop_params = true;
-        num_retries = 1;
-        request_timeout = 600;
-      };
+      environmentFiles = [ config.sops.templates."litellm.env".path ];
+      extraOptions = [
+        "--cap-drop=all"
+        "--network=host"
+        "--security-opt=no-new-privileges"
+      ];
+      volumes = [ "${litellmConfig}:/app/config.yaml:ro" ];
     };
   };
 
@@ -113,7 +134,7 @@ in
         "postgresql.service"
         "sops-install-secrets.service"
       ];
-      before = [ "litellm.service" ];
+      before = [ "podman-litellm.service" ];
       path = [
         pkgs.postgresql
         pkgs.util-linux
@@ -136,7 +157,7 @@ in
         SQL
       '';
     };
-    litellm = {
+    podman-litellm = {
       wants = [
         "litellm-postgresql-password.service"
         "sops-install-secrets.service"

@@ -690,6 +690,7 @@ rec {
       localDnsAliases = [
         "vikunja"
         "paperless"
+        "llm"
       ];
       upsHost = "prx1-lab";
       cores = 4;
