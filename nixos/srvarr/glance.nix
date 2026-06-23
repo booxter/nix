@@ -73,7 +73,7 @@ let
       // {
         url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
-  ) hostInventory.services;
+  ) hostInventory.glanceServices;
   utilityLinks = [
     {
       icon = "sh:smallstep";

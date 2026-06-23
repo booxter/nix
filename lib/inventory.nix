@@ -74,6 +74,7 @@ let
       publicHost ? null,
       title ? lib.strings.toSentenceCase id,
       icon ? "sh:${id}",
+      showInGlance ? true,
     }:
     {
       inherit
@@ -82,6 +83,7 @@ let
         owner
         probePath
         scope
+        showInGlance
         title
         ;
     }
@@ -348,6 +350,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/";
+      showInGlance = false;
     }))
     (resolveService (mkService {
       id = "aurral";
@@ -407,6 +410,7 @@ rec {
       scope = "internal";
       owner = "frame";
       probePath = "/";
+      showInGlance = false;
     }))
     (resolveService (mkService {
       id = "bazarr";
@@ -743,6 +747,8 @@ rec {
   );
 
   publicServices = builtins.filter (service: service.scope == "external") services;
+
+  glanceServices = builtins.filter (service: service.showInGlance) services;
 
   servicesById = builtins.listToAttrs (
     map (service: {
