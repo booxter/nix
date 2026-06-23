@@ -175,13 +175,15 @@ in
       PAPERLESS_ADMIN_USER = "ihar";
       PAPERLESS_ADMIN_MAIL = "ihar.hrachyshka@gmail.com";
       PAPERLESS_ACCOUNT_ALLOW_SIGNUPS = false;
-      PAPERLESS_ALLOWED_HOSTS = [
+      PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [
         paperlessService.publicHost
         "paperless.${hostInventory.site.lan.domain}"
         "paperless.local"
+        "127.0.0.1"
+        "localhost"
       ];
-      PAPERLESS_CSRF_TRUSTED_ORIGINS = [ paperlessService.url ];
-      PAPERLESS_CONSUMER_IGNORE_PATTERN = [
+      PAPERLESS_CSRF_TRUSTED_ORIGINS = paperlessService.url;
+      PAPERLESS_CONSUMER_IGNORE_PATTERN = lib.concatStringsSep "," [
         ".DS_STORE/*"
         "desktop.ini"
       ];
