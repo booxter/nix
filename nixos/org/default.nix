@@ -8,7 +8,10 @@ let
 in
 {
   imports = [
+    ./ai.nix
     ./backup.nix
+    ./llm.nix
+    ./paperless.nix
   ];
 
   sops.secrets.vikunjaMailerPassword = {

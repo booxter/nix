@@ -1,4 +1,16 @@
 {
+  "litellm": {
+    "changelog": "https://github.com/BerriAI/litellm/releases/tag/{tag}",
+    "image": "ghcr.io/berriai/litellm-database",
+    "tag": "v1.89.3",
+    "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+  },
+  "paperless-gpt": {
+    "changelog": "https://github.com/icereed/paperless-gpt/releases/tag/{tag}",
+    "image": "ghcr.io/icereed/paperless-gpt",
+    "tag": "v0.25.1",
+    "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
+  },
   "romm": {
     "changelog": "https://github.com/rommapp/romm/releases/tag/{tag}",
     "image": "docker.io/rommapp/romm",

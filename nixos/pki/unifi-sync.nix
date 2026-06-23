@@ -8,6 +8,7 @@
 }:
 let
   unifiSyncEnv = import ../../lib/unifi-sync-env.nix { inherit hostInventory; };
+  unifiSyncPayloadHash = builtins.hashString "sha256" (builtins.toJSON unifiSyncEnv.environment);
 in
 {
   users.users.unifi-sync = {
@@ -33,6 +34,33 @@ in
       UNIFI_API_KEY=${config.sops.placeholder.unifiApiKey}
     '';
     restartUnits = [ "unifi-sync.service" ];
+  };
+
+  system.activationScripts.unifiSyncApply = {
+    deps = [ "etc" ];
+    text = ''
+      if [ "''${NIXOS_ACTION:-}" = "dry-activate" ]; then
+        exit 0
+      fi
+
+      stamp_dir=/var/lib/unifi-sync
+      stamp_file="$stamp_dir/last-applied-payload"
+      next=${lib.escapeShellArg unifiSyncPayloadHash}
+      previous=
+
+      if [ -r "$stamp_file" ]; then
+        previous="$(${pkgs.coreutils}/bin/cat "$stamp_file")"
+      fi
+
+      if [ "$previous" != "$next" ]; then
+        ${pkgs.coreutils}/bin/install -d -m 0755 "$stamp_dir"
+        if [ -d /run/systemd/system ]; then
+          ${config.systemd.package}/bin/systemctl daemon-reload
+          ${config.systemd.package}/bin/systemctl start unifi-sync.service
+        fi
+        ${pkgs.coreutils}/bin/printf '%s\n' "$next" > "$stamp_file"
+      fi
+    '';
   };
 
   systemd.services.unifi-sync = {

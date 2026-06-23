@@ -1,4 +1,14 @@
-{ inputs, lib, ... }:
+{
+  config,
+  hostInventory,
+  inputs,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  ollamaService = hostInventory.servicesById.ollama;
+in
 {
   imports = [
     (import ../disko/luks.nix { })
@@ -10,6 +20,8 @@
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.client.blackbox.enable = true;
   host.observability.client.blackbox.mtls.enable = true;
+
+  nixpkgs.config.rocmSupport = true;
 
   networking.wireless.enable = false;
   networking.wireless.secretsFile = "/etc/wireless.secrets";
@@ -23,4 +35,33 @@
     enable = true;
   };
   programs.hyprland.enable = true;
+
+  services.ollama = {
+    enable = true;
+    package = pkgs.ollama-rocm;
+    host = "127.0.0.1";
+    port = 11434;
+    loadModels = [
+      "qwen3:8b"
+      "minicpm-v:8b"
+    ];
+    syncModels = false;
+    environmentVariables = {
+      OLLAMA_KEEP_ALIVE = "30m";
+    };
+  };
+
+  environment.systemPackages = with pkgs; [
+    clinfo
+    ramalama
+    rocmPackages.rocminfo
+  ];
+
+  host.internalHttps.services.ollama = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
+    mtls.enable = true;
+    serverAliases = [ ollamaService.displayHost ];
+    localAliases = [ "ollama" ];
+  };
 }

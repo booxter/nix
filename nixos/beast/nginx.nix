@@ -45,6 +45,18 @@ let
           id = "vikunja";
           localPort = 13456;
         }
+        {
+          id = "paperless";
+          localPort = 12881;
+        }
+        {
+          id = "llm";
+          localPort = 14000;
+        }
+        {
+          id = "ai";
+          localPort = 14001;
+        }
       ]
   );
   publicServiceBackendAddresses = {
@@ -59,6 +71,7 @@ let
     audiobookshelf = outputs.nixosConfigurations.srvarr.config.services.audiobookshelf.port;
     shelfmark = outputs.nixosConfigurations.srvarr.config.services.shelfmark.environment.FLASK_PORT;
     vikunja = outputs.nixosConfigurations.org.config.services.vikunja.port;
+    paperless = outputs.nixosConfigurations.org.config.services.paperless.port;
   };
 in
 {
@@ -89,9 +102,15 @@ in
                   localPort
                   ;
               };
-              locationExtraConfig = lib.optionalString (service.id == "aurral") ''
-                proxy_set_header X-Forwarded-For $remote_addr;
-              '';
+              locationExtraConfig =
+                lib.optionalString (service.id == "aurral") ''
+                  proxy_set_header X-Forwarded-For $remote_addr;
+                ''
+                + lib.optionalString (service.id == "paperless") ''
+                  client_max_body_size 512m;
+                  proxy_read_timeout 300s;
+                  proxy_send_timeout 300s;
+                '';
             }
           else
             {

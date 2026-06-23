@@ -4,10 +4,48 @@
   ...
 }:
 let
+  paperlessBackupDir = "/var/lib/paperless-backup/latest";
+  paperlessDataDir = "/var/lib/paperless";
+  paperlessGptStateDir = "/var/lib/paperless-gpt";
+  paperlessStoragePath = "/data/paperless";
+  litellmStateDir = "/var/lib/litellm";
+  openWebuiStateDir = "/var/lib/open-webui";
   backupPaths = [
+    litellmStateDir
+    openWebuiStateDir
+    paperlessBackupDir
+    paperlessDataDir
+    paperlessGptStateDir
+    paperlessStoragePath
     "/var/lib/vikunja/files"
     "/var/lib/vikunja-backup/latest"
   ];
+  paperlessBackupScript = pkgs.writeShellApplication {
+    name = "paperless-backup";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.postgresql
+      pkgs.util-linux
+    ];
+    text = ''
+      set -euo pipefail
+
+      dst_dir="${paperlessBackupDir}"
+      backup_root="$(dirname "$dst_dir")"
+
+      install -d -m 0750 "$backup_root"
+      tmp_dir="$(mktemp -d "/var/lib/paperless-backup/.tmp.XXXXXX")"
+      trap 'rm -rf "$tmp_dir"' EXIT
+
+      install -d -m 0750 "$dst_dir"
+
+      runuser -u postgres -- pg_dump --format=custom --file="$tmp_dir/paperless.dump" paperless
+      date --iso-8601=seconds > "$tmp_dir/created-at.txt"
+
+      mv "$tmp_dir/paperless.dump" "$dst_dir/paperless.dump"
+      mv "$tmp_dir/created-at.txt" "$dst_dir/created-at.txt"
+    '';
+  };
   vikunjaBackupScript = pkgs.writeShellApplication {
     name = "vikunja-backup";
     runtimeInputs = [
@@ -45,6 +83,17 @@ in
     enable = true;
     repoName = "orgvm";
     paths = backupPaths;
+    preBackupServices."paperless-backup" = {
+      description = "Create a consistent Paperless PostgreSQL backup artifact";
+      script = paperlessBackupScript;
+      unitConfig = {
+        After = [ "postgresql.service" ];
+        RequiresMountsFor = [
+          paperlessBackupDir
+          paperlessDataDir
+        ];
+      };
+    };
     preBackupServices."vikunja-backup" = {
       description = "Create a consistent Vikunja SQLite backup artifact";
       script = vikunjaBackupScript;

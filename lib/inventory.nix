@@ -74,14 +74,18 @@ let
       publicHost ? null,
       title ? lib.strings.toSentenceCase id,
       icon ? "sh:${id}",
+      blackboxProbe ? true,
+      showInGlance ? true,
     }:
     {
       inherit
+        blackboxProbe
         icon
         id
         owner
         probePath
         scope
+        showInGlance
         title
         ;
     }
@@ -348,6 +352,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/";
+      showInGlance = false;
     }))
     (resolveService (mkService {
       id = "aurral";
@@ -376,6 +381,42 @@ rec {
       owner = "org";
       publicHost = "vi.ihar.dev";
       probePath = "";
+    }))
+    (resolveService (mkService {
+      id = "paperless";
+      title = "Paperless";
+      icon = "sh:paperless-ngx";
+      scope = "external";
+      owner = "org";
+      publicHost = "papers.ihar.dev";
+      probePath = "/accounts/login/";
+    }))
+    (resolveService (mkService {
+      id = "llm";
+      title = "LLM Gateway";
+      icon = "sh:litellm";
+      scope = "external";
+      owner = "org";
+      publicHost = "llm.ihar.dev";
+      probePath = "/health/liveliness";
+    }))
+    (resolveService (mkService {
+      id = "ai";
+      title = "Open WebUI";
+      icon = "sh:open-webui";
+      scope = "external";
+      owner = "org";
+      publicHost = "ai.ihar.dev";
+      probePath = "/";
+    }))
+    (resolveService (mkService {
+      id = "ollama";
+      title = "Ollama";
+      scope = "internal";
+      owner = "frame";
+      probePath = "/";
+      blackboxProbe = false;
+      showInGlance = false;
     }))
     (resolveService (mkService {
       id = "bazarr";
@@ -468,6 +509,12 @@ rec {
       stateVersion = "25.11";
       platform = "x86_64-linux";
       isDesktop = true;
+      localDnsAliases = [ "ollama" ];
+      dhcpReservation = {
+        match = "9c:bf:0d:00:fa:0a";
+        hostname = "frame";
+        ip = "192.168.11.228";
+      };
     }
     {
       hostKind = "proxmox";
@@ -643,7 +690,12 @@ rec {
       isVM = true;
       name = "org";
       platform = "x86_64-linux";
-      localDnsAliases = [ "vikunja" ];
+      localDnsAliases = [
+        "vikunja"
+        "paperless"
+        "llm"
+        "ai"
+      ];
       upsHost = "prx1-lab";
       cores = 4;
       memorySize = 8;
@@ -703,6 +755,10 @@ rec {
   );
 
   publicServices = builtins.filter (service: service.scope == "external") services;
+
+  glanceServices = builtins.filter (service: service.showInGlance) services;
+
+  blackboxServices = builtins.filter (service: service.blackboxProbe) services;
 
   servicesById = builtins.listToAttrs (
     map (service: {

@@ -27,6 +27,12 @@ let
       recommendedProxySettings = false;
       extraConfig =
         recommendedProxyHeaders (if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host")
+        + lib.optionalString vhost.upstreamTls.enable ''
+          # The internal nginx vhost requires Host to match the mTLS SNI name,
+          # so rewrite app-generated absolute redirects back to the public host.
+          proxy_redirect https://${vhost.upstreamTls.serverName}/ $scheme://$host/;
+          proxy_redirect http://${vhost.upstreamTls.serverName}/ $scheme://$host/;
+        ''
         + vhost.locationExtraConfig;
     };
   };
