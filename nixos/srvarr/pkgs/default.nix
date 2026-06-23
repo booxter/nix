@@ -5,6 +5,8 @@ in
 {
   aurral = pkgs.callPackage ./aurral { };
 
+  letterboxd-list-radarr = pkgs.callPackage ./letterboxd-list-radarr { };
+
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller { };
 
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner { };

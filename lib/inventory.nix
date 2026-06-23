@@ -343,6 +343,13 @@ rec {
       probePath = "/";
     }))
     (resolveService (mkService {
+      id = "letterboxd-list-radarr";
+      title = "Letterboxd Radarr";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/";
+    }))
+    (resolveService (mkService {
       id = "aurral";
       scope = "external";
       owner = "srvarr";
@@ -575,6 +582,7 @@ rec {
         "lidarr"
         "bazarr"
         "prowlarr"
+        "letterboxd-list-radarr"
         "romm"
         "aurral"
         "audiobookshelf"

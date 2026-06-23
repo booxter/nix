@@ -13,6 +13,7 @@
     ./aurral.nix
     ./backup.nix
     ./glance.nix
+    ./letterboxd-list-radarr.nix
     ./nfs.nix
     ./paths.nix
     ./romm.nix
