@@ -53,6 +53,10 @@ let
           id = "llm";
           localPort = 14000;
         }
+        {
+          id = "ai";
+          localPort = 14001;
+        }
       ]
   );
   publicServiceBackendAddresses = {

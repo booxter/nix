@@ -394,6 +394,14 @@ rec {
       probePath = "/health/liveliness";
     }))
     (resolveService (mkService {
+      id = "ai";
+      title = "Open WebUI";
+      scope = "external";
+      owner = "org";
+      publicHost = "ai.ihar.dev";
+      probePath = "/";
+    }))
+    (resolveService (mkService {
       id = "ollama";
       title = "Ollama";
       scope = "internal";

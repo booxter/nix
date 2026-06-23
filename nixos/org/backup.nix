@@ -9,8 +9,10 @@ let
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessStoragePath = "/data/paperless";
   litellmStateDir = "/var/lib/litellm";
+  openWebuiStateDir = "/var/lib/open-webui";
   backupPaths = [
     litellmStateDir
+    openWebuiStateDir
     paperlessBackupDir
     paperlessDataDir
     paperlessGptStateDir
