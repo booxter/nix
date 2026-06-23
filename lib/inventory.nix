@@ -74,10 +74,12 @@ let
       publicHost ? null,
       title ? lib.strings.toSentenceCase id,
       icon ? "sh:${id}",
+      blackboxProbe ? true,
       showInGlance ? true,
     }:
     {
       inherit
+        blackboxProbe
         icon
         id
         owner
@@ -410,6 +412,7 @@ rec {
       scope = "internal";
       owner = "frame";
       probePath = "/";
+      blackboxProbe = false;
       showInGlance = false;
     }))
     (resolveService (mkService {
@@ -749,6 +752,8 @@ rec {
   publicServices = builtins.filter (service: service.scope == "external") services;
 
   glanceServices = builtins.filter (service: service.showInGlance) services;
+
+  blackboxServices = builtins.filter (service: service.blackboxProbe) services;
 
   servicesById = builtins.listToAttrs (
     map (service: {

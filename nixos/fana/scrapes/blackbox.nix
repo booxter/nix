@@ -87,7 +87,7 @@ let
         probeUrl = "http://${service.probeHost}:${toString (srvarrPortFor service.id)}${service.probePath}";
         url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
-  ) hostInventory.services;
+  ) hostInventory.blackboxServices;
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
