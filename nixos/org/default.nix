@@ -9,6 +9,7 @@ in
 {
   imports = [
     ./backup.nix
+    ./llm.nix
     ./paperless.nix
   ];
 

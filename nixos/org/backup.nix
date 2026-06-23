@@ -8,7 +8,9 @@ let
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessStoragePath = "/data/paperless";
+  litellmStateDir = "/var/lib/litellm";
   backupPaths = [
+    litellmStateDir
     paperlessBackupDir
     paperlessDataDir
     paperlessGptStateDir

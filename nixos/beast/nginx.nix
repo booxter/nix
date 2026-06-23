@@ -49,6 +49,10 @@ let
           id = "paperless";
           localPort = 12881;
         }
+        {
+          id = "llm";
+          localPort = 14000;
+        }
       ]
   );
   publicServiceBackendAddresses = {

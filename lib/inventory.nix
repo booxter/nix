@@ -386,6 +386,14 @@ rec {
       probePath = "/accounts/login/";
     }))
     (resolveService (mkService {
+      id = "llm";
+      title = "LLM Gateway";
+      scope = "external";
+      owner = "org";
+      publicHost = "llm.ihar.dev";
+      probePath = "/health/liveliness";
+    }))
+    (resolveService (mkService {
       id = "ollama";
       title = "Ollama";
       scope = "internal";
