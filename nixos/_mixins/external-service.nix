@@ -26,8 +26,9 @@ let
       proxyWebsockets = vhost.proxyWebsockets;
       recommendedProxySettings = false;
       extraConfig =
-        recommendedProxyHeaders (if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host")
-        + vhost.locationExtraConfig;
+        # Preserve the client-facing host for application redirects while the
+        # mTLS tunnel still uses upstreamTls.serverName for SNI and verification.
+        recommendedProxyHeaders "$host" + vhost.locationExtraConfig;
     };
   };
 in
