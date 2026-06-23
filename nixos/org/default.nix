@@ -9,6 +9,7 @@ in
 {
   imports = [
     ./backup.nix
+    ./paperless.nix
   ];
 
   sops.secrets.vikunjaMailerPassword = {

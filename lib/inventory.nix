@@ -378,6 +378,21 @@ rec {
       probePath = "";
     }))
     (resolveService (mkService {
+      id = "paperless";
+      title = "Paperless";
+      scope = "external";
+      owner = "org";
+      publicHost = "papers.ihar.dev";
+      probePath = "/accounts/login/";
+    }))
+    (resolveService (mkService {
+      id = "ollama";
+      title = "Ollama";
+      scope = "internal";
+      owner = "frame";
+      probePath = "/";
+    }))
+    (resolveService (mkService {
       id = "bazarr";
       scope = "internal";
       owner = "srvarr";
@@ -468,6 +483,12 @@ rec {
       stateVersion = "25.11";
       platform = "x86_64-linux";
       isDesktop = true;
+      localDnsAliases = [ "ollama" ];
+      dhcpReservation = {
+        match = "9c:bf:0d:00:fa:0a";
+        hostname = "frame";
+        ip = "192.168.11.228";
+      };
     }
     {
       hostKind = "proxmox";
@@ -643,7 +664,10 @@ rec {
       isVM = true;
       name = "org";
       platform = "x86_64-linux";
-      localDnsAliases = [ "vikunja" ];
+      localDnsAliases = [
+        "vikunja"
+        "paperless"
+      ];
       upsHost = "prx1-lab";
       cores = 4;
       memorySize = 8;
