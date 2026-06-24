@@ -278,12 +278,17 @@ Needs separate assessment:
       groups.
 - [x] Decide whether group membership is strictly declarative or partially
       managed in the IdP UI: strictly declarative from Nix config.
-- [ ] Deploy initial Kanidm users and groups on `pki`.
-- [ ] Verify `ihar` and `kasia` person records exist.
-- [ ] Verify declared group memberships exist.
+- [x] Deploy initial Kanidm users and groups on `pki`.
+- [x] Verify `ihar` and `kasia` person records exist.
+- [x] Verify declared group memberships exist.
 - [ ] Decide whether to delegate Kanidm built-in admin rights to `sso-admins`
       now or keep using `admin`/`idm_admin` as the IdP admin path.
 - [ ] Generate initial enrollment/reset path for `ihar` and `kasia`.
+
+Live verification on `pki` confirmed `kanidm.service` and `nginx.service` are
+active, `https://id.ihar.dev/status` returns `true`, both person records exist,
+`kasia` has `kasia.bondarava@gmail.com`, and declared group memberships match
+the inventory state.
 
 ### 5. Create OIDC Clients In Kanidm
 
