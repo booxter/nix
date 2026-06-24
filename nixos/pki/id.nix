@@ -16,6 +16,8 @@ let
   grafanaUrl = "https://grafana.${lan.domain}";
   vikunjaService = hostInventory.servicesById.vikunja;
   vikunjaUrl = "https://${vikunjaService.publicHost}";
+  openWebuiService = hostInventory.servicesById.ai;
+  openWebuiUrl = "https://${openWebuiService.publicHost}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
   mailSenderStateDir = "/var/lib/kanidm-mail-sender";
@@ -121,6 +123,13 @@ in
       mode = "0400";
       restartUnits = [ "kanidm.service" ];
     };
+    kanidmOpenWebuiOAuthClientSecret = {
+      key = "kanidm/oauth2/open-webui/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
   };
 
   services.kanidm = {
@@ -183,6 +192,22 @@ in
           "email"
           "profile"
         ];
+      };
+      systems.oauth2.open-webui = {
+        displayName = "Open WebUI";
+        originUrl = "${openWebuiUrl}/oauth/oidc/login/callback";
+        originLanding = "${openWebuiUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmOpenWebuiOAuthClientSecret.path;
+        preferShortUsername = true;
+        scopeMaps."ai-users" = [
+          "openid"
+          "email"
+          "profile"
+        ];
+        claimMaps.open_webui_role.valuesByGroup = {
+          "ai-users" = [ "user" ];
+          "sso-admins" = [ "admin" ];
+        };
       };
     };
   };
