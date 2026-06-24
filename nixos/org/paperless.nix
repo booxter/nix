@@ -337,7 +337,7 @@ in
         PDF_SKIP_EXISTING_OCR = "false";
         PDF_UPLOAD = "false";
         TOKEN_LIMIT = "2000";
-        VISION_LLM_MODEL = "minicpm-v:8b";
+        VISION_LLM_MODEL = "qwen3-vl:8b-instruct";
         VISION_LLM_PROVIDER = "ollama";
       };
       environmentFiles = [ config.sops.templates."paperless-gpt.env".path ];

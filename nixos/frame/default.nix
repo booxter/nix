@@ -43,7 +43,7 @@ in
     port = 11434;
     loadModels = [
       "qwen3.5:9b"
-      "minicpm-v:8b"
+      "qwen3-vl:8b-instruct"
     ];
     syncModels = false;
     environmentVariables = {

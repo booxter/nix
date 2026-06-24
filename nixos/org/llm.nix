@@ -30,9 +30,9 @@ let
         };
       }
       {
-        model_name = "minicpm-v:8b";
+        model_name = "qwen3-vl:8b-instruct";
         litellm_params = {
-          model = "ollama/minicpm-v:8b";
+          model = "ollama/qwen3-vl:8b-instruct";
           api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
           keep_alive = "30m";
         };
