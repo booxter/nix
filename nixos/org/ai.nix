@@ -44,7 +44,7 @@ in
     environmentFile = config.sops.templates."open-webui.env".path;
     environment = {
       DEFAULT_MODELS = "qwen3.5:9b";
-      DEFAULT_PINNED_MODELS = "qwen3.5:9b";
+      DEFAULT_PINNED_MODELS = "qwen3.5:9b,qwen3-next:80b";
       ENABLE_CODE_EXECUTION = "False";
       ENABLE_OLLAMA_API = "False";
       ENABLE_OPENAI_API = "True";
