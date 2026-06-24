@@ -1,0 +1,59 @@
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 38ddc4b..f2ab7de 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -1,7 +1,44 @@
+ import pytest
+ import chromadb
+ from unittest.mock import patch, MagicMock, AsyncMock
+-from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
++
++class DeterministicEmbeddingFunction:
++    def __call__(self, input):
++        return [[1.0] * 32 for _ in input]
++
++    def is_legacy(self):
++        return False
++
++    def embed_query(self, input):
++        return self(input)
++
++    def embed_documents(self, documents):
++        return self(documents)
++
++    def default_space(self):
++        return "l2"
++
++    def supported_spaces(self):
++        return ["l2"]
++
++    @staticmethod
++    def name():
++        return "deterministic"
++
++    @staticmethod
++    def build_from_config(config):
++        return DeterministicEmbeddingFunction()
++
++    def get_config(self):
++        return {}
++
++    @staticmethod
++    def validate_config(config):
++        return None
++
++    def validate_config_update(self, old_config, new_config):
++        return None
++
+
+ @pytest.fixture(autouse=True)
+ def mock_config():
+@@ -25,7 +62,7 @@ def mock_vector_store():
+     Replaces the HTTP client in vector_store module.
+     """
+     with patch("semantic.vector_store.chromadb.HttpClient", return_value=chromadb.EphemeralClient()):
+-        with patch("semantic.vector_store.GeminiEmbeddingFunction", return_value=DefaultEmbeddingFunction()):
++        with patch("semantic.vector_store.GeminiEmbeddingFunction", return_value=DeterministicEmbeddingFunction()):
+             from semantic.vector_store import VectorStore
+             # Re-initialize to pick up mocks
+             store = VectorStore()

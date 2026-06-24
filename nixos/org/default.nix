@@ -19,6 +19,7 @@ in
     ./backup.nix
     ./llm.nix
     ./paperless.nix
+    ./searchless-ngx.nix
     ./searxng.nix
   ];
 

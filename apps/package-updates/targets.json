@@ -9,6 +9,14 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "searchless-ngx",
+      "nixUpdateArgs": [
+        "--src-only",
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "ismc",
       "nixUpdateArgs": [
         "--src-only",

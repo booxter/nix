@@ -1,0 +1,64 @@
+diff --git a/server/mcp_tools.py b/server/mcp_tools.py
+index 42d057b..4231da7 100644
+--- a/server/mcp_tools.py
++++ b/server/mcp_tools.py
+@@ -1,5 +1,6 @@
+ import asyncio
+ import json
++import httpx
+ from loguru import logger
+ import re
+ from datetime import datetime
+@@ -48 +49 @@ async def _llm_fuzzy_match(filter_term: str, candidates: List[str]) -> List[str]:
+-    Use Gemini Flash to fuzzy-match a filter term against a list of candidate names.
++    Use the configured chat provider to fuzzy-match a filter term against candidate names.
+@@ -64,16 +65,46 @@ async def _llm_fuzzy_match(filter_term: str, candidates: List[str]) -> List[str]:
+         f"List:\n{names_block}"
+     )
+
+-    def _call() -> str:
++    def _call_gemini() -> str:
++        if not settings.gemini_api_key:
++            raise RuntimeError("GEMINI_API_KEY is required when LLM_PROVIDER=gemini")
+         llm = genai.Client(api_key=settings.gemini_api_key)
+         resp = llm.models.generate_content(
+-            model="gemini-flash-latest",
++            model=settings.llm_model,
+             contents=prompt
+         )
+         return resp.text.strip()
+
++    async def _call_openai_compatible() -> str:
++        headers = {"Content-Type": "application/json"}
++        if settings.openai_api_key:
++            headers["Authorization"] = f"Bearer {settings.openai_api_key}"
++        async with httpx.AsyncClient(
++            base_url=settings.openai_base_url.rstrip("/"),
++            timeout=120.0,
++        ) as client:
++            response = await client.post(
++                "/chat/completions",
++                headers=headers,
++                json={
++                    "model": settings.llm_model,
++                    "messages": [{"role": "user", "content": prompt}],
++                    "temperature": 0,
++                    "max_tokens": 512,
++                },
++            )
++            response.raise_for_status()
++            data = response.json()
++            return data["choices"][0]["message"]["content"].strip()
++
+     try:
+-        result = await asyncio.to_thread(_call)
++        provider = settings.llm_provider.lower()
++        if provider == "gemini":
++            result = await asyncio.to_thread(_call_gemini)
++        elif provider in {"litellm", "openai", "openai-compatible"}:
++            result = await _call_openai_compatible()
++        else:
++            raise RuntimeError(f"Unsupported LLM provider: {settings.llm_provider}")
+         if not result or result.upper() == "NONE":
+             return []
+         matched = [

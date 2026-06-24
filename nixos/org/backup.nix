@@ -8,6 +8,7 @@ let
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessStoragePath = "/data/paperless";
+  searchlessStateDir = "/var/lib/searchless-ngx";
   litellmStateDir = "/var/lib/litellm";
   openWebuiStateDir = "/var/lib/open-webui";
   backupPaths = [
@@ -17,6 +18,7 @@ let
     paperlessDataDir
     paperlessGptStateDir
     paperlessStoragePath
+    searchlessStateDir
     "/var/lib/vikunja/files"
     "/var/lib/vikunja-backup/latest"
   ];

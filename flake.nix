@@ -200,6 +200,7 @@
           updateTargetPackages =
             pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
               aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
+              searchless-ngx = pkgs.callPackage ./nixos/org/pkgs/searchless-ngx { };
             }
             // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
               ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
