@@ -26,7 +26,14 @@ let
       key = "";
       config = {
         enable = true;
-        access_control = { };
+        access_control = null;
+        access_grants = [
+          {
+            principal_type = "user";
+            principal_id = "*";
+            permission = "read";
+          }
+        ];
         function_name_filter_list = "";
       };
       info = {
