@@ -71,7 +71,6 @@ in
     serverAliases = [ idService.publicHost ];
     mtls.enable = true;
     locationExtraConfig = ''
-      proxy_http_version 1.1;
       proxy_set_header Host ${idService.publicHost};
       proxy_set_header X-Forwarded-Host ${idService.publicHost};
     '';
