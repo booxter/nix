@@ -53,7 +53,6 @@ in
 
   environment.systemPackages = with pkgs; [
     clinfo
-    ramalama
     rocmPackages.rocminfo
   ];
 
