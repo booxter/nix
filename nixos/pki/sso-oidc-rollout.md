@@ -10,6 +10,8 @@ identity source and a consistent SSO policy.
 - Use native OIDC in applications that support it.
 - Use `oauth2-proxy` plus nginx `auth_request` for admin tools that do not
   support OIDC.
+- Manage users, groups, OIDC clients, and app SSO settings declaratively from
+  this repository.
 - Keep app-local API keys, automation tokens, and break-glass admin accounts
   in sops.
 
@@ -28,7 +30,9 @@ identity source and a consistent SSO policy.
 ## Recommended Shape
 
 - Identity provider: Kanidm on `pki`.
-- Public issuer URL: one canonical URL, likely `https://id.ihar.dev`.
+- Display name: SSO.
+- Public issuer URL: `https://id.ihar.dev`.
+- Internal service name: use `id.home.arpa` where an internal name is needed.
 - Internal/public access: apps and browsers should use the same issuer URL.
 - Public ingress: expose the IdP through the existing `beast` public nginx
   entrypoint, with mTLS from `beast` to `pki` like other external services.
@@ -62,8 +66,14 @@ Initial groups:
 Initial users:
 
 - `ihar`: admin across SSO, infra, Grafana, Paperless, Vikunja, AI, and RomM.
-- `kasia`: likely Paperless, Vikunja, AI, and selected media groups.
+- `kasia`: non-admin. Primary email is `kasia.bondarava@gmail.com`. Initial
+  likely groups are Paperless, Vikunja, AI, and selected media groups.
 - Add more users only with a clear group assignment and service need.
+
+Person records should stay practical: account name, display name, primary
+email, optional extra mail, and groups. Use account-style display names such as
+`ihar` and `kasia`; do not model legal names unless there is a concrete service
+need.
 
 ## Service Buckets
 
@@ -83,13 +93,17 @@ These should use application-native OIDC rather than proxy-only auth:
 - Paperless (`papers.ihar.dev`)
   - Configure django-allauth OIDC through
     `PAPERLESS_SOCIALACCOUNT_PROVIDERS`.
-  - Decide whether signup creates regular users only, with admin/staff still
-    bootstrapped locally.
+  - Migrate the current declarative bootstrap users toward OIDC-backed users.
+  - Prefer group-driven Paperless staff/admin assignment if Paperless can be
+    made to support it cleanly; otherwise keep a small declarative app-local
+    bootstrap only for staff/admin state.
   - Keep Paperless API token for automation.
 - Open WebUI (`ai.ihar.dev`)
   - Configure OIDC env vars.
   - Keep `ENABLE_PERSISTENT_CONFIG = False`.
-  - Start with password auth enabled until OIDC login succeeds.
+  - Auto-approve users in `ai-users`.
+  - Start with password auth enabled until OIDC login and `ai-users`
+    auto-approval succeed.
   - Disable password auth only after a break-glass path is documented.
 - RomM (`game.ihar.dev`)
   - Configure `OIDC_ENABLED`.
@@ -121,18 +135,16 @@ reaches it.
 - Bazarr
 - Prowlarr
 - SABnzbd
-- Glance/startpage, if desired
 - Letterboxd Radarr bridge, if it should not be open on LAN
 
 Initial proxy access policy:
 
 - Require `infra-admins` for all admin/download-management tools.
-- Consider a weaker `home-users` group only for read-only landing pages such as
-  Glance if non-admin users need it.
 
 Deferred:
 
 - Transmission: no change in this rollout.
+- Glance: do not include in the initial proxy-gating work.
 
 Needs separate assessment:
 
@@ -149,13 +161,13 @@ Needs separate assessment:
 
 ### 1. Prepare Inventory And Naming
 
-- [ ] Choose canonical IdP public host, probably `id.ihar.dev`.
-- [ ] Choose internal service name, probably `id.home.arpa` or
-      `kanidm.home.arpa`.
+- [x] Choose canonical IdP public host: `id.ihar.dev`.
+- [x] Choose display name: SSO.
+- [x] Choose internal service name: `id.home.arpa` if an internal name is
+      needed.
 - [ ] Add IdP to `lib/inventory.nix` as an external service owned by `pki`.
-- [ ] Add `id` or `kanidm` as a local DNS alias for the `pki` host.
-- [ ] Decide whether the user-facing display name is `SSO`, `Identity`, or
-      `Kanidm`.
+- [ ] Add `id` as a local DNS alias for the `pki` host if `id.home.arpa` will
+      be served directly on LAN.
 
 ### 2. Provision PKI And Ingress
 
@@ -187,10 +199,12 @@ Needs separate assessment:
 - [ ] Add declarative Kanidm groups listed in this document.
 - [ ] Add `ihar` with admin groups.
 - [ ] Add `kasia` with initial non-admin groups.
-- [ ] Decide which fields are required for every person:
-      display name, legal name, primary email, and optional extra mail.
-- [ ] Decide whether group membership is strictly declarative or partially
-      managed in the IdP UI. Prefer declarative for the initial rollout.
+- [ ] Set `kasia` primary email to `kasia.bondarava@gmail.com`.
+- [x] Decide which fields are required for every person: account name,
+      account-style display name, primary email, optional extra mail, and
+      groups.
+- [x] Decide whether group membership is strictly declarative or partially
+      managed in the IdP UI: strictly declarative from Nix config.
 
 ### 5. Create OIDC Clients In Kanidm
 
@@ -229,6 +243,18 @@ Roll out one app at a time. For each app:
 - [ ] Decide whether to disable local password auth.
 - [ ] Document the rollback path.
 
+Paperless-specific work:
+
+- [ ] Replace the current local password bootstrap with OIDC-backed login where
+      possible.
+- [ ] Keep only the minimal Paperless-local declarative bootstrap needed for
+      API tokens and staff/admin state.
+
+Open WebUI-specific work:
+
+- [ ] Configure auto-approval for users carrying the `ai-users` group.
+- [ ] Verify a user without `ai-users` is not approved.
+
 Suggested order:
 
 - [ ] Grafana
@@ -261,12 +287,12 @@ Initial proxy-gated order:
 - [ ] Prowlarr
 - [ ] Bazarr
 - [ ] SABnzbd
-- [ ] Glance, if desired
 - [ ] Letterboxd Radarr bridge, if desired
 
 Do not include:
 
 - [ ] Transmission
+- [ ] Glance
 
 ### 8. Review Public Apps That Are Not Covered
 
@@ -285,6 +311,25 @@ Do not include:
 - [ ] Add backup coverage for Kanidm state.
 - [ ] Add a recovery note for IdP admin password and local break-glass app
       accounts.
+
+### 9a. Repo Helper Apps
+
+Consider adding repo-side `nix run .#...` helper apps once the first Kanidm
+module shape is clear. These should automate repeatable maintenance without
+moving ownership out of declarative config.
+
+Candidate helpers:
+
+- [ ] Validate declared SSO users, groups, OAuth clients, redirect URIs, and
+      referenced sops secret names.
+- [ ] Print an SSO inventory summary from `lib/inventory.nix` and
+      `nixos/pki/sso.nix`.
+- [ ] Generate random client secrets or cookie secrets into an operator-chosen
+      destination for later `sops-edit`/`sops-copy` use.
+- [ ] Check that every native OIDC service has a matching Kanidm OAuth client.
+- [ ] Check that every proxy-gated nginx vhost is covered by an allowed group.
+- [ ] Probe the IdP `.well-known/openid-configuration` document and selected
+      redirect URLs after deployment.
 
 ### 10. Cleanup After Successful Migration
 
@@ -323,13 +368,10 @@ For each migrated service:
 
 ## Open Questions
 
-- Exact canonical IdP hostname: `id.ihar.dev`, `sso.ihar.dev`, or another name.
 - Whether Kanidm should be directly TLS-serving behind nginx or plain loopback
   behind the internal HTTPS service.
-- Whether all household users should have email addresses in Kanidm.
-- Whether Paperless admin/staff status should be group-driven or remain
-  declaratively bootstrapped in Paperless.
-- Whether Open WebUI should auto-approve `ai-users` or leave first login
-  pending.
-- Whether Glance should be open on LAN, restricted to `infra-admins`, or
-  available to a broader `home-users` group.
+- Whether `id.home.arpa` is needed as a user-facing LAN name, or only as an
+  internal service/backend name.
+- Whether Paperless admin/staff status can be cleanly group-driven or must
+  retain a small declarative app-local bootstrap.
+- Which repo helper apps are worth building after the first implementation pass.
