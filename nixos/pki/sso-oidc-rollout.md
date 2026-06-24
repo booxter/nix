@@ -212,8 +212,11 @@ Needs separate assessment:
   - No active Prometheus alerts were present for `service="id"` or
     `public_host="id.ihar.dev"`.
   - Public TLS expiry metrics exist for SSO through blackbox SSL probes.
-  - Internal PKI expiry metrics did not yet show an `id` internal HTTPS
-    certificate series; keep that as a follow-up.
+  - Internal PKI expiry metrics did not show an `id` internal HTTPS certificate
+    series after several scrape intervals. This is not just Prometheus scrape
+    lag: `pki-status-export` uses `--base-branch master`, so the series should
+    appear after this branch lands on `master`, unless that exporter workflow is
+    changed.
 - Current implementation stage: declare Kanidm users and groups.
 - Verify OIDC discovery once the first app client exists.
 
@@ -372,7 +375,9 @@ Do not include:
 - [ ] Add internal probe for the IdP backend.
 - [x] Confirm existing service-probe alert rules cover IdP unavailability.
 - [x] Confirm public TLS expiry coverage for `id.ihar.dev`.
-- [ ] Confirm internal `id` certificate expiry appears in PKI inventory metrics.
+- [ ] Confirm internal `id` certificate expiry appears in PKI inventory metrics
+      after this branch lands on `master`, or adjust `pki-status-export` to
+      inspect the deployed branch.
 - [ ] Add backup coverage for Kanidm state.
 - [ ] Add a recovery note for IdP admin password and local break-glass app
       accounts.
