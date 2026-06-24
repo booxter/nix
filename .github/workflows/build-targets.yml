@@ -231,7 +231,7 @@ jobs:
           has_package_rows() {
             local file="$1"
 
-            grep -Eq '^\[[A-Z.][A-Z.]\][[:space:]]+[^[:space:]]' "${file}"
+            grep -Eq '^\[[^]]+\][[:space:]]+[^[:space:]]' "${file}"
           }
 
           has_generated_config_diff() {
