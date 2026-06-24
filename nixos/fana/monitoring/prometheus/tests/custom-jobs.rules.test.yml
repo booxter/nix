@@ -96,3 +96,137 @@ tests:
             exp_annotations:
               summary: "Adaptive upload metrics stale on srvarr"
               description: "The adaptive upload controller metrics file on srvarr has not been refreshed for more than 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="open-webui-searxng-probe.timer",state="active"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: OpenWebUISearxngProbeTimerDown
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="open-webui-searxng-probe.timer",state="active"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: OpenWebUISearxngProbeTimerDown
+      - eval_time: 10m
+        alertname: OpenWebUISearxngProbeTimerDown
+        exp_alerts:
+          - exp_labels:
+              alertname: OpenWebUISearxngProbeTimerDown
+              category: service
+              instance: org
+              job: node-mtls
+              name: open-webui-searxng-probe.timer
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "Open WebUI SearXNG probe timer down on org"
+              description: "The Open WebUI SearXNG dependency probe timer on org has not been active for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="open-webui-searxng-probe.service",state="failed"}'
+        values: "0x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: OpenWebUISearxngProbeServiceFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="open-webui-searxng-probe.service",state="failed"}'
+        values: "1x10 0x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: OpenWebUISearxngProbeServiceFailed
+      - eval_time: 5m
+        alertname: OpenWebUISearxngProbeServiceFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: OpenWebUISearxngProbeServiceFailed
+              category: service
+              instance: org
+              job: node-mtls
+              name: open-webui-searxng-probe.service
+              severity: warning
+              state: failed
+            exp_annotations:
+              summary: "Open WebUI SearXNG probe service failed on org"
+              description: "The Open WebUI SearXNG dependency probe service on org has remained in the failed state for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_openwebui_searxng_probe_ok{instance="org"}'
+        values: "1x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: OpenWebUISearxngProbeFailed
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_openwebui_searxng_probe_ok{instance="org"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: OpenWebUISearxngProbeFailed
+      - eval_time: 10m
+        alertname: OpenWebUISearxngProbeFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: OpenWebUISearxngProbeFailed
+              category: service
+              instance: org
+              severity: warning
+            exp_annotations:
+              summary: "Open WebUI SearXNG probe failed on org"
+              description: "The Open WebUI SearXNG dependency probe on org has been failing for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_textfile_mtime_seconds{instance="org",file="/var/lib/prometheus-node-exporter-textfile/open-webui-searxng.prom"}'
+        values: "0x42"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: OpenWebUISearxngProbeStale
+      - eval_time: 20m30s
+        alertname: OpenWebUISearxngProbeStale
+        exp_alerts:
+          - exp_labels:
+              alertname: OpenWebUISearxngProbeStale
+              category: service
+              file: /var/lib/prometheus-node-exporter-textfile/open-webui-searxng.prom
+              instance: org
+              severity: warning
+            exp_annotations:
+              summary: "Open WebUI SearXNG probe stale on org"
+              description: "The Open WebUI SearXNG dependency probe metrics file on org has not been refreshed for more than 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_openwebui_searxng_probe_results{instance="org"}'
+        values: "5x62"
+    alert_rule_test:
+      - eval_time: 30m
+        alertname: OpenWebUISearxngProbeNoResults
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_openwebui_searxng_probe_results{instance="org"}'
+        values: "0x60 5x2"
+    alert_rule_test:
+      - eval_time: 29m30s
+        alertname: OpenWebUISearxngProbeNoResults
+      - eval_time: 30m
+        alertname: OpenWebUISearxngProbeNoResults
+        exp_alerts:
+          - exp_labels:
+              alertname: OpenWebUISearxngProbeNoResults
+              category: service
+              instance: org
+              severity: warning
+            exp_annotations:
+              summary: "Open WebUI SearXNG probe returned no results on org"
+              description: "The Open WebUI SearXNG dependency probe on org has returned zero search results for 30 minutes."
