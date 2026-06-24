@@ -159,7 +159,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_openwebui_searxng_probe_ok{instance="org"}'
+      - series: 'host_observability_openwebui_searxng_probe_ok{instance="org",job="node-mtls"}'
         values: "1x22"
     alert_rule_test:
       - eval_time: 10m
@@ -167,7 +167,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_openwebui_searxng_probe_ok{instance="org"}'
+      - series: 'host_observability_openwebui_searxng_probe_ok{instance="org",job="node-mtls"}'
         values: "0x20 1x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -179,6 +179,7 @@ tests:
               alertname: OpenWebUISearxngProbeFailed
               category: service
               instance: org
+              job: node-mtls
               severity: warning
             exp_annotations:
               summary: "Open WebUI SearXNG probe failed on org"
@@ -186,7 +187,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_textfile_mtime_seconds{instance="org",file="/var/lib/prometheus-node-exporter-textfile/open-webui-searxng.prom"}'
+      - series: 'node_textfile_mtime_seconds{instance="org",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/open-webui-searxng.prom"}'
         values: "0x42"
     alert_rule_test:
       - eval_time: 20m
@@ -199,6 +200,7 @@ tests:
               category: service
               file: /var/lib/prometheus-node-exporter-textfile/open-webui-searxng.prom
               instance: org
+              job: node-mtls
               severity: warning
             exp_annotations:
               summary: "Open WebUI SearXNG probe stale on org"
@@ -206,7 +208,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_openwebui_searxng_probe_results{instance="org"}'
+      - series: 'host_observability_openwebui_searxng_probe_results{instance="org",job="node-mtls"}'
         values: "5x62"
     alert_rule_test:
       - eval_time: 30m
@@ -214,7 +216,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_openwebui_searxng_probe_results{instance="org"}'
+      - series: 'host_observability_openwebui_searxng_probe_results{instance="org",job="node-mtls"}'
         values: "0x60 5x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -226,6 +228,7 @@ tests:
               alertname: OpenWebUISearxngProbeNoResults
               category: service
               instance: org
+              job: node-mtls
               severity: warning
             exp_annotations:
               summary: "Open WebUI SearXNG probe returned no results on org"
