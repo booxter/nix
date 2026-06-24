@@ -19,8 +19,18 @@ let
       path,
       client,
       fsid,
+      extraOptions ? [ ],
     }:
-    "${path} ${client}(rw,async,no_subtree_check,fsid=${toString fsid})";
+    let
+      options = [
+        "rw"
+        "async"
+        "no_subtree_check"
+        "fsid=${toString fsid}"
+      ]
+      ++ extraOptions;
+    in
+    "${path} ${client}(${lib.concatStringsSep "," options})";
 in
 {
   # NFS exports matching existing clients.
@@ -41,6 +51,12 @@ in
         path = paperlessExportPath;
         client = orgNfsAddress;
         fsid = 12; # paperless document storage export
+        # Preserve root_squash while allowing root-run backup jobs on org to
+        # read the Paperless-owned export as the Paperless service identity.
+        extraOptions = [
+          "anonuid=${toString paperlessUid}"
+          "anongid=${toString paperlessGid}"
+        ];
       }}
     '';
   };
