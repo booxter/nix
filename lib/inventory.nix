@@ -301,6 +301,16 @@ rec {
 
   services = [
     (resolveService (mkService {
+      id = "id";
+      title = "SSO";
+      icon = "sh:kanidm";
+      scope = "external";
+      owner = "pki";
+      publicHost = "id.ihar.dev";
+      probePath = "/healthz";
+      showInGlance = false;
+    }))
+    (resolveService (mkService {
       id = "jellyfin";
       scope = "external";
       owner = "beast";
@@ -712,6 +722,7 @@ rec {
       isVM = true;
       name = "pki";
       platform = "x86_64-linux";
+      localDnsAliases = [ "id" ];
       caServer = {
         port = 8443;
         # Fixed step-ca HTTP API route for the trusted root bundle.

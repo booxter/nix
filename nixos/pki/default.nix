@@ -80,6 +80,7 @@ in
   _module.args.pkiPkgs = import ./pkgs pkgs;
 
   imports = [
+    ./id.nix
     ./unifi-sync.nix
     ./wg-home-dns-sync.nix
   ];

@@ -22,6 +22,10 @@ let
       )
       [
         {
+          id = "id";
+          localPort = 18443;
+        }
+        {
           id = "seerr";
           localPort = 15055;
         }
