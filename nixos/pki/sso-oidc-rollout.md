@@ -189,6 +189,11 @@ Needs separate assessment:
   - `id.home.arpa` accepts requests with an internal PKI client cert.
 - Current implementation stage: replace the placeholder upstream with Kanidm
   while keeping the same public/internal ingress shape.
+- First Kanidm deploy attempt on 2026-06-24 partially activated: Kanidm started
+  and provisioned successfully, but nginx failed its pre-start config test
+  because `proxy_http_version` was emitted twice. The follow-up fix removes the
+  redundant Kanidm-specific directive and keeps the shared internal HTTPS module
+  defaults.
 - After Kanidm is deployed, use `/status` as the service probe and verify OIDC
   discovery once the first app client exists.
 
