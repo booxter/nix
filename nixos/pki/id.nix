@@ -2,6 +2,7 @@
   config,
   hostInventory,
   lib,
+  pkiPkgs,
   pkgs,
   ...
 }:
@@ -9,6 +10,13 @@ let
   idService = hostInventory.servicesById.id;
   sso = hostInventory.sso;
   kanidmPort = 18085;
+  kanidmLocalUrl = "https://localhost:${toString kanidmPort}";
+  mailSenderUser = "kanidm-mail-sender";
+  mailSenderGroup = mailSenderUser;
+  mailSenderStateDir = "/var/lib/kanidm-mail-sender";
+  mailSenderTokenFile = "${mailSenderStateDir}/token";
+  mailSenderRuntimeDir = "/run/kanidm-mail-sender";
+  mailSenderConfigFile = "${mailSenderRuntimeDir}/mail-sender.toml";
   kanidmProvisionGroups = lib.mapAttrs (_: _: { }) sso.groups;
   kanidmProvisionPersons = lib.mapAttrs (
     _: person:
@@ -19,6 +27,43 @@ let
     // lib.optionalAttrs (person ? legalName) { inherit (person) legalName; }
     // lib.optionalAttrs (person ? mailAddresses) { inherit (person) mailAddresses; }
   ) sso.users;
+  writeMailSenderConfig = pkgs.writeShellApplication {
+    name = "kanidm-mail-sender-write-config";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.jq
+    ];
+    text = ''
+      set -euo pipefail
+
+      token_file=${lib.escapeShellArg mailSenderTokenFile}
+      password_file=${lib.escapeShellArg config.sops.secrets.kanidmMailerPassword.path}
+      config_file=${lib.escapeShellArg mailSenderConfigFile}
+      tmp_config="$(mktemp)"
+      trap 'rm -f "$tmp_config"' EXIT
+
+      [ -s "$token_file" ]
+      [ -r "$password_file" ]
+
+      token="$(jq -Rs 'sub("\n$"; "")' < "$token_file")"
+      password="$(jq -Rs 'sub("\n$"; "")' < "$password_file")"
+
+      umask 077
+      printf '%s\n' \
+        "token = $token" \
+        'schedule = "*/30 * * * * * *"' \
+        'instance_display_name = "SSO"' \
+        'instance_url = "https://${idService.publicHost}"' \
+        'mail_from_address = "ihar.hrachyshka@gmail.com"' \
+        'mail_reply_to_address = "ihar.hrachyshka@gmail.com"' \
+        'mail_relay = "smtp.gmail.com:587"' \
+        'mail_username = "ihar.hrachyshka@gmail.com"' \
+        "mail_password = $password" \
+        'mail_connect_timeout_seconds = 15' \
+        > "$tmp_config"
+      mv "$tmp_config" "$config_file"
+    '';
+  };
 in
 {
   sops.secrets = {
@@ -50,6 +95,13 @@ in
       mode = "0400";
       restartUnits = [ "kanidm.service" ];
     };
+    kanidmMailerPassword = {
+      key = "kanidm/mailer/password";
+      owner = mailSenderUser;
+      group = mailSenderGroup;
+      mode = "0400";
+      restartUnits = [ "kanidm-mail-sender.service" ];
+    };
   };
 
   services.kanidm = {
@@ -68,6 +120,11 @@ in
           versions = 14;
         };
       };
+    };
+    client.settings = {
+      uri = kanidmLocalUrl;
+      verify_ca = false;
+      verify_hostnames = false;
     };
     provision = {
       enable = true;
@@ -92,8 +149,104 @@ in
 
   environment.systemPackages = [ config.services.kanidm.package ];
 
+  users.users.${mailSenderUser} = {
+    isSystemUser = true;
+    group = mailSenderGroup;
+    home = mailSenderStateDir;
+    createHome = false;
+  };
+
+  users.groups.${mailSenderGroup} = { };
+
   systemd.services.kanidm = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
+  };
+
+  systemd.services.kanidm-mail-sender-bootstrap = {
+    description = "Bootstrap Kanidm mail sender service account";
+    after = [
+      "kanidm.service"
+      "sops-install-secrets.service"
+    ];
+    requires = [
+      "kanidm.service"
+      "sops-install-secrets.service"
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      UMask = "0077";
+      StateDirectory = "kanidm-mail-sender";
+      StateDirectoryMode = "0700";
+      ExecStart = "${lib.getExe pkiPkgs.kanidm-mail-sender-bootstrap} ${
+        lib.escapeShellArgs [
+          "--url"
+          kanidmLocalUrl
+          "--idm-admin-password-file"
+          config.sops.secrets.kanidmIdmAdminPassword.path
+          "--token-file"
+          mailSenderTokenFile
+          "--token-owner"
+          mailSenderUser
+          "--token-group"
+          mailSenderGroup
+          "--accept-invalid-certs"
+        ]
+      }";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ReadWritePaths = [ mailSenderStateDir ];
+      RestrictAddressFamilies = [
+        "AF_INET"
+        "AF_INET6"
+        "AF_UNIX"
+      ];
+    };
+  };
+
+  systemd.services.kanidm-mail-sender = {
+    description = "Kanidm mail sender";
+    wantedBy = [ "multi-user.target" ];
+    wants = [
+      "network-online.target"
+      "sops-install-secrets.service"
+    ];
+    requires = [
+      "kanidm.service"
+      "kanidm-mail-sender-bootstrap.service"
+    ];
+    after = [
+      "network-online.target"
+      "kanidm.service"
+      "kanidm-mail-sender-bootstrap.service"
+      "sops-install-secrets.service"
+    ];
+    serviceConfig = {
+      User = mailSenderUser;
+      Group = mailSenderGroup;
+      UMask = "0077";
+      RuntimeDirectory = "kanidm-mail-sender";
+      RuntimeDirectoryMode = "0700";
+      StateDirectory = "kanidm-mail-sender";
+      StateDirectoryMode = "0700";
+      ExecStartPre = lib.getExe writeMailSenderConfig;
+      ExecStart = "${config.services.kanidm.package}/bin/kanidm-mail-sender -c /etc/kanidm/config -m ${mailSenderConfigFile}";
+      Restart = "on-failure";
+      RestartSec = "10s";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectSystem = "strict";
+      ReadWritePaths = [
+        mailSenderRuntimeDir
+        mailSenderStateDir
+      ];
+      RestrictAddressFamilies = [
+        "AF_INET"
+        "AF_INET6"
+        "AF_UNIX"
+      ];
+    };
+    environment.RUST_LOG = "kanidm_client=warn,kanidm_mail_sender=info";
   };
 }
