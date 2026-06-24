@@ -7,6 +7,7 @@ let
   aiService = hostInventory.servicesById.ai;
   litellmPort = 4000;
   openWebuiPort = 8082;
+  searxPort = 18083;
 in
 {
   sops.secrets = {
@@ -48,10 +49,17 @@ in
       ENABLE_CODE_EXECUTION = "False";
       ENABLE_OLLAMA_API = "False";
       ENABLE_OPENAI_API = "True";
+      ENABLE_WEB_SEARCH = "True";
       ENABLE_PERSISTENT_CONFIG = "False";
       ENABLE_SIGNUP = "False";
       OPENAI_API_BASE_URL = "http://127.0.0.1:${toString litellmPort}/v1";
+      SEARXNG_LANGUAGE = "all";
+      SEARXNG_QUERY_URL = "http://127.0.0.1:${toString searxPort}/search";
       TASK_MODEL_EXTERNAL = "qwen3:8b";
+      WEB_LOADER_CONCURRENT_REQUESTS = "4";
+      WEB_SEARCH_CONCURRENT_REQUESTS = "2";
+      WEB_SEARCH_ENGINE = "searxng";
+      WEB_SEARCH_RESULT_COUNT = "5";
       WEBUI_ADMIN_EMAIL = "ihar.hrachyshka@gmail.com";
       WEBUI_ADMIN_NAME = "Ihar";
       WEBUI_NAME = "Homelab AI";
@@ -62,12 +70,39 @@ in
   systemd.services.open-webui = {
     wants = [
       "podman-litellm.service"
+      "searx.service"
       "sops-install-secrets.service"
     ];
     after = [
       "podman-litellm.service"
+      "searx.service"
       "sops-install-secrets.service"
     ];
+  };
+
+  services.searx = {
+    enable = true;
+    configureNginx = false;
+    configureUwsgi = false;
+    openFirewall = false;
+    settings = {
+      # This instance is loopback-only for Open WebUI. Use a SOPS-backed
+      # secret_key before exposing SearXNG directly to users.
+      server = {
+        bind_address = "127.0.0.1";
+        limiter = false;
+        port = searxPort;
+        public_instance = false;
+        secret_key = "org-open-webui-local-searxng";
+      };
+      search = {
+        formats = [
+          "html"
+          "json"
+        ];
+        safe_search = 1;
+      };
+    };
   };
 
   host.internalHttps.services.ai = {
