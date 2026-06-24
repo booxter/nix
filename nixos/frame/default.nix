@@ -42,7 +42,7 @@ in
     host = "127.0.0.1";
     port = 11434;
     loadModels = [
-      "qwen3:8b"
+      "qwen3.5:9b"
       "minicpm-v:8b"
     ];
     syncModels = false;

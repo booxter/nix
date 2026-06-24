@@ -318,7 +318,7 @@ in
         CREATE_LOCAL_HOCR = "false";
         CREATE_LOCAL_PDF = "false";
         LLM_LANGUAGE = "English";
-        LLM_MODEL = "qwen3:8b";
+        LLM_MODEL = "qwen3.5:9b";
         LLM_PROVIDER = "ollama";
         LISTEN_INTERFACE = "127.0.0.1:8080";
         LOCAL_HOCR_PATH = "/app/hocr";
