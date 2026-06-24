@@ -52,6 +52,7 @@ in
       ENABLE_SIGNUP = "False";
       OPENAI_API_BASE_URL = "http://127.0.0.1:${toString litellmPort}/v1";
       TASK_MODEL_EXTERNAL = "qwen3:8b";
+      WEB_LOADER_CONCURRENT_REQUESTS = "4";
       WEBUI_ADMIN_EMAIL = "ihar.hrachyshka@gmail.com";
       WEBUI_ADMIN_NAME = "Ihar";
       WEBUI_NAME = "Homelab AI";
