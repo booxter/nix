@@ -42,6 +42,7 @@ in
     host = "127.0.0.1";
     port = 11434;
     loadModels = [
+      "nomic-embed-text"
       "qwen3.5:9b"
       "qwen3-vl:8b-instruct"
     ];
