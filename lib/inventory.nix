@@ -299,6 +299,78 @@ rec {
     userCaPublicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJs0Zx3pG8L1SaGQSyD9Jqljt15KD7txMUrgu9lP85qRY89wjF7if3QQnp22jTBjgfuWrUW2GdFWwAbGmzvWDg8= ca-key-nix-infra@secretive.mair.local";
   };
 
+  sso = {
+    groups = {
+      "sso-admins" = {
+        title = "SSO administrators";
+      };
+      "infra-admins" = {
+        title = "Infrastructure administrators";
+      };
+      "grafana-admins" = {
+        title = "Grafana administrators";
+      };
+      "grafana-viewers" = {
+        title = "Grafana viewers";
+      };
+      "paperless-admins" = {
+        title = "Paperless administrators";
+      };
+      "paperless-users" = {
+        title = "Paperless users";
+      };
+      "vikunja-users" = {
+        title = "Vikunja users";
+      };
+      "ai-users" = {
+        title = "Open WebUI users";
+      };
+      "romm-admins" = {
+        title = "RomM administrators";
+      };
+      "romm-editors" = {
+        title = "RomM editors";
+      };
+      "romm-viewers" = {
+        title = "RomM viewers";
+      };
+      "media-admins" = {
+        title = "Media administrators";
+      };
+      "media-users" = {
+        title = "Media users";
+      };
+    };
+
+    users = {
+      ihar = {
+        displayName = "ihar";
+        groups = [
+          "sso-admins"
+          "infra-admins"
+          "grafana-admins"
+          "paperless-admins"
+          "paperless-users"
+          "vikunja-users"
+          "ai-users"
+          "romm-admins"
+          "media-admins"
+          "media-users"
+        ];
+      };
+      kasia = {
+        displayName = "kasia";
+        mailAddresses = [ "kasia.bondarava@gmail.com" ];
+        groups = [
+          "paperless-users"
+          "vikunja-users"
+          "ai-users"
+          "media-users"
+        ];
+      };
+    };
+  };
+
   services = [
     (resolveService (mkService {
       id = "id";

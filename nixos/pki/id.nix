@@ -1,12 +1,24 @@
 {
   config,
   hostInventory,
+  lib,
   pkgs,
   ...
 }:
 let
   idService = hostInventory.servicesById.id;
+  sso = hostInventory.sso;
   kanidmPort = 18085;
+  kanidmProvisionGroups = lib.mapAttrs (_: _: { }) sso.groups;
+  kanidmProvisionPersons = lib.mapAttrs (
+    _: person:
+    {
+      displayName = person.displayName;
+      groups = person.groups;
+    }
+    // lib.optionalAttrs (person ? legalName) { inherit (person) legalName; }
+    // lib.optionalAttrs (person ? mailAddresses) { inherit (person) mailAddresses; }
+  ) sso.users;
 in
 {
   sops.secrets = {
@@ -62,6 +74,8 @@ in
       adminPasswordFile = config.sops.secrets.kanidmAdminPassword.path;
       idmAdminPasswordFile = config.sops.secrets.kanidmIdmAdminPassword.path;
       instanceUrl = "https://localhost:${toString kanidmPort}";
+      groups = kanidmProvisionGroups;
+      persons = kanidmProvisionPersons;
     };
   };
 
