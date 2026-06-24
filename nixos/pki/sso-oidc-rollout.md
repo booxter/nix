@@ -221,9 +221,9 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Vikunja SSO client is deployed on `pki`.
-  Deploy `org` next for the Vikunja app config. Local Vikunja login remains
-  enabled for rollback. `kasia` enrollment is deferred until she is ready.
+- Current implementation stage: Vikunja SSO is deployed on `pki` and `org`.
+  Browser login validation is next. Local Vikunja login remains enabled for
+  rollback. `kasia` enrollment is deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -397,7 +397,7 @@ Vikunja-specific work:
 - [x] Keep Vikunja local login enabled for rollback.
 - [x] Enable email fallback so the trusted Kanidm account can link to an
       existing local Vikunja account by email.
-- [ ] Deploy `org` after the `pki` client deploy is verified.
+- [x] Deploy `org` after the `pki` client deploy is verified.
 - [ ] Log in as `ihar` through SSO.
 - [ ] Verify the SSO login is linked to the expected existing Vikunja account.
 - [ ] Verify the existing local login path still works.
