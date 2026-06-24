@@ -1,4 +1,9 @@
-{ config, hostInventory, ... }:
+{
+  config,
+  hostInventory,
+  pkgs,
+  ...
+}:
 let
   vikunjaService = hostInventory.servicesById.vikunja;
   vikunjaMetricsMtlsPort = 9345;
@@ -7,6 +12,8 @@ let
   vikunjaTimezone = "America/New_York";
 in
 {
+  _module.args.orgPkgs = import ./pkgs pkgs;
+
   imports = [
     ./ai.nix
     ./backup.nix
