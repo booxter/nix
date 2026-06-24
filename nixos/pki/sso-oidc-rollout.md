@@ -175,6 +175,21 @@ Needs separate assessment:
 - If a stage touches an app login flow, explicitly test both the old login path
   and the new SSO path before moving on.
 
+## Current Status
+
+- `id.ihar.dev` is live as a placeholder endpoint.
+- `pki` serves `id.home.arpa` through the internal HTTPS module with mTLS
+  enforced.
+- `beast` serves public `id.ihar.dev` and proxies to `pki` over the existing
+  external-service mTLS/stunnel pattern.
+- Verified on 2026-06-24:
+  - `https://id.ihar.dev/healthz` returns the placeholder response.
+  - `http://id.ihar.dev/healthz` redirects to HTTPS.
+  - `id.home.arpa` rejects requests without a client cert.
+  - `id.home.arpa` accepts requests with an internal PKI client cert.
+- Next implementation stage: replace the placeholder upstream with Kanidm while
+  keeping the same public/internal ingress shape.
+
 ## Ordered Work Items
 
 ### 1. Prepare Inventory And Naming
@@ -183,20 +198,21 @@ Needs separate assessment:
 - [x] Choose display name: SSO.
 - [x] Choose internal service name: `id.home.arpa` if an internal name is
       needed.
-- [ ] Add IdP to `lib/inventory.nix` as an external service owned by `pki`.
-- [ ] Add `id` as a local DNS alias for the `pki` host if `id.home.arpa` will
+- [x] Add IdP to `lib/inventory.nix` as an external service owned by `pki`.
+- [x] Add `id` as a local DNS alias for the `pki` host if `id.home.arpa` will
       be served directly on LAN.
 
 ### 2. Provision PKI And Ingress
 
-- [ ] Add `host.internalHttps.services.<idp>` on `pki`.
-- [ ] Issue internal HTTPS cert for the IdP service with
+- [x] Add `host.internalHttps.services.<idp>` on `pki`.
+- [x] Issue internal HTTPS cert for the IdP service with
       `nix run .#issue-internal-service-cert -- --host pki --service <idp>`.
-- [ ] Add public ingress on `beast` for `id.ihar.dev`.
-- [ ] Add an mTLS client identity on `beast` for the IdP upstream.
-- [ ] Issue any needed mTLS client/server certs.
-- [ ] Confirm public and internal paths both resolve to the same OIDC issuer
-      URL.
+- [x] Add public ingress on `beast` for `id.ihar.dev`.
+- [x] Add an mTLS client identity on `beast` for the IdP upstream.
+- [x] Issue any needed mTLS client/server certs.
+- [x] Confirm public and internal paths both reach the IdP endpoint.
+- [ ] Confirm public and internal paths both use the same OIDC issuer URL after
+      Kanidm is enabled.
 
 ### 3. Add Kanidm Service
 
