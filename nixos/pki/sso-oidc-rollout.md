@@ -69,6 +69,10 @@ Initial groups:
 Initial users:
 
 - `ihar`: admin across SSO, infra, Grafana, Paperless, Vikunja, AI, and RomM.
+  The first declarative pass places `ihar` in the fleet-level `sso-admins`
+  group, but does not yet mutate Kanidm built-in admin groups such as
+  `idm_admins`; `admin` and `idm_admin` remain the break-glass IdP admin path
+  until a deliberate admin-delegation step is added.
 - `kasia`: non-admin. Primary email is `kasia.bondarava@gmail.com`. Initial
   likely groups are Paperless, Vikunja, AI, and selected media groups.
 - Add more users only with a clear group assignment and service need.
@@ -263,15 +267,23 @@ Needs separate assessment:
 
 ### 4. Declare Users And Groups
 
-- [ ] Add declarative Kanidm groups listed in this document.
-- [ ] Add `ihar` with admin groups.
-- [ ] Add `kasia` with initial non-admin groups.
-- [ ] Set `kasia` primary email to `kasia.bondarava@gmail.com`.
+- [x] Add SSO groups and users to `lib/inventory.nix`.
+- [x] Map inventory SSO groups and users into Kanidm provisioning on `pki`.
+- [x] Add declarative Kanidm groups listed in this document.
+- [x] Add `ihar` with fleet-level admin groups.
+- [x] Add `kasia` with initial non-admin groups.
+- [x] Set `kasia` primary email to `kasia.bondarava@gmail.com`.
 - [x] Decide which fields are required for every person: account name,
       account-style display name, primary email, optional extra mail, and
       groups.
 - [x] Decide whether group membership is strictly declarative or partially
       managed in the IdP UI: strictly declarative from Nix config.
+- [ ] Deploy initial Kanidm users and groups on `pki`.
+- [ ] Verify `ihar` and `kasia` person records exist.
+- [ ] Verify declared group memberships exist.
+- [ ] Decide whether to delegate Kanidm built-in admin rights to `sso-admins`
+      now or keep using `admin`/`idm_admin` as the IdP admin path.
+- [ ] Generate initial enrollment/reset path for `ihar` and `kasia`.
 
 ### 5. Create OIDC Clients In Kanidm
 
