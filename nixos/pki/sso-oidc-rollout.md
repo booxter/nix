@@ -309,7 +309,7 @@ the inventory state.
       `mail-sender` service account, `idm_message_senders` membership, and
       local API token file.
 - [x] Configure `kanidm-mail-sender.service` to send as
-      `ihar.hrachyshka@gmail.com` through `smtp.gmail.com:587`.
+      `ihar.hrachyshka@gmail.com` through `smtp.gmail.com`.
 - [x] Deploy the mail sender stage on `pki`.
 - [x] Verify `kanidm-mail-sender-bootstrap.service` succeeds.
 - [x] Verify `kanidm-mail-sender.service` is active.

@@ -57,7 +57,7 @@ let
         'instance_url = "https://${idService.publicHost}"' \
         'mail_from_address = "ihar.hrachyshka@gmail.com"' \
         'mail_reply_to_address = "ihar.hrachyshka@gmail.com"' \
-        'mail_relay = "smtp.gmail.com:587"' \
+        'mail_relay = "smtp.gmail.com"' \
         'mail_username = "ihar.hrachyshka@gmail.com"' \
         "mail_password = $password" \
         'mail_connect_timeout_seconds = 15' \
