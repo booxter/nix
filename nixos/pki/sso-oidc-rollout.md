@@ -26,6 +26,9 @@ identity source and a consistent SSO policy.
   been validated through SSO and rollback is understood.
 - Do not replace the existing internal HTTPS and mTLS model. SSO should sit on
   top of it.
+- Do not add repo helper apps speculatively. Add one only when a concrete,
+  non-obvious, multi-step operational workflow proves it would reduce risk or
+  repeated manual work.
 
 ## Recommended Shape
 
@@ -156,6 +159,21 @@ Needs separate assessment:
 - LiteLLM gateway (`llm.ihar.dev`): API-key based service; do not blindly put a
   browser SSO gate in front of API clients without checking clients and
   intended usage.
+
+## Rollout Workflow
+
+- Work in small stages.
+- Each stage should be one focused local commit.
+- Codex patches the repo and runs local checks.
+- The operator deploys the committed stage.
+- Codex then checks the live result over the appropriate service URLs, logs, or
+  SSH commands.
+- Do not proceed to the next stage until the current stage has a clear live
+  result and rollback path.
+- Preserve existing login paths while introducing SSO. Tighten or remove local
+  login only in a later stage after the SSO path has been verified.
+- If a stage touches an app login flow, explicitly test both the old login path
+  and the new SSO path before moving on.
 
 ## Ordered Work Items
 
@@ -312,24 +330,21 @@ Do not include:
 - [ ] Add a recovery note for IdP admin password and local break-glass app
       accounts.
 
-### 9a. Repo Helper Apps
+### 9a. Repo Helper Apps Decision Rule
 
-Consider adding repo-side `nix run .#...` helper apps once the first Kanidm
-module shape is clear. These should automate repeatable maintenance without
-moving ownership out of declarative config.
+Do not build helper apps just in case. Most SSO work should stay in ordinary
+declarative Nix modules, sops secrets, existing PKI helpers, and existing deploy
+flows.
 
-Candidate helpers:
+A repo-side `nix run .#...` helper is worth considering only if a real workflow
+becomes non-obvious, multi-step, and likely to be repeated. Possible examples:
 
-- [ ] Validate declared SSO users, groups, OAuth clients, redirect URIs, and
-      referenced sops secret names.
-- [ ] Print an SSO inventory summary from `lib/inventory.nix` and
-      `nixos/pki/sso.nix`.
-- [ ] Generate random client secrets or cookie secrets into an operator-chosen
-      destination for later `sops-edit`/`sops-copy` use.
-- [ ] Check that every native OIDC service has a matching Kanidm OAuth client.
-- [ ] Check that every proxy-gated nginx vhost is covered by an allowed group.
-- [ ] Probe the IdP `.well-known/openid-configuration` document and selected
-      redirect URLs after deployment.
+- A validation command that catches mismatched Kanidm clients, redirect URIs,
+  group claims, and service declarations before deploy.
+- A live post-deploy probe that checks the IdP discovery document and selected
+  app callback URLs.
+- A secret-preparation helper only if client/cookie secret handling becomes
+  error-prone across many services.
 
 ### 10. Cleanup After Successful Migration
 
@@ -362,6 +377,8 @@ For each migrated service:
 - Keep local app login enabled until the replacement works.
 - Keep service-specific sops secrets until after a cleanup pass.
 - Change one service at a time.
+- Keep each stage as a separate commit so it can be reviewed, deployed, checked,
+  and reverted independently.
 - Prefer adding OIDC alongside existing auth, then tightening later.
 - For proxy-gated apps, rollback is removing nginx auth_request or removing the
   vhost from `services.oauth2-proxy.nginx.virtualHosts`.
@@ -374,4 +391,5 @@ For each migrated service:
   internal service/backend name.
 - Whether Paperless admin/staff status can be cleanly group-driven or must
   retain a small declarative app-local bootstrap.
-- Which repo helper apps are worth building after the first implementation pass.
+- Whether any concrete SSO workflow becomes complex enough to justify a repo
+  helper app.
