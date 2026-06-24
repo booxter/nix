@@ -9,6 +9,13 @@ let
   litellmPort = 4000;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   openWebuiPort = 8082;
+  # Enables Open WebUI's web-search feature by default for model chats.
+  # Without this metadata, asking the model to search does not trigger the
+  # SearXNG-backed retrieval path unless the user manually toggles search.
+  openWebuiDefaultModelMetadata = {
+    capabilities.web_search = true;
+    defaultFeatureIds = [ "web_search" ];
+  };
   searxPort = 18083;
   searxProbeMetricsFile = "${nodeExporterTextfileDir}/open-webui-searxng.prom";
   searxProbeScript = pkgs.writeShellApplication {
@@ -126,6 +133,7 @@ in
     environmentFile = config.sops.templates."open-webui.env".path;
     environment = {
       DEFAULT_MODELS = "qwen3:8b";
+      DEFAULT_MODEL_METADATA = builtins.toJSON openWebuiDefaultModelMetadata;
       DEFAULT_PINNED_MODELS = "qwen3:8b";
       ENABLE_CODE_EXECUTION = "False";
       ENABLE_OLLAMA_API = "False";
