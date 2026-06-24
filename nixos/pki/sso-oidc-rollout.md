@@ -221,9 +221,9 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Vikunja SSO is deployed on `pki` and `org`.
-  Browser login validation is next. Local Vikunja login remains enabled for
-  rollback. `kasia` enrollment is deferred until she is ready.
+- Current implementation stage: Vikunja SSO is validated for `ihar`, with
+  local Vikunja login retained as the rollback path. Open WebUI is next.
+  `kasia` enrollment is deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -321,7 +321,7 @@ Needs separate assessment:
 Create one OAuth/OIDC client per native app:
 
 - [x] `grafana`
-- [ ] `vikunja` declared in Nix; awaiting `org` deploy and app validation
+- [x] `vikunja`
 - [ ] `paperless`
 - [ ] `open-webui`
 - [ ] `romm`
@@ -398,9 +398,9 @@ Vikunja-specific work:
 - [x] Enable email fallback so the trusted Kanidm account can link to an
       existing local Vikunja account by email.
 - [x] Deploy `org` after the `pki` client deploy is verified.
-- [ ] Log in as `ihar` through SSO.
-- [ ] Verify the SSO login is linked to the expected existing Vikunja account.
-- [ ] Verify the existing local login path still works.
+- [x] Log in as `ihar` through SSO.
+- [x] Verify the SSO login is linked to the expected existing Vikunja account.
+- [x] Verify the existing local login path still works.
 
 Paperless-specific work:
 
@@ -417,7 +417,7 @@ Open WebUI-specific work:
 Suggested order:
 
 - [x] Grafana
-- [ ] Vikunja
+- [x] Vikunja
 - [ ] Open WebUI
 - [ ] Paperless
 - [ ] RomM
