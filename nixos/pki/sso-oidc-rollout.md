@@ -221,8 +221,9 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: create the first OIDC client. `kasia`
-  enrollment is deferred until she is ready.
+- Current implementation stage: deploy Grafana SSO in two stages: Kanidm
+  client on `pki`, then Grafana Generic OAuth on `fana`. `kasia` enrollment is
+  deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -318,7 +319,7 @@ Needs separate assessment:
 
 Create one OAuth/OIDC client per native app:
 
-- [ ] `grafana`
+- [ ] `grafana` declared in Nix; awaiting `pki` deploy and validation
 - [ ] `vikunja`
 - [ ] `paperless`
 - [ ] `open-webui`
@@ -335,6 +336,20 @@ For each client:
 - [ ] Expose `openid`, `profile`, `email`, and group/role claims.
 - [ ] Restrict scopes or login eligibility by group where practical.
 
+Grafana client:
+
+- [x] Add a shared Grafana OAuth client secret to `pki` and `fana` sops
+      secrets.
+- [x] Declare Kanidm OAuth2 client `grafana`.
+- [x] Set redirect URL to
+      `https://grafana.home.arpa/login/generic_oauth`.
+- [x] Set landing URL to `https://grafana.home.arpa/`.
+- [x] Restrict OIDC scopes to `grafana-admins` and `grafana-viewers`.
+- [x] Emit a `grafana_role` claim mapping `grafana-admins` to `admin` and
+      `grafana-viewers` to `viewer`.
+- [ ] Deploy `pki`.
+- [ ] Verify Grafana OIDC discovery and client metadata.
+
 ### 6. Configure Native OIDC Apps
 
 Roll out one app at a time. For each app:
@@ -350,6 +365,17 @@ Roll out one app at a time. For each app:
 - [ ] Verify API keys and automation still work.
 - [ ] Decide whether to disable local password auth.
 - [ ] Document the rollback path.
+
+Grafana-specific work:
+
+- [x] Configure Grafana Generic OAuth against Kanidm.
+- [x] Keep Grafana local login form enabled for break-glass access.
+- [x] Map `grafana_role=admin` to `GrafanaAdmin`.
+- [x] Map `grafana_role=viewer` to `Viewer`.
+- [ ] Deploy `fana` after the `pki` client deploy is verified.
+- [ ] Log in as `ihar` through SSO.
+- [ ] Verify `ihar` has Grafana server admin privileges.
+- [ ] Verify the existing local admin login path still works.
 
 Paperless-specific work:
 
