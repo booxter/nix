@@ -12,6 +12,7 @@ in
     ./backup.nix
     ./llm.nix
     ./paperless.nix
+    ./searxng.nix
   ];
 
   sops.secrets.vikunjaMailerPassword = {
