@@ -217,6 +217,13 @@ let
       exec ${pkiRotationPackage}/bin/pki-rotation "$@"
     '';
   };
+  resetOidc = pkgs.writeShellApplication {
+    name = "reset-oidc";
+    runtimeInputs = [ pkgs.openssh ];
+    text = ''
+      exec ${pkgs.bash}/bin/bash ${../apps/reset-oidc.sh} "$@"
+    '';
+  };
   wgHomeClientConfig = pkgs.writeShellApplication {
     name = "wg-home-client-config";
     runtimeInputs = with pkgs; [
@@ -398,6 +405,8 @@ in
     mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
   "pki-rotation" =
     mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
+  "reset-oidc" =
+    mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
   "join-media-parts" =
     mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
   "hba-flash" =
