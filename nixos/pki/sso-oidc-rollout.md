@@ -221,8 +221,8 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: finish initial Kanidm user enrollment, then
-  create the first OIDC client.
+- Current implementation stage: create the first OIDC client. `kasia`
+  enrollment is deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -292,7 +292,7 @@ Needs separate assessment:
 - [ ] Decide whether to delegate Kanidm built-in admin rights to `sso-admins`
       now or keep using `admin`/`idm_admin` as the IdP admin path.
 - [x] Generate initial enrollment/reset path for `ihar`.
-- [ ] Generate initial enrollment/reset path for `kasia`.
+- [ ] Later: generate initial enrollment/reset path for `kasia`.
 
 ### 4a. Configure Outgoing Email And Enrollment
 
@@ -312,7 +312,7 @@ Needs separate assessment:
 - [x] Add `nix run .#reset-oidc -- <user-id> [email]` for issuing
       enrollment/reset emails through `pki`.
 - [x] Generate enrollment/reset email for `ihar`.
-- [ ] Generate enrollment/reset email for `kasia`.
+- [ ] Later: generate enrollment/reset email for `kasia`.
 
 ### 5. Create OIDC Clients In Kanidm
 
