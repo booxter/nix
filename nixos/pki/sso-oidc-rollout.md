@@ -221,7 +221,14 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: declare Kanidm users and groups.
+- Current implementation stage: configure Kanidm outgoing email and enrollment
+  path.
+- Mail sender implementation is committed but not yet deployed on `pki`.
+  It reuses the existing Gmail SMTP sender details from Vikunja by copying that
+  app password into `pki` as `kanidm/mailer/password`.
+  The `mail-sender` Kanidm service account and read-write API token are ensured
+  by a `pki` oneshot bootstrap service, because Kanidm API tokens are generated
+  by the server and cannot be predeclared as ordinary Nix data.
 - Verify OIDC discovery once the first app client exists.
 
 ## Ordered Work Items
@@ -271,6 +278,7 @@ Needs separate assessment:
 - [x] Map inventory SSO groups and users into Kanidm provisioning on `pki`.
 - [x] Add declarative Kanidm groups listed in this document.
 - [x] Add `ihar` with fleet-level admin groups.
+- [x] Set `ihar` primary email to `ihar.hrachyshka@gmail.com`.
 - [x] Add `kasia` with initial non-admin groups.
 - [x] Set `kasia` primary email to `kasia.bondarava@gmail.com`.
 - [x] Decide which fields are required for every person: account name,
@@ -289,6 +297,24 @@ Live verification on `pki` confirmed `kanidm.service` and `nginx.service` are
 active, `https://id.ihar.dev/status` returns `true`, both person records exist,
 `kasia` has `kasia.bondarava@gmail.com`, and declared group memberships match
 the inventory state.
+
+### 4a. Configure Outgoing Email And Enrollment
+
+- [x] Add `ihar.hrachyshka@gmail.com` to the `ihar` Kanidm person record.
+- [x] Copy the existing Vikunja Gmail SMTP app password into `pki` as
+      `kanidm/mailer/password`.
+- [x] Add `nixos/pki/pkgs/kanidm-mail-sender-bootstrap` as the host-local
+      bootstrap helper.
+- [x] Configure `kanidm-mail-sender-bootstrap.service` to ensure the
+      `mail-sender` service account, `idm_message_senders` membership, and
+      local API token file.
+- [x] Configure `kanidm-mail-sender.service` to send as
+      `ihar.hrachyshka@gmail.com` through `smtp.gmail.com:587`.
+- [ ] Deploy the mail sender stage on `pki`.
+- [ ] Verify `kanidm-mail-sender-bootstrap.service` succeeds.
+- [ ] Verify `kanidm-mail-sender.service` is active.
+- [ ] Send a Kanidm test message before sending real enrollment/reset links.
+- [ ] Generate enrollment/reset links for `ihar` and `kasia`.
 
 ### 5. Create OIDC Clients In Kanidm
 
