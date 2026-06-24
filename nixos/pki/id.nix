@@ -10,7 +10,7 @@ let
   idService = hostInventory.servicesById.id;
   sso = hostInventory.sso;
   kanidmPort = 18085;
-  kanidmLocalHost = hostInventory.toLocalDnsName idService.id;
+  kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
@@ -206,6 +206,10 @@ in
   systemd.services.kanidm-mail-sender = {
     description = "Kanidm mail sender";
     wantedBy = [ "multi-user.target" ];
+    restartTriggers = [
+      config.environment.etc."kanidm/config".source
+      writeMailSenderConfig
+    ];
     wants = [
       "network-online.target"
       "sops-install-secrets.service"
