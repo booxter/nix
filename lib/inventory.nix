@@ -345,6 +345,7 @@ rec {
     users = {
       ihar = {
         displayName = "ihar";
+        mailAddresses = [ "ihar.hrachyshka@gmail.com" ];
         groups = [
           "sso-admins"
           "infra-admins"
