@@ -307,7 +307,7 @@ rec {
       scope = "external";
       owner = "pki";
       publicHost = "id.ihar.dev";
-      probePath = "/healthz";
+      probePath = "/status";
       showInGlance = false;
     }))
     (resolveService (mkService {

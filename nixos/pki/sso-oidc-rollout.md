@@ -187,8 +187,10 @@ Needs separate assessment:
   - `http://id.ihar.dev/healthz` redirects to HTTPS.
   - `id.home.arpa` rejects requests without a client cert.
   - `id.home.arpa` accepts requests with an internal PKI client cert.
-- Next implementation stage: replace the placeholder upstream with Kanidm while
-  keeping the same public/internal ingress shape.
+- Current implementation stage: replace the placeholder upstream with Kanidm
+  while keeping the same public/internal ingress shape.
+- After Kanidm is deployed, use `/status` as the service probe and verify OIDC
+  discovery once the first app client exists.
 
 ## Ordered Work Items
 
@@ -216,17 +218,20 @@ Needs separate assessment:
 
 ### 3. Add Kanidm Service
 
-- [ ] Add `nixos/pki/sso.nix`.
-- [ ] Import it from `nixos/pki/default.nix`.
-- [ ] Set `services.kanidm.server.enable = true`.
-- [ ] Set `services.kanidm.package = pkgs.kanidmWithSecretProvisioning_1_10`.
-- [ ] Bind Kanidm to loopback or a private listener behind nginx.
-- [ ] Set Kanidm `origin` to the canonical issuer URL.
-- [ ] Configure TLS settings as required by the module, using the internal HTTPS
-      service or direct service TLS based on the final module shape.
-- [ ] Enable Kanidm online backups.
-- [ ] Add sops secrets for Kanidm admin/idm admin bootstrap passwords.
-- [ ] Add monitoring probes and dashboard/rule follow-ups.
+- [x] Add `nixos/pki/id.nix` for the identity service.
+- [x] Import it from `nixos/pki/default.nix`.
+- [x] Set `services.kanidm.server.enable = true`.
+- [x] Set `services.kanidm.package = pkgs.kanidmWithSecretProvisioning_1_10`.
+- [x] Bind Kanidm to loopback behind nginx.
+- [x] Set Kanidm `origin` to the canonical issuer URL.
+- [x] Configure TLS settings required by the module.
+- [x] Enable Kanidm online backups.
+- [x] Add sops secrets for Kanidm admin/idm admin bootstrap passwords.
+- [ ] Deploy Kanidm on `pki`.
+- [ ] Verify `kanidm.service` is active.
+- [ ] Verify `https://id.ihar.dev/status` returns `true`.
+- [ ] Verify `id.home.arpa` still requires client certs.
+- [ ] Add monitoring dashboard/rule follow-ups.
 
 ### 4. Declare Users And Groups
 
