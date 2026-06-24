@@ -221,9 +221,10 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Grafana SSO is validated for `ihar`, with
-  local Grafana login retained as the break-glass path. `kasia` enrollment is
-  deferred until she is ready.
+- Current implementation stage: Vikunja SSO is staged in Nix. Deploy order is
+  `pki` for the Kanidm client, then `org` for the Vikunja app config. Local
+  Vikunja login remains enabled for rollback. `kasia` enrollment is deferred
+  until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -321,7 +322,7 @@ Needs separate assessment:
 Create one OAuth/OIDC client per native app:
 
 - [x] `grafana`
-- [ ] `vikunja`
+- [ ] `vikunja` declared in Nix; awaiting `pki` deploy and validation
 - [ ] `paperless`
 - [ ] `open-webui`
 - [ ] `romm`
@@ -351,6 +352,19 @@ Grafana client:
 - [x] Deploy `pki`.
 - [x] Verify Grafana OIDC discovery and client metadata.
 
+Vikunja client:
+
+- [x] Add a shared Vikunja OAuth client secret to `pki` and `org` sops
+      secrets.
+- [x] Declare Kanidm OAuth2 client `vikunja`.
+- [x] Set redirect URL to `https://vi.ihar.dev/auth/openid/sso`.
+- [x] Set landing URL to `https://vi.ihar.dev/`.
+- [x] Restrict OIDC scopes to `vikunja-users`.
+- [x] Allow non-PKCE OAuth flow for Vikunja because the current Vikunja
+      frontend does not send a PKCE challenge.
+- [ ] Deploy `pki`.
+- [ ] Verify Vikunja OIDC discovery and client metadata.
+
 ### 6. Configure Native OIDC Apps
 
 Roll out one app at a time. For each app:
@@ -377,6 +391,17 @@ Grafana-specific work:
 - [x] Log in as `ihar` through SSO.
 - [x] Verify `ihar` has Grafana server admin privileges.
 - [x] Verify the existing local admin login path still works.
+
+Vikunja-specific work:
+
+- [x] Configure Vikunja OpenID provider `sso` against Kanidm.
+- [x] Keep Vikunja local login enabled for rollback.
+- [x] Enable email fallback so the trusted Kanidm account can link to an
+      existing local Vikunja account by email.
+- [ ] Deploy `org` after the `pki` client deploy is verified.
+- [ ] Log in as `ihar` through SSO.
+- [ ] Verify the SSO login is linked to the expected existing Vikunja account.
+- [ ] Verify the existing local login path still works.
 
 Paperless-specific work:
 
