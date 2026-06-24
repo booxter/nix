@@ -34,15 +34,20 @@ if [ -z "$user_id" ]; then
   exit 1
 fi
 
+remote_args=("$user_id" "$ttl_seconds")
+if [ -n "$email" ]; then
+  remote_args+=("$email")
+fi
+
 ssh "$ssh_target" sudo -n /run/current-system/sw/bin/bash -s -- \
-  "$user_id" "$email" "$ttl_seconds" <<'REMOTE'
+  "${remote_args[@]}" <<'REMOTE'
 set -euo pipefail
 
 export PATH=/run/current-system/sw/bin:/run/wrappers/bin
 
 user_id="$1"
-email="${2:-}"
-ttl_seconds="$3"
+ttl_seconds="$2"
+email="${3:-}"
 
 token_dir="$(mktemp -d -t kanidm-reset-oidc.XXXXXX)"
 cleanup() {
