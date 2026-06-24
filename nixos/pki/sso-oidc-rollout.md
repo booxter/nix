@@ -177,7 +177,7 @@ Needs separate assessment:
 
 ## Current Status
 
-- `id.ihar.dev` is live as a placeholder endpoint.
+- `id.ihar.dev` is live as Kanidm.
 - `pki` serves `id.home.arpa` through the internal HTTPS module with mTLS
   enforced.
 - `beast` serves public `id.ihar.dev` and proxies to `pki` over the existing
@@ -194,8 +194,16 @@ Needs separate assessment:
   because `proxy_http_version` was emitted twice. The follow-up fix removes the
   redundant Kanidm-specific directive and keeps the shared internal HTTPS module
   defaults.
-- After Kanidm is deployed, use `/status` as the service probe and verify OIDC
-  discovery once the first app client exists.
+- Verified on 2026-06-24 after the follow-up fix:
+  - `kanidm.service` is active.
+  - `nginx.service` is active.
+  - `https://id.ihar.dev/status` returns `true`.
+  - `https://id.ihar.dev/ui/login` serves the Kanidm login UI.
+  - `id.home.arpa/status` rejects requests without a client certificate.
+  - `id.home.arpa/status` returns `true` with an internal PKI client
+    certificate.
+- Current implementation stage: declare Kanidm users and groups.
+- Verify OIDC discovery once the first app client exists.
 
 ## Ordered Work Items
 
@@ -232,10 +240,10 @@ Needs separate assessment:
 - [x] Configure TLS settings required by the module.
 - [x] Enable Kanidm online backups.
 - [x] Add sops secrets for Kanidm admin/idm admin bootstrap passwords.
-- [ ] Deploy Kanidm on `pki`.
-- [ ] Verify `kanidm.service` is active.
-- [ ] Verify `https://id.ihar.dev/status` returns `true`.
-- [ ] Verify `id.home.arpa` still requires client certs.
+- [x] Deploy Kanidm on `pki`.
+- [x] Verify `kanidm.service` is active.
+- [x] Verify `https://id.ihar.dev/status` returns `true`.
+- [x] Verify `id.home.arpa` still requires client certs.
 - [ ] Add monitoring dashboard/rule follow-ups.
 
 ### 4. Declare Users And Groups
