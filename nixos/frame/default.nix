@@ -44,6 +44,7 @@ in
     loadModels = [
       "nomic-embed-text"
       "qwen3.5:9b"
+      "qwen3-next:80b"
       "qwen3-vl:8b-instruct"
     ];
     syncModels = false;
