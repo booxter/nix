@@ -15,23 +15,24 @@ let
   litellmConfig = (pkgs.formats.yaml { }).generate "litellm-config.yaml" {
     model_list = [
       {
-        model_name = "qwen3:8b";
+        model_name = "qwen3.5:9b";
         litellm_params = {
-          model = "ollama_chat/qwen3:8b";
+          model = "ollama_chat/qwen3.5:9b";
           api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
           keep_alive = "30m";
         };
         model_info = {
           mode = "chat";
           supports_function_calling = true;
+          supports_vision = true;
           input_cost_per_token = 0.0;
           output_cost_per_token = 0.0;
         };
       }
       {
-        model_name = "minicpm-v:8b";
+        model_name = "qwen3-vl:8b-instruct";
         litellm_params = {
-          model = "ollama/minicpm-v:8b";
+          model = "ollama/qwen3-vl:8b-instruct";
           api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
           keep_alive = "30m";
         };

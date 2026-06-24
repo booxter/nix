@@ -39,7 +39,7 @@ let
 
       install -d -m 0750 "$dst_dir"
 
-      runuser -u postgres -- pg_dump --format=custom --file="$tmp_dir/paperless.dump" paperless
+      runuser -u postgres -- pg_dump --format=custom paperless > "$tmp_dir/paperless.dump"
       date --iso-8601=seconds > "$tmp_dir/created-at.txt"
 
       mv "$tmp_dir/paperless.dump" "$dst_dir/paperless.dump"

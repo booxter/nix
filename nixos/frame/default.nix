@@ -42,8 +42,8 @@ in
     host = "127.0.0.1";
     port = 11434;
     loadModels = [
-      "qwen3:8b"
-      "minicpm-v:8b"
+      "qwen3.5:9b"
+      "qwen3-vl:8b-instruct"
     ];
     syncModels = false;
     environmentVariables = {
@@ -53,7 +53,7 @@ in
 
   environment.systemPackages = with pkgs; [
     clinfo
-    ramalama
+    radeontop
     rocmPackages.rocminfo
   ];
 

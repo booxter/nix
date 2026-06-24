@@ -2,6 +2,7 @@
   config,
   hostInventory,
   lib,
+  orgPkgs,
   pkgs,
   ...
 }:
@@ -10,6 +11,7 @@ let
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
   paperlessStoragePath = "/data/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
+  paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
   ollamaTunnelPort = 11435;
   ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
@@ -96,6 +98,7 @@ let
       existing.delete()
       Token.objects.create(user=admin, key=token_key)
   '';
+
 in
 {
   boot.supportedFilesystems = [ "nfs" ];
@@ -134,6 +137,7 @@ in
       mode = "0400";
       restartUnits = [
         "paperless-bootstrap.service"
+        "paperless-gpt-configure.service"
         "podman-paperless-gpt.service"
       ];
     };
@@ -208,7 +212,10 @@ in
         "paperless-scheduler.service"
         "sops-install-secrets.service"
       ];
-      before = [ "podman-paperless-gpt.service" ];
+      before = [
+        "paperless-gpt-configure.service"
+        "podman-paperless-gpt.service"
+      ];
       unitConfig.RequiresMountsFor = [ config.services.paperless.dataDir ];
       path = [ config.services.paperless.manage ];
       serviceConfig = {
@@ -226,10 +233,41 @@ in
       '';
     };
 
+    paperless-gpt-configure = {
+      description = "Configure Paperless workflow for paperless-gpt";
+      wantedBy = [ "multi-user.target" ];
+      wants = [
+        "paperless-bootstrap.service"
+        "paperless-web.service"
+        "sops-install-secrets.service"
+      ];
+      after = [
+        "paperless-bootstrap.service"
+        "paperless-web.service"
+        "sops-install-secrets.service"
+      ];
+      before = [ "podman-paperless-gpt.service" ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "paperless";
+        Group = "paperless";
+        Environment = [
+          "PAPERLESS_API_TOKEN_FILE=${config.sops.secrets."paperless/api/token".path}"
+          "PAPERLESS_BASE_URL=http://127.0.0.1:${toString config.services.paperless.port}"
+          "PAPERLESS_GPT_AUTO_OCR_TAG=${paperlessGptAutoOcrTag}"
+          "PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME=Auto OCR with paperless-gpt"
+        ];
+      };
+      script = ''
+        ${lib.getExe orgPkgs.paperless-gpt-configure}
+      '';
+    };
+
     podman-paperless-gpt = {
       wants = [
         "network-online.target"
         "paperless-bootstrap.service"
+        "paperless-gpt-configure.service"
         "paperless-web.service"
         "sops-install-secrets.service"
         "stunnel.service"
@@ -237,6 +275,7 @@ in
       after = [
         "network-online.target"
         "paperless-bootstrap.service"
+        "paperless-gpt-configure.service"
         "paperless-web.service"
         "sops-install-secrets.service"
         "stunnel.service"
@@ -314,11 +353,11 @@ in
         AUTO_GENERATE_DOCUMENT_TYPE = "true";
         AUTO_GENERATE_TAGS = "true";
         AUTO_GENERATE_TITLE = "true";
-        AUTO_OCR_TAG = "paperless-gpt-ocr-auto";
+        AUTO_OCR_TAG = paperlessGptAutoOcrTag;
         CREATE_LOCAL_HOCR = "false";
         CREATE_LOCAL_PDF = "false";
         LLM_LANGUAGE = "English";
-        LLM_MODEL = "qwen3:8b";
+        LLM_MODEL = "qwen3.5:9b";
         LLM_PROVIDER = "ollama";
         LISTEN_INTERFACE = "127.0.0.1:8080";
         LOCAL_HOCR_PATH = "/app/hocr";
@@ -337,7 +376,7 @@ in
         PDF_SKIP_EXISTING_OCR = "false";
         PDF_UPLOAD = "false";
         TOKEN_LIMIT = "2000";
-        VISION_LLM_MODEL = "minicpm-v:8b";
+        VISION_LLM_MODEL = "qwen3-vl:8b-instruct";
         VISION_LLM_PROVIDER = "ollama";
       };
       environmentFiles = [ config.sops.templates."paperless-gpt.env".path ];
