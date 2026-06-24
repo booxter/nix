@@ -247,16 +247,16 @@ in
         "sops-install-secrets.service"
       ];
       before = [ "podman-paperless-gpt.service" ];
+      environment = {
+        PAPERLESS_API_TOKEN_FILE = config.sops.secrets."paperless/api/token".path;
+        PAPERLESS_BASE_URL = "http://127.0.0.1:${toString config.services.paperless.port}";
+        PAPERLESS_GPT_AUTO_OCR_TAG = paperlessGptAutoOcrTag;
+        PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME = "Auto OCR with paperless-gpt";
+      };
       serviceConfig = {
         Type = "oneshot";
         User = "paperless";
         Group = "paperless";
-        Environment = [
-          "PAPERLESS_API_TOKEN_FILE=${config.sops.secrets."paperless/api/token".path}"
-          "PAPERLESS_BASE_URL=http://127.0.0.1:${toString config.services.paperless.port}"
-          "PAPERLESS_GPT_AUTO_OCR_TAG=${paperlessGptAutoOcrTag}"
-          "PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME=Auto OCR with paperless-gpt"
-        ];
       };
       script = ''
         ${lib.getExe orgPkgs.paperless-gpt-configure}
