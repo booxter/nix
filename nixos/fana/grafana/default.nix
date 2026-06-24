@@ -4,7 +4,12 @@
   ...
 }:
 let
+  idService = hostInventory.servicesById.id;
   lan = hostInventory.site.lan;
+  grafanaHost = "grafana.${lan.domain}";
+  oidcClientId = "grafana";
+  oidcIssuerBase = "https://${idService.publicHost}";
+  oidcOpenidBase = "${oidcIssuerBase}/oauth2/openid/${oidcClientId}";
   alertmanagerPort = 9093;
   grafanaPort = 3000;
   prometheusPort = 9090;
@@ -26,6 +31,13 @@ in
     group = "grafana";
     mode = "0400";
   };
+  sops.secrets.grafanaOidcClientSecret = {
+    key = "grafana/oidc/client_secret";
+    owner = "grafana";
+    group = "grafana";
+    mode = "0400";
+    restartUnits = [ "grafana.service" ];
+  };
 
   services.grafana = {
     enable = true;
@@ -39,13 +51,41 @@ in
       server = {
         http_addr = "127.0.0.1";
         http_port = grafanaPort;
-        domain = "grafana.${lan.domain}";
-        root_url = "https://grafana.${lan.domain}/";
+        domain = grafanaHost;
+        root_url = "https://${grafanaHost}/";
       };
       security = {
         admin_user = "admin";
         admin_password = "$__file{${config.sops.secrets.grafanaAdminPassword.path}}";
         secret_key = "$__file{${config.sops.secrets.grafanaSecretKey.path}}";
+      };
+      auth = {
+        disable_login_form = false;
+      };
+      "auth.generic_oauth" = {
+        enabled = true;
+        name = "SSO";
+        icon = "signin";
+        allow_sign_up = true;
+        auto_login = false;
+        client_id = oidcClientId;
+        client_secret = "$__file{${config.sops.secrets.grafanaOidcClientSecret.path}}";
+        scopes = "openid email profile";
+        auth_url = "${oidcIssuerBase}/ui/oauth2";
+        token_url = "${oidcIssuerBase}/oauth2/token";
+        api_url = "${oidcOpenidBase}/userinfo";
+        auth_style = "InHeader";
+        use_pkce = true;
+        use_refresh_token = false;
+        validate_id_token = true;
+        jwk_set_url = "${oidcOpenidBase}/public_key.jwk";
+        login_attribute_path = "preferred_username";
+        name_attribute_path = "name";
+        email_attribute_path = "email";
+        role_attribute_path = "contains(grafana_role[*], 'admin') && 'GrafanaAdmin' || contains(grafana_role[*], 'viewer') && 'Viewer' || 'None'";
+        role_attribute_strict = true;
+        allow_assign_grafana_admin = true;
+        skip_org_role_sync = false;
       };
       analytics = {
         reporting_enabled = false;

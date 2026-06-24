@@ -8,10 +8,12 @@
 }:
 let
   idService = hostInventory.servicesById.id;
+  lan = hostInventory.site.lan;
   sso = hostInventory.sso;
   kanidmPort = 18085;
   kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
+  grafanaUrl = "https://grafana.${lan.domain}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
   mailSenderStateDir = "/var/lib/kanidm-mail-sender";
@@ -103,6 +105,13 @@ in
       mode = "0400";
       restartUnits = [ "kanidm-mail-sender.service" ];
     };
+    kanidmGrafanaOAuthClientSecret = {
+      key = "kanidm/oauth2/grafana/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
   };
 
   services.kanidm = {
@@ -130,6 +139,29 @@ in
       instanceUrl = "https://localhost:${toString kanidmPort}";
       groups = kanidmProvisionGroups;
       persons = kanidmProvisionPersons;
+      systems.oauth2.grafana = {
+        displayName = "Grafana";
+        originUrl = "${grafanaUrl}/login/generic_oauth";
+        originLanding = "${grafanaUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmGrafanaOAuthClientSecret.path;
+        preferShortUsername = true;
+        scopeMaps = {
+          "grafana-admins" = [
+            "openid"
+            "email"
+            "profile"
+          ];
+          "grafana-viewers" = [
+            "openid"
+            "email"
+            "profile"
+          ];
+        };
+        claimMaps.grafana_role.valuesByGroup = {
+          "grafana-admins" = [ "admin" ];
+          "grafana-viewers" = [ "viewer" ];
+        };
+      };
     };
   };
 
