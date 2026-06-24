@@ -14,6 +14,8 @@ let
   kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
   grafanaUrl = "https://grafana.${lan.domain}";
+  vikunjaService = hostInventory.servicesById.vikunja;
+  vikunjaUrl = "https://${vikunjaService.publicHost}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
   mailSenderStateDir = "/var/lib/kanidm-mail-sender";
@@ -112,6 +114,13 @@ in
       mode = "0400";
       restartUnits = [ "kanidm.service" ];
     };
+    kanidmVikunjaOAuthClientSecret = {
+      key = "kanidm/oauth2/vikunja/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
   };
 
   services.kanidm = {
@@ -161,6 +170,19 @@ in
           "grafana-admins" = [ "admin" ];
           "grafana-viewers" = [ "viewer" ];
         };
+      };
+      systems.oauth2.vikunja = {
+        displayName = "Vikunja";
+        originUrl = "${vikunjaUrl}/auth/openid/sso";
+        originLanding = "${vikunjaUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmVikunjaOAuthClientSecret.path;
+        allowInsecureClientDisablePkce = true;
+        preferShortUsername = true;
+        scopeMaps."vikunja-users" = [
+          "openid"
+          "email"
+          "profile"
+        ];
       };
     };
   };

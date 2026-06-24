@@ -5,8 +5,11 @@
   ...
 }:
 let
+  idService = hostInventory.servicesById.id;
   vikunjaService = hostInventory.servicesById.vikunja;
   vikunjaMetricsMtlsPort = 9345;
+  vikunjaOidcClientId = "vikunja";
+  vikunjaOidcProviderKey = "sso";
   vikunjaPort = 3456;
   # Vikunja expects an IANA tz database name here, not a fixed abbreviation.
   vikunjaTimezone = "America/New_York";
@@ -23,21 +26,28 @@ in
     ./searxng.nix
   ];
 
-  sops.secrets.vikunjaMailerPassword = {
-    key = "vikunja/mailer/password";
-    restartUnits = [ "vikunja.service" ];
+  sops.secrets = {
+    vikunjaMailerPassword = {
+      key = "vikunja/mailer/password";
+      restartUnits = [ "vikunja.service" ];
+    };
+    vikunjaOidcClientSecret = {
+      key = "vikunja/oidc/client_secret";
+      restartUnits = [ "vikunja.service" ];
+    };
   };
 
-  sops.templates."vikunja-mailer.env" = {
+  sops.templates."vikunja-secrets.env" = {
     content = ''
       VIKUNJA_MAILER_PASSWORD=${config.sops.placeholder.vikunjaMailerPassword}
+      VIKUNJA_AUTH_OPENID_PROVIDERS_${vikunjaOidcProviderKey}_CLIENTSECRET=${config.sops.placeholder.vikunjaOidcClientSecret}
     '';
     restartUnits = [ "vikunja.service" ];
   };
 
   services.vikunja = {
     enable = true;
-    environmentFiles = [ config.sops.templates."vikunja-mailer.env".path ];
+    environmentFiles = [ config.sops.templates."vikunja-secrets.env".path ];
     frontendScheme = "https";
     frontendHostname = vikunjaService.publicHost;
     port = vikunjaPort;
@@ -57,6 +67,20 @@ in
       service = {
         timezone = vikunjaTimezone;
         enableregistration = false;
+      };
+      auth = {
+        local.enabled = true;
+        openid = {
+          enabled = true;
+          providers.${vikunjaOidcProviderKey} = {
+            name = "SSO";
+            authurl = "https://${idService.publicHost}/oauth2/openid/${vikunjaOidcClientId}";
+            clientid = vikunjaOidcClientId;
+            clientsecret = "";
+            scope = "openid email profile";
+            emailfallback = true;
+          };
+        };
       };
     };
   };
