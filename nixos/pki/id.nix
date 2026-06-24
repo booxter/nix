@@ -61,7 +61,7 @@ let
         "mail_password = $password" \
         'mail_connect_timeout_seconds = 15' \
         > "$tmp_config"
-      mv "$tmp_config" "$config_file"
+      install -m 0440 -o root -g ${lib.escapeShellArg mailSenderGroup} "$tmp_config" "$config_file"
     '';
   };
 in
@@ -230,7 +230,7 @@ in
       RuntimeDirectoryMode = "0700";
       StateDirectory = "kanidm-mail-sender";
       StateDirectoryMode = "0700";
-      ExecStartPre = lib.getExe writeMailSenderConfig;
+      ExecStartPre = "+${lib.getExe writeMailSenderConfig}";
       ExecStart = "${config.services.kanidm.package}/bin/kanidm-mail-sender -c /etc/kanidm/config -m ${mailSenderConfigFile}";
       Restart = "on-failure";
       RestartSec = "10s";
