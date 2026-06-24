@@ -221,10 +221,9 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Vikunja SSO is staged in Nix. Deploy order is
-  `pki` for the Kanidm client, then `org` for the Vikunja app config. Local
-  Vikunja login remains enabled for rollback. `kasia` enrollment is deferred
-  until she is ready.
+- Current implementation stage: Vikunja SSO client is deployed on `pki`.
+  Deploy `org` next for the Vikunja app config. Local Vikunja login remains
+  enabled for rollback. `kasia` enrollment is deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -322,7 +321,7 @@ Needs separate assessment:
 Create one OAuth/OIDC client per native app:
 
 - [x] `grafana`
-- [ ] `vikunja` declared in Nix; awaiting `pki` deploy and validation
+- [ ] `vikunja` declared in Nix; awaiting `org` deploy and app validation
 - [ ] `paperless`
 - [ ] `open-webui`
 - [ ] `romm`
@@ -362,8 +361,8 @@ Vikunja client:
 - [x] Restrict OIDC scopes to `vikunja-users`.
 - [x] Allow non-PKCE OAuth flow for Vikunja because the current Vikunja
       frontend does not send a PKCE challenge.
-- [ ] Deploy `pki`.
-- [ ] Verify Vikunja OIDC discovery and client metadata.
+- [x] Deploy `pki`.
+- [x] Verify Vikunja OIDC discovery and client metadata.
 
 ### 6. Configure Native OIDC Apps
 
