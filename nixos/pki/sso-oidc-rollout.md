@@ -182,13 +182,11 @@ Needs separate assessment:
   enforced.
 - `beast` serves public `id.ihar.dev` and proxies to `pki` over the existing
   external-service mTLS/stunnel pattern.
-- Verified on 2026-06-24:
+- Initial placeholder path verified on 2026-06-24:
   - `https://id.ihar.dev/healthz` returns the placeholder response.
   - `http://id.ihar.dev/healthz` redirects to HTTPS.
   - `id.home.arpa` rejects requests without a client cert.
   - `id.home.arpa` accepts requests with an internal PKI client cert.
-- Current implementation stage: replace the placeholder upstream with Kanidm
-  while keeping the same public/internal ingress shape.
 - First Kanidm deploy attempt on 2026-06-24 partially activated: Kanidm started
   and provisioned successfully, but nginx failed its pre-start config test
   because `proxy_http_version` was emitted twice. The follow-up fix removes the
@@ -202,6 +200,20 @@ Needs separate assessment:
   - `id.home.arpa/status` rejects requests without a client certificate.
   - `id.home.arpa/status` returns `true` with an internal PKI client
     certificate.
+- Verified on 2026-06-24 after deploying `fana`:
+  - `prometheus.service`, `prometheus-blackbox-exporter.service`,
+    `grafana.service`, and `nginx.service` are active.
+  - Prometheus scrapes SSO split-DNS and public-WAN blackbox targets using
+    `/status`.
+  - `probe_success{service="id"}` is `1` for split-DNS, public-WAN, and public
+    DNS probes.
+  - `probe_http_status_code{service="id"}` is `200` for split-DNS and
+    public-WAN probes.
+  - No active Prometheus alerts were present for `service="id"` or
+    `public_host="id.ihar.dev"`.
+  - Public TLS expiry metrics exist for SSO through blackbox SSL probes.
+  - Internal PKI expiry metrics did not yet show an `id` internal HTTPS
+    certificate series; keep that as a follow-up.
 - Current implementation stage: declare Kanidm users and groups.
 - Verify OIDC discovery once the first app client exists.
 
@@ -356,10 +368,11 @@ Do not include:
 
 ### 9. Monitoring And Operations
 
-- [ ] Add a blackbox probe for `id.ihar.dev`.
+- [x] Add a blackbox probe for `id.ihar.dev`.
 - [ ] Add internal probe for the IdP backend.
-- [ ] Add alert rules for IdP unavailability.
-- [ ] Add certificate expiry coverage for IdP public and internal certs.
+- [x] Confirm existing service-probe alert rules cover IdP unavailability.
+- [x] Confirm public TLS expiry coverage for `id.ihar.dev`.
+- [ ] Confirm internal `id` certificate expiry appears in PKI inventory metrics.
 - [ ] Add backup coverage for Kanidm state.
 - [ ] Add a recovery note for IdP admin password and local break-glass app
       accounts.
