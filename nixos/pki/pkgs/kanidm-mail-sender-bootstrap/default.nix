@@ -168,7 +168,16 @@ writeShellApplication {
 
     case "$service_account_status" in
       200)
-        echo "service account already exists: $account"
+        if jq -e 'type == "object"' "$tmpdir/service-account.json" >/dev/null; then
+          echo "service account already exists: $account"
+        else
+          service_account_status=404
+        fi
+        ;;
+    esac
+
+    case "$service_account_status" in
+      200)
         ;;
       404)
         jq -n \
@@ -195,7 +204,7 @@ writeShellApplication {
         --request GET \
         "$kanidm_url/v1/group/$message_sender_group/_attr/member"
     )"
-    if jq -e --arg account "$account" 'map(split("@")[0]) | index($account)' \
+    if jq -e --arg account "$account" '(. // []) | map(split("@")[0]) | index($account)' \
       <<< "$members_json" >/dev/null; then
       echo "service account already in group: $message_sender_group"
     else
