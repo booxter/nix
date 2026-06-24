@@ -53,6 +53,7 @@ in
 
   environment.systemPackages = with pkgs; [
     clinfo
+    radeontop
     rocmPackages.rocminfo
   ];
 
