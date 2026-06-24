@@ -16,10 +16,9 @@ writeShellApplication {
   text = ''
     usage() {
       cat <<'USAGE'
-    Usage: kanidm-mail-sender-bootstrap --url URL --idm-admin-password-file PATH --token-file PATH --token-owner USER --token-group GROUP [--accept-invalid-certs]
+    Usage: kanidm-mail-sender-bootstrap --url URL --idm-admin-password-file PATH --token-file PATH --token-owner USER --token-group GROUP
 
     Options:
-      --accept-invalid-certs        Disable TLS certificate verification for the Kanidm API connection.
       -h, --help                    Show this help.
     USAGE
     }
@@ -39,7 +38,6 @@ writeShellApplication {
     entry_managed_by=idm_admins
     message_sender_group=idm_message_senders
     token_label="mail sender token"
-    accept_invalid_certs=false
 
     while [ "$#" -gt 0 ]; do
       case "$1" in
@@ -62,10 +60,6 @@ writeShellApplication {
         --token-group)
           token_group="''${2:-}"
           shift 2
-          ;;
-        --accept-invalid-certs)
-          accept_invalid_certs=true
-          shift
           ;;
         -h|--help)
           usage
@@ -97,21 +91,17 @@ writeShellApplication {
       --connect-timeout 5
     )
     curl_fail=(--fail "''${curl_common[@]}")
-    curl_tls=()
-    if [ "$accept_invalid_certs" = true ]; then
-      curl_tls=(--insecure)
-    fi
 
     curl_auth=()
 
     auth_request() {
-      curl "''${curl_fail[@]}" "''${curl_tls[@]}" \
+      curl "''${curl_fail[@]}" \
         -H "Content-Type: application/json" \
         "''${curl_auth[@]}" \
         "$@"
     }
 
-    curl "''${curl_fail[@]}" "''${curl_tls[@]}" \
+    curl "''${curl_fail[@]}" \
       --dump-header "$headers" \
       --output /dev/null \
       -H "Content-Type: application/json" \
@@ -132,7 +122,7 @@ writeShellApplication {
     done < "$headers"
     [ -n "$session_id" ] || die "Kanidm auth init did not return a session id"
 
-    curl "''${curl_fail[@]}" "''${curl_tls[@]}" \
+    curl "''${curl_fail[@]}" \
       --output /dev/null \
       -H "Content-Type: application/json" \
       -H "X-KANIDM-AUTH-SESSION-ID: $session_id" \
@@ -143,7 +133,7 @@ writeShellApplication {
     jq -n --rawfile password "$idm_admin_password_file" \
       '{step:{cred:{password:($password | sub("\n$"; ""))}}}' > "$body"
     auth_response="$(
-      curl "''${curl_fail[@]}" "''${curl_tls[@]}" \
+      curl "''${curl_fail[@]}" \
         -H "Content-Type: application/json" \
         -H "X-KANIDM-AUTH-SESSION-ID: $session_id" \
         --request POST \
@@ -158,7 +148,7 @@ writeShellApplication {
     )
 
     service_account_status="$(
-      curl "''${curl_common[@]}" "''${curl_tls[@]}" \
+      curl "''${curl_common[@]}" \
         --output "$tmpdir/service-account.json" \
         --write-out '%{http_code}' \
         -H "Content-Type: application/json" \

@@ -10,7 +10,8 @@ let
   idService = hostInventory.servicesById.id;
   sso = hostInventory.sso;
   kanidmPort = 18085;
-  kanidmLocalUrl = "https://localhost:${toString kanidmPort}";
+  kanidmLocalHost = hostInventory.toLocalDnsName idService.id;
+  kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
   mailSenderStateDir = "/var/lib/kanidm-mail-sender";
@@ -121,11 +122,7 @@ in
         };
       };
     };
-    client.settings = {
-      uri = kanidmLocalUrl;
-      verify_ca = false;
-      verify_hostnames = false;
-    };
+    client.settings.uri = kanidmLocalUrl;
     provision = {
       enable = true;
       adminPasswordFile = config.sops.secrets.kanidmAdminPassword.path;
@@ -148,6 +145,8 @@ in
   };
 
   environment.systemPackages = [ config.services.kanidm.package ];
+
+  networking.hosts."127.0.0.1" = [ kanidmLocalHost ];
 
   users.users.${mailSenderUser} = {
     isSystemUser = true;
@@ -190,7 +189,6 @@ in
           mailSenderUser
           "--token-group"
           mailSenderGroup
-          "--accept-invalid-certs"
         ]
       }";
       NoNewPrivileges = true;

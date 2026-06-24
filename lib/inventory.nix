@@ -135,6 +135,7 @@ rec {
   toNixosAllDnsNames =
     spec: lib.unique ([ (toNixosPrimaryDnsName spec) ] ++ toNixosLegacyDnsNames spec);
   toNixosShortDnsName = toNixosStableHostName;
+  toLocalDnsName = label: "${label}.local";
   toNixosMigrationDnsNames =
     spec: lib.unique ([ (toNixosShortDnsName spec) ] ++ toNixosAllDnsNames spec);
   toNixosHostCertificateDnsNames =
@@ -143,7 +144,9 @@ rec {
       names = toNixosMigrationDnsNames spec;
     in
     lib.unique (
-      names ++ map (name: "${name}.${site.lan.domain}") names ++ [ "${toNixosShortDnsName spec}.local" ]
+      names
+      ++ map (name: "${name}.${site.lan.domain}") names
+      ++ [ (toLocalDnsName (toNixosShortDnsName spec)) ]
     );
   toNixosLanDnsAliasLabels =
     spec:
@@ -168,7 +171,7 @@ rec {
       probeUrl = "${url}${service.probePath}";
     })
     // lib.optionalAttrs (service.scope == "internal") {
-      displayHost = "${nixosHostSpecsByName.${service.owner}.name}.local";
+      displayHost = toLocalDnsName (nixosHostSpecsByName.${service.owner}.name);
       probeHost =
         let
           spec = nixosHostSpecsByName.${service.owner};
