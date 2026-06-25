@@ -374,6 +374,8 @@ in
     mtls.enable = true;
     locationExtraConfig = ''
       client_max_body_size 512m;
+      proxy_set_header Host ${paperlessService.publicHost};
+      proxy_set_header X-Forwarded-Host ${paperlessService.publicHost};
       proxy_read_timeout 300s;
       proxy_send_timeout 300s;
     '';
