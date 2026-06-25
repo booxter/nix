@@ -168,16 +168,20 @@ Deferred:
 Needs separate assessment:
 
 - Seerr (`js.ihar.dev`): verify current auth capabilities in `seerr-team/seerr`.
-- Aurral (`mu.ihar.dev`): packaged v1.76.17 has app-local users/sessions and
-  reverse-proxy auth through `AUTH_PROXY_*` environment variables, but no native
-  OIDC path. Use oauth2-proxy for browser SSO, pass a trusted user header to
-  Aurral, map `media-admins` to Aurral admin and `media-users` to Aurral user,
-  and keep local app login as fallback.
 - Shelfmark (`shelf.ihar.dev`): decide whether it should be public,
   native-auth, or proxy-gated.
 - LiteLLM gateway (`llm.ihar.dev`): API-key based service; do not blindly put a
   browser SSO gate in front of API clients without checking clients and
   intended usage.
+
+Selected public proxy-auth apps:
+
+- Aurral (`mu.ihar.dev`): packaged v1.76.17 has app-local users/sessions and
+  reverse-proxy auth through `AUTH_PROXY_*` environment variables, but no native
+  OIDC path. Browser SSO is implemented with oauth2-proxy on `beast`, a Kanidm
+  OAuth client for `aurral`, trusted user headers to Aurral on `srvarr`,
+  `media-admins` as Aurral admins, `media-users` as Aurral users, and app-local
+  login retained as fallback.
 
 ## Rollout Workflow
 
@@ -542,6 +546,12 @@ Do not include:
 
 - [ ] Decide Seerr auth path.
 - [x] Decide Aurral auth path.
+- [x] Implement Aurral browser SSO on `beast`.
+- [ ] Deploy Aurral SSO stage in order:
+      `pki`, `beast`, `srvarr`, then `fana`.
+      Deploy `beast` before `srvarr` starts trusting proxy-auth headers so the
+      public edge is already overwriting the username header from oauth2-proxy.
+- [ ] Verify Aurral browser SSO and local fallback login after deploy.
 - [ ] Decide Shelfmark auth path.
 - [ ] Decide LiteLLM gateway auth/API-key path.
 - [ ] Update this document with the chosen path before implementing those.
