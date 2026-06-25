@@ -486,6 +486,9 @@ Suggested order:
 
 Start with `srvarr`, because most proxy-gated services live there.
 
+- [x] Keep the protected app list in `hostInventory.srvarrAdminAppIds`; use it
+      to generate Kanidm callbacks, oauth2-proxy redirect whitelists, nginx auth
+      locations, and probe paths.
 - [x] Add an OAuth client for `srvarr-admin-apps` in Kanidm.
 - [x] Add sops secrets for oauth2-proxy client secret and cookie secret.
 - [x] Enable `services.oauth2-proxy` on `srvarr`.
@@ -500,15 +503,16 @@ Start with `srvarr`, because most proxy-gated services live there.
 - [ ] Deploy `pki`, then `srvarr`, then `fana`.
 - [ ] Verify login, group denial, and logout.
 - [ ] Verify Bazarr local username/password login still works behind SSO.
-- [ ] Expand to the rest of the admin apps.
+- [x] Expand to the remaining *arr apps.
+- [ ] Expand to the remaining non-*arr admin apps.
 
 Initial proxy-gated order:
 
 - [x] Bazarr
-- [ ] Radarr
-- [ ] Sonarr
-- [ ] Lidarr
-- [ ] Prowlarr
+- [x] Radarr
+- [x] Sonarr
+- [x] Lidarr
+- [x] Prowlarr
 - [ ] SABnzbd
 - [ ] Letterboxd Radarr bridge, if desired
 
