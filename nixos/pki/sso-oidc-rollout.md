@@ -191,6 +191,8 @@ Needs separate assessment:
 ## Current Status
 
 - `id.ihar.dev` is live as Kanidm.
+- RomM OIDC is prepared in the repo. Deploy `pki` first for the Kanidm client,
+  verify the client metadata, then deploy `srvarr` for the app-side config.
 - `pki` serves `id.home.arpa` through the internal HTTPS module with mTLS
   enforced.
 - `beast` serves public `id.ihar.dev` and proxies to `pki` over the existing
@@ -335,7 +337,7 @@ Create one OAuth/OIDC client per native app:
 - [x] `vikunja`
 - [x] `open-webui`
 - [x] `paperless`
-- [ ] `romm`
+- [x] `romm`
 - [ ] later: `audiobookshelf`
 - [ ] later: `jellyfin`
 
@@ -406,6 +408,21 @@ Paperless client:
       to matching group names.
 - [x] Deploy `pki`.
 - [x] Verify Paperless OIDC discovery and client metadata.
+
+RomM client:
+
+- [x] Add a shared RomM OAuth client secret to `pki` and `srvarr` sops
+      secrets.
+- [x] Declare Kanidm OAuth2 client `romm`.
+- [x] Set redirect URL to `https://game.ihar.dev/api/oauth/openid`.
+- [x] Set landing URL to `https://game.ihar.dev/`.
+- [x] Allow non-PKCE OAuth flow for RomM because RomM 4.9.2 does not send a
+      PKCE challenge.
+- [x] Restrict OIDC scopes to `romm-admins`, `romm-editors`, and
+      `romm-viewers`.
+- [x] Emit a `groups` claim mapping the three RomM groups.
+- [ ] Deploy `pki`.
+- [ ] Verify RomM OIDC discovery and client metadata.
 
 ### 6. Configure Native OIDC Apps
 
@@ -482,6 +499,18 @@ Open WebUI-specific work:
 - [x] Verify the existing local login path still works.
 - [ ] Later: verify `kasia` receives a non-admin user role.
 - [ ] Verify a user without `ai-users` is not approved.
+
+RomM-specific work:
+
+- [x] Configure RomM OIDC against Kanidm discovery.
+- [x] Keep RomM username/password login enabled for native clients, API-style
+      access, and rollback.
+- [x] Map the `groups` claim to RomM roles.
+- [ ] Deploy `srvarr` after the `pki` client deploy is verified.
+- [ ] Log in as `ihar` through SSO.
+- [ ] Verify `ihar` receives RomM admin through `romm-admins`.
+- [ ] Verify the existing local username/password login path still works.
+- [ ] Later: verify a non-admin user role.
 
 Suggested order:
 
