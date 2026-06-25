@@ -166,6 +166,9 @@ These should use application-native OIDC rather than proxy-only auth:
   - Set Audiobookshelf's OIDC redirect subfolder setting to the empty string;
     leaving it undefined makes the app send `/undefined/auth/openid/callback`
     to Kanidm.
+  - Use a URL-safe client secret, currently hex. Audiobookshelf's OpenID
+    client uses encoded HTTP Basic auth for the token exchange, while Kanidm
+    rejects secrets with percent-encoded special characters.
   - Use an Audiobookshelf-specific `abs_groups` claim.
   - Map `media-admins` to Audiobookshelf `admin`.
   - Map `media-users` to Audiobookshelf `user`.
