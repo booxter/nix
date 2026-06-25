@@ -221,10 +221,10 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Paperless Kanidm client is committed and
-  waiting for `pki` deploy. Open WebUI SSO is validated for `ihar`, with local
-  Open WebUI password login retained as the rollback path. `kasia` enrollment
-  is deferred until she is ready.
+- Current implementation stage: Paperless Kanidm client is deployed. Configure
+  Paperless app-side OIDC next. Open WebUI SSO is validated for `ihar`, with
+  local Open WebUI password login retained as the rollback path. `kasia`
+  enrollment is deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -394,8 +394,8 @@ Paperless client:
 - [x] Allow the `groups` scope for Paperless group sync.
 - [x] Emit a `groups` claim mapping `paperless-admins` and `paperless-users`
       to matching group names.
-- [ ] Deploy `pki`.
-- [ ] Verify Paperless OIDC discovery and client metadata.
+- [x] Deploy `pki`.
+- [x] Verify Paperless OIDC discovery and client metadata.
 
 ### 6. Configure Native OIDC Apps
 
