@@ -37,6 +37,7 @@ let
       authOpenIDMobileRedirectURIs = [ "audiobookshelf://oauth" ];
       authOpenIDGroupClaim = "abs_groups";
       authOpenIDAdvancedPermsClaim = "";
+      authOpenIDSubfolderForRedirectURLs = "";
     }
   );
   bootstrapChangedFile = "/run/audiobookshelf-oidc-bootstrap/changed";
