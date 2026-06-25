@@ -421,8 +421,8 @@ RomM client:
 - [x] Restrict OIDC scopes to `romm-admins`, `romm-editors`, and
       `romm-viewers`.
 - [x] Emit a `groups` claim mapping the three RomM groups.
-- [ ] Deploy `pki`.
-- [ ] Verify RomM OIDC discovery and client metadata.
+- [x] Deploy `pki`.
+- [x] Verify RomM OIDC discovery and client metadata.
 
 ### 6. Configure Native OIDC Apps
 
