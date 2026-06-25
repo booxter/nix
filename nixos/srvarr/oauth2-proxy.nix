@@ -56,6 +56,12 @@ let
       '';
     };
   };
+  # Bazarr has no reverse-proxy auth mode here: its config has `auth.type: null`,
+  # but the UI still calls `POST /api/system/account` on logout. Bazarr returns
+  # 500 for that state because its logout endpoint only accepts `form` or
+  # `basic` auth. Handle that logout at nginx instead so the request succeeds
+  # and, more importantly, clears the oauth2-proxy session cookies that actually
+  # control browser SSO access for this vhost.
   bazarrLogoutLocations = {
     "= /api/system/account" = {
       return = "204";
