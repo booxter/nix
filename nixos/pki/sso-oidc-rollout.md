@@ -500,9 +500,14 @@ Start with `srvarr`, because most proxy-gated services live there.
 - [x] Protect the first nginx vhost by its actual attr name:
       `internal-https-bazarr`.
 - [x] Start with one low-risk vhost: Bazarr.
+- [x] Set Radarr, Sonarr, Lidarr, and Prowlarr to Servarr `External` auth so
+      oauth2-proxy is the browser login gate instead of a second app-local form.
+- [x] Add a Bazarr logout compatibility location, because Bazarr with
+      `auth.type: null` returns 500 from its own logout API.
 - [ ] Deploy `pki`, then `srvarr`, then `fana`.
 - [ ] Verify login, group denial, and logout.
-- [ ] Verify Bazarr local username/password login still works behind SSO.
+- [ ] Verify Servarr browser flows do not show app-local login forms behind SSO.
+- [ ] Verify API-key/native-client access still works where used.
 - [x] Expand to the remaining *arr apps.
 - [ ] Expand to the remaining non-*arr admin apps.
 
