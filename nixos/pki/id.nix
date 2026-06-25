@@ -264,22 +264,22 @@ in
             "openid"
             "email"
             "profile"
-            "groups"
+            "romm_roles"
           ];
           "romm-editors" = [
             "openid"
             "email"
             "profile"
-            "groups"
+            "romm_roles"
           ];
           "romm-viewers" = [
             "openid"
             "email"
             "profile"
-            "groups"
+            "romm_roles"
           ];
         };
-        claimMaps.groups.valuesByGroup = {
+        claimMaps.romm_roles.valuesByGroup = {
           "romm-admins" = [ "romm-admins" ];
           "romm-editors" = [ "romm-editors" ];
           "romm-viewers" = [ "romm-viewers" ];

@@ -60,7 +60,7 @@ let
     OIDC_REDIRECT_URI = "${rommService.url}/api/oauth/openid";
     OIDC_SERVER_APPLICATION_URL = rommOidcIssuerBase;
     OIDC_SERVER_METADATA_URL = "${rommOidcIssuerBase}/.well-known/openid-configuration";
-    OIDC_CLAIM_ROLES = "groups";
+    OIDC_CLAIM_ROLES = "romm_roles";
     OIDC_ROLE_ADMIN = "romm-admins";
     OIDC_ROLE_EDITOR = "romm-editors";
     OIDC_ROLE_VIEWER = "romm-viewers";
