@@ -486,25 +486,29 @@ Suggested order:
 
 Start with `srvarr`, because most proxy-gated services live there.
 
-- [ ] Add an OAuth client for `srvarr-admin-apps` in Kanidm.
-- [ ] Add sops secrets for oauth2-proxy client secret and cookie secret.
-- [ ] Enable `services.oauth2-proxy` on `srvarr`.
-- [ ] Set provider to OIDC and issuer to the canonical Kanidm issuer.
-- [ ] Set groups claim handling.
-- [ ] Enable `services.oauth2-proxy.nginx`.
-- [ ] Protect nginx vhosts by their actual attr names, for example
-      `internal-https-radarr`, not just `radarr.home.arpa`.
-- [ ] Start with one low-risk vhost.
+- [x] Add an OAuth client for `srvarr-admin-apps` in Kanidm.
+- [x] Add sops secrets for oauth2-proxy client secret and cookie secret.
+- [x] Enable `services.oauth2-proxy` on `srvarr`.
+- [x] Set provider to OIDC and issuer to the canonical Kanidm issuer.
+- [x] Set groups claim handling with the `infra_groups` claim.
+- [x] Wire nginx `auth_request` explicitly instead of using
+      `services.oauth2-proxy.nginx`, because repo vhost attrs are names like
+      `internal-https-bazarr`.
+- [x] Protect the first nginx vhost by its actual attr name:
+      `internal-https-bazarr`.
+- [x] Start with one low-risk vhost: Bazarr.
+- [ ] Deploy `pki`, then `srvarr`, then `fana`.
 - [ ] Verify login, group denial, and logout.
+- [ ] Verify Bazarr local username/password login still works behind SSO.
 - [ ] Expand to the rest of the admin apps.
 
 Initial proxy-gated order:
 
+- [x] Bazarr
 - [ ] Radarr
 - [ ] Sonarr
 - [ ] Lidarr
 - [ ] Prowlarr
-- [ ] Bazarr
 - [ ] SABnzbd
 - [ ] Letterboxd Radarr bridge, if desired
 
