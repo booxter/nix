@@ -163,6 +163,9 @@ These should use application-native OIDC rather than proxy-only auth:
   - Set mobile callback URL to
     `https://au.ihar.dev/auth/openid/mobile-redirect`.
   - Allow Audiobookshelf mobile redirect URI `audiobookshelf://oauth`.
+  - Set Audiobookshelf's OIDC redirect subfolder setting to the empty string;
+    leaving it undefined makes the app send `/undefined/auth/openid/callback`
+    to Kanidm.
   - Use an Audiobookshelf-specific `abs_groups` claim.
   - Map `media-admins` to Audiobookshelf `admin`.
   - Map `media-users` to Audiobookshelf `user`.
