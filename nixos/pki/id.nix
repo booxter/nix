@@ -18,6 +18,8 @@ let
   vikunjaUrl = "https://${vikunjaService.publicHost}";
   openWebuiService = hostInventory.servicesById.ai;
   openWebuiUrl = "https://${openWebuiService.publicHost}";
+  paperlessService = hostInventory.servicesById.paperless;
+  paperlessUrl = "https://${paperlessService.publicHost}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
   mailSenderStateDir = "/var/lib/kanidm-mail-sender";
@@ -130,6 +132,13 @@ in
       mode = "0400";
       restartUnits = [ "kanidm.service" ];
     };
+    kanidmPaperlessOAuthClientSecret = {
+      key = "kanidm/oauth2/paperless/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
   };
 
   services.kanidm = {
@@ -207,6 +216,31 @@ in
         claimMaps.open_webui_role.valuesByGroup = {
           "ai-users" = [ "user" ];
           "sso-admins" = [ "admin" ];
+        };
+      };
+      systems.oauth2.paperless = {
+        displayName = "Paperless";
+        originUrl = "${paperlessUrl}/accounts/oidc/sso/login/callback/";
+        originLanding = "${paperlessUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmPaperlessOAuthClientSecret.path;
+        preferShortUsername = true;
+        scopeMaps = {
+          "paperless-admins" = [
+            "openid"
+            "email"
+            "profile"
+            "groups"
+          ];
+          "paperless-users" = [
+            "openid"
+            "email"
+            "profile"
+            "groups"
+          ];
+        };
+        claimMaps.groups.valuesByGroup = {
+          "paperless-admins" = [ "paperless-admins" ];
+          "paperless-users" = [ "paperless-users" ];
         };
       };
     };
