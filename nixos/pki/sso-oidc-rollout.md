@@ -387,7 +387,7 @@ LiteLLM client:
 - [x] Emit a `litellm_groups` claim mapping `infra-admins` to
       `infra-admins`; LiteLLM maps that group to `proxy_admin`.
 - [x] Deploy `pki`.
-- [ ] Verify LiteLLM OIDC discovery and client metadata.
+- [x] Verify LiteLLM OIDC discovery and client metadata.
 
 Paperless client:
 
@@ -516,10 +516,10 @@ LiteLLM-specific work:
 - [x] Restrict Admin UI access to `infra-admins` with `admin_only` UI mode.
 - [x] Use LiteLLM role mappings to translate `litellm_groups=infra-admins` to
       `proxy_admin`.
-- [ ] Deploy `org` after the `pki` client deploy is verified.
+- [x] Deploy `org` after the `pki` client deploy is verified.
 - [ ] Log in as `ihar` through SSO.
 - [ ] Verify `ihar` receives LiteLLM `proxy_admin`.
-- [ ] Verify Swagger/API-key access still behaves as before.
+- [x] Verify Swagger/API-key access still behaves as before.
 - [ ] Verify LiteLLM fallback login path if needed.
 
 Suggested order:
