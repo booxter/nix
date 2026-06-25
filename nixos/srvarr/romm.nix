@@ -7,6 +7,7 @@
 }:
 let
   accounts = import ./accounts.nix;
+  idService = hostInventory.servicesById.id;
   mediaDir = config.host.srvarrPaths.mediaDir;
   # RomM's upstream layout keeps all mutable application data under one root:
   # library, resources, assets, config, sync, and launchbox.
@@ -24,6 +25,8 @@ let
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
   rommImage = "${ociImages.romm.image}:${ociImages.romm.tag}";
   rommService = hostInventory.servicesById.romm;
+  rommOidcClientId = "romm";
+  rommOidcIssuerBase = "https://${idService.publicHost}/oauth2/openid/${rommOidcClientId}";
 
   commonEnvironment = {
     PATH = "/src/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
@@ -49,6 +52,19 @@ let
     # the local metadata store is populated and refreshed without a manual task.
     ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA = "true";
     HASHEOUS_API_ENABLED = "true";
+    DISABLE_USERPASS_LOGIN = "false";
+    OIDC_ENABLED = "true";
+    OIDC_AUTOLOGIN = "false";
+    OIDC_PROVIDER = "SSO";
+    OIDC_CLIENT_ID = rommOidcClientId;
+    OIDC_REDIRECT_URI = "${rommService.url}/api/oauth/openid";
+    OIDC_SERVER_APPLICATION_URL = rommOidcIssuerBase;
+    OIDC_SERVER_METADATA_URL = "${rommOidcIssuerBase}/.well-known/openid-configuration";
+    OIDC_CLAIM_ROLES = "groups";
+    OIDC_ROLE_ADMIN = "romm-admins";
+    OIDC_ROLE_EDITOR = "romm-editors";
+    OIDC_ROLE_VIEWER = "romm-viewers";
+    OIDC_USERNAME_ATTRIBUTE = "preferred_username";
   };
 
   containerVolumes = [
@@ -126,6 +142,18 @@ in
   sops.secrets = {
     "romm/authSecretKey" = { };
     "romm/dbPassword" = { };
+    "romm/oidc/clientSecret" = {
+      owner = user;
+      group = "media";
+      mode = "0400";
+      restartUnits = [
+        "romm-setup.service"
+        "podman-romm-api.service"
+        "podman-romm-scheduler.service"
+        "podman-romm-worker.service"
+        "podman-romm-watcher.service"
+      ];
+    };
   };
 
   sops.templates."romm.env" = {
@@ -135,6 +163,7 @@ in
     content = ''
       ROMM_AUTH_SECRET_KEY=${config.sops.placeholder."romm/authSecretKey"}
       DB_PASSWD=${config.sops.placeholder."romm/dbPassword"}
+      OIDC_CLIENT_SECRET=${config.sops.placeholder."romm/oidc/clientSecret"}
     '';
     restartUnits = [
       "romm-db-init.service"
