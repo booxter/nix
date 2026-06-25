@@ -136,6 +136,13 @@ rec {
     spec: lib.unique ([ (toNixosPrimaryDnsName spec) ] ++ toNixosLegacyDnsNames spec);
   toNixosShortDnsName = toNixosStableHostName;
   toLocalDnsName = label: "${label}.local";
+  toInternalHttpsServiceHosts =
+    serviceName:
+    lib.unique [
+      "${serviceName}.${site.lan.domain}"
+      serviceName
+      (toLocalDnsName serviceName)
+    ];
   toNixosMigrationDnsNames =
     spec: lib.unique ([ (toNixosShortDnsName spec) ] ++ toNixosAllDnsNames spec);
   toNixosHostCertificateDnsNames =
@@ -162,6 +169,13 @@ rec {
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
+  srvarrAdminAppIds = [
+    "bazarr"
+    "lidarr"
+    "prowlarr"
+    "radarr"
+    "sonarr"
+  ];
   resolveService =
     service:
     service
@@ -418,19 +432,19 @@ rec {
       id = "radarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/login";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "sonarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/login";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "lidarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "letterboxd-list-radarr";
@@ -514,7 +528,7 @@ rec {
       id = "prowlarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/login";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "transmission";

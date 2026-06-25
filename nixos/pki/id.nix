@@ -23,6 +23,10 @@ let
   rommService = hostInventory.servicesById.romm;
   rommUrl = "https://${rommService.publicHost}";
   srvarrAdminAppsUrl = "https://bazarr.${lan.domain}";
+  srvarrAdminAppHosts = lib.unique (
+    lib.concatMap hostInventory.toInternalHttpsServiceHosts hostInventory.srvarrAdminAppIds
+  );
+  srvarrAdminAppOriginUrls = map (host: "https://${host}/oauth2/callback") srvarrAdminAppHosts;
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
   mailSenderStateDir = "/var/lib/kanidm-mail-sender";
@@ -295,11 +299,7 @@ in
       };
       systems.oauth2.srvarr-admin-apps = {
         displayName = "srvarr admin apps";
-        originUrl = [
-          "${srvarrAdminAppsUrl}/oauth2/callback"
-          "https://bazarr/oauth2/callback"
-          "https://bazarr.local/oauth2/callback"
-        ];
+        originUrl = srvarrAdminAppOriginUrls;
         originLanding = "${srvarrAdminAppsUrl}/";
         basicSecretFile = config.sops.secrets.kanidmSrvarrAdminAppsOAuthClientSecret.path;
         preferShortUsername = true;
