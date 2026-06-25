@@ -506,7 +506,7 @@ RomM-specific work:
 - [x] Keep RomM username/password login enabled for native clients, API-style
       access, and rollback.
 - [x] Map the `groups` claim to RomM roles.
-- [ ] Deploy `srvarr` after the `pki` client deploy is verified.
+- [x] Deploy `srvarr` after the `pki` client deploy is verified.
 - [ ] Log in as `ihar` through SSO.
 - [ ] Verify `ihar` receives RomM admin through `romm-admins`.
 - [ ] Verify the existing local username/password login path still works.
