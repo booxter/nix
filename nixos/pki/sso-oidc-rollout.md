@@ -14,6 +14,8 @@ identity source and a consistent SSO policy.
   this repository.
 - Keep app-local API keys, automation tokens, and break-glass admin accounts
   in sops.
+- Keep app-local username/password paths where native or mobile clients cannot
+  use OIDC.
 
 ## Non-Goals For The First Pass
 
@@ -24,6 +26,9 @@ identity source and a consistent SSO policy.
   user policy.
 - Do not remove local passwords or local admin accounts until each service has
   been validated through SSO and rollback is understood.
+- Do not remove local username/password auth from apps where native, mobile, or
+  API clients still need it. In those apps, local auth is an intentional
+  compatibility path, not just temporary migration scaffolding.
 - Do not replace the existing internal HTTPS and mTLS model. SSO should sit on
   top of it.
 - Do not add repo helper apps speculatively. Add one only when a concrete,
@@ -100,10 +105,13 @@ These should use application-native OIDC rather than proxy-only auth:
 - Paperless (`papers.ihar.dev`)
   - Configure django-allauth OIDC through
     `PAPERLESS_SOCIALACCOUNT_PROVIDERS`.
-  - Migrate the current declarative bootstrap users toward OIDC-backed users.
+  - Use SSO for browser login.
+  - Keep username/password login for native/mobile clients that do not support
+    OIDC.
   - Prefer group-driven Paperless staff/admin assignment if Paperless can be
     made to support it cleanly; otherwise keep a small declarative app-local
-    bootstrap only for staff/admin state.
+    bootstrap for local password compatibility, verified email rows,
+    staff/admin state, and automation tokens.
   - Keep Paperless API token for automation.
 - Open WebUI (`ai.ihar.dev`)
   - Configure OIDC env vars.
@@ -115,7 +123,8 @@ These should use application-native OIDC rather than proxy-only auth:
 - RomM (`game.ihar.dev`)
   - Configure `OIDC_ENABLED`.
   - Use role claims for `romm-admins`, `romm-editors`, and `romm-viewers`.
-  - Disable username/password login only after OIDC roles are verified.
+  - Disable username/password login only after OIDC roles are verified and
+    client compatibility is understood.
 
 ### Native Or App-Level Later
 
@@ -222,9 +231,10 @@ Needs separate assessment:
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
 - Current implementation stage: Paperless SSO login and regular Paperless
-  login rollback are validated. Open WebUI SSO is validated for `ihar`, with
-  local Open WebUI password login retained as the rollback path. `kasia`
-  enrollment is deferred until she is ready.
+  login fallback are validated. Paperless local password auth remains
+  intentional for native/mobile clients that cannot use OIDC. Open WebUI SSO is
+  validated for `ihar`, with local Open WebUI password login retained as the
+  rollback path. `kasia` enrollment is deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -410,7 +420,8 @@ Roll out one app at a time. For each app:
 - [ ] Verify role/group mapping.
 - [ ] Verify logout behavior.
 - [ ] Verify API keys and automation still work.
-- [ ] Decide whether to disable local password auth.
+- [ ] Decide whether local password auth is temporary rollback, permanent
+      native/client compatibility, or removable.
 - [ ] Document the rollback path.
 
 Grafana-specific work:
@@ -449,10 +460,11 @@ Paperless-specific work:
 - [x] Log in as `ihar` through SSO.
 - [x] Verify the existing regular Paperless login path still works.
 - [x] Verify Paperless API token automation still works.
-- [ ] Replace the current local password bootstrap with OIDC-backed login where
-      possible.
+- [x] Keep the Paperless local password bootstrap because native/mobile clients
+      may need username/password auth.
 - [ ] Keep only the minimal Paperless-local declarative bootstrap needed for
-      API tokens and staff/admin state.
+      local password compatibility, verified email rows, API tokens, and
+      staff/admin state.
 
 Open WebUI-specific work:
 
@@ -474,7 +486,7 @@ Suggested order:
 - [x] Grafana
 - [x] Vikunja
 - [x] Open WebUI
-- [ ] Paperless
+- [x] Paperless
 - [ ] RomM
 
 ### 7. Add `oauth2-proxy` For Admin Apps
@@ -558,6 +570,8 @@ Do this only after native/proxy auth is stable.
       longer need them.
 - [ ] Keep app admin passwords only where they are intentional break-glass
       paths.
+- [ ] Keep local username/password auth where native, mobile, or API clients do
+      not support OIDC.
 - [ ] Keep API tokens for automation.
 - [ ] Update service READMEs or comments where login behavior changes.
 - [ ] Add a short SSO section to `nixos/pki/README.md`.
@@ -579,6 +593,8 @@ For each migrated service:
 ## Rollback Principles
 
 - Keep local app login enabled until the replacement works.
+- Keep local app login enabled permanently for services whose non-browser
+  clients cannot use OIDC.
 - Keep service-specific sops secrets until after a cleanup pass.
 - Change one service at a time.
 - Keep each stage as a separate commit so it can be reviewed, deployed, checked,
