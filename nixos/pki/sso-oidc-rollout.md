@@ -517,10 +517,10 @@ LiteLLM-specific work:
 - [x] Use LiteLLM role mappings to translate `litellm_groups=infra-admins` to
       `proxy_admin`.
 - [x] Deploy `org` after the `pki` client deploy is verified.
-- [ ] Log in as `ihar` through SSO.
-- [ ] Verify `ihar` receives LiteLLM `proxy_admin`.
+- [x] Log in as `ihar` through SSO.
+- [x] Verify `ihar` receives LiteLLM `proxy_admin`.
 - [x] Verify Swagger/API-key access still behaves as before.
-- [ ] Verify LiteLLM fallback login path if needed.
+- [x] Verify LiteLLM fallback login path if needed.
 
 Suggested order:
 
@@ -529,7 +529,7 @@ Suggested order:
 - [x] Open WebUI
 - [x] Paperless
 - [x] RomM
-- [ ] LiteLLM
+- [x] LiteLLM
 
 ### 7. Add `oauth2-proxy` For Admin Apps
 
