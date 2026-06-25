@@ -645,7 +645,7 @@ Do not include:
 - [x] Decide Audiobookshelf auth path: native OIDC configured through the
       Audiobookshelf admin API, with no direct database patching.
 - [x] Implement Audiobookshelf Kanidm client and API bootstrap.
-- [ ] Deploy Audiobookshelf native OIDC stage in order:
+- [x] Deploy Audiobookshelf native OIDC stage in order:
       `pki`, then `srvarr`. No `fana` stage is needed unless monitoring
       changes are added later.
 - [ ] Verify Audiobookshelf browser SSO, local fallback login, mobile login
