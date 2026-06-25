@@ -13,6 +13,10 @@ in
   services.prowlarr = {
     enable = true;
     settings = {
+      auth = {
+        method = "External";
+        required = "Enabled";
+      };
       log.analyticsEnabled = false;
       server.bindaddress = "127.0.0.1";
       update = {

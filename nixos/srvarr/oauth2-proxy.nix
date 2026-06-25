@@ -8,6 +8,7 @@ let
   idService = hostInventory.servicesById.id;
   clientId = "srvarr-admin-apps";
   issuerUrl = "https://${idService.publicHost}/oauth2/openid/${clientId}";
+  oauth2ProxyCookieName = "_srvarr_admin_sso";
   oauth2ProxyUrl = config.services.oauth2-proxy.httpAddress;
   protectedServiceIds = hostInventory.srvarrAdminAppIds;
   protectedServiceHosts = lib.unique (
@@ -55,6 +56,19 @@ let
       '';
     };
   };
+  bazarrLogoutLocations = {
+    "= /api/system/account" = {
+      return = "204";
+      extraConfig = ''
+        auth_request off;
+        add_header Set-Cookie "${oauth2ProxyCookieName}=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+        add_header Set-Cookie "${oauth2ProxyCookieName}_0=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+        add_header Set-Cookie "${oauth2ProxyCookieName}_1=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+        add_header Set-Cookie "${oauth2ProxyCookieName}_2=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+        add_header Set-Cookie "${oauth2ProxyCookieName}_csrf=; Path=/; Max-Age=0; HttpOnly; Secure" always;
+      '';
+    };
+  };
 in
 {
   sops.secrets = {
@@ -82,7 +96,7 @@ in
     clientSecretFile = config.sops.secrets.oauth2ProxySrvarrAdminAppsClientSecret.path;
     approvalPrompt = "auto";
     cookie = {
-      name = "_srvarr_admin_sso";
+      name = oauth2ProxyCookieName;
       secretFile = config.sops.secrets.oauth2ProxySrvarrAdminAppsCookieSecret.path;
     };
     email.domains = [ "*" ];
@@ -111,7 +125,8 @@ in
   services.nginx.virtualHosts = builtins.listToAttrs (
     map (serviceName: {
       name = "internal-https-${serviceName}";
-      value.locations = oauth2ProxyLocations;
+      value.locations =
+        oauth2ProxyLocations // lib.optionalAttrs (serviceName == "bazarr") bazarrLogoutLocations;
     }) protectedServiceIds
   );
 
