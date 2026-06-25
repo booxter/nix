@@ -654,8 +654,11 @@ Do not include:
 - [x] Deploy Audiobookshelf native OIDC stage in order:
       `pki`, then `srvarr`. No `fana` stage is needed unless monitoring
       changes are added later.
-- [ ] Verify Audiobookshelf browser SSO, local fallback login, mobile login
-      behavior, and existing-user linking.
+- [x] Verify Audiobookshelf browser SSO.
+- [x] Verify Audiobookshelf local fallback login.
+- [ ] Verify Audiobookshelf mobile login behavior.
+- [ ] Verify Audiobookshelf existing-user linking when migrating a non-root
+      local account.
 - [x] Update this document with the chosen path before implementing remaining
       undecided apps.
 
