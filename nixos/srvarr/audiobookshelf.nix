@@ -74,6 +74,18 @@ in
   # needed for the absolute state path we use on srvarr.
   systemd.services.audiobookshelf.serviceConfig.WorkingDirectory = lib.mkForce stateDir;
 
+  services.nginx.commonHttpConfig = ''
+    map $http_x_forwarded_host $audiobookshelf_proxy_host {
+        default $http_x_forwarded_host;
+        "" $host;
+    }
+
+    map $http_x_forwarded_proto $audiobookshelf_proxy_proto {
+        default $http_x_forwarded_proto;
+        "" $scheme;
+    }
+  '';
+
   systemd.services.audiobookshelf-oidc-bootstrap = {
     description = "Configure Audiobookshelf OIDC";
     wantedBy = [ "multi-user.target" ];
@@ -108,5 +120,14 @@ in
     upstream = "http://127.0.0.1:${toString port}";
     serverAliases = [ audiobookshelfService.publicHost ];
     mtls.enable = true;
+    recommendedProxySettings = false;
+    locationExtraConfig = ''
+      proxy_set_header Host $audiobookshelf_proxy_host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $audiobookshelf_proxy_proto;
+      proxy_set_header X-Forwarded-Host $audiobookshelf_proxy_host;
+      proxy_set_header X-Forwarded-Server $hostname;
+    '';
   };
 }
