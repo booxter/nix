@@ -146,14 +146,34 @@ These should use application-native OIDC rather than proxy-only auth:
   - Map `media-admins` to Shelfmark admins.
   - Allow `media-users` to sign in as regular users.
   - Keep local auth visible and enabled for rollback/local compatibility.
+- Audiobookshelf (`au.ihar.dev`)
+  - Configure native OIDC through Audiobookshelf's app-level OpenID Connect
+    support, not oauth2-proxy.
+  - The current NixOS module exposes only basic service options, so keep the
+    auth settings declarative with a small `srvarr` bootstrap that calls the
+    Audiobookshelf admin API, especially `PATCH /api/auth-settings`.
+  - Do not patch the Audiobookshelf SQLite database directly.
+  - Manage the required Audiobookshelf admin/API credential in sops.
+  - Keep local username/password auth enabled for rollback, native clients, and
+    any client path that does not use OIDC cleanly.
+  - Use Kanidm client `audiobookshelf`.
+  - Use `ES256` for the token signing algorithm because Kanidm advertises that
+    for existing OAuth clients.
+  - Set web redirect URL to `https://au.ihar.dev/auth/openid/callback`.
+  - Set mobile callback URL to
+    `https://au.ihar.dev/auth/openid/mobile-redirect`.
+  - Allow Audiobookshelf mobile redirect URI `audiobookshelf://oauth`.
+  - Use an Audiobookshelf-specific `abs_groups` claim.
+  - Map `media-admins` to Audiobookshelf `admin`.
+  - Map `media-users` to Audiobookshelf `user`.
+  - Match existing local users by username so `ihar`, `kasia`, and future
+    account-style names can be linked instead of recreated.
+  - Enable auto-registration only through the scoped Kanidm groups.
+  - Do not model advanced Audiobookshelf permissions in Kanidm on the first
+    pass; default `user` permissions are sufficient initially.
 
 ### Native Or App-Level Later
 
-- Audiobookshelf (`au.ihar.dev`)
-  - Has OIDC support, but the current NixOS module exposes only basic service
-    options.
-  - Determine whether settings can be made declarative through config files,
-    database/API bootstrap, or a local module extension.
 - Jellyfin (`jf.ihar.dev`)
   - Postpone for now.
   - Jellyfin core does not have native OIDC in the deployed 10.11.11 package.
@@ -342,7 +362,7 @@ Create one OAuth/OIDC client per native app:
 - [x] `litellm`
 - [x] `paperless`
 - [x] `romm`
-- [ ] later: `audiobookshelf`
+- [ ] `audiobookshelf`
 - [ ] later: `jellyfin` after the plugin-based SSO path is deliberately
       selected and local-password fallback remains preserved
 
@@ -622,6 +642,13 @@ Do not include:
       `pki`, `srvarr`, then `fana`.
 - [x] Verify Shelfmark browser SSO and local fallback login after deploy.
 - [x] Decide LiteLLM gateway auth/API-key path.
+- [x] Decide Audiobookshelf auth path: native OIDC configured through the
+      Audiobookshelf admin API, with no direct database patching.
+- [ ] Implement Audiobookshelf Kanidm client and API bootstrap.
+- [ ] Deploy Audiobookshelf native OIDC stage in order:
+      `pki`, `srvarr`, then `fana` if monitoring changes.
+- [ ] Verify Audiobookshelf browser SSO, local fallback login, mobile login
+      behavior, and existing-user linking.
 - [x] Update this document with the chosen path before implementing remaining
       undecided apps.
 
