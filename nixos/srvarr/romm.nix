@@ -98,6 +98,12 @@ let
   ];
 
   runtimeAfter = setupBefore ++ [ "romm-setup.service" ];
+  rommUserRuntimeUnits = [
+    "user-runtime-dir@${toString accounts.uids.romm}.service"
+    "user@${toString accounts.uids.romm}.service"
+  ];
+  rommPodmanBaseUnits = rommUserRuntimeUnits ++ [ "network-online.target" ];
+  rommPodmanRuntimeUnits = rommPodmanBaseUnits ++ runtimeAfter;
 
   tmpfilesSetupUnits = [
     "systemd-tmpfiles-setup.service"
@@ -277,15 +283,8 @@ in
   systemd.services.romm-web-assets = {
     description = "Extract RomM web assets from upstream OCI image";
     wantedBy = [ "multi-user.target" ];
-    wants = [
-      "linger-users.service"
-      "network-online.target"
-    ];
-    after = [
-      "linger-users.service"
-      "network-online.target"
-    ]
-    ++ tmpfilesSetupUnits;
+    wants = rommPodmanBaseUnits;
+    after = rommPodmanBaseUnits ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = stateDir;
     path = [
       pkgs.coreutils
@@ -334,17 +333,8 @@ in
   systemd.services.romm-setup = {
     description = "Run RomM database migrations and startup tasks";
     wantedBy = [ "multi-user.target" ];
-    wants = [
-      "linger-users.service"
-      "network-online.target"
-    ]
-    ++ setupBefore;
-    after = [
-      "linger-users.service"
-      "network-online.target"
-    ]
-    ++ setupBefore
-    ++ tmpfilesSetupUnits;
+    wants = rommPodmanBaseUnits ++ setupBefore;
+    after = rommPodmanBaseUnits ++ setupBefore ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = [
       mediaDir
       stateDir
@@ -409,29 +399,29 @@ in
     podman-romm-api = {
       path = [ pkgs.slirp4netns ];
       requires = runtimeAfter;
-      wants = runtimeAfter;
-      after = runtimeAfter;
+      wants = lib.mkForce rommPodmanRuntimeUnits;
+      after = lib.mkForce rommPodmanRuntimeUnits;
       environment = podmanRuntimeEnvironment;
     };
     podman-romm-worker = {
       path = [ pkgs.slirp4netns ];
       requires = runtimeAfter;
-      wants = runtimeAfter;
-      after = runtimeAfter;
+      wants = lib.mkForce rommPodmanRuntimeUnits;
+      after = lib.mkForce rommPodmanRuntimeUnits;
       environment = podmanRuntimeEnvironment;
     };
     podman-romm-scheduler = {
       path = [ pkgs.slirp4netns ];
       requires = runtimeAfter;
-      wants = runtimeAfter;
-      after = runtimeAfter;
+      wants = lib.mkForce rommPodmanRuntimeUnits;
+      after = lib.mkForce rommPodmanRuntimeUnits;
       environment = podmanRuntimeEnvironment;
     };
     podman-romm-watcher = {
       path = [ pkgs.slirp4netns ];
       requires = runtimeAfter;
-      wants = runtimeAfter;
-      after = runtimeAfter;
+      wants = lib.mkForce rommPodmanRuntimeUnits;
+      after = lib.mkForce rommPodmanRuntimeUnits;
       environment = podmanRuntimeEnvironment;
     };
     nginx = {
