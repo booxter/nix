@@ -25,6 +25,9 @@ Scope: whole repository.
 - Secure service-to-service traffic by default. Prefer mTLS/authenticated
   encrypted transports; use plaintext only on loopback or with documented
   rationale.
+- Services should use OIDC/SSO where the application supports it. Keep
+  username/password fallback only when it is needed for rollback,
+  mobile/native clients, API clients, or service-specific compatibility.
 - For new managed-node channels, use repo PKI helpers:
   `issue-internal-service-cert` for internal HTTPS and
   `issue-observability-cert` for Prometheus/observability.
