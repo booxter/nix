@@ -386,7 +386,7 @@ LiteLLM client:
 - [x] Restrict OIDC scopes to `infra-admins`.
 - [x] Emit a `litellm_groups` claim mapping `infra-admins` to
       `infra-admins`; LiteLLM maps that group to `proxy_admin`.
-- [ ] Deploy `pki`.
+- [x] Deploy `pki`.
 - [ ] Verify LiteLLM OIDC discovery and client metadata.
 
 Paperless client:
