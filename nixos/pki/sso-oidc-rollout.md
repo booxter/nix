@@ -221,10 +221,10 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Paperless app-side OIDC config is ready for
-  `org` deploy. Open WebUI SSO is validated for `ihar`, with local Open WebUI
-  password login retained as the rollback path. `kasia` enrollment is deferred
-  until she is ready.
+- Current implementation stage: Paperless app-side OIDC config is deployed on
+  `org`. Interactive Paperless SSO login is next. Open WebUI SSO is validated
+  for `ihar`, with local Open WebUI password login retained as the rollback
+  path. `kasia` enrollment is deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -444,10 +444,10 @@ Paperless-specific work:
       allauth `SocialAccount` links in this stage.
 - [x] Create or sync Paperless groups for `paperless-admins` and
       `paperless-users`.
-- [ ] Deploy `org` after the Paperless app-side config commit.
+- [x] Deploy `org` after the Paperless app-side config commit.
 - [ ] Log in as `ihar` through SSO.
 - [ ] Verify the existing regular Paperless login path still works.
-- [ ] Verify Paperless API token automation still works.
+- [x] Verify Paperless API token automation still works.
 - [ ] Replace the current local password bootstrap with OIDC-backed login where
       possible.
 - [ ] Keep only the minimal Paperless-local declarative bootstrap needed for
