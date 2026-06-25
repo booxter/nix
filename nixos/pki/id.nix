@@ -18,6 +18,8 @@ let
   vikunjaUrl = "https://${vikunjaService.publicHost}";
   openWebuiService = hostInventory.servicesById.ai;
   openWebuiUrl = "https://${openWebuiService.publicHost}";
+  litellmService = hostInventory.servicesById.llm;
+  litellmUrl = "https://${litellmService.publicHost}";
   paperlessService = hostInventory.servicesById.paperless;
   paperlessUrl = "https://${paperlessService.publicHost}";
   rommService = hostInventory.servicesById.romm;
@@ -143,6 +145,13 @@ in
       mode = "0400";
       restartUnits = [ "kanidm.service" ];
     };
+    kanidmLitellmOAuthClientSecret = {
+      key = "kanidm/oauth2/litellm/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
     kanidmPaperlessOAuthClientSecret = {
       key = "kanidm/oauth2/paperless/client_secret";
       owner = "kanidm";
@@ -256,6 +265,20 @@ in
           "ai-users" = [ "user" ];
           "sso-admins" = [ "admin" ];
         };
+      };
+      systems.oauth2.litellm = {
+        displayName = "LiteLLM";
+        originUrl = "${litellmUrl}/sso/callback";
+        originLanding = "${litellmUrl}/ui/";
+        basicSecretFile = config.sops.secrets.kanidmLitellmOAuthClientSecret.path;
+        preferShortUsername = true;
+        scopeMaps."infra-admins" = [
+          "openid"
+          "email"
+          "profile"
+          "litellm_groups"
+        ];
+        claimMaps.litellm_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
       };
       systems.oauth2.paperless = {
         displayName = "Paperless";

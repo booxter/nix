@@ -5,7 +5,12 @@
   ...
 }:
 let
+  idService = hostInventory.servicesById.id;
   llmService = hostInventory.servicesById.llm;
+  llmUrl = "https://${llmService.publicHost}";
+  oidcClientId = "litellm";
+  oidcIssuerBase = "https://${idService.publicHost}";
+  oidcOpenidBase = "${oidcIssuerBase}/oauth2/openid/${oidcClientId}";
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
   litellmImage = "${ociImages.litellm.image}:${ociImages.litellm.tag}";
   litellmDatabase = "litellm";
@@ -61,6 +66,7 @@ let
     general_settings = {
       database_url = "os.environ/DATABASE_URL";
       master_key = "os.environ/LITELLM_MASTER_KEY";
+      ui_access_mode = "admin_only";
     };
     litellm_settings = {
       drop_params = true;
@@ -86,6 +92,12 @@ in
       mode = "0400";
       restartUnits = [ "podman-litellm.service" ];
     };
+    "litellm/oidc/client_secret" = {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      restartUnits = [ "podman-litellm.service" ];
+    };
   };
 
   sops.templates."litellm.env" = {
@@ -97,6 +109,19 @@ in
         config.sops.placeholder."litellm/database/password"
       }@127.0.0.1:5432/${litellmDatabase}
       LITELLM_MASTER_KEY=${config.sops.placeholder."litellm/master-key"}
+      GENERIC_CLIENT_ID=${oidcClientId}
+      GENERIC_CLIENT_SECRET=${config.sops.placeholder."litellm/oidc/client_secret"}
+      GENERIC_AUTHORIZATION_ENDPOINT=${oidcIssuerBase}/ui/oauth2
+      GENERIC_TOKEN_ENDPOINT=${oidcIssuerBase}/oauth2/token
+      GENERIC_USERINFO_ENDPOINT=${oidcOpenidBase}/userinfo
+      GENERIC_SCOPE=openid email profile litellm_groups
+      GENERIC_CLIENT_USE_PKCE=true
+      GENERIC_USER_ID_ATTRIBUTE=preferred_username
+      GENERIC_USER_EMAIL_ATTRIBUTE=email
+      GENERIC_USER_DISPLAY_NAME_ATTRIBUTE=name
+      GENERIC_ROLE_MAPPINGS_GROUP_CLAIM=litellm_groups
+      GENERIC_ROLE_MAPPINGS_ROLES={'proxy_admin':['infra-admins']}
+      PROXY_BASE_URL=${llmUrl}
     '';
     restartUnits = [ "podman-litellm.service" ];
   };
