@@ -24,6 +24,8 @@ let
   paperlessUrl = "https://${paperlessService.publicHost}";
   rommService = hostInventory.servicesById.romm;
   rommUrl = "https://${rommService.publicHost}";
+  audiobookshelfService = hostInventory.servicesById.audiobookshelf;
+  audiobookshelfUrl = "https://${audiobookshelfService.publicHost}";
   aurralService = hostInventory.servicesById.aurral;
   aurralUrl = "https://${aurralService.publicHost}";
   shelfmarkService = hostInventory.servicesById.shelfmark;
@@ -161,6 +163,13 @@ in
     };
     kanidmRommOAuthClientSecret = {
       key = "kanidm/oauth2/romm/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
+    kanidmAudiobookshelfOAuthClientSecret = {
+      key = "kanidm/oauth2/audiobookshelf/client_secret";
       owner = "kanidm";
       group = "kanidm";
       mode = "0400";
@@ -336,6 +345,34 @@ in
           "romm-admins" = [ "romm-admins" ];
           "romm-editors" = [ "romm-editors" ];
           "romm-viewers" = [ "romm-viewers" ];
+        };
+      };
+      systems.oauth2.audiobookshelf = {
+        displayName = "Audiobookshelf";
+        originUrl = [
+          "${audiobookshelfUrl}/auth/openid/callback"
+          "${audiobookshelfUrl}/auth/openid/mobile-redirect"
+        ];
+        originLanding = "${audiobookshelfUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmAudiobookshelfOAuthClientSecret.path;
+        preferShortUsername = true;
+        scopeMaps = {
+          "media-admins" = [
+            "openid"
+            "email"
+            "profile"
+            "abs_groups"
+          ];
+          "media-users" = [
+            "openid"
+            "email"
+            "profile"
+            "abs_groups"
+          ];
+        };
+        claimMaps.abs_groups.valuesByGroup = {
+          "media-admins" = [ "admin" ];
+          "media-users" = [ "user" ];
         };
       };
       systems.oauth2.aurral = {
