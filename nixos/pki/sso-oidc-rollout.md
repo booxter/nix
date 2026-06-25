@@ -221,10 +221,10 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Paperless Kanidm client is deployed. Configure
-  Paperless app-side OIDC next. Open WebUI SSO is validated for `ihar`, with
-  local Open WebUI password login retained as the rollback path. `kasia`
-  enrollment is deferred until she is ready.
+- Current implementation stage: Paperless app-side OIDC config is ready for
+  `org` deploy. Open WebUI SSO is validated for `ihar`, with local Open WebUI
+  password login retained as the rollback path. `kasia` enrollment is deferred
+  until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -437,13 +437,17 @@ Vikunja-specific work:
 
 Paperless-specific work:
 
-- [ ] Configure Paperless django-allauth OIDC against Kanidm discovery.
-- [ ] Keep regular Paperless login enabled for rollback.
-- [ ] Keep local password signups disabled.
-- [ ] Decide whether first SSO login should auto-link by trusted email or
-      whether the bootstrap should pre-create allauth `SocialAccount` links.
-- [ ] Create or sync Paperless groups for `paperless-admins` and
+- [x] Configure Paperless django-allauth OIDC against Kanidm discovery.
+- [x] Keep regular Paperless login enabled for rollback.
+- [x] Keep local password signups disabled.
+- [x] Use allauth trusted-email login for the first SSO pass; do not pre-create
+      allauth `SocialAccount` links in this stage.
+- [x] Create or sync Paperless groups for `paperless-admins` and
       `paperless-users`.
+- [ ] Deploy `org` after the Paperless app-side config commit.
+- [ ] Log in as `ihar` through SSO.
+- [ ] Verify the existing regular Paperless login path still works.
+- [ ] Verify Paperless API token automation still works.
 - [ ] Replace the current local password bootstrap with OIDC-backed login where
       possible.
 - [ ] Keep only the minimal Paperless-local declarative bootstrap needed for
