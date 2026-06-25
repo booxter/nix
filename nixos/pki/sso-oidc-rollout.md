@@ -221,10 +221,10 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Open WebUI Kanidm client is deployed. Deploy
-  `org` next to enable the Open WebUI app-side OIDC settings. Local Open WebUI
-  password login remains enabled as the rollback path. `kasia` enrollment is
-  deferred until she is ready.
+- Current implementation stage: Open WebUI app-side OIDC settings are deployed.
+  Validate SSO login as `ihar` next. Local Open WebUI password login remains
+  enabled as the rollback path. `kasia` enrollment is deferred until she is
+  ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -433,7 +433,7 @@ Open WebUI-specific work:
 - [x] Enable OIDC signup and role management through `open_webui_role`.
 - [x] Merge the SSO login into an existing local account by trusted email.
 - [x] Configure auto-approval for users carrying the `ai-users` group.
-- [ ] Deploy `org` after the `pki` client deploy is verified.
+- [x] Deploy `org` after the `pki` client deploy is verified.
 - [ ] Log in as `ihar` through SSO.
 - [ ] Verify `ihar` receives admin through `sso-admins`.
 - [ ] Verify the existing local login path still works.
