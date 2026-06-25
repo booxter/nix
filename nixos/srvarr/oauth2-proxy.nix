@@ -50,8 +50,14 @@ in
     passBasicAuth = false;
     extraConfig = {
       allowed-group = [ "infra-admins" ];
+      code-challenge-method = "S256";
       oidc-groups-claim = "infra_groups";
       skip-provider-button = true;
+      whitelist-domain = [
+        "bazarr"
+        (hostInventory.toLocalDnsName "bazarr")
+        "bazarr.${hostInventory.site.lan.domain}"
+      ];
     };
   };
 
