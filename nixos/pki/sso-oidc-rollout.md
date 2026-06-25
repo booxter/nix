@@ -68,8 +68,10 @@ Initial groups:
 - `romm-admins`: RomM admins.
 - `romm-editors`: RomM editors.
 - `romm-viewers`: RomM viewers.
-- `media-admins`: reserved for Jellyfin/Audiobookshelf later.
-- `media-users`: reserved for Jellyfin/Audiobookshelf later.
+- `media-admins`: media app administrators; used for Aurral now and reserved
+  for Jellyfin/Audiobookshelf later.
+- `media-users`: media app users; used for Aurral now and reserved for
+  Jellyfin/Audiobookshelf later.
 
 Initial users:
 
@@ -152,7 +154,6 @@ reaches it.
 - Bazarr
 - Prowlarr
 - SABnzbd
-- Letterboxd Radarr bridge, if it should not be open on LAN
 
 Initial proxy access policy:
 
@@ -162,12 +163,16 @@ Deferred:
 
 - Transmission: no change in this rollout.
 - Glance: do not include in the initial proxy-gating work.
+- Letterboxd Radarr bridge: no change in this rollout.
 
 Needs separate assessment:
 
 - Seerr (`js.ihar.dev`): verify current auth capabilities in `seerr-team/seerr`.
-- Aurral (`mu.ihar.dev`): decide whether it should be public, native-auth, or
-  proxy-gated.
+- Aurral (`mu.ihar.dev`): packaged v1.76.17 has app-local users/sessions and
+  reverse-proxy auth through `AUTH_PROXY_*` environment variables, but no native
+  OIDC path. Use oauth2-proxy for browser SSO, pass a trusted user header to
+  Aurral, map `media-admins` to Aurral admin and `media-users` to Aurral user,
+  and keep local app login as fallback.
 - Shelfmark (`shelf.ihar.dev`): decide whether it should be public,
   native-auth, or proxy-gated.
 - LiteLLM gateway (`llm.ihar.dev`): API-key based service; do not blindly put a
@@ -526,17 +531,17 @@ Initial proxy-gated order:
 - [x] Lidarr
 - [x] Prowlarr
 - [x] SABnzbd
-- [ ] Letterboxd Radarr bridge, if desired
 
 Do not include:
 
 - [ ] Transmission
 - [ ] Glance
+- [ ] Letterboxd Radarr bridge
 
 ### 8. Review Public Apps That Are Not Covered
 
 - [ ] Decide Seerr auth path.
-- [ ] Decide Aurral auth path.
+- [x] Decide Aurral auth path.
 - [ ] Decide Shelfmark auth path.
 - [ ] Decide LiteLLM gateway auth/API-key path.
 - [ ] Update this document with the chosen path before implementing those.
