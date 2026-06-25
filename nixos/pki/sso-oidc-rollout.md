@@ -656,9 +656,9 @@ Do not include:
       changes are added later.
 - [x] Verify Audiobookshelf browser SSO.
 - [x] Verify Audiobookshelf local fallback login.
-- [ ] Verify Audiobookshelf mobile login behavior.
-- [ ] Verify Audiobookshelf existing-user linking when migrating a non-root
-      local account.
+- [x] Verify Audiobookshelf mobile login behavior.
+- [x] Skip Audiobookshelf existing-user migration; no non-root local account
+      migration is needed.
 - [x] Update this document with the chosen path before implementing remaining
       undecided apps.
 
