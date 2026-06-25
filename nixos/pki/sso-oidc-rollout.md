@@ -504,9 +504,10 @@ Start with `srvarr`, because most proxy-gated services live there.
       oauth2-proxy is the browser login gate instead of a second app-local form.
 - [x] Add a Bazarr logout compatibility location, because Bazarr with
       `auth.type: null` returns 500 from its own logout API.
-- [ ] Deploy `pki`, then `srvarr`, then `fana`.
-- [ ] Verify login, group denial, and logout.
-- [ ] Verify Servarr browser flows do not show app-local login forms behind SSO.
+- [x] Deploy `pki`, then `srvarr`, then `fana`.
+- [x] Verify Servarr login and logout browser flows.
+- [ ] Verify group denial.
+- [x] Verify Servarr browser flows do not show app-local login forms behind SSO.
 - [ ] Verify API-key/native-client access still works where used.
 - [x] Expand to the remaining *arr apps.
 - [ ] Expand to the remaining non-*arr admin apps.
