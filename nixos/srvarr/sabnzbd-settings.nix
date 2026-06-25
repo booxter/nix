@@ -39,7 +39,10 @@
     web_color = "Auto";
     https_chain = "";
     enable_https = false;
-    inet_exposure = 0;
+    # Browser access is gated by oauth2-proxy in nginx. Keep SABnzbd's own
+    # username/password for non-local direct access, but do not show a second
+    # login form to the local reverse proxy path.
+    inet_exposure = 5;
     socks5_proxy_url = "";
     download_free = "";
     complete_free = "";

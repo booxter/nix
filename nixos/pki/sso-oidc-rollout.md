@@ -504,6 +504,9 @@ Start with `srvarr`, because most proxy-gated services live there.
       oauth2-proxy is the browser login gate instead of a second app-local form.
 - [x] Add a Bazarr logout compatibility location, because Bazarr with
       `auth.type: null` returns 500 from its own logout API.
+- [x] Set SABnzbd `inet_exposure = 5` so the local nginx reverse-proxy path does
+      not get a second app-local login form while direct non-local access still
+      uses SABnzbd username/password.
 - [x] Deploy `pki`, then `srvarr`, then `fana`.
 - [x] Verify Servarr login and logout browser flows.
 - [ ] Verify group denial.
