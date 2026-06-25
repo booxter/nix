@@ -474,7 +474,7 @@ rec {
       scope = "external";
       owner = "srvarr";
       publicHost = "shelf.ihar.dev";
-      probePath = "/";
+      probePath = "/api/health";
     }))
     (resolveService (mkService {
       id = "vikunja";
