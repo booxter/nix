@@ -174,6 +174,7 @@ rec {
     "lidarr"
     "prowlarr"
     "radarr"
+    "sabnzbd"
     "sonarr"
   ];
   resolveService =
@@ -542,7 +543,7 @@ rec {
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/login/";
+      probePath = "/oauth2/sign_in";
     }))
   ];
 

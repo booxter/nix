@@ -510,6 +510,7 @@ Start with `srvarr`, because most proxy-gated services live there.
 - [x] Verify Servarr browser flows do not show app-local login forms behind SSO.
 - [ ] Verify API-key/native-client access still works where used.
 - [x] Expand to the remaining *arr apps.
+- [x] Expand to SABnzbd without changing its loopback/API-key access path.
 - [ ] Expand to the remaining non-*arr admin apps.
 
 Initial proxy-gated order:
@@ -519,7 +520,7 @@ Initial proxy-gated order:
 - [x] Sonarr
 - [x] Lidarr
 - [x] Prowlarr
-- [ ] SABnzbd
+- [x] SABnzbd
 - [ ] Letterboxd Radarr bridge, if desired
 
 Do not include:
