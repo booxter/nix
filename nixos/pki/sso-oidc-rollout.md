@@ -122,6 +122,15 @@ These should use application-native OIDC rather than proxy-only auth:
   - Start with password auth enabled until OIDC login and `ai-users`
     auto-approval succeed.
   - Disable password auth only after a break-glass path is documented.
+- LiteLLM gateway (`llm.ihar.dev`)
+  - Configure native Generic OAuth for the LiteLLM Admin UI.
+  - Keep OpenAI-compatible API access and Swagger as ordinary LiteLLM
+    API-key-protected surfaces; do not put an oauth2-proxy gate in front of
+    the whole vhost.
+  - Restrict Admin UI SSO to `infra-admins`.
+  - Set LiteLLM `ui_access_mode` to `admin_only`.
+  - Keep `/fallback/login` available for LiteLLM's username/password fallback
+    path if needed.
 - RomM (`game.ihar.dev`)
   - Configure `OIDC_ENABLED`.
   - Use a RomM-specific `romm_roles` claim for `romm-admins`,
@@ -175,9 +184,6 @@ Deferred:
 Needs separate assessment:
 
 - Seerr (`js.ihar.dev`): verify current auth capabilities in `seerr-team/seerr`.
-- LiteLLM gateway (`llm.ihar.dev`): API-key based service; do not blindly put a
-  browser SSO gate in front of API clients without checking clients and
-  intended usage.
 
 Selected public proxy-auth apps:
 
@@ -312,6 +318,7 @@ Create one OAuth/OIDC client per native app:
 - [x] `grafana`
 - [x] `vikunja`
 - [x] `open-webui`
+- [x] `litellm`
 - [x] `paperless`
 - [x] `romm`
 - [ ] later: `audiobookshelf`
@@ -367,6 +374,20 @@ Open WebUI client:
       `sso-admins` to `admin`.
 - [x] Deploy `pki`.
 - [x] Verify Open WebUI OIDC discovery and client metadata.
+
+LiteLLM client:
+
+- [x] Add a shared LiteLLM OAuth client secret to `pki` and `org` sops
+      secrets.
+- [x] Declare Kanidm OAuth2 client `litellm`.
+- [x] Set redirect URL to `https://llm.ihar.dev/sso/callback`.
+- [x] Set landing URL to `https://llm.ihar.dev/ui/`.
+- [x] Keep PKCE required and configure LiteLLM Generic OAuth with PKCE.
+- [x] Restrict OIDC scopes to `infra-admins`.
+- [x] Emit a `litellm_groups` claim mapping `infra-admins` to
+      `infra-admins`; LiteLLM maps that group to `proxy_admin`.
+- [ ] Deploy `pki`.
+- [ ] Verify LiteLLM OIDC discovery and client metadata.
 
 Paperless client:
 
@@ -488,6 +509,19 @@ RomM-specific work:
 - [x] Verify the existing local username/password login path still works.
 - [ ] Later: verify a non-admin user role.
 
+LiteLLM-specific work:
+
+- [x] Configure LiteLLM Generic OAuth against Kanidm endpoints.
+- [x] Keep Swagger and API-key traffic outside the browser SSO gate.
+- [x] Restrict Admin UI access to `infra-admins` with `admin_only` UI mode.
+- [x] Use LiteLLM role mappings to translate `litellm_groups=infra-admins` to
+      `proxy_admin`.
+- [ ] Deploy `org` after the `pki` client deploy is verified.
+- [ ] Log in as `ihar` through SSO.
+- [ ] Verify `ihar` receives LiteLLM `proxy_admin`.
+- [ ] Verify Swagger/API-key access still behaves as before.
+- [ ] Verify LiteLLM fallback login path if needed.
+
 Suggested order:
 
 - [x] Grafana
@@ -495,6 +529,7 @@ Suggested order:
 - [x] Open WebUI
 - [x] Paperless
 - [x] RomM
+- [ ] LiteLLM
 
 ### 7. Add `oauth2-proxy` For Admin Apps
 
@@ -564,8 +599,8 @@ Do not include:
 - [x] Deploy Shelfmark native OIDC stage in order:
       `pki`, `srvarr`, then `fana`.
 - [x] Verify Shelfmark browser SSO and local fallback login after deploy.
-- [ ] Decide LiteLLM gateway auth/API-key path.
-- [ ] Update this document with the chosen path before implementing remaining
+- [x] Decide LiteLLM gateway auth/API-key path.
+- [x] Update this document with the chosen path before implementing remaining
       undecided apps.
 
 ### 9. Monitoring And Operations
