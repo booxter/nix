@@ -110,6 +110,12 @@ in
                 lib.optionalString (service.id == "aurral") ''
                   proxy_set_header X-Forwarded-For $remote_addr;
                 ''
+                + lib.optionalString (service.id == "audiobookshelf") ''
+                  # Audiobookshelf validates OIDC callback targets against the
+                  # request origin. The internal HTTPS vhost serves au.ihar.dev
+                  # as an alias, so preserve the browser-facing host here.
+                  proxy_set_header Host $host;
+                ''
                 + lib.optionalString (service.id == "paperless") ''
                   client_max_body_size 512m;
                   proxy_read_timeout 300s;
