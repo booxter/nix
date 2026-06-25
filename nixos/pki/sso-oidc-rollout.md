@@ -511,6 +511,8 @@ Start with `srvarr`, because most proxy-gated services live there.
 - [x] Verify Servarr login and logout browser flows.
 - [ ] Verify group denial.
 - [x] Verify Servarr browser flows do not show app-local login forms behind SSO.
+- [x] Verify SABnzbd browser flow reaches the app without a second login.
+- [x] Verify SABnzbd loopback/API-key access still works after browser SSO.
 - [ ] Verify API-key/native-client access still works where used.
 - [x] Expand to the remaining *arr apps.
 - [x] Expand to SABnzbd without changing its loopback/API-key access path.
