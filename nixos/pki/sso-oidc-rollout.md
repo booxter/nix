@@ -23,7 +23,9 @@ identity source and a consistent SSO policy.
   handled separately.
 - Do not migrate Jellyfin yet. It is important, but requires a dedicated pass
   because of media clients, library permissions, and the current Jellarr-managed
-  user policy.
+  user/password policy. The current SSO plugin path can link SSO identities to
+  existing Jellyfin users, but it is still plugin-based and not a core native
+  OIDC feature.
 - Do not remove local passwords or local admin accounts until each service has
   been validated through SSO and rollback is understood.
 - Do not remove local username/password auth from apps where native, mobile, or
@@ -153,10 +155,20 @@ These should use application-native OIDC rather than proxy-only auth:
   - Determine whether settings can be made declarative through config files,
     database/API bootstrap, or a local module extension.
 - Jellyfin (`jf.ihar.dev`)
-  - Handle in a dedicated migration.
+  - Postpone for now.
+  - Jellyfin core does not have native OIDC in the deployed 10.11.11 package.
+  - The viable path is the `SSO Authentication` plugin from
+    `K0lin/jellyfin-plugin-sso`; its current release targets Jellyfin 10.11.11
+    and supports OpenID/SAML.
+  - The plugin supports linking SSO identities to existing Jellyfin accounts,
+    so it can coexist with Jellarr-managed users instead of forcing duplicate
+    user creation.
+  - Keep Jellarr-managed local usernames/passwords as the compatibility path
+    for Android/TV clients, Seerr, and rollback.
   - Avoid proxy-only auth as the final solution because native/mobile/TV clients
     and per-user library permissions need app-level identity.
-  - Review plugin health before committing to a Jellyfin SSO path.
+  - Revisit only as a careful dedicated migration after the current app rollout
+    is stable.
 
 ### Proxy-Gated Admin/Internal Apps
 
@@ -181,9 +193,18 @@ Deferred:
 - Glance: do not include in the initial proxy-gating work.
 - Letterboxd Radarr bridge: no change in this rollout.
 
-Needs separate assessment:
+Deferred native-app work:
 
-- Seerr (`js.ihar.dev`): verify current auth capabilities in `seerr-team/seerr`.
+- Seerr (`js.ihar.dev`)
+  - Wait for upstream native OIDC.
+  - The deployed Seerr 3.2.0 package has no native OIDC support; its auth paths
+    are Plex, Jellyfin username/password, local login, logout, and password
+    reset.
+  - Track upstream `seerr-team/seerr` OIDC work: feature request `#183`, active
+    implementation PR `#2715`, and testing discussion `#2721`.
+  - Do not use oauth2-proxy as the main Seerr solution unless the goal changes
+    to browser gate only; Seerr needs real app-level user identity for request
+    ownership and permissions.
 
 Selected public proxy-auth apps:
 
@@ -322,7 +343,8 @@ Create one OAuth/OIDC client per native app:
 - [x] `paperless`
 - [x] `romm`
 - [ ] later: `audiobookshelf`
-- [ ] later: `jellyfin`
+- [ ] later: `jellyfin` after the plugin-based SSO path is deliberately
+      selected and local-password fallback remains preserved
 
 For each client:
 
@@ -584,7 +606,7 @@ Do not include:
 
 ### 8. Review Public Apps That Are Not Covered
 
-- [ ] Decide Seerr auth path.
+- [x] Decide Seerr auth path: wait for upstream native OIDC support.
 - [x] Decide Aurral auth path.
 - [x] Implement Aurral browser SSO on `beast`.
 - [x] Deploy Aurral IdP client and public SSO gate on `pki` and `beast`.
