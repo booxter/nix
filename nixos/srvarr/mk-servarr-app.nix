@@ -5,44 +5,29 @@
   name,
 }:
 let
+  servarrCommon = import ./servarr-common.nix { inherit config lib; };
   stateDir = "${config.host.srvarrPaths.stateDir}/${name}";
-  serviceCfg = lib.getAttr name config.services;
   user = name;
 in
-{
-  services.${name} = {
-    enable = true;
-    dataDir = stateDir;
-    user = user;
-    group = "media";
-    settings = {
-      auth = {
-        method = "External";
-        required = "Enabled";
-      };
-      log.analyticsEnabled = false;
-      server.bindaddress = "127.0.0.1";
-      update = {
-        automatically = false;
-        mechanism = "external";
-      };
+lib.mkMerge [
+  (servarrCommon.mkServarrService { inherit name; })
+  {
+    services.${name} = {
+      dataDir = stateDir;
+      user = user;
+      group = "media";
     };
-  };
 
-  users = {
-    groups = lib.optionalAttrs (apiGroup != null) {
-      ${apiGroup} = { };
+    users = {
+      groups = lib.optionalAttrs (apiGroup != null) {
+        ${apiGroup} = { };
+      };
+      users.${user} = {
+        isSystemUser = true;
+      }
+      // lib.optionalAttrs (apiGroup != null && addUserToApiGroup) {
+        extraGroups = [ apiGroup ];
+      };
     };
-    users.${user} = {
-      isSystemUser = true;
-    }
-    // lib.optionalAttrs (apiGroup != null && addUserToApiGroup) {
-      extraGroups = [ apiGroup ];
-    };
-  };
-
-  host.internalHttps.services.${name} = {
-    enable = true;
-    upstream = "http://127.0.0.1:${toString serviceCfg.settings.server.port}";
-  };
-}
+  }
+]
