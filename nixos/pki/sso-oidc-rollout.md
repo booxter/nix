@@ -553,12 +553,12 @@ Do not include:
 - [x] Decide Aurral auth path.
 - [x] Implement Aurral browser SSO on `beast`.
 - [x] Deploy Aurral IdP client and public SSO gate on `pki` and `beast`.
-- [ ] Deploy Aurral app-level proxy-auth integration on `srvarr`.
+- [x] Deploy Aurral app-level proxy-auth integration on `srvarr`.
       Deploy `beast` first so the public edge is already overwriting the
       username header from oauth2-proxy before `srvarr` starts trusting it.
 - [ ] Deploy Aurral monitoring probe update on `fana`.
 - [x] Verify Aurral browser SSO reaches the app through oauth2-proxy.
-- [ ] Verify Aurral app-local fallback login after `srvarr` deploy.
+- [x] Verify Aurral app-local fallback login after `srvarr` deploy.
 - [x] Decide Shelfmark auth path.
 - [x] Implement Shelfmark native OIDC.
 - [ ] Deploy Shelfmark native OIDC stage in order:
