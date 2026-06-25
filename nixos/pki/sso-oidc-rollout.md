@@ -462,7 +462,7 @@ Paperless-specific work:
 - [x] Verify Paperless API token automation still works.
 - [x] Keep the Paperless local password bootstrap because native/mobile clients
       may need username/password auth.
-- [ ] Manually migrate existing Paperless `kasia` local account to non-staff
+- [x] Manually migrate existing Paperless `kasia` local account to non-staff
       and non-superuser before enrolling or validating her SSO path.
 - [ ] Keep only the minimal Paperless-local declarative bootstrap needed for
       local password compatibility, verified email rows, API tokens, and
