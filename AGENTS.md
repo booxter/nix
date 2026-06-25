@@ -68,6 +68,9 @@ nix run .#sops-pass -- [--gen] <host> <user|both>
 nix run .#sops-bootstrap -- <host>
 ```
 
+- Do not run SOPS helpers that modify secrets in parallel; serialize them to
+  avoid races.
+
 ## Monitoring
 
 When adding/changing services, consider Grafana dashboards, Prometheus rules,
