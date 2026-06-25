@@ -362,7 +362,7 @@ Create one OAuth/OIDC client per native app:
 - [x] `litellm`
 - [x] `paperless`
 - [x] `romm`
-- [ ] `audiobookshelf`
+- [x] `audiobookshelf`
 - [ ] later: `jellyfin` after the plugin-based SSO path is deliberately
       selected and local-password fallback remains preserved
 
@@ -644,9 +644,10 @@ Do not include:
 - [x] Decide LiteLLM gateway auth/API-key path.
 - [x] Decide Audiobookshelf auth path: native OIDC configured through the
       Audiobookshelf admin API, with no direct database patching.
-- [ ] Implement Audiobookshelf Kanidm client and API bootstrap.
+- [x] Implement Audiobookshelf Kanidm client and API bootstrap.
 - [ ] Deploy Audiobookshelf native OIDC stage in order:
-      `pki`, `srvarr`, then `fana` if monitoring changes.
+      `pki`, then `srvarr`. No `fana` stage is needed unless monitoring
+      changes are added later.
 - [ ] Verify Audiobookshelf browser SSO, local fallback login, mobile login
       behavior, and existing-user linking.
 - [x] Update this document with the chosen path before implementing remaining
