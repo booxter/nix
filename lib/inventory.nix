@@ -135,6 +135,14 @@ rec {
   toNixosAllDnsNames =
     spec: lib.unique ([ (toNixosPrimaryDnsName spec) ] ++ toNixosLegacyDnsNames spec);
   toNixosShortDnsName = toNixosStableHostName;
+  toLocalDnsName = label: "${label}.local";
+  toInternalHttpsServiceHosts =
+    serviceName:
+    lib.unique [
+      "${serviceName}.${site.lan.domain}"
+      serviceName
+      (toLocalDnsName serviceName)
+    ];
   toNixosMigrationDnsNames =
     spec: lib.unique ([ (toNixosShortDnsName spec) ] ++ toNixosAllDnsNames spec);
   toNixosHostCertificateDnsNames =
@@ -143,7 +151,9 @@ rec {
       names = toNixosMigrationDnsNames spec;
     in
     lib.unique (
-      names ++ map (name: "${name}.${site.lan.domain}") names ++ [ "${toNixosShortDnsName spec}.local" ]
+      names
+      ++ map (name: "${name}.${site.lan.domain}") names
+      ++ [ (toLocalDnsName (toNixosShortDnsName spec)) ]
     );
   toNixosLanDnsAliasLabels =
     spec:
@@ -159,6 +169,14 @@ rec {
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
+  srvarrAdminAppIds = [
+    "bazarr"
+    "lidarr"
+    "prowlarr"
+    "radarr"
+    "sabnzbd"
+    "sonarr"
+  ];
   resolveService =
     service:
     service
@@ -168,7 +186,7 @@ rec {
       probeUrl = "${url}${service.probePath}";
     })
     // lib.optionalAttrs (service.scope == "internal") {
-      displayHost = "${nixosHostSpecsByName.${service.owner}.name}.local";
+      displayHost = toLocalDnsName (nixosHostSpecsByName.${service.owner}.name);
       probeHost =
         let
           spec = nixosHostSpecsByName.${service.owner};
@@ -299,7 +317,90 @@ rec {
     userCaPublicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJs0Zx3pG8L1SaGQSyD9Jqljt15KD7txMUrgu9lP85qRY89wjF7if3QQnp22jTBjgfuWrUW2GdFWwAbGmzvWDg8= ca-key-nix-infra@secretive.mair.local";
   };
 
+  sso = {
+    groups = {
+      "sso-admins" = {
+        title = "SSO administrators";
+      };
+      "infra-admins" = {
+        title = "Infrastructure administrators";
+      };
+      "grafana-admins" = {
+        title = "Grafana administrators";
+      };
+      "grafana-viewers" = {
+        title = "Grafana viewers";
+      };
+      "paperless-admins" = {
+        title = "Paperless administrators";
+      };
+      "paperless-users" = {
+        title = "Paperless users";
+      };
+      "vikunja-users" = {
+        title = "Vikunja users";
+      };
+      "ai-users" = {
+        title = "Open WebUI users";
+      };
+      "romm-admins" = {
+        title = "RomM administrators";
+      };
+      "romm-editors" = {
+        title = "RomM editors";
+      };
+      "romm-viewers" = {
+        title = "RomM viewers";
+      };
+      "media-admins" = {
+        title = "Media administrators";
+      };
+      "media-users" = {
+        title = "Media users";
+      };
+    };
+
+    users = {
+      ihar = {
+        displayName = "ihar";
+        mailAddresses = [ "ihar.hrachyshka@gmail.com" ];
+        groups = [
+          "sso-admins"
+          "infra-admins"
+          "grafana-admins"
+          "paperless-admins"
+          "paperless-users"
+          "vikunja-users"
+          "ai-users"
+          "romm-admins"
+          "media-admins"
+          "media-users"
+        ];
+      };
+      kasia = {
+        displayName = "kasia";
+        mailAddresses = [ "kasia.bondarava@gmail.com" ];
+        groups = [
+          "paperless-users"
+          "vikunja-users"
+          "ai-users"
+          "media-users"
+        ];
+      };
+    };
+  };
+
   services = [
+    (resolveService (mkService {
+      id = "id";
+      title = "SSO";
+      icon = "sh:kanidm";
+      scope = "external";
+      owner = "pki";
+      publicHost = "id.ihar.dev";
+      probePath = "/status";
+      showInGlance = false;
+    }))
     (resolveService (mkService {
       id = "jellyfin";
       scope = "external";
@@ -332,19 +433,19 @@ rec {
       id = "radarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/login";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "sonarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/login";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "lidarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "letterboxd-list-radarr";
@@ -359,7 +460,7 @@ rec {
       scope = "external";
       owner = "srvarr";
       publicHost = "mu.ihar.dev";
-      probePath = "/api/health";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "audiobookshelf";
@@ -373,7 +474,7 @@ rec {
       scope = "external";
       owner = "srvarr";
       publicHost = "shelf.ihar.dev";
-      probePath = "/";
+      probePath = "/api/health";
     }))
     (resolveService (mkService {
       id = "vikunja";
@@ -422,13 +523,13 @@ rec {
       id = "bazarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "prowlarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/login";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "transmission";
@@ -442,7 +543,7 @@ rec {
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/login/";
+      probePath = "/oauth2/sign_in";
     }))
   ];
 
@@ -712,6 +813,7 @@ rec {
       isVM = true;
       name = "pki";
       platform = "x86_64-linux";
+      localDnsAliases = [ "id" ];
       caServer = {
         port = 8443;
         # Fixed step-ca HTTP API route for the trusted root bundle.

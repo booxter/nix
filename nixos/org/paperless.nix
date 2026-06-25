@@ -7,11 +7,47 @@
   ...
 }:
 let
+  idService = hostInventory.servicesById.id;
   paperlessService = hostInventory.servicesById.paperless;
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
   paperlessStoragePath = "/data/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
+  paperlessOidcClientId = "paperless";
+  paperlessOidcProviderId = "sso";
+  paperlessOidcClientSecretPlaceholder = "__PAPERLESS_OIDC_CLIENT_SECRET__";
+  paperlessOidcDiscoveryUrl = "https://${idService.publicHost}/oauth2/openid/${paperlessOidcClientId}/.well-known/openid-configuration";
+  paperlessOidcProvidersJson =
+    builtins.replaceStrings
+      [ paperlessOidcClientSecretPlaceholder ]
+      [
+        config.sops.placeholder."paperless/oidc/client_secret"
+      ]
+      (
+        builtins.toJSON {
+          openid_connect.APPS = [
+            {
+              provider_id = paperlessOidcProviderId;
+              name = "SSO";
+              client_id = paperlessOidcClientId;
+              secret = paperlessOidcClientSecretPlaceholder;
+              settings = {
+                email_authentication = true;
+                oauth_pkce_enabled = true;
+                server_url = paperlessOidcDiscoveryUrl;
+                token_auth_method = "client_secret_basic";
+                verified_email = true;
+                scope = [
+                  "openid"
+                  "profile"
+                  "email"
+                  "groups"
+                ];
+              };
+            }
+          ];
+        }
+      );
   ollamaTunnelPort = 11435;
   ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
@@ -40,7 +76,9 @@ let
     import os
     import pathlib
 
+    from allauth.account.models import EmailAddress
     from django.contrib.auth import get_user_model
+    from django.contrib.auth.models import Group
     from rest_framework.authtoken.models import Token
 
     def read_secret(path):
@@ -60,10 +98,13 @@ let
         "username": "kasia",
         "email": "",
         "password_file": os.environ["PAPERLESS_KASIA_PASSWORD_FILE"],
-        "is_staff": True,
-        "is_superuser": True,
+        "is_staff": False,
+        "is_superuser": False,
       },
     ]
+
+    for name in ["paperless-admins", "paperless-users"]:
+      Group.objects.get_or_create(name=name)
 
     for spec in users:
       user, _ = User.objects.get_or_create(
@@ -85,6 +126,27 @@ let
         changed = True
       if changed:
         user.save()
+
+      if spec["email"]:
+        address, _ = EmailAddress.objects.get_or_create(
+          user=user,
+          email=spec["email"],
+          defaults={
+            "verified": True,
+            "primary": True,
+          },
+        )
+        address_changed = False
+        for field, value in {
+          "verified": True,
+          "primary": True,
+        }.items():
+          if getattr(address, field) != value:
+            setattr(address, field, value)
+            address_changed = True
+        if address_changed:
+          address.save()
+        EmailAddress.objects.filter(user=user, primary=True).exclude(pk=address.pk).update(primary=False)
 
     token_key = read_secret(os.environ["PAPERLESS_GPT_API_TOKEN_FILE"])
     if len(token_key) != 40:
@@ -141,6 +203,16 @@ in
         "podman-paperless-gpt.service"
       ];
     };
+    "paperless/oidc/client_secret" = {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      restartUnits = [
+        "paperless-scheduler.service"
+        "paperless-task-queue.service"
+        "paperless-web.service"
+      ];
+    };
     "internal-https-client-ollama-crt" = {
       key = "internal_https/clients/ollama/client_crt_unencrypted";
       owner = "root";
@@ -167,11 +239,26 @@ in
     restartUnits = [ "podman-paperless-gpt.service" ];
   };
 
+  sops.templates."paperless-oidc.env" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+    content = ''
+      PAPERLESS_SOCIALACCOUNT_PROVIDERS='${paperlessOidcProvidersJson}'
+    '';
+    restartUnits = [
+      "paperless-scheduler.service"
+      "paperless-task-queue.service"
+      "paperless-web.service"
+    ];
+  };
+
   services.paperless = {
     enable = true;
     address = "127.0.0.1";
     database.createLocally = true;
     domain = paperlessService.publicHost;
+    environmentFile = config.sops.templates."paperless-oidc.env".path;
     mediaDir = "${paperlessStoragePath}/media";
     consumptionDir = "${paperlessStoragePath}/consume";
     passwordFile = config.sops.secrets."paperless/admin/password".path;
@@ -179,6 +266,7 @@ in
       PAPERLESS_ADMIN_USER = "ihar";
       PAPERLESS_ADMIN_MAIL = "ihar.hrachyshka@gmail.com";
       PAPERLESS_ACCOUNT_ALLOW_SIGNUPS = false;
+      PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
       PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [
         paperlessService.publicHost
         "paperless.${hostInventory.site.lan.domain}"
@@ -187,11 +275,16 @@ in
         "localhost"
       ];
       PAPERLESS_CSRF_TRUSTED_ORIGINS = paperlessService.url;
+      PAPERLESS_DISABLE_REGULAR_LOGIN = false;
       PAPERLESS_CONSUMER_IGNORE_PATTERN = lib.concatStringsSep "," [
         ".DS_STORE/*"
         "desktop.ini"
       ];
       PAPERLESS_OCR_LANGUAGE = "eng";
+      PAPERLESS_REDIRECT_LOGIN_TO_SSO = false;
+      PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS = false;
+      PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS = true;
+      PAPERLESS_SOCIAL_AUTO_SIGNUP = false;
     };
   };
 
@@ -307,8 +400,15 @@ in
     upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
     serverAliases = [ paperlessService.publicHost ];
     mtls.enable = true;
+    recommendedProxySettings = false;
     locationExtraConfig = ''
       client_max_body_size 512m;
+      proxy_set_header Host ${paperlessService.publicHost};
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header X-Forwarded-Host ${paperlessService.publicHost};
+      proxy_set_header X-Forwarded-Server $hostname;
       proxy_read_timeout 300s;
       proxy_send_timeout 300s;
     '';

@@ -15,6 +15,7 @@
     ./glance.nix
     ./letterboxd-list-radarr.nix
     ./nfs.nix
+    ./oauth2-proxy.nix
     ./paths.nix
     ./romm.nix
     ./qos.nix

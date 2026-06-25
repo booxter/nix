@@ -7,6 +7,7 @@
 }:
 let
   accounts = import ./accounts.nix;
+  idService = hostInventory.servicesById.id;
   mediaDir = config.host.srvarrPaths.mediaDir;
   # RomM's upstream layout keeps all mutable application data under one root:
   # library, resources, assets, config, sync, and launchbox.
@@ -24,6 +25,8 @@ let
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
   rommImage = "${ociImages.romm.image}:${ociImages.romm.tag}";
   rommService = hostInventory.servicesById.romm;
+  rommOidcClientId = "romm";
+  rommOidcIssuerBase = "https://${idService.publicHost}/oauth2/openid/${rommOidcClientId}";
 
   commonEnvironment = {
     PATH = "/src/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
@@ -49,6 +52,19 @@ let
     # the local metadata store is populated and refreshed without a manual task.
     ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA = "true";
     HASHEOUS_API_ENABLED = "true";
+    DISABLE_USERPASS_LOGIN = "false";
+    OIDC_ENABLED = "true";
+    OIDC_AUTOLOGIN = "false";
+    OIDC_PROVIDER = "SSO";
+    OIDC_CLIENT_ID = rommOidcClientId;
+    OIDC_REDIRECT_URI = "${rommService.url}/api/oauth/openid";
+    OIDC_SERVER_APPLICATION_URL = rommOidcIssuerBase;
+    OIDC_SERVER_METADATA_URL = "${rommOidcIssuerBase}/.well-known/openid-configuration";
+    OIDC_CLAIM_ROLES = "romm_roles";
+    OIDC_ROLE_ADMIN = "romm-admins";
+    OIDC_ROLE_EDITOR = "romm-editors";
+    OIDC_ROLE_VIEWER = "romm-viewers";
+    OIDC_USERNAME_ATTRIBUTE = "preferred_username";
   };
 
   containerVolumes = [
@@ -82,6 +98,12 @@ let
   ];
 
   runtimeAfter = setupBefore ++ [ "romm-setup.service" ];
+  rommUserRuntimeUnits = [
+    "user-runtime-dir@${toString accounts.uids.romm}.service"
+    "user@${toString accounts.uids.romm}.service"
+  ];
+  rommPodmanBaseUnits = rommUserRuntimeUnits ++ [ "network-online.target" ];
+  rommPodmanRuntimeUnits = rommPodmanBaseUnits ++ runtimeAfter;
 
   tmpfilesSetupUnits = [
     "systemd-tmpfiles-setup.service"
@@ -126,6 +148,18 @@ in
   sops.secrets = {
     "romm/authSecretKey" = { };
     "romm/dbPassword" = { };
+    "romm/oidc/clientSecret" = {
+      owner = user;
+      group = "media";
+      mode = "0400";
+      restartUnits = [
+        "romm-setup.service"
+        "podman-romm-api.service"
+        "podman-romm-scheduler.service"
+        "podman-romm-worker.service"
+        "podman-romm-watcher.service"
+      ];
+    };
   };
 
   sops.templates."romm.env" = {
@@ -135,6 +169,7 @@ in
     content = ''
       ROMM_AUTH_SECRET_KEY=${config.sops.placeholder."romm/authSecretKey"}
       DB_PASSWD=${config.sops.placeholder."romm/dbPassword"}
+      OIDC_CLIENT_SECRET=${config.sops.placeholder."romm/oidc/clientSecret"}
     '';
     restartUnits = [
       "romm-db-init.service"
@@ -248,15 +283,8 @@ in
   systemd.services.romm-web-assets = {
     description = "Extract RomM web assets from upstream OCI image";
     wantedBy = [ "multi-user.target" ];
-    wants = [
-      "linger-users.service"
-      "network-online.target"
-    ];
-    after = [
-      "linger-users.service"
-      "network-online.target"
-    ]
-    ++ tmpfilesSetupUnits;
+    wants = rommPodmanBaseUnits;
+    after = rommPodmanBaseUnits ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = stateDir;
     path = [
       pkgs.coreutils
@@ -305,17 +333,8 @@ in
   systemd.services.romm-setup = {
     description = "Run RomM database migrations and startup tasks";
     wantedBy = [ "multi-user.target" ];
-    wants = [
-      "linger-users.service"
-      "network-online.target"
-    ]
-    ++ setupBefore;
-    after = [
-      "linger-users.service"
-      "network-online.target"
-    ]
-    ++ setupBefore
-    ++ tmpfilesSetupUnits;
+    wants = rommPodmanBaseUnits ++ setupBefore;
+    after = rommPodmanBaseUnits ++ setupBefore ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = [
       mediaDir
       stateDir
@@ -380,29 +399,29 @@ in
     podman-romm-api = {
       path = [ pkgs.slirp4netns ];
       requires = runtimeAfter;
-      wants = runtimeAfter;
-      after = runtimeAfter;
+      wants = lib.mkForce rommPodmanRuntimeUnits;
+      after = lib.mkForce rommPodmanRuntimeUnits;
       environment = podmanRuntimeEnvironment;
     };
     podman-romm-worker = {
       path = [ pkgs.slirp4netns ];
       requires = runtimeAfter;
-      wants = runtimeAfter;
-      after = runtimeAfter;
+      wants = lib.mkForce rommPodmanRuntimeUnits;
+      after = lib.mkForce rommPodmanRuntimeUnits;
       environment = podmanRuntimeEnvironment;
     };
     podman-romm-scheduler = {
       path = [ pkgs.slirp4netns ];
       requires = runtimeAfter;
-      wants = runtimeAfter;
-      after = runtimeAfter;
+      wants = lib.mkForce rommPodmanRuntimeUnits;
+      after = lib.mkForce rommPodmanRuntimeUnits;
       environment = podmanRuntimeEnvironment;
     };
     podman-romm-watcher = {
       path = [ pkgs.slirp4netns ];
       requires = runtimeAfter;
-      wants = runtimeAfter;
-      after = runtimeAfter;
+      wants = lib.mkForce rommPodmanRuntimeUnits;
+      after = lib.mkForce rommPodmanRuntimeUnits;
       environment = podmanRuntimeEnvironment;
     };
     nginx = {

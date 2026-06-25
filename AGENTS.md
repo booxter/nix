@@ -25,6 +25,9 @@ Scope: whole repository.
 - Secure service-to-service traffic by default. Prefer mTLS/authenticated
   encrypted transports; use plaintext only on loopback or with documented
   rationale.
+- Services should use OIDC/SSO where the application supports it. Keep
+  username/password fallback only when it is needed for rollback,
+  mobile/native clients, API clients, or service-specific compatibility.
 - For new managed-node channels, use repo PKI helpers:
   `issue-internal-service-cert` for internal HTTPS and
   `issue-observability-cert` for Prometheus/observability.
@@ -42,6 +45,8 @@ Scope: whole repository.
 - On configured clients, OpenSSH transparently runs `ssh-ticket ensure`; wait for
   any macOS TTL/Secretive approval prompts. Treat `ssh-ticket`/`ssht` as
   implementation details unless explicitly debugging ticket issuance.
+- For one-off remote diagnostics when a tool is missing on the target, it is ok
+  to use `nix shell nixpkgs#<pkg> -c <cmd>`.
 
 ## Deploys
 
@@ -67,6 +72,9 @@ nix run .#sops-copy -- <from-host> <to-host> <key>
 nix run .#sops-pass -- [--gen] <host> <user|both>
 nix run .#sops-bootstrap -- <host>
 ```
+
+- Do not run SOPS helpers that modify secrets in parallel; serialize them to
+  avoid races.
 
 ## Monitoring
 

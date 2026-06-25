@@ -1,10 +1,11 @@
 # `prox-pkivm`
 
-`prox-pkivm` is the home fleet control-plane VM for internal PKI and UniFi
-state sync. It runs `step-ca`, keeps the CA state in `/var/lib/step-ca`, and
-is the machine from which we issue internal HTTPS and Prometheus mTLS leaf
-certificates into host `sops` secrets. It also runs the `unifi-sync` timer so
-trusted-LAN DHCP and split DNS stay converged with inventory.
+`prox-pkivm` is the home fleet control-plane VM for internal PKI, SSO, and
+UniFi state sync. It runs `step-ca`, keeps the CA state in `/var/lib/step-ca`,
+and is the machine from which we issue internal HTTPS and Prometheus mTLS leaf
+certificates into host `sops` secrets. It also runs Kanidm as the fleet OIDC
+identity provider and runs the `unifi-sync` timer so trusted-LAN DHCP and split
+DNS stay converged with inventory.
 
 ## PKI Use
 
@@ -14,6 +15,35 @@ trusted-LAN DHCP and split DNS stay converged with inventory.
   - [common/_mixins/internal-pki/home-internal-pki-root-ca.crt](../../common/_mixins/internal-pki/home-internal-pki-root-ca.crt)
 - UniFi sync service docs:
   - [unifi-sync.md](./unifi-sync.md)
+
+## Managed Services
+
+- `step-ca`: internal CA for fleet leaf certificates.
+- `kanidm`: OIDC identity provider for `id.ihar.dev`.
+- `kanidm-mail-sender`: sends Kanidm enrollment and credential reset mail.
+- `unifi-sync`: syncs trusted-LAN DHCP and DNS state into UniFi.
+- `wg-home-dns-sync`: keeps WireGuard home DNS state aligned.
+- `pki-status-export`: exports PKI certificate inventory metrics.
+- `pki-rotate`: opens review PRs for due internal leaf certificate rotations.
+
+## SSO Use
+
+- Identity provider: Kanidm
+- Public issuer URL: `https://id.ihar.dev`
+- Internal HTTPS name: `id.home.arpa`
+- Display name: `SSO`
+- Users, groups, OAuth clients, client secrets, and service-side OIDC settings
+  are managed declaratively from Nix and `sops`.
+- Services are deployed with OIDC/SSO where the application supports it. Keep
+  local login only when it is needed for rollback, mobile/native clients, API
+  clients, or service-specific compatibility.
+- Public browser-only gates use `oauth2-proxy` plus nginx `auth_request` where
+  the application has no useful native OIDC path.
+- Enrollment and credential reset emails are issued with
+  `nix run .#reset-oidc -- <user-id> [email]`.
+- Current declarative OAuth clients cover Grafana, Vikunja, Open WebUI,
+  LiteLLM, Paperless, RomM, Audiobookshelf, Aurral, Shelfmark, and the
+  `srvarr` admin-app proxy gate.
 
 ## PKI Apps
 
@@ -27,6 +57,8 @@ trusted-LAN DHCP and split DNS stay converged with inventory.
 - `nix run .#pki-rotation`
   - inspect managed PKI cert state, export Prometheus metrics, and run the
     PR-based rotation controller flow
+- `nix run .#reset-oidc`
+  - ask Kanidm to email a user enrollment or credential reset link
 - `nix run .#deploy`
   - roll updated secrets and service config to the target host
 
@@ -77,6 +109,13 @@ PKI rotation dry-run:
 ```bash
 SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt" \
   nix run .#pki-rotation -- rotate --dry-run
+```
+
+OIDC credential reset email:
+
+```bash
+nix run .#reset-oidc -- ihar
+nix run .#reset-oidc -- kasia kasia.bondarava@gmail.com
 ```
 
 ## Secret Handling

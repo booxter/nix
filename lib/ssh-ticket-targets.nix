@@ -42,7 +42,7 @@ let
       inherit name;
       aliases = [
         sshHost
-        "${sshHost}.local"
+        (hostInventory.toLocalDnsName sshHost)
         (spec.dnsName or sshHost)
       ];
       dnsName = spec.dnsName or sshHost;
@@ -52,7 +52,7 @@ let
   mkNixosTarget =
     spec:
     let
-      localSshHost = "${hostInventory.toNixosShortDnsName spec}.local";
+      localSshHost = hostInventory.toLocalDnsName (hostInventory.toNixosShortDnsName spec);
     in
     if hostInventory.isNixosVM spec then
       let

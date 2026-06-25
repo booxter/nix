@@ -26,7 +26,7 @@ let
       config.networking.hostName
       config.host.dnsName
       config.services.avahi.hostName
-      "${config.services.avahi.hostName}.local"
+      (hostInventory.toLocalDnsName config.services.avahi.hostName)
     ]
   );
   caDnsArgs = lib.concatMapStringsSep " " (name: "--dns ${lib.escapeShellArg name}") caDnsNames;
@@ -80,6 +80,7 @@ in
   _module.args.pkiPkgs = import ./pkgs pkgs;
 
   imports = [
+    ./id.nix
     ./unifi-sync.nix
     ./wg-home-dns-sync.nix
   ];

@@ -5,7 +5,11 @@
 }:
 let
   aiService = hostInventory.servicesById.ai;
+  idService = hostInventory.servicesById.id;
   litellmPort = 4000;
+  oidcClientId = "open-webui";
+  oidcDiscoveryUrl = "https://${idService.publicHost}/oauth2/openid/${oidcClientId}/.well-known/openid-configuration";
+  oidcRedirectUri = "${aiService.url}/oauth/oidc/login/callback";
   openWebuiPort = 8082;
 in
 {
@@ -23,6 +27,12 @@ in
       mode = "0400";
       restartUnits = [ "open-webui.service" ];
     };
+    "open-webui/oidc/client_secret" = {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      restartUnits = [ "open-webui.service" ];
+    };
   };
 
   sops.templates."open-webui.env" = {
@@ -31,6 +41,7 @@ in
     mode = "0400";
     content = ''
       OPENAI_API_KEY=${config.sops.placeholder."litellm/master-key"}
+      OAUTH_CLIENT_SECRET=${config.sops.placeholder."open-webui/oidc/client_secret"}
       WEBUI_ADMIN_PASSWORD=${config.sops.placeholder."open-webui/admin/password"}
       WEBUI_SECRET_KEY=${config.sops.placeholder."open-webui/secret-key"}
     '';
@@ -46,11 +57,26 @@ in
       DEFAULT_MODELS = "qwen3-next:80b";
       DEFAULT_PINNED_MODELS = "qwen3-next:80b,qwen3.5:9b";
       ENABLE_CODE_EXECUTION = "False";
+      ENABLE_LOGIN_FORM = "True";
       ENABLE_OLLAMA_API = "False";
       ENABLE_OPENAI_API = "True";
+      ENABLE_OAUTH_PERSISTENT_CONFIG = "False";
+      ENABLE_OAUTH_ROLE_MANAGEMENT = "True";
+      ENABLE_OAUTH_SIGNUP = "True";
       ENABLE_PERSISTENT_CONFIG = "False";
       ENABLE_SIGNUP = "False";
+      OAUTH_ADMIN_ROLES = "admin";
+      OAUTH_ALLOWED_ROLES = "user";
+      OAUTH_CLIENT_ID = oidcClientId;
+      OAUTH_CODE_CHALLENGE_METHOD = "S256";
+      OAUTH_MERGE_ACCOUNTS_BY_EMAIL = "True";
+      OAUTH_PROVIDER_NAME = "SSO";
+      OAUTH_ROLES_CLAIM = "open_webui_role";
+      OAUTH_SCOPES = "openid email profile";
+      OAUTH_TOKEN_ENDPOINT_AUTH_METHOD = "client_secret_basic";
       OPENAI_API_BASE_URL = "http://127.0.0.1:${toString litellmPort}/v1";
+      OPENID_PROVIDER_URL = oidcDiscoveryUrl;
+      OPENID_REDIRECT_URI = oidcRedirectUri;
       TASK_MODEL_EXTERNAL = "qwen3.5:9b";
       WEB_LOADER_CONCURRENT_REQUESTS = "4";
       WEBUI_ADMIN_EMAIL = "ihar.hrachyshka@gmail.com";

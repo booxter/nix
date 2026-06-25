@@ -7,7 +7,7 @@
 let
   cfg = config.host.internalHttps;
   internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
-  localServerAliasesFor = aliases: aliases ++ builtins.map (alias: "${alias}.local") aliases;
+  localServerAliasesFor = aliases: aliases ++ builtins.map hostInventory.toLocalDnsName aliases;
   enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
   enabledServerNames = builtins.concatMap (service: [ service.serverName ] ++ service.serverAliases) (
     builtins.attrValues enabledServices
