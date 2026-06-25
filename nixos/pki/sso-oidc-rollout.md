@@ -122,7 +122,8 @@ These should use application-native OIDC rather than proxy-only auth:
   - Disable password auth only after a break-glass path is documented.
 - RomM (`game.ihar.dev`)
   - Configure `OIDC_ENABLED`.
-  - Use role claims for `romm-admins`, `romm-editors`, and `romm-viewers`.
+  - Use a RomM-specific `romm_roles` claim for `romm-admins`,
+    `romm-editors`, and `romm-viewers`.
   - Disable username/password login only after OIDC roles are verified and
     client compatibility is understood.
 
@@ -420,7 +421,7 @@ RomM client:
       PKCE challenge.
 - [x] Restrict OIDC scopes to `romm-admins`, `romm-editors`, and
       `romm-viewers`.
-- [x] Emit a `groups` claim mapping the three RomM groups.
+- [x] Emit a `romm_roles` claim mapping the three RomM groups.
 - [x] Deploy `pki`.
 - [x] Verify RomM OIDC discovery and client metadata.
 
@@ -505,7 +506,7 @@ RomM-specific work:
 - [x] Configure RomM OIDC against Kanidm discovery.
 - [x] Keep RomM username/password login enabled for native clients, API-style
       access, and rollback.
-- [x] Map the `groups` claim to RomM roles.
+- [x] Map the `romm_roles` claim to RomM roles.
 - [x] Deploy `srvarr` after the `pki` client deploy is verified.
 - [ ] Log in as `ihar` through SSO.
 - [ ] Verify `ihar` receives RomM admin through `romm-admins`.
