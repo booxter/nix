@@ -58,17 +58,20 @@ let
 in
 {
   sops.secrets = {
+    # systemd LoadCredential reads these as root before dropping privileges, so
+    # keep them root-owned and avoid first-activation ordering on a new service
+    # user.
     oauth2ProxyAurralClientSecret = {
       key = "oauth2-proxy/aurral/client_secret";
-      owner = "oauth2-proxy";
-      group = "oauth2-proxy";
+      owner = "root";
+      group = "root";
       mode = "0400";
       restartUnits = [ "oauth2-proxy.service" ];
     };
     oauth2ProxyAurralCookieSecret = {
       key = "oauth2-proxy/aurral/cookie_secret";
-      owner = "oauth2-proxy";
-      group = "oauth2-proxy";
+      owner = "root";
+      group = "root";
       mode = "0400";
       restartUnits = [ "oauth2-proxy.service" ];
     };
