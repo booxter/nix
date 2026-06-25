@@ -561,9 +561,9 @@ Do not include:
 - [x] Verify Aurral app-local fallback login after `srvarr` deploy.
 - [x] Decide Shelfmark auth path.
 - [x] Implement Shelfmark native OIDC.
-- [ ] Deploy Shelfmark native OIDC stage in order:
+- [x] Deploy Shelfmark native OIDC stage in order:
       `pki`, `srvarr`, then `fana`.
-- [ ] Verify Shelfmark browser SSO and local fallback login after deploy.
+- [x] Verify Shelfmark browser SSO and local fallback login after deploy.
 - [ ] Decide LiteLLM gateway auth/API-key path.
 - [ ] Update this document with the chosen path before implementing remaining
       undecided apps.
