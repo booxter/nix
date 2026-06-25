@@ -508,7 +508,7 @@ rec {
       id = "bazarr";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "prowlarr";

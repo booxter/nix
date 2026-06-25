@@ -22,6 +22,7 @@ let
   paperlessUrl = "https://${paperlessService.publicHost}";
   rommService = hostInventory.servicesById.romm;
   rommUrl = "https://${rommService.publicHost}";
+  srvarrAdminAppsUrl = "https://bazarr.${lan.domain}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
   mailSenderStateDir = "/var/lib/kanidm-mail-sender";
@@ -143,6 +144,13 @@ in
     };
     kanidmRommOAuthClientSecret = {
       key = "kanidm/oauth2/romm/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
+    kanidmSrvarrAdminAppsOAuthClientSecret = {
+      key = "kanidm/oauth2/srvarr-admin-apps/client_secret";
       owner = "kanidm";
       group = "kanidm";
       mode = "0400";
@@ -284,6 +292,24 @@ in
           "romm-editors" = [ "romm-editors" ];
           "romm-viewers" = [ "romm-viewers" ];
         };
+      };
+      systems.oauth2.srvarr-admin-apps = {
+        displayName = "srvarr admin apps";
+        originUrl = [
+          "${srvarrAdminAppsUrl}/oauth2/callback"
+          "https://bazarr/oauth2/callback"
+          "https://bazarr.local/oauth2/callback"
+        ];
+        originLanding = "${srvarrAdminAppsUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmSrvarrAdminAppsOAuthClientSecret.path;
+        preferShortUsername = true;
+        scopeMaps."infra-admins" = [
+          "openid"
+          "email"
+          "profile"
+          "infra_groups"
+        ];
+        claimMaps.infra_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
       };
     };
   };
