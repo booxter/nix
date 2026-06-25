@@ -37,6 +37,12 @@ let
                 server_url = paperlessOidcDiscoveryUrl;
                 token_auth_method = "client_secret_basic";
                 verified_email = true;
+                scope = [
+                  "openid"
+                  "profile"
+                  "email"
+                  "groups"
+                ];
               };
             }
           ];
