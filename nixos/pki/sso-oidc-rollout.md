@@ -128,6 +128,13 @@ These should use application-native OIDC rather than proxy-only auth:
     `romm-editors`, and `romm-viewers`.
   - Disable username/password login only after OIDC roles are verified and
     client compatibility is understood.
+- Shelfmark (`shelf.ihar.dev`)
+  - Configure native OIDC through the app's `AUTH_METHOD=oidc` environment
+    path.
+  - Use `media_groups` from Kanidm.
+  - Map `media-admins` to Shelfmark admins.
+  - Allow `media-users` to sign in as regular users.
+  - Keep local auth visible and enabled for rollback/local compatibility.
 
 ### Native Or App-Level Later
 
@@ -168,8 +175,6 @@ Deferred:
 Needs separate assessment:
 
 - Seerr (`js.ihar.dev`): verify current auth capabilities in `seerr-team/seerr`.
-- Shelfmark (`shelf.ihar.dev`): decide whether it should be public,
-  native-auth, or proxy-gated.
 - LiteLLM gateway (`llm.ihar.dev`): API-key based service; do not blindly put a
   browser SSO gate in front of API clients without checking clients and
   intended usage.
@@ -552,9 +557,14 @@ Do not include:
       Deploy `beast` before `srvarr` starts trusting proxy-auth headers so the
       public edge is already overwriting the username header from oauth2-proxy.
 - [ ] Verify Aurral browser SSO and local fallback login after deploy.
-- [ ] Decide Shelfmark auth path.
+- [x] Decide Shelfmark auth path.
+- [x] Implement Shelfmark native OIDC.
+- [ ] Deploy Shelfmark native OIDC stage in order:
+      `pki`, `srvarr`, then `fana`.
+- [ ] Verify Shelfmark browser SSO and local fallback login after deploy.
 - [ ] Decide LiteLLM gateway auth/API-key path.
-- [ ] Update this document with the chosen path before implementing those.
+- [ ] Update this document with the chosen path before implementing remaining
+      undecided apps.
 
 ### 9. Monitoring And Operations
 
