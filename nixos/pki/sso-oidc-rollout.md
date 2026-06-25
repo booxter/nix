@@ -221,9 +221,10 @@ Needs separate assessment:
     lag: `pki-status-export` uses `--base-branch master`, so the series should
     appear after this branch lands on `master`, unless that exporter workflow is
     changed.
-- Current implementation stage: Open WebUI SSO is validated for `ihar`, with
-  local Open WebUI password login retained as the rollback path. `kasia`
-  enrollment is deferred until she is ready.
+- Current implementation stage: Paperless Kanidm client is committed and
+  waiting for `pki` deploy. Open WebUI SSO is validated for `ihar`, with local
+  Open WebUI password login retained as the rollback path. `kasia` enrollment
+  is deferred until she is ready.
 - Mail sender is deployed on `pki`. It reuses the existing Gmail SMTP sender
   details from Vikunja by copying that app password into `pki` as
   `kanidm/mailer/password`. The `mail-sender` Kanidm service account and
@@ -323,7 +324,7 @@ Create one OAuth/OIDC client per native app:
 - [x] `grafana`
 - [x] `vikunja`
 - [x] `open-webui`
-- [ ] `paperless`
+- [x] `paperless`
 - [ ] `romm`
 - [ ] later: `audiobookshelf`
 - [ ] later: `jellyfin`
@@ -379,6 +380,23 @@ Open WebUI client:
 - [x] Deploy `pki`.
 - [x] Verify Open WebUI OIDC discovery and client metadata.
 
+Paperless client:
+
+- [x] Add a shared Paperless OAuth client secret to `pki` and `org` sops
+      secrets.
+- [x] Declare Kanidm OAuth2 client `paperless`.
+- [x] Set redirect URL to
+      `https://papers.ihar.dev/accounts/oidc/sso/login/callback/`.
+- [x] Set landing URL to `https://papers.ihar.dev/`.
+- [x] Keep PKCE required; the Paperless app-side config should set
+      `oauth_pkce_enabled` for the allauth OIDC app.
+- [x] Restrict OIDC scopes to `paperless-admins` and `paperless-users`.
+- [x] Allow the `groups` scope for Paperless group sync.
+- [x] Emit a `groups` claim mapping `paperless-admins` and `paperless-users`
+      to matching group names.
+- [ ] Deploy `pki`.
+- [ ] Verify Paperless OIDC discovery and client metadata.
+
 ### 6. Configure Native OIDC Apps
 
 Roll out one app at a time. For each app:
@@ -419,6 +437,13 @@ Vikunja-specific work:
 
 Paperless-specific work:
 
+- [ ] Configure Paperless django-allauth OIDC against Kanidm discovery.
+- [ ] Keep regular Paperless login enabled for rollback.
+- [ ] Keep local password signups disabled.
+- [ ] Decide whether first SSO login should auto-link by trusted email or
+      whether the bootstrap should pre-create allauth `SocialAccount` links.
+- [ ] Create or sync Paperless groups for `paperless-admins` and
+      `paperless-users`.
 - [ ] Replace the current local password bootstrap with OIDC-backed login where
       possible.
 - [ ] Keep only the minimal Paperless-local declarative bootstrap needed for
@@ -443,7 +468,7 @@ Suggested order:
 
 - [x] Grafana
 - [x] Vikunja
-- [ ] Open WebUI
+- [x] Open WebUI
 - [ ] Paperless
 - [ ] RomM
 
