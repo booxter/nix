@@ -556,7 +556,7 @@ Do not include:
 - [x] Deploy Aurral app-level proxy-auth integration on `srvarr`.
       Deploy `beast` first so the public edge is already overwriting the
       username header from oauth2-proxy before `srvarr` starts trusting it.
-- [ ] Deploy Aurral monitoring probe update on `fana`.
+- [x] Deploy Aurral monitoring probe update on `fana`.
 - [x] Verify Aurral browser SSO reaches the app through oauth2-proxy.
 - [x] Verify Aurral app-local fallback login after `srvarr` deploy.
 - [x] Decide Shelfmark auth path.
