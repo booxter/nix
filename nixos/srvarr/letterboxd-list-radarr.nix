@@ -7,6 +7,10 @@ let
   port = 5000;
   redisPort = 6381;
   redisService = "redis-letterboxd-list-radarr.service";
+  serviceDeps = [
+    "network-online.target"
+    redisService
+  ];
 in
 {
   services.redis.servers.letterboxd-list-radarr = {
@@ -25,11 +29,8 @@ in
   systemd.services.letterboxd-list-radarr = {
     description = "Letterboxd list to Radarr JSON bridge";
     wantedBy = [ "multi-user.target" ];
-    wants = [ redisService ];
-    after = [
-      "network-online.target"
-      redisService
-    ];
+    wants = serviceDeps;
+    after = serviceDeps;
     environment = {
       LOG_LEVEL = "info";
       PORT = toString port;
