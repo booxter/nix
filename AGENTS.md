@@ -42,6 +42,8 @@ Scope: whole repository.
 - On configured clients, OpenSSH transparently runs `ssh-ticket ensure`; wait for
   any macOS TTL/Secretive approval prompts. Treat `ssh-ticket`/`ssht` as
   implementation details unless explicitly debugging ticket issuance.
+- For one-off remote diagnostics when a tool is missing on the target, it is ok
+  to use `nix shell nixpkgs#<pkg> -c <cmd>`.
 
 ## Deploys
 
