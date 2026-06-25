@@ -20,6 +20,8 @@ let
   openWebuiUrl = "https://${openWebuiService.publicHost}";
   paperlessService = hostInventory.servicesById.paperless;
   paperlessUrl = "https://${paperlessService.publicHost}";
+  rommService = hostInventory.servicesById.romm;
+  rommUrl = "https://${rommService.publicHost}";
   mailSenderUser = "kanidm-mail-sender";
   mailSenderGroup = mailSenderUser;
   mailSenderStateDir = "/var/lib/kanidm-mail-sender";
@@ -139,6 +141,13 @@ in
       mode = "0400";
       restartUnits = [ "kanidm.service" ];
     };
+    kanidmRommOAuthClientSecret = {
+      key = "kanidm/oauth2/romm/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
   };
 
   services.kanidm = {
@@ -241,6 +250,39 @@ in
         claimMaps.groups.valuesByGroup = {
           "paperless-admins" = [ "paperless-admins" ];
           "paperless-users" = [ "paperless-users" ];
+        };
+      };
+      systems.oauth2.romm = {
+        displayName = "RomM";
+        originUrl = "${rommUrl}/api/oauth/openid";
+        originLanding = "${rommUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmRommOAuthClientSecret.path;
+        allowInsecureClientDisablePkce = true;
+        preferShortUsername = true;
+        scopeMaps = {
+          "romm-admins" = [
+            "openid"
+            "email"
+            "profile"
+            "groups"
+          ];
+          "romm-editors" = [
+            "openid"
+            "email"
+            "profile"
+            "groups"
+          ];
+          "romm-viewers" = [
+            "openid"
+            "email"
+            "profile"
+            "groups"
+          ];
+        };
+        claimMaps.groups.valuesByGroup = {
+          "romm-admins" = [ "romm-admins" ];
+          "romm-editors" = [ "romm-editors" ];
+          "romm-viewers" = [ "romm-viewers" ];
         };
       };
     };
