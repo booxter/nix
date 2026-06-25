@@ -12,6 +12,9 @@ let
   aurralStateDir = "${config.host.srvarrPaths.stateDir}/aurral";
   aurralFlowDir = "${mediaPath}/library/flows";
   aurralService = hostInventory.servicesById.aurral;
+  aurralAdminUsers = lib.attrNames (
+    lib.filterAttrs (_: person: builtins.elem "media-admins" person.groups) hostInventory.sso.users
+  );
   aurralUnitDeps = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];
@@ -44,6 +47,14 @@ in
       # Public access traverses beast nginx first and then the local srvarr
       # nginx proxy in front of the app.
       TRUST_PROXY = "2";
+      # Browser SSO is enforced by oauth2-proxy on beast. Aurral has no native
+      # OIDC support, so it trusts only this proxy-provided username header
+      # while keeping app-local password login as a fallback.
+      AUTH_PROXY_ENABLED = "true";
+      AUTH_PROXY_HEADER = "x-forwarded-user";
+      AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," aurralAdminUsers;
+      AUTH_PROXY_DEFAULT_ROLE = "user";
+      AUTH_PROXY_TRUSTED_IPS = "127.0.0.1,::1";
     };
     serviceConfig = {
       ExecStart = lib.getExe srvarrPkgs.aurral;

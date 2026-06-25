@@ -460,7 +460,7 @@ rec {
       scope = "external";
       owner = "srvarr";
       publicHost = "mu.ihar.dev";
-      probePath = "/api/health";
+      probePath = "/oauth2/sign_in";
     }))
     (resolveService (mkService {
       id = "audiobookshelf";

@@ -22,6 +22,8 @@ let
   paperlessUrl = "https://${paperlessService.publicHost}";
   rommService = hostInventory.servicesById.romm;
   rommUrl = "https://${rommService.publicHost}";
+  aurralService = hostInventory.servicesById.aurral;
+  aurralUrl = "https://${aurralService.publicHost}";
   srvarrAdminAppsUrl = "https://bazarr.${lan.domain}";
   srvarrAdminAppHosts = lib.unique (
     lib.concatMap hostInventory.toInternalHttpsServiceHosts hostInventory.srvarrAdminAppIds
@@ -148,6 +150,13 @@ in
     };
     kanidmRommOAuthClientSecret = {
       key = "kanidm/oauth2/romm/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
+    kanidmAurralOAuthClientSecret = {
+      key = "kanidm/oauth2/aurral/client_secret";
       owner = "kanidm";
       group = "kanidm";
       mode = "0400";
@@ -295,6 +304,31 @@ in
           "romm-admins" = [ "romm-admins" ];
           "romm-editors" = [ "romm-editors" ];
           "romm-viewers" = [ "romm-viewers" ];
+        };
+      };
+      systems.oauth2.aurral = {
+        displayName = "Aurral";
+        originUrl = "${aurralUrl}/oauth2/callback";
+        originLanding = "${aurralUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmAurralOAuthClientSecret.path;
+        preferShortUsername = true;
+        scopeMaps = {
+          "media-admins" = [
+            "openid"
+            "email"
+            "profile"
+            "media_groups"
+          ];
+          "media-users" = [
+            "openid"
+            "email"
+            "profile"
+            "media_groups"
+          ];
+        };
+        claimMaps.media_groups.valuesByGroup = {
+          "media-admins" = [ "media-admins" ];
+          "media-users" = [ "media-users" ];
         };
       };
       systems.oauth2.srvarr-admin-apps = {
