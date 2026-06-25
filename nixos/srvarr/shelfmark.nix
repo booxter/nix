@@ -84,9 +84,14 @@ in
     upstream = "http://127.0.0.1:${toString config.services.shelfmark.environment.FLASK_PORT}";
     serverAliases = [ shelfmarkService.publicHost ];
     mtls.enable = true;
+    recommendedProxySettings = false;
     locationExtraConfig = ''
       proxy_set_header Host ${shelfmarkService.publicHost};
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
       proxy_set_header X-Forwarded-Host ${shelfmarkService.publicHost};
+      proxy_set_header X-Forwarded-Server $hostname;
     '';
   };
 }
