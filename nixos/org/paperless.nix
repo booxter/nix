@@ -76,6 +76,7 @@ let
     import os
     import pathlib
 
+    from allauth.account.models import EmailAddress
     from django.contrib.auth import get_user_model
     from django.contrib.auth.models import Group
     from rest_framework.authtoken.models import Token
@@ -125,6 +126,27 @@ let
         changed = True
       if changed:
         user.save()
+
+      if spec["email"]:
+        address, _ = EmailAddress.objects.get_or_create(
+          user=user,
+          email=spec["email"],
+          defaults={
+            "verified": True,
+            "primary": True,
+          },
+        )
+        address_changed = False
+        for field, value in {
+          "verified": True,
+          "primary": True,
+        }.items():
+          if getattr(address, field) != value:
+            setattr(address, field, value)
+            address_changed = True
+        if address_changed:
+          address.save()
+        EmailAddress.objects.filter(user=user, primary=True).exclude(pk=address.pk).update(primary=False)
 
     token_key = read_secret(os.environ["PAPERLESS_GPT_API_TOKEN_FILE"])
     if len(token_key) != 40:
