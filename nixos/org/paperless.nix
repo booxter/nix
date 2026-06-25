@@ -98,8 +98,8 @@ let
         "username": "kasia",
         "email": "",
         "password_file": os.environ["PAPERLESS_KASIA_PASSWORD_FILE"],
-        "is_staff": True,
-        "is_superuser": True,
+        "is_staff": False,
+        "is_superuser": False,
       },
     ]
 
