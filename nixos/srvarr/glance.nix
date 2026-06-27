@@ -40,13 +40,6 @@ let
         url = "https://${httpsService.serverName}/";
       }
   ) hostInventory.glanceServices;
-  serviceCatalogById = builtins.listToAttrs (
-    map (service: {
-      name = service.id;
-      value = service;
-    }) serviceCatalog
-  );
-  servicesIn = serviceIds: map (serviceId: serviceCatalogById.${serviceId}) serviceIds;
   utilityLinks = [
     {
       icon = "sh:smallstep";
@@ -54,6 +47,17 @@ let
       url = pkiRootCaUrl;
     }
   ];
+  extraSitesByCategory = {
+    infrastructure = utilityLinks;
+  };
+  extraSitesFor =
+    category:
+    if builtins.hasAttr category.id extraSitesByCategory then
+      builtins.getAttr category.id extraSitesByCategory
+    else
+      [ ];
+  servicesForCategory =
+    category: builtins.filter (service: service.glanceCategory == category.id) serviceCatalog;
   siteFor = site: {
     inherit (site)
       icon
@@ -67,43 +71,10 @@ let
     inherit (section) title;
     sites = map siteFor section.sites;
   };
-  serviceSections = [
-    {
-      title = "User Apps";
-      sites = servicesIn [
-        "jellyfin"
-        "seerr"
-        "romm"
-        "aurral"
-        "audiobookshelf"
-        "shelfmark"
-        "vikunja"
-        "paperless"
-        "ai"
-      ];
-    }
-    {
-      title = "Media Admin";
-      sites = servicesIn [
-        "radarr"
-        "sonarr"
-        "lidarr"
-        "bazarr"
-        "prowlarr"
-        "transmission"
-        "sabnzbd"
-      ];
-    }
-    {
-      title = "Infrastructure";
-      sites =
-        (servicesIn [
-          "llm"
-          "grafana"
-        ])
-        ++ utilityLinks;
-    }
-  ];
+  serviceSections = map (category: {
+    inherit (category) title;
+    sites = (servicesForCategory category) ++ (extraSitesFor category);
+  }) hostInventory.glanceCategories;
 in
 {
   services.glance = {

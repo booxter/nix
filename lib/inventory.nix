@@ -9,6 +9,21 @@ let
 
   frame = "frame";
   nvws = "nvws";
+  glanceCategories = [
+    {
+      id = "user";
+      title = "User Apps";
+    }
+    {
+      id = "media-admin";
+      title = "Media Admin";
+    }
+    {
+      id = "infrastructure";
+      title = "Infrastructure";
+    }
+  ];
+  glanceCategoryIds = map (category: category.id) glanceCategories;
 
   builderDhcpReservations = {
     "1" = {
@@ -76,10 +91,12 @@ let
       icon ? "sh:${id}",
       blackboxProbe ? true,
       showInGlance ? true,
+      glanceCategory ? null,
     }:
     {
       inherit
         blackboxProbe
+        glanceCategory
         icon
         id
         owner
@@ -90,6 +107,20 @@ let
         ;
     }
     // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
+
+  assertValidService =
+    service:
+    let
+      category = service.glanceCategory or null;
+      categoryLabel = if category == null then "<missing>" else category;
+    in
+    assert lib.asserts.assertMsg (
+      !service.showInGlance || category != null
+    ) "Glance service ${service.id} must set glanceCategory";
+    assert lib.asserts.assertMsg (
+      category == null || builtins.elem category glanceCategoryIds
+    ) "Glance service ${service.id} uses unknown glanceCategory '${categoryLabel}'";
+    service;
 
   mkDnsARecord = domain: ipv4Address: {
     type = "A_RECORD";
@@ -110,6 +141,8 @@ let
       throw "host ${spec.name} does not have a stable IPv4 address for A-record aliases";
 in
 rec {
+  inherit glanceCategories;
+
   virtPlatform = "aarch64-darwin";
 
   toProxVmName = name: "prox-${name}vm";
@@ -390,7 +423,7 @@ rec {
     };
   };
 
-  services = [
+  services = map assertValidService [
     (resolveService (mkService {
       id = "id";
       title = "SSO";
@@ -407,6 +440,7 @@ rec {
       owner = "beast";
       publicHost = "jf.ihar.dev";
       probePath = "/web/";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "seerr";
@@ -414,6 +448,7 @@ rec {
       owner = "srvarr";
       publicHost = "js.ihar.dev";
       probePath = "/login";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "romm";
@@ -422,30 +457,35 @@ rec {
       owner = "srvarr";
       publicHost = "game.ihar.dev";
       probePath = "/api/heartbeat";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "grafana";
       scope = "internal";
       owner = "fana";
       probePath = "/login";
+      glanceCategory = "infrastructure";
     }))
     (resolveService (mkService {
       id = "radarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
       id = "sonarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
       id = "lidarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
       id = "letterboxd-list-radarr";
@@ -461,6 +501,7 @@ rec {
       owner = "srvarr";
       publicHost = "mu.ihar.dev";
       probePath = "/oauth2/sign_in";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "audiobookshelf";
@@ -468,6 +509,7 @@ rec {
       owner = "srvarr";
       publicHost = "au.ihar.dev";
       probePath = "";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "shelfmark";
@@ -475,6 +517,7 @@ rec {
       owner = "srvarr";
       publicHost = "shelf.ihar.dev";
       probePath = "/api/health";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "vikunja";
@@ -482,6 +525,7 @@ rec {
       owner = "org";
       publicHost = "vi.ihar.dev";
       probePath = "";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "paperless";
@@ -491,6 +535,7 @@ rec {
       owner = "org";
       publicHost = "papers.ihar.dev";
       probePath = "/accounts/login/";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "llm";
@@ -500,6 +545,7 @@ rec {
       owner = "org";
       publicHost = "llm.ihar.dev";
       probePath = "/health/liveliness";
+      glanceCategory = "infrastructure";
     }))
     (resolveService (mkService {
       id = "ai";
@@ -509,6 +555,7 @@ rec {
       owner = "org";
       publicHost = "ai.ihar.dev";
       probePath = "/";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "ollama";
@@ -524,18 +571,21 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
       id = "prowlarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
       id = "transmission";
       scope = "internal";
       owner = "srvarr";
       probePath = "/transmission/web/";
+      glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
       id = "sabnzbd";
@@ -544,6 +594,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      glanceCategory = "media-admin";
     }))
   ];
 
