@@ -77,11 +77,68 @@ let
         url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
   ) hostInventory.glanceServices;
+  serviceCatalogById = builtins.listToAttrs (
+    map (service: {
+      name = service.id;
+      value = service;
+    }) serviceCatalog
+  );
+  servicesIn = serviceIds: map (serviceId: serviceCatalogById.${serviceId}) serviceIds;
   utilityLinks = [
     {
       icon = "sh:smallstep";
       title = "PKI Root CA";
       url = pkiRootCaUrl;
+    }
+  ];
+  siteFor = site: {
+    inherit (site)
+      icon
+      title
+      url
+      ;
+  };
+  monitorWidgetFor = section: {
+    type = "monitor";
+    cache = "1m";
+    inherit (section) title;
+    sites = map siteFor section.sites;
+  };
+  serviceSections = [
+    {
+      title = "User Apps";
+      sites = servicesIn [
+        "jellyfin"
+        "seerr"
+        "romm"
+        "aurral"
+        "audiobookshelf"
+        "shelfmark"
+        "vikunja"
+        "paperless"
+        "ai"
+      ];
+    }
+    {
+      title = "Media Admin";
+      sites = servicesIn [
+        "radarr"
+        "sonarr"
+        "lidarr"
+        "bazarr"
+        "prowlarr"
+        "transmission"
+        "sabnzbd"
+      ];
+    }
+    {
+      title = "Infrastructure";
+      sites =
+        (servicesIn [
+          "llm"
+          "grafana"
+        ])
+        ++ utilityLinks;
     }
   ];
 in
@@ -107,19 +164,8 @@ in
                   type = "search";
                   autofocus = true;
                 }
-                {
-                  type = "monitor";
-                  cache = "1m";
-                  title = "Services";
-                  sites = map (service: {
-                    inherit (service)
-                      icon
-                      title
-                      url
-                      ;
-                  }) (serviceCatalog ++ utilityLinks);
-                }
-              ];
+              ]
+              ++ map monitorWidgetFor serviceSections;
             }
           ];
         }
