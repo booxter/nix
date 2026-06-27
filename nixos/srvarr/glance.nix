@@ -1,11 +1,15 @@
 {
   config,
   hostInventory,
+  lib,
   outputs,
+  pkgs,
   ...
 }:
 let
   glanceInternalPort = 18080;
+  glanceExternalPort = 18081;
+  dashService = hostInventory.servicesById.dash;
   fanaHostConfig = outputs.nixosConfigurations.fana.config;
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
   pkiSpec = hostInventory.nixosHostSpecsByName.pki;
@@ -71,18 +75,21 @@ let
     inherit (section) title;
     sites = map siteFor section.sites;
   };
-  serviceSections = map (category: {
-    inherit (category) title;
-    sites = (servicesForCategory category) ++ (extraSitesFor category);
-  }) hostInventory.glanceCategories;
-in
-{
-  services.glance = {
-    enable = true;
-    settings = {
+  serviceSectionsFor =
+    categories:
+    map (category: {
+      inherit (category) title;
+      sites = (servicesForCategory category) ++ (extraSitesFor category);
+    }) categories;
+  mkGlanceSettings =
+    {
+      port,
+      sections,
+    }:
+    {
       server = {
         host = "127.0.0.1";
-        port = glanceInternalPort;
+        inherit port;
       };
       pages = [
         {
@@ -99,16 +106,75 @@ in
                   autofocus = true;
                 }
               ]
-              ++ map monitorWidgetFor serviceSections;
+              ++ map monitorWidgetFor sections;
             }
           ];
         }
       ];
     };
+  allServiceSections = serviceSectionsFor hostInventory.glanceCategories;
+  externalServiceSections = serviceSectionsFor (
+    builtins.filter (category: category.id == "user") hostInventory.glanceCategories
+  );
+  externalSettings = mkGlanceSettings {
+    port = glanceExternalPort;
+    sections = externalServiceSections;
+  };
+  externalSettingsFile = (pkgs.formats.yaml { }).generate "glance-external.yaml" externalSettings;
+in
+{
+  services.glance = {
+    enable = true;
+    settings = mkGlanceSettings {
+      port = glanceInternalPort;
+      sections = allServiceSections;
+    };
   };
 
-  host.internalHttps.services.glance = {
-    enable = true;
-    upstream = "http://127.0.0.1:${toString glanceInternalPort}";
+  systemd.services.glance-external = {
+    description = "Glance external dashboard server";
+    wantedBy = [ "multi-user.target" ];
+    after = [
+      "network.target"
+      "nss-user-lookup.target"
+    ];
+    requires = [ "nss-user-lookup.target" ];
+    serviceConfig = {
+      ExecStart = "${lib.getExe config.services.glance.package} --config ${externalSettingsFile}";
+      Restart = "on-failure";
+      WorkingDirectory = "/var/lib/glance-external";
+      StateDirectory = "glance-external";
+      PrivateTmp = true;
+      DynamicUser = true;
+      DevicePolicy = "closed";
+      LockPersonality = true;
+      MemoryDenyWriteExecute = true;
+      PrivateUsers = true;
+      ProtectHome = true;
+      ProtectHostname = true;
+      ProtectKernelLogs = true;
+      ProtectKernelModules = true;
+      ProtectKernelTunables = true;
+      ProtectControlGroups = true;
+      ProcSubset = "all";
+      RestrictNamespaces = true;
+      RestrictRealtime = true;
+      SystemCallArchitectures = "native";
+      UMask = "0077";
+    };
+  };
+
+  host.internalHttps.services = {
+    glance = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString glanceInternalPort}";
+      serverAliases = [ dashService.publicHost ];
+    };
+
+    dash = {
+      enable = true;
+      upstream = "http://127.0.0.1:${toString glanceExternalPort}";
+      mtls.enable = true;
+    };
   };
 }

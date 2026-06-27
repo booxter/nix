@@ -435,6 +435,16 @@ rec {
       showInGlance = false;
     }))
     (resolveService (mkService {
+      id = "dash";
+      title = "Dashboard";
+      icon = "sh:glance";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "dash.ihar.dev";
+      probePath = "/";
+      showInGlance = false;
+    }))
+    (resolveService (mkService {
       id = "jellyfin";
       scope = "external";
       owner = "beast";
@@ -689,7 +699,9 @@ rec {
       stateVersion = "25.11";
       platform = "x86_64-linux";
       critical = true;
-      dnsAliases = map (service: service.publicHost) publicServices;
+      dnsAliases = builtins.filter (domain: domain != "dash.ihar.dev") (
+        map (service: service.publicHost) publicServices
+      );
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
@@ -773,7 +785,9 @@ rec {
       name = "srvarr";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
+      dnsAliases = [ "dash.ihar.dev" ];
       localDnsAliases = [
+        "dash"
         "glance"
         "seerr"
         "radarr"
