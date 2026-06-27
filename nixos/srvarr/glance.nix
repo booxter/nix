@@ -15,66 +15,29 @@ let
     + toString pkiCaServer.port
     + pkiCaServer.rootsPath;
   srvarrHttpsServices = config.host.internalHttps.services;
-  srvarrPortFor =
-    serviceId:
-    {
-      aurral = config.systemd.services.aurral.environment.PORT;
-      audiobookshelf = config.services.audiobookshelf.port;
-      bazarr = config.services.bazarr.listenPort;
-      lidarr = config.services.lidarr.settings.server.port;
-      prowlarr = config.services.prowlarr.settings.server.port;
-      radarr = config.services.radarr.settings.server.port;
-      sabnzbd = config.services.sabnzbd.settings.misc.port;
-      shelfmark = config.services.shelfmark.environment.FLASK_PORT;
-      sonarr = config.services.sonarr.settings.server.port;
-      transmission = config.services.transmission.settings.rpc-port;
-    }
-    .${serviceId};
-  httpsServiceFor =
-    service:
-    if
-      builtins.hasAttr service.id srvarrHttpsServices
-      && (builtins.getAttr service.id srvarrHttpsServices).enable
-    then
-      builtins.getAttr service.id srvarrHttpsServices
-    else
-      null;
-  fanaHttpsServiceFor =
-    service:
-    if
-      builtins.hasAttr service.id fanaHttpsServices
-      && (builtins.getAttr service.id fanaHttpsServices).enable
-    then
-      builtins.getAttr service.id fanaHttpsServices
-    else
-      null;
-  serviceCatalog = map (
+  internalHttpsServicesFor =
+    service: if service.owner == "fana" then fanaHttpsServices else srvarrHttpsServices;
+  internalHttpsServiceFor =
     service:
     let
-      httpsService = httpsServiceFor service;
-      fanaHttpsService = fanaHttpsServiceFor service;
+      internalHttpsServices = internalHttpsServicesFor service;
+      serviceConfig = builtins.getAttr service.id internalHttpsServices;
     in
+    if builtins.hasAttr service.id internalHttpsServices && serviceConfig.enable then
+      serviceConfig
+    else
+      throw "Glance service ${service.id} must expose enabled internal HTTPS";
+  serviceCatalog = map (
+    service:
     if service.scope == "external" then
       service
-    else if service.owner == "fana" && fanaHttpsService != null then
-      service
-      // {
-        url = "https://${fanaHttpsService.serverName}/";
-      }
-    else if service.owner == "fana" then
-      service
-      // {
-        url = "http://${service.displayHost}:3000/";
-      }
-    else if httpsService != null then
+    else
+      let
+        httpsService = internalHttpsServiceFor service;
+      in
       service
       // {
         url = "https://${httpsService.serverName}/";
-      }
-    else
-      service
-      // {
-        url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
   ) hostInventory.glanceServices;
   serviceCatalogById = builtins.listToAttrs (
