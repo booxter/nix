@@ -26,6 +26,10 @@ let
           localPort = 18443;
         }
         {
+          id = "dash";
+          localPort = 18081;
+        }
+        {
           id = "seerr";
           localPort = 15055;
         }
