@@ -11,6 +11,7 @@ let
   litellmPort = 4000;
   ollamaTunnelPort = 11435;
   paperlessService = hostInventory.servicesById.paperless;
+  searchlessMetricsMtlsPort = 9349;
   searchlessPort = 8001;
   searchlessStateDir = "/var/lib/searchless-ngx";
   searchlessUser = "searchless-ngx";
@@ -152,5 +153,11 @@ in
         ReadWritePaths = [ searchlessStateDir ];
       };
     };
+  };
+
+  host.observability.client.prometheusMtlsEndpoints.searchless = {
+    enable = true;
+    port = searchlessMetricsMtlsPort;
+    upstream = "http://127.0.0.1:${toString searchlessPort}/metrics";
   };
 }

@@ -1,0 +1,73 @@
+diff --git a/server/app.py b/server/app.py
+index ec130c0..4ac5f3f 100644
+--- a/server/app.py
++++ b/server/app.py
+@@ -2,6 +2,7 @@ import asyncio
+ from datetime import datetime, timedelta
+ from importlib.metadata import version, PackageNotFoundError
+ from fastapi import FastAPI, BackgroundTasks, Query, Request, Response, status
++from prometheus_client import CONTENT_TYPE_LATEST, Gauge, generate_latest
+ from loguru import logger
+ from core.config import settings
+ from api.paperless_client import PaperlessAPIClient
+@@ -15,6 +16,47 @@ try:
+ except PackageNotFoundError:
+     __version__ = "dev"
+ 
++metrics_collection_success = Gauge("searchless_metrics_collection_success", "Whether the most recent Searchless metrics collection completed successfully.")
++paperless_connected = Gauge("searchless_paperless_connected", "Whether Searchless can query the Paperless API.")
++vector_store_initialized = Gauge("searchless_vector_store_initialized", "Whether Searchless can initialize the Chroma vector store.")
++paperless_documents = Gauge("searchless_paperless_documents", "Number of documents visible to Searchless in Paperless.")
++chroma_chunks = Gauge("searchless_chroma_chunks", "Number of chunks stored in Chroma for Searchless retrieval.")
++bulk_sync_limit = Gauge("searchless_bulk_sync_limit", "Configured bulk sync document limit. Zero means unlimited.")
++
++
++async def _collect_metrics():
++    metrics_collection_success.set(1)
++    bulk_sync_limit.set(settings.bulk_sync_limit or 0)
++
++    client = PaperlessAPIClient()
++    try:
++        response = await client.get_documents(params={"page_size": 1})
++        paperless_connected.set(1 if "results" in response else 0)
++        paperless_documents.set(response.get("count", 0))
++    except Exception as e:
++        metrics_collection_success.set(0)
++        paperless_connected.set(0)
++        paperless_documents.set(0)
++        logger.error(f"Metrics Paperless check failed: {e}")
++    finally:
++        await client.close()
++
++    try:
++        from semantic.vector_store import vector_store
++        vector_store._ensure_initialized()
++        if vector_store.collection is None:
++            vector_store_initialized.set(0)
++            chroma_chunks.set(0)
++        else:
++            vector_store_initialized.set(1)
++            chroma_chunks.set(vector_store.collection.count())
++    except Exception as e:
++        metrics_collection_success.set(0)
++        vector_store_initialized.set(0)
++        chroma_chunks.set(0)
++        logger.error(f"Metrics Chroma check failed: {e}")
++
++
+ async def _periodic_sync_loop(interval_minutes: int):
+     """Runs bulk_sync_documents() every interval_minutes minutes."""
+     while True:
+@@ -125,6 +166,12 @@ async def sync_status():
+     }
+ 
+ 
++@app.get("/metrics", include_in_schema=False)
++async def metrics():
++    await _collect_metrics()
++    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
++
++
+ @app.post("/webhook/sync", status_code=status.HTTP_202_ACCEPTED)
+ async def webhook_sync(request: Request, background_tasks: BackgroundTasks):
+     """
