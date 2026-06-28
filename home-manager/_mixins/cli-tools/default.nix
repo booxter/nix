@@ -7,6 +7,7 @@
 }:
 let
   homeManagerPkgs = import ../../pkgs pkgs;
+  cliToolsPkgs = import ./pkgs { inherit pkgs; };
 in
 {
   programs.bash.enable = true;
@@ -139,6 +140,7 @@ in
       age-plugin-se
       ramalama
       sops
+      cliToolsPkgs.codex-rate-limit-reset-credits
     ];
 
   home.sessionVariables = {
