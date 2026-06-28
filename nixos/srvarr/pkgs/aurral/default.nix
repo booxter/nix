@@ -111,10 +111,7 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  passthru.updateScript = [
-    "bash"
-    ./update.sh
-  ];
+  passthru.updateScript = [ ./update.sh ];
 
   meta = {
     description = "Self-hosted music discovery, request management, and flow downloads for Lidarr";
