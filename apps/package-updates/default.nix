@@ -9,11 +9,14 @@ let
   updatePackages = pkgs.writeShellApplication {
     name = "update-packages";
     runtimeInputs = with pkgs; [
+      bash
       coreutils
       git
+      gnused
       jq
       nix
       nix-update
+      prefetch-npm-deps
     ];
     text = ''
       export PACKAGE_UPDATE_TARGETS_FILE="''${PACKAGE_UPDATE_TARGETS_FILE:-${./targets.json}}"
