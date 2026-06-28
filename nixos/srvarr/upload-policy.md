@@ -7,7 +7,7 @@ This document describes the current upload-control model on `srvarr`.
 There are two active control layers:
 
 - adaptive global upload budgeting from Jellyfin playback
-- native private-tracker prioritization inside the patched Transmission daemon
+- helper-driven per-torrent priority from preferred tracker hosts
 
 There is no public/private sub-cap split.
 
@@ -53,10 +53,10 @@ Important current facts:
 - `srvarr` imports `transmission-prioritizer.nix`
 - `transmission-prioritizer` can be stopped independently from
   `transmission-collector`
-- Transmission gets:
-  - `TR_TRACKER_PRIORITY_FILE=/run/secrets/transmissionTrackerHosts`
 - the preferred tracker host secret lives at:
   - `/run/secrets/transmissionTrackerHosts`
+- the prioritizer, collector, and torrent cleaner receive that secret with
+  `--trackers-file`
 
 ## Current Behavior
 
@@ -92,19 +92,22 @@ Shared state file:
 The main active fields are the adaptive target, reason, timestamps, and
 `transmission_upload_limit_kbps`.
 
-### 2. Native Transmission Tracker Prioritization
+### 2. Helper-Driven Tracker Prioritization
 
-Transmission is patched to honor `TR_TRACKER_PRIORITY_FILE`.
+Transmission itself is unpatched for tracker preference. The local helper
+services classify torrents by preferred tracker host through Transmission RPC
+and enforce `bandwidthPriority` on whole torrents.
 
 Current behavior:
 
-- preferred tracker hosts are loaded from that file
-- already-due announces for preferred trackers are dispatched first
-- peers learned from preferred trackers are treated as preferred in peer
-  scheduling
-- tracker-provided announce cadence is not overridden
+- preferred tracker hosts are loaded from `/run/secrets/transmissionTrackerHosts`
+- preferred torrents are kept at `bandwidthPriority = high`
+- non-preferred torrents are promoted, normalized, demoted, or stopped according
+  to preferred-torrent activity and ratio thresholds
+- tracker announce cadence and peer identity stay under upstream Transmission
+  behavior
 
-This is now the main private-tracker preference mechanism.
+This is the main private-tracker preference mechanism.
 
 ## Helper Services
 
