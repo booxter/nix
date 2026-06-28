@@ -138,6 +138,7 @@ in
     ++ lib.optionals (!isWork) [
       age
       age-plugin-se
+      cliToolsPkgs.codex-usage-status
       ramalama
       sops
       cliToolsPkgs.codex-rate-limit-reset-credits
