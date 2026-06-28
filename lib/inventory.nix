@@ -901,7 +901,7 @@ rec {
       upsHost = "prx1-lab";
       cores = 2;
       memorySize = 4;
-      diskSize = 40;
+      diskSize = 50;
       sshPort = 10010;
       hmFull = false;
       dhcpReservation = {
