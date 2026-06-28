@@ -81,6 +81,7 @@ in
 
   imports = [
     ./id.nix
+    ./backup.nix
     ./unifi-sync.nix
     ./wg-home-dns-sync.nix
   ];
