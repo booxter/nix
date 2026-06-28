@@ -489,6 +489,9 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [
             {
               "options": {
@@ -567,6 +570,9 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [
             {
               "options": {
@@ -921,56 +927,45 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "item"
+          }
+        ]
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "paperless_statistics_tag_count{job=\"paperless\"}",
+          "expr": "label_replace(paperless_statistics_tag_count{job=\"paperless\"}, \"item\", \"tags\", \"__name__\", \".*\") or label_replace(paperless_statistics_correspondent_count{job=\"paperless\"}, \"item\", \"correspondents\", \"__name__\", \".*\") or label_replace(paperless_statistics_document_type_count{job=\"paperless\"}, \"item\", \"document types\", \"__name__\", \".*\") or label_replace(paperless_statistics_storage_path_count{job=\"paperless\"}, \"item\", \"storage paths\", \"__name__\", \".*\") or label_replace(searchless_bulk_sync_limit{job=\"node-mtls\",instance=\"org\"}, \"item\", \"searchless bulk sync limit\", \"__name__\", \".*\")",
           "format": "table",
           "instant": true,
-          "legendFormat": "tags",
+          "range": false,
           "refId": "A"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "paperless_statistics_correspondent_count{job=\"paperless\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "correspondents",
-          "refId": "B"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "paperless_statistics_document_type_count{job=\"paperless\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "document types",
-          "refId": "C"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "paperless_statistics_storage_path_count{job=\"paperless\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "storage paths",
-          "refId": "D"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "searchless_bulk_sync_limit{job=\"node-mtls\",instance=\"org\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "searchless bulk sync limit",
-          "refId": "E"
         }
       ],
       "title": "Inventory Counts",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "item",
+                "Value"
+              ]
+            }
+          }
+        }
+      ],
       "type": "table"
     }
   ],
