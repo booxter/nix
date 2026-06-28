@@ -85,6 +85,15 @@ groups:
         annotations:
           summary: "Open WebUI SearXNG probe returned no results on org"
           description: "The Open WebUI SearXNG dependency probe on org has returned zero search results for 30 minutes."
+      - alert: PaperlessComponentUnhealthy
+        expr: max by (instance, job, component) (label_replace(paperless_status_celery_status{job="paperless"} < 1, "component", "celery", "__name__", ".*") or label_replace(paperless_status_classifier_status{job="paperless"} < 1, "component", "classifier", "__name__", ".*") or label_replace(paperless_status_database_status{job="paperless"} < 1, "component", "database", "__name__", ".*") or label_replace(paperless_status_index_status{job="paperless"} < 1, "component", "index", "__name__", ".*") or label_replace(paperless_status_redis_status{job="paperless"} < 1, "component", "redis", "__name__", ".*") or label_replace(paperless_status_sanity_check_status{job="paperless"} < 1, "component", "sanity check", "__name__", ".*"))
+        for: 10m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Paperless component unhealthy: {{ $labels.component }} on {{ $labels.instance }}"
+          description: "Paperless has reported the {{ $labels.component }} component unhealthy for 10 minutes."
       # Searchless API metrics are collected through its existing JSON
       # endpoints and emitted through org's node_exporter textfile collector.
       - alert: SearchlessMetricsTimerDown
@@ -114,6 +123,15 @@ groups:
         annotations:
           summary: "Searchless metrics collection failed on org"
           description: "The Searchless API metrics collector on org has been failing for 10 minutes."
+      - alert: SearchlessComponentUnhealthy
+        expr: max by (instance, job, component) (label_replace(searchless_health_success{job="node-mtls",instance="org"} < 1, "component", "health", "__name__", ".*") or label_replace(searchless_paperless_connected{job="node-mtls",instance="org"} < 1, "component", "paperless api", "__name__", ".*") or label_replace(searchless_sync_status_success{job="node-mtls",instance="org"} < 1, "component", "sync", "__name__", ".*") or label_replace(searchless_test_connection_success{job="node-mtls",instance="org"} < 1, "component", "test connection", "__name__", ".*") or label_replace(searchless_vector_store_initialized{job="node-mtls",instance="org"} < 1, "component", "vector store", "__name__", ".*"))
+        for: 10m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Searchless component unhealthy: {{ $labels.component }} on {{ $labels.instance }}"
+          description: "Searchless has reported the {{ $labels.component }} component unhealthy for 10 minutes."
       - alert: SearchlessMetricsStale
         expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="org",file="/var/lib/prometheus-node-exporter-textfile/searchless-ngx.prom"}) > 300
         for: 5m

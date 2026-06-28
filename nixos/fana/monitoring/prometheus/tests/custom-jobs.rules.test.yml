@@ -236,6 +236,27 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'paperless_status_database_status{instance="org",job="paperless"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: PaperlessComponentUnhealthy
+      - eval_time: 10m
+        alertname: PaperlessComponentUnhealthy
+        exp_alerts:
+          - exp_labels:
+              alertname: PaperlessComponentUnhealthy
+              category: service
+              component: database
+              instance: org
+              job: paperless
+              severity: warning
+            exp_annotations:
+              summary: "Paperless component unhealthy: database on org"
+              description: "Paperless has reported the database component unhealthy for 10 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="searchless-ngx-metrics.timer",state="active"}'
         values: "0x20 1x2"
     alert_rule_test:
@@ -297,6 +318,27 @@ tests:
             exp_annotations:
               summary: "Searchless metrics collection failed on org"
               description: "The Searchless API metrics collector on org has been failing for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'searchless_vector_store_initialized{instance="org",job="node-mtls"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: SearchlessComponentUnhealthy
+      - eval_time: 10m
+        alertname: SearchlessComponentUnhealthy
+        exp_alerts:
+          - exp_labels:
+              alertname: SearchlessComponentUnhealthy
+              category: service
+              component: vector store
+              instance: org
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Searchless component unhealthy: vector store on org"
+              description: "Searchless has reported the vector store component unhealthy for 10 minutes."
 
   - interval: 30s
     input_series:
