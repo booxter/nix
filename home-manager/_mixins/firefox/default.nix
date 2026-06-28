@@ -1,6 +1,12 @@
-{ lib, pkgs, ... }:
+{
+  hostInventory,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
+  firefoxDohExcludedDomains = [ hostInventory.site.public.domain ];
 in
 {
   programs.firefox = {
@@ -100,7 +106,12 @@ in
       ];
     };
 
-    policies = lib.optionalAttrs isDarwin {
+    policies = {
+      DNSOverHTTPS = {
+        ExcludedDomains = firefoxDohExcludedDomains;
+      };
+    }
+    // lib.optionalAttrs isDarwin {
       Certificates = {
         ImportEnterpriseRoots = true;
       };

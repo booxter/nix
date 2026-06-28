@@ -14,6 +14,7 @@ helpers.forAllSystems (
         outputs.overlays.modifications
       ];
     };
+    inventory = import ./lib/inventory.nix { inherit (pkgs) lib; };
     fleetApps = import ./apps/fleet.nix { inherit pkgs; };
     fanaMonitoring = import ./nixos/fana/monitoring/catalog.nix;
     mkCheck =
@@ -93,7 +94,7 @@ helpers.forAllSystems (
         } --peer mair --private-key-file "$private_key_file" --server-public-key test-server-pubkey)"
         printf '%s\n' "$peer_output" | grep -F -- 'Address = 10.83.0.10/32' >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'DNS = 192.168.0.1, home.arpa' >/dev/null
-        printf '%s\n' "$peer_output" | grep -F -- 'Endpoint = wg.ihar.dev:51820' >/dev/null
+        printf '%s\n' "$peer_output" | grep -F -- "Endpoint = wg.${inventory.site.public.domain}:51820" >/dev/null
         printf '%s\n' "$peer_output" | grep -F -- 'AllowedIPs = 10.83.0.0/24, 192.168.0.0/16' >/dev/null
 
         explicit_output="$(${
