@@ -5,6 +5,7 @@
   hostname,
   isLaptop ? false,
   isWork,
+  isVM,
   ...
 }:
 let
@@ -111,6 +112,9 @@ in
         yq
         zip
         ipmitool
+      ]
+      ++ lib.optionals (!isVM) [
+        nvtopPackages.full
       ]
       ++ lib.optionals (!isWork) [
         age

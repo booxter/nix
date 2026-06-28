@@ -418,6 +418,7 @@ rec {
     let
       isDarwin = true;
       isLinux = false;
+      isVM = false;
     in
     inputs.nix-darwin.lib.darwinSystem {
       specialArgs = {
@@ -437,6 +438,7 @@ rec {
           isWork
           isDarwin
           isLinux
+          isVM
           ;
         # If we ever add macOS VMs, thread isVM here and compute accordingly.
         upsShutdownDelaySeconds = upsShutdownDelaySeconds false;
