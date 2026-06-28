@@ -10,6 +10,8 @@ let
   idService = hostInventory.servicesById.id;
   paperlessService = hostInventory.servicesById.paperless;
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
+  paperlessMetricsInternalPort = 19289;
+  paperlessMetricsMtlsPort = 9348;
   paperlessStoragePath = "/data/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
@@ -200,6 +202,7 @@ in
       restartUnits = [
         "paperless-bootstrap.service"
         "paperless-gpt-configure.service"
+        "prometheus-paperless-exporter.service"
         "podman-paperless-gpt.service"
       ];
     };
@@ -375,6 +378,34 @@ in
       ];
       unitConfig.RequiresMountsFor = [ paperlessGptStateDir ];
     };
+
+    prometheus-paperless-exporter = {
+      description = "Prometheus exporter for Paperless-ngx";
+      wantedBy = [ "multi-user.target" ];
+      wants = [
+        "paperless-web.service"
+        "sops-install-secrets.service"
+      ];
+      after = [
+        "paperless-web.service"
+        "sops-install-secrets.service"
+      ];
+      environment = {
+        PAPERLESS_URL = "http://127.0.0.1:${toString config.services.paperless.port}";
+        PAPERLESS_AUTH_TOKEN_FILE = config.sops.secrets."paperless/api/token".path;
+      };
+      serviceConfig = {
+        User = "paperless";
+        Group = "paperless";
+        ExecStart = "${lib.getExe orgPkgs.prometheus-paperless-exporter} --collectors=status,statistics,document --web.disable-exporter-metrics --web.listen-address=127.0.0.1:${toString paperlessMetricsInternalPort}";
+        Restart = "on-failure";
+        RestartSec = "10s";
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectHome = true;
+        ProtectSystem = "strict";
+      };
+    };
   };
 
   systemd.tmpfiles = {
@@ -412,6 +443,12 @@ in
       proxy_read_timeout 300s;
       proxy_send_timeout 300s;
     '';
+  };
+
+  host.observability.client.prometheusMtlsEndpoints.paperless = {
+    enable = true;
+    port = paperlessMetricsMtlsPort;
+    upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
   };
 
   host.externalService.mtlsClients.ollama = {
