@@ -91,6 +91,7 @@
             url = "https://github.com/open-webui/open-webui/pull/24874.patch";
             hash = "sha256-7xgftGzUj0qHAId8+hHYAC0dhif5PVS0YClWHImAuJ8=";
           })
+          ../lib/patches/open-webui-apply-default-model-system-prompt.patch
         ];
       });
 

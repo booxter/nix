@@ -11,6 +11,12 @@ let
   oidcDiscoveryUrl = "https://${idService.publicHost}/oauth2/openid/${oidcClientId}/.well-known/openid-configuration";
   oidcRedirectUri = "${aiService.url}/oauth/oidc/login/callback";
   openWebuiPort = 8082;
+  openWebuiDefaultModelParams = {
+    function_calling = "native";
+    system = ''
+      Current date and time: {{CURRENT_DATETIME}} ({{CURRENT_WEEKDAY}}).
+    '';
+  };
 in
 {
   sops.secrets = {
@@ -77,6 +83,7 @@ in
       OPENAI_API_BASE_URL = "http://127.0.0.1:${toString litellmPort}/v1";
       OPENID_PROVIDER_URL = oidcDiscoveryUrl;
       OPENID_REDIRECT_URI = oidcRedirectUri;
+      DEFAULT_MODEL_PARAMS = builtins.toJSON openWebuiDefaultModelParams;
       TASK_MODEL_EXTERNAL = "qwen3.5:9b";
       WEB_LOADER_CONCURRENT_REQUESTS = "4";
       WEBUI_ADMIN_EMAIL = "ihar.hrachyshka@gmail.com";
