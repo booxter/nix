@@ -16,7 +16,6 @@ let
   litellmEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
   openWebuiEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints."open-webui";
   paperlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.paperless;
-  searchlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.searchless;
   vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
@@ -109,18 +108,6 @@ in
       static_configs = [
         {
           targets = [ "${orgTargetHost}:${toString paperlessEndpoint.port}" ];
-          labels.instance = "org";
-        }
-      ];
-    }
-    {
-      job_name = "searchless";
-      metrics_path = searchlessEndpoint.path;
-      scheme = "https";
-      tls_config = prometheusMtlsTlsConfig;
-      static_configs = [
-        {
-          targets = [ "${orgTargetHost}:${toString searchlessEndpoint.port}" ];
           labels.instance = "org";
         }
       ];

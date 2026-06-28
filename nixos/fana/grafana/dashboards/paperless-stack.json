@@ -160,13 +160,13 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max(up{job=\"searchless\"})",
+          "expr": "max(searchless_metrics_collection_success{job=\"node-mtls\",instance=\"org\"})",
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "Searchless Scrape",
+      "title": "Searchless Metrics",
       "type": "stat"
     },
     {
@@ -308,7 +308,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "min({__name__=~\"searchless_metrics_collection_success|searchless_paperless_connected|searchless_vector_store_initialized\",job=\"searchless\"})",
+          "expr": "min({__name__=~\"searchless_metrics_collection_success|searchless_health_success|searchless_test_connection_success|searchless_sync_status_success|searchless_paperless_connected|searchless_vector_store_initialized\",job=\"node-mtls\",instance=\"org\"})",
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"
@@ -410,7 +410,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "searchless_chroma_chunks{job=\"searchless\"}",
+          "expr": "searchless_chroma_chunks{job=\"node-mtls\",instance=\"org\"}",
           "legendFormat": "__auto",
           "range": false,
           "refId": "A"
@@ -632,7 +632,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "{__name__=~\"searchless_metrics_collection_success|searchless_paperless_connected|searchless_vector_store_initialized\",job=\"searchless\"}",
+          "expr": "{__name__=~\"searchless_metrics_collection_success|searchless_health_success|searchless_test_connection_success|searchless_sync_status_success|searchless_paperless_connected|searchless_vector_store_initialized\",job=\"node-mtls\",instance=\"org\"}",
           "legendFormat": "{{__name__}}",
           "range": false,
           "refId": "A"
@@ -726,7 +726,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "searchless_paperless_documents{job=\"searchless\"}",
+          "expr": "searchless_paperless_documents{job=\"node-mtls\",instance=\"org\"}",
           "legendFormat": "searchless visible documents",
           "range": true,
           "refId": "B"
@@ -734,7 +734,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "searchless_chroma_chunks{job=\"searchless\"}",
+          "expr": "searchless_chroma_chunks{job=\"node-mtls\",instance=\"org\"}",
           "legendFormat": "chroma chunks",
           "range": true,
           "refId": "C"
@@ -963,7 +963,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "searchless_bulk_sync_limit{job=\"searchless\"}",
+          "expr": "searchless_bulk_sync_limit{job=\"node-mtls\",instance=\"org\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "searchless bulk sync limit",

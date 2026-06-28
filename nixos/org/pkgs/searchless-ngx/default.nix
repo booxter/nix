@@ -19,7 +19,6 @@ let
       mistralai
       openai
       pydantic-settings
-      prometheus-client
       tenacity
       uvicorn
     ];
@@ -49,7 +48,6 @@ stdenvNoCC.mkDerivation rec {
   patches = [
     ./loopback-mcp-hosts.patch
     ./hermetic-test-embeddings.patch
-    ./prometheus-metrics.patch
   ];
 
   nativeBuildInputs = [ makeWrapper ];
