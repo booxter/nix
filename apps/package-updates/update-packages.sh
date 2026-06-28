@@ -156,15 +156,19 @@ main() {
 
   local target
   while IFS= read -r target; do
-    local attr system old_version old_changelog new_version new_changelog
+    local attr system nix_update_system old_version old_changelog new_version new_changelog
     attr="$(jq -r '.attr' <<< "$target")"
     system="$(jq -r '.system // "x86_64-linux"' <<< "$target")"
+    nix_update_system="$(jq -r '.nixUpdateSystem // .system // "x86_64-linux"' <<< "$target")"
 
     old_version="$(nix_eval_raw ".#packages.${system}.${attr}.version")"
     old_changelog="$(nix_eval_raw ".#packages.${system}.${attr}.meta.changelog")"
 
     echo "::group::Updating ${attr}"
     echo "system: ${system}"
+    if [[ "$nix_update_system" != "$system" ]]; then
+      echo "nix-update system: ${nix_update_system}"
+    fi
     if [[ -n "$old_version" ]]; then
       echo "old version: ${old_version}"
     fi
@@ -174,7 +178,7 @@ main() {
 
     local -a nix_update_args
     mapfile -t nix_update_args < <(jq -r '.nixUpdateArgs[]?' <<< "$target")
-    nix-update --flake --system "$system" "${nix_update_args[@]}" "$attr"
+    nix-update --flake --system "$nix_update_system" "${nix_update_args[@]}" "$attr"
     echo "::endgroup::"
 
     new_version="$(nix_eval_raw ".#packages.${system}.${attr}.version")"

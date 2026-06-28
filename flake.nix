@@ -204,6 +204,12 @@
             }
             // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
               ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
+            }
+            # nix-update runs on GitHub-hosted Linux. Expose this Darwin-only
+            # package there so its fixed-output source can be prefetched without
+            # trying to build an aarch64-darwin fetcher on Linux.
+            // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+              ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
             };
         in
         basePackages
