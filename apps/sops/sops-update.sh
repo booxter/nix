@@ -86,8 +86,10 @@ main() {
   sorted="$(mktemp)"
   current_sorted="$(mktemp)"
   encrypted="$(mktemp)"
+  missing_updates="$(mktemp)"
+  update_value="$(mktemp)"
 
-  trap 'rm -f "$tmp" "$base" "$merged" "$sorted" "$current_sorted" "$encrypted"' EXIT
+  trap 'rm -f "$tmp" "$base" "$merged" "$sorted" "$current_sorted" "$encrypted" "$missing_updates" "$update_value"' EXIT
 
   sops --decrypt "$secret" > "$tmp"
   cp "$template" "$base"
@@ -108,8 +110,67 @@ main() {
     return 0
   fi
 
-  sops --encrypt --filename-override "$secret" --input-type json --output-type yaml "$sorted" > "$encrypted"
-  mv "$encrypted" "$secret"
+  if [[ "$force" == "1" ]]; then
+    sops --encrypt --filename-override "$secret" --input-type json --output-type yaml "$sorted" > "$encrypted"
+    mv "$encrypted" "$secret"
+  else
+    jq -c -n \
+      --slurpfile current "$current_sorted" \
+      --slurpfile desired "$sorted" \
+      '
+        def path_exists($path):
+          reduce $path[] as $key
+            ({ exists: true, value: . };
+              if (.exists | not) then
+                .
+              elif ((.value | type) == "object" and ($key | type) == "string") then
+                if (.value | has($key)) then
+                  { exists: true, value: .value[$key] }
+                else
+                  { exists: false, value: null }
+                end
+              elif ((.value | type) == "array" and ($key | type) == "number") then
+                if ($key >= 0 and $key < (.value | length)) then
+                  { exists: true, value: .value[$key] }
+                else
+                  { exists: false, value: null }
+                end
+              else
+                { exists: false, value: null }
+              end)
+          | .exists;
+
+        def sops_index:
+          map(
+            if type == "number" then
+              "[" + tostring + "]"
+            else
+              "[" + @json + "]"
+            end
+          )
+          | join("");
+
+        $current[0] as $current_doc
+        | $desired[0] as $desired_doc
+        | $desired_doc
+        | paths(type != "object" and type != "array") as $path
+        | select(($current_doc | path_exists($path)) | not)
+        | {
+            path: ($path | sops_index),
+            value: ($desired_doc | getpath($path))
+          }
+      ' > "$missing_updates"
+
+    if [[ ! -s "$missing_updates" ]]; then
+      sops --encrypt --filename-override "$secret" --input-type json --output-type yaml "$sorted" > "$encrypted"
+      mv "$encrypted" "$secret"
+    else
+      while IFS= read -r update; do
+        jq -c '.value' <<< "$update" > "$update_value"
+        sops set --idempotent --value-stdin "$secret" "$(jq -r '.path' <<< "$update")" < "$update_value"
+      done < "$missing_updates"
+    fi
+  fi
 
   if [[ "$force" == "1" ]] && cmp -s "$current_sorted" "$sorted"; then
     echo "Re-encrypted secret: $secret"

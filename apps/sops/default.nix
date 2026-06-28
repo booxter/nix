@@ -79,7 +79,6 @@ let
       git
       jq
       sops
-      yq-go
     ];
     text = ''
       exec ${./sops-set.sh} "$@"
@@ -114,7 +113,6 @@ let
       mkpasswd
       pass
       sops
-      yq-go
     ];
     text = ''
       exec ${pkgs.bash}/bin/bash ${./sops-pass.sh} "$@"

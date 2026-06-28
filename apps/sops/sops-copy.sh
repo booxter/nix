@@ -15,31 +15,6 @@ Example:
 EOF
 }
 
-copy_yaml_path() {
-  local src_plain="$1"
-  local dst_plain="$2"
-  local out="$3"
-  local src_path_array="$4"
-  local dst_path_array="$5"
-  local src_json
-  local dst_json
-  local merged_json
-
-  src_json="$(mktemp)"
-  dst_json="$(mktemp)"
-  merged_json="$(mktemp)"
-  yq -o=json '.' "$src_plain" > "$src_json"
-  yq -o=json '.' "$dst_plain" > "$dst_json"
-  jq -n \
-    --slurpfile src "$src_json" \
-    --slurpfile dst "$dst_json" \
-    --argjson srcPath "${src_path_array}" \
-    --argjson dstPath "${dst_path_array}" \
-    '$dst[0] | setpath($dstPath; ($src[0] | getpath($srcPath)))' > "$merged_json"
-  yq -P '.' "$merged_json" > "$out"
-  rm -f "$src_json" "$dst_json" "$merged_json"
-}
-
 resolve_repo_root() {
   if git -C "$PWD" rev-parse --show-toplevel >/dev/null 2>&1; then
     git -C "$PWD" rev-parse --show-toplevel
@@ -86,6 +61,38 @@ path_to_jq_array() {
   printf '%s' "$array"
 }
 
+json_string() {
+  jq -cn --arg value "$1" '$value'
+}
+
+path_to_sops_index() {
+  local raw="$1"
+  local segment
+  local -a segments
+  local quoted
+  local index=""
+
+  raw="${raw#.}"
+  raw="${raw#/}"
+  if [[ -z "$raw" ]]; then
+    echo "KEY_PATH must not be empty."
+    return 1
+  fi
+
+  IFS='/' read -r -a segments <<< "$raw"
+  for segment in "${segments[@]}"; do
+    [[ -z "$segment" ]] && continue
+    quoted="$(json_string "$segment")"
+    index+="[${quoted}]"
+  done
+
+  if [[ -z "$index" ]]; then
+    echo "KEY_PATH must not be empty."
+    return 1
+  fi
+  printf '%s' "$index"
+}
+
 main() {
   local src_host=""
   local dst_host=""
@@ -130,9 +137,9 @@ main() {
   fi
 
   local src_key_path_array
-  local dst_key_path_array
+  local dst_key_path_index
   src_key_path_array="$(path_to_jq_array "$src_key_path")"
-  dst_key_path_array="$(path_to_jq_array "$dst_key_path")"
+  dst_key_path_index="$(path_to_sops_index "$dst_key_path")"
 
   local repo_root
   repo_root="$(resolve_repo_root)"
@@ -154,27 +161,23 @@ main() {
   fi
 
   local src_plain
-  local dst_plain
-  local merged_plain
-  local encrypted
+  local src_json
+  local value_json
   src_plain="$(mktemp)"
-  dst_plain="$(mktemp)"
-  merged_plain="$(mktemp)"
-  encrypted="$(mktemp)"
-  trap 'rm -f "${src_plain:-}" "${dst_plain:-}" "${merged_plain:-}" "${encrypted:-}"' EXIT
+  src_json="$(mktemp)"
+  value_json="$(mktemp)"
+  trap 'rm -f "${src_plain:-}" "${src_json:-}" "${value_json:-}"' EXIT
 
   sops --decrypt "$src_secret" > "$src_plain"
-  sops --decrypt "$dst_secret" > "$dst_plain"
+  yq -o=json '.' "$src_plain" > "$src_json"
 
-  if ! yq -o=json '.' "$src_plain" | jq -e --argjson path "${src_key_path_array}" 'getpath($path) != null' >/dev/null; then
+  if ! jq -e --argjson path "${src_key_path_array}" 'getpath($path) != null' "$src_json" >/dev/null; then
     echo "Path not found in source secret: $src_key_path"
     exit 1
   fi
 
-  copy_yaml_path "$src_plain" "$dst_plain" "$merged_plain" "$src_key_path_array" "$dst_key_path_array"
-
-  sops --encrypt --filename-override "$dst_secret" --input-type yaml --output-type yaml "$merged_plain" > "$encrypted"
-  mv "$encrypted" "$dst_secret"
+  jq -c --argjson path "${src_key_path_array}" 'getpath($path)' "$src_json" > "$value_json"
+  sops set --idempotent --value-stdin "$dst_secret" "$dst_key_path_index" < "$value_json"
 
   if [[ "$src_key_path" == "$dst_key_path" ]]; then
     echo "Copied ${src_key_path} from ${src_host} to ${dst_host}."
