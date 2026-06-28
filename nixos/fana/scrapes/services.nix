@@ -13,6 +13,7 @@ let
   sabnzbdTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.srvarr;
   vikunjaHostConfig = outputs.nixosConfigurations.org.config;
   vikunjaTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
+  litellmEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
   vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
@@ -73,6 +74,18 @@ in
     }
     # TODO: Restore the beast IPMI scrape target when the local IPMI card is
     # back and the exporter is re-enabled on beast.
+    {
+      job_name = "litellm";
+      metrics_path = litellmEndpoint.path;
+      scheme = "https";
+      tls_config = prometheusMtlsTlsConfig;
+      static_configs = [
+        {
+          targets = [ "${vikunjaTargetHost}:${toString litellmEndpoint.port}" ];
+          labels.instance = "org";
+        }
+      ];
+    }
     {
       job_name = "vikunja";
       metrics_path = vikunjaEndpoint.path;
