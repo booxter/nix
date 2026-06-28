@@ -55,8 +55,7 @@ fi
 if ! status="$(codex-usage-status --json 2>/dev/null)"; then
   sketchybar --set "$NAME" \
     drawing=on \
-    icon="CDX" \
-    icon.color="$RED" \
+    icon.drawing=off \
     label="err" \
     label.color="$RED"
   exit 0
@@ -73,12 +72,11 @@ color_remaining="$(jq -r '[.windows.five_hour.remaining_percent, .windows.weekly
 five_reset_label="$(format_duration "$five_reset")"
 week_reset_label="$(format_duration "$week_reset")"
 
-label="5h ${five_remaining:-?}%/${five_reset_label} 1w ${week_remaining:-?}%/${week_reset_label} +${refreshes}"
+label="${five_remaining:-?}%/${five_reset_label} ${week_remaining:-?}%/${week_reset_label} +${refreshes}"
 color="$(remaining_color "${color_remaining:-}" "$limit_reached")"
 
 sketchybar --set "$NAME" \
   drawing=on \
-  icon="CDX" \
-  icon.color="$color" \
+  icon.drawing=off \
   label="$label" \
   label.color="$color"
