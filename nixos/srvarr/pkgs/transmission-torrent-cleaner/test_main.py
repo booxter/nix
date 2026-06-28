@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from main import run_once
+from main import TransmissionRpcError, run_once
 
 
 NOW = 2_000_000_000
@@ -90,6 +90,23 @@ class RunOnceTests(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertEqual(removed, [(["old-high-ratio"], True)])
+
+    def test_rpc_listing_failure_does_not_remove_torrents(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            trackers_file = Path(tmp_dir) / "trackers.txt"
+            trackers_file.write_text("preferred.example\n", encoding="utf-8")
+            args = self.make_args(str(trackers_file))
+            with (
+                patch(
+                    "main.rpc_get_torrents",
+                    side_effect=TransmissionRpcError("listing failed"),
+                ),
+                patch("main.rpc_remove_torrents") as remove_torrents,
+            ):
+                with self.assertRaises(TransmissionRpcError):
+                    run_once(args)
+
+        remove_torrents.assert_not_called()
 
     def make_torrent(self, **overrides: object) -> dict:
         torrent = {
