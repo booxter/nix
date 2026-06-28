@@ -858,7 +858,44 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mime_type"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MIME type"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "count"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "count"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -877,7 +914,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "mime_type"
+          }
+        ]
       },
       "targets": [
         {
@@ -887,10 +930,31 @@
           "format": "table",
           "instant": true,
           "legendFormat": "{{mime_type}}",
+          "range": false,
           "refId": "A"
         }
       ],
       "title": "Documents By MIME Type",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "mime_type",
+                "Value",
+                "Value #A"
+              ]
+            }
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -908,7 +972,32 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "count"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "count"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -960,7 +1049,8 @@
             "include": {
               "names": [
                 "item",
-                "Value"
+                "Value",
+                "Value #A"
               ]
             }
           }
