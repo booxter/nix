@@ -1,5 +1,5 @@
 diff --git a/tests/conftest.py b/tests/conftest.py
-index 38ddc4b..f2ab7de 100644
+index 38ddc4b..a623ead 100644
 --- a/tests/conftest.py
 +++ b/tests/conftest.py
 @@ -1,7 +1,44 @@
@@ -52,8 +52,8 @@ index 38ddc4b..f2ab7de 100644
      Replaces the HTTP client in vector_store module.
      """
      with patch("semantic.vector_store.chromadb.HttpClient", return_value=chromadb.EphemeralClient()):
--        with patch("semantic.vector_store.GeminiEmbeddingFunction", return_value=DefaultEmbeddingFunction()):
-+        with patch("semantic.vector_store.GeminiEmbeddingFunction", return_value=DeterministicEmbeddingFunction()):
+-        with patch("semantic.vector_store.providers.get_embedding_function", return_value=DefaultEmbeddingFunction()):
++        with patch("semantic.vector_store.providers.get_embedding_function", return_value=DeterministicEmbeddingFunction()):
              from semantic.vector_store import VectorStore
              # Re-initialize to pick up mocks
              store = VectorStore()

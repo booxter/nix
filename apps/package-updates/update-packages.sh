@@ -8,9 +8,10 @@ Usage:
   apps/package-updates/update-packages.sh --list-targets
   apps/package-updates/update-packages.sh --help
 
-Run nix-update for selected flake package attrs and write a Markdown summary
-with changelog links. Package builds are intentionally not run here; normal CI
-is responsible for validating the resulting pull request.
+Run package passthru.updateScript when available, otherwise run nix-update for
+selected flake package attrs, and write a Markdown summary with changelog links.
+Package builds are intentionally not run here; normal CI is responsible for
+validating the resulting pull request.
 EOF
 }
 
@@ -27,6 +28,11 @@ resolve_repo_root() {
 nix_eval_raw() {
   local expr="$1"
   nix eval --option eval-cache false --raw "$expr" 2>/dev/null || true
+}
+
+nix_eval_json() {
+  local expr="$1"
+  nix eval --option eval-cache false --json "$expr" 2>/dev/null || true
 }
 
 target_rows() {
@@ -93,6 +99,64 @@ append_summary_row() {
   printf '| `%s` | `%s` | %s |\n' "$attr" "$version_text" "$changelog_text" >> "$summary_file"
 }
 
+run_package_update_script() {
+  local attr="$1"
+  local system="$2"
+  local update_script_json="$3"
+  local update_script_installable=".#packages.${system}.${attr}.passthru.updateScript"
+
+  local -a update_script_args update_script_outputs
+  mapfile -t update_script_outputs < <(nix build --no-link --print-out-paths "$update_script_installable" 2>/dev/null || true)
+  if [[ "${#update_script_outputs[@]}" -gt 0 ]]; then
+    local update_script_out main_program
+    update_script_out="${update_script_outputs[0]}"
+    main_program="$(nix_eval_raw "${update_script_installable}.meta.mainProgram")"
+
+    if [[ -n "$main_program" && -x "${update_script_out}/bin/${main_program}" ]]; then
+      update_script_args=("${update_script_out}/bin/${main_program}")
+    elif [[ -x "$update_script_out" ]]; then
+      update_script_args=("$update_script_out")
+    else
+      echo "Could not find executable for passthru.updateScript of ${attr}" >&2
+      return 2
+    fi
+
+    echo "running passthru.updateScript"
+    UPDATE_NIX_ATTR_PATH="$attr" UPDATE_NIX_SYSTEM="$system" "${update_script_args[@]}"
+    return
+  fi
+
+  if [[ -z "$update_script_json" || "$update_script_json" == "null" ]]; then
+    return 1
+  fi
+
+  local update_script_type
+  update_script_type="$(jq -r 'type' <<< "$update_script_json")"
+
+  case "$update_script_type" in
+    array)
+      if [[ "$(jq 'length' <<< "$update_script_json")" -eq 0 ]]; then
+        return 1
+      fi
+      mapfile -t update_script_args < <(jq -r '.[]' <<< "$update_script_json")
+      ;;
+    string)
+      mapfile -t update_script_args < <(jq -r '.' <<< "$update_script_json")
+      ;;
+    object)
+      echo "Unsupported passthru.updateScript object for ${attr}" >&2
+      return 2
+      ;;
+    *)
+      echo "Unsupported passthru.updateScript type for ${attr}: ${update_script_type}" >&2
+      return 2
+      ;;
+  esac
+
+  echo "running passthru.updateScript"
+  UPDATE_NIX_ATTR_PATH="$attr" UPDATE_NIX_SYSTEM="$system" "${update_script_args[@]}"
+}
+
 main() {
   local repo_root
   repo_root="$(resolve_repo_root)"
@@ -156,7 +220,7 @@ main() {
 
   local target
   while IFS= read -r target; do
-    local attr system nix_update_system old_version old_changelog new_version new_changelog
+    local attr system nix_update_system old_version old_changelog new_version new_changelog update_script_json update_script_status
     attr="$(jq -r '.attr' <<< "$target")"
     system="$(jq -r '.system // "x86_64-linux"' <<< "$target")"
     nix_update_system="$(jq -r '.nixUpdateSystem // .system // "x86_64-linux"' <<< "$target")"
@@ -178,7 +242,17 @@ main() {
 
     local -a nix_update_args
     mapfile -t nix_update_args < <(jq -r '.nixUpdateArgs[]?' <<< "$target")
-    nix-update --flake --system "$nix_update_system" "${nix_update_args[@]}" "$attr"
+    update_script_json="$(nix_eval_json ".#packages.${nix_update_system}.${attr}.passthru.updateScript")"
+    if run_package_update_script "$attr" "$nix_update_system" "$update_script_json"; then
+      :
+    else
+      update_script_status="$?"
+      if [[ "$update_script_status" -eq 1 ]]; then
+        nix-update --flake --system "$nix_update_system" "${nix_update_args[@]}" "$attr"
+      else
+        exit "$update_script_status"
+      fi
+    fi
     echo "::endgroup::"
 
     new_version="$(nix_eval_raw ".#packages.${system}.${attr}.version")"
