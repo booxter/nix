@@ -46,11 +46,25 @@ def test_osascript_approval_prompt_activates_system_events():
     assert "display dialog" in script
 
 
-def test_osascript_ttl_selector_activates_system_events():
-    script = ssh_ticket.osascript_ttl_selector_script("Approve?", ["30m", "1h"], "30m")
+def test_osascript_ttl_selector_uses_standard_ok_cancel_list():
+    script = ssh_ticket.osascript_ttl_selector_script(
+        "Approve?", ["30m", "1h", "Custom..."], "30m"
+    )
     assert 'tell application "System Events"' in script
     assert "activate" in script
     assert "choose from list" in script
+    assert "OK button name" not in script
+    assert "cancel button name" not in script
+    assert "Custom..." in script
+
+
+def test_osascript_ttl_text_prompt_uses_approve_default_button():
+    script = ssh_ticket.osascript_ttl_text_prompt_script("Approve?", "30m")
+    assert 'tell application "System Events"' in script
+    assert "activate" in script
+    assert "display dialog" in script
+    assert 'default answer "30m"' in script
+    assert 'default button "Approve"' in script
 
 
 def test_ttl_choices_include_common_values_allowed_by_max():

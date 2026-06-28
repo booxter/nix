@@ -65,6 +65,10 @@ let
           id = "ai";
           localPort = 14001;
         }
+        {
+          id = "search";
+          localPort = 18083;
+        }
       ]
   );
   publicServiceBackendAddresses = {
@@ -83,6 +87,9 @@ let
   };
 in
 {
+  # Keep public gateway config-only changes from dropping long-lived proxied streams.
+  services.nginx.enableReload = true;
+
   host.externalService = {
     ddns = {
       enable = true;

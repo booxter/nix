@@ -1,5 +1,13 @@
-{ pkgs, ... }:
+{
+  config,
+  hostInventory,
+  pkgs,
+  ...
+}:
 let
+  searchService = hostInventory.servicesById.search;
+  oauth2ClientId = "search";
+  oauth2ProxyCookieName = "_search_sso";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   openWebuiDefaultModelMetadata = {
     # Enables Open WebUI's web-search feature by default for model chats.
@@ -8,6 +16,7 @@ let
     capabilities.web_search = true;
     defaultFeatureIds = [ "web_search" ];
   };
+  searxMetricsMtlsPort = 9349;
   searxPort = 18083;
   searxProbeMetricsFile = "${nodeExporterTextfileDir}/open-webui-searxng.prom";
   searxProbeScript = pkgs.writeShellApplication {
@@ -90,6 +99,35 @@ let
   };
 in
 {
+  sops.secrets = {
+    "searxng/secret_key" = {
+      restartUnits = [
+        "searx-init.service"
+        "searx.service"
+      ];
+    };
+    "searxng/open_metrics_password" = {
+      restartUnits = [
+        "searx-init.service"
+        "searx.service"
+      ];
+    };
+  };
+
+  sops.templates."searxng.env" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+    content = ''
+      SEARX_SECRET_KEY=${config.sops.placeholder."searxng/secret_key"}
+      SEARX_OPEN_METRICS=${config.sops.placeholder."searxng/open_metrics_password"}
+    '';
+    restartUnits = [
+      "searx-init.service"
+      "searx.service"
+    ];
+  };
+
   services.open-webui.environment = {
     DEFAULT_MODEL_METADATA = builtins.toJSON openWebuiDefaultModelMetadata;
     ENABLE_WEB_SEARCH = "True";
@@ -109,16 +147,20 @@ in
     enable = true;
     configureNginx = false;
     configureUwsgi = false;
+    environmentFile = config.sops.templates."searxng.env".path;
     openFirewall = false;
     settings = {
-      # This instance is loopback-only for Open WebUI. Use a SOPS-backed
-      # secret_key before exposing SearXNG directly to users.
+      general = {
+        enable_metrics = true;
+        open_metrics = "$SEARX_OPEN_METRICS";
+      };
       server = {
+        base_url = "${searchService.url}/";
         bind_address = "127.0.0.1";
         limiter = false;
         port = searxPort;
         public_instance = false;
-        secret_key = "org-open-webui-local-searxng";
+        secret_key = "$SEARX_SECRET_KEY";
       };
       search = {
         formats = [
@@ -128,6 +170,49 @@ in
         safe_search = 1;
       };
     };
+  };
+
+  host.sso.oauth2ProxyGate = {
+    enable = true;
+    clientId = oauth2ClientId;
+    cookieName = oauth2ProxyCookieName;
+    allowedGroups = [ "ai-users" ];
+    groupClaim = "ai_groups";
+    whitelistDomains = [ searchService.publicHost ];
+    internalHttpsServiceNames = [ "search" ];
+    signInLocationName = "@search_oauth2_proxy_sign_in";
+    authCookieVariableName = "search_auth_cookie";
+    authRequestHeaders = [
+      {
+        variableName = "search_user";
+        upstreamHeader = "x_auth_request_user";
+        proxyHeader = "X-User";
+      }
+      {
+        variableName = "search_email";
+        upstreamHeader = "x_auth_request_email";
+        proxyHeader = "X-Email";
+      }
+    ];
+    extraLocations."= /metrics" = {
+      return = "404";
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
+  };
+
+  host.internalHttps.services.search = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString searxPort}";
+    serverAliases = [ searchService.publicHost ];
+    mtls.enable = true;
+  };
+
+  host.observability.client.prometheusMtlsEndpoints.searxng = {
+    enable = true;
+    port = searxMetricsMtlsPort;
+    upstream = "http://127.0.0.1:${toString searxPort}/metrics";
   };
 
   systemd.tmpfiles.rules = [

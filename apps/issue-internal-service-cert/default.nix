@@ -11,9 +11,6 @@
   writeShellApplication,
   yq-go,
 }:
-let
-  pythonWithDeps = python3.withPackages (ps: [ ps.pyyaml ]);
-in
 writeShellApplication {
   name = "issue-internal-service-cert";
   runtimeInputs = [
@@ -23,12 +20,12 @@ writeShellApplication {
     jq
     nix
     openssh
-    pythonWithDeps
+    python3
     sops
     yq-go
   ];
   text = ''
-    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
+    exec ${python3}/bin/python3 ${./main.py} "$@"
   '';
 
   meta = {

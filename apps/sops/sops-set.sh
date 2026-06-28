@@ -26,13 +26,16 @@ resolve_repo_root() {
   cd -- "${script_dir}/../.." && pwd
 }
 
-path_to_jq_array() {
+json_string() {
+  jq -cn --arg value "$1" '$value'
+}
+
+path_to_sops_index() {
   local raw="$1"
   local segment
   local -a segments
-  local escaped
-  local array="["
-  local first="1"
+  local quoted
+  local index=""
 
   raw="${raw#.}"
   raw="${raw#/}"
@@ -44,22 +47,15 @@ path_to_jq_array() {
   IFS='/' read -r -a segments <<< "$raw"
   for segment in "${segments[@]}"; do
     [[ -z "$segment" ]] && continue
-    escaped="${segment//\\/\\\\}"
-    escaped="${escaped//\"/\\\"}"
-    if [[ "$first" == "1" ]]; then
-      first="0"
-    else
-      array+=","
-    fi
-    array+="\"${escaped}\""
+    quoted="$(json_string "$segment")"
+    index+="[${quoted}]"
   done
 
-  array+="]"
-  if [[ "$array" == "[]" ]]; then
+  if [[ -z "$index" ]]; then
     echo "KEY_PATH must not be empty." >&2
     return 1
   fi
-  printf '%s' "$array"
+  printf '%s' "$index"
 }
 
 main() {
@@ -104,8 +100,8 @@ main() {
   local value
   value="$(cat)"
 
-  local key_path_array
-  key_path_array="$(path_to_jq_array "$key_path")"
+  local key_path_index
+  key_path_index="$(path_to_sops_index "$key_path")"
 
   local repo_root
   repo_root="$(resolve_repo_root)"
@@ -119,23 +115,9 @@ main() {
     exit 1
   fi
 
-  local plain
-  local updated_json
-  local sorted_json
-  local encrypted
-  plain="$(mktemp)"
-  updated_json="$(mktemp)"
-  sorted_json="$(mktemp)"
-  encrypted="$(mktemp)"
-  trap 'rm -f "${plain:-}" "${updated_json:-}" "${sorted_json:-}" "${encrypted:-}"' EXIT
-
-  sops --decrypt "$secret" > "$plain"
-  yq -o=json '.' "$plain" \
-    | jq --argjson path "$key_path_array" --arg value "$value" 'setpath($path; $value)' \
-    > "$updated_json"
-  jq -S 'del(.sops)' "$updated_json" > "$sorted_json"
-  sops --encrypt --filename-override "$secret" --input-type json --output-type yaml "$sorted_json" > "$encrypted"
-  mv "$encrypted" "$secret"
+  printf '%s' "$value" \
+    | jq -Rs '.' \
+    | sops set --idempotent --value-stdin "$secret" "$key_path_index"
 
   echo "Updated ${host}:${key_path}."
 }

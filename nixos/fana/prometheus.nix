@@ -51,6 +51,7 @@ let
       outputs
       prometheusMtlsTlsConfig
       ;
+    searxngMetricsPasswordFile = config.sops.secrets."searxng/open_metrics_password".path;
   };
   wireguardScrapes = import ./scrapes/wireguard.nix {
     inherit
@@ -88,6 +89,12 @@ in
   };
   sops.secrets.prometheusScrapeNodeClientKey = {
     key = "${prometheusScrapeClient.secretPrefix}/client_key";
+    owner = "prometheus";
+    group = "prometheus";
+    mode = "0400";
+    restartUnits = [ "prometheus.service" ];
+  };
+  sops.secrets."searxng/open_metrics_password" = {
     owner = "prometheus";
     group = "prometheus";
     mode = "0400";

@@ -1,15 +1,14 @@
 {
   config,
   hostInventory,
+  lib,
   ...
 }:
 let
-  idService = hostInventory.servicesById.id;
+  oidc = import ../../../lib/oidc-clients.nix { inherit lib hostInventory; };
   lan = hostInventory.site.lan;
   grafanaHost = "grafana.${lan.domain}";
-  oidcClientId = "grafana";
-  oidcIssuerBase = "https://${idService.publicHost}";
-  oidcOpenidBase = "${oidcIssuerBase}/oauth2/openid/${oidcClientId}";
+  oidcClientId = oidc.clients.grafana.clientId;
   alertmanagerPort = 9093;
   grafanaPort = 3000;
   prometheusPort = 9090;
@@ -70,15 +69,15 @@ in
         auto_login = false;
         client_id = oidcClientId;
         client_secret = "$__file{${config.sops.secrets.grafanaOidcClientSecret.path}}";
-        scopes = "openid email profile";
-        auth_url = "${oidcIssuerBase}/ui/oauth2";
-        token_url = "${oidcIssuerBase}/oauth2/token";
-        api_url = "${oidcOpenidBase}/userinfo";
+        scopes = lib.concatStringsSep " " oidc.baseScopes;
+        auth_url = oidc.authorizationUrl;
+        token_url = oidc.tokenUrl;
+        api_url = oidc.userinfoUrl oidcClientId;
         auth_style = "InHeader";
         use_pkce = true;
         use_refresh_token = false;
         validate_id_token = true;
-        jwk_set_url = "${oidcOpenidBase}/public_key.jwk";
+        jwk_set_url = oidc.jwksUrl oidcClientId;
         login_attribute_path = "preferred_username";
         name_attribute_path = "name";
         email_attribute_path = "email";
@@ -144,7 +143,6 @@ in
         providers = [
           {
             name = "fana";
-            folder = "Fana";
             type = "file";
             disableDeletion = false;
             editable = false;

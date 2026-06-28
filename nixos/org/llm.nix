@@ -1,16 +1,15 @@
 {
   config,
   hostInventory,
+  lib,
   pkgs,
   ...
 }:
 let
-  idService = hostInventory.servicesById.id;
+  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   llmService = hostInventory.servicesById.llm;
   llmUrl = "https://${llmService.publicHost}";
-  oidcClientId = "litellm";
-  oidcIssuerBase = "https://${idService.publicHost}";
-  oidcOpenidBase = "${oidcIssuerBase}/oauth2/openid/${oidcClientId}";
+  oidcClientId = oidc.clients.litellm.clientId;
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
   litellmImage = "${ociImages.litellm.image}:${ociImages.litellm.tag}";
   litellmDatabase = "litellm";
@@ -166,10 +165,10 @@ in
       LITELLM_MASTER_KEY=${config.sops.placeholder."litellm/master-key"}
       GENERIC_CLIENT_ID=${oidcClientId}
       GENERIC_CLIENT_SECRET=${config.sops.placeholder."litellm/oidc/client_secret"}
-      GENERIC_AUTHORIZATION_ENDPOINT=${oidcIssuerBase}/ui/oauth2
-      GENERIC_TOKEN_ENDPOINT=${oidcIssuerBase}/oauth2/token
-      GENERIC_USERINFO_ENDPOINT=${oidcOpenidBase}/userinfo
-      GENERIC_SCOPE=openid email profile litellm_groups
+      GENERIC_AUTHORIZATION_ENDPOINT=${oidc.authorizationUrl}
+      GENERIC_TOKEN_ENDPOINT=${oidc.tokenUrl}
+      GENERIC_USERINFO_ENDPOINT=${oidc.userinfoUrl oidcClientId}
+      GENERIC_SCOPE=${lib.concatStringsSep " " (oidc.scopeWith [ "litellm_groups" ])}
       GENERIC_CLIENT_USE_PKCE=true
       GENERIC_USER_ID_ATTRIBUTE=preferred_username
       GENERIC_USER_EMAIL_ATTRIBUTE=email

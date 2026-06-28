@@ -7,9 +7,6 @@ import re
 import shlex
 import subprocess
 import sys
-import tempfile
-
-import yaml
 
 
 DEFAULT_CA_HOST = "pki"
@@ -149,17 +146,6 @@ in
 def validate_inventory_host(host):
     if host not in known_inventory_hosts():
         raise SystemExit(f"Unknown host: {host}")
-
-
-def set_nested(mapping, dotted_path, value):
-    cursor = mapping
-    for key in dotted_path[:-1]:
-        next_value = cursor.get(key)
-        if not isinstance(next_value, dict):
-            next_value = {}
-            cursor[key] = next_value
-        cursor = next_value
-    cursor[dotted_path[-1]] = value
 
 
 def unique_strings(values):
@@ -333,41 +319,34 @@ sudo -u step-ca cat "$tmpdir/server.key"
     return cert_text.strip() + "\n", key_text.strip() + "\n"
 
 
+def sops_index(path):
+    return "".join(f"[{json.dumps(segment)}]" for segment in path)
+
+
+def sops_set(secret_path, path, value):
+    run(
+        [
+            "sops",
+            "set",
+            "--idempotent",
+            "--value-stdin",
+            str(secret_path),
+            sops_index(path),
+        ],
+        input_text=json.dumps(value),
+    )
+
+
 def update_secret_file(host, service, service_cfg, cert_text, key_text):
     secret_path = secret_path_for_host(host)
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
 
     run([str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"), host])
-    decrypted = run(["sops", "--decrypt", str(secret_path)])
-    data = yaml.safe_load(decrypted) or {}
 
     prefix = service_cfg["secretPrefix"].split("/")
-    set_nested(data, prefix + ["server_crt_unencrypted"], cert_text.rstrip("\n"))
-    set_nested(data, prefix + ["server_key"], key_text.rstrip("\n"))
-
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
-        json.dump(data, handle, sort_keys=True)
-        handle.write("\n")
-        payload_path = handle.name
-
-    try:
-        encrypted = run(
-            [
-                "sops",
-                "--encrypt",
-                "--filename-override",
-                str(secret_path),
-                "--input-type",
-                "json",
-                "--output-type",
-                "yaml",
-                payload_path,
-            ]
-        )
-        secret_path.write_text(encrypted)
-    finally:
-        pathlib.Path(payload_path).unlink(missing_ok=True)
+    sops_set(secret_path, prefix + ["server_crt_unencrypted"], cert_text.rstrip("\n"))
+    sops_set(secret_path, prefix + ["server_key"], key_text.rstrip("\n"))
 
 
 def issue_unifi(args):
@@ -450,35 +429,10 @@ def update_client_secret_file(host, client_cfg, cert_text, key_text):
         raise SystemExit(f"secret file not found: {secret_path}")
 
     run([str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"), host])
-    decrypted = run(["sops", "--decrypt", str(secret_path)])
-    data = yaml.safe_load(decrypted) or {}
 
     prefix = client_cfg["secretPrefix"].split("/")
-    set_nested(data, prefix + ["client_crt_unencrypted"], cert_text.rstrip("\n"))
-    set_nested(data, prefix + ["client_key"], key_text.rstrip("\n"))
-
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
-        json.dump(data, handle, sort_keys=True)
-        handle.write("\n")
-        payload_path = handle.name
-
-    try:
-        encrypted = run(
-            [
-                "sops",
-                "--encrypt",
-                "--filename-override",
-                str(secret_path),
-                "--input-type",
-                "json",
-                "--output-type",
-                "yaml",
-                payload_path,
-            ]
-        )
-        secret_path.write_text(encrypted)
-    finally:
-        pathlib.Path(payload_path).unlink(missing_ok=True)
+    sops_set(secret_path, prefix + ["client_crt_unencrypted"], cert_text.rstrip("\n"))
+    sops_set(secret_path, prefix + ["client_key"], key_text.rstrip("\n"))
 
 
 def issue_client(host, client, *, ca_host):

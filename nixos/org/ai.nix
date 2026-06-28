@@ -1,15 +1,16 @@
 {
   config,
   hostInventory,
+  lib,
   pkgs,
   ...
 }:
 let
   aiService = hostInventory.servicesById.ai;
-  idService = hostInventory.servicesById.id;
+  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   litellmPort = 4000;
-  oidcClientId = "open-webui";
-  oidcDiscoveryUrl = "https://${idService.publicHost}/oauth2/openid/${oidcClientId}/.well-known/openid-configuration";
+  oidcClientId = oidc.clients."open-webui".clientId;
+  oidcDiscoveryUrl = oidc.discoveryUrl oidcClientId;
   oidcRedirectUri = "${aiService.url}/oauth/oidc/login/callback";
   openWebuiMetricsMtlsPort = 9347;
   openWebuiOtelGrpcPort = 4317;
@@ -94,7 +95,7 @@ in
       OAUTH_MERGE_ACCOUNTS_BY_EMAIL = "True";
       OAUTH_PROVIDER_NAME = "SSO";
       OAUTH_ROLES_CLAIM = "open_webui_role";
-      OAUTH_SCOPES = "openid email profile";
+      OAUTH_SCOPES = lib.concatStringsSep " " oidc.baseScopes;
       OAUTH_TOKEN_ENDPOINT_AUTH_METHOD = "client_secret_basic";
       OTEL_METRICS_EXPORT_INTERVAL_MILLIS = "10000";
       OTEL_METRICS_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:${toString openWebuiOtelGrpcPort}";

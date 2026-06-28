@@ -10,7 +10,7 @@
 
   imports = [
     (import ../disko { })
-    ./aurral-sso.nix
+    ./sso.nix
     ./backup-server.nix
     ./btrfs.nix
     ./disk-bays.nix

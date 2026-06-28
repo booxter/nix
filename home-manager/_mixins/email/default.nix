@@ -11,6 +11,10 @@ let
   thunderbirdProfilesPath = if isDarwin then "Library/Thunderbird/Profiles" else ".thunderbird";
 in
 {
+  imports = lib.optionals (!isWork) [
+    ./gmailctl.nix
+  ];
+
   # Thunderbird
   programs.thunderbird = {
     enable = true;
@@ -93,8 +97,4 @@ in
 
   # Misc email tools
   programs.msmtp.enable = true;
-
-  home.packages = with pkgs; [
-    gmailctl
-  ];
 }

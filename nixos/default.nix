@@ -29,6 +29,7 @@ in
       ++ [
         ./_mixins/avahi
         ./_mixins/auto-upgrade
+        ./_mixins/backup-artifacts.nix
         ./_mixins/backup-metrics/default.nix
         ./_mixins/external-service.nix
         ./_mixins/firmware
@@ -38,6 +39,7 @@ in
         ./_mixins/observability-client
         ./_mixins/proxmox
         ./_mixins/restic-beast-client.nix
+        ./_mixins/sso-oauth2-proxy-gate.nix
         ./_mixins/user
       ]
       ++ lib.optionals (!(hostSpec.isWork or false)) [

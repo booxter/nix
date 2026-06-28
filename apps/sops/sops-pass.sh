@@ -117,11 +117,9 @@ if [[ ! -f "$secret" ]]; then
   exit 1
 fi
 
-plain="$(mktemp)"
-merged_json="$(mktemp)"
-encrypted="$(mktemp)"
 hash_file="$(mktemp)"
-trap 'rm -f "${plain:-}" "${merged_json:-}" "${encrypted:-}" "${hash_file:-}"' EXIT
+hash_json="$(mktemp)"
+trap 'rm -f "${hash_file:-}" "${hash_json:-}"' EXIT
 
 password=""
 load_password_from_pass
@@ -143,22 +141,17 @@ fi
 printf '%s' "$hash" > "$hash_file"
 hash=""
 
-sops --decrypt "$secret" > "$plain"
-yq -o=json '.' "$plain" \
-  | jq \
-    --arg user "$user" \
-    --rawfile hash "$hash_file" \
-    '
-      if $user == "both" then
-        setpath(["users", "root", "hashedPassword"]; $hash)
-        | setpath(["users", "ihrachyshka", "hashedPassword"]; $hash)
-      else
-        setpath(["users", $user, "hashedPassword"]; $hash)
-      end
-    ' > "$merged_json"
+jq -Rn --rawfile hash "$hash_file" '$hash' > "$hash_json"
 
-sops --encrypt --filename-override "$secret" --input-type json --output-type yaml "$merged_json" > "$encrypted"
-mv "$encrypted" "$secret"
+case "$user" in
+  both)
+    sops set --idempotent --value-stdin "$secret" '["users"]["root"]["hashedPassword"]' < "$hash_json"
+    sops set --idempotent --value-stdin "$secret" '["users"]["ihrachyshka"]["hashedPassword"]' < "$hash_json"
+    ;;
+  *)
+    sops set --idempotent --value-stdin "$secret" "[\"users\"][\"${user}\"][\"hashedPassword\"]" < "$hash_json"
+    ;;
+esac
 
 if [[ "${user}" == "both" ]]; then
   echo "Updated users/root/hashedPassword and users/ihrachyshka/hashedPassword in ${secret}."

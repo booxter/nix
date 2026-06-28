@@ -17,6 +17,7 @@ DEFAULT_KEY = "~/.ssh/fleet-ticket/id_ed25519"
 TARGETS_FILE_ENV = "SSHT_TARGETS_FILE"
 MIN_VALID_SECONDS = 60
 COMMON_TTL_CHOICES = (30 * 60, 60 * 60, 2 * 60 * 60, 12 * 60 * 60)
+CUSTOM_TTL_CHOICE = "Custom..."
 
 
 class Error(Exception):
@@ -89,10 +90,20 @@ def osascript_ttl_selector_script(message, choices, default_answer):
     return f"""
       tell application "System Events"
         activate
-        set response to choose from list {applescript_list(choices)} with title "ssht" with prompt {applescript_string(message)} default items {{{applescript_quote(default_answer)}}} OK button name "Approve" cancel button name "Deny"
+        set response to choose from list {applescript_list(choices)} with title "ssht" with prompt {applescript_string(message)} default items {{{applescript_quote(default_answer)}}}
       end tell
       if response is false then error number -128
       return item 1 of response
+    """
+
+
+def osascript_ttl_text_prompt_script(message, default_answer):
+    return f"""
+      tell application "System Events"
+        activate
+        set response to display dialog {applescript_string(message)} default answer {applescript_quote(default_answer)} buttons {{"Cancel", "Approve"}} default button "Approve" cancel button "Cancel" with title "ssht"
+        return text returned of response
+      end tell
     """
 
 
@@ -374,14 +385,28 @@ def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
     message = (
         f"Approve SSH ticket for {target['name']}?\n\n"
         f"Principal: {target['principal']}\n"
-        f"Select TTL, max {format_duration(max_ttl)}."
+        f"Select TTL to approve, max {format_duration(max_ttl)}."
     )
     choices = [format_duration(ttl) for ttl in ttl_choices(default_ttl, max_ttl)]
+    choices.append(CUSTOM_TTL_CHOICE)
     script = osascript_ttl_selector_script(message, choices, default_answer)
     result = subprocess.run([osascript, "-e", script], text=True, capture_output=True)
     if result.returncode != 0:
         raise Error("ticket request denied")
     ttl_text = result.stdout.strip() or default_answer
+    if ttl_text == CUSTOM_TTL_CHOICE:
+        custom_message = (
+            f"Approve SSH ticket for {target['name']}?\n\n"
+            f"Principal: {target['principal']}\n"
+            f"Enter TTL, max {format_duration(max_ttl)}."
+        )
+        script = osascript_ttl_text_prompt_script(custom_message, default_answer)
+        result = subprocess.run(
+            [osascript, "-e", script], text=True, capture_output=True
+        )
+        if result.returncode != 0:
+            raise Error("ticket request denied")
+        ttl_text = result.stdout.strip() or default_answer
     return default_ttl if ttl_text == "" else parse_duration(ttl_text)
 
 

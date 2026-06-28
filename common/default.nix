@@ -117,6 +117,9 @@ in
       ++ lib.optionals (!isVM) [
         nvtopPackages.full
       ]
+      ++ lib.optionals (!isWork && !isVM) [
+        whichllm
+      ]
       ++ lib.optionals (!isWork) [
         age
         restic
