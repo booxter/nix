@@ -64,7 +64,6 @@ in
   };
 
   systemd.services.transmission = {
-    environment.TR_TRACKER_PRIORITY_FILE = config.sops.secrets.transmissionTrackerHosts.path;
     # Transmission is currently inheriting a soft RLIMIT_NOFILE of 1024, which
     # is too low for many active torrents and peers.
     serviceConfig = {

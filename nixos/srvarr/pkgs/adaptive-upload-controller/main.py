@@ -19,6 +19,8 @@ import urllib.request
 import urllib.parse
 from pathlib import Path
 
+from transmission_common.transmission import TransmissionRpcClient, TransmissionRpcError
+
 
 LOG = logging.getLogger("adaptive-upload-controller")
 DEFAULT_MEDIA_TYPES = {
@@ -41,78 +43,6 @@ TARGET_MBIT_EPSILON = 0.05
 
 class ControllerError(RuntimeError):
     pass
-
-
-class TransmissionRpcError(RuntimeError):
-    pass
-
-
-class TransmissionRpcClient:
-    def __init__(self, rpc_url: str, timeout_seconds: float) -> None:
-        self.rpc_url = rpc_url
-        self.timeout_seconds = timeout_seconds
-        self.session_id: str | None = None
-
-    def call(self, method: str, arguments: dict | None = None) -> dict:
-        payload = json.dumps(
-            {
-                "method": method,
-                "arguments": arguments or {},
-            }
-        ).encode("utf-8")
-
-        for attempt in range(2):
-            headers = {
-                "Content-Type": "application/json",
-            }
-            if self.session_id is not None:
-                headers["X-Transmission-Session-Id"] = self.session_id
-
-            request = urllib.request.Request(
-                self.rpc_url,
-                data=payload,
-                headers=headers,
-                method="POST",
-            )
-
-            try:
-                with urllib.request.urlopen(
-                    request, timeout=self.timeout_seconds
-                ) as response:
-                    body = response.read().decode("utf-8")
-            except urllib.error.HTTPError as exc:
-                if exc.code == 409 and attempt == 0:
-                    session_id = exc.headers.get("X-Transmission-Session-Id")
-                    if session_id:
-                        self.session_id = session_id
-                        continue
-                raise TransmissionRpcError(
-                    f"HTTP {exc.code} from Transmission RPC"
-                ) from exc
-            except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
-                raise TransmissionRpcError(
-                    f"request to Transmission RPC failed: {exc}"
-                ) from exc
-
-            try:
-                parsed = json.loads(body)
-            except json.JSONDecodeError as exc:
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid JSON"
-                ) from exc
-
-            result = parsed.get("result")
-            if result != "success":
-                raise TransmissionRpcError(f"Transmission RPC returned {result!r}")
-
-            arguments_out = parsed.get("arguments", {})
-            if not isinstance(arguments_out, dict):
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid arguments payload"
-                )
-            return arguments_out
-
-        raise TransmissionRpcError("failed to negotiate Transmission session id")
 
 
 def now_utc_iso8601() -> str:
@@ -821,20 +751,18 @@ def load_policy_state(
 
 
 def transmission_get_current_upload_limit_kbps(session_arguments: dict) -> int | None:
-    for key in ("speed-limit-up", "speed_limit_up"):
-        value = session_arguments.get(key)
-        if isinstance(value, int):
-            return value
+    value = session_arguments.get("speed_limit_up")
+    if isinstance(value, int):
+        return value
     return None
 
 
 def transmission_get_current_upload_limit_enabled(
     session_arguments: dict,
 ) -> bool | None:
-    for key in ("speed-limit-up-enabled", "speed_limit_up_enabled"):
-        value = session_arguments.get(key)
-        if isinstance(value, bool):
-            return value
+    value = session_arguments.get("speed_limit_up_enabled")
+    if isinstance(value, bool):
+        return value
     return None
 
 
@@ -910,7 +838,7 @@ def run_transmission_applier(args: argparse.Namespace) -> int:
                 max_state_age_seconds=args.max_state_age_seconds,
             )
             target_limit = state["transmission_upload_limit_kbps"]
-            session_arguments = client.call("session-get")
+            session_arguments = client.call("session_get")
             current_limit = transmission_get_current_upload_limit_kbps(
                 session_arguments
             )
@@ -919,10 +847,10 @@ def run_transmission_applier(args: argparse.Namespace) -> int:
             )
             if current_limit != target_limit or current_enabled is not True:
                 client.call(
-                    "session-set",
+                    "session_set",
                     {
-                        "speed-limit-up": target_limit,
-                        "speed-limit-up-enabled": True,
+                        "speed_limit_up": target_limit,
+                        "speed_limit_up_enabled": True,
                     },
                 )
                 LOG.info(

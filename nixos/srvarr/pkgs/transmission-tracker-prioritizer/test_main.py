@@ -15,7 +15,7 @@ from main import (
 class TorrentDesiredPriorityTests(unittest.TestCase):
     def test_preferred_torrents_are_always_high(self) -> None:
         desired_priority = torrent_desired_priority(
-            torrent={"uploadRatio": 99.0},
+            torrent={"upload_ratio": 99.0},
             is_preferred=True,
             preferred_bootstrap_active=True,
             non_preferred_low_priority_ratio_threshold=3.0,
@@ -27,7 +27,7 @@ class TorrentDesiredPriorityTests(unittest.TestCase):
         self,
     ) -> None:
         desired_priority = torrent_desired_priority(
-            torrent={"uploadRatio": 2.9},
+            torrent={"upload_ratio": 2.9},
             is_preferred=False,
             preferred_bootstrap_active=True,
             non_preferred_low_priority_ratio_threshold=3.0,
@@ -39,7 +39,7 @@ class TorrentDesiredPriorityTests(unittest.TestCase):
         self,
     ) -> None:
         desired_priority = torrent_desired_priority(
-            torrent={"uploadRatio": 3.0},
+            torrent={"upload_ratio": 3.0},
             is_preferred=False,
             preferred_bootstrap_active=True,
             non_preferred_low_priority_ratio_threshold=3.0,
@@ -51,7 +51,7 @@ class TorrentDesiredPriorityTests(unittest.TestCase):
         self,
     ) -> None:
         desired_priority = torrent_desired_priority(
-            torrent={"uploadRatio": 2.9},
+            torrent={"upload_ratio": 2.9},
             is_preferred=False,
             preferred_bootstrap_active=False,
             non_preferred_low_priority_ratio_threshold=3.0,
@@ -63,7 +63,7 @@ class TorrentDesiredPriorityTests(unittest.TestCase):
         self,
     ) -> None:
         desired_priority = torrent_desired_priority(
-            torrent={"uploadRatio": 3.0},
+            torrent={"upload_ratio": 3.0},
             is_preferred=False,
             preferred_bootstrap_active=False,
             non_preferred_low_priority_ratio_threshold=3.0,
@@ -80,7 +80,7 @@ class FakeClient:
     def call(self, method: str, arguments: dict | None = None) -> dict:
         self.calls.append((method, arguments))
         self.last_call = (method, arguments)
-        if method != "torrent-get":
+        if method != "torrent_get":
             return {}
         return {"torrents": self.torrents}
 
@@ -91,30 +91,30 @@ class CollectIterationStateTests(unittest.TestCase):
     ) -> None:
         torrents = [
             {
-                "hashString": "preferred",
-                "bandwidthPriority": TR_PRI_HIGH,
-                "uploadRatio": 0.1,
-                "peersConnected": 0,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "preferred",
+                "bandwidth_priority": TR_PRI_HIGH,
+                "upload_ratio": 0.1,
+                "peers_connected": 0,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "preferred.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "preferred.example"}],
             },
             {
-                "hashString": "public",
-                "bandwidthPriority": TR_PRI_NORMAL,
-                "uploadRatio": 2.9,
-                "peersConnected": 0,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "public",
+                "bandwidth_priority": TR_PRI_NORMAL,
+                "upload_ratio": 2.9,
+                "peers_connected": 0,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "public.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "public.example"}],
             },
         ]
 
@@ -129,30 +129,30 @@ class CollectIterationStateTests(unittest.TestCase):
     ) -> None:
         torrents = [
             {
-                "hashString": "preferred",
-                "bandwidthPriority": TR_PRI_HIGH,
-                "uploadRatio": 0.1,
-                "peersConnected": 1,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "preferred",
+                "bandwidth_priority": TR_PRI_HIGH,
+                "upload_ratio": 0.1,
+                "peers_connected": 1,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "preferred.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "preferred.example"}],
             },
             {
-                "hashString": "public",
-                "bandwidthPriority": TR_PRI_NORMAL,
-                "uploadRatio": 2.9,
-                "peersConnected": 0,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "public",
+                "bandwidth_priority": TR_PRI_NORMAL,
+                "upload_ratio": 2.9,
+                "peers_connected": 0,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "public.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "public.example"}],
             },
         ]
 
@@ -168,30 +168,30 @@ class CollectIterationStateTests(unittest.TestCase):
     ) -> None:
         torrents = [
             {
-                "hashString": "preferred",
-                "bandwidthPriority": TR_PRI_HIGH,
-                "uploadRatio": 0.1,
-                "peersConnected": 1,
-                "peersGettingFromUs": 1,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "preferred",
+                "bandwidth_priority": TR_PRI_HIGH,
+                "upload_ratio": 0.1,
+                "peers_connected": 1,
+                "peers_getting_from_us": 1,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "preferred.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "preferred.example"}],
             },
             {
-                "hashString": "public",
-                "bandwidthPriority": TR_PRI_HIGH,
-                "uploadRatio": 2.9,
-                "peersConnected": 0,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "public",
+                "bandwidth_priority": TR_PRI_HIGH,
+                "upload_ratio": 2.9,
+                "peers_connected": 0,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "public.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "public.example"}],
             },
         ]
 
@@ -207,17 +207,17 @@ class CollectIterationStateTests(unittest.TestCase):
     ) -> None:
         torrents = [
             {
-                "hashString": "preferred",
-                "bandwidthPriority": TR_PRI_HIGH,
-                "uploadRatio": 0.1,
-                "peersConnected": 1,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "preferred",
+                "bandwidth_priority": TR_PRI_HIGH,
+                "upload_ratio": 0.1,
+                "peers_connected": 1,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 12345,
-                "trackerStats": [{"host": "preferred.example"}],
+                "rate_download": 0,
+                "rate_upload": 12345,
+                "tracker_stats": [{"host": "preferred.example"}],
             },
         ]
 
@@ -229,17 +229,17 @@ class CollectIterationStateTests(unittest.TestCase):
     def test_complete_non_preferred_at_pause_ratio_is_stopped(self) -> None:
         torrents = [
             {
-                "hashString": "public",
-                "bandwidthPriority": TR_PRI_NORMAL,
-                "uploadRatio": 6.0,
-                "peersConnected": 0,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "public",
+                "bandwidth_priority": TR_PRI_NORMAL,
+                "upload_ratio": 6.0,
+                "peers_connected": 0,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "public.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "public.example"}],
             },
         ]
 
@@ -251,17 +251,17 @@ class CollectIterationStateTests(unittest.TestCase):
     def test_complete_non_preferred_already_stopped_is_not_stopped_again(self) -> None:
         torrents = [
             {
-                "hashString": "public",
-                "bandwidthPriority": TR_PRI_LOW,
-                "uploadRatio": 6.0,
-                "peersConnected": 0,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "public",
+                "bandwidth_priority": TR_PRI_LOW,
+                "upload_ratio": 6.0,
+                "peers_connected": 0,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 0,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "public.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "public.example"}],
             },
         ]
 
@@ -272,17 +272,17 @@ class CollectIterationStateTests(unittest.TestCase):
     def test_preferred_torrent_at_pause_ratio_is_not_stopped(self) -> None:
         torrents = [
             {
-                "hashString": "preferred",
-                "bandwidthPriority": TR_PRI_HIGH,
-                "uploadRatio": 6.0,
-                "peersConnected": 0,
-                "peersGettingFromUs": 0,
-                "peersSendingToUs": 0,
-                "leftUntilDone": 0,
+                "hash_string": "preferred",
+                "bandwidth_priority": TR_PRI_HIGH,
+                "upload_ratio": 6.0,
+                "peers_connected": 0,
+                "peers_getting_from_us": 0,
+                "peers_sending_to_us": 0,
+                "left_until_done": 0,
                 "status": 6,
-                "rateDownload": 0,
-                "rateUpload": 0,
-                "trackerStats": [{"host": "preferred.example"}],
+                "rate_download": 0,
+                "rate_upload": 0,
+                "tracker_stats": [{"host": "preferred.example"}],
             },
         ]
 
@@ -317,7 +317,7 @@ class ApplyPriorityUpdatesTests(unittest.TestCase):
         self.assertEqual(
             client.calls,
             [
-                ("torrent-stop", {"ids": ["public"]}),
+                ("torrent_stop", {"ids": ["public"]}),
             ],
         )
 
@@ -331,10 +331,10 @@ class ApplyPriorityUpdatesTests(unittest.TestCase):
             client.calls,
             [
                 (
-                    "torrent-set",
-                    {"ids": ["public"], "bandwidthPriority": TR_PRI_LOW},
+                    "torrent_set",
+                    {"ids": ["public"], "bandwidth_priority": TR_PRI_LOW},
                 ),
-                ("torrent-stop", {"ids": ["public"]}),
+                ("torrent_stop", {"ids": ["public"]}),
             ],
         )
 

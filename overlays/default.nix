@@ -5,6 +5,8 @@
   modifications =
     final: prev:
     let
+      inherit (prev) lib;
+
       getPkgs =
         np:
         import np {
@@ -15,24 +17,21 @@
         };
 
       pkgsLldb = getPkgs inputs.debugserver;
-      pkgsTransmission = getPkgs inputs.nixpkgs-transmission;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
-      pinnedTransmission = pkgsTransmission.transmission_4;
+      releaseTransmission = prev.transmission_4;
+      releaseTransmissionVersion = lib.getVersion releaseTransmission;
+      # Track the release branch now that trackers allow 4.1.x, but fail
+      # evaluation before accepting an unvetted 4.2.x+ daemon.
+      guardedTransmission =
+        assert lib.asserts.assertMsg (
+          lib.versionAtLeast releaseTransmissionVersion "4.1.0"
+          && lib.versionOlder releaseTransmissionVersion "4.2.0"
+        ) "Transmission must stay on the 4.1.x release series; got ${releaseTransmissionVersion}";
+        releaseTransmission;
       lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
       lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../lib/patches/yt-dlp-twitter-only-own-status-media.patch
-        ];
-      });
-      patchedTransmission = pinnedTransmission.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          # Fix the 4.0.6 HTTP announce bug where a later failed sibling
-          # response could overwrite an earlier successful announce.
-          # Upstream: https://github.com/transmission/transmission/pull/7086
-          (prev.fetchpatch {
-            url = "https://github.com/transmission/transmission/commit/036174aa0e3d1f878e2a629ffe3709942a947c06.patch";
-            hash = "sha256-VekP2wwynCFX8QE3g1Eb1rynRPR+AZDnfR2ey9i3yJs=";
-          })
         ];
       });
     in
@@ -46,8 +45,8 @@
         yt-dlp = lolekYtDlp;
       };
 
-      transmission_4 = patchedTransmission;
-      transmission = patchedTransmission;
+      transmission_4 = guardedTransmission;
+      transmission = guardedTransmission;
 
       # NixOS can expose the same D-Bus service file through both direct package
       # paths and system-path symlinks. Do not let dbus-broker report those

@@ -7,29 +7,29 @@ This document describes the current upload-control model on `srvarr`.
 There are two active control layers:
 
 - adaptive global upload budgeting from Jellyfin playback
-- native private-tracker prioritization inside the patched Transmission daemon
+- helper-driven per-torrent priority from preferred tracker hosts
 
 There is no public/private sub-cap split.
 
 `transmission-prioritizer` is also active on `srvarr`, but it is now
 split into two services:
 
-- `transmission-prioritizer`: applies `bandwidthPriority` changes
+- `transmission-prioritizer`: applies `bandwidth_priority` changes
 - `transmission-collector`: exports Prometheus metrics without mutating torrents
 
 Together they:
 
-- mark preferred torrents `bandwidthPriority = high`
+- mark preferred torrents `bandwidth_priority = high`
 - if any preferred torrent currently has peers actively downloading from us,
   keep non-preferred
-  torrents at `bandwidthPriority = normal` while `uploadRatio < 3.0` and
-  demote the rest to `bandwidthPriority = low`
+  torrents at `bandwidth_priority = normal` while `upload_ratio < 3.0` and
+  demote the rest to `bandwidth_priority = low`
 - if no preferred torrent currently has peers actively downloading from us,
   promote non-preferred
   torrents with
-  `uploadRatio < 3.0` to `bandwidthPriority = high` and keep
-  `uploadRatio >= 3.0` torrents at `bandwidthPriority = low`
-- if a completed non-preferred torrent reaches `uploadRatio >= 6.0`, pause it
+  `upload_ratio < 3.0` to `bandwidth_priority = high` and keep
+  `upload_ratio >= 3.0` torrents at `bandwidth_priority = low`
+- if a completed non-preferred torrent reaches `upload_ratio >= 6.0`, pause it
   so the cleaner can remove it once it is old enough
 - exports per-class metrics for Prometheus / Grafana
 
@@ -53,10 +53,10 @@ Important current facts:
 - `srvarr` imports `transmission-prioritizer.nix`
 - `transmission-prioritizer` can be stopped independently from
   `transmission-collector`
-- Transmission gets:
-  - `TR_TRACKER_PRIORITY_FILE=/run/secrets/transmissionTrackerHosts`
 - the preferred tracker host secret lives at:
   - `/run/secrets/transmissionTrackerHosts`
+- the prioritizer, collector, and torrent cleaner receive that secret with
+  `--trackers-file`
 
 ## Current Behavior
 
@@ -92,19 +92,22 @@ Shared state file:
 The main active fields are the adaptive target, reason, timestamps, and
 `transmission_upload_limit_kbps`.
 
-### 2. Native Transmission Tracker Prioritization
+### 2. Helper-Driven Tracker Prioritization
 
-Transmission is patched to honor `TR_TRACKER_PRIORITY_FILE`.
+Transmission itself is unpatched for tracker preference. The local helper
+services classify torrents by preferred tracker host through Transmission RPC
+and enforce `bandwidth_priority` on whole torrents.
 
 Current behavior:
 
-- preferred tracker hosts are loaded from that file
-- already-due announces for preferred trackers are dispatched first
-- peers learned from preferred trackers are treated as preferred in peer
-  scheduling
-- tracker-provided announce cadence is not overridden
+- preferred tracker hosts are loaded from `/run/secrets/transmissionTrackerHosts`
+- preferred torrents are kept at `bandwidth_priority = high`
+- non-preferred torrents are promoted, normalized, demoted, or stopped according
+  to preferred-torrent activity and ratio thresholds
+- tracker announce cadence and peer identity stay under upstream Transmission
+  behavior
 
-This is now the main private-tracker preference mechanism.
+This is the main private-tracker preference mechanism.
 
 ## Helper Services
 
@@ -118,25 +121,25 @@ The helper code is split into separate collector and prioritizer entrypoints
 with shared classification logic:
 
 - `transmission-prioritizer`: classifies torrents and writes
-  `bandwidthPriority` updates back to Transmission
+  `bandwidth_priority` updates back to Transmission
 - `transmission-collector`: runs the same classification logic but only exports
   the observed state to Prometheus
 - both classify torrents by preferred tracker host when deciding which
   priorities to enforce
 - sets:
-  - preferred torrents -> `bandwidthPriority = high`
+  - preferred torrents -> `bandwidth_priority = high`
   - if any preferred torrent currently has peers actively downloading from us:
-    `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = normal`
+    `non-preferred torrents with upload_ratio < 3.0 -> bandwidth_priority = normal`
   - if any preferred torrent currently has peers actively downloading from us:
-    `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
+    `non-preferred torrents with upload_ratio >= 3.0 -> bandwidth_priority = low`
   - if no preferred torrent currently has peers actively downloading from us:
-    `non-preferred torrents with uploadRatio < 3.0 -> bandwidthPriority = high`
+    `non-preferred torrents with upload_ratio < 3.0 -> bandwidth_priority = high`
   - if no preferred torrent currently has peers actively downloading from us:
-    `non-preferred torrents with uploadRatio >= 3.0 -> bandwidthPriority = low`
-  - if a non-preferred torrent is complete and `uploadRatio >= 6.0`:
+    `non-preferred torrents with upload_ratio >= 3.0 -> bandwidth_priority = low`
+  - if a non-preferred torrent is complete and `upload_ratio >= 6.0`:
     stop/pause the torrent
 - exports `low` / `normal` / `high` torrent priority metrics based on current
-  `bandwidthPriority`
+  `bandwidth_priority`
 
 It does **not**:
 

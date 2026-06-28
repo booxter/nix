@@ -1,13 +1,15 @@
 from dataclasses import dataclass
-import json
 import logging
 import os
-import socket
 import tempfile
-import urllib.error
-import urllib.parse
-import urllib.request
 from pathlib import Path
+
+from transmission_common.transmission import (
+    TransmissionRpcClient,
+    TransmissionRpcError,
+    read_tracker_hosts,
+    torrent_matches_tracker_hosts,
+)
 
 
 LOG = logging.getLogger("transmission-tracker-common")
@@ -20,114 +22,20 @@ DEFAULT_NON_PREFERRED_LOW_PRIORITY_RATIO_THRESHOLD = 3.0
 DEFAULT_NON_PREFERRED_PAUSE_RATIO_THRESHOLD = 6.0
 
 
-class TransmissionRpcError(RuntimeError):
-    pass
-
-
-class TransmissionRpcClient:
-    def __init__(self, rpc_url: str, timeout_seconds: float) -> None:
-        self.rpc_url = rpc_url
-        self.timeout_seconds = timeout_seconds
-        self.session_id: str | None = None
-
-    def call(self, method: str, arguments: dict | None = None) -> dict:
-        payload = json.dumps(
-            {
-                "method": method,
-                "arguments": arguments or {},
-            }
-        ).encode("utf-8")
-
-        for attempt in range(2):
-            headers = {
-                "Content-Type": "application/json",
-            }
-            if self.session_id is not None:
-                headers["X-Transmission-Session-Id"] = self.session_id
-
-            request = urllib.request.Request(
-                self.rpc_url,
-                data=payload,
-                headers=headers,
-                method="POST",
-            )
-
-            try:
-                with urllib.request.urlopen(
-                    request, timeout=self.timeout_seconds
-                ) as response:
-                    body = response.read().decode("utf-8")
-            except urllib.error.HTTPError as exc:
-                if exc.code == 409 and attempt == 0:
-                    session_id = exc.headers.get("X-Transmission-Session-Id")
-                    if session_id:
-                        self.session_id = session_id
-                        continue
-                raise TransmissionRpcError(
-                    f"HTTP {exc.code} from Transmission RPC"
-                ) from exc
-            except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
-                raise TransmissionRpcError(
-                    f"request to Transmission RPC failed: {exc}"
-                ) from exc
-
-            try:
-                parsed = json.loads(body)
-            except json.JSONDecodeError as exc:
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid JSON"
-                ) from exc
-
-            result = parsed.get("result")
-            if result != "success":
-                raise TransmissionRpcError(f"Transmission RPC returned {result!r}")
-
-            return parsed.get("arguments", {})
-
-        raise TransmissionRpcError("failed to negotiate Transmission session id")
-
-
-def normalize_tracker_host(raw_value: str) -> str:
-    value = raw_value.strip()
-    if not value:
-        return ""
-
-    if "://" in value:
-        parsed = urllib.parse.urlparse(value)
-        return (parsed.hostname or "").lower()
-
-    if value.startswith("[") and "]" in value:
-        return value[1 : value.index("]")].lower()
-
-    value = value.rsplit("@", 1)[-1]
-    value = value.split("/", 1)[0]
-    value = value.split(":", 1)[0]
-    return value.lower()
-
-
 def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
     if not trackers_file.exists():
         return None
 
     try:
-        lines = trackers_file.read_text().splitlines()
+        return read_tracker_hosts(
+            trackers_file,
+            on_empty_entry=lambda line_number: LOG.warning(
+                "ignoring empty tracker host entry on line %s", line_number
+            ),
+        )
     except OSError as exc:
         LOG.warning("unable to read tracker host file %s: %s", trackers_file, exc)
         return None
-
-    hosts: set[str] = set()
-    for line_number, raw_line in enumerate(lines, start=1):
-        line = raw_line.split("#", 1)[0].strip()
-        if not line:
-            continue
-
-        host = normalize_tracker_host(line)
-        if not host:
-            LOG.warning("ignoring empty tracker host entry on line %s", line_number)
-            continue
-        hosts.add(host)
-
-    return hosts
 
 
 def write_text_atomic(path: Path, content: str) -> None:
@@ -159,7 +67,7 @@ def priority_class_name(priority: int) -> str:
 
 
 def torrent_is_complete(torrent: dict) -> bool:
-    left_until_done = torrent.get("leftUntilDone")
+    left_until_done = torrent.get("left_until_done")
     return isinstance(left_until_done, int) and left_until_done == 0
 
 
@@ -172,7 +80,7 @@ def torrent_desired_priority(
     if is_preferred:
         return TR_PRI_HIGH
 
-    upload_ratio = torrent.get("uploadRatio")
+    upload_ratio = torrent.get("upload_ratio")
     baseline_non_preferred_priority = TR_PRI_NORMAL
     if (
         isinstance(upload_ratio, (int, float))
@@ -410,45 +318,28 @@ def write_health_metrics(
     )
 
 
-def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
-    for tracker in torrent.get("trackerStats", []):
-        if not isinstance(tracker, dict):
-            continue
-        host = normalize_tracker_host(str(tracker.get("host", "")))
-        if host and host in tracker_hosts:
-            return True
-
-        announce = tracker.get("announce")
-        if isinstance(announce, str):
-            host = normalize_tracker_host(announce)
-            if host and host in tracker_hosts:
-                return True
-
-    return False
-
-
 def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
-    arguments = client.call(
-        "torrent-get",
+    result = client.call(
+        "torrent_get",
         {
             "fields": [
                 "id",
                 "name",
-                "hashString",
-                "bandwidthPriority",
-                "peersConnected",
-                "peersGettingFromUs",
-                "peersSendingToUs",
-                "leftUntilDone",
+                "hash_string",
+                "bandwidth_priority",
+                "peers_connected",
+                "peers_getting_from_us",
+                "peers_sending_to_us",
+                "left_until_done",
                 "status",
-                "uploadRatio",
-                "rateDownload",
-                "rateUpload",
-                "trackerStats",
+                "upload_ratio",
+                "rate_download",
+                "rate_upload",
+                "tracker_stats",
             ]
         },
     )
-    torrents = arguments.get("torrents", [])
+    torrents = result.get("torrents", [])
     if not isinstance(torrents, list):
         raise TransmissionRpcError("Transmission RPC returned an invalid torrent list")
     return torrents
@@ -462,13 +353,13 @@ def rpc_set_torrent_fields(
     if not torrent_hashes or not fields:
         return
 
-    arguments = {
+    params = {
         "ids": torrent_hashes,
     }
-    arguments.update(fields)
+    params.update(fields)
     client.call(
-        "torrent-set",
-        arguments,
+        "torrent_set",
+        params,
     )
 
 
@@ -477,7 +368,7 @@ def rpc_stop_torrents(client: TransmissionRpcClient, torrent_hashes: list[str]) 
         return
 
     client.call(
-        "torrent-stop",
+        "torrent_stop",
         {
             "ids": torrent_hashes,
         },
@@ -524,7 +415,7 @@ def collect_iteration_state(
     torrent_entries: list[tuple[dict, str, bool]] = []
     current_preferred_hashes: set[str] = set()
     for torrent in torrents:
-        torrent_hash = torrent.get("hashString")
+        torrent_hash = torrent.get("hash_string")
         if not isinstance(torrent_hash, str) or not torrent_hash:
             continue
         is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
@@ -534,8 +425,8 @@ def collect_iteration_state(
 
     preferred_bootstrap_active = any(
         is_preferred
-        and isinstance(torrent.get("peersGettingFromUs"), int)
-        and torrent["peersGettingFromUs"] > 0
+        and isinstance(torrent.get("peers_getting_from_us"), int)
+        and torrent["peers_getting_from_us"] > 0
         for torrent, _torrent_hash, is_preferred in torrent_entries
     )
     preferred_upload_observed_active = False
@@ -571,33 +462,33 @@ def collect_iteration_state(
     to_stop: list[str] = []
 
     for torrent, torrent_hash, is_preferred in torrent_entries:
-        priority = torrent.get("bandwidthPriority")
+        priority = torrent.get("bandwidth_priority")
         current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
         status = torrent.get("status")
         current_status = status if isinstance(status, int) else None
         torrent_class = priority_class_name(current_priority)
         torrent_counts[torrent_class] += 1
         peer_counts[torrent_class]["connected"] += nonnegative_int(
-            torrent.get("peersConnected")
+            torrent.get("peers_connected")
         )
         peer_counts[torrent_class]["getting_from_us"] += nonnegative_int(
-            torrent.get("peersGettingFromUs")
+            torrent.get("peers_getting_from_us")
         )
         peer_counts[torrent_class]["sending_to_us"] += nonnegative_int(
-            torrent.get("peersSendingToUs")
+            torrent.get("peers_sending_to_us")
         )
         download_bytes_per_second[torrent_class] += nonnegative_int(
-            torrent.get("rateDownload")
+            torrent.get("rate_download")
         )
         upload_bytes_per_second[torrent_class] += nonnegative_int(
-            torrent.get("rateUpload")
+            torrent.get("rate_upload")
         )
-        left_until_done = torrent.get("leftUntilDone")
-        peers_getting_from_us = torrent.get("peersGettingFromUs")
-        peers_sending_to_us = torrent.get("peersSendingToUs")
-        rate_download = torrent.get("rateDownload")
-        rate_upload = torrent.get("rateUpload")
-        upload_ratio = torrent.get("uploadRatio")
+        left_until_done = torrent.get("left_until_done")
+        peers_getting_from_us = torrent.get("peers_getting_from_us")
+        peers_sending_to_us = torrent.get("peers_sending_to_us")
+        rate_download = torrent.get("rate_download")
+        rate_upload = torrent.get("rate_upload")
+        upload_ratio = torrent.get("upload_ratio")
         is_active_download = (
             isinstance(peers_sending_to_us, int) and peers_sending_to_us > 0
         ) or (isinstance(rate_download, int) and rate_download > 0)
@@ -675,21 +566,21 @@ def apply_priority_updates(
         client,
         state.high_priority_hashes,
         {
-            "bandwidthPriority": TR_PRI_HIGH,
+            "bandwidth_priority": TR_PRI_HIGH,
         },
     )
     rpc_set_torrent_fields(
         client,
         state.normal_priority_hashes,
         {
-            "bandwidthPriority": TR_PRI_NORMAL,
+            "bandwidth_priority": TR_PRI_NORMAL,
         },
     )
     rpc_set_torrent_fields(
         client,
         state.low_priority_hashes,
         {
-            "bandwidthPriority": TR_PRI_LOW,
+            "bandwidth_priority": TR_PRI_LOW,
         },
     )
     rpc_stop_torrents(client, state.stop_hashes)

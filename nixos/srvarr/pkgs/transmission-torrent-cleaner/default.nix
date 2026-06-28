@@ -1,13 +1,29 @@
 {
   lib,
   python3,
+  transmissionCommon,
   writeShellApplication,
 }:
+let
+  sourceDir = ./.;
+  pythonWithDeps = python3.withPackages (_: [
+    transmissionCommon
+  ]);
+in
 writeShellApplication {
   name = "transmission-torrent-cleaner";
-  runtimeInputs = [ python3 ];
+  runtimeInputs = [ pythonWithDeps ];
   text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
+    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
+  '';
+  derivationArgs = {
+    doCheck = true;
+  };
+  checkPhase = ''
+    runHook preCheck
+    PYTHONPATH="${sourceDir}" \
+      ${pythonWithDeps}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
+    runHook postCheck
   '';
 
   meta = {
