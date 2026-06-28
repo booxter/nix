@@ -7,7 +7,7 @@
   ...
 }:
 let
-  idService = hostInventory.servicesById.id;
+  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   paperlessService = hostInventory.servicesById.paperless;
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
   paperlessMetricsInternalPort = 19289;
@@ -15,10 +15,10 @@ let
   paperlessStoragePath = "/data/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
-  paperlessOidcClientId = "paperless";
+  paperlessOidcClientId = oidc.clients.paperless.clientId;
   paperlessOidcProviderId = "sso";
   paperlessOidcClientSecretPlaceholder = "__PAPERLESS_OIDC_CLIENT_SECRET__";
-  paperlessOidcDiscoveryUrl = "https://${idService.publicHost}/oauth2/openid/${paperlessOidcClientId}/.well-known/openid-configuration";
+  paperlessOidcDiscoveryUrl = oidc.discoveryUrl paperlessOidcClientId;
   paperlessOidcProvidersJson =
     builtins.replaceStrings
       [ paperlessOidcClientSecretPlaceholder ]
@@ -39,12 +39,7 @@ let
                 server_url = paperlessOidcDiscoveryUrl;
                 token_auth_method = "client_secret_basic";
                 verified_email = true;
-                scope = [
-                  "openid"
-                  "profile"
-                  "email"
-                  "groups"
-                ];
+                scope = oidc.scopeWith [ "groups" ];
               };
             }
           ];

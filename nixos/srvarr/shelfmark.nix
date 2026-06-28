@@ -5,14 +5,13 @@
   ...
 }:
 let
-  idService = hostInventory.servicesById.id;
+  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   accounts = import ./accounts.nix;
   stateDir = "${config.host.srvarrPaths.stateDir}/shelfmark";
   mediaDir = config.host.srvarrPaths.mediaDir;
   user = "shelfmark";
   shelfmarkService = hostInventory.servicesById.shelfmark;
-  oidcClientId = "shelfmark";
-  oidcIssuerBase = "https://${idService.publicHost}/oauth2/openid/${oidcClientId}";
+  oidcClientId = oidc.clients.shelfmark.clientId;
 in
 {
   sops.secrets."shelfmark/oidc/client_secret" = {
@@ -44,9 +43,9 @@ in
       OIDC_AUTO_PROVISION = "true";
       OIDC_BUTTON_LABEL = "SSO";
       OIDC_CLIENT_ID = oidcClientId;
-      OIDC_DISCOVERY_URL = "${oidcIssuerBase}/.well-known/openid-configuration";
+      OIDC_DISCOVERY_URL = oidc.discoveryUrl oidcClientId;
       OIDC_GROUP_CLAIM = "media_groups";
-      OIDC_SCOPES = "openid,email,profile,media_groups";
+      OIDC_SCOPES = lib.concatStringsSep "," (oidc.scopeWith [ "media_groups" ]);
       OIDC_USE_ADMIN_GROUP = "true";
       SESSION_COOKIE_SECURE = "true";
     };

@@ -1,14 +1,15 @@
 {
   config,
   hostInventory,
+  lib,
   pkgs,
   ...
 }:
 let
-  idService = hostInventory.servicesById.id;
+  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   vikunjaService = hostInventory.servicesById.vikunja;
   vikunjaMetricsMtlsPort = 9345;
-  vikunjaOidcClientId = "vikunja";
+  vikunjaOidcClientId = oidc.clients.vikunja.clientId;
   vikunjaOidcProviderKey = "sso";
   vikunjaPort = 3456;
   # Vikunja expects an IANA tz database name here, not a fixed abbreviation.
@@ -74,10 +75,10 @@ in
           enabled = true;
           providers.${vikunjaOidcProviderKey} = {
             name = "SSO";
-            authurl = "https://${idService.publicHost}/oauth2/openid/${vikunjaOidcClientId}";
+            authurl = oidc.openidBaseUrl vikunjaOidcClientId;
             clientid = vikunjaOidcClientId;
             clientsecret = "";
-            scope = "openid email profile";
+            scope = lib.concatStringsSep " " oidc.baseScopes;
             emailfallback = true;
           };
         };

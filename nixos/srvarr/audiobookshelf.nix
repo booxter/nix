@@ -8,13 +8,13 @@
 }:
 let
   accounts = import ./accounts.nix;
-  idService = hostInventory.servicesById.id;
+  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   port = 9292;
   stateDir = "${config.host.srvarrPaths.stateDir}/audiobookshelf";
   user = "audiobookshelf";
   audiobookshelfService = hostInventory.servicesById.audiobookshelf;
-  oidcClientId = "audiobookshelf";
-  oidcIssuerBase = "https://${idService.publicHost}/oauth2/openid/${oidcClientId}";
+  oidcClientId = oidc.clients.audiobookshelf.clientId;
+  oidcIssuerBase = oidc.openidBaseUrl oidcClientId;
   oidcSettingsFile = pkgs.writeText "audiobookshelf-oidc-settings.json" (
     builtins.toJSON {
       authActiveAuthMethods = [
@@ -22,10 +22,10 @@ let
         "openid"
       ];
       authOpenIDIssuerURL = oidcIssuerBase;
-      authOpenIDAuthorizationURL = "https://${idService.publicHost}/ui/oauth2";
-      authOpenIDTokenURL = "https://${idService.publicHost}/oauth2/token";
-      authOpenIDUserInfoURL = "${oidcIssuerBase}/userinfo";
-      authOpenIDJwksURL = "${oidcIssuerBase}/public_key.jwk";
+      authOpenIDAuthorizationURL = oidc.authorizationUrl;
+      authOpenIDTokenURL = oidc.tokenUrl;
+      authOpenIDUserInfoURL = oidc.userinfoUrl oidcClientId;
+      authOpenIDJwksURL = oidc.jwksUrl oidcClientId;
       authOpenIDLogoutURL = null;
       authOpenIDClientID = oidcClientId;
       authOpenIDClientSecret = null;

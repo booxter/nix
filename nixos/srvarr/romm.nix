@@ -7,7 +7,7 @@
 }:
 let
   accounts = import ./accounts.nix;
-  idService = hostInventory.servicesById.id;
+  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   mediaDir = config.host.srvarrPaths.mediaDir;
   # RomM's upstream layout keeps all mutable application data under one root:
   # library, resources, assets, config, sync, and launchbox.
@@ -84,8 +84,7 @@ let
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
   rommImage = "${ociImages.romm.image}:${ociImages.romm.tag}";
   rommService = hostInventory.servicesById.romm;
-  rommOidcClientId = "romm";
-  rommOidcIssuerBase = "https://${idService.publicHost}/oauth2/openid/${rommOidcClientId}";
+  rommOidcClientId = oidc.clients.romm.clientId;
 
   commonEnvironment = {
     PATH = "/src/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
@@ -117,8 +116,8 @@ let
     OIDC_PROVIDER = "SSO";
     OIDC_CLIENT_ID = rommOidcClientId;
     OIDC_REDIRECT_URI = "${rommService.url}/api/oauth/openid";
-    OIDC_SERVER_APPLICATION_URL = rommOidcIssuerBase;
-    OIDC_SERVER_METADATA_URL = "${rommOidcIssuerBase}/.well-known/openid-configuration";
+    OIDC_SERVER_APPLICATION_URL = oidc.openidBaseUrl rommOidcClientId;
+    OIDC_SERVER_METADATA_URL = oidc.discoveryUrl rommOidcClientId;
     OIDC_CLAIM_ROLES = "romm_roles";
     OIDC_ROLE_ADMIN = "romm-admins";
     OIDC_ROLE_EDITOR = "romm-editors";
