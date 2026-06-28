@@ -54,8 +54,10 @@ in
   };
 
   environment.systemPackages = with pkgs; [
+    amdgpu_top
     clinfo
     radeontop
+    rocmPackages.rocm-smi
     rocmPackages.rocminfo
   ];
 
