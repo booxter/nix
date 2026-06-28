@@ -14,6 +14,8 @@ let
   vikunjaHostConfig = outputs.nixosConfigurations.org.config;
   vikunjaTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
   litellmEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
+  openWebuiEndpoint =
+    vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints."open-webui";
   vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
@@ -82,6 +84,18 @@ in
       static_configs = [
         {
           targets = [ "${vikunjaTargetHost}:${toString litellmEndpoint.port}" ];
+          labels.instance = "org";
+        }
+      ];
+    }
+    {
+      job_name = "open-webui";
+      metrics_path = openWebuiEndpoint.path;
+      scheme = "https";
+      tls_config = prometheusMtlsTlsConfig;
+      static_configs = [
+        {
+          targets = [ "${vikunjaTargetHost}:${toString openWebuiEndpoint.port}" ];
           labels.instance = "org";
         }
       ];
