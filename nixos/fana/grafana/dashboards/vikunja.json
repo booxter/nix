@@ -423,7 +423,6 @@
   "schemaVersion": 41,
   "style": "dark",
   "tags": [
-    "org",
     "vikunja"
   ],
   "templating": {
@@ -435,8 +434,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Org Services",
-  "uid": "fana-org-services",
+  "title": "Vikunja",
+  "uid": "vikunja",
   "version": 2,
   "weekStart": ""
 }
