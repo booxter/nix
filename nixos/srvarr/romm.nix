@@ -22,6 +22,65 @@ let
   user = "romm";
   apiPort = 5081;
   redisPort = 6380;
+  rommDefaultCoreHeadReplacement = "  <script src=\"/assets/romm-default-core.js\"></script>\n</head>";
+  rommDefaultCoreScript = pkgs.writeText "romm-default-core.js" ''
+    (() => {
+      const platform = "arcade";
+      const defaultCore = "mame2003_plus";
+      const previousDefaultCore = "mame2003";
+      const key = `player:''${platform}:core`;
+      const migrationKey = `player:''${platform}:core-default:''${defaultCore}`;
+
+      try {
+        const currentCore = window.localStorage.getItem(key);
+
+        if (currentCore === null) {
+          window.localStorage.setItem(key, defaultCore);
+          window.localStorage.setItem(migrationKey, "true");
+          return;
+        }
+
+        if (
+          currentCore === previousDefaultCore &&
+          window.localStorage.getItem(migrationKey) !== "true"
+        ) {
+          window.localStorage.setItem(key, defaultCore);
+          window.localStorage.setItem(migrationKey, "true");
+        }
+      } catch (_error) {
+        // Browser storage can be unavailable in restricted/private contexts.
+      }
+    })();
+  '';
+  rommReplaceFail = pkgs.writeShellScript "romm-replace-fail" ''
+    set -euo pipefail
+
+    if [ "$#" -ne 3 ]; then
+      echo "usage: $0 <file> <pattern> <replacement>" >&2
+      exit 2
+    fi
+
+    pattern=$2
+    replacement=$3
+
+    ${pkgs.perl}/bin/perl -0pi -e '
+      BEGIN {
+        $pattern = shift @ARGV;
+        $replacement = shift @ARGV;
+        $file = $ARGV[0] // "<input>";
+        $matches = 0;
+      }
+
+      $matches += s/\Q$pattern\E/$replacement/g;
+
+      END {
+        if ($matches == 0) {
+          print STDERR "replace-fail: pattern not found in $file\n";
+          exit 1;
+        }
+      }
+    ' "$pattern" "$replacement" "$1"
+  '';
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
   rommImage = "${ociImages.romm.image}:${ociImages.romm.tag}";
   rommService = hostInventory.servicesById.romm;
@@ -313,6 +372,12 @@ in
       mkdir -p ${lib.escapeShellArg "${webDir}.new"} ${lib.escapeShellArg "${nginxDir}.new"}
       podman cp "$cid:/var/www/html/." ${lib.escapeShellArg "${webDir}.new/"}
       podman cp "$cid:/etc/nginx/js/." ${lib.escapeShellArg "${nginxDir}.new/"}
+
+      install -m 0644 ${rommDefaultCoreScript} ${lib.escapeShellArg "${webDir}.new/assets/romm-default-core.js"}
+      ${rommReplaceFail} \
+        ${lib.escapeShellArg "${webDir}.new/index.html"} \
+        ${lib.escapeShellArg "</head>"} \
+        ${lib.escapeShellArg rommDefaultCoreHeadReplacement}
 
       rm -f ${lib.escapeShellArg "${webDir}.new/assets/romm/resources"}
       mkdir -p ${lib.escapeShellArg "${webDir}.new/assets/romm"}
