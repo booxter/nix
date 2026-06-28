@@ -8,6 +8,11 @@ Scope: whole repository.
   live unless explicitly asked.
 - Prefer declarative Nix changes; keep unrelated worktree changes intact.
 - Prefer flake apps/repo scripts over ad hoc commands. Check `--help` when unsure.
+- Prefer dependencies and packages already available from nixpkgs before adding
+  local package definitions or vendored sources.
+- Prefer third-party projects with a clear versioning story, especially tagged
+  releases. If using an untagged revision, document the rationale and update
+  path.
 - Run `nix fmt` after edits; it also runs repo lint checks.
 
 ## Layout
