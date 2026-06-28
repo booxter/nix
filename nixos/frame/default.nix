@@ -82,12 +82,44 @@ in
     };
   };
 
+  systemd.services.frame-ollama-metrics = {
+    description = "Collect Ollama state metrics for Prometheus";
+    wants = [ "ollama.service" ];
+    after = [ "ollama.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${lib.getExe framePkgs.frame-ollama-metrics} --base-url http://127.0.0.1:${toString config.services.ollama.port} --output ${nodeExporterTextfileDir}/frame-ollama.prom";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
+      ReadWritePaths = [ nodeExporterTextfileDir ];
+      RestrictAddressFamilies = [
+        "AF_UNIX"
+        "AF_INET"
+        "AF_INET6"
+      ];
+      RestrictRealtime = true;
+      LockPersonality = true;
+      MemoryDenyWriteExecute = true;
+    };
+  };
+
   systemd.timers.frame-amdgpu-metrics = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "2m";
       OnUnitActiveSec = "30s";
       AccuracySec = "5s";
+    };
+  };
+
+  systemd.timers.frame-ollama-metrics = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2m";
+      OnUnitActiveSec = "1m";
+      AccuracySec = "10s";
     };
   };
 
