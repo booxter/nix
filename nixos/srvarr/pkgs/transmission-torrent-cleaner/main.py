@@ -25,12 +25,17 @@ class TransmissionRpcClient:
         self.rpc_url = rpc_url
         self.timeout_seconds = timeout_seconds
         self.session_id: str | None = None
+        self.next_request_id = 1
 
-    def call(self, method: str, arguments: dict | None = None) -> dict:
+    def call(self, method: str, params: dict | None = None) -> dict:
+        request_id = self.next_request_id
+        self.next_request_id += 1
         payload = json.dumps(
             {
+                "jsonrpc": "2.0",
                 "method": method,
-                "arguments": arguments or {},
+                "params": params or {},
+                "id": request_id,
             }
         ).encode("utf-8")
 
@@ -73,17 +78,32 @@ class TransmissionRpcClient:
                 raise TransmissionRpcError(
                     "Transmission RPC returned invalid JSON"
                 ) from exc
-
-            result = parsed.get("result")
-            if result != "success":
-                raise TransmissionRpcError(f"Transmission RPC returned {result!r}")
-
-            arguments_out = parsed.get("arguments", {})
-            if not isinstance(arguments_out, dict):
+            if not isinstance(parsed, dict):
                 raise TransmissionRpcError(
-                    "Transmission RPC returned invalid arguments payload"
+                    "Transmission RPC returned invalid JSON-RPC payload"
                 )
-            return arguments_out
+
+            if parsed.get("id") != request_id:
+                raise TransmissionRpcError("Transmission RPC returned mismatched id")
+
+            error = parsed.get("error")
+            if error is not None:
+                if isinstance(error, dict):
+                    message = error.get("message", "unknown error")
+                    data = error.get("data")
+                    if isinstance(data, dict) and data.get("error_string"):
+                        message = f"{message}: {data['error_string']}"
+                    raise TransmissionRpcError(
+                        f"Transmission RPC returned error {error.get('code')}: {message}"
+                    )
+                raise TransmissionRpcError(f"Transmission RPC returned {error!r}")
+
+            result = parsed.get("result", {})
+            if not isinstance(result, dict):
+                raise TransmissionRpcError(
+                    "Transmission RPC returned invalid result payload"
+                )
+            return result
 
         raise TransmissionRpcError("failed to negotiate Transmission session id")
 
@@ -122,7 +142,7 @@ def load_tracker_hosts(trackers_file: Path) -> set[str]:
 
 
 def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
-    for tracker in torrent.get("trackerStats", []):
+    for tracker in torrent.get("tracker_stats", []):
         if not isinstance(tracker, dict):
             continue
         host = normalize_tracker_host(str(tracker.get("host", "")))
@@ -139,25 +159,25 @@ def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> boo
 
 
 def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
-    arguments = client.call(
-        "torrent-get",
+    result = client.call(
+        "torrent_get",
         {
             "fields": [
                 "id",
                 "name",
-                "hashString",
-                "addedDate",
-                "doneDate",
-                "leftUntilDone",
-                "percentDone",
-                "sizeWhenDone",
+                "hash_string",
+                "added_date",
+                "done_date",
+                "left_until_done",
+                "percent_done",
+                "size_when_done",
                 "status",
-                "trackerStats",
-                "uploadRatio",
+                "tracker_stats",
+                "upload_ratio",
             ]
         },
     )
-    torrents = arguments.get("torrents", [])
+    torrents = result.get("torrents", [])
     if not isinstance(torrents, list):
         raise TransmissionRpcError("Transmission RPC returned an invalid torrent list")
     return torrents
@@ -170,33 +190,33 @@ def rpc_remove_torrents(
         return
 
     client.call(
-        "torrent-remove",
+        "torrent_remove",
         {
             "ids": torrent_hashes,
-            "delete-local-data": delete_local_data,
+            "delete_local_data": delete_local_data,
         },
     )
 
 
 def torrent_is_complete(torrent: dict) -> bool:
-    left_until_done = torrent.get("leftUntilDone")
+    left_until_done = torrent.get("left_until_done")
     if isinstance(left_until_done, int) and left_until_done == 0:
         return True
 
-    percent_done = torrent.get("percentDone")
+    percent_done = torrent.get("percent_done")
     if isinstance(percent_done, (int, float)) and percent_done >= 0.999999:
         return True
 
-    done_date = torrent.get("doneDate")
+    done_date = torrent.get("done_date")
     return isinstance(done_date, int) and done_date > 0
 
 
 def torrent_completion_timestamp(torrent: dict) -> int | None:
-    done_date = torrent.get("doneDate")
+    done_date = torrent.get("done_date")
     if isinstance(done_date, int) and done_date > 0:
         return done_date
 
-    added_date = torrent.get("addedDate")
+    added_date = torrent.get("added_date")
     if isinstance(added_date, int) and added_date > 0:
         return added_date
 
@@ -204,11 +224,11 @@ def torrent_completion_timestamp(torrent: dict) -> int | None:
 
 
 def torrent_added_timestamp(torrent: dict) -> int | None:
-    added_date = torrent.get("addedDate")
+    added_date = torrent.get("added_date")
     if isinstance(added_date, int) and added_date > 0:
         return added_date
 
-    done_date = torrent.get("doneDate")
+    done_date = torrent.get("done_date")
     if isinstance(done_date, int) and done_date > 0:
         return done_date
 
@@ -243,7 +263,7 @@ def run_once(args: argparse.Namespace) -> int:
     candidates: list[dict] = []
 
     for torrent in torrents:
-        torrent_hash = torrent.get("hashString")
+        torrent_hash = torrent.get("hash_string")
         name = torrent.get("name")
         if not isinstance(torrent_hash, str) or not torrent_hash:
             continue
@@ -253,8 +273,8 @@ def run_once(args: argparse.Namespace) -> int:
         if torrent_matches_tracker_hosts(torrent, tracker_hosts):
             continue
 
-        upload_ratio = torrent.get("uploadRatio")
-        size_when_done = torrent.get("sizeWhenDone")
+        upload_ratio = torrent.get("upload_ratio")
+        size_when_done = torrent.get("size_when_done")
         size_bytes = size_when_done if isinstance(size_when_done, int) else 0
         age_days: float | None = None
         reasons: list[str] = []

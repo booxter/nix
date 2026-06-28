@@ -18,14 +18,14 @@ class RunOnceTests(unittest.TestCase):
         exit_code, removed = self.run_cleaner(
             [
                 self.make_torrent(
-                    hashString="old-public",
+                    hash_string="old-public",
                     name="old-public",
-                    addedDate=NOW - 366 * DAY_SECONDS,
-                    leftUntilDone=1024,
-                    percentDone=0.5,
-                    doneDate=0,
+                    added_date=NOW - 366 * DAY_SECONDS,
+                    left_until_done=1024,
+                    percent_done=0.5,
+                    done_date=0,
                     status=4,
-                    uploadRatio=0.2,
+                    upload_ratio=0.2,
                 )
             ]
         )
@@ -37,14 +37,14 @@ class RunOnceTests(unittest.TestCase):
         exit_code, removed = self.run_cleaner(
             [
                 self.make_torrent(
-                    hashString="still-seeding",
+                    hash_string="still-seeding",
                     name="still-seeding",
-                    addedDate=NOW - 366 * DAY_SECONDS,
-                    doneDate=NOW - 366 * DAY_SECONDS,
-                    leftUntilDone=0,
-                    percentDone=1.0,
+                    added_date=NOW - 366 * DAY_SECONDS,
+                    done_date=NOW - 366 * DAY_SECONDS,
+                    left_until_done=0,
+                    percent_done=1.0,
                     status=6,
-                    uploadRatio=0.2,
+                    upload_ratio=0.2,
                 )
             ]
         )
@@ -56,15 +56,15 @@ class RunOnceTests(unittest.TestCase):
         exit_code, removed = self.run_cleaner(
             [
                 self.make_torrent(
-                    hashString="old-preferred",
+                    hash_string="old-preferred",
                     name="old-preferred",
-                    addedDate=NOW - 366 * DAY_SECONDS,
-                    leftUntilDone=1024,
-                    percentDone=0.5,
-                    doneDate=0,
+                    added_date=NOW - 366 * DAY_SECONDS,
+                    left_until_done=1024,
+                    percent_done=0.5,
+                    done_date=0,
                     status=4,
-                    uploadRatio=0.2,
-                    trackerStats=[{"host": "preferred.example"}],
+                    upload_ratio=0.2,
+                    tracker_stats=[{"host": "preferred.example"}],
                 )
             ]
         )
@@ -76,14 +76,14 @@ class RunOnceTests(unittest.TestCase):
         exit_code, removed = self.run_cleaner(
             [
                 self.make_torrent(
-                    hashString="old-high-ratio",
+                    hash_string="old-high-ratio",
                     name="old-high-ratio",
-                    addedDate=NOW - 90 * DAY_SECONDS,
-                    doneDate=NOW - 45 * DAY_SECONDS,
-                    leftUntilDone=0,
-                    percentDone=1.0,
+                    added_date=NOW - 90 * DAY_SECONDS,
+                    done_date=NOW - 45 * DAY_SECONDS,
+                    left_until_done=0,
+                    percent_done=1.0,
                     status=6,
-                    uploadRatio=3.5,
+                    upload_ratio=3.5,
                 )
             ]
         )
@@ -93,16 +93,16 @@ class RunOnceTests(unittest.TestCase):
 
     def make_torrent(self, **overrides: object) -> dict:
         torrent = {
-            "hashString": "public",
+            "hash_string": "public",
             "name": "public",
-            "addedDate": NOW - 10 * DAY_SECONDS,
-            "doneDate": 0,
-            "leftUntilDone": 1024,
-            "percentDone": 0.5,
-            "sizeWhenDone": 0,
+            "added_date": NOW - 10 * DAY_SECONDS,
+            "done_date": 0,
+            "left_until_done": 1024,
+            "percent_done": 0.5,
+            "size_when_done": 0,
             "status": 4,
-            "trackerStats": [{"host": "public.example"}],
-            "uploadRatio": 0.0,
+            "tracker_stats": [{"host": "public.example"}],
+            "upload_ratio": 0.0,
         }
         torrent.update(overrides)
         return torrent

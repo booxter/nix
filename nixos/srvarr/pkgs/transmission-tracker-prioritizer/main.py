@@ -29,12 +29,17 @@ class TransmissionRpcClient:
         self.rpc_url = rpc_url
         self.timeout_seconds = timeout_seconds
         self.session_id: str | None = None
+        self.next_request_id = 1
 
-    def call(self, method: str, arguments: dict | None = None) -> dict:
+    def call(self, method: str, params: dict | None = None) -> dict:
+        request_id = self.next_request_id
+        self.next_request_id += 1
         payload = json.dumps(
             {
+                "jsonrpc": "2.0",
                 "method": method,
-                "arguments": arguments or {},
+                "params": params or {},
+                "id": request_id,
             }
         ).encode("utf-8")
 
@@ -77,12 +82,32 @@ class TransmissionRpcClient:
                 raise TransmissionRpcError(
                     "Transmission RPC returned invalid JSON"
                 ) from exc
+            if not isinstance(parsed, dict):
+                raise TransmissionRpcError(
+                    "Transmission RPC returned invalid JSON-RPC payload"
+                )
 
-            result = parsed.get("result")
-            if result != "success":
-                raise TransmissionRpcError(f"Transmission RPC returned {result!r}")
+            if parsed.get("id") != request_id:
+                raise TransmissionRpcError("Transmission RPC returned mismatched id")
 
-            return parsed.get("arguments", {})
+            error = parsed.get("error")
+            if error is not None:
+                if isinstance(error, dict):
+                    message = error.get("message", "unknown error")
+                    data = error.get("data")
+                    if isinstance(data, dict) and data.get("error_string"):
+                        message = f"{message}: {data['error_string']}"
+                    raise TransmissionRpcError(
+                        f"Transmission RPC returned error {error.get('code')}: {message}"
+                    )
+                raise TransmissionRpcError(f"Transmission RPC returned {error!r}")
+
+            result = parsed.get("result", {})
+            if not isinstance(result, dict):
+                raise TransmissionRpcError(
+                    "Transmission RPC returned invalid result payload"
+                )
+            return result
 
         raise TransmissionRpcError("failed to negotiate Transmission session id")
 
@@ -159,7 +184,7 @@ def priority_class_name(priority: int) -> str:
 
 
 def torrent_is_complete(torrent: dict) -> bool:
-    left_until_done = torrent.get("leftUntilDone")
+    left_until_done = torrent.get("left_until_done")
     return isinstance(left_until_done, int) and left_until_done == 0
 
 
@@ -172,7 +197,7 @@ def torrent_desired_priority(
     if is_preferred:
         return TR_PRI_HIGH
 
-    upload_ratio = torrent.get("uploadRatio")
+    upload_ratio = torrent.get("upload_ratio")
     baseline_non_preferred_priority = TR_PRI_NORMAL
     if (
         isinstance(upload_ratio, (int, float))
@@ -411,7 +436,7 @@ def write_health_metrics(
 
 
 def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
-    for tracker in torrent.get("trackerStats", []):
+    for tracker in torrent.get("tracker_stats", []):
         if not isinstance(tracker, dict):
             continue
         host = normalize_tracker_host(str(tracker.get("host", "")))
@@ -428,27 +453,27 @@ def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> boo
 
 
 def rpc_get_torrents(client: TransmissionRpcClient) -> list[dict]:
-    arguments = client.call(
-        "torrent-get",
+    result = client.call(
+        "torrent_get",
         {
             "fields": [
                 "id",
                 "name",
-                "hashString",
-                "bandwidthPriority",
-                "peersConnected",
-                "peersGettingFromUs",
-                "peersSendingToUs",
-                "leftUntilDone",
+                "hash_string",
+                "bandwidth_priority",
+                "peers_connected",
+                "peers_getting_from_us",
+                "peers_sending_to_us",
+                "left_until_done",
                 "status",
-                "uploadRatio",
-                "rateDownload",
-                "rateUpload",
-                "trackerStats",
+                "upload_ratio",
+                "rate_download",
+                "rate_upload",
+                "tracker_stats",
             ]
         },
     )
-    torrents = arguments.get("torrents", [])
+    torrents = result.get("torrents", [])
     if not isinstance(torrents, list):
         raise TransmissionRpcError("Transmission RPC returned an invalid torrent list")
     return torrents
@@ -462,13 +487,13 @@ def rpc_set_torrent_fields(
     if not torrent_hashes or not fields:
         return
 
-    arguments = {
+    params = {
         "ids": torrent_hashes,
     }
-    arguments.update(fields)
+    params.update(fields)
     client.call(
-        "torrent-set",
-        arguments,
+        "torrent_set",
+        params,
     )
 
 
@@ -477,7 +502,7 @@ def rpc_stop_torrents(client: TransmissionRpcClient, torrent_hashes: list[str]) 
         return
 
     client.call(
-        "torrent-stop",
+        "torrent_stop",
         {
             "ids": torrent_hashes,
         },
@@ -524,7 +549,7 @@ def collect_iteration_state(
     torrent_entries: list[tuple[dict, str, bool]] = []
     current_preferred_hashes: set[str] = set()
     for torrent in torrents:
-        torrent_hash = torrent.get("hashString")
+        torrent_hash = torrent.get("hash_string")
         if not isinstance(torrent_hash, str) or not torrent_hash:
             continue
         is_preferred = torrent_matches_tracker_hosts(torrent, tracker_hosts)
@@ -534,8 +559,8 @@ def collect_iteration_state(
 
     preferred_bootstrap_active = any(
         is_preferred
-        and isinstance(torrent.get("peersGettingFromUs"), int)
-        and torrent["peersGettingFromUs"] > 0
+        and isinstance(torrent.get("peers_getting_from_us"), int)
+        and torrent["peers_getting_from_us"] > 0
         for torrent, _torrent_hash, is_preferred in torrent_entries
     )
     preferred_upload_observed_active = False
@@ -571,33 +596,33 @@ def collect_iteration_state(
     to_stop: list[str] = []
 
     for torrent, torrent_hash, is_preferred in torrent_entries:
-        priority = torrent.get("bandwidthPriority")
+        priority = torrent.get("bandwidth_priority")
         current_priority = priority if isinstance(priority, int) else TR_PRI_NORMAL
         status = torrent.get("status")
         current_status = status if isinstance(status, int) else None
         torrent_class = priority_class_name(current_priority)
         torrent_counts[torrent_class] += 1
         peer_counts[torrent_class]["connected"] += nonnegative_int(
-            torrent.get("peersConnected")
+            torrent.get("peers_connected")
         )
         peer_counts[torrent_class]["getting_from_us"] += nonnegative_int(
-            torrent.get("peersGettingFromUs")
+            torrent.get("peers_getting_from_us")
         )
         peer_counts[torrent_class]["sending_to_us"] += nonnegative_int(
-            torrent.get("peersSendingToUs")
+            torrent.get("peers_sending_to_us")
         )
         download_bytes_per_second[torrent_class] += nonnegative_int(
-            torrent.get("rateDownload")
+            torrent.get("rate_download")
         )
         upload_bytes_per_second[torrent_class] += nonnegative_int(
-            torrent.get("rateUpload")
+            torrent.get("rate_upload")
         )
-        left_until_done = torrent.get("leftUntilDone")
-        peers_getting_from_us = torrent.get("peersGettingFromUs")
-        peers_sending_to_us = torrent.get("peersSendingToUs")
-        rate_download = torrent.get("rateDownload")
-        rate_upload = torrent.get("rateUpload")
-        upload_ratio = torrent.get("uploadRatio")
+        left_until_done = torrent.get("left_until_done")
+        peers_getting_from_us = torrent.get("peers_getting_from_us")
+        peers_sending_to_us = torrent.get("peers_sending_to_us")
+        rate_download = torrent.get("rate_download")
+        rate_upload = torrent.get("rate_upload")
+        upload_ratio = torrent.get("upload_ratio")
         is_active_download = (
             isinstance(peers_sending_to_us, int) and peers_sending_to_us > 0
         ) or (isinstance(rate_download, int) and rate_download > 0)
@@ -675,21 +700,21 @@ def apply_priority_updates(
         client,
         state.high_priority_hashes,
         {
-            "bandwidthPriority": TR_PRI_HIGH,
+            "bandwidth_priority": TR_PRI_HIGH,
         },
     )
     rpc_set_torrent_fields(
         client,
         state.normal_priority_hashes,
         {
-            "bandwidthPriority": TR_PRI_NORMAL,
+            "bandwidth_priority": TR_PRI_NORMAL,
         },
     )
     rpc_set_torrent_fields(
         client,
         state.low_priority_hashes,
         {
-            "bandwidthPriority": TR_PRI_LOW,
+            "bandwidth_priority": TR_PRI_LOW,
         },
     )
     rpc_stop_torrents(client, state.stop_hashes)

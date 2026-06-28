@@ -52,12 +52,17 @@ class TransmissionRpcClient:
         self.rpc_url = rpc_url
         self.timeout_seconds = timeout_seconds
         self.session_id: str | None = None
+        self.next_request_id = 1
 
-    def call(self, method: str, arguments: dict | None = None) -> dict:
+    def call(self, method: str, params: dict | None = None) -> dict:
+        request_id = self.next_request_id
+        self.next_request_id += 1
         payload = json.dumps(
             {
+                "jsonrpc": "2.0",
                 "method": method,
-                "arguments": arguments or {},
+                "params": params or {},
+                "id": request_id,
             }
         ).encode("utf-8")
 
@@ -100,17 +105,32 @@ class TransmissionRpcClient:
                 raise TransmissionRpcError(
                     "Transmission RPC returned invalid JSON"
                 ) from exc
-
-            result = parsed.get("result")
-            if result != "success":
-                raise TransmissionRpcError(f"Transmission RPC returned {result!r}")
-
-            arguments_out = parsed.get("arguments", {})
-            if not isinstance(arguments_out, dict):
+            if not isinstance(parsed, dict):
                 raise TransmissionRpcError(
-                    "Transmission RPC returned invalid arguments payload"
+                    "Transmission RPC returned invalid JSON-RPC payload"
                 )
-            return arguments_out
+
+            if parsed.get("id") != request_id:
+                raise TransmissionRpcError("Transmission RPC returned mismatched id")
+
+            error = parsed.get("error")
+            if error is not None:
+                if isinstance(error, dict):
+                    message = error.get("message", "unknown error")
+                    data = error.get("data")
+                    if isinstance(data, dict) and data.get("error_string"):
+                        message = f"{message}: {data['error_string']}"
+                    raise TransmissionRpcError(
+                        f"Transmission RPC returned error {error.get('code')}: {message}"
+                    )
+                raise TransmissionRpcError(f"Transmission RPC returned {error!r}")
+
+            result = parsed.get("result", {})
+            if not isinstance(result, dict):
+                raise TransmissionRpcError(
+                    "Transmission RPC returned invalid result payload"
+                )
+            return result
 
         raise TransmissionRpcError("failed to negotiate Transmission session id")
 
@@ -821,20 +841,18 @@ def load_policy_state(
 
 
 def transmission_get_current_upload_limit_kbps(session_arguments: dict) -> int | None:
-    for key in ("speed-limit-up", "speed_limit_up"):
-        value = session_arguments.get(key)
-        if isinstance(value, int):
-            return value
+    value = session_arguments.get("speed_limit_up")
+    if isinstance(value, int):
+        return value
     return None
 
 
 def transmission_get_current_upload_limit_enabled(
     session_arguments: dict,
 ) -> bool | None:
-    for key in ("speed-limit-up-enabled", "speed_limit_up_enabled"):
-        value = session_arguments.get(key)
-        if isinstance(value, bool):
-            return value
+    value = session_arguments.get("speed_limit_up_enabled")
+    if isinstance(value, bool):
+        return value
     return None
 
 
@@ -910,7 +928,7 @@ def run_transmission_applier(args: argparse.Namespace) -> int:
                 max_state_age_seconds=args.max_state_age_seconds,
             )
             target_limit = state["transmission_upload_limit_kbps"]
-            session_arguments = client.call("session-get")
+            session_arguments = client.call("session_get")
             current_limit = transmission_get_current_upload_limit_kbps(
                 session_arguments
             )
@@ -919,10 +937,10 @@ def run_transmission_applier(args: argparse.Namespace) -> int:
             )
             if current_limit != target_limit or current_enabled is not True:
                 client.call(
-                    "session-set",
+                    "session_set",
                     {
-                        "speed-limit-up": target_limit,
-                        "speed-limit-up-enabled": True,
+                        "speed_limit_up": target_limit,
+                        "speed_limit_up_enabled": True,
                     },
                 )
                 LOG.info(
