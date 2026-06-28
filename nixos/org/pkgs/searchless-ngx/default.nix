@@ -16,6 +16,8 @@ let
       httpx
       loguru
       mcp
+      mistralai
+      openai
       pydantic-settings
       tenacity
       uvicorn
@@ -44,9 +46,6 @@ stdenvNoCC.mkDerivation rec {
   };
 
   patches = [
-    ./settings-provider-configuration.patch
-    ./ollama-embedding-provider.patch
-    ./litellm-fuzzy-matching.patch
     ./loopback-mcp-hosts.patch
     ./hermetic-test-embeddings.patch
   ];
