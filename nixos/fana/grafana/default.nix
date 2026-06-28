@@ -144,7 +144,6 @@ in
         providers = [
           {
             name = "fana";
-            folder = "Fana";
             type = "file";
             disableDeletion = false;
             editable = false;
