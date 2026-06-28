@@ -11,12 +11,11 @@ let
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
   sabnzbdTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.srvarr;
-  vikunjaHostConfig = outputs.nixosConfigurations.org.config;
-  vikunjaTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
-  litellmEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
-  openWebuiEndpoint =
-    vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints."open-webui";
-  vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
+  orgHostConfig = outputs.nixosConfigurations.org.config;
+  orgTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
+  litellmEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
+  openWebuiEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints."open-webui";
+  vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
   scrapeConfigs = [
@@ -83,7 +82,7 @@ in
       tls_config = prometheusMtlsTlsConfig;
       static_configs = [
         {
-          targets = [ "${vikunjaTargetHost}:${toString litellmEndpoint.port}" ];
+          targets = [ "${orgTargetHost}:${toString litellmEndpoint.port}" ];
           labels.instance = "org";
         }
       ];
@@ -95,7 +94,7 @@ in
       tls_config = prometheusMtlsTlsConfig;
       static_configs = [
         {
-          targets = [ "${vikunjaTargetHost}:${toString openWebuiEndpoint.port}" ];
+          targets = [ "${orgTargetHost}:${toString openWebuiEndpoint.port}" ];
           labels.instance = "org";
         }
       ];
@@ -107,7 +106,7 @@ in
       tls_config = prometheusMtlsTlsConfig;
       static_configs = [
         {
-          targets = [ "${vikunjaTargetHost}:${toString vikunjaEndpoint.port}" ];
+          targets = [ "${orgTargetHost}:${toString vikunjaEndpoint.port}" ];
           labels.instance = "org";
         }
       ];
