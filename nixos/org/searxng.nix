@@ -8,9 +8,6 @@ let
     capabilities.web_search = true;
     defaultFeatureIds = [ "web_search" ];
   };
-  openWebuiDefaultModelParams = {
-    function_calling = "native";
-  };
   searxPort = 18083;
   searxProbeMetricsFile = "${nodeExporterTextfileDir}/open-webui-searxng.prom";
   searxProbeScript = pkgs.writeShellApplication {
@@ -95,7 +92,6 @@ in
 {
   services.open-webui.environment = {
     DEFAULT_MODEL_METADATA = builtins.toJSON openWebuiDefaultModelMetadata;
-    DEFAULT_MODEL_PARAMS = builtins.toJSON openWebuiDefaultModelParams;
     ENABLE_WEB_SEARCH = "True";
     SEARXNG_LANGUAGE = "all";
     SEARXNG_QUERY_URL = "http://127.0.0.1:${toString searxPort}/search";
