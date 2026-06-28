@@ -236,6 +236,50 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="searx.service",state="active"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: SearxngServiceDown
+      - eval_time: 10m
+        alertname: SearxngServiceDown
+        exp_alerts:
+          - exp_labels:
+              alertname: SearxngServiceDown
+              category: service
+              instance: org
+              job: node-mtls
+              name: searx.service
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "SearXNG service down on org"
+              description: "The SearXNG systemd service on org has not been active for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="oauth2-proxy.service",state="active"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: SearxngOauth2ProxyDown
+      - eval_time: 10m
+        alertname: SearxngOauth2ProxyDown
+        exp_alerts:
+          - exp_labels:
+              alertname: SearxngOauth2ProxyDown
+              category: service
+              instance: org
+              job: node-mtls
+              name: oauth2-proxy.service
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "SearXNG OAuth proxy down on org"
+              description: "The oauth2-proxy service protecting SearXNG on org has not been active for 10 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'paperless_status_database_status{instance="org",job="paperless"}'
         values: "0x20 1x2"
     alert_rule_test:

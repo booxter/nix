@@ -19,6 +19,7 @@ let
     capabilities.web_search = true;
     defaultFeatureIds = [ "web_search" ];
   };
+  searxMetricsMtlsPort = 9349;
   searxPort = 18083;
   authRequestLocationConfig = ''
     auth_request /oauth2/auth;
@@ -151,6 +152,12 @@ in
         "searx.service"
       ];
     };
+    "searxng/open_metrics_password" = {
+      restartUnits = [
+        "searx-init.service"
+        "searx.service"
+      ];
+    };
     oauth2ProxySearchClientSecret = {
       key = "oauth2-proxy/search/client_secret";
       owner = "root";
@@ -173,6 +180,7 @@ in
     mode = "0400";
     content = ''
       SEARX_SECRET_KEY=${config.sops.placeholder."searxng/secret_key"}
+      SEARX_OPEN_METRICS=${config.sops.placeholder."searxng/open_metrics_password"}
     '';
     restartUnits = [
       "searx-init.service"
@@ -202,6 +210,10 @@ in
     environmentFile = config.sops.templates."searxng.env".path;
     openFirewall = false;
     settings = {
+      general = {
+        enable_metrics = true;
+        open_metrics = "$SEARX_OPEN_METRICS";
+      };
       server = {
         base_url = "${searchService.url}/";
         bind_address = "127.0.0.1";
@@ -258,7 +270,20 @@ in
     locationExtraConfig = authRequestLocationConfig;
   };
 
-  services.nginx.virtualHosts."internal-https-search".locations = oauth2ProxyLocations;
+  services.nginx.virtualHosts."internal-https-search".locations = oauth2ProxyLocations // {
+    "= /metrics" = {
+      return = "404";
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
+  };
+
+  host.observability.client.prometheusMtlsEndpoints.searxng = {
+    enable = true;
+    port = searxMetricsMtlsPort;
+    upstream = "http://127.0.0.1:${toString searxPort}/metrics";
+  };
 
   systemd.services.oauth2-proxy = {
     wants = [ "sops-install-secrets.service" ];
