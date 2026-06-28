@@ -479,22 +479,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-transmission": {
-      "locked": {
-        "lastModified": 1771235854,
-        "narHash": "sha256-Lk8AsOBtk1SlGHGOWh4PavyHkix/XPmHPWg7br6r3Hs=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "12d60a4f2d5f2cc96e93ae5615328245d49ac2e8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "12d60a4f2d5f2cc96e93ae5615328245d49ac2e8",
-        "type": "github"
-      }
-    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1782118813,
@@ -652,7 +636,6 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-darwin": "nixpkgs-darwin",
-        "nixpkgs-transmission": "nixpkgs-transmission",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos",
