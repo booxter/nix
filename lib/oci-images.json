@@ -2,7 +2,7 @@
   "litellm": {
     "changelog": "https://github.com/BerriAI/litellm/releases/tag/{tag}",
     "image": "ghcr.io/berriai/litellm-database",
-    "tag": "v1.89.3",
+    "tag": "v1.90.0",
     "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "paperless-gpt": {

@@ -34,13 +34,13 @@ let
 in
 stdenvNoCC.mkDerivation rec {
   pname = "searchless-ngx";
-  version = "0.4.0";
+  version = "0.5.0";
 
   src = fetchFromGitHub {
     owner = "hensing";
     repo = "searchless-ngx";
     rev = "v${version}";
-    hash = "sha256-EW6VEfLhCr6z4I2j4AR4XpINaV5KWC8W/4d6MBV2C5c=";
+    hash = "sha256-W5cllQskPgu+uyI4af+9IfWVv15K08CCSQDiZy+0Z44=";
   };
 
   patches = [
