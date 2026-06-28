@@ -13,6 +13,7 @@ let
   npmHooks = buildPackages.npmHooks.override { inherit nodejs; };
   pname = "aurral";
   version = "1.76.50";
+  npmDepsHash = "sha256-UShOfNPPebtq4VXlmOdMxnl+8CxPP2dVwiaG8LASY98=";
   src = fetchFromGitHub {
     owner = "lklynet";
     repo = "aurral";
@@ -23,7 +24,7 @@ let
     name = "${pname}-${version}-npm-deps";
     inherit src;
     fetcherVersion = 2;
-    hash = "sha256-UShOfNPPebtq4VXlmOdMxnl+8CxPP2dVwiaG8LASY98=";
+    hash = npmDepsHash;
   };
   runtimeStateDir = "/data/.state/nixarr/aurral";
   runtimeFlowDir = "/data/media/library/flows";
@@ -109,6 +110,11 @@ stdenv.mkDerivation {
 
     runHook postInstall
   '';
+
+  passthru.updateScript = [
+    "bash"
+    ./update.sh
+  ];
 
   meta = {
     description = "Self-hosted music discovery, request management, and flow downloads for Lidarr";
