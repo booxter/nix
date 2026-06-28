@@ -85,3 +85,41 @@ groups:
         annotations:
           summary: "Open WebUI SearXNG probe returned no results on org"
           description: "The Open WebUI SearXNG dependency probe on org has returned zero search results for 30 minutes."
+      # Searchless API metrics are collected through its existing JSON
+      # endpoints and emitted through org's node_exporter textfile collector.
+      - alert: SearchlessMetricsTimerDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="org",name="searchless-ngx-metrics.timer",state="active"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Searchless metrics timer down on org"
+          description: "The Searchless API metrics timer on org has not been active for 10 minutes."
+      - alert: SearchlessMetricsServiceFailed
+        expr: node_systemd_unit_state{job="node-mtls",instance="org",name="searchless-ngx-metrics.service",state="failed"} > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Searchless metrics service failed on org"
+          description: "The Searchless API metrics service on org has remained in the failed state for 5 minutes."
+      - alert: SearchlessMetricsCollectionFailed
+        expr: searchless_metrics_collection_success{job="node-mtls",instance="org"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Searchless metrics collection failed on org"
+          description: "The Searchless API metrics collector on org has been failing for 10 minutes."
+      - alert: SearchlessMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="org",file="/var/lib/prometheus-node-exporter-textfile/searchless-ngx.prom"}) > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Searchless metrics stale on org"
+          description: "The Searchless API metrics file on org has not been refreshed for more than 5 minutes."

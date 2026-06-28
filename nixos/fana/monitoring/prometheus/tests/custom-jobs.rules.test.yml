@@ -233,3 +233,88 @@ tests:
             exp_annotations:
               summary: "Open WebUI SearXNG probe returned no results on org"
               description: "The Open WebUI SearXNG dependency probe on org has returned zero search results for 30 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="searchless-ngx-metrics.timer",state="active"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: SearchlessMetricsTimerDown
+      - eval_time: 10m
+        alertname: SearchlessMetricsTimerDown
+        exp_alerts:
+          - exp_labels:
+              alertname: SearchlessMetricsTimerDown
+              category: service
+              instance: org
+              job: node-mtls
+              name: searchless-ngx-metrics.timer
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "Searchless metrics timer down on org"
+              description: "The Searchless API metrics timer on org has not been active for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="searchless-ngx-metrics.service",state="failed"}'
+        values: "1x10 0x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: SearchlessMetricsServiceFailed
+      - eval_time: 5m
+        alertname: SearchlessMetricsServiceFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: SearchlessMetricsServiceFailed
+              category: service
+              instance: org
+              job: node-mtls
+              name: searchless-ngx-metrics.service
+              severity: warning
+              state: failed
+            exp_annotations:
+              summary: "Searchless metrics service failed on org"
+              description: "The Searchless API metrics service on org has remained in the failed state for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'searchless_metrics_collection_success{instance="org",job="node-mtls"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: SearchlessMetricsCollectionFailed
+      - eval_time: 10m
+        alertname: SearchlessMetricsCollectionFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: SearchlessMetricsCollectionFailed
+              category: service
+              instance: org
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Searchless metrics collection failed on org"
+              description: "The Searchless API metrics collector on org has been failing for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_textfile_mtime_seconds{instance="org",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/searchless-ngx.prom"}'
+        values: "0x24"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: SearchlessMetricsStale
+      - eval_time: 10m30s
+        alertname: SearchlessMetricsStale
+        exp_alerts:
+          - exp_labels:
+              alertname: SearchlessMetricsStale
+              category: service
+              file: /var/lib/prometheus-node-exporter-textfile/searchless-ngx.prom
+              instance: org
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Searchless metrics stale on org"
+              description: "The Searchless API metrics file on org has not been refreshed for more than 5 minutes."

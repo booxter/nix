@@ -15,6 +15,7 @@ let
   orgTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
   litellmEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
   openWebuiEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints."open-webui";
+  paperlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.paperless;
   vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
@@ -95,6 +96,18 @@ in
       static_configs = [
         {
           targets = [ "${orgTargetHost}:${toString openWebuiEndpoint.port}" ];
+          labels.instance = "org";
+        }
+      ];
+    }
+    {
+      job_name = "paperless";
+      metrics_path = paperlessEndpoint.path;
+      scheme = "https";
+      tls_config = prometheusMtlsTlsConfig;
+      static_configs = [
+        {
+          targets = [ "${orgTargetHost}:${toString paperlessEndpoint.port}" ];
           labels.instance = "org";
         }
       ];
