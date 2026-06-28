@@ -171,11 +171,17 @@ rec {
   toLocalDnsName = label: "${label}.local";
   toInternalHttpsServiceHosts =
     serviceName:
-    lib.unique [
-      "${serviceName}.${site.lan.domain}"
-      serviceName
-      (toLocalDnsName serviceName)
-    ];
+    let
+      mkHosts = label: [
+        "${label}.${site.lan.domain}"
+        label
+        (toLocalDnsName label)
+      ];
+      serviceLabels = {
+        transmission = [ "tmission" ];
+      };
+    in
+    lib.unique (lib.concatMap mkHosts (serviceLabels.${serviceName} or [ serviceName ]));
   toNixosMigrationDnsNames =
     spec: lib.unique ([ (toNixosShortDnsName spec) ] ++ toNixosAllDnsNames spec);
   toNixosHostCertificateDnsNames =
@@ -209,6 +215,7 @@ rec {
     "radarr"
     "sabnzbd"
     "sonarr"
+    "transmission"
   ];
   resolveService =
     service:
@@ -608,7 +615,7 @@ rec {
       id = "transmission";
       scope = "internal";
       owner = "srvarr";
-      probePath = "/transmission/web/";
+      probePath = "/oauth2/sign_in";
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
