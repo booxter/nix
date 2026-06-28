@@ -557,8 +557,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "{__name__=~\"paperless_status_(database|redis|celery|index|classifier|sanity_check)_status\",job=\"paperless\"}",
-          "legendFormat": "{{__name__}}",
+          "expr": "label_replace(paperless_status_celery_status{job=\"paperless\"}, \"component\", \"celery\", \"__name__\", \".*\") or label_replace(paperless_status_classifier_status{job=\"paperless\"}, \"component\", \"classifier\", \"__name__\", \".*\") or label_replace(paperless_status_database_status{job=\"paperless\"}, \"component\", \"database\", \"__name__\", \".*\") or label_replace(paperless_status_index_status{job=\"paperless\"}, \"component\", \"index\", \"__name__\", \".*\") or label_replace(paperless_status_redis_status{job=\"paperless\"}, \"component\", \"redis\", \"__name__\", \".*\") or label_replace(paperless_status_sanity_check_status{job=\"paperless\"}, \"component\", \"sanity check\", \"__name__\", \".*\")",
+          "legendFormat": "{{component}}",
           "range": false,
           "refId": "A"
         }
@@ -638,8 +638,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "{__name__=~\"searchless_metrics_collection_success|searchless_health_success|searchless_test_connection_success|searchless_sync_status_success|searchless_paperless_connected|searchless_vector_store_initialized\",job=\"node-mtls\",instance=\"org\"}",
-          "legendFormat": "{{__name__}}",
+          "expr": "label_replace(searchless_health_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"health\", \"__name__\", \".*\") or label_replace(searchless_metrics_collection_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"metrics\", \"__name__\", \".*\") or label_replace(searchless_paperless_connected{job=\"node-mtls\",instance=\"org\"}, \"component\", \"paperless api\", \"__name__\", \".*\") or label_replace(searchless_sync_status_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"sync\", \"__name__\", \".*\") or label_replace(searchless_test_connection_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"test connection\", \"__name__\", \".*\") or label_replace(searchless_vector_store_initialized{job=\"node-mtls\",instance=\"org\"}, \"component\", \"vector store\", \"__name__\", \".*\")",
+          "legendFormat": "{{component}}",
           "range": false,
           "refId": "A"
         }
