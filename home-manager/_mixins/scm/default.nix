@@ -75,6 +75,11 @@ in
       # show touched branches first
       branch.sort = "-committerdate";
 
+      fetch = {
+        prune = true;
+        pruneTags = true;
+      };
+
       # use mergiraf for merges
       merge.mergiraf = {
         name = "mergiraf";
