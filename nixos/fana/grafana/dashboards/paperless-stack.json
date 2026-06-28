@@ -536,7 +536,7 @@
       },
       "id": 8,
       "options": {
-        "displayMode": "lcd",
+        "displayMode": "basic",
         "maxVizHeight": 300,
         "minVizHeight": 16,
         "minVizWidth": 8,
@@ -549,7 +549,7 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true,
+        "showUnfilled": false,
         "sizing": "auto",
         "valueMode": "color"
       },
@@ -617,7 +617,7 @@
       },
       "id": 9,
       "options": {
-        "displayMode": "lcd",
+        "displayMode": "basic",
         "maxVizHeight": 300,
         "minVizHeight": 16,
         "minVizWidth": 8,
@@ -630,7 +630,7 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true,
+        "showUnfilled": false,
         "sizing": "auto",
         "valueMode": "color"
       },
