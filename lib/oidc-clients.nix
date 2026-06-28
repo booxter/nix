@@ -21,6 +21,10 @@ let
     clientId: client:
     {
       inherit clientId;
+      allowInsecureClientDisablePkce = false;
+      claimMaps = { };
+      public = false;
+      enableLocalhostRedirects = false;
       secretKey = clientSecretKey clientId;
       preferShortUsername = true;
     }
@@ -82,8 +86,23 @@ rec {
       displayName = "Search";
       originUrl = "${serviceUrl "search"}/oauth2/callback";
       originLanding = "${serviceUrl "search"}/";
-      scopeMaps."ai-users" = scopeWith [ "ai_groups" ];
-      claimMaps.ai_groups.valuesByGroup."ai-users" = [ "ai-users" ];
+      scopeMaps = {
+        "ai-users" = scopeWith [ "ai_groups" ];
+        "search-probe-users" = scopeWith [ "ai_groups" ];
+      };
+      claimMaps.ai_groups.valuesByGroup = {
+        "ai-users" = [ "ai-users" ];
+        "search-probe-users" = [ "search-probe-users" ];
+      };
+    };
+
+    oidc-synthetic-probe = mkClient "oidc-synthetic-probe" {
+      displayName = "OIDC synthetic probe";
+      public = true;
+      enableLocalhostRedirects = true;
+      originUrl = "http://127.0.0.1:9/oidc-synthetic-probe/callback";
+      originLanding = issuerBaseUrl;
+      scopeMaps."oidc-probe-users" = baseScopes;
     };
 
     litellm = mkClient "litellm" {
@@ -181,23 +200,18 @@ rec {
 
   kanidmProvisionClients =
     secretPathFor:
-    lib.mapAttrs (
-      _: client:
-      {
-        inherit (client)
-          displayName
-          originLanding
-          originUrl
-          preferShortUsername
-          scopeMaps
-          ;
-      }
-      // lib.optionalAttrs (client ? allowInsecureClientDisablePkce) {
-        inherit (client) allowInsecureClientDisablePkce;
-      }
-      // lib.optionalAttrs (client ? claimMaps) { inherit (client) claimMaps; }
-      // {
-        basicSecretFile = secretPathFor client.clientId;
-      }
-    ) clients;
+    lib.mapAttrs (_: client: {
+      inherit (client)
+        allowInsecureClientDisablePkce
+        claimMaps
+        displayName
+        enableLocalhostRedirects
+        originLanding
+        originUrl
+        preferShortUsername
+        public
+        scopeMaps
+        ;
+      basicSecretFile = if client.public then null else secretPathFor client.clientId;
+    }) clients;
 }

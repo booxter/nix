@@ -11,6 +11,7 @@ let
   sso = hostInventory.sso;
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   kanidmOAuthSecretAttrName = clientId: "kanidm-oauth2-${clientId}-client-secret";
+  confidentialOidcClients = lib.filterAttrs (_: client: !client.public) oidc.clients;
   kanidmPort = 18085;
   kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
@@ -115,7 +116,7 @@ in
       mode = "0400";
       restartUnits = [ "kanidm.service" ];
     }
-  ) oidc.clients;
+  ) confidentialOidcClients;
 
   services.kanidm = {
     package = pkgs.kanidmWithSecretProvisioning_1_10;

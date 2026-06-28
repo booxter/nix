@@ -387,6 +387,12 @@ rec {
       "ai-users" = {
         title = "Open WebUI users";
       };
+      "oidc-probe-users" = {
+        title = "OIDC synthetic probe users";
+      };
+      "search-probe-users" = {
+        title = "Search synthetic probe users";
+      };
       "romm-admins" = {
         title = "RomM administrators";
       };
@@ -429,6 +435,14 @@ rec {
           "vikunja-users"
           "ai-users"
           "media-users"
+        ];
+      };
+      oidc-probe-user = {
+        displayName = "OIDC synthetic probe";
+        mailAddresses = [ "oidc-probe@${site.public.domain}" ];
+        groups = [
+          "oidc-probe-users"
+          "search-probe-users"
         ];
       };
     };
