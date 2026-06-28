@@ -489,6 +489,9 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [
             {
               "options": {
@@ -533,7 +536,7 @@
       },
       "id": 8,
       "options": {
-        "displayMode": "lcd",
+        "displayMode": "basic",
         "maxVizHeight": 300,
         "minVizHeight": 16,
         "minVizWidth": 8,
@@ -546,7 +549,7 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true,
+        "showUnfilled": false,
         "sizing": "auto",
         "valueMode": "color"
       },
@@ -554,8 +557,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "{__name__=~\"paperless_status_(database|redis|celery|index|classifier|sanity_check)_status\",job=\"paperless\"}",
-          "legendFormat": "{{__name__}}",
+          "expr": "label_replace(paperless_status_celery_status{job=\"paperless\"}, \"component\", \"celery\", \"__name__\", \".*\") or label_replace(paperless_status_classifier_status{job=\"paperless\"}, \"component\", \"classifier\", \"__name__\", \".*\") or label_replace(paperless_status_database_status{job=\"paperless\"}, \"component\", \"database\", \"__name__\", \".*\") or label_replace(paperless_status_index_status{job=\"paperless\"}, \"component\", \"index\", \"__name__\", \".*\") or label_replace(paperless_status_redis_status{job=\"paperless\"}, \"component\", \"redis\", \"__name__\", \".*\") or label_replace(paperless_status_sanity_check_status{job=\"paperless\"}, \"component\", \"sanity check\", \"__name__\", \".*\")",
+          "legendFormat": "{{component}}",
           "range": false,
           "refId": "A"
         }
@@ -567,6 +570,9 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [
             {
               "options": {
@@ -611,7 +617,7 @@
       },
       "id": 9,
       "options": {
-        "displayMode": "lcd",
+        "displayMode": "basic",
         "maxVizHeight": 300,
         "minVizHeight": 16,
         "minVizWidth": 8,
@@ -624,7 +630,7 @@
           "fields": "",
           "values": false
         },
-        "showUnfilled": true,
+        "showUnfilled": false,
         "sizing": "auto",
         "valueMode": "color"
       },
@@ -632,8 +638,8 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "{__name__=~\"searchless_metrics_collection_success|searchless_health_success|searchless_test_connection_success|searchless_sync_status_success|searchless_paperless_connected|searchless_vector_store_initialized\",job=\"node-mtls\",instance=\"org\"}",
-          "legendFormat": "{{__name__}}",
+          "expr": "label_replace(searchless_health_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"health\", \"__name__\", \".*\") or label_replace(searchless_metrics_collection_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"metrics\", \"__name__\", \".*\") or label_replace(searchless_paperless_connected{job=\"node-mtls\",instance=\"org\"}, \"component\", \"paperless api\", \"__name__\", \".*\") or label_replace(searchless_sync_status_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"sync\", \"__name__\", \".*\") or label_replace(searchless_test_connection_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"test connection\", \"__name__\", \".*\") or label_replace(searchless_vector_store_initialized{job=\"node-mtls\",instance=\"org\"}, \"component\", \"vector store\", \"__name__\", \".*\")",
+          "legendFormat": "{{component}}",
           "range": false,
           "refId": "A"
         }
@@ -852,7 +858,44 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mime_type"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MIME type"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "count"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "count"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -871,7 +914,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "mime_type"
+          }
+        ]
       },
       "targets": [
         {
@@ -881,10 +930,31 @@
           "format": "table",
           "instant": true,
           "legendFormat": "{{mime_type}}",
+          "range": false,
           "refId": "A"
         }
       ],
       "title": "Documents By MIME Type",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "mime_type",
+                "Value",
+                "Value #A"
+              ]
+            }
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -902,7 +972,32 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "count"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "count"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -921,56 +1016,46 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "item"
+          }
+        ]
       },
       "targets": [
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "paperless_statistics_tag_count{job=\"paperless\"}",
+          "expr": "label_replace(paperless_statistics_tag_count{job=\"paperless\"}, \"item\", \"tags\", \"__name__\", \".*\") or label_replace(paperless_statistics_correspondent_count{job=\"paperless\"}, \"item\", \"correspondents\", \"__name__\", \".*\") or label_replace(paperless_statistics_document_type_count{job=\"paperless\"}, \"item\", \"document types\", \"__name__\", \".*\") or label_replace(paperless_statistics_storage_path_count{job=\"paperless\"}, \"item\", \"storage paths\", \"__name__\", \".*\") or label_replace(searchless_bulk_sync_limit{job=\"node-mtls\",instance=\"org\"}, \"item\", \"searchless bulk sync limit\", \"__name__\", \".*\")",
           "format": "table",
           "instant": true,
-          "legendFormat": "tags",
+          "range": false,
           "refId": "A"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "paperless_statistics_correspondent_count{job=\"paperless\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "correspondents",
-          "refId": "B"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "paperless_statistics_document_type_count{job=\"paperless\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "document types",
-          "refId": "C"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "paperless_statistics_storage_path_count{job=\"paperless\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "storage paths",
-          "refId": "D"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "searchless_bulk_sync_limit{job=\"node-mtls\",instance=\"org\"}",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "searchless bulk sync limit",
-          "refId": "E"
         }
       ],
       "title": "Inventory Counts",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "item",
+                "Value",
+                "Value #A"
+              ]
+            }
+          }
+        }
+      ],
       "type": "table"
     }
   ],
