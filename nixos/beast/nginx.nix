@@ -65,6 +65,10 @@ let
           id = "ai";
           localPort = 14001;
         }
+        {
+          id = "search";
+          localPort = 18083;
+        }
       ]
   );
   publicServiceBackendAddresses = {

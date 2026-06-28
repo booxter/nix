@@ -572,6 +572,16 @@ rec {
       glanceCategory = "user";
     }))
     (resolveService (mkService {
+      id = "search";
+      title = "Search";
+      icon = "sh:searxng";
+      scope = "external";
+      owner = "org";
+      publicHost = "search.${site.public.domain}";
+      probePath = "/oauth2/sign_in";
+      glanceCategory = "user";
+    }))
+    (resolveService (mkService {
       id = "ollama";
       title = "Ollama";
       scope = "internal";

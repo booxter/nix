@@ -1,5 +1,16 @@
-{ pkgs, ... }:
+{
+  config,
+  hostInventory,
+  pkgs,
+  ...
+}:
 let
+  idService = hostInventory.servicesById.id;
+  searchService = hostInventory.servicesById.search;
+  oauth2ClientId = "search";
+  issuerUrl = "https://${idService.publicHost}/oauth2/openid/${oauth2ClientId}";
+  oauth2ProxyCookieName = "_search_sso";
+  oauth2ProxyUrl = config.services.oauth2-proxy.httpAddress;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   openWebuiDefaultModelMetadata = {
     # Enables Open WebUI's web-search feature by default for model chats.
@@ -9,6 +20,49 @@ let
     defaultFeatureIds = [ "web_search" ];
   };
   searxPort = 18083;
+  authRequestLocationConfig = ''
+    auth_request /oauth2/auth;
+    error_page 401 = @search_oauth2_proxy_sign_in;
+
+    auth_request_set $search_user $upstream_http_x_auth_request_user;
+    auth_request_set $search_email $upstream_http_x_auth_request_email;
+    auth_request_set $search_auth_cookie $upstream_http_set_cookie;
+
+    proxy_set_header X-User $search_user;
+    proxy_set_header X-Email $search_email;
+    proxy_set_header Authorization "";
+    add_header Set-Cookie $search_auth_cookie;
+  '';
+  oauth2ProxyLocations = {
+    "/oauth2/" = {
+      proxyPass = oauth2ProxyUrl;
+      recommendedProxySettings = true;
+      extraConfig = ''
+        auth_request off;
+        proxy_set_header X-Scheme $scheme;
+        proxy_set_header X-Auth-Request-Redirect $scheme://$host$request_uri;
+      '';
+    };
+
+    "= /oauth2/auth" = {
+      proxyPass = "${oauth2ProxyUrl}/oauth2/auth";
+      recommendedProxySettings = true;
+      extraConfig = ''
+        internal;
+        auth_request off;
+        proxy_set_header X-Scheme $scheme;
+        proxy_set_header Content-Length "";
+        proxy_pass_request_body off;
+      '';
+    };
+
+    "@search_oauth2_proxy_sign_in" = {
+      return = "307 $scheme://$host/oauth2/start?rd=$scheme://$host$request_uri";
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
+  };
   searxProbeMetricsFile = "${nodeExporterTextfileDir}/open-webui-searxng.prom";
   searxProbeScript = pkgs.writeShellApplication {
     name = "open-webui-searxng-probe";
@@ -90,6 +144,42 @@ let
   };
 in
 {
+  sops.secrets = {
+    "searxng/secret_key" = {
+      restartUnits = [
+        "searx-init.service"
+        "searx.service"
+      ];
+    };
+    oauth2ProxySearchClientSecret = {
+      key = "oauth2-proxy/search/client_secret";
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      restartUnits = [ "oauth2-proxy.service" ];
+    };
+    oauth2ProxySearchCookieSecret = {
+      key = "oauth2-proxy/search/cookie_secret";
+      owner = "root";
+      group = "root";
+      mode = "0400";
+      restartUnits = [ "oauth2-proxy.service" ];
+    };
+  };
+
+  sops.templates."searxng.env" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+    content = ''
+      SEARX_SECRET_KEY=${config.sops.placeholder."searxng/secret_key"}
+    '';
+    restartUnits = [
+      "searx-init.service"
+      "searx.service"
+    ];
+  };
+
   services.open-webui.environment = {
     DEFAULT_MODEL_METADATA = builtins.toJSON openWebuiDefaultModelMetadata;
     ENABLE_WEB_SEARCH = "True";
@@ -109,16 +199,16 @@ in
     enable = true;
     configureNginx = false;
     configureUwsgi = false;
+    environmentFile = config.sops.templates."searxng.env".path;
     openFirewall = false;
     settings = {
-      # This instance is loopback-only for Open WebUI. Use a SOPS-backed
-      # secret_key before exposing SearXNG directly to users.
       server = {
+        base_url = "${searchService.url}/";
         bind_address = "127.0.0.1";
         limiter = false;
         port = searxPort;
         public_instance = false;
-        secret_key = "org-open-webui-local-searxng";
+        secret_key = "$SEARX_SECRET_KEY";
       };
       search = {
         formats = [
@@ -128,6 +218,51 @@ in
         safe_search = 1;
       };
     };
+  };
+
+  services.oauth2-proxy = {
+    enable = true;
+    provider = "oidc";
+    oidcIssuerUrl = issuerUrl;
+    clientID = oauth2ClientId;
+    clientSecretFile = config.sops.secrets.oauth2ProxySearchClientSecret.path;
+    approvalPrompt = "auto";
+    cookie = {
+      name = oauth2ProxyCookieName;
+      secretFile = config.sops.secrets.oauth2ProxySearchCookieSecret.path;
+    };
+    email.domains = [ "*" ];
+    scope = "openid email profile ai_groups";
+    upstream = [ "static://202" ];
+    reverseProxy = true;
+    trustedProxyIP = [
+      "127.0.0.1/32"
+      "::1/128"
+    ];
+    setXauthrequest = true;
+    passBasicAuth = false;
+    extraConfig = {
+      allowed-group = [ "ai-users" ];
+      code-challenge-method = "S256";
+      oidc-groups-claim = "ai_groups";
+      skip-provider-button = true;
+      whitelist-domain = [ searchService.publicHost ];
+    };
+  };
+
+  host.internalHttps.services.search = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString searxPort}";
+    serverAliases = [ searchService.publicHost ];
+    mtls.enable = true;
+    locationExtraConfig = authRequestLocationConfig;
+  };
+
+  services.nginx.virtualHosts."internal-https-search".locations = oauth2ProxyLocations;
+
+  systemd.services.oauth2-proxy = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
   };
 
   systemd.tmpfiles.rules = [

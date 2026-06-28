@@ -18,6 +18,8 @@ let
   vikunjaUrl = "https://${vikunjaService.publicHost}";
   openWebuiService = hostInventory.servicesById.ai;
   openWebuiUrl = "https://${openWebuiService.publicHost}";
+  searchService = hostInventory.servicesById.search;
+  searchUrl = "https://${searchService.publicHost}";
   litellmService = hostInventory.servicesById.llm;
   litellmUrl = "https://${litellmService.publicHost}";
   paperlessService = hostInventory.servicesById.paperless;
@@ -142,6 +144,13 @@ in
     };
     kanidmOpenWebuiOAuthClientSecret = {
       key = "kanidm/oauth2/open-webui/client_secret";
+      owner = "kanidm";
+      group = "kanidm";
+      mode = "0400";
+      restartUnits = [ "kanidm.service" ];
+    };
+    kanidmSearchOAuthClientSecret = {
+      key = "kanidm/oauth2/search/client_secret";
       owner = "kanidm";
       group = "kanidm";
       mode = "0400";
@@ -274,6 +283,20 @@ in
           "ai-users" = [ "user" ];
           "sso-admins" = [ "admin" ];
         };
+      };
+      systems.oauth2.search = {
+        displayName = "Search";
+        originUrl = "${searchUrl}/oauth2/callback";
+        originLanding = "${searchUrl}/";
+        basicSecretFile = config.sops.secrets.kanidmSearchOAuthClientSecret.path;
+        preferShortUsername = true;
+        scopeMaps."ai-users" = [
+          "openid"
+          "email"
+          "profile"
+          "ai_groups"
+        ];
+        claimMaps.ai_groups.valuesByGroup."ai-users" = [ "ai-users" ];
       };
       systems.oauth2.litellm = {
         displayName = "LiteLLM";
