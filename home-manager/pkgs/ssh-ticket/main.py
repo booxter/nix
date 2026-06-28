@@ -71,10 +71,6 @@ def applescript_string(value):
     return " & linefeed & ".join(applescript_quote(part) for part in value.split("\n"))
 
 
-def applescript_list(values):
-    return "{" + ", ".join(applescript_quote(value) for value in values) + "}"
-
-
 def osascript_approval_script(message):
     return f"""
       tell application "System Events"
@@ -86,13 +82,13 @@ def osascript_approval_script(message):
 
 
 def osascript_ttl_selector_script(message, choices, default_answer):
+    message = f"{message}\n\nTTL choices: {', '.join(choices)}"
     return f"""
       tell application "System Events"
         activate
-        set response to choose from list {applescript_list(choices)} with title "ssht" with prompt {applescript_string(message)} default items {{{applescript_quote(default_answer)}}} OK button name "Approve" cancel button name "Deny"
+        set response to display dialog {applescript_string(message)} default answer {applescript_quote(default_answer)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
+        return text returned of response
       end tell
-      if response is false then error number -128
-      return item 1 of response
     """
 
 
