@@ -14,7 +14,7 @@ let
   gmailctlKeepalive = pkgs.writeShellApplication {
     name = "gmailctl-token-keepalive";
     text = ''
-      exec ${gmailctlExe} --color never --config ${lib.escapeShellArg gmailctlConfigDir} download --output /dev/null
+      exec ${gmailctlExe} --color=never --config ${lib.escapeShellArg gmailctlConfigDir} download --output /dev/null
     '';
   };
 in
