@@ -7,9 +7,13 @@
   ...
 }:
 let
+  framePkgs = import ./pkgs pkgs;
   ollamaService = hostInventory.servicesById.ollama;
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
 in
 {
+  _module.args.framePkgs = framePkgs;
+
   imports = [
     (import ../disko/luks.nix { })
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
@@ -59,6 +63,36 @@ in
     radeontop
     rocmPackages.rocm-smi
     rocmPackages.rocminfo
+  ];
+
+  systemd.services.frame-amdgpu-metrics = {
+    description = "Collect AMD GPU metrics for Prometheus";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${lib.getExe framePkgs.frame-amdgpu-metrics} --output ${nodeExporterTextfileDir}/frame-amdgpu.prom";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
+      ReadWritePaths = [ nodeExporterTextfileDir ];
+      RestrictAddressFamilies = [ "AF_UNIX" ];
+      RestrictRealtime = true;
+      LockPersonality = true;
+      MemoryDenyWriteExecute = true;
+    };
+  };
+
+  systemd.timers.frame-amdgpu-metrics = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2m";
+      OnUnitActiveSec = "30s";
+      AccuracySec = "5s";
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d ${nodeExporterTextfileDir} 0755 root root - -"
   ];
 
   host.internalHttps.services.ollama = {
