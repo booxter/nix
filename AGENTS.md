@@ -13,6 +13,9 @@ Scope: whole repository.
 - Prefer third-party projects with a clear versioning story, especially tagged
   releases. If using an untagged revision, document the rationale and update
   path.
+- When adding a local package pinned to an upstream version, wire it into the
+  update-packages CI machinery so new releases are tracked. Do the same for
+  pinned OCI image versions through the OCI image update machinery.
 - Run `nix fmt` after edits; it also runs repo lint checks.
 
 ## Layout

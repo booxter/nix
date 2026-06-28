@@ -76,13 +76,18 @@ let
       prometheus_metrics_config = [
         {
           group = "proxy_requests";
-          metrics = [
-            "litellm_proxy_total_requests_metric"
-            "litellm_proxy_failed_requests_metric"
-          ];
+          metrics = [ "litellm_proxy_total_requests_metric" ];
           include_labels = [
             "requested_model"
             "status_code"
+            "route"
+          ];
+        }
+        {
+          group = "proxy_requests";
+          metrics = [ "litellm_proxy_failed_requests_metric" ];
+          include_labels = [
+            "requested_model"
             "route"
             "exception_status"
             "exception_class"
@@ -110,23 +115,6 @@ let
           include_labels = [
             "requested_model"
             "model"
-          ];
-        }
-        {
-          group = "deployment";
-          metrics = [
-            "litellm_deployment_success_responses"
-            "litellm_deployment_failure_responses"
-            "litellm_deployment_total_requests"
-            "litellm_deployment_state"
-            "litellm_deployment_latency_per_output_token"
-          ];
-          include_labels = [
-            "requested_model"
-            "litellm_model_name"
-            "api_provider"
-            "exception_status"
-            "exception_class"
           ];
         }
         {
@@ -296,6 +284,7 @@ in
   host.observability.client.prometheusMtlsEndpoints.litellm = {
     enable = true;
     port = litellmMetricsMtlsPort;
-    upstream = "http://127.0.0.1:${toString litellmPort}/metrics";
+    path = "/metrics/";
+    upstream = "http://127.0.0.1:${toString litellmPort}/metrics/";
   };
 }
