@@ -15,6 +15,13 @@ let
   openWebuiOtelGrpcPort = 4317;
   openWebuiPrometheusPort = 9464;
   openWebuiPort = 8082;
+  openWebuiPackage = pkgs.open-webui.overridePythonAttrs (oldAttrs: {
+    dependencies = oldAttrs.dependencies ++ [
+      # TODO: Drop this override after nixpkgs includes Open WebUI's OTEL
+      # system metrics instrumentation runtime dependency upstream.
+      pkgs.python313Packages.opentelemetry-instrumentation-system-metrics
+    ];
+  });
   openWebuiDefaultModelParams = {
     function_calling = "native";
     system = ''
@@ -60,6 +67,7 @@ in
 
   services.open-webui = {
     enable = true;
+    package = openWebuiPackage;
     host = "127.0.0.1";
     port = openWebuiPort;
     environmentFile = config.sops.templates."open-webui.env".path;
