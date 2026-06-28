@@ -87,7 +87,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "up{job=~\"smartctl|jellyfin|lolek|sabnzbd|vikunja\"}",
+          "expr": "up{job=~\"smartctl|jellyfin|litellm|lolek|open-webui|sabnzbd|vikunja\"}",
           "instant": true,
           "legendFormat": "{{job}}",
           "range": false,
@@ -218,7 +218,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "up{job=~\"smartctl|jellyfin|lolek|sabnzbd|vikunja\"}",
+          "expr": "up{job=~\"smartctl|jellyfin|litellm|lolek|open-webui|sabnzbd|vikunja\"}",
           "legendFormat": "{{job}}",
           "range": true,
           "refId": "A"

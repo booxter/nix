@@ -7,9 +7,13 @@
   ...
 }:
 let
+  framePkgs = import ./pkgs pkgs;
   ollamaService = hostInventory.servicesById.ollama;
+  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
 in
 {
+  _module.args.framePkgs = framePkgs;
+
   imports = [
     (import ../disko/luks.nix { })
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
@@ -54,9 +58,73 @@ in
   };
 
   environment.systemPackages = with pkgs; [
+    amdgpu_top
     clinfo
     radeontop
+    rocmPackages.rocm-smi
     rocmPackages.rocminfo
+  ];
+
+  systemd.services.frame-amdgpu-metrics = {
+    description = "Collect AMD GPU metrics for Prometheus";
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${lib.getExe framePkgs.frame-amdgpu-metrics} --output ${nodeExporterTextfileDir}/frame-amdgpu.prom";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
+      ReadWritePaths = [ nodeExporterTextfileDir ];
+      RestrictAddressFamilies = [ "AF_UNIX" ];
+      RestrictRealtime = true;
+      LockPersonality = true;
+      MemoryDenyWriteExecute = true;
+    };
+  };
+
+  systemd.services.frame-ollama-metrics = {
+    description = "Collect Ollama state metrics for Prometheus";
+    wants = [ "ollama.service" ];
+    after = [ "ollama.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${lib.getExe framePkgs.frame-ollama-metrics} --base-url http://127.0.0.1:${toString config.services.ollama.port} --output ${nodeExporterTextfileDir}/frame-ollama.prom";
+      NoNewPrivileges = true;
+      PrivateTmp = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
+      ReadWritePaths = [ nodeExporterTextfileDir ];
+      RestrictAddressFamilies = [
+        "AF_UNIX"
+        "AF_INET"
+        "AF_INET6"
+      ];
+      RestrictRealtime = true;
+      LockPersonality = true;
+      MemoryDenyWriteExecute = true;
+    };
+  };
+
+  systemd.timers.frame-amdgpu-metrics = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2m";
+      OnUnitActiveSec = "30s";
+      AccuracySec = "5s";
+    };
+  };
+
+  systemd.timers.frame-ollama-metrics = {
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnBootSec = "2m";
+      OnUnitActiveSec = "1m";
+      AccuracySec = "10s";
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d ${nodeExporterTextfileDir} 0755 root root - -"
   ];
 
   host.internalHttps.services.ollama = {

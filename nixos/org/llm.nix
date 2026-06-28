@@ -14,6 +14,7 @@ let
   ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
   litellmImage = "${ociImages.litellm.image}:${ociImages.litellm.tag}";
   litellmDatabase = "litellm";
+  litellmMetricsMtlsPort = 9346;
   litellmPort = 4000;
   litellmUser = "litellm";
   ollamaTunnelPort = 11435;
@@ -69,8 +70,74 @@ let
       ui_access_mode = "admin_only";
     };
     litellm_settings = {
+      callbacks = [ "prometheus" ];
       drop_params = true;
       num_retries = 1;
+      prometheus_metrics_config = [
+        {
+          group = "proxy_requests";
+          metrics = [
+            "litellm_proxy_total_requests_metric"
+            "litellm_proxy_failed_requests_metric"
+          ];
+          include_labels = [
+            "requested_model"
+            "status_code"
+            "route"
+            "exception_status"
+            "exception_class"
+          ];
+        }
+        {
+          group = "tokens";
+          metrics = [
+            "litellm_input_tokens_metric"
+            "litellm_output_tokens_metric"
+            "litellm_total_tokens_metric"
+          ];
+          include_labels = [
+            "requested_model"
+            "model"
+          ];
+        }
+        {
+          group = "latency";
+          metrics = [
+            "litellm_request_total_latency_metric"
+            "litellm_llm_api_latency_metric"
+            "litellm_llm_api_time_to_first_token_metric"
+          ];
+          include_labels = [
+            "requested_model"
+            "model"
+          ];
+        }
+        {
+          group = "deployment";
+          metrics = [
+            "litellm_deployment_success_responses"
+            "litellm_deployment_failure_responses"
+            "litellm_deployment_total_requests"
+            "litellm_deployment_state"
+            "litellm_deployment_latency_per_output_token"
+          ];
+          include_labels = [
+            "requested_model"
+            "litellm_model_name"
+            "api_provider"
+            "exception_status"
+            "exception_class"
+          ];
+        }
+        {
+          group = "proxy_health";
+          metrics = [
+            "litellm_in_flight_requests"
+            "litellm_callback_logging_failures_metric"
+          ];
+        }
+      ];
+      require_auth_for_metrics_endpoint = false;
       request_timeout = 600;
     };
   };
@@ -217,9 +284,18 @@ in
     serverAliases = [ llmService.publicHost ];
     mtls.enable = true;
     locationExtraConfig = ''
+      if ($uri = /metrics) {
+        return 404;
+      }
       proxy_buffering off;
       proxy_read_timeout 600s;
       proxy_send_timeout 600s;
     '';
+  };
+
+  host.observability.client.prometheusMtlsEndpoints.litellm = {
+    enable = true;
+    port = litellmMetricsMtlsPort;
+    upstream = "http://127.0.0.1:${toString litellmPort}/metrics";
   };
 }

@@ -11,9 +11,11 @@ let
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
   sabnzbdTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.srvarr;
-  vikunjaHostConfig = outputs.nixosConfigurations.org.config;
-  vikunjaTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
-  vikunjaEndpoint = vikunjaHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
+  orgHostConfig = outputs.nixosConfigurations.org.config;
+  orgTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
+  litellmEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
+  openWebuiEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints."open-webui";
+  vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
   scrapeConfigs = [
@@ -74,13 +76,37 @@ in
     # TODO: Restore the beast IPMI scrape target when the local IPMI card is
     # back and the exporter is re-enabled on beast.
     {
+      job_name = "litellm";
+      metrics_path = litellmEndpoint.path;
+      scheme = "https";
+      tls_config = prometheusMtlsTlsConfig;
+      static_configs = [
+        {
+          targets = [ "${orgTargetHost}:${toString litellmEndpoint.port}" ];
+          labels.instance = "org";
+        }
+      ];
+    }
+    {
+      job_name = "open-webui";
+      metrics_path = openWebuiEndpoint.path;
+      scheme = "https";
+      tls_config = prometheusMtlsTlsConfig;
+      static_configs = [
+        {
+          targets = [ "${orgTargetHost}:${toString openWebuiEndpoint.port}" ];
+          labels.instance = "org";
+        }
+      ];
+    }
+    {
       job_name = "vikunja";
       metrics_path = vikunjaEndpoint.path;
       scheme = "https";
       tls_config = prometheusMtlsTlsConfig;
       static_configs = [
         {
-          targets = [ "${vikunjaTargetHost}:${toString vikunjaEndpoint.port}" ];
+          targets = [ "${orgTargetHost}:${toString vikunjaEndpoint.port}" ];
           labels.instance = "org";
         }
       ];

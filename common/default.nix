@@ -99,6 +99,7 @@ in
         moreutils
         ngrep
         pstree
+        python3
         rclone
         ripgrep
         speedtest-cli

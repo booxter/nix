@@ -1,6 +1,7 @@
 {
   config,
   hostInventory,
+  pkgs,
   ...
 }:
 let
@@ -10,6 +11,9 @@ let
   oidcClientId = "open-webui";
   oidcDiscoveryUrl = "https://${idService.publicHost}/oauth2/openid/${oidcClientId}/.well-known/openid-configuration";
   oidcRedirectUri = "${aiService.url}/oauth/oidc/login/callback";
+  openWebuiMetricsMtlsPort = 9347;
+  openWebuiOtelGrpcPort = 4317;
+  openWebuiPrometheusPort = 9464;
   openWebuiPort = 8082;
   openWebuiDefaultModelParams = {
     function_calling = "native";
@@ -64,6 +68,10 @@ in
       DEFAULT_PINNED_MODELS = "qwen3-next:80b,qwen3.5:9b";
       ENABLE_CODE_EXECUTION = "False";
       ENABLE_LOGIN_FORM = "True";
+      ENABLE_OTEL = "True";
+      ENABLE_OTEL_LOGS = "False";
+      ENABLE_OTEL_METRICS = "True";
+      ENABLE_OTEL_TRACES = "False";
       ENABLE_OLLAMA_API = "False";
       ENABLE_OPENAI_API = "True";
       ENABLE_OAUTH_PERSISTENT_CONFIG = "False";
@@ -80,6 +88,11 @@ in
       OAUTH_ROLES_CLAIM = "open_webui_role";
       OAUTH_SCOPES = "openid email profile";
       OAUTH_TOKEN_ENDPOINT_AUTH_METHOD = "client_secret_basic";
+      OTEL_METRICS_EXPORT_INTERVAL_MILLIS = "10000";
+      OTEL_METRICS_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:${toString openWebuiOtelGrpcPort}";
+      OTEL_METRICS_EXPORTER_OTLP_INSECURE = "True";
+      OTEL_METRICS_OTLP_SPAN_EXPORTER = "grpc";
+      OTEL_SERVICE_NAME = "open-webui";
       OPENAI_API_BASE_URL = "http://127.0.0.1:${toString litellmPort}/v1";
       OPENID_PROVIDER_URL = oidcDiscoveryUrl;
       OPENID_REDIRECT_URI = oidcRedirectUri;
@@ -93,12 +106,32 @@ in
     };
   };
 
+  services.opentelemetry-collector = {
+    enable = true;
+    package = pkgs.opentelemetry-collector-contrib;
+    validateConfigFile = true;
+    settings = {
+      receivers.otlp.protocols.grpc.endpoint = "127.0.0.1:${toString openWebuiOtelGrpcPort}";
+      exporters.prometheus = {
+        endpoint = "127.0.0.1:${toString openWebuiPrometheusPort}";
+        namespace = "open_webui";
+        resource_to_telemetry_conversion.enabled = true;
+      };
+      service.pipelines.metrics = {
+        receivers = [ "otlp" ];
+        exporters = [ "prometheus" ];
+      };
+    };
+  };
+
   systemd.services.open-webui = {
     wants = [
+      "opentelemetry-collector.service"
       "podman-litellm.service"
       "sops-install-secrets.service"
     ];
     after = [
+      "opentelemetry-collector.service"
       "podman-litellm.service"
       "sops-install-secrets.service"
     ];
@@ -115,5 +148,11 @@ in
       proxy_read_timeout 600s;
       proxy_send_timeout 600s;
     '';
+  };
+
+  host.observability.client.prometheusMtlsEndpoints."open-webui" = {
+    enable = true;
+    port = openWebuiMetricsMtlsPort;
+    upstream = "http://127.0.0.1:${toString openWebuiPrometheusPort}/metrics";
   };
 }
