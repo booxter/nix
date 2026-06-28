@@ -228,6 +228,10 @@ rec {
     };
 
   site = rec {
+    public = {
+      domain = "ihar.dev";
+    };
+
     gids = {
       media = 169;
     };
@@ -330,7 +334,7 @@ rec {
         host = "gw";
         address = "10.83.0.1/24";
         listenPort = 51820;
-        publicEndpoint = "wg.ihar.dev";
+        publicEndpoint = "wg.${public.domain}";
       };
       peers = {
         mair = {
@@ -430,7 +434,7 @@ rec {
       icon = "sh:kanidm";
       scope = "external";
       owner = "pki";
-      publicHost = "id.ihar.dev";
+      publicHost = "id.${site.public.domain}";
       probePath = "/status";
       showInGlance = false;
     }))
@@ -440,7 +444,7 @@ rec {
       icon = "sh:glance";
       scope = "external";
       owner = "srvarr";
-      publicHost = "dash.ihar.dev";
+      publicHost = "dash.${site.public.domain}";
       probePath = "/";
       showInGlance = false;
     }))
@@ -448,7 +452,7 @@ rec {
       id = "jellyfin";
       scope = "external";
       owner = "beast";
-      publicHost = "jf.ihar.dev";
+      publicHost = "jf.${site.public.domain}";
       probePath = "/web/";
       glanceCategory = "user";
     }))
@@ -456,7 +460,7 @@ rec {
       id = "seerr";
       scope = "external";
       owner = "srvarr";
-      publicHost = "js.ihar.dev";
+      publicHost = "js.${site.public.domain}";
       probePath = "/login";
       glanceCategory = "user";
     }))
@@ -465,7 +469,7 @@ rec {
       title = "RomM";
       scope = "external";
       owner = "srvarr";
-      publicHost = "game.ihar.dev";
+      publicHost = "game.${site.public.domain}";
       probePath = "/api/heartbeat";
       glanceCategory = "user";
     }))
@@ -509,7 +513,7 @@ rec {
       id = "aurral";
       scope = "external";
       owner = "srvarr";
-      publicHost = "mu.ihar.dev";
+      publicHost = "mu.${site.public.domain}";
       probePath = "/oauth2/sign_in";
       glanceCategory = "user";
     }))
@@ -517,7 +521,7 @@ rec {
       id = "audiobookshelf";
       scope = "external";
       owner = "srvarr";
-      publicHost = "au.ihar.dev";
+      publicHost = "au.${site.public.domain}";
       probePath = "";
       glanceCategory = "user";
     }))
@@ -525,7 +529,7 @@ rec {
       id = "shelfmark";
       scope = "external";
       owner = "srvarr";
-      publicHost = "shelf.ihar.dev";
+      publicHost = "shelf.${site.public.domain}";
       probePath = "/api/health";
       glanceCategory = "user";
     }))
@@ -533,7 +537,7 @@ rec {
       id = "vikunja";
       scope = "external";
       owner = "org";
-      publicHost = "vi.ihar.dev";
+      publicHost = "vi.${site.public.domain}";
       probePath = "";
       glanceCategory = "user";
     }))
@@ -543,7 +547,7 @@ rec {
       icon = "sh:paperless-ngx";
       scope = "external";
       owner = "org";
-      publicHost = "papers.ihar.dev";
+      publicHost = "papers.${site.public.domain}";
       probePath = "/accounts/login/";
       glanceCategory = "user";
     }))
@@ -553,7 +557,7 @@ rec {
       icon = "sh:litellm";
       scope = "external";
       owner = "org";
-      publicHost = "llm.ihar.dev";
+      publicHost = "llm.${site.public.domain}";
       probePath = "/health/liveliness";
       glanceCategory = "infrastructure";
     }))
@@ -563,7 +567,7 @@ rec {
       icon = "sh:open-webui";
       scope = "external";
       owner = "org";
-      publicHost = "ai.ihar.dev";
+      publicHost = "ai.${site.public.domain}";
       probePath = "/";
       glanceCategory = "user";
     }))
@@ -699,7 +703,7 @@ rec {
       stateVersion = "25.11";
       platform = "x86_64-linux";
       critical = true;
-      dnsAliases = builtins.filter (domain: domain != "dash.ihar.dev") (
+      dnsAliases = builtins.filter (domain: domain != "dash.${site.public.domain}") (
         map (service: service.publicHost) publicServices
       );
       hmFull = false;
@@ -785,7 +789,7 @@ rec {
       name = "srvarr";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
-      dnsAliases = [ "dash.ihar.dev" ];
+      dnsAliases = [ "dash.${site.public.domain}" ];
       localDnsAliases = [
         "dash"
         "glance"

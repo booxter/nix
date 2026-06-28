@@ -112,7 +112,7 @@ in
     environmentFile = config.sops.templates."jellarr.env".path;
     config = {
       version = 1;
-      base_url = "https://jf.ihar.dev:443";
+      base_url = "https://jf.${hostInventory.site.public.domain}:443";
       #base_url = "http://localhost:8096";
       system = {
         serverName = "main";
