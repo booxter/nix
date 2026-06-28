@@ -1,7 +1,7 @@
 pkgs:
 let
   transmissionCommon = pkgs.callPackage ./transmission-common { };
-  transmissionTrackerTools = pkgs.callPackage ./transmission-tracker-prioritizer {
+  transmissionTrackerPrioritizer = pkgs.callPackage ./transmission-tracker-prioritizer {
     inherit transmissionCommon;
   };
 in
@@ -22,6 +22,6 @@ in
     inherit transmissionCommon;
   };
 
-  transmission-prioritizer = transmissionTrackerTools.prioritizer;
-  transmission-collector = transmissionTrackerTools.collector;
+  transmission-prioritizer = transmissionTrackerPrioritizer.prioritizer;
+  transmission-collector = transmissionTrackerPrioritizer.collector;
 }

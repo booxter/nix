@@ -173,11 +173,7 @@ class TrackerHostTests(unittest.TestCase):
         )
         self.assertTrue(
             torrent_matches_tracker_hosts(
-                {
-                    "tracker_stats": [
-                        {"announce": "https://announce.example/announce"}
-                    ]
-                },
+                {"tracker_stats": [{"announce": "https://announce.example/announce"}]},
                 tracker_hosts,
             )
         )
