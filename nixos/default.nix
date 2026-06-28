@@ -29,6 +29,7 @@ in
       ++ [
         ./_mixins/avahi
         ./_mixins/auto-upgrade
+        ./_mixins/backup-artifacts.nix
         ./_mixins/backup-metrics/default.nix
         ./_mixins/external-service.nix
         ./_mixins/firmware
