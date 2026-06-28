@@ -19,6 +19,8 @@ import urllib.request
 import urllib.parse
 from pathlib import Path
 
+from transmission_common.transmission import TransmissionRpcClient, TransmissionRpcError
+
 
 LOG = logging.getLogger("adaptive-upload-controller")
 DEFAULT_MEDIA_TYPES = {
@@ -41,98 +43,6 @@ TARGET_MBIT_EPSILON = 0.05
 
 class ControllerError(RuntimeError):
     pass
-
-
-class TransmissionRpcError(RuntimeError):
-    pass
-
-
-class TransmissionRpcClient:
-    def __init__(self, rpc_url: str, timeout_seconds: float) -> None:
-        self.rpc_url = rpc_url
-        self.timeout_seconds = timeout_seconds
-        self.session_id: str | None = None
-        self.next_request_id = 1
-
-    def call(self, method: str, params: dict | None = None) -> dict:
-        request_id = self.next_request_id
-        self.next_request_id += 1
-        payload = json.dumps(
-            {
-                "jsonrpc": "2.0",
-                "method": method,
-                "params": params or {},
-                "id": request_id,
-            }
-        ).encode("utf-8")
-
-        for attempt in range(2):
-            headers = {
-                "Content-Type": "application/json",
-            }
-            if self.session_id is not None:
-                headers["X-Transmission-Session-Id"] = self.session_id
-
-            request = urllib.request.Request(
-                self.rpc_url,
-                data=payload,
-                headers=headers,
-                method="POST",
-            )
-
-            try:
-                with urllib.request.urlopen(
-                    request, timeout=self.timeout_seconds
-                ) as response:
-                    body = response.read().decode("utf-8")
-            except urllib.error.HTTPError as exc:
-                if exc.code == 409 and attempt == 0:
-                    session_id = exc.headers.get("X-Transmission-Session-Id")
-                    if session_id:
-                        self.session_id = session_id
-                        continue
-                raise TransmissionRpcError(
-                    f"HTTP {exc.code} from Transmission RPC"
-                ) from exc
-            except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
-                raise TransmissionRpcError(
-                    f"request to Transmission RPC failed: {exc}"
-                ) from exc
-
-            try:
-                parsed = json.loads(body)
-            except json.JSONDecodeError as exc:
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid JSON"
-                ) from exc
-            if not isinstance(parsed, dict):
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid JSON-RPC payload"
-                )
-
-            if parsed.get("id") != request_id:
-                raise TransmissionRpcError("Transmission RPC returned mismatched id")
-
-            error = parsed.get("error")
-            if error is not None:
-                if isinstance(error, dict):
-                    message = error.get("message", "unknown error")
-                    data = error.get("data")
-                    if isinstance(data, dict) and data.get("error_string"):
-                        message = f"{message}: {data['error_string']}"
-                    raise TransmissionRpcError(
-                        f"Transmission RPC returned error {error.get('code')}: {message}"
-                    )
-                raise TransmissionRpcError(f"Transmission RPC returned {error!r}")
-
-            result = parsed.get("result", {})
-            if not isinstance(result, dict):
-                raise TransmissionRpcError(
-                    "Transmission RPC returned invalid result payload"
-                )
-            return result
-
-        raise TransmissionRpcError("failed to negotiate Transmission session id")
 
 
 def now_utc_iso8601() -> str:

@@ -1,10 +1,14 @@
 {
   lib,
   python3,
+  transmissionCommon,
   writeShellApplication,
 }:
 let
   sourceDir = ./.;
+  pythonWithDeps = python3.withPackages (_: [
+    transmissionCommon
+  ]);
   mkTool =
     {
       name,
@@ -13,10 +17,10 @@ let
     }:
     writeShellApplication {
       inherit name;
-      runtimeInputs = [ python3 ];
+      runtimeInputs = [ pythonWithDeps ];
       text = ''
         export PYTHONPATH="${sourceDir}:''${PYTHONPATH:-}"
-        exec ${python3}/bin/python3 ${script} "$@"
+        exec ${pythonWithDeps}/bin/python3 ${script} "$@"
       '';
       derivationArgs = {
         doCheck = true;
@@ -24,7 +28,7 @@ let
       checkPhase = ''
         runHook preCheck
         PYTHONPATH="${sourceDir}" \
-          ${python3}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
+          ${pythonWithDeps}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
         runHook postCheck
       '';
 

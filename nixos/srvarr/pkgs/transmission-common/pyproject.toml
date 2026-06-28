@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transmission-common"
+version = "0.1.0"
+description = "Shared Transmission RPC helpers for local service scripts"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = ["."]

@@ -2,16 +2,22 @@
   iproute2,
   lib,
   python3,
+  transmissionCommon,
   writeShellApplication,
 }:
+let
+  pythonWithDeps = python3.withPackages (_: [
+    transmissionCommon
+  ]);
+in
 writeShellApplication {
   name = "adaptive-upload-controller";
   runtimeInputs = [
     iproute2
-    python3
+    pythonWithDeps
   ];
   text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
+    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
   '';
 
   meta = {
