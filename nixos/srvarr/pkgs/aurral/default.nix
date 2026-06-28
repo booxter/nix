@@ -22,27 +22,14 @@ let
   npmDeps = fetchNpmDeps {
     name = "${pname}-${version}-npm-deps";
     inherit src;
-    hash = "sha256-i3pH8DkbVMVAPCdW69S3svywzwpiyG3oxbpNt4u0zj4=";
-  };
-  frontendNpmDeps = fetchNpmDeps {
-    name = "${pname}-${version}-frontend-npm-deps";
-    src = "${src}/frontend";
-    hash = "sha256-TKbc1k7nqndv5yBxBbqms10Nx67egBtOhFOVTnsCun4=";
-  };
-  backendNpmDeps = fetchNpmDeps {
-    name = "${pname}-${version}-backend-npm-deps";
-    src = "${src}/backend";
-    hash = "sha256-/0gVUwBgjmO0teri7WIz/+I4jcGlz2O8mha0DF2E+VI=";
+    fetcherVersion = 2;
+    hash = "sha256-UShOfNPPebtq4VXlmOdMxnl+8CxPP2dVwiaG8LASY98=";
   };
   runtimeStateDir = "/data/.state/nixarr/aurral";
   runtimeFlowDir = "/data/media/library/flows";
 in
 stdenv.mkDerivation {
   inherit pname version src;
-  patches = [
-    ./disable-local-network-bypass.patch
-    ./use-aurral-data-dir-for-image-proxy.patch
-  ];
 
   nativeBuildInputs = [
     nodejs
@@ -59,18 +46,12 @@ stdenv.mkDerivation {
   };
 
   postPatch = ''
-    # Install all three npm dependency trees from fixed offline caches.
+    # Install the npm workspace tree from the fixed offline cache.
     (
       local postPatchHooks=()
       source ${npmHooks.npmConfigHook}/nix-support/setup-hook
 
       npmDeps="${npmDeps}" npmConfigHook
-      rm -rf "$TMPDIR/cache"
-
-      npmRoot=backend npmDeps="${backendNpmDeps}" npmConfigHook
-      rm -rf "$TMPDIR/cache"
-
-      npmRoot=frontend npmDeps="${frontendNpmDeps}" npmConfigHook
       rm -rf "$TMPDIR/cache"
     )
   '';
@@ -78,10 +59,9 @@ stdenv.mkDerivation {
   buildPhase = ''
     runHook preBuild
 
-    npm --prefix frontend run build
+    npm run build --workspace frontend
 
-    npm prune --omit=dev --ignore-scripts
-    npm --prefix backend prune --omit=dev --ignore-scripts
+    npm prune --omit=dev --ignore-scripts --workspaces --include-workspace-root
 
     rm -rf frontend/node_modules
 
@@ -93,17 +73,21 @@ stdenv.mkDerivation {
 
     mkdir -p "$out/bin" "$out/lib/${pname}/backend" "$out/lib/${pname}/frontend" "$out/lib/${pname}/lib"
 
-    cp package.json loadEnv.js server.js "$out/lib/${pname}/"
+    cp package.json "$out/lib/${pname}/"
     cp -r lib "$out/lib/${pname}/"
     cp -r node_modules "$out/lib/${pname}/"
     cp backend/package.json "$out/lib/${pname}/backend/"
     cp -r backend/config \
+      backend/loadEnv.js \
       backend/middleware \
       backend/routes \
       backend/scripts \
+      backend/server.js \
       backend/services \
-      backend/node_modules \
       "$out/lib/${pname}/backend/"
+    if [[ -d backend/node_modules ]]; then
+      cp -r backend/node_modules "$out/lib/${pname}/backend/"
+    fi
     cp -r frontend/dist "$out/lib/${pname}/frontend/"
 
     cat > "$out/bin/${pname}" <<EOF
@@ -119,7 +103,7 @@ stdenv.mkDerivation {
     export AURRAL_DATA_DIR DOWNLOAD_FOLDER WEEKLY_FLOW_FOLDER
     export NODE_ENV=production
 
-    exec ${lib.getExe nodejs} "$out/lib/${pname}/server.js" "\$@"
+    exec ${lib.getExe nodejs} "$out/lib/${pname}/backend/server.js" "\$@"
     EOF
     chmod 0755 "$out/bin/${pname}"
 
