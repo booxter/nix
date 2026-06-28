@@ -87,6 +87,9 @@ let
   };
 in
 {
+  # Keep public gateway config-only changes from dropping long-lived proxied streams.
+  services.nginx.enableReload = true;
+
   host.externalService = {
     ddns = {
       enable = true;
