@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   isWork,
@@ -12,6 +13,17 @@ in
     enable = true;
 
     settings = {
+      model = "gpt-5.5";
+      model_reasoning_effort = "xhigh";
+      personality = "pragmatic";
+      approvals_reviewer = "auto_review";
+
+      projects = {
+        "${config.home.homeDirectory}/src/nix".trust_level = "trusted";
+        "${config.home.homeDirectory}/src/nixpkgs".trust_level = "trusted";
+        "${config.home.homeDirectory}/src/ovn-kubernetes".trust_level = "trusted";
+      };
+
       # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
       # https://github.com/openai/codex/issues/12582
       # https://github.com/openai/codex/issues/14509
@@ -55,6 +67,11 @@ in
           ],
       )
     '';
+  };
+
+  home.file = {
+    ".codex/config.toml".force = true;
+    ".codex/rules/default.rules".force = true;
   };
 
   home.packages = lib.optionals (!isWork) [
