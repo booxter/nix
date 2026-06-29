@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  isDarwin,
   isWork,
   ...
 }:
@@ -28,6 +29,11 @@ in
       # https://github.com/openai/codex/issues/12582
       # https://github.com/openai/codex/issues/14509
       tui.keymap.chat.interrupt_turn = "f12";
+    }
+    // lib.optionalAttrs isDarwin {
+      shell_environment_policy.set = {
+        inherit (config.home.sessionVariables) SSH_ASKPASS SSH_ASKPASS_REQUIRE;
+      };
     }
     // lib.optionalAttrs (!isWork) {
       mcp_servers.firefox-devtools = {
