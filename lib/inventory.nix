@@ -478,7 +478,7 @@ rec {
     (resolveService (mkService {
       id = "jfstat";
       title = "Jellystat";
-      icon = "sh:jellystat";
+      icon = "di:jellystat";
       scope = "internal";
       owner = "beast";
       probePath = "/auth/isConfigured";

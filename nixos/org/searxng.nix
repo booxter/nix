@@ -157,11 +157,13 @@ in
       server = {
         base_url = "${searchService.url}/";
         bind_address = "127.0.0.1";
+        image_proxy = true;
         limiter = false;
         port = searxPort;
         public_instance = false;
         secret_key = "$SEARX_SECRET_KEY";
       };
+      preferences.lock = [ "image_proxy" ];
       search = {
         formats = [
           "html"
