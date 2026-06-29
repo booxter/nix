@@ -28,6 +28,18 @@ in
       # https://github.com/openai/codex/issues/12582
       # https://github.com/openai/codex/issues/14509
       tui.keymap.chat.interrupt_turn = "f12";
+    }
+    // lib.optionalAttrs (!isWork) {
+      mcp_servers.firefox-devtools = {
+        command = lib.getExe pkgs.firefox-devtools-mcp;
+        args = [
+          "--profile-path"
+          "${config.xdg.dataHome}/firefox-devtools-mcp"
+          "--accept-insecure-certs"
+          "--viewport"
+          "1440x1000"
+        ];
+      };
     };
 
     rules.default = ''

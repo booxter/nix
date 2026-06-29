@@ -9,6 +9,13 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "firefox-devtools-mcp",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "searchless-ngx",
       "nixUpdateArgs": [
         "--src-only",
