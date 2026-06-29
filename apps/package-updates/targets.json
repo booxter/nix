@@ -10,9 +10,7 @@
     },
     {
       "attr": "firefox-devtools-mcp",
-      "nixUpdateArgs": [
-        "--use-github-releases"
-      ],
+      "nixUpdateArgs": [],
       "system": "x86_64-linux"
     },
     {
