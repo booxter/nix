@@ -4,6 +4,8 @@ let
   appPackages = import ../apps pkgs;
 in
 {
+  firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
+
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
   pki-rotation = pkgs.callPackage ./pki-rotation {
