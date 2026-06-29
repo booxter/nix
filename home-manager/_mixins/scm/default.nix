@@ -1,5 +1,7 @@
 {
+  config,
   inputs,
+  lib,
   pkgs,
   isWork,
   username,
@@ -9,6 +11,7 @@ let
   inherit (pkgs.stdenv) isDarwin;
   fullName = "Ihar Hrachyshka";
   email = if isWork then "${username}@nvidia.com" else "ihar.hrachyshka@gmail.com";
+  sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
 in
 {
   # Git
@@ -31,7 +34,12 @@ in
       user = {
         inherit email;
         name = fullName;
+        signingKey = lib.mkDefault sshSigningKeyPath;
       };
+
+      gpg.format = "ssh";
+      commit.gpgSign = true;
+      tag.gpgSign = true;
 
       # Keep a generic pager for non-diff git commands. diff-so-fancy is only
       # suitable for diff-shaped output and breaks commands like `git grep`
