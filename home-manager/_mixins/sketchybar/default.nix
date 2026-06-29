@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  isWork,
+  ...
+}:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
   codexPkgs = import ../codex/pkgs { inherit pkgs; };
@@ -11,12 +16,29 @@ let
     ];
     text = builtins.readFile ./sketchybar/plugins/codex.sh;
   };
+  codexItem = pkgs.writeText "sketchybar-codex-item.sh" (
+    lib.optionalString (!isWork) ''
+      sketchybar --add item codex left                               \
+                 --set codex script="$PLUGIN_DIR/codex.sh"          \
+                             update_freq=60                          \
+                             label.padding_left=6                    \
+                             label.padding_right=6                   \
+                             background.border_width=0               \
+                             background.corner_radius=6              \
+                             background.height=24                    \
+                 --subscribe codex system_woke
+    ''
+  );
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''
     mkdir -p "$out"
     cp -R ${./sketchybar}/. "$out/"
     chmod -R u+w "$out"
+    mkdir -p "$out/items"
     rm -f "$out/plugins/codex.sh"
-    ln -s ${lib.getExe codexPlugin} "$out/plugins/codex.sh"
+    ln -s ${codexItem} "$out/items/codex.sh"
+    ${lib.optionalString (!isWork) ''
+      ln -s ${lib.getExe codexPlugin} "$out/plugins/codex.sh"
+    ''}
   '';
 in
 {

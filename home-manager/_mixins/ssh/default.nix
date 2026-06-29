@@ -8,6 +8,10 @@
 let
   useSecretive = pkgs.stdenv.isDarwin && !isWork;
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
+  sshAskpass = pkgs.writeShellApplication {
+    name = "ssh-askpass-macos";
+    text = builtins.readFile ./ssh-askpass-macos.sh;
+  };
   secretiveAuthSockInit = ''
     if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
       export SSH_AUTH_SOCK="${secretiveSocket}"
@@ -18,6 +22,11 @@ in
   imports = lib.optionals (!isWork) [ ./ticket-client.nix ];
 
   config = {
+    home.sessionVariables = lib.mkIf pkgs.stdenv.isDarwin {
+      SSH_ASKPASS = lib.getExe sshAskpass;
+      SSH_ASKPASS_REQUIRE = "force";
+    };
+
     services.ssh-agent.enable = pkgs.stdenv.isLinux;
     # OpenSSH ssh-agent exits with status 2 on SIGTERM in this mode; treat that
     # as a clean stop so short-lived user sessions do not look like failures.

@@ -36,7 +36,15 @@
       });
     in
     {
-      inherit (llmAgentsPkgs) codex claude-code;
+      inherit (llmAgentsPkgs) claude-code;
+
+      # Carry recursive Codex project trust until openai/codex#19426 lands.
+      # Patch from https://github.com/luisnquin/nixos-config/commit/1859865c1db5e318635326787d04333b07054b26
+      codex = llmAgentsPkgs.codex.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../lib/patches/codex-recursive-project-trust.patch
+        ];
+      });
 
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
