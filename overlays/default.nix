@@ -145,8 +145,10 @@
         ];
       });
 
-      # Carry local fixes for broken user-count metrics until upstream releases them.
-      vikunja = prev.vikunja.overrideAttrs (old: {
+      # Carry local fixes for broken user-count metrics until upstream releases
+      # them, plus the pnpm pin fix until nixpkgs includes it.
+      # Upstream pnpm fix: https://github.com/NixOS/nixpkgs/pull/536781
+      vikunja = (prev.vikunja.override { pnpm_10_29_2 = prev.pnpm_10; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
         ];
