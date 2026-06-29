@@ -80,6 +80,9 @@ let
     else
       throw "Blackbox service ${service.id} must expose enabled internal HTTPS"
   ) hostInventory.blackboxServices;
+  usesHttpMtls = builtins.any (
+    service: (service.blackboxModule or null) == "http_service_mtls"
+  ) inventoryServiceCatalog;
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
@@ -181,7 +184,7 @@ let
   blackboxModules =
     baseBlackboxModules
     // publicDnsBlackboxModules
-    // {
+    // lib.optionalAttrs usesHttpMtls {
       http_service_mtls = baseBlackboxModules.http_service // {
         http = baseBlackboxModules.http_service.http // {
           tls_config = blackboxHttpMtlsTlsConfig;
@@ -280,6 +283,8 @@ let
   ];
 in
 {
+  inherit usesHttpMtls;
+
   assertions = [
     {
       assertion = remotePlainBlackboxProbeSourceNames == [ ];

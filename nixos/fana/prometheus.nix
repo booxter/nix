@@ -86,8 +86,8 @@ in
     commonName = "prometheus-node-scraper";
   };
 
-  users.groups.blackbox-exporter = { };
-  users.users.blackbox-exporter = {
+  users.groups.blackbox-exporter = lib.mkIf blackboxScrapes.usesHttpMtls { };
+  users.users.blackbox-exporter = lib.mkIf blackboxScrapes.usesHttpMtls {
     description = "Prometheus blackbox exporter service user";
     isSystemUser = true;
     group = "blackbox-exporter";
@@ -107,14 +107,14 @@ in
     mode = "0400";
     restartUnits = [ "prometheus.service" ];
   };
-  sops.secrets.prometheusBlackboxHttpClientCrt = {
+  sops.secrets.prometheusBlackboxHttpClientCrt = lib.mkIf blackboxScrapes.usesHttpMtls {
     key = "${prometheusScrapeClient.secretPrefix}/client_crt_unencrypted";
     owner = "blackbox-exporter";
     group = "blackbox-exporter";
     mode = "0400";
     restartUnits = [ "prometheus-blackbox-exporter.service" ];
   };
-  sops.secrets.prometheusBlackboxHttpClientKey = {
+  sops.secrets.prometheusBlackboxHttpClientKey = lib.mkIf blackboxScrapes.usesHttpMtls {
     key = "${prometheusScrapeClient.secretPrefix}/client_key";
     owner = "blackbox-exporter";
     group = "blackbox-exporter";
@@ -135,7 +135,9 @@ in
   systemd.services.prometheus-blackbox-exporter = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
-    serviceConfig.DynamicUser = false;
+    serviceConfig = lib.mkIf blackboxScrapes.usesHttpMtls {
+      DynamicUser = false;
+    };
   };
 
   systemd.services.prometheus-nut-exporter = nutScrapes.exporterService;

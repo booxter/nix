@@ -143,7 +143,6 @@ in
   host.internalHttps.services.jfstat = {
     enable = true;
     upstream = "http://127.0.0.1:${toString jellystatPort}";
-    mtls.enable = true;
     locationExtraConfig = ''
       proxy_read_timeout 300s;
       proxy_send_timeout 300s;

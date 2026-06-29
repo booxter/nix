@@ -447,7 +447,6 @@ in
   host.internalHttps.services.paperless-gpt = {
     enable = true;
     upstream = "http://127.0.0.1:${toString paperlessGptPort}";
-    mtls.enable = true;
   };
 
   host.sso.oauth2ProxyGates.paperless-gpt = {
