@@ -12,7 +12,7 @@ let
   canUseBuilders = !isWork && (hostname == "mair" || hostname == "mmini" || hostname == "frame");
   canUseWorkBuilders = isWork && hostname != "nvws";
   workKeys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHt25mSiJLQjx2JECMuhTZEV6rlrOYk3CT2cUEdXAoYs ihrachyshka@ihrachyshka-mlt"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILMs9I9LVggVhp5dLjcWmOHCAjUIOeW6eXTMftp3+Ekx ihrachyshka@JGWXHWDL4X"
   ];
   personalKeys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF0X50YNCxMOfuSwc5F/O0lvaRVDkxW4BA94XWz5ovBq" # tab
