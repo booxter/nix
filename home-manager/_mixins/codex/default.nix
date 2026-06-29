@@ -8,6 +8,11 @@
 }:
 let
   codexPkgs = import ./pkgs { inherit pkgs; };
+  trustedProjects =
+    paths:
+    lib.genAttrs (map (path: "${config.home.homeDirectory}/${path}") paths) (_: {
+      trust_level = "trusted";
+    });
 in
 {
   programs.codex = {
@@ -19,11 +24,12 @@ in
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
 
-      projects = {
-        "${config.home.homeDirectory}/src/nix".trust_level = "trusted";
-        "${config.home.homeDirectory}/src/nixpkgs".trust_level = "trusted";
-        "${config.home.homeDirectory}/src/ovn-kubernetes".trust_level = "trusted";
-      };
+      projects = trustedProjects [
+        "src/nix"
+        "src/nixpkgs"
+        "src/ovn-kubernetes"
+        "src/sdn"
+      ];
 
       # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
       # https://github.com/openai/codex/issues/12582
