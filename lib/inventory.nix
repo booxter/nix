@@ -573,6 +573,15 @@ rec {
       glanceCategory = "user";
     }))
     (resolveService (mkService {
+      id = "paperless-gpt";
+      title = "Paperless GPT";
+      icon = "sh:paperless-ngx";
+      scope = "internal";
+      owner = "org";
+      probePath = "/oauth2/sign_in";
+      glanceCategory = "infrastructure";
+    }))
+    (resolveService (mkService {
       id = "llm";
       title = "LLM Gateway";
       icon = "sh:litellm";
@@ -894,6 +903,7 @@ rec {
       localDnsAliases = [
         "vikunja"
         "paperless"
+        "paperless-gpt"
         "llm"
         "ai"
       ];

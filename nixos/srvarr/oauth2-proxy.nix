@@ -27,7 +27,7 @@ let
   };
 in
 {
-  host.sso.oauth2ProxyGate = {
+  host.sso.oauth2ProxyGates.srvarr-admin-apps = {
     enable = true;
     inherit clientId;
     cookieName = oauth2ProxyCookieName;

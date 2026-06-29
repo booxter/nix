@@ -5,6 +5,7 @@
   lib,
   outputs,
   pkgs,
+  blackboxHttpMtlsTlsConfig,
   prometheusMtlsTlsConfig,
 }:
 let
@@ -19,9 +20,7 @@ let
   publicDnsCnameRegexpFor =
     service:
     "^${lib.escapeRegex "${service.publicHost}."}\\s+[0-9]+\\s+IN\\s+CNAME\\s+${lib.escapeRegex "${publicWanHost}."}$";
-  localHttpsServices = config.host.internalHttps.services;
   srvarrHostConfig = outputs.nixosConfigurations.srvarr.config;
-  srvarrHttpsServices = srvarrHostConfig.host.internalHttps.services;
   srvarrPortFor =
     serviceId:
     {
@@ -37,37 +36,34 @@ let
       transmission = srvarrHostConfig.services.transmission.settings.rpc-port;
     }
     .${serviceId};
+  ownerHostConfigFor =
+    service:
+    if service.owner == "fana" then config else outputs.nixosConfigurations.${service.owner}.config;
+  ownerHttpsServicesFor = service: (ownerHostConfigFor service).host.internalHttps.services;
   httpsServiceFor =
     service:
+    let
+      httpsServices = ownerHttpsServicesFor service;
+    in
     if
-      builtins.hasAttr service.id srvarrHttpsServices
-      && (builtins.getAttr service.id srvarrHttpsServices).enable
+      builtins.hasAttr service.id httpsServices && (builtins.getAttr service.id httpsServices).enable
     then
-      builtins.getAttr service.id srvarrHttpsServices
-    else
-      null;
-  localHttpsServiceFor =
-    service:
-    if
-      builtins.hasAttr service.id localHttpsServices
-      && (builtins.getAttr service.id localHttpsServices).enable
-    then
-      builtins.getAttr service.id localHttpsServices
+      builtins.getAttr service.id httpsServices
     else
       null;
   inventoryServiceCatalog = map (
     service:
     let
       httpsService = httpsServiceFor service;
-      localHttpsService = localHttpsServiceFor service;
     in
     if service.scope == "external" then
       service
-    else if service.owner == "fana" && localHttpsService != null then
+    else if httpsService != null then
       service
       // {
-        probeUrl = "https://${localHttpsService.serverName}${service.probePath}";
-        url = "https://${localHttpsService.serverName}/";
+        blackboxModule = if httpsService.mtls.enable then "http_service_mtls" else "http_service";
+        probeUrl = "https://${httpsService.serverName}${service.probePath}";
+        url = "https://${httpsService.serverName}/";
       }
     else if service.owner == "fana" then
       service
@@ -75,18 +71,14 @@ let
         probeUrl = "http://127.0.0.1:${toString grafanaPort}/${service.probePath}";
         url = "http://${service.displayHost}:3000/";
       }
-    else if httpsService != null then
-      service
-      // {
-        probeUrl = "https://${httpsService.serverName}${service.probePath}";
-        url = "https://${httpsService.serverName}/";
-      }
-    else
+    else if service.owner == "srvarr" then
       service
       // {
         probeUrl = "http://${service.probeHost}:${toString (srvarrPortFor service.id)}${service.probePath}";
         url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
+    else
+      throw "Blackbox service ${service.id} must expose enabled internal HTTPS"
   ) hostInventory.blackboxServices;
   proxmoxLabNodeNames = builtins.filter (
     name:
@@ -185,7 +177,17 @@ let
       };
     }) publicServiceCatalog
   );
-  blackboxModules = (import ../../../lib/prometheus-blackbox-modules.nix) // publicDnsBlackboxModules;
+  baseBlackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
+  blackboxModules =
+    baseBlackboxModules
+    // publicDnsBlackboxModules
+    // {
+      http_service_mtls = baseBlackboxModules.http_service // {
+        http = baseBlackboxModules.http_service.http // {
+          tls_config = blackboxHttpMtlsTlsConfig;
+        };
+      };
+    };
   remoteBlackboxProbeSourceNames = builtins.filter (
     name:
     name != "fana"
@@ -297,9 +299,9 @@ in
     {
       job_name = "blackbox-arr";
       metrics_path = "/probe";
-      params.module = [ "http_service" ];
       static_configs = map (service: {
         labels = {
+          module = service.blackboxModule or "http_service";
           scope = service.scope;
           service = service.id;
           service_title = service.title;
@@ -310,6 +312,10 @@ in
         targets = [ service.probeUrl ];
       }) serviceCatalog;
       relabel_configs = [
+        {
+          source_labels = [ "module" ];
+          target_label = "__param_module";
+        }
         {
           source_labels = [ "__address__" ];
           target_label = "__param_target";
@@ -325,6 +331,10 @@ in
         {
           replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
           target_label = "__address__";
+        }
+        {
+          action = "labeldrop";
+          regex = "module";
         }
       ];
     }

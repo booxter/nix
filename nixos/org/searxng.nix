@@ -172,7 +172,7 @@ in
     };
   };
 
-  host.sso.oauth2ProxyGate = {
+  host.sso.oauth2ProxyGates.search = {
     enable = true;
     clientId = oauth2ClientId;
     cookieName = oauth2ProxyCookieName;

@@ -95,7 +95,7 @@ groups:
           summary: "SearXNG service down on org"
           description: "The SearXNG systemd service on org has not been active for 10 minutes."
       - alert: SearxngOauth2ProxyDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="org",name="oauth2-proxy.service",state="active"} < 1
+        expr: node_systemd_unit_state{job="node-mtls",instance="org",name="oauth2-proxy-search.service",state="active"} < 1
         for: 10m
         labels:
           severity: warning

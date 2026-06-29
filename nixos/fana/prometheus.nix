@@ -17,6 +17,11 @@ let
     cert_file = config.sops.secrets.prometheusScrapeNodeClientCrt.path;
     key_file = config.sops.secrets.prometheusScrapeNodeClientKey.path;
   };
+  blackboxHttpMtlsTlsConfig = {
+    ca_file = toString internalPkiRootCaPath;
+    cert_file = config.sops.secrets.prometheusBlackboxHttpClientCrt.path;
+    key_file = config.sops.secrets.prometheusBlackboxHttpClientKey.path;
+  };
   nodeScrapes = import ./scrapes/nodes.nix {
     inherit
       config
@@ -35,6 +40,7 @@ let
       lib
       outputs
       pkgs
+      blackboxHttpMtlsTlsConfig
       prometheusMtlsTlsConfig
       ;
   };
@@ -94,6 +100,20 @@ in
     mode = "0400";
     restartUnits = [ "prometheus.service" ];
   };
+  sops.secrets.prometheusBlackboxHttpClientCrt = {
+    key = "${prometheusScrapeClient.secretPrefix}/client_crt_unencrypted";
+    owner = "blackbox-exporter";
+    group = "blackbox-exporter";
+    mode = "0400";
+    restartUnits = [ "prometheus-blackbox-exporter.service" ];
+  };
+  sops.secrets.prometheusBlackboxHttpClientKey = {
+    key = "${prometheusScrapeClient.secretPrefix}/client_key";
+    owner = "blackbox-exporter";
+    group = "blackbox-exporter";
+    mode = "0400";
+    restartUnits = [ "prometheus-blackbox-exporter.service" ];
+  };
   sops.secrets."searxng/open_metrics_password" = {
     owner = "prometheus";
     group = "prometheus";
@@ -102,6 +122,10 @@ in
   };
 
   systemd.services.prometheus = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
+  };
+  systemd.services.prometheus-blackbox-exporter = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
   };

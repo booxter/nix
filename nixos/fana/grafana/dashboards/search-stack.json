@@ -763,7 +763,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "node_systemd_unit_state{job=\"node-mtls\",instance=\"org\",name=~\"searx\\\\.service|oauth2-proxy\\\\.service|open-webui-searxng-probe\\\\.(service|timer)\",state=\"active\"}",
+          "expr": "node_systemd_unit_state{job=\"node-mtls\",instance=\"org\",name=~\"searx\\\\.service|oauth2-proxy-search\\\\.service|open-webui-searxng-probe\\\\.(service|timer)\",state=\"active\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "{{name}}",

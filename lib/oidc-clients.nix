@@ -127,6 +127,14 @@ rec {
       };
     };
 
+    paperless-gpt = mkClient "paperless-gpt" {
+      displayName = "Paperless GPT";
+      originUrl = "https://paperless-gpt.${lan.domain}/oauth2/callback";
+      originLanding = "https://paperless-gpt.${lan.domain}/";
+      scopeMaps."paperless-admins" = scopeWith [ "paperless_groups" ];
+      claimMaps.paperless_groups.valuesByGroup."paperless-admins" = [ "paperless-admins" ];
+    };
+
     romm = mkClient "romm" {
       displayName = "RomM";
       originUrl = "${serviceUrl "romm"}/api/oauth/openid";
