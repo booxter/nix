@@ -110,6 +110,12 @@ let
           description = "Hostnames accepted as oauth2-proxy redirect targets.";
         };
 
+        externalOrigin = lib.mkOption {
+          type = with lib.types; nullOr str;
+          default = null;
+          description = "Browser-facing origin used for OAuth start, callback, and return URLs when the gate is behind an internal reverse proxy.";
+        };
+
         signInLocationName = lib.mkOption {
           type = lib.types.str;
           default = "@${safeClientId}_oauth2_proxy_sign_in";
@@ -222,6 +228,9 @@ let
       (mkArg "skip-provider-button" "true")
       (mkArg "upstream" "static://202")
     ]
+    ++ lib.optionals (gate.externalOrigin != null) [
+      (mkArg "redirect-url" "${gate.externalOrigin}/oauth2/callback")
+    ]
     ++ mkArgs "allowed-group" gate.allowedGroups
     ++ mkArgs "trusted-proxy-ip" [
       "127.0.0.1/32"
@@ -249,36 +258,41 @@ let
       add_header Set-Cookie ${authCookieVariable};
     '';
 
-  oauth2ProxyLocations = gate: {
-    "/oauth2/" = {
-      proxyPass = gate.httpAddress;
-      recommendedProxySettings = true;
-      extraConfig = ''
-        auth_request off;
-        proxy_set_header X-Scheme $scheme;
-        proxy_set_header X-Auth-Request-Redirect $scheme://$host$request_uri;
-      '';
-    };
+  oauth2ProxyLocations =
+    gate:
+    let
+      requestOrigin = if gate.externalOrigin != null then gate.externalOrigin else "$scheme://$host";
+    in
+    {
+      "/oauth2/" = {
+        proxyPass = gate.httpAddress;
+        recommendedProxySettings = true;
+        extraConfig = ''
+          auth_request off;
+          proxy_set_header X-Scheme $scheme;
+          proxy_set_header X-Auth-Request-Redirect ${requestOrigin}$request_uri;
+        '';
+      };
 
-    "= /oauth2/auth" = {
-      proxyPass = "${gate.httpAddress}/oauth2/auth";
-      recommendedProxySettings = true;
-      extraConfig = ''
-        internal;
-        auth_request off;
-        proxy_set_header X-Scheme $scheme;
-        proxy_set_header Content-Length "";
-        proxy_pass_request_body off;
-      '';
-    };
+      "= /oauth2/auth" = {
+        proxyPass = "${gate.httpAddress}/oauth2/auth";
+        recommendedProxySettings = true;
+        extraConfig = ''
+          internal;
+          auth_request off;
+          proxy_set_header X-Scheme $scheme;
+          proxy_set_header Content-Length "";
+          proxy_pass_request_body off;
+        '';
+      };
 
-    ${gate.signInLocationName} = {
-      return = "307 $scheme://$host/oauth2/start?rd=$scheme://$host$request_uri";
-      extraConfig = ''
-        auth_request off;
-      '';
+      ${gate.signInLocationName} = {
+        return = "307 ${requestOrigin}/oauth2/start?rd=${requestOrigin}$request_uri";
+        extraConfig = ''
+          auth_request off;
+        '';
+      };
     };
-  };
 
   locationsFor =
     gate: name:

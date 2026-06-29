@@ -14,38 +14,27 @@ let
     proxy_set_header X-Forwarded-Host $host;
     proxy_set_header X-Forwarded-Server $hostname;
   '';
-  mkPublicVhost =
-    vhost:
-    let
-      hostHeader =
-        if vhost.hostHeader != null then
-          vhost.hostHeader
-        else if vhost.upstreamTls.enable then
-          vhost.upstreamTls.serverName
+  mkPublicVhost = vhost: {
+    forceSSL = vhost.forceSSL;
+    enableACME = vhost.enableACME;
+    locations."/" = {
+      proxyPass =
+        if vhost.upstreamTls.enable then
+          "http://127.0.0.1:${toString vhost.upstreamTls.localPort}"
         else
-          "$host";
-    in
-    {
-      forceSSL = vhost.forceSSL;
-      enableACME = vhost.enableACME;
-      locations."/" = {
-        proxyPass =
-          if vhost.upstreamTls.enable then
-            "http://127.0.0.1:${toString vhost.upstreamTls.localPort}"
-          else
-            vhost.proxyPass;
-        proxyWebsockets = vhost.proxyWebsockets;
-        recommendedProxySettings = false;
-        extraConfig =
-          recommendedProxyHeaders hostHeader
-          + lib.optionalString vhost.upstreamTls.enable ''
-            # Backends may emit their internal canonical URL in absolute redirects.
-            proxy_redirect https://${vhost.upstreamTls.serverName}/ $scheme://$host/;
-            proxy_redirect http://${vhost.upstreamTls.serverName}/ $scheme://$host/;
-          ''
-          + vhost.locationExtraConfig;
-      };
+          vhost.proxyPass;
+      proxyWebsockets = vhost.proxyWebsockets;
+      recommendedProxySettings = false;
+      extraConfig =
+        recommendedProxyHeaders (if vhost.upstreamTls.enable then vhost.upstreamTls.serverName else "$host")
+        + lib.optionalString vhost.upstreamTls.enable ''
+          # Backends may emit their internal canonical URL in absolute redirects.
+          proxy_redirect https://${vhost.upstreamTls.serverName}/ $scheme://$host/;
+          proxy_redirect http://${vhost.upstreamTls.serverName}/ $scheme://$host/;
+        ''
+        + vhost.locationExtraConfig;
     };
+  };
 in
 {
   options.host.externalService = {
@@ -153,12 +142,6 @@ in
               type = lib.types.lines;
               default = "";
               description = "Extra nginx location config appended after the generated proxy settings.";
-            };
-
-            hostHeader = lib.mkOption {
-              type = with lib.types; nullOr str;
-              default = null;
-              description = "HTTP Host header to send to the upstream. Defaults to the upstream TLS server name for mTLS backends, otherwise the browser host.";
             };
 
             upstreamTls = {
