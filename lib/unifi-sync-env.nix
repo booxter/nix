@@ -42,13 +42,7 @@ let
     else
       null;
 
-  networkTftpServer =
-    if netbootHost ? lanAddress then
-      netbootHost.lanAddress
-    else if netbootHost ? ipAddress then
-      netbootHost.ipAddress
-    else
-      throw "netboot host ${netboot.host} does not expose a stable IPv4 address";
+  networkTftpServer = hostInventory.toHostIpv4Address netbootHost;
 
   networkBootfile = netboot.bootfile;
   dnsRecordsJson = builtins.toJSON lan.dnsRecords;

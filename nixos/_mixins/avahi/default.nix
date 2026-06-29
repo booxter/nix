@@ -10,9 +10,7 @@
 let
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
 
-  aliasAddress =
-    hostSpec.dhcpReservation.ip or hostSpec.lanAddress or hostSpec.ipAddress
-      or (throw "host ${hostSpec.name} does not have a stable IPv4 address for mDNS aliases");
+  aliasAddress = hostInventory.toHostIpv4Address hostSpec;
   aliases = lib.unique ((hostSpec.localDnsAliases or [ ]) ++ config.host.internalHttps.localAliases);
   aliasNames = builtins.map hostInventory.toLocalDnsName aliases;
   publishAliases = pkgs.writeShellScript "avahi-publish-aliases" ''

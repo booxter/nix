@@ -133,12 +133,10 @@ let
     spec:
     if spec ? dhcpReservation then
       spec.dhcpReservation.ip
-    else if spec ? lanAddress then
-      spec.lanAddress
     else if spec ? ipAddress then
       spec.ipAddress
     else
-      throw "host ${spec.name} does not have a stable IPv4 address for A-record aliases";
+      throw "host ${spec.name} does not have a stable IPv4 address";
 in
 rec {
   inherit glanceCategories;
@@ -148,7 +146,7 @@ rec {
   toProxVmName = name: "prox-${name}vm";
   isNixosVM = spec: spec.isVM or false;
   isNixosBM = spec: !(isNixosVM spec);
-  hasStableIpv4Address = spec: spec ? dhcpReservation || spec ? lanAddress || spec ? ipAddress;
+  hasStableIpv4Address = spec: spec ? dhcpReservation || spec ? ipAddress;
   toNixosConfigName = spec: spec.name;
   toNixosStableHostName = spec: spec.name;
   toNixosRuntimeHostName =
