@@ -16,8 +16,10 @@ write_update_machines_test_stubs() {
 set -euo pipefail
 if [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
   printf '%s\n' '127.0.0.1'
+elif [[ "$*" == *"hostWorkMap"* ]]; then
+  printf '%s\n' '{"darwin":{},"nixos":{"alpha":false,"beta":false,"gamma":false,"nv":true}}'
 elif [[ "$*" == *"hostInventory = import ./lib/inventory.nix"* ]]; then
-  printf '%s\n' '{"alpha":"alpha","beta":"beta","gamma":"gamma"}'
+  printf '%s\n' '{"alpha":"alpha","beta":"beta","gamma":"gamma","nv":"nv"}'
 else
   echo "unexpected nix invocation: $*" >&2
   exit 99
@@ -379,6 +381,19 @@ EOF
 
   [ "$status" -eq 0 ]
   [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin switch --hostname JGWXHWDL4X --print-build-logs --show-trace .#" ]
+}
+
+@test "update-machines resolves an explicit work host over mDNS" {
+  workdir="$BATS_TMPDIR/update-machines-explicit-work-host"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+
+  run script -q /dev/null bash ./apps/update-machines.sh --dry-run nv
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"nv.local"* ]]
 }
 
 @test "update-machines reports all failed deploy hosts and exits nonzero" {
