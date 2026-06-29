@@ -9,8 +9,7 @@ Scope: whole repository.
 - Prefer declarative Nix changes; keep unrelated worktree changes intact.
 - Never modify, restore, reformat, stage, or commit changes you did not produce.
   Unrelated dirty files may be human edits or another agent working in parallel.
-  If a tool touches unrelated paths, stop and report it instead of trying to
-  repair those paths yourself.
+  Do not try to repair, revert, or normalize unrelated dirty paths.
 - Prefer flake apps/repo scripts over ad hoc commands. Check `--help` when unsure.
 - Prefer dependencies and packages already available from nixpkgs before adding
   local package definitions or vendored sources.
