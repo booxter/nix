@@ -7,7 +7,6 @@
 }:
 let
   homeManagerPkgs = import ../../pkgs pkgs;
-  cliToolsPkgs = import ./pkgs { inherit pkgs; };
 in
 {
   programs.bash.enable = true;
@@ -138,10 +137,8 @@ in
     ++ lib.optionals (!isWork) [
       age
       age-plugin-se
-      cliToolsPkgs.codex-usage-status
       ramalama
       sops
-      cliToolsPkgs.codex-rate-limit-reset-credits
     ];
 
   home.sessionVariables = {
