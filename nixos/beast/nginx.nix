@@ -108,6 +108,7 @@ in
               backend = backendMtlsServices.${service.id};
             in
             {
+              hostHeader = lib.mkIf (service.id == "search") service.publicHost;
               proxyPass = "https://${backend.serverName}";
               upstreamTls = {
                 enable = true;
