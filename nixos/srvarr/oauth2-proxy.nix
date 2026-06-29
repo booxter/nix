@@ -31,8 +31,6 @@ in
     enable = true;
     inherit clientId;
     cookieName = oauth2ProxyCookieName;
-    secretOwner = "oauth2-proxy";
-    secretGroup = "oauth2-proxy";
     allowedGroups = [ "infra-admins" ];
     groupClaim = "infra_groups";
     whitelistDomains = protectedServiceHosts;
