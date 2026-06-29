@@ -8,6 +8,7 @@
   platform,
   stateVersion,
   upsShutdownDelaySeconds,
+  isVM,
   ...
 }:
 let
@@ -32,7 +33,6 @@ in
         ./_mixins/backup-artifacts.nix
         ./_mixins/backup-metrics/default.nix
         ./_mixins/external-service.nix
-        ./_mixins/firmware
         ./_mixins/internal-https-service.nix
         ./_mixins/lan-wan-accounting
         ./_mixins/nix
@@ -41,6 +41,9 @@ in
         ./_mixins/restic-beast-client.nix
         ./_mixins/sso-oauth2-proxy-gate.nix
         ./_mixins/user
+      ]
+      ++ lib.optionals (!isVM) [
+        ./_mixins/firmware
       ]
       ++ lib.optionals (!(hostSpec.isWork or false)) [
         ./_mixins/attic
