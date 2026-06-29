@@ -86,6 +86,13 @@ in
     commonName = "prometheus-node-scraper";
   };
 
+  users.groups.blackbox-exporter = { };
+  users.users.blackbox-exporter = {
+    description = "Prometheus blackbox exporter service user";
+    isSystemUser = true;
+    group = "blackbox-exporter";
+  };
+
   sops.secrets.prometheusScrapeNodeClientCrt = {
     key = "${prometheusScrapeClient.secretPrefix}/client_crt_unencrypted";
     owner = "prometheus";
@@ -128,6 +135,7 @@ in
   systemd.services.prometheus-blackbox-exporter = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
+    serviceConfig.DynamicUser = false;
   };
 
   systemd.services.prometheus-nut-exporter = nutScrapes.exporterService;
