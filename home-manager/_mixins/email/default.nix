@@ -48,6 +48,7 @@ in
         # auth not working for google without it for some reason
         "javascript.enabled" = true;
         "general.useragent.compatMode.firefox" = true;
+        "mailnews.oauth.useExternalBrowser" = true;
       };
     };
   };
