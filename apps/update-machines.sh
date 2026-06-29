@@ -194,8 +194,9 @@ resolve_ssh_host() {
   ssh_lookup_host="$base_host"
 
   # Work hosts are accessed over mDNS because corporate DNS policy blocks use
-  # of the LAN DNS server for these names.
-  if [[ "$MODE" == "work" && "$ssh_lookup_host" != *.* && ! "$ssh_lookup_host" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  # of the LAN DNS server for these names. Classify the host from inventory so
+  # explicitly selected work hosts behave the same as hosts selected by mode.
+  if [[ "$(is_work_host "$host" "$WORK_MAP")" == "true" ]] && is_bare_hostname "$ssh_lookup_host"; then
     ssh_lookup_host="${ssh_lookup_host}.local"
   fi
 
@@ -452,14 +453,15 @@ fi
 
 local_disk_cleanup_if_low
 
+WORK_MAP="$(bash "${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
+if [[ -z "$WORK_MAP" ]]; then
+  echo "Failed to read hosts from get-hosts.sh." >&2
+  exit 1
+fi
+
 if [[ "$ALL" == "true" ]]; then
   if [[ $# -gt 0 ]]; then
     echo "Do not pass host names with -A." >&2
-    exit 1
-  fi
-  WORK_MAP="$("${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
-  if [[ -z "$WORK_MAP" ]]; then
-    echo "Failed to read hosts from get-hosts.sh." >&2
     exit 1
   fi
   mapfile -t HOSTS < <(hosts_from_work_map "$WORK_MAP")
@@ -571,7 +573,7 @@ for host in "${HOSTS[@]}"; do
   runtime_host="$(resolve_runtime_host "$host")"
   display_host="$(display_host_name "$host")"
   printf '%b\n' "${COLOR_HOST}==> ${display_host}${COLOR_RESET}"
-  if ! [ -t 0 ]; then
+  if [[ "${UPDATE_MACHINES_TEST_ASSUME_TTY:-false}" != "true" ]] && ! [ -t 0 ]; then
     echo "Error: no TTY available for sudo on ${display_host}. Run this script from a real terminal." >&2
     exit 1
   fi

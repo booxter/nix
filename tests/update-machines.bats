@@ -6,9 +6,8 @@ setup() {
 
 write_update_machines_test_stubs() {
   local stub_dir="$1"
-  local bash_path python_path
+  local bash_path
   bash_path="$(command -v bash)"
-  python_path="$(command -v python3)"
 
   {
     printf '#!%s\n' "$bash_path"
@@ -16,8 +15,10 @@ write_update_machines_test_stubs() {
 set -euo pipefail
 if [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
   printf '%s\n' '127.0.0.1'
+elif [[ "$*" == *"hostWorkMap"* ]]; then
+  printf '%s\n' '{"darwin":{},"nixos":{"alpha":false,"beta":false,"gamma":false,"nv":true}}'
 elif [[ "$*" == *"hostInventory = import ./lib/inventory.nix"* ]]; then
-  printf '%s\n' '{"alpha":"alpha","beta":"beta","gamma":"gamma"}'
+  printf '%s\n' '{"alpha":"alpha","beta":"beta","gamma":"gamma","nv":"nv"}'
 else
   echo "unexpected nix invocation: $*" >&2
   exit 99
@@ -134,50 +135,6 @@ EOF
   } > "$stub_dir/ssh"
   chmod +x "$stub_dir/ssh"
 
-  {
-    printf '#!%s\n' "$bash_path"
-    printf 'python_path=%q\n' "$python_path"
-    cat <<'EOF'
-set -euo pipefail
-if [[ "${1-}" == "-q" ]]; then
-  shift
-fi
-if [[ $# -lt 2 ]]; then
-  echo "script stub: expected output file and command" >&2
-  exit 64
-fi
-shift
-"$python_path" - "$@" <<'PY'
-import os
-import pty
-import subprocess
-import sys
-
-cmd = sys.argv[1:]
-if not cmd:
-    sys.exit(64)
-
-master_fd, slave_fd = pty.openpty()
-proc = subprocess.Popen(cmd, stdin=slave_fd, stdout=slave_fd, stderr=slave_fd, close_fds=True)
-os.close(slave_fd)
-
-try:
-    while True:
-        chunk = os.read(master_fd, 4096)
-        if not chunk:
-            break
-        os.write(sys.stdout.fileno(), chunk)
-except OSError:
-    pass
-finally:
-    os.close(master_fd)
-
-proc.wait()
-sys.exit(proc.returncode)
-PY
-EOF
-  } > "$stub_dir/script"
-  chmod +x "$stub_dir/script"
 }
 
 @test "calc_min_disk_kb_from_gib converts GiB to KiB" {
@@ -381,6 +338,19 @@ EOF
   [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin switch --hostname JGWXHWDL4X --print-build-logs --show-trace .#" ]
 }
 
+@test "update-machines resolves an explicit work host over mDNS" {
+  workdir="$BATS_TMPDIR/update-machines-explicit-work-host"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+
+  run bash ./apps/update-machines.sh --dry-run nv
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"nv.local"* ]]
+}
+
 @test "update-machines reports all failed deploy hosts and exits nonzero" {
   workdir="$BATS_TMPDIR/update-machines-deploy-failure"
   mkdir -p "$workdir/bin"
@@ -389,8 +359,9 @@ EOF
   export PATH="$workdir/bin:$PATH"
   export SSH_TEST_MODE="deploy-fail"
   export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
+  export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
-  run script -q /dev/null bash ./apps/update-machines.sh alpha beta
+  run bash ./apps/update-machines.sh alpha beta
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]

@@ -55,13 +55,13 @@ helpers.forAllSystems (
         yq-go
       ];
       buildPhase = ''
-        bats tests/get-local-builders.bats
-        bats tests/test-diff-config.bats
-        bats tests/test-prox-deploy.bats
-        bats tests/test-update-oci-images.bats
+        bats --print-output-on-failure tests/get-local-builders.bats
+        bats --print-output-on-failure tests/test-diff-config.bats
+        bats --print-output-on-failure tests/test-prox-deploy.bats
+        bats --print-output-on-failure tests/test-update-oci-images.bats
         bash tests/check-sops-helpers.sh
-        bats tests/test-vm.bats
-        bats tests/update-machines.bats
+        bats --print-output-on-failure tests/test-vm.bats
+        bats --print-output-on-failure tests/update-machines.bats
       '';
     };
     box-py = mkCheck {
