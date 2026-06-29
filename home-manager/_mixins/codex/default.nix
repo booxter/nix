@@ -11,6 +11,13 @@ in
   programs.codex = {
     enable = true;
 
+    settings = {
+      # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
+      # https://github.com/openai/codex/issues/12582
+      # https://github.com/openai/codex/issues/14509
+      tui.keymap.chat.interrupt_turn = "f12";
+    };
+
     rules.default = ''
       prefix_rule(
           pattern = ["nix", "eval"],
