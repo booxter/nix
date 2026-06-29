@@ -286,6 +286,7 @@ in
     groupClaim = "media_groups";
     whitelistDomains = [ jellystatHostName ];
     internalHttpsServiceNames = [ "jfstat" ];
+    clearAuthorizationHeader = false;
     extraLocationsByName.jfstat."= /auth/isConfigured" = {
       proxyPass = "http://127.0.0.1:${toString jellystatPort}";
       recommendedProxySettings = true;
