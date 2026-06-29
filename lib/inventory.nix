@@ -914,6 +914,7 @@ rec {
         "paperless-gpt"
         "llm"
         "ai"
+        "search"
       ];
       upsHost = "prx1-lab";
       cores = 4;
