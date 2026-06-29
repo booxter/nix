@@ -1,4 +1,10 @@
 {
+  "jellystat": {
+    "changelog": "https://github.com/CyferShepard/Jellystat/releases/tag/V{tag}",
+    "image": "docker.io/cyfershepard/jellystat",
+    "tag": "1.1.11",
+    "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+  },
   "litellm": {
     "changelog": "https://github.com/BerriAI/litellm/releases/tag/{tag}",
     "image": "ghcr.io/berriai/litellm-database",

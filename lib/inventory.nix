@@ -476,6 +476,15 @@ rec {
       glanceCategory = "user";
     }))
     (resolveService (mkService {
+      id = "jfstat";
+      title = "Jellystat";
+      icon = "sh:jellystat";
+      scope = "internal";
+      owner = "beast";
+      probePath = "/auth/isConfigured";
+      glanceCategory = "media-admin";
+    }))
+    (resolveService (mkService {
       id = "seerr";
       scope = "external";
       owner = "srvarr";
@@ -744,6 +753,7 @@ rec {
       dnsAliases = builtins.filter (domain: domain != "dash.${site.public.domain}") (
         map (service: service.publicHost) publicServices
       );
+      localDnsAliases = [ "jfstat" ];
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
