@@ -20,7 +20,13 @@ let
     + pkiCaServer.rootsPath;
   srvarrHttpsServices = config.host.internalHttps.services;
   internalHttpsServicesFor =
-    service: if service.owner == "fana" then fanaHttpsServices else srvarrHttpsServices;
+    service:
+    if service.owner == "srvarr" then
+      srvarrHttpsServices
+    else if service.owner == "fana" then
+      fanaHttpsServices
+    else
+      outputs.nixosConfigurations.${service.owner}.config.host.internalHttps.services;
   internalHttpsServiceFor =
     service:
     let

@@ -95,7 +95,7 @@ groups:
           summary: "SearXNG service down on org"
           description: "The SearXNG systemd service on org has not been active for 10 minutes."
       - alert: SearxngOauth2ProxyDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="org",name="oauth2-proxy.service",state="active"} < 1
+        expr: node_systemd_unit_state{job="node-mtls",instance="org",name="oauth2-proxy-search.service",state="active"} < 1
         for: 10m
         labels:
           severity: warning
@@ -103,6 +103,44 @@ groups:
         annotations:
           summary: "SearXNG OAuth proxy down on org"
           description: "The oauth2-proxy service protecting SearXNG on org has not been active for 10 minutes."
+      # OIDC synthetic probe metrics are emitted on pki through node_exporter's
+      # textfile collector and scraped by fana's node-mtls job.
+      - alert: OidcSyntheticProbeTimerDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="pki",name="kanidm-oidc-synthetic-probe.timer",state="active"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "OIDC synthetic probe timer down on pki"
+          description: "The OIDC synthetic probe timer on pki has not been active for 10 minutes."
+      - alert: OidcSyntheticProbeServiceFailed
+        expr: node_systemd_unit_state{job="node-mtls",instance="pki",name=~"kanidm-oidc-(probe-bootstrap|synthetic-probe)\\.service",state="failed"} > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "OIDC synthetic probe service failed on pki"
+          description: "The OIDC synthetic probe bootstrap or runner service on pki has remained in the failed state for 5 minutes."
+      - alert: OidcSyntheticProbeFailed
+        expr: host_observability_oidc_synthetic_probe_ok{job="node-mtls",instance="pki"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "OIDC synthetic probe failed: {{ $labels.probe }}"
+          description: "The OIDC synthetic probe '{{ $labels.probe }}' on pki has been failing for 10 minutes."
+      - alert: OidcSyntheticProbeMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="pki",file="/var/lib/prometheus-node-exporter-textfile/oidc-synthetic.prom"}) > 900
+        for: 5m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "OIDC synthetic probe metrics stale on pki"
+          description: "The OIDC synthetic probe metrics file on pki has not been refreshed for more than 15 minutes."
       - alert: PaperlessComponentUnhealthy
         expr: max by (instance, job, component) (label_replace(paperless_status_celery_status{job="paperless"} < 1, "component", "celery", "__name__", ".*") or label_replace(paperless_status_classifier_status{job="paperless"} < 1, "component", "classifier", "__name__", ".*") or label_replace(paperless_status_database_status{job="paperless"} < 1, "component", "database", "__name__", ".*") or label_replace(paperless_status_index_status{job="paperless"} < 1, "component", "index", "__name__", ".*") or label_replace(paperless_status_redis_status{job="paperless"} < 1, "component", "redis", "__name__", ".*") or label_replace(paperless_status_sanity_check_status{job="paperless"} < 1, "component", "sanity check", "__name__", ".*"))
         for: 10m

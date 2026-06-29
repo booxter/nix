@@ -258,7 +258,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="oauth2-proxy.service",state="active"}'
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="oauth2-proxy-search.service",state="active"}'
         values: "0x20 1x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -271,12 +271,98 @@ tests:
               category: service
               instance: org
               job: node-mtls
-              name: oauth2-proxy.service
+              name: oauth2-proxy-search.service
               severity: warning
               state: active
             exp_annotations:
               summary: "SearXNG OAuth proxy down on org"
               description: "The oauth2-proxy service protecting SearXNG on org has not been active for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="pki",job="node-mtls",name="kanidm-oidc-synthetic-probe.timer",state="active"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: OidcSyntheticProbeTimerDown
+      - eval_time: 10m
+        alertname: OidcSyntheticProbeTimerDown
+        exp_alerts:
+          - exp_labels:
+              alertname: OidcSyntheticProbeTimerDown
+              category: service
+              instance: pki
+              job: node-mtls
+              name: kanidm-oidc-synthetic-probe.timer
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "OIDC synthetic probe timer down on pki"
+              description: "The OIDC synthetic probe timer on pki has not been active for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_systemd_unit_state{instance="pki",job="node-mtls",name="kanidm-oidc-synthetic-probe.service",state="failed"}'
+        values: "1x10 0x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: OidcSyntheticProbeServiceFailed
+      - eval_time: 5m
+        alertname: OidcSyntheticProbeServiceFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: OidcSyntheticProbeServiceFailed
+              category: service
+              instance: pki
+              job: node-mtls
+              name: kanidm-oidc-synthetic-probe.service
+              severity: warning
+              state: failed
+            exp_annotations:
+              summary: "OIDC synthetic probe service failed on pki"
+              description: "The OIDC synthetic probe bootstrap or runner service on pki has remained in the failed state for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_oidc_synthetic_probe_ok{instance="pki",job="node-mtls",probe="kanidm"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: OidcSyntheticProbeFailed
+      - eval_time: 10m
+        alertname: OidcSyntheticProbeFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: OidcSyntheticProbeFailed
+              category: service
+              instance: pki
+              job: node-mtls
+              probe: kanidm
+              severity: warning
+            exp_annotations:
+              summary: "OIDC synthetic probe failed: kanidm"
+              description: "The OIDC synthetic probe 'kanidm' on pki has been failing for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_textfile_mtime_seconds{instance="pki",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/oidc-synthetic.prom"}'
+        values: "0x42"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: OidcSyntheticProbeMetricsStale
+      - eval_time: 20m30s
+        alertname: OidcSyntheticProbeMetricsStale
+        exp_alerts:
+          - exp_labels:
+              alertname: OidcSyntheticProbeMetricsStale
+              category: service
+              file: /var/lib/prometheus-node-exporter-textfile/oidc-synthetic.prom
+              instance: pki
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "OIDC synthetic probe metrics stale on pki"
+              description: "The OIDC synthetic probe metrics file on pki has not been refreshed for more than 15 minutes."
 
   - interval: 30s
     input_series:

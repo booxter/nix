@@ -3,7 +3,7 @@ let
   aurralService = hostInventory.servicesById.aurral;
 in
 {
-  host.sso.oauth2ProxyGate = {
+  host.sso.oauth2ProxyGates.aurral = {
     enable = true;
     clientId = "aurral";
     cookieName = "_aurral_sso";

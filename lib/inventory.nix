@@ -133,12 +133,10 @@ let
     spec:
     if spec ? dhcpReservation then
       spec.dhcpReservation.ip
-    else if spec ? lanAddress then
-      spec.lanAddress
     else if spec ? ipAddress then
       spec.ipAddress
     else
-      throw "host ${spec.name} does not have a stable IPv4 address for A-record aliases";
+      throw "host ${spec.name} does not have a stable IPv4 address";
 in
 rec {
   inherit glanceCategories;
@@ -148,7 +146,7 @@ rec {
   toProxVmName = name: "prox-${name}vm";
   isNixosVM = spec: spec.isVM or false;
   isNixosBM = spec: !(isNixosVM spec);
-  hasStableIpv4Address = spec: spec ? dhcpReservation || spec ? lanAddress || spec ? ipAddress;
+  hasStableIpv4Address = spec: spec ? dhcpReservation || spec ? ipAddress;
   toNixosConfigName = spec: spec.name;
   toNixosStableHostName = spec: spec.name;
   toNixosRuntimeHostName =
@@ -387,6 +385,12 @@ rec {
       "ai-users" = {
         title = "Open WebUI users";
       };
+      "oidc-probe-users" = {
+        title = "OIDC synthetic probe users";
+      };
+      "search-probe-users" = {
+        title = "Search synthetic probe users";
+      };
       "romm-admins" = {
         title = "RomM administrators";
       };
@@ -431,6 +435,14 @@ rec {
           "media-users"
         ];
       };
+      oidc-probe-user = {
+        displayName = "OIDC synthetic probe";
+        mailAddresses = [ "oidc-probe@${site.public.domain}" ];
+        groups = [
+          "oidc-probe-users"
+          "search-probe-users"
+        ];
+      };
     };
   };
 
@@ -462,6 +474,15 @@ rec {
       publicHost = "jf.${site.public.domain}";
       probePath = "/web/";
       glanceCategory = "user";
+    }))
+    (resolveService (mkService {
+      id = "jfstat";
+      title = "Jellystat";
+      icon = "sh:jellystat";
+      scope = "internal";
+      owner = "beast";
+      probePath = "/auth/isConfigured";
+      glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
       id = "seerr";
@@ -557,6 +578,15 @@ rec {
       publicHost = "papers.${site.public.domain}";
       probePath = "/accounts/login/";
       glanceCategory = "user";
+    }))
+    (resolveService (mkService {
+      id = "paperless-gpt";
+      title = "Paperless GPT";
+      icon = "sh:paperless-ngx";
+      scope = "internal";
+      owner = "org";
+      probePath = "/oauth2/sign_in";
+      glanceCategory = "infrastructure";
     }))
     (resolveService (mkService {
       id = "llm";
@@ -723,6 +753,7 @@ rec {
       dnsAliases = builtins.filter (domain: domain != "dash.${site.public.domain}") (
         map (service: service.publicHost) publicServices
       );
+      localDnsAliases = [ "jfstat" ];
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
@@ -880,8 +911,10 @@ rec {
       localDnsAliases = [
         "vikunja"
         "paperless"
+        "paperless-gpt"
         "llm"
         "ai"
+        "search"
       ];
       upsHost = "prx1-lab";
       cores = 4;

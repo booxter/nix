@@ -172,12 +172,16 @@ in
     };
   };
 
-  host.sso.oauth2ProxyGate = {
+  host.sso.oauth2ProxyGates.search = {
     enable = true;
     clientId = oauth2ClientId;
     cookieName = oauth2ProxyCookieName;
-    allowedGroups = [ "ai-users" ];
+    allowedGroups = [
+      "ai-users"
+      "search-probe-users"
+    ];
     groupClaim = "ai_groups";
+    externalOrigin = searchService.url;
     whitelistDomains = [ searchService.publicHost ];
     internalHttpsServiceNames = [ "search" ];
     signInLocationName = "@search_oauth2_proxy_sign_in";

@@ -1,11 +1,11 @@
 { lib, pkgs, ... }:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
-  cliToolsPkgs = import ../cli-tools/pkgs { inherit pkgs; };
+  codexPkgs = import ../codex/pkgs { inherit pkgs; };
   codexPlugin = pkgs.writeShellApplication {
     name = "sketchybar-codex";
     runtimeInputs = [
-      cliToolsPkgs.codex-usage-status
+      codexPkgs.codex-usage-status
       pkgs.jq
       pkgs.sketchybar
     ];

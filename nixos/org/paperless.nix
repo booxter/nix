@@ -9,12 +9,16 @@
 let
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   paperlessService = hostInventory.servicesById.paperless;
+  paperlessGptService = hostInventory.servicesById."paperless-gpt";
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
   paperlessStoragePath = "/data/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
+  paperlessGptPort = 8080;
+  paperlessGptHost = "${paperlessGptService.id}.${hostInventory.site.lan.domain}";
+  paperlessGptOauth2ProxyPort = 4181;
   paperlessOidcClientId = oidc.clients.paperless.clientId;
   paperlessOidcProviderId = "sso";
   paperlessOidcClientSecretPlaceholder = "__PAPERLESS_OIDC_CLIENT_SECRET__";
@@ -440,6 +444,24 @@ in
     '';
   };
 
+  host.internalHttps.services.paperless-gpt = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString paperlessGptPort}";
+  };
+
+  host.sso.oauth2ProxyGates.paperless-gpt = {
+    enable = true;
+    clientId = "paperless-gpt";
+    httpAddress = "http://127.0.0.1:${toString paperlessGptOauth2ProxyPort}";
+    cookieName = "_paperless_gpt_sso";
+    allowedGroups = [ "paperless-admins" ];
+    groupClaim = "paperless_groups";
+    whitelistDomains = [ paperlessGptHost ];
+    internalHttpsServiceNames = [ "paperless-gpt" ];
+    signInLocationName = "@paperless_gpt_oauth2_proxy_sign_in";
+    authCookieVariableName = "paperless_gpt_auth_cookie";
+  };
+
   host.observability.client.prometheusMtlsEndpoints.paperless = {
     enable = true;
     port = paperlessMetricsMtlsPort;
@@ -491,7 +513,7 @@ in
         LLM_LANGUAGE = "English";
         LLM_MODEL = "qwen3.5:9b";
         LLM_PROVIDER = "ollama";
-        LISTEN_INTERFACE = "127.0.0.1:8080";
+        LISTEN_INTERFACE = "127.0.0.1:${toString paperlessGptPort}";
         LOCAL_HOCR_PATH = "/app/hocr";
         LOCAL_PDF_PATH = "/app/pdf";
         LOG_LEVEL = "info";

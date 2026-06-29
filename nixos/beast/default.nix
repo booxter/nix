@@ -19,6 +19,7 @@
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
+    ./jellystat.nix
     ./library-dirs.nix
     ./lolek.nix
     ./nfs.nix
