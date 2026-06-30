@@ -16,17 +16,36 @@ let
     ];
     text = builtins.readFile ./sketchybar/plugins/codex.sh;
   };
-  codexItem = pkgs.writeText "sketchybar-codex-item.sh" (
+  codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
     lib.optionalString (!isWork) ''
-      sketchybar --add item codex left                               \
-                 --set codex script="$PLUGIN_DIR/codex.sh"          \
-                             update_freq=60                          \
-                             label.padding_left=6                    \
-                             label.padding_right=6                   \
-                             background.border_width=0               \
-                             background.corner_radius=6              \
-                             background.height=24                    \
-                 --subscribe codex system_woke
+      sketchybar --add item codex.5h left                                  \
+                 --set codex.5h script="$PLUGIN_DIR/codex.sh"             \
+                                update_freq=60                             \
+                                icon.drawing=off                           \
+                                label.padding_left=6                       \
+                                label.padding_right=6                      \
+                                background.border_width=0                  \
+                                background.corner_radius=6                 \
+                                background.height=24                       \
+                 --subscribe codex.5h system_woke                         \
+                                                                            \
+                 --add item codex.weekly left                              \
+                 --set codex.weekly updates=off                            \
+                                    icon.drawing=off                        \
+                                    label.padding_left=6                    \
+                                    label.padding_right=6                   \
+                                    background.border_width=0               \
+                                    background.corner_radius=6              \
+                                    background.height=24                    \
+                                                                            \
+                 --add item codex.resets left                              \
+                 --set codex.resets updates=off                            \
+                                   icon.drawing=off                         \
+                                   label.padding_left=6                     \
+                                   label.padding_right=6                    \
+                                   background.border_width=0                \
+                                   background.corner_radius=6               \
+                                   background.height=24
     ''
   );
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''
