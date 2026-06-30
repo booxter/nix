@@ -23,6 +23,7 @@ in
       model_reasoning_effort = "xhigh";
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
+      notice.fast_default_opt_out = true;
 
       projects = trustedProjects [
         "src/nix"
