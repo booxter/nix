@@ -62,11 +62,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_memory_free_bytes{instance="mmini",job="node-mtls"}'
-        values: "10x12"
-      - series: 'node_memory_inactive_bytes{instance="mmini",job="node-mtls"}'
-        values: "5x12"
-      - series: 'node_memory_total_bytes{instance="mmini",job="node-mtls"}'
+      - series: 'node_memory_MemAvailable_bytes{instance="beast",job="node-mtls"}'
+        values: "15x12"
+      - series: 'node_memory_MemTotal_bytes{instance="beast",job="node-mtls"}'
         values: "100x12"
     alert_rule_test:
       - eval_time: 4m30s
@@ -77,12 +75,12 @@ tests:
           - exp_labels:
               alertname: NodeMemoryUsageHigh
               category: capacity
-              instance: mmini
+              instance: beast
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "Node memory usage high on mmini"
-              description: "mmini memory usage has been above 80% for 5 minutes."
+              summary: "Node memory usage high on beast"
+              description: "beast memory usage has been above 80% for 5 minutes."
 
   - interval: 30s
     input_series:
@@ -105,6 +103,22 @@ tests:
             exp_annotations:
               summary: "Node memory usage critical on beast"
               description: "beast memory usage has been above 90% for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_memory_MemAvailable_bytes{instance="mair",job="node-mtls"}'
+        values: "5x12"
+      - series: 'node_memory_MemTotal_bytes{instance="mair",job="node-mtls"}'
+        values: "100x12"
+      - series: 'node_memory_MemAvailable_bytes{instance="mmini",job="node-mtls"}'
+        values: "5x12"
+      - series: 'node_memory_MemTotal_bytes{instance="mmini",job="node-mtls"}'
+        values: "100x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: NodeMemoryUsageHigh
+      - eval_time: 5m
+        alertname: NodeMemoryUsageCritical
 
   - interval: 30s
     input_series:
