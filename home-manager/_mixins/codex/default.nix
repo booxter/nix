@@ -19,7 +19,7 @@ in
     enable = true;
 
     settings = {
-      model = "gpt-5.5";
+      model = if isWork then "gpt-5.6-sol" else "gpt-5.5";
       model_reasoning_effort = "xhigh";
       personality = "pragmatic";
       approvals_reviewer = "auto_review";

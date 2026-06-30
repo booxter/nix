@@ -13,10 +13,10 @@
 {
   imports = [
     ./_mixins/nix
-    ./_mixins/zsh-basic
+    ./_mixins/zsh
   ]
   ++ lib.optionals hmFull [
-    ./_mixins/cli-tools
+    ./_mixins/cli
     ./_mixins/codex
     ./_mixins/git-sync
     ./_mixins/gnupg

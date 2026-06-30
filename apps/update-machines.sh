@@ -453,7 +453,7 @@ fi
 
 local_disk_cleanup_if_low
 
-WORK_MAP="$("${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
+WORK_MAP="$(bash "${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
 if [[ -z "$WORK_MAP" ]]; then
   echo "Failed to read hosts from get-hosts.sh." >&2
   exit 1
@@ -573,7 +573,7 @@ for host in "${HOSTS[@]}"; do
   runtime_host="$(resolve_runtime_host "$host")"
   display_host="$(display_host_name "$host")"
   printf '%b\n' "${COLOR_HOST}==> ${display_host}${COLOR_RESET}"
-  if ! [ -t 0 ]; then
+  if [[ "${UPDATE_MACHINES_TEST_ASSUME_TTY:-false}" != "true" ]] && ! [ -t 0 ]; then
     echo "Error: no TTY available for sudo on ${display_host}. Run this script from a real terminal." >&2
     exit 1
   fi

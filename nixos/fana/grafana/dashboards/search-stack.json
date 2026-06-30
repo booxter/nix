@@ -738,7 +738,44 @@
           },
           "unit": "short"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Unit"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Value #A"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -757,7 +794,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "name"
+          }
+        ]
       },
       "targets": [
         {
@@ -772,6 +815,26 @@
         }
       ],
       "title": "Service Units",
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "columns"
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "name",
+                "Value",
+                "Value #A"
+              ]
+            }
+          }
+        }
+      ],
       "type": "table"
     },
     {
@@ -855,7 +918,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Search Stack",
+  "title": "Search",
   "uid": "search-stack",
   "version": 1,
   "weekStart": ""

@@ -166,7 +166,11 @@ in
         requiredBy = [ "pveproxy.service" ];
         before = [ "pveproxy.service" ];
         requires = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
-        after = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
+        after = [
+          "pve-cluster.service"
+          "corosync.service"
+        ]
+        ++ sopsInstallSecretsUnit;
         path = with pkgs; [
           coreutils
         ];
@@ -176,9 +180,31 @@ in
           key_path=${lib.escapeShellArg (toString cfg.keyPath)}
 
           cleanup() {
-            rm -f "$cert_path.tmp.$$" "$key_path.tmp.$$"
+            rm -f \
+              "$cert_path.tmp.$$" "$key_path.tmp.$$" \
+              "$cert_path.probe.$$" "$key_path.probe.$$"
           }
           trap cleanup EXIT
+
+          wait_pmxcfs_writable() {
+            dst="$1"
+            probe="$dst.probe.$$"
+
+            for attempt in $(seq 1 60); do
+              if : > "$probe" 2>/dev/null; then
+                rm -f "$probe"
+                return 0
+              fi
+
+              if [ "$attempt" -eq 1 ]; then
+                echo "waiting for writable Proxmox cluster filesystem before installing $dst" >&2
+              fi
+              sleep 1
+            done
+
+            echo "timed out waiting for writable Proxmox cluster filesystem before installing $dst" >&2
+            return 1
+          }
 
           # /etc/pve is Proxmox pmxcfs, which rejects normal chmod/chown
           # operations. Copy files into it and let pmxcfs assign its own
@@ -187,6 +213,8 @@ in
             src="$1"
             dst="$2"
             tmp="$dst.tmp.$$"
+
+            wait_pmxcfs_writable "$dst"
             cp "$src" "$tmp"
             mv -f "$tmp" "$dst"
           }

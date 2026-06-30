@@ -3,6 +3,8 @@ let
   litellmBackupDir = "/var/lib/litellm-backup/latest";
   openWebuiBackupDir = "/var/lib/open-webui-backup/latest";
   openWebuiStateDir = "/var/lib/open-webui";
+  openWebuiDataDir = "${openWebuiStateDir}/data";
+  openWebuiDatabasePath = "${openWebuiDataDir}/webui.db";
   paperlessBackupDir = "/var/lib/paperless-backup/latest";
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
@@ -17,8 +19,8 @@ let
     "/var/lib/vikunja/files"
   ];
   backupExclude = [
-    "${openWebuiStateDir}/webui.db"
-    "${openWebuiStateDir}/webui.db-*"
+    openWebuiDatabasePath
+    "${openWebuiDatabasePath}-*"
   ];
 in
 {
@@ -39,9 +41,9 @@ in
     sqlite = {
       open-webui = {
         displayName = "Open WebUI";
-        databasePath = "${openWebuiStateDir}/webui.db";
+        databasePath = openWebuiDatabasePath;
         destinationDir = openWebuiBackupDir;
-        requiresMountsFor = [ openWebuiStateDir ];
+        requiresMountsFor = [ openWebuiDataDir ];
       };
 
       vikunja = {

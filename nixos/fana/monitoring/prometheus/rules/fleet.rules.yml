@@ -3,7 +3,12 @@ groups:
     interval: 30s
     rules:
       - alert: NodeCpuUsageHigh
-        expr: 100 - (avg by(instance, job) (rate(node_cpu_seconds_total{job=~"node-local|node-mtls",mode="idle"}[5m])) * 100) > 80
+        expr: |
+          100 - (
+            avg by(instance, job) (
+              rate(node_cpu_seconds_total{job=~"node-local|node-mtls",instance!~"builder.*|frame|mair|mmini",mode="idle"}[5m])
+            ) * 100
+          ) > 80
         for: 5m
         labels:
           severity: warning
@@ -12,7 +17,12 @@ groups:
           summary: "Node CPU usage high on {{ $labels.instance }}"
           description: "{{ $labels.instance }} CPU busy has been above 80% for 5 minutes."
       - alert: NodeCpuUsageCritical
-        expr: 100 - (avg by(instance, job) (rate(node_cpu_seconds_total{job=~"node-local|node-mtls",mode="idle"}[5m])) * 100) > 90
+        expr: |
+          100 - (
+            avg by(instance, job) (
+              rate(node_cpu_seconds_total{job=~"node-local|node-mtls",instance!~"builder.*|frame|mair|mmini",mode="idle"}[5m])
+            ) * 100
+          ) > 90
         for: 5m
         labels:
           severity: critical
@@ -21,7 +31,13 @@ groups:
           summary: "Node CPU usage critical on {{ $labels.instance }}"
           description: "{{ $labels.instance }} CPU busy has been above 90% for 5 minutes."
       - alert: NodeMemoryUsageHigh
-        expr: 100 * ((1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"})) or (1 - ((node_memory_free_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"} + node_memory_inactive_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"}) / node_memory_total_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"}))) > 80
+        expr: |
+          100 * (
+            1 - (
+              node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab|mair|mmini"}
+              / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab|mair|mmini"}
+            )
+          ) > 80
         for: 5m
         labels:
           severity: warning
@@ -30,7 +46,13 @@ groups:
           summary: "Node memory usage high on {{ $labels.instance }}"
           description: "{{ $labels.instance }} memory usage has been above 80% for 5 minutes."
       - alert: NodeMemoryUsageCritical
-        expr: 100 * ((1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"})) or (1 - ((node_memory_free_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"} + node_memory_inactive_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"}) / node_memory_total_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab"}))) > 90
+        expr: |
+          100 * (
+            1 - (
+              node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab|mair|mmini"}
+              / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab|mair|mmini"}
+            )
+          ) > 90
         for: 5m
         labels:
           severity: critical

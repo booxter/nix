@@ -56,6 +56,30 @@
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
 
+      # TODO: Remove this temporary Darwin pin once current nixpkgs-darwin
+      # Thunderbird is available from cache again.
+      thunderbird =
+        if prev.stdenv.hostPlatform.isDarwin then
+          (getPkgs inputs.nixpkgs-darwin-thunderbird-cache).thunderbird
+        else
+          prev.thunderbird;
+
+      # Backport podman-desktop's pnpm pin fix until nixpkgs includes it.
+      # Upstream: https://github.com/NixOS/nixpkgs/pull/536832
+      podman-desktop = prev.podman-desktop.override {
+        pnpm_10_29_2 = prev.pnpm_10;
+      };
+
+      # Backport Teleport's pnpm pin fix until nixpkgs includes it.
+      # Upstream: https://github.com/NixOS/nixpkgs/pull/536323
+      teleport = prev.teleport.override {
+        teleport_18 = prev.teleport_18.override {
+          buildTeleport = prev.buildTeleport.override {
+            pnpm_10_29_2 = prev.pnpm_10;
+          };
+        };
+      };
+
       # NixOS can expose the same D-Bus service file through both direct package
       # paths and system-path symlinks. Do not let dbus-broker report those
       # same-file duplicates at error level.
@@ -137,8 +161,10 @@
         ];
       });
 
-      # Carry local fixes for broken user-count metrics until upstream releases them.
-      vikunja = prev.vikunja.overrideAttrs (old: {
+      # Carry local fixes for broken user-count metrics until upstream releases
+      # them, plus the pnpm pin fix until nixpkgs includes it.
+      # Upstream pnpm fix: https://github.com/NixOS/nixpkgs/pull/536781
+      vikunja = (prev.vikunja.override { pnpm_10_29_2 = prev.pnpm_10; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
         ];

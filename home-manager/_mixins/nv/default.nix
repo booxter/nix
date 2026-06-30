@@ -14,6 +14,10 @@ in
     "$HOME/.krew/bin"
   ];
 
+  home.shellAliases = {
+    k = "kubectl";
+  };
+
   home.packages =
     with pkgs;
     (

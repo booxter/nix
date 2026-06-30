@@ -23,13 +23,5 @@
         fi
       }
     '';
-
-    shellAliases = {
-      # Beautify ls output.
-      ll = "ls --hyperlink=auto --color=auto -Fal";
-      ls = "ls --hyperlink=auto --color=auto -F";
-
-      view = "vim -R";
-    };
   };
 }

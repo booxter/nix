@@ -127,7 +127,7 @@ in
       ];
 
     users.users.${username} = {
-      openssh.authorizedKeys.keys = workKeys ++ lib.optionals (!isWork) personalKeys;
+      openssh.authorizedKeys.keys = if isWork then workKeys else personalKeys;
     };
 
     programs.zsh.enable = true;

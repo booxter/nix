@@ -11,6 +11,27 @@ in
 {
   programs.bash.enable = true;
 
+  home.shellAliases = {
+    # Beautify ls output.
+    ll = "ls --hyperlink=auto --color=auto -Fal";
+    ls = "ls --hyperlink=auto --color=auto -F";
+
+    view = "vim -R";
+
+    # enable hyperlinks in kitty
+    rg = "rg --hyperlink-format=kitty";
+
+    # cat images in kitty
+    icat = "kitten icat";
+
+    # eza
+    q = "eza";
+    qq = "eza -l";
+
+    # remove once https://github.com/nektos/act/issues/2329 is fixed
+    act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04";
+  };
+
   programs.zsh = {
     autosuggestion = {
       enable = true;
@@ -50,22 +71,6 @@ in
          refresh
       }
     '';
-
-    # TODO: can I apply aliases for all shells?
-    shellAliases = {
-      # enable hyperlinks in kitty
-      rg = "rg --hyperlink-format=kitty";
-
-      # cat images in kitty
-      icat = "kitten icat";
-
-      # eza
-      q = "eza";
-      qq = "eza -l";
-
-      # remove once https://github.com/nektos/act/issues/2329 is fixed
-      act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04";
-    };
   };
 
   # eza, ls alternative (`q` and `qq` aliases set for shell)

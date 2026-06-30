@@ -12,7 +12,6 @@ KEY_PATH is slash-separated, for example:
   apps/sops/sops-set.sh srvarr romm/authSecretKey < secret.txt
 
 Values are read from stdin to avoid putting secrets in shell history or argv.
-One trailing newline is stripped, matching command-substitution behavior.
 EOF
 }
 
@@ -97,9 +96,6 @@ main() {
     exit 1
   fi
 
-  local value
-  value="$(cat)"
-
   local key_path_index
   key_path_index="$(path_to_sops_index "$key_path")"
 
@@ -115,8 +111,7 @@ main() {
     exit 1
   fi
 
-  printf '%s' "$value" \
-    | jq -Rs '.' \
+  jq -Rs '.' \
     | sops set --idempotent --value-stdin "$secret" "$key_path_index"
 
   echo "Updated ${host}:${key_path}."

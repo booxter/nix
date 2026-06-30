@@ -47,7 +47,7 @@
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "15m";
-      OnUnitActiveSec = "6h";
+      OnUnitActiveSec = "15m";
       Persistent = true;
       Unit = "transmission-torrent-cleaner.service";
     };
