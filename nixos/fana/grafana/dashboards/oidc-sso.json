@@ -95,7 +95,7 @@
           "refId": "A"
         }
       ],
-      "title": "Synthetic Probes",
+      "title": "OIDC Test User Result",
       "type": "stat"
     },
     {
@@ -172,7 +172,7 @@
           "refId": "A"
         }
       ],
-      "title": "Probe Phases",
+      "title": "OIDC Test User Phases",
       "type": "stat"
     },
     {
@@ -235,7 +235,7 @@
           "refId": "A"
         }
       ],
-      "title": "Last Success Age",
+      "title": "OIDC Test User Last Success",
       "type": "stat"
     },
     {
@@ -288,7 +288,7 @@
           "refId": "A"
         }
       ],
-      "title": "Probe Duration",
+      "title": "OIDC Test User Duration",
       "type": "timeseries"
     },
     {
@@ -345,7 +345,7 @@
           "refId": "A"
         }
       ],
-      "title": "Phase HTTP Status",
+      "title": "OIDC Test User HTTP Status",
       "type": "timeseries"
     },
     {
