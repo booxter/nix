@@ -432,6 +432,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-darwin-thunderbird-cache": {
+      "locked": {
+        "lastModified": 1782041437,
+        "narHash": "sha256-QxQvXkDqx7DrzQSGRzh7Lv08t2fCCnLICQvap3WVzQQ=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ea68a74f45ad6311f4bff62b865932ac195d46a7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ea68a74f45ad6311f4bff62b865932ac195d46a7",
+        "type": "github"
+      }
+    },
     "nixpkgs-lib": {
       "locked": {
         "lastModified": 1761765539,
@@ -636,6 +652,7 @@
         "nixos-hardware": "nixos-hardware",
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-darwin": "nixpkgs-darwin",
+        "nixpkgs-darwin-thunderbird-cache": "nixpkgs-darwin-thunderbird-cache",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos",

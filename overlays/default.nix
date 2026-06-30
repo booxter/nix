@@ -56,6 +56,14 @@
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
 
+      # TODO: Remove this temporary Darwin pin once current nixpkgs-darwin
+      # Thunderbird is available from cache again.
+      thunderbird =
+        if prev.stdenv.hostPlatform.isDarwin then
+          (getPkgs inputs.nixpkgs-darwin-thunderbird-cache).thunderbird
+        else
+          prev.thunderbird;
+
       # Backport podman-desktop's pnpm pin fix until nixpkgs includes it.
       # Upstream: https://github.com/NixOS/nixpkgs/pull/536832
       podman-desktop = prev.podman-desktop.override {

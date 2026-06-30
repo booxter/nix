@@ -4,6 +4,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+    # TODO: Remove this temporary pin once current nixpkgs-darwin Thunderbird
+    # is available from cache again.
+    nixpkgs-darwin-thunderbird-cache.url = "github:NixOS/nixpkgs/ea68a74f45ad6311f4bff62b865932ac195d46a7";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     nix-darwin.url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
