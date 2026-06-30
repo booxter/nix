@@ -1101,7 +1101,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by (http_route, http_method, http_status_code) (rate({__name__=~\"open_webui_http_server_requests(_1)?_total|open_webui_http_server_requests_total\",job=\"open-webui\"}[5m]))",
+          "expr": "sum by (http_route, http_method, http_status_code) (rate({__name__=~\"open_webui_http_server_requests(_1)?_total|open_webui_http_server_requests_total\",job=\"open-webui\",http_route!~\"/_app/.*|/static/.*|/favicon.*|/manifest.*|/robots.txt\"}[5m]))",
           "legendFormat": "{{http_method}} {{http_route}} {{http_status_code}}",
           "range": true,
           "refId": "A"
@@ -1159,7 +1159,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "(sum by (http_route) (rate({__name__=~\"open_webui_http_server_duration(_milliseconds|_ms)?_sum\",job=\"open-webui\"}[5m])) / sum by (http_route) (rate({__name__=~\"open_webui_http_server_duration(_milliseconds|_ms)?_count\",job=\"open-webui\"}[5m]))) / 1000",
+          "expr": "(sum by (http_route) (rate({__name__=~\"open_webui_http_server_duration(_milliseconds|_ms)?_sum\",job=\"open-webui\",http_route!~\"/_app/.*|/static/.*|/favicon.*|/manifest.*|/robots.txt\"}[5m])) / sum by (http_route) (rate({__name__=~\"open_webui_http_server_duration(_milliseconds|_ms)?_count\",job=\"open-webui\",http_route!~\"/_app/.*|/static/.*|/favicon.*|/manifest.*|/robots.txt\"}[5m]))) / 1000",
           "legendFormat": "{{http_route}}",
           "range": true,
           "refId": "A"
