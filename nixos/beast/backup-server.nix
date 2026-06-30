@@ -69,7 +69,7 @@ let
       };
     };
     pki = {
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGipRsuogt1gs0FTA3MNbseaR2eayHEZ5OcB4r6Yf1aO restic-pki@pki";
+      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMvtCrXazXDuqqqr2BiYxCf1Zwh2rdo39+ZR36fR/kSK restic-pki@pki";
       cloud = {
         repository = "b2:${cloudBucketName}:hosts/pki";
         prefix = "hosts/pki";
