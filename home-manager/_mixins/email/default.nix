@@ -45,9 +45,7 @@ in
         "mail.check_all_imap_folders_for_new" = true;
         "mail.server.default.check_all_folders_for_new" = true;
 
-        # auth not working for google without it for some reason
-        "javascript.enabled" = true;
-        "general.useragent.compatMode.firefox" = true;
+        # Use the system browser for OAuth flows.
         "mailnews.oauth.useExternalBrowser" = true;
       };
     };
