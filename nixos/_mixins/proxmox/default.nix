@@ -166,7 +166,11 @@ in
         requiredBy = [ "pveproxy.service" ];
         before = [ "pveproxy.service" ];
         requires = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
-        after = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
+        after = [
+          "pve-cluster.service"
+          "corosync.service"
+        ]
+        ++ sopsInstallSecretsUnit;
         path = with pkgs; [
           coreutils
         ];
