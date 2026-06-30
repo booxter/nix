@@ -570,7 +570,7 @@
           "refId": "A"
         }
       ],
-      "title": "Failed OIDC Units",
+      "title": "OIDC Unit Failure Status",
       "type": "stat"
     }
   ],
