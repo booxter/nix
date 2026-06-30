@@ -3,7 +3,12 @@ groups:
     interval: 30s
     rules:
       - alert: NodeCpuUsageHigh
-        expr: 100 - (avg by(instance, job) (rate(node_cpu_seconds_total{job=~"node-local|node-mtls",mode="idle"}[5m])) * 100) > 80
+        expr: |
+          100 - (
+            avg by(instance, job) (
+              rate(node_cpu_seconds_total{job=~"node-local|node-mtls",instance!~"builder.*|frame|mair|mmini",mode="idle"}[5m])
+            ) * 100
+          ) > 80
         for: 5m
         labels:
           severity: warning
@@ -12,7 +17,12 @@ groups:
           summary: "Node CPU usage high on {{ $labels.instance }}"
           description: "{{ $labels.instance }} CPU busy has been above 80% for 5 minutes."
       - alert: NodeCpuUsageCritical
-        expr: 100 - (avg by(instance, job) (rate(node_cpu_seconds_total{job=~"node-local|node-mtls",mode="idle"}[5m])) * 100) > 90
+        expr: |
+          100 - (
+            avg by(instance, job) (
+              rate(node_cpu_seconds_total{job=~"node-local|node-mtls",instance!~"builder.*|frame|mair|mmini",mode="idle"}[5m])
+            ) * 100
+          ) > 90
         for: 5m
         labels:
           severity: critical

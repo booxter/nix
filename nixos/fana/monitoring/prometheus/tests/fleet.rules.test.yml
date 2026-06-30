@@ -46,6 +46,22 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_cpu_seconds_total{instance="builder2",job="node-mtls",cpu="0",mode="idle"}'
+        values: "0+1.5x13"
+      - series: 'node_cpu_seconds_total{instance="frame",job="node-mtls",cpu="0",mode="idle"}'
+        values: "0+1.5x13"
+      - series: 'node_cpu_seconds_total{instance="mair",job="node-mtls",cpu="0",mode="idle"}'
+        values: "0+1.5x13"
+      - series: 'node_cpu_seconds_total{instance="mmini",job="node-mtls",cpu="0",mode="idle"}'
+        values: "0+1.5x13"
+    alert_rule_test:
+      - eval_time: 5m30s
+        alertname: NodeCpuUsageHigh
+      - eval_time: 5m30s
+        alertname: NodeCpuUsageCritical
+
+  - interval: 30s
+    input_series:
       - series: 'node_memory_free_bytes{instance="mmini",job="node-mtls"}'
         values: "10x12"
       - series: 'node_memory_inactive_bytes{instance="mmini",job="node-mtls"}'
