@@ -51,6 +51,19 @@ assert_file_contains() {
   fi
 }
 
+assert_yaml_scalar_eq_file() {
+  local expected_file="$1"
+  local yaml_file="$2"
+  local query="$3"
+  local message="${4:-}"
+  local expected_json
+  local actual_json
+
+  expected_json="$(jq -Rs -c '.' < "$expected_file")"
+  actual_json="$(yq -o=json "$query" "$yaml_file" | jq -c '.')"
+  assert_eq "$expected_json" "$actual_json" "$message"
+}
+
 decrypt_secret_file() {
   local host="$1"
   local out_file="$2"
@@ -105,6 +118,16 @@ run_and_capture() {
   if ! "$@" >"$out_file" 2>&1; then
     cat "$out_file" >&2
     fail "command failed: $*"
+  fi
+}
+
+run_with_stdin_and_capture() {
+  local out_file="$1"
+  local stdin_file="$2"
+  shift 2
+  if ! "$@" <"$stdin_file" >"$out_file" 2>&1; then
+    cat "$out_file" >&2
+    fail "command failed: $* < $stdin_file"
   fi
 }
 
@@ -287,20 +310,30 @@ EOF
   log "set a secret value from stdin without losing destination data"
   local cache_other_cipher_before
   local cache_ups_cipher_before
+  local set_stdin_value="$WORKDIR/set-stdin-value.txt"
+  printf 'SET_FROM_STDIN\n' > "$set_stdin_value"
   cache_other_cipher_before="$(yq -r '.other.keep' "secrets/cache.yaml")"
   cache_ups_cipher_before="$(yq -r '.nut.monitors."prx1-lab".password' "secrets/cache.yaml")"
-  printf 'SET_FROM_STDIN\n' | run_and_capture "$out" bash "$repo/apps/sops/sops-set.sh" cache nested/new/value
+  run_with_stdin_and_capture "$out" "$set_stdin_value" bash "$repo/apps/sops/sops-set.sh" cache nested/new/value
   assert_contains "$(cat "$out")" "Updated cache:nested/new/value."
   assert_eq "$cache_other_cipher_before" "$(yq -r '.other.keep' "secrets/cache.yaml")" "sops-set should preserve unrelated ciphertext"
   assert_eq "$cache_ups_cipher_before" "$(yq -r '.nut.monitors."prx1-lab".password' "secrets/cache.yaml")" "sops-set should preserve existing nested ciphertext"
   decrypt_secret_file cache "$copied"
-  assert_eq "SET_FROM_STDIN" "$(yq -r '.nested.new.value' "$copied")"
+  assert_yaml_scalar_eq_file "$set_stdin_value" "$copied" '.nested.new.value' "sops-set should preserve exact stdin bytes"
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
   assert_eq "cache" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive set"
 
   cp "secrets/cache.yaml" "$before"
-  printf 'SET_FROM_STDIN\n' | run_and_capture "$out" bash "$repo/apps/sops/sops-set.sh" cache nested/new/value
+  run_with_stdin_and_capture "$out" "$set_stdin_value" bash "$repo/apps/sops/sops-set.sh" cache nested/new/value
   cmp -s "$before" "secrets/cache.yaml" || fail "idempotent sops-set should not rewrite an equal value"
+
+  log "set preserves leading, trailing, and final whitespace"
+  local whitespace_value="$WORKDIR/sops-set-whitespace-value.txt"
+  printf ' leading space\nline with trailing spaces   \nfinal newline preserved\n' > "$whitespace_value"
+  run_with_stdin_and_capture "$out" "$whitespace_value" bash "$repo/apps/sops/sops-set.sh" cache nested/whitespace/value
+  assert_contains "$(cat "$out")" "Updated cache:nested/whitespace/value."
+  decrypt_secret_file cache "$copied"
+  assert_yaml_scalar_eq_file "$whitespace_value" "$copied" '.nested.whitespace.value' "sops-set should preserve leading, trailing, and final whitespace"
 
   log "sync UPS monitor password through helper"
   cat > "$repo/ups-clients-by-server.json" <<'EOF'
