@@ -134,15 +134,12 @@ def test_prompt_askpass_ttl_prompt_is_approval(monkeypatch):
     )
 
     assert ttl == 45 * 60
-    assert calls == [
-        (
-            [
-                "/usr/local/bin/ssh-askpass-macos",
-                "TTL for SSH ticket to srvarr [30m, max 2h]",
-            ],
-            None,
-        )
+    assert len(calls) == 1
+    assert calls[0][0] == [
+        "/usr/local/bin/ssh-askpass-macos",
+        "TTL for SSH ticket to srvarr [30m, max 2h]",
     ]
+    assert calls[0][1]["SSHT_ASKPASS_VISIBLE"] == "1"
 
 
 def test_resolved_ca_key_defaults_to_agent_public_key():
