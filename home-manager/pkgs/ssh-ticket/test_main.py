@@ -96,6 +96,52 @@ def test_ttl_choices_include_nonstandard_default():
     ]
 
 
+def test_prompt_askpass_uses_confirm_prompt_for_approval(monkeypatch):
+    calls = []
+
+    def fake_run(cmd, *, input_text=None, capture=True, env=None):
+        calls.append((cmd, env))
+        return "yes\n"
+
+    monkeypatch.setenv("SSH_ASKPASS", "/usr/local/bin/ssh-askpass-macos")
+    monkeypatch.setattr(ssh_ticket, "run", fake_run)
+
+    ttl = ssh_ticket.prompt_askpass(
+        {"name": "srvarr"}, 30 * 60, 2 * 60 * 60, ttl_was_explicit=True
+    )
+
+    assert ttl == 30 * 60
+    assert len(calls) == 1
+    assert calls[0][0] == [
+        "/usr/local/bin/ssh-askpass-macos",
+        "Approve SSH ticket to srvarr for 30m?",
+    ]
+    assert calls[0][1]["SSH_ASKPASS_PROMPT"] == "confirm"
+
+
+def test_prompt_askpass_ttl_prompt_is_approval(monkeypatch):
+    calls = []
+
+    def fake_run(cmd, *, input_text=None, capture=True, env=None):
+        calls.append((cmd, env))
+        return "45m\n"
+
+    monkeypatch.setenv("SSH_ASKPASS", "/usr/local/bin/ssh-askpass-macos")
+    monkeypatch.setattr(ssh_ticket, "run", fake_run)
+
+    ttl = ssh_ticket.prompt_askpass(
+        {"name": "srvarr"}, 30 * 60, 2 * 60 * 60, ttl_was_explicit=False
+    )
+
+    assert ttl == 45 * 60
+    assert len(calls) == 1
+    assert calls[0][0] == [
+        "/usr/local/bin/ssh-askpass-macos",
+        "TTL for SSH ticket to srvarr [30m, max 2h]",
+    ]
+    assert calls[0][1]["SSHT_ASKPASS_VISIBLE"] == "1"
+
+
 def test_resolved_ca_key_defaults_to_agent_public_key():
     ca_agent, ca_key = ssh_ticket.resolved_ca_key(
         types.SimpleNamespace(ca_agent=None, ca_key=None)

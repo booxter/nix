@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=apps/package-updates/update-summary-lib.sh
+# shellcheck disable=SC1091
+source "${script_dir}/update-summary-lib.sh"
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -19,8 +24,6 @@ resolve_repo_root() {
     git -C "$PWD" rev-parse --show-toplevel
     return
   fi
-  local script_dir
-  script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
   cd -- "${script_dir}/../.." && pwd
 }
 
@@ -82,8 +85,8 @@ Automated OCI image tag update.
 Container builds were not run by the updater. Normal CI is expected to validate
 whether the updated image tag still works with the managed service.
 
-| Target | Image | Tag | Changelog |
-| --- | --- | --- | --- |
+| Target | Image | Tag | Changelog | Diff |
+| --- | --- | --- | --- | --- |
 EOF
 }
 
@@ -94,6 +97,7 @@ append_summary_row() {
   local old_tag="$4"
   local new_tag="$5"
   local changelog="$6"
+  local diff_url="$7"
 
   local tag_text
   if [[ "$old_tag" != "$new_tag" ]]; then
@@ -102,15 +106,12 @@ append_summary_row() {
     tag_text="${new_tag}"
   fi
 
-  local changelog_text
-  if [[ -n "$changelog" ]]; then
-    changelog_text="[link](${changelog})"
-  else
-    changelog_text="not set"
-  fi
+  local changelog_text diff_text
+  changelog_text="$(markdown_link_or_not_set "link" "$changelog")"
+  diff_text="$(markdown_link_or_not_set "compare" "$diff_url")"
 
   # shellcheck disable=SC2016 # Literal Markdown backticks in the printf format.
-  printf '| `%s` | `%s` | `%s` | %s |\n' "$name" "$image" "$tag_text" "$changelog_text" >> "$summary_file"
+  printf '| `%s` | `%s` | `%s` | %s | %s |\n' "$name" "$image" "$tag_text" "$changelog_text" "$diff_text" >> "$summary_file"
 }
 
 replace_tag_template() {
@@ -118,6 +119,44 @@ replace_tag_template() {
   local tag="$2"
 
   printf '%s\n' "${template//\{tag\}/$tag}"
+}
+
+image_config_label() {
+  local image="$1"
+  local tag="$2"
+  local label="$3"
+
+  if [[ -z "$tag" ]]; then
+    return
+  fi
+
+  skopeo inspect --config "docker://${image}:${tag}" 2>/dev/null \
+    | jq -r --arg label "$label" '.config.Labels[$label] // .Labels[$label] // empty' \
+    || true
+}
+
+image_diff_url() {
+  local image="$1"
+  local old_tag="$2"
+  local new_tag="$3"
+  local old_changelog="$4"
+  local new_changelog="$5"
+  local old_source old_revision new_source new_revision diff_url
+
+  if [[ -z "$old_tag" || -z "$new_tag" || "$old_tag" == "$new_tag" ]]; then
+    return
+  fi
+
+  old_source="$(image_config_label "$image" "$old_tag" "org.opencontainers.image.source")"
+  old_revision="$(image_config_label "$image" "$old_tag" "org.opencontainers.image.revision")"
+  new_source="$(image_config_label "$image" "$new_tag" "org.opencontainers.image.source")"
+  new_revision="$(image_config_label "$image" "$new_tag" "org.opencontainers.image.revision")"
+
+  diff_url="$(github_compare_url_from_sources "$old_source" "$old_revision" "$new_source" "$new_revision")"
+  if [[ -z "$diff_url" ]]; then
+    diff_url="$(github_compare_url_from_changelogs "$old_changelog" "$new_changelog")"
+  fi
+  printf '%s\n' "$diff_url"
 }
 
 update_pin() {
@@ -194,7 +233,7 @@ main() {
 
   local target
   while IFS= read -r target; do
-    local name image old_tag tag_regex changelog_template new_tag changelog
+    local name image old_tag tag_regex changelog_template new_tag old_changelog changelog diff_url
     name="$(jq -r '.name' <<< "$target")"
     image="$(jq -r '.image' <<< "$target")"
     old_tag="$(jq -r '.tag' <<< "$target")"
@@ -214,8 +253,10 @@ main() {
     fi
     echo "::endgroup::"
 
+    old_changelog="$(replace_tag_template "$changelog_template" "$old_tag")"
     changelog="$(replace_tag_template "$changelog_template" "$new_tag")"
-    append_summary_row "$summary_file" "$name" "$image" "$old_tag" "$new_tag" "$changelog"
+    diff_url="$(image_diff_url "$image" "$old_tag" "$new_tag" "$old_changelog" "$changelog")"
+    append_summary_row "$summary_file" "$name" "$image" "$old_tag" "$new_tag" "$changelog" "$diff_url"
   done < <(target_rows "$pins_file" "$target_filter")
 
   cat >> "$summary_file" <<'EOF'

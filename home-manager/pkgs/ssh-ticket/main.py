@@ -39,13 +39,14 @@ def state_dir_arg(args):
     return expand_path(args.state_dir) if args.state_dir else default_state_dir()
 
 
-def run(cmd, *, input_text=None, capture=True):
+def run(cmd, *, input_text=None, capture=True, env=None):
     proc = subprocess.run(
         cmd,
         input=input_text,
         text=True,
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.PIPE if capture else None,
+        env=env,
     )
     if proc.returncode != 0:
         if capture and proc.stderr:
@@ -350,13 +351,19 @@ def prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit):
             f"TTL for SSH ticket to {target['name']} "
             f"[{format_duration(default_ttl)}, max {format_duration(max_ttl)}]"
         )
-        ttl_text = run([askpass, prompt]).strip()
-        ttl = default_ttl if ttl_text == "" else parse_duration(ttl_text)
+        ttl_env = os.environ.copy()
+        ttl_env["SSHT_ASKPASS_VISIBLE"] = "1"
+        ttl_text = run([askpass, prompt], env=ttl_env).strip()
+        return default_ttl if ttl_text == "" else parse_duration(ttl_text)
+    ttl = default_ttl
+    approval_env = os.environ.copy()
+    approval_env["SSH_ASKPASS_PROMPT"] = "confirm"
     answer = run(
         [
             askpass,
-            f"Approve SSH ticket to {target['name']} for {format_duration(ttl)}? Type yes.",
-        ]
+            f"Approve SSH ticket to {target['name']} for {format_duration(ttl)}?",
+        ],
+        env=approval_env,
     ).strip()
     if answer.lower() not in ("y", "yes"):
         raise Error("ticket request denied")

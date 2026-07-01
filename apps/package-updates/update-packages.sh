@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=apps/package-updates/update-summary-lib.sh
+# shellcheck disable=SC1091
+source "${script_dir}/update-summary-lib.sh"
+
 usage() {
   cat <<'EOF'
 Usage:
@@ -20,8 +25,6 @@ resolve_repo_root() {
     git -C "$PWD" rev-parse --show-toplevel
     return
   fi
-  local script_dir
-  script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
   cd -- "${script_dir}/../.." && pwd
 }
 
@@ -67,8 +70,8 @@ Automated package source update.
 Package builds were not run by the updater. Normal CI is expected to validate
 whether the updated package still builds or needs follow-up fixes.
 
-| Package | Version | Changelog |
-| --- | --- | --- |
+| Package | Version | Changelog | Diff |
+| --- | --- | --- | --- |
 EOF
 }
 
@@ -78,6 +81,7 @@ append_summary_row() {
   local old_version="$3"
   local new_version="$4"
   local changelog="$5"
+  local diff_url="$6"
 
   local version_text
   if [[ -n "$old_version" && -n "$new_version" && "$old_version" != "$new_version" ]]; then
@@ -88,15 +92,12 @@ append_summary_row() {
     version_text="unknown"
   fi
 
-  local changelog_text
-  if [[ -n "$changelog" ]]; then
-    changelog_text="[link](${changelog})"
-  else
-    changelog_text="not set"
-  fi
+  local changelog_text diff_text
+  changelog_text="$(markdown_link_or_not_set "link" "$changelog")"
+  diff_text="$(markdown_link_or_not_set "compare" "$diff_url")"
 
   # shellcheck disable=SC2016 # Literal Markdown backticks in the printf format.
-  printf '| `%s` | `%s` | %s |\n' "$attr" "$version_text" "$changelog_text" >> "$summary_file"
+  printf '| `%s` | `%s` | %s | %s |\n' "$attr" "$version_text" "$changelog_text" "$diff_text" >> "$summary_file"
 }
 
 run_package_update_script() {
@@ -220,13 +221,15 @@ main() {
 
   local target
   while IFS= read -r target; do
-    local attr system nix_update_system old_version old_changelog new_version new_changelog update_script_json update_script_status
+    local attr system nix_update_system old_version old_changelog old_homepage old_src_rev new_version new_changelog new_homepage new_src_rev diff_url update_script_json update_script_status
     attr="$(jq -r '.attr' <<< "$target")"
     system="$(jq -r '.system // "x86_64-linux"' <<< "$target")"
     nix_update_system="$(jq -r '.nixUpdateSystem // .system // "x86_64-linux"' <<< "$target")"
 
     old_version="$(nix_eval_raw ".#packages.${system}.${attr}.version")"
     old_changelog="$(nix_eval_raw ".#packages.${system}.${attr}.meta.changelog")"
+    old_homepage="$(nix_eval_raw ".#packages.${system}.${attr}.meta.homepage")"
+    old_src_rev="$(nix_eval_raw ".#packages.${system}.${attr}.src.rev")"
 
     echo "::group::Updating ${attr}"
     echo "system: ${system}"
@@ -257,7 +260,13 @@ main() {
 
     new_version="$(nix_eval_raw ".#packages.${system}.${attr}.version")"
     new_changelog="$(nix_eval_raw ".#packages.${system}.${attr}.meta.changelog")"
-    append_summary_row "$summary_file" "$attr" "$old_version" "$new_version" "$new_changelog"
+    new_homepage="$(nix_eval_raw ".#packages.${system}.${attr}.meta.homepage")"
+    new_src_rev="$(nix_eval_raw ".#packages.${system}.${attr}.src.rev")"
+    diff_url="$(github_compare_url_from_sources "$old_homepage" "$old_src_rev" "$new_homepage" "$new_src_rev")"
+    if [[ -z "$diff_url" ]]; then
+      diff_url="$(github_compare_url_from_changelogs "$old_changelog" "$new_changelog")"
+    fi
+    append_summary_row "$summary_file" "$attr" "$old_version" "$new_version" "$new_changelog" "$diff_url"
   done < <(target_rows "$targets_file" "$target_filter")
 
   cat >> "$summary_file" <<'EOF'
