@@ -36,7 +36,6 @@
     proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
 
     disko.url = "github:nix-community/disko/latest";
-    virby.url = "github:quinneden/virby-nix-darwin";
     debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
 
     # TODO: switch to official when diff is contributed upstream

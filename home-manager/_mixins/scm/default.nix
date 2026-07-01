@@ -88,6 +88,9 @@ in
         pruneTags = true;
       };
 
+      # Keep GitHub pushes on SSH instead of gh's broad HTTPS OAuth token.
+      url."git@github.com:".insteadOf = "https://github.com/";
+
       # use mergiraf for merges
       merge.mergiraf = {
         name = "mergiraf";
@@ -130,6 +133,9 @@ in
     extensions = with pkgs; [
       gh-poi
     ];
+    settings = {
+      git_protocol = "ssh";
+    };
   };
   programs.gh-dash = {
     # dashboard

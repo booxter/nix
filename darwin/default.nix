@@ -1,6 +1,5 @@
 {
   hostname,
-  inputs,
   lib,
   pkgs,
   username,
@@ -15,7 +14,6 @@
       ./${hostname}
     ]
     ++ [
-      inputs.virby.darwinModules.default
       ./_mixins/defaults
       ./_mixins/fonts
       ./_mixins/homebrew
@@ -64,16 +62,6 @@
   system.defaults.smb = lib.optionalAttrs (!isWork) {
     NetBIOSName = hostname;
     ServerDescription = hostname;
-  };
-
-  services.virby = {
-    enable = true;
-    cores = 8;
-    memory = 12 * 1024;
-    diskSize = "80GiB";
-    rosetta = false;
-    onDemand.enable = true;
-    onDemand.ttl = 180;
   };
 
   system = {

@@ -1,5 +1,9 @@
 { lib, pkgs, ... }:
 {
+  imports = [
+    ./firefox-touch-id-passkeys.nix
+  ];
+
   environment.systemPackages = with pkgs; [
     defaultbrowser
   ];

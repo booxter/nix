@@ -16,6 +16,8 @@ in
     programs.sshTicket.enableKnownHosts = true;
   };
 
+  host.browser.firefox.touchIdPasskeys.enable = true;
+
   sops.secrets."wireguard/gwvm/privateKey" = {
     owner = "root";
     group = "wheel";
