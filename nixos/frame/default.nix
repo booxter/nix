@@ -39,6 +39,7 @@ in
     enable = true;
   };
   programs.hyprland.enable = true;
+  services.openssh.settings.X11Forwarding = true;
 
   services.ollama = {
     enable = true;
