@@ -1,3 +1,5 @@
+# shellcheck shell=bash
+
 github_repo_url_from_url() {
   local url="$1"
   local rest owner repo
