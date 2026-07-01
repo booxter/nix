@@ -70,16 +70,6 @@
         pnpm_10_29_2 = prev.pnpm_10;
       };
 
-      # Backport Teleport's pnpm pin fix until nixpkgs includes it.
-      # Upstream: https://github.com/NixOS/nixpkgs/pull/536323
-      teleport = prev.teleport.override {
-        teleport_18 = prev.teleport_18.override {
-          buildTeleport = prev.buildTeleport.override {
-            pnpm_10_29_2 = prev.pnpm_10;
-          };
-        };
-      };
-
       # NixOS can expose the same D-Bus service file through both direct package
       # paths and system-path symlinks. Do not let dbus-broker report those
       # same-file duplicates at error level.
