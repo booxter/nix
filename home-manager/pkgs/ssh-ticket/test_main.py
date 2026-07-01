@@ -33,29 +33,11 @@ def test_applescript_string_renders_newlines_as_linefeed():
     assert expr == '"one" & linefeed & "" & linefeed & "quoted \\"value\\""'
 
 
-def test_applescript_list_quotes_values():
-    assert ssh_ticket.applescript_list(["30m", 'quoted "value"']) == (
-        '{"30m", "quoted \\"value\\""}'
-    )
-
-
 def test_osascript_approval_prompt_activates_system_events():
     script = ssh_ticket.osascript_approval_script("Approve?")
     assert 'tell application "System Events"' in script
     assert "activate" in script
     assert "display dialog" in script
-
-
-def test_osascript_ttl_selector_uses_standard_ok_cancel_list():
-    script = ssh_ticket.osascript_ttl_selector_script(
-        "Approve?", ["30m", "1h", "Custom..."], "30m"
-    )
-    assert 'tell application "System Events"' in script
-    assert "activate" in script
-    assert "choose from list" in script
-    assert "OK button name" not in script
-    assert "cancel button name" not in script
-    assert "Custom..." in script
 
 
 def test_osascript_ttl_text_prompt_uses_approve_default_button():
@@ -99,7 +81,7 @@ def test_ttl_choices_include_nonstandard_default():
 def test_prompt_askpass_uses_confirm_prompt_for_approval(monkeypatch):
     calls = []
 
-    def fake_run(cmd, *, input_text=None, capture=True, env=None):
+    def fake_run(cmd, *, capture=True, env=None):
         calls.append((cmd, env))
         return "yes\n"
 
@@ -122,7 +104,7 @@ def test_prompt_askpass_uses_confirm_prompt_for_approval(monkeypatch):
 def test_prompt_askpass_ttl_prompt_is_approval(monkeypatch):
     calls = []
 
-    def fake_run(cmd, *, input_text=None, capture=True, env=None):
+    def fake_run(cmd, *, capture=True, env=None):
         calls.append((cmd, env))
         return "45m\n"
 
@@ -139,7 +121,34 @@ def test_prompt_askpass_ttl_prompt_is_approval(monkeypatch):
         "/usr/local/bin/ssh-askpass-macos",
         "TTL for SSH ticket to srvarr [30m, max 2h]",
     ]
-    assert calls[0][1]["SSHT_ASKPASS_VISIBLE"] == "1"
+    assert calls[0][1] is None
+
+
+def test_prompt_gui_prefers_osascript(monkeypatch):
+    def fake_askpass(target, default_ttl, max_ttl, ttl_was_explicit):
+        raise AssertionError("askpass should not be used when osascript works")
+
+    monkeypatch.setattr(ssh_ticket, "prompt_osascript", lambda *args: 45 * 60)
+    monkeypatch.setattr(ssh_ticket, "prompt_askpass", fake_askpass)
+
+    assert (
+        ssh_ticket.prompt_gui(
+            {"name": "srvarr"}, 30 * 60, 2 * 60 * 60, ttl_was_explicit=False
+        )
+        == 45 * 60
+    )
+
+
+def test_prompt_gui_falls_back_to_askpass(monkeypatch):
+    monkeypatch.setattr(ssh_ticket, "prompt_osascript", lambda *args: None)
+    monkeypatch.setattr(ssh_ticket, "prompt_askpass", lambda *args: 30 * 60)
+
+    assert (
+        ssh_ticket.prompt_gui(
+            {"name": "srvarr"}, 30 * 60, 2 * 60 * 60, ttl_was_explicit=False
+        )
+        == 30 * 60
+    )
 
 
 def test_resolved_ca_key_defaults_to_agent_public_key():

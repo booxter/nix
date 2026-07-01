@@ -17,7 +17,6 @@ DEFAULT_KEY = "~/.ssh/fleet-ticket/id_ed25519"
 TARGETS_FILE_ENV = "SSHT_TARGETS_FILE"
 MIN_VALID_SECONDS = 60
 COMMON_TTL_CHOICES = (30 * 60, 60 * 60, 2 * 60 * 60, 12 * 60 * 60)
-CUSTOM_TTL_CHOICE = "Custom..."
 
 
 class Error(Exception):
@@ -39,10 +38,9 @@ def state_dir_arg(args):
     return expand_path(args.state_dir) if args.state_dir else default_state_dir()
 
 
-def run(cmd, *, input_text=None, capture=True, env=None):
+def run(cmd, *, capture=True, env=None):
     proc = subprocess.run(
         cmd,
-        input=input_text,
         text=True,
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.PIPE if capture else None,
@@ -73,10 +71,6 @@ def applescript_string(value):
     return " & linefeed & ".join(applescript_quote(part) for part in value.split("\n"))
 
 
-def applescript_list(values):
-    return "{" + ", ".join(applescript_quote(value) for value in values) + "}"
-
-
 def osascript_approval_script(message):
     return f"""
       tell application "System Events"
@@ -84,17 +78,6 @@ def osascript_approval_script(message):
         set response to display dialog {applescript_string(message)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
         return button returned of response
       end tell
-    """
-
-
-def osascript_ttl_selector_script(message, choices, default_answer):
-    return f"""
-      tell application "System Events"
-        activate
-        set response to choose from list {applescript_list(choices)} with title "ssht" with prompt {applescript_string(message)} default items {{{applescript_quote(default_answer)}}}
-      end tell
-      if response is false then error number -128
-      return item 1 of response
     """
 
 
@@ -351,9 +334,7 @@ def prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit):
             f"TTL for SSH ticket to {target['name']} "
             f"[{format_duration(default_ttl)}, max {format_duration(max_ttl)}]"
         )
-        ttl_env = os.environ.copy()
-        ttl_env["SSHT_ASKPASS_VISIBLE"] = "1"
-        ttl_text = run([askpass, prompt], env=ttl_env).strip()
+        ttl_text = run([askpass, prompt]).strip()
         return default_ttl if ttl_text == "" else parse_duration(ttl_text)
     ttl = default_ttl
     approval_env = os.environ.copy()
@@ -389,40 +370,28 @@ def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
             raise Error("ticket request denied")
         return default_ttl
 
+    common_ttls = ", ".join(
+        format_duration(ttl) for ttl in ttl_choices(default_ttl, max_ttl)
+    )
     message = (
         f"Approve SSH ticket for {target['name']}?\n\n"
         f"Principal: {target['principal']}\n"
-        f"Select TTL to approve, max {format_duration(max_ttl)}."
+        f"Enter TTL to approve ({common_ttls}; max {format_duration(max_ttl)})."
     )
-    choices = [format_duration(ttl) for ttl in ttl_choices(default_ttl, max_ttl)]
-    choices.append(CUSTOM_TTL_CHOICE)
-    script = osascript_ttl_selector_script(message, choices, default_answer)
+    script = osascript_ttl_text_prompt_script(message, default_answer)
     result = subprocess.run([osascript, "-e", script], text=True, capture_output=True)
     if result.returncode != 0:
         raise Error("ticket request denied")
     ttl_text = result.stdout.strip() or default_answer
-    if ttl_text == CUSTOM_TTL_CHOICE:
-        custom_message = (
-            f"Approve SSH ticket for {target['name']}?\n\n"
-            f"Principal: {target['principal']}\n"
-            f"Enter TTL, max {format_duration(max_ttl)}."
-        )
-        script = osascript_ttl_text_prompt_script(custom_message, default_answer)
-        result = subprocess.run(
-            [osascript, "-e", script], text=True, capture_output=True
-        )
-        if result.returncode != 0:
-            raise Error("ticket request denied")
-        ttl_text = result.stdout.strip() or default_answer
     return default_ttl if ttl_text == "" else parse_duration(ttl_text)
 
 
 def prompt_gui(target, default_ttl, max_ttl, ttl_was_explicit):
-    ttl = prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit)
+    ttl = prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit)
     if ttl is None:
-        ttl = prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit)
+        ttl = prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit)
     if ttl is None:
-        raise Error("cannot prompt for approval without SSH_ASKPASS or osascript")
+        raise Error("cannot prompt for approval without osascript or SSH_ASKPASS")
     return ttl
 
 
