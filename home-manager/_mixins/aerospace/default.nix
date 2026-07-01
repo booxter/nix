@@ -125,6 +125,13 @@ in
       on-focus-changed = [ "move-mouse window-lazy-center" ];
 
       on-window-detected = [
+        # XQuartz windows manage their own geometry better outside the tiling tree.
+        {
+          "if" = {
+            app-id = "org.nixos.xquartz.X11";
+          };
+          run = [ "layout floating" ];
+        }
         # Chat apps go to C workspace
         {
           "if" = {
