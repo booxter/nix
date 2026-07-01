@@ -311,6 +311,7 @@ def test_issue_ticket_allows_x11_forwarding_for_opted_in_targets(tmp_path, monke
     cmd = issue_ticket_command(tmp_path, monkeypatch, allow_x11_forwarding=True)
 
     assert "no-agent-forwarding" in cmd
+    assert "permit-X11-forwarding" in cmd
     assert "no-x11-forwarding" not in cmd
 
 

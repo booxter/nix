@@ -445,7 +445,9 @@ def issue_ticket(args, target, state_dir, key_path):
             "no-agent-forwarding",
         ]
     )
-    if not target.get("allowX11Forwarding", False):
+    if target.get("allowX11Forwarding", False):
+        cmd.extend(["-O", "permit-X11-forwarding"])
+    else:
         cmd.extend(["-O", "no-x11-forwarding"])
     cmd.extend(
         [
