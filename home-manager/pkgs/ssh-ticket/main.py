@@ -352,7 +352,8 @@ def prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit):
             f"[{format_duration(default_ttl)}, max {format_duration(max_ttl)}]"
         )
         ttl_text = run([askpass, prompt]).strip()
-        ttl = default_ttl if ttl_text == "" else parse_duration(ttl_text)
+        return default_ttl if ttl_text == "" else parse_duration(ttl_text)
+    ttl = default_ttl
     approval_env = os.environ.copy()
     approval_env["SSH_ASKPASS_PROMPT"] = "confirm"
     answer = run(
