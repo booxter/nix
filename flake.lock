@@ -556,22 +556,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_6": {
-      "locked": {
-        "lastModified": 1781577229,
-        "narHash": "sha256-lrp67w8AulE9Ks53n27I45ADSzbOCn4H+CNW1Ck8B+8=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "567a49d1913ce81ac6e9582e3553dd90a955875f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixvim": {
       "inputs": {
         "flake-parts": "flake-parts_3",
@@ -658,7 +642,6 @@
         "proxmox-nixos": "proxmox-nixos",
         "sops-nix": "sops-nix",
         "tig": "tig",
-        "virby": "virby",
         "vpnconfinement": "vpnconfinement"
       }
     },
@@ -815,24 +798,6 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "virby": {
-      "inputs": {
-        "nixpkgs": "nixpkgs_6"
-      },
-      "locked": {
-        "lastModified": 1782794068,
-        "narHash": "sha256-cCqDlWfjVXLa25elWp9WAwa5vIN+QhTP76Ilg4khOds=",
-        "owner": "quinneden",
-        "repo": "virby-nix-darwin",
-        "rev": "946ab75f32c92069ae7afa8c3d75276d26b17f10",
-        "type": "github"
-      },
-      "original": {
-        "owner": "quinneden",
-        "repo": "virby-nix-darwin",
         "type": "github"
       }
     },

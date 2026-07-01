@@ -31,12 +31,10 @@
         extra-substituters = [
           "https://cache.numtide.com"
           "https://cache.saumon.network/proxmox-nixos"
-          "https://virby-nix-darwin.cachix.org"
         ];
         extra-trusted-public-keys = [
           "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
           "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM="
-          "virby-nix-darwin.cachix.org-1:z9GiEZeBU5bEeoDQjyfHPMGPBaIQJOOvYOOjGMKIlLo="
         ];
       }
       // lib.optionalAttrs (!isWork) {
