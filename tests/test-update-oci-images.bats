@@ -10,12 +10,8 @@ setup() {
     cat <<'EOF'
 set -euo pipefail
 
-if [[ "$1" != "list-tags" || "$2" != "docker://docker.io/example/romm" ]]; then
-  echo "unexpected skopeo args: $*" >&2
-  exit 1
-fi
-
-cat <<'JSON'
+if [[ "$1" == "list-tags" && "$2" == "docker://docker.io/example/romm" ]]; then
+  cat <<'JSON'
 {
   "Tags": [
     "latest",
@@ -26,6 +22,37 @@ cat <<'JSON'
   ]
 }
 JSON
+  exit 0
+fi
+
+if [[ "$1" == "inspect" && "$2" == "--config" ]]; then
+  case "$3" in
+    docker://docker.io/example/romm:4.9.1)
+      revision="oldrev"
+      ;;
+    docker://docker.io/example/romm:4.10.0)
+      revision="newrev"
+      ;;
+    *)
+      echo "unexpected skopeo inspect ref: $3" >&2
+      exit 1
+      ;;
+  esac
+  jq -n --arg revision "$revision" '{
+    config: {
+      Labels: {
+        "org.opencontainers.image.source": "https://github.com/example/romm",
+        "org.opencontainers.image.revision": $revision
+      }
+    }
+  }'
+  exit 0
+fi
+
+if [[ "$1" != "list-tags" || "$2" != "docker://docker.io/example/romm" ]]; then
+  echo "unexpected skopeo args: $*" >&2
+  exit 1
+fi
 EOF
   } > "${TEST_BIN}/skopeo"
   chmod +x "${TEST_BIN}/skopeo"
@@ -61,7 +88,7 @@ JSON
   fi
   [ "$(jq -r '.romm.tag' "$pins_file")" = "4.10.0" ]
   [ "$(jq -r '.other.tag' "$pins_file")" = "1.0.0" ]
-  grep -F '| `romm` | `docker.io/example/romm` | `4.9.1 -> 4.10.0` | [link](https://example.invalid/releases/4.10.0) |' "$summary_file"
+  grep -F '| `romm` | `docker.io/example/romm` | `4.9.1 -> 4.10.0` | [link](https://example.invalid/releases/4.10.0) | [compare](https://github.com/example/romm/compare/oldrev...newrev) |' "$summary_file"
 }
 
 @test "lists OCI image targets" {
