@@ -16,6 +16,7 @@
       settings = {
         experimental-features = "nix-command flakes";
         warn-dirty = false;
+        sandbox = true;
         nix-path = [ "nixpkgs=flake:nixpkgs" ];
         trusted-users = [
           "@admin"
