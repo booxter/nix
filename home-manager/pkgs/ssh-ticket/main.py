@@ -443,8 +443,12 @@ def issue_ticket(args, target, state_dir, key_path):
             target["principal"],
             "-O",
             "no-agent-forwarding",
-            "-O",
-            "no-x11-forwarding",
+        ]
+    )
+    if not target.get("allowX11Forwarding", False):
+        cmd.extend(["-O", "no-x11-forwarding"])
+    cmd.extend(
+        [
             "-V",
             f"-5m:+{ttl}s",
             "-z",
@@ -464,6 +468,7 @@ def issue_ticket(args, target, state_dir, key_path):
         "validBefore": now + ttl,
         "issuedAt": now,
         "ttl": ttl,
+        "allowX11Forwarding": target.get("allowX11Forwarding", False),
         "certificateFile": str(paths["cert"]),
         "identityFile": str(key_path),
         "caAgent": ca_agent,

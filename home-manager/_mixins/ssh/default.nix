@@ -68,6 +68,9 @@ in
         IgnoreUnknown WarnWeakCrypto
         SetEnv TERM=xterm-256color
         WarnWeakCrypto no
+      ''
+      + lib.optionalString pkgs.stdenv.isDarwin ''
+        XAuthLocation ${lib.getExe pkgs.xauth}
       '';
     };
   };

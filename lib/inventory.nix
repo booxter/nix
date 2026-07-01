@@ -722,6 +722,7 @@ rec {
       stateVersion = "25.11";
       platform = "x86_64-linux";
       isDesktop = true;
+      sshTicket.allowX11Forwarding = true;
       localDnsAliases = [ "ollama" ];
       dhcpReservation = {
         match = "9c:bf:0d:00:fa:0a";

@@ -74,6 +74,7 @@
       vlc-bin
     ]
     ++ lib.optionals (!isWork && isDesktop && isDarwin) [
+      xauth
       xquartz
     ]
     ++ lib.optionals (isDesktop && !isDarwin) [

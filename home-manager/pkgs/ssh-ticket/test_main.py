@@ -263,6 +263,57 @@ def test_existing_ticket_valid_uses_metadata(tmp_path):
     assert ssh_ticket.existing_ticket_valid(target, paths)
 
 
+def issue_ticket_command(tmp_path, monkeypatch, *, allow_x11_forwarding=False):
+    public_key = tmp_path / "id_ed25519.pub"
+    public_key.write_text("ssh-ed25519 AAAATEST ssht ticket key\n", encoding="utf-8")
+    calls = []
+
+    def fake_run(cmd, *, capture=True, env=None):
+        calls.append(cmd)
+        return ""
+
+    monkeypatch.setattr(ssh_ticket, "ensure_ticket_key", lambda key_path: public_key)
+    monkeypatch.setattr(ssh_ticket, "run", fake_run)
+    monkeypatch.setattr(ssh_ticket.time, "time", lambda: 1710000000)
+
+    ssh_ticket.issue_ticket(
+        types.SimpleNamespace(
+            ttl=None,
+            yes=True,
+            gui=False,
+            ca_agent=False,
+            ca_key=str(tmp_path / "ca"),
+        ),
+        {
+            "name": "frame",
+            "sshHost": "frame",
+            "principal": "ihrachyshka@frame",
+            "defaultTtl": "30m",
+            "maxTtl": "2h",
+            "allowX11Forwarding": allow_x11_forwarding,
+        },
+        tmp_path / "state",
+        tmp_path / "id_ed25519",
+    )
+
+    assert len(calls) == 1
+    return calls[0]
+
+
+def test_issue_ticket_disables_x11_forwarding_by_default(tmp_path, monkeypatch):
+    cmd = issue_ticket_command(tmp_path, monkeypatch)
+
+    assert "no-agent-forwarding" in cmd
+    assert "no-x11-forwarding" in cmd
+
+
+def test_issue_ticket_allows_x11_forwarding_for_opted_in_targets(tmp_path, monkeypatch):
+    cmd = issue_ticket_command(tmp_path, monkeypatch, allow_x11_forwarding=True)
+
+    assert "no-agent-forwarding" in cmd
+    assert "no-x11-forwarding" not in cmd
+
+
 def test_write_ticket_alias_copies_cert_material(tmp_path):
     paths = ssh_ticket.target_paths({"name": "org"}, tmp_path)
     paths["public"].write_text("public\n", encoding="utf-8")
