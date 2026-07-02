@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 delta="${1:?Usage: aerospace-x11-aware-resize +/-pixels}"

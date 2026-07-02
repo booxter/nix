@@ -10,22 +10,12 @@ let
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
   sketchybarHeight = 30; # TODO: parametrize it?
 
+  aerospacePkgs = import ./pkgs { inherit pkgs; };
   workspaceCount = 6;
-  x11AwareResize = pkgs.writeShellApplication {
-    name = "aerospace-x11-aware-resize";
-    runtimeInputs = with pkgs; [
-      aerospace
-      gawk
-      wmctrl
-      xprop
-      xwininfo
-    ];
-    text = builtins.readFile ./aerospace-x11-aware-resize.sh;
-  };
   resizeCommand =
     delta:
     if isDarwin && !isWork then
-      "exec-and-forget ${lib.getExe x11AwareResize} ${delta}"
+      "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-x11-aware-resize} ${delta}"
     else
       "resize smart ${delta}";
   getBindings =
