@@ -14,13 +14,13 @@ let
   workspaceCount = 6;
   moveCommand =
     direction:
-    if isDarwin && !isWork then
+    if config.programs.xquartz.enable then
       "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-x11-aware-move} ${direction}"
     else
       "move ${direction}";
   resizeCommand =
     delta:
-    if isDarwin && !isWork then
+    if config.programs.xquartz.enable then
       "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-x11-aware-resize} ${delta}"
     else
       "resize smart ${delta}";
@@ -138,13 +138,6 @@ in
       on-focus-changed = [ "move-mouse window-lazy-center" ];
 
       on-window-detected = [
-        # XQuartz windows manage their own geometry better outside the tiling tree.
-        {
-          "if" = {
-            app-id = "org.nixos.xquartz.X11";
-          };
-          run = [ "layout floating" ];
-        }
         # Chat apps go to C workspace
         {
           "if" = {

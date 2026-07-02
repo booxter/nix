@@ -13,6 +13,7 @@
 {
   imports = [
     ./_mixins/nix
+    ./_mixins/xquartz
     ./_mixins/zsh
   ]
   ++ lib.optionals hmFull [
@@ -73,13 +74,8 @@
     ++ lib.optionals (isDesktop && isDarwin) [
       vlc-bin
     ]
-    ++ lib.optionals (!isWork && isDesktop && isDarwin) [
-      xquartz
-    ]
     ++ lib.optionals (isDesktop && !isDarwin) [
       vlc
-    ]
-    ++ lib.optionals (isDesktop && (!isDarwin || !isWork)) [
       wmctrl
       xauth
       xprop
