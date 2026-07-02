@@ -11,6 +11,23 @@ let
   sketchybarHeight = 30; # TODO: parametrize it?
 
   workspaceCount = 6;
+  x11AwareResize = pkgs.writeShellApplication {
+    name = "aerospace-x11-aware-resize";
+    runtimeInputs = with pkgs; [
+      aerospace
+      gawk
+      wmctrl
+      xprop
+      xwininfo
+    ];
+    text = builtins.readFile ./aerospace-x11-aware-resize.sh;
+  };
+  resizeCommand =
+    delta:
+    if isDarwin && !isWork then
+      "exec-and-forget ${lib.getExe x11AwareResize} ${delta}"
+    else
+      "resize smart ${delta}";
   getBindings =
     { prefix, action }:
     lib.mergeAttrsList (
@@ -60,8 +77,8 @@ in
         alt-shift-k = "move up";
         alt-shift-l = "move right";
 
-        alt-minus = "resize smart -50";
-        alt-equal = "resize smart +50";
+        alt-minus = resizeCommand "-50";
+        alt-equal = resizeCommand "+50";
 
         alt-tab = "workspace-back-and-forth";
         alt-shift-tab = "move-workspace-to-monitor --wrap-around next";
