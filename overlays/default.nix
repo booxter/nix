@@ -23,15 +23,17 @@
       nixpkgsReviewMainVersion = pkgsNixpkgsMain.nixpkgs-review.version;
       nixpkgsReviewDarwinVersion = pkgsNixpkgsDarwin.nixpkgs-review.version;
       pkgsNixpkgsReviewRelease =
-        assert lib.asserts.assertMsg (
-          !(
-            lib.versionAtLeast nixpkgsReviewMainVersion nixpkgsReviewFixedVersion
-            && lib.versionAtLeast nixpkgsReviewDarwinVersion nixpkgsReviewFixedVersion
+        assert lib.asserts.assertMsg
+          (
+            !(
+              lib.versionAtLeast nixpkgsReviewMainVersion nixpkgsReviewFixedVersion
+              && lib.versionAtLeast nixpkgsReviewDarwinVersion nixpkgsReviewFixedVersion
+            )
           )
-        ) ''
-          Drop nixpkgs-review-release: nixpkgs has nixpkgs-review ${nixpkgsReviewMainVersion}
-          and nixpkgs-darwin has ${nixpkgsReviewDarwinVersion}, both >= ${nixpkgsReviewFixedVersion}.
-        '';
+          ''
+            Drop nixpkgs-review-release: nixpkgs has nixpkgs-review ${nixpkgsReviewMainVersion}
+            and nixpkgs-darwin has ${nixpkgsReviewDarwinVersion}, both >= ${nixpkgsReviewFixedVersion}.
+          '';
         getPkgs inputs.nixpkgs-review-release;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       releaseTransmission = prev.transmission_4;
