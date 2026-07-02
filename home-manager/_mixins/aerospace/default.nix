@@ -10,7 +10,20 @@ let
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
   sketchybarHeight = 30; # TODO: parametrize it?
 
+  aerospacePkgs = import ./pkgs { inherit pkgs; };
   workspaceCount = 6;
+  moveCommand =
+    direction:
+    if config.programs.xquartz.enable then
+      "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-x11-aware-move} ${direction}"
+    else
+      "move ${direction}";
+  resizeCommand =
+    delta:
+    if config.programs.xquartz.enable then
+      "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-x11-aware-resize} ${delta}"
+    else
+      "resize smart ${delta}";
   getBindings =
     { prefix, action }:
     lib.mergeAttrsList (
@@ -55,13 +68,13 @@ in
         alt-k = "focus up";
         alt-l = "focus right";
 
-        alt-shift-h = "move left";
-        alt-shift-j = "move down";
-        alt-shift-k = "move up";
-        alt-shift-l = "move right";
+        alt-shift-h = moveCommand "left";
+        alt-shift-j = moveCommand "down";
+        alt-shift-k = moveCommand "up";
+        alt-shift-l = moveCommand "right";
 
-        alt-minus = "resize smart -50";
-        alt-equal = "resize smart +50";
+        alt-minus = resizeCommand "-50";
+        alt-equal = resizeCommand "+50";
 
         alt-tab = "workspace-back-and-forth";
         alt-shift-tab = "move-workspace-to-monitor --wrap-around next";

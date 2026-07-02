@@ -74,10 +74,6 @@ in
 
   home.sessionVariables = {
     GTK_THEME = "palenight";
-
-    # https://wiki.hypr.land/Configuring/XWayland/
-    GDK_SCALE = 2;
-    XCURSOR_SIZE = 32;
   };
 
   programs.waybar = {
@@ -147,6 +143,14 @@ in
 
       exec-once = [
         "waybar"
+      ];
+
+      # Keep XWayland scaling local to the Hyprland session so SSH-forwarded
+      # X11 apps do not inherit it under XQuartz.
+      # https://wiki.hypr.land/Configuring/XWayland/
+      env = [
+        "GDK_SCALE,2"
+        "XCURSOR_SIZE,32"
       ];
 
       ecosystem = {

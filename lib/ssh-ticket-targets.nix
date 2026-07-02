@@ -13,6 +13,7 @@ let
       sshHost ? name,
       dnsName ? sshHost,
       aliases ? [ name ],
+      allowX11Forwarding ? false,
       isWork ? false,
     }:
     let
@@ -26,6 +27,7 @@ let
         sshHost
         ;
       aliases = lib.unique ([ name ] ++ aliases);
+      inherit allowX11Forwarding;
       principal = if enabled then "${username}@${dnsName}" else "";
       defaultTtl = "30m";
       maxTtl = "2h";
@@ -46,6 +48,7 @@ let
         (spec.dnsName or sshHost)
       ];
       dnsName = spec.dnsName or sshHost;
+      allowX11Forwarding = spec.sshTicket.allowX11Forwarding or false;
       isWork = spec.isWork or false;
     };
 
@@ -66,6 +69,7 @@ let
           spec.name
           localSshHost
         ];
+        allowX11Forwarding = spec.sshTicket.allowX11Forwarding or false;
         isWork = spec.isWork or false;
       }
     else
@@ -78,6 +82,7 @@ let
           (spec.dnsName or (spec.hostname or spec.name))
         ];
         dnsName = spec.dnsName or (spec.hostname or spec.name);
+        allowX11Forwarding = spec.sshTicket.allowX11Forwarding or false;
         isWork = spec.isWork or false;
       };
 in
