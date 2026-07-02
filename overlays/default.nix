@@ -102,20 +102,6 @@
         ];
       });
 
-      # Backport Open WebUI 0.9.5 web-search fix: SafeWebBaseLoader passed
-      # allow_redirects twice to aiohttp, so all fetched SearXNG result pages
-      # were skipped and chats saw "No sources found".
-      # Upstream: https://github.com/open-webui/open-webui/pull/24874
-      open-webui = prev.open-webui.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            url = "https://github.com/open-webui/open-webui/pull/24874.patch";
-            hash = "sha256-7xgftGzUj0qHAId8+hHYAC0dhif5PVS0YClWHImAuJ8=";
-          })
-          ../lib/patches/open-webui-apply-default-model-system-prompt.patch
-        ];
-      });
-
       jellyfin = prev.jellyfin.overrideAttrs (old: {
         patches = old.patches or [ ] ++ [
           # Catch websocket keepalive send races.
