@@ -70,16 +70,6 @@
         pnpm_10_29_2 = prev.pnpm_10;
       };
 
-      # Backport Teleport's pnpm pin fix until nixpkgs includes it.
-      # Upstream: https://github.com/NixOS/nixpkgs/pull/536323
-      teleport = prev.teleport.override {
-        teleport_18 = prev.teleport_18.override {
-          buildTeleport = prev.buildTeleport.override {
-            pnpm_10_29_2 = prev.pnpm_10;
-          };
-        };
-      };
-
       # NixOS can expose the same D-Bus service file through both direct package
       # paths and system-path symlinks. Do not let dbus-broker report those
       # same-file duplicates at error level.
@@ -109,20 +99,6 @@
             url = "https://github.com/grafana/grafana/pull/123286.patch";
             hash = "sha256-G9kIyw10aMq/SlSQ9kjdvZWtPFSwxIOnTygcaAmsHic=";
           })
-        ];
-      });
-
-      # Backport Open WebUI 0.9.5 web-search fix: SafeWebBaseLoader passed
-      # allow_redirects twice to aiohttp, so all fetched SearXNG result pages
-      # were skipped and chats saw "No sources found".
-      # Upstream: https://github.com/open-webui/open-webui/pull/24874
-      open-webui = prev.open-webui.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            url = "https://github.com/open-webui/open-webui/pull/24874.patch";
-            hash = "sha256-7xgftGzUj0qHAId8+hHYAC0dhif5PVS0YClWHImAuJ8=";
-          })
-          ../lib/patches/open-webui-apply-default-model-system-prompt.patch
         ];
       });
 
@@ -161,10 +137,8 @@
         ];
       });
 
-      # Carry local fixes for broken user-count metrics until upstream releases
-      # them, plus the pnpm pin fix until nixpkgs includes it.
-      # Upstream pnpm fix: https://github.com/NixOS/nixpkgs/pull/536781
-      vikunja = (prev.vikunja.override { pnpm_10_29_2 = prev.pnpm_10; }).overrideAttrs (old: {
+      # Carry local fixes for broken user-count metrics until upstream releases them.
+      vikunja = prev.vikunja.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
         ];
