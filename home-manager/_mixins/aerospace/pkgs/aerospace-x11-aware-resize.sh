@@ -11,14 +11,38 @@ resize_aerospace() {
   exec aerospace resize smart "$delta"
 }
 
-frontmost_bundle_id="$(
+frontmost_bundle_id() {
+  local asn
+  local bundle_id
+
+  asn="$(
+    /usr/bin/lsappinfo visibleProcessList 2>/dev/null \
+      | awk 'match($0, /ASN:0x[[:xdigit:]]+-0x[[:xdigit:]]+/) { print substr($0, RSTART, RLENGTH) ":"; exit }'
+  )"
+  if [ -n "$asn" ]; then
+    bundle_id="$(
+      /usr/bin/lsappinfo info -only bundleid "$asn" 2>/dev/null \
+        | awk -F'"' '/CFBundleIdentifier/ { print $4; exit }'
+    )"
+    if [ -n "$bundle_id" ]; then
+      printf '%s\n' "$bundle_id"
+      return 0
+    fi
+  fi
+
   /usr/bin/osascript \
     -e 'tell application "System Events" to get bundle identifier of first application process whose frontmost is true' \
     2>/dev/null || true
-)"
+}
+
+frontmost_bundle_id="$(frontmost_bundle_id)"
 
 case "$frontmost_bundle_id" in
   org.nixos.xquartz.X11 | org.x.X11) ;;
+  "")
+    echo "Could not determine the frontmost macOS app; refusing to resize a background AeroSpace window." >&2
+    exit 1
+    ;;
   *) resize_aerospace ;;
 esac
 
