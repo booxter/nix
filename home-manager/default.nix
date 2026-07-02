@@ -74,11 +74,16 @@
       vlc-bin
     ]
     ++ lib.optionals (!isWork && isDesktop && isDarwin) [
-      xauth
       xquartz
     ]
     ++ lib.optionals (isDesktop && !isDarwin) [
       vlc
+    ]
+    ++ lib.optionals (isDesktop && (!isDarwin || !isWork)) [
+      wmctrl
+      xauth
+      xprop
+      xwininfo
     ]
     ++ lib.optionals (!isWork && isDesktop) [
       podman-desktop
