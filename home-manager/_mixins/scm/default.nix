@@ -12,13 +12,15 @@ let
   fullName = "Ihar Hrachyshka";
   email = if isWork then "${username}@nvidia.com" else "ihar.hrachyshka@gmail.com";
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
+  gitPackage = if isDarwin then pkgs.gitDarwinPrecompose else pkgs.gitFull;
 in
 {
   # Git
   programs.git = {
     enable = true;
     # Use regular git on macos for now, due to: https://github.com/NixOS/nixpkgs/issues/208951
-    package = if isDarwin then pkgs.git else pkgs.gitFull;
+    # with a scoped precompose fix until upstream/nixpkgs includes it.
+    package = gitPackage;
 
     ignores = [
       "*.swp"
