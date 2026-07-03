@@ -37,6 +37,7 @@ in
         # Remove some ui bloat
         "mailnews.start_page.enabled" = false;
         "mail.uidensity" = 0;
+        "mail.threadpane.listview" = 1;
 
         "mail.ui.folderpane.view" = 1;
         "mail.folder.views.version" = 1;
