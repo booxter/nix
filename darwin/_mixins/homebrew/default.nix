@@ -1,6 +1,7 @@
 {
   config,
   inputs,
+  isWork,
   lib,
   username,
   ...
@@ -28,11 +29,13 @@
     onActivation.extraEnv.HOMEBREW_NO_INSTALL_FROM_API = "1";
     taps = builtins.attrNames config.nix-homebrew.taps;
     casks = [
-      "docker-desktop"
       "element"
       "sf-symbols"
       "spotify" # spotify can't keep its shit together with hashes
       "wireshark-chmodbpf"
+    ]
+    ++ lib.optionals isWork [
+      "docker-desktop"
     ];
   };
 
