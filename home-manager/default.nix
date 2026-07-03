@@ -72,6 +72,7 @@
       wireshark
     ]
     ++ lib.optionals (isDesktop && isDarwin) [
+      spotify
       vlc-bin
     ]
     ++ lib.optionals (isDesktop && !isDarwin) [

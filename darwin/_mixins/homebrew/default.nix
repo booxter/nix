@@ -31,7 +31,6 @@
     casks = [
       "element"
       "sf-symbols"
-      "spotify" # spotify can't keep its shit together with hashes
       "wireshark-chmodbpf"
     ]
     ++ lib.optionals isWork [
