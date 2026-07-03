@@ -23,13 +23,6 @@ in
             message = "`programs.xquartz.enable` is only supported on Darwin.";
           }
         ];
-
-        home.packages = [
-          pkgs.wmctrl
-          pkgs.xauth
-          pkgs.xprop
-          pkgs.xwininfo
-        ];
       }
       (lib.mkIf cfg.configureSsh {
         programs.ssh.extraConfig = lib.mkAfter ''

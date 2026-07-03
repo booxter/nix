@@ -77,16 +77,14 @@
     ++ lib.optionals (!isWork && isDesktop && isDarwin) [
       vlc-bin
     ]
-    ++ lib.optionals (isDesktop && !isDarwin) [
-      wmctrl
-      xauth
-      xprop
-      xwininfo
-    ]
     ++ lib.optionals (!isWork && isDesktop && !isDarwin) [
       vlc
     ]
     ++ lib.optionals (!isWork && isDesktop) [
       podman-desktop
+      wmctrl
+      xauth
+      xprop
+      xwininfo
     ];
 }
