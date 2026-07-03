@@ -88,26 +88,12 @@
           prev.thunderbird;
 
       # Avoid XQuartz aborting in xtrans' SocketReopen on long launchd DISPLAY
-      # socket paths until nixpkgs carries the upstream libxtrans fix.
-      # Upstream: https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/32
-      xtrans =
-        if prev.stdenv.hostPlatform.isDarwin then
-          prev.xtrans.overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [
-              (prev.fetchpatch {
-                url = "https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/32.patch";
-                hash = "sha256-Y8QY1yAiOI/rSNi71/Qhsn6UEql556/pS2av7+vmGQA=";
-              })
-            ];
-          })
-        else
-          prev.xtrans;
-
+      # socket paths without rebuilding every Darwin package that uses xtrans.
       xorg-server =
         if prev.stdenv.hostPlatform.isDarwin then
-          prev.xorg-server.override {
-            xtrans = final.xtrans;
-          }
+          prev.xorg-server.overrideAttrs (old: {
+            hardeningDisable = lib.unique ((old.hardeningDisable or [ ]) ++ [ "fortify" ]);
+          })
         else
           prev.xorg-server;
 
