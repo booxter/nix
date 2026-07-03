@@ -87,6 +87,38 @@
         else
           prev.thunderbird;
 
+      # Avoid XQuartz aborting in xtrans' SocketReopen on long launchd DISPLAY
+      # socket paths until nixpkgs carries the upstream libxtrans fix.
+      # Upstream: https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/32
+      xtrans =
+        if prev.stdenv.hostPlatform.isDarwin then
+          prev.xtrans.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              (prev.fetchpatch {
+                url = "https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/merge_requests/32.patch";
+                hash = "sha256-Y8QY1yAiOI/rSNi71/Qhsn6UEql556/pS2av7+vmGQA=";
+              })
+            ];
+          })
+        else
+          prev.xtrans;
+
+      xorg-server =
+        if prev.stdenv.hostPlatform.isDarwin then
+          prev.xorg-server.override {
+            xtrans = final.xtrans;
+          }
+        else
+          prev.xorg-server;
+
+      xquartz =
+        if prev.stdenv.hostPlatform.isDarwin then
+          prev.xquartz.override {
+            xorg-server = final.xorg-server;
+          }
+        else
+          prev.xquartz;
+
       # Backport podman-desktop's pnpm pin fix until nixpkgs includes it.
       # Upstream: https://github.com/NixOS/nixpkgs/pull/536832
       podman-desktop =
