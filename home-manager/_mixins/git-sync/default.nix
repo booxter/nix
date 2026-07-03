@@ -4,6 +4,15 @@
   pkgs,
   ...
 }:
+let
+  gitSyncPackage =
+    if pkgs.stdenv.hostPlatform.isDarwin then
+      pkgs.git-sync.override {
+        gitMinimal = pkgs.gitMinimalDarwinPrecompose;
+      }
+    else
+      pkgs.git-sync;
+in
 {
 
   services.git-sync =
@@ -12,6 +21,7 @@
     in
     {
       enable = true;
+      package = gitSyncPackage;
       repositories = {
         password-store = {
           uri = "git+ssh://booxter@github.com:booxter/pass.git";
