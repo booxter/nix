@@ -47,6 +47,9 @@ in
 
         # Use the system browser for OAuth flows.
         "mailnews.oauth.useExternalBrowser" = true;
+
+        # Default the compose window and send path to plain text.
+        "mail.default_send_format" = 1;
       };
     };
   };
@@ -58,6 +61,10 @@ in
         realName = "Ihar Hrachyshka";
         thunderbird = {
           enable = true;
+          perIdentitySettings = id: {
+            # The account UI stores "Compose messages in HTML format" per identity.
+            "mail.identity.id_${id}.compose_html" = false;
+          };
           settings = id: {
             "mail.server.server_${id}.authMethod" = 10; # OAuth2
             # Thunderbird treats this as a filesystem path during folder/filter
