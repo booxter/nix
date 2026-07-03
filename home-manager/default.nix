@@ -73,14 +73,18 @@
     ]
     ++ lib.optionals (isDesktop && isDarwin) [
       spotify
+    ]
+    ++ lib.optionals (!isWork && isDesktop && isDarwin) [
       vlc-bin
     ]
     ++ lib.optionals (isDesktop && !isDarwin) [
-      vlc
       wmctrl
       xauth
       xprop
       xwininfo
+    ]
+    ++ lib.optionals (!isWork && isDesktop && !isDarwin) [
+      vlc
     ]
     ++ lib.optionals (!isWork && isDesktop) [
       podman-desktop
