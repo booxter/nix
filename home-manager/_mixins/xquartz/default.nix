@@ -8,7 +8,11 @@ let
   cfg = config.programs.xquartz;
 in
 {
-  options.programs.xquartz.enable = lib.mkEnableOption "XQuartz user integration";
+  options.programs.xquartz = {
+    enable = lib.mkEnableOption "XQuartz user integration";
+
+    configureSsh = lib.mkEnableOption "OpenSSH XAuthLocation for XQuartz forwarding";
+  };
 
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
@@ -20,18 +24,18 @@ in
           }
         ];
 
-        home.packages = with pkgs; [
-          xquartz
-          wmctrl
-          xauth
-          xprop
-          xwininfo
+        home.packages = [
+          pkgs.wmctrl
+          pkgs.xauth
+          pkgs.xprop
+          pkgs.xwininfo
         ];
-
+      }
+      (lib.mkIf cfg.configureSsh {
         programs.ssh.extraConfig = lib.mkAfter ''
           XAuthLocation ${lib.getExe pkgs.xauth}
         '';
-      }
+      })
       (lib.mkIf config.programs.aerospace.enable {
         programs.aerospace.settings.on-window-detected = lib.mkBefore [
           # XQuartz windows manage their own geometry better outside the tiling tree.
