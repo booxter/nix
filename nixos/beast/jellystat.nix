@@ -7,8 +7,9 @@
 }:
 let
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
-  ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
-  jellystatImage = "${ociImages.jellystat.image}:${ociImages.jellystat.tag}";
+  ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
+  jellystatImage = ociImages.jellystat.ref;
+  jellystatImageFile = ociImages.jellystat.imageFile;
   jellystatHostName = "jfstat.${hostInventory.site.lan.domain}";
   jellystatPort = 3000;
   jellystatDatabase = "jfstat";
@@ -70,7 +71,8 @@ in
     backend = "podman";
     containers.jellystat = {
       image = jellystatImage;
-      pull = "missing";
+      imageFile = jellystatImageFile;
+      pull = "never";
       environment = {
         POSTGRES_USER = jellystatUser;
         POSTGRES_IP = "127.0.0.1";

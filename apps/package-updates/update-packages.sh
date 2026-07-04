@@ -4,7 +4,7 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=apps/package-updates/update-summary-lib.sh
 # shellcheck disable=SC1091
-source "${script_dir}/update-summary-lib.sh"
+source "${UPDATE_SUMMARY_LIB:-${script_dir}/update-summary-lib.sh}"
 
 usage() {
   cat <<'EOF'

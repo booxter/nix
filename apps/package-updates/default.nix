@@ -19,6 +19,7 @@ let
       prefetch-npm-deps
     ];
     text = ''
+      export UPDATE_SUMMARY_LIB="''${UPDATE_SUMMARY_LIB:-${./update-summary-lib.sh}}"
       export PACKAGE_UPDATE_TARGETS_FILE="''${PACKAGE_UPDATE_TARGETS_FILE:-${./targets.json}}"
       exec ${pkgs.bash}/bin/bash ${./update-packages.sh} "$@"
     '';
@@ -31,9 +32,11 @@ let
       git
       gnugrep
       jq
+      nix-prefetch-docker
       skopeo
     ];
     text = ''
+      export UPDATE_SUMMARY_LIB="''${UPDATE_SUMMARY_LIB:-${./update-summary-lib.sh}}"
       exec ${pkgs.bash}/bin/bash ${./update-oci-images.sh} "$@"
     '';
   };
