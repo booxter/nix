@@ -18,7 +18,6 @@ let
   oidcSettingsFile = pkgs.writeText "audiobookshelf-oidc-settings.json" (
     builtins.toJSON {
       authActiveAuthMethods = [
-        "local"
         "openid"
       ];
       authOpenIDIssuerURL = oidcIssuerBase;
