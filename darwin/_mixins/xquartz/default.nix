@@ -18,16 +18,6 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [ cfg.package ];
 
-    system.activationScripts.applications.text = lib.mkAfter ''
-      xquartzApp='/Applications/Nix Apps/XQuartz.app'
-      if [ -d "$xquartzApp" ]; then
-        echo "signing XQuartz.app..." >&2
-        chmod -R u+w "$xquartzApp"
-        /usr/bin/codesign --force --deep --sign - "$xquartzApp"
-        chmod -R a-w "$xquartzApp"
-      fi
-    '';
-
     launchd.user.agents.xquartz-startx.serviceConfig = {
       Label = "org.nixos.xquartz.startx";
       ProgramArguments = [

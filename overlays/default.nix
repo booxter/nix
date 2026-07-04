@@ -101,9 +101,51 @@
 
       xquartz =
         if prev.stdenv.hostPlatform.isDarwin then
-          prev.xquartz.override {
+          (prev.xquartz.override {
             xorg-server = final.xorg-server;
-          }
+          }).overrideAttrs
+            (old: {
+              installPhase = old.installPhase + ''
+
+                xquartzPlist=$out/Applications/XQuartz.app/Contents/Info.plist
+                xquartzScript=$out/Applications/XQuartz.app/Contents/MacOS/X11.sh
+
+                readPlistString() {
+                  local value
+                  value=$(${prev.xcbuild}/bin/PlistBuddy -c "Print $1" "$xquartzPlist")
+                  # xcbuild's PlistBuddy prints strings with display quotes.
+                  # Strip those before shell-escaping the values for X11.sh.
+                  case "$value" in
+                    \"*\") value=''${value#\"}; value=''${value%\"} ;;
+                  esac
+                  printf '%s\n' "$value"
+                }
+
+                xquartzDefaultClient=$(readPlistString ':LSEnvironment:XQUARTZ_DEFAULT_CLIENT')
+                xquartzDefaultShell=$(readPlistString ':LSEnvironment:XQUARTZ_DEFAULT_SHELL')
+                xquartzDefaultStartX=$(readPlistString ':LSEnvironment:XQUARTZ_DEFAULT_STARTX')
+                xquartzFontconfigFile=$(readPlistString ':LSEnvironment:FONTCONFIG_FILE')
+
+                # On macOS 26, LaunchServices/AMFI rejects the ad-hoc XQuartz
+                # app when these defaults are supplied through Info.plist
+                # LSEnvironment, reporting a Launch Constraint Violation before
+                # X11 reaches main(). Exporting the same values from X11.sh keeps
+                # XQuartz startup behavior while avoiding that launch-time policy.
+                ${prev.xcbuild}/bin/PlistBuddy -c 'Delete :LSEnvironment' "$xquartzPlist"
+
+                {
+                  IFS= read -r xquartzShebang
+                  printf '%s\n\n' "$xquartzShebang"
+                  printf 'export XQUARTZ_DEFAULT_CLIENT=%q\n' "$xquartzDefaultClient"
+                  printf 'export XQUARTZ_DEFAULT_SHELL=%q\n' "$xquartzDefaultShell"
+                  printf 'export XQUARTZ_DEFAULT_STARTX=%q\n' "$xquartzDefaultStartX"
+                  printf 'export FONTCONFIG_FILE=%q\n' "$xquartzFontconfigFile"
+                  tail -n +2 "$xquartzScript"
+                } < "$xquartzScript" > "$xquartzScript.new"
+                mv "$xquartzScript.new" "$xquartzScript"
+                chmod +x "$xquartzScript"
+              '';
+            })
         else
           prev.xquartz;
 
