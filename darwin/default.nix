@@ -26,6 +26,7 @@
       ./_mixins/observability-client
       ./_mixins/sudo
       ./_mixins/thermal-accounting
+      ./_mixins/xquartz
     ]
     ++ lib.optionals (!isWork) [
       ./_mixins/attic
@@ -36,6 +37,8 @@
   nixpkgs.hostPlatform = lib.mkDefault platform;
 
   system.stateVersion = stateVersion;
+
+  host.xquartz.enable = lib.mkDefault (!isWork && isDesktop);
 
   system.primaryUser = username;
 
