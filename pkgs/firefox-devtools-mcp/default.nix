@@ -10,13 +10,13 @@
 
 buildNpmPackage rec {
   pname = "firefox-devtools-mcp";
-  version = "0.9.7";
+  version = "0.9.9";
 
   src = fetchFromGitHub {
     owner = "mozilla";
     repo = "firefox-devtools-mcp";
     tag = "v${version}";
-    hash = "sha256-ZaRh98iKbTEPOYdyxnK8o1mU1h6tIwRx1mZW0ozP/KY=";
+    hash = "sha256-Bz6LkiUbgu81OnPv6xegmo7EYVgGJdlbB5HZsW4QO/Q=";
   };
 
   nodejs = nodejs_24;
