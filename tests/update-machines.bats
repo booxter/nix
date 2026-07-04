@@ -315,27 +315,61 @@ EOF
   [ "$(<"$NIXOS_REBUILD_ARGS_OUT")" = "dry-activate --flake .#srvarr -L --show-trace" ]
 }
 
-@test "run_darwin_switch_from_repo uses pinned nh" {
-  workdir="$BATS_TMPDIR/darwin-nh"
+@test "run_darwin_switch_from_repo activates through one sudo command" {
+  workdir="$BATS_TMPDIR/darwin-single-sudo"
+  rm -rf "$workdir"
   mkdir -p "$workdir/bin"
+  mkdir -p "$workdir/system/sw/bin"
   bash_path="$(command -v bash)"
 
   {
     printf '#!%s\n' "$bash_path"
     cat <<'EOF'
 set -euo pipefail
-printf '%s\n' "$*" > "$NIX_ARGS_OUT"
+printf 'sudo\n' >> "$SUDO_CALLS_OUT"
+printf '%s\n' "$*" >> "$SUDO_ARGS_OUT"
+"$@"
+EOF
+  } > "$workdir/bin/sudo"
+  chmod +x "$workdir/bin/sudo"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" >> "$NIX_ARGS_OUT"
+if [[ "$*" == *"--print-out-paths"* ]]; then
+  printf '%s\n' "$SYSTEM_CONFIG_OUT"
+fi
 EOF
   } > "$workdir/bin/nix"
   chmod +x "$workdir/bin/nix"
 
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$DARWIN_REBUILD_ARGS_OUT"
+EOF
+  } > "$workdir/system/sw/bin/darwin-rebuild"
+  chmod +x "$workdir/system/sw/bin/darwin-rebuild"
+
   export PATH="$workdir/bin:$PATH"
+  export SUDO_CALLS_OUT="$workdir/sudo.calls"
+  export SUDO_ARGS_OUT="$workdir/sudo.args"
   export NIX_ARGS_OUT="$workdir/nix.args"
+  export DARWIN_REBUILD_ARGS_OUT="$workdir/darwin-rebuild.args"
+  export SYSTEM_CONFIG_OUT="$workdir/system"
 
   run run_darwin_switch_from_repo JGWXHWDL4X
 
   [ "$status" -eq 0 ]
-  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin switch --hostname JGWXHWDL4X --print-build-logs --show-trace .#" ]
+  [ "$(wc -l < "$SUDO_CALLS_OUT" | tr -d ' ')" = "1" ]
+  [[ "$(<"$SUDO_ARGS_OUT")" == *" -c "* ]]
+  [ "$(wc -l < "$NIX_ARGS_OUT" | tr -d ' ')" = "2" ]
+  [[ "$(<"$NIX_ARGS_OUT")" == *"build --print-out-paths --no-link --show-trace -L .#darwinConfigurations.JGWXHWDL4X.system"* ]]
+  [[ "$(<"$NIX_ARGS_OUT")" == *"build --no-link --profile /nix/var/nix/profiles/system $workdir/system"* ]]
+  [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "activate" ]
 }
 
 @test "update-machines resolves an explicit work host over mDNS" {

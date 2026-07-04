@@ -201,10 +201,31 @@ run_nixos_rebuild_from_repo() {
 
 run_darwin_switch_from_repo() {
   local host_name="$1"
+  local bash_bin=""
+  local nix_bin=""
+  local system_config=""
 
-  run_nh_from_repo darwin switch \
-    --hostname "$host_name" \
-    --print-build-logs \
-    --show-trace \
-    ".#"
+  bash_bin="$(command -v bash)"
+  nix_bin="$(command -v nix)"
+  system_config="$(
+    "$nix_bin" build \
+      --print-out-paths \
+      --no-link \
+      --show-trace \
+      -L \
+      ".#darwinConfigurations.${host_name}.system"
+  )"
+
+  if [[ -z "$system_config" ]]; then
+    echo "Failed to build Darwin system configuration for ${host_name}: nix returned no output path." >&2
+    return 1
+  fi
+
+  sudo "$bash_bin" -e -u -o pipefail -c '
+    nix_bin="$1"
+    system_config="$2"
+
+    "$nix_bin" build --no-link --profile /nix/var/nix/profiles/system "$system_config"
+    "$system_config/sw/bin/darwin-rebuild" activate
+  ' bash "$nix_bin" "$system_config"
 }
