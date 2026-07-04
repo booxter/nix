@@ -112,10 +112,6 @@ in
       };
     };
   };
-  programs.browserpass = {
-    enable = true;
-    browsers = [ "firefox" ];
-  };
 
   home.sessionVariables = {
     BROWSER = if isDarwin then "open" else "xdg-open";

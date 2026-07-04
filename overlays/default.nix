@@ -17,26 +17,8 @@
         };
 
       pkgsLldb = getPkgs inputs.debugserver;
-      pkgsNixpkgsMain = getPkgs inputs.nixpkgs;
       pkgsNixpkgsUnstable = getPkgs inputs.nixpkgs-unstable;
-      pkgsNixpkgsDarwin = getPkgs inputs.nixpkgs-darwin;
       pkgsXquartzPr = getPkgs inputs.nixpkgs-xquartz-pr;
-      nixpkgsReviewFixedVersion = "3.9.0";
-      nixpkgsReviewMainVersion = pkgsNixpkgsMain.nixpkgs-review.version;
-      nixpkgsReviewDarwinVersion = pkgsNixpkgsDarwin.nixpkgs-review.version;
-      pkgsNixpkgsReviewRelease =
-        assert lib.asserts.assertMsg
-          (
-            !(
-              lib.versionAtLeast nixpkgsReviewMainVersion nixpkgsReviewFixedVersion
-              && lib.versionAtLeast nixpkgsReviewDarwinVersion nixpkgsReviewFixedVersion
-            )
-          )
-          ''
-            Drop nixpkgs-review-release: nixpkgs has nixpkgs-review ${nixpkgsReviewMainVersion}
-            and nixpkgs-darwin has ${nixpkgsReviewDarwinVersion}, both >= ${nixpkgsReviewFixedVersion}.
-          '';
-        getPkgs inputs.nixpkgs-review-release;
       llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
@@ -59,11 +41,6 @@
       inherit (llmAgentsPkgs) claude-code;
       inherit (pkgsNixpkgsUnstable) whichllm;
 
-      # Pull the backported all-outputs nixpkgs-review fix until both main
-      # nixpkgs inputs include it.
-      # Upstream: https://github.com/Mic92/nixpkgs-review/pull/646
-      inherit (pkgsNixpkgsReviewRelease) nixpkgs-review nixpkgs-reviewFull;
-
       # Carry recursive Codex project trust until openai/codex#19426 lands.
       # Also load user-local config.local.toml so CLI config writes avoid
       # Home Manager's read-only config.toml symlink.
@@ -85,25 +62,7 @@
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
 
-      # TODO: Remove this temporary Darwin pin once current nixpkgs-darwin
-      # Thunderbird is available from cache again.
-      thunderbird =
-        if prev.stdenv.hostPlatform.isDarwin then
-          (getPkgs inputs.nixpkgs-darwin-thunderbird-cache).thunderbird
-        else
-          prev.thunderbird;
-
       xquartz = pkgsXquartzPr.xquartz;
-
-      # Backport podman-desktop's pnpm pin fix until nixpkgs includes it.
-      # Upstream: https://github.com/NixOS/nixpkgs/pull/536832
-      podman-desktop =
-        if prev.stdenv.hostPlatform.isLinux then
-          prev.podman-desktop.override {
-            pnpm_10_29_2 = prev.pnpm_10;
-          }
-        else
-          prev.podman-desktop;
 
       # NixOS can expose the same D-Bus service file through both direct package
       # paths and system-path symlinks. Do not let dbus-broker report those
