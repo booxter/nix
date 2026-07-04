@@ -51,7 +51,6 @@ in
         home.packages = with pkgs; [
           xquartz
           xauth
-          xclock
           xdpyinfo
           xeyes
           xprop
