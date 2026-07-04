@@ -46,6 +46,10 @@ stdenv.mkDerivation {
     VITE_RELEASE_CHANNEL = "stable";
   };
 
+  patches = [
+    ./disable-local-auth.patch
+  ];
+
   postPatch = ''
     # Install the npm workspace tree from the fixed offline cache.
     (
