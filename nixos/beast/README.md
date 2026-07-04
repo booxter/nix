@@ -180,17 +180,19 @@ sudo systemctl start restic-beast-cloud-offload.service
 - On first setup, use a simple password (no special characters) or later
   logins can fail.
 
-## Lolek gallery cookies
+## Lolek media cookies
 
-`beast` runs Lolek with gallery downloading enabled. The gallery path uses
-upstream `gallery-dl` support for image/GIF/video galleries, and authenticated
-sites get cookies from the sops secret `lolek.galleryDlCookies`.
+`beast` runs Lolek with gallery downloading enabled. Authenticated media sites
+get cookies from the sops secret `lolek.galleryDlCookies`; the same Netscape
+cookies file is passed to both `gallery-dl` and `yt-dlp`.
 
 Runtime wiring:
 
 - `services.lolek.galleryDownloadEnabled = true`
 - `LOLEK_GALLERY_DL_COOKIES_FILE` points at
   `/run/secrets/lolek/galleryDlCookies`
+- `LOLEK_YT_DLP_COOKIES_FILE` points at the same secret for yt-dlp metadata,
+  probe, and download calls
 - the secret is owned by the `lolek` user and group
 
 Refresh the cookie from a local Firefox profile that is logged into Instagram:

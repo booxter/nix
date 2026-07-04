@@ -7,14 +7,12 @@ let
   wgInterface = "wg0";
   wgExporterInternalAddress = "127.0.0.1";
   wgExporterInternalPort = 9587;
-  wgExporterPublicAddress = hostInventory.toNixosHostIpv4Address wgHome.gateway.host;
   wgExporterPublicHost = "gw.${hostInventory.site.lan.domain}";
   wgExporterPublicPort = 9586;
 in
 {
   host.observability.client.prometheusMtlsEndpoints."wg-home" = {
     enable = true;
-    listenAddress = wgExporterPublicAddress;
     port = wgExporterPublicPort;
     path = "/metrics";
     upstream = "http://${wgExporterInternalAddress}:${toString wgExporterInternalPort}/metrics";

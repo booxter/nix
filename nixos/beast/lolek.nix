@@ -59,7 +59,11 @@ in
     postSourceCaption = true;
     postRequesterCaption = true;
     galleryDownloadEnabled = true;
-    environment.LOLEK_GALLERY_DL_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
+    environment = {
+      LOLEK_GALLERY_DL_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
+      # TODO: Use a first-class upstream module option once lolek exposes one.
+      LOLEK_YT_DLP_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
+    };
     hardwareAcceleration.backend = "qsv";
     hardwareAcceleration.device = hostSpec.hardware.igpu.renderDevice;
     metrics = {

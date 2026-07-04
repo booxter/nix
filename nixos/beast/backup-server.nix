@@ -361,18 +361,25 @@ in
               exit 0
             fi
 
-            # New repo content inherits from directory default ACLs, so a full
-            # recursive ACL rewrite is only needed once for pre-existing data.
-            # Later boots just refresh the top-level/default ACLs cheaply.
-            ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwx" "$repo"
-            ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx" "$repo"
+            ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwx,m::rwx" "$repo"
+            ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" "$repo"
 
-            if [ ! -e "$marker" ]; then
-              ${pkgs.acl}/bin/setfacl -R -m "u:$offload_user:rwx" "$repo"
-              ${pkgs.findutils}/bin/find "$repo" -type d -exec \
-                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx" '{}' +
-              ${pkgs.coreutils}/bin/touch "$marker"
+            if [ ! -f "$repo/config" ]; then
+              exit 0
             fi
+
+            if [ ! -e "$marker" ] || [ "$repo/config" -nt "$marker" ]; then
+              ${pkgs.acl}/bin/setfacl -R -m "u:$offload_user:rwX,m::rwX" "$repo"
+              ${pkgs.findutils}/bin/find "$repo" -type d -exec \
+                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" '{}' +
+            else
+              ${pkgs.findutils}/bin/find "$repo" -newer "$marker" -exec \
+                ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwX,m::rwX" '{}' +
+              ${pkgs.findutils}/bin/find "$repo" -type d -newer "$marker" -exec \
+                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" '{}' +
+            fi
+
+            ${pkgs.coreutils}/bin/touch "$marker"
           '';
         };
       };
