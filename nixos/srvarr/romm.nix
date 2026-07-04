@@ -111,7 +111,7 @@ let
     # the local metadata store is populated and refreshed without a manual task.
     ENABLE_SCHEDULED_UPDATE_LAUNCHBOX_METADATA = "true";
     HASHEOUS_API_ENABLED = "true";
-    DISABLE_USERPASS_LOGIN = "false";
+    DISABLE_USERPASS_LOGIN = "true";
     OIDC_ENABLED = "true";
     OIDC_AUTOLOGIN = "false";
     OIDC_PROVIDER = "SSO";
