@@ -20,8 +20,6 @@ let
   ];
   mkSabnzbdServerSecretName = server: field: "sabnzbd/servers/${server}/${field}";
   sabnzbdSecretNames = [
-    "sabnzbd/webUsername"
-    "sabnzbd/webPassword"
     "sabnzbd/apiKey"
     "sabnzbd/nzbKey"
   ]
@@ -86,8 +84,6 @@ in
     mode = "0400";
     content = ''
       [misc]
-      username = ${config.sops.placeholder."sabnzbd/webUsername"}
-      password = ${config.sops.placeholder."sabnzbd/webPassword"}
       api_key = ${config.sops.placeholder."sabnzbd/apiKey"}
       nzb_key = ${config.sops.placeholder."sabnzbd/nzbKey"}
 
