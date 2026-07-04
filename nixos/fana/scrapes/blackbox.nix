@@ -114,7 +114,19 @@ let
       tlsRotation = "manual";
     }
   ];
-  serviceCatalog = inventoryServiceCatalog ++ proxmoxServiceCatalog ++ manualTlsServiceCatalog;
+  serviceCatalog =
+    inventoryServiceCatalog
+    ++ [
+      {
+        id = "proxmox";
+        scope = "internal";
+        title = "Proxmox VE";
+        probeUrl = "https://proxmox.${lan.domain}/";
+        url = "https://proxmox.${lan.domain}/";
+      }
+    ]
+    ++ proxmoxServiceCatalog
+    ++ manualTlsServiceCatalog;
   dnsProbeTargets = [
     {
       resolver = "gateway";
