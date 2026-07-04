@@ -1,0 +1,113 @@
+diff --git a/config/src/lib.rs b/config/src/lib.rs
+index ed267577..e77453cd 100644
+--- a/config/src/lib.rs
++++ b/config/src/lib.rs
+@@ -31,6 +31,7 @@ mod tui_keymap;
+ pub mod types;
+ 
+ pub const CONFIG_TOML_FILE: &str = "config.toml";
++pub const CONFIG_LOCAL_TOML_FILE: &str = "config.local.toml";
+ 
+ pub use cloud_config_bundle::CloudConfigBundle;
+ pub use cloud_config_bundle::CloudConfigBundleLayers;
+diff --git a/config/src/loader/mod.rs b/config/src/loader/mod.rs
+index e3c7ee11..bf838a83 100644
+--- a/config/src/loader/mod.rs
++++ b/config/src/loader/mod.rs
+@@ -5,6 +5,7 @@ mod macos;
+ mod tests;
+ 
+ use self::layer_io::LoadedConfigLayers;
++use crate::CONFIG_LOCAL_TOML_FILE;
+ use crate::CONFIG_TOML_FILE;
+ use crate::CloudConfigBundleLayers;
+ use crate::ProfileV2Name;
+@@ -241,8 +242,10 @@ pub async fn load_config_layers_state(
+     // Add the base user config layer. When profile-v2 is selected, add the
+     // profile config as a second user layer on top so the profile only needs to
+     // contain overrides.
+-    let active_user_file = overrides.user_config_path(codex_home)?;
+     let base_user_file = AbsolutePathBuf::resolve_path_against_base(CONFIG_TOML_FILE, codex_home);
++    let local_user_file =
++        AbsolutePathBuf::resolve_path_against_base(CONFIG_LOCAL_TOML_FILE, codex_home);
++    let active_user_file = overrides.user_config_path(codex_home)?;
+     let base_user_layer = load_user_config_layer(
+         fs,
+         &base_user_file,
+@@ -275,6 +278,19 @@ pub async fn load_config_layers_state(
+     }
+     layers.push(base_user_layer);
+ 
++    if active_user_file != local_user_file {
++        layers.push(
++            load_user_config_layer(
++                fs,
++                &local_user_file,
++                /*profile*/ None,
++                ignore_user_config,
++                strict_config,
++            )
++            .await?,
++        );
++    }
++
+     if active_user_file != base_user_file {
+         layers.push(
+             load_user_config_layer(
+@@ -317,7 +333,7 @@ pub async fn load_config_layers_state(
+             &cwd,
+             &project_root_markers,
+             codex_home,
+-            &active_user_file,
++            &local_user_file,
+         )
+         .await
+         {
+diff --git a/core/src/config/edit.rs b/core/src/config/edit.rs
+index 2d7a4132..23d0734d 100644
+--- a/core/src/config/edit.rs
++++ b/core/src/config/edit.rs
+@@ -1,6 +1,6 @@
+ use crate::path_utils::resolve_symlink_write_paths;
+ use crate::path_utils::write_atomically;
+ use anyhow::Context;
+-use codex_config::CONFIG_TOML_FILE;
++use codex_config::CONFIG_LOCAL_TOML_FILE;
+ use codex_config::types::McpServerConfig;
+ use codex_config::types::SessionPickerViewMode;
+@@ -689,7 +689,7 @@ fn write_skill_config_selector(table: &mut TomlTable, selector: &SkillConfigSele
+ 
+ /// Persist edits using a blocking strategy.
+ pub fn apply_blocking(codex_home: &Path, edits: &[ConfigEdit]) -> anyhow::Result<()> {
+-    let config_path = codex_home.join(CONFIG_TOML_FILE);
++    let config_path = codex_home.join(CONFIG_LOCAL_TOML_FILE);
+     apply_blocking_to_resolved_file(&config_path, edits)
+ }
+ 
+@@ -742,7 +742,7 @@ fn apply_blocking_to_resolved_file(
+ ///
+ pub async fn apply(codex_home: &Path, edits: Vec<ConfigEdit>) -> anyhow::Result<()> {
+     let codex_home = codex_home.to_path_buf();
+-    let config_path = codex_home.join(CONFIG_TOML_FILE);
++    let config_path = codex_home.join(CONFIG_LOCAL_TOML_FILE);
+     task::spawn_blocking(move || apply_blocking_to_resolved_file(&config_path, &edits))
+         .await
+         .context("config persistence task panicked")?
+@@ -757,7 +757,7 @@ pub struct ConfigEditsBuilder {
+ 
+ impl ConfigEditsBuilder {
+     pub fn new(codex_home: &Path) -> Self {
+-        Self::for_config_path(&codex_home.join(CONFIG_TOML_FILE))
++        Self::for_config_path(&codex_home.join(CONFIG_LOCAL_TOML_FILE))
+     }
+ 
+     pub fn for_config(config: &crate::config::Config) -> Self {
+@@ -765,7 +765,7 @@ impl ConfigEditsBuilder {
+             .config_layer_stack
+             .get_user_config_file()
+             .map(codex_utils_absolute_path::AbsolutePathBuf::to_path_buf)
+-            .unwrap_or_else(|| config.codex_home.join(CONFIG_TOML_FILE).to_path_buf());
++            .unwrap_or_else(|| config.codex_home.join(CONFIG_LOCAL_TOML_FILE).to_path_buf());
+         Self::for_config_path(&config_path)
+     }
+ 
