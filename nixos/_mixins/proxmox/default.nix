@@ -9,6 +9,11 @@
 let
   cfg = config.host.proxmox.apiCertificate;
   exporterCfg = config.host.proxmox.prometheusExporter;
+  oidc = import ../../../lib/oidc-clients.nix { inherit lib hostInventory; };
+  oidcCfg = config.host.proxmox.oidc;
+  oidcMappedAdminGroup = "${oidcCfg.allowedGroup}-${oidcCfg.realm}";
+  oidcRealmUnit = "proxmox-oidc-realm.service";
+  pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   certInstallUnit = "proxmox-api-certificate.service";
@@ -64,6 +69,106 @@ in
     };
   };
 
+  options.host.proxmox.oidc = {
+    enable = lib.mkEnableOption "Kanidm OpenID Connect realm for Proxmox VE";
+
+    managerHost = lib.mkOption {
+      type = lib.types.str;
+      default = "prx1-lab";
+      description = "Proxmox node that declaratively manages the cluster-wide OIDC realm.";
+    };
+
+    realm = lib.mkOption {
+      type = lib.types.str;
+      default = "kanidm";
+      description = "Proxmox VE realm identifier for Kanidm OIDC users.";
+    };
+
+    clientId = lib.mkOption {
+      type = lib.types.str;
+      default = oidc.clients.proxmox.clientId;
+      description = "Kanidm OAuth2 client ID used by Proxmox VE.";
+    };
+
+    issuerUrl = lib.mkOption {
+      type = lib.types.str;
+      default = oidc.openidBaseUrl oidcCfg.clientId;
+      defaultText = "\${issuerBase}/oauth2/openid/\${clientId}";
+      description = "OIDC issuer URL used by the Proxmox VE realm.";
+    };
+
+    clientSecretKey = lib.mkOption {
+      type = lib.types.str;
+      default = "proxmox/oidc/client_secret";
+      description = "SOPS key containing the Kanidm OAuth2 client secret for Proxmox VE.";
+    };
+
+    usernameClaim = lib.mkOption {
+      type = lib.types.str;
+      default = "username";
+      description = "OpenID claim used for Proxmox usernames.";
+    };
+
+    groupsClaim = lib.mkOption {
+      type = lib.types.str;
+      default = "infra_groups";
+      description = "OpenID claim used for Proxmox group mapping.";
+    };
+
+    scopes = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = [
+        "email"
+        "profile"
+        "infra_groups"
+      ];
+      apply = lib.unique;
+      description = "OIDC scopes requested by Proxmox VE.";
+    };
+
+    allowedGroup = lib.mkOption {
+      type = lib.types.str;
+      default = "infra-admins";
+      description = "Kanidm group mapped to the Proxmox administrator role.";
+    };
+
+    role = lib.mkOption {
+      type = lib.types.str;
+      default = "Administrator";
+      description = "Proxmox VE role granted to the mapped Kanidm group.";
+    };
+
+    aclPath = lib.mkOption {
+      type = lib.types.str;
+      default = "/";
+      description = "Proxmox VE ACL path where the mapped Kanidm group is granted access.";
+    };
+
+    autocreateUsers = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether Proxmox VE automatically creates OIDC users on first login.";
+    };
+
+    autocreateGroups = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether Proxmox VE automatically creates groups returned by the OIDC claim.";
+    };
+
+    overwriteGroups = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether OIDC group membership replaces existing Proxmox group membership on login.";
+    };
+
+    comment = lib.mkOption {
+      type = lib.types.str;
+      default = "Kanidm SSO";
+      description = "Comment stored on the Proxmox VE OIDC realm.";
+    };
+  };
+
   options.host.proxmox.prometheusExporter = {
     enable = lib.mkEnableOption "per-node Proxmox VE Prometheus exporter";
 
@@ -113,6 +218,9 @@ in
   config = lib.mkMerge [
     {
       host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.isProxmox && !config.host.isWork);
+      host.proxmox.oidc.enable = lib.mkDefault (
+        config.host.isProxmox && !config.host.isWork && hostSpecName == oidcCfg.managerHost
+      );
       host.proxmox.prometheusExporter.enable = lib.mkDefault (
         config.host.isProxmox && !config.host.isWork
       );
@@ -234,6 +342,114 @@ in
         # re-starting units that are not directly wanted. Keep the API proxy a
         # first-class boot target because nginx/443 and exporters depend on it.
         wantedBy = [ "multi-user.target" ];
+      };
+    })
+    (lib.mkIf oidcCfg.enable {
+      assertions = [
+        {
+          assertion = config.services.proxmox-ve.enable;
+          message = "host.proxmox.oidc requires services.proxmox-ve.enable.";
+        }
+        {
+          assertion = builtins.hasAttr oidcCfg.clientId oidc.clients;
+          message = "host.proxmox.oidc.clientId must exist in lib/oidc-clients.nix.";
+        }
+        {
+          assertion = oidcCfg.scopes != [ ];
+          message = "host.proxmox.oidc.scopes must not be empty.";
+        }
+      ];
+
+      sops.secrets.proxmoxOidcClientSecret = {
+        key = oidcCfg.clientSecretKey;
+        mode = "0400";
+        restartUnits = [ oidcRealmUnit ];
+      };
+
+      systemd.services.proxmox-oidc-realm = {
+        description = "Configure Proxmox VE Kanidm OIDC realm";
+        wantedBy = [ "multi-user.target" ];
+        requires = [ "pve-cluster.service" ] ++ sopsInstallSecretsUnit;
+        after = [
+          "pve-cluster.service"
+          "corosync.service"
+        ]
+        ++ sopsInstallSecretsUnit;
+        path = with pkgs; [
+          coreutils
+          jq
+        ];
+        script = ''
+          set -euo pipefail
+
+          realm=${lib.escapeShellArg oidcCfg.realm}
+          mapped_group=${lib.escapeShellArg oidcMappedAdminGroup}
+          group_comment=${lib.escapeShellArg "Kanidm ${oidcCfg.allowedGroup} OIDC group"}
+          acl_path=${lib.escapeShellArg oidcCfg.aclPath}
+          role=${lib.escapeShellArg oidcCfg.role}
+          pveum=${lib.escapeShellArg pveum}
+          client_key="$(tr -d '\n' < ${lib.escapeShellArg config.sops.secrets.proxmoxOidcClientSecret.path})"
+
+          cleanup() {
+            rm -f "/etc/pve/.proxmox-oidc-realm.probe.$$"
+          }
+          trap cleanup EXIT
+
+          wait_pmxcfs_writable() {
+            probe="/etc/pve/.proxmox-oidc-realm.probe.$$"
+
+            for attempt in $(seq 1 60); do
+              if : > "$probe" 2>/dev/null; then
+                rm -f "$probe"
+                return 0
+              fi
+
+              if [ "$attempt" -eq 1 ]; then
+                echo "waiting for writable Proxmox cluster filesystem before configuring OIDC" >&2
+              fi
+              sleep 1
+            done
+
+            echo "timed out waiting for writable Proxmox cluster filesystem before configuring OIDC" >&2
+            return 1
+          }
+
+          wait_pmxcfs_writable
+
+          realm_common_args=(
+            --issuer-url ${lib.escapeShellArg oidcCfg.issuerUrl}
+            --client-id ${lib.escapeShellArg oidcCfg.clientId}
+            --client-key "$client_key"
+            --autocreate ${if oidcCfg.autocreateUsers then "1" else "0"}
+            --groups-claim ${lib.escapeShellArg oidcCfg.groupsClaim}
+            --groups-autocreate ${if oidcCfg.autocreateGroups then "1" else "0"}
+            --groups-overwrite ${if oidcCfg.overwriteGroups then "1" else "0"}
+            --scopes ${lib.escapeShellArg (lib.concatStringsSep " " oidcCfg.scopes)}
+            --comment ${lib.escapeShellArg oidcCfg.comment}
+          )
+
+          if "$pveum" realm list --output-format json \
+            | jq -e --arg realm "$realm" '.[] | select((.realm // .realmid // .id) == $realm)' >/dev/null; then
+            "$pveum" realm modify "$realm" "''${realm_common_args[@]}"
+          else
+            "$pveum" realm add "$realm" \
+              --type openid \
+              --username-claim ${lib.escapeShellArg oidcCfg.usernameClaim} \
+              "''${realm_common_args[@]}"
+          fi
+
+          if ! "$pveum" group list --output-format json \
+            | jq -e --arg group "$mapped_group" '.[] | select((.groupid // .group // .id) == $group)' >/dev/null; then
+            "$pveum" group add "$mapped_group" --comment "$group_comment"
+          fi
+
+          "$pveum" aclmod "$acl_path" -groups "$mapped_group" -roles "$role"
+        '';
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          UMask = "0077";
+        };
       };
     })
     (lib.mkIf exporterCfg.enable {

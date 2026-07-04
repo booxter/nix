@@ -17,6 +17,16 @@ let
   serviceUrl = serviceId: hostInventory.servicesById.${serviceId}.url;
   scopeWith = extraScopes: baseScopes ++ extraScopes;
   clientSecretKey = clientId: "kanidm/oauth2/${clientId}/client_secret";
+  proxmoxLabHostSpecs = builtins.filter (
+    spec: (spec.hostKind or null) == "proxmox" && !(spec.isWork or false)
+  ) hostInventory.nixosHostSpecs;
+  proxmoxLabHosts = lib.unique (
+    lib.concatMap hostInventory.toNixosHostCertificateDnsNames proxmoxLabHostSpecs
+  );
+  proxmoxOriginUrls = lib.unique (
+    (map (host: "https://${host}") proxmoxLabHosts)
+    ++ (map (host: "https://${host}:8006") proxmoxLabHosts)
+  );
   mkClient =
     clientId: client:
     {
@@ -103,6 +113,14 @@ rec {
       originUrl = "http://127.0.0.1:9/oidc-synthetic-probe/callback";
       originLanding = issuerBaseUrl;
       scopeMaps."oidc-probe-users" = baseScopes;
+    };
+
+    proxmox = mkClient "proxmox" {
+      displayName = "Proxmox VE";
+      originUrl = proxmoxOriginUrls;
+      originLanding = "https://prx1-lab.${lan.domain}/";
+      scopeMaps."infra-admins" = scopeWith [ "infra_groups" ];
+      claimMaps.infra_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
     };
 
     litellm = mkClient "litellm" {
