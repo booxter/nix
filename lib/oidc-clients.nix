@@ -23,10 +23,7 @@ let
   proxmoxLabHosts = lib.unique (
     lib.concatMap hostInventory.toNixosHostCertificateDnsNames proxmoxLabHostSpecs
   );
-  proxmoxOriginUrls = lib.unique (
-    (map (host: "https://${host}") proxmoxLabHosts)
-    ++ (map (host: "https://${host}:8006") proxmoxLabHosts)
-  );
+  proxmoxOriginUrls = map (host: "https://${host}") proxmoxLabHosts;
   mkClient =
     clientId: client:
     {

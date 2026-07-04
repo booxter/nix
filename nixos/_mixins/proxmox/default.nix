@@ -233,8 +233,8 @@ in
         }
       ];
 
-      # TODO: revisit whether direct LAN access to pveproxy's fixed 8006 port
-      # is still needed after browser/API access has settled on nginx/443.
+      # Browser OIDC origins are scoped to nginx/443. pveproxy keeps its fixed
+      # 8006 listener for Proxmox-native/root fallback access.
       host.internalHttps.services.proxmox = {
         enable = true;
         serverName = cfg.serverName;
