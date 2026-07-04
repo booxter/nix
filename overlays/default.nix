@@ -18,6 +18,7 @@
 
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsNixpkgsMain = getPkgs inputs.nixpkgs;
+      pkgsNixpkgsUnstable = getPkgs inputs.nixpkgs-unstable;
       pkgsNixpkgsDarwin = getPkgs inputs.nixpkgs-darwin;
       nixpkgsReviewFixedVersion = "3.9.0";
       nixpkgsReviewMainVersion = pkgsNixpkgsMain.nixpkgs-review.version;
@@ -55,6 +56,7 @@
     in
     {
       inherit (llmAgentsPkgs) claude-code;
+      inherit (pkgsNixpkgsUnstable) whichllm;
 
       # Pull the backported all-outputs nixpkgs-review fix until both main
       # nixpkgs inputs include it.
