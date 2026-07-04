@@ -88,6 +88,7 @@ in
       ENABLE_OAUTH_SIGNUP = "True";
       ENABLE_PERSISTENT_CONFIG = "False";
       ENABLE_SIGNUP = "False";
+      OAUTH_AUTO_REDIRECT = "True";
       OAUTH_ADMIN_ROLES = "admin";
       OAUTH_ALLOWED_ROLES = "user";
       OAUTH_CLIENT_ID = oidcClientId;
