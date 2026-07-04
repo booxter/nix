@@ -338,8 +338,20 @@ EOF
     cat <<'EOF'
 set -euo pipefail
 printf '%s\n' "$*" >> "$NIX_ARGS_OUT"
-if [[ "$*" == *"--print-out-paths"* ]]; then
-  printf '%s\n' "$SYSTEM_CONFIG_OUT"
+if [[ "${1-}" == "shell" ]]; then
+  args=("$@")
+  out_link=""
+  for ((i = 0; i < ${#args[@]}; i++)); do
+    if [[ "${args[$i]}" == "--out-link" ]]; then
+      out_link="${args[$((i + 1))]}"
+      break
+    fi
+  done
+  if [[ -z "$out_link" ]]; then
+    echo "missing --out-link" >&2
+    exit 99
+  fi
+  ln -s "$SYSTEM_CONFIG_OUT" "$out_link"
 fi
 EOF
   } > "$workdir/bin/nix"
@@ -367,7 +379,9 @@ EOF
   [ "$(wc -l < "$SUDO_CALLS_OUT" | tr -d ' ')" = "1" ]
   [[ "$(<"$SUDO_ARGS_OUT")" == *" -c "* ]]
   [ "$(wc -l < "$NIX_ARGS_OUT" | tr -d ' ')" = "2" ]
-  [[ "$(<"$NIX_ARGS_OUT")" == *"build --print-out-paths --no-link --show-trace -L .#darwinConfigurations.JGWXHWDL4X.system"* ]]
+  [[ "$(<"$NIX_ARGS_OUT")" == *"shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin build"* ]]
+  [[ "$(<"$NIX_ARGS_OUT")" == *"--hostname JGWXHWDL4X"* ]]
+  [[ "$(<"$NIX_ARGS_OUT")" == *"--diff auto .#"* ]]
   [[ "$(<"$NIX_ARGS_OUT")" == *"build --no-link --profile /nix/var/nix/profiles/system $workdir/system"* ]]
   [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "activate" ]
 }
