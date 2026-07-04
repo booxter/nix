@@ -1,0 +1,53 @@
+diff --git a/backend/middleware/auth.js b/backend/middleware/auth.js
+index 8d83ec8..bf66dc0 100644
+--- a/backend/middleware/auth.js
++++ b/backend/middleware/auth.js
+@@ -46,6 +46,11 @@ export const isProxyAuthEnabled = () => {
+   return !!process.env.AUTH_PROXY_HEADER;
+ };
+ 
++export const isLocalAuthEnabled = () => {
++  const value = String(process.env.DISABLE_LOCAL_AUTH || "").trim().toLowerCase();
++  return value !== "true" && value !== "1" && value !== "yes";
++};
++
+ function parseCsv(value) {
+   if (!value) return [];
+   return String(value)
+@@ -443,6 +449,7 @@ function migrateLegacyAdmin() {
+ }
+ 
+ function resolveUser(username, password) {
++  if (!isLocalAuthEnabled()) return null;
+   const users = userOps.getAllUsers();
+   if (users.length === 0) {
+     migrateLegacyAdmin();
+@@ -466,6 +473,7 @@ function resolveUser(username, password) {
+ }
+ 
+ function legacyAuth(username, password) {
++  if (!isLocalAuthEnabled()) return null;
+   const authUser = getAuthUser();
+   const passwords = getAuthPassword();
+   if (passwords.length === 0) return null;
+diff --git a/backend/routes/auth.js b/backend/routes/auth.js
+index 772c180..412c1ea 100644
+--- a/backend/routes/auth.js
++++ b/backend/routes/auth.js
+@@ -2,6 +2,7 @@ import express from "express";
+ import bcrypt from "bcrypt";
+ import { userOps } from "../config/db-helpers.js";
+ import { createSession, deleteSession, getSessionByToken } from "../config/session-helpers.js";
++import { isLocalAuthEnabled } from "../middleware/auth.js";
+ import { requireAuth } from "../middleware/requirePermission.js";
+ 
+ const router = express.Router();
+@@ -13,5 +14,8 @@ const getBearerToken = (req) => {
+ router.post("/login", (req, res) => {
+   try {
++    if (!isLocalAuthEnabled()) {
++      return res.status(403).json({ error: "Local password login is disabled" });
++    }
+     const username = String(req.body?.username || "").trim().toLowerCase();
+     const password = String(req.body?.password || "");
+     if (!username || !password) {

@@ -40,8 +40,7 @@
     https_chain = "";
     enable_https = false;
     # Browser access is gated by oauth2-proxy in nginx. Keep SABnzbd's own
-    # username/password for non-local direct access, but do not show a second
-    # login form to the local reverse proxy path.
+    # password login disabled; integrations use the API key instead.
     inet_exposure = 5;
     socks5_proxy_url = "";
     download_free = "";

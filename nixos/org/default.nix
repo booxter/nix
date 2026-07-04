@@ -70,7 +70,7 @@ in
         enableregistration = false;
       };
       auth = {
-        local.enabled = true;
+        local.enabled = false;
         openid = {
           enabled = true;
           providers.${vikunjaOidcProviderKey} = {

@@ -49,12 +49,13 @@ in
       TRUST_PROXY = "2";
       # Browser SSO is enforced by oauth2-proxy on beast. Aurral has no native
       # OIDC support, so it trusts only this proxy-provided username header
-      # while keeping app-local password login as a fallback.
+      # and rejects app-local password login.
       AUTH_PROXY_ENABLED = "true";
       AUTH_PROXY_HEADER = "x-forwarded-user";
       AUTH_PROXY_ADMIN_USERS = lib.concatStringsSep "," aurralAdminUsers;
       AUTH_PROXY_DEFAULT_ROLE = "user";
       AUTH_PROXY_TRUSTED_IPS = "127.0.0.1,::1";
+      DISABLE_LOCAL_AUTH = "true";
     };
     serviceConfig = {
       ExecStart = lib.getExe srvarrPkgs.aurral;

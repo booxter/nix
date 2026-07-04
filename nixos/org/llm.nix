@@ -176,6 +176,8 @@ in
       GENERIC_USER_DISPLAY_NAME_ATTRIBUTE=name
       GENERIC_ROLE_MAPPINGS_GROUP_CLAIM=litellm_groups
       GENERIC_ROLE_MAPPINGS_ROLES={'proxy_admin':['infra-admins']}
+      LITELLM_HIDE_DEFAULT_CREDENTIALS_HINT=true
+      AUTO_REDIRECT_UI_LOGIN_TO_SSO=true
       PROXY_BASE_URL=${llmUrl}
     '';
     restartUnits = [ "podman-litellm.service" ];
@@ -280,6 +282,13 @@ in
       proxy_read_timeout 600s;
       proxy_send_timeout 600s;
     '';
+  };
+
+  services.nginx.virtualHosts."internal-https-llm".locations = {
+    "= /fallback/login".return = 404;
+    "= /login".return = 404;
+    "= /v2/login".return = 404;
+    "= /v3/login".return = 404;
   };
 
   host.observability.client.prometheusMtlsEndpoints.litellm = {
