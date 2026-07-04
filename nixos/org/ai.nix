@@ -76,7 +76,7 @@ in
       DEFAULT_MODELS = "qwen3-next:80b";
       DEFAULT_PINNED_MODELS = "qwen3-next:80b,qwen3.5:9b";
       ENABLE_CODE_EXECUTION = "False";
-      ENABLE_LOGIN_FORM = "True";
+      ENABLE_LOGIN_FORM = "False";
       ENABLE_OTEL = "True";
       ENABLE_OTEL_LOGS = "False";
       ENABLE_OTEL_METRICS = "True";
