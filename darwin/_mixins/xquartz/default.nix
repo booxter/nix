@@ -1,12 +1,12 @@
 {
   config,
   lib,
-  username,
+  pkgs,
   ...
 }:
 let
   cfg = config.host.xquartz;
-  xquartzProfile = "/etc/profiles/per-user/${username}";
+  xquartz = pkgs.xquartz;
 in
 {
   options.host.xquartz = {
@@ -14,14 +14,19 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    # XQuartz itself is installed by Home Manager. The launchd jobs still need
+    # package-internal helpers under libexec and etc/X11, which Home Manager's
+    # profile symlink farm does not expose, so point launchd at the store path.
     launchd.user.agents.xquartz-startx.serviceConfig = {
       Label = "org.nixos.xquartz.startx";
       ProgramArguments = [
-        "${xquartzProfile}/libexec/launchd_startx"
-        "${xquartzProfile}/bin/startx"
+        "${xquartz}/libexec/launchd_startx"
+        "${xquartz}/bin/startx"
         "--"
-        "${xquartzProfile}/bin/Xquartz"
+        "${xquartz}/bin/Xquartz"
       ];
+      # XQuartz expects launchd to allocate DISPLAY as this socket name; X11.bin
+      # derives the org.nixos.xquartz prefix from the bundle identifier.
       Sockets."org.nixos.xquartz:0".SecureSocketWithKey = "DISPLAY";
       ServiceIPC = true;
       EnableTransactions = true;
@@ -30,9 +35,9 @@ in
     launchd.daemons.xquartz-privileged-startx.serviceConfig = {
       Label = "org.nixos.xquartz.privileged_startx";
       ProgramArguments = [
-        "${xquartzProfile}/libexec/privileged_startx"
+        "${xquartz}/libexec/privileged_startx"
         "-d"
-        "${xquartzProfile}/etc/X11/xinit/privileged_startx.d"
+        "${xquartz}/etc/X11/xinit/privileged_startx.d"
       ];
       MachServices."org.nixos.xquartz.privileged_startx" = true;
       TimeOut = 120;
