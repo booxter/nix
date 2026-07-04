@@ -20,6 +20,7 @@
       pkgsNixpkgsMain = getPkgs inputs.nixpkgs;
       pkgsNixpkgsUnstable = getPkgs inputs.nixpkgs-unstable;
       pkgsNixpkgsDarwin = getPkgs inputs.nixpkgs-darwin;
+      pkgsXquartzPr = getPkgs inputs.nixpkgs-xquartz-pr;
       nixpkgsReviewFixedVersion = "3.9.0";
       nixpkgsReviewMainVersion = pkgsNixpkgsMain.nixpkgs-review.version;
       nixpkgsReviewDarwinVersion = pkgsNixpkgsDarwin.nixpkgs-review.version;
@@ -97,6 +98,8 @@
           (getPkgs inputs.nixpkgs-darwin-thunderbird-cache).thunderbird
         else
           prev.thunderbird;
+
+      xquartz = pkgsXquartzPr.xquartz;
 
       # Backport podman-desktop's pnpm pin fix until nixpkgs includes it.
       # Upstream: https://github.com/NixOS/nixpkgs/pull/536832

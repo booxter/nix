@@ -527,6 +527,22 @@
         "type": "github"
       }
     },
+    "nixpkgs-xquartz-pr": {
+      "locked": {
+        "lastModified": 1782970327,
+        "narHash": "sha256-MH7S945oaxnPz0TNFCSGF8Xwv8HRh6+jtMPT2jqI2Hc=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "4a35131769a3c06c37232d60a1c3f1eb37392377",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "4a35131769a3c06c37232d60a1c3f1eb37392377",
+        "type": "github"
+      }
+    },
     "nixpkgs_2": {
       "locked": {
         "lastModified": 1782918843,
@@ -671,6 +687,7 @@
         "nixpkgs-darwin-thunderbird-cache": "nixpkgs-darwin-thunderbird-cache",
         "nixpkgs-review-release": "nixpkgs-review-release",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "nixpkgs-xquartz-pr": "nixpkgs-xquartz-pr",
         "nixvim": "nixvim",
         "nur": "nur",
         "proxmox-nixos": "proxmox-nixos",
