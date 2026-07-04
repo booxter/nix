@@ -8,11 +8,6 @@
 }:
 let
   codexPkgs = import ./pkgs { inherit pkgs; };
-  trustedProjects =
-    paths:
-    lib.genAttrs (map (path: "${config.home.homeDirectory}/${path}") paths) (_: {
-      trust_level = "trusted";
-    });
 in
 {
   programs.codex = {
@@ -24,10 +19,6 @@ in
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
       notice.fast_default_opt_out = true;
-
-      projects = trustedProjects [
-        "src"
-      ];
 
       # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
       # https://github.com/openai/codex/issues/12582
