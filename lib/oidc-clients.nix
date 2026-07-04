@@ -23,7 +23,10 @@ let
   proxmoxLabHosts = lib.unique (
     lib.concatMap hostInventory.toNixosHostCertificateDnsNames proxmoxLabHostSpecs
   );
-  proxmoxOriginUrls = map (host: "https://${host}") proxmoxLabHosts;
+  proxmoxCanonicalHost = "proxmox.${lan.domain}";
+  proxmoxOriginUrls = lib.unique (
+    [ "https://${proxmoxCanonicalHost}" ] ++ map (host: "https://${host}") proxmoxLabHosts
+  );
   mkClient =
     clientId: client:
     {
@@ -115,7 +118,7 @@ rec {
     proxmox = mkClient "proxmox" {
       displayName = "Proxmox VE";
       originUrl = proxmoxOriginUrls;
-      originLanding = "https://prx1-lab.${lan.domain}/";
+      originLanding = "https://${proxmoxCanonicalHost}/";
       scopeMaps."infra-admins" = scopeWith [ "infra_groups" ];
       claimMaps.infra_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
     };

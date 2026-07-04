@@ -771,6 +771,7 @@ rec {
       netIface = prxNetIface;
       ipAddress = "192.168.15.10";
       macAddress = "38:05:25:30:7d:89";
+      dnsAliases = [ "proxmox.${site.lan.domain}" ];
       dhcpReservation = {
         match = "38:05:25:30:7d:89";
         hostname = "prx1-lab";
