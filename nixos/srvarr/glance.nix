@@ -50,7 +50,12 @@ let
         url = "https://${httpsService.serverName}/";
       }
   ) hostInventory.glanceServices;
-  utilityLinks = [
+  infrastructureLinks = [
+    {
+      icon = "sh:proxmox";
+      title = "Proxmox VE";
+      url = "https://proxmox.${hostInventory.site.lan.domain}/";
+    }
     {
       icon = "sh:smallstep";
       title = "PKI Root CA";
@@ -58,7 +63,7 @@ let
     }
   ];
   extraSitesByCategory = {
-    infrastructure = utilityLinks;
+    infrastructure = infrastructureLinks;
   };
   extraSitesFor =
     category:
