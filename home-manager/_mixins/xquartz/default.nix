@@ -48,7 +48,16 @@ in
           }
         ];
 
-        home.packages = [ pkgs.xquartz ];
+        home.packages = with pkgs; [
+          xquartz
+          xauth
+          xclock
+          xdpyinfo
+          xeyes
+          xprop
+          xterm
+          xwininfo
+        ];
 
         programs.bash = {
           profileExtra = lib.mkOrder 900 displayInit;

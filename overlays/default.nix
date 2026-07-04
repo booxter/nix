@@ -73,12 +73,6 @@
           ../lib/patches/codex-recursive-project-trust.patch
           ../lib/patches/codex-user-config-local-overlay.patch
         ];
-        # nixpkgs' Cargo hook passes -j $NIX_BUILD_CORES, which overrides
-        # CARGO_BUILD_JOBS. Keep the upstream package's job cap effective.
-        preBuild = ''
-          export NIX_BUILD_CORES="''${CARGO_BUILD_JOBS:-2}"
-        ''
-        + (old.preBuild or "");
       });
 
       # https://github.com/NixOS/nixpkgs/pull/374846
