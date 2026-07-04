@@ -8,9 +8,6 @@
     # TODO: Drop once XQuartz fixes from NixOS/nixpkgs#537679 reach
     # nixpkgs-26.05-darwin.
     nixpkgs-xquartz-pr.url = "github:NixOS/nixpkgs/4a35131769a3c06c37232d60a1c3f1eb37392377";
-    # TODO: Remove this temporary pin once both main nixpkgs inputs include
-    # nixpkgs-review 3.9.0.
-    nixpkgs-review-release.url = "github:NixOS/nixpkgs/release-26.05";
     # TODO: Remove this temporary pin once current nixpkgs-darwin Thunderbird
     # is available from cache again.
     nixpkgs-darwin-thunderbird-cache.url = "github:NixOS/nixpkgs/ea68a74f45ad6311f4bff62b865932ac195d46a7";

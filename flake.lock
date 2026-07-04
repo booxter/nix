@@ -479,22 +479,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-review-release": {
-      "locked": {
-        "lastModified": 1783156076,
-        "narHash": "sha256-fINeT3icpJNLreCx62GJ66zhSTMQip6LRtxRywpaCGI=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "230911bdb9e26d476542ac961352f7c20b0724bb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "release-26.05",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-stable": {
       "locked": {
         "lastModified": 1769318308,
@@ -685,7 +669,6 @@
         "nixpkgs": "nixpkgs_4",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "nixpkgs-darwin-thunderbird-cache": "nixpkgs-darwin-thunderbird-cache",
-        "nixpkgs-review-release": "nixpkgs-review-release",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nixpkgs-xquartz-pr": "nixpkgs-xquartz-pr",
         "nixvim": "nixvim",
