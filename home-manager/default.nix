@@ -67,6 +67,7 @@
     [
     ]
     ++ lib.optionals isDesktop [
+      element-desktop
       obsidian
       telegram-desktop
       wireshark
