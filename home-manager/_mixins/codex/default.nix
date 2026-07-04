@@ -53,11 +53,6 @@ in
     };
   };
 
-  home.file = {
-    ".codex/config.toml".force = true;
-    ".codex/rules/default.rules".force = true;
-  };
-
   home.packages = lib.optionals (!isWork) [
     codexPkgs.codex-usage-status
     codexPkgs.codex-rate-limit-reset-credits
