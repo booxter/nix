@@ -63,6 +63,9 @@
   targets.darwin.copyApps.enable = isDarwin; # populate apps dir for Spotlight
 
   home.packages =
+    let
+      vlc = if isDarwin then pkgs.vlc-bin else pkgs.vlc;
+    in
     with pkgs;
     [
     ]
@@ -75,13 +78,8 @@
     ++ lib.optionals (isDesktop && isDarwin) [
       spotify
     ]
-    ++ lib.optionals (!isWork && isDesktop && isDarwin) [
-      vlc-bin
-    ]
-    ++ lib.optionals (!isWork && isDesktop && !isDarwin) [
-      vlc
-    ]
     ++ lib.optionals (!isWork && isDesktop) [
+      vlc
       podman-desktop
       wmctrl
       xauth
