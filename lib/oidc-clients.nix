@@ -25,7 +25,11 @@ let
   );
   proxmoxCanonicalHost = "proxmox.${lan.domain}";
   proxmoxOriginUrls = lib.unique (
-    [ "https://${proxmoxCanonicalHost}" ] ++ map (host: "https://${host}") proxmoxLabHosts
+    [
+      "https://${proxmoxCanonicalHost}"
+      "https://proxmox"
+    ]
+    ++ map (host: "https://${host}") proxmoxLabHosts
   );
   mkClient =
     clientId: client:
