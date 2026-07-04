@@ -51,6 +51,7 @@ in
         http_addr = "127.0.0.1";
         http_port = grafanaPort;
         domain = grafanaHost;
+        enforce_domain = true;
         root_url = "https://${grafanaHost}/";
       };
       security = {
