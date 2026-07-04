@@ -5,6 +5,7 @@ AUTH_FILE="${HOME}/.codex/auth.json"
 FIVE_HOUR_ITEM="codex.5h"
 WEEKLY_ITEM="codex.weekly"
 RESETS_ITEM="codex.resets"
+EXPIRING_RESET_SECONDS=604800
 
 GREEN="0xff9ece6a"
 RED="0xfff7768e"
@@ -18,8 +19,14 @@ format_duration() {
     printf '?'
     return
   fi
+  if ! [[ "$seconds" =~ ^-?[0-9]+$ ]]; then
+    printf '?'
+    return
+  fi
 
-  if [ "$seconds" -lt 60 ]; then
+  if [ "$seconds" -lt 0 ]; then
+    printf 'expired'
+  elif [ "$seconds" -lt 60 ]; then
     printf '%ss' "$seconds"
   elif [ "$seconds" -lt 3600 ]; then
     printf '%sm' "$((seconds / 60))"
@@ -27,6 +34,22 @@ format_duration() {
     printf '%sh%02d' "$((seconds / 3600))" "$(((seconds % 3600) / 60))"
   else
     printf '%sd%02dh' "$((seconds / 86400))" "$(((seconds % 86400) / 3600))"
+  fi
+}
+
+format_epoch_local() {
+  local epoch="$1"
+
+  if ! [[ "$epoch" =~ ^[0-9]+$ ]]; then
+    return 1
+  fi
+
+  if date -r "$epoch" '+%Y-%m-%d %H:%M %Z' >/dev/null 2>&1; then
+    date -r "$epoch" '+%Y-%m-%d %H:%M %Z'
+  elif date -d "@$epoch" '+%Y-%m-%d %H:%M %Z' >/dev/null 2>&1; then
+    date -d "@$epoch" '+%Y-%m-%d %H:%M %Z'
+  else
+    return 1
   fi
 }
 
@@ -157,14 +180,59 @@ window_limit_reached() {
   esac
 }
 
-reset_color() {
-  local refreshes="$1"
+reset_count_label() {
+  local reset_count="$1"
 
-  if [[ "$refreshes" =~ ^[0-9]+$ ]] && [ "$refreshes" -gt 0 ]; then
-    printf '%s' "$GREEN"
+  if [ "$reset_count" = "1" ]; then
+    printf '1 reset'
   else
-    printf '%s' "$NEUTRAL"
+    printf '%s resets' "$reset_count"
   fi
+}
+
+reset_color() {
+  local reset_count="$1"
+  local next_expires_after_seconds="$2"
+
+  if ! [[ "$reset_count" =~ ^[0-9]+$ ]] || [ "$reset_count" -le 0 ]; then
+    printf '%s' "$NEUTRAL"
+  elif [[ "$next_expires_after_seconds" =~ ^-?[0-9]+$ ]] \
+    && [ "$next_expires_after_seconds" -le "$EXPIRING_RESET_SECONDS" ]; then
+    printf '%s' "$RED"
+  else
+    printf '%s' "$GREEN"
+  fi
+}
+
+reset_tooltip() {
+  local reset_count="$1"
+  local next_expires_at="$2"
+  local next_expires_at_unix="$3"
+  local next_expires_after_seconds="$4"
+  local reset_count_text expires_text remaining_text
+
+  if ! [[ "$reset_count" =~ ^[0-9]+$ ]] || [ "$reset_count" -le 0 ]; then
+    printf 'No rate-limit reset credits available'
+    return
+  fi
+
+  reset_count_text="$(reset_count_label "$reset_count")"
+  if [[ "$next_expires_after_seconds" =~ ^-?[0-9]+$ ]]; then
+    remaining_text="$(format_duration "$next_expires_after_seconds")"
+  else
+    remaining_text='?'
+  fi
+
+  if expires_text="$(format_epoch_local "$next_expires_at_unix")"; then
+    :
+  elif [ -n "$next_expires_at" ] && [ "$next_expires_at" != "null" ]; then
+    expires_text="$next_expires_at"
+  else
+    printf '%s available; expiry unavailable' "$reset_count_text"
+    return
+  fi
+
+  printf '%s available; nearest expires %s (%s)' "$reset_count_text" "$expires_text" "$remaining_text"
 }
 
 hide_items() {
@@ -196,6 +264,9 @@ week_remaining="$(jq -r '.windows.weekly.remaining_percent // empty' <<<"$status
 five_reset="$(jq -r '.windows.five_hour.reset_after_seconds // empty' <<<"$status")"
 week_reset="$(jq -r '.windows.weekly.reset_after_seconds // empty' <<<"$status")"
 refreshes="$(jq -r '.rate_limit_reset_credits.available_count // 0' <<<"$status")"
+next_reset_expires_at="$(jq -r '.rate_limit_reset_credits.next_expires_at // empty' <<<"$status")"
+next_reset_expires_at_unix="$(jq -r '.rate_limit_reset_credits.next_expires_at_unix // empty' <<<"$status")"
+next_reset_expires_after="$(jq -r '.rate_limit_reset_credits.next_expires_after_seconds // empty' <<<"$status")"
 five_pace_risk_bps="$(window_pace_risk_bps five_hour <<<"$status")"
 week_pace_risk_bps="$(window_pace_risk_bps weekly <<<"$status")"
 five_limit_reached="$(window_limit_reached five_hour "$limit_reached" "$limit_reached_type")"
@@ -209,7 +280,10 @@ week_label="1w ${week_remaining:-?}%/${week_reset_label}"
 reset_label="+${refreshes}"
 five_color="$(pace_color "${five_pace_risk_bps:-}" "$five_limit_reached")"
 week_color="$(pace_color "${week_pace_risk_bps:-}" "$week_limit_reached")"
-refreshes_color="$(reset_color "$refreshes")"
+refreshes_color="$(reset_color "$refreshes" "$next_reset_expires_after")"
+refreshes_tooltip="$(
+  reset_tooltip "$refreshes" "$next_reset_expires_at" "$next_reset_expires_at_unix" "$next_reset_expires_after"
+)"
 
 sketchybar --set "$FIVE_HOUR_ITEM" \
   drawing=on \
@@ -222,4 +296,5 @@ sketchybar --set "$FIVE_HOUR_ITEM" \
   --set "$RESETS_ITEM" \
   drawing=on \
   label="$reset_label" \
-  label.color="$refreshes_color"
+  label.color="$refreshes_color" \
+  tooltip="$refreshes_tooltip"

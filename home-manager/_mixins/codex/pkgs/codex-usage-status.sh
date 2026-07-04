@@ -3,7 +3,8 @@ set -euo pipefail
 
 AUTH_FILE="${HOME}/.codex/auth.json"
 FORMAT="text"
-ENDPOINT="https://chatgpt.com/backend-api/wham/usage"
+USAGE_ENDPOINT="https://chatgpt.com/backend-api/wham/usage"
+RESET_CREDITS_ENDPOINT="https://chatgpt.com/backend-api/wham/rate-limit-reset-credits"
 
 usage() {
   cat <<'USAGE'
@@ -54,10 +55,16 @@ if [ -z "$TOKEN" ]; then
   exit 1
 fi
 
-RESPONSE="$(curl -fsS -H "Authorization: Bearer ${TOKEN}" "$ENDPOINT")"
+USAGE_RESPONSE="$(curl -fsS -H "Authorization: Bearer ${TOKEN}" "$USAGE_ENDPOINT")"
 
-if [ "$FORMAT" = "json" ]; then
-  printf '%s\n' "$RESPONSE" | jq -c '
+RESET_CREDITS_RESPONSE="null"
+if response="$(curl -fsS -H "Authorization: Bearer ${TOKEN}" "$RESET_CREDITS_ENDPOINT" 2>/dev/null)" \
+  && printf '%s\n' "$response" | jq -e . >/dev/null 2>&1; then
+  RESET_CREDITS_RESPONSE="$response"
+fi
+
+NORMALIZED_RESPONSE="$(
+  printf '%s\n' "$USAGE_RESPONSE" | jq -c --argjson reset_credits "$RESET_CREDITS_RESPONSE" '
     def window($source):
       if $source == null then
         null
@@ -77,32 +84,84 @@ if [ "$FORMAT" = "json" ]; then
         }
       end;
 
-    {
-      allowed: .rate_limit.allowed,
-      limit_reached: .rate_limit.limit_reached,
-      limit_reached_type: (.rate_limit_reached_type // null),
-      windows: {
-        five_hour: window(.rate_limit.primary_window),
-        weekly: window(.rate_limit.secondary_window)
-      },
-      rate_limit_reset_credits: {
-        available_count: (.rate_limit_reset_credits.available_count // 0)
+    def expires_at_epoch($expires_at):
+      if ($expires_at | type) != "string" then
+        null
+      else
+        $expires_at
+        | sub("\\.[0-9]+Z$"; "Z")
+        | try fromdateiso8601 catch null
+      end;
+
+    def reset_credits($fallback; $details; $now):
+      ($details // $fallback // {}) as $source
+      | [
+          $source.credits[]?
+          | (.expires_at // null) as $expires_at
+          | (expires_at_epoch($expires_at)) as $expires_at_unix
+          | {
+              expires_at: $expires_at,
+              expires_at_unix: $expires_at_unix,
+              expires_after_seconds: (
+                if $expires_at_unix == null then
+                  null
+                else
+                  (($expires_at_unix - $now) | floor)
+                end
+              )
+            }
+        ] as $credits
+      | (
+          $credits
+          | map(select(.expires_after_seconds != null and .expires_after_seconds >= 0))
+          | sort_by(.expires_after_seconds)
+          | .[0] // null
+        ) as $next
+      | {
+          available_count: ($source.available_count // $fallback.available_count // 0),
+          credits: $credits,
+          next_expires_at: ($next.expires_at // null),
+          next_expires_at_unix: ($next.expires_at_unix // null),
+          next_expires_after_seconds: ($next.expires_after_seconds // null)
+        };
+
+    now as $now
+    | {
+        allowed: .rate_limit.allowed,
+        limit_reached: .rate_limit.limit_reached,
+        limit_reached_type: (.rate_limit_reached_type // null),
+        windows: {
+          five_hour: window(.rate_limit.primary_window),
+          weekly: window(.rate_limit.secondary_window)
+        },
+        rate_limit_reset_credits: reset_credits(.rate_limit_reset_credits; $reset_credits; $now)
       }
-    }
   '
+)"
+
+if [ "$FORMAT" = "json" ]; then
+  printf '%s\n' "$NORMALIZED_RESPONSE"
 else
-  printf '%s\n' "$RESPONSE" | jq -r '
+  printf '%s\n' "$NORMALIZED_RESPONSE" | jq -r '
     def fmt_window($label; $source):
       if $source == null then
         "\($label): unavailable"
       else
-        "\($label): \(if ($source.used_percent | type) == "number" then (100 - $source.used_percent) | floor else "?" end)% remaining, reset_after_seconds=\($source.reset_after_seconds // "?"), reset_at=\($source.reset_at // "?")"
+        "\($label): \($source.remaining_percent // "?")% remaining, reset_after_seconds=\($source.reset_after_seconds // "?"), reset_at=\($source.reset_at // "?")"
       end;
 
-    "allowed: \(if .rate_limit.allowed == null then "?" else .rate_limit.allowed end)",
-    "limit_reached: \(if .rate_limit.limit_reached == null then "?" else .rate_limit.limit_reached end)",
-    fmt_window("5h"; .rate_limit.primary_window),
-    fmt_window("1w"; .rate_limit.secondary_window),
-    "rate_limit_reset_credits: \(.rate_limit_reset_credits.available_count // 0)"
+    def fmt_reset_credits:
+      .rate_limit_reset_credits as $credits
+      | if $credits.next_expires_at == null then
+          "rate_limit_reset_credits: \($credits.available_count // 0)"
+        else
+          "rate_limit_reset_credits: \($credits.available_count // 0), next_expires_at=\($credits.next_expires_at), next_expires_after_seconds=\($credits.next_expires_after_seconds // "?")"
+        end;
+
+    "allowed: \(if .allowed == null then "?" else .allowed end)",
+    "limit_reached: \(if .limit_reached == null then "?" else .limit_reached end)",
+    fmt_window("5h"; .windows.five_hour),
+    fmt_window("1w"; .windows.weekly),
+    fmt_reset_credits
   '
 fi
