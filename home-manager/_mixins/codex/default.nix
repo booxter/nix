@@ -26,7 +26,10 @@ in
       notice.fast_default_opt_out = true;
 
       projects = trustedProjects [
-        "src"
+        "src/sdn"
+        "src/nix"
+        "src/nixpkgs"
+        "src/ovn-kubernetes"
       ];
 
       # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
