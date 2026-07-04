@@ -72,16 +72,6 @@
 
       xquartz = pkgsXquartzPr.xquartz;
 
-      # Backport podman-desktop's pnpm pin fix until nixpkgs includes it.
-      # Upstream: https://github.com/NixOS/nixpkgs/pull/536832
-      podman-desktop =
-        if prev.stdenv.hostPlatform.isLinux then
-          prev.podman-desktop.override {
-            pnpm_10_29_2 = prev.pnpm_10;
-          }
-        else
-          prev.podman-desktop;
-
       # NixOS can expose the same D-Bus service file through both direct package
       # paths and system-path symlinks. Do not let dbus-broker report those
       # same-file duplicates at error level.
