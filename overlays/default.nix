@@ -62,14 +62,6 @@
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
 
-      # TODO: Remove this temporary Darwin pin once current nixpkgs-darwin
-      # Thunderbird is available from cache again.
-      thunderbird =
-        if prev.stdenv.hostPlatform.isDarwin then
-          (getPkgs inputs.nixpkgs-darwin-thunderbird-cache).thunderbird
-        else
-          prev.thunderbird;
-
       xquartz = pkgsXquartzPr.xquartz;
 
       # NixOS can expose the same D-Bus service file through both direct package
