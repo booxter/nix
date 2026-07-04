@@ -10,6 +10,117 @@ index ed267577..e77453cd 100644
  
  pub use cloud_config_bundle::CloudConfigBundle;
  pub use cloud_config_bundle::CloudConfigBundleLayers;
+diff --git a/cli/src/mcp_cmd.rs b/cli/src/mcp_cmd.rs
+index 9fcb37f4..b886172a 100644
+--- a/cli/src/mcp_cmd.rs
++++ b/cli/src/mcp_cmd.rs
+@@ -5,6 +5,7 @@ use anyhow::Result;
+ use anyhow::anyhow;
+ use anyhow::bail;
+ use clap::ArgGroup;
++use codex_config::load_global_mcp_servers;
+ use codex_config::types::AppToolApproval;
+ use codex_config::types::McpServerConfig;
+ use codex_config::types::McpServerOAuthConfig;
+@@ -16,7 +17,6 @@ use codex_core::config::ConfigBuilder;
+ use codex_core::config::LoaderOverrides;
+ use codex_core::config::edit::ConfigEditsBuilder;
+ use codex_core::config::find_codex_home;
+-use codex_core::config::load_global_mcp_servers;
+ use codex_core_plugins::PluginsManager;
+ use codex_mcp::McpOAuthLoginSupport;
+ use codex_mcp::ResolvedMcpOAuthScopes;
+diff --git a/config/src/marketplace_edit.rs b/config/src/marketplace_edit.rs
+index 907431eb..734cdcd3 100644
+--- a/config/src/marketplace_edit.rs
++++ b/config/src/marketplace_edit.rs
+@@ -8,7 +8,7 @@ use toml_edit::Table as TomlTable;
+ use toml_edit::Value as TomlValue;
+ use toml_edit::value;
+-
++
+-use crate::CONFIG_TOML_FILE;
++use crate::CONFIG_LOCAL_TOML_FILE;
+-
++
+ pub struct MarketplaceConfigUpdate<'a> {
+     pub last_updated: &'a str,
+@@ -31,7 +31,7 @@ pub fn record_user_marketplace(
+     marketplace_name: &str,
+     update: &MarketplaceConfigUpdate<'_>,
+ ) -> std::io::Result<()> {
+-    let config_path = codex_home.join(CONFIG_TOML_FILE);
++    let config_path = codex_home.join(CONFIG_LOCAL_TOML_FILE);
+     let mut doc = read_or_create_document(&config_path)?;
+     upsert_marketplace(&mut doc, marketplace_name, update);
+     fs::create_dir_all(codex_home)?;
+@@ -47,7 +47,7 @@ pub fn remove_user_marketplace_config(
+     codex_home: &Path,
+     marketplace_name: &str,
+ ) -> std::io::Result<RemoveMarketplaceConfigOutcome> {
+-    let config_path = codex_home.join(CONFIG_TOML_FILE);
++    let config_path = codex_home.join(CONFIG_LOCAL_TOML_FILE);
+     let mut doc = match fs::read_to_string(&config_path) {
+         Ok(raw) => raw
+             .parse::<DocumentMut>()
+diff --git a/config/src/mcp_edit.rs b/config/src/mcp_edit.rs
+index 8489f184..0f8d7e8d 100644
+--- a/config/src/mcp_edit.rs
++++ b/config/src/mcp_edit.rs
+@@ -12,7 +12,7 @@ use toml_edit::Table as TomlTable;
+ use toml_edit::value;
+-
++
+ use crate::AppToolApproval;
+-use crate::CONFIG_TOML_FILE;
++use crate::CONFIG_LOCAL_TOML_FILE;
+ use crate::McpServerConfig;
+ use crate::McpServerEnvVar;
+ use crate::McpServerTransportConfig;
+@@ -20,7 +20,7 @@ use crate::McpServerTransportConfig;
+ pub async fn load_global_mcp_servers(
+     codex_home: &Path,
+ ) -> std::io::Result<BTreeMap<String, McpServerConfig>> {
+-    let config_path = codex_home.join(CONFIG_TOML_FILE);
++    let config_path = codex_home.join(CONFIG_LOCAL_TOML_FILE);
+     let raw = match tokio::fs::read_to_string(&config_path).await {
+         Ok(raw) => raw,
+         Err(err) if err.kind() == ErrorKind::NotFound => return Ok(BTreeMap::new()),
+@@ -86,7 +86,7 @@ impl ConfigEditsBuilder {
+     }
+-
++
+     fn apply_blocking(self) -> std::io::Result<()> {
+-        let config_path = self.codex_home.join(CONFIG_TOML_FILE);
++        let config_path = self.codex_home.join(CONFIG_LOCAL_TOML_FILE);
+         let mut doc = read_or_create_document(&config_path)?;
+         if let Some(servers) = self.mcp_servers.as_ref() {
+             replace_mcp_servers(&mut doc, servers);
+diff --git a/config/src/plugin_edit.rs b/config/src/plugin_edit.rs
+index 7510f26f..f59752b9 100644
+--- a/config/src/plugin_edit.rs
++++ b/config/src/plugin_edit.rs
+@@ -10,7 +10,7 @@ use toml_edit::Item as TomlItem;
+ use toml_edit::Table as TomlTable;
+ use toml_edit::value;
+-
++
+-use crate::CONFIG_TOML_FILE;
++use crate::CONFIG_LOCAL_TOML_FILE;
+-
++
+ #[derive(Debug, Clone, PartialEq, Eq)]
+ pub enum PluginConfigEdit {
+@@ -57,7 +57,7 @@ fn apply_user_plugin_config_edits_blocking(
+         return Ok(());
+     }
+-
++
+-    let config_path = codex_home.join(CONFIG_TOML_FILE);
++    let config_path = codex_home.join(CONFIG_LOCAL_TOML_FILE);
+     let write_paths = resolve_symlink_write_paths(&config_path)?;
+     let mut doc = read_or_create_document(write_paths.read_path.as_deref())?;
+     let mut mutated = false;
 diff --git a/config/src/loader/mod.rs b/config/src/loader/mod.rs
 index e3c7ee11..bf838a83 100644
 --- a/config/src/loader/mod.rs
@@ -63,6 +174,49 @@ index e3c7ee11..bf838a83 100644
          )
          .await
          {
+diff --git a/app-server/src/config_manager.rs b/app-server/src/config_manager.rs
+index 881f3b5a..dba79c67 100644
+--- a/app-server/src/config_manager.rs
++++ b/app-server/src/config_manager.rs
+@@ -1,6 +1,7 @@
+ use codex_arg0::Arg0DispatchPaths;
+ use codex_cloud_config::cloud_config_bundle_loader;
+ use codex_config::CloudConfigBundleLoader;
++use codex_config::CONFIG_LOCAL_TOML_FILE;
+ use codex_config::ConfigLayerStack;
+ use codex_config::LoaderOverrides;
+ use codex_config::ThreadConfigLoader;
+@@ -67,6 +68,16 @@ impl ConfigManager {
+         self.loader_overrides.user_config_path(self.codex_home())
+     }
+-
++
++    pub(crate) fn writable_user_config_path(&self) -> std::io::Result<AbsolutePathBuf> {
++        match self.loader_overrides.user_config_path.as_ref() {
++            Some(path) => Ok(path.clone()),
++            None => Ok(AbsolutePathBuf::resolve_path_against_base(
++                CONFIG_LOCAL_TOML_FILE,
++                self.codex_home(),
++            )),
++        }
++    }
++
+     pub(crate) fn current_cli_overrides(&self) -> Vec<(String, TomlValue)> {
+         self.cli_overrides
+             .read()
+diff --git a/app-server/src/config_manager_service.rs b/app-server/src/config_manager_service.rs
+index 9d4256d7..11d85f9b 100644
+--- a/app-server/src/config_manager_service.rs
++++ b/app-server/src/config_manager_service.rs
+@@ -197,7 +197,7 @@ impl ConfigManager {
+         edits: Vec<(String, JsonValue, MergeStrategy)>,
+     ) -> Result<ConfigWriteResponse, ConfigManagerError> {
+         let allowed_path = self
+-            .user_config_path()
++            .writable_user_config_path()
+             .map_err(|err| ConfigManagerError::io("failed to resolve user config path", err))?;
+         let provided_path = match file_path {
+             Some(path) => AbsolutePathBuf::from_absolute_path(PathBuf::from(path))
 diff --git a/core/src/config/edit.rs b/core/src/config/edit.rs
 index 2d7a4132..23d0734d 100644
 --- a/core/src/config/edit.rs
