@@ -36,9 +36,9 @@ in
     environment = {
       AUTH_METHOD = "oidc";
       CONFIG_DIR = stateDir;
-      DISABLE_LOCAL_AUTH = "false";
+      DISABLE_LOCAL_AUTH = "true";
       FLASK_HOST = "127.0.0.1";
-      HIDE_LOCAL_AUTH = "false";
+      HIDE_LOCAL_AUTH = "true";
       OIDC_ADMIN_GROUP = "media-admins";
       OIDC_AUTO_PROVISION = "true";
       OIDC_BUTTON_LABEL = "SSO";
