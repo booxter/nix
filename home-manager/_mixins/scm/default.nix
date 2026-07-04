@@ -13,6 +13,19 @@ let
   email = if isWork then "${username}@nvidia.com" else "ihar.hrachyshka@gmail.com";
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
   gitPackage = if isDarwin then pkgs.gitDarwinPrecompose else pkgs.gitFull;
+  pushDisabledGitHubRepos = [
+    "NixOS/nixpkgs"
+    "ovn-kubernetes/ovn-kubernetes"
+  ];
+  pushDisabledGitHubUrls = builtins.listToAttrs (
+    map (repo: {
+      name = "file:///dev/null/git-push-disabled/${repo}";
+      value.pushInsteadOf = [
+        "git@github.com:${repo}.git"
+        "https://github.com/${repo}.git"
+      ];
+    }) pushDisabledGitHubRepos
+  );
 in
 {
   # Git
@@ -90,8 +103,11 @@ in
         pruneTags = true;
       };
 
-      # Keep GitHub pushes on SSH instead of gh's broad HTTPS OAuth token.
-      url."git@github.com:".insteadOf = "https://github.com/";
+      url = {
+        # Keep GitHub pushes on SSH instead of gh's broad HTTPS OAuth token.
+        "git@github.com:".insteadOf = "https://github.com/";
+      }
+      // pushDisabledGitHubUrls;
 
       # use mergiraf for merges
       merge.mergiraf = {
