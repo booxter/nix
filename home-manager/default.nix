@@ -60,28 +60,34 @@
   };
 
   programs.home-manager.enable = true; # let it manage itself
+  programs.xquartz = lib.mkIf (isDarwin && isDesktop && !isWork) {
+    enable = true;
+    configureSsh = true;
+  };
   targets.darwin.copyApps.enable = isDarwin; # populate apps dir for Spotlight
 
   home.packages =
+    let
+      vlc = if isDarwin then pkgs.vlc-bin else pkgs.vlc;
+    in
     with pkgs;
     [
     ]
     ++ lib.optionals isDesktop [
+      element-desktop
       obsidian
       telegram-desktop
       wireshark
     ]
     ++ lib.optionals (isDesktop && isDarwin) [
-      vlc-bin
+      spotify
     ]
-    ++ lib.optionals (isDesktop && !isDarwin) [
+    ++ lib.optionals (!isWork && isDesktop) [
       vlc
+      podman-desktop
       wmctrl
       xauth
       xprop
       xwininfo
-    ]
-    ++ lib.optionals (!isWork && isDesktop) [
-      podman-desktop
     ];
 }

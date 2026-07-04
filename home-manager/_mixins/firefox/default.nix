@@ -14,9 +14,6 @@ in
     # Pin Firefox to the legacy on-disk profile root until we intentionally
     # migrate existing state. macOS Firefox does not read ~/.mozilla/firefox.
     configPath = if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
-    nativeMessagingHosts = [
-      pkgs.browserpass
-    ];
     profiles.default = {
       # duckduckgo
       search.default = "ddg";
@@ -98,9 +95,7 @@ in
         "dom.private-attribution.submission.enabled" = false; # No PPA
       };
       extensions.packages = with pkgs.nur.repos.rycee.firefox-addons; [
-        browserpass
         privacy-badger
-        readwise-highlighter
         ublock-origin
         vimium
       ];

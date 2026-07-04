@@ -201,10 +201,58 @@ run_nixos_rebuild_from_repo() {
 
 run_darwin_switch_from_repo() {
   local host_name="$1"
+  local bash_bin=""
+  local nix_bin=""
+  local out_link=""
+  local status=0
+  local system_config=""
+  local tmpdir=""
 
-  run_nh_from_repo darwin switch \
+  bash_bin="$(command -v bash)"
+  nix_bin="$(command -v nix)"
+  tmpdir="$(mktemp -d)"
+  out_link="${tmpdir}/system"
+
+  if run_nh_from_repo darwin build \
     --hostname "$host_name" \
+    --out-link "$out_link" \
     --print-build-logs \
     --show-trace \
-    ".#"
+    --diff auto \
+    ".#"; then
+    :
+  else
+    status=$?
+    rm -rf "$tmpdir"
+    return "$status"
+  fi
+
+  if system_config="$(readlink "$out_link")"; then
+    :
+  else
+    echo "Failed to resolve Darwin system configuration output link for ${host_name}: ${out_link}" >&2
+    rm -rf "$tmpdir"
+    return 1
+  fi
+
+  if [[ -z "$system_config" ]]; then
+    echo "Failed to build Darwin system configuration for ${host_name}: nix returned no output path." >&2
+    rm -rf "$tmpdir"
+    return 1
+  fi
+
+  if sudo "$bash_bin" -e -u -o pipefail -c '
+    nix_bin="$1"
+    system_config="$2"
+
+    "$nix_bin" build --no-link --profile /nix/var/nix/profiles/system "$system_config"
+    "$system_config/sw/bin/darwin-rebuild" activate
+  ' bash "$nix_bin" "$system_config"; then
+    :
+  else
+    status=$?
+  fi
+
+  rm -rf "$tmpdir"
+  return "$status"
 }

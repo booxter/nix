@@ -10,8 +10,9 @@ let
   llmService = hostInventory.servicesById.llm;
   llmUrl = "https://${llmService.publicHost}";
   oidcClientId = oidc.clients.litellm.clientId;
-  ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
-  litellmImage = "${ociImages.litellm.image}:${ociImages.litellm.tag}";
+  ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
+  litellmImage = ociImages.litellm.ref;
+  litellmImageFile = ociImages.litellm.imageFile;
   litellmDatabase = "litellm";
   litellmMetricsMtlsPort = 9346;
   litellmPort = 4000;
@@ -197,7 +198,8 @@ in
       # needed for DB-backed proxy mode. Use the upstream database image until
       # the Nix package grows a complete Prisma runtime.
       image = litellmImage;
-      pull = "missing";
+      imageFile = litellmImageFile;
+      pull = "never";
       cmd = [
         "--host"
         "127.0.0.1"

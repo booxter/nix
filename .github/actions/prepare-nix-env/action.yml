@@ -9,13 +9,14 @@ runs:
         extra-conf: |
           trusted-users = root runner
           allowed-users = root runner
+          sandbox = true
           extra-substituters = https://cache.numtide.com https://nixos-raspberrypi.cachix.org https://cache.saumon.network/proxmox-nixos https://virby-nix-darwin.cachix.org
           extra-trusted-public-keys = niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g= nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI= proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM= virby-nix-darwin.cachix.org-1:z9GiEZeBU5bEeoDQjyfHPMGPBaIQJOOvYOOjGMKIlLo=
 
     - name: Setup FlakeHub Cache
       uses: DeterminateSystems/flakehub-cache-action@146f476c94460cb634f9ade79470fcbc3f7e5b36 # v1
 
-    - name: Verify required binary caches are enabled
+    - name: Verify required Nix daemon settings
       shell: bash
       run: |
         set -euo pipefail
@@ -35,6 +36,12 @@ runs:
 
         substituters="$(nix config show substituters)"
         trusted_keys="$(nix config show trusted-public-keys)"
+        sandbox="$(nix config show sandbox)"
+
+        if [ "${sandbox}" != "true" ]; then
+          echo "Nix sandbox must be enabled in CI, got: ${sandbox}"
+          exit 1
+        fi
 
         for substituter in "${required_substituters[@]}"; do
           if ! grep -Fq "${substituter}" <<< "${substituters}"; then

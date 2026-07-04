@@ -81,8 +81,9 @@ let
       }
     ' "$pattern" "$replacement" "$1"
   '';
-  ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
-  rommImage = "${ociImages.romm.image}:${ociImages.romm.tag}";
+  ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
+  rommImage = ociImages.romm.ref;
+  rommImageFile = ociImages.romm.imageFile;
   rommService = hostInventory.servicesById.romm;
   rommOidcClientId = oidc.clients.romm.clientId;
 
@@ -134,7 +135,8 @@ let
 
   commonContainer = {
     image = rommImage;
-    pull = "missing";
+    imageFile = rommImageFile;
+    pull = "never";
     podman.user = user;
     environment = commonEnvironment;
     environmentFiles = [ config.sops.templates."romm.env".path ];
@@ -196,7 +198,7 @@ let
     "--security-opt=no-new-privileges"
     "--entrypoint"
     "/bin/bash"
-    "--pull=missing"
+    "--pull=never"
     rommImage
   ];
 
@@ -360,8 +362,8 @@ in
     script = ''
       set -euo pipefail
 
-      podman pull ${rommImage}
-      cid="$(podman create ${rommImage})"
+      podman load -i ${lib.escapeShellArg "${rommImageFile}"}
+      cid="$(podman create ${lib.escapeShellArg rommImage})"
       cleanup() {
         podman rm -f "$cid" >/dev/null 2>&1 || true
       }
@@ -420,6 +422,7 @@ in
     script = ''
       set -euo pipefail
 
+      podman load -i ${lib.escapeShellArg "${rommImageFile}"}
       podman run ${podmanRunCommon} \
         -c 'cd /backend && alembic upgrade head && python3 startup.py'
     '';

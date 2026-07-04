@@ -1,24 +1,32 @@
 {
   "jellystat": {
     "changelog": "https://github.com/CyferShepard/Jellystat/releases/tag/V{tag}",
+    "digest": "sha256:c4e2dfa8bddf8d5ac3a675d7202f71a54dcfe3540cc186899d9201e0fe701fa5",
+    "hash": "sha256-63qBeXU2VClAO2cdH6+Q/eqkCDWwOSgwnPhFz6YFDqg=",
     "image": "docker.io/cyfershepard/jellystat",
     "tag": "1.1.11",
     "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "litellm": {
     "changelog": "https://github.com/BerriAI/litellm/releases/tag/{tag}",
+    "digest": "sha256:fc15e199e743c64beb00ac2cd6ac01e48ba17765ac792188060fa3ede7421ed7",
+    "hash": "sha256-ueYo28D/EIUHFR4ZoocnnXgJFbXtlEfYq3N8qEUzZH8=",
     "image": "ghcr.io/berriai/litellm-database",
     "tag": "v1.90.1",
     "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "paperless-gpt": {
     "changelog": "https://github.com/icereed/paperless-gpt/releases/tag/{tag}",
+    "digest": "sha256:c0ce6186028911101a2cfe68353f14a9dbb2653596f3f1cff94de4b6db3114ff",
+    "hash": "sha256-QhdJp1l1Le1n6AfPbrmyexcSHaK9ewmJQUFx9fTKcRA=",
     "image": "ghcr.io/icereed/paperless-gpt",
     "tag": "v0.25.1",
     "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "romm": {
     "changelog": "https://github.com/rommapp/romm/releases/tag/{tag}",
+    "digest": "sha256:c81778afcafe7c865bdf156d1c62349aec3dfca3aca5ec0d6c2c2e8bfa9fb071",
+    "hash": "sha256-aKzTdvP69/i8RdTExi8n4e650FahVqi4ChsPCiNG5Kc=",
     "image": "docker.io/rommapp/romm",
     "tag": "4.9.2",
     "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$"

@@ -18,7 +18,9 @@
 
       pkgsLldb = getPkgs inputs.debugserver;
       pkgsNixpkgsMain = getPkgs inputs.nixpkgs;
+      pkgsNixpkgsUnstable = getPkgs inputs.nixpkgs-unstable;
       pkgsNixpkgsDarwin = getPkgs inputs.nixpkgs-darwin;
+      pkgsXquartzPr = getPkgs inputs.nixpkgs-xquartz-pr;
       nixpkgsReviewFixedVersion = "3.9.0";
       nixpkgsReviewMainVersion = pkgsNixpkgsMain.nixpkgs-review.version;
       nixpkgsReviewDarwinVersion = pkgsNixpkgsDarwin.nixpkgs-review.version;
@@ -55,6 +57,7 @@
     in
     {
       inherit (llmAgentsPkgs) claude-code;
+      inherit (pkgsNixpkgsUnstable) whichllm;
 
       # Pull the backported all-outputs nixpkgs-review fix until both main
       # nixpkgs inputs include it.
@@ -62,10 +65,13 @@
       inherit (pkgsNixpkgsReviewRelease) nixpkgs-review nixpkgs-reviewFull;
 
       # Carry recursive Codex project trust until openai/codex#19426 lands.
-      # Patch from https://github.com/luisnquin/nixos-config/commit/1859865c1db5e318635326787d04333b07054b26
+      # Also load user-local config.local.toml so CLI config writes avoid
+      # Home Manager's read-only config.toml symlink.
+      # Recursive trust patch from https://github.com/luisnquin/nixos-config/commit/1859865c1db5e318635326787d04333b07054b26
       codex = llmAgentsPkgs.codex.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../lib/patches/codex-recursive-project-trust.patch
+          ../lib/patches/codex-user-config-local-overlay.patch
         ];
       });
 
@@ -86,6 +92,8 @@
           (getPkgs inputs.nixpkgs-darwin-thunderbird-cache).thunderbird
         else
           prev.thunderbird;
+
+      xquartz = pkgsXquartzPr.xquartz;
 
       # Backport podman-desktop's pnpm pin fix until nixpkgs includes it.
       # Upstream: https://github.com/NixOS/nixpkgs/pull/536832

@@ -4,7 +4,7 @@ set -euo pipefail
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=apps/package-updates/update-summary-lib.sh
 # shellcheck disable=SC1091
-source "${script_dir}/update-summary-lib.sh"
+source "${UPDATE_SUMMARY_LIB:-${script_dir}/update-summary-lib.sh}"
 
 usage() {
   cat <<'EOF'
@@ -15,7 +15,8 @@ Usage:
 
 Update pinned OCI image tags from lib/oci-images.json and write a Markdown
 summary. Tags are discovered from the upstream registry and filtered by each
-target's tagRegex.
+target's tagRegex. The selected linux/amd64 image is prefetched into a Nix
+fixed-output pin so same-tag digest rewrites are visible as file changes.
 EOF
 }
 
@@ -38,6 +39,8 @@ target_rows() {
         name: .key,
         image: .value.image,
         tag: .value.tag,
+        digest: .value.digest,
+        hash: .value.hash,
         tagRegex: (.value.tagRegex // "^[0-9]+\\.[0-9]+\\.[0-9]+$"),
         changelog: (.value.changelog // "")
       }
@@ -82,12 +85,24 @@ write_summary_header() {
   cat > "$summary_file" <<'EOF'
 Automated OCI image tag update.
 
-Container builds were not run by the updater. Normal CI is expected to validate
-whether the updated image tag still works with the managed service.
+OCI images were prefetched for linux/amd64 and pinned as Nix fixed-output
+archives. Normal CI is expected to validate whether the updated image still
+works with the managed service.
 
-| Target | Image | Tag | Changelog | Diff |
-| --- | --- | --- | --- | --- |
+| Target | Image | Tag | Digest | Nix hash | Changelog | Diff |
+| --- | --- | --- | --- | --- | --- | --- |
 EOF
+}
+
+change_text() {
+  local old_value="$1"
+  local new_value="$2"
+
+  if [[ -n "$old_value" && "$old_value" != "null" && "$old_value" != "$new_value" ]]; then
+    printf '%s -> %s\n' "$old_value" "$new_value"
+  else
+    printf '%s\n' "$new_value"
+  fi
 }
 
 append_summary_row() {
@@ -96,22 +111,25 @@ append_summary_row() {
   local image="$3"
   local old_tag="$4"
   local new_tag="$5"
-  local changelog="$6"
-  local diff_url="$7"
+  local old_digest="$6"
+  local new_digest="$7"
+  local old_hash="$8"
+  local new_hash="$9"
+  local changelog="${10}"
+  local diff_url="${11}"
 
   local tag_text
-  if [[ "$old_tag" != "$new_tag" ]]; then
-    tag_text="${old_tag} -> ${new_tag}"
-  else
-    tag_text="${new_tag}"
-  fi
+  tag_text="$(change_text "$old_tag" "$new_tag")"
 
-  local changelog_text diff_text
+  local digest_text hash_text changelog_text diff_text
+  digest_text="$(change_text "$old_digest" "$new_digest")"
+  hash_text="$(change_text "$old_hash" "$new_hash")"
   changelog_text="$(markdown_link_or_not_set "link" "$changelog")"
   diff_text="$(markdown_link_or_not_set "compare" "$diff_url")"
 
   # shellcheck disable=SC2016 # Literal Markdown backticks in the printf format.
-  printf '| `%s` | `%s` | `%s` | %s | %s |\n' "$name" "$image" "$tag_text" "$changelog_text" "$diff_text" >> "$summary_file"
+  printf '| `%s` | `%s` | `%s` | `%s` | `%s` | %s | %s |\n' \
+    "$name" "$image" "$tag_text" "$digest_text" "$hash_text" "$changelog_text" "$diff_text" >> "$summary_file"
 }
 
 replace_tag_template() {
@@ -121,16 +139,29 @@ replace_tag_template() {
   printf '%s\n' "${template//\{tag\}/$tag}"
 }
 
+image_ref() {
+  local image="$1"
+  local tag="$2"
+  local digest="$3"
+
+  if [[ -n "$digest" && "$digest" != "null" ]]; then
+    printf 'docker://%s@%s\n' "$image" "$digest"
+  else
+    printf 'docker://%s:%s\n' "$image" "$tag"
+  fi
+}
+
 image_config_label() {
   local image="$1"
   local tag="$2"
-  local label="$3"
+  local digest="$3"
+  local label="$4"
 
   if [[ -z "$tag" ]]; then
     return
   fi
 
-  skopeo inspect --config "docker://${image}:${tag}" 2>/dev/null \
+  skopeo inspect --config "$(image_ref "$image" "$tag" "$digest")" 2>/dev/null \
     | jq -r --arg label "$label" '.config.Labels[$label] // .Labels[$label] // empty' \
     || true
 }
@@ -139,18 +170,20 @@ image_diff_url() {
   local image="$1"
   local old_tag="$2"
   local new_tag="$3"
-  local old_changelog="$4"
-  local new_changelog="$5"
+  local old_digest="$4"
+  local new_digest="$5"
+  local old_changelog="$6"
+  local new_changelog="$7"
   local old_source old_revision new_source new_revision diff_url
 
   if [[ -z "$old_tag" || -z "$new_tag" || "$old_tag" == "$new_tag" ]]; then
     return
   fi
 
-  old_source="$(image_config_label "$image" "$old_tag" "org.opencontainers.image.source")"
-  old_revision="$(image_config_label "$image" "$old_tag" "org.opencontainers.image.revision")"
-  new_source="$(image_config_label "$image" "$new_tag" "org.opencontainers.image.source")"
-  new_revision="$(image_config_label "$image" "$new_tag" "org.opencontainers.image.revision")"
+  old_source="$(image_config_label "$image" "$old_tag" "$old_digest" "org.opencontainers.image.source")"
+  old_revision="$(image_config_label "$image" "$old_tag" "$old_digest" "org.opencontainers.image.revision")"
+  new_source="$(image_config_label "$image" "$new_tag" "$new_digest" "org.opencontainers.image.source")"
+  new_revision="$(image_config_label "$image" "$new_tag" "$new_digest" "org.opencontainers.image.revision")"
 
   diff_url="$(github_compare_url_from_sources "$old_source" "$old_revision" "$new_source" "$new_revision")"
   if [[ -z "$diff_url" ]]; then
@@ -159,16 +192,39 @@ image_diff_url() {
   printf '%s\n' "$diff_url"
 }
 
+prefetch_image() {
+  local image="$1"
+  local tag="$2"
+
+  nix-prefetch-docker \
+    --json \
+    --quiet \
+    --os linux \
+    --arch amd64 \
+    --image-name "$image" \
+    --image-tag "$tag" \
+    --final-image-name "$image" \
+    --final-image-tag "$tag"
+}
+
 update_pin() {
   local pins_file="$1"
   local name="$2"
   local tag="$3"
+  local digest="$4"
+  local hash="$5"
   local pins_dir pins_base tmp
 
   pins_dir="$(dirname -- "$pins_file")"
   pins_base="$(basename -- "$pins_file")"
   tmp="$(mktemp "${pins_dir}/.${pins_base}.tmp.XXXXXX")"
-  jq --arg name "$name" --arg tag "$tag" '.[$name].tag = $tag' "$pins_file" > "$tmp"
+  jq \
+    --arg name "$name" \
+    --arg tag "$tag" \
+    --arg digest "$digest" \
+    --arg hash "$hash" \
+    '.[$name].tag = $tag | .[$name].digest = $digest | .[$name].hash = $hash' \
+    "$pins_file" > "$tmp"
   mv "$tmp" "$pins_file"
 }
 
@@ -233,10 +289,12 @@ main() {
 
   local target
   while IFS= read -r target; do
-    local name image old_tag tag_regex changelog_template new_tag old_changelog changelog diff_url
+    local name image old_tag old_digest old_hash tag_regex changelog_template prefetch new_tag new_digest new_hash old_changelog changelog diff_url
     name="$(jq -r '.name' <<< "$target")"
     image="$(jq -r '.image' <<< "$target")"
     old_tag="$(jq -r '.tag' <<< "$target")"
+    old_digest="$(jq -r '.digest' <<< "$target")"
+    old_hash="$(jq -r '.hash' <<< "$target")"
     tag_regex="$(jq -r '.tagRegex' <<< "$target")"
     changelog_template="$(jq -r '.changelog' <<< "$target")"
 
@@ -248,15 +306,36 @@ main() {
     new_tag="$(latest_tag_for_image "$image" "$tag_regex")"
     echo "new tag: ${new_tag}"
 
-    if [[ "$new_tag" != "$old_tag" ]]; then
-      update_pin "$pins_file" "$name" "$new_tag"
+    prefetch="$(prefetch_image "$image" "$new_tag")"
+    new_digest="$(jq -r '.imageDigest' <<< "$prefetch")"
+    new_hash="$(jq -r '.hash' <<< "$prefetch")"
+    if [[ -z "$new_digest" || "$new_digest" == "null" || -z "$new_hash" || "$new_hash" == "null" ]]; then
+      echo "Prefetch did not return digest and hash for ${image}:${new_tag}" >&2
+      exit 1
+    fi
+    echo "new digest: ${new_digest}"
+    echo "new hash: ${new_hash}"
+
+    if [[ "$new_tag" != "$old_tag" || "$new_digest" != "$old_digest" || "$new_hash" != "$old_hash" ]]; then
+      update_pin "$pins_file" "$name" "$new_tag" "$new_digest" "$new_hash"
     fi
     echo "::endgroup::"
 
     old_changelog="$(replace_tag_template "$changelog_template" "$old_tag")"
     changelog="$(replace_tag_template "$changelog_template" "$new_tag")"
-    diff_url="$(image_diff_url "$image" "$old_tag" "$new_tag" "$old_changelog" "$changelog")"
-    append_summary_row "$summary_file" "$name" "$image" "$old_tag" "$new_tag" "$changelog" "$diff_url"
+    diff_url="$(image_diff_url "$image" "$old_tag" "$new_tag" "$old_digest" "$new_digest" "$old_changelog" "$changelog")"
+    append_summary_row \
+      "$summary_file" \
+      "$name" \
+      "$image" \
+      "$old_tag" \
+      "$new_tag" \
+      "$old_digest" \
+      "$new_digest" \
+      "$old_hash" \
+      "$new_hash" \
+      "$changelog" \
+      "$diff_url"
   done < <(target_rows "$pins_file" "$target_filter")
 
   cat >> "$summary_file" <<'EOF'

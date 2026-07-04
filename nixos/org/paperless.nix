@@ -51,8 +51,9 @@ let
       );
   ollamaTunnelPort = 11435;
   ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
-  ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
-  paperlessGptImage = "${ociImages.paperless-gpt.image}:${ociImages.paperless-gpt.tag}";
+  ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
+  paperlessGptImage = ociImages.paperless-gpt.ref;
+  paperlessGptImageFile = ociImages.paperless-gpt.imageFile;
 
   nfsMountOptions = [
     "nfsvers=4"
@@ -500,7 +501,8 @@ in
     backend = "podman";
     containers.paperless-gpt = {
       image = paperlessGptImage;
-      pull = "missing";
+      imageFile = paperlessGptImageFile;
+      pull = "never";
       environment = {
         AUTO_GENERATE_CORRESPONDENTS = "true";
         AUTO_GENERATE_CREATED_DATE = "true";

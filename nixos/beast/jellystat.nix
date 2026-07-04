@@ -7,8 +7,9 @@
 }:
 let
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
-  ociImages = builtins.fromJSON (builtins.readFile ../../lib/oci-images.json);
-  jellystatImage = "${ociImages.jellystat.image}:${ociImages.jellystat.tag}";
+  ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
+  jellystatImage = ociImages.jellystat.ref;
+  jellystatImageFile = ociImages.jellystat.imageFile;
   jellystatHostName = "jfstat.${hostInventory.site.lan.domain}";
   jellystatPort = 3000;
   jellystatDatabase = "jfstat";
@@ -16,6 +17,71 @@ let
   jellystatBackupDataDir = "/var/lib/jellystat/backup-data";
   jellystatOidcClientId = oidc.clients.jfstat.clientId;
   jellyfinUrl = "https://jf.${hostInventory.site.public.domain}";
+  jellystatBackupScript = pkgs.writeShellApplication {
+    name = "jellystat-built-in-backup";
+    runtimeInputs = with pkgs; [
+      coreutils
+      curl
+      findutils
+      jq
+    ];
+    text = ''
+      set -euo pipefail
+
+      base_url="http://127.0.0.1:${toString jellystatPort}"
+      backup_dir=${lib.escapeShellArg jellystatBackupDataDir}
+
+      install -d -m 0750 -o root -g restic-cloud "$backup_dir"
+      marker="$(mktemp "$backup_dir/.backup-marker.XXXXXX")"
+      trap 'rm -f "$marker"' EXIT
+
+      for attempt in $(seq 1 120); do
+        config_json="$(curl --fail --silent "$base_url/auth/isConfigured" 2>/dev/null || true)"
+        state="$(printf '%s' "$config_json" | jq --raw-output '.state // empty' 2>/dev/null || true)"
+
+        if [ "$state" = 2 ]; then
+          break
+        fi
+
+        if [ "$attempt" = 120 ]; then
+          echo "Timed out waiting for Jellystat to become configured" >&2
+          exit 1
+        fi
+
+        sleep 2
+      done
+
+      login_response="$(
+        curl \
+          --fail \
+          --silent \
+          --show-error \
+          --header 'Content-Type: application/json' \
+          --data-binary '{}' \
+          "$base_url/auth/login"
+      )"
+      token="$(printf '%s' "$login_response" | jq --raw-output '.token // empty')"
+
+      if [ -z "$token" ] || [ "$token" = "null" ]; then
+        echo "Jellystat login did not return a backup token" >&2
+        printf '%s\n' "$login_response" >&2
+        exit 1
+      fi
+
+      curl \
+        --fail \
+        --silent \
+        --show-error \
+        --header "Authorization: Bearer $token" \
+        "$base_url/backup/beginBackup"
+
+      created_file="$(find "$backup_dir" -maxdepth 1 -type f -name 'backup_*.json' -newer "$marker" -print -quit)"
+      if [ -z "$created_file" ]; then
+        echo "Jellystat backup endpoint did not create a new backup file in $backup_dir" >&2
+        exit 1
+      fi
+    '';
+  };
 in
 {
   sops.secrets = {
@@ -70,7 +136,8 @@ in
     backend = "podman";
     containers.jellystat = {
       image = jellystatImage;
-      pull = "missing";
+      imageFile = jellystatImageFile;
+      pull = "never";
       environment = {
         POSTGRES_USER = jellystatUser;
         POSTGRES_IP = "127.0.0.1";
@@ -95,7 +162,7 @@ in
   };
 
   systemd.tmpfiles.rules = [
-    "d ${jellystatBackupDataDir} 0750 root root - -"
+    "d ${jellystatBackupDataDir} 0750 root restic-cloud - -"
   ];
 
   systemd.services = {
@@ -255,6 +322,23 @@ in
       '';
     };
 
+    jellystat-built-in-backup = {
+      description = "Create a built-in Jellystat backup artifact";
+      restartIfChanged = false;
+      stopIfChanged = false;
+      before = [ "restic-backups-beast.service" ];
+      wants = [ "podman-jellystat.service" ];
+      after = [ "podman-jellystat.service" ];
+      unitConfig.RequiresMountsFor = [ jellystatBackupDataDir ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "root";
+        Group = "root";
+        ExecStart = lib.getExe jellystatBackupScript;
+        TimeoutStartSec = "12h";
+      };
+    };
+
     podman-jellystat = {
       wants = [
         "jellystat-postgresql-password.service"
@@ -266,6 +350,20 @@ in
       ];
       unitConfig.RequiresMountsFor = [ jellystatBackupDataDir ];
     };
+
+    restic-backups-beast = {
+      after = [ "jellystat-built-in-backup.service" ];
+      wants = [ "jellystat-built-in-backup.service" ];
+      requires = [ "jellystat-built-in-backup.service" ];
+    };
+  };
+
+  services.restic.backups.beast.paths = [ jellystatBackupDataDir ];
+
+  host.observability.backupMetrics.jobs.jellystat-built-in-backup = {
+    service = "jellystat-built-in-backup";
+    title = "Jellystat Built-In Backup";
+    phase = "prep";
   };
 
   host.internalHttps.services.jfstat = {

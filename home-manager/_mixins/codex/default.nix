@@ -26,7 +26,10 @@ in
       notice.fast_default_opt_out = true;
 
       projects = trustedProjects [
-        "src"
+        "src/sdn"
+        "src/nix"
+        "src/nixpkgs"
+        "src/ovn-kubernetes"
       ];
 
       # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
@@ -51,49 +54,6 @@ in
         ];
       };
     };
-
-    rules.default = ''
-      prefix_rule(
-          pattern = ["nix", "eval"],
-          decision = "allow",
-          justification = "Nix evaluation is a routine read-only repository check.",
-          match = [
-              "nix eval .#darwinConfigurations.mair.config.system.stateVersion",
-              "nix eval --raw .#nixosConfigurations.fana.config.system.build.toplevel.drvPath",
-          ],
-          not_match = [
-              "nix build .#darwinConfigurations.mair.system",
-          ],
-      )
-
-      prefix_rule(
-          pattern = ["nix", "build"],
-          decision = "allow",
-          justification = "Nix builds are routine repository verification commands.",
-          match = [
-              "nix build .#darwinConfigurations.mair.system",
-              "nix build .#nixosConfigurations.fana.config.system.build.toplevel",
-          ],
-          not_match = [
-              "nix eval .#darwinConfigurations.mair.config.system.stateVersion",
-          ],
-      )
-
-      prefix_rule(
-          pattern = ["rg"],
-          decision = "allow",
-          justification = "Ripgrep searches are routine read-only repository inspection commands.",
-          match = [
-              "rg -n codex home-manager",
-              "rg --files",
-          ],
-      )
-    '';
-  };
-
-  home.file = {
-    ".codex/config.toml".force = true;
-    ".codex/rules/default.rules".force = true;
   };
 
   home.packages = lib.optionals (!isWork) [
