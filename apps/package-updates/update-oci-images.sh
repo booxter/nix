@@ -17,6 +17,7 @@ Update pinned OCI image tags from lib/oci-images.json and write a Markdown
 summary. Tags are discovered from the upstream registry and filtered by each
 target's tagRegex. The selected linux/amd64 image is prefetched into a Nix
 fixed-output pin so same-tag digest rewrites are visible as file changes.
+Targets with signature metadata are verified before pins are updated.
 EOF
 }
 
@@ -42,7 +43,8 @@ target_rows() {
         digest: .value.digest,
         hash: .value.hash,
         tagRegex: (.value.tagRegex // "^[0-9]+\\.[0-9]+\\.[0-9]+$"),
-        changelog: (.value.changelog // "")
+        changelog: (.value.changelog // ""),
+        signature: (.value.signature // {})
       }
   ' "$pins_file"
 }
@@ -89,8 +91,8 @@ OCI images were prefetched for linux/amd64 and pinned as Nix fixed-output
 archives. Normal CI is expected to validate whether the updated image still
 works with the managed service.
 
-| Target | Image | Tag | Digest | Nix hash | Changelog | Diff |
-| --- | --- | --- | --- | --- | --- | --- |
+| Target | Image | Tag | Digest | Nix hash | Changelog | Diff | Signature |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 EOF
 }
 
@@ -117,6 +119,7 @@ append_summary_row() {
   local new_hash="$9"
   local changelog="${10}"
   local diff_url="${11}"
+  local signature="${12}"
 
   local tag_text
   tag_text="$(change_text "$old_tag" "$new_tag")"
@@ -128,8 +131,8 @@ append_summary_row() {
   diff_text="$(markdown_link_or_not_set "compare" "$diff_url")"
 
   # shellcheck disable=SC2016 # Literal Markdown backticks in the printf format.
-  printf '| `%s` | `%s` | `%s` | `%s` | `%s` | %s | %s |\n' \
-    "$name" "$image" "$tag_text" "$digest_text" "$hash_text" "$changelog_text" "$diff_text" >> "$summary_file"
+  printf '| `%s` | `%s` | `%s` | `%s` | `%s` | %s | %s | `%s` |\n' \
+    "$name" "$image" "$tag_text" "$digest_text" "$hash_text" "$changelog_text" "$diff_text" "$signature" >> "$summary_file"
 }
 
 replace_tag_template() {
@@ -205,6 +208,41 @@ prefetch_image() {
     --image-tag "$tag" \
     --final-image-name "$image" \
     --final-image-tag "$tag"
+}
+
+verify_image_signature() {
+  local image="$1"
+  local digest="$2"
+  local signature="$3"
+  local signature_type key ref
+
+  signature_type="$(jq -r '.type // empty' <<< "$signature")"
+  if [[ -z "$signature_type" ]]; then
+    printf 'not configured\n'
+    return
+  fi
+
+  case "$signature_type" in
+    cosign-key)
+      key="$(jq -r '.key // empty' <<< "$signature")"
+      if [[ -z "$key" ]]; then
+        echo "Signature verification for ${image} is missing signature.key" >&2
+        return 1
+      fi
+
+      ref="${image}@${digest}"
+      echo "verifying signature: cosign verify --key ${key} ${ref}" >&2
+      if ! cosign verify --key "$key" "$ref" >/dev/null; then
+        echo "Cosign verification failed for ${ref}" >&2
+        return 1
+      fi
+      printf 'cosign verified\n'
+      ;;
+    *)
+      echo "Unsupported signature verification type for ${image}: ${signature_type}" >&2
+      return 1
+      ;;
+  esac
 }
 
 update_pin() {
@@ -289,7 +327,7 @@ main() {
 
   local target
   while IFS= read -r target; do
-    local name image old_tag old_digest old_hash tag_regex changelog_template prefetch new_tag new_digest new_hash old_changelog changelog diff_url
+    local name image old_tag old_digest old_hash tag_regex changelog_template signature prefetch new_tag new_digest new_hash signature_result old_changelog changelog diff_url
     name="$(jq -r '.name' <<< "$target")"
     image="$(jq -r '.image' <<< "$target")"
     old_tag="$(jq -r '.tag' <<< "$target")"
@@ -297,6 +335,7 @@ main() {
     old_hash="$(jq -r '.hash' <<< "$target")"
     tag_regex="$(jq -r '.tagRegex' <<< "$target")"
     changelog_template="$(jq -r '.changelog' <<< "$target")"
+    signature="$(jq -c '.signature // {}' <<< "$target")"
 
     echo "::group::Updating OCI image ${name}"
     echo "image: ${image}"
@@ -315,6 +354,9 @@ main() {
     fi
     echo "new digest: ${new_digest}"
     echo "new hash: ${new_hash}"
+
+    signature_result="$(verify_image_signature "$image" "$new_digest" "$signature")"
+    echo "signature: ${signature_result}"
 
     if [[ "$new_tag" != "$old_tag" || "$new_digest" != "$old_digest" || "$new_hash" != "$old_hash" ]]; then
       update_pin "$pins_file" "$name" "$new_tag" "$new_digest" "$new_hash"
@@ -335,7 +377,8 @@ main() {
       "$old_hash" \
       "$new_hash" \
       "$changelog" \
-      "$diff_url"
+      "$diff_url" \
+      "$signature_result"
   done < <(target_rows "$pins_file" "$target_filter")
 
   cat >> "$summary_file" <<'EOF'
