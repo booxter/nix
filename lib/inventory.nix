@@ -393,7 +393,10 @@ rec {
         };
 
         piv = {
-          managementKey.storage = "protected-by-pin";
+          managementKey = {
+            algorithm = "TDES";
+            storage = "protected-by-pin";
+          };
 
           occupiedSlots = {
             "9A" = {
@@ -410,6 +413,21 @@ rec {
               purpose = "PIV key management certificate";
               subject = "CN=ihrachyshka@mmini PIV key management";
               certificateSha1 = "8F:60:00:48:80:3B:94:E8:DB:6A:E9:28:41:8C:EF:8E:3A:3B:EF:C7";
+            };
+          };
+
+          retiredSlots = {
+            "1" = {
+              hosts = [
+                frame
+                mmini
+              ];
+              purpose = "age-plugin-yubikey sops identity";
+              name = "nix sops age";
+              recipient = "age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r";
+              identityFileName = "yubi-nix.txt";
+              pinPolicy = "once";
+              touchPolicy = "cached";
             };
           };
         };
