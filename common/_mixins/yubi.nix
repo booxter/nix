@@ -29,6 +29,18 @@ in
         default = residentSsh.keyName;
         description = "Resident SSH key stub filename under ~/.ssh.";
       };
+
+      localOnly = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to use the YubiKey SSH identity only outside SSH login sessions.";
+      };
+
+      remoteFallbackKeyName = lib.mkOption {
+        type = lib.types.str;
+        default = "id_ed25519";
+        description = "Password-protected SSH key filename under ~/.ssh for SSH login sessions.";
+      };
     };
 
     age = {
@@ -106,7 +118,7 @@ in
     (lib.mkIf cfg.ssh.enable {
       home-manager.users.${username}.programs.yubi.ssh = {
         enable = true;
-        inherit (cfg.ssh) keyName;
+        inherit (cfg.ssh) keyName localOnly remoteFallbackKeyName;
       };
     })
 

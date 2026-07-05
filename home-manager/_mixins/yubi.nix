@@ -9,7 +9,28 @@ let
   cfg = config.programs.yubi;
   residentSsh = hostInventory.yubi.devices.personal.applets.fido2.residentSsh;
   yubikeySshKey = "${config.home.homeDirectory}/.ssh/${cfg.ssh.keyName}";
+  fallbackSshKey = "${config.home.homeDirectory}/.ssh/${cfg.ssh.remoteFallbackKeyName}";
   yubikeyAgeIdentityFile = "${config.home.homeDirectory}/.config/sops/age/${cfg.age.identityFileName}";
+  localSshIdentityConfig =
+    if cfg.ssh.localOnly then
+      ''
+        Match exec "test -z \"$SSH_CONNECTION\""
+          IdentityFile ${yubikeySshKey}
+          IdentitiesOnly yes
+
+        Match exec "test -n \"$SSH_CONNECTION\""
+          IdentityFile ${fallbackSshKey}
+          IdentitiesOnly yes
+          IdentityAgent none
+
+        Host *
+      ''
+    else
+      ''
+        Host *
+          IdentityFile ${yubikeySshKey}
+          IdentitiesOnly yes
+      '';
   sshSudoAskpass = pkgs.writeShellScript "sudo-ssh-askpass" ''
     prompt="$1"
     [ -n "$prompt" ] || prompt="Password:"
@@ -37,6 +58,18 @@ in
         default = residentSsh.keyName;
         description = "Resident SSH key stub filename under ~/.ssh.";
       };
+
+      localOnly = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to use the YubiKey SSH identity only outside SSH login sessions.";
+      };
+
+      remoteFallbackKeyName = lib.mkOption {
+        type = lib.types.str;
+        default = "id_ed25519";
+        description = "Password-protected SSH key filename under ~/.ssh for SSH login sessions.";
+      };
     };
 
     age = {
@@ -59,7 +92,7 @@ in
   config = lib.mkMerge [
     (lib.mkIf cfg.ssh.enable {
       programs.git.settings.user.signingKey = yubikeySshKey;
-      programs.ssh.settings."*".IdentityFile = yubikeySshKey;
+      programs.ssh.extraConfig = lib.mkAfter localSshIdentityConfig;
     })
 
     (lib.mkIf cfg.age.enable {
