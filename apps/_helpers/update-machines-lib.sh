@@ -199,6 +199,46 @@ run_nixos_rebuild_from_repo() {
     ".#"
 }
 
+run_sudo_for_remote_darwin() {
+  local askpass_script=""
+  local has_tty=false
+  local pam_service_file="${SUDO_SSH_PASSWORD_PAM_SERVICE_FILE:-/etc/pam.d/sudo_ssh_password}"
+  local sudo_args=()
+  local status=0
+
+  if [[ -t 0 && -t 1 ]] || [[ "${UPDATE_MACHINES_TEST_ASSUME_TTY:-false}" == "true" ]]; then
+    has_tty=true
+  fi
+
+  if [[ -n "${SSH_CONNECTION:-}" && "$has_tty" == "true" && -f "$pam_service_file" ]]; then
+    askpass_script="$(mktemp)"
+    cat > "$askpass_script" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+prompt="${1:-Password:}"
+printf '%s' "$prompt" > /dev/tty
+saved_tty="$(stty -g < /dev/tty)"
+trap 'stty "$saved_tty" < /dev/tty 2>/dev/null' EXIT HUP INT TERM
+stty -echo < /dev/tty
+IFS= read -r password < /dev/tty
+printf '\n' > /dev/tty
+printf '%s\n' "$password"
+EOF
+    chmod 700 "$askpass_script"
+    sudo_args=(-A)
+    if SUDO_ASKPASS="$askpass_script" sudo "${sudo_args[@]}" "$@"; then
+      status=0
+    else
+      status=$?
+    fi
+    rm -f "$askpass_script"
+    return "$status"
+  fi
+
+  sudo "$@"
+}
+
 run_darwin_switch_from_repo() {
   local host_name="$1"
   local bash_bin=""
@@ -241,7 +281,8 @@ run_darwin_switch_from_repo() {
     return 1
   fi
 
-  if sudo "$bash_bin" -e -u -o pipefail -c '
+  # shellcheck disable=SC2016
+  if run_sudo_for_remote_darwin "$bash_bin" -e -u -o pipefail -c '
     nix_bin="$1"
     system_config="$2"
 
