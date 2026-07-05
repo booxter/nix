@@ -117,9 +117,44 @@ jq -n \
 EOF
   } > "${TEST_BIN}/nix-prefetch-docker"
   chmod +x "${TEST_BIN}/nix-prefetch-docker"
+
+  {
+    printf '#!%s\n' "$(command -v bash)"
+    cat <<'EOF'
+set -euo pipefail
+
+if [[ "$#" -ne 4 || "$1" != "verify" || "$2" != "--key" ]]; then
+  echo "unexpected cosign args: $*" >&2
+  exit 1
+fi
+
+if [[ "$3" != "https://example.invalid/cosign.pub" ]]; then
+  echo "unexpected cosign key: $3" >&2
+  exit 1
+fi
+
+if [[ "$4" != "docker.io/example/romm@sha256:new" ]]; then
+  echo "unexpected cosign ref: $4" >&2
+  exit 1
+fi
+
+cat <<'JSON'
+[
+  {
+    "critical": {
+      "image": {
+        "docker-manifest-digest": "sha256:new"
+      }
+    }
+  }
+]
+JSON
+EOF
+  } > "${TEST_BIN}/cosign"
+  chmod +x "${TEST_BIN}/cosign"
 }
 
-@test "updates selected OCI image tag from registry tags" {
+@test "updates selected signed OCI image tag from registry tags" {
   pins_file="${BATS_TEST_TMPDIR}/oci-images.json"
   summary_file="${BATS_TEST_TMPDIR}/summary.md"
   cat > "$pins_file" <<'JSON'
@@ -137,7 +172,11 @@ EOF
     "digest": "sha256:old",
     "hash": "sha256-oldhash",
     "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
-    "changelog": "https://example.invalid/releases/{tag}"
+    "changelog": "https://example.invalid/releases/{tag}",
+    "signature": {
+      "type": "cosign-key",
+      "key": "https://example.invalid/cosign.pub"
+    }
   }
 }
 JSON
@@ -157,7 +196,7 @@ JSON
   [ "$(jq -r '.other.tag' "$pins_file")" = "1.0.0" ]
   [ "$(jq -r '.other.digest' "$pins_file")" = "sha256:other" ]
   [ "$(jq -r '.other.hash' "$pins_file")" = "sha256-otherhash" ]
-  grep -F '| `romm` | `docker.io/example/romm` | `4.9.1 -> 4.10.0` | `sha256:old -> sha256:new` | `sha256-oldhash -> sha256-newhash` | [link](https://example.invalid/releases/4.10.0) | [compare](https://github.com/example/romm/compare/oldrev...newrev) |' "$summary_file"
+  grep -F '| `romm` | `docker.io/example/romm` | `4.9.1 -> 4.10.0` | `sha256:old -> sha256:new` | `sha256-oldhash -> sha256-newhash` | [link](https://example.invalid/releases/4.10.0) | [compare](https://github.com/example/romm/compare/oldrev...newrev) | `cosign verified` |' "$summary_file"
 }
 
 @test "updates selected OCI image digest when tag is unchanged" {
@@ -188,7 +227,50 @@ JSON
   [ "$(jq -r '.romm.tag' "$pins_file")" = "4.10.0" ]
   [ "$(jq -r '.romm.digest' "$pins_file")" = "sha256:new" ]
   [ "$(jq -r '.romm.hash' "$pins_file")" = "sha256-newhash" ]
-  grep -F '| `romm` | `docker.io/example/romm` | `4.10.0` | `sha256:old -> sha256:new` | `sha256-oldhash -> sha256-newhash` | [link](https://example.invalid/releases/4.10.0) | not set |' "$summary_file"
+  grep -F '| `romm` | `docker.io/example/romm` | `4.10.0` | `sha256:old -> sha256:new` | `sha256-oldhash -> sha256-newhash` | [link](https://example.invalid/releases/4.10.0) | not set | `not configured` |' "$summary_file"
+}
+
+@test "fails selected OCI image update when signature verification fails" {
+  {
+    printf '#!%s\n' "$(command -v bash)"
+    cat <<'EOF'
+set -euo pipefail
+
+echo "mock signature failure" >&2
+exit 42
+EOF
+  } > "${TEST_BIN}/cosign"
+  chmod +x "${TEST_BIN}/cosign"
+
+  pins_file="${BATS_TEST_TMPDIR}/oci-images.json"
+  summary_file="${BATS_TEST_TMPDIR}/summary.md"
+  cat > "$pins_file" <<'JSON'
+{
+  "romm": {
+    "image": "docker.io/example/romm",
+    "tag": "4.9.1",
+    "digest": "sha256:old",
+    "hash": "sha256-oldhash",
+    "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+    "changelog": "https://example.invalid/releases/{tag}",
+    "signature": {
+      "type": "cosign-key",
+      "key": "https://example.invalid/cosign.pub"
+    }
+  }
+}
+JSON
+
+  run bash apps/package-updates/update-oci-images.sh \
+    --pins-file "$pins_file" \
+    --summary-file "$summary_file" \
+    --target romm
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"Cosign verification failed for docker.io/example/romm@sha256:new"* ]]
+  [ "$(jq -r '.romm.tag' "$pins_file")" = "4.9.1" ]
+  [ "$(jq -r '.romm.digest' "$pins_file")" = "sha256:old" ]
+  [ "$(jq -r '.romm.hash' "$pins_file")" = "sha256-oldhash" ]
 }
 
 @test "lists OCI image targets" {

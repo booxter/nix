@@ -12,6 +12,10 @@
     "digest": "sha256:9f091622b15c1db6df0cd11491292b4358895da1454a47070dae124d7ae66145",
     "hash": "sha256-JEmf8tZxMi2e//2pUmfkumT7WXqwIcxja93JX9l8qzw=",
     "image": "ghcr.io/berriai/litellm-database",
+    "signature": {
+      "key": "https://raw.githubusercontent.com/BerriAI/litellm/0112e53046018d726492c814b3644b7d376029d0/cosign.pub",
+      "type": "cosign-key"
+    },
     "tag": "v1.90.3",
     "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
   },

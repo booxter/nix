@@ -29,6 +29,7 @@ let
     name = "update-oci-images";
     runtimeInputs = with pkgs; [
       coreutils
+      cosign
       git
       gnugrep
       jq

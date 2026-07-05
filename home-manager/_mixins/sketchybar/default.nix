@@ -39,13 +39,28 @@ let
                                     background.height=24                    \
                                                                             \
                  --add item codex.resets left                              \
-                 --set codex.resets updates=off                            \
+                 --set codex.resets script="$PLUGIN_DIR/codex.sh"          \
+                                   click_script="sketchybar --set codex.resets popup.drawing=toggle" \
                                    icon.drawing=off                         \
                                    label.padding_left=6                     \
                                    label.padding_right=6                    \
                                    background.border_width=0                \
                                    background.corner_radius=6               \
-                                   background.height=24
+                                   background.height=24                     \
+                                   popup.align=center                       \
+                                   popup.background.color="$BACKGROUND_COLOR" \
+                                   popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
+                                   popup.background.border_width=1           \
+                                   popup.background.corner_radius=6          \
+                 --subscribe codex.resets mouse.entered mouse.exited        \
+                                                                            \
+                 --add item codex.resets.expiry popup.codex.resets          \
+                 --set codex.resets.expiry updates=off                      \
+                                          icon.drawing=off                  \
+                                          label.padding_left=8              \
+                                          label.padding_right=8             \
+                                          background.border_width=0         \
+                                          background.height=24
     ''
   );
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''
