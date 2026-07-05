@@ -41,6 +41,16 @@ in
   programs.hyprland.enable = true;
   services.openssh.settings.X11Forwarding = true;
 
+  security.pam.u2f = {
+    enable = true;
+    control = "sufficient";
+    settings = {
+      appid = "pam://frame";
+      cue = true;
+      origin = "pam://frame";
+    };
+  };
+
   services.ollama = {
     enable = true;
     package = pkgs.ollama-rocm;
@@ -62,6 +72,7 @@ in
     amdgpu_top
     clinfo
     radeontop
+    pam_u2f
     rocmPackages.rocm-smi
     rocmPackages.rocminfo
   ];
