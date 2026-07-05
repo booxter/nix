@@ -5,6 +5,7 @@ AUTH_FILE="${HOME}/.codex/auth.json"
 FIVE_HOUR_ITEM="codex.5h"
 WEEKLY_ITEM="codex.weekly"
 RESETS_ITEM="codex.resets"
+RESETS_POPUP_ITEM="codex.resets.expiry"
 EXPIRING_RESET_SECONDS=604800
 
 GREEN="0xff9ece6a"
@@ -235,10 +236,26 @@ reset_tooltip() {
   printf '%s available; nearest expires %s (%s)' "$reset_count_text" "$expires_text" "$remaining_text"
 }
 
+case "${SENDER:-}" in
+  mouse.entered)
+    sketchybar --set "$RESETS_ITEM" popup.drawing=on
+    exit 0
+    ;;
+  mouse.exited | mouse.exited.global)
+    sketchybar --set "$RESETS_ITEM" popup.drawing=off
+    exit 0
+    ;;
+esac
+
+if [ "${NAME:-}" = "$RESETS_ITEM" ]; then
+  exit 0
+fi
+
 hide_items() {
   sketchybar --set "$FIVE_HOUR_ITEM" drawing=off \
     --set "$WEEKLY_ITEM" drawing=off \
-    --set "$RESETS_ITEM" drawing=off
+    --set "$RESETS_ITEM" drawing=off popup.drawing=off \
+    --set "$RESETS_POPUP_ITEM" drawing=off
 }
 
 if [ ! -f "$AUTH_FILE" ]; then
@@ -253,7 +270,8 @@ if ! status="$(codex-usage-status --json 2>/dev/null)"; then
     label="err" \
     label.color="$RED" \
     --set "$WEEKLY_ITEM" drawing=off \
-    --set "$RESETS_ITEM" drawing=off
+    --set "$RESETS_ITEM" drawing=off popup.drawing=off \
+    --set "$RESETS_POPUP_ITEM" drawing=off
   exit 0
 fi
 
@@ -297,4 +315,8 @@ sketchybar --set "$FIVE_HOUR_ITEM" \
   drawing=on \
   label="$reset_label" \
   label.color="$refreshes_color" \
-  tooltip="$refreshes_tooltip"
+  popup.drawing=off \
+  --set "$RESETS_POPUP_ITEM" \
+  drawing=on \
+  label="$refreshes_tooltip" \
+  label.color="$refreshes_color"
