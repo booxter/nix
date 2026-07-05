@@ -403,6 +403,8 @@ EOF
   workdir="$BATS_TMPDIR/update-machines-deploy-failure"
   mkdir -p "$workdir/bin"
   write_update_machines_test_stubs "$workdir/bin"
+  local uploaded_script
+  local expected_clone
 
   export PATH="$workdir/bin:$PATH"
   export SSH_TEST_MODE="deploy-fail"
@@ -413,7 +415,12 @@ EOF
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
-  grep -Fq 'target_config_name="$7"' "$SSH_UPLOADED_SCRIPT_OUT"
-  grep -Fq 'target_runtime_host="$8"' "$SSH_UPLOADED_SCRIPT_OUT"
-  grep -Fq 'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"' "$SSH_UPLOADED_SCRIPT_OUT"
+
+  uploaded_script="$(<"$SSH_UPLOADED_SCRIPT_OUT")"
+  expected_clone=$'GIT_CONFIG_NOSYSTEM=1 \\\n  GIT_CONFIG_GLOBAL=/dev/null \\\n  GIT_CONFIG_SYSTEM=/dev/null \\\n  GIT_TERMINAL_PROMPT=0 \\\n  git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"'
+
+  [[ "$uploaded_script" == *'target_config_name="$7"'* ]]
+  [[ "$uploaded_script" == *'target_runtime_host="$8"'* ]]
+  [[ "$uploaded_script" == *"$expected_clone"* ]]
+  [[ "$uploaded_script" == *'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"'* ]]
 }

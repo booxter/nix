@@ -650,7 +650,11 @@ if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
 fi
 
 https_url="https://github.com/${repo_url#github.com:}.git"
-git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
+GIT_CONFIG_NOSYSTEM=1 \
+  GIT_CONFIG_GLOBAL=/dev/null \
+  GIT_CONFIG_SYSTEM=/dev/null \
+  GIT_TERMINAL_PROMPT=0 \
+  git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
 
 cd "$repo_dir"
 
