@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   hostname,
   isDarwin,
   isLinux,
@@ -10,6 +11,13 @@
 }:
 let
   cfg = config.programs.yubi;
+  personalYubi = hostInventory.yubi.devices.personal;
+  residentSsh = personalYubi.applets.fido2.residentSsh;
+  pamU2fDefaults =
+    personalYubi.applets.fido2.pamU2f.${hostname} or {
+      appId = "pam://${hostname}";
+      origin = "pam://${hostname}";
+    };
 in
 {
   options.programs.yubi = {
@@ -18,7 +26,7 @@ in
 
       keyName = lib.mkOption {
         type = lib.types.str;
-        default = "id_ed25519_sk_rk";
+        default = residentSsh.keyName;
         description = "Resident SSH key stub filename under ~/.ssh.";
       };
     };
@@ -28,13 +36,13 @@ in
 
       appId = lib.mkOption {
         type = lib.types.str;
-        default = "pam://${hostname}";
+        default = pamU2fDefaults.appId;
         description = "PAM U2F application ID.";
       };
 
       origin = lib.mkOption {
         type = lib.types.str;
-        default = "pam://${hostname}";
+        default = pamU2fDefaults.origin;
         description = "PAM U2F origin.";
       };
 

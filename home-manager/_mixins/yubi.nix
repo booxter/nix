@@ -1,6 +1,12 @@
-{ config, lib, ... }:
+{
+  config,
+  hostInventory,
+  lib,
+  ...
+}:
 let
   cfg = config.programs.yubi.ssh;
+  residentSsh = hostInventory.yubi.devices.personal.applets.fido2.residentSsh;
   yubikeySshKey = "${config.home.homeDirectory}/.ssh/${cfg.keyName}";
 in
 {
@@ -9,7 +15,7 @@ in
 
     keyName = lib.mkOption {
       type = lib.types.str;
-      default = "id_ed25519_sk_rk";
+      default = residentSsh.keyName;
       description = "Resident SSH key stub filename under ~/.ssh.";
     };
   };
