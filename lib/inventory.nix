@@ -765,6 +765,7 @@ rec {
       hostname = "JGWXHWDL4X";
       platform = "aarch64-darwin";
       isDesktop = true;
+      isLaptop = true;
       isWork = true;
       lanWanInterfaces = [
         "en0"

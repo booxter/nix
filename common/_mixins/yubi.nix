@@ -95,6 +95,10 @@ in
         default = false;
         description = "Whether macOS should require smart-card authentication.";
       };
+
+      sshSudoPassword = {
+        enable = lib.mkEnableOption "password-only sudo authentication for interactive SSH sessions";
+      };
     };
   };
 
@@ -142,6 +146,25 @@ in
           checkCertificateTrust = cfg.smartCard.checkCertificateTrust;
           enforceSmartCard = cfg.smartCard.enforceSmartCard;
         };
+
+        environment.etc."pam.d/sudo_ssh_password" = lib.mkIf cfg.smartCard.sshSudoPassword.enable {
+          text = ''
+            # sudo_ssh_password: auth account password session
+            auth       required       pam_opendirectory.so
+            account    required       pam_permit.so
+            password   required       pam_deny.so
+            session    required       pam_permit.so
+          '';
+        };
+
+        security.sudo.extraConfig = lib.mkIf cfg.smartCard.sshSudoPassword.enable (
+          lib.mkAfter ''
+            Defaults    pam_askpass_service=sudo_ssh_password
+          ''
+        );
+
+        home-manager.users.${username}.programs.yubi.smartCard.sshSudoPassword.enable =
+          cfg.smartCard.sshSudoPassword.enable;
       }
     ))
 
