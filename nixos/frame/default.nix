@@ -4,12 +4,14 @@
   inputs,
   lib,
   pkgs,
+  username,
   ...
 }:
 let
   framePkgs = import ./pkgs pkgs;
   ollamaService = hostInventory.servicesById.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  yubikeySshKey = "${config.users.users.${username}.home}/.ssh/id_ed25519_sk";
 in
 {
   _module.args.framePkgs = framePkgs;
@@ -41,6 +43,11 @@ in
   services.displayManager.defaultSession = "hyprland";
   programs.hyprland.enable = true;
   services.openssh.settings.X11Forwarding = true;
+
+  home-manager.users.${username} = {
+    programs.git.settings.user.signingKey = yubikeySshKey;
+    programs.ssh.settings."*".IdentityFile = yubikeySshKey;
+  };
 
   security.pam.u2f = {
     enable = true;
