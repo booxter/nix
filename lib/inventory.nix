@@ -3,6 +3,7 @@
   username ? "ihrachyshka",
 }:
 let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   prxStateVersion = "25.11";
   prxNetIface = "enp5s0f0np0";
   lanDnsRecordTtlSeconds = 300;
@@ -254,11 +255,11 @@ rec {
       {
         nixos = {
           url = "https://cache.nixos.org/";
-          key = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
+          key = readPublicKey ../public-keys/nix-cache/nixos.pub;
         };
         home = {
           url = homeUrl;
-          key = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
+          key = readPublicKey ../public-keys/nix-cache/home.pub;
           defaultUrl = nixCacheUrlWithPriority homeUrl 30;
           lanUrl = nixCacheUrlWithPriority homeUrl 10;
           vpnUrl = nixCacheUrlWithPriority homeUrl 30;
@@ -346,18 +347,18 @@ rec {
         mair = {
           host = "mair";
           address = "10.83.0.10/32";
-          publicKey = "j3TbXthVhDk2TVAag6Cr0MRLiCTaOPfBL8UeecG9Sx4=";
+          publicKey = readPublicKey ../public-keys/wireguard/home-mair.pub;
         };
         unifi-travel-router = {
           address = "10.83.0.20/32";
-          publicKey = "B+s4ysMFr3GrIdXdKP4SxXM3JZ9ziCUVJXkLwEvPX1E=";
+          publicKey = readPublicKey ../public-keys/wireguard/home-unifi-travel-router.pub;
         };
       };
     };
   };
 
   sshTicket = {
-    userCaPublicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJs0Zx3pG8L1SaGQSyD9Jqljt15KD7txMUrgu9lP85qRY89wjF7if3QQnp22jTBjgfuWrUW2GdFWwAbGmzvWDg8= ca-key-nix-infra@secretive.mair.local";
+    userCaPublicKey = readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub;
   };
 
   # Public YubiKey allocation facts. Keep PINs, PUKs, management keys, and

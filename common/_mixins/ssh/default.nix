@@ -1,4 +1,7 @@
 { isWork, lib, ... }:
+let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
+in
 {
   imports = lib.optionals (!isWork) [ ./ticket-server.nix ];
 
@@ -6,7 +9,7 @@
 
   programs.ssh.knownHosts = {
     "beast" = {
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILC6++O8K1tm3RzwHD6igpTxDlJvUHIobfsNL2udZ/dm";
+      publicKey = readPublicKey ../../../public-keys/hosts/beast.pub;
     };
   };
 }

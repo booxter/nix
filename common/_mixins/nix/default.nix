@@ -6,6 +6,9 @@
   isWork,
   ...
 }:
+let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
+in
 {
   nix =
     let
@@ -33,8 +36,8 @@
           "https://cache.saumon.network/proxmox-nixos"
         ];
         extra-trusted-public-keys = [
-          "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
-          "proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM="
+          (readPublicKey ../../../public-keys/nix-cache/numtide.pub)
+          (readPublicKey ../../../public-keys/nix-cache/proxmox-nixos.pub)
         ];
       }
       // lib.optionalAttrs (!isWork) {
