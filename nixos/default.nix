@@ -88,6 +88,7 @@ in
       pciutils
       procps
       psmisc
+      usbutils
     ];
 
   }
