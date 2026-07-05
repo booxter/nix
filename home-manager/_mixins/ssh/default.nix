@@ -25,7 +25,6 @@ in
   config = {
     home.sessionVariables = lib.mkIf pkgs.stdenv.isDarwin {
       SSH_ASKPASS = lib.getExe sshAskpass;
-      SSH_ASKPASS_REQUIRE = "force";
     };
 
     services.ssh-agent.enable = pkgs.stdenv.isLinux;
