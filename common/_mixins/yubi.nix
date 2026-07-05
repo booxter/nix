@@ -132,6 +132,18 @@ in
     (lib.optionalAttrs isLinux (
       lib.mkIf cfg.age.enable {
         services.pcscd.enable = true;
+        security.polkit = {
+          enable = true;
+          extraConfig = ''
+            polkit.addRule(function(action, subject) {
+              if ((action.id == "org.debian.pcsc-lite.access_pcsc" ||
+                   action.id == "org.debian.pcsc-lite.access_card") &&
+                  subject.user == "${username}") {
+                return polkit.Result.YES;
+              }
+            });
+          '';
+        };
       }
     ))
 
