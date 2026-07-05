@@ -386,6 +386,40 @@ EOF
   [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "activate" ]
 }
 
+@test "run_sudo_for_remote_darwin uses askpass sudo over ssh when configured" {
+  workdir="$BATS_TMPDIR/darwin-ssh-sudo-askpass"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  touch "$workdir/sudo_ssh_password"
+  local askpass_path
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$SUDO_ARGS_OUT"
+printf '%s\n' "${SUDO_ASKPASS:-}" > "$SUDO_ASKPASS_OUT"
+EOF
+  } > "$workdir/bin/sudo"
+  chmod +x "$workdir/bin/sudo"
+
+  export PATH="$workdir/bin:$PATH"
+  export SSH_CONNECTION="192.0.2.1 50000 192.0.2.2 22"
+  export SUDO_ARGS_OUT="$workdir/sudo.args"
+  export SUDO_ASKPASS_OUT="$workdir/sudo.askpass"
+  export SUDO_SSH_PASSWORD_PAM_SERVICE_FILE="$workdir/sudo_ssh_password"
+  export UPDATE_MACHINES_TEST_ASSUME_TTY=true
+
+  run run_sudo_for_remote_darwin echo ok
+
+  [ "$status" -eq 0 ]
+  [ "$(<"$SUDO_ARGS_OUT")" = "-A echo ok" ]
+  askpass_path="$(<"$SUDO_ASKPASS_OUT")"
+  [ -n "$askpass_path" ]
+  [ ! -e "$askpass_path" ]
+}
+
 @test "update-machines resolves an explicit work host over mDNS" {
   workdir="$BATS_TMPDIR/update-machines-explicit-work-host"
   mkdir -p "$workdir/bin"
@@ -403,6 +437,8 @@ EOF
   workdir="$BATS_TMPDIR/update-machines-deploy-failure"
   mkdir -p "$workdir/bin"
   write_update_machines_test_stubs "$workdir/bin"
+  local uploaded_script
+  local expected_clone
 
   export PATH="$workdir/bin:$PATH"
   export SSH_TEST_MODE="deploy-fail"
@@ -413,7 +449,14 @@ EOF
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
-  grep -Fq 'target_config_name="$7"' "$SSH_UPLOADED_SCRIPT_OUT"
-  grep -Fq 'target_runtime_host="$8"' "$SSH_UPLOADED_SCRIPT_OUT"
-  grep -Fq 'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"' "$SSH_UPLOADED_SCRIPT_OUT"
+
+  uploaded_script="$(<"$SSH_UPLOADED_SCRIPT_OUT")"
+  expected_clone=$'GIT_CONFIG_NOSYSTEM=1 \\\n  GIT_CONFIG_GLOBAL=/dev/null \\\n  GIT_CONFIG_SYSTEM=/dev/null \\\n  GIT_TERMINAL_PROMPT=0 \\\n  git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"'
+
+  [[ "$uploaded_script" == *'target_config_name="$7"'* ]]
+  [[ "$uploaded_script" == *'target_runtime_host="$8"'* ]]
+  [[ "$uploaded_script" == *"$expected_clone"* ]]
+  [[ "$uploaded_script" == *'SUDO_ASKPASS="$askpass_script" sudo "${sudo_args[@]}" "$@"'* ]]
+  [[ "$uploaded_script" == *'run_sudo_for_remote_darwin "$bash_bin" -e -u -o pipefail -c'* ]]
+  [[ "$uploaded_script" == *'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"'* ]]
 }

@@ -3,11 +3,13 @@
   username ? "ihrachyshka",
 }:
 let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   prxStateVersion = "25.11";
   prxNetIface = "enp5s0f0np0";
   lanDnsRecordTtlSeconds = 300;
 
   frame = "frame";
+  mmini = "mmini";
   nvws = "nvws";
   glanceCategories = [
     {
@@ -253,11 +255,11 @@ rec {
       {
         nixos = {
           url = "https://cache.nixos.org/";
-          key = "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=";
+          key = readPublicKey ../public-keys/nix-cache/nixos.pub;
         };
         home = {
           url = homeUrl;
-          key = "default:+epFjzN1YKGqqeraQczdEfRyIuzgWd6/nrifa0467QQ=";
+          key = readPublicKey ../public-keys/nix-cache/home.pub;
           defaultUrl = nixCacheUrlWithPriority homeUrl 30;
           lanUrl = nixCacheUrlWithPriority homeUrl 10;
           vpnUrl = nixCacheUrlWithPriority homeUrl 30;
@@ -345,18 +347,92 @@ rec {
         mair = {
           host = "mair";
           address = "10.83.0.10/32";
-          publicKey = "j3TbXthVhDk2TVAag6Cr0MRLiCTaOPfBL8UeecG9Sx4=";
+          publicKey = readPublicKey ../public-keys/wireguard/home-mair.pub;
         };
         unifi-travel-router = {
           address = "10.83.0.20/32";
-          publicKey = "B+s4ysMFr3GrIdXdKP4SxXM3JZ9ziCUVJXkLwEvPX1E=";
+          publicKey = readPublicKey ../public-keys/wireguard/home-unifi-travel-router.pub;
         };
       };
     };
   };
 
   sshTicket = {
-    userCaPublicKey = "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBJs0Zx3pG8L1SaGQSyD9Jqljt15KD7txMUrgu9lP85qRY89wjF7if3QQnp22jTBjgfuWrUW2GdFWwAbGmzvWDg8= ca-key-nix-infra@secretive.mair.local";
+    userCaPublicKey = readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub;
+  };
+
+  # Public YubiKey allocation facts. Keep PINs, PUKs, management keys, and
+  # private key material out of inventory.
+  yubi = {
+    devices.personal = {
+      owner = username;
+      hosts = [
+        frame
+        mmini
+      ];
+
+      applets = {
+        fido2 = {
+          residentSsh = {
+            keyName = "id_ed25519_sk_rk";
+            hosts = [
+              frame
+              mmini
+            ];
+            purposes = [
+              "ssh-client-auth"
+              "git-ssh-signing"
+            ];
+          };
+
+          pamU2f.${frame} = {
+            host = frame;
+            appId = "pam://${frame}";
+            origin = "pam://${frame}";
+          };
+        };
+
+        piv = {
+          managementKey = {
+            algorithm = "TDES";
+            storage = "protected-by-pin";
+          };
+
+          occupiedSlots = {
+            "9A" = {
+              host = mmini;
+              purpose = "macOS SmartCardServices login";
+              subject = "CN=ihrachyshka@mmini PIV auth";
+              certificateSha1 = "EE:44:3A:CB:F7:9B:70:13:C2:9A:D8:53:1C:47:25:F3:FF:4C:57:85";
+              macosIdentityHash = "1CD7472BD8C5B0129801906597B581CC8FE05968";
+              macosToken = "com.apple.pivtoken:9F19388BE1FB4DEF83A8F2AC72223BF6";
+            };
+
+            "9D" = {
+              host = mmini;
+              purpose = "PIV key management certificate";
+              subject = "CN=ihrachyshka@mmini PIV key management";
+              certificateSha1 = "8F:60:00:48:80:3B:94:E8:DB:6A:E9:28:41:8C:EF:8E:3A:3B:EF:C7";
+            };
+          };
+
+          retiredSlots = {
+            "1" = {
+              hosts = [
+                frame
+                mmini
+              ];
+              purpose = "age-plugin-yubikey sops identity";
+              name = "nix sops age";
+              recipient = "age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r";
+              identityFileName = "yubi-nix.txt";
+              pinPolicy = "once";
+              touchPolicy = "cached";
+            };
+          };
+        };
+      };
+    };
   };
 
   sso = {
@@ -707,6 +783,7 @@ rec {
       hostname = "JGWXHWDL4X";
       platform = "aarch64-darwin";
       isDesktop = true;
+      isLaptop = true;
       isWork = true;
       lanWanInterfaces = [
         "en0"

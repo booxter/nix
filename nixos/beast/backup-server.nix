@@ -5,6 +5,7 @@
   ...
 }:
 let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   backupRoot = "/volume2/backups/restic-prod";
   cloudOffloadUser = "restic-cloud";
   cloudBucketName = "ihar-restic-prod";
@@ -36,7 +37,7 @@ let
       };
     };
     srvarr = {
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ5uWCS2lW2JVBHPltnWuYtB5866DUSJ9Ayhz4hgY1T2";
+      publicKey = readPublicKey ../../public-keys/restic/srvarr.pub;
       cloud = {
         repository = "b2:${cloudBucketName}:hosts/srvarr";
         prefix = "hosts/srvarr";
@@ -53,7 +54,7 @@ let
       };
     };
     orgvm = {
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF0906WU3WLoVgNE8B0HRyV0gDGQihj0LHPMZ2pTiV/B ihrachyshka@mair";
+      publicKey = readPublicKey ../../public-keys/restic/orgvm.pub;
       cloud = {
         repository = "b2:${cloudBucketName}:hosts/orgvm";
         prefix = "hosts/orgvm";
@@ -69,7 +70,7 @@ let
       };
     };
     pki = {
-      publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMvtCrXazXDuqqqr2BiYxCf1Zwh2rdo39+ZR36fR/kSK restic-pki@pki";
+      publicKey = readPublicKey ../../public-keys/restic/pki.pub;
       cloud = {
         repository = "b2:${cloudBucketName}:hosts/pki";
         prefix = "hosts/pki";

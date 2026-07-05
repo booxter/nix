@@ -8,6 +8,7 @@
   ...
 }:
 let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   builderSpec = n: hostInventory.nixosHostSpecsByName."builder${toString n}";
   toBuilderName = n: hostInventory.toNixosShortDnsName (builderSpec n);
 in
@@ -15,22 +16,22 @@ in
   programs.ssh = {
     knownHosts = {
       "frame" = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICS86u2oMXjLCgXsM+g9EryrS6kUjWEWVHAYe0AaBjs7";
+        publicKey = readPublicKey ../../../public-keys/hosts/frame.pub;
       };
       "mmini" = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAII8s28KbVXwhV4K5c5WDd6adK5wSSjyT7EWLqkF1VhQf";
+        publicKey = readPublicKey ../../../public-keys/hosts/mmini.pub;
       };
       "mair" = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICHqTUyXOeL1O4JPIDxf8EzUzgKLmkW4C2g9EezZMivL";
+        publicKey = readPublicKey ../../../public-keys/hosts/mair.pub;
       };
       ${toBuilderName 1} = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIADgC19iVlCSjvzOZGCw0rwnPLGLFcSKzFDqqyMc5bhQ";
+        publicKey = readPublicKey ../../../public-keys/hosts/builder1.pub;
       };
       ${toBuilderName 2} = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILA7m9aXyQUMY+tMCpo6bDoS/Ei+FWxleBq5ytIIvSTC";
+        publicKey = readPublicKey ../../../public-keys/hosts/builder2.pub;
       };
       ${toBuilderName 3} = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICG1HuHAS0FyJORcsaOYvV2LlLfkT0f608r6JhUUbkvf";
+        publicKey = readPublicKey ../../../public-keys/hosts/builder3.pub;
       };
     };
     extraConfig =

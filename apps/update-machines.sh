@@ -585,6 +585,7 @@ REMOTE
 )"
   remote_payload+=$'\n'"$(declare -f run_nh_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nixos_rebuild_from_repo)"$'\n'
+  remote_payload+=$'\n'"$(declare -f run_sudo_for_remote_darwin)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_darwin_switch_from_repo)"$'\n'
   remote_payload+="$(cat <<'REMOTE'
 repo_dir=""
@@ -636,13 +637,13 @@ if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
   GC_TARGET_KB="$((MIN_DISK_KB - AVAIL_KB + GC_HEADROOM_KB))"
   GC_TARGET_GB="$(awk "BEGIN {printf \"%.1f\", ${GC_TARGET_KB}/1024/1024}")"
   echo "Low disk space (<${MIN_DISK_GIB}GiB). Running bounded nix-collect-garbage -d --max-freed ${GC_TARGET_GB}GiB..."
-  sudo nix-collect-garbage -d --max-freed "${GC_TARGET_KB}K"
+  run_sudo_for_remote_darwin nix-collect-garbage -d --max-freed "${GC_TARGET_KB}K"
   if set_avail_gib; then
     printf '\033[1;33m%s\033[0m\n' "Available disk after cleanup on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
   fi
   if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
     echo "Bounded GC did not free enough space. Running full nix-collect-garbage -d..."
-    sudo nix-collect-garbage -d
+    run_sudo_for_remote_darwin nix-collect-garbage -d
     if set_avail_gib; then
       printf '\033[1;33m%s\033[0m\n' "Available disk after full cleanup on ${AVAIL_PATH}: ${AVAIL_GB} GiB"
     fi
@@ -650,7 +651,11 @@ if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
 fi
 
 https_url="https://github.com/${repo_url#github.com:}.git"
-git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
+GIT_CONFIG_NOSYSTEM=1 \
+  GIT_CONFIG_GLOBAL=/dev/null \
+  GIT_CONFIG_SYSTEM=/dev/null \
+  GIT_TERMINAL_PROMPT=0 \
+  git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
 
 cd "$repo_dir"
 

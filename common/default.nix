@@ -9,16 +9,19 @@
   ...
 }:
 let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   canUseBuilders = !isWork && (hostname == "mair" || hostname == "mmini" || hostname == "frame");
   canUseWorkBuilders = isWork && hostname != "nvws";
   workKeys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILMs9I9LVggVhp5dLjcWmOHCAjUIOeW6eXTMftp3+Ekx ihrachyshka@JGWXHWDL4X"
+    (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
   ];
   personalKeys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF0X50YNCxMOfuSwc5F/O0lvaRVDkxW4BA94XWz5ovBq" # tab
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILF2Ga7NLRUkAqv6B4GDya40U1mQalWo8XOhEhOPF3zW ihrachyshka@Mac.lan" # mmini
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINBhNnNyDsIzKgNgiIfdHp4LORT+elGraPwcueuiRjk3 ihrachyshka@mair" # mair
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGjHlS1RWVYGAhE9SpQMExN0iSfeRdPgqW7ltOIUf49g ihrachyshka@frame" # frame
+    (readPublicKey ../public-keys/users/tab.pub)
+    (readPublicKey ../public-keys/users/mmini.pub)
+    (readPublicKey ../public-keys/users/mair.pub)
+    (readPublicKey ../public-keys/users/frame.pub)
+    (readPublicKey ../public-keys/yubikey.pub)
+    (readPublicKey ../public-keys/mair-secretive.pub)
   ];
 
 in
@@ -30,6 +33,7 @@ in
     ./_mixins/nix-gc
     ./_mixins/ssh
     ./_mixins/terminfo
+    ./_mixins/yubi.nix
   ]
   ++ lib.optionals (!isWork) [
     ./_mixins/attic

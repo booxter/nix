@@ -5,11 +5,14 @@
   hostname,
   ...
 }:
+let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
+in
 {
   programs.ssh = {
     knownHosts = {
       "nvws.local" = {
-        publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHfcwsYERqU04xrr6LY0lcbkmlcFuThaURac/AlvP8mR";
+        publicKey = readPublicKey ../../../public-keys/hosts/nvws-local.pub;
       };
     };
     extraConfig =

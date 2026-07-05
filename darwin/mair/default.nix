@@ -1,10 +1,12 @@
 {
   config,
   hostInventory,
+  lib,
   username,
   ...
 }:
 let
+  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
 in
@@ -13,6 +15,8 @@ in
 
   home-manager.users.${username} = {
     home.sessionVariables.SOPS_AGE_KEY_FILE = "/Users/${username}/.config/sops/age/mair-se.txt";
+    home.file.".ssh/secretive.pub".source = ../../public-keys/mair-secretive.pub;
+    programs.git.settings.user.signingKey = "/Users/${username}/.ssh/secretive.pub";
     programs.sshTicket.enableKnownHosts = true;
   };
 
@@ -37,7 +41,7 @@ in
 
     peers = [
       {
-        publicKey = "ftjXEviy3flbMlXVntXs/QDcDUWR9f38nIPAcDTe4Gc=";
+        publicKey = readPublicKey ../../public-keys/wireguard/home-gateway.pub;
         endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
         allowedIPs = [
           wgHome.cidr

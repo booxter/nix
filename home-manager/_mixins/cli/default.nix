@@ -134,6 +134,7 @@ in
       pre-commit
       wget
       yq-go
+      yubikey-manager
       zstd
 
       # python
@@ -150,9 +151,6 @@ in
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
     CONTAINERS_MACHINE_PROVIDER = "libkrun";
-  }
-  // lib.optionalAttrs (!isWork) {
-    SOPS_AGE_KEY_FILE = lib.mkDefault "${config.home.homeDirectory}/.config/sops/age/keys.txt.age";
   };
 
   home.file = {

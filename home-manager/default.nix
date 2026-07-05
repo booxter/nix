@@ -26,6 +26,7 @@
     ./_mixins/scm
     ./_mixins/ssh
     ./_mixins/tmux
+    ./_mixins/yubi.nix
   ]
   ++ lib.optionals isDesktop [
     ./_mixins/aerospace

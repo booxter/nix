@@ -39,7 +39,8 @@ in
     }
     // lib.optionalAttrs isDarwin {
       shell_environment_policy.set = {
-        inherit (config.home.sessionVariables) SSH_ASKPASS SSH_ASKPASS_REQUIRE;
+        inherit (config.home.sessionVariables) SSH_ASKPASS;
+        SSH_ASKPASS_REQUIRE = "force";
       };
     }
     // lib.optionalAttrs (!isWork) {
