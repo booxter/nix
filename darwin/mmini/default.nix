@@ -6,6 +6,7 @@
   ];
 
   programs.yubi = {
+    age.enable = true;
     ssh.enable = true;
     smartCard.enable = true;
   };

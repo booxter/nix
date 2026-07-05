@@ -31,6 +31,16 @@ in
       };
     };
 
+    age = {
+      enable = lib.mkEnableOption "YubiKey-backed age identity tooling";
+
+      identityFileName = lib.mkOption {
+        type = lib.types.str;
+        default = "yubi-nix.txt";
+        description = "YubiKey age identity filename under ~/.config/sops/age.";
+      };
+    };
+
     pamU2f = {
       enable = lib.mkEnableOption "YubiKey PAM U2F authentication";
 
@@ -95,6 +105,19 @@ in
         inherit (cfg.ssh) keyName;
       };
     })
+
+    (lib.mkIf cfg.age.enable {
+      home-manager.users.${username}.programs.yubi.age = {
+        enable = true;
+        inherit (cfg.age) identityFileName;
+      };
+    })
+
+    (lib.optionalAttrs isLinux (
+      lib.mkIf cfg.age.enable {
+        services.pcscd.enable = true;
+      }
+    ))
 
     (lib.optionalAttrs isLinux (
       lib.mkIf cfg.pamU2f.enable {

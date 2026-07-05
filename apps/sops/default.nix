@@ -15,6 +15,7 @@ let
     name = "sops-cat";
     runtimeInputs = with pkgs; [
       age-plugin-se
+      age-plugin-yubikey
       coreutils
       git
       sops
@@ -29,6 +30,7 @@ let
     name = "sops-edit";
     runtimeInputs = with pkgs; [
       age-plugin-se
+      age-plugin-yubikey
       coreutils
       git
       sops
@@ -43,6 +45,7 @@ let
     name = "sops-update";
     runtimeInputs = with pkgs; [
       age-plugin-se
+      age-plugin-yubikey
       coreutils
       git
       jq
@@ -59,6 +62,7 @@ let
     name = "sops-copy";
     runtimeInputs = with pkgs; [
       age-plugin-se
+      age-plugin-yubikey
       coreutils
       git
       jq
@@ -75,6 +79,7 @@ let
     name = "sops-set";
     runtimeInputs = with pkgs; [
       age-plugin-se
+      age-plugin-yubikey
       coreutils
       git
       jq
@@ -90,6 +95,7 @@ let
     name = "sops-ups-sync";
     runtimeInputs = with pkgs; [
       age-plugin-se
+      age-plugin-yubikey
       coreutils
       git
       jq
@@ -107,6 +113,7 @@ let
     name = "sops-pass";
     runtimeInputs = with pkgs; [
       age-plugin-se
+      age-plugin-yubikey
       coreutils
       git
       jq
@@ -125,6 +132,7 @@ let
     runtimeInputs = with pkgs; [
       age
       age-plugin-se
+      age-plugin-yubikey
       gnugrep
       jq
       openssh
