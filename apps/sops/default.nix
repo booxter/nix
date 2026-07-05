@@ -9,17 +9,20 @@ let
   upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
     builtins.toJSON upsClientsByServer
   );
+  commonRuntimeInputs = with pkgs; [
+    age-plugin-se
+    age-plugin-yubikey
+    coreutils
+    git
+    sops
+  ];
+  jqRuntimeInputs = commonRuntimeInputs ++ [ pkgs.jq ];
+  yqRuntimeInputs = jqRuntimeInputs ++ [ pkgs.yq-go ];
 
   # Decrypt and print a host secret (defaults to current short hostname).
   sops-cat = pkgs.writeShellApplication {
     name = "sops-cat";
-    runtimeInputs = with pkgs; [
-      age-plugin-se
-      age-plugin-yubikey
-      coreutils
-      git
-      sops
-    ];
+    runtimeInputs = commonRuntimeInputs;
     text = ''
       exec ${./sops-cat.sh} "$@"
     '';
@@ -28,13 +31,7 @@ let
   # Open a host secret in sops editor.
   sops-edit = pkgs.writeShellApplication {
     name = "sops-edit";
-    runtimeInputs = with pkgs; [
-      age-plugin-se
-      age-plugin-yubikey
-      coreutils
-      git
-      sops
-    ];
+    runtimeInputs = commonRuntimeInputs;
     text = ''
       exec ${./sops-edit.sh} "$@"
     '';
@@ -43,15 +40,7 @@ let
   # Update a host secret with missing keys from secrets/_template.yaml.
   sops-update = pkgs.writeShellApplication {
     name = "sops-update";
-    runtimeInputs = with pkgs; [
-      age-plugin-se
-      age-plugin-yubikey
-      coreutils
-      git
-      jq
-      sops
-      yq-go
-    ];
+    runtimeInputs = yqRuntimeInputs;
     text = ''
       exec ${./sops-update.sh} "$@"
     '';
@@ -60,15 +49,7 @@ let
   # Copy a key path from one host secret into another host secret.
   sops-copy = pkgs.writeShellApplication {
     name = "sops-copy";
-    runtimeInputs = with pkgs; [
-      age-plugin-se
-      age-plugin-yubikey
-      coreutils
-      git
-      jq
-      sops
-      yq-go
-    ];
+    runtimeInputs = yqRuntimeInputs;
     text = ''
       exec ${./sops-copy.sh} "$@"
     '';
@@ -77,14 +58,7 @@ let
   # Set a single key path in one host secret from stdin.
   sops-set = pkgs.writeShellApplication {
     name = "sops-set";
-    runtimeInputs = with pkgs; [
-      age-plugin-se
-      age-plugin-yubikey
-      coreutils
-      git
-      jq
-      sops
-    ];
+    runtimeInputs = jqRuntimeInputs;
     text = ''
       exec ${./sops-set.sh} "$@"
     '';
@@ -93,15 +67,7 @@ let
   # Sync NUT secondary-user passwords from UPS servers into client secrets.
   sops-ups-sync = pkgs.writeShellApplication {
     name = "sops-ups-sync";
-    runtimeInputs = with pkgs; [
-      age-plugin-se
-      age-plugin-yubikey
-      coreutils
-      git
-      jq
-      sops
-      yq-go
-    ];
+    runtimeInputs = yqRuntimeInputs;
     text = ''
       export UPS_CLIENTS_BY_SERVER_FILE=${upsClientsByServerFile}
       exec ${pkgs.bash}/bin/bash ${./sops-ups-sync.sh} "$@"
@@ -111,16 +77,12 @@ let
   # Hash and store a NixOS login password in a host secret.
   sops-pass = pkgs.writeShellApplication {
     name = "sops-pass";
-    runtimeInputs = with pkgs; [
-      age-plugin-se
-      age-plugin-yubikey
-      coreutils
-      git
-      jq
-      mkpasswd
-      pass
-      sops
-    ];
+    runtimeInputs =
+      jqRuntimeInputs
+      ++ (with pkgs; [
+        mkpasswd
+        pass
+      ]);
     text = ''
       exec ${pkgs.bash}/bin/bash ${./sops-pass.sh} "$@"
     '';
@@ -129,17 +91,14 @@ let
   # Bootstrap a remote host over SSH and initialize its encrypted secret file.
   sops-bootstrap = pkgs.writeShellApplication {
     name = "sops-bootstrap";
-    runtimeInputs = with pkgs; [
-      age
-      age-plugin-se
-      age-plugin-yubikey
-      gnugrep
-      jq
-      openssh
-      ripgrep
-      sops
-      yq-go
-    ];
+    runtimeInputs =
+      yqRuntimeInputs
+      ++ (with pkgs; [
+        age
+        gnugrep
+        openssh
+        ripgrep
+      ]);
     text = ''
       exec ${./sops-bootstrap.sh} "$@"
     '';
