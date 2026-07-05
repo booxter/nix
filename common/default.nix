@@ -31,6 +31,7 @@ in
     ./_mixins/nix-gc
     ./_mixins/ssh
     ./_mixins/terminfo
+    ./_mixins/yubi.nix
   ]
   ++ lib.optionals (!isWork) [
     ./_mixins/attic

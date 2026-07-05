@@ -4,14 +4,12 @@
   inputs,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
   framePkgs = import ./pkgs pkgs;
   ollamaService = hostInventory.servicesById.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
-  yubikeySshKey = "${config.users.users.${username}.home}/.ssh/id_ed25519_sk";
 in
 {
   _module.args.framePkgs = framePkgs;
@@ -44,19 +42,9 @@ in
   programs.hyprland.enable = true;
   services.openssh.settings.X11Forwarding = true;
 
-  home-manager.users.${username} = {
-    programs.git.settings.user.signingKey = yubikeySshKey;
-    programs.ssh.settings."*".IdentityFile = yubikeySshKey;
-  };
-
-  security.pam.u2f = {
-    enable = true;
-    control = "sufficient";
-    settings = {
-      appid = "pam://frame";
-      cue = true;
-      origin = "pam://frame";
-    };
+  programs.yubi = {
+    ssh.enable = true;
+    pamU2f.enable = true;
   };
 
   services.ollama = {
@@ -80,7 +68,6 @@ in
     amdgpu_top
     clinfo
     radeontop
-    pam_u2f
     rocmPackages.rocm-smi
     rocmPackages.rocminfo
   ];
