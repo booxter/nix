@@ -134,6 +134,7 @@ in
       pre-commit
       wget
       yq-go
+      yubikey-manager
       zstd
 
       # python
