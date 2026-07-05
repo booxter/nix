@@ -2,11 +2,12 @@
   config,
   lib,
   pkgs,
+  hostSpecName,
   isWork,
   ...
 }:
 let
-  useSecretive = pkgs.stdenv.isDarwin && !isWork;
+  useSecretive = pkgs.stdenv.isDarwin && hostSpecName == "mair";
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
   sshAskpass = pkgs.writeShellApplication {
     name = "ssh-askpass-macos";

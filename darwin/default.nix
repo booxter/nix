@@ -31,6 +31,8 @@
     ++ lib.optionals (!isWork) [
       ./_mixins/attic
       ./_mixins/browser
+    ]
+    ++ lib.optionals (hostname == "mair") [
       ./_mixins/secretive
     ];
 
