@@ -38,6 +38,7 @@ in
   services.displayManager.gdm = {
     enable = true;
   };
+  services.displayManager.defaultSession = "hyprland";
   programs.hyprland.enable = true;
   services.openssh.settings.X11Forwarding = true;
 
