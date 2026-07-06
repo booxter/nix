@@ -10,6 +10,7 @@
 let
   inherit (pkgs.stdenv) isDarwin;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
+  scmPkgs = import ./pkgs { inherit pkgs; };
   fullName = "Ihar Hrachyshka";
   email = if isWork then "${username}@nvidia.com" else "ihar.hrachyshka@gmail.com";
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
@@ -205,6 +206,7 @@ in
     git-pw
     git-review
     glab
+    scmPkgs.glab-mr-create
     mergiraf
     tig
 
