@@ -56,6 +56,12 @@ normalize_flake_ref() {
   printf '%s\n' "${source}"
 }
 
+quote_remote_arg() {
+  local quoted="${1//\'/\'\\\'\'}"
+
+  printf "'%s'" "${quoted}"
+}
+
 main() {
   local host="${XRUN_NIXPKGS_HOST:-frame}"
   local command=""
@@ -145,12 +151,13 @@ main() {
     exit 0
   fi
 
-  exec ssh "${forwarding}" "${ssh_args[@]}" "${host}" bash -s -- \
-    "${flake_ref}" \
-    "${package_attr}" \
-    "${command}" \
-    "${allow_unfree}" \
-    "$@" <<'REMOTE'
+  local remote_command="bash -s --"
+  local remote_arg
+  for remote_arg in "${flake_ref}" "${package_attr}" "${command}" "${allow_unfree}" "$@"; do
+    remote_command+=" $(quote_remote_arg "${remote_arg}")"
+  done
+
+  exec ssh "${forwarding}" "${ssh_args[@]}" "${host}" "${remote_command}" <<'REMOTE'
 set -euo pipefail
 
 flake_ref="$1"
