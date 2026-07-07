@@ -55,9 +55,25 @@
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
-      lolek = lolekPackage.override {
-        yt-dlp = lolekYtDlp;
-      };
+      lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (prev.fetchpatch {
+            url = "https://github.com/dziaineka/lolek/pull/6.patch";
+            # The PR also changes upstream CI, tests, and Nix files; only this
+            # runtime source file is present in the already-evaluated package src.
+            includes = [ "lib/lolek.ex" ];
+            hash = "sha256-r+/09tlhtye7SPSbciB7oTe0hFRpdRxr8VLyj36p0QU=";
+          })
+        ];
+        nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ prev.getconf ];
+        postInstall = (old.postInstall or "") + ''
+
+          cat >> "$out/releases/${old.version}/env.sh" <<'EOF'
+
+          export PATH="${lib.makeBinPath [ prev.getconf ]}:$PATH"
+          EOF
+        '';
+      });
 
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
