@@ -7,6 +7,7 @@
 }:
 let
   homeManagerPkgs = import ../../pkgs pkgs;
+  cliPkgs = import ./pkgs { inherit pkgs; };
 in
 {
   programs.bash.enable = true;
@@ -136,6 +137,8 @@ in
       yq-go
       yubikey-manager
       zstd
+
+      cliPkgs.xrun-nixpkgs
 
       # python
       python313
