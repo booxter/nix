@@ -8,7 +8,7 @@ on:
         required: false
         type: string
       oci_target:
-        description: Optional OCI image target from lib/oci-images.json.
+        description: Optional OCI image target from oci/images.json.
         required: false
         type: string
   schedule:
@@ -85,7 +85,7 @@ jobs:
                   | select($target == "" or .key == $target)
                   | {target: .key, branch: (.key | branch_slug)}
                 ]
-              ' lib/oci-images.json
+              ' oci/images.json
             )"
             if [[ "$(jq 'length' <<< "${oci_targets}")" -eq 0 ]]; then
               echo "No OCI image targets matched: ${OCI_TARGET}" >&2
@@ -194,4 +194,5 @@ jobs:
           branch: ci/oci-image-update-${{ matrix.branch }}
           delete-branch: true
           add-paths: |
-            lib/oci-images.json
+            oci/images.json
+            oci/keys/*
