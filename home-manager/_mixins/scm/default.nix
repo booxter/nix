@@ -106,8 +106,9 @@ in
       };
 
       url = {
-        # Keep GitHub pushes on SSH instead of gh's broad HTTPS OAuth token.
-        "git@github.com:".insteadOf = "https://github.com/";
+        # Keep GitHub pushes on SSH instead of gh's broad HTTPS OAuth token,
+        # while leaving fetches on HTTPS.
+        "git@github.com:".pushInsteadOf = "https://github.com/";
       }
       // pushDisabledGitHubUrls;
 
