@@ -13,11 +13,12 @@ Usage:
   apps/package-updates/update-oci-images.sh --list-targets
   apps/package-updates/update-oci-images.sh --help
 
-Update pinned OCI image tags from lib/oci-images.json and write a Markdown
+Update pinned OCI image tags from oci/images.json and write a Markdown
 summary. Tags are discovered from the upstream registry and filtered by each
 target's tagRegex. The selected linux/amd64 image is prefetched into a Nix
 fixed-output pin so same-tag digest rewrites are visible as file changes.
-Targets with signature metadata are verified before pins are updated.
+Targets with signature metadata are verified with vendored key material before
+pins are updated.
 EOF
 }
 
@@ -214,6 +215,7 @@ verify_image_signature() {
   local image="$1"
   local digest="$2"
   local signature="$3"
+  local repo_root="$4"
   local signature_type key ref
 
   signature_type="$(jq -r '.type // empty' <<< "$signature")"
@@ -227,6 +229,17 @@ verify_image_signature() {
       key="$(jq -r '.key // empty' <<< "$signature")"
       if [[ -z "$key" ]]; then
         echo "Signature verification for ${image} is missing signature.key" >&2
+        return 1
+      fi
+      if [[ "$key" == *"://"* ]]; then
+        echo "Signature verification key for ${image} must be a vendored local path, got: ${key}" >&2
+        return 1
+      fi
+      if [[ "$key" != /* ]]; then
+        key="${repo_root}/${key}"
+      fi
+      if [[ ! -f "$key" ]]; then
+        echo "Signature verification key for ${image} not found: ${key}" >&2
         return 1
       fi
 
@@ -270,7 +283,7 @@ main() {
   local repo_root
   repo_root="$(resolve_repo_root)"
 
-  local pins_file="${OCI_IMAGE_PINS_FILE:-${repo_root}/lib/oci-images.json}"
+  local pins_file="${OCI_IMAGE_PINS_FILE:-${repo_root}/oci/images.json}"
   local summary_file="${OCI_IMAGE_UPDATE_SUMMARY_FILE:-${repo_root}/oci-image-update-summary.md}"
   local target_filter=""
   local list_only=0
@@ -355,7 +368,7 @@ main() {
     echo "new digest: ${new_digest}"
     echo "new hash: ${new_hash}"
 
-    signature_result="$(verify_image_signature "$image" "$new_digest" "$signature")"
+    signature_result="$(verify_image_signature "$image" "$new_digest" "$signature" "$repo_root")"
     echo "signature: ${signature_result}"
 
     if [[ "$new_tag" != "$old_tag" || "$new_digest" != "$old_digest" || "$new_hash" != "$old_hash" ]]; then

@@ -128,8 +128,10 @@ if [[ "$#" -ne 4 || "$1" != "verify" || "$2" != "--key" ]]; then
   exit 1
 fi
 
-if [[ "$3" != "https://example.invalid/cosign.pub" ]]; then
+expected_key="${PWD}/tests/fixtures/oci-cosign.pub"
+if [[ "$3" != "$expected_key" ]]; then
   echo "unexpected cosign key: $3" >&2
+  echo "expected cosign key: $expected_key" >&2
   exit 1
 fi
 
@@ -175,7 +177,7 @@ EOF
     "changelog": "https://example.invalid/releases/{tag}",
     "signature": {
       "type": "cosign-key",
-      "key": "https://example.invalid/cosign.pub"
+      "key": "tests/fixtures/oci-cosign.pub"
     }
   }
 }
@@ -255,7 +257,7 @@ EOF
     "changelog": "https://example.invalid/releases/{tag}",
     "signature": {
       "type": "cosign-key",
-      "key": "https://example.invalid/cosign.pub"
+      "key": "tests/fixtures/oci-cosign.pub"
     }
   }
 }
@@ -268,6 +270,38 @@ JSON
 
   [ "$status" -ne 0 ]
   [[ "$output" == *"Cosign verification failed for docker.io/example/romm@sha256:new"* ]]
+  [ "$(jq -r '.romm.tag' "$pins_file")" = "4.9.1" ]
+  [ "$(jq -r '.romm.digest' "$pins_file")" = "sha256:old" ]
+  [ "$(jq -r '.romm.hash' "$pins_file")" = "sha256-oldhash" ]
+}
+
+@test "rejects remote signature keys" {
+  pins_file="${BATS_TEST_TMPDIR}/oci-images.json"
+  summary_file="${BATS_TEST_TMPDIR}/summary.md"
+  cat > "$pins_file" <<'JSON'
+{
+  "romm": {
+    "image": "docker.io/example/romm",
+    "tag": "4.9.1",
+    "digest": "sha256:old",
+    "hash": "sha256-oldhash",
+    "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+    "changelog": "https://example.invalid/releases/{tag}",
+    "signature": {
+      "type": "cosign-key",
+      "key": "https://example.invalid/cosign.pub"
+    }
+  }
+}
+JSON
+
+  run bash apps/package-updates/update-oci-images.sh \
+    --pins-file "$pins_file" \
+    --summary-file "$summary_file" \
+    --target romm
+
+  [ "$status" -ne 0 ]
+  [[ "$output" == *"must be a vendored local path"* ]]
   [ "$(jq -r '.romm.tag' "$pins_file")" = "4.9.1" ]
   [ "$(jq -r '.romm.digest' "$pins_file")" = "sha256:old" ]
   [ "$(jq -r '.romm.hash' "$pins_file")" = "sha256-oldhash" ]

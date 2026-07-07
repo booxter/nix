@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  pins = builtins.fromJSON (builtins.readFile ./oci-images.json);
+  pins = builtins.fromJSON (builtins.readFile ../oci/images.json);
 
   mkImage =
     _name: pin:
