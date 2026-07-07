@@ -2,12 +2,15 @@
   config,
   lib,
   pkgs,
+  isDarwin,
+  isDesktop,
   isWork,
   ...
 }:
 let
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
+  hasRemoteGui = isDesktop && (!isDarwin || config.programs.xquartz.enable);
 in
 {
   programs.bash.enable = true;
@@ -138,10 +141,11 @@ in
       yubikey-manager
       zstd
 
-      cliPkgs.xrun-nixpkgs
-
       # python
       python313
+    ]
+    ++ lib.optionals hasRemoteGui [
+      cliPkgs.xrun-nixpkgs
     ]
     ++ lib.optionals (!isWork) [
       age
