@@ -16,7 +16,6 @@ let
     (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
   ];
   personalKeys = [
-    (readPublicKey ../public-keys/users/tab.pub)
     (readPublicKey ../public-keys/users/mmini.pub)
     (readPublicKey ../public-keys/users/mair.pub)
     (readPublicKey ../public-keys/users/frame.pub)
