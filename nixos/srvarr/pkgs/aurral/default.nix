@@ -12,13 +12,13 @@ let
   nodejs = nodejs_24;
   npmHooks = buildPackages.npmHooks.override { inherit nodejs; };
   pname = "aurral";
-  version = "1.76.50";
+  version = "1.76.51";
   npmDepsHash = "sha256-UShOfNPPebtq4VXlmOdMxnl+8CxPP2dVwiaG8LASY98=";
   src = fetchFromGitHub {
     owner = "lklynet";
     repo = "aurral";
     tag = "v${version}";
-    sha256 = "sha256-Yxw41o6pfuTSZaulN337j9+v+CSEptYaMdy5Bha1T9U=";
+    sha256 = "sha256-C0YA+vYMedMp+aR2yJgi96cIgL/2Nn6NQI08VaW9gJU=";
   };
   npmDeps = fetchNpmDeps {
     name = "${pname}-${version}-npm-deps";
