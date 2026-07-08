@@ -69,14 +69,13 @@ index 8489f184..0f8d7e8d 100644
 +++ b/config/src/mcp_edit.rs
 @@ -12,7 +12,7 @@ use toml_edit::Table as TomlTable;
  use toml_edit::value;
--
-+
+
  use crate::AppToolApproval;
 -use crate::CONFIG_TOML_FILE;
 +use crate::CONFIG_LOCAL_TOML_FILE;
+ use crate::McpServerAuth;
  use crate::McpServerConfig;
  use crate::McpServerEnvVar;
- use crate::McpServerTransportConfig;
 @@ -20,7 +20,7 @@ use crate::McpServerTransportConfig;
  pub async fn load_global_mcp_servers(
      codex_home: &Path,
