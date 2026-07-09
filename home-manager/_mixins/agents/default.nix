@@ -8,8 +8,9 @@
 }:
 let
   codexPkgs = import ./pkgs { inherit pkgs; };
-  codingAgentEnv = import ../coding-agent-env.nix {
-    inherit config lib isDarwin;
+  codingAgentEnv = lib.optionalAttrs isDarwin {
+    inherit (config.home.sessionVariables) SSH_ASKPASS;
+    SSH_ASKPASS_REQUIRE = "force";
   };
   trustedProjects =
     paths:
