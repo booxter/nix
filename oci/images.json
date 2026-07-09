@@ -22,10 +22,10 @@
   },
   "paperless-gpt": {
     "changelog": "https://github.com/icereed/paperless-gpt/releases/tag/{tag}",
-    "digest": "sha256:1210dcf072d9b3de0eb8aff3d7716c28c5d658f2c5b04f0461f16fd6d9551069",
-    "hash": "sha256-qX1kpV9Y+CH9F31tU7flzBUpTSt6T/IeDTJgQVIYH7c=",
+    "digest": "sha256:6b9024d1adebfcd6bd7ec5e9da2ca17f9879b1fb5ce749d72905bbb121091ef8",
+    "hash": "sha256-XJeQtA/XtnkbNi8pLFXi4LU24Nxkw7h2vuc1j5HYJkk=",
     "image": "ghcr.io/icereed/paperless-gpt",
-    "tag": "v0.26.0",
+    "tag": "v0.26.1",
     "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "romm": {
