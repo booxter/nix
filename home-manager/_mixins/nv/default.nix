@@ -45,8 +45,6 @@ in
       ]
     );
 
-  programs.claude-code.enable = true;
-
   programs.ssh = {
     # This file is managed by devspace (if project has useInclude = true).
     includes = [

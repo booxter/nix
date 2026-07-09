@@ -18,7 +18,7 @@
   ]
   ++ lib.optionals hmFull [
     ./_mixins/cli
-    ./_mixins/codex
+    ./_mixins/agents
     ./_mixins/git-sync
     ./_mixins/gnupg
     ./_mixins/ide-headless
