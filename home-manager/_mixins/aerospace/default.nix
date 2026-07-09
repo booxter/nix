@@ -200,10 +200,12 @@ in
       after-startup-command = [
         "exec-and-forget ${sketchybar}"
       ];
+      # Work around https://github.com/nikitabobko/AeroSpace/issues/1615 using
+      # the guarded reaper from https://github.com/nikitabobko/AeroSpace/issues/1615#issuecomment-4667204873.
       exec-on-workspace-change = [
         "/bin/bash"
         "-c"
-        "${sketchybar} --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
+        "${sketchybar} --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE; ${lib.getExe aerospacePkgs.aerospace-reap-ghosts} >/dev/null 2>&1 &"
       ];
     };
   };
