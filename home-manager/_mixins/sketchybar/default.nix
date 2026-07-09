@@ -6,7 +6,7 @@
 }:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
-  codexPkgs = import ../codex/pkgs { inherit pkgs; };
+  codexPkgs = import ../agents/pkgs { inherit pkgs; };
   codexPlugin = pkgs.writeShellApplication {
     name = "sketchybar-codex";
     runtimeInputs = [
