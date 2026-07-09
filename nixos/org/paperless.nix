@@ -16,6 +16,8 @@ let
   paperlessStoragePath = "/data/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
+  paperlessGptContainerUid = "10001";
+  paperlessGptContainerGid = "10001";
   paperlessGptPort = 8080;
   paperlessGptHost = "${paperlessGptService.id}.${hostInventory.site.lan.domain}";
   paperlessGptOauth2ProxyPort = 4181;
@@ -419,10 +421,10 @@ in
     };
     rules = [
       "d '${paperlessGptStateDir}' 0750 root root - -"
-      "d '${paperlessGptStateDir}/config' 0750 root root - -"
-      "d '${paperlessGptStateDir}/hocr' 0750 root root - -"
-      "d '${paperlessGptStateDir}/pdf' 0750 root root - -"
-      "d '${paperlessGptStateDir}/prompts' 0750 root root - -"
+      "d '${paperlessGptStateDir}/config' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
+      "d '${paperlessGptStateDir}/hocr' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
+      "d '${paperlessGptStateDir}/pdf' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
+      "d '${paperlessGptStateDir}/prompts' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
     ];
   };
 
@@ -510,8 +512,11 @@ in
         AUTO_GENERATE_TAGS = "true";
         AUTO_GENERATE_TITLE = "true";
         AUTO_OCR_TAG = paperlessGptAutoOcrTag;
+        AUTO_TAG_COMPLETE = "paperless-gpt-auto-complete";
         CREATE_LOCAL_HOCR = "false";
         CREATE_LOCAL_PDF = "false";
+        CREATE_NEW_TAGS = "false";
+        FAIL_TAG = "paperless-gpt-failed";
         LLM_LANGUAGE = "English";
         LLM_MODEL = "qwen3.5:9b";
         LLM_PROVIDER = "ollama";
@@ -524,13 +529,16 @@ in
         OCR_PROVIDER = "llm";
         OLLAMA_CONTEXT_LENGTH = "8192";
         OLLAMA_HOST = "http://127.0.0.1:${toString ollamaTunnelPort}";
+        OLLAMA_THINK = "false";
         PAPERLESS_BASE_URL = "http://127.0.0.1:${toString config.services.paperless.port}";
         PAPERLESS_PUBLIC_URL = paperlessService.url;
+        PGID = paperlessGptContainerGid;
         PDF_COPY_METADATA = "true";
         PDF_OCR_TAGGING = "true";
         PDF_REPLACE = "false";
         PDF_SKIP_EXISTING_OCR = "false";
         PDF_UPLOAD = "false";
+        PUID = paperlessGptContainerUid;
         TOKEN_LIMIT = "2000";
         VISION_LLM_MODEL = "qwen3-vl:8b-instruct";
         VISION_LLM_PROVIDER = "ollama";
