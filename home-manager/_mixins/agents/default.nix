@@ -89,9 +89,9 @@ in
     codexPkgs.codex-rate-limit-reset-credits
   ];
 
-  # Work remote settings pin the default model to Sonnet; user settings lose to
-  # that managed layer, but the CLI model flag still wins for shell launches.
+  # Work remote settings pin the default model and effort; user settings lose to
+  # that managed layer, but CLI flags still win for shell launches.
   home.shellAliases = lib.optionalAttrs isWork {
-    claude = "command claude --model opus";
+    claude = "command claude --model opus --effort xhigh";
   };
 }
