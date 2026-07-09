@@ -62,8 +62,6 @@ in
     enable = true;
 
     settings = {
-      model = "opus";
-      effortLevel = "xhigh";
       outputStyle = "Proactive";
       fastModePerSessionOptIn = true;
 
@@ -76,6 +74,10 @@ in
         "$defaults"
         "Never push, deploy, or change managed hosts unless explicitly asked."
       ];
+    }
+    // lib.optionalAttrs (!isWork) {
+      model = "opus";
+      effortLevel = "xhigh";
     }
     // lib.optionalAttrs (codingAgentEnv != { }) {
       env = codingAgentEnv;
