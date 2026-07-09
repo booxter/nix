@@ -1,5 +1,15 @@
 { pkgs }:
 {
+  aerospace-reap-ghosts = pkgs.writeShellApplication {
+    name = "aerospace-reap-ghosts";
+    runtimeInputs = with pkgs; [
+      aerospace
+      coreutils
+      jq
+    ];
+    text = builtins.readFile ./aerospace-reap-ghosts.sh;
+  };
+
   aerospace-x11-aware-move = pkgs.writeShellApplication {
     name = "aerospace-x11-aware-move";
     runtimeInputs = with pkgs; [
