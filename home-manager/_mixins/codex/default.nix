@@ -57,6 +57,30 @@ in
     };
   };
 
+  programs.claude-code = {
+    enable = true;
+
+    settings = {
+      model = "opus";
+      effortLevel = "xhigh";
+      outputStyle = "Proactive";
+      fastModePerSessionOptIn = true;
+
+      permissions = {
+        defaultMode = "auto";
+        disableBypassPermissionsMode = "disable";
+      };
+
+      autoMode.soft_deny = [
+        "$defaults"
+        "Never push, deploy, or change managed hosts unless explicitly asked."
+      ];
+    }
+    // lib.optionalAttrs (codingAgentEnv != { }) {
+      env = codingAgentEnv;
+    };
+  };
+
   home.packages = lib.optionals (!isWork) [
     codexPkgs.codex-usage-status
     codexPkgs.codex-rate-limit-reset-credits
