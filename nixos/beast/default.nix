@@ -29,12 +29,6 @@
     ./ups.nix
   ];
 
-  # Pin the host to the current stable branch's 7.0 kernel line instead of
-  # tracking the moving `linuxPackages_latest` alias.
-  # TODO: switch to a versioned LTS kernel package once the stable branch
-  # carries an LTS kernel in the 7.x series.
-  boot.kernelPackages = pkgs.linuxPackages_7_0;
-
   users.groups.media.gid = hostInventory.site.gids.media;
 
   host.observability.client.blackbox.enable = true;
