@@ -8,6 +8,8 @@
 }:
 let
   codexPkgs = import ./pkgs { inherit pkgs; };
+  claudeModel = "opus";
+  modelEffort = "xhigh";
   codingAgentEnv = lib.optionalAttrs isDarwin {
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";
@@ -24,7 +26,7 @@ in
 
     settings = {
       model = "gpt-5.5";
-      model_reasoning_effort = "xhigh";
+      model_reasoning_effort = modelEffort;
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
       notice.fast_default_opt_out = true;
@@ -76,8 +78,8 @@ in
       ];
     }
     // lib.optionalAttrs (!isWork) {
-      model = "opus";
-      effortLevel = "xhigh";
+      model = claudeModel;
+      effortLevel = modelEffort;
     }
     // lib.optionalAttrs (codingAgentEnv != { }) {
       env = codingAgentEnv;
@@ -92,6 +94,6 @@ in
   # Work remote settings pin the default model and effort; user settings lose to
   # that managed layer, but CLI flags still win for shell launches.
   home.shellAliases = lib.optionalAttrs isWork {
-    claude = "command claude --model opus --effort xhigh";
+    claude = "command claude --model ${claudeModel} --effort ${modelEffort}";
   };
 }
