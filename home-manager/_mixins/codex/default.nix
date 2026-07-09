@@ -8,6 +8,9 @@
 }:
 let
   codexPkgs = import ./pkgs { inherit pkgs; };
+  codingAgentEnv = import ../coding-agent-env.nix {
+    inherit config lib isDarwin;
+  };
   trustedProjects =
     paths:
     lib.genAttrs (map (path: "${config.home.homeDirectory}/${path}") paths) (_: {
@@ -37,11 +40,8 @@ in
       # https://github.com/openai/codex/issues/14509
       tui.keymap.chat.interrupt_turn = "f12";
     }
-    // lib.optionalAttrs isDarwin {
-      shell_environment_policy.set = {
-        inherit (config.home.sessionVariables) SSH_ASKPASS;
-        SSH_ASKPASS_REQUIRE = "force";
-      };
+    // lib.optionalAttrs (codingAgentEnv != { }) {
+      shell_environment_policy.set = codingAgentEnv;
     }
     // lib.optionalAttrs (!isWork) {
       mcp_servers.firefox-devtools = {

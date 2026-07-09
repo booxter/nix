@@ -1,10 +1,15 @@
 {
+  config,
   lib,
   pkgs,
+  isDarwin,
   isDesktop,
   ...
 }:
 let
+  codingAgentEnv = import ../coding-agent-env.nix {
+    inherit config lib isDarwin;
+  };
   homeManagerPkgs = import ../../pkgs pkgs;
 in
 {
@@ -45,7 +50,29 @@ in
       ]
     );
 
-  programs.claude-code.enable = true;
+  programs.claude-code = {
+    enable = true;
+
+    settings = {
+      model = "opus";
+      effortLevel = "xhigh";
+      outputStyle = "Proactive";
+      fastModePerSessionOptIn = true;
+
+      permissions = {
+        defaultMode = "auto";
+        disableBypassPermissionsMode = "disable";
+      };
+
+      autoMode.soft_deny = [
+        "$defaults"
+        "Never push, deploy, or change managed hosts unless explicitly asked."
+      ];
+    }
+    // lib.optionalAttrs (codingAgentEnv != { }) {
+      env = codingAgentEnv;
+    };
+  };
 
   programs.ssh = {
     # This file is managed by devspace (if project has useInclude = true).
