@@ -135,7 +135,12 @@ in
         ];
       };
 
-      on-focus-changed = [ "move-mouse window-lazy-center" ];
+      on-focus-changed = [
+        "move-mouse window-lazy-center"
+        # Work around https://github.com/nikitabobko/AeroSpace/issues/1615 using
+        # the guarded reaper from https://github.com/nikitabobko/AeroSpace/issues/1615#issuecomment-4667204873.
+        "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-reap-ghosts} >/dev/null 2>&1"
+      ];
 
       on-window-detected = [
         # Chat apps go to C workspace
@@ -200,12 +205,10 @@ in
       after-startup-command = [
         "exec-and-forget ${sketchybar}"
       ];
-      # Work around https://github.com/nikitabobko/AeroSpace/issues/1615 using
-      # the guarded reaper from https://github.com/nikitabobko/AeroSpace/issues/1615#issuecomment-4667204873.
       exec-on-workspace-change = [
         "/bin/bash"
         "-c"
-        "${sketchybar} --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE; ${lib.getExe aerospacePkgs.aerospace-reap-ghosts} >/dev/null 2>&1 &"
+        "${sketchybar} --trigger aerospace_workspace_change FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
       ];
     };
   };
