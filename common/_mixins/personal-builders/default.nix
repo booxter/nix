@@ -57,7 +57,7 @@ in
         )
       );
   };
-  environment.systemPackages = [ pkgs.openssh_gssapi ];
+  environment.systemPackages = [ pkgs.openssh ];
 
   nix.buildMachines =
     let

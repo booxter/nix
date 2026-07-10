@@ -43,5 +43,5 @@ in
           User ${user}
       '';
   };
-  environment.systemPackages = [ pkgs.openssh_gssapi ];
+  environment.systemPackages = [ pkgs.openssh ];
 }

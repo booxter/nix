@@ -43,7 +43,7 @@ in
       enable = true;
       enableDefaultConfig = false;
 
-      package = pkgs.openssh_gssapi;
+      package = pkgs.openssh;
 
       settings = {
         "*" = {
