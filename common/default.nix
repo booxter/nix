@@ -3,6 +3,7 @@
   pkgs,
   username,
   hostname,
+  isDesktop ? false,
   isLaptop ? false,
   isWork,
   isVM,
@@ -118,7 +119,7 @@ in
         zip
         ipmitool
       ]
-      ++ lib.optionals (!isVM) [
+      ++ lib.optionals (!isVM && (!isWork || isDesktop)) [
         nvtopPackages.full
       ]
       ++ lib.optionals (!isWork && !isVM) [
