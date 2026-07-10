@@ -3,7 +3,6 @@
   pkgs,
   username,
   hostname,
-  isDesktop ? false,
   isLaptop ? false,
   isWork,
   isVM,
@@ -32,6 +31,7 @@ in
     ./_mixins/nix
     ./_mixins/nixpkgs
     ./_mixins/nix-gc
+    ./_mixins/nvtop
     ./_mixins/ssh
     ./_mixins/terminfo
     ./_mixins/yubi.nix
@@ -118,9 +118,6 @@ in
         yq
         zip
         ipmitool
-      ]
-      ++ lib.optionals (!isVM && (!isWork || isDesktop)) [
-        nvtopPackages.full
       ]
       ++ lib.optionals (!isWork && !isVM) [
         whichllm
