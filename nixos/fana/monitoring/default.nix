@@ -67,6 +67,18 @@ in
     environmentFile = config.sops.templates."alertmanager.env".path;
   };
 
+  host.internalHttps.services.alertmanager = {
+    enable = true;
+    upstream = "http://127.0.0.1:${toString alertmanagerPort}";
+    path = "= /-/ready";
+    localAliases = [ ];
+    proxyWebsockets = false;
+    mtls.enable = true;
+    locationExtraConfig = ''
+      access_log off;
+    '';
+  };
+
   sops.secrets.grafanaAlertingTelegramBotToken = {
     key = "grafana/alerting/telegram/bot_token";
     owner = "grafana";

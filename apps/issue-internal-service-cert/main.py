@@ -272,18 +272,48 @@ def proxmox_api_service_config(root, host):
 
 def client_names_for_host(host):
     root = host_config_root(host)
-    client_map = (
+    internal_clients = (
+        nix_eval_json(root, host, "config", "host", "internalHttps", "mtlsClients")
+        or {}
+    )
+    external_clients = (
         nix_eval_json(root, host, "config", "host", "externalService", "mtlsClients")
         or {}
     )
-    return sorted(name for name, client in client_map.items() if client.get("enable"))
+    enabled_clients = {
+        name
+        for client_map in (internal_clients, external_clients)
+        for name, client in client_map.items()
+        if client.get("enable")
+    }
+    return sorted(enabled_clients)
 
 
 def client_config(host, client):
     root = host_config_root(host)
-    return nix_eval_json(
-        root, host, "config", "host", "externalService", "mtlsClients", client
+    internal_clients = (
+        nix_eval_json(root, host, "config", "host", "internalHttps", "mtlsClients")
+        or {}
     )
+    external_clients = (
+        nix_eval_json(root, host, "config", "host", "externalService", "mtlsClients")
+        or {}
+    )
+    matching_clients = [
+        cfg
+        for cfg in (internal_clients.get(client), external_clients.get(client))
+        if cfg is not None
+    ]
+    enabled_matching_clients = [cfg for cfg in matching_clients if cfg.get("enable")]
+    if len(enabled_matching_clients) > 1:
+        raise SystemExit(
+            f"internal HTTPS client {client} is enabled in multiple client maps on {host}"
+        )
+    if enabled_matching_clients:
+        return enabled_matching_clients[0]
+    if matching_clients:
+        return matching_clients[0]
+    return {}
 
 
 def issue_remote_cert(*, ca_host, common_name, sans):

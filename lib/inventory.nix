@@ -954,6 +954,7 @@ rec {
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
       localDnsAliases = [
+        "alertmanager"
         "grafana"
         "loki"
       ];
