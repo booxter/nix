@@ -7,6 +7,8 @@
 }:
 let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
+  identityFile = "${config.users.users.${username}.home}/.ssh/jgwxhwdl4x-nix-builder";
+  user = "ihrachyshka";
 in
 {
   programs.ssh = {
@@ -15,24 +17,21 @@ in
         publicKey = readPublicKey ../../../public-keys/hosts/nvws-local.pub;
       };
     };
-    extraConfig =
-      let
-        identityFile = "${config.users.users.${username}.home}/.ssh/id_ed25519";
-        user = "ihrachyshka";
-      in
-      ''
-        Host nvws.local
-          Hostname nvws.local
-          IdentityFile ${identityFile}
-          IdentitiesOnly yes
-          User ${user}
-      '';
+    extraConfig = ''
+      Host nvws.local
+        Hostname nvws.local
+        IdentityFile ${identityFile}
+        IdentitiesOnly yes
+        User ${user}
+    '';
   };
 
   nix.buildMachines = lib.optional (hostname != "nvws") {
     hostName = "nvws.local";
     system = "x86_64-linux";
     protocol = "ssh-ng";
+    sshKey = identityFile;
+    sshUser = user;
     maxJobs = 4;
     speedFactor = 100;
     supportedFeatures = [

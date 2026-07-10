@@ -14,6 +14,7 @@ let
   canUseWorkBuilders = isWork && hostname != "nvws";
   workKeys = [
     (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
+    (readPublicKey ../public-keys/users/jgwxhwdl4x-nix-builder.pub)
   ];
   personalKeys = [
     (readPublicKey ../public-keys/users/mmini.pub)
