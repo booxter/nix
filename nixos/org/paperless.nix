@@ -231,8 +231,8 @@ in
   };
 
   sops.templates."paperless-oidc.env" = {
-    owner = "root";
-    group = "root";
+    owner = "paperless";
+    group = "paperless";
     mode = "0400";
     content = ''
       PAPERLESS_SOCIALACCOUNT_PROVIDERS='${paperlessOidcProvidersJson}'
@@ -408,7 +408,9 @@ in
     rules = [
       "d '${paperlessGptStateDir}' 0750 root root - -"
       "d '${paperlessGptStateDir}/config' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
+      "d '${paperlessGptStateDir}/db' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
       "d '${paperlessGptStateDir}/hocr' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
+      "d '${paperlessGptStateDir}/home' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
       "d '${paperlessGptStateDir}/pdf' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
       "d '${paperlessGptStateDir}/prompts' 0750 ${paperlessGptContainerUid} ${paperlessGptContainerGid} - -"
     ];
@@ -492,6 +494,9 @@ in
       image = paperlessGptImage;
       imageFile = paperlessGptImageFile;
       pull = "never";
+      entrypoint = "/app/paperless-gpt";
+      user = "${paperlessGptContainerUid}:${paperlessGptContainerGid}";
+      capabilities.all = false;
       environment = {
         AUTO_GENERATE_CORRESPONDENTS = "true";
         AUTO_GENERATE_CREATED_DATE = "true";
@@ -504,6 +509,7 @@ in
         CREATE_LOCAL_PDF = "false";
         CREATE_NEW_TAGS = "false";
         FAIL_TAG = "paperless-gpt-failed";
+        HOME = "/home/paperless-gpt";
         LLM_LANGUAGE = "English";
         LLM_MODEL = "qwen3.5:9b";
         LLM_PROVIDER = "ollama";
@@ -519,26 +525,27 @@ in
         OLLAMA_THINK = "false";
         PAPERLESS_BASE_URL = "http://127.0.0.1:${toString config.services.paperless.port}";
         PAPERLESS_PUBLIC_URL = paperlessService.url;
-        PGID = paperlessGptContainerGid;
         PDF_COPY_METADATA = "true";
         PDF_OCR_TAGGING = "true";
         PDF_REPLACE = "false";
         PDF_SKIP_EXISTING_OCR = "false";
         PDF_UPLOAD = "false";
-        PUID = paperlessGptContainerUid;
         TOKEN_LIMIT = "2000";
         VISION_LLM_MODEL = "qwen3-vl:8b-instruct";
         VISION_LLM_PROVIDER = "ollama";
       };
       environmentFiles = [ config.sops.templates."paperless-gpt.env".path ];
+      networks = [ "host" ];
       extraOptions = [
-        "--cap-drop=all"
-        "--network=host"
+        # Bypass upstream's root entrypoint; it recursively chowns /app and
+        # needs extra capabilities. Host tmpfiles owns writable state instead.
         "--security-opt=no-new-privileges"
       ];
       volumes = [
         "${paperlessGptStateDir}/config:/app/config:rw"
+        "${paperlessGptStateDir}/db:/app/db:rw"
         "${paperlessGptStateDir}/hocr:/app/hocr:rw"
+        "${paperlessGptStateDir}/home:/home/paperless-gpt:rw"
         "${paperlessGptStateDir}/pdf:/app/pdf:rw"
         "${paperlessGptStateDir}/prompts:/app/prompts:rw"
       ];
