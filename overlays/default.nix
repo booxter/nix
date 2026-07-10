@@ -47,6 +47,25 @@
 
       inherit (pkgsNixpkgsUnstable) whichllm;
 
+      # Support Kubernetes 1.36 while carrying the nixpkgs update.
+      # https://github.com/NixOS/nixpkgs/pull/539773
+      kind = prev.kind.overrideAttrs (old: {
+        version = "0.32.0";
+        src = prev.fetchFromGitHub {
+          owner = "kubernetes-sigs";
+          repo = "kind";
+          rev = "v0.32.0";
+          hash = "sha256-ii0VhS1Nib+r2ZFIIkRvkcGY1fLxev6WnhbqvaZW7j8=";
+        };
+        patches = (old.patches or [ ]) ++ [
+          # Fix apiserver connection loss after envoy lb container restart.
+          (prev.fetchpatch {
+            url = "https://github.com/kubernetes-sigs/kind/commit/9a24e6c1ae3d59f8de052ee5c3842820450a369a.patch";
+            hash = "sha256-BP2Ub8b1GA7V0CGvhcoGuHRm7u+IMRTmN3mDc2rePnY=";
+          })
+        ];
+      });
+
       # Carry recursive Codex project trust until openai/codex#19426 lands.
       # Also load user-local config.local.toml so CLI config writes avoid
       # Home Manager's read-only config.toml symlink.
