@@ -3,7 +3,8 @@ set -euo pipefail
 
 AUTH_FILE="${HOME}/.codex/auth.json"
 ITEM="codex.work"
-POPUP_ITEM="codex.work.details"
+POPUP_CREDITS_ITEM="codex.work.credits"
+POPUP_RESET_ITEM="codex.work.reset"
 
 GREEN="0xff9ece6a"
 RED="0xfff7768e"
@@ -175,13 +176,16 @@ case "${SENDER:-}" in
     ;;
 esac
 
-if [ "${NAME:-}" = "$POPUP_ITEM" ]; then
-  exit 0
-fi
+case "${NAME:-}" in
+  "$POPUP_CREDITS_ITEM" | "$POPUP_RESET_ITEM")
+    exit 0
+    ;;
+esac
 
 hide_items() {
   sketchybar --set "$ITEM" drawing=off popup.drawing=off \
-    --set "$POPUP_ITEM" drawing=off
+    --set "$POPUP_CREDITS_ITEM" drawing=off \
+    --set "$POPUP_RESET_ITEM" drawing=off
 }
 
 if [ ! -f "$AUTH_FILE" ]; then
@@ -196,7 +200,8 @@ if ! status="$(codex-work-usage-status --json 2>/dev/null)"; then
     label="work err" \
     label.color="$RED" \
     popup.drawing=off \
-    --set "$POPUP_ITEM" drawing=off
+    --set "$POPUP_CREDITS_ITEM" drawing=off \
+    --set "$POPUP_RESET_ITEM" drawing=off
   exit 0
 fi
 
@@ -212,7 +217,7 @@ pace_risk_bps="$(monthly_pace_risk_bps <<<"$status")"
 
 label="work ${remaining_percent:-?}%"
 color="$(pace_color "${pace_risk_bps:-}" "$reached")"
-details="$(printf '%s / %s credits left; used %s (%s%%)' \
+credits_label="$(printf 'credits: %s/%s left; used %s (%s%%)' \
   "$(format_number "$remaining")" \
   "$(format_number "$limit")" \
   "$(format_number "$used")" \
@@ -220,13 +225,13 @@ details="$(printf '%s / %s credits left; used %s (%s%%)' \
 
 reset_text="$(format_duration "$reset_after")"
 if reset_date="$(format_epoch_local "$reset_at")"; then
-  details="${details}; resets ${reset_date} (${reset_text})"
+  reset_label="reset: ${reset_date} (${reset_text})"
 else
-  details="${details}; resets in ${reset_text}"
+  reset_label="reset: in ${reset_text}"
 fi
 
 if [ "$reached" = "true" ]; then
-  details="${details}; spend limit reached"
+  credits_label="${credits_label}; limit reached"
 fi
 
 sketchybar --set "$ITEM" \
@@ -234,7 +239,11 @@ sketchybar --set "$ITEM" \
   label="$label" \
   label.color="$color" \
   popup.drawing=off \
-  --set "$POPUP_ITEM" \
+  --set "$POPUP_CREDITS_ITEM" \
   drawing=on \
-  label="$details" \
+  label="$credits_label" \
+  label.color="$NEUTRAL" \
+  --set "$POPUP_RESET_ITEM" \
+  drawing=on \
+  label="$reset_label" \
   label.color="$NEUTRAL"

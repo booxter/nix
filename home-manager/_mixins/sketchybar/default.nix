@@ -56,7 +56,7 @@ let
                                    background.border_width=0                \
                                    background.corner_radius=6               \
                                    background.height=24                     \
-                                   popup.align=center                       \
+                                   popup.align=left                         \
                                    popup.background.color="$BACKGROUND_COLOR" \
                                    popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
                                    popup.background.border_width=1           \
@@ -81,20 +81,28 @@ let
                                   background.border_width=0                 \
                                   background.corner_radius=6                \
                                   background.height=24                      \
-                                  popup.align=center                        \
+                                  popup.align=left                          \
                                   popup.background.color="$BACKGROUND_COLOR" \
                                   popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
                                   popup.background.border_width=1            \
                                   popup.background.corner_radius=6           \
                  --subscribe codex.work system_woke mouse.entered mouse.exited \
                                                                            \
-                 --add item codex.work.details popup.codex.work             \
-                 --set codex.work.details updates=off                       \
+                 --add item codex.work.credits popup.codex.work             \
+                 --set codex.work.credits updates=off                       \
                                           icon.drawing=off                  \
                                           label.padding_left=8              \
                                           label.padding_right=8             \
                                           background.border_width=0         \
-                                          background.height=24
+                                          background.height=24              \
+                                                                           \
+                 --add item codex.work.reset popup.codex.work               \
+                 --set codex.work.reset updates=off                         \
+                                        icon.drawing=off                    \
+                                        label.padding_left=8                \
+                                        label.padding_right=8               \
+                                        background.border_width=0           \
+                                        background.height=24
     ''
   );
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''
