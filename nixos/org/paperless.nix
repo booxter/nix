@@ -231,8 +231,8 @@ in
   };
 
   sops.templates."paperless-oidc.env" = {
-    owner = "root";
-    group = "root";
+    owner = "paperless";
+    group = "paperless";
     mode = "0400";
     content = ''
       PAPERLESS_SOCIALACCOUNT_PROVIDERS='${paperlessOidcProvidersJson}'
@@ -533,6 +533,13 @@ in
       environmentFiles = [ config.sops.templates."paperless-gpt.env".path ];
       extraOptions = [
         "--cap-drop=all"
+        # Upstream's entrypoint creates the PUID/PGID user, recursively chowns
+        # /app and /home/paperless-gpt, then su-execs to that numeric user.
+        "--cap-add=CHOWN"
+        "--cap-add=DAC_OVERRIDE"
+        "--cap-add=FOWNER"
+        "--cap-add=SETGID"
+        "--cap-add=SETUID"
         "--network=host"
         "--security-opt=no-new-privileges"
       ];
