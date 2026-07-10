@@ -6,7 +6,6 @@
   nix,
   pushToAttic ? true,
   targetFilter ? "non-work",
-  useRemoteBuilders ? true,
   writeShellApplication,
 }:
 
@@ -66,10 +65,6 @@ writeShellApplication {
     ${lib.optionalString pushToAttic ''
       attic_cache="''${FLEET_CACHE_WARMER_ATTIC_CACHE:-default}"
     ''}
-        declare -a nix_build_opts=()
-    ${lib.optionalString (!useRemoteBuilders) ''
-      nix_build_opts+=(--option builders "")
-    ''}
 
         declare -a target_suffixes=()
         ${embeddedTargetAssignments}
@@ -120,7 +115,7 @@ writeShellApplication {
 
         printf 'Building %s resolved warm target(s) from %s\n' "''${#buildable_targets[@]}" "$flake_ref" >&2
         : >"$out_paths_file"
-        if ! ${lib.getExe nix} build "''${nix_build_opts[@]}" -L --keep-going --no-link --print-out-paths "''${buildable_targets[@]}" >>"$out_paths_file"; then
+        if ! ${lib.getExe nix} build -L --keep-going --no-link --print-out-paths "''${buildable_targets[@]}" >>"$out_paths_file"; then
           echo "${name}: batched build reported failures; continuing with any successful outputs" >&2
         fi
 
@@ -129,7 +124,7 @@ writeShellApplication {
           echo "${name}: batched build produced no successful outputs; retrying target-by-target" >&2
           for target in "''${buildable_targets[@]}"; do
             printf 'Warming %s\n' "$target" >&2
-            if ! ${lib.getExe nix} build "''${nix_build_opts[@]}" -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
+            if ! ${lib.getExe nix} build -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
               fallback_failed_count=$((fallback_failed_count + 1))
               printf '${name}: target failed, skipping: %s\n' "$target" >&2
             fi

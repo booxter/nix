@@ -93,8 +93,7 @@ The filtered list is embedded in the installed launchd closure.
 `cache` remains the Attic server. It is not the build orchestrator.
 
 `JGWXHWDL4X` runs the work warmup with `pushToAttic = false` because there is no
-work Attic cache. It may still use configured Nix remote builders for work
-Linux targets.
+work Attic cache. It uses configured Nix remote builders for work Linux targets.
 
 ## Procedure
 

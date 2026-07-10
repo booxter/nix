@@ -8,7 +8,7 @@ let
   cfg = config.host.fleetCacheWarmer;
   warmerPackage = pkgs.callPackage ../../pkgs/fleet-cache-warmer {
     name = cfg.serviceName;
-    inherit (cfg) pushToAttic targetFilter useRemoteBuilders;
+    inherit (cfg) pushToAttic targetFilter;
   };
 in
 {
@@ -28,12 +28,6 @@ in
       type = lib.types.bool;
       default = true;
       description = "Whether to push successfully built outputs to Attic after warming.";
-    };
-
-    useRemoteBuilders = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether Nix may use configured remote builders while warming targets.";
     };
 
     flakeRef = lib.mkOption {
