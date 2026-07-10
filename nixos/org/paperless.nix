@@ -218,20 +218,6 @@ in
         "paperless-web.service"
       ];
     };
-    "internal-https-client-ollama-crt" = {
-      key = "internal_https/clients/ollama/client_crt_unencrypted";
-      owner = "root";
-      group = "root";
-      mode = "0400";
-      restartUnits = [ "stunnel.service" ];
-    };
-    "internal-https-client-ollama-key" = {
-      key = "internal_https/clients/ollama/client_key";
-      owner = "root";
-      group = "root";
-      mode = "0400";
-      restartUnits = [ "stunnel.service" ];
-    };
   };
 
   sops.templates."paperless-gpt.env" = {
@@ -471,9 +457,10 @@ in
     upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
   };
 
-  host.externalService.mtlsClients.ollama = {
+  host.internalHttps.mtlsClients.ollama = {
     enable = true;
     commonName = "ollama.org";
+    restartUnits = [ "stunnel.service" ];
   };
 
   services.stunnel = {
