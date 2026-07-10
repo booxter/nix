@@ -17,6 +17,7 @@
     ++ [
       ./_mixins/defaults
       ./_mixins/fonts
+      ./_mixins/fleet-cache-warmer
       ./_mixins/homebrew
       ./_mixins/internal-pki
       ./_mixins/lan-wan-accounting

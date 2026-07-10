@@ -192,10 +192,12 @@
         let
           pkgs = inputs.nixpkgs.legacyPackages.${system};
           basePackages = import ./pkgs pkgs;
-          mminiPackages = import ./darwin/mmini/pkgs pkgs;
+          darwinPackages = import ./darwin/pkgs pkgs;
           fleetPackages = {
             inherit (inputs.disko.packages.${system}) disko-install;
-            inherit (mminiPackages) fleet-cache-warmer;
+          }
+          // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+            inherit (darwinPackages) fleet-cache-warmer fleet-cache-warmer-work;
           };
           updateTargetPackages =
             pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {

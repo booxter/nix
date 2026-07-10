@@ -2,54 +2,77 @@
   lib,
   attic-client,
   coreutils,
+  name ? "fleet-cache-warmer",
   nix,
+  packageAttrName ? name,
+  pushToAttic ? true,
   stdenv,
+  targetFilter ? "non-work",
+  useRemoteBuilders ? true,
   writeShellApplication,
 }:
 
 let
-  inventory = builtins.fromJSON (builtins.readFile ../../../../ci-target-inventory.json);
-  hostInventory = import ../../../../lib/inventory.nix { inherit lib; };
+  inventory = builtins.fromJSON (builtins.readFile ../../../ci-target-inventory.json);
+  hostInventory = import ../../../lib/inventory.nix { inherit lib; };
   workHosts = lib.genAttrs (
     (map (spec: spec.name) (lib.filter (spec: spec.isWork or false) hostInventory.nixosHostSpecs))
     ++ (lib.attrNames (lib.filterAttrs (_: cfg: cfg.isWork or false) hostInventory.darwinHosts))
   ) (_: true);
   isWorkTarget = target: lib.any (host: workHosts.${host} or false) (target.selection.hosts or [ ]);
+  matchesTargetFilter =
+    target:
+    if targetFilter == "work" then
+      isWorkTarget target
+    else if targetFilter == "non-work" then
+      !(isWorkTarget target)
+    else
+      throw "unknown fleet-cache-warmer targetFilter: ${targetFilter}";
   ciValidatedWarmTargets = map (target: target.attr) (
-    lib.filter (target: target.warm && !(isWorkTarget target)) (
+    lib.filter (target: target.warm && matchesTargetFilter target) (
       inventory.buildTargets ++ inventory.regularChecks ++ inventory.nixosTests
     )
   );
   embeddedTargetAssignments = lib.concatMapStringsSep "\n" (
     target: ''target_suffixes+=("${target}")''
   ) ciValidatedWarmTargets;
-  targetInventoryAttr = "packages.${stdenv.hostPlatform.system}.fleet-cache-warmer.ciWarmTargets";
+  targetInventoryAttr = "packages.${stdenv.hostPlatform.system}.${packageAttrName}.ciWarmTargets";
 in
 writeShellApplication {
-  name = "fleet-cache-warmer";
+  inherit name;
   passthru.ciWarmTargets = ciValidatedWarmTargets;
   runtimeInputs = [
-    attic-client
     coreutils
     nix
-  ];
+  ]
+  ++ lib.optional pushToAttic attic-client;
   text = ''
         set -euo pipefail
 
         usage() {
           cat <<'EOF'
-    Usage: fleet-cache-warmer [--print-targets]
+    Usage: ${name} [--print-targets]
 
-    Build and push the CI-validated fleet outputs to the local Attic cache.
-    The flake reference and cache name can be overridden with:
+    Build the selected CI-validated fleet outputs.
+    The flake reference can be overridden with:
 
       FLEET_CACHE_WARMER_FLAKE
-      FLEET_CACHE_WARMER_ATTIC_CACHE
+    ${lib.optionalString pushToAttic ''
+      The Attic cache name can be overridden with:
+
+        FLEET_CACHE_WARMER_ATTIC_CACHE
+    ''}
     EOF
         }
 
         flake_ref="''${FLEET_CACHE_WARMER_FLAKE:-github:booxter/nix}"
-        attic_cache="''${FLEET_CACHE_WARMER_ATTIC_CACHE:-default}"
+    ${lib.optionalString pushToAttic ''
+      attic_cache="''${FLEET_CACHE_WARMER_ATTIC_CACHE:-default}"
+    ''}
+        declare -a nix_build_opts=()
+    ${lib.optionalString (!useRemoteBuilders) ''
+      nix_build_opts+=(--option builders "")
+    ''}
 
         load_target_suffixes() {
           local inventory_ref
@@ -65,7 +88,7 @@ writeShellApplication {
             return 0
           fi
 
-          echo "fleet-cache-warmer: failed to load target inventory from $inventory_ref; falling back to embedded target list" >&2
+          echo "${name}: failed to load target inventory from $inventory_ref; falling back to embedded target list" >&2
           inventory_source=embedded
           target_suffixes=()
           ${embeddedTargetAssignments}
@@ -97,7 +120,7 @@ writeShellApplication {
             ;;
         esac
 
-        out_paths_file="$(${coreutils}/bin/mktemp -t fleet-cache-warmer.XXXXXX)"
+        out_paths_file="$(${coreutils}/bin/mktemp -t ${name}.XXXXXX)"
         trap '${coreutils}/bin/rm -f "$out_paths_file"' EXIT
 
         declare -a buildable_targets=()
@@ -114,50 +137,55 @@ writeShellApplication {
               buildable_targets+=("$target")
             else
               skipped_inventory_count=$((skipped_inventory_count + 1))
-              printf 'fleet-cache-warmer: target is missing or does not evaluate, skipping: %s\n' "$target" >&2
+              printf '${name}: target is missing or does not evaluate, skipping: %s\n' "$target" >&2
             fi
           done
         fi
 
         if [ "''${#buildable_targets[@]}" -eq 0 ]; then
-          echo "fleet-cache-warmer: no warm targets resolved successfully; skipping cache push" >&2
+          echo "${name}: no warm targets resolved successfully" >&2
           exit 0
         fi
 
         printf 'Building %s resolved warm target(s) from %s\n' "''${#buildable_targets[@]}" "$flake_ref" >&2
         : >"$out_paths_file"
-        if ! ${lib.getExe nix} build -L --keep-going --no-link --print-out-paths "''${buildable_targets[@]}" >>"$out_paths_file"; then
-          echo "fleet-cache-warmer: batched build reported failures; continuing with any successful outputs" >&2
+        if ! ${lib.getExe nix} build "''${nix_build_opts[@]}" -L --keep-going --no-link --print-out-paths "''${buildable_targets[@]}" >>"$out_paths_file"; then
+          echo "${name}: batched build reported failures; continuing with any successful outputs" >&2
         fi
 
         fallback_failed_count=0
         if ! ${coreutils}/bin/test -s "$out_paths_file"; then
-          echo "fleet-cache-warmer: batched build produced no successful outputs; retrying target-by-target" >&2
+          echo "${name}: batched build produced no successful outputs; retrying target-by-target" >&2
           for target in "''${buildable_targets[@]}"; do
             printf 'Warming %s\n' "$target" >&2
-            if ! ${lib.getExe nix} build -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
+            if ! ${lib.getExe nix} build "''${nix_build_opts[@]}" -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
               fallback_failed_count=$((fallback_failed_count + 1))
-              printf 'fleet-cache-warmer: target failed, skipping: %s\n' "$target" >&2
+              printf '${name}: target failed, skipping: %s\n' "$target" >&2
             fi
           done
         fi
 
         if ! ${coreutils}/bin/test -s "$out_paths_file"; then
-          echo "fleet-cache-warmer: no targets built successfully; skipping cache push" >&2
+          echo "${name}: no targets built successfully" >&2
           exit 0
         fi
 
         realized_output_count="$(${coreutils}/bin/sort -u "$out_paths_file" | ${coreutils}/bin/wc -l | ${coreutils}/bin/tr -d ' ')"
-        printf 'Pushing %s warmed output path(s) to Attic cache %s\n' "$realized_output_count" "$attic_cache" >&2
-        ${coreutils}/bin/sort -u "$out_paths_file" \
-          | ${lib.getExe attic-client} push --ignore-upstream-cache-filter --stdin "$attic_cache"
+    ${lib.optionalString pushToAttic ''
+      printf 'Pushing %s warmed output path(s) to Attic cache %s\n' "$realized_output_count" "$attic_cache" >&2
+      ${coreutils}/bin/sort -u "$out_paths_file" \
+        | ${lib.getExe attic-client} push --ignore-upstream-cache-filter --stdin "$attic_cache"
+    ''}
+    ${lib.optionalString (!pushToAttic) ''
+      printf 'Built %s warmed output path(s); Attic push disabled\n' "$realized_output_count" >&2
+    ''}
 
         if [ "$skipped_inventory_count" -gt 0 ]; then
-          printf 'fleet-cache-warmer: skipped %s missing or unevaluable inventory target(s)\n' "$skipped_inventory_count" >&2
+          printf '${name}: skipped %s missing or unevaluable inventory target(s)\n' "$skipped_inventory_count" >&2
         fi
 
         if [ "$fallback_failed_count" -gt 0 ]; then
-          printf 'fleet-cache-warmer: completed with %s skipped target failure(s) after batch fallback\n' "$fallback_failed_count" >&2
+          printf '${name}: completed with %s skipped target failure(s) after batch fallback\n' "$fallback_failed_count" >&2
         fi
   '';
 }

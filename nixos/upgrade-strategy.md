@@ -4,7 +4,8 @@ This repo uses a two-stage flow:
 
 1. GitHub bumps flake inputs on a fixed morning schedule.
 2. `mmini` warms the LAN Attic cache by building and pushing the non-work
-   CI-validated outputs.
+   CI-validated outputs. The work laptop warms the work outputs locally without
+   pushing to Attic.
 
 The point of the warmup is to make the next upgrade window and later interactive
 work substitute from the LAN cache instead of rebuilding or downloading on
@@ -35,7 +36,7 @@ All times below are in `America/New_York`.
 | Time | Event | Notes |
 | --- | --- | --- |
 | `06:00` daily | Flake input bump workflow | GitHub Actions runs `.github/workflows/auto-update.yml`, updates `flake.lock`, and opens a PR. |
-| `08:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized closures into Attic. |
+| `08:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized non-work closures into Attic. |
 | `03:00` Monday | Nix builder VM upgrade window | Set in `lib/inventory.nix` for `prox-builder1vm`, `prox-builder2vm`, and `prox-builder3vm`. |
 | `03:30` Monday | `cache` upgrade window | Set in `nixos/cache/default.nix`. |
 | `04:00` Monday | Proxmox hypervisor upgrade window | Set in `lib/helpers.nix` for Proxmox hosts. |
@@ -52,8 +53,9 @@ can activate without waiting for manual intervention.
 
 ## Warmup Scope
 
-`fleet-cache-warmer` builds and pushes the non-work CI-validated Nix outputs
-below:
+`fleet-cache-warmer` builds the selected CI-validated Nix outputs below. On
+`mmini`, it selects non-work targets and pushes them to Attic. On `JGWXHWDL4X`,
+it selects work targets and only realizes them in the local Nix store.
 
 - `x86_64-linux` NixOS system closures
 - `aarch64-linux` NixOS system closures
@@ -62,7 +64,7 @@ below:
 - `x86_64-linux` regular checks from `.github/workflows/checks.yml`
 - `x86_64-linux` NixOS tests from `.github/workflows/checks.yml`
 
-It intentionally excludes:
+The non-work warmer intentionally excludes:
 
 - targets selected for hosts marked with `isWork = true` in
   [`lib/inventory.nix`](/Users/ihrachyshka/src/nix/lib/inventory.nix:1)
@@ -75,12 +77,12 @@ useful Nix store closures for Attic warming.
 The authoritative source for these targets is
 [`ci-target-inventory.json`](/Users/ihrachyshka/src/nix/ci-target-inventory.json:1).
 Both CI and `fleet-cache-warmer` read from that inventory; the warmer also
-filters targets selected for work hosts based on `isWork` in
+filters targets based on `isWork` in
 [`lib/inventory.nix`](/Users/ihrachyshka/src/nix/lib/inventory.nix:1).
 
 ## Why `mmini`
 
-`mmini` is the warmup orchestrator because it can:
+`mmini` is the non-work warmup orchestrator because it can:
 
 - run unattended on a stable always-on Darwin machine
 - delegate `x86_64-linux` builds to the configured remote builders
@@ -89,14 +91,18 @@ filters targets selected for work hosts based on `isWork` in
 
 `cache` remains the Attic server. It is not the build orchestrator.
 
+`JGWXHWDL4X` runs the work warmup with `pushToAttic = false` because there is no
+work Attic cache. It may still use configured Nix remote builders for work
+Linux targets.
+
 ## Procedure
 
-The daily warmup procedure is:
+The daily non-work warmup procedure is:
 
 1. `launchd` starts `fleet-cache-warmer` on `mmini` at `08:30`.
 2. The warmer reads the warm target inventory from the same flake revision it is
    about to build from `github:booxter/nix`.
-3. The warmer excludes targets selected for hosts marked with `isWork = true`.
+3. The warmer selects targets based on the configured `isWork` filter.
 4. The warmer filters out inventory entries that no longer evaluate at that
    flake revision.
 5. The warmer builds the remaining targets in one `nix build --keep-going`
@@ -105,8 +111,8 @@ The daily warmup procedure is:
    builds.
 6. Missing or broken targets are logged and skipped so one failure does not
    abort the whole run.
-7. The warmer explicitly pushes the resulting store paths into the `default`
-   Attic cache with `--ignore-upstream-cache-filter`.
+7. If `pushToAttic` is enabled, the warmer explicitly pushes the resulting store
+   paths into the `default` Attic cache with `--ignore-upstream-cache-filter`.
 8. Later fleet upgrades substitute from `http://nix-cache:8080/default/` when
    those closures are needed.
 
@@ -118,7 +124,7 @@ rehomed into the local cache.
 
 ## Manual Operation
 
-Useful commands on `mmini`:
+Useful commands on `mmini`, and on `JGWXHWDL4X` for work targets:
 
 ```bash
 sudo fleet-cache-warmer --print-targets
