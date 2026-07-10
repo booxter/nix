@@ -6,11 +6,8 @@
 }:
 let
   cfg = config.host.fleetCacheWarmer;
-  packageAttrName =
-    if cfg.targetFilter == "work" then "fleet-cache-warmer-work" else "fleet-cache-warmer";
   warmerPackage = pkgs.callPackage ../../pkgs/fleet-cache-warmer {
     name = cfg.serviceName;
-    inherit packageAttrName;
     inherit (cfg) pushToAttic targetFilter useRemoteBuilders;
   };
 in

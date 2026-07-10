@@ -74,11 +74,12 @@ The non-work warmer intentionally excludes:
 Those excluded items either are not warmed yet by policy or do not produce
 useful Nix store closures for Attic warming.
 
-The authoritative source for these targets is
+The authoritative source for these targets at system build time is
 [`ci-target-inventory.json`](/Users/ihrachyshka/src/nix/ci-target-inventory.json:1).
-Both CI and `fleet-cache-warmer` read from that inventory; the warmer also
-filters targets based on `isWork` in
+Both CI and the `fleet-cache-warmer` package read from that inventory; the
+warmer package also filters targets based on `isWork` in
 [`lib/inventory.nix`](/Users/ihrachyshka/src/nix/lib/inventory.nix:1).
+The filtered list is embedded in the installed launchd closure.
 
 ## Why `mmini`
 
@@ -100,8 +101,8 @@ Linux targets.
 The daily non-work warmup procedure is:
 
 1. `launchd` starts `fleet-cache-warmer` on `mmini` at `08:30`.
-2. The warmer reads the warm target inventory from the same flake revision it is
-   about to build from `github:booxter/nix`.
+2. The warmer uses the target list embedded in its installed launchd closure and
+   builds those attributes from `github:booxter/nix`.
 3. The warmer selects targets based on the configured `isWork` filter.
 4. The warmer filters out inventory entries that no longer evaluate at that
    flake revision.

@@ -4,9 +4,7 @@
   coreutils,
   name ? "fleet-cache-warmer",
   nix,
-  packageAttrName ? name,
   pushToAttic ? true,
-  stdenv,
   targetFilter ? "non-work",
   useRemoteBuilders ? true,
   writeShellApplication,
@@ -36,7 +34,6 @@ let
   embeddedTargetAssignments = lib.concatMapStringsSep "\n" (
     target: ''target_suffixes+=("${target}")''
   ) ciValidatedWarmTargets;
-  targetInventoryAttr = "packages.${stdenv.hostPlatform.system}.${packageAttrName}.ciWarmTargets";
 in
 writeShellApplication {
   inherit name;
@@ -74,29 +71,8 @@ writeShellApplication {
       nix_build_opts+=(--option builders "")
     ''}
 
-        load_target_suffixes() {
-          local inventory_ref
-          inventory_ref="''${flake_ref}#${targetInventoryAttr}"
-
-          if mapfile -t target_suffixes < <(
-            ${lib.getExe nix} eval "$inventory_ref" \
-              --apply 'xs: builtins.concatStringsSep "\n" xs' \
-              --raw 2>/dev/null
-          ) && [ "''${#target_suffixes[@]}" -gt 0 ]; then
-            inventory_source=flake
-            printf 'Loaded %s warm target(s) from %s\n' "''${#target_suffixes[@]}" "$inventory_ref" >&2
-            return 0
-          fi
-
-          echo "${name}: failed to load target inventory from $inventory_ref; falling back to embedded target list" >&2
-          inventory_source=embedded
-          target_suffixes=()
-          ${embeddedTargetAssignments}
-        }
-
-        inventory_source=embedded
         declare -a target_suffixes=()
-        load_target_suffixes
+        ${embeddedTargetAssignments}
 
         declare -a targets=()
         for suffix in "''${target_suffixes[@]}"; do
@@ -125,22 +101,17 @@ writeShellApplication {
 
         declare -a buildable_targets=()
         skipped_inventory_count=0
-        if [ "$inventory_source" = "flake" ]; then
-          buildable_targets=("''${targets[@]}")
-          printf 'Using %s warm target(s) directly from %s inventory; skipping preflight evaluation\n' "''${#buildable_targets[@]}" "$flake_ref" >&2
-        else
-          printf 'Resolving %s warm target(s) from %s\n' "''${#targets[@]}" "$flake_ref" >&2
-          for i in "''${!targets[@]}"; do
-            target="''${targets[$i]}"
-            printf 'Resolving target %s/%s: %s\n' "$((i + 1))" "''${#targets[@]}" "$target" >&2
-            if ${lib.getExe nix} eval --raw "$target.outPath" >/dev/null 2>&1; then
-              buildable_targets+=("$target")
-            else
-              skipped_inventory_count=$((skipped_inventory_count + 1))
-              printf '${name}: target is missing or does not evaluate, skipping: %s\n' "$target" >&2
-            fi
-          done
-        fi
+        printf 'Resolving %s warm target(s) from %s\n' "''${#targets[@]}" "$flake_ref" >&2
+        for i in "''${!targets[@]}"; do
+          target="''${targets[$i]}"
+          printf 'Resolving target %s/%s: %s\n' "$((i + 1))" "''${#targets[@]}" "$target" >&2
+          if ${lib.getExe nix} eval --raw "$target.outPath" >/dev/null 2>&1; then
+            buildable_targets+=("$target")
+          else
+            skipped_inventory_count=$((skipped_inventory_count + 1))
+            printf '${name}: target is missing or does not evaluate, skipping: %s\n' "$target" >&2
+          fi
+        done
 
         if [ "''${#buildable_targets[@]}" -eq 0 ]; then
           echo "${name}: no warm targets resolved successfully" >&2
