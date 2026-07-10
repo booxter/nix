@@ -17,6 +17,11 @@
       scrollback_pager = "page -t man";
       scrollback_lines = 100000;
       hide_window_decorations = "titlebar-only";
+      # Make the focused split obvious even when the cursor is hard to spot.
+      window_border_width = "2pt";
+      active_border_color = "#ff5a00";
+      inactive_border_color = "#30323d";
+      inactive_text_alpha = "0.65";
     };
     keybindings = {
       "cmd+с" = "copy_to_clipboard";
