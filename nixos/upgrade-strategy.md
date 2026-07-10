@@ -3,7 +3,7 @@
 This repo uses a two-stage flow:
 
 1. GitHub bumps flake inputs on a fixed morning schedule.
-2. `mmini` warms the LAN Attic cache by building and pushing the same
+2. `mmini` warms the LAN Attic cache by building and pushing the non-work
    CI-validated outputs.
 
 The point of the warmup is to make the next upgrade window and later interactive
@@ -52,7 +52,8 @@ can activate without waiting for manual intervention.
 
 ## Warmup Scope
 
-`fleet-cache-warmer` builds and pushes the CI-validated Nix outputs below:
+`fleet-cache-warmer` builds and pushes the non-work CI-validated Nix outputs
+below:
 
 - `x86_64-linux` NixOS system closures
 - `aarch64-linux` NixOS system closures
@@ -63,6 +64,8 @@ can activate without waiting for manual intervention.
 
 It intentionally excludes:
 
+- targets selected for hosts marked with `isWork = true` in
+  [`lib/inventory.nix`](/Users/ihrachyshka/src/nix/lib/inventory.nix:1)
 - formatting checks such as `nix fmt`
 - shell-only CI steps such as `./tests/test-get-hosts.sh`
 
@@ -71,8 +74,9 @@ useful Nix store closures for Attic warming.
 
 The authoritative source for these targets is
 [`ci-target-inventory.json`](/Users/ihrachyshka/src/nix/ci-target-inventory.json:1).
-Both CI and `fleet-cache-warmer` read from that inventory so the target list is
-maintained in one place.
+Both CI and `fleet-cache-warmer` read from that inventory; the warmer also
+filters targets selected for work hosts based on `isWork` in
+[`lib/inventory.nix`](/Users/ihrachyshka/src/nix/lib/inventory.nix:1).
 
 ## Why `mmini`
 
@@ -92,17 +96,18 @@ The daily warmup procedure is:
 1. `launchd` starts `fleet-cache-warmer` on `mmini` at `08:30`.
 2. The warmer reads the warm target inventory from the same flake revision it is
    about to build from `github:booxter/nix`.
-3. The warmer first filters out inventory entries that no longer evaluate at
-   that flake revision.
-4. The warmer builds the remaining targets in one `nix build --keep-going`
+3. The warmer excludes targets selected for hosts marked with `isWork = true`.
+4. The warmer filters out inventory entries that no longer evaluate at that
+   flake revision.
+5. The warmer builds the remaining targets in one `nix build --keep-going`
    invocation so Nix can schedule work across the available builders. If that
    batched build produces no successful outputs, it falls back to target-by-target
    builds.
-5. Missing or broken targets are logged and skipped so one failure does not
+6. Missing or broken targets are logged and skipped so one failure does not
    abort the whole run.
-6. The warmer explicitly pushes the resulting store paths into the `default`
+7. The warmer explicitly pushes the resulting store paths into the `default`
    Attic cache with `--ignore-upstream-cache-filter`.
-7. Later fleet upgrades substitute from `http://nix-cache:8080/default/` when
+8. Later fleet upgrades substitute from `http://nix-cache:8080/default/` when
    those closures are needed.
 
 The explicit `attic push` step matters. The repo's background

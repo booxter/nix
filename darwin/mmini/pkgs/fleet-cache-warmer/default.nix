@@ -9,8 +9,14 @@
 
 let
   inventory = builtins.fromJSON (builtins.readFile ../../../../ci-target-inventory.json);
+  hostInventory = import ../../../../lib/inventory.nix { inherit lib; };
+  workHosts = lib.genAttrs (
+    (map (spec: spec.name) (lib.filter (spec: spec.isWork or false) hostInventory.nixosHostSpecs))
+    ++ (lib.attrNames (lib.filterAttrs (_: cfg: cfg.isWork or false) hostInventory.darwinHosts))
+  ) (_: true);
+  isWorkTarget = target: lib.any (host: workHosts.${host} or false) (target.selection.hosts or [ ]);
   ciValidatedWarmTargets = map (target: target.attr) (
-    lib.filter (target: target.warm) (
+    lib.filter (target: target.warm && !(isWorkTarget target)) (
       inventory.buildTargets ++ inventory.regularChecks ++ inventory.nixosTests
     )
   );
