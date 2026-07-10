@@ -21,7 +21,7 @@
       window_border_width = "2pt";
       active_border_color = "#ff5a00";
       inactive_border_color = "#30323d";
-      inactive_text_alpha = "0.85";
+      inactive_text_alpha = "0.65";
     };
     keybindings = {
       "cmd+с" = "copy_to_clipboard";
