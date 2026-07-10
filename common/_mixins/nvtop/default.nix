@@ -3,7 +3,6 @@
   hostSpecName,
   hostname,
   isDarwin ? false,
-  isDesktop ? false,
   isVM ? false,
   lib,
   pkgs,
@@ -17,12 +16,13 @@ let
     "amd"
     "apple"
     "intel"
+    "nvidia"
   ];
   unknownGpuFamilies = lib.filter (gpu: !(builtins.elem gpu knownGpuFamilies)) gpuFamilies;
   validGpuFamilies = lib.filter (gpu: builtins.elem gpu knownGpuFamilies) gpuFamilies;
   nvtopSupport =
     (lib.genAttrs knownGpuFamilies (_: false)) // (lib.genAttrs validGpuFamilies (_: true));
-  shouldInstall = !isVM && isDesktop && gpuFamilies != [ ];
+  shouldInstall = !isVM && gpuFamilies != [ ];
   nvtopPackage =
     if builtins.length validGpuFamilies == 1 then
       pkgs.nvtopPackages.${builtins.head validGpuFamilies}
