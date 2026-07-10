@@ -42,6 +42,7 @@ in
           Host ${hostname}
             Hostname ${hostname}
             IdentityFile ${identityFile}
+            IdentitiesOnly yes
             User ${user}
         '';
       in

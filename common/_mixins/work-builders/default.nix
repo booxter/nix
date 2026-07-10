@@ -24,6 +24,7 @@ in
         Host nvws.local
           Hostname nvws.local
           IdentityFile ${identityFile}
+          IdentitiesOnly yes
           User ${user}
       '';
   };
