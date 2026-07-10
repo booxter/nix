@@ -1,9 +1,14 @@
 { ... }:
 {
   imports = [
-    ./cache-warmup.nix
     ./ups.nix
   ];
+
+  host.fleetCacheWarmer = {
+    enable = true;
+    targetFilter = "non-work";
+    pushToAttic = true;
+  };
 
   programs.yubi = {
     age.enable = true;

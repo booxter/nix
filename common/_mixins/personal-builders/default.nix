@@ -42,6 +42,7 @@ in
           Host ${hostname}
             Hostname ${hostname}
             IdentityFile ${identityFile}
+            IdentitiesOnly yes
             User ${user}
         '';
       in
@@ -56,7 +57,7 @@ in
         )
       );
   };
-  environment.systemPackages = [ pkgs.openssh_gssapi ];
+  environment.systemPackages = [ pkgs.openssh ];
 
   nix.buildMachines =
     let
