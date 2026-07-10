@@ -17,4 +17,13 @@
     ];
     text = builtins.readFile ./codex-rate-limit-reset-credits.sh;
   };
+
+  codex-work-usage-status = pkgs.writeShellApplication {
+    name = "codex-work-usage-status";
+    runtimeInputs = with pkgs; [
+      curl
+      jq
+    ];
+    text = builtins.readFile ./codex-work-usage-status.sh;
+  };
 }
