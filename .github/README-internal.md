@@ -57,8 +57,8 @@ the toplevel machine jobs included in that matrix. VM, QEMU, ISO, and other
 non-toplevel targets remain build-only.
 
 The PR comment groups diff results into machines with package or generated
-config changes, machines with closure-size-only changes, and machines with no
-changes.
+config changes, machines with closure-size-only or dix path/size-only
+changes, and machines with no changes.
 Per-machine artifacts are prefixed with `package-or-config-`, `size-only-`, or
 `unchanged-`; the post job uses those prefixes when assembling the grouped
 comment.
@@ -68,5 +68,6 @@ For scheduled flake input update PRs, if at least one selected target produced a
 config diff artifact and no package-or-config entries were found, the post job
 enables GitHub auto-merge for the pull request. The PR must come from
 `ci/flake-update`, have title `flake: update inputs`, include the scheduled
-trigger marker in its body, and change only `flake.lock`. Closure-size-only and
-unchanged diffs are considered safe for this auto-merge path.
+trigger marker in its body, and change only `flake.lock`. Closure-size-only,
+dix path/size-only, and unchanged diffs are considered safe for this auto-merge
+path.
