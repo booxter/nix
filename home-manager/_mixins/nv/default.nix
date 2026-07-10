@@ -6,6 +6,7 @@
 }:
 let
   homeManagerPkgs = import ../../pkgs pkgs;
+  nvPkgs = import ./pkgs { inherit pkgs; };
 in
 {
   home.sessionPath = [
@@ -30,6 +31,7 @@ in
         kind
         kubectl
         kubevirt
+        nvPkgs.nico-cli
         (wrapHelm kubernetes-helm {
           plugins = with kubernetes-helmPlugins; [
             helm-unittest
