@@ -17,6 +17,7 @@ in
   imports = [
     (import ../disko/luks.nix { })
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
+    ./alertmanager-watchdog.nix
     ./ups.nix
   ];
 
