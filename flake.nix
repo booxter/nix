@@ -192,6 +192,7 @@
         let
           pkgs = inputs.nixpkgs.legacyPackages.${system};
           basePackages = import ./pkgs pkgs;
+          nvPackages = import ./home-manager/_mixins/nv/pkgs { inherit pkgs; };
           fleetPackages = {
             inherit (inputs.disko.packages.${system}) disko-install;
           };
@@ -208,6 +209,9 @@
             # trying to build an aarch64-darwin fetcher on Linux.
             // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
               ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
+            }
+            // {
+              inherit (nvPackages) nico-cli;
             };
         in
         basePackages
