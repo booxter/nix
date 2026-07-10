@@ -77,10 +77,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [
-      warmerPackage
-    ];
-
     launchd.daemons.${cfg.serviceName} = {
       serviceConfig = {
         ProgramArguments = [

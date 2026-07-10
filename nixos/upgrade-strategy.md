@@ -123,16 +123,9 @@ honors Attic's upstream cache filter. The warmer uses
 `--ignore-upstream-cache-filter` so already-substituted targets still get
 rehomed into the local cache.
 
-## Manual Operation
+## Logs
 
-Useful commands on `mmini`, and on `JGWXHWDL4X` for work targets:
-
-```bash
-sudo fleet-cache-warmer --print-targets
-sudo fleet-cache-warmer
-```
-
-Logs are written to:
+Warmup logs are written to:
 
 ```text
 /var/log/fleet-cache-warmer.log
