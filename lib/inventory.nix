@@ -766,6 +766,7 @@ rec {
       platform = "aarch64-darwin";
       isDesktop = true;
       isLaptop = true;
+      hardware.gpuFamilies = [ "apple" ];
       lanWanInterfaces = [ "en0" ];
     };
     mmini = {
@@ -774,6 +775,7 @@ rec {
       hostname = "mmini";
       platform = "aarch64-darwin";
       isDesktop = true;
+      hardware.gpuFamilies = [ "apple" ];
       upsHost = frame;
       lanWanInterfaces = [ "en0" ];
     };
@@ -785,6 +787,7 @@ rec {
       isDesktop = true;
       isLaptop = true;
       isWork = true;
+      hardware.gpuFamilies = [ "apple" ];
       lanWanInterfaces = [
         "en0"
         "en7"
@@ -801,6 +804,7 @@ rec {
       isDesktop = true;
       sshTicket.allowX11Forwarding = true;
       localDnsAliases = [ "ollama" ];
+      hardware.gpuFamilies = [ "amd" ];
       dhcpReservation = {
         match = "9c:bf:0d:00:fa:0a";
         hostname = "frame";
@@ -816,6 +820,7 @@ rec {
       netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
+      hardware.gpuFamilies = [ "nvidia" ];
       dhcpReservation = {
         match = "ac:b4:80:40:05:2e";
         hostname = "nvws";
@@ -833,6 +838,7 @@ rec {
       );
       localDnsAliases = [ "jfstat" ];
       hmFull = false;
+      hardware.gpuFamilies = [ "intel" ];
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
         match = "bc:fc:e7:3b:fe:da";
@@ -848,6 +854,7 @@ rec {
       netIface = prxNetIface;
       ipAddress = "192.168.15.10";
       macAddress = "38:05:25:30:7d:89";
+      hardware.gpuFamilies = [ "intel" ];
       dnsAliases = [ "proxmox.${site.lan.domain}" ];
       dhcpReservation = {
         match = "38:05:25:30:7d:89";
@@ -864,6 +871,7 @@ rec {
       netIface = prxNetIface;
       ipAddress = "192.168.15.11";
       macAddress = "38:05:25:30:7f:7d";
+      hardware.gpuFamilies = [ "intel" ];
       dhcpReservation = {
         match = "38:05:25:30:7f:7d";
         hostname = "prx2-lab";
@@ -879,6 +887,7 @@ rec {
       netIface = prxNetIface;
       ipAddress = "192.168.15.12";
       macAddress = "38:05:25:30:7d:69";
+      hardware.gpuFamilies = [ "intel" ];
       dhcpReservation = {
         match = "38:05:25:30:7d:69";
         hostname = "prx3-lab";
