@@ -8,6 +8,7 @@
 let
   cfg = config.host.sso.oauth2ProxyGates;
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
+  probeHelpers = import ./sso-oauth2-proxy-gate-probes.nix { inherit lib; };
 
   gateSubmodule =
     gateName:
@@ -303,31 +304,6 @@ let
   locationsFor =
     gate: name:
     (oauth2ProxyLocations gate) // gate.extraLocations // (gate.extraLocationsByName.${name} or { });
-  # Internal services with exact backend probe locations. Example: the Search
-  # gate has `probeLocationsByName.search."= /healthz"`.
-  probeServiceNamesFor = gate: builtins.attrNames gate.probeLocationsByName;
-  emptyProbeServiceNamesFor =
-    gate:
-    builtins.filter (serviceName: gate.probeLocationsByName.${serviceName} == { }) (
-      probeServiceNamesFor gate
-    );
-  # Flatten probe location keys so assertions can reject broad auth bypasses.
-  # Example: `search:= /healthz` is allowed; `search:/healthz` is not because
-  # it would be a prefix location rather than one exact backend probe URL.
-  probeLocationEntriesFor =
-    gate:
-    builtins.concatMap (
-      serviceName:
-      map (locationName: {
-        inherit locationName serviceName;
-        label = "${serviceName}:${locationName}";
-      }) (builtins.attrNames gate.probeLocationsByName.${serviceName})
-    ) (probeServiceNamesFor gate);
-  unsafeProbeLocationNamesFor =
-    gate:
-    map (entry: entry.label) (
-      builtins.filter (entry: !(lib.hasPrefix "= /" entry.locationName)) (probeLocationEntriesFor gate)
-    );
   # Normal service surfaces that should receive OAuth locations. Example:
   # `search` expands to `internal-https-search` and `search.ihar.dev`.
   internalServiceVhostNames =
@@ -339,9 +315,6 @@ let
       "internal-https-${serviceName}"
     ]
     ++ service.publicAliases;
-  # Probe-only surface for exact unauthenticated backend checks. Example:
-  # `search` maps to `internal-https-search-probe`.
-  probeVhostNameFor = serviceName: "internal-https-${serviceName}-probe";
   # OAuth-protected internal HTTPS vhosts. Example: this installs `/oauth2/`,
   # `= /oauth2/auth`, and protected app locations on `internal-https-search`
   # and on its public sibling `search.ihar.dev`.
@@ -356,14 +329,6 @@ let
         }) (internalServiceVhostNames serviceName)
       ) gate.internalHttpsServiceNames
     );
-  # Probe vhosts get only their explicit probe locations, not the normal app
-  # proxy or OAuth endpoints. Example: `internal-https-search-probe` gets
-  # `= /healthz` and the probe-vhost catch-all remains 404.
-  probeVhostsFor =
-    gate:
-    lib.mapAttrs' (
-      serviceName: locations: lib.nameValuePair (probeVhostNameFor serviceName) { inherit locations; }
-    ) gate.probeLocationsByName;
   # Public vhosts owned by host.externalService instead of host.internalHttps.
   # Example: Beast's Aurral gate protects the external `au.ihar.dev` vhost.
   protectedExternalVhostsFor =
@@ -385,34 +350,20 @@ in
   config = lib.mkIf (enabledGates != { }) {
     assertions =
       builtins.concatLists (
-        lib.mapAttrsToList (gateName: gate: [
-          {
-            assertion = gate.allowedGroups != [ ];
-            message = "host.sso.oauth2ProxyGates.${gateName}.allowedGroups must not be empty.";
-          }
-          {
-            assertion = gate.whitelistDomains != [ ];
-            message = "host.sso.oauth2ProxyGates.${gateName}.whitelistDomains must not be empty.";
-          }
-          {
-            assertion =
-              let
-                unknownProbeServices = builtins.filter (
-                  serviceName: !(builtins.elem serviceName gate.internalHttpsServiceNames)
-                ) (probeServiceNamesFor gate);
-              in
-              unknownProbeServices == [ ];
-            message = "host.sso.oauth2ProxyGates.${gateName}.probeLocationsByName must only reference internalHttpsServiceNames.";
-          }
-          {
-            assertion = unsafeProbeLocationNamesFor gate == [ ];
-            message = "host.sso.oauth2ProxyGates.${gateName}.probeLocationsByName must use exact nginx locations like '= /healthz'. Offenders: ${lib.concatStringsSep ", " (unsafeProbeLocationNamesFor gate)}";
-          }
-          {
-            assertion = emptyProbeServiceNamesFor gate == [ ];
-            message = "host.sso.oauth2ProxyGates.${gateName}.probeLocationsByName entries must not be empty. Offenders: ${lib.concatStringsSep ", " (emptyProbeServiceNamesFor gate)}";
-          }
-        ]) enabledGates
+        lib.mapAttrsToList (
+          gateName: gate:
+          [
+            {
+              assertion = gate.allowedGroups != [ ];
+              message = "host.sso.oauth2ProxyGates.${gateName}.allowedGroups must not be empty.";
+            }
+            {
+              assertion = gate.whitelistDomains != [ ];
+              message = "host.sso.oauth2ProxyGates.${gateName}.whitelistDomains must not be empty.";
+            }
+          ]
+          ++ probeHelpers.assertionsFor gateName gate
+        ) enabledGates
       )
       ++ [
         {
@@ -487,9 +438,7 @@ in
           # of the normal service vhost. Public ingress forwards to the internal
           # service name, so attaching these locations to :443 would expose them
           # through browser-facing hostnames such as search.ihar.dev.
-          (lib.genAttrs (probeServiceNamesFor gate) (_: {
-            probe.enable = true;
-          }))
+          (probeHelpers.enableAttrsFor gate)
         ]) enabledGates
       )
     );
@@ -505,7 +454,8 @@ in
 
     services.nginx.virtualHosts = lib.mkMerge (
       lib.mapAttrsToList (
-        _: gate: protectedInternalVhostsFor gate // probeVhostsFor gate // protectedExternalVhostsFor gate
+        _: gate:
+        protectedInternalVhostsFor gate // probeHelpers.vhostsFor gate // protectedExternalVhostsFor gate
       ) enabledGates
     );
 
