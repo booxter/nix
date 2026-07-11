@@ -33,6 +33,9 @@
       ./_mixins/attic
       ./_mixins/browser
     ]
+    ++ lib.optionals isWork [
+      ./_mixins/docker-desktop
+    ]
     ++ lib.optionals (hostname == "mair") [
       ./_mixins/secretive
     ];

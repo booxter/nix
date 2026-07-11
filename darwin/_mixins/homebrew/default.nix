@@ -1,7 +1,6 @@
 {
   config,
   inputs,
-  isWork,
   lib,
   username,
   ...
@@ -35,9 +34,6 @@
     casks = [
       "sf-symbols"
       "wireshark-chmodbpf"
-    ]
-    ++ lib.optionals isWork [
-      "docker-desktop"
     ];
   };
 
