@@ -39,7 +39,7 @@ in
       remoteFallbackKeyName = lib.mkOption {
         type = lib.types.str;
         default = "id_ed25519";
-        description = "Password-protected SSH key filename under ~/.ssh for SSH login sessions.";
+        description = "Non-interactive SSH fallback key filename under ~/.ssh for remote sessions.";
       };
     };
 
