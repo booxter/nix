@@ -419,7 +419,7 @@ in
   host.internalHttps.services.paperless = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
-    serverAliases = [ paperlessService.publicHost ];
+    publicAliases = [ paperlessService.publicHost ];
     mtls.enable = true;
     recommendedProxySettings = false;
     locationExtraConfig = ''
@@ -451,6 +451,13 @@ in
     internalHttpsServiceNames = [ "paperless-gpt" ];
     signInLocationName = "@paperless_gpt_oauth2_proxy_sign_in";
     authCookieVariableName = "paperless_gpt_auth_cookie";
+    probeLocationsByName.paperless-gpt."= /api/version" = {
+      proxyPass = "http://127.0.0.1:${toString paperlessGptPort}";
+      recommendedProxySettings = true;
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
   };
 
   host.observability.client.prometheusMtlsEndpoints.paperless = {

@@ -7,14 +7,123 @@
 let
   cfg = config.host.internalHttps;
   internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
+  # A local alias like `search` is served both as the single-label name and as
+  # mDNS, for example `search` and `search.local`.
   localServerAliasesFor = aliases: aliases ++ builtins.map hostInventory.toLocalDnsName aliases;
   enabledServices = lib.filterAttrs (_: service: service.enable) cfg.services;
-  enabledServerNames = builtins.concatMap (service: [ service.serverName ] ++ service.serverAliases) (
-    builtins.attrValues enabledServices
-  );
+  # All hostnames that consume an nginx server_name on this machine. Example:
+  # the Search service owns `search.home.arpa`, `search`, `search.local`, and
+  # the public sibling vhost `search.ihar.dev`.
+  serviceServerNames =
+    service:
+    [
+      service.serverName
+    ]
+    ++ service.serverAliases
+    ++ service.publicAliases;
+  enabledServerNames = builtins.concatMap serviceServerNames (builtins.attrValues enabledServices);
+  enabledProbeServices = lib.filterAttrs (_: service: service.probe.enable) enabledServices;
+  servicesWithProbePortConflicts = lib.filterAttrs (
+    _: service: service.probe.enable && service.probe.port == service.port
+  ) enabledServices;
   enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
   secretAttrName = serviceName: "internal-https-${serviceName}";
   mtlsClientSecretAttrName = clientName: "internal-https-client-${clientName}";
+  # Listener tuple shared by all surfaces for one service. Example: normal
+  # service vhosts listen on :443 while probe-only vhosts listen on :9443.
+  mkListen = service: port: [
+    {
+      addr = service.listenAddress;
+      inherit port;
+      ssl = true;
+    }
+  ];
+  # TLS and optional client-cert verification common to every vhost surface for
+  # a service. Example: `internal-https-search`, `search.ihar.dev`, and
+  # `internal-https-search-probe` reuse the same certificate and mTLS policy.
+  mkTlsVhost = serviceName: service: port: {
+    extraConfig = lib.optionalString service.mtls.enable ''
+      ssl_client_certificate ${service.mtls.trustedCaCertificate};
+      ssl_verify_client on;
+    '';
+    listen = mkListen service port;
+    sslCertificate = config.sops.secrets."${secretAttrName serviceName}-server-crt".path;
+    sslCertificateKey = config.sops.secrets."${secretAttrName serviceName}-server-key".path;
+    sslTrustedCertificate = internalPkiRootCaPath;
+  };
+  # The normal application proxy location for a service. Example: Search maps
+  # `/` to SearXNG, while RomM maps `/api` to its API upstream.
+  mkServiceLocations = service: {
+    ${service.path} = {
+      proxyPass = service.upstream;
+      proxyWebsockets = service.proxyWebsockets;
+      recommendedProxySettings = service.recommendedProxySettings;
+      extraConfig = service.locationExtraConfig;
+    };
+  };
+  # Builds a normal service surface on the service port. It is parameterized so
+  # both the canonical internal host and public sibling hosts share one shape.
+  # Examples: `search.home.arpa` and `search.ihar.dev` both proxy to SearXNG on
+  # :443, but they are separate nginx vhosts.
+  mkProxyVhost =
+    {
+      serviceName,
+      service,
+      serverName,
+      serverAliases ? [ ],
+    }:
+    (mkTlsVhost serviceName service service.port)
+    // {
+      inherit serverName serverAliases;
+      forceSSL = true;
+      locations = mkServiceLocations service;
+    };
+  # Canonical internal service vhost. Example: `internal-https-search` serves
+  # `search.home.arpa` plus internal aliases such as `search` and `search.local`.
+  mkServiceVhost =
+    serviceName: service:
+    mkProxyVhost {
+      inherit serviceName service;
+      inherit (service) serverName serverAliases;
+    };
+  # Public sibling vhost for direct browser-facing names on the service host.
+  # Example: `search.ihar.dev` gets the normal app and OAuth locations, but not
+  # backend probe bypass locations.
+  mkPublicAliasVhost =
+    serviceName: service: publicAlias:
+    mkProxyVhost {
+      inherit serviceName service;
+      serverName = publicAlias;
+    };
+  # Every public alias gets a sibling vhost keyed by that public hostname.
+  # Example: `search.ihar.dev = mkPublicAliasVhost "search" search ...`.
+  mkPublicAliasVhostsFor =
+    serviceName: service:
+    lib.genAttrs service.publicAliases (
+      publicAlias: mkPublicAliasVhost serviceName service publicAlias
+    );
+  # Probe-only vhost on the probe port. Example:
+  # `internal-https-search-probe` serves exact backend probe locations on
+  # `https://search.home.arpa:9443/...`; its catch-all returns 404.
+  mkProbeVhost =
+    serviceName: service:
+    (mkTlsVhost serviceName service service.probe.port)
+    // {
+      serverName = service.serverName;
+      serverAliases = [ ];
+      addSSL = true;
+      forceSSL = false;
+      # Backend probes live on a separate HTTPS listener instead of the normal
+      # service listener. Public ingress proxies to the normal service listener
+      # using the internal server name, so host alias splitting alone would not
+      # keep auth-bypass health endpoints off the WAN path.
+      locations."/" = {
+        return = "404";
+        extraConfig = ''
+          auth_request off;
+        '';
+      };
+    };
 in
 {
   options.host.internalHttps.localAliases = lib.mkOption {
@@ -103,7 +212,13 @@ in
               serverAliases = lib.mkOption {
                 type = with lib.types; listOf str;
                 default = [ ];
-                description = "Additional hostnames served by the internal HTTPS vhost.";
+                description = "Additional internal hostnames served by the canonical internal HTTPS vhost.";
+              };
+
+              publicAliases = lib.mkOption {
+                type = with lib.types; listOf str;
+                default = [ ];
+                description = "Browser-facing hostnames served by sibling HTTPS vhosts with the same upstream and certificate.";
               };
 
               sans = lib.mkOption {
@@ -114,6 +229,7 @@ in
                     config.serverName
                   ]
                   ++ config.serverAliases
+                  ++ config.publicAliases
                 );
                 description = "DNS SANs to include when issuing this service certificate.";
               };
@@ -186,6 +302,16 @@ in
                   description = "CA certificate bundle trusted for inbound client certificate verification.";
                 };
               };
+
+              probe = {
+                enable = lib.mkEnableOption "probe-only internal HTTPS listener";
+
+                port = lib.mkOption {
+                  type = port;
+                  default = 9443;
+                  description = "HTTPS port for exact backend probe locations; no catch-all upstream is exposed on this listener.";
+                };
+              };
             };
           }
         )
@@ -203,7 +329,11 @@ in
       {
         assertion =
           (builtins.length enabledServerNames) == (builtins.length (lib.unique enabledServerNames));
-        message = "host.internalHttps.services must not reuse the same serverName on one host.";
+        message = "host.internalHttps.services must not reuse the same serverName, serverAlias, or publicAlias on one host.";
+      }
+      {
+        assertion = servicesWithProbePortConflicts == { };
+        message = "host.internalHttps.services probe listeners must use a port distinct from the normal service port. Offenders: ${lib.concatStringsSep ", " (builtins.attrNames servicesWithProbePortConflicts)}";
       }
     ];
 
@@ -253,34 +383,16 @@ in
       enable = true;
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
-      virtualHosts = lib.mapAttrs' (
-        serviceName: service:
-        lib.nameValuePair "internal-https-${serviceName}" {
-          serverName = service.serverName;
-          serverAliases = service.serverAliases;
-          forceSSL = true;
-          extraConfig = lib.optionalString service.mtls.enable ''
-            ssl_client_certificate ${service.mtls.trustedCaCertificate};
-            ssl_verify_client on;
-          '';
-          listen = [
-            {
-              addr = service.listenAddress;
-              port = service.port;
-              ssl = true;
-            }
-          ];
-          sslCertificate = config.sops.secrets."${secretAttrName serviceName}-server-crt".path;
-          sslCertificateKey = config.sops.secrets."${secretAttrName serviceName}-server-key".path;
-          sslTrustedCertificate = internalPkiRootCaPath;
-          locations.${service.path} = {
-            proxyPass = service.upstream;
-            proxyWebsockets = service.proxyWebsockets;
-            recommendedProxySettings = service.recommendedProxySettings;
-            extraConfig = service.locationExtraConfig;
-          };
-        }
-      ) enabledServices;
+      virtualHosts =
+        lib.mapAttrs' (
+          serviceName: service:
+          lib.nameValuePair "internal-https-${serviceName}" (mkServiceVhost serviceName service)
+        ) enabledServices
+        // lib.concatMapAttrs mkPublicAliasVhostsFor enabledServices
+        // lib.mapAttrs' (
+          serviceName: service:
+          lib.nameValuePair "internal-https-${serviceName}-probe" (mkProbeVhost serviceName service)
+        ) enabledProbeServices;
     };
 
     networking.firewall.allowedTCPPorts = lib.mkIf (enabledServices != { }) (
@@ -290,6 +402,9 @@ in
           lib.optionals service.openFirewall [
             80
             service.port
+          ]
+          ++ lib.optionals (service.openFirewall && service.probe.enable) [
+            service.probe.port
           ]
         ) (builtins.attrValues enabledServices)
       )

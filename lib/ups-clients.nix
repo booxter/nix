@@ -12,10 +12,10 @@ let
     client = hostInventory.toNixosConfigName spec;
   }) (builtins.filter includeClient hostInventory.nixosHostSpecs);
 
-  darwinEntries = lib.mapAttrsToList (_: spec: {
+  darwinEntries = map (spec: {
     server = spec.upsHost;
     client = spec.hostname;
-  }) (lib.filterAttrs (_: includeClient) hostInventory.darwinHosts);
+  }) (builtins.attrValues (lib.filterAttrs (_: includeClient) hostInventory.darwinHosts));
 
   addEntry =
     acc: entry:

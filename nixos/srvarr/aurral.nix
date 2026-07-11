@@ -102,7 +102,19 @@ in
   host.internalHttps.services.aurral = {
     enable = true;
     upstream = "http://127.0.0.1:${toString aurralPort}";
-    serverAliases = [ aurralService.publicHost ];
+    publicAliases = [ aurralService.publicHost ];
     mtls.enable = true;
+    probe.enable = true;
+  };
+
+  # Aurral's OAuth gate lives on beast because only the public hostname is
+  # browser-protected. The backend probe still needs a probe-only listener on
+  # the service owner, so define this exact health location locally on srvarr.
+  services.nginx.virtualHosts."internal-https-aurral-probe".locations."= /api/health/live" = {
+    proxyPass = "http://127.0.0.1:${toString aurralPort}";
+    recommendedProxySettings = true;
+    extraConfig = ''
+      auth_request off;
+    '';
   };
 }

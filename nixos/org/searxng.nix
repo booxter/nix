@@ -206,12 +206,19 @@ in
         auth_request off;
       '';
     };
+    probeLocationsByName.search."= /healthz" = {
+      proxyPass = "http://127.0.0.1:${toString searxPort}";
+      recommendedProxySettings = true;
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
   };
 
   host.internalHttps.services.search = {
     enable = true;
     upstream = "http://127.0.0.1:${toString searxPort}";
-    serverAliases = [ searchService.publicHost ];
+    publicAliases = [ searchService.publicHost ];
     mtls.enable = true;
   };
 

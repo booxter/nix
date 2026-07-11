@@ -1,3 +1,13 @@
+let
+  httpService = {
+    http = {
+      follow_redirects = true;
+      preferred_ip_protocol = "ip4";
+    };
+    prober = "http";
+    timeout = "5s";
+  };
+in
 {
   dns_udp = {
     dns = {
@@ -11,13 +21,12 @@
     timeout = "5s";
   };
 
-  http_service = {
-    http = {
-      follow_redirects = true;
-      preferred_ip_protocol = "ip4";
+  http_service = httpService;
+
+  http_service_409 = httpService // {
+    http = httpService.http // {
+      valid_status_codes = [ 409 ];
     };
-    prober = "http";
-    timeout = "5s";
   };
 
   icmp_ipv4 = {

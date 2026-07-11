@@ -92,6 +92,7 @@ let
       title ? lib.strings.toSentenceCase id,
       icon ? "sh:${id}",
       blackboxProbe ? true,
+      backendProbe ? null,
       showInGlance ? true,
       glanceCategory ? null,
     }:
@@ -108,6 +109,7 @@ let
         title
         ;
     }
+    // lib.optionalAttrs (backendProbe != null) { inherit backendProbe; }
     // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
 
   assertValidService =
@@ -589,6 +591,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/ping";
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
@@ -596,6 +599,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/ping";
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
@@ -603,6 +607,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/ping";
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
@@ -619,6 +624,7 @@ rec {
       owner = "srvarr";
       publicHost = "mu.${site.public.domain}";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/api/health/live";
       glanceCategory = "user";
     }))
     (resolveService (mkService {
@@ -662,6 +668,7 @@ rec {
       scope = "internal";
       owner = "org";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/api/version";
       glanceCategory = "infrastructure";
     }))
     (resolveService (mkService {
@@ -692,6 +699,7 @@ rec {
       owner = "org";
       publicHost = "search.${site.public.domain}";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/healthz";
       glanceCategory = "user";
     }))
     (resolveService (mkService {
@@ -708,6 +716,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/api/system/ping";
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
@@ -715,6 +724,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/ping";
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
@@ -722,6 +732,10 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      backendProbe = {
+        path = "/__probe/transmission-rpc";
+        blackboxModule = "http_service_409";
+      };
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
@@ -731,6 +745,7 @@ rec {
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
+      backendProbe.path = "/__probe/sabnzbd-version";
       glanceCategory = "media-admin";
     }))
   ];

@@ -573,7 +573,7 @@ in
     enable = true;
     upstream = "http://127.0.0.1:${toString apiPort}";
     path = "/api";
-    serverAliases = [ rommService.publicHost ];
+    publicAliases = [ rommService.publicHost ];
     mtls.enable = true;
   };
 }

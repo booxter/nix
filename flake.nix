@@ -162,18 +162,9 @@
 
     in
     {
-      darwinConfigurations = builtins.listToAttrs (
-        map (
-          name:
-          let
-            cfg = darwinHosts.${name};
-          in
-          {
-            name = name;
-            value = helpers.mkDarwin (cfg // { hostSpecName = name; });
-          }
-        ) (builtins.attrNames darwinHosts)
-      );
+      darwinConfigurations = builtins.mapAttrs (
+        name: cfg: helpers.mkDarwin (cfg // { hostSpecName = name; })
+      ) darwinHosts;
 
       nixosConfigurations = canonicalNixosConfigurations;
 

@@ -85,11 +85,8 @@ in
   ];
 
   sops = {
-    secrets = builtins.listToAttrs (
-      map (user: {
-        name = mkJellyfinUserPasswordSecret user.name;
-        value = jellyfinSecretFile;
-      }) userDefinitions
+    secrets = lib.genAttrs (map (user: mkJellyfinUserPasswordSecret user.name) userDefinitions) (
+      _: jellyfinSecretFile
     );
     templates."jellarr.env" = {
       inherit (jellyfinSecretFile) owner group mode;

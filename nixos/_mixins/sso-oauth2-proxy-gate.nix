@@ -8,6 +8,7 @@
 let
   cfg = config.host.sso.oauth2ProxyGates;
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
+  probeHelpers = import ./sso-oauth2-proxy-gate-probes.nix { inherit lib; };
 
   gateSubmodule =
     gateName:
@@ -193,6 +194,12 @@ let
           default = { };
           description = "Extra nginx locations added to one protected internal service or external hostname.";
         };
+
+        probeLocationsByName = lib.mkOption {
+          type = with lib.types; attrsOf (attrsOf anything);
+          default = { };
+          description = "Extra nginx locations added only to one protected internal service's probe-only HTTPS listener.";
+        };
       };
     };
 
@@ -297,6 +304,38 @@ let
   locationsFor =
     gate: name:
     (oauth2ProxyLocations gate) // gate.extraLocations // (gate.extraLocationsByName.${name} or { });
+  # Normal service surfaces that should receive OAuth locations. Example:
+  # `search` expands to `internal-https-search` and `search.ihar.dev`.
+  internalServiceVhostNames =
+    serviceName:
+    let
+      service = config.host.internalHttps.services.${serviceName};
+    in
+    [
+      "internal-https-${serviceName}"
+    ]
+    ++ service.publicAliases;
+  # OAuth-protected internal HTTPS vhosts. Example: this installs `/oauth2/`,
+  # `= /oauth2/auth`, and protected app locations on `internal-https-search`
+  # and on its public sibling `search.ihar.dev`.
+  protectedInternalVhostsFor =
+    gate:
+    builtins.listToAttrs (
+      builtins.concatMap (
+        serviceName:
+        map (vhostName: {
+          name = vhostName;
+          value.locations = locationsFor gate serviceName;
+        }) (internalServiceVhostNames serviceName)
+      ) gate.internalHttpsServiceNames
+    );
+  # Public vhosts owned by host.externalService instead of host.internalHttps.
+  # Example: Beast's Aurral gate protects the external `au.ihar.dev` vhost.
+  protectedExternalVhostsFor =
+    gate:
+    lib.genAttrs gate.externalHostNames (hostName: {
+      locations = locationsFor gate hostName;
+    });
 in
 {
   options.host.sso.oauth2ProxyGates = lib.mkOption {
@@ -308,16 +347,20 @@ in
   config = lib.mkIf (enabledGates != { }) {
     assertions =
       builtins.concatLists (
-        lib.mapAttrsToList (gateName: gate: [
-          {
-            assertion = gate.allowedGroups != [ ];
-            message = "host.sso.oauth2ProxyGates.${gateName}.allowedGroups must not be empty.";
-          }
-          {
-            assertion = gate.whitelistDomains != [ ];
-            message = "host.sso.oauth2ProxyGates.${gateName}.whitelistDomains must not be empty.";
-          }
-        ]) enabledGates
+        lib.mapAttrsToList (
+          gateName: gate:
+          [
+            {
+              assertion = gate.allowedGroups != [ ];
+              message = "host.sso.oauth2ProxyGates.${gateName}.allowedGroups must not be empty.";
+            }
+            {
+              assertion = gate.whitelistDomains != [ ];
+              message = "host.sso.oauth2ProxyGates.${gateName}.whitelistDomains must not be empty.";
+            }
+          ]
+          ++ probeHelpers.assertionsFor gateName gate
+        ) enabledGates
       )
       ++ [
         {
@@ -383,38 +426,33 @@ in
       ) enabledGates;
 
     host.internalHttps.services = lib.mkMerge (
-      lib.mapAttrsToList (
-        _: gate:
-        lib.genAttrs gate.internalHttpsServiceNames (_: {
-          locationExtraConfig = authRequestLocationConfig gate;
-        })
-      ) enabledGates
+      builtins.concatLists (
+        map (gate: [
+          (lib.genAttrs gate.internalHttpsServiceNames (_: {
+            locationExtraConfig = authRequestLocationConfig gate;
+          }))
+          # Backend probe bypasses intentionally use a separate listener instead
+          # of the normal service vhost. Public ingress forwards to the internal
+          # service name, so attaching these locations to :443 would expose them
+          # through browser-facing hostnames such as search.ihar.dev.
+          (probeHelpers.enableAttrsFor gate)
+        ]) (builtins.attrValues enabledGates)
+      )
     );
 
     host.externalService.virtualHosts = lib.mkMerge (
-      lib.mapAttrsToList (
-        _: gate:
+      map (
+        gate:
         lib.genAttrs gate.externalHostNames (_: {
           locationExtraConfig = authRequestLocationConfig gate;
         })
-      ) enabledGates
+      ) (builtins.attrValues enabledGates)
     );
 
     services.nginx.virtualHosts = lib.mkMerge (
       lib.mapAttrsToList (
         _: gate:
-        builtins.listToAttrs (
-          map (serviceName: {
-            name = "internal-https-${serviceName}";
-            value.locations = locationsFor gate serviceName;
-          }) gate.internalHttpsServiceNames
-        )
-        // builtins.listToAttrs (
-          map (hostName: {
-            name = hostName;
-            value.locations = locationsFor gate hostName;
-          }) gate.externalHostNames
-        )
+        protectedInternalVhostsFor gate // probeHelpers.vhostsFor gate // protectedExternalVhostsFor gate
       ) enabledGates
     );
 

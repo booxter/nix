@@ -152,7 +152,7 @@ in
   host.internalHttps.services.id = {
     enable = true;
     upstream = "https://127.0.0.1:${toString kanidmPort}";
-    serverAliases = [ idService.publicHost ];
+    publicAliases = [ idService.publicHost ];
     mtls.enable = true;
     locationExtraConfig = ''
       proxy_set_header Host ${idService.publicHost};

@@ -51,38 +51,63 @@ let
       builtins.getAttr service.id httpsServices
     else
       null;
-  inventoryServiceCatalog = map (
-    service:
+  # Builds the target URL for a service owned by another NixOS host. Normal
+  # OAuth/front-door probes use :443, for example
+  # `https://search.home.arpa/oauth2/sign_in`; backend probes use the
+  # probe-only listener, for example `https://search.home.arpa:9443/healthz`,
+  # so auth-bypass checks stay off the public gateway's :443 upstream path.
+  mkOwnerServiceProbe =
+    service: probePath: useProbeListener:
     let
       httpsService = httpsServiceFor service;
+      probePortSuffix = lib.optionalString (
+        useProbeListener && httpsService.probe.port != 443
+      ) ":${toString httpsService.probe.port}";
     in
-    if service.scope == "external" then
-      service
-    else if httpsService != null then
-      service
-      // {
+    if httpsService != null then
+      {
         blackboxModule = if httpsService.mtls.enable then "http_service_mtls" else "http_service";
-        probeUrl = "https://${httpsService.serverName}${service.probePath}";
+        probeUrl = "https://${httpsService.serverName}${probePortSuffix}${probePath}";
         url = "https://${httpsService.serverName}/";
       }
     else if service.owner == "fana" then
-      service
-      // {
-        probeUrl = "http://127.0.0.1:${toString grafanaPort}/${service.probePath}";
+      {
+        probeUrl = "http://127.0.0.1:${toString grafanaPort}/${probePath}";
         url = "http://${service.displayHost}:3000/";
       }
     else if service.owner == "srvarr" then
-      service
-      // {
-        probeUrl = "http://${service.probeHost}:${toString (srvarrPortFor service.id)}${service.probePath}";
+      {
+        probeUrl = "http://${service.probeHost}:${toString (srvarrPortFor service.id)}${probePath}";
         url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
       }
     else
-      throw "Blackbox service ${service.id} must expose enabled internal HTTPS"
+      throw "Blackbox service ${service.id} must expose enabled internal HTTPS";
+  inventoryServiceCatalog = map (
+    service:
+    if service.scope == "external" then
+      service
+    else
+      service // (mkOwnerServiceProbe service service.probePath false)
   ) hostInventory.blackboxServices;
-  usesHttpMtls = builtins.any (
-    service: (service.blackboxModule or null) == "http_service_mtls"
-  ) inventoryServiceCatalog;
+  backendProbeCatalog = map (
+    service:
+    let
+      ownerProbe = mkOwnerServiceProbe service service.backendProbe.path true;
+    in
+    service
+    // ownerProbe
+    // {
+      blackboxModule =
+        service.backendProbe.blackboxModule or (ownerProbe.blackboxModule or "http_service");
+      backend_probe = service.backendProbe.name or "http";
+      backend_probe_title = service.backendProbe.title or "Backend HTTP";
+      scope = "backend";
+    }
+  ) (builtins.filter (service: service ? backendProbe) hostInventory.blackboxServices);
+  serviceHttpProbeCatalog = inventoryServiceCatalog ++ backendProbeCatalog;
+  usesHttpMtls = builtins.any (service: (service.blackboxModule or null) == "http_service_mtls") (
+    serviceHttpProbeCatalog
+  );
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
@@ -263,6 +288,53 @@ let
       targets = [ resolver.target ];
     }) publicServiceCatalog
   ) publicDnsProbeTargets;
+  mkServiceHttpStaticConfig = service: {
+    labels = {
+      module = service.blackboxModule or "http_service";
+      scope = service.scope;
+      service = service.id;
+      service_title = service.title;
+    }
+    // lib.optionalAttrs (service ? tlsRotation) {
+      tls_rotation = service.tlsRotation;
+    }
+    // lib.optionalAttrs (service ? backend_probe) {
+      inherit (service) backend_probe backend_probe_title;
+    };
+    targets = [ service.probeUrl ];
+  };
+  serviceHttpRelabelConfigs = [
+    {
+      source_labels = [ "module" ];
+      target_label = "__param_module";
+    }
+    {
+      source_labels = [ "__address__" ];
+      target_label = "__param_target";
+    }
+    {
+      source_labels = [ "__param_target" ];
+      target_label = "target";
+    }
+    {
+      source_labels = [ "service" ];
+      target_label = "instance";
+    }
+    {
+      replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+      target_label = "__address__";
+    }
+    {
+      action = "labeldrop";
+      regex = "module";
+    }
+  ];
+  mkServiceHttpScrapeConfig = jobName: catalog: {
+    job_name = jobName;
+    metrics_path = "/probe";
+    static_configs = map mkServiceHttpStaticConfig catalog;
+    relabel_configs = serviceHttpRelabelConfigs;
+  };
   blackboxProbeRelabelConfigs = [
     {
       source_labels = [ "__address__" ];
@@ -313,48 +385,8 @@ in
   };
 
   scrapeConfigs = [
-    {
-      job_name = "blackbox-arr";
-      metrics_path = "/probe";
-      static_configs = map (service: {
-        labels = {
-          module = service.blackboxModule or "http_service";
-          scope = service.scope;
-          service = service.id;
-          service_title = service.title;
-        }
-        // lib.optionalAttrs (service ? tlsRotation) {
-          tls_rotation = service.tlsRotation;
-        };
-        targets = [ service.probeUrl ];
-      }) serviceCatalog;
-      relabel_configs = [
-        {
-          source_labels = [ "module" ];
-          target_label = "__param_module";
-        }
-        {
-          source_labels = [ "__address__" ];
-          target_label = "__param_target";
-        }
-        {
-          source_labels = [ "__param_target" ];
-          target_label = "target";
-        }
-        {
-          source_labels = [ "service" ];
-          target_label = "instance";
-        }
-        {
-          replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
-          target_label = "__address__";
-        }
-        {
-          action = "labeldrop";
-          regex = "module";
-        }
-      ];
-    }
+    (mkServiceHttpScrapeConfig "blackbox-arr" serviceCatalog)
+    (mkServiceHttpScrapeConfig "blackbox-backend" backendProbeCatalog)
     {
       job_name = "blackbox-public-wan";
       metrics_path = "/probe";

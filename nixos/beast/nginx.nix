@@ -7,70 +7,25 @@
 let
   arrVmAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   orgVmAddress = hostInventory.toNixosHostIpv4Address "org";
-  backendMtlsServices = builtins.listToAttrs (
-    map
-      (
-        { id, localPort }:
-        {
-          name = id;
-          value = {
-            clientName = id;
-            serverName = "${id}.${hostInventory.site.lan.domain}";
-            inherit localPort;
-          };
-        }
-      )
-      [
-        {
-          id = "id";
-          localPort = 18443;
-        }
-        {
-          id = "dash";
-          localPort = 18081;
-        }
-        {
-          id = "seerr";
-          localPort = 15055;
-        }
-        {
-          id = "romm";
-          localPort = 18080;
-        }
-        {
-          id = "aurral";
-          localPort = 13001;
-        }
-        {
-          id = "audiobookshelf";
-          localPort = 19292;
-        }
-        {
-          id = "shelfmark";
-          localPort = 18084;
-        }
-        {
-          id = "vikunja";
-          localPort = 13456;
-        }
-        {
-          id = "paperless";
-          localPort = 12881;
-        }
-        {
-          id = "llm";
-          localPort = 14000;
-        }
-        {
-          id = "ai";
-          localPort = 14001;
-        }
-        {
-          id = "search";
-          localPort = 18083;
-        }
-      ]
-  );
+  backendMtlsServicePorts = {
+    id = 18443;
+    dash = 18081;
+    seerr = 15055;
+    romm = 18080;
+    aurral = 13001;
+    audiobookshelf = 19292;
+    shelfmark = 18084;
+    vikunja = 13456;
+    paperless = 12881;
+    llm = 14000;
+    ai = 14001;
+    search = 18083;
+  };
+  backendMtlsServices = builtins.mapAttrs (id: localPort: {
+    clientName = id;
+    serverName = "${id}.${hostInventory.site.lan.domain}";
+    inherit localPort;
+  }) backendMtlsServicePorts;
   publicServiceBackendAddresses = {
     beast = "127.0.0.1";
     srvarr = arrVmAddress;
