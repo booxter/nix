@@ -22,20 +22,64 @@ in
     settings =
       let
         hyprctl = "${pkgs.hyprland}/bin/hyprctl";
+        hyprlock = "${pkgs.hyprlock}/bin/hyprlock";
+        loginctl = "${pkgs.systemd}/bin/loginctl";
+        pidof = "${pkgs.procps}/bin/pidof";
       in
       {
         general = {
+          after_sleep_cmd = "${hyprctl} dispatch dpms on";
+          before_sleep_cmd = "${loginctl} lock-session";
           ignore_dbus_inhibit = false;
+          lock_cmd = "${pidof} hyprlock || ${hyprlock}";
         };
 
         listener = [
           {
             timeout = 120;
+            on-timeout = "${loginctl} lock-session";
+          }
+          {
+            timeout = 150;
             on-timeout = "${hyprctl} dispatch dpms off";
             on-resume = "${hyprctl} dispatch dpms on";
           }
         ];
       };
+  };
+
+  programs.hyprlock = {
+    enable = true;
+    settings = {
+      general = {
+        hide_cursor = true;
+      };
+
+      background = [
+        {
+          monitor = "";
+          path = "screenshot";
+          blur_passes = 3;
+          blur_size = 8;
+        }
+      ];
+
+      input-field = [
+        {
+          monitor = "";
+          size = "240, 56";
+          position = "0, -80";
+          dots_center = true;
+          fade_on_empty = false;
+          font_color = "rgb(202, 211, 245)";
+          inner_color = "rgb(36, 39, 58)";
+          outer_color = "rgb(137, 180, 250)";
+          outline_thickness = 2;
+          placeholder_text = ''<span foreground="##cad3f5">Password...</span>'';
+          shadow_passes = 2;
+        }
+      ];
+    };
   };
 
   # TODO: rename module?

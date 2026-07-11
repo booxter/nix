@@ -4,6 +4,7 @@
   inputs,
   lib,
   pkgs,
+  username,
   ...
 }:
 let
@@ -25,6 +26,7 @@ in
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.client.blackbox.enable = true;
   host.observability.client.blackbox.mtls.enable = true;
+  home-manager.users.${username}.programs.sshTicket.enableKnownHosts = true;
 
   nixpkgs.config.rocmSupport = true;
 
@@ -41,6 +43,7 @@ in
   };
   services.displayManager.defaultSession = "hyprland";
   programs.hyprland.enable = true;
+  security.pam.services.hyprlock = { };
   services.openssh.settings.X11Forwarding = true;
 
   programs.yubi = {
