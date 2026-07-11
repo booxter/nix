@@ -206,7 +206,7 @@ in
         auth_request off;
       '';
     };
-    extraLocations."= /healthz" = {
+    probeLocationsByName.search."= /healthz" = {
       proxyPass = "http://127.0.0.1:${toString searxPort}";
       recommendedProxySettings = true;
       extraConfig = ''
@@ -218,7 +218,7 @@ in
   host.internalHttps.services.search = {
     enable = true;
     upstream = "http://127.0.0.1:${toString searxPort}";
-    serverAliases = [ searchService.publicHost ];
+    publicAliases = [ searchService.publicHost ];
     mtls.enable = true;
   };
 

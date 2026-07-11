@@ -118,7 +118,7 @@ in
   host.internalHttps.services.audiobookshelf = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
-    serverAliases = [ audiobookshelfService.publicHost ];
+    publicAliases = [ audiobookshelfService.publicHost ];
     mtls.enable = true;
     recommendedProxySettings = false;
     locationExtraConfig = ''

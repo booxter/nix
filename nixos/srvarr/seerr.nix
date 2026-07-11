@@ -39,7 +39,7 @@ in
   host.internalHttps.services.seerr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
-    serverAliases = [ seerrService.publicHost ];
+    publicAliases = [ seerrService.publicHost ];
     mtls.enable = true;
   };
 }

@@ -67,7 +67,7 @@ let
       '';
     };
   };
-  backendProbeLocations = servarrPingProbeLocations // {
+  backendProbeLocationsByName = servarrPingProbeLocations // {
     bazarr = mkBackendProbePathLocation "bazarr" "= /api/system/ping";
     sabnzbd."= /__probe/sabnzbd-version" = mkBackendProbeLocation {
       port = backendPorts.sabnzbd;
@@ -118,8 +118,7 @@ in
         proxyHeader = "X-Email";
       }
     ];
-    extraLocationsByName = backendProbeLocations // {
-      bazarr = backendProbeLocations.bazarr // bazarrLogoutLocations;
-    };
+    extraLocationsByName.bazarr = bazarrLogoutLocations;
+    probeLocationsByName = backendProbeLocationsByName;
   };
 }

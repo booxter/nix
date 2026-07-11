@@ -201,7 +201,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-backend",instance="paperless-gpt",scope="backend",service="paperless-gpt",service_title="Paperless GPT",backend_probe="http",backend_probe_title="Backend HTTP",target="https://paperless-gpt.home.arpa/api/version"}'
+      - series: 'probe_success{job="blackbox-backend",instance="paperless-gpt",scope="backend",service="paperless-gpt",service_title="Paperless GPT",backend_probe="http",backend_probe_title="Backend HTTP",target="https://paperless-gpt.home.arpa:9443/api/version"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
@@ -209,7 +209,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-backend",instance="paperless-gpt",scope="backend",service="paperless-gpt",service_title="Paperless GPT",backend_probe="http",backend_probe_title="Backend HTTP",target="https://paperless-gpt.home.arpa/api/version"}'
+      - series: 'probe_success{job="blackbox-backend",instance="paperless-gpt",scope="backend",service="paperless-gpt",service_title="Paperless GPT",backend_probe="http",backend_probe_title="Backend HTTP",target="https://paperless-gpt.home.arpa:9443/api/version"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
@@ -228,7 +228,7 @@ tests:
               service: paperless-gpt
               service_title: Paperless GPT
               severity: warning
-              target: https://paperless-gpt.home.arpa/api/version
+              target: https://paperless-gpt.home.arpa:9443/api/version
             exp_annotations:
               summary: "Backend service probe down: Paperless GPT"
-              description: "The backend blackbox probe for Paperless GPT (https://paperless-gpt.home.arpa/api/version) has been failing for 5 minutes."
+              description: "The backend blackbox probe for Paperless GPT (https://paperless-gpt.home.arpa:9443/api/version) has been failing for 5 minutes."

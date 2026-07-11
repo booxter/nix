@@ -272,7 +272,7 @@ in
   host.internalHttps.services.llm = {
     enable = true;
     upstream = "http://127.0.0.1:${toString litellmPort}";
-    serverAliases = [ llmService.publicHost ];
+    publicAliases = [ llmService.publicHost ];
     mtls.enable = true;
     locationExtraConfig = ''
       if ($uri = /metrics) {

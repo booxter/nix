@@ -102,7 +102,7 @@ in
   host.internalHttps.services.aurral = {
     enable = true;
     upstream = "http://127.0.0.1:${toString aurralPort}";
-    serverAliases = [ aurralService.publicHost ];
+    publicAliases = [ aurralService.publicHost ];
     mtls.enable = true;
   };
 }

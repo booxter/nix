@@ -150,7 +150,7 @@ in
   host.internalHttps.services.ai = {
     enable = true;
     upstream = "http://127.0.0.1:${toString openWebuiPort}";
-    serverAliases = [ aiService.publicHost ];
+    publicAliases = [ aiService.publicHost ];
     mtls.enable = true;
     locationExtraConfig = ''
       client_max_body_size 128m;

@@ -51,15 +51,23 @@ let
       builtins.getAttr service.id httpsServices
     else
       null;
+  # Builds the target URL for a service owned by another NixOS host. Normal
+  # OAuth/front-door probes use :443, for example
+  # `https://search.home.arpa/oauth2/sign_in`; backend probes use the
+  # probe-only listener, for example `https://search.home.arpa:9443/healthz`,
+  # so auth-bypass checks stay off the public gateway's :443 upstream path.
   mkOwnerServiceProbe =
-    service: probePath:
+    service: probePath: useProbeListener:
     let
       httpsService = httpsServiceFor service;
+      probePortSuffix = lib.optionalString (
+        useProbeListener && httpsService.probe.port != 443
+      ) ":${toString httpsService.probe.port}";
     in
     if httpsService != null then
       {
         blackboxModule = if httpsService.mtls.enable then "http_service_mtls" else "http_service";
-        probeUrl = "https://${httpsService.serverName}${probePath}";
+        probeUrl = "https://${httpsService.serverName}${probePortSuffix}${probePath}";
         url = "https://${httpsService.serverName}/";
       }
     else if service.owner == "fana" then
@@ -79,12 +87,12 @@ let
     if service.scope == "external" then
       service
     else
-      service // (mkOwnerServiceProbe service service.probePath)
+      service // (mkOwnerServiceProbe service service.probePath false)
   ) hostInventory.blackboxServices;
   backendProbeCatalog = map (
     service:
     let
-      ownerProbe = mkOwnerServiceProbe service service.backendProbe.path;
+      ownerProbe = mkOwnerServiceProbe service service.backendProbe.path true;
     in
     service
     // ownerProbe
