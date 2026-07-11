@@ -86,10 +86,14 @@ in
     };
   };
 
-  home.packages = lib.optionals (!isWork) [
-    codexPkgs.codex-usage-status
-    codexPkgs.codex-rate-limit-reset-credits
-  ];
+  home.packages =
+    lib.optionals (!isWork) [
+      codexPkgs.codex-usage-status
+      codexPkgs.codex-rate-limit-reset-credits
+    ]
+    ++ lib.optionals isWork [
+      codexPkgs.codex-work-usage-status
+    ];
 
   # Work remote settings pin the default model and effort; user settings lose to
   # that managed layer, but CLI flags still win for shell launches.
