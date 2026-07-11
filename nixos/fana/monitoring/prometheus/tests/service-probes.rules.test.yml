@@ -60,6 +60,27 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'up{job="blackbox-backend",instance="paperless-gpt"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: BlackboxBackendScrapeDown
+      - eval_time: 5m
+        alertname: BlackboxBackendScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: BlackboxBackendScrapeDown
+              category: observability
+              job: blackbox-backend
+              severity: warning
+            exp_annotations:
+              summary: "Backend service probe scrape down"
+              description: "Prometheus has been unable to scrape any blackbox-backend probe targets for 5 minutes."
+      - eval_time: 5m30s
+        alertname: BlackboxBackendScrapeDown
+
+  - interval: 30s
+    input_series:
       - series: 'probe_success{job="blackbox-arr",instance="jellyfin",scope="external"}'
         values: "1x12"
     alert_rule_test:
@@ -177,3 +198,37 @@ tests:
             exp_annotations:
               summary: "Internal service probe down: Proxmox prx1-lab"
               description: "The internal blackbox probe for Proxmox prx1-lab (https://prx1-lab/) has been failing for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-backend",instance="paperless-gpt",scope="backend",service="paperless-gpt",service_title="Paperless GPT",backend_probe="http",backend_probe_title="Backend HTTP",target="https://paperless-gpt.home.arpa/api/version"}'
+        values: "1x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: BackendServiceProbeDown
+
+  - interval: 30s
+    input_series:
+      - series: 'probe_success{job="blackbox-backend",instance="paperless-gpt",scope="backend",service="paperless-gpt",service_title="Paperless GPT",backend_probe="http",backend_probe_title="Backend HTTP",target="https://paperless-gpt.home.arpa/api/version"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: BackendServiceProbeDown
+      - eval_time: 5m
+        alertname: BackendServiceProbeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: BackendServiceProbeDown
+              backend_probe: http
+              backend_probe_title: Backend HTTP
+              category: service
+              instance: paperless-gpt
+              job: blackbox-backend
+              scope: backend
+              service: paperless-gpt
+              service_title: Paperless GPT
+              severity: warning
+              target: https://paperless-gpt.home.arpa/api/version
+            exp_annotations:
+              summary: "Backend service probe down: Paperless GPT"
+              description: "The backend blackbox probe for Paperless GPT (https://paperless-gpt.home.arpa/api/version) has been failing for 5 minutes."

@@ -451,6 +451,13 @@ in
     internalHttpsServiceNames = [ "paperless-gpt" ];
     signInLocationName = "@paperless_gpt_oauth2_proxy_sign_in";
     authCookieVariableName = "paperless_gpt_auth_cookie";
+    extraLocations."= /api/version" = {
+      proxyPass = "http://127.0.0.1:${toString paperlessGptPort}";
+      recommendedProxySettings = true;
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
   };
 
   host.observability.client.prometheusMtlsEndpoints.paperless = {

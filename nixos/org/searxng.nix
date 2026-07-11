@@ -206,6 +206,13 @@ in
         auth_request off;
       '';
     };
+    extraLocations."= /healthz" = {
+      proxyPass = "http://127.0.0.1:${toString searxPort}";
+      recommendedProxySettings = true;
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
   };
 
   host.internalHttps.services.search = {
