@@ -154,12 +154,34 @@
         ];
       });
 
-      # Carry local fixes for broken user-count metrics until upstream releases them.
-      vikunja = prev.vikunja.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
-        ];
-      });
+      vikunja = prev.vikunja.overrideAttrs (
+        old:
+        let
+          frontend = old.passthru.frontend.overrideAttrs (frontendOld: {
+            patches = (frontendOld.patches or [ ]) ++ [
+              # Focus the quick-actions input when its modal opens.
+              (prev.fetchpatch {
+                url = "https://github.com/go-vikunja/vikunja/commit/01fff665c60e2b25e65205f706845517881db149.patch";
+                stripLen = 1;
+                hash = "sha256-79N56esq0esenvoFfai9klv5x17sCQ2qC2JeuSgXe6I=";
+              })
+            ];
+          });
+        in
+        {
+          patches = (old.patches or [ ]) ++ [
+            # Drop when https://github.com/go-vikunja/vikunja/pull/2811 reaches nixpkgs.
+            ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
+          ];
+          inherit frontend;
+          prePatch = ''
+            cp -r ${frontend} frontend/dist
+          '';
+          passthru = old.passthru // {
+            inherit frontend;
+          };
+        }
+      );
 
       # Use the upstream macOS FSEvents switch for Attic to fix `watch-store`
       # reliability on Darwin while testing the async push issue locally.
