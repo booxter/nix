@@ -1,8 +1,10 @@
-{ ... }:
+{ username, ... }:
 {
   imports = [
     ./ups.nix
   ];
+
+  home-manager.users.${username}.programs.sshTicket.enableKnownHosts = true;
 
   host.fleetCacheWarmer = {
     enable = true;

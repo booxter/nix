@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  isDarwin,
   isWork,
   ...
 }:
@@ -21,7 +20,7 @@ let
     Only use the Firefox DevTools MCP when the user explicitly requests browser
     interaction or browser-based debugging.
   '';
-  codingAgentEnv = lib.optionalAttrs isDarwin {
+  codingAgentEnv = {
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";
   };

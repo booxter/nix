@@ -7,12 +7,21 @@
   ...
 }:
 let
-  useSecretive = pkgs.stdenv.isDarwin && hostSpecName == "mair";
+  inherit (pkgs.stdenv) isDarwin isLinux;
+  useSecretive = isDarwin && hostSpecName == "mair";
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
-  sshAskpass = pkgs.writeShellApplication {
-    name = "ssh-askpass-macos";
-    text = builtins.readFile ./ssh-askpass-macos.sh;
-  };
+  sshAskpass =
+    if isDarwin then
+      pkgs.writeShellApplication {
+        name = "ssh-askpass-macos";
+        text = builtins.readFile ./ssh-askpass-macos.sh;
+      }
+    else
+      pkgs.writeShellApplication {
+        name = "ssh-askpass-linux";
+        runtimeInputs = [ pkgs.zenity ];
+        text = builtins.readFile ./ssh-askpass-linux.sh;
+      };
   secretiveAuthSockInit = ''
     if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
       export SSH_AUTH_SOCK="${secretiveSocket}"
@@ -23,7 +32,7 @@ in
   imports = lib.optionals (!isWork) [ ./ticket-client.nix ];
 
   config = {
-    home.sessionVariables = lib.mkIf pkgs.stdenv.isDarwin {
+    home.sessionVariables = lib.mkIf (isDarwin || isLinux) {
       SSH_ASKPASS = lib.getExe sshAskpass;
     };
 
