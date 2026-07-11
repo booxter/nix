@@ -9,7 +9,7 @@
 let
   codexPkgs = import ./pkgs { inherit pkgs; };
   claudeModel = "opus";
-  modelEffort = "xhigh";
+  modelEffort = "high";
   codingAgentEnv = lib.optionalAttrs isDarwin {
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";
@@ -25,7 +25,7 @@ in
     enable = true;
 
     settings = {
-      model = "gpt-5.5";
+      model = "gpt-5.6-sol";
       model_reasoning_effort = modelEffort;
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
