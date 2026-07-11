@@ -102,6 +102,9 @@ in
     };
 
     policies = {
+      "3rdparty".Extensions."uBlock0@raymondhill.net" = {
+        toAdd.trustedSiteDirectives = [ hostInventory.site.public.domain ];
+      };
       DNSOverHTTPS = {
         ExcludedDomains = firefoxDohExcludedDomains;
       };
