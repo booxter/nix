@@ -4,7 +4,7 @@ let
 
   managedUsersWithHomes = lib.filter (
     user: lib.elem user.name cfg.knownUsers && user.name != "root" && user.home != null
-  ) (lib.mapAttrsToList (_: user: user) cfg.users);
+  ) (builtins.attrValues cfg.users);
 
   patchUserHomeCheck =
     user:
