@@ -34,12 +34,19 @@ in
   config = {
     home.sessionVariables = {
       SSH_ASKPASS = lib.getExe sshAskpass;
+      SSH_ASKPASS_REQUIRE = "prefer";
     };
 
     services.ssh-agent.enable = isLinux;
-    # OpenSSH ssh-agent exits with status 2 on SIGTERM in this mode; treat that
-    # as a clean stop so short-lived user sessions do not look like failures.
-    systemd.user.services.ssh-agent.Service.SuccessExitStatus = lib.mkIf isLinux 2;
+    systemd.user.services.ssh-agent.Service = lib.mkIf isLinux {
+      Environment = [
+        "SSH_ASKPASS=${lib.getExe sshAskpass}"
+        "SSH_ASKPASS_REQUIRE=force"
+      ];
+      # OpenSSH ssh-agent exits with status 2 on SIGTERM in this mode; treat that
+      # as a clean stop so short-lived user sessions do not look like failures.
+      SuccessExitStatus = 2;
+    };
 
     programs.bash = lib.mkIf useSecretive {
       profileExtra = lib.mkOrder 900 secretiveAuthSockInit;
