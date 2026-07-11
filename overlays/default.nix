@@ -39,6 +39,28 @@
     in
     {
       inherit (llmAgentsPkgs) claude-code;
+
+      # Avoid a SIGPIPE race while deciding which symlinked Mach-O libraries
+      # must be copied into wrapped Firefox apps on Darwin. Remove when
+      # https://github.com/NixOS/nixpkgs/pull/540753 reaches nixpkgs-26.05-darwin.
+      wrapFirefox =
+        if prev.stdenv.hostPlatform.isDarwin then
+          browser: args:
+          (prev.wrapFirefox browser args).overrideAttrs (
+            old:
+            let
+              flakyDylibCheck = "otool -l \"$file\" 2>/dev/null | grep -q 'LC_ID_DYLIB' || continue";
+              fixedDylibCheck = "otool -l \"$file\" 2>/dev/null | grep -F 'LC_ID_DYLIB' >/dev/null || continue";
+            in
+            assert lib.assertMsg (lib.hasInfix flakyDylibCheck old.buildCommand)
+              "Firefox wrapper no longer contains the dylib check from nixpkgs PR #540753";
+            {
+              buildCommand = builtins.replaceStrings [ flakyDylibCheck ] [ fixedDylibCheck ] old.buildCommand;
+            }
+          )
+        else
+          prev.wrapFirefox;
+
       # CI renders two-revision config diffs by calling standalone dix, not
       # nh's internal dix library. Stable dix 1.4.x omits the per-package size
       # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI
