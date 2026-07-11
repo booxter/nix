@@ -51,7 +51,8 @@
     };
 
     lolek = {
-      url = "github:dziaineka/lolek";
+      # TODO: revert back to upstream
+      url = "github:booxter/lolek/mute-video-tiktok";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
