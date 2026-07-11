@@ -333,12 +333,9 @@ let
   # Example: Beast's Aurral gate protects the external `au.ihar.dev` vhost.
   protectedExternalVhostsFor =
     gate:
-    builtins.listToAttrs (
-      map (hostName: {
-        name = hostName;
-        value.locations = locationsFor gate hostName;
-      }) gate.externalHostNames
-    );
+    lib.genAttrs gate.externalHostNames (hostName: {
+      locations = locationsFor gate hostName;
+    });
 in
 {
   options.host.sso.oauth2ProxyGates = lib.mkOption {
@@ -430,7 +427,7 @@ in
 
     host.internalHttps.services = lib.mkMerge (
       builtins.concatLists (
-        lib.mapAttrsToList (_: gate: [
+        map (gate: [
           (lib.genAttrs gate.internalHttpsServiceNames (_: {
             locationExtraConfig = authRequestLocationConfig gate;
           }))
@@ -439,17 +436,17 @@ in
           # service name, so attaching these locations to :443 would expose them
           # through browser-facing hostnames such as search.ihar.dev.
           (probeHelpers.enableAttrsFor gate)
-        ]) enabledGates
+        ]) (builtins.attrValues enabledGates)
       )
     );
 
     host.externalService.virtualHosts = lib.mkMerge (
-      lib.mapAttrsToList (
-        _: gate:
+      map (
+        gate:
         lib.genAttrs gate.externalHostNames (_: {
           locationExtraConfig = authRequestLocationConfig gate;
         })
-      ) enabledGates
+      ) (builtins.attrValues enabledGates)
     );
 
     services.nginx.virtualHosts = lib.mkMerge (

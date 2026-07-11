@@ -98,17 +98,15 @@ let
     // ownerProbe
     // {
       blackboxModule =
-        if service.backendProbe ? blackboxModule then
-          service.backendProbe.blackboxModule
-        else
-          ownerProbe.blackboxModule or "http_service";
+        service.backendProbe.blackboxModule or (ownerProbe.blackboxModule or "http_service");
       backend_probe = service.backendProbe.name or "http";
       backend_probe_title = service.backendProbe.title or "Backend HTTP";
       scope = "backend";
     }
   ) (builtins.filter (service: service ? backendProbe) hostInventory.blackboxServices);
+  serviceHttpProbeCatalog = inventoryServiceCatalog ++ backendProbeCatalog;
   usesHttpMtls = builtins.any (service: (service.blackboxModule or null) == "http_service_mtls") (
-    inventoryServiceCatalog ++ backendProbeCatalog
+    serviceHttpProbeCatalog
   );
   proxmoxLabNodeNames = builtins.filter (
     name:
@@ -305,6 +303,38 @@ let
     };
     targets = [ service.probeUrl ];
   };
+  serviceHttpRelabelConfigs = [
+    {
+      source_labels = [ "module" ];
+      target_label = "__param_module";
+    }
+    {
+      source_labels = [ "__address__" ];
+      target_label = "__param_target";
+    }
+    {
+      source_labels = [ "__param_target" ];
+      target_label = "target";
+    }
+    {
+      source_labels = [ "service" ];
+      target_label = "instance";
+    }
+    {
+      replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
+      target_label = "__address__";
+    }
+    {
+      action = "labeldrop";
+      regex = "module";
+    }
+  ];
+  mkServiceHttpScrapeConfig = jobName: catalog: {
+    job_name = jobName;
+    metrics_path = "/probe";
+    static_configs = map mkServiceHttpStaticConfig catalog;
+    relabel_configs = serviceHttpRelabelConfigs;
+  };
   blackboxProbeRelabelConfigs = [
     {
       source_labels = [ "__address__" ];
@@ -355,68 +385,8 @@ in
   };
 
   scrapeConfigs = [
-    {
-      job_name = "blackbox-arr";
-      metrics_path = "/probe";
-      static_configs = map mkServiceHttpStaticConfig serviceCatalog;
-      relabel_configs = [
-        {
-          source_labels = [ "module" ];
-          target_label = "__param_module";
-        }
-        {
-          source_labels = [ "__address__" ];
-          target_label = "__param_target";
-        }
-        {
-          source_labels = [ "__param_target" ];
-          target_label = "target";
-        }
-        {
-          source_labels = [ "service" ];
-          target_label = "instance";
-        }
-        {
-          replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
-          target_label = "__address__";
-        }
-        {
-          action = "labeldrop";
-          regex = "module";
-        }
-      ];
-    }
-    {
-      job_name = "blackbox-backend";
-      metrics_path = "/probe";
-      static_configs = map mkServiceHttpStaticConfig backendProbeCatalog;
-      relabel_configs = [
-        {
-          source_labels = [ "module" ];
-          target_label = "__param_module";
-        }
-        {
-          source_labels = [ "__address__" ];
-          target_label = "__param_target";
-        }
-        {
-          source_labels = [ "__param_target" ];
-          target_label = "target";
-        }
-        {
-          source_labels = [ "service" ];
-          target_label = "instance";
-        }
-        {
-          replacement = "127.0.0.1:${toString config.services.prometheus.exporters.blackbox.port}";
-          target_label = "__address__";
-        }
-        {
-          action = "labeldrop";
-          regex = "module";
-        }
-      ];
-    }
+    (mkServiceHttpScrapeConfig "blackbox-arr" serviceCatalog)
+    (mkServiceHttpScrapeConfig "blackbox-backend" backendProbeCatalog)
     {
       job_name = "blackbox-public-wan";
       metrics_path = "/probe";

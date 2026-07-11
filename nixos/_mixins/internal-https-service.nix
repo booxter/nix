@@ -95,6 +95,13 @@ let
       inherit serviceName service;
       serverName = publicAlias;
     };
+  # Every public alias gets a sibling vhost keyed by that public hostname.
+  # Example: `search.ihar.dev = mkPublicAliasVhost "search" search ...`.
+  mkPublicAliasVhostsFor =
+    serviceName: service:
+    lib.genAttrs service.publicAliases (
+      publicAlias: mkPublicAliasVhost serviceName service publicAlias
+    );
   # Probe-only vhost on the probe port. Example:
   # `internal-https-search-probe` serves exact backend probe locations on
   # `https://search.home.arpa:9443/...`; its catch-all returns 404.
@@ -380,17 +387,7 @@ in
           serviceName: service:
           lib.nameValuePair "internal-https-${serviceName}" (mkServiceVhost serviceName service)
         ) enabledServices
-        // builtins.listToAttrs (
-          builtins.concatLists (
-            lib.mapAttrsToList (
-              serviceName: service:
-              map (publicAlias: {
-                name = publicAlias;
-                value = mkPublicAliasVhost serviceName service publicAlias;
-              }) service.publicAliases
-            ) enabledServices
-          )
-        )
+        // lib.concatMapAttrs mkPublicAliasVhostsFor enabledServices
         // lib.mapAttrs' (
           serviceName: service:
           lib.nameValuePair "internal-https-${serviceName}-probe" (mkProbeVhost serviceName service)
