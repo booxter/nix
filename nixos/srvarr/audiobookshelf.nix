@@ -15,6 +15,49 @@ let
   audiobookshelfService = hostInventory.servicesById.audiobookshelf;
   oidcClientId = oidc.clients.audiobookshelf.clientId;
   oidcIssuerBase = oidc.openidBaseUrl oidcClientId;
+  backupSettingsFile = pkgs.writeText "audiobookshelf-backup-settings.json" (
+    builtins.toJSON {
+      backupSchedule = "15 4 * * *";
+      backupsToKeep = 2;
+      maxBackupSize = 1;
+    }
+  );
+  backupBootstrap = pkgs.writeShellApplication {
+    name = "audiobookshelf-backup-bootstrap";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.curl
+    ];
+    text = ''
+      set -euo pipefail
+
+      credentials_dir="''${CREDENTIALS_DIRECTORY:?}"
+      header_file="$(mktemp)"
+      response_file="$(mktemp)"
+      trap 'rm -f "$header_file" "$response_file"' EXIT
+
+      chmod 0600 "$header_file" "$response_file"
+      printf 'Authorization: Bearer %s\n' "$(tr -d '\n' < "$credentials_dir/api-token")" > "$header_file"
+
+      status="$(${pkgs.curl}/bin/curl -sS -o "$response_file" -w '%{http_code}' \
+        --retry 30 --retry-all-errors --retry-delay 2 \
+        -X PATCH \
+        -H "@$header_file" \
+        -H 'Content-Type: application/json' \
+        --data-binary @${backupSettingsFile} \
+        http://127.0.0.1:${toString port}/api/settings)"
+
+      case "$status" in
+        2*) ;;
+        *)
+          echo "failed to configure Audiobookshelf backups; HTTP status: $status" >&2
+          exit 1
+          ;;
+      esac
+
+      echo "Enabled daily Audiobookshelf backups."
+    '';
+  };
   oidcSettingsFile = pkgs.writeText "audiobookshelf-oidc-settings.json" (
     builtins.toJSON {
       authActiveAuthMethods = [
@@ -50,7 +93,10 @@ in
   sops.secrets = {
     "audiobookshelf/bootstrap/api_token" = {
       mode = "0400";
-      restartUnits = [ "audiobookshelf-oidc-bootstrap.service" ];
+      restartUnits = [
+        "audiobookshelf-backup-bootstrap.service"
+        "audiobookshelf-oidc-bootstrap.service"
+      ];
     };
     "audiobookshelf/oidc/client_secret" = {
       mode = "0400";
@@ -107,6 +153,28 @@ in
         config.sops.secrets."audiobookshelf/oidc/client_secret".path
       } --settings-file ${oidcSettingsFile} --changed-file ${bootstrapChangedFile}";
       ExecStartPost = restartIfBootstrapChanged;
+    };
+  };
+
+  systemd.services.audiobookshelf-backup-bootstrap = {
+    description = "Enable Audiobookshelf native backups";
+    wantedBy = [ "multi-user.target" ];
+    wants = [
+      "audiobookshelf.service"
+      "sops-install-secrets.service"
+    ];
+    after = [
+      "audiobookshelf.service"
+      "sops-install-secrets.service"
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      DynamicUser = true;
+      LoadCredential = "api-token:${config.sops.secrets."audiobookshelf/bootstrap/api_token".path}";
+      PrivateTmp = true;
+      ProtectHome = true;
+      ProtectSystem = "strict";
+      ExecStart = lib.getExe backupBootstrap;
     };
   };
 
