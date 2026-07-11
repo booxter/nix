@@ -105,6 +105,14 @@ in
         pruneTags = true;
       };
 
+      push = {
+        autoSetupRemote = true;
+
+        # Make explicit force-with-lease pushes reject remote commits that have
+        # not first been integrated locally.
+        useForceIfIncludes = true;
+      };
+
       url = {
         # Keep GitHub pushes on SSH instead of gh's broad HTTPS OAuth token,
         # while leaving fetches on HTTPS.
