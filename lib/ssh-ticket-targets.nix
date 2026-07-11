@@ -4,7 +4,7 @@
   username ? "ihrachyshka",
 }:
 let
-  hasCaPublicKey = hostInventory.sshTicket.userCaPublicKey != null;
+  hasCaPublicKeys = hostInventory.sshTicket.trustedCaPublicKeys != [ ];
 
   mkTarget =
     {
@@ -31,7 +31,7 @@ let
       principal = if enabled then "${username}@${dnsName}" else "";
       defaultTtl = "30m";
       maxTtl = "2h";
-      caPublicKeyConfigured = enabled && hasCaPublicKey;
+      caPublicKeyConfigured = enabled && hasCaPublicKeys;
     };
 
   mkDarwinTarget =

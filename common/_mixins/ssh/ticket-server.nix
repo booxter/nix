@@ -12,9 +12,11 @@
 }:
 let
   cfg = config.host.sshTicket;
-  caPublicKeyPath = "/etc/ssh/fleet-user-ca.pub";
-  inventoryCaPublicKey = hostInventory.sshTicket.userCaPublicKey;
-  caPublicKeyFile = pkgs.writeText "fleet-user-ca.pub" "${cfg.caPublicKey}\n";
+  caPublicKeyPath = "/etc/ssh/fleet-user-cas.pub";
+  inventoryCaPublicKeys = hostInventory.sshTicket.trustedCaPublicKeys;
+  caPublicKeyFile = pkgs.writeText "fleet-user-cas.pub" (
+    lib.concatMapStrings (publicKey: "${publicKey}\n") cfg.caPublicKeys
+  );
   principalsFile = pkgs.writeText "${username}-authorized_principals" (
     lib.concatMapStrings (principal: "${principal}\n") cfg.principals
   );
@@ -36,14 +38,14 @@ in
   options.host.sshTicket = {
     enable = lib.mkEnableOption "short-lived SSH user certificate access";
 
-    caPublicKey = lib.mkOption {
-      type = lib.types.nullOr lib.types.singleLineStr;
-      default = null;
-      example = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... fleet-user-ca";
+    caPublicKeys = lib.mkOption {
+      type = lib.types.listOf lib.types.singleLineStr;
+      default = [ ];
+      example = [ "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA... fleet-user-ca" ];
       description = ''
-        Public key of the SSH user CA trusted for short-lived login tickets.
-        Leave null while staging per-host principals without enabling certificate
-        authentication on the server.
+        Public keys of the SSH user CAs trusted for short-lived login tickets.
+        Leave empty while staging per-host principals without enabling
+        certificate authentication on the server.
       '';
     };
 
@@ -109,27 +111,27 @@ in
   config = lib.mkMerge [
     {
       host.sshTicket.enable = lib.mkDefault true;
-      host.sshTicket.caPublicKey = lib.mkIf cfg.enable (lib.mkDefault inventoryCaPublicKey);
+      host.sshTicket.caPublicKeys = lib.mkIf cfg.enable (lib.mkDefault inventoryCaPublicKeys);
     }
     (lib.optionalAttrs isLinux {
-      environment.etc."ssh/fleet-user-ca.pub" = lib.mkIf (cfg.enable && cfg.caPublicKey != null) {
+      environment.etc."ssh/fleet-user-cas.pub" = lib.mkIf (cfg.enable && cfg.caPublicKeys != [ ]) {
         source = caPublicKeyFile;
       };
     })
     (lib.optionalAttrs isLinux {
       services.openssh.settings.TrustedUserCAKeys = lib.mkIf (
-        cfg.enable && cfg.caPublicKey != null
+        cfg.enable && cfg.caPublicKeys != [ ]
       ) caPublicKeyPath;
 
       users.users.${username}.openssh.authorizedPrincipals = lib.mkIf cfg.enable cfg.principals;
     })
     (lib.optionalAttrs isDarwin {
-      services.openssh.extraConfig = lib.mkIf (cfg.enable && cfg.caPublicKey != null) ''
+      services.openssh.extraConfig = lib.mkIf (cfg.enable && cfg.caPublicKeys != [ ]) ''
         TrustedUserCAKeys ${caPublicKeyPath}
         AuthorizedPrincipalsFile /etc/ssh/authorized_principals.d/%u
       '';
 
-      system.activationScripts.etc.text = lib.mkIf (cfg.enable && cfg.caPublicKey != null) (
+      system.activationScripts.etc.text = lib.mkIf (cfg.enable && cfg.caPublicKeys != [ ]) (
         lib.mkAfter ''
           # nix-darwin environment.etc only creates symlinks. Mirror NixOS'
           # copied /etc files here because sshd StrictModes rejects cert auth
@@ -140,8 +142,8 @@ in
 
           install -m 0444 -o root -g wheel \
             "${caPublicKeyFile}" \
-            /etc/ssh/fleet-user-ca.pub.tmp
-          mv -f /etc/ssh/fleet-user-ca.pub.tmp /etc/ssh/fleet-user-ca.pub
+            /etc/ssh/fleet-user-cas.pub.tmp
+          mv -f /etc/ssh/fleet-user-cas.pub.tmp /etc/ssh/fleet-user-cas.pub
 
           install -m 0444 -o root -g wheel \
             "${principalsFile}" \
