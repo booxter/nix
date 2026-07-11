@@ -45,8 +45,6 @@
       # on unstable until the stable branch catches up.
       inherit (pkgsNixpkgsUnstable) dix;
 
-      inherit (pkgsNixpkgsUnstable) whichllm;
-
       # Support Kubernetes 1.36 while carrying the nixpkgs update.
       # https://github.com/NixOS/nixpkgs/pull/539773
       kind = prev.kind.overrideAttrs (old: {
