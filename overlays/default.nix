@@ -165,6 +165,13 @@
                 stripLen = 1;
                 hash = "sha256-79N56esq0esenvoFfai9klv5x17sCQ2qC2JeuSgXe6I=";
               })
+              # TODO: send upstream.
+              # Confirm label creation from the multiselect input.
+              (prev.fetchpatch {
+                url = "https://github.com/booxter/vikunja/commit/5ce44564b395bfc3edb3895074b625e7a517e764.patch";
+                stripLen = 1;
+                hash = "sha256-6BWLcSTiK65OvwB+LAVmwhXpiHc6O031aSK1vAvk7sk=";
+              })
             ];
           });
         in
