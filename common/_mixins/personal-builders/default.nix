@@ -80,10 +80,7 @@ in
     ++ lib.optional (hostname != "frame") (toBuilder 200 "frame")
     ++ lib.optional (hostname != "mmini") {
       hostName = "mmini";
-      systems = [
-        "aarch64-darwin"
-        "x86_64-darwin"
-      ];
+      systems = [ "aarch64-darwin" ];
       protocol = "ssh-ng";
       maxJobs = 4;
       speedFactor = 100;
