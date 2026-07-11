@@ -41,6 +41,7 @@ in
   };
   services.displayManager.defaultSession = "hyprland";
   programs.hyprland.enable = true;
+  security.pam.services.hyprlock = { };
   services.openssh.settings.X11Forwarding = true;
 
   programs.yubi = {
