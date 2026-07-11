@@ -12,7 +12,7 @@ DAY_SECONDS = 86400
 
 
 class RunOnceTests(unittest.TestCase):
-    def test_old_non_preferred_non_seeding_torrent_is_deleted_even_when_incomplete(
+    def test_over_age_non_preferred_torrent_is_deleted_even_when_incomplete(
         self,
     ) -> None:
         exit_code, removed = self.run_cleaner(
@@ -33,7 +33,9 @@ class RunOnceTests(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertEqual(removed, [(["old-public"], True)])
 
-    def test_old_non_preferred_seeding_torrent_below_ratio_is_kept(self) -> None:
+    def test_over_age_non_preferred_seeding_torrent_below_ratio_is_deleted(
+        self,
+    ) -> None:
         exit_code, removed = self.run_cleaner(
             [
                 self.make_torrent(
@@ -50,9 +52,30 @@ class RunOnceTests(unittest.TestCase):
         )
 
         self.assertEqual(exit_code, 0)
+        self.assertEqual(removed, [(["still-seeding"], True)])
+
+    def test_under_age_non_preferred_seeding_torrent_below_ratio_is_kept(
+        self,
+    ) -> None:
+        exit_code, removed = self.run_cleaner(
+            [
+                self.make_torrent(
+                    hash_string="young-seeding",
+                    name="young-seeding",
+                    added_date=NOW - 364 * DAY_SECONDS,
+                    done_date=NOW - 364 * DAY_SECONDS,
+                    left_until_done=0,
+                    percent_done=1.0,
+                    status=6,
+                    upload_ratio=2.9,
+                )
+            ]
+        )
+
+        self.assertEqual(exit_code, 0)
         self.assertEqual(removed, [])
 
-    def test_old_preferred_non_seeding_torrent_is_exempt(self) -> None:
+    def test_over_age_preferred_torrent_is_exempt(self) -> None:
         exit_code, removed = self.run_cleaner(
             [
                 self.make_torrent(
@@ -130,7 +153,7 @@ class RunOnceTests(unittest.TestCase):
             "trackers_file": trackers_file,
             "minimum_age_days": 30.0,
             "minimum_ratio": 3.0,
-            "stale_nonseeding_age_days": 365.0,
+            "maximum_age_days": 365.0,
             "request_timeout_seconds": 20.0,
             "delete": True,
             "log_level": "INFO",

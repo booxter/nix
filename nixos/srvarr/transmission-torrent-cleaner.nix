@@ -6,7 +6,7 @@
 }:
 {
   systemd.services.transmission-torrent-cleaner = {
-    description = "Cleanup for old or stale public Transmission torrents";
+    description = "Cleanup for old public Transmission torrents";
     after = [
       "network-online.target"
       "nginx.service"
@@ -31,7 +31,7 @@
         "30"
         "--minimum-ratio"
         (toString config.host.srvarrTuning.transmissionNonPreferredLowPriorityRatio)
-        "--stale-nonseeding-age-days"
+        "--maximum-age-days"
         "365"
         "--request-timeout-seconds"
         "20"
@@ -43,7 +43,7 @@
   };
 
   systemd.timers.transmission-torrent-cleaner = {
-    description = "Periodic cleanup scan for old or stale public Transmission torrents";
+    description = "Periodic cleanup scan for old public Transmission torrents";
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "15m";
