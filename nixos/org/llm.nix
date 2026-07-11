@@ -256,13 +256,17 @@ in
       '';
     };
     podman-litellm = {
+      # Podman snapshots the host resolver configuration when it creates the
+      # container, so wait for DHCP to populate resolv.conf first.
       wants = [
         "litellm-postgresql-password.service"
+        "network-online.target"
         "sops-install-secrets.service"
         "stunnel.service"
       ];
       after = [
         "litellm-postgresql-password.service"
+        "network-online.target"
         "sops-install-secrets.service"
         "stunnel.service"
       ];

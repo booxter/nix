@@ -358,12 +358,16 @@ in
     };
 
     podman-jellystat = {
+      # Podman snapshots the host resolver configuration when it creates the
+      # container, so wait for DHCP to populate resolv.conf first.
       wants = [
         "jellystat-postgresql-password.service"
+        "network-online.target"
         "sops-install-secrets.service"
       ];
       after = [
         "jellystat-postgresql-password.service"
+        "network-online.target"
         "sops-install-secrets.service"
       ];
       unitConfig.RequiresMountsFor = [ jellystatBackupDataDir ];
