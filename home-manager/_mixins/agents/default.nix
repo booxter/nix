@@ -10,6 +10,17 @@ let
   codexPkgs = import ./pkgs { inherit pkgs; };
   claudeModel = "opus";
   modelEffort = "high";
+  agentContext = ''
+    This machine uses Nix on macOS or Linux. If a required tool is missing,
+    prefer repository flake apps or dev shells; otherwise use
+    `nix shell nixpkgs#<package> -c <command>` instead of installing it globally.
+    Nix builders for x86_64-linux and aarch64-darwin are available for
+    cross-platform builds.
+  '';
+  codexContext = agentContext + ''
+    Only use the Firefox DevTools MCP when the user explicitly requests browser
+    interaction or browser-based debugging.
+  '';
   codingAgentEnv = lib.optionalAttrs isDarwin {
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";
@@ -23,6 +34,7 @@ in
 {
   programs.codex = {
     enable = true;
+    context = codexContext;
 
     settings = {
       model = "gpt-5.6-sol";
@@ -62,6 +74,7 @@ in
 
   programs.claude-code = {
     enable = true;
+    context = agentContext;
 
     settings = {
       outputStyle = "Proactive";
