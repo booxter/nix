@@ -359,9 +359,32 @@ rec {
     };
   };
 
-  sshTicket = {
-    userCaPublicKey = readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub;
-  };
+  sshTicket =
+    let
+      secretivePublicKey = readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub;
+      yubikeyPublicKey = readPublicKey ../public-keys/yubikey.pub;
+      yubikeyIssuer = {
+        publicKey = yubikeyPublicKey;
+        keyName = "id_ed25519_sk_rk";
+        useAgent = false;
+      };
+    in
+    {
+      trustedCaPublicKeys = [
+        secretivePublicKey
+        yubikeyPublicKey
+      ];
+
+      issuers = {
+        mair = {
+          publicKey = secretivePublicKey;
+          keyName = "fleet-user-ca.pub";
+          useAgent = true;
+        };
+        ${frame} = yubikeyIssuer;
+        ${mmini} = yubikeyIssuer;
+      };
+    };
 
   # Public YubiKey allocation facts. Keep PINs, PUKs, management keys, and
   # private key material out of inventory.
@@ -384,6 +407,7 @@ rec {
             purposes = [
               "ssh-client-auth"
               "git-ssh-signing"
+              "ssh-ticket-ca-signing"
             ];
           };
 
