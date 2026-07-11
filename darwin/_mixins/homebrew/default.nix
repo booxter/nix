@@ -1,7 +1,6 @@
 {
   config,
   inputs,
-  isWork,
   lib,
   username,
   ...
@@ -23,22 +22,24 @@
 
   homebrew = {
     enable = true;
-    onActivation.autoUpdate = true;
-    # Use pinned local taps during activation because our pinned brew can lag
-    # behind Homebrew's API schema for casks.
-    onActivation.extraEnv.HOMEBREW_NO_INSTALL_FROM_API = "1";
+    greedyCasks = true;
+    onActivation = {
+      autoUpdate = false;
+      upgrade = true;
+      # Use pinned local taps because our pinned brew can lag behind
+      # Homebrew's API schema for casks.
+      extraEnv.HOMEBREW_NO_INSTALL_FROM_API = "1";
+    };
     taps = builtins.attrNames config.nix-homebrew.taps;
     casks = [
       "sf-symbols"
       "wireshark-chmodbpf"
-    ]
-    ++ lib.optionals isWork [
-      "docker-desktop"
     ];
   };
 
   nix-homebrew = {
     enable = true;
+    mutableTaps = false;
     user = username;
     taps = {
       "homebrew/homebrew-core" = inputs.homebrew-core;
