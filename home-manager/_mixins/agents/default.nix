@@ -17,6 +17,10 @@ let
     Nix builders for x86_64-linux and aarch64-darwin are available for
     cross-platform builds.
   '';
+  codexContext = agentContext + ''
+    Only use the Firefox DevTools MCP when the user explicitly requests browser
+    interaction or browser-based debugging.
+  '';
   codingAgentEnv = lib.optionalAttrs isDarwin {
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";
@@ -30,7 +34,7 @@ in
 {
   programs.codex = {
     enable = true;
-    context = agentContext;
+    context = codexContext;
 
     settings = {
       model = "gpt-5.6-sol";
