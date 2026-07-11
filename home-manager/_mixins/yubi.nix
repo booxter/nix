@@ -31,6 +31,19 @@ let
           IdentityFile ${yubikeySshKey}
           IdentitiesOnly yes
       '';
+  gitSshSign = pkgs.writeShellScript "git-ssh-sign" ''
+    args=("$@")
+
+    if [[ -n "''${SSH_CONNECTION:-}" ]]; then
+      for ((i = 0; i < ''${#args[@]}; i++)); do
+        if [[ "''${args[i]}" == ${lib.escapeShellArg yubikeySshKey} ]]; then
+          args[i]=${lib.escapeShellArg fallbackSshKey}
+        fi
+      done
+    fi
+
+    exec ${pkgs.openssh}/bin/ssh-keygen "''${args[@]}"
+  '';
   sshSudoAskpass = pkgs.writeShellScript "sudo-ssh-askpass" ''
     prompt="$1"
     [ -n "$prompt" ] || prompt="Password:"
@@ -68,7 +81,7 @@ in
       remoteFallbackKeyName = lib.mkOption {
         type = lib.types.str;
         default = "id_ed25519";
-        description = "Password-protected SSH key filename under ~/.ssh for SSH login sessions.";
+        description = "Non-interactive SSH fallback key filename under ~/.ssh for remote sessions.";
       };
     };
 
@@ -91,7 +104,10 @@ in
 
   config = lib.mkMerge [
     (lib.mkIf cfg.ssh.enable {
-      programs.git.settings.user.signingKey = yubikeySshKey;
+      programs.git.settings = {
+        gpg.ssh.program = "${gitSshSign}";
+        user.signingKey = yubikeySshKey;
+      };
       programs.ssh.extraConfig = lib.mkAfter localSshIdentityConfig;
     })
 

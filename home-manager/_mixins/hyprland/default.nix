@@ -75,7 +75,7 @@ in
           inner_color = "rgb(36, 39, 58)";
           outer_color = "rgb(137, 180, 250)";
           outline_thickness = 2;
-          placeholder_text = ''<span foreground="##cad3f5">Password...</span>'';
+          placeholder_text = ''<span foreground="##cad3f5">YubiKey PIN or password...</span>'';
           shadow_passes = 2;
         }
       ];
