@@ -22,7 +22,10 @@ let
     runtimeInputs = commonRuntimeInputs;
     checkPhase = ''
       runHook preCheck
-      SSH_TICKET_MAIN=${./main.py} ${python.pkgs.pytest}/bin/pytest -q -p no:cacheprovider ${./test_main.py}
+      (
+        cd ${./.}
+        SSH_TICKET_MAIN=${./main.py} ${python.pkgs.pytest}/bin/pytest -q -p no:cacheprovider test_main.py
+      )
       runHook postCheck
     '';
     text = ''
