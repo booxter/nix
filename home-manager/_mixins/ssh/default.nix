@@ -32,14 +32,14 @@ in
   imports = lib.optionals (!isWork) [ ./ticket-client.nix ];
 
   config = {
-    home.sessionVariables = lib.mkIf (isDarwin || isLinux) {
+    home.sessionVariables = {
       SSH_ASKPASS = lib.getExe sshAskpass;
     };
 
-    services.ssh-agent.enable = pkgs.stdenv.isLinux;
+    services.ssh-agent.enable = isLinux;
     # OpenSSH ssh-agent exits with status 2 on SIGTERM in this mode; treat that
     # as a clean stop so short-lived user sessions do not look like failures.
-    systemd.user.services.ssh-agent.Service.SuccessExitStatus = lib.mkIf pkgs.stdenv.isLinux 2;
+    systemd.user.services.ssh-agent.Service.SuccessExitStatus = lib.mkIf isLinux 2;
 
     programs.bash = lib.mkIf useSecretive {
       profileExtra = lib.mkOrder 900 secretiveAuthSockInit;
