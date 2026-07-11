@@ -194,6 +194,15 @@ if [ "$is_build" = true ]; then
   exit 0
 fi
 
+if [ -n "${DIFF_CONFIG_EVAL_HOMEBREW:-}" ]; then
+  case "${DIFF_CONFIG_FLAKE_REF:?}" in
+    *"${FAKE_OLD_REV:-not-set}"*) tap_root="${FAKE_HOMEBREW_OLD_TAP:?}" ;;
+    *) tap_root="${FAKE_HOMEBREW_NEW_TAP:?}" ;;
+  esac
+  printf '{"enabled":true,"brews":[],"casks":["sf-symbols"],"taps":{"homebrew/homebrew-cask":"%s"}}\n' "$tap_root"
+  exit 0
+fi
+
 if [ -n "${DIFF_CONFIG_VALIDATE_MACHINE:-}" ]; then
   case "${DIFF_CONFIG_MACHINE:-}" in
     frame | mair | org | srvarr | builder1 | fana) printf '%s\n' true ;;
@@ -469,4 +478,41 @@ SH
   [[ "$output" == *"CHANGED"* ]]
   [[ "$output" == *"[U.] package 1.0 -> 2.0"* ]]
   [[ "$output" == *"SIZE: 1 -> 2"* ]]
+}
+
+@test "diff-config --details includes selected Homebrew recipe changes" {
+  make_repo
+  make_fake_bin
+
+  old_tap="$BATS_TMPDIR/diff-config-homebrew-old-$BATS_TEST_NUMBER"
+  new_tap="$BATS_TMPDIR/diff-config-homebrew-new-$BATS_TEST_NUMBER"
+  mkdir -p "$old_tap/Casks/s" "$new_tap/Casks/s"
+  printf 'cask "sf-symbols" do\n  version "7.1"\nend\n' >"$old_tap/Casks/s/sf-symbols.rb"
+  printf 'cask "sf-symbols" do\n  version "8.0"\nend\n' >"$new_tap/Casks/s/sf-symbols.rb"
+
+  nh_log="$BATS_TMPDIR/diff-config-nh-homebrew-$BATS_TEST_NUMBER.log"
+  dix_log="$BATS_TMPDIR/diff-config-dix-homebrew-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log"
+
+  run env \
+    DIFF_CONFIG_REPO_ROOT="$repo" \
+    XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-homebrew-$BATS_TEST_NUMBER" \
+    HM_BUILD_ROOT="$BATS_TMPDIR/diff-config-hm-homebrew-$BATS_TEST_NUMBER" \
+    FAKE_OLD_REV="$old_rev" \
+    FAKE_HOMEBREW_OLD_TAP="$old_tap" \
+    FAKE_HOMEBREW_NEW_TAP="$new_tap" \
+    NH_ARGS_LOG="$nh_log" \
+    DIX_ARGS_LOG="$dix_log" \
+    PATH="$fake_bin:$PATH" \
+    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    --details \
+    --path etc/nix/nix.conf \
+    mair \
+    "$old_rev" \
+    "$new_rev"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"diff -ruN old/homebrew/casks/sf-symbols.rb new/homebrew/casks/sf-symbols.rb"* ]]
+  [[ "$output" == *'-  version "7.1"'* ]]
+  [[ "$output" == *'+  version "8.0"'* ]]
 }

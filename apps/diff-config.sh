@@ -17,6 +17,7 @@ With --details, also diff generated target configuration files from the built
 toplevels and embedded Home Manager users. By default this covers:
   NixOS:       etc, activate, bin/switch-to-configuration
   nix-darwin:  etc, activate, activate-user, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
+  Homebrew:    selected cask and formula recipes from Nix-managed taps
   Home Manager users: activate, home-files, LaunchAgents, session-vars
   Profile/manpage trees and release metadata files are skipped because those
   changes are already covered by the dix output.
@@ -791,6 +792,165 @@ materialize_home_manager_details() {
   done
 }
 
+eval_homebrew_manifest() {
+  local label="$1"
+  local flake_ref="$2"
+  local machine_attr=""
+  local manifest=""
+
+  machine_attr="$(machine_attr_for_label "${label}")"
+
+  if ! manifest="$(
+    DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
+      DIFF_CONFIG_MACHINE="${machine_attr}" \
+      DIFF_CONFIG_EVAL_HOMEBREW=1 \
+      nix --extra-experimental-features "nix-command flakes" eval --impure --json --expr '
+        let
+          f = builtins.getFlake (builtins.getEnv "DIFF_CONFIG_FLAKE_REF");
+          name = builtins.getEnv "DIFF_CONFIG_MACHINE";
+          cfg = (builtins.getAttr name f.darwinConfigurations).config;
+          entryName = entry: if builtins.isString entry then entry else entry.name;
+          taps = builtins.mapAttrs (_: path: toString path) cfg."nix-homebrew".taps;
+        in
+          {
+            enabled = cfg.homebrew.enable;
+            brews = map entryName cfg.homebrew.brews;
+            casks = map entryName cfg.homebrew.casks;
+            inherit taps;
+          }
+      '
+  )"; then
+    echo "Unable to inspect Homebrew configuration in ${label} revision for machine '${machine}'." >&2
+    return 1
+  fi
+
+  printf '%s\n' "${manifest}"
+}
+
+canonical_homebrew_tap_name() {
+  local tap="$1"
+  local owner="${tap%%/*}"
+  local repo="${tap#*/}"
+
+  repo="${repo#homebrew-}"
+  printf '%s/%s\n' "${owner}" "${repo}"
+}
+
+homebrew_recipe_in_tap() {
+  local tap_root="$1"
+  local kind="$2"
+  local recipe="$3"
+  local recipe_dir=""
+  local candidate=""
+
+  case "${kind}" in
+    brew) recipe_dir="Formula" ;;
+    cask) recipe_dir="Casks" ;;
+    *) return 1 ;;
+  esac
+
+  for candidate in \
+    "${tap_root}/${recipe_dir}/${recipe:0:1}/${recipe}.rb" \
+    "${tap_root}/${recipe_dir}/${recipe}.rb"; do
+    if [[ -f "${candidate}" ]]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  done
+
+  find "${tap_root}/${recipe_dir}" -type f -name "${recipe}.rb" -print -quit 2>/dev/null
+}
+
+materialize_homebrew_recipe() {
+  local manifest="$1"
+  local kind="$2"
+  local token="$3"
+  local dest_root="$4"
+  local preferred_tap=""
+  local recipe="${token##*/}"
+  local tap_name=""
+  local tap_root=""
+  local recipe_path=""
+  local qualified_tap=""
+  local dest="${dest_root}/homebrew/${kind}s/${token}.rb"
+  local search_scope="${5:-preferred}"
+
+  case "${token}" in
+    "" | /* | .. | ../* | */.. | */../* | *[!A-Za-z0-9@+._/-]*)
+      echo "Skipping invalid Homebrew ${kind} token '${token}'." >&2
+      return 0
+      ;;
+  esac
+
+  if [[ "${token}" == */*/* ]]; then
+    qualified_tap="${token%/*}"
+  elif [[ "${search_scope}" == "any" ]]; then
+    preferred_tap=""
+  elif [[ "${kind}" == "cask" ]]; then
+    preferred_tap="homebrew/cask"
+  else
+    preferred_tap="homebrew/core"
+  fi
+
+  while IFS=$'\t' read -r tap_name tap_root; do
+    if [[ -z "${tap_name}" || -z "${tap_root}" ]]; then
+      continue
+    fi
+    if [[ -n "${qualified_tap}" && "$(canonical_homebrew_tap_name "${tap_name}")" != "${qualified_tap}" ]]; then
+      continue
+    fi
+    if [[ -n "${preferred_tap}" && "$(canonical_homebrew_tap_name "${tap_name}")" != "${preferred_tap}" ]]; then
+      continue
+    fi
+
+    if recipe_path="$(homebrew_recipe_in_tap "${tap_root}" "${kind}" "${recipe}")" && [[ -n "${recipe_path}" ]]; then
+      mkdir -p "${dest%/*}"
+      cp -p "${recipe_path}" "${dest}"
+      detail_found=true
+      return 0
+    fi
+  done < <(jq -r '.taps | to_entries[] | [.key, .value] | @tsv' <<<"${manifest}")
+
+  if [[ -n "${preferred_tap}" ]]; then
+    materialize_homebrew_recipe "${manifest}" "${kind}" "${token}" "${dest_root}" any
+    return 0
+  fi
+
+  echo "Unable to find Homebrew ${kind} recipe '${token}' in Nix-managed taps." >&2
+}
+
+materialize_homebrew_details_for_revision() {
+  local label="$1"
+  local flake_ref="$2"
+  local dest_root="$3"
+  local manifest=""
+  local kind=""
+  local token=""
+
+  manifest="$(eval_homebrew_manifest "${label}" "${flake_ref}")"
+  if [[ "$(jq -r '.enabled' <<<"${manifest}")" != "true" ]]; then
+    return 0
+  fi
+
+  while IFS=$'\t' read -r kind token; do
+    if [[ -n "${token}" ]]; then
+      materialize_homebrew_recipe "${manifest}" "${kind}" "${token}" "${dest_root}"
+    fi
+  done < <(jq -r '(.brews[] | ["brew", .]), (.casks[] | ["cask", .]) | @tsv' <<<"${manifest}")
+}
+
+materialize_homebrew_details() {
+  local old_detail_root="$1"
+  local new_detail_root="$2"
+
+  if [[ "${target_kind}" != "darwin" ]]; then
+    return 0
+  fi
+
+  materialize_homebrew_details_for_revision old "${old_flake}" "${old_detail_root}"
+  materialize_homebrew_details_for_revision new "${new_flake}" "${new_detail_root}"
+}
+
 run_detail_diff() {
   local diff_root="${tmpdir}/details"
   local old_detail_root="${diff_root}/old"
@@ -801,6 +961,7 @@ run_detail_diff() {
   mkdir -p "${old_detail_root}" "${new_detail_root}"
 
   materialize_system_details "${old_detail_root}" "${new_detail_root}"
+  materialize_homebrew_details "${old_detail_root}" "${new_detail_root}"
   materialize_home_manager_details "${old_detail_root}" "${new_detail_root}"
 
   if [[ "${detail_found}" == false ]]; then

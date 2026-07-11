@@ -132,9 +132,11 @@ let
       coreutils
       diffutils
       dix
+      findutils
       git
       gnugrep
       gnused
+      jq
       nh
       nix
     ];
