@@ -203,6 +203,29 @@ if [ -n "${DIFF_CONFIG_EVAL_HOMEBREW:-}" ]; then
   exit 0
 fi
 
+if [ -n "${DIFF_CONFIG_EVAL_NGINX:-}" ]; then
+  if [ -n "${FAKE_OLD_REV:-}" ] && [[ "${DIFF_CONFIG_FLAKE_REF:-}" == *"rev=${FAKE_OLD_REV}"* ]]; then
+    if [ "${FAKE_NGINX_OLD_DISABLED:-}" = true ]; then
+      exit 0
+    fi
+    side=old
+  else
+    side=new
+  fi
+
+  mkdir -p "${NGINX_BUILD_ROOT:?}"
+  nginx_config="${NGINX_BUILD_ROOT:?}/nginx-${side}.conf"
+  if [ "$side" = old ]; then
+    store_hash=55555555555555555555555555555555
+  else
+    store_hash=66666666666666666666666666666666
+  fi
+  printf 'nginx-flake=%s\n' "${DIFF_CONFIG_FLAKE_REF:?}" >"$nginx_config"
+  printf 'store=/nix/store/%s-same-nginx-package/bin\n' "$store_hash" >>"$nginx_config"
+  printf '%s\n' "$nginx_config"
+  exit 0
+fi
+
 if [ -n "${DIFF_CONFIG_VALIDATE_MACHINE:-}" ]; then
   case "${DIFF_CONFIG_MACHINE:-}" in
     frame | mair | org | srvarr | builder1 | fana) printf '%s\n' true ;;
@@ -394,6 +417,8 @@ SH
     DIFF_CONFIG_DIFF_COLOR=always \
     XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-details-$BATS_TEST_NUMBER" \
     HM_BUILD_ROOT="$BATS_TMPDIR/diff-config-hm-details-$BATS_TEST_NUMBER" \
+    NGINX_BUILD_ROOT="$BATS_TMPDIR/diff-config-nginx-details-$BATS_TEST_NUMBER" \
+    FAKE_OLD_REV="$old_rev" \
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     DIFF_ARGS_LOG="$diff_log" \
@@ -413,6 +438,7 @@ SH
   [[ "$output" == *"diff -ruN old/system/etc/nix/nix.conf new/system/etc/nix/nix.conf"* ]]
   [[ "$output" == *"diff -ruN old/system/activate new/system/activate"* ]]
   [[ "$output" == *"diff -ruN old/system/bin/switch-to-configuration new/system/bin/switch-to-configuration"* ]]
+  [[ "$output" == *"diff -ruN old/system/services/nginx.conf new/system/services/nginx.conf"* ]]
   [[ "$output" != *"old/system/etc/issue"* ]]
   [[ "$output" != *"home-configuration.nix.5"* ]]
   [[ "$output" != *"man-flake"* ]]
@@ -428,6 +454,9 @@ SH
   [[ "$output" == *"home-files/.config/hm.conf"* ]]
   [[ "$output" == *"LaunchAgents/org.example.hm.plist"* ]]
   [[ "$output" == *"session-vars/etc/profile.d/hm-session-vars.sh"* ]]
+  [[ "$output" == *"nginx-flake=git+file://$repo?rev=$old_rev"* ]]
+  [[ "$output" == *"nginx-flake=git+file://$repo?rev=$new_rev"* ]]
+  [[ "$output" == *"store=/nix/store/<path>/bin"* ]]
   [[ "$output" == *"/nix/store/<path>/bin"* ]]
   [[ "$output" != *"same-package"* ]]
   [[ "$output" != *"same-home-package"* ]]
@@ -437,9 +466,41 @@ SH
   [[ "$output" != *"22222222222222222222222222222222"* ]]
   [[ "$output" != *"33333333333333333333333333333333"* ]]
   [[ "$output" != *"44444444444444444444444444444444"* ]]
+  [[ "$output" != *"55555555555555555555555555555555"* ]]
+  [[ "$output" != *"66666666666666666666666666666666"* ]]
   [[ "$output" != *"Permission denied"* ]]
   [[ "$output" != *"cannot stat"* ]]
   [[ "$output" != *"No such file or directory"* ]]
+}
+
+@test "diff-config --details reports nginx becoming enabled" {
+  make_repo
+  make_fake_bin
+
+  nh_log="$BATS_TMPDIR/diff-config-nh-nginx-enabled-$BATS_TEST_NUMBER.log"
+  dix_log="$BATS_TMPDIR/diff-config-dix-nginx-enabled-$BATS_TEST_NUMBER.log"
+  rm -f "$nh_log" "$dix_log"
+
+  run env \
+    DIFF_CONFIG_REPO_ROOT="$repo" \
+    XDG_CACHE_HOME="$BATS_TMPDIR/diff-config-cache-nginx-enabled-$BATS_TEST_NUMBER" \
+    HM_BUILD_ROOT="$BATS_TMPDIR/diff-config-hm-nginx-enabled-$BATS_TEST_NUMBER" \
+    NGINX_BUILD_ROOT="$BATS_TMPDIR/diff-config-nginx-enabled-$BATS_TEST_NUMBER" \
+    FAKE_OLD_REV="$old_rev" \
+    FAKE_NGINX_OLD_DISABLED=true \
+    NH_ARGS_LOG="$nh_log" \
+    DIX_ARGS_LOG="$dix_log" \
+    PATH="$fake_bin:$PATH" \
+    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    --details \
+    --path etc/nix/nix.conf \
+    frame \
+    "$old_rev" \
+    "$new_rev"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"diff -ruN old/system/services/nginx.conf new/system/services/nginx.conf"* ]]
+  [[ "$output" == *"+nginx-flake=git+file://$repo?rev=$new_rev"* ]]
 }
 
 @test "diff-config detects bare darwin targets" {

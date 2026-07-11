@@ -15,7 +15,7 @@ backend used by nh.
 
 With --details, also diff generated target configuration files from the built
 toplevels and embedded Home Manager users. By default this covers:
-  NixOS:       etc, activate, bin/switch-to-configuration
+  NixOS:       etc, activate, bin/switch-to-configuration, rendered nginx config
   nix-darwin:  etc, activate, activate-user, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
   Homebrew:    selected cask and formula recipes from Nix-managed taps
   Home Manager users: activate, home-files, LaunchAgents, session-vars
@@ -491,6 +491,62 @@ materialize_generated_paths() {
   done
 }
 
+eval_nginx_config() {
+  local label="$1"
+  local flake_ref="$2"
+  local machine_attr=""
+  local nginx_config=""
+
+  machine_attr="$(machine_attr_for_label "${label}")"
+
+  # shellcheck disable=SC2016
+  if ! nginx_config="$(
+    DIFF_CONFIG_FLAKE_REF="${flake_ref}" \
+      DIFF_CONFIG_MACHINE="${machine_attr}" \
+      DIFF_CONFIG_EVAL_NGINX=1 \
+      nix --extra-experimental-features "nix-command flakes" eval --impure --raw --expr '
+        let
+          f = builtins.getFlake (builtins.getEnv "DIFF_CONFIG_FLAKE_REF");
+          name = builtins.getEnv "DIFF_CONFIG_MACHINE";
+          cfg = (builtins.getAttr name f.nixosConfigurations).config;
+          nginx = cfg.services.nginx;
+          execStart = cfg.systemd.services.nginx.serviceConfig.ExecStart;
+          configMatch = builtins.match ".* -c '\''([^'\'']+)'\''.*" execStart;
+        in
+          if !nginx.enable then ""
+          else if nginx.enableReload then toString cfg.environment.etc."nginx/nginx.conf".source
+          else if configMatch != null then builtins.head configMatch
+          else throw "Unable to find the rendered nginx config in ExecStart: ${execStart}"
+      '
+  )"; then
+    echo "Unable to inspect rendered nginx configuration in ${label} revision." >&2
+    return 1
+  fi
+
+  printf '%s\n' "${nginx_config}"
+}
+
+materialize_nginx_details() {
+  local old_detail_root="$1"
+  local new_detail_root="$2"
+  local old_nginx_config=""
+  local new_nginx_config=""
+
+  if [[ "${target_kind}" != "nixos" ]]; then
+    return 0
+  fi
+
+  old_nginx_config="$(eval_nginx_config old "${old_flake}")"
+  new_nginx_config="$(eval_nginx_config new "${new_flake}")"
+
+  copy_generated_store_path "${old_nginx_config}" "${old_detail_root}/system" services/nginx.conf
+  copy_generated_store_path "${new_nginx_config}" "${new_detail_root}/system" services/nginx.conf
+
+  if [[ -n "${old_nginx_config}" || -n "${new_nginx_config}" ]]; then
+    detail_found=true
+  fi
+}
+
 materialize_system_details() {
   local old_detail_root="$1"
   local new_detail_root="$2"
@@ -961,6 +1017,7 @@ run_detail_diff() {
   mkdir -p "${old_detail_root}" "${new_detail_root}"
 
   materialize_system_details "${old_detail_root}" "${new_detail_root}"
+  materialize_nginx_details "${old_detail_root}" "${new_detail_root}"
   materialize_homebrew_details "${old_detail_root}" "${new_detail_root}"
   materialize_home_manager_details "${old_detail_root}" "${new_detail_root}"
 

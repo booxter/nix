@@ -1,8 +1,11 @@
+import contextlib
 import importlib.util
 import os
 import pathlib
+import threading
 import time
 import types
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -261,6 +264,62 @@ def test_existing_ticket_valid_uses_metadata(tmp_path):
         },
     )
     assert ssh_ticket.existing_ticket_valid(target, paths)
+
+
+def test_ensure_ticket_serializes_concurrent_issuance(tmp_path, monkeypatch):
+    target = {
+        "name": "srvarr",
+        "principal": "ihrachyshka@srvarr",
+    }
+    issue_started = threading.Event()
+    second_lock_attempted = threading.Event()
+    issue_calls = 0
+    lock_attempts = 0
+    lock_attempts_guard = threading.Lock()
+    original_lock = ssh_ticket.ticket_issue_lock
+
+    @contextlib.contextmanager
+    def observed_lock(issue_target, state_dir):
+        nonlocal lock_attempts
+        with lock_attempts_guard:
+            lock_attempts += 1
+            if lock_attempts == 2:
+                second_lock_attempted.set()
+        with original_lock(issue_target, state_dir):
+            yield
+
+    def fake_issue_ticket(args, issue_target, state_dir, key_path):
+        nonlocal issue_calls
+        issue_calls += 1
+        issue_started.set()
+        assert second_lock_attempted.wait(timeout=5)
+        paths = ssh_ticket.target_paths(issue_target, state_dir)
+        paths["cert"].write_text("cert\n", encoding="utf-8")
+        ssh_ticket.write_json(
+            paths["metadata"],
+            {
+                "target": issue_target["name"],
+                "principal": issue_target["principal"],
+                "validBefore": int(time.time()) + 3600,
+            },
+        )
+        return paths
+
+    monkeypatch.setattr(ssh_ticket, "ticket_issue_lock", observed_lock)
+    monkeypatch.setattr(ssh_ticket, "issue_ticket", fake_issue_ticket)
+    args = types.SimpleNamespace(
+        state_dir=str(tmp_path / "state"),
+        key=str(tmp_path / "id_ed25519"),
+        force=False,
+    )
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        first = executor.submit(ssh_ticket.ensure_ticket, args, target)
+        assert issue_started.wait(timeout=5)
+        second = executor.submit(ssh_ticket.ensure_ticket, args, target)
+        assert first.result(timeout=5) == second.result(timeout=5)
+
+    assert issue_calls == 1
 
 
 def issue_ticket_command(tmp_path, monkeypatch, *, allow_x11_forwarding=False):
