@@ -111,6 +111,7 @@ let
     // {
       serverName = service.serverName;
       serverAliases = [ ];
+      addSSL = true;
       forceSSL = false;
       # Backend probes live on a separate HTTPS listener instead of the normal
       # service listener. Public ingress proxies to the normal service listener
