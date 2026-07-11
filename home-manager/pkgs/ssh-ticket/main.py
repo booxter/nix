@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 import argparse
+import contextlib
 import datetime as dt
+import fcntl
 import json
 import os
 import pathlib
@@ -236,6 +238,19 @@ def target_paths(target, state_dir):
         "cert": pathlib.Path(f"{base}-cert.pub"),
         "metadata": pathlib.Path(f"{base}.json"),
     }
+
+
+@contextlib.contextmanager
+def ticket_issue_lock(target, state_dir):
+    state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    lock_path = state_dir / f"{safe_name(target['name'])}.lock"
+    fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        fcntl.flock(fd, fcntl.LOCK_EX)
+        yield
+    finally:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        os.close(fd)
 
 
 def ensure_ticket_key(key_path):
@@ -486,7 +501,11 @@ def ensure_ticket(args, target):
     paths = target_paths(target, state_dir)
     if not args.force and existing_ticket_valid(target, paths):
         return paths
-    return issue_ticket(args, target, state_dir, key_path)
+    with ticket_issue_lock(target, state_dir):
+        # Another process may have issued the ticket while this one waited.
+        if not args.force and existing_ticket_valid(target, paths):
+            return paths
+        return issue_ticket(args, target, state_dir, key_path)
 
 
 def write_ticket_alias(paths, alias, state_dir):
