@@ -22,7 +22,6 @@
       ./_mixins/internal-pki
       ./_mixins/lan-wan-accounting
       ./_mixins/logs-client
-      ./_mixins/nix-darwin-backports
       ./_mixins/nix-gc
       ./_mixins/observability-client
       ./_mixins/sudo
