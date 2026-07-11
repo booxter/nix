@@ -30,128 +30,30 @@ def test_parse_duration_rejects_invalid_values(value):
         ssh_ticket.parse_duration(value)
 
 
-def test_applescript_string_renders_newlines_as_linefeed():
-    expr = ssh_ticket.applescript_string('one\n\nquoted "value"')
-    assert "\\n" not in expr
-    assert expr == '"one" & linefeed & "" & linefeed & "quoted \\"value\\""'
-
-
-def test_osascript_approval_prompt_activates_system_events():
-    script = ssh_ticket.osascript_approval_script("Approve?")
-    assert 'tell application "System Events"' in script
-    assert "activate" in script
-    assert "display dialog" in script
-
-
-def test_osascript_ttl_text_prompt_uses_approve_default_button():
-    script = ssh_ticket.osascript_ttl_text_prompt_script("Approve?", "30m")
-    assert 'tell application "System Events"' in script
-    assert "activate" in script
-    assert "display dialog" in script
-    assert 'default answer "30m"' in script
-    assert 'default button "Approve"' in script
-
-
-def test_ttl_choices_include_common_values_allowed_by_max():
-    assert [
-        ssh_ticket.format_duration(ttl) for ttl in ssh_ticket.ttl_choices(1800, 7200)
-    ] == [
-        "30m",
-        "1h",
-        "2h",
-    ]
-    assert [
-        ssh_ticket.format_duration(ttl) for ttl in ssh_ticket.ttl_choices(1800, 43200)
-    ] == [
-        "30m",
-        "1h",
-        "2h",
-        "12h",
-    ]
-
-
-def test_ttl_choices_include_nonstandard_default():
-    assert [
-        ssh_ticket.format_duration(ttl) for ttl in ssh_ticket.ttl_choices(2700, 7200)
-    ] == [
-        "30m",
-        "45m",
-        "1h",
-        "2h",
-    ]
-
-
-def test_prompt_askpass_uses_confirm_prompt_for_approval(monkeypatch):
-    calls = []
-
-    def fake_run(cmd, *, capture=True, env=None):
-        calls.append((cmd, env))
-        return "yes\n"
-
-    monkeypatch.setenv("SSH_ASKPASS", "/usr/local/bin/ssh-askpass-macos")
-    monkeypatch.setattr(ssh_ticket, "run", fake_run)
-
-    ttl = ssh_ticket.prompt_askpass(
-        {"name": "srvarr"}, 30 * 60, 2 * 60 * 60, ttl_was_explicit=True
+def test_requested_ttl_uses_target_default():
+    ttl = ssh_ticket.requested_ttl(
+        types.SimpleNamespace(ttl=None),
+        {"name": "srvarr", "defaultTtl": "30m", "maxTtl": "2h"},
     )
 
     assert ttl == 30 * 60
-    assert len(calls) == 1
-    assert calls[0][0] == [
-        "/usr/local/bin/ssh-askpass-macos",
-        "Approve SSH ticket to srvarr for 30m?",
-    ]
-    assert calls[0][1]["SSH_ASKPASS_PROMPT"] == "confirm"
 
 
-def test_prompt_askpass_ttl_prompt_is_approval(monkeypatch):
-    calls = []
-
-    def fake_run(cmd, *, capture=True, env=None):
-        calls.append((cmd, env))
-        return "45m\n"
-
-    monkeypatch.setenv("SSH_ASKPASS", "/usr/local/bin/ssh-askpass-macos")
-    monkeypatch.setattr(ssh_ticket, "run", fake_run)
-
-    ttl = ssh_ticket.prompt_askpass(
-        {"name": "srvarr"}, 30 * 60, 2 * 60 * 60, ttl_was_explicit=False
+def test_requested_ttl_uses_explicit_value():
+    ttl = ssh_ticket.requested_ttl(
+        types.SimpleNamespace(ttl="45m"),
+        {"name": "srvarr", "defaultTtl": "30m", "maxTtl": "2h"},
     )
 
     assert ttl == 45 * 60
-    assert len(calls) == 1
-    assert calls[0][0] == [
-        "/usr/local/bin/ssh-askpass-macos",
-        "TTL for SSH ticket to srvarr [30m, max 2h]",
-    ]
-    assert calls[0][1] is None
 
 
-def test_prompt_gui_prefers_osascript(monkeypatch):
-    def fake_askpass(target, default_ttl, max_ttl, ttl_was_explicit):
-        raise AssertionError("askpass should not be used when osascript works")
-
-    monkeypatch.setattr(ssh_ticket, "prompt_osascript", lambda *args: 45 * 60)
-    monkeypatch.setattr(ssh_ticket, "prompt_askpass", fake_askpass)
-
-    assert (
-        ssh_ticket.prompt_gui(
-            {"name": "srvarr"}, 30 * 60, 2 * 60 * 60, ttl_was_explicit=False
+def test_requested_ttl_rejects_value_above_target_maximum():
+    with pytest.raises(ssh_ticket.Error, match="requested TTL 3h exceeds max TTL 2h"):
+        ssh_ticket.requested_ttl(
+            types.SimpleNamespace(ttl="3h"),
+            {"name": "srvarr", "defaultTtl": "30m", "maxTtl": "2h"},
         )
-        == 45 * 60
-    )
-
-
-def test_prompt_gui_falls_back_to_askpass(monkeypatch):
-    monkeypatch.setattr(ssh_ticket, "prompt_osascript", lambda *args: None)
-    monkeypatch.setattr(ssh_ticket, "prompt_askpass", lambda *args: 30 * 60)
-
-    assert (
-        ssh_ticket.prompt_gui(
-            {"name": "srvarr"}, 30 * 60, 2 * 60 * 60, ttl_was_explicit=False
-        )
-        == 30 * 60
-    )
 
 
 def test_resolved_ca_key_defaults_to_agent_public_key():
@@ -338,8 +240,6 @@ def issue_ticket_command(tmp_path, monkeypatch, *, allow_x11_forwarding=False):
     ssh_ticket.issue_ticket(
         types.SimpleNamespace(
             ttl=None,
-            yes=True,
-            gui=False,
             ca_agent=False,
             ca_key=str(tmp_path / "ca"),
         ),
@@ -390,12 +290,11 @@ def test_write_ticket_alias_copies_cert_material(tmp_path):
 
 def test_parser_has_ensure_command():
     args = ssh_ticket.build_parser().parse_args(
-        ["ensure", "--quiet", "--gui", "--cert-alias", "org", "org"]
+        ["ensure", "--quiet", "--cert-alias", "org", "org"]
     )
 
     assert args.func == ssh_ticket.cmd_ensure
     assert args.quiet
-    assert args.gui
     assert args.cert_alias == "org"
     assert args.target == "org"
 

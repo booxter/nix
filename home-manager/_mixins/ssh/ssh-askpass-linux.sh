@@ -36,15 +36,6 @@ if [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
     exit 1
   fi
 
-  case "$PROMPT" in
-    "TTL for SSH ticket"*)
-      printf '%s: ' "$PROMPT" >&3
-      IFS= read -r answer <&3 || exit 1
-      printf '%s\n' "$answer"
-      exit 0
-      ;;
-  esac
-
   printf '%s' "$PROMPT" >&3
   saved_tty="$(stty -g <&3)" || exit 1
   trap 'stty "$saved_tty" <&3 2>/dev/null' EXIT HUP INT TERM
@@ -83,15 +74,8 @@ entry_args=(
   --entry
   --title "OpenSSH authentication"
   --text "$PROMPT"
+  --hide-text
 )
-
-case "$PROMPT" in
-  "TTL for SSH ticket"*)
-    ;;
-  *)
-    entry_args+=(--hide-text)
-    ;;
-esac
 
 answer="$(zenity "${entry_args[@]}")" || exit 1
 printf '%s\n' "$answer"

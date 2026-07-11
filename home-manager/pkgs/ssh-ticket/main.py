@@ -7,7 +7,6 @@ import json
 import os
 import pathlib
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -18,7 +17,6 @@ DEFAULT_CA_PUBLIC_KEY = "~/.ssh/fleet-user-ca.pub"
 DEFAULT_KEY = "~/.ssh/fleet-ticket/id_ed25519"
 TARGETS_FILE_ENV = "SSHT_TARGETS_FILE"
 MIN_VALID_SECONDS = 60
-COMMON_TTL_CHOICES = (30 * 60, 60 * 60, 2 * 60 * 60, 12 * 60 * 60)
 
 
 class Error(Exception):
@@ -65,34 +63,6 @@ def shell_quote(value):
     return "'" + value.replace("'", "'\\''") + "'"
 
 
-def applescript_quote(value):
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def applescript_string(value):
-    return " & linefeed & ".join(applescript_quote(part) for part in value.split("\n"))
-
-
-def osascript_approval_script(message):
-    return f"""
-      tell application "System Events"
-        activate
-        set response to display dialog {applescript_string(message)} buttons {{"Deny", "Approve"}} default button "Approve" cancel button "Deny" with title "ssht"
-        return button returned of response
-      end tell
-    """
-
-
-def osascript_ttl_text_prompt_script(message, default_answer):
-    return f"""
-      tell application "System Events"
-        activate
-        set response to display dialog {applescript_string(message)} default answer {applescript_quote(default_answer)} buttons {{"Cancel", "Approve"}} default button "Approve" cancel button "Cancel" with title "ssht"
-        return text returned of response
-      end tell
-    """
-
-
 def parse_duration(value):
     if isinstance(value, int):
         return value
@@ -133,14 +103,6 @@ def format_time(epoch):
     return (
         dt.datetime.fromtimestamp(epoch).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
     )
-
-
-def ttl_choices(default_ttl, max_ttl):
-    choices = {
-        int(default_ttl),
-        *(choice for choice in COMMON_TTL_CHOICES if choice <= max_ttl),
-    }
-    return sorted(choices)
 
 
 def safe_name(value):
@@ -316,125 +278,18 @@ def ticket_status(target, state_dir):
     return {**target, "status": "valid", "validBefore": valid_before}
 
 
-def prompt_tty(target, default_ttl, max_ttl, ttl_was_explicit):
-    print(f"SSH ticket request for {target['name']}", file=sys.stderr)
-    print(f"  principal: {target['principal']}", file=sys.stderr)
-    print(f"  ssh host:  {target['sshHost']}", file=sys.stderr)
-    if ttl_was_explicit:
-        answer = input(f"Approve ticket for {format_duration(default_ttl)}? [y/N] ")
-        if answer.strip().lower() not in ("y", "yes"):
-            raise Error("ticket request denied")
-        return default_ttl
-
-    raw = input(
-        f"TTL [{format_duration(default_ttl)}, max {format_duration(max_ttl)}; empty default, 'no' denies]: "
-    ).strip()
-    if raw.lower() in ("n", "no", "deny"):
-        raise Error("ticket request denied")
-    ttl = default_ttl if raw == "" else parse_duration(raw)
-    answer = input(f"Approve ticket for {format_duration(ttl)}? [y/N] ")
-    if answer.strip().lower() not in ("y", "yes"):
-        raise Error("ticket request denied")
-    return ttl
-
-
-def prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit):
-    askpass = os.environ.get("SSH_ASKPASS")
-    if not askpass:
-        return None
-    if ttl_was_explicit:
-        ttl = default_ttl
-    else:
-        prompt = (
-            f"TTL for SSH ticket to {target['name']} "
-            f"[{format_duration(default_ttl)}, max {format_duration(max_ttl)}]"
-        )
-        ttl_text = run([askpass, prompt]).strip()
-        return default_ttl if ttl_text == "" else parse_duration(ttl_text)
-    ttl = default_ttl
-    approval_env = os.environ.copy()
-    approval_env["SSH_ASKPASS_PROMPT"] = "confirm"
-    answer = run(
-        [
-            askpass,
-            f"Approve SSH ticket to {target['name']} for {format_duration(ttl)}?",
-        ],
-        env=approval_env,
-    ).strip()
-    if answer.lower() not in ("y", "yes"):
-        raise Error("ticket request denied")
-    return ttl
-
-
-def prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit):
-    osascript = shutil.which("osascript")
-    if osascript is None:
-        return None
-    default_answer = format_duration(default_ttl)
-    if ttl_was_explicit:
-        message = (
-            f"Approve SSH ticket for {target['name']}?\n\n"
-            f"Principal: {target['principal']}\n"
-            f"TTL: {default_answer}"
-        )
-        script = osascript_approval_script(message)
-        result = subprocess.run(
-            [osascript, "-e", script], text=True, capture_output=True
-        )
-        if result.returncode != 0 or result.stdout.strip() != "Approve":
-            raise Error("ticket request denied")
-        return default_ttl
-
-    common_ttls = ", ".join(
-        format_duration(ttl) for ttl in ttl_choices(default_ttl, max_ttl)
-    )
-    message = (
-        f"Approve SSH ticket for {target['name']}?\n\n"
-        f"Principal: {target['principal']}\n"
-        f"Enter TTL to approve ({common_ttls}; max {format_duration(max_ttl)})."
-    )
-    script = osascript_ttl_text_prompt_script(message, default_answer)
-    result = subprocess.run([osascript, "-e", script], text=True, capture_output=True)
-    if result.returncode != 0:
-        raise Error("ticket request denied")
-    ttl_text = result.stdout.strip() or default_answer
-    return default_ttl if ttl_text == "" else parse_duration(ttl_text)
-
-
-def prompt_gui(target, default_ttl, max_ttl, ttl_was_explicit):
-    ttl = prompt_osascript(target, default_ttl, max_ttl, ttl_was_explicit)
-    if ttl is None:
-        ttl = prompt_askpass(target, default_ttl, max_ttl, ttl_was_explicit)
-    if ttl is None:
-        raise Error("cannot prompt for approval without osascript or SSH_ASKPASS")
-    return ttl
-
-
-def approved_ttl(args, target):
-    default_ttl = parse_duration(args.ttl or target["defaultTtl"])
+def requested_ttl(args, target):
+    ttl = parse_duration(args.ttl or target["defaultTtl"])
     max_ttl = parse_duration(target["maxTtl"])
-    ttl_was_explicit = args.ttl is not None
-    if default_ttl > max_ttl:
-        raise Error(
-            f"requested TTL {format_duration(default_ttl)} exceeds max TTL {format_duration(max_ttl)} for {target['name']}"
-        )
-    if args.yes:
-        return default_ttl
-    if getattr(args, "gui", False):
-        ttl = prompt_gui(target, default_ttl, max_ttl, ttl_was_explicit)
-    elif sys.stdin.isatty():
-        ttl = prompt_tty(target, default_ttl, max_ttl, ttl_was_explicit)
-    else:
-        ttl = prompt_gui(target, default_ttl, max_ttl, ttl_was_explicit)
     if ttl > max_ttl:
         raise Error(
-            f"approved TTL {format_duration(ttl)} exceeds max TTL {format_duration(max_ttl)} for {target['name']}"
+            f"requested TTL {format_duration(ttl)} exceeds max TTL {format_duration(max_ttl)} for {target['name']}"
         )
     return ttl
 
 
 def issue_ticket(args, target, state_dir, key_path):
-    ttl = approved_ttl(args, target)
+    ttl = requested_ttl(args, target)
     public_key = ensure_ticket_key(key_path)
     paths = target_paths(target, state_dir)
     state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -673,14 +528,6 @@ def add_common_options(parser):
     )
     parser.set_defaults(ca_agent=env_flag("SSHT_CA_AGENT"))
     parser.add_argument("--ttl", help="ticket lifetime, e.g. 30m, 2h, 1h30m")
-    parser.add_argument(
-        "--yes", action="store_true", help="issue without an approval prompt"
-    )
-    parser.add_argument(
-        "--gui",
-        action="store_true",
-        help="use SSH_ASKPASS or osascript instead of terminal input",
-    )
     parser.add_argument(
         "--force", action="store_true", help="ignore an existing valid ticket"
     )

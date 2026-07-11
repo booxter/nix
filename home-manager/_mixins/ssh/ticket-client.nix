@@ -50,7 +50,7 @@ let
     target:
     let
       patterns = target.aliases;
-      ensureCommand = "${ticketPackage}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --gui --cert-alias %n ${target.name}";
+      ensureCommand = "${ticketPackage}/bin/ssh-ticket ensure --targets-file ${ticketTargetsFile} --quiet --cert-alias %n ${target.name}";
     in
     {
       name = "ssh-ticket-ensure-${target.name}";
