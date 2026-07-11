@@ -205,11 +205,15 @@ in
       description = "Bootstrap Jellystat configuration";
       wantedBy = [ "multi-user.target" ];
       wants = [
+        "jellyfin.service"
+        "nginx.service"
         "podman-jellystat.service"
         "postgresql.service"
         "sops-install-secrets.service"
       ];
       after = [
+        "jellyfin.service"
+        "nginx.service"
         "podman-jellystat.service"
         "postgresql.service"
         "sops-install-secrets.service"
@@ -305,7 +309,21 @@ in
         fi
 
         if [ -n "$token" ]; then
-          post_json_auth /api/setconfig "$config_payload" "$token" >/dev/null
+          # setconfig validates the supplied connection by calling Jellyfin's
+          # /system/configuration endpoint, so wait for the API to become ready
+          # after boot rather than relying only on systemd service ordering.
+          for attempt in $(seq 1 120); do
+            if post_json_auth /api/setconfig "$config_payload" "$token" >/dev/null; then
+              break
+            fi
+
+            if [ "$attempt" = 120 ]; then
+              echo "Timed out waiting for Jellyfin setup API" >&2
+              exit 1
+            fi
+
+            sleep 2
+          done
 
           login_payload="$(jq --null-input --compact-output '{ REQUIRE_LOGIN: false }')"
           post_json_auth /api/setRequireLogin "$login_payload" "$token" >/dev/null
