@@ -3,6 +3,19 @@ set -euo pipefail
 
 PROMPT="${1:-OpenSSH authentication}"
 
+case "$PROMPT" in
+  "User presence confirmed"*)
+    exit 0
+    ;;
+  "Confirm user presence for key "*)
+    exec zenity --info \
+      --title "OpenSSH security key" \
+      --width 460 \
+      --ok-label "Dismiss" \
+      --text "$PROMPT"
+    ;;
+esac
+
 if [ "${SSH_ASKPASS_PROMPT:-}" = "confirm" ]; then
   if zenity --question \
     --title "OpenSSH authentication" \
