@@ -20,6 +20,14 @@ let
     sonarr = config.services.sonarr.settings.server.port;
     transmission = config.services.transmission.settings.rpc-port;
   };
+  localBackendProxyHeaders = ''
+    proxy_set_header Host ${config.networking.hostName};
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Server $hostname;
+  '';
   mkBackendProbeLocation =
     {
       port,
@@ -72,6 +80,11 @@ let
     sabnzbd."= /__probe/sabnzbd-version" = mkBackendProbeLocation {
       port = backendPorts.sabnzbd;
       upstreamPath = "/api?mode=version&output=json";
+      recommendedProxySettings = false;
+      # SABnzbd rejects arbitrary Host headers even for the version API. Use
+      # the local machine name accepted by its hostname check while still
+      # exposing only this exact unauthenticated probe URL.
+      extraConfig = localBackendProxyHeaders;
     };
     transmission."= /__probe/transmission-rpc" = mkBackendProbeLocation {
       port = backendPorts.transmission;
@@ -84,13 +97,8 @@ let
         limit_except GET {
           deny all;
         }
-        proxy_set_header Host ${config.networking.hostName};
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Server $hostname;
-      '';
+      ''
+      + localBackendProxyHeaders;
     };
   };
 in
