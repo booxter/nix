@@ -49,12 +49,18 @@ in
     };
 
     startCalendarInterval = lib.mkOption {
-      type = lib.types.attrsOf lib.types.int;
-      default = {
-        Hour = 8;
-        Minute = 30;
-      };
-      description = "launchd calendar interval for the scheduled warmup.";
+      type = lib.types.listOf (lib.types.attrsOf lib.types.int);
+      default = [
+        {
+          Hour = 8;
+          Minute = 30;
+        }
+        {
+          Hour = 20;
+          Minute = 30;
+        }
+      ];
+      description = "launchd calendar intervals for the scheduled warmups.";
     };
 
     rootDir = lib.mkOption {
