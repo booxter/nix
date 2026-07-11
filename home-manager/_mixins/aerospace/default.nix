@@ -92,7 +92,8 @@ in
         alt-shift-s = "exec-and-forget screencapture -i -c";
 
         cmd-backtick = "exec-and-forget ${pkgs.kitty}/bin/kitten quick-access-terminal";
-        alt-enter = "exec-and-forget ${lib.getExe pkgs.kitty} --directory ~";
+        # Use LaunchServices so Kitty starts with the current GUI launchd environment.
+        alt-enter = "exec-and-forget /usr/bin/open -n -b net.kovidgoyal.kitty --args --directory ~";
       }
       // getBindings {
         prefix = "alt";
