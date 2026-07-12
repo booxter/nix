@@ -509,6 +509,10 @@ fi
 mapfile -t HOSTS < <(canonicalize_hosts "${HOSTS[@]}")
 mapfile -t HOSTS < <(prioritize_hosts "${HOSTS[@]}")
 
+if [[ "$DRY_RUN" != "true" ]]; then
+  prebuild_deploy_targets "$BRANCH" "$REPO_URL" "$WORK_MAP" "${HOSTS[@]}"
+fi
+
 echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."
 failed=0
 unreachable_hosts=()

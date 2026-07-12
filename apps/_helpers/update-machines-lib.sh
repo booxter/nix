@@ -97,16 +97,30 @@ format_display_host_list() {
   format_host_list "${display_hosts[@]}"
 }
 
+host_kind_from_work_map() {
+  local host="$1"
+  local work_map="$2"
+
+  jq -r --arg host "$host" '
+    if (.nixos | has($host)) then "nixos"
+    elif (.darwin | has($host)) then "darwin"
+    else empty
+    end
+  ' <<<"$work_map"
+}
+
 is_work_host() {
   local host="$1"
   local work_map="$2"
-  local is_work
-  is_work="$(jq -r --arg h "$host" '(.nixos[$h] // .darwin[$h] // "null")' <<<"$work_map")"
-  if [[ -z "$is_work" || "$is_work" == "null" ]]; then
+  local kind
+
+  kind="$(host_kind_from_work_map "$host" "$work_map")"
+  if [[ -z "$kind" ]]; then
     printf '%s' "false"
     return 0
   fi
-  printf '%s' "$is_work"
+
+  jq -r --arg kind "$kind" --arg host "$host" '.[$kind][$host]' <<<"$work_map"
 }
 
 filter_hosts_by_mode() {
@@ -172,6 +186,36 @@ format_host_list() {
   for host in "$@"; do
     printf ', %s' "$host"
   done
+}
+
+prebuild_deploy_targets() {
+  local branch="$1"
+  local repo_url="$2"
+  local work_map="$3"
+  shift 3
+
+  local flake_ref host kind
+  local -a installables=()
+
+  flake_ref="git+https://github.com/${repo_url#github.com:}.git?ref=${branch}"
+  for host in "$@"; do
+    kind="$(host_kind_from_work_map "$host" "$work_map")"
+    case "$kind" in
+      nixos)
+        installables+=("${flake_ref}#nixosConfigurations.${host}.config.system.build.toplevel")
+        ;;
+      darwin)
+        installables+=("${flake_ref}#darwinConfigurations.${host}.system")
+        ;;
+      *)
+        echo "Cannot prebuild unknown host: ${host}" >&2
+        return 1
+        ;;
+    esac
+  done
+
+  echo "Prebuilding ${#installables[@]} deployment target(s) from branch ${branch}..."
+  nix build -L --show-trace --no-link "${installables[@]}"
 }
 
 run_nh_from_repo() {

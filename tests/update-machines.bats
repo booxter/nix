@@ -13,7 +13,11 @@ write_update_machines_test_stubs() {
     printf '#!%s\n' "$bash_path"
     cat <<'EOF'
 set -euo pipefail
-if [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
+if [[ "${1-}" == "build" ]]; then
+  if [[ -n "${NIX_BUILD_ARGS_OUT:-}" ]]; then
+    printf '%s\n' "$*" > "$NIX_BUILD_ARGS_OUT"
+  fi
+elif [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
   printf '%s\n' '127.0.0.1'
 elif [[ "$*" == *"hostWorkMap"* ]]; then
   printf '%s\n' '{"darwin":{},"nixos":{"alpha":false,"beta":false,"gamma":false,"nv":true}}'
@@ -220,6 +224,22 @@ EOF
   [ "$output" = "$expected" ]
 }
 
+@test "host_kind_from_work_map identifies NixOS and Darwin hosts" {
+  work_map='{"darwin":{"mair":false},"nixos":{"frame":false}}'
+
+  run host_kind_from_work_map frame "$work_map"
+  [ "$status" -eq 0 ]
+  [ "$output" = "nixos" ]
+
+  run host_kind_from_work_map mair "$work_map"
+  [ "$status" -eq 0 ]
+  [ "$output" = "darwin" ]
+
+  run host_kind_from_work_map missing "$work_map"
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
 @test "filter_hosts_by_mode includes only personal hosts" {
   work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
   run filter_hosts_by_mode personal "$work_map" nvws beast mmini
@@ -255,6 +275,30 @@ EOF
   run format_host_list alpha beta gamma
   [ "$status" -eq 0 ]
   [ "$output" = "alpha, beta, gamma" ]
+}
+
+@test "prebuild_deploy_targets builds NixOS and Darwin closures from the requested branch" {
+  workdir="$BATS_TMPDIR/prebuild-deploy-targets"
+  mkdir -p "$workdir/bin"
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$NIX_BUILD_ARGS_OUT"
+EOF
+  } > "$workdir/bin/nix"
+  chmod +x "$workdir/bin/nix"
+
+  export PATH="$workdir/bin:$PATH"
+  export NIX_BUILD_ARGS_OUT="$workdir/nix.args"
+  work_map='{"nixos":{"frame":false},"darwin":{"mair":false}}'
+
+  run prebuild_deploy_targets feature/test github.com:booxter/nix "$work_map" frame mair
+
+  [ "$status" -eq 0 ]
+  [ "$(<"$NIX_BUILD_ARGS_OUT")" = "build -L --show-trace --no-link git+https://github.com/booxter/nix.git?ref=feature/test#nixosConfigurations.frame.config.system.build.toplevel git+https://github.com/booxter/nix.git?ref=feature/test#darwinConfigurations.mair.system" ]
 }
 
 @test "run_nixos_rebuild_from_repo uses pinned nh for switch and boot" {
@@ -443,12 +487,15 @@ EOF
   export PATH="$workdir/bin:$PATH"
   export SSH_TEST_MODE="deploy-fail"
   export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
+  export NIX_BUILD_ARGS_OUT="$workdir/nix-build.args"
   export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
   run bash ./apps/update-machines.sh alpha beta
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
+  [[ "$output" == *"Prebuilding 2 deployment target(s)"*"Checking SSH connectivity"* ]]
+  [ "$(<"$NIX_BUILD_ARGS_OUT")" = "build -L --show-trace --no-link git+https://github.com/booxter/nix.git?ref=master#nixosConfigurations.alpha.config.system.build.toplevel git+https://github.com/booxter/nix.git?ref=master#nixosConfigurations.beta.config.system.build.toplevel" ]
 
   uploaded_script="$(<"$SSH_UPLOADED_SCRIPT_OUT")"
   expected_clone=$'GIT_CONFIG_NOSYSTEM=1 \\\n  GIT_CONFIG_GLOBAL=/dev/null \\\n  GIT_CONFIG_SYSTEM=/dev/null \\\n  GIT_TERMINAL_PROMPT=0 \\\n  git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"'
