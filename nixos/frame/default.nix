@@ -45,6 +45,16 @@ in
   };
   services.displayManager.defaultSession = "hyprland";
   programs.hyprland.enable = true;
+
+  # systemd's global bpf-restrict-fs link took roughly three minutes to detach
+  # during reboot while the kernel waited for a Tasks RCU grace period. No
+  # service on this host uses RestrictFileSystems=, so keep the other default
+  # LSMs without enabling the BPF LSM solely for that unused systemd feature.
+  security.lsm = lib.mkForce [
+    "landlock"
+    "yama"
+  ];
+
   security.pam.services.hyprlock = { };
   services.openssh.settings.X11Forwarding = true;
 
