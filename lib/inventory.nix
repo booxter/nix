@@ -937,6 +937,11 @@ rec {
       name = "nv";
       isWork = true;
       upsHost = nvws;
+      dhcpReservation = {
+        match = "bc:24:11:ed:30:d3";
+        hostname = "nv";
+        ip = "192.168.10.138";
+      };
       cores = 64;
       memorySize = 128;
       sshPort = 10000;
