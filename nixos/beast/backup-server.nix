@@ -55,9 +55,12 @@ let
     };
     org = {
       publicKey = readPublicKey ../../public-keys/restic/org.pub;
+      # Restic repository namespaces are durable storage identities. Keep the
+      # pre-rename namespace so local and B2 snapshot history remains intact.
+      storageName = "orgvm";
       cloud = {
-        repository = "b2:${cloudBucketName}:hosts/org";
-        prefix = "hosts/org";
+        repository = "b2:${cloudBucketName}:hosts/orgvm";
+        prefix = "hosts/orgvm";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
@@ -87,7 +90,7 @@ let
     };
   };
   mkBackupUser = name: "restic-${name}";
-  mkBackupRepo = name: "${backupRoot}/hosts/${name}";
+  mkBackupRepo = name: "${backupRoot}/hosts/${backupClients.${name}.storageName or name}";
   # Keep SSH/SFTP ingest and cloud offload as separate identities. The ingest
   # users are remote entry points, while offload users need access to cloud
   # credentials. Reusing the same account would let an SSH-exposed user read

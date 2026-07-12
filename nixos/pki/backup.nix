@@ -10,7 +10,7 @@ in
 
   host.backups.beast = {
     enable = true;
-    repoName = "pki";
+    clientName = "pki";
     paths = [
       kanidmBackupDir
       stepStateDir
