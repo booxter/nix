@@ -40,6 +40,9 @@
     {
       inherit (llmAgentsPkgs) claude-code;
 
+      # Pick up the latest window-management fixes ahead of the stable branch.
+      inherit (pkgsNixpkgsUnstable) aerospace;
+
       # Avoid a SIGPIPE race while deciding which symlinked Mach-O libraries
       # must be copied into wrapped Firefox apps on Darwin. Remove when
       # https://github.com/NixOS/nixpkgs/pull/540753 reaches nixpkgs-26.05-darwin.
