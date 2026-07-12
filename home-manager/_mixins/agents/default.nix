@@ -53,6 +53,7 @@ in
       # https://github.com/openai/codex/issues/12582
       # https://github.com/openai/codex/issues/14509
       tui.keymap.chat.interrupt_turn = "f12";
+      tui.vim_mode_default = true;
       tui.status_line = [
         "model-with-reasoning"
         "current-dir"
@@ -82,6 +83,7 @@ in
 
     settings = {
       outputStyle = "Proactive";
+      editorMode = "vim";
       fastModePerSessionOptIn = true;
 
       permissions = {
