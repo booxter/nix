@@ -8,7 +8,7 @@ BRANCH="master"
 BRANCH_EXPLICIT=false
 REBUILD_ACTION="switch"
 SOURCE_MODE="github"
-ALL=true
+ALL=false
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${REPO_ROOT}/apps/_helpers/update-machines-host-lib.sh"
@@ -337,11 +337,11 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  apps/update-machines.sh [-A|--all] [--branch BRANCH|--local] [--switch|--boot|--test] [--personal|--work|--both]
-  apps/update-machines.sh [--branch BRANCH|--local] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
+  apps/update-machines.sh [--branch BRANCH|--local] [--switch|--boot|--test] [--dry-run] [host1 ...]
+  apps/update-machines.sh [-A|--all|--select] [--personal|--work|--both] [other options] [host1 ...]
 
 Options:
-  -A, --all         Update all hosts discovered from flake outputs (default).
+  -A, --all         Update all hosts discovered from flake outputs.
   --personal        Update only personal machines (default).
   --work            Update only work machines.
   --both            Update all machines (work + personal).
@@ -354,7 +354,9 @@ Options:
   --select          Interactively select hosts from the filtered list.
 
 Notes:
-  - Passing explicit host names disables --all.
+  - With no host names, deploy the current machine.
+  - --select with no host names offers all hosts allowed by the selected mode.
+  - Do not combine explicit host names with --all.
   - --test is NixOS-only and keeps using nixos-rebuild dry-activate.
   -h, --help        Show this help.
 
@@ -443,14 +445,6 @@ if [[ "$MODE" != "personal" && "$MODE" != "work" && "$MODE" != "both" ]]; then
   exit 1
 fi
 
-if [[ $# -gt 0 ]]; then
-  ALL=false
-fi
-
-if [[ "$ALL" == "true" && "$SELECT" == "false" ]]; then
-  SELECT=true
-fi
-
 local_disk_cleanup_if_low
 
 HOST_MAP="$(bash "${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
@@ -459,19 +453,21 @@ if [[ -z "$HOST_MAP" ]]; then
   exit 1
 fi
 
+DISCOVERED=false
 if [[ "$ALL" == "true" ]]; then
   if [[ $# -gt 0 ]]; then
     echo "Do not pass host names with -A." >&2
     exit 1
   fi
   mapfile -t HOSTS < <(hosts_from_host_map "$HOST_MAP")
-else
-  if [[ $# -lt 1 ]]; then
-    usage >&2
-    exit 1
-  fi
+  DISCOVERED=true
+elif [[ $# -gt 0 ]]; then
   HOSTS=("$@")
-  SELECT=false
+elif [[ "$SELECT" == "true" ]]; then
+  mapfile -t HOSTS < <(hosts_from_host_map "$HOST_MAP")
+  DISCOVERED=true
+else
+  HOSTS=("$(hostname -s 2>/dev/null || hostname)")
 fi
 
 if [[ ${#HOSTS[@]} -eq 0 ]]; then
@@ -479,9 +475,9 @@ if [[ ${#HOSTS[@]} -eq 0 ]]; then
   exit 1
 fi
 
-# Only apply mode filtering when discovering hosts (ALL=true).
+# Only apply mode filtering when discovering the fleet.
 # When hosts are explicitly passed, update them without filtering.
-if [[ "$ALL" == "true" && "$MODE" != "both" ]]; then
+if [[ "$DISCOVERED" == "true" && "$MODE" != "both" ]]; then
   mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$HOST_MAP" "${HOSTS[@]}")
   HOSTS=("${filtered[@]}")
 fi

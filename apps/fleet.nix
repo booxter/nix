@@ -69,6 +69,7 @@ let
         deploy --disko <host> <device>
 
       Examples:
+        deploy
         deploy -A --select
         deploy --branch ci/flake-update --boot srvarr
         deploy --branch dhcp-unifi --test beast

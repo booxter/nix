@@ -626,6 +626,36 @@ EOF
   [ ! -e "$SSH_CALLS_OUT" ]
 }
 
+@test "update-machines defaults to the current machine without opening the selector" {
+  workdir="$BATS_TMPDIR/update-machines-current-host"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+  export SSH_CALLS_OUT="$workdir/ssh.calls"
+
+  run bash ./apps/update-machines.sh --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Dry run: would update controller."* ]]
+  [ ! -e "$SSH_CALLS_OUT" ]
+}
+
+@test "update-machines deploys all filtered hosts without selecting unless requested" {
+  workdir="$BATS_TMPDIR/update-machines-all-hosts"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+
+  run bash ./apps/update-machines.sh --all --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Dry run: would update alpha, beta, controller, gamma."* ]]
+}
+
 @test "update-machines rejects combining --local with --branch" {
   workdir="$BATS_TMPDIR/update-machines-local-branch-conflict"
   rm -rf "$workdir"
