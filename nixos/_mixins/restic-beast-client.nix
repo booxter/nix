@@ -59,7 +59,7 @@ in
 
     repoName = lib.mkOption {
       type = lib.types.str;
-      example = "orgvm";
+      example = "org";
       description = "Repository name under /volume2/backups/restic-prod/hosts on beast.";
     };
 

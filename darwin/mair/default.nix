@@ -22,7 +22,7 @@ in
 
   host.browser.firefox.touchIdPasskeys.enable = true;
 
-  sops.secrets."wireguard/gwvm/privateKey" = {
+  sops.secrets."wireguard/gw/privateKey" = {
     owner = "root";
     group = "wheel";
     mode = "0400";
@@ -37,7 +37,7 @@ in
       lan.gateway.address
       lan.domain
     ];
-    privateKeyFile = config.sops.secrets."wireguard/gwvm/privateKey".path;
+    privateKeyFile = config.sops.secrets."wireguard/gw/privateKey".path;
 
     peers = [
       {

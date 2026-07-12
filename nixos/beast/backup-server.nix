@@ -53,11 +53,11 @@ let
         };
       };
     };
-    orgvm = {
-      publicKey = readPublicKey ../../public-keys/restic/orgvm.pub;
+    org = {
+      publicKey = readPublicKey ../../public-keys/restic/org.pub;
       cloud = {
-        repository = "b2:${cloudBucketName}:hosts/orgvm";
-        prefix = "hosts/orgvm";
+        repository = "b2:${cloudBucketName}:hosts/org";
+        prefix = "hosts/org";
         pruneOpts = [
           "--keep-daily=14"
           "--keep-weekly=8"
