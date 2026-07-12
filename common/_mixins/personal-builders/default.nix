@@ -8,32 +8,11 @@
   ...
 }:
 let
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   builderSpec = n: hostInventory.nixosHostSpecsByName."builder${toString n}";
   toBuilderName = n: hostInventory.toNixosShortDnsName (builderSpec n);
 in
 {
   programs.ssh = {
-    knownHosts = {
-      "frame" = {
-        publicKey = readPublicKey ../../../public-keys/hosts/frame.pub;
-      };
-      "mmini" = {
-        publicKey = readPublicKey ../../../public-keys/hosts/mmini.pub;
-      };
-      "mair" = {
-        publicKey = readPublicKey ../../../public-keys/hosts/mair.pub;
-      };
-      ${toBuilderName 1} = {
-        publicKey = readPublicKey ../../../public-keys/hosts/builder1.pub;
-      };
-      ${toBuilderName 2} = {
-        publicKey = readPublicKey ../../../public-keys/hosts/builder2.pub;
-      };
-      ${toBuilderName 3} = {
-        publicKey = readPublicKey ../../../public-keys/hosts/builder3.pub;
-      };
-    };
     extraConfig =
       let
         identityFile = "${config.users.users.${username}.home}/.ssh/id_ed25519";
