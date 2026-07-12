@@ -57,10 +57,17 @@ in
   options.host.backups.beast = {
     enable = lib.mkEnableOption "restic backups pushed over SFTP to beast";
 
-    repoName = lib.mkOption {
+    clientName = lib.mkOption {
       type = lib.types.str;
       example = "org";
-      description = "Repository name under /volume2/backups/restic-prod/hosts on beast.";
+      description = "Client account name used to connect to the restic backup server on beast.";
+    };
+
+    storageName = lib.mkOption {
+      type = lib.types.str;
+      default = cfg.clientName;
+      example = "orgvm";
+      description = "Durable repository name under /volume2/backups/restic-prod/hosts on beast.";
     };
 
     paths = lib.mkOption {
@@ -178,7 +185,7 @@ in
             timerConfig
             ;
           passwordFile = config.sops.secrets.${localPasswordSecret}.path;
-          repository = "sftp:restic-${cfg.repoName}@beast:/volume2/backups/restic-prod/hosts/${cfg.repoName}";
+          repository = "sftp:restic-${cfg.clientName}@beast:/volume2/backups/restic-prod/hosts/${cfg.storageName}";
         }
         // lib.optionalAttrs (cfg.exclude != [ ]) {
           inherit (cfg) exclude;

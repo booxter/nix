@@ -27,7 +27,7 @@ in
 
   host.backups.beast = {
     enable = true;
-    repoName = "srvarr";
+    clientName = "srvarr";
     paths = backupPaths;
     exclude = backupExclude;
   };

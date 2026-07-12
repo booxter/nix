@@ -56,7 +56,10 @@ in
 
   host.backups.beast = {
     enable = true;
-    repoName = "org";
+    clientName = "org";
+    # Keep the historical storage namespace: changing it would create new
+    # local and B2 repositories instead of preserving the existing snapshots.
+    storageName = "orgvm";
     paths = backupPaths;
     exclude = backupExclude;
   };
