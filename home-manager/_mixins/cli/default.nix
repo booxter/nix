@@ -150,6 +150,7 @@ in
     ++ lib.optionals (!isWork) [
       age
       age-plugin-se
+      cliPkgs.sync-repo
       ramalama
       sops
     ];
