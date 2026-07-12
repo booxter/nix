@@ -1051,7 +1051,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:fd:eb:9c";
-        hostname = "prox-orgvm";
+        hostname = "org";
         ip = "192.168.20.4";
       };
     }
