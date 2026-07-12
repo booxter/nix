@@ -43,9 +43,7 @@ in
         programs.aerospace.settings.on-window-detected = lib.mkBefore [
           # XQuartz windows manage their own geometry better outside the tiling tree.
           {
-            "if" = {
-              app-id = "org.nixos.xquartz.X11";
-            };
+            "if" = "test %{app-bundle-id} = org.nixos.xquartz.X11";
             run = [ "layout floating" ];
           }
         ];
