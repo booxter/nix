@@ -31,6 +31,8 @@ let
     });
 in
 {
+  imports = [ ./codex-warmer.nix ];
+
   programs.codex = {
     enable = true;
     context = codexContext;
