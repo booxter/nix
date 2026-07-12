@@ -66,6 +66,17 @@ resolve_runtime_host() {
   lookup_host_map_or_identity "$1" "${HOST_RUNTIME_MAP_JSON:-}"
 }
 
+resolve_accepted_runtime_hosts() {
+  local host="$1"
+
+  if [[ -z "${HOST_ACCEPTED_RUNTIME_MAP_JSON:-}" ]]; then
+    printf '%s' "$host"
+    return 0
+  fi
+
+  jq -r --arg host "$host" '(.[$host] // [$host]) | join(",")' <<<"$HOST_ACCEPTED_RUNTIME_MAP_JSON"
+}
+
 resolve_host_alias() {
   local host="$1"
   local resolved

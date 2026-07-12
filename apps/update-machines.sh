@@ -100,6 +100,37 @@ HOST_RUNTIME_MAP_JSON="$(
   )
 )"
 export HOST_RUNTIME_MAP_JSON
+HOST_ACCEPTED_RUNTIME_MAP_JSON="$(
+  (
+    cd "${REPO_ROOT}"
+    nix eval --impure --json --expr "
+      let
+        hostInventory = import ./lib/inventory.nix {
+          lib = {
+            optionals = condition: values: if condition then values else [ ];
+            strings.toUpper = s: s;
+            unique = builtins.foldl' (
+              values: value: if builtins.elem value values then values else values ++ [ value ]
+            ) [ ];
+          };
+        };
+        nixos = builtins.foldl' (
+          acc: spec:
+          let
+            configName = hostInventory.toNixosConfigName spec;
+          in
+          acc
+          // {
+            \${configName} = hostInventory.toNixosMigrationDnsNames spec;
+          }
+        ) { } hostInventory.nixosHostSpecs;
+        darwin = builtins.mapAttrs (_: cfg: [ cfg.hostname ]) hostInventory.darwinHosts;
+      in
+      nixos // darwin
+    "
+  )
+)"
+export HOST_ACCEPTED_RUNTIME_MAP_JSON
 HOST_ALIAS_MAP_JSON="$(
   (
     cd "${REPO_ROOT}"
@@ -526,6 +557,7 @@ ok_hosts=()
 failed_hosts=()
 for host in "${HOSTS[@]}"; do
   runtime_host="$(resolve_runtime_host "$host")"
+  accepted_runtime_hosts_csv="$(resolve_accepted_runtime_hosts "$host")"
   if is_local_host "$runtime_host"; then
     ssh_host="$(resolve_base_host "$host")"
   else
@@ -545,6 +577,7 @@ set -euo pipefail
 REMOTE
 )"
   remote_payload+=$'\n'"$(declare -f deploy_flake_ref)"$'\n'
+  remote_payload+=$'\n'"$(declare -f runtime_hostname_is_accepted)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nh_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nh_for_host_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nixos_rebuild_from_repo)"$'\n'
@@ -572,8 +605,9 @@ GC_HEADROOM_KB="$5"
 rebuild_action="$6"
 target_config_name="$7"
 target_runtime_host="$8"
-source_mode="$9"
-source_archive="${10:-}"
+accepted_runtime_hosts_csv="$9"
+source_mode="${10}"
+source_archive="${11:-}"
 repo_dir="$(mktemp -d)"
 
 get_avail_path() {
@@ -640,8 +674,8 @@ cd "$repo_dir"
 
 os="$(uname -s)"
 host_name="$(hostname -s 2>/dev/null || hostname)"
-if [[ "$host_name" != "$target_runtime_host" ]]; then
-  echo "Refusing to deploy ${target_config_name}: SSH landed on ${host_name}, expected ${target_runtime_host}." >&2
+if ! runtime_hostname_is_accepted "$host_name" "$accepted_runtime_hosts_csv"; then
+  echo "Refusing to deploy ${target_config_name}: SSH landed on ${host_name}, expected one of ${accepted_runtime_hosts_csv}." >&2
   exit 1
 fi
 case "$os" in
@@ -670,7 +704,7 @@ REMOTE
       source_archive="$remote_archive"
       cp "$LOCAL_SOURCE_ARCHIVE" "$source_archive"
     fi
-    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$source_archive"; then
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$accepted_runtime_hosts_csv" "$SOURCE_MODE" "$source_archive"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -693,7 +727,7 @@ REMOTE
       continue
     fi
   fi
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$source_archive"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$accepted_runtime_hosts_csv" "$SOURCE_MODE" "$source_archive"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")
