@@ -544,6 +544,7 @@ for host in "${HOSTS[@]}"; do
 set -euo pipefail
 REMOTE
 )"
+  remote_payload+=$'\n'"$(declare -f deploy_flake_ref)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nh_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nh_for_host_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nixos_rebuild_from_repo)"$'\n'

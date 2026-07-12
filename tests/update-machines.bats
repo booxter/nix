@@ -420,6 +420,30 @@ EOF
   [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname srvarr --print-build-logs --show-trace .#" ]
 }
 
+@test "run_nixos_rebuild_from_repo uses a path flake outside a Git checkout" {
+  workdir="$BATS_TMPDIR/nixos-nh-path-action"
+  mkdir -p "$workdir/bin" "$workdir/repo"
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$NIX_ARGS_OUT"
+EOF
+  } > "$workdir/bin/nix"
+  chmod +x "$workdir/bin/nix"
+
+  export PATH="$workdir/bin:$PATH"
+  export NIX_ARGS_OUT="$workdir/nix.args"
+
+  cd "$workdir/repo"
+  run run_nixos_rebuild_from_repo boot frame
+
+  [ "$status" -eq 0 ]
+  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from path:. nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname frame --print-build-logs --show-trace path:.#" ]
+}
+
 @test "run_nixos_rebuild_from_repo keeps dry-activate on nixos-rebuild" {
   workdir="$BATS_TMPDIR/nixos-dry-activate"
   mkdir -p "$workdir/bin"

@@ -1,22 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+deploy_flake_ref() {
+  if git rev-parse --show-toplevel >/dev/null 2>&1; then
+    printf '.'
+  else
+    printf 'path:.'
+  fi
+}
+
 run_nh_from_repo() {
-  nix shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh "$@"
+  local flake_ref
+  flake_ref="$(deploy_flake_ref)"
+  nix shell --inputs-from "$flake_ref" nixpkgs#nh nixpkgs#nix-output-monitor -c nh "$@"
 }
 
 run_nh_for_host_from_repo() {
   local platform="$1"
   local action="$2"
   local host_name="$3"
+  local flake_ref
   shift 3
 
+  flake_ref="$(deploy_flake_ref)"
   run_nh_from_repo "$platform" "$action" \
     --hostname "$host_name" \
     "$@" \
     --print-build-logs \
     --show-trace \
-    ".#"
+    "${flake_ref}#"
 }
 
 run_nixos_rebuild_from_repo() {
