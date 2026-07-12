@@ -88,40 +88,44 @@ format_display_host_list() {
   format_host_list "${display_hosts[@]}"
 }
 
-host_metadata_from_work_map() {
+host_metadata_from_host_map() {
   local host="$1"
-  local work_map="$2"
+  local host_map="$2"
 
   jq -r --arg host "$host" '
-    if (.nixos | has($host)) then ["nixos", .nixos[$host]] | @tsv
-    elif (.darwin | has($host)) then ["darwin", .darwin[$host]] | @tsv
+    if (.nixos | has($host)) then
+      ["nixos", .nixos[$host].isWork, .nixos[$host].deployPriority] | @tsv
+    elif (.darwin | has($host)) then
+      ["darwin", .darwin[$host].isWork, .darwin[$host].deployPriority] | @tsv
     else empty
     end
-  ' <<<"$work_map"
+  ' <<<"$host_map"
 }
 
-host_kind_from_work_map() {
+host_kind_from_host_map() {
   local metadata
 
-  metadata="$(host_metadata_from_work_map "$1" "$2")"
+  metadata="$(host_metadata_from_host_map "$1" "$2")"
   printf '%s' "${metadata%%$'\t'*}"
 }
 
 is_work_host() {
   local metadata
+  local is_work
 
-  metadata="$(host_metadata_from_work_map "$1" "$2")"
+  metadata="$(host_metadata_from_host_map "$1" "$2")"
   if [[ -z "$metadata" ]]; then
     printf '%s' "false"
     return 0
   fi
 
-  printf '%s' "${metadata#*$'\t'}"
+  IFS=$'\t' read -r _ is_work _ <<<"$metadata"
+  printf '%s' "$is_work"
 }
 
 filter_hosts_by_mode() {
   local mode="$1"
-  local work_map="$2"
+  local host_map="$2"
   shift 2
 
   if [[ "$mode" == "both" ]]; then
@@ -131,7 +135,7 @@ filter_hosts_by_mode() {
 
   local host is_work
   for host in "$@"; do
-    is_work="$(is_work_host "$host" "$work_map")"
+    is_work="$(is_work_host "$host" "$host_map")"
     if [[ "$mode" == "work" && "$is_work" == "true" ]]; then
       printf '%s\n' "$host"
     elif [[ "$mode" == "personal" && "$is_work" == "false" ]]; then
@@ -140,8 +144,8 @@ filter_hosts_by_mode() {
   done
 }
 
-hosts_from_work_map() {
-  local work_map="$1"
+hosts_from_host_map() {
+  local host_map="$1"
   jq -r '
     [
       (.nixos | keys[]),
@@ -150,26 +154,41 @@ hosts_from_work_map() {
     | unique
     | sort
     | .[]
-  ' <<<"$work_map"
+  ' <<<"$host_map"
 }
 
 prioritize_hosts() {
+  local host_map="$1"
+  shift
+
   local host
   local -a prioritized=()
   local -a deferred=()
   local -a normal=()
 
   for host in "$@"; do
-    if [[ "$host" =~ ^prx[0-9]+-lab$ || "$host" == "nvws" ]]; then
-      prioritized+=("$host")
-    elif [[ "$host" == "cache" || "$host" == *cachevm* ]]; then
-      deferred+=("$host")
-    else
-      normal+=("$host")
-    fi
+    case "$(deploy_priority_from_host_map "$host" "$host_map")" in
+      early) prioritized+=("$host") ;;
+      late) deferred+=("$host") ;;
+      *) normal+=("$host") ;;
+    esac
   done
 
   printf '%s\n' "${prioritized[@]}" "${normal[@]}" "${deferred[@]}"
+}
+
+deploy_priority_from_host_map() {
+  local metadata
+  local deploy_priority
+
+  metadata="$(host_metadata_from_host_map "$1" "$2")"
+  if [[ -z "$metadata" ]]; then
+    printf '%s' "normal"
+    return 0
+  fi
+
+  IFS=$'\t' read -r _ _ deploy_priority <<<"$metadata"
+  printf '%s' "$deploy_priority"
 }
 
 format_host_list() {
@@ -190,9 +209,9 @@ format_host_list() {
 deploy_installable_for_host() {
   local flake_ref="$1"
   local host="$2"
-  local work_map="$3"
+  local host_map="$3"
 
-  case "$(host_kind_from_work_map "$host" "$work_map")" in
+  case "$(host_kind_from_host_map "$host" "$host_map")" in
     nixos)
       printf '%s#nixosConfigurations.%s.config.system.build.toplevel' "$flake_ref" "$host"
       ;;
@@ -209,7 +228,7 @@ deploy_installable_for_host() {
 prebuild_deploy_targets() {
   local branch="$1"
   local repo_url="$2"
-  local work_map="$3"
+  local host_map="$3"
   shift 3
 
   local flake_ref host
@@ -217,7 +236,7 @@ prebuild_deploy_targets() {
 
   flake_ref="git+https://github.com/${repo_url#github.com:}.git?ref=${branch}"
   for host in "$@"; do
-    installables+=("$(deploy_installable_for_host "$flake_ref" "$host" "$work_map")")
+    installables+=("$(deploy_installable_for_host "$flake_ref" "$host" "$host_map")")
   done
 
   echo "Prebuilding ${#installables[@]} deployment target(s) from branch ${branch}..."

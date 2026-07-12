@@ -3,27 +3,27 @@ set -euo pipefail
 
 expected_json='{
   "darwin": {
-    "JGWXHWDL4X": true,
-    "mair": false,
-    "mmini": false
+    "JGWXHWDL4X": { "isWork": true, "deployPriority": "normal" },
+    "mair": { "isWork": false, "deployPriority": "normal" },
+    "mmini": { "isWork": false, "deployPriority": "normal" }
   },
   "nixos": {
-    "beast": false,
-    "builder1": false,
-    "builder2": false,
-    "builder3": false,
-    "cache": false,
-    "fana": false,
-    "frame": false,
-    "gw": false,
-    "nv": true,
-    "nvws": true,
-    "org": false,
-    "pki": false,
-    "prx1-lab": false,
-    "prx2-lab": false,
-    "prx3-lab": false,
-    "srvarr": false
+    "beast": { "isWork": false, "deployPriority": "normal" },
+    "builder1": { "isWork": false, "deployPriority": "normal" },
+    "builder2": { "isWork": false, "deployPriority": "normal" },
+    "builder3": { "isWork": false, "deployPriority": "normal" },
+    "cache": { "isWork": false, "deployPriority": "late" },
+    "fana": { "isWork": false, "deployPriority": "normal" },
+    "frame": { "isWork": false, "deployPriority": "normal" },
+    "gw": { "isWork": false, "deployPriority": "normal" },
+    "nv": { "isWork": true, "deployPriority": "normal" },
+    "nvws": { "isWork": true, "deployPriority": "early" },
+    "org": { "isWork": false, "deployPriority": "normal" },
+    "pki": { "isWork": false, "deployPriority": "normal" },
+    "prx1-lab": { "isWork": false, "deployPriority": "early" },
+    "prx2-lab": { "isWork": false, "deployPriority": "early" },
+    "prx3-lab": { "isWork": false, "deployPriority": "early" },
+    "srvarr": { "isWork": false, "deployPriority": "normal" }
   }
 }'
 
@@ -60,11 +60,11 @@ echo "get-hosts.sh output matches expected map."
 # Test with specific host arguments
 expected_filtered='{
   "darwin": {
-    "mair": false
+    "mair": { "isWork": false, "deployPriority": "normal" }
   },
   "nixos": {
-    "beast": false,
-    "nvws": true
+    "beast": { "isWork": false, "deployPriority": "normal" },
+    "nvws": { "isWork": true, "deployPriority": "early" }
   }
 }'
 
@@ -98,8 +98,8 @@ echo "get-hosts.sh with args output matches expected filtered map."
 expected_vm_filtered='{
   "darwin": {},
   "nixos": {
-    "org": false,
-    "srvarr": false
+    "org": { "isWork": false, "deployPriority": "normal" },
+    "srvarr": { "isWork": false, "deployPriority": "normal" }
   }
 }'
 

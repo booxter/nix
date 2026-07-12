@@ -19,8 +19,8 @@ if [[ "${1-}" == "build" ]]; then
   fi
 elif [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
   printf '%s\n' '127.0.0.1'
-elif [[ "$*" == *"hostWorkMap"* ]]; then
-  printf '%s\n' '{"darwin":{},"nixos":{"alpha":false,"beta":false,"gamma":false,"nv":true}}'
+elif [[ "$*" == *"hostDeployMap"* ]]; then
+  printf '%s\n' '{"darwin":{},"nixos":{"alpha":{"isWork":false,"deployPriority":"normal"},"beta":{"isWork":false,"deployPriority":"normal"},"gamma":{"isWork":false,"deployPriority":"normal"},"nv":{"isWork":true,"deployPriority":"normal"}}}'
 elif [[ "$*" == *"hostInventory = import ./lib/inventory.nix"* ]]; then
   printf '%s\n' '{"alpha":"alpha","beta":"beta","gamma":"gamma","nv":"nv"}'
 else
@@ -216,53 +216,53 @@ EOF
   [ "$output" = "org, beast, srvarr" ]
 }
 
-@test "hosts_from_work_map returns sorted unique hosts" {
-  work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
-  run hosts_from_work_map "$work_map"
+@test "hosts_from_host_map returns sorted unique hosts" {
+  host_map='{"darwin":{"mmini":{"isWork":false,"deployPriority":"normal"}},"nixos":{"beast":{"isWork":false,"deployPriority":"normal"},"nvws":{"isWork":true,"deployPriority":"early"}}}'
+  run hosts_from_host_map "$host_map"
   [ "$status" -eq 0 ]
   expected=$'beast\nmmini\nnvws'
   [ "$output" = "$expected" ]
 }
 
-@test "host_kind_from_work_map identifies NixOS and Darwin hosts" {
-  work_map='{"darwin":{"mair":false},"nixos":{"frame":false}}'
+@test "host_kind_from_host_map identifies NixOS and Darwin hosts" {
+  host_map='{"darwin":{"mair":{"isWork":false,"deployPriority":"normal"}},"nixos":{"frame":{"isWork":false,"deployPriority":"normal"}}}'
 
-  run host_kind_from_work_map frame "$work_map"
+  run host_kind_from_host_map frame "$host_map"
   [ "$status" -eq 0 ]
   [ "$output" = "nixos" ]
 
-  run host_kind_from_work_map mair "$work_map"
+  run host_kind_from_host_map mair "$host_map"
   [ "$status" -eq 0 ]
   [ "$output" = "darwin" ]
 
-  run host_kind_from_work_map missing "$work_map"
+  run host_kind_from_host_map missing "$host_map"
   [ "$status" -eq 0 ]
   [ -z "$output" ]
 }
 
-@test "host_metadata_from_work_map returns kind and work status together" {
-  work_map='{"darwin":{"mair":true},"nixos":{"frame":false}}'
+@test "host_metadata_from_host_map returns kind and deploy metadata together" {
+  host_map='{"darwin":{"mair":{"isWork":true,"deployPriority":"normal"}},"nixos":{"frame":{"isWork":false,"deployPriority":"normal"}}}'
 
-  run host_metadata_from_work_map frame "$work_map"
+  run host_metadata_from_host_map frame "$host_map"
   [ "$status" -eq 0 ]
-  [ "$output" = $'nixos\tfalse' ]
+  [ "$output" = $'nixos\tfalse\tnormal' ]
 
-  run host_metadata_from_work_map mair "$work_map"
+  run host_metadata_from_host_map mair "$host_map"
   [ "$status" -eq 0 ]
-  [ "$output" = $'darwin\ttrue' ]
+  [ "$output" = $'darwin\ttrue\tnormal' ]
 }
 
 @test "filter_hosts_by_mode includes only personal hosts" {
-  work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
-  run filter_hosts_by_mode personal "$work_map" nvws beast mmini
+  host_map='{"darwin":{"mmini":{"isWork":false,"deployPriority":"normal"}},"nixos":{"beast":{"isWork":false,"deployPriority":"normal"},"nvws":{"isWork":true,"deployPriority":"early"}}}'
+  run filter_hosts_by_mode personal "$host_map" nvws beast mmini
   [ "$status" -eq 0 ]
   expected=$'beast\nmmini'
   [ "$output" = "$expected" ]
 }
 
 @test "filter_hosts_by_mode includes only work hosts" {
-  work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
-  run filter_hosts_by_mode work "$work_map" nvws beast mmini
+  host_map='{"darwin":{"mmini":{"isWork":false,"deployPriority":"normal"}},"nixos":{"beast":{"isWork":false,"deployPriority":"normal"},"nvws":{"isWork":true,"deployPriority":"early"}}}'
+  run filter_hosts_by_mode work "$host_map" nvws beast mmini
   [ "$status" -eq 0 ]
   expected=$'nvws'
   [ "$output" = "$expected" ]
@@ -276,7 +276,8 @@ EOF
 }
 
 @test "prioritize_hosts orders priority, normal, deferred" {
-  run prioritize_hosts cache nvws zeta prx2-lab alpha
+  host_map='{"darwin":{},"nixos":{"cache":{"isWork":false,"deployPriority":"late"},"nvws":{"isWork":true,"deployPriority":"early"},"zeta":{"isWork":false,"deployPriority":"normal"},"prx2-lab":{"isWork":false,"deployPriority":"early"},"alpha":{"isWork":false,"deployPriority":"normal"}}}'
+  run prioritize_hosts "$host_map" cache nvws zeta prx2-lab alpha
   [ "$status" -eq 0 ]
   expected=$'nvws\nprx2-lab\nzeta\nalpha\ncache'
   [ "$output" = "$expected" ]
@@ -304,15 +305,15 @@ EOF
 
   export PATH="$workdir/bin:$PATH"
   export NIX_BUILD_ARGS_OUT="$workdir/nix.args"
-  work_map='{"nixos":{"frame":false},"darwin":{"mair":false}}'
+  host_map='{"nixos":{"frame":{"isWork":false,"deployPriority":"normal"}},"darwin":{"mair":{"isWork":false,"deployPriority":"normal"}}}'
 
-  run prebuild_deploy_targets feature/test github.com:booxter/nix "$work_map" frame mair
+  run prebuild_deploy_targets feature/test github.com:booxter/nix "$host_map" frame mair
 
   [ "$status" -eq 0 ]
   [ "$(<"$NIX_BUILD_ARGS_OUT")" = "build -L --show-trace --no-link git+https://github.com/booxter/nix.git?ref=feature/test#nixosConfigurations.frame.config.system.build.toplevel git+https://github.com/booxter/nix.git?ref=feature/test#darwinConfigurations.mair.system" ]
 }
 
-@test "deploy_installable_for_host rejects hosts absent from the work map" {
+@test "deploy_installable_for_host rejects hosts absent from the host map" {
   run deploy_installable_for_host .# missing '{"nixos":{},"darwin":{}}'
 
   [ "$status" -eq 1 ]

@@ -172,7 +172,7 @@ HOST_DISPLAY_MAP_JSON="$(
   )
 )"
 export HOST_DISPLAY_MAP_JSON
-WORK_MAP=""
+HOST_MAP=""
 DRY_RUN=false
 SELECT=false
 START_TS="$(date +%s)"
@@ -196,7 +196,7 @@ resolve_ssh_host() {
   # Work hosts are accessed over mDNS because corporate DNS policy blocks use
   # of the LAN DNS server for these names. Classify the host from inventory so
   # explicitly selected work hosts behave the same as hosts selected by mode.
-  if [[ "$(is_work_host "$host" "$WORK_MAP")" == "true" ]] && is_bare_hostname "$ssh_lookup_host"; then
+  if [[ "$(is_work_host "$host" "$HOST_MAP")" == "true" ]] && is_bare_hostname "$ssh_lookup_host"; then
     ssh_lookup_host="${ssh_lookup_host}.local"
   fi
 
@@ -453,8 +453,8 @@ fi
 
 local_disk_cleanup_if_low
 
-WORK_MAP="$(bash "${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
-if [[ -z "$WORK_MAP" ]]; then
+HOST_MAP="$(bash "${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
+if [[ -z "$HOST_MAP" ]]; then
   echo "Failed to read hosts from get-hosts.sh." >&2
   exit 1
 fi
@@ -464,7 +464,7 @@ if [[ "$ALL" == "true" ]]; then
     echo "Do not pass host names with -A." >&2
     exit 1
   fi
-  mapfile -t HOSTS < <(hosts_from_work_map "$WORK_MAP")
+  mapfile -t HOSTS < <(hosts_from_host_map "$HOST_MAP")
 else
   if [[ $# -lt 1 ]]; then
     usage >&2
@@ -482,7 +482,7 @@ fi
 # Only apply mode filtering when discovering hosts (ALL=true).
 # When hosts are explicitly passed, update them without filtering.
 if [[ "$ALL" == "true" && "$MODE" != "both" ]]; then
-  mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$WORK_MAP" "${HOSTS[@]}")
+  mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$HOST_MAP" "${HOSTS[@]}")
   HOSTS=("${filtered[@]}")
 fi
 
@@ -507,10 +507,10 @@ if [[ "$SELECT" == "true" ]]; then
 fi
 
 mapfile -t HOSTS < <(canonicalize_hosts "${HOSTS[@]}")
-mapfile -t HOSTS < <(prioritize_hosts "${HOSTS[@]}")
+mapfile -t HOSTS < <(prioritize_hosts "$HOST_MAP" "${HOSTS[@]}")
 
 if [[ "$DRY_RUN" != "true" ]]; then
-  prebuild_deploy_targets "$BRANCH" "$REPO_URL" "$WORK_MAP" "${HOSTS[@]}"
+  prebuild_deploy_targets "$BRANCH" "$REPO_URL" "$HOST_MAP" "${HOSTS[@]}"
 fi
 
 echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."
