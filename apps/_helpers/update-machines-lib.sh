@@ -88,30 +88,35 @@ format_display_host_list() {
   format_host_list "${display_hosts[@]}"
 }
 
-host_kind_from_work_map() {
+host_metadata_from_work_map() {
   local host="$1"
   local work_map="$2"
 
   jq -r --arg host "$host" '
-    if (.nixos | has($host)) then "nixos"
-    elif (.darwin | has($host)) then "darwin"
+    if (.nixos | has($host)) then ["nixos", .nixos[$host]] | @tsv
+    elif (.darwin | has($host)) then ["darwin", .darwin[$host]] | @tsv
     else empty
     end
   ' <<<"$work_map"
 }
 
-is_work_host() {
-  local host="$1"
-  local work_map="$2"
-  local kind
+host_kind_from_work_map() {
+  local metadata
 
-  kind="$(host_kind_from_work_map "$host" "$work_map")"
-  if [[ -z "$kind" ]]; then
+  metadata="$(host_metadata_from_work_map "$1" "$2")"
+  printf '%s' "${metadata%%$'\t'*}"
+}
+
+is_work_host() {
+  local metadata
+
+  metadata="$(host_metadata_from_work_map "$1" "$2")"
+  if [[ -z "$metadata" ]]; then
     printf '%s' "false"
     return 0
   fi
 
-  jq -r --arg kind "$kind" --arg host "$host" '.[$kind][$host]' <<<"$work_map"
+  printf '%s' "${metadata#*$'\t'}"
 }
 
 filter_hosts_by_mode() {

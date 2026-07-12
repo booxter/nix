@@ -240,6 +240,18 @@ EOF
   [ -z "$output" ]
 }
 
+@test "host_metadata_from_work_map returns kind and work status together" {
+  work_map='{"darwin":{"mair":true},"nixos":{"frame":false}}'
+
+  run host_metadata_from_work_map frame "$work_map"
+  [ "$status" -eq 0 ]
+  [ "$output" = $'nixos\tfalse' ]
+
+  run host_metadata_from_work_map mair "$work_map"
+  [ "$status" -eq 0 ]
+  [ "$output" = $'darwin\ttrue' ]
+}
+
 @test "filter_hosts_by_mode includes only personal hosts" {
   work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
   run filter_hosts_by_mode personal "$work_map" nvws beast mmini
