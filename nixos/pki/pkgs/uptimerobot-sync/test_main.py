@@ -184,7 +184,7 @@ def test_client_lists_v3_monitors_with_bearer_auth(monkeypatch):
             return None
 
         def read(self):
-            return json.dumps({"monitors": [{"id": 17}]}).encode()
+            return json.dumps({"data": [{"id": 17}]}).encode()
 
     def urlopen(request, timeout):
         assert request.full_url == "https://api.example/v3/monitors"

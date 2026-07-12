@@ -143,11 +143,9 @@ class UptimeRobotClient:
 
     def list_monitors(self) -> list[dict[str, Any]]:
         response = self.request("GET", "/monitors")
-        if not isinstance(response, dict) or not isinstance(
-            response.get("monitors"), list
-        ):
+        if not isinstance(response, dict) or not isinstance(response.get("data"), list):
             raise UptimeRobotError("UptimeRobot monitor list response is malformed")
-        return response["monitors"]
+        return response["data"]
 
     def create_monitor(self, payload: dict[str, Any]) -> None:
         self.request("POST", "/monitors", payload)
