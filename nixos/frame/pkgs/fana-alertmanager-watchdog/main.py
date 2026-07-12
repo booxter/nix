@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import html
 import os
 import pathlib
 import ssl
@@ -100,13 +101,44 @@ def check_ready(url, ca_file, client_cert_file, client_key_file, timeout):
 
 async def send_telegram_async(token, chat_id, message):
     async with Bot(token=token) as bot:
-        await bot.send_message(chat_id=chat_id, text=message)
+        await bot.send_message(chat_id=chat_id, text=message, parse_mode="HTML")
 
 
 def send_telegram(bot_token_file, chat_id_file, message):
     token = read_secret(bot_token_file)
     chat_id = read_secret(chat_id_file)
     asyncio.run(send_telegram_async(token, chat_id, message))
+
+
+def html_escape(text):
+    return html.escape(str(text), quote=False)
+
+
+def format_status_message(url, detail, status):
+    title = html_escape(url)
+    safe_detail = html_escape(detail)
+    if status == STATUS_UP:
+        return (
+            "✅ <b>Alert resolved</b>\n"
+            "<b>Fana alertmanager readiness probe recovered</b>\n\n"
+            "frame can reach {title} with mTLS again.\n\n"
+            "<b>Details</b>\n"
+            "• Target: {title}\n"
+            "• Sender: frame\n"
+            "• Source: fana/monitoring watchdog"
+        ).format(title=title)
+    return (
+        "🚨 <b>Alert firing</b>\n"
+        "<b>Fana Alertmanager readiness probe failed</b>\n\n"
+        "frame cannot reach {title} with mTLS.\n"
+        "Regular alert notifications from fana may be unavailable.\n\n"
+        "<b>Details</b>\n"
+        "• Target: {title}\n"
+        "• Sender: frame\n"
+        "• Source: fana/monitoring watchdog\n"
+        f"• Detail: {safe_detail}\n\n"
+        "<a href=\"https://grafana.home.arpa/alerting/groups\">Open active alerts in Grafana</a>"
+    ).format(title=title, safe_detail=safe_detail)
 
 
 def should_notify(last_status, now, last_notified, repeat_after_seconds):
@@ -140,10 +172,7 @@ def run(args):
             send_telegram(
                 bot_token_file,
                 chat_id_file,
-                (
-                    "Alert resolved: fana Alertmanager readiness probe recovered\n\n"
-                    f"frame can reach {args.url} with mTLS again."
-                ),
+                format_status_message(args.url, "", STATUS_UP),
             )
         atomic_write(status_file, STATUS_UP + "\n")
         remove_file(notified_file)
@@ -158,12 +187,7 @@ def run(args):
         send_telegram(
             bot_token_file,
             chat_id_file,
-            (
-                "Alert firing: fana Alertmanager readiness probe failed\n\n"
-                f"frame cannot reach {args.url} with mTLS. Regular alert "
-                "notifications from fana may be unavailable.\n\n"
-                f"detail: {detail}"
-            ),
+            format_status_message(args.url, detail, STATUS_DOWN),
         )
         atomic_write(notified_file, f"{now}\n")
 
