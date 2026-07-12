@@ -30,17 +30,17 @@ let
   builderDhcpReservations = {
     "1" = {
       match = "bc:24:11:49:bf:fc";
-      hostname = "prox-builder1vm";
+      hostname = "builder1";
       ip = "192.168.12.106";
     };
     "2" = {
       match = "bc:24:11:dc:ea:2c";
-      hostname = "prox-builder2vm";
+      hostname = "builder2";
       ip = "192.168.13.243";
     };
     "3" = {
       match = "bc:24:11:2a:ee:d7";
-      hostname = "prox-builder3vm";
+      hostname = "builder3";
       ip = "192.168.11.114";
     };
   };
@@ -949,7 +949,7 @@ rec {
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
-        hostname = "prox-cachevm";
+        hostname = "cache";
         ip = "192.168.20.7";
       };
       sshPort = 10004;
@@ -991,7 +991,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:19:4d:d1";
-        hostname = "prox-srvarrvm";
+        hostname = "srvarr";
         ip = "192.168.20.2";
       };
     }
@@ -1012,7 +1012,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:06:e8:8b";
-        hostname = "prox-fanavm";
+        hostname = "fana";
         ip = "192.168.13.110";
       };
     }
@@ -1027,7 +1027,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:91:b5:77";
-        hostname = "prox-gwvm";
+        hostname = "gw";
         ip = "192.168.20.3";
       };
     }
@@ -1073,7 +1073,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:c6:ab:fc";
-        hostname = "prox-pkivm";
+        hostname = "pki";
         ip = "192.168.20.5";
       };
     }
