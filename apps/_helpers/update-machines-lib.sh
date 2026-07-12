@@ -282,7 +282,7 @@ EOF
   sudo "$@"
 }
 
-run_darwin_switch_from_repo() {
+run_darwin_switch_from_repo() (
   local host_name="$1"
   local bash_bin=""
   local nix_bin=""
@@ -294,6 +294,7 @@ run_darwin_switch_from_repo() {
   bash_bin="$(command -v bash)"
   nix_bin="$(command -v nix)"
   tmpdir="$(mktemp -d)"
+  trap 'rm -rf "$tmpdir"' EXIT
   out_link="${tmpdir}/system"
 
   if run_nh_from_repo darwin build \
@@ -306,7 +307,6 @@ run_darwin_switch_from_repo() {
     :
   else
     status=$?
-    rm -rf "$tmpdir"
     return "$status"
   fi
 
@@ -314,13 +314,11 @@ run_darwin_switch_from_repo() {
     :
   else
     echo "Failed to resolve Darwin system configuration output link for ${host_name}: ${out_link}" >&2
-    rm -rf "$tmpdir"
     return 1
   fi
 
   if [[ -z "$system_config" ]]; then
     echo "Failed to build Darwin system configuration for ${host_name}: nix returned no output path." >&2
-    rm -rf "$tmpdir"
     return 1
   fi
 
@@ -337,6 +335,5 @@ run_darwin_switch_from_repo() {
     status=$?
   fi
 
-  rm -rf "$tmpdir"
   return "$status"
-}
+)
