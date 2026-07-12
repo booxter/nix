@@ -15,10 +15,7 @@ source "${REPO_ROOT}/apps/_helpers/update-machines-host-lib.sh"
 source "${REPO_ROOT}/apps/_helpers/update-machines-remote-lib.sh"
 COLOR_RESET='\033[0m'
 COLOR_HOST='\033[1;36m'
-COLOR_BLUE='\033[1;34m'
 COLOR_DIM='\033[2m'
-COLOR_GREEN='\033[1;32m'
-COLOR_RED='\033[1;31m'
 LAN_DNS_SERVER="$(
   (
     cd "${REPO_ROOT}"
@@ -238,28 +235,6 @@ resolve_ssh_host() {
   printf '%s' "$ssh_lookup_host"
 }
 
-ssh_base_opts=(
-  -o BatchMode=yes
-  -o ConnectTimeout=8
-)
-
-avail_gb_local() {
-  local path="$1"
-  df -Pk "$path" | awk 'NR==2 {printf "%.1f", $4/1024/1024}'
-}
-
-avail_gb_remote_cmd() {
-  local path_literal="$1"
-  printf '%s\n' "df -Pk \"$path_literal\" | awk 'NR==2 {printf \"%.1f\", \$4/1024/1024}'"
-}
-
-print_lines_if_any() {
-  local -a lines=("$@")
-  if [[ ${#lines[@]} -gt 0 ]]; then
-    printf '%b\n' "${lines[@]}"
-  fi
-}
-
 is_local_host() {
   local host="$1"
   local local_short local_full
@@ -375,7 +350,7 @@ Options:
   --switch          Switch into the new configuration immediately (default).
   --boot            Stage the new configuration for the next boot.
   --test            Build and preview activation changes without activating them.
-  --dry-run         Only check SSH and print the hosts that would be updated.
+  --dry-run         Print the hosts that would be updated without deploying.
   --select          Interactively select hosts from the filtered list.
 
 Notes:
@@ -542,67 +517,8 @@ if [[ "$DRY_RUN" != "true" ]]; then
   fi
 fi
 
-echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."
-failed=0
-unreachable_hosts=()
-host_status_lines=()
-for host in "${HOSTS[@]}"; do
-  runtime_host="$(resolve_runtime_host "$host")"
-  if is_local_host "$runtime_host"; then
-    # Do not even evaluate SSH configuration for the local host: Match exec
-    # rules may perform authentication as a side effect of `ssh -G`.
-    ssh_host="$(resolve_base_host "$host")"
-  else
-    ssh_host="$(resolve_ssh_host "$host")"
-  fi
-  display_host="$(display_host_name "$host")"
-  if is_local_host "$runtime_host"; then
-    ok="ok (local)"
-  else
-    if ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" true >/dev/null 2>&1; then
-      ok="ok"
-    else
-      ok="failed"
-      failed=$((failed + 1))
-      unreachable_hosts+=("$host")
-    fi
-  fi
-
-  avail_gb=""
-  if [[ "$DRY_RUN" == "true" && "$ok" == ok* ]]; then
-    if is_local_host "$runtime_host"; then
-      avail_path="$(get_local_avail_path)"
-      avail_gb="$(avail_gb_local "$avail_path" 2>/dev/null || true)"
-    else
-      # shellcheck disable=SC2029
-      avail_gb="$(ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$(avail_gb_remote_cmd "\\\$HOME")" 2>/dev/null || true)"
-    fi
-    if [[ -z "$avail_gb" ]]; then
-      avail_gb="unknown"
-    fi
-  fi
-
-  status_color="$COLOR_GREEN"
-  if [[ "$ok" != ok* ]]; then
-    status_color="$COLOR_RED"
-  fi
-  line="- ${COLOR_BLUE}${display_host}${COLOR_RESET} (${COLOR_DIM}${ssh_host}${COLOR_RESET}): ${status_color}${ok}${COLOR_RESET}"
-  if [[ -n "$avail_gb" ]]; then
-    line="${line}, ${avail_gb} GiB"
-  fi
-  host_status_lines+=("$line")
-done
-
-print_lines_if_any "${host_status_lines[@]}"
-
-if [[ $failed -ne 0 ]]; then
-  echo "Aborting: $failed host(s) unreachable." >&2
-  echo "Unreachable hosts: $(format_display_host_list "${unreachable_hosts[@]}")" >&2
-  exit 1
-fi
-
 if [[ "$DRY_RUN" == "true" ]]; then
-  echo "Dry run: would update ${#HOSTS[@]} host(s)."
+  echo "Dry run: would update $(format_display_host_list "${HOSTS[@]}")."
   exit 0
 fi
 

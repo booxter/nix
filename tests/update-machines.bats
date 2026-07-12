@@ -105,13 +105,6 @@ fi
 cmd=("${args[@]:$cmd_start}")
 joined="${cmd[*]}"
 
-if [[ "$joined" == "true" ]]; then
-  if [[ "${SSH_TEST_MODE:-}" == "unreachable" ]]; then
-    exit 1
-  fi
-  exit 0
-fi
-
 if [[ "$joined" == cat\ \>* ]]; then
   if [[ "$joined" == *"update-nix-repo-"* && -n "${SSH_UPLOADED_ARCHIVE_OUT:-}" ]]; then
     cat > "$SSH_UPLOADED_ARCHIVE_OUT"
@@ -133,10 +126,6 @@ case "${SSH_TEST_MODE:-}" in
         exit 0
         ;;
     esac
-    ;;
-  unreachable)
-    echo "ssh stub: unexpected command in unreachable mode: $joined" >&2
-    exit 97
     ;;
   *)
     exit 0
@@ -584,15 +573,17 @@ EOF
   write_update_machines_test_stubs "$workdir/bin"
 
   export PATH="$workdir/bin:$PATH"
+  export SSH_CALLS_OUT="$workdir/ssh.calls"
+  export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
-  run bash ./apps/update-machines.sh --dry-run nv
+  run bash ./apps/update-machines.sh nv
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"nv.local"* ]]
+  grep -q 'nv.local' "$SSH_CALLS_OUT"
 }
 
-@test "update-machines does not evaluate SSH configuration for the local host" {
-  workdir="$BATS_TMPDIR/update-machines-local-host"
+@test "update-machines dry run does not connect to hosts" {
+  workdir="$BATS_TMPDIR/update-machines-dry-run"
   rm -rf "$workdir"
   mkdir -p "$workdir/bin"
   write_update_machines_test_stubs "$workdir/bin"
@@ -600,10 +591,10 @@ EOF
   export PATH="$workdir/bin:$PATH"
   export SSH_CALLS_OUT="$workdir/ssh.calls"
 
-  run bash ./apps/update-machines.sh --dry-run controller
+  run bash ./apps/update-machines.sh --dry-run alpha controller
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"ok (local)"* ]]
+  [[ "$output" == *"Dry run: would update alpha, controller."* ]]
   [ ! -e "$SSH_CALLS_OUT" ]
 }
 
@@ -669,7 +660,8 @@ EOF
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
-  [[ "$output" == *"Prebuilding 2 deployment target(s)"*"Checking SSH connectivity"* ]]
+  [[ "$output" == *"Prebuilding 2 deployment target(s)"* ]]
+  [[ "$output" != *"Checking SSH connectivity"* ]]
   [ "$(<"$NIX_BUILD_ARGS_OUT")" = "build -L --show-trace --no-link git+https://github.com/booxter/nix.git?ref=master#nixosConfigurations.alpha.config.system.build.toplevel git+https://github.com/booxter/nix.git?ref=master#nixosConfigurations.beta.config.system.build.toplevel" ]
 
   uploaded_script="$(<"$SSH_UPLOADED_SCRIPT_OUT")"

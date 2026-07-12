@@ -53,7 +53,7 @@ nix run .#deploy -- -A --work
 # Update a subset interactively
 nix run .#deploy -- -A --select
 
-# Dry run (SSH check + disk estimate only)
+# Dry run (print selected hosts only)
 nix run .#deploy -- -A --dry-run
 ```
 
