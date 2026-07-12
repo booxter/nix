@@ -452,7 +452,7 @@ EOF
   [ "$(wc -l < "$NIX_ARGS_OUT" | tr -d ' ')" = "2" ]
   [[ "$(<"$NIX_ARGS_OUT")" == *"shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin build"* ]]
   [[ "$(<"$NIX_ARGS_OUT")" == *"--hostname JGWXHWDL4X"* ]]
-  [[ "$(<"$NIX_ARGS_OUT")" == *"--diff auto .#"* ]]
+  [[ "$(<"$NIX_ARGS_OUT")" == *"--diff auto --print-build-logs --show-trace .#"* ]]
   [[ "$(<"$NIX_ARGS_OUT")" == *"build --no-link --profile /nix/var/nix/profiles/system $workdir/system"* ]]
   [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "activate" ]
 }

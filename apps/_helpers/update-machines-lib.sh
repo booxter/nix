@@ -247,6 +247,20 @@ run_nh_from_repo() {
   nix shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh "$@"
 }
 
+run_nh_for_host_from_repo() {
+  local platform="$1"
+  local action="$2"
+  local host_name="$3"
+  shift 3
+
+  run_nh_from_repo "$platform" "$action" \
+    --hostname "$host_name" \
+    "$@" \
+    --print-build-logs \
+    --show-trace \
+    ".#"
+}
+
 run_nixos_rebuild_from_repo() {
   local rebuild_action="$1"
   local host_name="$2"
@@ -261,11 +275,7 @@ run_nixos_rebuild_from_repo() {
     return 1
   fi
 
-  run_nh_from_repo os "$rebuild_action" \
-    --hostname "$host_name" \
-    --print-build-logs \
-    --show-trace \
-    ".#"
+  run_nh_for_host_from_repo os "$rebuild_action" "$host_name"
 }
 
 run_sudo_for_remote_darwin() {
@@ -318,13 +328,9 @@ run_darwin_switch_from_repo() (
   trap 'rm -rf "$tmpdir"' EXIT
   out_link="${tmpdir}/system"
 
-  if run_nh_from_repo darwin build \
-    --hostname "$host_name" \
+  if run_nh_for_host_from_repo darwin build "$host_name" \
     --out-link "$out_link" \
-    --print-build-logs \
-    --show-trace \
-    --diff auto \
-    ".#"; then
+    --diff auto; then
     :
   else
     status=$?

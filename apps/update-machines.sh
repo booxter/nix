@@ -588,6 +588,7 @@ set -euo pipefail
 REMOTE
 )"
   remote_payload+=$'\n'"$(declare -f run_nh_from_repo)"$'\n'
+  remote_payload+=$'\n'"$(declare -f run_nh_for_host_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nixos_rebuild_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_sudo_for_remote_darwin)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_darwin_switch_from_repo)"$'\n'
