@@ -17,6 +17,7 @@ prepare_local_deploy_source() {
 
   LOCAL_SOURCE_COMMIT="$(git -C "$checkout_root" rev-parse --verify HEAD)"
   LOCAL_SOURCE_ROOT="$(mktemp -d)"
+  LOCAL_SOURCE_ROOT="$(cd "$LOCAL_SOURCE_ROOT" && pwd -P)"
   LOCAL_SOURCE_ARCHIVE="${LOCAL_SOURCE_ROOT}/repo.tar"
   LOCAL_SOURCE_CHECKOUT="${LOCAL_SOURCE_ROOT}/repo"
   mkdir -p "$LOCAL_SOURCE_CHECKOUT"

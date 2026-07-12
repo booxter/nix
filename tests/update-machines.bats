@@ -163,7 +163,7 @@ EOF
   git -C "$repo" config user.name Test
   printf '%s\n' committed > "$repo/tracked"
   git -C "$repo" add tracked
-  git -C "$repo" commit -qm initial
+  git -C "$repo" -c commit.gpgSign=false commit -qm initial
   expected_commit="$(git -C "$repo" rev-parse HEAD)"
 
   printf '%s\n' dirty > "$repo/tracked"
@@ -179,6 +179,33 @@ EOF
   [ "$(<"$LOCAL_SOURCE_CHECKOUT/tracked")" = "committed" ]
   [ ! -e "$LOCAL_SOURCE_CHECKOUT/untracked" ]
   [ -f "$LOCAL_SOURCE_ARCHIVE" ]
+  rm -rf "$LOCAL_SOURCE_ROOT"
+}
+
+@test "prepare_local_deploy_source canonicalizes a symlinked temporary directory" {
+  workdir="$BATS_TMPDIR/local-deploy-source-symlink"
+  repo="$workdir/repo"
+  physical_tmp="$workdir/physical-tmp"
+  symlinked_tmp="$workdir/symlinked-tmp"
+  rm -rf "$workdir"
+  mkdir -p "$repo" "$physical_tmp"
+  ln -s "$physical_tmp" "$symlinked_tmp"
+  physical_tmp="$(cd "$physical_tmp" && pwd -P)"
+  git -C "$repo" init -q
+  git -C "$repo" config user.email test@example.invalid
+  git -C "$repo" config user.name Test
+  printf '%s\n' committed > "$repo/tracked"
+  git -C "$repo" add tracked
+  git -C "$repo" -c commit.gpgSign=false commit -qm initial
+  LOCAL_SOURCE_ROOT=""
+  LOCAL_SOURCE_ARCHIVE=""
+  LOCAL_SOURCE_CHECKOUT=""
+  LOCAL_SOURCE_COMMIT=""
+
+  TMPDIR="$symlinked_tmp" prepare_local_deploy_source "$repo" > "$repo/message"
+
+  [[ "$LOCAL_SOURCE_ROOT" == "$physical_tmp/"* ]]
+  [[ "$LOCAL_SOURCE_ROOT" != "$symlinked_tmp/"* ]]
   rm -rf "$LOCAL_SOURCE_ROOT"
 }
 
@@ -613,7 +640,7 @@ EOF
   git -C "$source_repo" config user.name Test
   printf '%s\n' committed > "$source_repo/tracked"
   git -C "$source_repo" add tracked
-  git -C "$source_repo" commit -qm initial
+  git -C "$source_repo" -c commit.gpgSign=false commit -qm initial
   commit="$(git -C "$source_repo" rev-parse HEAD)"
   printf '%s\n' dirty > "$source_repo/tracked"
   printf '%s\n' untracked > "$source_repo/untracked"
