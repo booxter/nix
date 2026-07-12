@@ -61,15 +61,8 @@ help:
 nixos:
 	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
 	$(call require-what-and-list-hosts,nixos) \
-	resolved="$(WHAT)"; \
-	if ! printf '%s\n' "$$known" | grep -Fxq "$$resolved"; then \
-		candidate="prox-$(WHAT)vm"; \
-		if printf '%s\n' "$$known" | grep -Fxq "$$candidate"; then \
-			resolved="$$candidate"; \
-		fi; \
-	fi; \
-	$(call require-known-host,nixos,$$resolved) \
-	$(call nh-config-build,os,$$resolved)
+	$(call require-known-host,nixos,$(WHAT)) \
+	$(call nh-config-build,os,$(WHAT))
 
 darwin:
 	@known="$$($(call config-hosts,.#darwinConfigurations))"; \

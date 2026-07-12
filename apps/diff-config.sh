@@ -187,40 +187,16 @@ detect_target_kind_for_name() {
   printf '%s\n' "${detected}"
 }
 
-legacy_nixos_vm_attr() {
-  local name="$1"
-
-  printf 'prox-%svm\n' "${name}"
-}
-
 resolve_revision_target() {
   local label="$1"
   local flake_ref="$2"
-  local candidate=""
   local detected=""
-  local -a candidates=("${machine}")
 
-  if [[ "${target_kind}" != "darwin" ]]; then
-    candidates+=("$(legacy_nixos_vm_attr "${machine}")")
-  fi
-
-  for candidate in "${candidates[@]}"; do
-    if [[ "${candidate}" != "${machine}" && "${candidate}" != prox-*vm ]]; then
-      continue
-    fi
-
-    detected="$(detect_target_kind_for_name "${label}" "${flake_ref}" "${candidate}")"
-    if [[ "${detected}" == "missing" ]]; then
-      continue
-    fi
-
-    if [[ -n "${target_kind}" && "${detected}" != "${target_kind}" ]]; then
-      continue
-    fi
-
-    printf '%s %s\n' "${detected}" "${candidate}"
+  detected="$(detect_target_kind_for_name "${label}" "${flake_ref}" "${machine}")"
+  if [[ "${detected}" != "missing" && ( -z "${target_kind}" || "${detected}" == "${target_kind}" ) ]]; then
+    printf '%s %s\n' "${detected}" "${machine}"
     return 0
-  done
+  fi
 
   printf 'missing %s\n' "${machine}"
 }
