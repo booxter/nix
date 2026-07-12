@@ -67,6 +67,12 @@ in
           ForwardAgent = true;
           AddKeysToAgent = if useSecretive then "no" else "yes";
         };
+        frame-initrd = {
+          HostName = "frame";
+          HostKeyAlias = "frame-initrd";
+          User = "root";
+          RequestTTY = "force";
+        };
       };
 
       includes = [
