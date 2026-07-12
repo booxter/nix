@@ -19,10 +19,12 @@ in
     (import ../disko/luks.nix { })
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
     ./alertmanager-watchdog.nix
+    ./remote-luks.nix
     ./ups.nix
   ];
 
-  # This host needs manual unlock after boot; never auto-reboot on upgrades.
+  # This host needs manual local or remote unlock after boot; never auto-reboot
+  # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.client.blackbox.enable = true;
   host.observability.client.blackbox.mtls.enable = true;
