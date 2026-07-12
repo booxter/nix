@@ -124,12 +124,15 @@ filter_hosts_by_mode() {
   local work_map="$2"
   shift 2
 
+  if [[ "$mode" == "both" ]]; then
+    printf '%s\n' "$@"
+    return 0
+  fi
+
   local host is_work
   for host in "$@"; do
     is_work="$(is_work_host "$host" "$work_map")"
-    if [[ "$mode" == "both" ]]; then
-      printf '%s\n' "$host"
-    elif [[ "$mode" == "work" && "$is_work" == "true" ]]; then
+    if [[ "$mode" == "work" && "$is_work" == "true" ]]; then
       printf '%s\n' "$host"
     elif [[ "$mode" == "personal" && "$is_work" == "false" ]]; then
       printf '%s\n' "$host"

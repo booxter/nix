@@ -269,8 +269,7 @@ EOF
 }
 
 @test "filter_hosts_by_mode includes all hosts for both" {
-  work_map='{"darwin":{"mmini":false},"nixos":{"beast":false,"nvws":true}}'
-  run filter_hosts_by_mode both "$work_map" nvws beast mmini
+  run filter_hosts_by_mode both 'not parsed in both mode' nvws beast mmini
   [ "$status" -eq 0 ]
   expected=$'nvws\nbeast\nmmini'
   [ "$output" = "$expected" ]
