@@ -114,9 +114,9 @@ host_metadata_from_host_map() {
 
   jq -r --arg host "$host" '
     if (.nixos | has($host)) then
-      ["nixos", .nixos[$host].isWork, .nixos[$host].deployPriority] | @tsv
+      ["nixos", .nixos[$host].isWork] | @tsv
     elif (.darwin | has($host)) then
-      ["darwin", .darwin[$host].isWork, .darwin[$host].deployPriority] | @tsv
+      ["darwin", .darwin[$host].isWork] | @tsv
     else empty
     end
   ' <<<"$host_map"
@@ -139,7 +139,7 @@ is_work_host() {
     return 0
   fi
 
-  IFS=$'\t' read -r _ is_work _ <<<"$metadata"
+  IFS=$'\t' read -r _ is_work <<<"$metadata"
   printf '%s' "$is_work"
 }
 
@@ -175,40 +175,6 @@ hosts_from_host_map() {
     | sort
     | .[]
   ' <<<"$host_map"
-}
-
-prioritize_hosts() {
-  local host_map="$1"
-  shift
-
-  local host
-  local -a prioritized=()
-  local -a deferred=()
-  local -a normal=()
-
-  for host in "$@"; do
-    case "$(deploy_priority_from_host_map "$host" "$host_map")" in
-      early) prioritized+=("$host") ;;
-      late) deferred+=("$host") ;;
-      *) normal+=("$host") ;;
-    esac
-  done
-
-  printf '%s\n' "${prioritized[@]}" "${normal[@]}" "${deferred[@]}"
-}
-
-deploy_priority_from_host_map() {
-  local metadata
-  local deploy_priority
-
-  metadata="$(host_metadata_from_host_map "$1" "$2")"
-  if [[ -z "$metadata" ]]; then
-    printf '%s' "normal"
-    return 0
-  fi
-
-  IFS=$'\t' read -r _ _ deploy_priority <<<"$metadata"
-  printf '%s' "$deploy_priority"
 }
 
 format_host_list() {

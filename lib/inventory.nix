@@ -853,7 +853,6 @@ rec {
     {
       hostKind = "proxmox";
       name = nvws;
-      deployPriority = "early";
       inherit username;
       isWork = true;
       stateVersion = "25.11";
@@ -889,7 +888,6 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx1-lab";
-      deployPriority = "early";
       inherit username;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
@@ -906,7 +904,6 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx2-lab";
-      deployPriority = "early";
       inherit username;
       upsHost = "prx1-lab";
       stateVersion = prxStateVersion;
@@ -923,7 +920,6 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx3-lab";
-      deployPriority = "early";
       inherit username;
       upsHost = "prx1-lab";
       stateVersion = prxStateVersion;
@@ -950,7 +946,6 @@ rec {
     {
       isVM = true;
       name = "cache";
-      deployPriority = "late";
       upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {

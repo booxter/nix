@@ -532,7 +532,6 @@ if [[ "$SELECT" == "true" ]]; then
 fi
 
 mapfile -t HOSTS < <(canonicalize_hosts "${HOSTS[@]}")
-mapfile -t HOSTS < <(prioritize_hosts "$HOST_MAP" "${HOSTS[@]}")
 
 if [[ "$DRY_RUN" != "true" ]]; then
   if [[ "$SOURCE_MODE" == "local" ]]; then
