@@ -138,9 +138,6 @@ in
 
       on-focus-changed = [
         "move-mouse window-lazy-center"
-        # Work around https://github.com/nikitabobko/AeroSpace/issues/1615 using
-        # the guarded reaper from https://github.com/nikitabobko/AeroSpace/issues/1615#issuecomment-4667204873.
-        "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-reap-ghosts} >/dev/null 2>&1"
       ];
 
       on-window-detected = [
