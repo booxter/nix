@@ -47,6 +47,13 @@ in
     remoteMobileControl.enable = true;
   };
 
+  # The remote-mobile-control Linux device-key provider rejects outbound
+  # authorization unless this directory is exactly 0700, but the app creates
+  # it as 0755. Keep the correction declarative until upstream fixes creation.
+  systemd.user.tmpfiles.rules = lib.optionals pkgs.stdenv.hostPlatform.isLinux [
+    "d %h/.config/codex-desktop 0700 - - -"
+  ];
+
   programs.codex = {
     enable = true;
     context = codexContext;
