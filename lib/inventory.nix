@@ -198,14 +198,13 @@ rec {
     );
   toNixosLanDnsAliasLabels =
     spec:
-    lib.unique (
-      lib.optionals (
-        isNixosVM spec
-        && hasStableIpv4Address spec
-        && toNixosShortDnsName spec != toNixosPrimaryDnsName spec
-      ) [ (toNixosShortDnsName spec) ]
-      ++ (spec.localDnsAliases or [ ])
-    );
+    let
+      dhcpHostName = spec.dhcpReservation.hostname or null;
+      migrationAliases = lib.optionals (isNixosVM spec && hasStableIpv4Address spec) (
+        builtins.filter (name: name != dhcpHostName) (toNixosMigrationDnsNames spec)
+      );
+    in
+    lib.unique (migrationAliases ++ (spec.localDnsAliases or [ ]));
   toNixosSshHostName = toNixosPrimaryDnsName;
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};

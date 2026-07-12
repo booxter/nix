@@ -15,6 +15,25 @@ helpers.forAllSystems (
       ];
     };
     inventory = import ./lib/inventory.nix { inherit (pkgs) lib; };
+    vmHostnameMigrationDnsCheck =
+      let
+        legacyPrimarySpec = {
+          isVM = true;
+          name = "example";
+          dhcpReservation = {
+            hostname = "prox-examplevm";
+            ip = "192.0.2.1";
+          };
+        };
+        shortPrimarySpec = legacyPrimarySpec // {
+          dhcpReservation = legacyPrimarySpec.dhcpReservation // {
+            hostname = "example";
+          };
+        };
+      in
+      assert inventory.toNixosLanDnsAliasLabels legacyPrimarySpec == [ "example" ];
+      assert inventory.toNixosLanDnsAliasLabels shortPrimarySpec == [ "prox-examplevm" ];
+      true;
     fleetApps = import ./apps/fleet.nix { inherit pkgs; };
     fanaMonitoring = import ./nixos/fana/monitoring/catalog.nix;
     mkCheck =
@@ -41,6 +60,7 @@ helpers.forAllSystems (
         '';
       };
   in
+  assert vmHostnameMigrationDnsCheck;
   {
     bats = mkCheck {
       name = "bats";
