@@ -38,6 +38,19 @@ format_duration() {
   fi
 }
 
+format_window_label() {
+  local name="$1"
+  local remaining="$2"
+  local reset_after="$3"
+
+  if ! [[ "$remaining" =~ ^[0-9]+$ ]] || ! [[ "$reset_after" =~ ^-?[0-9]+$ ]]; then
+    printf '%s ???' "$name"
+    return
+  fi
+
+  printf '%s %s%%/%s' "$name" "$remaining" "$(format_duration "$reset_after")"
+}
+
 format_epoch_local() {
   local epoch="$1"
 
@@ -290,11 +303,8 @@ week_pace_risk_bps="$(window_pace_risk_bps weekly <<<"$status")"
 five_limit_reached="$(window_limit_reached five_hour "$limit_reached" "$limit_reached_type")"
 week_limit_reached="$(window_limit_reached weekly "$limit_reached" "$limit_reached_type")"
 
-five_reset_label="$(format_duration "$five_reset")"
-week_reset_label="$(format_duration "$week_reset")"
-
-five_label="5h ${five_remaining:-?}%/${five_reset_label}"
-week_label="1w ${week_remaining:-?}%/${week_reset_label}"
+five_label="$(format_window_label 5h "$five_remaining" "$five_reset")"
+week_label="$(format_window_label 1w "$week_remaining" "$week_reset")"
 reset_label="+${refreshes}"
 five_color="$(pace_color "${five_pace_risk_bps:-}" "$five_limit_reached")"
 week_color="$(pace_color "${week_pace_risk_bps:-}" "$week_limit_reached")"
