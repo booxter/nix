@@ -107,8 +107,8 @@ in
     enable = true;
     inherit clientId;
     cookieName = oauth2ProxyCookieName;
-    allowedGroups = [ "infra-admins" ];
-    groupClaim = "infra_groups";
+    allowedGroups = [ "media-admins" ];
+    groupClaim = "media_groups";
     whitelistDomains = protectedServiceHosts;
     internalHttpsServiceNames = protectedServiceIds;
     signInLocationName = "@oauth2_proxy_sign_in";

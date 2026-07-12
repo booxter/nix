@@ -250,8 +250,8 @@ rec {
       displayName = "srvarr admin apps";
       originUrl = map (host: "https://${host}/oauth2/callback") srvarrAdminAppHosts;
       originLanding = "https://bazarr.${lan.domain}/";
-      scopeMaps."infra-admins" = scopeWith [ "infra_groups" ];
-      claimMaps.infra_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
+      scopeMaps."media-admins" = scopeWith [ "media_groups" ];
+      claimMaps.media_groups.valuesByGroup."media-admins" = [ "media-admins" ];
     };
   };
 
