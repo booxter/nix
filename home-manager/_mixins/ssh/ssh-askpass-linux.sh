@@ -52,7 +52,7 @@ case "$PROMPT" in
       --title "OpenSSH security key" \
       --width 460 \
       --ok-label "Dismiss" \
-      --text "$PROMPT"
+      --text "$PROMPT" 2>/dev/null
     ;;
 esac
 
@@ -62,7 +62,7 @@ if [ "${SSH_ASKPASS_PROMPT:-}" = "confirm" ]; then
     --width 460 \
     --ok-label "Yes" \
     --cancel-label "No" \
-    --text "$PROMPT"; then
+    --text "$PROMPT" 2>/dev/null; then
     printf '%s\n' yes
     exit 0
   fi
@@ -77,5 +77,5 @@ entry_args=(
   --hide-text
 )
 
-answer="$(zenity "${entry_args[@]}")" || exit 1
+answer="$(zenity "${entry_args[@]}" 2>/dev/null)" || exit 1
 printf '%s\n' "$answer"
