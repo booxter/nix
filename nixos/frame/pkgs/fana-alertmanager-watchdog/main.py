@@ -137,7 +137,7 @@ def format_status_message(url, detail, status):
         "• Sender: frame\n"
         "• Source: fana/monitoring watchdog\n"
         f"• Detail: {safe_detail}\n\n"
-        "<a href=\"https://grafana.home.arpa/alerting/groups\">Open active alerts in Grafana</a>"
+        '<a href="https://grafana.home.arpa/alerting/groups">Open active alerts in Grafana</a>'
     ).format(title=title, safe_detail=safe_detail)
 
 
