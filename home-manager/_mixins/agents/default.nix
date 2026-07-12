@@ -41,11 +41,10 @@ in
     enable = true;
     cliPackage = config.programs.codex.package;
     computerUseUi.enable = true;
+    # The patched Desktop app-server is the remote-control owner. A separate
+    # remoteControl service races it for the same backend environment and makes
+    # Desktop pairing fail with HTTP 409 "Remote app server already online".
     remoteMobileControl.enable = true;
-    remoteControl = {
-      enable = true;
-      package = config.programs.codex.package;
-    };
   };
 
   programs.codex = {
