@@ -191,7 +191,7 @@ in
       # https://wiki.hypr.land/Configuring/XWayland/
       env = [
         "GDK_SCALE,2"
-        "XCURSOR_SIZE,32"
+        "XCURSOR_SIZE,64"
       ];
 
       ecosystem = {
