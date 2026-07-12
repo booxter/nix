@@ -1,7 +1,8 @@
 #!/usr/bin/env bats
 
 setup() {
-  source ./apps/_helpers/update-machines-lib.sh
+  source ./apps/_helpers/update-machines-host-lib.sh
+  source ./apps/_helpers/update-machines-remote-lib.sh
 }
 
 write_update_machines_test_stubs() {

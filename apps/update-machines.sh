@@ -9,7 +9,8 @@ REBUILD_ACTION="switch"
 ALL=true
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "${REPO_ROOT}/apps/_helpers/update-machines-lib.sh"
+source "${REPO_ROOT}/apps/_helpers/update-machines-host-lib.sh"
+source "${REPO_ROOT}/apps/_helpers/update-machines-remote-lib.sh"
 COLOR_RESET='\033[0m'
 COLOR_HOST='\033[1;36m'
 COLOR_BLUE='\033[1;34m'
