@@ -519,9 +519,16 @@ failed=0
 unreachable_hosts=()
 host_status_lines=()
 for host in "${HOSTS[@]}"; do
-  ssh_host="$(resolve_ssh_host "$host")"
+  runtime_host="$(resolve_runtime_host "$host")"
+  if is_local_host "$runtime_host"; then
+    # Do not even evaluate SSH configuration for the local host: Match exec
+    # rules may perform authentication as a side effect of `ssh -G`.
+    ssh_host="$(resolve_base_host "$host")"
+  else
+    ssh_host="$(resolve_ssh_host "$host")"
+  fi
   display_host="$(display_host_name "$host")"
-  if is_local_host "$host"; then
+  if is_local_host "$runtime_host"; then
     ok="ok (local)"
   else
     if ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" true >/dev/null 2>&1; then
@@ -535,7 +542,7 @@ for host in "${HOSTS[@]}"; do
 
   avail_gb=""
   if [[ "$DRY_RUN" == "true" && "$ok" == ok* ]]; then
-    if is_local_host "$host"; then
+    if is_local_host "$runtime_host"; then
       avail_path="$(get_local_avail_path)"
       avail_gb="$(avail_gb_local "$avail_path" 2>/dev/null || true)"
     else
@@ -574,8 +581,12 @@ fi
 ok_hosts=()
 failed_hosts=()
 for host in "${HOSTS[@]}"; do
-  ssh_host="$(resolve_ssh_host "$host")"
   runtime_host="$(resolve_runtime_host "$host")"
+  if is_local_host "$runtime_host"; then
+    ssh_host="$(resolve_base_host "$host")"
+  else
+    ssh_host="$(resolve_ssh_host "$host")"
+  fi
   display_host="$(display_host_name "$host")"
   printf '%b\n' "${COLOR_HOST}==> ${display_host}${COLOR_RESET}"
   if [[ "${UPDATE_MACHINES_TEST_ASSUME_TTY:-false}" != "true" ]] && ! [ -t 0 ]; then
@@ -689,7 +700,7 @@ case "$os" in
 esac
 REMOTE
 )"
-  if is_local_host "$host"; then
+  if is_local_host "$runtime_host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
     if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host"; then

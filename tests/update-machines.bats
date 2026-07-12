@@ -21,9 +21,9 @@ if [[ "${1-}" == "build" ]]; then
 elif [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
   printf '%s\n' '127.0.0.1'
 elif [[ "$*" == *"hostDeployMap"* ]]; then
-  printf '%s\n' '{"darwin":{},"nixos":{"alpha":{"isWork":false,"deployPriority":"normal"},"beta":{"isWork":false,"deployPriority":"normal"},"gamma":{"isWork":false,"deployPriority":"normal"},"nv":{"isWork":true,"deployPriority":"normal"}}}'
+  printf '%s\n' '{"darwin":{},"nixos":{"alpha":{"isWork":false,"deployPriority":"normal"},"beta":{"isWork":false,"deployPriority":"normal"},"controller":{"isWork":false,"deployPriority":"normal"},"gamma":{"isWork":false,"deployPriority":"normal"},"nv":{"isWork":true,"deployPriority":"normal"}}}'
 elif [[ "$*" == *"hostInventory = import ./lib/inventory.nix"* ]]; then
-  printf '%s\n' '{"alpha":"alpha","beta":"beta","gamma":"gamma","nv":"nv"}'
+  printf '%s\n' '{"alpha":"alpha","beta":"beta","controller":"controller","gamma":"gamma","nv":"nv"}'
 else
   echo "unexpected nix invocation: $*" >&2
   exit 99
@@ -64,6 +64,10 @@ EOF
     printf '#!%s\n' "$bash_path"
     cat <<'EOF'
 set -euo pipefail
+
+if [[ -n "${SSH_CALLS_OUT:-}" ]]; then
+  printf '%s\n' "$*" >> "$SSH_CALLS_OUT"
+fi
 
 if [[ "${1-}" == "-G" ]]; then
   exit 0
@@ -510,6 +514,22 @@ EOF
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"nv.local"* ]]
+}
+
+@test "update-machines does not evaluate SSH configuration for the local host" {
+  workdir="$BATS_TMPDIR/update-machines-local-host"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+  export SSH_CALLS_OUT="$workdir/ssh.calls"
+
+  run bash ./apps/update-machines.sh --dry-run controller
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"ok (local)"* ]]
+  [ ! -e "$SSH_CALLS_OUT" ]
 }
 
 @test "update-machines reports all failed deploy hosts and exits nonzero" {
