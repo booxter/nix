@@ -1,5 +1,7 @@
 {
   config,
+  isDesktop,
+  isLinux,
   lib,
   pkgs,
   isWork,
@@ -31,7 +33,12 @@ let
     });
 in
 {
-  imports = [ ./codex-warmer.nix ];
+  imports = [
+    ./codex-warmer.nix
+  ]
+  ++ lib.optionals (isDesktop && isLinux) [
+    ./codex-app.nix
+  ];
 
   programs.codex = {
     enable = true;

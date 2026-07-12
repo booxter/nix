@@ -20,7 +20,6 @@
     ./_mixins/cli
     ./_mixins/agents
     ./_mixins/gnupg
-    ./_mixins/ide-headless
     ./_mixins/nixvim
     ./_mixins/scm
     ./_mixins/ssh
