@@ -203,6 +203,10 @@ in
         enabled = 0;
       };
 
+      windowrule = [
+        "match:title ^OpenSSH authentication$, stay_focused on"
+      ];
+
       monitor = [
         "DP-4, 3840x2160@60, 0x0, 1.5" # left
         "DP-2, 3840x2160@60, 2560x0, 1.5" # right (logical width = 3840/1.5)
