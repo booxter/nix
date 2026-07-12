@@ -9,22 +9,6 @@ deploy_flake_ref() {
   fi
 }
 
-runtime_hostname_is_accepted() {
-  local runtime_hostname="$1"
-  local accepted_runtime_hosts_csv="$2"
-  local accepted_runtime_host
-  local -a accepted_runtime_hosts=()
-
-  IFS=',' read -r -a accepted_runtime_hosts <<<"$accepted_runtime_hosts_csv"
-  for accepted_runtime_host in "${accepted_runtime_hosts[@]}"; do
-    if [[ "$runtime_hostname" == "$accepted_runtime_host" ]]; then
-      return 0
-    fi
-  done
-
-  return 1
-}
-
 run_nh_from_repo() {
   local flake_ref
   flake_ref="$(deploy_flake_ref)"

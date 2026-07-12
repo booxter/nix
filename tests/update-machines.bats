@@ -22,8 +22,6 @@ elif [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
   printf '%s\n' '127.0.0.1'
 elif [[ "$*" == *"hostMap"* ]]; then
   printf '%s\n' '{"darwin":{},"nixos":{"alpha":{"isWork":false},"beta":{"isWork":false},"controller":{"isWork":false},"gamma":{"isWork":false},"nv":{"isWork":true}}}'
-elif [[ "$*" == *"toNixosMigrationDnsNames"* ]]; then
-  printf '%s\n' '{"alpha":["alpha"],"beta":["beta"],"controller":["controller"],"gamma":["gamma"],"nv":["nv"]}'
 elif [[ "$*" == *"hostInventory = import ./lib/inventory.nix"* ]]; then
   printf '%s\n' '{"alpha":"alpha","beta":"beta","controller":"controller","gamma":"gamma","nv":"nv"}'
 else
@@ -242,28 +240,10 @@ EOF
 }
 
 @test "resolve_runtime_host can differ from connection host" {
-  export HOST_RUNTIME_MAP_JSON='{"fana":"prox-fanavm"}'
-  run resolve_runtime_host fana
+  export HOST_RUNTIME_MAP_JSON='{"alpha":"alpha-runtime"}'
+  run resolve_runtime_host alpha
   [ "$status" -eq 0 ]
-  [ "$output" = "prox-fanavm" ]
-}
-
-@test "resolve_accepted_runtime_hosts includes transitional identities" {
-  export HOST_ACCEPTED_RUNTIME_MAP_JSON='{"org":["org","prox-orgvm"]}'
-  run resolve_accepted_runtime_hosts org
-  [ "$status" -eq 0 ]
-  [ "$output" = "org,prox-orgvm" ]
-}
-
-@test "runtime_hostname_is_accepted permits current and legacy identities" {
-  run runtime_hostname_is_accepted org "org,prox-orgvm"
-  [ "$status" -eq 0 ]
-
-  run runtime_hostname_is_accepted prox-orgvm "org,prox-orgvm"
-  [ "$status" -eq 0 ]
-
-  run runtime_hostname_is_accepted wrong-host "org,prox-orgvm"
-  [ "$status" -eq 1 ]
+  [ "$output" = "alpha-runtime" ]
 }
 
 @test "resolve_host_alias maps host aliases" {
@@ -713,8 +693,7 @@ EOF
 
   [[ "$uploaded_script" == *'target_config_name="$7"'* ]]
   [[ "$uploaded_script" == *'target_runtime_host="$8"'* ]]
-  [[ "$uploaded_script" == *'accepted_runtime_hosts_csv="$9"'* ]]
-  [[ "$uploaded_script" == *'source_mode="${10}"'* ]]
+  [[ "$uploaded_script" == *'source_mode="$9"'* ]]
   [[ "$uploaded_script" == *'tar -xf "$source_archive" -C "$repo_dir"'* ]]
   [[ "$uploaded_script" == *"$expected_clone"* ]]
   [[ "$uploaded_script" == *'SUDO_ASKPASS="$askpass_script" sudo -A "$@"'* ]]
