@@ -243,19 +243,19 @@ run_nixos_rebuild_from_repo() {
 }
 
 run_sudo_for_remote_darwin() {
-  local askpass_script=""
   local has_tty=false
   local pam_service_file="${SUDO_SSH_PASSWORD_PAM_SERVICE_FILE:-/etc/pam.d/sudo_ssh_password}"
-  local sudo_args=()
-  local status=0
 
   if [[ -t 0 && -t 1 ]] || [[ "${UPDATE_MACHINES_TEST_ASSUME_TTY:-false}" == "true" ]]; then
     has_tty=true
   fi
 
   if [[ -n "${SSH_CONNECTION:-}" && "$has_tty" == "true" && -f "$pam_service_file" ]]; then
-    askpass_script="$(mktemp)"
-    cat > "$askpass_script" <<'EOF'
+    (
+      local askpass_script
+      askpass_script="$(mktemp)"
+      trap 'rm -f "$askpass_script"' EXIT
+      cat > "$askpass_script" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -268,15 +268,10 @@ IFS= read -r password < /dev/tty
 printf '\n' > /dev/tty
 printf '%s\n' "$password"
 EOF
-    chmod 700 "$askpass_script"
-    sudo_args=(-A)
-    if SUDO_ASKPASS="$askpass_script" sudo "${sudo_args[@]}" "$@"; then
-      status=0
-    else
-      status=$?
-    fi
-    rm -f "$askpass_script"
-    return "$status"
+      chmod 700 "$askpass_script"
+      SUDO_ASKPASS="$askpass_script" sudo -A "$@"
+    )
+    return $?
   fi
 
   sudo "$@"

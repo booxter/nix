@@ -455,6 +455,7 @@ EOF
 set -euo pipefail
 printf '%s\n' "$*" > "$SUDO_ARGS_OUT"
 printf '%s\n' "${SUDO_ASKPASS:-}" > "$SUDO_ASKPASS_OUT"
+exit "${SUDO_TEST_STATUS:-0}"
 EOF
   } > "$workdir/bin/sudo"
   chmod +x "$workdir/bin/sudo"
@@ -472,6 +473,12 @@ EOF
   [ "$(<"$SUDO_ARGS_OUT")" = "-A echo ok" ]
   askpass_path="$(<"$SUDO_ASKPASS_OUT")"
   [ -n "$askpass_path" ]
+  [ ! -e "$askpass_path" ]
+
+  export SUDO_TEST_STATUS=42
+  run run_sudo_for_remote_darwin echo failure
+  [ "$status" -eq 42 ]
+  askpass_path="$(<"$SUDO_ASKPASS_OUT")"
   [ ! -e "$askpass_path" ]
 }
 
@@ -514,7 +521,7 @@ EOF
   [[ "$uploaded_script" == *'target_config_name="$7"'* ]]
   [[ "$uploaded_script" == *'target_runtime_host="$8"'* ]]
   [[ "$uploaded_script" == *"$expected_clone"* ]]
-  [[ "$uploaded_script" == *'SUDO_ASKPASS="$askpass_script" sudo "${sudo_args[@]}" "$@"'* ]]
+  [[ "$uploaded_script" == *'SUDO_ASKPASS="$askpass_script" sudo -A "$@"'* ]]
   [[ "$uploaded_script" == *'run_sudo_for_remote_darwin "$bash_bin" -e -u -o pipefail -c'* ]]
   [[ "$uploaded_script" == *'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"'* ]]
 }
