@@ -19,7 +19,6 @@
   ++ lib.optionals hmFull [
     ./_mixins/cli
     ./_mixins/agents
-    ./_mixins/git-sync
     ./_mixins/gnupg
     ./_mixins/ide-headless
     ./_mixins/nixvim
@@ -27,6 +26,9 @@
     ./_mixins/ssh
     ./_mixins/tmux
     ./_mixins/yubi.nix
+  ]
+  ++ lib.optionals (hmFull && !isWork) [
+    ./_mixins/git-sync
   ]
   ++ lib.optionals isDesktop [
     ./_mixins/aerospace
