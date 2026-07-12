@@ -31,6 +31,8 @@ let
     });
 in
 {
+  imports = [ ./codex-warmer.nix ];
+
   programs.codex = {
     enable = true;
     context = codexContext;
@@ -53,6 +55,12 @@ in
       # https://github.com/openai/codex/issues/12582
       # https://github.com/openai/codex/issues/14509
       tui.keymap.chat.interrupt_turn = "f12";
+      tui.vim_mode_default = true;
+      tui.status_line = [
+        "model-with-reasoning"
+        "current-dir"
+        "context-remaining"
+      ];
     }
     // lib.optionalAttrs (codingAgentEnv != { }) {
       shell_environment_policy.set = codingAgentEnv;
@@ -77,6 +85,7 @@ in
 
     settings = {
       outputStyle = "Proactive";
+      editorMode = "vim";
       fastModePerSessionOptIn = true;
 
       permissions = {

@@ -1,5 +1,7 @@
 { pkgs }:
 {
+  sync-repo = pkgs.callPackage ./sync-repo { };
+
   xrun-nixpkgs = pkgs.writeShellApplication {
     name = "xrun-nixpkgs";
     runtimeInputs = [ pkgs.openssh ];

@@ -5,11 +5,14 @@ set -euo pipefail
 
 REPO_URL="github.com:booxter/nix"
 BRANCH="master"
+BRANCH_EXPLICIT=false
 REBUILD_ACTION="switch"
+SOURCE_MODE="github"
 ALL=true
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source "${REPO_ROOT}/apps/_helpers/update-machines-lib.sh"
+source "${REPO_ROOT}/apps/_helpers/update-machines-host-lib.sh"
+source "${REPO_ROOT}/apps/_helpers/update-machines-remote-lib.sh"
 COLOR_RESET='\033[0m'
 COLOR_HOST='\033[1;36m'
 COLOR_BLUE='\033[1;34m'
@@ -172,7 +175,7 @@ HOST_DISPLAY_MAP_JSON="$(
   )
 )"
 export HOST_DISPLAY_MAP_JSON
-WORK_MAP=""
+HOST_MAP=""
 DRY_RUN=false
 SELECT=false
 START_TS="$(date +%s)"
@@ -183,6 +186,17 @@ REMOTE_MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$REMOTE_MIN_DISK_GIB")"
 GC_HEADROOM_GIB=5
 GC_HEADROOM_KB="$(calc_min_disk_kb_from_gib "$GC_HEADROOM_GIB")"
 SSH_HOST_OPTS=()
+LOCAL_SOURCE_ROOT=""
+LOCAL_SOURCE_ARCHIVE=""
+LOCAL_SOURCE_CHECKOUT=""
+LOCAL_SOURCE_COMMIT=""
+
+cleanup_local_source() {
+  if [[ -n "$LOCAL_SOURCE_ROOT" ]]; then
+    rm -rf "$LOCAL_SOURCE_ROOT"
+  fi
+}
+trap cleanup_local_source EXIT
 
 resolve_ssh_host() {
   local host="$1"
@@ -196,7 +210,7 @@ resolve_ssh_host() {
   # Work hosts are accessed over mDNS because corporate DNS policy blocks use
   # of the LAN DNS server for these names. Classify the host from inventory so
   # explicitly selected work hosts behave the same as hosts selected by mode.
-  if [[ "$(is_work_host "$host" "$WORK_MAP")" == "true" ]] && is_bare_hostname "$ssh_lookup_host"; then
+  if [[ "$(is_work_host "$host" "$HOST_MAP")" == "true" ]] && is_bare_hostname "$ssh_lookup_host"; then
     ssh_lookup_host="${ssh_lookup_host}.local"
   fi
 
@@ -348,8 +362,8 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  apps/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both]
-  apps/update-machines.sh [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
+  apps/update-machines.sh [-A|--all] [--branch BRANCH|--local] [--switch|--boot|--test] [--personal|--work|--both]
+  apps/update-machines.sh [--branch BRANCH|--local] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
 
 Options:
   -A, --all         Update all hosts discovered from flake outputs (default).
@@ -357,6 +371,7 @@ Options:
   --work            Update only work machines.
   --both            Update all machines (work + personal).
   --branch BRANCH   Git branch to deploy (default: master).
+  --local           Deploy committed HEAD from the current checkout; ignore working-tree changes.
   --switch          Switch into the new configuration immediately (default).
   --boot            Stage the new configuration for the next boot.
   --test            Build and preview activation changes without activating them.
@@ -385,7 +400,12 @@ while [[ $# -gt 0 ]]; do
         echo "Missing value for --branch" >&2
         exit 1
       fi
+      BRANCH_EXPLICIT=true
       shift 2
+      ;;
+    --local)
+      SOURCE_MODE="local"
+      shift
       ;;
     --switch)
       REBUILD_ACTION="switch"
@@ -438,6 +458,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$SOURCE_MODE" == "local" && "$BRANCH_EXPLICIT" == "true" ]]; then
+  echo "--local and --branch cannot be used together." >&2
+  exit 1
+fi
+
 if [[ "$MODE" != "personal" && "$MODE" != "work" && "$MODE" != "both" ]]; then
   echo "Invalid mode: $MODE" >&2
   exit 1
@@ -453,8 +478,8 @@ fi
 
 local_disk_cleanup_if_low
 
-WORK_MAP="$(bash "${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
-if [[ -z "$WORK_MAP" ]]; then
+HOST_MAP="$(bash "${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
+if [[ -z "$HOST_MAP" ]]; then
   echo "Failed to read hosts from get-hosts.sh." >&2
   exit 1
 fi
@@ -464,7 +489,7 @@ if [[ "$ALL" == "true" ]]; then
     echo "Do not pass host names with -A." >&2
     exit 1
   fi
-  mapfile -t HOSTS < <(hosts_from_work_map "$WORK_MAP")
+  mapfile -t HOSTS < <(hosts_from_host_map "$HOST_MAP")
 else
   if [[ $# -lt 1 ]]; then
     usage >&2
@@ -482,7 +507,7 @@ fi
 # Only apply mode filtering when discovering hosts (ALL=true).
 # When hosts are explicitly passed, update them without filtering.
 if [[ "$ALL" == "true" && "$MODE" != "both" ]]; then
-  mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$WORK_MAP" "${HOSTS[@]}")
+  mapfile -t filtered < <(filter_hosts_by_mode "$MODE" "$HOST_MAP" "${HOSTS[@]}")
   HOSTS=("${filtered[@]}")
 fi
 
@@ -507,16 +532,32 @@ if [[ "$SELECT" == "true" ]]; then
 fi
 
 mapfile -t HOSTS < <(canonicalize_hosts "${HOSTS[@]}")
-mapfile -t HOSTS < <(prioritize_hosts "${HOSTS[@]}")
+mapfile -t HOSTS < <(prioritize_hosts "$HOST_MAP" "${HOSTS[@]}")
+
+if [[ "$DRY_RUN" != "true" ]]; then
+  if [[ "$SOURCE_MODE" == "local" ]]; then
+    prepare_local_deploy_source "$PWD"
+    prebuild_local_deploy_targets "$LOCAL_SOURCE_CHECKOUT" "$LOCAL_SOURCE_COMMIT" "$HOST_MAP" "${HOSTS[@]}"
+  else
+    prebuild_deploy_targets "$BRANCH" "$REPO_URL" "$HOST_MAP" "${HOSTS[@]}"
+  fi
+fi
 
 echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."
 failed=0
 unreachable_hosts=()
 host_status_lines=()
 for host in "${HOSTS[@]}"; do
-  ssh_host="$(resolve_ssh_host "$host")"
+  runtime_host="$(resolve_runtime_host "$host")"
+  if is_local_host "$runtime_host"; then
+    # Do not even evaluate SSH configuration for the local host: Match exec
+    # rules may perform authentication as a side effect of `ssh -G`.
+    ssh_host="$(resolve_base_host "$host")"
+  else
+    ssh_host="$(resolve_ssh_host "$host")"
+  fi
   display_host="$(display_host_name "$host")"
-  if is_local_host "$host"; then
+  if is_local_host "$runtime_host"; then
     ok="ok (local)"
   else
     if ssh "${ssh_base_opts[@]}" "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" true >/dev/null 2>&1; then
@@ -530,7 +571,7 @@ for host in "${HOSTS[@]}"; do
 
   avail_gb=""
   if [[ "$DRY_RUN" == "true" && "$ok" == ok* ]]; then
-    if is_local_host "$host"; then
+    if is_local_host "$runtime_host"; then
       avail_path="$(get_local_avail_path)"
       avail_gb="$(avail_gb_local "$avail_path" 2>/dev/null || true)"
     else
@@ -569,8 +610,12 @@ fi
 ok_hosts=()
 failed_hosts=()
 for host in "${HOSTS[@]}"; do
-  ssh_host="$(resolve_ssh_host "$host")"
   runtime_host="$(resolve_runtime_host "$host")"
+  if is_local_host "$runtime_host"; then
+    ssh_host="$(resolve_base_host "$host")"
+  else
+    ssh_host="$(resolve_ssh_host "$host")"
+  fi
   display_host="$(display_host_name "$host")"
   printf '%b\n' "${COLOR_HOST}==> ${display_host}${COLOR_RESET}"
   if [[ "${UPDATE_MACHINES_TEST_ASSUME_TTY:-false}" != "true" ]] && ! [ -t 0 ]; then
@@ -578,12 +623,14 @@ for host in "${HOSTS[@]}"; do
     exit 1
   fi
   remote_script="/tmp/update-nix-$$.sh"
+  remote_archive="/tmp/update-nix-repo-$$.tar"
   remote_payload="$(cat <<'REMOTE'
 #!/usr/bin/env bash
 set -euo pipefail
 REMOTE
 )"
   remote_payload+=$'\n'"$(declare -f run_nh_from_repo)"$'\n'
+  remote_payload+=$'\n'"$(declare -f run_nh_for_host_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nixos_rebuild_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_sudo_for_remote_darwin)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_darwin_switch_from_repo)"$'\n'
@@ -593,6 +640,9 @@ cleanup() {
   status=$?
   if [[ -n "$repo_dir" ]]; then
     rm -rf "$repo_dir" || true
+  fi
+  if [[ -n "$source_archive" ]]; then
+    rm -f "$source_archive" || true
   fi
   rm -f "$0" || true
   return "$status"
@@ -606,6 +656,8 @@ GC_HEADROOM_KB="$5"
 rebuild_action="$6"
 target_config_name="$7"
 target_runtime_host="$8"
+source_mode="$9"
+source_archive="${10:-}"
 repo_dir="$(mktemp -d)"
 
 get_avail_path() {
@@ -650,12 +702,23 @@ if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
   fi
 fi
 
-https_url="https://github.com/${repo_url#github.com:}.git"
-GIT_CONFIG_NOSYSTEM=1 \
+case "$source_mode" in
+  local)
+    tar -xf "$source_archive" -C "$repo_dir"
+    ;;
+  github)
+    https_url="https://github.com/${repo_url#github.com:}.git"
+    GIT_CONFIG_NOSYSTEM=1 \
   GIT_CONFIG_GLOBAL=/dev/null \
   GIT_CONFIG_SYSTEM=/dev/null \
   GIT_TERMINAL_PROMPT=0 \
   git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
+    ;;
+  *)
+    echo "Unsupported deployment source mode: ${source_mode}." >&2
+    exit 1
+    ;;
+esac
 
 cd "$repo_dir"
 
@@ -683,10 +746,15 @@ case "$os" in
 esac
 REMOTE
 )"
-  if is_local_host "$host"; then
+  if is_local_host "$runtime_host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
-    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host"; then
+    source_archive=""
+    if [[ "$SOURCE_MODE" == "local" ]]; then
+      source_archive="$remote_archive"
+      cp "$LOCAL_SOURCE_ARCHIVE" "$source_archive"
+    fi
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$source_archive"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -699,7 +767,17 @@ REMOTE
     failed_hosts+=("$host")
     continue
   fi
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host"; then
+  source_archive=""
+  if [[ "$SOURCE_MODE" == "local" ]]; then
+    source_archive="$remote_archive"
+    # shellcheck disable=SC2029
+    if ! ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_archive\"" < "$LOCAL_SOURCE_ARCHIVE"; then
+      echo "Failed to upload local source to ${display_host}." >&2
+      failed_hosts+=("$host")
+      continue
+    fi
+  fi
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$source_archive"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")

@@ -16,7 +16,7 @@ make_repo() {
 }
 NIX
   git -C "$repo" add flake.nix
-  git -C "$repo" -c user.name='Test User' -c user.email='test@example.invalid' commit -q -m old
+  git -C "$repo" -c user.name='Test User' -c user.email='test@example.invalid' -c commit.gpgSign=false commit -q -m old
   old_rev="$(git -C "$repo" rev-parse HEAD)"
 
   cat >"$repo/flake.nix" <<'NIX'
@@ -29,7 +29,7 @@ NIX
 }
 NIX
   git -C "$repo" add flake.nix
-  git -C "$repo" -c user.name='Test User' -c user.email='test@example.invalid' commit -q -m new
+  git -C "$repo" -c user.name='Test User' -c user.email='test@example.invalid' -c commit.gpgSign=false commit -q -m new
   new_rev="$(git -C "$repo" rev-parse HEAD)"
 }
 

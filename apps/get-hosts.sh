@@ -14,24 +14,29 @@ fi
 nix eval --impure --json --expr "
   let
     hostInventory = import \"${REPO_ROOT}/lib/inventory.nix\" {
-      # get-hosts only needs VM naming and isWork flags. Keep this import cheap
+      # get-hosts only needs VM naming and deploy metadata. Keep this import cheap
       # by stubbing the one lib function inventory.nix currently references for the
       # unrelated UPS-name helper.
       lib = {
         strings.toUpper = s: s;
       };
     };
-    hostWorkMap = {
-      darwin = builtins.mapAttrs (_: cfg: cfg.isWork or false) hostInventory.darwinHosts;
+    hostDeployMap = {
+      darwin = builtins.mapAttrs (_: cfg: {
+        isWork = cfg.isWork or false;
+        deployPriority = cfg.deployPriority or \"normal\";
+      }) hostInventory.darwinHosts;
       nixos = builtins.foldl' (
         acc: spec:
         let
-          isWork = spec.isWork or false;
           configName = hostInventory.toNixosConfigName spec;
         in
         acc
         // {
-          \${configName} = isWork;
+          \${configName} = {
+            isWork = spec.isWork or false;
+            deployPriority = spec.deployPriority or \"normal\";
+          };
         }
       ) { } hostInventory.nixosHostSpecs;
     };
@@ -67,7 +72,7 @@ nix eval --impure --json --expr "
       );
   in
   {
-    nixos = filterNames hostWorkMap.nixos nixosAliases requestedHosts;
-    darwin = filterNames hostWorkMap.darwin darwinAliases requestedHosts;
+    nixos = filterNames hostDeployMap.nixos nixosAliases requestedHosts;
+    darwin = filterNames hostDeployMap.darwin darwinAliases requestedHosts;
   }
 "

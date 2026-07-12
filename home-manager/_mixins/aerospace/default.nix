@@ -12,6 +12,14 @@ let
 
   aerospacePkgs = import ./pkgs { inherit pkgs; };
   workspaceCount = 6;
+  workspaceNames =
+    (map toString (lib.range 1 workspaceCount))
+    ++ [
+      "c" # chat
+      "e" # email
+      "s" # spotify
+    ]
+    ++ (lib.optional isWork "t"); # teams
   moveCommand =
     direction:
     if config.programs.xquartz.enable then
@@ -27,19 +35,9 @@ let
   getBindings =
     { prefix, action }:
     lib.mergeAttrsList (
-      map
-        (i: {
-          "${prefix}-${i}" = "${action} ${i}";
-        })
-        (
-          (map toString (lib.range 1 workspaceCount))
-          ++ [
-            "c" # chat
-            "e" # email
-            "s" # spotify
-          ]
-          ++ (lib.optional isWork "t") # teams
-        )
+      map (i: {
+        "${prefix}-${i}" = "${action} ${i}";
+      }) workspaceNames
     );
 in
 {
@@ -49,6 +47,9 @@ in
 
     # ex: https://nikitabobko.github.io/AeroSpace/guide.html#default-config
     settings = {
+      config-version = 2;
+      persistent-workspaces = workspaceNames;
+
       gaps = {
         outer.left = 2;
         outer.right = 2;
@@ -138,58 +139,41 @@ in
 
       on-focus-changed = [
         "move-mouse window-lazy-center"
-        # Work around https://github.com/nikitabobko/AeroSpace/issues/1615 using
-        # the guarded reaper from https://github.com/nikitabobko/AeroSpace/issues/1615#issuecomment-4667204873.
-        "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-reap-ghosts} >/dev/null 2>&1"
       ];
 
       on-window-detected = [
         # Chat apps go to C workspace
         {
-          "if" = {
-            app-id = "com.tinyspeck.slackmacgap";
-          };
+          "if" = "test %{app-bundle-id} = com.tinyspeck.slackmacgap";
           run = [ "move-node-to-workspace c" ];
         }
         {
-          "if" = {
-            app-id = "im.riot.app";
-          };
+          "if" = "test %{app-bundle-id} = im.riot.app";
           run = [ "move-node-to-workspace c" ];
         }
         {
-          "if" = {
-            app-id = "com.tdesktop.Telegram";
-          };
+          "if" = "test %{app-bundle-id} = com.tdesktop.Telegram";
           run = [ "move-node-to-workspace c" ];
         }
         # Spotify
         {
-          "if" = {
-            app-id = "com.spotify.client";
-          };
+          "if" = "test %{app-bundle-id} = com.spotify.client";
           run = [ "move-node-to-workspace s" ];
         }
         # Jellyfin Desktop on same workspace as Spotify
         {
-          "if" = {
-            app-id = "org.jellyfin.JellyfinDesktop";
-          };
+          "if" = "test %{app-bundle-id} = org.jellyfin.JellyfinDesktop";
           run = [ "move-node-to-workspace s" ];
         }
         # Email
         {
-          "if" = {
-            app-id = "org.nixos.thunderbird";
-          };
+          "if" = "test %{app-bundle-id} = org.nixos.thunderbird";
           run = [ "move-node-to-workspace e" ];
         }
       ]
       ++ lib.optionals isWork [
         {
-          "if" = {
-            app-id = "com.microsoft.teams2";
-          };
+          "if" = "test %{app-bundle-id} = com.microsoft.teams2";
           run = [ "move-node-to-workspace t" ];
         }
       ];

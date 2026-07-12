@@ -150,6 +150,7 @@ in
     ++ lib.optionals (!isWork) [
       age
       age-plugin-se
+      cliPkgs.sync-repo
       ramalama
       sops
     ];
@@ -159,6 +160,10 @@ in
     MANPAGER = "page -t man";
     CONTAINERS_MACHINE_PROVIDER = "libkrun";
   };
+
+  home.sessionPath = lib.optionals (!isWork) [
+    "$HOME/.priv-bin"
+  ];
 
   home.file = {
     # TODO: use native readline module for inputrc

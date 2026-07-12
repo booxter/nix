@@ -56,6 +56,7 @@ helpers.forAllSystems (
       ];
       buildPhase = ''
         bats --print-output-on-failure tests/get-local-builders.bats
+        bats --print-output-on-failure tests/codex-warmer.bats
         bats --print-output-on-failure tests/test-diff-config.bats
         bats --print-output-on-failure tests/test-prox-deploy.bats
         bats --print-output-on-failure tests/test-update-packages.bats
@@ -64,6 +65,7 @@ helpers.forAllSystems (
         bats --print-output-on-failure tests/test-vm.bats
         bats --print-output-on-failure tests/update-machines.bats
       '';
+      extraFileset = [ ./home-manager/_mixins/agents/pkgs/codex-warmer.sh ];
     };
     box-py = mkCheck {
       name = "box-py-tests";
