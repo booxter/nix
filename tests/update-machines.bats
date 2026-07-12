@@ -417,7 +417,9 @@ EOF
   run run_nixos_rebuild_from_repo boot srvarr
 
   [ "$status" -eq 0 ]
-  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname srvarr --print-build-logs --show-trace .#" ]
+  local flake_ref
+  flake_ref="$(deploy_flake_ref)"
+  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from ${flake_ref} nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname srvarr --print-build-logs --show-trace ${flake_ref}#" ]
 }
 
 @test "run_nixos_rebuild_from_repo uses a path flake outside a Git checkout" {
@@ -543,9 +545,11 @@ EOF
   [ "$(wc -l < "$SUDO_CALLS_OUT" | tr -d ' ')" = "1" ]
   [[ "$(<"$SUDO_ARGS_OUT")" == *" -c "* ]]
   [ "$(wc -l < "$NIX_ARGS_OUT" | tr -d ' ')" = "2" ]
-  [[ "$(<"$NIX_ARGS_OUT")" == *"shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin build"* ]]
+  local flake_ref
+  flake_ref="$(deploy_flake_ref)"
+  [[ "$(<"$NIX_ARGS_OUT")" == *"shell --inputs-from ${flake_ref} nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin build"* ]]
   [[ "$(<"$NIX_ARGS_OUT")" == *"--hostname JGWXHWDL4X"* ]]
-  [[ "$(<"$NIX_ARGS_OUT")" == *"--diff auto --print-build-logs --show-trace .#"* ]]
+  [[ "$(<"$NIX_ARGS_OUT")" == *"--diff auto --print-build-logs --show-trace ${flake_ref}#"* ]]
   [[ "$(<"$NIX_ARGS_OUT")" == *"build --no-link --profile /nix/var/nix/profiles/system $workdir/system"* ]]
   [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "activate" ]
 }
