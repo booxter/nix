@@ -13,7 +13,7 @@ the generated service environment.
 
 ## Architecture
 
-`prox-pkivm` runs `unifi-sync` as a systemd oneshot with a timer. The service
+`pki` runs `unifi-sync` as a systemd oneshot with a timer. The service
 uses a UniFi API key from sops-managed secrets and calls the UniFi Network API
 to converge the configured site.
 
