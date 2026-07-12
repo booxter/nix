@@ -53,12 +53,11 @@ def test_create_missing_monitor():
             "type": "HTTP",
             "url": "https://search.example/health",
             "interval": 300,
-            "tagNames": ["nix-inventory", "nix-service-search"],
         }
     ]
 
 
-def test_adopt_monitor_by_url_and_preserve_existing_tags():
+def test_adopt_monitor_by_url():
     client = FakeClient(
         [
             {
@@ -67,7 +66,6 @@ def test_adopt_monitor_by_url_and_preserve_existing_tags():
                 "type": "HTTP",
                 "url": "https://search.example/health",
                 "interval": 300,
-                "tags": [{"name": "personal"}],
             }
         ]
     )
@@ -82,13 +80,12 @@ def test_adopt_monitor_by_url_and_preserve_existing_tags():
                 "type": "HTTP",
                 "url": "https://search.example/health",
                 "interval": 300,
-                "tagNames": ["nix-inventory", "nix-service-search", "personal"],
             },
         )
     ]
 
 
-def test_update_managed_monitor_by_service_tag_when_url_changes():
+def test_adopt_monitor_by_title_when_url_changes():
     client = FakeClient(
         [
             {
@@ -97,7 +94,6 @@ def test_update_managed_monitor_by_service_tag_when_url_changes():
                 "type": "HTTP",
                 "url": "https://old.example/health",
                 "interval": 300,
-                "tags": ["nix-inventory", "nix-service-search"],
             }
         ]
     )
@@ -112,7 +108,6 @@ def test_update_managed_monitor_by_service_tag_when_url_changes():
                 "type": "HTTP",
                 "url": "https://search.example/health",
                 "interval": 300,
-                "tagNames": ["nix-inventory", "nix-service-search"],
             },
         )
     ]
@@ -120,26 +115,26 @@ def test_update_managed_monitor_by_service_tag_when_url_changes():
     assert client.deleted == []
 
 
-def test_delete_only_stale_managed_monitor():
+def test_delete_all_monitors_absent_from_inventory():
     client = FakeClient(
         [
             {
                 "id": 1,
+                "friendlyName": "Old",
                 "url": "https://old.example",
-                "tags": ["nix-inventory", "nix-service-old"],
             },
             {
                 "id": 2,
+                "friendlyName": "Manual",
                 "url": "https://manual.example",
-                "tags": ["personal"],
             },
         ]
     )
 
     actions = uptimerobot_sync.reconcile(client, [], 300)
 
-    assert actions == ["delete old (1)"]
-    assert client.deleted == [1]
+    assert actions == ["delete Old (1)", "delete Manual (2)"]
+    assert client.deleted == [1, 2]
 
 
 def test_noop_when_monitor_matches():
@@ -151,7 +146,6 @@ def test_noop_when_monitor_matches():
                 "type": "HTTP",
                 "url": "https://search.example/health",
                 "interval": 300,
-                "tags": ["nix-inventory", "nix-service-search"],
             }
         ]
     )
