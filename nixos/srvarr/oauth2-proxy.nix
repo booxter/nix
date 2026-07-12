@@ -13,6 +13,7 @@ let
   );
   backendPorts = {
     bazarr = config.services.bazarr.listenPort;
+    houndarr = config.systemd.services.houndarr.environment.HOUNDARR_PORT;
     lidarr = config.services.lidarr.settings.server.port;
     prowlarr = config.services.prowlarr.settings.server.port;
     radarr = config.services.radarr.settings.server.port;
@@ -77,6 +78,7 @@ let
   };
   backendProbeLocationsByName = servarrPingProbeLocations // {
     bazarr = mkBackendProbePathLocation "bazarr" "= /api/system/ping";
+    houndarr = mkBackendProbePathLocation "houndarr" "= /api/health";
     sabnzbd."= /__probe/sabnzbd-version" = mkBackendProbeLocation {
       port = backendPorts.sabnzbd;
       upstreamPath = "/api?mode=version&output=json";

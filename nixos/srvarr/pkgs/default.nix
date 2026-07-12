@@ -10,6 +10,8 @@ in
 
   aurral = pkgs.callPackage ./aurral { };
 
+  houndarr = pkgs.callPackage ./houndarr { };
+
   letterboxd-list-radarr = pkgs.callPackage ./letterboxd-list-radarr { };
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller {

@@ -186,6 +186,7 @@ rec {
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
   srvarrAdminAppIds = [
     "bazarr"
+    "houndarr"
     "lidarr"
     "prowlarr"
     "radarr"
@@ -610,6 +611,14 @@ rec {
       glanceCategory = "user";
     }))
     (resolveService (mkService {
+      id = "houndarr";
+      scope = "internal";
+      owner = "srvarr";
+      probePath = "/oauth2/sign_in";
+      backendProbe.path = "/api/health";
+      glanceCategory = "media-admin";
+    }))
+    (resolveService (mkService {
       id = "radarr";
       scope = "internal";
       owner = "srvarr";
@@ -973,6 +982,7 @@ rec {
         "dash"
         "glance"
         "seerr"
+        "houndarr"
         "radarr"
         "sonarr"
         "lidarr"
