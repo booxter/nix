@@ -187,30 +187,37 @@ format_host_list() {
   done
 }
 
+deploy_installable_for_host() {
+  local flake_ref="$1"
+  local host="$2"
+  local work_map="$3"
+
+  case "$(host_kind_from_work_map "$host" "$work_map")" in
+    nixos)
+      printf '%s#nixosConfigurations.%s.config.system.build.toplevel' "$flake_ref" "$host"
+      ;;
+    darwin)
+      printf '%s#darwinConfigurations.%s.system' "$flake_ref" "$host"
+      ;;
+    *)
+      echo "Cannot construct deploy installable for unknown host: ${host}" >&2
+      return 1
+      ;;
+  esac
+}
+
 prebuild_deploy_targets() {
   local branch="$1"
   local repo_url="$2"
   local work_map="$3"
   shift 3
 
-  local flake_ref host kind
+  local flake_ref host
   local -a installables=()
 
   flake_ref="git+https://github.com/${repo_url#github.com:}.git?ref=${branch}"
   for host in "$@"; do
-    kind="$(host_kind_from_work_map "$host" "$work_map")"
-    case "$kind" in
-      nixos)
-        installables+=("${flake_ref}#nixosConfigurations.${host}.config.system.build.toplevel")
-        ;;
-      darwin)
-        installables+=("${flake_ref}#darwinConfigurations.${host}.system")
-        ;;
-      *)
-        echo "Cannot prebuild unknown host: ${host}" >&2
-        return 1
-        ;;
-    esac
+    installables+=("$(deploy_installable_for_host "$flake_ref" "$host" "$work_map")")
   done
 
   echo "Prebuilding ${#installables[@]} deployment target(s) from branch ${branch}..."

@@ -312,6 +312,13 @@ EOF
   [ "$(<"$NIX_BUILD_ARGS_OUT")" = "build -L --show-trace --no-link git+https://github.com/booxter/nix.git?ref=feature/test#nixosConfigurations.frame.config.system.build.toplevel git+https://github.com/booxter/nix.git?ref=feature/test#darwinConfigurations.mair.system" ]
 }
 
+@test "deploy_installable_for_host rejects hosts absent from the work map" {
+  run deploy_installable_for_host .# missing '{"nixos":{},"darwin":{}}'
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"unknown host: missing"* ]]
+}
+
 @test "run_nixos_rebuild_from_repo uses pinned nh for switch and boot" {
   workdir="$BATS_TMPDIR/nixos-nh-action"
   mkdir -p "$workdir/bin"
