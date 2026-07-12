@@ -40,6 +40,7 @@ in
   programs.codexDesktopLinux = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
     enable = true;
     cliPackage = config.programs.codex.package;
+    computerUseUi.enable = true;
     remoteMobileControl.enable = true;
     remoteControl = {
       enable = true;
