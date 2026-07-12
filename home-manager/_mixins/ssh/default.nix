@@ -78,10 +78,6 @@ in
 
       # some servers have a problem with kitty terminfo, be conservative
       extraConfig = ''
-        # Work around Home Manager issue #9362: Darwin git-sync launchd jobs may
-        # use /usr/bin/ssh, which does not understand every option supported by
-        # the Nix-provided OpenSSH in interactive shells.
-        IgnoreUnknown WarnWeakCrypto
         SetEnv TERM=xterm-256color
         WarnWeakCrypto no
       '';

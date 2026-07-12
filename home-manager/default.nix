@@ -27,9 +27,6 @@
     ./_mixins/tmux
     ./_mixins/yubi.nix
   ]
-  ++ lib.optionals (hmFull && !isWork) [
-    ./_mixins/git-sync
-  ]
   ++ lib.optionals isDesktop [
     ./_mixins/aerospace
     ./_mixins/email

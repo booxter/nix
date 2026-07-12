@@ -161,6 +161,10 @@ in
     CONTAINERS_MACHINE_PROVIDER = "libkrun";
   };
 
+  home.sessionPath = lib.optionals (!isWork) [
+    "$HOME/.priv-bin"
+  ];
+
   home.file = {
     # TODO: use native readline module for inputrc
     ".inputrc".source = ./inputrc;

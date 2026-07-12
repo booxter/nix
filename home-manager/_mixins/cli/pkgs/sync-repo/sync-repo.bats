@@ -18,7 +18,7 @@ setup() {
   "$REAL_GIT" -C "$TEST_ROOT/seed" remote add origin "$TEST_REMOTE"
   "$REAL_GIT" -C "$TEST_ROOT/seed" push --set-upstream origin master
 
-  "$REAL_GIT" config --global url."$TEST_REMOTE".insteadOf git@github.com:booxter/notes.git
+  "$REAL_GIT" config --global url."$TEST_REMOTE".insteadOf git@github.com:booxter/dotfiles.git
 }
 
 configure_repo() {
@@ -27,20 +27,20 @@ configure_repo() {
 }
 
 sync_repo() {
-  "$SYNC_REPO_BIN" notes
+  "$SYNC_REPO_BIN" dotfiles
 }
 
 @test "sync-repo clones a missing repository" {
   run sync_repo
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"cloned notes into $HOME/notes"* ]]
-  [ "$("$REAL_GIT" -C "$HOME/notes" rev-parse HEAD)" = "$("$REAL_GIT" --git-dir="$TEST_REMOTE" rev-parse master)" ]
+  [[ "$output" == *"cloned dotfiles into $HOME/.priv-bin"* ]]
+  [ "$("$REAL_GIT" -C "$HOME/.priv-bin" rev-parse HEAD)" = "$("$REAL_GIT" --git-dir="$TEST_REMOTE" rev-parse master)" ]
 }
 
 @test "sync-repo rebases incoming commits and pushes local commits" {
   sync_repo
-  configure_repo "$HOME/notes"
+  configure_repo "$HOME/.priv-bin"
 
   "$REAL_GIT" clone "$TEST_REMOTE" "$TEST_ROOT/other"
   configure_repo "$TEST_ROOT/other"
@@ -49,21 +49,21 @@ sync_repo() {
   "$REAL_GIT" -C "$TEST_ROOT/other" commit -m remote
   "$REAL_GIT" -C "$TEST_ROOT/other" push
 
-  printf 'local\n' >"$HOME/notes/local"
-  "$REAL_GIT" -C "$HOME/notes" add local
-  "$REAL_GIT" -C "$HOME/notes" commit -m local
+  printf 'local\n' >"$HOME/.priv-bin/local"
+  "$REAL_GIT" -C "$HOME/.priv-bin" add local
+  "$REAL_GIT" -C "$HOME/.priv-bin" commit -m local
 
   run sync_repo
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"pushed notes from $HOME/notes"* ]]
-  [ "$("$REAL_GIT" -C "$HOME/notes" rev-parse HEAD)" = "$("$REAL_GIT" --git-dir="$TEST_REMOTE" rev-parse master)" ]
-  [ "$("$REAL_GIT" -C "$HOME/notes" log -1 --format=%s)" = local ]
+  [[ "$output" == *"pushed dotfiles from $HOME/.priv-bin"* ]]
+  [ "$("$REAL_GIT" -C "$HOME/.priv-bin" rev-parse HEAD)" = "$("$REAL_GIT" --git-dir="$TEST_REMOTE" rev-parse master)" ]
+  [ "$("$REAL_GIT" -C "$HOME/.priv-bin" log -1 --format=%s)" = local ]
 }
 
 @test "sync-repo leaves a failed rebase for manual resolution" {
   sync_repo
-  configure_repo "$HOME/notes"
+  configure_repo "$HOME/.priv-bin"
 
   "$REAL_GIT" clone "$TEST_REMOTE" "$TEST_ROOT/other"
   configure_repo "$TEST_ROOT/other"
@@ -72,20 +72,22 @@ sync_repo() {
   "$REAL_GIT" -C "$TEST_ROOT/other" commit -m remote
   "$REAL_GIT" -C "$TEST_ROOT/other" push
 
-  printf 'local\n' >"$HOME/notes/value"
-  "$REAL_GIT" -C "$HOME/notes" add value
-  "$REAL_GIT" -C "$HOME/notes" commit -m local
+  printf 'local\n' >"$HOME/.priv-bin/value"
+  "$REAL_GIT" -C "$HOME/.priv-bin" add value
+  "$REAL_GIT" -C "$HOME/.priv-bin" commit -m local
 
   run sync_repo
 
   [ "$status" -ne 0 ]
-  [[ "$output" == *"rebase failed in $HOME/notes; resolve it there manually"* ]]
-  [ -d "$HOME/notes/.git/rebase-merge" ]
+  [[ "$output" == *"rebase failed in $HOME/.priv-bin; resolve it there manually"* ]]
+  [ -d "$HOME/.priv-bin/.git/rebase-merge" ]
 }
 
-@test "sync-repo rejects unknown names" {
-  run "$SYNC_REPO_BIN" unknown
+@test "sync-repo rejects unknown and removed repository names" {
+  for name in unknown notes vault; do
+    run "$SYNC_REPO_BIN" "$name"
 
-  [ "$status" -eq 2 ]
-  [[ "$output" == *"unknown repository: unknown"* ]]
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"unknown repository: $name"* ]]
+  done
 }

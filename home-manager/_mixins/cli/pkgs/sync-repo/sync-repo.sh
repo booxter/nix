@@ -4,7 +4,7 @@ usage() {
   cat <<'EOF'
 Usage: sync-repo <name>
 
-Synchronize one of: gmailctl, pass, notes, vault, dotfiles.
+Synchronize one of: gmailctl, pass, dotfiles.
 EOF
 }
 
@@ -22,14 +22,6 @@ case "$name" in
   pass)
     remote=git@github.com:booxter/pass.git
     repo_dir=${PASSWORD_STORE_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/password-store}
-    ;;
-  notes)
-    remote=git@github.com:booxter/notes.git
-    repo_dir=$HOME/notes
-    ;;
-  vault)
-    remote=git@github.com:booxter/vault.git
-    repo_dir=$HOME/vault
     ;;
   dotfiles)
     remote=git@github.com:booxter/dotfiles.git
