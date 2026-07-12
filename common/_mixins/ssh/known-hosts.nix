@@ -11,11 +11,7 @@ let
   };
   nixosKnownHosts = builtins.listToAttrs (
     map (
-      spec:
-      mkKnownHost spec.name (
-        hostInventory.toNixosHostCertificateDnsNames spec
-        ++ map hostInventory.toLocalDnsName (hostInventory.toNixosMigrationDnsNames spec)
-      )
+      spec: mkKnownHost spec.name (hostInventory.toNixosHostCertificateDnsNames spec)
     ) hostInventory.nixosHostSpecs
   );
   darwinKnownHosts = lib.mapAttrs' (
@@ -36,7 +32,11 @@ let
       ++ map (host: hostInventory.toLocalDnsName (lib.toLower host)) names
     )
   ) hostInventory.darwinHosts;
+  initrdKnownHosts.frame-initrd = {
+    hostNames = [ "frame-initrd" ];
+    publicKey = readPublicKey ../../../public-keys/hosts/frame-initrd.pub;
+  };
 in
 {
-  programs.ssh.knownHosts = nixosKnownHosts // darwinKnownHosts;
+  programs.ssh.knownHosts = nixosKnownHosts // darwinKnownHosts // initrdKnownHosts;
 }

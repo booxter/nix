@@ -30,17 +30,17 @@ let
   builderDhcpReservations = {
     "1" = {
       match = "bc:24:11:49:bf:fc";
-      hostname = "prox-builder1vm";
+      hostname = "builder1";
       ip = "192.168.12.106";
     };
     "2" = {
       match = "bc:24:11:dc:ea:2c";
-      hostname = "prox-builder2vm";
+      hostname = "builder2";
       ip = "192.168.13.243";
     };
     "3" = {
       match = "bc:24:11:2a:ee:d7";
-      hostname = "prox-builder3vm";
+      hostname = "builder3";
       ip = "192.168.11.114";
     };
   };
@@ -147,29 +147,12 @@ rec {
 
   virtPlatform = "aarch64-darwin";
 
-  toProxVmName = name: "prox-${name}vm";
   isNixosVM = spec: spec.isVM or false;
   isNixosBM = spec: !(isNixosVM spec);
-  hasStableIpv4Address = spec: spec ? dhcpReservation || spec ? ipAddress;
   toNixosConfigName = spec: spec.name;
-  toNixosStableHostName = spec: spec.name;
-  toNixosRuntimeHostName =
-    spec:
-    spec.hostname
-      or (spec.dhcpReservation.hostname or (if isNixosVM spec then toProxVmName spec.name else spec.name)
-      );
+  toNixosRuntimeHostName = spec: spec.hostname or (spec.dhcpReservation.hostname or spec.name);
   toNixosPrimaryDnsName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
-  toNixosLegacyDnsNames =
-    spec:
-    lib.unique (
-      (spec.legacyDnsNames or [ ])
-      ++ lib.optionals (isNixosVM spec && toNixosPrimaryDnsName spec != toProxVmName spec.name) [
-        (toProxVmName spec.name)
-      ]
-    );
-  toNixosAllDnsNames =
-    spec: lib.unique ([ (toNixosPrimaryDnsName spec) ] ++ toNixosLegacyDnsNames spec);
-  toNixosShortDnsName = toNixosStableHostName;
+  toNixosShortDnsName = spec: spec.name;
   toLocalDnsName = label: "${label}.local";
   toInternalHttpsServiceHosts =
     serviceName:
@@ -184,29 +167,20 @@ rec {
       };
     in
     lib.unique (lib.concatMap mkHosts (serviceLabels.${serviceName} or [ serviceName ]));
-  toNixosMigrationDnsNames =
-    spec: lib.unique ([ (toNixosShortDnsName spec) ] ++ toNixosAllDnsNames spec);
   toNixosHostCertificateDnsNames =
     spec:
     let
-      names = toNixosMigrationDnsNames spec;
+      primaryName = toNixosPrimaryDnsName spec;
+      shortName = toNixosShortDnsName spec;
     in
-    lib.unique (
-      names
-      ++ map (name: "${name}.${site.lan.domain}") names
-      ++ [ (toLocalDnsName (toNixosShortDnsName spec)) ]
-    );
-  toNixosLanDnsAliasLabels =
-    spec:
-    lib.unique (
-      lib.optionals (
-        isNixosVM spec
-        && hasStableIpv4Address spec
-        && toNixosShortDnsName spec != toNixosPrimaryDnsName spec
-      ) [ (toNixosShortDnsName spec) ]
-      ++ (spec.localDnsAliases or [ ])
-    );
-  toNixosSshHostName = toNixosPrimaryDnsName;
+    lib.unique ([
+      primaryName
+      shortName
+      "${primaryName}.${site.lan.domain}"
+      "${shortName}.${site.lan.domain}"
+      (toLocalDnsName shortName)
+    ]);
+  toNixosLanDnsAliasLabels = spec: lib.unique (spec.localDnsAliases or [ ]);
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
@@ -853,7 +827,6 @@ rec {
     {
       hostKind = "proxmox";
       name = nvws;
-      deployPriority = "early";
       inherit username;
       isWork = true;
       stateVersion = "25.11";
@@ -889,7 +862,6 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx1-lab";
-      deployPriority = "early";
       inherit username;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
@@ -906,7 +878,6 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx2-lab";
-      deployPriority = "early";
       inherit username;
       upsHost = "prx1-lab";
       stateVersion = prxStateVersion;
@@ -923,7 +894,6 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx3-lab";
-      deployPriority = "early";
       inherit username;
       upsHost = "prx1-lab";
       stateVersion = prxStateVersion;
@@ -942,6 +912,11 @@ rec {
       name = "nv";
       isWork = true;
       upsHost = nvws;
+      dhcpReservation = {
+        match = "bc:24:11:ed:30:d3";
+        hostname = "nv";
+        ip = "192.168.10.138";
+      };
       cores = 64;
       memorySize = 128;
       sshPort = 10000;
@@ -950,12 +925,11 @@ rec {
     {
       isVM = true;
       name = "cache";
-      deployPriority = "late";
       upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
-        hostname = "prox-cachevm";
+        hostname = "cache";
         ip = "192.168.20.7";
       };
       sshPort = 10004;
@@ -997,7 +971,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:19:4d:d1";
-        hostname = "prox-srvarrvm";
+        hostname = "srvarr";
         ip = "192.168.20.2";
       };
     }
@@ -1018,7 +992,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:06:e8:8b";
-        hostname = "prox-fanavm";
+        hostname = "fana";
         ip = "192.168.13.110";
       };
     }
@@ -1033,7 +1007,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:91:b5:77";
-        hostname = "prox-gwvm";
+        hostname = "gw";
         ip = "192.168.20.3";
       };
     }
@@ -1057,7 +1031,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:fd:eb:9c";
-        hostname = "prox-orgvm";
+        hostname = "org";
         ip = "192.168.20.4";
       };
     }
@@ -1079,7 +1053,7 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:c6:ab:fc";
-        hostname = "prox-pkivm";
+        hostname = "pki";
         ip = "192.168.20.5";
       };
     }

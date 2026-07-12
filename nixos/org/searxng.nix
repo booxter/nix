@@ -174,6 +174,11 @@ in
     };
   };
 
+  systemd.services.searx-init = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
+  };
+
   host.sso.oauth2ProxyGates.search = {
     enable = true;
     clientId = oauth2ClientId;

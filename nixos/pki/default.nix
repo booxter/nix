@@ -29,6 +29,7 @@ let
       (hostInventory.toLocalDnsName config.services.avahi.hostName)
     ]
   );
+  caDnsNamesJson = builtins.toJSON caDnsNames;
   caDnsArgs = lib.concatMapStringsSep " " (name: "--dns ${lib.escapeShellArg name}") caDnsNames;
   bootstrapScript = pkgs.writeShellScript "step-ca-bootstrap" ''
     set -eu
@@ -60,7 +61,10 @@ let
     ${pkgs.jq}/bin/jq \
       --arg provisioner ${lib.escapeShellArg caProvisioner} \
       --arg cert_lifetime ${lib.escapeShellArg certLifetime} \
+      --argjson dns_names ${lib.escapeShellArg caDnsNamesJson} \
       '
+        .dnsNames = $dns_names
+        |
         .authority.provisioners |= map(
           if .name == $provisioner then
             .claims = ((.claims // {}) + {

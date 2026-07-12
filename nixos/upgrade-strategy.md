@@ -37,7 +37,7 @@ All times below are in `America/New_York`.
 | --- | --- | --- |
 | `06:00` daily | Flake input bump workflow | GitHub Actions runs `.github/workflows/auto-update.yml`, updates `flake.lock`, and opens a PR. |
 | `08:30` and `20:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized non-work closures into Attic. |
-| `03:00` Monday | Nix builder VM upgrade window | Set in `lib/inventory.nix` for `prox-builder1vm`, `prox-builder2vm`, and `prox-builder3vm`. |
+| `03:00` Monday | Nix builder VM upgrade window | Set in `lib/inventory.nix` for `builder1`, `builder2`, and `builder3`. |
 | `03:30` Monday | `cache` upgrade window | Set in `nixos/cache/default.nix`. |
 | `04:00` Monday | Proxmox hypervisor upgrade window | Set in `lib/helpers.nix` for Proxmox hosts. |
 | `05:15` daily | Default NixOS upgrade window | Most NixOS hosts inherit this from `nixos/default.nix`. |

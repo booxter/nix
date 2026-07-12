@@ -56,7 +56,7 @@ in
 
   host.backups.beast = {
     enable = true;
-    repoName = "orgvm";
+    repoName = "org";
     paths = backupPaths;
     exclude = backupExclude;
   };

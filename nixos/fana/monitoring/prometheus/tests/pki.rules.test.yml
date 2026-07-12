@@ -71,7 +71,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="fana",cert_name="grafana",category="internal_https_server"}'
         values: "60x62"
     alert_rule_test:
       - eval_time: 30m
@@ -79,7 +79,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="fana",cert_name="grafana",category="internal_https_server"}'
         values: "29x60 40x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -92,19 +92,19 @@ tests:
               category: pki
               cert_name: grafana
               cert_category: internal_https_server
-              host: prox-fanavm
+              host: fana
               instance: pki
               job: node-mtls
               severity: warning
             exp_annotations:
-              summary: "Managed PKI cert expiring soon: prox-fanavm / grafana"
-              description: "The managed certificate grafana for prox-fanavm (internal_https_server) has less than 30 days remaining."
+              summary: "Managed PKI cert expiring soon: fana / grafana"
+              description: "The managed certificate grafana for fana (internal_https_server) has less than 30 days remaining."
       - eval_time: 30m30s
         alertname: InternalPKICertExpiringSoon
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="fana",cert_name="grafana",category="internal_https_server"}'
         values: "30x62"
     alert_rule_test:
       - eval_time: 30m
@@ -112,7 +112,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="prox-fanavm",cert_name="grafana",category="internal_https_server"}'
+      - series: 'host_observability_pki_cert_days_remaining{job="node-mtls",instance="pki",host="fana",cert_name="grafana",category="internal_https_server"}'
         values: "13x60 20x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -125,13 +125,13 @@ tests:
               category: pki
               cert_name: grafana
               cert_category: internal_https_server
-              host: prox-fanavm
+              host: fana
               instance: pki
               job: node-mtls
               severity: critical
             exp_annotations:
-              summary: "Managed PKI cert expiring critically soon: prox-fanavm / grafana"
-              description: "The managed certificate grafana for prox-fanavm (internal_https_server) has less than 14 days remaining."
+              summary: "Managed PKI cert expiring critically soon: fana / grafana"
+              description: "The managed certificate grafana for fana (internal_https_server) has less than 14 days remaining."
       - eval_time: 30m30s
         alertname: InternalPKICertExpiringCritical
 

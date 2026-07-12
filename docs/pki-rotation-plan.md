@@ -1,7 +1,7 @@
 # PKI Rotation Plan
 
 This repo manages internal PKI leaf certificates through encrypted host
-secrets, so rotation should happen centrally from `prox-pkivm`, not on each
+secrets, so rotation should happen centrally from `pki`, not on each
 host. `pki` already runs `step-ca` and the issuer apps, and the fleet already
 converges from Git state via the normal review and upgrade flow.
 
@@ -15,7 +15,7 @@ converges from Git state via the normal review and upgrade flow.
 
 ## Secret Access Model
 
-`prox-pkivm` is a shared `sops` recipient for the fleet secrets. That lets the
+`pki` is a shared `sops` recipient for the fleet secrets. That lets the
 rotation controller decrypt and re-encrypt repo-managed host secrets without
 using a workstation-only age key.
 
@@ -34,7 +34,7 @@ This is intentional:
 
 ## Runtime Components
 
-`prox-pkivm` runs two PKI jobs:
+`pki` runs two PKI jobs:
 
 - `pki-status-export`
   - scans managed certificates
@@ -59,7 +59,7 @@ branch.
 1. `pki-rotate` scans the repo-managed internal leaf inventory.
 2. If no leaf cert is inside the `45d` rotation window, the run exits cleanly.
 3. If one or more leaf certs are due, `pki-rotate` reissues them from the local
-   `step-ca` on `prox-pkivm`.
+   `step-ca` on `pki`.
 4. Updated certs are written back into the corresponding `secrets/*.yaml`
    files.
 5. The controller commits those encrypted updates to `ci/pki-rotate`.
@@ -74,7 +74,7 @@ works on that branch instead of re-creating the change from the base branch.
 
 PKI monitoring is split into internal managed cert state and public HTTPS state.
 
-Internal metrics come from `pki-status-export` on `prox-pkivm`:
+Internal metrics come from `pki-status-export` on `pki`:
 
 - root CA expiry
 - intermediate CA expiry

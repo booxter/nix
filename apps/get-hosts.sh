@@ -14,17 +14,16 @@ fi
 nix eval --impure --json --expr "
   let
     hostInventory = import \"${REPO_ROOT}/lib/inventory.nix\" {
-      # get-hosts only needs VM naming and deploy metadata. Keep this import cheap
+      # get-hosts only needs VM naming and work/personal classification. Keep this import cheap
       # by stubbing the one lib function inventory.nix currently references for the
       # unrelated UPS-name helper.
       lib = {
         strings.toUpper = s: s;
       };
     };
-    hostDeployMap = {
+    hostMap = {
       darwin = builtins.mapAttrs (_: cfg: {
         isWork = cfg.isWork or false;
-        deployPriority = cfg.deployPriority or \"normal\";
       }) hostInventory.darwinHosts;
       nixos = builtins.foldl' (
         acc: spec:
@@ -35,7 +34,6 @@ nix eval --impure --json --expr "
         // {
           \${configName} = {
             isWork = spec.isWork or false;
-            deployPriority = spec.deployPriority or \"normal\";
           };
         }
       ) { } hostInventory.nixosHostSpecs;
@@ -72,7 +70,7 @@ nix eval --impure --json --expr "
       );
   in
   {
-    nixos = filterNames hostDeployMap.nixos nixosAliases requestedHosts;
-    darwin = filterNames hostDeployMap.darwin darwinAliases requestedHosts;
+    nixos = filterNames hostMap.nixos nixosAliases requestedHosts;
+    darwin = filterNames hostMap.darwin darwinAliases requestedHosts;
   }
 "

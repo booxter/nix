@@ -52,16 +52,7 @@ list_target_hosts_from_flake() {
         if (.targetDisplayNames? | type) == "array" then
           .targetDisplayNames
         else
-          .nixosConfigurations as $cfgs
-          | [
-              $cfgs
-              | keys[]
-              | if test("^prox-.*vm$") then
-                  capture("^prox-(?<host>.*)vm$").host
-                else
-                  .
-                end
-            ]
+          [.nixosConfigurations | keys[]]
         end
         | unique[]
       ' \
@@ -77,7 +68,7 @@ resolve_target_config_from_flake() {
         | (.targetAliases // {}) as $aliases
         | if ($aliases | has($host)) then
             $aliases[$host]
-          elif (($host | test("^prox-.*vm$") | not) and ($cfgs | has($host))) then
+          elif ($cfgs | has($host)) then
             $host
           else
             empty

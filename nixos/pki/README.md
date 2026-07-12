@@ -1,6 +1,6 @@
-# `prox-pkivm`
+# `pki`
 
-`prox-pkivm` is the home fleet control-plane VM for internal PKI, SSO, and
+`pki` is the home fleet control-plane VM for internal PKI, SSO, and
 UniFi state sync. It runs `step-ca`, keeps the CA state in `/var/lib/step-ca`,
 and is the machine from which we issue internal HTTPS and Prometheus mTLS leaf
 certificates into host `sops` secrets. It also runs Kanidm as the fleet OIDC

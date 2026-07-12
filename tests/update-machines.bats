@@ -20,8 +20,8 @@ if [[ "${1-}" == "build" ]]; then
   fi
 elif [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
   printf '%s\n' '127.0.0.1'
-elif [[ "$*" == *"hostDeployMap"* ]]; then
-  printf '%s\n' '{"darwin":{},"nixos":{"alpha":{"isWork":false,"deployPriority":"normal"},"beta":{"isWork":false,"deployPriority":"normal"},"controller":{"isWork":false,"deployPriority":"normal"},"gamma":{"isWork":false,"deployPriority":"normal"},"nv":{"isWork":true,"deployPriority":"normal"}}}'
+elif [[ "$*" == *"hostMap"* ]]; then
+  printf '%s\n' '{"darwin":{},"nixos":{"alpha":{"isWork":false},"beta":{"isWork":false},"controller":{"isWork":false},"gamma":{"isWork":false},"nv":{"isWork":true}}}'
 elif [[ "$*" == *"hostInventory = import ./lib/inventory.nix"* ]]; then
   printf '%s\n' '{"alpha":"alpha","beta":"beta","controller":"controller","gamma":"gamma","nv":"nv"}'
 else
@@ -105,13 +105,6 @@ fi
 cmd=("${args[@]:$cmd_start}")
 joined="${cmd[*]}"
 
-if [[ "$joined" == "true" ]]; then
-  if [[ "${SSH_TEST_MODE:-}" == "unreachable" ]]; then
-    exit 1
-  fi
-  exit 0
-fi
-
 if [[ "$joined" == cat\ \>* ]]; then
   if [[ "$joined" == *"update-nix-repo-"* && -n "${SSH_UPLOADED_ARCHIVE_OUT:-}" ]]; then
     cat > "$SSH_UPLOADED_ARCHIVE_OUT"
@@ -133,10 +126,6 @@ case "${SSH_TEST_MODE:-}" in
         exit 0
         ;;
     esac
-    ;;
-  unreachable)
-    echo "ssh stub: unexpected command in unreachable mode: $joined" >&2
-    exit 97
     ;;
   *)
     exit 0
@@ -251,10 +240,10 @@ EOF
 }
 
 @test "resolve_runtime_host can differ from connection host" {
-  export HOST_RUNTIME_MAP_JSON='{"fana":"prox-fanavm"}'
-  run resolve_runtime_host fana
+  export HOST_RUNTIME_MAP_JSON='{"alpha":"alpha-runtime"}'
+  run resolve_runtime_host alpha
   [ "$status" -eq 0 ]
-  [ "$output" = "prox-fanavm" ]
+  [ "$output" = "alpha-runtime" ]
 }
 
 @test "resolve_host_alias maps host aliases" {
@@ -287,7 +276,7 @@ EOF
 }
 
 @test "hosts_from_host_map returns sorted unique hosts" {
-  host_map='{"darwin":{"mmini":{"isWork":false,"deployPriority":"normal"}},"nixos":{"beast":{"isWork":false,"deployPriority":"normal"},"nvws":{"isWork":true,"deployPriority":"early"}}}'
+  host_map='{"darwin":{"mmini":{"isWork":false}},"nixos":{"beast":{"isWork":false},"nvws":{"isWork":true}}}'
   run hosts_from_host_map "$host_map"
   [ "$status" -eq 0 ]
   expected=$'beast\nmmini\nnvws'
@@ -295,7 +284,7 @@ EOF
 }
 
 @test "host_kind_from_host_map identifies NixOS and Darwin hosts" {
-  host_map='{"darwin":{"mair":{"isWork":false,"deployPriority":"normal"}},"nixos":{"frame":{"isWork":false,"deployPriority":"normal"}}}'
+  host_map='{"darwin":{"mair":{"isWork":false}},"nixos":{"frame":{"isWork":false}}}'
 
   run host_kind_from_host_map frame "$host_map"
   [ "$status" -eq 0 ]
@@ -310,20 +299,20 @@ EOF
   [ -z "$output" ]
 }
 
-@test "host_metadata_from_host_map returns kind and deploy metadata together" {
-  host_map='{"darwin":{"mair":{"isWork":true,"deployPriority":"normal"}},"nixos":{"frame":{"isWork":false,"deployPriority":"normal"}}}'
+@test "host_metadata_from_host_map returns kind and work classification together" {
+  host_map='{"darwin":{"mair":{"isWork":true}},"nixos":{"frame":{"isWork":false}}}'
 
   run host_metadata_from_host_map frame "$host_map"
   [ "$status" -eq 0 ]
-  [ "$output" = $'nixos\tfalse\tnormal' ]
+  [ "$output" = $'nixos\tfalse' ]
 
   run host_metadata_from_host_map mair "$host_map"
   [ "$status" -eq 0 ]
-  [ "$output" = $'darwin\ttrue\tnormal' ]
+  [ "$output" = $'darwin\ttrue' ]
 }
 
 @test "filter_hosts_by_mode includes only personal hosts" {
-  host_map='{"darwin":{"mmini":{"isWork":false,"deployPriority":"normal"}},"nixos":{"beast":{"isWork":false,"deployPriority":"normal"},"nvws":{"isWork":true,"deployPriority":"early"}}}'
+  host_map='{"darwin":{"mmini":{"isWork":false}},"nixos":{"beast":{"isWork":false},"nvws":{"isWork":true}}}'
   run filter_hosts_by_mode personal "$host_map" nvws beast mmini
   [ "$status" -eq 0 ]
   expected=$'beast\nmmini'
@@ -331,7 +320,7 @@ EOF
 }
 
 @test "filter_hosts_by_mode includes only work hosts" {
-  host_map='{"darwin":{"mmini":{"isWork":false,"deployPriority":"normal"}},"nixos":{"beast":{"isWork":false,"deployPriority":"normal"},"nvws":{"isWork":true,"deployPriority":"early"}}}'
+  host_map='{"darwin":{"mmini":{"isWork":false}},"nixos":{"beast":{"isWork":false},"nvws":{"isWork":true}}}'
   run filter_hosts_by_mode work "$host_map" nvws beast mmini
   [ "$status" -eq 0 ]
   expected=$'nvws'
@@ -342,14 +331,6 @@ EOF
   run filter_hosts_by_mode both 'not parsed in both mode' nvws beast mmini
   [ "$status" -eq 0 ]
   expected=$'nvws\nbeast\nmmini'
-  [ "$output" = "$expected" ]
-}
-
-@test "prioritize_hosts orders priority, normal, deferred" {
-  host_map='{"darwin":{},"nixos":{"cache":{"isWork":false,"deployPriority":"late"},"nvws":{"isWork":true,"deployPriority":"early"},"zeta":{"isWork":false,"deployPriority":"normal"},"prx2-lab":{"isWork":false,"deployPriority":"early"},"alpha":{"isWork":false,"deployPriority":"normal"}}}'
-  run prioritize_hosts "$host_map" cache nvws zeta prx2-lab alpha
-  [ "$status" -eq 0 ]
-  expected=$'nvws\nprx2-lab\nzeta\nalpha\ncache'
   [ "$output" = "$expected" ]
 }
 
@@ -375,7 +356,7 @@ EOF
 
   export PATH="$workdir/bin:$PATH"
   export NIX_BUILD_ARGS_OUT="$workdir/nix.args"
-  host_map='{"nixos":{"frame":{"isWork":false,"deployPriority":"normal"}},"darwin":{"mair":{"isWork":false,"deployPriority":"normal"}}}'
+  host_map='{"nixos":{"frame":{"isWork":false}},"darwin":{"mair":{"isWork":false}}}'
 
   run prebuild_deploy_targets feature/test github.com:booxter/nix "$host_map" frame mair
 
@@ -400,7 +381,7 @@ EOF
 
   export PATH="$workdir/bin:$PATH"
   export NIX_BUILD_ARGS_OUT="$workdir/nix.args"
-  host_map='{"nixos":{"frame":{"isWork":false,"deployPriority":"normal"}},"darwin":{"mair":{"isWork":false,"deployPriority":"normal"}}}'
+  host_map='{"nixos":{"frame":{"isWork":false}},"darwin":{"mair":{"isWork":false}}}'
 
   run prebuild_local_deploy_targets "$workdir/repo" deadbeef "$host_map" frame mair
 
@@ -436,7 +417,33 @@ EOF
   run run_nixos_rebuild_from_repo boot srvarr
 
   [ "$status" -eq 0 ]
-  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname srvarr --print-build-logs --show-trace .#" ]
+  local flake_ref
+  flake_ref="$(deploy_flake_ref)"
+  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from ${flake_ref} nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname srvarr --print-build-logs --show-trace ${flake_ref}#" ]
+}
+
+@test "run_nixos_rebuild_from_repo uses a path flake outside a Git checkout" {
+  workdir="$BATS_TMPDIR/nixos-nh-path-action"
+  mkdir -p "$workdir/bin" "$workdir/repo"
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$NIX_ARGS_OUT"
+EOF
+  } > "$workdir/bin/nix"
+  chmod +x "$workdir/bin/nix"
+
+  export PATH="$workdir/bin:$PATH"
+  export NIX_ARGS_OUT="$workdir/nix.args"
+
+  cd "$workdir/repo"
+  run run_nixos_rebuild_from_repo boot frame
+
+  [ "$status" -eq 0 ]
+  [ "$(<"$NIX_ARGS_OUT")" = "shell --inputs-from path:. nixpkgs#nh nixpkgs#nix-output-monitor -c nh os boot --hostname frame --print-build-logs --show-trace path:.#" ]
 }
 
 @test "run_nixos_rebuild_from_repo keeps dry-activate on nixos-rebuild" {
@@ -538,9 +545,11 @@ EOF
   [ "$(wc -l < "$SUDO_CALLS_OUT" | tr -d ' ')" = "1" ]
   [[ "$(<"$SUDO_ARGS_OUT")" == *" -c "* ]]
   [ "$(wc -l < "$NIX_ARGS_OUT" | tr -d ' ')" = "2" ]
-  [[ "$(<"$NIX_ARGS_OUT")" == *"shell --inputs-from . nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin build"* ]]
+  local flake_ref
+  flake_ref="$(deploy_flake_ref)"
+  [[ "$(<"$NIX_ARGS_OUT")" == *"shell --inputs-from ${flake_ref} nixpkgs#nh nixpkgs#nix-output-monitor -c nh darwin build"* ]]
   [[ "$(<"$NIX_ARGS_OUT")" == *"--hostname JGWXHWDL4X"* ]]
-  [[ "$(<"$NIX_ARGS_OUT")" == *"--diff auto --print-build-logs --show-trace .#"* ]]
+  [[ "$(<"$NIX_ARGS_OUT")" == *"--diff auto --print-build-logs --show-trace ${flake_ref}#"* ]]
   [[ "$(<"$NIX_ARGS_OUT")" == *"build --no-link --profile /nix/var/nix/profiles/system $workdir/system"* ]]
   [ "$(<"$DARWIN_REBUILD_ARGS_OUT")" = "activate" ]
 }
@@ -592,15 +601,17 @@ EOF
   write_update_machines_test_stubs "$workdir/bin"
 
   export PATH="$workdir/bin:$PATH"
+  export SSH_CALLS_OUT="$workdir/ssh.calls"
+  export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
-  run bash ./apps/update-machines.sh --dry-run nv
+  run bash ./apps/update-machines.sh nv
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"nv.local"* ]]
+  grep -q 'nv.local' "$SSH_CALLS_OUT"
 }
 
-@test "update-machines does not evaluate SSH configuration for the local host" {
-  workdir="$BATS_TMPDIR/update-machines-local-host"
+@test "update-machines dry run does not connect to hosts" {
+  workdir="$BATS_TMPDIR/update-machines-dry-run"
   rm -rf "$workdir"
   mkdir -p "$workdir/bin"
   write_update_machines_test_stubs "$workdir/bin"
@@ -608,10 +619,10 @@ EOF
   export PATH="$workdir/bin:$PATH"
   export SSH_CALLS_OUT="$workdir/ssh.calls"
 
-  run bash ./apps/update-machines.sh --dry-run controller
+  run bash ./apps/update-machines.sh --dry-run alpha controller
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"ok (local)"* ]]
+  [[ "$output" == *"Dry run: would update alpha, controller."* ]]
   [ ! -e "$SSH_CALLS_OUT" ]
 }
 
@@ -677,7 +688,8 @@ EOF
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
-  [[ "$output" == *"Prebuilding 2 deployment target(s)"*"Checking SSH connectivity"* ]]
+  [[ "$output" == *"Prebuilding 2 deployment target(s)"* ]]
+  [[ "$output" != *"Checking SSH connectivity"* ]]
   [ "$(<"$NIX_BUILD_ARGS_OUT")" = "build -L --show-trace --no-link git+https://github.com/booxter/nix.git?ref=master#nixosConfigurations.alpha.config.system.build.toplevel git+https://github.com/booxter/nix.git?ref=master#nixosConfigurations.beta.config.system.build.toplevel" ]
 
   uploaded_script="$(<"$SSH_UPLOADED_SCRIPT_OUT")"
