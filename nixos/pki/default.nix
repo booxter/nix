@@ -88,6 +88,7 @@ in
     ./oidc-probes.nix
     ./backup.nix
     ./unifi-sync.nix
+    ./uptimerobot-sync.nix
     ./wg-home-dns-sync.nix
   ];
 
