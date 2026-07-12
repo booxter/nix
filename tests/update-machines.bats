@@ -113,7 +113,9 @@ if [[ "$joined" == "true" ]]; then
 fi
 
 if [[ "$joined" == cat\ \>* ]]; then
-  if [[ -n "${SSH_UPLOADED_SCRIPT_OUT:-}" ]]; then
+  if [[ "$joined" == *"update-nix-repo-"* && -n "${SSH_UPLOADED_ARCHIVE_OUT:-}" ]]; then
+    cat > "$SSH_UPLOADED_ARCHIVE_OUT"
+  elif [[ -n "${SSH_UPLOADED_SCRIPT_OUT:-}" ]]; then
     cat > "$SSH_UPLOADED_SCRIPT_OUT"
   else
     cat >/dev/null
@@ -150,6 +152,34 @@ EOF
   run calc_min_disk_kb_from_gib 20
   [ "$status" -eq 0 ]
   [ "$output" = "20971520" ]
+}
+
+@test "prepare_local_deploy_source archives committed HEAD only" {
+  repo="$BATS_TMPDIR/local-deploy-source-repo"
+  rm -rf "$repo"
+  mkdir -p "$repo"
+  git -C "$repo" init -q
+  git -C "$repo" config user.email test@example.invalid
+  git -C "$repo" config user.name Test
+  printf '%s\n' committed > "$repo/tracked"
+  git -C "$repo" add tracked
+  git -C "$repo" commit -qm initial
+  expected_commit="$(git -C "$repo" rev-parse HEAD)"
+
+  printf '%s\n' dirty > "$repo/tracked"
+  printf '%s\n' untracked > "$repo/untracked"
+  LOCAL_SOURCE_ROOT=""
+  LOCAL_SOURCE_ARCHIVE=""
+  LOCAL_SOURCE_CHECKOUT=""
+  LOCAL_SOURCE_COMMIT=""
+
+  prepare_local_deploy_source "$repo" > "$repo/message"
+
+  [ "$LOCAL_SOURCE_COMMIT" = "$expected_commit" ]
+  [ "$(<"$LOCAL_SOURCE_CHECKOUT/tracked")" = "committed" ]
+  [ ! -e "$LOCAL_SOURCE_CHECKOUT/untracked" ]
+  [ -f "$LOCAL_SOURCE_ARCHIVE" ]
+  rm -rf "$LOCAL_SOURCE_ROOT"
 }
 
 @test "lan_dns_lookup_candidates adds the LAN domain for bare hostnames" {
@@ -324,6 +354,32 @@ EOF
 
   [ "$status" -eq 0 ]
   [ "$(<"$NIX_BUILD_ARGS_OUT")" = "build -L --show-trace --no-link git+https://github.com/booxter/nix.git?ref=feature/test#nixosConfigurations.frame.config.system.build.toplevel git+https://github.com/booxter/nix.git?ref=feature/test#darwinConfigurations.mair.system" ]
+}
+
+@test "prebuild_local_deploy_targets builds closures from an archived checkout" {
+  workdir="$BATS_TMPDIR/prebuild-local-deploy-targets"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin" "$workdir/repo"
+  bash_path="$(command -v bash)"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' "$*" > "$NIX_BUILD_ARGS_OUT"
+EOF
+  } > "$workdir/bin/nix"
+  chmod +x "$workdir/bin/nix"
+
+  export PATH="$workdir/bin:$PATH"
+  export NIX_BUILD_ARGS_OUT="$workdir/nix.args"
+  host_map='{"nixos":{"frame":{"isWork":false,"deployPriority":"normal"}},"darwin":{"mair":{"isWork":false,"deployPriority":"normal"}}}'
+
+  run prebuild_local_deploy_targets "$workdir/repo" deadbeef "$host_map" frame mair
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"local commit deadbeef"* ]]
+  [ "$(<"$NIX_BUILD_ARGS_OUT")" = "build -L --show-trace --no-link path:$workdir/repo#nixosConfigurations.frame.config.system.build.toplevel path:$workdir/repo#darwinConfigurations.mair.system" ]
 }
 
 @test "deploy_installable_for_host rejects hosts absent from the host map" {
@@ -532,6 +588,51 @@ EOF
   [ ! -e "$SSH_CALLS_OUT" ]
 }
 
+@test "update-machines rejects combining --local with --branch" {
+  workdir="$BATS_TMPDIR/update-machines-local-branch-conflict"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+
+  run bash ./apps/update-machines.sh --dry-run --local --branch feature/test controller
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"--local and --branch cannot be used together"* ]]
+}
+
+@test "update-machines prebuilds and uploads committed checkout state in local mode" {
+  workdir="$BATS_TMPDIR/update-machines-local-source"
+  source_repo="$workdir/source"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin" "$source_repo"
+  write_update_machines_test_stubs "$workdir/bin"
+  git -C "$source_repo" init -q
+  git -C "$source_repo" config user.email test@example.invalid
+  git -C "$source_repo" config user.name Test
+  printf '%s\n' committed > "$source_repo/tracked"
+  git -C "$source_repo" add tracked
+  git -C "$source_repo" commit -qm initial
+  commit="$(git -C "$source_repo" rev-parse HEAD)"
+  printf '%s\n' dirty > "$source_repo/tracked"
+  printf '%s\n' untracked > "$source_repo/untracked"
+
+  export PATH="$workdir/bin:$PATH"
+  export SSH_UPLOADED_ARCHIVE_OUT="$workdir/uploaded.tar"
+  export NIX_BUILD_ARGS_OUT="$workdir/nix-build.args"
+  export UPDATE_MACHINES_TEST_ASSUME_TTY=true
+
+  cd "$source_repo"
+  run bash "$BATS_TEST_DIRNAME/../apps/update-machines.sh" --local alpha
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"local commit $commit"* ]]
+  [[ "$(<"$NIX_BUILD_ARGS_OUT")" == *"--no-link path:"*"#nixosConfigurations.alpha.config.system.build.toplevel" ]]
+  [ "$(tar -xOf "$SSH_UPLOADED_ARCHIVE_OUT" tracked)" = "committed" ]
+  ! tar -tf "$SSH_UPLOADED_ARCHIVE_OUT" | grep -qx untracked
+}
+
 @test "update-machines reports all failed deploy hosts and exits nonzero" {
   workdir="$BATS_TMPDIR/update-machines-deploy-failure"
   mkdir -p "$workdir/bin"
@@ -557,6 +658,8 @@ EOF
 
   [[ "$uploaded_script" == *'target_config_name="$7"'* ]]
   [[ "$uploaded_script" == *'target_runtime_host="$8"'* ]]
+  [[ "$uploaded_script" == *'source_mode="$9"'* ]]
+  [[ "$uploaded_script" == *'tar -xf "$source_archive" -C "$repo_dir"'* ]]
   [[ "$uploaded_script" == *"$expected_clone"* ]]
   [[ "$uploaded_script" == *'SUDO_ASKPASS="$askpass_script" sudo -A "$@"'* ]]
   [[ "$uploaded_script" == *'run_sudo_for_remote_darwin "$bash_bin" -e -u -o pipefail -c'* ]]

@@ -6,6 +6,25 @@ calc_min_disk_kb_from_gib() {
   printf '%s' "$((gib * 1024 * 1024))"
 }
 
+prepare_local_deploy_source() {
+  local checkout_start="$1"
+  local checkout_root
+
+  if ! checkout_root="$(git -C "$checkout_start" rev-parse --show-toplevel 2>/dev/null)"; then
+    echo "--local must be run from inside a Git checkout." >&2
+    return 1
+  fi
+
+  LOCAL_SOURCE_COMMIT="$(git -C "$checkout_root" rev-parse --verify HEAD)"
+  LOCAL_SOURCE_ROOT="$(mktemp -d)"
+  LOCAL_SOURCE_ARCHIVE="${LOCAL_SOURCE_ROOT}/repo.tar"
+  LOCAL_SOURCE_CHECKOUT="${LOCAL_SOURCE_ROOT}/repo"
+  mkdir -p "$LOCAL_SOURCE_CHECKOUT"
+  git -C "$checkout_root" archive --format=tar --output="$LOCAL_SOURCE_ARCHIVE" HEAD
+  tar -xf "$LOCAL_SOURCE_ARCHIVE" -C "$LOCAL_SOURCE_CHECKOUT"
+  echo "Using committed checkout state ${LOCAL_SOURCE_COMMIT} from ${checkout_root}."
+}
+
 looks_like_ipv4_address() {
   local host="$1"
   [[ "$host" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
@@ -240,5 +259,23 @@ prebuild_deploy_targets() {
   done
 
   echo "Prebuilding ${#installables[@]} deployment target(s) from branch ${branch}..."
+  nix build -L --show-trace --no-link "${installables[@]}"
+}
+
+prebuild_local_deploy_targets() {
+  local repo_dir="$1"
+  local commit="$2"
+  local host_map="$3"
+  shift 3
+
+  local flake_ref host
+  local -a installables=()
+
+  flake_ref="path:${repo_dir}"
+  for host in "$@"; do
+    installables+=("$(deploy_installable_for_host "$flake_ref" "$host" "$host_map")")
+  done
+
+  echo "Prebuilding ${#installables[@]} deployment target(s) from local commit ${commit}..."
   nix build -L --show-trace --no-link "${installables[@]}"
 }

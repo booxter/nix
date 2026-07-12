@@ -5,7 +5,9 @@ set -euo pipefail
 
 REPO_URL="github.com:booxter/nix"
 BRANCH="master"
+BRANCH_EXPLICIT=false
 REBUILD_ACTION="switch"
+SOURCE_MODE="github"
 ALL=true
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -184,6 +186,17 @@ REMOTE_MIN_DISK_KB="$(calc_min_disk_kb_from_gib "$REMOTE_MIN_DISK_GIB")"
 GC_HEADROOM_GIB=5
 GC_HEADROOM_KB="$(calc_min_disk_kb_from_gib "$GC_HEADROOM_GIB")"
 SSH_HOST_OPTS=()
+LOCAL_SOURCE_ROOT=""
+LOCAL_SOURCE_ARCHIVE=""
+LOCAL_SOURCE_CHECKOUT=""
+LOCAL_SOURCE_COMMIT=""
+
+cleanup_local_source() {
+  if [[ -n "$LOCAL_SOURCE_ROOT" ]]; then
+    rm -rf "$LOCAL_SOURCE_ROOT"
+  fi
+}
+trap cleanup_local_source EXIT
 
 resolve_ssh_host() {
   local host="$1"
@@ -349,8 +362,8 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  apps/update-machines.sh [-A|--all] [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both]
-  apps/update-machines.sh [--branch BRANCH] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
+  apps/update-machines.sh [-A|--all] [--branch BRANCH|--local] [--switch|--boot|--test] [--personal|--work|--both]
+  apps/update-machines.sh [--branch BRANCH|--local] [--switch|--boot|--test] [--personal|--work|--both] [--dry-run] [--select] host1 [host2 ...]
 
 Options:
   -A, --all         Update all hosts discovered from flake outputs (default).
@@ -358,6 +371,7 @@ Options:
   --work            Update only work machines.
   --both            Update all machines (work + personal).
   --branch BRANCH   Git branch to deploy (default: master).
+  --local           Deploy committed HEAD from the current checkout; ignore working-tree changes.
   --switch          Switch into the new configuration immediately (default).
   --boot            Stage the new configuration for the next boot.
   --test            Build and preview activation changes without activating them.
@@ -386,7 +400,12 @@ while [[ $# -gt 0 ]]; do
         echo "Missing value for --branch" >&2
         exit 1
       fi
+      BRANCH_EXPLICIT=true
       shift 2
+      ;;
+    --local)
+      SOURCE_MODE="local"
+      shift
       ;;
     --switch)
       REBUILD_ACTION="switch"
@@ -438,6 +457,11 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ "$SOURCE_MODE" == "local" && "$BRANCH_EXPLICIT" == "true" ]]; then
+  echo "--local and --branch cannot be used together." >&2
+  exit 1
+fi
 
 if [[ "$MODE" != "personal" && "$MODE" != "work" && "$MODE" != "both" ]]; then
   echo "Invalid mode: $MODE" >&2
@@ -511,7 +535,12 @@ mapfile -t HOSTS < <(canonicalize_hosts "${HOSTS[@]}")
 mapfile -t HOSTS < <(prioritize_hosts "$HOST_MAP" "${HOSTS[@]}")
 
 if [[ "$DRY_RUN" != "true" ]]; then
-  prebuild_deploy_targets "$BRANCH" "$REPO_URL" "$HOST_MAP" "${HOSTS[@]}"
+  if [[ "$SOURCE_MODE" == "local" ]]; then
+    prepare_local_deploy_source "$PWD"
+    prebuild_local_deploy_targets "$LOCAL_SOURCE_CHECKOUT" "$LOCAL_SOURCE_COMMIT" "$HOST_MAP" "${HOSTS[@]}"
+  else
+    prebuild_deploy_targets "$BRANCH" "$REPO_URL" "$HOST_MAP" "${HOSTS[@]}"
+  fi
 fi
 
 echo "Checking SSH connectivity to ${#HOSTS[@]} hosts..."
@@ -594,6 +623,7 @@ for host in "${HOSTS[@]}"; do
     exit 1
   fi
   remote_script="/tmp/update-nix-$$.sh"
+  remote_archive="/tmp/update-nix-repo-$$.tar"
   remote_payload="$(cat <<'REMOTE'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -611,6 +641,9 @@ cleanup() {
   if [[ -n "$repo_dir" ]]; then
     rm -rf "$repo_dir" || true
   fi
+  if [[ -n "$source_archive" ]]; then
+    rm -f "$source_archive" || true
+  fi
   rm -f "$0" || true
   return "$status"
 }
@@ -623,6 +656,8 @@ GC_HEADROOM_KB="$5"
 rebuild_action="$6"
 target_config_name="$7"
 target_runtime_host="$8"
+source_mode="$9"
+source_archive="${10:-}"
 repo_dir="$(mktemp -d)"
 
 get_avail_path() {
@@ -667,12 +702,23 @@ if [[ -n "$AVAIL_KB" && "$AVAIL_KB" -lt "$MIN_DISK_KB" ]]; then
   fi
 fi
 
-https_url="https://github.com/${repo_url#github.com:}.git"
-GIT_CONFIG_NOSYSTEM=1 \
+case "$source_mode" in
+  local)
+    tar -xf "$source_archive" -C "$repo_dir"
+    ;;
+  github)
+    https_url="https://github.com/${repo_url#github.com:}.git"
+    GIT_CONFIG_NOSYSTEM=1 \
   GIT_CONFIG_GLOBAL=/dev/null \
   GIT_CONFIG_SYSTEM=/dev/null \
   GIT_TERMINAL_PROMPT=0 \
   git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
+    ;;
+  *)
+    echo "Unsupported deployment source mode: ${source_mode}." >&2
+    exit 1
+    ;;
+esac
 
 cd "$repo_dir"
 
@@ -703,7 +749,12 @@ REMOTE
   if is_local_host "$runtime_host"; then
     printf '%s\n' "$remote_payload" > "$remote_script"
     chmod +x "$remote_script"
-    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host"; then
+    source_archive=""
+    if [[ "$SOURCE_MODE" == "local" ]]; then
+      source_archive="$remote_archive"
+      cp "$LOCAL_SOURCE_ARCHIVE" "$source_archive"
+    fi
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$source_archive"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -716,7 +767,17 @@ REMOTE
     failed_hosts+=("$host")
     continue
   fi
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host"; then
+  source_archive=""
+  if [[ "$SOURCE_MODE" == "local" ]]; then
+    source_archive="$remote_archive"
+    # shellcheck disable=SC2029
+    if ! ssh "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "cat > \"$remote_archive\"" < "$LOCAL_SOURCE_ARCHIVE"; then
+      echo "Failed to upload local source to ${display_host}." >&2
+      failed_hosts+=("$host")
+      continue
+    fi
+  fi
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$source_archive"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")
