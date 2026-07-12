@@ -34,6 +34,7 @@
     casks = [
       "sf-symbols"
       "wireshark-chmodbpf"
+      "chatgpt"
     ];
   };
 
