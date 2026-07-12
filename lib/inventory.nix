@@ -147,29 +147,12 @@ rec {
 
   virtPlatform = "aarch64-darwin";
 
-  toProxVmName = name: "prox-${name}vm";
   isNixosVM = spec: spec.isVM or false;
   isNixosBM = spec: !(isNixosVM spec);
-  hasStableIpv4Address = spec: spec ? dhcpReservation || spec ? ipAddress;
   toNixosConfigName = spec: spec.name;
-  toNixosStableHostName = spec: spec.name;
-  toNixosRuntimeHostName =
-    spec:
-    spec.hostname
-      or (spec.dhcpReservation.hostname or (if isNixosVM spec then toProxVmName spec.name else spec.name)
-      );
+  toNixosRuntimeHostName = spec: spec.hostname or (spec.dhcpReservation.hostname or spec.name);
   toNixosPrimaryDnsName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
-  toNixosLegacyDnsNames =
-    spec:
-    lib.unique (
-      (spec.legacyDnsNames or [ ])
-      ++ lib.optionals (isNixosVM spec && toNixosPrimaryDnsName spec != toProxVmName spec.name) [
-        (toProxVmName spec.name)
-      ]
-    );
-  toNixosAllDnsNames =
-    spec: lib.unique ([ (toNixosPrimaryDnsName spec) ] ++ toNixosLegacyDnsNames spec);
-  toNixosShortDnsName = toNixosStableHostName;
+  toNixosShortDnsName = spec: spec.name;
   toLocalDnsName = label: "${label}.local";
   toInternalHttpsServiceHosts =
     serviceName:
@@ -184,28 +167,20 @@ rec {
       };
     in
     lib.unique (lib.concatMap mkHosts (serviceLabels.${serviceName} or [ serviceName ]));
-  toNixosMigrationDnsNames =
-    spec: lib.unique ([ (toNixosShortDnsName spec) ] ++ toNixosAllDnsNames spec);
   toNixosHostCertificateDnsNames =
     spec:
     let
-      names = toNixosMigrationDnsNames spec;
+      primaryName = toNixosPrimaryDnsName spec;
+      shortName = toNixosShortDnsName spec;
     in
-    lib.unique (
-      names
-      ++ map (name: "${name}.${site.lan.domain}") names
-      ++ [ (toLocalDnsName (toNixosShortDnsName spec)) ]
-    );
-  toNixosLanDnsAliasLabels =
-    spec:
-    let
-      dhcpHostName = spec.dhcpReservation.hostname or null;
-      migrationAliases = lib.optionals (isNixosVM spec && hasStableIpv4Address spec) (
-        builtins.filter (name: name != dhcpHostName) (toNixosMigrationDnsNames spec)
-      );
-    in
-    lib.unique (migrationAliases ++ (spec.localDnsAliases or [ ]));
-  toNixosSshHostName = toNixosPrimaryDnsName;
+    lib.unique ([
+      primaryName
+      shortName
+      "${primaryName}.${site.lan.domain}"
+      "${shortName}.${site.lan.domain}"
+      (toLocalDnsName shortName)
+    ]);
+  toNixosLanDnsAliasLabels = spec: lib.unique (spec.localDnsAliases or [ ]);
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";

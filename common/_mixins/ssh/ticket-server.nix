@@ -20,19 +20,11 @@ let
   principalsFile = pkgs.writeText "${username}-authorized_principals" (
     lib.concatMapStrings (principal: "${principal}\n") cfg.principals
   );
-  nixosHostSpec =
-    if builtins.hasAttr hostSpecName hostInventory.nixosHostSpecsByName then
-      hostInventory.nixosHostSpecsByName.${hostSpecName}
-    else
-      null;
-  defaultPrincipalNames = lib.unique (
-    [
-      config.host.dnsName
-      config.networking.hostName
-      hostSpecName
-    ]
-    ++ lib.optionals (nixosHostSpec != null) (hostInventory.toNixosMigrationDnsNames nixosHostSpec)
-  );
+  defaultPrincipalNames = lib.unique [
+    config.host.dnsName
+    config.networking.hostName
+    hostSpecName
+  ];
 in
 {
   options.host.sshTicket = {
@@ -60,14 +52,11 @@ in
       type = lib.types.listOf lib.types.singleLineStr;
       default = defaultPrincipalNames;
       defaultText = lib.literalExpression ''
-        lib.unique (
-          [
-            config.host.dnsName
-            config.networking.hostName
-            hostSpecName
-          ]
-          ++ hostInventory.toNixosMigrationDnsNames nixosHostSpec
-        )
+        lib.unique [
+          config.host.dnsName
+          config.networking.hostName
+          hostSpecName
+        ]
       '';
       description = "Host identity names accepted as SSH certificate principals for ${username}.";
     };
