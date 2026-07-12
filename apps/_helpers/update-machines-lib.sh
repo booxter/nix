@@ -26,24 +26,24 @@ lan_dns_lookup_candidates() {
   fi
 }
 
-resolve_base_host() {
+lookup_host_map_or_identity() {
   local host="$1"
-  if [[ -z "${HOST_BASE_MAP_JSON:-}" ]]; then
+  local host_map_json="$2"
+
+  if [[ -z "$host_map_json" ]]; then
     printf '%s' "$host"
     return 0
   fi
 
-  jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_BASE_MAP_JSON"
+  jq -r --arg host "$host" '.[$host] // $host' <<<"$host_map_json"
+}
+
+resolve_base_host() {
+  lookup_host_map_or_identity "$1" "${HOST_BASE_MAP_JSON:-}"
 }
 
 resolve_runtime_host() {
-  local host="$1"
-  if [[ -z "${HOST_RUNTIME_MAP_JSON:-}" ]]; then
-    printf '%s' "$host"
-    return 0
-  fi
-
-  jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_RUNTIME_MAP_JSON"
+  lookup_host_map_or_identity "$1" "${HOST_RUNTIME_MAP_JSON:-}"
 }
 
 resolve_host_alias() {
@@ -74,16 +74,7 @@ canonicalize_hosts() {
 }
 
 display_host_name() {
-  local host="$1"
-  local display
-
-  if [[ -z "${HOST_DISPLAY_MAP_JSON:-}" ]]; then
-    printf '%s' "$host"
-    return 0
-  fi
-
-  display="$(jq -r --arg h "$host" '.[$h] // $h' <<<"$HOST_DISPLAY_MAP_JSON")"
-  printf '%s' "$display"
+  lookup_host_map_or_identity "$1" "${HOST_DISPLAY_MAP_JSON:-}"
 }
 
 format_display_host_list() {
