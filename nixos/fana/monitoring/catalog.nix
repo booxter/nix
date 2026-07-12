@@ -12,6 +12,8 @@ let
   dnsTestFile = ./prometheus/tests/dns.rules.test.yml;
   fleetRuleFile = ./prometheus/rules/fleet.rules.yml;
   fleetTestFile = ./prometheus/tests/fleet.rules.test.yml;
+  homeAssistantRuleFile = ./prometheus/rules/home-assistant.rules.yml;
+  homeAssistantTestFile = ./prometheus/tests/home-assistant.rules.test.yml;
   mediaPolicyRuleFile = ./prometheus/rules/media-policy.rules.yml;
   mediaPolicyTestFile = ./prometheus/tests/media-policy.rules.test.yml;
   networkProbesRuleFile = ./prometheus/rules/network-probes.rules.yml;
@@ -47,6 +49,7 @@ in
       customJobsRuleFile
       dnsRuleFile
       fleetRuleFile
+      homeAssistantRuleFile
       mediaPolicyRuleFile
       networkProbesRuleFile
       pkiRuleFile
@@ -65,6 +68,7 @@ in
       "nixos/fana/monitoring/prometheus/rules/custom-jobs.rules.yml"
       "nixos/fana/monitoring/prometheus/rules/dns.rules.yml"
       "nixos/fana/monitoring/prometheus/rules/fleet.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/home-assistant.rules.yml"
       "nixos/fana/monitoring/prometheus/rules/media-policy.rules.yml"
       "nixos/fana/monitoring/prometheus/rules/network-probes.rules.yml"
       "nixos/fana/monitoring/prometheus/rules/pki.rules.yml"
@@ -83,6 +87,7 @@ in
       customJobsTestFile
       dnsTestFile
       fleetTestFile
+      homeAssistantTestFile
       mediaPolicyTestFile
       networkProbesTestFile
       pkiTestFile
@@ -101,6 +106,7 @@ in
       "nixos/fana/monitoring/prometheus/tests/custom-jobs.rules.test.yml"
       "nixos/fana/monitoring/prometheus/tests/dns.rules.test.yml"
       "nixos/fana/monitoring/prometheus/tests/fleet.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/home-assistant.rules.test.yml"
       "nixos/fana/monitoring/prometheus/tests/media-policy.rules.test.yml"
       "nixos/fana/monitoring/prometheus/tests/network-probes.rules.test.yml"
       "nixos/fana/monitoring/prometheus/tests/pki.rules.test.yml"
