@@ -53,6 +53,11 @@ in
       # https://github.com/openai/codex/issues/12582
       # https://github.com/openai/codex/issues/14509
       tui.keymap.chat.interrupt_turn = "f12";
+      tui.status_line = [
+        "model-with-reasoning"
+        "current-dir"
+        "context-remaining"
+      ];
     }
     // lib.optionalAttrs (codingAgentEnv != { }) {
       shell_environment_policy.set = codingAgentEnv;
