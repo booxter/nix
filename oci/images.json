@@ -9,15 +9,15 @@
   },
   "litellm": {
     "changelog": "https://github.com/BerriAI/litellm/releases/tag/{tag}",
-    "digest": "sha256:64696cd89e425c2b2d0e0c78cece7d52430185ef155a5b0a67557ab9a226af9b",
-    "hash": "sha256-PUHVmVbMHOuSo32FynMHgraCCuGmB1WlDaC2CZOMyB4=",
+    "digest": "sha256:64d3547e0b131bf4638342e52c12bc46d6f1d9b8498e4b731ff31be5ab316ea9",
+    "hash": "sha256-wnjXARKZqiJF+wbkMpOgM9gIoTfbtZpiocEkqMXPXRo=",
     "image": "ghcr.io/berriai/litellm-database",
     "signature": {
       "key": "oci/keys/litellm.pub",
       "keyUpstream": "https://raw.githubusercontent.com/BerriAI/litellm/0112e53046018d726492c814b3644b7d376029d0/cosign.pub",
       "type": "cosign-key"
     },
-    "tag": "v1.91.2",
+    "tag": "v1.92.0",
     "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "paperless-gpt": {
