@@ -99,6 +99,90 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_systemd_unit_state{instance="srvarr",job="node-mtls",name="lidarr-cue-splitter.service",state="active"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: LidarrCueSplitterServiceDown
+      - eval_time: 5m
+        alertname: LidarrCueSplitterServiceDown
+        exp_alerts:
+          - exp_labels:
+              alertname: LidarrCueSplitterServiceDown
+              category: media
+              instance: srvarr
+              job: node-mtls
+              name: lidarr-cue-splitter.service
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "Lidarr CUE splitter service down on srvarr"
+              description: "The Lidarr CUE splitter service on srvarr has not been active for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_lidarr_cue_splitter_ok{instance="srvarr",job="node-mtls"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: LidarrCueSplitterIterationFailed
+      - eval_time: 10m
+        alertname: LidarrCueSplitterIterationFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: LidarrCueSplitterIterationFailed
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Lidarr CUE splitter failing on srvarr"
+              description: "The Lidarr CUE splitter on srvarr has been reporting unsuccessful iterations for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_textfile_mtime_seconds{instance="srvarr",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/lidarr-cue-splitter.prom"}'
+        values: "0x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: LidarrCueSplitterMetricsStale
+      - eval_time: 10m30s
+        alertname: LidarrCueSplitterMetricsStale
+        exp_alerts:
+          - exp_labels:
+              alertname: LidarrCueSplitterMetricsStale
+              category: media
+              file: /var/lib/prometheus-node-exporter-textfile/lidarr-cue-splitter.prom
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Lidarr CUE splitter metrics stale on srvarr"
+              description: "The Lidarr CUE splitter metrics file on srvarr has not been refreshed for more than 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_lidarr_cue_splitter_jobs{instance="srvarr",job="node-mtls",state="needs_attention"}'
+        values: "1x30 0x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: LidarrCueSplitterJobNeedsAttention
+      - eval_time: 15m
+        alertname: LidarrCueSplitterJobNeedsAttention
+        exp_alerts:
+          - exp_labels:
+              alertname: LidarrCueSplitterJobNeedsAttention
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+              state: needs_attention
+            exp_annotations:
+              summary: "Lidarr CUE split job needs attention on srvarr"
+              description: "At least one Lidarr CUE split job on srvarr has remained failed or in need of attention for 15 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="open-webui-searxng-probe.timer",state="active"}'
         values: "1x22"
     alert_rule_test:

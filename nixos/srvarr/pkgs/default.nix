@@ -18,6 +18,8 @@ in
 
   audiobookshelf-oidc-bootstrap = pkgs.callPackage ./audiobookshelf-oidc-bootstrap { };
 
+  lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter { };
+
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner {
     inherit transmissionCommon;
   };
