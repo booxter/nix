@@ -26,10 +26,6 @@ in
 
   sops.secrets.uptimeRobotApiKey = {
     key = "uptimerobot/api_key";
-    owner = "uptimerobot-sync";
-    group = "uptimerobot-sync";
-    mode = "0400";
-    restartUnits = [ "uptimerobot-sync.service" ];
   };
 
   systemd.services.uptimerobot-sync = {
@@ -46,10 +42,11 @@ in
       Type = "oneshot";
       User = "uptimerobot-sync";
       Group = "uptimerobot-sync";
+      LoadCredential = "uptimerobot-api-key:${config.sops.secrets.uptimeRobotApiKey.path}";
       ExecStart = "${lib.getExe pkiPkgs.uptimerobot-sync} ${
         lib.escapeShellArgs [
           "--api-key-file"
-          config.sops.secrets.uptimeRobotApiKey.path
+          "%d/uptimerobot-api-key"
           "--inventory-json-file"
           servicesFile
         ]
