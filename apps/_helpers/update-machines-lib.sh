@@ -6,14 +6,14 @@ calc_min_disk_kb_from_gib() {
   printf '%s' "$((gib * 1024 * 1024))"
 }
 
-is_ipv4_address() {
+looks_like_ipv4_address() {
   local host="$1"
   [[ "$host" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
 }
 
 is_bare_hostname() {
   local host="$1"
-  [[ "$host" != *.* ]] && ! is_ipv4_address "$host"
+  [[ "$host" != *.* ]] && ! looks_like_ipv4_address "$host"
 }
 
 lan_dns_lookup_candidates() {

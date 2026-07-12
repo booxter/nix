@@ -166,6 +166,14 @@ EOF
   [ "$output" = "192.168.15.10" ]
 }
 
+@test "looks_like_ipv4_address only checks the dotted-decimal shape" {
+  run looks_like_ipv4_address 999.999.999.999
+  [ "$status" -eq 0 ]
+
+  run looks_like_ipv4_address host.example
+  [ "$status" -eq 1 ]
+}
+
 @test "resolve_base_host leaves bare-metal hosts unchanged" {
   export HOST_BASE_MAP_JSON='{"beast":"beast"}'
   run resolve_base_host beast
