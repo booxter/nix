@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   isWork,
@@ -31,7 +32,15 @@ let
     });
 in
 {
-  imports = [ ./codex-warmer.nix ];
+  imports = [
+    inputs.codex-desktop-linux.homeManagerModules.default
+    ./codex-warmer.nix
+  ];
+
+  programs.codexDesktopLinux = lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+    enable = true;
+    cliPackage = config.programs.codex.package;
+  };
 
   programs.codex = {
     enable = true;
