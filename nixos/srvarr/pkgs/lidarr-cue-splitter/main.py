@@ -635,13 +635,16 @@ class CueSplitterService:
                 try:
                     summaries, fingerprint = self.discover(record)
                     if not summaries:
-                        if not existing:
-                            jobs[download_id] = {
-                                "download_id": download_id,
-                                "status": "ignored",
-                                "updated_at": now,
-                                "fingerprint": "",
-                            }
+                        if not existing or existing.get("status") != "ignored":
+                            job = jobs.setdefault(
+                                download_id, {"download_id": download_id}
+                            )
+                            job.update(
+                                status="ignored",
+                                updated_at=now,
+                                fingerprint="",
+                                error="",
+                            )
                             self.store.data["totals"]["ignored"] = (
                                 int(self.store.data["totals"].get("ignored", 0)) + 1
                             )

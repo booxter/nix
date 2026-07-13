@@ -259,6 +259,49 @@ class CueSplitterTests(unittest.TestCase):
             self.assertFalse((download / "_lidarr-cue-split").exists())
             self.assertTrue(audio.exists())
 
+    def test_non_cue_download_recovers_from_needs_attention(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            download = root / "usenet" / "manual" / "album"
+            download.mkdir(parents=True)
+            (download / "album.tar").write_bytes(b"tar")
+            record = {
+                "status": "completed",
+                "protocol": "usenet",
+                "downloadId": "abc",
+                "outputPath": str(download),
+            }
+
+            class FakeClient:
+                def queue(self):
+                    return [record]
+
+            store = StateStore(root / "state.json")
+            store.data["jobs"]["abc"] = {
+                "download_id": "abc",
+                "status": "needs_attention",
+                "error": "download path is outside allowed roots",
+                "updated_at": 1000.0,
+            }
+            service = CueSplitterService(
+                client_factory=FakeClient,
+                runner=object(),
+                store=store,
+                allowed_roots=[root / "usenet" / "manual"],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=60,
+                now=lambda: 1001.0,
+                sleep=lambda _: None,
+            )
+            service.iteration()
+            self.assertEqual(store.data["jobs"]["abc"]["status"], "ignored")
+            self.assertEqual(store.data["jobs"]["abc"]["error"], "")
+            self.assertEqual(store.data["totals"]["ignored"], 1)
+            service.iteration()
+            self.assertEqual(store.data["totals"]["ignored"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
