@@ -43,6 +43,19 @@
       # Pick up the latest window-management fixes ahead of the stable branch.
       inherit (pkgsNixpkgsUnstable) aerospace;
 
+      # Build passthru.tests for all changed packages with --tests. Drop when
+      # https://github.com/Mic92/nixpkgs-review/pull/397 lands in nixpkgs-review.
+      nixpkgs-review = prev.nixpkgs-review.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (prev.fetchpatch {
+            # Commit 47f4647, rebased after its first two prerequisite commits
+            # landed on main.
+            url = "https://github.com/user-attachments/files/29713758/rebased.patch";
+            hash = "sha256-euILgOxvghTRf3AwK7BHoC7mKKdmkAEH9iIOqNdN8pE=";
+          })
+        ];
+      });
+
       # Avoid a SIGPIPE race while deciding which symlinked Mach-O libraries
       # must be copied into wrapped Firefox apps on Darwin. Remove when
       # https://github.com/NixOS/nixpkgs/pull/540753 reaches nixpkgs-26.05-darwin.
