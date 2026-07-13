@@ -4,9 +4,11 @@ let
   mediaPaths = import ./media-paths.nix;
   servarrAccounts = import ../srvarr/accounts.nix;
   mediaRoot = "/volume2/Media";
+  mediaPodcastsRoot = "${mediaRoot}/podcasts";
   mediaRommRoot = "${mediaRoot}/romm";
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
+  pinepodsUser = toString servarrAccounts.uids.pinepods;
   rommUser = toString servarrAccounts.uids.romm;
 
   mkTmpfilesDir = path: mode: user: group: [
@@ -41,6 +43,18 @@ let
     }
     # /volume2/Media is exported to srvarr. Use srvarr's numeric service IDs
     # so ownership is meaningful on the NFS client.
+    {
+      path = mediaPodcastsRoot;
+      mode = "2775";
+      user = "root";
+      group = "media";
+    }
+    {
+      path = "${mediaPodcastsRoot}/pinepods";
+      mode = "2775";
+      user = pinepodsUser;
+      group = "media";
+    }
     {
       path = mediaRommRoot;
       mode = "2775";

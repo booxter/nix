@@ -99,8 +99,6 @@ in
     "d '${stateDir}' 0750 root media - -"
     "d '${databaseDir}' 0700 postgres postgres - -"
     "d '${backupDir}' 0750 ${user} media - -"
-    "d '${config.host.srvarrPaths.mediaDir}/podcasts' 2775 root media - -"
-    "d '${downloadsDir}' 2775 ${user} media - -"
   ];
 
   services.postgresql = {
