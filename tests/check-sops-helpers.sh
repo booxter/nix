@@ -145,20 +145,26 @@ test_age_recipient_derivation() {
   local fixture_dir="$WORKDIR/age-recipient"
   local mock_bin="$fixture_dir/bin"
   local out="$fixture_dir/out.txt"
+  local bash_path
+  bash_path="$(command -v bash)"
   mkdir -p "$mock_bin"
 
-  cat > "$mock_bin/age-keygen" <<'EOF'
-#!/usr/bin/env bash
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
 set -euo pipefail
 [[ "$1" == "-y" && -f "$2" ]]
 printf '%s\n' 'age1native1test'
 EOF
-  cat > "$mock_bin/age-plugin-se" <<'EOF'
-#!/usr/bin/env bash
+  } > "$mock_bin/age-keygen"
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
 set -euo pipefail
 [[ "$1" == "recipients" && "$2" == "-i" && -f "$3" ]]
 printf '%s\n' 'age1se1test'
 EOF
+  } > "$mock_bin/age-plugin-se"
   chmod +x "$mock_bin/age-keygen" "$mock_bin/age-plugin-se"
 
   cat > "$fixture_dir/native.txt" <<'EOF'
