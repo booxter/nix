@@ -1,11 +1,13 @@
 {
   config,
+  hostInventory,
   lib,
   srvarrPkgs,
   ...
 }:
 let
   port = 8877;
+  srvarrAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   stateDir = "${config.host.srvarrPaths.stateDir}/houndarr";
 in
 {
@@ -56,7 +58,10 @@ in
 
         CapabilityBoundingSet = "";
         DevicePolicy = "closed";
-        IPAddressAllow = "localhost";
+        IPAddressAllow = [
+          "localhost"
+          "${srvarrAddress}/32"
+        ];
         IPAddressDeny = "any";
         LockPersonality = true;
         MemoryDenyWriteExecute = true;

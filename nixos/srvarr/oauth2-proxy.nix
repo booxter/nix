@@ -11,6 +11,12 @@ let
   protectedServiceHosts = lib.unique (
     lib.concatMap hostInventory.toInternalHttpsServiceHosts protectedServiceIds
   );
+  houndarrManagedServiceNames = [
+    "lidarr"
+    "radarr"
+    "sonarr"
+  ];
+  srvarrAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   backendPorts = {
     bazarr = config.services.bazarr.listenPort;
     houndarr = config.systemd.services.houndarr.environment.HOUNDARR_PORT;
@@ -51,6 +57,22 @@ let
       port = backendPorts.${serviceName};
     };
   };
+  # Houndarr rejects loopback instance URLs as an SSRF defense. Give it a
+  # routable HTTPS path to each local Arr API on the existing probe-only
+  # listener. Only this host may enter the lane, the normal UI remains absent,
+  # and the Arr applications still require their API keys.
+  houndarrApiVhosts = builtins.listToAttrs (
+    map (serviceName: {
+      name = "internal-https-${serviceName}-probe";
+      value.locations."/api/" = mkBackendProbeLocation {
+        port = backendPorts.${serviceName};
+        extraConfig = ''
+          allow ${srvarrAddress};
+          deny all;
+        '';
+      };
+    }) houndarrManagedServiceNames
+  );
   servarrPingProbeLocations = lib.genAttrs [
     "lidarr"
     "prowlarr"
@@ -105,6 +127,8 @@ let
   };
 in
 {
+  services.nginx.virtualHosts = houndarrApiVhosts;
+
   host.sso.oauth2ProxyGates.srvarr-admin-apps = {
     enable = true;
     inherit clientId;
