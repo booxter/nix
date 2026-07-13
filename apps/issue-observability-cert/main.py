@@ -158,6 +158,37 @@ def validate_inventory_host(host):
         raise SystemExit(f"Unknown host: {host}")
 
 
+def ca_url_for_host(host):
+    expr = f"""
+let
+  f = builtins.getFlake {json.dumps(str(REPO_ROOT))};
+  inventory = import {json.dumps(str(REPO_ROOT / "lib/inventory.nix"))} {{
+    lib = f.inputs.nixpkgs.lib;
+  }};
+  spec = builtins.getAttr {json.dumps(host)} inventory.nixosHostSpecsByName;
+in
+  {{
+    dnsName = inventory.toNixosPrimaryDnsName spec;
+    port = spec.caServer.port;
+  }}
+"""
+    endpoint = json.loads(
+        run(
+            [
+                "nix",
+                "--extra-experimental-features",
+                "nix-command flakes",
+                "eval",
+                "--impure",
+                "--json",
+                "--expr",
+                expr,
+            ]
+        )
+    )
+    return f"https://{endpoint['dnsName']}:{endpoint['port']}"
+
+
 def unique_strings(values):
     result = []
     seen = set()
@@ -314,6 +345,7 @@ def host_identity(host):
 
 
 def issue_remote_cert(*, ca_host, common_name, sans):
+    ca_url = ca_url_for_host(ca_host)
     san_args = " ".join(f"--san {shlex.quote(san)}" for san in sans)
     script = f"""
 set -euo pipefail
@@ -327,6 +359,7 @@ sudo -u step-ca env HOME={shlex.quote(DEFAULT_STEP_PATH)} STEPPATH={shlex.quote(
   {san_args} \
   --provisioner {shlex.quote(DEFAULT_PROVISIONER)} \
   --provisioner-password-file {shlex.quote(DEFAULT_PROVISIONER_PASSWORD_FILE)} \
+  --ca-url {shlex.quote(ca_url)} \
   >/dev/null
 printf '%s\\n' '__CERT__'
 sudo -u step-ca cat "$tmpdir/server.crt"

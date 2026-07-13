@@ -16,6 +16,7 @@ expected_json='{
     "fana": { "isWork": false },
     "frame": { "isWork": false },
     "gw": { "isWork": false },
+    "home": { "isWork": false },
     "nv": { "isWork": true },
     "nvws": { "isWork": true },
     "org": { "isWork": false },

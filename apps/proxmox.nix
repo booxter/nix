@@ -59,7 +59,7 @@ if builtins.hasAttr system inputs.proxmox-nixos.packages then
         exec ${../apps/prox-deploy.sh} \
           "$proxmox_host" \
           "root" \
-          "priv/lab-''${proxmox_host}" \
+          "host/''${proxmox_host}/root" \
           "$vm_type"
       '';
     };

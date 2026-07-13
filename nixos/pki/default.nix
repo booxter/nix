@@ -13,11 +13,13 @@ let
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
   caPort = caServer.port;
+  caUrl = "https://${config.host.dnsName}:${toString caPort}";
   caProvisioner = "bootstrap@home.arpa";
   pkiRotationBaseBranch = "master";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   stepStateDir = "/var/lib/step-ca";
+  stepDefaultsFile = "${stepStateDir}/config/defaults.json";
   stepPasswordFile = "${stepStateDir}/password.txt";
   stepProvisionerPasswordFile = "${stepStateDir}/provisioner-password.txt";
   caDnsNames = lib.unique (
@@ -78,6 +80,13 @@ let
       ' \
       "${stepStateDir}/config/ca.json" > "$tmp_json"
     mv "$tmp_json" "${stepStateDir}/config/ca.json"
+
+    tmp_defaults="$(mktemp)"
+    ${pkgs.jq}/bin/jq \
+      --arg ca_url ${lib.escapeShellArg caUrl} \
+      '."ca-url" = $ca_url' \
+      "${stepDefaultsFile}" > "$tmp_defaults"
+    mv "$tmp_defaults" "${stepDefaultsFile}"
   '';
 in
 {

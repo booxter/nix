@@ -9,6 +9,10 @@ let
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
   beastTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.beast;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
+  homeHostConfig = outputs.nixosConfigurations.home.config;
+  homeTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.home;
+  homeAssistantEndpoint =
+    homeHostConfig.host.observability.client.prometheusMtlsEndpoints.home-assistant;
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
   sabnzbdTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.srvarr;
@@ -60,6 +64,20 @@ in
             "${beastTargetHost}:${toString lolekEndpoint.port}"
           ];
           labels.instance = "beast";
+        }
+      ];
+    }
+    {
+      job_name = "home-assistant";
+      metrics_path = homeAssistantEndpoint.path;
+      scheme = "https";
+      tls_config = prometheusMtlsTlsConfig;
+      static_configs = [
+        {
+          targets = [
+            "${homeTargetHost}:${toString homeAssistantEndpoint.port}"
+          ];
+          labels.instance = "home";
         }
       ];
     }

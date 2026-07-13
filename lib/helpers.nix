@@ -134,6 +134,7 @@ rec {
       memorySize ? 8, # GB
       balloonSize ? null, # GB
       diskSize ? 100, # GB
+      dhcpReservation ? null,
       hostname,
       proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
       ...
@@ -205,10 +206,15 @@ rec {
                     fstrim_cloned_disks = true;
                   };
                   net = [
-                    {
-                      model = "virtio";
-                      bridge = "vmbr0";
-                    }
+                    (
+                      {
+                        model = "virtio";
+                        bridge = "vmbr0";
+                      }
+                      // inputs.nixpkgs.lib.optionalAttrs (dhcpReservation != null) {
+                        macaddr = dhcpReservation.match;
+                      }
+                    )
                   ];
                   scsi = [
                     {

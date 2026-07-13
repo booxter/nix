@@ -72,6 +72,22 @@ let
         };
       };
     };
+    home = {
+      publicKey = readPublicKey ../../public-keys/restic/home.pub;
+      cloud = {
+        repository = "b2:${cloudBucketName}:hosts/home";
+        prefix = "hosts/home";
+        pruneOpts = [
+          "--keep-daily=14"
+          "--keep-weekly=8"
+          "--keep-monthly=12"
+        ];
+        timerConfig = {
+          OnCalendar = "06:00";
+          RandomizedDelaySec = "5m";
+        };
+      };
+    };
     pki = {
       publicKey = readPublicKey ../../public-keys/restic/pki.pub;
       cloud = {

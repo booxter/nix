@@ -436,6 +436,13 @@ rec {
   };
 
   sso = {
+    applications."home-assistant" = {
+      adminGroup = "home-admins";
+      userGroup = "home-users";
+      bootstrapOwner = "ihar";
+      bootstrapLanguage = "en";
+    };
+
     groups = {
       "sso-admins" = {
         title = "SSO administrators";
@@ -448,6 +455,12 @@ rec {
       };
       "grafana-viewers" = {
         title = "Grafana viewers";
+      };
+      "home-admins" = {
+        title = "Home Assistant administrators";
+      };
+      "home-users" = {
+        title = "Home Assistant users";
       };
       "paperless-admins" = {
         title = "Paperless administrators";
@@ -492,6 +505,8 @@ rec {
           "sso-admins"
           "infra-admins"
           "grafana-admins"
+          "home-admins"
+          "home-users"
           "paperless-admins"
           "paperless-users"
           "vikunja-users"
@@ -509,6 +524,7 @@ rec {
           "vikunja-users"
           "ai-users"
           "media-users"
+          "home-users"
         ];
       };
       oidc-probe-user = {
@@ -583,6 +599,15 @@ rec {
       owner = "fana";
       probePath = "/login";
       glanceCategory = "infrastructure";
+    }))
+    (resolveService (mkService {
+      id = "home";
+      title = "Home Assistant";
+      icon = "sh:home-assistant";
+      scope = "internal";
+      owner = "home";
+      probePath = "/";
+      glanceCategory = "user";
     }))
     (resolveService (mkService {
       id = "radarr";
@@ -1055,6 +1080,25 @@ rec {
         match = "bc:24:11:c6:ab:fc";
         hostname = "pki";
         ip = "192.168.20.5";
+      };
+    }
+    {
+      isVM = true;
+      name = "home";
+      platform = "x86_64-linux";
+      stateVersion = "26.05";
+      upsHost = "prx1-lab";
+      proxNode = "prx2-lab";
+      localDnsAliases = [ "home" ];
+      cores = 4;
+      memorySize = 8;
+      diskSize = 80;
+      sshPort = 10011;
+      hmFull = false;
+      dhcpReservation = {
+        match = "02:48:4f:4d:45:01";
+        hostname = "home";
+        ip = "192.168.20.6";
       };
     }
   ]

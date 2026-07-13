@@ -1,6 +1,7 @@
 { lib, hostInventory }:
 let
   idService = hostInventory.servicesById.id;
+  homeAssistantSso = hostInventory.sso.applications.home-assistant;
   lan = hostInventory.site.lan;
   issuerBaseUrl = "https://${idService.publicHost}";
   baseScopes = [
@@ -74,6 +75,24 @@ rec {
       claimMaps.grafana_role.valuesByGroup = {
         "grafana-admins" = [ "admin" ];
         "grafana-viewers" = [ "viewer" ];
+      };
+    };
+
+    home-assistant = mkClient "home-assistant" {
+      displayName = "Home Assistant";
+      public = true;
+      originUrl = [
+        "https://home.${lan.domain}/auth/oidc/welcome"
+        "https://home.${lan.domain}/auth/oidc/callback"
+      ];
+      originLanding = "https://home.${lan.domain}/";
+      scopeMaps = {
+        ${homeAssistantSso.adminGroup} = scopeWith [ "home_groups" ];
+        ${homeAssistantSso.userGroup} = scopeWith [ "home_groups" ];
+      };
+      claimMaps.home_groups.valuesByGroup = {
+        ${homeAssistantSso.adminGroup} = [ homeAssistantSso.adminGroup ];
+        ${homeAssistantSso.userGroup} = [ homeAssistantSso.userGroup ];
       };
     };
 

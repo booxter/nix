@@ -122,13 +122,6 @@ host_metadata_from_host_map() {
   ' <<<"$host_map"
 }
 
-host_kind_from_host_map() {
-  local metadata
-
-  metadata="$(host_metadata_from_host_map "$1" "$2")"
-  printf '%s' "${metadata%%$'\t'*}"
-}
-
 is_work_host() {
   local metadata
   local is_work
@@ -190,59 +183,4 @@ format_host_list() {
   for host in "$@"; do
     printf ', %s' "$host"
   done
-}
-
-deploy_installable_for_host() {
-  local flake_ref="$1"
-  local host="$2"
-  local host_map="$3"
-
-  case "$(host_kind_from_host_map "$host" "$host_map")" in
-    nixos)
-      printf '%s#nixosConfigurations.%s.config.system.build.toplevel' "$flake_ref" "$host"
-      ;;
-    darwin)
-      printf '%s#darwinConfigurations.%s.system' "$flake_ref" "$host"
-      ;;
-    *)
-      echo "Cannot construct deploy installable for unknown host: ${host}" >&2
-      return 1
-      ;;
-  esac
-}
-
-prebuild_deploy_targets() {
-  local branch="$1"
-  local repo_url="$2"
-  local host_map="$3"
-  shift 3
-
-  local flake_ref host
-  local -a installables=()
-
-  flake_ref="git+https://github.com/${repo_url#github.com:}.git?ref=${branch}"
-  for host in "$@"; do
-    installables+=("$(deploy_installable_for_host "$flake_ref" "$host" "$host_map")")
-  done
-
-  echo "Prebuilding ${#installables[@]} deployment target(s) from branch ${branch}..."
-  nix build -L --show-trace --no-link "${installables[@]}"
-}
-
-prebuild_local_deploy_targets() {
-  local repo_dir="$1"
-  local commit="$2"
-  local host_map="$3"
-  shift 3
-
-  local flake_ref host
-  local -a installables=()
-
-  flake_ref="path:${repo_dir}"
-  for host in "$@"; do
-    installables+=("$(deploy_installable_for_host "$flake_ref" "$host" "$host_map")")
-  done
-
-  echo "Prebuilding ${#installables[@]} deployment target(s) from local commit ${commit}..."
-  nix build -L --show-trace --no-link "${installables[@]}"
 }
