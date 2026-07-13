@@ -197,6 +197,7 @@
               aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
               houndarr = pkgs.callPackage ./nixos/srvarr/pkgs/houndarr { };
               searchless-ngx = pkgs.callPackage ./nixos/org/pkgs/searchless-ngx { };
+              telegram-archive = pkgs.callPackage ./nixos/org/pkgs/telegram-archive { };
             }
             // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
               ismc = pkgs.callPackage ./darwin/pkgs/ismc { };

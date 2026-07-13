@@ -130,6 +130,14 @@ rec {
       };
     };
 
+    tg = mkClient "tg" {
+      displayName = "Telegram Archive";
+      originUrl = "https://tg.${lan.domain}/oauth2/callback";
+      originLanding = "https://tg.${lan.domain}/";
+      scopeMaps."infra-admins" = scopeWith [ "infra_groups" ];
+      claimMaps.infra_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
+    };
+
     oidc-synthetic-probe = mkClient "oidc-synthetic-probe" {
       displayName = "OIDC synthetic probe";
       public = true;

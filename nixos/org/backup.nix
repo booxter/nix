@@ -10,17 +10,26 @@ let
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessStoragePath = "/data/paperless";
   searchlessStateDir = "/var/lib/searchless-ngx";
+  telegramArchiveStateDir = "/var/lib/telegram-archive";
+  telegramArchiveBackupDir = "/var/lib/telegram-archive-backup";
+  telegramArchiveDatabasePath = "${telegramArchiveStateDir}/backups/telegram_backup.db";
+  telegramArchiveSessionPath = "${telegramArchiveStateDir}/session/telegram_archive.session";
   backupPaths = [
     openWebuiStateDir
     paperlessDataDir
     paperlessGptStateDir
     paperlessStoragePath
     searchlessStateDir
+    telegramArchiveStateDir
     "/var/lib/vikunja/files"
   ];
   backupExclude = [
     openWebuiDatabasePath
     "${openWebuiDatabasePath}-*"
+    telegramArchiveDatabasePath
+    "${telegramArchiveDatabasePath}-*"
+    telegramArchiveSessionPath
+    "${telegramArchiveSessionPath}-*"
   ];
 in
 {
@@ -50,6 +59,26 @@ in
         displayName = "Vikunja";
         databasePath = "/var/lib/vikunja/vikunja.db";
         destinationDir = "/var/lib/vikunja-backup/latest";
+      };
+
+      telegram-archive = {
+        displayName = "Telegram Archive";
+        databasePath = telegramArchiveDatabasePath;
+        destinationDir = "${telegramArchiveBackupDir}/database/latest";
+        unitConfig.ConditionPathExists = telegramArchiveDatabasePath;
+      };
+
+      telegram-archive-session = {
+        displayName = "Telegram Archive authenticated session";
+        databasePath = telegramArchiveSessionPath;
+        destinationDir = "${telegramArchiveBackupDir}/session/latest";
+        unitConfig.ConditionPathExists = telegramArchiveSessionPath;
+        extraCopies = [
+          {
+            source = "${telegramArchiveSessionPath}.authenticated";
+            mode = "0600";
+          }
+        ];
       };
     };
   };

@@ -43,7 +43,7 @@ DNS stay converged with inventory.
   `nix run .#reset-oidc -- <user-id> [email]`.
 - Current declarative OAuth clients cover Grafana, Home Assistant, Vikunja,
   Open WebUI, LiteLLM, Paperless, RomM, Audiobookshelf, Aurral, Shelfmark, and
-  the `srvarr` admin-app proxy gate.
+  the Telegram Archive and `srvarr` admin-app proxy gates.
 
 ## PKI Apps
 
