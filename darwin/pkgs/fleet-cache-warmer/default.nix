@@ -45,6 +45,10 @@ writeShellApplication {
   text = ''
         set -euo pipefail
 
+        log() {
+          printf '[%s] %s\n' "$(${coreutils}/bin/date '+%Y-%m-%dT%H:%M:%S%z')" "$*" >&2
+        }
+
         usage() {
           cat <<'EOF'
     Usage: ${name} [--print-targets]
@@ -96,62 +100,68 @@ writeShellApplication {
 
         declare -a buildable_targets=()
         skipped_inventory_count=0
-        printf 'Resolving %s warm target(s) from %s\n' "''${#targets[@]}" "$flake_ref" >&2
+        log "Resolving ''${#targets[@]} warm target(s) from $flake_ref"
         for i in "''${!targets[@]}"; do
           target="''${targets[$i]}"
-          printf 'Resolving target %s/%s: %s\n' "$((i + 1))" "''${#targets[@]}" "$target" >&2
+          log "Resolving target $((i + 1))/''${#targets[@]}: $target"
           if ${lib.getExe nix} eval --raw "$target.outPath" >/dev/null 2>&1; then
             buildable_targets+=("$target")
+            log "Resolved target $((i + 1))/''${#targets[@]}: $target"
           else
             skipped_inventory_count=$((skipped_inventory_count + 1))
-            printf '${name}: target is missing or does not evaluate, skipping: %s\n' "$target" >&2
+            log "${name}: target is missing or does not evaluate, skipping: $target"
           fi
         done
 
         if [ "''${#buildable_targets[@]}" -eq 0 ]; then
-          echo "${name}: no warm targets resolved successfully" >&2
+          log "${name}: no warm targets resolved successfully"
           exit 0
         fi
 
-        printf 'Building %s resolved warm target(s) from %s\n' "''${#buildable_targets[@]}" "$flake_ref" >&2
+        log "Building ''${#buildable_targets[@]} resolved warm target(s) from $flake_ref"
         : >"$out_paths_file"
-        if ! ${lib.getExe nix} build -L --keep-going --no-link --print-out-paths "''${buildable_targets[@]}" >>"$out_paths_file"; then
-          echo "${name}: batched build reported failures; continuing with any successful outputs" >&2
+        if ${lib.getExe nix} build -L --keep-going --no-link --print-out-paths "''${buildable_targets[@]}" >>"$out_paths_file"; then
+          log "Batched build completed"
+        else
+          log "${name}: batched build reported failures; continuing with any successful outputs"
         fi
 
         fallback_failed_count=0
         if ! ${coreutils}/bin/test -s "$out_paths_file"; then
-          echo "${name}: batched build produced no successful outputs; retrying target-by-target" >&2
+          log "${name}: batched build produced no successful outputs; retrying target-by-target"
           for target in "''${buildable_targets[@]}"; do
-            printf 'Warming %s\n' "$target" >&2
-            if ! ${lib.getExe nix} build -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
+            log "Warming $target"
+            if ${lib.getExe nix} build -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
+              log "Warmed $target"
+            else
               fallback_failed_count=$((fallback_failed_count + 1))
-              printf '${name}: target failed, skipping: %s\n' "$target" >&2
+              log "${name}: target failed, skipping: $target"
             fi
           done
         fi
 
         if ! ${coreutils}/bin/test -s "$out_paths_file"; then
-          echo "${name}: no targets built successfully" >&2
+          log "${name}: no targets built successfully"
           exit 0
         fi
 
         realized_output_count="$(${coreutils}/bin/sort -u "$out_paths_file" | ${coreutils}/bin/wc -l | ${coreutils}/bin/tr -d ' ')"
     ${lib.optionalString pushToAttic ''
-      printf 'Pushing %s warmed output path(s) to Attic cache %s\n' "$realized_output_count" "$attic_cache" >&2
+      log "Pushing $realized_output_count warmed output path(s) to Attic cache $attic_cache"
       ${coreutils}/bin/sort -u "$out_paths_file" \
         | ${lib.getExe attic-client} push --ignore-upstream-cache-filter --stdin "$attic_cache"
+      log "Pushed $realized_output_count warmed output path(s) to Attic cache $attic_cache"
     ''}
     ${lib.optionalString (!pushToAttic) ''
-      printf 'Built %s warmed output path(s); Attic push disabled\n' "$realized_output_count" >&2
+      log "Built $realized_output_count warmed output path(s); Attic push disabled"
     ''}
 
         if [ "$skipped_inventory_count" -gt 0 ]; then
-          printf '${name}: skipped %s missing or unevaluable inventory target(s)\n' "$skipped_inventory_count" >&2
+          log "${name}: skipped $skipped_inventory_count missing or unevaluable inventory target(s)"
         fi
 
         if [ "$fallback_failed_count" -gt 0 ]; then
-          printf '${name}: completed with %s skipped target failure(s) after batch fallback\n' "$fallback_failed_count" >&2
+          log "${name}: completed with $fallback_failed_count skipped target failure(s) after batch fallback"
         fi
   '';
 }
