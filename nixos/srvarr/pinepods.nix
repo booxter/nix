@@ -198,12 +198,10 @@ in
     pinepods-postgresql-password = {
       description = "Apply PinePods PostgreSQL password";
       wantedBy = [ "multi-user.target" ];
-      wants = [
-        "postgresql.service"
-        "sops-install-secrets.service"
-      ];
+      requires = [ "postgresql-setup.service" ];
+      wants = [ "sops-install-secrets.service" ];
       after = [
-        "postgresql.service"
+        "postgresql-setup.service"
         "sops-install-secrets.service"
       ];
       before = [ "podman-pinepods.service" ];
