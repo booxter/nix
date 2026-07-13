@@ -139,7 +139,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (name) (unifipoller_device_uptime_seconds{job=\"unpoller\"})",
+          "expr": "max by (name) (unpoller_device_uptime_seconds{job=\"unpoller\"})",
           "instant": true,
           "legendFormat": "{{name}}",
           "range": false,
@@ -201,7 +201,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (site_name) (unifipoller_site_latency_seconds{job=\"unpoller\"})",
+          "expr": "max by (site_name) (unpoller_site_latency_seconds{job=\"unpoller\"})",
           "instant": true,
           "legendFormat": "{{site_name}}",
           "range": false,
@@ -265,7 +265,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (wan_name) (unifipoller_wan_uptime_percentage{job=\"unpoller\"})",
+          "expr": "max by (wan_name) (unpoller_wan_uptime_percentage{job=\"unpoller\"})",
           "instant": true,
           "legendFormat": "{{wan_name}}",
           "range": false,
@@ -319,7 +319,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by (name, port) (unifipoller_device_wan_receive_rate_bytes{job=\"unpoller\"}) * 8",
+          "expr": "sum by (name, port) (unpoller_device_wan_receive_rate_bytes{job=\"unpoller\"}) * 8",
           "legendFormat": "Download {{name}} {{port}}",
           "range": true,
           "refId": "A"
@@ -327,7 +327,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum by (name, port) (unifipoller_device_wan_transmit_rate_bytes{job=\"unpoller\"}) * 8",
+          "expr": "sum by (name, port) (unpoller_device_wan_transmit_rate_bytes{job=\"unpoller\"}) * 8",
           "legendFormat": "Upload {{name}} {{port}}",
           "range": true,
           "refId": "B"
@@ -380,7 +380,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(increase(unifipoller_device_wan_receive_bytes_total{job=\"unpoller\"}[24h]))",
+          "expr": "sum(increase(unpoller_device_wan_receive_bytes_total{job=\"unpoller\"}[24h]))",
           "instant": true,
           "legendFormat": "Downloaded",
           "range": false,
@@ -389,7 +389,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(increase(unifipoller_device_wan_transmit_bytes_total{job=\"unpoller\"}[24h]))",
+          "expr": "sum(increase(unpoller_device_wan_transmit_bytes_total{job=\"unpoller\"}[24h]))",
           "instant": true,
           "legendFormat": "Uploaded",
           "range": false,
@@ -451,7 +451,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (site_name) (unifipoller_site_latency_seconds{job=\"unpoller\"})",
+          "expr": "max by (site_name) (unpoller_site_latency_seconds{job=\"unpoller\"})",
           "legendFormat": "{{site_name}}",
           "range": true,
           "refId": "A"
@@ -514,7 +514,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (name) (unifipoller_device_cpu_utilization_ratio{job=\"unpoller\"})",
+          "expr": "max by (name) (unpoller_device_cpu_utilization_ratio{job=\"unpoller\"})",
           "legendFormat": "CPU {{name}}",
           "range": true,
           "refId": "A"
@@ -522,7 +522,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (name) (unifipoller_device_memory_utilization_ratio{job=\"unpoller\"})",
+          "expr": "max by (name) (unpoller_device_memory_utilization_ratio{job=\"unpoller\"})",
           "legendFormat": "Memory {{name}}",
           "range": true,
           "refId": "B"
@@ -583,7 +583,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (name, temp_area, temp_type) (unifipoller_device_temperature_celsius{job=\"unpoller\"})",
+          "expr": "max by (name, temp_area, temp_type) (unpoller_device_temperature_celsius{job=\"unpoller\"})",
           "legendFormat": "{{name}} {{temp_area}} {{temp_type}}",
           "range": true,
           "refId": "A"
@@ -636,7 +636,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (site_name) (unifipoller_site_users{job=\"unpoller\"})",
+          "expr": "max by (site_name) (unpoller_site_users{job=\"unpoller\"})",
           "legendFormat": "Users {{site_name}}",
           "range": true,
           "refId": "A"
@@ -644,7 +644,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (site_name) (unifipoller_site_guests{job=\"unpoller\"})",
+          "expr": "max by (site_name) (unpoller_site_guests{job=\"unpoller\"})",
           "legendFormat": "Guests {{site_name}}",
           "range": true,
           "refId": "B"
@@ -652,7 +652,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "max by (site_name) (unifipoller_site_iots{job=\"unpoller\"})",
+          "expr": "max by (site_name) (unpoller_site_iots{job=\"unpoller\"})",
           "legendFormat": "IoT {{site_name}}",
           "range": true,
           "refId": "C"
