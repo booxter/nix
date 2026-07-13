@@ -504,18 +504,13 @@ fi
 
 mapfile -t HOSTS < <(canonicalize_hosts "${HOSTS[@]}")
 
-if [[ "$DRY_RUN" != "true" ]]; then
-  if [[ "$SOURCE_MODE" == "local" ]]; then
-    prepare_local_deploy_source "$PWD"
-    prebuild_local_deploy_targets "$LOCAL_SOURCE_CHECKOUT" "$LOCAL_SOURCE_COMMIT" "$HOST_MAP" "${HOSTS[@]}"
-  else
-    prebuild_deploy_targets "$BRANCH" "$REPO_URL" "$HOST_MAP" "${HOSTS[@]}"
-  fi
-fi
-
 if [[ "$DRY_RUN" == "true" ]]; then
   echo "Dry run: would update $(format_display_host_list "${HOSTS[@]}")."
   exit 0
+fi
+
+if [[ "$SOURCE_MODE" == "local" ]]; then
+  prepare_local_deploy_source "$PWD"
 fi
 
 ok_hosts=()
