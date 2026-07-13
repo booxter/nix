@@ -7,15 +7,26 @@
   ...
 }:
 let
+  monitorLimit = 10;
+  excludedServiceIds = [
+    "llm"
+    "paperless"
+    "search"
+  ];
+  monitoredServices = builtins.filter (
+    service: !(builtins.elem service.id excludedServiceIds)
+  ) hostInventory.publicServices;
   servicesFile = pkgs.writeText "uptimerobot-services.json" (
     builtins.toJSON (
       map (service: {
         inherit (service) id title;
         url = service.probeUrl;
-      }) hostInventory.publicServices
+      }) monitoredServices
     )
   );
 in
+assert lib.assertMsg (builtins.length monitoredServices <= monitorLimit)
+  "UptimeRobot monitor limit exceeded: configured ${toString (builtins.length monitoredServices)}, limit ${toString monitorLimit}";
 {
   users.users.uptimerobot-sync = {
     isSystemUser = true;
