@@ -47,6 +47,9 @@ in
         HOUNDARR_PORT = toString port;
         HOUNDARR_SECURE_COOKIES = "true";
         HOUNDARR_TRUSTED_PROXIES = "127.0.0.1/32";
+        # httpx otherwise uses certifi's public-only CA set and cannot verify
+        # the internal HTTPS certificates on the local Arr API lanes.
+        SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
       };
       serviceConfig = {
         ExecStart = lib.getExe srvarrPkgs.houndarr;
