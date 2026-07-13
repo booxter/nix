@@ -11,15 +11,7 @@ let
   sketchybarHeight = 30; # TODO: parametrize it?
 
   aerospacePkgs = import ./pkgs { inherit pkgs; };
-  workspaceCount = 6;
-  workspaceNames =
-    (map toString (lib.range 1 workspaceCount))
-    ++ [
-      "c" # chat
-      "e" # email
-      "s" # spotify
-    ]
-    ++ (lib.optional isWork "t"); # teams
+  workspaceNames = import ./workspaces.nix { inherit lib isWork; };
   moveCommand =
     direction:
     if config.programs.xquartz.enable then
@@ -187,9 +179,6 @@ in
 
       automatically-unhide-macos-hidden-apps = false;
 
-      after-startup-command = [
-        "exec-and-forget ${sketchybar}"
-      ];
       exec-on-workspace-change = [
         "/bin/bash"
         "-c"

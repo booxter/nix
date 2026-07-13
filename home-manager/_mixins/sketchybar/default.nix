@@ -7,6 +7,7 @@
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
+  workspaceNames = import ../aerospace/workspaces.nix { inherit lib isWork; };
   codexPlugin = pkgs.writeShellApplication {
     name = "sketchybar-codex";
     runtimeInputs = [
@@ -105,6 +106,29 @@ let
                                         background.height=24
     ''
   );
+  aerospaceSpacesItem = pkgs.writeText "sketchybar-aerospace-spaces.sh" (
+    ''
+      sketchybar --add event aerospace_workspace_change
+    ''
+    + lib.concatMapStringsSep "\n" (
+      sid:
+      let
+        escapedSid = lib.escapeShellArg sid;
+      in
+      ''
+        sketchybar --add item space.${sid} left \
+            --subscribe space.${sid} aerospace_workspace_change \
+            --set space.${sid} \
+            background.color=0x44ffffff \
+            background.corner_radius=5 \
+            background.height=25 \
+            background.drawing=off \
+            label="${sid}" \
+            click_script="aerospace workspace ${escapedSid}" \
+            script="$CONFIG_DIR/plugins/aerospace.sh ${escapedSid}"
+      ''
+    ) workspaceNames
+  );
   sketchybarConfig = pkgs.runCommandLocal "sketchybar-config" { } ''
     mkdir -p "$out"
     cp -R ${./sketchybar}/. "$out/"
@@ -112,6 +136,8 @@ let
     mkdir -p "$out/items"
     rm -f "$out/plugins/codex.sh"
     rm -f "$out/plugins/codex-work.sh"
+    rm -f "$out/items/aerospace-spaces.sh"
+    ln -s ${aerospaceSpacesItem} "$out/items/aerospace-spaces.sh"
     ln -s ${codexItem} "$out/items/codex.sh"
     ${lib.optionalString (!isWork) ''
       ln -s ${lib.getExe codexPlugin} "$out/plugins/codex.sh"
@@ -128,7 +154,8 @@ in
       source = sketchybarConfig;
       recursive = true;
     };
-    service.enable = false;
+    # Let launchd own the process lifetime. Aerospace only sends workspace events.
+    service.enable = true;
     extraPackages = with pkgs; [
       aerospace
       gnugrep
