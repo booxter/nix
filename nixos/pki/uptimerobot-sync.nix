@@ -7,15 +7,26 @@
   ...
 }:
 let
+  monitorLimit = 10;
+  excludedServiceIds = [
+    "llm"
+    "paperless"
+    "search"
+  ];
+  monitoredServices = builtins.filter (
+    service: !(builtins.elem service.id excludedServiceIds)
+  ) hostInventory.publicServices;
   servicesFile = pkgs.writeText "uptimerobot-services.json" (
     builtins.toJSON (
       map (service: {
         inherit (service) id title;
         url = service.probeUrl;
-      }) hostInventory.publicServices
+      }) monitoredServices
     )
   );
 in
+assert lib.assertMsg (builtins.length monitoredServices <= monitorLimit)
+  "UptimeRobot monitor limit exceeded: configured ${toString (builtins.length monitoredServices)}, limit ${toString monitorLimit}";
 {
   users.users.uptimerobot-sync = {
     isSystemUser = true;
@@ -26,10 +37,6 @@ in
 
   sops.secrets.uptimeRobotApiKey = {
     key = "uptimerobot/api_key";
-    owner = "uptimerobot-sync";
-    group = "uptimerobot-sync";
-    mode = "0400";
-    restartUnits = [ "uptimerobot-sync.service" ];
   };
 
   systemd.services.uptimerobot-sync = {
@@ -46,10 +53,11 @@ in
       Type = "oneshot";
       User = "uptimerobot-sync";
       Group = "uptimerobot-sync";
+      LoadCredential = "uptimerobot-api-key:${config.sops.secrets.uptimeRobotApiKey.path}";
       ExecStart = "${lib.getExe pkiPkgs.uptimerobot-sync} ${
         lib.escapeShellArgs [
           "--api-key-file"
-          config.sops.secrets.uptimeRobotApiKey.path
+          "%d/uptimerobot-api-key"
           "--inventory-json-file"
           servicesFile
         ]
