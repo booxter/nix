@@ -64,7 +64,7 @@ Useful checks:
 ```bash
 ssh org 'systemctl status telegram-archive-scheduler telegram-archive-viewer oauth2-proxy-tg'
 ssh org 'journalctl -u telegram-archive-scheduler -f'
-ssh org 'curl -fsS http://127.0.0.1:8080/api/health'
+ssh org 'curl -fsS http://127.0.0.1:8091/api/health'
 ```
 
 If the session is invalidated, stop the scheduler, rerun

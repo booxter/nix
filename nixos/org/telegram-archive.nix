@@ -14,7 +14,7 @@ let
   sessionDir = "${stateDir}/session";
   databasePath = "${backupPath}/telegram_backup.db";
   sessionPath = "${sessionDir}/telegram_archive.session";
-  viewerPort = 8080;
+  viewerPort = 8091;
   oauth2ProxyPort = 4182;
   tgService = hostInventory.servicesById.tg;
   externalOrigin = "https://${tgService.id}.${hostInventory.site.lan.domain}";
