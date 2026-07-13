@@ -62,12 +62,23 @@
 
   system = {
     activationScripts.postActivation.text = ''
-      echo "Do not sleep when on AC power."
-      pmset -c sleep 0 # Needs testing - UI not immediately updated.
+      echo "Do not idle sleep or hibernate when on AC power."
+      pmset -c sleep 0 disksleep 0 standby 0 powernap 0 hibernatemode 0
 
       echo "Prefer network over sleep."
       pmset networkoversleep 1
     '';
+  };
+
+  launchd.daemons.prevent-ac-sleep = {
+    command = "/usr/bin/caffeinate -s";
+    serviceConfig = {
+      RunAtLoad = true;
+      KeepAlive = true;
+      ProcessType = "Background";
+      StandardOutPath = "/var/log/prevent-ac-sleep.log";
+      StandardErrorPath = "/var/log/prevent-ac-sleep.log";
+    };
   };
 
   # TODO: is it still needed? Does it operate in the user context? (Not root?)
