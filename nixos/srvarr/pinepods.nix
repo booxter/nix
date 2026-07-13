@@ -11,6 +11,9 @@ let
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
 
   pinepodsService = hostInventory.servicesById.pinepods;
+  pinepodsSso = hostInventory.sso.applications.pinepods;
+  bootstrapOwnerName = pinepodsSso.bootstrapOwner;
+  bootstrapAdmin = hostInventory.sso.users.${bootstrapOwnerName};
   oidcClientId = oidc.clients.pinepods.clientId;
   image = ociImages.pinepods.ref;
   imageFile = ociImages.pinepods.imageFile;
@@ -50,6 +53,10 @@ in
     "pinepods/oidc/client_secret" = {
       mode = "0400";
       restartUnits = [ "podman-pinepods.service" ];
+    };
+    "pinepods/bootstrap/password" = {
+      mode = "0400";
+      restartUnits = [ "pinepods-bootstrap-admin.service" ];
     };
   };
 
@@ -255,6 +262,89 @@ in
       };
     };
 
+    pinepods-bootstrap-admin = {
+      description = "Create the initial PinePods administrator";
+      wantedBy = [ "multi-user.target" ];
+      requires = [ "podman-pinepods.service" ];
+      wants = [ "sops-install-secrets.service" ];
+      after = [
+        "podman-pinepods.service"
+        "sops-install-secrets.service"
+      ];
+      path = [
+        pkgs.coreutils
+        pkgs.curl
+        pkgs.jq
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        TimeoutStartSec = "5min";
+      };
+      script = ''
+        base_url="http://127.0.0.1:${toString port}"
+
+        for attempt in $(seq 1 120); do
+          status_json="$(
+            curl --fail --silent "$base_url/api/data/self_service_status" 2>/dev/null \
+              || true
+          )"
+          first_admin_created="$(
+            printf '%s' "$status_json" \
+              | jq --raw-output '.first_admin_created // empty' 2>/dev/null \
+              || true
+          )"
+
+          if [ "$first_admin_created" = "true" ]; then
+            echo "PinePods already has an administrator"
+            exit 0
+          fi
+
+          if [ "$first_admin_created" = "false" ]; then
+            break
+          fi
+
+          if [ "$attempt" = 120 ]; then
+            echo "Timed out waiting for the PinePods setup API" >&2
+            exit 1
+          fi
+
+          sleep 2
+        done
+
+        response="$(
+          jq \
+            --null-input \
+            --arg username ${lib.escapeShellArg bootstrapOwnerName} \
+            --arg fullname ${lib.escapeShellArg bootstrapAdmin.displayName} \
+            --arg email ${lib.escapeShellArg (builtins.head bootstrapAdmin.mailAddresses)} \
+            --rawfile password ${config.sops.secrets."pinepods/bootstrap/password".path} \
+            '{
+              username: $username,
+              fullname: $fullname,
+              email: $email,
+              password: ($password | sub("[\\r\\n]+$"; ""))
+            }' \
+            | curl \
+              --fail \
+              --silent \
+              --show-error \
+              --header 'Content-Type: application/json' \
+              --data-binary @- \
+              "$base_url/api/data/create_first"
+        )"
+
+        user_id="$(printf '%s' "$response" | jq --raw-output '.user_id // empty')"
+        if [ -z "$user_id" ]; then
+          echo "PinePods did not return the created administrator ID" >&2
+          printf '%s\n' "$response" >&2
+          exit 1
+        fi
+
+        echo "Created the initial PinePods administrator (user ID $user_id)"
+      '';
+    };
+
     podman-pinepods = {
       requires = [
         "pinepods-postgresql-password.service"
@@ -288,4 +378,15 @@ in
       proxy_send_timeout 300s;
     '';
   };
+
+  assertions = [
+    {
+      assertion = builtins.elem pinepodsSso.adminGroup bootstrapAdmin.groups;
+      message = "The PinePods bootstrap owner must belong to its SSO admin group.";
+    }
+    {
+      assertion = builtins.elem pinepodsSso.userGroup bootstrapAdmin.groups;
+      message = "The PinePods bootstrap owner must belong to its SSO user group.";
+    }
+  ];
 }

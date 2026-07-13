@@ -437,11 +437,18 @@ rec {
   };
 
   sso = {
-    applications."home-assistant" = {
-      adminGroup = "home-admins";
-      userGroup = "home-users";
-      bootstrapOwner = "ihar";
-      bootstrapLanguage = "en";
+    applications = {
+      "home-assistant" = {
+        adminGroup = "home-admins";
+        userGroup = "home-users";
+        bootstrapOwner = "ihar";
+        bootstrapLanguage = "en";
+      };
+      pinepods = {
+        adminGroup = "media-admins";
+        userGroup = "media-users";
+        bootstrapOwner = "ihar";
+      };
     };
 
     groups = {

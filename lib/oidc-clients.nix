@@ -2,6 +2,7 @@
 let
   idService = hostInventory.servicesById.id;
   homeAssistantSso = hostInventory.sso.applications.home-assistant;
+  pinepodsSso = hostInventory.sso.applications.pinepods;
   lan = hostInventory.site.lan;
   issuerBaseUrl = "https://${idService.publicHost}";
   baseScopes = [
@@ -217,12 +218,12 @@ rec {
       # PinePods 0.9.0 explicitly requires a confidential client without PKCE.
       allowInsecureClientDisablePkce = true;
       scopeMaps = {
-        "media-admins" = scopeWith [ "pinepods_roles" ];
-        "media-users" = scopeWith [ "pinepods_roles" ];
+        ${pinepodsSso.adminGroup} = scopeWith [ "pinepods_roles" ];
+        ${pinepodsSso.userGroup} = scopeWith [ "pinepods_roles" ];
       };
       claimMaps.pinepods_roles.valuesByGroup = {
-        "media-admins" = [ "admin" ];
-        "media-users" = [ "user" ];
+        ${pinepodsSso.adminGroup} = [ "admin" ];
+        ${pinepodsSso.userGroup} = [ "user" ];
       };
     };
 
