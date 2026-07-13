@@ -7,6 +7,7 @@
     ./grafana
     ./loki.nix
     ./prometheus.nix
+    ./unpoller.nix
     ./monitoring
   ];
 
