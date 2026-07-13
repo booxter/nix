@@ -140,6 +140,62 @@ run_expect_failure() {
   fi
 }
 
+test_age_recipient_derivation() {
+  local helper="$REPO_ROOT/apps/sops/age-recipient.sh"
+  local fixture_dir="$WORKDIR/age-recipient"
+  local mock_bin="$fixture_dir/bin"
+  local out="$fixture_dir/out.txt"
+  mkdir -p "$mock_bin"
+
+  cat > "$mock_bin/age-keygen" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$1" == "-y" && -f "$2" ]]
+printf '%s\n' 'age1native1test'
+EOF
+  cat > "$mock_bin/age-plugin-se" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$1" == "recipients" && "$2" == "-i" && -f "$3" ]]
+printf '%s\n' 'age1se1test'
+EOF
+  chmod +x "$mock_bin/age-keygen" "$mock_bin/age-plugin-se"
+
+  cat > "$fixture_dir/native.txt" <<'EOF'
+# native identity
+AGE-SECRET-KEY-1TEST
+EOF
+  cat > "$fixture_dir/se.txt" <<'EOF'
+AGE-PLUGIN-SE-1TEST
+EOF
+  cat > "$fixture_dir/se-metadata.txt" <<'EOF'
+# public key: age1se1metadata
+AGE-PLUGIN-SE-1TEST
+EOF
+  cat > "$fixture_dir/yubikey.txt" <<'EOF'
+# Recipient: age1yubikey1test
+AGE-PLUGIN-YUBIKEY-1TEST
+EOF
+  cat > "$fixture_dir/unknown.txt" <<'EOF'
+AGE-PLUGIN-UNKNOWN-1TEST
+EOF
+
+  run_and_capture "$out" env PATH="$mock_bin:$PATH" bash "$helper" "$fixture_dir/native.txt"
+  assert_eq "age1native1test" "$(cat "$out")" "native identity should use age-keygen"
+
+  run_and_capture "$out" env PATH="$mock_bin:$PATH" bash "$helper" "$fixture_dir/se.txt"
+  assert_eq "age1se1test" "$(cat "$out")" "SE identity should use age-plugin-se"
+
+  run_and_capture "$out" env PATH="$mock_bin:$PATH" bash "$helper" "$fixture_dir/se-metadata.txt"
+  assert_eq "age1se1metadata" "$(cat "$out")" "SE identity should use embedded recipient when present"
+
+  run_and_capture "$out" env PATH="$mock_bin:$PATH" bash "$helper" "$fixture_dir/yubikey.txt"
+  assert_eq "age1yubikey1test" "$(cat "$out")" "YubiKey identity should use embedded recipient"
+
+  run_expect_failure "$out" bash "$helper" "$fixture_dir/unknown.txt"
+  assert_contains "$(cat "$out")" "Unsupported age identity type"
+}
+
 main() {
   local repo="$WORKDIR/repo"
   local out="$WORKDIR/out.txt"
@@ -147,6 +203,9 @@ main() {
   local after="$WORKDIR/after.yaml"
   local edited="$WORKDIR/edited.yaml"
   local copied="$WORKDIR/copied.yaml"
+
+  log "derive recipients from native, Secure Enclave, and YubiKey identities"
+  test_age_recipient_derivation
 
   setup_repo "$repo"
 

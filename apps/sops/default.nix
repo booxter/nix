@@ -100,6 +100,7 @@ let
         ripgrep
       ]);
     text = ''
+      export SOPS_AGE_RECIPIENT_HELPER=${./age-recipient.sh}
       exec ${./sops-bootstrap.sh} "$@"
     '';
   };

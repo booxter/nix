@@ -17,7 +17,9 @@ EOF
 
 resolve_local_pubkey() {
   local key_file
+  local recipient_helper
   key_file="${SOPS_AGE_KEY_FILE:-${HOME}/.config/sops/age/keys.txt}"
+  recipient_helper="${SOPS_AGE_RECIPIENT_HELPER:-$(dirname -- "$0")/age-recipient.sh}"
 
   if [[ ! -f "$key_file" ]]; then
     echo "Local age key file not found: $key_file" >&2
@@ -25,13 +27,16 @@ resolve_local_pubkey() {
     return 1
   fi
 
-  if ! command -v age-keygen >/dev/null 2>&1; then
-    echo "age-keygen is required locally to derive the public key." >&2
+  if [[ ! -x "$recipient_helper" ]]; then
+    echo "Age recipient helper is not executable: $recipient_helper" >&2
     return 1
   fi
 
   local local_key
-  local_key="$(age-keygen -y "$key_file" 2>/dev/null | sed -n '1p' || true)"
+  if ! local_key="$("$recipient_helper" "$key_file" | sed -n '1p')"; then
+    echo "Failed to derive local age public key from: $key_file" >&2
+    return 1
+  fi
   if [[ -z "$local_key" ]]; then
     echo "Failed to derive local age public key from: $key_file" >&2
     return 1
