@@ -26,6 +26,7 @@ let
     {
       aurral = srvarrHostConfig.systemd.services.aurral.environment.PORT;
       audiobookshelf = srvarrHostConfig.services.audiobookshelf.port;
+      pinepods = srvarrHostConfig.systemd.services.podman-pinepods.environment.PINEPODS_LISTEN_PORT;
       bazarr = srvarrHostConfig.services.bazarr.listenPort;
       houndarr = srvarrHostConfig.systemd.services.houndarr.environment.HOUNDARR_PORT;
       lidarr = srvarrHostConfig.services.lidarr.settings.server.port;

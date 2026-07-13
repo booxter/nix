@@ -47,6 +47,15 @@ groups:
         annotations:
           summary: "Lidarr CUE splitter service down on srvarr"
           description: "The Lidarr CUE splitter service on srvarr has not been active for 5 minutes."
+      - alert: PinePodsServiceDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name=~"(podman-pinepods|pinepods-valkey|postgresql)\\.service",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "PinePods service down on srvarr: {{ $labels.name }}"
+          description: "The PinePods application or one of its database/cache dependencies on srvarr has not been active for 5 minutes."
       - alert: LidarrCueSplitterIterationFailed
         expr: host_observability_lidarr_cue_splitter_ok{job="node-mtls",instance="srvarr"} < 1
         for: 10m

@@ -210,6 +210,22 @@ rec {
       };
     };
 
+    pinepods = mkClient "pinepods" {
+      displayName = "PinePods";
+      originUrl = "${serviceUrl "pinepods"}/api/auth/callback";
+      originLanding = "${serviceUrl "pinepods"}/";
+      # PinePods 0.9.0 explicitly requires a confidential client without PKCE.
+      allowInsecureClientDisablePkce = true;
+      scopeMaps = {
+        "media-admins" = scopeWith [ "pinepods_roles" ];
+        "media-users" = scopeWith [ "pinepods_roles" ];
+      };
+      claimMaps.pinepods_roles.valuesByGroup = {
+        "media-admins" = [ "admin" ];
+        "media-users" = [ "user" ];
+      };
+    };
+
     aurral = mkClient "aurral" {
       displayName = "Aurral";
       originUrl = "${serviceUrl "aurral"}/oauth2/callback";

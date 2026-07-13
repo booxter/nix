@@ -11,6 +11,9 @@ let
   excludedServiceIds = [
     "llm"
     "paperless"
+    # PinePods has split-DNS, WAN, and systemd dependency alerts in Prometheus;
+    # keep the existing ten UptimeRobot monitors within the free-tier limit.
+    "pinepods"
     "search"
   ];
   monitoredServices = builtins.filter (

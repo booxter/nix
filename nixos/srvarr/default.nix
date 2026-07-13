@@ -19,6 +19,7 @@
     ./nfs.nix
     ./oauth2-proxy.nix
     ./paths.nix
+    ./pinepods.nix
     ./romm.nix
     ./qos.nix
     ./sabnzbd.nix

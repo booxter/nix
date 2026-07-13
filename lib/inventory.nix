@@ -668,6 +668,16 @@ rec {
       glanceCategory = "user";
     }))
     (resolveService (mkService {
+      id = "pinepods";
+      title = "PinePods";
+      icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "pod.${site.public.domain}";
+      probePath = "/api/health";
+      glanceCategory = "user";
+    }))
+    (resolveService (mkService {
       id = "shelfmark";
       scope = "external";
       owner = "srvarr";

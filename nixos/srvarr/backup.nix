@@ -4,6 +4,8 @@
 }:
 let
   stateRoot = config.host.srvarrPaths.stateDir;
+  pinepodsDatabaseDir = "${stateRoot}/pinepods/postgresql";
+  pinepodsBackupDir = "${stateRoot}/pinepods-backup/latest";
   backupPaths = [ stateRoot ];
   seerrConfigDir = "${stateRoot}/seerr";
   seerrBackupDir = "${stateRoot}/seerr-backup/latest";
@@ -14,9 +16,18 @@ let
     "${stateRoot}/*/logs/**"
     "${stateRoot}/*/cache"
     "${stateRoot}/*/cache/**"
+    pinepodsDatabaseDir
+    "${pinepodsDatabaseDir}/**"
   ];
 in
 {
+  host.backups.artifacts.postgresql.pinepods = {
+    displayName = "PinePods";
+    destinationDir = pinepodsBackupDir;
+    includeInBeastBackup = false;
+    requiresMountsFor = [ stateRoot ];
+  };
+
   host.backups.artifacts.sqlite.seerr = {
     displayName = "Seerr";
     databasePath = "${seerrConfigDir}/db/db.sqlite3";
