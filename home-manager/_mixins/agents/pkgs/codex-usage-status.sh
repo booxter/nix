@@ -84,6 +84,33 @@ NORMALIZED_RESPONSE="$(
         }
       end;
 
+    def window_kind($source):
+      if ($source.limit_window_seconds // null) == 18000 then
+        "five_hour"
+      elif ($source.limit_window_seconds // null) == 604800 then
+        "weekly"
+      else
+        null
+      end;
+
+    def window_by_kind($kind; $primary; $secondary):
+      if window_kind($primary) == $kind then
+        $primary
+      elif window_kind($secondary) == $kind then
+        $secondary
+      else
+        null
+      end;
+
+    def limit_reached_kind($kind; $primary; $secondary):
+      if $kind == "primary" or $kind == "primary_window" then
+        window_kind($primary) // $kind
+      elif $kind == "secondary" or $kind == "secondary_window" then
+        window_kind($secondary) // $kind
+      else
+        $kind
+      end;
+
     def expires_at_epoch($expires_at):
       if ($expires_at | type) != "string" then
         null
@@ -126,13 +153,19 @@ NORMALIZED_RESPONSE="$(
         };
 
     now as $now
+    | .rate_limit.primary_window as $primary
+    | .rate_limit.secondary_window as $secondary
     | {
         allowed: .rate_limit.allowed,
         limit_reached: .rate_limit.limit_reached,
-        limit_reached_type: (.rate_limit_reached_type // null),
+        limit_reached_type: limit_reached_kind(
+          (.rate_limit_reached_type // null);
+          $primary;
+          $secondary
+        ),
         windows: {
-          five_hour: window(.rate_limit.primary_window),
-          weekly: window(.rate_limit.secondary_window)
+          five_hour: window(window_by_kind("five_hour"; $primary; $secondary)),
+          weekly: window(window_by_kind("weekly"; $primary; $secondary))
         },
         rate_limit_reset_credits: reset_credits(.rate_limit_reset_credits; $reset_credits; $now)
       }
