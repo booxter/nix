@@ -30,6 +30,7 @@ in
         homeManagerPkgs.jinjanator
         kind
         kubectl
+        kubectx
         kubevirt
         nvPkgs.nico-cli
         (wrapHelm kubernetes-helm {
