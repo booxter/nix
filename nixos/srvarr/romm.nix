@@ -533,14 +533,27 @@ in
         };
         "/assets/romm/resources/" = {
           extraConfig = ''
+            # Covers and screenshots describe the private library. Reuse RomM's
+            # own session/API-token validation before serving them from disk.
+            auth_request /_romm_auth;
             alias ${rommBasePath}/resources/;
+            add_header Cache-Control "private";
           '';
         };
         "/assets" = {
           tryFiles = "$uri $uri/ =404";
         };
-        "/openapi.json" = {
-          proxyPass = "http://127.0.0.1:${toString apiPort}";
+        "= /_romm_auth" = {
+          proxyPass = "http://127.0.0.1:${toString apiPort}/api/users/me";
+          extraConfig = ''
+            internal;
+            proxy_set_header Content-Length "";
+            proxy_pass_request_body off;
+          '';
+        };
+        "= /openapi.json" = {
+          # The browser client does not consume the API schema.
+          return = "404";
         };
         "/api" = {
           extraConfig = ''
