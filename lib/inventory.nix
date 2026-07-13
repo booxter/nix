@@ -1002,6 +1002,7 @@ rec {
         "romm"
         "aurral"
         "audiobookshelf"
+        "pinepods"
         "shelfmark"
         "sabnzbd"
         "tmission"
