@@ -204,6 +204,7 @@ def reconcile(
             "type": "HTTP",
             "url": service.url,
             "interval": interval,
+            "timeout": 30,
         }
         if monitor is None:
             actions.append(f"create {service.id} ({service.url})")

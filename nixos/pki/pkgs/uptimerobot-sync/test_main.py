@@ -53,6 +53,7 @@ def test_create_missing_monitor():
             "type": "HTTP",
             "url": "https://search.example/health",
             "interval": 300,
+            "timeout": 30,
         }
     ]
 
@@ -66,6 +67,7 @@ def test_adopt_monitor_by_url():
                 "type": "HTTP",
                 "url": "https://search.example/health",
                 "interval": 300,
+                "timeout": 30,
             }
         ]
     )
@@ -80,6 +82,7 @@ def test_adopt_monitor_by_url():
                 "type": "HTTP",
                 "url": "https://search.example/health",
                 "interval": 300,
+                "timeout": 30,
             },
         )
     ]
@@ -94,6 +97,7 @@ def test_adopt_monitor_by_title_when_url_changes():
                 "type": "HTTP",
                 "url": "https://old.example/health",
                 "interval": 300,
+                "timeout": 30,
             }
         ]
     )
@@ -108,6 +112,7 @@ def test_adopt_monitor_by_title_when_url_changes():
                 "type": "HTTP",
                 "url": "https://search.example/health",
                 "interval": 300,
+                "timeout": 30,
             },
         )
     ]
@@ -146,6 +151,7 @@ def test_noop_when_monitor_matches():
                 "type": "HTTP",
                 "url": "https://search.example/health",
                 "interval": 300,
+                "timeout": 30,
             }
         ]
     )
