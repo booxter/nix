@@ -178,6 +178,9 @@ in
         ];
         extraOptions = [
           "--cap-drop=all"
+          # The upstream entrypoint starts as root, chowns its writable paths,
+          # then uses su-exec to switch to PUID:PGID. Retain only the three
+          # capabilities required for that privilege-drop path.
           "--cap-add=CHOWN"
           "--cap-add=SETGID"
           "--cap-add=SETUID"
