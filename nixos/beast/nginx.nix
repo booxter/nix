@@ -17,6 +17,7 @@ let
     pinepods = 18040;
     shelfmark = 18084;
     vikunja = 13456;
+    notes = 18086;
     paperless = 12881;
     llm = 14000;
     ai = 14001;

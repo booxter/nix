@@ -491,6 +491,9 @@ rec {
       "vikunja-users" = {
         title = "Vikunja users";
       };
+      "trilium-users" = {
+        title = "Trilium Notes users";
+      };
       "ai-users" = {
         title = "Open WebUI users";
       };
@@ -530,6 +533,7 @@ rec {
           "paperless-admins"
           "paperless-users"
           "vikunja-users"
+          "trilium-users"
           "ai-users"
           "romm-admins"
           "media-admins"
@@ -720,6 +724,17 @@ rec {
       owner = "org";
       publicHost = "vi.${site.public.domain}";
       probePath = "";
+      glanceCategory = "user";
+    }))
+    (resolveService (mkService {
+      id = "notes";
+      title = "Trilium Notes";
+      icon = "sh:trilium";
+      scope = "external";
+      owner = "org";
+      publicHost = "notes.${site.public.domain}";
+      probePath = "/api/health-check";
+      backendProbe.path = "/api/health-check";
       glanceCategory = "user";
     }))
     (resolveService (mkService {
@@ -1105,6 +1120,7 @@ rec {
       platform = "x86_64-linux";
       localDnsAliases = [
         "vikunja"
+        "notes"
         "paperless"
         "paperless-gpt"
         "llm"

@@ -106,6 +106,13 @@ rec {
       scopeMaps."vikunja-users" = baseScopes;
     };
 
+    trilium = mkClient "trilium" {
+      displayName = "Trilium Notes";
+      originUrl = "${serviceUrl "notes"}/callback";
+      originLanding = "${serviceUrl "notes"}/";
+      scopeMaps."trilium-users" = baseScopes;
+    };
+
     open-webui = mkClient "open-webui" {
       displayName = "Open WebUI";
       originUrl = "${serviceUrl "ai"}/oauth/oidc/login/callback";

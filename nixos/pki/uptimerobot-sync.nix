@@ -15,6 +15,9 @@ let
     # keep the existing ten UptimeRobot monitors within the free-tier limit.
     "pinepods"
     "search"
+    # Prometheus still checks Trilium from split DNS and WAN. Keep it out of
+    # UptimeRobot because the account is already at its ten-monitor limit.
+    "notes"
   ];
   monitoredServices = builtins.filter (
     service: !(builtins.elem service.id excludedServiceIds)
