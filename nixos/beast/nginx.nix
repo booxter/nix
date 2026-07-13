@@ -14,6 +14,7 @@ let
     romm = 18080;
     aurral = 13001;
     audiobookshelf = 19292;
+    pinepods = 18040;
     shelfmark = 18084;
     vikunja = 13456;
     paperless = 12881;
@@ -36,6 +37,8 @@ let
     seerr = outputs.nixosConfigurations.srvarr.config.services.seerr.port;
     aurral = outputs.nixosConfigurations.srvarr.config.systemd.services.aurral.environment.PORT;
     audiobookshelf = outputs.nixosConfigurations.srvarr.config.services.audiobookshelf.port;
+    pinepods =
+      outputs.nixosConfigurations.srvarr.config.systemd.services.podman-pinepods.environment.PINEPODS_LISTEN_PORT;
     shelfmark = outputs.nixosConfigurations.srvarr.config.services.shelfmark.environment.FLASK_PORT;
     vikunja = outputs.nixosConfigurations.org.config.services.vikunja.port;
     paperless = outputs.nixosConfigurations.org.config.services.paperless.port;

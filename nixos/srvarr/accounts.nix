@@ -7,6 +7,7 @@
   uids = {
     audiobookshelf = 156;
     bazarr = 232;
+    pinepods = 296;
     prowlarr = 293;
     radarr = 275;
     romm = 295;

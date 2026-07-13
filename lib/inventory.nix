@@ -437,11 +437,18 @@ rec {
   };
 
   sso = {
-    applications."home-assistant" = {
-      adminGroup = "home-admins";
-      userGroup = "home-users";
-      bootstrapOwner = "ihar";
-      bootstrapLanguage = "en";
+    applications = {
+      "home-assistant" = {
+        adminGroup = "home-admins";
+        userGroup = "home-users";
+        bootstrapOwner = "ihar";
+        bootstrapLanguage = "en";
+      };
+      pinepods = {
+        adminGroup = "media-admins";
+        userGroup = "media-users";
+        bootstrapOwner = "ihar";
+      };
     };
 
     groups = {
@@ -665,6 +672,16 @@ rec {
       owner = "srvarr";
       publicHost = "au.${site.public.domain}";
       probePath = "";
+      glanceCategory = "user";
+    }))
+    (resolveService (mkService {
+      id = "pinepods";
+      title = "PinePods";
+      icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";
+      scope = "external";
+      owner = "srvarr";
+      publicHost = "pod.${site.public.domain}";
+      probePath = "/api/health";
       glanceCategory = "user";
     }))
     (resolveService (mkService {
@@ -992,6 +1009,7 @@ rec {
         "romm"
         "aurral"
         "audiobookshelf"
+        "pinepods"
         "shelfmark"
         "sabnzbd"
         "tmission"
