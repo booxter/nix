@@ -32,6 +32,8 @@ let
   thermalTestFile = ./prometheus/tests/thermal.rules.test.yml;
   upsRuleFile = ./prometheus/rules/ups.rules.yml;
   upsTestFile = ./prometheus/tests/ups.rules.test.yml;
+  unifiRuleFile = ./prometheus/rules/unifi.rules.yml;
+  unifiTestFile = ./prometheus/tests/unifi.rules.test.yml;
   wireguardRuleFile = ./prometheus/rules/wireguard.rules.yml;
   wireguardTestFile = ./prometheus/tests/wireguard.rules.test.yml;
 in
@@ -59,6 +61,7 @@ in
       storageRuleFile
       thermalRuleFile
       upsRuleFile
+      unifiRuleFile
       wireguardRuleFile
     ];
     ruleFilesRelative = [
@@ -78,6 +81,7 @@ in
       "nixos/fana/monitoring/prometheus/rules/storage.rules.yml"
       "nixos/fana/monitoring/prometheus/rules/thermal.rules.yml"
       "nixos/fana/monitoring/prometheus/rules/ups.rules.yml"
+      "nixos/fana/monitoring/prometheus/rules/unifi.rules.yml"
       "nixos/fana/monitoring/prometheus/rules/wireguard.rules.yml"
     ];
     testFiles = [
@@ -97,6 +101,7 @@ in
       storageTestFile
       thermalTestFile
       upsTestFile
+      unifiTestFile
       wireguardTestFile
     ];
     testFilesRelative = [
@@ -116,6 +121,7 @@ in
       "nixos/fana/monitoring/prometheus/tests/storage.rules.test.yml"
       "nixos/fana/monitoring/prometheus/tests/thermal.rules.test.yml"
       "nixos/fana/monitoring/prometheus/tests/ups.rules.test.yml"
+      "nixos/fana/monitoring/prometheus/tests/unifi.rules.test.yml"
       "nixos/fana/monitoring/prometheus/tests/wireguard.rules.test.yml"
     ];
   };

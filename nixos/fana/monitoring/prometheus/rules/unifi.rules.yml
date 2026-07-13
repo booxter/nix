@@ -1,0 +1,13 @@
+groups:
+  - name: unifi
+    interval: 30s
+    rules:
+      - alert: UnpollerMetricsScrapeDown
+        expr: up{job="unpoller",instance="unifi"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "UniFi metrics scrape down"
+          description: "Prometheus has been unable to scrape Unpoller on fana for 5 minutes."

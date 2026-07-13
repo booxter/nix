@@ -1,0 +1,25 @@
+rule_files:
+  - ../rules/unifi.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'up{job="unpoller",instance="unifi"}'
+        values: "0x12"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: UnpollerMetricsScrapeDown
+      - eval_time: 5m
+        alertname: UnpollerMetricsScrapeDown
+        exp_alerts:
+          - exp_labels:
+              alertname: UnpollerMetricsScrapeDown
+              category: observability
+              instance: unifi
+              job: unpoller
+              severity: warning
+            exp_annotations:
+              summary: "UniFi metrics scrape down"
+              description: "Prometheus has been unable to scrape Unpoller on fana for 5 minutes."
