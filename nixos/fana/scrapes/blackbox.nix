@@ -27,6 +27,7 @@ let
       aurral = srvarrHostConfig.systemd.services.aurral.environment.PORT;
       audiobookshelf = srvarrHostConfig.services.audiobookshelf.port;
       bazarr = srvarrHostConfig.services.bazarr.listenPort;
+      houndarr = srvarrHostConfig.systemd.services.houndarr.environment.HOUNDARR_PORT;
       lidarr = srvarrHostConfig.services.lidarr.settings.server.port;
       prowlarr = srvarrHostConfig.services.prowlarr.settings.server.port;
       radarr = srvarrHostConfig.services.radarr.settings.server.port;

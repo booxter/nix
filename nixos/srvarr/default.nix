@@ -13,6 +13,7 @@
     ./aurral.nix
     ./backup.nix
     ./glance.nix
+    ./houndarr.nix
     ./letterboxd-list-radarr.nix
     ./lidarr-cue-splitter.nix
     ./nfs.nix

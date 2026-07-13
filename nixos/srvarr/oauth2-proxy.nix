@@ -11,8 +11,15 @@ let
   protectedServiceHosts = lib.unique (
     lib.concatMap hostInventory.toInternalHttpsServiceHosts protectedServiceIds
   );
+  houndarrManagedServiceNames = [
+    "lidarr"
+    "radarr"
+    "sonarr"
+  ];
+  srvarrAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   backendPorts = {
     bazarr = config.services.bazarr.listenPort;
+    houndarr = config.systemd.services.houndarr.environment.HOUNDARR_PORT;
     lidarr = config.services.lidarr.settings.server.port;
     prowlarr = config.services.prowlarr.settings.server.port;
     radarr = config.services.radarr.settings.server.port;
@@ -50,6 +57,22 @@ let
       port = backendPorts.${serviceName};
     };
   };
+  # Houndarr rejects loopback instance URLs as an SSRF defense. Give it a
+  # routable HTTPS path to each local Arr API on the existing probe-only
+  # listener. Only this host may enter the lane, the normal UI remains absent,
+  # and the Arr applications still require their API keys.
+  houndarrApiVhosts = builtins.listToAttrs (
+    map (serviceName: {
+      name = "internal-https-${serviceName}-probe";
+      value.locations."/api/" = mkBackendProbeLocation {
+        port = backendPorts.${serviceName};
+        extraConfig = ''
+          allow ${srvarrAddress};
+          deny all;
+        '';
+      };
+    }) houndarrManagedServiceNames
+  );
   servarrPingProbeLocations = lib.genAttrs [
     "lidarr"
     "prowlarr"
@@ -77,6 +100,7 @@ let
   };
   backendProbeLocationsByName = servarrPingProbeLocations // {
     bazarr = mkBackendProbePathLocation "bazarr" "= /api/system/ping";
+    houndarr = mkBackendProbePathLocation "houndarr" "= /api/health";
     sabnzbd."= /__probe/sabnzbd-version" = mkBackendProbeLocation {
       port = backendPorts.sabnzbd;
       upstreamPath = "/api?mode=version&output=json";
@@ -103,12 +127,14 @@ let
   };
 in
 {
+  services.nginx.virtualHosts = houndarrApiVhosts;
+
   host.sso.oauth2ProxyGates.srvarr-admin-apps = {
     enable = true;
     inherit clientId;
     cookieName = oauth2ProxyCookieName;
-    allowedGroups = [ "infra-admins" ];
-    groupClaim = "infra_groups";
+    allowedGroups = [ "media-admins" ];
+    groupClaim = "media_groups";
     whitelistDomains = protectedServiceHosts;
     internalHttpsServiceNames = protectedServiceIds;
     signInLocationName = "@oauth2_proxy_sign_in";
