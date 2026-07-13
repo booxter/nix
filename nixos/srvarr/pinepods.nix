@@ -291,7 +291,9 @@ in
           )"
           first_admin_created="$(
             printf '%s' "$status_json" \
-              | jq --raw-output '.first_admin_created // empty' 2>/dev/null \
+              | jq --raw-output \
+                'select((.first_admin_created | type) == "boolean") | .first_admin_created' \
+                2>/dev/null \
               || true
           )"
 
