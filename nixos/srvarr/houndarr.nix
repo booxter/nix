@@ -30,6 +30,11 @@ in
         "sonarr.service"
       ];
       environment = {
+        # Uvicorn otherwise trusts nginx's X-Forwarded-For and rewrites the
+        # ASGI peer to the browser address. Houndarr's proxy-auth trust check
+        # must instead see the actual loopback peer; it handles forwarded
+        # client addresses itself where needed for rate limiting.
+        FORWARDED_ALLOW_IPS = "";
         HOUNDARR_AUTH_MODE = "proxy";
         HOUNDARR_AUTH_PROXY_HEADER = "X-User";
         HOUNDARR_COOKIE_SAMESITE = "lax";
