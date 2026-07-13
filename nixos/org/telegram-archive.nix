@@ -46,6 +46,10 @@ let
     LISTEN_DELETIONS = "true";
     DELETION_MODE = "soft";
     LISTEN_CHAT_ACTIONS = "true";
+    # SQLite mode delivers browser live-update events to the viewer over its
+    # loopback-only internal endpoint.
+    VIEWER_HOST = "127.0.0.1";
+    VIEWER_PORT = toString viewerPort;
     # Soft deletion only annotates retained rows, so burst protection would
     # make the deletion markers less complete without protecting archive data.
     MASS_OPERATION_THRESHOLD = "1000000";
