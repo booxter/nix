@@ -21,6 +21,35 @@ let
   litellmConfig = (pkgs.formats.yaml { }).generate "litellm-config.yaml" {
     model_list = [
       {
+        model_name = "gemma4:31b";
+        litellm_params = {
+          model = "ollama_chat/gemma4:31b";
+          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
+          keep_alive = "30m";
+        };
+        model_info = {
+          mode = "chat";
+          supports_function_calling = true;
+          supports_vision = true;
+          input_cost_per_token = 0.0;
+          output_cost_per_token = 0.0;
+        };
+      }
+      {
+        model_name = "granite4:32b-a9b-h";
+        litellm_params = {
+          model = "ollama_chat/granite4:32b-a9b-h";
+          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
+          keep_alive = "30m";
+        };
+        model_info = {
+          mode = "chat";
+          supports_function_calling = true;
+          input_cost_per_token = 0.0;
+          output_cost_per_token = 0.0;
+        };
+      }
+      {
         model_name = "qwen3.5:9b";
         litellm_params = {
           model = "ollama_chat/qwen3.5:9b";
