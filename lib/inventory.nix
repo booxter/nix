@@ -585,6 +585,15 @@ rec {
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
+      id = "watchstate";
+      title = "WatchState";
+      scope = "internal";
+      owner = "beast";
+      probePath = "/";
+      blackboxProbe = false;
+      glanceCategory = "media-admin";
+    }))
+    (resolveService (mkService {
       id = "seerr";
       scope = "external";
       owner = "srvarr";

@@ -43,5 +43,13 @@
     "image": "docker.io/rommapp/romm",
     "tag": "4.9.2",
     "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+  },
+  "watchstate": {
+    "changelog": "https://github.com/arabcoders/watchstate/releases/tag/{tag}",
+    "digest": "sha256:9999a384d4ead0d3615e156c97243583d4ae2f3083d61ffe968334b96eca1459",
+    "hash": "sha256-BgRX2PVqzH+9UIykfy717hEIQvf7DeX2qTBtkopzAwQ=",
+    "image": "ghcr.io/arabcoders/watchstate",
+    "tag": "v1.9.2",
+    "tagRegex": "^v[0-9]+\\.[0-9]+\\.[0-9]+$"
   }
 }

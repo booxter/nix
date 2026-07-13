@@ -104,6 +104,36 @@ Expected:
 This keeps existing owners/groups intact and avoids broad `chmod 777`. Re-run
 only if some later job strips ACLs.
 
+## WatchState
+
+WatchState runs as an unprivileged UID inside a Podman container and keeps its
+state under `/var/lib/watchstate`. Its port is published on loopback only; the
+management UI is available at `https://watchstate.home.arpa` through the
+internal HTTPS and `media-admins` OIDC gate. Jellyfin's official Webhook plugin
+is installed declaratively by Jellarr.
+
+The initial WatchState configuration remains an explicit, staged operation:
+
+1. Create the first WatchState system user.
+2. Add the same `http://host.containers.internal:8096` Jellyfin server twice,
+   using distinct backend names such as `jellyfin_ihar` and
+   `jellyfin_shared` and selecting `Ihar` and `jellyfin`, respectively.
+3. Do not provision WatchState identities: separate identities do not merge
+   play state with one another.
+4. Start with import enabled and export disabled for both backends. Import and
+   inspect history, unmatched items, and conflicts before enabling writes.
+5. Enable export to `jellyfin` first, validate a small sample in both shared
+   libraries and an `Ihar`-only library, and only then enable export to `Ihar`.
+6. Keep the import and export scheduled tasks enabled for reconciliation.
+   After validation, a 12-hour schedule is sufficient when webhooks are also
+   enabled.
+
+Configure one generic Jellyfin webhook destination pointing to
+`http://127.0.0.1:8080/v1/api/webhook`. Select Item Added, User Data Saved,
+Playback Start, and Playback Stop; select all users, restrict item types to
+Movies and Episodes, send all properties, and set `Content-Type` to
+`application/json`.
+
 ## Maintenance and monitoring
 
 - Snapper timeline snapshots for `/volume2` (daily/weekly/monthly/yearly).
@@ -144,6 +174,9 @@ Jellystat is backed up by triggering its built-in backup API before the same
 local restic job runs. The app writes JSON backups into
 `/app/backend/backup-data`, which is mounted from
 `/var/lib/jellystat/backup-data` and included in restic.
+
+WatchState's persistent `/var/lib/watchstate` configuration and SQLite state
+are also included in the `beast` restic backup paths.
 
 Secrets required in `secrets/beast.yaml`:
 

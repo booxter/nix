@@ -393,6 +393,7 @@ in
         "ThePornDB"
         "TheTVDB"
         "TMDb"
+        "Webhook"
       ];
     };
   };
