@@ -70,6 +70,8 @@ in
     host = "127.0.0.1";
     port = 11434;
     loadModels = [
+      "gemma4:31b"
+      "granite4:32b-a9b-h"
       "nomic-embed-text"
       "qwen3.5:9b"
       "qwen3-next:80b"

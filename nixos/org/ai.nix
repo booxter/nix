@@ -74,7 +74,7 @@ in
     environmentFile = config.sops.templates."open-webui.env".path;
     environment = {
       DEFAULT_MODELS = "qwen3-next:80b";
-      DEFAULT_PINNED_MODELS = "qwen3-next:80b,qwen3.5:9b";
+      DEFAULT_PINNED_MODELS = "qwen3-next:80b,gemma4:31b,granite4:32b-a9b-h,qwen3.5:9b";
       ENABLE_CODE_EXECUTION = "False";
       ENABLE_LOGIN_FORM = "False";
       ENABLE_OTEL = "True";
