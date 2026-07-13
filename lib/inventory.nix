@@ -752,6 +752,16 @@ rec {
       glanceCategory = "user";
     }))
     (resolveService (mkService {
+      id = "tg";
+      title = "Telegram Archive";
+      icon = "sh:telegram";
+      scope = "internal";
+      owner = "org";
+      probePath = "/oauth2/sign_in";
+      backendProbe.path = "/api/health";
+      glanceCategory = "user";
+    }))
+    (resolveService (mkService {
       id = "ollama";
       title = "Ollama";
       scope = "internal";
@@ -1075,6 +1085,7 @@ rec {
         "llm"
         "ai"
         "search"
+        "tg"
       ];
       upsHost = "prx1-lab";
       cores = 4;
