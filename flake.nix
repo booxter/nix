@@ -93,7 +93,6 @@
       inherit (hostSpecs)
         darwinHosts
         nixosHostSpecs
-        virtPlatform
         ;
 
       hostKindToMkHost = {
