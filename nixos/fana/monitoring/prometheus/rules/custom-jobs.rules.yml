@@ -38,6 +38,42 @@ groups:
         annotations:
           summary: "Adaptive upload metrics stale on srvarr"
           description: "The adaptive upload controller metrics file on srvarr has not been refreshed for more than 10 minutes."
+      - alert: LidarrCueSplitterServiceDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="lidarr-cue-splitter.service",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Lidarr CUE splitter service down on srvarr"
+          description: "The Lidarr CUE splitter service on srvarr has not been active for 5 minutes."
+      - alert: LidarrCueSplitterIterationFailed
+        expr: host_observability_lidarr_cue_splitter_ok{job="node-mtls",instance="srvarr"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Lidarr CUE splitter failing on srvarr"
+          description: "The Lidarr CUE splitter on srvarr has been reporting unsuccessful iterations for 10 minutes."
+      - alert: LidarrCueSplitterMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/lidarr-cue-splitter.prom"}) > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Lidarr CUE splitter metrics stale on srvarr"
+          description: "The Lidarr CUE splitter metrics file on srvarr has not been refreshed for more than 5 minutes."
+      - alert: LidarrCueSplitterJobNeedsAttention
+        expr: host_observability_lidarr_cue_splitter_jobs{job="node-mtls",instance="srvarr",state=~"failed|needs_attention"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Lidarr CUE split job needs attention on srvarr"
+          description: "At least one Lidarr CUE split job on srvarr has remained failed or in need of attention for 15 minutes."
       # Open WebUI SearXNG probe metrics are emitted through org's
       # node_exporter textfile collector and scraped by fana's node-mtls job.
       - alert: OpenWebUISearxngProbeTimerDown
