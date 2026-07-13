@@ -632,6 +632,18 @@ class CueSplitterService:
                     "awaiting_queue_removal",
                 }:
                     continue
+                if (
+                    existing
+                    and existing.get("status") == "needs_attention"
+                    and int(existing.get("attempts", 0)) >= 3
+                ):
+                    continue
+                if existing and existing.get("status") == "failed":
+                    if int(existing.get("attempts", 0)) >= 3:
+                        existing.update(status="needs_attention", updated_at=now)
+                        continue
+                    if now - float(existing.get("updated_at", now)) < 300:
+                        continue
                 try:
                     summaries, fingerprint = self.discover(record)
                     if not summaries:
@@ -667,12 +679,6 @@ class CueSplitterService:
                         break
                     if existing.get("status") == "needs_attention":
                         continue
-                    if existing.get("status") == "failed":
-                        if int(existing.get("attempts", 0)) >= 3:
-                            existing.update(status="needs_attention", updated_at=now)
-                            continue
-                        if now - float(existing.get("updated_at", now)) < 300:
-                            continue
                     if (
                         now - float(existing.get("discovered_at", now))
                         < self.settle_seconds

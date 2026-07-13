@@ -302,6 +302,63 @@ class CueSplitterTests(unittest.TestCase):
             service.iteration()
             self.assertEqual(store.data["totals"]["ignored"], 1)
 
+    def test_discovery_failures_respect_retry_delay_and_attempt_limit(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            download = root / "torrents" / "album"
+            download.mkdir(parents=True)
+            (download / "album.cue").write_text("malformed cue", encoding="utf-8")
+            record = {
+                "status": "completed",
+                "protocol": "torrent",
+                "downloadId": "abc",
+                "outputPath": str(download),
+            }
+
+            class FakeClient:
+                def queue(self):
+                    return [record]
+
+            class FailingRunner:
+                def __init__(self):
+                    self.inspections = 0
+
+                def inspect(self, cue):
+                    self.inspections += 1
+                    raise CueSplitterError("malformed cue")
+
+            runner = FailingRunner()
+            store = StateStore(root / "state.json")
+            now = [1000.0]
+            service = CueSplitterService(
+                client_factory=FakeClient,
+                runner=runner,
+                store=store,
+                allowed_roots=[root / "torrents"],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=60,
+                now=lambda: now[0],
+                sleep=lambda _: None,
+            )
+
+            service.iteration()
+            self.assertEqual(store.data["jobs"]["abc"]["attempts"], 1)
+            service.iteration()
+            self.assertEqual(runner.inspections, 1)
+
+            for attempt in (2, 3):
+                now[0] += 300
+                service.iteration()
+                self.assertEqual(store.data["jobs"]["abc"]["attempts"], attempt)
+
+            now[0] += 300
+            service.iteration()
+            self.assertEqual(runner.inspections, 3)
+            self.assertEqual(store.data["jobs"]["abc"]["status"], "needs_attention")
+            self.assertEqual(store.data["totals"]["failed"], 3)
+
 
 if __name__ == "__main__":
     unittest.main()
