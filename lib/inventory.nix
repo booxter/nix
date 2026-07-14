@@ -449,6 +449,10 @@ rec {
         userGroup = "media-users";
         bootstrapOwner = "ihar";
       };
+      watchstate = {
+        adminGroup = "media-admins";
+        bootstrapOwner = "ihar";
+      };
     };
 
     groups = {

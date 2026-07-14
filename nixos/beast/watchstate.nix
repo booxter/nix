@@ -1,4 +1,5 @@
 {
+  config,
   hostInventory,
   pkgs,
   ...
@@ -8,6 +9,9 @@ let
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
   watchstateHostName = "watchstate.${hostInventory.site.lan.domain}";
+  watchstateSso = hostInventory.sso.applications.watchstate;
+  watchstateSystemUser = watchstateSso.bootstrapOwner;
+  watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
   watchstatePort = 8080;
   watchstateDataDir = "/var/lib/watchstate";
   watchstateUid = 296;
@@ -23,6 +27,23 @@ in
     createHome = false;
   };
 
+  sops.secrets."watchstate/system/password" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+  };
+
+  sops.templates."watchstate.env" = {
+    owner = "root";
+    group = "root";
+    mode = "0400";
+    content = ''
+      WS_SYSTEM_USER=${watchstateSystemUser}
+      WS_SYSTEM_PASSWORD=${config.sops.placeholder."watchstate/system/password"}
+    '';
+    restartUnits = [ "podman-watchstate.service" ];
+  };
+
   virtualisation.oci-containers = {
     backend = "podman";
     containers.watchstate = {
@@ -33,6 +54,7 @@ in
       environment = {
         TZ = "America/New_York";
       };
+      environmentFiles = [ config.sops.templates."watchstate.env".path ];
       extraOptions = [
         "--cap-drop=all"
         "--security-opt=no-new-privileges"
@@ -47,8 +69,14 @@ in
   ];
 
   systemd.services.podman-watchstate = {
-    wants = [ "network-online.target" ];
-    after = [ "network-online.target" ];
+    wants = [
+      "network-online.target"
+      "sops-install-secrets.service"
+    ];
+    after = [
+      "network-online.target"
+      "sops-install-secrets.service"
+    ];
     unitConfig.RequiresMountsFor = [ watchstateDataDir ];
   };
 
@@ -68,11 +96,22 @@ in
     clientId = "watchstate";
     httpAddress = "http://127.0.0.1:4182";
     cookieName = "_watchstate_sso";
-    allowedGroups = [ "media-admins" ];
+    allowedGroups = [ watchstateSso.adminGroup ];
     groupClaim = "media_groups";
     whitelistDomains = [ watchstateHostName ];
     internalHttpsServiceNames = [ "watchstate" ];
     # WatchState's frontend uses Authorization for its own API session.
     clearAuthorizationHeader = false;
   };
+
+  assertions = [
+    {
+      assertion = builtins.elem watchstateSso.adminGroup watchstateSystemAccount.groups;
+      message = "The WatchState bootstrap owner must belong to its SSO admin group.";
+    }
+    {
+      assertion = builtins.match "[a-z0-9_]+" watchstateSystemUser != null;
+      message = "The WatchState bootstrap owner must be a valid WatchState username.";
+    }
+  ];
 }

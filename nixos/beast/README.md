@@ -112,10 +112,16 @@ management UI is available at `https://watchstate.home.arpa` through the
 internal HTTPS and `media-admins` OIDC gate. Jellyfin's official Webhook plugin
 is installed declaratively by Jellarr.
 
-The initial WatchState configuration remains an explicit, staged operation:
+The WatchState system user is supplied declaratively from
+`sso.applications.watchstate.bootstrapOwner` in `lib/inventory.nix`; its
+password comes from `watchstate/system/password` in `secrets/beast.yaml`.
+Password changes restart WatchState.
 
-1. Create the first WatchState system user.
-2. Add the same `http://host.containers.internal:8096` Jellyfin server twice,
+The remaining initial configuration is an explicit, staged operation:
+
+1. Sign in to WatchState as the inventory bootstrap owner using the sops-managed
+   password.
+2. Add the same `https://jf.ihar.dev` Jellyfin server twice,
    using distinct backend names such as `jellyfin_ihar` and
    `jellyfin_shared` and selecting `Ihar` and `jellyfin`, respectively.
 3. Do not provision WatchState identities: separate identities do not merge
@@ -181,6 +187,7 @@ are also included in the `beast` restic backup paths.
 Secrets required in `secrets/beast.yaml`:
 
 - `jellyfin.apiKey`
+- `watchstate/system/password`
 - `backup.restic.beast.cloud.localPassword`
 - `backup.restic.beast.cloud.password`
 
