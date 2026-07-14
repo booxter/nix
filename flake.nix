@@ -93,7 +93,6 @@
       inherit (hostSpecs)
         darwinHosts
         nixosHostSpecs
-        virtPlatform
         ;
 
       hostKindToMkHost = {
@@ -275,7 +274,8 @@
             shellcheck
             ruff
             nodejs
-            prettier
+            # TODO: reenable when https://github.com/NixOS/nixpkgs/pull/540892 reaches nixos-26.05
+            #prettier
             eslint
             jq
             mbake
