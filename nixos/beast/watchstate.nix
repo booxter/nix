@@ -134,6 +134,8 @@ in
     groupClaim = "media_groups";
     whitelistDomains = [ watchstateHostName ];
     internalHttpsServiceNames = [ "watchstate" ];
+    # WatchState uses X-User for its own identity selection.
+    authRequestHeaders = [ ];
     # WatchState's frontend uses Authorization for its own API session.
     clearAuthorizationHeader = false;
   };
