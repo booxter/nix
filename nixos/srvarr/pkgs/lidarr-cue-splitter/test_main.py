@@ -302,6 +302,52 @@ class CueSplitterTests(unittest.TestCase):
             service.iteration()
             self.assertEqual(store.data["totals"]["ignored"], 1)
 
+    def test_problem_job_is_dismissed_and_expires_after_leaving_queue(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+
+            class FakeClient:
+                def queue(self):
+                    return []
+
+            store = StateStore(root / "state.json")
+            store.data["jobs"]["abc"] = {
+                "download_id": "abc",
+                "status": "needs_attention",
+                "error": "malformed cue",
+                "updated_at": 1000.0,
+            }
+            now = [1001.0]
+            service = CueSplitterService(
+                client_factory=FakeClient,
+                runner=object(),
+                store=store,
+                allowed_roots=[root / "torrents"],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=60,
+                now=lambda: now[0],
+                sleep=lambda _: None,
+            )
+
+            service.iteration()
+            self.assertEqual(store.data["jobs"]["abc"]["status"], "dismissed")
+            self.assertEqual(store.data["jobs"]["abc"]["error"], "malformed cue")
+            metrics = prometheus_metrics(store, True, now[0])
+            self.assertIn(
+                'host_observability_lidarr_cue_splitter_jobs{state="dismissed"} 1',
+                metrics,
+            )
+            self.assertIn(
+                'host_observability_lidarr_cue_splitter_jobs{state="needs_attention"} 0',
+                metrics,
+            )
+
+            now[0] += 7 * 86400
+            service.iteration()
+            self.assertNotIn("abc", store.data["jobs"])
+
     def test_discovery_failures_respect_retry_delay_and_attempt_limit(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

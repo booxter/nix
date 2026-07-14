@@ -37,6 +37,8 @@ ACTIVE_JOB_STATES = {
     "awaiting_queue_removal",
 }
 PROCESSING_JOB_STATES = {"splitting", "verifying", "matching", "importing"}
+PROBLEM_JOB_STATES = {"failed", "needs_attention"}
+EXPIRING_JOB_STATES = {"complete", "dismissed", "ignored"}
 
 
 class CueSplitterError(RuntimeError):
@@ -357,7 +359,7 @@ class StateStore:
         self.data["jobs"] = {
             key: value
             for key, value in self.data["jobs"].items()
-            if value.get("status") not in {"complete", "ignored"}
+            if value.get("status") not in EXPIRING_JOB_STATES
             or now - float(value.get("updated_at", now)) < retention_seconds
         }
 
@@ -586,6 +588,9 @@ class CueSplitterService:
         now = self.now()
         client = self.client_factory()
         records = client.queue()
+        queued_download_ids = {
+            str(record["downloadId"]) for record in records if record.get("downloadId")
+        }
         completed = {
             str(record["downloadId"]): record
             for record in records
@@ -601,6 +606,17 @@ class CueSplitterService:
                     updated_at=now,
                     attempts=int(job.get("attempts", 0)) + 1,
                 )
+
+        for job in jobs.values():
+            if (
+                job.get("status") in PROBLEM_JOB_STATES
+                and job.get("download_id") not in queued_download_ids
+            ):
+                LOG.info(
+                    "dismissing CUE job no longer present in Lidarr queue: download_id=%s",
+                    job.get("download_id", ""),
+                )
+                job.update(status="dismissed", updated_at=now)
 
         for job in jobs.values():
             if (
