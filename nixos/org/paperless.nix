@@ -16,7 +16,6 @@ let
   paperlessStoragePath = "/data/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoTag = "paperless-gpt-auto";
-  paperlessGptAutoTagComplete = "paperless-gpt-auto-complete";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
   paperlessGptOcrCompleteTag = "paperless-gpt-ocr-complete";
   paperlessGptContainerUid = "10001";
@@ -338,12 +337,10 @@ in
         PAPERLESS_API_TOKEN_FILE = config.sops.secrets."paperless/api/token".path;
         PAPERLESS_BASE_URL = "http://127.0.0.1:${toString config.services.paperless.port}";
         PAPERLESS_GPT_AUTO_TAG = paperlessGptAutoTag;
-        PAPERLESS_GPT_AUTO_TAG_COMPLETE = paperlessGptAutoTagComplete;
         PAPERLESS_GPT_AUTO_OCR_TAG = paperlessGptAutoOcrTag;
         PAPERLESS_GPT_OCR_COMPLETE_TAG = paperlessGptOcrCompleteTag;
         PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME = "Auto OCR with paperless-gpt";
         PAPERLESS_GPT_POST_OCR_WORKFLOW_NAME = "Auto classify after paperless-gpt OCR";
-        PAPERLESS_GPT_CLEANUP_WORKFLOW_NAME = "Clear paperless-gpt auto tag after completion";
       };
       serviceConfig = {
         Type = "oneshot";
@@ -520,7 +517,7 @@ in
         AUTO_GENERATE_TITLE = "true";
         AUTO_OCR_TAG = paperlessGptAutoOcrTag;
         AUTO_TAG = paperlessGptAutoTag;
-        AUTO_TAG_COMPLETE = paperlessGptAutoTagComplete;
+        AUTO_TAG_COMPLETE = "";
         CREATE_LOCAL_HOCR = "false";
         CREATE_LOCAL_PDF = "false";
         CREATE_NEW_TAGS = "false";
