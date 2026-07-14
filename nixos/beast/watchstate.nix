@@ -15,7 +15,64 @@ let
   watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
   watchstatePort = hostInventory.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";
+  watchstateBackupStagingDir = "/volume2/backups/staging/watchstate";
   watchstateUid = 296;
+  watchstateBackupScript = pkgs.writeShellApplication {
+    name = "watchstate-native-backup";
+    runtimeInputs = with pkgs; [
+      coreutils
+      findutils
+      gawk
+      gzip
+      gnutar
+      podman
+      rsync
+      sqlite
+    ];
+    text = ''
+      set -euo pipefail
+
+      data_dir=${lib.escapeShellArg watchstateDataDir}
+      staging_dir=${lib.escapeShellArg watchstateBackupStagingDir}
+      archive_name="watchstate-backup-$(date --utc +%Y%m%dT%H%M%SZ).tar.gz"
+
+      install -d -m 0750 -o root -g restic-cloud "$staging_dir"
+      work_dir="$(mktemp -d --tmpdir="$staging_dir" .watchstate-backup.XXXXXX)"
+      trap 'rm -rf "$work_dir"' EXIT
+      install -d -m 0700 "$work_dir/state/db"
+
+      podman exec watchstate \
+        /opt/bin/console state:backup --keep --sync-requests --no-interaction -v
+
+      rsync \
+        --archive \
+        --exclude=/db/watchstate_v02.db \
+        --exclude=/db/watchstate_v02.db-shm \
+        --exclude=/db/watchstate_v02.db-wal \
+        "$data_dir/" \
+        "$work_dir/state/"
+
+      sqlite3 "$data_dir/db/watchstate_v02.db" \
+        ".backup '$work_dir/state/db/watchstate_v02.db'"
+
+      tar --create --gzip --file "$work_dir/$archive_name" --directory "$work_dir" state
+      install \
+        -m 0640 \
+        -o root \
+        -g restic-cloud \
+        "$work_dir/$archive_name" \
+        "$staging_dir/$archive_name"
+
+      mapfile -t archives < <(
+        find "$staging_dir" -maxdepth 1 -type f -name 'watchstate-backup-*.tar.gz' -printf '%T@ %p\n' \
+          | sort -nr \
+          | awk '{ print $2 }'
+      )
+      if [ "''${#archives[@]}" -gt 7 ]; then
+        rm -f -- "''${archives[@]:7}"
+      fi
+    '';
+  };
 in
 {
   users.groups.watchstate.gid = watchstateUid;
@@ -97,6 +154,10 @@ in
         WS_CRON_IMPORT_AT = "0 */12 * * *";
         WS_CRON_EXPORT = "true";
         WS_CRON_EXPORT_AT = "30 */12 * * *";
+        # Disable WatchState's cron trigger: watchstate-native-backup.service
+        # invokes the same native backup immediately before Restic, ensuring
+        # the latest archive is included and the outcome is monitored.
+        WS_CRON_BACKUP = "false";
         # Serialize full export comparisons and state writes so large syncs do
         # not exhaust the reverse proxy or Jellyfin API. WatchState 1.9.2 does
         # not apply this switch to incremental Jellyfin metadata reads, so each
@@ -131,7 +192,36 @@ in
     unitConfig.RequiresMountsFor = [ watchstateDataDir ];
   };
 
-  services.restic.backups.beast.paths = [ watchstateDataDir ];
+  systemd.services.watchstate-native-backup = {
+    description = "Create a native WatchState backup archive";
+    restartIfChanged = false;
+    stopIfChanged = false;
+    before = [ "restic-backups-beast.service" ];
+    requires = [ "podman-watchstate.service" ];
+    after = [ "podman-watchstate.service" ];
+    unitConfig.RequiresMountsFor = [ watchstateBackupStagingDir ];
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+      ExecStart = lib.getExe watchstateBackupScript;
+      TimeoutStartSec = "2h";
+    };
+  };
+
+  systemd.services.restic-backups-beast = {
+    after = [ "watchstate-native-backup.service" ];
+    wants = [ "watchstate-native-backup.service" ];
+    requires = [ "watchstate-native-backup.service" ];
+  };
+
+  services.restic.backups.beast.paths = [ watchstateBackupStagingDir ];
+
+  host.observability.backupMetrics.jobs.watchstate-native-backup = {
+    service = "watchstate-native-backup";
+    title = "WatchState Native Backup";
+    phase = "prep";
+  };
 
   host.internalHttps.services.watchstate = {
     enable = true;
@@ -155,6 +245,13 @@ in
     authRequestHeaders = [ ];
     # WatchState's frontend uses Authorization for its own API session.
     clearAuthorizationHeader = false;
+    probeLocationsByName.watchstate."= /v1/api/system/healthcheck" = {
+      proxyPass = "http://127.0.0.1:${toString watchstatePort}";
+      recommendedProxySettings = true;
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
   };
 
   assertions = [

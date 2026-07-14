@@ -6,6 +6,40 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="home",backup_job="home-assistant-native-backup",backup_title="Home Assistant Native Backup",phase="prep",unit="home-assistant-native-backup.service"}'
+        values: "1x4322"
+    alert_rule_test:
+      - eval_time: 35h59m30s
+        alertname: BackupJobNeverRan
+      - eval_time: 36h
+        alertname: BackupJobNeverRan
+        exp_alerts:
+          - exp_labels:
+              alertname: BackupJobNeverRan
+              backup_job: home-assistant-native-backup
+              backup_title: Home Assistant Native Backup
+              category: backup
+              instance: home
+              job: node-mtls
+              phase: prep
+              severity: warning
+              unit: home-assistant-native-backup.service
+            exp_annotations:
+              summary: "Backup job has never run on home: Home Assistant Native Backup"
+              description: "The configured prep backup job Home Assistant Native Backup on home has not emitted a completed run within 36 hours."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="home",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
+        values: "1x4322"
+      - series: 'host_observability_backup_last_run_timestamp_seconds{job="node-mtls",instance="home",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
+        values: "3600x4322"
+    alert_rule_test:
+      - eval_time: 36h
+        alertname: BackupJobNeverRan
+
+  - interval: 30s
+    input_series:
       - series: 'host_observability_backup_last_success{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "1x62"
     alert_rule_test:
@@ -14,6 +48,8 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+        values: "1x61"
       - series: 'host_observability_backup_last_success{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "0x61"
     alert_rule_test:
@@ -38,6 +74,8 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="org",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
+        values: "1x4600"
       - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="org",backup_job="restic-beast-local",backup_title="Restic To Beast",phase="local",unit="restic-backups-beast.service"}'
         values: "3600x4600"
     alert_rule_test:
@@ -62,6 +100,8 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="beast",backup_job="srvarr-cloud-offload",backup_title="srvarr Cloud Offload",phase="cloud",unit="restic-srvarr-cloud-offload.service"}'
+        values: "1x7500"
       - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="beast",backup_job="srvarr-cloud-offload",backup_title="srvarr Cloud Offload",phase="cloud",unit="restic-srvarr-cloud-offload.service"}'
         values: "3600x7500"
     alert_rule_test:
@@ -86,12 +126,28 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
+        values: "1x5000"
       - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="srvarr",backup_job="seerr-backup",backup_title="Create a consistent Seerr SQLite backup artifact",phase="prep",unit="seerr-backup.service"}'
         values: "0x5000"
     alert_rule_test:
       - eval_time: 72h
         alertname: BackupJobStale
       - eval_time: 72h
+        alertname: BackupJobStaleCritical
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_backup_last_success{job="node-mtls",instance="beast",backup_job="removed-job",backup_title="Removed Job",phase="cloud",unit="removed-job.service"}'
+        values: "0x122"
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="beast",backup_job="removed-job",backup_title="Removed Job",phase="cloud",unit="removed-job.service"}'
+        values: "1x9000"
+    alert_rule_test:
+      - eval_time: 1h
+        alertname: BackupJobFailed
+      - eval_time: 62h
+        alertname: BackupJobStale
+      - eval_time: 62h
         alertname: BackupJobStaleCritical
 
   - interval: 30s

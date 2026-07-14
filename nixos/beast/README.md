@@ -178,8 +178,10 @@ local restic job runs. The app writes JSON backups into
 `/app/backend/backup-data`, which is mounted from
 `/var/lib/jellystat/backup-data` and included in restic.
 
-WatchState's persistent `/var/lib/watchstate` configuration and SQLite state
-are also included in the `beast` restic backup paths.
+WatchState runs its native portable play-state backup before creating a
+consistent archive of that output, its configuration, and its SQLite state in
+`/volume2/backups/staging/watchstate`. The seven newest archives are included
+in the local restic repository and then follow the same Backblaze B2 offload.
 
 Secrets required in `secrets/main/beast.yaml`:
 
@@ -192,6 +194,7 @@ Relevant units:
 
 - `jellyfin-built-in-backup.service`
 - `jellystat-built-in-backup.service`
+- `watchstate-native-backup.service`
 - `restic-backups-beast.service`
 - `restic-beast-cloud-offload.service`
 

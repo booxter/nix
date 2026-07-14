@@ -595,8 +595,8 @@ rec {
       title = "WatchState";
       scope = "internal";
       owner = "beast";
-      probePath = "/";
-      blackboxProbe = false;
+      probePath = "/oauth2/sign_in";
+      backendProbe.path = "/v1/api/system/healthcheck";
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {

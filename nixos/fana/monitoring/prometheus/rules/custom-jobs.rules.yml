@@ -56,6 +56,51 @@ groups:
         annotations:
           summary: "PinePods service down on srvarr: {{ $labels.name }}"
           description: "The PinePods application or one of its database/cache dependencies on srvarr has not been active for 5 minutes."
+      - alert: TelegramArchiveSchedulerDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="org",name="telegram-archive-scheduler.service",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: service
+        annotations:
+          summary: "Telegram Archive scheduler down on org"
+          description: "The Telegram Archive scheduler and real-time listener on org has not been active for 5 minutes."
+      - alert: HoundarrStatusCollectorTimerDown
+        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="houndarr-status-collector.timer",state="active"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Houndarr status collector timer down on srvarr"
+          description: "The Houndarr operational status collector timer on srvarr has not been active for 5 minutes."
+      - alert: HoundarrStatusCollectionFailed
+        expr: host_observability_houndarr_status_ok{job="node-mtls",instance="srvarr"} < 1
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Houndarr status collection failed on srvarr"
+          description: "The Houndarr operational status endpoint has been unavailable or invalid for 5 minutes."
+      - alert: HoundarrStatusMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status.prom"}) > 600
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Houndarr status metrics stale on srvarr"
+          description: "The Houndarr operational status metrics on srvarr have not been refreshed for more than 10 minutes."
+      - alert: HoundarrInstanceActiveError
+        expr: host_observability_houndarr_active_error_instances{job="node-mtls",instance="srvarr"} > 0
+        for: 10m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Houndarr has failing Arr instances on srvarr"
+          description: "At least one enabled Houndarr Arr instance has reported an active scheduler error for 10 minutes."
       - alert: LidarrCueSplitterIterationFailed
         expr: host_observability_lidarr_cue_splitter_ok{job="node-mtls",instance="srvarr"} < 1
         for: 10m

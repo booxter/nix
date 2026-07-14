@@ -2,8 +2,17 @@ groups:
   - name: backup-health
     interval: 30s
     rules:
+      - alert: BackupJobNeverRan
+        expr: host_observability_backup_job_configured{job="node-mtls"} unless on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_run_timestamp_seconds{job="node-mtls"}
+        for: 36h
+        labels:
+          severity: warning
+          category: backup
+        annotations:
+          summary: "Backup job has never run on {{ $labels.instance }}: {{ $labels.backup_title }}"
+          description: "The configured {{ $labels.phase }} backup job {{ $labels.backup_title }} on {{ $labels.instance }} has not emitted a completed run within 36 hours."
       - alert: BackupJobFailed
-        expr: host_observability_backup_last_success{job="node-mtls"} < 1
+        expr: (host_observability_backup_last_success{job="node-mtls"} < 1) and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_job_configured{job="node-mtls"}
         for: 30m
         labels:
           severity: warning
@@ -12,7 +21,7 @@ groups:
           summary: "Backup job failed on {{ $labels.instance }}: {{ $labels.backup_title }}"
           description: "The most recent {{ $labels.phase }} backup job {{ $labels.backup_title }} on {{ $labels.instance }} failed and has not been followed by a successful run for 30 minutes."
       - alert: BackupJobStale
-        expr: ((time() - host_observability_backup_last_success_timestamp_seconds{job="node-mtls"}) / 3600) > 36 and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_success_timestamp_seconds{job="node-mtls"} > 0
+        expr: (((time() - host_observability_backup_last_success_timestamp_seconds{job="node-mtls"}) / 3600) > 36 and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_success_timestamp_seconds{job="node-mtls"} > 0) and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_job_configured{job="node-mtls"}
         for: 30m
         labels:
           severity: warning
@@ -21,7 +30,7 @@ groups:
           summary: "Backup job stale on {{ $labels.instance }}: {{ $labels.backup_title }}"
           description: "The {{ $labels.phase }} backup job {{ $labels.backup_title }} on {{ $labels.instance }} has not completed a successful run for more than 36 hours."
       - alert: BackupJobStaleCritical
-        expr: ((time() - host_observability_backup_last_success_timestamp_seconds{job="node-mtls"}) / 3600) > 60 and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_success_timestamp_seconds{job="node-mtls"} > 0
+        expr: (((time() - host_observability_backup_last_success_timestamp_seconds{job="node-mtls"}) / 3600) > 60 and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_success_timestamp_seconds{job="node-mtls"} > 0) and on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_job_configured{job="node-mtls"}
         for: 30m
         labels:
           severity: critical

@@ -25,10 +25,13 @@ standard observability client.
 
 ## Backup
 
-The live recorder SQLite database is copied consistently with SQLite's backup
-API before restic runs. The remaining runtime state and staged database
-artifact are pushed to the dedicated `home` repository on beast and then
-copied to B2.
+Before restic runs, `home-assistant-native-backup.service` asks Home Assistant's
+native backup manager to create a local archive containing the configuration
+and recorder database. Home Assistant retains the seven newest local archives;
+those archives and the remaining runtime state are pushed to the dedicated
+`home` repository on beast and then copied to B2. The live recorder database is
+excluded from restic because its consistent copy is already inside the native
+archive.
 
 Before the first deployment:
 
