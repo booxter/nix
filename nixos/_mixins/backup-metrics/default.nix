@@ -22,6 +22,9 @@ let
         "-"
       ]
       name;
+  # Prometheus text-format label values must escape backslashes, line feeds,
+  # and double quotes. This applies to every label value, including free-form
+  # backup titles, rather than only to unusual job names.
   escapeLabel =
     value:
     lib.replaceStrings

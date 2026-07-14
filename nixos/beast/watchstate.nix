@@ -153,8 +153,9 @@ in
         WS_CRON_IMPORT_AT = "0 */12 * * *";
         WS_CRON_EXPORT = "true";
         WS_CRON_EXPORT_AT = "30 */12 * * *";
-        # The systemd preparation job below owns native backups so their
-        # success is measured and Restic never races the built-in scheduler.
+        # Disable WatchState's cron trigger: watchstate-native-backup.service
+        # invokes the same native backup immediately before Restic, ensuring
+        # the latest archive is included and the outcome is monitored.
         WS_CRON_BACKUP = "false";
         # Serialize full export comparisons and state writes so large syncs do
         # not exhaust the reverse proxy or Jellyfin API. WatchState 1.9.2 does
