@@ -919,7 +919,10 @@ rec {
       dnsAliases = builtins.filter (domain: domain != "dash.${site.public.domain}") (
         map (service: service.publicHost) publicServices
       );
-      localDnsAliases = [ "jfstat" ];
+      localDnsAliases = [
+        "jfstat"
+        "watchstate"
+      ];
       hmFull = false;
       hardware.gpuFamilies = [ "intel" ];
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
