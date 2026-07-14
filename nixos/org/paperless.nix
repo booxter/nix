@@ -526,7 +526,7 @@ in
         FAIL_TAG = "paperless-gpt-failed";
         HOME = "/home/paperless-gpt";
         LLM_LANGUAGE = "English";
-        LLM_MODEL = "qwen3.5:9b";
+        LLM_MODEL = "granite4:32b-a9b-h";
         LLM_PROVIDER = "ollama";
         LISTEN_INTERFACE = "127.0.0.1:${toString paperlessGptPort}";
         LOCAL_HOCR_PATH = "/app/hocr";

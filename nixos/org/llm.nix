@@ -50,21 +50,6 @@ let
         };
       }
       {
-        model_name = "qwen3.5:9b";
-        litellm_params = {
-          model = "ollama_chat/qwen3.5:9b";
-          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
-          keep_alive = "30m";
-        };
-        model_info = {
-          mode = "chat";
-          supports_function_calling = true;
-          supports_vision = true;
-          input_cost_per_token = 0.0;
-          output_cost_per_token = 0.0;
-        };
-      }
-      {
         model_name = "qwen3-next:80b";
         litellm_params = {
           model = "ollama_chat/qwen3-next:80b";

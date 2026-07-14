@@ -73,11 +73,10 @@ in
       "gemma4:31b"
       "granite4:32b-a9b-h"
       "nomic-embed-text"
-      "qwen3.5:9b"
       "qwen3-next:80b"
       "qwen3-vl:8b-instruct"
     ];
-    syncModels = false;
+    syncModels = true;
     environmentVariables = {
       OLLAMA_KEEP_ALIVE = "30m";
     };
@@ -159,5 +158,9 @@ in
     mtls.enable = true;
     serverAliases = [ ollamaService.displayHost ];
     localAliases = [ "ollama" ];
+    locationExtraConfig = ''
+      proxy_read_timeout 600s;
+      proxy_send_timeout 600s;
+    '';
   };
 }
