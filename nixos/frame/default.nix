@@ -73,7 +73,6 @@ in
       "gemma4:31b"
       "granite4:32b-a9b-h"
       "nomic-embed-text"
-      "qwen3.5:9b"
       "qwen3-next:80b"
       "qwen3-vl:8b-instruct"
     ];

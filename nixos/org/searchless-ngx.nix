@@ -232,7 +232,7 @@ in
       environment = {
         CHROMA_HOST = "127.0.0.1";
         CHROMA_PORT = toString chromaPort;
-        CHAT_MODEL = "qwen3.5:9b";
+        CHAT_MODEL = "granite4:32b-a9b-h";
         CHAT_PROVIDER = "openai";
         EMBEDDING_MODEL = "nomic-embed-text";
         EMBEDDING_PROVIDER = "ollama";

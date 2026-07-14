@@ -74,7 +74,7 @@ in
     environmentFile = config.sops.templates."open-webui.env".path;
     environment = {
       DEFAULT_MODELS = "qwen3-next:80b";
-      DEFAULT_PINNED_MODELS = "qwen3-next:80b,gemma4:31b,granite4:32b-a9b-h,qwen3.5:9b";
+      DEFAULT_PINNED_MODELS = "qwen3-next:80b,gemma4:31b,granite4:32b-a9b-h";
       ENABLE_CODE_EXECUTION = "False";
       ENABLE_LOGIN_FORM = "False";
       ENABLE_OTEL = "True";
@@ -107,7 +107,7 @@ in
       OPENID_PROVIDER_URL = oidcDiscoveryUrl;
       OPENID_REDIRECT_URI = oidcRedirectUri;
       DEFAULT_MODEL_PARAMS = builtins.toJSON openWebuiDefaultModelParams;
-      TASK_MODEL_EXTERNAL = "qwen3.5:9b";
+      TASK_MODEL_EXTERNAL = "granite4:32b-a9b-h";
       WEB_LOADER_CONCURRENT_REQUESTS = "4";
       WEBUI_ADMIN_EMAIL = "ihar.hrachyshka@gmail.com";
       WEBUI_ADMIN_NAME = "Ihar";
