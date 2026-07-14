@@ -19,6 +19,7 @@ os.environ.update(
         "PAPERLESS_GPT_OCR_COMPLETE_TAG": "paperless-gpt-ocr-complete",
         "PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME": "Auto OCR with paperless-gpt",
         "PAPERLESS_GPT_POST_OCR_WORKFLOW_NAME": "Auto classify after paperless-gpt OCR",
+        "PAPERLESS_GPT_CLEANUP_WORKFLOW_NAME": "Clear paperless-gpt auto tag after completion",
     }
 )
 
@@ -61,6 +62,16 @@ def test_desired_workflows_sequence_ocr_before_metadata():
                 }
             ],
             [{"type": 1, "assign_tags": [1]}],
+        ),
+        (
+            "Clear paperless-gpt auto tag after completion",
+            [
+                {
+                    "type": 3,
+                    "filter_has_all_tags": [1, 2],
+                }
+            ],
+            [{"type": 2, "remove_tags": [1]}],
         ),
     ]
 

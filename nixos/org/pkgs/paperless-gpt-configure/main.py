@@ -15,6 +15,7 @@ AUTO_OCR_TAG = os.environ["PAPERLESS_GPT_AUTO_OCR_TAG"]
 OCR_COMPLETE_TAG = os.environ["PAPERLESS_GPT_OCR_COMPLETE_TAG"]
 AUTO_OCR_WORKFLOW_NAME = os.environ["PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME"]
 POST_OCR_WORKFLOW_NAME = os.environ["PAPERLESS_GPT_POST_OCR_WORKFLOW_NAME"]
+CLEANUP_WORKFLOW_NAME = os.environ["PAPERLESS_GPT_CLEANUP_WORKFLOW_NAME"]
 
 
 def api(method, path, payload=None):
@@ -114,6 +115,19 @@ def desired_workflows(tags):
                 }
             ],
             [{"type": 1, "assign_tags": [tags[AUTO_TAG]["id"]]}],
+        ),
+        (
+            CLEANUP_WORKFLOW_NAME,
+            [
+                {
+                    "type": 3,
+                    "filter_has_all_tags": [
+                        tags[AUTO_TAG]["id"],
+                        tags[AUTO_TAG_COMPLETE]["id"],
+                    ],
+                }
+            ],
+            [{"type": 2, "remove_tags": [tags[AUTO_TAG]["id"]]}],
         ),
     ]
 

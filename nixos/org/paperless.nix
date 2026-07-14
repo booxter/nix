@@ -343,6 +343,7 @@ in
         PAPERLESS_GPT_OCR_COMPLETE_TAG = paperlessGptOcrCompleteTag;
         PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME = "Auto OCR with paperless-gpt";
         PAPERLESS_GPT_POST_OCR_WORKFLOW_NAME = "Auto classify after paperless-gpt OCR";
+        PAPERLESS_GPT_CLEANUP_WORKFLOW_NAME = "Clear paperless-gpt auto tag after completion";
       };
       serviceConfig = {
         Type = "oneshot";
