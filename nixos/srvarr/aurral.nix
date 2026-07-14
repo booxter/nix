@@ -20,6 +20,11 @@ let
     After = [ "network-online.target" ];
     RequiresMountsFor = mediaPath;
   };
+  legacyImageProxyLocation = {
+    # The query-based endpoint fetches caller-supplied URLs and is not needed by
+    # current Aurral clients. Keep the cache-key image route below this path.
+    return = "404";
+  };
 in
 {
   users.groups.aurral = { };
@@ -106,6 +111,13 @@ in
     mtls.enable = true;
     probe.enable = true;
   };
+
+  # Close the legacy endpoint on both backend HTTPS surfaces. The exact match
+  # still permits /api/image-proxy/<cache-key>, which serves cached artwork.
+  services.nginx.virtualHosts."internal-https-aurral".locations."= /api/image-proxy" =
+    legacyImageProxyLocation;
+  services.nginx.virtualHosts.${aurralService.publicHost}.locations."= /api/image-proxy" =
+    legacyImageProxyLocation;
 
   # Aurral's OAuth gate lives on beast because only the public hostname is
   # browser-protected. The backend probe still needs a probe-only listener on
