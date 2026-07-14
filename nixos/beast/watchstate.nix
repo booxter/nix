@@ -13,7 +13,7 @@ let
   watchstateSso = hostInventory.sso.applications.watchstate;
   watchstateSystemUser = watchstateSso.bootstrapOwner;
   watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
-  watchstatePort = 8080;
+  watchstatePort = hostInventory.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";
   watchstateUid = 296;
 in
@@ -90,6 +90,13 @@ in
       user = "${toString watchstateUid}:${toString watchstateUid}";
       environment = {
         TZ = "America/New_York";
+        # Webhooks provide low-latency updates, while these staggered jobs
+        # reconcile events that Jellyfin or WatchState may have missed. Import
+        # first so the following export works from the freshest combined state.
+        WS_CRON_IMPORT = "true";
+        WS_CRON_IMPORT_AT = "0 */12 * * *";
+        WS_CRON_EXPORT = "true";
+        WS_CRON_EXPORT_AT = "30 */12 * * *";
         # Serialize full export comparisons and state writes so large syncs do
         # not exhaust the reverse proxy or Jellyfin API. WatchState 1.9.2 does
         # not apply this switch to incremental Jellyfin metadata reads, so each

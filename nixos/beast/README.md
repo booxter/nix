@@ -110,7 +110,7 @@ WatchState runs as an unprivileged UID inside a Podman container and keeps its
 state under `/var/lib/watchstate`. Its port is published on loopback only; the
 management UI is available at `https://watchstate.home.arpa` through the
 internal HTTPS and `media-admins` OIDC gate. Jellyfin's official Webhook plugin
-is installed declaratively by Jellarr.
+and its WatchState destination are managed declaratively by Jellarr.
 
 The WatchState system user is supplied declaratively from
 `sso.applications.watchstate.bootstrapOwner` in `lib/inventory.nix`; its
@@ -122,7 +122,7 @@ The remaining initial configuration is an explicit, staged operation:
 1. Sign in to WatchState as the inventory bootstrap owner using the sops-managed
    password.
 2. Add the same `https://jf.ihar.dev` Jellyfin server twice,
-   using distinct backend names such as `jellyfin_ihar` and
+   using distinct backend names such as `jellyfin_user` and
    `jellyfin_shared` and selecting `Ihar` and `jellyfin`, respectively.
 3. Do not provision WatchState identities: separate identities do not merge
    play state with one another.
@@ -130,15 +130,12 @@ The remaining initial configuration is an explicit, staged operation:
    inspect history, unmatched items, and conflicts before enabling writes.
 5. Enable export to `jellyfin` first, validate a small sample in both shared
    libraries and an `Ihar`-only library, and only then enable export to `Ihar`.
-6. Keep the import and export scheduled tasks enabled for reconciliation.
-   After validation, a 12-hour schedule is sufficient when webhooks are also
-   enabled.
 
-Configure one generic Jellyfin webhook destination pointing to
-`http://127.0.0.1:8080/v1/api/webhook`. Select Item Added, User Data Saved,
-Playback Start, and Playback Stop; select all users, restrict item types to
-Movies and Episodes, send all properties, and set `Content-Type` to
-`application/json`.
+WatchState imports every 12 hours and exports 30 minutes later to reconcile
+events missed by either service. Jellarr configures one generic Jellyfin
+webhook destination at `http://127.0.0.1:8080/v1/api/webhook` for near-real-time
+updates. It covers all users, Movies and Episodes, and the Item Added, User Data
+Saved, Playback Start, and Playback Stop events.
 
 ## Maintenance and monitoring
 
