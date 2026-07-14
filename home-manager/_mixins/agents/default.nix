@@ -26,11 +26,11 @@ let
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";
   };
-  trustedProjects =
-    paths:
-    lib.genAttrs (map (path: "${config.home.homeDirectory}/${path}") paths) (_: {
-      trust_level = "trusted";
-    });
+  codexConfigDir =
+    if config.home.preferXdgDirectories then
+      "${lib.removePrefix config.home.homeDirectory config.xdg.configHome}/codex"
+    else
+      ".codex";
 in
 {
   imports = [
@@ -50,13 +50,6 @@ in
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
       notice.fast_default_opt_out = true;
-
-      projects = trustedProjects [
-        "src/sdn"
-        "src/nix"
-        "src/nixpkgs"
-        "src/ovn-kubernetes"
-      ];
 
       # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
       # https://github.com/openai/codex/issues/12582
@@ -122,6 +115,18 @@ in
     ++ lib.optionals isWork [
       codexPkgs.codex-work-usage-status
     ];
+
+  # Preserve edits made by the removed local-overlay patch. Run after Home
+  # Manager removes its old config.toml symlink, and never replace a user file.
+  home.activation.migrateCodexLocalConfig = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    localConfig="$HOME/${codexConfigDir}/config.local.toml"
+    userConfig="$HOME/${codexConfigDir}/config.toml"
+
+    if [[ -f "$localConfig" && ! -e "$userConfig" && ! -L "$userConfig" ]]; then
+      verboseEcho "Moving $localConfig to writable Codex user config $userConfig"
+      run mv $VERBOSE_ARG "$localConfig" "$userConfig"
+    fi
+  '';
 
   # Work remote settings pin the default model and effort; user settings lose to
   # that managed layer, but CLI flags still win for shell launches.

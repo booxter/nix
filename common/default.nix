@@ -27,6 +27,7 @@ let
 in
 {
   imports = [
+    ./_mixins/codex
     ./_mixins/internal-pki
     ./_mixins/nix
     ./_mixins/nixpkgs
