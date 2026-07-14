@@ -155,6 +155,13 @@ in
     authRequestHeaders = [ ];
     # WatchState's frontend uses Authorization for its own API session.
     clearAuthorizationHeader = false;
+    probeLocationsByName.watchstate."= /v1/api/system/healthcheck" = {
+      proxyPass = "http://127.0.0.1:${toString watchstatePort}";
+      recommendedProxySettings = true;
+      extraConfig = ''
+        auth_request off;
+      '';
+    };
   };
 
   assertions = [
