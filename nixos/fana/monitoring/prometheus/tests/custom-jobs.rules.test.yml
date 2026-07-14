@@ -143,6 +143,28 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="telegram-archive-scheduler.service",state="active"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: TelegramArchiveSchedulerDown
+      - eval_time: 5m
+        alertname: TelegramArchiveSchedulerDown
+        exp_alerts:
+          - exp_labels:
+              alertname: TelegramArchiveSchedulerDown
+              category: service
+              instance: org
+              job: node-mtls
+              name: telegram-archive-scheduler.service
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "Telegram Archive scheduler down on org"
+              description: "The Telegram Archive scheduler and real-time listener on org has not been active for 5 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'host_observability_lidarr_cue_splitter_ok{instance="srvarr",job="node-mtls"}'
         values: "0x20 1x2"
     alert_rule_test:
