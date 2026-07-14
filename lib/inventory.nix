@@ -222,6 +222,7 @@ rec {
 
     ports = {
       nfs = 2049;
+      watchstate = 8080;
     };
 
     nixCaches =
@@ -449,6 +450,10 @@ rec {
         userGroup = "media-users";
         bootstrapOwner = "ihar";
       };
+      watchstate = {
+        adminGroup = "media-admins";
+        bootstrapOwner = "ihar";
+      };
     };
 
     groups = {
@@ -582,6 +587,15 @@ rec {
       scope = "internal";
       owner = "beast";
       probePath = "/auth/isConfigured";
+      glanceCategory = "media-admin";
+    }))
+    (resolveService (mkService {
+      id = "watchstate";
+      title = "WatchState";
+      scope = "internal";
+      owner = "beast";
+      probePath = "/";
+      blackboxProbe = false;
       glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
@@ -910,7 +924,10 @@ rec {
       dnsAliases = builtins.filter (domain: domain != "dash.${site.public.domain}") (
         map (service: service.publicHost) publicServices
       );
-      localDnsAliases = [ "jfstat" ];
+      localDnsAliases = [
+        "jfstat"
+        "watchstate"
+      ];
       hmFull = false;
       hardware.gpuFamilies = [ "intel" ];
       hardware.igpu.renderDevice = "/dev/dri/renderD128";

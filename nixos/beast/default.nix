@@ -27,6 +27,7 @@
     ./pause.nix
     ./raid.nix
     ./ups.nix
+    ./watchstate.nix
   ];
 
   users.groups.media.gid = hostInventory.site.gids.media;
