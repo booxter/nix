@@ -165,6 +165,89 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_systemd_unit_state{instance="srvarr",job="node-mtls",name="houndarr-status-collector.timer",state="active"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: HoundarrStatusCollectorTimerDown
+      - eval_time: 5m
+        alertname: HoundarrStatusCollectorTimerDown
+        exp_alerts:
+          - exp_labels:
+              alertname: HoundarrStatusCollectorTimerDown
+              category: media
+              instance: srvarr
+              job: node-mtls
+              name: houndarr-status-collector.timer
+              severity: warning
+              state: active
+            exp_annotations:
+              summary: "Houndarr status collector timer down on srvarr"
+              description: "The Houndarr operational status collector timer on srvarr has not been active for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_houndarr_status_ok{instance="srvarr",job="node-mtls"}'
+        values: "0x10 1x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: HoundarrStatusCollectionFailed
+      - eval_time: 5m
+        alertname: HoundarrStatusCollectionFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: HoundarrStatusCollectionFailed
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Houndarr status collection failed on srvarr"
+              description: "The Houndarr operational status endpoint has been unavailable or invalid for 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_textfile_mtime_seconds{instance="srvarr",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/houndarr-status.prom"}'
+        values: "0x31"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: HoundarrStatusMetricsStale
+      - eval_time: 15m30s
+        alertname: HoundarrStatusMetricsStale
+        exp_alerts:
+          - exp_labels:
+              alertname: HoundarrStatusMetricsStale
+              category: media
+              file: /var/lib/prometheus-node-exporter-textfile/houndarr-status.prom
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Houndarr status metrics stale on srvarr"
+              description: "The Houndarr operational status metrics on srvarr have not been refreshed for more than 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_houndarr_active_error_instances{instance="srvarr",job="node-mtls"}'
+        values: "1x20 0x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: HoundarrInstanceActiveError
+      - eval_time: 10m
+        alertname: HoundarrInstanceActiveError
+        exp_alerts:
+          - exp_labels:
+              alertname: HoundarrInstanceActiveError
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Houndarr has failing Arr instances on srvarr"
+              description: "At least one enabled Houndarr Arr instance has reported an active scheduler error for 10 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'host_observability_lidarr_cue_splitter_ok{instance="srvarr",job="node-mtls"}'
         values: "0x20 1x2"
     alert_rule_test:
