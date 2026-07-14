@@ -87,6 +87,13 @@ in
       user = "${toString watchstateUid}:${toString watchstateUid}";
       environment = {
         TZ = "America/New_York";
+        # Serialize full export comparisons and state writes so large syncs do
+        # not exhaust the reverse proxy or Jellyfin API. WatchState 1.9.2 does
+        # not apply this switch to incremental Jellyfin metadata reads, so each
+        # exported Jellyfin backend must also set options.client.http_version
+        # to 1.1. Disabling HTTP/2 multiplexing makes WatchState's built-in
+        # per-host connection limit effective for those requests.
+        WS_HTTP_SYNC_REQUESTS = "true";
       };
       environmentFiles = [ "/run/watchstate/auth.env" ];
       extraOptions = [
