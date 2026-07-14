@@ -1,6 +1,7 @@
 {
   config,
   hostInventory,
+  lib,
   pkgs,
   ...
 }:
@@ -31,17 +32,50 @@ in
     owner = "root";
     group = "root";
     mode = "0400";
+    restartUnits = [
+      "watchstate-password-env.service"
+      "podman-watchstate.service"
+    ];
   };
 
-  sops.templates."watchstate.env" = {
-    owner = "root";
-    group = "root";
-    mode = "0400";
-    content = ''
-      WS_SYSTEM_USER=${watchstateSystemUser}
-      WS_SYSTEM_PASSWORD=${config.sops.placeholder."watchstate/system/password"}
+  systemd.services.watchstate-password-env = {
+    description = "Render the WatchState authentication environment";
+    requires = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
+    before = [ "podman-watchstate.service" ];
+    path = [
+      pkgs.apacheHttpd
+      pkgs.coreutils
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      RuntimeDirectory = "watchstate";
+      RuntimeDirectoryMode = "0700";
+      UMask = "0077";
+    };
+    script = ''
+      env_file="$RUNTIME_DIRECTORY/auth.env"
+      tmp_file="$env_file.tmp"
+      trap 'rm -f "$tmp_file"' EXIT
+
+      password_hash="$(
+        htpasswd \
+          -niBC 12 \
+          watchstate \
+          < ${config.sops.secrets."watchstate/system/password".path}
+      )"
+      password_hash="''${password_hash#watchstate:}"
+
+      {
+        printf 'WS_SYSTEM_USER=%s\n' ${lib.escapeShellArg watchstateSystemUser}
+        printf 'WS_SYSTEM_PASSWORD=ws_hash@:%s\n' "$password_hash"
+      } > "$tmp_file"
+
+      chmod 0400 "$tmp_file"
+      mv "$tmp_file" "$env_file"
+      trap - EXIT
     '';
-    restartUnits = [ "podman-watchstate.service" ];
   };
 
   virtualisation.oci-containers = {
@@ -54,7 +88,7 @@ in
       environment = {
         TZ = "America/New_York";
       };
-      environmentFiles = [ config.sops.templates."watchstate.env".path ];
+      environmentFiles = [ "/run/watchstate/auth.env" ];
       extraOptions = [
         "--cap-drop=all"
         "--security-opt=no-new-privileges"
@@ -69,13 +103,13 @@ in
   ];
 
   systemd.services.podman-watchstate = {
+    requires = [ "watchstate-password-env.service" ];
     wants = [
       "network-online.target"
-      "sops-install-secrets.service"
     ];
     after = [
       "network-online.target"
-      "sops-install-secrets.service"
+      "watchstate-password-env.service"
     ];
     unitConfig.RequiresMountsFor = [ watchstateDataDir ];
   };
