@@ -19,6 +19,8 @@ keys:
   - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
   - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
   - age1n7vnsmumaqfgslf463henqwpg96u36jv04nmcqde5d40tvx5l3hqje8jur
+  - age1rcpzj9rsqs038a3h3rcqw27szw3qw0wy3qat5mg8n52sn68ymyes0fc9k6
+  - age1se1qw0jnkm4jxvrj0msw5kq9pcpj7vpz867hme8q20l0hhld7wxshq7zd3ccw9
 creation_rules:
   - path_regex: secrets/main/mair\.yaml$
     key_groups:
@@ -155,3 +157,8 @@ creation_rules:
           - age1se1qd34yq677gy4y6zq3xngr3e6587xnd3lwg04tatm64xnya7wgtntsgj6n2p
           - age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r
           - age1n7vnsmumaqfgslf463henqwpg96u36jv04nmcqde5d40tvx5l3hqje8jur
+  - path_regex: secrets/work/JGWXHWDL4X\.yaml$
+    key_groups:
+      - age:
+          - age1rcpzj9rsqs038a3h3rcqw27szw3qw0wy3qat5mg8n52sn68ymyes0fc9k6
+          - age1se1qw0jnkm4jxvrj0msw5kq9pcpj7vpz867hme8q20l0hhld7wxshq7zd3ccw9
