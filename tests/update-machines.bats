@@ -41,6 +41,17 @@ EOF
     printf '#!%s\n' "$bash_path"
     cat <<'EOF'
 set -euo pipefail
+printf '%s\n' \
+  'Filesystem 1024-blocks Used Available Capacity Mounted on' \
+  'testfs 41943040 10485760 31457280 25% /nix/store'
+EOF
+  } > "$stub_dir/df"
+  chmod +x "$stub_dir/df"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
 case "${1-}" in
   -s)
     printf '%s\n' "controller"

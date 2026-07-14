@@ -66,6 +66,7 @@ rec {
       isDesktop ? false,
       isLaptop ? false,
       isWork ? false,
+      secretDomain ? (if isWork then "work" else "main"),
       isVM ? false,
       nixpkgsInput ? inputs.nixpkgs,
       extraModules ? [ ],
@@ -91,6 +92,7 @@ rec {
           isDesktop
           isLaptop
           isWork
+          secretDomain
           isDarwin
           isLinux
           ;
@@ -418,6 +420,7 @@ rec {
       isDesktop ? false,
       isLaptop ? false,
       isWork ? false,
+      secretDomain ? (if isWork then "work" else "main"),
       extraModules ? [ ],
       ...
     }:
@@ -442,6 +445,7 @@ rec {
           isDesktop
           isLaptop
           isWork
+          secretDomain
           isDarwin
           isLinux
           isVM

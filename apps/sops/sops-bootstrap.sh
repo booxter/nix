@@ -4,13 +4,13 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-bootstrap.sh HOST [--user USER]
+  apps/sops/sops-bootstrap.sh [--domain DOMAIN] [--local] HOST [--user USER]
   apps/sops/sops-bootstrap.sh --help
 
 This script:
-  1) SSHes into HOST and generates /var/lib/sops-nix/key.txt (if missing)
+  1) Generates /var/lib/sops-nix/key.txt locally or over SSH (if missing)
   2) Reads the age public key
-  3) Creates secrets/HOST.yaml encrypted with that key
+  3) Creates secrets/DOMAIN/HOST.yaml encrypted with that key
   4) Creates .sops.yaml if it doesn't exist (otherwise patches it)
 EOF
 }
@@ -48,6 +48,7 @@ resolve_local_pubkey() {
 resolve_control_plane_pubkey() {
   local sops_yaml="$1"
   local local_pubkey="$2"
+  local domain="$3"
   local control_host="pki"
 
   if [[ ! -f "$sops_yaml" ]]; then
@@ -58,12 +59,112 @@ resolve_control_plane_pubkey() {
     return 0
   fi
 
-  yq -r ".creation_rules[] | select(.path_regex == \"secrets/${control_host}\\\\.yaml$\") | .key_groups[]?.age[]" "$sops_yaml" \
+  yq -r ".creation_rules[] | select(.path_regex == \"secrets/${domain}/${control_host}\\\\.yaml$\") | .key_groups[]?.age[]" "$sops_yaml" \
     | awk -v local_key="$local_pubkey" '$0 != local_key { print; exit }'
+}
+
+as_root_local() {
+  if [[ "$(id -u)" -eq 0 ]]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+local_runtime_pubkey() {
+  local key_file="/var/lib/sops-nix/key.txt"
+  local age_keygen
+  age_keygen="$(command -v age-keygen)"
+
+  as_root_local mkdir -p "$(dirname -- "$key_file")"
+  if ! as_root_local test -f "$key_file"; then
+    as_root_local "$age_keygen" -o "$key_file"
+    as_root_local chmod 0400 "$key_file"
+  fi
+  as_root_local sed -n 's/^# public key: //p' "$key_file" | tail -n1
+}
+
+remote_runtime_pubkey() {
+  local ssh_target="$1"
+  local remote_output
+  local remote_script
+  local remote_script_q
+  local remote_payload
+  local pubkey
+
+  remote_output="$(mktemp)"
+  remote_script="/tmp/sops-bootstrap-$$.sh"
+  remote_script_q="$(printf '%q' "$remote_script")"
+  remote_payload="$(cat <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+as_root() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  else
+    echo "Need root privileges on remote host (login as root or install/configure sudo)." >&2
+    exit 1
+  fi
+}
+
+run_age_keygen() {
+  if command -v age-keygen >/dev/null 2>&1; then
+    as_root age-keygen -o /var/lib/sops-nix/key.txt
+  else
+    as_root nix --extra-experimental-features "nix-command flakes" shell nixpkgs#age -c age-keygen -o /var/lib/sops-nix/key.txt
+  fi
+}
+
+as_root mkdir -p /var/lib/sops-nix
+if ! as_root test -f /var/lib/sops-nix/key.txt; then
+  run_age_keygen
+  as_root chmod 0400 /var/lib/sops-nix/key.txt
+fi
+
+pubkey="$(as_root sed -n 's/^# public key: //p' /var/lib/sops-nix/key.txt | tail -n1)"
+if [ -z "$pubkey" ]; then
+  echo "Failed to parse age public key from /var/lib/sops-nix/key.txt." >&2
+  exit 1
+fi
+echo "PUBKEY:${pubkey}"
+EOF
+)"
+
+  # shellcheck disable=SC2029
+  printf '%s\n' "$remote_payload" | ssh "$ssh_target" "cat > ${remote_script_q} && chmod +x ${remote_script_q}"
+  ssh -tt "$ssh_target" "bash ${remote_script_q}" | tee "$remote_output" >&2
+  pubkey="$(tr -d '\r' < "$remote_output" | sed -n 's/^PUBKEY://p' | tail -n1)"
+  # shellcheck disable=SC2029
+  ssh "$ssh_target" "rm -f -- ${remote_script_q}" >/dev/null 2>&1 || true
+  rm -f "$remote_output"
+  printf '%s\n' "$pubkey"
+}
+
+ensure_work_operator_identity() {
+  local key_file="$1"
+  local key_dir
+  key_dir="$(dirname -- "$key_file")"
+
+  if [[ "$(uname -s)" != "Darwin" ]]; then
+    echo "The work operator identity must be initialized on macOS with Secure Enclave support." >&2
+    return 1
+  fi
+  if [[ ! -f "$key_file" ]]; then
+    mkdir -p "$key_dir"
+    chmod 0700 "$key_dir"
+    umask 077
+    age-plugin-se keygen --access-control current-biometry -o "$key_file"
+  fi
+  chmod 0600 "$key_file"
 }
 
 host=""
 user="${USER:-$(whoami)}"
+domain=""
+local_mode=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -79,6 +180,14 @@ while [[ $# -gt 0 ]]; do
       fi
       user="$2"
       shift 2
+      ;;
+    --domain)
+      domain="${2:?Missing value for --domain}"
+      shift 2
+      ;;
+    --local)
+      local_mode=1
+      shift
       ;;
     -*)
       echo "Unknown option: $1" >&2
@@ -102,77 +211,38 @@ if [[ -z "$host" ]]; then
   exit 1
 fi
 
-ssh_target="${user}@${host}"
-remote_output="$(mktemp)"
-remote_script="/tmp/sops-bootstrap-$$.sh"
-remote_script_q="$(printf '%q' "$remote_script")"
-cleanup() {
-  rm -f "$remote_output"
-  # shellcheck disable=SC2029
-  ssh "$ssh_target" "rm -f -- ${remote_script_q}" >/dev/null 2>&1 || true
-}
-trap cleanup EXIT
+repo_root="$(git -C "$PWD" rev-parse --show-toplevel)"
+# shellcheck disable=SC1091
+source "${repo_root}/apps/_helpers/secret-domains.sh"
+domain="$(resolve_secret_domain "$domain")"
+assert_secret_domain_host "$domain" "$host"
+cd "$repo_root"
 
-if ! [ -t 0 ]; then
+if [[ "$host" == "${SOPS_MACHINE_HOSTNAME:-$(hostname -s)}" ]]; then
+  local_mode=1
+fi
+if [[ "$local_mode" != "1" ]] && ! [ -t 0 ]; then
   echo "Error: no TTY available for sudo on ${host}. Run this command from a real terminal." >&2
   exit 1
 fi
-
-remote_payload="$(cat <<'EOF'
-#!/usr/bin/env bash
-set -euo pipefail
-
-as_root() {
-  if [ "$(id -u)" -eq 0 ]; then
-    "$@"
-  elif command -v sudo >/dev/null 2>&1; then
-    sudo "$@"
-  else
-    echo "Need root privileges on remote host (login as root or install/configure sudo)." >&2
-    exit 1
-  fi
-}
-
-run_age_keygen() {
-  if command -v age-keygen >/dev/null 2>&1; then
-    as_root age-keygen -o /var/lib/sops-nix/key.txt
-    return 0
-  fi
-
-  as_root nix --extra-experimental-features "nix-command flakes" shell nixpkgs#age -c age-keygen -o /var/lib/sops-nix/key.txt
-}
-
-as_root mkdir -p /var/lib/sops-nix
-if ! as_root test -f /var/lib/sops-nix/key.txt; then
-  run_age_keygen
-fi
-
-if command -v rg >/dev/null 2>&1; then
-  key_line="$(as_root rg -n 'public key' /var/lib/sops-nix/key.txt)"
+if [[ "$local_mode" == "1" ]]; then
+  pubkey="$(local_runtime_pubkey)"
 else
-  key_line="$(as_root grep -n 'public key' /var/lib/sops-nix/key.txt)"
+  pubkey="$(remote_runtime_pubkey "${user}@${host}")"
 fi
-
-pubkey="$(printf "%s\n" "$key_line" | sed -n 's/.*public key: //p' | tail -n1)"
-if [ -z "$pubkey" ]; then
-  echo "Failed to parse age public key from /var/lib/sops-nix/key.txt." >&2
-  exit 1
-fi
-echo "PUBKEY:${pubkey}"
-EOF
-)"
-
-# shellcheck disable=SC2029
-printf '%s\n' "$remote_payload" | ssh "$ssh_target" "cat > ${remote_script_q} && chmod +x ${remote_script_q}"
-ssh -tt "$ssh_target" "bash ${remote_script_q}" | tee "$remote_output"
-
-pubkey="$(tr -d '\r' < "$remote_output" | sed -n 's/^PUBKEY://p' | tail -n1)"
 
 if [[ -z "$pubkey" ]]; then
-  echo "Failed to read age public key from ${ssh_target}."
+  echo "Failed to read age public key for ${host}."
   exit 1
 fi
 
+if [[ "$domain" != "main" ]]; then
+  SOPS_AGE_KEY_FILE="$(domain_age_identity_file "$domain")"
+  export SOPS_AGE_KEY_FILE
+fi
+if [[ "$domain" == "work" ]]; then
+  ensure_work_operator_identity "$SOPS_AGE_KEY_FILE"
+fi
 local_pubkey="$(resolve_local_pubkey)"
 if [[ -z "$local_pubkey" ]]; then
   echo "Failed to resolve local age public key."
@@ -181,12 +251,15 @@ fi
 
 secret_host="${host}"
 
-secrets_dir="secrets"
+secrets_dir="secrets/${domain}"
 secrets_file="${secrets_dir}/${secret_host}.yaml"
-template_file="secrets/_template.yaml"
+template_file="${secrets_dir}/_template.yaml"
 sops_yaml=".sops.yaml"
 
-control_plane_pubkey="$(resolve_control_plane_pubkey "$sops_yaml" "$local_pubkey" || true)"
+control_plane_pubkey=""
+if [[ "$domain" == "main" ]]; then
+  control_plane_pubkey="$(resolve_control_plane_pubkey "$sops_yaml" "$local_pubkey" "$domain" || true)"
+fi
 if [[ "$control_plane_pubkey" == "$pubkey" || "$control_plane_pubkey" == "$local_pubkey" ]]; then
   control_plane_pubkey=""
 fi
@@ -216,7 +289,7 @@ keys:
 ${local_top_key_line}
 ${control_top_key_line}
 creation_rules:
-  - path_regex: secrets/${secret_host}\\.yaml\$
+  - path_regex: secrets/${domain}/${secret_host}\\.yaml\$
     key_groups:
       - age:
           - ${pubkey}
@@ -242,16 +315,16 @@ else
     exit 1
   fi
 
-  if ! (command -v rg >/dev/null 2>&1 && rg -q "secrets/${secret_host}\\\\.yaml" "$sops_yaml") \
-    && ! grep -q "secrets/${secret_host}\\.yaml" "$sops_yaml"; then
+  if ! (command -v rg >/dev/null 2>&1 && rg -q "secrets/${domain}/${secret_host}\\\\.yaml" "$sops_yaml") \
+    && ! grep -q "secrets/${domain}/${secret_host}\\.yaml" "$sops_yaml"; then
     yq -i ".keys += [\"${pubkey}\",\"${local_pubkey}\"] | .keys |= unique" "$sops_yaml"
     if [[ -n "$control_plane_pubkey" ]]; then
       yq -i ".keys += [\"${control_plane_pubkey}\"] | .keys |= unique" "$sops_yaml"
     fi
-    yq -i ".creation_rules += [{\"path_regex\":\"secrets/${secret_host}\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${pubkey}\",\"${local_pubkey}\"]}]}]" "$sops_yaml"
+    yq -i ".creation_rules += [{\"path_regex\":\"secrets/${domain}/${secret_host}\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${pubkey}\",\"${local_pubkey}\"]}]}]" "$sops_yaml"
     if [[ -n "$control_plane_pubkey" ]]; then
-      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
-      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
     fi
     echo "Updated $sops_yaml."
   else
@@ -259,11 +332,11 @@ else
     if [[ -n "$control_plane_pubkey" ]]; then
       yq -i ".keys += [\"${control_plane_pubkey}\"] | .keys |= unique" "$sops_yaml"
     fi
-    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${pubkey}\",\"${local_pubkey}\"]" "$sops_yaml"
-    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${pubkey}\",\"${local_pubkey}\"]" "$sops_yaml"
+    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
     if [[ -n "$control_plane_pubkey" ]]; then
-      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
-      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
     fi
     echo "Updated $sops_yaml."
   fi

@@ -4,10 +4,10 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-copy.sh SRC_HOST DST_HOST SRC_KEY_PATH [DST_KEY_PATH]
+  apps/sops/sops-copy.sh [--domain DOMAIN] SRC_HOST DST_HOST SRC_KEY_PATH [DST_KEY_PATH]
   apps/sops/sops-copy.sh --help
 
-Copy SRC_KEY_PATH from secrets/SRC_HOST.yaml into secrets/DST_HOST.yaml.
+Copy SRC_KEY_PATH between host files in secrets/DOMAIN/.
 If DST_KEY_PATH is omitted, SRC_KEY_PATH is used in the destination too.
 Example:
   apps/sops/sops-copy.sh mair prx1-lab attic
@@ -98,12 +98,17 @@ main() {
   local dst_host=""
   local src_key_path=""
   local dst_key_path=""
+  local domain=""
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -h | --help)
         usage
         exit 0
+        ;;
+      --domain)
+        domain="${2:?Missing value for --domain}"
+        shift 2
         ;;
       -*)
         echo "Unknown option: $1" >&2
@@ -145,11 +150,17 @@ main() {
   repo_root="$(resolve_repo_root)"
   # shellcheck disable=SC1091
   source "${repo_root}/apps/_helpers/host-aliases.sh"
-  src_host="$(canonical_secret_host "$repo_root" "$src_host")"
-  dst_host="$(canonical_secret_host "$repo_root" "$dst_host")"
+  # shellcheck disable=SC1091
+  source "${repo_root}/apps/_helpers/secret-domains.sh"
+  domain="$(resolve_secret_domain "$domain")"
+  configure_domain_age_identity "$domain"
+  src_host="$(canonical_secret_host "$repo_root" "$domain" "$src_host")"
+  dst_host="$(canonical_secret_host "$repo_root" "$domain" "$dst_host")"
 
-  local src_secret="${repo_root}/secrets/${src_host}.yaml"
-  local dst_secret="${repo_root}/secrets/${dst_host}.yaml"
+  local src_secret
+  local dst_secret
+  src_secret="$(secret_file_path "$repo_root" "$domain" "$src_host")"
+  dst_secret="$(secret_file_path "$repo_root" "$domain" "$dst_host")"
 
   if [[ ! -f "$src_secret" ]]; then
     echo "Source secret not found: $src_secret"

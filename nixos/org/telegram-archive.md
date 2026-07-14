@@ -17,7 +17,7 @@ removed. Keeping the listener healthy is therefore important.
 
 ## Secrets
 
-The following keys live in `secrets/org.yaml`:
+The following keys live in `secrets/main/org.yaml`:
 
 - `telegramArchive/apiId`: numeric API ID from `my.telegram.org/apps`
 - `telegramArchive/apiHash`: API hash paired with that ID
@@ -33,8 +33,8 @@ non-empty array of integer IDs and converts it to the comma-separated format
 expected by Telegram Archive. Add another ID to the array to expand coverage.
 
 Kanidm's authoritative OIDC copy is
-`kanidm/oauth2/tg/client_secret` in `secrets/pki.yaml`. Use the same value on
-both hosts; `nix run .#sops-copy` is the intended transfer mechanism.
+`kanidm/oauth2/tg/client_secret` in `secrets/main/pki.yaml`. Use the same value
+on both hosts; `nix run .#sops-copy` is the intended transfer mechanism.
 
 ## First authentication
 

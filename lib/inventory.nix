@@ -149,6 +149,7 @@ rec {
 
   isNixosVM = spec: spec.isVM or false;
   isNixosBM = spec: !(isNixosVM spec);
+  toSecretDomain = spec: spec.secretDomain or (if spec.isWork or false then "work" else "main");
   toNixosConfigName = spec: spec.name;
   toNixosRuntimeHostName = spec: spec.hostname or (spec.dhcpReservation.hostname or spec.name);
   toNixosPrimaryDnsName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
@@ -1181,6 +1182,17 @@ rec {
       value = spec;
     }) nixosHostSpecs
   );
+
+  secretDomainsByHost =
+    (lib.mapAttrs' (
+      name: spec: lib.nameValuePair (spec.hostname or name) (toSecretDomain spec)
+    ) darwinHosts)
+    // builtins.listToAttrs (
+      map (spec: {
+        name = toNixosRuntimeHostName spec;
+        value = toSecretDomain spec;
+      }) nixosHostSpecs
+    );
 
   publicServices = builtins.filter (service: service.scope == "external") services;
 

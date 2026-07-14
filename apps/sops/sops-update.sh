@@ -4,12 +4,13 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-update.sh --force [HOST]
-  apps/sops/sops-update.sh [HOST]
+  apps/sops/sops-update.sh [--domain DOMAIN] --force [HOST]
+  apps/sops/sops-update.sh [--domain DOMAIN] [HOST]
   apps/sops/sops-update.sh --help
 
-Update secrets/HOST.yaml from template defaults in secrets/_template.yaml and,
-if present, secrets/_templates/HOST.yaml.
+Update secrets/DOMAIN/HOST.yaml from template defaults in
+secrets/DOMAIN/_template.yaml and, if present,
+secrets/DOMAIN/_templates/HOST.yaml.
 
 If HOST is omitted, the current short hostname is used.
 Template keys are added only if missing; existing values win.
@@ -29,12 +30,17 @@ resolve_repo_root() {
 
 main() {
   host=""
+  domain=""
   force=0
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --force)
         force=1
         shift
+        ;;
+      --domain)
+        domain="${2:?Missing value for --domain}"
+        shift 2
         ;;
       -h | --help)
         usage
@@ -65,10 +71,14 @@ main() {
   repo_root="$(resolve_repo_root)"
   # shellcheck disable=SC1091
   source "${repo_root}/apps/_helpers/host-aliases.sh"
-  host="$(canonical_secret_host "$repo_root" "$host")"
-  template="${repo_root}/secrets/_template.yaml"
-  host_template="${repo_root}/secrets/_templates/${host}.yaml"
-  secret="${repo_root}/secrets/${host}.yaml"
+  # shellcheck disable=SC1091
+  source "${repo_root}/apps/_helpers/secret-domains.sh"
+  domain="$(resolve_secret_domain "$domain")"
+  configure_domain_age_identity "$domain"
+  host="$(canonical_secret_host "$repo_root" "$domain" "$host")"
+  template="${repo_root}/secrets/${domain}/_template.yaml"
+  host_template="${repo_root}/secrets/${domain}/_templates/${host}.yaml"
+  secret="$(secret_file_path "$repo_root" "$domain" "$host")"
 
   if [[ ! -f "$template" ]]; then
     echo "Template not found: $template"

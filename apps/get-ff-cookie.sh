@@ -19,7 +19,7 @@ Examples:
   get-ff-cookie
   get-ff-cookie instagram.com
   get-ff-cookie --profile default-release instagram.com
-  get-ff-cookie instagram.com | nix run .#sops-set -- beast lolek/galleryDlCookies
+  get-ff-cookie instagram.com | nix run .#sops-set -- --domain main beast lolek/galleryDlCookies
 
 The cookie file is written only to a temporary file and then printed to stdout.
 Progress and diagnostics go to stderr so stdout can be safely piped.

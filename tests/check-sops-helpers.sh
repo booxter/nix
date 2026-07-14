@@ -67,7 +67,7 @@ assert_yaml_scalar_eq_file() {
 decrypt_secret_file() {
   local host="$1"
   local out_file="$2"
-  sops --decrypt "secrets/${host}.yaml" > "$out_file"
+  sops --decrypt "secrets/main/${host}.yaml" > "$out_file"
 }
 
 encrypt_secret_file() {
@@ -76,17 +76,18 @@ encrypt_secret_file() {
   local tmp_file
   tmp_file="$(mktemp)"
   sops --encrypt \
-    --filename-override "secrets/${host}.yaml" \
+    --filename-override "secrets/main/${host}.yaml" \
     --input-type yaml \
     --output-type yaml \
     "$plain_file" > "$tmp_file"
-  mv "$tmp_file" "secrets/${host}.yaml"
+  mv "$tmp_file" "secrets/main/${host}.yaml"
 }
 
 setup_repo() {
   local repo_dir="$1"
-  mkdir -p "$repo_dir/secrets/_templates" "$repo_dir/apps/_helpers" "$repo_dir/apps/sops" "$repo_dir/tests"
+  mkdir -p "$repo_dir/secrets/main/_templates" "$repo_dir/apps/_helpers" "$repo_dir/apps/sops" "$repo_dir/tests"
   cp "$REPO_ROOT/apps/_helpers/host-aliases.sh" "$repo_dir/apps/_helpers/"
+  cp "$REPO_ROOT/apps/_helpers/secret-domains.sh" "$repo_dir/apps/_helpers/"
   cp "$REPO_ROOT/apps/sops/sops-cat.sh" "$repo_dir/apps/sops/"
   cp "$REPO_ROOT/apps/sops/sops-update.sh" "$repo_dir/apps/sops/"
   cp "$REPO_ROOT/apps/sops/sops-copy.sh" "$repo_dir/apps/sops/"
@@ -99,13 +100,16 @@ setup_repo() {
   git init -q
   age-keygen -o "$repo_dir/age.txt" >/dev/null 2>&1
   export SOPS_AGE_KEY_FILE="$repo_dir/age.txt"
+  export SOPS_MACHINE_HOSTNAME="test-host"
+  export SOPS_SECRET_DOMAINS_FILE="$repo_dir/secret-domains.json"
+  printf '%s\n' '{"test-host":"main"}' > "$SOPS_SECRET_DOMAINS_FILE"
   local pubkey
   pubkey="$(age-keygen -y "$SOPS_AGE_KEY_FILE")"
   cat > "$repo_dir/.sops.yaml" <<EOF
 keys:
   - ${pubkey}
 creation_rules:
-  - path_regex: secrets/.*\\.yaml\$
+  - path_regex: secrets/main/.*\\.yaml\$
     key_groups:
       - age:
           - ${pubkey}
@@ -215,7 +219,7 @@ main() {
 
   setup_repo "$repo"
 
-  cat > "$repo/secrets/_template.yaml" <<'EOF'
+  cat > "$repo/secrets/main/_template.yaml" <<'EOF'
 common:
   shared: "TEMPLATE"
 attic:
@@ -230,7 +234,7 @@ users:
     hashedPassword: "REPLACE_ME"
 EOF
 
-  cat > "$repo/secrets/_templates/beast.yaml" <<'EOF'
+  cat > "$repo/secrets/main/_templates/beast.yaml" <<'EOF'
 jellyfin:
   apiKey: "REPLACE_ME"
 transmission:
@@ -300,15 +304,29 @@ EOF
   run_and_capture "$out" bash "$repo/tests/test-sops-config.sh"
   assert_contains "$(cat "$out")" "sops config check passed."
 
+  log "reject recipients shared across secret domains"
+  local main_pubkey
+  local work_pubkey
+  main_pubkey="$(age-keygen -y "$SOPS_AGE_KEY_FILE")"
+  yq -i ".creation_rules += [{\"path_regex\":\"secrets/work/.*\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${main_pubkey}\"]}]}]" .sops.yaml
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" "share age recipients"
+
+  age-keygen -o "$repo/work-age.txt" >/dev/null 2>&1
+  work_pubkey="$(age-keygen -y "$repo/work-age.txt")"
+  yq -i ".keys += [\"${work_pubkey}\"] | (.creation_rules[] | select(.path_regex == \"secrets/work/.*\\\\.yaml$\") | .key_groups[]?.age) = [\"${work_pubkey}\"]" .sops.yaml
+  run_and_capture "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" "sops config check passed."
+
   log "merge default and host template keys into beast"
   local beast_common_cipher_before
   local beast_other_cipher_before
-  beast_common_cipher_before="$(yq -r '.common.shared' "secrets/beast.yaml")"
-  beast_other_cipher_before="$(yq -r '.other.keep' "secrets/beast.yaml")"
+  beast_common_cipher_before="$(yq -r '.common.shared' "secrets/main/beast.yaml")"
+  beast_other_cipher_before="$(yq -r '.other.keep' "secrets/main/beast.yaml")"
   run_and_capture "$out" bash "$repo/apps/sops/sops-update.sh" beast
   assert_contains "$(cat "$out")" "Updated secret from templates:"
-  assert_eq "$beast_common_cipher_before" "$(yq -r '.common.shared' "secrets/beast.yaml")" "sops-update should preserve unchanged existing ciphertext"
-  assert_eq "$beast_other_cipher_before" "$(yq -r '.other.keep' "secrets/beast.yaml")" "sops-update should preserve unrelated existing ciphertext"
+  assert_eq "$beast_common_cipher_before" "$(yq -r '.common.shared' "secrets/main/beast.yaml")" "sops-update should preserve unchanged existing ciphertext"
+  assert_eq "$beast_other_cipher_before" "$(yq -r '.other.keep' "secrets/main/beast.yaml")" "sops-update should preserve unrelated existing ciphertext"
   decrypt_secret_file beast "$after"
   assert_eq "SECRET" "$(yq -r '.common.shared' "$after")" "beast shared value should be preserved"
   assert_eq "beast" "$(yq -r '.other.keep' "$after")" "beast unrelated data should survive update"
@@ -318,36 +336,36 @@ EOF
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "user password placeholder should be added"
   assert_eq "REPLACE_ME" "$(yq -r '.jellyfin.apiKey' "$after")" "host template block should be added"
   assert_eq "REPLACE_ME" "$(yq -r '.transmission.trackers[0]' "$after")" "host template array values should be added"
-  assert_file_contains "secrets/beast.yaml" "sops:"
+  assert_file_contains "secrets/main/beast.yaml" "sops:"
 
   log "skip re-encryption when beast is already converged"
-  cp "secrets/beast.yaml" "$before"
+  cp "secrets/main/beast.yaml" "$before"
   run_and_capture "$out" bash "$repo/apps/sops/sops-update.sh" beast
   assert_contains "$(cat "$out")" "Secret already up to date:"
-  cmp -s "$before" "secrets/beast.yaml" || fail "no-op update should not rewrite encrypted secret"
+  cmp -s "$before" "secrets/main/beast.yaml" || fail "no-op update should not rewrite encrypted secret"
 
   log "force re-encrypt without changing decrypted content"
   decrypt_secret_file beast "$before"
   yq -o=json '.' "$before" | jq -S . > "$WORKDIR/before-force.json"
-  cp "secrets/beast.yaml" "$WORKDIR/before-force.yaml"
+  cp "secrets/main/beast.yaml" "$WORKDIR/before-force.yaml"
   run_and_capture "$out" bash "$repo/apps/sops/sops-update.sh" --force beast
   assert_contains "$(cat "$out")" "Re-encrypted secret:"
   decrypt_secret_file beast "$after"
   yq -o=json '.' "$after" | jq -S . > "$WORKDIR/after-force.json"
   cmp -s "$WORKDIR/before-force.json" "$WORKDIR/after-force.json" || fail "forced re-encrypt changed decrypted beast secret"
-  if cmp -s "$WORKDIR/before-force.yaml" "secrets/beast.yaml"; then
+  if cmp -s "$WORKDIR/before-force.yaml" "secrets/main/beast.yaml"; then
     fail "forced re-encrypt should rewrite encrypted beast secret"
   fi
 
   log "copy a secret block without losing destination data"
   local prx_other_cipher_before
   local prx_ups_cipher_before
-  prx_other_cipher_before="$(yq -r '.other.keep' "secrets/prx1-lab.yaml")"
-  prx_ups_cipher_before="$(yq -r '.nut.users.upsslave.password' "secrets/prx1-lab.yaml")"
+  prx_other_cipher_before="$(yq -r '.other.keep' "secrets/main/prx1-lab.yaml")"
+  prx_ups_cipher_before="$(yq -r '.nut.users.upsslave.password' "secrets/main/prx1-lab.yaml")"
   run_and_capture "$out" bash "$repo/apps/sops/sops-copy.sh" mair prx1-lab attic
   assert_contains "$(cat "$out")" "Copied attic from mair to prx1-lab."
-  assert_eq "$prx_other_cipher_before" "$(yq -r '.other.keep' "secrets/prx1-lab.yaml")" "sops-copy should preserve unrelated ciphertext"
-  assert_eq "$prx_ups_cipher_before" "$(yq -r '.nut.users.upsslave.password' "secrets/prx1-lab.yaml")" "sops-copy should preserve destination-only ciphertext"
+  assert_eq "$prx_other_cipher_before" "$(yq -r '.other.keep' "secrets/main/prx1-lab.yaml")" "sops-copy should preserve unrelated ciphertext"
+  assert_eq "$prx_ups_cipher_before" "$(yq -r '.nut.users.upsslave.password' "secrets/main/prx1-lab.yaml")" "sops-copy should preserve destination-only ciphertext"
   decrypt_secret_file prx1-lab "$copied"
   assert_eq "NEW_TOKEN" "$(yq -r '.attic.token' "$copied")"
   assert_eq "http://nix-cache:8080" "$(yq -r '.attic.endpoint' "$copied")"
@@ -357,7 +375,7 @@ EOF
   log "update a prox VM secret by short name"
   run_and_capture "$out" bash "$repo/apps/sops/sops-update.sh" gw
   assert_contains "$(cat "$out")" "Updated secret from templates:"
-  assert_contains "$(cat "$out")" "secrets/gw.yaml"
+  assert_contains "$(cat "$out")" "secrets/main/gw.yaml"
   decrypt_secret_file gw "$after"
   assert_eq "REPLACE_ME" "$(yq -r '.attic.token' "$after")" "short prox VM update should merge templates into short secret"
   assert_eq "gw" "$(yq -r '.other.keep' "$after")" "short prox VM update should preserve short secret data"
@@ -377,20 +395,20 @@ EOF
   local cache_ups_cipher_before
   local set_stdin_value="$WORKDIR/set-stdin-value.txt"
   printf 'SET_FROM_STDIN\n' > "$set_stdin_value"
-  cache_other_cipher_before="$(yq -r '.other.keep' "secrets/cache.yaml")"
-  cache_ups_cipher_before="$(yq -r '.nut.monitors."prx1-lab".password' "secrets/cache.yaml")"
+  cache_other_cipher_before="$(yq -r '.other.keep' "secrets/main/cache.yaml")"
+  cache_ups_cipher_before="$(yq -r '.nut.monitors."prx1-lab".password' "secrets/main/cache.yaml")"
   run_with_stdin_and_capture "$out" "$set_stdin_value" bash "$repo/apps/sops/sops-set.sh" cache nested/new/value
   assert_contains "$(cat "$out")" "Updated cache:nested/new/value."
-  assert_eq "$cache_other_cipher_before" "$(yq -r '.other.keep' "secrets/cache.yaml")" "sops-set should preserve unrelated ciphertext"
-  assert_eq "$cache_ups_cipher_before" "$(yq -r '.nut.monitors."prx1-lab".password' "secrets/cache.yaml")" "sops-set should preserve existing nested ciphertext"
+  assert_eq "$cache_other_cipher_before" "$(yq -r '.other.keep' "secrets/main/cache.yaml")" "sops-set should preserve unrelated ciphertext"
+  assert_eq "$cache_ups_cipher_before" "$(yq -r '.nut.monitors."prx1-lab".password' "secrets/main/cache.yaml")" "sops-set should preserve existing nested ciphertext"
   decrypt_secret_file cache "$copied"
   assert_yaml_scalar_eq_file "$set_stdin_value" "$copied" '.nested.new.value' "sops-set should preserve exact stdin bytes"
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
   assert_eq "cache" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive set"
 
-  cp "secrets/cache.yaml" "$before"
+  cp "secrets/main/cache.yaml" "$before"
   run_with_stdin_and_capture "$out" "$set_stdin_value" bash "$repo/apps/sops/sops-set.sh" cache nested/new/value
-  cmp -s "$before" "secrets/cache.yaml" || fail "idempotent sops-set should not rewrite an equal value"
+  cmp -s "$before" "secrets/main/cache.yaml" || fail "idempotent sops-set should not rewrite an equal value"
 
   log "set preserves leading, trailing, and final whitespace"
   local whitespace_value="$WORKDIR/sops-set-whitespace-value.txt"
@@ -477,14 +495,14 @@ esac
 EOF
   chmod +x "$WORKDIR/fake-bin/pass"
   local beast_other_cipher_before_pass
-  beast_other_cipher_before_pass="$(yq -r '.other.keep' "secrets/beast.yaml")"
+  beast_other_cipher_before_pass="$(yq -r '.other.keep' "secrets/main/beast.yaml")"
   run_and_capture "$out" env \
     PASS_TEST_STORE="$WORKDIR/pass-store" \
     PATH="$WORKDIR/fake-bin:$PATH" \
     bash "$repo/apps/sops/sops-pass.sh" beast root
   assert_contains "$(cat "$out")" "Updated users/root/hashedPassword"
   assert_contains "$(cat "$out")" "Inserted host/beast/root."
-  assert_eq "$beast_other_cipher_before_pass" "$(yq -r '.other.keep' "secrets/beast.yaml")" "sops-pass should preserve unrelated ciphertext"
+  assert_eq "$beast_other_cipher_before_pass" "$(yq -r '.other.keep' "secrets/main/beast.yaml")" "sops-pass should preserve unrelated ciphertext"
   decrypt_secret_file beast "$after"
   local sha512_prefix="\$6\$"
   case "$(yq -r '.users.root.hashedPassword' "$after")" in
@@ -557,8 +575,8 @@ EOF
   decrypt_secret_file prx1-lab "$after"
   assert_not_contains "$(cat "$before")" "ENC[" "decrypted beast secret should be plaintext"
   assert_not_contains "$(cat "$after")" "ENC[" "decrypted prx1-lab secret should be plaintext"
-  assert_file_contains "secrets/beast.yaml" "ENC["
-  assert_file_contains "secrets/prx1-lab.yaml" "ENC["
+  assert_file_contains "secrets/main/beast.yaml" "ENC["
+  assert_file_contains "secrets/main/prx1-lab.yaml" "ENC["
 
   log "sops helper integration checks passed"
 }
