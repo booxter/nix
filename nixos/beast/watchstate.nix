@@ -50,7 +50,10 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      RuntimeDirectory = "watchstate";
+      # Keep the credentials outside the generated Podman unit's
+      # /run/watchstate directory: systemd removes that directory whenever the
+      # container stops, while this oneshot remains active and is not rerun.
+      RuntimeDirectory = "watchstate-auth";
       RuntimeDirectoryMode = "0700";
       UMask = "0077";
     };
@@ -95,7 +98,7 @@ in
         # per-host connection limit effective for those requests.
         WS_HTTP_SYNC_REQUESTS = "true";
       };
-      environmentFiles = [ "/run/watchstate/auth.env" ];
+      environmentFiles = [ "/run/watchstate-auth/auth.env" ];
       extraOptions = [
         "--cap-drop=all"
         "--security-opt=no-new-privileges"
