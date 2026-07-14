@@ -22,6 +22,43 @@ let
         "-"
       ]
       name;
+  escapeLabel =
+    value:
+    lib.replaceStrings
+      [
+        "\\"
+        "\n"
+        "\""
+      ]
+      [
+        "\\\\"
+        "\\n"
+        "\\\""
+      ]
+      value;
+  configuredMetrics = pkgs.writeText "configured-backup-jobs.prom" (
+    ''
+      # HELP host_observability_backup_job_configured Whether a backup job is configured on this host.
+      # TYPE host_observability_backup_job_configured gauge
+    ''
+    + lib.concatMapStringsSep "\n" (
+      backupJob:
+      let
+        job = cfg.jobs.${backupJob};
+        labels = {
+          backup_job = backupJob;
+          backup_title = job.title;
+          phase = job.phase;
+          unit = "${job.service}.service";
+        };
+        labelText = lib.concatStringsSep "," (
+          lib.mapAttrsToList (name: value: ''${name}="${escapeLabel value}"'') labels
+        );
+      in
+      "host_observability_backup_job_configured{${labelText}} 1"
+    ) (builtins.attrNames cfg.jobs)
+    + "\n"
+  );
   recorder = pkgs.writeTextFile {
     name = "record-backup-metrics";
     executable = true;
@@ -214,6 +251,7 @@ in
   config = lib.mkIf (cfg.jobs != { }) {
     systemd.tmpfiles.rules = [
       "d ${stateDir} 0755 root root - -"
+      "C+ ${textfileDir}/backup-jobs-configured.prom 0644 root root - ${configuredMetrics}"
     ];
 
     systemd.services = lib.mapAttrs' (

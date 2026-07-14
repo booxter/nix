@@ -2,6 +2,15 @@ groups:
   - name: backup-health
     interval: 30s
     rules:
+      - alert: BackupJobNeverRan
+        expr: host_observability_backup_job_configured{job="node-mtls"} unless on(instance, job, backup_job, backup_title, phase, unit) host_observability_backup_last_run_timestamp_seconds{job="node-mtls"}
+        for: 36h
+        labels:
+          severity: warning
+          category: backup
+        annotations:
+          summary: "Backup job has never run on {{ $labels.instance }}: {{ $labels.backup_title }}"
+          description: "The configured {{ $labels.phase }} backup job {{ $labels.backup_title }} on {{ $labels.instance }} has not emitted a completed run within 36 hours."
       - alert: BackupJobFailed
         expr: host_observability_backup_last_success{job="node-mtls"} < 1
         for: 30m
