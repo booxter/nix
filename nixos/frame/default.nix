@@ -159,5 +159,9 @@ in
     mtls.enable = true;
     serverAliases = [ ollamaService.displayHost ];
     localAliases = [ "ollama" ];
+    locationExtraConfig = ''
+      proxy_read_timeout 600s;
+      proxy_send_timeout 600s;
+    '';
   };
 }
