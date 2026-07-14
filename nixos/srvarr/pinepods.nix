@@ -35,34 +35,40 @@ let
   ];
   nativeBackupScript = pkgs.writeShellApplication {
     name = "pinepods-native-backup";
-    runtimeInputs = with pkgs; [
-      coreutils
-      curl
-      jq
+    runtimeInputs = [
+      config.services.postgresql.package
+      pkgs.coreutils
+      pkgs.curl
+      pkgs.jq
+      pkgs.util-linux
     ];
     text = ''
       set -euo pipefail
 
       base_url=http://127.0.0.1:${toString port}
-      username=${lib.escapeShellArg bootstrapOwnerName}
-      password="$(tr -d '\r\n' < ${config.sops.secrets."pinepods/bootstrap/password".path})"
-
-      login_response="$(
-        curl \
-          --fail-with-body \
-          --silent \
-          --show-error \
-          --retry 60 \
-          --retry-connrefused \
-          --retry-delay 2 \
-          --user "$username:$password" \
-          "$base_url/api/data/get_key"
-      )"
+      # The bootstrap password is only used to create the initial account and
+      # can change afterward. Read an existing admin key from the local
+      # database instead of coupling scheduled backups to that old password.
       api_key="$(
-        printf '%s' "$login_response" \
-          | jq --exit-status --raw-output \
-            'select(.status == "success" and .mfa_required == false) | .retrieved_key'
+        runuser -u postgres -- \
+          psql \
+            --dbname=${lib.escapeShellArg database} \
+            --no-align \
+            --quiet \
+            --tuples-only \
+            --command \
+              "SELECT a.apikey
+                 FROM \"APIKeys\" a
+                 JOIN \"Users\" u ON u.userid = a.userid
+                WHERE u.isadmin = true
+                  AND u.username <> 'background_tasks'
+                ORDER BY u.userid, a.apikeyid
+                LIMIT 1;"
       )"
+      if [ -z "$api_key" ]; then
+        echo "PinePods has no API key for a non-background administrator" >&2
+        exit 1
+      fi
 
       backup_response="$(
         curl \
