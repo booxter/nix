@@ -304,6 +304,20 @@ EOF
   run_and_capture "$out" bash "$repo/tests/test-sops-config.sh"
   assert_contains "$(cat "$out")" "sops config check passed."
 
+  log "reject recipients shared across secret domains"
+  local main_pubkey
+  local work_pubkey
+  main_pubkey="$(age-keygen -y "$SOPS_AGE_KEY_FILE")"
+  yq -i ".creation_rules += [{\"path_regex\":\"secrets/work/.*\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${main_pubkey}\"]}]}]" .sops.yaml
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" "share age recipients"
+
+  age-keygen -o "$repo/work-age.txt" >/dev/null 2>&1
+  work_pubkey="$(age-keygen -y "$repo/work-age.txt")"
+  yq -i ".keys += [\"${work_pubkey}\"] | (.creation_rules[] | select(.path_regex == \"secrets/work/.*\\\\.yaml$\") | .key_groups[]?.age) = [\"${work_pubkey}\"]" .sops.yaml
+  run_and_capture "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" "sops config check passed."
+
   log "merge default and host template keys into beast"
   local beast_common_cipher_before
   local beast_other_cipher_before

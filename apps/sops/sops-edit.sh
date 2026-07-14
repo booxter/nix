@@ -64,6 +64,7 @@ if [[ -z "$host" ]]; then
 fi
 
 domain="$(resolve_secret_domain "$domain")"
+configure_domain_age_identity "$domain"
 host="$(canonical_secret_host "$repo_root" "$domain" "$host")"
 secret="$(secret_file_path "$repo_root" "$domain" "$host")"
 

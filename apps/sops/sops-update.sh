@@ -74,6 +74,7 @@ main() {
   # shellcheck disable=SC1091
   source "${repo_root}/apps/_helpers/secret-domains.sh"
   domain="$(resolve_secret_domain "$domain")"
+  configure_domain_age_identity "$domain"
   host="$(canonical_secret_host "$repo_root" "$domain" "$host")"
   template="${repo_root}/secrets/${domain}/_template.yaml"
   host_template="${repo_root}/secrets/${domain}/_templates/${host}.yaml"

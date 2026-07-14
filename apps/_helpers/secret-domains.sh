@@ -29,6 +29,60 @@ resolve_secret_domain() {
   fi
 }
 
+registered_secret_domain() {
+  local machine="$1"
+  local domains_file="${SOPS_SECRET_DOMAINS_FILE:-}"
+
+  if [[ -z "$domains_file" || ! -f "$domains_file" ]]; then
+    echo "SOPS_SECRET_DOMAINS_FILE is not set to a readable inventory map." >&2
+    return 1
+  fi
+  jq -er --arg machine "$machine" '.[$machine]' "$domains_file"
+}
+
+assert_secret_domain_host() {
+  local domain="$1"
+  local machine="$2"
+  local registered
+
+  if ! registered="$(registered_secret_domain "$machine")"; then
+    echo "No secret domain is registered for host: $machine" >&2
+    return 1
+  fi
+  if [[ "$registered" != "$domain" ]]; then
+    echo "Host $machine belongs to secret domain '$registered', not '$domain'." >&2
+    return 1
+  fi
+}
+
+domain_age_identity_file() {
+  local domain="$1"
+
+  if [[ "$domain" == "main" ]]; then
+    return 1
+  fi
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    printf '%s/Library/Application Support/sops/age/%s.txt\n' "$HOME" "$domain"
+  else
+    printf '%s/sops/age/%s.txt\n' "${XDG_CONFIG_HOME:-${HOME}/.config}" "$domain"
+  fi
+}
+
+configure_domain_age_identity() {
+  local domain="$1"
+  local identity_file
+
+  if [[ "$domain" == "main" || -n "${SOPS_AGE_KEY_FILE:-}" ]]; then
+    return
+  fi
+  identity_file="$(domain_age_identity_file "$domain")"
+  if [[ ! -f "$identity_file" ]]; then
+    echo "Age identity for secret domain '$domain' not found: $identity_file" >&2
+    return 1
+  fi
+  export SOPS_AGE_KEY_FILE="$identity_file"
+}
+
 secret_domain_dir() {
   local repo_root="$1"
   local domain="$2"

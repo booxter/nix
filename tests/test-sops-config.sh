@@ -25,12 +25,12 @@ yq() {
 }
 
 has_secrets() {
-  compgen -G "secrets/main/*.yaml" >/dev/null 2>&1
+  compgen -G "secrets/*/*.yaml" >/dev/null 2>&1
 }
 
 assert_sops_yaml_present() {
   if has_secrets && [[ ! -f .sops.yaml ]]; then
-    echo "secrets/main/*.yaml present but .sops.yaml is missing."
+    echo "secrets/*/*.yaml present but .sops.yaml is missing."
     return 1
   fi
 }
@@ -62,8 +62,8 @@ check_sops_yaml_structure() {
 
 check_secrets_encrypted() {
   if has_secrets; then
-    for f in secrets/main/*.yaml; do
-      if [[ "$f" == "secrets/main/_template.yaml" ]]; then
+    for f in secrets/*/*.yaml; do
+      if [[ "$(basename -- "$f")" == "_template.yaml" ]]; then
         continue
       fi
       if ! yq -e '.sops' "$f" >/dev/null; then
@@ -74,11 +74,39 @@ check_secrets_encrypted() {
   fi
 }
 
+check_domain_isolation() {
+  local main_recipients
+  local work_recipients
+  local overlap
+
+  main_recipients="$(
+    yq -o=json '.creation_rules' .sops.yaml \
+      | jq -r '.[] | select(.path_regex | startswith("secrets/main/")) | .key_groups[]?.age[]' \
+      | sort -u
+  )"
+  work_recipients="$(
+    yq -o=json '.creation_rules' .sops.yaml \
+      | jq -r '.[] | select(.path_regex | startswith("secrets/work/")) | .key_groups[]?.age[]' \
+      | sort -u
+  )"
+  if [[ -z "$main_recipients" || -z "$work_recipients" ]]; then
+    return
+  fi
+
+  overlap="$(comm -12 <(printf '%s\n' "$main_recipients") <(printf '%s\n' "$work_recipients"))"
+  if [[ -n "$overlap" ]]; then
+    echo "Secret domains main and work share age recipients:" >&2
+    printf '%s\n' "$overlap" >&2
+    return 1
+  fi
+}
+
 main() {
   enable_strict_mode
   assert_sops_yaml_present || return 1
   check_sops_yaml_structure || return 1
   check_secrets_encrypted || return 1
+  check_domain_isolation || return 1
   echo "sops config check passed."
 }
 

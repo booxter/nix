@@ -116,6 +116,7 @@ source "${repo_root}/apps/_helpers/host-aliases.sh"
 # shellcheck disable=SC1091
 source "${repo_root}/apps/_helpers/secret-domains.sh"
 domain="$(resolve_secret_domain "$domain")"
+configure_domain_age_identity "$domain"
 secret_host="$(canonical_secret_host "$repo_root" "$domain" "${host}")"
 secret="$(secret_file_path "$repo_root" "$domain" "$secret_host")"
 
