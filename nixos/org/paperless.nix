@@ -513,7 +513,9 @@ in
         AUTO_GENERATE_CORRESPONDENTS = "true";
         AUTO_GENERATE_CREATED_DATE = "true";
         AUTO_GENERATE_DOCUMENT_TYPE = "true";
-        AUTO_GENERATE_TAGS = "true";
+        # v0.26.1 may re-suggest OCR control tags, while the completion-tag
+        # guard is broken: https://github.com/icereed/paperless-gpt/issues/1006
+        AUTO_GENERATE_TAGS = "false";
         AUTO_GENERATE_TITLE = "true";
         AUTO_OCR_TAG = paperlessGptAutoOcrTag;
         AUTO_TAG = paperlessGptAutoTag;
