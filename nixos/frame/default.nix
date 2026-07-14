@@ -76,7 +76,7 @@ in
       "qwen3-next:80b"
       "qwen3-vl:8b-instruct"
     ];
-    syncModels = false;
+    syncModels = true;
     environmentVariables = {
       OLLAMA_KEEP_ALIVE = "30m";
     };
