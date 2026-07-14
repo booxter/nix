@@ -11,6 +11,7 @@ let
   codexPkgs = import ./pkgs { inherit pkgs; };
   claudeModel = "opus";
   modelEffort = "high";
+  deployFirefoxDevtoolsMcp = !isWork;
   agentContext = ''
     This machine uses Nix on macOS or Linux. If a required tool is missing,
     prefer repository flake apps or dev shells; otherwise use
@@ -18,10 +19,12 @@ let
     Nix builders for x86_64-linux and aarch64-darwin are available for
     cross-platform builds.
   '';
-  codexContext = agentContext + ''
-    Only use the Firefox DevTools MCP when the user explicitly requests browser
-    interaction or browser-based debugging.
-  '';
+  codexContext =
+    agentContext
+    + lib.optionalString deployFirefoxDevtoolsMcp ''
+      Only use the Firefox DevTools MCP when the user explicitly requests browser
+      interaction or browser-based debugging.
+    '';
   codingAgentEnv = {
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";
@@ -65,7 +68,7 @@ in
     // lib.optionalAttrs (codingAgentEnv != { }) {
       shell_environment_policy.set = codingAgentEnv;
     }
-    // lib.optionalAttrs (!isWork) {
+    // lib.optionalAttrs deployFirefoxDevtoolsMcp {
       mcp_servers.firefox-devtools = {
         command = lib.getExe pkgs.firefox-devtools-mcp;
         args = [
