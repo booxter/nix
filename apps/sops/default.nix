@@ -1,4 +1,4 @@
-{ pkgs }:
+{ hostInventory, pkgs }:
 let
   mkApp = program: description: {
     type = "app";
@@ -9,11 +9,18 @@ let
   upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
     builtins.toJSON upsClientsByServer
   );
+  secretDomainsByHostFile = pkgs.writeText "secret-domains-by-host.json" (
+    builtins.toJSON hostInventory.secretDomainsByHost
+  );
+  domainEnvironment = ''
+    export SOPS_SECRET_DOMAINS_FILE=${secretDomainsByHostFile}
+  '';
   commonRuntimeInputs = with pkgs; [
     age-plugin-se
     age-plugin-yubikey
     coreutils
     git
+    jq
     sops
   ];
   jqRuntimeInputs = commonRuntimeInputs ++ [ pkgs.jq ];
@@ -24,6 +31,7 @@ let
     name = "sops-cat";
     runtimeInputs = commonRuntimeInputs;
     text = ''
+      ${domainEnvironment}
       exec ${./sops-cat.sh} "$@"
     '';
   };
@@ -33,15 +41,17 @@ let
     name = "sops-edit";
     runtimeInputs = commonRuntimeInputs;
     text = ''
+      ${domainEnvironment}
       exec ${./sops-edit.sh} "$@"
     '';
   };
 
-  # Update a host secret with missing keys from secrets/_template.yaml.
+  # Update a host secret with missing keys from its domain templates.
   sops-update = pkgs.writeShellApplication {
     name = "sops-update";
     runtimeInputs = yqRuntimeInputs;
     text = ''
+      ${domainEnvironment}
       exec ${./sops-update.sh} "$@"
     '';
   };
@@ -51,6 +61,7 @@ let
     name = "sops-copy";
     runtimeInputs = yqRuntimeInputs;
     text = ''
+      ${domainEnvironment}
       exec ${./sops-copy.sh} "$@"
     '';
   };
@@ -60,6 +71,7 @@ let
     name = "sops-set";
     runtimeInputs = jqRuntimeInputs;
     text = ''
+      ${domainEnvironment}
       exec ${./sops-set.sh} "$@"
     '';
   };
@@ -69,6 +81,7 @@ let
     name = "sops-ups-sync";
     runtimeInputs = yqRuntimeInputs;
     text = ''
+      ${domainEnvironment}
       export UPS_CLIENTS_BY_SERVER_FILE=${upsClientsByServerFile}
       exec ${pkgs.bash}/bin/bash ${./sops-ups-sync.sh} "$@"
     '';
@@ -84,6 +97,7 @@ let
         pass
       ]);
     text = ''
+      ${domainEnvironment}
       exec ${pkgs.bash}/bin/bash ${./sops-pass.sh} "$@"
     '';
   };
@@ -100,6 +114,7 @@ let
         ripgrep
       ]);
     text = ''
+      ${domainEnvironment}
       export SOPS_AGE_RECIPIENT_HELPER=${./age-recipient.sh}
       exec ${./sops-bootstrap.sh} "$@"
     '';

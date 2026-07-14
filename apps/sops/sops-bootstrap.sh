@@ -4,13 +4,13 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-bootstrap.sh HOST [--user USER]
+  apps/sops/sops-bootstrap.sh [--domain DOMAIN] HOST [--user USER]
   apps/sops/sops-bootstrap.sh --help
 
 This script:
   1) SSHes into HOST and generates /var/lib/sops-nix/key.txt (if missing)
   2) Reads the age public key
-  3) Creates secrets/HOST.yaml encrypted with that key
+  3) Creates secrets/DOMAIN/HOST.yaml encrypted with that key
   4) Creates .sops.yaml if it doesn't exist (otherwise patches it)
 EOF
 }
@@ -48,6 +48,7 @@ resolve_local_pubkey() {
 resolve_control_plane_pubkey() {
   local sops_yaml="$1"
   local local_pubkey="$2"
+  local domain="$3"
   local control_host="pki"
 
   if [[ ! -f "$sops_yaml" ]]; then
@@ -58,12 +59,13 @@ resolve_control_plane_pubkey() {
     return 0
   fi
 
-  yq -r ".creation_rules[] | select(.path_regex == \"secrets/${control_host}\\\\.yaml$\") | .key_groups[]?.age[]" "$sops_yaml" \
+  yq -r ".creation_rules[] | select(.path_regex == \"secrets/${domain}/${control_host}\\\\.yaml$\") | .key_groups[]?.age[]" "$sops_yaml" \
     | awk -v local_key="$local_pubkey" '$0 != local_key { print; exit }'
 }
 
 host=""
 user="${USER:-$(whoami)}"
+domain=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -78,6 +80,10 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       user="$2"
+      shift 2
+      ;;
+    --domain)
+      domain="${2:?Missing value for --domain}"
       shift 2
       ;;
     -*)
@@ -99,6 +105,15 @@ done
 
 if [[ -z "$host" ]]; then
   usage >&2
+  exit 1
+fi
+
+repo_root="$(git -C "$PWD" rev-parse --show-toplevel)"
+# shellcheck disable=SC1091
+source "${repo_root}/apps/_helpers/secret-domains.sh"
+domain="$(resolve_secret_domain "$domain")"
+if [[ "$domain" != "main" ]]; then
+  echo "Bootstrap policy for secret domain '$domain' is not implemented yet." >&2
   exit 1
 fi
 
@@ -181,12 +196,12 @@ fi
 
 secret_host="${host}"
 
-secrets_dir="secrets"
+secrets_dir="secrets/${domain}"
 secrets_file="${secrets_dir}/${secret_host}.yaml"
-template_file="secrets/_template.yaml"
+template_file="${secrets_dir}/_template.yaml"
 sops_yaml=".sops.yaml"
 
-control_plane_pubkey="$(resolve_control_plane_pubkey "$sops_yaml" "$local_pubkey" || true)"
+control_plane_pubkey="$(resolve_control_plane_pubkey "$sops_yaml" "$local_pubkey" "$domain" || true)"
 if [[ "$control_plane_pubkey" == "$pubkey" || "$control_plane_pubkey" == "$local_pubkey" ]]; then
   control_plane_pubkey=""
 fi
@@ -216,7 +231,7 @@ keys:
 ${local_top_key_line}
 ${control_top_key_line}
 creation_rules:
-  - path_regex: secrets/${secret_host}\\.yaml\$
+  - path_regex: secrets/${domain}/${secret_host}\\.yaml\$
     key_groups:
       - age:
           - ${pubkey}
@@ -242,16 +257,16 @@ else
     exit 1
   fi
 
-  if ! (command -v rg >/dev/null 2>&1 && rg -q "secrets/${secret_host}\\\\.yaml" "$sops_yaml") \
-    && ! grep -q "secrets/${secret_host}\\.yaml" "$sops_yaml"; then
+  if ! (command -v rg >/dev/null 2>&1 && rg -q "secrets/${domain}/${secret_host}\\\\.yaml" "$sops_yaml") \
+    && ! grep -q "secrets/${domain}/${secret_host}\\.yaml" "$sops_yaml"; then
     yq -i ".keys += [\"${pubkey}\",\"${local_pubkey}\"] | .keys |= unique" "$sops_yaml"
     if [[ -n "$control_plane_pubkey" ]]; then
       yq -i ".keys += [\"${control_plane_pubkey}\"] | .keys |= unique" "$sops_yaml"
     fi
-    yq -i ".creation_rules += [{\"path_regex\":\"secrets/${secret_host}\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${pubkey}\",\"${local_pubkey}\"]}]}]" "$sops_yaml"
+    yq -i ".creation_rules += [{\"path_regex\":\"secrets/${domain}/${secret_host}\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${pubkey}\",\"${local_pubkey}\"]}]}]" "$sops_yaml"
     if [[ -n "$control_plane_pubkey" ]]; then
-      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
-      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
     fi
     echo "Updated $sops_yaml."
   else
@@ -259,11 +274,11 @@ else
     if [[ -n "$control_plane_pubkey" ]]; then
       yq -i ".keys += [\"${control_plane_pubkey}\"] | .keys |= unique" "$sops_yaml"
     fi
-    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${pubkey}\",\"${local_pubkey}\"]" "$sops_yaml"
-    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${pubkey}\",\"${local_pubkey}\"]" "$sops_yaml"
+    yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
     if [[ -n "$control_plane_pubkey" ]]; then
-      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
-      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) += [\"${control_plane_pubkey}\"]" "$sops_yaml"
+      yq -i "(.creation_rules[] | select(.path_regex == \"secrets/${domain}/${secret_host}\\\\.yaml$\") | .key_groups[]?.age) |= unique" "$sops_yaml"
     fi
     echo "Updated $sops_yaml."
   fi

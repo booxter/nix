@@ -6,12 +6,13 @@
   pkgs,
   hostname,
   hostSpecName ? hostname,
+  secretDomain,
   ...
 }:
 let
   hostSecretName =
     if builtins.hasAttr hostSpecName hostInventory.nixosHostSpecsByName then hostSpecName else hostname;
-  hostSecretFile = ../../../secrets/${hostSecretName}.yaml;
+  hostSecretFile = ../../../secrets/${secretDomain}/${hostSecretName}.yaml;
   flakehubCacheKeys =
     let
       # FlakeHub does not expose a separate machine-readable cache key

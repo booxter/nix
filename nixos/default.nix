@@ -9,12 +9,13 @@
   stateVersion,
   upsShutdownDelaySeconds,
   isVM,
+  secretDomain,
   ...
 }:
 let
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   configName = ./${hostSpec.name};
-  hostSecretFile = ../secrets + "/${hostSpecName}.yaml";
+  hostSecretFile = ../secrets + "/${secretDomain}/${hostSpecName}.yaml";
   upsServerName = hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};

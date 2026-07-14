@@ -4,10 +4,10 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-set.sh HOST KEY_PATH
+  apps/sops/sops-set.sh [--domain DOMAIN] HOST KEY_PATH
   apps/sops/sops-set.sh --help
 
-Set KEY_PATH in secrets/HOST.yaml to the exact value read from stdin.
+Set KEY_PATH in secrets/DOMAIN/HOST.yaml to the exact value read from stdin.
 KEY_PATH is slash-separated, for example:
   apps/sops/sops-set.sh srvarr romm/authSecretKey < secret.txt
 
@@ -60,12 +60,17 @@ path_to_sops_index() {
 main() {
   local host=""
   local key_path=""
+  local domain=""
 
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -h | --help)
         usage
         exit 0
+        ;;
+      --domain)
+        domain="${2:?Missing value for --domain}"
+        shift 2
         ;;
       -*)
         echo "Unknown option: $1" >&2
@@ -103,9 +108,13 @@ main() {
   repo_root="$(resolve_repo_root)"
   # shellcheck disable=SC1091
   source "${repo_root}/apps/_helpers/host-aliases.sh"
-  host="$(canonical_secret_host "$repo_root" "$host")"
+  # shellcheck disable=SC1091
+  source "${repo_root}/apps/_helpers/secret-domains.sh"
+  domain="$(resolve_secret_domain "$domain")"
+  host="$(canonical_secret_host "$repo_root" "$domain" "$host")"
 
-  local secret="${repo_root}/secrets/${host}.yaml"
+  local secret
+  secret="$(secret_file_path "$repo_root" "$domain" "$host")"
   if [[ ! -f "$secret" ]]; then
     echo "Secret not found: $secret"
     exit 1

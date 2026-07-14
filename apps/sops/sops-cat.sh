@@ -4,11 +4,12 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-cat.sh [HOST]
+  apps/sops/sops-cat.sh [--domain DOMAIN] [HOST]
   apps/sops/sops-cat.sh --help
 
-Decrypt and print secrets/HOST.yaml.
+Decrypt and print secrets/DOMAIN/HOST.yaml.
 If HOST is omitted, the current short hostname is used.
+If DOMAIN is omitted, the current machine's inventory domain is used.
 EOF
 }
 
@@ -23,11 +24,16 @@ resolve_repo_root() {
 }
 
 host=""
+domain=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h | --help)
       usage
       exit 0
+      ;;
+    --domain)
+      domain="${2:?Missing value for --domain}"
+      shift 2
       ;;
     -*)
       echo "Unknown option: $1" >&2
@@ -53,8 +59,11 @@ fi
 repo_root="$(resolve_repo_root)"
 # shellcheck disable=SC1091
 source "${repo_root}/apps/_helpers/host-aliases.sh"
-host="$(canonical_secret_host "$repo_root" "$host")"
-secret="${repo_root}/secrets/${host}.yaml"
+# shellcheck disable=SC1091
+source "${repo_root}/apps/_helpers/secret-domains.sh"
+domain="$(resolve_secret_domain "$domain")"
+host="$(canonical_secret_host "$repo_root" "$domain" "$host")"
+secret="$(secret_file_path "$repo_root" "$domain" "$host")"
 
 if [[ ! -f "$secret" ]]; then
   echo "Secret not found: $secret"

@@ -229,7 +229,7 @@
               outputs.overlays.modifications
             ];
           };
-          sopsApps = import ./apps/sops { inherit pkgs; };
+          sopsApps = import ./apps/sops { inherit hostInventory pkgs; };
           packageUpdateApps = import ./apps/package-updates { inherit pkgs; };
           fleetApps = import ./apps/fleet.nix {
             inherit pkgs username;

@@ -114,7 +114,7 @@ and its WatchState destination are managed declaratively by Jellarr.
 
 The WatchState system user is supplied declaratively from
 `sso.applications.watchstate.bootstrapOwner` in `lib/inventory.nix`; its
-password comes from `watchstate/system/password` in `secrets/beast.yaml`.
+password comes from `watchstate/system/password` in `secrets/main/beast.yaml`.
 Password changes restart WatchState.
 
 The remaining initial configuration is an explicit, staged operation:
@@ -181,7 +181,7 @@ local restic job runs. The app writes JSON backups into
 WatchState's persistent `/var/lib/watchstate` configuration and SQLite state
 are also included in the `beast` restic backup paths.
 
-Secrets required in `secrets/beast.yaml`:
+Secrets required in `secrets/main/beast.yaml`:
 
 - `jellyfin.apiKey`
 - `watchstate/system/password`

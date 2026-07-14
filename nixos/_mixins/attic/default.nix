@@ -2,11 +2,12 @@
   config,
   lib,
   hostname,
+  secretDomain,
   pkgs,
   ...
 }:
 let
-  hostSecretFile = ../../../secrets/${hostname}.yaml;
+  hostSecretFile = ../../../secrets/${secretDomain}/${hostname}.yaml;
   rootDir = "/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
   watchStore = pkgs.writeShellApplication {

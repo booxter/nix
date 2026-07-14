@@ -25,12 +25,12 @@ yq() {
 }
 
 has_secrets() {
-  compgen -G "secrets/*.yaml" >/dev/null 2>&1
+  compgen -G "secrets/main/*.yaml" >/dev/null 2>&1
 }
 
 assert_sops_yaml_present() {
   if has_secrets && [[ ! -f .sops.yaml ]]; then
-    echo "secrets/*.yaml present but .sops.yaml is missing."
+    echo "secrets/main/*.yaml present but .sops.yaml is missing."
     return 1
   fi
 }
@@ -62,8 +62,8 @@ check_sops_yaml_structure() {
 
 check_secrets_encrypted() {
   if has_secrets; then
-    for f in secrets/*.yaml; do
-      if [[ "$f" == "secrets/_template.yaml" ]]; then
+    for f in secrets/main/*.yaml; do
+      if [[ "$f" == "secrets/main/_template.yaml" ]]; then
         continue
       fi
       if ! yq -e '.sops' "$f" >/dev/null; then

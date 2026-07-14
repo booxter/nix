@@ -5,6 +5,7 @@
   hostname,
   isLaptop ? false,
   isWork,
+  secretDomain,
   isVM,
   ...
 }:
@@ -52,6 +53,12 @@ in
   options.host.isWork = lib.mkOption {
     type = lib.types.bool;
     default = false;
+  };
+
+  options.host.secretDomain = lib.mkOption {
+    type = lib.types.str;
+    readOnly = true;
+    description = "SOPS secret domain selected for this host.";
   };
 
   options.host.isProxmox = lib.mkOption {
@@ -136,5 +143,6 @@ in
     programs.zsh.enable = true;
     host.isLaptop = lib.mkDefault isLaptop;
     host.isWork = isWork;
+    host.secretDomain = secretDomain;
   };
 }

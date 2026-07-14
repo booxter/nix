@@ -18,7 +18,7 @@ done < <(git ls-files -z -- '*.json' '**/*.json')
 actionlint .github/workflows/*.yml
 #while IFS= read -r -d '' file; do
 #  case "$file" in
-#  secrets/*.yaml) continue ;;
+#  secrets/*/*.yaml) continue ;;
 #  esac
 #  printf '%s\0' "$file"
 #done < <(git ls-files -z -- '*.yaml' '**/*.yaml' '*.yml' '**/*.yml') |

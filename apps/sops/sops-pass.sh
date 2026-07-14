@@ -4,10 +4,10 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-pass.sh [--gen] HOST USER
+  apps/sops/sops-pass.sh [--domain DOMAIN] [--gen] HOST USER
   apps/sops/sops-pass.sh --help
 
-Hash a login password with mkpasswd and store it in secrets/HOST.yaml.
+Hash a login password with mkpasswd and store it in secrets/DOMAIN/HOST.yaml.
 USER must be root, ihrachyshka, or both.
 
 By default, insert the password into pass first, under host/HOST/USER,
@@ -59,6 +59,7 @@ load_password_from_pass() {
 host=""
 user=""
 generate_password=0
+domain=""
 pass_entry=""
 pass_extra_entry=""
 pass_action=""
@@ -67,6 +68,10 @@ while [[ $# -gt 0 ]]; do
     --gen)
       generate_password=1
       shift
+      ;;
+    --domain)
+      domain="${2:?Missing value for --domain}"
+      shift 2
       ;;
     -h | --help)
       usage
@@ -108,12 +113,15 @@ esac
 repo_root="$(resolve_repo_root)"
 # shellcheck disable=SC1091
 source "${repo_root}/apps/_helpers/host-aliases.sh"
-secret_host="$(canonical_secret_host "$repo_root" "${host}")"
-secret="${repo_root}/secrets/${secret_host}.yaml"
+# shellcheck disable=SC1091
+source "${repo_root}/apps/_helpers/secret-domains.sh"
+domain="$(resolve_secret_domain "$domain")"
+secret_host="$(canonical_secret_host "$repo_root" "$domain" "${host}")"
+secret="$(secret_file_path "$repo_root" "$domain" "$secret_host")"
 
 if [[ ! -f "$secret" ]]; then
   echo "Secret not found for host ${host}: ${secret}" >&2
-  echo "Bootstrap it first with: nix run .#sops-bootstrap -- ${secret_host}" >&2
+  echo "Bootstrap it first with: nix run .#sops-bootstrap -- --domain ${domain} ${secret_host}" >&2
   exit 1
 fi
 

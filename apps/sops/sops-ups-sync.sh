@@ -4,8 +4,8 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-ups-sync.sh --all
-  apps/sops/sops-ups-sync.sh SERVER [CLIENT...]
+  apps/sops/sops-ups-sync.sh [--domain DOMAIN] --all
+  apps/sops/sops-ups-sync.sh [--domain DOMAIN] SERVER [CLIENT...]
   apps/sops/sops-ups-sync.sh --help
 
 Copy a UPS server's nut/users/upsslave/password secret to each client's
@@ -69,8 +69,9 @@ all_servers() {
 
 sync_server() {
   local repo_root="$1"
-  local server="$2"
-  shift 2
+  local domain="$2"
+  local server="$3"
+  shift 3
   local clients=("$@")
 
   if [[ "${#clients[@]}" -eq 0 ]]; then
@@ -84,6 +85,7 @@ sync_server() {
   local client
   for client in "${clients[@]}"; do
     "${BASH}" "${repo_root}/apps/sops/sops-copy.sh" \
+      --domain "$domain" \
       "$server" \
       "$client" \
       "nut/users/upsslave/password" \
@@ -95,6 +97,16 @@ sync_server() {
 main() {
   local repo_root
   repo_root="$(resolve_repo_root)"
+
+  local domain=""
+  if [[ "${1:-}" == "--domain" ]]; then
+    domain="${2:?Missing value for --domain}"
+    shift 2
+  fi
+
+  # shellcheck disable=SC1091
+  source "${repo_root}/apps/_helpers/secret-domains.sh"
+  domain="$(resolve_secret_domain "$domain")"
 
   if [[ "$#" -eq 0 ]]; then
     usage >&2
@@ -120,7 +132,7 @@ main() {
       fi
       local server
       for server in "${servers[@]}"; do
-        sync_server "$repo_root" "$server"
+        sync_server "$repo_root" "$domain" "$server"
       done
       ;;
     -*)
@@ -131,7 +143,7 @@ main() {
     *)
       local server="$1"
       shift
-      sync_server "$repo_root" "$server" "$@"
+      sync_server "$repo_root" "$domain" "$server" "$@"
       ;;
   esac
 }

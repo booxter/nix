@@ -36,7 +36,7 @@
   host.observability.client.blackbox.mtls.enable = true;
 
   sops = {
-    defaultSopsFile = ../../secrets/beast.yaml;
+    defaultSopsFile = ../../secrets/main/beast.yaml;
   };
 
   networking.resolvconf.enable = true;

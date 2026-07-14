@@ -4,16 +4,18 @@ set -euo pipefail
 usage() {
   cat <<'EOF'
 Usage:
-  apps/sops/sops-edit.sh [HOST]
+  apps/sops/sops-edit.sh [--domain DOMAIN] [HOST]
   apps/sops/sops-edit.sh --help
 
 If HOST is omitted, the current short hostname is used.
+If DOMAIN is omitted, the current machine's inventory domain is used.
 Open the host secret for editing with sops.
 Run sops-update separately when template keys should be merged.
 EOF
 }
 
 host=""
+domain=""
 
 resolve_repo_root() {
   if git -C "$PWD" rev-parse --show-toplevel >/dev/null 2>&1; then
@@ -28,11 +30,17 @@ resolve_repo_root() {
 repo_root="$(resolve_repo_root)"
 # shellcheck disable=SC1091
 source "${repo_root}/apps/_helpers/host-aliases.sh"
+# shellcheck disable=SC1091
+source "${repo_root}/apps/_helpers/secret-domains.sh"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h | --help)
       usage
       exit 0
+      ;;
+    --domain)
+      domain="${2:?Missing value for --domain}"
+      shift 2
       ;;
     -*)
       echo "Unknown option: $1" >&2
@@ -55,8 +63,9 @@ if [[ -z "$host" ]]; then
   host="$(hostname -s)"
 fi
 
-host="$(canonical_secret_host "$repo_root" "$host")"
-secret="${repo_root}/secrets/${host}.yaml"
+domain="$(resolve_secret_domain "$domain")"
+host="$(canonical_secret_host "$repo_root" "$domain" "$host")"
+secret="$(secret_file_path "$repo_root" "$domain" "$host")"
 
 if [[ ! -f "$secret" ]]; then
   echo "Secret not found: $secret"
