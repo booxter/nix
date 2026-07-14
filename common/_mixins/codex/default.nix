@@ -20,7 +20,10 @@ let
   maasJiraEnabled = config.host.codex.mcp.maasJira.enable;
   maasJiraSecret = "codex/mcp/maas_jira/url";
   effectiveCodexSettings = lib.recursiveUpdate codexConfig.settings (
-    lib.optionalAttrs maasJiraEnabled {
+    lib.optionalAttrs (!config.host.isLaptop) {
+      desktop.keepRemoteControlAwakeWhilePluggedIn = false;
+    }
+    // lib.optionalAttrs maasJiraEnabled {
       mcp_servers.maas_jira = {
         url = config.sops.placeholder.${maasJiraSecret};
         auth = "oauth";
