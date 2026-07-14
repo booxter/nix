@@ -9,7 +9,7 @@ writeShellApplication {
   runtimeInputs = [ python3 ];
   checkPhase = ''
     runHook preCheck
-    ${python3}/bin/python3 -m py_compile ${./main.py}
+    PAPERLESS_GPT_CONFIGURE_MAIN=${./main.py} ${python3.pkgs.pytest}/bin/pytest -q -p no:cacheprovider ${./test_main.py}
     runHook postCheck
   '';
   text = ''
