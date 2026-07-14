@@ -23,6 +23,7 @@ let
       coreutils
       findutils
       gawk
+      gzip
       gnutar
       podman
       rsync
