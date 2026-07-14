@@ -10,7 +10,6 @@ import urllib.request
 BASE_URL = os.environ["PAPERLESS_BASE_URL"].rstrip("/")
 TOKEN = pathlib.Path(os.environ["PAPERLESS_API_TOKEN_FILE"]).read_text().strip()
 AUTO_TAG = os.environ["PAPERLESS_GPT_AUTO_TAG"]
-AUTO_TAG_COMPLETE = os.environ["PAPERLESS_GPT_AUTO_TAG_COMPLETE"]
 AUTO_OCR_TAG = os.environ["PAPERLESS_GPT_AUTO_OCR_TAG"]
 OCR_COMPLETE_TAG = os.environ["PAPERLESS_GPT_OCR_COMPLETE_TAG"]
 AUTO_OCR_WORKFLOW_NAME = os.environ["PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME"]
@@ -107,13 +106,13 @@ def desired_workflows(tags):
                 {
                     "type": 3,
                     "filter_has_tags": [tags[OCR_COMPLETE_TAG]["id"]],
-                    "filter_has_not_tags": [
-                        tags[AUTO_TAG]["id"],
-                        tags[AUTO_TAG_COMPLETE]["id"],
-                    ],
+                    "filter_has_not_tags": [tags[AUTO_TAG]["id"]],
                 }
             ],
-            [{"type": 1, "assign_tags": [tags[AUTO_TAG]["id"]]}],
+            [
+                {"type": 1, "assign_tags": [tags[AUTO_TAG]["id"]]},
+                {"type": 2, "remove_tags": [tags[OCR_COMPLETE_TAG]["id"]]},
+            ],
         ),
     ]
 
@@ -137,8 +136,7 @@ def ensure_workflow(name, triggers, actions):
 def main():
     wait_for_paperless()
     tags = {
-        name: ensure_tag(name)
-        for name in [AUTO_TAG, AUTO_TAG_COMPLETE, AUTO_OCR_TAG, OCR_COMPLETE_TAG]
+        name: ensure_tag(name) for name in [AUTO_TAG, AUTO_OCR_TAG, OCR_COMPLETE_TAG]
     }
     for name, triggers, actions in desired_workflows(tags):
         ensure_workflow(name, triggers, actions)

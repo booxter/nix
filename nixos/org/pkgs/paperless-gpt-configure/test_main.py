@@ -14,7 +14,6 @@ os.environ.update(
         "PAPERLESS_API_TOKEN_FILE": TOKEN_FILE.name,
         "PAPERLESS_BASE_URL": "http://paperless.test",
         "PAPERLESS_GPT_AUTO_TAG": "paperless-gpt-auto",
-        "PAPERLESS_GPT_AUTO_TAG_COMPLETE": "paperless-gpt-auto-complete",
         "PAPERLESS_GPT_AUTO_OCR_TAG": "paperless-gpt-ocr-auto",
         "PAPERLESS_GPT_OCR_COMPLETE_TAG": "paperless-gpt-ocr-complete",
         "PAPERLESS_GPT_AUTO_OCR_WORKFLOW_NAME": "Auto OCR with paperless-gpt",
@@ -38,7 +37,6 @@ pathlib.Path(TOKEN_FILE.name).unlink()
 def test_desired_workflows_sequence_ocr_before_metadata():
     tags = {
         "paperless-gpt-auto": {"id": 1},
-        "paperless-gpt-auto-complete": {"id": 2},
         "paperless-gpt-ocr-auto": {"id": 3},
         "paperless-gpt-ocr-complete": {"id": 4},
     }
@@ -57,10 +55,13 @@ def test_desired_workflows_sequence_ocr_before_metadata():
                 {
                     "type": 3,
                     "filter_has_tags": [4],
-                    "filter_has_not_tags": [1, 2],
+                    "filter_has_not_tags": [1],
                 }
             ],
-            [{"type": 1, "assign_tags": [1]}],
+            [
+                {"type": 1, "assign_tags": [1]},
+                {"type": 2, "remove_tags": [4]},
+            ],
         ),
     ]
 
@@ -69,7 +70,10 @@ def test_workflow_payload_preserves_nested_object_ids():
     payload = paperless_gpt_configure.workflow_payload(
         "Existing workflow",
         [{"type": 3, "filter_has_tags": [4]}],
-        [{"type": 1, "assign_tags": [1]}],
+        [
+            {"type": 1, "assign_tags": [1]},
+            {"type": 2, "remove_tags": [4]},
+        ],
         {
             "triggers": [{"id": 20, "type": 2}],
             "actions": [{"id": 30, "type": 1}],
@@ -81,5 +85,8 @@ def test_workflow_payload_preserves_nested_object_ids():
         "order": 0,
         "enabled": True,
         "triggers": [{"id": 20, "type": 3, "filter_has_tags": [4]}],
-        "actions": [{"id": 30, "type": 1, "assign_tags": [1]}],
+        "actions": [
+            {"id": 30, "type": 1, "assign_tags": [1]},
+            {"type": 2, "remove_tags": [4]},
+        ],
     }
