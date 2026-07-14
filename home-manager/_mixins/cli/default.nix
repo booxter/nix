@@ -144,6 +144,9 @@ in
       # python
       python313
     ]
+    ++ lib.optionals isDarwin [
+      container
+    ]
     ++ lib.optionals hasRemoteGui [
       cliPkgs.xrun-nixpkgs
     ]
