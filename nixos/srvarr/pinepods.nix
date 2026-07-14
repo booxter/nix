@@ -33,6 +33,112 @@ let
     "pinepods-valkey.service"
     "sops-install-secrets.service"
   ];
+  nativeBackupScript = pkgs.writeShellApplication {
+    name = "pinepods-native-backup";
+    runtimeInputs = with pkgs; [
+      coreutils
+      curl
+      jq
+    ];
+    text = ''
+      set -euo pipefail
+
+      base_url=http://127.0.0.1:${toString port}
+      username=${lib.escapeShellArg bootstrapOwnerName}
+      password="$(tr -d '\r\n' < ${config.sops.secrets."pinepods/bootstrap/password".path})"
+
+      login_response="$(
+        curl \
+          --fail-with-body \
+          --silent \
+          --show-error \
+          --retry 60 \
+          --retry-connrefused \
+          --retry-delay 2 \
+          --user "$username:$password" \
+          "$base_url/api/data/get_key"
+      )"
+      api_key="$(
+        printf '%s' "$login_response" \
+          | jq --exit-status --raw-output \
+            'select(.status == "success" and .mfa_required == false) | .retrieved_key'
+      )"
+
+      backup_response="$(
+        curl \
+          --fail-with-body \
+          --silent \
+          --show-error \
+          --request POST \
+          --header "Api-Key: $api_key" \
+          --header 'Content-Type: application/json' \
+          --data '{}' \
+          "$base_url/api/data/manual_backup_to_directory"
+      )"
+      task_id="$(printf '%s' "$backup_response" | jq --exit-status --raw-output '.task_id')"
+
+      for attempt in $(seq 1 3600); do
+        task_response="$(
+          curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            "$base_url/api/tasks/$task_id"
+        )"
+        status="$(printf '%s' "$task_response" | jq --exit-status --raw-output '.status')"
+        case "$status" in
+          SUCCESS)
+            break
+            ;;
+          FAILED)
+            printf 'PinePods native backup failed: %s\n' "$task_response" >&2
+            exit 1
+            ;;
+          PENDING | DOWNLOADING)
+            ;;
+          *)
+            printf 'PinePods returned an unknown backup task state: %s\n' "$task_response" >&2
+            exit 1
+            ;;
+        esac
+
+        if [ "$attempt" = 3600 ]; then
+          echo "PinePods native backup timed out" >&2
+          exit 1
+        fi
+        sleep 2
+      done
+
+      files_response="$(
+        curl \
+          --fail-with-body \
+          --silent \
+          --show-error \
+          --request POST \
+          --header "Api-Key: $api_key" \
+          --header 'Content-Type: application/json' \
+          --data '{}' \
+          "$base_url/api/data/list_backup_files"
+      )"
+      mapfile -t old_backups < <(
+        printf '%s' "$files_response" | jq --exit-status --raw-output '.backup_files[7:][]?.filename'
+      )
+      for backup_filename in "''${old_backups[@]}"; do
+        jq --null-input --arg backup_filename "$backup_filename" \
+          '{backup_filename: $backup_filename}' \
+          | curl \
+            --fail-with-body \
+            --silent \
+            --show-error \
+            --request POST \
+            --header "Api-Key: $api_key" \
+            --header 'Content-Type: application/json' \
+            --data-binary @- \
+            "$base_url/api/data/delete_backup_file" \
+            >/dev/null
+      done
+    '';
+  };
 in
 {
   sops.secrets = {
@@ -361,6 +467,35 @@ in
         downloadsDir
       ];
     };
+
+    pinepods-native-backup = {
+      description = "Create a native PinePods database backup";
+      restartIfChanged = false;
+      stopIfChanged = false;
+      before = [ "restic-backups-beast.service" ];
+      requires = [ "podman-pinepods.service" ];
+      after = [ "podman-pinepods.service" ];
+      unitConfig.RequiresMountsFor = [ backupDir ];
+      serviceConfig = {
+        Type = "oneshot";
+        User = "root";
+        Group = "root";
+        ExecStart = lib.getExe nativeBackupScript;
+        TimeoutStartSec = "2h15m";
+      };
+    };
+
+    restic-backups-beast = {
+      after = [ "pinepods-native-backup.service" ];
+      wants = [ "pinepods-native-backup.service" ];
+      requires = [ "pinepods-native-backup.service" ];
+    };
+  };
+
+  host.observability.backupMetrics.jobs.pinepods-native-backup = {
+    service = "pinepods-native-backup";
+    title = "PinePods Native Backup";
+    phase = "prep";
   };
 
   host.internalHttps.services.pinepods = {
