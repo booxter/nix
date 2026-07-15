@@ -8,6 +8,7 @@ setup() {
 
   printf '#!%s\n' "$bash_path" >"$tmpdir/bin/curl"
   cat >>"$tmpdir/bin/curl" <<'EOF'
+printf '%s\n' "$*" >"$ALERTMANAGER_TEST_CURL_ARGS"
 if [[ -n "${ALERTMANAGER_TEST_CURL_FAILURE:-}" ]]; then
   exit 22
 fi
@@ -22,8 +23,10 @@ EOF
 
   export NAME=alertmanager
   export ALERTMANAGER_URL=https://alertmanager.test/api/v2/alerts
+  export ALERTMANAGER_CA_CERTIFICATE="$tmpdir/root-ca.crt"
   export ALERTMANAGER_CLIENT_CERTIFICATE="$tmpdir/client.crt"
   export ALERTMANAGER_CLIENT_KEY="$tmpdir/client.key"
+  export ALERTMANAGER_TEST_CURL_ARGS="$tmpdir/curl-args"
   export CURL="$tmpdir/bin/curl"
 }
 
@@ -39,6 +42,12 @@ teardown() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=off"* ]]
+  run grep -F -- "--cacert $ALERTMANAGER_CA_CERTIFICATE" "$ALERTMANAGER_TEST_CURL_ARGS"
+  [ "$status" -eq 0 ]
+  run grep -F -- "--cert $ALERTMANAGER_CLIENT_CERTIFICATE" "$ALERTMANAGER_TEST_CURL_ARGS"
+  [ "$status" -eq 0 ]
+  run grep -F -- "--key $ALERTMANAGER_CLIENT_KEY" "$ALERTMANAGER_TEST_CURL_ARGS"
+  [ "$status" -eq 0 ]
 }
 
 @test "shows the number of firing alerts" {

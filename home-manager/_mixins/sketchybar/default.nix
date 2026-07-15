@@ -6,6 +6,7 @@
   ...
 }:
 let
+  internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
   workspaceNames = import ../aerospace/workspaces.nix { inherit lib isWork; };
@@ -36,6 +37,7 @@ let
     ];
     runtimeEnv = {
       ALERTMANAGER_URL = config.programs.sketchybarAlertmanager.alertmanagerUrl;
+      ALERTMANAGER_CA_CERTIFICATE = toString internalPkiRootCaPath;
       ALERTMANAGER_CLIENT_CERTIFICATE = config.programs.sketchybarAlertmanager.clientCertificate;
       ALERTMANAGER_CLIENT_KEY = config.programs.sketchybarAlertmanager.clientKey;
     };

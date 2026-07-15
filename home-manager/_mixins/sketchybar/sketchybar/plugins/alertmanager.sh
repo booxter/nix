@@ -16,6 +16,7 @@ if ! alerts="$(${CURL:-curl} \
   --silent \
   --show-error \
   --max-time 10 \
+  --cacert "$ALERTMANAGER_CA_CERTIFICATE" \
   --cert "$ALERTMANAGER_CLIENT_CERTIFICATE" \
   --key "$ALERTMANAGER_CLIENT_KEY" \
   "${ALERTMANAGER_URL}?active=true&silenced=false&inhibited=false")"; then
