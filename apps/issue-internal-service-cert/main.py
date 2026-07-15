@@ -97,6 +97,13 @@ def nix_eval_json(*segments):
     return json.loads(raw)
 
 
+def nix_eval_json_optional(*segments):
+    raw = run_optional(["nix", "eval", "--json", nix_attr_path(*segments)])
+    if raw is None:
+        return None
+    return json.loads(raw)
+
+
 def nix_eval_raw_optional(*segments):
     raw = run_optional(["nix", "eval", "--raw", nix_attr_path(*segments)])
     if raw is None:
@@ -104,8 +111,16 @@ def nix_eval_raw_optional(*segments):
     return raw.strip()
 
 
+def secret_domain_for_host(host):
+    root = host_config_root(host)
+    secret_domain = nix_eval_raw_optional(root, host, "config", "host", "secretDomain")
+    if not secret_domain:
+        raise SystemExit(f"host {host} does not define host.secretDomain")
+    return secret_domain
+
+
 def secret_path_for_host(host):
-    return REPO_ROOT / "secrets" / f"{host}.yaml"
+    return REPO_ROOT / "secrets" / secret_domain_for_host(host) / f"{host}.yaml"
 
 
 _KNOWN_INVENTORY_HOSTS = None
@@ -304,11 +319,15 @@ def proxmox_api_service_config(root, host):
 def client_names_for_host(host):
     root = host_config_root(host)
     internal_clients = (
-        nix_eval_json(root, host, "config", "host", "internalHttps", "mtlsClients")
+        nix_eval_json_optional(
+            root, host, "config", "host", "internalHttps", "mtlsClients"
+        )
         or {}
     )
     external_clients = (
-        nix_eval_json(root, host, "config", "host", "externalService", "mtlsClients")
+        nix_eval_json_optional(
+            root, host, "config", "host", "externalService", "mtlsClients"
+        )
         or {}
     )
     enabled_clients = {
@@ -323,11 +342,15 @@ def client_names_for_host(host):
 def client_config(host, client):
     root = host_config_root(host)
     internal_clients = (
-        nix_eval_json(root, host, "config", "host", "internalHttps", "mtlsClients")
+        nix_eval_json_optional(
+            root, host, "config", "host", "internalHttps", "mtlsClients"
+        )
         or {}
     )
     external_clients = (
-        nix_eval_json(root, host, "config", "host", "externalService", "mtlsClients")
+        nix_eval_json_optional(
+            root, host, "config", "host", "externalService", "mtlsClients"
+        )
         or {}
     )
     matching_clients = [
@@ -405,7 +428,14 @@ def update_secret_file(host, service, service_cfg, cert_text, key_text):
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
 
-    run([str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"), host])
+    run(
+        [
+            str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"),
+            "--domain",
+            secret_domain_for_host(host),
+            host,
+        ]
+    )
 
     prefix = service_cfg["secretPrefix"].split("/")
     sops_set(secret_path, prefix + ["server_crt_unencrypted"], cert_text.rstrip("\n"))
@@ -491,7 +521,14 @@ def update_client_secret_file(host, client_cfg, cert_text, key_text):
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
 
-    run([str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"), host])
+    run(
+        [
+            str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"),
+            "--domain",
+            secret_domain_for_host(host),
+            host,
+        ]
+    )
 
     prefix = client_cfg["secretPrefix"].split("/")
     sops_set(secret_path, prefix + ["client_crt_unencrypted"], cert_text.rstrip("\n"))
