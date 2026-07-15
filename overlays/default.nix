@@ -107,9 +107,28 @@
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
-      lolek = lolekPackage.override {
-        yt-dlp = lolekYtDlp;
-      };
+      lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # Reject TikTok channel links that do not identify a video or photo.
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/lolek/commit/99fac30eea2e29ad23dd1313fd6825c4dd3e1e0e.patch";
+            # The package source filter omits tests.
+            excludes = [ "test/lolek/url_test.exs" ];
+            hash = "sha256-knk/GjF3gSZ+4zE3qVlZnUcwxsud8m2HJphtqEDpdnc=";
+          })
+          # Enforce an overall deadline for processing Telegram requests.
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/lolek/commit/b7a885eb59b955e656b28504e56bd71c8a531e6c.patch";
+            # The package source filter omits the NixOS module and tests.
+            excludes = [
+              "nix/module.nix"
+              "test/lolek/processing_deadline_test.exs"
+              "test/lolek_test.exs"
+            ];
+            hash = "sha256-+yyajBobp07bvndthBPUXCqjlUsTWlx7Y5FufR9PlVM=";
+          })
+        ];
+      });
 
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
