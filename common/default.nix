@@ -36,6 +36,7 @@ in
     ./_mixins/nix-gc
     ./_mixins/nvtop
     ./_mixins/ssh
+    ./_mixins/sync-git-mains
     ./_mixins/terminfo
     ./_mixins/yubi.nix
   ]
