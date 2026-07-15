@@ -26,9 +26,7 @@ let
   servicesWithProbePortConflicts = lib.filterAttrs (
     _: service: service.probe.enable && service.probe.port == service.port
   ) enabledServices;
-  enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
   secretAttrName = serviceName: "internal-https-${serviceName}";
-  mtlsClientSecretAttrName = clientName: "internal-https-client-${clientName}";
   # Listener tuple shared by all surfaces for one service. Example: normal
   # service vhosts listen on :443 while probe-only vhosts listen on :9443.
   mkListen = service: port: [
@@ -130,65 +128,6 @@ in
     type = with lib.types; listOf str;
     default = [ ];
     description = "Single-label local service names exported by enabled internal HTTPS services.";
-  };
-
-  options.host.internalHttps.mtlsClients = lib.mkOption {
-    type =
-      with lib.types;
-      attrsOf (
-        submodule (
-          { name, ... }:
-          {
-            options = {
-              enable = lib.mkEnableOption "internal HTTPS mTLS client identity";
-
-              secretPrefix = lib.mkOption {
-                type = str;
-                default = "internal_https/clients/${name}";
-                description = "SOPS key prefix containing client_crt_unencrypted and client_key for this client identity.";
-              };
-
-              commonName = lib.mkOption {
-                type = str;
-                default = "${name}.${config.host.dnsName}";
-                description = "Leaf certificate common name to issue for this client identity.";
-              };
-
-              sans = lib.mkOption {
-                type = listOf str;
-                default = [ ];
-                description = "Optional SANs for this client certificate.";
-              };
-
-              owner = lib.mkOption {
-                type = str;
-                default = "root";
-                description = "Owner for generated client certificate and key secret files.";
-              };
-
-              group = lib.mkOption {
-                type = str;
-                default = "root";
-                description = "Group for generated client certificate and key secret files.";
-              };
-
-              mode = lib.mkOption {
-                type = str;
-                default = "0400";
-                description = "Mode for generated client certificate and key secret files.";
-              };
-
-              restartUnits = lib.mkOption {
-                type = listOf str;
-                default = [ ];
-                description = "Systemd units restarted when this client certificate changes.";
-              };
-            };
-          }
-        )
-      );
-    default = { };
-    description = "Internal HTTPS mTLS client identities used by services on this host.";
   };
 
   options.host.internalHttps.services = lib.mkOption {
@@ -320,7 +259,7 @@ in
     description = "Internal HTTPS services fronted by nginx and backed by the internal PKI.";
   };
 
-  config = lib.mkIf (enabledServices != { } || enabledMtlsClients != { }) {
+  config = lib.mkIf (enabledServices != { }) {
     host.internalHttps.localAliases = lib.unique (
       builtins.concatMap (service: service.localAliases) (builtins.attrValues enabledServices)
     );
@@ -357,27 +296,7 @@ in
           mode = "0400";
           restartUnits = [ "nginx.service" ];
         }
-      ) enabledServices
-      // lib.mapAttrs' (
-        clientName: client:
-        lib.nameValuePair "${mtlsClientSecretAttrName clientName}-crt" {
-          key = "${client.secretPrefix}/client_crt_unencrypted";
-          owner = client.owner;
-          group = client.group;
-          mode = client.mode;
-          restartUnits = client.restartUnits;
-        }
-      ) enabledMtlsClients
-      // lib.mapAttrs' (
-        clientName: client:
-        lib.nameValuePair "${mtlsClientSecretAttrName clientName}-key" {
-          key = "${client.secretPrefix}/client_key";
-          owner = client.owner;
-          group = client.group;
-          mode = client.mode;
-          restartUnits = client.restartUnits;
-        }
-      ) enabledMtlsClients;
+      ) enabledServices;
 
     services.nginx = lib.mkIf (enabledServices != { }) {
       enable = true;

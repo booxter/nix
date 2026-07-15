@@ -25,6 +25,7 @@
       ./_mixins/networking
       ./_mixins/nix-gc
       ./_mixins/observability-client
+      ./_mixins/sketchybar-alertmanager
       ./_mixins/sudo
       ./_mixins/thermal-accounting
       ./_mixins/xquartz

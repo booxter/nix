@@ -1,10 +1,12 @@
 {
+  config,
   lib,
   pkgs,
   isWork,
   ...
 }:
 let
+  internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
   workspaceNames = import ../aerospace/workspaces.nix { inherit lib isWork; };
@@ -26,6 +28,35 @@ let
     ];
     text = builtins.readFile ./sketchybar/plugins/codex-work.sh;
   };
+  alertmanagerPlugin = pkgs.writeShellApplication {
+    name = "sketchybar-alertmanager";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.sketchybar
+    ];
+    runtimeEnv = {
+      ALERTMANAGER_URL = config.programs.sketchybarAlertmanager.alertmanagerUrl;
+      ALERTMANAGER_CA_CERTIFICATE = toString internalPkiRootCaPath;
+      ALERTMANAGER_CLIENT_CERTIFICATE = config.programs.sketchybarAlertmanager.clientCertificate;
+      ALERTMANAGER_CLIENT_KEY = config.programs.sketchybarAlertmanager.clientKey;
+    };
+    text = builtins.readFile ./sketchybar/plugins/alertmanager.sh;
+  };
+  alertmanagerItem = pkgs.writeText "sketchybar-alertmanager-item.sh" (
+    lib.optionalString config.programs.sketchybarAlertmanager.enable ''
+      sketchybar --add item alertmanager right                               \
+                 --set alertmanager script="$PLUGIN_DIR/alertmanager.sh"     \
+                                    update_freq=60                           \
+                                    drawing=off                              \
+                                    icon.padding_left=6                      \
+                                    icon.padding_right=2                     \
+                                    label.padding_left=2                     \
+                                    label.padding_right=6                    \
+                                    click_script="/usr/bin/open ${lib.escapeShellArg config.programs.sketchybarAlertmanager.grafanaUrl}"                                       \
+                 --subscribe alertmanager system_woke
+    ''
+  );
   codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
     lib.optionalString (!isWork) ''
       sketchybar --add item codex.5h left                                  \
@@ -136,9 +167,15 @@ let
     mkdir -p "$out/items"
     rm -f "$out/plugins/codex.sh"
     rm -f "$out/plugins/codex-work.sh"
+    rm -f "$out/plugins/alertmanager.sh"
     rm -f "$out/items/aerospace-spaces.sh"
+    rm -f "$out/items/alertmanager.sh"
     ln -s ${aerospaceSpacesItem} "$out/items/aerospace-spaces.sh"
     ln -s ${codexItem} "$out/items/codex.sh"
+    ln -s ${alertmanagerItem} "$out/items/alertmanager.sh"
+    ${lib.optionalString config.programs.sketchybarAlertmanager.enable ''
+      ln -s ${lib.getExe alertmanagerPlugin} "$out/plugins/alertmanager.sh"
+    ''}
     ${lib.optionalString (!isWork) ''
       ln -s ${lib.getExe codexPlugin} "$out/plugins/codex.sh"
     ''}
@@ -148,7 +185,31 @@ let
   '';
 in
 {
-  programs.sketchybar = lib.mkIf isDarwin {
+  options.programs.sketchybarAlertmanager = {
+    enable = lib.mkEnableOption "Alertmanager firing-alert indicator in SketchyBar";
+
+    alertmanagerUrl = lib.mkOption {
+      type = lib.types.str;
+      description = "mTLS-protected Alertmanager alerts API URL.";
+    };
+
+    grafanaUrl = lib.mkOption {
+      type = lib.types.str;
+      description = "Grafana alert groups page opened when the indicator is clicked.";
+    };
+
+    clientCertificate = lib.mkOption {
+      type = lib.types.str;
+      description = "Path to the Alertmanager mTLS client certificate.";
+    };
+
+    clientKey = lib.mkOption {
+      type = lib.types.str;
+      description = "Path to the Alertmanager mTLS client key.";
+    };
+  };
+
+  config.programs.sketchybar = lib.mkIf isDarwin {
     enable = true;
     config = {
       source = sketchybarConfig;

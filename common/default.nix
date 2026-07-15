@@ -29,6 +29,7 @@ in
 {
   imports = [
     ./_mixins/codex
+    ./_mixins/internal-https-mtls-client.nix
     ./_mixins/internal-pki
     ./_mixins/nix
     ./_mixins/nixpkgs

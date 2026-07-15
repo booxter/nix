@@ -79,6 +79,19 @@ in
     '';
   };
 
+  # Expose only the read-only alerts collection used by the SketchyBar applet.
+  # Alertmanager's mutation endpoints remain unavailable on this vhost.
+  services.nginx.virtualHosts.internal-https-alertmanager.locations."= /api/v2/alerts" = {
+    proxyPass = "http://127.0.0.1:${toString alertmanagerPort}";
+    recommendedProxySettings = true;
+    extraConfig = ''
+      limit_except GET {
+        deny all;
+      }
+      access_log off;
+    '';
+  };
+
   sops.secrets.grafanaAlertingTelegramBotToken = {
     key = "grafana/alerting/telegram/bot_token";
     owner = "grafana";
