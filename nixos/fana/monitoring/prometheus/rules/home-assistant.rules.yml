@@ -11,12 +11,3 @@ groups:
         annotations:
           summary: "Home Assistant service inactive"
           description: "The Home Assistant systemd service has not been active for 5 minutes."
-      - alert: HomeAssistantEntitiesUnavailable
-        expr: (sum(1 - homeassistant_entity_available{job="home-assistant"}) / count(homeassistant_entity_available{job="home-assistant"}) > 0.25) and (count(homeassistant_entity_available{job="home-assistant"}) >= 5)
-        for: 15m
-        labels:
-          severity: warning
-          category: home-automation
-        annotations:
-          summary: "Many Home Assistant entities unavailable"
-          description: "More than 25% of Home Assistant entities have been unavailable or unknown for 15 minutes."
