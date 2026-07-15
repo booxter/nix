@@ -46,7 +46,7 @@ let
 in
 {
   system.defaults.CustomUserPreferences."com.apple.Terminal" = {
-    SecureKeyboardEntry = true;
+    SecureKeyboardEntry = false; # otherwise focused Terminal disables Aerospace bindings
     "Default Window Settings" = profileName;
     "Startup Window Settings" = profileName;
   };
