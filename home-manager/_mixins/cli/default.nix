@@ -61,6 +61,14 @@ in
     '';
 
     envExtra = ''
+      ${lib.optionalString isDarwin ''
+        # Repair shells that inherit the Nix initialization guards without the
+        # corresponding profile paths, such as Terminal launched by Codex.
+        if [[ ":$PATH:" != *":/run/current-system/sw/bin:"* ]]; then
+          export PATH="$HOME/.priv-bin:$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/sbin:/sbin:$PATH"
+        fi
+      ''}
+
       # Reinitialize SSH_AUTH_SOCK in tmux on reconnect
       # from: @tom-wiley-cotton/nix-config
       if [ -n "$TMUX" ]; then
