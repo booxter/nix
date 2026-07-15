@@ -11,6 +11,7 @@ from main import (
     StateStore,
     UnflacRunner,
     build_manual_import_files,
+    cue_already_split_audio_files,
     inspection_summary,
     is_within,
     prometheus_metrics,
@@ -85,6 +86,63 @@ class CueSplitterTests(unittest.TestCase):
             }
         ]
         self.assertFalse(inspection_summary(cue, payload)["eligible"])
+
+    def test_eac_noncompliant_one_file_per_track_cue_is_already_split(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cue = root / "album.cue"
+            cue.write_text(
+                "\n".join(
+                    [
+                        'FILE "01 - First.wav" WAVE',
+                        "  TRACK 01 AUDIO",
+                        "    INDEX 01 00:00:00",
+                        "  TRACK 02 AUDIO",
+                        "    INDEX 00 03:12:34",
+                        'FILE "02 - Second.wav" WAVE',
+                        "    INDEX 01 00:00:00",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            first = root / "01 - First.flac"
+            second = root / "02 - Second.flac"
+            first.write_bytes(b"flac")
+            second.write_bytes(b"flac")
+
+            self.assertEqual(
+                cue_already_split_audio_files(cue),
+                [first.resolve(), second.resolve()],
+            )
+
+    def test_already_split_cue_requires_every_referenced_audio_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            cue = Path(directory) / "album.cue"
+            cue.write_text(
+                'FILE "missing.wav" WAVE\n  TRACK 01 AUDIO\n    INDEX 01 00:00:00\n',
+                encoding="utf-8",
+            )
+            self.assertIsNone(cue_already_split_audio_files(cue))
+
+    def test_image_cue_is_not_classified_as_already_split(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            cue = root / "album.cue"
+            cue.write_text(
+                "\n".join(
+                    [
+                        'FILE "album.flac" WAVE',
+                        "  TRACK 01 AUDIO",
+                        "    INDEX 01 00:00:00",
+                        "  TRACK 02 AUDIO",
+                        "    INDEX 01 03:12:34",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (root / "album.flac").write_bytes(b"flac")
+
+            self.assertIsNone(cue_already_split_audio_files(cue))
 
     def test_builds_manual_import_payload(self):
         generated = [Path("/stage/01.flac"), Path("/stage/02.flac")]
@@ -302,6 +360,70 @@ class CueSplitterTests(unittest.TestCase):
             service.iteration()
             self.assertEqual(store.data["totals"]["ignored"], 1)
 
+    def test_already_split_cue_recovers_exhausted_job_without_unflac(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            download = root / "torrents" / "album"
+            download.mkdir(parents=True)
+            (download / "album.cue").write_text(
+                "\n".join(
+                    [
+                        'FILE "01.wav" WAVE',
+                        "  TRACK 01 AUDIO",
+                        "    INDEX 01 00:00:00",
+                        "  TRACK 02 AUDIO",
+                        "    INDEX 00 03:12:34",
+                        'FILE "02.wav" WAVE',
+                        "    INDEX 01 00:00:00",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            (download / "01.flac").write_bytes(b"flac")
+            (download / "02.flac").write_bytes(b"flac")
+            record = {
+                "status": "completed",
+                "protocol": "torrent",
+                "downloadId": "abc",
+                "outputPath": str(download),
+            }
+
+            class FakeClient:
+                def queue(self):
+                    return [record]
+
+            class UnexpectedRunner:
+                def inspect(self, cue):
+                    raise AssertionError(f"unflac should not inspect {cue}")
+
+            store = StateStore(root / "state.json")
+            store.data["jobs"]["abc"] = {
+                "download_id": "abc",
+                "status": "needs_attention",
+                "attempts": 3,
+                "error": "unflac could not parse EAC cue",
+                "updated_at": 1000.0,
+            }
+            service = CueSplitterService(
+                client_factory=FakeClient,
+                runner=UnexpectedRunner(),
+                store=store,
+                allowed_roots=[root / "torrents"],
+                work_root=root / "work",
+                metrics_file=root / "metrics.prom",
+                settle_seconds=0,
+                command_timeout_seconds=60,
+                now=lambda: 1001.0,
+                sleep=lambda _: None,
+            )
+
+            service.iteration()
+            self.assertEqual(store.data["jobs"]["abc"]["status"], "ignored")
+            self.assertEqual(store.data["jobs"]["abc"]["error"], "")
+            self.assertEqual(store.data["totals"]["ignored"], 1)
+            service.iteration()
+            self.assertEqual(store.data["totals"]["ignored"], 1)
+
     def test_problem_job_is_dismissed_and_expires_after_leaving_queue(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -404,6 +526,8 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(runner.inspections, 3)
             self.assertEqual(store.data["jobs"]["abc"]["status"], "needs_attention")
             self.assertEqual(store.data["totals"]["failed"], 3)
+            service.iteration()
+            self.assertEqual(runner.inspections, 3)
 
 
 if __name__ == "__main__":

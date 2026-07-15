@@ -39,6 +39,30 @@ ACTIVE_JOB_STATES = {
 PROCESSING_JOB_STATES = {"splitting", "verifying", "matching", "importing"}
 PROBLEM_JOB_STATES = {"failed", "needs_attention"}
 EXPIRING_JOB_STATES = {"complete", "dismissed", "ignored"}
+AUDIO_FILE_SUFFIXES = {
+    ".aac",
+    ".aif",
+    ".aiff",
+    ".alac",
+    ".ape",
+    ".dff",
+    ".dsf",
+    ".flac",
+    ".m4a",
+    ".mka",
+    ".mp3",
+    ".mpc",
+    ".ogg",
+    ".opus",
+    ".tak",
+    ".tta",
+    ".wav",
+    ".wave",
+    ".wma",
+    ".wv",
+}
+CUE_FILE_COMMAND_RE = re.compile(r'^\s*FILE\s+(?:"([^"]+)"|(\S+))\s+\S+', re.IGNORECASE)
+CUE_TRACK_COMMAND_RE = re.compile(r"^\s*TRACK\s+\d+\s+\S+", re.IGNORECASE)
 
 
 class CueSplitterError(RuntimeError):
@@ -69,6 +93,52 @@ def safe_component(value: str) -> str:
     readable = re.sub(r"[^A-Za-z0-9._-]+", "-", value).strip("-.")[:48] or "download"
     digest = hashlib.sha256(value.encode()).hexdigest()[:12]
     return f"{readable}-{digest}"
+
+
+def resolve_cue_audio_reference(cue: Path, reference: str) -> Path | None:
+    referenced = Path(reference)
+    candidate = referenced if referenced.is_absolute() else cue.parent / referenced
+    try:
+        if candidate.is_file():
+            return candidate.resolve()
+        matches = sorted(
+            path.resolve()
+            for path in candidate.parent.iterdir()
+            if path.is_file()
+            and path.stem == candidate.stem
+            and path.suffix.lower() in AUDIO_FILE_SUFFIXES
+        )
+    except (OSError, RuntimeError):
+        return None
+    return matches[0] if len(matches) == 1 else None
+
+
+def cue_already_split_audio_files(cue: Path) -> list[Path] | None:
+    try:
+        content = cue.read_bytes().decode("utf-8-sig", errors="surrogateescape")
+    except OSError:
+        return None
+
+    references: list[str] = []
+    track_count = 0
+    for line in content.splitlines():
+        file_match = CUE_FILE_COMMAND_RE.match(line)
+        if file_match:
+            references.append(file_match.group(1) or file_match.group(2))
+        if CUE_TRACK_COMMAND_RE.match(line):
+            track_count += 1
+
+    if not references or len(references) != track_count:
+        return None
+    audio_files: list[Path] = []
+    for reference in references:
+        audio_file = resolve_cue_audio_reference(cue, reference)
+        if audio_file is None:
+            return None
+        audio_files.append(audio_file)
+    if len(set(audio_files)) != track_count:
+        return None
+    return audio_files
 
 
 def read_api_key(config_path: Path) -> str:
@@ -449,6 +519,33 @@ class CueSplitterService:
             and bool(record.get("outputPath"))
         )
 
+    @staticmethod
+    def cue_files(output_path: Path) -> list[Path]:
+        return sorted(
+            path
+            for path in output_path.rglob("*")
+            if path.is_file()
+            and path.suffix.lower() == ".cue"
+            and STAGING_DIR_NAME not in path.parts
+        )
+
+    def download_is_already_split(self, record: dict[str, Any]) -> bool:
+        output_path = Path(str(record["outputPath"]))
+        if not is_within(output_path, self.allowed_roots) or not output_path.is_dir():
+            return False
+        cues = self.cue_files(output_path)
+        if not cues:
+            return False
+        for cue in cues:
+            audio_files = cue_already_split_audio_files(cue)
+            if audio_files is None:
+                return False
+            if not is_within(cue, self.allowed_roots) or any(
+                not is_within(path, self.allowed_roots) for path in audio_files
+            ):
+                return False
+        return True
+
     def discover(self, record: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
         output_path = Path(str(record["outputPath"]))
         if not is_within(output_path, self.allowed_roots):
@@ -457,15 +554,19 @@ class CueSplitterService:
             )
         if not output_path.is_dir():
             raise CueSplitterError(f"download path does not exist: {output_path}")
-        cues = sorted(
-            path
-            for path in output_path.rglob("*")
-            if path.is_file()
-            and path.suffix.lower() == ".cue"
-            and STAGING_DIR_NAME not in path.parts
-        )
+        cues = self.cue_files(output_path)
         summaries = []
         for cue in cues:
+            already_split_audio_files = cue_already_split_audio_files(cue)
+            if already_split_audio_files is not None:
+                if not is_within(cue, self.allowed_roots) or any(
+                    not is_within(path, self.allowed_roots)
+                    for path in already_split_audio_files
+                ):
+                    raise NeedsAttention(
+                        f"CUE references audio outside allowed roots: {cue}"
+                    )
+                continue
             summary = inspection_summary(cue, self.runner.inspect(cue))
             if not is_within(summary["cue"], self.allowed_roots) or any(
                 not is_within(path, self.allowed_roots)
@@ -652,6 +753,7 @@ class CueSplitterService:
                     existing
                     and existing.get("status") == "needs_attention"
                     and int(existing.get("attempts", 0)) >= 3
+                    and not self.download_is_already_split(record)
                 ):
                     continue
                 if existing and existing.get("status") == "failed":
