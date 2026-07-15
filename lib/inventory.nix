@@ -1107,7 +1107,7 @@ rec {
       ];
       upsHost = "prx1-lab";
       cores = 4;
-      memorySize = 8;
+      memorySize = 16;
       diskSize = 80;
       sshPort = 10009;
       hmFull = false;
