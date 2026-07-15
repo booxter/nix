@@ -3,6 +3,7 @@
   hostInventory,
   hostname,
   inputs,
+  lib,
   pkgs,
   ...
 }:
@@ -84,6 +85,10 @@ in
   };
 
   systemd.services.lolek = {
+    # Let the application use its runtime default until the upstream module
+    # stops exporting a duplicate allowlist by default.
+    # https://github.com/dziaineka/lolek/pull/12
+    environment.LOLEK_ALLOWED_URLS_REGEX = lib.mkForce null;
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
   };
