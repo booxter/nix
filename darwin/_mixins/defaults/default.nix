@@ -1,5 +1,9 @@
-{ username, ... }:
+{ ... }:
 {
+  imports = [
+    ./terminal.nix
+  ];
+
   system.defaults = {
     dock = {
       autohide = true;
@@ -25,10 +29,6 @@
     };
 
     CustomUserPreferences = {
-      "com.apple.Terminal" = {
-        # skhd requires Secure Keyboard Entry to be disabled.
-        "SecureKeyboardEntry" = false;
-      };
       "com.apple.loginwindow" = {
         TALLogoutSavesState = false;
         LoginwindowLaunchesRelaunchApps = false;
@@ -116,4 +116,5 @@
       _HIHideMenuBar = true;
     };
   };
+
 }
