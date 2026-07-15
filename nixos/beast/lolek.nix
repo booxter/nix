@@ -62,6 +62,7 @@ in
     galleryDownloadEnabled = true;
     environment = {
       LOLEK_GALLERY_DL_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
+      LOLEK_MAX_GALLERY_MEDIA = "20";
       # TODO: Use a first-class upstream module option once lolek exposes one.
       LOLEK_YT_DLP_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
     };
