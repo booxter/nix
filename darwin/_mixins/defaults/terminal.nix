@@ -5,6 +5,8 @@
   ...
 }:
 let
+  profileName = "Nix";
+  profileKey = "Window Settings.${profileName}";
   terminalProfile = ./Nix.terminal;
   installTerminalProfile = pkgs.writeShellScript "install-terminal-profile" ''
     set -eu
@@ -22,7 +24,7 @@ let
       /usr/bin/plutil -create xml1 "$preferences"
     fi
 
-    if /usr/bin/plutil -extract 'Window Settings.Nix' xml1 \
+    if /usr/bin/plutil -extract ${lib.escapeShellArg profileKey} xml1 \
       -o "$current_profile" "$preferences" 2>/dev/null \
       && /usr/bin/cmp -s "$current_profile" "$desired_profile"; then
       exit 0
@@ -33,10 +35,10 @@ let
       /usr/bin/plutil -insert 'Window Settings' -dictionary "$preferences"
     fi
 
-    if /usr/bin/plutil -type 'Window Settings.Nix' "$preferences" >/dev/null 2>&1; then
-      /usr/bin/plutil -replace 'Window Settings.Nix' -xml "$profile_xml" "$preferences"
+    if /usr/bin/plutil -type ${lib.escapeShellArg profileKey} "$preferences" >/dev/null 2>&1; then
+      /usr/bin/plutil -replace ${lib.escapeShellArg profileKey} -xml "$profile_xml" "$preferences"
     else
-      /usr/bin/plutil -insert 'Window Settings.Nix' -xml "$profile_xml" "$preferences"
+      /usr/bin/plutil -insert ${lib.escapeShellArg profileKey} -xml "$profile_xml" "$preferences"
     fi
 
     /usr/bin/defaults import com.apple.Terminal "$preferences"
@@ -44,10 +46,8 @@ let
 in
 {
   system.defaults.CustomUserPreferences."com.apple.Terminal" = {
-    # skhd requires Secure Keyboard Entry to be disabled.
-    "SecureKeyboardEntry" = false;
-    "Default Window Settings" = "Nix";
-    "Startup Window Settings" = "Nix";
+    "Default Window Settings" = profileName;
+    "Startup Window Settings" = profileName;
   };
 
   system.activationScripts.userDefaults.text = lib.mkAfter ''
