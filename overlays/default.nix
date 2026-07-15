@@ -53,6 +53,12 @@
             url = "https://github.com/user-attachments/files/29713758/rebased.patch";
             hash = "sha256-euILgOxvghTRf3AwK7BHoC7mKKdmkAEH9iIOqNdN8pE=";
           })
+          # Merge dependent PRs into the reviewed worktree with --include-pr.
+          # https://github.com/Mic92/nixpkgs-review/pull/562
+          (prev.fetchpatch {
+            url = "https://github.com/Mic92/nixpkgs-review/commit/efb00d8799c7d26e2ef7f6f827922e41106ed0a2.patch";
+            hash = "sha256-jH4tnA1PIOU8BGkKetJXnBVggXe60kSRtvvKzKRjFVw=";
+          })
         ];
       });
 
