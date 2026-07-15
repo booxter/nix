@@ -17,42 +17,30 @@ let
     else
       ".codex";
   tomlFormat = pkgs.formats.toml { };
-  maasJiraEnabled = config.host.codex.mcp.maasJira.enable;
-  maasJiraSecret = "codex/mcp/maas_jira/url";
+  mcps = import ./mcps.nix { inherit config lib; };
   effectiveCodexSettings = lib.recursiveUpdate codexConfig.settings (
     lib.optionalAttrs (!config.host.isLaptop) {
       desktop.keepRemoteControlAwakeWhilePluggedIn = false;
     }
-    // lib.optionalAttrs maasJiraEnabled {
-      mcp_servers.maas_jira = {
-        url = config.sops.placeholder.${maasJiraSecret};
-        auth = "oauth";
-        default_tools_approval_mode = "writes";
-      };
-    }
+    // lib.optionalAttrs mcps.enabled mcps.settings
   );
   generatedCodexConfig = tomlFormat.generate "codex-system-config" effectiveCodexSettings;
   hostSecretFile = ../../../secrets + "/${config.host.secretDomain}/${hostname}.yaml";
 in
 {
-  options.host.codex.mcp.maasJira.enable = lib.mkEnableOption "the NVIDIA MaaS Jira MCP server";
+  options.host.codex.mcp = mcps.options;
 
   config = {
-    assertions = [
-      {
-        assertion = !maasJiraEnabled || config.host.secretDomain == "work";
-        message = "NVIDIA MaaS Jira MCP must use the isolated work SOPS domain.";
-      }
-    ];
+    assertions = mcps.assertions;
 
     environment.etc."codex/config.toml" = lib.mkIf codexConfigEnabled {
       source =
-        if maasJiraEnabled then config.sops.templates."codex-config.toml".path else generatedCodexConfig;
+        if mcps.enabled then config.sops.templates."codex-config.toml".path else generatedCodexConfig;
     };
 
-    sops = lib.mkIf maasJiraEnabled {
+    sops = lib.mkIf mcps.enabled {
       defaultSopsFile = hostSecretFile;
-      secrets.${maasJiraSecret} = { };
+      secrets = mcps.secrets;
       templates."codex-config.toml" = {
         owner = username;
         group = "staff";
