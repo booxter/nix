@@ -18,6 +18,13 @@ let
     `nix shell nixpkgs#<package> -c <command>` instead of installing it globally.
     Nix builders for x86_64-linux and aarch64-darwin are available for
     cross-platform builds.
+
+    When creating pull requests:
+    - Keep descriptions terse: at most three bullets describing material changes.
+    - Do not add headings or boilerplate sections such as Summary, Validation, or Testing.
+    - Mention checks only when they failed, were skipped, or require reviewer action.
+    - Do not restate the title or commit messages.
+    - These rules override generic PR-body conventions from publishing workflows.
   '';
   codexContext =
     agentContext
