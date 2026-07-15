@@ -127,6 +127,19 @@
             ];
             hash = "sha256-+yyajBobp07bvndthBPUXCqjlUsTWlx7Y5FufR9PlVM=";
           })
+          # Limit gallery downloads and uploads to a configurable media count.
+          (prev.fetchpatch {
+            url = "https://github.com/booxter/lolek/commit/4494acb9249ad082cab17eeb734f84d80b6b64e4.patch";
+            # The package source filter omits the NixOS module and tests.
+            excludes = [
+              "nix/module.nix"
+              "nix/tests/service.nix"
+              "test/lolek/downloader_test.exs"
+              "test/lolek/gallery_downloader_test.exs"
+              "test/lolek/send_file_test.exs"
+            ];
+            hash = "sha256-XXIyfdp1g+ps9IKb9AkZaQEC/ZBu5enD4w7A/EJ6+ok=";
+          })
         ];
       });
 
