@@ -115,13 +115,6 @@
 
       lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
-          # Reject TikTok channel links that do not identify a video or photo.
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/lolek/commit/99fac30eea2e29ad23dd1313fd6825c4dd3e1e0e.patch";
-            # The package source filter omits tests.
-            excludes = [ "test/lolek/url_test.exs" ];
-            hash = "sha256-knk/GjF3gSZ+4zE3qVlZnUcwxsud8m2HJphtqEDpdnc=";
-          })
           # Enforce an overall deadline for processing Telegram requests.
           (prev.fetchpatch {
             url = "https://github.com/booxter/lolek/commit/b7a885eb59b955e656b28504e56bd71c8a531e6c.patch";
@@ -132,19 +125,6 @@
               "test/lolek_test.exs"
             ];
             hash = "sha256-+yyajBobp07bvndthBPUXCqjlUsTWlx7Y5FufR9PlVM=";
-          })
-          # Limit gallery downloads and uploads to a configurable media count.
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/lolek/commit/4494acb9249ad082cab17eeb734f84d80b6b64e4.patch";
-            # The package source filter omits the NixOS module and tests.
-            excludes = [
-              "nix/module.nix"
-              "nix/tests/service.nix"
-              "test/lolek/downloader_test.exs"
-              "test/lolek/gallery_downloader_test.exs"
-              "test/lolek/send_file_test.exs"
-            ];
-            hash = "sha256-XXIyfdp1g+ps9IKb9AkZaQEC/ZBu5enD4w7A/EJ6+ok=";
           })
         ];
       });
