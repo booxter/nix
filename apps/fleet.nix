@@ -181,6 +181,8 @@ let
   issueInternalServiceCertPackage = appPackages.issue-internal-service-cert;
   issueObservabilityCertPackage = appPackages.issue-observability-cert;
   issueProxmoxExporterTokenPackage = appPackages.issue-proxmox-exporter-token;
+  seerrRequestStoragePackage = appPackages.seerr-request-storage;
+  seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
   pkiRotationPackage = pkgs.pki-rotation;
   issueObservabilityCertApp = pkgs.writeShellApplication {
     name = "issue-observability-cert-app";
@@ -407,6 +409,10 @@ in
     mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
   "issue-proxmox-exporter-token" =
     mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
+  "seerr-request-storage" =
+    mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
+  "seerr-update-user-tags" =
+    mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
   "pki-rotation" =
     mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
   "reset-oidc" =
