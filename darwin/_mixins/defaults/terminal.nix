@@ -26,14 +26,8 @@ let
 
     if /usr/bin/plutil -extract ${lib.escapeShellArg profileKey} xml1 \
       -o "$current_profile" "$preferences" 2>/dev/null \
-      && /usr/bin/cmp -s "$current_profile" "$desired_profile" \
-      && ! /usr/bin/plutil -type SecureKeyboardEntry "$preferences" >/dev/null 2>&1; then
+      && /usr/bin/cmp -s "$current_profile" "$desired_profile"; then
       exit 0
-    fi
-
-    # Restore Terminal's default after the old skhd configuration forced this off.
-    if /usr/bin/plutil -type SecureKeyboardEntry "$preferences" >/dev/null 2>&1; then
-      /usr/bin/plutil -remove SecureKeyboardEntry "$preferences"
     fi
 
     profile_xml="$(/usr/bin/plutil -convert xml1 -o - ${terminalProfile})"
@@ -52,6 +46,7 @@ let
 in
 {
   system.defaults.CustomUserPreferences."com.apple.Terminal" = {
+    SecureKeyboardEntry = true;
     "Default Window Settings" = profileName;
     "Startup Window Settings" = profileName;
   };
