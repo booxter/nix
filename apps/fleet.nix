@@ -68,10 +68,14 @@ let
         deploy [fleet deploy args]
         deploy --disko <host> <device>
 
+      GitHub branch deployments merge the latest origin/master by default.
+      Pass --no-merge to deploy the selected branch exactly as published.
+
       Examples:
         deploy
         deploy -A --select
         deploy --branch ci/flake-update --boot srvarr
+        deploy --branch ci/flake-update --no-merge srvarr
         deploy --branch dhcp-unifi --test beast
         deploy --local mair
         deploy --disko frame /dev/sdX

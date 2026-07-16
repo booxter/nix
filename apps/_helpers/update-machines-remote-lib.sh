@@ -9,6 +9,26 @@ deploy_flake_ref() {
   fi
 }
 
+merge_latest_master() {
+  local repo_dir="$1"
+  local branch="$2"
+
+  echo "Merging latest origin/master into ${branch}."
+  GIT_CONFIG_NOSYSTEM=1 \
+    GIT_CONFIG_GLOBAL=/dev/null \
+    GIT_CONFIG_SYSTEM=/dev/null \
+    GIT_TERMINAL_PROMPT=0 \
+    git -C "$repo_dir" fetch origin master
+  GIT_CONFIG_NOSYSTEM=1 \
+    GIT_CONFIG_GLOBAL=/dev/null \
+    GIT_CONFIG_SYSTEM=/dev/null \
+    git -C "$repo_dir" \
+      -c user.name="Nix deploy" \
+      -c user.email="nix-deploy@localhost" \
+      -c commit.gpgSign=false \
+      merge --no-edit --no-gpg-sign FETCH_HEAD
+}
+
 run_nh_from_repo() {
   local flake_ref
   flake_ref="$(deploy_flake_ref)"
