@@ -58,6 +58,11 @@ in
       commit.gpgSign = true;
       tag.gpgSign = true;
 
+      hook."commit-message-format" = {
+        event = "commit-msg";
+        command = lib.getExe scmPkgs.check-commit-message;
+      };
+
       # Keep a generic pager for non-diff git commands. diff-so-fancy is only
       # suitable for diff-shaped output and breaks commands like `git grep`
       # when installed as the global core.pager.
