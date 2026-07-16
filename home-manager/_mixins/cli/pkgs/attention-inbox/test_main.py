@@ -120,6 +120,16 @@ class AttentionInboxTests(unittest.TestCase):
             },
         )
 
+    def test_normalizes_offset_timestamps_to_utc(self):
+        todo = gitlab_todo(7)
+        todo["created_at"] = "2026-07-16T10:20:38.020-07:00"
+        todo["updated_at"] = "2026-07-16T10:21:39.123456-07:00"
+
+        item = attention_inbox.normalize_gitlab_todo(todo)
+
+        self.assertEqual(item["created_at"], "2026-07-16T17:20:38.020000Z")
+        self.assertEqual(item["updated_at"], "2026-07-16T17:21:39.123456Z")
+
     def test_collects_newest_items_first(self):
         todos = [
             gitlab_todo(1, updated_at="2026-07-16T12:00:00Z"),

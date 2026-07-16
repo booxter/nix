@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import datetime as dt
 import json
 import re
 import subprocess
@@ -85,6 +86,19 @@ def first_text(*values):
     return None
 
 
+def normalize_timestamp(value):
+    value = first_text(value)
+    if value is None:
+        return None
+    try:
+        parsed = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return value
+    if parsed.tzinfo is None:
+        return value
+    return parsed.astimezone(dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
 def item_reference(kind, target):
     iid = target.get("iid")
     if iid is None:
@@ -134,8 +148,8 @@ def normalize_gitlab_todo(todo):
             "name": first_text(author.get("name")),
             "username": first_text(author.get("username")),
         },
-        "created_at": first_text(todo.get("created_at")),
-        "updated_at": first_text(todo.get("updated_at")),
+        "created_at": normalize_timestamp(todo.get("created_at")),
+        "updated_at": normalize_timestamp(todo.get("updated_at")),
     }
 
 
