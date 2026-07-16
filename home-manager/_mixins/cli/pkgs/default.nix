@@ -1,5 +1,7 @@
 { pkgs }:
 {
+  attention-inbox = pkgs.callPackage ./attention-inbox { };
+
   sync-repo = pkgs.callPackage ./sync-repo { };
 
   xrun-nixpkgs = pkgs.writeShellApplication {
