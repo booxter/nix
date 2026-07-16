@@ -19,6 +19,25 @@ let
     Nix builders for x86_64-linux and aarch64-darwin are available for
     cross-platform builds.
 
+    When creating or amending Git commits:
+    - Follow the repository's existing commit-message style.
+    - Keep the subject at most 72 characters; prefer 50 or fewer when that
+      remains clear.
+    - Separate a body from the subject with a blank line.
+    - Hard-wrap body prose at 72 characters. Hard-wrapping means inserting
+      newline characters so each physical prose line is at most 72 characters;
+      terminal or editor soft wrapping does not count.
+    - Do not split URLs, literal code, long identifiers, or Git trailers solely
+      to satisfy the limit.
+    - For multiline messages, compose and validate the complete message in a
+      file and use `git commit -F <file>` instead of a long `-m` argument.
+    - Never bypass commit-message validation with `--no-verify` or disable the
+      `commit-message-format` hook.
+    - If validation fails, edit the saved message and run
+      `git hook run commit-msg -- "$(git rev-parse --git-path COMMIT_EDITMSG)"`
+      until it passes, then retry the commit once. Do not repeatedly create and
+      amend commits while guessing at the format.
+
     When creating pull requests:
     - Keep descriptions terse: at most three bullets describing material changes.
     - Do not add headings or boilerplate sections such as Summary, Validation, or Testing.

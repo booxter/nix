@@ -1,5 +1,7 @@
 { pkgs }:
 {
+  check-commit-message = pkgs.callPackage ./check-commit-message.nix { };
+
   glab-mr-create = pkgs.writeShellApplication {
     name = "glab-mr-create";
     runtimeInputs = [ pkgs.glab ];
