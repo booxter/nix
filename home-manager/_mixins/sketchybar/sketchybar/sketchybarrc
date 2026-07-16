@@ -43,6 +43,7 @@ source "$CONFIG_DIR/items/codex.sh"
 source "$CONFIG_DIR/items/alertmanager.sh"
 
 source "$CONFIG_DIR/items/attention-inbox.sh"
+source "$CONFIG_DIR/items/github-status.sh"
 
 sketchybar --add item chevron left \
            --set chevron icon=􀁖  label.drawing=off \
