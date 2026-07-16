@@ -392,6 +392,7 @@ jobs:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         with:
+          retries: 3
           script: |
             const fs = require("fs");
             const path = require("path");
