@@ -71,7 +71,7 @@ let
     lib.optionalString isWork ''
       sketchybar --add item attention.inbox right                                \
                  --set attention.inbox script="$PLUGIN_DIR/attention-inbox.sh"   \
-                                       update_freq=60                            \
+                                       update_freq=1200                          \
                                        drawing=off                               \
                                        icon.drawing=off                          \
                                        icon.padding_left=6                       \
