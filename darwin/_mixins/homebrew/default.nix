@@ -23,7 +23,7 @@
 
   homebrew = {
     enable = true;
-    greedyCasks = true;
+    greedyCasks = false;
     onActivation = {
       autoUpdate = false;
       upgrade = true;
