@@ -36,16 +36,19 @@ SOPS configuration check enforces this invariant.
 
 ## Codex MaaS MCPs
 
-JGW stores the NVIDIA MaaS Jira and Redmine endpoints at
-`codex/mcp/maas_jira/url` and `codex/mcp/maas_redmine/url` in its work-domain
-secret. During activation, `sops-nix` renders the endpoints into the protected
-system Codex configuration; the plaintext values are not evaluated into the
-Nix store.
+JGW stores the NVIDIA MaaS GitLab, Jira, NVBugs, and Redmine endpoints at
+`codex/mcp/maas_gitlab/url`, `codex/mcp/maas_jira/url`,
+`codex/mcp/maas_nvbugs/url`, and `codex/mcp/maas_redmine/url` in its
+work-domain secret. During activation, `sops-nix` renders the endpoints into
+the protected system Codex configuration; the plaintext values are not
+evaluated into the Nix store.
 
 After activating the configuration, authenticate with NVIDIA SSO:
 
 ```sh
+codex mcp login maas_gitlab
 codex mcp login maas_jira
+codex mcp login maas_nvbugs
 codex mcp login maas_redmine
 ```
 

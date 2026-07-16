@@ -19,10 +19,21 @@ let
     };
 
   services = {
+    maasGitLab = mkMaasService {
+      codexName = "maas_gitlab";
+      displayName = "GitLab";
+    };
+
     maasJira = mkMaasService {
       codexName = "maas_jira";
       displayName = "Jira";
     };
+
+    maasNVBugs = mkMaasService {
+      codexName = "maas_nvbugs";
+      displayName = "NVBugs";
+    };
+
     maasRedmine = mkMaasService {
       codexName = "maas_redmine";
       displayName = "Redmine";
