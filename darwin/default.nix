@@ -33,6 +33,7 @@
     ++ lib.optionals (!isWork) [
       ./_mixins/attic
       ./_mixins/browser
+      ./_mixins/vnc
     ]
     ++ lib.optionals isWork [
       ./_mixins/docker-desktop
