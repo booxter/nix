@@ -8,6 +8,7 @@ BRANCH="master"
 BRANCH_EXPLICIT=false
 REBUILD_ACTION="switch"
 SOURCE_MODE="github"
+MERGE_MASTER=true
 ALL=false
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -337,7 +338,7 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  apps/update-machines.sh [--branch BRANCH|--local] [--switch|--boot|--test] [--dry-run] [host1 ...]
+  apps/update-machines.sh [--branch BRANCH|--local] [--no-merge] [--switch|--boot|--test] [--dry-run] [host1 ...]
   apps/update-machines.sh [-A|--all|--select] [--personal|--work|--both] [other options] [host1 ...]
 
 Options:
@@ -347,6 +348,7 @@ Options:
   --both            Update all machines (work + personal).
   --branch BRANCH   Git branch to deploy (default: master).
   --local           Deploy committed HEAD from the current checkout; ignore working-tree changes.
+  --no-merge        Do not merge the latest origin/master into a GitHub branch checkout.
   --switch          Switch into the new configuration immediately (default).
   --boot            Stage the new configuration for the next boot.
   --test            Build and preview activation changes without activating them.
@@ -355,6 +357,7 @@ Options:
 
 Notes:
   - With no host names, deploy the current machine.
+  - GitHub branch checkouts merge the latest origin/master by default.
   - --select with no host names offers all hosts allowed by the selected mode.
   - Do not combine explicit host names with --all.
   - --test is NixOS-only and keeps using nixos-rebuild dry-activate.
@@ -382,6 +385,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --local)
       SOURCE_MODE="local"
+      shift
+      ;;
+    --no-merge)
+      MERGE_MASTER=false
       shift
       ;;
     --switch)
@@ -536,6 +543,7 @@ set -euo pipefail
 REMOTE
 )"
   remote_payload+=$'\n'"$(declare -f deploy_flake_ref)"$'\n'
+  remote_payload+=$'\n'"$(declare -f merge_latest_master)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nh_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nh_for_host_from_repo)"$'\n'
   remote_payload+=$'\n'"$(declare -f run_nixos_rebuild_from_repo)"$'\n'
@@ -564,7 +572,8 @@ rebuild_action="$6"
 target_config_name="$7"
 target_runtime_host="$8"
 source_mode="$9"
-source_archive="${10:-}"
+merge_master="${10}"
+source_archive="${11:-}"
 repo_dir="$(mktemp -d)"
 
 get_avail_path() {
@@ -620,6 +629,9 @@ case "$source_mode" in
   GIT_CONFIG_SYSTEM=/dev/null \
   GIT_TERMINAL_PROMPT=0 \
   git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"
+    if [[ "$merge_master" == "true" ]]; then
+      merge_latest_master "$repo_dir" "$branch"
+    fi
     ;;
   *)
     echo "Unsupported deployment source mode: ${source_mode}." >&2
@@ -661,7 +673,7 @@ REMOTE
       source_archive="$remote_archive"
       cp "$LOCAL_SOURCE_ARCHIVE" "$source_archive"
     fi
-    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$source_archive"; then
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$MERGE_MASTER" "$source_archive"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -684,7 +696,7 @@ REMOTE
       continue
     fi
   fi
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$source_archive"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$MERGE_MASTER" "$source_archive"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")

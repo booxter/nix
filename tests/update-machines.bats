@@ -205,6 +205,43 @@ EOF
   rm -rf "$LOCAL_SOURCE_ROOT"
 }
 
+@test "merge_latest_master merges the remote master into the deployment checkout" {
+  workdir="$BATS_TMPDIR/merge-latest-master"
+  upstream="$workdir/upstream.git"
+  source_repo="$workdir/source"
+  deploy_repo="$workdir/deploy"
+  rm -rf "$workdir"
+  mkdir -p "$workdir"
+  git init -q --bare "$upstream"
+  git init -q -b master "$source_repo"
+  git -C "$source_repo" config user.email test@example.invalid
+  git -C "$source_repo" config user.name Test
+  printf '%s\n' base > "$source_repo/base"
+  git -C "$source_repo" add base
+  git -C "$source_repo" -c commit.gpgSign=false commit -qm base
+  git -C "$source_repo" remote add origin "$upstream"
+  git -C "$source_repo" push -q -u origin master
+  git -C "$source_repo" switch -q -c feature
+  printf '%s\n' feature > "$source_repo/feature"
+  git -C "$source_repo" add feature
+  git -C "$source_repo" -c commit.gpgSign=false commit -qm feature
+  git -C "$source_repo" push -q -u origin feature
+  git -C "$source_repo" switch -q master
+  printf '%s\n' master > "$source_repo/master"
+  git -C "$source_repo" add master
+  git -C "$source_repo" -c commit.gpgSign=false commit -qm master
+  master_commit="$(git -C "$source_repo" rev-parse HEAD)"
+  git -C "$source_repo" push -q
+  git clone -q --branch feature --single-branch "$upstream" "$deploy_repo"
+
+  run merge_latest_master "$deploy_repo" feature
+
+  [ "$status" -eq 0 ]
+  [ -f "$deploy_repo/feature" ]
+  [ -f "$deploy_repo/master" ]
+  git -C "$deploy_repo" merge-base --is-ancestor "$master_commit" HEAD
+}
+
 @test "lan_dns_lookup_candidates adds the LAN domain for bare hostnames" {
   run lan_dns_lookup_candidates beast home.arpa
   [ "$status" -eq 0 ]
@@ -604,6 +641,22 @@ EOF
   [[ "$output" == *"--local and --branch cannot be used together"* ]]
 }
 
+@test "update-machines passes the no-merge choice to the deployment checkout" {
+  workdir="$BATS_TMPDIR/update-machines-no-merge"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+  export SSH_CALLS_OUT="$workdir/ssh.calls"
+  export UPDATE_MACHINES_TEST_ASSUME_TTY=true
+
+  run bash ./apps/update-machines.sh --no-merge alpha
+
+  [ "$status" -eq 0 ]
+  grep -Eq ' github false[[:space:]]*$' "$SSH_CALLS_OUT"
+}
+
 @test "update-machines uploads committed checkout state in local mode" {
   workdir="$BATS_TMPDIR/update-machines-local-source"
   source_repo="$workdir/source"
@@ -657,8 +710,11 @@ EOF
   [[ "$uploaded_script" == *'target_config_name="$7"'* ]]
   [[ "$uploaded_script" == *'target_runtime_host="$8"'* ]]
   [[ "$uploaded_script" == *'source_mode="$9"'* ]]
+  [[ "$uploaded_script" == *'merge_master="${10}"'* ]]
+  [[ "$uploaded_script" == *'source_archive="${11:-}"'* ]]
   [[ "$uploaded_script" == *'tar -xf "$source_archive" -C "$repo_dir"'* ]]
   [[ "$uploaded_script" == *"$expected_clone"* ]]
+  [[ "$uploaded_script" == *'merge_latest_master "$repo_dir" "$branch"'* ]]
   [[ "$uploaded_script" == *'SUDO_ASKPASS="$askpass_script" sudo -A "$@"'* ]]
   [[ "$uploaded_script" == *'run_sudo_for_remote_darwin "$bash_bin" -e -u -o pipefail -c'* ]]
   [[ "$uploaded_script" == *'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"'* ]]
