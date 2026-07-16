@@ -155,6 +155,9 @@ let
     "romm-db-init.service"
     "romm-valkey.service"
     "sops-install-secrets.service"
+    # Never run an Alembic migration without first replacing the staged
+    # logical dump with one from the current database revision.
+    "romm-backup.service"
   ];
 
   runtimeAfter = setupBefore ++ [ "romm-setup.service" ];
@@ -400,6 +403,7 @@ in
     description = "Run RomM database migrations and startup tasks";
     wantedBy = [ "multi-user.target" ];
     wants = rommPodmanBaseUnits ++ setupBefore;
+    requires = [ "romm-backup.service" ];
     after = rommPodmanBaseUnits ++ setupBefore ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = [
       mediaDir
