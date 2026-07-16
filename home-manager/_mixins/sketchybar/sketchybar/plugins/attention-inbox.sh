@@ -6,8 +6,9 @@ ITEM="attention.inbox"
 POPUP_ITEM_PREFIX="attention.inbox."
 MAX_ITEMS=10
 
-BLUE="0xff7aa2f7"
 NEUTRAL="0xffa9b1d6"
+ORANGE="0xffff9e64"
+RED="0xfff7768e"
 YELLOW="0xffe0af68"
 
 hide_popup_items() {
@@ -130,11 +131,16 @@ fi
 
 new_count="$(jq -r '.new_count' <<<"$view")"
 row_count="$(jq -r '.items | length' <<<"$view")"
+if ((total > 10)); then
+  count_color="$RED"
+else
+  count_color="$ORANGE"
+fi
 args=(
   --set "$ITEM"
   drawing=on
   label="$total"
-  label.color="$BLUE"
+  label.color="$count_color"
 )
 
 if ((new_count > 0)); then

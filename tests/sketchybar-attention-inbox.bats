@@ -75,7 +75,7 @@ write_inbox() {
   run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"--set attention.inbox drawing=on label=2 label.color=0xff7aa2f7 icon.drawing=off"* ]]
+  [[ "$output" == *"--set attention.inbox drawing=on label=2 label.color=0xffff9e64 icon.drawing=off"* ]]
   [[ "$output" == *"--set attention.inbox.0 drawing=on"* ]]
   [[ "$output" == *"label=gitlab · assigned · tools/widget!41 · Older item"* ]]
 }
@@ -107,7 +107,7 @@ write_inbox() {
   run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"--set attention.inbox drawing=on label=2 label.color=0xff7aa2f7 icon.drawing=on icon=● icon.color=0xffe0af68"* ]]
+  [[ "$output" == *"--set attention.inbox drawing=on label=2 label.color=0xffff9e64 icon.drawing=on icon=● icon.color=0xffe0af68"* ]]
   [[ "$output" == *"--set attention.inbox.0 drawing=on"*"icon.drawing=on icon=●"* ]]
   [[ "$output" == *"--set attention.inbox.1 drawing=on"*"icon.drawing=off"* ]]
 }
@@ -152,12 +152,31 @@ write_inbox() {
   run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"--set attention.inbox drawing=on label=11"* ]]
+  [[ "$output" == *"--set attention.inbox drawing=on label=11 label.color=0xfff7768e"* ]]
   [[ "$output" == *"--set attention.inbox.9 drawing=on"* ]]
   [[ "$output" == *"label=gitlab · assigned · tools/widget!9 · Item 9"* ]]
   [[ "$output" == *"click_script=/usr/bin/open https://gitlab.test/tools/widget/-/merge_requests/9; sketchybar --set attention.inbox popup.drawing=off"* ]]
   [[ "$output" != *"attention.inbox.10"* ]]
   [[ "$output" != *"Item 10"* ]]
+}
+
+@test "keeps an exact count of ten orange" {
+  items="$(jq -n '[
+    range(0; 10) as $index
+    | {
+        id: "gitlab:\($index)",
+        source: "gitlab",
+        reason: "assigned",
+        title: "Item \($index)",
+        created_at: "2026-07-01T12:00:00Z"
+      }
+  ]')"
+  write_inbox "$items"
+
+  run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"--set attention.inbox drawing=on label=10 label.color=0xffff9e64"* ]]
 }
 
 @test "shell-quotes popup URLs before assigning click scripts" {
