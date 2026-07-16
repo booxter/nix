@@ -34,17 +34,22 @@ nix run .#sops-bootstrap -- --domain work --local "$(hostname -s)"
 Work creation rules must not contain recipients present in `main` rules. The
 SOPS configuration check enforces this invariant.
 
-## Codex Jira MCP
+## Codex MaaS MCPs
 
-JGW stores the NVIDIA MaaS Jira endpoint at
-`codex/mcp/maas_jira/url` in its work-domain secret. During activation,
-`sops-nix` renders the endpoint into the protected system Codex configuration;
-the plaintext value is not evaluated into the Nix store.
+JGW stores the NVIDIA MaaS GitLab, Jira, NVBugs, and Redmine endpoints at
+`codex/mcp/maas_gitlab/url`, `codex/mcp/maas_jira/url`,
+`codex/mcp/maas_nvbugs/url`, and `codex/mcp/maas_redmine/url` in its
+work-domain secret. During activation, `sops-nix` renders the endpoints into
+the protected system Codex configuration; the plaintext values are not
+evaluated into the Nix store.
 
 After activating the configuration, authenticate with NVIDIA SSO:
 
 ```sh
+codex mcp login maas_gitlab
 codex mcp login maas_jira
+codex mcp login maas_nvbugs
+codex mcp login maas_redmine
 ```
 
 Codex stores the resulting OAuth credential in its local credential store. The
