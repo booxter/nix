@@ -20,6 +20,18 @@ stdenv.mkDerivation {
     runHook postBuild
   '';
 
+  doCheck = true;
+
+  checkPhase = ''
+    runHook preCheck
+
+    $CC -Wall -Wextra -Wno-unused-function -O2 \
+      -o darwin-lan-wan-bpf-tests test.c -lpcap
+    ./darwin-lan-wan-bpf-tests
+
+    runHook postCheck
+  '';
+
   installPhase = ''
     runHook preInstall
 

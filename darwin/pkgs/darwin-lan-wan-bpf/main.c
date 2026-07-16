@@ -85,6 +85,18 @@ struct capture_interface {
   bool retrying;
 };
 
+struct capture_operations {
+  bool (*get_interface_mac)(const char *interface, uint8_t out[ETH_ADDR_LEN],
+                            bool report_missing);
+  bool (*open_capture_interface)(struct capture_interface *iface,
+                                 bool report_errors);
+  void (*close_capture_interface)(struct capture_interface *iface);
+  int (*get_selectable_fd)(pcap_t *pcap);
+  int (*dispatch)(pcap_t *pcap, int packet_count, pcap_handler callback,
+                  u_char *user);
+  const char *(*get_error)(pcap_t *pcap);
+};
+
 struct context {
   struct capture_interface interfaces[MAX_INTERFACES];
   size_t interface_count;
@@ -784,22 +796,35 @@ static bool open_capture_interface(struct capture_interface *iface,
   return true;
 }
 
+static const char *get_capture_error(pcap_t *pcap) { return pcap_geterr(pcap); }
+
+static const struct capture_operations system_capture_operations = {
+    .get_interface_mac = get_interface_mac,
+    .open_capture_interface = open_capture_interface,
+    .close_capture_interface = close_capture_interface,
+    .get_selectable_fd = pcap_get_selectable_fd,
+    .dispatch = pcap_dispatch,
+    .get_error = get_capture_error,
+};
+
 static void schedule_capture_retry(struct capture_interface *iface,
-                                   time_t now) {
-  close_capture_interface(iface);
+                                   time_t now,
+                                   const struct capture_operations *operations) {
+  operations->close_capture_interface(iface);
   iface->retrying = true;
   iface->next_retry = now + INTERFACE_RETRY_SECONDS;
 }
 
 static void try_open_capture_interface(struct capture_interface *iface,
-                                       time_t now) {
+                                       time_t now,
+                                       const struct capture_operations *operations) {
   if (iface->pcap != NULL || now < iface->next_retry) {
     return;
   }
 
   bool was_retrying = iface->retrying;
-  if (!open_capture_interface(iface, !was_retrying)) {
-    schedule_capture_retry(iface, now);
+  if (!operations->open_capture_interface(iface, !was_retrying)) {
+    schedule_capture_retry(iface, now, operations);
     return;
   }
 
@@ -812,9 +837,10 @@ static void try_open_capture_interface(struct capture_interface *iface,
 }
 
 static void maintain_capture_interface(struct capture_interface *iface,
-                                       time_t now) {
+                                       time_t now,
+                                       const struct capture_operations *operations) {
   if (iface->pcap == NULL) {
-    try_open_capture_interface(iface, now);
+    try_open_capture_interface(iface, now, operations);
     return;
   }
 
@@ -824,10 +850,10 @@ static void maintain_capture_interface(struct capture_interface *iface,
   iface->next_health_check = now + INTERFACE_RETRY_SECONDS;
 
   uint8_t current_mac[ETH_ADDR_LEN];
-  if (!get_interface_mac(iface->name, current_mac, false)) {
+  if (!operations->get_interface_mac(iface->name, current_mac, false)) {
     fprintf(stderr, "interface %s disappeared; retrying capture\n",
             iface->name);
-    schedule_capture_retry(iface, now);
+    schedule_capture_retry(iface, now, operations);
     return;
   }
 
@@ -855,6 +881,29 @@ static time_t next_capture_maintenance(const struct context *ctx) {
   }
 
   return next;
+}
+
+static int collect_capture_fds(const struct context *ctx, fd_set *readfds,
+                               const struct capture_operations *operations) {
+  int max_fd = -1;
+
+  FD_ZERO(readfds);
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    const struct capture_interface *iface = &ctx->interfaces[i];
+    if (iface->pcap == NULL) {
+      continue;
+    }
+
+    int fd = operations->get_selectable_fd(iface->pcap);
+    if (fd >= 0) {
+      FD_SET(fd, readfds);
+      if (fd > max_fd) {
+        max_fd = fd;
+      }
+    }
+  }
+
+  return max_fd;
 }
 
 static uint64_t total_packets(const struct counters *counters) {
@@ -966,6 +1015,34 @@ static void handle_packet(u_char *user, const struct pcap_pkthdr *header,
   }
 }
 
+static void dispatch_capture_interfaces(
+    struct context *ctx, int ready, const fd_set *readfds, time_t now,
+    const struct capture_operations *operations) {
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    struct capture_interface *iface = &ctx->interfaces[i];
+    if (iface->pcap == NULL) {
+      continue;
+    }
+
+    int fd = operations->get_selectable_fd(iface->pcap);
+    if (fd >= 0 && (ready == 0 || !FD_ISSET(fd, readfds))) {
+      continue;
+    }
+
+    int rc = operations->dispatch(iface->pcap, -1, handle_packet,
+                                  (u_char *)iface);
+    if (rc == PCAP_ERROR_BREAK) {
+      break;
+    }
+
+    if (rc == PCAP_ERROR) {
+      fprintf(stderr, "pcap_dispatch(%s): %s\n", iface->name,
+              operations->get_error(iface->pcap));
+      schedule_capture_retry(iface, now, operations);
+    }
+  }
+}
+
 static void usage(FILE *stream, const char *program_name) {
   fprintf(stream,
           "Usage: %s [-i interface]... [-l cidr] [-p seconds] [-n packets]\n"
@@ -989,6 +1066,7 @@ static void usage(FILE *stream, const char *program_name) {
           DEFAULT_PROMETHEUS_METRIC, DEFAULT_TEXTFILE_METRIC);
 }
 
+#ifndef DARWIN_LAN_WAN_BPF_TEST
 int main(int argc, char **argv) {
   struct context ctx = {
       .print_interval_seconds = 5,
@@ -1088,7 +1166,8 @@ int main(int argc, char **argv) {
 
   time_t started_at = time(NULL);
   for (size_t i = 0; i < ctx.interface_count; i++) {
-    try_open_capture_interface(&ctx.interfaces[i], started_at);
+    try_open_capture_interface(&ctx.interfaces[i], started_at,
+                               &system_capture_operations);
   }
 
   signal(SIGINT, request_stop);
@@ -1114,26 +1193,13 @@ int main(int argc, char **argv) {
   while (!stop_requested) {
     time_t loop_started_at = time(NULL);
     for (size_t i = 0; i < ctx.interface_count; i++) {
-      maintain_capture_interface(&ctx.interfaces[i], loop_started_at);
+      maintain_capture_interface(&ctx.interfaces[i], loop_started_at,
+                                 &system_capture_operations);
     }
 
     fd_set readfds;
-    FD_ZERO(&readfds);
-
-    int max_fd = -1;
-    for (size_t i = 0; i < ctx.interface_count; i++) {
-      if (ctx.interfaces[i].pcap == NULL) {
-        continue;
-      }
-
-      int fd = pcap_get_selectable_fd(ctx.interfaces[i].pcap);
-      if (fd >= 0) {
-        FD_SET(fd, &readfds);
-        if (fd > max_fd) {
-          max_fd = fd;
-        }
-      }
-    }
+    int max_fd =
+        collect_capture_fds(&ctx, &readfds, &system_capture_operations);
 
     time_t before_select = time(NULL);
     time_t next_wakeup = next_print;
@@ -1159,36 +1225,16 @@ int main(int argc, char **argv) {
       for (size_t i = 0; i < ctx.interface_count; i++) {
         struct capture_interface *iface = &ctx.interfaces[i];
         if (iface->pcap != NULL) {
-          schedule_capture_retry(iface, failed_at);
+          schedule_capture_retry(iface, failed_at,
+                                 &system_capture_operations);
           iface->next_retry = failed_at;
         }
       }
       continue;
     }
 
-    for (size_t i = 0; i < ctx.interface_count; i++) {
-      struct capture_interface *iface = &ctx.interfaces[i];
-      if (iface->pcap == NULL) {
-        continue;
-      }
-
-      int fd = pcap_get_selectable_fd(iface->pcap);
-
-      if (fd >= 0 && (ready == 0 || !FD_ISSET(fd, &readfds))) {
-        continue;
-      }
-
-      int rc = pcap_dispatch(iface->pcap, -1, handle_packet, (u_char *)iface);
-      if (rc == PCAP_ERROR_BREAK) {
-        break;
-      }
-
-      if (rc == PCAP_ERROR) {
-        fprintf(stderr, "pcap_dispatch(%s): %s\n", iface->name,
-                pcap_geterr(iface->pcap));
-        schedule_capture_retry(iface, time(NULL));
-      }
-    }
+    dispatch_capture_interfaces(&ctx, ready, &readfds, time(NULL),
+                                &system_capture_operations);
 
     time_t now = time(NULL);
     if (now >= next_print) {
@@ -1229,3 +1275,4 @@ int main(int argc, char **argv) {
   close_capture_interfaces(&ctx);
   return 0;
 }
+#endif
