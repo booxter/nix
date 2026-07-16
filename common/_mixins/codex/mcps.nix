@@ -4,6 +4,7 @@ let
     {
       codexName,
       displayName,
+      oauthClientIdSecret ? null,
       settings ? { },
     }:
     {
@@ -14,8 +15,11 @@ let
         auth = "oauth";
         default_tools_approval_mode = "writes";
       }
+      // lib.optionalAttrs (oauthClientIdSecret != null) {
+        oauth.client_id = config.sops.placeholder.${oauthClientIdSecret};
+      }
       // settings;
-      inherit codexName;
+      inherit codexName oauthClientIdSecret;
     };
 
   services = {
@@ -32,6 +36,7 @@ let
     maasNVBugs = mkMaasService {
       codexName = "maas_nvbugs";
       displayName = "NVBugs";
+      oauthClientIdSecret = "codex/mcp/maas_nvbugs/oauth/client_id";
     };
 
     maasRedmine = mkMaasService {
@@ -44,6 +49,11 @@ let
     optionName: _: config.host.codex.mcp.${optionName}.enable
   ) services;
   enabledServiceList = lib.attrValues enabledServices;
+  enabledSecretNames = lib.concatMap (
+    service:
+    [ service.urlSecret ]
+    ++ lib.optional (service.oauthClientIdSecret != null) service.oauthClientIdSecret
+  ) enabledServiceList;
 in
 {
   options = lib.mapAttrs (_: service: {
@@ -62,9 +72,7 @@ in
     )
   ) enabledServices;
 
-  secrets = lib.listToAttrs (
-    map (service: lib.nameValuePair service.urlSecret { }) enabledServiceList
-  );
+  secrets = lib.genAttrs enabledSecretNames (_: { });
 
   assertions = map (service: {
     assertion = config.host.secretDomain == service.requiredSecretDomain;
