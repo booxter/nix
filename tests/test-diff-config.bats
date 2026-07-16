@@ -122,6 +122,9 @@ printf '<<< %s\n' "$old_path"
 printf '>>> %s\n' "$new_path"
 printf '\n'
 printf 'CHANGED\n'
+printf '[C.] source +14.8 KiB\n'
+printf '\033[31m[C.]\033[0m \033[32msource\033[0m +14.8 KiB\n'
+printf '[U.] nixos-system-frame 26.05.20260712.569d578 -> 26.05.20260714.8eeec93\n'
 printf '[U.] package 1.0 -> 2.0\n'
 printf '\n'
 printf 'SIZE: 1 -> 2\n'
@@ -314,6 +317,8 @@ SH
   [[ "$output" != *"<<< "* ]]
   [[ "$output" != *">>> "* ]]
   [[ "$output" == *"CHANGED"* ]]
+  [[ "$output" != *"source"* ]]
+  [[ "$output" != *"nixos-system-"* ]]
   [[ "$output" == *"[U.] package 1.0 -> 2.0"* ]]
   [[ "$output" == *"SIZE: 1 -> 2"* ]]
 }
