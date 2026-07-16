@@ -4,6 +4,9 @@
 set -euo pipefail
 
 program_name="${DIFF_CONFIG_PROGRAM_NAME:-diff-config}"
+readonly -a ignored_dix_packages=(
+  source
+)
 
 usage() {
   cat <<EOF
@@ -314,6 +317,8 @@ machine_attr_for_label() {
 
 filter_dix_output() {
   local ansi_color_re=$'\033\\[[0-9;]*m'
+  local ignored_package=""
+  local package_name=""
   local plain_line=""
   local seen_output=false
   local line=""
@@ -328,8 +333,13 @@ filter_dix_output() {
       "<<< "*|">>> "*) continue ;;
     esac
 
-    if [[ "${plain_line}" =~ ^\[[^]]+\][[:space:]]+source([[:space:]]|$) ]]; then
-      continue
+    if [[ "${plain_line}" =~ ^\[[^]]+\][[:space:]]+([^[:space:]]+) ]]; then
+      package_name="${BASH_REMATCH[1]}"
+      for ignored_package in "${ignored_dix_packages[@]}"; do
+        if [[ "${package_name}" == "${ignored_package}" ]]; then
+          continue 2
+        fi
+      done
     fi
 
     if [[ "${seen_output}" == false && -z "${plain_line}" ]]; then
