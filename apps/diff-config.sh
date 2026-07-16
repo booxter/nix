@@ -313,15 +313,26 @@ machine_attr_for_label() {
 }
 
 filter_dix_output() {
+  local ansi_color_re=$'\033\\[[0-9;]*m'
+  local plain_line=""
   local seen_output=false
   local line=""
 
   while IFS= read -r line; do
-    case "${line}" in
+    plain_line="${line}"
+    while [[ "${plain_line}" =~ ${ansi_color_re} ]]; do
+      plain_line="${plain_line/"${BASH_REMATCH[0]}"/}"
+    done
+
+    case "${plain_line}" in
       "<<< "*|">>> "*) continue ;;
     esac
 
-    if [[ "${seen_output}" == false && -z "${line}" ]]; then
+    if [[ "${plain_line}" =~ ^\[[^]]+\][[:space:]]+source([[:space:]]|$) ]]; then
+      continue
+    fi
+
+    if [[ "${seen_output}" == false && -z "${plain_line}" ]]; then
       continue
     fi
 
