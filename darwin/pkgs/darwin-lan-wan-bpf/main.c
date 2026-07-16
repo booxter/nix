@@ -33,6 +33,7 @@
 #define MAX_CIDRS 32
 #define MAX_INTERFACES 16
 #define INTERFACE_LABEL_LEN 256
+#define INTERFACE_RETRY_SECONDS 5
 
 enum direction {
   DIR_RECEIVE = 0,
@@ -79,6 +80,9 @@ struct capture_interface {
   uint8_t mac[ETH_ADDR_LEN];
   pcap_t *pcap;
   struct context *ctx;
+  time_t next_retry;
+  time_t next_health_check;
+  bool retrying;
 };
 
 struct context {
@@ -346,7 +350,8 @@ static bool mac_is_multicast(const uint8_t *mac) {
   return (mac[0] & 0x01) != 0;
 }
 
-static bool get_interface_mac(const char *interface, uint8_t out[ETH_ADDR_LEN]) {
+static bool get_interface_mac(const char *interface, uint8_t out[ETH_ADDR_LEN],
+                              bool report_missing) {
   struct ifaddrs *ifaddrs_list = NULL;
 
   if (getifaddrs(&ifaddrs_list) != 0) {
@@ -373,7 +378,7 @@ static bool get_interface_mac(const char *interface, uint8_t out[ETH_ADDR_LEN]) 
 
   freeifaddrs(ifaddrs_list);
 
-  if (!found) {
+  if (!found && report_missing) {
     fprintf(stderr, "could not find MAC address for interface %s\n", interface);
   }
 
@@ -396,7 +401,7 @@ static void print_mac(FILE *stream, const uint8_t mac[ETH_ADDR_LEN]) {
 static bool refresh_interface_mac(struct capture_interface *iface) {
   uint8_t current_mac[ETH_ADDR_LEN];
 
-  if (!get_interface_mac(iface->name, current_mac) ||
+  if (!get_interface_mac(iface->name, current_mac, false) ||
       mac_equal(current_mac, iface->mac)) {
     return false;
   }
@@ -478,7 +483,11 @@ static void print_human_header(const struct context *ctx) {
       printf("; ");
     }
     printf("%s (", ctx->interfaces[i].name);
-    print_mac(stdout, ctx->interfaces[i].mac);
+    if (ctx->interfaces[i].pcap == NULL) {
+      printf("unavailable");
+    } else {
+      print_mac(stdout, ctx->interfaces[i].mac);
+    }
     printf(")");
   }
   printf(", LAN ");
@@ -686,8 +695,13 @@ static void print_status(FILE *stream, const struct context *ctx) {
     if (i > 0) {
       fprintf(stream, "; ");
     }
-    fprintf(stream, "%s, MAC ", ctx->interfaces[i].name);
-    print_mac(stream, ctx->interfaces[i].mac);
+    fprintf(stream, "%s, ", ctx->interfaces[i].name);
+    if (ctx->interfaces[i].pcap == NULL) {
+      fprintf(stream, "unavailable");
+    } else {
+      fprintf(stream, "MAC ");
+      print_mac(stream, ctx->interfaces[i].mac);
+    }
   }
   fprintf(stream, ", LAN CIDRs: ");
   for (size_t i = 0; i < ctx->cidr_count; i++) {
@@ -700,66 +714,147 @@ static void print_status(FILE *stream, const struct context *ctx) {
   fprintf(stream, "\n");
 }
 
-static void close_capture_interfaces(struct context *ctx) {
-  for (size_t i = 0; i < ctx->interface_count; i++) {
-    if (ctx->interfaces[i].pcap != NULL) {
-      pcap_close(ctx->interfaces[i].pcap);
-      ctx->interfaces[i].pcap = NULL;
-    }
+static void close_capture_interface(struct capture_interface *iface) {
+  if (iface->pcap != NULL) {
+    pcap_close(iface->pcap);
+    iface->pcap = NULL;
   }
 }
 
-static bool open_capture_interface(struct capture_interface *iface) {
-  if (!get_interface_mac(iface->name, iface->mac)) {
+static void close_capture_interfaces(struct context *ctx) {
+  for (size_t i = 0; i < ctx->interface_count; i++) {
+    close_capture_interface(&ctx->interfaces[i]);
+  }
+}
+
+static bool open_capture_interface(struct capture_interface *iface,
+                                   bool report_errors) {
+  if (!get_interface_mac(iface->name, iface->mac, report_errors)) {
     return false;
   }
 
   char errbuf[PCAP_ERRBUF_SIZE];
   iface->pcap = pcap_open_live(iface->name, 65535, 0, 1000, errbuf);
   if (iface->pcap == NULL) {
-    fprintf(stderr, "pcap_open_live(%s): %s\n", iface->name, errbuf);
+    if (report_errors) {
+      fprintf(stderr, "pcap_open_live(%s): %s\n", iface->name, errbuf);
+    }
     return false;
   }
 
   if (pcap_datalink(iface->pcap) != DLT_EN10MB) {
-    fprintf(stderr, "unsupported datalink type on %s: %s\n", iface->name,
-            pcap_datalink_val_to_name(pcap_datalink(iface->pcap)));
+    if (report_errors) {
+      fprintf(stderr, "unsupported datalink type on %s: %s\n", iface->name,
+              pcap_datalink_val_to_name(pcap_datalink(iface->pcap)));
+    }
+    close_capture_interface(iface);
     return false;
   }
 
   struct bpf_program filter;
   if (pcap_compile(iface->pcap, &filter, "ip or ip6", 1,
                    PCAP_NETMASK_UNKNOWN) != 0) {
-    fprintf(stderr, "pcap_compile(%s): %s\n", iface->name,
-            pcap_geterr(iface->pcap));
+    if (report_errors) {
+      fprintf(stderr, "pcap_compile(%s): %s\n", iface->name,
+              pcap_geterr(iface->pcap));
+    }
+    close_capture_interface(iface);
     return false;
   }
 
   if (pcap_setfilter(iface->pcap, &filter) != 0) {
-    fprintf(stderr, "pcap_setfilter(%s): %s\n", iface->name,
-            pcap_geterr(iface->pcap));
+    if (report_errors) {
+      fprintf(stderr, "pcap_setfilter(%s): %s\n", iface->name,
+              pcap_geterr(iface->pcap));
+    }
     pcap_freecode(&filter);
+    close_capture_interface(iface);
     return false;
   }
   pcap_freecode(&filter);
 
   if (pcap_setnonblock(iface->pcap, 1, errbuf) != 0) {
-    fprintf(stderr, "pcap_setnonblock(%s): %s\n", iface->name, errbuf);
+    if (report_errors) {
+      fprintf(stderr, "pcap_setnonblock(%s): %s\n", iface->name, errbuf);
+    }
+    close_capture_interface(iface);
     return false;
   }
 
   return true;
 }
 
-static bool open_capture_interfaces(struct context *ctx) {
+static void schedule_capture_retry(struct capture_interface *iface,
+                                   time_t now) {
+  close_capture_interface(iface);
+  iface->retrying = true;
+  iface->next_retry = now + INTERFACE_RETRY_SECONDS;
+}
+
+static void try_open_capture_interface(struct capture_interface *iface,
+                                       time_t now) {
+  if (iface->pcap != NULL || now < iface->next_retry) {
+    return;
+  }
+
+  bool was_retrying = iface->retrying;
+  if (!open_capture_interface(iface, !was_retrying)) {
+    schedule_capture_retry(iface, now);
+    return;
+  }
+
+  iface->retrying = false;
+  iface->next_retry = 0;
+  iface->next_health_check = now + INTERFACE_RETRY_SECONDS;
+  if (was_retrying) {
+    fprintf(stderr, "capture restored on interface %s\n", iface->name);
+  }
+}
+
+static void maintain_capture_interface(struct capture_interface *iface,
+                                       time_t now) {
+  if (iface->pcap == NULL) {
+    try_open_capture_interface(iface, now);
+    return;
+  }
+
+  if (now < iface->next_health_check) {
+    return;
+  }
+  iface->next_health_check = now + INTERFACE_RETRY_SECONDS;
+
+  uint8_t current_mac[ETH_ADDR_LEN];
+  if (!get_interface_mac(iface->name, current_mac, false)) {
+    fprintf(stderr, "interface %s disappeared; retrying capture\n",
+            iface->name);
+    schedule_capture_retry(iface, now);
+    return;
+  }
+
+  if (!mac_equal(current_mac, iface->mac)) {
+    fprintf(stderr, "interface %s MAC changed from ", iface->name);
+    print_mac(stderr, iface->mac);
+    fprintf(stderr, " to ");
+    print_mac(stderr, current_mac);
+    fprintf(stderr, "; refreshing packet classification\n");
+    fflush(stderr);
+    memcpy(iface->mac, current_mac, ETH_ADDR_LEN);
+  }
+}
+
+static time_t next_capture_maintenance(const struct context *ctx) {
+  time_t next = 0;
+
   for (size_t i = 0; i < ctx->interface_count; i++) {
-    if (!open_capture_interface(&ctx->interfaces[i])) {
-      close_capture_interfaces(ctx);
-      return false;
+    const struct capture_interface *iface = &ctx->interfaces[i];
+    time_t candidate = iface->pcap == NULL ? iface->next_retry
+                                           : iface->next_health_check;
+    if (next == 0 || candidate < next) {
+      next = candidate;
     }
   }
 
-  return true;
+  return next;
 }
 
 static uint64_t total_packets(const struct counters *counters) {
@@ -991,8 +1086,9 @@ int main(int argc, char **argv) {
     ctx.metric_name = DEFAULT_TEXTFILE_METRIC;
   }
 
-  if (!open_capture_interfaces(&ctx)) {
-    return 1;
+  time_t started_at = time(NULL);
+  for (size_t i = 0; i < ctx.interface_count; i++) {
+    try_open_capture_interface(&ctx.interfaces[i], started_at);
   }
 
   signal(SIGINT, request_stop);
@@ -1016,11 +1112,20 @@ int main(int argc, char **argv) {
 
   time_t next_print = previous_print + (time_t)ctx.print_interval_seconds;
   while (!stop_requested) {
+    time_t loop_started_at = time(NULL);
+    for (size_t i = 0; i < ctx.interface_count; i++) {
+      maintain_capture_interface(&ctx.interfaces[i], loop_started_at);
+    }
+
     fd_set readfds;
     FD_ZERO(&readfds);
 
     int max_fd = -1;
     for (size_t i = 0; i < ctx.interface_count; i++) {
+      if (ctx.interfaces[i].pcap == NULL) {
+        continue;
+      }
+
       int fd = pcap_get_selectable_fd(ctx.interfaces[i].pcap);
       if (fd >= 0) {
         FD_SET(fd, &readfds);
@@ -1031,9 +1136,13 @@ int main(int argc, char **argv) {
     }
 
     time_t before_select = time(NULL);
-    time_t wait_seconds = next_print > before_select
-                              ? next_print - before_select
-                              : 0;
+    time_t next_wakeup = next_print;
+    time_t next_maintenance = next_capture_maintenance(&ctx);
+    if (next_maintenance < next_wakeup) {
+      next_wakeup = next_maintenance;
+    }
+    time_t wait_seconds =
+        next_wakeup > before_select ? next_wakeup - before_select : 0;
     struct timeval timeout = {
         .tv_sec = wait_seconds,
         .tv_usec = 0,
@@ -1046,12 +1155,23 @@ int main(int argc, char **argv) {
       }
 
       fprintf(stderr, "select: %s\n", strerror(errno));
-      close_capture_interfaces(&ctx);
-      return 1;
+      time_t failed_at = time(NULL);
+      for (size_t i = 0; i < ctx.interface_count; i++) {
+        struct capture_interface *iface = &ctx.interfaces[i];
+        if (iface->pcap != NULL) {
+          schedule_capture_retry(iface, failed_at);
+          iface->next_retry = failed_at;
+        }
+      }
+      continue;
     }
 
     for (size_t i = 0; i < ctx.interface_count; i++) {
       struct capture_interface *iface = &ctx.interfaces[i];
+      if (iface->pcap == NULL) {
+        continue;
+      }
+
       int fd = pcap_get_selectable_fd(iface->pcap);
 
       if (fd >= 0 && (ready == 0 || !FD_ISSET(fd, &readfds))) {
@@ -1066,8 +1186,7 @@ int main(int argc, char **argv) {
       if (rc == PCAP_ERROR) {
         fprintf(stderr, "pcap_dispatch(%s): %s\n", iface->name,
                 pcap_geterr(iface->pcap));
-        close_capture_interfaces(&ctx);
-        return 1;
+        schedule_capture_retry(iface, time(NULL));
       }
     }
 
