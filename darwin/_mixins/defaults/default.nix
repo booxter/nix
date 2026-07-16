@@ -1,4 +1,4 @@
-{ ... }:
+{ isWork, lib, ... }:
 {
   imports = [
     ./terminal.nix
@@ -92,7 +92,6 @@
 
       # use Caps Lock to switch between layouts
       NSGlobalDomain.TISRomanSwitchState = 1;
-
     };
 
     screensaver.askForPasswordDelay = 10;
@@ -115,6 +114,14 @@
       # hide menu bar
       _HIHideMenuBar = true;
     };
+  };
+
+  system.defaults.CustomUserPreferences."com.superultra.Homerow" = lib.mkIf (!isWork) {
+    SUEnableAutomaticChecks = 0;
+    SUHasLaunchedBefore = 1;
+    "check-for-updates-automatically" = 0;
+    "include-beta-updates" = false;
+    "launch-at-login" = 1;
   };
 
 }

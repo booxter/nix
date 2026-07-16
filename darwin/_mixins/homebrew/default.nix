@@ -1,6 +1,7 @@
 {
   config,
   inputs,
+  isWork,
   lib,
   username,
   ...
@@ -35,7 +36,8 @@
       "sf-symbols"
       "wireshark-chmodbpf"
       "chatgpt"
-    ];
+    ]
+    ++ lib.optionals (!isWork) [ "homerow" ];
   };
 
   nix-homebrew = {
