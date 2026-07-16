@@ -4,8 +4,9 @@
 set -euo pipefail
 
 program_name="${DIFF_CONFIG_PROGRAM_NAME:-diff-config}"
-readonly -a ignored_dix_packages=(
-  source
+readonly -a ignored_dix_package_regexes=(
+  '^source$'
+  '^nixos-system-'
 )
 
 usage() {
@@ -317,7 +318,7 @@ machine_attr_for_label() {
 
 filter_dix_output() {
   local ansi_color_re=$'\033\\[[0-9;]*m'
-  local ignored_package=""
+  local ignored_package_regex=""
   local package_name=""
   local plain_line=""
   local seen_output=false
@@ -335,8 +336,8 @@ filter_dix_output() {
 
     if [[ "${plain_line}" =~ ^\[[^]]+\][[:space:]]+([^[:space:]]+) ]]; then
       package_name="${BASH_REMATCH[1]}"
-      for ignored_package in "${ignored_dix_packages[@]}"; do
-        if [[ "${package_name}" == "${ignored_package}" ]]; then
+      for ignored_package_regex in "${ignored_dix_package_regexes[@]}"; do
+        if [[ "${package_name}" =~ ${ignored_package_regex} ]]; then
           continue 2
         fi
       done
