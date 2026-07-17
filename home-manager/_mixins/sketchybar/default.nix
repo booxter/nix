@@ -53,6 +53,30 @@ let
     ];
     text = builtins.readFile ./sketchybar/plugins/attention-inbox.sh;
   };
+  githubStatusPlugin = pkgs.writeShellApplication {
+    name = "sketchybar-github-status";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.sketchybar
+    ];
+    runtimeEnv.GITHUB_STATUS_URL = "https://www.githubstatus.com/api/v2/summary.json";
+    text = builtins.readFile ./sketchybar/plugins/github-status.sh;
+  };
+  githubStatusItem = pkgs.writeText "sketchybar-github-status-item.sh" ''
+    sketchybar --add item github-status right                           \
+               --set github-status script="$PLUGIN_DIR/github-status.sh" \
+                                   update_freq=60                       \
+                                   drawing=off                          \
+                                   icon=""                            \
+                                   icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
+                                   icon.color="0xfff7768e"              \
+                                   icon.padding_left=6                  \
+                                   icon.padding_right=6                 \
+                                   label.drawing=off                    \
+                                   click_script="/usr/bin/open https://www.githubstatus.com" \
+               --subscribe github-status system_woke
+  '';
   alertmanagerItem = pkgs.writeText "sketchybar-alertmanager-item.sh" (
     lib.optionalString config.programs.sketchybarAlertmanager.enable ''
       sketchybar --add item alertmanager right                               \
@@ -213,13 +237,17 @@ let
     rm -f "$out/plugins/codex-work.sh"
     rm -f "$out/plugins/alertmanager.sh"
     rm -f "$out/plugins/attention-inbox.sh"
+    rm -f "$out/plugins/github-status.sh"
     rm -f "$out/items/aerospace-spaces.sh"
     rm -f "$out/items/alertmanager.sh"
     rm -f "$out/items/attention-inbox.sh"
+    rm -f "$out/items/github-status.sh"
     ln -s ${aerospaceSpacesItem} "$out/items/aerospace-spaces.sh"
     ln -s ${codexItem} "$out/items/codex.sh"
     ln -s ${alertmanagerItem} "$out/items/alertmanager.sh"
     ln -s ${attentionInboxItem} "$out/items/attention-inbox.sh"
+    ln -s ${githubStatusItem} "$out/items/github-status.sh"
+    ln -s ${lib.getExe githubStatusPlugin} "$out/plugins/github-status.sh"
     ${lib.optionalString config.programs.sketchybarAlertmanager.enable ''
       ln -s ${lib.getExe alertmanagerPlugin} "$out/plugins/alertmanager.sh"
     ''}
