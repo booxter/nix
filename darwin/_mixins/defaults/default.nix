@@ -117,9 +117,9 @@
   };
 
   system.defaults.CustomUserPreferences."com.superultra.Homerow" = lib.mkIf (!isWork) {
-    SUEnableAutomaticChecks = 0;
+    SUEnableAutomaticChecks = 1;
     SUHasLaunchedBefore = 1;
-    "check-for-updates-automatically" = 0;
+    "check-for-updates-automatically" = 1;
     "include-beta-updates" = false;
     "launch-at-login" = 1;
   };
