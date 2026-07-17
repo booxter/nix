@@ -13,6 +13,7 @@ let
 in
 writeShellApplication {
   name = "check-commit-message";
+  runtimeInputs = [ git ];
   text = ''
     exec ${python3}/bin/python3 ${./check_commit_message.py} "$@"
   '';
