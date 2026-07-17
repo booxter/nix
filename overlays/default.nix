@@ -138,11 +138,6 @@
             url = "https://github.com/AlynxZhou/reframe/commit/c028f5f840638ba6eb1703393ee81315474264d1.patch";
             hash = "sha256-u8v3SHY6uqg97RZTY6LO0wyVhBYH6BMjsHTp4BUhRsY=";
           })
-          # RFB clients may send the resulting shifted keysym without a
-          # separate Shift event. ReFrame finds but otherwise ignores the XKB
-          # level, causing uppercase account-password characters to be wrong.
-          # TODO: report upstream and replace with the upstream fix.
-          ../lib/patches/reframe-synthesize-shift-for-keysyms.patch
         ];
       });
 
