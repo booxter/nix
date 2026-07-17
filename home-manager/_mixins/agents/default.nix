@@ -151,6 +151,7 @@ in
       codexPkgs.codex-rate-limit-reset-credits
     ]
     ++ lib.optionals isWork [
+      codexPkgs.codex-mcp-init
       codexPkgs.codex-work-usage-status
     ];
 
