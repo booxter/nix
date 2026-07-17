@@ -252,11 +252,6 @@
         old:
         let
           frontend = old.passthru.frontend.overrideAttrs (frontendOld: {
-            # Drop when https://github.com/NixOS/nixpkgs/pull/541650 reaches nixos-26.05.
-            postPatch = (frontendOld.postPatch or "") + ''
-              substituteInPlace src/version.json \
-                --replace-fail '"dev"' '"${frontendOld.version}"'
-            '';
             patches = (frontendOld.patches or [ ]) ++ [
               # Focus the quick-actions input when its modal opens.
               (prev.fetchpatch {
