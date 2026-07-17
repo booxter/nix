@@ -28,13 +28,13 @@
       ./_mixins/sketchybar-alertmanager
       ./_mixins/sudo
       ./_mixins/thermal-accounting
-      ./_mixins/vnc-open
       ./_mixins/xquartz
     ]
     ++ lib.optionals (!isWork) [
       ./_mixins/attic
       ./_mixins/browser
       ./_mixins/vnc
+      ./_mixins/vnc-open
     ]
     ++ lib.optionals isWork [
       ./_mixins/docker-desktop
