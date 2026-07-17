@@ -165,9 +165,12 @@ in
     instance: spec:
     lib.nameValuePair "reframe-${instance}.conf" {
       path = reframeConfigPath instance;
-      owner = "reframe";
+      # The streamer starts as root but its capability bounding set excludes
+      # CAP_DAC_OVERRIDE, so it cannot read a 0400 file owned by `reframe`.
+      # Let it read as owner and the unprivileged server read via its group.
+      owner = "root";
       group = "reframe";
-      mode = "0400";
+      mode = "0440";
       content = mkReframeConfig spec;
       restartUnits = [
         "reframe-server@${instance}.service"
