@@ -40,6 +40,9 @@ let
 
     When creating or amending Git commits:
     - Follow the repository's existing commit-message style.
+    - When an AI agent creates or materially contributes to a commit, add an
+      `Assisted-by: <agent name>` trailer using the agent's recognizable product
+      name, such as `Assisted-by: Codex` or `Assisted-by: Claude Code`.
     - Keep the subject at most 72 characters; prefer 50 or fewer when that
       remains clear.
     - Separate a body from the subject with a blank line.
