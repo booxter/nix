@@ -28,6 +28,7 @@
       ./_mixins/sketchybar-alertmanager
       ./_mixins/sudo
       ./_mixins/thermal-accounting
+      ./_mixins/vnc-open
       ./_mixins/xquartz
     ]
     ++ lib.optionals (!isWork) [

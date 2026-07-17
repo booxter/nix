@@ -129,6 +129,18 @@
         ];
       });
 
+      # Advertise ReFrame's absolute pointer as a touchscreen only. Declaring
+      # the same uinput device as both absolute and relative breaks movement
+      # under some compositors. Drop once a release contains this commit.
+      reframe = prev.reframe.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          (prev.fetchpatch {
+            url = "https://github.com/AlynxZhou/reframe/commit/c028f5f840638ba6eb1703393ee81315474264d1.patch";
+            hash = "sha256-ETB/kbPFoRER/w49oVHrjY1AhBvlNWTrXlXvWBY/yvw=";
+          })
+        ];
+      });
+
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
 

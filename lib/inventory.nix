@@ -11,6 +11,7 @@ let
   frame = "frame";
   mmini = "mmini";
   nvws = "nvws";
+
   glanceCategories = [
     {
       id = "user";
@@ -862,6 +863,7 @@ rec {
       platform = "aarch64-darwin";
       isDesktop = true;
       isLaptop = true;
+      vnc.enable = true;
       hardware.gpuFamilies = [ "apple" ];
       lanWanInterfaces = [ "en0" ];
     };
@@ -871,6 +873,7 @@ rec {
       hostname = "mmini";
       platform = "aarch64-darwin";
       isDesktop = true;
+      vnc.enable = true;
       hardware.gpuFamilies = [ "apple" ];
       upsHost = frame;
       lanWanInterfaces = [ "en0" ];
@@ -900,7 +903,64 @@ rec {
       isDesktop = true;
       sshTicket.allowX11Forwarding = true;
       localDnsAliases = [ "ollama" ];
-      hardware.gpuFamilies = [ "amd" ];
+      vnc = {
+        enable = true;
+        # ReFrame exposes one loopback listener per inventory display.
+        sshTunnel = true;
+        basePort = 5933;
+      };
+      hardware =
+        let
+          displayMode = {
+            width = 3840;
+            height = 2160;
+            refreshRate = 60;
+          };
+          displayScale = 1.5;
+          logicalDisplayWidth = builtins.floor (displayMode.width / displayScale);
+          mkDisplay =
+            {
+              name,
+              connector,
+              x,
+              primary ? false,
+            }:
+            let
+              y = 0;
+            in
+            {
+              inherit
+                connector
+                name
+                primary
+                ;
+              scale = displayScale;
+              mode = displayMode;
+              logical = {
+                inherit x y;
+                width = logicalDisplayWidth;
+                height = builtins.floor (displayMode.height / displayScale);
+              };
+            };
+        in
+        {
+          gpuFamilies = [ "amd" ];
+          # Shared display topology for the kernel, GDM, Hyprland, and ReFrame.
+          drmCard = "card1";
+          displays = [
+            (mkDisplay {
+              name = "left";
+              connector = "DP-4";
+              x = 0;
+              primary = true;
+            })
+            (mkDisplay {
+              name = "right";
+              connector = "DP-2";
+              x = logicalDisplayWidth;
+            })
+          ];
+        };
       dhcpReservation = {
         match = "9c:bf:0d:00:fa:0a";
         hostname = "frame";
