@@ -9,6 +9,7 @@ BRANCH_EXPLICIT=false
 REBUILD_ACTION="switch"
 SOURCE_MODE="github"
 MERGE_MASTER=true
+NO_INHIBIT=false
 ALL=false
 MODE="personal"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -338,7 +339,7 @@ local_disk_cleanup_if_low() {
 usage() {
   cat <<'EOF'
 Usage:
-  apps/update-machines.sh [--branch BRANCH|--local] [--no-merge] [--switch|--boot|--test] [--dry-run] [host1 ...]
+  apps/update-machines.sh [--branch BRANCH|--local] [--no-merge] [--no-inhibit] [--switch|--boot|--test] [--dry-run] [host1 ...]
   apps/update-machines.sh [-A|--all|--select] [--personal|--work|--both] [other options] [host1 ...]
 
 Options:
@@ -349,6 +350,7 @@ Options:
   --branch BRANCH   Git branch to deploy (default: master).
   --local           Deploy committed HEAD from the current checkout; ignore working-tree changes.
   --no-merge        Do not merge the latest origin/master into a GitHub branch checkout.
+  --no-inhibit      Bypass NixOS pre-switch checks and switch inhibitors.
   --switch          Switch into the new configuration immediately (default).
   --boot            Stage the new configuration for the next boot.
   --test            Build and preview activation changes without activating them.
@@ -389,6 +391,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-merge)
       MERGE_MASTER=false
+      shift
+      ;;
+    --no-inhibit)
+      NO_INHIBIT=true
       shift
       ;;
     --switch)
@@ -573,7 +579,8 @@ target_config_name="$7"
 target_runtime_host="$8"
 source_mode="$9"
 merge_master="${10}"
-source_archive="${11:-}"
+no_inhibit="${11}"
+source_archive="${12:-}"
 repo_dir="$(mktemp -d)"
 
 get_avail_path() {
@@ -647,6 +654,9 @@ if [[ "$host_name" != "$target_runtime_host" ]]; then
   echo "Refusing to deploy ${target_config_name}: SSH landed on ${host_name}, expected ${target_runtime_host}." >&2
   exit 1
 fi
+if [[ "$no_inhibit" == "true" ]]; then
+  export NIXOS_NO_CHECK=1
+fi
 case "$os" in
   Darwin)
     if [[ "$rebuild_action" != "switch" ]]; then
@@ -673,7 +683,7 @@ REMOTE
       source_archive="$remote_archive"
       cp "$LOCAL_SOURCE_ARCHIVE" "$source_archive"
     fi
-    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$MERGE_MASTER" "$source_archive"; then
+    if "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$MERGE_MASTER" "$NO_INHIBIT" "$source_archive"; then
       ok_hosts+=("$host")
     else
       failed_hosts+=("$host")
@@ -696,7 +706,7 @@ REMOTE
       continue
     fi
   fi
-  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$MERGE_MASTER" "$source_archive"; then
+  if ssh -tt "${SSH_OPTS_ARR[@]}" "${SSH_HOST_OPTS[@]}" "$ssh_host" "$remote_script" "$REMOTE_MIN_DISK_KB" "$REMOTE_MIN_DISK_GIB" "$BRANCH" "$REPO_URL" "$GC_HEADROOM_KB" "$REBUILD_ACTION" "$host" "$runtime_host" "$SOURCE_MODE" "$MERGE_MASTER" "$NO_INHIBIT" "$source_archive"; then
     ok_hosts+=("$host")
   else
     failed_hosts+=("$host")

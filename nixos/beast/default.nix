@@ -16,6 +16,7 @@
     ./disk-bays.nix
     ./igpu.nix
     ./jellyfin.nix
+    ./jellyfin-maintenance.nix
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix

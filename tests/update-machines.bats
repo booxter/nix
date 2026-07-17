@@ -654,7 +654,26 @@ EOF
   run bash ./apps/update-machines.sh --no-merge alpha
 
   [ "$status" -eq 0 ]
-  grep -Eq ' github false[[:space:]]*$' "$SSH_CALLS_OUT"
+  grep -Eq ' github false false[[:space:]]*$' "$SSH_CALLS_OUT"
+}
+
+@test "update-machines passes no-inhibit to the remote activation" {
+  workdir="$BATS_TMPDIR/update-machines-no-inhibit"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+  export SSH_CALLS_OUT="$workdir/ssh.calls"
+  export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
+  export UPDATE_MACHINES_TEST_ASSUME_TTY=true
+
+  run bash ./apps/update-machines.sh --no-inhibit alpha
+
+  [ "$status" -eq 0 ]
+  grep -Eq ' github true true[[:space:]]*$' "$SSH_CALLS_OUT"
+  grep -Fq 'no_inhibit="${11}"' "$SSH_UPLOADED_SCRIPT_OUT"
+  grep -Fq 'export NIXOS_NO_CHECK=1' "$SSH_UPLOADED_SCRIPT_OUT"
 }
 
 @test "update-machines uploads committed checkout state in local mode" {
@@ -711,7 +730,8 @@ EOF
   [[ "$uploaded_script" == *'target_runtime_host="$8"'* ]]
   [[ "$uploaded_script" == *'source_mode="$9"'* ]]
   [[ "$uploaded_script" == *'merge_master="${10}"'* ]]
-  [[ "$uploaded_script" == *'source_archive="${11:-}"'* ]]
+  [[ "$uploaded_script" == *'no_inhibit="${11}"'* ]]
+  [[ "$uploaded_script" == *'source_archive="${12:-}"'* ]]
   [[ "$uploaded_script" == *'tar -xf "$source_archive" -C "$repo_dir"'* ]]
   [[ "$uploaded_script" == *"$expected_clone"* ]]
   [[ "$uploaded_script" == *'merge_latest_master "$repo_dir" "$branch"'* ]]
