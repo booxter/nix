@@ -260,4 +260,12 @@ in
       proxy_send_timeout 3600s;
     '';
   };
+
+  services.nginx.virtualHosts."internal-https-notes-probe".locations."= /api/health-check" = {
+    proxyPass = "http://127.0.0.1:${toString port}";
+    recommendedProxySettings = true;
+    extraConfig = ''
+      auth_request off;
+    '';
+  };
 }
