@@ -8,6 +8,7 @@
 let
   internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
+  cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
   workspaceNames = import ../aerospace/workspaces.nix { inherit lib isWork; };
   codexPlugin = pkgs.writeShellApplication {
@@ -43,6 +44,15 @@ let
     };
     text = builtins.readFile ./sketchybar/plugins/alertmanager.sh;
   };
+  attentionInboxPlugin = pkgs.writeShellApplication {
+    name = "sketchybar-attention-inbox";
+    runtimeInputs = [
+      cliPkgs.attention-inbox
+      pkgs.jq
+      pkgs.sketchybar
+    ];
+    text = builtins.readFile ./sketchybar/plugins/attention-inbox.sh;
+  };
   alertmanagerItem = pkgs.writeText "sketchybar-alertmanager-item.sh" (
     lib.optionalString config.programs.sketchybarAlertmanager.enable ''
       sketchybar --add item alertmanager right                               \
@@ -55,6 +65,40 @@ let
                                     label.padding_right=6                    \
                                     click_script="/usr/bin/open ${lib.escapeShellArg config.programs.sketchybarAlertmanager.grafanaUrl}"                                       \
                  --subscribe alertmanager system_woke
+    ''
+  );
+  attentionInboxItem = pkgs.writeText "sketchybar-attention-inbox-item.sh" (
+    lib.optionalString isWork ''
+      sketchybar --add item attention.inbox right                                \
+                 --set attention.inbox script="$PLUGIN_DIR/attention-inbox.sh"   \
+                                       update_freq=1200                          \
+                                       drawing=off                               \
+                                       icon.drawing=off                          \
+                                       icon.padding_left=6                       \
+                                       icon.padding_right=2                      \
+                                       label.padding_left=2                      \
+                                       label.padding_right=6                     \
+                                       click_script="sketchybar --set attention.inbox popup.drawing=toggle" \
+                                       popup.align=right                         \
+                                       popup.background.color="$BACKGROUND_COLOR" \
+                                       popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
+                                       popup.background.border_width=1           \
+                                       popup.background.corner_radius=6          \
+                 --subscribe attention.inbox system_woke
+
+      for index in {0..9}; do
+        sketchybar --add item "attention.inbox.$index" popup.attention.inbox     \
+                   --set "attention.inbox.$index" updates=off                    \
+                                                    drawing=off                   \
+                                                    icon.drawing=off              \
+                                                    icon.padding_left=8           \
+                                                    icon.padding_right=4          \
+                                                    label.align=left              \
+                                                    label.padding_left=8          \
+                                                    label.padding_right=8         \
+                                                    background.border_width=0     \
+                                                    background.height=24
+      done
     ''
   );
   codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
@@ -168,11 +212,14 @@ let
     rm -f "$out/plugins/codex.sh"
     rm -f "$out/plugins/codex-work.sh"
     rm -f "$out/plugins/alertmanager.sh"
+    rm -f "$out/plugins/attention-inbox.sh"
     rm -f "$out/items/aerospace-spaces.sh"
     rm -f "$out/items/alertmanager.sh"
+    rm -f "$out/items/attention-inbox.sh"
     ln -s ${aerospaceSpacesItem} "$out/items/aerospace-spaces.sh"
     ln -s ${codexItem} "$out/items/codex.sh"
     ln -s ${alertmanagerItem} "$out/items/alertmanager.sh"
+    ln -s ${attentionInboxItem} "$out/items/attention-inbox.sh"
     ${lib.optionalString config.programs.sketchybarAlertmanager.enable ''
       ln -s ${lib.getExe alertmanagerPlugin} "$out/plugins/alertmanager.sh"
     ''}
@@ -181,6 +228,7 @@ let
     ''}
     ${lib.optionalString isWork ''
       ln -s ${lib.getExe codexWorkPlugin} "$out/plugins/codex-work.sh"
+      ln -s ${lib.getExe attentionInboxPlugin} "$out/plugins/attention-inbox.sh"
     ''}
   '';
 in

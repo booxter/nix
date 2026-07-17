@@ -42,6 +42,8 @@ source "$CONFIG_DIR/items/codex.sh"
 
 source "$CONFIG_DIR/items/alertmanager.sh"
 
+source "$CONFIG_DIR/items/attention-inbox.sh"
+
 sketchybar --add item chevron left \
            --set chevron icon=􀁖  label.drawing=off \
            --add item front_app left \

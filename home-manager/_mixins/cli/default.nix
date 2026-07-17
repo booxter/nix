@@ -128,6 +128,7 @@ in
       (ripgrep.override { withPCRE2 = true; })
       ack
       act
+      cliPkgs.attention-inbox
       bc
       curl
       delve # go debugger

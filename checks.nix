@@ -59,6 +59,7 @@ helpers.forAllSystems (
         bats --print-output-on-failure tests/codex-usage.bats
         bats --print-output-on-failure tests/codex-warmer.bats
         bats --print-output-on-failure tests/sketchybar-alertmanager.bats
+        bats --print-output-on-failure tests/sketchybar-attention-inbox.bats
         bats --print-output-on-failure tests/test-diff-config.bats
         bats --print-output-on-failure tests/test-prox-deploy.bats
         bats --print-output-on-failure tests/test-update-packages.bats
@@ -72,6 +73,7 @@ helpers.forAllSystems (
         ./home-manager/_mixins/agents/pkgs/codex-warmer.sh
         ./home-manager/_mixins/sketchybar/sketchybar/plugins/codex.sh
         ./home-manager/_mixins/sketchybar/sketchybar/plugins/alertmanager.sh
+        ./home-manager/_mixins/sketchybar/sketchybar/plugins/attention-inbox.sh
       ];
     };
     box-py = mkCheck {
