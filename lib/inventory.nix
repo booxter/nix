@@ -62,6 +62,7 @@ let
       diskSize = 150;
       cores = 24;
       hmFull = false;
+      nspawnTestBuilder = true;
       extraModules = [
         (
           {
@@ -916,6 +917,7 @@ rec {
       stateVersion = "25.11";
       platform = "x86_64-linux";
       isDesktop = true;
+      nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
       localDnsAliases = [ "ollama" ];
       vnc = {

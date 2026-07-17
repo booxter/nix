@@ -9,7 +9,8 @@
 }:
 let
   builderSpec = n: hostInventory.nixosHostSpecsByName."builder${toString n}";
-  toBuilderName = n: hostInventory.toNixosShortDnsName (builderSpec n);
+  builderSpecs = map builderSpec (lib.range 1 3);
+  toBuilderName = hostInventory.toNixosShortDnsName;
 in
 {
   programs.ssh = {
@@ -32,7 +33,7 @@ in
             "mmini"
             "mair"
           ]
-          ++ (map toBuilderName (lib.range 1 3))
+          ++ (map toBuilderName builderSpecs)
         )
       );
   };
@@ -46,17 +47,22 @@ in
         "big-parallel"
         "kvm"
       ];
+      nspawnFeatures = [
+        "devnet"
+        "uid-range"
+      ];
       builderSpeedFactor = 100; # prefer these builders; higher the better
-      toBuilder = speedFactor: hostName: {
-        inherit hostName speedFactor;
+      toBuilder = speedFactor: hostSpec: {
+        hostName = toBuilderName hostSpec;
+        inherit speedFactor;
         system = "x86_64-linux";
         protocol = "ssh-ng";
         maxJobs = 4;
-        supportedFeatures = features;
+        supportedFeatures = features ++ lib.optionals (hostSpec.nspawnTestBuilder or false) nspawnFeatures;
       };
     in
-    (map (toBuilder builderSpeedFactor) (map toBuilderName (lib.range 1 3)))
-    ++ lib.optional (hostname != "frame") (toBuilder 200 "frame")
+    (map (toBuilder builderSpeedFactor) builderSpecs)
+    ++ lib.optional (hostname != "frame") (toBuilder 200 hostInventory.nixosHostSpecsByName.frame)
     ++ lib.optional (hostname != "mmini") {
       hostName = "mmini";
       systems = [ "aarch64-darwin" ];
