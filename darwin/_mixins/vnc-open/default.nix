@@ -65,14 +65,16 @@ let
     name = "vnc-open";
     runtimeInputs = [
       pkgs.coreutils
+      pkgs.fzf
       pkgs.openssh
     ];
     text = ''
       usage() {
         cat <<'EOF'
-      Usage: vnc-open [--${lib.concatStringsSep "|--" displayNames}] HOST
+      Usage: vnc-open [--${lib.concatStringsSep "|--" displayNames}] [HOST]
 
       Open macOS Screen Sharing for an inventory host with VNC enabled.
+      If HOST is omitted, select one interactively.
       Display selection applies only to tunneled multi-display hosts.
 
       Hosts: ${lib.concatStringsSep ", " hostNames}
@@ -107,8 +109,12 @@ let
       done
 
       if [[ -z "$target" ]]; then
-        usage >&2
-        exit 2
+        if ! target="$(
+          printf '%s\n' ${lib.concatStringsSep " " (map lib.escapeShellArg hostNames)} \
+            | fzf --height=~100% --layout=reverse --prompt='VNC host> '
+        )"; then
+          exit 0
+        fi
       fi
 
       case "$target" in
