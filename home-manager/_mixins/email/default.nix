@@ -79,7 +79,6 @@ in
                 10; # OAuth2
           };
         };
-        msmtp.enable = true;
         primary = true;
       };
     in
@@ -96,12 +95,9 @@ in
             {
               flavor = "gmail.com";
               address = "ihar.hrachyshka@gmail.com";
-              passwordCommand = "${pkgs.pass}/bin/pass show priv/google.com-mutt";
             }
         )
         // commonCfg;
     };
 
-  # Misc email tools
-  programs.msmtp.enable = true;
 }
