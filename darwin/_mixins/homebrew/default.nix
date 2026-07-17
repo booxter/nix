@@ -27,6 +27,8 @@
     onActivation = {
       autoUpdate = false;
       upgrade = true;
+      # Homebrew upgrades self-updating casks even without --greedy.
+      extraEnv.HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS = "1";
       # Use pinned local taps because our pinned brew can lag behind
       # Homebrew's API schema for casks.
       extraEnv.HOMEBREW_NO_INSTALL_FROM_API = "1";
