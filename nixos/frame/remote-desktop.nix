@@ -7,7 +7,9 @@
   ...
 }:
 let
-  displayHardware = hostInventory.nixosHostSpecsByName.${hostSpecName}.hardware;
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
+  inherit (hostSpec) vnc;
+  displayHardware = hostSpec.hardware;
   inherit (displayHardware) displays;
 
   maxLogicalExtent =
@@ -25,7 +27,7 @@ let
         display
         // {
           # Keep the VNC listeners stable while deriving one port per display.
-          port = 5933 + index;
+          port = vnc.basePort + index;
         }
       )
     ) displays

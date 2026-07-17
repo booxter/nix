@@ -856,6 +856,7 @@ rec {
       platform = "aarch64-darwin";
       isDesktop = true;
       isLaptop = true;
+      vnc.enable = true;
       hardware.gpuFamilies = [ "apple" ];
       lanWanInterfaces = [ "en0" ];
     };
@@ -865,6 +866,7 @@ rec {
       hostname = "mmini";
       platform = "aarch64-darwin";
       isDesktop = true;
+      vnc.enable = true;
       hardware.gpuFamilies = [ "apple" ];
       upsHost = frame;
       lanWanInterfaces = [ "en0" ];
@@ -894,6 +896,12 @@ rec {
       isDesktop = true;
       sshTicket.allowX11Forwarding = true;
       localDnsAliases = [ "ollama" ];
+      vnc = {
+        enable = true;
+        # ReFrame exposes one loopback listener per inventory display.
+        sshTunnel = true;
+        basePort = 5933;
+      };
       hardware =
         let
           displayMode = {
