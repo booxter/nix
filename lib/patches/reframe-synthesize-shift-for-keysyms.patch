@@ -1,0 +1,40 @@
+diff --git a/reframe-server/rf-vnc-server.c b/reframe-server/rf-vnc-server.c
+index a4f286b..88f89e1 100644
+--- a/reframe-server/rf-vnc-server.c
++++ b/reframe-server/rf-vnc-server.c
+@@ -0,0 +1 @@
++#include <linux/input-event-codes.h>
+@@ -10,0 +12,2 @@ typedef struct _RfVNCServerPrivate {
++	bool left_shift_down;
++	bool right_shift_down;
+@@ -305,5 +308,25 @@ void rf_vnc_server_handle_keysym_event(
+-	g_debug("Input: Received key %s for keysym %04x and keycode %u.",
+-		down ? "down" : "up",
+-		keysym,
+-		keycode);
+-	g_signal_emit(this, sigs[SIG_KEYBOARD_EVENT], 0, keycode, down);
++	g_debug("Input: Received key %s for keysym %04x, keycode %u and level %u.",
++		down ? "down" : "up",
++		keysym,
++		keycode,
++		idata.level);
++
++	if (keycode == KEY_LEFTSHIFT)
++		priv->left_shift_down = down;
++	else if (keycode == KEY_RIGHTSHIFT)
++		priv->right_shift_down = down;
++
++	/*
++	 * RFB keysyms describe the resulting symbol, so a client does not have
++	 * to send a separate Shift event for an uppercase letter or symbol.
++	 * The configured US keymap uses level 1 for those shifted symbols.
++	 * Avoid synthesizing Shift when the client sent it explicitly.
++	 */
++	const bool synthesize_shift = idata.level == 1
++		&& !priv->left_shift_down
++		&& !priv->right_shift_down;
++	if (down && synthesize_shift)
++		g_signal_emit(this, sigs[SIG_KEYBOARD_EVENT], 0, KEY_LEFTSHIFT, true);
++	g_signal_emit(this, sigs[SIG_KEYBOARD_EVENT], 0, keycode, down);
++	if (!down && synthesize_shift)
++		g_signal_emit(this, sigs[SIG_KEYBOARD_EVENT], 0, KEY_LEFTSHIFT, false);

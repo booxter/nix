@@ -11,14 +11,19 @@ let
   inherit (hostSpec) vnc;
   displayHardware = hostSpec.hardware;
   inherit (displayHardware) displays;
+  displayScale = (builtins.head displays).scale;
 
   maxLogicalExtent =
     position: size:
     lib.foldl' (
       maximum: display: lib.max maximum (display.logical.${position} + display.logical.${size})
     ) 0 displays;
-  desktopWidth = maxLogicalExtent "x" "width";
-  desktopHeight = maxLogicalExtent "y" "height";
+  # ReFrame combines normalized VNC pointer coordinates with the physical DRM
+  # framebuffer dimensions. Its desktop and monitor offsets must therefore be
+  # in physical pixels even though GDM and Hyprland use logical coordinates.
+  desktopWidth = builtins.floor (maxLogicalExtent "x" "width" * displayScale);
+  desktopHeight = builtins.floor (maxLogicalExtent "y" "height" * displayScale);
+  monitorPosition = position: display: builtins.floor (display.logical.${position} * displayScale);
 
   reframeInstances = lib.listToAttrs (
     lib.imap0 (
@@ -53,7 +58,7 @@ let
   reframeStreamer = lib.getExe' pkgs.reframe "reframe-streamer";
 
   mkReframeConfig =
-    {
+    spec@{
       connector,
       logical,
       port,
@@ -66,12 +71,14 @@ let
       rotation=0
       desktop-width=${toString desktopWidth}
       desktop-height=${toString desktopHeight}
-      monitor-x=${toString logical.x}
-      monitor-y=${toString logical.y}
+      monitor-x=${toString (monitorPosition "x" spec)}
+      monitor-y=${toString (monitorPosition "y" spec)}
       default-width=${toString logical.width}
       default-height=${toString logical.height}
       resize=true
-      cursor=true
+      # Screen Sharing draws its own local cursor. Do not also composite the
+      # DRM cursor plane into the captured image.
+      cursor=false
       wakeup=true
       # CPU damage detection is more conservative on this AMD GPU. It avoids
       # the artifacts GPU-based detection can produce, at some CPU cost.
@@ -118,6 +125,9 @@ let
     </logicalmonitor>
   '';
 in
+assert lib.assertMsg (lib.all (
+  display: display.scale == displayScale
+) displays) "ReFrame pointer mapping currently requires a uniform display scale";
 {
   # The KVM removes the monitors' EDIDs when it selects another computer. Use
   # edid-generator's prebuilt standard 128-byte 4K60 EDID firmware blob
