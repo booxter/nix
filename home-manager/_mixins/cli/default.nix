@@ -135,6 +135,7 @@ in
       devenv
       fd
       fzf
+      cliPkgs.gh-restart-failed-jobs
       gnupg
       go
       hydra-check

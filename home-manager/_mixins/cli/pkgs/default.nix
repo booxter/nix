@@ -2,6 +2,8 @@
 {
   attention-inbox = pkgs.callPackage ./attention-inbox { };
 
+  gh-restart-failed-jobs = pkgs.callPackage ./gh-restart-failed-jobs { };
+
   sync-repo = pkgs.callPackage ./sync-repo { };
 
   xrun-nixpkgs = pkgs.writeShellApplication {
