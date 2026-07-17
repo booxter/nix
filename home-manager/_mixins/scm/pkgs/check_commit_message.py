@@ -1,5 +1,6 @@
 import re
 import shlex
+import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -72,8 +73,33 @@ def is_indivisible_body_line(line: str) -> bool:
     return bool(stripped) and not any(character.isspace() for character in stripped)
 
 
-def validate_message(message: str) -> list[Violation]:
-    lines = message.splitlines()
+def git_comment_prefix() -> str:
+    """Return the comment prefix Git applies to edited messages."""
+    try:
+        result = subprocess.run(
+            ["git", "stripspace", "--comment-lines"],
+            input="probe\n",
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except OSError:
+        return "#"
+
+    suffix = " probe\n"
+    if result.returncode == 0 and result.stdout.endswith(suffix):
+        return result.stdout[: -len(suffix)]
+    return "#"
+
+
+def validate_message(message: str, comment_prefix: str = "#") -> list[Violation]:
+    source_lines = message.splitlines()
+    retained_lines = [
+        (index, line)
+        for index, line in enumerate(source_lines)
+        if not line.startswith(comment_prefix)
+    ]
+    lines = [line for _, line in retained_lines]
     if not lines or not lines[0].strip():
         return [Violation(1, 0, "subject must not be empty", "")]
 
@@ -92,7 +118,7 @@ def validate_message(message: str) -> list[Violation]:
     if len(lines) > 1 and lines[1].strip():
         violations.append(
             Violation(
-                2,
+                retained_lines[1][0] + 1,
                 len(lines[1]),
                 "subject and body must be separated by a blank line",
                 lines[1],
@@ -109,7 +135,7 @@ def validate_message(message: str) -> list[Violation]:
             continue
         violations.append(
             Violation(
-                index + 1,
+                retained_lines[index][0] + 1,
                 len(line),
                 f"body prose exceeds {MAX_LINE_LENGTH} characters",
                 line,
@@ -138,7 +164,7 @@ def main(argv: list[str]) -> int:
         print(f"cannot read commit message {message_path}: {error}", file=sys.stderr)
         return 2
 
-    violations = validate_message(message)
+    violations = validate_message(message, git_comment_prefix())
     if not violations:
         return 0
 

@@ -1,4 +1,5 @@
 import importlib.util
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -15,14 +16,27 @@ def load_checker_module():
     return module
 
 
-def run_checker(tmp_path: Path, message: str) -> subprocess.CompletedProcess[str]:
+def run_checker(
+    tmp_path: Path, message: str, comment_prefix: str = "#"
+) -> subprocess.CompletedProcess[str]:
     message_path = tmp_path / "COMMIT_EDITMSG"
     message_path.write_text(message, encoding="utf-8")
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "GIT_CONFIG_COUNT": "1",
+            "GIT_CONFIG_KEY_0": "core.commentString",
+            "GIT_CONFIG_VALUE_0": comment_prefix,
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+        }
+    )
     return subprocess.run(
         [sys.executable, str(CHECKER_PATH), str(message_path)],
         text=True,
         capture_output=True,
         check=False,
+        env=environment,
     )
 
 
@@ -60,6 +74,37 @@ def test_rejects_long_body_prose(tmp_path):
     assert result.returncode == 1
     assert "line 3: body prose exceeds 72 characters (75 characters)" in result.stderr
     assert "run `git hook run commit-msg" in result.stderr
+
+
+def test_accepts_long_git_comments(tmp_path):
+    result = run_checker(
+        tmp_path,
+        "Keep comments out of validation\n\n"
+        "This body is short.\n\n"
+        "# You are currently editing a commit while rebasing branch "
+        "'codex/nixos-system-tests' on 'eafdd7136'.\n",
+    )
+    assert result.returncode == 0
+
+
+def test_accepts_configured_comment_prefix(tmp_path):
+    result = run_checker(
+        tmp_path,
+        "Honor Git configuration\n\n"
+        "This body is short.\n\n"
+        "// " + "generated comment prose " * 5 + "\n",
+        comment_prefix="//",
+    )
+    assert result.returncode == 0
+
+
+def test_rejects_indented_comment_like_prose(tmp_path):
+    result = run_checker(
+        tmp_path,
+        "Only skip comments\n\n # " + "long body prose " * 6 + "\n",
+    )
+    assert result.returncode == 1
+    assert "line 3: body prose exceeds 72 characters" in result.stderr
 
 
 def test_requires_blank_line_before_body(tmp_path):
