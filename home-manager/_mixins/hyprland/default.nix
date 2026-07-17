@@ -1,6 +1,8 @@
 # TODO: refactor the module
 {
   config,
+  hostInventory,
+  hostSpecName,
   lib,
   pkgs,
   ...
@@ -8,6 +10,15 @@
 let
   super = "MOD1";
   cmdButton = "MOD4";
+  displays = hostInventory.nixosHostSpecsByName.${hostSpecName}.hardware.displays;
+  displaysByName = lib.listToAttrs (map (display: lib.nameValuePair display.name display) displays);
+  inherit (displaysByName) left right;
+  renderMonitor =
+    display:
+    let
+      inherit (display) logical mode;
+    in
+    "${display.connector}, ${toString mode.width}x${toString mode.height}@${toString mode.refreshRate}, ${toString logical.x}x${toString logical.y}, ${toString display.scale}";
 in
 {
   home.packages = with pkgs; [
@@ -152,8 +163,7 @@ in
               "3"
               "4"
             ];
-            # right
-            "DP-2" = [
+            "${right.connector}" = [
               "5"
               "6"
             ];
@@ -207,10 +217,7 @@ in
         "match:title ^OpenSSH authentication$, stay_focused on"
       ];
 
-      monitor = [
-        "DP-4, 3840x2160@60, 0x0, 1.5" # left
-        "DP-2, 3840x2160@60, 2560x0, 1.5" # right (logical width = 3840/1.5)
-      ];
+      monitor = map renderMonitor displays;
 
       xwayland = {
         # https://wiki.hypr.land/Configuring/XWayland/
@@ -219,13 +226,13 @@ in
 
       workspace = [
         # left
-        "1, monitor:DP-4"
-        "2, monitor:DP-4"
-        "3, monitor:DP-4"
-        "4, monitor:DP-4"
+        "1, monitor:${left.connector}"
+        "2, monitor:${left.connector}"
+        "3, monitor:${left.connector}"
+        "4, monitor:${left.connector}"
         # right
-        "5, monitor:DP-2"
-        "6, monitor:DP-2"
+        "5, monitor:${right.connector}"
+        "6, monitor:${right.connector}"
       ];
 
       input =
