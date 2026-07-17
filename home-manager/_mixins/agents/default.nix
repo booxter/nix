@@ -12,6 +12,25 @@ let
   claudeModel = "opus";
   modelEffort = "high";
   deployFirefoxDevtoolsMcp = !isWork;
+  nixosMcpServer = {
+    command = lib.getExe pkgs.mcp-nixos;
+    args = [ ];
+  };
+  codexMcpServers = {
+    nixos = nixosMcpServer;
+  }
+  // lib.optionalAttrs deployFirefoxDevtoolsMcp {
+    firefox-devtools = {
+      command = lib.getExe pkgs.firefox-devtools-mcp;
+      args = [
+        "--profile-path"
+        "${config.xdg.dataHome}/firefox-devtools-mcp"
+        "--accept-insecure-certs"
+        "--viewport"
+        "1440x1000"
+      ];
+    };
+  };
   agentContext = ''
     This machine uses Nix on macOS or Linux. If a required tool is missing,
     prefer repository flake apps or dev shells; otherwise use
@@ -90,27 +109,17 @@ in
         "current-dir"
         "context-remaining"
       ];
+      mcp_servers = codexMcpServers;
     }
     // lib.optionalAttrs (codingAgentEnv != { }) {
       shell_environment_policy.set = codingAgentEnv;
-    }
-    // lib.optionalAttrs deployFirefoxDevtoolsMcp {
-      mcp_servers.firefox-devtools = {
-        command = lib.getExe pkgs.firefox-devtools-mcp;
-        args = [
-          "--profile-path"
-          "${config.xdg.dataHome}/firefox-devtools-mcp"
-          "--accept-insecure-certs"
-          "--viewport"
-          "1440x1000"
-        ];
-      };
     };
   };
 
   programs.claude-code = {
     enable = true;
     context = agentContext;
+    mcpServers.nixos = nixosMcpServer;
 
     settings = {
       outputStyle = "Proactive";
