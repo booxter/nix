@@ -26,6 +26,7 @@ in
     ./searchless-ngx.nix
     ./searxng.nix
     ./telegram-archive.nix
+    ./trilium.nix
   ];
 
   sops.secrets = {

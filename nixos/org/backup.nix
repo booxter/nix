@@ -14,6 +14,7 @@ let
   telegramArchiveBackupDir = "/var/lib/telegram-archive-backup";
   telegramArchiveDatabasePath = "${telegramArchiveStateDir}/backups/telegram_backup.db";
   telegramArchiveSessionPath = "${telegramArchiveStateDir}/session/telegram_archive.session";
+  triliumStateDir = "/var/lib/trilium";
   backupPaths = [
     openWebuiStateDir
     paperlessDataDir
@@ -21,6 +22,7 @@ let
     paperlessStoragePath
     searchlessStateDir
     telegramArchiveStateDir
+    triliumStateDir
     "/var/lib/vikunja/files"
   ];
   backupExclude = [
@@ -30,6 +32,8 @@ let
     "${telegramArchiveDatabasePath}-*"
     telegramArchiveSessionPath
     "${telegramArchiveSessionPath}-*"
+    "${triliumStateDir}/document.db"
+    "${triliumStateDir}/document.db-*"
   ];
 in
 {
@@ -79,6 +83,13 @@ in
             mode = "0600";
           }
         ];
+      };
+
+      trilium = {
+        displayName = "Trilium Notes";
+        databasePath = "${triliumStateDir}/document.db";
+        destinationDir = "/var/lib/trilium-backup/latest";
+        requiresMountsFor = [ triliumStateDir ];
       };
     };
   };

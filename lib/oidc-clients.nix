@@ -42,6 +42,7 @@ let
       claimMaps = { };
       public = false;
       enableLocalhostRedirects = false;
+      enableLegacyCrypto = false;
       secretKey = clientSecretKey clientId;
       preferShortUsername = true;
     }
@@ -104,6 +105,14 @@ rec {
       originLanding = "${serviceUrl "vikunja"}/";
       allowInsecureClientDisablePkce = true;
       scopeMaps."vikunja-users" = baseScopes;
+    };
+
+    trilium = mkClient "trilium" {
+      displayName = "Trilium Notes";
+      enableLegacyCrypto = true;
+      originUrl = "${serviceUrl "notes"}/callback";
+      originLanding = "${serviceUrl "notes"}/";
+      scopeMaps."trilium-users" = baseScopes;
     };
 
     open-webui = mkClient "open-webui" {
@@ -297,6 +306,7 @@ rec {
         claimMaps
         displayName
         enableLocalhostRedirects
+        enableLegacyCrypto
         originLanding
         originUrl
         preferShortUsername
