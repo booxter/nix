@@ -4,8 +4,10 @@
 }:
 let
   stateRoot = config.host.srvarrPaths.stateDir;
+  mysqlDataDir = "${stateRoot}/mysql";
   pinepodsDatabaseDir = "${stateRoot}/pinepods/postgresql";
   backupPaths = [ stateRoot ];
+  rommDatabaseBackupDir = "${stateRoot}/romm-mariadb-backup/latest";
   seerrConfigDir = "${stateRoot}/seerr";
   seerrBackupDir = "${stateRoot}/seerr-backup/latest";
   houndarrConfigDir = "${stateRoot}/houndarr";
@@ -15,11 +17,25 @@ let
     "${stateRoot}/*/logs/**"
     "${stateRoot}/*/cache"
     "${stateRoot}/*/cache/**"
+    mysqlDataDir
+    "${mysqlDataDir}/**"
     pinepodsDatabaseDir
     "${pinepodsDatabaseDir}/**"
   ];
 in
 {
+  host.backups.artifacts.mariadb.romm = {
+    displayName = "RomM";
+    database = "romm";
+    destinationDir = rommDatabaseBackupDir;
+    includeInBeastBackup = false;
+    requiresMountsFor = [ stateRoot ];
+    unitConfig = {
+      After = [ "romm-db-init.service" ];
+      Requires = [ "romm-db-init.service" ];
+    };
+  };
+
   host.backups.artifacts.sqlite.seerr = {
     displayName = "Seerr";
     databasePath = "${seerrConfigDir}/db/db.sqlite3";

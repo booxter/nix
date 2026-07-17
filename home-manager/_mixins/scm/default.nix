@@ -125,6 +125,18 @@ in
       }
       // pushDisabledGitHubUrls;
 
+      # Preserve the credential helper that programs.gh normally configures.
+      credential = {
+        "https://github.com".helper = [
+          ""
+          "${pkgs.gh}/bin/gh auth git-credential"
+        ];
+        "https://gist.github.com".helper = [
+          ""
+          "${pkgs.gh}/bin/gh auth git-credential"
+        ];
+      };
+
       # use mergiraf for merges
       merge.mergiraf = {
         name = "mergiraf";
@@ -161,16 +173,27 @@ in
     settings.markEmptyLines = true;
   };
 
-  # GitHub client
-  programs.gh = {
-    enable = true;
-    extensions = with pkgs; [
-      gh-poi
-    ];
-    settings = {
-      git_protocol = "ssh";
-    };
-  };
+  # Let gh own its mutable config while retaining the declarative extensions.
+  xdg.dataFile."gh/extensions".source = pkgs.linkFarm "gh-extensions" (
+    map
+      (extension: {
+        name = extension.pname;
+        path = "${extension}/bin";
+      })
+      [
+        pkgs.gh-dash
+        pkgs.gh-poi
+      ]
+  );
+
+  # Run after Home Manager removes the programs.gh config.yml symlink. This
+  # creates a writable config on the first activation and enforces the protocol
+  # preference without taking ownership of the file afterward.
+  home.activation.configureGh = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    verboseEcho "Configuring GitHub CLI to use SSH"
+    run ${lib.getExe pkgs.gh} config set git_protocol ssh
+  '';
+
   programs.gh-dash = {
     # dashboard
     enable = true;
@@ -215,6 +238,7 @@ in
 
   home.packages = with pkgs; [
     # misc git goodies
+    gh
     git-absorb
     git-prole
     git-pw

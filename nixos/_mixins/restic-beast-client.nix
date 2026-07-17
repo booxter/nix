@@ -198,7 +198,7 @@ in
         }
         // lib.optionalAttrs (preBackupServiceNames != [ ]) {
           after = map (name: "${name}.service") preBackupServiceNames;
-          wants = map (name: "${name}.service") preBackupServiceNames;
+          requires = map (name: "${name}.service") preBackupServiceNames;
         };
 
         host.observability.backupMetrics.jobs = {

@@ -117,6 +117,36 @@ let
         };
     };
 
+  mariadbArtifactModule =
+    { name, config, ... }:
+    {
+      options =
+        commonArtifactOptions {
+          inherit name config;
+          kind = "MariaDB";
+          defaultDestinationFile = "${name}.sql";
+        }
+        // {
+          database = lib.mkOption {
+            type = lib.types.str;
+            default = name;
+            description = "MariaDB database to dump with mariadb-dump.";
+          };
+
+          mariadbUser = lib.mkOption {
+            type = lib.types.str;
+            default = "root";
+            description = "MariaDB user used to create the logical dump.";
+          };
+
+          socket = lib.mkOption {
+            type = lib.types.str;
+            default = "/run/mysqld/mysqld.sock";
+            description = "Unix socket used to connect to MariaDB.";
+          };
+        };
+    };
+
   sqliteExtraCopyModule =
     { config, ... }:
     {
@@ -192,6 +222,44 @@ let
         install -d -m 0750 "$dst_dir"
 
         runuser -u ${shellArg artifact.postgresUser} -- pg_dump --format=custom ${shellArg artifact.database} > "$tmp_dir/$dst_file"
+        date --iso-8601=seconds > "$tmp_dir/created-at.txt"
+
+        mv "$tmp_dir/$dst_file" "$dst_dir/$dst_file"
+        mv "$tmp_dir/created-at.txt" "$dst_dir/created-at.txt"
+      '';
+    };
+
+  mkMariadbScript =
+    artifact:
+    pkgs.writeShellApplication {
+      name = artifact.serviceName;
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.mariadb
+      ];
+      text = ''
+        set -euo pipefail
+
+        dst_dir=${shellArg artifact.destinationDir}
+        dst_file=${shellArg artifact.destinationFile}
+        backup_root="$(dirname "$dst_dir")"
+
+        install -d -m 0750 "$backup_root"
+        tmp_dir="$(mktemp -d "$backup_root/.tmp.XXXXXX")"
+        trap 'rm -rf "$tmp_dir"' EXIT
+
+        install -d -m 0750 "$dst_dir"
+
+        mariadb-dump \
+          --user=${shellArg artifact.mariadbUser} \
+          --socket=${shellArg artifact.socket} \
+          --single-transaction \
+          --routines \
+          --events \
+          --triggers \
+          --hex-blob \
+          --databases ${shellArg artifact.database} \
+          > "$tmp_dir/$dst_file"
         date --iso-8601=seconds > "$tmp_dir/created-at.txt"
 
         mv "$tmp_dir/$dst_file" "$dst_dir/$dst_file"
@@ -284,6 +352,24 @@ let
       ];
     };
 
+  mkMariadbService =
+    _: artifact:
+    lib.nameValuePair artifact.serviceName {
+      inherit (artifact)
+        description
+        group
+        serviceConfig
+        timerConfig
+        user
+        ;
+      script = mkMariadbScript artifact;
+      unitConfig = artifact.unitConfig // {
+        After = [ "mysql.service" ] ++ (artifact.unitConfig.After or [ ]);
+        Requires = [ "mysql.service" ] ++ (artifact.unitConfig.Requires or [ ]);
+        RequiresMountsFor = [ artifact.destinationDir ] ++ artifact.requiresMountsFor;
+      };
+    };
+
   mkSqliteService =
     _: artifact:
     lib.nameValuePair artifact.serviceName {
@@ -303,11 +389,17 @@ let
       ];
     };
 
+  mariadbServices = lib.mapAttrsToList mkMariadbService cfg.mariadb;
   postgresqlServices = lib.mapAttrsToList mkPostgresqlService cfg.postgresql;
   sqliteServices = lib.mapAttrsToList mkSqliteService cfg.sqlite;
-  hasArtifacts = cfg.postgresql != { } || cfg.sqlite != { };
+  hasArtifacts = cfg.mariadb != { } || cfg.postgresql != { } || cfg.sqlite != { };
   artifactPaths = lib.unique (
     (lib.concatLists (
+      lib.mapAttrsToList (
+        _: artifact: lib.optional artifact.includeInBeastBackup artifact.destinationDir
+      ) cfg.mariadb
+    ))
+    ++ (lib.concatLists (
       lib.mapAttrsToList (
         _: artifact: lib.optional artifact.includeInBeastBackup artifact.destinationDir
       ) cfg.postgresql
@@ -321,6 +413,12 @@ let
 in
 {
   options.host.backups.artifacts = {
+    mariadb = lib.mkOption {
+      type = with lib.types; attrsOf (submodule mariadbArtifactModule);
+      default = { };
+      description = "MariaDB backup artifacts generated before restic runs.";
+    };
+
     postgresql = lib.mkOption {
       type = with lib.types; attrsOf (submodule postgresqlArtifactModule);
       default = { };
@@ -337,7 +435,7 @@ in
   config = lib.mkIf hasArtifacts {
     host.backups.beast = {
       paths = lib.mkBefore artifactPaths;
-      preBackupServices = builtins.listToAttrs (postgresqlServices ++ sqliteServices);
+      preBackupServices = builtins.listToAttrs (mariadbServices ++ postgresqlServices ++ sqliteServices);
     };
   };
 }

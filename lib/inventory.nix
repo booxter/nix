@@ -452,6 +452,12 @@ rec {
         userGroup = "media-users";
         bootstrapOwner = "ihar";
       };
+      romm = {
+        adminGroup = "romm-admins";
+        editorGroup = "romm-editors";
+        viewerGroup = "romm-viewers";
+        bootstrapOwner = "ihar";
+      };
       watchstate = {
         adminGroup = "media-admins";
         bootstrapOwner = "ihar";
@@ -539,6 +545,7 @@ rec {
           "vikunja-users"
           "ai-users"
           "media-users"
+          "romm-viewers"
           "home-users"
         ];
       };

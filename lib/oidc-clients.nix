@@ -3,6 +3,7 @@ let
   idService = hostInventory.servicesById.id;
   homeAssistantSso = hostInventory.sso.applications.home-assistant;
   pinepodsSso = hostInventory.sso.applications.pinepods;
+  rommSso = hostInventory.sso.applications.romm;
   lan = hostInventory.site.lan;
   issuerBaseUrl = "https://${idService.publicHost}";
   baseScopes = [
@@ -191,14 +192,14 @@ rec {
       originLanding = "${serviceUrl "romm"}/";
       allowInsecureClientDisablePkce = true;
       scopeMaps = {
-        "romm-admins" = scopeWith [ "romm_roles" ];
-        "romm-editors" = scopeWith [ "romm_roles" ];
-        "romm-viewers" = scopeWith [ "romm_roles" ];
+        ${rommSso.adminGroup} = scopeWith [ "romm_roles" ];
+        ${rommSso.editorGroup} = scopeWith [ "romm_roles" ];
+        ${rommSso.viewerGroup} = scopeWith [ "romm_roles" ];
       };
       claimMaps.romm_roles.valuesByGroup = {
-        "romm-admins" = [ "romm-admins" ];
-        "romm-editors" = [ "romm-editors" ];
-        "romm-viewers" = [ "romm-viewers" ];
+        ${rommSso.adminGroup} = [ rommSso.adminGroup ];
+        ${rommSso.editorGroup} = [ rommSso.editorGroup ];
+        ${rommSso.viewerGroup} = [ rommSso.viewerGroup ];
       };
     };
 

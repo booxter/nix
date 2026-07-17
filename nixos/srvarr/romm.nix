@@ -8,6 +8,22 @@
 let
   accounts = import ./accounts.nix;
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
+  rommSso = hostInventory.sso.applications.romm;
+  rommAccessGroups = [
+    rommSso.adminGroup
+    rommSso.editorGroup
+    rommSso.viewerGroup
+  ];
+  rommGroupsFor = person: builtins.filter (group: builtins.elem group person.groups) rommAccessGroups;
+  rommAdmins = lib.filterAttrs (
+    _: person: builtins.elem rommSso.adminGroup person.groups
+  ) hostInventory.sso.users;
+  rommAuthorizedUsers = lib.filterAttrs (
+    _: person: rommGroupsFor person != [ ]
+  ) hostInventory.sso.users;
+  mediaUsers = lib.filterAttrs (
+    _: person: builtins.elem "media-users" person.groups
+  ) hostInventory.sso.users;
   mediaDir = config.host.srvarrPaths.mediaDir;
   # RomM's upstream layout keeps all mutable application data under one root:
   # library, resources, assets, config, sync, and launchbox.
@@ -120,9 +136,12 @@ let
     OIDC_SERVER_APPLICATION_URL = oidc.openidBaseUrl rommOidcClientId;
     OIDC_SERVER_METADATA_URL = oidc.discoveryUrl rommOidcClientId;
     OIDC_CLAIM_ROLES = "romm_roles";
-    OIDC_ROLE_ADMIN = "romm-admins";
-    OIDC_ROLE_EDITOR = "romm-editors";
-    OIDC_ROLE_VIEWER = "romm-viewers";
+    OIDC_ROLE_ADMIN = rommSso.adminGroup;
+    # RomM 5 maps both legacy editor and viewer claims to its non-admin `user`
+    # role. Viewers inherit the native default permission group. An editor must
+    # additionally be assigned RomM's native Editor permission group.
+    OIDC_ROLE_EDITOR = rommSso.editorGroup;
+    OIDC_ROLE_VIEWER = rommSso.viewerGroup;
     OIDC_USERNAME_ATTRIBUTE = "preferred_username";
   };
 
@@ -155,6 +174,9 @@ let
     "romm-db-init.service"
     "romm-valkey.service"
     "sops-install-secrets.service"
+    # Never run an Alembic migration without first replacing the staged
+    # logical dump with one from the current database revision.
+    "romm-backup.service"
   ];
 
   runtimeAfter = setupBefore ++ [ "romm-setup.service" ];
@@ -400,6 +422,7 @@ in
     description = "Run RomM database migrations and startup tasks";
     wantedBy = [ "multi-user.target" ];
     wants = rommPodmanBaseUnits ++ setupBefore;
+    requires = [ "romm-backup.service" ];
     after = rommPodmanBaseUnits ++ setupBefore ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = [
       mediaDir
@@ -589,4 +612,23 @@ in
     publicAliases = [ rommService.publicHost ];
     mtls.enable = true;
   };
+
+  assertions = [
+    {
+      assertion = builtins.attrNames rommAdmins == [ rommSso.bootstrapOwner ];
+      message = "The RomM bootstrap owner must be its only SSO administrator.";
+    }
+    {
+      assertion = lib.all (person: builtins.length (rommGroupsFor person) == 1) (
+        builtins.attrValues rommAuthorizedUsers
+      );
+      message = "Each RomM SSO user must belong to exactly one RomM access group.";
+    }
+    {
+      assertion = lib.all (person: builtins.length (rommGroupsFor person) == 1) (
+        builtins.attrValues mediaUsers
+      );
+      message = "Each media user must have exactly one RomM SSO access group.";
+    }
+  ];
 }
