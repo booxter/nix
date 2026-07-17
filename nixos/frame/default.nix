@@ -72,6 +72,7 @@ in
     loadModels = [
       "gemma4:31b"
       "granite4:32b-a9b-h"
+      "nemotron-cascade-2:30b"
       "nomic-embed-text"
       "qwen3-next:80b"
       "qwen3-vl:8b-instruct"
