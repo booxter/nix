@@ -733,7 +733,7 @@ rec {
       scope = "external";
       owner = "org";
       publicHost = "notes.${site.public.domain}";
-      probePath = "/api/health-check";
+      probePath = "/authenticate";
       backendProbe.path = "/api/health-check";
       glanceCategory = "user";
     }))

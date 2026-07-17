@@ -107,7 +107,9 @@ offloaded to B2 at about `06:00`.
 
 Existing fleet rules cover:
 
-- split-DNS, backend mTLS, and true WAN health probes;
+- split-DNS and true WAN sign-in probes that follow Trilium's OIDC redirect to
+  the Kanidm login page;
+- a separate backend mTLS health probe;
 - public DNS-chain failures for `notes.ihar.dev`;
 - stale or failed SQLite artifact and restic jobs;
 - `org` disk, memory, CPU, and host availability.
