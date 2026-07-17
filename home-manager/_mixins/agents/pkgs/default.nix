@@ -1,5 +1,13 @@
 { pkgs }:
 rec {
+  codex-mcp-init = pkgs.writeShellApplication {
+    name = "codex-mcp-init";
+    runtimeInputs = with pkgs; [
+      jq
+    ];
+    text = builtins.readFile ./codex-mcp-init.sh;
+  };
+
   codex-usage-status = pkgs.writeShellApplication {
     name = "codex-usage-status";
     runtimeInputs = with pkgs; [
