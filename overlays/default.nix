@@ -136,7 +136,7 @@
         patches = (old.patches or [ ]) ++ [
           (prev.fetchpatch {
             url = "https://github.com/AlynxZhou/reframe/commit/c028f5f840638ba6eb1703393ee81315474264d1.patch";
-            hash = "sha256-u8v3SHY6uqg97RZTY6LO0wyVhBYH6BMjsHTp4BUhRsY=";
+            hash = "sha256-ETB/kbPFoRER/w49oVHrjY1AhBvlNWTrXlXvWBY/yvw=";
           })
         ];
       });
