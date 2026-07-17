@@ -80,6 +80,11 @@ in
                 lib.optionalString (service.id == "aurral") ''
                   proxy_set_header X-Forwarded-For $remote_addr;
                 ''
+                + lib.optionalString (service.id == "notes") ''
+                  proxy_buffer_size 128k;
+                  proxy_buffers 4 256k;
+                  proxy_busy_buffers_size 256k;
+                ''
                 + lib.optionalString (service.id == "paperless") ''
                   client_max_body_size 512m;
                   proxy_read_timeout 300s;
