@@ -100,6 +100,7 @@ in
       model_reasoning_effort = modelEffort;
       personality = "pragmatic";
       approvals_reviewer = "auto_review";
+      mcp_oauth_credentials_store = "file";
       notice.fast_default_opt_out = true;
 
       # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
