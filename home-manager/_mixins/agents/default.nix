@@ -116,7 +116,7 @@ in
     };
   };
 
-  programs.claude-code = {
+  programs.claude-code = lib.mkIf isWork {
     enable = true;
     context = agentContext;
     mcpServers.nixos = nixosMcpServer;
@@ -135,10 +135,6 @@ in
         "$defaults"
         "Never push, deploy, or change managed hosts unless explicitly asked."
       ];
-    }
-    // lib.optionalAttrs (!isWork) {
-      model = claudeModel;
-      effortLevel = modelEffort;
     }
     // lib.optionalAttrs (codingAgentEnv != { }) {
       env = codingAgentEnv;
