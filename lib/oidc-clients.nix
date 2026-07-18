@@ -275,6 +275,20 @@ rec {
       claimMaps.media_groups.valuesByGroup."media-admins" = [ "media-admins" ];
     };
 
+    shelfmark = mkClient "shelfmark" {
+      displayName = "Shelfmark";
+      originUrl = "${serviceUrl "shelfmark"}/api/auth/oidc/callback";
+      originLanding = "${serviceUrl "shelfmark"}/";
+      scopeMaps = {
+        "media-admins" = scopeWith [ "media_groups" ];
+        "media-users" = scopeWith [ "media_groups" ];
+      };
+      claimMaps.media_groups.valuesByGroup = {
+        "media-admins" = [ "media-admins" ];
+        "media-users" = [ "media-users" ];
+      };
+    };
+
     srvarr-admin-apps = mkClient "srvarr-admin-apps" {
       displayName = "srvarr admin apps";
       originUrl = map (host: "https://${host}/oauth2/callback") srvarrAdminAppHosts;
