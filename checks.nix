@@ -56,6 +56,7 @@ helpers.forAllSystems (
       ];
       buildPhase = ''
         bats --print-output-on-failure tests/get-local-builders.bats
+        bats --print-output-on-failure tests/git-send-email-store-password.bats
         bats --print-output-on-failure tests/codex-usage.bats
         bats --print-output-on-failure tests/codex-warmer.bats
         bats --print-output-on-failure tests/sketchybar-alertmanager.bats
@@ -70,6 +71,7 @@ helpers.forAllSystems (
         bats --print-output-on-failure tests/update-machines.bats
       '';
       extraFileset = [
+        ./home-manager/_mixins/scm/pkgs/git-send-email-store-password.sh
         ./home-manager/_mixins/agents/pkgs/codex-usage-status.sh
         ./home-manager/_mixins/agents/pkgs/codex-warmer.sh
         ./home-manager/_mixins/sketchybar/sketchybar/plugins/codex.sh
