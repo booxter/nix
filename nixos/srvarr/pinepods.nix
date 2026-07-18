@@ -170,6 +170,10 @@ in
       mode = "0400";
       restartUnits = [ "pinepods-bootstrap-admin.service" ];
     };
+    "pinepods/bootstrap/email" = {
+      mode = "0400";
+      restartUnits = [ "pinepods-bootstrap-admin.service" ];
+    };
   };
 
   sops.templates = {
@@ -431,12 +435,12 @@ in
             --null-input \
             --arg username ${lib.escapeShellArg bootstrapOwnerName} \
             --arg fullname ${lib.escapeShellArg bootstrapAdmin.displayName} \
-            --arg email ${lib.escapeShellArg (builtins.head bootstrapAdmin.mailAddresses)} \
+            --rawfile email ${config.sops.secrets."pinepods/bootstrap/email".path} \
             --rawfile password ${config.sops.secrets."pinepods/bootstrap/password".path} \
             '{
               username: $username,
               fullname: $fullname,
-              email: $email,
+              email: ($email | sub("[\\r\\n]+$"; "")),
               password: ($password | sub("[\\r\\n]+$"; ""))
             }' \
             | curl \
