@@ -151,6 +151,11 @@ in
         upstreamHeader = "x_auth_request_email";
         proxyHeader = "X-Email";
       }
+      {
+        variableName = "groups";
+        upstreamHeader = "x_auth_request_groups";
+        proxyHeader = "X-Groups";
+      }
     ];
     extraLocationsByName.bazarr = bazarrLogoutLocations;
     probeLocationsByName = backendProbeLocationsByName;

@@ -194,6 +194,7 @@ rec {
     "prowlarr"
     "radarr"
     "sabnzbd"
+    "shelfmark"
     "sonarr"
     "transmission"
   ];
@@ -719,7 +720,7 @@ rec {
       owner = "srvarr";
       publicHost = "shelf.${site.public.domain}";
       probePath = "/api/health";
-      glanceCategory = "user";
+      glanceCategory = "media-admin";
     }))
     (resolveService (mkService {
       id = "vikunja";
