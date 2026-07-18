@@ -1,0 +1,224 @@
+diff --git a/pkg/migration/20260617153629.go b/pkg/migration/20260617153629.go
+new file mode 100644
+index 0000000..d5ae3d7
+--- /dev/null
++++ b/pkg/migration/20260617153629.go
+@@ -0,0 +1,127 @@
++// Vikunja is a to-do list application to facilitate your life.
++// Copyright 2018-present Vikunja and contributors. All rights reserved.
++//
++// This program is free software: you can redistribute it and/or modify
++// it under the terms of the GNU Affero General Public License as published by
++// the Free Software Foundation, either version 3 of the License, or
++// (at your option) any later version.
++//
++// This program is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++// GNU Affero General Public License for more details.
++//
++// You should have received a copy of the GNU Affero General Public License
++// along with this program.  If not, see <https://www.gnu.org/licenses/>.
++
++package migration
++
++import (
++	"fmt"
++
++	"src.techknowlogick.com/xormigrate"
++	"xorm.io/xorm"
++	"xorm.io/xorm/schemas"
++)
++
++type taskPosition20260617153629 struct {
++	TaskID        int64   `xorm:"bigint not null index"`
++	ProjectViewID int64   `xorm:"bigint not null index"`
++	Position      float64 `xorm:"double not null"`
++}
++
++func (taskPosition20260617153629) TableName() string {
++	return "task_positions"
++}
++
++func init() {
++	migrations = append(migrations, &xormigrate.Migration{
++		ID:          "20260617153629",
++		Description: "deduplicate task positions and add a unique index on task_id + project_view_id",
++		Migrate: func(tx *xorm.Engine) error {
++
++			s := tx.NewSession()
++			defer s.Close()
++
++			err := s.Begin()
++			if err != nil {
++				return err
++			}
++
++			// First remove all duplicate entries. A task may only ever have a
++			// single position per view; rapid task creation could race and
++			// insert more than one row before this constraint existed.
++			duplicates := []taskPosition20260617153629{}
++			err = s.
++				Select("task_id, project_view_id").
++				GroupBy("task_id, project_view_id").
++				Having("count(*) > 1").
++				Find(&duplicates)
++			if err != nil {
++				_ = s.Rollback()
++				return err
++			}
++
++			// Keep the lowest position of each group so the result is
++			// deterministic across databases.
++			kept := []taskPosition20260617153629{}
++			for _, dup := range duplicates {
++				row := taskPosition20260617153629{}
++				has, err := s.
++					Where("task_id = ? AND project_view_id = ?", dup.TaskID, dup.ProjectViewID).
++					OrderBy("position ASC").
++					Get(&row)
++				if err != nil {
++					_ = s.Rollback()
++					return err
++				}
++				if !has {
++					// The pair was just reported as duplicated by the GroupBy above,
++					// so a row must exist. If it doesn't, fail instead of continuing —
++					// the delete loop below would otherwise drop every row for the pair
++					// without re-inserting one.
++					_ = s.Rollback()
++					return fmt.Errorf("no task_positions row found for task %d and project view %d while deduplicating positions", dup.TaskID, dup.ProjectViewID)
++				}
++				kept = append(kept, row)
++			}
++
++			for _, dup := range duplicates {
++				_, err = s.
++					Where("task_id = ? AND project_view_id = ?", dup.TaskID, dup.ProjectViewID).
++					Delete(&taskPosition20260617153629{})
++				if err != nil {
++					_ = s.Rollback()
++					return err
++				}
++			}
++
++			for _, position := range kept {
++				_, err = s.Insert(&position)
++				if err != nil {
++					_ = s.Rollback()
++					return err
++				}
++			}
++
++			err = s.Commit()
++			if err != nil {
++				return err
++			}
++
++			// Then create the unique index
++			var query string
++			switch tx.Dialect().URI().DBType {
++			case schemas.MYSQL:
++				query = "CREATE UNIQUE INDEX UQE_task_positions_task_project_view ON task_positions (task_id, project_view_id)"
++			default:
++				query = "CREATE UNIQUE INDEX IF NOT EXISTS UQE_task_positions_task_project_view ON task_positions (task_id, project_view_id)"
++			}
++			_, err = tx.Exec(query)
++			return err
++		},
++		Rollback: func(_ *xorm.Engine) error {
++			return nil
++		},
++	})
++}
+diff --git a/pkg/models/saved_filter_positions_test.go b/pkg/models/saved_filter_positions_test.go
+index d233460..91bf09d 100644
+--- a/pkg/models/saved_filter_positions_test.go
++++ b/pkg/models/saved_filter_positions_test.go
+@@ -81,0 +82,3 @@ func TestCronInsertsNonZeroPosition(t *testing.T) {
++	// Force the task to a zero position in this view to simulate the unhealed
++	// state. A task only ever has one position row per view, so update it if it
++	// already exists (e.g. created with the filter) instead of inserting a duplicate.
+@@ -83 +86,7 @@ func TestCronInsertsNonZeroPosition(t *testing.T) {
+-	_, err = s.Insert(tp)
++	hasPosition, err := s.Where("task_id = ? AND project_view_id = ?", task.ID, view.ID).Exist(&TaskPosition{})
++	require.NoError(t, err)
++	if hasPosition {
++		_, err = s.Where("task_id = ? AND project_view_id = ?", task.ID, view.ID).Cols("position").Update(tp)
++	} else {
++		_, err = s.Insert(tp)
++	}
+diff --git a/pkg/models/task_position.go b/pkg/models/task_position.go
+index 3250332..e1f120d 100644
+--- a/pkg/models/task_position.go
++++ b/pkg/models/task_position.go
+@@ -36 +36 @@ type TaskPosition struct {
+-	TaskID int64 `xorm:"bigint not null index" json:"task_id" param:"task"`
++	TaskID int64 `xorm:"bigint not null index unique(task_view)" json:"task_id" param:"task"`
+@@ -38 +38 @@ type TaskPosition struct {
+-	ProjectViewID int64 `xorm:"bigint not null index" json:"project_view_id"`
++	ProjectViewID int64 `xorm:"bigint not null index unique(task_view)" json:"project_view_id"`
+@@ -343,0 +344,51 @@ func calculateNewPositionForTask(s *xorm.Session, a web.Auth, t *Task, view *Pro
++type taskPositionKey struct {
++	taskID int64
++	viewID int64
++}
++
++// filterNewTaskPositions returns the positions whose (task_id, project_view_id)
++// row does not exist yet, also deduplicating within the slice. Position creation
++// during task creation can trigger a full recalculation (calculateNewPositionForTask
++// or moveTaskToDoneBuckets) that already persists rows for the new task, so inserting
++// the queued positions unconditionally would violate the unique index on
++// (task_id, project_view_id).
++func filterNewTaskPositions(s *xorm.Session, positions []*TaskPosition) ([]*TaskPosition, error) {
++	if len(positions) == 0 {
++		return positions, nil
++	}
++
++	taskIDs := make([]int64, 0, len(positions))
++	seenTask := make(map[int64]bool, len(positions))
++	for _, p := range positions {
++		if seenTask[p.TaskID] {
++			continue
++		}
++		seenTask[p.TaskID] = true
++		taskIDs = append(taskIDs, p.TaskID)
++	}
++
++	// Fetch all existing rows for the involved tasks in one query so this stays
++	// cheap when createTask runs in a loop (bulk import, project duplication).
++	existing := []*TaskPosition{}
++	err := s.In("task_id", taskIDs).Find(&existing)
++	if err != nil {
++		return nil, err
++	}
++
++	seen := make(map[taskPositionKey]bool, len(positions)+len(existing))
++	for _, e := range existing {
++		seen[taskPositionKey{taskID: e.TaskID, viewID: e.ProjectViewID}] = true
++	}
++
++	filtered := make([]*TaskPosition, 0, len(positions))
++	for _, p := range positions {
++		key := taskPositionKey{taskID: p.TaskID, viewID: p.ProjectViewID}
++		if seen[key] {
++			continue
++		}
++		seen[key] = true
++		filtered = append(filtered, p)
++	}
++	return filtered, nil
++}
++
+diff --git a/pkg/models/tasks.go b/pkg/models/tasks.go
+index d484bb3..3f95bc9 100644
+--- a/pkg/models/tasks.go
++++ b/pkg/models/tasks.go
+@@ -938,0 +939,7 @@ func createTask(s *xorm.Session, t *Task, a web.Auth, updateAssignees bool, setB
++	if len(positions) > 0 {
++		positions, err = filterNewTaskPositions(s, positions)
++		if err != nil {
++			return err
++		}
++	}
++
