@@ -557,6 +557,7 @@ rec {
       };
       eugene = {
         displayName = "eugene";
+        mailAddressSopsKey = "kanidm/person_mail_addresses/eugene";
         groups = [
           "ai-users"
           "media-users"
