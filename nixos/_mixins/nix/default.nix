@@ -22,7 +22,7 @@ in
       "devnet"
       "uid-range"
     ];
-    sandbox-paths = [ "/dev/net" ];
+    extra-sandbox-paths = [ "/dev/net" ];
   };
 
   systemd.services.nix-daemon.serviceConfig = {
