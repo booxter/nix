@@ -556,6 +556,14 @@ rec {
           "home-users"
         ];
       };
+      eugene = {
+        displayName = "eugene";
+        groups = [
+          "media-users"
+          "vikunja-users"
+          "romm-viewers"
+        ];
+      };
       oidc-probe-user = {
         displayName = "OIDC synthetic probe";
         mailAddresses = [ "oidc-probe@${site.public.domain}" ];
