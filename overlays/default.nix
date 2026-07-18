@@ -115,16 +115,10 @@
 
       lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
-          # Enforce an overall deadline for processing Telegram requests.
+          # Send Telegram responses to the originating message thread.
           (prev.fetchpatch {
-            url = "https://github.com/booxter/lolek/commit/b7a885eb59b955e656b28504e56bd71c8a531e6c.patch";
-            # The package source filter omits the NixOS module and tests.
-            excludes = [
-              "nix/module.nix"
-              "test/lolek/processing_deadline_test.exs"
-              "test/lolek_test.exs"
-            ];
-            hash = "sha256-+yyajBobp07bvndthBPUXCqjlUsTWlx7Y5FufR9PlVM=";
+            url = "https://github.com/booxter/lolek/commit/3afaa7a2778a75aa1007fbb653b9b2c8c56f4a29.patch";
+            hash = "sha256-w05uMRdZJTbpEthb3S5Lb53SmbTdcDcACchoUrcFkNk=";
           })
         ];
       });
