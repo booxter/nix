@@ -236,23 +236,28 @@ in
     };
   };
 
-  home.packages = with pkgs; [
-    # misc git goodies
-    gh
-    git-absorb
-    git-prole
-    git-pw
-    git-review
-    glab
-    scmPkgs.glab-mr-create
-    mergiraf
-    tig
+  home.packages =
+    with pkgs;
+    [
+      # misc git goodies
+      gh
+      git-absorb
+      git-prole
+      git-pw
+      git-review
+      glab
+      scmPkgs.glab-mr-create
+      mergiraf
+      tig
 
-    # for nix dev
-    nix-output-monitor
-    nixpkgs-reviewFull
-    nurl
-  ];
+      # for nix dev
+      nix-output-monitor
+      nixpkgs-reviewFull
+      nurl
+    ]
+    ++ lib.optionals isDarwin [
+      scmPkgs.git-send-email-store-password
+    ];
 
   # use vim bindings for tig
   home.file = {
