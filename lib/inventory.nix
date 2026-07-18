@@ -558,6 +558,7 @@ rec {
       eugene = {
         displayName = "eugene";
         groups = [
+          "ai-users"
           "media-users"
           "vikunja-users"
           "romm-viewers"
