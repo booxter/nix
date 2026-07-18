@@ -267,6 +267,10 @@
           patches = (old.patches or [ ]) ++ [
             # Drop when https://github.com/go-vikunja/vikunja/pull/2811 reaches nixpkgs.
             ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
+            # Backport https://github.com/go-vikunja/vikunja/pull/2923 to 2.3.0.
+            ../lib/patches/vikunja-task-position-uniqueness.patch
+            # Backport https://github.com/go-vikunja/vikunja/pull/3098 to 2.3.0.
+            ../lib/patches/vikunja-task-position-concurrency.patch
           ];
           inherit frontend;
           prePatch = ''
