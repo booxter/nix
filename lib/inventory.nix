@@ -549,6 +549,7 @@ rec {
           "paperless-users"
           "vikunja-users"
           "ai-users"
+          "media-admins"
           "media-users"
           "romm-viewers"
           "home-users"
