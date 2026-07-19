@@ -45,6 +45,17 @@ DNS stay converged with inventory.
   Open WebUI, LiteLLM, Paperless, RomM, Audiobookshelf, Aurral, Shelfmark, and
   the Telegram Archive and `srvarr` admin-app proxy gates.
 
+### Open WebUI Paperless access
+
+The `ai-users` group grants access to Open WebUI, while the narrower
+`paperless-users` group grants access to its Paperless MCP tool.
+
+Open WebUI ACLs use internal group UUIDs rather than group names. Its
+post-start reconciler therefore creates or finds the private group, resolves
+the UUID, and replaces the Paperless tool's fail-closed ACL with one group read
+grant. This avoids manual ID management and keeps the tool unavailable if
+reconciliation fails.
+
 ## PKI Apps
 
 - `nix run .#issue-internal-service-cert`
