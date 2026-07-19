@@ -654,7 +654,7 @@ rec {
       scope = "internal";
       owner = "home";
       probePath = "/";
-      glanceCategory = "user";
+      glanceCategory = "infrastructure";
     }))
     (resolveService (mkService {
       id = "houndarr";
@@ -748,7 +748,7 @@ rec {
       publicHost = "notes.${site.public.domain}";
       probePath = "/authenticate";
       backendProbe.path = "/api/health-check";
-      glanceCategory = "user";
+      glanceCategory = "infrastructure";
     }))
     (resolveService (mkService {
       id = "paperless";
@@ -758,7 +758,7 @@ rec {
       owner = "org";
       publicHost = "papers.${site.public.domain}";
       probePath = "/accounts/login/";
-      glanceCategory = "user";
+      glanceCategory = "infrastructure";
     }))
     (resolveService (mkService {
       id = "paperless-gpt";
@@ -809,7 +809,7 @@ rec {
       owner = "org";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health";
-      glanceCategory = "user";
+      glanceCategory = "infrastructure";
     }))
     (resolveService (mkService {
       id = "ollama";
