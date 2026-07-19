@@ -48,6 +48,9 @@ stdenv.mkDerivation {
 
   patches = [
     ./disable-local-auth.patch
+    # Skip dead direct artist artwork URLs before trying release-group covers.
+    # Upstream v2: https://github.com/lklynet/aurral/blob/release/v2/backend/services/imageService.js#L119-L139
+    ../../../../overlays/aurral-fallback-broken-artist-images.patch
   ];
 
   postPatch = ''
