@@ -3,4 +3,4 @@ diff --git a/backend/services/imageProxyService.js b/backend/services/imageProxy
 +++ b/backend/services/imageProxyService.js
 @@ -470 +470 @@ export const handleImageProxyRequest = async (req, res) => {
 -  return res.sendFile(cached.imagePath);
-+  return res.sendFile(cached.imagePath, { dotfiles: "allow" });
++  return res.sendFile(path.basename(cached.imagePath), { root: IMAGE_PROXY_DIR });
