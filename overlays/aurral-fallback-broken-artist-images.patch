@@ -1,0 +1,48 @@
+diff --git a/backend/services/imageService.js b/backend/services/imageService.js
+--- a/backend/services/imageService.js
++++ b/backend/services/imageService.js
+@@ -229,16 +229,28 @@ export const getArtistImage = async (
+-      const directArtistImage = selectBestArtistImage(metadataArtist?.images);
+-
+-      if (directArtistImage?.url) {
+-        const cachedImage = await warmImageProxy(directArtistImage.url);
+-        negativeImageCache.delete(mbid);
+-        dbOps.setImage(mbid, cachedImage.localUrl);
+-        return {
+-          url: cachedImage.localUrl,
+-          images: [
+-            {
+-              image: cachedImage.localUrl,
+-              front: true,
+-              types: [directArtistImage.kind || "Artist"],
+-            },
+-          ],
+-        };
++      const directArtistImages = Array.isArray(metadataArtist?.images)
++        ? metadataArtist.images
++            .filter((image) => getImageUrl(image))
++            .map((image, index) => ({ image, index }))
++            .sort((a, b) => {
++              const rankDiff = getArtistImageKindRank(a.image) - getArtistImageKindRank(b.image);
++              if (rankDiff !== 0) return rankDiff;
++              return a.index - b.index;
++            })
++            .map((entry) => entry.image)
++        : [];
++
++      for (const directArtistImage of directArtistImages) {
++        try {
++          const cachedImage = await warmImageProxy(getImageUrl(directArtistImage));
++          negativeImageCache.delete(mbid);
++          dbOps.setImage(mbid, cachedImage.localUrl);
++          return {
++            url: cachedImage.localUrl,
++            images: [
++              {
++                image: cachedImage.localUrl,
++                front: true,
++                types: [directArtistImage.kind || "Artist"],
++              },
++            ],
++          };
++        } catch {}
