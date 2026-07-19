@@ -1,4 +1,5 @@
 pkgs: {
+  open-webui-tool-acl-reconcile = pkgs.callPackage ./open-webui-tool-acl-reconcile { };
   paperless-gpt-configure = pkgs.callPackage ./paperless-gpt-configure { };
   prometheus-paperless-exporter = pkgs.callPackage ./prometheus-paperless-exporter { };
   searchless-ngx = pkgs.callPackage ./searchless-ngx { };

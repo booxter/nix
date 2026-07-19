@@ -119,10 +119,13 @@ rec {
       displayName = "Open WebUI";
       originUrl = "${serviceUrl "ai"}/oauth/oidc/login/callback";
       originLanding = "${serviceUrl "ai"}/";
-      scopeMaps."ai-users" = baseScopes;
-      claimMaps.open_webui_role.valuesByGroup = {
-        "ai-users" = [ "user" ];
-        "sso-admins" = [ "admin" ];
+      scopeMaps."ai-users" = scopeWith [ "open_webui_groups" ];
+      claimMaps = {
+        open_webui_groups.valuesByGroup."paperless-users" = [ "paperless-users" ];
+        open_webui_role.valuesByGroup = {
+          "ai-users" = [ "user" ];
+          "sso-admins" = [ "admin" ];
+        };
       };
     };
 
