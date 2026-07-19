@@ -44,6 +44,21 @@ let
     };
     text = builtins.readFile ./sketchybar/plugins/alertmanager.sh;
   };
+  jellyfinPlugin = pkgs.writeShellApplication {
+    name = "sketchybar-jellyfin";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.gawk
+      pkgs.sketchybar
+    ];
+    runtimeEnv = {
+      JELLYFIN_METRICS_URL = config.programs.sketchybarJellyfin.metricsUrl;
+      JELLYFIN_CA_CERTIFICATE = toString internalPkiRootCaPath;
+      JELLYFIN_CLIENT_CERTIFICATE = config.programs.sketchybarJellyfin.clientCertificate;
+      JELLYFIN_CLIENT_KEY = config.programs.sketchybarJellyfin.clientKey;
+    };
+    text = builtins.readFile ./sketchybar/plugins/jellyfin.sh;
+  };
   attentionInboxPlugin = pkgs.writeShellApplication {
     name = "sketchybar-attention-inbox";
     runtimeInputs = [
@@ -89,6 +104,23 @@ let
                                     label.padding_right=6                    \
                                     click_script="/usr/bin/open ${lib.escapeShellArg config.programs.sketchybarAlertmanager.grafanaUrl}"                                       \
                  --subscribe alertmanager system_woke
+    ''
+  );
+  jellyfinItem = pkgs.writeText "sketchybar-jellyfin-item.sh" (
+    lib.optionalString config.programs.sketchybarJellyfin.enable ''
+      sketchybar --add item jellyfin right                              \
+                 --set jellyfin script="$PLUGIN_DIR/jellyfin.sh"       \
+                                update_freq=30                          \
+                                drawing=off                             \
+                                icon="󰼁"                               \
+                                icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
+                                icon.color="0xffaa5cc3"                 \
+                                icon.padding_left=6                     \
+                                icon.padding_right=2                    \
+                                label.padding_left=2                    \
+                                label.padding_right=6                   \
+                                click_script="/usr/bin/open ${lib.escapeShellArg config.programs.sketchybarJellyfin.dashboardUrl}" \
+                 --subscribe jellyfin system_woke
     ''
   );
   attentionInboxItem = pkgs.writeText "sketchybar-attention-inbox-item.sh" (
@@ -236,20 +268,26 @@ let
     rm -f "$out/plugins/codex.sh"
     rm -f "$out/plugins/codex-work.sh"
     rm -f "$out/plugins/alertmanager.sh"
+    rm -f "$out/plugins/jellyfin.sh"
     rm -f "$out/plugins/attention-inbox.sh"
     rm -f "$out/plugins/github-status.sh"
     rm -f "$out/items/aerospace-spaces.sh"
     rm -f "$out/items/alertmanager.sh"
+    rm -f "$out/items/jellyfin.sh"
     rm -f "$out/items/attention-inbox.sh"
     rm -f "$out/items/github-status.sh"
     ln -s ${aerospaceSpacesItem} "$out/items/aerospace-spaces.sh"
     ln -s ${codexItem} "$out/items/codex.sh"
     ln -s ${alertmanagerItem} "$out/items/alertmanager.sh"
+    ln -s ${jellyfinItem} "$out/items/jellyfin.sh"
     ln -s ${attentionInboxItem} "$out/items/attention-inbox.sh"
     ln -s ${githubStatusItem} "$out/items/github-status.sh"
     ln -s ${lib.getExe githubStatusPlugin} "$out/plugins/github-status.sh"
     ${lib.optionalString config.programs.sketchybarAlertmanager.enable ''
       ln -s ${lib.getExe alertmanagerPlugin} "$out/plugins/alertmanager.sh"
+    ''}
+    ${lib.optionalString config.programs.sketchybarJellyfin.enable ''
+      ln -s ${lib.getExe jellyfinPlugin} "$out/plugins/jellyfin.sh"
     ''}
     ${lib.optionalString (!isWork) ''
       ln -s ${lib.getExe codexPlugin} "$out/plugins/codex.sh"
@@ -282,6 +320,30 @@ in
     clientKey = lib.mkOption {
       type = lib.types.str;
       description = "Path to the Alertmanager mTLS client key.";
+    };
+  };
+
+  options.programs.sketchybarJellyfin = {
+    enable = lib.mkEnableOption "active Jellyfin stream indicator in SketchyBar";
+
+    metricsUrl = lib.mkOption {
+      type = lib.types.str;
+      description = "mTLS-protected Jellyfin exporter metrics URL.";
+    };
+
+    dashboardUrl = lib.mkOption {
+      type = lib.types.str;
+      description = "Grafana media dashboard opened when the indicator is clicked.";
+    };
+
+    clientCertificate = lib.mkOption {
+      type = lib.types.str;
+      description = "Path to the Jellyfin exporter mTLS client certificate.";
+    };
+
+    clientKey = lib.mkOption {
+      type = lib.types.str;
+      description = "Path to the Jellyfin exporter mTLS client key.";
     };
   };
 

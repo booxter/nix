@@ -114,8 +114,16 @@ def nix_eval_raw_optional(*segments):
     return raw.strip()
 
 
+def secret_domain_for_host(host):
+    root = host_config_root(host)
+    secret_domain = nix_eval_raw_optional(root, host, "config", "host", "secretDomain")
+    if not secret_domain:
+        raise SystemExit(f"host {host} does not define host.secretDomain")
+    return secret_domain
+
+
 def secret_path_for_host(host):
-    return REPO_ROOT / "secrets" / f"{host}.yaml"
+    return REPO_ROOT / "secrets" / secret_domain_for_host(host) / f"{host}.yaml"
 
 
 _KNOWN_INVENTORY_HOSTS = None
@@ -402,7 +410,14 @@ def update_secret_file(host, secret_prefix, cert_field, key_field, cert_text, ke
     if not secret_path.exists():
         raise SystemExit(f"secret file not found: {secret_path}")
 
-    run([str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"), host])
+    run(
+        [
+            str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"),
+            "--domain",
+            secret_domain_for_host(host),
+            host,
+        ]
+    )
 
     prefix = secret_prefix.split("/")
     sops_set(secret_path, prefix + [cert_field], cert_text.rstrip("\n"))

@@ -26,6 +26,7 @@
       ./_mixins/nix-gc
       ./_mixins/observability-client
       ./_mixins/sketchybar-alertmanager
+      ./_mixins/sketchybar-jellyfin
       ./_mixins/sudo
       ./_mixins/thermal-accounting
       ./_mixins/xquartz
