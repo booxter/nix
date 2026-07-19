@@ -525,7 +525,7 @@ rec {
     users = {
       ihar = {
         displayName = "ihar";
-        mailAddresses = [ "ihar.hrachyshka@gmail.com" ];
+        mailAddressSopsKey = "kanidm/person_mail_addresses/ihar";
         groups = [
           "sso-admins"
           "infra-admins"
@@ -544,19 +544,30 @@ rec {
       };
       kasia = {
         displayName = "kasia";
-        mailAddresses = [ "kasia.bondarava@gmail.com" ];
+        mailAddressSopsKey = "kanidm/person_mail_addresses/kasia";
         groups = [
           "paperless-users"
           "vikunja-users"
           "ai-users"
+          "media-admins"
           "media-users"
           "romm-viewers"
           "home-users"
         ];
       };
+      eugene = {
+        displayName = "eugene";
+        mailAddressSopsKey = "kanidm/person_mail_addresses/eugene";
+        groups = [
+          "ai-users"
+          "media-users"
+          "vikunja-users"
+          "romm-viewers"
+        ];
+      };
       oidc-probe-user = {
         displayName = "OIDC synthetic probe";
-        mailAddresses = [ "oidc-probe@${site.public.domain}" ];
+        mailAddressSopsKey = "kanidm/person_mail_addresses/oidc-probe-user";
         groups = [
           "oidc-probe-users"
           "search-probe-users"

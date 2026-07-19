@@ -115,7 +115,17 @@ OIDC credential reset email:
 
 ```bash
 nix run .#reset-oidc -- ihar
-nix run .#reset-oidc -- kasia kasia.bondarava@gmail.com
+nix run .#reset-oidc -- kasia
+```
+
+Kanidm person email addresses are stored under
+`kanidm/person_mail_addresses/<username>` in the `pki` SOPS file. Add the
+matching `mailAddressSopsKey` to the person's inventory entry, then set the
+encrypted value from standard input:
+
+```bash
+printf '%s' 'user@example.com' \
+  | nix run .#sops-set -- pki kanidm/person_mail_addresses/username
 ```
 
 ## Secret Handling

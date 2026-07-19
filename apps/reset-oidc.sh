@@ -10,7 +10,7 @@ Usage:
 
 Examples:
   reset-oidc ihar
-  reset-oidc kasia kasia.bondarava@gmail.com
+  reset-oidc kasia
 EOF
 }
 
