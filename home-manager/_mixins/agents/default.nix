@@ -38,6 +38,10 @@ let
     Nix builders for x86_64-linux and aarch64-darwin are available for
     cross-platform builds.
 
+    Never push, post, deploy, or change managed hosts unless the user
+    explicitly asks. Before posting a bug report, show the user the exact
+    contents and get their confirmation.
+
     When creating or amending Git commits:
     - Follow the repository's existing commit-message style.
     - When an AI agent creates or materially contributes to a commit, add an
@@ -134,11 +138,6 @@ in
         defaultMode = "auto";
         disableBypassPermissionsMode = "disable";
       };
-
-      autoMode.soft_deny = [
-        "$defaults"
-        "Never push, deploy, or change managed hosts unless explicitly asked."
-      ];
     }
     // lib.optionalAttrs (codingAgentEnv != { }) {
       env = codingAgentEnv;
