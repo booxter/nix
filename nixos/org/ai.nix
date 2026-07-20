@@ -83,6 +83,8 @@ in
       ENABLE_OTEL_TRACES = "False";
       ENABLE_OLLAMA_API = "False";
       ENABLE_OPENAI_API = "True";
+      ENABLE_OAUTH_GROUP_CREATION = "True";
+      ENABLE_OAUTH_GROUP_MANAGEMENT = "True";
       ENABLE_OAUTH_PERSISTENT_CONFIG = "False";
       ENABLE_OAUTH_ROLE_MANAGEMENT = "True";
       ENABLE_OAUTH_SIGNUP = "True";
@@ -93,10 +95,12 @@ in
       OAUTH_ALLOWED_ROLES = "user";
       OAUTH_CLIENT_ID = oidcClientId;
       OAUTH_CODE_CHALLENGE_METHOD = "S256";
+      OAUTH_GROUP_CLAIM = "open_webui_groups";
+      OAUTH_GROUP_DEFAULT_SHARE = "False";
       OAUTH_MERGE_ACCOUNTS_BY_EMAIL = "True";
       OAUTH_PROVIDER_NAME = "SSO";
       OAUTH_ROLES_CLAIM = "open_webui_role";
-      OAUTH_SCOPES = lib.concatStringsSep " " oidc.baseScopes;
+      OAUTH_SCOPES = lib.concatStringsSep " " (oidc.scopeWith [ "open_webui_groups" ]);
       OAUTH_TOKEN_ENDPOINT_AUTH_METHOD = "client_secret_basic";
       OTEL_METRICS_EXPORT_INTERVAL_MILLIS = "10000";
       OTEL_METRICS_EXPORTER_OTLP_ENDPOINT = "http://127.0.0.1:${toString openWebuiOtelGrpcPort}";

@@ -11,7 +11,9 @@ let
   litellmPort = 4000;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   ollamaTunnelPort = 11435;
+  paperlessOpenWebuiGroup = "paperless-users";
   paperlessService = hostInventory.servicesById.paperless;
+  paperlessToolServerId = "paperless-mcp-server";
   searchlessMetricsFile = "${nodeExporterTextfileDir}/searchless-ngx.prom";
   searchlessPort = 8001;
   searchlessMetricsScript = pkgs.writeShellApplication {
@@ -139,17 +141,13 @@ let
       config = {
         enable = true;
         access_control = null;
-        access_grants = [
-          {
-            principal_type = "user";
-            principal_id = "*";
-            permission = "read";
-          }
-        ];
+        # The post-start reconciler resolves the SSO-managed group's Open WebUI
+        # ID and replaces this fail-closed default at runtime.
+        access_grants = [ ];
         function_name_filter_list = "";
       };
       info = {
-        id = "paperless-mcp-server";
+        id = paperlessToolServerId;
         name = "Paperless MCP";
         description = "Searchless-ngx RAG tools for Paperless-ngx";
       };
@@ -186,6 +184,13 @@ in
     open-webui = {
       wants = [ "searchless-ngx.service" ];
       after = [ "searchless-ngx.service" ];
+      postStart = ''
+        OPEN_WEBUI_BASE_URL=http://127.0.0.1:${toString config.services.open-webui.port} \
+        OPEN_WEBUI_ADMIN_EMAIL=${lib.escapeShellArg config.services.open-webui.environment.WEBUI_ADMIN_EMAIL} \
+        OPEN_WEBUI_ACCESS_GROUP=${lib.escapeShellArg paperlessOpenWebuiGroup} \
+        OPEN_WEBUI_TOOL_SERVER_ID=${lib.escapeShellArg paperlessToolServerId} \
+          ${lib.getExe orgPkgs.open-webui-tool-acl-reconcile}
+      '';
     };
 
     searchless-chroma = {
