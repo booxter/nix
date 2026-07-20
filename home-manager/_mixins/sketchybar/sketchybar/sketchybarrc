@@ -41,6 +41,7 @@ source "$CONFIG_DIR/items/aerospace-spaces.sh"
 source "$CONFIG_DIR/items/codex.sh"
 
 source "$CONFIG_DIR/items/alertmanager.sh"
+source "$CONFIG_DIR/items/jellyfin.sh"
 
 source "$CONFIG_DIR/items/attention-inbox.sh"
 source "$CONFIG_DIR/items/github-status.sh"
