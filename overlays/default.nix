@@ -113,15 +113,7 @@
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
-      lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          # Send Telegram responses to the originating message thread.
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/lolek/commit/3afaa7a2778a75aa1007fbb653b9b2c8c56f4a29.patch";
-            hash = "sha256-w05uMRdZJTbpEthb3S5Lb53SmbTdcDcACchoUrcFkNk=";
-          })
-        ];
-      });
+      lolek = lolekPackage.override { yt-dlp = lolekYtDlp; };
 
       # Advertise ReFrame's absolute pointer as a touchscreen only. Declaring
       # the same uinput device as both absolute and relative breaks movement
