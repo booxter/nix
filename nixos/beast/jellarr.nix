@@ -349,7 +349,7 @@ in
                 isAdministrator = isAdmin;
                 enableAllFolders = allLibraries;
                 enableCollectionManagement = allowWrite || isAdmin;
-                enableContentDownloading = !isGuest;
+                enableContentDownloading = true;
                 loginAttemptsBeforeLockout = 3;
                 # 10 Mbps (Jellyfin policy expects bits/sec).
                 # Spectrum upload is maxed at 35 Mbps, so this should

@@ -31,6 +31,11 @@ WireGuard can keep its own DDNS hostname separately on `gw`.
 
 The shared module currently checks every `3min`.
 
+External Jellyfin original-file downloads (`/Items/<id>/Download`) pass through
+a loopback-only HAProxy backend with one shared 5 Mbit/s bandwidth pool. Active
+downloads divide that pool dynamically; LAN clients bypass the limit. Playback
+and other Jellyfin API traffic continue to proxy directly to Jellyfin.
+
 Validation:
 
 ```bash
