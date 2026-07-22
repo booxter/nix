@@ -22,6 +22,7 @@
     ./_mixins/agents
     ./_mixins/gnupg
     ./_mixins/nixvim
+    ./_mixins/podman
     ./_mixins/scm
     ./_mixins/ssh
     ./_mixins/tmux
