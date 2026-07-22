@@ -13,6 +13,7 @@
 {
   imports = [
     ./_mixins/nix
+    ./_mixins/podman-machine
     ./_mixins/xquartz
     ./_mixins/zsh
   ]
@@ -59,6 +60,14 @@
   };
 
   programs.home-manager.enable = true; # let it manage itself
+  programs.podman-machine = {
+    enable = isDarwin && isDesktop && !isWork;
+    provider = "libkrun";
+    cpus = 4;
+    memoryMiB = 8192;
+    diskSizeGiB = 100;
+    autoStart = true;
+  };
   programs.xquartz = lib.mkIf (isDarwin && isDesktop && !isWork) {
     enable = true;
     configureSsh = true;
