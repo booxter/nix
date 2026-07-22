@@ -6,6 +6,7 @@
   ...
 }:
 let
+  mediaPaths = import ./media-paths.nix;
   ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
@@ -154,12 +155,17 @@ in
         WS_CRON_IMPORT_AT = "0 */12 * * *";
         WS_CRON_EXPORT = "true";
         WS_CRON_EXPORT_AT = "30 */12 * * *";
+        # Generate the consolidated backend/path audit after the midnight
+        # import and enable file checks against the read-only library mount.
+        WS_CRON_MEDIA_HEALTH = "true";
+        WS_CRON_MEDIA_HEALTH_AT = "0 5 * * *";
+        WS_MEDIA_HEALTH_CHECK_FILES = "true";
         # Disable WatchState's cron trigger: watchstate-native-backup.service
         # invokes the same native backup immediately before Restic, ensuring
         # the latest archive is included and the outcome is monitored.
         WS_CRON_BACKUP = "false";
         # Serialize full export comparisons and state writes so large syncs do
-        # not exhaust the reverse proxy or Jellyfin API. WatchState 1.9.2 does
+        # not exhaust the reverse proxy or Jellyfin API. WatchState does
         # not apply this switch to incremental Jellyfin metadata reads, so each
         # exported Jellyfin backend must also set options.client.http_version
         # to 1.1. Disabling HTTP/2 multiplexing makes WatchState's built-in
@@ -172,7 +178,10 @@ in
         "--security-opt=no-new-privileges"
       ];
       ports = [ "127.0.0.1:${toString watchstatePort}:${toString watchstatePort}" ];
-      volumes = [ "${watchstateDataDir}:/config:rw" ];
+      volumes = [
+        "${watchstateDataDir}:/config:rw"
+        "${mediaPaths.sourceLibraryRoot}:${mediaPaths.jellyfinLibraryRoot}:ro"
+      ];
     };
   };
 
@@ -189,7 +198,10 @@ in
       "network-online.target"
       "watchstate-password-env.service"
     ];
-    unitConfig.RequiresMountsFor = [ watchstateDataDir ];
+    unitConfig.RequiresMountsFor = [
+      watchstateDataDir
+      mediaPaths.sourceLibraryRoot
+    ];
   };
 
   systemd.services.watchstate-native-backup = {

@@ -122,6 +122,14 @@ The WatchState system user is supplied declaratively from
 password comes from `watchstate/system/password` in `secrets/main/beast.yaml`.
 Password changes restart WatchState.
 
+WatchState generates its Media Health report daily at 05:00, after the
+midnight import. The report combines backend coverage, duplicate references,
+identity and metadata conflicts, path disagreements, and missing-file checks.
+For file checks, the Jellyfin library is mounted read-only in the WatchState
+container at the same `/media/library` path Jellyfin reports. Review findings
+under **Diagnostics > Media Health**; `partial` findings can be expected when
+the restricted `jellyfin_shared` backend cannot see a library.
+
 The remaining initial configuration is an explicit, staged operation:
 
 1. Sign in to WatchState as the inventory bootstrap owner using the sops-managed
