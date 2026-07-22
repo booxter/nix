@@ -175,6 +175,11 @@ in
       environmentFiles = [ "/run/watchstate-auth/auth.env" ];
       extraOptions = [
         "--cap-drop=all"
+        # The image probes before WatchState finishes initializing. Podman
+        # exposes that expected startup miss as a failed transient systemd
+        # unit, which makes NixOS activation report a false failure. The
+        # backend endpoint remains covered by the external probe below.
+        "--no-healthcheck"
         "--security-opt=no-new-privileges"
       ];
       ports = [ "127.0.0.1:${toString watchstatePort}:${toString watchstatePort}" ];
