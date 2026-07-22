@@ -513,8 +513,9 @@ in
         AUTO_GENERATE_CORRESPONDENTS = "true";
         AUTO_GENERATE_CREATED_DATE = "true";
         AUTO_GENERATE_DOCUMENT_TYPE = "true";
-        # v0.26.1 may re-suggest OCR control tags, while the completion-tag
-        # guard is broken: https://github.com/icereed/paperless-gpt/issues/1006
+        # paperless-gpt may re-suggest OCR control tags, while the
+        # completion-tag guard is still broken:
+        # https://github.com/icereed/paperless-gpt/issues/1006
         AUTO_GENERATE_TAGS = "false";
         AUTO_GENERATE_TITLE = "true";
         AUTO_OCR_TAG = paperlessGptAutoOcrTag;
@@ -533,6 +534,7 @@ in
         LOCAL_PDF_PATH = "/app/pdf";
         LOG_LEVEL = "info";
         OCR_LIMIT_PAGES = "5";
+        OCR_MAX_RETRIES = "3";
         OCR_PROCESS_MODE = "image";
         OCR_PROVIDER = "llm";
         OLLAMA_CONTEXT_LENGTH = "8192";
