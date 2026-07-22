@@ -255,7 +255,7 @@ in
       nixpkgs-reviewFull
       nurl
     ]
-    ++ lib.optionals isDarwin [
+    ++ lib.optionals (isDarwin && !isWork) [
       scmPkgs.git-send-email-store-password
     ];
 
