@@ -62,7 +62,10 @@ in
   programs.yubi = {
     age.enable = true;
     ssh.enable = true;
-    pamU2f.enable = true;
+    pamU2f = {
+      enable = true;
+      pinVerification = true;
+    };
   };
 
   services.ollama = {
