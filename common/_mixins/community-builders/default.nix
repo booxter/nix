@@ -17,10 +17,7 @@ let
     darwin-builder = {
       hostName = "darwin-build-box.nix-community.org";
       publicKeyFile = ../../../public-keys/hosts/nix-community-darwin-build-box.pub;
-      systems = [
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
+      systems = [ "aarch64-darwin" ];
       maxJobs = 2;
       speedFactor = 20;
       supportedFeatures = [ "big-parallel" ];
