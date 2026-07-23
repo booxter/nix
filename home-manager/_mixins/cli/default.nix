@@ -13,7 +13,7 @@ let
   cliPkgs = import ./pkgs { inherit pkgs; };
   hasRemoteGui = isDesktop && (!isDarwin || config.programs.xquartz.enable);
   nr = cliPkgs.nr.override {
-    inherit (osConfig.host.nixpkgsReview) builders;
+    builders = lib.concatStringsSep " ; " osConfig.host.nixpkgsReview.builders;
   };
 in
 {
