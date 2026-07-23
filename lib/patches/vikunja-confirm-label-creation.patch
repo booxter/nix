@@ -1,0 +1,159 @@
+diff --git a/src/components/input/Multiselect.test.ts b/src/components/input/Multiselect.test.ts
+index 3b3bb59be..7204856aa 100644
+--- a/src/components/input/Multiselect.test.ts
++++ b/src/components/input/Multiselect.test.ts
+@@ -171,3 +171,83 @@ describe('Multiselect.vue — creation-disabled hint', () => {
+ 		wrapper.unmount()
+ 	})
+ })
++
++describe('Multiselect.vue — creation on Enter', () => {
++	const nixLabel = {title: 'nix'}
++	const wrappers: VueWrapper[] = []
++
++	beforeEach(() => {
++		vi.useFakeTimers()
++	})
++
++	afterEach(() => {
++		wrappers.forEach(wrapper => wrapper.unmount())
++		wrappers.length = 0
++		vi.useRealTimers()
++		document.body.innerHTML = ''
++	})
++
++	function mountCreatableMultiselect(confirmCreateOnEnter = false) {
++		let wrapper: VueWrapper
++		wrapper = mount(Multiselect, {
++			attachTo: document.body,
++			props: {
++				modelValue: [],
++				multiple: true,
++				creatable: true,
++				confirmCreateOnEnter,
++				label: 'title',
++				searchResults: [],
++				createPlaceholder: 'create',
++				selectPlaceholder: 'select',
++				onSearch: (query: string) => wrapper.setProps({
++					searchResults: query === 'ni' ? [nixLabel] : [],
++				}),
++			},
++			global: {
++				mocks: {$t: (key: string) => key},
++			},
++		})
++		wrappers.push(wrapper)
++
++		return wrapper
++	}
++
++	it('selects the first partial match when confirmation is enabled', async () => {
++		const wrapper = mountCreatableMultiselect(true)
++		const input = wrapper.find('input')
++
++		await input.setValue('ni')
++		await input.trigger('keyup', {key: 'Enter'})
++		await nextTick()
++
++		expect(wrapper.emitted('select')?.[0]).toEqual([nixLabel])
++		expect(wrapper.emitted('create')).toBeUndefined()
++	})
++
++	it('requires a second Enter when there are no matches', async () => {
++		const wrapper = mountCreatableMultiselect(true)
++		const input = wrapper.find('input')
++
++		await input.setValue('new label')
++		await input.trigger('keyup', {key: 'Enter'})
++		await nextTick()
++
++		expect(wrapper.emitted('create')).toBeUndefined()
++		const createOption = wrapper.find('.is-create-option')
++		expect(document.activeElement).toBe(createOption.element)
++
++		await createOption.trigger('keyup', {key: 'Enter'})
++		expect(wrapper.emitted('create')?.[0]).toEqual(['new label'])
++	})
++
++	it('keeps immediate creation as the default behavior', async () => {
++		const wrapper = mountCreatableMultiselect()
++		const input = wrapper.find('input')
++
++		await input.setValue('new label')
++		await input.trigger('keyup', {key: 'Enter'})
++
++		expect(wrapper.emitted('create')?.[0]).toEqual(['new label'])
++	})
++})
+diff --git a/src/components/input/Multiselect.vue b/src/components/input/Multiselect.vue
+index ba5ea4a86..6171d4c3e 100644
+--- a/src/components/input/Multiselect.vue
++++ b/src/components/input/Multiselect.vue
+@@ -145,7 +145,7 @@
+ </template>
+ 
+ <script setup lang="ts" generic="T extends Record<string, unknown>">
+-import {computed, onBeforeUnmount, onMounted, ref, toRefs, useId, watch, type ComponentPublicInstance} from 'vue'
++import {computed, nextTick, onBeforeUnmount, onMounted, ref, toRefs, useId, watch, type ComponentPublicInstance} from 'vue'
+ import {useI18n} from 'vue-i18n'
+ 
+ import {closeWhenClickedOutside} from '@/helpers/closeWhenClickedOutside'
+@@ -169,6 +169,8 @@ const props = withDefaults(defineProps<{
+ 	name?: string
+ 	/** If true, will provide an 'add this as a new value' entry which  fires an @create event when clicking on it. */
+ 	creatable?: boolean
++	/** If true, Enter selects the first result or focuses the create option for confirmation. */
++	confirmCreateOnEnter?: boolean
+ 	/** When set and `creatable` is false, shows a non-interactive hint row explaining why a non-matching query can't be added. */
+ 	creationDisabledMessage?: string
+ 	/** The text shown next to the new value option. */
+@@ -195,6 +197,7 @@ const props = withDefaults(defineProps<{
+ 	searchResults: () => [] as T[],
+ 	label: '',
+ 	creatable: false,
++	confirmCreateOnEnter: false,
+ 	creationDisabledMessage: '',
+ 	createPlaceholder: () => useI18n().t('input.multiselect.createPlaceholder'),
+ 	selectPlaceholder: () => useI18n().t('input.multiselect.selectPlaceholder'),
+@@ -432,7 +435,27 @@ function create() {
+ 	closeSearchResults()
+ }
+ 
+-function createOrSelectOnEnter() {
++async function createOrSelectOnEnter() {
++	if (creatableAvailable.value && props.confirmCreateOnEnter) {
++		if (searchTimeout.value !== null) {
++			clearTimeout(searchTimeout.value)
++			searchTimeout.value = null
++		}
++
++		emit('search', query.value as string)
++		localLoading.value = false
++		showSearchResults.value = true
++		await nextTick()
++
++		if (filteredSearchResults.value.length > 0) {
++			select(filteredSearchResults.value[0])
++			return
++		}
++
++		preSelect(filteredSearchResults.value.length)
++		return
++	}
++
+ 	if (!creatableAvailable.value && searchResults.value.length === 1) {
+ 		select(searchResults.value[0])
+ 		return
+diff --git a/src/components/tasks/partials/EditLabels.vue b/src/components/tasks/partials/EditLabels.vue
+index 0b261cfb0..b254153d8 100644
+--- a/src/components/tasks/partials/EditLabels.vue
++++ b/src/components/tasks/partials/EditLabels.vue
+@@ -8,6 +8,7 @@
+ 		label="title"
+ 		:creatable="creatable"
+ 		:creation-disabled-message="creationDisabledMessage"
++		:confirm-create-on-enter="true"
+ 		:create-placeholder="$t('task.label.createPlaceholder')"
+ 		:search-delay="10"
+ 		:close-after-select="false"

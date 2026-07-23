@@ -221,31 +221,13 @@
         let
           frontend = old.passthru.frontend.overrideAttrs (frontendOld: {
             patches = (frontendOld.patches or [ ]) ++ [
-              # Focus the quick-actions input when its modal opens.
-              (prev.fetchpatch {
-                url = "https://github.com/go-vikunja/vikunja/commit/01fff665c60e2b25e65205f706845517881db149.patch";
-                stripLen = 1;
-                hash = "sha256-79N56esq0esenvoFfai9klv5x17sCQ2qC2JeuSgXe6I=";
-              })
               # TODO: send upstream.
               # Confirm label creation from the multiselect input.
-              (prev.fetchpatch {
-                url = "https://github.com/booxter/vikunja/commit/5ce44564b395bfc3edb3895074b625e7a517e764.patch";
-                stripLen = 1;
-                hash = "sha256-6BWLcSTiK65OvwB+LAVmwhXpiHc6O031aSK1vAvk7sk=";
-              })
+              ../lib/patches/vikunja-confirm-label-creation.patch
             ];
           });
         in
         {
-          patches = (old.patches or [ ]) ++ [
-            # Drop when https://github.com/go-vikunja/vikunja/pull/2811 reaches nixpkgs.
-            ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
-            # Backport https://github.com/go-vikunja/vikunja/pull/2923 to 2.3.0.
-            ../lib/patches/vikunja-task-position-uniqueness.patch
-            # Backport https://github.com/go-vikunja/vikunja/pull/3098 to 2.3.0.
-            ../lib/patches/vikunja-task-position-concurrency.patch
-          ];
           inherit frontend;
           prePatch = ''
             cp -r ${frontend} frontend/dist
