@@ -10,6 +10,8 @@ usage() {
 
 # Array of key = value strings
 extra_config=()
+approve_pr=""
+post_result=""
 
 while getopts ":aps:C" opt; do
   case $opt in
@@ -42,9 +44,9 @@ extra_config_str=$(IFS=' '; echo "${extra_config[*]}")
 
 # if extra_config_str is not empty, add it to the extra-nixpkgs-config
 if [ -n "$extra_config_str" ]; then
-  extra_config="--extra-nixpkgs-config={ ${extra_config_str} }"
+  extra_config_arg="--extra-nixpkgs-config={ ${extra_config_str} }"
 else
-  extra_config=""
+  extra_config_arg=""
 fi
 
 set -x
@@ -54,10 +56,15 @@ cmd=(
   pr "$@"
   --no-shell
 )
-if [ -n "$extra_config" ]; then
-  cmd+=("$extra_config")
+if [ -n "$extra_config_arg" ]; then
+  cmd+=("$extra_config_arg")
 fi
-cmd+=(${post_result} ${approve_pr})
+if [ -n "$post_result" ]; then
+  cmd+=("$post_result")
+fi
+if [ -n "$approve_pr" ]; then
+  cmd+=("$approve_pr")
+fi
 cmd+=(--systems="${systems}")
 
 #### Initialize builders
@@ -71,15 +78,15 @@ done
 
 # Pick peer machines as builders.
 # We have to be careful not to create a loop, so we exclude the current host. nix doesn't support building on localhost via ssh.
-if [ $(hostname) != "mmini" ]; then
+if [ "$(hostname)" != "mmini" ]; then
   # Use higher speed factor for mac mini
   builders+=' ; ssh://mmini x86_64-darwin,aarch64-darwin - 3 25 big-parallel'
 fi
-if [ $(hostname) != "mair" ]; then
+if [ "$(hostname)" != "mair" ]; then
   # Use lower speed factor for macbook air
   builders+=' ; ssh://mair x86_64-darwin,aarch64-darwin - 3 15 big-parallel'
 fi
-if [ $(hostname) != "frame" ]; then
+if [ "$(hostname)" != "frame" ]; then
   # Use higher speed factor for frame
   builders+=' ; ssh://frame x86_64-linux - 10 200 benchmark,big-parallel,kvm,nixos-test'
 fi

@@ -7,12 +7,6 @@ writeShellApplication {
   name = "nr";
   runtimeInputs = [ nixpkgs-reviewFull ];
   bashOptions = [ ];
-  excludeShellChecks = [
-    "SC2046"
-    "SC2128"
-    "SC2178"
-    "SC2206"
-  ];
   text = builtins.readFile ./nr;
 
   meta = {
