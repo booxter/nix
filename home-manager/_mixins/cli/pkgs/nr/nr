@@ -49,7 +49,6 @@ else
   extra_config_arg=""
 fi
 
-set -x
 NP=${NP:-"nixpkgs-review"}
 cmd=(
   "$NP"
