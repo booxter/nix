@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   username,
@@ -34,6 +33,7 @@ in
     ./_mixins/internal-pki
     ./_mixins/nix
     ./_mixins/nixpkgs
+    ./_mixins/nixpkgs-review
     ./_mixins/nix-gc
     ./_mixins/nvtop
     ./_mixins/ssh
@@ -73,20 +73,6 @@ in
     type = lib.types.bool;
     default = false;
     description = "Whether this host should avoid frequent unattended reboots.";
-  };
-
-  options.host.nixpkgsReview.builders = lib.mkOption {
-    type = lib.types.str;
-    readOnly = true;
-    internal = true;
-    description = "Nix builders made available to nixpkgs-review on this host.";
-  };
-
-  options.host.nixpkgsReview.communityBuilders = lib.mkOption {
-    type = lib.types.lines;
-    default = "";
-    internal = true;
-    description = "Review-only nix-community builders in Nix machines-file format.";
   };
 
   options.host.isLaptop = lib.mkOption {
@@ -160,16 +146,6 @@ in
     programs.zsh.enable = true;
     host.isLaptop = lib.mkDefault isLaptop;
     host.isWork = isWork;
-    host.nixpkgsReview.builders =
-      let
-        configuredBuilders =
-          if config.nix.buildMachines == [ ] then "" else config.environment.etc."nix/machines".text;
-      in
-      lib.concatStringsSep " ; " (
-        lib.filter (builder: builder != "") (
-          lib.splitString "\n" "${configuredBuilders}${config.host.nixpkgsReview.communityBuilders}"
-        )
-      );
     host.secretDomain = secretDomain;
   };
 }
