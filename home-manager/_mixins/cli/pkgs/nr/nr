@@ -62,9 +62,8 @@ else
   extra_config_arg=""
 fi
 
-NP=${NP:-"nixpkgs-review"}
 cmd=(
-  "$NP"
+  nixpkgs-review
   pr "$@"
   --no-shell
 )
