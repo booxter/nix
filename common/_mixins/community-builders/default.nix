@@ -51,6 +51,6 @@ in
   host.nixpkgsReview.communityBuilders = ''
     ssh://${linuxAarch64Builder} aarch64-linux - 10 20 ${linuxFeatures} - -
     ssh://${linuxX86Builder} x86_64-linux - 5 20 ${linuxFeatures} - -
-    ssh://${darwinBuilder} x86_64-darwin,aarch64-darwin - 3 20 big-parallel - -
+    ssh://${darwinBuilder} x86_64-darwin,aarch64-darwin - 2 20 big-parallel - -
   '';
 }
