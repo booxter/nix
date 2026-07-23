@@ -7,50 +7,71 @@
 }:
 let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  darwinBuilder = "darwin-builder";
-  linuxAarch64Builder = "remote-linux-builder";
-  linuxX86Builder = "remote-linux-x86-builder";
-  linuxFeatures = "benchmark,big-parallel,kvm,nixos-test";
+  linuxFeatures = [
+    "benchmark"
+    "big-parallel"
+    "kvm"
+    "nixos-test"
+  ];
+  communityBuilders = {
+    darwin-builder = {
+      hostName = "darwin-build-box.nix-community.org";
+      publicKeyFile = ../../../public-keys/hosts/nix-community-darwin-build-box.pub;
+      systems = [
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
+      maxJobs = 2;
+      speedFactor = 20;
+      supportedFeatures = [ "big-parallel" ];
+    };
+    remote-linux-builder = {
+      hostName = "aarch64-build-box.nix-community.org";
+      publicKeyFile = ../../../public-keys/hosts/nix-community-aarch64-build-box.pub;
+      systems = [ "aarch64-linux" ];
+      maxJobs = 10;
+      speedFactor = 20;
+      supportedFeatures = linuxFeatures;
+    };
+    remote-linux-x86-builder = {
+      hostName = "build-box.nix-community.org";
+      publicKeyFile = ../../../public-keys/hosts/nix-community-build-box.pub;
+      systems = [ "x86_64-linux" ];
+      maxJobs = 5;
+      speedFactor = 20;
+      supportedFeatures = linuxFeatures;
+    };
+  };
+  formatList = values: if values == [ ] then "-" else lib.concatStringsSep "," values;
 in
 {
   programs.ssh = {
-    knownHosts = {
-      "aarch64-build-box.nix-community.org" = {
-        publicKey = readPublicKey ../../../public-keys/hosts/nix-community-aarch64-build-box.pub;
-      };
-      "build-box.nix-community.org" = {
-        publicKey = readPublicKey ../../../public-keys/hosts/nix-community-build-box.pub;
-      };
-      "darwin-build-box.nix-community.org" = {
-        publicKey = readPublicKey ../../../public-keys/hosts/nix-community-darwin-build-box.pub;
-      };
-    };
+    knownHosts = lib.mapAttrs' (
+      _: builder:
+      lib.nameValuePair builder.hostName {
+        publicKey = readPublicKey builder.publicKeyFile;
+      }
+    ) communityBuilders;
     extraConfig =
       let
         communityBuilderIdentityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
         user = "booxter";
       in
-      ''
-        Host ${darwinBuilder}
-          Hostname darwin-build-box.nix-community.org
-          IdentityFile ${communityBuilderIdentityFile}
-          User ${user}
-
-        Host ${linuxAarch64Builder}
-          Hostname aarch64-build-box.nix-community.org
-          IdentityFile ${communityBuilderIdentityFile}
-          User ${user}
-
-        Host ${linuxX86Builder}
-          Hostname build-box.nix-community.org
-          IdentityFile ${communityBuilderIdentityFile}
-          User ${user}
-      '';
+      lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (name: builder: ''
+          Host ${name}
+            Hostname ${builder.hostName}
+            IdentityFile ${communityBuilderIdentityFile}
+            User ${user}
+        '') communityBuilders
+      );
   };
   environment.systemPackages = [ pkgs.openssh ];
-  host.nixpkgsReview.communityBuilders = ''
-    ssh://${linuxAarch64Builder} aarch64-linux - 10 20 ${linuxFeatures} - -
-    ssh://${linuxX86Builder} x86_64-linux - 5 20 ${linuxFeatures} - -
-    ssh://${darwinBuilder} x86_64-darwin,aarch64-darwin - 2 20 big-parallel - -
-  '';
+  host.nixpkgsReview.communityBuilders = lib.concatStringsSep "\n" (
+    lib.mapAttrsToList (
+      name: builder:
+      "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "
+      + "${toString builder.speedFactor} ${formatList builder.supportedFeatures} - -"
+    ) communityBuilders
+  );
 }
