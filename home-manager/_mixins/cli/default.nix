@@ -143,6 +143,7 @@ in
       nix-init
       nix-search-cli
       nix-tree
+      cliPkgs.nr
       nurl
       openssl
       pre-commit
