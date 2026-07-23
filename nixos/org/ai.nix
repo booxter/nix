@@ -26,7 +26,7 @@ let
   openWebuiDefaultModelParams = {
     function_calling = "native";
     system = ''
-      Current date and time: {{CURRENT_DATETIME}} ({{CURRENT_WEEKDAY}}).
+      Current date: {{CURRENT_DATE}} ({{CURRENT_WEEKDAY}}).
     '';
   };
 in

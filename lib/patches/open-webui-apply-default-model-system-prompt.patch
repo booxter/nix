@@ -1,29 +1,31 @@
 --- a/backend/open_webui/functions.py
 +++ b/backend/open_webui/functions.py
-@@ -272,0 +273,5 @@ async def get_function_params(function_module, form_data, user, extra_params=Non
-+    default_params = getattr(request.app.state.config, 'DEFAULT_MODEL_PARAMS', None) or {}
+@@ -23,0 +24 @@
++from open_webui.models.config import Config
+@@ -281,0 +283,5 @@
++
++    default_params = await Config.get('models.default_params', {}) or {}
 +    default_system = default_params.get('system') if isinstance(default_params, dict) else None
 +    if default_system:
 +        form_data = await apply_system_prompt_to_body(default_system, form_data, metadata, user)
-+
 --- a/backend/open_webui/routers/ollama.py
 +++ b/backend/open_webui/routers/ollama.py
-@@ -1114,0 +1115,5 @@ async def generate_chat_completion(
-+    default_params = getattr(request.app.state.config, 'DEFAULT_MODEL_PARAMS', None) or {}
+@@ -1119,0 +1120,5 @@
++
++    default_params = await Config.get('models.default_params', {}) or {}
 +    default_system = default_params.get('system') if isinstance(default_params, dict) else None
 +    if default_system and not bypass_system_prompt:
 +        payload = await apply_system_prompt_to_body(default_system, payload, metadata, user)
-+
-@@ -1274,0 +1280,5 @@ async def generate_openai_chat_completion(
-+    default_params = getattr(request.app.state.config, 'DEFAULT_MODEL_PARAMS', None) or {}
+@@ -1267,0 +1273,5 @@
++    default_params = await Config.get('models.default_params', {}) or {}
 +    default_system = default_params.get('system') if isinstance(default_params, dict) else None
 +    if default_system:
 +        payload = await apply_system_prompt_to_body(default_system, payload, metadata, user)
 +
 --- a/backend/open_webui/routers/openai.py
 +++ b/backend/open_webui/routers/openai.py
-@@ -1104,0 +1105,5 @@ async def generate_chat_completion(
-+    default_params = getattr(request.app.state.config, 'DEFAULT_MODEL_PARAMS', None) or {}
+@@ -1153,0 +1154,5 @@
++    default_params = await Config.get('models.default_params', {}) or {}
 +    default_system = default_params.get('system') if isinstance(default_params, dict) else None
 +    if default_system and not bypass_system_prompt:
 +        payload = await apply_system_prompt_to_body(default_system, payload, metadata, user)

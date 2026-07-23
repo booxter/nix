@@ -209,6 +209,9 @@
         in
         {
           inherit version src;
+          patches = (old.patches or [ ]) ++ [
+            ../lib/patches/open-webui-apply-default-model-system-prompt.patch
+          ];
           # overridePythonAttrs retains 0.9.6's dependencies unless removed explicitly.
           dependencies = lib.subtractLists (with prev.python3Packages; [
             peewee
