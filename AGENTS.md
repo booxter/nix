@@ -6,6 +6,11 @@ Scope: whole repository.
 
 - Commit completed changes locally. Do not push, deploy, or change managed hosts
   live unless explicitly asked.
+- Keep history clean: use separate commits for distinct logical steps and avoid
+  spurious or unrelated changes.
+- Prefer simple, task-focused solutions over over-engineering. Do not copy and
+  paste shared patterns; refactor them when useful, normally in a separate
+  commit.
 - Prefer declarative Nix changes; keep unrelated worktree changes intact.
 - Treat in-tree Nix modules, mixins, and options as internal to this repository.
   When editing them, update all in-repo call sites and do not preserve legacy
