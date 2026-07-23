@@ -8,7 +8,6 @@ writeShellApplication {
   name = "nr";
   runtimeInputs = [ nixpkgs-reviewFull ];
   runtimeEnv.NR_BUILDERS = builders;
-  bashOptions = [ ];
   text = builtins.readFile ./nr;
 
   meta = {
