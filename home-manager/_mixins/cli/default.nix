@@ -5,12 +5,16 @@
   isDarwin,
   isDesktop,
   isWork,
+  osConfig,
   ...
 }:
 let
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
   hasRemoteGui = isDesktop && (!isDarwin || config.programs.xquartz.enable);
+  nr = cliPkgs.nr.override {
+    inherit (osConfig.host.nixpkgsReview) builders;
+  };
 in
 {
   imports = [
@@ -143,7 +147,7 @@ in
       nix-init
       nix-search-cli
       nix-tree
-      cliPkgs.nr
+      nr
       nurl
       openssl
       pre-commit

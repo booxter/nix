@@ -7,6 +7,10 @@
 }:
 let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
+  darwinBuilder = "darwin-builder";
+  linuxAarch64Builder = "remote-linux-builder";
+  linuxX86Builder = "remote-linux-x86-builder";
+  linuxFeatures = "benchmark,big-parallel,kvm,nixos-test";
 in
 {
   programs.ssh = {
@@ -27,21 +31,26 @@ in
         user = "booxter";
       in
       ''
-        Host darwin-builder
+        Host ${darwinBuilder}
           Hostname darwin-build-box.nix-community.org
           IdentityFile ${communityBuilderIdentityFile}
           User ${user}
 
-        Host remote-linux-builder
+        Host ${linuxAarch64Builder}
           Hostname aarch64-build-box.nix-community.org
           IdentityFile ${communityBuilderIdentityFile}
           User ${user}
 
-        Host remote-linux-x86-builder
+        Host ${linuxX86Builder}
           Hostname build-box.nix-community.org
           IdentityFile ${communityBuilderIdentityFile}
           User ${user}
       '';
   };
   environment.systemPackages = [ pkgs.openssh ];
+  host.nixpkgsReview.communityBuilders = ''
+    ssh://${linuxAarch64Builder} aarch64-linux - 10 20 ${linuxFeatures} - -
+    ssh://${linuxX86Builder} x86_64-linux - 5 20 ${linuxFeatures} - -
+    ssh://${darwinBuilder} x86_64-darwin,aarch64-darwin - 3 20 big-parallel - -
+  '';
 }
