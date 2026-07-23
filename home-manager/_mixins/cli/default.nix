@@ -35,9 +35,6 @@ in
     # eza
     q = "eza";
     qq = "eza -l";
-
-    # remove once https://github.com/nektos/act/issues/2329 is fixed
-    act = "act -P ubuntu-24.04=ghcr.io/catthehacker/ubuntu:act-24.04";
   };
 
   programs.zsh = {
@@ -148,7 +145,6 @@ in
       nix-tree
       nurl
       openssl
-      podman
       pre-commit
       wget
       yq-go
@@ -175,7 +171,6 @@ in
   home.sessionVariables = {
     PAGER = "page -WO -q 90000";
     MANPAGER = "page -t man";
-    CONTAINERS_MACHINE_PROVIDER = "libkrun";
   };
 
   home.sessionPath = lib.optionals (!isWork) [
