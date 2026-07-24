@@ -384,7 +384,8 @@ should_skip_generated_source() {
 
   case "${source}" in
     */etc/profiles | */etc/profiles/* | */share/man | */share/man/* | \
-      */etc/pki/tls/certs/ca-bundle.crt | */etc/ssl/certs/ca-bundle.crt | \
+      */etc/pki/tls/certs/ca-bundle.crt | \
+      */etc/ssl/certs/ca-bundle.crt | */etc/ssl/certs/ca-certificates.crt | \
       */etc/ssh/moduli | */etc/terminfo | */etc/terminfo/* | \
       */etc/issue | */etc/issue.net | */etc/os-release | */etc/lsb-release)
       return 0

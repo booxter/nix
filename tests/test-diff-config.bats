@@ -92,6 +92,7 @@ printf 'readonly=true\n' >"$out_link/etc/nut/ups.conf"
 printf 'ca-bundle=%s\n' "$last_arg" >"$out_link/etc/pki/tls/certs/ca-bundle.crt"
 printf 'moduli=%s\n' "$last_arg" >"$out_link/etc/ssh/moduli"
 printf 'ca-bundle=%s\n' "$last_arg" >"$out_link/etc/ssl/certs/ca-bundle.crt"
+printf 'ca-certificates=%s\n' "$last_arg" >"$out_link/etc/ssl/certs/ca-certificates.crt"
 printf '\000terminfo=%s\n' "$last_arg" >"$out_link/etc/terminfo/t/tvi912c"
 {
   printf 'man-flake=%s\n' "$last_arg"
@@ -423,6 +424,7 @@ SH
   [[ "$output" == *"diff -ruN old/system/services/nginx.conf new/system/services/nginx.conf"* ]]
   [[ "$output" != *"old/system/etc/issue"* ]]
   [[ "$output" != *"ca-bundle.crt"* ]]
+  [[ "$output" != *"ca-certificates.crt"* ]]
   [[ "$output" != *"etc/ssh/moduli"* ]]
   [[ "$output" != *"etc/terminfo"* ]]
   [[ "$output" != *"home-configuration.nix.5"* ]]
