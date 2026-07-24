@@ -23,8 +23,8 @@ toplevels and embedded Home Manager users. By default this covers:
   nix-darwin:  etc, activate, activate-user, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
   Homebrew:    selected cask and formula recipes from Nix-managed taps
   Home Manager users: activate, home-files, LaunchAgents, session-vars
-  Profile/manpage trees and release metadata files are skipped because those
-  changes are already covered by the dix output.
+  CA bundles, SSH moduli, terminfo databases, profile/manpage trees, and release
+  metadata files are skipped because those changes are already covered by dix.
 
 Repeat --path with --details to override the default system generated paths.
 
@@ -384,6 +384,9 @@ should_skip_generated_source() {
 
   case "${source}" in
     */etc/profiles | */etc/profiles/* | */share/man | */share/man/* | \
+      */etc/pki/tls/certs/ca-bundle.crt | \
+      */etc/ssl/certs/ca-bundle.crt | */etc/ssl/certs/ca-certificates.crt | \
+      */etc/ssh/moduli | */etc/terminfo | */etc/terminfo/* | \
       */etc/issue | */etc/issue.net | */etc/os-release | */etc/lsb-release)
       return 0
       ;;

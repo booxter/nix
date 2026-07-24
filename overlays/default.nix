@@ -62,27 +62,6 @@
         ];
       });
 
-      # Avoid a SIGPIPE race while deciding which symlinked Mach-O libraries
-      # must be copied into wrapped Firefox apps on Darwin. Remove when
-      # https://github.com/NixOS/nixpkgs/pull/540753 reaches nixpkgs-26.05-darwin.
-      wrapFirefox =
-        if prev.stdenv.hostPlatform.isDarwin then
-          browser: args:
-          (prev.wrapFirefox browser args).overrideAttrs (
-            old:
-            let
-              flakyDylibCheck = "otool -l \"$file\" 2>/dev/null | grep -q 'LC_ID_DYLIB' || continue";
-              fixedDylibCheck = "otool -l \"$file\" 2>/dev/null | grep -F 'LC_ID_DYLIB' >/dev/null || continue";
-            in
-            assert lib.assertMsg (lib.hasInfix flakyDylibCheck old.buildCommand)
-              "Firefox wrapper no longer contains the dylib check from nixpkgs PR #540753";
-            {
-              buildCommand = builtins.replaceStrings [ flakyDylibCheck ] [ fixedDylibCheck ] old.buildCommand;
-            }
-          )
-        else
-          prev.wrapFirefox;
-
       # CI renders two-revision config diffs by calling standalone dix, not
       # nh's internal dix library. Stable dix 1.4.x omits the per-package size
       # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI
@@ -242,31 +221,13 @@
         let
           frontend = old.passthru.frontend.overrideAttrs (frontendOld: {
             patches = (frontendOld.patches or [ ]) ++ [
-              # Focus the quick-actions input when its modal opens.
-              (prev.fetchpatch {
-                url = "https://github.com/go-vikunja/vikunja/commit/01fff665c60e2b25e65205f706845517881db149.patch";
-                stripLen = 1;
-                hash = "sha256-79N56esq0esenvoFfai9klv5x17sCQ2qC2JeuSgXe6I=";
-              })
               # TODO: send upstream.
               # Confirm label creation from the multiselect input.
-              (prev.fetchpatch {
-                url = "https://github.com/booxter/vikunja/commit/5ce44564b395bfc3edb3895074b625e7a517e764.patch";
-                stripLen = 1;
-                hash = "sha256-6BWLcSTiK65OvwB+LAVmwhXpiHc6O031aSK1vAvk7sk=";
-              })
+              ../lib/patches/vikunja-confirm-label-creation.patch
             ];
           });
         in
         {
-          patches = (old.patches or [ ]) ++ [
-            # Drop when https://github.com/go-vikunja/vikunja/pull/2811 reaches nixpkgs.
-            ../lib/patches/vikunja-user-count-metrics-event-dispatch.patch
-            # Backport https://github.com/go-vikunja/vikunja/pull/2923 to 2.3.0.
-            ../lib/patches/vikunja-task-position-uniqueness.patch
-            # Backport https://github.com/go-vikunja/vikunja/pull/3098 to 2.3.0.
-            ../lib/patches/vikunja-task-position-concurrency.patch
-          ];
           inherit frontend;
           prePatch = ''
             cp -r ${frontend} frontend/dist
