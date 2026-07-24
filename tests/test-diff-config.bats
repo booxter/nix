@@ -76,7 +76,9 @@ mkdir -p \
   "$out_link/generated" \
   "$out_link/etc/nix" \
   "$out_link/etc/nut" \
+  "$out_link/etc/pki/tls/certs" \
   "$out_link/etc/profiles/per-user/ihrachyshka/share/man/man5" \
+  "$out_link/etc/ssh" \
   "$out_link/etc/terminfo/x~nix~case~hack~1"
 printf 'activate=%s\n' "$last_arg" >"$out_link/activate"
 printf 'switch=%s\n' "$last_arg" >"$out_link/bin/switch-to-configuration"
@@ -85,6 +87,8 @@ printf 'store=/nix/store/%s-same-package/bin\n' "$store_hash" >>"$out_link/gener
 chmod 0444 "$out_link/generated/nix.conf"
 printf 'Welcome to NixOS %s\n' "$last_arg" >"$out_link/etc/issue"
 printf 'readonly=true\n' >"$out_link/etc/nut/ups.conf"
+printf 'ca-bundle=%s\n' "$last_arg" >"$out_link/etc/pki/tls/certs/ca-bundle.crt"
+printf 'moduli=%s\n' "$last_arg" >"$out_link/etc/ssh/moduli"
 {
   printf 'man-flake=%s\n' "$last_arg"
   printf '\\fB/nix/store/%s\\-source/modules/generic/meta\\-maintainers\\&.nix\\fP\n' "$store_hash"
@@ -413,6 +417,8 @@ SH
   [[ "$output" == *"diff -ruN old/system/bin/switch-to-configuration new/system/bin/switch-to-configuration"* ]]
   [[ "$output" == *"diff -ruN old/system/services/nginx.conf new/system/services/nginx.conf"* ]]
   [[ "$output" != *"old/system/etc/issue"* ]]
+  [[ "$output" != *"ca-bundle.crt"* ]]
+  [[ "$output" != *"etc/ssh/moduli"* ]]
   [[ "$output" != *"home-configuration.nix.5"* ]]
   [[ "$output" != *"man-flake"* ]]
   [[ "$output" == *"etc/nix/nix.conf"* ]]
