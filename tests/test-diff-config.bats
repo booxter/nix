@@ -79,7 +79,9 @@ mkdir -p \
   "$out_link/etc/pki/tls/certs" \
   "$out_link/etc/profiles/per-user/ihrachyshka/share/man/man5" \
   "$out_link/etc/ssh" \
-  "$out_link/etc/terminfo/x~nix~case~hack~1"
+  "$out_link/etc/ssl/certs" \
+  "$out_link/etc/terminfo/t" \
+  "$out_link/etc/test-links/x~nix~case~hack~1"
 printf 'activate=%s\n' "$last_arg" >"$out_link/activate"
 printf 'switch=%s\n' "$last_arg" >"$out_link/bin/switch-to-configuration"
 printf 'flake=%s\n' "$last_arg" >"$out_link/generated/nix.conf"
@@ -89,12 +91,14 @@ printf 'Welcome to NixOS %s\n' "$last_arg" >"$out_link/etc/issue"
 printf 'readonly=true\n' >"$out_link/etc/nut/ups.conf"
 printf 'ca-bundle=%s\n' "$last_arg" >"$out_link/etc/pki/tls/certs/ca-bundle.crt"
 printf 'moduli=%s\n' "$last_arg" >"$out_link/etc/ssh/moduli"
+printf 'ca-bundle=%s\n' "$last_arg" >"$out_link/etc/ssl/certs/ca-bundle.crt"
+printf '\000terminfo=%s\n' "$last_arg" >"$out_link/etc/terminfo/t/tvi912c"
 {
   printf 'man-flake=%s\n' "$last_arg"
   printf '\\fB/nix/store/%s\\-source/modules/generic/meta\\-maintainers\\&.nix\\fP\n' "$store_hash"
 } >"$out_link/etc/profiles/per-user/ihrachyshka/share/man/man5/home-configuration.nix.5"
 ln -s ../../generated/nix.conf "$out_link/etc/nix/nix.conf"
-ln -s missing-target "$out_link/etc/terminfo/x~nix~case~hack~1/xterm-xfree86"
+ln -s missing-target "$out_link/etc/test-links/x~nix~case~hack~1/xterm-xfree86"
 chmod 0555 "$out_link/etc/nut"
 SH
   } >"$fake_bin/nh"
@@ -403,6 +407,7 @@ SH
     bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
     --details \
     --path etc/nix/nix.conf \
+    --path etc/test-links \
     --path etc/terminfo \
     .#nixosConfigurations.frame.config.system.build.toplevel \
     "$old_rev" \
@@ -419,6 +424,7 @@ SH
   [[ "$output" != *"old/system/etc/issue"* ]]
   [[ "$output" != *"ca-bundle.crt"* ]]
   [[ "$output" != *"etc/ssh/moduli"* ]]
+  [[ "$output" != *"etc/terminfo"* ]]
   [[ "$output" != *"home-configuration.nix.5"* ]]
   [[ "$output" != *"man-flake"* ]]
   [[ "$output" == *"etc/nix/nix.conf"* ]]
