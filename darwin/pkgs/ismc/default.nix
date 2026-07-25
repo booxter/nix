@@ -5,16 +5,16 @@
 }:
 buildGoModule rec {
   pname = "ismc";
-  version = "0.16.7";
+  version = "0.17.0";
 
   src = fetchFromGitHub {
     owner = "dkorunic";
     repo = "iSMC";
     rev = "v${version}";
-    hash = "sha256-Z3F45EABhoCLGIK8fS4ix/LDXBFmiQQishNzUM4xuRQ=";
+    hash = "sha256-kQvkTUeySu3Tl7RHsc5O6O9jJ0bkM2ZMKaR/z1Wpr0w=";
   };
 
-  vendorHash = "sha256-OlYOlfkOY0dKvJbnX0Ogld9UOPEhomUACB2WxTfMMhQ=";
+  vendorHash = "sha256-ubvFyu5cgsSN0yDAtGifxCpIiRI3CZM1QJUrR8bHYHA=";
 
   env.CGO_ENABLED = 1;
 
