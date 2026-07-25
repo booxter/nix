@@ -91,7 +91,12 @@
       # https://github.com/NixOS/nixpkgs/pull/374846
       inherit (pkgsLldb) debugserver;
 
-      lolek = lolekPackage.override { yt-dlp = lolekYtDlp; };
+      lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          # https://github.com/dziaineka/lolek/pull/17
+          ../lib/patches/lolek-restrict-telegram-thread-routing-to-topics.patch
+        ];
+      });
 
       # Advertise ReFrame's absolute pointer as a touchscreen only. Declaring
       # the same uinput device as both absolute and relative breaks movement
