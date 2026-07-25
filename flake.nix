@@ -60,10 +60,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # TODO: Drop once XQuartz fixes from NixOS/nixpkgs#537679 reach
-    # nixpkgs-26.05-darwin.
-    nixpkgs-xquartz-pr.url = "github:NixOS/nixpkgs/4a35131769a3c06c37232d60a1c3f1eb37392377";
-
     tig = {
       url = "github:jonas/tig";
       flake = false;
