@@ -1,0 +1,66 @@
+diff --git a/lib/lolek/handler.ex b/lib/lolek/handler.ex
+index 9a0d647..8a03725 100644
+--- a/lib/lolek/handler.ex
++++ b/lib/lolek/handler.ex
+@@ -38,15 +38,14 @@ defmodule Lolek.Handler do
+           text,
+           %ExGram.Model.Message{
+             chat: %ExGram.Model.Chat{id: chat_id},
+-            from: from,
+-            message_thread_id: message_thread_id
++            from: from
+           } = message
+         },
+         _context
+       ) do
+     with_fresh_message(message, fn ->
+       with_processing_deadline(message, fn ->
+-        handle_text_message(text, chat_id, from, message_thread_id)
++        handle_text_message(text, chat_id, from, topic_message_thread_id(message))
+       end)
+     end)
+   end
+@@ -55,6 +54,17 @@ defmodule Lolek.Handler do
+     :ok
+   end
+
++  @doc false
++  @spec topic_message_thread_id(ExGram.Model.Message.t()) :: integer() | nil
++  def topic_message_thread_id(%ExGram.Model.Message{
++        is_topic_message: true,
++        message_thread_id: message_thread_id
++      })
++      when is_integer(message_thread_id),
++      do: message_thread_id
++
++  def topic_message_thread_id(%ExGram.Model.Message{}), do: nil
++
+   @spec handle_text_message(String.t(), integer(), ExGram.Model.User.t() | nil, integer() | nil) ::
+           :ok
+   defp handle_text_message(text, chat_id, from, message_thread_id) do
+diff --git a/test/lolek_test.exs b/test/lolek_test.exs
+index 10457ec..fa62e84 100644
+--- a/test/lolek_test.exs
++++ b/test/lolek_test.exs
+@@ -33,6 +33,21 @@ defmodule LolekTest do
+     assert :ok = Lolek.Handler.handle({:command, :start, message}, %ExGram.Cnt{})
+   end
+
++  test "routes responses only to actual Telegram topics" do
++    message = text_message("https://tiktok.com/video", System.system_time(:second))
++
++    ordinary_reply = %{message | message_thread_id: 456}
++
++    topic_message = %{
++      message
++      | is_topic_message: true,
++        message_thread_id: 456
++    }
++
++    assert Lolek.Handler.topic_message_thread_id(ordinary_reply) == nil
++    assert Lolek.Handler.topic_message_thread_id(topic_message) == 456
++  end
++
+   defp text_message(text, date) do
+     %ExGram.Model.Message{
+       message_id: 1,
