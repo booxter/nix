@@ -1,0 +1,2143 @@
+diff --git a/lib/lolek.ex b/lib/lolek.ex
+index f0cd241..ac8126e 100644
+--- a/lib/lolek.ex
++++ b/lib/lolek.ex
+@@ -8,6 +8,10 @@ defmodule Lolek do
+   @max_upload_file_name_bytes 180
+   @max_media_group_size 10
+   @gif_extensions ~w(.gif)
++  @photo_extensions ~w(.jpg .jpeg .png .webp .avif)
++
++  @typep media_source :: {:file_path, String.t()} | {:file_id, String.t()}
++  @typep media_item :: {media_source(), String.t()}
+ 
+   require Logger
+ 
+@@ -17,49 +21,57 @@ defmodule Lolek do
+ 
+   @spec send_file(integer(), Lolek.File.file_state(), keyword()) ::
+           {:ok, Lolek.File.file_state()} | {:error, term()}
+-  def send_file(chat_id, {:ready_to_telegram, file_path}, context) do
+-    extname = Path.extname(file_path) |> String.downcase()
+-    file_id = Path.basename(file_path, extname)
++  def send_file(chat_id, {:prepared_media, cache_root, files}, context) do
++    items = path_media_items(files)
+ 
+-    with {:ok, response} <- send_ready_file(chat_id, file_id, extname, context) do
+-      update_caption_after_send(chat_id, response, context)
+-      {:ok, {:ready_to_telegram, file_path}}
++    with {:ok, entries} <- send_media_collection(chat_id, items, context) do
++      {:ok, {:sent_media, cache_root, entries}}
+     end
+   end
+ 
+-  def send_file(chat_id, {:compressed, file_path}, context) do
+-    case Path.extname(file_path) |> String.downcase() do
+-      ".mp4" -> send_video_file(chat_id, file_path, context)
+-      _ -> send_document_file(chat_id, file_path, context)
++  def send_file(chat_id, {:ready_media, entries}, context) do
++    limited_entries = Enum.take(entries, max_gallery_media())
++    items = Enum.map(limited_entries, fn {file_id, ext} -> {{:file_id, file_id}, ext} end)
++
++    with {:ok, _sent_entries} <- send_media_collection(chat_id, items, context) do
++      {:ok, {:ready_media, limited_entries}}
+     end
+   end
+ 
+-  def send_file(chat_id, {:downloaded_gallery, gallery_dir, [file_path]}, context) do
+-    send_single_gallery_file(chat_id, gallery_dir, file_path, context)
++  @spec path_media_items([String.t()]) :: [media_item()]
++  defp path_media_items(files) do
++    files
++    |> Enum.take(max_gallery_media())
++    |> Enum.map(fn file_path ->
++      {{:file_path, file_path}, file_path |> Path.extname() |> String.downcase()}
++    end)
+   end
+ 
+-  def send_file(chat_id, {:downloaded_gallery, gallery_dir, files}, context) do
+-    send_gallery_files(chat_id, gallery_dir, files, context)
+-  end
++  @spec send_media_collection(integer(), [media_item()], keyword()) ::
++          {:ok, [{String.t(), String.t()}]} | {:error, term()}
++  defp send_media_collection(_chat_id, [], _context), do: {:error, :no_usable_media_files}
+ 
+-  def send_file(chat_id, {:ready_to_telegram_gallery, entries}, context) do
+-    send_cached_gallery(chat_id, entries, context)
++  defp send_media_collection(chat_id, [item], context) do
++    send_single_media_item(chat_id, item, context)
+   end
+ 
+-  @spec send_single_gallery_file(integer(), String.t(), String.t(), keyword()) ::
+-          {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp send_single_gallery_file(chat_id, gallery_dir, file_path, context) do
+-    options = add_send_context([], context)
+-    ext = file_path |> Path.extname() |> String.downcase()
++  defp send_media_collection(chat_id, items, context) do
++    send_media_group_items(chat_id, items, context)
++  end
+ 
+-    upload =
+-      {:file_content, File.stream!(file_path, @upload_chunk_size, []), Path.basename(file_path)}
++  @spec send_single_media_item(integer(), media_item(), keyword()) ::
++          {:ok, [{String.t(), String.t()}]} | {:error, term()}
++  defp send_single_media_item(chat_id, {source, ext}, context) do
++    options = single_media_options(source, ext, context)
+ 
+-    case send_gallery_single_upload(chat_id, ext, upload, options) do
++    case with_media_sources([source], context, fn [prepared_source] ->
++           send_single_media(chat_id, ext, prepared_source, options)
++         end) do
+       {:ok, response} ->
+         case extract_single_file_id(response) do
+           {:ok, file_id} ->
+-            {:ok, {:sent_gallery_to_telegram_at_first, gallery_dir, [{ext, file_id}]}}
++            update_caption_after_send(chat_id, response, context)
++            {:ok, [{ext, file_id}]}
+ 
+           :error ->
+             {:error, {:unexpected_telegram_response, response}}
+@@ -70,39 +82,57 @@ defmodule Lolek do
+     end
+   end
+ 
+-  @spec send_gallery_single_upload(integer(), String.t(), term(), keyword()) ::
+-          {:ok, term()} | {:error, term()}
+-  defp send_gallery_single_upload(chat_id, ext, upload, options) when ext in @gif_extensions do
+-    call_telegram(fn -> Lolek.Telegram.send_animation(chat_id, upload, options) end)
+-  end
+-
+-  defp send_gallery_single_upload(chat_id, ext, upload, options) do
++  @spec single_media_options(media_source(), String.t(), keyword()) :: keyword()
++  defp single_media_options({:file_path, file_path}, ext, context) do
+     if Lolek.GalleryDownloader.video_file?("x#{ext}") do
+-      call_telegram(fn -> Lolek.Telegram.send_video(chat_id, upload, options) end)
++      file_path |> get_options() |> add_send_context(context)
+     else
+-      call_telegram(fn -> Lolek.Telegram.send_photo(chat_id, upload, options) end)
++      add_send_context([], context)
+     end
+   end
+ 
+-  @spec send_gallery_files(integer(), String.t(), [String.t()], keyword()) ::
+-          {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp send_gallery_files(chat_id, gallery_dir, files, context) do
+-    case Enum.take(files, max_gallery_media()) do
+-      [file] -> send_single_gallery_file(chat_id, gallery_dir, file, context)
+-      limited_files -> do_send_gallery_files(chat_id, gallery_dir, limited_files, context)
++  defp single_media_options({:file_id, _file_id}, ext, context) do
++    options =
++      if Lolek.GalleryDownloader.video_file?("x#{ext}"),
++        do: [disable_notification: true],
++        else: []
++
++    add_send_context(options, context)
++  end
++
++  @spec send_single_media(integer(), String.t(), term(), keyword()) ::
++          {:ok, term()} | {:error, term()}
++  defp send_single_media(chat_id, ext, source, options) when ext in @gif_extensions do
++    call_telegram(fn -> Lolek.Telegram.send_animation(chat_id, source, options) end)
++  end
++
++  defp send_single_media(chat_id, ext, source, options) do
++    cond do
++      Lolek.GalleryDownloader.video_file?("x#{ext}") ->
++        call_telegram(fn -> Lolek.Telegram.send_video(chat_id, source, options) end)
++
++      ext in @photo_extensions ->
++        call_telegram(fn -> Lolek.Telegram.send_photo(chat_id, source, options) end)
++
++      true ->
++        call_telegram(fn -> Lolek.Telegram.send_document(chat_id, source, options) end)
+     end
+   end
+ 
+-  @spec do_send_gallery_files(integer(), String.t(), [String.t()], keyword()) ::
+-          {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp do_send_gallery_files(chat_id, gallery_dir, files, context) do
+-    files
++  @spec send_media_group_items(integer(), [media_item()], keyword()) ::
++          {:ok, [{String.t(), String.t()}]} | {:error, term()}
++  defp send_media_group_items(chat_id, items, context) do
++    items
+     |> gallery_batches()
+     |> Enum.with_index()
+     |> Enum.reduce_while({:ok, []}, fn {batch, idx}, {:ok, acc_entries} ->
+-      media = build_gallery_media(batch, idx, context)
++      result =
++        with_media_sources(Enum.map(batch, &elem(&1, 0)), context, fn sources ->
++          media = build_media_group(batch, sources, idx, context)
++          send_media_group_batch(chat_id, media, context)
++        end)
+ 
+-      case send_media_group_batch(chat_id, media, context) do
++      case result do
+         {:ok, messages} when is_list(messages) ->
+           entries = extract_media_group_entries(batch, messages)
+           {:cont, {:ok, acc_entries ++ entries}}
+@@ -114,10 +144,6 @@ defmodule Lolek do
+           {:halt, error}
+       end
+     end)
+-    |> case do
+-      {:ok, entries} -> {:ok, {:sent_gallery_to_telegram_at_first, gallery_dir, entries}}
+-      error -> error
+-    end
+   end
+ 
+   @spec send_media_group_batch(integer(), [term()], keyword()) ::
+@@ -127,57 +153,6 @@ defmodule Lolek do
+     call_telegram(fn -> Lolek.Telegram.send_media_group(chat_id, media, options) end)
+   end
+ 
+-  @spec send_cached_gallery(integer(), [{String.t(), String.t()}], keyword()) ::
+-          {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp send_cached_gallery(chat_id, entries, context) do
+-    limited_entries = Enum.take(entries, max_gallery_media())
+-
+-    case limited_entries do
+-      [entry] ->
+-        send_cached_gallery_single(chat_id, entry, context)
+-
+-      _ ->
+-        limited_entries
+-        |> gallery_batches()
+-        |> Enum.with_index()
+-        |> Enum.each(fn {batch, idx} ->
+-          send_cached_gallery_batch(chat_id, batch, idx, context)
+-        end)
+-    end
+-
+-    {:ok, {:ready_to_telegram_gallery, limited_entries}}
+-  end
+-
+-  @spec send_cached_gallery_batch(
+-          integer(),
+-          [{String.t(), String.t()}],
+-          non_neg_integer(),
+-          keyword()
+-        ) ::
+-          {:ok, term()} | {:error, term()}
+-  defp send_cached_gallery_batch(chat_id, batch, idx, context) do
+-    media = build_cached_gallery_media(batch, idx, context)
+-    options = add_message_thread_id([], context)
+-    call_telegram(fn -> Lolek.Telegram.send_media_group(chat_id, media, options) end)
+-  end
+-
+-  @spec send_cached_gallery_single(integer(), {String.t(), String.t()}, keyword()) ::
+-          {:ok, term()} | {:error, term()}
+-  defp send_cached_gallery_single(chat_id, {file_id, ext}, context) do
+-    options = add_send_context([], context)
+-
+-    cond do
+-      ext in @gif_extensions ->
+-        call_telegram(fn -> Lolek.Telegram.send_animation(chat_id, file_id, options) end)
+-
+-      Lolek.GalleryDownloader.video_file?("x#{ext}") ->
+-        call_telegram(fn -> Lolek.Telegram.send_video(chat_id, file_id, options) end)
+-
+-      true ->
+-        call_telegram(fn -> Lolek.Telegram.send_photo(chat_id, file_id, options) end)
+-    end
+-  end
+-
+   @spec gallery_batches([term()]) :: [[term()]]
+   defp gallery_batches(items) do
+     batches = Enum.chunk_every(items, @max_media_group_size)
+@@ -197,57 +172,31 @@ defmodule Lolek do
+     Application.fetch_env!(:lolek, :max_gallery_media)
+   end
+ 
+-  @spec file_to_input_media(String.t(), String.t() | nil) :: term()
+-  defp file_to_input_media(file_path, caption) do
+-    ext = file_path |> Path.extname() |> String.downcase()
+-
+-    upload =
+-      {:file_content, File.stream!(file_path, @upload_chunk_size, []), Path.basename(file_path)}
+-
+-    cond do
+-      ext in @gif_extensions ->
+-        %ExGram.Model.InputMediaDocument{type: "document", media: upload, caption: caption}
+-
+-      Lolek.GalleryDownloader.video_file?(file_path) ->
+-        %ExGram.Model.InputMediaVideo{type: "video", media: upload, caption: caption}
+-
+-      true ->
+-        %ExGram.Model.InputMediaPhoto{type: "photo", media: upload, caption: caption}
+-    end
+-  end
+-
+-  @spec cached_file_to_input_media(String.t(), String.t(), String.t() | nil) :: term()
+-  defp cached_file_to_input_media(file_id, ext, caption) do
++  @spec media_to_input_media(term(), String.t(), String.t() | nil) :: term()
++  defp media_to_input_media(source, ext, caption) do
+     cond do
+       ext in @gif_extensions ->
+-        %ExGram.Model.InputMediaDocument{type: "document", media: file_id, caption: caption}
++        %ExGram.Model.InputMediaDocument{type: "document", media: source, caption: caption}
+ 
+       Lolek.GalleryDownloader.video_file?("x#{ext}") ->
+-        %ExGram.Model.InputMediaVideo{type: "video", media: file_id, caption: caption}
++        %ExGram.Model.InputMediaVideo{type: "video", media: source, caption: caption}
++
++      ext in @photo_extensions ->
++        %ExGram.Model.InputMediaPhoto{type: "photo", media: source, caption: caption}
+ 
+       true ->
+-        %ExGram.Model.InputMediaPhoto{type: "photo", media: file_id, caption: caption}
++        %ExGram.Model.InputMediaDocument{type: "document", media: source, caption: caption}
+     end
+   end
+ 
+-  @spec build_gallery_media([String.t()], non_neg_integer(), keyword()) :: [term()]
+-  defp build_gallery_media(batch, batch_idx, context) do
+-    batch
+-    |> Enum.with_index()
+-    |> Enum.map(fn {file, file_idx} ->
+-      cap = if batch_idx == 0 and file_idx == 0, do: caption(context), else: nil
+-      file_to_input_media(file, cap)
+-    end)
+-  end
+-
+-  @spec build_cached_gallery_media([{String.t(), String.t()}], non_neg_integer(), keyword()) ::
+-          [term()]
+-  defp build_cached_gallery_media(batch, batch_idx, context) do
++  @spec build_media_group([media_item()], [term()], non_neg_integer(), keyword()) :: [term()]
++  defp build_media_group(batch, sources, batch_idx, context) do
+     batch
++    |> Enum.zip(sources)
+     |> Enum.with_index()
+-    |> Enum.map(fn {{file_id, ext}, file_idx} ->
++    |> Enum.map(fn {{{_source, ext}, prepared_source}, file_idx} ->
+       cap = if batch_idx == 0 and file_idx == 0, do: caption(context), else: nil
+-      cached_file_to_input_media(file_id, ext, cap)
++      media_to_input_media(prepared_source, ext, cap)
+     end)
+   end
+ 
+@@ -266,15 +215,19 @@ defmodule Lolek do
+     {:ok, fid}
+   end
+ 
++  defp extract_single_file_id(%ExGram.Model.Message{
++         document: %ExGram.Model.Document{file_id: fid}
++       }) do
++    {:ok, fid}
++  end
++
+   defp extract_single_file_id(_), do: :error
+ 
+-  @spec extract_media_group_entries([String.t()], [term()]) :: [{String.t(), String.t()}]
+-  defp extract_media_group_entries(file_paths, messages) do
+-    file_paths
++  @spec extract_media_group_entries([media_item()], [term()]) :: [{String.t(), String.t()}]
++  defp extract_media_group_entries(items, messages) do
++    items
+     |> Enum.zip(messages)
+-    |> Enum.flat_map(fn {file_path, message} ->
+-      ext = file_path |> Path.extname() |> String.downcase()
+-
++    |> Enum.flat_map(fn {{_source, ext}, message} ->
+       case extract_single_file_id(message) do
+         {:ok, fid} -> [{ext, fid}]
+         :error -> []
+@@ -282,65 +235,48 @@ defmodule Lolek do
+     end)
+   end
+ 
+-  @spec send_video_file(integer(), String.t(), keyword()) ::
+-          {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp send_video_file(chat_id, file_path, context) do
+-    options = get_options(file_path) |> add_send_context(context)
+-
+-    case with_upload_file(file_path, context, fn upload ->
+-           do_send_video(chat_id, upload, options)
+-         end) do
+-      {:ok, %ExGram.Model.Message{video: %ExGram.Model.Video{file_id: file_id}} = response} ->
+-        update_caption_after_send(chat_id, response, context)
+-        {:ok, {:sent_to_telegram_at_first, file_path, file_id}}
+-
+-      {:ok, response} ->
+-        {:error, {:unexpected_telegram_response, response}}
++  @spec with_media_sources([media_source()], keyword(), ([term()] -> term())) :: term()
++  defp with_media_sources(sources, context, fun) do
++    case prepare_media_sources(sources, context) do
++      {:ok, prepared_sources, cleanups} ->
++        try do
++          fun.(prepared_sources)
++        after
++          cleanup_upload_files(cleanups)
++        end
+ 
+-      {:error, _reason} = error ->
+-        error
++      {:error, reason, cleanups} ->
++        cleanup_upload_files(cleanups)
++        {:error, reason}
+     end
+   end
+ 
+-  @spec do_send_video(integer(), term(), keyword()) :: {:ok, term()} | {:error, term()}
+-  defp do_send_video(chat_id, upload, options) do
+-    call_telegram(fn -> Lolek.Telegram.send_video(chat_id, upload, options) end)
+-  end
+-
+-  @spec send_document_file(integer(), String.t(), keyword()) ::
+-          {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp send_document_file(chat_id, file_path, context) do
+-    options = add_send_context([], context)
+-
+-    case with_upload_file(file_path, context, fn upload ->
+-           do_send_document(chat_id, upload, options)
+-         end) do
+-      {:ok, %ExGram.Model.Message{document: %ExGram.Model.Document{file_id: file_id}} = response} ->
+-        update_caption_after_send(chat_id, response, context)
+-        {:ok, {:sent_to_telegram_at_first, file_path, file_id}}
+-
+-      {:ok, response} ->
+-        {:error, {:unexpected_telegram_response, response}}
++  @spec prepare_media_sources([media_source()], keyword()) ::
++          {:ok, [term()], [(-> :ok)]} | {:error, term(), [(-> :ok)]}
++  defp prepare_media_sources(sources, context) do
++    Enum.reduce_while(sources, {:ok, [], []}, fn source, {:ok, prepared, cleanups} ->
++      case prepare_media_source(source, context) do
++        {:ok, prepared_source, cleanup} ->
++          {:cont, {:ok, [prepared_source | prepared], [cleanup | cleanups]}}
+ 
+-      {:error, _reason} = error ->
+-        error
++        {:error, reason} ->
++          {:halt, {:error, reason, cleanups}}
++      end
++    end)
++    |> case do
++      {:ok, prepared, cleanups} -> {:ok, Enum.reverse(prepared), cleanups}
++      error -> error
+     end
+   end
+ 
+-  @spec do_send_document(integer(), term(), keyword()) :: {:ok, term()} | {:error, term()}
+-  defp do_send_document(chat_id, upload, options) do
+-    call_telegram(fn -> Lolek.Telegram.send_document(chat_id, upload, options) end)
+-  end
++  @spec prepare_media_source(media_source(), keyword()) ::
++          {:ok, term(), (-> :ok)} | {:error, term()}
++  defp prepare_media_source({:file_path, file_path}, context), do: upload_file(file_path, context)
++  defp prepare_media_source({:file_id, file_id}, _context), do: {:ok, file_id, fn -> :ok end}
+ 
+-  @spec with_upload_file(String.t(), keyword(), (term() -> term())) :: term()
+-  defp with_upload_file(file_path, context, fun) do
+-    with {:ok, upload, cleanup} <- upload_file(file_path, context) do
+-      try do
+-        fun.(upload)
+-      after
+-        cleanup.()
+-      end
+-    end
++  @spec cleanup_upload_files([(-> :ok)]) :: :ok
++  defp cleanup_upload_files(cleanups) do
++    Enum.each(cleanups, & &1.())
+   end
+ 
+   @spec upload_file(String.t(), keyword()) ::
+@@ -503,22 +439,6 @@ defmodule Lolek do
+   defp file_uri_char?(?/), do: true
+   defp file_uri_char?(char), do: URI.char_unreserved?(char)
+ 
+-  @spec send_ready_file(integer(), String.t(), String.t(), keyword()) ::
+-          {:ok, term()} | {:error, term()}
+-  defp send_ready_file(chat_id, file_id, ".mp4", context) do
+-    options = [disable_notification: true] |> add_send_context(context)
+-
+-    call_telegram(fn ->
+-      Lolek.Telegram.send_video(chat_id, file_id, options)
+-    end)
+-  end
+-
+-  defp send_ready_file(chat_id, file_id, _extname, context) do
+-    options = add_send_context([], context)
+-
+-    call_telegram(fn -> Lolek.Telegram.send_document(chat_id, file_id, options) end)
+-  end
+-
+   @spec get_options(String.t()) :: Keyword.t()
+   defp get_options(file_path) do
+     options = [supports_streaming: true, disable_notification: true]
+diff --git a/lib/lolek/converter.ex b/lib/lolek/converter.ex
+index 5a4e135..81dc04a 100644
+--- a/lib/lolek/converter.ex
++++ b/lib/lolek/converter.ex
+@@ -10,9 +10,10 @@ defmodule Lolek.Converter do
+ 
+   @spec adapt_to_telegram(Lolek.File.file_state()) ::
+           {:ok, Lolek.File.file_state()} | {:error, term()}
+-  def adapt_to_telegram({:downloaded, file_path}) do
+-    with :ok <- compress_video_to_telegram_size(file_path) do
+-      replace_original_file_with_compressed(file_path)
++  def adapt_to_telegram({:downloaded_media, cache_root, files}) do
++    case prepare_media_files(cache_root, files) do
++      [] -> {:error, :no_usable_media_files}
++      prepared_files -> {:ok, {:prepared_media, cache_root, prepared_files}}
+     end
+   end
+ 
+@@ -20,23 +21,74 @@ defmodule Lolek.Converter do
+     {:ok, another_file_state}
+   end
+ 
+-  @spec compress_video_to_telegram_size(String.t()) :: :ok | {:error, term()}
+-  defp compress_video_to_telegram_size(file_path) do
+-    if Path.extname(file_path) != ".mp4" do
+-      :ok
++  @spec prepare_media_files(String.t(), [String.t()]) :: [String.t()]
++  defp prepare_media_files(cache_root, files) do
++    files
++    |> Enum.reduce([], fn file_path, prepared_files ->
++      case prepare_media_file(cache_root, file_path) do
++        {:ok, prepared_path} ->
++          [prepared_path | prepared_files]
++
++        {:error, reason} ->
++          relative_path = Path.relative_to(file_path, cache_root)
++          Logger.warning("Omitting media #{relative_path}: #{inspect(reason)}")
++          prepared_files
++      end
++    end)
++    |> Enum.reverse()
++  end
++
++  @spec prepare_media_file(String.t(), String.t()) :: {:ok, String.t()} | {:error, term()}
++  defp prepare_media_file(cache_root, file_path) do
++    if Lolek.GalleryDownloader.video_file?(file_path) do
++      prepare_video(file_path, prepared_video_path(cache_root, file_path))
++    else
++      with :ok <- ensure_telegram_file_size(file_path) do
++        {:ok, file_path}
++      end
++    end
++  end
++
++  @spec prepared_video_path(String.t(), String.t()) :: String.t()
++  defp prepared_video_path(cache_root, file_path) do
++    if Path.dirname(file_path) == cache_root do
++      Path.join(cache_root, @compressed_name)
+     else
+-      compress_mp4_to_telegram_size(file_path)
++      file_path <> ".telegram.mp4"
+     end
+   end
+ 
+-  @spec compress_mp4_to_telegram_size(String.t()) :: :ok | {:error, term()}
+-  defp compress_mp4_to_telegram_size(file_path) do
++  @spec prepare_video(String.t(), String.t()) :: {:ok, String.t()} | {:error, term()}
++  defp prepare_video(file_path, prepared_path) do
++    with {:ok, strategy} <- video_preparation_strategy(file_path) do
++      case strategy do
++        :passthrough ->
++          {:ok, file_path}
++
++        strategy ->
++          prepare_encoded_video(file_path, prepared_path, strategy)
++      end
++    end
++  end
++
++  @spec prepare_encoded_video(String.t(), String.t(), encoding_strategy()) ::
++          {:ok, String.t()} | {:error, term()}
++  defp prepare_encoded_video(file_path, prepared_path, strategy) do
++    with :ok <- encode_video(file_path, prepared_path, strategy),
++         :ok <- remove_encoded_source(file_path, prepared_path) do
++      {:ok, prepared_path}
++    end
++  end
++
++  @spec video_preparation_strategy(String.t()) ::
++          {:ok, encoding_strategy() | :passthrough} | {:error, term()}
++  defp video_preparation_strategy(file_path) do
+     with {:ok, file_size} <- Lolek.File.file_size(file_path),
+          {:ok, duration} <- video_duration(file_path) do
+       case encoding_strategy(file_path, file_size, duration) do
+-        :passthrough -> :ok
++        :passthrough -> {:ok, :passthrough}
+         :too_big_media -> {:error, :too_big_media}
+-        strategy -> encode_video(file_path, strategy)
++        strategy -> {:ok, strategy}
+       end
+     end
+   end
+@@ -44,46 +96,26 @@ defmodule Lolek.Converter do
+   @spec encoding_strategy(String.t(), non_neg_integer(), non_neg_integer()) ::
+           :compress | :convert | :passthrough | :too_big_media
+   defp encoding_strategy(file_path, file_size, duration) do
+-    if h264_codec?(file_path) do
+-      h264_encoding_strategy(file_size, duration)
+-    else
+-      non_h264_encoding_strategy(file_size, duration)
+-    end
+-  end
+-
+-  @spec h264_encoding_strategy(non_neg_integer(), non_neg_integer()) ::
+-          :compress | :passthrough | :too_big_media
+-  defp h264_encoding_strategy(file_size, duration) do
+     cond do
+-      small_enough_to_upload?(file_size) ->
++      small_enough_to_upload?(file_size) and telegram_video?(file_path) ->
+         :passthrough
+ 
+-      compressible_file?(file_size) and compressible_duration?(duration) ->
+-        :compress
+-
+-      true ->
++      not compressible_file?(file_size) or not compressible_duration?(duration) ->
+         :too_big_media
+-    end
+-  end
+-
+-  @spec non_h264_encoding_strategy(non_neg_integer(), non_neg_integer()) ::
+-          :compress | :convert | :too_big_media
+-  defp non_h264_encoding_strategy(file_size, duration) do
+-    cond do
+-      small_enough_to_upload?(file_size) and compressible_duration?(duration) ->
+-        :compress
+ 
+-      compressible_duration?(duration) ->
++      small_enough_to_upload?(file_size) ->
+         :convert
+ 
+-      compressible_file?(file_size) and compressible_duration?(duration) ->
+-        :compress
+-
+       true ->
+-        :too_big_media
++        :compress
+     end
+   end
+ 
++  @spec telegram_video?(String.t()) :: boolean()
++  defp telegram_video?(file_path) do
++    Path.extname(file_path) |> String.downcase() == ".mp4" and h264_codec?(file_path)
++  end
++
+   @spec small_enough_to_upload?(non_neg_integer()) :: boolean()
+   defp small_enough_to_upload?(file_size) do
+     file_size <= Application.fetch_env!(:lolek, :max_file_size_to_send_to_telegram)
+@@ -99,18 +131,23 @@ defmodule Lolek.Converter do
+     duration <= Application.fetch_env!(:lolek, :max_duration_to_compress)
+   end
+ 
+-  @spec encode_video(String.t(), encoding_strategy()) :: :ok | {:error, term()}
+-  defp encode_video(file_path, strategy) do
+-    new_file_path = get_compressed_file_path(file_path)
+-
+-    case encode_with_h264(file_path, new_file_path, strategy) do
++  @spec encode_video(String.t(), String.t(), encoding_strategy()) :: :ok | {:error, term()}
++  defp encode_video(file_path, prepared_path, strategy) do
++    case encode_with_h264(file_path, prepared_path, strategy) do
+       :ok ->
+-        ensure_telegram_file_size(new_file_path)
++        case ensure_telegram_file_size(prepared_path) do
++          :ok ->
++            :ok
++
++          {:error, _reason} = error ->
++            File.rm(prepared_path)
++            error
++        end
+ 
+       {:error, error} ->
+         action = if strategy == :compress, do: "compressing", else: "converting"
+         Logger.error("Error when #{action} video: #{inspect(error)}")
+-        File.rm(new_file_path)
++        File.rm(prepared_path)
+         {:error, error}
+     end
+   end
+@@ -459,26 +496,15 @@ defmodule Lolek.Converter do
+     end
+   end
+ 
+-  @spec get_compressed_file_path(String.t()) :: String.t()
+-  defp get_compressed_file_path(file_path) do
+-    file_path |> Path.dirname() |> Path.join(@compressed_name)
+-  end
+-
+-  @spec replace_original_file_with_compressed(String.t()) ::
+-          {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp replace_original_file_with_compressed(file_path) do
+-    new_file_path = get_compressed_file_path(file_path)
++  @spec remove_encoded_source(String.t(), String.t()) :: :ok | {:error, term()}
++  defp remove_encoded_source(file_path, prepared_path) do
++    case File.rm(file_path) do
++      :ok ->
++        :ok
+ 
+-    if File.exists?(new_file_path) do
+-      case File.rm(file_path) do
+-        :ok -> {:ok, {:compressed, new_file_path}}
+-        {:error, reason} -> {:error, {:remove_original_failed, reason}}
+-      end
+-    else
+-      case File.rename(file_path, new_file_path) do
+-        :ok -> {:ok, {:compressed, new_file_path}}
+-        {:error, reason} -> {:error, {:rename_compressed_failed, reason}}
+-      end
++      {:error, reason} ->
++        File.rm(prepared_path)
++        {:error, {:remove_original_failed, reason}}
+     end
+   end
+ 
+diff --git a/lib/lolek/downloader.ex b/lib/lolek/downloader.ex
+index eb79668..ac9598e 100644
+--- a/lib/lolek/downloader.ex
++++ b/lib/lolek/downloader.ex
+@@ -49,7 +49,7 @@ defmodule Lolek.Downloader do
+     case download_once(url, output_path) do
+       {:ok, _} ->
+         case Lolek.File.get_file_path_by_pattern(output_path, @downloaded_name) do
+-          {:ok, file_path} -> {:ok, {:downloaded, file_path}}
++          {:ok, file_path} -> {:ok, {:downloaded_media, output_path, [file_path]}}
+           {:error, reason} -> {:error, reason}
+         end
+ 
+@@ -89,7 +89,7 @@ defmodule Lolek.Downloader do
+       case do_gallery_download(url, gallery_dir) do
+         {:ok, [_ | _] = files} ->
+           Logger.info("Gallery download found #{length(files)} file(s) for url: #{log_url}")
+-          route_gallery_files(files, gallery_dir, output_path)
++          {:ok, {:downloaded_media, output_path, files}}
+ 
+         {:ok, []} ->
+           Logger.info("Gallery download found no files for url: #{log_url}")
+@@ -115,29 +115,6 @@ defmodule Lolek.Downloader do
+     end
+   end
+ 
+-  @spec route_gallery_files([String.t()], String.t(), String.t()) ::
+-          {:ok, Lolek.File.file_state()} | {:error, term()}
+-  defp route_gallery_files(files, gallery_dir, output_path) do
+-    {videos, images} = Enum.split_with(files, &Lolek.GalleryDownloader.video_file?/1)
+-    mp4_videos = Enum.filter(videos, fn p -> Path.extname(p) |> String.downcase() == ".mp4" end)
+-
+-    cond do
+-      images != [] ->
+-        {:ok, {:downloaded_gallery, gallery_dir, files}}
+-
+-      match?([_], mp4_videos) ->
+-        dest = Path.join(output_path, @downloaded_name)
+-
+-        case File.rename(hd(mp4_videos), dest) do
+-          :ok -> {:ok, {:downloaded, dest}}
+-          {:error, reason} -> {:error, {:rename_gallery_video, reason}}
+-        end
+-
+-      true ->
+-        {:error, :no_usable_gallery_files}
+-    end
+-  end
+-
+   @spec download_once(String.t(), String.t()) :: {:ok, term()} | {:error, term()}
+   defp download_once(url, output_path) do
+     output_file_path = Path.join(output_path, @downloaded_name)
+diff --git a/lib/lolek/file.ex b/lib/lolek/file.ex
+index a444f6a..b01fe90 100644
+--- a/lib/lolek/file.ex
++++ b/lib/lolek/file.ex
+@@ -8,18 +8,18 @@ defmodule Lolek.File do
+   @compressed_name "compressed.mp4"
+   @downloaded_name "downloaded"
+   @gallery_subdir "gallery"
+-  @gallery_manifest "gallery_manifest.json"
++  @media_manifest "media_manifest.json"
++  @legacy_gallery_manifest "gallery_manifest.json"
++
++  @type ready_media_entry :: {tg_file_id :: String.t(), ext :: String.t()}
++  @type sent_media_entry :: {ext :: String.t(), tg_file_id :: String.t()}
+ 
+   @type file_state ::
+-          {:ready_to_telegram, String.t()}
+-          | {:ready_to_telegram_gallery, [{tg_file_id :: String.t(), ext :: String.t()}]}
+-          | {:compressed, String.t()}
+-          | {:downloaded, String.t()}
+-          | {:downloaded_gallery, gallery_dir :: String.t(), files :: [String.t()]}
++          {:ready_media, [ready_media_entry()]}
++          | {:downloaded_media, cache_root :: String.t(), files :: [String.t()]}
++          | {:prepared_media, cache_root :: String.t(), files :: [String.t()]}
+           | {:new_file, String.t()}
+-          | {:sent_to_telegram_at_first, file_path :: String.t(), tg_file_id :: String.t()}
+-          | {:sent_gallery_to_telegram_at_first, gallery_dir :: String.t(),
+-             [{ext :: String.t(), tg_file_id :: String.t()}]}
++          | {:sent_media, cache_root :: String.t(), [sent_media_entry()]}
+ 
+   @spec get_video_width_and_height(String.t()) :: :error | {:ok, {integer(), integer()}}
+   def get_video_width_and_height(file_path) do
+@@ -134,26 +134,9 @@ defmodule Lolek.File do
+   end
+ 
+   @spec move_to_ready_to_telegram(Lolek.File.file_state()) :: :ok | {:error, term()}
+-  def move_to_ready_to_telegram({:sent_to_telegram_at_first, file_path, file_id}) do
+-    file_extension = Path.extname(file_path)
+-
+-    folder_path =
+-      file_path
+-      |> Path.dirname()
+-      |> Path.join(@ready_to_telegram)
+-
+-    new_file_path =
+-      folder_path
+-      |> Path.join(file_id <> file_extension)
+-
+-    with :ok <- File.mkdir_p(folder_path) do
+-      File.rename(file_path, new_file_path)
+-    end
+-  end
+-
+-  def move_to_ready_to_telegram({:sent_gallery_to_telegram_at_first, gallery_dir, entries}) do
+-    ready_path = gallery_dir |> Path.dirname() |> Path.join(@ready_to_telegram)
+-    manifest_path = Path.join(ready_path, @gallery_manifest)
++  def move_to_ready_to_telegram({:sent_media, cache_root, entries}) do
++    ready_path = Path.join(cache_root, @ready_to_telegram)
++    manifest_path = Path.join(ready_path, @media_manifest)
+ 
+     manifest =
+       Enum.map(entries, fn {ext, file_id} ->
+@@ -163,7 +146,7 @@ defmodule Lolek.File do
+     with :ok <- File.mkdir_p(ready_path) do
+       case File.write(manifest_path, Jason.encode!(manifest)) do
+         :ok -> :ok
+-        {:error, reason} -> {:error, {:gallery_manifest_write, reason}}
++        {:error, reason} -> {:error, {:media_manifest_write, reason}}
+       end
+     end
+   end
+@@ -195,14 +178,29 @@ defmodule Lolek.File do
+   @spec check_if_ready_to_tg(String.t()) :: :not_ready | {:exists, Lolek.File.file_state()}
+   defp check_if_ready_to_tg(folder_path) do
+     ready_to_telegram_path = Path.join(folder_path, @ready_to_telegram)
+-    manifest_path = Path.join(ready_to_telegram_path, @gallery_manifest)
+ 
+-    case read_gallery_manifest(manifest_path) do
+-      {:ok, [_ | _] = entries} -> {:exists, {:ready_to_telegram_gallery, entries}}
++    manifest_paths = [
++      Path.join(ready_to_telegram_path, @media_manifest),
++      Path.join(ready_to_telegram_path, @legacy_gallery_manifest)
++    ]
++
++    case read_media_manifests(manifest_paths) do
++      {:ok, [_ | _] = entries} -> {:exists, {:ready_media, entries}}
+       _ -> check_single_file_cache(ready_to_telegram_path)
+     end
+   end
+ 
++  @spec read_media_manifests([String.t()]) ::
++          {:ok, [ready_media_entry()]} | {:error, term()}
++  defp read_media_manifests([]), do: {:error, :enoent}
++
++  defp read_media_manifests([manifest_path | remaining]) do
++    case read_media_manifest(manifest_path) do
++      {:ok, [_ | _] = entries} -> {:ok, entries}
++      _ -> read_media_manifests(remaining)
++    end
++  end
++
+   @spec check_single_file_cache(String.t()) :: :not_ready | {:exists, Lolek.File.file_state()}
+   defp check_single_file_cache(ready_to_telegram_path) do
+     case File.ls(ready_to_telegram_path) do
+@@ -217,9 +215,9 @@ defmodule Lolek.File do
+     end
+   end
+ 
+-  @spec read_gallery_manifest(String.t()) ::
+-          {:ok, [{String.t(), String.t()}]} | {:error, term()}
+-  defp read_gallery_manifest(manifest_path) do
++  @spec read_media_manifest(String.t()) ::
++          {:ok, [ready_media_entry()]} | {:error, term()}
++  defp read_media_manifest(manifest_path) do
+     with {:ok, content} <- File.read(manifest_path),
+          {:ok, entries} when is_list(entries) <- Jason.decode(content) do
+       parsed =
+@@ -241,14 +239,25 @@ defmodule Lolek.File do
+ 
+     case Lolek.GalleryDownloader.list_media_files(gallery_dir) do
+       [] -> :not_gallery
+-      files -> {:exists, {:downloaded_gallery, gallery_dir, files}}
++      files -> {:exists, {:downloaded_media, folder_path, files}}
+     end
+   end
+ 
+   @spec check_cache_file(String.t()) :: {:exists, file_state()} | false
+   defp check_cache_file(file_path) do
++    if Path.basename(file_path) in [@media_manifest, @legacy_gallery_manifest] do
++      false
++    else
++      check_single_cache_media(file_path)
++    end
++  end
++
++  @spec check_single_cache_media(String.t()) :: {:exists, file_state()} | false
++  defp check_single_cache_media(file_path) do
+     if usable_cached_file?(file_path) do
+-      {:exists, {:ready_to_telegram, file_path}}
++      ext = file_path |> Path.extname() |> String.downcase()
++      file_id = Path.basename(file_path, ext)
++      {:exists, {:ready_media, [{file_id, ext}]}}
+     else
+       remove_invalid_cache_file(file_path)
+       false
+@@ -277,7 +286,7 @@ defmodule Lolek.File do
+       true ->
+         {
+           :exists,
+-          {:compressed, file_path}
++          {:prepared_media, folder_path, [file_path]}
+         }
+     end
+   end
+@@ -322,7 +331,7 @@ defmodule Lolek.File do
+       {:ok, file_path} ->
+         {
+           :exists,
+-          {:downloaded, file_path}
++          {:downloaded_media, folder_path, [file_path]}
+         }
+ 
+       _ ->
+diff --git a/lib/lolek/gallery_downloader.ex b/lib/lolek/gallery_downloader.ex
+index 8e9bcde..de8587d 100644
+--- a/lib/lolek/gallery_downloader.ex
++++ b/lib/lolek/gallery_downloader.ex
+@@ -47,7 +47,7 @@ defmodule Lolek.GalleryDownloader do
+ 
+   @spec repaired_media_files(String.t()) :: {:ok, [String.t()]} | {:error, term()}
+   defp repaired_media_files(output_dir) do
+-    files = list_all_media_files(output_dir)
++    files = list_media_files(output_dir)
+ 
+     with :ok <- repair_single_gallery_video(output_dir, files) do
+       {:ok, files}
+@@ -56,13 +56,9 @@ defmodule Lolek.GalleryDownloader do
+ 
+   @spec list_media_files(String.t()) :: [String.t()]
+   def list_media_files(dir) do
+-    max_size = Application.fetch_env!(:lolek, :max_file_size_to_send_to_telegram)
+-
+     dir
+     |> collect_files()
+-    |> Enum.filter(fn path ->
+-      (image_file?(path) or video_file?(path)) and within_size_limit?(path, max_size)
+-    end)
++    |> Enum.filter(&(image_file?(&1) or video_file?(&1)))
+     |> Enum.sort()
+     |> Enum.take(max_gallery_media())
+   end
+@@ -89,19 +85,6 @@ defmodule Lolek.GalleryDownloader do
+     end
+   end
+ 
+-  @spec list_all_media_files(String.t()) :: [String.t()]
+-  defp list_all_media_files(dir) do
+-    max_size = Application.fetch_env!(:lolek, :max_file_size_to_send_to_telegram)
+-
+-    dir
+-    |> collect_files()
+-    |> Enum.filter(fn path ->
+-      (image_file?(path) or video_file?(path)) and within_size_limit?(path, max_size)
+-    end)
+-    |> Enum.sort()
+-    |> Enum.take(max_gallery_media())
+-  end
+-
+   @spec read_caption(String.t()) :: {:ok, String.t()} | :error
+   def read_caption(gallery_dir) do
+     gallery_dir
+@@ -129,11 +112,6 @@ defmodule Lolek.GalleryDownloader do
+     path |> Path.extname() |> String.downcase() |> then(&(&1 in @image_extensions))
+   end
+ 
+-  @spec within_size_limit?(String.t(), non_neg_integer()) :: boolean()
+-  defp within_size_limit?(path, max_size) do
+-    match?({:ok, %File.Stat{size: size}} when size <= max_size, File.stat(path))
+-  end
+-
+   @spec read_caption_from_json(String.t()) :: {:ok, String.t()} | nil
+   defp read_caption_from_json(json_path) do
+     with {:ok, content} <- File.read(json_path),
+diff --git a/lib/lolek/handler.ex b/lib/lolek/handler.ex
+index 8a03725..10c12cf 100644
+--- a/lib/lolek/handler.ex
++++ b/lib/lolek/handler.ex
+@@ -237,7 +237,9 @@ defmodule Lolek.Handler do
+   end
+ 
+   @spec enrich_gallery_context(keyword(), Lolek.File.file_state()) :: keyword()
+-  defp enrich_gallery_context(context, {:downloaded_gallery, gallery_dir, _files}) do
++  defp enrich_gallery_context(context, {:downloaded_media, cache_root, _files}) do
++    gallery_dir = Path.join(cache_root, "gallery")
++
+     with nil <- Keyword.get(context, :source_caption),
+          {:ok, caption} <- Lolek.GalleryDownloader.read_caption(gallery_dir) do
+       folder_path = Path.dirname(gallery_dir)
+@@ -310,24 +312,19 @@ defmodule Lolek.Handler do
+   defp present?(value), do: is_binary(value) and value != ""
+ 
+   @spec format_file_state(term()) :: String.t()
+-  defp format_file_state({:ready_to_telegram, _file_path}), do: "ready_to_telegram"
+-
+-  defp format_file_state({:ready_to_telegram_gallery, entries}),
+-    do: "ready_to_telegram_gallery:count=#{length(entries)}"
++  defp format_file_state({:ready_media, entries}),
++    do: "ready_media:count=#{length(entries)}"
+ 
+-  defp format_file_state({:compressed, _file_path}), do: "compressed"
+-  defp format_file_state({:downloaded, _file_path}), do: "downloaded"
++  defp format_file_state({:downloaded_media, _cache_root, files}),
++    do: "downloaded_media:count=#{length(files)}"
+ 
+-  defp format_file_state({:downloaded_gallery, _gallery_dir, files}),
+-    do: "downloaded_gallery:count=#{length(files)}"
++  defp format_file_state({:prepared_media, _cache_root, files}),
++    do: "prepared_media:count=#{length(files)}"
+ 
+   defp format_file_state({:new_file, _folder_path}), do: "new_file"
+ 
+-  defp format_file_state({:sent_to_telegram_at_first, _file_path, _file_id}),
+-    do: "sent_to_telegram_at_first"
+-
+-  defp format_file_state({:sent_gallery_to_telegram_at_first, _gallery_dir, entries}),
+-    do: "sent_gallery_to_telegram_at_first:count=#{length(entries)}"
++  defp format_file_state({:sent_media, _cache_root, entries}),
++    do: "sent_media:count=#{length(entries)}"
+ 
+   defp format_file_state(other), do: inspect(other)
+ end
+diff --git a/lib/lolek/metrics.ex b/lib/lolek/metrics.ex
+index 02d8596..337acfb 100644
+--- a/lib/lolek/metrics.ex
++++ b/lib/lolek/metrics.ex
+@@ -319,10 +319,10 @@ defmodule Lolek.Metrics do
+ 
+   @spec file_state_label(term()) :: String.t()
+   defp file_state_label({:new_file, _path}), do: "new_file"
+-  defp file_state_label({:downloaded, _path}), do: "downloaded"
+-  defp file_state_label({:compressed, _path}), do: "compressed"
+-  defp file_state_label({:ready_to_telegram, _path}), do: "ready_to_telegram"
+-  defp file_state_label({:sent_to_telegram_at_first, _path, _file_id}), do: "sent_to_telegram"
++  defp file_state_label({:downloaded_media, _cache_root, _files}), do: "downloaded"
++  defp file_state_label({:prepared_media, _cache_root, _files}), do: "compressed"
++  defp file_state_label({:ready_media, _entries}), do: "ready_to_telegram"
++  defp file_state_label({:sent_media, _cache_root, _entries}), do: "sent_to_telegram"
+   defp file_state_label(_file_state), do: "unknown"
+ 
+   @spec result_label(term()) :: String.t()
+diff --git a/test/lolek/converter_test.exs b/test/lolek/converter_test.exs
+index fded86b..1e75ed1 100644
+--- a/test/lolek/converter_test.exs
++++ b/test/lolek/converter_test.exs
+@@ -17,7 +17,8 @@ defmodule Lolek.ConverterTest do
+   test "returns an error when downloaded mp4 is missing", %{tmp_dir: tmp_dir} do
+     file_path = Path.join(tmp_dir, "downloaded.mp4")
+ 
+-    assert {:error, :enoent} = Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++    assert {:error, :no_usable_media_files} =
++             Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
+   end
+ 
+   @tag :tmp_dir
+@@ -33,8 +34,8 @@ defmodule Lolek.ConverterTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:error, :video_duration} =
+-               Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++      assert {:error, :no_usable_media_files} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
+     end)
+   end
+ 
+@@ -52,7 +53,8 @@ defmodule Lolek.ConverterTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:error, _reason} = Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++      assert {:error, _reason} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
+     end)
+   end
+ 
+@@ -80,7 +82,9 @@ defmodule Lolek.ConverterTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:error, _reason} = Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++      assert {:error, _reason} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
++
+       assert File.exists?(file_path)
+       refute File.exists?(compressed_path)
+     end)
+@@ -100,16 +104,241 @@ defmodule Lolek.ConverterTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:error, :enoent} = Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++      assert {:error, :no_usable_media_files} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
+     end)
+   end
+ 
+   @tag :tmp_dir
+-  test "returns an error when original file cannot be renamed", %{tmp_dir: tmp_dir} do
++  test "returns an error when downloaded file is missing", %{tmp_dir: tmp_dir} do
+     file_path = Path.join(tmp_dir, "downloaded.txt")
+ 
+-    assert {:error, {:rename_compressed_failed, :enoent}} =
+-             Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++    assert {:error, :no_usable_media_files} =
++             Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
++  end
++
++  @tag :tmp_dir
++  test "keeps a compatible video without invoking ffmpeg", %{tmp_dir: tmp_dir} do
++    preserve_converter_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      file_path = Path.join(tmp_dir, "downloaded.mp4")
++      File.write!(file_path, String.duplicate("x", 10))
++      put_video_probe(bin_dir, "10.0", "h264")
++      put_fake_executable(bin_dir, "ffmpeg", "exit 1")
++      put_compression_env()
++      Application.put_env(:lolek, :max_file_size_to_send_to_telegram, 100)
++
++      System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
++      {:ok, _apps} = Application.ensure_all_started(:erlexec)
++
++      assert {:ok, {:prepared_media, ^tmp_dir, [^file_path]}} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
++
++      assert File.read!(file_path) == String.duplicate("x", 10)
++    end)
++  end
++
++  @tag :tmp_dir
++  test "converts a non-mp4 video even when its codec is h264", %{tmp_dir: tmp_dir} do
++    preserve_converter_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      file_path = Path.join(tmp_dir, "downloaded.mkv")
++      compressed_path = Path.join(tmp_dir, "compressed.mp4")
++      ffmpeg_args_file = Path.join(tmp_dir, "ffmpeg.args")
++
++      File.write!(file_path, String.duplicate("x", 10))
++      put_video_probe(bin_dir, "10.0", "h264")
++
++      put_fake_executable(bin_dir, "ffmpeg", """
++      output=
++      for arg do
++        printf '%s\\n' "$arg" >> "#{ffmpeg_args_file}"
++        output="$arg"
++      done
++      printf ok > "$output"
++      """)
++
++      put_compression_env()
++      Application.put_env(:lolek, :max_file_size_to_send_to_telegram, 100)
++
++      System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
++      {:ok, _apps} = Application.ensure_all_started(:erlexec)
++
++      assert {:ok, {:prepared_media, ^tmp_dir, [^compressed_path]}} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
++
++      assert File.read!(compressed_path) == "ok"
++      assert File.read!(ffmpeg_args_file) =~ "-c:v\nlibx264\n"
++      refute File.exists?(file_path)
++    end)
++  end
++
++  @tag :tmp_dir
++  test "rejects videos above the conversion input limit", %{tmp_dir: tmp_dir} do
++    preserve_converter_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      file_path = Path.join(tmp_dir, "downloaded.mp4")
++      compressed_path = Path.join(tmp_dir, "compressed.mp4")
++
++      File.write!(file_path, String.duplicate("x", 10))
++      put_video_probe(bin_dir, "10.0", "h264")
++      put_fake_executable(bin_dir, "ffmpeg", "exit 1")
++      put_compression_env()
++      Application.put_env(:lolek, :max_file_size_to_compress, 5)
++
++      System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
++      {:ok, _apps} = Application.ensure_all_started(:erlexec)
++
++      assert {:error, :no_usable_media_files} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
++
++      assert File.exists?(file_path)
++      refute File.exists?(compressed_path)
++    end)
++  end
++
++  @tag :tmp_dir
++  test "removes encoded output that remains above the upload limit", %{tmp_dir: tmp_dir} do
++    preserve_converter_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      file_path = Path.join(tmp_dir, "downloaded.mp4")
++      compressed_path = Path.join(tmp_dir, "compressed.mp4")
++
++      File.write!(file_path, String.duplicate("x", 10))
++      put_video_probe(bin_dir, "10.0", "h264")
++
++      put_fake_executable(bin_dir, "ffmpeg", """
++      output=
++      for arg do output="$arg"; done
++      printf toolarge > "$output"
++      """)
++
++      put_compression_env()
++      Application.put_env(:lolek, :max_file_size_to_send_to_telegram, 5)
++
++      System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
++      {:ok, _apps} = Application.ensure_all_started(:erlexec)
++
++      assert {:error, :no_usable_media_files} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
++
++      assert File.exists?(file_path)
++      refute File.exists?(compressed_path)
++    end)
++  end
++
++  @tag :tmp_dir
++  test "prepares gallery videos while preserving media order", %{tmp_dir: tmp_dir} do
++    preserve_converter_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      gallery_dir = Path.join(tmp_dir, "gallery")
++      File.mkdir_p!(gallery_dir)
++
++      first_image = Path.join(gallery_dir, "01.jpg")
++      oversized_video = Path.join(gallery_dir, "02.mp4")
++      second_image = Path.join(gallery_dir, "03.png")
++      small_video = Path.join(gallery_dir, "04.mp4")
++      prepared_video = oversized_video <> ".telegram.mp4"
++
++      File.write!(first_image, "i")
++      File.write!(oversized_video, String.duplicate("v", 10))
++      File.write!(second_image, "i")
++      File.write!(small_video, "vid")
++      put_video_probe(bin_dir, "10.0", "h264")
++
++      put_fake_executable(bin_dir, "ffmpeg", """
++      output=
++      for arg do output="$arg"; done
++      printf ok > "$output"
++      """)
++
++      put_compression_env()
++      Application.put_env(:lolek, :max_file_size_to_send_to_telegram, 5)
++
++      System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
++      {:ok, _apps} = Application.ensure_all_started(:erlexec)
++
++      files = [first_image, oversized_video, second_image, small_video]
++
++      assert {:ok, {:prepared_media, ^tmp_dir, prepared_files}} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, files})
++
++      assert prepared_files == [first_image, prepared_video, second_image, small_video]
++      assert File.read!(prepared_video) == "ok"
++      refute File.exists?(oversized_video)
++      assert File.exists?(small_video)
++    end)
++  end
++
++  @tag :tmp_dir
++  test "omits gallery media that cannot be prepared", %{tmp_dir: tmp_dir} do
++    preserve_converter_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      gallery_dir = Path.join(tmp_dir, "gallery")
++      File.mkdir_p!(gallery_dir)
++
++      image = Path.join(gallery_dir, "01.jpg")
++      video = Path.join(gallery_dir, "02.mp4")
++
++      File.write!(image, "image")
++      File.write!(video, String.duplicate("v", 10))
++      put_video_probe(bin_dir, "1000.0", "h264")
++      put_fake_executable(bin_dir, "ffmpeg", "exit 1")
++      put_compression_env()
++      Application.put_env(:lolek, :max_file_size_to_send_to_telegram, 5)
++
++      System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
++      {:ok, _apps} = Application.ensure_all_started(:erlexec)
++
++      assert {:ok, {:prepared_media, ^tmp_dir, [^image]}} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [image, video]})
++
++      assert File.exists?(video)
++      refute File.exists?(video <> ".telegram.mp4")
++    end)
++  end
++
++  @tag :tmp_dir
++  test "omits oversized gallery images while keeping usable media", %{tmp_dir: tmp_dir} do
++    preserve_converter_env(fn ->
++      gallery_dir = Path.join(tmp_dir, "gallery")
++      File.mkdir_p!(gallery_dir)
++
++      oversized_image = Path.join(gallery_dir, "01.jpg")
++      usable_image = Path.join(gallery_dir, "02.jpg")
++
++      File.write!(oversized_image, String.duplicate("i", 10))
++      File.write!(usable_image, "image")
++      put_compression_env()
++      Application.put_env(:lolek, :max_file_size_to_send_to_telegram, 5)
++
++      assert {:ok, {:prepared_media, ^tmp_dir, [^usable_image]}} =
++               Lolek.Converter.adapt_to_telegram(
++                 {:downloaded_media, tmp_dir, [oversized_image, usable_image]}
++               )
++    end)
++  end
++
++  @tag :tmp_dir
++  test "returns an error when no gallery media can be prepared", %{tmp_dir: tmp_dir} do
++    preserve_converter_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      gallery_dir = Path.join(tmp_dir, "gallery")
++      File.mkdir_p!(gallery_dir)
++      video = Path.join(gallery_dir, "video.mp4")
++
++      File.write!(video, String.duplicate("v", 10))
++      put_video_probe(bin_dir, "1000.0", "h264")
++      put_fake_executable(bin_dir, "ffmpeg", "exit 1")
++      put_compression_env()
++      Application.put_env(:lolek, :max_file_size_to_send_to_telegram, 5)
++
++      System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
++      {:ok, _apps} = Application.ensure_all_started(:erlexec)
++
++      assert {:error, :no_usable_media_files} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [video]})
++    end)
+   end
+ 
+   @tag :tmp_dir
+@@ -139,8 +368,8 @@ defmodule Lolek.ConverterTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:ok, {:compressed, compressed_path}} =
+-               Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++      assert {:ok, {:prepared_media, ^tmp_dir, [compressed_path]}} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
+ 
+       assert File.read!(compressed_path) == "ok"
+ 
+@@ -193,8 +422,8 @@ defmodule Lolek.ConverterTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:ok, {:compressed, compressed_path}} =
+-               Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++      assert {:ok, {:prepared_media, ^tmp_dir, [compressed_path]}} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
+ 
+       assert File.read!(compressed_path) == "ok"
+ 
+@@ -234,8 +463,8 @@ defmodule Lolek.ConverterTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:ok, {:compressed, compressed_path}} =
+-               Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++      assert {:ok, {:prepared_media, ^tmp_dir, [compressed_path]}} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
+ 
+       assert File.read!(compressed_path) == "ok"
+ 
+@@ -291,8 +520,8 @@ defmodule Lolek.ConverterTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:ok, {:compressed, compressed_path}} =
+-               Lolek.Converter.adapt_to_telegram({:downloaded, file_path})
++      assert {:ok, {:prepared_media, ^tmp_dir, [compressed_path]}} =
++               Lolek.Converter.adapt_to_telegram({:downloaded_media, tmp_dir, [file_path]})
+ 
+       assert File.read!(compressed_path) == "ok"
+ 
+diff --git a/test/lolek/downloader_test.exs b/test/lolek/downloader_test.exs
+index 913603f..dde06fe 100644
+--- a/test/lolek/downloader_test.exs
++++ b/test/lolek/downloader_test.exs
+@@ -82,7 +82,7 @@ defmodule Lolek.DownloaderTest do
+       System.put_env("PATH", bin_dir <> path_delimiter() <> System.get_env("PATH", ""))
+       {:ok, _apps} = Application.ensure_all_started(:erlexec)
+ 
+-      assert {:ok, {:downloaded, file_path}} =
++      assert {:ok, {:downloaded_media, ^tmp_dir, [file_path]}} =
+                Lolek.Downloader.download("https://example.com/video", {:new_file, tmp_dir})
+ 
+       assert Path.basename(file_path) == "downloaded.mp4"
+@@ -213,7 +213,7 @@ defmodule Lolek.DownloaderTest do
+   end
+ 
+   @tag :tmp_dir
+-  test "routes gallery-dl image results to downloaded_gallery state", %{tmp_dir: tmp_dir} do
++  test "routes gallery-dl image results to downloaded media state", %{tmp_dir: tmp_dir} do
+     preserve_download_env(fn ->
+       bin_dir = Path.join(tmp_dir, "bin")
+       File.mkdir_p!(bin_dir)
+@@ -233,9 +233,10 @@ defmodule Lolek.DownloaderTest do
+ 
+       set_gallery_env(bin_dir, true)
+ 
+-      assert {:ok, {:downloaded_gallery, gallery_dir, files}} =
++      assert {:ok, {:downloaded_media, ^tmp_dir, files}} =
+                Lolek.Downloader.download("https://example.com/post", {:new_file, tmp_dir})
+ 
++      gallery_dir = Path.join(tmp_dir, "gallery")
+       assert gallery_dir == Path.join(tmp_dir, "gallery")
+       assert length(files) == 2
+       assert Enum.all?(files, &String.ends_with?(&1, ".jpg"))
+@@ -243,7 +244,36 @@ defmodule Lolek.DownloaderTest do
+   end
+ 
+   @tag :tmp_dir
+-  test "promotes single mp4 from gallery-dl to downloaded state", %{tmp_dir: tmp_dir} do
++  test "keeps a single gallery-dl image in downloaded gallery state", %{tmp_dir: tmp_dir} do
++    preserve_download_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      File.mkdir_p!(bin_dir)
++
++      write_script(bin_dir, "gallery-dl", """
++      #!/bin/sh
++      dest=
++      while [ "$#" -gt 0 ]; do
++        case "$1" in --dest) shift; dest="$1" ;; esac
++        shift
++      done
++      printf photo > "$dest/photo001.jpg"
++      """)
++
++      write_script(bin_dir, "yt-dlp", "#!/bin/sh\nexit 1")
++
++      set_gallery_env(bin_dir, true)
++
++      assert {:ok, {:downloaded_media, ^tmp_dir, [file_path]}} =
++               Lolek.Downloader.download("https://example.com/post", {:new_file, tmp_dir})
++
++      gallery_dir = Path.join(tmp_dir, "gallery")
++      assert gallery_dir == Path.join(tmp_dir, "gallery")
++      assert Path.basename(file_path) == "photo001.jpg"
++    end)
++  end
++
++  @tag :tmp_dir
++  test "routes gallery-dl video collections to downloaded media state", %{tmp_dir: tmp_dir} do
+     preserve_download_env(fn ->
+       bin_dir = Path.join(tmp_dir, "bin")
+       File.mkdir_p!(bin_dir)
+@@ -256,23 +286,56 @@ defmodule Lolek.DownloaderTest do
+         shift
+       done
+       printf videodata > "$dest/video001.mp4"
++      printf videodata > "$dest/video002.mp4"
+       """)
+ 
+       write_script(bin_dir, "yt-dlp", "#!/bin/sh\nexit 1")
+ 
+       set_gallery_env(bin_dir, true)
+ 
+-      assert {:ok, {:downloaded, file_path}} =
++      assert {:ok, {:downloaded_media, ^tmp_dir, files}} =
+                Lolek.Downloader.download("https://example.com/post", {:new_file, tmp_dir})
+ 
+-      assert Path.basename(file_path) == "downloaded.mp4"
+-      assert Path.dirname(file_path) == tmp_dir
++      gallery_dir = Path.join(tmp_dir, "gallery")
++      assert gallery_dir == Path.join(tmp_dir, "gallery")
++      assert length(files) == 2
++      assert Enum.all?(files, &String.ends_with?(&1, ".mp4"))
++    end)
++  end
++
++  @tag :tmp_dir
++  test "keeps a single gallery-dl mp4 in downloaded gallery state", %{tmp_dir: tmp_dir} do
++    preserve_download_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      File.mkdir_p!(bin_dir)
++
++      write_script(bin_dir, "gallery-dl", """
++      #!/bin/sh
++      dest=
++      while [ "$#" -gt 0 ]; do
++        case "$1" in --dest) shift; dest="$1" ;; esac
++        shift
++      done
++      printf videodata > "$dest/video001.mp4"
++      """)
++
++      write_script(bin_dir, "yt-dlp", "#!/bin/sh\nexit 1")
++
++      set_gallery_env(bin_dir, true)
++
++      assert {:ok, {:downloaded_media, ^tmp_dir, [file_path]}} =
++               Lolek.Downloader.download("https://example.com/post", {:new_file, tmp_dir})
++
++      gallery_dir = Path.join(tmp_dir, "gallery")
++      assert gallery_dir == Path.join(tmp_dir, "gallery")
++      assert Path.basename(file_path) == "video001.mp4"
++      assert Path.dirname(file_path) == gallery_dir
+       assert File.read!(file_path) == "videodata"
+     end)
+   end
+ 
+   @tag :tmp_dir
+-  test "muxes TikTok gallery video-only mp4 before returning downloaded state", %{
++  test "muxes TikTok gallery video-only mp4 before returning gallery state", %{
+     tmp_dir: tmp_dir
+   } do
+     preserve_download_env(fn ->
+@@ -345,10 +408,12 @@ defmodule Lolek.DownloaderTest do
+ 
+       set_gallery_env(bin_dir, true)
+ 
+-      assert {:ok, {:downloaded, file_path}} =
++      assert {:ok, {:downloaded_media, ^tmp_dir, [file_path]}} =
+                Lolek.Downloader.download("https://example.com/post", {:new_file, tmp_dir})
+ 
+-      assert Path.basename(file_path) == "downloaded.mp4"
++      gallery_dir = Path.join(tmp_dir, "gallery")
++      assert gallery_dir == Path.join(tmp_dir, "gallery")
++      assert Path.basename(file_path) == "video001.mp4"
+       assert File.read!(file_path) == "muxed"
+ 
+       assert File.read!(attempts_file) ==
+@@ -383,7 +448,7 @@ defmodule Lolek.DownloaderTest do
+ 
+       set_gallery_env(bin_dir, true)
+ 
+-      assert {:ok, {:downloaded, file_path}} =
++      assert {:ok, {:downloaded_media, ^tmp_dir, [file_path]}} =
+                Lolek.Downloader.download("https://example.com/post", {:new_file, tmp_dir})
+ 
+       assert Path.basename(file_path) == "downloaded.mp4"
+@@ -408,7 +473,7 @@ defmodule Lolek.DownloaderTest do
+ 
+       set_gallery_env(bin_dir, true)
+ 
+-      assert {:ok, {:downloaded, file_path}} =
++      assert {:ok, {:downloaded_media, ^tmp_dir, [file_path]}} =
+                Lolek.Downloader.download("https://example.com/post", {:new_file, tmp_dir})
+ 
+       assert Path.basename(file_path) == "downloaded.mp4"
+@@ -437,7 +502,7 @@ defmodule Lolek.DownloaderTest do
+ 
+       set_gallery_env(bin_dir, false)
+ 
+-      assert {:ok, {:downloaded, _file_path}} =
++      assert {:ok, {:downloaded_media, ^tmp_dir, [_file_path]}} =
+                Lolek.Downloader.download("https://example.com/post", {:new_file, tmp_dir})
+     end)
+   end
+diff --git a/test/lolek/file_test.exs b/test/lolek/file_test.exs
+index c18c496..00bdec5 100644
+--- a/test/lolek/file_test.exs
++++ b/test/lolek/file_test.exs
+@@ -7,33 +7,55 @@ defmodule Lolek.FileTest do
+   ]
+ 
+   @tag :tmp_dir
+-  test "moves first uploaded file into ready to telegram cache", %{tmp_dir: tmp_dir} do
+-    file_path = Path.join(tmp_dir, "compressed.mp4")
+-    ready_path = Path.join([tmp_dir, "ready_to_telegram", "telegram-file-id.mp4"])
++  test "reads existing single-file caches as one-item ready media", %{tmp_dir: tmp_dir} do
++    ready_path = Path.join([tmp_dir, "ready_to_telegram", "telegram-file-id.txt"])
+ 
+-    File.write!(file_path, "video")
++    File.mkdir_p!(Path.dirname(ready_path))
++    File.write!(ready_path, "document")
++
++    assert {:ok, {:ready_media, [{"telegram-file-id", ".txt"}]}} =
++             Lolek.File.get_file_state(tmp_dir)
++  end
++
++  @tag :tmp_dir
++  test "caches one or more sent media entries in a shared manifest", %{tmp_dir: tmp_dir} do
++    entries = [{".jpg", "photo-id"}, {".mp4", "video-id"}]
++    manifest_path = Path.join([tmp_dir, "ready_to_telegram", "media_manifest.json"])
+ 
+     assert :ok =
+              Lolek.File.move_to_ready_to_telegram(
+-               {:sent_to_telegram_at_first, file_path, "telegram-file-id"}
++               {:sent_media, tmp_dir, [{".jpg", "single-photo-id"}]}
+              )
+ 
+-    assert File.read!(ready_path) == "video"
+-    refute File.exists?(file_path)
++    assert Jason.decode!(File.read!(manifest_path)) == [
++             %{"ext" => ".jpg", "file_id" => "single-photo-id"}
++           ]
++
++    assert :ok = Lolek.File.move_to_ready_to_telegram({:sent_media, tmp_dir, entries})
++
++    assert Jason.decode!(File.read!(manifest_path)) == [
++             %{"ext" => ".jpg", "file_id" => "photo-id"},
++             %{"ext" => ".mp4", "file_id" => "video-id"}
++           ]
++
++    assert {:ok, {:ready_media, [{"photo-id", ".jpg"}, {"video-id", ".mp4"}]}} =
++             Lolek.File.get_file_state(tmp_dir)
+   end
+ 
+   @tag :tmp_dir
+-  test "returns an error when uploaded file is missing", %{tmp_dir: tmp_dir} do
+-    file_path = Path.join(tmp_dir, "compressed.mp4")
++  test "reads existing gallery manifests as ready media", %{tmp_dir: tmp_dir} do
++    ready_path = Path.join(tmp_dir, "ready_to_telegram")
++    manifest_path = Path.join(ready_path, "gallery_manifest.json")
+ 
+-    assert {:error, :enoent} =
+-             Lolek.File.move_to_ready_to_telegram(
+-               {:sent_to_telegram_at_first, file_path, "telegram-file-id"}
+-             )
++    File.mkdir_p!(ready_path)
++    File.write!(manifest_path, Jason.encode!([%{"file_id" => "photo-id", "ext" => ".jpg"}]))
++
++    assert {:ok, {:ready_media, [{"photo-id", ".jpg"}]}} =
++             Lolek.File.get_file_state(tmp_dir)
+   end
+ 
+   test "ignores file states that do not need caching" do
+-    assert :ok = Lolek.File.move_to_ready_to_telegram({:ready_to_telegram, "/tmp/file.mp4"})
++    assert :ok = Lolek.File.move_to_ready_to_telegram({:ready_media, [{"file-id", ".mp4"}]})
+   end
+ 
+   @tag :tmp_dir
+@@ -48,7 +70,9 @@ defmodule Lolek.FileTest do
+       put_fake_executable(bin_dir, "ffprobe", "exit 0")
+       put_cache_env(bin_dir)
+ 
+-      assert {:ok, {:downloaded, ^downloaded_path}} = Lolek.File.get_file_state(tmp_dir)
++      assert {:ok, {:downloaded_media, ^tmp_dir, [^downloaded_path]}} =
++               Lolek.File.get_file_state(tmp_dir)
++
+       refute File.exists?(compressed_path)
+     end)
+   end
+@@ -67,7 +91,9 @@ defmodule Lolek.FileTest do
+       put_fake_executable(bin_dir, "ffprobe", "exit 0")
+       put_cache_env(bin_dir)
+ 
+-      assert {:ok, {:downloaded, ^downloaded_path}} = Lolek.File.get_file_state(tmp_dir)
++      assert {:ok, {:downloaded_media, ^tmp_dir, [^downloaded_path]}} =
++               Lolek.File.get_file_state(tmp_dir)
++
+       refute File.exists?(ready_path)
+     end)
+   end
+diff --git a/test/lolek/gallery_downloader_test.exs b/test/lolek/gallery_downloader_test.exs
+index ce56583..8145756 100644
+--- a/test/lolek/gallery_downloader_test.exs
++++ b/test/lolek/gallery_downloader_test.exs
+@@ -134,14 +134,14 @@ defmodule Lolek.GalleryDownloaderTest do
+     end
+ 
+     @tag :tmp_dir
+-    test "filters files over the size limit", %{tmp_dir: tmp_dir} do
++    test "returns supported files regardless of the upload size limit", %{tmp_dir: tmp_dir} do
+       preserve_env(fn ->
+         Application.put_env(:lolek, :max_file_size_to_send_to_telegram, 4)
+         File.write!(Path.join(tmp_dir, "small.jpg"), "ok")
+         File.write!(Path.join(tmp_dir, "large.jpg"), "toolarge!")
+ 
+-        assert [path] = Lolek.GalleryDownloader.list_media_files(tmp_dir)
+-        assert Path.basename(path) == "small.jpg"
++        files = Lolek.GalleryDownloader.list_media_files(tmp_dir)
++        assert Enum.map(files, &Path.basename/1) == ["large.jpg", "small.jpg"]
+       end)
+     end
+ 
+diff --git a/test/lolek/metrics_test.exs b/test/lolek/metrics_test.exs
+index 8950ffd..e585a40 100644
+--- a/test/lolek/metrics_test.exs
++++ b/test/lolek/metrics_test.exs
+@@ -31,7 +31,7 @@ defmodule Lolek.MetricsTest do
+       name: metrics_name
+     )
+ 
+-    Lolek.Metrics.record_cache_lookup({:ok, {:ready_to_telegram, "/tmp/file.mp4"}},
++    Lolek.Metrics.record_cache_lookup({:ok, {:ready_media, [{"file-id", ".mp4"}]}},
+       name: metrics_name
+     )
+ 
+diff --git a/test/lolek/send_file_test.exs b/test/lolek/send_file_test.exs
+index 75598e0..4e980ff 100644
+--- a/test/lolek/send_file_test.exs
++++ b/test/lolek/send_file_test.exs
+@@ -33,6 +33,14 @@ defmodule Lolek.SendFileTest do
+     @impl true
+     def send_media_group(chat_id, media, options) do
+       record_call({:send_media_group, chat_id, media, options})
++
++      local_files_exist =
++        Enum.map(media, fn
++          %{media: "file://" <> encoded_path} -> encoded_path |> URI.decode() |> File.exists?()
++          _ -> :not_local
++        end)
++
++      record_call({:send_media_group_local_files_exist, local_files_exist})
+       Application.fetch_env!(:lolek, :telegram_test_result)
+     end
+ 
+@@ -57,7 +65,7 @@ defmodule Lolek.SendFileTest do
+       Application.put_env(:lolek, :telegram_test_result, {:error, error})
+ 
+       assert {:error, {:telegram_api, %ExGram.Error{code: 400, message: "Bad Request"}}} =
+-               Lolek.send_file(123, {:ready_to_telegram, "/tmp/file-id.mp4"})
++               Lolek.send_file(123, {:ready_media, [{"file-id", ".mp4"}]})
+     end)
+   end
+ 
+@@ -83,7 +91,7 @@ defmodule Lolek.SendFileTest do
+                      end
+                    end)
+ 
+-                   result = Lolek.send_file(123, {:ready_to_telegram, "/tmp/file-id.mp4"})
++                   result = Lolek.send_file(123, {:ready_media, [{"file-id", ".mp4"}]})
+                    send(test_pid, {:send_after_deadline, result})
+                  end,
+                  25
+@@ -103,7 +111,7 @@ defmodule Lolek.SendFileTest do
+       Application.put_env(:lolek, :telegram_test_error, error)
+ 
+       assert {:error, {:telegram_api, %ExGram.Error{code: 500, message: "Internal Error"}}} =
+-               Lolek.send_file(123, {:ready_to_telegram, "/tmp/file-id.mp4"})
++               Lolek.send_file(123, {:ready_media, [{"file-id", ".mp4"}]})
+     end)
+   end
+ 
+@@ -115,7 +123,7 @@ defmodule Lolek.SendFileTest do
+       Application.put_env(:lolek, :telegram_test_result, {:ok, response})
+ 
+       assert {:error, {:unexpected_telegram_response, ^response}} =
+-               Lolek.send_file(123, {:compressed, "/tmp/downloaded.txt"})
++               Lolek.send_file(123, {:prepared_media, "/tmp", ["/tmp/downloaded.txt"]})
+     end)
+   end
+ 
+@@ -130,8 +138,8 @@ defmodule Lolek.SendFileTest do
+       Application.put_env(:lolek, :telegram_client, TelegramClient)
+       Application.put_env(:lolek, :telegram_test_result, {:ok, response})
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path})
++      assert {:ok, {:sent_media, _, [{".txt", "telegram-file-id"}]}} =
++               Lolek.send_file(123, {:prepared_media, Path.dirname(file_path), [file_path]})
+     end)
+   end
+ 
+@@ -149,8 +157,12 @@ defmodule Lolek.SendFileTest do
+ 
+       context = [message_thread_id: 456]
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, _upload, options}
+       assert options[:message_thread_id] == 456
+@@ -174,8 +186,8 @@ defmodule Lolek.SendFileTest do
+ 
+       context = [message_thread_id: 456]
+ 
+-      assert {:ok, {:sent_gallery_to_telegram_at_first, "/tmp/gallery", _entries}} =
+-               Lolek.send_file(123, {:downloaded_gallery, "/tmp/gallery", files}, context)
++      assert {:ok, {:sent_media, "/tmp", _entries}} =
++               Lolek.send_file(123, {:prepared_media, "/tmp", files}, context)
+ 
+       assert_receive {:send_media_group, 123, _media, options}
+       assert options[:message_thread_id] == 456
+@@ -198,8 +210,8 @@ defmodule Lolek.SendFileTest do
+       Application.put_env(:lolek, :telegram_test_parent, self())
+       Application.put_env(:lolek, :max_gallery_media, 2)
+ 
+-      assert {:ok, {:sent_gallery_to_telegram_at_first, "/tmp/gallery", entries}} =
+-               Lolek.send_file(123, {:downloaded_gallery, "/tmp/gallery", files})
++      assert {:ok, {:sent_media, "/tmp", entries}} =
++               Lolek.send_file(123, {:prepared_media, "/tmp", files})
+ 
+       assert length(entries) == 2
+       assert_receive {:send_media_group, 123, media, []}
+@@ -221,27 +233,150 @@ defmodule Lolek.SendFileTest do
+       Application.put_env(:lolek, :telegram_test_parent, self())
+       Application.put_env(:lolek, :max_gallery_media, 1)
+ 
+-      assert {:ok,
+-              {:sent_gallery_to_telegram_at_first, "/tmp/gallery",
+-               [{".mp4", "gallery-video-file"}]}} =
+-               Lolek.send_file(123, {:downloaded_gallery, "/tmp/gallery", files})
++      assert {:ok, {:sent_media, "/tmp", [{".mp4", "gallery-video-file"}]}} =
++               Lolek.send_file(123, {:prepared_media, "/tmp", files})
++
++      assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "gallery-1.mp4"},
++                      _options}
+ 
+-      assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "gallery-1.mp4"}, []}
+       refute_receive {:send_media_group, 123, _, []}
+     end)
+   end
+ 
++  test "sends one-item galleries as local file uris" do
++    preserve_telegram_env(fn ->
++      file_path = tmp_file("gallery video.mp4", "media")
++
++      response = %ExGram.Model.Message{
++        video: %ExGram.Model.Video{file_id: "gallery-video-file"}
++      }
++
++      Application.put_env(:lolek, :telegram_client, TelegramClient)
++      Application.put_env(:lolek, :telegram_test_result, {:ok, response})
++      Application.put_env(:lolek, :telegram_test_parent, self())
++      Application.put_env(:lolek, :telegram_local_file_uploads, true)
++
++      assert {:ok, {:sent_media, "/tmp", [{".mp4", "gallery-video-file"}]}} =
++               Lolek.send_file(123, {:prepared_media, "/tmp", [file_path]})
++
++      assert_receive {:send_video, 123, "file://" <> encoded_path, _options}
++      assert URI.decode(encoded_path) == file_path
++    end)
++  end
++
++  test "sends media groups as local file uris and cleans upload aliases" do
++    preserve_telegram_env(fn ->
++      files = for index <- 1..2, do: tmp_file("gallery-#{index}.jpg", "media")
++
++      messages =
++        for index <- 1..2 do
++          %ExGram.Model.Message{
++            photo: [%ExGram.Model.PhotoSize{file_id: "gallery-file-#{index}"}]
++          }
++        end
++
++      Application.put_env(:lolek, :telegram_client, TelegramClient)
++      Application.put_env(:lolek, :telegram_test_result, {:ok, messages})
++      Application.put_env(:lolek, :telegram_test_parent, self())
++      Application.put_env(:lolek, :telegram_local_file_uploads, true)
++
++      context = [source_title: "Gallery title"]
++
++      assert {:ok, {:sent_media, "/tmp", _entries}} =
++               Lolek.send_file(123, {:prepared_media, "/tmp", files}, context)
++
++      assert_receive {:send_media_group, 123, media, []}
++      assert Enum.all?(media, &String.starts_with?(&1.media, "file://"))
++      assert_receive {:send_media_group_local_files_exist, [true, true]}
++
++      for file <- files do
++        assert [] = Path.wildcard(Path.join(Path.dirname(file), ".telegram-upload-*"))
++      end
++    end)
++  end
++
++  test "cleans prepared gallery uploads when a later item cannot be prepared" do
++    preserve_telegram_env(fn ->
++      file_path = tmp_file("gallery-1.jpg", "media")
++      missing_path = Path.join(Path.dirname(file_path), "missing.jpg")
++
++      Application.put_env(:lolek, :telegram_client, TelegramClient)
++      Application.put_env(:lolek, :telegram_test_result, {:ok, []})
++      Application.put_env(:lolek, :telegram_test_parent, self())
++      Application.put_env(:lolek, :telegram_local_file_uploads, true)
++
++      context = [source_title: "Gallery title"]
++
++      assert {:error, {:local_upload_alias, :enoent}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, "/tmp", [file_path, missing_path]},
++                 context
++               )
++
++      assert [] = Path.wildcard(Path.join(Path.dirname(file_path), ".telegram-upload-*"))
++      refute_receive {:send_media_group, _, _, _}
++    end)
++  end
++
++  test "builds uploaded and cached gallery media through the same type mapping" do
++    preserve_telegram_env(fn ->
++      files = [
++        tmp_file("gallery.jpg", "photo"),
++        tmp_file("gallery.mp4", "video"),
++        tmp_file("gallery.gif", "animation")
++      ]
++
++      messages = [
++        %ExGram.Model.Message{photo: [%ExGram.Model.PhotoSize{file_id: "photo-id"}]},
++        %ExGram.Model.Message{video: %ExGram.Model.Video{file_id: "video-id"}},
++        %ExGram.Model.Message{document: %ExGram.Model.Document{file_id: "gif-id"}}
++      ]
++
++      Application.put_env(:lolek, :telegram_client, TelegramClient)
++      Application.put_env(:lolek, :telegram_test_result, {:ok, messages})
++      Application.put_env(:lolek, :telegram_test_parent, self())
++
++      assert {:ok,
++              {:sent_media, "/tmp",
++               [{".jpg", "photo-id"}, {".mp4", "video-id"}, {".gif", "gif-id"}]}} =
++               Lolek.send_file(123, {:prepared_media, "/tmp", files})
++
++      assert_receive {:send_media_group, 123, uploaded_media, []}
++
++      assert [
++               %ExGram.Model.InputMediaPhoto{media: {:file_content, _, "gallery.jpg"}},
++               %ExGram.Model.InputMediaVideo{media: {:file_content, _, "gallery.mp4"}},
++               %ExGram.Model.InputMediaDocument{media: {:file_content, _, "gallery.gif"}}
++             ] = uploaded_media
++
++      cached_entries = [{"photo-id", ".jpg"}, {"video-id", ".mp4"}, {"gif-id", ".gif"}]
++
++      assert {:ok, {:ready_media, ^cached_entries}} =
++               Lolek.send_file(123, {:ready_media, cached_entries})
++
++      assert_receive {:send_media_group, 123, cached_media, []}
++
++      assert [
++               %ExGram.Model.InputMediaPhoto{media: "photo-id"},
++               %ExGram.Model.InputMediaVideo{media: "video-id"},
++               %ExGram.Model.InputMediaDocument{media: "gif-id"}
++             ] = cached_media
++    end)
++  end
++
+   test "applies the gallery limit to cached media" do
+     preserve_telegram_env(fn ->
+       entries = for index <- 1..3, do: {"gallery-file-#{index}", ".jpg"}
++      response = %ExGram.Model.Message{photo: [%ExGram.Model.PhotoSize{file_id: "new-file-id"}]}
+ 
+       Application.put_env(:lolek, :telegram_client, TelegramClient)
+-      Application.put_env(:lolek, :telegram_test_result, {:ok, []})
++      Application.put_env(:lolek, :telegram_test_result, {:ok, response})
+       Application.put_env(:lolek, :telegram_test_parent, self())
+       Application.put_env(:lolek, :max_gallery_media, 1)
+ 
+-      assert {:ok, {:ready_to_telegram_gallery, limited_entries}} =
+-               Lolek.send_file(123, {:ready_to_telegram_gallery, entries})
++      assert {:ok, {:ready_media, limited_entries}} =
++               Lolek.send_file(123, {:ready_media, entries})
+ 
+       assert length(limited_entries) == 1
+       assert_receive {:send_photo, 123, "gallery-file-1", []}
+@@ -249,6 +384,49 @@ defmodule Lolek.SendFileTest do
+     end)
+   end
+ 
++  test "propagates Telegram errors when sending cached galleries" do
++    preserve_telegram_env(fn ->
++      error = %ExGram.Error{code: 400, message: "Bad Request"}
++      entries = [{"gallery-file-1", ".jpg"}, {"gallery-file-2", ".jpg"}]
++
++      Application.put_env(:lolek, :telegram_client, TelegramClient)
++      Application.put_env(:lolek, :telegram_test_result, {:error, error})
++      Application.put_env(:lolek, :telegram_test_parent, self())
++
++      assert {:error, {:telegram_api, %ExGram.Error{code: 400, message: "Bad Request"}}} =
++               Lolek.send_file(123, {:ready_media, entries})
++
++      assert_receive {:send_media_group, 123, _media, []}
++    end)
++  end
++
++  test "splits large collections without a one-item media group" do
++    preserve_telegram_env(fn ->
++      files = for index <- 1..11, do: tmp_file("gallery-#{index}.jpg", "media")
++
++      messages =
++        for index <- 1..9 do
++          %ExGram.Model.Message{
++            photo: [%ExGram.Model.PhotoSize{file_id: "gallery-file-#{index}"}]
++          }
++        end
++
++      Application.put_env(:lolek, :telegram_client, TelegramClient)
++      Application.put_env(:lolek, :telegram_test_result, {:ok, messages})
++      Application.put_env(:lolek, :telegram_test_parent, self())
++      Application.put_env(:lolek, :max_gallery_media, 11)
++
++      assert {:ok, {:sent_media, "/tmp", entries}} =
++               Lolek.send_file(123, {:prepared_media, "/tmp", files})
++
++      assert length(entries) == 11
++      assert_receive {:send_media_group, 123, first_batch, []}
++      assert_receive {:send_media_group, 123, second_batch, []}
++      assert length(first_batch) == 9
++      assert length(second_batch) == 2
++    end)
++  end
++
+   test "sends local file uris when local Telegram uploads are enabled" do
+     preserve_telegram_env(fn ->
+       file_path = tmp_file("downloaded with spaces.mp4", "media")
+@@ -262,8 +440,8 @@ defmodule Lolek.SendFileTest do
+       Application.put_env(:lolek, :telegram_test_parent, self())
+       Application.put_env(:lolek, :telegram_local_file_uploads, true)
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path})
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(123, {:prepared_media, Path.dirname(file_path), [file_path]})
+ 
+       assert_receive {:send_video, 123, "file://" <> encoded_path, _options}
+       assert encoded_path == String.replace(file_path, " ", "%20")
+@@ -285,8 +463,12 @@ defmodule Lolek.SendFileTest do
+ 
+       context = [source_title: "A / Video: https://example.com/watch Title?"]
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, "file://" <> encoded_path, _options}
+ 
+@@ -318,8 +500,12 @@ defmodule Lolek.SendFileTest do
+ 
+       assert byte_size(source_title <> extname) > max_upload_file_name_bytes
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, "file://" <> encoded_path, _options}
+ 
+@@ -354,8 +540,12 @@ defmodule Lolek.SendFileTest do
+ 
+       assert byte_size(source_title <> extname) > max_upload_file_name_bytes
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, "file://" <> encoded_path, _options}
+ 
+@@ -380,8 +570,8 @@ defmodule Lolek.SendFileTest do
+       Application.put_env(:lolek, :telegram_test_result, {:ok, response})
+       Application.put_env(:lolek, :telegram_test_parent, self())
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path})
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(123, {:prepared_media, Path.dirname(file_path), [file_path]})
+ 
+       assert_receive {:send_video, 123,
+                       {:file_content, %File.Stream{} = stream, "downloaded.mp4"}, _options}
+@@ -405,8 +595,12 @@ defmodule Lolek.SendFileTest do
+ 
+       context = [source_title: "A Video Title"]
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "A Video Title.mp4"},
+                       _options}
+@@ -427,8 +621,12 @@ defmodule Lolek.SendFileTest do
+ 
+       context = [source_title: "A / Video: https://example.com/watch Title?"]
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "A Video Title.mp4"},
+                       _options}
+@@ -451,8 +649,12 @@ defmodule Lolek.SendFileTest do
+ 
+       context = [requester_name: "alice", started_at: System.monotonic_time()]
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "downloaded.mp4"},
+                       options}
+@@ -484,8 +686,12 @@ defmodule Lolek.SendFileTest do
+         started_at: System.monotonic_time()
+       ]
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "downloaded.mp4"},
+                       options}
+@@ -515,8 +721,12 @@ defmodule Lolek.SendFileTest do
+         started_at: System.monotonic_time()
+       ]
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "downloaded.mp4"},
+                       options}
+@@ -546,8 +756,12 @@ defmodule Lolek.SendFileTest do
+         started_at: System.monotonic_time()
+       ]
+ 
+-      assert {:ok, {:sent_to_telegram_at_first, ^file_path, "telegram-file-id"}} =
+-               Lolek.send_file(123, {:compressed, file_path}, context)
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
+ 
+       assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "downloaded.mp4"},
+                       options}
