@@ -30,6 +30,8 @@ let
   );
 in
 {
+  home.shellAliases.g = "git";
+
   # Git
   programs.git = {
     enable = true;
