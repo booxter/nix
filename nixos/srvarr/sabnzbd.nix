@@ -99,7 +99,10 @@ in
     group = "media";
     secretFiles = [ config.sops.templates."sabnzbd-secret.ini".path ];
     settings = import ./sabnzbd-settings.nix {
-      hostName = config.networking.hostName;
+      hostWhitelist = [
+        config.networking.hostName
+      ]
+      ++ hostInventory.toInternalHttpsServiceHosts "sabnzbd";
       inherit
         mediaDir
         wgNamespaceAddress
