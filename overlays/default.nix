@@ -111,24 +111,23 @@
       # Fix XQuartz crashes under launchd socket activation and restore the
       # strictflexarrays1 hardening check.
       # https://github.com/NixOS/nixpkgs/pull/543662
-      xtrans =
-        if prev.stdenv.hostPlatform.isDarwin then
-          prev.xtrans.overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [
-              (prev.fetchpatch {
-                url = "https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/commit/79f6b0bfe2170496e8c37626043d009f4cd3f1e1.patch";
-                hash = "sha256-Y8QY1yAiOI/rSNi71/Qhsn6UEql556/pS2av7+vmGQA=";
-              })
-            ];
-          })
-        else
-          prev.xtrans;
-
       xorg-server =
         if prev.stdenv.hostPlatform.isDarwin then
-          prev.xorg-server.overrideAttrs (old: {
-            hardeningDisable = lib.remove "strictflexarrays1" (old.hardeningDisable or [ ]);
-          })
+          (prev.xorg-server.override {
+            # Keep the patched xtrans private to XQuartz's xorg-server
+            # dependency graph so unrelated X11 consumers do not rebuild.
+            xtrans = prev.xtrans.overrideAttrs (old: {
+              patches = (old.patches or [ ]) ++ [
+                (prev.fetchpatch {
+                  url = "https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/commit/79f6b0bfe2170496e8c37626043d009f4cd3f1e1.patch";
+                  hash = "sha256-Y8QY1yAiOI/rSNi71/Qhsn6UEql556/pS2av7+vmGQA=";
+                })
+              ];
+            });
+          }).overrideAttrs
+            (old: {
+              hardeningDisable = lib.remove "strictflexarrays1" (old.hardeningDisable or [ ]);
+            })
         else
           prev.xorg-server;
 
