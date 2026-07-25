@@ -6,7 +6,7 @@ usage() {
   echo "  -a: Approve the PR"
   echo "  -t: Build tests associated with changed packages"
   echo "  -i: Include a dependent PR (can be passed multiple times)"
-  echo "  -s: Specify systems (default: all)"
+  echo "  -s: Specify systems (default: available)"
   echo "  -C: Enable CUDA support"
 }
 
@@ -49,8 +49,14 @@ while getopts ":apti:s:C" opt; do
 done
 shift $((OPTIND-1))
 
-# Default systems if not specified
-systems=${systems:-"x86_64-linux aarch64-linux aarch64-darwin"}
+# Default to aarch64-linux only when a configured builder supports it.
+if [ -z "${systems:-}" ]; then
+  systems="x86_64-linux aarch64-darwin"
+  builder_systems=${NR_BUILDERS:-}
+  if [[ " ${builder_systems//,/ } " == *" aarch64-linux "* ]]; then
+    systems="x86_64-linux aarch64-linux aarch64-darwin"
+  fi
+fi
 
 # Join extra_config_values into a single Nix attribute-set body.
 extra_config_str=$(IFS=' '; echo "${extra_config_values[*]}")
