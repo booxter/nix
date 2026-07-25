@@ -93,8 +93,8 @@
 
       lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
-          # https://github.com/dziaineka/lolek/pull/18
-          ../lib/patches/lolek-handle-multi-video-galleries.patch
+          # https://github.com/dziaineka/lolek/pull/19
+          ../lib/patches/lolek-unify-media-processing.patch
         ];
       });
 
