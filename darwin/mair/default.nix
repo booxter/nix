@@ -21,6 +21,7 @@ in
   };
 
   host.browser.firefox.touchIdPasskeys.enable = true;
+  host.remoteGui.wayland.enable = true;
 
   sops.secrets."wireguard/gw/privateKey" = {
     owner = "root";

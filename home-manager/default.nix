@@ -19,6 +19,7 @@
   ]
   ++ lib.optionals hmFull [
     ./_mixins/cli
+    ./_mixins/remote-gui
     ./_mixins/agents
     ./_mixins/gnupg
     ./_mixins/nixvim
@@ -68,10 +69,6 @@
     memoryMiB = 8192;
     diskSizeGiB = 100;
     autoStart = true;
-  };
-  programs.xquartz = lib.mkIf (isDarwin && isDesktop && !isWork) {
-    enable = true;
-    configureSsh = true;
   };
   targets.darwin.copyApps.enable = isDarwin; # populate apps dir for Spotlight
 

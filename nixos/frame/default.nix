@@ -90,6 +90,7 @@ in
     radeontop
     rocmPackages.rocm-smi
     rocmPackages.rocminfo
+    waypipe
   ];
 
   systemd.services.frame-amdgpu-metrics = {

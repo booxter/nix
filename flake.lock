@@ -50,6 +50,22 @@
         "type": "github"
       }
     },
+    "cocoa-way-homebrew-tap": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1784359768,
+        "narHash": "sha256-1JMNUnsdmPo6RQkccyMr0OHrYFC5OrRxa8gn27qLNug=",
+        "owner": "J-x-Z",
+        "repo": "homebrew-tap",
+        "rev": "72a377cb80c31dcbb730e92b6927bcfb58e41a1c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "J-x-Z",
+        "repo": "homebrew-tap",
+        "type": "github"
+      }
+    },
     "codex-desktop-linux": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -635,6 +651,7 @@
     },
     "root": {
       "inputs": {
+        "cocoa-way-homebrew-tap": "cocoa-way-homebrew-tap",
         "codex-desktop-linux": "codex-desktop-linux",
         "debugserver": "debugserver",
         "determinate-nix-installer": "determinate-nix-installer",

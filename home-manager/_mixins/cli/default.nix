@@ -3,7 +3,6 @@
   lib,
   pkgs,
   isDarwin,
-  isDesktop,
   isWork,
   osConfig,
   ...
@@ -11,7 +10,6 @@
 let
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
-  hasRemoteGui = isDesktop && (!isDarwin || config.programs.xquartz.enable);
   nr = cliPkgs.nr.override {
     builders = lib.concatStringsSep " ; " osConfig.host.nixpkgsReview.builders;
   };
@@ -161,9 +159,6 @@ in
     ]
     ++ lib.optionals isDarwin [
       container
-    ]
-    ++ lib.optionals hasRemoteGui [
-      cliPkgs.xrun-nixpkgs
     ]
     ++ lib.optionals (!isWork) [
       age

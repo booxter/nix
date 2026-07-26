@@ -25,6 +25,7 @@
       ./_mixins/networking
       ./_mixins/nix-gc
       ./_mixins/observability-client
+      ./_mixins/remote-gui
       ./_mixins/sketchybar-alertmanager
       ./_mixins/sketchybar-jellyfin
       ./_mixins/sudo
@@ -48,7 +49,7 @@
 
   system.stateVersion = stateVersion;
 
-  host.xquartz.enable = lib.mkDefault (!isWork && isDesktop);
+  host.remoteGui.x11.enable = lib.mkDefault (!isWork && isDesktop);
 
   system.primaryUser = username;
 
