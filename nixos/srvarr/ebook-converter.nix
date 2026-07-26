@@ -8,14 +8,12 @@ let
   mediaDir = config.host.srvarrPaths.mediaDir;
   booksDir = "${mediaDir}/library/books";
   stateDir = "/var/lib/ebook-converter";
-  calibreConfigDir = "${stateDir}/calibre";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/ebook-converter.prom";
 in
 {
   systemd.tmpfiles.rules = [
     "d '${stateDir}' 0770 shelfmark media - -"
-    "d '${calibreConfigDir}' 0770 shelfmark media - -"
     "z ${nodeExporterTextfileDir} 0775 root media - -"
   ];
 
@@ -44,7 +42,7 @@ in
         "--max-attempts"
         "3"
       ];
-      Environment = "CALIBRE_CONFIG_DIRECTORY=${calibreConfigDir}";
+      Environment = "XDG_CONFIG_HOME=${stateDir}";
       User = "shelfmark";
       Group = "media";
       UMask = "0002";

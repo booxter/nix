@@ -13,14 +13,13 @@ let
   mediaDir = config.host.srvarrPaths.mediaDir;
   booksDir = "${mediaDir}/library/books";
   ebookConverterStateDir = "/var/lib/ebook-converter";
-  calibreConfigDir = "${ebookConverterStateDir}/calibre";
   user = "shelfmark";
   shelfmarkService = hostInventory.servicesById.shelfmark;
   oidcClientId = oidc.clients.shelfmark.clientId;
   ebookConverterHook = pkgs.writeShellApplication {
     name = "shelfmark-ebook-converter-hook";
     text = ''
-      export CALIBRE_CONFIG_DIRECTORY=${lib.escapeShellArg calibreConfigDir}
+      export XDG_CONFIG_HOME=${lib.escapeShellArg ebookConverterStateDir}
       exec ${lib.getExe srvarrPkgs.ebook-converter} hook \
         --library-root ${lib.escapeShellArg booksDir} \
         --lock-root ${lib.escapeShellArg ebookConverterStateDir} \

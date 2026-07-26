@@ -1,11 +1,14 @@
 pkgs:
 let
+  ebookConverterCli = pkgs.callPackage ./ebook-converter-cli { };
   transmissionCommon = pkgs.callPackage ./transmission-common { };
   transmissionTrackerPrioritizer = pkgs.callPackage ./transmission-tracker-prioritizer {
     inherit transmissionCommon;
   };
 in
 {
+  ebook-converter-cli = ebookConverterCli;
+
   transmission-common = transmissionCommon;
 
   aurral = pkgs.callPackage ./aurral { };
@@ -20,7 +23,9 @@ in
 
   audiobookshelf-oidc-bootstrap = pkgs.callPackage ./audiobookshelf-oidc-bootstrap { };
 
-  ebook-converter = pkgs.callPackage ./ebook-converter { };
+  ebook-converter = pkgs.callPackage ./ebook-converter {
+    inherit ebookConverterCli;
+  };
 
   lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter { };
 

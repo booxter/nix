@@ -9,6 +9,11 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "ebook-converter-cli",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "firefox-devtools-mcp",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"

@@ -190,6 +190,7 @@
           updateTargetPackages =
             pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
               aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
+              ebook-converter-cli = pkgs.callPackage ./nixos/srvarr/pkgs/ebook-converter-cli { };
               houndarr = pkgs.callPackage ./nixos/srvarr/pkgs/houndarr { };
               searchless-ngx = pkgs.callPackage ./nixos/org/pkgs/searchless-ngx { };
               telegram-archive = pkgs.callPackage ./nixos/org/pkgs/telegram-archive { };
