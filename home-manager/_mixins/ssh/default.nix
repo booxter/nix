@@ -73,6 +73,17 @@ in
           User = "root";
           RequestTTY = "force";
         };
+        mmini-boot = {
+          # FileVault's pre-boot SSH server requires a local account password
+          # before the normal host keys and ticket CA are available.
+          HostName = "mmini";
+          HostKeyAlias = "mmini";
+          User = config.home.username;
+          PreferredAuthentications = "password";
+          PasswordAuthentication = true;
+          KbdInteractiveAuthentication = false;
+          PubkeyAuthentication = false;
+        };
       };
 
       includes = [
