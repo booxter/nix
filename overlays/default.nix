@@ -96,6 +96,9 @@
           # The package source excludes nix/tests, so vendor only applicable hunks from:
           # https://github.com/dziaineka/lolek/pull/19
           ../lib/patches/lolek-unify-media-processing.patch
+          # Fall back to the container duration when a video stream omits it.
+          # https://github.com/dziaineka/lolek/pull/23
+          ../lib/patches/lolek-fallback-container-duration.patch
         ];
       });
 

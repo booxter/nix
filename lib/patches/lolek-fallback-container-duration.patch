@@ -1,0 +1,123 @@
+diff --git a/lib/lolek/file.ex b/lib/lolek/file.ex
+index b01fe90..3d924c9 100644
+--- a/lib/lolek/file.ex
++++ b/lib/lolek/file.ex
+@@ -77,9 +77,9 @@ defmodule Lolek.File do
+              "-select_streams",
+              "v:0",
+              "-show_entries",
+-             "stream=duration",
++             "stream=duration:format=duration",
+              "-of",
+-             "default=noprint_wrappers=1:nokey=1",
++             "json",
+              file_path
+            ],
+            timeout: command_timeout(:probe_command_timeout_seconds)
+@@ -87,16 +87,14 @@ defmodule Lolek.File do
+       {:ok, result} ->
+         # Extract stdout regardless of stderr warnings
+         stdout_data = Keyword.get(result, :stdout, [])
+-        raw_duration = stdout_data |> IO.iodata_to_binary() |> String.trim()
++        raw_probe = stdout_data |> IO.iodata_to_binary() |> String.trim()
+ 
+-        case Float.parse(raw_duration) do
+-          {duration_float, _} ->
+-            {:ok, round(duration_float)}
++        case parse_video_duration(raw_probe) do
++          {:ok, duration} ->
++            {:ok, duration}
+ 
+           :error ->
+-            Logger.warning(
+-              "Could not parse duration from ffprobe output: #{inspect(raw_duration)}"
+-            )
++            Logger.warning("Could not parse duration from ffprobe output: #{inspect(raw_probe)}")
+ 
+             :error
+         end
+@@ -111,6 +109,42 @@ defmodule Lolek.File do
+       :error
+   end
+ 
++  @spec parse_video_duration(String.t()) :: :error | {:ok, integer()}
++  defp parse_video_duration(raw_probe) do
++    case Jason.decode(raw_probe) do
++      {:ok, probe} when is_map(probe) ->
++        stream_duration =
++          case probe do
++            %{"streams" => [%{"duration" => duration} | _]} -> duration
++            _ -> nil
++          end
++
++        format_duration =
++          probe
++          |> Map.get("format", %{})
++          |> Map.get("duration")
++
++        [
++          stream_duration,
++          format_duration
++        ]
++        |> Enum.find_value(:error, &parse_duration/1)
++
++      _ ->
++        :error
++    end
++  end
++
++  @spec parse_duration(term()) :: nil | {:ok, integer()}
++  defp parse_duration(raw_duration) when is_binary(raw_duration) do
++    case Float.parse(raw_duration) do
++      {duration_float, _} -> {:ok, round(duration_float)}
++      :error -> nil
++    end
++  end
++
++  defp parse_duration(_raw_duration), do: nil
++
+   @spec get_file_path_by_pattern(String.t(), String.t()) ::
+           {:ok, String.t()} | {:error, String.t()}
+   def get_file_path_by_pattern(output_path, pattern) do
+diff --git a/test/lolek/converter_test.exs b/test/lolek/converter_test.exs
+index 1e75ed1..b05bd3a 100644
+--- a/test/lolek/converter_test.exs
++++ b/test/lolek/converter_test.exs
+@@ -571,7 +571,7 @@ defmodule Lolek.ConverterTest do
+     put_fake_executable(bin_dir, "ffprobe", """
+     case "$*" in
+       *stream=duration*)
+-        printf '#{duration}\\n'
++        printf '{"streams":[{"duration":"#{duration}"}],"format":{}}\\n'
+         ;;
+       *stream=codec_name*)
+         printf '#{codec}\\n'
+diff --git a/test/lolek/file_test.exs b/test/lolek/file_test.exs
+index 00bdec5..e2bc1f5 100644
+--- a/test/lolek/file_test.exs
++++ b/test/lolek/file_test.exs
+@@ -58,6 +58,24 @@ defmodule Lolek.FileTest do
+     assert :ok = Lolek.File.move_to_ready_to_telegram({:ready_media, [{"file-id", ".mp4"}]})
+   end
+ 
++  @tag :tmp_dir
++  test "uses container duration when the video stream duration is unavailable", %{
++    tmp_dir: tmp_dir
++  } do
++    preserve_file_env(fn ->
++      bin_dir = Path.join(tmp_dir, "bin")
++      file_path = Path.join(tmp_dir, "video.mkv")
++
++      put_fake_executable(bin_dir, "ffprobe", """
++      printf '{"streams":[{}],"format":{"duration":"60.101000"}}\n'
++      """)
++
++      put_cache_env(bin_dir)
++
++      assert {:ok, 60} = Lolek.File.get_video_duration(file_path)
++    end)
++  end
++
+   @tag :tmp_dir
+   test "ignores invalid compressed cache files", %{tmp_dir: tmp_dir} do
+     preserve_file_env(fn ->
