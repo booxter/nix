@@ -22,6 +22,10 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
+    cocoa-way-homebrew-tap = {
+      url = "github:J-x-Z/homebrew-tap";
+      flake = false;
+    };
 
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";

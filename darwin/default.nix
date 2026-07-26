@@ -25,6 +25,7 @@
       ./_mixins/networking
       ./_mixins/nix-gc
       ./_mixins/observability-client
+      ./_mixins/remote-gui
       ./_mixins/sketchybar-alertmanager
       ./_mixins/sketchybar-jellyfin
       ./_mixins/sudo

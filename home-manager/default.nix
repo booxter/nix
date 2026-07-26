@@ -19,6 +19,7 @@
   ]
   ++ lib.optionals hmFull [
     ./_mixins/cli
+    ./_mixins/remote-gui
     ./_mixins/agents
     ./_mixins/gnupg
     ./_mixins/nixvim
