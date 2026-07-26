@@ -84,11 +84,16 @@ quote_remote_arg() {
 
 find_wayland_socket() {
   local directory="$1"
+  local socket_probe="${WRUN_NIXPKGS_SOCKET_PROBE:-socat}"
   local socket
 
   [[ -d "${directory}" ]] || return 1
   for socket in "${directory}"/wayland-*; do
-    if [[ -S "${socket}" ]]; then
+    # Cocoa-Way may leave the socket inode behind after exiting, so verify that
+    # a compositor is actually accepting connections.
+    if [[ -S "${socket}" ]] \
+      && "${socket_probe}" -T 1 -u OPEN:/dev/null "UNIX-CONNECT:${socket}" \
+        >/dev/null 2>&1; then
       printf '%s\n' "${socket}"
       return 0
     fi

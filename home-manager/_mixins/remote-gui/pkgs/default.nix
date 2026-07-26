@@ -28,11 +28,12 @@ let
     {
       description,
       name,
+      runtimeInputs ? [ ],
       transport,
     }:
     pkgs.writeShellApplication {
       inherit name;
-      runtimeInputs = [ pkgs.openssh ];
+      runtimeInputs = [ pkgs.openssh ] ++ runtimeInputs;
       text = ''
         export RUN_NIXPKGS_PROGRAM_NAME=${name}
         export RUN_NIXPKGS_TRANSPORT=${transport}
@@ -77,6 +78,7 @@ in
 
   wrun-nixpkgs = mkRunner {
     name = "wrun-nixpkgs";
+    runtimeInputs = [ pkgs.socat ];
     transport = "waypipe";
     description = "Build a Linux nixpkgs package remotely and run it through Cocoa-Way and Waypipe";
   };

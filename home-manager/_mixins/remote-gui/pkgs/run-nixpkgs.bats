@@ -29,6 +29,7 @@ import time
 
 listener = socket.socket(socket.AF_UNIX)
 listener.bind(sys.argv[1])
+listener.listen()
 time.sleep(60)
 ' "$socket_path" &
   SOCKET_PID=$!
@@ -81,9 +82,16 @@ time.sleep(60)
   [[ "$output" == *"Activate host.remoteGui.wayland"* ]]
 }
 
-@test "Waypipe runner starts Cocoa-Way on demand" {
+@test "Waypipe runner recovers from a stale Cocoa-Way socket" {
   [[ "$RUN_NIXPKGS_TEST_TRANSPORT" == waypipe ]] || skip
   mkdir -p "$TEST_ROOT/runtime"
+  python3 -c '
+import socket
+import sys
+
+listener = socket.socket(socket.AF_UNIX)
+listener.bind(sys.argv[1])
+' "$TEST_ROOT/runtime/wayland-1"
 
   export COCOA_WAY_RUNTIME_DIR="$TEST_ROOT/runtime"
   export LAUNCHCTL_LOG="$TEST_ROOT/launchctl.log"
