@@ -96,7 +96,7 @@ find_wayland_socket() {
   return 1
 }
 
-configure_wayland_display() {
+discover_wayland_display() {
   local directory
   local socket=""
   local -a candidates=()
@@ -116,16 +116,47 @@ configure_wayland_display() {
     [[ -n "${socket}" ]] && break
   done
 
-  if [[ -z "${socket}" ]]; then
-    echo "Unable to find a live Cocoa-Way socket." >&2
-    echo "Start it with: COCOA_WAY_PRESENTATION=rootless cocoa-way" >&2
-    echo "Alternatively, set COCOA_WAY_RUNTIME_DIR to its socket directory." >&2
-    return 1
-  fi
+  [[ -n "${socket}" ]] || return 1
 
   export XDG_RUNTIME_DIR="${socket%/*}"
   export WAYLAND_DISPLAY="${socket##*/}"
-  echo "Using Cocoa-Way socket: ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" >&2
+}
+
+start_cocoa_way() {
+  local launchctl_bin="${WRUN_NIXPKGS_LAUNCHCTL:-/bin/launchctl}"
+  local service="${WRUN_NIXPKGS_COCOA_WAY_SERVICE:-org.nixos.cocoa-way}"
+  local target="gui/${UID}/${service}"
+
+  echo "Starting Cocoa-Way through launchd..." >&2
+  if ! "${launchctl_bin}" kickstart "${target}"; then
+    echo "Unable to start Cocoa-Way through launchd service ${service}." >&2
+    echo "Activate host.remoteGui.wayland, or start Cocoa-Way manually." >&2
+    return 1
+  fi
+}
+
+configure_wayland_display() {
+  local attempt
+  local attempts="${WRUN_NIXPKGS_START_ATTEMPTS:-100}"
+  local delay="${WRUN_NIXPKGS_START_DELAY:-0.1}"
+
+  if discover_wayland_display; then
+    echo "Using Cocoa-Way socket: ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" >&2
+    return 0
+  fi
+
+  start_cocoa_way
+  for ((attempt = 0; attempt < attempts; attempt++)); do
+    if discover_wayland_display; then
+      echo "Using Cocoa-Way socket: ${XDG_RUNTIME_DIR}/${WAYLAND_DISPLAY}" >&2
+      return 0
+    fi
+    sleep "${delay}"
+  done
+
+  echo "Timed out waiting for the Cocoa-Way socket." >&2
+  echo "Inspect it with: launchctl print gui/${UID}/org.nixos.cocoa-way" >&2
+  return 1
 }
 
 run_remote() {

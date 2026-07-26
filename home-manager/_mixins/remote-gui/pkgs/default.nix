@@ -1,5 +1,24 @@
 { pkgs }:
 let
+  launchctlFailureStub = pkgs.writeShellScript "launchctl-failure-stub" ''
+    exit 1
+  '';
+  waylandSocketTestStub = pkgs.writeText "wayland-socket-test-stub.py" ''
+    import signal
+    import socket
+    import sys
+
+    listener = socket.socket(socket.AF_UNIX)
+    listener.bind(sys.argv[1])
+    listener.listen()
+    signal.pause()
+  '';
+  launchctlTestStub = pkgs.writeShellScript "launchctl-test-stub" ''
+    printf '%s\n' "$*" >"$LAUNCHCTL_LOG"
+    "${pkgs.python3}/bin/python3" ${waylandSocketTestStub} \
+      "$COCOA_WAY_RUNTIME_DIR/wayland-8" </dev/null >/dev/null 2>&1 &
+    printf '%s\n' "$!" >"$LAUNCHCTL_SOCKET_PID_FILE"
+  '';
   waypipeTestStub = pkgs.writeShellScript "waypipe-test-stub" ''
     printf '%s\n' "$*" >"$WAYPIPE_LOG"
     printf '%s/%s\n' "$XDG_RUNTIME_DIR" "$WAYLAND_DISPLAY" >"$WAYLAND_LOG"
@@ -33,6 +52,8 @@ let
         bash -n "$target"
         ${pkgs.lib.getExe pkgs.shellcheck} "$target"
         RUN_NIXPKGS_BIN="$target" \
+          RUN_NIXPKGS_LAUNCHCTL_FAILURE_STUB=${launchctlFailureStub} \
+          RUN_NIXPKGS_LAUNCHCTL_STUB=${launchctlTestStub} \
           RUN_NIXPKGS_TEST_TRANSPORT=${transport} \
           RUN_NIXPKGS_WAYPIPE_STUB=${waypipeTestStub} \
           ${pkgs.lib.getExe pkgs.bats} --print-output-on-failure ${./run-nixpkgs.bats}

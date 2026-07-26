@@ -51,6 +51,22 @@ in
         ];
       };
 
+      # Register the agent without RunAtLoad; wrun-nixpkgs starts it when no
+      # live Cocoa-Way socket is available.
+      launchd.user.agents.cocoa-way.serviceConfig = {
+        Label = "org.nixos.cocoa-way";
+        ProgramArguments = [ "/opt/homebrew/bin/cocoa-way" ];
+        EnvironmentVariables = {
+          COCOA_WAY_PRESENTATION = "rootless";
+          PATH = "/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin";
+        };
+        LimitLoadToSessionType = "Aqua";
+        ProcessType = "Interactive";
+        StandardOutPath = "/Users/${username}/Library/Logs/cocoa-way.log";
+        StandardErrorPath = "/Users/${username}/Library/Logs/cocoa-way.log";
+        ThrottleInterval = 10;
+      };
+
       home-manager.users.${username}.programs.remoteGui.wayland.enable = true;
     })
   ];

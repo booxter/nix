@@ -10,6 +10,9 @@ teardown() {
   if [[ -n "$SOCKET_PID" ]]; then
     kill "$SOCKET_PID" 2>/dev/null || true
   fi
+  if [[ -n "${LAUNCHCTL_SOCKET_PID_FILE:-}" && -f "$LAUNCHCTL_SOCKET_PID_FILE" ]]; then
+    kill "$(cat "$LAUNCHCTL_SOCKET_PID_FILE")" 2>/dev/null || true
+  fi
 }
 
 run_nixpkgs() {
@@ -64,17 +67,38 @@ time.sleep(60)
   [[ "$output" == *"--trusted is only available for X11 forwarding"* ]]
 }
 
-@test "Waypipe runner requires a Cocoa-Way socket" {
+@test "Waypipe runner reports when the Cocoa-Way agent is unavailable" {
   [[ "$RUN_NIXPKGS_TEST_TRANSPORT" == waypipe ]] || skip
   export COCOA_WAY_RUNTIME_DIR="$TEST_ROOT/missing"
   export TMPDIR="$TEST_ROOT/missing-tmp"
+  export WRUN_NIXPKGS_LAUNCHCTL="$RUN_NIXPKGS_LAUNCHCTL_FAILURE_STUB"
   unset XDG_RUNTIME_DIR WAYLAND_DISPLAY
 
   run run_nixpkgs nixpkgs foot
 
   [ "$status" -eq 1 ]
-  [[ "$output" == *"Unable to find a live Cocoa-Way socket"* ]]
-  [[ "$output" == *"COCOA_WAY_PRESENTATION=rootless cocoa-way"* ]]
+  [[ "$output" == *"Unable to start Cocoa-Way through launchd"* ]]
+  [[ "$output" == *"Activate host.remoteGui.wayland"* ]]
+}
+
+@test "Waypipe runner starts Cocoa-Way on demand" {
+  [[ "$RUN_NIXPKGS_TEST_TRANSPORT" == waypipe ]] || skip
+  mkdir -p "$TEST_ROOT/runtime"
+
+  export COCOA_WAY_RUNTIME_DIR="$TEST_ROOT/runtime"
+  export LAUNCHCTL_LOG="$TEST_ROOT/launchctl.log"
+  export LAUNCHCTL_SOCKET_PID_FILE="$TEST_ROOT/launchctl-socket.pid"
+  export WAYPIPE_LOG="$TEST_ROOT/waypipe.log"
+  export WAYLAND_LOG="$TEST_ROOT/wayland.log"
+  export WRUN_NIXPKGS_LAUNCHCTL="$RUN_NIXPKGS_LAUNCHCTL_STUB"
+  export WRUN_NIXPKGS_WAYPIPE="$RUN_NIXPKGS_WAYPIPE_STUB"
+  unset XDG_RUNTIME_DIR WAYLAND_DISPLAY
+
+  run run_nixpkgs nixpkgs foot
+
+  [ "$status" -eq 0 ]
+  grep -Eq '^kickstart gui/[0-9]+/org\.nixos\.cocoa-way$' "$LAUNCHCTL_LOG"
+  [ "$(cat "$WAYLAND_LOG")" = "$TEST_ROOT/runtime/wayland-8" ]
 }
 
 @test "Waypipe runner discovers Cocoa-Way and invokes the remote wrapper" {
