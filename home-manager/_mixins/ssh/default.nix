@@ -67,6 +67,8 @@ in
           ForwardAgent = true;
           AddKeysToAgent = if useSecretive then "no" else "yes";
         };
+      }
+      // lib.optionalAttrs (!isWork) {
         frame-boot = {
           HostName = "frame";
           HostKeyAlias = "frame-initrd";
