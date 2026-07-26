@@ -99,17 +99,47 @@ class ConvertPathTests(unittest.TestCase):
             self.assertEqual(torrent_source.stat().st_nlink, 2)
             self.assertFalse((library / "book.epub").exists())
 
-    def test_existing_epub_is_not_replaced_and_source_is_kept(self) -> None:
+    def test_valid_existing_epub_is_kept_and_library_source_is_removed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            torrents = root / "torrents"
+            library.mkdir()
+            torrents.mkdir()
+            torrent_source = torrents / "book.mobi"
+            torrent_source.write_bytes(b"source")
+            source = library / "book.mobi"
+            os.link(torrent_source, source)
+            destination = library / "book.epub"
+            write_epub(destination)
+            existing_epub = destination.read_bytes()
+            runner = FakeRunner()
+
+            result = convert_path(
+                source,
+                library_root=library,
+                lock_root=root / "locks",
+                runner=runner,
+            )
+
+            self.assertEqual(result, destination.resolve())
+            self.assertFalse(source.exists())
+            self.assertEqual(torrent_source.read_bytes(), b"source")
+            self.assertEqual(torrent_source.stat().st_nlink, 1)
+            self.assertEqual(destination.read_bytes(), existing_epub)
+            self.assertEqual(runner.calls, [])
+
+    def test_invalid_existing_epub_is_kept_with_source_for_attention(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             library = Path(tmp_dir) / "library"
             library.mkdir()
             source = library / "book.mobi"
             source.write_bytes(b"source")
             destination = library / "book.epub"
-            destination.write_bytes(b"existing")
+            destination.write_bytes(b"invalid")
             runner = FakeRunner()
 
-            with self.assertRaisesRegex(EbookConverterError, "existing EPUB"):
+            with self.assertRaisesRegex(EbookConverterError, "invalid EPUB"):
                 convert_path(
                     source,
                     library_root=library,
@@ -118,7 +148,7 @@ class ConvertPathTests(unittest.TestCase):
                 )
 
             self.assertEqual(source.read_bytes(), b"source")
-            self.assertEqual(destination.read_bytes(), b"existing")
+            self.assertEqual(destination.read_bytes(), b"invalid")
             self.assertEqual(runner.calls, [])
 
     def test_source_outside_library_root_is_rejected(self) -> None:
@@ -250,6 +280,61 @@ class WatchServiceTests(unittest.TestCase):
             self.assertTrue((library / "book.epub").exists())
             self.assertEqual(torrent_source.read_bytes(), b"torrent payload")
             self.assertEqual(torrent_source.stat().st_nlink, 1)
+
+    def test_old_attention_job_cleans_up_valid_existing_epub(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            torrents = root / "torrents"
+            library.mkdir()
+            torrents.mkdir()
+            torrent_source = torrents / "book.mobi"
+            torrent_source.write_bytes(b"torrent payload")
+            library_source = library / "book.mobi"
+            os.link(torrent_source, library_source)
+            destination = library / "book.epub"
+            write_epub(destination)
+            store = StateStore(root / "state.json")
+            key = str(library_source.resolve())
+            store.data["files"][key] = {
+                "status": "needs_attention",
+                "fingerprint": {
+                    "device": library_source.stat().st_dev,
+                    "inode": library_source.stat().st_ino,
+                    "size": library_source.stat().st_size,
+                    "mtime_ns": library_source.stat().st_mtime_ns,
+                },
+                "observed_at": 900.0,
+                "updated_at": 900.0,
+                "attempts": 3,
+                "error": "refusing to replace existing EPUB",
+            }
+            runner = FakeRunner()
+            clock = MutableClock(1000.0)
+            service = EbookConverterService(
+                library_root=library,
+                lock_root=root / "locks",
+                store=store,
+                runner=runner,
+                settle_seconds=30.0,
+                max_attempts=3,
+                now=clock,
+            )
+
+            service.iteration()
+            self.assertEqual(store.data["files"][key]["status"], "settling")
+            self.assertEqual(store.data["files"][key]["attempts"], 0)
+
+            clock.value += 31.0
+            service.iteration()
+
+            job = store.data["files"][key]
+            self.assertEqual(job["status"], "complete")
+            self.assertEqual(job["destination"], str(destination.resolve()))
+            self.assertFalse(library_source.exists())
+            self.assertEqual(torrent_source.read_bytes(), b"torrent payload")
+            self.assertEqual(torrent_source.stat().st_nlink, 1)
+            self.assertEqual(runner.calls, [])
 
     def test_failed_file_stops_retrying_at_max_attempts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

@@ -21,6 +21,7 @@ from typing import Callable, Iterator
 LOG = logging.getLogger("ebook-converter")
 SUPPORTED_SOURCE_SUFFIXES = {".azw3", ".mobi"}
 STATE_VERSION = 1
+JOB_POLICY_VERSION = 2
 
 
 class EbookConverterError(RuntimeError):
@@ -147,9 +148,18 @@ def convert_path(
 
     with source_lock(source, lock_root):
         if destination.exists():
-            raise EbookConverterError(
-                f"refusing to replace existing EPUB beside source: {destination}"
+            if destination.is_symlink():
+                raise EbookConverterError(
+                    f"refusing EPUB symlink beside source: {destination}"
+                )
+            validate_epub(destination)
+            source.unlink()
+            LOG.info(
+                "removed redundant ebook source: source=%s destination=%s",
+                source,
+                destination,
             )
+            return destination
 
         hidden_source = hidden_source_path(source)
         if hidden_source.exists():
@@ -430,10 +440,15 @@ class EbookConverterService:
             except FileNotFoundError:
                 continue
             job = files.get(key)
-            if not isinstance(job, dict) or job.get("fingerprint") != fingerprint:
+            if (
+                not isinstance(job, dict)
+                or job.get("fingerprint") != fingerprint
+                or job.get("policy_version") != JOB_POLICY_VERSION
+            ):
                 files[key] = {
                     "status": "settling",
                     "fingerprint": fingerprint,
+                    "policy_version": JOB_POLICY_VERSION,
                     "observed_at": now,
                     "updated_at": now,
                     "attempts": 0,
