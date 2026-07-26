@@ -1395,14 +1395,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "sum(host_observability_lidarr_cue_splitter_jobs{job=\"node-mtls\",instance=\"srvarr\",state=~\"failed|needs_attention\"}) or vector(0)",
+          "expr": "sum(host_observability_lidarr_cue_splitter_jobs{job=\"node-mtls\",instance=\"srvarr\",state=~\"failed|automation_failed\"}) or vector(0)",
           "instant": true,
           "legendFormat": "",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "CUE Jobs Requiring Attention",
+      "title": "CUE Automation Failures",
       "type": "stat"
     },
     {

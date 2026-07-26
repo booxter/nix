@@ -289,7 +289,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_lidarr_cue_splitter_jobs{instance="srvarr",job="node-mtls",state="needs_attention"}'
+      - series: 'host_observability_lidarr_cue_splitter_jobs{instance="srvarr",job="node-mtls",state="automation_failed"}'
         values: "1x30 0x2"
     alert_rule_test:
       - eval_time: 14m30s
@@ -303,10 +303,18 @@ tests:
               instance: srvarr
               job: node-mtls
               severity: warning
-              state: needs_attention
+              state: automation_failed
             exp_annotations:
               summary: "Lidarr CUE split job needs attention on srvarr"
-              description: "At least one Lidarr CUE split job on srvarr has remained failed or in need of attention for 15 minutes."
+              description: "At least one Lidarr CUE split job on srvarr has remained failed or its automated resolution failed for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_lidarr_cue_splitter_jobs{instance="srvarr",job="node-mtls",state="awaiting_manual_match"}'
+        values: "1x32"
+    alert_rule_test:
+      - eval_time: 15m
+        alertname: LidarrCueSplitterJobNeedsAttention
 
   - interval: 30s
     input_series:
