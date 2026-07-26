@@ -34,6 +34,7 @@
       ansible
       ansible-lint
       golangci-lint
+      nixfmt
       ripgrep
       vscode-extensions.vadimcn.vscode-lldb.adapter
     ];
@@ -58,11 +59,10 @@
           jsonls.enable = true;
           lua_ls.enable = true;
           marksman.enable = true; # markdown
-          nil_ls = {
+          nixd = {
             enable = true; # nix
-            settings.nix.flake.autoArchive = true;
+            settings.formatting.command = [ "nixfmt" ];
           };
-          nixd.enable = true; # nix
           perlpls.enable = true; # perl
           pyright.enable = true; # python
           sqls.enable = true; # SQL
