@@ -79,6 +79,12 @@ in
         default = true;
         description = "Whether pam_u2f should prompt before waiting for touch.";
       };
+
+      pinVerification = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether pam_u2f should require FIDO2 PIN verification.";
+      };
     };
 
     smartCard = {
@@ -156,6 +162,7 @@ in
           inherit (cfg.pamU2f) control;
           settings = {
             appid = cfg.pamU2f.appId;
+            pinverification = if cfg.pamU2f.pinVerification then 1 else null;
             inherit (cfg.pamU2f) cue origin;
           };
         };
