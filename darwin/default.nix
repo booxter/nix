@@ -49,7 +49,7 @@
 
   system.stateVersion = stateVersion;
 
-  host.xquartz.enable = lib.mkDefault (!isWork && isDesktop);
+  host.remoteGui.x11.enable = lib.mkDefault (!isWork && isDesktop);
 
   system.primaryUser = username;
 

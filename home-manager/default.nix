@@ -70,10 +70,6 @@
     diskSizeGiB = 100;
     autoStart = true;
   };
-  programs.xquartz = lib.mkIf (isDarwin && isDesktop && !isWork) {
-    enable = true;
-    configureSsh = true;
-  };
   targets.darwin.copyApps.enable = isDarwin; # populate apps dir for Spotlight
 
   home.packages =
