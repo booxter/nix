@@ -70,8 +70,7 @@ class ConvertPathTests(unittest.TestCase):
             self.assertEqual(torrent_source.stat().st_ino, source_inode)
             self.assertEqual(torrent_source.stat().st_nlink, 1)
             validate_epub(destination)
-            self.assertTrue(runner.calls[0][0].name.startswith("."))
-            self.assertEqual(runner.calls[0][0].suffix, ".mobi")
+            self.assertEqual(runner.calls[0][0], library_source.resolve())
 
     def test_failed_conversion_restores_library_hardlink(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

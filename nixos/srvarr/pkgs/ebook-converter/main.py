@@ -161,19 +161,20 @@ def convert_path(
             f".{source.stem}.{uuid.uuid4().hex}.ebook-converter-partial.epub"
         )
         source_mode = stat.S_IMODE(source.stat().st_mode)
-        os.replace(source, hidden_source)
         try:
-            runner.convert(hidden_source, temporary_epub)
+            runner.convert(source, temporary_epub)
             validate_epub(temporary_epub)
             os.chmod(temporary_epub, source_mode)
             with temporary_epub.open("rb") as output_file:
                 os.fsync(output_file.fileno())
+            if destination.exists():
+                raise EbookConverterError(
+                    f"refusing to replace EPUB created during conversion: {destination}"
+                )
             os.replace(temporary_epub, destination)
-            hidden_source.unlink()
+            source.unlink()
         except Exception:
             temporary_epub.unlink(missing_ok=True)
-            if hidden_source.exists() and not source.exists():
-                os.replace(hidden_source, source)
             raise
 
     LOG.info("converted ebook: source=%s destination=%s", source, destination)
