@@ -1,5 +1,5 @@
 {
-  calibre,
+  ebookConverterCli,
   lib,
   python3,
   writeShellApplication,
@@ -9,7 +9,7 @@ let
 in
 writeShellApplication {
   name = "ebook-converter";
-  runtimeInputs = [ calibre ];
+  runtimeInputs = [ ebookConverterCli ];
   text = ''
     exec ${python3}/bin/python3 ${./main.py} "$@"
   '';
@@ -23,9 +23,10 @@ writeShellApplication {
 
     mkdir integration
     cd integration
+    export XDG_CONFIG_HOME="$TMPDIR/ebook-converter-config"
     printf '%s\n' '<html><body><h1>Conversion test</h1></body></html>' > source.html
-    ${calibre}/bin/ebook-convert source.html source.mobi >/dev/null
-    ${calibre}/bin/ebook-convert source.mobi output.epub >/dev/null
+    ${lib.getExe ebookConverterCli} source.html source.mobi >/dev/null
+    ${lib.getExe ebookConverterCli} source.mobi output.epub >/dev/null
     PYTHONPATH="${sourceDir}" \
       ${python3}/bin/python3 -c \
         'from pathlib import Path; from main import validate_epub; validate_epub(Path("output.epub"))'

@@ -32,8 +32,8 @@ class ConversionBusy(EbookConverterError):
     pass
 
 
-class CalibreRunner:
-    def __init__(self, executable: str = "ebook-convert"):
+class ConverterRunner:
+    def __init__(self, executable: str = "ebook-converter"):
         self.executable = executable
 
     def convert(self, source: Path, destination: Path) -> None:
@@ -48,7 +48,7 @@ class CalibreRunner:
         except subprocess.CalledProcessError as exc:
             output = exc.stdout.strip() if exc.stdout else "no converter output"
             raise EbookConverterError(
-                f"Calibre conversion failed for {source.name}: {output[-1000:]}"
+                f"ebook conversion failed for {source.name}: {output[-1000:]}"
             ) from exc
 
 
@@ -140,7 +140,7 @@ def convert_path(
     *,
     library_root: Path,
     lock_root: Path,
-    runner: CalibreRunner,
+    runner: ConverterRunner,
 ) -> Path:
     library_root = library_root.resolve(strict=True)
     source = safe_source_path(source, library_root)
@@ -196,7 +196,7 @@ def process_hook_payload(
     *,
     library_root: Path,
     lock_root: Path,
-    runner: CalibreRunner,
+    runner: ConverterRunner,
 ) -> list[Path]:
     if not isinstance(payload, dict) or payload.get("version") != 1:
         raise EbookConverterError("Shelfmark hook requires a version 1 JSON payload")
@@ -415,7 +415,7 @@ class EbookConverterService:
         library_root: Path,
         lock_root: Path,
         store: StateStore,
-        runner: CalibreRunner,
+        runner: ConverterRunner,
         settle_seconds: float,
         max_attempts: int,
         now: Callable[[], float] = time.time,
@@ -534,7 +534,7 @@ def hook_command(args: argparse.Namespace) -> int:
             payload,
             library_root=Path(args.library_root),
             lock_root=Path(args.lock_root),
-            runner=CalibreRunner(),
+            runner=ConverterRunner(),
         )
     except (EbookConverterError, json.JSONDecodeError, OSError) as exc:
         LOG.error("Shelfmark ebook conversion hook failed: %s", exc)
@@ -551,7 +551,7 @@ def watch_command(args: argparse.Namespace) -> int:
             library_root=Path(args.library_root),
             lock_root=Path(args.lock_root),
             store=store,
-            runner=CalibreRunner(),
+            runner=ConverterRunner(),
             settle_seconds=args.settle_seconds,
             max_attempts=args.max_attempts,
         )
