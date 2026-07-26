@@ -120,14 +120,14 @@ groups:
           summary: "Lidarr CUE splitter metrics stale on srvarr"
           description: "The Lidarr CUE splitter metrics file on srvarr has not been refreshed for more than 5 minutes."
       - alert: LidarrCueSplitterJobNeedsAttention
-        expr: host_observability_lidarr_cue_splitter_jobs{job="node-mtls",instance="srvarr",state=~"failed|needs_attention"} > 0
+        expr: host_observability_lidarr_cue_splitter_jobs{job="node-mtls",instance="srvarr",state=~"failed|automation_failed"} > 0
         for: 15m
         labels:
           severity: warning
           category: media
         annotations:
           summary: "Lidarr CUE split job needs attention on srvarr"
-          description: "At least one Lidarr CUE split job on srvarr has remained failed or in need of attention for 15 minutes."
+          description: "At least one Lidarr CUE split job on srvarr has remained failed or its automated resolution failed for 15 minutes."
       - alert: EbookConverterIterationFailed
         expr: host_observability_ebook_converter_ok{job="node-mtls",instance="srvarr"} < 1
         for: 10m
