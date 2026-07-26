@@ -12,6 +12,7 @@
     ./audiobookshelf.nix
     ./aurral.nix
     ./backup.nix
+    ./ebook-converter.nix
     ./glance.nix
     ./houndarr.nix
     ./letterboxd-list-radarr.nix

@@ -20,6 +20,8 @@ in
 
   audiobookshelf-oidc-bootstrap = pkgs.callPackage ./audiobookshelf-oidc-bootstrap { };
 
+  ebook-converter = pkgs.callPackage ./ebook-converter { };
+
   lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter { };
 
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner {

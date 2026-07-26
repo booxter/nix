@@ -128,6 +128,33 @@ groups:
         annotations:
           summary: "Lidarr CUE split job needs attention on srvarr"
           description: "At least one Lidarr CUE split job on srvarr has remained failed or in need of attention for 15 minutes."
+      - alert: EbookConverterIterationFailed
+        expr: host_observability_ebook_converter_ok{job="node-mtls",instance="srvarr"} < 1
+        for: 10m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Ebook converter failing on srvarr"
+          description: "The ebook converter on srvarr has been reporting unsuccessful iterations for 10 minutes."
+      - alert: EbookConverterMetricsStale
+        expr: (time() - node_textfile_mtime_seconds{job="node-mtls",instance="srvarr",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom"}) > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Ebook converter metrics stale on srvarr"
+          description: "The ebook converter metrics file on srvarr has not been refreshed for more than 5 minutes."
+      - alert: EbookConverterFileNeedsAttention
+        expr: host_observability_ebook_converter_files{job="node-mtls",instance="srvarr",state="needs_attention"} > 0
+        for: 15m
+        labels:
+          severity: warning
+          category: media
+        annotations:
+          summary: "Ebook conversion needs attention on srvarr"
+          description: "At least one ebook conversion on srvarr has remained in need of attention for 15 minutes."
       # Open WebUI SearXNG probe metrics are emitted through org's
       # node_exporter textfile collector and scraped by fana's node-mtls job.
       - alert: OpenWebUISearxngProbeTimerDown

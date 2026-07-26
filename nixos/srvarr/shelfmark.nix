@@ -2,6 +2,8 @@
   config,
   hostInventory,
   lib,
+  pkgs,
+  srvarrPkgs,
   ...
 }:
 let
@@ -9,9 +11,22 @@ let
   accounts = import ./accounts.nix;
   stateDir = "${config.host.srvarrPaths.stateDir}/shelfmark";
   mediaDir = config.host.srvarrPaths.mediaDir;
+  booksDir = "${mediaDir}/library/books";
+  ebookConverterStateDir = "/var/lib/ebook-converter";
+  calibreConfigDir = "${ebookConverterStateDir}/calibre";
   user = "shelfmark";
   shelfmarkService = hostInventory.servicesById.shelfmark;
   oidcClientId = oidc.clients.shelfmark.clientId;
+  ebookConverterHook = pkgs.writeShellApplication {
+    name = "shelfmark-ebook-converter-hook";
+    text = ''
+      export CALIBRE_CONFIG_DIRECTORY=${lib.escapeShellArg calibreConfigDir}
+      exec ${lib.getExe srvarrPkgs.ebook-converter} hook \
+        --library-root ${lib.escapeShellArg booksDir} \
+        --lock-root ${lib.escapeShellArg ebookConverterStateDir} \
+        "$@"
+    '';
+  };
 in
 {
   sops.secrets."shelfmark/oidc/client_secret" = {
@@ -36,6 +51,9 @@ in
     environment = {
       AUTH_METHOD = "oidc";
       CONFIG_DIR = stateDir;
+      CUSTOM_SCRIPT = lib.getExe ebookConverterHook;
+      CUSTOM_SCRIPT_JSON_PAYLOAD = "true";
+      CUSTOM_SCRIPT_PATH_MODE = "absolute";
       DISABLE_LOCAL_AUTH = "true";
       FLASK_HOST = "127.0.0.1";
       HIDE_LOCAL_AUTH = "true";
@@ -65,6 +83,7 @@ in
     Group = "media";
     ReadWritePaths = [
       stateDir
+      ebookConverterStateDir
       mediaDir
     ];
     StateDirectory = lib.mkForce "";
