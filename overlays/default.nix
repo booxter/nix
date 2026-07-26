@@ -93,6 +93,7 @@
 
       lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
+          # The package source excludes nix/tests, so vendor only applicable hunks from:
           # https://github.com/dziaineka/lolek/pull/19
           ../lib/patches/lolek-unify-media-processing.patch
         ];
