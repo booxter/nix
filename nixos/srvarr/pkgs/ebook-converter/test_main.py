@@ -6,9 +6,14 @@ import zipfile
 from pathlib import Path
 
 from main import (
+    EbookConverterService,
     EbookConverterError,
+    StateStore,
     convert_path,
+    discover_sources,
+    prometheus_metrics,
     process_hook_payload,
+    recover_stale_sources,
     validate_epub,
 )
 
@@ -194,6 +199,159 @@ class HookPayloadTests(unittest.TestCase):
                 }
             )
         )
+
+
+class MutableClock:
+    def __init__(self, value: float):
+        self.value = value
+
+    def __call__(self) -> float:
+        return self.value
+
+
+class WatchServiceTests(unittest.TestCase):
+    def test_stable_file_is_converted_on_second_iteration(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            torrents = root / "torrents"
+            library.mkdir()
+            torrents.mkdir()
+            torrent_source = torrents / "book.mobi"
+            torrent_source.write_bytes(b"torrent payload")
+            library_source = library / "book.mobi"
+            os.link(torrent_source, library_source)
+            store = StateStore(root / "state" / "state.json")
+            runner = FakeRunner()
+            clock = MutableClock(1000.0)
+            service = EbookConverterService(
+                library_root=library,
+                lock_root=root / "locks",
+                store=store,
+                runner=runner,
+                settle_seconds=30.0,
+                max_attempts=3,
+                now=clock,
+            )
+
+            service.iteration()
+            self.assertEqual(runner.calls, [])
+            self.assertEqual(
+                store.data["files"][str(library_source.resolve())]["status"],
+                "settling",
+            )
+
+            clock.value += 31.0
+            service.iteration()
+
+            job = store.data["files"][str(library_source.resolve())]
+            self.assertEqual(job["status"], "complete")
+            self.assertEqual(store.data["totals"]["success"], 1)
+            self.assertFalse(library_source.exists())
+            self.assertTrue((library / "book.epub").exists())
+            self.assertEqual(torrent_source.read_bytes(), b"torrent payload")
+            self.assertEqual(torrent_source.stat().st_nlink, 1)
+
+    def test_failed_file_stops_retrying_at_max_attempts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            library.mkdir()
+            source = library / "book.mobi"
+            source.write_bytes(b"source")
+            store = StateStore(root / "state.json")
+            runner = FakeRunner(fail=True)
+            clock = MutableClock(1000.0)
+            service = EbookConverterService(
+                library_root=library,
+                lock_root=root / "locks",
+                store=store,
+                runner=runner,
+                settle_seconds=0.0,
+                max_attempts=2,
+                now=clock,
+            )
+
+            service.iteration()
+            service.iteration()
+            service.iteration()
+            service.iteration()
+
+            job = store.data["files"][str(source.resolve())]
+            self.assertEqual(job["status"], "needs_attention")
+            self.assertEqual(job["attempts"], 2)
+            self.assertEqual(len(runner.calls), 2)
+            self.assertTrue(source.exists())
+            self.assertEqual(store.data["totals"]["failed"], 2)
+
+    def test_stale_hidden_source_is_restored_after_interruption(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            library.mkdir()
+            source = library / "book.mobi"
+            source.write_bytes(b"source")
+            hidden = library / ".book.ebook-converter-source.mobi"
+            os.replace(source, hidden)
+            partial = library / ".book.deadbeef.ebook-converter-partial.epub"
+            partial.write_bytes(b"partial")
+
+            recovered = recover_stale_sources(library, root / "locks")
+
+            self.assertEqual(recovered, 1)
+            self.assertEqual(source.read_bytes(), b"source")
+            self.assertFalse(hidden.exists())
+            self.assertFalse(partial.exists())
+
+    def test_stale_hidden_source_is_removed_after_publication(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            library.mkdir()
+            hidden = library / ".book.ebook-converter-source.azw3"
+            hidden.write_bytes(b"source")
+            destination = library / "book.epub"
+            write_epub(destination)
+
+            recovered = recover_stale_sources(library, root / "locks")
+
+            self.assertEqual(recovered, 1)
+            self.assertFalse(hidden.exists())
+            validate_epub(destination)
+
+    def test_discovery_ignores_hidden_conversion_files(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            library = Path(tmp_dir) / "library"
+            library.mkdir()
+            visible = library / "visible.mobi"
+            visible.write_bytes(b"visible")
+            (library / ".hidden.mobi").write_bytes(b"hidden")
+            hidden_dir = library / ".work"
+            hidden_dir.mkdir()
+            (hidden_dir / "nested.azw3").write_bytes(b"hidden")
+
+            self.assertEqual(discover_sources(library), [visible])
+
+    def test_metrics_report_failed_and_attention_states(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            store = StateStore(Path(tmp_dir) / "state.json")
+            store.data["files"] = {
+                "one": {"status": "failed"},
+                "two": {"status": "needs_attention"},
+            }
+            store.data["totals"] = {"success": 3, "failed": 2}
+
+            metrics = prometheus_metrics(store, True, 1234.0)
+
+            self.assertIn("host_observability_ebook_converter_ok 1", metrics)
+            self.assertIn(
+                'host_observability_ebook_converter_files{state="needs_attention"} 1',
+                metrics,
+            )
+            self.assertIn(
+                'host_observability_ebook_converter_files_total{result="success"} 3',
+                metrics,
+            )
 
 
 if __name__ == "__main__":

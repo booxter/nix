@@ -9,15 +9,18 @@ import os
 import stat
 import subprocess
 import sys
+import time
 import uuid
 import zipfile
+from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator
+from typing import Callable, Iterator
 
 
 LOG = logging.getLogger("ebook-converter")
 SUPPORTED_SOURCE_SUFFIXES = {".azw3", ".mobi"}
+STATE_VERSION = 1
 
 
 class EbookConverterError(RuntimeError):
@@ -72,7 +75,9 @@ def validate_epub(path: Path) -> None:
             if "META-INF/container.xml" not in names:
                 raise EbookConverterError(f"EPUB has no container metadata: {path}")
     except zipfile.BadZipFile as exc:
-        raise EbookConverterError(f"converter produced an invalid EPUB: {path}") from exc
+        raise EbookConverterError(
+            f"converter produced an invalid EPUB: {path}"
+        ) from exc
 
 
 def safe_source_path(source: Path, library_root: Path) -> Path:
@@ -113,6 +118,20 @@ def hidden_source_path(source: Path) -> Path:
     return source.with_name(
         f".{source.stem}.ebook-converter-source{source.suffix.lower()}"
     )
+
+
+def atomic_write_text(path: Path, contents: str, mode: int = 0o660) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
+    try:
+        with temporary.open("x", encoding="utf-8") as output:
+            output.write(contents)
+            output.flush()
+            os.fsync(output.fileno())
+        os.chmod(temporary, mode)
+        os.replace(temporary, path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def convert_path(
@@ -202,6 +221,296 @@ def process_hook_payload(
     return converted
 
 
+def source_fingerprint(path: Path) -> dict[str, int]:
+    file_stat = path.stat()
+    return {
+        "device": file_stat.st_dev,
+        "inode": file_stat.st_ino,
+        "size": file_stat.st_size,
+        "mtime_ns": file_stat.st_mtime_ns,
+    }
+
+
+def discover_sources(library_root: Path) -> list[Path]:
+    candidates = []
+    for path in library_root.rglob("*"):
+        relative = path.relative_to(library_root)
+        if any(part.startswith(".") for part in relative.parts):
+            continue
+        if (
+            path.is_file()
+            and not path.is_symlink()
+            and path.suffix.lower() in SUPPORTED_SOURCE_SUFFIXES
+        ):
+            candidates.append(path)
+    return sorted(candidates, key=lambda path: str(path).casefold())
+
+
+def original_path_from_hidden(hidden: Path) -> Path | None:
+    suffix = hidden.suffix.lower()
+    if suffix not in SUPPORTED_SOURCE_SUFFIXES or not hidden.name.startswith("."):
+        return None
+    marker = f".ebook-converter-source{suffix}"
+    visible_name = hidden.name[1:]
+    if not visible_name.endswith(marker):
+        return None
+    original_stem = visible_name[: -len(marker)]
+    if not original_stem:
+        return None
+    return hidden.with_name(original_stem + suffix)
+
+
+def recover_stale_sources(library_root: Path, lock_root: Path) -> int:
+    recovered = 0
+    hidden_sources = sorted(
+        (
+            path
+            for path in library_root.rglob(".*")
+            if path.is_file() and original_path_from_hidden(path) is not None
+        ),
+        key=lambda path: str(path).casefold(),
+    )
+    for hidden in hidden_sources:
+        original = original_path_from_hidden(hidden)
+        if original is None:
+            continue
+        try:
+            with source_lock(original, lock_root):
+                destination = original.with_suffix(".epub")
+                if destination.exists():
+                    try:
+                        validate_epub(destination)
+                    except EbookConverterError:
+                        if not original.exists():
+                            os.replace(hidden, original)
+                            LOG.error(
+                                "restored source beside invalid published EPUB: %s",
+                                original,
+                            )
+                            recovered += 1
+                        continue
+                    else:
+                        hidden.unlink()
+                        LOG.warning(
+                            "cleaned stale conversion source after EPUB publication: %s",
+                            hidden,
+                        )
+                        recovered += 1
+                        continue
+                if original.exists():
+                    LOG.error(
+                        "hidden conversion source conflicts with visible source: %s",
+                        hidden,
+                    )
+                    continue
+                for partial in original.parent.glob(
+                    f".{original.stem}.*.ebook-converter-partial.epub"
+                ):
+                    partial.unlink(missing_ok=True)
+                os.replace(hidden, original)
+                LOG.warning("restored stale conversion source: %s", original)
+                recovered += 1
+        except ConversionBusy:
+            continue
+        except (EbookConverterError, OSError) as exc:
+            LOG.error("failed to recover hidden conversion source %s: %s", hidden, exc)
+    return recovered
+
+
+class StateStore:
+    def __init__(self, path: Path):
+        self.path = path
+        self.data = self.default_data()
+        self.load()
+
+    @staticmethod
+    def default_data() -> dict:
+        return {
+            "version": STATE_VERSION,
+            "files": {},
+            "totals": {"success": 0, "failed": 0},
+            "last_success": None,
+        }
+
+    def load(self) -> None:
+        if not self.path.exists():
+            return
+        try:
+            data = json.loads(self.path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            raise EbookConverterError(
+                f"failed to read state file {self.path}: {exc}"
+            ) from exc
+        if not isinstance(data, dict) or data.get("version") != STATE_VERSION:
+            raise EbookConverterError(f"unsupported state file format: {self.path}")
+        if not isinstance(data.get("files"), dict) or not isinstance(
+            data.get("totals"), dict
+        ):
+            raise EbookConverterError(f"invalid state file structure: {self.path}")
+        self.data = data
+
+    def save(self) -> None:
+        atomic_write_text(
+            self.path,
+            json.dumps(self.data, indent=2, sort_keys=True) + "\n",
+        )
+
+
+def prometheus_metrics(store: StateStore, ok: bool, now: float) -> str:
+    states = Counter(
+        job.get("status", "unknown") for job in store.data["files"].values()
+    )
+    totals = store.data["totals"]
+    lines = [
+        "# HELP host_observability_ebook_converter_ok Whether the latest service iteration completed successfully.",
+        "# TYPE host_observability_ebook_converter_ok gauge",
+        f"host_observability_ebook_converter_ok {1 if ok else 0}",
+        "# HELP host_observability_ebook_converter_last_run_timestamp_seconds Unix timestamp of the latest iteration.",
+        "# TYPE host_observability_ebook_converter_last_run_timestamp_seconds gauge",
+        f"host_observability_ebook_converter_last_run_timestamp_seconds {now}",
+        "# HELP host_observability_ebook_converter_files Number of known files by state.",
+        "# TYPE host_observability_ebook_converter_files gauge",
+    ]
+    for state_name in sorted(
+        set(states)
+        | {"complete", "converting", "failed", "needs_attention", "settling"}
+    ):
+        lines.append(
+            f'host_observability_ebook_converter_files{{state="{state_name}"}} {states[state_name]}'
+        )
+    lines.extend(
+        [
+            "# HELP host_observability_ebook_converter_files_total Conversion attempts by result.",
+            "# TYPE host_observability_ebook_converter_files_total counter",
+            f'host_observability_ebook_converter_files_total{{result="success"}} {int(totals.get("success", 0))}',
+            f'host_observability_ebook_converter_files_total{{result="failed"}} {int(totals.get("failed", 0))}',
+        ]
+    )
+    if store.data.get("last_success") is not None:
+        lines.extend(
+            [
+                "# HELP host_observability_ebook_converter_last_success_timestamp_seconds Unix timestamp of the latest successful conversion.",
+                "# TYPE host_observability_ebook_converter_last_success_timestamp_seconds gauge",
+                f"host_observability_ebook_converter_last_success_timestamp_seconds {float(store.data['last_success'])}",
+            ]
+        )
+    return "\n".join(lines) + "\n"
+
+
+class EbookConverterService:
+    def __init__(
+        self,
+        *,
+        library_root: Path,
+        lock_root: Path,
+        store: StateStore,
+        runner: CalibreRunner,
+        settle_seconds: float,
+        max_attempts: int,
+        now: Callable[[], float] = time.time,
+    ):
+        self.library_root = library_root.resolve(strict=True)
+        self.lock_root = lock_root
+        self.store = store
+        self.runner = runner
+        self.settle_seconds = settle_seconds
+        self.max_attempts = max_attempts
+        self.now = now
+
+    def iteration(self) -> None:
+        now = self.now()
+        recover_stale_sources(self.library_root, self.lock_root)
+        files = self.store.data["files"]
+
+        for source in discover_sources(self.library_root):
+            key = str(source.resolve())
+            try:
+                fingerprint = source_fingerprint(source)
+            except FileNotFoundError:
+                continue
+            job = files.get(key)
+            if not isinstance(job, dict) or job.get("fingerprint") != fingerprint:
+                files[key] = {
+                    "status": "settling",
+                    "fingerprint": fingerprint,
+                    "observed_at": now,
+                    "updated_at": now,
+                    "attempts": 0,
+                    "error": "",
+                }
+                continue
+            if (
+                job.get("status") == "needs_attention"
+                and int(job.get("attempts", 0)) >= self.max_attempts
+            ):
+                continue
+            if now - float(job.get("observed_at", now)) < self.settle_seconds:
+                continue
+
+            job.update(status="converting", updated_at=now, error="")
+            self.store.save()
+            try:
+                destination = convert_path(
+                    source,
+                    library_root=self.library_root,
+                    lock_root=self.lock_root,
+                    runner=self.runner,
+                )
+            except ConversionBusy:
+                job.update(status="settling", updated_at=self.now())
+                continue
+            except (EbookConverterError, OSError) as exc:
+                expected_destination = source.with_suffix(".epub")
+                if not source.exists() and expected_destination.exists():
+                    try:
+                        validate_epub(expected_destination)
+                    except EbookConverterError:
+                        pass
+                    else:
+                        job.update(
+                            status="complete",
+                            destination=str(expected_destination),
+                            updated_at=self.now(),
+                            error="",
+                        )
+                        continue
+                attempts = int(job.get("attempts", 0)) + 1
+                status_name = (
+                    "needs_attention" if attempts >= self.max_attempts else "failed"
+                )
+                job.update(
+                    status=status_name,
+                    attempts=attempts,
+                    updated_at=self.now(),
+                    error=str(exc),
+                )
+                self.store.data["totals"]["failed"] = (
+                    int(self.store.data["totals"].get("failed", 0)) + 1
+                )
+                LOG.error(
+                    "ebook conversion failed: source=%s attempts=%d error=%s",
+                    source,
+                    attempts,
+                    exc,
+                )
+            else:
+                finished = self.now()
+                job.update(
+                    status="complete",
+                    destination=str(destination),
+                    updated_at=finished,
+                    error="",
+                )
+                self.store.data["totals"]["success"] = (
+                    int(self.store.data["totals"].get("success", 0)) + 1
+                )
+                self.store.data["last_success"] = finished
+            finally:
+                self.store.save()
+
+        self.store.save()
+
+
 def hook_command(args: argparse.Namespace) -> int:
     try:
         payload = json.load(sys.stdin)
@@ -217,6 +526,42 @@ def hook_command(args: argparse.Namespace) -> int:
 
     LOG.info("Shelfmark ebook conversion hook complete: converted=%d", len(converted))
     return 0
+
+
+def watch_command(args: argparse.Namespace) -> int:
+    try:
+        store = StateStore(Path(args.state_file))
+        service = EbookConverterService(
+            library_root=Path(args.library_root),
+            lock_root=Path(args.lock_root),
+            store=store,
+            runner=CalibreRunner(),
+            settle_seconds=args.settle_seconds,
+            max_attempts=args.max_attempts,
+        )
+    except (EbookConverterError, OSError) as exc:
+        LOG.error("failed to initialize ebook converter service: %s", exc)
+        return 1
+
+    while True:
+        ok = True
+        try:
+            service.iteration()
+        except Exception:
+            ok = False
+            LOG.exception("ebook converter iteration failed")
+        try:
+            atomic_write_text(
+                Path(args.metrics_file),
+                prometheus_metrics(store, ok, time.time()),
+            )
+        except OSError:
+            ok = False
+            LOG.exception("failed to write ebook converter metrics")
+
+        if args.once:
+            return 0 if ok else 1
+        time.sleep(args.interval_seconds)
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -237,6 +582,19 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     hook_parser.add_argument("--lock-root", required=True)
     hook_parser.add_argument("target", help="target path supplied by Shelfmark")
     hook_parser.set_defaults(handler=hook_command)
+
+    watch_parser = subparsers.add_parser(
+        "watch", help="poll a library root for stable MOBI/AZW3 files"
+    )
+    watch_parser.add_argument("--library-root", required=True)
+    watch_parser.add_argument("--lock-root", required=True)
+    watch_parser.add_argument("--state-file", required=True)
+    watch_parser.add_argument("--metrics-file", required=True)
+    watch_parser.add_argument("--interval-seconds", type=float, default=30.0)
+    watch_parser.add_argument("--settle-seconds", type=float, default=30.0)
+    watch_parser.add_argument("--max-attempts", type=int, default=3)
+    watch_parser.add_argument("--once", action="store_true")
+    watch_parser.set_defaults(handler=watch_command)
     return parser.parse_args(argv)
 
 

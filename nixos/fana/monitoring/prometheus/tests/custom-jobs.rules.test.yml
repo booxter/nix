@@ -310,6 +310,68 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_ebook_converter_ok{instance="srvarr",job="node-mtls"}'
+        values: "0x20 1x2"
+    alert_rule_test:
+      - eval_time: 9m30s
+        alertname: EbookConverterIterationFailed
+      - eval_time: 10m
+        alertname: EbookConverterIterationFailed
+        exp_alerts:
+          - exp_labels:
+              alertname: EbookConverterIterationFailed
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Ebook converter failing on srvarr"
+              description: "The ebook converter on srvarr has been reporting unsuccessful iterations for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_textfile_mtime_seconds{instance="srvarr",job="node-mtls",file="/var/lib/prometheus-node-exporter-textfile/ebook-converter.prom"}'
+        values: "0x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: EbookConverterMetricsStale
+      - eval_time: 10m30s
+        alertname: EbookConverterMetricsStale
+        exp_alerts:
+          - exp_labels:
+              alertname: EbookConverterMetricsStale
+              category: media
+              file: /var/lib/prometheus-node-exporter-textfile/ebook-converter.prom
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Ebook converter metrics stale on srvarr"
+              description: "The ebook converter metrics file on srvarr has not been refreshed for more than 5 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_ebook_converter_files{instance="srvarr",job="node-mtls",state="needs_attention"}'
+        values: "1x30 0x2"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: EbookConverterFileNeedsAttention
+      - eval_time: 15m
+        alertname: EbookConverterFileNeedsAttention
+        exp_alerts:
+          - exp_labels:
+              alertname: EbookConverterFileNeedsAttention
+              category: media
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+              state: needs_attention
+            exp_annotations:
+              summary: "Ebook conversion needs attention on srvarr"
+              description: "At least one ebook conversion on srvarr has remained in need of attention for 15 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'node_systemd_unit_state{instance="org",job="node-mtls",name="open-webui-searxng-probe.timer",state="active"}'
         values: "1x22"
     alert_rule_test:

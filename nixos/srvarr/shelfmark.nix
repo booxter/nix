@@ -13,12 +13,14 @@ let
   mediaDir = config.host.srvarrPaths.mediaDir;
   booksDir = "${mediaDir}/library/books";
   ebookConverterStateDir = "/var/lib/ebook-converter";
+  calibreConfigDir = "${ebookConverterStateDir}/calibre";
   user = "shelfmark";
   shelfmarkService = hostInventory.servicesById.shelfmark;
   oidcClientId = oidc.clients.shelfmark.clientId;
   ebookConverterHook = pkgs.writeShellApplication {
     name = "shelfmark-ebook-converter-hook";
     text = ''
+      export CALIBRE_CONFIG_DIRECTORY=${lib.escapeShellArg calibreConfigDir}
       exec ${lib.getExe srvarrPkgs.ebook-converter} hook \
         --library-root ${lib.escapeShellArg booksDir} \
         --lock-root ${lib.escapeShellArg ebookConverterStateDir} \
@@ -69,7 +71,6 @@ in
 
   systemd.tmpfiles.rules = [
     "d '${stateDir}' 0700 ${user} root - -"
-    "d '${ebookConverterStateDir}' 0770 ${user} media - -"
   ];
 
   systemd.services.shelfmark = {
