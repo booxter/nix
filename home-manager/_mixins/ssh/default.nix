@@ -67,7 +67,7 @@ in
           ForwardAgent = true;
           AddKeysToAgent = if useSecretive then "no" else "yes";
         };
-        frame-initrd = {
+        frame-boot = {
           HostName = "frame";
           HostKeyAlias = "frame-initrd";
           User = "root";
