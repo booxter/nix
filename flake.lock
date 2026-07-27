@@ -358,11 +358,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785050094,
-        "narHash": "sha256-3HKBUnRkx5775zSQyRvCUBewsridS+ezqHfuidVDmpw=",
+        "lastModified": 1785140476,
+        "narHash": "sha256-mnpF/qPHnqgkufO80tQA1zTUH9L2+BYJEl39guBBq5Q=",
         "owner": "dziaineka",
         "repo": "lolek",
-        "rev": "62dc7f88d5d6a5be3f454f2c0b17627602e07645",
+        "rev": "3fc8000ead7be83974ab1fbd461c2bc6923b70ee",
         "type": "github"
       },
       "original": {

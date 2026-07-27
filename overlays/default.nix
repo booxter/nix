@@ -93,12 +93,10 @@
 
       lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
-          # The package source excludes nix/tests, so vendor only applicable hunks from:
-          # https://github.com/dziaineka/lolek/pull/19
-          ../lib/patches/lolek-unify-media-processing.patch
-          # Fall back to the container duration when a video stream omits it.
-          # https://github.com/dziaineka/lolek/pull/23
-          ../lib/patches/lolek-fallback-container-duration.patch
+          (prev.fetchpatch {
+            url = "https://patch-diff.githubusercontent.com/raw/dziaineka/lolek/pull/19.patch";
+            hash = "sha256-URgf016rX0TSvrCbik368l4q0S9umioHBbD53A4UwQ0=";
+          })
         ];
       });
 
