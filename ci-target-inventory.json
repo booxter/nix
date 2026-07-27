@@ -209,6 +209,21 @@
       "warm": true
     },
     {
+      "attr": "nixosConfigurations.home.config.system.build.toplevel",
+      "name": "home (x86_64-linux)",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [
+          "home"
+        ],
+        "prefixes": [
+          "nixos/home/"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
+    },
+    {
       "attr": "nixosConfigurations.builder1.config.system.build.vm",
       "name": "nixos vm builder1 (x86_64-linux)",
       "runner": "ubuntu-latest",
