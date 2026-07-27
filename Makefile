@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help nixos darwin check check-nixos
+.PHONY: help nixos nixos-eval darwin darwin-eval check check-nixos
 
 ARGS = -L --show-trace
 NH_ARGS = --print-build-logs --show-trace
@@ -33,7 +33,7 @@ endef
 
 define require-what-and-list-hosts
 if [ "x$(WHAT)" = "x" ]; then \
-	echo "Usage: make $@ WHAT=host [REMOTE=false]"; \
+	echo "Usage: make $@ WHAT=host$(2)"; \
 	echo; \
 	echo "Available $(1) hosts:"; \
 	printf '%s\n' "$$known"; \
@@ -54,21 +54,35 @@ endef
 help:
 	@echo "Available targets:"
 	@echo "  make nixos WHAT=<host> [REMOTE=false]"
+	@echo "  make nixos-eval WHAT=<host>"
 	@echo "  make darwin WHAT=<host> [REMOTE=false]"
+	@echo "  make darwin-eval WHAT=<host>"
 	@echo "  make check [WHAT=<check-name>] [REMOTE=false]"
 	@echo "  make check-nixos [WHAT=<nixos-check-name>] [REMOTE=false]"
 
 nixos:
 	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
-	$(call require-what-and-list-hosts,nixos) \
+	$(call require-what-and-list-hosts,nixos, [REMOTE=false]) \
 	$(call require-known-host,nixos,$(WHAT)) \
 	$(call nh-config-build,os,$(WHAT))
 
+nixos-eval:
+	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
+	$(call require-what-and-list-hosts,nixos) \
+	$(call require-known-host,nixos,$(WHAT)) \
+	nix eval $(ARGS) ".#nixosConfigurations.$(WHAT).config.system.build.toplevel.drvPath"
+
 darwin:
+	@known="$$($(call config-hosts,.#darwinConfigurations))"; \
+	$(call require-what-and-list-hosts,darwin, [REMOTE=false]) \
+	$(call require-known-host,darwin,$(WHAT)) \
+	$(call nh-config-build,darwin,$(WHAT))
+
+darwin-eval:
 	@known="$$($(call config-hosts,.#darwinConfigurations))"; \
 	$(call require-what-and-list-hosts,darwin) \
 	$(call require-known-host,darwin,$(WHAT)) \
-	$(call nh-config-build,darwin,$(WHAT))
+	nix eval $(ARGS) ".#darwinConfigurations.$(WHAT).system.drvPath"
 
 check:
 	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" apps/run-check-target.sh checks checks check
