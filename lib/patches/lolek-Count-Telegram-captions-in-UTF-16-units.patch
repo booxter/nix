@@ -1,0 +1,174 @@
+From 9baa7b593105a328834d5def97071d6e14917c1e Mon Sep 17 00:00:00 2001
+From: Ihar Hrachyshka <ihar.hrachyshka@gmail.com>
+Date: Mon, 27 Jul 2026 19:20:47 -0400
+Subject: [PATCH] Count Telegram captions in UTF-16 units
+
+Enforce Telegram's 1024-unit caption budget using UTF-16 code units
+instead of Elixir grapheme counts. Preserve grapheme boundaries and the
+requester suffix while truncating Unicode-heavy source captions.
+
+Assisted-by: Codex gpt-5.6-sol xhigh
+---
+ lib/lolek.ex                  | 58 ++++++++++++++++++++++++++---------
+ test/lolek/send_file_test.exs | 42 +++++++++++++++++++++++++
+ 2 files changed, 86 insertions(+), 14 deletions(-)
+
+diff --git a/lib/lolek.ex b/lib/lolek.ex
+index ac8126e..7f1d7e0 100644
+--- a/lib/lolek.ex
++++ b/lib/lolek.ex
+@@ -3,8 +3,9 @@ defmodule Lolek do
+   This module is the main module of the Lolek bot containing bot operations
+   """
+   @upload_chunk_size 64 * 1024
+-  @max_caption_length 1024
++  @max_caption_utf16_units 1024
+   @caption_separator "\n\n"
++  @caption_ellipsis "..."
+   @max_upload_file_name_bytes 180
+   @max_media_group_size 10
+   @gif_extensions ~w(.gif)
+@@ -537,20 +538,21 @@ defmodule Lolek do
+   defp build_caption(nil, nil), do: nil
+ 
+   defp build_caption(source_caption, nil),
+-    do: truncate_caption(source_caption, @max_caption_length)
++    do: truncate_caption(source_caption, @max_caption_utf16_units)
+ 
+   defp build_caption(nil, requester_caption),
+-    do: truncate_caption(requester_caption, @max_caption_length)
++    do: truncate_caption(requester_caption, @max_caption_utf16_units)
+ 
+   defp build_caption(source_caption, requester_caption) do
+-    requester_caption = truncate_caption(requester_caption, @max_caption_length)
++    requester_caption = truncate_caption(requester_caption, @max_caption_utf16_units)
+ 
+-    available_source_length =
+-      @max_caption_length - String.length(requester_caption) - String.length(@caption_separator)
++    available_source_utf16_units =
++      @max_caption_utf16_units -
++        utf16_code_units(requester_caption) - utf16_code_units(@caption_separator)
+ 
+-    if available_source_length > 0 do
++    if available_source_utf16_units > 0 do
+       [
+-        truncate_caption(source_caption, available_source_length),
++        truncate_caption(source_caption, available_source_utf16_units),
+         requester_caption
+       ]
+       |> Enum.reject(&(&1 == ""))
+@@ -563,17 +565,45 @@ defmodule Lolek do
+   @spec truncate_caption(String.t(), non_neg_integer()) :: String.t()
+   defp truncate_caption(_caption, 0), do: ""
+ 
+-  defp truncate_caption(caption, max_length) do
+-    if String.length(caption) <= max_length do
++  defp truncate_caption(caption, max_utf16_units) do
++    if utf16_code_units(caption) <= max_utf16_units do
+       caption
+     else
+-      caption
+-      |> String.slice(0, max(max_length - 3, 0))
+-      |> Kernel.<>("...")
+-      |> String.slice(0, max_length)
++      ellipsis = take_utf16_prefix(@caption_ellipsis, max_utf16_units)
++      caption_utf16_units = max_utf16_units - utf16_code_units(ellipsis)
++
++      take_utf16_prefix(caption, caption_utf16_units) <> ellipsis
+     end
+   end
+ 
++  @spec take_utf16_prefix(String.t(), non_neg_integer()) :: String.t()
++  defp take_utf16_prefix(text, max_utf16_units) do
++    {graphemes, _utf16_units} =
++      text
++      |> String.graphemes()
++      |> Enum.reduce_while({[], 0}, fn grapheme, {graphemes, utf16_units} ->
++        candidate_utf16_units = utf16_units + utf16_code_units(grapheme)
++
++        if candidate_utf16_units > max_utf16_units do
++          {:halt, {graphemes, utf16_units}}
++        else
++          {:cont, {[grapheme | graphemes], candidate_utf16_units}}
++        end
++      end)
++
++    graphemes
++    |> Enum.reverse()
++    |> IO.iodata_to_binary()
++  end
++
++  @spec utf16_code_units(String.t()) :: non_neg_integer()
++  defp utf16_code_units(text) do
++    text
++    |> :unicode.characters_to_binary(:utf8, {:utf16, :little})
++    |> byte_size()
++    |> div(2)
++  end
++
+   @spec elapsed_seconds(integer()) :: String.t()
+   defp elapsed_seconds(started_at) do
+     System.monotonic_time()
+diff --git a/test/lolek/send_file_test.exs b/test/lolek/send_file_test.exs
+index 4e980ff..b2d8541 100644
+--- a/test/lolek/send_file_test.exs
++++ b/test/lolek/send_file_test.exs
+@@ -771,6 +771,41 @@ defmodule Lolek.SendFileTest do
+     end)
+   end
+ 
++  test "truncates Unicode captions by Telegram's UTF-16 limit" do
++    preserve_telegram_env(fn ->
++      file_path = tmp_file("downloaded.mp4", "media")
++
++      response = %ExGram.Model.Message{
++        video: %ExGram.Model.Video{file_id: "telegram-file-id"}
++      }
++
++      Application.put_env(:lolek, :telegram_client, TelegramClient)
++      Application.put_env(:lolek, :telegram_test_result, {:ok, response})
++      Application.put_env(:lolek, :telegram_test_parent, self())
++      Application.put_env(:lolek, :post_source_caption, true)
++      Application.put_env(:lolek, :post_requester_caption, true)
++
++      context = [
++        source_caption: String.duplicate("😀", 2_000),
++        requester_name: "alice",
++        started_at: System.monotonic_time()
++      ]
++
++      assert {:ok, {:sent_media, _, [{".mp4", "telegram-file-id"}]}} =
++               Lolek.send_file(
++                 123,
++                 {:prepared_media, Path.dirname(file_path), [file_path]},
++                 context
++               )
++
++      assert_receive {:send_video, 123, {:file_content, %File.Stream{}, "downloaded.mp4"},
++                      options}
++
++      assert utf16_code_units(options[:caption]) in 1023..1024
++      assert options[:caption] =~ ~r/\.\.\.\n\nalice requested, processed in \d+\.\ds$/
++    end)
++  end
++
+   defp preserve_telegram_env(fun) do
+     client = Application.fetch_env(:lolek, :telegram_client)
+     result = Application.fetch_env(:lolek, :telegram_test_result)
+@@ -818,6 +853,13 @@ defmodule Lolek.SendFileTest do
+     end
+   end
+ 
++  defp utf16_code_units(text) do
++    text
++    |> :unicode.characters_to_binary(:utf8, {:utf16, :little})
++    |> byte_size()
++    |> div(2)
++  end
++
+   defp restore_app_env(key, {:ok, value}), do: Application.put_env(:lolek, key, value)
+   defp restore_app_env(key, :error), do: Application.delete_env(:lolek, key)
+ end
+-- 
+2.54.0
+
