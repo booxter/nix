@@ -93,10 +93,14 @@
 
       lolek = (lolekPackage.override { yt-dlp = lolekYtDlp; }).overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
+          # Unify codepaths for media uploads; drive-testing.
           (prev.fetchpatch {
             url = "https://patch-diff.githubusercontent.com/raw/dziaineka/lolek/pull/19.patch";
             hash = "sha256-URgf016rX0TSvrCbik368l4q0S9umioHBbD53A4UwQ0=";
           })
+          # Fix message too long errors when multi UTF-16 codepoints are
+          # present in a single message.
+          ../lib/patches/lolek-Count-Telegram-captions-in-UTF-16-units.patch
         ];
       });
 
