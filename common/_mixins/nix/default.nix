@@ -1,5 +1,6 @@
 {
   hostInventory,
+  isDarwin,
   lib,
   pkgs,
   username,
@@ -19,7 +20,6 @@ in
       settings = {
         experimental-features = "nix-command flakes";
         warn-dirty = false;
-        sandbox = "relaxed";
         nix-path = [ "nixpkgs=flake:nixpkgs" ];
         trusted-users = [
           "@admin"
@@ -39,6 +39,9 @@ in
           (readPublicKey ../../../public-keys/nix-cache/numtide.pub)
           (readPublicKey ../../../public-keys/nix-cache/proxmox-nixos.pub)
         ];
+      }
+      // lib.optionalAttrs isDarwin {
+        sandbox = "relaxed";
       }
       // lib.optionalAttrs (!isWork) {
         substituters = lib.mkForce [
