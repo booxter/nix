@@ -35,6 +35,8 @@
 
   host.observability.client.blackbox.enable = true;
   host.observability.client.blackbox.mtls.enable = true;
+  # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
+  host.observability.lanWan.interface = "enp6s0";
 
   sops = {
     defaultSopsFile = ../../secrets/main/beast.yaml;
