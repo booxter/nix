@@ -360,15 +360,30 @@ diff_supports_color() {
   diff --color=never -q /dev/null /dev/null >/dev/null 2>&1
 }
 
+filter_binary_diff_output() {
+  local line=""
+
+  while IFS= read -r line; do
+    case "${line}" in
+      "Binary files "*" and "*" differ") continue ;;
+    esac
+
+    printf '%s\n' "${line}"
+  done
+}
+
 run_recursive_diff() {
   local diff_root="$1"
+  local diff_status=0
   local -a diff_cmd=(diff -ruN)
 
   if [[ -n "${detail_diff_color}" ]] && diff_supports_color; then
     diff_cmd=(diff "--color=${detail_diff_color}" -ruN)
   fi
 
-  (cd "${diff_root}" && "${diff_cmd[@]}" old new)
+  (cd "${diff_root}" && LC_ALL=C "${diff_cmd[@]}" old new) | filter_binary_diff_output
+  diff_status="${PIPESTATUS[0]}"
+  return "${diff_status}"
 }
 
 generated_path_exists() {

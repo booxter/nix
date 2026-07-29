@@ -94,6 +94,7 @@ printf 'moduli=%s\n' "$last_arg" >"$out_link/etc/ssh/moduli"
 printf 'ca-bundle=%s\n' "$last_arg" >"$out_link/etc/ssl/certs/ca-bundle.crt"
 printf 'ca-certificates=%s\n' "$last_arg" >"$out_link/etc/ssl/certs/ca-certificates.crt"
 printf '\000terminfo=%s\n' "$last_arg" >"$out_link/etc/terminfo/t/tvi912c"
+printf '\000binary=%s\n' "$last_arg" >"$out_link/etc/test-links/cache.bin"
 {
   printf 'man-flake=%s\n' "$last_arg"
   printf '\\fB/nix/store/%s\\-source/modules/generic/meta\\-maintainers\\&.nix\\fP\n' "$store_hash"
@@ -427,6 +428,8 @@ SH
   [[ "$output" != *"ca-certificates.crt"* ]]
   [[ "$output" != *"etc/ssh/moduli"* ]]
   [[ "$output" != *"etc/terminfo"* ]]
+  [[ "$output" != *"cache.bin"* ]]
+  [[ "$output" != *"Binary files "* ]]
   [[ "$output" != *"home-configuration.nix.5"* ]]
   [[ "$output" != *"man-flake"* ]]
   [[ "$output" == *"etc/nix/nix.conf"* ]]
