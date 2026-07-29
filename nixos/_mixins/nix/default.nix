@@ -8,8 +8,8 @@ let
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
 in
 {
-  nix.gc.dates = "Mon, 03:15";
-  nix.optimise.dates = [ "Mon, 04:15" ];
+  nix.gc.dates = "*-*-* 03:15:00";
+  nix.optimise.dates = [ "*-*-* 04:15:00" ];
   nix.optimise.randomizedDelaySec = "5min";
 
   nix.settings = lib.mkIf (hostSpec.nspawnTestBuilder or false) {
