@@ -81,7 +81,8 @@ mkdir -p \
   "$out_link/etc/ssh" \
   "$out_link/etc/ssl/certs" \
   "$out_link/etc/terminfo/t" \
-  "$out_link/etc/test-links/x~nix~case~hack~1"
+  "$out_link/etc/test-links/x~nix~case~hack~1" \
+  "$out_link/etc/zoneinfo/America"
 printf 'activate=%s\n' "$last_arg" >"$out_link/activate"
 printf 'switch=%s\n' "$last_arg" >"$out_link/bin/switch-to-configuration"
 printf 'flake=%s\n' "$last_arg" >"$out_link/generated/nix.conf"
@@ -94,6 +95,9 @@ printf 'moduli=%s\n' "$last_arg" >"$out_link/etc/ssh/moduli"
 printf 'ca-bundle=%s\n' "$last_arg" >"$out_link/etc/ssl/certs/ca-bundle.crt"
 printf 'ca-certificates=%s\n' "$last_arg" >"$out_link/etc/ssl/certs/ca-certificates.crt"
 printf '\000terminfo=%s\n' "$last_arg" >"$out_link/etc/terminfo/t/tvi912c"
+printf '\000binary=%s\n' "$last_arg" >"$out_link/etc/test-links/cache.bin"
+printf 'leap-seconds=%s\n' "$last_arg" >"$out_link/etc/zoneinfo/leap-seconds.list"
+printf 'New_York=%s\n' "$last_arg" >"$out_link/etc/zoneinfo/America/New_York"
 {
   printf 'man-flake=%s\n' "$last_arg"
   printf '\\fB/nix/store/%s\\-source/modules/generic/meta\\-maintainers\\&.nix\\fP\n' "$store_hash"
@@ -410,6 +414,7 @@ SH
     --path etc/nix/nix.conf \
     --path etc/test-links \
     --path etc/terminfo \
+    --path etc/zoneinfo \
     .#nixosConfigurations.frame.config.system.build.toplevel \
     "$old_rev" \
     "$new_rev"
@@ -427,6 +432,10 @@ SH
   [[ "$output" != *"ca-certificates.crt"* ]]
   [[ "$output" != *"etc/ssh/moduli"* ]]
   [[ "$output" != *"etc/terminfo"* ]]
+  [[ "$output" != *"etc/zoneinfo"* ]]
+  [[ "$output" != *"leap-seconds.list"* ]]
+  [[ "$output" != *"cache.bin"* ]]
+  [[ "$output" != *"Binary files "* ]]
   [[ "$output" != *"home-configuration.nix.5"* ]]
   [[ "$output" != *"man-flake"* ]]
   [[ "$output" == *"etc/nix/nix.conf"* ]]

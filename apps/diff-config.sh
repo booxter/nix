@@ -23,8 +23,9 @@ toplevels and embedded Home Manager users. By default this covers:
   nix-darwin:  etc, activate, activate-user, Library/LaunchAgents, Library/LaunchDaemons, user/Library/LaunchAgents
   Homebrew:    selected cask and formula recipes from Nix-managed taps
   Home Manager users: activate, home-files, LaunchAgents, session-vars
-  CA bundles, SSH moduli, terminfo databases, profile/manpage trees, and release
-  metadata files are skipped because those changes are already covered by dix.
+  CA bundles, SSH moduli, terminfo and time zone databases, profile/manpage
+  trees, and release metadata files are skipped because those changes are
+  already covered by dix.
 
 Repeat --path with --details to override the default system generated paths.
 
@@ -360,15 +361,30 @@ diff_supports_color() {
   diff --color=never -q /dev/null /dev/null >/dev/null 2>&1
 }
 
+filter_binary_diff_output() {
+  local line=""
+
+  while IFS= read -r line; do
+    case "${line}" in
+      "Binary files "*" and "*" differ") continue ;;
+    esac
+
+    printf '%s\n' "${line}"
+  done
+}
+
 run_recursive_diff() {
   local diff_root="$1"
+  local diff_status=0
   local -a diff_cmd=(diff -ruN)
 
   if [[ -n "${detail_diff_color}" ]] && diff_supports_color; then
     diff_cmd=(diff "--color=${detail_diff_color}" -ruN)
   fi
 
-  (cd "${diff_root}" && "${diff_cmd[@]}" old new)
+  (cd "${diff_root}" && LC_ALL=C "${diff_cmd[@]}" old new) | filter_binary_diff_output
+  diff_status="${PIPESTATUS[0]}"
+  return "${diff_status}"
 }
 
 generated_path_exists() {
@@ -384,9 +400,10 @@ should_skip_generated_source() {
 
   case "${source}" in
     */etc/profiles | */etc/profiles/* | */share/man | */share/man/* | \
-      */etc/pki/tls/certs/ca-bundle.crt | \
+      */etc/pki/tls/certs/ca-bundle.crt | */etc/ssl/trust-source/* | \
       */etc/ssl/certs/ca-bundle.crt | */etc/ssl/certs/ca-certificates.crt | \
       */etc/ssh/moduli | */etc/terminfo | */etc/terminfo/* | \
+      */etc/zoneinfo | */etc/zoneinfo/* | \
       */etc/issue | */etc/issue.net | */etc/os-release | */etc/lsb-release)
       return 0
       ;;
