@@ -34,6 +34,8 @@ let
   mysqlDataDir = "${config.host.srvarrPaths.stateDir}/mysql";
   webDir = "${stateDir}/web";
   nginxDir = "${stateDir}/nginx";
+  integrationDir = "${stateDir}/integration";
+  rommZipCacheModule = "${integrationDir}/utils/zip_cache.py";
   valkeyDir = "${stateDir}/valkey";
   user = "romm";
   apiPort = 5081;
@@ -109,6 +111,7 @@ let
     PYTHONUNBUFFERED = "1";
     PYTHONPATH = "/backend";
     ROMM_BASE_URL = rommService.url;
+    ROMM_SESSION_SECURE_COOKIE = "true";
     DB_HOST = "localhost";
     DB_USER = "romm";
     DB_QUERY_JSON = builtins.toJSON {
@@ -148,6 +151,7 @@ let
   containerVolumes = [
     "${rommBasePath}:/romm:rw"
     "/run/mysqld:/run/mysqld:ro"
+    "${rommZipCacheModule}:/backend/utils/zip_cache.py:ro"
   ];
 
   containerNetworks = [ "slirp4netns:allow_host_loopback=true" ];
@@ -170,6 +174,7 @@ let
   };
 
   setupBefore = [
+    "romm-web-assets.service"
     "mysql.service"
     "romm-db-init.service"
     "romm-valkey.service"
@@ -215,6 +220,8 @@ let
     "${rommBasePath}:/romm:rw"
     "-v"
     "/run/mysqld:/run/mysqld:ro"
+    "-v"
+    "${rommZipCacheModule}:/backend/utils/zip_cache.py:ro"
     "--network=slirp4netns:allow_host_loopback=true"
     "--cap-drop=all"
     "--security-opt=no-new-privileges"
@@ -279,9 +286,11 @@ in
     "d '${stateDir}' 0750 ${user} media - -"
     "d '${webDir}' 0750 ${user} media - -"
     "d '${nginxDir}' 0750 ${user} media - -"
+    "d '${integrationDir}' 0750 ${user} media - -"
     "d '${valkeyDir}' 0750 ${user} media - -"
     "d '${rommBasePath}' 2775 ${user} media - -"
     "d '${rommBasePath}/assets' 2775 ${user} media - -"
+    "d '${rommBasePath}/cache' 2775 ${user} media - -"
     "d '${rommBasePath}/config' 2775 ${user} media - -"
     "d '${rommBasePath}/resources' 2775 ${user} media - -"
     "d '${rommBasePath}/sync' 2775 ${user} media - -"
@@ -363,7 +372,7 @@ in
   };
 
   systemd.services.romm-web-assets = {
-    description = "Extract RomM web assets from upstream OCI image";
+    description = "Prepare RomM integration assets from upstream OCI image";
     wantedBy = [ "multi-user.target" ];
     wants = rommPodmanBaseUnits;
     after = rommPodmanBaseUnits ++ tmpfilesSetupUnits;
@@ -391,30 +400,53 @@ in
       }
       trap cleanup EXIT
 
-      rm -rf ${lib.escapeShellArg "${webDir}.new"} ${lib.escapeShellArg "${nginxDir}.new"}
-      mkdir -p ${lib.escapeShellArg "${webDir}.new"} ${lib.escapeShellArg "${nginxDir}.new"}
+      rm -rf \
+        ${lib.escapeShellArg "${webDir}.new"} \
+        ${lib.escapeShellArg "${nginxDir}.new"} \
+        ${lib.escapeShellArg "${integrationDir}.new"}
+      mkdir -p \
+        ${lib.escapeShellArg "${webDir}.new"} \
+        ${lib.escapeShellArg "${nginxDir}.new"} \
+        ${lib.escapeShellArg "${integrationDir}.new/utils"}
       podman cp "$cid:/var/www/html/." ${lib.escapeShellArg "${webDir}.new/"}
       podman cp "$cid:/etc/nginx/js/." ${lib.escapeShellArg "${nginxDir}.new/"}
+      podman cp \
+        "$cid:/backend/utils/zip_cache.py" \
+        ${lib.escapeShellArg "${integrationDir}.new/utils/zip_cache.py"}
 
       install -m 0644 ${rommDefaultCoreScript} ${lib.escapeShellArg "${webDir}.new/assets/romm-default-core.js"}
       ${rommReplaceFail} \
         ${lib.escapeShellArg "${webDir}.new/index.html"} \
         ${lib.escapeShellArg "</head>"} \
         ${lib.escapeShellArg rommDefaultCoreHeadReplacement}
+      ${rommReplaceFail} \
+        ${lib.escapeShellArg "${integrationDir}.new/utils/zip_cache.py"} \
+        ${lib.escapeShellArg "        os.rename(tmp_path, target)"} \
+        ${lib.escapeShellArg "        os.chmod(tmp_path, 0o640)\n        os.rename(tmp_path, target)"}
 
       rm -f ${lib.escapeShellArg "${webDir}.new/assets/romm/resources"}
       mkdir -p ${lib.escapeShellArg "${webDir}.new/assets/romm"}
 
-      rm -rf ${lib.escapeShellArg "${webDir}.old"} ${lib.escapeShellArg "${nginxDir}.old"}
+      rm -rf \
+        ${lib.escapeShellArg "${webDir}.old"} \
+        ${lib.escapeShellArg "${nginxDir}.old"} \
+        ${lib.escapeShellArg "${integrationDir}.old"}
       if [ -e ${lib.escapeShellArg webDir} ]; then
         mv ${lib.escapeShellArg webDir} ${lib.escapeShellArg "${webDir}.old"}
       fi
       if [ -e ${lib.escapeShellArg nginxDir} ]; then
         mv ${lib.escapeShellArg nginxDir} ${lib.escapeShellArg "${nginxDir}.old"}
       fi
+      if [ -e ${lib.escapeShellArg integrationDir} ]; then
+        mv ${lib.escapeShellArg integrationDir} ${lib.escapeShellArg "${integrationDir}.old"}
+      fi
       mv ${lib.escapeShellArg "${webDir}.new"} ${lib.escapeShellArg webDir}
       mv ${lib.escapeShellArg "${nginxDir}.new"} ${lib.escapeShellArg nginxDir}
-      rm -rf ${lib.escapeShellArg "${webDir}.old"} ${lib.escapeShellArg "${nginxDir}.old"}
+      mv ${lib.escapeShellArg "${integrationDir}.new"} ${lib.escapeShellArg integrationDir}
+      rm -rf \
+        ${lib.escapeShellArg "${webDir}.old"} \
+        ${lib.escapeShellArg "${nginxDir}.old"} \
+        ${lib.escapeShellArg "${integrationDir}.old"}
     '';
   };
 
@@ -422,7 +454,10 @@ in
     description = "Run RomM database migrations and startup tasks";
     wantedBy = [ "multi-user.target" ];
     wants = rommPodmanBaseUnits ++ setupBefore;
-    requires = [ "romm-backup.service" ];
+    requires = [
+      "romm-backup.service"
+      "romm-web-assets.service"
+    ];
     after = rommPodmanBaseUnits ++ setupBefore ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = [
       mediaDir
@@ -539,6 +574,13 @@ in
           ~^/rom/.*/ejs$ "same-origin";
           ~^/console/rom/[0-9]+/play "same-origin";
       }
+
+      # RomM resources are authenticated, so retain the upstream cache policy
+      # while limiting stored responses to the end user's private cache.
+      map $args $romm_resources_cache_control {
+          default "private, max-age=3600, must-revalidate";
+          "~(^|&)(ts|v)=" "private, max-age=31536000, immutable";
+      }
     '';
     virtualHosts."internal-https-romm" = {
       root = webDir;
@@ -547,6 +589,7 @@ in
           tryFiles = "$uri $uri/ /index.html";
           extraConfig = ''
             proxy_redirect off;
+            add_header Cache-Control "no-cache";
             add_header Access-Control-Allow-Origin *;
             add_header Access-Control-Allow-Methods *;
             add_header Access-Control-Allow-Headers *;
@@ -560,12 +603,22 @@ in
             # own session/API-token validation before serving them from disk.
             auth_request /_romm_auth;
             alias ${rommBasePath}/resources/;
-            add_header Cache-Control "private";
+            add_header Cache-Control $romm_resources_cache_control;
           '';
         };
         "/assets" = {
           tryFiles = "$uri $uri/ =404";
+          extraConfig = ''
+            add_header Cache-Control "public, max-age=3600, must-revalidate";
+          '';
         };
+        "~* ^/assets/[^/]+-[A-Za-z0-9_-]{8,}\\.(js|mjs|css|map|woff2?|ttf|otf|eot|svg|png|jpe?g|gif|webp|avif|ico|json|wasm)$" =
+          {
+            tryFiles = "$uri $uri/ =404";
+            extraConfig = ''
+              add_header Cache-Control "public, max-age=31536000, immutable";
+            '';
+          };
         "= /_romm_auth" = {
           proxyPass = "http://127.0.0.1:${toString apiPort}/api/users/me";
           extraConfig = ''
@@ -593,6 +646,15 @@ in
           extraConfig = ''
             internal;
             alias ${rommBasePath}/library/;
+          '';
+        };
+        "/cache/" = {
+          extraConfig = ''
+            # RomM 5.1 redirects resumable multi-file downloads here after
+            # assembling the ZIP in its cache. The patched module above makes
+            # the file group-readable by this host nginx worker.
+            internal;
+            alias ${rommBasePath}/cache/;
           '';
         };
         "/decode" = {
