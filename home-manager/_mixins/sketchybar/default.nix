@@ -78,6 +78,23 @@ let
     runtimeEnv.GITHUB_STATUS_URL = "https://www.githubstatus.com/api/v2/summary.json";
     text = builtins.readFile ./sketchybar/plugins/github-status.sh;
   };
+  diskPlugin = pkgs.writeShellApplication {
+    name = "sketchybar-disk";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.gawk
+      pkgs.sketchybar
+    ];
+    text = builtins.readFile ./sketchybar/plugins/disk.sh;
+  };
+  diskItem = pkgs.writeText "sketchybar-disk-item.sh" ''
+    sketchybar --add item disk left                              \
+               --set disk script="$PLUGIN_DIR/disk.sh"          \
+                          update_freq=60                         \
+                          icon="󰋊"                              \
+                          icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
+               --subscribe disk system_woke
+  '';
   githubStatusItem = pkgs.writeText "sketchybar-github-status-item.sh" ''
     sketchybar --add item github-status right                           \
                --set github-status script="$PLUGIN_DIR/github-status.sh" \
@@ -271,17 +288,21 @@ let
     rm -f "$out/plugins/jellyfin.sh"
     rm -f "$out/plugins/attention-inbox.sh"
     rm -f "$out/plugins/github-status.sh"
+    rm -f "$out/plugins/disk.sh"
     rm -f "$out/items/aerospace-spaces.sh"
+    rm -f "$out/items/disk.sh"
     rm -f "$out/items/alertmanager.sh"
     rm -f "$out/items/jellyfin.sh"
     rm -f "$out/items/attention-inbox.sh"
     rm -f "$out/items/github-status.sh"
     ln -s ${aerospaceSpacesItem} "$out/items/aerospace-spaces.sh"
+    ln -s ${diskItem} "$out/items/disk.sh"
     ln -s ${codexItem} "$out/items/codex.sh"
     ln -s ${alertmanagerItem} "$out/items/alertmanager.sh"
     ln -s ${jellyfinItem} "$out/items/jellyfin.sh"
     ln -s ${attentionInboxItem} "$out/items/attention-inbox.sh"
     ln -s ${githubStatusItem} "$out/items/github-status.sh"
+    ln -s ${lib.getExe diskPlugin} "$out/plugins/disk.sh"
     ln -s ${lib.getExe githubStatusPlugin} "$out/plugins/github-status.sh"
     ${lib.optionalString config.programs.sketchybarAlertmanager.enable ''
       ln -s ${lib.getExe alertmanagerPlugin} "$out/plugins/alertmanager.sh"

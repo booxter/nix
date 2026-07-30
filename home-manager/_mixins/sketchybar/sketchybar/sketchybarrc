@@ -37,6 +37,7 @@ default=(
 sketchybar --default "${default[@]}"
 
 source "$CONFIG_DIR/items/aerospace-spaces.sh"
+source "$CONFIG_DIR/items/disk.sh"
 
 source "$CONFIG_DIR/items/codex.sh"
 
