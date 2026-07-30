@@ -38,10 +38,10 @@
   },
   "romm": {
     "changelog": "https://github.com/rommapp/romm/releases/tag/{tag}",
-    "digest": "sha256:91f6611eca5a4dafc4f4a1d72a1ed7dd66a11375d939f28410dc1d1de0b80b1b",
-    "hash": "sha256-aGC1B03E9dQX4hBXPyuFt9E0erqSleDFmK3Mt1ZzaJM=",
+    "digest": "sha256:ce9d86ab531e09fede45d00f426e3bf2d1f5dd14846f94d6360d77a92a413028",
+    "hash": "sha256-rpQZZjVDgiDzUc3cgZyeEGIE+9zAlEDByobdJHDP8Ww=",
     "image": "docker.io/rommapp/romm",
-    "tag": "5.0.0",
+    "tag": "5.1.0",
     "tagRegex": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
   },
   "watchstate": {
