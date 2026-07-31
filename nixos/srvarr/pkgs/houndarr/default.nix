@@ -33,14 +33,14 @@ let
 in
 python313Packages.buildPythonApplication (finalAttrs: {
   pname = "houndarr";
-  version = "1.12.1";
+  version = "1.13.0";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "av1155";
     repo = "houndarr";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-Y+1KpdYI4cSbLJfIfXpPvOg6WEWzGVuNMqhiANPktpA=";
+    hash = "sha256-bacy6DvpWpQaKFtTynrVQ78VQKSVLNHUtPhO3ZC/E1g=";
   };
 
   pnpmDeps = fetchPnpmDeps {
