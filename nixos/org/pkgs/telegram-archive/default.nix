@@ -41,13 +41,13 @@ let
 in
 stdenvNoCC.mkDerivation rec {
   pname = "telegram-archive";
-  version = "7.20.0";
+  version = "7.31.2";
 
   src = fetchFromGitHub {
     owner = "GeiserX";
     repo = "Telegram-Archive";
     tag = "v${version}";
-    hash = "sha256-HfR5XytzgQ1RB2YcypA/9r7uzarijwEQwcUpzODCJDM=";
+    hash = "sha256-1AEKLaN5AgiuY4Ucb0gfyU6s9tPVqUhnndLTZe2ffZY=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
