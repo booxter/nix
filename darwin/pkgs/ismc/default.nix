@@ -2,6 +2,7 @@
   buildGoModule,
   fetchFromGitHub,
   lib,
+  versionCheckHook,
 }:
 buildGoModule rec {
   pname = "ismc";
@@ -24,12 +25,19 @@ buildGoModule rec {
     "-s"
     "-w"
     "-X"
-    "github.com/dkorunic/iSMC/cmd.GitTag=v${version}"
+    "github.com/dkorunic/iSMC/internal/cmd.GitTag=v${version}"
     "-X"
-    "github.com/dkorunic/iSMC/cmd.GitCommit=${src.rev}"
+    "github.com/dkorunic/iSMC/internal/cmd.GitCommit=${src.rev}"
     "-X"
-    "github.com/dkorunic/iSMC/cmd.GitDirty="
+    "github.com/dkorunic/iSMC/internal/cmd.GitDirty="
+    "-X"
+    "github.com/dkorunic/iSMC/internal/cmd.BuildTime=unknown"
   ];
+
+  doInstallCheck = true;
+  nativeInstallCheckInputs = [ versionCheckHook ];
+  versionCheckProgram = "${builtins.placeholder "out"}/bin/iSMC";
+  versionCheckProgramArg = "version";
 
   meta = {
     description = "Apple SMC CLI for temperatures, fans, battery, power, voltage and current";
