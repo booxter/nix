@@ -99,3 +99,23 @@ JSON
 
   grep -F '| `demo` | `1.0.0 -> 1.1.0` | [link](https://github.com/example/demo/releases/tag/v1.1.0) | [compare](https://github.com/example/demo/compare/v1.0.0...v1.1.0) |' "$summary_file"
 }
+
+@test "package update scripts are executable" {
+  found=0
+  failures=0
+
+  while IFS= read -r script; do
+    found=1
+    if [[ ! -x "$script" ]]; then
+      printf '%s must be executable\n' "$script" >&3
+      failures=1
+    fi
+  done < <(find . -type f -name update.sh -print)
+
+  if [[ "$found" -eq 0 ]]; then
+    printf 'no package update scripts found\n' >&3
+    return 1
+  fi
+
+  [[ "$failures" -eq 0 ]]
+}
