@@ -612,7 +612,7 @@ in
             add_header Cache-Control "public, max-age=3600, must-revalidate";
           '';
         };
-        "~* ^/assets/[^/]+-[A-Za-z0-9_-]{8,}\\.(js|mjs|css|map|woff2?|ttf|otf|eot|svg|png|jpe?g|gif|webp|avif|ico|json|wasm)$" =
+        "~* \"^/assets/[^/]+-[A-Za-z0-9_-]{8,}\\.(js|mjs|css|map|woff2?|ttf|otf|eot|svg|png|jpe?g|gif|webp|avif|ico|json|wasm)$\"" =
           {
             tryFiles = "$uri $uri/ =404";
             extraConfig = ''
