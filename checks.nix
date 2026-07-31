@@ -17,6 +17,7 @@ helpers.forAllSystems (
     inventory = import ./lib/inventory.nix { inherit (pkgs) lib; };
     fleetApps = import ./apps/fleet.nix { inherit pkgs; };
     fanaMonitoring = import ./nixos/fana/monitoring/catalog.nix;
+    packageUpdateScripts = pkgs.lib.fileset.fileFilter (file: file.name == "update.sh") ./.;
     mkCheck =
       {
         name,
@@ -86,6 +87,7 @@ helpers.forAllSystems (
         ./home-manager/_mixins/sketchybar/sketchybar/plugins/github-status.sh
         ./home-manager/_mixins/sketchybar/sketchybar/plugins/disk.sh
         ./nixos/pki/kanidm-person-mail-provision.sh
+        packageUpdateScripts
       ];
     };
     box-py = mkCheck {

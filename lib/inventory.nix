@@ -617,6 +617,7 @@ rec {
     (resolveService (mkService {
       id = "watchstate";
       title = "WatchState";
+      icon = "sh:watchstate.png";
       scope = "internal";
       owner = "beast";
       probePath = "/oauth2/sign_in";
@@ -658,6 +659,7 @@ rec {
     }))
     (resolveService (mkService {
       id = "houndarr";
+      icon = "sh:houndarr.png";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";

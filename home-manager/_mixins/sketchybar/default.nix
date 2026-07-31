@@ -91,8 +91,7 @@ let
     sketchybar --add item disk left                              \
                --set disk script="$PLUGIN_DIR/disk.sh"          \
                           update_freq=60                         \
-                          icon="󰋊"                              \
-                          icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
+                          icon.drawing=off                       \
                --subscribe disk system_woke
   '';
   githubStatusItem = pkgs.writeText "sketchybar-github-status-item.sh" ''
