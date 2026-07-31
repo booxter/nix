@@ -123,11 +123,14 @@ let
         ' "$tmp_powermetrics"
 
         if [[ "$ismc_collect_success" == "1" ]]; then
+          # iSMC can decode invalid ioft sensor payloads as astronomical
+          # positive temperatures: https://github.com/dkorunic/iSMC/issues/39
           jq -r '
             to_entries[]
             | select(.value.quantity != null)
             | select((.value.quantity | type) == "number")
             | select((.value.unit // "") | contains("°C"))
+            | select(.value.quantity >= 0 and .value.quantity <= 150)
             | [.key, (.value.key // ""), (.value.type // ""), (.value.quantity | tostring)]
             | @tsv
           ' "$tmp_ismc" \
