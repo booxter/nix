@@ -224,43 +224,11 @@
         ];
       });
 
-      # Backport Open WebUI 0.10.2 until it reaches nixos-26.05.
-      # https://github.com/NixOS/nixpkgs/pull/542060
-      open-webui = prev.open-webui.overridePythonAttrs (
-        old:
-        let
-          version = "0.10.2";
-          src = prev.fetchFromGitHub {
-            owner = "open-webui";
-            repo = "open-webui";
-            tag = "v${version}";
-            hash = "sha256-tJ9b5up5FoX5TrmpwMWevyA/o3Ai/lKsHu+nahc2Ttc=";
-          };
-          frontend = old.passthru.frontend.overrideAttrs {
-            inherit version src;
-            npmDeps = prev.fetchNpmDeps {
-              inherit src;
-              name = "open-webui-frontend-${version}-npm-deps";
-              hash = "sha256-yw/1n1jBCUtt8wUqJmIkB3W53wsXTKuAFG/EMwcTpx8=";
-            };
-          };
-        in
-        {
-          inherit version src;
-          patches = (old.patches or [ ]) ++ [
-            ../lib/patches/open-webui-apply-default-model-system-prompt.patch
-          ];
-          # overridePythonAttrs retains 0.9.6's dependencies unless removed explicitly.
-          dependencies = lib.subtractLists (with prev.python3Packages; [
-            peewee
-            peewee-migrate
-          ]) old.dependencies;
-          makeWrapperArgs = [ "--set FRONTEND_BUILD_DIR ${frontend}/share/open-webui" ];
-          passthru = old.passthru // {
-            inherit frontend;
-          };
-        }
-      );
+      open-webui = prev.open-webui.overridePythonAttrs (old: {
+        patches = (old.patches or [ ]) ++ [
+          ../lib/patches/open-webui-apply-default-model-system-prompt.patch
+        ];
+      });
 
       # Track exact SAB cleanup artifacts at post-processing time so history
       # deletion can safely remove sorted outputs and temporary unpack trees
