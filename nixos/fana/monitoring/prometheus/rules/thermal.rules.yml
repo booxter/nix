@@ -27,6 +27,20 @@ groups:
         annotations:
           summary: "Storage temperature high on {{ $labels.instance }}"
           description: "{{ $labels.instance }} has sustained storage temperature above 75C for 10 minutes."
+      - alert: HostTemperatureCritical
+        expr: |
+          max by(instance) (
+            node_hwmon_temp_celsius{job="node-mtls",host_class="hardware"}
+            or host_observability_hba_temperature_celsius{job="node-mtls",host_class="hardware",sensor="roc"}
+            or host_observability_darwin_temperature_max_celsius{job="node-mtls",host_class="hardware"}
+          ) > 110
+        for: 5m
+        labels:
+          severity: critical
+          category: thermal
+        annotations:
+          summary: "Host temperature critical on {{ $labels.instance }}"
+          description: "{{ $labels.instance }} has sustained an exposed sensor temperature above 110C for 5 minutes."
       - alert: HBAThermalExportFailed
         expr: host_observability_hba_collect_success{job="node-mtls",host_class="hardware"} < 1
         for: 10m

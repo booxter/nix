@@ -72,6 +72,57 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'host_observability_darwin_temperature_max_celsius{job="node-mtls",host_class="hardware",instance="mmini"}'
+        values: "110x12"
+    alert_rule_test:
+      - eval_time: 5m
+        alertname: HostTemperatureCritical
+
+  - interval: 30s
+    input_series:
+      - series: 'node_hwmon_temp_celsius{job="node-mtls",host_class="hardware",instance="frame",chip="amdgpu_1",sensor="edge"}'
+        values: "120x10 100x2"
+      - series: 'node_hwmon_temp_celsius{job="node-mtls",host_class="hardware",instance="frame",chip="amdgpu_1",sensor="junction"}'
+        values: "125x10 100x2"
+      - series: 'host_observability_hba_temperature_celsius{job="node-mtls",host_class="hardware",instance="beast",controller="0",sensor="roc"}'
+        values: "120x10 100x2"
+      - series: 'host_observability_darwin_temperature_max_celsius{job="node-mtls",host_class="hardware",instance="mair"}'
+        values: "120x10 100x2"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: HostTemperatureCritical
+      - eval_time: 5m
+        alertname: HostTemperatureCritical
+        exp_alerts:
+          - exp_labels:
+              alertname: HostTemperatureCritical
+              category: thermal
+              instance: beast
+              severity: critical
+            exp_annotations:
+              summary: "Host temperature critical on beast"
+              description: "beast has sustained an exposed sensor temperature above 110C for 5 minutes."
+          - exp_labels:
+              alertname: HostTemperatureCritical
+              category: thermal
+              instance: frame
+              severity: critical
+            exp_annotations:
+              summary: "Host temperature critical on frame"
+              description: "frame has sustained an exposed sensor temperature above 110C for 5 minutes."
+          - exp_labels:
+              alertname: HostTemperatureCritical
+              category: thermal
+              instance: mair
+              severity: critical
+            exp_annotations:
+              summary: "Host temperature critical on mair"
+              description: "mair has sustained an exposed sensor temperature above 110C for 5 minutes."
+      - eval_time: 5m30s
+        alertname: HostTemperatureCritical
+
+  - interval: 30s
+    input_series:
       - series: 'host_observability_hba_collect_success{job="node-mtls",host_class="hardware",instance="beast",controller="0"}'
         values: "1x22"
     alert_rule_test:
