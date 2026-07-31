@@ -39,6 +39,26 @@
     {
       inherit (llmAgentsPkgs) claude-code;
 
+      # https://github.com/NixOS/nixpkgs/pull/539100
+      age-plugin-se = prev.age-plugin-se.overrideAttrs (old: {
+        version = "0.2.1";
+        src = prev.fetchFromGitHub {
+          owner = "remko";
+          repo = "age-plugin-se";
+          tag = "v0.2.1";
+          hash = "sha256-ga9EYfvscXf8VHSptjgnjaeZT+D/69PAr/s53JOHG20=";
+        };
+        postPatch = ''
+          ${lib.optionalString (lib.versionAtLeast prev.swift.version "6") ''
+            echo "age-plugin-se still applies patch-package-swift-legacy; remove or revisit this patch now that nixpkgs Swift is 6+."
+            exit 1
+          ''}
+          make patch-package-swift-legacy
+          ${old.postPatch}
+          substituteInPlace Sources/Plugin.swift --replace-fail 'let createdAt = now.ISO8601Format()' 'let createdAt = ISO8601DateFormatter().string(from: now)'
+        '';
+      });
+
       # Pick up the latest window-management fixes ahead of the stable branch.
       inherit (pkgsNixpkgsUnstable) aerospace;
 
