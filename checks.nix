@@ -54,7 +54,7 @@ helpers.forAllSystems (
         git
         jq
         mkpasswd
-        python3
+        (python3.withPackages (pythonPackages: [ pythonPackages.semantic-version ]))
         sops
         yq-go
       ];
@@ -73,6 +73,7 @@ helpers.forAllSystems (
         bats --print-output-on-failure tests/test-diff-config.bats
         bats --print-output-on-failure tests/test-prox-deploy.bats
         bats --print-output-on-failure tests/test-update-packages.bats
+        bats --print-output-on-failure tests/select-nodejs.bats
         bats --print-output-on-failure tests/test-update-oci-images.bats
         bash tests/check-sops-helpers.sh
         bats --print-output-on-failure tests/test-vm.bats

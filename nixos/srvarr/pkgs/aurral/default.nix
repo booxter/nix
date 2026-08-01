@@ -4,21 +4,23 @@
   fetchFromGitHub,
   fetchNpmDeps,
   buildPackages,
-  nodejs_24,
+  nodejs_22,
+  patchelf,
   python3,
   makeWrapper,
+  sqlite,
 }:
 let
-  nodejs = nodejs_24;
+  nodejs = nodejs_22;
   npmHooks = buildPackages.npmHooks.override { inherit nodejs; };
   pname = "aurral";
-  version = "1.76.51";
-  npmDepsHash = "sha256-UShOfNPPebtq4VXlmOdMxnl+8CxPP2dVwiaG8LASY98=";
+  version = "2.0.3";
+  npmDepsHash = "sha256-QQmXYQ+mFS4gfM2KNCssvN3QdzTG2jAtW710Qgcoc10=";
   src = fetchFromGitHub {
     owner = "lklynet";
     repo = "aurral";
     tag = "v${version}";
-    sha256 = "sha256-C0YA+vYMedMp+aR2yJgi96cIgL/2Nn6NQI08VaW9gJU=";
+    sha256 = "sha256-pfDRixnBEk6+ZsAhRipccnNjmn4aiFjrffdnxQmInXg=";
   };
   npmDeps = fetchNpmDeps {
     name = "${pname}-${version}-npm-deps";
@@ -34,9 +36,12 @@ stdenv.mkDerivation {
 
   nativeBuildInputs = [
     nodejs
+    patchelf
     python3
     makeWrapper
   ];
+
+  buildInputs = [ sqlite ];
 
   env = {
     APP_VERSION = version;
@@ -48,9 +53,6 @@ stdenv.mkDerivation {
 
   patches = [
     ./disable-local-auth.patch
-    # Skip dead direct artist artwork URLs before trying release-group covers.
-    # Upstream v2: https://github.com/lklynet/aurral/blob/release/v2/backend/services/imageService.js#L119-L139
-    ../../../../overlays/aurral-fallback-broken-artist-images.patch
     # AURRAL_DATA_DIR lives below /data/.state, which sendFile rejects by default.
     ../../../../overlays/aurral-allow-hidden-image-cache-path.patch
   ];
@@ -88,7 +90,7 @@ stdenv.mkDerivation {
     cp -r node_modules "$out/lib/${pname}/"
     cp backend/package.json "$out/lib/${pname}/backend/"
     cp -r backend/config \
-      backend/loadEnv.js \
+      backend/db \
       backend/middleware \
       backend/routes \
       backend/scripts \
@@ -110,6 +112,7 @@ stdenv.mkDerivation {
 
     mkdir -p "\$AURRAL_DATA_DIR" "\$DOWNLOAD_FOLDER" "\$WEEKLY_FLOW_FOLDER"
 
+    export APP_VERSION=${lib.escapeShellArg version}
     export AURRAL_DATA_DIR DOWNLOAD_FOLDER WEEKLY_FLOW_FOLDER
     export NODE_ENV=production
 
@@ -118,6 +121,61 @@ stdenv.mkDerivation {
     chmod 0755 "$out/bin/${pname}"
 
     runHook postInstall
+  '';
+
+  preFixup = ''
+    # Honker links to system SQLite but ships its native binding without an
+    # RPATH. Patch only its glibc bindings; npm also carries unrelated musl
+    # prebuilds that must remain untouched.
+    find "$out/lib/${pname}/node_modules/@russellthehippo" \
+      -name 'honker.linux-*-gnu.node' \
+      -exec patchelf --add-rpath '${lib.makeLibraryPath [ sqlite ]}' {} +
+  '';
+
+  doInstallCheck = true;
+  installCheckPhase = ''
+    runHook preInstallCheck
+
+    test -d "$out/lib/${pname}/backend/db"
+    test ! -e "$out/lib/${pname}/backend/loadEnv.js"
+
+    export AURRAL_DATA_DIR="$TMPDIR/aurral-install-check"
+    mkdir -p "$AURRAL_DATA_DIR"
+    pushd "$out/lib/${pname}"
+    ${lib.getExe nodejs} --input-type=module --eval '
+      const { default: Database } = await import("better-sqlite3");
+      const database = new Database(":memory:");
+      database.close();
+      const { default: sharp } = await import("sharp");
+      const image = await sharp({
+        create: {
+          width: 1,
+          height: 1,
+          channels: 4,
+          background: "#00000000",
+        },
+      }).png().toBuffer();
+      if (image.length === 0) {
+        throw new Error("sharp produced an empty image");
+      }
+      const { default: honker } = await import("@russellthehippo/honker-node");
+      const honkerDatabase = honker.open(`''${process.env.AURRAL_DATA_DIR}/honker-smoke.db`);
+      honkerDatabase.query("SELECT 1");
+      honkerDatabase.close();
+      await import("./backend/db/helpers/index.js");
+      const { isLocalAuthEnabled } = await import("./backend/middleware/auth.js");
+      delete process.env.DISABLE_LOCAL_AUTH;
+      if (!isLocalAuthEnabled()) {
+        throw new Error("local authentication was not enabled by default");
+      }
+      process.env.DISABLE_LOCAL_AUTH = "true";
+      if (isLocalAuthEnabled()) {
+        throw new Error("local authentication was not disabled");
+      }
+    '
+    popd
+
+    runHook postInstallCheck
   '';
 
   passthru.updateScript = [ ./update.sh ];

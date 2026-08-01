@@ -17,6 +17,7 @@ let
       nix
       nix-update
       prefetch-npm-deps
+      (python3.withPackages (pythonPackages: [ pythonPackages.semantic-version ]))
     ];
     text = ''
       export UPDATE_SUMMARY_LIB="''${UPDATE_SUMMARY_LIB:-${./update-summary-lib.sh}}"

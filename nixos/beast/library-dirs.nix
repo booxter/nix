@@ -6,10 +6,12 @@ let
   mediaRoot = "/volume2/Media";
   mediaPodcastsRoot = "${mediaRoot}/podcasts";
   mediaRommRoot = "${mediaRoot}/romm";
+  mediaSlskdRoot = "${mediaRoot}/slskd";
   mediaTorrentRoot = "${mediaRoot}/torrents";
   mediaUsenetRoot = "${mediaRoot}/usenet";
   pinepodsUser = toString servarrAccounts.uids.pinepods;
   rommUser = toString servarrAccounts.uids.romm;
+  slskdUser = toString servarrAccounts.uids.slskd;
 
   mkTmpfilesDir = path: mode: user: group: [
     "d ${path} ${mode} ${user} ${group} - -"
@@ -155,6 +157,24 @@ let
       path = "${mediaTorrentRoot}/shelfmark";
       mode = "0755";
       user = "70";
+      group = "media";
+    }
+    {
+      path = mediaSlskdRoot;
+      mode = "2775";
+      user = slskdUser;
+      group = "media";
+    }
+    {
+      path = "${mediaSlskdRoot}/incomplete";
+      mode = "2775";
+      user = slskdUser;
+      group = "media";
+    }
+    {
+      path = "${mediaSlskdRoot}/complete";
+      mode = "2775";
+      user = slskdUser;
       group = "media";
     }
     {

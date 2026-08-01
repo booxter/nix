@@ -11,6 +11,7 @@ let
   mediaPath = config.host.srvarrPaths.mediaDir;
   aurralStateDir = "${config.host.srvarrPaths.stateDir}/aurral";
   aurralFlowDir = "${mediaPath}/library/flows";
+  slskdDownloadsDir = "${mediaPath}/slskd/complete";
   aurralService = hostInventory.servicesById.aurral;
   aurralAdminUsers = lib.attrNames (
     lib.filterAttrs (_: person: builtins.elem "media-admins" person.groups) hostInventory.sso.users
@@ -20,13 +21,28 @@ let
     After = [ "network-online.target" ];
     RequiresMountsFor = mediaPath;
   };
-  legacyImageProxyLocation = {
-    # The query-based endpoint fetches caller-supplied URLs and is not needed by
-    # current Aurral clients. Keep the cache-key image route below this path.
-    return = "404";
+  imageProxyCacheZone = "aurral_images";
+  imageProxyCacheLocation = {
+    proxyPass = "http://127.0.0.1:${toString aurralPort}";
+    recommendedProxySettings = true;
+    extraConfig = ''
+      proxy_cache ${imageProxyCacheZone};
+      proxy_cache_background_update on;
+      proxy_cache_lock on;
+      proxy_cache_revalidate on;
+      proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+    '';
+  };
+  aurralImageLocations = {
+    # Only cache-key responses have public cache semantics. Do not share-cache
+    # playlist or discovery artwork because those handlers enforce user access.
+    "^~ /api/image-proxy/" = imageProxyCacheLocation;
   };
 in
 {
+  # Sharp resolves fonts through fontconfig when rendering playlist artwork.
+  fonts.packages = [ pkgs.dejavu_fonts ];
+
   users.groups.aurral = { };
   users.users.aurral = {
     isSystemUser = true;
@@ -37,13 +53,22 @@ in
   systemd.tmpfiles.rules = [
     "d ${aurralStateDir} 0750 aurral aurral - -"
     "z ${aurralStateDir} 0750 aurral aurral - -"
+    # A cache root retained from an older nginx user must remain traversable
+    # after nginx switches users or cached response bodies cannot be served.
+    "d /var/cache/nginx/aurral-images 0750 nginx nginx - -"
   ];
 
   systemd.services.aurral = {
     description = "Aurral music discovery and flow download service";
     wantedBy = [ "multi-user.target" ];
     unitConfig = aurralUnitDeps;
-    path = [ pkgs.coreutils ];
+    path = [
+      pkgs.coreutils
+      # Aurral only needs FFmpeg for yt-dlp extraction and metadata remuxing;
+      # those operations do not require the full optional feature set.
+      pkgs.ffmpeg
+      pkgs.yt-dlp
+    ];
     environment = {
       AURRAL_DATA_DIR = aurralStateDir;
       DOWNLOAD_FOLDER = aurralFlowDir;
@@ -78,6 +103,9 @@ in
       ReadWritePaths = [
         aurralStateDir
         aurralFlowDir
+        # Aurral validates and moves completed slskd downloads into its
+        # separate flow library.
+        slskdDownloadsDir
       ];
       ProtectHome = true;
       ProtectHostname = true;
@@ -112,12 +140,18 @@ in
     probe.enable = true;
   };
 
-  # Close the legacy endpoint on both backend HTTPS surfaces. The exact match
-  # still permits /api/image-proxy/<cache-key>, which serves cached artwork.
-  services.nginx.virtualHosts."internal-https-aurral".locations."= /api/image-proxy" =
-    legacyImageProxyLocation;
-  services.nginx.virtualHosts.${aurralService.publicHost}.locations."= /api/image-proxy" =
-    legacyImageProxyLocation;
+  services.nginx.proxyCachePath.aurral-images = {
+    enable = true;
+    keysZoneName = imageProxyCacheZone;
+    keysZoneSize = "1m";
+    inactive = "7d";
+    maxSize = "256m";
+  };
+
+  # Cache only immutable cache-key responses. The query-based warming endpoint
+  # remains on the normal proxy path because Aurral still emits it for misses.
+  services.nginx.virtualHosts."internal-https-aurral".locations = aurralImageLocations;
+  services.nginx.virtualHosts.${aurralService.publicHost}.locations = aurralImageLocations;
 
   # Aurral's OAuth gate lives on beast because only the public hostname is
   # browser-protected. The backend probe still needs a probe-only listener on

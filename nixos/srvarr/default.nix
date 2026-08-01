@@ -26,6 +26,7 @@
     ./sabnzbd.nix
     ./seerr.nix
     ./shelfmark.nix
+    ./slskd.nix
     ./tuning.nix
     ./transmission.nix
     ./vpn.nix
