@@ -18,6 +18,16 @@ let
       "engines/duckduckgo"
       "engines/duckduckgo-images"
       "engines/duckduckgo-news"
+      "plugins/ddg-bang"
+      "plugins/define"
+      "plugins/github-slot"
+      "plugins/highlight-terms"
+      "plugins/jellyfin"
+      "plugins/math-slot"
+      "plugins/romm"
+      "plugins/time"
+      "plugins/tmdb-slot"
+      "plugins/weather"
     ];
   };
   degoogService = hostInventory.servicesById.goo;
