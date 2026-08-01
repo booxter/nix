@@ -53,6 +53,9 @@ in
   systemd.tmpfiles.rules = [
     "d ${aurralStateDir} 0750 aurral aurral - -"
     "z ${aurralStateDir} 0750 aurral aurral - -"
+    # A cache root retained from an older nginx user must remain traversable
+    # after nginx switches users or cached response bodies cannot be served.
+    "d /var/cache/nginx/aurral-images 0750 nginx nginx - -"
   ];
 
   systemd.services.aurral = {
