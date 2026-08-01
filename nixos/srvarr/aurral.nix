@@ -43,7 +43,13 @@ in
     description = "Aurral music discovery and flow download service";
     wantedBy = [ "multi-user.target" ];
     unitConfig = aurralUnitDeps;
-    path = [ pkgs.coreutils ];
+    path = [
+      pkgs.coreutils
+      # Aurral only needs FFmpeg for yt-dlp extraction and metadata remuxing;
+      # those operations do not require the full optional feature set.
+      pkgs.ffmpeg
+      pkgs.yt-dlp
+    ];
     environment = {
       AURRAL_DATA_DIR = aurralStateDir;
       DOWNLOAD_FOLDER = aurralFlowDir;
