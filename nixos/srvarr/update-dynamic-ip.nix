@@ -48,9 +48,9 @@
           printf '%s\n' "$response"
         '';
     };
-    vpnconfinement = {
+    vpnConfinement = {
       enable = true;
-      vpnnamespace = "wg";
+      vpnNamespace = "wg";
     };
   };
 
