@@ -119,6 +119,7 @@ in
         rclone
         ripgrep
         speedtest-cli
+        sqlite
         tcpdump
         tmux
         tree
