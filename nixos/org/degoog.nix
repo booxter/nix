@@ -23,6 +23,7 @@ let
       "engines/google-cse"
       "engines/hacker-news"
       "engines/internet-archive"
+      "engines/pross-degoog-stackexchange-engine-stackexchange"
       "engines/reddit"
       "engines/wikipedia"
       "plugins/ddg-bang"
@@ -37,7 +38,11 @@ let
       "plugins/trusted-header-settings-auth"
       "plugins/weather"
     ];
-    extraExtensionSources."plugins/trusted-header-settings-auth" = trustedHeaderSettingsAuth;
+    extraExtensionSources = {
+      "engines/pross-degoog-stackexchange-engine-stackexchange" =
+        repoPackages.degoog-stackexchange-engine;
+      "plugins/trusted-header-settings-auth" = trustedHeaderSettingsAuth;
+    };
   };
   degoogService = hostInventory.servicesById.goo;
   jellyfinService = hostInventory.servicesById.jellyfin;
@@ -55,6 +60,7 @@ let
     "jellyfin_api_key"
     "romm_api_token"
     "settings_password"
+    "stackexchange_api_key"
     "tmdb_api_key"
   ];
   mergePluginSettings = pkgs.writeShellApplication {
@@ -118,6 +124,8 @@ in
       };
       degoog-org-official-extensions-tmdb-slot.apiKey = config.sops.placeholder."degoog/tmdb_api_key";
       middleware.settingsGate = "plugin:trusted-header-settings-auth-middleware";
+      pross-degoog-stackexchange-engine-stackexchange-engine.apiKey =
+        config.sops.placeholder."degoog/stackexchange_api_key";
       trusted-header-settings-auth-middleware.allowedUsers = "ihar";
     };
     restartUnits = [ "degoog.service" ];

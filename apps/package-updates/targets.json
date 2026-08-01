@@ -21,6 +21,11 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "degoog-stackexchange-engine",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "ebook-converter-cli",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"

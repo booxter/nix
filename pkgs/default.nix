@@ -21,6 +21,8 @@ in
     degoogNodeModules = degoogPackage.productionNodeModules;
   };
 
+  degoog-stackexchange-engine = pkgs.callPackage ./degoog/stackexchange-engine.nix { };
+
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
   gitDarwinPrecompose =
