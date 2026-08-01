@@ -21,11 +21,6 @@ let
     After = [ "network-online.target" ];
     RequiresMountsFor = mediaPath;
   };
-  legacyImageProxyLocation = {
-    # The query-based endpoint fetches caller-supplied URLs and is not needed by
-    # current Aurral clients. Keep the cache-key image route below this path.
-    return = "404";
-  };
   imageProxyCacheZone = "aurral_images";
   imageProxyCacheLocation = {
     proxyPass = "http://127.0.0.1:${toString aurralPort}";
@@ -39,9 +34,8 @@ let
     '';
   };
   aurralImageLocations = {
-    "= /api/image-proxy" = legacyImageProxyLocation;
-    # Only the cache-key route is public. Do not share-cache the playlist and
-    # discovery artwork routes because their handlers enforce per-user access.
+    # Only cache-key responses have public cache semantics. Do not share-cache
+    # playlist or discovery artwork because those handlers enforce user access.
     "^~ /api/image-proxy/" = imageProxyCacheLocation;
   };
 in
@@ -151,8 +145,8 @@ in
     maxSize = "256m";
   };
 
-  # Close the legacy endpoint on both backend HTTPS surfaces. The exact match
-  # still permits /api/image-proxy/<cache-key>, which serves cached artwork.
+  # Cache only immutable cache-key responses. The query-based warming endpoint
+  # remains on the normal proxy path because Aurral still emits it for misses.
   services.nginx.virtualHosts."internal-https-aurral".locations = aurralImageLocations;
   services.nginx.virtualHosts.${aurralService.publicHost}.locations = aurralImageLocations;
 
