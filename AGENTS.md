@@ -22,6 +22,9 @@ Scope: whole repository.
 - Prefer flake apps/repo scripts over ad hoc commands. Check `--help` when unsure.
 - Prefer dependencies and packages already available from nixpkgs before adding
   local package definitions or vendored sources.
+- Do not trim unchanged context from vendored patches. Patches should carry
+  forward to new upstream versions only when the surrounding code still
+  matches.
 - Prefer third-party projects with a clear versioning story, especially tagged
   releases. If using an untagged revision, document the rationale and update
   path.
