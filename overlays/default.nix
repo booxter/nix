@@ -180,16 +180,21 @@
         ];
       });
 
-      # Carry the partial rename chunk fix until it lands upstream.
-      # TODO: report upstream and drop this extra patch once it is released.
-      diff-so-fancy = prev.diff-so-fancy.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/diff-so-fancy/commit/e9d375a3730366deb3d395dd693da86ad11e3368.patch";
-            hash = "sha256-3kI5fYOycVMub7sHrJnQfIZtKC026TpQIGSb4NCpreg=";
+      # Backport the partial rename chunk fix to the older Darwin package.
+      # Applying it unconditionally there makes a future upgrade fail until
+      # this backport is removed.
+      diff-so-fancy =
+        if prev.stdenv.hostPlatform.isDarwin then
+          prev.diff-so-fancy.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              (prev.fetchpatch {
+                url = "https://github.com/so-fancy/diff-so-fancy/commit/9a8b325a72de44d492b079a4b02cef4e2c33ab81.patch";
+                hash = "sha256-v3sk7VjKMLO+aGMtWCyrI9DOy+LeyGAb25UrEX3oXbs=";
+              })
+            ];
           })
-        ];
-      });
+        else
+          prev.diff-so-fancy;
 
       # Backport Grafana fix for /alerting/groups showing a bogus 404 header.
       # Upstream: https://github.com/grafana/grafana/pull/123286
