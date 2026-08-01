@@ -43,6 +43,7 @@ let
       "plugins/tmdb-slot"
       "plugins/trusted-header-settings-auth"
       "plugins/weather"
+      "themes/georgvwt-georgvwt-degoog-stuff-gruvbox-theme"
     ];
     extraExtensionSources = {
       "engines/devinside-devinside-degoog-osmapp-maps" =
@@ -56,6 +57,8 @@ let
         "${orgPkgs.degoog-georgvwt-extensions}/plugins/reddit-slot";
       "plugins/sopat712-degoog-toolkit-stocks" = "${orgPkgs.degoog-toolkit-extensions}/plugins/stocks";
       "plugins/trusted-header-settings-auth" = trustedHeaderSettingsAuth;
+      "themes/georgvwt-georgvwt-degoog-stuff-gruvbox-theme" =
+        "${orgPkgs.degoog-georgvwt-extensions}/themes/gruvbox";
     };
   };
   degoogService = hostInventory.servicesById.goo;
@@ -141,6 +144,7 @@ in
       middleware.settingsGate = "plugin:trusted-header-settings-auth-middleware";
       pross-degoog-stackexchange-engine-stackexchange-engine.apiKey =
         config.sops.placeholder."degoog/stackexchange_api_key";
+      theme.active = "georgvwt-georgvwt-degoog-stuff-gruvbox-theme";
       trusted-header-settings-auth-middleware.allowedUsers = "ihar";
     };
     restartUnits = [ "degoog.service" ];
