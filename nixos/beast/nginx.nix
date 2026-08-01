@@ -22,6 +22,7 @@ let
     llm = 14000;
     ai = 14001;
     search = 18083;
+    goo = 14444;
   };
   backendMtlsServices = builtins.mapAttrs (id: localPort: {
     clientName = id;

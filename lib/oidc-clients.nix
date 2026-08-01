@@ -143,6 +143,14 @@ rec {
       };
     };
 
+    goo = mkClient "goo" {
+      displayName = "Degoog";
+      originUrl = "${serviceUrl "goo"}/oauth2/callback";
+      originLanding = "${serviceUrl "goo"}/";
+      scopeMaps."ai-users" = scopeWith [ "ai_groups" ];
+      claimMaps.ai_groups.valuesByGroup."ai-users" = [ "ai-users" ];
+    };
+
     tg = mkClient "tg" {
       displayName = "Telegram Archive";
       originUrl = "https://tg.${lan.domain}/oauth2/callback";

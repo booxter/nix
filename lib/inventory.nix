@@ -804,6 +804,17 @@ rec {
       glanceCategory = "user";
     }))
     (resolveService (mkService {
+      id = "goo";
+      title = "Degoog";
+      icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
+      scope = "external";
+      owner = "org";
+      publicHost = "goo.${site.public.domain}";
+      probePath = "/oauth2/sign_in";
+      backendProbe.path = "/readyz";
+      glanceCategory = "user";
+    }))
+    (resolveService (mkService {
       id = "tg";
       title = "Telegram Archive";
       icon = "sh:telegram";
