@@ -201,6 +201,7 @@
                 degoog-georgvwt-extensions
                 degoog-official-extensions
                 degoog-stackexchange-engine
+                degoog-toolkit-extensions
                 searchless-ngx
                 telegram-archive
                 ;

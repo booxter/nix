@@ -10,6 +10,7 @@ in
     degoogNodeModules = degoogPackage.productionNodeModules;
   };
   degoog-stackexchange-engine = pkgs.callPackage ./degoog/stackexchange-engine.nix { };
+  degoog-toolkit-extensions = pkgs.callPackage ./degoog/toolkit-extensions.nix { };
   degoog-trusted-header-settings-auth = pkgs.callPackage ./degoog-trusted-header-settings-auth { };
   open-webui-tool-acl-reconcile = pkgs.callPackage ./open-webui-tool-acl-reconcile { };
   paperless-gpt-configure = pkgs.callPackage ./paperless-gpt-configure { };

@@ -36,6 +36,9 @@ let
       "plugins/jellyfin"
       "plugins/math-slot"
       "plugins/romm"
+      # Stocks declares Degoog 0.24.0, but the APIs it uses are already in our
+      # 0.23.0 package. Keep runtime compatibility in the deployment checks.
+      "plugins/sopat712-degoog-toolkit-stocks"
       "plugins/time"
       "plugins/tmdb-slot"
       "plugins/trusted-header-settings-auth"
@@ -51,6 +54,7 @@ let
         "${orgPkgs.degoog-georgvwt-extensions}/plugins/osm-slot";
       "plugins/georgvwt-georgvwt-degoog-stuff-reddit-slot" =
         "${orgPkgs.degoog-georgvwt-extensions}/plugins/reddit-slot";
+      "plugins/sopat712-degoog-toolkit-stocks" = "${orgPkgs.degoog-toolkit-extensions}/plugins/stocks";
       "plugins/trusted-header-settings-auth" = trustedHeaderSettingsAuth;
     };
   };
