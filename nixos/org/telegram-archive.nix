@@ -16,6 +16,9 @@ let
   sessionPath = "${sessionDir}/telegram_archive.session";
   viewerPort = 8091;
   oauth2ProxyPort = 4182;
+  migrationUnit = "telegram-archive-migrate.service";
+  schedulerUnit = "telegram-archive-scheduler.service";
+  viewerUnit = "telegram-archive-viewer.service";
   tgService = hostInventory.servicesById.tg;
   externalOrigin = "https://${tgService.id}.${hostInventory.site.lan.domain}";
 
@@ -220,6 +223,21 @@ in
   environment.systemPackages = [ telegramArchiveAuth ];
 
   systemd.services = {
+    telegram-archive-migrate = {
+      description = "Migrate the Telegram Archive database";
+      before = [
+        schedulerUnit
+        viewerUnit
+      ];
+      environment = commonEnvironment;
+      unitConfig.ConditionPathExists = databasePath;
+      serviceConfig = commonServiceConfig // {
+        Type = "oneshot";
+        ExecStart = "${orgPkgs.telegram-archive}/bin/telegram-archive-migrate";
+        RemainAfterExit = true;
+      };
+    };
+
     telegram-archive-scheduler = {
       description = "Telegram Archive scheduler and real-time listener";
       wantedBy = [ "multi-user.target" ];
@@ -230,7 +248,9 @@ in
         "network-online.target"
         "sops-install-secrets.service"
       ];
+      requires = [ migrationUnit ];
       after = [
+        migrationUnit
         "network-online.target"
         "sops-install-secrets.service"
       ];
@@ -252,7 +272,11 @@ in
       description = "Telegram Archive web viewer";
       wantedBy = [ "multi-user.target" ];
       wants = [ "sops-install-secrets.service" ];
-      after = [ "sops-install-secrets.service" ];
+      requires = [ migrationUnit ];
+      after = [
+        migrationUnit
+        "sops-install-secrets.service"
+      ];
       environment = viewerEnvironment;
       serviceConfig = commonServiceConfig // {
         ExecStart = "${viewerWrapper}/bin/telegram-archive-viewer-wrapper";
