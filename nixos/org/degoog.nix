@@ -20,6 +20,7 @@ let
       "engines/duckduckgo"
       "engines/duckduckgo-images"
       "engines/duckduckgo-news"
+      "engines/google-cse"
       "engines/hacker-news"
       "engines/internet-archive"
       "engines/reddit"
