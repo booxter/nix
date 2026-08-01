@@ -14,6 +14,7 @@
     sabnzbd = 38;
     seerr = 262;
     shelfmark = 250;
+    slskd = 297;
     sonarr = 274;
     transmission = 70;
   };

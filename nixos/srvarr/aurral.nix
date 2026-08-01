@@ -11,6 +11,7 @@ let
   mediaPath = config.host.srvarrPaths.mediaDir;
   aurralStateDir = "${config.host.srvarrPaths.stateDir}/aurral";
   aurralFlowDir = "${mediaPath}/library/flows";
+  slskdDownloadsDir = "${mediaPath}/slskd/complete";
   aurralService = hostInventory.servicesById.aurral;
   aurralAdminUsers = lib.attrNames (
     lib.filterAttrs (_: person: builtins.elem "media-admins" person.groups) hostInventory.sso.users
@@ -105,6 +106,9 @@ in
       ReadWritePaths = [
         aurralStateDir
         aurralFlowDir
+        # Aurral validates and moves completed slskd downloads into its
+        # separate flow library.
+        slskdDownloadsDir
       ];
       ProtectHome = true;
       ProtectHostname = true;
