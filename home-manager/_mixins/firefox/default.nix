@@ -6,6 +6,7 @@
 }:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
+  degoogUrl = hostInventory.servicesById.goo.url;
   firefoxDohExcludedDomains = [ hostInventory.site.public.domain ];
 in
 {
@@ -15,10 +16,30 @@ in
     # migrate existing state. macOS Firefox does not read ~/.mozilla/firefox.
     configPath = if isDarwin then "Library/Application Support/Firefox" else ".mozilla/firefox";
     profiles.default = {
-      # duckduckgo
-      search.default = "ddg";
-      search.privateDefault = "ddg";
-      search.force = true;
+      search = {
+        default = "degoog";
+        privateDefault = "degoog";
+        force = true;
+        engines = {
+          degoog = {
+            name = "Degoog";
+            urls = [
+              {
+                template = "${degoogUrl}/search";
+                params = [
+                  {
+                    name = "q";
+                    value = "{searchTerms}";
+                  }
+                ];
+              }
+            ];
+            searchForm = degoogUrl;
+            definedAliases = [ "@goo" ];
+          };
+          ddg = { };
+        };
+      };
 
       settings = {
         # enable installed extensions
