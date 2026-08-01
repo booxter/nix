@@ -2,6 +2,7 @@
 pkgs:
 let
   appPackages = import ../apps pkgs;
+  degoogPackage = pkgs.callPackage ./degoog { };
   gitPrecomposePatch = ../lib/patches/git-precompose-utf8-flex-array.patch;
   # Keep this as opt-in packages instead of overriding pkgs.git globally: Git
   # is a common build tool, so a global override can fan out into many rebuilds.
@@ -14,7 +15,11 @@ let
     });
 in
 {
-  degoog = pkgs.callPackage ./degoog { };
+  degoog = degoogPackage;
+
+  degoog-official-extensions = pkgs.callPackage ./degoog/official-extensions.nix {
+    degoogNodeModules = degoogPackage.productionNodeModules;
+  };
 
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 

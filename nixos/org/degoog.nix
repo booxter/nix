@@ -6,7 +6,20 @@
   ...
 }:
 let
-  degoogPackage = (import ../../pkgs pkgs).degoog;
+  repoPackages = import ../../pkgs pkgs;
+  degoogPackage = repoPackages.degoog;
+  degoogExtensions = repoPackages.degoog-official-extensions.override {
+    # Full catalog: https://degoog-org.github.io/community-extensions/
+    extensions = [
+      "autocomplete/brave"
+      "engines/brave"
+      "engines/brave-images"
+      "engines/brave-news"
+      "engines/duckduckgo"
+      "engines/duckduckgo-images"
+      "engines/duckduckgo-news"
+    ];
+  };
   degoogService = hostInventory.servicesById.goo;
   serviceName = "degoog";
   serviceUser = serviceName;
@@ -58,10 +71,16 @@ in
       "systemd-tmpfiles-setup.service"
     ];
     environment = {
+      DEGOOG_AUTOCOMPLETE_DIR = "${degoogExtensions}/autocomplete";
       DEGOOG_DATA_DIR = stateDir;
       DEGOOG_DISTRUST_PROXY = "0";
       DEGOOG_DOCKER = "true";
+      DEGOOG_ENGINES_DIR = "${degoogExtensions}/engines";
+      DEGOOG_PLUGINS_DIR = "${degoogExtensions}/plugins";
       DEGOOG_PUBLIC_INSTANCE = "false";
+      DEGOOG_SHORTCUTS_DIR = "${degoogExtensions}/shortcuts";
+      DEGOOG_THEMES_DIR = "${degoogExtensions}/themes";
+      DEGOOG_TRANSPORTS_DIR = "${degoogExtensions}/transports";
       DEGOOG_UNIX_SOCKET = socketPath;
       LOG_LEVEL = "info";
       NO_COLOR = "1";
@@ -69,6 +88,7 @@ in
     };
     serviceConfig = {
       ExecStart = lib.getExe degoogPackage;
+      ExecStartPre = "${pkgs.coreutils}/bin/rm -f ${socketPath}";
       EnvironmentFile = config.sops.templates."degoog.env".path;
       User = serviceUser;
       Group = serviceUser;
