@@ -31,21 +31,54 @@ let
     ];
   };
   degoogService = hostInventory.servicesById.goo;
+  jellyfinService = hostInventory.servicesById.jellyfin;
+  rommService = hostInventory.servicesById.romm;
   serviceName = "degoog";
   serviceUser = serviceName;
   stateDir = "/var/lib/${serviceName}";
   runtimeDir = "/run/${serviceName}";
   socketPath = "${runtimeDir}/${serviceName}.sock";
+  pluginSettingsFile = "${stateDir}/plugin-settings.json";
   upstream = "http://unix:${socketPath}";
   oauth2ProxyPort = 4183;
+  secretNames = [
+    "github_api_token"
+    "jellyfin_api_key"
+    "romm_api_token"
+    "settings_password"
+    "tmdb_api_key"
+  ];
+  mergePluginSettings = pkgs.writeShellApplication {
+    name = "degoog-merge-plugin-settings";
+    runtimeInputs = [
+      pkgs.coreutils
+      pkgs.jq
+    ];
+    text = ''
+      target=${lib.escapeShellArg pluginSettingsFile}
+      desired=${lib.escapeShellArg config.sops.templates."degoog-plugin-settings.json".path}
+      temporary="$(mktemp "$target.XXXXXX")"
+      trap 'rm -f "$temporary"' EXIT
+
+      if [[ -f "$target" ]]; then
+        jq --slurp '.[0] * .[1]' "$target" "$desired" > "$temporary"
+      else
+        jq '.' "$desired" > "$temporary"
+      fi
+
+      chmod 0600 "$temporary"
+      mv -f "$temporary" "$target"
+      trap - EXIT
+    '';
+  };
 in
 {
-  sops.secrets."degoog/settings_password" = {
+  sops.secrets = lib.genAttrs (map (name: "degoog/${name}") secretNames) (_: {
     owner = serviceUser;
     group = serviceUser;
     mode = "0400";
     restartUnits = [ "degoog.service" ];
-  };
+  });
 
   sops.templates."degoog.env" = {
     owner = serviceUser;
@@ -54,6 +87,27 @@ in
     content = ''
       DEGOOG_SETTINGS_PASSWORDS=${config.sops.placeholder."degoog/settings_password"}
     '';
+    restartUnits = [ "degoog.service" ];
+  };
+
+  sops.templates."degoog-plugin-settings.json" = {
+    owner = serviceUser;
+    group = serviceUser;
+    mode = "0400";
+    content = builtins.toJSON {
+      degoog-org-official-extensions-github-slot.apiToken =
+        config.sops.placeholder."degoog/github_api_token";
+      degoog-org-official-extensions-jellyfin-command = {
+        apiKey = config.sops.placeholder."degoog/jellyfin_api_key";
+        headerName = "X-Emby-Token";
+        url = jellyfinService.url;
+      };
+      degoog-org-official-extensions-romm-command = {
+        apiToken = config.sops.placeholder."degoog/romm_api_token";
+        url = rommService.url;
+      };
+      degoog-org-official-extensions-tmdb-slot.apiKey = config.sops.placeholder."degoog/tmdb_api_key";
+    };
     restartUnits = [ "degoog.service" ];
   };
 
@@ -87,6 +141,7 @@ in
       DEGOOG_DOCKER = "true";
       DEGOOG_ENGINES_DIR = "${degoogExtensions}/engines";
       DEGOOG_PLUGINS_DIR = "${degoogExtensions}/plugins";
+      DEGOOG_PLUGIN_SETTINGS_FILE = pluginSettingsFile;
       DEGOOG_PUBLIC_INSTANCE = "false";
       DEGOOG_SHORTCUTS_DIR = "${degoogExtensions}/shortcuts";
       DEGOOG_THEMES_DIR = "${degoogExtensions}/themes";
@@ -98,7 +153,10 @@ in
     };
     serviceConfig = {
       ExecStart = lib.getExe degoogPackage;
-      ExecStartPre = "${pkgs.coreutils}/bin/rm -f ${socketPath}";
+      ExecStartPre = [
+        "${pkgs.coreutils}/bin/rm -f ${socketPath}"
+        (lib.getExe mergePluginSettings)
+      ];
       EnvironmentFile = config.sops.templates."degoog.env".path;
       User = serviceUser;
       Group = serviceUser;
