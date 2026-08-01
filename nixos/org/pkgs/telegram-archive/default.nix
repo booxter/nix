@@ -1,4 +1,5 @@
 {
+  coreutils,
   fetchFromGitHub,
   lib,
   makeWrapper,
@@ -41,13 +42,13 @@ let
 in
 stdenvNoCC.mkDerivation rec {
   pname = "telegram-archive";
-  version = "7.20.0";
+  version = "7.31.2";
 
   src = fetchFromGitHub {
     owner = "GeiserX";
     repo = "Telegram-Archive";
     tag = "v${version}";
-    hash = "sha256-HfR5XytzgQ1RB2YcypA/9r7uzarijwEQwcUpzODCJDM=";
+    hash = "sha256-1AEKLaN5AgiuY4Ucb0gfyU6s9tPVqUhnndLTZe2ffZY=";
   };
 
   nativeBuildInputs = [ makeWrapper ];
@@ -55,9 +56,14 @@ stdenvNoCC.mkDerivation rec {
   installPhase = ''
     runHook preInstall
 
-    mkdir -p "$out/share/telegram-archive"
+    mkdir -p "$out/libexec" "$out/share/telegram-archive"
     cp -R alembic src "$out/share/telegram-archive/"
     cp alembic.ini LICENSE README.md pyproject.toml "$out/share/telegram-archive/"
+    install -m 0755 scripts/entrypoint.sh "$out/libexec/telegram-archive-entrypoint"
+
+    substituteInPlace "$out/libexec/telegram-archive-entrypoint" \
+      --replace-fail "/app/alembic.ini" "$out/share/telegram-archive/alembic.ini"
+    patchShebangs "$out/libexec/telegram-archive-entrypoint"
 
     makeWrapper ${pythonEnv}/bin/python "$out/bin/telegram-archive" \
       --chdir "$out/share/telegram-archive" \
@@ -65,6 +71,15 @@ stdenvNoCC.mkDerivation rec {
     makeWrapper ${pythonEnv}/bin/python "$out/bin/telegram-archive-viewer" \
       --chdir "$out/share/telegram-archive" \
       --add-flags "-m uvicorn src.web.main:app"
+    makeWrapper "$out/libexec/telegram-archive-entrypoint" "$out/bin/telegram-archive-migrate" \
+      --chdir "$out/share/telegram-archive" \
+      --prefix PATH : ${
+        lib.makeBinPath [
+          coreutils
+          pythonEnv
+        ]
+      } \
+      --add-flags "${coreutils}/bin/true"
 
     runHook postInstall
   '';

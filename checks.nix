@@ -18,6 +18,9 @@ helpers.forAllSystems (
     fleetApps = import ./apps/fleet.nix { inherit pkgs; };
     fanaMonitoring = import ./nixos/fana/monitoring/catalog.nix;
     packageUpdateScripts = pkgs.lib.fileset.fileFilter (file: file.name == "update.sh") ./.;
+    patchFiles = pkgs.lib.fileset.fileFilter (
+      file: pkgs.lib.hasSuffix ".patch" file.name || pkgs.lib.hasSuffix ".diff" file.name
+    ) ./.;
     mkCheck =
       {
         name,
@@ -98,6 +101,15 @@ helpers.forAllSystems (
       ];
       buildPhase = ''
         pytest -q tests/test_box.py
+      '';
+    };
+    patch-context = mkCheck {
+      name = "patch-context";
+      nativeBuildInputs = [ pkgs.python3 ];
+      extraFileset = [ patchFiles ];
+      buildPhase = ''
+        python3 -m unittest discover -s tests -p 'test_patch_context.py'
+        python3 tests/check_patch_context.py .
       '';
     };
     wg-home-client-config = mkCheck {
