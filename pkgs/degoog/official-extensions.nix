@@ -1,4 +1,5 @@
 {
+  applyPatches,
   degoogNodeModules,
   extensions ? [ ],
   fetchFromGitHub,
@@ -7,11 +8,16 @@
 }:
 let
   rev = "abfd270cb4f85080fd09a0763dbdd5eae0c927d5";
-  src = fetchFromGitHub {
+  upstreamSrc = fetchFromGitHub {
     owner = "degoog-org";
     repo = "official-extensions";
     inherit rev;
     hash = "sha256-6jgpEsez0DJSCeOJPQJ4NkFaz2CE8mv3/aVfTRfGxlg=";
+  };
+  src = applyPatches {
+    name = "degoog-official-extensions-source";
+    src = upstreamSrc;
+    patches = [ ./romm-client-api-token.patch ];
   };
   validExtension =
     extension:
