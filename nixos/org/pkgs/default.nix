@@ -5,6 +5,7 @@ in
 {
   degoog = degoogPackage;
   degoog-devinside-extensions = pkgs.callPackage ./degoog/devinside-extensions.nix { };
+  degoog-georgvwt-extensions = pkgs.callPackage ./degoog/georgvwt-extensions.nix { };
   degoog-official-extensions = pkgs.callPackage ./degoog/official-extensions.nix {
     degoogNodeModules = degoogPackage.productionNodeModules;
   };

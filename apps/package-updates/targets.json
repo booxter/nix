@@ -21,6 +21,11 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "degoog-georgvwt-extensions",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "degoog-official-extensions",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"

@@ -29,6 +29,8 @@ let
       "plugins/ddg-bang"
       "plugins/define"
       "plugins/devinside-devinside-degoog-local-history"
+      "plugins/georgvwt-georgvwt-degoog-stuff-osm-slot"
+      "plugins/georgvwt-georgvwt-degoog-stuff-reddit-slot"
       "plugins/github-slot"
       "plugins/highlight-terms"
       "plugins/jellyfin"
@@ -45,6 +47,10 @@ let
       "engines/pross-degoog-stackexchange-engine-stackexchange" = orgPkgs.degoog-stackexchange-engine;
       "plugins/devinside-devinside-degoog-local-history" =
         "${orgPkgs.degoog-devinside-extensions}/plugins/local-history";
+      "plugins/georgvwt-georgvwt-degoog-stuff-osm-slot" =
+        "${orgPkgs.degoog-georgvwt-extensions}/plugins/osm-slot";
+      "plugins/georgvwt-georgvwt-degoog-stuff-reddit-slot" =
+        "${orgPkgs.degoog-georgvwt-extensions}/plugins/reddit-slot";
       "plugins/trusted-header-settings-auth" = trustedHeaderSettingsAuth;
     };
   };
@@ -127,6 +133,7 @@ in
         url = rommService.url;
       };
       degoog-org-official-extensions-tmdb-slot.apiKey = config.sops.placeholder."degoog/tmdb_api_key";
+      georgvwt-georgvwt-degoog-stuff-reddit-slot.filterNsfw = false;
       middleware.settingsGate = "plugin:trusted-header-settings-auth-middleware";
       pross-degoog-stackexchange-engine-stackexchange-engine.apiKey =
         config.sops.placeholder."degoog/stackexchange_api_key";

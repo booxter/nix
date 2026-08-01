@@ -198,6 +198,7 @@
               inherit (orgPackages)
                 degoog
                 degoog-devinside-extensions
+                degoog-georgvwt-extensions
                 degoog-official-extensions
                 degoog-stackexchange-engine
                 searchless-ngx
