@@ -25,6 +25,24 @@ let
     # current Aurral clients. Keep the cache-key image route below this path.
     return = "404";
   };
+  imageProxyCacheZone = "aurral_images";
+  imageProxyCacheLocation = {
+    proxyPass = "http://127.0.0.1:${toString aurralPort}";
+    recommendedProxySettings = true;
+    extraConfig = ''
+      proxy_cache ${imageProxyCacheZone};
+      proxy_cache_background_update on;
+      proxy_cache_lock on;
+      proxy_cache_revalidate on;
+      proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+    '';
+  };
+  aurralImageLocations = {
+    "= /api/image-proxy" = legacyImageProxyLocation;
+    # Only the cache-key route is public. Do not share-cache the playlist and
+    # discovery artwork routes because their handlers enforce per-user access.
+    "^~ /api/image-proxy/" = imageProxyCacheLocation;
+  };
 in
 {
   # Sharp resolves fonts through fontconfig when rendering playlist artwork.
@@ -121,12 +139,18 @@ in
     probe.enable = true;
   };
 
+  services.nginx.proxyCachePath.aurral-images = {
+    enable = true;
+    keysZoneName = imageProxyCacheZone;
+    keysZoneSize = "1m";
+    inactive = "7d";
+    maxSize = "256m";
+  };
+
   # Close the legacy endpoint on both backend HTTPS surfaces. The exact match
   # still permits /api/image-proxy/<cache-key>, which serves cached artwork.
-  services.nginx.virtualHosts."internal-https-aurral".locations."= /api/image-proxy" =
-    legacyImageProxyLocation;
-  services.nginx.virtualHosts.${aurralService.publicHost}.locations."= /api/image-proxy" =
-    legacyImageProxyLocation;
+  services.nginx.virtualHosts."internal-https-aurral".locations = aurralImageLocations;
+  services.nginx.virtualHosts.${aurralService.publicHost}.locations = aurralImageLocations;
 
   # Aurral's OAuth gate lives on beast because only the public hostname is
   # browser-protected. The backend probe still needs a probe-only listener on
