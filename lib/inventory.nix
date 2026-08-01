@@ -744,7 +744,7 @@ rec {
     (resolveService (mkService {
       id = "notes";
       title = "Trilium Notes";
-      icon = "sh:trilium";
+      icon = "sh:trilium-notes";
       scope = "external";
       owner = "org";
       publicHost = "notes.${site.public.domain}";
