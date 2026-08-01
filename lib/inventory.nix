@@ -1217,6 +1217,7 @@ rec {
         "llm"
         "ai"
         "search"
+        "goo"
         "tg"
       ];
       upsHost = "prx1-lab";
