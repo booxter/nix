@@ -27,6 +27,9 @@ let
   };
 in
 {
+  # Sharp resolves fonts through fontconfig when rendering playlist artwork.
+  fonts.packages = [ pkgs.dejavu_fonts ];
+
   users.groups.aurral = { };
   users.users.aurral = {
     isSystemUser = true;
