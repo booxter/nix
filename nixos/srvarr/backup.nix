@@ -8,6 +8,8 @@ let
   pinepodsDatabaseDir = "${stateRoot}/pinepods/postgresql";
   backupPaths = [ stateRoot ];
   rommDatabaseBackupDir = "${stateRoot}/romm-mariadb-backup/latest";
+  aurralConfigDir = "${stateRoot}/aurral";
+  aurralBackupDir = "${stateRoot}/aurral-backup/latest";
   seerrConfigDir = "${stateRoot}/seerr";
   seerrBackupDir = "${stateRoot}/seerr-backup/latest";
   houndarrConfigDir = "${stateRoot}/houndarr";
@@ -34,6 +36,13 @@ in
       After = [ "romm-db-init.service" ];
       Requires = [ "romm-db-init.service" ];
     };
+  };
+
+  host.backups.artifacts.sqlite.aurral = {
+    displayName = "Aurral";
+    databasePath = "${aurralConfigDir}/aurral.db";
+    destinationDir = aurralBackupDir;
+    includeInBeastBackup = false;
   };
 
   host.backups.artifacts.sqlite.seerr = {
