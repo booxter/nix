@@ -6,10 +6,11 @@
 }:
 let
   mediaDir = config.host.srvarrPaths.mediaDir;
-  peerPort = 45486;
+  srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
+  peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
   tuning = config.host.srvarrTuning;
-  wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
+  wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.

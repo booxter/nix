@@ -1142,6 +1142,11 @@ rec {
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
         namespaceAddress = "192.168.50.1";
+        # Ports allocated in AirVPN's forwarded-port control panel.
+        forwardedPorts = {
+          slskd = 13869;
+          transmission = 45486;
+        };
       };
       cores = 16;
       memorySize = 32;
