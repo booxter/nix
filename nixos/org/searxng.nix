@@ -15,6 +15,11 @@ let
     # SearXNG-backed retrieval path unless the user manually toggles search.
     capabilities.web_search = true;
     defaultFeatureIds = [ "web_search" ];
+    builtinTools = {
+      automations = false;
+      calendar = false;
+      knowledge = false;
+    };
   };
   searxMetricsMtlsPort = 9349;
   searxPort = 18083;
