@@ -112,6 +112,7 @@ stdenv.mkDerivation {
 
     mkdir -p "\$AURRAL_DATA_DIR" "\$DOWNLOAD_FOLDER" "\$WEEKLY_FLOW_FOLDER"
 
+    export APP_VERSION=${lib.escapeShellArg version}
     export AURRAL_DATA_DIR DOWNLOAD_FOLDER WEEKLY_FLOW_FOLDER
     export NODE_ENV=production
 
