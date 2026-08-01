@@ -1,0 +1,15 @@
+diff --git a/plugins/stocks/index.js b/plugins/stocks/index.js
+index 2a8c1b8..bc63ce8 100644
+--- a/plugins/stocks/index.js
++++ b/plugins/stocks/index.js
+@@ -229,8 +229,8 @@ export const slot = {
+   description:
+     "Shows no-key stock quotes for explicit ticker and company-share queries using server-side Yahoo Finance data with Stooq fallback.",
+   isClientExposed: false,
+-  position: "full-width-above-results",
+-  slotPositions: ["full-width-above-results", "knowledge-panel"],
++  position: "above-results",
++  slotPositions: ["above-results", "knowledge-panel"],
+   waitForResults: true,
+   settingsSchema: [
+     {

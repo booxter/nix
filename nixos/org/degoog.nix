@@ -36,8 +36,8 @@ let
       "plugins/jellyfin"
       "plugins/math-slot"
       "plugins/romm"
-      # Stocks declares Degoog 0.24.0, but the APIs it uses are already in our
-      # 0.23.0 package. Keep runtime compatibility in the deployment checks.
+      # Stocks uses a slot position introduced in Degoog 0.24.0. Its package
+      # patches that position for 0.23.x and asserts when the patch is stale.
       "plugins/sopat712-degoog-toolkit-stocks"
       "plugins/time"
       "plugins/tmdb-slot"
