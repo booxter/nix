@@ -16,6 +16,7 @@ let
       "engines/brave"
       "engines/brave-images"
       "engines/brave-news"
+      "engines/devinside-devinside-degoog-osmapp-maps"
       "engines/duckduckgo"
       "engines/duckduckgo-images"
       "engines/duckduckgo-news"
@@ -27,6 +28,7 @@ let
       "engines/wikipedia"
       "plugins/ddg-bang"
       "plugins/define"
+      "plugins/devinside-devinside-degoog-local-history"
       "plugins/github-slot"
       "plugins/highlight-terms"
       "plugins/jellyfin"
@@ -38,7 +40,11 @@ let
       "plugins/weather"
     ];
     extraExtensionSources = {
+      "engines/devinside-devinside-degoog-osmapp-maps" =
+        "${orgPkgs.degoog-devinside-extensions}/engines/osmapp-maps";
       "engines/pross-degoog-stackexchange-engine-stackexchange" = orgPkgs.degoog-stackexchange-engine;
+      "plugins/devinside-devinside-degoog-local-history" =
+        "${orgPkgs.degoog-devinside-extensions}/plugins/local-history";
       "plugins/trusted-header-settings-auth" = trustedHeaderSettingsAuth;
     };
   };

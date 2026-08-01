@@ -16,6 +16,11 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "degoog-devinside-extensions",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "degoog-official-extensions",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"

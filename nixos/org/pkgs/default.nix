@@ -4,6 +4,7 @@ let
 in
 {
   degoog = degoogPackage;
+  degoog-devinside-extensions = pkgs.callPackage ./degoog/devinside-extensions.nix { };
   degoog-official-extensions = pkgs.callPackage ./degoog/official-extensions.nix {
     degoogNodeModules = degoogPackage.productionNodeModules;
   };

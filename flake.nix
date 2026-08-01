@@ -197,6 +197,7 @@
               aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
               inherit (orgPackages)
                 degoog
+                degoog-devinside-extensions
                 degoog-official-extensions
                 degoog-stackexchange-engine
                 searchless-ngx
