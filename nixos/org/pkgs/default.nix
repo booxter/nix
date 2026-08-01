@@ -1,4 +1,13 @@
-pkgs: {
+pkgs:
+let
+  degoogPackage = pkgs.callPackage ./degoog { };
+in
+{
+  degoog = degoogPackage;
+  degoog-official-extensions = pkgs.callPackage ./degoog/official-extensions.nix {
+    degoogNodeModules = degoogPackage.productionNodeModules;
+  };
+  degoog-stackexchange-engine = pkgs.callPackage ./degoog/stackexchange-engine.nix { };
   degoog-trusted-header-settings-auth = pkgs.callPackage ./degoog-trusted-header-settings-auth { };
   open-webui-tool-acl-reconcile = pkgs.callPackage ./open-webui-tool-acl-reconcile { };
   paperless-gpt-configure = pkgs.callPackage ./paperless-gpt-configure { };

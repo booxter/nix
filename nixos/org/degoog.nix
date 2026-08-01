@@ -7,10 +7,9 @@
   ...
 }:
 let
-  repoPackages = import ../../pkgs pkgs;
-  degoogPackage = repoPackages.degoog;
+  degoogPackage = orgPkgs.degoog;
   trustedHeaderSettingsAuth = orgPkgs.degoog-trusted-header-settings-auth;
-  degoogExtensions = repoPackages.degoog-official-extensions.override {
+  degoogExtensions = orgPkgs.degoog-official-extensions.override {
     # Full catalog: https://degoog-org.github.io/community-extensions/
     extensions = [
       "autocomplete/brave"
@@ -39,8 +38,7 @@ let
       "plugins/weather"
     ];
     extraExtensionSources = {
-      "engines/pross-degoog-stackexchange-engine-stackexchange" =
-        repoPackages.degoog-stackexchange-engine;
+      "engines/pross-degoog-stackexchange-engine-stackexchange" = orgPkgs.degoog-stackexchange-engine;
       "plugins/trusted-header-settings-auth" = trustedHeaderSettingsAuth;
     };
   };

@@ -3,7 +3,7 @@ set -euo pipefail
 
 attr="${UPDATE_NIX_ATTR_PATH:-degoog-stackexchange-engine}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
-package_file="pkgs/degoog/stackexchange-engine.nix"
+package_file="nixos/org/pkgs/degoog/stackexchange-engine.nix"
 
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
