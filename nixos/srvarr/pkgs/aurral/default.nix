@@ -146,8 +146,22 @@ stdenv.mkDerivation {
       const { default: Database } = await import("better-sqlite3");
       const database = new Database(":memory:");
       database.close();
-      await import("sharp");
-      await import("@russellthehippo/honker-node");
+      const { default: sharp } = await import("sharp");
+      const image = await sharp({
+        create: {
+          width: 1,
+          height: 1,
+          channels: 4,
+          background: "#00000000",
+        },
+      }).png().toBuffer();
+      if (image.length === 0) {
+        throw new Error("sharp produced an empty image");
+      }
+      const { default: honker } = await import("@russellthehippo/honker-node");
+      const honkerDatabase = honker.open(`''${process.env.AURRAL_DATA_DIR}/honker-smoke.db`);
+      honkerDatabase.query("SELECT 1");
+      honkerDatabase.close();
       await import("./backend/db/helpers/index.js");
       const { isLocalAuthEnabled } = await import("./backend/middleware/auth.js");
       delete process.env.DISABLE_LOCAL_AUTH;
