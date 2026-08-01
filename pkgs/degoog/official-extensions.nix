@@ -2,6 +2,7 @@
   applyPatches,
   degoogNodeModules,
   extensions ? [ ],
+  extraExtensionSources ? { },
   fetchFromGitHub,
   lib,
   stdenvNoCC,
@@ -24,14 +25,20 @@ let
     builtins.match "^(autocomplete|engines|plugins|shortcuts|themes|transports)/[a-z0-9][a-z0-9._+-]*$" extension
     != null;
   invalidExtensions = builtins.filter (extension: !validExtension extension) extensions;
+  invalidExtraExtensionSources = builtins.filter (extension: !validExtension extension) (
+    builtins.attrNames extraExtensionSources
+  );
   copyExtension =
     extension:
     let
       extensionType = builtins.head (lib.splitString "/" extension);
       extensionName = builtins.baseNameOf extension;
       canonicalName = "degoog-org-official-extensions-${extensionName}";
+      isExtraExtension = builtins.hasAttr extension extraExtensionSources;
       installedName =
-        if extensionType == "autocomplete" then
+        if isExtraExtension then
+          extensionName
+        else if extensionType == "autocomplete" then
           "${canonicalName}-autocomplete"
         else if extensionType == "shortcuts" then
           "${canonicalName}-shortcut"
@@ -39,7 +46,7 @@ let
           "${canonicalName}-theme"
         else
           canonicalName;
-      source = "${src}/${extension}";
+      source = if isExtraExtension then extraExtensionSources.${extension} else "${src}/${extension}";
     in
     ''
       if [[ ! -d ${lib.escapeShellArg source} ]]; then
@@ -52,6 +59,9 @@ in
 assert lib.assertMsg (
   invalidExtensions == [ ]
 ) "invalid Degoog extension paths: ${lib.concatStringsSep ", " invalidExtensions}";
+assert lib.assertMsg (
+  invalidExtraExtensionSources == [ ]
+) "invalid extra Degoog extension paths: ${lib.concatStringsSep ", " invalidExtraExtensionSources}";
 assert lib.assertMsg (lib.unique extensions == extensions) "duplicate Degoog extension paths";
 stdenvNoCC.mkDerivation {
   pname = "degoog-official-extensions";
