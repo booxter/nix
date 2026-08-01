@@ -20,6 +20,10 @@ let
       "engines/duckduckgo"
       "engines/duckduckgo-images"
       "engines/duckduckgo-news"
+      "engines/hacker-news"
+      "engines/internet-archive"
+      "engines/reddit"
+      "engines/wikipedia"
       "plugins/ddg-bang"
       "plugins/define"
       "plugins/github-slot"
@@ -106,6 +110,7 @@ in
         headerName = "X-Emby-Token";
         url = jellyfinService.url;
       };
+      degoog-org-official-extensions-reddit-engine.includeNsfw = "true";
       degoog-org-official-extensions-romm-command = {
         apiToken = config.sops.placeholder."degoog/romm_api_token";
         url = rommService.url;
