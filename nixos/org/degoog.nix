@@ -2,12 +2,14 @@
   config,
   hostInventory,
   lib,
+  orgPkgs,
   pkgs,
   ...
 }:
 let
   repoPackages = import ../../pkgs pkgs;
   degoogPackage = repoPackages.degoog;
+  trustedHeaderSettingsAuth = orgPkgs.degoog-trusted-header-settings-auth;
   degoogExtensions = repoPackages.degoog-official-extensions.override {
     # Full catalog: https://degoog-org.github.io/community-extensions/
     extensions = [
@@ -27,8 +29,10 @@ let
       "plugins/romm"
       "plugins/time"
       "plugins/tmdb-slot"
+      "plugins/trusted-header-settings-auth"
       "plugins/weather"
     ];
+    extraExtensionSources."plugins/trusted-header-settings-auth" = trustedHeaderSettingsAuth;
   };
   degoogService = hostInventory.servicesById.goo;
   jellyfinService = hostInventory.servicesById.jellyfin;
@@ -107,6 +111,8 @@ in
         url = rommService.url;
       };
       degoog-org-official-extensions-tmdb-slot.apiKey = config.sops.placeholder."degoog/tmdb_api_key";
+      middleware.settingsGate = "plugin:trusted-header-settings-auth-middleware";
+      trusted-header-settings-auth-middleware.allowedUsers = "ihar";
     };
     restartUnits = [ "degoog.service" ];
   };
@@ -210,6 +216,13 @@ in
     internalHttpsServiceNames = [ "goo" ];
     signInLocationName = "@goo_oauth2_proxy_sign_in";
     authCookieVariableName = "goo_auth_cookie";
+    authRequestHeaders = [
+      {
+        variableName = "goo_user";
+        upstreamHeader = "x_auth_request_preferred_username";
+        proxyHeader = "X-User";
+      }
+    ];
     probeLocationsByName.goo."= /readyz" = {
       proxyPass = upstream;
       recommendedProxySettings = true;
