@@ -14,6 +14,8 @@ let
     });
 in
 {
+  degoog = pkgs.callPackage ./degoog { };
+
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
   gitDarwinPrecompose =
