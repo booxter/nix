@@ -3,8 +3,10 @@
 
 ARGS = -L --show-trace
 NH_ARGS = --print-build-logs --show-trace
-# Avoid comparing a Linux result with the local nix-darwin generation.
-NIXOS_NH_DIFF_ARGS := $(if $(filter Darwin,$(shell uname -s)),--diff never,)
+LOCAL_OS := $(shell uname -s)
+
+# Avoid comparing a result with a local generation from another platform.
+nh-diff-args = $(if $(filter $(1),$(LOCAL_OS)),,--diff never)
 
 REMOTE ?= true
 LOCAL_LOCAL_BUILDERS = $(shell nix run --quiet --option builders '' .#get-local-builders -- --local)
@@ -66,7 +68,7 @@ nixos:
 	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
 	$(call require-what-and-list-hosts,nixos, [REMOTE=false]) \
 	$(call require-known-host,nixos,$(WHAT)) \
-	$(call nh-config-build,os,$(WHAT),$(NIXOS_NH_DIFF_ARGS))
+	$(call nh-config-build,os,$(WHAT),$(call nh-diff-args,Linux))
 
 nixos-eval:
 	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
@@ -78,7 +80,7 @@ darwin:
 	@known="$$($(call config-hosts,.#darwinConfigurations))"; \
 	$(call require-what-and-list-hosts,darwin, [REMOTE=false]) \
 	$(call require-known-host,darwin,$(WHAT)) \
-	$(call nh-config-build,darwin,$(WHAT))
+	$(call nh-config-build,darwin,$(WHAT),$(call nh-diff-args,Darwin))
 
 darwin-eval:
 	@known="$$($(call config-hosts,.#darwinConfigurations))"; \
