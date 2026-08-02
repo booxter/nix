@@ -122,6 +122,112 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_vmstat_oom_kill{instance="frame",job="node-mtls"}'
+        values: "0x10 1x3"
+    alert_rule_test:
+      - eval_time: 4m30s
+        alertname: NodeOOMKillDetected
+      - eval_time: 5m
+        alertname: NodeOOMKillDetected
+      - eval_time: 5m30s
+        alertname: NodeOOMKillDetected
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeOOMKillDetected
+              category: capacity
+              instance: frame
+              job: node-mtls
+              severity: critical
+            exp_annotations:
+              summary: "Kernel OOM kill detected on frame"
+              description: "The kernel OOM killer terminated at least one process on frame during the last 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_vmstat_oom_kill{instance="beast",job="node-mtls"}'
+        values: "0x22"
+    alert_rule_test:
+      - eval_time: 10m
+        alertname: NodeOOMKillDetected
+
+  - interval: 30s
+    input_series:
+      - series: 'node_pressure_cpu_waiting_seconds_total{instance="builder3",job="node-mtls"}'
+        values: "0+28.5x42"
+    alert_rule_test:
+      - eval_time: 19m30s
+        alertname: NodeCPUPressureHigh
+      - eval_time: 20m
+        alertname: NodeCPUPressureHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeCPUPressureHigh
+              category: capacity
+              instance: builder3
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "CPU pressure high on builder3"
+              description: "CPU pressure has kept at least one task waiting for more than 90% of wall time on builder3 for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_pressure_memory_stalled_seconds_total{instance="org",job="node-mtls"}'
+        values: "0+6x32"
+    alert_rule_test:
+      - eval_time: 12m30s
+        alertname: NodeMemoryPressureHigh
+      - eval_time: 13m
+        alertname: NodeMemoryPressureHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeMemoryPressureHigh
+              category: capacity
+              instance: org
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Memory pressure high on org"
+              description: "Memory pressure has stalled all non-idle tasks for more than 10% of wall time on org for 10 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_pressure_io_stalled_seconds_total{instance="srvarr",job="node-mtls"}'
+        values: "0+18x42"
+    alert_rule_test:
+      - eval_time: 19m
+        alertname: NodeIOPressureHigh
+      - eval_time: 19m30s
+        alertname: NodeIOPressureHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeIOPressureHigh
+              category: capacity
+              instance: srvarr
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "I/O pressure high on srvarr"
+              description: "I/O pressure has stalled all non-idle tasks for more than 50% of wall time on srvarr for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_pressure_cpu_waiting_seconds_total{instance="builder3",job="node-mtls"}'
+        values: "0+27x42"
+      - series: 'node_pressure_memory_stalled_seconds_total{instance="org",job="node-mtls"}'
+        values: "0+3x42"
+      - series: 'node_pressure_io_stalled_seconds_total{instance="srvarr",job="node-mtls"}'
+        values: "0+15x42"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: NodeCPUPressureHigh
+      - eval_time: 20m
+        alertname: NodeMemoryPressureHigh
+      - eval_time: 20m
+        alertname: NodeIOPressureHigh
+
+  - interval: 30s
+    input_series:
       - series: 'node_memory_MemAvailable_bytes{instance="prx1-lab",job="node-mtls"}'
         values: "25769803776x12"
       - series: 'node_memory_MemTotal_bytes{instance="prx1-lab",job="node-mtls"}'
