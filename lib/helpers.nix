@@ -101,6 +101,7 @@ rec {
         upsShutdownDelaySeconds = upsShutdownDelaySeconds isVM;
       };
       modules = [
+        inputs.stylix.nixosModules.stylix
         ../common
         ../nixos
         inputs.disko.nixosModules.disko
@@ -460,6 +461,7 @@ rec {
       modules = [
         inputs.nix-homebrew.darwinModules.nix-homebrew
         inputs.sops-nix.darwinModules.sops
+        inputs.stylix.darwinModules.stylix
         ../common
         ../darwin
 

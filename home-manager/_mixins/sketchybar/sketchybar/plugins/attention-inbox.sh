@@ -6,10 +6,10 @@ ITEM="attention.inbox"
 POPUP_ITEM_PREFIX="attention.inbox."
 MAX_ITEMS=10
 
-NEUTRAL="0xffa9b1d6"
-ORANGE="0xffff9e64"
-RED="0xfff7768e"
-YELLOW="0xffe0af68"
+NEUTRAL="${SKETCHYBAR_COLOR_NEUTRAL:-0xffd5c4a1}"
+ORANGE="${SKETCHYBAR_COLOR_ORANGE:-0xfffe8019}"
+RED="${SKETCHYBAR_COLOR_RED:-0xfffb4934}"
+YELLOW="${SKETCHYBAR_COLOR_YELLOW:-0xfffabd2f}"
 
 hide_popup_items() {
   local args=()

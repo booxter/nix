@@ -8,10 +8,10 @@ RESETS_ITEM="codex.resets"
 RESETS_POPUP_ITEM="codex.resets.expiry"
 EXPIRING_RESET_SECONDS=604800
 
-GREEN="0xff9ece6a"
-RED="0xfff7768e"
-BLUE="0xff7aa2f7"
-NEUTRAL="0xffa9b1d6"
+GREEN="${SKETCHYBAR_COLOR_GREEN:-0xffb8bb26}"
+RED="${SKETCHYBAR_COLOR_RED:-0xfffb4934}"
+BLUE="${SKETCHYBAR_COLOR_BLUE:-0xff83a598}"
+NEUTRAL="${SKETCHYBAR_COLOR_NEUTRAL:-0xffd5c4a1}"
 
 format_duration() {
   local seconds="$1"

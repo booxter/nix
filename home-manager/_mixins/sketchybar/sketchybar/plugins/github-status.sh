@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+RED="${SKETCHYBAR_COLOR_RED:-0xfffb4934}"
+
 if ! summary="$(${CURL:-curl} \
   --fail \
   --silent \
@@ -34,5 +36,5 @@ fi
 sketchybar --set "$NAME" \
   drawing=on \
   icon="" \
-  icon.color="0xfff7768e" \
+  icon.color="$RED" \
   label.drawing=off

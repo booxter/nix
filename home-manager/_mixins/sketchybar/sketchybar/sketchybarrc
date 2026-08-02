@@ -1,7 +1,7 @@
 PLUGIN_DIR="$CONFIG_DIR/plugins"
 THEME_DIR="$CONFIG_DIR/themes"
 
-source "$THEME_DIR/tokyonight"
+source "$THEME_DIR/gruvbox"
 
 bar=(
     blur_radius="$BAR_BLUR_RADIUS"
@@ -63,11 +63,10 @@ sketchybar --add item clock right \
            --subscribe battery system_woke power_source_change
 
 # Source: https://github.com/nicolas-martin/awesome-sketchybar/blob/b710fe2fe03c2725efa5ae4cd8c6503a3ffc15be/plugins/Combined-Wifi-Status-IP-Address-and-VPN-.md
-BLACK=0xff1a1b26
-BACKGROUND=$BLACK
-YELLOW=0xffd19a66
-GREEN=0xffa6e3a1
-BLUE=0xff7aa2f7
+BACKGROUND=$black
+YELLOW=$yellow
+GREEN=$green
+BLUE=$blue
 sketchybar --add item  ip_address right                              \
            --set       ip_address script="$PLUGIN_DIR/ip_address.sh" \
                                   update_freq=30                     \
@@ -147,7 +146,7 @@ sketchybar --add       event           spotify_change $SPOTIFY_EVENT      \
                                                                           \
            --add       item            spotify.shuffle popup.spotify.name \
            --set       spotify.shuffle icon=􀊝                             \
-                                       icon.highlight_color=0xff1DB954    \
+                                       icon.highlight_color=$GREEN       \
                                        icon.padding_left=5                \
                                        icon.padding_right=5               \
                                        label.drawing=off                  \
@@ -156,7 +155,7 @@ sketchybar --add       event           spotify_change $SPOTIFY_EVENT      \
                                                                           \
            --add       item            spotify.repeat popup.spotify.name  \
            --set       spotify.repeat  icon=􀊞                             \
-                                       icon.highlight_color=0xff1DB954    \
+                                       icon.highlight_color=$GREEN       \
                                        icon.padding_left=5                \
                                        icon.padding_right=5               \
                                        label.drawing=off                  \

@@ -55,7 +55,7 @@ write_response() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=on"* ]]
   [[ "$output" == *"icon="* ]]
-  [[ "$output" == *"icon.color=0xfff7768e"* ]]
+  [[ "$output" == *"icon.color=0xfffb4934"* ]]
   [[ "$output" == *"label.drawing=off"* ]]
 }
 

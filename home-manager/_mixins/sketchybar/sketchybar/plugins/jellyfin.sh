@@ -2,13 +2,16 @@
 
 set -euo pipefail
 
+PURPLE="${SKETCHYBAR_COLOR_PURPLE:-0xffd3869b}"
+YELLOW="${SKETCHYBAR_COLOR_YELLOW:-0xfffabd2f}"
+
 show_error() {
   sketchybar --set "$NAME" \
     drawing=on \
     icon="!" \
-    icon.color="0xffe0af68" \
+    icon.color="$YELLOW" \
     label="?" \
-    label.color="0xffe0af68"
+    label.color="$YELLOW"
 }
 
 if ! metrics="$(${CURL:-curl} \
@@ -83,6 +86,6 @@ fi
 sketchybar --set "$NAME" \
   drawing=on \
   icon="󰼁" \
-  icon.color="0xffaa5cc3" \
+  icon.color="$PURPLE" \
   label="$count" \
-  label.color="0xffaa5cc3"
+  label.color="$PURPLE"

@@ -16,9 +16,6 @@ in
 
   programs.spicetify = {
     enable = true;
-    theme = spicePkgs.themes.onepunch;
-    colorScheme = "dark";
-
     enabledExtensions = with spicePkgs.extensions; [
       aiBandBlocker
       shuffle

@@ -24,8 +24,6 @@
     vimAlias = true;
     vimdiffAlias = true;
 
-    colorschemes.gruvbox.enable = true;
-
     # copy to system clipboard
     clipboard.register = "unnamedplus";
 

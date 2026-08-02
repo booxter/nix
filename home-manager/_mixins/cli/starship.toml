@@ -7,24 +7,14 @@ $git_branch\
 $time\
 $character"""
 
-palette = 'gruvbox_dark'
-
-[palettes.gruvbox_dark]
-color_bg3 = '#665c54'
-color_aqua = '#689d6a'
-color_green = '#98971a'
-color_purple = '#b16286'
-color_red = '#cc241d'
-color_yellow = '#d79921'
-
 [custom.ssh_hostname]
 command = 'hostname'
 when = 'test -n "$SSH_CONNECTION"'
-style = "bold fg:color_red"
+style = "bold red"
 format = '[@$output ]($style)'
 
 [directory]
-style = "bold fg:color_yellow"
+style = "bold yellow"
 format = "[$path]($style)"
 truncate_to_repo = false
 truncation_length = 1
@@ -32,7 +22,7 @@ truncation_symbol = ""
 
 [git_branch]
 symbol = "git"
-style = "fg:color_aqua"
+style = "cyan"
 format = '[ $symbol:$branch]($style)'
 truncation_length = 10
 truncation_symbol = ""
@@ -40,14 +30,14 @@ truncation_symbol = ""
 [time]
 disabled = false
 time_format = "%R"
-style = "fg:color_bg3"
+style = "base03"
 format = '[ $time]($style)'
 
 [character]
 disabled = false
-success_symbol = '[ >](bold fg:color_green) '
-error_symbol = '[ >](bold fg:color_red) '
-vimcmd_symbol = '[ <](bold fg:color_green) '
-vimcmd_replace_one_symbol = '[ <](bold fg:color_purple) '
-vimcmd_replace_symbol = '[ <](bold fg:color_purple) '
-vimcmd_visual_symbol = '[ <](bold fg:color_yellow) '
+success_symbol = '[ >](bold green) '
+error_symbol = '[ >](bold red) '
+vimcmd_symbol = '[ <](bold green) '
+vimcmd_replace_one_symbol = '[ <](bold purple) '
+vimcmd_replace_symbol = '[ <](bold purple) '
+vimcmd_visual_symbol = '[ <](bold yellow) '
