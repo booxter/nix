@@ -64,6 +64,36 @@ let
           description = "Session cookie name used by oauth2-proxy.";
         };
 
+        sessionRefresh = lib.mkOption {
+          type =
+            with lib.types;
+            nullOr (submodule {
+              options = {
+                intervalSeconds = lib.mkOption {
+                  type = ints.positive;
+                  description = "Seconds between oauth2-proxy session refreshes.";
+                };
+
+                lifetimeSeconds = lib.mkOption {
+                  type = ints.positive;
+                  description = "Maximum oauth2-proxy session lifetime in seconds.";
+                };
+
+                redisConnectionUrl = lib.mkOption {
+                  type = str;
+                  description = "Redis connection URL for the oauth2-proxy session store.";
+                };
+
+                redisServiceUnit = lib.mkOption {
+                  type = str;
+                  description = "Systemd unit providing the Redis session store.";
+                };
+              };
+            });
+          default = null;
+          description = "Redis-backed oauth2-proxy session refresh configuration.";
+        };
+
         clientSecretSopsKey = lib.mkOption {
           type = lib.types.str;
           default = "oauth2-proxy/${config.clientId}/client_secret";
@@ -238,6 +268,12 @@ let
     ++ lib.optionals (gate.externalOrigin != null) [
       (mkArg "redirect-url" "${gate.externalOrigin}/oauth2/callback")
     ]
+    ++ lib.optionals (gate.sessionRefresh != null) [
+      (mkArg "cookie-expire" "${toString gate.sessionRefresh.lifetimeSeconds}s")
+      (mkArg "cookie-refresh" "${toString gate.sessionRefresh.intervalSeconds}s")
+      (mkArg "redis-connection-url" gate.sessionRefresh.redisConnectionUrl)
+      (mkArg "session-store-type" "redis")
+    ]
     ++ mkArgs "allowed-group" gate.allowedGroups
     ++ mkArgs "trusted-proxy-ip" [
       "127.0.0.1/32"
@@ -359,6 +395,10 @@ in
               message = "host.sso.oauth2ProxyGates.${gateName}.whitelistDomains must not be empty.";
             }
           ]
+          ++ lib.optional (gate.sessionRefresh != null) {
+            assertion = gate.sessionRefresh.intervalSeconds < gate.sessionRefresh.lifetimeSeconds;
+            message = "host.sso.oauth2ProxyGates.${gateName}.sessionRefresh.intervalSeconds must be less than lifetimeSeconds.";
+          }
           ++ probeHelpers.assertionsFor gateName gate
         ) enabledGates
       )
@@ -458,6 +498,9 @@ in
 
     systemd.services = lib.mapAttrs' (
       gateName: gate:
+      let
+        sessionStoreUnits = lib.optional (gate.sessionRefresh != null) gate.sessionRefresh.redisServiceUnit;
+      in
       lib.nameValuePair gate.serviceName {
         description = "OAuth2 Proxy";
         path = [ gate.package ];
@@ -466,10 +509,12 @@ in
           "network-online.target"
           "sops-install-secrets.service"
         ];
+        requires = sessionStoreUnits;
         after = [
           "network-online.target"
           "sops-install-secrets.service"
-        ];
+        ]
+        ++ sessionStoreUnits;
         serviceConfig = {
           User = gate.user;
           Group = gate.group;
