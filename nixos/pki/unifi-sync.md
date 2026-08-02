@@ -22,8 +22,9 @@ The data path is:
 1. Fleet facts are defined in [inventory.nix](../../lib/inventory.nix).
 2. [unifi-sync-env.nix](../../lib/unifi-sync-env.nix) renders those facts into
    the environment consumed by the service.
-3. [unifi-sync.nix](./unifi-sync.nix) wires the pki-local package, secrets,
-   systemd unit, and timer.
+3. The [unifi-sync module](../_mixins/unifi-sync/default.nix) defines the
+   service and timer, while [unifi-sync.nix](./unifi-sync.nix) supplies the
+   PKI host's inventory and secret.
 4. [cli.py](./pkgs/unifi-sync/src/unifi_sync/cli.py) reads the environment,
    compares it with UniFi state, and applies only the required changes.
 

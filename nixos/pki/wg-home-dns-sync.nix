@@ -8,6 +8,7 @@
 }:
 let
   internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
+  unifiSyncCfg = config.services.unifi-sync;
   unifiSyncEnv = import ../../lib/unifi-sync-env.nix { inherit hostInventory; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
@@ -33,16 +34,16 @@ in
 
   sops.secrets.wgHomeDnsSyncClientCrt = {
     key = "${wgHomeDnsSyncClientSecretPrefix}/client_crt_unencrypted";
-    owner = "unifi-sync";
-    group = "unifi-sync";
+    owner = unifiSyncCfg.user;
+    group = unifiSyncCfg.group;
     mode = "0400";
     restartUnits = [ "wg-home-dns-sync.service" ];
   };
 
   sops.secrets.wgHomeDnsSyncClientKey = {
     key = "${wgHomeDnsSyncClientSecretPrefix}/client_key";
-    owner = "unifi-sync";
-    group = "unifi-sync";
+    owner = unifiSyncCfg.user;
+    group = unifiSyncCfg.group;
     mode = "0400";
     restartUnits = [ "wg-home-dns-sync.service" ];
   };
@@ -63,10 +64,10 @@ in
     };
     serviceConfig = {
       Type = "oneshot";
-      User = "unifi-sync";
-      Group = "unifi-sync";
+      User = unifiSyncCfg.user;
+      Group = unifiSyncCfg.group;
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe pkiPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${config.sops.secrets.wgHomeDnsSyncClientCrt.path} --client-key-file ${config.sops.secrets.wgHomeDnsSyncClientKey.path} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile} --unifi-sync-command ${lib.getExe pkiPkgs.unifi-sync}";
+      ExecStart = "${lib.getExe pkiPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${config.sops.secrets.wgHomeDnsSyncClientCrt.path} --client-key-file ${config.sops.secrets.wgHomeDnsSyncClientKey.path} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile} --unifi-sync-command ${lib.getExe unifiSyncCfg.package}";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;
