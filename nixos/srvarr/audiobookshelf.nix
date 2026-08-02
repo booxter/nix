@@ -74,7 +74,10 @@ let
       authOpenIDClientSecret = null;
       authOpenIDTokenSigningAlgorithm = "ES256";
       authOpenIDButtonText = "SSO";
-      authOpenIDAutoLaunch = false;
+      # Make SSO the normal browser recovery path after Audiobookshelf's
+      # refresh token expires. Local login remains available with
+      # /login?autoLaunch=0 for rollback.
+      authOpenIDAutoLaunch = true;
       authOpenIDAutoRegister = true;
       authOpenIDMatchExistingBy = "username";
       authOpenIDMobileRedirectURIs = [ "audiobookshelf://oauth" ];
