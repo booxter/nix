@@ -265,6 +265,9 @@
           cookieApps = {
             get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
           };
+          repositoryApps = {
+            flake-input-update-summary = mkApp "${pkgs.flake-input-update-summary}/bin/flake-input-update-summary" "Generate a revision-linked flake input update summary.";
+          };
           darwinApps = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
             lan-wan-bpf = mkApp "${darwinPackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
           };
@@ -272,7 +275,13 @@
             inherit inputs system;
           };
         in
-        sopsApps // packageUpdateApps // fleetApps // proxmox.apps // cookieApps // darwinApps
+        sopsApps
+        // packageUpdateApps
+        // fleetApps
+        // proxmox.apps
+        // cookieApps
+        // repositoryApps
+        // darwinApps
       );
       formatter = helpers.forAllSystems (
         system:

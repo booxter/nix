@@ -64,6 +64,11 @@ Per-machine artifacts are prefixed with `package-or-config-`, `size-only-`, or
 comment.
 Before posting a new config diff comment batch, the post job marks earlier
 bot-authored config diff comments on the same pull request as outdated.
+Flake input update pull requests list every changed input in a table with its old
+and new revisions and a link to the upstream comparison. Nested inputs use their
+full lock path, while `follows` aliases are omitted.
+The generator and its tests are packaged as
+`nix run .#flake-input-update-summary`.
 For scheduled flake input update PRs, if at least one selected target produced a
 config diff artifact and no package-or-config entries were found, the post job
 enables GitHub auto-merge for the pull request. The PR must come from
