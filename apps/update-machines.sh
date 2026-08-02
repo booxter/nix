@@ -18,6 +18,8 @@ source "${REPO_ROOT}/apps/_helpers/update-machines-remote-lib.sh"
 COLOR_RESET='\033[0m'
 COLOR_HOST='\033[1;36m'
 COLOR_DIM='\033[2m'
+COLOR_SUCCESS='\033[1;32m'
+COLOR_ERROR='\033[1;31m'
 LAN_DNS_SERVER="$(
   (
     cd "${REPO_ROOT}"
@@ -263,40 +265,34 @@ run_selector() {
   printf '%s' "$selection"
 }
 
-print_summary_box() {
+print_summary_status() {
   local total="$1"
   local ok="$2"
   local failed="$3"
   local elapsed="$4"
   local failed_list="$5"
-  local box_bin minutes seconds duration_fmt
+  local color label minutes seconds duration_fmt
 
   minutes=$((elapsed / 60))
   seconds=$((elapsed % 60))
   duration_fmt="${minutes}m ${seconds}s"
 
-  summary_text="Update Summary
-Total: ${total}  Succeeded: ${ok}  Failed: ${failed}
-Duration: ${duration_fmt}"
-  if [[ -n "$failed_list" ]]; then
-    summary_text="${summary_text}
-Failed hosts: ${failed_list}"
+  color="$COLOR_SUCCESS"
+  label="Update complete"
+  if ((failed > 0)); then
+    color="$COLOR_ERROR"
+    label="Update failed"
   fi
 
-  border_color=2
-  text_color=2
+  printf '\n%b%s: %d/%d succeeded in %s' \
+    "$color" "$label" "$ok" "$total" "$duration_fmt"
   if ((failed > 0)); then
-    border_color=1
-    text_color=1
+    printf ', %d failed' "$failed"
   fi
-  box_bin="${UPDATE_MACHINES_BOX_BIN:-${REPO_ROOT}/apps/_helpers/box/box.py}"
-  printf '%s\n' "$summary_text" | "$box_bin" \
-    --border-color "$border_color" \
-    --text-color "$text_color" \
-    --margin "1 2" \
-    --padding "1 2" \
-    --border double \
-    --align center
+  if [[ -n "$failed_list" ]]; then
+    printf '; Failed hosts: %s' "$failed_list"
+  fi
+  printf '%b\n' "$COLOR_RESET"
 }
 
 SSH_OPTS_ARR=()
@@ -723,7 +719,7 @@ failed_list=""
 if [[ ${#failed_hosts[@]} -gt 0 ]]; then
   failed_list="$(format_display_host_list "${failed_hosts[@]}")"
 fi
-print_summary_box "${#HOSTS[@]}" "${#ok_hosts[@]}" "${#failed_hosts[@]}" "$elapsed" "$failed_list"
+print_summary_status "${#HOSTS[@]}" "${#ok_hosts[@]}" "${#failed_hosts[@]}" "$elapsed" "$failed_list"
 
 if [[ ${#failed_hosts[@]} -gt 0 ]]; then
   exit 1

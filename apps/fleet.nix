@@ -39,7 +39,6 @@ let
     };
 
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
-  boxPackage = pkgs.callPackage ./_helpers/box { };
   hostInventory = import ../lib/inventory.nix {
     inherit username;
     lib = pkgs.lib;
@@ -107,10 +106,7 @@ let
         openssh
         pythonWithPromptToolkit
       ])
-      ++ [
-        boxPackage
-        getHosts
-      ];
+      ++ [ getHosts ];
     text = ''
       set -euo pipefail
 
@@ -170,7 +166,6 @@ let
         exec sudo "''${disko_cmd[@]}"
       fi
 
-      export UPDATE_MACHINES_BOX_BIN=${pkgs.lib.getExe boxPackage}
       export UPDATE_MACHINES_GET_HOSTS_BIN=${pkgs.lib.getExe getHosts}
       exec ${pkgs.bash}/bin/bash ${../.}/apps/update-machines.sh "$@"
     '';
@@ -180,7 +175,6 @@ let
         environment = {
           FLEET_TEST_REPO_ROOT = "${../.}";
           UPDATE_MACHINES_BIN = "${../.}/apps/update-machines.sh";
-          UPDATE_MACHINES_BOX_BIN = pkgs.lib.getExe boxPackage;
         };
         nativeCheckInputs = with pkgs; [
           git

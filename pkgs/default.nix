@@ -15,8 +15,6 @@ let
     });
 in
 {
-  box = pkgs.callPackage ../apps/_helpers/box { };
-
   debugserver = pkgs.callPackage ./debugserver { };
 
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };

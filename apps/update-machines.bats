@@ -687,6 +687,7 @@ EOF
   run bash "$update_machines" alpha beta
 
   [ "$status" -eq 1 ]
+  [[ "$output" == *"Update failed: 0/2 succeeded"* ]]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
   [[ "$output" != *"Checking SSH connectivity"* ]]
 }
