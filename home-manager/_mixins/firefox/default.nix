@@ -6,6 +6,7 @@
 }:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
+  dashUrl = hostInventory.servicesById.dash.url;
   degoogUrl = hostInventory.servicesById.goo.url;
   firefoxDohExcludedDomains = [ hostInventory.site.public.domain ];
 in
@@ -50,7 +51,7 @@ in
         "browser.translations.neverTranslateLanguages" = "en,ru,be,uk,cz,pl";
 
         # UX fixes
-        "browser.startup.homepage" = "about:blank";
+        "browser.startup.homepage" = dashUrl;
         "browser.newtab.url" = "about:blank";
         "browser.ctrlTab.sortByRecentlyUsed" = false;
         "browser.tabs.closeWindowWithLastTab" = true;
