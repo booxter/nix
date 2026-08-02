@@ -5,10 +5,11 @@
 }:
 writeShellApplication {
   name = "unifi-sync";
-  runtimeInputs = [ python3 ];
   checkPhase = ''
     runHook preCheck
-    UNIFI_SYNC_MAIN=${./main.py} ${python3.pkgs.pytest}/bin/pytest -q -p no:cacheprovider ${./test_main.py}
+    cd "$TMPDIR"
+    cp ${./test_main.py} test_main.py
+    UNIFI_SYNC_MAIN=${./main.py} ${python3.pkgs.pytest}/bin/pytest -q -p no:cacheprovider test_main.py
     runHook postCheck
   '';
   text = ''
