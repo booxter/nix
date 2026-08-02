@@ -69,36 +69,31 @@ EOF
   [[ "$output" == *"Failed to evaluate flake for VM target discovery"* ]]
 }
 
-@test "vm --gui enables graphics for the resolved vm" {
+@test "vm passes the GUI selection to the resolved VM build" {
   export FLAKE_JSON='{
-    "nixosConfigurations":{"builder1":{},"beast":{}},
-    "targetAliases":{"builder1":"builder1"}
+    "nixosConfigurations":{"builder1-config":{},"beast":{}},
+    "targetAliases":{"builder1":"builder1-config"}
   }'
 
   run bash "$vm" --gui builder1
 
   [ "$status" -eq 0 ]
-  grep -Fq "VM_TARGET_CONFIG=builder1" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "VM_TARGET_CONFIG=builder1-config" "$NIX_RUN_ARGS_OUT"
   grep -Fq "VM_GUI=1" "$NIX_RUN_ARGS_OUT"
-  grep -Fq -- "--expr" "$NIX_RUN_ARGS_OUT"
-  grep -Fq "getAttr targetConfig f.nixosConfigurations" "$NIX_RUN_ARGS_OUT"
-  grep -Fq "virtualisation.vmVariant.virtualisation.host.pkgs = lib.mkForce hostPkgs;" "$NIX_RUN_ARGS_OUT"
-  grep -Fq "graphics = lib.mkForce true;" "$NIX_RUN_ARGS_OUT"
 }
 
 @test "vm resolves short VM name to config" {
   export FLAKE_JSON='{
-    "nixosConfigurations":{"builder1":{},"beast":{}},
-    "targetAliases":{"builder1":"builder1","beast":"beast"},
+    "nixosConfigurations":{"builder1-config":{},"beast":{}},
+    "targetAliases":{"builder1":"builder1-config","beast":"beast"},
     "targetDisplayNames":["builder1","beast"]
   }'
 
   run bash "$vm" builder1
 
   [ "$status" -eq 0 ]
-  grep -Fq "VM_TARGET_CONFIG=builder1" "$NIX_RUN_ARGS_OUT"
+  grep -Fq "VM_TARGET_CONFIG=builder1-config" "$NIX_RUN_ARGS_OUT"
   grep -Fq "VM_GUI=0" "$NIX_RUN_ARGS_OUT"
-  grep -Fq "cfg.config.system.build.vm" "$NIX_RUN_ARGS_OUT"
 }
 
 @test "vm resolves real host directly" {

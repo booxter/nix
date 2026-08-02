@@ -6,13 +6,9 @@ let
     meta = { inherit description; };
   };
 
-  packageUpdateScripts = pkgs.lib.fileset.fileFilter (file: file.name == "update.sh") ../..;
   testSource = pkgs.lib.fileset.toSource {
     root = ../..;
-    fileset = pkgs.lib.fileset.unions [
-      ./.
-      packageUpdateScripts
-    ];
+    fileset = ./.;
   };
   mkBatsCheck =
     {
@@ -70,7 +66,6 @@ let
         ];
         nativeCheckInputs = with pkgs; [
           coreutils
-          findutils
           git
           gnugrep
           jq

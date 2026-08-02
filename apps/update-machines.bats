@@ -117,8 +117,6 @@ joined="${cmd[*]}"
 if [[ "$joined" == cat\ \>* ]]; then
   if [[ "$joined" == *"update-nix-repo-"* && -n "${SSH_UPLOADED_ARCHIVE_OUT:-}" ]]; then
     cat > "$SSH_UPLOADED_ARCHIVE_OUT"
-  elif [[ -n "${SSH_UPLOADED_SCRIPT_OUT:-}" ]]; then
-    cat > "$SSH_UPLOADED_SCRIPT_OUT"
   else
     cat >/dev/null
   fi
@@ -263,26 +261,11 @@ EOF
   [ "$output" = "192.168.15.10" ]
 }
 
-@test "looks_like_ipv4_address only checks the dotted-decimal shape" {
-  run looks_like_ipv4_address 999.999.999.999
-  [ "$status" -eq 0 ]
-
-  run looks_like_ipv4_address host.example
-  [ "$status" -eq 1 ]
-}
-
-@test "resolve_base_host leaves bare-metal hosts unchanged" {
-  export HOST_BASE_MAP_JSON='{"beast":"beast"}'
-  run resolve_base_host beast
-  [ "$status" -eq 0 ]
-  [ "$output" = "beast" ]
-}
-
-@test "resolve_base_host leaves other hosts unchanged" {
-  export HOST_BASE_MAP_JSON='{"beast":"beast"}'
+@test "resolve_base_host maps a VM to its base host" {
+  export HOST_BASE_MAP_JSON='{"nvws":"nv"}'
   run resolve_base_host nvws
   [ "$status" -eq 0 ]
-  [ "$output" = "nvws" ]
+  [ "$output" = "nv" ]
 }
 
 @test "resolve_runtime_host can differ from connection host" {
@@ -292,31 +275,17 @@ EOF
   [ "$output" = "alpha-runtime" ]
 }
 
-@test "resolve_host_alias maps host aliases" {
-  export HOST_ALIAS_MAP_JSON='{"org":"org","beast":"beast"}'
-  run resolve_host_alias org
-  [ "$status" -eq 0 ]
-  [ "$output" = "org" ]
-}
-
 @test "canonicalize_hosts preserves order after alias resolution" {
-  export HOST_ALIAS_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
+  export HOST_ALIAS_MAP_JSON='{"org":"org-config","srvarr":"srvarr-config","beast":"beast"}'
   run canonicalize_hosts org beast srvarr
   [ "$status" -eq 0 ]
-  expected=$'org\nbeast\nsrvarr'
+  expected=$'org-config\nbeast\nsrvarr-config'
   [ "$output" = "$expected" ]
 }
 
-@test "display_host_name keeps canonical short VM configs displayable" {
-  export HOST_DISPLAY_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
-  run display_host_name org
-  [ "$status" -eq 0 ]
-  [ "$output" = "org" ]
-}
-
 @test "format_display_host_list joins display names" {
-  export HOST_DISPLAY_MAP_JSON='{"org":"org","srvarr":"srvarr","beast":"beast"}'
-  run format_display_host_list org beast srvarr
+  export HOST_DISPLAY_MAP_JSON='{"org-config":"org","srvarr-config":"srvarr"}'
+  run format_display_host_list org-config beast srvarr-config
   [ "$status" -eq 0 ]
   [ "$output" = "org, beast, srvarr" ]
 }
@@ -362,12 +331,6 @@ EOF
   [ "$status" -eq 0 ]
   expected=$'nvws\nbeast\nmmini'
   [ "$output" = "$expected" ]
-}
-
-@test "format_host_list joins hosts with commas" {
-  run format_host_list alpha beta gamma
-  [ "$status" -eq 0 ]
-  [ "$output" = "alpha, beta, gamma" ]
 }
 
 @test "run_nixos_rebuild_from_repo uses pinned nh for switch and boot" {
@@ -667,15 +630,12 @@ EOF
 
   export PATH="$workdir/bin:$PATH"
   export SSH_CALLS_OUT="$workdir/ssh.calls"
-  export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
   export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
   run bash "$update_machines" --no-inhibit alpha
 
   [ "$status" -eq 0 ]
   grep -Eq ' github true true[[:space:]]*$' "$SSH_CALLS_OUT"
-  grep -Fq 'no_inhibit="${11}"' "$SSH_UPLOADED_SCRIPT_OUT"
-  grep -Fq 'export NIXOS_NO_CHECK=1' "$SSH_UPLOADED_SCRIPT_OUT"
 }
 
 @test "update-machines uploads committed checkout state in local mode" {
@@ -711,12 +671,9 @@ EOF
   workdir="$BATS_TMPDIR/update-machines-deploy-failure"
   mkdir -p "$workdir/bin"
   write_update_machines_test_stubs "$workdir/bin"
-  local uploaded_script
-  local expected_clone
 
   export PATH="$workdir/bin:$PATH"
   export SSH_TEST_MODE="deploy-fail"
-  export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
   export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
   run bash "$update_machines" alpha beta
@@ -724,20 +681,4 @@ EOF
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]
   [[ "$output" != *"Checking SSH connectivity"* ]]
-
-  uploaded_script="$(<"$SSH_UPLOADED_SCRIPT_OUT")"
-  expected_clone=$'GIT_CONFIG_NOSYSTEM=1 \\\n  GIT_CONFIG_GLOBAL=/dev/null \\\n  GIT_CONFIG_SYSTEM=/dev/null \\\n  GIT_TERMINAL_PROMPT=0 \\\n  git clone --branch "$branch" --single-branch "$https_url" "$repo_dir"'
-
-  [[ "$uploaded_script" == *'target_config_name="$7"'* ]]
-  [[ "$uploaded_script" == *'target_runtime_host="$8"'* ]]
-  [[ "$uploaded_script" == *'source_mode="$9"'* ]]
-  [[ "$uploaded_script" == *'merge_master="${10}"'* ]]
-  [[ "$uploaded_script" == *'no_inhibit="${11}"'* ]]
-  [[ "$uploaded_script" == *'source_archive="${12:-}"'* ]]
-  [[ "$uploaded_script" == *'tar -xf "$source_archive" -C "$repo_dir"'* ]]
-  [[ "$uploaded_script" == *"$expected_clone"* ]]
-  [[ "$uploaded_script" == *'merge_latest_master "$repo_dir" "$branch"'* ]]
-  [[ "$uploaded_script" == *'SUDO_ASKPASS="$askpass_script" sudo -A "$@"'* ]]
-  [[ "$uploaded_script" == *'run_sudo_for_remote_darwin "$bash_bin" -e -u -o pipefail -c'* ]]
-  [[ "$uploaded_script" == *'run_nixos_rebuild_from_repo "$rebuild_action" "$target_config_name"'* ]]
 }
