@@ -20,7 +20,10 @@ assert_eq() {
   local actual="$2"
   local message="${3:-}"
   if [[ "$expected" != "$actual" ]]; then
-    fail "${message:-expected \"$expected\" but got \"$actual\"}"
+    if [[ -n "$message" ]]; then
+      fail "$message (expected \"$expected\" but got \"$actual\")"
+    fi
+    fail "expected \"$expected\" but got \"$actual\""
   fi
 }
 
@@ -102,7 +105,18 @@ setup_repo() {
   export SOPS_AGE_KEY_FILE="$repo_dir/age.txt"
   export SOPS_MACHINE_HOSTNAME="test-host"
   export SOPS_SECRET_DOMAINS_FILE="$repo_dir/secret-domains.json"
-  printf '%s\n' '{"test-host":"main"}' > "$SOPS_SECRET_DOMAINS_FILE"
+  cat > "$SOPS_SECRET_DOMAINS_FILE" <<'EOF'
+{
+  "beast": "main",
+  "cache": "main",
+  "fana": "main",
+  "gw": "main",
+  "mair": "main",
+  "prx1-lab": "main",
+  "test-host": "main",
+  "workhost": "work"
+}
+EOF
   local pubkey
   pubkey="$(age-keygen -y "$SOPS_AGE_KEY_FILE")"
   cat > "$repo_dir/.sops.yaml" <<EOF
@@ -132,6 +146,16 @@ run_with_stdin_and_capture() {
   if ! "$@" <"$stdin_file" >"$out_file" 2>&1; then
     cat "$out_file" >&2
     fail "command failed: $* < $stdin_file"
+  fi
+}
+
+run_with_stdin_expect_failure() {
+  local out_file="$1"
+  local stdin_file="$2"
+  shift 2
+  if "$@" <"$stdin_file" >"$out_file" 2>&1; then
+    cat "$out_file" >&2
+    fail "expected command to fail: $* < $stdin_file"
   fi
 }
 
@@ -186,6 +210,19 @@ EOF
 # Recipient: age1yubikey1test
 AGE-PLUGIN-YUBIKEY-1TEST
 EOF
+  cat > "$fixture_dir/yubikey-missing-metadata.txt" <<'EOF'
+AGE-PLUGIN-YUBIKEY-1TEST
+EOF
+  cat > "$fixture_dir/yubikey-duplicate-metadata.txt" <<'EOF'
+# Recipient: age1yubikey1test
+# Recipient: age1yubikey1duplicate
+AGE-PLUGIN-YUBIKEY-1TEST
+EOF
+  cat > "$fixture_dir/se-duplicate-metadata.txt" <<'EOF'
+# public key: age1se1metadata
+# public key: age1se1duplicate
+AGE-PLUGIN-SE-1TEST
+EOF
   cat > "$fixture_dir/unknown.txt" <<'EOF'
 AGE-PLUGIN-UNKNOWN-1TEST
 EOF
@@ -201,6 +238,19 @@ EOF
 
   run_and_capture "$out" env PATH="$mock_bin:$PATH" bash "$helper" "$fixture_dir/yubikey.txt"
   assert_eq "age1yubikey1test" "$(cat "$out")" "YubiKey identity should use embedded recipient"
+
+  run_expect_failure "$out" bash "$helper" "$fixture_dir/missing.txt"
+  assert_contains "$(cat "$out")" "Age identity file not found"
+
+  run_expect_failure "$out" env PATH="$mock_bin:$PATH" \
+    bash "$helper" "$fixture_dir/se-duplicate-metadata.txt"
+  assert_contains "$(cat "$out")" "multiple recipient metadata lines"
+
+  run_expect_failure "$out" bash "$helper" "$fixture_dir/yubikey-missing-metadata.txt"
+  assert_contains "$(cat "$out")" "must contain exactly one recipient metadata line"
+
+  run_expect_failure "$out" bash "$helper" "$fixture_dir/yubikey-duplicate-metadata.txt"
+  assert_contains "$(cat "$out")" "must contain exactly one recipient metadata line"
 
   run_expect_failure "$out" bash "$helper" "$fixture_dir/unknown.txt"
   assert_contains "$(cat "$out")" "Unsupported age identity type"
@@ -307,6 +357,7 @@ EOF
   log "reject recipients shared across secret domains"
   local main_pubkey
   local work_pubkey
+  local work_identity
   main_pubkey="$(age-keygen -y "$SOPS_AGE_KEY_FILE")"
   yq -i ".creation_rules += [{\"path_regex\":\"secrets/work/.*\\\\.yaml$\",\"key_groups\":[{\"age\":[\"${main_pubkey}\"]}]}]" .sops.yaml
   run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
@@ -317,6 +368,108 @@ EOF
   yq -i ".keys += [\"${work_pubkey}\"] | (.creation_rules[] | select(.path_regex == \"secrets/work/.*\\\\.yaml$\") | .key_groups[]?.age) = [\"${work_pubkey}\"]" .sops.yaml
   run_and_capture "$out" bash "$repo/tests/test-sops-config.sh"
   assert_contains "$(cat "$out")" "sops config check passed."
+
+  log "reject a non-map SOPS policy"
+  cp .sops.yaml "$WORKDIR/sops.valid.yaml"
+
+  printf '%s\n' '- not-a-map' > .sops.yaml
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" ".sops.yaml must be a YAML map at top-level."
+  cp "$WORKDIR/sops.valid.yaml" .sops.yaml
+
+  log "reject an empty SOPS recipient list"
+  yq -i '.keys = []' .sops.yaml
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" "'keys' sequence must not be empty."
+  cp "$WORKDIR/sops.valid.yaml" .sops.yaml
+
+  log "reject a non-sequence SOPS recipient list"
+  yq -i '.keys = {}' .sops.yaml
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" \
+    ".sops.yaml must contain a top-level 'keys' sequence."
+  cp "$WORKDIR/sops.valid.yaml" .sops.yaml
+
+  log "reject an empty SOPS creation rule list"
+  yq -i '.creation_rules = []' .sops.yaml
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" "'creation_rules' sequence must not be empty."
+  cp "$WORKDIR/sops.valid.yaml" .sops.yaml
+
+  log "reject a non-sequence SOPS creation rule list"
+  yq -i '.creation_rules = {}' .sops.yaml
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" \
+    ".sops.yaml must contain a top-level 'creation_rules' sequence."
+  cp "$WORKDIR/sops.valid.yaml" .sops.yaml
+
+  log "reject plaintext files in secret directories"
+  printf '%s\n' 'plaintext: secret' > secrets/main/plain.yaml
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" "secrets/main/plain.yaml is missing a 'sops' block"
+  rm secrets/main/plain.yaml
+
+  log "require a SOPS policy when secret files exist"
+  mv .sops.yaml "$WORKDIR/sops.missing.yaml"
+  run_expect_failure "$out" bash "$repo/tests/test-sops-config.sh"
+  assert_contains "$(cat "$out")" ".sops.yaml is missing."
+  mv "$WORKDIR/sops.missing.yaml" .sops.yaml
+
+  log "decrypt a non-main domain with its dedicated operator identity"
+  if [[ "$(uname -s)" == "Darwin" ]]; then
+    work_identity="$WORKDIR/home/Library/Application Support/sops/age/work.txt"
+  else
+    work_identity="$WORKDIR/xdg/sops/age/work.txt"
+  fi
+  mkdir -p "$repo/secrets/work" "$(dirname -- "$work_identity")"
+  cp "$repo/work-age.txt" "$work_identity"
+  cat > "$WORKDIR/workhost.plain.yaml" <<'EOF'
+domain:
+  marker: "WORK_ONLY"
+EOF
+  SOPS_AGE_KEY_FILE="$repo/work-age.txt" \
+    sops --encrypt \
+    --filename-override "secrets/work/workhost.yaml" \
+    --input-type yaml \
+    --output-type yaml \
+    "$WORKDIR/workhost.plain.yaml" > secrets/work/workhost.yaml
+  run_and_capture "$out" env -u SOPS_AGE_KEY_FILE \
+    HOME="$WORKDIR/home" \
+    XDG_CONFIG_HOME="$WORKDIR/xdg" \
+    SOPS_MACHINE_HOSTNAME=test-host \
+    SOPS_SECRET_DOMAINS_FILE="$SOPS_SECRET_DOMAINS_FILE" \
+    bash "$repo/apps/sops/sops-cat.sh" --domain work workhost
+  assert_contains "$(cat "$out")" "marker: WORK_ONLY"
+
+  mkdir -p "$WORKDIR/missing-home" "$WORKDIR/missing-xdg"
+  run_expect_failure "$out" env -u SOPS_AGE_KEY_FILE \
+    HOME="$WORKDIR/missing-home" \
+    XDG_CONFIG_HOME="$WORKDIR/missing-xdg" \
+    SOPS_MACHINE_HOSTNAME=test-host \
+    SOPS_SECRET_DOMAINS_FILE="$SOPS_SECRET_DOMAINS_FILE" \
+    bash "$repo/apps/sops/sops-cat.sh" --domain work workhost
+  assert_contains "$(cat "$out")" "Age identity for secret domain 'work' not found:"
+
+  run_expect_failure "$out" bash "$repo/apps/sops/sops-cat.sh" --domain Invalid beast
+  assert_contains "$(cat "$out")" "Invalid secret domain: Invalid"
+
+  run_expect_failure "$out" env -u SOPS_SECRET_DOMAINS_FILE \
+    bash "$repo/apps/sops/sops-cat.sh" beast
+  assert_contains "$(cat "$out")" \
+    "SOPS_SECRET_DOMAINS_FILE is not set to a readable inventory map."
+
+  log "default host to the current short hostname"
+  mkdir -p "$WORKDIR/hostname-bin"
+  cat > "$WORKDIR/hostname-bin/hostname" <<'EOF'
+#!/bin/sh
+set -eu
+[ "${1:-}" = "-s" ]
+printf '%s\n' beast
+EOF
+  chmod +x "$WORKDIR/hostname-bin/hostname"
+  run_and_capture "$out" env PATH="$WORKDIR/hostname-bin:$PATH" \
+    bash "$repo/apps/sops/sops-cat.sh"
+  assert_contains "$(cat "$out")" "keep: beast"
 
   log "merge default and host template keys into beast"
   local beast_common_cipher_before
@@ -356,6 +509,24 @@ EOF
   if cmp -s "$WORKDIR/before-force.yaml" "secrets/main/beast.yaml"; then
     fail "forced re-encrypt should rewrite encrypted beast secret"
   fi
+
+  log "merge an empty template container"
+  yq -i '.emptyBlock = {}' secrets/main/_template.yaml
+  run_and_capture "$out" bash "$repo/apps/sops/sops-update.sh" beast
+  assert_contains "$(cat "$out")" "Updated secret from templates:"
+  decrypt_secret_file beast "$after"
+  assert_eq "object" \
+    "$(yq -o=json '.emptyBlock' "$after" | jq -r 'type')" \
+    "an empty template map should still be added"
+  assert_eq "0" \
+    "$(yq -o=json '.emptyBlock' "$after" | jq -r 'length')" \
+    "the empty template map should remain empty"
+  yq -i 'del(.emptyBlock)' secrets/main/_template.yaml
+
+  log "silence a converged update when requested"
+  run_and_capture "$out" env SOPS_UPDATE_QUIET=1 \
+    bash "$repo/apps/sops/sops-update.sh" beast
+  assert_eq "" "$(cat "$out")" "quiet no-op update should produce no output"
 
   log "copy a secret block without losing destination data"
   local prx_other_cipher_before
@@ -418,6 +589,40 @@ EOF
   decrypt_secret_file cache "$copied"
   assert_yaml_scalar_eq_file "$whitespace_value" "$copied" '.nested.whitespace.value' "sops-set should preserve leading, trailing, and final whitespace"
 
+  log "treat dots and dashes as literal path characters"
+  local special_key='key.with.dots-and-dashes'
+  local special_path="special/${special_key}"
+  local special_value="$WORKDIR/sops-special-value.txt"
+  local expected_special_json
+  local actual_special_json
+  printf 'SPECIAL_VALUE\n' > "$special_value"
+  run_with_stdin_and_capture "$out" "$special_value" \
+    bash "$repo/apps/sops/sops-set.sh" cache "$special_path"
+  decrypt_secret_file cache "$copied"
+  expected_special_json="$(jq -Rs -c '.' < "$special_value")"
+  actual_special_json="$(
+    yq -o=json '.' "$copied" \
+      | jq -c --arg key "$special_key" '.special[$key]'
+  )"
+  assert_eq "$expected_special_json" "$actual_special_json" \
+    "sops-set should treat dots and dashes as literal key characters"
+
+  run_and_capture "$out" bash "$repo/apps/sops/sops-copy.sh" \
+    cache prx1-lab "$special_path" "copied/${special_key}"
+  decrypt_secret_file prx1-lab "$copied"
+  actual_special_json="$(
+    yq -o=json '.' "$copied" \
+      | jq -c --arg key "$special_key" '.copied[$key]'
+  )"
+  assert_eq "$expected_special_json" "$actual_special_json" \
+    "sops-copy should preserve literal path segments and the exact value"
+
+  cp secrets/main/prx1-lab.yaml "$before"
+  run_and_capture "$out" bash "$repo/apps/sops/sops-copy.sh" \
+    cache prx1-lab "$special_path" "copied/${special_key}"
+  cmp -s "$before" secrets/main/prx1-lab.yaml \
+    || fail "idempotent sops-copy should not rewrite an equal value"
+
   log "sync UPS monitor password through helper"
   cat > "$repo/ups-clients-by-server.json" <<'EOF'
 {"prx1-lab":["fana"]}
@@ -429,9 +634,69 @@ EOF
   assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
   assert_eq "fana" "$(yq -r '.other.keep' "$copied")" "destination-specific values should survive sync"
 
+  log "let explicit UPS clients override inventory defaults"
+  local sentinel_value="$WORKDIR/ups-sentinel.txt"
+  printf 'DO_NOT_TOUCH' > "$sentinel_value"
+  run_with_stdin_and_capture "$out" "$sentinel_value" \
+    bash "$repo/apps/sops/sops-set.sh" fana nut/monitors/prx1-lab/password
+  run_and_capture "$out" env UPS_CLIENTS_BY_SERVER_FILE="$repo/ups-clients-by-server.json" \
+    bash "$repo/apps/sops/sops-ups-sync.sh" prx1-lab gw
+  assert_contains "$(cat "$out")" "Synced prx1-lab UPS password to gw."
+  assert_not_contains "$(cat "$out")" "to fana"
+  decrypt_secret_file gw "$copied"
+  assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
+  decrypt_secret_file fana "$copied"
+  assert_eq "DO_NOT_TOUCH" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")" \
+    "an explicit client list should not also use inventory clients"
+
+  log "sync every UPS server from inventory"
+  run_and_capture "$out" env UPS_CLIENTS_BY_SERVER_FILE="$repo/ups-clients-by-server.json" \
+    bash "$repo/apps/sops/sops-ups-sync.sh" --all
+  assert_contains "$(cat "$out")" "Synced prx1-lab UPS password to fana."
+  decrypt_secret_file fana "$copied"
+  assert_eq "LAB_UPS_PASS" "$(yq -r '.nut.monitors."prx1-lab".password' "$copied")"
+
+  log "handle empty UPS client selections explicitly"
+  run_and_capture "$out" env UPS_CLIENTS_BY_SERVER_FILE="$repo/ups-clients-by-server.json" \
+    bash "$repo/apps/sops/sops-ups-sync.sh" unknown-server
+  assert_contains "$(cat "$out")" "No UPS clients to sync for unknown-server."
+  printf '%s\n' '{}' > "$WORKDIR/no-ups-clients.json"
+  run_expect_failure "$out" env UPS_CLIENTS_BY_SERVER_FILE="$WORKDIR/no-ups-clients.json" \
+    bash "$repo/apps/sops/sops-ups-sync.sh" --all
+  assert_contains "$(cat "$out")" "No UPS clients found in inventory."
+
   log "fail cleanly when source path is missing"
+  cp secrets/main/prx1-lab.yaml "$before"
   run_expect_failure "$out" bash "$repo/apps/sops/sops-copy.sh" mair prx1-lab missing
   assert_contains "$(cat "$out")" "Path not found in source secret: missing"
+  cmp -s "$before" secrets/main/prx1-lab.yaml \
+    || fail "a missing copy source path should not modify the destination"
+
+  log "fail cleanly for missing files and empty key paths"
+  run_expect_failure "$out" bash "$repo/apps/sops/sops-copy.sh" mair missing attic
+  assert_contains "$(cat "$out")" "Destination secret not found:"
+  run_expect_failure "$out" bash "$repo/apps/sops/sops-copy.sh" mair cache '///'
+  assert_contains "$(cat "$out")" "KEY_PATH must not be empty."
+  run_with_stdin_expect_failure "$out" "$special_value" \
+    bash "$repo/apps/sops/sops-set.sh" cache '///'
+  assert_contains "$(cat "$out")" "KEY_PATH must not be empty."
+  run_expect_failure "$out" bash "$repo/apps/sops/sops-cat.sh" missing
+  assert_contains "$(cat "$out")" "Secret not found:"
+  run_expect_failure "$out" bash "$repo/apps/sops/sops-edit.sh" missing
+  assert_contains "$(cat "$out")" "Secret not found:"
+  run_expect_failure "$out" bash "$repo/apps/sops/sops-update.sh" missing
+  assert_contains "$(cat "$out")" "Secret not found:"
+  run_with_stdin_expect_failure "$out" "$special_value" \
+    bash "$repo/apps/sops/sops-set.sh" missing some/path
+  assert_contains "$(cat "$out")" "Secret not found:"
+
+  cp secrets/main/beast.yaml "$before"
+  mv secrets/main/_template.yaml "$WORKDIR/main-template.yaml"
+  run_expect_failure "$out" bash "$repo/apps/sops/sops-update.sh" beast
+  assert_contains "$(cat "$out")" "Template not found:"
+  mv "$WORKDIR/main-template.yaml" secrets/main/_template.yaml
+  cmp -s "$before" secrets/main/beast.yaml \
+    || fail "a missing template should not modify the secret"
 
   log "set a login password hash from pass without losing existing secret data"
   mkdir -p "$WORKDIR/fake-bin" "$WORKDIR/pass-store"
@@ -441,6 +706,7 @@ set -eu
 
 cmd="$1"
 shift
+printf '%s\n' "$cmd $*" >> "${PASS_TEST_LOG:-/dev/null}"
 
 case "$cmd" in
   insert)
@@ -485,7 +751,11 @@ case "$cmd" in
     ;;
   show)
     entry="$1"
-    cat "$PASS_TEST_STORE/$entry"
+    if [ "${PASS_TEST_EMPTY:-0}" = 1 ]; then
+      printf '\n'
+    else
+      cat "$PASS_TEST_STORE/$entry"
+    fi
     ;;
   *)
     echo "unexpected pass command: $cmd" >&2
@@ -527,6 +797,24 @@ EOF
   esac
   assert_eq "REPLACE_ME" "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" "generated password should only update requested user"
 
+  log "honor pass prefix and generated password length"
+  : > "$WORKDIR/pass.log"
+  run_and_capture "$out" env \
+    PASS_TEST_LOG="$WORKDIR/pass.log" \
+    PASS_TEST_STORE="$WORKDIR/pass-store" \
+    SOPS_PASS_GENERATE_LENGTH=47 \
+    SOPS_PASS_PREFIX=machines \
+    PATH="$WORKDIR/fake-bin:$PATH" \
+    bash "$repo/apps/sops/sops-pass.sh" --gen beast ihrachyshka
+  assert_contains "$(cat "$out")" "Generated machines/beast/ihrachyshka."
+  assert_file_contains "$WORKDIR/pass.log" \
+    "generate --force machines/beast/ihrachyshka 47"
+  decrypt_secret_file beast "$after"
+  case "$(yq -r '.users.ihrachyshka.hashedPassword' "$after")" in
+    "${sha512_prefix}"*) ;;
+    *) fail "custom pass entry should still produce a sha-512 hash" ;;
+  esac
+
   log "decrypt a VM secret by short name"
   run_and_capture "$out" bash "$repo/apps/sops/sops-cat.sh" gw
   assert_contains "$(cat "$out")" "other:"
@@ -555,6 +843,43 @@ EOF
   log "reject unsupported login users before prompting"
   run_expect_failure "$out" bash "$repo/apps/sops/sops-pass.sh" beast nobody
   assert_contains "$(cat "$out")" "Unsupported user: nobody"
+
+  log "reject password failures without modifying encrypted secrets"
+  cp secrets/main/gw.yaml "$before"
+  run_expect_failure "$out" env \
+    PASS_TEST_EMPTY=1 \
+    PASS_TEST_STORE="$WORKDIR/pass-store" \
+    PATH="$WORKDIR/fake-bin:$PATH" \
+    bash "$repo/apps/sops/sops-pass.sh" gw root
+  assert_contains "$(cat "$out")" "Stored password must not be empty:"
+  cmp -s "$before" secrets/main/gw.yaml \
+    || fail "an empty stored password should not modify the secret"
+
+  mkdir -p "$WORKDIR/bad-hash-bin"
+  cat > "$WORKDIR/bad-hash-bin/mkpasswd" <<'EOF'
+#!/bin/sh
+set -eu
+cat >/dev/null
+printf '%s\n' not-a-password-hash
+EOF
+  chmod +x "$WORKDIR/bad-hash-bin/mkpasswd"
+  run_expect_failure "$out" env \
+    PASS_TEST_STORE="$WORKDIR/pass-store" \
+    PATH="$WORKDIR/bad-hash-bin:$WORKDIR/fake-bin:$PATH" \
+    bash "$repo/apps/sops/sops-pass.sh" gw root
+  assert_contains "$(cat "$out")" "mkpasswd returned an unexpected hash format."
+  cmp -s "$before" secrets/main/gw.yaml \
+    || fail "an invalid password hash should not modify the secret"
+
+  : > "$WORKDIR/pass.log"
+  run_expect_failure "$out" env \
+    PASS_TEST_LOG="$WORKDIR/pass.log" \
+    PASS_TEST_STORE="$WORKDIR/pass-store" \
+    PATH="$WORKDIR/fake-bin:$PATH" \
+    bash "$repo/apps/sops/sops-pass.sh" missing root
+  assert_contains "$(cat "$out")" "Secret not found for host missing:"
+  assert_eq "" "$(cat "$WORKDIR/pass.log")" \
+    "a missing secret should fail before invoking pass"
 
   log "edit a secret through sops without merging template keys"
   cat > "$WORKDIR/editor.sh" <<'EOF'

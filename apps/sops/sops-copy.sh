@@ -36,7 +36,7 @@ path_to_jq_array() {
   raw="${raw#.}"
   raw="${raw#/}"
   if [[ -z "$raw" ]]; then
-    echo "KEY_PATH must not be empty."
+    echo "KEY_PATH must not be empty." >&2
     return 1
   fi
 
@@ -55,7 +55,7 @@ path_to_jq_array() {
 
   array+="]"
   if [[ "$array" == "[]" ]]; then
-    echo "KEY_PATH must not be empty."
+    echo "KEY_PATH must not be empty." >&2
     return 1
   fi
   printf '%s' "$array"
@@ -75,7 +75,7 @@ path_to_sops_index() {
   raw="${raw#.}"
   raw="${raw#/}"
   if [[ -z "$raw" ]]; then
-    echo "KEY_PATH must not be empty."
+    echo "KEY_PATH must not be empty." >&2
     return 1
   fi
 
@@ -87,7 +87,7 @@ path_to_sops_index() {
   done
 
   if [[ -z "$index" ]]; then
-    echo "KEY_PATH must not be empty."
+    echo "KEY_PATH must not be empty." >&2
     return 1
   fi
   printf '%s' "$index"

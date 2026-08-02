@@ -25,7 +25,13 @@ yq() {
 }
 
 has_secrets() {
-  compgen -G "secrets/*/*.yaml" >/dev/null 2>&1
+  local secret
+  for secret in secrets/*/*.yaml; do
+    if [[ -f "$secret" ]]; then
+      return 0
+    fi
+  done
+  return 1
 }
 
 assert_sops_yaml_present() {
@@ -63,10 +69,12 @@ check_sops_yaml_structure() {
 check_secrets_encrypted() {
   if has_secrets; then
     for f in secrets/*/*.yaml; do
+      [[ -f "$f" ]] || continue
       if [[ "$(basename -- "$f")" == "_template.yaml" ]]; then
         continue
       fi
-      if ! yq -e '.sops' "$f" >/dev/null; then
+      if ! yq -o=json '.' "$f" \
+        | jq -e '(.sops? | type) == "object"' >/dev/null; then
         echo "$f is missing a 'sops' block (not encrypted?)."
         return 1
       fi
