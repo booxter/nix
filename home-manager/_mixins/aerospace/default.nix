@@ -171,7 +171,6 @@ in
       ];
 
       workspace-to-monitor-force-assignment = {
-        "6" = "secondary";
         "t" = "secondary";
       };
 

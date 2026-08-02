@@ -1,6 +1,6 @@
 { lib, isWork }:
 
-(map toString (lib.range 1 6))
+(map toString (lib.range 1 4))
 ++ [
   "c" # chat
   "e" # email
