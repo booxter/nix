@@ -16,6 +16,8 @@ in
 {
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
+  flake-input-update-summary = pkgs.callPackage ./flake-input-update-summary { };
+
   gitDarwinPrecompose =
     if pkgs.stdenv.hostPlatform.isDarwin then patchGitPrecompose pkgs.git else pkgs.git;
 
