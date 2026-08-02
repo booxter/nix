@@ -1,135 +1,41 @@
 "$schema" = 'https://starship.rs/config-schema.json'
 
 format = """
-$os\
 ${custom.ssh_hostname}\
 $directory\
 $git_branch\
-$c\
-$rust\
-$golang\
-$nodejs\
-$php\
-$java\
-$kotlin\
-$haskell\
-$python\
-$docker_context\
-$conda\
 $time\
-$line_break\
 $character"""
 
 palette = 'gruvbox_dark'
 
 [palettes.gruvbox_dark]
 color_bg3 = '#665c54'
-color_blue = '#458588'
 color_aqua = '#689d6a'
 color_green = '#98971a'
-color_orange = '#d65d0e'
 color_purple = '#b16286'
 color_red = '#cc241d'
 color_yellow = '#d79921'
-
-[os]
-disabled = false
-style = "bold fg:color_orange"
-format = '[$symbol]($style)'
-
-[os.symbols]
-Windows = "Windows"
-Ubuntu = "Ubuntu"
-SUSE = "SUSE"
-Raspbian = "Raspbian"
-Mint = "Mint"
-Macos = "macOS"
-Manjaro = "Manjaro"
-Linux = "Linux"
-Gentoo = "Gentoo"
-Fedora = "Fedora"
-Alpine = "Alpine"
-Amazon = "Amazon"
-Android = "Android"
-Arch = "Arch"
-Artix = "Artix"
-EndeavourOS = "EndeavourOS"
-CentOS = "CentOS"
-Debian = "Debian"
-Redhat = "Red Hat"
-RedHatEnterprise = "RHEL"
 
 [custom.ssh_hostname]
 command = 'hostname'
 when = 'test -n "$SSH_CONNECTION"'
 style = "bold fg:color_red"
-format = '[ @$output]($style)'
+format = '[@$output ]($style)'
 
 [directory]
 style = "bold fg:color_yellow"
-format = "[ $path]($style)"
-truncation_length = 3
-truncation_symbol = "../"
+format = "[$path]($style)"
+truncate_to_repo = false
+truncation_length = 1
+truncation_symbol = ""
 
 [git_branch]
 symbol = "git"
 style = "fg:color_aqua"
 format = '[ $symbol:$branch]($style)'
-
-[nodejs]
-symbol = "node"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[c]
-symbol = "c"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[rust]
-symbol = "rs"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[golang]
-symbol = "go"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[php]
-symbol = "php"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[java]
-symbol = "java"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[kotlin]
-symbol = "kt"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[haskell]
-symbol = "hs"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[python]
-symbol = "py"
-style = "fg:color_blue"
-format = '[ $symbol(:$version)]($style)'
-
-[docker_context]
-symbol = "docker"
-style = "fg:color_bg3"
-format = '[ $symbol:$context]($style)'
-
-[conda]
-symbol = "conda"
-style = "fg:color_bg3"
-format = '[ $symbol:$environment]($style)'
+truncation_length = 10
+truncation_symbol = ""
 
 [time]
 disabled = false
@@ -137,14 +43,11 @@ time_format = "%R"
 style = "fg:color_bg3"
 format = '[ $time]($style)'
 
-[line_break]
-disabled = false
-
 [character]
 disabled = false
-success_symbol = '[>](bold fg:color_green) '
-error_symbol = '[>](bold fg:color_red) '
-vimcmd_symbol = '[<](bold fg:color_green) '
-vimcmd_replace_one_symbol = '[<](bold fg:color_purple) '
-vimcmd_replace_symbol = '[<](bold fg:color_purple) '
-vimcmd_visual_symbol = '[<](bold fg:color_yellow) '
+success_symbol = '[ >](bold fg:color_green) '
+error_symbol = '[ >](bold fg:color_red) '
+vimcmd_symbol = '[ <](bold fg:color_green) '
+vimcmd_replace_one_symbol = '[ <](bold fg:color_purple) '
+vimcmd_replace_symbol = '[ <](bold fg:color_purple) '
+vimcmd_visual_symbol = '[ <](bold fg:color_yellow) '
