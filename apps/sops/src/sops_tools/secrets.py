@@ -31,6 +31,23 @@ def load_yaml(path: Path) -> JsonValue:
     return require_json_value(value, source=str(path))
 
 
+def write_atomic(path: Path, content: str) -> None:
+    temporary_name: str | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            delete=False,
+        ) as temporary:
+            temporary.write(content)
+            temporary_name = temporary.name
+        os.replace(temporary_name, path)
+    finally:
+        if temporary_name is not None:
+            Path(temporary_name).unlink(missing_ok=True)
+
+
 class SopsBackend(Protocol):
     def decrypt_text(self, path: Path) -> str: ...
 
@@ -174,7 +191,7 @@ class SecretService:
             return UpdateResult(secret, changed=False, reencrypted=False)
 
         if force:
-            self._replace_encrypted(secret, self.sops.encrypt_data(secret, desired))
+            write_atomic(secret, self.sops.encrypt_data(secret, desired))
             return UpdateResult(secret, changed=True, reencrypted=True)
 
         missing = [
@@ -187,22 +204,5 @@ class SecretService:
                 self.sops.set_value(secret, path, value)
             return UpdateResult(secret, changed=True, reencrypted=False)
 
-        self._replace_encrypted(secret, self.sops.encrypt_data(secret, desired))
+        write_atomic(secret, self.sops.encrypt_data(secret, desired))
         return UpdateResult(secret, changed=True, reencrypted=True)
-
-    @staticmethod
-    def _replace_encrypted(path: Path, content: str) -> None:
-        temporary_name: str | None = None
-        try:
-            with tempfile.NamedTemporaryFile(
-                mode="w",
-                dir=path.parent,
-                prefix=f".{path.name}.",
-                delete=False,
-            ) as temporary:
-                temporary.write(content)
-                temporary_name = temporary.name
-            os.replace(temporary_name, path)
-        finally:
-            if temporary_name is not None:
-                Path(temporary_name).unlink(missing_ok=True)

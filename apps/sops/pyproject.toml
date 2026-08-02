@@ -10,10 +10,14 @@ requires-python = ">=3.11"
 dependencies = ["PyYAML"]
 
 [project.scripts]
+sops-bootstrap = "sops_tools.cli:bootstrap_main"
 sops-cat = "sops_tools.cli:cat_main"
 sops-copy = "sops_tools.cli:copy_main"
 sops-edit = "sops_tools.cli:edit_main"
+sops-pass = "sops_tools.cli:pass_main"
+sops-runtime-key = "sops_tools.runtime_key:main"
 sops-set = "sops_tools.cli:set_main"
+sops-ups-sync = "sops_tools.cli:ups_sync_main"
 sops-update = "sops_tools.cli:update_main"
 
 [tool.setuptools]

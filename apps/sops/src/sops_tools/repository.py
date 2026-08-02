@@ -10,6 +10,7 @@ from .errors import ToolError
 from .process import ProcessRunner
 
 _DOMAIN_PATTERN = re.compile(r"^[a-z][a-z0-9-]*$")
+_SYSTEM_PATTERN = re.compile(r"^[a-z0-9_]+-(?:linux|darwin)$")
 
 
 @dataclass(frozen=True)
@@ -47,24 +48,28 @@ class RuntimeEnvironment:
         config_home = Path(values.get("XDG_CONFIG_HOME", str(home / ".config")))
         return cls(repo_root, home, config_home, system_name, hostname, dict(values))
 
-    def resolve_domain(self, explicit: str | None) -> SecretDomain:
+    def resolve_domain(
+        self, explicit: str | None, *, require_identity: bool = True
+    ) -> SecretDomain:
         name = explicit or self._inventory_domain(self.machine_hostname)
         if not _DOMAIN_PATTERN.fullmatch(name):
             raise ToolError(f"Invalid secret domain: {name}")
 
         identity: Path | None = None
         if name != "main" and not self.values.get("SOPS_AGE_KEY_FILE"):
-            if self.system_name == "Darwin":
-                identity = (
-                    self.home / "Library/Application Support/sops/age" / f"{name}.txt"
-                )
-            else:
-                identity = self.config_home / "sops/age" / f"{name}.txt"
-            if not identity.is_file():
+            identity = self.domain_identity_file(name)
+            if require_identity and not identity.is_file():
                 raise ToolError(
                     f"Age identity for secret domain '{name}' not found: {identity}"
                 )
         return SecretDomain(name, identity)
+
+    def domain_identity_file(self, domain: str) -> Path:
+        if domain == "main":
+            raise ToolError("The main secret domain uses the default SOPS identity.")
+        if self.system_name == "Darwin":
+            return self.home / "Library/Application Support/sops/age" / f"{domain}.txt"
+        return self.config_home / "sops/age" / f"{domain}.txt"
 
     @property
     def machine_hostname(self) -> str:
@@ -85,6 +90,32 @@ class RuntimeEnvironment:
             raise ToolError(
                 f"Host {host} belongs to secret domain '{registered}', not '{domain.name}'."
             )
+
+    def registered_system(self, host: str) -> str:
+        inventory_path = self.values.get("SOPS_HOST_SYSTEMS_FILE")
+        if not inventory_path or not Path(inventory_path).is_file():
+            raise ToolError(
+                "SOPS_HOST_SYSTEMS_FILE is not set to a readable inventory map."
+            )
+        try:
+            value: object = json.loads(Path(inventory_path).read_text())
+        except (OSError, json.JSONDecodeError) as error:
+            raise ToolError(
+                f"Invalid host system inventory: {inventory_path}"
+            ) from error
+        if not isinstance(value, dict) or not all(
+            isinstance(name, str) and isinstance(system, str)
+            for name, system in value.items()
+        ):
+            raise ToolError(f"Invalid host system inventory: {inventory_path}")
+        systems = cast(dict[str, str], value)
+        try:
+            system = systems[host]
+        except KeyError as error:
+            raise ToolError(f"No Nix system is registered for host: {host}") from error
+        if not _SYSTEM_PATTERN.fullmatch(system):
+            raise ToolError(f"Invalid Nix system for host {host}: {system}")
+        return system
 
     def command_environment(self, domain: SecretDomain) -> dict[str, str]:
         environment = dict(self.values)
