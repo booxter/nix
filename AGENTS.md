@@ -46,8 +46,9 @@ Scope: whole repository.
 ## Application Development
 
 - New apps and helpers are Python, not shell. Allow shell only for tiny,
-  inherently shell-facing glue. In Python, use native APIs and argument-list
-  subprocess calls; no embedded shell or `shell=True` unless strictly required.
+  inherently shell-facing glue. Prefer native APIs and maintained bindings or
+  client libraries over subprocesses. When a CLI is the necessary interface,
+  pass argument lists; no embedded shell or `shell=True` unless required.
   Consider Go or Rust for larger applications and systems-level work.
 - Python apps are `pyproject.toml` projects with `src/` packages and console
   entry points, never loose `.py` files. Require full typing, strict mypy, Ruff,
