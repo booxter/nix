@@ -11,7 +11,8 @@ in
     port = redisPort;
     openFirewall = false;
     save = [ ];
-    appendOnly = false;
+    appendOnly = true;
+    appendFsync = "everysec";
     settings = {
       maxmemory = "64mb";
       maxmemory-policy = "volatile-ttl";
