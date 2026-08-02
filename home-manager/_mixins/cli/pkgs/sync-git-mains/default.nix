@@ -1,38 +1,47 @@
 {
-  bats,
-  git,
   lib,
-  roots,
-  shellcheck,
-  writeShellApplication,
+  openssh,
+  python3,
+  ruff,
 }:
-writeShellApplication {
-  name = "sync-git-mains";
-  runtimeInputs = [ git ];
-  text =
-    lib.replaceStrings
-      [ "@roots@" ]
-      [
-        (lib.concatMapStringsSep "\n  " lib.escapeShellArg roots)
-      ]
-      (builtins.readFile ./sync-git-mains.sh);
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
+  pname = "sync-git-mains";
+  version = "0.1.0";
+  pyproject = true;
 
-  derivationArgs = {
-    doCheck = true;
-    nativeCheckInputs = [ git ];
-  };
-  checkPhase = ''
-    runHook preCheck
-    bash -n "$target"
-    ${lib.getExe shellcheck} "$target"
-    SYNC_GIT_MAINS_BIN="$target" ${lib.getExe bats} --print-output-on-failure ${./sync-git-mains.bats}
-    runHook postCheck
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  dependencies = [ pythonPackages.dulwich ];
+
+  nativeCheckInputs = with pythonPackages; [
+    ruff
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  makeWrapperArgs = [
+    "--prefix PATH : ${lib.makeBinPath [ openssh ]}"
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/sync_git_mains
   '';
+
+  pythonImportsCheck = [ "sync_git_mains" ];
 
   meta = {
     description = "Discover and fast-forward local Git main branches from origin";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "sync-git-mains";
+    platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }
