@@ -40,6 +40,7 @@ let
     };
 
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
+  boxPackage = pkgs.callPackage ./_helpers/box { };
   hostInventory = import ../lib/inventory.nix {
     inherit username;
     lib = pkgs.lib;
@@ -81,14 +82,16 @@ let
 
   deploy = pkgs.writeShellApplication {
     name = "deploy";
-    runtimeInputs = with pkgs; [
-      bind
-      git
-      jq
-      nix
-      openssh
-      pythonWithPromptToolkit
-    ];
+    runtimeInputs =
+      (with pkgs; [
+        bind
+        git
+        jq
+        nix
+        openssh
+        pythonWithPromptToolkit
+      ])
+      ++ [ boxPackage ];
     text = ''
       set -euo pipefail
 
@@ -148,6 +151,7 @@ let
         exec sudo "''${disko_cmd[@]}"
       fi
 
+      export UPDATE_MACHINES_BOX_BIN=${pkgs.lib.getExe boxPackage}
       exec ${pkgs.bash}/bin/bash ${../.}/apps/update-machines.sh "$@"
     '';
     inherit

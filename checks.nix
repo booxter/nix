@@ -50,16 +50,7 @@ helpers.forAllSystems (
   in
   {
     sops-tools = sops.package;
-    box-py = mkCheck {
-      name = "box-py-tests";
-      nativeBuildInputs = with pkgs; [
-        python3
-        python3Packages.pytest
-      ];
-      buildPhase = ''
-        pytest -q tests/test_box.py
-      '';
-    };
+    box = pkgs.box;
     patch-context = mkCheck {
       name = "patch-context";
       nativeBuildInputs = [ pkgs.python3 ];

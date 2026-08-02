@@ -269,7 +269,7 @@ print_summary_box() {
   local failed="$3"
   local elapsed="$4"
   local failed_list="$5"
-  local minutes seconds duration_fmt
+  local box_bin minutes seconds duration_fmt
 
   minutes=$((elapsed / 60))
   seconds=$((elapsed % 60))
@@ -289,7 +289,8 @@ Failed hosts: ${failed_list}"
     border_color=1
     text_color=1
   fi
-  printf '%s\n' "$summary_text" | python3 "${REPO_ROOT}/apps/_helpers/box.py" \
+  box_bin="${UPDATE_MACHINES_BOX_BIN:-${REPO_ROOT}/apps/_helpers/box/box.py}"
+  printf '%s\n' "$summary_text" | "$box_bin" \
     --border-color "$border_color" \
     --text-color "$text_color" \
     --margin "1 2" \

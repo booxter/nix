@@ -1,11 +1,11 @@
 import importlib.util
+import os
 import subprocess
 import sys
 import textwrap
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-BOX_PATH = ROOT / "apps" / "_helpers" / "box.py"
+BOX_PATH = Path(os.environ.get("BOX_BIN", Path(__file__).with_name("box.py")))
 
 
 def load_box_module():
