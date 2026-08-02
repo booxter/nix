@@ -9,6 +9,13 @@ description = "Repository-aware helpers for managing host secrets with SOPS"
 requires-python = ">=3.11"
 dependencies = ["PyYAML"]
 
+[project.scripts]
+sops-cat = "sops_tools.cli:cat_main"
+sops-copy = "sops_tools.cli:copy_main"
+sops-edit = "sops_tools.cli:edit_main"
+sops-set = "sops_tools.cli:set_main"
+sops-update = "sops_tools.cli:update_main"
+
 [tool.setuptools]
 package-dir = { "" = "src" }
 
@@ -22,4 +29,3 @@ testpaths = ["tests"]
 [tool.mypy]
 files = ["src/sops_tools"]
 strict = true
-

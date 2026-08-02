@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 from sops_tools.model import KeyPath
 from sops_tools.repository import SecretDomain, SecretRepository
 from sops_tools.secrets import CommandSopsBackend, SecretService
@@ -13,19 +15,21 @@ def service(
     tmp_path: Path,
     documents: dict[str, object],
     *,
-    template: str = "{}\n",
-    host_template: str | None = None,
+    template: object = None,
+    host_template: object | None = None,
 ) -> tuple[SecretService, MemorySopsBackend]:
     repository = SecretRepository(tmp_path, SecretDomain("main", None))
     repository.directory.mkdir(parents=True)
-    repository.template.write_text(template)
+    repository.template.write_text(
+        yaml.safe_dump({} if template is None else template, sort_keys=False)
+    )
     paths = {repository.secret(host): value for host, value in documents.items()}
     for path in paths:
         path.touch()
     if host_template is not None:
         template_path = repository.host_template("beast")
         template_path.parent.mkdir()
-        template_path.write_text(host_template)
+        template_path.write_text(yaml.safe_dump(host_template, sort_keys=False))
     backend = MemorySopsBackend(paths)  # type: ignore[arg-type]
     return SecretService(repository, backend), backend
 
@@ -68,8 +72,14 @@ def test_update_adds_default_and_host_template_leaves(tmp_path: Path) -> None:
     secrets, backend = service(
         tmp_path,
         {"beast": {"common": {"shared": "secret"}, "keep": "value"}},
-        template="common:\n  shared: template\nattic:\n  token: replace\n",
-        host_template="jellyfin:\n  apiKey: replace\n",
+        template={
+            "common": {"shared": "template"},
+            "attic": {"token": "replace"},
+        },
+        host_template={
+            "jellyfin": {"apiKey": "replace"},
+            "transmission": {"trackers": ["replace"]},
+        },
     )
 
     result = secrets.update("beast")
@@ -80,10 +90,12 @@ def test_update_adds_default_and_host_template_leaves(tmp_path: Path) -> None:
         "keep": "value",
         "attic": {"token": "replace"},
         "jellyfin": {"apiKey": "replace"},
+        "transmission": {"trackers": ["replace"]},
     }
     assert [call[1].display() for call in backend.set_calls] == [
         "attic/token",
         "jellyfin/apiKey",
+        "transmission/trackers/0",
     ]
 
 
@@ -91,7 +103,7 @@ def test_update_is_a_true_noop_when_converged(tmp_path: Path) -> None:
     secrets, backend = service(
         tmp_path,
         {"beast": {"present": "secret"}},
-        template="present: template\n",
+        template={"present": "template"},
     )
 
     result = secrets.update("beast")
@@ -105,7 +117,7 @@ def test_force_update_reencrypts_without_changing_values(tmp_path: Path) -> None
     secrets, backend = service(
         tmp_path,
         {"beast": {"present": "secret"}},
-        template="present: template\n",
+        template={"present": "template"},
     )
 
     result = secrets.update("beast", force=True)
@@ -120,7 +132,7 @@ def test_empty_template_container_uses_full_reencryption(tmp_path: Path) -> None
     secrets, backend = service(
         tmp_path,
         {"beast": {"present": "secret"}},
-        template="present: template\nempty: {}\n",
+        template={"present": "template", "empty": {}},
     )
 
     result = secrets.update("beast")

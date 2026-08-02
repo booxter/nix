@@ -8,6 +8,7 @@ from typing import Sequence
 import yaml
 
 from sops_tools.model import JsonValue, KeyPath
+from sops_tools.secrets import SopsBackend
 
 
 @dataclass
@@ -45,18 +46,24 @@ class MemorySopsBackend:
     def set_value(self, path: Path, key_path: KeyPath, value: JsonValue) -> None:
         self.set_calls.append((path, key_path, copy.deepcopy(value)))
         current: JsonValue = self.documents[path]
-        for segment in key_path.segments[:-1]:
+        for index, segment in enumerate(key_path.segments[:-1]):
+            next_segment = key_path.segments[index + 1]
             if isinstance(segment, int):
                 assert isinstance(current, list)
                 current = current[segment]
             else:
                 assert isinstance(current, dict)
-                child = current.setdefault(segment, {})
+                child = current.setdefault(
+                    segment, [] if isinstance(next_segment, int) else {}
+                )
                 current = child
         final = key_path.segments[-1]
         if isinstance(final, int):
             assert isinstance(current, list)
-            current[final] = copy.deepcopy(value)
+            if final == len(current):
+                current.append(copy.deepcopy(value))
+            else:
+                current[final] = copy.deepcopy(value)
         else:
             assert isinstance(current, dict)
             current[final] = copy.deepcopy(value)
@@ -70,3 +77,11 @@ class MemorySopsBackend:
         value = yaml.safe_load(plaintext)
         self.documents[path] = value
         return "encrypted\n"
+
+
+@dataclass(frozen=True)
+class StaticBackendFactory:
+    backend: SopsBackend
+
+    def create(self, environment: object) -> SopsBackend:
+        return self.backend
