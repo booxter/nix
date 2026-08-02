@@ -60,10 +60,6 @@ helpers.forAllSystems (
       ];
       buildPhase = ''
         bats --print-output-on-failure tests/get-local-builders.bats
-        bats --print-output-on-failure tests/git-send-email-store-password.bats
-        bats --print-output-on-failure tests/codex-usage.bats
-        bats --print-output-on-failure tests/codex-warmer.bats
-        bats --print-output-on-failure tests/kanidm-person-mail-provision.bats
         bats --print-output-on-failure tests/test-diff-config.bats
         bats --print-output-on-failure tests/test-prox-deploy.bats
         bats --print-output-on-failure tests/test-update-packages.bats
@@ -74,10 +70,6 @@ helpers.forAllSystems (
         bats --print-output-on-failure tests/update-machines.bats
       '';
       extraFileset = [
-        ./home-manager/_mixins/scm/pkgs/git-send-email-store-password.sh
-        ./home-manager/_mixins/agents/pkgs/codex-usage-status.sh
-        ./home-manager/_mixins/agents/pkgs/codex-warmer.sh
-        ./nixos/pki/kanidm-person-mail-provision.sh
         packageUpdateScripts
       ];
     };

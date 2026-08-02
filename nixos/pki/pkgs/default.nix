@@ -1,4 +1,6 @@
 pkgs: {
+  kanidm-person-mail-provision = pkgs.callPackage ./kanidm-person-mail-provision { };
+
   kanidm-mail-sender-bootstrap = pkgs.callPackage ./kanidm-mail-sender-bootstrap { };
 
   oidc-synthetic-probe = pkgs.callPackage ./oidc-synthetic-probe { };

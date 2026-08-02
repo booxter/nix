@@ -3,7 +3,7 @@
 setup() {
   tmpdir="$(mktemp -d)"
   mkdir -p "$tmpdir/bin"
-  warmer="$PWD/home-manager/_mixins/agents/pkgs/codex-warmer.sh"
+  warmer="${CODEX_WARMER_BIN:-$BATS_TEST_DIRNAME/codex-warmer.sh}"
   bash_path="$(command -v bash)"
 
   jq -n '{

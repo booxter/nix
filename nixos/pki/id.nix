@@ -35,14 +35,7 @@ let
     }
     // lib.optionalAttrs (person ? legalName) { inherit (person) legalName; }
   ) sso.users;
-  personMailProvision = pkgs.writeShellApplication {
-    name = "kanidm-person-mail-provision";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.jq
-    ];
-    text = builtins.readFile ./kanidm-person-mail-provision.sh;
-  };
+  personMailProvision = pkiPkgs.kanidm-person-mail-provision;
   personMailProvisionArgs = [
     personMailProvisionFile
   ]

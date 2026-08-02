@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  script="${BATS_TEST_DIRNAME}/../nixos/pki/kanidm-person-mail-provision.sh"
+  script="${KANIDM_PERSON_MAIL_PROVISION_BIN:-$BATS_TEST_DIRNAME/kanidm-person-mail-provision.sh}"
 }
 
 @test "renders person mail addresses as Kanidm provisioning JSON" {

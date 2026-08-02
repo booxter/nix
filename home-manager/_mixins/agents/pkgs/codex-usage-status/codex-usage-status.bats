@@ -3,7 +3,7 @@
 setup() {
   tmpdir="$(mktemp -d)"
   mkdir -p "$tmpdir/bin" "$tmpdir/home/.codex"
-  usage_status="$PWD/home-manager/_mixins/agents/pkgs/codex-usage-status.sh"
+  usage_status="${CODEX_USAGE_STATUS_BIN:-$BATS_TEST_DIRNAME/codex-usage-status.sh}"
   bash_path="$(command -v bash)"
 
   jq -n '{ tokens: { access_token: "test-token" } }' >"$tmpdir/auth.json"

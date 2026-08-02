@@ -3,7 +3,7 @@
 setup() {
   tmpdir="$(mktemp -d)"
   mkdir -p "$tmpdir/bin"
-  helper="$PWD/home-manager/_mixins/scm/pkgs/git-send-email-store-password.sh"
+  helper="${GIT_SEND_EMAIL_STORE_PASSWORD_BIN:-$BATS_TEST_DIRNAME/git-send-email-store-password.sh}"
   bash_path="$(command -v bash)"
 
   printf '#!%s\n' "$bash_path" >"$tmpdir/bin/git"
