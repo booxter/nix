@@ -15,6 +15,10 @@ helpers.forAllSystems (
       ];
     };
     inventory = import ./lib/inventory.nix { inherit (pkgs) lib; };
+    sops = import ./apps/sops {
+      hostInventory = inventory;
+      inherit pkgs;
+    };
     fleetApps = import ./apps/fleet.nix { inherit pkgs; };
     fanaMonitoring = import ./nixos/fana/monitoring/catalog.nix;
     patchFiles = pkgs.lib.fileset.fileFilter (
@@ -45,20 +49,7 @@ helpers.forAllSystems (
       };
   in
   {
-    sops-helpers = mkCheck {
-      name = "sops-helper-tests";
-      nativeBuildInputs = with pkgs; [
-        age
-        git
-        jq
-        mkpasswd
-        sops
-        yq-go
-      ];
-      buildPhase = ''
-        bash tests/check-sops-helpers.sh
-      '';
-    };
+    sops-tools = sops.package;
     box-py = mkCheck {
       name = "box-py-tests";
       nativeBuildInputs = with pkgs; [

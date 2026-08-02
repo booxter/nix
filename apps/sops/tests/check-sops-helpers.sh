@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
+REPO_ROOT="$(cd -- "${SCRIPT_DIR}/../../.." && pwd)"
 WORKDIR="$(mktemp -d)"
 trap 'rm -rf "$WORKDIR"' EXIT
 
@@ -95,7 +95,7 @@ setup_repo() {
   cp "$REPO_ROOT/apps/sops/sops-ups-sync.sh" "$repo_dir/apps/sops/"
   cp "$REPO_ROOT/apps/sops/sops-edit.sh" "$repo_dir/apps/sops/"
   cp "$REPO_ROOT/apps/sops/sops-pass.sh" "$repo_dir/apps/sops/"
-  cp "$REPO_ROOT/tests/test-sops-config.sh" "$repo_dir/tests/"
+  cp "$REPO_ROOT/apps/sops/tests/test-sops-config.sh" "$repo_dir/tests/"
   cd "$repo_dir"
   git init -q
   age-keygen -o "$repo_dir/age.txt" >/dev/null 2>&1

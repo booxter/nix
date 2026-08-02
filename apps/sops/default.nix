@@ -25,6 +25,14 @@ let
   ];
   jqRuntimeInputs = commonRuntimeInputs ++ [ pkgs.jq ];
   yqRuntimeInputs = jqRuntimeInputs ++ [ pkgs.yq-go ];
+  testSource = pkgs.lib.fileset.toSource {
+    root = ../..;
+    fileset = pkgs.lib.fileset.unions [
+      ./.
+      ../_helpers/host-aliases.sh
+      ../_helpers/secret-domains.sh
+    ];
+  };
 
   # Decrypt and print a host secret (defaults to current short hostname).
   sops-cat = pkgs.writeShellApplication {
@@ -119,17 +127,64 @@ let
       exec ${./sops-bootstrap.sh} "$@"
     '';
   };
+  commandPackages = [
+    sops-bootstrap
+    sops-cat
+    sops-copy
+    sops-edit
+    sops-pass
+    sops-set
+    sops-update
+    sops-ups-sync
+  ];
+  sopsTools = pkgs.stdenvNoCC.mkDerivation {
+    pname = "sops-tools";
+    version = "1";
+    src = testSource;
+
+    doCheck = true;
+    nativeCheckInputs = with pkgs; [
+      age
+      bash
+      git
+      jq
+      mkpasswd
+      shellcheck
+      sops
+      yq-go
+    ];
+
+    checkPhase = ''
+      runHook preCheck
+      ${pkgs.lib.getExe pkgs.bash} -n apps/sops/*.sh apps/sops/tests/*.sh
+      ${pkgs.lib.getExe pkgs.shellcheck} apps/sops/*.sh apps/sops/tests/*.sh
+      ${pkgs.lib.getExe pkgs.bash} apps/sops/tests/check-sops-helpers.sh
+      runHook postCheck
+    '';
+
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out/bin"
+      ${pkgs.lib.concatMapStringsSep "\n" (package: ''
+        ln -s ${package}/bin/* "$out/bin/"
+      '') commandPackages}
+      runHook postInstall
+    '';
+  };
 in
 {
-  "sops-bootstrap" =
-    mkApp "${sops-bootstrap}/bin/sops-bootstrap" "Bootstrap host sops secrets and key recipients.";
-  "sops-cat" = mkApp "${sops-cat}/bin/sops-cat" "Decrypt and print a host secret.";
-  "sops-edit" = mkApp "${sops-edit}/bin/sops-edit" "Edit a host secret.";
-  "sops-update" =
-    mkApp "${sops-update}/bin/sops-update" "Merge missing template keys into a host secret.";
-  "sops-copy" = mkApp "${sops-copy}/bin/sops-copy" "Copy a top-level key path between host secrets.";
-  "sops-set" = mkApp "${sops-set}/bin/sops-set" "Set a single host secret key path from stdin.";
-  "sops-ups-sync" =
-    mkApp "${sops-ups-sync}/bin/sops-ups-sync" "Sync NUT UPS server passwords into client secrets.";
-  "sops-pass" = mkApp "${sops-pass}/bin/sops-pass" "Hash and store a NixOS login password.";
+  package = sopsTools;
+  apps = {
+    "sops-bootstrap" =
+      mkApp "${sopsTools}/bin/sops-bootstrap" "Bootstrap host sops secrets and key recipients.";
+    "sops-cat" = mkApp "${sopsTools}/bin/sops-cat" "Decrypt and print a host secret.";
+    "sops-edit" = mkApp "${sopsTools}/bin/sops-edit" "Edit a host secret.";
+    "sops-update" =
+      mkApp "${sopsTools}/bin/sops-update" "Merge missing template keys into a host secret.";
+    "sops-copy" = mkApp "${sopsTools}/bin/sops-copy" "Copy a top-level key path between host secrets.";
+    "sops-set" = mkApp "${sopsTools}/bin/sops-set" "Set a single host secret key path from stdin.";
+    "sops-ups-sync" =
+      mkApp "${sopsTools}/bin/sops-ups-sync" "Sync NUT UPS server passwords into client secrets.";
+    "sops-pass" = mkApp "${sopsTools}/bin/sops-pass" "Hash and store a NixOS login password.";
+  };
 }

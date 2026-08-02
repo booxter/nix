@@ -232,7 +232,7 @@
               outputs.overlays.modifications
             ];
           };
-          sopsApps = import ./apps/sops { inherit hostInventory pkgs; };
+          sops = import ./apps/sops { inherit hostInventory pkgs; };
           packageUpdateApps = import ./apps/package-updates { inherit pkgs; };
           fleetApps = import ./apps/fleet.nix {
             inherit pkgs username;
@@ -265,7 +265,7 @@
             inherit inputs system;
           };
         in
-        sopsApps
+        sops.apps
         // packageUpdateApps
         // fleetApps
         // proxmox.apps
