@@ -6,7 +6,6 @@
 
 writeShellApplication {
   name = "paperless-gpt-configure";
-  runtimeInputs = [ python3 ];
   checkPhase = ''
     runHook preCheck
     PAPERLESS_GPT_CONFIGURE_MAIN=${./main.py} ${python3.pkgs.pytest}/bin/pytest -q -p no:cacheprovider ${./test_main.py}

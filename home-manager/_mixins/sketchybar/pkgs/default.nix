@@ -82,13 +82,7 @@ pkgs.stdenvNoCC.mkDerivation {
   src = ./plugins;
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
-  nativeCheckInputs = [
-    pkgs.bash
-    pkgs.bats
-    pkgs.gawk
-    pkgs.jq
-    pkgs.shellcheck
-  ];
+  nativeCheckInputs = [ pkgs.jq ];
 
   dontConfigure = true;
   dontBuild = true;

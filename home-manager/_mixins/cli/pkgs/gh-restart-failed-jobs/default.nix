@@ -16,11 +16,7 @@ writeShellApplication {
 
   derivationArgs = {
     doCheck = true;
-    nativeCheckInputs = [
-      bats
-      jq
-      shellcheck
-    ];
+    nativeCheckInputs = [ jq ];
   };
   checkPhase = ''
     runHook preCheck

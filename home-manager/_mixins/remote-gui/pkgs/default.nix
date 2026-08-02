@@ -42,11 +42,7 @@ let
 
       derivationArgs = {
         doCheck = true;
-        nativeCheckInputs = [
-          pkgs.bats
-          pkgs.python3
-          pkgs.shellcheck
-        ];
+        nativeCheckInputs = [ pkgs.python3 ];
       };
       checkPhase = ''
         runHook preCheck

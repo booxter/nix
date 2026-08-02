@@ -20,7 +20,6 @@ writeShellApplication {
     jq
     nix
     openssh
-    python3
     sops
     yq-go
   ];

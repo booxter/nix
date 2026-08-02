@@ -18,12 +18,7 @@ let
     {
       derivationArgs = {
         doCheck = true;
-        nativeCheckInputs = [
-          pkgs.bash
-          pkgs.bats
-          pkgs.shellcheck
-        ]
-        ++ nativeCheckInputs;
+        inherit nativeCheckInputs;
       };
       checkPhase = ''
         runHook preCheck
@@ -188,10 +183,7 @@ let
           UPDATE_MACHINES_BOX_BIN = pkgs.lib.getExe boxPackage;
         };
         nativeCheckInputs = with pkgs; [
-          coreutils
           git
-          gnugrep
-          gnutar
           jq
           openssh
           pythonWithPromptToolkit
@@ -216,10 +208,7 @@ let
       (mkBatsCheck {
         test = ./vm.bats;
         environment.VM_BIN = "${./vm.sh}";
-        nativeCheckInputs = with pkgs; [
-          gnugrep
-          jq
-        ];
+        nativeCheckInputs = [ pkgs.jq ];
       })
       derivationArgs
       checkPhase
@@ -249,12 +238,7 @@ let
         test = ./diff-config.bats;
         environment.DIFF_CONFIG_BIN = "${./diff-config.sh}";
         nativeCheckInputs = with pkgs; [
-          coreutils
-          diffutils
-          findutils
           git
-          gnugrep
-          gnused
           jq
         ];
       })
@@ -266,21 +250,16 @@ let
   getLocalBuilders = pkgs.writeShellApplication {
     name = "get-local-builders";
     runtimeInputs = with pkgs; [
-      bash
       coreutils
       gawk
     ];
     text = ''
-      exec ${../apps/get-local-builders.sh} "$@"
+      exec ${pkgs.bash}/bin/bash ${../apps/get-local-builders.sh} "$@"
     '';
     inherit
       (mkBatsCheck {
         test = ./get-local-builders.bats;
         environment.GET_LOCAL_BUILDERS_BIN = "${./get-local-builders.sh}";
-        nativeCheckInputs = with pkgs; [
-          coreutils
-          gawk
-        ];
       })
       derivationArgs
       checkPhase
@@ -290,7 +269,6 @@ let
   hbaFlash = pkgs.writeShellApplication {
     name = "hba-flash";
     runtimeInputs = with pkgs; [
-      bash
       coreutils
       findutils
       gnugrep
@@ -313,14 +291,12 @@ let
   pkiRotationPackage = pkgs.pki-rotation;
   issueObservabilityCertApp = pkgs.writeShellApplication {
     name = "issue-observability-cert-app";
-    runtimeInputs = [ issueObservabilityCertPackage ];
     text = ''
       exec ${issueObservabilityCertPackage}/bin/issue-observability-cert "$@"
     '';
   };
   issueInternalServiceCertApp = pkgs.writeShellApplication {
     name = "issue-internal-service-cert-app";
-    runtimeInputs = [ issueInternalServiceCertPackage ];
     text = ''
       export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_COMMON_NAME=${pkgs.lib.escapeShellArg "unifi.${lan.domain}"}
       export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_SANS_JSON=${
@@ -337,14 +313,12 @@ let
   };
   issueProxmoxExporterTokenApp = pkgs.writeShellApplication {
     name = "issue-proxmox-exporter-token-app";
-    runtimeInputs = [ issueProxmoxExporterTokenPackage ];
     text = ''
       exec ${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token "$@"
     '';
   };
   pkiRotationApp = pkgs.writeShellApplication {
     name = "pki-rotation-app";
-    runtimeInputs = [ pkiRotationPackage ];
     text = ''
       export PKI_ROTATION_REPO_ROOT="${../.}"
       exec ${pkiRotationPackage}/bin/pki-rotation "$@"
@@ -359,11 +333,7 @@ let
   };
   wgHomeClientConfig = pkgs.writeShellApplication {
     name = "wg-home-client-config";
-    runtimeInputs = with pkgs; [
-      coreutils
-      openssh
-      python3
-    ];
+    runtimeInputs = [ pkgs.openssh ];
     text = ''
       set -euo pipefail
 

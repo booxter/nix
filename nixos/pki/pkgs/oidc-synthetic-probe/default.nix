@@ -6,7 +6,6 @@
 
 writeShellApplication {
   name = "oidc-synthetic-probe";
-  runtimeInputs = [ python3 ];
   text = ''
     exec ${python3}/bin/python3 ${./main.py} "$@"
   '';

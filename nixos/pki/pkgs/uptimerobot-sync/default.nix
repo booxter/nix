@@ -5,7 +5,6 @@
 }:
 writeShellApplication {
   name = "uptimerobot-sync";
-  runtimeInputs = [ python3 ];
   checkPhase = ''
     runHook preCheck
     cd "$TMPDIR"

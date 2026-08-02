@@ -11,7 +11,6 @@ in
 
 writeShellApplication {
   name = "fana-alertmanager-watchdog";
-  runtimeInputs = [ pythonWithDeps ];
   text = ''
     exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
   '';

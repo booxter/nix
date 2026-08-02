@@ -23,8 +23,7 @@ let
     jq
     sops
   ];
-  jqRuntimeInputs = commonRuntimeInputs ++ [ pkgs.jq ];
-  yqRuntimeInputs = jqRuntimeInputs ++ [ pkgs.yq-go ];
+  yqRuntimeInputs = commonRuntimeInputs ++ [ pkgs.yq-go ];
   testSource = pkgs.lib.fileset.toSource {
     root = ../..;
     fileset = pkgs.lib.fileset.unions [
@@ -77,7 +76,7 @@ let
   # Set a single key path in one host secret from stdin.
   sops-set = pkgs.writeShellApplication {
     name = "sops-set";
-    runtimeInputs = jqRuntimeInputs;
+    runtimeInputs = commonRuntimeInputs;
     text = ''
       ${domainEnvironment}
       exec ${./sops-set.sh} "$@"
@@ -99,7 +98,7 @@ let
   sops-pass = pkgs.writeShellApplication {
     name = "sops-pass";
     runtimeInputs =
-      jqRuntimeInputs
+      commonRuntimeInputs
       ++ (with pkgs; [
         mkpasswd
         pass
@@ -145,11 +144,9 @@ let
     doCheck = true;
     nativeCheckInputs = with pkgs; [
       age
-      bash
       git
       jq
       mkpasswd
-      shellcheck
       sops
       yq-go
     ];

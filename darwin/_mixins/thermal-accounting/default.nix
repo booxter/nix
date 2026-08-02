@@ -13,7 +13,6 @@ let
   exportMetrics = pkgs.writeShellApplication {
     name = "observability-thermal-export";
     runtimeInputs = [
-      pkgs.bash
       pkgs.coreutils
       pkgs.gnused
       pkgs.gawk

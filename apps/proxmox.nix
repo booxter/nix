@@ -61,12 +61,6 @@ let
     '';
     derivationArgs = {
       doCheck = true;
-      nativeCheckInputs = [
-        pkgs.bash
-        pkgs.bats
-        pkgs.gnugrep
-        pkgs.shellcheck
-      ];
     };
     checkPhase = ''
       runHook preCheck

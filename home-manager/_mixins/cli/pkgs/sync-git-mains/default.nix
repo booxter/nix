@@ -19,11 +19,7 @@ writeShellApplication {
 
   derivationArgs = {
     doCheck = true;
-    nativeCheckInputs = [
-      bats
-      git
-      shellcheck
-    ];
+    nativeCheckInputs = [ git ];
   };
   checkPhase = ''
     runHook preCheck

@@ -12,7 +12,6 @@ let
   commonRuntimeInputs = [
     nix
     openssh
-    python
   ];
   commonEnv = lib.optionalString stdenv.hostPlatform.isDarwin ''
     export SSH_AUTH_SOCK="''${SSHT_SECRETIVE_SOCKET:-$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh}"

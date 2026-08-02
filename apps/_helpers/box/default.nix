@@ -5,7 +5,6 @@
 }:
 writeShellApplication {
   name = "box";
-  runtimeInputs = [ python3 ];
   text = ''
     exec ${python3}/bin/python3 ${./box.py} "$@"
   '';

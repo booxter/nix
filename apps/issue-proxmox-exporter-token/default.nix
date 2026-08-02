@@ -1,5 +1,4 @@
 {
-  bash,
   age-plugin-se,
   git,
   lib,
@@ -12,12 +11,10 @@
 writeShellApplication {
   name = "issue-proxmox-exporter-token";
   runtimeInputs = [
-    bash
     age-plugin-se
     git
     nix
     openssh
-    python3
     sops
   ];
   text = ''

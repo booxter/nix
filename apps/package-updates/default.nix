@@ -19,12 +19,7 @@ let
     {
       derivationArgs = {
         doCheck = true;
-        nativeCheckInputs = [
-          pkgs.bash
-          pkgs.bats
-          pkgs.shellcheck
-        ]
-        ++ nativeCheckInputs;
+        inherit nativeCheckInputs;
       };
       checkPhase = ''
         runHook preCheck
@@ -39,7 +34,6 @@ let
   updatePackages = pkgs.writeShellApplication {
     name = "update-packages";
     runtimeInputs = with pkgs; [
-      bash
       coreutils
       git
       gnused
@@ -65,9 +59,7 @@ let
           "apps/package-updates/select-nodejs.bats"
         ];
         nativeCheckInputs = with pkgs; [
-          coreutils
           git
-          gnugrep
           jq
           (python3.withPackages (pythonPackages: [ pythonPackages.semantic-version ]))
         ];
@@ -100,9 +92,7 @@ let
         ];
         tests = [ "apps/package-updates/update-oci-images.bats" ];
         nativeCheckInputs = with pkgs; [
-          coreutils
           git
-          gnugrep
           jq
         ];
       })
