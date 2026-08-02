@@ -14,17 +14,12 @@ helpers.forAllSystems (
         outputs.overlays.modifications
       ];
     };
-    inventory = import ./lib/inventory.nix { inherit (pkgs) lib; };
-    sops = import ./apps/sops {
-      hostInventory = inventory;
-      inherit pkgs;
-    };
     fleet = import ./apps/fleet.nix { inherit pkgs; };
     packageUpdates = import ./apps/package-updates { inherit pkgs; };
     proxmox = import ./apps/proxmox.nix { inherit inputs system; };
   in
   {
-    sops-tools = sops.package;
+    sops-tools = pkgs.sops-tools;
     patch-context = pkgs.patch-context;
     deploy = fleet.packages.deploy;
     diff = fleet.packages.diff;

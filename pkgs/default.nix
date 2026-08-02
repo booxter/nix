@@ -2,6 +2,7 @@
 pkgs:
 let
   appPackages = import ../apps pkgs;
+  hostInventory = import ../lib/inventory.nix { inherit (pkgs) lib; };
   gitPrecomposePatch = ../lib/patches/git-precompose-utf8-flex-array.patch;
   # Keep this as opt-in packages instead of overriding pkgs.git globally: Git
   # is a common build tool, so a global override can fan out into many rebuilds.
@@ -35,5 +36,9 @@ in
   pki-rotation = pkgs.callPackage ./pki-rotation {
     issueInternalServiceCert = appPackages.issue-internal-service-cert;
     issueObservabilityCert = appPackages.issue-observability-cert;
+  };
+
+  sops-tools = import ../apps/sops/package.nix {
+    inherit hostInventory pkgs;
   };
 }
