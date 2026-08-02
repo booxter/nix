@@ -1,5 +1,6 @@
 { hostInventory, pkgs }:
 let
+  pythonPackages = pkgs.python3Packages;
   upsClientsByServer = import ../../lib/ups-clients.nix { lib = pkgs.lib; };
   upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
     builtins.toJSON upsClientsByServer
@@ -35,7 +36,7 @@ let
     ]
   );
 in
-pkgs.python3.pkgs.buildPythonApplication {
+pythonPackages.buildPythonApplication {
   pname = "sops-tools";
   version = "0.1.0";
   pyproject = true;
@@ -43,18 +44,18 @@ pkgs.python3.pkgs.buildPythonApplication {
   src = source;
   sourceRoot = "source/apps/sops";
 
-  build-system = [ pkgs.python3.pkgs.setuptools ];
-  dependencies = [ pkgs.python3.pkgs.pyyaml ];
+  build-system = [ pythonPackages.setuptools ];
+  dependencies = [ pythonPackages.pyyaml ];
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
-  nativeCheckInputs = [
+  nativeCheckInputs = with pythonPackages; [
     pkgs.age
     pkgs.ruff
     pkgs.sops
-    pkgs.python3.pkgs.mypy
-    pkgs.python3.pkgs.pytestCheckHook
-    pkgs.python3.pkgs.pytest-cov
-    pkgs.python3.pkgs.types-pyyaml
+    mypy
+    pytestCheckHook
+    pytest-cov
+    types-pyyaml
   ];
 
   preCheck = ''
