@@ -50,11 +50,6 @@
 
     vpnconfinement.url = "github:Maroka-chan/VPN-Confinement";
 
-    codex-desktop-linux = {
-      url = "github:ilysenko/codex-desktop-linux";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     determinate-nix-installer = {
       url = "github:DeterminateSystems/nix-installer";
       flake = false;
