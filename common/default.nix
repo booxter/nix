@@ -3,6 +3,8 @@
   pkgs,
   username,
   hostname,
+  isBuilder,
+  isDesktop,
   isLaptop ? false,
   isWork,
   secretDomain,
@@ -11,8 +13,8 @@
 }:
 let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  canUseBuilders = !isWork && (hostname == "mair" || hostname == "mmini" || hostname == "frame");
-  canUseWorkBuilders = isWork && hostname != "nvws";
+  canUsePersonalBuilders = !isWork && isDesktop;
+  canUseWorkBuilders = isWork && !isBuilder;
   workKeys = [
     (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
     (readPublicKey ../public-keys/users/jgwxhwdl4x-nix-builder.pub)
@@ -45,7 +47,7 @@ in
     ./_mixins/attic
     ./_mixins/flakehub-cache
   ]
-  ++ lib.optionals canUseBuilders [
+  ++ lib.optionals canUsePersonalBuilders [
     ./_mixins/community-builders
     ./_mixins/personal-builders
   ]

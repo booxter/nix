@@ -1,8 +1,6 @@
 {
-  lib,
   config,
   username,
-  hostname,
   ...
 }:
 let
@@ -20,21 +18,23 @@ in
     '';
   };
 
-  nix.buildMachines = lib.optional (hostname != "nvws") {
-    hostName = "nvws.local";
-    system = "x86_64-linux";
-    protocol = "ssh-ng";
-    sshKey = identityFile;
-    sshUser = user;
-    maxJobs = 4;
-    speedFactor = 100;
-    supportedFeatures = [
-      "nixos-test"
-      "benchmark"
-      "big-parallel"
-      "kvm"
-    ];
-  };
+  nix.buildMachines = [
+    {
+      hostName = "nvws.local";
+      system = "x86_64-linux";
+      protocol = "ssh-ng";
+      sshKey = identityFile;
+      sshUser = user;
+      maxJobs = 4;
+      speedFactor = 100;
+      supportedFeatures = [
+        "nixos-test"
+        "benchmark"
+        "big-parallel"
+        "kvm"
+      ];
+    }
+  ];
 
   nix.settings.builders-use-substitutes = true;
   nix.distributedBuilds = true;
