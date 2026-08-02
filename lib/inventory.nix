@@ -52,6 +52,7 @@ let
       idx' = toString idx;
     in
     {
+      isBuilder = true;
       isVM = true;
       name = "builder${idx'}";
       proxNode = "prx${idx'}-lab";
@@ -912,6 +913,7 @@ rec {
       hmStateVersion = "25.11";
       hostname = "mmini";
       platform = "aarch64-darwin";
+      isBuilder = true;
       isDesktop = true;
       vnc.enable = true;
       hardware.gpuFamilies = [ "apple" ];
@@ -940,6 +942,7 @@ rec {
       name = frame;
       stateVersion = "25.11";
       platform = "x86_64-linux";
+      isBuilder = true;
       isDesktop = true;
       nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
@@ -1012,6 +1015,7 @@ rec {
       hostKind = "proxmox";
       name = nvws;
       inherit username;
+      isBuilder = true;
       isWork = true;
       stateVersion = "25.11";
       netIface = "enp3s0f0";
