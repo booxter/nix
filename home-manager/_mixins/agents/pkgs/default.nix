@@ -23,12 +23,5 @@ rec {
     codexUsageStatus = codex-usage-status;
   };
 
-  codex-work-usage-status = pkgs.writeShellApplication {
-    name = "codex-work-usage-status";
-    runtimeInputs = with pkgs; [
-      curl
-      jq
-    ];
-    text = builtins.readFile ./codex-work-usage-status.sh;
-  };
+  codex-work-usage-status = codex-usage-status;
 }
