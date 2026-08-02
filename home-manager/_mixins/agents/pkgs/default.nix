@@ -8,7 +8,7 @@ rec {
     text = builtins.readFile ./codex-mcp-init.sh;
   };
 
-  codex-usage-status = pkgs.callPackage ./codex-usage-status { };
+  codex-usage-status = pkgs.callPackage ./codex-tools { };
 
   codex-rate-limit-reset-credits = pkgs.writeShellApplication {
     name = "codex-rate-limit-reset-credits";
