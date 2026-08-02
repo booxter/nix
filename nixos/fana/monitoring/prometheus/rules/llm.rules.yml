@@ -1,0 +1,13 @@
+groups:
+  - name: llm-health
+    interval: 30s
+    rules:
+      - alert: FrameGPUActivitySustained
+        expr: max by(instance, job, engine) (host_observability_amdgpu_activity_percent{job="node-mtls",instance="frame",engine="GFX"}) > 95
+        for: 1h
+        labels:
+          severity: warning
+          category: capacity
+        annotations:
+          summary: "GPU activity continuously high on frame"
+          description: "Frame's GFX engine has remained above 95% activity continuously for 1 hour."

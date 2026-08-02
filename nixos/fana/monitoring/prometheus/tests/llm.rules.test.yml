@@ -1,0 +1,34 @@
+rule_files:
+  - ../rules/llm.rules.yml
+
+evaluation_interval: 30s
+
+tests:
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_amdgpu_activity_percent{instance="frame",job="node-mtls",engine="GFX",gpu="0"}'
+        values: "100x122"
+    alert_rule_test:
+      - eval_time: 59m30s
+        alertname: FrameGPUActivitySustained
+      - eval_time: 1h
+        alertname: FrameGPUActivitySustained
+        exp_alerts:
+          - exp_labels:
+              alertname: FrameGPUActivitySustained
+              category: capacity
+              engine: GFX
+              instance: frame
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "GPU activity continuously high on frame"
+              description: "Frame's GFX engine has remained above 95% activity continuously for 1 hour."
+
+  - interval: 30s
+    input_series:
+      - series: 'host_observability_amdgpu_activity_percent{instance="frame",job="node-mtls",engine="GFX",gpu="0"}'
+        values: "100x119 0x2"
+    alert_rule_test:
+      - eval_time: 1h
+        alertname: FrameGPUActivitySustained
