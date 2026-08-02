@@ -128,7 +128,7 @@ if [[ "$#" -ne 4 || "$1" != "verify" || "$2" != "--key" ]]; then
   exit 1
 fi
 
-expected_key="${PWD}/tests/fixtures/oci-cosign.pub"
+expected_key="${PWD}/apps/package-updates/fixtures/oci-cosign.pub"
 if [[ "$3" != "$expected_key" ]]; then
   echo "unexpected cosign key: $3" >&2
   echo "expected cosign key: $expected_key" >&2
@@ -177,7 +177,7 @@ EOF
     "changelog": "https://example.invalid/releases/{tag}",
     "signature": {
       "type": "cosign-key",
-      "key": "tests/fixtures/oci-cosign.pub"
+      "key": "apps/package-updates/fixtures/oci-cosign.pub"
     }
   }
 }
@@ -257,7 +257,7 @@ EOF
     "changelog": "https://example.invalid/releases/{tag}",
     "signature": {
       "type": "cosign-key",
-      "key": "tests/fixtures/oci-cosign.pub"
+      "key": "apps/package-updates/fixtures/oci-cosign.pub"
     }
   }
 }

@@ -17,7 +17,6 @@ helpers.forAllSystems (
     inventory = import ./lib/inventory.nix { inherit (pkgs) lib; };
     fleetApps = import ./apps/fleet.nix { inherit pkgs; };
     fanaMonitoring = import ./nixos/fana/monitoring/catalog.nix;
-    packageUpdateScripts = pkgs.lib.fileset.fileFilter (file: file.name == "update.sh") ./.;
     patchFiles = pkgs.lib.fileset.fileFilter (
       file: pkgs.lib.hasSuffix ".patch" file.name || pkgs.lib.hasSuffix ".diff" file.name
     ) ./.;
@@ -46,27 +45,19 @@ helpers.forAllSystems (
       };
   in
   {
-    bats = mkCheck {
-      name = "bats";
+    sops-helpers = mkCheck {
+      name = "sops-helper-tests";
       nativeBuildInputs = with pkgs; [
         age
-        bats
         git
         jq
         mkpasswd
-        (python3.withPackages (pythonPackages: [ pythonPackages.semantic-version ]))
         sops
         yq-go
       ];
       buildPhase = ''
-        bats --print-output-on-failure tests/test-update-packages.bats
-        bats --print-output-on-failure tests/select-nodejs.bats
-        bats --print-output-on-failure tests/test-update-oci-images.bats
         bash tests/check-sops-helpers.sh
       '';
-      extraFileset = [
-        packageUpdateScripts
-      ];
     };
     box-py = mkCheck {
       name = "box-py-tests";
