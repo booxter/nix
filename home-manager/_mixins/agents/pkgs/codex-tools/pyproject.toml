@@ -9,6 +9,7 @@ description = "Typed helpers for local Codex account automation"
 requires-python = ">=3.11"
 
 [project.scripts]
+codex-rate-limit-reset-credits = "codex_tools.cli:reset_credits_main"
 codex-usage-status = "codex_tools.cli:usage_main"
 codex-work-usage-status = "codex_tools.cli:work_usage_main"
 

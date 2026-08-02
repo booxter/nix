@@ -9,6 +9,7 @@ from typing import TextIO
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.http import JsonHttpClient, UrllibJsonHttpClient
+from codex_tools.reset_credits import ResetCreditsService, format_reset_credits
 from codex_tools.usage import PersonalUsageService, format_personal_usage
 from codex_tools.work_usage import WorkUsageService, format_work_usage
 
@@ -94,4 +95,34 @@ def work_usage_main(
         print(json.dumps(usage.to_json(), separators=(",", ":")), file=stdout)
     else:
         print(format_work_usage(usage), file=stdout)
+    return 0
+
+
+def reset_credits_main(
+    argv: Sequence[str] | None = None,
+    *,
+    client: JsonHttpClient | None = None,
+    home: Path | None = None,
+    stdout: TextIO = sys.stdout,
+    stderr: TextIO = sys.stderr,
+) -> int:
+    parser = argparse.ArgumentParser(
+        prog="codex-rate-limit-reset-credits",
+        description="Print Codex rate-limit reset credits.",
+    )
+    parser.add_argument(
+        "auth_file",
+        nargs="?",
+        type=Path,
+        default=(home or Path.home()) / ".codex" / "auth.json",
+    )
+    args = parser.parse_args(argv)
+    try:
+        report = ResetCreditsService(client or UrllibJsonHttpClient()).fetch(
+            CodexAuth.load(args.auth_file)
+        )
+    except CodexToolsError as error:
+        print(error, file=stderr)
+        return 1
+    print(format_reset_credits(report), file=stdout)
     return 0

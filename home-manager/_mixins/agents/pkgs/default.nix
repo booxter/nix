@@ -10,14 +10,7 @@ rec {
 
   codex-usage-status = pkgs.callPackage ./codex-tools { };
 
-  codex-rate-limit-reset-credits = pkgs.writeShellApplication {
-    name = "codex-rate-limit-reset-credits";
-    runtimeInputs = with pkgs; [
-      curl
-      jq
-    ];
-    text = builtins.readFile ./codex-rate-limit-reset-credits.sh;
-  };
+  codex-rate-limit-reset-credits = codex-usage-status;
 
   codex-warmer = pkgs.callPackage ./codex-warmer {
     codexUsageStatus = codex-usage-status;
