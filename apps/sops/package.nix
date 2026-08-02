@@ -152,6 +152,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ${pkgs.lib.getExe pkgs.bash} -n apps/sops/*.sh apps/sops/tests/*.sh
     ${pkgs.lib.getExe pkgs.shellcheck} apps/sops/*.sh apps/sops/tests/*.sh
     ${pkgs.lib.getExe pkgs.bash} apps/sops/tests/check-sops-helpers.sh
+    ${pkgs.lib.getExe pkgs.bash} apps/sops/tests/check-sops-bootstrap.sh
     runHook postCheck
   '';
 
