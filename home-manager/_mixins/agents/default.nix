@@ -102,6 +102,7 @@ in
       mcp_oauth_credentials_store = "file";
       notice.fast_default_opt_out = true;
 
+      tui.theme = "gruvbox-dark";
       # Avoid accidental bare-Esc interrupts until Codex has safer interrupt UX:
       # https://github.com/openai/codex/issues/12582
       # https://github.com/openai/codex/issues/14509
