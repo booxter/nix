@@ -215,8 +215,37 @@ let
                                 icon.padding_right=2                    \
                                 label.padding_left=2                    \
                                 label.padding_right=6                   \
-                                click_script="/usr/bin/open ${lib.escapeShellArg config.programs.sketchybarJellyfin.dashboardUrl}" \
-                 --subscribe jellyfin system_woke
+                                popup.align=right                       \
+                                popup.background.color="$BACKGROUND_COLOR" \
+                                popup.background.border_color="$BACKGROUND_BORDER_COLOR" \
+                                popup.background.border_width=1        \
+                                popup.background.corner_radius=6       \
+                 --subscribe jellyfin system_woke mouse.clicked
+
+      for index in {0..7}; do
+        sketchybar --add item "jellyfin.session.$index" popup.jellyfin \
+                   --set "jellyfin.session.$index" updates=off          \
+                                                   drawing=off           \
+                                                   icon.drawing=off      \
+                                                   label.align=left      \
+                                                   label.padding_left=8  \
+                                                   label.padding_right=8 \
+                                                   background.border_width=0 \
+                                                   background.height=24
+      done
+
+      sketchybar --add item jellyfin.dashboard popup.jellyfin          \
+                 --set jellyfin.dashboard updates=off                   \
+                                           icon="󰈹"                    \
+                                           icon.padding_left=8          \
+                                           icon.padding_right=4         \
+                                           label="Open Grafana"        \
+                                           label.align=left             \
+                                           label.padding_left=4         \
+                                           label.padding_right=8        \
+                                           background.border_width=0    \
+                                           background.height=24         \
+                                           click_script="/usr/bin/open ${lib.escapeShellArg config.programs.sketchybarJellyfin.dashboardUrl}; sketchybar --set jellyfin popup.drawing=off"
     ''
   );
   attentionInboxItem = pkgs.writeText "sketchybar-attention-inbox-item.sh" (
@@ -438,7 +467,7 @@ in
 
     dashboardUrl = lib.mkOption {
       type = lib.types.str;
-      description = "Grafana media dashboard opened when the indicator is clicked.";
+      description = "Grafana media dashboard opened from the indicator popup.";
     };
 
     clientCertificate = lib.mkOption {

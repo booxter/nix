@@ -28,6 +28,7 @@ EOF
   export JELLYFIN_CLIENT_KEY="$tmpdir/client.key"
   export JELLYFIN_TEST_CURL_ARGS="$tmpdir/curl-args"
   export CURL="$tmpdir/bin/curl"
+  unset SENDER
 }
 
 teardown() {
@@ -42,6 +43,7 @@ write_response() {
 @test "hides the item when there are no active streams" {
   write_response <<'EOF'
 jellyfin_scrape_collector_success{collector="playing"} 1
+jellyfin_scrape_collector_success{collector="users"} 1
 jellyfin_up 1
 EOF
 
@@ -49,6 +51,7 @@ EOF
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=off"* ]]
+  [[ "$output" == *"popup.drawing=off"* ]]
   run grep -F -- "--cacert $JELLYFIN_CA_CERTIFICATE" "$JELLYFIN_TEST_CURL_ARGS"
   [ "$status" -eq 0 ]
   run grep -F -- "--cert $JELLYFIN_CLIENT_CERTIFICATE" "$JELLYFIN_TEST_CURL_ARGS"
@@ -57,13 +60,19 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-@test "shows the number of active audio and video streams" {
+@test "shows session details for active and paused streams" {
   write_response <<'EOF'
 jellyfin_scrape_collector_success{collector="playing"} 1
+jellyfin_scrape_collector_success{collector="users"} 1
 jellyfin_up 1
-jellyfin_now_playing_state{device="Living Room",title="A Film",type="Movie",user_id="one",username="One"} 1
-jellyfin_now_playing_state{device="Phone",title="A Song",type="Audio",user_id="two",username="Two"} 1
-jellyfin_now_playing_state{device="Tablet",title="Paused",type="Episode",user_id="three",username="Three"} 0
+jellyfin_user_active{client="Jellyfin Web",device="Living Room",ip_address="192.168.1.20",user_id="one",username="One"} 1
+jellyfin_user_active{client="Jellyfin Mobile",device="Phone",ip_address="8.8.8.8",user_id="two",username="Two"} 1
+jellyfin_now_playing_state{device="Living Room",method="DirectPlay",title="A Film",type="Movie",user_id="one",username="One"} 1
+jellyfin_now_playing_remaining{device="Living Room",method="DirectPlay",title="A Film",type="Movie",user_id="one",username="One"} 2040
+jellyfin_now_playing_progress{device="Living Room",method="DirectPlay",title="A Film",type="Movie",user_id="one",username="One"} 42
+jellyfin_now_playing_state{device="Phone",method="Transcode",title="A Song",type="Audio",user_id="two",username="Two"} 1
+jellyfin_now_playing_state{device="Tablet",method="DirectStream",series_episode="5",series_season="2",series_title="A Series",title="The Episode",type="Episode",user_id="three",username="Three"} 0
+jellyfin_now_playing_progress{device="Tablet",method="DirectStream",series_episode="5",series_season="2",series_title="A Series",title="The Episode",type="Episode",user_id="three",username="Three"} 61
 jellyfin_now_playing_state{device="Browser",title="Photo",type="Photo",user_id="four",username="Four"} 1
 EOF
 
@@ -71,8 +80,27 @@ EOF
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=on"* ]]
-  [[ "$output" == *"label=2"* ]]
+  [[ "$output" == *"label=3"* ]]
   [[ "$output" == *"label.color=0xffd3869b"* ]]
+  [[ "$output" == *"label=LAN · One · Living Room · A Film — 34m left · direct"* ]]
+  [[ "$output" == *"label=WAN · Two · Phone · A Song — playing · transcode"* ]]
+  [[ "$output" == *"label=unknown · Three · Tablet · A Series S2E5 — The Episode — paused at 61% · direct stream"* ]]
+  [[ "$output" != *"ip_address="* ]]
+}
+
+@test "refreshes and toggles the popup when clicked" {
+  write_response <<'EOF'
+jellyfin_scrape_collector_success{collector="playing"} 1
+jellyfin_scrape_collector_success{collector="users"} 1
+jellyfin_up 1
+jellyfin_user_active{client="Jellyfin Web",device="TV",ip_address="10.0.0.2",user_id="one",username="One"} 1
+jellyfin_now_playing_state{device="TV",method="DirectPlay",title="A Film",type="Movie",user_id="one",username="One"} 1
+EOF
+
+  run env PATH="$tmpdir/bin:$PATH" SENDER=mouse.clicked bash "$plugin"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"popup.drawing=toggle"* ]]
 }
 
 @test "shows an error state when the exporter is unavailable" {
@@ -89,6 +117,7 @@ EOF
 @test "shows an error state when Jellyfin is down" {
   write_response <<'EOF'
 jellyfin_scrape_collector_success{collector="playing"} 1
+jellyfin_scrape_collector_success{collector="users"} 1
 jellyfin_up 0
 EOF
 
@@ -101,6 +130,20 @@ EOF
 @test "shows an error state when the playing collector fails" {
   write_response <<'EOF'
 jellyfin_scrape_collector_success{collector="playing"} 0
+jellyfin_scrape_collector_success{collector="users"} 1
+jellyfin_up 1
+EOF
+
+  run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"label=?"* ]]
+}
+
+@test "shows an error state when the users collector fails" {
+  write_response <<'EOF'
+jellyfin_scrape_collector_success{collector="playing"} 1
+jellyfin_scrape_collector_success{collector="users"} 0
 jellyfin_up 1
 EOF
 
@@ -113,6 +156,7 @@ EOF
 @test "shows an error state for an invalid playback sample" {
   write_response <<'EOF'
 jellyfin_scrape_collector_success{collector="playing"} 1
+jellyfin_scrape_collector_success{collector="users"} 1
 jellyfin_up 1
 jellyfin_now_playing_state{device="TV",title="Broken",type="Movie",user_id="one",username="One"} invalid
 EOF

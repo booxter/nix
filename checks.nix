@@ -51,6 +51,7 @@ helpers.forAllSystems (
       nativeBuildInputs = with pkgs; [
         age
         bats
+        gawk
         git
         jq
         mkpasswd
