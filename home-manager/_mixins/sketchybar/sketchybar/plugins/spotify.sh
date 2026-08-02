@@ -41,8 +41,7 @@ shuffle ()
 
 spotify_info_field ()
 {
-  # Keep truncation UTF-8 aware; cut can split bytes under SketchyBar's launch locale.
-  jq -r --arg field "$1" '.[$field] // "" | .[:20]' <<<"$INFO"
+  jq -r --arg field "$1" '.[$field] // ""' <<<"$INFO"
 }
 
 update ()
