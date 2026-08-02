@@ -1,0 +1,84 @@
+diff --git a/plugins/romm/index.js b/plugins/romm/index.js
+index 1ddbfde..c202da9 100644
+--- a/plugins/romm/index.js
++++ b/plugins/romm/index.js
+@@ -3,8 +3,7 @@ import { createThumbCache } from "./thumb-cache.js";
+ const thumb = createThumbCache();
+ 
+ let rommUrl = "";
+-let username = "";
+-let password = "";
++let apiToken = "";
+ let template = "";
+ let resultItemTpl = "";
+ 
+@@ -37,18 +36,9 @@ function searchVariants(term) {
+   return [...new Set(variants)];
+ }
+ 
+-function _basicAuthValue(user, pass) {
+-  const raw = `${user}:${pass}`;
+-  const encoded =
+-    typeof Buffer !== "undefined"
+-      ? Buffer.from(raw, "utf8").toString("base64")
+-      : btoa(raw);
+-  return `Basic ${encoded}`;
+-}
+-
+ function _authHeaders() {
+-  if (!username || !password) return {};
+-  return { Authorization: _basicAuthValue(username, password) };
++  if (!apiToken) return {};
++  return { Authorization: `Bearer ${apiToken}` };
+ }
+ 
+ function _coverHeaders(coverUrl) {
+@@ -158,19 +148,13 @@ export default {
+       description: "Base URL of your RomM instance",
+     },
+     {
+-      key: "username",
+-      label: "Username",
+-      type: "text",
+-      required: true,
+-      placeholder: "RomM login username",
+-    },
+-    {
+-      key: "password",
+-      label: "Password",
++      key: "apiToken",
++      label: "Client API Token",
+       type: "password",
+       secret: true,
+       required: true,
+-      placeholder: "RomM login password",
++      placeholder: "rmm_...",
++      description: "Client API token with roms.read and me.read scopes",
+     },
+   ],
+ 
+@@ -184,20 +168,19 @@ export default {
+ 
+   configure(settings) {
+     rommUrl = (settings.url || "").replace(/\/+$/, "");
+-    username = settings.username || "";
+-    password = settings.password || "";
++    apiToken = settings.apiToken || "";
+   },
+ 
+   async isConfigured() {
+-    return !!rommUrl && !!username && !!password;
++    return !!rommUrl && !!apiToken;
+   },
+ 
+   async execute(args, context) {
+     const fetchFn = context?.fetch || fetch;
+-    if (!rommUrl || !username || !password) {
++    if (!rommUrl || !apiToken) {
+       return {
+         title: "RomM Search",
+-        html: `<div class="command-result"><p>RomM is not configured. Go to <a href="/settings">Settings → Plugins</a> and set your RomM URL, username, and password.</p></div>`,
++        html: `<div class="command-result"><p>RomM is not configured. Go to <a href="/settings">Settings → Plugins</a> and set your RomM URL and client API token.</p></div>`,
+       };
+     }
+ 

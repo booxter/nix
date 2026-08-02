@@ -9,6 +9,38 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "degoog",
+      "nixUpdateArgs": [
+        "--use-github-releases"
+      ],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "degoog-devinside-extensions",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "degoog-georgvwt-extensions",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "degoog-official-extensions",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "degoog-stackexchange-engine",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
+      "attr": "degoog-toolkit-extensions",
+      "nixUpdateArgs": [],
+      "system": "x86_64-linux"
+    },
+    {
       "attr": "ebook-converter-cli",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"

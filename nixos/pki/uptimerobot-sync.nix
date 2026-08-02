@@ -9,6 +9,8 @@
 let
   monitorLimit = 10;
   excludedServiceIds = [
+    # Degoog is an evaluation deployment covered by the fleet blackbox probes.
+    "goo"
     "llm"
     "paperless"
     # PinePods has split-DNS, WAN, and systemd dependency alerts in Prometheus;

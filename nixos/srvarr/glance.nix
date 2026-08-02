@@ -10,6 +10,7 @@ let
   glanceInternalPort = 18080;
   glanceExternalPort = 18081;
   dashService = hostInventory.servicesById.dash;
+  degoogService = hostInventory.servicesById.goo;
   fanaHostConfig = outputs.nixosConfigurations.fana.config;
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
   pkiSpec = hostInventory.nixosHostSpecsByName.pki;
@@ -115,6 +116,7 @@ let
                 {
                   type = "search";
                   autofocus = true;
+                  search-engine = "${degoogService.url}/search?q={QUERY}";
                 }
               ]
               ++ map monitorWidgetFor sections;

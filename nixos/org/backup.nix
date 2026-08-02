@@ -1,5 +1,6 @@
 { ... }:
 let
+  degoogStateDir = "/var/lib/degoog";
   litellmBackupDir = "/var/lib/litellm-backup/latest";
   openWebuiBackupDir = "/var/lib/open-webui-backup/latest";
   openWebuiStateDir = "/var/lib/open-webui";
@@ -16,6 +17,7 @@ let
   telegramArchiveSessionPath = "${telegramArchiveStateDir}/session/telegram_archive.session";
   triliumStateDir = "/var/lib/trilium";
   backupPaths = [
+    degoogStateDir
     openWebuiStateDir
     paperlessDataDir
     paperlessGptStateDir

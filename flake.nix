@@ -188,16 +188,25 @@
           pkgs = inputs.nixpkgs.legacyPackages.${system};
           basePackages = import ./pkgs pkgs;
           nvPackages = import ./home-manager/_mixins/nv/pkgs { inherit pkgs; };
+          orgPackages = import ./nixos/org/pkgs pkgs;
           fleetPackages = {
             inherit (inputs.disko.packages.${system}) disko-install;
           };
           updateTargetPackages =
             pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
               aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
+              inherit (orgPackages)
+                degoog
+                degoog-devinside-extensions
+                degoog-georgvwt-extensions
+                degoog-official-extensions
+                degoog-stackexchange-engine
+                degoog-toolkit-extensions
+                searchless-ngx
+                telegram-archive
+                ;
               ebook-converter-cli = pkgs.callPackage ./nixos/srvarr/pkgs/ebook-converter-cli { };
               houndarr = pkgs.callPackage ./nixos/srvarr/pkgs/houndarr { };
-              searchless-ngx = pkgs.callPackage ./nixos/org/pkgs/searchless-ngx { };
-              telegram-archive = pkgs.callPackage ./nixos/org/pkgs/telegram-archive { };
             }
             // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
               ismc = pkgs.callPackage ./darwin/pkgs/ismc { };

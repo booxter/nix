@@ -1,0 +1,21 @@
+diff --git a/tests/indexer/engine-selection.test.ts b/tests/indexer/engine-selection.test.ts
+index 90ca02a..5229623 100644
+--- a/tests/indexer/engine-selection.test.ts
++++ b/tests/indexer/engine-selection.test.ts
+@@ -1,5 +1,5 @@
+ import { describe, test, expect, beforeAll, afterAll } from "bun:test";
+-import { mkdirSync } from "fs";
++import { mkdirSync, writeFileSync } from "fs";
+ import { tmpdir } from "os";
+ import { join } from "path";
+ 
+@@ -33,7 +33,8 @@ describe("indexer engine selection", () => {
+     else delete process.env.DEGOOG_ENGINES_DIR;
+   });
+ 
+-  test("auto-enables degoog engine when indexer is on and no explicit config", async () => {
++  test("auto-enables degoog engine for known web index type when no explicit config", async () => {
++    writeFileSync(join(SHARED, "index-web.db"), "");
+     await setInstanceSettings({ degoogIndexerEnabled: "true" });
+     const active = await getActiveWebEngines({});
+     expect(hasDegoog(active)).toBe(true);

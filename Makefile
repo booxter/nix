@@ -3,6 +3,8 @@
 
 ARGS = -L --show-trace
 NH_ARGS = --print-build-logs --show-trace
+# Avoid comparing a Linux result with the local nix-darwin generation.
+NIXOS_NH_DIFF_ARGS := $(if $(filter Darwin,$(shell uname -s)),--diff never,)
 
 REMOTE ?= true
 LOCAL_LOCAL_BUILDERS = $(shell nix run --quiet --option builders '' .#get-local-builders -- --local)
@@ -20,7 +22,7 @@ nix shell $(call builder-opts) --inputs-from . nixpkgs#nh -c nh $(1)
 endef
 
 define nh-config-build
-$(call run-nh,$(1) build $(call nh-builder-opts) --hostname "$(2)" $(NH_ARGS) ".#")
+$(call run-nh,$(1) build $(call nh-builder-opts) --hostname "$(2)" $(3) $(NH_ARGS) ".#")
 endef
 
 define nom-build
@@ -64,7 +66,7 @@ nixos:
 	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
 	$(call require-what-and-list-hosts,nixos, [REMOTE=false]) \
 	$(call require-known-host,nixos,$(WHAT)) \
-	$(call nh-config-build,os,$(WHAT))
+	$(call nh-config-build,os,$(WHAT),$(NIXOS_NH_DIFF_ARGS))
 
 nixos-eval:
 	@known="$$($(call config-hosts,.#nixosConfigurations))"; \

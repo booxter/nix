@@ -744,7 +744,7 @@ rec {
     (resolveService (mkService {
       id = "notes";
       title = "Trilium Notes";
-      icon = "sh:trilium";
+      icon = "sh:trilium-notes";
       scope = "external";
       owner = "org";
       publicHost = "notes.${site.public.domain}";
@@ -801,6 +801,17 @@ rec {
       publicHost = "search.${site.public.domain}";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/healthz";
+      glanceCategory = "user";
+    }))
+    (resolveService (mkService {
+      id = "goo";
+      title = "Degoog";
+      icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
+      scope = "external";
+      owner = "org";
+      publicHost = "goo.${site.public.domain}";
+      probePath = "/oauth2/sign_in";
+      backendProbe.path = "/readyz";
       glanceCategory = "user";
     }))
     (resolveService (mkService {
@@ -1206,6 +1217,7 @@ rec {
         "llm"
         "ai"
         "search"
+        "goo"
         "tg"
       ];
       upsHost = "prx1-lab";
