@@ -41,6 +41,12 @@
       "system": "x86_64-linux"
     },
     {
+      "attr": "debugserver",
+      "nixUpdateArgs": [],
+      "nixUpdateSystem": "x86_64-linux",
+      "system": "aarch64-darwin"
+    },
+    {
       "attr": "ebook-converter-cli",
       "nixUpdateArgs": [],
       "system": "x86_64-linux"

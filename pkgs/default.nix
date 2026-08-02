@@ -14,6 +14,8 @@ let
     });
 in
 {
+  debugserver = pkgs.callPackage ./debugserver { };
+
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
   flake-input-update-summary = pkgs.callPackage ./flake-input-update-summary { };

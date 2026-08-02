@@ -1,6 +1,5 @@
 {
   config,
-  inputs,
   lib,
   pkgs,
   isWork,
@@ -263,6 +262,6 @@ in
 
   # use vim bindings for tig
   home.file = {
-    ".tigrc".source = "${inputs.tig}/contrib/vim.tigrc";
+    ".tigrc".source = "${pkgs.tig.src}/contrib/vim.tigrc";
   };
 }

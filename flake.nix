@@ -41,7 +41,6 @@
     proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
 
     disko.url = "github:nix-community/disko/latest";
-    debugserver.url = "github:reckenrode/nixpkgs/push-tnkmrvyqmzpu";
 
     # TODO: switch to official when diff is contributed upstream
     jellarr.url = "github:booxter/jellarr/my-fork-plus-fix-plugin-404";
@@ -49,13 +48,6 @@
     jellarr.inputs.nixpkgs.follows = "nixpkgs";
 
     vpnconfinement.url = "github:Maroka-chan/VPN-Confinement";
-
-    llm-agents.url = "github:numtide/llm-agents.nix";
-
-    codex-desktop-linux = {
-      url = "github:ilysenko/codex-desktop-linux";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
 
     determinate-nix-installer = {
       url = "github:DeterminateSystems/nix-installer";
@@ -65,11 +57,6 @@
     lolek = {
       url = "github:dziaineka/lolek";
       inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    tig = {
-      url = "github:jonas/tig";
-      flake = false;
     };
 
   };

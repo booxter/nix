@@ -16,9 +16,7 @@
           };
         };
 
-      pkgsLldb = getPkgs inputs.debugserver;
       pkgsNixpkgsUnstable = getPkgs inputs.nixpkgs-unstable;
-      llmAgentsPkgs = inputs.llm-agents.packages.${prev.system};
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
       # Track the release branch now that trackers allow 4.1.x, but fail
@@ -37,7 +35,7 @@
       });
     in
     {
-      inherit (llmAgentsPkgs) claude-code;
+      inherit (pkgsNixpkgsUnstable) claude-code;
 
       # https://github.com/NixOS/nixpkgs/pull/539100
       age-plugin-se = prev.age-plugin-se.overrideAttrs (old: {
@@ -151,10 +149,7 @@
         ];
       });
 
-      inherit (llmAgentsPkgs) codex;
-
-      # https://github.com/NixOS/nixpkgs/pull/374846
-      inherit (pkgsLldb) debugserver;
+      inherit (pkgsNixpkgsUnstable) codex;
 
       lolek = lolekPackage.override { yt-dlp = lolekYtDlp; };
 
