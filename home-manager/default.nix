@@ -40,6 +40,9 @@
   ++ lib.optionals (isDesktop && !isDarwin) [
     ./_mixins/hyprland
   ]
+  ++ lib.optionals isDesktop [
+    ./_mixins/spicetify
+  ]
   ++ lib.optionals (!isWork && isDesktop) [
     ./_mixins/firefox
   ]
@@ -84,9 +87,6 @@
       obsidian
       telegram-desktop
       wireshark
-    ]
-    ++ lib.optionals (isDesktop && isDarwin) [
-      spotify
     ]
     ++ lib.optionals (!isWork && isDesktop) [
       vlc
