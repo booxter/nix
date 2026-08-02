@@ -2,6 +2,9 @@
 
 SYMBOL="${STOCK_SYMBOL:-NVDA}"
 QUOTE_URL="https://api.nasdaq.com/api/quote/${SYMBOL}/info?assetclass=stocks"
+GREEN="${SKETCHYBAR_COLOR_GREEN:-0xffb8bb26}"
+RED="${SKETCHYBAR_COLOR_RED:-0xfffb4934}"
+YELLOW="${SKETCHYBAR_COLOR_YELLOW:-0xfffabd2f}"
 
 format_price() {
   local price="$1"
@@ -29,7 +32,7 @@ if ! data="$(
     -H 'User-Agent: Mozilla/5.0' \
     "$QUOTE_URL"
 )"; then
-  sketchybar --set "$NAME" icon="􀇿" icon.color="0xffe0af68" label="$SYMBOL"
+  sketchybar --set "$NAME" icon="􀇿" icon.color="$YELLOW" label="$SYMBOL"
   exit 0
 fi
 
@@ -37,17 +40,17 @@ raw_last_price="$(jq -r '.data.primaryData.lastSalePrice // empty' <<<"$data" 2>
 direction="$(jq -r '.data.primaryData.deltaIndicator // empty' <<<"$data" 2>/dev/null)"
 
 if [ -z "$raw_last_price" ]; then
-  sketchybar --set "$NAME" icon="􀇿" icon.color="0xffe0af68" label="$SYMBOL"
+  sketchybar --set "$NAME" icon="􀇿" icon.color="$YELLOW" label="$SYMBOL"
   exit 0
 fi
 
 last_price="$(format_price "$raw_last_price")"
 
 if [ "$direction" = "down" ]; then
-	COLOR="0xffff0000"
+	COLOR="$RED"
 	ICON="􀁩"
 else
-	COLOR="0xffa6e3a1"
+	COLOR="$GREEN"
 	ICON="􀁧"
 fi
 

@@ -72,7 +72,7 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=on"* ]]
   [[ "$output" == *"label=2"* ]]
-  [[ "$output" == *"label.color=0xffaa5cc3"* ]]
+  [[ "$output" == *"label.color=0xffd3869b"* ]]
 }
 
 @test "shows an error state when the exporter is unavailable" {
@@ -83,7 +83,7 @@ EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=on"* ]]
   [[ "$output" == *"label=?"* ]]
-  [[ "$output" == *"label.color=0xffe0af68"* ]]
+  [[ "$output" == *"label.color=0xfffabd2f"* ]]
 }
 
 @test "shows an error state when Jellyfin is down" {

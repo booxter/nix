@@ -11,6 +11,8 @@ let
   firefoxDohExcludedDomains = [ hostInventory.site.public.domain ];
 in
 {
+  stylix.targets.firefox.profileNames = [ "default" ];
+
   programs.firefox = {
     enable = true;
     # Pin Firefox to the legacy on-disk profile root until we intentionally

@@ -22,7 +22,6 @@ let
 in
 {
   home.packages = with pkgs; [
-    config.gtk.theme.package
     wev
     wl-clipboard
     wlrctl
@@ -67,30 +66,23 @@ in
         hide_cursor = true;
       };
 
-      background = [
-        {
-          monitor = "";
-          path = "screenshot";
-          blur_passes = 3;
-          blur_size = 8;
-        }
-      ];
+      background = {
+        monitor = "";
+        path = "screenshot";
+        blur_passes = 3;
+        blur_size = 8;
+      };
 
-      input-field = [
-        {
-          monitor = "";
-          size = "240, 56";
-          position = "0, -80";
-          dots_center = true;
-          fade_on_empty = false;
-          font_color = "rgb(202, 211, 245)";
-          inner_color = "rgb(36, 39, 58)";
-          outer_color = "rgb(137, 180, 250)";
-          outline_thickness = 2;
-          placeholder_text = ''<span foreground="##cad3f5">YubiKey PIN or password...</span>'';
-          shadow_passes = 2;
-        }
-      ];
+      input-field = {
+        monitor = "";
+        size = "240, 56";
+        position = "0, -80";
+        dots_center = true;
+        fade_on_empty = false;
+        outline_thickness = 2;
+        placeholder_text = "YubiKey PIN or password...";
+        shadow_passes = 2;
+      };
     };
   };
 
@@ -102,13 +94,6 @@ in
       name = "Papirus-Dark";
       package = pkgs.papirus-icon-theme;
     };
-
-    theme = {
-      name = "palenight";
-      package = pkgs.palenight-theme;
-    };
-
-    gtk4.theme = config.gtk.theme;
 
     cursorTheme = {
       name = "Numix-Cursor";
@@ -122,10 +107,6 @@ in
     gtk4.extraConfig = {
       gtk-application-prefer-dark-theme = 1;
     };
-  };
-
-  home.sessionVariables = {
-    GTK_THEME = "palenight";
   };
 
   programs.waybar = {
@@ -189,7 +170,6 @@ in
       general = {
         gaps_in = 5;
         gaps_out = 2;
-        "col.active_border" = "0xffFF0000";
       };
 
       exec-once = [

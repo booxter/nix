@@ -11,6 +11,71 @@ let
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
   workspaceNames = import ../aerospace/workspaces.nix { inherit lib isWork; };
+  inherit (config.lib.stylix) colors;
+  sketchybarColors = {
+    background = "0xff${colors.base00}";
+    backgroundAlt = "0xff${colors.base01}";
+    neutral = "0xff${colors.base05}";
+    red = "0xff${colors.base08}";
+    orange = "0xff${colors.base09}";
+    yellow = "0xff${colors.base0A}";
+    green = "0xff${colors.base0B}";
+    cyan = "0xff${colors.base0C}";
+    blue = "0xff${colors.base0D}";
+    purple = "0xff${colors.base0E}";
+  };
+  pluginColorEnv = {
+    SKETCHYBAR_COLOR_NEUTRAL = sketchybarColors.neutral;
+    SKETCHYBAR_COLOR_RED = sketchybarColors.red;
+    SKETCHYBAR_COLOR_ORANGE = sketchybarColors.orange;
+    SKETCHYBAR_COLOR_YELLOW = sketchybarColors.yellow;
+    SKETCHYBAR_COLOR_GREEN = sketchybarColors.green;
+    SKETCHYBAR_COLOR_BLUE = sketchybarColors.blue;
+    SKETCHYBAR_COLOR_PURPLE = sketchybarColors.purple;
+  };
+  sketchybarTheme = pkgs.writeText "sketchybar-gruvbox-theme" ''
+    black="${sketchybarColors.background}"
+    blue="${sketchybarColors.blue}"
+    blue1="${sketchybarColors.backgroundAlt}"
+    cyan="${sketchybarColors.cyan}"
+    green="${sketchybarColors.green}"
+    magenta="${sketchybarColors.purple}"
+    orange="${sketchybarColors.orange}"
+    purple="${sketchybarColors.purple}"
+    red="${sketchybarColors.red}"
+    transparent="0x00000000"
+    white="${sketchybarColors.neutral}"
+    yellow="${sketchybarColors.yellow}"
+
+    BAR_COLOR="$black"
+    BAR_BLUR_RADIUS=0
+    BAR_POSITION="top"
+    BAR_HEIGHT=30
+    BAR_PADDING=0
+    BAR_Y_OFFSET=0
+    BAR_CORNER_RADIUS=0
+    BAR_MARGIN=0
+
+    BACKGROUND_COLOR="$blue1"
+    BACKGROUND_BORDER_COLOR="$blue"
+    BACKGROUND_BORDER_WIDTH=0
+    LABEL_ALIGN="center"
+    LABEL_COLOR="$blue"
+    LABEL_HIGHLIGHT_COLOR="$red"
+
+    ICON_BASE_FONT="SF Pro"
+    ICON_FONT="$ICON_BASE_FONT:Bold:14.0"
+    LABEL_BASE_FONT="${config.stylix.fonts.monospace.name}"
+    LABEL_FONT="$LABEL_BASE_FONT:Regular:14.0"
+    LABEL_HIGHLIGHT_FONT="$LABEL_BASE_FONT:ExtraBold:14.0"
+
+    BACKGROUND_CORNER_RADIUS=4
+    BACKGROUND_HEIGHT=24
+    LABEL_Y_OFFSET=1
+    LABEL_PADDING=6
+    BRACKET_BACKGROUND_BORDER_WIDTH=2
+    BRACKET_BACKGROUND_CORNER_RADIUS=12
+  '';
   codexPlugin = pkgs.writeShellApplication {
     name = "sketchybar-codex";
     runtimeInputs = [
@@ -18,6 +83,7 @@ let
       pkgs.jq
       pkgs.sketchybar
     ];
+    runtimeEnv = pluginColorEnv;
     text = builtins.readFile ./sketchybar/plugins/codex.sh;
   };
   codexWorkPlugin = pkgs.writeShellApplication {
@@ -27,6 +93,7 @@ let
       pkgs.jq
       pkgs.sketchybar
     ];
+    runtimeEnv = pluginColorEnv;
     text = builtins.readFile ./sketchybar/plugins/codex-work.sh;
   };
   alertmanagerPlugin = pkgs.writeShellApplication {
@@ -36,7 +103,7 @@ let
       pkgs.jq
       pkgs.sketchybar
     ];
-    runtimeEnv = {
+    runtimeEnv = pluginColorEnv // {
       ALERTMANAGER_URL = config.programs.sketchybarAlertmanager.alertmanagerUrl;
       ALERTMANAGER_CA_CERTIFICATE = toString internalPkiRootCaPath;
       ALERTMANAGER_CLIENT_CERTIFICATE = config.programs.sketchybarAlertmanager.clientCertificate;
@@ -51,7 +118,7 @@ let
       pkgs.gawk
       pkgs.sketchybar
     ];
-    runtimeEnv = {
+    runtimeEnv = pluginColorEnv // {
       JELLYFIN_METRICS_URL = config.programs.sketchybarJellyfin.metricsUrl;
       JELLYFIN_CA_CERTIFICATE = toString internalPkiRootCaPath;
       JELLYFIN_CLIENT_CERTIFICATE = config.programs.sketchybarJellyfin.clientCertificate;
@@ -66,6 +133,7 @@ let
       pkgs.jq
       pkgs.sketchybar
     ];
+    runtimeEnv = pluginColorEnv;
     text = builtins.readFile ./sketchybar/plugins/attention-inbox.sh;
   };
   githubStatusPlugin = pkgs.writeShellApplication {
@@ -75,8 +143,20 @@ let
       pkgs.jq
       pkgs.sketchybar
     ];
-    runtimeEnv.GITHUB_STATUS_URL = "https://www.githubstatus.com/api/v2/summary.json";
+    runtimeEnv = pluginColorEnv // {
+      GITHUB_STATUS_URL = "https://www.githubstatus.com/api/v2/summary.json";
+    };
     text = builtins.readFile ./sketchybar/plugins/github-status.sh;
+  };
+  stockPlugin = pkgs.writeShellApplication {
+    name = "sketchybar-stock";
+    runtimeInputs = [
+      pkgs.curl
+      pkgs.jq
+      pkgs.sketchybar
+    ];
+    runtimeEnv = pluginColorEnv;
+    text = builtins.readFile ./sketchybar/plugins/stock.sh;
   };
   diskPlugin = pkgs.writeShellApplication {
     name = "sketchybar-disk";
@@ -101,7 +181,7 @@ let
                                    drawing=off                          \
                                    icon=""                            \
                                    icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
-                                   icon.color="0xfff7768e"              \
+                                   icon.color="${sketchybarColors.red}" \
                                    icon.padding_left=6                  \
                                    icon.padding_right=6                 \
                                    label.drawing=off                    \
@@ -130,7 +210,7 @@ let
                                 drawing=off                             \
                                 icon="󰼁"                               \
                                 icon.font="JetBrainsMono Nerd Font:Regular:16.0" \
-                                icon.color="0xffaa5cc3"                 \
+                                icon.color="${sketchybarColors.purple}" \
                                 icon.padding_left=6                     \
                                 icon.padding_right=2                    \
                                 label.padding_left=2                    \
@@ -266,7 +346,7 @@ let
         sketchybar --add item space.${sid} left \
             --subscribe space.${sid} aerospace_workspace_change \
             --set space.${sid} \
-            background.color=0x44ffffff \
+            background.color=0x44${colors.base05} \
             background.corner_radius=5 \
             background.height=25 \
             background.drawing=off \
@@ -280,6 +360,9 @@ let
     mkdir -p "$out"
     cp -R ${./sketchybar}/. "$out/"
     chmod -R u+w "$out"
+    rm -rf "$out/themes"
+    mkdir -p "$out/themes"
+    ln -s ${sketchybarTheme} "$out/themes/gruvbox"
     mkdir -p "$out/items"
     rm -f "$out/plugins/codex.sh"
     rm -f "$out/plugins/codex-work.sh"
@@ -288,6 +371,7 @@ let
     rm -f "$out/plugins/attention-inbox.sh"
     rm -f "$out/plugins/github-status.sh"
     rm -f "$out/plugins/disk.sh"
+    rm -f "$out/plugins/stock.sh"
     rm -f "$out/items/aerospace-spaces.sh"
     rm -f "$out/items/disk.sh"
     rm -f "$out/items/alertmanager.sh"
@@ -303,6 +387,7 @@ let
     ln -s ${githubStatusItem} "$out/items/github-status.sh"
     ln -s ${lib.getExe diskPlugin} "$out/plugins/disk.sh"
     ln -s ${lib.getExe githubStatusPlugin} "$out/plugins/github-status.sh"
+    ln -s ${lib.getExe stockPlugin} "$out/plugins/stock.sh"
     ${lib.optionalString config.programs.sketchybarAlertmanager.enable ''
       ln -s ${lib.getExe alertmanagerPlugin} "$out/plugins/alertmanager.sh"
     ''}

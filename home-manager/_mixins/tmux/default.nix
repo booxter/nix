@@ -19,7 +19,6 @@
     sensibleOnTop = true;
 
     plugins = with pkgs.tmuxPlugins; [
-      gruvbox
       jump
       logging
       tmux-fzf
@@ -32,9 +31,6 @@
       bind '"' split-window -v -c "#{pane_current_path}"
       bind % split-window -h -c "#{pane_current_path}"
       bind c new-window -c "#{pane_current_path}"
-
-      set -g window-style 'fg=colour247,bg=colour236'
-      set -g window-active-style 'fg=default,bg=colour234'
 
       bind-key -T copy-mode-vi v send-keys -X begin-selection
       bind-key -T copy-mode-vi y send-keys -X copy-selection-and-cancel
@@ -49,8 +45,6 @@
       bind-key -n C-\\ if-shell "$is_vim" "send-keys C-\\" "select-pane -l"
 
       bind-key -T prefix K confirm-before -p "Kill session #S? (y/n)" kill-session
-
-      set -g @tmux-gruvbox 'light'
 
       set -ga terminal-features "*:hyperlinks"
 

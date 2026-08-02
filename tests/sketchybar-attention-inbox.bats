@@ -75,7 +75,7 @@ write_inbox() {
   run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"--set attention.inbox drawing=on label=2 label.color=0xffff9e64 icon.drawing=off"* ]]
+  [[ "$output" == *"--set attention.inbox drawing=on label=2 label.color=0xfffe8019 icon.drawing=off"* ]]
   [[ "$output" == *"--set attention.inbox.0 drawing=on"* ]]
   [[ "$output" == *"label=gitlab · assigned · tools/widget!41 · Older item"* ]]
 }
@@ -107,7 +107,7 @@ write_inbox() {
   run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"--set attention.inbox drawing=on label=2 label.color=0xffff9e64 icon.drawing=on icon=● icon.color=0xffe0af68"* ]]
+  [[ "$output" == *"--set attention.inbox drawing=on label=2 label.color=0xfffe8019 icon.drawing=on icon=● icon.color=0xfffabd2f"* ]]
   [[ "$output" == *"--set attention.inbox.0 drawing=on"*"icon.drawing=on icon=●"* ]]
   [[ "$output" == *"--set attention.inbox.1 drawing=on"*"icon.drawing=off"* ]]
 }
@@ -130,7 +130,7 @@ write_inbox() {
   run env TZ='EST5EDT,M3.2.0,M11.1.0' PATH="$tmpdir/bin:$PATH" bash "$plugin"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"icon.drawing=on icon=● icon.color=0xffe0af68"* ]]
+  [[ "$output" == *"icon.drawing=on icon=● icon.color=0xfffabd2f"* ]]
 }
 
 @test "limits the popup to ten clickable rows" {
@@ -152,7 +152,7 @@ write_inbox() {
   run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"--set attention.inbox drawing=on label=11 label.color=0xfff7768e"* ]]
+  [[ "$output" == *"--set attention.inbox drawing=on label=11 label.color=0xfffb4934"* ]]
   [[ "$output" == *"--set attention.inbox.9 drawing=on"* ]]
   [[ "$output" == *"label=gitlab · assigned · tools/widget!9 · Item 9"* ]]
   [[ "$output" == *"click_script=/usr/bin/open https://gitlab.test/tools/widget/-/merge_requests/9; sketchybar --set attention.inbox popup.drawing=off"* ]]
@@ -176,7 +176,7 @@ write_inbox() {
   run env PATH="$tmpdir/bin:$PATH" bash "$plugin"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"--set attention.inbox drawing=on label=10 label.color=0xffff9e64"* ]]
+  [[ "$output" == *"--set attention.inbox drawing=on label=10 label.color=0xfffe8019"* ]]
 }
 
 @test "shell-quotes popup URLs before assigning click scripts" {
@@ -207,7 +207,7 @@ write_inbox() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=on popup.drawing=off icon.drawing=on icon=!"* ]]
-  [[ "$output" == *"label=? label.color=0xffe0af68"* ]]
+  [[ "$output" == *"label=? label.color=0xfffabd2f"* ]]
   [[ "$output" == *"--set attention.inbox.0 drawing=off"* ]]
 }
 
@@ -218,5 +218,5 @@ write_inbox() {
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=on popup.drawing=off icon.drawing=on icon=!"* ]]
-  [[ "$output" == *"label=? label.color=0xffe0af68"* ]]
+  [[ "$output" == *"label=? label.color=0xfffabd2f"* ]]
 }

@@ -1,13 +1,19 @@
-{ lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
+  inherit (config.lib.stylix) colors;
 in
 {
   services.jankyborders = lib.mkIf isDarwin {
     enable = true;
     settings = {
-      active_color = "glow\\(0xffFF0000\\)";
-      inactive_color = "0xff000000";
+      active_color = "glow\\(0xff${colors.base0D}\\)";
+      inactive_color = "0xff${colors.base03}";
       hidpi = "on";
     };
   };

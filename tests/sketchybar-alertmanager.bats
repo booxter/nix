@@ -59,7 +59,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=on"* ]]
   [[ "$output" == *"label=2"* ]]
-  [[ "$output" == *"label.color=0xfff7768e"* ]]
+  [[ "$output" == *"label.color=0xfffb4934"* ]]
 }
 
 @test "shows an error state when Alertmanager is unavailable" {
@@ -70,7 +70,7 @@ teardown() {
   [ "$status" -eq 0 ]
   [[ "$output" == *"drawing=on"* ]]
   [[ "$output" == *"label=?"* ]]
-  [[ "$output" == *"label.color=0xffe0af68"* ]]
+  [[ "$output" == *"label.color=0xfffabd2f"* ]]
 }
 
 @test "shows an error state for an invalid API response" {
