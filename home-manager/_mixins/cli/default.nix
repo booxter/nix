@@ -117,7 +117,6 @@ in
   programs.starship = {
     enable = true;
     enableZshIntegration = true;
-    # starship preset gruvbox-rainbow > ./modules/home-manager/config/starship.toml
     settings = fromTOML (builtins.readFile ./starship.toml);
   };
 
