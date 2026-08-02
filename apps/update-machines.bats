@@ -82,6 +82,27 @@ EOF
     cat <<'EOF'
 set -euo pipefail
 
+if [[ -n "${FZF_ARGS_OUT:-}" ]]; then
+  printf '%s\n' "$*" > "$FZF_ARGS_OUT"
+fi
+if [[ -n "${FZF_INPUT_OUT:-}" ]]; then
+  cat > "$FZF_INPUT_OUT"
+else
+  cat >/dev/null
+fi
+if [[ "${FZF_TEST_CANCEL:-false}" == "true" ]]; then
+  exit 130
+fi
+printf '%s\n' "${FZF_TEST_SELECTION:?missing FZF_TEST_SELECTION}"
+EOF
+  } > "$stub_dir/fzf"
+  chmod +x "$stub_dir/fzf"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+
 if [[ -n "${SSH_CALLS_OUT:-}" ]]; then
   printf '%s\n' "$*" >> "$SSH_CALLS_OUT"
 fi
@@ -598,6 +619,40 @@ EOF
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Dry run: would update alpha, beta, controller, gamma."* ]]
+}
+
+@test "update-machines selects multiple filtered hosts with fzf" {
+  workdir="$BATS_TMPDIR/update-machines-select-hosts"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+  export FZF_ARGS_OUT="$workdir/fzf.args"
+  export FZF_INPUT_OUT="$workdir/fzf.input"
+  export FZF_TEST_SELECTION=$'gamma\nalpha'
+
+  run bash "$update_machines" --select --dry-run
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"Dry run: would update gamma, alpha."* ]]
+  [[ "$(<"$FZF_ARGS_OUT")" == *"--multi"* ]]
+  [ "$(<"$FZF_INPUT_OUT")" = $'alpha\nbeta\ncontroller\ngamma' ]
+}
+
+@test "update-machines reports canceled fzf selection" {
+  workdir="$BATS_TMPDIR/update-machines-cancel-selection"
+  rm -rf "$workdir"
+  mkdir -p "$workdir/bin"
+  write_update_machines_test_stubs "$workdir/bin"
+
+  export PATH="$workdir/bin:$PATH"
+  export FZF_TEST_CANCEL=true
+
+  run bash "$update_machines" --select --dry-run
+
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Selection canceled."* ]]
 }
 
 @test "update-machines rejects combining --local with --branch" {

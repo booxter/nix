@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#!nix-shell -i bash -p jq bind python3 python3Packages.prompt-toolkit
+#!nix-shell -i bash -p jq bind fzf
 # shellcheck shell=bash
 set -euo pipefail
 
@@ -249,19 +249,18 @@ is_local_host() {
 
 run_selector() {
   local -a items=("$@")
-  local tmpfile selection
+  local selection
   if [[ ${#items[@]} -eq 0 ]]; then
     echo "No items to select." >&2
-    exit 1
+    return 1
   fi
-  tmpfile="$(mktemp)"
-  printf '%s\n' "${items[@]}" >"$tmpfile"
-  if ! selection="$(python3 "${REPO_ROOT}/apps/_helpers/selector.py" --file "$tmpfile")"; then
-    rm -f "$tmpfile"
+  if ! selection="$(
+    printf '%s\n' "${items[@]}" \
+      | fzf --multi --layout=reverse --prompt='Deploy hosts> '
+  )"; then
     echo "Selection canceled." >&2
-    exit 1
+    return 1
   fi
-  rm -f "$tmpfile"
   printf '%s' "$selection"
 }
 

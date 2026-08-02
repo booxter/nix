@@ -38,7 +38,6 @@ let
       '';
     };
 
-  pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
   hostInventory = import ../lib/inventory.nix {
     inherit username;
     lib = pkgs.lib;
@@ -100,11 +99,11 @@ let
     runtimeInputs =
       (with pkgs; [
         bind
+        fzf
         git
         jq
         nix
         openssh
-        pythonWithPromptToolkit
       ])
       ++ [ getHosts ];
     text = ''
@@ -177,10 +176,10 @@ let
           UPDATE_MACHINES_BIN = "${../.}/apps/update-machines.sh";
         };
         nativeCheckInputs = with pkgs; [
+          fzf
           git
           jq
           openssh
-          pythonWithPromptToolkit
         ];
       })
       derivationArgs
