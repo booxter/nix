@@ -233,7 +233,7 @@
             ];
           };
           sops = import ./apps/sops { inherit hostInventory pkgs; };
-          packageUpdateApps = import ./apps/package-updates { inherit pkgs; };
+          packageUpdates = import ./apps/package-updates { inherit pkgs; };
           fleet = import ./apps/fleet.nix {
             inherit pkgs username;
           };
@@ -266,7 +266,7 @@
           };
         in
         sops.apps
-        // packageUpdateApps
+        // packageUpdates.apps
         // fleet.apps
         // proxmox.apps
         // cookieApps

@@ -461,7 +461,8 @@ fi
 
 local_disk_cleanup_if_low
 
-HOST_MAP="$(bash "${REPO_ROOT}/apps/get-hosts.sh" 2>/dev/null || echo '')"
+get_hosts_bin="${UPDATE_MACHINES_GET_HOSTS_BIN:-${REPO_ROOT}/apps/get-hosts.sh}"
+HOST_MAP="$("$get_hosts_bin" 2>/dev/null || echo '')"
 if [[ -z "$HOST_MAP" ]]; then
   echo "Failed to read hosts from get-hosts.sh." >&2
   exit 1

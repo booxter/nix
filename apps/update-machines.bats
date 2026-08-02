@@ -18,8 +18,6 @@ write_update_machines_test_stubs() {
 set -euo pipefail
 if [[ "$*" == *"hostInventory.site.lan.gateway.address"* ]]; then
   printf '%s\n' '127.0.0.1'
-elif [[ "$*" == *"hostMap"* ]]; then
-  printf '%s\n' '{"darwin":{},"nixos":{"alpha":{"isWork":false},"beta":{"isWork":false},"controller":{"isWork":false},"gamma":{"isWork":false},"nv":{"isWork":true}}}'
 elif [[ "$*" == *"hostInventory = import ./lib/inventory.nix"* ]]; then
   printf '%s\n' '{"alpha":"alpha","beta":"beta","controller":"controller","gamma":"gamma","nv":"nv"}'
 else
@@ -29,6 +27,16 @@ fi
 EOF
   } > "$stub_dir/nix"
   chmod +x "$stub_dir/nix"
+
+  {
+    printf '#!%s\n' "$bash_path"
+    cat <<'EOF'
+set -euo pipefail
+printf '%s\n' '{"darwin":{},"nixos":{"alpha":{"isWork":false},"beta":{"isWork":false},"controller":{"isWork":false},"gamma":{"isWork":false},"nv":{"isWork":true}}}'
+EOF
+  } > "$stub_dir/get-hosts"
+  chmod +x "$stub_dir/get-hosts"
+  export UPDATE_MACHINES_GET_HOSTS_BIN="$stub_dir/get-hosts"
 
   {
     printf '#!%s\n' "$bash_path"

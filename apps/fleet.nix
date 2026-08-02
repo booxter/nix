@@ -84,6 +84,23 @@ let
     };
   };
 
+  getHosts = pkgs.writeShellApplication {
+    name = "get-hosts";
+    runtimeInputs = [ pkgs.nix ];
+    text = ''
+      exec ${pkgs.bash}/bin/bash ${../.}/apps/get-hosts.sh "$@"
+    '';
+    inherit
+      (mkBatsCheck {
+        test = ./get-hosts.bats;
+        targetEnvironmentVariable = "GET_HOSTS_BIN";
+        nativeCheckInputs = [ pkgs.jq ];
+      })
+      derivationArgs
+      checkPhase
+      ;
+  };
+
   deploy = pkgs.writeShellApplication {
     name = "deploy";
     runtimeInputs =
@@ -95,7 +112,10 @@ let
         openssh
         pythonWithPromptToolkit
       ])
-      ++ [ boxPackage ];
+      ++ [
+        boxPackage
+        getHosts
+      ];
     text = ''
       set -euo pipefail
 
@@ -156,6 +176,7 @@ let
       fi
 
       export UPDATE_MACHINES_BOX_BIN=${pkgs.lib.getExe boxPackage}
+      export UPDATE_MACHINES_GET_HOSTS_BIN=${pkgs.lib.getExe getHosts}
       exec ${pkgs.bash}/bin/bash ${../.}/apps/update-machines.sh "$@"
     '';
     inherit
@@ -164,6 +185,7 @@ let
         environment = {
           FLEET_TEST_REPO_ROOT = "${../.}";
           UPDATE_MACHINES_BIN = "${../.}/apps/update-machines.sh";
+          UPDATE_MACHINES_BOX_BIN = pkgs.lib.getExe boxPackage;
         };
         nativeCheckInputs = with pkgs; [
           coreutils
@@ -516,6 +538,7 @@ in
     inherit deploy vm;
     diff = diffConfig;
     get-local-builders = getLocalBuilders;
+    get-hosts = getHosts;
     issue-observability-cert = issueObservabilityCertApp;
     issue-internal-service-cert = issueInternalServiceCertApp;
     issue-proxmox-exporter-token = issueProxmoxExporterTokenApp;

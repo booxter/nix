@@ -112,6 +112,12 @@ let
   };
 in
 {
-  update-packages = mkApp "${updatePackages}/bin/update-packages" "Update selected fetched packages and write a changelog-linked PR summary.";
-  update-oci-images = mkApp "${updateOciImages}/bin/update-oci-images" "Update selected OCI image tags and write a changelog-linked PR summary.";
+  packages = {
+    update-packages = updatePackages;
+    update-oci-images = updateOciImages;
+  };
+  apps = {
+    update-packages = mkApp "${updatePackages}/bin/update-packages" "Update selected fetched packages and write a changelog-linked PR summary.";
+    update-oci-images = mkApp "${updateOciImages}/bin/update-oci-images" "Update selected OCI image tags and write a changelog-linked PR summary.";
+  };
 }

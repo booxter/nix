@@ -11,7 +11,7 @@ else
   HOSTS_NIX="null"
 fi
 
-nix eval --impure --json --expr "
+nix-instantiate --store dummy:// --eval --strict --json --expr "
   let
     hostInventory = import \"${REPO_ROOT}/lib/inventory.nix\" {
       # get-hosts only needs VM naming and work/personal classification. Keep this import cheap

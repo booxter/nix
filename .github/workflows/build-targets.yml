@@ -45,24 +45,6 @@ jobs:
             exit 1
           fi
 
-  get-hosts-check:
-    name: get-hosts check
-    needs:
-      - plan-build-matrix
-    if: needs.plan-build-matrix.outputs.docs_only != 'true'
-    runs-on: ubuntu-slim
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.event_name == 'pull_request' && format('refs/pull/{0}/merge', github.event.pull_request.number) || github.ref }}
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-
-      - name: Run get-hosts test
-        run: ./tests/test-get-hosts.sh
-
   plan-build-matrix:
     name: plan build matrix
     runs-on: ubuntu-slim
@@ -138,7 +120,6 @@ jobs:
     if: needs.plan-build-matrix.outputs.docs_only != 'true'
     needs:
       - format
-      - get-hosts-check
       - plan-build-matrix
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -355,7 +336,6 @@ jobs:
     needs:
       - plan-build-matrix
       - format
-      - get-hosts-check
       - build
     if: >-
       ${{
@@ -363,7 +343,6 @@ jobs:
         github.event_name == 'pull_request' &&
         needs.plan-build-matrix.result == 'success' &&
         needs.format.result == 'success' &&
-        needs.get-hosts-check.result == 'success' &&
         needs.plan-build-matrix.outputs.docs_only != 'true' &&
         needs.build.result == 'success'
       }}
@@ -818,7 +797,6 @@ jobs:
     needs:
       - plan-build-matrix
       - format
-      - get-hosts-check
       - build
       - post-config-diffs
     runs-on: ubuntu-slim
@@ -835,14 +813,13 @@ jobs:
           fi
 
           if [ "${{ needs.plan-build-matrix.outputs.docs_only }}" = "true" ]; then
-            echo "Docs-only change detected; skipped get-hosts-check and build."
+            echo "Docs-only change detected; skipped build."
             echo "All CI jobs passed."
             exit 0
           fi
 
-          if [ "${{ needs.get-hosts-check.result }}" != "success" ] || [ "${{ needs.build.result }}" != "success" ]; then
+          if [ "${{ needs.build.result }}" != "success" ]; then
             echo "One or more CI jobs failed."
-            echo "get-hosts-check=${{ needs.get-hosts-check.result }}"
             echo "build=${{ needs.build.result }}"
             exit 1
           fi
