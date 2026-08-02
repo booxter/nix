@@ -1,19 +1,6 @@
-import importlib.util
-import os
-import pathlib
-import sys
-
 import pytest
 
-
-MODULE_PATH = pathlib.Path(
-    os.environ.get("UNIFI_SYNC_MAIN", pathlib.Path(__file__).with_name("main.py"))
-)
-SPEC = importlib.util.spec_from_file_location("unifi_sync", MODULE_PATH)
-unifi_sync = importlib.util.module_from_spec(SPEC)
-assert SPEC.loader is not None
-sys.modules[SPEC.name] = unifi_sync
-SPEC.loader.exec_module(unifi_sync)
+from unifi_sync import cli as unifi_sync
 
 
 def test_tls_verification_is_default():
