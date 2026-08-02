@@ -9,6 +9,7 @@ MAX_POPUP_SESSIONS=8
 hide_popup_rows() {
   local index
 
+  sketchybar --set "$NAME.bandwidth" drawing=off
   for ((index = 0; index < MAX_POPUP_SESSIONS; index++)); do
     sketchybar --set "$NAME.session.$index" drawing=off
   done
@@ -45,6 +46,35 @@ format_remaining() {
     printf '%dh left' "$hours"
   else
     printf '%dh %02dm left' "$hours" "$minutes"
+  fi
+}
+
+format_bitrate() {
+  local bits_per_second="$1"
+
+  LC_ALL=C awk -v bits_per_second="$bits_per_second" 'BEGIN {
+    mbit = bits_per_second / 1000000
+    if (mbit == int(mbit)) {
+      printf "%.0f Mbit", mbit
+    } else {
+      printf "%.1f Mbit", mbit
+    }
+  }'
+}
+
+format_scope_bitrate() {
+  local active="$2" bits_per_second="$3" missing="$4" scope="$1"
+
+  if ((active == 0)); then
+    printf '%s 0 Mbit' "$scope"
+  elif ((missing > 0)); then
+    if ((bits_per_second > 0)); then
+      printf '%s ≥%s' "$scope" "$(format_bitrate "$bits_per_second")"
+    else
+      printf '%s ?' "$scope"
+    fi
+  else
+    printf '%s %s' "$scope" "$(format_bitrate "$bits_per_second")"
   fi
 }
 
@@ -248,6 +278,16 @@ if ! sessions="$(awk '
     next
   }
 
+  /^jellyfin_now_playing_bitrate_bits_per_second\{/ {
+    value = sample_value($0)
+    if (!is_number(value) || value < 0) {
+      invalid = 1
+    } else {
+      user_bitrate[user_key($0)] = value
+    }
+    next
+  }
+
   /^jellyfin_now_playing_remaining\{/ {
     value = sample_value($0)
     if (!is_number(value)) {
@@ -275,12 +315,13 @@ if ! sessions="$(awk '
       }
       progress = key in session_progress ? sprintf("%.0f", session_progress[key]) : ""
       remaining = key in session_remaining ? sprintf("%.0f", session_remaining[key]) : ""
+      bitrate = user in user_bitrate ? sprintf("%.0f", user_bitrate[user]) : ""
       state = session_state[key] > 0.5 ? "playing" : "paused"
       print state, \
         scope, session_username[key], session_device[key], user_client[user], \
         session_type[key], session_title[key], session_series[key], \
         session_season[key], session_episode[key], session_method[key], \
-        progress, remaining
+        progress, remaining, bitrate
     }
   }
 ' <<<"$metrics")"; then
@@ -296,9 +337,42 @@ fi
 
 count="$(awk 'NF { count++ } END { print count + 0 }' <<<"$sessions")"
 active_count="$(awk -F '\037' '$1 == "playing" { count++ } END { print count + 0 }' <<<"$sessions")"
+read -r wan_active wan_bitrate wan_missing lan_active lan_bitrate lan_missing \
+  unknown_active unknown_bitrate unknown_missing < <(
+  awk -F '\037' '
+    $1 == "playing" {
+      scope = tolower($2)
+      active[scope]++
+      if ($14 ~ /^[0-9]+$/ && $14 > 0) {
+        bitrate[scope] += $14
+      } else {
+        missing[scope]++
+      }
+    }
+    END {
+      printf "%d %.0f %d %d %.0f %d %d %.0f %d\n", \
+        active["wan"], bitrate["wan"], missing["wan"], \
+        active["lan"], bitrate["lan"], missing["lan"], \
+        active["unknown"], bitrate["unknown"], missing["unknown"]
+    }
+  ' <<<"$sessions"
+)
+bandwidth_label="$(
+  format_scope_bitrate WAN "$wan_active" "$wan_bitrate" "$wan_missing"
+) · $(
+  format_scope_bitrate LAN "$lan_active" "$lan_bitrate" "$lan_missing"
+)"
+if ((unknown_active > 0)); then
+  bandwidth_label="$bandwidth_label · $(
+    format_scope_bitrate Unknown "$unknown_active" "$unknown_bitrate" \
+      "$unknown_missing"
+  )"
+fi
+sketchybar --set "$NAME.bandwidth" drawing=on label="$bandwidth_label"
+
 index=0
 while IFS=$'\037' read -r state scope username device client media_type title \
-  series season episode method progress remaining; do
+  series season episode method progress remaining bitrate; do
   if ((index >= MAX_POPUP_SESSIONS)); then
     break
   fi
@@ -344,6 +418,9 @@ while IFS=$'\037' read -r state scope username device client media_type title \
   label="$scope · ${username:-Unknown} · ${playback_device:-Unknown device} · $media — $timing"
   if [[ -n "$method_label" ]]; then
     label="$label · $method_label"
+  fi
+  if [[ -n "$bitrate" && "$bitrate" != 0 ]]; then
+    label="$label · $(format_bitrate "$bitrate")"
   fi
   sketchybar --set "$NAME.session.$index" drawing=on label="$label"
   index=$((index + 1))

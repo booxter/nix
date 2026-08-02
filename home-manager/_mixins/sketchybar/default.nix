@@ -158,6 +158,16 @@ let
                                 popup.background.corner_radius=6       \
                  --subscribe jellyfin system_woke mouse.clicked
 
+      sketchybar --add item jellyfin.bandwidth popup.jellyfin          \
+                 --set jellyfin.bandwidth updates=off                   \
+                                           drawing=off                   \
+                                           icon.drawing=off              \
+                                           label.align=left              \
+                                           label.padding_left=8          \
+                                           label.padding_right=8         \
+                                           background.border_width=0     \
+                                           background.height=24
+
       for index in {0..7}; do
         sketchybar --add item "jellyfin.session.$index" popup.jellyfin \
                    --set "jellyfin.session.$index" updates=off          \
