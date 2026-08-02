@@ -40,7 +40,7 @@
   ++ lib.optionals (isDesktop && !isDarwin) [
     ./_mixins/hyprland
   ]
-  ++ lib.optionals (isDesktop && isDarwin) [
+  ++ lib.optionals isDesktop [
     ./_mixins/spicetify
   ]
   ++ lib.optionals (!isWork && isDesktop) [

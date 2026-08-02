@@ -700,7 +700,7 @@
     "spicetify-nix": {
       "inputs": {
         "nixpkgs": [
-          "nixpkgs-darwin"
+          "nixpkgs"
         ],
         "systems": "systems_6"
       },
