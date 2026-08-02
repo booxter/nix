@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, cast
 
-from .errors import ToolError
+from .errors import CommandError, ToolError
 from .process import ProcessRunner
 
 _DOMAIN_PATTERN = re.compile(r"^[a-z][a-z0-9-]*$")
@@ -39,11 +39,13 @@ class RuntimeEnvironment:
         hostname: str,
     ) -> RuntimeEnvironment:
         configured_root = values.get("SOPS_TOOLS_REPO_ROOT")
-        if configured_root:
-            repo_root = Path(configured_root)
-        else:
+        try:
             output = runner.run(["git", "-C", str(cwd), "rev-parse", "--show-toplevel"])
             repo_root = Path(output.strip())
+        except CommandError:
+            if not configured_root:
+                raise
+            repo_root = Path(configured_root)
         home = Path(values.get("HOME", str(Path.home())))
         config_home = Path(values.get("XDG_CONFIG_HOME", str(home / ".config")))
         return cls(repo_root, home, config_home, system_name, hostname, dict(values))

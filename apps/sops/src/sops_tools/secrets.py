@@ -59,12 +59,11 @@ class SopsBackend(Protocol):
 
     def encrypt_data(self, path: Path, value: JsonValue) -> str: ...
 
-    def encrypt_yaml(self, path: Path, plaintext: str) -> str: ...
-
 
 @dataclass(frozen=True)
 class CommandSopsBackend:
     runner: ProcessRunner
+    config: Path | None = None
 
     def decrypt_text(self, path: Path) -> str:
         return self.runner.run(["sops", "--decrypt", str(path)])
@@ -96,9 +95,11 @@ class CommandSopsBackend:
         )
 
     def encrypt_data(self, path: Path, value: JsonValue) -> str:
+        config = ["--config", str(self.config)] if self.config is not None else []
         return self.runner.run(
             [
                 "sops",
+                *config,
                 "--encrypt",
                 "--filename-override",
                 str(path),
@@ -109,22 +110,6 @@ class CommandSopsBackend:
                 "/dev/stdin",
             ],
             input_text=json.dumps(value, separators=(",", ":")),
-        )
-
-    def encrypt_yaml(self, path: Path, plaintext: str) -> str:
-        return self.runner.run(
-            [
-                "sops",
-                "--encrypt",
-                "--filename-override",
-                str(path),
-                "--input-type",
-                "yaml",
-                "--output-type",
-                "yaml",
-                "/dev/stdin",
-            ],
-            input_text=plaintext,
         )
 
 

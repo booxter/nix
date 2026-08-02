@@ -30,13 +30,13 @@ from .ups import UpsInventory, UpsService
 
 
 class SopsBackendFactory(Protocol):
-    def create(self, environment: Mapping[str, str]) -> SopsBackend: ...
+    def create(self, environment: Mapping[str, str], config: Path) -> SopsBackend: ...
 
 
 @dataclass(frozen=True)
 class CommandBackendFactory:
-    def create(self, environment: Mapping[str, str]) -> SopsBackend:
-        return CommandSopsBackend(SubprocessRunner(environment))
+    def create(self, environment: Mapping[str, str], config: Path) -> SopsBackend:
+        return CommandSopsBackend(SubprocessRunner(environment), config)
 
 
 @dataclass(frozen=True)
@@ -60,7 +60,10 @@ class Application:
         domain = self.runtime.resolve_domain(explicit_domain)
         return SecretService(
             SecretRepository(self.runtime.repo_root, domain),
-            self.backend_factory.create(self.runtime.command_environment(domain)),
+            self.backend_factory.create(
+                self.runtime.command_environment(domain),
+                self.runtime.repo_root / ".sops.yaml",
+            ),
         )
 
 
@@ -202,7 +205,9 @@ def pass_main(
         domain = current.runtime.resolve_domain(args.domain)
         environment = current.runtime.command_environment(domain)
         runner = SubprocessRunner(environment)
-        backend = current.backend_factory.create(environment)
+        backend = current.backend_factory.create(
+            environment, current.runtime.repo_root / ".sops.yaml"
+        )
         service = PasswordService(
             SecretRepository(current.runtime.repo_root, domain),
             backend,
@@ -286,7 +291,9 @@ def bootstrap_main(
         service = BootstrapService(
             current.runtime,
             SecretRepository(current.runtime.repo_root, domain),
-            current.backend_factory.create(environment),
+            current.backend_factory.create(
+                environment, current.runtime.repo_root / ".sops.yaml"
+            ),
             CommandRuntimeKeyProvider(runner, current.runtime.repo_root, target_system),
             CommandOperatorRecipientProvider(
                 current.runtime, runner, AgeRecipientResolver(runner)

@@ -8,7 +8,7 @@ class ToolError(RuntimeError):
     """An expected error that should be shown without a traceback."""
 
 
-@dataclass(frozen=True)
+@dataclass
 class CommandError(ToolError):
     argv: Sequence[str]
     returncode: int

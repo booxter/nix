@@ -7,6 +7,7 @@ from typing import Sequence
 
 import yaml
 
+from sops_tools.errors import CommandError
 from sops_tools.model import JsonValue, KeyPath
 from sops_tools.passwords import PasswordHasher, PasswordStore
 from sops_tools.repository import SecretDomain
@@ -33,6 +34,23 @@ class RecordingRunner:
     def run_streaming(self, argv: Sequence[str]) -> str:
         self.streaming_calls.append(list(argv))
         return self.streaming_outputs.pop(0) if self.streaming_outputs else ""
+
+
+@dataclass(frozen=True)
+class FailingRunner:
+    message: str
+
+    def run(
+        self,
+        argv: Sequence[str],
+        *,
+        input_text: str | None = None,
+        capture_output: bool = True,
+    ) -> str:
+        raise CommandError(argv, 1, self.message)
+
+    def run_streaming(self, argv: Sequence[str]) -> str:
+        raise CommandError(argv, 1, self.message)
 
 
 @dataclass
@@ -81,17 +99,12 @@ class MemorySopsBackend:
         self.documents[path] = copy.deepcopy(value)
         return "encrypted\n"
 
-    def encrypt_yaml(self, path: Path, plaintext: str) -> str:
-        value = yaml.safe_load(plaintext)
-        self.documents[path] = value
-        return "encrypted\n"
-
 
 @dataclass(frozen=True)
 class StaticBackendFactory:
     backend: SopsBackend
 
-    def create(self, environment: object) -> SopsBackend:
+    def create(self, environment: object, config: Path) -> SopsBackend:
         return self.backend
 
 

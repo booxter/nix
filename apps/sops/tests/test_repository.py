@@ -8,7 +8,7 @@ import pytest
 from sops_tools.errors import ToolError
 from sops_tools.repository import RuntimeEnvironment, SecretDomain, SecretRepository
 
-from .fakes import RecordingRunner
+from .fakes import FailingRunner, RecordingRunner
 
 
 def runtime(
@@ -29,6 +29,20 @@ def runtime(
 
 def test_explicit_main_domain_does_not_require_inventory(tmp_path: Path) -> None:
     assert runtime(tmp_path).resolve_domain("main") == SecretDomain("main", None)
+
+
+def test_repository_falls_back_to_packaged_root_outside_git(tmp_path: Path) -> None:
+    packaged_root = tmp_path / "packaged"
+
+    environment = RuntimeEnvironment.discover(
+        FailingRunner("not a git checkout"),
+        values={"SOPS_TOOLS_REPO_ROOT": str(packaged_root)},
+        cwd=tmp_path,
+        system_name="Linux",
+        hostname="controller",
+    )
+
+    assert environment.repo_root == packaged_root
 
 
 def test_default_domain_comes_from_inventory(tmp_path: Path) -> None:
