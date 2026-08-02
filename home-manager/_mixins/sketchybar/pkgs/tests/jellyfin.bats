@@ -3,7 +3,7 @@
 setup() {
   tmpdir="$(mktemp -d)"
   mkdir -p "$tmpdir/bin"
-  plugin="$PWD/home-manager/_mixins/sketchybar/sketchybar/plugins/jellyfin.sh"
+  plugin="${SKETCHYBAR_PLUGIN_DIR:-$BATS_TEST_DIRNAME/../plugins}/jellyfin.sh"
   bash_path="$(command -v bash)"
 
   printf '#!%s\n' "$bash_path" >"$tmpdir/bin/curl"

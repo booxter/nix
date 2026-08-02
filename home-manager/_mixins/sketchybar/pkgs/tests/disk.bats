@@ -3,7 +3,7 @@
 setup() {
   tmpdir="$(mktemp -d)"
   mkdir -p "$tmpdir/bin" "$tmpdir/home"
-  plugin="$PWD/home-manager/_mixins/sketchybar/sketchybar/plugins/disk.sh"
+  plugin="${SKETCHYBAR_PLUGIN_DIR:-$BATS_TEST_DIRNAME/../plugins}/disk.sh"
   bash_path="$(command -v bash)"
 
   printf '#!%s\n' "$bash_path" >"$tmpdir/bin/df"
