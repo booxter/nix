@@ -16,7 +16,6 @@
           };
         };
 
-      pkgsLldb = getPkgs inputs.debugserver;
       pkgsNixpkgsUnstable = getPkgs inputs.nixpkgs-unstable;
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
@@ -151,9 +150,6 @@
       });
 
       inherit (pkgsNixpkgsUnstable) codex;
-
-      # https://github.com/NixOS/nixpkgs/pull/374846
-      inherit (pkgsLldb) debugserver;
 
       lolek = lolekPackage.override { yt-dlp = lolekYtDlp; };
 
