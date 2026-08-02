@@ -18,5 +18,9 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = "-q --cov=unifi_sync --cov-report=term-missing --cov-fail-under=70"
 testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/unifi_sync"]
+strict = true

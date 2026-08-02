@@ -11,6 +11,7 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from http.cookiejar import CookieJar
 from typing import Any
@@ -23,6 +24,41 @@ SUPPORTED_DNS_RECORD_TYPES = {"A_RECORD", "CNAME_RECORD"}
 
 class UnifiError(RuntimeError):
     pass
+
+
+class Arguments(argparse.Namespace):
+    mac: str | None
+    ip: str | None
+    hostname: str
+    base_url: str
+    site: str
+    api_key: str
+    network_id: str
+    create_known_client: bool
+    client_name: str
+    usergroup_id: str
+    insecure_tls: bool
+    debug: bool
+    dry_run: bool
+    inventory_json: str
+    no_reservations_update: bool
+    no_create_known_clients: bool
+    no_local_dns_record: bool
+    dhcp_range_json: str
+    no_dhcp_range_update: bool
+    domain_name: str
+    domain_search_json: str
+    domain_search_option_json: str
+    classless_static_routes_json: str
+    no_classless_static_routes_update: bool
+    classless_static_routes_option_json: str
+    tftp_server: str
+    bootfile: str
+    no_netboot_update: bool
+    dns_records_json: str
+    no_dns_records_update: bool
+    static_routes_json: str
+    no_static_routes_update: bool
 
 
 @dataclass(frozen=True)
@@ -95,7 +131,7 @@ def normalize_mac(mac: str) -> str:
     return normalized
 
 
-def format_json(data: Any) -> str:
+def format_json(data: object) -> str:
     return json.dumps(data, indent=2, sort_keys=True)
 
 
@@ -336,7 +372,11 @@ class UnifiLegacyClient:
             if cookie.name != "TOKEN":
                 continue
 
-            parts = cookie.value.split(".")
+            cookie_value = cookie.value
+            if cookie_value is None:
+                continue
+
+            parts = cookie_value.split(".")
             if len(parts) < 2:
                 continue
 
@@ -832,7 +872,7 @@ def normalize_dhcp_option_type(value: str) -> str:
     return normalized
 
 
-def normalize_dhcp_option_code(value: Any) -> int:
+def normalize_dhcp_option_code(value: object) -> int:
     if isinstance(value, bool) or not isinstance(value, int):
         raise UnifiError(f"DHCP option code must be an integer, got: {value!r}")
     if value < 1 or value > 254:
@@ -844,7 +884,7 @@ def parse_dhcp_custom_option_json(
     raw_json: str,
     *,
     label: str,
-    normalize_encoding: Any,
+    normalize_encoding: Callable[[str], str],
 ) -> DhcpCustomOptionSpec | None:
     if not raw_json:
         return None
@@ -1103,7 +1143,7 @@ def render_classless_static_routes_option(
     return ",".join(values)
 
 
-def build_single_reservation(args: argparse.Namespace) -> ReservationSpec:
+def build_single_reservation(args: Arguments) -> ReservationSpec:
     if not args.mac and not args.ip and not args.hostname:
         raise UnifiError("single-client mode requires at least --mac and --ip")
     if not args.mac or not args.ip:
@@ -1121,7 +1161,7 @@ def build_single_reservation(args: argparse.Namespace) -> ReservationSpec:
     )
 
 
-def load_reservations(args: argparse.Namespace) -> tuple[str, list[ReservationSpec]]:
+def load_reservations(args: Arguments) -> tuple[str, list[ReservationSpec]]:
     if args.no_reservations_update:
         if args.mac or args.ip or args.hostname:
             raise UnifiError(
@@ -1142,7 +1182,7 @@ def build_network_dhcp_payload(dhcp_range: DhcpRangeSpec) -> dict[str, Any]:
 
 
 def build_network_settings(
-    args: argparse.Namespace,
+    args: Arguments,
 ) -> NetworkDhcpSettingsSpec | None:
     dhcp_range = (
         None if args.no_dhcp_range_update else parse_dhcp_range(args.dhcp_range_json)
@@ -1200,11 +1240,11 @@ def build_network_settings(
     )
 
 
-def stringify(value: Any) -> str | None:
+def stringify(value: object) -> str | None:
     return None if value is None else str(value)
 
 
-def build_change(current: Any, desired: Any) -> dict[str, Any]:
+def build_change(current: object, desired: object) -> dict[str, object]:
     return {
         "current": current,
         "desired": desired,
@@ -1738,9 +1778,9 @@ def build_network_update_payload(
     return payload, changes
 
 
-def main() -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
-    args = parser.parse_args()
+    args = parser.parse_args(argv, namespace=Arguments())
 
     try:
         mode, reservations = load_reservations(args)
@@ -1767,9 +1807,9 @@ def main() -> int:
         networks = client.list_networks()
         clients = client.list_known_clients()
         clients_by_mac = build_clients_by_mac(clients)
-        dhcp_range_result = None
-        dns_records_result = None
-        static_routes_result = None
+        dhcp_range_result: dict[str, Any] | None = None
+        dns_records_result: dict[str, Any] | None = None
+        static_routes_result: dict[str, Any] | None = None
 
         if network_settings is not None:
             if args.network_id:
@@ -1782,8 +1822,8 @@ def main() -> int:
                 raise UnifiError(
                     "network settings without DHCP range require reservations or --network-id to choose a network"
                 )
-            selected_dhcp_network = (
-                next(
+            if args.network_id:
+                selected_dhcp_network = next(
                     (
                         network
                         for network in networks
@@ -1791,9 +1831,10 @@ def main() -> int:
                     ),
                     None,
                 )
-                if args.network_id
-                else choose_network_by_ip(networks, lookup_ip)
-            )
+            else:
+                if lookup_ip is None:
+                    raise UnifiError("internal error: missing network lookup address")
+                selected_dhcp_network = choose_network_by_ip(networks, lookup_ip)
             if selected_dhcp_network is None:
                 raise UnifiError(f"network not found: {args.network_id}")
 

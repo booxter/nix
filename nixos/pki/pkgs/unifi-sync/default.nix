@@ -11,7 +11,15 @@ python3.pkgs.buildPythonApplication {
 
   build-system = [ python3.pkgs.setuptools ];
 
-  nativeCheckInputs = [ python3.pkgs.pytestCheckHook ];
+  nativeCheckInputs = with python3.pkgs; [
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  preCheck = ''
+    mypy src/unifi_sync
+  '';
 
   pythonImportsCheck = [ "unifi_sync" ];
 
