@@ -1,0 +1,13 @@
+diff --git a/backend/routes/auth.js b/backend/routes/auth.js
+index 17f0284..780cc9e 100644
+--- a/backend/routes/auth.js
++++ b/backend/routes/auth.js
+@@ -43,6 +43,8 @@ router.post("/login", async (req, res) => {
+   }
+ });
+ 
++router.get("/reauth", (_req, res) => res.redirect(302, "/"));
++
+ router.post("/logout", requireAuth, (req, res) => {
+   const token = getBearerToken(req);
+   if (token) {
