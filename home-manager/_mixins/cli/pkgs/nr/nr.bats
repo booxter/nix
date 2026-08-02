@@ -1,7 +1,7 @@
 #!/usr/bin/env bats
 
 setup() {
-  export NR="$BATS_TEST_DIRNAME/../home-manager/_mixins/cli/pkgs/nr/nr"
+  export NR="${NR_BIN:-$BATS_TEST_DIRNAME/nr}"
 
   function nixpkgs-review() {
     printf '%s\n' "$@"
