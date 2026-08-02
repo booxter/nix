@@ -15,6 +15,8 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
+  dependencies = [ pythonPackages.openai ];
+
   nativeCheckInputs = with pythonPackages; [
     ruff
     mypy

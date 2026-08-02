@@ -12,9 +12,7 @@ rec {
 
   codex-rate-limit-reset-credits = codex-usage-status;
 
-  codex-warmer = pkgs.callPackage ./codex-warmer {
-    codexUsageStatus = codex-usage-status;
-  };
+  codex-warmer = codex-usage-status;
 
   codex-work-usage-status = codex-usage-status;
 }

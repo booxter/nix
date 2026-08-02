@@ -1,8 +1,9 @@
 import argparse
 import json
+import os
 import sys
 import time
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import TextIO
 
@@ -11,6 +12,12 @@ from codex_tools.errors import CodexToolsError
 from codex_tools.http import JsonHttpClient, UrllibJsonHttpClient
 from codex_tools.reset_credits import ResetCreditsService, format_reset_credits
 from codex_tools.usage import PersonalUsageService, format_personal_usage
+from codex_tools.warmer import (
+    RESPONSES_ENDPOINT,
+    OpenAIResponsesClient,
+    ResponsesClient,
+    WarmerService,
+)
 from codex_tools.work_usage import WorkUsageService, format_work_usage
 
 
@@ -125,4 +132,47 @@ def reset_credits_main(
         print(error, file=stderr)
         return 1
     print(format_reset_credits(report), file=stdout)
+    return 0
+
+
+def warmer_main(
+    argv: Sequence[str] | None = None,
+    *,
+    client: JsonHttpClient | None = None,
+    responses_client: ResponsesClient | None = None,
+    now: float | None = None,
+    home: Path | None = None,
+    environ: Mapping[str, str] | None = None,
+    stdout: TextIO = sys.stdout,
+    stderr: TextIO = sys.stderr,
+) -> int:
+    parser = argparse.ArgumentParser(
+        prog="codex-warmer",
+        description="Start the Codex five-hour usage window when it is inactive.",
+    )
+    parser.add_argument(
+        "--auth-file",
+        type=Path,
+        default=(home or Path.home()) / ".codex" / "auth.json",
+    )
+    args = parser.parse_args(argv)
+    environment = os.environ if environ is None else environ
+    http_client = client or UrllibJsonHttpClient()
+    try:
+        started = WarmerService(
+            PersonalUsageService(http_client),
+            responses_client or OpenAIResponsesClient(),
+            responses_endpoint=environment.get(
+                "CODEX_WARMER_RESPONSES_ENDPOINT",
+                RESPONSES_ENDPOINT,
+            ),
+        ).warm_if_needed(
+            CodexAuth.load(args.auth_file),
+            now=time.time() if now is None else now,
+        )
+    except CodexToolsError as error:
+        print(error, file=stderr)
+        return 1
+    if started:
+        print("Started the Codex five-hour usage window.", file=stdout)
     return 0

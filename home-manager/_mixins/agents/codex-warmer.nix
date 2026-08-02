@@ -6,17 +6,18 @@
   ...
 }:
 let
-  codexWarmer = (import ./pkgs { inherit pkgs; }).codex-warmer;
+  codexWarmerPackage = (import ./pkgs { inherit pkgs; }).codex-warmer;
+  codexWarmer = lib.getExe' codexWarmerPackage "codex-warmer";
   codexWarmerEnabled = !isWork;
   inherit (pkgs.stdenv.hostPlatform) isDarwin;
 in
 {
-  home.packages = lib.optionals codexWarmerEnabled [ codexWarmer ];
+  home.packages = lib.optionals codexWarmerEnabled [ codexWarmerPackage ];
 
   launchd.agents.codex-warmer = lib.mkIf (isDarwin && codexWarmerEnabled) {
     enable = true;
     config = {
-      ProgramArguments = [ (lib.getExe codexWarmer) ];
+      ProgramArguments = [ codexWarmer ];
       ProcessType = "Background";
       RunAtLoad = true;
       StartInterval = 300;
@@ -31,7 +32,7 @@ in
 
     Service = {
       Type = "oneshot";
-      ExecStart = lib.getExe codexWarmer;
+      ExecStart = codexWarmer;
     };
   };
 
