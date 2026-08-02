@@ -1,8 +1,10 @@
 #!/usr/bin/env bats
 
 setup() {
-  source ./apps/_helpers/update-machines-host-lib.sh
-  source ./apps/_helpers/update-machines-remote-lib.sh
+  repo_root="${FLEET_TEST_REPO_ROOT:-$BATS_TEST_DIRNAME/..}"
+  update_machines="${UPDATE_MACHINES_BIN:-$repo_root/apps/update-machines.sh}"
+  source "$repo_root/apps/_helpers/update-machines-host-lib.sh"
+  source "$repo_root/apps/_helpers/update-machines-remote-lib.sh"
 }
 
 write_update_machines_test_stubs() {
@@ -575,7 +577,7 @@ EOF
   export SSH_CALLS_OUT="$workdir/ssh.calls"
   export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
-  run bash ./apps/update-machines.sh nv
+  run bash "$update_machines" nv
 
   [ "$status" -eq 0 ]
   grep -q 'nv.local' "$SSH_CALLS_OUT"
@@ -590,7 +592,7 @@ EOF
   export PATH="$workdir/bin:$PATH"
   export SSH_CALLS_OUT="$workdir/ssh.calls"
 
-  run bash ./apps/update-machines.sh --dry-run alpha controller
+  run bash "$update_machines" --dry-run alpha controller
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Dry run: would update alpha, controller."* ]]
@@ -606,7 +608,7 @@ EOF
   export PATH="$workdir/bin:$PATH"
   export SSH_CALLS_OUT="$workdir/ssh.calls"
 
-  run bash ./apps/update-machines.sh --dry-run
+  run bash "$update_machines" --dry-run
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Dry run: would update controller."* ]]
@@ -621,7 +623,7 @@ EOF
 
   export PATH="$workdir/bin:$PATH"
 
-  run bash ./apps/update-machines.sh --all --dry-run
+  run bash "$update_machines" --all --dry-run
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Dry run: would update alpha, beta, controller, gamma."* ]]
@@ -635,7 +637,7 @@ EOF
 
   export PATH="$workdir/bin:$PATH"
 
-  run bash ./apps/update-machines.sh --dry-run --local --branch feature/test controller
+  run bash "$update_machines" --dry-run --local --branch feature/test controller
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"--local and --branch cannot be used together"* ]]
@@ -651,7 +653,7 @@ EOF
   export SSH_CALLS_OUT="$workdir/ssh.calls"
   export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
-  run bash ./apps/update-machines.sh --no-merge alpha
+  run bash "$update_machines" --no-merge alpha
 
   [ "$status" -eq 0 ]
   grep -Eq ' github false false[[:space:]]*$' "$SSH_CALLS_OUT"
@@ -668,7 +670,7 @@ EOF
   export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
   export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
-  run bash ./apps/update-machines.sh --no-inhibit alpha
+  run bash "$update_machines" --no-inhibit alpha
 
   [ "$status" -eq 0 ]
   grep -Eq ' github true true[[:space:]]*$' "$SSH_CALLS_OUT"
@@ -697,7 +699,7 @@ EOF
   export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
   cd "$source_repo"
-  run bash "$BATS_TEST_DIRNAME/../apps/update-machines.sh" --local alpha
+  run bash "$update_machines" --local alpha
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Using committed checkout state $commit"* ]]
@@ -717,7 +719,7 @@ EOF
   export SSH_UPLOADED_SCRIPT_OUT="$workdir/uploaded.sh"
   export UPDATE_MACHINES_TEST_ASSUME_TTY=true
 
-  run bash ./apps/update-machines.sh alpha beta
+  run bash "$update_machines" alpha beta
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"Failed hosts: alpha, beta"* ]]

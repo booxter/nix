@@ -4,6 +4,7 @@ setup() {
   workdir="$BATS_TMPDIR/vm-app"
   mkdir -p "$workdir/bin"
   bash_path="$(command -v bash)"
+  vm="${VM_BIN:-$BATS_TEST_DIRNAME/vm.sh}"
 
   {
     printf '#!%s\n' "$bash_path"
@@ -47,7 +48,7 @@ EOF
     "targetDisplayNames":["builder1","srvarr","beast","prx1-lab"]
   }'
 
-  run bash ./apps/vm.sh --help
+  run bash "$vm" --help
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage: vm [--gui] <target-host>"* ]]
@@ -62,7 +63,7 @@ EOF
   export NIX_EVAL_EXIT_CODE=1
   export NIX_EVAL_STDERR='boom'
 
-  run bash ./apps/vm.sh --help
+  run bash "$vm" --help
 
   [ "$status" -ne 0 ]
   [[ "$output" == *"Failed to evaluate flake for VM target discovery"* ]]
@@ -74,7 +75,7 @@ EOF
     "targetAliases":{"builder1":"builder1"}
   }'
 
-  run bash ./apps/vm.sh --gui builder1
+  run bash "$vm" --gui builder1
 
   [ "$status" -eq 0 ]
   grep -Fq "VM_TARGET_CONFIG=builder1" "$NIX_RUN_ARGS_OUT"
@@ -92,7 +93,7 @@ EOF
     "targetDisplayNames":["builder1","beast"]
   }'
 
-  run bash ./apps/vm.sh builder1
+  run bash "$vm" builder1
 
   [ "$status" -eq 0 ]
   grep -Fq "VM_TARGET_CONFIG=builder1" "$NIX_RUN_ARGS_OUT"
@@ -103,7 +104,7 @@ EOF
 @test "vm resolves real host directly" {
   export FLAKE_JSON='{"nixosConfigurations":{"beast":{}}}'
 
-  run bash ./apps/vm.sh beast
+  run bash "$vm" beast
 
   [ "$status" -eq 0 ]
   grep -Fq "VM_TARGET_CONFIG=beast" "$NIX_RUN_ARGS_OUT"
@@ -112,7 +113,7 @@ EOF
 @test "vm reports unknown target host" {
   export FLAKE_JSON='{"nixosConfigurations":{"beast":{}}}'
 
-  run bash ./apps/vm.sh does-not-exist
+  run bash "$vm" does-not-exist
 
   [ "$status" -ne 0 ]
   [[ "$output" == *"Unknown target host: does-not-exist"* ]]

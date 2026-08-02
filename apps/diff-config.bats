@@ -1,5 +1,9 @@
 #!/usr/bin/env bats
 
+setup() {
+  diff_config="${DIFF_CONFIG_BIN:-$BATS_TEST_DIRNAME/diff-config.sh}"
+}
+
 make_repo() {
   repo="$BATS_TMPDIR/diff-config-repo-$BATS_TEST_NUMBER"
   rm -rf "$repo"
@@ -288,7 +292,7 @@ SH
 }
 
 @test "diff-config shows usage" {
-  run bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" --help
+  run bash "$diff_config" --help
 
   [ "$status" -eq 0 ]
   [[ "$output" == *"Usage: diff-config [--details] [--path <relpath>] <machine> <old-rev> <new-rev>"* ]]
@@ -308,7 +312,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    bash "$diff_config" \
     .#nixosConfigurations.frame.config.system.build.toplevel \
     "$old_rev" \
     "$new_rev"
@@ -351,7 +355,7 @@ SH
     DIX_ARGS_LOG="$dix_log" \
     NIX_TARGET_KIND=nixos \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    bash "$diff_config" \
     org \
     "$old_rev" \
     "$new_rev"
@@ -378,7 +382,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    bash "$diff_config" \
     fana \
     "$old_rev" \
     "$new_rev"
@@ -409,7 +413,7 @@ SH
     DIX_ARGS_LOG="$dix_log" \
     DIFF_ARGS_LOG="$diff_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    bash "$diff_config" \
     --details \
     --path etc/nix/nix.conf \
     --path etc/test-links \
@@ -487,7 +491,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    bash "$diff_config" \
     --details \
     --path etc/nix/nix.conf \
     frame \
@@ -513,7 +517,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    bash "$diff_config" \
     mair \
     "$old_rev" \
     "$new_rev"
@@ -561,7 +565,7 @@ SH
     NH_ARGS_LOG="$nh_log" \
     DIX_ARGS_LOG="$dix_log" \
     PATH="$fake_bin:$PATH" \
-    bash "$BATS_TEST_DIRNAME/../apps/diff-config.sh" \
+    bash "$diff_config" \
     --details \
     --path etc/nix/nix.conf \
     mair \

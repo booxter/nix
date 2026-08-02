@@ -1,5 +1,9 @@
 #!/usr/bin/env bats
 
+setup() {
+  prox_deploy="${PROX_DEPLOY_BIN:-$BATS_TEST_DIRNAME/prox-deploy.sh}"
+}
+
 @test "prox-deploy writes nixmoxer.conf and calls nixmoxer with flake target" {
   workdir="$BATS_TMPDIR/push-vm"
   mkdir -p "$workdir/bin"
@@ -31,7 +35,7 @@ EOF
   export NIXMOXER_CONF_OUT="$workdir/nixmoxer.conf.snapshot"
 
   cd "$workdir"
-  run bash "$BATS_TEST_DIRNAME/../apps/prox-deploy.sh" prx1-lab root host/prx1-lab/root srvarr
+  run bash "$prox_deploy" prx1-lab root host/prx1-lab/root srvarr
 
   [ "$status" -eq 0 ]
   [ "$(cat "$PASS_ARGS_OUT")" = "host/prx1-lab/root" ]
@@ -46,7 +50,7 @@ EOF
 }
 
 @test "prox-deploy validates argument count" {
-  run bash "$BATS_TEST_DIRNAME/../apps/prox-deploy.sh" only three args
+  run bash "$prox_deploy" only three args
   [ "$status" -ne 0 ]
   [[ "$output" == *"Usage: "* ]]
 }
@@ -78,7 +82,7 @@ EOF
   export PATH="$workdir/bin:$PATH"
 
   cd "$workdir"
-  run bash "$BATS_TEST_DIRNAME/../apps/prox-deploy.sh" prx1-lab root host/prx1-lab/root srvarr
+  run bash "$prox_deploy" prx1-lab root host/prx1-lab/root srvarr
 
   [ "$status" -eq 7 ]
   [ ! -e "$workdir/nixmoxer.conf" ]

@@ -8,6 +8,36 @@ let
     inherit program;
     meta = { inherit description; };
   };
+  mkBatsCheck =
+    {
+      environment ? { },
+      nativeCheckInputs ? [ ],
+      test,
+    }:
+    {
+      derivationArgs = {
+        doCheck = true;
+        nativeCheckInputs = [
+          pkgs.bash
+          pkgs.bats
+          pkgs.shellcheck
+        ]
+        ++ nativeCheckInputs;
+      };
+      checkPhase = ''
+        runHook preCheck
+        ${pkgs.lib.getExe pkgs.bash} -n "$target"
+        ${pkgs.lib.getExe pkgs.shellcheck} "$target"
+        ${pkgs.lib.concatStringsSep "\n" (
+          pkgs.lib.mapAttrsToList (
+            name: value: "export ${name}=${pkgs.lib.escapeShellArg (toString value)}"
+          ) environment
+        )}
+        cd ${../.}
+        ${pkgs.lib.getExe pkgs.bats} --print-output-on-failure ${test}
+        runHook postCheck
+      '';
+    };
 
   pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
   hostInventory = import ../lib/inventory.nix {
@@ -120,6 +150,26 @@ let
 
       exec ${pkgs.bash}/bin/bash ${../.}/apps/update-machines.sh "$@"
     '';
+    inherit
+      (mkBatsCheck {
+        test = ./update-machines.bats;
+        environment = {
+          FLEET_TEST_REPO_ROOT = "${../.}";
+          UPDATE_MACHINES_BIN = "${../.}/apps/update-machines.sh";
+        };
+        nativeCheckInputs = with pkgs; [
+          coreutils
+          git
+          gnugrep
+          gnutar
+          jq
+          openssh
+          pythonWithPromptToolkit
+        ];
+      })
+      derivationArgs
+      checkPhase
+      ;
   };
 
   vm = pkgs.writeShellApplication {
@@ -132,6 +182,18 @@ let
       export VM_REPO_ROOT="${../.}"
       exec ${pkgs.bash}/bin/bash ${../apps/vm.sh} "$@"
     '';
+    inherit
+      (mkBatsCheck {
+        test = ./vm.bats;
+        environment.VM_BIN = "${./vm.sh}";
+        nativeCheckInputs = with pkgs; [
+          gnugrep
+          jq
+        ];
+      })
+      derivationArgs
+      checkPhase
+      ;
   };
 
   diffConfig = pkgs.writeShellApplication {
@@ -152,6 +214,23 @@ let
       export DIFF_CONFIG_PROGRAM_NAME=diff
       exec ${pkgs.bash}/bin/bash ${../apps/diff-config.sh} "$@"
     '';
+    inherit
+      (mkBatsCheck {
+        test = ./diff-config.bats;
+        environment.DIFF_CONFIG_BIN = "${./diff-config.sh}";
+        nativeCheckInputs = with pkgs; [
+          coreutils
+          diffutils
+          findutils
+          git
+          gnugrep
+          gnused
+          jq
+        ];
+      })
+      derivationArgs
+      checkPhase
+      ;
   };
 
   getLocalBuilders = pkgs.writeShellApplication {
@@ -164,6 +243,18 @@ let
     text = ''
       exec ${../apps/get-local-builders.sh} "$@"
     '';
+    inherit
+      (mkBatsCheck {
+        test = ./get-local-builders.bats;
+        environment.GET_LOCAL_BUILDERS_BIN = "${./get-local-builders.sh}";
+        nativeCheckInputs = with pkgs; [
+          coreutils
+          gawk
+        ];
+      })
+      derivationArgs
+      checkPhase
+      ;
   };
 
   hbaFlash = pkgs.writeShellApplication {

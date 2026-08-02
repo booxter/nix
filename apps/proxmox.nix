@@ -62,6 +62,24 @@ if builtins.hasAttr system inputs.proxmox-nixos.packages then
           "host/''${proxmox_host}/root" \
           "$vm_type"
       '';
+      derivationArgs = {
+        doCheck = true;
+        nativeCheckInputs = [
+          pkgs.bash
+          pkgs.bats
+          pkgs.gnugrep
+          pkgs.shellcheck
+        ];
+      };
+      checkPhase = ''
+        runHook preCheck
+        ${pkgs.lib.getExe pkgs.bash} -n "$target"
+        ${pkgs.lib.getExe pkgs.shellcheck} "$target"
+        cd ${../.}
+        PROX_DEPLOY_BIN=${../apps/prox-deploy.sh} \
+          ${pkgs.lib.getExe pkgs.bats} --print-output-on-failure ${../apps/prox-deploy.bats}
+        runHook postCheck
+      '';
     };
   in
   if builtins.hasAttr "nixmoxer" proxmoxPkgs then
