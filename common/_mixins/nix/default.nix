@@ -30,13 +30,10 @@ in
         download-attempts = 1;
         max-jobs = 5;
 
-        # Numtide cache for llm-agents.nix
         extra-substituters = [
-          "https://cache.numtide.com"
           "https://cache.saumon.network/proxmox-nixos"
         ];
         extra-trusted-public-keys = [
-          (readPublicKey ../../../public-keys/nix-cache/numtide.pub)
           (readPublicKey ../../../public-keys/nix-cache/proxmox-nixos.pub)
         ];
       }
