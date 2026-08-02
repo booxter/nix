@@ -581,7 +581,6 @@
         "proxmox-nixos": "proxmox-nixos",
         "sops-nix": "sops-nix",
         "spicetify-nix": "spicetify-nix",
-        "tig": "tig",
         "vpnconfinement": "vpnconfinement"
       }
     },
@@ -715,22 +714,6 @@
         "owner": "booxter",
         "ref": "lolek-missing-features",
         "repo": "telegym",
-        "type": "github"
-      }
-    },
-    "tig": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1785193247,
-        "narHash": "sha256-PiQRXfXa2QYspfrYoZFivcc+NxvhErc5GQ8OUPDPgRY=",
-        "owner": "jonas",
-        "repo": "tig",
-        "rev": "1b86f070a1f6d4c686a09b997fd4249d52a2a272",
-        "type": "github"
-      },
-      "original": {
-        "owner": "jonas",
-        "repo": "tig",
         "type": "github"
       }
     },

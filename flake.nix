@@ -65,11 +65,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    tig = {
-      url = "github:jonas/tig";
-      flake = false;
-    };
-
   };
 
   outputs =
