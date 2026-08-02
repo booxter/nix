@@ -13,6 +13,7 @@ let
       environment ? { },
       nativeCheckInputs ? [ ],
       test,
+      targetEnvironmentVariable ? null,
     }:
     {
       derivationArgs = {
@@ -33,6 +34,9 @@ let
             name: value: "export ${name}=${pkgs.lib.escapeShellArg (toString value)}"
           ) environment
         )}
+        ${pkgs.lib.optionalString (targetEnvironmentVariable != null) ''
+          export ${targetEnvironmentVariable}="$target"
+        ''}
         cd ${../.}
         ${pkgs.lib.getExe pkgs.bats} --print-output-on-failure ${test}
         runHook postCheck
@@ -496,32 +500,58 @@ let
         ${pkgs.coreutils}/bin/printf '%s\n' "$config_text"
       fi
     '';
+    inherit
+      (mkBatsCheck {
+        test = ./wg-home-client-config.bats;
+        targetEnvironmentVariable = "WG_HOME_CLIENT_CONFIG_BIN";
+        environment.WG_HOME_TEST_ENDPOINT = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
+      })
+      derivationArgs
+      checkPhase
+      ;
   };
 in
 {
-  deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
-  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
-  diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
-  "get-local-builders" =
-    mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
-  "issue-observability-cert" =
-    mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
-  "issue-internal-service-cert" =
-    mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
-  "issue-proxmox-exporter-token" =
-    mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
-  "seerr-request-storage" =
-    mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
-  "seerr-update-user-tags" =
-    mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
-  "pki-rotation" =
-    mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
-  "reset-oidc" =
-    mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
-  "join-media-parts" =
-    mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
-  "hba-flash" =
-    mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
-  "wg-home-client-config" =
-    mkApp "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
+  packages = {
+    inherit deploy vm;
+    diff = diffConfig;
+    get-local-builders = getLocalBuilders;
+    issue-observability-cert = issueObservabilityCertApp;
+    issue-internal-service-cert = issueInternalServiceCertApp;
+    issue-proxmox-exporter-token = issueProxmoxExporterTokenApp;
+    seerr-request-storage = seerrRequestStoragePackage;
+    seerr-update-user-tags = seerrUpdateUserTagsPackage;
+    pki-rotation = pkiRotationApp;
+    reset-oidc = resetOidc;
+    join-media-parts = pkgs.join-media-parts;
+    hba-flash = hbaFlash;
+    wg-home-client-config = wgHomeClientConfig;
+  };
+  apps = {
+    deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
+    vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
+    diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
+    "get-local-builders" =
+      mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+    "issue-observability-cert" =
+      mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+    "issue-internal-service-cert" =
+      mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+    "issue-proxmox-exporter-token" =
+      mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
+    "seerr-request-storage" =
+      mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
+    "seerr-update-user-tags" =
+      mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
+    "pki-rotation" =
+      mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
+    "reset-oidc" =
+      mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
+    "join-media-parts" =
+      mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
+    "hba-flash" =
+      mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
+    "wg-home-client-config" =
+      mkApp "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
+  };
 }
