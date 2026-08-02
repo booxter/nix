@@ -63,6 +63,7 @@ rec {
       virtPlatform ? platform,
       homeManagerInput ? inputs.home-manager,
       hmFull ? true,
+      isBuilder ? false,
       isDesktop ? false,
       isLaptop ? false,
       isWork ? false,
@@ -89,6 +90,7 @@ rec {
           username
           stateVersion
           isVM
+          isBuilder
           isDesktop
           isLaptop
           isWork
@@ -417,6 +419,7 @@ rec {
       hostSpecName ? hostname,
       homeManagerInput ? inputs.home-manager,
       hmFull ? true,
+      isBuilder ? false,
       isDesktop ? false,
       isLaptop ? false,
       isWork ? false,
@@ -442,6 +445,7 @@ rec {
           stateVersion
           hmStateVersion
           hmFull
+          isBuilder
           isDesktop
           isLaptop
           isWork

@@ -1,6 +1,9 @@
 {
+  config,
   hostInventory,
+  isBuilder,
   isDarwin,
+  isDesktop,
   lib,
   pkgs,
   username,
@@ -14,6 +17,7 @@ in
   nix =
     let
       nixCaches = hostInventory.site.nixCaches;
+      needsProxmoxCache = config.host.isProxmox || isBuilder || isDesktop; # Desktops may be used for development.
     in
     {
       package = lib.mkForce pkgs.nixVersions.latest;
@@ -30,10 +34,10 @@ in
         download-attempts = 1;
         max-jobs = 5;
 
-        extra-substituters = [
+        extra-substituters = lib.optionals needsProxmoxCache [
           "https://cache.saumon.network/proxmox-nixos"
         ];
-        extra-trusted-public-keys = [
+        extra-trusted-public-keys = lib.optionals needsProxmoxCache [
           (readPublicKey ../../../public-keys/nix-cache/proxmox-nixos.pub)
         ];
       }
