@@ -97,7 +97,7 @@ in
     description = "Collect AMD GPU metrics for Prometheus";
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${lib.getExe framePkgs.frame-amdgpu-metrics} --output ${nodeExporterTextfileDir}/frame-amdgpu.prom";
+      ExecStart = "${lib.getExe' framePkgs.frame-observability "frame-amdgpu-metrics"} --output ${nodeExporterTextfileDir}/frame-amdgpu.prom";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;
@@ -116,7 +116,7 @@ in
     after = [ "ollama.service" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = "${lib.getExe framePkgs.frame-ollama-metrics} --base-url http://127.0.0.1:${toString config.services.ollama.port} --output ${nodeExporterTextfileDir}/frame-ollama.prom";
+      ExecStart = "${lib.getExe' framePkgs.frame-observability "frame-ollama-metrics"} --base-url http://127.0.0.1:${toString config.services.ollama.port} --output ${nodeExporterTextfileDir}/frame-ollama.prom";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;

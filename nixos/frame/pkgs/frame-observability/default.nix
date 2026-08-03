@@ -1,5 +1,7 @@
 {
+  amdgpu_top,
   lib,
+  makeWrapper,
   python3,
 }:
 python3.pkgs.buildPythonApplication {
@@ -16,6 +18,8 @@ python3.pkgs.buildPythonApplication {
     pydantic
   ];
 
+  nativeBuildInputs = [ makeWrapper ];
+
   nativeCheckInputs = with python3.pkgs; [
     mypy
     pytestCheckHook
@@ -27,6 +31,11 @@ python3.pkgs.buildPythonApplication {
     ruff format --check src tests
     ruff check src tests
     mypy src/frame_observability
+  '';
+
+  postFixup = ''
+    wrapProgram "$out/bin/frame-amdgpu-metrics" \
+      --set-default FRAME_AMDGPU_TOP ${lib.getExe amdgpu_top}
   '';
 
   pythonImportsCheck = [ "frame_observability" ];

@@ -10,6 +10,7 @@ requires-python = ">=3.11"
 dependencies = ["prometheus-client", "pydantic"]
 
 [project.scripts]
+frame-amdgpu-metrics = "frame_observability.amdgpu:main"
 frame-ollama-metrics = "frame_observability.ollama:main"
 
 [tool.setuptools]
