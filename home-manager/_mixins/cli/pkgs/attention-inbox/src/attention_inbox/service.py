@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 
+from attention_inbox.gitlab import GitLabTodoSource, SubprocessRunner
 from attention_inbox.model import InboxItem
 
 
@@ -18,3 +19,7 @@ class InboxService:
             key=lambda item: item.updated_at or item.created_at or "",
             reverse=True,
         )
+
+
+def default_service() -> InboxService:
+    return InboxService(GitLabTodoSource(SubprocessRunner()))

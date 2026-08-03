@@ -5,10 +5,9 @@ from collections.abc import Sequence
 from typing import TextIO
 
 from attention_inbox.errors import InboxError
-from attention_inbox.gitlab import GitLabTodoSource, SubprocessRunner
 from attention_inbox.model import build_document
 from attention_inbox.render import render_text
-from attention_inbox.service import InboxService
+from attention_inbox.service import InboxService, default_service
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -39,7 +38,7 @@ def main(
     stderr: TextIO = sys.stderr,
 ) -> int:
     arguments = _parser().parse_args(argv)
-    inbox = service or InboxService(GitLabTodoSource(SubprocessRunner()))
+    inbox = service or default_service()
     try:
         items = inbox.collect(arguments.gitlab_hostname)
     except InboxError as error:

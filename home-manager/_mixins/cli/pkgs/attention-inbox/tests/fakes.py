@@ -28,6 +28,17 @@ class FakeSource:
         return self.items
 
 
+@dataclass
+class RecordingSketchybar:
+    calls: list[list[str]] = field(default_factory=list)
+    error: Exception | None = None
+
+    def run(self, arguments: Sequence[str]) -> None:
+        self.calls.append(list(arguments))
+        if self.error is not None:
+            raise self.error
+
+
 def gitlab_todo(
     todo_id: int,
     *,

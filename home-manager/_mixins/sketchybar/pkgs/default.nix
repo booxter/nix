@@ -34,10 +34,10 @@ let
     "ip_address"
     "jellyfin"
   ];
-  shellPluginNames = builtins.filter (name: !builtins.elem name nativePluginNames) pluginNames;
+  packagedPluginNames = nativePluginNames ++ [ "attention-inbox" ];
+  shellPluginNames = builtins.filter (name: !builtins.elem name packagedPluginNames) pluginNames;
   sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
   runtimePath = lib.makeBinPath [
-    attentionInbox
     codexUsageStatus
     codexWorkUsageStatus
     pkgs.bash
@@ -83,8 +83,8 @@ let
         --prefix PATH : ${lib.escapeShellArg runtimePath} \
       ${environmentArguments environment}
     '';
-  makeNativePluginWrapper =
-    name: executable:
+  makeBinaryPluginWrapper =
+    name: package: executable:
     let
       environment =
         pluginColors
@@ -94,9 +94,10 @@ let
         };
     in
     ''
-      makeWrapper ${lib.getExe' sketchybarTools executable} "$out/bin/${name}" \
+      makeWrapper ${lib.getExe' package executable} "$out/bin/${name}" \
         ${environmentArguments environment}
     '';
+  makeNativePluginWrapper = name: executable: makeBinaryPluginWrapper name sketchybarTools executable;
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "sketchybar-plugins";
@@ -127,6 +128,7 @@ pkgs.stdenvNoCC.mkDerivation {
     mkdir -p "$out/bin" "$out/libexec/sketchybar"
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
+    ${makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"}
     ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
     ${makeNativePluginWrapper "disk" "sketchybar-disk"}
     ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}
