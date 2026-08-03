@@ -29,7 +29,7 @@ class Runtime:
 
 @dataclass(frozen=True)
 class SystemCommands:
-    stderr: TextIO = sys.stderr
+    stderr: TextIO | None = None
 
     def run(self, arguments: Sequence[str], *, capture: bool = True) -> str:
         process = subprocess.run(
@@ -41,7 +41,7 @@ class SystemCommands:
         )
         if process.returncode != 0:
             if capture and process.stderr:
-                self.stderr.write(process.stderr)
+                (self.stderr or sys.stderr).write(process.stderr)
             raise CommandError(f"command failed: {shlex.join(arguments)}")
         return process.stdout if capture else ""
 

@@ -2,19 +2,34 @@
   lib,
   openssh,
   python3,
+  ruff,
 }:
-python3.pkgs.buildPythonApplication {
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
   pname = "ssh-ticket";
   version = "0.1.0";
   pyproject = true;
 
   src = ./.;
 
-  build-system = [ python3.pkgs.setuptools ];
+  build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [ python3.pkgs.pydantic ];
+  dependencies = [ pythonPackages.pydantic ];
 
-  nativeCheckInputs = [ python3.pkgs.pytestCheckHook ];
+  nativeCheckInputs = with pythonPackages; [
+    ruff
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/ssh_ticket
+  '';
 
   makeWrapperArgs = [
     "--prefix PATH : ${lib.makeBinPath [ openssh ]}"

@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
@@ -8,7 +8,7 @@ from .durations import parse_duration
 
 
 class Target(BaseModel):
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True, strict=True)
 
     name: str = Field(min_length=1)
     enabled: bool = False
@@ -22,7 +22,7 @@ class Target(BaseModel):
     ca_public_key_configured: bool = Field(default=False, alias="caPublicKeyConfigured")
 
     @model_validator(mode="after")
-    def validate_ticket_lifetimes(self) -> "Target":
+    def validate_ticket_lifetimes(self) -> Self:
         default_ttl = parse_duration(self.default_ttl)
         max_ttl = parse_duration(self.max_ttl)
         if default_ttl > max_ttl:
@@ -30,11 +30,16 @@ class Target(BaseModel):
         return self
 
 
-TARGETS = TypeAdapter(list[Target])
+TARGETS: TypeAdapter[list[Target]] = TypeAdapter(list[Target])
+
+
+class TicketStatus(Target):
+    status: Literal["missing", "expired", "valid"]
+    valid_before: int | None = Field(default=None, alias="validBefore")
 
 
 class TicketMetadata(BaseModel):
-    model_config = ConfigDict(extra="forbid", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True, strict=True)
 
     target: str = Field(min_length=1)
     ssh_host: str = Field(default="", alias="sshHost")
