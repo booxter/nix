@@ -34,6 +34,7 @@ let
     "jellyfin"
     "network"
     "stock"
+    "volume"
   ];
   packagedPluginNames = goPluginNames ++ [
     "attention-inbox"
@@ -140,6 +141,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ${makeGoPluginWrapper "jellyfin" "sketchybar-jellyfin"}
     ${makeGoPluginWrapper "network" "sketchybar-network"}
     ${makeGoPluginWrapper "stock" "sketchybar-stock"}
+    ${makeGoPluginWrapper "volume" "sketchybar-volume"}
     runHook postInstall
   '';
 

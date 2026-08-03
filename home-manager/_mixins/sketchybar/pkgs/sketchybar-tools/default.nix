@@ -19,6 +19,7 @@ buildGoModule {
     "cmd/sketchybar-jellyfin"
     "cmd/sketchybar-network"
     "cmd/sketchybar-stock"
+    "cmd/sketchybar-volume"
   ];
 
   preCheck = ''
