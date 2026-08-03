@@ -19,6 +19,7 @@ swiftPackages.stdenv.mkDerivation (finalAttrs: {
   doCheck = true;
   checkPhase = ''
     runHook preCheck
+    "$(swiftpmBinPath)/BatteryAppletChecks"
     "$(swiftpmBinPath)/SpotifyAppletChecks"
     runHook postCheck
   '';
@@ -26,9 +27,9 @@ swiftPackages.stdenv.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
     mkdir -p "$out/bin"
-    install -m 0755 \
-      "$(swiftpmBinPath)/${finalAttrs.meta.mainProgram}" \
-      "$out/bin/${finalAttrs.meta.mainProgram}"
+    for executable in sketchybar-battery sketchybar-spotify; do
+      install -m 0755 "$(swiftpmBinPath)/$executable" "$out/bin/$executable"
+    done
     runHook postInstall
   '';
 

@@ -26,7 +26,7 @@ let
     "stock"
     "volume"
   ];
-  nativePluginNames = [
+  goPluginNames = [
     "alertmanager"
     "disk"
     "github-status"
@@ -35,8 +35,9 @@ let
     "network"
     "stock"
   ];
-  packagedPluginNames = nativePluginNames ++ [
+  packagedPluginNames = goPluginNames ++ [
     "attention-inbox"
+    "battery"
     "codex"
     "codex-work"
     "spotify"
@@ -47,7 +48,6 @@ let
   runtimePath = lib.makeBinPath [
     pkgs.bash
     pkgs.coreutils
-    pkgs.gnugrep
     pkgs.sketchybar
   ];
   pluginEnvironments = {
@@ -101,7 +101,7 @@ let
       makeWrapper ${lib.getExe' package executable} "$out/bin/${name}" \
         ${environmentArguments environment}
     '';
-  makeNativePluginWrapper = name: executable: makeBinaryPluginWrapper name sketchybarTools executable;
+  makeGoPluginWrapper = name: executable: makeBinaryPluginWrapper name sketchybarTools executable;
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "sketchybar-plugins";
@@ -129,16 +129,17 @@ pkgs.stdenvNoCC.mkDerivation {
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
     ${makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"}
+    ${makeBinaryPluginWrapper "battery" swiftApplets "sketchybar-battery"}
     ${makeBinaryPluginWrapper "codex" codexTools "codex-sketchybar"}
     ${makeBinaryPluginWrapper "codex-work" codexTools "codex-work-sketchybar"}
     ${makeBinaryPluginWrapper "spotify" swiftApplets "sketchybar-spotify"}
-    ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
-    ${makeNativePluginWrapper "disk" "sketchybar-disk"}
-    ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}
-    ${makeNativePluginWrapper "ip_address" "sketchybar-ip-address"}
-    ${makeNativePluginWrapper "jellyfin" "sketchybar-jellyfin"}
-    ${makeNativePluginWrapper "network" "sketchybar-network"}
-    ${makeNativePluginWrapper "stock" "sketchybar-stock"}
+    ${makeGoPluginWrapper "alertmanager" "sketchybar-alertmanager"}
+    ${makeGoPluginWrapper "disk" "sketchybar-disk"}
+    ${makeGoPluginWrapper "github-status" "sketchybar-github-status"}
+    ${makeGoPluginWrapper "ip_address" "sketchybar-ip-address"}
+    ${makeGoPluginWrapper "jellyfin" "sketchybar-jellyfin"}
+    ${makeGoPluginWrapper "network" "sketchybar-network"}
+    ${makeGoPluginWrapper "stock" "sketchybar-stock"}
     runHook postInstall
   '';
 
