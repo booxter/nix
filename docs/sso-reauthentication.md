@@ -3,7 +3,7 @@
 This document defines the repository's contract between nginx,
 `oauth2-proxy`, browser applications, and synthetic probes when an SSO session
 expires. It applies to applications protected by
-`host.sso.oauth2ProxyGates` with `authFailureMode = "navigation-aware"`.
+`host.sso.oauth2ProxyGates`.
 
 This is not a new OAuth or OpenID Connect protocol. It is the local behavior
 required to make standards-based sign-in recover safely in applications that
@@ -293,7 +293,7 @@ Migrate one gate at a time:
 3. Identify any read-only operations that require restoration. Everything else
    remains non-replayable.
 4. Implement and test application handling before, or in the same deployment
-   as, `authFailureMode = "navigation-aware"`.
+   as, the proxy gate.
 5. Run `nix fmt`, package checks, and the shared NixOS proxy test as relevant.
 6. Run `deploy --local --test` and inspect every unit that would stop, restart,
    reload, or start.
@@ -302,9 +302,9 @@ Migrate one gate at a time:
 9. Record the result in the adoption status below before starting the next
    gate.
 
-Do not enable navigation-aware failures for a collection of unrelated apps
-until every protected frontend has been inspected. A shared gate and cookie
-make the entire collection one rollout unit.
+Do not place a collection of unrelated apps behind a shared gate until every
+protected frontend has been inspected. A shared gate and cookie make the
+entire collection one rollout unit.
 
 ## Adoption Status
 
@@ -321,24 +321,24 @@ make the entire collection one rollout unit.
 - Telegram Archive (`tg`): adopted and browser-tested. Its fetch interceptor
   restores only the selected chat or topic, while WebSocket reconnects probe
   the proxy session first.
-- Paperless-GPT: deferred; its pinned OCI image still uses the legacy proxy
-  redirect.
-- Jellystat (`jfstat`): deferred; its pinned OCI image still uses the legacy
-  proxy redirect.
-- WatchState: deferred; its pinned OCI image still uses the legacy proxy
-  redirect.
+- Paperless-GPT: proxy contract adopted. Its pinned OCI frontend remains
+  unpatched, so expired background requests fail until the user refreshes.
+- Jellystat (`jfstat`): proxy contract adopted. Its pinned OCI frontend remains
+  unpatched, so expired background requests fail until the user refreshes.
+- WatchState: proxy contract adopted. Its pinned OCI frontend remains
+  unpatched, so expired background requests fail until the user refreshes.
 - `srvarr-admin-apps`: adopted and browser-tested across Bazarr, Houndarr,
   Lidarr, Prowlarr, Radarr, SABnzbd, Sonarr, and Transmission. Marked failures
   start a safe top-level login without replaying rejected requests. Houndarr
   relies on its vendored HTMX refresh behavior; the other frontends carry
   release patches with package checks.
 
-The three OCI applications above are the only remaining application
-adoptions. Their prebuilt images do not expose an application source tree to
-the normal Nix patch and check phases, while this contract requires frontend
-request-handling changes. Adoption is therefore deferred until upstream
-support is available or this repository deliberately takes ownership of
-building and maintaining patched images.
+All proxy gates now enforce this contract. The three OCI applications above
+are the only remaining frontend adoptions. Their prebuilt images do not expose
+an application source tree to the normal Nix patch and check phases, so
+graceful in-tab recovery is deferred until upstream support is available or
+this repository deliberately takes ownership of building and maintaining
+patched images.
 
 Jellyfin is not protected by these gates and must not be restarted merely to
 adopt this contract in another application on `beast`.
