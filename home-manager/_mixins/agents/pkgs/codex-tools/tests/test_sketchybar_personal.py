@@ -1,8 +1,7 @@
 import io
-import json
 import os
 import time
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -26,7 +25,12 @@ from codex_tools.sketchybar_personal import (
     window_pace_risk_bps,
 )
 from codex_tools.usage import PersonalUsage, ResetCredit, ResetCredits, UsageWindow
-from fakes import FakePersonalUsageService, RecordingSketchybar
+from fakes import (
+    FakePersonalUsageService,
+    RecordingSketchybar,
+    sketchybar_properties,
+    write_codex_auth,
+)
 
 NOW = 1_784_203_200
 COLORS = Colors(
@@ -35,21 +39,6 @@ COLORS = Colors(
     blue="blue",
     neutral="neutral",
 )
-
-
-def properties(arguments: Sequence[str]) -> dict[str, dict[str, str]]:
-    result: dict[str, dict[str, str]] = {}
-    current: str | None = None
-    iterator = iter(arguments)
-    for argument in iterator:
-        if argument == "--set":
-            current = next(iterator)
-            result.setdefault(current, {})
-        elif current is not None:
-            name, separator, value = argument.partition("=")
-            assert separator == "=", argument
-            result[current][name] = value
-    return result
 
 
 def window(
@@ -84,12 +73,6 @@ def usage(
         weekly=weekly,
         reset_credits=resets or ResetCredits(0, (), None),
     )
-
-
-def write_auth(home: Path) -> None:
-    path = home / ".codex" / "auth.json"
-    path.parent.mkdir(parents=True)
-    path.write_text(json.dumps({"tokens": {"access_token": "token"}}), encoding="utf-8")
 
 
 @pytest.mark.parametrize(
@@ -132,7 +115,7 @@ def test_renders_unavailable_window_with_compact_placeholder() -> None:
         usage(weekly=window()),
         bar,
     )
-    rendered = properties(bar.calls[0])
+    rendered = sketchybar_properties(bar.calls[0])
     assert rendered["codex.5h"]["label"] == "5h ???"
     assert rendered["codex.weekly"]["label"] == "1w 96%/6d19h"
     assert rendered["codex.resets"]["label"] == "+0"
@@ -189,7 +172,7 @@ def test_handles_hover_without_fetching(sender: str, drawing: str) -> None:
         )
         == 0
     )
-    assert properties(bar.calls[0])["codex.resets"]["popup.drawing"] == drawing
+    assert sketchybar_properties(bar.calls[0])["codex.resets"]["popup.drawing"] == drawing
     assert service.calls == []
 
 
@@ -204,14 +187,14 @@ def test_missing_auth_hides_items(tmp_path: Path) -> None:
         )
         == 0
     )
-    rendered = properties(bar.calls[0])
+    rendered = sketchybar_properties(bar.calls[0])
     assert rendered["codex.5h"]["drawing"] == "off"
     assert rendered["codex.weekly"]["drawing"] == "off"
     assert rendered["codex.resets"]["popup.drawing"] == "off"
 
 
 def test_fetches_and_renders_usage(tmp_path: Path) -> None:
-    write_auth(tmp_path)
+    write_codex_auth(tmp_path)
     service = FakePersonalUsageService(
         usage=usage(five_hour=window(length=18_000, reset_after=17_000))
     )
@@ -227,11 +210,11 @@ def test_fetches_and_renders_usage(tmp_path: Path) -> None:
     )
     assert service.calls[0][0].access_token == "token"
     assert service.calls[0][1] == NOW
-    assert properties(bar.calls[0])["codex.5h"]["label"] == "5h 96%/4h43"
+    assert sketchybar_properties(bar.calls[0])["codex.5h"]["label"] == "5h 96%/4h43"
 
 
 def test_provider_failure_shows_error(tmp_path: Path) -> None:
-    write_auth(tmp_path)
+    write_codex_auth(tmp_path)
     bar = RecordingSketchybar()
     assert (
         main(
@@ -242,7 +225,7 @@ def test_provider_failure_shows_error(tmp_path: Path) -> None:
         )
         == 0
     )
-    rendered = properties(bar.calls[0])
+    rendered = sketchybar_properties(bar.calls[0])
     assert rendered["codex.5h"]["label"] == "err"
     assert rendered["codex.5h"]["label.color"] == "0xfffb4934"
     assert rendered["codex.weekly"]["drawing"] == "off"

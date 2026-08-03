@@ -14,6 +14,7 @@ codex-rate-limit-reset-credits = "codex_tools.cli:reset_credits_main"
 codex-sketchybar = "codex_tools.sketchybar_personal:main"
 codex-usage-status = "codex_tools.cli:usage_main"
 codex-warmer = "codex_tools.cli:warmer_main"
+codex-work-sketchybar = "codex_tools.sketchybar_work:main"
 codex-work-usage-status = "codex_tools.cli:work_usage_main"
 
 [tool.setuptools]

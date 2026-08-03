@@ -36,11 +36,11 @@ let
   packagedPluginNames = nativePluginNames ++ [
     "attention-inbox"
     "codex"
+    "codex-work"
   ];
   shellPluginNames = builtins.filter (name: !builtins.elem name packagedPluginNames) pluginNames;
   sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
   runtimePath = lib.makeBinPath [
-    codexTools
     pkgs.bash
     pkgs.coreutils
     pkgs.curl
@@ -127,6 +127,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
     ${makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"}
     ${makeBinaryPluginWrapper "codex" codexTools "codex-sketchybar"}
+    ${makeBinaryPluginWrapper "codex-work" codexTools "codex-work-sketchybar"}
     ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
     ${makeNativePluginWrapper "disk" "sketchybar-disk"}
     ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}
