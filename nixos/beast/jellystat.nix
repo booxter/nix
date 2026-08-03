@@ -399,6 +399,7 @@ in
 
   host.sso.oauth2ProxyGates.jfstat = {
     enable = true;
+    authFailureMode = "legacy-redirect";
     clientId = jellystatOidcClientId;
     httpAddress = "http://127.0.0.1:4181";
     cookieName = "_jfstat_sso";

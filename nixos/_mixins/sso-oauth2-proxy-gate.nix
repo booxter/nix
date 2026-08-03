@@ -146,7 +146,6 @@ let
             "legacy-redirect"
             "navigation-aware"
           ];
-          default = "legacy-redirect";
           description = ''
             How nginx handles a failed oauth2-proxy auth subrequest. The
             navigation-aware mode starts sign-in only for document GET and HEAD

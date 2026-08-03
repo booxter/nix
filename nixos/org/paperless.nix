@@ -447,6 +447,7 @@ in
 
   host.sso.oauth2ProxyGates.paperless-gpt = {
     enable = true;
+    authFailureMode = "legacy-redirect";
     clientId = "paperless-gpt";
     httpAddress = "http://127.0.0.1:${toString paperlessGptOauth2ProxyPort}";
     cookieName = "_paperless_gpt_sso";
