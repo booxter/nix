@@ -9,6 +9,7 @@ import pathlib
 import re
 import subprocess
 import sys
+import tempfile
 import time
 
 from pydantic import ValidationError
@@ -18,7 +19,7 @@ from .durations import (
     format_duration as format_duration_value,
     parse_duration as parse_duration_value,
 )
-from .models import TARGETS
+from .models import TARGETS, TicketMetadata, TicketPaths
 
 
 DEFAULT_CA_PRIVATE_KEY = "~/.ssh/fleet-user-ca"
@@ -175,11 +176,11 @@ def display_target_name(target):
 
 def target_paths(target, state_dir):
     base = state_dir / safe_name(target["name"])
-    return {
-        "public": pathlib.Path(f"{base}.pub"),
-        "cert": pathlib.Path(f"{base}-cert.pub"),
-        "metadata": pathlib.Path(f"{base}.json"),
-    }
+    return TicketPaths(
+        public=pathlib.Path(f"{base}.pub"),
+        cert=pathlib.Path(f"{base}-cert.pub"),
+        metadata=pathlib.Path(f"{base}.json"),
+    )
 
 
 @contextlib.contextmanager
@@ -221,38 +222,53 @@ def ensure_ticket_key(key_path):
     return public_path
 
 
-def read_json(path):
+def read_metadata(path):
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        return TicketMetadata.model_validate_json(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
         return None
-    except json.JSONDecodeError:
+    except ValidationError:
         return None
 
 
-def write_json(path, value):
-    path.write_text(
-        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+def write_metadata(path, value):
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            delete=False,
+        ) as output:
+            temporary_path = pathlib.Path(output.name)
+            os.fchmod(output.fileno(), 0o600)
+            output.write(value.model_dump_json(by_alias=True, indent=2))
+            output.write("\n")
+        os.replace(temporary_path, path)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def existing_ticket_valid(target, paths):
-    metadata = read_json(paths["metadata"])
-    if metadata is None or not paths["cert"].exists():
+    metadata = read_metadata(paths.metadata)
+    if metadata is None or not paths.cert.exists():
         return False
-    if metadata.get("target") != target["name"]:
+    if metadata.target != target["name"]:
         return False
-    if metadata.get("principal") != target["principal"]:
+    if metadata.principal != target["principal"]:
         return False
-    return int(metadata.get("validBefore", 0)) - int(time.time()) > MIN_VALID_SECONDS
+    return metadata.valid_before - int(time.time()) > MIN_VALID_SECONDS
 
 
 def ticket_status(target, state_dir):
     paths = target_paths(target, state_dir)
-    metadata = read_json(paths["metadata"])
-    if metadata is None or not paths["cert"].exists():
+    metadata = read_metadata(paths.metadata)
+    if metadata is None or not paths.cert.exists():
         return {**target, "status": "missing"}
-    valid_before = int(metadata.get("validBefore", 0))
+    valid_before = metadata.valid_before
     if valid_before - int(time.time()) <= MIN_VALID_SECONDS:
         return {**target, "status": "expired", "validBefore": valid_before}
     return {**target, "status": "valid", "validBefore": valid_before}
@@ -274,8 +290,8 @@ def issue_ticket(args, target, state_dir, key_path):
     paths = target_paths(target, state_dir)
     state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     public_text = public_key.read_text(encoding="utf-8")
-    paths["public"].write_text(public_text, encoding="utf-8")
-    paths["cert"].unlink(missing_ok=True)
+    paths.public.write_text(public_text, encoding="utf-8")
+    paths.cert.unlink(missing_ok=True)
 
     ca_agent, ca_key = resolved_ca_key(args)
     serial = int(time.time())
@@ -305,28 +321,28 @@ def issue_ticket(args, target, state_dir, key_path):
             f"-5m:+{ttl}s",
             "-z",
             str(serial),
-            str(paths["public"]),
+            str(paths.public),
         ]
     )
     run(cmd, capture=False)
 
     now = int(time.time())
-    metadata = {
-        "target": target["name"],
-        "sshHost": target["sshHost"],
-        "principal": target["principal"],
-        "identity": identity,
-        "validAfter": now - 300,
-        "validBefore": now + ttl,
-        "issuedAt": now,
-        "ttl": ttl,
-        "allowX11Forwarding": target.get("allowX11Forwarding", False),
-        "certificateFile": str(paths["cert"]),
-        "identityFile": str(key_path),
-        "caAgent": ca_agent,
-        "caKey": str(ca_key),
-    }
-    write_json(paths["metadata"], metadata)
+    metadata = TicketMetadata(
+        target=target["name"],
+        ssh_host=target["sshHost"],
+        principal=target["principal"],
+        identity=identity,
+        valid_after=now - 300,
+        valid_before=now + ttl,
+        issued_at=now,
+        ttl=ttl,
+        allow_x11_forwarding=target.get("allowX11Forwarding", False),
+        certificate_file=str(paths.cert),
+        identity_file=str(key_path),
+        ca_agent=ca_agent,
+        ca_key=str(ca_key),
+    )
+    write_metadata(paths.metadata, metadata)
     return paths
 
 
@@ -345,14 +361,16 @@ def ensure_ticket(args, target):
 
 def write_ticket_alias(paths, alias, state_dir):
     alias_paths = target_paths({"name": alias}, state_dir)
-    if alias_paths["cert"] == paths["cert"]:
+    if alias_paths.cert == paths.cert:
         return alias_paths
     state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
-    for key in ("public", "cert", "metadata"):
-        if paths[key].exists():
-            alias_paths[key].write_text(
-                paths[key].read_text(encoding="utf-8"), encoding="utf-8"
-            )
+    for source, destination in (
+        (paths.public, alias_paths.public),
+        (paths.cert, alias_paths.cert),
+        (paths.metadata, alias_paths.metadata),
+    ):
+        if source.exists():
+            destination.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
     return alias_paths
 
 
@@ -416,7 +434,7 @@ def cmd_issue(args):
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     paths = issue_ticket(args, target, state_dir, expand_path(args.key))
-    print(str(paths["cert"]))
+    print(str(paths.cert))
     return 0
 
 
@@ -428,7 +446,7 @@ def cmd_ensure(args):
     cert_alias = args.cert_alias or args.target
     alias_paths = write_ticket_alias(paths, cert_alias, state_dir)
     if not args.quiet:
-        print(str(alias_paths["cert"]))
+        print(str(alias_paths.cert))
     return 0
 
 
@@ -458,7 +476,7 @@ def ssht_ssh_command(args, target, paths):
         "-o",
         f"IdentityFile={expand_path(args.key)}",
         "-o",
-        f"CertificateFile={paths['cert']}",
+        f"CertificateFile={paths.cert}",
         "-o",
         "ForwardAgent=no",
         "-o",

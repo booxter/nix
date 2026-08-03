@@ -7,6 +7,7 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 
 from ssh_ticket import app as ssh_ticket
+from ssh_ticket.models import TicketMetadata
 
 
 def test_parse_duration_combined_units():
@@ -164,15 +165,17 @@ def test_existing_ticket_valid_uses_metadata(tmp_path):
         "principal": "ihrachyshka@srvarr",
     }
     paths = ssh_ticket.target_paths(target, tmp_path)
-    paths["cert"].write_text("not a real cert\n", encoding="utf-8")
-    ssh_ticket.write_json(
-        paths["metadata"],
-        {
-            "target": target["name"],
-            "principal": target["principal"],
-            "validBefore": int(time.time()) + 3600,
-        },
+    paths.cert.write_text("not a real cert\n", encoding="utf-8")
+    ssh_ticket.write_metadata(
+        paths.metadata,
+        TicketMetadata(
+            target=target["name"],
+            principal=target["principal"],
+            valid_before=int(time.time()) + 3600,
+        ),
     )
+    assert paths.metadata.stat().st_mode & 0o777 == 0o600
+    assert not list(tmp_path.glob(".srvarr.json.*"))
     assert ssh_ticket.existing_ticket_valid(target, paths)
 
 
@@ -204,14 +207,14 @@ def test_ensure_ticket_serializes_concurrent_issuance(tmp_path, monkeypatch):
         issue_started.set()
         assert second_lock_attempted.wait(timeout=5)
         paths = ssh_ticket.target_paths(issue_target, state_dir)
-        paths["cert"].write_text("cert\n", encoding="utf-8")
-        ssh_ticket.write_json(
-            paths["metadata"],
-            {
-                "target": issue_target["name"],
-                "principal": issue_target["principal"],
-                "validBefore": int(time.time()) + 3600,
-            },
+        paths.cert.write_text("cert\n", encoding="utf-8")
+        ssh_ticket.write_metadata(
+            paths.metadata,
+            TicketMetadata(
+                target=issue_target["name"],
+                principal=issue_target["principal"],
+                valid_before=int(time.time()) + 3600,
+            ),
         )
         return paths
 
@@ -284,16 +287,16 @@ def test_issue_ticket_allows_x11_forwarding_for_opted_in_targets(tmp_path, monke
 
 def test_write_ticket_alias_copies_cert_material(tmp_path):
     paths = ssh_ticket.target_paths({"name": "org"}, tmp_path)
-    paths["public"].write_text("public\n", encoding="utf-8")
-    paths["cert"].write_text("cert\n", encoding="utf-8")
-    paths["metadata"].write_text('{"target":"org"}\n', encoding="utf-8")
+    paths.public.write_text("public\n", encoding="utf-8")
+    paths.cert.write_text("cert\n", encoding="utf-8")
+    paths.metadata.write_text('{"target":"org"}\n', encoding="utf-8")
 
     alias_paths = ssh_ticket.write_ticket_alias(paths, "org.home.arpa", tmp_path)
 
-    assert alias_paths["public"].name == "org.home.arpa.pub"
-    assert alias_paths["cert"].name == "org.home.arpa-cert.pub"
-    assert alias_paths["cert"].read_text(encoding="utf-8") == "cert\n"
-    assert alias_paths["metadata"].read_text(encoding="utf-8") == ('{"target":"org"}\n')
+    assert alias_paths.public.name == "org.home.arpa.pub"
+    assert alias_paths.cert.name == "org.home.arpa-cert.pub"
+    assert alias_paths.cert.read_text(encoding="utf-8") == "cert\n"
+    assert alias_paths.metadata.read_text(encoding="utf-8") == '{"target":"org"}\n'
 
 
 def test_parser_has_ensure_command():
@@ -313,7 +316,11 @@ def test_ssht_command_does_not_add_ticket_key_to_agent(tmp_path):
             key=str(tmp_path / "id_ed25519"), ssh_args=["--", "true"]
         ),
         {"sshHost": "srvarr"},
-        {"cert": tmp_path / "id_ed25519-cert.pub"},
+        ssh_ticket.TicketPaths(
+            public=tmp_path / "id_ed25519.pub",
+            cert=tmp_path / "id_ed25519-cert.pub",
+            metadata=tmp_path / "id_ed25519.json",
+        ),
     )
 
     assert "AddKeysToAgent=no" in cmd
