@@ -33,9 +33,11 @@ let package = Package(
       name: "SketchybarSpotify",
       dependencies: ["SketchyBarSupport", "SpotifyApplet"]
     ),
-    // nixpkgs disables SwiftPM's Darwin XCTest runner because Apple's xctest
-    // command-line runner is not open source. Keep checks executable until
-    // nixpkgs has a native test runner for Swift packages on Darwin.
+    // nixpkgs patches SwiftPM on Darwin to remove its dependency on Apple's
+    // non-free xctest command-line runner, so `swift test` cannot run normal
+    // `.testTarget`s in a Nix build. These executable targets are behavioral
+    // test runners invoked by checkPhase. Convert them back to `.testTarget`s
+    // once nixpkgs provides a usable Darwin Swift test runner.
     .executableTarget(
       name: "BatteryAppletChecks",
       dependencies: ["BatteryApplet", "SketchyBarSupport"],
