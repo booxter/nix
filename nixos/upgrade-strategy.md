@@ -69,7 +69,6 @@ The non-work warmer intentionally excludes:
 - targets selected for hosts marked with `isWork = true` in
   [`lib/inventory.nix`](/Users/ihrachyshka/src/nix/lib/inventory.nix:1)
 - formatting checks such as `nix fmt`
-- shell-only CI steps such as `./tests/test-get-hosts.sh`
 
 Those excluded items either are not warmed yet by policy or do not produce
 useful Nix store closures for Attic warming.

@@ -8,36 +8,6 @@ let
     inherit program;
     meta = { inherit description; };
   };
-  mkBatsCheck =
-    {
-      environment ? { },
-      nativeCheckInputs ? [ ],
-      test,
-      targetEnvironmentVariable ? null,
-    }:
-    {
-      derivationArgs = {
-        doCheck = true;
-        inherit nativeCheckInputs;
-      };
-      checkPhase = ''
-        runHook preCheck
-        ${pkgs.lib.getExe pkgs.bash} -n "$target"
-        ${pkgs.lib.getExe pkgs.shellcheck} "$target"
-        ${pkgs.lib.concatStringsSep "\n" (
-          pkgs.lib.mapAttrsToList (
-            name: value: "export ${name}=${pkgs.lib.escapeShellArg (toString value)}"
-          ) environment
-        )}
-        ${pkgs.lib.optionalString (targetEnvironmentVariable != null) ''
-          export ${targetEnvironmentVariable}="$target"
-        ''}
-        cd ${../.}
-        ${pkgs.lib.getExe pkgs.bats} --print-output-on-failure ${test}
-        runHook postCheck
-      '';
-    };
-
   hostInventory = import ../lib/inventory.nix {
     inherit username;
     lib = pkgs.lib;
@@ -140,98 +110,7 @@ let
 
   getHosts = fleetTools;
 
-  deploy = pkgs.writeShellApplication {
-    name = "deploy";
-    runtimeInputs =
-      (with pkgs; [
-        bind
-        fzf
-        git
-        jq
-        nix
-        openssh
-      ])
-      ++ [ getHosts ];
-    text = ''
-      set -euo pipefail
-
-      usage() {
-        cat <<'EOF'
-      Usage:
-        deploy [fleet deploy args]
-        deploy --disko <host> <device>
-
-      GitHub branch deployments merge the latest origin/master by default.
-      Pass --no-merge to deploy the selected branch exactly as published.
-      Pass --no-inhibit to bypass NixOS activation checks explicitly.
-
-      Examples:
-        deploy
-        deploy -A --select
-        deploy --branch ci/flake-update --boot srvarr
-        deploy --branch ci/flake-update --no-merge srvarr
-        deploy --no-inhibit beast
-        deploy --branch dhcp-unifi --test beast
-        deploy --local mair
-        deploy --disko frame /dev/sdX
-      EOF
-      }
-
-      if [ "$#" -eq 1 ] && [ "$1" = "--help" ]; then
-        usage
-        exit 0
-      fi
-
-      if [ "$#" -gt 0 ] && [ "$1" = "--disko" ]; then
-        shift
-
-        if [ "$#" -ne 2 ]; then
-          usage >&2
-          exit 1
-        fi
-
-        host="$1"
-        device="$2"
-        disko_cmd=(
-          nix
-          --extra-experimental-features "nix-command flakes"
-          run
-          -L
-          --show-trace
-          "${../.}#disko-install"
-          --
-          --flake "${../.}#''${host}"
-          --disk main
-          "''${device}"
-        )
-
-        if [ "''${EUID}" -eq 0 ]; then
-          exec "''${disko_cmd[@]}"
-        fi
-        exec sudo "''${disko_cmd[@]}"
-      fi
-
-      export UPDATE_MACHINES_GET_HOSTS_BIN=${pkgs.lib.getExe getHosts}
-      exec ${pkgs.bash}/bin/bash ${../.}/apps/update-machines.sh "$@"
-    '';
-    inherit
-      (mkBatsCheck {
-        test = ./update-machines.bats;
-        environment = {
-          FLEET_TEST_REPO_ROOT = "${../.}";
-          UPDATE_MACHINES_BIN = "${../.}/apps/update-machines.sh";
-        };
-        nativeCheckInputs = with pkgs; [
-          fzf
-          git
-          jq
-          openssh
-        ];
-      })
-      derivationArgs
-      checkPhase
-      ;
-  };
+  deploy = fleetTools;
 
   vm = fleetTools;
 
@@ -304,6 +183,7 @@ in
   packages = {
     inherit deploy vm;
     diff = diffConfig;
+    fleet-tools = fleetTools;
     get-local-builders = getLocalBuilders;
     get-hosts = getHosts;
     issue-observability-cert = issueObservabilityCertApp;
