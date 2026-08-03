@@ -1,20 +1,39 @@
 {
   lib,
   python3,
-  writeShellApplication,
+  ruff,
 }:
-writeShellApplication {
-  name = "uptimerobot-sync";
-  checkPhase = ''
-    runHook preCheck
-    cd "$TMPDIR"
-    cp ${./test_main.py} test_main.py
-    UPTIMEROBOT_SYNC_MAIN=${./main.py} ${python3.pkgs.pytest}/bin/pytest -q -p no:cacheprovider test_main.py
-    runHook postCheck
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
+  pname = "uptimerobot-sync";
+  version = "0.1.0";
+  pyproject = true;
+
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  dependencies = with pythonPackages; [
+    httpx
+    pydantic
+  ];
+
+  nativeCheckInputs = with pythonPackages; [
+    ruff
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/uptimerobot_sync
   '';
-  text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
-  '';
+
+  pythonImportsCheck = [ "uptimerobot_sync" ];
 
   meta = {
     description = "Sync UptimeRobot monitors from Nix service inventory";
