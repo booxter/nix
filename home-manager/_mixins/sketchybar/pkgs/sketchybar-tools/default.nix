@@ -11,7 +11,10 @@ buildGoModule {
 
   vendorHash = "sha256-WOE+6bYAcerTiONLfSgz78Kjz/riiA8FGspdQSfdSGM=";
 
-  subPackages = [ "cmd/sketchybar-jellyfin" ];
+  subPackages = [
+    "cmd/sketchybar-alertmanager"
+    "cmd/sketchybar-jellyfin"
+  ];
 
   preCheck = ''
     test -z "$(gofmt -l .)"

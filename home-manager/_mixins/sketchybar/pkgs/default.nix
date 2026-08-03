@@ -27,7 +27,11 @@ let
     "stock"
     "volume"
   ];
-  shellPluginNames = builtins.filter (name: name != "jellyfin") pluginNames;
+  nativePluginNames = [
+    "alertmanager"
+    "jellyfin"
+  ];
+  shellPluginNames = builtins.filter (name: !builtins.elem name nativePluginNames) pluginNames;
   sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
   runtimePath = lib.makeBinPath [
     attentionInbox
@@ -76,17 +80,18 @@ let
         --prefix PATH : ${lib.escapeShellArg runtimePath} \
       ${environmentArguments environment}
     '';
-  makeJellyfinWrapper =
+  makeNativePluginWrapper =
+    name: executable:
     let
       environment =
         pluginColors
-        // (pluginEnvironments.jellyfin or { })
+        // (pluginEnvironments.${name} or { })
         // {
           SKETCHYBAR_BIN = lib.getExe pkgs.sketchybar;
         };
     in
     ''
-      makeWrapper ${lib.getExe sketchybarTools} "$out/bin/jellyfin" \
+      makeWrapper ${lib.getExe' sketchybarTools executable} "$out/bin/${name}" \
         ${environmentArguments environment}
     '';
 in
@@ -119,7 +124,8 @@ pkgs.stdenvNoCC.mkDerivation {
     mkdir -p "$out/bin" "$out/libexec/sketchybar"
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
-    ${makeJellyfinWrapper}
+    ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
+    ${makeNativePluginWrapper "jellyfin" "sketchybar-jellyfin"}
     runHook postInstall
   '';
 
