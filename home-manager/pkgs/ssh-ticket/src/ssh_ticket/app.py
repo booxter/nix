@@ -7,10 +7,8 @@ import json
 import os
 import pathlib
 import re
-import subprocess
 import sys
 import tempfile
-import time
 
 from pydantic import ValidationError
 
@@ -20,6 +18,7 @@ from .durations import (
     parse_duration as parse_duration_value,
 )
 from .models import TARGETS, TicketMetadata, TicketPaths
+from .runtime import CommandError, Runtime, system_runtime
 
 
 DEFAULT_CA_PRIVATE_KEY = "~/.ssh/fleet-user-ca"
@@ -57,31 +56,6 @@ def default_state_dir():
 
 def state_dir_arg(args):
     return expand_path(args.state_dir) if args.state_dir else default_state_dir()
-
-
-def run(cmd, *, capture=True, env=None):
-    proc = subprocess.run(
-        cmd,
-        text=True,
-        stdout=subprocess.PIPE if capture else None,
-        stderr=subprocess.PIPE if capture else None,
-        env=env,
-    )
-    if proc.returncode != 0:
-        if capture and proc.stderr:
-            sys.stderr.write(proc.stderr)
-        raise Error(f"command failed: {shlex_join(cmd)}")
-    return proc.stdout if capture else ""
-
-
-def shlex_join(cmd):
-    return " ".join(shell_quote(str(part)) for part in cmd)
-
-
-def shell_quote(value):
-    if re.fullmatch(r"[A-Za-z0-9_@%+=:,./-]+", value):
-        return value
-    return "'" + value.replace("'", "'\\''") + "'"
 
 
 def format_time(epoch):
@@ -196,11 +170,11 @@ def ticket_issue_lock(target, state_dir):
         os.close(fd)
 
 
-def ensure_ticket_key(key_path):
+def ensure_ticket_key(key_path, runtime: Runtime):
     public_path = pathlib.Path(f"{key_path}.pub")
     key_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     if not key_path.exists():
-        run(
+        runtime.commands.run(
             [
                 "ssh-keygen",
                 "-q",
@@ -216,7 +190,7 @@ def ensure_ticket_key(key_path):
             capture=False,
         )
     if not public_path.exists():
-        public = run(["ssh-keygen", "-y", "-f", str(key_path)])
+        public = runtime.commands.run(["ssh-keygen", "-y", "-f", str(key_path)])
         public_path.write_text(public, encoding="utf-8")
     key_path.chmod(0o600)
     return public_path
@@ -252,7 +226,7 @@ def write_metadata(path, value):
             temporary_path.unlink(missing_ok=True)
 
 
-def existing_ticket_valid(target, paths):
+def existing_ticket_valid(target, paths, runtime: Runtime):
     metadata = read_metadata(paths.metadata)
     if metadata is None or not paths.cert.exists():
         return False
@@ -260,16 +234,16 @@ def existing_ticket_valid(target, paths):
         return False
     if metadata.principal != target["principal"]:
         return False
-    return metadata.valid_before - int(time.time()) > MIN_VALID_SECONDS
+    return metadata.valid_before - runtime.clock.now() > MIN_VALID_SECONDS
 
 
-def ticket_status(target, state_dir):
+def ticket_status(target, state_dir, runtime: Runtime):
     paths = target_paths(target, state_dir)
     metadata = read_metadata(paths.metadata)
     if metadata is None or not paths.cert.exists():
         return {**target, "status": "missing"}
     valid_before = metadata.valid_before
-    if valid_before - int(time.time()) <= MIN_VALID_SECONDS:
+    if valid_before - runtime.clock.now() <= MIN_VALID_SECONDS:
         return {**target, "status": "expired", "validBefore": valid_before}
     return {**target, "status": "valid", "validBefore": valid_before}
 
@@ -284,9 +258,9 @@ def requested_ttl(args, target):
     return ttl
 
 
-def issue_ticket(args, target, state_dir, key_path):
+def issue_ticket(args, target, state_dir, key_path, runtime: Runtime):
     ttl = requested_ttl(args, target)
-    public_key = ensure_ticket_key(key_path)
+    public_key = ensure_ticket_key(key_path, runtime)
     paths = target_paths(target, state_dir)
     state_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
     public_text = public_key.read_text(encoding="utf-8")
@@ -294,7 +268,7 @@ def issue_ticket(args, target, state_dir, key_path):
     paths.cert.unlink(missing_ok=True)
 
     ca_agent, ca_key = resolved_ca_key(args)
-    serial = int(time.time())
+    serial = runtime.clock.now()
     identity = f"ssht:{target['name']}:{serial}"
     cmd = ["ssh-keygen", "-q"]
     if ca_agent:
@@ -324,9 +298,9 @@ def issue_ticket(args, target, state_dir, key_path):
             str(paths.public),
         ]
     )
-    run(cmd, capture=False)
+    runtime.commands.run(cmd, capture=False)
 
-    now = int(time.time())
+    now = runtime.clock.now()
     metadata = TicketMetadata(
         target=target["name"],
         ssh_host=target["sshHost"],
@@ -346,17 +320,17 @@ def issue_ticket(args, target, state_dir, key_path):
     return paths
 
 
-def ensure_ticket(args, target):
+def ensure_ticket(args, target, runtime: Runtime):
     state_dir = state_dir_arg(args)
     key_path = expand_path(args.key)
     paths = target_paths(target, state_dir)
-    if not args.force and existing_ticket_valid(target, paths):
+    if not args.force and existing_ticket_valid(target, paths, runtime):
         return paths
     with ticket_issue_lock(target, state_dir):
         # Another process may have issued the ticket while this one waited.
-        if not args.force and existing_ticket_valid(target, paths):
+        if not args.force and existing_ticket_valid(target, paths, runtime):
             return paths
-        return issue_ticket(args, target, state_dir, key_path)
+        return issue_ticket(args, target, state_dir, key_path, runtime)
 
 
 def write_ticket_alias(paths, alias, state_dir):
@@ -374,7 +348,7 @@ def write_ticket_alias(paths, alias, state_dir):
     return alias_paths
 
 
-def cmd_targets(args):
+def cmd_targets(args, _runtime: Runtime):
     targets = load_targets(args.targets_file)
     if not args.all:
         targets = [target for target in targets if target.get("enabled")]
@@ -407,14 +381,14 @@ def cmd_targets(args):
     return 0
 
 
-def cmd_status(args):
+def cmd_status(args, runtime: Runtime):
     targets = load_targets(args.targets_file)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
     if args.target:
         targets = [resolve_target(targets, args.target, allow_disabled=args.all)]
     elif not args.all:
         targets = [target for target in targets if target.get("enabled")]
-    statuses = [ticket_status(target, state_dir) for target in targets]
+    statuses = [ticket_status(target, state_dir, runtime) for target in targets]
     if args.json:
         print(json.dumps(statuses, indent=2, sort_keys=True))
         return 0
@@ -429,20 +403,20 @@ def cmd_status(args):
     return 0
 
 
-def cmd_issue(args):
+def cmd_issue(args, runtime: Runtime):
     targets = load_targets(args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     state_dir = expand_path(args.state_dir) if args.state_dir else default_state_dir()
-    paths = issue_ticket(args, target, state_dir, expand_path(args.key))
+    paths = issue_ticket(args, target, state_dir, expand_path(args.key), runtime)
     print(str(paths.cert))
     return 0
 
 
-def cmd_ensure(args):
+def cmd_ensure(args, runtime: Runtime):
     targets = load_targets(args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
     state_dir = state_dir_arg(args)
-    paths = ensure_ticket(args, target)
+    paths = ensure_ticket(args, target, runtime)
     cert_alias = args.cert_alias or args.target
     alias_paths = write_ticket_alias(paths, cert_alias, state_dir)
     if not args.quiet:
@@ -450,19 +424,18 @@ def cmd_ensure(args):
     return 0
 
 
-def cmd_init_key(args):
-    public_key = ensure_ticket_key(expand_path(args.key))
+def cmd_init_key(args, runtime: Runtime):
+    public_key = ensure_ticket_key(expand_path(args.key), runtime)
     print(str(public_key))
     return 0
 
 
-def cmd_ssht(args):
+def cmd_ssht(args, runtime: Runtime):
     targets = load_targets(args.targets_file)
     target = resolve_target(targets, args.target, allow_disabled=args.allow_disabled)
-    paths = ensure_ticket(args, target)
+    paths = ensure_ticket(args, target, runtime)
     cmd = ssht_ssh_command(args, target, paths)
-    os.execvp("ssh", cmd)
-    raise AssertionError("unreachable")
+    runtime.commands.exec(cmd)
 
 
 def ssht_ssh_command(args, target, paths):
@@ -601,12 +574,13 @@ def build_parser():
     return parser
 
 
-def main(argv):
+def main(argv, runtime: Runtime | None = None):
     parser = build_parser()
     args = parser.parse_args(argv)
+    runtime = runtime or system_runtime()
     try:
-        return args.func(args)
-    except Error as exc:
+        return args.func(args, runtime)
+    except (CommandError, Error) as exc:
         print(f"ssh-ticket: {exc}", file=sys.stderr)
         return 1
 

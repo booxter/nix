@@ -1,13 +1,41 @@
-import contextlib
 import threading
-import time
 import types
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+from typing import NoReturn, Sequence
 
 import pytest
 
 from ssh_ticket import app as ssh_ticket
 from ssh_ticket.models import TicketMetadata
+from ssh_ticket.runtime import Runtime
+
+
+@dataclass(frozen=True)
+class FrozenClock:
+    timestamp: int = 1_710_000_000
+
+    def now(self) -> int:
+        return self.timestamp
+
+
+@dataclass
+class RecordingCommands:
+    calls: list[list[str]] = field(default_factory=list)
+
+    def run(self, arguments: Sequence[str], *, capture: bool = True) -> str:
+        self.calls.append(list(arguments))
+        return ""
+
+    def exec(self, arguments: Sequence[str]) -> NoReturn:
+        raise AssertionError(f"unexpected exec: {arguments!r}")
+
+
+def runtime(commands=None, *, timestamp=1_710_000_000):
+    return Runtime(
+        commands=commands or RecordingCommands(),
+        clock=FrozenClock(timestamp),
+    )
 
 
 def test_parse_duration_combined_units():
@@ -48,7 +76,8 @@ def test_requested_ttl_rejects_value_above_target_maximum():
         )
 
 
-def test_resolved_ca_key_defaults_to_agent_public_key():
+def test_resolved_ca_key_defaults_to_agent_public_key(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
     ca_agent, ca_key = ssh_ticket.resolved_ca_key(
         types.SimpleNamespace(ca_agent=None, ca_key=None)
     )
@@ -171,82 +200,78 @@ def test_existing_ticket_valid_uses_metadata(tmp_path):
         TicketMetadata(
             target=target["name"],
             principal=target["principal"],
-            valid_before=int(time.time()) + 3600,
+            valid_before=1_710_003_600,
         ),
     )
     assert paths.metadata.stat().st_mode & 0o777 == 0o600
     assert not list(tmp_path.glob(".srvarr.json.*"))
-    assert ssh_ticket.existing_ticket_valid(target, paths)
+    assert ssh_ticket.existing_ticket_valid(target, paths, runtime())
 
 
-def test_ensure_ticket_serializes_concurrent_issuance(tmp_path, monkeypatch):
+def test_ensure_ticket_serializes_concurrent_issuance(tmp_path):
     target = {
         "name": "srvarr",
+        "sshHost": "srvarr",
         "principal": "ihrachyshka@srvarr",
+        "defaultTtl": "30m",
+        "maxTtl": "2h",
     }
-    issue_started = threading.Event()
-    second_lock_attempted = threading.Event()
-    issue_calls = 0
-    lock_attempts = 0
-    lock_attempts_guard = threading.Lock()
-    original_lock = ssh_ticket.ticket_issue_lock
-
-    @contextlib.contextmanager
-    def observed_lock(issue_target, state_dir):
-        nonlocal lock_attempts
-        with lock_attempts_guard:
-            lock_attempts += 1
-            if lock_attempts == 2:
-                second_lock_attempted.set()
-        with original_lock(issue_target, state_dir):
-            yield
-
-    def fake_issue_ticket(args, issue_target, state_dir, key_path):
-        nonlocal issue_calls
-        issue_calls += 1
-        issue_started.set()
-        assert second_lock_attempted.wait(timeout=5)
-        paths = ssh_ticket.target_paths(issue_target, state_dir)
-        paths.cert.write_text("cert\n", encoding="utf-8")
-        ssh_ticket.write_metadata(
-            paths.metadata,
-            TicketMetadata(
-                target=issue_target["name"],
-                principal=issue_target["principal"],
-                valid_before=int(time.time()) + 3600,
-            ),
-        )
-        return paths
-
-    monkeypatch.setattr(ssh_ticket, "ticket_issue_lock", observed_lock)
-    monkeypatch.setattr(ssh_ticket, "issue_ticket", fake_issue_ticket)
+    key_path = tmp_path / "id_ed25519"
+    key_path.write_text("private\n", encoding="utf-8")
+    key_path.with_suffix(".pub").write_text("public\n", encoding="utf-8")
+    commands = CoordinatedSigningCommands()
+    test_runtime = runtime(commands)
     args = types.SimpleNamespace(
         state_dir=str(tmp_path / "state"),
-        key=str(tmp_path / "id_ed25519"),
+        key=str(key_path),
         force=False,
+        ttl=None,
+        ca_agent=False,
+        ca_key=str(tmp_path / "ca"),
     )
 
     with ThreadPoolExecutor(max_workers=2) as executor:
-        first = executor.submit(ssh_ticket.ensure_ticket, args, target)
-        assert issue_started.wait(timeout=5)
-        second = executor.submit(ssh_ticket.ensure_ticket, args, target)
+        first = executor.submit(ssh_ticket.ensure_ticket, args, target, test_runtime)
+        assert commands.signing_started.wait(timeout=5)
+        second = executor.submit(ssh_ticket.ensure_ticket, args, target, test_runtime)
+        assert not commands.second_signing.wait(timeout=0.2)
+        commands.release_signing.set()
         assert first.result(timeout=5) == second.result(timeout=5)
 
-    assert issue_calls == 1
+    assert commands.signing_calls == 1
 
 
-def issue_ticket_command(tmp_path, monkeypatch, *, allow_x11_forwarding=False):
-    public_key = tmp_path / "id_ed25519.pub"
-    public_key.write_text("ssh-ed25519 AAAATEST ssht ticket key\n", encoding="utf-8")
-    calls = []
+@dataclass
+class CoordinatedSigningCommands:
+    signing_started: threading.Event = field(default_factory=threading.Event)
+    second_signing: threading.Event = field(default_factory=threading.Event)
+    release_signing: threading.Event = field(default_factory=threading.Event)
+    signing_calls: int = 0
+    _guard: threading.Lock = field(default_factory=threading.Lock)
 
-    def fake_run(cmd, *, capture=True, env=None):
-        calls.append(cmd)
+    def run(self, arguments: Sequence[str], *, capture: bool = True) -> str:
+        with self._guard:
+            self.signing_calls += 1
+            call_number = self.signing_calls
+        if call_number > 1:
+            self.second_signing.set()
+        self.signing_started.set()
+        assert self.release_signing.wait(timeout=5)
+        public_path = arguments[-1]
+        cert_path = public_path.removesuffix(".pub") + "-cert.pub"
+        ssh_ticket.pathlib.Path(cert_path).write_text("cert\n", encoding="utf-8")
         return ""
 
-    monkeypatch.setattr(ssh_ticket, "ensure_ticket_key", lambda key_path: public_key)
-    monkeypatch.setattr(ssh_ticket, "run", fake_run)
-    monkeypatch.setattr(ssh_ticket.time, "time", lambda: 1710000000)
+    def exec(self, arguments: Sequence[str]) -> NoReturn:
+        raise AssertionError(f"unexpected exec: {arguments!r}")
+
+
+def issue_ticket_command(tmp_path, *, allow_x11_forwarding=False):
+    key_path = tmp_path / "id_ed25519"
+    key_path.write_text("private\n", encoding="utf-8")
+    public_key = tmp_path / "id_ed25519.pub"
+    public_key.write_text("ssh-ed25519 AAAATEST ssht ticket key\n", encoding="utf-8")
+    commands = RecordingCommands()
 
     ssh_ticket.issue_ticket(
         types.SimpleNamespace(
@@ -263,22 +288,23 @@ def issue_ticket_command(tmp_path, monkeypatch, *, allow_x11_forwarding=False):
             "allowX11Forwarding": allow_x11_forwarding,
         },
         tmp_path / "state",
-        tmp_path / "id_ed25519",
+        key_path,
+        runtime(commands),
     )
 
-    assert len(calls) == 1
-    return calls[0]
+    assert len(commands.calls) == 1
+    return commands.calls[0]
 
 
-def test_issue_ticket_disables_x11_forwarding_by_default(tmp_path, monkeypatch):
-    cmd = issue_ticket_command(tmp_path, monkeypatch)
+def test_issue_ticket_disables_x11_forwarding_by_default(tmp_path):
+    cmd = issue_ticket_command(tmp_path)
 
     assert "no-agent-forwarding" in cmd
     assert "no-x11-forwarding" in cmd
 
 
-def test_issue_ticket_allows_x11_forwarding_for_opted_in_targets(tmp_path, monkeypatch):
-    cmd = issue_ticket_command(tmp_path, monkeypatch, allow_x11_forwarding=True)
+def test_issue_ticket_allows_x11_forwarding_for_opted_in_targets(tmp_path):
+    cmd = issue_ticket_command(tmp_path, allow_x11_forwarding=True)
 
     assert "no-agent-forwarding" in cmd
     assert "permit-X11-forwarding" in cmd
