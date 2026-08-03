@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 pub mod local_builders;
+pub mod vm;
 pub mod wireguard;
 
 const COMPILED_HOSTS_JSON: &str = env!("FLEET_HOSTS_JSON");

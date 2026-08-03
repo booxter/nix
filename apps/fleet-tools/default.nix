@@ -2,9 +2,11 @@
   clippy,
   fleetInventory,
   lib,
+  nix,
   openssh,
   rustfmt,
   rustPlatform,
+  vmTargets,
   wireguardHome,
 }:
 
@@ -33,6 +35,18 @@ rustPlatform.buildRustPackage {
     Inventory-backed peers: ${lib.concatStringsSep ", " (builtins.attrNames wireguardHome.peers)}
   '';
   WG_HOME_SSH = lib.getExe openssh;
+  VM_NIX = lib.getExe nix;
+  VM_REPO_ROOT = ../..;
+  VM_RUNNER_NIX = ./vm-runner.nix;
+  VM_TARGETS_JSON = builtins.toJSON vmTargets;
+  VM_HELP = ''
+    Examples:
+      vm builder1
+      vm --gui frame
+
+    Available target hosts:
+    ${lib.concatMapStringsSep "\n" (name: "  ${name}") (builtins.attrNames vmTargets)}
+  '';
 
   nativeCheckInputs = [
     clippy

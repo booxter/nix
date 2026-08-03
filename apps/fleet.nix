@@ -72,8 +72,14 @@ let
     peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
     gatewaySshHost = wireguardGatewaySshHost;
   };
+  vmTargets = builtins.listToAttrs (
+    map (spec: {
+      name = spec.name;
+      value = hostInventory.toNixosConfigName spec;
+    }) hostInventory.nixosHostSpecs
+  );
   fleetTools = pkgs.callPackage ./fleet-tools {
-    inherit fleetInventory wireguardHome;
+    inherit fleetInventory vmTargets wireguardHome;
   };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
@@ -201,26 +207,7 @@ let
       ;
   };
 
-  vm = pkgs.writeShellApplication {
-    name = "vm";
-    runtimeInputs = with pkgs; [
-      jq
-      nix
-    ];
-    text = ''
-      export VM_REPO_ROOT="${../.}"
-      exec ${pkgs.bash}/bin/bash ${../apps/vm.sh} "$@"
-    '';
-    inherit
-      (mkBatsCheck {
-        test = ./vm.bats;
-        environment.VM_BIN = "${./vm.sh}";
-        nativeCheckInputs = [ pkgs.jq ];
-      })
-      derivationArgs
-      checkPhase
-      ;
-  };
+  vm = fleetTools;
 
   diffConfig = pkgs.writeShellApplication {
     name = "diff";
