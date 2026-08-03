@@ -148,6 +148,10 @@ in
       user = "${toString watchstateUid}:${toString watchstateUid}";
       environment = {
         TZ = "America/New_York";
+        # oauth2-proxy remains the browser-facing authentication boundary.
+        # Trust nginx's loopback connection so WatchState mints its internal
+        # token after SSO instead of prompting for a second password.
+        WS_TRUST_LOCAL = "true";
         # Webhooks provide low-latency updates, while these staggered jobs
         # reconcile events that Jellyfin or WatchState may have missed. Import
         # first so the following export works from the freshest combined state.
