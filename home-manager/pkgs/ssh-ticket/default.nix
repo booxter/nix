@@ -1,52 +1,24 @@
 {
   lib,
-  nix,
   openssh,
   python3,
-  stdenv,
-  symlinkJoin,
-  writeShellApplication,
 }:
-let
-  python = python3;
-  commonRuntimeInputs = [
-    nix
-    openssh
+python3.pkgs.buildPythonApplication {
+  pname = "ssh-ticket";
+  version = "0.1.0";
+  pyproject = true;
+
+  src = ./.;
+
+  build-system = [ python3.pkgs.setuptools ];
+
+  nativeCheckInputs = [ python3.pkgs.pytestCheckHook ];
+
+  makeWrapperArgs = [
+    "--prefix PATH : ${lib.makeBinPath [ openssh ]}"
   ];
-  commonEnv = lib.optionalString stdenv.hostPlatform.isDarwin ''
-    export SSH_AUTH_SOCK="''${SSHT_SECRETIVE_SOCKET:-$HOME/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh}"
-  '';
-  sshTicket = writeShellApplication {
-    name = "ssh-ticket";
-    runtimeInputs = commonRuntimeInputs;
-    checkPhase = ''
-      runHook preCheck
-      (
-        cd ${./.}
-        SSH_TICKET_MAIN=${./main.py} ${python.pkgs.pytest}/bin/pytest -q -p no:cacheprovider test_main.py
-      )
-      runHook postCheck
-    '';
-    text = ''
-      ${commonEnv}
-      exec ${python}/bin/python3 ${./main.py} "$@"
-    '';
-  };
-  ssht = writeShellApplication {
-    name = "ssht";
-    runtimeInputs = commonRuntimeInputs;
-    text = ''
-      ${commonEnv}
-      exec ${python}/bin/python3 ${./main.py} ssht "$@"
-    '';
-  };
-in
-symlinkJoin {
-  name = "ssh-ticket";
-  paths = [
-    sshTicket
-    ssht
-  ];
+
+  pythonImportsCheck = [ "ssh_ticket" ];
 
   meta = {
     description = "Issue per-host short-lived SSH user certificates and connect through ssht";

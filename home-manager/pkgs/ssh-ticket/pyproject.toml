@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ssh-ticket"
+version = "0.1.0"
+description = "Issue per-host short-lived SSH user certificates"
+requires-python = ">=3.11"
+
+[project.scripts]
+ssh-ticket = "ssh_ticket.app:cli"
+ssht = "ssh_ticket.app:ssht_cli"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

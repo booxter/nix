@@ -613,5 +613,24 @@ def main(argv):
         return 1
 
 
+def configure_darwin_ssh_agent():
+    if sys.platform == "darwin":
+        socket = os.environ.get("SSHT_SECRETIVE_SOCKET") or (
+            pathlib.Path.home()
+            / "Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh"
+        )
+        os.environ["SSH_AUTH_SOCK"] = str(socket)
+
+
+def cli():
+    configure_darwin_ssh_agent()
+    return main(sys.argv[1:])
+
+
+def ssht_cli():
+    configure_darwin_ssh_agent()
+    return main(["ssht", *sys.argv[1:]])
+
+
 if __name__ == "__main__":
-    raise SystemExit(main(sys.argv[1:]))
+    raise SystemExit(cli())

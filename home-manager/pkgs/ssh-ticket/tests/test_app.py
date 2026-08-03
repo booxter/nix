@@ -1,7 +1,4 @@
 import contextlib
-import importlib.util
-import os
-import pathlib
 import threading
 import time
 import types
@@ -9,13 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-
-MODULE_PATH = pathlib.Path(
-    os.environ.get("SSH_TICKET_MAIN", pathlib.Path(__file__).with_name("main.py"))
-)
-SPEC = importlib.util.spec_from_file_location("ssh_ticket_main", MODULE_PATH)
-ssh_ticket = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(ssh_ticket)
+from ssh_ticket import app as ssh_ticket
 
 
 def test_parse_duration_combined_units():
