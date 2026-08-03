@@ -321,14 +321,24 @@ make the entire collection one rollout unit.
 - Telegram Archive (`tg`): adopted and browser-tested. Its fetch interceptor
   restores only the selected chat or topic, while WebSocket reconnects probe
   the proxy session first.
-- Paperless-GPT: legacy proxy redirect; pending inspection and adoption.
-- Jellystat (`jfstat`): legacy proxy redirect; pending inspection and adoption.
-- WatchState: legacy proxy redirect; pending inspection and adoption.
+- Paperless-GPT: deferred; its pinned OCI image still uses the legacy proxy
+  redirect.
+- Jellystat (`jfstat`): deferred; its pinned OCI image still uses the legacy
+  proxy redirect.
+- WatchState: deferred; its pinned OCI image still uses the legacy proxy
+  redirect.
 - `srvarr-admin-apps`: adopted and browser-tested across Bazarr, Houndarr,
   Lidarr, Prowlarr, Radarr, SABnzbd, Sonarr, and Transmission. Marked failures
   start a safe top-level login without replaying rejected requests. Houndarr
   relies on its vendored HTMX refresh behavior; the other frontends carry
   release patches with package checks.
+
+The three OCI applications above are the only remaining application
+adoptions. Their prebuilt images do not expose an application source tree to
+the normal Nix patch and check phases, while this contract requires frontend
+request-handling changes. Adoption is therefore deferred until upstream
+support is available or this repository deliberately takes ownership of
+building and maintaining patched images.
 
 Jellyfin is not protected by these gates and must not be restarted merely to
 adopt this contract in another application on `beast`.
