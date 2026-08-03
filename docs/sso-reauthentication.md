@@ -324,8 +324,11 @@ make the entire collection one rollout unit.
 - Paperless-GPT: legacy proxy redirect; pending inspection and adoption.
 - Jellystat (`jfstat`): legacy proxy redirect; pending inspection and adoption.
 - WatchState: legacy proxy redirect; pending inspection and adoption.
-- `srvarr-admin-apps`: shared legacy proxy redirect. Eight protected frontends
-  must be reviewed together; migrate this gate last.
+- `srvarr-admin-apps`: adopted and browser-tested across Bazarr, Houndarr,
+  Lidarr, Prowlarr, Radarr, SABnzbd, Sonarr, and Transmission. Marked failures
+  start a safe top-level login without replaying rejected requests. Houndarr
+  relies on its vendored HTMX refresh behavior; the other frontends carry
+  release patches with package checks.
 
 Jellyfin is not protected by these gates and must not be restarted merely to
 adopt this contract in another application on `beast`.
