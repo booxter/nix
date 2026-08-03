@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 pub mod deploy_remote;
+pub mod deploy_source;
 pub mod diff;
 pub mod local_builders;
 pub mod vm;

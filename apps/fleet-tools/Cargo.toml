@@ -9,7 +9,15 @@ publish = false
 [dependencies]
 anyhow = "1.0.102"
 clap = { version = "4.6.0", features = ["derive"] }
-gix = { version = "0.83.0", default-features = false, features = ["revision", "sha1"] }
+# gix accepts kstring 2.0.3 and newer, but those releases require Rust 1.96
+# while nixpkgs currently provides 1.95. Cargo.lock pins kstring 2.0.2;
+# remove the pin once the nixpkgs toolchain reaches 1.96.
+gix = { version = "0.83.0", default-features = false, features = [
+  "blocking-http-transport-curl",
+  "merge",
+  "revision",
+  "sha1",
+] }
 ipnet = { version = "2.11.0", features = ["serde"] }
 rustix = { version = "1.1.4", features = ["fs", "system", "termios"] }
 serde = { version = "1.0.228", features = ["derive"] }

@@ -1,5 +1,6 @@
 {
   clippy,
+  curl,
   diffutils,
   dix,
   fleetInventory,
@@ -9,10 +10,12 @@
   nix,
   nix-output-monitor,
   openssh,
+  pkg-config,
   rustfmt,
   rustPlatform,
   vmTargets,
   wireguardHome,
+  zlib,
 }:
 
 rustPlatform.buildRustPackage {
@@ -28,7 +31,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-MEe77+zSEZC2Z3k52Q6TUyIViYqnhhON2ph5t3CM82I=";
+  cargoHash = "sha256-yNpVGw+2yVczk+DxxwocnFuMNYowamzRVbklpGJCZuY=";
 
   DIFF_DIX = lib.getExe dix;
   DIFF_GNU_DIFF = lib.getExe' diffutils "diff";
@@ -66,7 +69,15 @@ rustPlatform.buildRustPackage {
     rustfmt
   ];
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    makeWrapper
+    pkg-config
+  ];
+
+  buildInputs = [
+    curl
+    zlib
+  ];
 
   postFixup = ''
     wrapProgram "$out/bin/fleet-deploy-remote" \
