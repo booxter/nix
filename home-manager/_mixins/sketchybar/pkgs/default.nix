@@ -1,8 +1,7 @@
 {
   alertmanager ? null,
   attentionInbox,
-  codexUsageStatus,
-  codexWorkUsageStatus,
+  codexTools,
   jellyfin ? null,
   pkgs,
   pluginColors,
@@ -34,12 +33,14 @@ let
     "ip_address"
     "jellyfin"
   ];
-  packagedPluginNames = nativePluginNames ++ [ "attention-inbox" ];
+  packagedPluginNames = nativePluginNames ++ [
+    "attention-inbox"
+    "codex"
+  ];
   shellPluginNames = builtins.filter (name: !builtins.elem name packagedPluginNames) pluginNames;
   sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
   runtimePath = lib.makeBinPath [
-    codexUsageStatus
-    codexWorkUsageStatus
+    codexTools
     pkgs.bash
     pkgs.coreutils
     pkgs.curl
@@ -106,8 +107,6 @@ pkgs.stdenvNoCC.mkDerivation {
   src = ./plugins;
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
-  nativeCheckInputs = [ pkgs.jq ];
-
   dontConfigure = true;
   dontBuild = true;
   doCheck = true;
@@ -118,8 +117,6 @@ pkgs.stdenvNoCC.mkDerivation {
       ${lib.getExe pkgs.bash} -n "$plugin"
       ${lib.getExe pkgs.shellcheck} "$plugin"
     done
-    SKETCHYBAR_PLUGIN_DIR="$src" \
-      ${lib.getExe pkgs.bats} --print-output-on-failure ${./tests}/*.bats
     runHook postCheck
   '';
 
@@ -129,6 +126,7 @@ pkgs.stdenvNoCC.mkDerivation {
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
     ${makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"}
+    ${makeBinaryPluginWrapper "codex" codexTools "codex-sketchybar"}
     ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
     ${makeNativePluginWrapper "disk" "sketchybar-disk"}
     ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}

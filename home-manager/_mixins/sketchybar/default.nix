@@ -79,8 +79,7 @@ let
   sketchybarPlugins = import ./pkgs {
     inherit pkgs;
     attentionInbox = cliPkgs.attention-inbox;
-    codexUsageStatus = codexPkgs.codex-usage-status;
-    codexWorkUsageStatus = codexPkgs.codex-work-usage-status;
+    codexTools = codexPkgs.codex-usage-status;
     pluginColors = pluginColorEnv;
     alertmanager =
       if config.programs.sketchybarAlertmanager.enable then
