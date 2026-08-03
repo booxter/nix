@@ -12,6 +12,8 @@ python3.pkgs.buildPythonApplication {
 
   build-system = [ python3.pkgs.setuptools ];
 
+  dependencies = [ python3.pkgs.pydantic ];
+
   nativeCheckInputs = [ python3.pkgs.pytestCheckHook ];
 
   makeWrapperArgs = [

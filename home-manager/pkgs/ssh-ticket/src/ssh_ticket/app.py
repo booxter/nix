@@ -11,6 +11,15 @@ import subprocess
 import sys
 import time
 
+from pydantic import ValidationError
+
+from .durations import (
+    DurationError,
+    format_duration as format_duration_value,
+    parse_duration as parse_duration_value,
+)
+from .models import TARGETS
+
 
 DEFAULT_CA_PRIVATE_KEY = "~/.ssh/fleet-user-ca"
 DEFAULT_CA_PUBLIC_KEY = "~/.ssh/fleet-user-ca.pub"
@@ -21,6 +30,17 @@ MIN_VALID_SECONDS = 60
 
 class Error(Exception):
     pass
+
+
+def parse_duration(value):
+    try:
+        return parse_duration_value(value)
+    except DurationError as exc:
+        raise Error(str(exc)) from exc
+
+
+def format_duration(seconds):
+    return format_duration_value(int(seconds))
 
 
 def expand_path(value):
@@ -63,42 +83,6 @@ def shell_quote(value):
     return "'" + value.replace("'", "'\\''") + "'"
 
 
-def parse_duration(value):
-    if isinstance(value, int):
-        return value
-    text = str(value).strip().lower()
-    if not text:
-        raise Error("duration must not be empty")
-    units = {
-        "": 1,
-        "s": 1,
-        "m": 60,
-        "h": 60 * 60,
-        "d": 24 * 60 * 60,
-        "w": 7 * 24 * 60 * 60,
-    }
-    total = 0
-    pos = 0
-    for match in re.finditer(r"(\d+)([smhdw]?)", text):
-        if match.start() != pos:
-            raise Error(f"invalid duration: {value}")
-        amount = int(match.group(1))
-        unit = match.group(2)
-        total += amount * units[unit]
-        pos = match.end()
-    if pos != len(text) or total <= 0:
-        raise Error(f"invalid duration: {value}")
-    return total
-
-
-def format_duration(seconds):
-    seconds = int(seconds)
-    for unit, size in (("w", 604800), ("d", 86400), ("h", 3600), ("m", 60)):
-        if seconds % size == 0 and seconds >= size:
-            return f"{seconds // size}{unit}"
-    return f"{seconds}s"
-
-
 def format_time(epoch):
     return (
         dt.datetime.fromtimestamp(epoch).astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
@@ -138,16 +122,12 @@ def resolved_ca_key(args):
 
 def load_targets_from_file(targets_file):
     try:
-        targets = json.loads(targets_file.read_text(encoding="utf-8"))
+        models = TARGETS.validate_json(targets_file.read_text(encoding="utf-8"))
     except OSError as exc:
         raise Error(f"failed to read targets file {targets_file}: {exc}") from exc
-    except json.JSONDecodeError as exc:
+    except (DurationError, ValidationError) as exc:
         raise Error(f"failed to parse targets file {targets_file}: {exc}") from exc
-    if not isinstance(targets, list) or not all(
-        isinstance(target, dict) and isinstance(target.get("name"), str)
-        for target in targets
-    ):
-        raise Error(f"targets file {targets_file} must contain a JSON list of targets")
+    targets = [model.model_dump(by_alias=True) for model in models]
     targets.sort(key=lambda item: item["name"])
     return targets
 

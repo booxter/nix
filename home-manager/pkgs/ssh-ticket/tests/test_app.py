@@ -89,6 +89,23 @@ def test_load_targets_reads_env_file(tmp_path, monkeypatch):
     ]
 
 
+@pytest.mark.parametrize(
+    "payload",
+    [
+        '{"name":"frame"}',
+        '[{"name":""}]',
+        '[{"name":"frame","defaultTtl":"3h","maxTtl":"2h"}]',
+        '[{"name":"frame","unexpected":true}]',
+    ],
+)
+def test_load_targets_rejects_invalid_models(tmp_path, payload):
+    targets_file = tmp_path / "targets.json"
+    targets_file.write_text(payload, encoding="utf-8")
+
+    with pytest.raises(ssh_ticket.Error, match="failed to parse targets file"):
+        ssh_ticket.load_targets_from_file(targets_file)
+
+
 def test_resolve_target_accepts_unique_alias():
     targets = [
         {
