@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	jellyfin "github.com/booxter/nix-config/sketchybar-jellyfin"
+	"github.com/booxter/nix-config/sketchybar-tools/internal/jellyfin"
+	"github.com/booxter/nix-config/sketchybar-tools/internal/sketchybar"
 )
 
 func main() {
@@ -24,6 +25,6 @@ func run() error {
 		context.Background(),
 		config,
 		jellyfin.NewHTTPMetricsFetcher(config),
-		jellyfin.CommandSketchybar{Executable: config.SketchybarExecutable},
+		sketchybar.Command{Executable: config.SketchybarExecutable},
 	)
 }

@@ -28,7 +28,7 @@ let
     "volume"
   ];
   shellPluginNames = builtins.filter (name: name != "jellyfin") pluginNames;
-  jellyfinPlugin = pkgs.callPackage ./jellyfin { };
+  sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
   runtimePath = lib.makeBinPath [
     attentionInbox
     codexUsageStatus
@@ -86,7 +86,7 @@ let
         };
     in
     ''
-      makeWrapper ${lib.getExe jellyfinPlugin} "$out/bin/jellyfin" \
+      makeWrapper ${lib.getExe sketchybarTools} "$out/bin/jellyfin" \
         ${environmentArguments environment}
     '';
 in

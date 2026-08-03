@@ -1,4 +1,4 @@
-module github.com/booxter/nix-config/sketchybar-jellyfin
+module github.com/booxter/nix-config/sketchybar-tools
 
 go 1.25.0
 

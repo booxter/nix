@@ -3,30 +3,16 @@ package jellyfin
 import (
 	"context"
 	"fmt"
-	"os/exec"
 	"strings"
+
+	"github.com/booxter/nix-config/sketchybar-tools/internal/sketchybar"
 )
 
 type MetricsFetcher interface {
 	Fetch(ctx context.Context) ([]byte, error)
 }
 
-type Sketchybar interface {
-	Run(arguments ...string) error
-}
-
-type CommandSketchybar struct {
-	Executable string
-}
-
-func (bar CommandSketchybar) Run(arguments ...string) error {
-	if err := exec.Command(bar.Executable, arguments...).Run(); err != nil {
-		return fmt.Errorf("update SketchyBar: %w", err)
-	}
-	return nil
-}
-
-func Run(ctx context.Context, config Config, fetcher MetricsFetcher, bar Sketchybar) error {
+func Run(ctx context.Context, config Config, fetcher MetricsFetcher, bar sketchybar.Runner) error {
 	metrics, err := fetcher.Fetch(ctx)
 	if err != nil {
 		return showError(config, bar)
@@ -98,7 +84,7 @@ func Run(ctx context.Context, config Config, fetcher MetricsFetcher, bar Sketchy
 	return bar.Run(arguments...)
 }
 
-func hidePopupRows(name string, bar Sketchybar) error {
+func hidePopupRows(name string, bar sketchybar.Runner) error {
 	if err := bar.Run("--set", name+".bandwidth", "drawing=off"); err != nil {
 		return err
 	}
@@ -114,7 +100,7 @@ func hidePopupRows(name string, bar Sketchybar) error {
 	return nil
 }
 
-func showError(config Config, bar Sketchybar) error {
+func showError(config Config, bar sketchybar.Runner) error {
 	if err := hidePopupRows(config.Name, bar); err != nil {
 		return err
 	}

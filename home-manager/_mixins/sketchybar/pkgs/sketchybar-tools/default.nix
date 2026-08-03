@@ -4,7 +4,7 @@
 }:
 
 buildGoModule {
-  pname = "sketchybar-jellyfin";
+  pname = "sketchybar-tools";
   version = "0.1.0";
 
   src = ./.;
@@ -20,7 +20,7 @@ buildGoModule {
   checkFlags = [ "-cover" ];
 
   meta = {
-    description = "Jellyfin activity plugin for SketchyBar";
+    description = "Native personal plugins for SketchyBar";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "sketchybar-jellyfin";
