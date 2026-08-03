@@ -1,7 +1,10 @@
 {
   clippy,
+  diffutils,
+  dix,
   fleetInventory,
   lib,
+  nh,
   nix,
   openssh,
   rustfmt,
@@ -23,8 +26,13 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-NjXKYufPOV4MfmZIm5IKvQ2FU8hElsUhLu7iDL6hiS4=";
+  cargoHash = "sha256-jX9+4U/yP+jV5o5+YyeY5tk8CeBI7M1Fcfqw5Q0dFLo=";
 
+  DIFF_DIX = lib.getExe dix;
+  DIFF_GNU_DIFF = lib.getExe' diffutils "diff";
+  DIFF_NH = lib.getExe nh;
+  DIFF_NIX = lib.getExe nix;
+  DIFF_TARGET_ALIASES_JSON = builtins.toJSON vmTargets;
   FLEET_HOSTS_JSON = builtins.toJSON fleetInventory;
   WG_HOME_CONFIG_JSON = builtins.toJSON wireguardHome;
   WG_HOME_HELP = ''

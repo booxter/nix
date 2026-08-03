@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+pub mod diff;
 pub mod local_builders;
 pub mod vm;
 pub mod wireguard;
