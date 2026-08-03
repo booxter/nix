@@ -1,35 +1,38 @@
 {
-  bash,
-  bats,
-  coreutils,
-  jq,
   lib,
-  shellcheck,
-  writeShellApplication,
+  python3,
+  ruff,
 }:
-writeShellApplication {
-  name = "kanidm-person-mail-provision";
-  runtimeInputs = [
-    coreutils
-    jq
-  ];
-  text = builtins.readFile ./kanidm-person-mail-provision.sh;
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
+  pname = "kanidm-person-mail-provision";
+  version = "0.1.0";
+  pyproject = true;
 
-  derivationArgs = {
-    doCheck = true;
-    nativeCheckInputs = [ jq ];
-  };
-  checkPhase = ''
-    runHook preCheck
-    ${lib.getExe bash} -n "$target"
-    ${lib.getExe shellcheck} "$target"
-    KANIDM_PERSON_MAIL_PROVISION_BIN=${./kanidm-person-mail-provision.sh} \
-      ${lib.getExe bats} --print-output-on-failure ${./kanidm-person-mail-provision.bats}
-    runHook postCheck
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  nativeCheckInputs = [
+    ruff
+    pythonPackages.mypy
+    pythonPackages.pytestCheckHook
+    pythonPackages.pytest-cov
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/kanidm_person_mail_provision
   '';
+
+  pythonImportsCheck = [ "kanidm_person_mail_provision" ];
 
   meta = {
     description = "Render person mail addresses as Kanidm provisioning JSON";
+    license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "kanidm-person-mail-provision";
     platforms = lib.platforms.linux;

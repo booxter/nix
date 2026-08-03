@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kanidm-person-mail-provision"
+version = "0.1.0"
+description = "Render person mail addresses as Kanidm provisioning JSON"
+requires-python = ">=3.11"
+
+[project.scripts]
+kanidm-person-mail-provision = "kanidm_person_mail_provision.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=kanidm_person_mail_provision --cov-report=term-missing --cov-fail-under=95"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/kanidm_person_mail_provision"]
+strict = true
+
+[tool.ruff]
+line-length = 100
