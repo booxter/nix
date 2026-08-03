@@ -10,18 +10,18 @@ let
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
   sketchybarHeight = 30; # TODO: parametrize it?
 
-  aerospacePkgs = import ./pkgs { inherit pkgs; };
+  aerospaceX11Actions = pkgs.callPackage ./pkgs { };
   workspaceNames = import ./workspaces.nix { inherit lib isWork; };
   moveCommand =
     direction:
     if config.programs.xquartz.enable then
-      "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-x11-aware-move} ${direction}"
+      "exec-and-forget ${lib.getExe' aerospaceX11Actions "aerospace-x11-aware-move"} ${direction}"
     else
       "move ${direction}";
   resizeCommand =
     delta:
     if config.programs.xquartz.enable then
-      "exec-and-forget ${lib.getExe aerospacePkgs.aerospace-x11-aware-resize} ${delta}"
+      "exec-and-forget ${lib.getExe' aerospaceX11Actions "aerospace-x11-aware-resize"} ${delta}"
     else
       "resize smart ${delta}";
   getBindings =
