@@ -1,21 +1,36 @@
 {
   lib,
   python3,
-  writeShellApplication,
+  ruff,
 }:
-writeShellApplication {
-  name = "flake-input-update-summary";
-  text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
-  '';
-  checkPhase = ''
-    runHook preCheck
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
+  pname = "flake-input-update-summary";
+  version = "0.1.0";
+  pyproject = true;
 
-    PYTHONDONTWRITEBYTECODE=1 \
-      ${python3}/bin/python3 -m unittest discover -s ${./.} -p test_main.py
+  src = ./.;
 
-    runHook postCheck
+  build-system = [ pythonPackages.setuptools ];
+
+  dependencies = [ pythonPackages.pydantic ];
+
+  nativeCheckInputs = with pythonPackages; [
+    ruff
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/flake_input_update_summary
   '';
+
+  pythonImportsCheck = [ "flake_input_update_summary" ];
 
   meta = {
     description = "Generate a revision-linked flake input update summary";

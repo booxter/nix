@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flake-input-update-summary"
+version = "0.1.0"
+description = "Generate a revision-linked flake input update summary"
+requires-python = ">=3.11"
+dependencies = ["pydantic"]
+
+[project.scripts]
+flake-input-update-summary = "flake_input_update_summary.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=flake_input_update_summary --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/flake_input_update_summary"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100
