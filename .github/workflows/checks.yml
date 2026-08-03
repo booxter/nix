@@ -42,6 +42,23 @@ jobs:
       - name: Run regular checks
         run: make check
 
+  check-success:
+    name: Regular checks
+    if: ${{ always() }}
+    needs:
+      - check
+    runs-on: ubuntu-slim
+    steps:
+      - name: Check regular check results
+        run: |
+          set -euo pipefail
+
+          if [ "${{ needs.check.result }}" != "success" ]; then
+            echo "Regular check matrix result: ${{ needs.check.result }}"
+            exit 1
+          fi
+          echo "All regular checks passed."
+
   plan-nixos-tests:
     name: plan NixOS tests
     runs-on: ubuntu-slim
