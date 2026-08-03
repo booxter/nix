@@ -315,9 +315,12 @@ make the entire collection one rollout unit.
   handler may replay only the allowlisted search POST.
 - Audiobookshelf: native OIDC is configured with automatic OIDC launch. The
   proxy contract does not apply.
-- DeGoog (`goo`): legacy proxy redirect; pending inspection and adoption.
-- Telegram Archive (`tg`): legacy proxy redirect; pending inspection and
-  adoption.
+- DeGoog (`goo`): adopted and browser-tested. Its fetch and EventSource
+  handlers recover from marked failures and restore only reviewed navigation
+  or search state.
+- Telegram Archive (`tg`): adopted pending canary deployment. Its fetch
+  interceptor restores only the selected chat or topic, while WebSocket
+  reconnects probe the proxy session first.
 - Paperless-GPT: legacy proxy redirect; pending inspection and adoption.
 - Jellystat (`jfstat`): legacy proxy redirect; pending inspection and adoption.
 - WatchState: legacy proxy redirect; pending inspection and adoption.
@@ -339,3 +342,7 @@ adopt this contract in another application on `beast`.
   [`nixos/srvarr/pkgs/aurral/keep-proxy-reauth-upgrade-route.patch`](../nixos/srvarr/pkgs/aurral/keep-proxy-reauth-upgrade-route.patch)
 - SearXNG reauthentication backport:
   [`overlays/searxng-load-sso-reauth-script.patch`](../overlays/searxng-load-sso-reauth-script.patch)
+- DeGoog reauthentication backport:
+  [`nixos/org/pkgs/degoog/sso-reauthentication.patch`](../nixos/org/pkgs/degoog/sso-reauthentication.patch)
+- Telegram Archive reauthentication backport:
+  [`nixos/org/pkgs/telegram-archive/sso-reauthentication.patch`](../nixos/org/pkgs/telegram-archive/sso-reauthentication.patch)
