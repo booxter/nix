@@ -239,6 +239,7 @@ in
 
   host.sso.oauth2ProxyGates.goo = {
     enable = true;
+    authFailureMode = "navigation-aware";
     clientId = "goo";
     httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";
     cookieName = "_goo_sso";
