@@ -15,6 +15,7 @@
   pkg-config,
   rustfmt,
   rustPlatform,
+  stdenv,
   vmTargets,
   wireguardHome,
   zlib,
@@ -58,6 +59,9 @@ rustPlatform.buildRustPackage {
     Inventory-backed peers: ${lib.concatStringsSep ", " (builtins.attrNames wireguardHome.peers)}
   '';
   WG_HOME_SSH = lib.getExe openssh;
+  CHECK_NIX = lib.getExe nix;
+  CHECK_NOM = lib.getExe nix-output-monitor;
+  CHECK_SYSTEM = stdenv.hostPlatform.system;
   VM_NIX = lib.getExe nix;
   VM_REPO_ROOT = ../..;
   VM_RUNNER_NIX = ./vm-runner.nix;

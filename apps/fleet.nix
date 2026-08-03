@@ -118,6 +118,8 @@ let
 
   getLocalBuilders = fleetTools;
 
+  runCheckTarget = fleetTools;
+
   hbaFlash = pkgs.writeShellApplication {
     name = "hba-flash";
     runtimeInputs = with pkgs; [
@@ -185,6 +187,7 @@ in
     diff = diffConfig;
     fleet-tools = fleetTools;
     get-local-builders = getLocalBuilders;
+    run-check-target = runCheckTarget;
     get-hosts = getHosts;
     issue-observability-cert = issueObservabilityCertApp;
     issue-internal-service-cert = issueInternalServiceCertApp;
@@ -203,6 +206,8 @@ in
     diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
     "get-local-builders" =
       mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+    "run-check-target" =
+      mkApp "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
     "issue-observability-cert" =
       mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
     "issue-internal-service-cert" =
