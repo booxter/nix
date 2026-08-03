@@ -1,19 +1,39 @@
 {
   lib,
   python3,
-  writeShellApplication,
+  ruff,
 }:
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
+  pname = "open-webui-tool-acl-reconcile";
+  version = "0.1.0";
+  pyproject = true;
 
-writeShellApplication {
-  name = "open-webui-tool-acl-reconcile";
-  checkPhase = ''
-    runHook preCheck
-    OPEN_WEBUI_TOOL_ACL_RECONCILE_MAIN=${./main.py} ${python3.pkgs.pytest}/bin/pytest -q -p no:cacheprovider ${./test_main.py}
-    runHook postCheck
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  dependencies = with pythonPackages; [
+    httpx
+    pydantic
+  ];
+
+  nativeCheckInputs = with pythonPackages; [
+    ruff
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/open_webui_tool_acl_reconcile
   '';
-  text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
-  '';
+
+  pythonImportsCheck = [ "open_webui_tool_acl_reconcile" ];
 
   meta = {
     description = "Reconcile an Open WebUI tool server ACL with a group";
