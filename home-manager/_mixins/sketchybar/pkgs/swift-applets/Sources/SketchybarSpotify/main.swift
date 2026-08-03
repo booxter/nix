@@ -1,14 +1,15 @@
 import Foundation
+import SketchyBarSupport
 import SpotifyApplet
 
 do {
-  let environment = try AppletEnvironment(
+  let environment = try SketchyBarEnvironment(
     environment: ProcessInfo.processInfo.environment
   )
   let applet = SpotifyApplet(
     spotify: AppleScriptSpotifyController(),
     sketchyBar: ProcessSketchyBarRunner(
-      executable: environment.sketchyBarExecutable
+      executable: environment.executable
     )
   )
   try applet.handle(

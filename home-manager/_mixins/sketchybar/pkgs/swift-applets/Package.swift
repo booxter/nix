@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "sketchybar-spotify",
+  name: "sketchybar-swift-applets",
   platforms: [.macOS(.v14)],
   products: [
     .executable(
@@ -12,17 +12,21 @@ let package = Package(
     )
   ],
   targets: [
-    .target(name: "SpotifyApplet"),
+    .target(name: "SketchyBarSupport"),
+    .target(
+      name: "SpotifyApplet",
+      dependencies: ["SketchyBarSupport"]
+    ),
     .executableTarget(
       name: "SketchybarSpotify",
-      dependencies: ["SpotifyApplet"]
+      dependencies: ["SketchyBarSupport", "SpotifyApplet"]
     ),
     // nixpkgs disables SwiftPM's Darwin XCTest runner because Apple's xctest
     // command-line runner is not open source. Keep checks executable until
     // nixpkgs has a native test runner for Swift packages on Darwin.
     .executableTarget(
       name: "SpotifyAppletChecks",
-      dependencies: ["SpotifyApplet"],
+      dependencies: ["SketchyBarSupport", "SpotifyApplet"],
       path: "Tests/SpotifyAppletChecks"
     ),
   ]

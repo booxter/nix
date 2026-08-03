@@ -1,4 +1,5 @@
 import Foundation
+import SketchyBarSupport
 import SpotifyApplet
 
 private enum CheckFailure: Error, CustomStringConvertible {
@@ -190,15 +191,15 @@ do {
   )
 
   do {
-    _ = try AppletEnvironment(environment: [:])
+    _ = try SketchyBarEnvironment(environment: [:])
     throw CheckFailure.failed("missing SKETCHYBAR_BIN was accepted")
   } catch ConfigurationError.missingSketchyBarExecutable {}
-  let environment = try AppletEnvironment(environment: [
+  let environment = try SketchyBarEnvironment(environment: [
     "SKETCHYBAR_BIN": "/nix/store/example/bin/sketchybar",
     "SENDER": "forced",
   ])
   try expectEqual(
-    environment.sketchyBarExecutable.path,
+    environment.executable.path,
     "/nix/store/example/bin/sketchybar",
     "SketchyBar executable"
   )

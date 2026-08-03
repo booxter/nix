@@ -43,7 +43,7 @@ let
   ];
   shellPluginNames = builtins.filter (name: !builtins.elem name packagedPluginNames) pluginNames;
   sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
-  spotifyApplet = pkgs.callPackage ./spotify { };
+  swiftApplets = pkgs.callPackage ./swift-applets { };
   runtimePath = lib.makeBinPath [
     pkgs.bash
     pkgs.coreutils
@@ -131,7 +131,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ${makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"}
     ${makeBinaryPluginWrapper "codex" codexTools "codex-sketchybar"}
     ${makeBinaryPluginWrapper "codex-work" codexTools "codex-work-sketchybar"}
-    ${makeBinaryPluginWrapper "spotify" spotifyApplet "sketchybar-spotify"}
+    ${makeBinaryPluginWrapper "spotify" swiftApplets "sketchybar-spotify"}
     ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
     ${makeNativePluginWrapper "disk" "sketchybar-disk"}
     ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}

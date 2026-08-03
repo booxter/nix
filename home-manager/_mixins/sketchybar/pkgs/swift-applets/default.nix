@@ -6,7 +6,7 @@
 }:
 
 swiftPackages.stdenv.mkDerivation (finalAttrs: {
-  pname = "sketchybar-spotify";
+  pname = "sketchybar-swift-applets";
   version = "1";
 
   src = ./.;
@@ -33,7 +33,7 @@ swiftPackages.stdenv.mkDerivation (finalAttrs: {
   '';
 
   meta = {
-    description = "Native Spotify controller for SketchyBar";
+    description = "Native Swift applets for SketchyBar";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "sketchybar-spotify";
