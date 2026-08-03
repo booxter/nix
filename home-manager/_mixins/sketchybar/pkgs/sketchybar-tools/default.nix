@@ -13,6 +13,7 @@ buildGoModule {
 
   subPackages = [
     "cmd/sketchybar-alertmanager"
+    "cmd/sketchybar-clock"
     "cmd/sketchybar-disk"
     "cmd/sketchybar-github-status"
     "cmd/sketchybar-ip-address"

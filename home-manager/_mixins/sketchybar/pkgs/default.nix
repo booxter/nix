@@ -28,6 +28,7 @@ let
   ];
   goPluginNames = [
     "alertmanager"
+    "clock"
     "disk"
     "github-status"
     "ip_address"
@@ -48,7 +49,6 @@ let
   swiftApplets = pkgs.callPackage ./swift-applets { };
   runtimePath = lib.makeBinPath [
     pkgs.bash
-    pkgs.coreutils
     pkgs.sketchybar
   ];
   pluginEnvironments = {
@@ -135,6 +135,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ${makeBinaryPluginWrapper "codex-work" codexTools "codex-work-sketchybar"}
     ${makeBinaryPluginWrapper "spotify" swiftApplets "sketchybar-spotify"}
     ${makeGoPluginWrapper "alertmanager" "sketchybar-alertmanager"}
+    ${makeGoPluginWrapper "clock" "sketchybar-clock"}
     ${makeGoPluginWrapper "disk" "sketchybar-disk"}
     ${makeGoPluginWrapper "github-status" "sketchybar-github-status"}
     ${makeGoPluginWrapper "ip_address" "sketchybar-ip-address"}
