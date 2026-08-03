@@ -33,6 +33,7 @@ let
     "ip_address"
     "jellyfin"
     "network"
+    "stock"
   ];
   packagedPluginNames = nativePluginNames ++ [
     "attention-inbox"
@@ -46,11 +47,7 @@ let
   runtimePath = lib.makeBinPath [
     pkgs.bash
     pkgs.coreutils
-    pkgs.curl
-    pkgs.gawk
     pkgs.gnugrep
-    pkgs.gnused
-    pkgs.jq
     pkgs.sketchybar
   ];
   pluginEnvironments = {
@@ -68,6 +65,9 @@ let
       JELLYFIN_CA_CERTIFICATE = jellyfin.caCertificate;
       JELLYFIN_CLIENT_CERTIFICATE = jellyfin.clientCertificate;
       JELLYFIN_CLIENT_KEY = jellyfin.clientKey;
+    };
+    stock = {
+      STOCK_API_URL = "https://api.nasdaq.com/api/quote";
     };
   };
   environmentArguments =
@@ -138,6 +138,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ${makeNativePluginWrapper "ip_address" "sketchybar-ip-address"}
     ${makeNativePluginWrapper "jellyfin" "sketchybar-jellyfin"}
     ${makeNativePluginWrapper "network" "sketchybar-network"}
+    ${makeNativePluginWrapper "stock" "sketchybar-stock"}
     runHook postInstall
   '';
 

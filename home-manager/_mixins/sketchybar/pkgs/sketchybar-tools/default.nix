@@ -18,6 +18,7 @@ buildGoModule {
     "cmd/sketchybar-ip-address"
     "cmd/sketchybar-jellyfin"
     "cmd/sketchybar-network"
+    "cmd/sketchybar-stock"
   ];
 
   preCheck = ''
