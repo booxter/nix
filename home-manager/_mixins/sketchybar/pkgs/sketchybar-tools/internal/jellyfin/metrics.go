@@ -9,9 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	prometheusmetrics "github.com/booxter/nix-config/sketchybar-tools/internal/prometheus"
 	dto "github.com/prometheus/client_model/go"
-	"github.com/prometheus/common/expfmt"
-	"github.com/prometheus/common/model"
 )
 
 type Session struct {
@@ -65,21 +64,20 @@ var supportedMediaTypes = map[string]bool{
 }
 
 func ParseMetrics(reader io.Reader) ([]Session, error) {
-	parser := expfmt.NewTextParser(model.UTF8Validation)
-	families, err := parser.TextToMetricFamilies(reader)
+	families, err := prometheusmetrics.ParseText(reader)
 	if err != nil {
 		return nil, fmt.Errorf("parse Jellyfin metrics: %w", err)
 	}
-	if metricFamilyValue(families["jellyfin_up"], nil) != 1 {
+	if prometheusmetrics.FamilyValue(families["jellyfin_up"], nil) != 1 {
 		return nil, fmt.Errorf("Jellyfin is unavailable")
 	}
-	if metricFamilyValue(
+	if prometheusmetrics.FamilyValue(
 		families["jellyfin_scrape_collector_success"],
 		map[string]string{"collector": "playing"},
 	) != 1 {
 		return nil, fmt.Errorf("Jellyfin playing collector failed")
 	}
-	if metricFamilyValue(
+	if prometheusmetrics.FamilyValue(
 		families["jellyfin_scrape_collector_success"],
 		map[string]string{"collector": "users"},
 	) != 1 {
@@ -87,8 +85,8 @@ func ParseMetrics(reader io.Reader) ([]Session, error) {
 	}
 
 	users := make(map[userKey]userDetails)
-	for _, metric := range metrics(families["jellyfin_user_active"]) {
-		labels := labels(metric)
+	for _, metric := range prometheusmetrics.Metrics(families["jellyfin_user_active"]) {
+		labels := prometheusmetrics.Labels(metric)
 		users[userKeyFromLabels(labels)] = userDetails{
 			Scope:  addressScope(labels["ip_address"]),
 			Client: labels["client"],
@@ -96,8 +94,8 @@ func ParseMetrics(reader io.Reader) ([]Session, error) {
 	}
 
 	sessions := make(map[sessionKey]Session)
-	for _, metric := range metrics(families["jellyfin_now_playing_state"]) {
-		labels := labels(metric)
+	for _, metric := range prometheusmetrics.Metrics(families["jellyfin_now_playing_state"]) {
+		labels := prometheusmetrics.Labels(metric)
 		if !supportedMediaTypes[labels["type"]] {
 			continue
 		}
@@ -108,7 +106,7 @@ func ParseMetrics(reader io.Reader) ([]Session, error) {
 			scope = "unknown"
 		}
 		sessions[key] = Session{
-			Playing:       metricValue(metric) > 0.5,
+			Playing:       prometheusmetrics.Value(metric) > 0.5,
 			Scope:         scope,
 			Username:      key.Username,
 			Device:        key.Device,
@@ -125,12 +123,12 @@ func ParseMetrics(reader io.Reader) ([]Session, error) {
 	progress := metricValuesBySession(families["jellyfin_now_playing_progress"])
 	remaining := metricValuesBySession(families["jellyfin_now_playing_remaining"])
 	bitrates := make(map[userKey]int64)
-	for _, metric := range metrics(families["jellyfin_now_playing_bitrate_bits_per_second"]) {
-		value := metricValue(metric)
+	for _, metric := range prometheusmetrics.Metrics(families["jellyfin_now_playing_bitrate_bits_per_second"]) {
+		value := prometheusmetrics.Value(metric)
 		if value < 0 {
 			return nil, fmt.Errorf("Jellyfin bitrate is negative")
 		}
-		bitrates[userKeyFromLabels(labels(metric))] = int64(math.Round(value))
+		bitrates[userKeyFromLabels(prometheusmetrics.Labels(metric))] = int64(math.Round(value))
 	}
 
 	result := make([]Session, 0, len(sessions))
@@ -152,51 +150,6 @@ func ParseMetrics(reader io.Reader) ([]Session, error) {
 		return leftKey < rightKey
 	})
 	return result, nil
-}
-
-func metrics(family *dto.MetricFamily) []*dto.Metric {
-	if family == nil {
-		return nil
-	}
-	return family.GetMetric()
-}
-
-func metricFamilyValue(family *dto.MetricFamily, requiredLabels map[string]string) float64 {
-	for _, metric := range metrics(family) {
-		labels := labels(metric)
-		matches := true
-		for name, expected := range requiredLabels {
-			if labels[name] != expected {
-				matches = false
-				break
-			}
-		}
-		if matches {
-			return metricValue(metric)
-		}
-	}
-	return math.NaN()
-}
-
-func metricValue(metric *dto.Metric) float64 {
-	switch {
-	case metric.Gauge != nil:
-		return metric.GetGauge().GetValue()
-	case metric.Counter != nil:
-		return metric.GetCounter().GetValue()
-	case metric.Untyped != nil:
-		return metric.GetUntyped().GetValue()
-	default:
-		return math.NaN()
-	}
-}
-
-func labels(metric *dto.Metric) map[string]string {
-	result := make(map[string]string, len(metric.GetLabel()))
-	for _, pair := range metric.GetLabel() {
-		result[pair.GetName()] = pair.GetValue()
-	}
-	return result
 }
 
 func sessionKeyFromLabels(labels map[string]string) sessionKey {
@@ -223,8 +176,8 @@ func userKeyFromLabels(labels map[string]string) userKey {
 
 func metricValuesBySession(family *dto.MetricFamily) map[sessionKey]int64 {
 	result := make(map[sessionKey]int64)
-	for _, metric := range metrics(family) {
-		result[sessionKeyFromLabels(labels(metric))] = int64(math.Round(metricValue(metric)))
+	for _, metric := range prometheusmetrics.Metrics(family) {
+		result[sessionKeyFromLabels(prometheusmetrics.Labels(metric))] = int64(math.Round(prometheusmetrics.Value(metric)))
 	}
 	return result
 }
