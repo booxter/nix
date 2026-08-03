@@ -1,0 +1,528 @@
+diff --git a/searx/templates/simple/base.html b/searx/templates/simple/base.html
+index 7234e9ac..dfdfc2ac 100644
+--- a/searx/templates/simple/base.html
++++ b/searx/templates/simple/base.html
+@@ -10,6 +10,7 @@
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>{% block title %}{% endblock %}{{ instance_name }}</title>
+   <script type="module" src="{{ url_for('static', filename='sxng-core.min.js') }}" client_settings="{{ client_settings }}"></script>
++  <script type="module" src="{{ url_for('static', filename='sso-reauth.mjs') }}"></script>
+   {% block meta %}{% endblock %}
+   {% if rtl %}
+   <link rel="stylesheet" href="{{ url_for('static', filename='sxng-rtl.min.css') }}" type="text/css" media="screen">
+diff --git a/searx/static/themes/simple/sso-reauth.mjs b/searx/static/themes/simple/sso-reauth.mjs
+new file mode 100644
+index 00000000..62460db1
+--- /dev/null
++++ b/searx/static/themes/simple/sso-reauth.mjs
+@@ -0,0 +1,254 @@
++const PENDING_VERSION = 1;
++const STORAGE_KEY = "searxng.sso.pending-form.v1";
++const MAX_PENDING_AGE_MS = 10 * 60 * 1000;
++const MAX_PENDING_BYTES = 128 * 1024;
++const SESSION_PATH = "/oauth2/session";
++const REAUTH_HEADER = "x-sso-reauth";
++
++const formTargetIsCurrentWindow = (form) => {
++  const target = String(form.target || "_self").toLowerCase();
++  return target === "_self";
++};
++
++export const pendingSubmissionFor = (
++  form,
++  {
++    FormDataClass = globalThis.FormData,
++    now = Date.now(),
++    origin = globalThis.location?.origin,
++  } = {},
++) => {
++  if (!origin || String(form.method || "GET").toUpperCase() !== "POST") {
++    return null;
++  }
++  if (!formTargetIsCurrentWindow(form)) {
++    return null;
++  }
++
++  const action = new URL(form.action || "/", `${origin}/`);
++  if (action.origin !== origin) {
++    return null;
++  }
++
++  const fields = [];
++  for (const [name, value] of new FormDataClass(form).entries()) {
++    if (typeof value !== "string") {
++      return null;
++    }
++    fields.push([name, value]);
++  }
++
++  return {
++    version: PENDING_VERSION,
++    createdAt: now,
++    action: `${action.pathname}${action.search}`,
++    fields,
++  };
++};
++
++export const parsePendingSubmission = (
++  raw,
++  { now = Date.now(), origin = globalThis.location?.origin } = {},
++) => {
++  if (!origin || typeof raw !== "string" || raw.length > MAX_PENDING_BYTES) {
++    return null;
++  }
++
++  try {
++    const pending = JSON.parse(raw);
++    if (
++      pending.version !== PENDING_VERSION ||
++      !Number.isFinite(pending.createdAt) ||
++      pending.createdAt > now + 60_000 ||
++      now - pending.createdAt > MAX_PENDING_AGE_MS ||
++      typeof pending.action !== "string" ||
++      !Array.isArray(pending.fields) ||
++      pending.fields.length > 1024
++    ) {
++      return null;
++    }
++
++    const action = new URL(pending.action, `${origin}/`);
++    if (action.origin !== origin) {
++      return null;
++    }
++
++    const fields = pending.fields.map((field) => {
++      if (
++        !Array.isArray(field) ||
++        field.length !== 2 ||
++        typeof field[0] !== "string" ||
++        typeof field[1] !== "string"
++      ) {
++        throw new TypeError("invalid form field");
++      }
++      return field;
++    });
++
++    return {
++      version: PENDING_VERSION,
++      createdAt: pending.createdAt,
++      action: `${action.pathname}${action.search}`,
++      fields,
++    };
++  } catch {
++    return null;
++  }
++};
++
++export const sessionState = (response) => {
++  if (response.ok) {
++    return "valid";
++  }
++  if (response.status === 401 && response.headers.get(REAUTH_HEADER) === "1") {
++    return "reauth";
++  }
++  return "unknown";
++};
++
++export const reauthUrl = (origin) => {
++  const returnUrl = new URL("/", origin).href;
++  return `/oauth2/start?rd=${encodeURIComponent(returnUrl)}`;
++};
++
++export const installSsoReauth = ({
++  documentObject = globalThis.document,
++  fetchImpl = globalThis.fetch?.bind(globalThis),
++  now = () => Date.now(),
++  windowObject = globalThis.window,
++} = {}) => {
++  if (!documentObject || !fetchImpl || !windowObject) {
++    return;
++  }
++
++  const { HTMLFormElement: FormClass, FormData: FormDataClass } = windowObject;
++  const { origin } = windowObject.location;
++  const storage = windowObject.sessionStorage;
++  const nativeSubmit = FormClass.prototype.submit;
++
++  const rawPending = storage.getItem(STORAGE_KEY);
++  if (rawPending !== null) {
++    storage.removeItem(STORAGE_KEY);
++    const pending = parsePendingSubmission(rawPending, { now: now(), origin });
++    if (pending) {
++      const replayForm = documentObject.createElement("form");
++      replayForm.action = pending.action;
++      replayForm.hidden = true;
++      replayForm.method = "POST";
++
++      for (const [name, value] of pending.fields) {
++        const input = documentObject.createElement("input");
++        input.name = name;
++        input.type = "hidden";
++        input.value = value;
++        replayForm.append(input);
++      }
++
++      documentObject.body.append(replayForm);
++      nativeSubmit.call(replayForm);
++      return;
++    }
++  }
++
++  const activeChecks = new WeakSet();
++  const bypassSubmitEvents = new WeakSet();
++  const approvedSearchSubmissions = new WeakSet();
++
++  const authorizeSubmission = async (form, pending, resume) => {
++    if (activeChecks.has(form)) {
++      return;
++    }
++    activeChecks.add(form);
++
++    try {
++      const response = await fetchImpl(SESSION_PATH, {
++        cache: "no-store",
++        credentials: "same-origin",
++        headers: { Accept: "application/json" },
++      });
++
++      if (sessionState(response) !== "reauth") {
++        resume();
++        return;
++      }
++
++      try {
++        storage.setItem(STORAGE_KEY, JSON.stringify(pending));
++      } catch {
++        resume();
++        return;
++      }
++      windowObject.location.assign(reauthUrl(origin));
++    } catch {
++      // Preserve normal failure behavior if the session probe itself is down.
++      resume();
++    } finally {
++      activeChecks.delete(form);
++    }
++  };
++
++  const searchForm = documentObject.getElementById("search");
++  if (searchForm instanceof FormClass) {
++    Object.defineProperty(searchForm, "submit", {
++      configurable: true,
++      value: () => {
++        if (approvedSearchSubmissions.delete(searchForm)) {
++          nativeSubmit.call(searchForm);
++          return;
++        }
++
++        const pending = pendingSubmissionFor(searchForm, {
++          FormDataClass,
++          now: now(),
++          origin,
++        });
++        if (!pending) {
++          nativeSubmit.call(searchForm);
++          return;
++        }
++        void authorizeSubmission(searchForm, pending, () => nativeSubmit.call(searchForm));
++      },
++    });
++  }
++
++  documentObject.addEventListener(
++    "submit",
++    (event) => {
++      const form = event.target;
++      if (!(form instanceof FormClass) || bypassSubmitEvents.delete(form)) {
++        return;
++      }
++
++      const pending = pendingSubmissionFor(form, {
++        FormDataClass,
++        now: now(),
++        origin,
++      });
++      if (!pending) {
++        return;
++      }
++
++      event.preventDefault();
++      event.stopImmediatePropagation();
++      const submitter = event.submitter;
++
++      void authorizeSubmission(form, pending, () => {
++        if (form === searchForm) {
++          approvedSearchSubmissions.add(form);
++        }
++        bypassSubmitEvents.add(form);
++        if (submitter) {
++          form.requestSubmit(submitter);
++        } else {
++          form.requestSubmit();
++        }
++        windowObject.queueMicrotask(() => approvedSearchSubmissions.delete(form));
++      });
++    },
++    true,
++  );
++};
++
++if (typeof window !== "undefined" && typeof document !== "undefined") {
++  installSsoReauth();
++}
+diff --git a/tests/unit/client/sso-reauth.test.mjs b/tests/unit/client/sso-reauth.test.mjs
+new file mode 100644
+index 00000000..cdb33e91
+--- /dev/null
++++ b/tests/unit/client/sso-reauth.test.mjs
+@@ -0,0 +1,250 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++
++import {
++  installSsoReauth,
++  parsePendingSubmission,
++  pendingSubmissionFor,
++  reauthUrl,
++  sessionState,
++} from "../../../searx/static/themes/simple/sso-reauth.mjs";
++
++const now = 1_800_000_000_000;
++const origin = "https://search.ihar.dev";
++
++class TestFormData {
++  constructor(form) {
++    this.fields = form.fields;
++  }
++
++  entries() {
++    return this.fields[Symbol.iterator]();
++  }
++}
++
++class TestForm {
++  constructor({ action = `${origin}/search`, fields = [], method = "POST" } = {}) {
++    this.action = action;
++    this.fields = fields;
++    this.method = method;
++    this.target = "_self";
++    this.nativeSubmits = 0;
++    this.requestSubmits = 0;
++  }
++
++  append() {}
++
++  requestSubmit() {
++    this.requestSubmits += 1;
++    const event = this.document.submitEvent(this);
++    if (!event.defaultPrevented) {
++      this.submit();
++    }
++  }
++
++  submit() {
++    this.nativeSubmits += 1;
++  }
++}
++
++class TestStorage {
++  values = new Map();
++
++  getItem(key) {
++    return this.values.has(key) ? this.values.get(key) : null;
++  }
++
++  removeItem(key) {
++    this.values.delete(key);
++  }
++
++  setItem(key, value) {
++    this.values.set(key, value);
++  }
++}
++
++class TestDocument {
++  constructor(searchForm) {
++    this.searchForm = searchForm;
++    this.searchForm.document = this;
++    this.body = { append() {} };
++  }
++
++  addEventListener(type, listener) {
++    if (type === "submit") {
++      this.submitListener = listener;
++    }
++  }
++
++  createElement(type) {
++    if (type === "form") {
++      return new TestForm();
++    }
++    return {};
++  }
++
++  getElementById(id) {
++    return id === "search" ? this.searchForm : null;
++  }
++
++  submitEvent(form) {
++    const event = {
++      defaultPrevented: false,
++      submitter: null,
++      target: form,
++      preventDefault() {
++        this.defaultPrevented = true;
++      },
++      stopImmediatePropagation() {},
++    };
++    this.submitListener(event);
++    return event;
++  }
++}
++
++const response = (status, headers = {}) => new Response(null, { status, headers });
++const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
++
++test("serializes same-origin POST fields without exposing them in the action", () => {
++  const form = new TestForm({
++    action: `${origin}/search?category=general`,
++    fields: [
++      ["q", "private search"],
++      ["language", "en"],
++      ["language", "de"],
++    ],
++  });
++
++  assert.deepEqual(
++    pendingSubmissionFor(form, { FormDataClass: TestFormData, now, origin }),
++    {
++      version: 1,
++      createdAt: now,
++      action: "/search?category=general",
++      fields: [
++        ["q", "private search"],
++        ["language", "en"],
++        ["language", "de"],
++      ],
++    },
++  );
++});
++
++test("does not intercept GET, cross-origin, or new-window forms", () => {
++  const getForm = new TestForm({ method: "GET" });
++  const foreignForm = new TestForm({ action: "https://example.net/search" });
++  const newWindowForm = new TestForm();
++  newWindowForm.target = "_blank";
++
++  for (const form of [getForm, foreignForm, newWindowForm]) {
++    assert.equal(
++      pendingSubmissionFor(form, { FormDataClass: TestFormData, now, origin }),
++      null,
++    );
++  }
++});
++
++test("accepts only fresh same-origin pending submissions", () => {
++  const valid = JSON.stringify({
++    version: 1,
++    createdAt: now,
++    action: "/search",
++    fields: [["q", "private search"]],
++  });
++
++  assert.deepEqual(parsePendingSubmission(valid, { now, origin }), {
++    version: 1,
++    createdAt: now,
++    action: "/search",
++    fields: [["q", "private search"]],
++  });
++  assert.equal(
++    parsePendingSubmission(valid, { now: now + 11 * 60 * 1000, origin }),
++    null,
++  );
++  assert.equal(
++    parsePendingSubmission(
++      JSON.stringify({
++        version: 1,
++        createdAt: now,
++        action: "https://example.net/search",
++        fields: [],
++      }),
++      { now, origin },
++    ),
++    null,
++  );
++});
++
++test("recognizes only the proxy-owned reauthentication response", () => {
++  assert.equal(sessionState(response(202)), "valid");
++  assert.equal(sessionState(response(401, { "X-SSO-Reauth": "1" })), "reauth");
++  assert.equal(sessionState(response(401)), "unknown");
++  assert.equal(sessionState(response(500, { "X-SSO-Reauth": "1" })), "unknown");
++});
++
++test("uses a fixed root return URL that never includes form fields", () => {
++  const url = reauthUrl(origin);
++  assert.equal(url, "/oauth2/start?rd=https%3A%2F%2Fsearch.ihar.dev%2F");
++  assert.equal(url.includes("private"), false);
++});
++
++test("stores an expired search and starts SSO without submitting it", async () => {
++  const form = new TestForm({ fields: [["q", "private search"]] });
++  const documentObject = new TestDocument(form);
++  const storage = new TestStorage();
++  let assignedUrl;
++  const windowObject = {
++    FormData: TestFormData,
++    HTMLFormElement: TestForm,
++    location: {
++      origin,
++      assign(url) {
++        assignedUrl = url;
++      },
++    },
++    queueMicrotask,
++    sessionStorage: storage,
++  };
++
++  installSsoReauth({
++    documentObject,
++    fetchImpl: async () => response(401, { "X-SSO-Reauth": "1" }),
++    now: () => now,
++    windowObject,
++  });
++
++  const event = documentObject.submitEvent(form);
++  await settle();
++
++  assert.equal(event.defaultPrevented, true);
++  assert.equal(form.nativeSubmits, 0);
++  assert.equal(assignedUrl, reauthUrl(origin));
++  assert.equal(assignedUrl.includes("private"), false);
++  assert.match([...storage.values.values()][0], /private search/);
++});
++
++test("continues a search immediately while the SSO session is valid", async () => {
++  const form = new TestForm({ fields: [["q", "ordinary search"]] });
++  const documentObject = new TestDocument(form);
++  const windowObject = {
++    FormData: TestFormData,
++    HTMLFormElement: TestForm,
++    location: { origin, assign() {} },
++    queueMicrotask,
++    sessionStorage: new TestStorage(),
++  };
++
++  installSsoReauth({
++    documentObject,
++    fetchImpl: async () => response(202),
++    now: () => now,
++    windowObject,
++  });
++
++  documentObject.submitEvent(form);
++  await settle();
++
++  assert.equal(form.requestSubmits, 1);
++  assert.equal(form.nativeSubmits, 1);
++});

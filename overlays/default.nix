@@ -124,6 +124,22 @@
         ];
       });
 
+      # Preserve POST form data across an oauth2-proxy reauthentication. The
+      # unconditional template patch is the expiry guard: if upstream changes
+      # its integration point, the package build fails for an explicit review.
+      searxng = prev.searxng.overrideAttrs (old: {
+        patches = (old.patches or [ ]) ++ [ ./searxng-load-sso-reauth-script.patch ];
+
+        doCheck = true;
+        nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ prev.nodejs ];
+
+        checkPhase = ''
+          runHook preCheck
+          ${lib.getExe prev.nodejs} --test tests/unit/client/sso-reauth.test.mjs
+          runHook postCheck
+        '';
+      });
+
       # CI renders two-revision config diffs by calling standalone dix, not
       # nh's internal dix library. Stable dix 1.4.x omits the per-package size
       # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI
