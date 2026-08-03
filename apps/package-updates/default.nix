@@ -1,5 +1,7 @@
 { pkgs }:
 let
+  packageUpdateTools = import ./package.nix { inherit pkgs; };
+
   mkApp = program: description: {
     type = "app";
     inherit program;
@@ -103,6 +105,7 @@ let
 in
 {
   packages = {
+    package-update-tools = packageUpdateTools;
     update-packages = updatePackages;
     update-oci-images = updateOciImages;
   };
