@@ -1,3 +1,5 @@
+import pytest
+
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.usage import (
@@ -121,7 +123,6 @@ def test_normalizes_reset_credit_expiry_and_secondary_limit_type() -> None:
                 "rate_limit": {
                     "primary_window": {"limit_window_seconds": 123},
                     "secondary_window": {
-                        "used_percent": "unknown",
                         "limit_window_seconds": 18_000,
                     },
                 },
@@ -131,7 +132,6 @@ def test_normalizes_reset_credit_expiry_and_secondary_limit_type() -> None:
             RESET_CREDITS_ENDPOINT: {
                 "credits": [
                     {"expires_at": "invalid"},
-                    "not-an-object",
                     {"expires_at": "2023-11-14T22:15:00Z"},
                 ]
             },
@@ -168,3 +168,22 @@ def test_normalizes_reset_credit_expiry_and_secondary_limit_type() -> None:
         "next_expires_after_seconds": 100,
     }
     assert "next_expires_after_seconds=100" in format_personal_usage(usage)
+
+
+def test_rejects_malformed_usage_fields() -> None:
+    client = FakeJsonHttpClient(
+        {
+            USAGE_ENDPOINT: {
+                "rate_limit": {
+                    "primary_window": {
+                        "used_percent": "unknown",
+                        "limit_window_seconds": 18_000,
+                    }
+                }
+            },
+            RESET_CREDITS_ENDPOINT: {"credits": []},
+        }
+    )
+
+    with pytest.raises(CodexToolsError, match="Invalid usage response"):
+        PersonalUsageService(client).fetch(CodexAuth("test-token", None), now=0)

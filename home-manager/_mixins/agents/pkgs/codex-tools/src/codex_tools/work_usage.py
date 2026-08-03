@@ -5,26 +5,9 @@ from datetime import datetime, timezone
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.http import JsonHttpClient
-from codex_tools.json import (
-    JsonObject,
-    boolean_value,
-    number_value,
-    object_value,
-    string_value,
-)
+from codex_tools.json import JsonObject
+from codex_tools.payloads import WorkUsagePayload, validate_payload
 from codex_tools.usage import USAGE_ENDPOINT
-
-
-def _coerce_number(value: object) -> int | float | None:
-    number = number_value(value)
-    if number is not None:
-        return number
-    if not isinstance(value, str):
-        return None
-    try:
-        return float(value) if "." in value else int(value)
-    except ValueError:
-        return None
 
 
 @dataclass(frozen=True)
@@ -84,36 +67,37 @@ class WorkUsage:
 
 
 def normalize_work_usage(response: JsonObject, *, now: float) -> WorkUsage:
-    spend_control = object_value(response, "spend_control") or {}
-    individual_limit = object_value(spend_control, "individual_limit")
+    payload = validate_payload(WorkUsagePayload, response, source="work usage response")
+    spend_control = payload.spend_control
+    individual_limit = spend_control.individual_limit
     if individual_limit is None:
         raise CodexToolsError("Missing spend_control.individual_limit in usage response")
 
     current = datetime.fromtimestamp(now, timezone.utc)
     window_start = datetime(current.year, current.month, 1, tzinfo=timezone.utc).timestamp()
-    reset_at = _coerce_number(individual_limit.get("reset_at"))
-    credits = object_value(response, "credits") or {}
+    reset_at = individual_limit.reset_at
+    credits = payload.credits
     return WorkUsage(
-        account_id=string_value(response.get("account_id")),
-        email=string_value(response.get("email")),
-        plan_type=string_value(response.get("plan_type")),
-        reached=boolean_value(spend_control.get("reached")) or False,
-        source=string_value(individual_limit.get("source")),
-        limit=_coerce_number(individual_limit.get("limit")),
-        used=_coerce_number(individual_limit.get("used")),
-        remaining=_coerce_number(individual_limit.get("remaining")),
-        used_percent=_coerce_number(individual_limit.get("used_percent")),
-        remaining_percent=_coerce_number(individual_limit.get("remaining_percent")),
-        reset_after_seconds=_coerce_number(individual_limit.get("reset_after_seconds")),
+        account_id=payload.account_id,
+        email=payload.email,
+        plan_type=payload.plan_type,
+        reached=spend_control.reached or False,
+        source=individual_limit.source,
+        limit=individual_limit.limit,
+        used=individual_limit.used,
+        remaining=individual_limit.remaining,
+        used_percent=individual_limit.used_percent,
+        remaining_percent=individual_limit.remaining_percent,
+        reset_after_seconds=individual_limit.reset_after_seconds,
         reset_at=reset_at,
         window_start_at=math.floor(window_start),
         window_seconds=(math.floor(reset_at - window_start) if reset_at is not None else None),
         elapsed_seconds=math.floor(now - window_start),
         credits=WorkCredits(
-            has_credits=boolean_value(credits.get("has_credits")) or False,
-            unlimited=boolean_value(credits.get("unlimited")) or False,
-            overage_limit_reached=(boolean_value(credits.get("overage_limit_reached")) or False),
-            balance=_coerce_number(credits.get("balance")),
+            has_credits=credits.has_credits or False,
+            unlimited=credits.unlimited or False,
+            overage_limit_reached=credits.overage_limit_reached or False,
+            balance=credits.balance,
         ),
     )
 

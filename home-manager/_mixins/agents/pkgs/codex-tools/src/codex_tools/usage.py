@@ -6,14 +6,12 @@ from typing import Final
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.http import JsonHttpClient
-from codex_tools.json import (
-    JsonObject,
-    boolean_value,
-    integer_value,
-    number_value,
-    object_list,
-    object_value,
-    string_value,
+from codex_tools.json import JsonObject
+from codex_tools.payloads import (
+    PersonalUsagePayload,
+    ResetCreditsPayload,
+    UsageWindowPayload,
+    validate_payload,
 )
 
 USAGE_ENDPOINT: Final = "https://chatgpt.com/backend-api/wham/usage"
@@ -31,16 +29,16 @@ class UsageWindow:
     reset_at: int | float | None
 
     @classmethod
-    def from_json(cls, source: JsonObject) -> "UsageWindow":
-        used_percent = number_value(source.get("used_percent"))
+    def from_payload(cls, source: UsageWindowPayload) -> "UsageWindow":
+        used_percent = source.used_percent
         return cls(
             used_percent=used_percent,
             remaining_percent=(
                 math.floor(100 - used_percent) if used_percent is not None else None
             ),
-            limit_window_seconds=integer_value(source.get("limit_window_seconds")),
-            reset_after_seconds=integer_value(source.get("reset_after_seconds")),
-            reset_at=number_value(source.get("reset_at")),
+            limit_window_seconds=source.limit_window_seconds,
+            reset_after_seconds=source.reset_after_seconds,
+            reset_at=source.reset_at,
         )
 
     def to_json(self) -> JsonObject:
@@ -109,10 +107,10 @@ class PersonalUsage:
         }
 
 
-def _window_kind(source: JsonObject | None) -> str | None:
+def _window_kind(source: UsageWindowPayload | None) -> str | None:
     if source is None:
         return None
-    duration = integer_value(source.get("limit_window_seconds"))
+    duration = source.limit_window_seconds
     if duration == FIVE_HOURS:
         return "five_hour"
     if duration == ONE_WEEK:
@@ -131,14 +129,14 @@ def _parse_expiry(value: str | None) -> int | None:
 
 
 def _reset_credits(
-    source: JsonObject,
-    fallback: JsonObject | None,
+    source: ResetCreditsPayload,
+    fallback: ResetCreditsPayload | None,
     *,
     now: float,
 ) -> ResetCredits:
     credits: list[ResetCredit] = []
-    for item in object_list(source, "credits"):
-        expires_at = string_value(item.get("expires_at"))
+    for item in source.credits:
+        expires_at = item.expires_at
         expires_at_unix = _parse_expiry(expires_at)
         credits.append(
             ResetCredit(
@@ -155,9 +153,9 @@ def _reset_credits(
         if credit.expires_after_seconds is not None and credit.expires_after_seconds >= 0
     ]
     next_credit = min(future, key=lambda credit: credit.expires_after_seconds or 0, default=None)
-    available_count = integer_value(source.get("available_count"))
+    available_count = source.available_count
     if available_count is None and fallback is not None:
-        available_count = integer_value(fallback.get("available_count"))
+        available_count = fallback.available_count
     return ResetCredits(
         available_count=available_count or 0,
         credits=tuple(credits),
@@ -171,14 +169,20 @@ def normalize_personal_usage(
     *,
     now: float,
 ) -> PersonalUsage:
-    rate_limit = object_value(response, "rate_limit") or {}
-    primary = object_value(rate_limit, "primary_window")
-    secondary = object_value(rate_limit, "secondary_window")
+    payload = validate_payload(PersonalUsagePayload, response, source="usage response")
+    reset_payload = (
+        validate_payload(ResetCreditsPayload, reset_details, source="reset credits response")
+        if reset_details is not None
+        else None
+    )
+    rate_limit = payload.rate_limit
+    primary = rate_limit.primary_window
+    secondary = rate_limit.secondary_window
     by_kind = {_window_kind(window): window for window in (primary, secondary)}
-    fallback_credits = object_value(response, "rate_limit_reset_credits")
-    reset_source = reset_details or fallback_credits or {}
+    fallback_credits = payload.rate_limit_reset_credits
+    reset_source = reset_payload or fallback_credits or ResetCreditsPayload()
 
-    reached_type = string_value(response.get("rate_limit_reached_type"))
+    reached_type = payload.rate_limit_reached_type
     if reached_type in {"primary", "primary_window"}:
         reached_type = _window_kind(primary) or reached_type
     elif reached_type in {"secondary", "secondary_window"}:
@@ -187,11 +191,11 @@ def normalize_personal_usage(
     five_hour = by_kind.get("five_hour")
     weekly = by_kind.get("weekly")
     return PersonalUsage(
-        allowed=boolean_value(rate_limit.get("allowed")),
-        limit_reached=boolean_value(rate_limit.get("limit_reached")),
+        allowed=rate_limit.allowed,
+        limit_reached=rate_limit.limit_reached,
         limit_reached_type=reached_type,
-        five_hour=UsageWindow.from_json(five_hour) if five_hour else None,
-        weekly=UsageWindow.from_json(weekly) if weekly else None,
+        five_hour=UsageWindow.from_payload(five_hour) if five_hour else None,
+        weekly=UsageWindow.from_payload(weekly) if weekly else None,
         reset_credits=_reset_credits(reset_source, fallback_credits, now=now),
     )
 

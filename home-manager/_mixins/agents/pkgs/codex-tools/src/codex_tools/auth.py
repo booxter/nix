@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from codex_tools.errors import CodexToolsError
-from codex_tools.json import decode_object, object_value, string_value
+from codex_tools.json import decode_object
+from codex_tools.payloads import AuthPayload, validate_payload
 
 
 @dataclass(frozen=True)
@@ -19,11 +20,12 @@ class CodexAuth:
         except OSError as error:
             raise CodexToolsError(f"Cannot read Codex auth file {path}: {error}") from error
 
-        tokens = object_value(document, "tokens") or {}
-        access_token = string_value(tokens.get("access_token"))
+        payload = validate_payload(AuthPayload, document, source=f"Codex auth file {path}")
+        tokens = payload.tokens
+        access_token = tokens.access_token if tokens is not None else None
         if not access_token:
             raise CodexToolsError(f"No access token found in {path}")
         return cls(
             access_token=access_token,
-            account_id=string_value(tokens.get("account_id")),
+            account_id=tokens.account_id if tokens is not None else None,
         )

@@ -70,10 +70,7 @@ def test_rejects_missing_limit_and_account() -> None:
 
 
 def test_formats_missing_values() -> None:
-    usage = normalize_work_usage(
-        {"spend_control": {"individual_limit": {"limit": "invalid"}}},
-        now=0,
-    )
+    usage = normalize_work_usage({"spend_control": {"individual_limit": {}}}, now=0)
 
     assert format_work_usage(usage).splitlines() == [
         "remaining: ?%",
@@ -82,6 +79,14 @@ def test_formats_missing_values() -> None:
         "reset_after_seconds: ?",
         "reset_at: ?",
     ]
+
+
+def test_rejects_malformed_work_usage_fields() -> None:
+    with pytest.raises(CodexToolsError, match="Invalid work usage response"):
+        normalize_work_usage(
+            {"spend_control": {"individual_limit": {"limit": "invalid"}}},
+            now=0,
+        )
 
 
 def test_work_usage_main_writes_json(tmp_path: Path) -> None:

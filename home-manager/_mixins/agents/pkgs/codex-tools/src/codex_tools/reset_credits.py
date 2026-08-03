@@ -3,7 +3,8 @@ from dataclasses import dataclass
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
 from codex_tools.http import JsonHttpClient
-from codex_tools.json import JsonObject, integer_value, object_list, string_value
+from codex_tools.json import JsonObject
+from codex_tools.payloads import ResetCreditsPayload, validate_payload
 from codex_tools.usage import RESET_CREDITS_ENDPOINT
 
 
@@ -14,15 +15,17 @@ class ResetCreditsReport:
 
     @classmethod
     def from_json(cls, response: JsonObject) -> "ResetCreditsReport":
-        available_count = integer_value(response.get("available_count"))
+        payload = validate_payload(
+            ResetCreditsPayload,
+            response,
+            source="reset credits response",
+        )
+        available_count = payload.available_count
         if available_count is None:
             raise CodexToolsError("Unexpected response: missing available_count")
         return cls(
             available_count=available_count,
-            expirations=tuple(
-                string_value(credit.get("expires_at"))
-                for credit in object_list(response, "credits")
-            ),
+            expirations=tuple(credit.expires_at for credit in payload.credits),
         )
 
 

@@ -7,7 +7,7 @@ name = "codex-tools"
 version = "0.1.0"
 description = "Typed helpers for local Codex account automation"
 requires-python = ">=3.11"
-dependencies = ["openai"]
+dependencies = ["openai", "pydantic"]
 
 [project.scripts]
 codex-rate-limit-reset-credits = "codex_tools.cli:reset_credits_main"

@@ -24,7 +24,6 @@ def test_fetches_and_formats_reset_credits() -> None:
                 "credits": [
                     {"expires_at": "2026-08-03T12:00:00Z"},
                     {},
-                    "invalid",
                 ],
             }
         }
@@ -48,6 +47,11 @@ def test_fetches_and_formats_reset_credits() -> None:
 def test_rejects_missing_available_count() -> None:
     with pytest.raises(CodexToolsError, match="missing available_count"):
         ResetCreditsReport.from_json({"credits": []})
+
+
+def test_rejects_malformed_credits() -> None:
+    with pytest.raises(CodexToolsError, match="Invalid reset credits response"):
+        ResetCreditsReport.from_json({"available_count": 1, "credits": ["invalid"]})
 
 
 def test_reset_credits_main_accepts_positional_auth_file(tmp_path: Path) -> None:
