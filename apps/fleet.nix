@@ -317,7 +317,7 @@ let
       exec ${pkiRotationPackage}/bin/pki-rotation "$@"
     '';
   };
-  resetOidc = pkgs.callPackage ../nixos/pki/pkgs/reset-oidc { };
+  resetOidc = pkgs.callPackage ../nixos/pki/pkgs/kanidm-tools { };
   wgHomeClientConfig = pkgs.writeShellApplication {
     name = "wg-home-client-config";
     runtimeInputs = [ pkgs.openssh ];

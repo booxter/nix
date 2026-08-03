@@ -3,7 +3,7 @@ use std::path::Path;
 use std::process::ExitCode;
 
 use anyhow::Result;
-use reset_oidc::{run_server, send_with_kanidm};
+use kanidm_tools::{run_server, send_with_kanidm};
 
 const CONFIG_PATH: &str = "/etc/kanidm/config";
 const PASSWORD_PATH: &str = "/run/secrets/kanidmIdmAdminPassword";

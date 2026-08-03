@@ -5,7 +5,7 @@ pkgs: {
 
   oidc-synthetic-probe = pkgs.callPackage ./oidc-synthetic-probe { };
 
-  reset-oidc = pkgs.callPackage ./reset-oidc { };
+  reset-oidc = pkgs.callPackage ./kanidm-tools { };
 
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 

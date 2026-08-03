@@ -11,7 +11,7 @@ let
 in
 assert lib.getVersion kanidmWithSecretProvisioning_1_10 == kanidmClientVersion;
 rustPlatform.buildRustPackage {
-  pname = "reset-oidc";
+  pname = "kanidm-tools";
   version = "0.1.0";
 
   src = lib.fileset.toSource {
@@ -23,7 +23,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-7xPnismw8AvcRPAXA9tVzMJZ9T2GOC8w3LbwqchvjZY=";
+  cargoHash = "sha256-M4erT2YxjeZG2bxx1qafiUMVr8fUrJaPnQZzP17dt9g=";
 
   RESET_OIDC_SSH = lib.getExe openssh;
 
@@ -41,7 +41,7 @@ rustPlatform.buildRustPackage {
   passthru = { inherit kanidmClientVersion; };
 
   meta = {
-    description = "Send Kanidm credential reset email requests through the PKI host";
+    description = "Administrative Kanidm tools for the PKI host";
     license = lib.licenses.mit;
     mainProgram = "reset-oidc";
     maintainers = with lib.maintainers; [ booxter ];

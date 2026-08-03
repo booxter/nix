@@ -3720,7 +3720,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "reset-oidc"
+name = "kanidm-tools"
 version = "0.1.0"
 dependencies = [
  "anyhow",
