@@ -58,6 +58,7 @@ let
       }) hostInventory.nixosHostSpecs
     );
   };
+  fleetTools = pkgs.callPackage ./fleet-tools { inherit fleetInventory; };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -89,7 +90,7 @@ let
     };
   };
 
-  getHosts = pkgs.callPackage ./fleet-tools { inherit fleetInventory; };
+  getHosts = fleetTools;
 
   deploy = pkgs.writeShellApplication {
     name = "deploy";
@@ -237,24 +238,7 @@ let
       ;
   };
 
-  getLocalBuilders = pkgs.writeShellApplication {
-    name = "get-local-builders";
-    runtimeInputs = with pkgs; [
-      coreutils
-      gawk
-    ];
-    text = ''
-      exec ${pkgs.bash}/bin/bash ${../apps/get-local-builders.sh} "$@"
-    '';
-    inherit
-      (mkBatsCheck {
-        test = ./get-local-builders.bats;
-        environment.GET_LOCAL_BUILDERS_BIN = "${./get-local-builders.sh}";
-      })
-      derivationArgs
-      checkPhase
-      ;
-  };
+  getLocalBuilders = fleetTools;
 
   hbaFlash = pkgs.writeShellApplication {
     name = "hba-flash";
