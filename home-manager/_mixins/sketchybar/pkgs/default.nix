@@ -32,6 +32,7 @@ let
     "github-status"
     "ip_address"
     "jellyfin"
+    "network"
   ];
   packagedPluginNames = nativePluginNames ++ [
     "attention-inbox"
@@ -133,6 +134,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}
     ${makeNativePluginWrapper "ip_address" "sketchybar-ip-address"}
     ${makeNativePluginWrapper "jellyfin" "sketchybar-jellyfin"}
+    ${makeNativePluginWrapper "network" "sketchybar-network"}
     runHook postInstall
   '';
 

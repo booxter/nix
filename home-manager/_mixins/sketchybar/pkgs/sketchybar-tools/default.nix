@@ -17,6 +17,7 @@ buildGoModule {
     "cmd/sketchybar-github-status"
     "cmd/sketchybar-ip-address"
     "cmd/sketchybar-jellyfin"
+    "cmd/sketchybar-network"
   ];
 
   preCheck = ''
