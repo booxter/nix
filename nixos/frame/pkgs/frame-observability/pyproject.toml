@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "frame-observability"
+version = "0.1.0"
+description = "Typed Prometheus textfile collectors for frame"
+requires-python = ">=3.11"
+dependencies = ["prometheus-client", "pydantic"]
+
+[project.scripts]
+frame-ollama-metrics = "frame_observability.ollama:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=frame_observability --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/frame_observability"]
+strict = true
+
+[tool.ruff]
+line-length = 100
