@@ -13,6 +13,7 @@ buildGoModule {
 
   subPackages = [
     "cmd/sketchybar-alertmanager"
+    "cmd/sketchybar-github-status"
     "cmd/sketchybar-jellyfin"
   ];
 

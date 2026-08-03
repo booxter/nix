@@ -29,6 +29,7 @@ let
   ];
   nativePluginNames = [
     "alertmanager"
+    "github-status"
     "jellyfin"
   ];
   shellPluginNames = builtins.filter (name: !builtins.elem name nativePluginNames) pluginNames;
@@ -125,6 +126,7 @@ pkgs.stdenvNoCC.mkDerivation {
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
     ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
+    ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}
     ${makeNativePluginWrapper "jellyfin" "sketchybar-jellyfin"}
     runHook postInstall
   '';
