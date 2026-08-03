@@ -8,7 +8,7 @@
 }:
 let
   cfg = config.programs.remoteGui;
-  remoteGuiPkgs = import ./pkgs { inherit pkgs; };
+  remoteGuiRunners = pkgs.callPackage ./pkgs { };
 in
 {
   options.programs.remoteGui = {
@@ -33,8 +33,6 @@ in
         message = "programs.remoteGui.x11 on Darwin requires programs.xquartz";
       };
 
-    home.packages =
-      lib.optionals cfg.x11.enable [ remoteGuiPkgs.xrun-nixpkgs ]
-      ++ lib.optionals cfg.wayland.enable [ remoteGuiPkgs.wrun-nixpkgs ];
+    home.packages = lib.optional (cfg.x11.enable || cfg.wayland.enable) remoteGuiRunners;
   };
 }

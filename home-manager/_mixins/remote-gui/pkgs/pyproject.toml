@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "remote-nixpkgs-runners"
+version = "0.1.0"
+description = "Run remote Linux nixpkgs applications over X11 or Waypipe"
+requires-python = ">=3.11"
+
+[project.scripts]
+xrun-nixpkgs = "remote_nixpkgs.cli:x11_main"
+wrun-nixpkgs = "remote_nixpkgs.cli:waypipe_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=remote_nixpkgs --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/remote_nixpkgs"]
+strict = true
+
+[tool.ruff]
+line-length = 100
