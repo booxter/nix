@@ -7,7 +7,7 @@ name = "sync-git-mains"
 version = "0.1.0"
 description = "Fast-forward local Git main branches from origin"
 requires-python = ">=3.11"
-dependencies = ["dulwich"]
+dependencies = []
 
 [project.scripts]
 sync-git-mains = "sync_git_mains.cli:main"
