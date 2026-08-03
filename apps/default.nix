@@ -9,10 +9,13 @@ let
     inherit sopsTools;
   };
   issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token { };
+  getFfCookie = pkgs.callPackage ./get-ff-cookie { };
   seerrRequestStorage = pkgs.callPackage ./seerr-request-storage { };
   seerrUpdateUserTags = pkgs.callPackage ./seerr-update-user-tags { };
 in
 {
+  get-ff-cookie = getFfCookie;
+
   issue-internal-service-cert = issueInternalServiceCert;
 
   issue-observability-cert = issueObservabilityCert;

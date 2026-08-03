@@ -245,15 +245,7 @@
             inherit program;
             meta = { inherit description; };
           };
-          get-ff-cookie = pkgs.writeShellApplication {
-            name = "get-ff-cookie";
-            runtimeInputs = with pkgs; [
-              coreutils
-              gallery-dl
-              gnugrep
-            ];
-            text = builtins.readFile ./apps/get-ff-cookie.sh;
-          };
+          get-ff-cookie = pkgs.get-ff-cookie;
           cookieApps = {
             get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
           };

@@ -19,6 +19,8 @@ in
 
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
+  get-ff-cookie = appPackages.get-ff-cookie;
+
   flake-input-update-summary = pkgs.callPackage ./flake-input-update-summary { };
 
   gitDarwinPrecompose =

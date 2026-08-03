@@ -17,8 +17,11 @@ helpers.forAllSystems (
     fleet = import ./apps/fleet.nix { inherit pkgs; };
     packageUpdates = import ./apps/package-updates { inherit pkgs; };
     proxmox = import ./apps/proxmox.nix { inherit inputs system; };
+    getFfCookie = pkgs.get-ff-cookie;
   in
   {
+    get-ff-cookie = getFfCookie;
+
     sops-tools = pkgs.sops-tools;
     patch-context = pkgs.patch-context;
     deploy = fleet.packages.deploy;
