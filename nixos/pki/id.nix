@@ -256,7 +256,7 @@ in
       UMask = "0077";
       StateDirectory = "kanidm-mail-sender";
       StateDirectoryMode = "0700";
-      ExecStart = "${lib.getExe pkiPkgs.kanidm-mail-sender-bootstrap} ${
+      ExecStart = "${lib.getExe' pkiPkgs.kanidm-mail-sender-bootstrap "kanidm-mail-sender-bootstrap"} ${
         lib.escapeShellArgs [
           "--url"
           kanidmLocalUrl

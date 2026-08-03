@@ -1,18 +1,17 @@
-use std::fs;
 use std::future::Future;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 
-use anyhow::{anyhow, bail, ensure, Context, Result};
+use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
-use kanidm_client::KanidmClientBuilder;
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroizing;
+
+mod client;
+pub mod mail_sender;
 
 const PROTOCOL_VERSION: u8 = 1;
 const TTL_SECONDS: u64 = 86_400;
-const ADMIN_ID: &str = "idm_admin";
 const REMOTE_PROGRAM: &str = "/run/current-system/sw/bin/reset-oidc-server";
 const SSH_PROGRAM: &str = match option_env!("RESET_OIDC_SSH") {
     Some(path) => path,
@@ -45,7 +44,7 @@ pub struct ClientArgs {
     pub target: String,
 }
 
-fn non_empty(value: &str) -> Result<String, String> {
+pub(crate) fn non_empty(value: &str) -> Result<String, String> {
     if value.trim().is_empty() {
         Err("value must be non-empty".to_owned())
     } else {
@@ -176,24 +175,7 @@ pub async fn send_with_kanidm(
         config_path.display()
     );
 
-    let mut password = Zeroizing::new(
-        fs::read_to_string(password_path)
-            .with_context(|| format!("failed to read {}", password_path.display()))?,
-    );
-    while matches!(password.as_bytes().last(), Some(b'\n' | b'\r')) {
-        password.pop();
-    }
-    ensure!(!password.is_empty(), "Kanidm admin password is empty");
-
-    let client = KanidmClientBuilder::new()
-        .read_options_from_optional_config(config_path)
-        .map_err(|error| anyhow!("failed to read Kanidm client configuration: {error:?}"))?
-        .build()
-        .map_err(|error| anyhow!("failed to build Kanidm client: {error:?}"))?;
-    client
-        .auth_simple_password(ADMIN_ID, &password)
-        .await
-        .map_err(|error| anyhow!("Kanidm authentication failed: {error:?}"))?;
+    let client = client::authenticated_from_config(config_path, password_path).await?;
     client
         .idm_person_account_credential_update_send_intent(
             &request.user_id,
@@ -201,7 +183,9 @@ pub async fn send_with_kanidm(
             request.email,
         )
         .await
-        .map_err(|error| anyhow!("Kanidm rejected the credential reset request: {error:?}"))
+        .map_err(|error| {
+            client::client_error("Kanidm rejected the credential reset request", error)
+        })
 }
 
 #[cfg(test)]

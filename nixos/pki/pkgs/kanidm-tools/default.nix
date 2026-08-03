@@ -23,7 +23,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-M4erT2YxjeZG2bxx1qafiUMVr8fUrJaPnQZzP17dt9g=";
+  cargoHash = "sha256-0zUQxhKoa6jtrPuVPQqIwnPuEdm6Ay1o4xTlfBwjqM4=";
 
   RESET_OIDC_SSH = lib.getExe openssh;
 
