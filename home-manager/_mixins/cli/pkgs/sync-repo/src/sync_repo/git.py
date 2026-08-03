@@ -1,14 +1,9 @@
-from collections.abc import Mapping
+import subprocess
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from io import BytesIO, StringIO
 from pathlib import Path
-
-from dulwich import porcelain
-from dulwich.errors import GitProtocolError, NotGitRepository, ObjectMissing
-from dulwich.graph import can_fast_forward
-from dulwich.refs import Ref
-from dulwich.repo import Repo
+from typing import Protocol
 
 
 @dataclass(frozen=True)
@@ -30,6 +25,48 @@ class SyncError(Exception):
 
 class RebaseFailed(SyncError):
     """A rebase stopped for manual conflict resolution."""
+
+
+@dataclass(frozen=True)
+class GitResult:
+    returncode: int
+    stdout: str
+    stderr: str
+
+
+class GitRunner(Protocol):
+    def run(
+        self,
+        arguments: Sequence[str],
+        *,
+        repository: Path | None = None,
+    ) -> GitResult:
+        """Run Git and capture its result."""
+
+
+@dataclass(frozen=True)
+class SubprocessGitRunner:
+    executable: str = "git"
+    environment: Mapping[str, str] | None = None
+
+    def run(
+        self,
+        arguments: Sequence[str],
+        *,
+        repository: Path | None = None,
+    ) -> GitResult:
+        command = [self.executable]
+        if repository is not None:
+            command.extend(["-C", str(repository)])
+        completed = subprocess.run(
+            [*command, *arguments],
+            check=False,
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            env=self.environment,
+        )
+        return GitResult(completed.returncode, completed.stdout, completed.stderr)
 
 
 def repository_specs(
@@ -57,117 +94,109 @@ def repository_specs(
     }
 
 
-def _branch_upstream(repo: Repo, branch: bytes) -> tuple[str, Ref] | None:
-    config = repo.get_config_stack()
+def _detail(result: GitResult) -> str:
+    message = result.stderr.strip()
+    return f": {message}" if message else ""
+
+
+def _divergence(result: GitResult, upstream: str) -> tuple[int, int]:
+    if result.returncode != 0:
+        raise SyncError(f"cannot compare local branch with {upstream}{_detail(result)}")
+    fields = result.stdout.split()
+    if len(fields) != 2:
+        raise SyncError(f"cannot parse divergence from {upstream}: {result.stdout.strip()}")
     try:
-        remote = config.get((b"branch", branch), b"remote")
-        merge = config.get((b"branch", branch), b"merge")
-    except KeyError:
-        return None
-    if remote == b".":
-        return ".", Ref(merge)
-    prefix = b"refs/heads/"
-    if not merge.startswith(prefix):
-        raise SyncError(f"unsupported upstream ref: {merge.decode(errors='replace')}")
-    return remote.decode(), Ref(b"refs/remotes/" + remote + b"/" + merge.removeprefix(prefix))
-
-
-def _set_origin_upstream(repo: Repo, branch: bytes) -> tuple[str, Ref]:
-    config = repo.get_config()
-    config.set((b"branch", branch), b"remote", b"origin")
-    config.set((b"branch", branch), b"merge", b"refs/heads/" + branch)
-    config.write_to_path()
-    return "origin", Ref(b"refs/remotes/origin/" + branch)
-
-
-def _push(repo: Repo, remote: str, branch_ref: Ref, *, set_upstream: bool) -> None:
-    result = porcelain.push(
-        repo,
-        remote_location=remote,
-        refspecs=f"{branch_ref.decode()}:{branch_ref.decode()}",
-        outstream=BytesIO(),
-        errstream=BytesIO(),
-        set_upstream=set_upstream,
-    )
-    failures = [error for error in (result.ref_status or {}).values() if error]
-    if failures:
-        raise SyncError(f"push failed: {failures[0]}")
+        return int(fields[0]), int(fields[1])
+    except ValueError as error:
+        raise SyncError(
+            f"cannot parse divergence from {upstream}: {result.stdout.strip()}"
+        ) from error
 
 
 class RepositorySynchronizer:
+    def __init__(self, git: GitRunner | None = None) -> None:
+        self._git = git or SubprocessGitRunner()
+
+    def _run(self, path: Path, arguments: Sequence[str]) -> GitResult:
+        return self._git.run(arguments, repository=path)
+
+    def _upstream(self, path: Path, branch: str) -> str | None:
+        result = self._run(
+            path,
+            ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()
+
+        upstream = f"origin/{branch}"
+        origin_ref = self._run(
+            path,
+            ["show-ref", "--verify", "--quiet", f"refs/remotes/{upstream}"],
+        )
+        if origin_ref.returncode != 0:
+            return None
+        configured = self._run(
+            path,
+            ["branch", "--set-upstream-to", upstream, branch],
+        )
+        if configured.returncode != 0:
+            raise SyncError(f"cannot set upstream to {upstream}{_detail(configured)}")
+        return upstream
+
+    def _push_new_branch(self, path: Path, branch: str) -> None:
+        pushed = self._run(path, ["push", "--quiet", "--set-upstream", "origin", branch])
+        if pushed.returncode != 0:
+            raise SyncError(f"push failed{_detail(pushed)}")
+
+    def _compare(self, path: Path, upstream: str) -> tuple[int, int]:
+        result = self._run(
+            path,
+            ["rev-list", "--left-right", "--count", f"HEAD...{upstream}"],
+        )
+        return _divergence(result, upstream)
+
     def sync(self, spec: RepositorySpec) -> SyncOutcome:
         if not spec.path.exists():
             spec.path.parent.mkdir(parents=True, exist_ok=True)
-            try:
-                cloned = porcelain.clone(
-                    spec.remote,
-                    spec.path,
-                    errstream=BytesIO(),
-                )
-                cloned.close()
-            except (porcelain.Error, GitProtocolError, NotGitRepository, OSError) as error:
-                raise SyncError(f"clone failed: {error}") from error
+            cloned = self._git.run(["clone", "--quiet", spec.remote, str(spec.path)])
+            if cloned.returncode != 0:
+                raise SyncError(f"clone failed{_detail(cloned)}")
             return SyncOutcome.CLONED
 
-        try:
-            repo = Repo(str(spec.path))
-        except NotGitRepository as error:
-            raise SyncError(f"{spec.name} is not a Git repository: {spec.path}") from error
+        repository = self._run(spec.path, ["rev-parse", "--git-dir"])
+        if repository.returncode != 0:
+            raise SyncError(f"{spec.name} is not a Git repository: {spec.path}")
 
-        with repo:
-            head_ref = repo.refs.get_symrefs().get(Ref(b"HEAD"))
-            prefix = b"refs/heads/"
-            if head_ref is None or not head_ref.startswith(prefix):
-                raise SyncError(f"detached HEAD in {spec.path}; fix it manually")
-            branch = head_ref.removeprefix(prefix)
+        head = self._run(spec.path, ["symbolic-ref", "--quiet", "--short", "HEAD"])
+        if head.returncode != 0:
+            raise SyncError(f"detached HEAD in {spec.path}; fix it manually")
+        branch = head.stdout.strip()
 
-            try:
-                porcelain.fetch(
-                    repo,
-                    remote_location="origin",
-                    outstream=StringIO(),
-                    errstream=BytesIO(),
-                    prune=True,
-                    quiet=True,
-                )
-            except (porcelain.Error, GitProtocolError, NotGitRepository, OSError) as error:
-                raise SyncError(f"fetch from origin failed: {error}") from error
+        fetched = self._run(
+            spec.path,
+            ["fetch", "--no-auto-maintenance", "--quiet", "--prune", "origin"],
+        )
+        if fetched.returncode != 0:
+            raise SyncError(f"fetch from origin failed{_detail(fetched)}")
 
-            upstream = _branch_upstream(repo, branch)
-            if upstream is None:
-                origin_ref = Ref(b"refs/remotes/origin/" + branch)
-                if origin_ref in repo.refs:
-                    remote, upstream_ref = _set_origin_upstream(repo, branch)
-                else:
-                    try:
-                        _push(repo, "origin", head_ref, set_upstream=True)
-                    except (porcelain.Error, GitProtocolError, OSError) as error:
-                        raise SyncError(f"push failed: {error}") from error
-                    return SyncOutcome.PUSHED
-            else:
-                remote, upstream_ref = upstream
-
-            try:
-                upstream_oid = repo.refs[upstream_ref]
-                local_oid = repo.head()
-            except (KeyError, ObjectMissing) as error:
-                raise SyncError(f"cannot resolve upstream {upstream_ref.decode()}") from error
-
-            if not can_fast_forward(repo, upstream_oid, local_oid):
-                try:
-                    porcelain.rebase(repo, upstream_ref)
-                except porcelain.Error as error:
-                    raise RebaseFailed(
-                        f"rebase failed in {spec.path}; resolve it there manually"
-                    ) from error
-                local_oid = repo.head()
-
-            if local_oid == upstream_oid:
-                return SyncOutcome.UP_TO_DATE
-            if not can_fast_forward(repo, upstream_oid, local_oid):
-                raise SyncError("local branch still diverges from its upstream after rebase")
-            try:
-                _push(repo, remote, head_ref, set_upstream=False)
-            except (porcelain.Error, GitProtocolError, OSError) as error:
-                raise SyncError(f"push failed: {error}") from error
+        upstream = self._upstream(spec.path, branch)
+        if upstream is None:
+            self._push_new_branch(spec.path, branch)
             return SyncOutcome.PUSHED
+
+        ahead, behind = self._compare(spec.path, upstream)
+        if behind > 0:
+            rebased = self._run(spec.path, ["rebase", upstream])
+            if rebased.returncode != 0:
+                raise RebaseFailed(f"rebase failed in {spec.path}; resolve it there manually")
+            ahead, behind = self._compare(spec.path, upstream)
+
+        if behind > 0:
+            raise SyncError("local branch still diverges from its upstream after rebase")
+        if ahead == 0:
+            return SyncOutcome.UP_TO_DATE
+
+        pushed = self._run(spec.path, ["push", "--quiet"])
+        if pushed.returncode != 0:
+            raise SyncError(f"push failed{_detail(pushed)}")
+        return SyncOutcome.PUSHED

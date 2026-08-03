@@ -1,4 +1,5 @@
 {
+  git,
   lib,
   openssh,
   python3,
@@ -16,14 +17,8 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [
-    pythonPackages.dulwich
-    # TODO(nixpkgs): Dulwich's rebase support imports merge3, but the nixpkgs
-    # package does not propagate that runtime dependency yet.
-    pythonPackages.merge3
-  ];
-
   nativeCheckInputs = with pythonPackages; [
+    git
     ruff
     mypy
     pytestCheckHook
@@ -31,7 +26,12 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ openssh ]}"
+    "--prefix PATH : ${
+      lib.makeBinPath [
+        git
+        openssh
+      ]
+    }"
   ];
 
   preCheck = ''

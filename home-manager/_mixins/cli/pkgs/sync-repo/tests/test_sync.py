@@ -1,16 +1,16 @@
 import io
+import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from dulwich import porcelain
-from dulwich.objects import Commit
-from dulwich.refs import Ref
-from dulwich.repo import Repo
-
 from sync_repo.cli import main
-from sync_repo.git import RepositorySpec, repository_specs
-
-IDENTITY = b"Test <test@example.com>"
+from sync_repo.git import (
+    RepositorySpec,
+    RepositorySynchronizer,
+    SubprocessGitRunner,
+    repository_specs,
+)
 
 
 @dataclass(frozen=True)
@@ -25,25 +25,56 @@ class RepositoryFixture:
         return RepositorySpec("dotfiles", str(self.remote), self.checkout)
 
 
-def commit_file(repository: Path, filename: str, content: str, message: str) -> bytes:
-    (repository / filename).write_text(content, encoding="utf-8")
-    porcelain.add(repository, paths=[filename])
-    return porcelain.commit(
-        repository,
-        message=message,
-        author=IDENTITY,
-        committer=IDENTITY,
+def git_environment() -> dict[str, str]:
+    environment = os.environ.copy()
+    environment.update(
+        {
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_SYSTEM": os.devnull,
+            "GIT_TERMINAL_PROMPT": "0",
+        }
     )
+    return environment
+
+
+def run_git(
+    repository: Path | None,
+    *arguments: str,
+    check: bool = True,
+) -> subprocess.CompletedProcess[str]:
+    command = ["git"]
+    if repository is not None:
+        command.extend(["-C", str(repository)])
+    command.extend(arguments)
+    return subprocess.run(
+        command,
+        check=check,
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        env=git_environment(),
+    )
+
+
+def configure_repository(repository: Path) -> None:
+    run_git(repository, "config", "user.name", "Test")
+    run_git(repository, "config", "user.email", "test@example.com")
+
+
+def commit_file(repository: Path, filename: str, content: str, message: str) -> str:
+    (repository / filename).write_text(content, encoding="utf-8")
+    run_git(repository, "add", filename)
+    run_git(repository, "commit", "--message", message)
+    return run_git(repository, "rev-parse", "HEAD").stdout.strip()
 
 
 def push(repository: RepositoryFixture) -> None:
     reference = f"refs/heads/{repository.branch}"
-    porcelain.push(
+    run_git(
         repository.seed,
-        remote_location="origin",
-        refspecs=f"{reference}:{reference}",
-        outstream=io.BytesIO(),
-        errstream=io.BytesIO(),
+        "push",
+        "origin",
+        f"{reference}:{reference}",
     )
 
 
@@ -51,13 +82,11 @@ def repository_fixture(tmp_path: Path) -> RepositoryFixture:
     remote = tmp_path / "remote.git"
     seed = tmp_path / "seed"
     checkout = tmp_path / "home" / ".priv-bin"
-    reference = Ref(b"refs/heads/master")
-    with porcelain.init(remote, bare=True) as bare:
-        bare.refs.set_symbolic_ref(Ref(b"HEAD"), reference)
-    with porcelain.init(seed) as local:
-        local.refs.set_symbolic_ref(Ref(b"HEAD"), reference)
+    run_git(None, "init", "--bare", "--initial-branch=master", str(remote))
+    run_git(None, "init", "--initial-branch=master", str(seed))
+    configure_repository(seed)
     commit_file(seed, "value", "base\n", "base")
-    porcelain.remote_add(seed, "origin", str(remote))
+    run_git(seed, "remote", "add", "origin", str(remote))
     fixture = RepositoryFixture(remote, seed, checkout)
     push(fixture)
     return fixture
@@ -72,20 +101,19 @@ def invoke(
     status = main(
         [name],
         specs={"dotfiles": fixture.spec},
+        synchronizer=RepositorySynchronizer(SubprocessGitRunner(environment=git_environment())),
         stdout=stdout,
         stderr=stderr,
     )
     return status, stdout.getvalue(), stderr.getvalue()
 
 
-def remote_head(fixture: RepositoryFixture) -> bytes:
-    with Repo(str(fixture.remote)) as repository:
-        return repository.refs[Ref(b"refs/heads/master")]
+def remote_head(fixture: RepositoryFixture) -> str:
+    return run_git(fixture.remote, "rev-parse", "refs/heads/master").stdout.strip()
 
 
-def local_head(fixture: RepositoryFixture) -> bytes:
-    with Repo(str(fixture.checkout)) as repository:
-        return repository.head()
+def local_head(fixture: RepositoryFixture) -> str:
+    return run_git(fixture.checkout, "rev-parse", "HEAD").stdout.strip()
 
 
 def test_clones_missing_repository(tmp_path: Path) -> None:
@@ -102,6 +130,7 @@ def test_clones_missing_repository(tmp_path: Path) -> None:
 def test_rebases_incoming_commits_and_pushes_local_commits(tmp_path: Path) -> None:
     fixture = repository_fixture(tmp_path)
     assert invoke(fixture)[0] == 0
+    configure_repository(fixture.checkout)
     commit_file(fixture.seed, "remote", "remote\n", "remote")
     push(fixture)
     commit_file(fixture.checkout, "local", "local\n", "local")
@@ -112,15 +141,14 @@ def test_rebases_incoming_commits_and_pushes_local_commits(tmp_path: Path) -> No
     assert stderr == ""
     assert f"pushed dotfiles from {fixture.checkout}" in stdout
     assert local_head(fixture) == remote_head(fixture)
-    with Repo(str(fixture.remote)) as repository:
-        commit = repository[repository.head()]
-        assert isinstance(commit, Commit)
-        assert commit.message == b"local"
+    message = run_git(fixture.remote, "show", "--no-patch", "--format=%s", "HEAD")
+    assert message.stdout.strip() == "local"
 
 
 def test_leaves_failed_rebase_for_manual_resolution(tmp_path: Path) -> None:
     fixture = repository_fixture(tmp_path)
     assert invoke(fixture)[0] == 0
+    configure_repository(fixture.checkout)
     commit_file(fixture.seed, "value", "remote\n", "remote")
     push(fixture)
     commit_file(fixture.checkout, "value", "local\n", "local")
@@ -129,8 +157,7 @@ def test_leaves_failed_rebase_for_manual_resolution(tmp_path: Path) -> None:
 
     assert status == 1
     assert f"rebase failed in {fixture.checkout}; resolve it there manually" in stderr
-    with Repo(str(fixture.checkout)) as repository:
-        assert repository.get_rebase_state_manager().exists()
+    assert (fixture.checkout / ".git" / "rebase-merge").exists()
 
 
 def test_reports_up_to_date_repository(tmp_path: Path) -> None:
@@ -148,19 +175,19 @@ def test_reports_up_to_date_repository(tmp_path: Path) -> None:
 def test_pushes_a_new_local_branch_and_sets_its_upstream(tmp_path: Path) -> None:
     fixture = repository_fixture(tmp_path)
     assert invoke(fixture)[0] == 0
-    porcelain.switch(fixture.checkout, "master", create="personal")
+    run_git(fixture.checkout, "switch", "--create", "personal")
 
     status, stdout, stderr = invoke(fixture)
 
     assert status == 0
     assert stderr == ""
     assert f"pushed dotfiles from {fixture.checkout}" in stdout
-    with Repo(str(fixture.remote)) as repository:
-        assert repository.refs[Ref(b"refs/heads/personal")] == local_head(fixture)
-    with Repo(str(fixture.checkout)) as repository:
-        config = repository.get_config_stack()
-        assert config.get((b"branch", b"personal"), b"remote") == b"origin"
-        assert config.get((b"branch", b"personal"), b"merge") == b"refs/heads/personal"
+    personal = run_git(fixture.remote, "rev-parse", "refs/heads/personal")
+    assert personal.stdout.strip() == local_head(fixture)
+    remote = run_git(fixture.checkout, "config", "branch.personal.remote")
+    merge = run_git(fixture.checkout, "config", "branch.personal.merge")
+    assert remote.stdout.strip() == "origin"
+    assert merge.stdout.strip() == "refs/heads/personal"
 
 
 def test_reports_clone_and_fetch_failures(tmp_path: Path) -> None:
@@ -176,10 +203,13 @@ def test_reports_clone_and_fetch_failures(tmp_path: Path) -> None:
     fetch_root.mkdir()
     fixture = repository_fixture(fetch_root)
     assert invoke(fixture)[0] == 0
-    with Repo(str(fixture.checkout)) as repository:
-        config = repository.get_config()
-        config.set((b"remote", b"origin"), b"url", str(tmp_path / "gone.git").encode())
-        config.write_to_path()
+    run_git(
+        fixture.checkout,
+        "remote",
+        "set-url",
+        "origin",
+        str(tmp_path / "gone.git"),
+    )
 
     fetch_status, _, fetch_stderr = invoke(fixture)
 
@@ -207,7 +237,7 @@ def test_rejects_non_repository_and_detached_head(tmp_path: Path) -> None:
 
     fixture.checkout.rmdir()
     assert invoke(fixture)[0] == 0
-    porcelain.switch(fixture.checkout, local_head(fixture), detach=True)
+    run_git(fixture.checkout, "switch", "--detach", local_head(fixture))
 
     detached_status, _, detached_stderr = invoke(fixture)
 
