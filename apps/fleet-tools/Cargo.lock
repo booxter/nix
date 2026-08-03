@@ -384,6 +384,7 @@ dependencies = [
  "rustix",
  "serde",
  "serde_json",
+ "shell-words",
  "tempfile",
 ]
 

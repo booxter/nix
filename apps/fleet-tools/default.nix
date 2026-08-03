@@ -1,9 +1,11 @@
 {
+  bind,
   clippy,
   curl,
   diffutils,
   dix,
   fleetInventory,
+  fzf,
   lib,
   makeWrapper,
   nh,
@@ -31,7 +33,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-yNpVGw+2yVczk+DxxwocnFuMNYowamzRVbklpGJCZuY=";
+  cargoHash = "sha256-Vdr61US/XgBBhcwOT9yxxn8NgJU/Dn50Fq8lz3GVClw=";
 
   DIFF_DIX = lib.getExe dix;
   DIFF_GNU_DIFF = lib.getExe' diffutils "diff";
@@ -39,8 +41,13 @@ rustPlatform.buildRustPackage {
   DIFF_NIX = lib.getExe nix;
   DIFF_TARGET_ALIASES_JSON = builtins.toJSON vmTargets;
   DEPLOY_NH = lib.getExe nh;
+  DEPLOY_DIG = lib.getExe' bind "dig";
+  DEPLOY_FZF = lib.getExe fzf;
   DEPLOY_NIX = lib.getExe nix;
   DEPLOY_NIX_COLLECT_GARBAGE = lib.getExe' nix "nix-collect-garbage";
+  DEPLOY_REPO_ROOT = ../..;
+  DEPLOY_REPO_URL = "https://github.com/booxter/nix.git";
+  DEPLOY_SSH = lib.getExe openssh;
   FLEET_HOSTS_JSON = builtins.toJSON fleetInventory;
   WG_HOME_CONFIG_JSON = builtins.toJSON wireguardHome;
   WG_HOME_HELP = ''
@@ -87,6 +94,8 @@ rustPlatform.buildRustPackage {
           nix-output-monitor
         ]
       }
+    wrapProgram "$out/bin/deploy" \
+      --prefix PATH : ${lib.makeBinPath [ openssh ]}
   '';
 
   preCheck = ''
