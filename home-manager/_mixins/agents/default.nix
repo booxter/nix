@@ -6,7 +6,10 @@
   ...
 }:
 let
-  codexPkgs = import ./pkgs { inherit pkgs; };
+  codexPkgs = import ./pkgs {
+    inherit pkgs;
+    codex = config.programs.codex.package;
+  };
   claudeModel = "opus";
   modelEffort = "high";
   deployFirefoxDevtoolsMcp = !isWork;

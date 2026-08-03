@@ -1,14 +1,11 @@
-{ pkgs }:
+{
+  pkgs,
+  codex ? pkgs.codex,
+}:
 rec {
-  codex-mcp-init = pkgs.writeShellApplication {
-    name = "codex-mcp-init";
-    runtimeInputs = with pkgs; [
-      jq
-    ];
-    text = builtins.readFile ./codex-mcp-init.sh;
-  };
-
   codex-usage-status = pkgs.callPackage ./codex-tools { };
+
+  codex-mcp-init = pkgs.callPackage ./codex-mcp-init { inherit codex; };
 
   codex-rate-limit-reset-credits = codex-usage-status;
 
