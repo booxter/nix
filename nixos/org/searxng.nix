@@ -186,6 +186,7 @@ in
 
   host.sso.oauth2ProxyGates.search = {
     enable = true;
+    authFailureMode = "navigation-aware";
     clientId = oauth2ClientId;
     cookieName = oauth2ProxyCookieName;
     allowedGroups = [
