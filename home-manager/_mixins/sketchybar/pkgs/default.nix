@@ -29,6 +29,7 @@ let
   ];
   nativePluginNames = [
     "alertmanager"
+    "disk"
     "github-status"
     "jellyfin"
   ];
@@ -126,6 +127,7 @@ pkgs.stdenvNoCC.mkDerivation {
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
     ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
+    ${makeNativePluginWrapper "disk" "sketchybar-disk"}
     ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}
     ${makeNativePluginWrapper "jellyfin" "sketchybar-jellyfin"}
     runHook postInstall
