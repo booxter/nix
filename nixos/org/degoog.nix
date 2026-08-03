@@ -247,7 +247,6 @@ in
     externalOrigin = degoogService.url;
     whitelistDomains = [ degoogService.publicHost ];
     internalHttpsServiceNames = [ "goo" ];
-    signInLocationName = "@goo_oauth2_proxy_sign_in";
     authCookieVariableName = "goo_auth_cookie";
     authRequestHeaders = [
       {

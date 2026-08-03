@@ -412,7 +412,7 @@ def update_secret_file(host, secret_prefix, cert_field, key_field, cert_text, ke
 
     run(
         [
-            str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"),
+            "sops-update",
             "--domain",
             secret_domain_for_host(host),
             host,

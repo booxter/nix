@@ -7,10 +7,7 @@
 
 writeShellApplication {
   name = "frame-amdgpu-metrics";
-  runtimeInputs = [
-    amdgpu_top
-    python3
-  ];
+  runtimeInputs = [ amdgpu_top ];
   text = ''
     exec ${python3}/bin/python3 ${./main.py} "$@"
   '';

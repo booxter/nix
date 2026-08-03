@@ -265,9 +265,10 @@ nix run .#get-ff-cookie -- --profile default-release instagram.com \
   | nix run .#sops-set -- beast lolek/galleryDlCookies
 ```
 
-`get-ff-cookie` uses `gallery-dl --cookies-from-browser firefox/<domain>` and
-prints a Netscape `cookies.txt` file to stdout. Diagnostics go to stderr so the
-stdout stream can be piped directly into `sops-set`. The command avoids browser
+`get-ff-cookie` uses gallery-dl's native Firefox cookie loader and Netscape
+serializer. Diagnostics go to stderr so the stdout stream can be piped directly
+into `sops-set`. When URLs are passed, it falls back to gallery-dl's extractor
+CLI so extractor-updated cookies are preserved. The command avoids browser
 extensions; if Firefox is not logged into the site, it exits without updating
 the secret.
 

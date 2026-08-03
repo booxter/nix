@@ -1313,6 +1313,15 @@ rec {
       }) nixosHostSpecs
     );
 
+  systemsByHost =
+    (lib.mapAttrs' (name: spec: lib.nameValuePair (spec.hostname or name) spec.platform) darwinHosts)
+    // builtins.listToAttrs (
+      map (spec: {
+        name = toNixosRuntimeHostName spec;
+        value = spec.platform or "x86_64-linux";
+      }) nixosHostSpecs
+    );
+
   publicServices = builtins.filter (service: service.scope == "external") services;
 
   glanceServices = builtins.filter (service: service.showInGlance) services;

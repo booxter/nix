@@ -430,7 +430,7 @@ def update_secret_file(host, service, service_cfg, cert_text, key_text):
 
     run(
         [
-            str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"),
+            "sops-update",
             "--domain",
             secret_domain_for_host(host),
             host,
@@ -523,7 +523,7 @@ def update_client_secret_file(host, client_cfg, cert_text, key_text):
 
     run(
         [
-            str(REPO_ROOT / "apps" / "sops" / "sops-update.sh"),
+            "sops-update",
             "--domain",
             secret_domain_for_host(host),
             host,

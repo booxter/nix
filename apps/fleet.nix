@@ -8,8 +8,36 @@ let
     inherit program;
     meta = { inherit description; };
   };
+  mkBatsCheck =
+    {
+      environment ? { },
+      nativeCheckInputs ? [ ],
+      test,
+      targetEnvironmentVariable ? null,
+    }:
+    {
+      derivationArgs = {
+        doCheck = true;
+        inherit nativeCheckInputs;
+      };
+      checkPhase = ''
+        runHook preCheck
+        ${pkgs.lib.getExe pkgs.bash} -n "$target"
+        ${pkgs.lib.getExe pkgs.shellcheck} "$target"
+        ${pkgs.lib.concatStringsSep "\n" (
+          pkgs.lib.mapAttrsToList (
+            name: value: "export ${name}=${pkgs.lib.escapeShellArg (toString value)}"
+          ) environment
+        )}
+        ${pkgs.lib.optionalString (targetEnvironmentVariable != null) ''
+          export ${targetEnvironmentVariable}="$target"
+        ''}
+        cd ${../.}
+        ${pkgs.lib.getExe pkgs.bats} --print-output-on-failure ${test}
+        runHook postCheck
+      '';
+    };
 
-  pythonWithPromptToolkit = pkgs.python3.withPackages (ps: [ ps."prompt-toolkit" ]);
   hostInventory = import ../lib/inventory.nix {
     inherit username;
     lib = pkgs.lib;
@@ -18,6 +46,41 @@ let
   wgHome = hostInventory.site.wireguard.home;
   wireguardGatewaySshHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.gw;
   appPackages = import ./default.nix pkgs;
+
+  fleetInventory = {
+    darwin = pkgs.lib.mapAttrs (_name: config: {
+      isWork = config.isWork or false;
+    }) hostInventory.darwinHosts;
+    nixos = builtins.listToAttrs (
+      map (spec: {
+        name = hostInventory.toNixosConfigName spec;
+        value.isWork = spec.isWork or false;
+      }) hostInventory.nixosHostSpecs
+    );
+  };
+  wireguardHome = {
+    subnet = wgHome.cidr;
+    dns = [
+      lan.gateway.address
+      lan.domain
+    ];
+    endpoint = "${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}";
+    allowedIps = [
+      wgHome.cidr
+      lan.cidr
+    ];
+    peers = pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers;
+    gatewaySshHost = wireguardGatewaySshHost;
+  };
+  vmTargets = builtins.listToAttrs (
+    map (spec: {
+      name = spec.name;
+      value = hostInventory.toNixosConfigName spec;
+    }) hostInventory.nixosHostSpecs
+  );
+  fleetTools = pkgs.callPackage ./fleet-tools {
+    inherit fleetInventory vmTargets wireguardHome;
+  };
 
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
@@ -49,16 +112,20 @@ let
     };
   };
 
+  getHosts = fleetTools;
+
   deploy = pkgs.writeShellApplication {
     name = "deploy";
-    runtimeInputs = with pkgs; [
-      bind
-      git
-      jq
-      nix
-      openssh
-      pythonWithPromptToolkit
-    ];
+    runtimeInputs =
+      (with pkgs; [
+        bind
+        fzf
+        git
+        jq
+        nix
+        openssh
+      ])
+      ++ [ getHosts ];
     text = ''
       set -euo pipefail
 
@@ -118,21 +185,29 @@ let
         exec sudo "''${disko_cmd[@]}"
       fi
 
+      export UPDATE_MACHINES_GET_HOSTS_BIN=${pkgs.lib.getExe getHosts}
       exec ${pkgs.bash}/bin/bash ${../.}/apps/update-machines.sh "$@"
     '';
+    inherit
+      (mkBatsCheck {
+        test = ./update-machines.bats;
+        environment = {
+          FLEET_TEST_REPO_ROOT = "${../.}";
+          UPDATE_MACHINES_BIN = "${../.}/apps/update-machines.sh";
+        };
+        nativeCheckInputs = with pkgs; [
+          fzf
+          git
+          jq
+          openssh
+        ];
+      })
+      derivationArgs
+      checkPhase
+      ;
   };
 
-  vm = pkgs.writeShellApplication {
-    name = "vm";
-    runtimeInputs = with pkgs; [
-      jq
-      nix
-    ];
-    text = ''
-      export VM_REPO_ROOT="${../.}"
-      exec ${pkgs.bash}/bin/bash ${../apps/vm.sh} "$@"
-    '';
-  };
+  vm = fleetTools;
 
   diffConfig = pkgs.writeShellApplication {
     name = "diff";
@@ -152,24 +227,25 @@ let
       export DIFF_CONFIG_PROGRAM_NAME=diff
       exec ${pkgs.bash}/bin/bash ${../apps/diff-config.sh} "$@"
     '';
+    inherit
+      (mkBatsCheck {
+        test = ./diff-config.bats;
+        environment.DIFF_CONFIG_BIN = "${./diff-config.sh}";
+        nativeCheckInputs = with pkgs; [
+          git
+          jq
+        ];
+      })
+      derivationArgs
+      checkPhase
+      ;
   };
 
-  getLocalBuilders = pkgs.writeShellApplication {
-    name = "get-local-builders";
-    runtimeInputs = with pkgs; [
-      bash
-      coreutils
-      gawk
-    ];
-    text = ''
-      exec ${../apps/get-local-builders.sh} "$@"
-    '';
-  };
+  getLocalBuilders = fleetTools;
 
   hbaFlash = pkgs.writeShellApplication {
     name = "hba-flash";
     runtimeInputs = with pkgs; [
-      bash
       coreutils
       findutils
       gnugrep
@@ -192,14 +268,12 @@ let
   pkiRotationPackage = pkgs.pki-rotation;
   issueObservabilityCertApp = pkgs.writeShellApplication {
     name = "issue-observability-cert-app";
-    runtimeInputs = [ issueObservabilityCertPackage ];
     text = ''
       exec ${issueObservabilityCertPackage}/bin/issue-observability-cert "$@"
     '';
   };
   issueInternalServiceCertApp = pkgs.writeShellApplication {
     name = "issue-internal-service-cert-app";
-    runtimeInputs = [ issueInternalServiceCertPackage ];
     text = ''
       export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_COMMON_NAME=${pkgs.lib.escapeShellArg "unifi.${lan.domain}"}
       export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_SANS_JSON=${
@@ -216,217 +290,62 @@ let
   };
   issueProxmoxExporterTokenApp = pkgs.writeShellApplication {
     name = "issue-proxmox-exporter-token-app";
-    runtimeInputs = [ issueProxmoxExporterTokenPackage ];
     text = ''
       exec ${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token "$@"
     '';
   };
   pkiRotationApp = pkgs.writeShellApplication {
     name = "pki-rotation-app";
-    runtimeInputs = [ pkiRotationPackage ];
     text = ''
       export PKI_ROTATION_REPO_ROOT="${../.}"
       exec ${pkiRotationPackage}/bin/pki-rotation "$@"
     '';
   };
-  resetOidc = pkgs.writeShellApplication {
-    name = "reset-oidc";
-    runtimeInputs = [ pkgs.openssh ];
-    text = ''
-      exec ${pkgs.bash}/bin/bash ${../apps/reset-oidc.sh} "$@"
-    '';
-  };
-  wgHomeClientConfig = pkgs.writeShellApplication {
-    name = "wg-home-client-config";
-    runtimeInputs = with pkgs; [
-      coreutils
-      openssh
-      python3
-    ];
-    text = ''
-      set -euo pipefail
-
-      WG_HOME_CIDR='${wgHome.cidr}'
-      WG_HOME_DNS='${lan.gateway.address}, ${lan.domain}'
-      WG_HOME_ENDPOINT='${wgHome.gateway.publicEndpoint}:${toString wgHome.gateway.listenPort}'
-      WG_HOME_ALLOWED_IPS='${wgHome.cidr}, ${lan.cidr}'
-      WG_HOME_PEERS_JSON='${builtins.toJSON (pkgs.lib.mapAttrs (_name: peer: peer.address) wgHome.peers)}'
-
-      usage() {
-        cat <<'EOF'
-      Usage:
-        wg-home-client-config (--peer <inventory-peer-name> | --address <peer-address>/32) --private-key-file <path> [--output <path>] (--server-public-key <key> | --fetch-server-public-key)
-
-      Examples:
-        wg-home-client-config --peer mair --private-key-file ./client.key --fetch-server-public-key --output ./client.conf
-        wg-home-client-config --address 10.83.0.50/32 --private-key-file ./client.key --fetch-server-public-key --output ./client.conf
-        wg-home-client-config --address 10.83.0.50/32 --private-key-file ./client.key --server-public-key "$(<server.pub)"
-        Inventory-backed peers: ${pkgs.lib.concatStringsSep ", " (builtins.attrNames wgHome.peers)}
-      EOF
-      }
-
-      peer_name=""
-      address=""
-      private_key_file=""
-      server_public_key=""
-      fetch_server_public_key=false
-      output=""
-
-      while [ "$#" -gt 0 ]; do
-        case "$1" in
-          --help)
-            usage
-            exit 0
-            ;;
-          --peer)
-            shift
-            peer_name="''${1-}"
-            ;;
-          --address)
-            shift
-            address="''${1-}"
-            ;;
-          --private-key-file)
-            shift
-            private_key_file="''${1-}"
-            ;;
-          --server-public-key)
-            shift
-            server_public_key="''${1-}"
-            ;;
-          --fetch-server-public-key)
-            fetch_server_public_key=true
-            ;;
-          --output)
-            shift
-            output="''${1-}"
-            ;;
-          *)
-            echo "Unknown argument: $1" >&2
-            usage >&2
-            exit 1
-            ;;
-        esac
-        shift || true
-      done
-
-      if [ -z "$private_key_file" ]; then
-        usage >&2
-        exit 1
-      fi
-
-      if [ -n "$peer_name" ] && [ -n "$address" ]; then
-        echo "Use either --peer or --address, not both." >&2
-        exit 1
-      fi
-
-      if [ -z "$peer_name" ] && [ -z "$address" ]; then
-        echo "One of --peer or --address is required." >&2
-        usage >&2
-        exit 1
-      fi
-
-      if [ ! -f "$private_key_file" ]; then
-        echo "Private key file not found: $private_key_file" >&2
-        exit 1
-      fi
-
-      if [ -n "$server_public_key" ] && [ "$fetch_server_public_key" = true ]; then
-        echo "Use either --server-public-key or --fetch-server-public-key, not both." >&2
-        exit 1
-      fi
-
-      if [ -z "$server_public_key" ] && [ "$fetch_server_public_key" = false ]; then
-        echo "One of --server-public-key or --fetch-server-public-key is required." >&2
-        exit 1
-      fi
-
-      resolved_address="$(${pkgs.python3}/bin/python3 - "$peer_name" "$address" "$WG_HOME_CIDR" "$WG_HOME_PEERS_JSON" <<'PY'
-      import ipaddress
-      import json
-      import sys
-
-      peer_name, explicit, subnet_cidr, peers_json = sys.argv[1:5]
-      peers = json.loads(peers_json)
-
-      if peer_name:
-          if peer_name not in peers:
-              known = ", ".join(sorted(peers)) or "<none>"
-              raise SystemExit(f"unknown inventory peer {peer_name!r}; known peers: {known}")
-          explicit = peers[peer_name]
-
-      peer = ipaddress.ip_interface(explicit)
-      subnet = ipaddress.ip_network(subnet_cidr)
-
-      if peer.version != 4:
-          raise SystemExit("peer address must be IPv4")
-      if peer.network.prefixlen != 32:
-          raise SystemExit("peer address must use /32")
-      if peer.ip not in subnet:
-          raise SystemExit(f"peer address {peer.ip} is not inside {subnet}")
-      print(str(peer))
-      PY
-      )"
-
-      if [ "$fetch_server_public_key" = true ]; then
-        server_public_key="$(ssh ${wireguardGatewaySshHost} "sudo sh -c 'wg pubkey < /var/lib/wireguard/wg0.key'")"
-      fi
-
-      private_key="$(${pkgs.coreutils}/bin/tr -d '\n' < "$private_key_file")"
-      server_public_key="$(${pkgs.coreutils}/bin/printf '%s' "$server_public_key" | ${pkgs.coreutils}/bin/tr -d '\n')"
-
-      if [ -z "$private_key" ] || [ -z "$server_public_key" ]; then
-        echo "Private key and server public key must be non-empty." >&2
-        exit 1
-      fi
-
-      config_text="$(
-        printf '%s\n' \
-          '[Interface]' \
-          "PrivateKey = $private_key" \
-          "Address = $resolved_address" \
-          "DNS = $WG_HOME_DNS" \
-          "" \
-          '[Peer]' \
-          "PublicKey = $server_public_key" \
-          "Endpoint = $WG_HOME_ENDPOINT" \
-          "AllowedIPs = $WG_HOME_ALLOWED_IPS" \
-          'PersistentKeepalive = 25'
-      )"
-
-      if [ -n "$output" ]; then
-        umask 077
-        ${pkgs.coreutils}/bin/printf '%s\n' "$config_text" > "$output"
-      else
-        ${pkgs.coreutils}/bin/printf '%s\n' "$config_text"
-      fi
-    '';
-  };
+  resetOidc = pkgs.callPackage ../nixos/pki/pkgs/kanidm-tools { };
+  wgHomeClientConfig = fleetTools;
 in
 {
-  deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
-  vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
-  diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
-  "get-local-builders" =
-    mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
-  "issue-observability-cert" =
-    mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
-  "issue-internal-service-cert" =
-    mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
-  "issue-proxmox-exporter-token" =
-    mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
-  "seerr-request-storage" =
-    mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
-  "seerr-update-user-tags" =
-    mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
-  "pki-rotation" =
-    mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
-  "reset-oidc" =
-    mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
-  "join-media-parts" =
-    mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
-  "hba-flash" =
-    mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
-  "wg-home-client-config" =
-    mkApp "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
+  packages = {
+    inherit deploy vm;
+    diff = diffConfig;
+    get-local-builders = getLocalBuilders;
+    get-hosts = getHosts;
+    issue-observability-cert = issueObservabilityCertApp;
+    issue-internal-service-cert = issueInternalServiceCertApp;
+    issue-proxmox-exporter-token = issueProxmoxExporterTokenApp;
+    seerr-request-storage = seerrRequestStoragePackage;
+    seerr-update-user-tags = seerrUpdateUserTagsPackage;
+    pki-rotation = pkiRotationApp;
+    reset-oidc = resetOidc;
+    join-media-parts = pkgs.join-media-parts;
+    hba-flash = hbaFlash;
+    wg-home-client-config = wgHomeClientConfig;
+  };
+  apps = {
+    deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
+    vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
+    diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
+    "get-local-builders" =
+      mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+    "issue-observability-cert" =
+      mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+    "issue-internal-service-cert" =
+      mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+    "issue-proxmox-exporter-token" =
+      mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
+    "seerr-request-storage" =
+      mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
+    "seerr-update-user-tags" =
+      mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
+    "pki-rotation" =
+      mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
+    "reset-oidc" =
+      mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
+    "join-media-parts" =
+      mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
+    "hba-flash" =
+      mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
+    "wg-home-client-config" =
+      mkApp "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
+  };
 }

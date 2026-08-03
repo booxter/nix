@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gh-restart-failed-jobs"
+version = "0.1.0"
+description = "Restart failed GitHub Actions jobs for pull requests"
+requires-python = ">=3.11"
+dependencies = ["pygithub"]
+
+[project.scripts]
+gh-restart-failed-jobs = "gh_restart_failed_jobs.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=gh_restart_failed_jobs --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/gh_restart_failed_jobs"]
+strict = true
+
+[tool.ruff]
+line-length = 100

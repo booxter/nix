@@ -26,7 +26,6 @@ writeShellApplication {
     jq
     nix
     openssh
-    pythonWithDeps
     sops
     yq-go
   ];

@@ -7,6 +7,7 @@
 }:
 let
   catalog = import ./catalog.nix;
+  monitoringPackage = pkgs.callPackage ./package.nix { };
   alertmanagerPort = 9093;
   grafanaPort = config.services.grafana.settings.server.http_port;
   validateAlertmanagerConfig = pkgs.writeShellApplication {
@@ -35,7 +36,7 @@ in
         ];
       }
     ];
-    ruleFiles = catalog.prometheus.ruleFiles;
+    ruleFiles = monitoringPackage.prometheusRuleFiles;
     scrapeConfigs = [
       {
         job_name = "alertmanager";

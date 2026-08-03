@@ -137,6 +137,9 @@ in
       ++ lib.optionals (!isWork && !isVM) [
         whichllm
       ]
+      ++ lib.optionals isDesktop [
+        sops-tools
+      ]
       ++ lib.optionals (!isWork) [
         age
         restic

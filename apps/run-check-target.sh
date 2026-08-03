@@ -23,8 +23,9 @@ fi
 nom_build() {
   local attr="$1"
 
-  nix shell "${builder_opts[@]}" --inputs-from . nixpkgs#nix-output-monitor \
-    -c nom build "${builder_opts[@]}" "$attr" -L --show-trace
+  # Bash 3.2 treats an empty array expansion as unbound under `set -u`.
+  nix shell ${builder_opts[@]+"${builder_opts[@]}"} --inputs-from . nixpkgs#nix-output-monitor \
+    -c nom build ${builder_opts[@]+"${builder_opts[@]}"} "$attr" -L --show-trace
 }
 
 system="$(nix eval --impure --raw --expr builtins.currentSystem)"

@@ -12,10 +12,7 @@ let
 in
 writeShellApplication {
   name = "adaptive-upload-controller";
-  runtimeInputs = [
-    iproute2
-    pythonWithDeps
-  ];
+  runtimeInputs = [ iproute2 ];
   text = ''
     exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
   '';

@@ -37,11 +37,6 @@ in
 writeShellApplication {
   inherit name;
   passthru.ciWarmTargets = ciValidatedWarmTargets;
-  runtimeInputs = [
-    coreutils
-    nix
-  ]
-  ++ lib.optional pushToAttic attic-client;
   text = ''
         set -euo pipefail
 

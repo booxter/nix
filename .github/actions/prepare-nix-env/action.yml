@@ -1,5 +1,10 @@
 name: Prepare Nix environment
 description: Checkout the repo, install Determinate Nix, and configure FlakeHub Cache.
+inputs:
+  extra-conf:
+    description: Additional nix.conf entries passed to the Nix installer.
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -12,6 +17,7 @@ runs:
           ${{ runner.os == 'macOS' && 'sandbox = relaxed' || '' }}
           extra-substituters = https://cache.saumon.network/proxmox-nixos
           extra-trusted-public-keys = proxmox-nixos:D9RYSWpQQC/msZUWphOY2I5RLH5Dd6yQcaHIuug7dWM=
+          ${{ inputs.extra-conf }}
 
     - name: Setup FlakeHub Cache
       uses: DeterminateSystems/flakehub-cache-action@146f476c94460cb634f9ade79470fcbc3f7e5b36 # v1

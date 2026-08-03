@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aerospace-x11-aware-actions"
+version = "0.1.0"
+description = "Route AeroSpace actions to active X11 windows"
+requires-python = ">=3.11"
+dependencies = ["pyobjc-framework-Cocoa", "python-xlib"]
+
+[project.scripts]
+aerospace-x11-aware-move = "aerospace_x11.cli:move_main"
+aerospace-x11-aware-resize = "aerospace_x11.cli:resize_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=aerospace_x11 --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.run]
+omit = ["*/aerospace_x11/native.py"]
+
+[tool.mypy]
+files = ["src/aerospace_x11"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["AppKit", "Xlib", "Xlib.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100

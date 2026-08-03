@@ -17,7 +17,6 @@ let
     }:
     writeShellApplication {
       inherit name;
-      runtimeInputs = [ pythonWithDeps ];
       text = ''
         export PYTHONPATH="${sourceDir}:''${PYTHONPATH:-}"
         exec ${pythonWithDeps}/bin/python3 ${script} "$@"

@@ -41,6 +41,7 @@ in
         ./_mixins/proxmox
         ./_mixins/restic-beast-client.nix
         ./_mixins/sso-oauth2-proxy-gate.nix
+        ./_mixins/unifi-sync
         ./_mixins/user
       ]
       ++ lib.optionals (!isVM) [

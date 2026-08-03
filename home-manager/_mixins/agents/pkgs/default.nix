@@ -1,47 +1,15 @@
-{ pkgs }:
+{
+  pkgs,
+  codex ? pkgs.codex,
+}:
 rec {
-  codex-mcp-init = pkgs.writeShellApplication {
-    name = "codex-mcp-init";
-    runtimeInputs = with pkgs; [
-      jq
-    ];
-    text = builtins.readFile ./codex-mcp-init.sh;
-  };
+  codex-usage-status = pkgs.callPackage ./codex-tools { };
 
-  codex-usage-status = pkgs.writeShellApplication {
-    name = "codex-usage-status";
-    runtimeInputs = with pkgs; [
-      curl
-      jq
-    ];
-    text = builtins.readFile ./codex-usage-status.sh;
-  };
+  codex-mcp-init = pkgs.callPackage ./codex-mcp-init { inherit codex; };
 
-  codex-rate-limit-reset-credits = pkgs.writeShellApplication {
-    name = "codex-rate-limit-reset-credits";
-    runtimeInputs = with pkgs; [
-      curl
-      jq
-    ];
-    text = builtins.readFile ./codex-rate-limit-reset-credits.sh;
-  };
+  codex-rate-limit-reset-credits = codex-usage-status;
 
-  codex-warmer = pkgs.writeShellApplication {
-    name = "codex-warmer";
-    runtimeInputs = with pkgs; [
-      codex-usage-status
-      curl
-      jq
-    ];
-    text = builtins.readFile ./codex-warmer.sh;
-  };
+  codex-warmer = codex-usage-status;
 
-  codex-work-usage-status = pkgs.writeShellApplication {
-    name = "codex-work-usage-status";
-    runtimeInputs = with pkgs; [
-      curl
-      jq
-    ];
-    text = builtins.readFile ./codex-work-usage-status.sh;
-  };
+  codex-work-usage-status = codex-usage-status;
 }

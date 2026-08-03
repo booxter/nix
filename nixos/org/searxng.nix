@@ -196,7 +196,6 @@ in
     externalOrigin = searchService.url;
     whitelistDomains = [ searchService.publicHost ];
     internalHttpsServiceNames = [ "search" ];
-    signInLocationName = "@search_oauth2_proxy_sign_in";
     authCookieVariableName = "search_auth_cookie";
     authRequestHeaders = [
       {

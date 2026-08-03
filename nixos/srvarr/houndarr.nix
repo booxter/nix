@@ -8,10 +8,55 @@
 }:
 let
   port = 8877;
+  arrServiceNames = [
+    "lidarr"
+    "radarr"
+    "sonarr"
+  ];
+  arrServiceUnits = map (name: "${name}.service") arrServiceNames;
+  runtimeUnits = [ "nginx.service" ] ++ arrServiceUnits;
+  arrProbeUrls = map (
+    name: "https://${name}.${hostInventory.site.lan.domain}:9443/ping"
+  ) arrServiceNames;
   srvarrAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   stateDir = "${config.host.srvarrPaths.stateDir}/houndarr";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   statusMetricsFile = "${nodeExporterTextfileDir}/houndarr-status.prom";
+  waitForArrBackends = pkgs.writeShellApplication {
+    name = "wait-for-houndarr-arr-backends";
+    runtimeInputs = with pkgs; [
+      coreutils
+      curl
+    ];
+    text = ''
+      set -euo pipefail
+
+      deadline="$((SECONDS + 120))"
+      while [ "$SECONDS" -lt "$deadline" ]; do
+        all_ready=true
+        for url in ${lib.escapeShellArgs arrProbeUrls}; do
+          if ! curl \
+            --fail \
+            --silent \
+            --connect-timeout 1 \
+            --max-time 2 \
+            --output /dev/null \
+            "$url"
+          then
+            all_ready=false
+          fi
+        done
+
+        if [ "$all_ready" = true ]; then
+          exit 0
+        fi
+        sleep 1
+      done
+
+      echo "Timed out waiting for Houndarr Arr backends: ${lib.concatStringsSep " " arrProbeUrls}" >&2
+      exit 1
+    '';
+  };
   statusCollector = pkgs.writeShellApplication {
     name = "houndarr-status-collector";
     runtimeInputs = with pkgs; [
@@ -88,12 +133,12 @@ in
       description = "Polite Arr search scheduler";
       wantedBy = [ "multi-user.target" ];
       wants = [ "network-online.target" ];
-      after = [
-        "network-online.target"
-        "lidarr.service"
-        "radarr.service"
-        "sonarr.service"
-      ];
+      # Houndarr persists the newest cycle error. Keep it stopped throughout
+      # proxy or Arr restarts so deployment downtime does not become a stale
+      # degraded state, then start it only after the dependency transaction.
+      requires = runtimeUnits;
+      after = [ "network-online.target" ] ++ runtimeUnits;
+      partOf = runtimeUnits;
       environment = {
         # Uvicorn otherwise trusts nginx's X-Forwarded-For and rewrites the
         # ASGI peer to the browser address. Houndarr's proxy-auth trust check
@@ -115,6 +160,8 @@ in
         SSL_CERT_FILE = "/etc/ssl/certs/ca-bundle.crt";
       };
       serviceConfig = {
+        # Servarr units can be active before their HTTP APIs accept requests.
+        ExecStartPre = lib.getExe waitForArrBackends;
         ExecStart = lib.getExe srvarrPkgs.houndarr;
         Restart = "on-failure";
         RestartSec = "5s";

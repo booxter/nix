@@ -43,6 +43,31 @@ Scope: whole repository.
 - Shared packages: `pkgs/`; checkout-run apps/scripts: `apps/`.
 - Secrets: `secrets/`; checks: `tests/`, `checks.nix`.
 
+## Application Development
+
+- New apps and helpers are Python, not shell. Allow shell only for tiny,
+  inherently shell-facing glue. Prefer native APIs and maintained bindings or
+  client libraries over subprocesses. When a CLI is the necessary interface,
+  pass argument lists; no embedded shell or `shell=True` unless required.
+  Consider Go or Rust for larger applications and systems-level work.
+- Python apps are `pyproject.toml` projects with `src/` packages and console
+  entry points, never loose `.py` files. Require full typing, strict mypy, Ruff,
+  and explicit models such as dataclasses instead of untyped dictionaries.
+- Put I/O and external commands behind narrow injected interfaces (`Protocol`).
+  Test with explicit fakes, not mocks, implementation monkeypatches, or global
+  mutable hooks.
+- Test behavior and failures, not generated source or implementation text. Keep
+  tests beside the package and run pytest with coverage and a minimum threshold
+  in Nix `checkPhase`; keep package tests out of top-level `tests/`.
+- Every package must be built by a consumer or CI. Check shared portable apps on
+  both Linux and macOS; keep host-specific packages under that host's `pkgs/`.
+- Parse and emit JSON, YAML, and similar formats with libraries, never string
+  concatenation or hand-written serialization templates.
+- Declare and wrap external runtime executables; build inputs alone do not put
+  programs on the installed runtime `PATH`.
+- Assume Nix on managed machines. Build for the target system and use `nix copy`
+  for closures, not `scp`, copied sources, or host-architecture executables.
+
 ## Security
 
 - Secure service-to-service traffic by default. Prefer mTLS/authenticated

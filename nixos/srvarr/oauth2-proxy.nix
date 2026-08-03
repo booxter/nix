@@ -137,7 +137,6 @@ in
     groupClaim = "media_groups";
     whitelistDomains = protectedServiceHosts;
     internalHttpsServiceNames = protectedServiceIds;
-    signInLocationName = "@oauth2_proxy_sign_in";
     authCookieVariableName = "auth_cookie";
     clearAuthorizationHeader = false;
     authRequestHeaders = [

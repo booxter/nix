@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "git-send-email-store-password"
+version = "0.1.0"
+description = "Store Git send-email credentials in macOS Keychain"
+requires-python = ">=3.11"
+
+[project.scripts]
+git-send-email-store-password = "git_send_email_store_password.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=git_send_email_store_password --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/git_send_email_store_password"]
+strict = true
+
+[tool.ruff]
+line-length = 100

@@ -232,9 +232,11 @@
               outputs.overlays.modifications
             ];
           };
-          sopsApps = import ./apps/sops { inherit hostInventory pkgs; };
-          packageUpdateApps = import ./apps/package-updates { inherit pkgs; };
-          fleetApps = import ./apps/fleet.nix {
+          sopsApps = import ./apps/sops {
+            sopsTools = pkgs.sops-tools;
+          };
+          packageUpdates = import ./apps/package-updates { inherit pkgs; };
+          fleet = import ./apps/fleet.nix {
             inherit pkgs username;
           };
           darwinPackages = import ./darwin/pkgs pkgs;
@@ -243,15 +245,7 @@
             inherit program;
             meta = { inherit description; };
           };
-          get-ff-cookie = pkgs.writeShellApplication {
-            name = "get-ff-cookie";
-            runtimeInputs = with pkgs; [
-              coreutils
-              gallery-dl
-              gnugrep
-            ];
-            text = builtins.readFile ./apps/get-ff-cookie.sh;
-          };
+          get-ff-cookie = pkgs.get-ff-cookie;
           cookieApps = {
             get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
           };
@@ -266,8 +260,8 @@
           };
         in
         sopsApps
-        // packageUpdateApps
-        // fleetApps
+        // packageUpdates.apps
+        // fleet.apps
         // proxmox.apps
         // cookieApps
         // repositoryApps

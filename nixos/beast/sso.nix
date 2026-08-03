@@ -38,7 +38,6 @@ in
     };
     whitelistDomains = [ aurralService.publicHost ];
     externalHostNames = [ aurralService.publicHost ];
-    signInLocationName = "@aurral_oauth2_proxy_sign_in";
     authCookieVariableName = "aurral_auth_cookie";
     authRequestHeaders = [
       {

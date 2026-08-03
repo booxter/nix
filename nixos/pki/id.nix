@@ -35,14 +35,7 @@ let
     }
     // lib.optionalAttrs (person ? legalName) { inherit (person) legalName; }
   ) sso.users;
-  personMailProvision = pkgs.writeShellApplication {
-    name = "kanidm-person-mail-provision";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.jq
-    ];
-    text = builtins.readFile ./kanidm-person-mail-provision.sh;
-  };
+  personMailProvision = pkiPkgs.kanidm-person-mail-provision;
   personMailProvisionArgs = [
     personMailProvisionFile
   ]
@@ -89,6 +82,13 @@ let
   };
 in
 {
+  assertions = [
+    {
+      assertion = pkiPkgs.reset-oidc.kanidmClientVersion == lib.getVersion config.services.kanidm.package;
+      message = "reset-oidc and the Kanidm server must use the same version";
+    }
+  ];
+
   sops.secrets = {
     kanidmAdminPassword = {
       key = "kanidm/admin_password";
@@ -193,7 +193,10 @@ in
     '';
   };
 
-  environment.systemPackages = [ config.services.kanidm.package ];
+  environment.systemPackages = [
+    config.services.kanidm.package
+    pkiPkgs.reset-oidc
+  ];
 
   networking.hosts."127.0.0.1" = [ kanidmLocalHost ];
 
@@ -253,7 +256,7 @@ in
       UMask = "0077";
       StateDirectory = "kanidm-mail-sender";
       StateDirectoryMode = "0700";
-      ExecStart = "${lib.getExe pkiPkgs.kanidm-mail-sender-bootstrap} ${
+      ExecStart = "${lib.getExe' pkiPkgs.kanidm-mail-sender-bootstrap "kanidm-mail-sender-bootstrap"} ${
         lib.escapeShellArgs [
           "--url"
           kanidmLocalUrl

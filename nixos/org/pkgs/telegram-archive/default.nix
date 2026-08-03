@@ -3,6 +3,7 @@
   fetchFromGitHub,
   lib,
   makeWrapper,
+  nodejs,
   python314,
   stdenvNoCC,
 }:
@@ -51,7 +52,15 @@ stdenvNoCC.mkDerivation rec {
     hash = "sha256-2FkI8BtlrXaJdm+OiOPh0O8avB+bFMP27GOcZ9QP6rU=";
   };
 
+  patches = [
+    # Recover browser API and WebSocket traffic from an expired oauth2-proxy
+    # session. Patch application is the upgrade guard.
+    ./sso-reauthentication.patch
+  ];
+
   nativeBuildInputs = [ makeWrapper ];
+
+  nativeCheckInputs = [ nodejs ];
 
   installPhase = ''
     runHook preInstall
@@ -91,6 +100,7 @@ stdenvNoCC.mkDerivation rec {
     ${pythonEnv}/bin/python -m compileall -q src
     PYTHONPATH="$PWD" ${pythonEnv}/bin/python -c \
       'from src.config import Config; from src.db import create_adapter; from src.telegram_backup import TelegramBackup'
+    ${lib.getExe nodejs} --test tests/sso-reauth.test.cjs
 
     runHook postCheck
   '';

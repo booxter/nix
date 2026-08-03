@@ -2,6 +2,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  fetchpatch,
   fetchNpmDeps,
   buildPackages,
   nodejs_22,
@@ -52,6 +53,18 @@ stdenv.mkDerivation {
   };
 
   patches = [
+    # Fix expired reverse-proxy sessions leaving the SPA stuck until a hard
+    # refresh. Keep this unconditional so a future release containing the fix
+    # fails patch application and prompts removal of the backport.
+    (fetchpatch {
+      url = "https://github.com/lklynet/aurral/commit/23f0cc4fbfe0dba43ee065e370dd8c6362aee262.patch";
+      hash = "sha256-zHrYYbR/Eo/pDJFZKhlg8FspH1rkpT15nnUPsxiRS3A=";
+    })
+    # Tabs still running the release's precached frontend use this route to
+    # escape an expired proxy session. Keep the bounce during the backport so
+    # those clients can migrate to the fixed service worker without a manual
+    # hard refresh.
+    ./keep-proxy-reauth-upgrade-route.patch
     ./disable-local-auth.patch
     # AURRAL_DATA_DIR lives below /data/.state, which sendFile rejects by default.
     ../../../../overlays/aurral-allow-hidden-image-cache-path.patch

@@ -5,7 +5,6 @@
 }:
 writeShellApplication {
   name = "flake-input-update-summary";
-  runtimeInputs = [ python3 ];
   text = ''
     exec ${python3}/bin/python3 ${./main.py} "$@"
   '';

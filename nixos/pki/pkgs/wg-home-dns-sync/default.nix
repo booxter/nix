@@ -6,7 +6,6 @@
 
 writeShellApplication {
   name = "wg-home-dns-sync";
-  runtimeInputs = [ python3 ];
   text = ''
     exec ${python3}/bin/python3 ${./main.py} "$@"
   '';

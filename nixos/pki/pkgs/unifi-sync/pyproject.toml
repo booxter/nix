@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unifi-sync"
+version = "0.1.0"
+description = "Sync inventory-backed reservations, DHCP, DNS, and routes to UniFi"
+requires-python = ">=3.10"
+
+[project.scripts]
+unifi-sync = "unifi_sync.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=unifi_sync --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/unifi_sync"]
+strict = true

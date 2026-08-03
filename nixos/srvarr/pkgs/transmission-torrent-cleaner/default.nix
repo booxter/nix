@@ -12,7 +12,6 @@ let
 in
 writeShellApplication {
   name = "transmission-torrent-cleaner";
-  runtimeInputs = [ pythonWithDeps ];
   text = ''
     exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
   '';

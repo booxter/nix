@@ -70,12 +70,13 @@ BLUE=$blue
 sketchybar --add item  ip_address right                              \
            --set       ip_address script="$PLUGIN_DIR/ip_address.sh" \
                                   update_freq=30                     \
+                                  label.drawing=off                  \
                                   padding_left=2                     \
                                   padding_right=8                    \
                                   background.border_width=0          \
                                   background.corner_radius=6         \
                                   background.height=24               \
-           --subscribe ip_address wifi_change                        \
+           --subscribe ip_address wifi_change mouse.clicked          \
                                                                      \
            --add item  network.up right                              \
            --set       network.up script="$PLUGIN_DIR/network.sh"    \
@@ -118,6 +119,8 @@ sketchybar --add       event           spotify_change $SPOTIFY_EVENT      \
                                        popup.horizontal=on                \
                                        popup.align=center                 \
                                        icon.drawing=off                   \
+                                       label.max_chars=20                 \
+                                       scroll_texts=on                    \
                                                                           \
            --add       item            spotify.back popup.spotify.name    \
            --set       spotify.back    icon=􀊎                             \

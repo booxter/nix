@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "attention-inbox"
+version = "0.1.0"
+description = "Collect attention items from external services"
+requires-python = ">=3.11"
+dependencies = ["pydantic"]
+
+[project.scripts]
+attention-inbox = "attention_inbox.cli:main"
+attention-inbox-sketchybar = "attention_inbox.sketchybar:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=attention_inbox --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/attention_inbox"]
+strict = true
+
+[tool.ruff]
+line-length = 100

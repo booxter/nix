@@ -8,6 +8,7 @@
   openssh,
   python3,
   sops,
+  sopsTools,
   writeShellApplication,
   yq-go,
 }:
@@ -20,8 +21,8 @@ writeShellApplication {
     jq
     nix
     openssh
-    python3
     sops
+    sopsTools
     yq-go
   ];
   text = ''

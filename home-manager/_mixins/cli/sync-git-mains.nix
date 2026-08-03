@@ -8,9 +8,8 @@
 }:
 let
   cfg = osConfig.host.syncGitMains;
-  syncGitMains = pkgs.callPackage ./pkgs/sync-git-mains {
-    inherit (cfg) roots;
-  };
+  syncGitMains = pkgs.callPackage ./pkgs/sync-git-mains { };
+  syncGitMainsCommand = [ (lib.getExe syncGitMains) ] ++ cfg.roots;
 in
 {
   home.packages = lib.optionals cfg.enable [ syncGitMains ];
@@ -18,7 +17,7 @@ in
   launchd.agents.sync-git-mains = lib.mkIf (isDarwin && cfg.enable) {
     enable = true;
     config = {
-      ProgramArguments = [ (lib.getExe syncGitMains) ];
+      ProgramArguments = syncGitMainsCommand;
       ProcessType = "Background";
       RunAtLoad = true;
       StartInterval = cfg.intervalSeconds;
@@ -33,7 +32,7 @@ in
 
     Service = {
       Type = "oneshot";
-      ExecStart = lib.getExe syncGitMains;
+      ExecStart = lib.escapeShellArgs syncGitMainsCommand;
     };
   };
 

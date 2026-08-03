@@ -2,25 +2,42 @@
   glab,
   lib,
   python3,
-  writeShellApplication,
+  ruff,
 }:
 let
-  sourceDir = ./.;
+  pythonPackages = python3.pkgs;
 in
-writeShellApplication {
-  name = "attention-inbox";
-  runtimeInputs = [ glab ];
-  text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
+pythonPackages.buildPythonApplication {
+  pname = "attention-inbox";
+  version = "0.1.0";
+  pyproject = true;
+
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+  dependencies = [ pythonPackages.pydantic ];
+
+  nativeCheckInputs = with pythonPackages; [
+    ruff
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/attention_inbox
   '';
 
-  derivationArgs.doCheck = true;
-  checkPhase = ''
-    runHook preCheck
-    PYTHONPATH="${sourceDir}" \
-      ${python3}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
-    runHook postCheck
-  '';
+  makeWrapperArgs = [
+    "--prefix"
+    "PATH"
+    ":"
+    (lib.makeBinPath [ glab ])
+  ];
+
+  pythonImportsCheck = [ "attention_inbox" ];
 
   meta = {
     description = "Collect attention items from external services into one inbox";

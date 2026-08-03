@@ -336,19 +336,28 @@
       },
       "system": "x86_64-linux",
       "warm": true
+    },
+    {
+      "attr": "nixosTests.x86_64-linux.oauth2-proxy-gate",
+      "name": "NixOS test: OAuth2 proxy gate",
+      "runner": "ubuntu-latest",
+      "selection": {
+        "hosts": [],
+        "prefixes": [
+          "nixos/_mixins/external-service.nix",
+          "nixos/_mixins/sso-oauth2-proxy-gate.nix",
+          "nixos/_mixins/sso-oauth2-proxy-gate-probes.nix",
+          "tests/nixos/oauth2-proxy-gate.nix"
+        ]
+      },
+      "system": "x86_64-linux",
+      "warm": true
     }
   ],
   "regularChecks": [
     {
       "attr": "checks.x86_64-linux.bats",
       "name": "bats",
-      "runner": "ubuntu-latest",
-      "system": "x86_64-linux",
-      "warm": true
-    },
-    {
-      "attr": "checks.x86_64-linux.box-py",
-      "name": "box-py",
       "runner": "ubuntu-latest",
       "system": "x86_64-linux",
       "warm": true
