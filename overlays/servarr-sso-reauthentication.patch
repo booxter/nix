@@ -1,0 +1,394 @@
+diff --git a/frontend/src/Components/SignalRConnector.js b/frontend/src/Components/SignalRConnector.js
+--- a/frontend/src/Components/SignalRConnector.js
++++ b/frontend/src/Components/SignalRConnector.js
+@@ -14,2 +14,3 @@
+ import { repopulatePage } from 'Utilities/pagePopulator';
++import { checkSsoSession } from 'Utilities/ssoReauthentication.mjs';
+ import titleCase from 'Utilities/String/titleCase';
+@@ -200,3 +201,4 @@
+   onStartFail = (error) => {
++    void checkSsoSession();
+     console.error('[signalR] failed to connect');
+     console.error(error);
+@@ -220,3 +222,4 @@
+   onReconnecting = () => {
++    void checkSsoSession();
+     this.props.dispatchSetAppValue({ isReconnecting: true });
+   };
+@@ -230,3 +233,4 @@
+   onClose = () => {
++    void checkSsoSession();
+     console.debug('[signalR] connection closed');
+   };
+diff --git a/frontend/src/Utilities/ssoReauthentication.mjs b/frontend/src/Utilities/ssoReauthentication.mjs
+new file mode 100644
+--- /dev/null
++++ b/frontend/src/Utilities/ssoReauthentication.mjs
+@@ -0,0 +1,180 @@
++const ATTEMPT_KEY = 'servarr.sso.reauth-attempt.v1';
++const REAUTH_HEADER = 'x-sso-reauth';
++const REAUTH_RETRY_DELAY_MS = 60 * 1000;
++const SESSION_PATH = '/oauth2/session';
++const XHR_PATCHED = Symbol('servarr.sso.xhr-patched');
++
++const responseUrl = (response) => response?.url || response?.responseURL || '';
++
++const responseHeader = (response, name) => {
++  if (typeof response?.headers?.get === 'function') {
++    return response.headers.get(name);
++  }
++  if (typeof response?.getResponseHeader === 'function') {
++    return response.getResponseHeader(name);
++  }
++  return null;
++};
++
++export const sameOriginResponse = (response, origin) => {
++  const url = responseUrl(response);
++  if (!url) {
++    return false;
++  }
++  try {
++    return new URL(url, origin).origin === origin;
++  } catch {
++    return false;
++  }
++};
++
++export const isSsoReauthResponse = (response, origin) =>
++  response?.status === 401 &&
++  responseHeader(response, REAUTH_HEADER) === '1' &&
++  sameOriginResponse(response, origin);
++
++export const reauthUrl = (origin) => {
++  const returnUrl = new URL('/', origin).href;
++  return `/oauth2/start?rd=${encodeURIComponent(returnUrl)}`;
++};
++
++export const createSsoReauthController = ({
++  fetchImpl,
++  location,
++  storage,
++  now = () => Date.now()
++}) => {
++  let navigating = false;
++
++  const getStored = (key) => {
++    try {
++      return storage.getItem(key);
++    } catch {
++      return null;
++    }
++  };
++
++  const removeStored = (key) => {
++    try {
++      storage.removeItem(key);
++    } catch {
++      // Reauthentication remains safe if storage is unavailable.
++    }
++  };
++
++  const beginReauthentication = () => {
++    if (navigating) {
++      return true;
++    }
++
++    const attemptedAt = Number(getStored(ATTEMPT_KEY));
++    const age = now() - attemptedAt;
++    if (
++      Number.isFinite(attemptedAt) &&
++      attemptedAt > 0 &&
++      age >= 0 &&
++      age < REAUTH_RETRY_DELAY_MS
++    ) {
++      return true;
++    }
++
++    try {
++      storage.setItem(ATTEMPT_KEY, String(now()));
++    } catch {
++      // Only the persisted loop guard is lost.
++    }
++
++    navigating = true;
++    location.assign(reauthUrl(location.origin));
++    return true;
++  };
++
++  const inspectResponse = (response) => {
++    if (isSsoReauthResponse(response, location.origin)) {
++      return beginReauthentication();
++    }
++    if (
++      !navigating &&
++      response?.status >= 200 &&
++      response.status < 400 &&
++      sameOriginResponse(response, location.origin)
++    ) {
++      removeStored(ATTEMPT_KEY);
++    }
++    return false;
++  };
++
++  const wrappedFetch = async (input, init) => {
++    const response = await fetchImpl(input, init);
++    inspectResponse(response);
++    return response;
++  };
++
++  const checkSession = async () => {
++    try {
++      const response = await fetchImpl(SESSION_PATH, {
++        cache: 'no-store',
++        credentials: 'same-origin',
++        headers: { Accept: 'application/json' }
++      });
++      return inspectResponse(response);
++    } catch {
++      return false;
++    }
++  };
++
++  const attachXMLHttpRequest = (XMLHttpRequestClass) => {
++    const prototype = XMLHttpRequestClass?.prototype;
++    if (!prototype || prototype[XHR_PATCHED]) {
++      return;
++    }
++
++    const originalSend = prototype.send;
++    prototype.send = function(...args) {
++      this.addEventListener('loadend', () => inspectResponse(this), {
++        once: true
++      });
++      return originalSend.apply(this, args);
++    };
++    Object.defineProperty(prototype, XHR_PATCHED, { value: true });
++  };
++
++  return {
++    attachXMLHttpRequest,
++    beginReauthentication,
++    checkSession,
++    inspectResponse,
++    wrappedFetch
++  };
++};
++
++let activeController = null;
++
++export const installSsoReauthentication = (windowObject) => {
++  if (activeController) {
++    return activeController;
++  }
++
++  const fetchImpl = windowObject.fetch.bind(windowObject);
++  activeController = createSsoReauthController({
++    fetchImpl,
++    location: windowObject.location,
++    storage: windowObject.sessionStorage
++  });
++
++  windowObject.fetch = activeController.wrappedFetch;
++  activeController.attachXMLHttpRequest(windowObject.XMLHttpRequest);
++  windowObject.addEventListener('focus', () => {
++    void activeController.checkSession();
++  });
++  windowObject.document.addEventListener('visibilitychange', () => {
++    if (windowObject.document.visibilityState === 'visible') {
++      void activeController.checkSession();
++    }
++  });
++
++  return activeController;
++};
++
++export const checkSsoSession = () =>
++  activeController?.checkSession() ?? Promise.resolve(false);
+diff --git a/frontend/src/index.ts b/frontend/src/index.ts
+--- a/frontend/src/index.ts
++++ b/frontend/src/index.ts
+@@ -1,5 +1,8 @@
+ import './polyfills';
+ import 'Styles/globals.css';
+ import './index.css';
++import { installSsoReauthentication } from './Utilities/ssoReauthentication.mjs';
+-
++
++installSsoReauthentication(window);
++
+ const initializeUrl = `${
+diff --git a/tests/sso-reauth.test.mjs b/tests/sso-reauth.test.mjs
+new file mode 100644
+--- /dev/null
++++ b/tests/sso-reauth.test.mjs
+@@ -0,0 +1,169 @@
++import assert from 'node:assert/strict';
++import test from 'node:test';
++
++import {
++  createSsoReauthController,
++  isSsoReauthResponse,
++  reauthUrl
++} from '../frontend/src/Utilities/ssoReauthentication.mjs';
++
++const ORIGIN = 'https://arr.example';
++const NOW = 1_000_000;
++
++const response = (status, marker, url = `${ORIGIN}/api/v3/system/status`) => ({
++  headers: { get: (name) => name.toLowerCase() === 'x-sso-reauth' ? marker : null },
++  status,
++  url
++});
++
++const memoryStorage = (initial = {}) => {
++  const values = new Map(Object.entries(initial));
++  return {
++    getItem: (key) => values.get(key) ?? null,
++    removeItem: (key) => values.delete(key),
++    setItem: (key, value) => values.set(key, value),
++    values
++  };
++};
++
++const runtime = ({ fetchImpl = async () => response(200), storage } = {}) => {
++  const navigations = [];
++  const controller = createSsoReauthController({
++    fetchImpl,
++    location: {
++      assign: (url) => navigations.push(url),
++      origin: ORIGIN,
++      pathname: '/settings/general',
++      search: '?apiKey=private'
++    },
++    now: () => NOW,
++    storage: storage ?? memoryStorage()
++  });
++  return { controller, navigations };
++};
++
++test('only a same-origin marked 401 is an SSO response', () => {
++  assert.equal(isSsoReauthResponse(response(401, '1'), ORIGIN), true);
++  assert.equal(isSsoReauthResponse(response(401, null), ORIGIN), false);
++  assert.equal(isSsoReauthResponse(response(403, '1'), ORIGIN), false);
++  assert.equal(
++    isSsoReauthResponse(response(401, '1', 'https://evil.example/'), ORIGIN),
++    false
++  );
++});
++
++test('reauthentication returns to a fixed safe root', () => {
++  assert.equal(
++    reauthUrl(ORIGIN),
++    '/oauth2/start?rd=https%3A%2F%2Farr.example%2F'
++  );
++  assert.equal(reauthUrl(ORIGIN).includes('apiKey'), false);
++});
++
++test('fetch returns the original response and starts one navigation', async () => {
++  const marked = response(401, '1');
++  const { controller, navigations } = runtime({
++    fetchImpl: async () => marked
++  });
++
++  assert.equal(await controller.wrappedFetch('/api/v3/queue'), marked);
++  await controller.wrappedFetch('/api/v3/health');
++  assert.deepEqual(navigations, [reauthUrl(ORIGIN)]);
++});
++
++test('native and cross-origin failures keep their application meaning', () => {
++  const { controller, navigations } = runtime();
++
++  assert.equal(controller.inspectResponse(response(401, null)), false);
++  assert.equal(
++    controller.inspectResponse(
++      response(401, '1', 'https://upstream.example/private')
++    ),
++    false
++  );
++  assert.deepEqual(navigations, []);
++});
++
++test('a recent attempt suppresses a login loop', () => {
++  const storage = memoryStorage({
++    'servarr.sso.reauth-attempt.v1': String(NOW - 1000)
++  });
++  const { controller, navigations } = runtime({ storage });
++
++  assert.equal(controller.inspectResponse(response(401, '1')), true);
++  assert.deepEqual(navigations, []);
++});
++
++test('a successful same-origin response clears the loop guard', () => {
++  const storage = memoryStorage({
++    'servarr.sso.reauth-attempt.v1': String(NOW - 1000)
++  });
++  const { controller } = runtime({ storage });
++
++  controller.inspectResponse(response(202, null, `${ORIGIN}/oauth2/session`));
++  assert.equal(storage.getItem('servarr.sso.reauth-attempt.v1'), null);
++});
++
++test('the session probe uses the fixed same-origin endpoint', async () => {
++  const calls = [];
++  const { controller, navigations } = runtime({
++    fetchImpl: async (...args) => {
++      calls.push(args);
++      return response(401, '1', `${ORIGIN}/oauth2/session`);
++    }
++  });
++
++  assert.equal(await controller.checkSession(), true);
++  assert.equal(calls[0][0], '/oauth2/session');
++  assert.deepEqual(calls[0][1], {
++    cache: 'no-store',
++    credentials: 'same-origin',
++    headers: { Accept: 'application/json' }
++  });
++  assert.deepEqual(navigations, [reauthUrl(ORIGIN)]);
++});
++
++test('network errors from the advisory session probe are ignored', async () => {
++  const { controller, navigations } = runtime({
++    fetchImpl: async () => {
++      throw new Error('offline');
++    }
++  });
++
++  assert.equal(await controller.checkSession(), false);
++  assert.deepEqual(navigations, []);
++});
++
++test('XMLHttpRequest inspection handles marked failures without replay', () => {
++  class FakeXMLHttpRequest {
++    constructor() {
++      this.listeners = new Map();
++      this.responseURL = `${ORIGIN}/api/v3/command`;
++      this.status = 401;
++    }
++
++    addEventListener(name, callback) {
++      this.listeners.set(name, callback);
++    }
++
++    getResponseHeader(name) {
++      return name.toLowerCase() === 'x-sso-reauth' ? '1' : null;
++    }
++
++    send(body) {
++      this.body = body;
++      return 'sent';
++    }
++  }
++
++  const { controller, navigations } = runtime();
++  controller.attachXMLHttpRequest(FakeXMLHttpRequest);
++
++  const xhr = new FakeXMLHttpRequest();
++  assert.equal(xhr.send('private mutation body'), 'sent');
++  xhr.listeners.get('loadend')();
++
++  assert.equal(xhr.body, 'private mutation body');
++  assert.deepEqual(navigations, [reauthUrl(ORIGIN)]);
++  assert.equal(navigations[0].includes('private'), false);
++});

@@ -1,0 +1,34 @@
+diff --git a/tests/test_sso_reauthentication.py b/tests/test_sso_reauthentication.py
+new file mode 100644
+--- /dev/null
++++ b/tests/test_sso_reauthentication.py
+@@ -0,0 +1,29 @@
++"""Pin the vendored HTMX behavior used for proxy reauthentication."""
++
++from pathlib import Path
++
++import houndarr
++
++
++_REPO_ROOT = Path(houndarr.__file__).resolve().parents[2]
++_HTMX = _REPO_ROOT / "src" / "houndarr" / "static" / "js" / "htmx.min.js"
++
++
++def test_hx_refresh_reloads_before_status_response_handling() -> None:
++    """HX-Refresh must reload even when the response status is 401.
++
++    The navigation-aware oauth2-proxy gate adds ``HX-Refresh: true`` only to
++    its marked HTMX 401. HTMX processes that header before its normal 4xx
++    no-swap handling, turning the reload into a safe document navigation that
++    can start SSO without replaying the rejected request.
++    """
++    source = _HTMX.read_text()
++    refresh_header = 'getResponseHeader("HX-Refresh")==="true"'
++
++    refresh_index = source.index(refresh_header)
++    reload_index = source.index("location.reload()", refresh_index)
++    status_handling_index = source.index("const r=Pn(s)", refresh_index)
++
++    assert refresh_index < reload_index < status_handling_index
++    assert 'responseHandling:[{code:"204",swap:false}' in source
++    assert '{code:"[45]..",swap:false,error:true}' in source
