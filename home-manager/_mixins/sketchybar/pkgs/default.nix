@@ -27,6 +27,8 @@ let
     "stock"
     "volume"
   ];
+  shellPluginNames = builtins.filter (name: name != "jellyfin") pluginNames;
+  jellyfinPlugin = pkgs.callPackage ./jellyfin { };
   runtimePath = lib.makeBinPath [
     attentionInbox
     codexUsageStatus
@@ -72,6 +74,19 @@ let
     ''
       makeWrapper "$out/libexec/sketchybar/${name}.sh" "$out/bin/${name}" \
         --prefix PATH : ${lib.escapeShellArg runtimePath} \
+      ${environmentArguments environment}
+    '';
+  makeJellyfinWrapper =
+    let
+      environment =
+        pluginColors
+        // (pluginEnvironments.jellyfin or { })
+        // {
+          SKETCHYBAR_BIN = lib.getExe pkgs.sketchybar;
+        };
+    in
+    ''
+      makeWrapper ${lib.getExe jellyfinPlugin} "$out/bin/jellyfin" \
         ${environmentArguments environment}
     '';
 in
@@ -103,7 +118,8 @@ pkgs.stdenvNoCC.mkDerivation {
     runHook preInstall
     mkdir -p "$out/bin" "$out/libexec/sketchybar"
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
-    ${lib.concatMapStringsSep "\n" makePluginWrapper pluginNames}
+    ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
+    ${makeJellyfinWrapper}
     runHook postInstall
   '';
 
