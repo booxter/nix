@@ -141,6 +141,19 @@ let
           description = "Hostnames accepted as oauth2-proxy redirect targets.";
         };
 
+        authFailureMode = lib.mkOption {
+          type = lib.types.enum [
+            "legacy-redirect"
+            "navigation-aware"
+          ];
+          default = "legacy-redirect";
+          description = ''
+            How nginx handles a failed oauth2-proxy auth subrequest. The
+            navigation-aware mode starts sign-in only for document GET and HEAD
+            requests; background and unsafe requests receive a marked 401.
+          '';
+        };
+
         externalOrigin = lib.mkOption {
           type = with lib.types; nullOr str;
           default = null;
@@ -234,6 +247,9 @@ let
     };
 
   enabledGates = lib.filterAttrs (_: gate: gate.enable) cfg;
+  hasNavigationAwareGates = lib.any (gate: gate.authFailureMode == "navigation-aware") (
+    builtins.attrValues enabledGates
+  );
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
 
   mkArg = name: value: "--${name}=${lib.escapeShellArg (toString value)}";
@@ -291,13 +307,21 @@ let
     in
     ''
       auth_request /oauth2/auth;
-      error_page 401 = ${gate.signInLocationName};
+      error_page 401 = ${
+        if gate.authFailureMode == "navigation-aware" then
+          "$sso_oauth2_proxy_auth_failure_uri"
+        else
+          gate.signInLocationName
+      };
 
       ${lib.concatMapStringsSep "\n" mkAuthRequestSet gate.authRequestHeaders}
       auth_request_set ${authCookieVariable} $upstream_http_set_cookie;
 
       ${lib.concatMapStringsSep "\n" mkProxyHeader gate.authRequestHeaders}
       ${lib.optionalString gate.clearAuthorizationHeader ''proxy_set_header Authorization "";''}
+      ${lib.optionalString (gate.authFailureMode == "navigation-aware") ''
+        proxy_hide_header X-SSO-Reauth;
+      ''}
       add_header Set-Cookie ${authCookieVariable};
     '';
 
@@ -328,7 +352,34 @@ let
           proxy_pass_request_body off;
         '';
       };
+    }
+    // lib.optionalAttrs (gate.authFailureMode == "navigation-aware") {
+      "= /oauth2/session" = {
+        proxyPass = "${gate.httpAddress}/oauth2/auth";
+        recommendedProxySettings = true;
+        extraConfig = ''
+          auth_request off;
+          proxy_intercept_errors on;
+          error_page 401 = /oauth2/reauth-required;
+          proxy_set_header X-Scheme $scheme;
+          proxy_set_header Content-Length "";
+          proxy_pass_request_body off;
+          add_header Cache-Control "no-store" always;
+        '';
+      };
 
+      "= /oauth2/reauth-required" = {
+        return = "401";
+        extraConfig = ''
+          internal;
+          auth_request off;
+          add_header X-SSO-Reauth "1" always;
+          add_header Cache-Control "no-store" always;
+          add_header HX-Refresh $sso_oauth2_proxy_hx_refresh always;
+        '';
+      };
+    }
+    // lib.optionalAttrs (gate.authFailureMode == "legacy-redirect") {
       ${gate.signInLocationName} = {
         return = "307 ${requestOrigin}/oauth2/start?rd=${requestOrigin}$request_uri";
         extraConfig = ''
@@ -495,6 +546,45 @@ in
         protectedInternalVhostsFor gate // probeHelpers.vhostsFor gate // protectedExternalVhostsFor gate
       ) enabledGates
     );
+
+    services.nginx.appendHttpConfig = lib.mkIf hasNavigationAwareGates ''
+      map $request_method $sso_oauth2_proxy_safe_method {
+        default 0;
+        GET 1;
+        HEAD 1;
+      }
+
+      map $http_hx_request $sso_oauth2_proxy_non_htmx {
+        default 1;
+        ~*^true$ 0;
+      }
+
+      map $http_hx_request $sso_oauth2_proxy_hx_refresh {
+        default "";
+        ~*^true$ true;
+      }
+
+      map "$http_sec_fetch_mode:$http_sec_fetch_dest" $sso_oauth2_proxy_document_navigation {
+        default 0;
+        ~*^navigate:document$ 1;
+      }
+
+      map $http_sec_fetch_mode $sso_oauth2_proxy_fetch_metadata_missing {
+        default 0;
+        "" 1;
+      }
+
+      map $http_accept $sso_oauth2_proxy_accepts_html {
+        default 0;
+        ~*text/html 1;
+      }
+
+      map "$sso_oauth2_proxy_safe_method:$sso_oauth2_proxy_non_htmx:$sso_oauth2_proxy_document_navigation:$sso_oauth2_proxy_fetch_metadata_missing:$sso_oauth2_proxy_accepts_html" $sso_oauth2_proxy_auth_failure_uri {
+        default /oauth2/reauth-required;
+        ~^1:1:1: /oauth2/start;
+        "1:1:0:1:1" /oauth2/start;
+      }
+    '';
 
     systemd.services = lib.mapAttrs' (
       gateName: gate:
