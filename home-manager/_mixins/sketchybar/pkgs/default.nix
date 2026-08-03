@@ -31,6 +31,7 @@ let
     "alertmanager"
     "disk"
     "github-status"
+    "ip_address"
     "jellyfin"
   ];
   shellPluginNames = builtins.filter (name: !builtins.elem name nativePluginNames) pluginNames;
@@ -129,6 +130,7 @@ pkgs.stdenvNoCC.mkDerivation {
     ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
     ${makeNativePluginWrapper "disk" "sketchybar-disk"}
     ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}
+    ${makeNativePluginWrapper "ip_address" "sketchybar-ip-address"}
     ${makeNativePluginWrapper "jellyfin" "sketchybar-jellyfin"}
     runHook postInstall
   '';

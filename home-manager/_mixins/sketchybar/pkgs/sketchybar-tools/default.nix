@@ -15,6 +15,7 @@ buildGoModule {
     "cmd/sketchybar-alertmanager"
     "cmd/sketchybar-disk"
     "cmd/sketchybar-github-status"
+    "cmd/sketchybar-ip-address"
     "cmd/sketchybar-jellyfin"
   ];
 
