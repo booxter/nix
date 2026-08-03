@@ -209,37 +209,7 @@ let
 
   vm = fleetTools;
 
-  diffConfig = pkgs.writeShellApplication {
-    name = "diff";
-    runtimeInputs = with pkgs; [
-      coreutils
-      diffutils
-      dix
-      findutils
-      git
-      gnugrep
-      gnused
-      jq
-      nh
-      nix
-    ];
-    text = ''
-      export DIFF_CONFIG_PROGRAM_NAME=diff
-      exec ${pkgs.bash}/bin/bash ${../apps/diff-config.sh} "$@"
-    '';
-    inherit
-      (mkBatsCheck {
-        test = ./diff-config.bats;
-        environment.DIFF_CONFIG_BIN = "${./diff-config.sh}";
-        nativeCheckInputs = with pkgs; [
-          git
-          jq
-        ];
-      })
-      derivationArgs
-      checkPhase
-      ;
-  };
+  diffConfig = fleetTools;
 
   getLocalBuilders = fleetTools;
 
