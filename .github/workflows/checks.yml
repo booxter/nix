@@ -166,7 +166,7 @@ jobs:
       matrix: ${{ fromJson(needs.plan-nixos-tests.outputs.matrix) }}
     timeout-minutes: 180
     env:
-      NIX_CONFIG: system-features = benchmark big-parallel kvm nixos-test
+      NIX_CONFIG: system-features = benchmark big-parallel kvm nixos-test uid-range
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -176,6 +176,10 @@ jobs:
 
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
+        with:
+          extra-conf: |
+            extra-experimental-features = auto-allocate-uids
+            auto-allocate-uids = true
 
       - name: Run NixOS tests
         run: ${{ matrix.cmd }}
