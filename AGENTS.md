@@ -52,7 +52,9 @@ Scope: whole repository.
   Consider Go or Rust for larger applications and systems-level work.
 - Python apps are `pyproject.toml` projects with `src/` packages and console
   entry points, never loose `.py` files. Require full typing, strict mypy, Ruff,
-  and explicit models such as dataclasses instead of untyped dictionaries.
+  and explicit models instead of untyped dictionaries. Prefer dataclasses for
+  internal state; use Pydantic when external data benefits from runtime
+  validation, aliases, or serialization.
 - Put I/O and external commands behind narrow injected interfaces (`Protocol`).
   Test with explicit fakes, not mocks, implementation monkeypatches, or global
   mutable hooks.
