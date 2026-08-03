@@ -178,7 +178,7 @@ jobs:
         uses: ./.github/actions/prepare-nix-env
         with:
           extra-conf: |
-            extra-experimental-features = auto-allocate-uids
+            extra-experimental-features = auto-allocate-uids cgroups
             auto-allocate-uids = true
 
       - name: Run NixOS tests
