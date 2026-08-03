@@ -46,6 +46,30 @@ func TestGetReturnsBoundedSuccessfulResponse(t *testing.T) {
 	}
 }
 
+func TestGetWithHeadersAddsRequestHeaders(t *testing.T) {
+	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+		if got := request.Header.Get("Accept"); got != "application/json" {
+			t.Errorf("Accept header = %q, want application/json", got)
+		}
+		return &http.Response{
+			StatusCode: http.StatusOK,
+			Status:     "200 OK",
+			Body:       io.NopCloser(strings.NewReader("healthy")),
+		}, nil
+	})}
+
+	_, err := GetWithHeaders(
+		context.Background(),
+		client,
+		"https://status.test",
+		1024,
+		http.Header{"Accept": {"application/json"}},
+	)
+	if err != nil {
+		t.Fatalf("GetWithHeaders returned an error: %v", err)
+	}
+}
+
 func TestGetRejectsHTTPFailure(t *testing.T) {
 	_, err := Get(
 		context.Background(),

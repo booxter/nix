@@ -42,10 +42,21 @@ func NewMTLS(config MTLSConfig) (*http.Client, error) {
 }
 
 func Get(ctx context.Context, client *http.Client, url string, maxBytes int64) ([]byte, error) {
+	return GetWithHeaders(ctx, client, url, maxBytes, nil)
+}
+
+func GetWithHeaders(
+	ctx context.Context,
+	client *http.Client,
+	url string,
+	maxBytes int64,
+	headers http.Header,
+) ([]byte, error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("create request: %w", err)
 	}
+	request.Header = headers.Clone()
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, fmt.Errorf("send request: %w", err)
