@@ -47,6 +47,18 @@ let
   wireguardGatewaySshHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.gw;
   appPackages = import ./default.nix pkgs;
 
+  fleetInventory = {
+    darwin = pkgs.lib.mapAttrs (_name: config: {
+      isWork = config.isWork or false;
+    }) hostInventory.darwinHosts;
+    nixos = builtins.listToAttrs (
+      map (spec: {
+        name = hostInventory.toNixosConfigName spec;
+        value.isWork = spec.isWork or false;
+      }) hostInventory.nixosHostSpecs
+    );
+  };
+
   broadcomSas3flashP15 = pkgs.fetchzip {
     pname = "broadcom-sas3flash";
     version = "p15";
@@ -77,22 +89,7 @@ let
     };
   };
 
-  getHosts = pkgs.writeShellApplication {
-    name = "get-hosts";
-    runtimeInputs = [ pkgs.nix ];
-    text = ''
-      exec ${pkgs.bash}/bin/bash ${../.}/apps/get-hosts.sh "$@"
-    '';
-    inherit
-      (mkBatsCheck {
-        test = ./get-hosts.bats;
-        targetEnvironmentVariable = "GET_HOSTS_BIN";
-        nativeCheckInputs = [ pkgs.jq ];
-      })
-      derivationArgs
-      checkPhase
-      ;
-  };
+  getHosts = pkgs.callPackage ./fleet-tools { inherit fleetInventory; };
 
   deploy = pkgs.writeShellApplication {
     name = "deploy";
