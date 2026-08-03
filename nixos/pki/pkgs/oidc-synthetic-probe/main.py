@@ -132,6 +132,17 @@ class HttpClient:
     def get(self, url: str) -> HttpResponse:
         return self.request("GET", url)
 
+    def get_navigation(self, url: str) -> HttpResponse:
+        return self.request(
+            "GET",
+            url,
+            headers={
+                "Accept": "text/html",
+                "Sec-Fetch-Mode": "navigate",
+                "Sec-Fetch-Dest": "document",
+            },
+        )
+
     def post_json(self, url: str, payload: dict[str, Any]) -> HttpResponse:
         body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
         return self.request(
@@ -346,7 +357,7 @@ def follow_oidc_authorization(
                 return parse_authorization_code(
                     location, redirect_uri, expected_state
                 ), response.status
-            response = client.get(location)
+            response = client.get_navigation(location)
             continue
 
         if response.status == 200:
@@ -420,7 +431,7 @@ def run_kanidm_probe(
                 "code_challenge_method": "S256",
             }
         )
-        response = client.get(f"{authorization_endpoint}?{auth_query}")
+        response = client.get_navigation(f"{authorization_endpoint}?{auth_query}")
         code, status = follow_oidc_authorization(
             client, idp_url, response, redirect_uri, state
         )
@@ -504,7 +515,7 @@ def run_searxng_probe(
         return False
 
     try:
-        response = client.get(searxng_url)
+        response = client.get_navigation(searxng_url)
         last_status = response.status
         consent_url = url_join(idp_url, "/ui/oauth2/consent")
 
@@ -515,7 +526,7 @@ def run_searxng_probe(
                 return True
 
             if is_redirect(response):
-                response = client.get(absolute_location(response))
+                response = client.get_navigation(absolute_location(response))
                 last_status = response.status
                 continue
 
