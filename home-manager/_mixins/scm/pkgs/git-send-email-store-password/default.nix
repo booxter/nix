@@ -1,31 +1,39 @@
 {
-  bash,
-  bats,
-  coreutils,
   git,
   lib,
-  shellcheck,
-  writeShellApplication,
+  python3,
+  ruff,
 }:
-writeShellApplication {
-  name = "git-send-email-store-password";
-  runtimeInputs = [
-    coreutils
-    git
-  ];
-  text = builtins.readFile ./git-send-email-store-password.sh;
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
+  pname = "git-send-email-store-password";
+  version = "0.1.0";
+  pyproject = true;
 
-  derivationArgs = {
-    doCheck = true;
-  };
-  checkPhase = ''
-    runHook preCheck
-    ${lib.getExe bash} -n "$target"
-    ${lib.getExe shellcheck} "$target"
-    GIT_SEND_EMAIL_STORE_PASSWORD_BIN=${./git-send-email-store-password.sh} \
-      ${lib.getExe bats} --print-output-on-failure ${./git-send-email-store-password.bats}
-    runHook postCheck
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  nativeCheckInputs = with pythonPackages; [
+    ruff
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  makeWrapperArgs = [
+    "--prefix PATH : ${lib.makeBinPath [ git ]}"
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/git_send_email_store_password
   '';
+
+  pythonImportsCheck = [ "git_send_email_store_password" ];
 
   meta = {
     description = "Store the configured Git SMTP password in macOS Keychain";
