@@ -447,7 +447,6 @@ in
 
   host.sso.oauth2ProxyGates.paperless-gpt = {
     enable = true;
-    authFailureMode = "legacy-redirect";
     clientId = "paperless-gpt";
     httpAddress = "http://127.0.0.1:${toString paperlessGptOauth2ProxyPort}";
     cookieName = "_paperless_gpt_sso";
@@ -455,7 +454,6 @@ in
     groupClaim = "paperless_groups";
     whitelistDomains = [ paperlessGptHost ];
     internalHttpsServiceNames = [ "paperless-gpt" ];
-    signInLocationName = "@paperless_gpt_oauth2_proxy_sign_in";
     authCookieVariableName = "paperless_gpt_auth_cookie";
     probeLocationsByName.paperless-gpt."= /api/version" = {
       proxyPass = "http://127.0.0.1:${toString paperlessGptPort}";

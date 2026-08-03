@@ -21,7 +21,6 @@ in
 
   host.sso.oauth2ProxyGates.aurral = {
     enable = true;
-    authFailureMode = "navigation-aware";
     clientId = "aurral";
     cookieName = "_aurral_sso";
     allowedGroups = [
@@ -39,7 +38,6 @@ in
     };
     whitelistDomains = [ aurralService.publicHost ];
     externalHostNames = [ aurralService.publicHost ];
-    signInLocationName = "@aurral_oauth2_proxy_sign_in";
     authCookieVariableName = "aurral_auth_cookie";
     authRequestHeaders = [
       {

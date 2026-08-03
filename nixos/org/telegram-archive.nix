@@ -296,7 +296,6 @@ in
 
   host.sso.oauth2ProxyGates.tg = {
     enable = true;
-    authFailureMode = "navigation-aware";
     clientId = "tg";
     httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";
     cookieName = "_tg_sso";

@@ -132,13 +132,11 @@ in
   host.sso.oauth2ProxyGates.srvarr-admin-apps = {
     enable = true;
     inherit clientId;
-    authFailureMode = "navigation-aware";
     cookieName = oauth2ProxyCookieName;
     allowedGroups = [ "media-admins" ];
     groupClaim = "media_groups";
     whitelistDomains = protectedServiceHosts;
     internalHttpsServiceNames = protectedServiceIds;
-    signInLocationName = "@oauth2_proxy_sign_in";
     authCookieVariableName = "auth_cookie";
     clearAuthorizationHeader = false;
     authRequestHeaders = [

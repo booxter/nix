@@ -186,7 +186,6 @@ in
 
   host.sso.oauth2ProxyGates.search = {
     enable = true;
-    authFailureMode = "navigation-aware";
     clientId = oauth2ClientId;
     cookieName = oauth2ProxyCookieName;
     allowedGroups = [
@@ -197,7 +196,6 @@ in
     externalOrigin = searchService.url;
     whitelistDomains = [ searchService.publicHost ];
     internalHttpsServiceNames = [ "search" ];
-    signInLocationName = "@search_oauth2_proxy_sign_in";
     authCookieVariableName = "search_auth_cookie";
     authRequestHeaders = [
       {

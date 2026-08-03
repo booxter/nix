@@ -141,28 +141,10 @@ let
           description = "Hostnames accepted as oauth2-proxy redirect targets.";
         };
 
-        authFailureMode = lib.mkOption {
-          type = lib.types.enum [
-            "legacy-redirect"
-            "navigation-aware"
-          ];
-          description = ''
-            How nginx handles a failed oauth2-proxy auth subrequest. The
-            navigation-aware mode starts sign-in only for document GET and HEAD
-            requests; background and unsafe requests receive a marked 401.
-          '';
-        };
-
         externalOrigin = lib.mkOption {
           type = with lib.types; nullOr str;
           default = null;
           description = "Browser-facing origin used for OAuth start, callback, and return URLs when the gate is behind an internal reverse proxy.";
-        };
-
-        signInLocationName = lib.mkOption {
-          type = lib.types.str;
-          default = "@${safeClientId}_oauth2_proxy_sign_in";
-          description = "nginx named location used for oauth2-proxy sign-in redirects.";
         };
 
         authCookieVariableName = lib.mkOption {
@@ -246,9 +228,6 @@ let
     };
 
   enabledGates = lib.filterAttrs (_: gate: gate.enable) cfg;
-  hasNavigationAwareGates = lib.any (gate: gate.authFailureMode == "navigation-aware") (
-    builtins.attrValues enabledGates
-  );
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
 
   mkArg = name: value: "--${name}=${lib.escapeShellArg (toString value)}";
@@ -306,21 +285,14 @@ let
     in
     ''
       auth_request /oauth2/auth;
-      error_page 401 = ${
-        if gate.authFailureMode == "navigation-aware" then
-          "$sso_oauth2_proxy_auth_failure_uri"
-        else
-          gate.signInLocationName
-      };
+      error_page 401 = $sso_oauth2_proxy_auth_failure_uri;
 
       ${lib.concatMapStringsSep "\n" mkAuthRequestSet gate.authRequestHeaders}
       auth_request_set ${authCookieVariable} $upstream_http_set_cookie;
 
       ${lib.concatMapStringsSep "\n" mkProxyHeader gate.authRequestHeaders}
       ${lib.optionalString gate.clearAuthorizationHeader ''proxy_set_header Authorization "";''}
-      ${lib.optionalString (gate.authFailureMode == "navigation-aware") ''
-        proxy_hide_header X-SSO-Reauth;
-      ''}
+      proxy_hide_header X-SSO-Reauth;
       add_header Set-Cookie ${authCookieVariable};
     '';
 
@@ -351,8 +323,7 @@ let
           proxy_pass_request_body off;
         '';
       };
-    }
-    // lib.optionalAttrs (gate.authFailureMode == "navigation-aware") {
+
       "= /oauth2/session" = {
         proxyPass = "${gate.httpAddress}/oauth2/auth";
         recommendedProxySettings = true;
@@ -375,14 +346,6 @@ let
           add_header X-SSO-Reauth "1" always;
           add_header Cache-Control "no-store" always;
           add_header HX-Refresh $sso_oauth2_proxy_hx_refresh always;
-        '';
-      };
-    }
-    // lib.optionalAttrs (gate.authFailureMode == "legacy-redirect") {
-      ${gate.signInLocationName} = {
-        return = "307 ${requestOrigin}/oauth2/start?rd=${requestOrigin}$request_uri";
-        extraConfig = ''
-          auth_request off;
         '';
       };
     };
@@ -546,7 +509,7 @@ in
       ) enabledGates
     );
 
-    services.nginx.appendHttpConfig = lib.mkIf hasNavigationAwareGates ''
+    services.nginx.appendHttpConfig = ''
       map $request_method $sso_oauth2_proxy_safe_method {
         default 0;
         GET 1;

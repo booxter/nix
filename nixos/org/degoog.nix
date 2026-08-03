@@ -239,7 +239,6 @@ in
 
   host.sso.oauth2ProxyGates.goo = {
     enable = true;
-    authFailureMode = "navigation-aware";
     clientId = "goo";
     httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";
     cookieName = "_goo_sso";
@@ -248,7 +247,6 @@ in
     externalOrigin = degoogService.url;
     whitelistDomains = [ degoogService.publicHost ];
     internalHttpsServiceNames = [ "goo" ];
-    signInLocationName = "@goo_oauth2_proxy_sign_in";
     authCookieVariableName = "goo_auth_cookie";
     authRequestHeaders = [
       {

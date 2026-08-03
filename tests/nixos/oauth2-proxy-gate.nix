@@ -1,7 +1,6 @@
 { pkgs, ... }:
 let
   fakeOauth2Proxy = pkgs.writeText "fake-oauth2-proxy.py" ''
-    import sys
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
@@ -45,7 +44,7 @@ let
             pass
 
 
-    ThreadingHTTPServer(("127.0.0.1", int(sys.argv[1])), Handler).serve_forever()
+    ThreadingHTTPServer(("127.0.0.1", 4180), Handler).serve_forever()
   '';
 
   fakeBackend = pkgs.writeText "fake-oauth2-gated-backend.py" ''
@@ -134,23 +133,15 @@ pkgs.testers.runNixOSTest {
 
         host.externalService = {
           openFirewall = false;
-          virtualHosts = {
-            "test.example.invalid" = {
-              proxyPass = "http://127.0.0.1:9000";
-              forceSSL = false;
-              enableACME = false;
-            };
-            "legacy.example.invalid" = {
-              proxyPass = "http://127.0.0.1:9000";
-              forceSSL = false;
-              enableACME = false;
-            };
+          virtualHosts."test.example.invalid" = {
+            proxyPass = "http://127.0.0.1:9000";
+            forceSSL = false;
+            enableACME = false;
           };
         };
 
         host.sso.oauth2ProxyGates.test = {
           enable = true;
-          authFailureMode = "navigation-aware";
           clientId = "test";
           issuerUrl = "https://id.example.invalid/oauth2/openid/test";
           httpAddress = "http://127.0.0.1:4180";
@@ -161,34 +152,14 @@ pkgs.testers.runNixOSTest {
           externalHostNames = [ "test.example.invalid" ];
         };
 
-        host.sso.oauth2ProxyGates.legacy = {
-          enable = true;
-          authFailureMode = "legacy-redirect";
-          clientId = "legacy-test";
-          issuerUrl = "https://id.example.invalid/oauth2/openid/legacy-test";
-          httpAddress = "http://127.0.0.1:4181";
-          serviceName = "oauth2-proxy-gate-legacy-test";
-          groupClaim = "groups";
-          allowedGroups = [ "test-users" ];
-          whitelistDomains = [ "legacy.example.invalid" ];
-          externalHostNames = [ "legacy.example.invalid" ];
-        };
-
         # The test supplies a deterministic fake auth endpoint instead of
         # starting oauth2-proxy and provisioning its credentials.
         systemd.services.oauth2-proxy-gate-test.wantedBy = lib.mkForce [ ];
-        systemd.services.oauth2-proxy-gate-legacy-test.wantedBy = lib.mkForce [ ];
 
         systemd.services.fake-oauth2-proxy = {
           wantedBy = [ "multi-user.target" ];
           after = [ "network.target" ];
-          serviceConfig.ExecStart = "${pkgs.python3}/bin/python ${fakeOauth2Proxy} 4180";
-        };
-
-        systemd.services.fake-oauth2-proxy-legacy = {
-          wantedBy = [ "multi-user.target" ];
-          after = [ "network.target" ];
-          serviceConfig.ExecStart = "${pkgs.python3}/bin/python ${fakeOauth2Proxy} 4181";
+          serviceConfig.ExecStart = "${pkgs.python3}/bin/python ${fakeOauth2Proxy}";
         };
 
         systemd.services.fake-oauth2-backend = {
@@ -205,13 +176,7 @@ pkgs.testers.runNixOSTest {
     import shlex
 
 
-    def request(
-        path,
-        method="GET",
-        headers=None,
-        data=None,
-        host="test.example.invalid",
-    ):
+    def request(path, method="GET", headers=None, data=None):
         headers = headers or {}
         args = [
             "curl",
@@ -220,7 +185,7 @@ pkgs.testers.runNixOSTest {
             "-D", "/tmp/response-headers",
             "-w", "%{http_code}",
             "-X", method,
-            "-H", f"Host: {host}",
+            "-H", "Host: test.example.invalid",
         ]
         for name, value in headers.items():
             args += ["-H", f"{name}: {value}"]
@@ -268,42 +233,12 @@ pkgs.testers.runNixOSTest {
     machine.wait_for_unit("nginx.service")
     machine.wait_for_open_port(80)
     machine.wait_for_open_port(4180)
-    machine.wait_for_open_port(4181)
     machine.wait_for_open_port(9000)
 
     with subtest("valid session reaches the backend"):
         response = request("/library", headers={"Cookie": "session=valid"})
         assert response[0] == 200, response
         assert response[2] == "GET /library user=test-user\n", response
-
-    with subtest("legacy gate passes valid sessions to the backend"):
-        response = request(
-            "/legacy",
-            headers={"Cookie": "session=valid"},
-            host="legacy.example.invalid",
-        )
-        assert response[0] == 200, response
-        assert response[2] == "GET /legacy user=test-user\n", response
-
-    with subtest("legacy gate redirects every method"):
-        for method in ["GET", "POST", "PUT", "PATCH", "DELETE"]:
-            clear_logs()
-            response = request(
-                "/expired",
-                method=method,
-                headers={"Accept": "application/json"},
-                data=None if method == "GET" else f"secret-{method}",
-                host="legacy.example.invalid",
-            )
-            assert response[0] == 307, (method, response)
-            assert response[1].get("location") == (
-                "http://legacy.example.invalid/oauth2/start"
-                "?rd=http://legacy.example.invalid/expired"
-            ), (method, response)
-            oauth_log, backend_log = logs()
-            assert "/oauth2/start" not in oauth_log, (method, oauth_log)
-            assert "secret" not in oauth_log, (method, oauth_log)
-            assert backend_log == "", (method, backend_log)
 
     with subtest("document navigation starts sign-in with a safe GET"):
         clear_logs()

@@ -251,7 +251,6 @@ in
 
   host.sso.oauth2ProxyGates.watchstate = {
     enable = true;
-    authFailureMode = "legacy-redirect";
     clientId = "watchstate";
     httpAddress = "http://127.0.0.1:4182";
     cookieName = "_watchstate_sso";
