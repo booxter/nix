@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prox-deploy"
+version = "0.1.0"
+description = "Deploy inventory-backed NixOS VMs through nixmoxer"
+requires-python = ">=3.11"
+dependencies = ["nixmoxer"]
+
+[project.scripts]
+prox-deploy = "prox_deploy.cli:entrypoint"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=prox_deploy --cov-report=term-missing --cov-fail-under=95"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/prox_deploy"]
+strict = true
+
+[tool.ruff]
+line-length = 100
