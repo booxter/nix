@@ -5,6 +5,8 @@ pkgs: {
 
   oidc-synthetic-probe = pkgs.callPackage ./oidc-synthetic-probe { };
 
+  reset-oidc = pkgs.callPackage ./reset-oidc { };
+
   unifi-sync = pkgs.callPackage ./unifi-sync { };
 
   uptimerobot-sync = pkgs.callPackage ./uptimerobot-sync { };

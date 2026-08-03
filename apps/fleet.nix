@@ -317,13 +317,7 @@ let
       exec ${pkiRotationPackage}/bin/pki-rotation "$@"
     '';
   };
-  resetOidc = pkgs.writeShellApplication {
-    name = "reset-oidc";
-    runtimeInputs = [ pkgs.openssh ];
-    text = ''
-      exec ${pkgs.bash}/bin/bash ${../apps/reset-oidc.sh} "$@"
-    '';
-  };
+  resetOidc = pkgs.callPackage ../nixos/pki/pkgs/reset-oidc { };
   wgHomeClientConfig = pkgs.writeShellApplication {
     name = "wg-home-client-config";
     runtimeInputs = [ pkgs.openssh ];
