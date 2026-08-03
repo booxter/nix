@@ -332,6 +332,7 @@ dependencies = [
  "clap",
  "gix",
  "ipnet",
+ "rustix",
  "serde",
  "serde_json",
  "tempfile",

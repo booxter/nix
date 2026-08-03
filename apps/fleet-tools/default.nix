@@ -4,8 +4,10 @@
   dix,
   fleetInventory,
   lib,
+  makeWrapper,
   nh,
   nix,
+  nix-output-monitor,
   openssh,
   rustfmt,
   rustPlatform,
@@ -26,13 +28,16 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-jX9+4U/yP+jV5o5+YyeY5tk8CeBI7M1Fcfqw5Q0dFLo=";
+  cargoHash = "sha256-MEe77+zSEZC2Z3k52Q6TUyIViYqnhhON2ph5t3CM82I=";
 
   DIFF_DIX = lib.getExe dix;
   DIFF_GNU_DIFF = lib.getExe' diffutils "diff";
   DIFF_NH = lib.getExe nh;
   DIFF_NIX = lib.getExe nix;
   DIFF_TARGET_ALIASES_JSON = builtins.toJSON vmTargets;
+  DEPLOY_NH = lib.getExe nh;
+  DEPLOY_NIX = lib.getExe nix;
+  DEPLOY_NIX_COLLECT_GARBAGE = lib.getExe' nix "nix-collect-garbage";
   FLEET_HOSTS_JSON = builtins.toJSON fleetInventory;
   WG_HOME_CONFIG_JSON = builtins.toJSON wireguardHome;
   WG_HOME_HELP = ''
@@ -60,6 +65,18 @@ rustPlatform.buildRustPackage {
     clippy
     rustfmt
   ];
+
+  nativeBuildInputs = [ makeWrapper ];
+
+  postFixup = ''
+    wrapProgram "$out/bin/fleet-deploy-remote" \
+      --prefix PATH : ${
+        lib.makeBinPath [
+          nix
+          nix-output-monitor
+        ]
+      }
+  '';
 
   preCheck = ''
     cargo fmt --check
