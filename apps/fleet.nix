@@ -48,13 +48,39 @@ let
   appPackages = import ./default.nix pkgs;
 
   fleetInventory = {
-    darwin = pkgs.lib.mapAttrs (_name: config: {
+    aliases =
+      builtins.listToAttrs (
+        map (spec: {
+          name = hostInventory.toNixosConfigName spec;
+          value = hostInventory.toNixosConfigName spec;
+        }) hostInventory.nixosHostSpecs
+      )
+      // pkgs.lib.foldlAttrs (
+        aliases: name: config:
+        let
+          hostname = config.hostname or name;
+        in
+        aliases // { ${name} = name; } // pkgs.lib.optionalAttrs (hostname != name) { ${hostname} = name; }
+      ) { } hostInventory.darwinHosts;
+    darwin = pkgs.lib.mapAttrs (name: config: {
+      displayName = name;
       isWork = config.isWork or false;
+      platform = config.platform;
+      runtimeHost = config.hostname or name;
+      sshHost = config.hostname or name;
     }) hostInventory.darwinHosts;
+    lanDnsServer = lan.gateway.address;
+    lanDomain = lan.domain;
     nixos = builtins.listToAttrs (
       map (spec: {
         name = hostInventory.toNixosConfigName spec;
-        value.isWork = spec.isWork or false;
+        value = {
+          displayName = hostInventory.toNixosConfigName spec;
+          isWork = spec.isWork or false;
+          platform = spec.platform or "x86_64-linux";
+          runtimeHost = hostInventory.toNixosRuntimeHostName spec;
+          sshHost = hostInventory.toNixosShortDnsName spec;
+        };
       }) hostInventory.nixosHostSpecs
     );
   };

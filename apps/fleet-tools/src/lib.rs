@@ -12,12 +12,20 @@ const COMPILED_HOSTS_JSON: &str = env!("FLEET_HOSTS_JSON");
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Host {
+    pub display_name: String,
     pub is_work: bool,
+    pub platform: String,
+    pub runtime_host: String,
+    pub ssh_host: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HostInventory {
+    pub aliases: BTreeMap<String, String>,
     pub darwin: BTreeMap<String, Host>,
+    pub lan_dns_server: String,
+    pub lan_domain: String,
     pub nixos: BTreeMap<String, Host>,
 }
 
@@ -31,7 +39,10 @@ pub fn select_hosts(inventory: &HostInventory, requested: &[String]) -> HostInve
     }
 
     HostInventory {
+        aliases: inventory.aliases.clone(),
         darwin: select_platform(&inventory.darwin, requested),
+        lan_dns_server: inventory.lan_dns_server.clone(),
+        lan_domain: inventory.lan_domain.clone(),
         nixos: select_platform(&inventory.nixos, requested),
     }
 }
@@ -52,8 +63,14 @@ mod tests {
         let inventory = compiled_inventory().expect("compiled host inventory should be valid");
 
         assert!(!inventory.darwin["mair"].is_work);
+        assert_eq!(inventory.darwin["mair"].platform, "aarch64-darwin");
+        assert_eq!(inventory.darwin["mair"].runtime_host, "mair");
         assert!(!inventory.nixos["beast"].is_work);
+        assert_eq!(inventory.nixos["beast"].platform, "x86_64-linux");
         assert!(inventory.nixos["nv"].is_work);
+        assert_eq!(inventory.aliases["JGWXHWDL4X"], "JGWXHWDL4X");
+        assert!(!inventory.lan_dns_server.is_empty());
+        assert!(!inventory.lan_domain.is_empty());
     }
 
     #[test]
@@ -86,5 +103,6 @@ mod tests {
             ["beast", "nvws"]
         );
         assert!(selected.nixos["nvws"].is_work);
+        assert_eq!(selected.aliases, inventory.aliases);
     }
 }
