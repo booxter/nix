@@ -4,8 +4,6 @@ import os
 import sys
 import time
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
-from pathlib import Path
 from typing import Protocol, TextIO
 
 from codex_tools.auth import CodexAuth
@@ -13,13 +11,13 @@ from codex_tools.errors import CodexToolsError
 from codex_tools.http import UrllibJsonHttpClient
 from codex_tools.sketchybar import (
     Colors,
+    Config,
     Sketchybar,
     SketchybarCommand,
     format_duration,
     format_epoch_local,
     pace_color,
     rounded_risk_bps,
-    sketchybar_executable,
 )
 from codex_tools.usage import PersonalUsage, PersonalUsageService, ResetCredits, UsageWindow
 
@@ -28,22 +26,6 @@ WEEKLY_ITEM = "codex.weekly"
 RESETS_ITEM = "codex.resets"
 RESETS_POPUP_ITEM = "codex.resets.expiry"
 EXPIRING_RESET_SECONDS = 604_800
-
-
-@dataclass(frozen=True)
-class Config:
-    auth_file: Path
-    colors: Colors
-    sketchybar_executable: str
-
-    @classmethod
-    def from_environment(cls, environment: Mapping[str, str]) -> Config:
-        home = Path(environment.get("HOME", str(Path.home())))
-        return cls(
-            auth_file=home / ".codex" / "auth.json",
-            colors=Colors.from_environment(environment),
-            sketchybar_executable=sketchybar_executable(environment),
-        )
 
 
 class PersonalUsageProvider(Protocol):

@@ -5,6 +5,7 @@ import math
 import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 
 from codex_tools.errors import CodexToolsError
@@ -29,6 +30,22 @@ class Colors:
             red=environment.get("SKETCHYBAR_COLOR_RED", DEFAULT_RED),
             blue=environment.get("SKETCHYBAR_COLOR_BLUE", DEFAULT_BLUE),
             neutral=environment.get("SKETCHYBAR_COLOR_NEUTRAL", DEFAULT_NEUTRAL),
+        )
+
+
+@dataclass(frozen=True)
+class Config:
+    auth_file: Path
+    colors: Colors
+    sketchybar_executable: str
+
+    @classmethod
+    def from_environment(cls, environment: Mapping[str, str]) -> Config:
+        home = Path(environment.get("HOME", str(Path.home())))
+        return cls(
+            auth_file=home / ".codex" / "auth.json",
+            colors=Colors.from_environment(environment),
+            sketchybar_executable=sketchybar_executable(environment),
         )
 
 
