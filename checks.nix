@@ -32,7 +32,6 @@ helpers.forAllSystems (
     wg-home-client-config = fleet.packages.wg-home-client-config;
     update-packages = packageUpdates.packages.update-packages;
     update-oci-images = packageUpdates.packages.update-oci-images;
-    package-update-tools = packageUpdates.packages.package-update-tools;
     prox-deploy = proxmox.packages.prox-deploy;
   }
 )
