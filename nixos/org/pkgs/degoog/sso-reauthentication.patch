@@ -16,20 +16,26 @@ diff --git a/src/client/modules/settings/settings.ts b/src/client/modules/settin
 index 6ec6c8f..ee79d68 100644
 --- a/src/client/modules/settings/settings.ts
 +++ b/src/client/modules/settings/settings.ts
-@@ -1,6 +1,7 @@
+@@ -1,6 +1,10 @@
  import { initTheme } from "../../utils/theme";
  import { applyDefaults } from "../../utils/sync";
  import { getBase } from "../../utils/base-url";
-+import { installSsoReauthentication } from "../../utils/sso-reauth";
++import {
++  installSsoReauthentication,
++  isSettingsPageDocument,
++} from "../../utils/sso-reauth";
  import { initInstallPrompt } from "../../utils/install-prompt";
  import {
    initGeneralTab,
-@@ -354,4 +355,6 @@ async function _init(): Promise<void> {
+@@ -354,4 +358,9 @@ async function _init(): Promise<void> {
    }
  }
  
 -void _init();
-+if (!installSsoReauthentication()) {
++if (
++  isSettingsPageDocument(document) &&
++  !installSsoReauthentication()
++) {
 +  void _init();
 +}
 diff --git a/src/client/utils/sso-reauth.ts b/src/client/utils/sso-reauth.ts
@@ -37,7 +43,7 @@ new file mode 100644
 index 0000000..afb002e
 --- /dev/null
 +++ b/src/client/utils/sso-reauth.ts
-@@ -0,0 +1,268 @@
+@@ -0,0 +1,275 @@
 +const PENDING_VERSION = 1;
 +const PENDING_KEY = "degoog.sso.pending-navigation.v1";
 +const ATTEMPT_KEY = "degoog.sso.reauth-attempt.v1";
@@ -71,6 +77,13 @@ index 0000000..afb002e
 +  removeItem(key: string): void;
 +  setItem(key: string, value: string): void;
 +}
++
++interface DocumentLike {
++  querySelector(selectors: string): unknown;
++}
++
++export const isSettingsPageDocument = (document: DocumentLike): boolean =>
++  document.querySelector(".settings-page") !== null;
 +
 +interface ResponseLike {
 +  status: number;
@@ -354,10 +367,11 @@ new file mode 100644
 index 0000000..7bc446d
 --- /dev/null
 +++ b/tests/public/sso-reauth.test.ts
-@@ -0,0 +1,222 @@
+@@ -0,0 +1,235 @@
 +import { describe, expect, test } from "bun:test";
 +import {
 +  createSsoReauthController,
++  isSettingsPageDocument,
 +  isSsoReauthResponse,
 +  parsePendingNavigation,
 +  pendingNavigationFor,
@@ -387,6 +401,18 @@ index 0000000..7bc446d
 +    values,
 +  };
 +};
++
++describe("SSO page initialization", () => {
++  test("initializes settings only in a settings document", () => {
++    const documentWith = (match: boolean) => ({
++      querySelector: (selector: string) =>
++        match && selector === ".settings-page" ? {} : null,
++    });
++
++    expect(isSettingsPageDocument(documentWith(true))).toBe(true);
++    expect(isSettingsPageDocument(documentWith(false))).toBe(false);
++  });
++});
 +
 +const runtime = (
 +  nextResponse: Response,
