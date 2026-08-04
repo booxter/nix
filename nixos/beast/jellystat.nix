@@ -1,4 +1,5 @@
 {
+  beastPkgs,
   config,
   hostInventory,
   lib,
@@ -27,71 +28,22 @@ let
     "--password-file"
     config.sops.secrets."jellystat/postgres/password".path
   ];
-  jellystatBackupScript = pkgs.writeShellApplication {
-    name = "jellystat-built-in-backup";
-    runtimeInputs = with pkgs; [
-      coreutils
-      curl
-      findutils
-      jq
-    ];
-    text = ''
-      set -euo pipefail
-
-      base_url="http://127.0.0.1:${toString jellystatPort}"
-      backup_dir=${lib.escapeShellArg jellystatBackupDataDir}
-
-      install -d -m 0750 -o root -g restic-cloud "$backup_dir"
-      marker="$(mktemp "$backup_dir/.backup-marker.XXXXXX")"
-      trap 'rm -f "$marker"' EXIT
-
-      for attempt in $(seq 1 120); do
-        config_json="$(curl --fail --silent "$base_url/auth/isConfigured" 2>/dev/null || true)"
-        state="$(printf '%s' "$config_json" | jq --raw-output '.state // empty' 2>/dev/null || true)"
-
-        if [ "$state" = 2 ]; then
-          break
-        fi
-
-        if [ "$attempt" = 120 ]; then
-          echo "Timed out waiting for Jellystat to become configured" >&2
-          exit 1
-        fi
-
-        sleep 2
-      done
-
-      login_response="$(
-        curl \
-          --fail \
-          --silent \
-          --show-error \
-          --header 'Content-Type: application/json' \
-          --data-binary '{}' \
-          "$base_url/auth/login"
-      )"
-      token="$(printf '%s' "$login_response" | jq --raw-output '.token // empty')"
-
-      if [ -z "$token" ] || [ "$token" = "null" ]; then
-        echo "Jellystat login did not return a backup token" >&2
-        printf '%s\n' "$login_response" >&2
-        exit 1
-      fi
-
-      curl \
-        --fail \
-        --silent \
-        --show-error \
-        --header "Authorization: Bearer $token" \
-        "$base_url/backup/beginBackup"
-
-      created_file="$(find "$backup_dir" -maxdepth 1 -type f -name 'backup_*.json' -newer "$marker" -print -quit)"
-      if [ -z "$created_file" ]; then
-        echo "Jellystat backup endpoint did not create a new backup file in $backup_dir" >&2
-        exit 1
-      fi
-    '';
-  };
+  bootstrapCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' beastPkgs.jellystat-tools "jellystat-bootstrap")
+    "--url"
+    "http://127.0.0.1:${toString jellystatPort}"
+    "--jellyfin-url"
+    jellyfinUrl
+    "--jellyfin-api-key-file"
+    config.sops.secrets."jellyfin/apiKey".path
+  ];
+  backupCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' beastPkgs.jellystat-tools "jellystat-built-in-backup")
+    "--url"
+    "http://127.0.0.1:${toString jellystatPort}"
+    "--backup-dir"
+    jellystatBackupDataDir
+  ];
 in
 {
   sops.secrets = {
@@ -212,126 +164,12 @@ in
         "postgresql.service"
         "sops-install-secrets.service"
       ];
-      path = [
-        pkgs.coreutils
-        pkgs.curl
-        pkgs.jq
-      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
         TimeoutStartSec = "12h";
+        ExecStart = bootstrapCommand;
       };
-      script = ''
-        base_url="http://127.0.0.1:${toString jellystatPort}"
-
-        post_json() {
-          local path="$1"
-          local payload="$2"
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --header 'Content-Type: application/json' \
-            --data-binary "$payload" \
-            "$base_url$path"
-        }
-
-        post_json_auth() {
-          local path="$1"
-          local payload="$2"
-          local token="$3"
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --header 'Content-Type: application/json' \
-            --header "Authorization: Bearer $token" \
-            --data-binary "$payload" \
-            "$base_url$path"
-        }
-
-        get_json_auth() {
-          local path="$1"
-          local token="$2"
-          curl \
-            --fail \
-            --silent \
-            --show-error \
-            --header "Authorization: Bearer $token" \
-            "$base_url$path"
-        }
-
-        for attempt in $(seq 1 120); do
-          config_json="$(curl --fail --silent "$base_url/auth/isConfigured" 2>/dev/null || true)"
-          state="$(printf '%s' "$config_json" | jq --raw-output '.state // empty' 2>/dev/null || true)"
-
-          if [ -n "$state" ]; then
-            break
-          fi
-
-          if [ "$attempt" = 120 ]; then
-            echo "Timed out waiting for Jellystat setup API" >&2
-            exit 1
-          fi
-
-          sleep 2
-        done
-
-        jellyfin_api_key="$(tr -d '\n' < ${lib.escapeShellArg config.sops.secrets."jellyfin/apiKey".path})"
-        config_payload="$(jq --null-input --compact-output \
-          --arg JF_HOST ${lib.escapeShellArg jellyfinUrl} \
-          --arg JF_API_KEY "$jellyfin_api_key" \
-          '{ JF_HOST: $JF_HOST, JF_API_KEY: $JF_API_KEY }')"
-        token=""
-
-        if [ "$state" -lt 2 ]; then
-          user_payload="$(jq --null-input --compact-output \
-            --arg username oauth2-proxy \
-            --arg password disabled \
-            '{ username: $username, password: $password }')"
-          user_response="$(post_json /auth/createuser "$user_payload")"
-          token="$(printf '%s' "$user_response" | jq --raw-output '.token // empty')"
-
-          post_json /auth/configSetup "$config_payload" >/dev/null
-        fi
-
-        if [ -z "$token" ]; then
-          login_payload="$(jq --null-input --compact-output '{}')"
-          login_response="$(post_json /auth/login "$login_payload" 2>/dev/null || true)"
-          token="$(printf '%s' "$login_response" | jq --raw-output '.token // empty' 2>/dev/null || true)"
-        fi
-
-        if [ -n "$token" ]; then
-          # setconfig validates the supplied connection by calling Jellyfin's
-          # /system/configuration endpoint, so wait for the API to become ready
-          # after boot rather than relying only on systemd service ordering.
-          for attempt in $(seq 1 120); do
-            if post_json_auth /api/setconfig "$config_payload" "$token" >/dev/null; then
-              break
-            fi
-
-            if [ "$attempt" = 120 ]; then
-              echo "Timed out waiting for Jellyfin setup API" >&2
-              exit 1
-            fi
-
-            sleep 2
-          done
-
-          login_payload="$(jq --null-input --compact-output '{ REQUIRE_LOGIN: false }')"
-          post_json_auth /api/setRequireLogin "$login_payload" "$token" >/dev/null
-
-          library_metadata="$(get_json_auth /stats/getLibraryMetadata "$token")"
-          library_count="$(printf '%s' "$library_metadata" | jq 'length')"
-
-          if [ "$library_count" = 0 ]; then
-            get_json_auth /sync/beginSync "$token" >/dev/null
-          fi
-        else
-          echo "Jellystat is already configured and did not issue a bootstrap token; leaving app login unchanged." >&2
-        fi
-      '';
     };
 
     jellystat-built-in-backup = {
@@ -346,7 +184,7 @@ in
         Type = "oneshot";
         User = "root";
         Group = "root";
-        ExecStart = lib.getExe jellystatBackupScript;
+        ExecStart = backupCommand;
         TimeoutStartSec = "12h";
       };
     };
