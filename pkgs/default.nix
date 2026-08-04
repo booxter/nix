@@ -31,6 +31,8 @@ in
 
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 
+  issue-proxmox-exporter-token = appPackages.issue-proxmox-exporter-token;
+
   patch-context = pkgs.callPackage ./patch-context { };
 
   pki-rotation = pkgs.callPackage ./pki-rotation {

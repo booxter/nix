@@ -8,7 +8,9 @@ let
   issueObservabilityCert = pkgs.callPackage ./issue-observability-cert {
     inherit sopsTools;
   };
-  issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token { };
+  issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token {
+    inherit hostInventory sopsTools;
+  };
   getFfCookie = pkgs.callPackage ./get-ff-cookie { };
   seerrTools = pkgs.callPackage ../nixos/srvarr/pkgs/seerr-tools { };
 in
