@@ -16,4 +16,8 @@ in
   restic-cloud-usage = pkgs.callPackage ./restic-cloud-usage {
     inherit atomicFileWrites;
   };
+
+  storage-observability = pkgs.callPackage ./storage-observability {
+    inherit atomicFileWrites;
+  };
 }

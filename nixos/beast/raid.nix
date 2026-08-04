@@ -1,4 +1,5 @@
 {
+  beastPkgs,
   config,
   lib,
   pkgs,
@@ -126,14 +127,6 @@ let
     mv "$tmp_file" ${textfileDir}/md-sync.prom
     trap - EXIT
   '';
-  hbaExporter = pkgs.writeShellScript "beast-hba-export" ''
-    set -euo pipefail
-
-    exec ${pkgs.python3}/bin/python3 ${./hba-exporter.py} \
-      --storcli-path ${pkgs.storcli}/bin/storcli \
-      --bay-map /etc/beast-hba-bay-map.json \
-      --output-file ${textfileDir}/hba.prom
-  '';
 in
 {
   # Assemble the existing RAID6 array from the previous NAS.
@@ -222,7 +215,13 @@ in
     after = [ "local-fs.target" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = hbaExporter;
+      ExecStart = lib.escapeShellArgs [
+        (lib.getExe beastPkgs.storage-observability)
+        "--bay-map"
+        "/etc/beast-hba-bay-map.json"
+        "--output-file"
+        "${textfileDir}/hba.prom"
+      ];
     };
   };
 
