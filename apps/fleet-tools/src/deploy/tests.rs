@@ -373,6 +373,22 @@ fn lan_dns_candidates_add_the_domain_only_to_bare_names() {
 }
 
 #[test]
+fn remote_helper_uses_the_existing_package_interface() {
+    assert_eq!(
+        remote_helper_arguments(Path::new("/nix/store/source")),
+        [
+            "nix",
+            "shell",
+            "-L",
+            "--show-trace",
+            "/nix/store/source#fleet-tools",
+            "--command",
+            "fleet-deploy-remote",
+        ]
+    );
+}
+
+#[test]
 fn store_output_must_be_an_absolute_nix_store_path() {
     assert_eq!(
         parse_store_path(b"/nix/store/abc-source\n", "test").unwrap(),

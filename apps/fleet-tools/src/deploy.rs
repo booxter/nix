@@ -9,7 +9,9 @@ use model::{
 };
 pub use system_backend::SystemBackend;
 #[cfg(test)]
-use system_backend::{config_uses_proxy, dns_candidates, parse_store_path};
+use system_backend::{
+    config_uses_proxy, dns_candidates, parse_store_path, remote_helper_arguments,
+};
 pub use workflow::run;
 #[cfg(test)]
 use workflow::{run_with_backend, REPO_URL};

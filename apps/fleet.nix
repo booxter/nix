@@ -202,8 +202,6 @@ in
   };
   apps = {
     deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
-    "fleet-deploy-remote" =
-      mkApp "${fleetTools}/bin/fleet-deploy-remote" "Run the internal target-side fleet deployment helper.";
     vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
     diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
     "get-local-builders" =

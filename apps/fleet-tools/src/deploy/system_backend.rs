@@ -190,14 +190,7 @@ impl Backend for SystemBackend {
         // The source is content-addressed, so the target can authenticate it
         // without a signature. Build the input-addressed helper on the target
         // instead of copying an unsigned local build across the trust boundary.
-        let mut remote_arguments = vec![
-            "nix".to_owned(),
-            "run".to_owned(),
-            "-L".to_owned(),
-            "--show-trace".to_owned(),
-            format!("{}#fleet-deploy-remote", source.display()),
-            "--".to_owned(),
-        ];
+        let mut remote_arguments = remote_helper_arguments(source);
         remote_arguments.extend(activation_arguments(source, request));
         // OpenSSH's remote-command protocol is a shell string, not an argv
         // vector. Quote each typed argument here at that unavoidable boundary.
@@ -387,6 +380,18 @@ fn activation_arguments(source: &Path, request: &ActivationRequest) -> Vec<Strin
         arguments.push("--no-inhibit".to_owned());
     }
     arguments
+}
+
+pub(super) fn remote_helper_arguments(source: &Path) -> Vec<String> {
+    vec![
+        "nix".to_owned(),
+        "shell".to_owned(),
+        "-L".to_owned(),
+        "--show-trace".to_owned(),
+        format!("{}#fleet-tools", source.display()),
+        "--command".to_owned(),
+        "fleet-deploy-remote".to_owned(),
+    ]
 }
 
 pub(super) fn parse_store_path(stdout: &[u8], operation: &str) -> Result<PathBuf> {
