@@ -12,6 +12,8 @@ in
 
   reset-oidc = kanidmTools;
 
+  step-ca-bootstrap = pkgs.callPackage ./step-ca-bootstrap { };
+
   unifi-sync = unifiSync;
 
   uptimerobot-sync = pkgs.callPackage ./uptimerobot-sync { };
