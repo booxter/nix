@@ -17,7 +17,9 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
   dependencies = [
     pythonPackages.mariadb
+    pythonPackages.podman
     pythonPackages.pydantic
+    pythonPackages.requests
     pythonPackages.sqlalchemy
   ];
 
@@ -26,6 +28,9 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
+    # podman exposes requests response types without propagating their stubs;
+    # fix this in nixpkgs' podman dependency closure instead of keeping it here.
+    pythonPackages.types-requests
     ruff
   ];
 

@@ -42,65 +42,6 @@ let
   user = "romm";
   apiPort = 5081;
   redisPort = 6380;
-  rommDefaultCoreHeadReplacement = "  <script src=\"/assets/romm-default-core.js\"></script>\n</head>";
-  rommDefaultCoreScript = pkgs.writeText "romm-default-core.js" ''
-    (() => {
-      const platform = "arcade";
-      const defaultCore = "mame2003_plus";
-      const previousDefaultCore = "mame2003";
-      const key = `player:''${platform}:core`;
-      const migrationKey = `player:''${platform}:core-default:''${defaultCore}`;
-
-      try {
-        const currentCore = window.localStorage.getItem(key);
-
-        if (currentCore === null) {
-          window.localStorage.setItem(key, defaultCore);
-          window.localStorage.setItem(migrationKey, "true");
-          return;
-        }
-
-        if (
-          currentCore === previousDefaultCore &&
-          window.localStorage.getItem(migrationKey) !== "true"
-        ) {
-          window.localStorage.setItem(key, defaultCore);
-          window.localStorage.setItem(migrationKey, "true");
-        }
-      } catch (_error) {
-        // Browser storage can be unavailable in restricted/private contexts.
-      }
-    })();
-  '';
-  rommReplaceFail = pkgs.writeShellScript "romm-replace-fail" ''
-    set -euo pipefail
-
-    if [ "$#" -ne 3 ]; then
-      echo "usage: $0 <file> <pattern> <replacement>" >&2
-      exit 2
-    fi
-
-    pattern=$2
-    replacement=$3
-
-    ${pkgs.perl}/bin/perl -0pi -e '
-      BEGIN {
-        $pattern = shift @ARGV;
-        $replacement = shift @ARGV;
-        $file = $ARGV[0] // "<input>";
-        $matches = 0;
-      }
-
-      $matches += s/\Q$pattern\E/$replacement/g;
-
-      END {
-        if ($matches == 0) {
-          print STDERR "replace-fail: pattern not found in $file\n";
-          exit 1;
-        }
-      }
-    ' "$pattern" "$replacement" "$1"
-  '';
   ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
   rommImage = ociImages.romm.ref;
   rommImageFile = ociImages.romm.imageFile;
@@ -110,6 +51,17 @@ let
     (lib.getExe' srvarrPkgs.romm-tools "romm-db-init")
     "--socket"
     "/run/mysqld/mysqld.sock"
+  ];
+  rommAssetsCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.romm-tools "romm-prepare-assets")
+    "--socket-url"
+    "http+unix:///run/user/${toString accounts.uids.romm}/podman/podman.sock"
+    "--image-ref"
+    rommImage
+    "--image-file"
+    rommImageFile
+    "--state-dir"
+    stateDir
   ];
 
   commonEnvironment = {
@@ -374,10 +326,6 @@ in
     wants = rommPodmanBaseUnits;
     after = rommPodmanBaseUnits ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = stateDir;
-    path = [
-      pkgs.coreutils
-      config.virtualisation.podman.package
-    ];
     environment = podmanRuntimeEnvironment;
     serviceConfig = {
       Type = "oneshot";
@@ -386,65 +334,9 @@ in
       WorkingDirectory = stateDir;
       UMask = "0027";
       RemainAfterExit = true;
+      ExecStart = rommAssetsCommand;
+      TimeoutStartSec = "10min";
     };
-    script = ''
-      set -euo pipefail
-
-      podman load -i ${lib.escapeShellArg "${rommImageFile}"}
-      cid="$(podman create ${lib.escapeShellArg rommImage})"
-      cleanup() {
-        podman rm -f "$cid" >/dev/null 2>&1 || true
-      }
-      trap cleanup EXIT
-
-      rm -rf \
-        ${lib.escapeShellArg "${webDir}.new"} \
-        ${lib.escapeShellArg "${nginxDir}.new"} \
-        ${lib.escapeShellArg "${integrationDir}.new"}
-      mkdir -p \
-        ${lib.escapeShellArg "${webDir}.new"} \
-        ${lib.escapeShellArg "${nginxDir}.new"} \
-        ${lib.escapeShellArg "${integrationDir}.new/utils"}
-      podman cp "$cid:/var/www/html/." ${lib.escapeShellArg "${webDir}.new/"}
-      podman cp "$cid:/etc/nginx/js/." ${lib.escapeShellArg "${nginxDir}.new/"}
-      podman cp \
-        "$cid:/backend/utils/zip_cache.py" \
-        ${lib.escapeShellArg "${integrationDir}.new/utils/zip_cache.py"}
-
-      install -m 0644 ${rommDefaultCoreScript} ${lib.escapeShellArg "${webDir}.new/assets/romm-default-core.js"}
-      ${rommReplaceFail} \
-        ${lib.escapeShellArg "${webDir}.new/index.html"} \
-        ${lib.escapeShellArg "</head>"} \
-        ${lib.escapeShellArg rommDefaultCoreHeadReplacement}
-      ${rommReplaceFail} \
-        ${lib.escapeShellArg "${integrationDir}.new/utils/zip_cache.py"} \
-        ${lib.escapeShellArg "        os.rename(tmp_path, target)"} \
-        ${lib.escapeShellArg "        os.chmod(tmp_path, 0o640)\n        os.rename(tmp_path, target)"}
-
-      rm -f ${lib.escapeShellArg "${webDir}.new/assets/romm/resources"}
-      mkdir -p ${lib.escapeShellArg "${webDir}.new/assets/romm"}
-
-      rm -rf \
-        ${lib.escapeShellArg "${webDir}.old"} \
-        ${lib.escapeShellArg "${nginxDir}.old"} \
-        ${lib.escapeShellArg "${integrationDir}.old"}
-      if [ -e ${lib.escapeShellArg webDir} ]; then
-        mv ${lib.escapeShellArg webDir} ${lib.escapeShellArg "${webDir}.old"}
-      fi
-      if [ -e ${lib.escapeShellArg nginxDir} ]; then
-        mv ${lib.escapeShellArg nginxDir} ${lib.escapeShellArg "${nginxDir}.old"}
-      fi
-      if [ -e ${lib.escapeShellArg integrationDir} ]; then
-        mv ${lib.escapeShellArg integrationDir} ${lib.escapeShellArg "${integrationDir}.old"}
-      fi
-      mv ${lib.escapeShellArg "${webDir}.new"} ${lib.escapeShellArg webDir}
-      mv ${lib.escapeShellArg "${nginxDir}.new"} ${lib.escapeShellArg nginxDir}
-      mv ${lib.escapeShellArg "${integrationDir}.new"} ${lib.escapeShellArg integrationDir}
-      rm -rf \
-        ${lib.escapeShellArg "${webDir}.old"} \
-        ${lib.escapeShellArg "${nginxDir}.old"} \
-        ${lib.escapeShellArg "${integrationDir}.old"}
-    '';
   };
 
   systemd.services.romm-setup = {
