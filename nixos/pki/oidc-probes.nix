@@ -3,7 +3,7 @@
   hostInventory,
   lib,
   pkiPkgs,
-  pkgs,
+  utils,
   ...
 }:
 let
@@ -17,16 +17,15 @@ let
   metricsFile = "/var/lib/prometheus-node-exporter-textfile/oidc-synthetic.prom";
   stateDir = "/var/lib/oidc-synthetic-probe";
   stateFile = "${stateDir}/state.json";
-  bootstrapScript = pkgs.writeShellScript "kanidm-oidc-probe-bootstrap" ''
-    set -euo pipefail
-    export KANIDM_RECOVER_ACCOUNT_PASSWORD_FILE=${lib.escapeShellArg probePasswordSecret.path}
-    exec ${config.services.kanidm.package}/bin/kanidmd \
-      scripting recover-account \
-      -c /etc/kanidm/server.toml \
-      ${lib.escapeShellArg probeUser} \
-      --from-environment \
-      >/dev/null
-  '';
+  bootstrapCommand = utils.escapeSystemdExecArgs [
+    "${config.services.kanidm.package}/bin/kanidmd"
+    "scripting"
+    "recover-account"
+    "-c"
+    "/etc/kanidm/server.toml"
+    probeUser
+    "--from-environment"
+  ];
 in
 {
   sops.secrets.kanidmOidcProbePassword = {
@@ -53,7 +52,9 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = bootstrapScript;
+      Environment = "KANIDM_RECOVER_ACCOUNT_PASSWORD_FILE=${probePasswordSecret.path}";
+      ExecStart = bootstrapCommand;
+      StandardOutput = "null";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;
