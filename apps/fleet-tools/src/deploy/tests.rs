@@ -43,7 +43,6 @@ impl Backend for FakeBackend {
     fn activate_remote(
         &mut self,
         _target: &DeploymentTarget,
-        _helper: &Path,
         _source: &Path,
         request: &ActivationRequest,
     ) -> Result<()> {
@@ -244,7 +243,7 @@ fn explicit_aliases_skip_mode_filtering() {
 }
 
 #[test]
-fn deployment_stages_requested_source_and_caches_helpers_by_platform() {
+fn deployment_stages_requested_source_and_builds_only_local_helper() {
     let mut backend = FakeBackend {
         hostname: "controller".to_owned(),
         terminal: true,
@@ -278,7 +277,7 @@ fn deployment_stages_requested_source_and_caches_helpers_by_platform() {
             url: REPO_URL.to_owned(),
         }]
     );
-    assert_eq!(backend.builds, ["x86_64-linux", "aarch64-darwin"]);
+    assert_eq!(backend.builds, ["x86_64-linux"]);
     assert_eq!(backend.activations.len(), 3);
     assert!(backend.activations[0].2);
     assert!(!backend.activations[1].2);

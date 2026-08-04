@@ -168,7 +168,6 @@ impl Backend for SystemBackend {
     fn activate_remote(
         &mut self,
         target: &DeploymentTarget,
-        helper: &Path,
         source: &Path,
         request: &ActivationRequest,
     ) -> Result<()> {
@@ -181,7 +180,6 @@ impl Backend for SystemBackend {
             "--to",
             &format!("ssh-ng://{}", connection.destination),
         ])
-        .arg(helper)
         .arg(source)
         .env("NIX_SSHOPTS", shell_words::join(&nix_ssh_options));
         self.checked_status(
@@ -189,8 +187,17 @@ impl Backend for SystemBackend {
             &format!("Nix copy to {}", target.host.display_name),
         )?;
 
-        let mut remote_arguments =
-            vec![helper.join("bin/fleet-deploy-remote").display().to_string()];
+        // The source is content-addressed, so the target can authenticate it
+        // without a signature. Build the input-addressed helper on the target
+        // instead of copying an unsigned local build across the trust boundary.
+        let mut remote_arguments = vec![
+            "nix".to_owned(),
+            "run".to_owned(),
+            "-L".to_owned(),
+            "--show-trace".to_owned(),
+            format!("{}#fleet-deploy-remote", source.display()),
+            "--".to_owned(),
+        ];
         remote_arguments.extend(activation_arguments(source, request));
         // OpenSSH's remote-command protocol is a shell string, not an argv
         // vector. Quote each typed argument here at that unavoidable boundary.

@@ -1,7 +1,6 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeSet;
 use std::env;
 use std::io::Write;
-use std::path::PathBuf;
 use std::time::Instant;
 
 use anyhow::{anyhow, bail, Result};
@@ -75,8 +74,6 @@ pub(super) fn run_with_backend(
     };
     let local_hostname = backend.hostname()?;
     let started = Instant::now();
-    let mut helpers: BTreeMap<String, PathBuf> = BTreeMap::new();
-    let mut failed_platforms: BTreeMap<String, String> = BTreeMap::new();
     let mut succeeded = Vec::new();
     let mut failed = Vec::new();
 
@@ -90,31 +87,6 @@ pub(super) fn run_with_backend(
             failed.push(target.clone());
             continue;
         }
-        if let Some(error) = failed_platforms.get(&target.host.platform) {
-            eprintln!("{}: {error}", target.host.display_name);
-            failed.push(target.clone());
-            continue;
-        }
-        let helper = if let Some(helper) = helpers.get(&target.host.platform) {
-            helper.clone()
-        } else {
-            match backend.build_helper(&source.store_path, &target.host.platform) {
-                Ok(helper) => {
-                    helpers.insert(target.host.platform.clone(), helper.clone());
-                    helper
-                }
-                Err(error) => {
-                    let message = format!(
-                        "failed to build {} deploy helper: {error:#}",
-                        target.host.platform
-                    );
-                    failed_platforms.insert(target.host.platform.clone(), message.clone());
-                    eprintln!("{}: {message}", target.host.display_name);
-                    failed.push(target.clone());
-                    continue;
-                }
-            }
-        };
         let request = ActivationRequest {
             action,
             config_name: target.config_name.clone(),
@@ -122,9 +94,12 @@ pub(super) fn run_with_backend(
             no_inhibit: arguments.no_inhibit,
         };
         let result = if target.host.runtime_host == local_hostname {
-            backend.activate_local(&helper, &source.store_path, &request)
+            match backend.build_helper(&source.store_path, &target.host.platform) {
+                Ok(helper) => backend.activate_local(&helper, &source.store_path, &request),
+                Err(error) => Err(error),
+            }
         } else {
-            backend.activate_remote(target, &helper, &source.store_path, &request)
+            backend.activate_remote(target, &source.store_path, &request)
         };
         match result {
             Ok(()) => succeeded.push(target.clone()),

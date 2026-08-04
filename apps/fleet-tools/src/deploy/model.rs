@@ -138,7 +138,6 @@ pub(super) trait Backend {
     fn activate_remote(
         &mut self,
         target: &DeploymentTarget,
-        helper: &Path,
         source: &Path,
         request: &ActivationRequest,
     ) -> Result<()>;
