@@ -2,7 +2,12 @@ import json
 import subprocess
 import tempfile
 import unittest
+import urllib.parse
+from contextlib import contextmanager
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from threading import Thread
+from typing import Iterator
 
 from lidarr_cue_splitter.app import (
     CueSplitterError,
@@ -78,24 +83,104 @@ class CueSplitterTests(unittest.TestCase):
         with self.assertRaises(SourceInvalid):
             UnflacRunner(run).inspect(Path("album.cue"))
 
-    def test_detaching_queue_item_retains_download_client_data(self):
-        class RecordingClient(LidarrClient):
-            def __init__(self):
-                super().__init__("http://lidarr", "secret")
-                self.request_args = None
+    def test_native_lidarr_client_round_trip(self):
+        requests: list[tuple[str, str, str | None, object]] = []
 
-            def request(self, method, endpoint, *, query=None, body=None):
-                self.request_args = (method, endpoint, query, body)
-                return None
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, format, *args):
+                del format, args
 
-        client = RecordingClient()
-        client.detach_queue_item(42, blocklist=True)
+            def send_json(self, payload):
+                body = json.dumps(payload).encode()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
 
-        method, endpoint, query, body = client.request_args
-        self.assertEqual((method, endpoint, body), ("DELETE", "queue/42", None))
-        self.assertEqual(query["removeFromClient"], "false")
-        self.assertEqual(query["blocklist"], "true")
-        self.assertEqual(query["skipRedownload"], "true")
+            def do_GET(self):
+                requests.append(("GET", self.path, self.headers.get("X-Api-Key"), None))
+                path = urllib.parse.urlparse(self.path).path
+                if path == "/api/v1/queue":
+                    self.send_json({"records": []})
+                elif path == "/api/v1/manualimport":
+                    self.send_json([])
+                elif path == "/api/v1/command/12":
+                    self.send_json({"id": 12, "status": "completed"})
+                else:
+                    self.send_error(404)
+
+            def do_POST(self):
+                length = int(self.headers["Content-Length"])
+                payload = json.loads(self.rfile.read(length))
+                requests.append(("POST", self.path, self.headers.get("X-Api-Key"), payload))
+                self.send_json({"id": 12})
+
+            def do_DELETE(self):
+                requests.append(("DELETE", self.path, self.headers.get("X-Api-Key"), None))
+                self.send_json({})
+
+        @contextmanager
+        def server() -> Iterator[str]:
+            httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+            thread = Thread(target=httpd.serve_forever)
+            thread.start()
+            try:
+                host, port = httpd.server_address
+                yield f"http://{host}:{port}"
+            finally:
+                httpd.shutdown()
+                thread.join()
+                httpd.server_close()
+
+        with server() as base_url:
+            client = LidarrClient(base_url, "secret")
+            self.assertEqual(client.queue(), [])
+            self.assertEqual(
+                client.manual_import(
+                    Path("/staging/album"),
+                    {"downloadId": "download-1", "artistId": 7},
+                ),
+                [],
+            )
+            self.assertEqual(
+                client.submit_manual_import([{"path": "/staging/album/01.flac"}]),
+                12,
+            )
+            self.assertEqual(client.command(12)["status"], "completed")
+            client.detach_queue_item(42, blocklist=True)
+
+        self.assertTrue(all(api_key == "secret" for _, _, api_key, _ in requests))
+
+        queue_query = urllib.parse.parse_qs(urllib.parse.urlparse(requests[0][1]).query)
+        self.assertEqual(queue_query["pageSize"], ["2000"])
+        self.assertEqual(queue_query["includeUnknownArtistItems"], ["True"])
+
+        import_query = urllib.parse.parse_qs(urllib.parse.urlparse(requests[1][1]).query)
+        self.assertEqual(import_query["folder"], ["/staging/album"])
+        self.assertEqual(import_query["downloadId"], ["download-1"])
+        self.assertEqual(import_query["artistId"], ["7"])
+        self.assertEqual(import_query["replaceExistingFiles"], ["True"])
+        self.assertEqual(import_query["filterExistingFiles"], ["False"])
+
+        self.assertEqual(requests[2][0:2], ("POST", "/api/v1/command"))
+        self.assertEqual(
+            requests[2][3],
+            {
+                "name": "ManualImport",
+                "files": [{"path": "/staging/album/01.flac"}],
+                "importMode": "auto",
+                "replaceExistingFiles": True,
+            },
+        )
+
+        parsed = urllib.parse.urlparse(requests[4][1])
+        delete_query = urllib.parse.parse_qs(parsed.query)
+        self.assertEqual(requests[4][0], "DELETE")
+        self.assertEqual(parsed.path, "/api/v1/queue/42")
+        self.assertEqual(delete_query["removeFromClient"], ["False"])
+        self.assertEqual(delete_query["blocklist"], ["True"])
+        self.assertEqual(delete_query["skipReDownload"], ["True"])
 
     def test_image_style_inspection_is_eligible(self):
         cue = Path("/music/album.cue")

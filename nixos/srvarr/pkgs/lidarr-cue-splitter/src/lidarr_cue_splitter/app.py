@@ -10,13 +10,13 @@ import shutil
 import subprocess
 import sys
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
 from typing import Any, Callable
+
+from .errors import CueSplitterError, ManualMatchRequired, NeedsAttention, SourceInvalid
+from .lidarr import LidarrClient
 
 
 LOG = logging.getLogger("lidarr-cue-splitter")
@@ -83,22 +83,6 @@ AUDIO_FILE_SUFFIXES = {
 }
 CUE_FILE_COMMAND_RE = re.compile(r'^\s*FILE\s+(?:"([^"]+)"|(\S+))\s+\S+', re.IGNORECASE)
 CUE_TRACK_COMMAND_RE = re.compile(r"^\s*TRACK\s+\d+\s+\S+", re.IGNORECASE)
-
-
-class CueSplitterError(RuntimeError):
-    pass
-
-
-class NeedsAttention(CueSplitterError):
-    pass
-
-
-class ManualMatchRequired(NeedsAttention):
-    pass
-
-
-class SourceInvalid(CueSplitterError):
-    pass
 
 
 def atomic_write(path: Path, content: str) -> None:
@@ -177,107 +161,6 @@ def read_api_key(config_path: Path) -> str:
     if not api_key:
         raise CueSplitterError(f"Lidarr config {config_path} does not contain ApiKey")
     return api_key
-
-
-class LidarrClient:
-    def __init__(self, base_url: str, api_key: str, timeout_seconds: float = 20.0):
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key
-        self.timeout_seconds = timeout_seconds
-
-    def request(
-        self,
-        method: str,
-        endpoint: str,
-        *,
-        query: dict[str, Any] | None = None,
-        body: dict[str, Any] | None = None,
-    ) -> Any:
-        url = f"{self.base_url}/api/v1/{endpoint.lstrip('/')}"
-        if query:
-            url = f"{url}?{urllib.parse.urlencode(query)}"
-        data = None
-        headers = {"Accept": "application/json", "X-Api-Key": self.api_key}
-        if body is not None:
-            data = json.dumps(body).encode()
-            headers["Content-Type"] = "application/json"
-        request = urllib.request.Request(url, data=data, headers=headers, method=method)
-        try:
-            with urllib.request.urlopen(request, timeout=self.timeout_seconds) as response:
-                payload = response.read()
-        except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
-            raise CueSplitterError(f"Lidarr {method} {endpoint} failed: {exc}") from exc
-        if not payload:
-            return None
-        try:
-            return json.loads(payload)
-        except json.JSONDecodeError as exc:
-            raise CueSplitterError(f"Lidarr {method} {endpoint} returned invalid JSON") from exc
-
-    def queue(self) -> list[dict[str, Any]]:
-        payload = self.request(
-            "GET",
-            "queue",
-            query={
-                "page": 1,
-                "pageSize": 2000,
-                "sortKey": "timeleft",
-                "includeUnknownArtistItems": "true",
-            },
-        )
-        if not isinstance(payload, dict) or not isinstance(payload.get("records"), list):
-            raise CueSplitterError("Lidarr queue response has an unexpected shape")
-        return payload["records"]
-
-    def manual_import(self, folder: Path, record: dict[str, Any]) -> list[dict[str, Any]]:
-        payload = self.request(
-            "GET",
-            "manualimport",
-            query={
-                "folder": str(folder),
-                "downloadId": record.get("downloadId", ""),
-                "artistId": int(record.get("artistId") or 0),
-                "replaceExistingFiles": "true",
-                "filterExistingFiles": "false",
-            },
-        )
-        if not isinstance(payload, list):
-            raise CueSplitterError("Lidarr manual-import response has an unexpected shape")
-        return payload
-
-    def submit_manual_import(self, files: list[dict[str, Any]]) -> int:
-        payload = self.request(
-            "POST",
-            "command",
-            body={
-                "name": "ManualImport",
-                "files": files,
-                "importMode": "auto",
-                "replaceExistingFiles": True,
-            },
-        )
-        command_id = payload.get("id") if isinstance(payload, dict) else None
-        if not isinstance(command_id, int) or command_id <= 0:
-            raise CueSplitterError("Lidarr did not return a manual-import command ID")
-        return command_id
-
-    def command(self, command_id: int) -> dict[str, Any]:
-        payload = self.request("GET", f"command/{command_id}")
-        if not isinstance(payload, dict):
-            raise CueSplitterError("Lidarr command response has an unexpected shape")
-        return payload
-
-    def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None:
-        self.request(
-            "DELETE",
-            f"queue/{queue_id}",
-            query={
-                "removeFromClient": "false",
-                "blocklist": str(blocklist).lower(),
-                "skipRedownload": "true",
-                "changeCategory": "false",
-            },
-        )
 
 
 class UnflacRunner:

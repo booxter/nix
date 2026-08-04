@@ -18,6 +18,8 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
+  dependencies = [ pythonPackages.aiopyarr ];
+
   nativeCheckInputs = [
     ffmpeg
     flac
