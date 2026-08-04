@@ -3,6 +3,8 @@
   hostInventory,
   lib,
   pkgs,
+  srvarrPkgs,
+  utils,
   ...
 }:
 let
@@ -33,122 +35,43 @@ let
     "pinepods-valkey.service"
     "sops-install-secrets.service"
   ];
-  nativeBackupScript = pkgs.writeShellApplication {
-    name = "pinepods-native-backup";
-    runtimeInputs = [
-      config.services.postgresql.package
-      pkgs.coreutils
-      pkgs.curl
-      pkgs.jq
-      pkgs.util-linux
-    ];
-    text = ''
-      set -euo pipefail
-
-      base_url=http://127.0.0.1:${toString port}
-      # The bootstrap password is only used to create the initial account and
-      # can change afterward. Read an existing admin key from the local
-      # database instead of coupling scheduled backups to that old password.
-      api_key="$(
-        runuser -u postgres -- \
-          psql \
-            --dbname=${lib.escapeShellArg database} \
-            --no-align \
-            --quiet \
-            --tuples-only \
-            --command \
-              "SELECT a.apikey
-                 FROM \"APIKeys\" a
-                 JOIN \"Users\" u ON u.userid = a.userid
-                WHERE u.isadmin = true
-                  AND u.username <> 'background_tasks'
-                ORDER BY u.userid, a.apikeyid
-                LIMIT 1;"
-      )"
-      if [ -z "$api_key" ]; then
-        echo "PinePods has no API key for a non-background administrator" >&2
-        exit 1
-      fi
-
-      backup_response="$(
-        curl \
-          --fail-with-body \
-          --silent \
-          --show-error \
-          --request POST \
-          --header "Api-Key: $api_key" \
-          --header 'Content-Type: application/json' \
-          --data '{}' \
-          "$base_url/api/data/manual_backup_to_directory"
-      )"
-      task_id="$(printf '%s' "$backup_response" | jq --exit-status --raw-output '.task_id')"
-
-      for attempt in $(seq 1 3600); do
-        task_response="$(
-          curl \
-            --fail-with-body \
-            --silent \
-            --show-error \
-            "$base_url/api/tasks/$task_id"
-        )"
-        status="$(printf '%s' "$task_response" | jq --exit-status --raw-output '.status')"
-        case "$status" in
-          SUCCESS)
-            break
-            ;;
-          FAILED)
-            printf 'PinePods native backup failed: %s\n' "$task_response" >&2
-            exit 1
-            ;;
-          PENDING | DOWNLOADING)
-            ;;
-          *)
-            printf 'PinePods returned an unknown backup task state: %s\n' "$task_response" >&2
-            exit 1
-            ;;
-        esac
-
-        if [ "$attempt" = 3600 ]; then
-          echo "PinePods native backup timed out" >&2
-          exit 1
-        fi
-        sleep 2
-      done
-
-      files_response="$(
-        curl \
-          --fail-with-body \
-          --silent \
-          --show-error \
-          --request POST \
-          --header "Api-Key: $api_key" \
-          --header 'Content-Type: application/json' \
-          --data '{}' \
-          "$base_url/api/data/list_backup_files"
-      )"
-      mapfile -t old_backups < <(
-        printf '%s' "$files_response" | jq --exit-status --raw-output '.backup_files[7:][]?.filename'
-      )
-      for backup_filename in "''${old_backups[@]}"; do
-        jq --null-input --arg backup_filename "$backup_filename" \
-          '{backup_filename: $backup_filename}' \
-          | curl \
-            --fail-with-body \
-            --silent \
-            --show-error \
-            --request POST \
-            --header "Api-Key: $api_key" \
-            --header 'Content-Type: application/json' \
-            --data-binary @- \
-            "$base_url/api/data/delete_backup_file" \
-            >/dev/null
-      done
-    '';
-  };
+  setDatabasePasswordCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.pinepods-tools "pinepods-set-database-password")
+    "--database"
+    database
+    "--role"
+    user
+    "--password-file"
+    config.sops.secrets."pinepods/postgresql/password".path
+  ];
+  bootstrapAdminCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.pinepods-tools "pinepods-bootstrap-admin")
+    "--url"
+    "http://127.0.0.1:${toString port}"
+    "--username"
+    bootstrapOwnerName
+    "--full-name"
+    bootstrapAdmin.displayName
+    "--email-file"
+    config.sops.secrets."pinepods/bootstrap/email".path
+    "--password-file"
+    config.sops.secrets."pinepods/bootstrap/password".path
+  ];
+  nativeBackupCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.pinepods-tools "pinepods-native-backup")
+    "--url"
+    "http://127.0.0.1:${toString port}"
+    "--database"
+    database
+    "--keep"
+    "7"
+  ];
 in
 {
   sops.secrets = {
     "pinepods/postgresql/password" = {
+      owner = "postgres";
+      group = "postgres";
       mode = "0400";
       restartUnits = [
         "pinepods-postgresql-password.service"
@@ -328,20 +251,13 @@ in
         "sops-install-secrets.service"
       ];
       before = [ "podman-pinepods.service" ];
-      path = [
-        config.services.postgresql.package
-        pkgs.util-linux
-      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        User = "postgres";
+        Group = "postgres";
+        ExecStart = setDatabasePasswordCommand;
       };
-      script = ''
-        password="$(cat ${config.sops.secrets."pinepods/postgresql/password".path})"
-        runuser -u postgres -- psql --set=ON_ERROR_STOP=1 --set=password="$password" <<'SQL'
-        ALTER ROLE pinepods WITH LOGIN PASSWORD :'password';
-        SQL
-      '';
     };
 
     pinepods-valkey = {
@@ -387,80 +303,12 @@ in
         "podman-pinepods.service"
         "sops-install-secrets.service"
       ];
-      path = [
-        pkgs.coreutils
-        pkgs.curl
-        pkgs.jq
-      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
         TimeoutStartSec = "5min";
+        ExecStart = bootstrapAdminCommand;
       };
-      script = ''
-        base_url="http://127.0.0.1:${toString port}"
-
-        for attempt in $(seq 1 120); do
-          status_json="$(
-            curl --fail --silent "$base_url/api/data/self_service_status" 2>/dev/null \
-              || true
-          )"
-          first_admin_created="$(
-            printf '%s' "$status_json" \
-              | jq --raw-output \
-                'select((.first_admin_created | type) == "boolean") | .first_admin_created' \
-                2>/dev/null \
-              || true
-          )"
-
-          if [ "$first_admin_created" = "true" ]; then
-            echo "PinePods already has an administrator"
-            exit 0
-          fi
-
-          if [ "$first_admin_created" = "false" ]; then
-            break
-          fi
-
-          if [ "$attempt" = 120 ]; then
-            echo "Timed out waiting for the PinePods setup API" >&2
-            exit 1
-          fi
-
-          sleep 2
-        done
-
-        response="$(
-          jq \
-            --null-input \
-            --arg username ${lib.escapeShellArg bootstrapOwnerName} \
-            --arg fullname ${lib.escapeShellArg bootstrapAdmin.displayName} \
-            --rawfile email ${config.sops.secrets."pinepods/bootstrap/email".path} \
-            --rawfile password ${config.sops.secrets."pinepods/bootstrap/password".path} \
-            '{
-              username: $username,
-              fullname: $fullname,
-              email: ($email | sub("[\\r\\n]+$"; "")),
-              password: ($password | sub("[\\r\\n]+$"; ""))
-            }' \
-            | curl \
-              --fail \
-              --silent \
-              --show-error \
-              --header 'Content-Type: application/json' \
-              --data-binary @- \
-              "$base_url/api/data/create_first"
-        )"
-
-        user_id="$(printf '%s' "$response" | jq --raw-output '.user_id // empty')"
-        if [ -z "$user_id" ]; then
-          echo "PinePods did not return the created administrator ID" >&2
-          printf '%s\n' "$response" >&2
-          exit 1
-        fi
-
-        echo "Created the initial PinePods administrator (user ID $user_id)"
-      '';
     };
 
     podman-pinepods = {
@@ -488,9 +336,9 @@ in
       unitConfig.RequiresMountsFor = [ backupDir ];
       serviceConfig = {
         Type = "oneshot";
-        User = "root";
-        Group = "root";
-        ExecStart = lib.getExe nativeBackupScript;
+        User = "postgres";
+        Group = "postgres";
+        ExecStart = nativeBackupCommand;
         TimeoutStartSec = "2h15m";
       };
     };

@@ -38,6 +38,8 @@ in
 
   lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter { };
 
+  pinepods-tools = pkgs.callPackage ./pinepods-tools { };
+
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner {
     inherit transmissionCommon;
   };
