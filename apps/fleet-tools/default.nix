@@ -62,7 +62,6 @@ rustPlatform.buildRustPackage {
   CHECK_NOM = lib.getExe nix-output-monitor;
   CHECK_SYSTEM = stdenv.hostPlatform.system;
   VM_NIX = lib.getExe nix;
-  VM_REPO_ROOT = ../..;
   VM_RUNNER_NIX = ./vm-runner.nix;
   VM_TARGETS_JSON = builtins.toJSON vmTargets;
   VM_HELP = ''
