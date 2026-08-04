@@ -14,7 +14,7 @@ import httpx
 import pytest
 
 from pinepods_tools.api import PinepodsApi, PinepodsApiError
-from pinepods_tools.cli import run_backup, run_bootstrap, run_database_password
+from pinepods_tools.cli import run_backup, run_bootstrap
 from pinepods_tools.models import CreateAdminRequest
 from pinepods_tools.service import PinepodsServiceError, bootstrap_admin, native_backup
 
@@ -99,13 +99,9 @@ def api_server(state: ApiState) -> Iterator[str]:
 class InMemoryDatabase:
     def __init__(self, api_key: str | None = "admin-key") -> None:
         self.api_key = api_key
-        self.passwords: dict[str, str] = {}
 
     def admin_api_key(self) -> str | None:
         return self.api_key
-
-    def set_role_password(self, role: str, password: str) -> None:
-        self.passwords[role] = password
 
 
 def api(base_url: str) -> tuple[httpx.Client, PinepodsApi]:
@@ -270,16 +266,3 @@ def test_native_backup_times_out_and_requires_admin_key() -> None:
                     interval=2,
                     sleep=lambda _: None,
                 )
-
-
-def test_database_password_reads_secret_without_newline(tmp_path: Path) -> None:
-    password = tmp_path / "password"
-    password.write_text("database-secret\n", encoding="utf-8")
-    database = InMemoryDatabase()
-
-    run_database_password(
-        ["--database", "pinepods", "--role", "pinepods", "--password-file", str(password)],
-        lambda _: database,
-    )
-
-    assert database.passwords == {"pinepods": "database-secret"}

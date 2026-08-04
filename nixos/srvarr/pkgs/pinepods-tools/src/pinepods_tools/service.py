@@ -16,10 +16,6 @@ def read_secret(path: Path) -> str:
     return path.read_text(encoding="utf-8").rstrip("\r\n")
 
 
-def set_database_password(database: Database, role: str, password_file: Path) -> None:
-    database.set_role_password(role, read_secret(password_file))
-
-
 def bootstrap_admin(
     api: PinepodsApi,
     request: CreateAdminRequest,

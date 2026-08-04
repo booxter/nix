@@ -56,5 +56,7 @@ in
       ;
   };
 
+  postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };
+
   sops-tools = sopsTools;
 }

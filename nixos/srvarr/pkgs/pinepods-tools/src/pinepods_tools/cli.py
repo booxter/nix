@@ -16,16 +16,7 @@ from .service import (
     bootstrap_admin,
     native_backup,
     read_secret,
-    set_database_password,
 )
-
-
-def database_password_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Set the PinePods PostgreSQL role password")
-    parser.add_argument("--database", required=True)
-    parser.add_argument("--role", required=True)
-    parser.add_argument("--password-file", required=True)
-    return parser
 
 
 def bootstrap_parser() -> argparse.ArgumentParser:
@@ -53,18 +44,6 @@ def api_client(base_url: str) -> httpx.Client:
         base_url=base_url,
         timeout=httpx.Timeout(30.0, connect=5.0),
         trust_env=False,
-    )
-
-
-def run_database_password(
-    arguments: Sequence[str],
-    database_factory: Callable[[str], Database],
-) -> None:
-    args = database_password_parser().parse_args(arguments)
-    set_database_password(
-        database_factory(str(args.database)),
-        str(args.role),
-        Path(str(args.password_file)),
     )
 
 
@@ -106,10 +85,6 @@ def run_backup(
             interval=2.0,
             sleep=sleep,
         )
-
-
-def database_password_main() -> None:
-    run_database_password(sys.argv[1:], PsycopgDatabase)
 
 
 def bootstrap_main() -> None:

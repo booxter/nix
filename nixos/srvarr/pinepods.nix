@@ -36,7 +36,7 @@ let
     "sops-install-secrets.service"
   ];
   setDatabasePasswordCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe' srvarrPkgs.pinepods-tools "pinepods-set-database-password")
+    (lib.getExe pkgs.postgresql-role-password)
     "--database"
     database
     "--role"

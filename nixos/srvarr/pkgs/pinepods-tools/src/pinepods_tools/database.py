@@ -3,14 +3,11 @@ from __future__ import annotations
 from typing import Protocol
 
 import psycopg
-from psycopg import sql
 from psycopg.rows import scalar_row
 
 
 class Database(Protocol):
     def admin_api_key(self) -> str | None: ...
-
-    def set_role_password(self, role: str, password: str) -> None: ...
 
 
 class PsycopgDatabase:
@@ -30,8 +27,3 @@ class PsycopgDatabase:
         with psycopg.connect(dbname=self.database, row_factory=scalar_row) as connection:
             value = connection.execute(query).fetchone()
         return value if isinstance(value, str) and value else None
-
-    def set_role_password(self, role: str, password: str) -> None:
-        statement = sql.SQL("ALTER ROLE {} WITH LOGIN PASSWORD %s").format(sql.Identifier(role))
-        with psycopg.connect(dbname=self.database) as connection:
-            connection.execute(statement, (password,))

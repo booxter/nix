@@ -3,6 +3,7 @@
   hostInventory,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -17,6 +18,15 @@ let
   jellystatBackupDataDir = "/var/lib/jellystat/backup-data";
   jellystatOidcClientId = oidc.clients.jfstat.clientId;
   jellyfinUrl = "https://jf.${hostInventory.site.public.domain}";
+  setDatabasePasswordCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe pkgs.postgresql-role-password)
+    "--database"
+    jellystatDatabase
+    "--role"
+    jellystatUser
+    "--password-file"
+    config.sops.secrets."jellystat/postgres/password".path
+  ];
   jellystatBackupScript = pkgs.writeShellApplication {
     name = "jellystat-built-in-backup";
     runtimeInputs = with pkgs; [
@@ -92,8 +102,8 @@ in
       ];
     };
     "jellystat/postgres/password" = {
-      owner = "root";
-      group = "root";
+      owner = "postgres";
+      group = "postgres";
       mode = "0400";
       restartUnits = [
         "jellystat-postgresql-password.service"
@@ -169,36 +179,20 @@ in
     jellystat-postgresql-password = {
       description = "Apply Jellystat PostgreSQL password";
       wantedBy = [ "multi-user.target" ];
-      wants = [
-        "postgresql.service"
-        "sops-install-secrets.service"
-      ];
+      requires = [ "postgresql-setup.service" ];
+      wants = [ "sops-install-secrets.service" ];
       after = [
-        "postgresql.service"
+        "postgresql-setup.service"
         "sops-install-secrets.service"
       ];
       before = [ "podman-jellystat.service" ];
-      path = [
-        pkgs.postgresql
-        pkgs.util-linux
-      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        User = "postgres";
+        Group = "postgres";
+        ExecStart = setDatabasePasswordCommand;
       };
-      script = ''
-        password="$(cat ${config.sops.secrets."jellystat/postgres/password".path})"
-        runuser -u postgres -- psql --set=ON_ERROR_STOP=1 --set=password="$password" <<'SQL'
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'jfstat') THEN
-            CREATE ROLE jfstat LOGIN;
-          END IF;
-        END
-        $$;
-        ALTER ROLE jfstat WITH LOGIN PASSWORD :'password';
-        SQL
-      '';
     };
 
     jellystat-bootstrap = {

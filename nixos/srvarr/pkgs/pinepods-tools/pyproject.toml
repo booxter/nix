@@ -12,7 +12,6 @@ dependencies = ["httpx", "psycopg", "pydantic"]
 [project.scripts]
 pinepods-bootstrap-admin = "pinepods_tools.cli:bootstrap_main"
 pinepods-native-backup = "pinepods_tools.cli:backup_main"
-pinepods-set-database-password = "pinepods_tools.cli:database_password_main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
