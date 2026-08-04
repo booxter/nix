@@ -18,5 +18,9 @@ package-dir = { "" = "src" }
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.pytest.ini_options]
+addopts = "-q --cov=adaptive_upload_controller --cov-report=term-missing --cov-fail-under=55"
+testpaths = ["tests"]
+
 [tool.ruff]
 line-length = 100

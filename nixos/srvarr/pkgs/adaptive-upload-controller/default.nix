@@ -19,15 +19,20 @@ pythonPackages.buildPythonApplication {
 
   dependencies = [ transmissionCommon ];
 
-  nativeCheckInputs = [ ruff ];
+  nativeCheckInputs = [
+    ruff
+    pythonPackages.prometheus-client
+    pythonPackages.pytestCheckHook
+    pythonPackages.pytest-cov
+  ];
 
   makeWrapperArgs = [
     "--prefix PATH : ${lib.makeBinPath [ iproute2 ]}"
   ];
 
   preCheck = ''
-    ruff format --check src
-    ruff check src
+    ruff format --check src tests
+    ruff check src tests
   '';
 
   pythonImportsCheck = [ "adaptive_upload_controller" ];
