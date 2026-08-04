@@ -3,6 +3,8 @@
   hostInventory,
   lib,
   pkgs,
+  srvarrPkgs,
+  utils,
   ...
 }:
 let
@@ -104,6 +106,11 @@ let
   rommImageFile = ociImages.romm.imageFile;
   rommService = hostInventory.servicesById.romm;
   rommOidcClientId = oidc.clients.romm.clientId;
+  rommDbInitCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.romm-tools "romm-db-init")
+    "--socket"
+    "/run/mysqld/mysqld.sock"
+  ];
 
   commonEnvironment = {
     PATH = "/src/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
@@ -323,18 +330,8 @@ in
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = config.sops.templates."romm.env".path;
+      ExecStart = rommDbInitCommand;
     };
-    script = ''
-      set -euo pipefail
-
-      ${pkgs.mariadb}/bin/mariadb --protocol=socket -u root <<SQL
-      CREATE DATABASE IF NOT EXISTS romm CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-      CREATE USER IF NOT EXISTS 'romm'@'localhost' IDENTIFIED BY '$DB_PASSWD';
-      ALTER USER 'romm'@'localhost' IDENTIFIED BY '$DB_PASSWD';
-      GRANT ALL PRIVILEGES ON romm.* TO 'romm'@'localhost';
-      FLUSH PRIVILEGES;
-      SQL
-    '';
   };
 
   systemd.services.romm-valkey = {

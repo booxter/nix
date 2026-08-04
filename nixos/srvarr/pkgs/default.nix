@@ -46,6 +46,8 @@ in
 
   pinepods-tools = pkgs.callPackage ./pinepods-tools { };
 
+  romm-tools = pkgs.callPackage ./romm-tools { };
+
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner {
     inherit transmissionCommon;
   };
