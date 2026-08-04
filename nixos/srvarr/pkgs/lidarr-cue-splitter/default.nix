@@ -18,13 +18,17 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [ pythonPackages.aiopyarr ];
+  dependencies = with pythonPackages; [
+    aiopyarr
+    pydantic
+  ];
 
   nativeCheckInputs = [
     ffmpeg
     flac
     ruff
     unflac
+    pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
   ];
@@ -42,6 +46,7 @@ pythonPackages.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
+    mypy src/lidarr_cue_splitter
   '';
 
   postCheck = ''

@@ -15,8 +15,17 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Callable
 
+from pydantic import TypeAdapter, ValidationError
+
 from .errors import CueSplitterError, ManualMatchRequired, NeedsAttention, SourceInvalid
-from .lidarr import LidarrClient
+from .lidarr import Lidarr, LidarrClient
+from .models import (
+    CueSummary,
+    ManualImportCandidate,
+    ManualImportFile,
+    QueueRecord,
+    UnflacInput,
+)
 
 
 LOG = logging.getLogger("lidarr-cue-splitter")
@@ -83,6 +92,7 @@ AUDIO_FILE_SUFFIXES = {
 }
 CUE_FILE_COMMAND_RE = re.compile(r'^\s*FILE\s+(?:"([^"]+)"|(\S+))\s+\S+', re.IGNORECASE)
 CUE_TRACK_COMMAND_RE = re.compile(r"^\s*TRACK\s+\d+\s+\S+", re.IGNORECASE)
+UNFLAC_INSPECTIONS = TypeAdapter(list[UnflacInput])
 
 
 def atomic_write(path: Path, content: str) -> None:
@@ -167,7 +177,7 @@ class UnflacRunner:
     def __init__(self, run: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run):
         self.run = run
 
-    def inspect(self, cue: Path) -> list[dict[str, Any]]:
+    def inspect(self, cue: Path) -> list[UnflacInput]:
         result = self.run(
             ["unflac", "-d", "-j", str(cue)],
             check=False,
@@ -178,10 +188,10 @@ class UnflacRunner:
         if result.returncode != 0:
             raise SourceInvalid(f"unflac could not parse {cue}: {result.stderr.strip()}")
         try:
-            payload = json.loads(result.stdout)
-        except json.JSONDecodeError as exc:
+            payload = UNFLAC_INSPECTIONS.validate_json(result.stdout)
+        except ValidationError as exc:
             raise SourceInvalid(f"unflac returned invalid inspection JSON for {cue}") from exc
-        if not isinstance(payload, list) or not payload:
+        if not payload:
             raise SourceInvalid(f"unflac found no input in {cue}")
         return payload
 
@@ -209,37 +219,34 @@ class UnflacRunner:
             raise SourceInvalid(f"FLAC verification failed for {path}: {result.stderr.strip()}")
 
 
-def inspection_summary(cue: Path, payload: list[dict[str, Any]]) -> dict[str, Any]:
+def inspection_summary(cue: Path, payload: list[UnflacInput]) -> CueSummary:
     audio_files: list[Path] = []
     track_count = 0
     has_image = False
     for item in payload:
-        for audio in item.get("audio", []):
-            path = Path(str(audio.get("path", "")))
+        for audio in item.audio:
+            path = audio.path
             if not path.is_absolute():
                 path = cue.parent / path
-            tracks = audio.get("tracks", [])
-            if not isinstance(tracks, list):
-                raise SourceInvalid(f"unflac inspection has invalid tracks for {cue}")
             audio_files.append(path.resolve())
-            track_count += len(tracks)
-            has_image = has_image or len(tracks) > 1
+            track_count += len(audio.tracks)
+            has_image = has_image or len(audio.tracks) > 1
     if not audio_files or track_count == 0:
         raise SourceInvalid(f"unflac inspection found no audio tracks for {cue}")
-    return {
-        "cue": cue.resolve(),
-        "audio_files": audio_files,
-        "track_count": track_count,
-        "eligible": has_image,
-    }
+    return CueSummary(
+        cue=cue.resolve(),
+        audio_files=tuple(audio_files),
+        track_count=track_count,
+        eligible=has_image,
+    )
 
 
-def source_fingerprint(summaries: list[dict[str, Any]]) -> str:
+def source_fingerprint(summaries: list[CueSummary]) -> str:
     entries: list[str] = []
     paths: set[Path] = set()
     for summary in summaries:
-        paths.add(summary["cue"])
-        paths.update(summary["audio_files"])
+        paths.add(summary.cue)
+        paths.update(summary.audio_files)
     for path in sorted(paths):
         stat = path.stat()
         entries.append(f"{path}\0{stat.st_size}\0{stat.st_mtime_ns}")
@@ -268,24 +275,23 @@ def output_fingerprint(output_path: Path) -> str:
 
 
 def build_manual_import_files(
-    outputs: list[dict[str, Any]],
+    outputs: list[ManualImportCandidate],
     generated_files: list[Path],
-    record: dict[str, Any],
-) -> list[dict[str, Any]]:
+    record: QueueRecord,
+) -> list[ManualImportFile]:
     generated = {path.resolve() for path in generated_files}
-    selected: dict[Path, dict[str, Any]] = {}
-    expected_artist = int(record.get("artistId") or 0)
-    expected_album = int(record.get("albumId") or 0)
+    selected: dict[Path, ManualImportFile] = {}
+    expected_artist = record.artist_id
+    expected_album = record.album_id
     for output in outputs:
-        path = Path(str(output.get("path", ""))).resolve()
+        path = output.path.resolve()
         if path not in generated:
             continue
-        rejections = output.get("rejections") or []
-        if rejections:
-            reasons = "; ".join(str(item.get("reason", "rejected")) for item in rejections)
+        if output.rejections:
+            reasons = "; ".join(item.reason for item in output.rejections)
             raise ManualMatchRequired(f"Lidarr rejected {path.name}: {reasons}")
-        artist_id = int((output.get("artist") or {}).get("id") or 0)
-        album_id = int((output.get("album") or {}).get("id") or 0)
+        artist_id = output.artist.id
+        album_id = output.album.id
         if expected_artist and artist_id != expected_artist:
             raise ManualMatchRequired(
                 f"Lidarr matched {path.name} to artist {artist_id}, expected {expected_artist}"
@@ -294,20 +300,19 @@ def build_manual_import_files(
             raise ManualMatchRequired(
                 f"Lidarr matched {path.name} to album {album_id}, expected {expected_album}"
             )
-        track_ids = [int(track["id"]) for track in output.get("tracks", []) if track.get("id")]
+        track_ids = [track.id for track in output.tracks if track.id]
         if not track_ids:
             raise ManualMatchRequired(f"Lidarr did not match {path.name} to a track")
-        selected[path] = {
-            "path": str(path),
-            "artistId": artist_id,
-            "albumId": album_id,
-            "albumReleaseId": int(output.get("albumReleaseId") or 0),
-            "trackIds": track_ids,
-            "quality": output.get("quality") or {},
-            "indexerFlags": 0,
-            "downloadId": output.get("downloadId") or record.get("downloadId", ""),
-            "disableReleaseSwitching": bool(output.get("disableReleaseSwitching", False)),
-        }
+        selected[path] = ManualImportFile(
+            path=path,
+            artist_id=artist_id,
+            album_id=album_id,
+            album_release_id=output.album_release_id,
+            track_ids=track_ids,
+            quality=output.quality,
+            download_id=output.download_id or record.download_id,
+            disable_release_switching=output.disable_release_switching,
+        )
     missing = generated - selected.keys()
     if missing:
         names = ", ".join(sorted(path.name for path in missing))
@@ -411,7 +416,7 @@ class CueSplitterService:
     def __init__(
         self,
         *,
-        client_factory: Callable[[], LidarrClient],
+        client_factory: Callable[[], Lidarr],
         runner: UnflacRunner,
         store: StateStore,
         allowed_roots: list[Path],
@@ -436,12 +441,12 @@ class CueSplitterService:
         self.sleep = sleep
 
     @staticmethod
-    def completed_record(record: dict[str, Any]) -> bool:
+    def completed_record(record: QueueRecord) -> bool:
         return (
-            str(record.get("status", "")).lower() == "completed"
-            and str(record.get("protocol", "")).lower() in SUPPORTED_PROTOCOLS
-            and bool(record.get("downloadId"))
-            and bool(record.get("outputPath"))
+            record.status.lower() == "completed"
+            and record.protocol.lower() in SUPPORTED_PROTOCOLS
+            and bool(record.download_id)
+            and record.output_path is not None
         )
 
     @staticmethod
@@ -454,8 +459,10 @@ class CueSplitterService:
             and STAGING_DIR_NAME not in path.parts
         )
 
-    def download_is_already_split(self, record: dict[str, Any]) -> bool:
-        output_path = Path(str(record["outputPath"]))
+    def download_is_already_split(self, record: QueueRecord) -> bool:
+        if record.output_path is None:
+            return False
+        output_path = record.output_path
         if not is_within(output_path, self.allowed_roots) or not output_path.is_dir():
             return False
         cues = self.cue_files(output_path)
@@ -471,8 +478,10 @@ class CueSplitterService:
                 return False
         return True
 
-    def discover(self, record: dict[str, Any]) -> tuple[list[dict[str, Any]], str]:
-        output_path = Path(str(record["outputPath"]))
+    def discover(self, record: QueueRecord) -> tuple[list[CueSummary], str]:
+        if record.output_path is None:
+            raise CueSplitterError("Lidarr queue record does not contain an output path")
+        output_path = record.output_path
         if not is_within(output_path, self.allowed_roots):
             raise NeedsAttention(f"download path is outside allowed roots: {output_path}")
         if not output_path.is_dir():
@@ -488,23 +497,25 @@ class CueSplitterService:
                     raise NeedsAttention(f"CUE references audio outside allowed roots: {cue}")
                 continue
             summary = inspection_summary(cue, self.runner.inspect(cue))
-            if not is_within(summary["cue"], self.allowed_roots) or any(
-                not is_within(path, self.allowed_roots) for path in summary["audio_files"]
+            if not is_within(summary.cue, self.allowed_roots) or any(
+                not is_within(path, self.allowed_roots) for path in summary.audio_files
             ):
                 raise NeedsAttention(f"CUE references audio outside allowed roots: {cue}")
-            if summary["eligible"]:
+            if summary.eligible:
                 summaries.append(summary)
         return summaries, source_fingerprint(summaries) if summaries else ""
 
     def prepare_split(
         self,
-        record: dict[str, Any],
+        record: QueueRecord,
         job: dict[str, Any],
-        summaries: list[dict[str, Any]],
+        summaries: list[CueSummary],
     ) -> Path:
-        component = safe_component(str(record["downloadId"]))
+        component = safe_component(record.download_id)
         partial_root = self.work_root / f"{component}.partial"
-        output_path = Path(str(record["outputPath"])).resolve()
+        if record.output_path is None:
+            raise CueSplitterError("Lidarr queue record does not contain an output path")
+        output_path = record.output_path.resolve()
         ready_root = output_path / STAGING_DIR_NAME / component
         if partial_root.exists():
             shutil.rmtree(partial_root)
@@ -517,12 +528,10 @@ class CueSplitterService:
             job.update(status="splitting", updated_at=self.now())
             self.store.save()
             for index, summary in enumerate(summaries, start=1):
-                cue_output = (
-                    partial_root / f"disc-{index:02d}-{safe_component(summary['cue'].stem)}"
-                )
+                cue_output = partial_root / f"disc-{index:02d}-{safe_component(summary.cue.stem)}"
                 cue_output.mkdir(parents=True)
-                generated.extend(self.runner.split(summary["cue"], cue_output))
-                expected_tracks += int(summary["track_count"])
+                generated.extend(self.runner.split(summary.cue, cue_output))
+                expected_tracks += summary.track_count
             if len(generated) != expected_tracks:
                 raise SourceInvalid(
                     f"unflac generated {len(generated)} tracks; expected {expected_tracks}"
@@ -549,8 +558,8 @@ class CueSplitterService:
 
     def import_split(
         self,
-        client: LidarrClient,
-        record: dict[str, Any],
+        client: Lidarr,
+        record: QueueRecord,
         job: dict[str, Any],
         ready_root: Path,
     ) -> None:
@@ -565,11 +574,11 @@ class CueSplitterService:
             deadline = time.monotonic() + self.command_timeout_seconds
             while time.monotonic() < deadline:
                 command = client.command(command_id)
-                status = str(command.get("status", "")).lower()
+                status = command.status.lower()
                 if status in TERMINAL_COMMAND_STATES:
                     if status != "completed":
                         raise ManualMatchRequired(
-                            f"Lidarr manual-import command {command_id} ended as {status}: {command.get('message', '')}"
+                            f"Lidarr manual-import command {command_id} ended as {status}: {command.message}"
                         )
                     break
                 self.sleep(2.0)
@@ -588,7 +597,7 @@ class CueSplitterService:
         job.update(status="awaiting_queue_removal", updated_at=self.now(), error="")
         self.store.save()
 
-    def process(self, client: LidarrClient, record: dict[str, Any], job: dict[str, Any]) -> None:
+    def process(self, client: Lidarr, record: QueueRecord, job: dict[str, Any]) -> None:
         summaries, fingerprint = self.discover(record)
         if fingerprint != job["fingerprint"]:
             job.update(
@@ -655,11 +664,13 @@ class CueSplitterService:
     def record_source_failure(
         self,
         job: dict[str, Any],
-        record: dict[str, Any],
+        record: QueueRecord,
         error: Exception,
         now: float,
     ) -> None:
-        fingerprint = output_fingerprint(Path(str(record["outputPath"])))
+        if record.output_path is None:
+            raise CueSplitterError("Lidarr queue record does not contain an output path")
+        fingerprint = output_fingerprint(record.output_path)
         previous_fingerprint = job.get("failure_fingerprint")
         attempts = (
             int(job.get("attempts", 0)) + 1 if previous_fingerprint in {None, fingerprint} else 1
@@ -680,16 +691,16 @@ class CueSplitterService:
 
     def resolve_source_failure(
         self,
-        client: LidarrClient,
-        record: dict[str, Any],
+        client: Lidarr,
+        record: QueueRecord,
         job: dict[str, Any],
         now: float,
     ) -> None:
         if self.download_is_already_split(record):
             self.mark_ignored(job, now)
             return
-        queue_id = record.get("id")
-        if not isinstance(queue_id, int) or queue_id <= 0:
+        queue_id = record.id
+        if queue_id is None or queue_id <= 0:
             self.mark_automation_failed(
                 job, "Lidarr queue record does not contain a numeric id", now
             )
@@ -813,9 +824,9 @@ class CueSplitterService:
 
     def handle_completed_record(
         self,
-        client: LidarrClient,
+        client: Lidarr,
         download_id: str,
-        record: dict[str, Any],
+        record: QueueRecord,
         now: float,
     ) -> bool:
         jobs = self.store.data["jobs"]
@@ -833,7 +844,9 @@ class CueSplitterService:
             }:
                 return False
             if job.get("status") == "failed":
-                current_fingerprint = output_fingerprint(Path(str(record["outputPath"])))
+                if record.output_path is None:
+                    return False
+                current_fingerprint = output_fingerprint(record.output_path)
                 previous_fingerprint = job.get("failure_fingerprint")
                 if previous_fingerprint and previous_fingerprint != current_fingerprint:
                     job.update(attempts=0, failure_fingerprint=current_fingerprint)
@@ -851,7 +864,7 @@ class CueSplitterService:
             if job is None or job.get("fingerprint") != fingerprint:
                 jobs[download_id] = {
                     "download_id": download_id,
-                    "title": record.get("title", ""),
+                    "title": record.title,
                     "status": "settling",
                     "fingerprint": fingerprint,
                     "discovered_at": now,
@@ -861,7 +874,7 @@ class CueSplitterService:
                 LOG.info(
                     "discovered CUE image: download_id=%s title=%s",
                     download_id,
-                    record.get("title", ""),
+                    record.title,
                 )
                 return True
             if now - float(job.get("discovered_at", now)) < self.settle_seconds:
@@ -879,7 +892,7 @@ class CueSplitterService:
                 download_id,
                 {
                     "download_id": download_id,
-                    "title": record.get("title", ""),
+                    "title": record.title,
                 },
             )
             self.record_source_failure(job, record, exc, now)
@@ -887,8 +900,8 @@ class CueSplitterService:
 
     def process_completed_records(
         self,
-        client: LidarrClient,
-        completed: dict[str, dict[str, Any]],
+        client: Lidarr,
+        completed: dict[str, QueueRecord],
         now: float,
     ) -> None:
         if any(
@@ -903,11 +916,9 @@ class CueSplitterService:
         now = self.now()
         client = self.client_factory()
         records = client.queue()
-        queued_download_ids = {
-            str(record["downloadId"]) for record in records if record.get("downloadId")
-        }
+        queued_download_ids = {record.download_id for record in records if record.download_id}
         completed = {
-            str(record["downloadId"]): record for record in records if self.completed_record(record)
+            record.download_id: record for record in records if self.completed_record(record)
         }
         self.recover_interrupted_jobs(now)
         self.reconcile_jobs(queued_download_ids, now)

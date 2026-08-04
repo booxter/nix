@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Any, TypeVar, cast
+from typing import Any, Protocol, TypeVar, cast
 
 from aiopyarr.const import HTTPMethod
 from aiopyarr.exceptions import ArrException
@@ -11,9 +11,22 @@ from aiopyarr.lidarr_client import LidarrClient as NativeLidarrClient
 from aiopyarr.models.base import BaseModel
 
 from .errors import CueSplitterError
+from .models import CommandStatus, ManualImportCandidate, ManualImportFile, QueueRecord
 
 
 T = TypeVar("T")
+
+
+class Lidarr(Protocol):
+    def queue(self) -> list[QueueRecord]: ...
+
+    def manual_import(self, folder: Path, record: QueueRecord) -> list[ManualImportCandidate]: ...
+
+    def submit_manual_import(self, files: list[ManualImportFile]) -> int: ...
+
+    def command(self, command_id: int) -> CommandStatus: ...
+
+    def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None: ...
 
 
 def _attributes(model: BaseModel) -> dict[str, Any]:
@@ -31,7 +44,9 @@ class LidarrClient:
             url=self.base_url,
             api_token=self.api_key,
             request_timeout=self.timeout_seconds,
-        ) as client:
+        ) as request_client:
+            # aiopyarr's context manager is typed as its base RequestClient.
+            client = cast(NativeLidarrClient, request_client)
             return await operation(client)
 
     def _run(self, operation: Callable[[NativeLidarrClient], Awaitable[T]]) -> T:
@@ -40,37 +55,37 @@ class LidarrClient:
         except ArrException as error:
             raise CueSplitterError(f"Lidarr API request failed: {error}") from error
 
-    def queue(self) -> list[dict[str, Any]]:
-        async def get_queue(client: NativeLidarrClient) -> list[dict[str, Any]]:
+    def queue(self) -> list[QueueRecord]:
+        async def get_queue(client: NativeLidarrClient) -> list[QueueRecord]:
             queue = await client.async_get_queue(
                 page=1,
                 page_size=2000,
                 unknown_artists=True,
             )
-            return [_attributes(record) for record in queue.records]
+            return [QueueRecord.model_validate(_attributes(record)) for record in queue.records]
 
         return self._run(get_queue)
 
-    def manual_import(self, folder: Path, record: dict[str, Any]) -> list[dict[str, Any]]:
-        async def get_manual_import(client: NativeLidarrClient) -> list[dict[str, Any]]:
+    def manual_import(self, folder: Path, record: QueueRecord) -> list[ManualImportCandidate]:
+        async def get_manual_import(client: NativeLidarrClient) -> list[ManualImportCandidate]:
             records = await client.async_get_manual_import(
                 folder=str(folder),
-                downloadid=str(record.get("downloadId", "")),
-                artistid=int(record.get("artistId") or 0),
+                downloadid=record.download_id,
+                artistid=record.artist_id,
                 replaceexistingfiles=True,
                 filterexistingfiles=False,
             )
-            return [_attributes(item) for item in records]
+            return [ManualImportCandidate.model_validate(_attributes(item)) for item in records]
 
         return self._run(get_manual_import)
 
-    def submit_manual_import(self, files: list[dict[str, Any]]) -> int:
+    def submit_manual_import(self, files: list[ManualImportFile]) -> int:
         async def submit(client: NativeLidarrClient) -> object:
             return await client.async_command_other(
                 "command",
                 data={
                     "name": "ManualImport",
-                    "files": files,
+                    "files": [file.model_dump(by_alias=True, mode="json") for file in files],
                     "importMode": "auto",
                     "replaceExistingFiles": True,
                 },
@@ -83,14 +98,15 @@ class LidarrClient:
             raise CueSplitterError("Lidarr did not return a manual-import command ID")
         return command_id
 
-    def command(self, command_id: int) -> dict[str, Any]:
+    def command(self, command_id: int) -> CommandStatus:
         async def get_command(client: NativeLidarrClient) -> object:
             return await client.async_command_other(f"command/{command_id}")
 
         payload = self._run(get_command)
-        if not isinstance(payload, dict):
-            raise CueSplitterError("Lidarr command response has an unexpected shape")
-        return cast(dict[str, Any], payload)
+        try:
+            return CommandStatus.model_validate(payload)
+        except ValueError as error:
+            raise CueSplitterError("Lidarr command response has an unexpected shape") from error
 
     def detach_queue_item(self, queue_id: int, *, blocklist: bool) -> None:
         async def detach(client: NativeLidarrClient) -> None:

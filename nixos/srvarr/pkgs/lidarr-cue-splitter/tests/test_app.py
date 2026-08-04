@@ -9,6 +9,9 @@ from pathlib import Path
 from threading import Thread
 from typing import Iterator
 
+from pydantic import TypeAdapter
+from aiopyarr.models.const import ProtocolType
+
 from lidarr_cue_splitter.app import (
     CueSplitterError,
     CueSplitterService,
@@ -26,9 +29,36 @@ from lidarr_cue_splitter.app import (
     read_api_key,
     safe_component,
 )
+from lidarr_cue_splitter.models import (
+    CommandStatus,
+    ManualImportCandidate,
+    ManualImportFile,
+    QueueRecord,
+    UnflacInput,
+)
+
+
+INSPECTIONS = TypeAdapter(list[UnflacInput])
+IMPORT_CANDIDATES = TypeAdapter(list[ManualImportCandidate])
+
+
+def queue_record(payload):
+    return QueueRecord.model_validate(payload)
+
+
+def inspections(payload):
+    return INSPECTIONS.validate_python(payload)
+
+
+def import_candidates(payload):
+    return IMPORT_CANDIDATES.validate_python(payload)
 
 
 class CueSplitterTests(unittest.TestCase):
+    def test_queue_record_normalizes_aiopyarr_protocol(self):
+        record = queue_record({"protocol": ProtocolType.TORRENT})
+        self.assertEqual(record.protocol, "torrent")
+
     def test_reads_lidarr_api_key(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "config.xml"
@@ -74,7 +104,7 @@ class CueSplitterTests(unittest.TestCase):
         def run(*args, **kwargs):
             return subprocess.CompletedProcess(args[0], 0, json.dumps(payload), "")
 
-        self.assertEqual(UnflacRunner(run).inspect(Path("album.cue")), payload)
+        self.assertEqual(UnflacRunner(run).inspect(Path("album.cue")), inspections(payload))
 
     def test_unflac_inspection_failure(self):
         def run(*args, **kwargs):
@@ -139,15 +169,28 @@ class CueSplitterTests(unittest.TestCase):
             self.assertEqual(
                 client.manual_import(
                     Path("/staging/album"),
-                    {"downloadId": "download-1", "artistId": 7},
+                    queue_record({"downloadId": "download-1", "artistId": 7}),
                 ),
                 [],
             )
             self.assertEqual(
-                client.submit_manual_import([{"path": "/staging/album/01.flac"}]),
+                client.submit_manual_import(
+                    [
+                        ManualImportFile(
+                            path=Path("/staging/album/01.flac"),
+                            artist_id=7,
+                            album_id=8,
+                            album_release_id=9,
+                            track_ids=[10],
+                            quality={},
+                            download_id="download-1",
+                            disable_release_switching=False,
+                        )
+                    ]
+                ),
                 12,
             )
-            self.assertEqual(client.command(12)["status"], "completed")
+            self.assertEqual(client.command(12).status, "completed")
             client.detach_queue_item(42, blocklist=True)
 
         self.assertTrue(all(api_key == "secret" for _, _, api_key, _ in requests))
@@ -168,7 +211,19 @@ class CueSplitterTests(unittest.TestCase):
             requests[2][3],
             {
                 "name": "ManualImport",
-                "files": [{"path": "/staging/album/01.flac"}],
+                "files": [
+                    {
+                        "path": "/staging/album/01.flac",
+                        "artistId": 7,
+                        "albumId": 8,
+                        "albumReleaseId": 9,
+                        "trackIds": [10],
+                        "quality": {},
+                        "indexerFlags": 0,
+                        "downloadId": "download-1",
+                        "disableReleaseSwitching": False,
+                    }
+                ],
                 "importMode": "auto",
                 "replaceExistingFiles": True,
             },
@@ -185,9 +240,9 @@ class CueSplitterTests(unittest.TestCase):
     def test_image_style_inspection_is_eligible(self):
         cue = Path("/music/album.cue")
         payload = [{"audio": [{"path": "/music/album.flac", "tracks": [{}, {}, {}]}]}]
-        summary = inspection_summary(cue, payload)
-        self.assertTrue(summary["eligible"])
-        self.assertEqual(summary["track_count"], 3)
+        summary = inspection_summary(cue, inspections(payload))
+        self.assertTrue(summary.eligible)
+        self.assertEqual(summary.track_count, 3)
 
     def test_one_file_per_track_cue_is_not_eligible(self):
         cue = Path("/music/album.cue")
@@ -199,7 +254,7 @@ class CueSplitterTests(unittest.TestCase):
                 ]
             }
         ]
-        self.assertFalse(inspection_summary(cue, payload)["eligible"])
+        self.assertFalse(inspection_summary(cue, inspections(payload)).eligible)
 
     def test_eac_noncompliant_one_file_per_track_cue_is_already_split(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -274,10 +329,12 @@ class CueSplitterTests(unittest.TestCase):
             for index, path in enumerate(generated, start=10)
         ]
         files = build_manual_import_files(
-            outputs, generated, {"artistId": 4, "albumId": 5, "downloadId": "abc"}
+            import_candidates(outputs),
+            generated,
+            queue_record({"artistId": 4, "albumId": 5, "downloadId": "abc"}),
         )
-        self.assertEqual([item["trackIds"] for item in files], [[10], [11]])
-        self.assertTrue(all(item["downloadId"] == "abc" for item in files))
+        self.assertEqual([item.track_ids for item in files], [[10], [11]])
+        self.assertTrue(all(item.download_id == "abc" for item in files))
 
     def test_manual_import_requires_every_generated_file(self):
         generated = [Path("/stage/01.flac"), Path("/stage/02.flac")]
@@ -292,7 +349,11 @@ class CueSplitterTests(unittest.TestCase):
             }
         ]
         with self.assertRaises(ManualMatchRequired):
-            build_manual_import_files(outputs, generated, {"artistId": 4, "albumId": 5})
+            build_manual_import_files(
+                import_candidates(outputs),
+                generated,
+                queue_record({"artistId": 4, "albumId": 5}),
+            )
 
     def test_manual_import_rejections_need_attention(self):
         output = {
@@ -304,7 +365,9 @@ class CueSplitterTests(unittest.TestCase):
         }
         with self.assertRaises(ManualMatchRequired):
             build_manual_import_files(
-                [output], [Path("/stage/01.flac")], {"artistId": 4, "albumId": 5}
+                import_candidates([output]),
+                [Path("/stage/01.flac")],
+                queue_record({"artistId": 4, "albumId": 5}),
             )
 
     def test_metrics_include_health_state_and_totals(self):
@@ -333,28 +396,32 @@ class CueSplitterTests(unittest.TestCase):
             audio = download / "album.ape"
             cue.write_text('FILE "album.ape" WAVE\n', encoding="utf-8")
             audio.write_bytes(b"ape")
-            record = {
-                "status": "completed",
-                "protocol": "torrent",
-                "downloadId": "abc",
-                "outputPath": str(download),
-                "title": "Album",
-                "artistId": 4,
-                "albumId": 5,
-            }
+            record = queue_record(
+                {
+                    "status": "completed",
+                    "protocol": "torrent",
+                    "downloadId": "abc",
+                    "outputPath": str(download),
+                    "title": "Album",
+                    "artistId": 4,
+                    "albumId": 5,
+                }
+            )
 
             class FakeRunner:
                 def inspect(self, cue_path):
-                    return [
-                        {
-                            "audio": [
-                                {
-                                    "path": str(audio),
-                                    "tracks": [{"number": 1}, {"number": 2}],
-                                }
-                            ]
-                        }
-                    ]
+                    return inspections(
+                        [
+                            {
+                                "audio": [
+                                    {
+                                        "path": str(audio),
+                                        "tracks": [{"number": 1}, {"number": 2}],
+                                    }
+                                ]
+                            }
+                        ]
+                    )
 
                 def split(self, cue_path, output_dir):
                     paths = [output_dir / "01.flac", output_dir / "02.flac"]
@@ -375,26 +442,28 @@ class CueSplitterTests(unittest.TestCase):
                     return self.records
 
                 def manual_import(self, folder, queue_record):
-                    return [
-                        {
-                            "path": str(path),
-                            "artist": {"id": 4},
-                            "album": {"id": 5},
-                            "albumReleaseId": 6,
-                            "tracks": [{"id": index}],
-                            "quality": {},
-                            "downloadId": "abc",
-                            "rejections": [],
-                        }
-                        for index, path in enumerate(sorted(folder.rglob("*.flac")), start=10)
-                    ]
+                    return import_candidates(
+                        [
+                            {
+                                "path": str(path),
+                                "artist": {"id": 4},
+                                "album": {"id": 5},
+                                "albumReleaseId": 6,
+                                "tracks": [{"id": index}],
+                                "quality": {},
+                                "downloadId": "abc",
+                                "rejections": [],
+                            }
+                            for index, path in enumerate(sorted(folder.rglob("*.flac")), start=10)
+                        ]
+                    )
 
                 def submit_manual_import(self, files):
                     self.submitted = files
                     return 7
 
                 def command(self, command_id):
-                    return {"id": command_id, "status": "completed"}
+                    return CommandStatus(id=command_id, status="completed")
 
             client = FakeClient()
             store = StateStore(root / "state.json")
@@ -432,12 +501,14 @@ class CueSplitterTests(unittest.TestCase):
             download = root / "usenet" / "manual" / "album"
             download.mkdir(parents=True)
             (download / "album.tar").write_bytes(b"tar")
-            record = {
-                "status": "completed",
-                "protocol": "usenet",
-                "downloadId": "abc",
-                "outputPath": str(download),
-            }
+            record = queue_record(
+                {
+                    "status": "completed",
+                    "protocol": "usenet",
+                    "downloadId": "abc",
+                    "outputPath": str(download),
+                }
+            )
 
             class FakeClient:
                 def queue(self):
@@ -490,12 +561,14 @@ class CueSplitterTests(unittest.TestCase):
             )
             (download / "01.flac").write_bytes(b"flac")
             (download / "02.flac").write_bytes(b"flac")
-            record = {
-                "status": "completed",
-                "protocol": "torrent",
-                "downloadId": "abc",
-                "outputPath": str(download),
-            }
+            record = queue_record(
+                {
+                    "status": "completed",
+                    "protocol": "torrent",
+                    "downloadId": "abc",
+                    "outputPath": str(download),
+                }
+            )
 
             class FakeClient:
                 def queue(self):
@@ -542,32 +615,36 @@ class CueSplitterTests(unittest.TestCase):
             audio = download / "album.ape"
             cue.write_text('FILE "album.ape" WAVE\n', encoding="utf-8")
             audio.write_bytes(b"ape")
-            record = {
-                "id": 42,
-                "status": "completed",
-                "protocol": "torrent",
-                "downloadId": "abc",
-                "outputPath": str(download),
-                "title": "Album",
-                "artistId": 4,
-                "albumId": 5,
-            }
+            record = queue_record(
+                {
+                    "id": 42,
+                    "status": "completed",
+                    "protocol": "torrent",
+                    "downloadId": "abc",
+                    "outputPath": str(download),
+                    "title": "Album",
+                    "artistId": 4,
+                    "albumId": 5,
+                }
+            )
 
             class FakeRunner:
                 def __init__(self):
                     self.splits = 0
 
                 def inspect(self, cue_path):
-                    return [
-                        {
-                            "audio": [
-                                {
-                                    "path": str(audio),
-                                    "tracks": [{"number": 1}, {"number": 2}],
-                                }
-                            ]
-                        }
-                    ]
+                    return inspections(
+                        [
+                            {
+                                "audio": [
+                                    {
+                                        "path": str(audio),
+                                        "tracks": [{"number": 1}, {"number": 2}],
+                                    }
+                                ]
+                            }
+                        ]
+                    )
 
                 def split(self, cue_path, output_dir):
                     self.splits += 1
@@ -593,16 +670,18 @@ class CueSplitterTests(unittest.TestCase):
                     return self.records
 
                 def manual_import(self, folder, queue_record):
-                    return [
-                        {
-                            "path": str(path),
-                            "artist": {"id": 4},
-                            "album": {"id": 5},
-                            "tracks": [{"id": index}],
-                            "rejections": [{"reason": "album match is too weak"}],
-                        }
-                        for index, path in enumerate(sorted(folder.rglob("*.flac")), start=10)
-                    ]
+                    return import_candidates(
+                        [
+                            {
+                                "path": str(path),
+                                "artist": {"id": 4},
+                                "album": {"id": 5},
+                                "tracks": [{"id": index}],
+                                "rejections": [{"reason": "album match is too weak"}],
+                            }
+                            for index, path in enumerate(sorted(folder.rglob("*.flac")), start=10)
+                        ]
+                    )
 
                 def detach_queue_item(self, queue_id, *, blocklist):
                     self.detached.append((queue_id, blocklist))
@@ -649,13 +728,15 @@ class CueSplitterTests(unittest.TestCase):
             root = Path(directory)
             download = root / "torrents" / "album"
             download.mkdir(parents=True)
-            record = {
-                "id": 42,
-                "status": "completed",
-                "protocol": "torrent",
-                "downloadId": "abc",
-                "outputPath": str(download),
-            }
+            record = queue_record(
+                {
+                    "id": 42,
+                    "status": "completed",
+                    "protocol": "torrent",
+                    "downloadId": "abc",
+                    "outputPath": str(download),
+                }
+            )
 
             class FakeClient:
                 def __init__(self):
@@ -704,12 +785,14 @@ class CueSplitterTests(unittest.TestCase):
             ready_root.mkdir(parents=True)
             generated = ready_root / "01.flac"
             generated.write_bytes(b"flac")
-            record = {
-                "status": "completed",
-                "protocol": "torrent",
-                "downloadId": "abc",
-                "outputPath": str(download),
-            }
+            record = queue_record(
+                {
+                    "status": "completed",
+                    "protocol": "torrent",
+                    "downloadId": "abc",
+                    "outputPath": str(download),
+                }
+            )
 
             class FakeClient:
                 def queue(self):
@@ -796,13 +879,15 @@ class CueSplitterTests(unittest.TestCase):
             download.mkdir(parents=True)
             cue = download / "album.cue"
             cue.write_text("malformed cue", encoding="utf-8")
-            record = {
-                "id": 42,
-                "status": "completed",
-                "protocol": "torrent",
-                "downloadId": "abc",
-                "outputPath": str(download),
-            }
+            record = queue_record(
+                {
+                    "id": 42,
+                    "status": "completed",
+                    "protocol": "torrent",
+                    "downloadId": "abc",
+                    "outputPath": str(download),
+                }
+            )
 
             class FakeClient:
                 def __init__(self):
@@ -870,13 +955,15 @@ class CueSplitterTests(unittest.TestCase):
             cue.write_text("first malformed cue", encoding="utf-8")
             failed_fingerprint = output_fingerprint(download)
             cue.write_text("changed malformed cue", encoding="utf-8")
-            record = {
-                "id": 42,
-                "status": "completed",
-                "protocol": "torrent",
-                "downloadId": "abc",
-                "outputPath": str(download),
-            }
+            record = queue_record(
+                {
+                    "id": 42,
+                    "status": "completed",
+                    "protocol": "torrent",
+                    "downloadId": "abc",
+                    "outputPath": str(download),
+                }
+            )
 
             class FakeClient:
                 def __init__(self):
@@ -925,13 +1012,15 @@ class CueSplitterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             missing_download = root / "torrents" / "missing"
-            record = {
-                "id": 42,
-                "status": "completed",
-                "protocol": "torrent",
-                "downloadId": "abc",
-                "outputPath": str(missing_download),
-            }
+            record = queue_record(
+                {
+                    "id": 42,
+                    "status": "completed",
+                    "protocol": "torrent",
+                    "downloadId": "abc",
+                    "outputPath": str(missing_download),
+                }
+            )
 
             class FakeClient:
                 def __init__(self):
