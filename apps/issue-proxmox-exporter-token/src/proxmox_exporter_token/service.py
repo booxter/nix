@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, Sequence
 
-from pydantic import ValidationError
 from sops_tools.errors import ToolError
+from sops_tools.flake import archive_flake_source
 from sops_tools.model import KeyPath
 from sops_tools.process import ProcessRunner
 from sops_tools.repository import RuntimeEnvironment, SecretRepository
@@ -14,7 +14,6 @@ from sops_tools.secrets import CommandSopsBackend
 
 from .models import (
     ExporterConfig,
-    FlakeArchive,
     FleetHosts,
     IssueSummary,
     RemoteTokenRequest,
@@ -84,16 +83,7 @@ class RemoteTokenIssuer:
         return value
 
     def _archive_source(self) -> Path:
-        output = self.runner.run(["nix", "flake", "archive", "--json", f"path:{self.repo_root}"])
-        try:
-            path = FlakeArchive.model_validate_json(output).path
-        except ValidationError as error:
-            raise ToolError(
-                f"failed to archive the Proxmox token helper source: {error}"
-            ) from error
-        if not path.startswith("/nix/store/"):
-            raise ToolError("failed to archive the Proxmox token helper source")
-        return Path(path)
+        return archive_flake_source(self.runner, self.repo_root)
 
 
 @dataclass(frozen=True)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import shlex
 import shutil
@@ -11,6 +10,7 @@ from typing import Protocol
 
 from .age import AgeRecipientResolver
 from .errors import ToolError
+from .flake import archive_flake_source
 from .model import JsonValue
 from .policy import SopsPolicy
 from .process import ProcessRunner
@@ -97,21 +97,7 @@ class CommandRuntimeKeyProvider:
         return recipients[-1]
 
     def _archive_source(self) -> Path:
-        output = self.runner.run(
-            ["nix", "flake", "archive", "--json", f"path:{self.repo_root}"]
-        )
-        try:
-            payload: object = json.loads(output)
-        except json.JSONDecodeError as error:
-            raise ToolError(f"Failed to archive sops-tools source: {error}") from error
-        if not isinstance(payload, dict):
-            raise ToolError("Failed to archive sops-tools source.")
-        path = payload.get("path")
-        if not isinstance(path, str):
-            raise ToolError("Failed to archive sops-tools source.")
-        if not path.startswith("/nix/store/"):
-            raise ToolError("Failed to archive sops-tools source.")
-        return Path(path)
+        return archive_flake_source(self.runner, self.repo_root)
 
     @staticmethod
     def _executable(name: str) -> str:

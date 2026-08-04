@@ -8,12 +8,12 @@ from typing import Protocol
 
 from pydantic import ValidationError
 from sops_tools.errors import ToolError
+from sops_tools.flake import archive_flake_source
 from sops_tools.process import ProcessRunner
 
 from .models import (
     CertificateMaterial,
     CertificateRequest,
-    FlakeArchive,
     FleetHosts,
 )
 from .repository import host_facts
@@ -118,11 +118,4 @@ class RemoteCertificateIssuer:
             raise ToolError(f"invalid certificate response from {ca_host}: {error}") from error
 
     def _archive_source(self) -> Path:
-        output = self.runner.run(["nix", "flake", "archive", "--json", f"path:{self.repo_root}"])
-        try:
-            path = FlakeArchive.model_validate_json(output).path
-        except ValidationError as error:
-            raise ToolError(f"failed to archive the certificate helper source: {error}") from error
-        if not path.startswith("/nix/store/"):
-            raise ToolError("failed to archive the certificate helper source")
-        return Path(path)
+        return archive_flake_source(self.runner, self.repo_root)

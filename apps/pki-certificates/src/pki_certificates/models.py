@@ -18,12 +18,6 @@ class FleetHosts(RootModel[dict[str, HostFacts]]):
     model_config = ConfigDict(frozen=True, strict=True)
 
 
-class FlakeArchive(BaseModel):
-    model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
-
-    path: str
-
-
 class InternalServiceConfig(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
 
