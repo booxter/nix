@@ -56,9 +56,7 @@ in
           {
             inherit pkgs upsShutdownDelaySeconds;
             monitorName = upsServerSpec.name;
-            system = "${hostInventory.toUpsName upsServerSpec.name}@${
-              upsServerSpec.dnsName or upsServerSpec.name
-            }";
+            system = "${hostInventory.toUpsName upsServerSpec.name}@${hostInventory.toHostIpv4Address upsServerSpec}";
             user = "upsslave";
           }
           // lib.optionalAttrs useLiteralUpsPassword {
