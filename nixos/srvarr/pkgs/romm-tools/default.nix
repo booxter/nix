@@ -19,6 +19,7 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mariadb
     pythonPackages.podman
     pythonPackages.pydantic
+    pythonPackages.python-dotenv
     pythonPackages.requests
     pythonPackages.sqlalchemy
   ];

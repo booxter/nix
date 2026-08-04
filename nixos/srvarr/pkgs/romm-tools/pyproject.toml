@@ -7,11 +7,19 @@ name = "romm-tools"
 version = "0.1.0"
 description = "Host integration tools for the srvarr RomM service"
 requires-python = ">=3.11"
-dependencies = ["mariadb", "podman", "pydantic", "requests", "sqlalchemy"]
+dependencies = [
+  "mariadb",
+  "podman",
+  "pydantic",
+  "python-dotenv",
+  "requests",
+  "sqlalchemy",
+]
 
 [project.scripts]
 romm-db-init = "romm_tools.database:main"
 romm-prepare-assets = "romm_tools.assets:main"
+romm-run-setup = "romm_tools.setup:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

@@ -107,11 +107,26 @@ let
     OIDC_USERNAME_ATTRIBUTE = "preferred_username";
   };
 
-  containerVolumes = [
-    "${rommBasePath}:/romm:rw"
-    "/run/mysqld:/run/mysqld:ro"
-    "${rommZipCacheModule}:/backend/utils/zip_cache.py:ro"
+  containerMounts = [
+    {
+      source = rommBasePath;
+      target = "/romm";
+      readOnly = false;
+    }
+    {
+      source = "/run/mysqld";
+      target = "/run/mysqld";
+      readOnly = true;
+    }
+    {
+      source = rommZipCacheModule;
+      target = "/backend/utils/zip_cache.py";
+      readOnly = true;
+    }
   ];
+  containerVolumes = map (
+    mount: "${mount.source}:${mount.target}:${if mount.readOnly then "ro" else "rw"}"
+  ) containerMounts;
 
   containerNetworks = [ "slirp4netns:allow_host_loopback=true" ];
 
@@ -160,37 +175,26 @@ let
     HOME = stateDir;
     XDG_RUNTIME_DIR = "/run/user/${toString accounts.uids.romm}";
   };
-
-  podmanRunArgs = [
-    "--rm"
-    "--name=romm-setup"
-    "--log-driver=journald"
-    "--env-file"
+  rommSetupConfig = pkgs.writeText "romm-setup.json" (
+    builtins.toJSON {
+      image = rommImage;
+      environment = commonEnvironment;
+      mounts = map (mount: {
+        source = mount.source;
+        target = mount.target;
+        read_only = mount.readOnly;
+      }) containerMounts;
+    }
+  );
+  rommSetupCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.romm-tools "romm-run-setup")
+    "--socket-url"
+    "http+unix:///run/user/${toString accounts.uids.romm}/podman/podman.sock"
+    "--config"
+    rommSetupConfig
+    "--environment-file"
     config.sops.templates."romm.env".path
-  ]
-  ++ lib.flatten (
-    lib.mapAttrsToList (name: value: [
-      "-e"
-      "${name}=${value}"
-    ]) commonEnvironment
-  )
-  ++ [
-    "-v"
-    "${rommBasePath}:/romm:rw"
-    "-v"
-    "/run/mysqld:/run/mysqld:ro"
-    "-v"
-    "${rommZipCacheModule}:/backend/utils/zip_cache.py:ro"
-    "--network=slirp4netns:allow_host_loopback=true"
-    "--cap-drop=all"
-    "--security-opt=no-new-privileges"
-    "--entrypoint"
-    "/bin/bash"
-    "--pull=never"
-    rommImage
   ];
-
-  podmanRunCommon = lib.concatMapStringsSep " " lib.escapeShellArg podmanRunArgs;
 in
 {
   sops.secrets = {
@@ -352,10 +356,6 @@ in
       mediaDir
       stateDir
     ];
-    path = [
-      config.virtualisation.podman.package
-      pkgs.slirp4netns
-    ];
     environment = podmanRuntimeEnvironment;
     serviceConfig = {
       Type = "oneshot";
@@ -365,14 +365,9 @@ in
       RemainAfterExit = true;
       Restart = "on-failure";
       RestartSec = "5s";
+      ExecStart = rommSetupCommand;
+      TimeoutStartSec = "10min";
     };
-    script = ''
-      set -euo pipefail
-
-      podman load -i ${lib.escapeShellArg "${rommImageFile}"}
-      podman run ${podmanRunCommon} \
-        -c 'cd /backend && alembic upgrade head && python3 startup.py'
-    '';
   };
 
   virtualisation = {
