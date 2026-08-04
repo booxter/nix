@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transmission-torrent-cleaner"
+version = "0.1.0"
+description = "Clean up old non-priority Transmission torrents"
+requires-python = ">=3.11"
+dependencies = ["pydantic", "transmission-common"]
+
+[project.scripts]
+transmission-torrent-cleaner = "transmission_torrent_cleaner.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=transmission_torrent_cleaner --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/transmission_torrent_cleaner"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["transmission_common.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
