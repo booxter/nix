@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proxmox-host-tools"
+version = "0.1.0"
+description = "Host integration tools for Proxmox VE nodes"
+requires-python = ">=3.11"
+
+[project.scripts]
+proxmox-install-api-certificate = "proxmox_host_tools.certificate:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+proxmox_host_tools = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=proxmox_host_tools --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/proxmox_host_tools"]
+strict = true
+
+[tool.ruff]
+line-length = 100
