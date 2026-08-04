@@ -130,19 +130,6 @@ let
   seerrRequestStoragePackage = appPackages.seerr-request-storage;
   seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
   pkiRotationPackage = pkgs.pki-rotation;
-  issueProxmoxExporterTokenApp = pkgs.writeShellApplication {
-    name = "issue-proxmox-exporter-token-app";
-    text = ''
-      exec ${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token "$@"
-    '';
-  };
-  pkiRotationApp = pkgs.writeShellApplication {
-    name = "pki-rotation-app";
-    text = ''
-      export PKI_ROTATION_REPO_ROOT="${../.}"
-      exec ${pkiRotationPackage}/bin/pki-rotation "$@"
-    '';
-  };
   resetOidc = pkgs.callPackage ../nixos/pki/pkgs/kanidm-tools { };
   wgHomeClientConfig = fleetTools;
 in
@@ -156,10 +143,10 @@ in
     get-hosts = getHosts;
     issue-observability-cert = issueObservabilityCertPackage;
     issue-internal-service-cert = issueInternalServiceCertPackage;
-    issue-proxmox-exporter-token = issueProxmoxExporterTokenApp;
+    issue-proxmox-exporter-token = issueProxmoxExporterTokenPackage;
     seerr-request-storage = seerrRequestStoragePackage;
     seerr-update-user-tags = seerrUpdateUserTagsPackage;
-    pki-rotation = pkiRotationApp;
+    pki-rotation = pkiRotationPackage;
     reset-oidc = resetOidc;
     join-media-parts = pkgs.join-media-parts;
     hba-flash = hbaFlash;
@@ -178,13 +165,13 @@ in
     "issue-internal-service-cert" =
       mkApp "${issueInternalServiceCertPackage}/bin/issue-internal-service-cert" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
     "issue-proxmox-exporter-token" =
-      mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
+      mkApp "${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
     "seerr-request-storage" =
       mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
     "seerr-update-user-tags" =
       mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
     "pki-rotation" =
-      mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
+      mkApp "${pkiRotationPackage}/bin/pki-rotation" "Inspect repo-managed internal PKI certificates and export rotation status.";
     "reset-oidc" =
       mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
     "join-media-parts" =
