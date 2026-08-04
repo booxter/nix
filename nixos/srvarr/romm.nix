@@ -140,7 +140,6 @@ let
     volumes = containerVolumes;
     networks = containerNetworks;
     workdir = "/backend";
-    entrypoint = "/bin/bash";
     extraOptions = [
       "--cap-drop=all"
       "--security-opt=no-new-privileges"
@@ -377,27 +376,72 @@ in
       containers = {
         romm-api = commonContainer // {
           ports = [ "127.0.0.1:${toString apiPort}:${toString apiPort}" ];
+          entrypoint = "/src/.venv/bin/gunicorn";
           cmd = [
-            "-c"
-            "exec gunicorn --bind 0.0.0.0:${toString apiPort} --forwarded-allow-ips='*' --worker-class uvicorn_worker.UvicornWorker --workers 1 --timeout 300 --keep-alive 2 --max-requests 1000 --max-requests-jitter 100 --worker-connections 1000 --error-logfile - main:app"
+            "--bind"
+            "0.0.0.0:${toString apiPort}"
+            "--forwarded-allow-ips"
+            "*"
+            "--worker-class"
+            "uvicorn_worker.UvicornWorker"
+            "--workers"
+            "1"
+            "--timeout"
+            "300"
+            "--keep-alive"
+            "2"
+            "--max-requests"
+            "1000"
+            "--max-requests-jitter"
+            "100"
+            "--worker-connections"
+            "1000"
+            "--error-logfile"
+            "-"
+            "main:app"
           ];
         };
         romm-worker = commonContainer // {
+          entrypoint = "/src/.venv/bin/rq";
           cmd = [
-            "-c"
-            "exec rq worker --path /backend --url redis://10.0.2.2:${toString redisPort}/0 --results-ttl 86400 --logging_level INFO high default low"
+            "worker"
+            "--path"
+            "/backend"
+            "--url"
+            "redis://10.0.2.2:${toString redisPort}/0"
+            "--results-ttl"
+            "86400"
+            "--logging_level"
+            "INFO"
+            "high"
+            "default"
+            "low"
           ];
         };
         romm-scheduler = commonContainer // {
+          environment = commonEnvironment // {
+            RQ_REDIS_HOST = "10.0.2.2";
+            RQ_REDIS_PORT = toString redisPort;
+            RQ_REDIS_DB = "0";
+            RQ_REDIS_SSL = "0";
+          };
+          entrypoint = "/src/.venv/bin/rqscheduler";
           cmd = [
-            "-c"
-            "exec env RQ_REDIS_HOST=10.0.2.2 RQ_REDIS_PORT=${toString redisPort} RQ_REDIS_DB=0 RQ_REDIS_SSL=0 rqscheduler --path /backend --pid /tmp/rq_scheduler.pid"
+            "--path"
+            "/backend"
+            "--pid"
+            "/tmp/rq_scheduler.pid"
           ];
         };
         romm-watcher = commonContainer // {
+          entrypoint = "/src/.venv/bin/watchfiles";
+          # watchfiles' command-target interface intentionally accepts the
+          # child command as one argument; no shell wraps the container itself.
           cmd = [
-            "-c"
-            "exec watchfiles --target-type command 'python3 watcher.py' /romm/library"
+            "--target-type"
+            "command"
+            "/src/.venv/bin/python3 watcher.py"
+            "/romm/library"
           ];
         };
       };
