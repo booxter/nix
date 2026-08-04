@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+from __future__ import annotations
 
 import argparse
 import fcntl
@@ -76,9 +76,7 @@ def validate_epub(path: Path) -> None:
             if "META-INF/container.xml" not in names:
                 raise EbookConverterError(f"EPUB has no container metadata: {path}")
     except zipfile.BadZipFile as exc:
-        raise EbookConverterError(
-            f"converter produced an invalid EPUB: {path}"
-        ) from exc
+        raise EbookConverterError(f"converter produced an invalid EPUB: {path}") from exc
 
 
 def safe_source_path(source: Path, library_root: Path) -> Path:
@@ -89,9 +87,7 @@ def safe_source_path(source: Path, library_root: Path) -> Path:
     except FileNotFoundError as exc:
         raise EbookConverterError(f"source does not exist: {source}") from exc
     if not is_within(resolved, library_root):
-        raise EbookConverterError(
-            f"source is outside the configured library root: {resolved}"
-        )
+        raise EbookConverterError(f"source is outside the configured library root: {resolved}")
     if not resolved.is_file():
         raise EbookConverterError(f"source is not a regular file: {resolved}")
     if resolved.suffix.lower() not in SUPPORTED_SOURCE_SUFFIXES:
@@ -116,9 +112,7 @@ def source_lock(source: Path, lock_root: Path) -> Iterator[None]:
 
 
 def hidden_source_path(source: Path) -> Path:
-    return source.with_name(
-        f".{source.stem}.ebook-converter-source{source.suffix.lower()}"
-    )
+    return source.with_name(f".{source.stem}.ebook-converter-source{source.suffix.lower()}")
 
 
 def atomic_write_text(path: Path, contents: str, mode: int = 0o660) -> None:
@@ -149,9 +143,7 @@ def convert_path(
     with source_lock(source, lock_root):
         if destination.exists():
             if destination.is_symlink():
-                raise EbookConverterError(
-                    f"refusing EPUB symlink beside source: {destination}"
-                )
+                raise EbookConverterError(f"refusing EPUB symlink beside source: {destination}")
             validate_epub(destination)
             source.unlink()
             LOG.info(
@@ -211,9 +203,7 @@ def process_hook_payload(
 
     paths = payload.get("paths")
     final_paths = paths.get("final_paths") if isinstance(paths, dict) else None
-    if not isinstance(final_paths, list) or not all(
-        isinstance(path, str) for path in final_paths
-    ):
+    if not isinstance(final_paths, list) or not all(isinstance(path, str) for path in final_paths):
         raise EbookConverterError("Shelfmark hook payload has invalid final paths")
 
     converted = []
@@ -349,14 +339,10 @@ class StateStore:
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError) as exc:
-            raise EbookConverterError(
-                f"failed to read state file {self.path}: {exc}"
-            ) from exc
+            raise EbookConverterError(f"failed to read state file {self.path}: {exc}") from exc
         if not isinstance(data, dict) or data.get("version") != STATE_VERSION:
             raise EbookConverterError(f"unsupported state file format: {self.path}")
-        if not isinstance(data.get("files"), dict) or not isinstance(
-            data.get("totals"), dict
-        ):
+        if not isinstance(data.get("files"), dict) or not isinstance(data.get("totals"), dict):
             raise EbookConverterError(f"invalid state file structure: {self.path}")
         self.data = data
 
@@ -368,9 +354,7 @@ class StateStore:
 
 
 def prometheus_metrics(store: StateStore, ok: bool, now: float) -> str:
-    states = Counter(
-        job.get("status", "unknown") for job in store.data["files"].values()
-    )
+    states = Counter(job.get("status", "unknown") for job in store.data["files"].values())
     totals = store.data["totals"]
     lines = [
         "# HELP host_observability_ebook_converter_ok Whether the latest service iteration completed successfully.",
@@ -383,8 +367,7 @@ def prometheus_metrics(store: StateStore, ok: bool, now: float) -> str:
         "# TYPE host_observability_ebook_converter_files gauge",
     ]
     for state_name in sorted(
-        set(states)
-        | {"complete", "converting", "failed", "needs_attention", "settling"}
+        set(states) | {"complete", "converting", "failed", "needs_attention", "settling"}
     ):
         lines.append(
             f'host_observability_ebook_converter_files{{state="{state_name}"}} {states[state_name]}'
@@ -491,9 +474,7 @@ class EbookConverterService:
                         )
                         continue
                 attempts = int(job.get("attempts", 0)) + 1
-                status_name = (
-                    "needs_attention" if attempts >= self.max_attempts else "failed"
-                )
+                status_name = "needs_attention" if attempts >= self.max_attempts else "failed"
                 job.update(
                     status=status_name,
                     attempts=attempts,

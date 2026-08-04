@@ -5,7 +5,7 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from main import (
+from srvarr_ebook_converter.app import (
     EbookConverterService,
     EbookConverterError,
     StateStore,
@@ -84,9 +84,7 @@ class ConvertPathTests(unittest.TestCase):
             library_source = library / "book.azw3"
             os.link(torrent_source, library_source)
 
-            with self.assertRaisesRegex(
-                EbookConverterError, "injected conversion failure"
-            ):
+            with self.assertRaisesRegex(EbookConverterError, "injected conversion failure"):
                 convert_path(
                     library_source,
                     library_root=library,

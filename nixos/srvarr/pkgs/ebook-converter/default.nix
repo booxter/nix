@@ -2,36 +2,49 @@
   ebookConverterCli,
   lib,
   python3,
-  writeShellApplication,
+  ruff,
 }:
 let
-  sourceDir = ./.;
+  pythonPackages = python3.pkgs;
 in
-writeShellApplication {
-  name = "ebook-converter";
-  runtimeInputs = [ ebookConverterCli ];
-  text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
-  '';
-  derivationArgs = {
-    doCheck = true;
-  };
-  checkPhase = ''
-    runHook preCheck
-    PYTHONPATH="${sourceDir}" \
-      ${python3}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
+pythonPackages.buildPythonApplication {
+  pname = "srvarr-ebook-converter";
+  version = "0.1.0";
+  pyproject = true;
 
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  nativeCheckInputs = [
+    ebookConverterCli
+    ruff
+    pythonPackages.pytestCheckHook
+    pythonPackages.pytest-cov
+  ];
+
+  makeWrapperArgs = [
+    "--prefix PATH : ${lib.makeBinPath [ ebookConverterCli ]}"
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+  '';
+
+  postCheck = ''
     mkdir integration
     cd integration
     export XDG_CONFIG_HOME="$TMPDIR/ebook-converter-config"
     printf '%s\n' '<html><body><h1>Conversion test</h1></body></html>' > source.html
     ${lib.getExe ebookConverterCli} source.html source.mobi >/dev/null
     ${lib.getExe ebookConverterCli} source.mobi output.epub >/dev/null
-    PYTHONPATH="${sourceDir}" \
+    PYTHONPATH="$out/${python3.sitePackages}" \
       ${python3}/bin/python3 -c \
-        'from pathlib import Path; from main import validate_epub; validate_epub(Path("output.epub"))'
-    runHook postCheck
+        'from pathlib import Path; from srvarr_ebook_converter.app import validate_epub; validate_epub(Path("output.epub"))'
   '';
+
+  pythonImportsCheck = [ "srvarr_ebook_converter" ];
 
   meta = {
     description = "Convert library MOBI and AZW3 files to EPUB";
