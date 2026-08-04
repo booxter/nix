@@ -17,6 +17,7 @@ in
   open-webui-tool-acl-reconcile = pkgs.callPackage ./open-webui-tool-acl-reconcile { };
   paperless-gpt-configure = pkgs.callPackage ./paperless-gpt-configure { };
   prometheus-paperless-exporter = pkgs.callPackage ./prometheus-paperless-exporter { };
+  search-stack-probes = pkgs.callPackage ./search-stack-probes { };
   searchless-ngx = pkgs.callPackage ./searchless-ngx { };
   telegram-archive = pkgs.callPackage ./telegram-archive { };
 }
