@@ -1,18 +1,22 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::env;
-use std::fmt;
 use std::fs;
 use std::io::{self, IsTerminal, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Component, Path, PathBuf};
 use std::process::{Command, Output};
-use std::str::FromStr;
 
 use anyhow::{anyhow, bail, Context, Result};
 use serde::Deserialize;
 use tempfile::TempDir;
 
 use crate::HostInventory;
+
+mod revision;
+mod target;
+
+use revision::{GitCheckout, Revision, RevisionSide};
+pub use target::{DiffOptions, GeneratedPath, TargetKind, TargetRequest};
 
 const TARGET_ALIASES_JSON: &str = env!("DIFF_TARGET_ALIASES_JSON");
 const NIX: &str = env!("DIFF_NIX");
@@ -26,229 +30,20 @@ const HOME_MANAGER_USERS_EXPRESSION: &str = include_str!("diff/home-manager-user
 const HOMEBREW_MANIFEST_EXPRESSION: &str = include_str!("diff/homebrew-manifest.nix");
 const NGINX_CONFIG_EXPRESSION: &str = include_str!("diff/nginx-config.nix");
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TargetKind {
-    Nixos,
-    Darwin,
-}
-
-impl TargetKind {
-    fn as_str(self) -> &'static str {
-        match self {
-            Self::Nixos => "nixos",
-            Self::Darwin => "darwin",
-        }
-    }
-
-    fn nh_subcommand(self) -> &'static str {
-        match self {
-            Self::Nixos => "os",
-            Self::Darwin => "darwin",
-        }
-    }
-}
-
-impl fmt::Display for TargetKind {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str(self.as_str())
-    }
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct TargetRequest {
-    pub machine: String,
-    pub explicit_kind: Option<TargetKind>,
-}
-
-impl FromStr for TargetRequest {
-    type Err = anyhow::Error;
-
-    fn from_str(value: &str) -> Result<Self> {
-        let mut attribute = value;
-        if let Some(stripped) = attribute.strip_prefix(".#") {
-            attribute = stripped;
-        } else if let Some(stripped) = attribute.strip_prefix('#') {
-            attribute = stripped;
-        } else if let Some(stripped) = attribute.strip_prefix('.') {
-            attribute = stripped;
-        }
-
-        let (explicit_kind, machine) =
-            if let Some(rest) = attribute.strip_prefix("nixosConfigurations.") {
-                (Some(TargetKind::Nixos), first_attribute(rest))
-            } else if let Some(rest) = attribute.strip_prefix("darwinConfigurations.") {
-                (Some(TargetKind::Darwin), first_attribute(rest))
-            } else {
-                (None, attribute)
-            };
-
-        if machine.is_empty() {
-            bail!("machine must not be empty");
-        }
-
-        Ok(Self {
-            machine: machine.to_owned(),
-            explicit_kind,
-        })
-    }
-}
-
-fn first_attribute(value: &str) -> &str {
-    value.split('.').next().unwrap_or_default()
-}
-
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct GeneratedPath(PathBuf);
-
-impl GeneratedPath {
-    pub fn as_path(&self) -> &Path {
-        &self.0
-    }
-}
-
-impl fmt::Display for GeneratedPath {
-    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.display().fmt(formatter)
-    }
-}
-
-impl FromStr for GeneratedPath {
-    type Err = anyhow::Error;
-
-    fn from_str(value: &str) -> Result<Self> {
-        let path = PathBuf::from(value);
-        if value.is_empty()
-            || path.is_absolute()
-            || path.components().any(|component| {
-                matches!(
-                    component,
-                    Component::ParentDir | Component::RootDir | Component::Prefix(_)
-                )
-            })
-        {
-            bail!("generated path must be a relative path without '..': {value}");
-        }
-        Ok(Self(path))
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct DiffOptions {
-    pub details: bool,
-    pub generated_paths: Vec<GeneratedPath>,
-    pub target: TargetRequest,
-    pub old_revision: String,
-    pub new_revision: String,
-}
-
-pub struct GitCheckout {
-    repository: gix::Repository,
-    root: PathBuf,
-}
-
-impl GitCheckout {
-    pub fn discover(explicit_root: Option<&Path>) -> Result<Self> {
-        let start = explicit_root
-            .map(Path::to_path_buf)
-            .unwrap_or(env::current_dir().context("Unable to read the current directory")?);
-        let root = if explicit_root.is_some() {
-            start
-                .canonicalize()
-                .with_context(|| format!("Unable to access repo root: {}", start.display()))?
-        } else {
-            let repository = gix::discover(&start).map_err(|_| {
-                anyhow!(
-                    "Unable to find a Git checkout; run from the flake repo or set DIFF_CONFIG_REPO_ROOT."
-                )
-            })?;
-            repository
-                .workdir()
-                .context("The discovered Git repository has no working tree")?
-                .canonicalize()
-                .context("Unable to access the discovered repo root")?
-        };
-        let repository = gix::discover(&root)
-            .with_context(|| format!("Unable to open Git repository at {}", root.display()))?;
-
-        if !root.join("flake.nix").is_file() {
-            bail!("Repo root does not contain flake.nix: {}", root.display());
-        }
-
-        Ok(Self { repository, root })
-    }
-
-    pub fn root(&self) -> &Path {
-        &self.root
-    }
-
-    pub fn resolve_revision(&self, label: &str, revision: &str) -> Result<String> {
-        let commit = self
-            .repository
-            .rev_parse_single(revision)
-            .ok()
-            .and_then(|id| id.object().ok())
-            .and_then(|object| object.peel_to_commit().ok())
-            .ok_or_else(|| {
-                anyhow!(
-                    "Unable to resolve {label} revision '{revision}' in {}.",
-                    self.root.display()
-                )
-            })?;
-        Ok(commit.id().to_string())
-    }
-
-    pub fn flake_ref(&self, revision: &str) -> String {
-        format!("git+file://{}?rev={revision}", self.root.display())
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub enum RevisionSide {
-    Old,
-    New,
-}
-
-impl RevisionSide {
-    fn label(self) -> &'static str {
-        match self {
-            Self::Old => "old",
-            Self::New => "new",
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Revision {
-    side: RevisionSide,
-    id: String,
-    flake_ref: String,
-    machine: String,
-}
-
-impl Revision {
-    fn environment(&self, kind: TargetKind) -> [(&'static str, &str); 3] {
-        [
-            ("DIFF_FLAKE_REF", &self.flake_ref),
-            ("DIFF_MACHINE", &self.machine),
-            ("DIFF_TARGET_KIND", kind.as_str()),
-        ]
-    }
-}
-
 #[derive(Clone, Debug, Default, Deserialize)]
-pub struct HomebrewManifest {
+struct HomebrewManifest {
     enabled: bool,
     brews: Vec<String>,
     casks: Vec<String>,
     taps: BTreeMap<String, PathBuf>,
 }
 
-pub enum RecursiveDiff {
+enum RecursiveDiff {
     Identical,
     Different(String),
 }
 
-pub trait DiffBackend {
+trait DiffBackend {
     fn detect_target(&self, revision: &Revision) -> Result<Option<TargetKind>>;
 
     fn build_toplevel(&self, kind: TargetKind, revision: &Revision, out_link: &Path) -> Result<()>;
@@ -273,7 +68,7 @@ pub trait DiffBackend {
 }
 
 #[derive(Default)]
-pub struct NativeBackend;
+struct NativeBackend;
 
 impl NativeBackend {
     fn nix_eval(
@@ -560,7 +355,7 @@ pub fn execute(options: &DiffOptions) -> Result<()> {
     )
 }
 
-pub fn run_with_backend(
+fn run_with_backend(
     options: &DiffOptions,
     checkout: &GitCheckout,
     backend: &impl DiffBackend,
@@ -1151,7 +946,7 @@ fn at_or_below(path: &str, pattern: &str) -> bool {
     path.ends_with(pattern) || path.contains(&format!("{pattern}/"))
 }
 
-pub fn filter_dix_output(output: &str) -> String {
+fn filter_dix_output(output: &str) -> String {
     let mut filtered = String::new();
     let mut seen = false;
     for line in output.lines() {
@@ -1213,7 +1008,7 @@ fn filter_binary_diff_output(output: &str) -> String {
     filtered
 }
 
-pub fn normalize_store_paths(value: &str) -> String {
+fn normalize_store_paths(value: &str) -> String {
     const PREFIX: &str = "/nix/store/";
     let mut output = String::with_capacity(value.len());
     let mut remaining = value;
