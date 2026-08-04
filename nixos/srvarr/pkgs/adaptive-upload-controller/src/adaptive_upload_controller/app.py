@@ -5,18 +5,15 @@ import json
 import logging
 import math
 import os
-import re
-import socket
 import ssl
 import subprocess
 import sys
 import tempfile
 import time
-import urllib.error
-import urllib.request
-import urllib.parse
 from pathlib import Path
 
+import httpx
+from prometheus_client.parser import text_string_to_metric_families
 from transmission_common.transmission import TransmissionRpcClient, TransmissionRpcError
 
 
@@ -30,12 +27,6 @@ DEFAULT_MEDIA_TYPES = {
     "trailer",
     "video",
 }
-PLAYING_METRIC_RE = re.compile(
-    r"^jellyfin_now_playing_state\{(?P<labels>.*)\}\s+"
-    r"(?P<value>[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)"
-    r"(?:\s+\d+)?$"
-)
-LABEL_PAIR_RE = re.compile(r'([A-Za-z_][A-Za-z0-9_]*)="((?:[^"\\]|\\.)*)"')
 TARGET_MBIT_EPSILON = 0.05
 
 
@@ -202,17 +193,6 @@ def default_policy_state(
     }
 
 
-def decode_prometheus_label_value(value: str) -> str:
-    return value.replace(r"\\", "\\").replace(r"\"", '"').replace(r"\n", "\n").replace(r"\t", "\t")
-
-
-def parse_prometheus_labels(label_text: str) -> dict[str, str]:
-    labels: dict[str, str] = {}
-    for match in LABEL_PAIR_RE.finditer(label_text):
-        labels[match.group(1)] = decode_prometheus_label_value(match.group(2))
-    return labels
-
-
 def normalize_remote_ip(endpoint: str) -> ipaddress._BaseAddress | None:
     value = endpoint.strip()
     if not value:
@@ -263,19 +243,20 @@ def fetch_url_text(
     client_cert_file: str | None = None,
     client_key_file: str | None = None,
 ) -> str:
-    request = urllib.request.Request(url, method="GET")
-    kwargs: dict[str, object] = {}
-    if urllib.parse.urlsplit(url).scheme == "https":
-        kwargs["context"] = build_https_context(
+    verify: ssl.SSLContext | bool = True
+    if httpx.URL(url).scheme == "https":
+        verify = build_https_context(
             ca_file,
             client_cert_file,
             client_key_file,
         )
     try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds, **kwargs) as response:
-            return response.read().decode("utf-8")
-    except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
-        raise ControllerError(f"request to {url} failed: {exc}") from exc
+        with httpx.Client(verify=verify, timeout=timeout_seconds) as client:
+            response = client.get(url)
+            response.raise_for_status()
+            return response.text
+    except httpx.HTTPError as error:
+        raise ControllerError(f"request to {url} failed: {error}") from error
 
 
 def collect_media_stream_stats(
@@ -285,83 +266,31 @@ def collect_media_stream_stats(
     playing_media_session_keys: set[tuple[str, str, str]] = set()
     bitrate_by_session_key: dict[tuple[str, str, str], int] = {}
 
-    for raw_line in metrics_text.splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-
-        if line.startswith("jellyfin_user_active{"):
-            match = PLAYING_METRIC_RE.match(
-                line.replace("jellyfin_user_active{", "jellyfin_now_playing_state{", 1)
-            )
-            if match is None:
-                continue
-            labels = parse_prometheus_labels(match.group("labels"))
+    for family in text_string_to_metric_families(metrics_text):
+        for sample in family.samples:
+            labels = sample.labels
             session_key = (
                 labels.get("user_id", ""),
                 labels.get("username", ""),
                 labels.get("device", ""),
             )
-            if (
-                session_key[0]
-                and session_key[1]
-                and session_key[2]
-                and not is_internal_remote_endpoint(labels.get("ip_address", ""))
-            ):
-                external_session_keys.add(session_key)
-            continue
+            if sample.name == "jellyfin_user_active":
+                if all(session_key) and not is_internal_remote_endpoint(
+                    labels.get("ip_address", "")
+                ):
+                    external_session_keys.add(session_key)
+                continue
 
-        if line.startswith("jellyfin_now_playing_bitrate_bits_per_second{"):
-            match = PLAYING_METRIC_RE.match(
-                line.replace(
-                    "jellyfin_now_playing_bitrate_bits_per_second{",
-                    "jellyfin_now_playing_state{",
-                    1,
-                )
-            )
-            if match is None:
-                continue
-            try:
-                value = float(match.group("value"))
-            except ValueError:
-                continue
-            if value <= 0:
-                continue
-            labels = parse_prometheus_labels(match.group("labels"))
             media_type = labels.get("type", "").lower()
-            if media_type not in media_types:
+            if media_type not in media_types or not all(session_key):
                 continue
-            session_key = (
-                labels.get("user_id", ""),
-                labels.get("username", ""),
-                labels.get("device", ""),
-            )
-            if session_key[0] and session_key[1] and session_key[2]:
-                bitrate_by_session_key[session_key] = int(value)
-            continue
 
-        if not line.startswith("jellyfin_now_playing_state{"):
-            continue
+            if sample.name == "jellyfin_now_playing_bitrate_bits_per_second":
+                if sample.value > 0:
+                    bitrate_by_session_key[session_key] = int(sample.value)
+                continue
 
-        match = PLAYING_METRIC_RE.match(line)
-        if match is None:
-            continue
-        try:
-            value = float(match.group("value"))
-        except ValueError:
-            continue
-        if value <= 0.5:
-            continue
-
-        labels = parse_prometheus_labels(match.group("labels"))
-        media_type = labels.get("type", "").lower()
-        if media_type in media_types:
-            session_key = (
-                labels.get("user_id", ""),
-                labels.get("username", ""),
-                labels.get("device", ""),
-            )
-            if session_key[0] and session_key[1] and session_key[2]:
+            if sample.name == "jellyfin_now_playing_state" and sample.value > 0.5:
                 playing_media_session_keys.add(session_key)
 
     total_streams = len(playing_media_session_keys)

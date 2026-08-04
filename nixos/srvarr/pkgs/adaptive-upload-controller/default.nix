@@ -17,11 +17,14 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [ transmissionCommon ];
+  dependencies = with pythonPackages; [
+    httpx
+    prometheus-client
+    transmissionCommon
+  ];
 
   nativeCheckInputs = [
     ruff
-    pythonPackages.prometheus-client
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
   ];
