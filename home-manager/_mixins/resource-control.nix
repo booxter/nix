@@ -13,10 +13,9 @@ let
   settingsByService = resourceControl.compile (inventory.userServices or { });
   unknownServices = lib.filter (
     name:
-    let
-      service = config.systemd.user.services.${name} or { };
-    in
-    !(builtins.hasAttr "ExecStart" (service.Service or { }))
+    builtins.removeAttrs config.systemd.user.services.${name}.Service (
+      lib.attrNames settingsByService.${name}
+    ) == { }
   ) (lib.attrNames settingsByService);
 in
 {
