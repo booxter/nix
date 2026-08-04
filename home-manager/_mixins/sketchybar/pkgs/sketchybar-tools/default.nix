@@ -29,6 +29,8 @@ buildGoModule {
   '';
   checkFlags = [ "-cover" ];
 
+  __darwinAllowLocalNetworking = true;
+
   meta = {
     description = "Native personal plugins for SketchyBar";
     license = lib.licenses.mit;

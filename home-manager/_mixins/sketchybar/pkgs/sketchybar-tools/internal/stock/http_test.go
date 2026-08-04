@@ -2,27 +2,15 @@ package stock
 
 import (
 	"context"
-	"io"
+	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
-	return function(request)
-}
-
 func TestHTTPQuoteFetcherUsesNasdaqRequestContract(t *testing.T) {
-	fetcher, err := NewHTTPQuoteFetcher(Config{
-		APIURL: "https://stock.test/api/quote",
-		Symbol: "BRK.B",
-	})
-	if err != nil {
-		t.Fatalf("NewHTTPQuoteFetcher returned an error: %v", err)
-	}
-	fetcher.client = &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if request.URL.Path != "/api/quote/BRK.B/info" {
 			t.Errorf("request path = %q, want /api/quote/BRK.B/info", request.URL.Path)
 		}
@@ -35,14 +23,27 @@ func TestHTTPQuoteFetcherUsesNasdaqRequestContract(t *testing.T) {
 		if got := request.Header.Get("User-Agent"); got != "Mozilla/5.0" {
 			t.Errorf("User-Agent = %q, want Mozilla/5.0", got)
 		}
-		return &http.Response{
-			StatusCode: http.StatusOK,
-			Status:     "200 OK",
-			Body: io.NopCloser(strings.NewReader(
-				`{"data":{"primaryData":{"lastSalePrice":"$512.5","deltaIndicator":"up"}}}`,
-			)),
-		}, nil
-	})}
+		response.Header().Set("Content-Type", "application/json")
+		if err := json.NewEncoder(response).Encode(map[string]any{
+			"data": map[string]any{
+				"primaryData": map[string]string{
+					"lastSalePrice":  "$512.5",
+					"deltaIndicator": "up",
+				},
+			},
+		}); err != nil {
+			t.Errorf("encode response: %v", err)
+		}
+	}))
+	defer server.Close()
+
+	fetcher, err := NewHTTPQuoteFetcher(Config{
+		APIURL: server.URL + "/api/quote",
+		Symbol: "BRK.B",
+	})
+	if err != nil {
+		t.Fatalf("NewHTTPQuoteFetcher returned an error: %v", err)
+	}
 
 	quote, err := fetcher.Fetch(context.Background())
 	if err != nil {

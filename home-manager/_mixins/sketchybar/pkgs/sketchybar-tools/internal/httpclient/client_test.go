@@ -2,42 +2,35 @@ package httpclient
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
-type roundTripFunc func(*http.Request) (*http.Response, error)
-
-func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
-	return function(request)
-}
-
-func responseClient(statusCode int, body string) *http.Client {
-	return &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
-		return &http.Response{
-			StatusCode: statusCode,
-			Status:     fmt.Sprintf("%d %s", statusCode, http.StatusText(statusCode)),
-			Body:       io.NopCloser(strings.NewReader(body)),
-		}, nil
-	})}
+func responseServer(t *testing.T, statusCode int, body string) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, _ *http.Request) {
+		response.WriteHeader(statusCode)
+		if _, err := io.WriteString(response, body); err != nil {
+			t.Errorf("write response: %v", err)
+		}
+	}))
 }
 
 func TestGetReturnsBoundedSuccessfulResponse(t *testing.T) {
-	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if request.Method != http.MethodGet {
 			t.Errorf("request method = %s, want GET", request.Method)
 		}
-		return &http.Response{
-			StatusCode: http.StatusOK,
-			Status:     "200 OK",
-			Body:       io.NopCloser(strings.NewReader("healthy")),
-		}, nil
-	})}
+		if _, err := io.WriteString(response, "healthy"); err != nil {
+			t.Errorf("write response: %v", err)
+		}
+	}))
+	defer server.Close()
 
-	body, err := Get(context.Background(), client, "https://status.test", 7)
+	body, err := Get(context.Background(), server.Client(), server.URL, 7)
 	if err != nil {
 		t.Fatalf("Get returned an error: %v", err)
 	}
@@ -47,21 +40,18 @@ func TestGetReturnsBoundedSuccessfulResponse(t *testing.T) {
 }
 
 func TestGetWithHeadersAddsRequestHeaders(t *testing.T) {
-	client := &http.Client{Transport: roundTripFunc(func(request *http.Request) (*http.Response, error) {
+	server := httptest.NewServer(http.HandlerFunc(func(response http.ResponseWriter, request *http.Request) {
 		if got := request.Header.Get("Accept"); got != "application/json" {
 			t.Errorf("Accept header = %q, want application/json", got)
 		}
-		return &http.Response{
-			StatusCode: http.StatusOK,
-			Status:     "200 OK",
-			Body:       io.NopCloser(strings.NewReader("healthy")),
-		}, nil
-	})}
+		response.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
 
 	_, err := GetWithHeaders(
 		context.Background(),
-		client,
-		"https://status.test",
+		server.Client(),
+		server.URL,
 		1024,
 		http.Header{"Accept": {"application/json"}},
 	)
@@ -71,10 +61,13 @@ func TestGetWithHeadersAddsRequestHeaders(t *testing.T) {
 }
 
 func TestGetRejectsHTTPFailure(t *testing.T) {
+	server := responseServer(t, http.StatusServiceUnavailable, "unavailable")
+	defer server.Close()
+
 	_, err := Get(
 		context.Background(),
-		responseClient(http.StatusServiceUnavailable, "unavailable"),
-		"https://status.test",
+		server.Client(),
+		server.URL,
 		1024,
 	)
 	if err == nil || !strings.Contains(err.Error(), "503 Service Unavailable") {
@@ -83,10 +76,13 @@ func TestGetRejectsHTTPFailure(t *testing.T) {
 }
 
 func TestGetRejectsOversizedResponse(t *testing.T) {
+	server := responseServer(t, http.StatusOK, "too large")
+	defer server.Close()
+
 	_, err := Get(
 		context.Background(),
-		responseClient(http.StatusOK, "too large"),
-		"https://status.test",
+		server.Client(),
+		server.URL,
 		3,
 	)
 	if err == nil || !strings.Contains(err.Error(), "exceeds 3 bytes") {
