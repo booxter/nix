@@ -1,26 +1,46 @@
 {
   lib,
   python3,
-  writeShellApplication,
+  ruff,
 }:
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
+  pname = "oidc-synthetic-probe";
+  version = "0.1.0";
+  pyproject = true;
 
-writeShellApplication {
-  name = "oidc-synthetic-probe";
-  checkPhase = ''
-    runHook preCheck
-    cd "$TMPDIR"
-    cp ${./test_main.py} test_main.py
-    OIDC_SYNTHETIC_PROBE_MAIN=${./main.py} ${python3.pkgs.pytest}/bin/pytest -q -p no:cacheprovider test_main.py
-    runHook postCheck
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  dependencies = with pythonPackages; [
+    httpx
+    prometheus-client
+    pydantic
+  ];
+
+  nativeCheckInputs = with pythonPackages; [
+    ruff
+    mypy
+    pytestCheckHook
+    pytest-cov
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/oidc_synthetic_probe
   '';
-  text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
-  '';
+
+  pythonImportsCheck = [ "oidc_synthetic_probe" ];
 
   meta = {
     description = "Synthetic OIDC and oauth2-proxy probe";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "oidc-synthetic-probe";
+    platforms = lib.platforms.linux;
   };
 }
