@@ -959,6 +959,7 @@ rec {
         heavy.ollama = {
           memoryHigh = "80%";
           memoryMax = "90%";
+          memorySwapMax = "8G";
           tasksMax = 4096;
         };
       };

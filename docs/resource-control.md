@@ -17,17 +17,18 @@ preventing intentionally large workloads from using available capacity.
   Do not treat launchd resource limits as equivalent to Linux cgroups.
 
 `MemoryHigh` is the primary throttling and reclaim control. `MemoryMax` is the
-last line of defense. CPU weights protect responsiveness under contention;
-CPU quotas are reserved for workloads that need a hard throughput ceiling.
+last line of defense, but it does not include swap; `MemorySwapMax` bounds that
+separately. CPU weights protect responsiveness under contention; CPU quotas
+are reserved for workloads that need a hard throughput ceiling.
 
 ## Service Classes
 
-| Class | High | Max | Tasks | Start | Use |
-| --- | ---: | ---: | ---: | ---: | --- |
-| Lightweight | 512 MiB | 1 GiB | 128 | 15 min | Probes, sync, reconcilers |
-| Medium | 2 GiB | 4 GiB | 512 | 1 hour | Indexers and bounded processing |
-| Heavy | Explicit | Explicit | Explicit | Explicit | Large explicit workloads |
-| Critical | None | None | Explicit | None | Unconstrained continuity services |
+| Class | High | Max | Swap | Tasks | Start | Use |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Lightweight | 512 MiB | 1 GiB | 512 MiB | 128 | 4 min | Small jobs |
+| Medium | 2 GiB | 4 GiB | 2 GiB | 512 | 1 hour | Bounded work |
+| Heavy | Explicit | Explicit | Explicit | Explicit | Explicit | Large jobs |
+| Critical | None | None | None | Explicit | None | Continuity |
 
 Background services run in `background.slice`. Heavy oneshot jobs declare an
 activation deadline with `TimeoutStartSec`; long-running services use an
@@ -54,6 +55,7 @@ resourceControl = {
     heavy.ollama = {
       memoryHigh = "80%";
       memoryMax = "90%";
+      memorySwapMax = "8G";
     };
   };
 

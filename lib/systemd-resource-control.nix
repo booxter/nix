@@ -5,13 +5,15 @@ let
       Slice = "background.slice";
       MemoryHigh = "512M";
       MemoryMax = "1G";
+      MemorySwapMax = "512M";
       TasksMax = 128;
-      TimeoutStartSec = "15m";
+      TimeoutStartSec = "4m";
     };
     medium = {
       Slice = "background.slice";
       MemoryHigh = "2G";
       MemoryMax = "4G";
+      MemorySwapMax = "2G";
       TasksMax = 512;
       TimeoutStartSec = "1h";
     };
@@ -23,6 +25,7 @@ let
     {
       memoryHigh,
       memoryMax,
+      memorySwapMax,
       cpuQuota ? null,
       memoryLow ? null,
       slice ? null,
@@ -34,6 +37,7 @@ let
       MemoryHigh = memoryHigh;
       MemoryLow = memoryLow;
       MemoryMax = memoryMax;
+      MemorySwapMax = memorySwapMax;
       Slice = slice;
       TasksMax = tasksMax;
       TimeoutStartSec = timeoutStartSec;
