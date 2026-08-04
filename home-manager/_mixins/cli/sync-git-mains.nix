@@ -29,9 +29,16 @@ in
   };
 
   systemd.user.services.sync-git-mains = lib.mkIf (!isDarwin && cfg.enable) {
-    Unit.Description = "Fast-forward local Git main branches from origin";
+    Unit = {
+      Description = "Fast-forward local Git main branches from origin";
+      X-SwitchMethod = "keep-old";
+    };
 
     Service = {
+      Environment = [
+        "GIT_SSH_COMMAND=${lib.getExe pkgs.openssh} -oBatchMode=yes"
+        "GIT_TERMINAL_PROMPT=0"
+      ];
       Type = "oneshot";
       ExecStart = lib.escapeShellArgs syncGitMainsCommand;
     };
