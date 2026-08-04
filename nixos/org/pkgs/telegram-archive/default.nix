@@ -43,13 +43,13 @@ let
 in
 stdenvNoCC.mkDerivation rec {
   pname = "telegram-archive";
-  version = "7.33.2";
+  version = "7.33.4";
 
   src = fetchFromGitHub {
     owner = "GeiserX";
     repo = "Telegram-Archive";
     tag = "v${version}";
-    hash = "sha256-2FkI8BtlrXaJdm+OiOPh0O8avB+bFMP27GOcZ9QP6rU=";
+    hash = "sha256-ULMhnsRB+xYZznvy/IdT/Vjw0kqvizTMN8WFCdzHIb0=";
   };
 
   patches = [
