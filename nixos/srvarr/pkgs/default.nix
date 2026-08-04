@@ -5,6 +5,7 @@ let
   transmissionTrackerPrioritizer = pkgs.callPackage ./transmission-tracker-prioritizer {
     inherit transmissionCommon;
   };
+  seerrTools = pkgs.callPackage ./seerr-tools { };
 in
 {
   ebook-converter-cli = ebookConverterCli;
@@ -16,6 +17,8 @@ in
   houndarr = pkgs.callPackage ./houndarr { };
 
   letterboxd-list-radarr = pkgs.callPackage ./letterboxd-list-radarr { };
+
+  seerr-tools = seerrTools.package;
 
   adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller {
     inherit transmissionCommon;

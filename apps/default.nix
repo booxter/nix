@@ -10,7 +10,7 @@ let
   };
   issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token { };
   getFfCookie = pkgs.callPackage ./get-ff-cookie { };
-  seerrRequestStorage = pkgs.callPackage ./seerr-request-storage { };
+  seerrTools = pkgs.callPackage ../nixos/srvarr/pkgs/seerr-tools { };
   seerrUpdateUserTags = pkgs.callPackage ./seerr-update-user-tags { };
 in
 {
@@ -22,7 +22,7 @@ in
 
   issue-proxmox-exporter-token = issueProxmoxExporterToken;
 
-  seerr-request-storage = seerrRequestStorage;
+  seerr-request-storage = seerrTools.requestStorage;
 
   seerr-update-user-tags = seerrUpdateUserTags;
 }
