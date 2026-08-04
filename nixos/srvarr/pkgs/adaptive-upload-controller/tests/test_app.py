@@ -8,6 +8,7 @@ from threading import Thread
 from prometheus_client.parser import text_string_to_metric_families
 
 from adaptive_upload_controller import app
+from adaptive_upload_controller.metrics import render_metrics_text
 
 
 def policy_args(**overrides):
@@ -172,7 +173,7 @@ def test_metrics_render_current_policy_values():
         relaxation_pending_target_mbit=12.0,
     )
 
-    metrics = app.render_metrics_text(state)
+    metrics = render_metrics_text(state)
     assert metric_value(metrics, "host_observability_adaptive_upload_target_mbit") == 8.0
     assert (
         metric_value(
