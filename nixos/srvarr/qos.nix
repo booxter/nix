@@ -39,8 +39,6 @@ in
       fallbackUploadRateMbit = tuning.wgConservativeUploadRateMbit;
       inherit
         networkOnlineUnitDeps
-        wgEndpointPort
-        wgOuterLinkRate
         wgUnitDepsBase
         ;
     })

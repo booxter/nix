@@ -117,17 +117,6 @@ def parse_args() -> argparse.Namespace:
         default=0.95,
     )
     tc_applier.add_argument("--max-state-age-seconds", type=float, default=90.0)
-    tc_applier.add_argument(
-        "--outer-link-rate",
-        required=True,
-        help="Parent HTB class rate for non-WireGuard traffic.",
-    )
-    tc_applier.add_argument(
-        "--endpoint-port",
-        type=int,
-        required=True,
-        help="WireGuard UDP endpoint port.",
-    )
     tc_applier.add_argument("--route-probe-address", default="1.1.1.1")
 
     parser.add_argument(

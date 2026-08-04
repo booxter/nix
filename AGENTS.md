@@ -15,7 +15,8 @@ Scope: whole repository.
 - Treat in-tree Nix modules, mixins, and options as internal to this repository.
   When editing them, update all in-repo call sites and do not preserve legacy
   aliases, compatibility shims, or backwards-compatible option names solely for
-  out-of-tree consumers.
+  out-of-tree consumers. Remove unused options and features together with their
+  in-tree wiring; Git history is the fallback for code needed later.
 - Never modify, restore, reformat, stage, or commit changes you did not produce.
   Unrelated dirty files may be human edits or another agent working in parallel.
   Do not try to repair, revert, or normalize unrelated dirty paths.
