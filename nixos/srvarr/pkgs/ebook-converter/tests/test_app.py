@@ -16,6 +16,7 @@ from srvarr_ebook_converter.app import (
     recover_stale_sources,
     validate_epub,
 )
+from srvarr_ebook_converter.models import FileFingerprint, JobState
 
 
 class FakeRunner:
@@ -212,6 +213,31 @@ class HookPayloadTests(unittest.TestCase):
             self.assertTrue(mobi.exists())
             self.assertEqual(runner.calls, [])
 
+    def test_rejects_invalid_version_and_missing_folder_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            library.mkdir()
+            arguments = {
+                "library_root": library,
+                "lock_root": root / "locks",
+                "runner": FakeRunner(),
+            }
+            with self.assertRaisesRegex(EbookConverterError, "invalid Shelfmark hook payload"):
+                process_hook_payload(
+                    {"version": 2, "phase": "post_transfer"},
+                    **arguments,
+                )
+            with self.assertRaisesRegex(EbookConverterError, "invalid final paths"):
+                process_hook_payload(
+                    {
+                        "version": 1,
+                        "phase": "post_transfer",
+                        "output": {"mode": "folder"},
+                    },
+                    **arguments,
+                )
+
     @staticmethod
     def payload(final_paths: list[Path]) -> dict:
         return json.loads(
@@ -234,6 +260,30 @@ class MutableClock:
 
     def __call__(self) -> float:
         return self.value
+
+
+class StateStoreTests(unittest.TestCase):
+    def test_round_trips_typed_state_and_rejects_invalid_state(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            state_path = Path(tmp_dir) / "state.json"
+            store = StateStore(state_path)
+            store.data.files["book"] = JobState(
+                status="failed",
+                fingerprint=FileFingerprint(device=1, inode=2, size=3, mtime_ns=4),
+                observed_at=10,
+                updated_at=11,
+                attempts=1,
+                error="conversion failed",
+            )
+            store.data.totals.failed = 1
+            store.save()
+
+            loaded = StateStore(state_path)
+            self.assertEqual(loaded.data, store.data)
+
+            state_path.write_text(json.dumps({"version": 2, "files": {}, "totals": {}}))
+            with self.assertRaisesRegex(EbookConverterError, "failed to read state file"):
+                StateStore(state_path)
 
 
 class WatchServiceTests(unittest.TestCase):
@@ -264,16 +314,16 @@ class WatchServiceTests(unittest.TestCase):
             service.iteration()
             self.assertEqual(runner.calls, [])
             self.assertEqual(
-                store.data["files"][str(library_source.resolve())]["status"],
+                store.data.files[str(library_source.resolve())].status,
                 "settling",
             )
 
             clock.value += 31.0
             service.iteration()
 
-            job = store.data["files"][str(library_source.resolve())]
-            self.assertEqual(job["status"], "complete")
-            self.assertEqual(store.data["totals"]["success"], 1)
+            job = store.data.files[str(library_source.resolve())]
+            self.assertEqual(job.status, "complete")
+            self.assertEqual(store.data.totals.success, 1)
             self.assertFalse(library_source.exists())
             self.assertTrue((library / "book.epub").exists())
             self.assertEqual(torrent_source.read_bytes(), b"torrent payload")
@@ -294,19 +344,19 @@ class WatchServiceTests(unittest.TestCase):
             write_epub(destination)
             store = StateStore(root / "state.json")
             key = str(library_source.resolve())
-            store.data["files"][key] = {
-                "status": "needs_attention",
-                "fingerprint": {
-                    "device": library_source.stat().st_dev,
-                    "inode": library_source.stat().st_ino,
-                    "size": library_source.stat().st_size,
-                    "mtime_ns": library_source.stat().st_mtime_ns,
-                },
-                "observed_at": 900.0,
-                "updated_at": 900.0,
-                "attempts": 3,
-                "error": "refusing to replace existing EPUB",
-            }
+            store.data.files[key] = JobState(
+                status="needs_attention",
+                fingerprint=FileFingerprint(
+                    device=library_source.stat().st_dev,
+                    inode=library_source.stat().st_ino,
+                    size=library_source.stat().st_size,
+                    mtime_ns=library_source.stat().st_mtime_ns,
+                ),
+                observed_at=900.0,
+                updated_at=900.0,
+                attempts=3,
+                error="refusing to replace existing EPUB",
+            )
             runner = FakeRunner()
             clock = MutableClock(1000.0)
             service = EbookConverterService(
@@ -320,15 +370,15 @@ class WatchServiceTests(unittest.TestCase):
             )
 
             service.iteration()
-            self.assertEqual(store.data["files"][key]["status"], "settling")
-            self.assertEqual(store.data["files"][key]["attempts"], 0)
+            self.assertEqual(store.data.files[key].status, "settling")
+            self.assertEqual(store.data.files[key].attempts, 0)
 
             clock.value += 31.0
             service.iteration()
 
-            job = store.data["files"][key]
-            self.assertEqual(job["status"], "complete")
-            self.assertEqual(job["destination"], str(destination.resolve()))
+            job = store.data.files[key]
+            self.assertEqual(job.status, "complete")
+            self.assertEqual(job.destination, str(destination.resolve()))
             self.assertFalse(library_source.exists())
             self.assertEqual(torrent_source.read_bytes(), b"torrent payload")
             self.assertEqual(torrent_source.stat().st_nlink, 1)
@@ -359,12 +409,12 @@ class WatchServiceTests(unittest.TestCase):
             service.iteration()
             service.iteration()
 
-            job = store.data["files"][str(source.resolve())]
-            self.assertEqual(job["status"], "needs_attention")
-            self.assertEqual(job["attempts"], 2)
+            job = store.data.files[str(source.resolve())]
+            self.assertEqual(job.status, "needs_attention")
+            self.assertEqual(job.attempts, 2)
             self.assertEqual(len(runner.calls), 2)
             self.assertTrue(source.exists())
-            self.assertEqual(store.data["totals"]["failed"], 2)
+            self.assertEqual(store.data.totals.failed, 2)
 
     def test_stale_hidden_source_is_restored_after_interruption(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -417,11 +467,20 @@ class WatchServiceTests(unittest.TestCase):
     def test_metrics_report_failed_and_attention_states(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:
             store = StateStore(Path(tmp_dir) / "state.json")
-            store.data["files"] = {
-                "one": {"status": "failed"},
-                "two": {"status": "needs_attention"},
+            fingerprint = FileFingerprint(device=1, inode=1, size=1, mtime_ns=1)
+            store.data.files = {
+                "one": JobState(
+                    status="failed", fingerprint=fingerprint, observed_at=1, updated_at=1
+                ),
+                "two": JobState(
+                    status="needs_attention",
+                    fingerprint=fingerprint,
+                    observed_at=1,
+                    updated_at=1,
+                ),
             }
-            store.data["totals"] = {"success": 3, "failed": 2}
+            store.data.totals.success = 3
+            store.data.totals.failed = 2
 
             metrics = prometheus_metrics(store, True, 1234.0)
 

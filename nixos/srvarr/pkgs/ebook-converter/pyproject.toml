@@ -7,6 +7,7 @@ name = "srvarr-ebook-converter"
 version = "0.1.0"
 description = "Convert library MOBI and AZW3 files to EPUB"
 requires-python = ">=3.11"
+dependencies = ["pydantic"]
 
 [project.scripts]
 ebook-converter = "srvarr_ebook_converter.app:main"
@@ -18,8 +19,13 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=srvarr_ebook_converter --cov-report=term-missing --cov-fail-under=65"
+addopts = "-q --cov=srvarr_ebook_converter --cov-report=term-missing --cov-fail-under=70"
 testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/srvarr_ebook_converter"]
+plugins = ["pydantic.mypy"]
+strict = true
 
 [tool.ruff]
 line-length = 100

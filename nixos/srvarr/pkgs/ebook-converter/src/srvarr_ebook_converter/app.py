@@ -15,12 +15,15 @@ import zipfile
 from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Iterator
+from typing import Callable, Iterator, Protocol, cast
+
+from pydantic import ValidationError
+
+from .models import FileFingerprint, JobState, ServiceState, ShelfmarkPayload
 
 
 LOG = logging.getLogger("ebook-converter")
 SUPPORTED_SOURCE_SUFFIXES = {".azw3", ".mobi"}
-STATE_VERSION = 1
 JOB_POLICY_VERSION = 2
 
 
@@ -30,6 +33,10 @@ class EbookConverterError(RuntimeError):
 
 class ConversionBusy(EbookConverterError):
     pass
+
+
+class Converter(Protocol):
+    def convert(self, source: Path, destination: Path) -> None: ...
 
 
 class ConverterRunner:
@@ -134,7 +141,7 @@ def convert_path(
     *,
     library_root: Path,
     lock_root: Path,
-    runner: ConverterRunner,
+    runner: Converter,
 ) -> Path:
     library_root = library_root.resolve(strict=True)
     source = safe_source_path(source, library_root)
@@ -188,26 +195,25 @@ def process_hook_payload(
     *,
     library_root: Path,
     lock_root: Path,
-    runner: ConverterRunner,
+    runner: Converter,
 ) -> list[Path]:
-    if not isinstance(payload, dict) or payload.get("version") != 1:
-        raise EbookConverterError("Shelfmark hook requires a version 1 JSON payload")
-    if payload.get("phase") != "post_transfer":
-        LOG.info("ignoring Shelfmark hook phase %r", payload.get("phase"))
+    try:
+        hook = ShelfmarkPayload.model_validate(payload)
+    except ValidationError as exc:
+        raise EbookConverterError(f"invalid Shelfmark hook payload: {exc}") from exc
+    if hook.phase != "post_transfer":
+        LOG.info("ignoring Shelfmark hook phase %r", hook.phase)
         return []
 
-    output = payload.get("output")
-    if not isinstance(output, dict) or output.get("mode") != "folder":
+    if hook.output is None or hook.output.mode != "folder":
         LOG.info("ignoring non-folder Shelfmark output")
         return []
 
-    paths = payload.get("paths")
-    final_paths = paths.get("final_paths") if isinstance(paths, dict) else None
-    if not isinstance(final_paths, list) or not all(isinstance(path, str) for path in final_paths):
+    if hook.paths is None:
         raise EbookConverterError("Shelfmark hook payload has invalid final paths")
 
-    converted = []
-    for path_string in final_paths:
+    converted: list[Path] = []
+    for path_string in hook.paths.final_paths:
         path = Path(path_string)
         if path.suffix.lower() not in SUPPORTED_SOURCE_SUFFIXES:
             continue
@@ -222,14 +228,14 @@ def process_hook_payload(
     return converted
 
 
-def source_fingerprint(path: Path) -> dict[str, int]:
+def source_fingerprint(path: Path) -> FileFingerprint:
     file_stat = path.stat()
-    return {
-        "device": file_stat.st_dev,
-        "inode": file_stat.st_ino,
-        "size": file_stat.st_size,
-        "mtime_ns": file_stat.st_mtime_ns,
-    }
+    return FileFingerprint(
+        device=file_stat.st_dev,
+        inode=file_stat.st_ino,
+        size=file_stat.st_size,
+        mtime_ns=file_stat.st_mtime_ns,
+    )
 
 
 def discover_sources(library_root: Path) -> list[Path]:
@@ -319,43 +325,33 @@ def recover_stale_sources(library_root: Path, lock_root: Path) -> int:
 
 
 class StateStore:
-    def __init__(self, path: Path):
+    def __init__(self, path: Path) -> None:
         self.path = path
         self.data = self.default_data()
         self.load()
 
     @staticmethod
-    def default_data() -> dict:
-        return {
-            "version": STATE_VERSION,
-            "files": {},
-            "totals": {"success": 0, "failed": 0},
-            "last_success": None,
-        }
+    def default_data() -> ServiceState:
+        return ServiceState()
 
     def load(self) -> None:
         if not self.path.exists():
             return
         try:
-            data = json.loads(self.path.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError) as exc:
+            self.data = ServiceState.model_validate_json(self.path.read_text(encoding="utf-8"))
+        except (ValidationError, OSError) as exc:
             raise EbookConverterError(f"failed to read state file {self.path}: {exc}") from exc
-        if not isinstance(data, dict) or data.get("version") != STATE_VERSION:
-            raise EbookConverterError(f"unsupported state file format: {self.path}")
-        if not isinstance(data.get("files"), dict) or not isinstance(data.get("totals"), dict):
-            raise EbookConverterError(f"invalid state file structure: {self.path}")
-        self.data = data
 
     def save(self) -> None:
         atomic_write_text(
             self.path,
-            json.dumps(self.data, indent=2, sort_keys=True) + "\n",
+            self.data.model_dump_json(indent=2) + "\n",
         )
 
 
 def prometheus_metrics(store: StateStore, ok: bool, now: float) -> str:
-    states = Counter(job.get("status", "unknown") for job in store.data["files"].values())
-    totals = store.data["totals"]
+    states = Counter(job.status for job in store.data.files.values())
+    totals = store.data.totals
     lines = [
         "# HELP host_observability_ebook_converter_ok Whether the latest service iteration completed successfully.",
         "# TYPE host_observability_ebook_converter_ok gauge",
@@ -376,16 +372,16 @@ def prometheus_metrics(store: StateStore, ok: bool, now: float) -> str:
         [
             "# HELP host_observability_ebook_converter_files_total Conversion attempts by result.",
             "# TYPE host_observability_ebook_converter_files_total counter",
-            f'host_observability_ebook_converter_files_total{{result="success"}} {int(totals.get("success", 0))}',
-            f'host_observability_ebook_converter_files_total{{result="failed"}} {int(totals.get("failed", 0))}',
+            f'host_observability_ebook_converter_files_total{{result="success"}} {totals.success}',
+            f'host_observability_ebook_converter_files_total{{result="failed"}} {totals.failed}',
         ]
     )
-    if store.data.get("last_success") is not None:
+    if store.data.last_success is not None:
         lines.extend(
             [
                 "# HELP host_observability_ebook_converter_last_success_timestamp_seconds Unix timestamp of the latest successful conversion.",
                 "# TYPE host_observability_ebook_converter_last_success_timestamp_seconds gauge",
-                f"host_observability_ebook_converter_last_success_timestamp_seconds {float(store.data['last_success'])}",
+                f"host_observability_ebook_converter_last_success_timestamp_seconds {store.data.last_success}",
             ]
         )
     return "\n".join(lines) + "\n"
@@ -398,11 +394,11 @@ class EbookConverterService:
         library_root: Path,
         lock_root: Path,
         store: StateStore,
-        runner: ConverterRunner,
+        runner: Converter,
         settle_seconds: float,
         max_attempts: int,
         now: Callable[[], float] = time.time,
-    ):
+    ) -> None:
         self.library_root = library_root.resolve(strict=True)
         self.lock_root = lock_root
         self.store = store
@@ -414,7 +410,7 @@ class EbookConverterService:
     def iteration(self) -> None:
         now = self.now()
         recover_stale_sources(self.library_root, self.lock_root)
-        files = self.store.data["files"]
+        files = self.store.data.files
 
         for source in discover_sources(self.library_root):
             key = str(source.resolve())
@@ -424,29 +420,26 @@ class EbookConverterService:
                 continue
             job = files.get(key)
             if (
-                not isinstance(job, dict)
-                or job.get("fingerprint") != fingerprint
-                or job.get("policy_version") != JOB_POLICY_VERSION
+                job is None
+                or job.fingerprint != fingerprint
+                or job.policy_version != JOB_POLICY_VERSION
             ):
-                files[key] = {
-                    "status": "settling",
-                    "fingerprint": fingerprint,
-                    "policy_version": JOB_POLICY_VERSION,
-                    "observed_at": now,
-                    "updated_at": now,
-                    "attempts": 0,
-                    "error": "",
-                }
+                files[key] = JobState(
+                    status="settling",
+                    fingerprint=fingerprint,
+                    policy_version=JOB_POLICY_VERSION,
+                    observed_at=now,
+                    updated_at=now,
+                )
                 continue
-            if (
-                job.get("status") == "needs_attention"
-                and int(job.get("attempts", 0)) >= self.max_attempts
-            ):
+            if job.status == "needs_attention" and job.attempts >= self.max_attempts:
                 continue
-            if now - float(job.get("observed_at", now)) < self.settle_seconds:
+            if now - job.observed_at < self.settle_seconds:
                 continue
 
-            job.update(status="converting", updated_at=now, error="")
+            job.status = "converting"
+            job.updated_at = now
+            job.error = ""
             self.store.save()
             try:
                 destination = convert_path(
@@ -456,7 +449,8 @@ class EbookConverterService:
                     runner=self.runner,
                 )
             except ConversionBusy:
-                job.update(status="settling", updated_at=self.now())
+                job.status = "settling"
+                job.updated_at = self.now()
                 continue
             except (EbookConverterError, OSError) as exc:
                 expected_destination = source.with_suffix(".epub")
@@ -466,24 +460,18 @@ class EbookConverterService:
                     except EbookConverterError:
                         pass
                     else:
-                        job.update(
-                            status="complete",
-                            destination=str(expected_destination),
-                            updated_at=self.now(),
-                            error="",
-                        )
+                        job.status = "complete"
+                        job.destination = str(expected_destination)
+                        job.updated_at = self.now()
+                        job.error = ""
                         continue
-                attempts = int(job.get("attempts", 0)) + 1
+                attempts = job.attempts + 1
                 status_name = "needs_attention" if attempts >= self.max_attempts else "failed"
-                job.update(
-                    status=status_name,
-                    attempts=attempts,
-                    updated_at=self.now(),
-                    error=str(exc),
-                )
-                self.store.data["totals"]["failed"] = (
-                    int(self.store.data["totals"].get("failed", 0)) + 1
-                )
+                job.status = status_name
+                job.attempts = attempts
+                job.updated_at = self.now()
+                job.error = str(exc)
+                self.store.data.totals.failed += 1
                 LOG.error(
                     "ebook conversion failed: source=%s attempts=%d error=%s",
                     source,
@@ -492,16 +480,12 @@ class EbookConverterService:
                 )
             else:
                 finished = self.now()
-                job.update(
-                    status="complete",
-                    destination=str(destination),
-                    updated_at=finished,
-                    error="",
-                )
-                self.store.data["totals"]["success"] = (
-                    int(self.store.data["totals"].get("success", 0)) + 1
-                )
-                self.store.data["last_success"] = finished
+                job.status = "complete"
+                job.destination = str(destination)
+                job.updated_at = finished
+                job.error = ""
+                self.store.data.totals.success += 1
+                self.store.data.last_success = finished
             finally:
                 self.store.save()
 
@@ -601,7 +585,8 @@ def main(argv: list[str] | None = None) -> int:
         level=getattr(logging, args.log_level),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
-    return args.handler(args)
+    handler = cast(Callable[[argparse.Namespace], int], args.handler)
+    return handler(args)
 
 
 if __name__ == "__main__":
