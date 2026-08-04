@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "auto-upgrade-tools"
+version = "0.1.0"
+description = "NixOS auto-upgrade hold, metric, and reboot helpers"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "prometheus-client", "pydantic"]
+
+[project.scripts]
+auto-upgrade-tools = "auto_upgrade_tools.cli:main"
+
+[tool.mypy]
+files = ["src/auto_upgrade_tools"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=auto_upgrade_tools --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

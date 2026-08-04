@@ -3,23 +3,19 @@
   hostSpecName,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
-  rebootIfNeeded = pkgs.writeShellScript "nixos-weekly-reboot-if-needed" ''
-    set -euo pipefail
-
-    booted="$(${pkgs.coreutils}/bin/readlink /run/booted-system/{initrd,kernel,kernel-modules})"
-    current="$(${pkgs.coreutils}/bin/readlink /nix/var/nix/profiles/system/{initrd,kernel,kernel-modules})"
-
-    if [ "$booted" = "$current" ]; then
-      echo "Booted kernel, initrd, and modules match the current system profile; no reboot needed."
-      exit 0
-    fi
-
-    echo "Booted kernel, initrd, or modules differ from the current system profile; scheduling reboot."
-    ${config.systemd.package}/bin/shutdown -r +1 "Rebooting to activate staged NixOS kernel, initrd, or module upgrade"
-  '';
+  autoUpgradeTools = pkgs.callPackage ./pkgs/auto-upgrade-tools {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
+  rebootIfNeeded = utils.escapeSystemdExecArgs [
+    (lib.getExe autoUpgradeTools)
+    "reboot-if-needed"
+    "--shutdown-executable"
+    "${config.systemd.package}/bin/shutdown"
+  ];
 in
 {
   imports = [
@@ -29,6 +25,8 @@ in
 
   config = lib.mkMerge [
     {
+      _module.args.autoUpgradeTools = autoUpgradeTools;
+
       system.autoUpgrade = {
         enable = true;
         flake = "github:booxter/nix#${hostSpecName}";
