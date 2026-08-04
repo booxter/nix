@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jellyfin-tools"
+version = "0.1.0"
+description = "Back up Jellyfin and gate Beast maintenance on playback"
+requires-python = ">=3.11"
+dependencies = ["jellyfin-apiclient-python", "pydantic", "pystemd"]
+
+[project.scripts]
+jellyfin-built-in-backup = "jellyfin_tools.cli:backup_main"
+wait-for-jellyfin-idle = "jellyfin_tools.cli:wait_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+jellyfin_tools = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=jellyfin_tools --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/jellyfin_tools"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

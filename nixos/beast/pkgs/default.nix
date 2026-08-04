@@ -9,6 +9,8 @@ in
 {
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
 
+  jellyfin-tools = pkgs.callPackage ./jellyfin-tools { };
+
   jellystat-tools = pkgs.callPackage ./jellystat-tools { };
 
   jellarr = pkgs.callPackage ./jellarr {
