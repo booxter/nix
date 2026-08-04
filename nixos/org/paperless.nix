@@ -346,10 +346,8 @@ in
         Type = "oneshot";
         User = "paperless";
         Group = "paperless";
+        ExecStart = lib.getExe orgPkgs.paperless-gpt-configure;
       };
-      script = ''
-        ${lib.getExe orgPkgs.paperless-gpt-configure}
-      '';
     };
 
     podman-paperless-gpt = {
