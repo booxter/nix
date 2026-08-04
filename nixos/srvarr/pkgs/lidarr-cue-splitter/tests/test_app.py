@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from main import (
+from lidarr_cue_splitter.app import (
     CueSplitterError,
     CueSplitterService,
     LidarrClient,
@@ -27,9 +27,7 @@ class CueSplitterTests(unittest.TestCase):
     def test_reads_lidarr_api_key(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "config.xml"
-            config.write_text(
-                "<Config><ApiKey>secret-key</ApiKey></Config>", encoding="utf-8"
-            )
+            config.write_text("<Config><ApiKey>secret-key</ApiKey></Config>", encoding="utf-8")
             self.assertEqual(read_api_key(config), "secret-key")
 
     def test_rejects_missing_api_key(self):
@@ -228,9 +226,7 @@ class CueSplitterTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             store = StateStore(Path(directory) / "state.json")
             store.data["jobs"]["abc"] = {"status": "awaiting_manual_match"}
-            store.data["totals"].update(
-                success=3, failed=1, ignored=2, manual=1, tracks=24
-            )
+            store.data["totals"].update(success=3, failed=1, ignored=2, manual=1, tracks=24)
             metrics = prometheus_metrics(store, True, 1234.0)
             self.assertIn("host_observability_lidarr_cue_splitter_ok 1", metrics)
             self.assertIn(
@@ -241,9 +237,7 @@ class CueSplitterTests(unittest.TestCase):
                 'host_observability_lidarr_cue_splitter_jobs_total{result="success"} 3',
                 metrics,
             )
-            self.assertIn(
-                "host_observability_lidarr_cue_splitter_tracks_total 24", metrics
-            )
+            self.assertIn("host_observability_lidarr_cue_splitter_tracks_total 24", metrics)
 
     def test_completed_download_is_split_imported_and_cleaned(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -307,9 +301,7 @@ class CueSplitterTests(unittest.TestCase):
                             "downloadId": "abc",
                             "rejections": [],
                         }
-                        for index, path in enumerate(
-                            sorted(folder.rglob("*.flac")), start=10
-                        )
+                        for index, path in enumerate(sorted(folder.rglob("*.flac")), start=10)
                     ]
 
                 def submit_manual_import(self, files):
@@ -338,9 +330,7 @@ class CueSplitterTests(unittest.TestCase):
             service.iteration()
             now[0] += 1
             service.iteration()
-            self.assertEqual(
-                store.data["jobs"]["abc"]["status"], "awaiting_queue_removal"
-            )
+            self.assertEqual(store.data["jobs"]["abc"]["status"], "awaiting_queue_removal")
             self.assertEqual(len(client.submitted), 2)
             client.records = []
             now[0] += 1
@@ -526,9 +516,7 @@ class CueSplitterTests(unittest.TestCase):
                             "tracks": [{"id": index}],
                             "rejections": [{"reason": "album match is too weak"}],
                         }
-                        for index, path in enumerate(
-                            sorted(folder.rglob("*.flac")), start=10
-                        )
+                        for index, path in enumerate(sorted(folder.rglob("*.flac")), start=10)
                     ]
 
                 def detach_queue_item(self, queue_id, *, blocklist):

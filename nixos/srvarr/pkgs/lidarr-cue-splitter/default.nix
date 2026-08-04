@@ -3,31 +3,46 @@
   flac,
   lib,
   python3,
+  ruff,
   unflac,
-  writeShellApplication,
 }:
 let
-  sourceDir = ./.;
+  pythonPackages = python3.pkgs;
 in
-writeShellApplication {
-  name = "lidarr-cue-splitter";
-  runtimeInputs = [
+pythonPackages.buildPythonApplication {
+  pname = "lidarr-cue-splitter";
+  version = "0.1.0";
+  pyproject = true;
+
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  nativeCheckInputs = [
     ffmpeg
     flac
+    ruff
     unflac
+    pythonPackages.pytestCheckHook
+    pythonPackages.pytest-cov
   ];
-  text = ''
-    exec ${python3}/bin/python3 ${./main.py} "$@"
-  '';
-  derivationArgs = {
-    doCheck = true;
-  };
-  checkPhase = ''
-    runHook preCheck
-    PYTHONPATH="${sourceDir}" \
-      ${python3}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
 
-    ${ffmpeg}/bin/ffmpeg -hide_banner -decoders 2>&1 | grep -F ' ape '
+  makeWrapperArgs = [
+    "--prefix PATH : ${
+      lib.makeBinPath [
+        ffmpeg
+        flac
+        unflac
+      ]
+    }"
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+  '';
+
+  postCheck = ''
     mkdir integration
     cd integration
     ${ffmpeg}/bin/ffmpeg -hide_banner -loglevel error \
@@ -46,8 +61,9 @@ writeShellApplication {
     ${unflac}/bin/unflac -o output album.cue
     test "$(find output -type f -name '*.flac' | wc -l)" -eq 2
     find output -type f -name '*.flac' -exec ${flac}/bin/flac --silent --test '{}' +
-    runHook postCheck
   '';
+
+  pythonImportsCheck = [ "lidarr_cue_splitter" ];
 
   meta = {
     description = "Split completed Lidarr CUE images and submit their tracks for manual import";

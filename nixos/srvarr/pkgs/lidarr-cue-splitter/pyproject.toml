@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lidarr-cue-splitter"
+version = "0.1.0"
+description = "Split completed Lidarr CUE images for manual import"
+requires-python = ">=3.11"
+
+[project.scripts]
+lidarr-cue-splitter = "lidarr_cue_splitter.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=lidarr_cue_splitter --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
