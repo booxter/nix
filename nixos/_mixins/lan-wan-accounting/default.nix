@@ -3,6 +3,7 @@
   hostInventory,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -68,104 +69,34 @@ let
       }
     }
   '';
-  installRules = pkgs.writeShellApplication {
-    name = "lan-wan-accounting-install";
-    runtimeInputs = [
-      pkgs.nftables
-    ];
-    text = ''
-      set -euo pipefail
-      nft delete table inet ${tableName} 2>/dev/null || true
-      nft -f ${rulesFile}
-    '';
-  };
-  removeRules = pkgs.writeShellApplication {
-    name = "lan-wan-accounting-remove";
-    runtimeInputs = [
-      pkgs.nftables
-    ];
-    text = ''
-      set -euo pipefail
-      nft delete table inet ${tableName} 2>/dev/null || true
-    '';
-  };
-  exportMetrics = pkgs.writeShellApplication {
-    name = "lan-wan-accounting-export";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.gawk
-      pkgs.jq
-      pkgs.iproute2
-      pkgs.nftables
-    ];
-    text = ''
-      set -euo pipefail
-
-      tmp_file="$(mktemp ${textfileDir}/lan-wan.prom.XXXXXX)"
-      trap 'rm -f "$tmp_file"' EXIT
-
-      declare -A counter_bytes=(
-        [lan_in]=0
-        [wan_in]=0
-        [lan_out]=0
-        [wan_out]=0
-        ${lib.optionalString wanSubclassEnabled "[${cfg.wanUdpSubclass.name}_out]=0"}
-        ${lib.optionalString wanSubclassEnabled "[wan_other_out]=0"}
-      )
-
-      while read -r counter_name counter_value; do
-        counter_bytes["$counter_name"]="$counter_value"
-      done < <(
-        nft -j list table inet ${tableName} | jq -r '
-          .nftables[]
-          | .counter?
-          | select(
-              .name == "lan_in"
-              or .name == "wan_in"
-              or .name == "lan_out"
-              or .name == "wan_out"
-              ${lib.optionalString wanSubclassEnabled ''or .name == "${cfg.wanUdpSubclass.name}_out" or .name == "wan_other_out"''}
-            )
-          | "\(.name) \(.bytes)"
-        '
-      )
-
-      ${lib.optionalString wanTransmitTcClassEnabled ''
-        tc_wan_bytes="$(
-          tc -s class show dev ${cfg.interface} | awk '
-            /^class htb ${cfg.wanTransmitTcClass} / { getline; print $2; found = 1; exit }
-            END { if (!found) print 0 }
-          '
-        )"
-        ${lib.optionalString wanSubclassEnabled ''
-          counter_bytes[${cfg.wanUdpSubclass.name}_out]="$tc_wan_bytes"
-          counter_bytes[wan_out]="$(( tc_wan_bytes + counter_bytes[wan_other_out] ))"
-        ''}
-        ${lib.optionalString (!wanSubclassEnabled) ''
-          counter_bytes[wan_out]="$tc_wan_bytes"
-        ''}
-      ''}
-
-      {
-        printf '%s\n' '# HELP host_observability_network_bytes_total Classified network traffic observed on this host (per packet path/interface) in bytes.'
-        printf '%s\n' '# TYPE host_observability_network_bytes_total counter'
-        printf 'host_observability_network_bytes_total{direction="receive",scope="lan"} %s\n' "''${counter_bytes[lan_in]}"
-        printf 'host_observability_network_bytes_total{direction="receive",scope="wan"} %s\n' "''${counter_bytes[wan_in]}"
-        printf 'host_observability_network_bytes_total{direction="transmit",scope="lan"} %s\n' "''${counter_bytes[lan_out]}"
-        printf 'host_observability_network_bytes_total{direction="transmit",scope="wan"} %s\n' "''${counter_bytes[wan_out]}"
-        ${lib.optionalString wanSubclassEnabled ''
-          printf '%s\n' '# HELP host_observability_network_wan_subclass_bytes_total Classified outbound WAN traffic in bytes by subclass.'
-          printf '%s\n' '# TYPE host_observability_network_wan_subclass_bytes_total counter'
-          printf 'host_observability_network_wan_subclass_bytes_total{class="${cfg.wanUdpSubclass.name}"} %s\n' "''${counter_bytes[${cfg.wanUdpSubclass.name}_out]}"
-          printf 'host_observability_network_wan_subclass_bytes_total{class="other"} %s\n' "''${counter_bytes[wan_other_out]}"
-        ''}
-      } >"$tmp_file"
-
-      chmod 0644 "$tmp_file"
-      mv "$tmp_file" ${textfileDir}/lan-wan.prom
-      trap - EXIT
-    '';
-  };
+  exporter = pkgs.callPackage ./pkgs/lan-wan-exporter { };
+  nft = lib.getExe pkgs.nftables;
+  removeCommand = utils.escapeSystemdExecArgs [
+    nft
+    "delete"
+    "table"
+    "inet"
+    tableName
+  ];
+  exportCommand = utils.escapeSystemdExecArgs (
+    [
+      (lib.getExe exporter)
+      "--table"
+      tableName
+      "--output"
+      "${textfileDir}/lan-wan.prom"
+    ]
+    ++ lib.optionals wanSubclassEnabled [
+      "--wan-subclass"
+      cfg.wanUdpSubclass.name
+    ]
+    ++ lib.optionals wanTransmitTcClassEnabled [
+      "--interface"
+      cfg.interface
+      "--wan-tc-class"
+      cfg.wanTransmitTcClass
+    ]
+  );
 in
 {
   options.host.observability.lanWan = {
@@ -243,8 +174,13 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = lib.getExe installRules;
-        ExecStop = lib.getExe removeRules;
+        ExecStartPre = "-${removeCommand}";
+        ExecStart = utils.escapeSystemdExecArgs [
+          nft
+          "-f"
+          rulesFile
+        ];
+        ExecStop = "-${removeCommand}";
       };
     };
 
@@ -254,7 +190,7 @@ in
       requires = [ "observability-lan-wan-accounting.service" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = lib.getExe exportMetrics;
+        ExecStart = exportCommand;
       };
     };
 
