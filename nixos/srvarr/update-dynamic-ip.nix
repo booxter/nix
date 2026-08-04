@@ -1,51 +1,25 @@
 {
-  pkgs,
+  lib,
+  srvarrPkgs,
+  utils,
   wgTimerDeps,
   wgUnitDepsBase,
 }:
+let
+  cookiePath = "/data/.secret/mam.cookies";
+  updateCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe srvarrPkgs.dynamic-ip-updater)
+    "--cookie-jar"
+    cookiePath
+  ];
+in
 {
   systemd.services."update-dynamic-ip" = {
     unitConfig = wgUnitDepsBase;
-    path = [
-      pkgs.coreutils
-      pkgs.curl
-      pkgs.jq
-    ];
     serviceConfig = {
       Type = "oneshot";
       UMask = "0077";
-      ExecStart =
-        let
-          cookiePath = "/data/.secret/mam.cookies";
-        in
-        pkgs.writeShellScript "update-dynamic-ip" ''
-          set -euo pipefail
-
-          cookie_path="${cookiePath}"
-          tmp_cookie="$(mktemp)"
-          trap 'rm -f "$tmp_cookie"' EXIT
-
-          if [ ! -s "$cookie_path" ]; then
-            echo "missing or empty MAM cookie jar at $cookie_path" >&2
-            exit 1
-          fi
-
-          cp "$cookie_path" "$tmp_cookie"
-          chmod 600 "$tmp_cookie"
-
-          response="$(${pkgs.curl}/bin/curl --silent --show-error --fail \
-            -c "$tmp_cookie" \
-            -b "$tmp_cookie" \
-            https://t.myanonamouse.net/json/dynamicSeedbox.php)"
-
-          if ! printf '%s' "$response" | ${pkgs.jq}/bin/jq -e '.Success == true' >/dev/null; then
-            printf '%s\n' "$response" >&2
-            exit 1
-          fi
-
-          install -m 600 "$tmp_cookie" "$cookie_path"
-          printf '%s\n' "$response"
-        '';
+      ExecStart = updateCommand;
     };
     vpnConfinement = {
       enable = true;

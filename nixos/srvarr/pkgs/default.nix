@@ -12,6 +12,10 @@ in
     atomicFileWrites = pkgs.atomic-file-writes;
   };
 
+  dynamic-ip-updater = pkgs.callPackage ./dynamic-ip-updater {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
+
   ebook-converter-cli = ebookConverterCli;
 
   transmission-common = transmissionCommon;
