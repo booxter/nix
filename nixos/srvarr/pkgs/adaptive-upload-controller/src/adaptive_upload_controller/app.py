@@ -1,39 +1,24 @@
 import argparse
 import datetime
-import ipaddress
 import json
 import logging
 import math
 import os
-import ssl
 import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-import httpx
-from prometheus_client.parser import text_string_to_metric_families
 from transmission_common.transmission import TransmissionRpcClient, TransmissionRpcError
 
+from .errors import ControllerError
+from .jellyfin import DEFAULT_MEDIA_TYPES, collect_media_stream_stats, fetch_url_text
 from .metrics import render_metrics_text
 
 
 LOG = logging.getLogger("adaptive-upload-controller")
-DEFAULT_MEDIA_TYPES = {
-    "audio",
-    "audiobook",
-    "episode",
-    "movie",
-    "musicvideo",
-    "trailer",
-    "video",
-}
 TARGET_MBIT_EPSILON = 0.05
-
-
-class ControllerError(RuntimeError):
-    pass
 
 
 def now_utc_iso8601() -> str:
@@ -131,131 +116,6 @@ def default_policy_state(
         "transmission_upload_limit_kbps": transmission_upload_limit_kbps,
         "updated_at": now_utc_iso8601(),
     }
-
-
-def normalize_remote_ip(endpoint: str) -> ipaddress._BaseAddress | None:
-    value = endpoint.strip()
-    if not value:
-        return None
-
-    if value.startswith("[") and "]" in value:
-        value = value[1 : value.index("]")]
-    elif value.count(":") == 1 and "." in value:
-        value = value.rsplit(":", 1)[0]
-
-    try:
-        return ipaddress.ip_address(value)
-    except ValueError:
-        return None
-
-
-def is_internal_remote_endpoint(endpoint: str) -> bool:
-    remote_ip = normalize_remote_ip(endpoint)
-    if remote_ip is None:
-        return False
-    return (
-        remote_ip.is_private
-        or remote_ip.is_loopback
-        or remote_ip.is_link_local
-        or remote_ip.is_reserved
-    )
-
-
-def build_https_context(
-    ca_file: str | None, client_cert_file: str | None, client_key_file: str | None
-) -> ssl.SSLContext:
-    try:
-        context = ssl.create_default_context(cafile=ca_file or None)
-        if client_cert_file or client_key_file:
-            if not client_cert_file or not client_key_file:
-                raise ControllerError("both client certificate and key must be configured together")
-            context.load_cert_chain(client_cert_file, client_key_file)
-    except (OSError, ssl.SSLError) as exc:
-        raise ControllerError(f"failed to build HTTPS client context: {exc}") from exc
-    return context
-
-
-def fetch_url_text(
-    url: str,
-    timeout_seconds: float,
-    *,
-    ca_file: str | None = None,
-    client_cert_file: str | None = None,
-    client_key_file: str | None = None,
-) -> str:
-    verify: ssl.SSLContext | bool = True
-    if httpx.URL(url).scheme == "https":
-        verify = build_https_context(
-            ca_file,
-            client_cert_file,
-            client_key_file,
-        )
-    try:
-        with httpx.Client(verify=verify, timeout=timeout_seconds) as client:
-            response = client.get(url)
-            response.raise_for_status()
-            return response.text
-    except httpx.HTTPError as error:
-        raise ControllerError(f"request to {url} failed: {error}") from error
-
-
-def collect_media_stream_stats(
-    metrics_text: str, media_types: set[str]
-) -> tuple[int, int, int, int]:
-    external_session_keys: set[tuple[str, str, str]] = set()
-    playing_media_session_keys: set[tuple[str, str, str]] = set()
-    bitrate_by_session_key: dict[tuple[str, str, str], int] = {}
-
-    for family in text_string_to_metric_families(metrics_text):
-        for sample in family.samples:
-            labels = sample.labels
-            session_key = (
-                labels.get("user_id", ""),
-                labels.get("username", ""),
-                labels.get("device", ""),
-            )
-            if sample.name == "jellyfin_user_active":
-                if all(session_key) and not is_internal_remote_endpoint(
-                    labels.get("ip_address", "")
-                ):
-                    external_session_keys.add(session_key)
-                continue
-
-            media_type = labels.get("type", "").lower()
-            if media_type not in media_types or not all(session_key):
-                continue
-
-            if sample.name == "jellyfin_now_playing_bitrate_bits_per_second":
-                if sample.value > 0:
-                    bitrate_by_session_key[session_key] = int(sample.value)
-                continue
-
-            if sample.name == "jellyfin_now_playing_state" and sample.value > 0.5:
-                playing_media_session_keys.add(session_key)
-
-    total_streams = len(playing_media_session_keys)
-    active_external_media_session_keys = {
-        session_key
-        for session_key in playing_media_session_keys
-        if session_key in external_session_keys
-    }
-    external_streams = len(active_external_media_session_keys)
-
-    total_external_media_bitrate_bps = 0
-    missing_external_media_bitrate_sessions = 0
-    for session_key in active_external_media_session_keys:
-        bitrate_bps = bitrate_by_session_key.get(session_key)
-        if bitrate_bps is None or bitrate_bps <= 0:
-            missing_external_media_bitrate_sessions += 1
-            continue
-        total_external_media_bitrate_bps += bitrate_bps
-
-    return (
-        total_streams,
-        external_streams,
-        total_external_media_bitrate_bps,
-        missing_external_media_bitrate_sessions,
-    )
 
 
 def observed_policy_state_from_stream_stats(
@@ -422,20 +282,13 @@ def decide_observed_policy_state(args: argparse.Namespace) -> dict:
             client_cert_file=args.client_cert_file,
             client_key_file=args.client_key_file,
         )
-        (
-            total_media_streams,
-            active_external_media_streams,
-            active_external_media_bitrate_bits_per_second,
-            missing_external_media_bitrate_sessions,
-        ) = collect_media_stream_stats(metrics_text, set(args.media_types))
+        stats = collect_media_stream_stats(metrics_text, set(args.media_types))
         return observed_policy_state_from_stream_stats(
             args=args,
-            total_media_streams=total_media_streams,
-            active_external_media_streams=active_external_media_streams,
-            active_external_media_bitrate_bits_per_second=(
-                active_external_media_bitrate_bits_per_second
-            ),
-            missing_external_media_bitrate_sessions=(missing_external_media_bitrate_sessions),
+            total_media_streams=stats.total,
+            active_external_media_streams=stats.external,
+            active_external_media_bitrate_bits_per_second=stats.external_bitrate_bps,
+            missing_external_media_bitrate_sessions=stats.external_missing_bitrate,
         )
     except ControllerError as exc:
         LOG.warning("using conservative fallback after exporter failure: %s", exc)

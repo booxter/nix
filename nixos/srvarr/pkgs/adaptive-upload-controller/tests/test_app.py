@@ -8,6 +8,12 @@ from threading import Thread
 from prometheus_client.parser import text_string_to_metric_families
 
 from adaptive_upload_controller import app
+from adaptive_upload_controller.jellyfin import (
+    DEFAULT_MEDIA_TYPES,
+    MediaStreamStats,
+    collect_media_stream_stats,
+    is_internal_remote_endpoint,
+)
 from adaptive_upload_controller.metrics import render_metrics_text
 
 
@@ -18,7 +24,7 @@ def policy_args(**overrides):
         "ca_file": "",
         "client_cert_file": "",
         "client_key_file": "",
-        "media_types": sorted(app.DEFAULT_MEDIA_TYPES),
+        "media_types": sorted(DEFAULT_MEDIA_TYPES),
         "no_streams_mbit": 25.0,
         "minimum_streams_mbit": 0.5,
         "fallback_mbit": 8.0,
@@ -85,11 +91,11 @@ def test_collects_only_external_playing_media_bitrate():
         ]
     )
 
-    assert app.collect_media_stream_stats(metrics, app.DEFAULT_MEDIA_TYPES) == (
-        2,
-        1,
-        4_000_000,
-        0,
+    assert collect_media_stream_stats(metrics, DEFAULT_MEDIA_TYPES) == MediaStreamStats(
+        total=2,
+        external=1,
+        external_bitrate_bps=4_000_000,
+        external_missing_bitrate=0,
     )
 
 
@@ -186,10 +192,10 @@ def test_metrics_render_current_policy_values():
 
 
 def test_endpoint_and_transmission_value_normalization():
-    assert app.is_internal_remote_endpoint("[fd00::1]:8096")
-    assert app.is_internal_remote_endpoint("192.168.1.5:8096")
-    assert not app.is_internal_remote_endpoint("8.8.8.8:8096")
-    assert not app.is_internal_remote_endpoint("not-an-address")
+    assert is_internal_remote_endpoint("[fd00::1]:8096")
+    assert is_internal_remote_endpoint("192.168.1.5:8096")
+    assert not is_internal_remote_endpoint("8.8.8.8:8096")
+    assert not is_internal_remote_endpoint("not-an-address")
 
     assert app.transmission_get_current_upload_limit_kbps({"speed_limit_up": 123}) == 123
     assert app.transmission_get_current_upload_limit_kbps({"speed_limit_up": "123"}) is None

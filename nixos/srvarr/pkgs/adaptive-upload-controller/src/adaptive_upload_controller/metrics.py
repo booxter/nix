@@ -91,4 +91,4 @@ def render_metrics_text(state: Mapping[str, object]) -> str:
         "Pending relaxed adaptive upload cap in megabits per second.",
         nonnegative_float(pending_target),
     )
-    return generate_latest(registry).decode()
+    return bytes(generate_latest(registry)).decode()
