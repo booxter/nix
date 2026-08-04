@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "backup-metrics"
+version = "0.1.0"
+description = "Persist systemd backup outcomes as Prometheus metrics"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "prometheus-client", "pydantic", "pystemd"]
+
+[project.scripts]
+backup-metrics-configure = "backup_metrics.cli:configure_main"
+backup-metrics-record = "backup_metrics.cli:record_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+backup_metrics = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=backup_metrics --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/backup_metrics"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100
