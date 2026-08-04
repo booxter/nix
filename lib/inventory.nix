@@ -947,6 +947,21 @@ rec {
       nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
       localDnsAliases = [ "ollama" ];
+      resourceControl.systemServices = {
+        lightweight = [
+          "fana-alertmanager-watchdog"
+          "frame-amdgpu-metrics"
+          "frame-ollama-metrics"
+          "ollama-model-loader"
+          "prometheus-blackbox-exporter"
+          "prometheus-node-exporter"
+        ];
+        heavy.ollama = {
+          memoryHigh = "80%";
+          memoryMax = "90%";
+          tasksMax = 4096;
+        };
+      };
       vnc = {
         enable = true;
         # ReFrame exposes one loopback listener per inventory display.
@@ -1041,6 +1056,22 @@ rec {
         "jfstat"
         "watchstate"
       ];
+      resourceControl.systemServices = {
+        lightweight = [
+          "beast-disk-bay-export"
+          "beast-hba-export"
+          "beast-md-sync-export"
+          "jellarr"
+          "jellyfin-exporter"
+          "prometheus-node-exporter"
+          "prometheus-smartctl-exporter"
+          "restic-cloud-usage-export"
+        ];
+        critical = [
+          "jellyfin"
+          "nfs-server"
+        ];
+      };
       hmFull = false;
       hardware.gpuFamilies = [ "intel" ];
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
@@ -1166,6 +1197,29 @@ rec {
           transmission = 45486;
         };
       };
+      resourceControl.systemServices = {
+        lightweight = [
+          "audiobookshelf-backup-bootstrap"
+          "audiobookshelf-oidc-bootstrap"
+          "houndarr-status-collector"
+          "jellyfin-upload-policy"
+          "jellyfin-upload-policy-tc"
+          "jellyfin-upload-policy-transmission"
+          "letterboxd-list-radarr"
+          "prometheus-node-exporter"
+          "prometheus-sabnzbd-exporter"
+          "transmission-collector"
+          "transmission-prioritizer"
+          "transmission-torrent-cleaner"
+          "update-dynamic-ip"
+          "wg-bridge-access"
+          "wg-qos"
+        ];
+        medium = [
+          "ebook-converter"
+          "lidarr-cue-splitter"
+        ];
+      };
       cores = 16;
       memorySize = 32;
       sshPort = 10005;
@@ -1186,6 +1240,15 @@ rec {
         "grafana"
         "loki"
       ];
+      resourceControl.systemServices = {
+        lightweight = [
+          "prometheus-blackbox-exporter"
+          "prometheus-node-exporter"
+          "prometheus-nut-exporter"
+          "unpoller"
+        ];
+        critical = [ "alertmanager" ];
+      };
       cores = 8;
       memorySize = 16;
       diskSize = 300;
@@ -1201,6 +1264,11 @@ rec {
       isVM = true;
       name = "gw";
       upsHost = "prx1-lab";
+      resourceControl.systemServices.lightweight = [
+        "prometheus-node-exporter"
+        "prometheus-wireguard-exporter"
+        "wg-qos"
+      ];
       cores = 2;
       memorySize = 8;
       diskSize = 64;
@@ -1227,6 +1295,12 @@ rec {
         "goo"
         "tg"
       ];
+      resourceControl.systemServices.lightweight = [
+        "open-webui-searxng-probe"
+        "prometheus-node-exporter"
+        "prometheus-paperless-exporter"
+        "searchless-ngx-metrics"
+      ];
       upsHost = "prx1-lab";
       cores = 4;
       memorySize = 16;
@@ -1249,6 +1323,25 @@ rec {
         # Fixed step-ca HTTP API route for the trusted root bundle.
         rootsPath = "/roots.pem";
       };
+      resourceControl.systemServices = {
+        lightweight = [
+          "kanidm-mail-sender"
+          "kanidm-mail-sender-bootstrap"
+          "kanidm-oidc-probe-bootstrap"
+          "kanidm-oidc-synthetic-probe"
+          "kanidm-person-mail-provision"
+          "pki-rotate"
+          "pki-status-export"
+          "prometheus-node-exporter"
+          "unifi-sync"
+          "uptimerobot-sync"
+          "wg-home-dns-sync"
+        ];
+        critical = [
+          "kanidm"
+          "step-ca"
+        ];
+      };
       upsHost = "prx1-lab";
       cores = 2;
       memorySize = 4;
@@ -1269,6 +1362,14 @@ rec {
       upsHost = "prx1-lab";
       proxNode = "prx2-lab";
       localDnsAliases = [ "home" ];
+      resourceControl.systemServices = {
+        lightweight = [
+          "home-assistant-bootstrap"
+          "home-assistant-native-backup"
+          "prometheus-node-exporter"
+        ];
+        critical = [ "home-assistant" ];
+      };
       cores = 4;
       memorySize = 8;
       diskSize = 80;
