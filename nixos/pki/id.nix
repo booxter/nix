@@ -4,6 +4,7 @@
   lib,
   pkiPkgs,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -43,43 +44,29 @@ let
     name
     config.sops.secrets.${personMailSecretName name}.path
   ]) (builtins.attrNames personMailUsers);
-  writeMailSenderConfig = pkgs.writeShellApplication {
-    name = "kanidm-mail-sender-write-config";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.jq
-    ];
-    text = ''
-      set -euo pipefail
-
-      token_file=${lib.escapeShellArg mailSenderTokenFile}
-      password_file=${lib.escapeShellArg config.sops.secrets.kanidmMailerPassword.path}
-      config_file=${lib.escapeShellArg mailSenderConfigFile}
-      tmp_config="$(mktemp)"
-      trap 'rm -f "$tmp_config"' EXIT
-
-      [ -s "$token_file" ]
-      [ -r "$password_file" ]
-
-      token="$(jq -Rs 'sub("\n$"; "")' < "$token_file")"
-      password="$(jq -Rs 'sub("\n$"; "")' < "$password_file")"
-
-      umask 077
-      printf '%s\n' \
-        "token = $token" \
-        'schedule = "*/30 * * * * * *"' \
-        'instance_display_name = "SSO"' \
-        'instance_url = "https://${idService.publicHost}"' \
-        'mail_from_address = "ihar.hrachyshka@gmail.com"' \
-        'mail_reply_to_address = "ihar.hrachyshka@gmail.com"' \
-        'mail_relay = "smtp.gmail.com"' \
-        'mail_username = "ihar.hrachyshka@gmail.com"' \
-        "mail_password = $password" \
-        'mail_connect_timeout_seconds = 15' \
-        > "$tmp_config"
-      install -m 0440 -o root -g ${lib.escapeShellArg mailSenderGroup} "$tmp_config" "$config_file"
-    '';
+  mailSenderTemplate = (pkgs.formats.json { }).generate "kanidm-mail-sender-template.json" {
+    schedule = "*/30 * * * * * *";
+    instanceDisplayName = "SSO";
+    instanceUrl = "https://${idService.publicHost}";
+    mailFromAddress = "ihar.hrachyshka@gmail.com";
+    mailReplyToAddress = "ihar.hrachyshka@gmail.com";
+    mailRelay = "smtp.gmail.com";
+    mailUsername = "ihar.hrachyshka@gmail.com";
+    mailConnectTimeoutSeconds = 15;
   };
+  writeMailSenderConfigCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' pkiPkgs.kanidm-mail-sender-bootstrap "kanidm-mail-sender-write-config")
+    "--template"
+    mailSenderTemplate
+    "--token-file"
+    mailSenderTokenFile
+    "--password-file"
+    config.sops.secrets.kanidmMailerPassword.path
+    "--output"
+    mailSenderConfigFile
+    "--output-group"
+    mailSenderGroup
+  ];
 in
 {
   assertions = [
@@ -287,7 +274,8 @@ in
     wantedBy = [ "multi-user.target" ];
     restartTriggers = [
       config.environment.etc."kanidm/config".source
-      writeMailSenderConfig
+      mailSenderTemplate
+      pkiPkgs.kanidm-mail-sender-bootstrap
     ];
     wants = [
       "network-online.target"
@@ -311,7 +299,7 @@ in
       RuntimeDirectoryMode = "0700";
       StateDirectory = "kanidm-mail-sender";
       StateDirectoryMode = "0700";
-      ExecStartPre = "+${lib.getExe writeMailSenderConfig}";
+      ExecStartPre = "+${writeMailSenderConfigCommand}";
       ExecStart = "${config.services.kanidm.package}/bin/kanidm-mail-sender -c /etc/kanidm/config -m ${mailSenderConfigFile}";
       Restart = "on-failure";
       RestartSec = "10s";

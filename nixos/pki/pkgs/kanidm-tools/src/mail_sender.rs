@@ -7,10 +7,10 @@ use anyhow::{ensure, Context, Result};
 use async_trait::async_trait;
 use clap::Parser;
 use kanidm_client::KanidmClient;
-use nix::unistd::{chown, fchown, Gid, Group, Uid, User};
-use tempfile::NamedTempFile;
+use nix::unistd::{chown, Gid, Group, Uid, User};
 use zeroize::Zeroizing;
 
+use crate::atomic::write_owned_atomic;
 use crate::client::{authenticated_at_address, client_error};
 use crate::non_empty;
 
@@ -154,24 +154,9 @@ impl MailSenderTokenStore for FileTokenStore {
 
     fn store(&self, token: &str) -> Result<()> {
         ensure!(!token.is_empty(), "Kanidm returned an empty API token");
-        let mut temporary = NamedTempFile::new_in(self.directory())
-            .with_context(|| format!("failed to create token beside {}", self.path.display()))?;
-        temporary
-            .as_file()
-            .set_permissions(fs::Permissions::from_mode(0o400))
-            .context("failed to set token permissions")?;
-        fchown(temporary.as_file(), Some(self.uid), Some(self.gid))
-            .context("failed to set token ownership")?;
-        writeln!(temporary, "{token}").context("failed to write API token")?;
-        temporary
-            .as_file()
-            .sync_all()
-            .context("failed to sync API token")?;
-        temporary
-            .persist(&self.path)
-            .map_err(|error| error.error)
-            .with_context(|| format!("failed to install {}", self.path.display()))?;
-        Ok(())
+        write_owned_atomic(&self.path, 0o400, self.uid, self.gid, |file| {
+            writeln!(file, "{token}").context("failed to write API token")
+        })
     }
 }
 
