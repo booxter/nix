@@ -18,7 +18,6 @@ from lidarr_cue_splitter.app import (
     LidarrClient,
     ManualMatchRequired,
     SourceInvalid,
-    StateStore,
     UnflacRunner,
     build_manual_import_files,
     cue_already_split_audio_files,
@@ -36,6 +35,7 @@ from lidarr_cue_splitter.models import (
     QueueRecord,
     UnflacInput,
 )
+from lidarr_cue_splitter.state import Job, StateStore
 
 
 INSPECTIONS = TypeAdapter(list[UnflacInput])
@@ -373,8 +373,12 @@ class CueSplitterTests(unittest.TestCase):
     def test_metrics_include_health_state_and_totals(self):
         with tempfile.TemporaryDirectory() as directory:
             store = StateStore(Path(directory) / "state.json")
-            store.data["jobs"]["abc"] = {"status": "awaiting_manual_match"}
-            store.data["totals"].update(success=3, failed=1, ignored=2, manual=1, tracks=24)
+            store.state.jobs["abc"] = Job(status="awaiting_manual_match")
+            store.state.totals.success = 3
+            store.state.totals.failed = 1
+            store.state.totals.ignored = 2
+            store.state.totals.manual = 1
+            store.state.totals.tracks = 24
             metrics = prometheus_metrics(store, True, 1234.0)
             self.assertIn("host_observability_lidarr_cue_splitter_ok 1", metrics)
             self.assertIn(
@@ -386,6 +390,29 @@ class CueSplitterTests(unittest.TestCase):
                 metrics,
             )
             self.assertIn("host_observability_lidarr_cue_splitter_tracks_total 24", metrics)
+
+    def test_state_round_trip_is_typed_and_rejects_invalid_data(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "state.json"
+            store = StateStore(path)
+            store.state.jobs["abc"] = Job(
+                download_id="abc",
+                status="matching",
+                ready_root=Path("/staging/abc"),
+                attempts=2,
+            )
+            store.save()
+
+            loaded = StateStore(path).state.jobs["abc"]
+            self.assertEqual(loaded.ready_root, Path("/staging/abc"))
+            self.assertEqual(loaded.attempts, 2)
+
+            path.write_text(
+                json.dumps({"jobs": {"abc": {"attempts": "invalid"}}}),
+                encoding="utf-8",
+            )
+            with self.assertRaises(CueSplitterError):
+                StateStore(path)
 
     def test_completed_download_is_split_imported_and_cleaned(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -484,14 +511,14 @@ class CueSplitterTests(unittest.TestCase):
             service.iteration()
             now[0] += 1
             service.iteration()
-            self.assertEqual(store.data["jobs"]["abc"]["status"], "awaiting_queue_removal")
+            self.assertEqual(store.state.jobs["abc"].status, "awaiting_queue_removal")
             self.assertEqual(len(client.submitted), 2)
             client.records = []
             now[0] += 1
             service.iteration()
-            self.assertEqual(store.data["jobs"]["abc"]["status"], "complete")
-            self.assertEqual(store.data["totals"]["success"], 1)
-            self.assertEqual(store.data["totals"]["tracks"], 2)
+            self.assertEqual(store.state.jobs["abc"].status, "complete")
+            self.assertEqual(store.state.totals.success, 1)
+            self.assertEqual(store.state.totals.tracks, 2)
             self.assertFalse((download / "_lidarr-cue-split").exists())
             self.assertTrue(audio.exists())
 
@@ -515,12 +542,12 @@ class CueSplitterTests(unittest.TestCase):
                     return [record]
 
             store = StateStore(root / "state.json")
-            store.data["jobs"]["abc"] = {
-                "download_id": "abc",
-                "status": "needs_attention",
-                "error": "download path is outside allowed roots",
-                "updated_at": 1000.0,
-            }
+            store.state.jobs["abc"] = Job(
+                download_id="abc",
+                status="needs_attention",
+                error="download path is outside allowed roots",
+                updated_at=1000.0,
+            )
             service = CueSplitterService(
                 client_factory=FakeClient,
                 runner=object(),
@@ -534,11 +561,11 @@ class CueSplitterTests(unittest.TestCase):
                 sleep=lambda _: None,
             )
             service.iteration()
-            self.assertEqual(store.data["jobs"]["abc"]["status"], "ignored")
-            self.assertEqual(store.data["jobs"]["abc"]["error"], "")
-            self.assertEqual(store.data["totals"]["ignored"], 1)
+            self.assertEqual(store.state.jobs["abc"].status, "ignored")
+            self.assertEqual(store.state.jobs["abc"].error, "")
+            self.assertEqual(store.state.totals.ignored, 1)
             service.iteration()
-            self.assertEqual(store.data["totals"]["ignored"], 1)
+            self.assertEqual(store.state.totals.ignored, 1)
 
     def test_already_split_cue_recovers_exhausted_job_without_unflac(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -579,13 +606,13 @@ class CueSplitterTests(unittest.TestCase):
                     raise AssertionError(f"unflac should not inspect {cue}")
 
             store = StateStore(root / "state.json")
-            store.data["jobs"]["abc"] = {
-                "download_id": "abc",
-                "status": "needs_attention",
-                "attempts": 3,
-                "error": "unflac could not parse EAC cue",
-                "updated_at": 1000.0,
-            }
+            store.state.jobs["abc"] = Job(
+                download_id="abc",
+                status="needs_attention",
+                attempts=3,
+                error="unflac could not parse EAC cue",
+                updated_at=1000.0,
+            )
             service = CueSplitterService(
                 client_factory=FakeClient,
                 runner=UnexpectedRunner(),
@@ -600,11 +627,11 @@ class CueSplitterTests(unittest.TestCase):
             )
 
             service.iteration()
-            self.assertEqual(store.data["jobs"]["abc"]["status"], "ignored")
-            self.assertEqual(store.data["jobs"]["abc"]["error"], "")
-            self.assertEqual(store.data["totals"]["ignored"], 1)
+            self.assertEqual(store.state.jobs["abc"].status, "ignored")
+            self.assertEqual(store.state.jobs["abc"].error, "")
+            self.assertEqual(store.state.totals.ignored, 1)
             service.iteration()
-            self.assertEqual(store.data["totals"]["ignored"], 1)
+            self.assertEqual(store.state.totals.ignored, 1)
 
     def test_manual_match_preserves_generated_tracks_without_retrying_split(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -706,11 +733,13 @@ class CueSplitterTests(unittest.TestCase):
             service.iteration()
             now[0] += 1
             service.iteration()
-            job = store.data["jobs"]["abc"]
-            ready_root = Path(job["ready_root"])
-            self.assertEqual(job["status"], "awaiting_manual_match")
+            job = store.state.jobs["abc"]
+            self.assertIsNotNone(job.ready_root)
+            ready_root = job.ready_root
+            assert ready_root is not None
+            self.assertEqual(job.status, "awaiting_manual_match")
             self.assertEqual(len(list(ready_root.rglob("*.flac"))), 2)
-            self.assertEqual(store.data["totals"]["manual"], 1)
+            self.assertEqual(store.state.totals.manual, 1)
             self.assertEqual(client.detached, [])
             self.assertTrue(audio.exists())
 
@@ -720,7 +749,7 @@ class CueSplitterTests(unittest.TestCase):
             for _ in range(3):
                 now[0] += 30
                 service.iteration()
-            self.assertEqual(job["status"], "manual_resolved")
+            self.assertEqual(job.status, "manual_resolved")
             self.assertEqual(len(list(ready_root.rglob("*.flac"))), 2)
 
     def test_transient_empty_queue_does_not_dismiss_problem_job(self):
@@ -747,14 +776,14 @@ class CueSplitterTests(unittest.TestCase):
 
             client = FakeClient()
             store = StateStore(root / "state.json")
-            job = {
-                "download_id": "abc",
-                "status": "failed",
-                "attempts": 1,
-                "error": "temporary source failure",
-                "updated_at": 1000.0,
-            }
-            store.data["jobs"]["abc"] = job
+            job = Job(
+                download_id="abc",
+                status="failed",
+                attempts=1,
+                error="temporary source failure",
+                updated_at=1000.0,
+            )
+            store.state.jobs["abc"] = job
             now = [1001.0]
             service = CueSplitterService(
                 client_factory=lambda: client,
@@ -770,12 +799,12 @@ class CueSplitterTests(unittest.TestCase):
             )
 
             service.iteration()
-            self.assertEqual(job["status"], "failed")
-            self.assertEqual(job["missing_queue_observations"], 1)
+            self.assertEqual(job.status, "failed")
+            self.assertEqual(job.missing_queue_observations, 1)
             client.records = [record]
             service.iteration()
-            self.assertEqual(job["status"], "failed")
-            self.assertNotIn("missing_queue_observations", job)
+            self.assertEqual(job.status, "failed")
+            self.assertEqual(job.missing_queue_observations, 0)
 
     def test_legacy_post_split_failure_becomes_manual_work(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -799,14 +828,14 @@ class CueSplitterTests(unittest.TestCase):
                     return [record]
 
             store = StateStore(root / "state.json")
-            job = {
-                "download_id": "abc",
-                "status": "needs_attention",
-                "ready_root": str(ready_root),
-                "error": "Lidarr rejected the generated track",
-                "updated_at": 1000.0,
-            }
-            store.data["jobs"]["abc"] = job
+            job = Job(
+                download_id="abc",
+                status="needs_attention",
+                ready_root=ready_root,
+                error="Lidarr rejected the generated track",
+                updated_at=1000.0,
+            )
+            store.state.jobs["abc"] = job
             service = CueSplitterService(
                 client_factory=FakeClient,
                 runner=object(),
@@ -821,9 +850,9 @@ class CueSplitterTests(unittest.TestCase):
             )
 
             service.iteration()
-            self.assertEqual(job["status"], "awaiting_manual_match")
+            self.assertEqual(job.status, "awaiting_manual_match")
             self.assertTrue(generated.exists())
-            self.assertEqual(store.data["totals"]["manual"], 1)
+            self.assertEqual(store.state.totals.manual, 1)
 
     def test_problem_job_is_dismissed_and_expires_after_leaving_queue(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -834,12 +863,12 @@ class CueSplitterTests(unittest.TestCase):
                     return []
 
             store = StateStore(root / "state.json")
-            store.data["jobs"]["abc"] = {
-                "download_id": "abc",
-                "status": "needs_attention",
-                "error": "malformed cue",
-                "updated_at": 1000.0,
-            }
+            store.state.jobs["abc"] = Job(
+                download_id="abc",
+                status="needs_attention",
+                error="malformed cue",
+                updated_at=1000.0,
+            )
             now = [1001.0]
             service = CueSplitterService(
                 client_factory=FakeClient,
@@ -856,8 +885,8 @@ class CueSplitterTests(unittest.TestCase):
             )
 
             service.iteration()
-            self.assertEqual(store.data["jobs"]["abc"]["status"], "dismissed")
-            self.assertEqual(store.data["jobs"]["abc"]["error"], "malformed cue")
+            self.assertEqual(store.state.jobs["abc"].status, "dismissed")
+            self.assertEqual(store.state.jobs["abc"].error, "malformed cue")
             metrics = prometheus_metrics(store, True, now[0])
             self.assertIn(
                 'host_observability_lidarr_cue_splitter_jobs{state="dismissed"} 1',
@@ -870,7 +899,7 @@ class CueSplitterTests(unittest.TestCase):
 
             now[0] += 7 * 86400
             service.iteration()
-            self.assertNotIn("abc", store.data["jobs"])
+            self.assertNotIn("abc", store.state.jobs)
 
     def test_exhausted_invalid_source_is_detached_but_files_are_retained(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -925,21 +954,21 @@ class CueSplitterTests(unittest.TestCase):
             )
 
             service.iteration()
-            self.assertEqual(store.data["jobs"]["abc"]["attempts"], 1)
+            self.assertEqual(store.state.jobs["abc"].attempts, 1)
             service.iteration()
             self.assertEqual(runner.inspections, 1)
 
             for attempt in (2, 3):
                 now[0] += 300
                 service.iteration()
-                self.assertEqual(store.data["jobs"]["abc"]["attempts"], attempt)
+                self.assertEqual(store.state.jobs["abc"].attempts, attempt)
 
             now[0] += 300
             service.iteration()
             self.assertEqual(runner.inspections, 3)
-            self.assertEqual(store.data["jobs"]["abc"]["status"], "source_invalid")
-            self.assertEqual(store.data["totals"]["failed"], 3)
-            self.assertEqual(store.data["totals"]["source_invalid"], 1)
+            self.assertEqual(store.state.jobs["abc"].status, "source_invalid")
+            self.assertEqual(store.state.totals.failed, 3)
+            self.assertEqual(store.state.totals.source_invalid, 1)
             self.assertEqual(client.detached, [(42, True)])
             self.assertTrue(cue.exists())
             service.iteration()
@@ -981,15 +1010,15 @@ class CueSplitterTests(unittest.TestCase):
 
             client = FakeClient()
             store = StateStore(root / "state.json")
-            job = {
-                "download_id": "abc",
-                "status": "failed",
-                "attempts": 3,
-                "failure_kind": "source_invalid",
-                "failure_fingerprint": failed_fingerprint,
-                "updated_at": 1000.0,
-            }
-            store.data["jobs"]["abc"] = job
+            job = Job(
+                download_id="abc",
+                status="failed",
+                attempts=3,
+                failure_kind="source_invalid",
+                failure_fingerprint=failed_fingerprint,
+                updated_at=1000.0,
+            )
+            store.state.jobs["abc"] = job
             service = CueSplitterService(
                 client_factory=lambda: client,
                 runner=FailingRunner(),
@@ -1004,8 +1033,8 @@ class CueSplitterTests(unittest.TestCase):
             )
 
             service.iteration()
-            self.assertEqual(job["status"], "failed")
-            self.assertEqual(job["attempts"], 1)
+            self.assertEqual(job.status, "failed")
+            self.assertEqual(job.attempts, 1)
             self.assertEqual(client.detached, [])
 
     def test_unavailable_source_is_detached_without_blocklisting(self):
@@ -1034,15 +1063,15 @@ class CueSplitterTests(unittest.TestCase):
 
             client = FakeClient()
             store = StateStore(root / "state.json")
-            job = {
-                "download_id": "abc",
-                "status": "failed",
-                "attempts": 3,
-                "failure_kind": "source_unavailable",
-                "error": "download path does not exist",
-                "updated_at": 1000.0,
-            }
-            store.data["jobs"]["abc"] = job
+            job = Job(
+                download_id="abc",
+                status="failed",
+                attempts=3,
+                failure_kind="source_unavailable",
+                error="download path does not exist",
+                updated_at=1000.0,
+            )
+            store.state.jobs["abc"] = job
             service = CueSplitterService(
                 client_factory=lambda: client,
                 runner=object(),
@@ -1057,7 +1086,7 @@ class CueSplitterTests(unittest.TestCase):
             )
 
             service.iteration()
-            self.assertEqual(job["status"], "source_unavailable")
+            self.assertEqual(job.status, "source_unavailable")
             self.assertEqual(client.detached, [(42, False)])
 
 

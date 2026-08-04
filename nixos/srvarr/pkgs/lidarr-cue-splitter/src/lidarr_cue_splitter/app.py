@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import logging
 import os
 import re
@@ -13,11 +12,12 @@ import time
 import xml.etree.ElementTree as ET
 from collections import Counter
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 from pydantic import TypeAdapter, ValidationError
 
 from .errors import CueSplitterError, ManualMatchRequired, NeedsAttention, SourceInvalid
+from .files import atomic_write
 from .lidarr import Lidarr, LidarrClient
 from .models import (
     CueSummary,
@@ -26,6 +26,7 @@ from .models import (
     QueueRecord,
     UnflacInput,
 )
+from .state import EXPIRING_JOB_STATES, Job, StateStore
 
 
 LOG = logging.getLogger("lidarr-cue-splitter")
@@ -50,14 +51,6 @@ ACTIVE_JOB_STATES = {
 }
 PROCESSING_JOB_STATES = {"splitting", "verifying", "matching", "importing"}
 PROBLEM_JOB_STATES = {"failed", "automation_failed", "needs_attention"}
-EXPIRING_JOB_STATES = {
-    "complete",
-    "dismissed",
-    "ignored",
-    "manual_resolved",
-    "source_invalid",
-    "source_unavailable",
-}
 KNOWN_JOB_STATES = (
     ACTIVE_JOB_STATES
     | EXPIRING_JOB_STATES
@@ -93,14 +86,6 @@ AUDIO_FILE_SUFFIXES = {
 CUE_FILE_COMMAND_RE = re.compile(r'^\s*FILE\s+(?:"([^"]+)"|(\S+))\s+\S+', re.IGNORECASE)
 CUE_TRACK_COMMAND_RE = re.compile(r"^\s*TRACK\s+\d+\s+\S+", re.IGNORECASE)
 UNFLAC_INSPECTIONS = TypeAdapter(list[UnflacInput])
-
-
-def atomic_write(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    temporary.write_text(content, encoding="utf-8")
-    os.chmod(temporary, 0o644)
-    os.replace(temporary, path)
 
 
 def is_within(path: Path, roots: list[Path]) -> bool:
@@ -320,52 +305,9 @@ def build_manual_import_files(
     return [selected[path] for path in sorted(selected)]
 
 
-class StateStore:
-    def __init__(self, path: Path):
-        self.path = path
-        self.data: dict[str, Any] = {
-            "jobs": {},
-            "totals": {
-                "success": 0,
-                "failed": 0,
-                "ignored": 0,
-                "manual": 0,
-                "source_invalid": 0,
-                "source_unavailable": 0,
-                "tracks": 0,
-            },
-            "last_success": None,
-            "last_duration": 0.0,
-        }
-        self.load()
-
-    def load(self) -> None:
-        try:
-            loaded = json.loads(self.path.read_text(encoding="utf-8"))
-        except FileNotFoundError:
-            return
-        except (OSError, json.JSONDecodeError) as exc:
-            raise CueSplitterError(f"cannot load state {self.path}: {exc}") from exc
-        if isinstance(loaded, dict):
-            self.data.update(loaded)
-            self.data.setdefault("jobs", {})
-            self.data.setdefault("totals", {})
-
-    def save(self) -> None:
-        atomic_write(self.path, json.dumps(self.data, indent=2, sort_keys=True) + "\n")
-
-    def prune(self, now: float, retention_seconds: float = 7 * 86400) -> None:
-        self.data["jobs"] = {
-            key: value
-            for key, value in self.data["jobs"].items()
-            if value.get("status") not in EXPIRING_JOB_STATES
-            or now - float(value.get("updated_at", now)) < retention_seconds
-        }
-
-
 def prometheus_metrics(store: StateStore, ok: bool, now: float) -> str:
-    states = Counter(job.get("status", "unknown") for job in store.data["jobs"].values())
-    totals = store.data.get("totals", {})
+    states = Counter(job.status for job in store.state.jobs.values())
+    totals = store.state.totals
     lines = [
         "# HELP host_observability_lidarr_cue_splitter_ok Whether the latest service iteration completed successfully.",
         "# TYPE host_observability_lidarr_cue_splitter_ok gauge",
@@ -387,26 +329,26 @@ def prometheus_metrics(store: StateStore, ok: bool, now: float) -> str:
         [
             "# HELP host_observability_lidarr_cue_splitter_jobs_total Jobs handled by result.",
             "# TYPE host_observability_lidarr_cue_splitter_jobs_total counter",
-            f'host_observability_lidarr_cue_splitter_jobs_total{{result="success"}} {int(totals.get("success", 0))}',
-            f'host_observability_lidarr_cue_splitter_jobs_total{{result="failed"}} {int(totals.get("failed", 0))}',
-            f'host_observability_lidarr_cue_splitter_jobs_total{{result="ignored"}} {int(totals.get("ignored", 0))}',
-            f'host_observability_lidarr_cue_splitter_jobs_total{{result="manual"}} {int(totals.get("manual", 0))}',
-            f'host_observability_lidarr_cue_splitter_jobs_total{{result="source_invalid"}} {int(totals.get("source_invalid", 0))}',
-            f'host_observability_lidarr_cue_splitter_jobs_total{{result="source_unavailable"}} {int(totals.get("source_unavailable", 0))}',
+            f'host_observability_lidarr_cue_splitter_jobs_total{{result="success"}} {totals.success}',
+            f'host_observability_lidarr_cue_splitter_jobs_total{{result="failed"}} {totals.failed}',
+            f'host_observability_lidarr_cue_splitter_jobs_total{{result="ignored"}} {totals.ignored}',
+            f'host_observability_lidarr_cue_splitter_jobs_total{{result="manual"}} {totals.manual}',
+            f'host_observability_lidarr_cue_splitter_jobs_total{{result="source_invalid"}} {totals.source_invalid}',
+            f'host_observability_lidarr_cue_splitter_jobs_total{{result="source_unavailable"}} {totals.source_unavailable}',
             "# HELP host_observability_lidarr_cue_splitter_tracks_total Tracks generated by successful jobs.",
             "# TYPE host_observability_lidarr_cue_splitter_tracks_total counter",
-            f"host_observability_lidarr_cue_splitter_tracks_total {int(totals.get('tracks', 0))}",
+            f"host_observability_lidarr_cue_splitter_tracks_total {totals.tracks}",
             "# HELP host_observability_lidarr_cue_splitter_last_job_duration_seconds Duration of the latest successful job.",
             "# TYPE host_observability_lidarr_cue_splitter_last_job_duration_seconds gauge",
-            f"host_observability_lidarr_cue_splitter_last_job_duration_seconds {float(store.data.get('last_duration', 0.0))}",
+            f"host_observability_lidarr_cue_splitter_last_job_duration_seconds {store.state.last_duration}",
         ]
     )
-    if store.data.get("last_success") is not None:
+    if store.state.last_success is not None:
         lines.extend(
             [
                 "# HELP host_observability_lidarr_cue_splitter_last_success_timestamp_seconds Unix timestamp of the latest successful import.",
                 "# TYPE host_observability_lidarr_cue_splitter_last_success_timestamp_seconds gauge",
-                f"host_observability_lidarr_cue_splitter_last_success_timestamp_seconds {float(store.data['last_success'])}",
+                f"host_observability_lidarr_cue_splitter_last_success_timestamp_seconds {store.state.last_success}",
             ]
         )
     return "\n".join(lines) + "\n"
@@ -508,7 +450,7 @@ class CueSplitterService:
     def prepare_split(
         self,
         record: QueueRecord,
-        job: dict[str, Any],
+        job: Job,
         summaries: list[CueSummary],
     ) -> Path:
         component = safe_component(record.download_id)
@@ -525,7 +467,8 @@ class CueSplitterService:
         generated: list[Path] = []
         expected_tracks = 0
         try:
-            job.update(status="splitting", updated_at=self.now())
+            job.status = "splitting"
+            job.updated_at = self.now()
             self.store.save()
             for index, summary in enumerate(summaries, start=1):
                 cue_output = partial_root / f"disc-{index:02d}-{safe_component(summary.cue.stem)}"
@@ -536,19 +479,18 @@ class CueSplitterService:
                 raise SourceInvalid(
                     f"unflac generated {len(generated)} tracks; expected {expected_tracks}"
                 )
-            job.update(status="verifying", updated_at=self.now())
+            job.status = "verifying"
+            job.updated_at = self.now()
             self.store.save()
             for path in generated:
                 self.runner.verify_flac(path)
             ready_root.parent.mkdir(parents=True, exist_ok=True)
             os.replace(partial_root, ready_root)
             generated = sorted(path.resolve() for path in ready_root.rglob("*.flac"))
-            job.update(
-                status="matching",
-                ready_root=str(ready_root),
-                tracks=len(generated),
-                updated_at=self.now(),
-            )
+            job.status = "matching"
+            job.ready_root = ready_root
+            job.tracks = len(generated)
+            job.updated_at = self.now()
             self.store.save()
             return ready_root
         except Exception:
@@ -560,17 +502,18 @@ class CueSplitterService:
         self,
         client: Lidarr,
         record: QueueRecord,
-        job: dict[str, Any],
+        job: Job,
         ready_root: Path,
     ) -> None:
         generated = sorted(path.resolve() for path in ready_root.rglob("*.flac"))
         try:
             outputs = client.manual_import(ready_root, record)
             import_files = build_manual_import_files(outputs, generated, record)
-            job.update(status="importing", updated_at=self.now())
+            job.status = "importing"
+            job.updated_at = self.now()
             self.store.save()
             command_id = client.submit_manual_import(import_files)
-            job["command_id"] = command_id
+            job.command_id = command_id
             deadline = time.monotonic() + self.command_timeout_seconds
             while time.monotonic() < deadline:
                 command = client.command(command_id)
@@ -594,46 +537,51 @@ class CueSplitterService:
             raise NeedsAttention(
                 f"unexpected failure after splitting; generated tracks were preserved: {exc}"
             ) from exc
-        job.update(status="awaiting_queue_removal", updated_at=self.now(), error="")
+        job.status = "awaiting_queue_removal"
+        job.updated_at = self.now()
+        job.error = ""
         self.store.save()
 
-    def process(self, client: Lidarr, record: QueueRecord, job: dict[str, Any]) -> None:
+    def process(self, client: Lidarr, record: QueueRecord, job: Job) -> None:
         summaries, fingerprint = self.discover(record)
-        if fingerprint != job["fingerprint"]:
-            job.update(
-                status="settling",
-                fingerprint=fingerprint,
-                discovered_at=self.now(),
-                updated_at=self.now(),
-                attempts=0,
-            )
+        if fingerprint != job.fingerprint:
+            job.status = "settling"
+            job.fingerprint = fingerprint
+            job.discovered_at = self.now()
+            job.updated_at = self.now()
+            job.attempts = 0
             return
         ready_root = self.prepare_split(record, job, summaries)
         self.import_split(client, record, job, ready_root)
 
-    def mark_manual_match(self, job: dict[str, Any], error: str, now: float) -> None:
-        if job.get("status") != "awaiting_manual_match":
-            totals = self.store.data["totals"]
-            totals["manual"] = int(totals.get("manual", 0)) + 1
-        job.update(status="awaiting_manual_match", error=error, updated_at=now)
+    def mark_manual_match(self, job: Job, error: str, now: float) -> None:
+        if job.status != "awaiting_manual_match":
+            self.store.state.totals.manual += 1
+        job.status = "awaiting_manual_match"
+        job.error = error
+        job.updated_at = now
         LOG.warning(
             "split tracks await manual Lidarr matching: download_id=%s path=%s error=%s",
-            job.get("download_id", ""),
-            job.get("ready_root", ""),
+            job.download_id,
+            job.ready_root or "",
             error,
         )
 
-    def mark_ignored(self, job: dict[str, Any], now: float) -> None:
-        if job.get("status") != "ignored":
-            totals = self.store.data["totals"]
-            totals["ignored"] = int(totals.get("ignored", 0)) + 1
-        job.update(status="ignored", updated_at=now, fingerprint="", error="")
+    def mark_ignored(self, job: Job, now: float) -> None:
+        if job.status != "ignored":
+            self.store.state.totals.ignored += 1
+        job.status = "ignored"
+        job.updated_at = now
+        job.fingerprint = ""
+        job.error = ""
 
-    def mark_automation_failed(self, job: dict[str, Any], error: str, now: float) -> None:
-        job.update(status="automation_failed", error=error, updated_at=now)
+    def mark_automation_failed(self, job: Job, error: str, now: float) -> None:
+        job.status = "automation_failed"
+        job.error = error
+        job.updated_at = now
         LOG.error(
             "cue job automation failed: download_id=%s error=%s",
-            job.get("download_id", ""),
+            job.download_id,
             error,
         )
 
@@ -650,20 +598,18 @@ class CueSplitterService:
             else "source_unavailable"
         )
 
-    def migrate_legacy_job(self, job: dict[str, Any], now: float) -> None:
-        if job.get("status") != "needs_attention":
+    def migrate_legacy_job(self, job: Job, now: float) -> None:
+        if job.status != "needs_attention":
             return
-        if job.get("ready_root"):
-            self.mark_manual_match(job, str(job.get("error", "")), now)
-        elif int(job.get("attempts", 0)) >= MAX_SOURCE_ATTEMPTS:
-            job.update(
-                status="failed",
-                failure_kind=self.legacy_failure_kind(str(job.get("error", ""))),
-            )
+        if job.ready_root:
+            self.mark_manual_match(job, job.error, now)
+        elif job.attempts >= MAX_SOURCE_ATTEMPTS:
+            job.status = "failed"
+            job.failure_kind = self.legacy_failure_kind(job.error)
 
     def record_source_failure(
         self,
-        job: dict[str, Any],
+        job: Job,
         record: QueueRecord,
         error: Exception,
         now: float,
@@ -671,29 +617,24 @@ class CueSplitterService:
         if record.output_path is None:
             raise CueSplitterError("Lidarr queue record does not contain an output path")
         fingerprint = output_fingerprint(record.output_path)
-        previous_fingerprint = job.get("failure_fingerprint")
-        attempts = (
-            int(job.get("attempts", 0)) + 1 if previous_fingerprint in {None, fingerprint} else 1
+        previous_fingerprint = job.failure_fingerprint
+        attempts = job.attempts + 1 if previous_fingerprint in {None, fingerprint} else 1
+        job.status = "failed"
+        job.error = str(error)
+        job.failure_fingerprint = fingerprint
+        job.failure_kind = (
+            "source_invalid" if isinstance(error, SourceInvalid) else "source_unavailable"
         )
-        job.update(
-            status="failed",
-            error=str(error),
-            failure_fingerprint=fingerprint,
-            failure_kind=(
-                "source_invalid" if isinstance(error, SourceInvalid) else "source_unavailable"
-            ),
-            updated_at=now,
-            attempts=attempts,
-        )
-        totals = self.store.data["totals"]
-        totals["failed"] = int(totals.get("failed", 0)) + 1
-        LOG.exception("cue job failed: download_id=%s", job.get("download_id", ""))
+        job.updated_at = now
+        job.attempts = attempts
+        self.store.state.totals.failed += 1
+        LOG.exception("cue job failed: download_id=%s", job.download_id)
 
     def resolve_source_failure(
         self,
         client: Lidarr,
         record: QueueRecord,
-        job: dict[str, Any],
+        job: Job,
         now: float,
     ) -> None:
         if self.download_is_already_split(record):
@@ -705,7 +646,7 @@ class CueSplitterService:
                 job, "Lidarr queue record does not contain a numeric id", now
             )
             return
-        failure_kind = str(job.get("failure_kind") or "source_unavailable")
+        failure_kind = job.failure_kind or "source_unavailable"
         try:
             client.detach_queue_item(queue_id, blocklist=failure_kind == "source_invalid")
         except CueSplitterError as exc:
@@ -713,20 +654,20 @@ class CueSplitterService:
                 job, f"could not detach failed release from Lidarr: {exc}", now
             )
             return
-        job.update(
-            status=failure_kind,
-            resolution="lidarr_queue_detached_download_client_retained",
-            updated_at=now,
-        )
-        totals = self.store.data["totals"]
-        totals[failure_kind] = int(totals.get(failure_kind, 0)) + 1
+        job.status = failure_kind
+        job.resolution = "lidarr_queue_detached_download_client_retained"
+        job.updated_at = now
+        if failure_kind == "source_invalid":
+            self.store.state.totals.source_invalid += 1
+        else:
+            self.store.state.totals.source_unavailable += 1
         LOG.warning(
             "detached failed CUE release from Lidarr while retaining client data: download_id=%s state=%s",
-            job.get("download_id", ""),
+            job.download_id,
             failure_kind,
         )
 
-    def complete_job(self, job: dict[str, Any], ready_root: Path, started: float) -> None:
+    def complete_job(self, job: Job, ready_root: Path, started: float) -> None:
         if STAGING_DIR_NAME not in ready_root.parts or not is_within(
             ready_root, self.allowed_roots
         ):
@@ -737,55 +678,52 @@ class CueSplitterService:
         if parent.exists() and not any(parent.iterdir()):
             parent.rmdir()
         finished = self.now()
-        job.update(status="complete", updated_at=finished, error="")
-        totals = self.store.data["totals"]
-        totals["success"] = int(totals.get("success", 0)) + 1
-        totals["tracks"] = int(totals.get("tracks", 0)) + int(job.get("tracks", 0))
-        self.store.data["last_success"] = finished
-        self.store.data["last_duration"] = max(0.0, finished - started)
+        job.status = "complete"
+        job.updated_at = finished
+        job.error = ""
+        self.store.state.totals.success += 1
+        self.store.state.totals.tracks += job.tracks
+        self.store.state.last_success = finished
+        self.store.state.last_duration = max(0.0, finished - started)
         LOG.info(
             "completed cue split/import: download_id=%s tracks=%s",
-            job["download_id"],
-            job.get("tracks", 0),
+            job.download_id,
+            job.tracks,
         )
 
     def recover_interrupted_jobs(self, now: float) -> None:
-        for job in self.store.data["jobs"].values():
-            status = job.get("status")
+        for job in self.store.state.jobs.values():
+            status = job.status
             if status not in PROCESSING_JOB_STATES:
                 continue
-            if status in {"matching", "importing"} and job.get("ready_root"):
+            if status in {"matching", "importing"} and job.ready_root:
                 self.mark_manual_match(
                     job,
                     "service restarted after splitting; generated tracks were preserved",
                     now,
                 )
                 continue
-            job.update(
-                status="failed",
-                error="service restarted while the source was processing",
-                failure_kind="source_unavailable",
-                updated_at=now,
-                attempts=int(job.get("attempts", 0)) + 1,
-            )
+            job.status = "failed"
+            job.error = "service restarted while the source was processing"
+            job.failure_kind = "source_unavailable"
+            job.updated_at = now
+            job.attempts += 1
 
-    def missing_queue_confirmed(self, job: dict[str, Any], queued_download_ids: set[str]) -> bool:
-        if job.get("download_id") in queued_download_ids:
-            job.pop("missing_queue_observations", None)
+    def missing_queue_confirmed(self, job: Job, queued_download_ids: set[str]) -> bool:
+        if job.download_id in queued_download_ids:
+            job.missing_queue_observations = 0
             return False
-        observations = int(job.get("missing_queue_observations", 0)) + 1
-        job["missing_queue_observations"] = observations
-        return observations >= self.missing_queue_confirmations
+        job.missing_queue_observations += 1
+        return job.missing_queue_observations >= self.missing_queue_confirmations
 
     def reconcile_jobs(self, queued_download_ids: set[str], now: float) -> None:
-        for job in self.store.data["jobs"].values():
+        for job in self.store.state.jobs.values():
             self.migrate_legacy_job(job, now)
-            status = job.get("status")
-            if status == "awaiting_queue_removal" and (
-                job.get("download_id") in queued_download_ids
-            ):
-                job.pop("missing_queue_observations", None)
-                if now - float(job.get("updated_at", now)) > self.command_timeout_seconds:
+            status = job.status
+            if status == "awaiting_queue_removal" and job.download_id in queued_download_ids:
+                job.missing_queue_observations = 0
+                updated_at = job.updated_at if job.updated_at is not None else now
+                if now - updated_at > self.command_timeout_seconds:
                     self.mark_manual_match(
                         job,
                         "Lidarr manual import completed but the download remained in the activity queue",
@@ -801,26 +739,30 @@ class CueSplitterService:
                 continue
             if status == "awaiting_queue_removal":
                 try:
+                    if job.ready_root is None:
+                        raise NeedsAttention("completed import has no staging path")
                     self.complete_job(
                         job,
-                        Path(job["ready_root"]),
-                        float(job.get("started_at", now)),
+                        job.ready_root,
+                        job.started_at if job.started_at is not None else now,
                     )
                 except NeedsAttention as exc:
                     self.mark_automation_failed(job, str(exc), now)
             elif status == "awaiting_manual_match":
-                job.update(status="manual_resolved", updated_at=now)
+                job.status = "manual_resolved"
+                job.updated_at = now
                 LOG.info(
                     "manual-match job left the Lidarr queue; preserving generated tracks: download_id=%s path=%s",
-                    job.get("download_id", ""),
-                    job.get("ready_root", ""),
+                    job.download_id,
+                    job.ready_root or "",
                 )
             else:
                 LOG.info(
                     "dismissing CUE job no longer present in Lidarr queue: download_id=%s",
-                    job.get("download_id", ""),
+                    job.download_id,
                 )
-                job.update(status="dismissed", updated_at=now)
+                job.status = "dismissed"
+                job.updated_at = now
 
     def handle_completed_record(
         self,
@@ -829,11 +771,11 @@ class CueSplitterService:
         record: QueueRecord,
         now: float,
     ) -> bool:
-        jobs = self.store.data["jobs"]
+        jobs = self.store.state.jobs
         job = jobs.get(download_id)
         if job is not None:
             self.migrate_legacy_job(job, now)
-            if job.get("status") in {
+            if job.status in {
                 "automation_failed",
                 "awaiting_manual_match",
                 "awaiting_queue_removal",
@@ -843,58 +785,56 @@ class CueSplitterService:
                 "source_unavailable",
             }:
                 return False
-            if job.get("status") == "failed":
+            if job.status == "failed":
                 if record.output_path is None:
                     return False
                 current_fingerprint = output_fingerprint(record.output_path)
-                previous_fingerprint = job.get("failure_fingerprint")
+                previous_fingerprint = job.failure_fingerprint
                 if previous_fingerprint and previous_fingerprint != current_fingerprint:
-                    job.update(attempts=0, failure_fingerprint=current_fingerprint)
-                elif int(job.get("attempts", 0)) >= MAX_SOURCE_ATTEMPTS:
+                    job.attempts = 0
+                    job.failure_fingerprint = current_fingerprint
+                elif job.attempts >= MAX_SOURCE_ATTEMPTS:
                     self.resolve_source_failure(client, record, job, now)
                     return True
-                elif now - float(job.get("updated_at", now)) < SOURCE_RETRY_SECONDS:
+                elif (
+                    now - (job.updated_at if job.updated_at is not None else now)
+                    < SOURCE_RETRY_SECONDS
+                ):
                     return False
         try:
             summaries, fingerprint = self.discover(record)
             if not summaries:
-                job = jobs.setdefault(download_id, {"download_id": download_id})
+                job = self.store.job(download_id)
                 self.mark_ignored(job, now)
                 return False
-            if job is None or job.get("fingerprint") != fingerprint:
-                jobs[download_id] = {
-                    "download_id": download_id,
-                    "title": record.title,
-                    "status": "settling",
-                    "fingerprint": fingerprint,
-                    "discovered_at": now,
-                    "updated_at": now,
-                    "attempts": 0,
-                }
+            if job is None or job.fingerprint != fingerprint:
+                jobs[download_id] = Job(
+                    download_id=download_id,
+                    title=record.title,
+                    status="settling",
+                    fingerprint=fingerprint,
+                    discovered_at=now,
+                    updated_at=now,
+                )
                 LOG.info(
                     "discovered CUE image: download_id=%s title=%s",
                     download_id,
                     record.title,
                 )
                 return True
-            if now - float(job.get("discovered_at", now)) < self.settle_seconds:
+            discovered_at = job.discovered_at if job.discovered_at is not None else now
+            if now - discovered_at < self.settle_seconds:
                 return False
-            job["started_at"] = now
+            job.started_at = now
             self.process(client, record, job)
         except ManualMatchRequired as exc:
-            job = jobs.setdefault(download_id, {"download_id": download_id})
+            job = self.store.job(download_id)
             self.mark_manual_match(job, str(exc), now)
         except NeedsAttention as exc:
-            job = jobs.setdefault(download_id, {"download_id": download_id})
+            job = self.store.job(download_id)
             self.mark_automation_failed(job, str(exc), now)
         except Exception as exc:
-            job = jobs.setdefault(
-                download_id,
-                {
-                    "download_id": download_id,
-                    "title": record.title,
-                },
-            )
+            job = self.store.job(download_id, title=record.title)
             self.record_source_failure(job, record, exc, now)
         return True
 
@@ -904,9 +844,7 @@ class CueSplitterService:
         completed: dict[str, QueueRecord],
         now: float,
     ) -> None:
-        if any(
-            job.get("status") in PROCESSING_JOB_STATES for job in self.store.data["jobs"].values()
-        ):
+        if any(job.status in PROCESSING_JOB_STATES for job in self.store.state.jobs.values()):
             return
         for download_id, record in completed.items():
             if self.handle_completed_record(client, download_id, record, now):
