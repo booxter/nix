@@ -17,6 +17,9 @@ package-dir = { "" = "src" }
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+unifi_sync = ["py.typed"]
+
 [tool.pytest.ini_options]
 addopts = "-q --cov=unifi_sync --cov-report=term-missing --cov-fail-under=70"
 testpaths = ["tests"]
