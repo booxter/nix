@@ -162,6 +162,20 @@ let
       cloudShapingConfig
       action
     ];
+  mkRepoAclConfig =
+    name:
+    (pkgs.formats.json { }).generate "restic-${name}-repo-acl.json" {
+      repository = mkBackupRepo name;
+      user = mkOffloadUser name;
+      setfaclExecutable = lib.getExe' pkgs.acl "setfacl";
+    };
+  mkRepoAclCommand =
+    name:
+    utils.escapeSystemdExecArgs [
+      (lib.getExe' beastPkgs.backup-server-tools "restic-repo-acl")
+      "--config"
+      (mkRepoAclConfig name)
+    ];
 in
 {
   imports = [
@@ -310,37 +324,7 @@ in
           Type = "oneshot";
           User = "root";
           Group = "root";
-          ExecStart = pkgs.writeShellScript "restic-${name}-repo-acl" ''
-            set -euo pipefail
-
-            repo="${mkBackupRepo name}"
-            offload_user="${mkOffloadUser name}"
-            marker="$repo/.offload-acl-initialized"
-
-            if [ ! -d "$repo" ]; then
-              exit 0
-            fi
-
-            ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwx,m::rwx" "$repo"
-            ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" "$repo"
-
-            if [ ! -f "$repo/config" ]; then
-              exit 0
-            fi
-
-            if [ ! -e "$marker" ] || [ "$repo/config" -nt "$marker" ]; then
-              ${pkgs.acl}/bin/setfacl -R -m "u:$offload_user:rwX,m::rwX" "$repo"
-              ${pkgs.findutils}/bin/find "$repo" -type d -exec \
-                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" '{}' +
-            else
-              ${pkgs.findutils}/bin/find "$repo" -newer "$marker" -exec \
-                ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwX,m::rwX" '{}' +
-              ${pkgs.findutils}/bin/find "$repo" -type d -newer "$marker" -exec \
-                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" '{}' +
-            fi
-
-            ${pkgs.coreutils}/bin/touch "$marker"
-          '';
+          ExecStart = mkRepoAclCommand name;
         };
       };
     }) (builtins.attrNames sshBackupClients))

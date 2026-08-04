@@ -9,7 +9,10 @@ buildGoModule {
   src = ./.;
   vendorHash = "sha256-EO32BX2lTYmaTNwuQd0LrdLPJYMPAwm9voLyZ0vSmHc=";
 
-  subPackages = [ "cmd/restic-cloud-qos" ];
+  subPackages = [
+    "cmd/restic-cloud-qos"
+    "cmd/restic-repo-acl"
+  ];
 
   preCheck = ''
     test -z "$(gofmt -l cmd internal)"
