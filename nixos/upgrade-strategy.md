@@ -105,9 +105,10 @@ The daily non-work warmup procedure is:
 4. The warmer filters out inventory entries that no longer evaluate at that
    flake revision.
 5. The warmer builds the remaining targets in one `nix build --keep-going`
-   invocation so Nix can schedule work across the available builders. If that
-   batched build produces no successful outputs, it falls back to target-by-target
-   builds.
+   invocation so Nix can schedule work across the available builders. Warmers
+   that push to Attic cap substitution jobs at 4 and HTTP connections at 8 to
+   avoid exhausting Attic's SQLite connection pool. If that batched build
+   produces no successful outputs, it falls back to target-by-target builds.
 6. Missing or broken targets are logged and skipped so one failure does not
    abort the whole run.
 7. If `pushToAttic` is enabled, the warmer explicitly pushes the resulting store

@@ -12,6 +12,8 @@ const NAME: &str = "fleet-cache-warmer";
 const NIX: &str = env!("FLEET_CACHE_WARMER_NIX");
 const ATTIC: &str = env!("FLEET_CACHE_WARMER_ATTIC");
 const TARGETS_JSON: &str = env!("FLEET_CACHE_WARMER_TARGETS_JSON");
+const MAX_SUBSTITUTION_JOBS: &str = "4";
+const HTTP_CONNECTIONS: &str = "8";
 
 fn push_to_attic() -> bool {
     env!("FLEET_CACHE_WARMER_PUSH_TO_ATTIC") == "true"
@@ -41,6 +43,32 @@ trait Backend {
 
 struct CommandBackend;
 
+fn nix_build_command(
+    targets: &[String],
+    keep_going: bool,
+    limit_substitution_concurrency: bool,
+) -> Command {
+    let mut command = Command::new(NIX);
+    command.args(["build", "-L"]);
+    if keep_going {
+        command.arg("--keep-going");
+    }
+    if limit_substitution_concurrency {
+        command.args([
+            "--option",
+            "max-substitution-jobs",
+            MAX_SUBSTITUTION_JOBS,
+            "--option",
+            "http-connections",
+            HTTP_CONNECTIONS,
+        ]);
+    }
+    command
+        .args(["--no-link", "--print-out-paths"])
+        .args(targets);
+    command
+}
+
 impl Backend for CommandBackend {
     fn resolves(&mut self, target: &str) -> Result<bool> {
         let status = Command::new(NIX)
@@ -53,14 +81,7 @@ impl Backend for CommandBackend {
     }
 
     fn build(&mut self, targets: &[String], keep_going: bool) -> Result<BuildResult> {
-        let mut command = Command::new(NIX);
-        command.args(["build", "-L"]);
-        if keep_going {
-            command.arg("--keep-going");
-        }
-        let output = command
-            .args(["--no-link", "--print-out-paths"])
-            .args(targets)
+        let output = nix_build_command(targets, keep_going, push_to_attic())
             .stderr(Stdio::inherit())
             .output()
             .with_context(|| format!("failed to execute {NIX}"))?;
@@ -342,6 +363,45 @@ mod tests {
             .iter()
             .zip(expected_suffixes)
             .all(|(target, suffix)| target == &format!("path:/repo#{suffix}")));
+    }
+
+    #[test]
+    fn caps_substitution_concurrency_when_pushing_to_attic() {
+        let command = nix_build_command(&["flake#one".to_owned()], true, true);
+        let arguments: Vec<_> = command
+            .get_args()
+            .map(|argument| argument.to_string_lossy())
+            .collect();
+        assert_eq!(
+            arguments,
+            [
+                "build",
+                "-L",
+                "--keep-going",
+                "--option",
+                "max-substitution-jobs",
+                "4",
+                "--option",
+                "http-connections",
+                "8",
+                "--no-link",
+                "--print-out-paths",
+                "flake#one",
+            ]
+        );
+    }
+
+    #[test]
+    fn leaves_substitution_concurrency_uncapped_without_attic() {
+        let command = nix_build_command(&["flake#one".to_owned()], false, false);
+        let arguments: Vec<_> = command
+            .get_args()
+            .map(|argument| argument.to_string_lossy())
+            .collect();
+        assert_eq!(
+            arguments,
+            ["build", "-L", "--no-link", "--print-out-paths", "flake#one",]
+        );
     }
 
     #[test]
