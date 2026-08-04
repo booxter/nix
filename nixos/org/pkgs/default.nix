@@ -4,6 +4,9 @@ let
 in
 {
   degoog = degoogPackage;
+  degoog-settings = pkgs.callPackage ./degoog-settings {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
   degoog-devinside-extensions = pkgs.callPackage ./degoog/devinside-extensions.nix { };
   degoog-georgvwt-extensions = pkgs.callPackage ./degoog/georgvwt-extensions.nix { };
   degoog-official-extensions = pkgs.callPackage ./degoog/official-extensions.nix {

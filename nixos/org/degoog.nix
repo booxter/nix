@@ -4,6 +4,7 @@
   lib,
   orgPkgs,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -80,29 +81,13 @@ let
     "stackexchange_api_key"
     "tmdb_api_key"
   ];
-  mergePluginSettings = pkgs.writeShellApplication {
-    name = "degoog-merge-plugin-settings";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.jq
-    ];
-    text = ''
-      target=${lib.escapeShellArg pluginSettingsFile}
-      desired=${lib.escapeShellArg config.sops.templates."degoog-plugin-settings.json".path}
-      temporary="$(mktemp "$target.XXXXXX")"
-      trap 'rm -f "$temporary"' EXIT
-
-      if [[ -f "$target" ]]; then
-        jq --slurp '.[0] * .[1]' "$target" "$desired" > "$temporary"
-      else
-        jq '.' "$desired" > "$temporary"
-      fi
-
-      chmod 0600 "$temporary"
-      mv -f "$temporary" "$target"
-      trap - EXIT
-    '';
-  };
+  mergePluginSettingsCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe orgPkgs.degoog-settings)
+    "--target"
+    pluginSettingsFile
+    "--desired"
+    config.sops.templates."degoog-plugin-settings.json".path
+  ];
 in
 {
   sops.secrets = lib.genAttrs (map (name: "degoog/${name}") secretNames) (_: {
@@ -194,7 +179,7 @@ in
       ExecStart = lib.getExe degoogPackage;
       ExecStartPre = [
         "${pkgs.coreutils}/bin/rm -f ${socketPath}"
-        (lib.getExe mergePluginSettings)
+        mergePluginSettingsCommand
       ];
       EnvironmentFile = config.sops.templates."degoog.env".path;
       User = serviceUser;
