@@ -14,6 +14,7 @@ pythonPackages.buildPythonApplication {
   src = ./.;
 
   build-system = [ pythonPackages.setuptools ];
+  dependencies = [ pythonPackages.pydantic ];
 
   nativeCheckInputs = [
     pythonPackages.mypy

@@ -22,8 +22,8 @@ class Pmxcfs:
     interval_seconds: float = 1.0
     sleep: Callable[[float], None] = time.sleep
 
-    def wait_writable(self, destination: Path, stderr: TextIO) -> None:
-        probe = destination.with_name(f"{destination.name}.probe.{os.getpid()}")
+    def wait_writable(self, directory: Path, purpose: str, stderr: TextIO) -> None:
+        probe = directory / f".proxmox-host-tools.probe.{os.getpid()}"
         try:
             for attempt in range(self.attempts):
                 try:
@@ -33,22 +33,20 @@ class Pmxcfs:
                 except OSError:
                     if attempt == 0:
                         print(
-                            "waiting for writable Proxmox cluster filesystem "
-                            f"before installing {destination}",
+                            f"waiting for writable Proxmox cluster filesystem before {purpose}",
                             file=stderr,
                         )
                     if attempt + 1 < self.attempts:
                         self.sleep(self.interval_seconds)
             raise Error(
-                "timed out waiting for writable Proxmox cluster filesystem "
-                f"before installing {destination}"
+                f"timed out waiting for writable Proxmox cluster filesystem before {purpose}"
             )
         finally:
             with suppress(OSError):
                 probe.unlink()
 
     def copy(self, source: Path, destination: Path, stderr: TextIO) -> None:
-        self.wait_writable(destination, stderr)
+        self.wait_writable(destination.parent, f"installing {destination}", stderr)
         temporary = destination.with_name(f"{destination.name}.tmp.{os.getpid()}")
         try:
             with source.open("rb") as source_file, temporary.open("wb") as destination_file:

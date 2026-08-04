@@ -7,9 +7,11 @@ name = "proxmox-host-tools"
 version = "0.1.0"
 description = "Host integration tools for Proxmox VE nodes"
 requires-python = ">=3.11"
+dependencies = ["pydantic"]
 
 [project.scripts]
 proxmox-install-api-certificate = "proxmox_host_tools.certificate:main"
+proxmox-configure-oidc = "proxmox_host_tools.oidc:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

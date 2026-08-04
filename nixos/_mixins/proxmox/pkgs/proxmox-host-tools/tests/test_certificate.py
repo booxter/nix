@@ -54,7 +54,7 @@ def test_times_out_cleanly_when_pmxcfs_is_unavailable(tmp_path: Path) -> None:
     pmxcfs = Pmxcfs(attempts=2, interval_seconds=0, sleep=lambda _: None)
 
     with pytest.raises(Error, match="timed out"):
-        pmxcfs.wait_writable(destination, stderr)
+        pmxcfs.wait_writable(destination.parent, f"installing {destination}", stderr)
 
     assert "waiting for writable" in stderr.getvalue()
     assert not destination.parent.exists()
