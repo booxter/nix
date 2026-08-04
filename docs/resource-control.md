@@ -28,26 +28,41 @@ CPU quotas are reserved for workloads that need a hard throughput ceiling.
 | Lightweight | 512 MiB | 1 GiB | 128 | Probes, sync jobs, reconcilers |
 | Medium | 2 GiB | 4 GiB | 512 | Indexers and bounded processing |
 | Heavy | Explicit | Explicit | Explicit | Builds, LLMs, databases, backups |
+| Critical | None | None | Explicit | Services deliberately kept unconstrained |
 
 Background services run in `background.slice`. Oneshot jobs must also declare
 an activation deadline with `TimeoutStartSec`; long-running services use an
-appropriate runtime or application-level deadline. Critical services may use
-memory protection and oomd avoidance, but only through explicit configuration.
+appropriate runtime or application-level deadline.
+
+Critical services remain in the normal system slice with no generic memory or
+CPU ceiling. They use `ManagedOOMPreference=avoid`, not `omit`, so oomd may
+still select them as a last resort. `MemoryLow` and task limits are optional
+explicit settings rather than fleet-wide reservations. Classification is
+host-specific and should reflect which services are more important to preserve
+during resource pressure.
 
 ## Nix Interface
 
-Resource policy stays adjacent to each service and expands to ordinary systemd
-settings. A shared helper should support both NixOS `serviceConfig` and Home
-Manager `Service` values:
+Host inventory assigns systemd unit names to classes. Units omitted from the
+inventory remain unconstrained beyond the host baseline. Fixed classes use
+mergeable lists; heavy services supply explicit budgets:
 
 ```nix
-Service = resourceControl.background {
-  memoryHigh = "512M";
-  memoryMax = "1G";
-  timeoutStartSec = "30m";
+resourceControl = {
+  systemServices = {
+    lightweight = [ "jellyfin-exporter" ];
+    critical = [ "jellyfin" ];
+    heavy.ollama = {
+      memoryHigh = "80%";
+      memoryMax = "90%";
+    };
+  };
+
+  userServices.lightweight = [ "sync-git-mains" ];
 };
 ```
 
-Do not discover or rewrite services by inspecting the evaluated timer or
-launchd configuration. Migrate in-tree services explicitly, and document
-host-specific exceptions beside their service definitions.
+`systemServices` names system-manager units; `userServices` names Linux
+systemd user-manager units. Class semantics live in the shared module. Reject
+duplicate classifications and incomplete heavy budgets. Do not discover
+services by inspecting evaluated timer or launchd configuration.
