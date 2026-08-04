@@ -4,11 +4,11 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from git_command_runner import SubprocessGitRunner
 from sync_repo.cli import main
 from sync_repo.git import (
     RepositorySpec,
     RepositorySynchronizer,
-    SubprocessGitRunner,
     repository_specs,
 )
 

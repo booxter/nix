@@ -7,7 +7,7 @@ name = "sync-repo"
 version = "0.1.0"
 description = "Synchronize personal Git repositories on demand"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = ["git-command-runner"]
 
 [project.scripts]
 sync-repo = "sync_repo.cli:main"

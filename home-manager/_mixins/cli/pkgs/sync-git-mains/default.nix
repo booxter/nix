@@ -1,5 +1,6 @@
 {
   git,
+  gitCommandRunner,
   lib,
   openssh,
   python3,
@@ -16,6 +17,8 @@ pythonPackages.buildPythonApplication {
   src = ./.;
 
   build-system = [ pythonPackages.setuptools ];
+
+  dependencies = [ gitCommandRunner ];
 
   nativeCheckInputs = with pythonPackages; [
     git

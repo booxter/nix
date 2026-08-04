@@ -2,15 +2,21 @@ from collections import deque
 from collections.abc import Sequence
 from pathlib import Path
 
-from sync_git_mains.git import GitResult, RepositorySynchronizer
+from git_command_runner import GitResult
+from sync_git_mains.git import RepositorySynchronizer
 
 
 class FakeGitRunner:
     def __init__(self, results: Sequence[GitResult]) -> None:
         self._results = deque(results)
-        self.calls: list[tuple[Path, tuple[str, ...]]] = []
+        self.calls: list[tuple[Path | None, tuple[str, ...]]] = []
 
-    def run(self, repository: Path, arguments: Sequence[str]) -> GitResult:
+    def run(
+        self,
+        arguments: Sequence[str],
+        *,
+        repository: Path | None = None,
+    ) -> GitResult:
         self.calls.append((repository, tuple(arguments)))
         return self._results.popleft()
 

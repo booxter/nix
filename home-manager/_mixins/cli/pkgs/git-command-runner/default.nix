@@ -1,24 +1,20 @@
 {
   git,
-  gitCommandRunner,
   lib,
-  openssh,
-  python3,
+  python,
   ruff,
 }:
 let
-  pythonPackages = python3.pkgs;
+  pythonPackages = python.pkgs;
 in
-pythonPackages.buildPythonApplication {
-  pname = "sync-repo";
+pythonPackages.buildPythonPackage {
+  pname = "git-command-runner";
   version = "0.1.0";
   pyproject = true;
 
   src = ./.;
 
   build-system = [ pythonPackages.setuptools ];
-
-  dependencies = [ gitCommandRunner ];
 
   nativeCheckInputs = with pythonPackages; [
     git
@@ -28,28 +24,18 @@ pythonPackages.buildPythonApplication {
     pytest-cov
   ];
 
-  makeWrapperArgs = [
-    "--prefix PATH : ${
-      lib.makeBinPath [
-        git
-        openssh
-      ]
-    }"
-  ];
-
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/sync_repo
+    mypy src/git_command_runner
   '';
 
-  pythonImportsCheck = [ "sync_repo" ];
+  pythonImportsCheck = [ "git_command_runner" ];
 
   meta = {
-    description = "Synchronize a personal Git repository on demand";
+    description = "Typed subprocess runner for internal Git applications";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
-    mainProgram = "sync-repo";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }

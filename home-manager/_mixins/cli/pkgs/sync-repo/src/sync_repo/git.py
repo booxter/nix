@@ -1,9 +1,9 @@
-import subprocess
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
-from typing import Protocol
+
+from git_command_runner import GitResult, GitRunner, SubprocessGitRunner, stderr_suffix
 
 
 @dataclass(frozen=True)
@@ -25,48 +25,6 @@ class SyncError(Exception):
 
 class RebaseFailed(SyncError):
     """A rebase stopped for manual conflict resolution."""
-
-
-@dataclass(frozen=True)
-class GitResult:
-    returncode: int
-    stdout: str
-    stderr: str
-
-
-class GitRunner(Protocol):
-    def run(
-        self,
-        arguments: Sequence[str],
-        *,
-        repository: Path | None = None,
-    ) -> GitResult:
-        """Run Git and capture its result."""
-
-
-@dataclass(frozen=True)
-class SubprocessGitRunner:
-    executable: str = "git"
-    environment: Mapping[str, str] | None = None
-
-    def run(
-        self,
-        arguments: Sequence[str],
-        *,
-        repository: Path | None = None,
-    ) -> GitResult:
-        command = [self.executable]
-        if repository is not None:
-            command.extend(["-C", str(repository)])
-        completed = subprocess.run(
-            [*command, *arguments],
-            check=False,
-            capture_output=True,
-            encoding="utf-8",
-            errors="replace",
-            env=self.environment,
-        )
-        return GitResult(completed.returncode, completed.stdout, completed.stderr)
 
 
 def repository_specs(
@@ -94,14 +52,9 @@ def repository_specs(
     }
 
 
-def _detail(result: GitResult) -> str:
-    message = result.stderr.strip()
-    return f": {message}" if message else ""
-
-
 def _divergence(result: GitResult, upstream: str) -> tuple[int, int]:
     if result.returncode != 0:
-        raise SyncError(f"cannot compare local branch with {upstream}{_detail(result)}")
+        raise SyncError(f"cannot compare local branch with {upstream}{stderr_suffix(result)}")
     fields = result.stdout.split()
     if len(fields) != 2:
         raise SyncError(f"cannot parse divergence from {upstream}: {result.stdout.strip()}")
@@ -140,13 +93,13 @@ class RepositorySynchronizer:
             ["branch", "--set-upstream-to", upstream, branch],
         )
         if configured.returncode != 0:
-            raise SyncError(f"cannot set upstream to {upstream}{_detail(configured)}")
+            raise SyncError(f"cannot set upstream to {upstream}{stderr_suffix(configured)}")
         return upstream
 
     def _push_new_branch(self, path: Path, branch: str) -> None:
         pushed = self._run(path, ["push", "--quiet", "--set-upstream", "origin", branch])
         if pushed.returncode != 0:
-            raise SyncError(f"push failed{_detail(pushed)}")
+            raise SyncError(f"push failed{stderr_suffix(pushed)}")
 
     def _compare(self, path: Path, upstream: str) -> tuple[int, int]:
         result = self._run(
@@ -160,7 +113,7 @@ class RepositorySynchronizer:
             spec.path.parent.mkdir(parents=True, exist_ok=True)
             cloned = self._git.run(["clone", "--quiet", spec.remote, str(spec.path)])
             if cloned.returncode != 0:
-                raise SyncError(f"clone failed{_detail(cloned)}")
+                raise SyncError(f"clone failed{stderr_suffix(cloned)}")
             return SyncOutcome.CLONED
 
         repository = self._run(spec.path, ["rev-parse", "--git-dir"])
@@ -177,7 +130,7 @@ class RepositorySynchronizer:
             ["fetch", "--no-auto-maintenance", "--quiet", "--prune", "origin"],
         )
         if fetched.returncode != 0:
-            raise SyncError(f"fetch from origin failed{_detail(fetched)}")
+            raise SyncError(f"fetch from origin failed{stderr_suffix(fetched)}")
 
         upstream = self._upstream(spec.path, branch)
         if upstream is None:
@@ -198,5 +151,5 @@ class RepositorySynchronizer:
 
         pushed = self._run(spec.path, ["push", "--quiet"])
         if pushed.returncode != 0:
-            raise SyncError(f"push failed{_detail(pushed)}")
+            raise SyncError(f"push failed{stderr_suffix(pushed)}")
         return SyncOutcome.PUSHED

@@ -8,7 +8,8 @@
 }:
 let
   cfg = osConfig.host.syncGitMains;
-  syncGitMains = pkgs.callPackage ./pkgs/sync-git-mains { };
+  cliPkgs = import ./pkgs { inherit pkgs; };
+  syncGitMains = cliPkgs.sync-git-mains;
   syncGitMainsCommand = [ (lib.getExe syncGitMains) ] ++ cfg.roots;
 in
 {
