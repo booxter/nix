@@ -18,6 +18,8 @@ def write_text_atomic(
     content: str,
     *,
     mode: int = 0o600,
+    uid: int | None = None,
+    gid: int | None = None,
     encoding: str = "utf-8",
 ) -> None:
     """Durably replace a text file without exposing partial content."""
@@ -29,6 +31,12 @@ def write_text_atomic(
     temporary = Path(temporary_name)
     try:
         with os.fdopen(descriptor, mode="w", encoding=encoding) as output:
+            if uid is not None or gid is not None:
+                os.fchown(
+                    output.fileno(),
+                    uid if uid is not None else -1,
+                    gid if gid is not None else -1,
+                )
             os.fchmod(output.fileno(), mode)
             output.write(content)
             output.flush()
