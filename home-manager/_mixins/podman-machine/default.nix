@@ -14,105 +14,24 @@ let
     memory = ${toString cfg.memoryMiB}
     provider = ${builtins.toJSON cfg.provider}
   '';
-  podmanMachineEnsure = pkgs.writeShellApplication {
-    name = "podman-machine-ensure";
-    runtimeInputs = [
-      cfg.package
-      pkgs.jq
-    ];
-    text = ''
-      machine_name=${lib.escapeShellArg cfg.name}
-      expected_provider=${lib.escapeShellArg cfg.provider}
-      expected_cpus=${toString cfg.cpus}
-      expected_memory=${toString cfg.memoryMiB}
-      minimum_disk_size=${toString cfg.diskSizeGiB}
-      export CONTAINERS_CONF_OVERRIDE=${lib.escapeShellArg machineConfig}
-
-      all_machines="$(podman machine list --all-providers --format json)"
-      matching_machines="$(
-        jq --arg name "$machine_name" '[.[] | select(.Name == $name)]' <<<"$all_machines"
-      )"
-      machine_count="$(jq 'length' <<<"$matching_machines")"
-
-      if (( machine_count > 1 )); then
-        printf 'Multiple Podman machines named %s exist across providers; refusing to choose one.\n' \
-          "$machine_name" >&2
-        exit 1
-      fi
-
-      if (( machine_count == 1 )); then
-        actual_provider="$(jq -r '.[0].VMType' <<<"$matching_machines")"
-        if [[ "$actual_provider" != "$expected_provider" ]]; then
-          printf 'Podman machine %s uses provider %s; expected %s.\n' \
-            "$machine_name" "$actual_provider" "$expected_provider" >&2
-          printf 'Remove or rename it manually before allowing the managed machine to be created.\n' >&2
-          exit 1
-        fi
-      else
-        podman machine init \
-          --cpus="$expected_cpus" \
-          --disk-size="$minimum_disk_size" \
-          --memory="$expected_memory" \
-          "$machine_name"
-      fi
-
-      inspect_machine() {
-        podman machine inspect "$machine_name"
-      }
-
-      machine_json="$(inspect_machine)"
-      actual_cpus="$(jq -r '.[0].Resources.CPUs' <<<"$machine_json")"
-      actual_memory="$(jq -r '.[0].Resources.Memory' <<<"$machine_json")"
-      actual_disk_size="$(jq -r '.[0].Resources.DiskSize' <<<"$machine_json")"
-      state="$(jq -r '.[0].State' <<<"$machine_json")"
-
-      set_args=()
-      if [[ "$actual_cpus" != "$expected_cpus" ]]; then
-        set_args+=(--cpus="$expected_cpus")
-      fi
-      if [[ "$actual_memory" != "$expected_memory" ]]; then
-        set_args+=(--memory="$expected_memory")
-      fi
-      if (( actual_disk_size < minimum_disk_size )); then
-        set_args+=(--disk-size="$minimum_disk_size")
-      fi
-
-      restart_on_error=false
-      restart_machine() {
-        if [[ "$restart_on_error" == true ]]; then
-          podman machine start --quiet "$machine_name" || true
-        fi
-      }
-      trap restart_machine EXIT
-
-      if (( ''${#set_args[@]} > 0 )); then
-        if [[ "$state" != stopped ]]; then
-          restart_on_error=true
-          podman machine stop "$machine_name"
-        fi
-
-        podman machine set "''${set_args[@]}" "$machine_name"
-
-        machine_json="$(inspect_machine)"
-        actual_cpus="$(jq -r '.[0].Resources.CPUs' <<<"$machine_json")"
-        actual_memory="$(jq -r '.[0].Resources.Memory' <<<"$machine_json")"
-        actual_disk_size="$(jq -r '.[0].Resources.DiskSize' <<<"$machine_json")"
-        if [[ "$actual_cpus" != "$expected_cpus" || "$actual_memory" != "$expected_memory" ]] \
-          || (( actual_disk_size < minimum_disk_size )); then
-          printf 'Podman machine %s did not converge to the requested resources.\n' "$machine_name" >&2
-          exit 1
-        fi
-        state=stopped
-      fi
-
-      trap - EXIT
-      restart_on_error=false
-
-      if [[ "$state" != running ]]; then
-        exec podman machine start --quiet "$machine_name"
-      fi
-    '';
+  podmanMachineEnsure = pkgs.callPackage ./pkgs/podman-machine-ensure {
+    podman = cfg.package;
   };
+  ensureArguments = [
+    (lib.getExe podmanMachineEnsure)
+    "--name"
+    cfg.name
+    "--provider"
+    cfg.provider
+    "--cpus"
+    (toString cfg.cpus)
+    "--memory"
+    (toString cfg.memoryMiB)
+    "--disk-size"
+    (toString cfg.diskSizeGiB)
+    "--containers-config"
+    "${machineConfig}"
+  ];
 in
 {
   options.programs.podman-machine = {
@@ -182,7 +101,7 @@ in
     launchd.agents.podman-machine = lib.mkIf cfg.autoStart {
       enable = true;
       config = {
-        ProgramArguments = [ (lib.getExe podmanMachineEnsure) ];
+        ProgramArguments = ensureArguments;
         RunAtLoad = true;
         AbandonProcessGroup = true;
         ProcessType = "Background";
