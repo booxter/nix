@@ -13,7 +13,6 @@ from aiopyarr.models.const import ProtocolType
 from prometheus_client.parser import text_string_to_metric_families
 from pydantic import TypeAdapter
 
-from lidarr_cue_splitter.app import CueSplitterService
 from lidarr_cue_splitter.config import read_api_key
 from lidarr_cue_splitter.errors import CueSplitterError, ManualMatchRequired, SourceInvalid
 from lidarr_cue_splitter.lidarr import LidarrClient
@@ -34,6 +33,7 @@ from lidarr_cue_splitter.models import (
     QueueRecord,
     UnflacInput,
 )
+from lidarr_cue_splitter.service import CueSplitterService
 from lidarr_cue_splitter.state import Job, StateStore
 
 

@@ -4,7 +4,7 @@ import hashlib
 import re
 import subprocess
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Protocol
 
 from pydantic import TypeAdapter, ValidationError
 
@@ -103,6 +103,14 @@ def cue_already_split_audio_files(cue: Path) -> list[Path] | None:
     if len(set(audio_files)) != track_count:
         return None
     return audio_files
+
+
+class MediaRunner(Protocol):
+    def inspect(self, cue: Path) -> list[UnflacInput]: ...
+
+    def split(self, cue: Path, output_dir: Path) -> list[Path]: ...
+
+    def verify_flac(self, path: Path) -> None: ...
 
 
 class UnflacRunner:
