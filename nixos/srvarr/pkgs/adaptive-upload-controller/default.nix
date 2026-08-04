@@ -1,5 +1,4 @@
 {
-  iproute2,
   lib,
   python3,
   ruff,
@@ -21,6 +20,7 @@ pythonPackages.buildPythonApplication {
     httpx
     prometheus-client
     pydantic
+    pyroute2
     transmissionCommon
   ];
 
@@ -29,10 +29,6 @@ pythonPackages.buildPythonApplication {
     pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
-  ];
-
-  makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ iproute2 ]}"
   ];
 
   preCheck = ''
@@ -48,6 +44,6 @@ pythonPackages.buildPythonApplication {
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "adaptive-upload-controller";
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.linux;
   };
 }

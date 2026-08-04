@@ -26,6 +26,7 @@ from adaptive_upload_controller.runtime import (
     transmission_get_current_upload_limit_enabled,
     transmission_get_current_upload_limit_kbps,
 )
+from adaptive_upload_controller.traffic_control import PyrouteTrafficControl
 
 
 def policy_args(**overrides):
@@ -91,6 +92,38 @@ def metric_value(text, name, labels=None):
             if sample.name == name and sample.labels == expected_labels:
                 return sample.value
     raise AssertionError(f"missing metric {name} with labels {expected_labels}")
+
+
+class NetlinkMessage:
+    def __init__(self, **attributes):
+        self.attributes = attributes
+
+    def get_attr(self, name):
+        return self.attributes.get(name)
+
+
+class RecordingNetlink:
+    def __init__(self):
+        self.route_requests = []
+        self.tc_requests = []
+        self.closed = False
+
+    def route(self, command, **attributes):
+        self.route_requests.append((command, attributes))
+        return [NetlinkMessage(RTA_OIF=2)]
+
+    def get_links(self, *indexes):
+        links = [NetlinkMessage(IFLA_IFNAME="ens18")]
+        return links if not indexes or indexes == (2,) else []
+
+    def link_lookup(self, **attributes):
+        return [2] if attributes == {"ifname": "ens18"} else []
+
+    def tc(self, command, kind, index, handle, **attributes):
+        self.tc_requests.append((command, kind, index, handle, attributes))
+
+    def close(self):
+        self.closed = True
 
 
 def test_collects_only_external_playing_media_bitrate():
@@ -217,3 +250,37 @@ def test_endpoint_and_transmission_value_normalization():
     assert transmission_get_current_upload_limit_kbps({"speed_limit_up": "123"}) is None
     assert transmission_get_current_upload_limit_kbps({"speed_limit_up": True}) is None
     assert transmission_get_current_upload_limit_enabled({"speed_limit_up_enabled": True})
+
+
+def test_native_traffic_control_resolves_route_and_updates_qos():
+    netlink = RecordingNetlink()
+    traffic_control = PyrouteTrafficControl(netlink)
+
+    interface = traffic_control.default_egress_interface("1.1.1.1")
+    traffic_control.apply_shape(interface, "8mbit")
+    traffic_control.close()
+
+    assert interface == "ens18"
+    assert netlink.route_requests == [("get", {"dst": "1.1.1.1"})]
+    assert netlink.tc_requests == [
+        (
+            "change-class",
+            "htb",
+            2,
+            "1:10",
+            {"parent": "1:1", "rate": "8mbit", "ceil": "8mbit"},
+        ),
+        (
+            "change",
+            "cake",
+            2,
+            "10:",
+            {
+                "parent": "1:10",
+                "bandwidth": "8mbit",
+                "diffserv_mode": "besteffort",
+                "wash": True,
+            },
+        ),
+    ]
+    assert netlink.closed

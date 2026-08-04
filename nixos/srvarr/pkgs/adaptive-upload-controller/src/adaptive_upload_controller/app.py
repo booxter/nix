@@ -15,6 +15,7 @@ from .runtime import (
     run_tc_applier,
     run_transmission_applier,
 )
+from .traffic_control import PyrouteTrafficControl
 
 
 def parse_args() -> argparse.Namespace:
@@ -200,5 +201,12 @@ def main() -> int:
     if args.command == "apply-transmission":
         return run_transmission_applier(_transmission_runtime_config(args))
     if args.command == "apply-tc":
-        return run_tc_applier(_traffic_control_runtime_config(args))
+        traffic_control = PyrouteTrafficControl.open()
+        try:
+            return run_tc_applier(
+                _traffic_control_runtime_config(args),
+                traffic_control,
+            )
+        finally:
+            traffic_control.close()
     return _unknown_command(args.command)

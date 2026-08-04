@@ -4,7 +4,6 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 import logging
 from pathlib import Path
-import subprocess
 import time
 
 from transmission_common.transmission import (
@@ -21,6 +20,7 @@ from .policy import (
     load_policy_state,
     save_policy_state,
 )
+from .traffic_control import TrafficControl
 
 
 LOG = logging.getLogger("adaptive-upload-controller")
@@ -177,74 +177,10 @@ def run_transmission_applier(config: TransmissionRuntimeConfig) -> int:
         time.sleep(sleep_for)
 
 
-def determine_default_egress_interface(route_probe_address: str) -> str:
-    result = subprocess.run(
-        ["ip", "-o", "route", "get", route_probe_address],
-        check=True,
-        text=True,
-        capture_output=True,
-    )
-    tokens = result.stdout.split()
-    for index, token in enumerate(tokens[:-1]):
-        if token == "dev":
-            return tokens[index + 1]
-    raise ControllerError("failed to determine default egress interface")
-
-
-def run_command(
-    command: list[str],
-    *,
-    check: bool = True,
-) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        command,
-        check=check,
-        text=True,
-        capture_output=True,
-    )
-
-
-def apply_tc_shape(iface: str, tc_rate: str) -> None:
-    commands = [
-        [
-            "tc",
-            "class",
-            "change",
-            "dev",
-            iface,
-            "parent",
-            "1:1",
-            "classid",
-            "1:10",
-            "htb",
-            "rate",
-            tc_rate,
-            "ceil",
-            tc_rate,
-        ],
-        [
-            "tc",
-            "qdisc",
-            "change",
-            "dev",
-            iface,
-            "parent",
-            "1:10",
-            "handle",
-            "10:",
-            "cake",
-            "bandwidth",
-            tc_rate,
-            "besteffort",
-            "wash",
-        ],
-    ]
-
-    for command in commands:
-        run_command(command)
-
-
-def run_tc_applier(config: TrafficControlRuntimeConfig) -> int:
+def run_tc_applier(
+    config: TrafficControlRuntimeConfig,
+    traffic_control: TrafficControl,
+) -> int:
     last_applied: tuple[str, str] | None = None
 
     while True:
@@ -256,10 +192,10 @@ def run_tc_applier(config: TrafficControlRuntimeConfig) -> int:
                 transmission_headroom_fraction=(config.transmission_headroom_fraction),
                 max_state_age_seconds=config.max_state_age_seconds,
             )
-            iface = determine_default_egress_interface(config.route_probe_address)
+            iface = traffic_control.default_egress_interface(config.route_probe_address)
             desired = (iface, state.target_tc_rate)
             if desired != last_applied:
-                apply_tc_shape(iface=iface, tc_rate=state.target_tc_rate)
+                traffic_control.apply_shape(iface, state.target_tc_rate)
                 LOG.info(
                     "updated tc WireGuard upload shaping on %s to %s (reason=%s)",
                     iface,
@@ -269,11 +205,6 @@ def run_tc_applier(config: TrafficControlRuntimeConfig) -> int:
                 last_applied = desired
         except ControllerError as error:
             LOG.warning("skipping tc apply iteration: %s", error)
-        except subprocess.CalledProcessError as error:
-            LOG.warning(
-                "skipping tc apply iteration after command failure: %s",
-                error.stderr.strip() if error.stderr else error,
-            )
         except Exception:
             LOG.exception("skipping tc apply iteration after unexpected failure")
 

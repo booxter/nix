@@ -7,7 +7,7 @@ name = "adaptive-upload-controller"
 version = "0.1.0"
 description = "Coordinate Jellyfin-aware torrent upload limits"
 requires-python = ">=3.11"
-dependencies = ["httpx", "prometheus-client", "pydantic", "transmission-common"]
+dependencies = ["httpx", "prometheus-client", "pydantic", "pyroute2", "transmission-common"]
 
 [project.scripts]
 adaptive-upload-controller = "adaptive_upload_controller.app:main"
