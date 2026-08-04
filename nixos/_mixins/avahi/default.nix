@@ -3,7 +3,6 @@
   hostSpecName,
   hostInventory,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -11,26 +10,28 @@ let
 
   aliasAddress = hostInventory.toHostIpv4Address hostSpec;
   aliases = lib.unique ((hostSpec.localDnsAliases or [ ]) ++ config.host.internalHttps.localAliases);
-  aliasNames = builtins.map hostInventory.toLocalDnsName aliases;
-  publishAliases = pkgs.writeShellScript "avahi-publish-aliases" ''
-    set -euo pipefail
-
-    pids=()
-    cleanup() {
-      trap - EXIT
-      if [ "''${#pids[@]}" -gt 0 ]; then
-        kill "''${pids[@]}" 2>/dev/null || true
-      fi
-    }
-    trap cleanup INT TERM EXIT
-
-    for alias in ${lib.escapeShellArgs aliasNames}; do
-      ${config.services.avahi.package}/bin/avahi-publish-address -f -R "$alias" ${lib.escapeShellArg aliasAddress} &
-      pids+=("$!")
-    done
-
-    wait -n "''${pids[@]}"
-  '';
+  aliasService = alias: {
+    name = "avahi-alias-${alias}";
+    value = {
+      description = "Avahi mDNS host alias ${hostInventory.toLocalDnsName alias}";
+      after = [ "avahi-daemon.service" ];
+      requires = [ "avahi-daemon.service" ];
+      wantedBy = [ "multi-user.target" ];
+      serviceConfig = {
+        ExecStart = lib.escapeShellArgs [
+          "${config.services.avahi.package}/bin/avahi-publish-address"
+          "-f"
+          "-R"
+          (hostInventory.toLocalDnsName alias)
+          aliasAddress
+        ];
+        Restart = "on-failure";
+        RestartSec = "5s";
+        User = "avahi";
+        Group = "avahi";
+      };
+    };
+  };
 in
 {
   services.avahi = {
@@ -47,18 +48,5 @@ in
     hostName = hostSpec.name;
   };
 
-  systemd.services.avahi-aliases = lib.mkIf (aliases != [ ]) {
-    description = "Avahi mDNS host aliases";
-    after = [ "avahi-daemon.service" ];
-    requires = [ "avahi-daemon.service" ];
-    wantedBy = [ "multi-user.target" ];
-    restartTriggers = [ publishAliases ];
-    serviceConfig = {
-      ExecStart = publishAliases;
-      Restart = "on-failure";
-      RestartSec = "5s";
-      User = "avahi";
-      Group = "avahi";
-    };
-  };
+  systemd.services = builtins.listToAttrs (builtins.map aliasService aliases);
 }
