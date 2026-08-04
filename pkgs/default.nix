@@ -2,8 +2,13 @@
 pkgs:
 let
   appPackages = import ../apps pkgs;
+  atomicFileWrites = pkgs.python3Packages.callPackage ./atomic-file-writes { };
   gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
   hostInventory = import ../lib/inventory.nix { inherit (pkgs) lib; };
+  pkiCertificates = appPackages.issue-internal-service-cert;
+  sopsTools = import ../apps/sops/package.nix {
+    inherit hostInventory pkgs;
+  };
   gitPrecomposePatch = ../lib/patches/git-precompose-utf8-flex-array.patch;
   # Keep this as opt-in packages instead of overriding pkgs.git globally: Git
   # is a common build tool, so a global override can fan out into many rebuilds.
@@ -17,6 +22,8 @@ let
 in
 {
   debugserver = pkgs.callPackage ./debugserver { };
+
+  atomic-file-writes = atomicFileWrites;
 
   firefox-devtools-mcp = pkgs.callPackage ./firefox-devtools-mcp { };
 
@@ -38,14 +45,16 @@ in
 
   patch-context = pkgs.callPackage ./patch-context { };
 
-  pki-certificates = appPackages.issue-internal-service-cert;
+  pki-certificates = pkiCertificates;
 
   pki-rotation = pkgs.callPackage ./pki-rotation {
-    issueInternalServiceCert = appPackages.issue-internal-service-cert;
-    issueObservabilityCert = appPackages.issue-observability-cert;
+    inherit
+      atomicFileWrites
+      gitCommandRunner
+      pkiCertificates
+      sopsTools
+      ;
   };
 
-  sops-tools = import ../apps/sops/package.nix {
-    inherit hostInventory pkgs;
-  };
+  sops-tools = sopsTools;
 }

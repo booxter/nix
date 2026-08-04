@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pki-rotation"
+version = "0.1.0"
+description = "Inspect and rotate repository-managed internal PKI certificates"
+requires-python = ">=3.11"
+dependencies = [
+  "atomic-file-writes",
+  "cryptography",
+  "git-command-runner",
+  "pki-certificates",
+  "prometheus-client",
+  "pydantic",
+  "PyGithub",
+  "sops-tools",
+]
+
+[project.scripts]
+pki-rotation = "pki_rotation.cli:main"
+pki-rotation-git-askpass = "pki_rotation.askpass:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pki_rotation = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=pki_rotation --cov-report=term-missing --cov-fail-under=80"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/pki_rotation"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100
