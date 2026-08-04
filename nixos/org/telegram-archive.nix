@@ -4,6 +4,7 @@
   lib,
   orgPkgs,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -21,6 +22,7 @@ let
   viewerUnit = "telegram-archive-viewer.service";
   tgService = hostInventory.servicesById.tg;
   externalOrigin = "https://${tgService.id}.${hostInventory.site.lan.domain}";
+  serviceTools = orgPkgs.telegram-archive-service-tools;
 
   secretAttrs = {
     apiId = "telegramArchiveApiId";
@@ -71,88 +73,34 @@ let
     SHOW_STATS = "true";
   };
 
-  authEnvironmentArgs = lib.concatMapStringsSep " " (
-    name: lib.escapeShellArg "--setenv=${name}=${schedulerEnvironment.${name}}"
-  ) (builtins.attrNames schedulerEnvironment);
-
-  chatIdsFromCredential = ''
-    credentials_dir="''${CREDENTIALS_DIRECTORY:?systemd credentials are required}"
-    chat_ids="$(${lib.getExe pkgs.jq} -er '
-      if type == "array" and length > 0 and all(.[]; type == "number" and floor == .)
-      then map(tostring) | join(",")
-      else error("chat-ids must be a non-empty JSON array of integer Telegram chat IDs")
-      end
-    ' "$credentials_dir/chat-ids")"
-  '';
-
-  schedulerWrapper = pkgs.writeShellApplication {
-    name = "telegram-archive-scheduler-wrapper";
-    runtimeInputs = [ pkgs.coreutils ];
-    text = ''
-      set -euo pipefail
-
-      ${chatIdsFromCredential}
-
-      read_secret() {
-        tr -d '\r\n' < "$credentials_dir/$1"
-      }
-
-      TELEGRAM_API_ID="$(read_secret api-id)"
-      TELEGRAM_API_HASH="$(read_secret api-hash)"
-      TELEGRAM_PHONE="$(read_secret phone)"
-      export TELEGRAM_API_ID TELEGRAM_API_HASH TELEGRAM_PHONE
-      export CHAT_IDS="$chat_ids"
-      export DISPLAY_CHAT_IDS="$chat_ids"
-
-      exec ${lib.getExe orgPkgs.telegram-archive} "$@"
-    '';
-  };
-
-  viewerWrapper = pkgs.writeShellApplication {
-    name = "telegram-archive-viewer-wrapper";
-    text = ''
-      set -euo pipefail
-
-      ${chatIdsFromCredential}
-      export DISPLAY_CHAT_IDS="$chat_ids"
-
-      exec ${orgPkgs.telegram-archive}/bin/telegram-archive-viewer \
-        --host 127.0.0.1 \
-        --port ${toString viewerPort} \
-        --proxy-headers \
-        --forwarded-allow-ips 127.0.0.1
-    '';
-  };
-
-  telegramArchiveAuth = pkgs.writeShellApplication {
-    name = "telegram-archive-auth";
-    runtimeInputs = [ pkgs.systemd ];
-    text = ''
-      set -euo pipefail
-
-      if systemctl is-active --quiet telegram-archive-scheduler.service; then
-        echo "telegram-archive-scheduler.service is running; stop it before authenticating" >&2
-        exit 1
-      fi
-
-      exec systemd-run \
-        --collect \
-        --wait \
-        --pty \
-        --unit=telegram-archive-auth \
-        --property=User=${serviceUser} \
-        --property=Group=${serviceUser} \
-        --property=StateDirectory=${serviceName} \
-        --property=StateDirectoryMode=0700 \
-        --property=WorkingDirectory=${stateDir} \
-        --property=UMask=0077 \
-        --property=LoadCredential=api-id:${config.sops.secrets.${secretAttrs.apiId}.path} \
-        --property=LoadCredential=api-hash:${config.sops.secrets.${secretAttrs.apiHash}.path} \
-        --property=LoadCredential=phone:${config.sops.secrets.${secretAttrs.phone}.path} \
-        --property=LoadCredential=chat-ids:${config.sops.secrets.${secretAttrs.chatIds}.path} \
-        ${authEnvironmentArgs} \
-        ${schedulerWrapper}/bin/telegram-archive-scheduler-wrapper auth
-    '';
+  schedulerCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' serviceTools "telegram-archive-scheduler")
+    (lib.getExe orgPkgs.telegram-archive)
+    "schedule"
+  ];
+  viewerCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' serviceTools "telegram-archive-viewer")
+    "${orgPkgs.telegram-archive}/bin/telegram-archive-viewer"
+    "--host"
+    "127.0.0.1"
+    "--port"
+    (toString viewerPort)
+    "--proxy-headers"
+    "--forwarded-allow-ips"
+    "127.0.0.1"
+  ];
+  authConfig = (pkgs.formats.json { }).generate "telegram-archive-auth.json" {
+    executable = lib.getExe orgPkgs.telegram-archive;
+    scheduler_unit = schedulerUnit;
+    user = serviceUser;
+    state_directory = stateDir;
+    credentials = {
+      api_id = config.sops.secrets.${secretAttrs.apiId}.path;
+      api_hash = config.sops.secrets.${secretAttrs.apiHash}.path;
+      phone = config.sops.secrets.${secretAttrs.phone}.path;
+      chat_ids = config.sops.secrets.${secretAttrs.chatIds}.path;
+    };
+    environment = schedulerEnvironment;
   };
 
   commonServiceConfig = {
@@ -220,7 +168,12 @@ in
     };
   };
 
-  environment.systemPackages = [ telegramArchiveAuth ];
+  environment.systemPackages = [ serviceTools ];
+
+  environment.etc."telegram-archive/auth.json" = {
+    source = authConfig;
+    mode = "0400";
+  };
 
   systemd.services = {
     telegram-archive-migrate = {
@@ -256,7 +209,7 @@ in
       ];
       environment = schedulerEnvironment;
       serviceConfig = commonServiceConfig // {
-        ExecStart = "${schedulerWrapper}/bin/telegram-archive-scheduler-wrapper schedule";
+        ExecStart = schedulerCommand;
         LoadCredential = [
           "api-id:${config.sops.secrets.${secretAttrs.apiId}.path}"
           "api-hash:${config.sops.secrets.${secretAttrs.apiHash}.path}"
@@ -279,7 +232,7 @@ in
       ];
       environment = viewerEnvironment;
       serviceConfig = commonServiceConfig // {
-        ExecStart = "${viewerWrapper}/bin/telegram-archive-viewer-wrapper";
+        ExecStart = viewerCommand;
         LoadCredential = [
           "chat-ids:${config.sops.secrets.${secretAttrs.chatIds}.path}"
         ];
