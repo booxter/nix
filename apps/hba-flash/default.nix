@@ -1,67 +1,45 @@
 {
-  coreutils,
   defaultFirmwareBundle,
   defaultSas3flashBundle,
-  findutils,
-  gnugrep,
-  gnused,
   lib,
   makeWrapper,
   openssh,
   python3,
   ruff,
-  shellcheck,
-  stdenvNoCC,
-  unzip,
-  util-linux,
 }:
-stdenvNoCC.mkDerivation {
+let
+  pythonPackages = python3.pkgs;
+in
+pythonPackages.buildPythonApplication {
   pname = "hba-flash";
-  version = "0.1.0";
+  version = "0.2.0";
+  pyproject = true;
 
   src = ./.;
 
+  build-system = [ pythonPackages.setuptools ];
+
   nativeBuildInputs = [ makeWrapper ];
   nativeCheckInputs = [
-    python3
-    python3.pkgs.pytest
+    pythonPackages.mypy
+    pythonPackages.pytestCheckHook
+    pythonPackages.pytest-cov
     ruff
-    shellcheck
   ];
 
-  doCheck = true;
-  postPatch = ''
-    chmod +x tests/fake_command.py
-    patchShebangs tests/fake_command.py
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/hba_flash
   '';
 
-  checkPhase = ''
-    runHook preCheck
-    shellcheck hba-flash.sh
-    ruff format --check tests
-    ruff check tests
-    pytest -q tests
-    runHook postCheck
-  '';
+  pythonImportsCheck = [ "hba_flash" ];
 
-  installPhase = ''
-    runHook preInstall
-    install -D -m 0755 hba-flash.sh "$out/bin/hba-flash"
+  postFixup = ''
     wrapProgram "$out/bin/hba-flash" \
-      --prefix PATH : ${
-        lib.makeBinPath [
-          coreutils
-          findutils
-          gnugrep
-          gnused
-          openssh
-          unzip
-          util-linux
-        ]
-      } \
+      --prefix PATH : ${lib.makeBinPath [ openssh ]} \
       --set HBA_FLASH_DEFAULT_SAS3FLASH_BUNDLE ${defaultSas3flashBundle} \
       --set HBA_FLASH_DEFAULT_FIRMWARE_BUNDLE ${defaultFirmwareBundle}
-    runHook postInstall
   '';
 
   meta = {
