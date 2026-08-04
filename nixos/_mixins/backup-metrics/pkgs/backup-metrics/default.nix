@@ -6,14 +6,6 @@
 }:
 let
   pythonPackages = python3.pkgs;
-  # pystemd installs complete .pyi files but omits the PEP 561 marker. Fix
-  # this in the upstream nixpkgs dependency so downstream mypy users do not
-  # need import suppressions.
-  typedPystemd = pythonPackages.pystemd.overrideAttrs (old: {
-    postInstall = (old.postInstall or "") + ''
-      touch "$out/${python3.sitePackages}/pystemd/py.typed"
-    '';
-  });
 in
 pythonPackages.buildPythonApplication {
   pname = "backup-metrics";
@@ -27,7 +19,7 @@ pythonPackages.buildPythonApplication {
     atomicFileWrites
     pythonPackages.prometheus-client
     pythonPackages.pydantic
-    typedPystemd
+    pythonPackages.pystemd
   ];
 
   nativeCheckInputs = [
