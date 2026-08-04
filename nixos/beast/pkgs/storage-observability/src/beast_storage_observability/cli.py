@@ -5,8 +5,34 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from pydantic import ValidationError
+
+from .disk_bays import DiskBayExporter
 from .hba import HbaError, HbaExporter, SubprocessStorcliSource
 from .md import MdExporter
+
+
+def disk_bay_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="beast-disk-bay-metrics",
+        description="Export Beast physical disk bay mappings.",
+    )
+    parser.add_argument("--bay-map", required=True, type=Path)
+    parser.add_argument("--output-file", required=True, type=Path)
+    return parser
+
+
+def disk_bay_main(
+    argv: Sequence[str] | None = None,
+    exporter: DiskBayExporter | None = None,
+) -> int:
+    arguments = disk_bay_parser().parse_args(argv if argv is not None else sys.argv[1:])
+    try:
+        (exporter or DiskBayExporter()).run(arguments.bay_map, arguments.output_file)
+    except (OSError, ValidationError) as error:
+        print(f"beast-disk-bay-metrics: {error}", file=sys.stderr)
+        return 1
+    return 0
 
 
 def hba_parser() -> argparse.ArgumentParser:

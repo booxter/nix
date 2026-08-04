@@ -1,4 +1,9 @@
-{ lib, pkgs, ... }:
+{
+  beastPkgs,
+  lib,
+  utils,
+  ...
+}:
 let
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   diskBayMappings = [
@@ -80,29 +85,13 @@ let
       model = "ST24000NM000C-3WD103";
     }
   ];
-  diskBayExporter = pkgs.writeShellScript "beast-disk-bay-export" ''
-    set -euo pipefail
-
-    mkdir -p ${textfileDir}
-    tmp_file="$(mktemp ${textfileDir}/disk-bays.prom.XXXXXX)"
-    trap 'rm -f "$tmp_file"' EXIT
-
-    cat > "$tmp_file" <<'EOF'
-    # HELP host_observability_disk_bay_info Current mapping of beast disk device names to physical bays.
-    # TYPE host_observability_disk_bay_info gauge
-    EOF
-
-    ${lib.concatMapStringsSep "\n" (mapping: ''
-      device="$(${pkgs.util-linux}/bin/lsblk -dn -o NAME,SERIAL | ${pkgs.gawk}/bin/awk '$2 == "${mapping.serial}" { print $1; exit }')"
-      if [ -n "$device" ]; then
-        printf 'host_observability_disk_bay_info{device="%s",bay="${mapping.bay}",bay_row="${mapping.row}",bay_col="${mapping.col}",serial="${mapping.serial}",model="${mapping.model}"} 1\n' "$device" >> "$tmp_file"
-      fi
-    '') diskBayMappings}
-
-    chmod 0644 "$tmp_file"
-    mv "$tmp_file" ${textfileDir}/disk-bays.prom
-    trap - EXIT
-  '';
+  exportCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' beastPkgs.storage-observability "beast-disk-bay-metrics")
+    "--bay-map"
+    "/etc/beast-hba-bay-map.json"
+    "--output-file"
+    "${textfileDir}/disk-bays.prom"
+  ];
 in
 {
   environment.etc."beast-hba-bay-map.json".text = builtins.toJSON diskBayMappings;
@@ -113,7 +102,7 @@ in
     after = [ "local-fs.target" ];
     serviceConfig = {
       Type = "oneshot";
-      ExecStart = diskBayExporter;
+      ExecStart = exportCommand;
     };
   };
 
