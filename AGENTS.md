@@ -51,6 +51,9 @@ Scope: whole repository.
   client libraries over subprocesses. When a CLI is the necessary interface,
   pass argument lists; no embedded shell or `shell=True` unless required.
   Consider Go or Rust for larger applications and systems-level work.
+- Dulwich sucks for huge repositories; do not use it there. Prefer the Git CLI
+  behind the repository's typed command-runner interface when native libraries
+  would compromise Git semantics or performance.
 - Python apps are `pyproject.toml` projects with `src/` packages and console
   entry points, never loose `.py` files. Require full typing, strict mypy, Ruff,
   and explicit models instead of untyped dictionaries. Prefer dataclasses for
