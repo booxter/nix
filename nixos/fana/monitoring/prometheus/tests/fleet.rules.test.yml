@@ -122,6 +122,60 @@ tests:
 
   - interval: 30s
     input_series:
+      - series: 'node_memory_SwapFree_bytes{instance="beast",job="node-mtls"}'
+        values: "15x32"
+      - series: 'node_memory_SwapTotal_bytes{instance="beast",job="node-mtls"}'
+        values: "100x32"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: NodeSwapUsageHigh
+      - eval_time: 15m
+        alertname: NodeSwapUsageHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeSwapUsageHigh
+              category: capacity
+              instance: beast
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Node swap usage high on beast"
+              description: "Combined zram and disk swap on beast has been above 80% used for 15 minutes."
+
+  - interval: 30s
+    input_series:
+      - series: 'node_memory_SwapFree_bytes{instance="beast",job="node-mtls"}'
+        values: "0x42"
+      - series: 'node_memory_SwapTotal_bytes{instance="beast",job="node-mtls"}'
+        values: "0x42"
+    alert_rule_test:
+      - eval_time: 20m
+        alertname: NodeSwapUsageHigh
+
+  - interval: 30s
+    input_series:
+      - series: 'node_vmstat_pswpin{instance="frame",job="node-mtls"}'
+        values: "0+18000x32"
+      - series: 'node_vmstat_pswpout{instance="frame",job="node-mtls"}'
+        values: "0+18000x32"
+    alert_rule_test:
+      - eval_time: 14m30s
+        alertname: NodeSwapChurnHigh
+      - eval_time: 15m
+        alertname: NodeSwapChurnHigh
+        exp_alerts:
+          - exp_labels:
+              alertname: NodeSwapChurnHigh
+              category: capacity
+              instance: frame
+              job: node-mtls
+              severity: warning
+            exp_annotations:
+              summary: "Node swap churn high on frame"
+              description: "Swap-in and swap-out activity on frame has exceeded 1,000 pages per second for 10 minutes."
+
+  - interval: 30s
+    input_series:
       - series: 'node_vmstat_oom_kill{instance="frame",job="node-mtls"}'
         values: "0x10 1x3"
     alert_rule_test:
