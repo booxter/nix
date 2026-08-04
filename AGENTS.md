@@ -71,8 +71,10 @@ Scope: whole repository.
   concatenation or hand-written serialization templates.
 - Declare and wrap external runtime executables; build inputs alone do not put
   programs on the installed runtime `PATH`.
-- Assume Nix on managed machines. Build for the target system and use `nix copy`
-  for closures, not `scp`, copied sources, or host-architecture executables.
+- Assume Nix on managed machines. For remote helpers, copy only a
+  content-addressed flake source and build on the target. Do not copy unsigned
+  local build outputs into signature-enforcing target stores, use `scp`, or run
+  host-architecture executables remotely.
 
 ## Security
 
@@ -95,6 +97,10 @@ Scope: whole repository.
   ```sh
   ssh <target> [command ...]
   ```
+
+- OpenSSH transports a remote command as shell text rather than an argv array.
+  Keep that unavoidable boundary fixed or quote every typed argument, and pass
+  structured dynamic input over stdin where practical.
 
 - On configured clients, OpenSSH transparently runs `ssh-ticket ensure`; wait for
   any macOS TTL/Secretive approval prompts. Treat `ssh-ticket`/`ssht` as

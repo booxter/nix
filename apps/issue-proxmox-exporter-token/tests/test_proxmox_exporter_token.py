@@ -53,10 +53,10 @@ class StaticEvaluator:
 @dataclass
 class RecordingIssuer:
     value: str = "issued-token"
-    calls: list[tuple[str, str, TokenRequest]] = field(default_factory=list)
+    calls: list[tuple[str, TokenRequest]] = field(default_factory=list)
 
-    def issue(self, host, system, request):
-        self.calls.append((host, system, request))
+    def issue(self, host, request):
+        self.calls.append((host, request))
         return self.value
 
 
@@ -245,7 +245,7 @@ def test_service_builds_for_issuer_system_and_updates_selected_secrets():
         token_value=None,
     )
 
-    assert issuer.calls == [("prx2-lab", "x86_64-linux", request)]
+    assert issuer.calls == [("prx2-lab", request)]
     assert store.calls == [
         (
             "prx1-lab",
@@ -288,47 +288,53 @@ def test_service_discovers_enabled_non_work_hosts_and_accepts_existing_token():
     assert store.calls[0][2] == "existing-token"
 
 
-def test_remote_issuer_builds_target_closure_and_copies_it():
-    package = "/nix/store/test-proxmox-token"
-    runner = RecordingRunner(outputs=[f"{package}\n", "", "remote-token\n"])
+def test_remote_issuer_copies_source_and_builds_on_target():
+    source = "/nix/store/test-source"
+    runner = RecordingRunner(outputs=[f'{{"path":"{source}"}}', "", "remote-token\n"])
     issuer = RemoteTokenIssuer(runner, Path("/repo"))
 
-    value = issuer.issue("prx1-lab", "x86_64-linux", token_request())
+    request = token_request()
+    value = issuer.issue("prx1-lab", request)
 
     assert value == "remote-token"
     assert runner.calls[0][0] == [
         "nix",
-        "build",
-        "--no-link",
-        "--print-out-paths",
-        "path:/repo#packages.x86_64-linux.issue-proxmox-exporter-token",
+        "flake",
+        "archive",
+        "--json",
+        "path:/repo",
     ]
     assert runner.calls[1][0] == [
         "nix",
         "copy",
         "--to",
-        "ssh://prx1-lab",
-        package,
+        "ssh-ng://prx1-lab",
+        source,
     ]
-    assert runner.calls[2][0][:3] == [
+    assert runner.calls[2][0] == [
         "ssh",
         "prx1-lab",
-        f"{package}/bin/issue-proxmox-exporter-token-remote",
+        "nix shell -L --show-trace 'path:/nix/store/test-source#issue-proxmox-exporter-token' "
+        "--command issue-proxmox-exporter-token-remote",
     ]
+    assert runner.calls[2][1] == (
+        '{"user":"prometheus@pve","token_name":"metrics","role":"PVEAuditor",'
+        '"acl_path":"/","replace":false,"comment":"metrics user"}'
+    )
 
 
 @pytest.mark.parametrize(
     ("outputs", "message"),
     [
-        (["not-a-store-path\n"], "failed to build"),
-        (["/nix/store/test\n", "", "\n"], "returned no token"),
+        (["not-json"], "failed to archive"),
+        (['{"path":"/nix/store/test"}', "", "\n"], "returned no token"),
     ],
 )
 def test_remote_issuer_rejects_invalid_results(outputs, message):
     issuer = RemoteTokenIssuer(RecordingRunner(outputs=outputs), Path("/repo"))
 
     with pytest.raises(ToolError, match=message):
-        issuer.issue("prx1-lab", "x86_64-linux", token_request())
+        issuer.issue("prx1-lab", token_request())
 
 
 def test_repository_boundaries_validate_inventory_and_nix_json(tmp_path: Path):

@@ -15,6 +15,12 @@ class FleetHosts(RootModel[dict[str, HostFacts]]):
     model_config = ConfigDict(frozen=True, strict=True)
 
 
+class FlakeArchive(BaseModel):
+    model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
+
+    path: str
+
+
 class ExporterConfig(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
 
@@ -41,6 +47,17 @@ class TokenResponse(BaseModel):
         if not value:
             raise ValueError("pveum token response did not include a value")
         return value
+
+
+class RemoteTokenRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, strict=True)
+
+    user: str
+    token_name: str
+    role: str
+    acl_path: str
+    replace: bool
+    comment: str
 
 
 class PveUser(BaseModel):

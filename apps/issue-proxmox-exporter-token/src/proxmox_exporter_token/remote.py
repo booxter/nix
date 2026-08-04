@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import argparse
 import os
+import sys
 from collections.abc import Sequence
 from dataclasses import dataclass
 
@@ -9,7 +9,7 @@ from pydantic import TypeAdapter, ValidationError
 from sops_tools.errors import CommandError, ToolError
 from sops_tools.process import ProcessRunner, SubprocessRunner
 
-from .models import PveUser, PveUserList, TokenResponse
+from .models import PveUser, PveUserList, RemoteTokenRequest, TokenResponse
 
 
 _USERS: TypeAdapter[list[PveUser] | PveUserList] = TypeAdapter(list[PveUser] | PveUserList)
@@ -67,28 +67,22 @@ class PveumClient:
         return self.runner.run([*self.privilege, "pveum", *arguments])
 
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Issue a Proxmox VE API token on the local node.")
-    parser.add_argument("--user", required=True)
-    parser.add_argument("--token-name", required=True)
-    parser.add_argument("--role", required=True)
-    parser.add_argument("--path", required=True)
-    parser.add_argument("--replace", action="store_true")
-    parser.add_argument("--comment", required=True)
-    return parser
-
-
 def main(argv: Sequence[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    if argv:
+        raise SystemExit("remote helper accepts its request on stdin")
+    try:
+        request = RemoteTokenRequest.model_validate_json(sys.stdin.read())
+    except ValidationError as error:
+        raise SystemExit(f"invalid remote token request: {error}") from error
     privilege = () if os.geteuid() == 0 else ("sudo", "-n")
     try:
         value = PveumClient(SubprocessRunner(), privilege).issue(
-            user=str(args.user),
-            token_name=str(args.token_name),
-            role=str(args.role),
-            acl_path=str(args.path),
-            replace=bool(args.replace),
-            comment=str(args.comment),
+            user=request.user,
+            token_name=request.token_name,
+            role=request.role,
+            acl_path=request.acl_path,
+            replace=request.replace,
+            comment=request.comment,
         )
     except ToolError as error:
         raise SystemExit(str(error)) from error

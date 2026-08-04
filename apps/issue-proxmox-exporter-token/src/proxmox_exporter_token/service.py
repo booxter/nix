@@ -1,16 +1,24 @@
 from __future__ import annotations
 
+import shlex
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, Sequence
 
+from pydantic import ValidationError
 from sops_tools.errors import ToolError
 from sops_tools.model import KeyPath
 from sops_tools.process import ProcessRunner
 from sops_tools.repository import RuntimeEnvironment, SecretRepository
 from sops_tools.secrets import CommandSopsBackend
 
-from .models import ExporterConfig, FleetHosts, IssueSummary
+from .models import (
+    ExporterConfig,
+    FlakeArchive,
+    FleetHosts,
+    IssueSummary,
+    RemoteTokenRequest,
+)
 from .repository import host_facts
 
 
@@ -25,7 +33,7 @@ class TokenRequest:
 
 
 class TokenIssuer(Protocol):
-    def issue(self, host: str, system: str, request: TokenRequest) -> str: ...
+    def issue(self, host: str, request: TokenRequest) -> str: ...
 
 
 class TokenStore(Protocol):
@@ -43,38 +51,49 @@ class RemoteTokenIssuer:
     runner: ProcessRunner
     repo_root: Path
 
-    def issue(self, host: str, system: str, request: TokenRequest) -> str:
-        package = self._build(system)
-        self.runner.run(["nix", "copy", "--to", f"ssh://{host}", str(package)])
-        arguments = [
-            str(package / "bin/issue-proxmox-exporter-token-remote"),
-            "--user",
-            request.user,
-            "--token-name",
-            request.token_name,
-            "--role",
-            request.role,
-            "--path",
-            request.acl_path,
-            "--comment",
-            request.comment,
-        ]
-        if request.replace:
-            arguments.append("--replace")
-        output = self.runner.run(["ssh", host, *arguments])
+    def issue(self, host: str, request: TokenRequest) -> str:
+        source = self._archive_source()
+        self.runner.run(["nix", "copy", "--to", f"ssh-ng://{host}", str(source)])
+        # OpenSSH has no remote argv protocol. Keep the command fixed and pass
+        # the typed request over stdin so no request value reaches its shell.
+        command = shlex.join(
+            [
+                "nix",
+                "shell",
+                "-L",
+                "--show-trace",
+                f"path:{source}#issue-proxmox-exporter-token",
+                "--command",
+                "issue-proxmox-exporter-token-remote",
+            ]
+        )
+        remote_request = RemoteTokenRequest(
+            user=request.user,
+            token_name=request.token_name,
+            role=request.role,
+            acl_path=request.acl_path,
+            replace=request.replace,
+            comment=request.comment,
+        )
+        output = self.runner.run(
+            ["ssh", host, command], input_text=remote_request.model_dump_json()
+        )
         value = output.strip()
         if not value:
             raise ToolError(f"remote token issuer on {host} returned no token")
         return value
 
-    def _build(self, system: str) -> Path:
-        flake = f"path:{self.repo_root}#packages.{system}.issue-proxmox-exporter-token"
-        outputs = self.runner.run(
-            ["nix", "build", "--no-link", "--print-out-paths", flake]
-        ).splitlines()
-        if len(outputs) != 1 or not outputs[0].startswith("/nix/store/"):
-            raise ToolError(f"failed to build the Proxmox token helper for {system}")
-        return Path(outputs[0])
+    def _archive_source(self) -> Path:
+        output = self.runner.run(["nix", "flake", "archive", "--json", f"path:{self.repo_root}"])
+        try:
+            path = FlakeArchive.model_validate_json(output).path
+        except ValidationError as error:
+            raise ToolError(
+                f"failed to archive the Proxmox token helper source: {error}"
+            ) from error
+        if not path.startswith("/nix/store/"):
+            raise ToolError("failed to archive the Proxmox token helper source")
+        return Path(path)
 
 
 @dataclass(frozen=True)
@@ -135,14 +154,10 @@ class TokenService:
             configs[host] = config
 
         selected_issuer = issuer_host or selected[0]
-        issuer_facts = host_facts(self.hosts, selected_issuer)
+        host_facts(self.hosts, selected_issuer)
         value = token_value
         if value is None:
-            value = self.issuer.issue(
-                selected_issuer,
-                issuer_facts.system,
-                request,
-            )
+            value = self.issuer.issue(selected_issuer, request)
 
         for host in selected:
             self.store.set(
