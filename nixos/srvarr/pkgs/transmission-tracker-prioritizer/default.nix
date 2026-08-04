@@ -1,55 +1,58 @@
 {
   lib,
   python3,
+  ruff,
   transmissionCommon,
-  writeShellApplication,
 }:
 let
-  sourceDir = ./.;
-  pythonWithDeps = python3.withPackages (_: [
-    transmissionCommon
-  ]);
-  mkTool =
-    {
-      name,
-      script,
-      description,
-    }:
-    writeShellApplication {
-      inherit name;
-      text = ''
-        export PYTHONPATH="${sourceDir}:''${PYTHONPATH:-}"
-        exec ${pythonWithDeps}/bin/python3 ${script} "$@"
-      '';
-      derivationArgs = {
-        doCheck = true;
-      };
-      checkPhase = ''
-        runHook preCheck
-        PYTHONPATH="${sourceDir}" \
-          ${pythonWithDeps}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
-        runHook postCheck
-      '';
+  pythonPackages = python3.pkgs;
+  application = pythonPackages.buildPythonApplication {
+    pname = "transmission-tracker-prioritizer";
+    version = "0.1.0";
+    pyproject = true;
 
-      meta = {
-        inherit description;
-        license = lib.licenses.mit;
-        maintainers = with lib.maintainers; [ booxter ];
-        mainProgram = name;
-        platforms = lib.platforms.linux;
+    src = ./.;
+
+    build-system = [ pythonPackages.setuptools ];
+
+    dependencies = [
+      pythonPackages.prometheus-client
+      pythonPackages.pydantic
+      transmissionCommon
+    ];
+
+    nativeCheckInputs = [
+      pythonPackages.mypy
+      pythonPackages.pytestCheckHook
+      pythonPackages.pytest-cov
+      ruff
+    ];
+
+    preCheck = ''
+      ruff format --check src tests
+      ruff check src tests
+      mypy src/transmission_tracker_prioritizer
+    '';
+
+    pythonImportsCheck = [ "transmission_tracker_prioritizer" ];
+
+    meta = {
+      description = "Transmission priority enforcement and metrics collection";
+      license = lib.licenses.mit;
+      maintainers = with lib.maintainers; [ booxter ];
+      platforms = lib.platforms.linux;
+    };
+  };
+  withMainProgram =
+    mainProgram:
+    application
+    // {
+      meta = application.meta // {
+        inherit mainProgram;
       };
     };
 in
 {
-  prioritizer = mkTool {
-    name = "transmission-prioritizer";
-    script = ./prioritizer.py;
-    description = "Continuously enforce Transmission torrent priority based on selected tracker hosts";
-  };
-
-  collector = mkTool {
-    name = "transmission-collector";
-    script = ./collector.py;
-    description = "Continuously collect Transmission torrent metrics based on selected tracker hosts";
-  };
+  prioritizer = withMainProgram "transmission-prioritizer";
+  collector = withMainProgram "transmission-collector";
 }

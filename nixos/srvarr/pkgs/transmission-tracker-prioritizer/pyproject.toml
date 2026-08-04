@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "transmission-tracker-prioritizer"
+version = "0.1.0"
+description = "Transmission priority enforcement and metrics collection"
+requires-python = ">=3.11"
+dependencies = ["prometheus-client", "pydantic", "transmission-common"]
+
+[project.scripts]
+transmission-collector = "transmission_tracker_prioritizer.collector:main"
+transmission-prioritizer = "transmission_tracker_prioritizer.prioritizer:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=transmission_tracker_prioritizer --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/transmission_tracker_prioritizer"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["transmission_common.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
