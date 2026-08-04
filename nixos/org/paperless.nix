@@ -4,6 +4,7 @@
   lib,
   orgPkgs,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -77,95 +78,12 @@ let
     "${paperlessStoragePath}/export"
     "${paperlessStoragePath}/media"
   ];
-
-  bootstrapScript = pkgs.writeText "paperless-bootstrap.py" ''
-    import os
-    import pathlib
-
-    from allauth.account.models import EmailAddress
-    from django.contrib.auth import get_user_model
-    from django.contrib.auth.models import Group
-    from rest_framework.authtoken.models import Token
-
-    def read_secret(path):
-      return pathlib.Path(path).read_text().strip()
-
-    User = get_user_model()
-
-    users = [
-      {
-        "username": "ihar",
-        "email": "ihar.hrachyshka@gmail.com",
-        "password_file": os.environ["PAPERLESS_IHAR_PASSWORD_FILE"],
-        "is_staff": True,
-        "is_superuser": True,
-      },
-      {
-        "username": "kasia",
-        "email": "",
-        "password_file": os.environ["PAPERLESS_KASIA_PASSWORD_FILE"],
-        "is_staff": False,
-        "is_superuser": False,
-      },
-    ]
-
-    for name in ["paperless-admins", "paperless-users"]:
-      Group.objects.get_or_create(name=name)
-
-    for spec in users:
-      user, _ = User.objects.get_or_create(
-        username=spec["username"],
-        defaults={
-          "email": spec["email"],
-          "is_staff": spec["is_staff"],
-          "is_superuser": spec["is_superuser"],
-        },
-      )
-      changed = False
-      for field in ["email", "is_staff", "is_superuser"]:
-        if getattr(user, field) != spec[field]:
-          setattr(user, field, spec[field])
-          changed = True
-      password = read_secret(spec["password_file"])
-      if not user.check_password(password):
-        user.set_password(password)
-        changed = True
-      if changed:
-        user.save()
-
-      if spec["email"]:
-        address, _ = EmailAddress.objects.get_or_create(
-          user=user,
-          email=spec["email"],
-          defaults={
-            "verified": True,
-            "primary": True,
-          },
-        )
-        address_changed = False
-        for field, value in {
-          "verified": True,
-          "primary": True,
-        }.items():
-          if getattr(address, field) != value:
-            setattr(address, field, value)
-            address_changed = True
-        if address_changed:
-          address.save()
-        EmailAddress.objects.filter(user=user, primary=True).exclude(pk=address.pk).update(primary=False)
-
-    token_key = read_secret(os.environ["PAPERLESS_GPT_API_TOKEN_FILE"])
-    if len(token_key) != 40:
-      raise SystemExit("PAPERLESS_GPT_API_TOKEN must be a 40-character Django REST token")
-
-    admin = User.objects.get(username="ihar")
-    existing = Token.objects.filter(user=admin).first()
-    if existing is None:
-      Token.objects.create(user=admin, key=token_key)
-    elif existing.key != token_key:
-      existing.delete()
-      Token.objects.create(user=admin, key=token_key)
-  '';
+  paperlessBootstrapCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' config.services.paperless.manage "paperless-manage")
+    "shell"
+    "-c"
+    "from paperless_bootstrap.django import main; main()"
+  ];
 
 in
 {
@@ -303,7 +221,6 @@ in
         "podman-paperless-gpt.service"
       ];
       unitConfig.RequiresMountsFor = [ config.services.paperless.dataDir ];
-      path = [ config.services.paperless.manage ];
       serviceConfig = {
         Type = "oneshot";
         User = "paperless";
@@ -312,11 +229,12 @@ in
           "PAPERLESS_IHAR_PASSWORD_FILE=${config.sops.secrets."paperless/admin/password".path}"
           "PAPERLESS_KASIA_PASSWORD_FILE=${config.sops.secrets."paperless/users/kasia/password".path}"
           "PAPERLESS_GPT_API_TOKEN_FILE=${config.sops.secrets."paperless/api/token".path}"
+          "PYTHONPATH=${orgPkgs.paperless-bootstrap}/${orgPkgs.paperless-bootstrap.python.sitePackages}"
         ];
+        # The upstream NixOS module exposes administration through Django's
+        # `shell -c` subcommand; this argument is Python, not a POSIX shell.
+        ExecStart = paperlessBootstrapCommand;
       };
-      script = ''
-        paperless-manage shell -c 'exec(open("${bootstrapScript}").read())'
-      '';
     };
 
     paperless-gpt-configure = {
