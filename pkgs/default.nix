@@ -2,6 +2,7 @@
 pkgs:
 let
   appPackages = import ../apps pkgs;
+  gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
   hostInventory = import ../lib/inventory.nix { inherit (pkgs) lib; };
   gitPrecomposePatch = ../lib/patches/git-precompose-utf8-flex-array.patch;
   # Keep this as opt-in packages instead of overriding pkgs.git globally: Git
@@ -28,6 +29,8 @@ in
 
   gitMinimalDarwinPrecompose =
     if pkgs.stdenv.hostPlatform.isDarwin then patchGitPrecompose pkgs.gitMinimal else pkgs.gitMinimal;
+
+  git-command-runner = gitCommandRunner;
 
   join-media-parts = pkgs.callPackage ./join-media-parts { };
 

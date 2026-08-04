@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
+  gitCommandRunner = pkgs.python3Packages.callPackage ../../../../pkgs/git-command-runner { };
 in
 {
   attention-inbox = pkgs.callPackage ./attention-inbox { };
