@@ -962,6 +962,11 @@ rec {
           tasksMax = 4096;
         };
       };
+      resourceControl.userServices.lightweight = [
+        "codex-warmer"
+        "gmailctl-token-keepalive"
+        "sync-git-mains"
+      ];
       vnc = {
         enable = true;
         # ReFrame exposes one loopback listener per inventory display.
