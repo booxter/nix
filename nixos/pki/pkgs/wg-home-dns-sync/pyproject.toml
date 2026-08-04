@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wg-home-dns-sync"
+version = "0.1.0"
+description = "Sync home WireGuard peer DNS overrides to UniFi"
+requires-python = ">=3.11"
+dependencies = ["httpx", "prometheus-client", "pydantic", "unifi-sync"]
+
+[project.scripts]
+wg-home-dns-sync = "wg_home_dns_sync.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=wg_home_dns_sync --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/wg_home_dns_sync"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

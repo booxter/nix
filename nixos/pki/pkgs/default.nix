@@ -1,6 +1,7 @@
 pkgs:
 let
   kanidmTools = pkgs.callPackage ./kanidm-tools { };
+  unifiSync = pkgs.callPackage ./unifi-sync { };
 in
 {
   kanidm-person-mail-provision = pkgs.callPackage ./kanidm-person-mail-provision { };
@@ -11,9 +12,9 @@ in
 
   reset-oidc = kanidmTools;
 
-  unifi-sync = pkgs.callPackage ./unifi-sync { };
+  unifi-sync = unifiSync;
 
   uptimerobot-sync = pkgs.callPackage ./uptimerobot-sync { };
 
-  wg-home-dns-sync = pkgs.callPackage ./wg-home-dns-sync { };
+  wg-home-dns-sync = pkgs.callPackage ./wg-home-dns-sync { inherit unifiSync; };
 }
