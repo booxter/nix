@@ -12,9 +12,11 @@ import sys
 import time
 import uuid
 import zipfile
+from collections.abc import Mapping
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterator, Protocol, cast
+from typing import Callable, Iterator, Protocol, TextIO, cast
 
 from pydantic import ValidationError
 
@@ -35,13 +37,42 @@ class ConversionBusy(EbookConverterError):
     pass
 
 
+@dataclass(frozen=True)
+class ShelfmarkHookConfig:
+    library_root: Path
+    state_dir: Path
+
+    @classmethod
+    def from_environment(cls, environment: Mapping[str, str]) -> ShelfmarkHookConfig:
+        def required_path(name: str) -> Path:
+            value = environment.get(name)
+            if not value:
+                raise EbookConverterError(f"required environment variable is unset: {name}")
+            return Path(value)
+
+        return cls(
+            library_root=required_path("EBOOK_CONVERTER_LIBRARY_ROOT"),
+            state_dir=required_path("EBOOK_CONVERTER_STATE_DIR"),
+        )
+
+    def converter_environment(self, environment: Mapping[str, str]) -> dict[str, str]:
+        configured = dict(environment)
+        configured["XDG_CONFIG_HOME"] = str(self.state_dir)
+        return configured
+
+
 class Converter(Protocol):
     def convert(self, source: Path, destination: Path) -> None: ...
 
 
 class ConverterRunner:
-    def __init__(self, executable: str = "ebook-converter"):
+    def __init__(
+        self,
+        executable: str = "ebook-converter",
+        environment: Mapping[str, str] | None = None,
+    ):
         self.executable = executable
+        self.environment = dict(environment) if environment is not None else None
 
     def convert(self, source: Path, destination: Path) -> None:
         try:
@@ -51,6 +82,7 @@ class ConverterRunner:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
+                env=self.environment,
             )
         except subprocess.CalledProcessError as exc:
             output = exc.stdout.strip() if exc.stdout else "no converter output"
@@ -454,14 +486,20 @@ class EbookConverterService:
         self.store.save()
 
 
-def hook_command(args: argparse.Namespace) -> int:
+def run_hook(
+    *,
+    library_root: Path,
+    lock_root: Path,
+    stdin: TextIO,
+    runner: Converter,
+) -> int:
     try:
-        payload = json.load(sys.stdin)
+        payload = json.load(stdin)
         converted = process_hook_payload(
             payload,
-            library_root=Path(args.library_root),
-            lock_root=Path(args.lock_root),
-            runner=ConverterRunner(),
+            library_root=library_root,
+            lock_root=lock_root,
+            runner=runner,
         )
     except (EbookConverterError, json.JSONDecodeError, OSError) as exc:
         LOG.error("Shelfmark ebook conversion hook failed: %s", exc)
@@ -469,6 +507,15 @@ def hook_command(args: argparse.Namespace) -> int:
 
     LOG.info("Shelfmark ebook conversion hook complete: converted=%d", len(converted))
     return 0
+
+
+def hook_command(args: argparse.Namespace) -> int:
+    return run_hook(
+        library_root=Path(args.library_root),
+        lock_root=Path(args.lock_root),
+        stdin=sys.stdin,
+        runner=ConverterRunner(),
+    )
 
 
 def watch_command(args: argparse.Namespace) -> int:
@@ -549,6 +596,42 @@ def main(argv: list[str] | None = None) -> int:
     )
     handler = cast(Callable[[argparse.Namespace], int], args.handler)
     return handler(args)
+
+
+def shelfmark_hook_main(
+    argv: list[str] | None = None,
+    *,
+    environment: Mapping[str, str] = os.environ,
+    stdin: TextIO = sys.stdin,
+    runner: Converter | None = None,
+) -> int:
+    hook_parser = argparse.ArgumentParser(
+        prog="shelfmark-ebook-converter-hook",
+        description="Convert ebooks from a Shelfmark post-transfer hook payload",
+    )
+    hook_parser.add_argument("target", help="target path supplied by Shelfmark")
+    hook_parser.add_argument(
+        "--log-level",
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+    )
+    arguments = hook_parser.parse_args(argv)
+    logging.basicConfig(
+        level=getattr(logging, arguments.log_level),
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
+    try:
+        config = ShelfmarkHookConfig.from_environment(environment)
+    except EbookConverterError as exc:
+        LOG.error("Shelfmark ebook conversion hook configuration failed: %s", exc)
+        return 1
+    converter = runner or ConverterRunner(environment=config.converter_environment(environment))
+    return run_hook(
+        library_root=config.library_root,
+        lock_root=config.state_dir,
+        stdin=stdin,
+        runner=converter,
+    )
 
 
 if __name__ == "__main__":

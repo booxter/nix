@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 import zipfile
+from io import StringIO
 from pathlib import Path
 
 from prometheus_client.parser import text_string_to_metric_families
@@ -10,11 +11,13 @@ from prometheus_client.parser import text_string_to_metric_families
 from srvarr_ebook_converter.app import (
     EbookConverterService,
     EbookConverterError,
+    ShelfmarkHookConfig,
     StateStore,
     convert_path,
     discover_sources,
     process_hook_payload,
     recover_stale_sources,
+    shelfmark_hook_main,
     validate_epub,
 )
 from srvarr_ebook_converter.metrics import prometheus_metrics
@@ -239,6 +242,44 @@ class HookPayloadTests(unittest.TestCase):
                     },
                     **arguments,
                 )
+
+    def test_shelfmark_entrypoint_uses_service_configuration(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            library = root / "library"
+            library.mkdir()
+            source = library / "book.mobi"
+            source.write_bytes(b"source")
+            state = root / "state"
+            runner = FakeRunner()
+
+            result = shelfmark_hook_main(
+                [str(source)],
+                environment={
+                    "EBOOK_CONVERTER_LIBRARY_ROOT": str(library),
+                    "EBOOK_CONVERTER_STATE_DIR": str(state),
+                },
+                stdin=StringIO(json.dumps(self.payload([source]))),
+                runner=runner,
+            )
+
+            self.assertEqual(result, 0)
+            self.assertTrue((library / "book.epub").exists())
+            self.assertTrue(state.exists())
+            self.assertEqual(len(runner.calls), 1)
+
+    def test_shelfmark_configuration_sets_converter_config_home(self) -> None:
+        config = ShelfmarkHookConfig.from_environment(
+            {
+                "EBOOK_CONVERTER_LIBRARY_ROOT": "/library",
+                "EBOOK_CONVERTER_STATE_DIR": "/state",
+            }
+        )
+
+        self.assertEqual(
+            config.converter_environment({"KEEP": "value"}),
+            {"KEEP": "value", "XDG_CONFIG_HOME": "/state"},
+        )
 
     @staticmethod
     def payload(final_paths: list[Path]) -> dict:

@@ -11,6 +11,7 @@ dependencies = ["prometheus-client", "pydantic"]
 
 [project.scripts]
 ebook-converter = "srvarr_ebook_converter.app:main"
+shelfmark-ebook-converter-hook = "srvarr_ebook_converter.app:shelfmark_hook_main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
