@@ -1055,6 +1055,7 @@ rec {
       name = "prx1-lab";
       inherit username;
       stateVersion = prxStateVersion;
+      proxmoxUpgradeTime = "Mon 03:50";
       netIface = prxNetIface;
       ipAddress = "192.168.15.10";
       macAddress = "38:05:25:30:7d:89";
@@ -1072,6 +1073,7 @@ rec {
       inherit username;
       upsHost = "prx1-lab";
       stateVersion = prxStateVersion;
+      proxmoxUpgradeTime = "Mon 04:20";
       netIface = prxNetIface;
       ipAddress = "192.168.15.11";
       macAddress = "38:05:25:30:7f:7d";
@@ -1088,6 +1090,7 @@ rec {
       inherit username;
       upsHost = "prx1-lab";
       stateVersion = prxStateVersion;
+      proxmoxUpgradeTime = "Mon 04:50";
       netIface = prxNetIface;
       ipAddress = "192.168.15.12";
       macAddress = "38:05:25:30:7d:69";

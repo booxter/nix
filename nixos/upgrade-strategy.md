@@ -39,7 +39,7 @@ All times below are in `America/New_York`.
 | `08:30` and `20:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized non-work closures into Attic. |
 | `03:00` Monday | Nix builder VM upgrade window | Set in `lib/inventory.nix` for `builder1`, `builder2`, and `builder3`. |
 | `03:30` Monday | `cache` upgrade window | Set in `nixos/cache/default.nix`. |
-| `04:00` Monday | Proxmox hypervisor upgrade window | Set in `lib/helpers.nix` for Proxmox hosts. |
+| `03:50`, `04:20`, and `04:50` Monday | Proxmox lab hypervisor upgrade windows | The nodes are staggered by 30 minutes in `lib/inventory.nix` to preserve cluster quorum. |
 | `05:15` daily | Default NixOS upgrade window | Most NixOS hosts inherit this from `nixos/default.nix`. |
 <!-- markdownlint-enable MD013 -->
 
@@ -50,6 +50,10 @@ on schedule but does not auto-reboot.
 The early Monday builder and cache windows allow auto-reboots from `02:59` until
 `06:00`, so kernel, initrd, or module changes staged during those early windows
 can activate without waiting for manual intervention.
+
+The Proxmox lab nodes may reboot from `03:45` until `06:00`. Their staggered
+windows keep two quorum members available and give guest VMs time to recover
+before the inherited `05:15` fleet upgrade window.
 
 ## Warmup Scope
 
