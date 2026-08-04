@@ -120,22 +120,9 @@ let
 
   runCheckTarget = fleetTools;
 
-  hbaFlash = pkgs.writeShellApplication {
-    name = "hba-flash";
-    runtimeInputs = with pkgs; [
-      coreutils
-      findutils
-      gnugrep
-      gnused
-      openssh
-      unzip
-      util-linux
-    ];
-    text = ''
-      export HBA_FLASH_DEFAULT_SAS3FLASH_BUNDLE="${broadcomSas3flashP15}"
-      export HBA_FLASH_DEFAULT_FIRMWARE_BUNDLE="${broadcomSas9305_24iP16_12}"
-    ''
-    + builtins.readFile ../apps/hba-flash.sh;
+  hbaFlash = pkgs.callPackage ./hba-flash {
+    defaultSas3flashBundle = broadcomSas3flashP15;
+    defaultFirmwareBundle = broadcomSas9305_24iP16_12;
   };
   issueInternalServiceCertPackage = appPackages.issue-internal-service-cert;
   issueObservabilityCertPackage = appPackages.issue-observability-cert;
