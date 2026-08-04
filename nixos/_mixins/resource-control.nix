@@ -19,6 +19,31 @@ let
   ) (lib.attrNames settingsByService);
 in
 {
+  zramSwap = {
+    enable = true;
+    memoryPercent = 25;
+    memoryMax = (if config.host.isProxmox then 4 else 16) * 1024 * 1024 * 1024;
+  };
+
+  systemd.oomd = {
+    enable = true;
+    enableRootSlice = !config.host.isProxmox;
+    enableUserSlices = true;
+  };
+
+  systemd.slices = {
+    user.sliceConfig = {
+      MemoryHigh = "65%";
+      MemoryMax = "75%";
+    };
+    background.sliceConfig = {
+      CPUWeight = 10;
+      IOWeight = 10;
+      MemoryHigh = "50%";
+      MemoryMax = "70%";
+    };
+  };
+
   assertions = [
     {
       assertion = unknownServices == [ ];

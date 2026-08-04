@@ -11,9 +11,8 @@ preventing intentionally large workloads from using available capacity.
 - `user.slice` starts with `MemoryHigh=65%` and `MemoryMax=75%`.
 - `background.slice` uses low CPU and I/O weights, `MemoryHigh=50%`, and
   `MemoryMax=70%`.
-- Proxmox hosts use a smaller zram ceiling and user/background containment.
-  Root oomd monitoring remains disabled until killing a QEMU guest is an
-  explicitly accepted failure mode.
+- Proxmox hosts cap zram at 4 GiB and retain user/background containment. Root
+  oomd monitoring is disabled.
 - Darwin jobs use launchd's `Background` process class and low-priority I/O.
   Do not treat launchd resource limits as equivalent to Linux cgroups.
 
