@@ -11,8 +11,8 @@ let
   backupRoot = "/volume2/backups/restic-prod";
   cloudOffloadUser = "restic-cloud";
   cloudBucketName = "ihar-restic-prod";
-  cloudBackupRate = "10mbit";
-  cloudBackupCeil = "10gbit";
+  cloudBackupRateBits = 10 * 1000 * 1000;
+  cloudBackupCeilBits = 10 * 1000 * 1000 * 1000;
   # Keep cloud-copy uploads smaller so each B2 request finishes sooner under
   # the shaped uplink instead of timing out mid-pack.
   cloudCopyPackSize = 4;
@@ -147,47 +147,21 @@ let
       "--config"
       (mkCloudOffloadConfig name)
     ];
-  cloudShapingScript = pkgs.writeShellScript "restic-cloud-traffic-shaping" ''
-    set -euo pipefail
-
-    iface="$(${pkgs.iproute2}/bin/ip -o route get 1.1.1.1 | ${pkgs.gawk}/bin/awk '{for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit }}')"
-    if [ -z "$iface" ]; then
-      echo "failed to determine default egress interface" >&2
-      exit 1
-    fi
-
-    case "''${1:-start}" in
-      start)
-        ${pkgs.nftables}/bin/nft delete table inet backup_cloud_shaping 2>/dev/null || true
-        ${pkgs.nftables}/bin/nft add table inet backup_cloud_shaping
-        ${pkgs.nftables}/bin/nft \
-          "add chain inet backup_cloud_shaping output { type route hook output priority mangle; policy accept; }"
-        ${lib.concatMapStringsSep "\n" (name: ''
-          uid="$(${pkgs.coreutils}/bin/id -u ${mkOffloadUser name})"
-          ${pkgs.nftables}/bin/nft \
-            add rule inet backup_cloud_shaping output meta skuid "$uid" meta mark set 0x1
-        '') (builtins.attrNames backupClients)}
-
-        ${pkgs.iproute2}/bin/tc qdisc del dev "$iface" root 2>/dev/null || true
-        ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" root handle 1: htb default 20 r2q 1000
-        ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1: classid 1:1 htb rate ${cloudBackupCeil} ceil ${cloudBackupCeil}
-        ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:10 htb rate ${cloudBackupRate} ceil ${cloudBackupRate}
-        ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:20 htb rate ${cloudBackupCeil} ceil ${cloudBackupCeil}
-        ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:10 handle 10: fq_codel
-        ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:20 handle 20: fq_codel
-        ${pkgs.iproute2}/bin/tc filter add dev "$iface" parent 1: protocol ip prio 10 handle 1 fw classid 1:10
-        ${pkgs.iproute2}/bin/tc filter add dev "$iface" parent 1: protocol ipv6 prio 11 handle 1 fw classid 1:10
-        ;;
-      stop)
-        ${pkgs.nftables}/bin/nft delete table inet backup_cloud_shaping 2>/dev/null || true
-        ${pkgs.iproute2}/bin/tc qdisc del dev "$iface" root 2>/dev/null || true
-        ;;
-      *)
-        echo "usage: $0 [start|stop]" >&2
-        exit 2
-        ;;
-    esac
-  '';
+  cloudShapingConfig = (pkgs.formats.json { }).generate "restic-cloud-qos.json" {
+    routeProbe = "1.1.1.1";
+    users = map mkOffloadUser (builtins.attrNames backupClients);
+    mark = 1;
+    outerRateBits = cloudBackupCeilBits;
+    cloudRateBits = cloudBackupRateBits;
+  };
+  cloudShapingCommand =
+    action:
+    utils.escapeSystemdExecArgs [
+      (lib.getExe' beastPkgs.backup-server-tools "restic-cloud-qos")
+      "--config"
+      cloudShapingConfig
+      action
+    ];
 in
 {
   imports = [
@@ -319,8 +293,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${cloudShapingScript} start";
-        ExecStop = "${cloudShapingScript} stop";
+        ExecStart = cloudShapingCommand "start";
+        ExecStop = cloudShapingCommand "stop";
       };
     };
   }
