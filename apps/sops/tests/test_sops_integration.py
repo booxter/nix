@@ -10,7 +10,8 @@ from sops_tools.model import KeyPath
 from sops_tools.policy import SopsPolicy
 from sops_tools.process import SubprocessRunner
 from sops_tools.repository import SecretDomain, SecretRepository
-from sops_tools.secrets import CommandSopsBackend, SecretService, write_atomic
+from atomic_file_writes import write_text_atomic
+from sops_tools.secrets import CommandSopsBackend, SecretService
 
 
 def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> None:
@@ -58,7 +59,7 @@ def test_real_sops_operations_preserve_unrelated_ciphertext(tmp_path: Path) -> N
     }
     for host, document in documents.items():
         secret = repository.secret(host)
-        write_atomic(secret, backend.encrypt_data(secret, document))
+        write_text_atomic(secret, backend.encrypt_data(secret, document))
 
     beast = repository.secret("beast")
     original_beast = yaml.safe_load(beast.read_text())

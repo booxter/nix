@@ -20,7 +20,9 @@ from .runtime_key import (
     RuntimeKeyError,
     ensure_runtime_key,
 )
-from .secrets import SopsBackend, load_yaml, write_atomic
+from atomic_file_writes import write_text_atomic
+
+from .secrets import SopsBackend, load_yaml
 
 _RUNTIME_KEY = Path("/var/lib/sops-nix/key.txt")
 
@@ -213,7 +215,7 @@ class BootstrapService:
             encrypted = self.sops.encrypt_data(secret, plaintext)
             if not encrypted:
                 raise ToolError(f"Failed to create encrypted secret for {secret}.")
-            write_atomic(secret, encrypted)
+            write_text_atomic(secret, encrypted)
             relative = secret.relative_to(self.runtime.repo_root)
             messages.append(f"Created encrypted {relative}.")
         return BootstrapResult(tuple(messages))

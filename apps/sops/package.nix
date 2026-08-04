@@ -1,6 +1,7 @@
 { hostInventory, pkgs }:
 let
   pythonPackages = pkgs.python3Packages;
+  atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
   upsClientsByServer = import ../../lib/ups-clients.nix { lib = pkgs.lib; };
   upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
     builtins.toJSON upsClientsByServer
@@ -42,7 +43,10 @@ pythonPackages.buildPythonApplication {
   sourceRoot = "source/apps/sops";
 
   build-system = [ pythonPackages.setuptools ];
-  dependencies = [ pythonPackages.pyyaml ];
+  dependencies = [
+    atomicFileWrites
+    pythonPackages.pyyaml
+  ];
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
   nativeCheckInputs = with pythonPackages; [

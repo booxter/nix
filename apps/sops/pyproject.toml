@@ -7,7 +7,7 @@ name = "sops-tools"
 version = "0.1.0"
 description = "Repository-aware helpers for managing host secrets with SOPS"
 requires-python = ">=3.11"
-dependencies = ["PyYAML"]
+dependencies = ["atomic-file-writes", "PyYAML"]
 
 [project.scripts]
 sops-bootstrap = "sops_tools.cli:bootstrap_main"
