@@ -62,9 +62,10 @@ Scope: whole repository.
 - Put I/O and external commands behind narrow injected interfaces (`Protocol`).
   Test with explicit fakes, not mocks, implementation monkeypatches, or global
   mutable hooks.
-- Test behavior and failures, not generated source or implementation text. Keep
-  tests beside the package and run pytest with coverage and a minimum threshold
-  in Nix `checkPhase`; keep package tests out of top-level `tests/`.
+- Test behavior and failures, not generated source, implementation text, or
+  command argv/call order copied from the implementation. Keep tests beside the
+  package and run pytest with coverage and a minimum threshold in Nix
+  `checkPhase`; keep package tests out of top-level `tests/`.
 - For tests that bind loopback in Darwin derivations, use the real local server
   and set `__darwinAllowLocalNetworking = true;`; do not substitute fake
   transports solely to satisfy the sandbox.
