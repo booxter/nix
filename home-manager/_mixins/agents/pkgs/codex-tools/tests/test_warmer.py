@@ -41,25 +41,39 @@ class FakeResponsesClient:
         return self.event_types
 
 
-def usage_response(reset_after_seconds: int | None) -> dict[str, object]:
+def usage_response(
+    five_hour_reset_after_seconds: int | None,
+    weekly_reset_after_seconds: int | None = None,
+) -> dict[str, object]:
+    windows = [
+        {
+            "limit_window_seconds": limit_window_seconds,
+            "reset_after_seconds": reset_after_seconds,
+        }
+        for limit_window_seconds, reset_after_seconds in (
+            (18_000, five_hour_reset_after_seconds),
+            (604_800, weekly_reset_after_seconds),
+        )
+        if reset_after_seconds is not None
+    ]
     return {
         "rate_limit": {
-            "primary_window": (
-                {
-                    "limit_window_seconds": 18_000,
-                    "reset_after_seconds": reset_after_seconds,
-                }
-                if reset_after_seconds is not None
-                else None
-            )
+            "primary_window": windows[0] if windows else None,
+            "secondary_window": windows[1] if len(windows) > 1 else None,
         }
     }
 
 
-def fake_client(reset_after_seconds: int | None) -> FakeJsonHttpClient:
+def fake_client(
+    five_hour_reset_after_seconds: int | None,
+    weekly_reset_after_seconds: int | None = None,
+) -> FakeJsonHttpClient:
     return FakeJsonHttpClient(
         responses={
-            USAGE_ENDPOINT: usage_response(reset_after_seconds),
+            USAGE_ENDPOINT: usage_response(
+                five_hour_reset_after_seconds,
+                weekly_reset_after_seconds,
+            ),
             RESET_CREDITS_ENDPOINT: {"available_count": 0, "credits": []},
         }
     )
@@ -74,6 +88,50 @@ def test_does_nothing_while_five_hour_window_is_ticking() -> None:
         now=0,
     )
     assert responses.requests == []
+
+
+def test_does_nothing_without_rate_limit_windows() -> None:
+    client = fake_client(None, None)
+    responses = FakeResponsesClient(("response.completed",))
+
+    assert not WarmerService(PersonalUsageService(client), responses).warm_if_needed(
+        CodexAuth("test-token", "test-account"),
+        now=0,
+    )
+    assert responses.requests == []
+
+
+def test_does_nothing_while_only_weekly_window_is_ticking() -> None:
+    client = fake_client(None, 604_799)
+    responses = FakeResponsesClient(("response.completed",))
+
+    assert not WarmerService(PersonalUsageService(client), responses).warm_if_needed(
+        CodexAuth("test-token", "test-account"),
+        now=0,
+    )
+    assert responses.requests == []
+
+
+def test_starts_inactive_weekly_window_without_five_hour_window() -> None:
+    client = fake_client(None, 0)
+    responses = FakeResponsesClient(("response.completed",))
+
+    assert WarmerService(PersonalUsageService(client), responses).warm_if_needed(
+        CodexAuth("test-token", "test-account"),
+        now=0,
+    )
+    assert len(responses.requests) == 1
+
+
+def test_starts_when_either_window_is_inactive() -> None:
+    client = fake_client(17_999, 0)
+    responses = FakeResponsesClient(("response.completed",))
+
+    assert WarmerService(PersonalUsageService(client), responses).warm_if_needed(
+        CodexAuth("test-token", "test-account"),
+        now=0,
+    )
+    assert len(responses.requests) == 1
 
 
 def test_starts_inactive_window_with_minimal_request() -> None:
@@ -124,7 +182,7 @@ def test_warmer_main_fails_when_response_does_not_complete(tmp_path: Path) -> No
         json.dumps({"tokens": {"access_token": "token", "account_id": "account"}}),
         encoding="utf-8",
     )
-    client = fake_client(None)
+    client = fake_client(0)
     responses = FakeResponsesClient(("response.failed",))
     stderr = io.StringIO()
 
@@ -142,7 +200,7 @@ def test_warmer_main_fails_when_response_does_not_complete(tmp_path: Path) -> No
     assert responses.requests[0].endpoint == "https://example.invalid/responses"
 
 
-def test_warmer_main_reports_started_window(tmp_path: Path) -> None:
+def test_warmer_main_reports_warmup_request(tmp_path: Path) -> None:
     auth_path = tmp_path / "auth.json"
     auth_path.write_text(
         json.dumps({"tokens": {"access_token": "token", "account_id": "account"}}),
@@ -160,4 +218,4 @@ def test_warmer_main_reports_started_window(tmp_path: Path) -> None:
     )
 
     assert status == 0
-    assert stdout.getvalue() == "Started the Codex five-hour usage window.\n"
+    assert stdout.getvalue() == "Sent a Codex usage warm-up request.\n"

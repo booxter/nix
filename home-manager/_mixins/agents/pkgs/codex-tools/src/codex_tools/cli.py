@@ -148,7 +148,7 @@ def warmer_main(
 ) -> int:
     parser = argparse.ArgumentParser(
         prog="codex-warmer",
-        description="Start the Codex five-hour usage window when it is inactive.",
+        description="Start inactive Codex usage windows.",
     )
     parser.add_argument(
         "--auth-file",
@@ -174,5 +174,5 @@ def warmer_main(
         print(error, file=stderr)
         return 1
     if started:
-        print("Started the Codex five-hour usage window.", file=stdout)
+        print("Sent a Codex usage warm-up request.", file=stdout)
     return 0

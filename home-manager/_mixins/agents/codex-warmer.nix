@@ -28,7 +28,7 @@ in
   };
 
   systemd.user.services.codex-warmer = lib.mkIf (!isDarwin && codexWarmerEnabled) {
-    Unit.Description = "Keep the Codex five-hour usage window active";
+    Unit.Description = "Keep Codex usage windows active";
 
     Service = {
       Type = "oneshot";
@@ -37,7 +37,7 @@ in
   };
 
   systemd.user.timers.codex-warmer = lib.mkIf (!isDarwin && codexWarmerEnabled) {
-    Unit.Description = "Periodically check the Codex five-hour usage window";
+    Unit.Description = "Periodically check Codex usage windows";
 
     Timer = {
       OnBootSec = "1m";
