@@ -2,8 +2,8 @@
   config,
   hostInventory,
   lib,
-  pkgs,
   srvarrPkgs,
+  utils,
   ...
 }:
 let
@@ -22,101 +22,24 @@ let
   stateDir = "${config.host.srvarrPaths.stateDir}/houndarr";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   statusMetricsFile = "${nodeExporterTextfileDir}/houndarr-status.prom";
-  waitForArrBackends = pkgs.writeShellApplication {
-    name = "wait-for-houndarr-arr-backends";
-    runtimeInputs = with pkgs; [
-      coreutils
-      curl
-    ];
-    text = ''
-      set -euo pipefail
-
-      deadline="$((SECONDS + 120))"
-      while [ "$SECONDS" -lt "$deadline" ]; do
-        all_ready=true
-        for url in ${lib.escapeShellArgs arrProbeUrls}; do
-          if ! curl \
-            --fail \
-            --silent \
-            --connect-timeout 1 \
-            --max-time 2 \
-            --output /dev/null \
-            "$url"
-          then
-            all_ready=false
-          fi
-        done
-
-        if [ "$all_ready" = true ]; then
-          exit 0
-        fi
-        sleep 1
-      done
-
-      echo "Timed out waiting for Houndarr Arr backends: ${lib.concatStringsSep " " arrProbeUrls}" >&2
-      exit 1
-    '';
-  };
-  statusCollector = pkgs.writeShellApplication {
-    name = "houndarr-status-collector";
-    runtimeInputs = with pkgs; [
-      coreutils
-      curl
-      jq
-    ];
-    text = ''
-      set -euo pipefail
-
-      metrics_file=${lib.escapeShellArg statusMetricsFile}
-      metrics_dir="$(dirname "$metrics_file")"
-      response_file="$(mktemp)"
-      tmp_file="$(mktemp "$metrics_dir/.houndarr-status.prom.XXXXXX")"
-      trap 'rm -f "$response_file" "$tmp_file"' EXIT
-
-      ok=0
-      enabled_instances=0
-      active_error_instances=0
-      if curl \
-        --fail-with-body \
-        --silent \
-        --show-error \
-        --connect-timeout 5 \
-        --max-time 30 \
-        --header 'X-User: houndarr-monitor' \
-        --output "$response_file" \
-        http://127.0.0.1:${toString port}/api/status \
-        && jq --exit-status '.instances | type == "array"' "$response_file" >/dev/null
-      then
-        ok=1
-        enabled_instances="$(
-          jq '[.instances[] | select(.enabled == true)] | length' "$response_file"
-        )"
-        active_error_instances="$(
-          jq '[.instances[] | select(.enabled == true and .active_error == true)] | length' \
-            "$response_file"
-        )"
-      fi
-
-      cat > "$tmp_file" <<EOF
-      # HELP host_observability_houndarr_status_ok Whether the latest Houndarr operational status collection succeeded.
-      # TYPE host_observability_houndarr_status_ok gauge
-      host_observability_houndarr_status_ok $ok
-      # HELP host_observability_houndarr_enabled_instances Number of enabled Houndarr Arr instances.
-      # TYPE host_observability_houndarr_enabled_instances gauge
-      host_observability_houndarr_enabled_instances $enabled_instances
-      # HELP host_observability_houndarr_active_error_instances Number of enabled Houndarr Arr instances whose newest cycle result is an error.
-      # TYPE host_observability_houndarr_active_error_instances gauge
-      host_observability_houndarr_active_error_instances $active_error_instances
-      # HELP host_observability_houndarr_status_timestamp_seconds Unix timestamp of the latest Houndarr operational status collection.
-      # TYPE host_observability_houndarr_status_timestamp_seconds gauge
-      host_observability_houndarr_status_timestamp_seconds $(date +%s)
-      EOF
-      chmod 0644 "$tmp_file"
-      mv "$tmp_file" "$metrics_file"
-
-      [ "$ok" = 1 ]
-    '';
-  };
+  waitForArrBackendsCommand = utils.escapeSystemdExecArgs (
+    [
+      (lib.getExe' srvarrPkgs.houndarr-tools "wait-for-houndarr-arr-backends")
+      "--timeout-seconds"
+      "120"
+    ]
+    ++ lib.concatMap (url: [
+      "--url"
+      url
+    ]) arrProbeUrls
+  );
+  statusCollectorCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.houndarr-tools "houndarr-status-collector")
+    "--url"
+    "http://127.0.0.1:${toString port}/api/status"
+    "--metrics-file"
+    statusMetricsFile
+  ];
 in
 {
   users = {
@@ -161,7 +84,7 @@ in
       };
       serviceConfig = {
         # Servarr units can be active before their HTTP APIs accept requests.
-        ExecStartPre = lib.getExe waitForArrBackends;
+        ExecStartPre = waitForArrBackendsCommand;
         ExecStart = lib.getExe srvarrPkgs.houndarr;
         Restart = "on-failure";
         RestartSec = "5s";
@@ -211,7 +134,7 @@ in
       after = [ "houndarr.service" ];
       serviceConfig = {
         Type = "oneshot";
-        ExecStart = lib.getExe statusCollector;
+        ExecStart = statusCollectorCommand;
         User = "root";
         Group = "root";
         NoNewPrivileges = true;
