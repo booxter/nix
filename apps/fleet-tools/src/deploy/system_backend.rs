@@ -21,7 +21,6 @@ const DIG: &str = env!("DEPLOY_DIG");
 const FZF: &str = env!("DEPLOY_FZF");
 const NIX: &str = env!("DEPLOY_NIX");
 const NIX_COLLECT_GARBAGE: &str = env!("DEPLOY_NIX_COLLECT_GARBAGE");
-const REPO_ROOT: &str = env!("DEPLOY_REPO_ROOT");
 const SSH: &str = env!("DEPLOY_SSH");
 const GIB: u64 = 1024 * 1024 * 1024;
 
@@ -227,7 +226,9 @@ impl Backend for SystemBackend {
     }
 
     fn disko(&mut self, request: &DiskoRequest) -> Result<()> {
-        let repo = Path::new(REPO_ROOT);
+        let current_directory =
+            env::current_dir().context("failed to resolve current directory")?;
+        let repo = crate::repository::checkout_root(&current_directory)?;
         let arguments = vec![
             "--extra-experimental-features".to_owned(),
             "nix-command flakes".to_owned(),

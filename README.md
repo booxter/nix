@@ -35,6 +35,9 @@ nix run .#prox-deploy -- org prx1-lab
 nix run .#deploy -- --disko frame /dev/sdX
 ```
 
+Disk provisioning resolves the enclosing Git checkout at runtime and must be
+run from inside one.
+
 ## Fleet updates
 
 Update multiple machines over SSH with `nix run .#deploy` (defaults to
