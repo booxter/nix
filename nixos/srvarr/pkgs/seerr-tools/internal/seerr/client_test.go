@@ -83,7 +83,7 @@ func TestClientUsesTypedServiceAndRequestEndpoints(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	services, err := client.Services(context.Background(), "radarr")
+	services, err := client.Services(context.Background(), seerr.Radarr)
 	if err != nil || len(services) != 1 || services[0].ID != 0 {
 		t.Fatalf("Services() = %#v, %v", services, err)
 	}

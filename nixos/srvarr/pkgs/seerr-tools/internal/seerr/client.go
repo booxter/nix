@@ -18,6 +18,13 @@ const (
 	RequestCompleted = 5
 )
 
+type ServiceKind string
+
+const (
+	Radarr ServiceKind = "radarr"
+	Sonarr ServiceKind = "sonarr"
+)
+
 type User struct {
 	ID          int    `json:"id"`
 	DisplayName string `json:"displayName"`
@@ -107,9 +114,9 @@ func NewClient(baseURL, apiKey string, timeout time.Duration) (*Client, error) {
 // The goenvoy Seerr module follows Seerr's incomplete OpenAPI response model,
 // which omits request type, seasons, media service IDs, and service settings.
 // Use its shared transport here until those omissions are fixed upstream.
-func (client *Client) Services(ctx context.Context, kind string) ([]Service, error) {
+func (client *Client) Services(ctx context.Context, kind ServiceKind) ([]Service, error) {
 	var services []Service
-	if err := client.base.Get(ctx, "/api/v1/settings/"+kind, &services); err != nil {
+	if err := client.base.Get(ctx, "/api/v1/settings/"+string(kind), &services); err != nil {
 		return nil, err
 	}
 	return services, nil

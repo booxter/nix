@@ -11,14 +11,19 @@ let
 
     src = ./.;
 
-    vendorHash = "sha256-aXJxOLBG/fthkGLhgxEGeyDBG0sLSeF5UTRG/TqUUbE=";
+    vendorHash = "sha256-KnBhJnsf8YAonb48o4rL4KUeF2LKtSwMNZc++CDd2cw=";
 
-    subPackages = [ "cmd/seerr-request-storage" ];
+    subPackages = [
+      "cmd/seerr-request-storage"
+      "cmd/seerr-update-user-tags"
+    ];
 
     nativeBuildInputs = [ makeWrapper ];
 
     postInstall = ''
       wrapProgram $out/bin/seerr-request-storage \
+        --prefix PATH : ${lib.makeBinPath [ openssh ]}
+      wrapProgram $out/bin/seerr-update-user-tags \
         --prefix PATH : ${lib.makeBinPath [ openssh ]}
     '';
 
@@ -53,4 +58,5 @@ in
 {
   package = application;
   requestStorage = withMainProgram "seerr-request-storage";
+  updateUserTags = withMainProgram "seerr-update-user-tags";
 }

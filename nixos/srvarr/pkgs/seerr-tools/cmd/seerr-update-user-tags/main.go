@@ -2,36 +2,37 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/booxter/nix-config/seerr-tools/internal/remote"
 	"github.com/booxter/nix-config/seerr-tools/internal/seerr"
 	"github.com/booxter/nix-config/seerr-tools/internal/servarr"
-	"github.com/booxter/nix-config/seerr-tools/internal/storage"
-)
-
-const (
-	defaultSeerrURL     = "http://127.0.0.1:5055"
-	defaultSettingsFile = "/data/.state/nixarr/seerr/settings.json"
+	"github.com/booxter/nix-config/seerr-tools/internal/tagging"
 )
 
 type CLI struct {
-	JSON       bool    `help:"Emit machine-readable JSON."`
-	SSHHost    string  `default:"srvarr" help:"Host on which to run the report."`
+	Apply      bool    `help:"Create missing tags and update items."`
+	SSHHost    string  `default:"srvarr" help:"Host on which to run the updater."`
 	Local      bool    `help:"Run locally instead of on --ssh-host."`
 	SeerrURL   string  `default:"http://127.0.0.1:5055" help:"Seerr base URL."`
 	APIKeyFile string  `default:"/data/.state/nixarr/seerr/settings.json" help:"File containing the Seerr API key or settings.json." type:"path"`
 	PageSize   int     `default:"100" help:"Requests to fetch per page."`
+	BatchSize  int     `default:"500" help:"Maximum items per Radarr or Sonarr update."`
 	Timeout    float64 `default:"30" help:"API timeout in seconds."`
+	User       []int   `help:"Only backfill this Seerr user ID; may be repeated."`
+	Verbose    bool    `help:"List individual titles."`
 }
 
 func (cli CLI) validate() error {
 	if cli.PageSize < 1 {
 		return fmt.Errorf("--page-size must be positive")
+	}
+	if cli.BatchSize < 1 {
+		return fmt.Errorf("--batch-size must be positive")
 	}
 	if cli.Timeout <= 0 {
 		return fmt.Errorf("--timeout must be positive")
@@ -39,7 +40,27 @@ func (cli CLI) validate() error {
 	return nil
 }
 
-func run(ctx context.Context, cli CLI, originalArguments []string) error {
+func (cli CLI) localArguments() []string {
+	arguments := []string{
+		"--seerr-url", cli.SeerrURL,
+		"--api-key-file", cli.APIKeyFile,
+		"--page-size", strconv.Itoa(cli.PageSize),
+		"--batch-size", strconv.Itoa(cli.BatchSize),
+		"--timeout", strconv.FormatFloat(cli.Timeout, 'g', -1, 64),
+	}
+	if cli.Apply {
+		arguments = append(arguments, "--apply")
+	}
+	if cli.Verbose {
+		arguments = append(arguments, "--verbose")
+	}
+	for _, userID := range cli.User {
+		arguments = append(arguments, "--user", strconv.Itoa(userID))
+	}
+	return arguments
+}
+
+func run(ctx context.Context, cli CLI) error {
 	if err := cli.validate(); err != nil {
 		return err
 	}
@@ -48,8 +69,8 @@ func run(ctx context.Context, cli CLI, originalArguments []string) error {
 			ctx,
 			remote.ExecRunner{Stdout: os.Stdout, Stderr: os.Stderr},
 			cli.SSHHost,
-			"seerr-request-storage",
-			originalArguments,
+			"seerr-update-user-tags",
+			cli.localArguments(),
 		)
 	}
 	timeout := time.Duration(cli.Timeout * float64(time.Second))
@@ -73,38 +94,36 @@ func run(ctx context.Context, cli CLI, originalArguments []string) error {
 	if err != nil {
 		return fmt.Errorf("read Seerr requests: %w", err)
 	}
-	report, err := storage.Build(
+	_, err = tagging.Update(
 		ctx,
 		requests,
 		radarrServices,
 		sonarrServices,
 		servarr.NewCatalog(timeout),
+		tagging.Options{
+			Apply:     cli.Apply,
+			Verbose:   cli.Verbose,
+			BatchSize: cli.BatchSize,
+			UserIDs:   cli.User,
+		},
+		os.Stdout,
 	)
-	if err != nil {
-		return err
-	}
-	if cli.JSON {
-		encoder := json.NewEncoder(os.Stdout)
-		encoder.SetIndent("", "  ")
-		return encoder.Encode(report)
-	}
-	storage.Render(os.Stdout, report)
-	return nil
+	return err
 }
 
 func main() {
 	var cli CLI
 	parser := kong.Must(
 		&cli,
-		kong.Name("seerr-request-storage"),
+		kong.Name("seerr-update-user-tags"),
 		kong.Description(
-			"Report Radarr and Sonarr storage attributable to Seerr users.",
+			"Backfill Seerr requester tags on existing Radarr and Sonarr items. Runs read-only unless --apply is supplied.",
 		),
 		kong.UsageOnError(),
 	)
 	_, err := parser.Parse(os.Args[1:])
 	parser.FatalIfErrorf(err)
-	if err := run(context.Background(), cli, os.Args[1:]); err != nil {
+	if err := run(context.Background(), cli); err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
 	}

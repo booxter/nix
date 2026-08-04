@@ -11,7 +11,6 @@ let
   issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token { };
   getFfCookie = pkgs.callPackage ./get-ff-cookie { };
   seerrTools = pkgs.callPackage ../nixos/srvarr/pkgs/seerr-tools { };
-  seerrUpdateUserTags = pkgs.callPackage ./seerr-update-user-tags { };
 in
 {
   get-ff-cookie = getFfCookie;
@@ -24,5 +23,5 @@ in
 
   seerr-request-storage = seerrTools.requestStorage;
 
-  seerr-update-user-tags = seerrUpdateUserTags;
+  seerr-update-user-tags = seerrTools.updateUserTags;
 }
