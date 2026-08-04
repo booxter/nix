@@ -159,9 +159,9 @@ tests:
       - series: 'node_vmstat_pswpout{instance="frame",job="node-mtls"}'
         values: "0+18000x32"
     alert_rule_test:
-      - eval_time: 14m30s
+      - eval_time: 14m
         alertname: NodeSwapChurnHigh
-      - eval_time: 15m
+      - eval_time: 14m30s
         alertname: NodeSwapChurnHigh
         exp_alerts:
           - exp_labels:
