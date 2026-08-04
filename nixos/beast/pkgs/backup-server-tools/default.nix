@@ -10,6 +10,7 @@ buildGoModule {
   vendorHash = "sha256-EO32BX2lTYmaTNwuQd0LrdLPJYMPAwm9voLyZ0vSmHc=";
 
   subPackages = [
+    "cmd/btrfs-maintenance"
     "cmd/restic-cloud-qos"
     "cmd/restic-repo-acl"
   ];
