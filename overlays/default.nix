@@ -3,7 +3,7 @@
   additions = final: _prev: import ../pkgs final.pkgs;
 
   modifications =
-    final: prev:
+    _: prev:
     let
       inherit (prev) lib;
 

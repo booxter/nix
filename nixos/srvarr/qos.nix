@@ -7,7 +7,6 @@
   ...
 }:
 let
-  srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
   tuning = config.host.srvarrTuning;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   beastHostConfig = outputs.nixosConfigurations.beast.config;

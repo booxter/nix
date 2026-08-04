@@ -1,6 +1,5 @@
 # TODO: refactor the module
 {
-  config,
   hostInventory,
   hostSpecName,
   lib,

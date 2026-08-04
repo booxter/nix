@@ -216,7 +216,7 @@ in
       }
 
       {
-        systemd.services = builtins.mapAttrs (name: service: {
+        systemd.services = builtins.mapAttrs (_: service: {
           inherit (service) description unitConfig;
           before = [ "restic-backups-beast.service" ];
           serviceConfig = {

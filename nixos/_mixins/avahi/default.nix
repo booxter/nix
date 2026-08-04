@@ -1,6 +1,5 @@
 {
   config,
-  hostname,
   hostSpecName,
   hostInventory,
   lib,

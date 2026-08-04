@@ -307,7 +307,6 @@ rec {
               { lib, pkgs, ... }:
               let
                 brname = "vmbr0";
-                lanDomain = hostInventory.site.lan.domain;
               in
               {
                 # Hypervisors upgrade on a separate schedule to avoid

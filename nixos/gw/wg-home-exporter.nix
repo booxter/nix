@@ -3,7 +3,6 @@
   ...
 }:
 let
-  wgHome = hostInventory.site.wireguard.home;
   wgInterface = "wg0";
   wgExporterInternalAddress = "127.0.0.1";
   wgExporterInternalPort = 9587;

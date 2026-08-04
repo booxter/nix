@@ -3,7 +3,6 @@
   hostInventory,
   hostname,
   inputs,
-  lib,
   pkgs,
   ...
 }:

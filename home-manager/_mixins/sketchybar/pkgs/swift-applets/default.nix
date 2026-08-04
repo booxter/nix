@@ -5,7 +5,7 @@
   swiftpm,
 }:
 
-swiftPackages.stdenv.mkDerivation (finalAttrs: {
+swiftPackages.stdenv.mkDerivation {
   pname = "sketchybar-swift-applets";
   version = "1";
 
@@ -40,4 +40,4 @@ swiftPackages.stdenv.mkDerivation (finalAttrs: {
     mainProgram = "sketchybar-spotify";
     platforms = lib.platforms.darwin;
   };
-})
+}

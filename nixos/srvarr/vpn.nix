@@ -1,6 +1,5 @@
 {
   hostInventory,
-  lib,
   pkgs,
   ...
 }:
@@ -26,7 +25,6 @@ in
     ./wg-bridge-access.nix
     (import ./update-dynamic-ip.nix {
       inherit
-        lib
         pkgs
         wgTimerDeps
         wgUnitDepsBase
