@@ -64,6 +64,7 @@ let
       cores = 24;
       hmFull = false;
       nspawnTestBuilder = true;
+      resourceControl.diskSwapGiB = 8;
       extraModules = [
         (
           {
@@ -947,6 +948,7 @@ rec {
       nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
       localDnsAliases = [ "ollama" ];
+      resourceControl.diskSwapGiB = 8;
       resourceControl.systemServices = {
         lightweight = [
           "fana-alertmanager-watchdog"
@@ -1062,6 +1064,7 @@ rec {
         "jfstat"
         "watchstate"
       ];
+      resourceControl.diskSwapGiB = 8;
       resourceControl.systemServices = {
         lightweight = [
           "beast-disk-bay-export"
@@ -1152,6 +1155,7 @@ rec {
       memorySize = 128;
       sshPort = 10000;
       proxNode = "nvws";
+      resourceControl.diskSwapGiB = 8;
     }
     {
       isVM = true;
@@ -1168,6 +1172,7 @@ rec {
       cores = 16;
       memorySize = 16;
       diskSize = 50; # actual cache is on NFS
+      resourceControl.diskSwapGiB = 4;
     }
     {
       isVM = true;
@@ -1228,6 +1233,7 @@ rec {
       };
       cores = 16;
       memorySize = 32;
+      resourceControl.diskSwapGiB = 4;
       sshPort = 10005;
       hmFull = false;
       dhcpReservation = {
@@ -1258,6 +1264,7 @@ rec {
       cores = 8;
       memorySize = 16;
       diskSize = 300;
+      resourceControl.diskSwapGiB = 4;
       sshPort = 10006;
       hmFull = false;
       dhcpReservation = {
@@ -1278,6 +1285,7 @@ rec {
       cores = 2;
       memorySize = 8;
       diskSize = 64;
+      resourceControl.diskSwapGiB = 2;
       sshPort = 10008;
       hmFull = false;
       dhcpReservation = {
@@ -1311,6 +1319,7 @@ rec {
       cores = 4;
       memorySize = 16;
       diskSize = 80;
+      resourceControl.diskSwapGiB = 4;
       sshPort = 10009;
       hmFull = false;
       dhcpReservation = {
@@ -1352,6 +1361,7 @@ rec {
       cores = 2;
       memorySize = 4;
       diskSize = 50;
+      resourceControl.diskSwapGiB = 2;
       sshPort = 10010;
       hmFull = false;
       dhcpReservation = {
@@ -1379,6 +1389,7 @@ rec {
       cores = 4;
       memorySize = 8;
       diskSize = 80;
+      resourceControl.diskSwapGiB = 2;
       sshPort = 10011;
       hmFull = false;
       dhcpReservation = {
