@@ -280,6 +280,7 @@
           name = "formatter";
           runtimeInputs = with pkgs; [
             coreutils
+            deadnix
             nixfmt-tree
             shellcheck
             ruff
