@@ -28,14 +28,11 @@ in
 {
   host.backups.artifacts.mariadb.romm = {
     displayName = "RomM";
-    database = "romm";
     destinationDir = rommDatabaseBackupDir;
     includeInBeastBackup = false;
     requiresMountsFor = [ stateRoot ];
-    unitConfig = {
-      After = [ "romm-db-init.service" ];
-      Requires = [ "romm-db-init.service" ];
-    };
+    after = [ "romm-db-init.service" ];
+    requires = [ "romm-db-init.service" ];
   };
 
   host.backups.artifacts.sqlite.aurral = {

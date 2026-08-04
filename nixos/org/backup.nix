@@ -71,14 +71,14 @@ in
         displayName = "Telegram Archive";
         databasePath = telegramArchiveDatabasePath;
         destinationDir = "${telegramArchiveBackupDir}/database/latest";
-        unitConfig.ConditionPathExists = telegramArchiveDatabasePath;
+        conditionPathExists = telegramArchiveDatabasePath;
       };
 
       telegram-archive-session = {
         displayName = "Telegram Archive authenticated session";
         databasePath = telegramArchiveSessionPath;
         destinationDir = "${telegramArchiveBackupDir}/session/latest";
-        unitConfig.ConditionPathExists = telegramArchiveSessionPath;
+        conditionPathExists = telegramArchiveSessionPath;
         extraCopies = [
           {
             source = "${telegramArchiveSessionPath}.authenticated";

@@ -111,33 +111,15 @@ in
               description = "systemd description for this pre-backup oneshot.";
             };
 
-            script = lib.mkOption {
-              type = package;
-              description = "Executable package to run before restic starts.";
+            execStart = lib.mkOption {
+              type = str;
+              description = "Escaped systemd command for the pre-backup service.";
             };
 
             timerConfig = lib.mkOption {
               type = attrsOf anything;
               default = defaultPreBackupTimerConfig;
               description = "Timer settings for this generated pre-backup timer.";
-            };
-
-            user = lib.mkOption {
-              type = str;
-              default = "root";
-              description = "User to run the pre-backup service as.";
-            };
-
-            group = lib.mkOption {
-              type = str;
-              default = "root";
-              description = "Group to run the pre-backup service as.";
-            };
-
-            serviceConfig = lib.mkOption {
-              type = attrsOf anything;
-              default = { };
-              description = "Extra serviceConfig fields merged into the generated oneshot.";
             };
 
             unitConfig = lib.mkOption {
@@ -221,11 +203,10 @@ in
           before = [ "restic-backups-beast.service" ];
           serviceConfig = {
             Type = "oneshot";
-            User = service.user;
-            Group = service.group;
-            ExecStart = lib.getExe service.script;
-          }
-          // service.serviceConfig;
+            User = "root";
+            Group = "root";
+            ExecStart = service.execStart;
+          };
         }) cfg.preBackupServices;
 
         systemd.timers = builtins.mapAttrs (_: service: {
