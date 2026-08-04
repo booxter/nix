@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Final, Literal, Protocol
 
 from openai import OpenAI, OpenAIError
+from openai.types.responses import ResponseInputParam
 
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
@@ -26,6 +27,15 @@ class WarmupRequest:
     prompt: str = "OK"
     reasoning_effort: Literal["low"] = "low"
     verbosity: Literal["low"] = "low"
+
+    @property
+    def input_items(self) -> ResponseInputParam:
+        return [
+            {
+                "role": "user",
+                "content": [{"type": "input_text", "text": self.prompt}],
+            }
+        ]
 
 
 class ResponsesClient(Protocol):
@@ -65,7 +75,7 @@ class OpenAIResponsesClient:
                 stream = client.responses.create(
                     model=request.model,
                     instructions=request.instructions,
-                    input=request.prompt,
+                    input=request.input_items,
                     reasoning={"effort": request.reasoning_effort},
                     store=False,
                     stream=True,

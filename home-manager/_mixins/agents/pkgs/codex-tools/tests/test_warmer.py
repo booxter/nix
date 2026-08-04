@@ -153,6 +153,12 @@ def test_starts_inactive_window_with_minimal_request() -> None:
         reasoning_effort="low",
         verbosity="low",
     )
+    assert call.request.input_items == [
+        {
+            "role": "user",
+            "content": [{"type": "input_text", "text": "OK"}],
+        }
+    ]
 
 
 def test_requires_account_id_to_start_window() -> None:
