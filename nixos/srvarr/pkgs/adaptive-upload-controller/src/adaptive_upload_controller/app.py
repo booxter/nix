@@ -1,670 +1,42 @@
+from __future__ import annotations
+
 import argparse
-import datetime
-import json
 import logging
-import math
-import os
-import subprocess
-import sys
-import tempfile
-import time
 from pathlib import Path
-
-from transmission_common.transmission import TransmissionRpcClient, TransmissionRpcError
-
-from .errors import ControllerError
-from .jellyfin import DEFAULT_MEDIA_TYPES, collect_media_stream_stats, fetch_url_text
-from .metrics import render_metrics_text
-
-
-LOG = logging.getLogger("adaptive-upload-controller")
-TARGET_MBIT_EPSILON = 0.05
-
-
-def now_utc_iso8601() -> str:
-    return datetime_to_utc_iso8601(datetime.datetime.now(datetime.timezone.utc))
-
-
-def datetime_to_utc_iso8601(value: datetime.datetime) -> str:
-    return (
-        value.astimezone(datetime.timezone.utc)
-        .replace(microsecond=0)
-        .isoformat()
-        .replace("+00:00", "Z")
-    )
-
-
-def parse_utc_iso8601(value: str) -> datetime.datetime | None:
-    normalized = value.strip()
-    if not normalized:
-        return None
-    if normalized.endswith("Z"):
-        normalized = normalized[:-1] + "+00:00"
-    try:
-        parsed = datetime.datetime.fromisoformat(normalized)
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=datetime.timezone.utc)
-    return parsed.astimezone(datetime.timezone.utc)
-
-
-def write_json_atomic(path: Path, data: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.", text=True)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(data, handle, indent=2, sort_keys=True)
-            handle.write("\n")
-        os.replace(tmp_path, path)
-    except Exception:
-        try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
-        raise
-
-
-def write_text_atomic(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            handle.write(content)
-        os.chmod(tmp_path, 0o644)
-        os.replace(tmp_path, path)
-    except Exception:
-        try:
-            os.unlink(tmp_path)
-        except OSError:
-            pass
-        raise
-
-
-def round_target_mbit(target_mbit: float) -> float:
-    return round(target_mbit, 1)
-
-
-def format_target_mbit(target_mbit: float) -> str:
-    return f"{round_target_mbit(target_mbit):.1f}".rstrip("0").rstrip(".")
-
-
-def calculate_transmission_upload_limit_kbps(target_mbit: float, headroom_fraction: float) -> int:
-    return max(1, int((target_mbit * 1000.0 / 8.0) * headroom_fraction))
-
-
-def default_policy_state(
-    fallback_mbit: float,
-    transmission_headroom_fraction: float,
-    reason: str,
-    exporter_ok: bool,
-    active_external_media_streams: int | None,
-) -> dict:
-    transmission_upload_limit_kbps = calculate_transmission_upload_limit_kbps(
-        fallback_mbit, transmission_headroom_fraction
-    )
-    return {
-        "active_external_media_streams": active_external_media_streams,
-        "active_external_media_bitrate_bits_per_second": None,
-        "active_media_streams_total": active_external_media_streams,
-        "exporter_ok": exporter_ok,
-        "missing_external_media_bitrate_sessions": None,
-        "reason": reason,
-        "reserved_external_media_bandwidth_mbit": None,
-        "target_mbit": float(fallback_mbit),
-        "target_tc_rate": f"{format_target_mbit(fallback_mbit)}mbit",
-        "transmission_upload_limit_kbps": transmission_upload_limit_kbps,
-        "updated_at": now_utc_iso8601(),
-    }
-
-
-def observed_policy_state_from_stream_stats(
-    args: argparse.Namespace,
-    total_media_streams: int,
-    active_external_media_streams: int,
-    active_external_media_bitrate_bits_per_second: int,
-    missing_external_media_bitrate_sessions: int,
-) -> dict:
-    if active_external_media_streams == 0:
-        target_mbit = float(args.no_streams_mbit)
-        reason = "no_active_media_streams"
-        reserved_external_media_bandwidth_mbit = 0.0
-    elif missing_external_media_bitrate_sessions > 0:
-        target_mbit = float(args.minimum_streams_mbit)
-        reason = "active_media_streams_missing_bitrate"
-        reserved_external_media_bandwidth_mbit = None
-    else:
-        reserved_external_media_bandwidth_mbit = round_target_mbit(
-            (active_external_media_bitrate_bits_per_second / 1_000_000.0)
-            * (1.0 + args.stream_bitrate_headroom_fraction)
-        )
-        target_mbit = round_target_mbit(
-            min(
-                float(args.no_streams_mbit),
-                max(
-                    float(args.minimum_streams_mbit),
-                    float(args.no_streams_mbit) - reserved_external_media_bandwidth_mbit,
-                ),
-            )
-        )
-        reason = "bitrate_based_active_media_streams"
-
-    return {
-        "active_external_media_bitrate_bits_per_second": (
-            active_external_media_bitrate_bits_per_second
-        ),
-        "active_external_media_streams": active_external_media_streams,
-        "active_media_streams_total": total_media_streams,
-        "exporter_ok": True,
-        "missing_external_media_bitrate_sessions": (missing_external_media_bitrate_sessions),
-        "reason": reason,
-        "reserved_external_media_bandwidth_mbit": (reserved_external_media_bandwidth_mbit),
-        "target_mbit": target_mbit,
-    }
-
-
-def fallback_observed_policy_state(args: argparse.Namespace, reason: str) -> dict:
-    return {
-        "active_external_media_bitrate_bits_per_second": None,
-        "active_external_media_streams": None,
-        "active_media_streams_total": None,
-        "exporter_ok": False,
-        "missing_external_media_bitrate_sessions": None,
-        "reason": reason,
-        "reserved_external_media_bandwidth_mbit": None,
-        "target_mbit": float(args.fallback_mbit),
-    }
-
-
-def load_decider_state(
-    state_file: Path, args: argparse.Namespace
-) -> tuple[float | None, float | None, datetime.datetime | None]:
-    try:
-        parsed = json.loads(state_file.read_text())
-    except (OSError, json.JSONDecodeError):
-        return None, None, None
-
-    if not isinstance(parsed, dict):
-        return None, None, None
-
-    effective_target_mbit = parsed.get("target_mbit")
-    if (
-        not isinstance(effective_target_mbit, (int, float))
-        or isinstance(effective_target_mbit, bool)
-        or not math.isfinite(float(effective_target_mbit))
-    ):
-        effective_target_mbit = None
-    else:
-        effective_target_mbit = round_target_mbit(float(effective_target_mbit))
-        if (
-            effective_target_mbit < float(args.minimum_streams_mbit) - TARGET_MBIT_EPSILON
-            or effective_target_mbit > float(args.no_streams_mbit) + TARGET_MBIT_EPSILON
-        ):
-            effective_target_mbit = None
-
-    pending_target_mbit = parsed.get("relaxation_pending_target_mbit")
-    pending_since = parsed.get("relaxation_pending_since")
-    if (
-        not isinstance(pending_target_mbit, (int, float))
-        or isinstance(pending_target_mbit, bool)
-        or not math.isfinite(float(pending_target_mbit))
-        or not isinstance(pending_since, str)
-    ):
-        return effective_target_mbit, None, None
-
-    pending_target_mbit = round_target_mbit(float(pending_target_mbit))
-    if (
-        pending_target_mbit < float(args.minimum_streams_mbit) - TARGET_MBIT_EPSILON
-        or pending_target_mbit > float(args.no_streams_mbit) + TARGET_MBIT_EPSILON
-    ):
-        return effective_target_mbit, None, None
-
-    parsed_pending_since = parse_utc_iso8601(pending_since)
-    if parsed_pending_since is None:
-        return effective_target_mbit, None, None
-
-    return effective_target_mbit, pending_target_mbit, parsed_pending_since
-
-
-def build_policy_state(
-    *,
-    args: argparse.Namespace,
-    observed_state: dict,
-    effective_target_mbit: float,
-    effective_reason: str,
-    relaxation_pending_target_mbit: float | None,
-    relaxation_pending_since: datetime.datetime | None,
-) -> dict:
-    effective_target_mbit = round_target_mbit(effective_target_mbit)
-    transmission_upload_limit_kbps = calculate_transmission_upload_limit_kbps(
-        effective_target_mbit, args.transmission_headroom_fraction
-    )
-    return {
-        "active_external_media_bitrate_bits_per_second": observed_state[
-            "active_external_media_bitrate_bits_per_second"
-        ],
-        "active_external_media_streams": observed_state["active_external_media_streams"],
-        "active_media_streams_total": observed_state["active_media_streams_total"],
-        "exporter_ok": observed_state["exporter_ok"],
-        "missing_external_media_bitrate_sessions": observed_state[
-            "missing_external_media_bitrate_sessions"
-        ],
-        "observed_reason": observed_state["reason"],
-        "observed_target_mbit": observed_state["target_mbit"],
-        "reason": effective_reason,
-        "relaxation_hold_seconds": args.relaxation_hold_seconds,
-        "relaxation_pending_since": (
-            datetime_to_utc_iso8601(relaxation_pending_since)
-            if relaxation_pending_since is not None
-            else None
-        ),
-        "relaxation_pending_target_mbit": (
-            round_target_mbit(relaxation_pending_target_mbit)
-            if relaxation_pending_target_mbit is not None
-            else None
-        ),
-        "reserved_external_media_bandwidth_mbit": observed_state[
-            "reserved_external_media_bandwidth_mbit"
-        ],
-        "target_mbit": effective_target_mbit,
-        "target_tc_rate": f"{format_target_mbit(effective_target_mbit)}mbit",
-        "transmission_upload_limit_kbps": transmission_upload_limit_kbps,
-        "updated_at": now_utc_iso8601(),
-    }
-
-
-def decide_observed_policy_state(args: argparse.Namespace) -> dict:
-    try:
-        metrics_text = fetch_url_text(
-            args.exporter_url,
-            args.request_timeout_seconds,
-            ca_file=args.ca_file,
-            client_cert_file=args.client_cert_file,
-            client_key_file=args.client_key_file,
-        )
-        stats = collect_media_stream_stats(metrics_text, set(args.media_types))
-        return observed_policy_state_from_stream_stats(
-            args=args,
-            total_media_streams=stats.total,
-            active_external_media_streams=stats.external,
-            active_external_media_bitrate_bits_per_second=stats.external_bitrate_bps,
-            missing_external_media_bitrate_sessions=stats.external_missing_bitrate,
-        )
-    except ControllerError as exc:
-        LOG.warning("using conservative fallback after exporter failure: %s", exc)
-        return fallback_observed_policy_state(args, "exporter_unreachable")
-
-
-def decide_effective_policy_state(args: argparse.Namespace, state_file: Path) -> dict:
-    observed_state = decide_observed_policy_state(args)
-    now = datetime.datetime.now(datetime.timezone.utc)
-    (
-        current_effective_target_mbit,
-        relaxation_pending_target_mbit,
-        relaxation_pending_since,
-    ) = load_decider_state(state_file, args)
-
-    observed_target_mbit = observed_state["target_mbit"]
-
-    if current_effective_target_mbit is None:
-        return build_policy_state(
-            args=args,
-            observed_state=observed_state,
-            effective_target_mbit=observed_target_mbit,
-            effective_reason=observed_state["reason"],
-            relaxation_pending_target_mbit=None,
-            relaxation_pending_since=None,
-        )
-
-    if observed_target_mbit < current_effective_target_mbit - TARGET_MBIT_EPSILON:
-        return build_policy_state(
-            args=args,
-            observed_state=observed_state,
-            effective_target_mbit=observed_target_mbit,
-            effective_reason=observed_state["reason"],
-            relaxation_pending_target_mbit=None,
-            relaxation_pending_since=None,
-        )
-
-    if abs(observed_target_mbit - current_effective_target_mbit) <= TARGET_MBIT_EPSILON:
-        return build_policy_state(
-            args=args,
-            observed_state=observed_state,
-            effective_target_mbit=current_effective_target_mbit,
-            effective_reason=observed_state["reason"],
-            relaxation_pending_target_mbit=None,
-            relaxation_pending_since=None,
-        )
-
-    if (
-        relaxation_pending_target_mbit is None
-        or abs(relaxation_pending_target_mbit - observed_target_mbit) > TARGET_MBIT_EPSILON
-        or relaxation_pending_since is None
-    ):
-        return build_policy_state(
-            args=args,
-            observed_state=observed_state,
-            effective_target_mbit=current_effective_target_mbit,
-            effective_reason=(f"holding_before_relaxation_to_{observed_state['reason']}"),
-            relaxation_pending_target_mbit=observed_target_mbit,
-            relaxation_pending_since=now,
-        )
-
-    if (now - relaxation_pending_since).total_seconds() >= args.relaxation_hold_seconds:
-        return build_policy_state(
-            args=args,
-            observed_state=observed_state,
-            effective_target_mbit=observed_target_mbit,
-            effective_reason=observed_state["reason"],
-            relaxation_pending_target_mbit=None,
-            relaxation_pending_since=None,
-        )
-
-    return build_policy_state(
-        args=args,
-        observed_state=observed_state,
-        effective_target_mbit=current_effective_target_mbit,
-        effective_reason=f"holding_before_relaxation_to_{observed_state['reason']}",
-        relaxation_pending_target_mbit=relaxation_pending_target_mbit,
-        relaxation_pending_since=relaxation_pending_since,
-    )
-
-
-def load_policy_state(
-    state_file: Path,
-    fallback_mbit: float,
-    transmission_headroom_fraction: float,
-    max_state_age_seconds: float | None,
-) -> dict:
-    fallback_state = default_policy_state(
-        fallback_mbit=fallback_mbit,
-        transmission_headroom_fraction=transmission_headroom_fraction,
-        reason="missing_or_invalid_state_file",
-        exporter_ok=False,
-        active_external_media_streams=None,
-    )
-
-    try:
-        raw_text = state_file.read_text()
-    except OSError as exc:
-        LOG.warning("unable to read state file %s: %s", state_file, exc)
-        return fallback_state
-
-    try:
-        parsed = json.loads(raw_text)
-    except json.JSONDecodeError as exc:
-        LOG.warning("state file %s contains invalid JSON: %s", state_file, exc)
-        return fallback_state
-
-    if not isinstance(parsed, dict):
-        LOG.warning("state file %s does not contain a JSON object", state_file)
-        return fallback_state
-
-    target_mbit = parsed.get("target_mbit")
-    transmission_upload_limit_kbps = parsed.get("transmission_upload_limit_kbps")
-    if (
-        not isinstance(target_mbit, (int, float))
-        or isinstance(target_mbit, bool)
-        or float(target_mbit) <= 0
-        or not isinstance(transmission_upload_limit_kbps, int)
-        or transmission_upload_limit_kbps <= 0
-    ):
-        LOG.warning("state file %s is missing expected numeric policy fields", state_file)
-        return fallback_state
-
-    if max_state_age_seconds is not None:
-        updated_at = parsed.get("updated_at")
-        parsed_updated_at = parse_utc_iso8601(updated_at) if isinstance(updated_at, str) else None
-        if parsed_updated_at is None:
-            LOG.warning("state file %s is missing a valid updated_at timestamp", state_file)
-            fallback_state["reason"] = "stale_or_invalid_state_file"
-            return fallback_state
-
-        age_seconds = (
-            datetime.datetime.now(datetime.timezone.utc) - parsed_updated_at
-        ).total_seconds()
-        if age_seconds > max_state_age_seconds:
-            LOG.warning(
-                "state file %s is stale (age %.1fs exceeds %.1fs)",
-                state_file,
-                age_seconds,
-                max_state_age_seconds,
-            )
-            fallback_state["reason"] = "stale_state_file"
-            return fallback_state
-
-    return parsed
-
-
-def transmission_get_current_upload_limit_kbps(session_arguments: dict) -> int | None:
-    value = session_arguments.get("speed_limit_up")
-    if isinstance(value, int):
-        return value
-    return None
-
-
-def transmission_get_current_upload_limit_enabled(
-    session_arguments: dict,
-) -> bool | None:
-    value = session_arguments.get("speed_limit_up_enabled")
-    if isinstance(value, bool):
-        return value
-    return None
-
-
-def run_decider(args: argparse.Namespace) -> int:
-    state_file = Path(args.state_file)
-    metrics_file = Path(args.metrics_file.strip()) if args.metrics_file.strip() else None
-    last_signature: tuple | None = None
-
-    while True:
-        started_at = time.monotonic()
-        try:
-            state = decide_effective_policy_state(args, state_file)
-            signature = (
-                state["target_mbit"],
-                state["observed_target_mbit"],
-                state["transmission_upload_limit_kbps"],
-                state["active_external_media_streams"],
-                state["active_external_media_bitrate_bits_per_second"],
-                state["active_media_streams_total"],
-                state["missing_external_media_bitrate_sessions"],
-                state["reason"],
-                state["observed_reason"],
-                state["exporter_ok"],
-                state["relaxation_pending_target_mbit"],
-                state["relaxation_pending_since"],
-                state["reserved_external_media_bandwidth_mbit"],
-            )
-            write_json_atomic(state_file, state)
-            if metrics_file is not None:
-                write_text_atomic(metrics_file, render_metrics_text(state))
-            if signature != last_signature:
-                LOG.info(
-                    "policy updated: observed_target_mbit=%s target_mbit=%s transmission_upload_limit_kbps=%s active_external_media_streams=%s active_external_media_bitrate_bits_per_second=%s active_media_streams_total=%s missing_external_media_bitrate_sessions=%s reserved_external_media_bandwidth_mbit=%s reason=%s observed_reason=%s exporter_ok=%s relaxation_pending_target_mbit=%s relaxation_pending_since=%s",
-                    state["observed_target_mbit"],
-                    state["target_mbit"],
-                    state["transmission_upload_limit_kbps"],
-                    state["active_external_media_streams"],
-                    state["active_external_media_bitrate_bits_per_second"],
-                    state["active_media_streams_total"],
-                    state["missing_external_media_bitrate_sessions"],
-                    state["reserved_external_media_bandwidth_mbit"],
-                    state["reason"],
-                    state["observed_reason"],
-                    state["exporter_ok"],
-                    state["relaxation_pending_target_mbit"],
-                    state["relaxation_pending_since"],
-                )
-                last_signature = signature
-        except Exception:
-            LOG.exception("failed to refresh adaptive upload policy state")
-
-        sleep_for = max(0.0, args.interval_seconds - (time.monotonic() - started_at))
-        time.sleep(sleep_for)
-
-
-def run_transmission_applier(args: argparse.Namespace) -> int:
-    state_file = Path(args.state_file)
-    client = TransmissionRpcClient(
-        rpc_url=args.rpc_url,
-        timeout_seconds=args.request_timeout_seconds,
-    )
-    last_applied_limit: int | None = None
-
-    while True:
-        started_at = time.monotonic()
-        try:
-            state = load_policy_state(
-                state_file=state_file,
-                fallback_mbit=args.fallback_mbit,
-                transmission_headroom_fraction=args.transmission_headroom_fraction,
-                max_state_age_seconds=args.max_state_age_seconds,
-            )
-            target_limit = state["transmission_upload_limit_kbps"]
-            session_arguments = client.call("session_get")
-            current_limit = transmission_get_current_upload_limit_kbps(session_arguments)
-            current_enabled = transmission_get_current_upload_limit_enabled(session_arguments)
-            if current_limit != target_limit or current_enabled is not True:
-                client.call(
-                    "session_set",
-                    {
-                        "speed_limit_up": target_limit,
-                        "speed_limit_up_enabled": True,
-                    },
-                )
-                LOG.info(
-                    "updated Transmission upload limit to %s kB/s (reason=%s)",
-                    target_limit,
-                    state.get("reason"),
-                )
-                last_applied_limit = target_limit
-            elif last_applied_limit != target_limit:
-                LOG.info("Transmission upload limit already at %s kB/s", target_limit)
-                last_applied_limit = target_limit
-        except TransmissionRpcError as exc:
-            LOG.warning("skipping Transmission apply iteration after RPC failure: %s", exc)
-        except Exception:
-            LOG.exception("skipping Transmission apply iteration after unexpected failure")
-
-        sleep_for = max(0.0, args.interval_seconds - (time.monotonic() - started_at))
-        time.sleep(sleep_for)
-
-
-def determine_default_egress_interface(route_probe_address: str) -> str:
-    result = subprocess.run(
-        ["ip", "-o", "route", "get", route_probe_address],
-        check=True,
-        text=True,
-        capture_output=True,
-    )
-    tokens = result.stdout.split()
-    for index, token in enumerate(tokens[:-1]):
-        if token == "dev":
-            return tokens[index + 1]
-    raise ControllerError("failed to determine default egress interface")
-
-
-def run_command(command: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
-    return subprocess.run(command, check=check, text=True, capture_output=True)
-
-
-def apply_tc_shape(
-    iface: str,
-    tc_rate: str,
-) -> None:
-    commands = [
-        [
-            "tc",
-            "class",
-            "change",
-            "dev",
-            iface,
-            "parent",
-            "1:1",
-            "classid",
-            "1:10",
-            "htb",
-            "rate",
-            tc_rate,
-            "ceil",
-            tc_rate,
-        ],
-        [
-            "tc",
-            "qdisc",
-            "change",
-            "dev",
-            iface,
-            "parent",
-            "1:10",
-            "handle",
-            "10:",
-            "cake",
-            "bandwidth",
-            tc_rate,
-            "besteffort",
-            "wash",
-        ],
-    ]
-
-    for command in commands:
-        run_command(command)
-
-
-def run_tc_applier(args: argparse.Namespace) -> int:
-    state_file = Path(args.state_file)
-    last_applied: tuple[str, str] | None = None
-
-    while True:
-        started_at = time.monotonic()
-        try:
-            state = load_policy_state(
-                state_file=state_file,
-                fallback_mbit=args.fallback_mbit,
-                transmission_headroom_fraction=args.transmission_headroom_fraction,
-                max_state_age_seconds=args.max_state_age_seconds,
-            )
-            iface = determine_default_egress_interface(args.route_probe_address)
-            tc_rate = state["target_tc_rate"]
-            desired = (iface, tc_rate)
-            if desired != last_applied:
-                apply_tc_shape(
-                    iface=iface,
-                    tc_rate=tc_rate,
-                )
-                LOG.info(
-                    "updated tc WireGuard upload shaping on %s to %s (reason=%s)",
-                    iface,
-                    tc_rate,
-                    state.get("reason"),
-                )
-                last_applied = desired
-        except ControllerError as exc:
-            LOG.warning("skipping tc apply iteration: %s", exc)
-        except subprocess.CalledProcessError as exc:
-            LOG.warning(
-                "skipping tc apply iteration after command failure: %s",
-                exc.stderr.strip() if exc.stderr else exc,
-            )
-        except Exception:
-            LOG.exception("skipping tc apply iteration after unexpected failure")
-
-        sleep_for = max(0.0, args.interval_seconds - (time.monotonic() - started_at))
-        time.sleep(sleep_for)
+from typing import NoReturn
+
+from .jellyfin import DEFAULT_MEDIA_TYPES
+from .policy import DecisionConfig
+from .runtime import (
+    DeciderRuntimeConfig,
+    TrafficControlRuntimeConfig,
+    TransmissionRuntimeConfig,
+    run_decider,
+    run_tc_applier,
+    run_transmission_applier,
+)
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Coordinate adaptive torrent upload limits from Jellyfin playback activity."
+        description="Coordinate adaptive torrent upload limits from Jellyfin activity."
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     decider = subparsers.add_parser(
-        "decide", help="Poll Jellyfin exporter and write the desired upload policy."
+        "decide",
+        help="Poll Jellyfin exporter and write the desired upload policy.",
     )
-    decider.add_argument("--exporter-url", required=True, help="Jellyfin exporter metrics URL.")
-    decider.add_argument("--state-file", required=True, help="Path to the shared state JSON file.")
+    decider.add_argument(
+        "--exporter-url",
+        required=True,
+        help="Jellyfin exporter metrics URL.",
+    )
+    decider.add_argument(
+        "--state-file",
+        required=True,
+        help="Path to the shared state JSON file.",
+    )
     decider.add_argument("--interval-seconds", type=float, default=30.0)
     decider.add_argument("--request-timeout-seconds", type=float, default=10.0)
     decider.add_argument(
@@ -685,45 +57,65 @@ def parse_args() -> argparse.Namespace:
     decider.add_argument("--no-streams-mbit", type=float, default=25.0)
     decider.add_argument("--minimum-streams-mbit", type=float, default=2.0)
     decider.add_argument("--fallback-mbit", type=float, default=8.0)
-    decider.add_argument("--stream-bitrate-headroom-fraction", type=float, default=0.2)
+    decider.add_argument(
+        "--stream-bitrate-headroom-fraction",
+        type=float,
+        default=0.2,
+    )
     decider.add_argument("--relaxation-hold-seconds", type=float, default=300.0)
-    decider.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
+    decider.add_argument(
+        "--transmission-headroom-fraction",
+        type=float,
+        default=0.95,
+    )
     decider.add_argument(
         "--metrics-file",
         default="",
-        help="Optional Prometheus textfile path for exported adaptive upload policy metrics.",
+        help="Optional Prometheus textfile path for policy metrics.",
     )
     decider.add_argument(
         "--media-types",
         nargs="+",
         default=sorted(DEFAULT_MEDIA_TYPES),
-        help="Jellyfin media types that count toward adaptive uplink budgeting.",
+        help="Jellyfin media types included in uplink budgeting.",
     )
 
     transmission = subparsers.add_parser(
         "apply-transmission",
-        help="Apply the current upload policy to Transmission's session upload limit.",
+        help="Apply the current policy to Transmission's upload limit.",
     )
     transmission.add_argument("--rpc-url", required=True, help="Transmission RPC URL.")
     transmission.add_argument(
-        "--state-file", required=True, help="Path to the shared state JSON file."
+        "--state-file",
+        required=True,
+        help="Path to the shared state JSON file.",
     )
     transmission.add_argument("--interval-seconds", type=float, default=30.0)
     transmission.add_argument("--request-timeout-seconds", type=float, default=15.0)
     transmission.add_argument("--fallback-mbit", type=float, default=8.0)
-    transmission.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
+    transmission.add_argument(
+        "--transmission-headroom-fraction",
+        type=float,
+        default=0.95,
+    )
     transmission.add_argument("--max-state-age-seconds", type=float, default=90.0)
 
     tc_applier = subparsers.add_parser(
         "apply-tc",
-        help="Apply the current upload policy to the WireGuard tc shaper.",
+        help="Apply the current policy to the WireGuard tc shaper.",
     )
     tc_applier.add_argument(
-        "--state-file", required=True, help="Path to the shared state JSON file."
+        "--state-file",
+        required=True,
+        help="Path to the shared state JSON file.",
     )
     tc_applier.add_argument("--interval-seconds", type=float, default=30.0)
     tc_applier.add_argument("--fallback-mbit", type=float, default=8.0)
-    tc_applier.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
+    tc_applier.add_argument(
+        "--transmission-headroom-fraction",
+        type=float,
+        default=0.95,
+    )
     tc_applier.add_argument("--max-state-age-seconds", type=float, default=90.0)
     tc_applier.add_argument(
         "--outer-link-rate",
@@ -731,7 +123,10 @@ def parse_args() -> argparse.Namespace:
         help="Parent HTB class rate for non-WireGuard traffic.",
     )
     tc_applier.add_argument(
-        "--endpoint-port", type=int, required=True, help="WireGuard UDP endpoint port."
+        "--endpoint-port",
+        type=int,
+        required=True,
+        help="WireGuard UDP endpoint port.",
     )
     tc_applier.add_argument("--route-probe-address", default="1.1.1.1")
 
@@ -744,29 +139,77 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _decision_config(args: argparse.Namespace) -> DecisionConfig:
+    return DecisionConfig(
+        exporter_url=str(args.exporter_url),
+        request_timeout_seconds=float(args.request_timeout_seconds),
+        ca_file=str(args.ca_file),
+        client_cert_file=str(args.client_cert_file),
+        client_key_file=str(args.client_key_file),
+        media_types=frozenset(str(value) for value in args.media_types),
+        no_streams_mbit=float(args.no_streams_mbit),
+        minimum_streams_mbit=float(args.minimum_streams_mbit),
+        fallback_mbit=float(args.fallback_mbit),
+        stream_bitrate_headroom_fraction=float(args.stream_bitrate_headroom_fraction),
+        relaxation_hold_seconds=float(args.relaxation_hold_seconds),
+        transmission_headroom_fraction=float(args.transmission_headroom_fraction),
+    )
+
+
+def _decider_runtime_config(args: argparse.Namespace) -> DeciderRuntimeConfig:
+    metrics_file = str(args.metrics_file).strip()
+    return DeciderRuntimeConfig(
+        decision=_decision_config(args),
+        state_file=Path(str(args.state_file)),
+        metrics_file=Path(metrics_file) if metrics_file else None,
+        interval_seconds=float(args.interval_seconds),
+    )
+
+
+def _transmission_runtime_config(
+    args: argparse.Namespace,
+) -> TransmissionRuntimeConfig:
+    return TransmissionRuntimeConfig(
+        rpc_url=str(args.rpc_url),
+        state_file=Path(str(args.state_file)),
+        interval_seconds=float(args.interval_seconds),
+        request_timeout_seconds=float(args.request_timeout_seconds),
+        fallback_mbit=float(args.fallback_mbit),
+        transmission_headroom_fraction=float(args.transmission_headroom_fraction),
+        max_state_age_seconds=float(args.max_state_age_seconds),
+    )
+
+
+def _traffic_control_runtime_config(
+    args: argparse.Namespace,
+) -> TrafficControlRuntimeConfig:
+    return TrafficControlRuntimeConfig(
+        state_file=Path(str(args.state_file)),
+        interval_seconds=float(args.interval_seconds),
+        fallback_mbit=float(args.fallback_mbit),
+        transmission_headroom_fraction=float(args.transmission_headroom_fraction),
+        max_state_age_seconds=float(args.max_state_age_seconds),
+        route_probe_address=str(args.route_probe_address),
+    )
+
+
+def _unknown_command(command: object) -> NoReturn:
+    raise SystemExit(f"unknown command {command!r}")
+
+
 def main() -> int:
     args = parse_args()
-    if args.command == "decide":
-        if bool(args.client_cert_file) != bool(args.client_key_file):
-            raise SystemExit("--client-cert-file and --client-key-file must be provided together")
+    if args.command == "decide" and bool(args.client_cert_file) != bool(args.client_key_file):
+        raise SystemExit("--client-cert-file and --client-key-file must be provided together")
     logging.basicConfig(
-        level=getattr(logging, args.log_level),
+        level=getattr(logging, str(args.log_level)),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
     if args.command == "decide":
-        return run_decider(args)
+        return run_decider(_decider_runtime_config(args))
     if args.command == "apply-transmission":
-        return run_transmission_applier(args)
+        return run_transmission_applier(_transmission_runtime_config(args))
     if args.command == "apply-tc":
-        return run_tc_applier(args)
-
-    raise SystemExit(f"unknown command {args.command!r}")
-
-
-if __name__ == "__main__":
-    try:
-        raise SystemExit(main())
-    except KeyboardInterrupt:
-        print("", file=sys.stderr)
-        raise SystemExit(0)
+        return run_tc_applier(_traffic_control_runtime_config(args))
+    return _unknown_command(args.command)

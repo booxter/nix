@@ -20,11 +20,13 @@ pythonPackages.buildPythonApplication {
   dependencies = with pythonPackages; [
     httpx
     prometheus-client
+    pydantic
     transmissionCommon
   ];
 
   nativeCheckInputs = [
     ruff
+    pythonPackages.mypy
     pythonPackages.pytestCheckHook
     pythonPackages.pytest-cov
   ];
@@ -36,6 +38,7 @@ pythonPackages.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
+    mypy src/adaptive_upload_controller
   '';
 
   pythonImportsCheck = [ "adaptive_upload_controller" ];
