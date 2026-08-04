@@ -61,6 +61,9 @@ Scope: whole repository.
 - Test behavior and failures, not generated source or implementation text. Keep
   tests beside the package and run pytest with coverage and a minimum threshold
   in Nix `checkPhase`; keep package tests out of top-level `tests/`.
+- For tests that bind loopback in Darwin derivations, use the real local server
+  and set `__darwinAllowLocalNetworking = true;`; do not substitute fake
+  transports solely to satisfy the sandbox.
 - Every package must be built by a consumer or CI. Check shared portable apps on
   both Linux and macOS; keep host-specific packages under that host's `pkgs/`.
 - Parse and emit JSON, YAML, and similar formats with libraries, never string
