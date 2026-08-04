@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bazarr-auth-config"
+version = "0.1.0"
+description = "Disable Bazarr's local authentication settings"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "ruamel.yaml"]
+
+[project.scripts]
+enforce-bazarr-auth-config = "bazarr_auth_config.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+bazarr_auth_config = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=bazarr_auth_config --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/bazarr_auth_config"]
+strict = true
+
+[tool.ruff]
+line-length = 100

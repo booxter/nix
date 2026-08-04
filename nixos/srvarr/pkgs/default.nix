@@ -8,6 +8,10 @@ let
   seerrTools = pkgs.callPackage ./seerr-tools { };
 in
 {
+  bazarr-auth-config = pkgs.callPackage ./bazarr-auth-config {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
+
   ebook-converter-cli = ebookConverterCli;
 
   transmission-common = transmissionCommon;

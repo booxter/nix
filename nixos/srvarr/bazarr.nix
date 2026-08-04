@@ -1,7 +1,9 @@
 {
   config,
+  hostInventory,
   lib,
-  pkgs,
+  srvarrPkgs,
+  utils,
   ...
 }:
 let
@@ -9,27 +11,15 @@ let
   group = "media";
   stateDir = "${config.host.srvarrPaths.stateDir}/bazarr";
   user = "bazarr";
-  enforceBazarrAuthConfig = pkgs.writeShellApplication {
-    name = "enforce-bazarr-auth-config";
-    runtimeInputs = [ pkgs.yq-go ];
-    text = ''
-      set -euo pipefail
-
-      config_file=${lib.escapeShellArg "${stateDir}/config/config.yaml"}
-      config_dir="$(dirname "$config_file")"
-
-      install -d -m 0700 -o ${user} -g ${group} "$config_dir"
-      if [[ ! -s "$config_file" ]]; then
-        printf '{}\n' > "$config_file"
-      fi
-
-      tmp="$(mktemp "$config_dir/config.yaml.XXXXXX")"
-      trap 'rm -f "$tmp"' EXIT
-
-      yq eval '.auth.type = null | .auth.username = "" | .auth.password = ""' "$config_file" > "$tmp"
-      install -m 0600 -o ${user} -g ${group} "$tmp" "$config_file"
-    '';
-  };
+  enforceBazarrAuthCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe srvarrPkgs.bazarr-auth-config)
+    "--config"
+    "${stateDir}/config/config.yaml"
+    "--uid"
+    (toString accounts.uids.bazarr)
+    "--gid"
+    (toString hostInventory.site.gids.media)
+  ];
 in
 {
   services.bazarr = {
@@ -50,7 +40,7 @@ in
     uid = accounts.uids.bazarr;
   };
 
-  systemd.services.bazarr.serviceConfig.ExecStartPre = "+${lib.getExe enforceBazarrAuthConfig}";
+  systemd.services.bazarr.serviceConfig.ExecStartPre = "+${enforceBazarrAuthCommand}";
 
   host.internalHttps.services.bazarr = {
     enable = true;

@@ -1,0 +1,1 @@
+"""Bazarr authentication configuration reconciliation."""
