@@ -2,7 +2,6 @@ use std::collections::{BTreeMap, BTreeSet};
 use std::env;
 use std::fs;
 use std::io::{self, IsTerminal, Write};
-use std::os::unix::fs::PermissionsExt;
 use std::path::{Component, Path, PathBuf};
 
 use anyhow::{bail, Context, Result};
@@ -11,12 +10,16 @@ use tempfile::TempDir;
 use crate::HostInventory;
 
 mod backend;
+mod output;
 mod revision;
 mod target;
+mod tree;
 
 use backend::{DiffBackend, HomebrewManifest, NativeBackend, RecursiveDiff};
+use output::{filter_binary_diff_output, filter_dix_output, normalize_store_paths};
 use revision::{GitCheckout, Revision, RevisionSide};
 pub use target::{DiffOptions, GeneratedPath, TargetKind, TargetRequest};
+use tree::{copy_generated_path, copy_store_path, path_exists};
 
 const TARGET_ALIASES_JSON: &str = env!("DIFF_TARGET_ALIASES_JSON");
 
@@ -561,211 +564,6 @@ fn find_file_recursive(root: &Path, filename: &str) -> Option<PathBuf> {
         }
     }
     None
-}
-
-fn path_exists(path: &Path) -> bool {
-    fs::symlink_metadata(path).is_ok()
-}
-
-fn copy_generated_path(source_root: &Path, destination_root: &Path, relative: &Path) -> Result<()> {
-    let source = source_root.join(relative);
-    if !path_exists(&source) || should_skip(&source) {
-        return Ok(());
-    }
-    let destination = destination_root.join(relative);
-    if let Some(parent) = destination.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    copy_node(&source, &destination)
-}
-
-fn copy_store_path(source: &Path, destination_root: &Path, relative: &Path) -> Result<()> {
-    if !path_exists(source) || should_skip(source) {
-        return Ok(());
-    }
-    let destination = destination_root.join(relative);
-    if let Some(parent) = destination.parent() {
-        fs::create_dir_all(parent)?;
-    }
-    copy_node(source, &destination)
-}
-
-fn copy_node(source: &Path, destination: &Path) -> Result<()> {
-    let symlink_metadata = fs::symlink_metadata(source)?;
-    if symlink_metadata.file_type().is_symlink() && fs::metadata(source).is_err() {
-        let target = fs::read_link(source)?;
-        fs::write(
-            destination,
-            normalize_store_paths(&format!("broken symlink -> {}\n", target.display())),
-        )?;
-        return Ok(());
-    }
-    if fs::metadata(source)?.is_dir() {
-        fs::create_dir_all(destination)?;
-        let mut entries: Vec<_> = fs::read_dir(source)?.collect::<io::Result<_>>()?;
-        entries.sort_by_key(|entry| entry.file_name());
-        for entry in entries {
-            let child = entry.path();
-            if !should_skip(&child) {
-                copy_node(&child, &destination.join(entry.file_name()))?;
-            }
-        }
-        return Ok(());
-    }
-
-    let bytes = fs::read(source)?;
-    if !bytes.is_empty() && !bytes.contains(&0) {
-        if let Ok(text) = std::str::from_utf8(&bytes) {
-            fs::write(destination, normalize_store_paths(text))?;
-            let mut permissions = fs::metadata(destination)?.permissions();
-            permissions.set_mode(permissions.mode() | 0o200);
-            fs::set_permissions(destination, permissions)?;
-            return Ok(());
-        }
-    }
-    fs::copy(source, destination)?;
-    Ok(())
-}
-
-fn should_skip(path: &Path) -> bool {
-    let path = path.to_string_lossy();
-    [
-        "/etc/profiles",
-        "/share/man",
-        "/etc/ssl/trust-source",
-        "/etc/terminfo",
-        "/etc/zoneinfo",
-    ]
-    .iter()
-    .any(|pattern| at_or_below(&path, pattern))
-        || [
-            "/etc/pki/tls/certs/ca-bundle.crt",
-            "/etc/ssl/certs/ca-bundle.crt",
-            "/etc/ssl/certs/ca-certificates.crt",
-            "/etc/ssh/moduli",
-            "/etc/issue",
-            "/etc/issue.net",
-            "/etc/os-release",
-            "/etc/lsb-release",
-        ]
-        .iter()
-        .any(|pattern| path.ends_with(pattern))
-}
-
-fn at_or_below(path: &str, pattern: &str) -> bool {
-    path.ends_with(pattern) || path.contains(&format!("{pattern}/"))
-}
-
-fn filter_dix_output(output: &str) -> String {
-    let mut filtered = String::new();
-    let mut seen = false;
-    for line in output.lines() {
-        let plain = strip_ansi(line);
-        if plain.starts_with("<<< ") || plain.starts_with(">>> ") {
-            continue;
-        }
-        if let Some(package) = dix_package_name(&plain) {
-            if package == "source" || package.starts_with("nixos-system-") {
-                continue;
-            }
-        }
-        if !seen && plain.is_empty() {
-            continue;
-        }
-        seen = true;
-        filtered.push_str(line);
-        filtered.push('\n');
-    }
-    filtered
-}
-
-fn dix_package_name(line: &str) -> Option<&str> {
-    let rest = line.strip_prefix('[')?.split_once(']')?.1.trim_start();
-    rest.split_whitespace().next()
-}
-
-fn strip_ansi(value: &str) -> String {
-    let bytes = value.as_bytes();
-    let mut output = Vec::with_capacity(bytes.len());
-    let mut index = 0;
-    while index < bytes.len() {
-        if bytes[index] == 0x1b && bytes.get(index + 1) == Some(&b'[') {
-            let mut end = index + 2;
-            while end < bytes.len() && (bytes[end].is_ascii_digit() || bytes[end] == b';') {
-                end += 1;
-            }
-            if bytes.get(end) == Some(&b'm') {
-                index = end + 1;
-                continue;
-            }
-        }
-        output.push(bytes[index]);
-        index += 1;
-    }
-    String::from_utf8_lossy(&output).into_owned()
-}
-
-fn filter_binary_diff_output(output: &str) -> String {
-    let mut filtered = String::new();
-    for line in output.lines() {
-        if line.starts_with("Binary files ") && line.contains(" and ") && line.ends_with(" differ")
-        {
-            continue;
-        }
-        filtered.push_str(line);
-        filtered.push('\n');
-    }
-    filtered
-}
-
-fn normalize_store_paths(value: &str) -> String {
-    const PREFIX: &str = "/nix/store/";
-    let mut output = String::with_capacity(value.len());
-    let mut remaining = value;
-    while let Some(position) = remaining.find(PREFIX) {
-        output.push_str(&remaining[..position]);
-        let candidate = &remaining[position..];
-        if let Some(end) = store_path_end(candidate) {
-            output.push_str("/nix/store/<path>");
-            remaining = &candidate[end..];
-        } else {
-            output.push_str(PREFIX);
-            remaining = &candidate[PREFIX.len()..];
-        }
-    }
-    output.push_str(remaining);
-    output
-}
-
-fn store_path_end(candidate: &str) -> Option<usize> {
-    const PREFIX: &str = "/nix/store/";
-    let bytes = candidate.as_bytes();
-    let hash_start = PREFIX.len();
-    let hash_end = hash_start + 32;
-    if bytes.len() <= hash_end
-        || !bytes[hash_start..hash_end]
-            .iter()
-            .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit())
-    {
-        return None;
-    }
-    let name_start = if bytes.get(hash_end) == Some(&b'-') {
-        hash_end + 1
-    } else if bytes.get(hash_end..hash_end + 2) == Some(b"\\-") {
-        hash_end + 2
-    } else {
-        return None;
-    };
-    let end = bytes[name_start..]
-        .iter()
-        .position(|byte| {
-            matches!(
-                byte,
-                b'/' | b' ' | b'\t' | b'\r' | b'\n' | b'\'' | b'"' | b'<' | b'>'
-            )
-        })
-        .map_or(bytes.len(), |offset| name_start + offset);
-    (end > name_start).then_some(end)
 }
 
 #[cfg(test)]
