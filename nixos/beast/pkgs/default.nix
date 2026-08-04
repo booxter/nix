@@ -24,4 +24,8 @@ in
   storage-observability = pkgs.callPackage ./storage-observability {
     inherit atomicFileWrites;
   };
+
+  watchstate-tools = pkgs.callPackage ./watchstate-tools {
+    inherit atomicFileWrites;
+  };
 }

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "watchstate-tools"
+version = "0.1.0"
+description = "Render authentication and back up the Beast WatchState service"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "bcrypt", "podman", "pydantic"]
+
+[project.scripts]
+watchstate-native-backup = "watchstate_tools.cli:backup_main"
+watchstate-render-auth = "watchstate_tools.cli:auth_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+watchstate_tools = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=watchstate_tools --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/watchstate_tools"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100
