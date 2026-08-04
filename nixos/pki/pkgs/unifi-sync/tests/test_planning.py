@@ -2,11 +2,11 @@ import ipaddress
 
 import pytest
 
-from unifi_sync import cli
+from unifi_sync import cli, dns
 
 
 def a_record(address="192.168.1.1", ttl=60):
-    return cli.DnsRecordSpec(
+    return dns.DnsRecordSpec(
         record_type="A_RECORD",
         domain="router.home.arpa",
         ttl_seconds=ttl,
@@ -26,7 +26,7 @@ def static_route(next_hop="192.168.1.1", distance=1):
 def test_dns_policy_update_plan_covers_create_noop_and_update():
     record = a_record()
 
-    action, payload, changes = cli.build_dns_policy_update_plan(None, record)
+    action, payload, changes = dns.update_plan(None, record)
     assert action == "create"
     assert payload["ipv4Address"] == "192.168.1.1"
     assert changes["domain"] == {
@@ -42,9 +42,9 @@ def test_dns_policy_update_plan_covers_create_noop_and_update():
         "ttlSeconds": 60,
         "ipv4Address": "192.168.1.1",
     }
-    assert cli.build_dns_policy_update_plan(existing, record) == ("noop", {}, {})
+    assert dns.update_plan(existing, record) == ("noop", {}, {})
 
-    action, payload, changes = cli.build_dns_policy_update_plan(
+    action, payload, changes = dns.update_plan(
         existing, a_record(address="192.168.1.2", ttl=120)
     )
     assert action == "update"
@@ -118,8 +118,8 @@ def test_build_dns_policies_by_key_rejects_duplicates():
         {"id": "two", "type": "a_record", "domain": "Router.HOME.ARPA."},
     ]
 
-    with pytest.raises(cli.UnifiError, match="multiple UniFi DNS policies"):
-        cli.build_dns_policies_by_key(policies)
+    with pytest.raises(dns.UnifiError, match="multiple UniFi DNS policies"):
+        dns.policies_by_key(policies)
 
 
 def test_choose_existing_dhcp_option_prefers_exact_definition():
