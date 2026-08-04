@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "home-assistant-tools"
+version = "0.1.0"
+description = "Bootstrap and back up the fleet Home Assistant instance"
+requires-python = ">=3.11"
+dependencies = ["httpx", "pydantic", "websockets"]
+
+[project.scripts]
+home-assistant-tools = "home_assistant_tools.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+home_assistant_tools = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=home_assistant_tools --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/home_assistant_tools"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

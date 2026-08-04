@@ -1,5 +1,6 @@
 {
   config,
+  homeAssistantTools,
   hostInventory,
   lib,
   pkgs,
@@ -17,21 +18,6 @@ let
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   oidcClient = oidc.clients.home-assistant;
-  # Home Assistant requires a local owner before OIDC can be used. This
-  # substituted script completes that bootstrap idempotently without UI edits.
-  bootstrapScript = pkgs.replaceVarsWith {
-    src = ./home-assistant-bootstrap.sh;
-    isExecutable = true;
-    replacements = {
-      inherit (pkgs) coreutils curl jq;
-      baseUrl = lib.escapeShellArg bootstrapBaseUrl;
-      clientId = lib.escapeShellArg bootstrapClientId;
-      ownerDisplayName = lib.escapeShellArg bootstrapOwner.displayName;
-      ownerLanguage = lib.escapeShellArg homeAssistantSso.bootstrapLanguage;
-      ownerUsername = lib.escapeShellArg bootstrapOwnerName;
-      passwordFile = lib.escapeShellArg config.sops.secrets.${bootstrapPasswordSecret}.path;
-    };
-  };
 in
 {
   sops.secrets.${bootstrapPasswordSecret} = {
@@ -173,7 +159,22 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = bootstrapScript;
+      ExecStart = lib.escapeShellArgs [
+        (lib.getExe homeAssistantTools)
+        "bootstrap"
+        "--base-url"
+        bootstrapBaseUrl
+        "--client-id"
+        bootstrapClientId
+        "--owner-display-name"
+        bootstrapOwner.displayName
+        "--owner-language"
+        homeAssistantSso.bootstrapLanguage
+        "--owner-username"
+        bootstrapOwnerName
+        "--password-file"
+        config.sops.secrets.${bootstrapPasswordSecret}.path
+      ];
       User = "root";
       Group = "root";
       NoNewPrivileges = true;
