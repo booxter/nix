@@ -33,14 +33,14 @@ let
 in
 python313Packages.buildPythonApplication (finalAttrs: {
   pname = "houndarr";
-  version = "1.13.0";
+  version = "1.13.1";
   pyproject = true;
 
   src = fetchFromGitHub {
     owner = "av1155";
     repo = "houndarr";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-bacy6DvpWpQaKFtTynrVQ78VQKSVLNHUtPhO3ZC/E1g=";
+    hash = "sha256-SVhgMJI4Iqo0lUWD6CV2Wau/e/w2DmfI9buQvFkVpaQ=";
   };
 
   patches = [ ./sso-reauthentication-contract.patch ];
