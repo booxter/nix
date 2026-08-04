@@ -5,17 +5,19 @@ import unittest
 import zipfile
 from pathlib import Path
 
+from prometheus_client.parser import text_string_to_metric_families
+
 from srvarr_ebook_converter.app import (
     EbookConverterService,
     EbookConverterError,
     StateStore,
     convert_path,
     discover_sources,
-    prometheus_metrics,
     process_hook_payload,
     recover_stale_sources,
     validate_epub,
 )
+from srvarr_ebook_converter.metrics import prometheus_metrics
 from srvarr_ebook_converter.models import FileFingerprint, JobState
 
 
@@ -482,16 +484,31 @@ class WatchServiceTests(unittest.TestCase):
             store.data.totals.success = 3
             store.data.totals.failed = 2
 
-            metrics = prometheus_metrics(store, True, 1234.0)
+            metrics = prometheus_metrics(store.data, True, 1234.0)
+            samples = {
+                (sample.name, tuple(sorted(sample.labels.items()))): sample.value
+                for family in text_string_to_metric_families(metrics)
+                for sample in family.samples
+            }
 
-            self.assertIn("host_observability_ebook_converter_ok 1", metrics)
-            self.assertIn(
-                'host_observability_ebook_converter_files{state="needs_attention"} 1',
-                metrics,
+            self.assertEqual(samples[("host_observability_ebook_converter_ok", ())], 1)
+            self.assertEqual(
+                samples[
+                    (
+                        "host_observability_ebook_converter_files",
+                        (("state", "needs_attention"),),
+                    )
+                ],
+                1,
             )
-            self.assertIn(
-                'host_observability_ebook_converter_files_total{result="success"} 3',
-                metrics,
+            self.assertEqual(
+                samples[
+                    (
+                        "host_observability_ebook_converter_files_total",
+                        (("result", "success"),),
+                    )
+                ],
+                3,
             )
 
 

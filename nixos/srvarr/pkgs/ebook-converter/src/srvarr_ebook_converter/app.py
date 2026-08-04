@@ -12,13 +12,13 @@ import sys
 import time
 import uuid
 import zipfile
-from collections import Counter
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Iterator, Protocol, cast
 
 from pydantic import ValidationError
 
+from .metrics import prometheus_metrics
 from .models import FileFingerprint, JobState, ServiceState, ShelfmarkPayload
 
 
@@ -349,44 +349,6 @@ class StateStore:
         )
 
 
-def prometheus_metrics(store: StateStore, ok: bool, now: float) -> str:
-    states = Counter(job.status for job in store.data.files.values())
-    totals = store.data.totals
-    lines = [
-        "# HELP host_observability_ebook_converter_ok Whether the latest service iteration completed successfully.",
-        "# TYPE host_observability_ebook_converter_ok gauge",
-        f"host_observability_ebook_converter_ok {1 if ok else 0}",
-        "# HELP host_observability_ebook_converter_last_run_timestamp_seconds Unix timestamp of the latest iteration.",
-        "# TYPE host_observability_ebook_converter_last_run_timestamp_seconds gauge",
-        f"host_observability_ebook_converter_last_run_timestamp_seconds {now}",
-        "# HELP host_observability_ebook_converter_files Number of known files by state.",
-        "# TYPE host_observability_ebook_converter_files gauge",
-    ]
-    for state_name in sorted(
-        set(states) | {"complete", "converting", "failed", "needs_attention", "settling"}
-    ):
-        lines.append(
-            f'host_observability_ebook_converter_files{{state="{state_name}"}} {states[state_name]}'
-        )
-    lines.extend(
-        [
-            "# HELP host_observability_ebook_converter_files_total Conversion attempts by result.",
-            "# TYPE host_observability_ebook_converter_files_total counter",
-            f'host_observability_ebook_converter_files_total{{result="success"}} {totals.success}',
-            f'host_observability_ebook_converter_files_total{{result="failed"}} {totals.failed}',
-        ]
-    )
-    if store.data.last_success is not None:
-        lines.extend(
-            [
-                "# HELP host_observability_ebook_converter_last_success_timestamp_seconds Unix timestamp of the latest successful conversion.",
-                "# TYPE host_observability_ebook_converter_last_success_timestamp_seconds gauge",
-                f"host_observability_ebook_converter_last_success_timestamp_seconds {store.data.last_success}",
-            ]
-        )
-    return "\n".join(lines) + "\n"
-
-
 class EbookConverterService:
     def __init__(
         self,
@@ -534,7 +496,7 @@ def watch_command(args: argparse.Namespace) -> int:
         try:
             atomic_write_text(
                 Path(args.metrics_file),
-                prometheus_metrics(store, ok, time.time()),
+                prometheus_metrics(store.data, ok, time.time()),
             )
         except OSError:
             ok = False

@@ -7,7 +7,7 @@ name = "srvarr-ebook-converter"
 version = "0.1.0"
 description = "Convert library MOBI and AZW3 files to EPUB"
 requires-python = ">=3.11"
-dependencies = ["pydantic"]
+dependencies = ["prometheus-client", "pydantic"]
 
 [project.scripts]
 ebook-converter = "srvarr_ebook_converter.app:main"

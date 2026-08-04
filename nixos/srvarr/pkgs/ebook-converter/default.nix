@@ -16,7 +16,10 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [ pythonPackages.pydantic ];
+  dependencies = with pythonPackages; [
+    prometheus-client
+    pydantic
+  ];
 
   nativeCheckInputs = [
     ebookConverterCli
