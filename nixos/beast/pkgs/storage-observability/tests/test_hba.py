@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
-from prometheus_client import generate_latest
 from prometheus_client.parser import text_string_to_metric_families
 
 from beast_storage_observability.hba import (
@@ -16,6 +15,9 @@ from beast_storage_observability.hba import (
     SubprocessStorcliSource,
 )
 from beast_storage_observability.models import BayMapping, StorcliDocument
+
+from .metrics import samples as metric_samples
+from .metrics import value
 
 
 def storcli_document(*, command_status: str = "Success") -> StorcliDocument:
@@ -81,28 +83,6 @@ def storcli_document(*, command_status: str = "Success") -> StorcliDocument:
     )
 
 
-def metric_samples(metrics: HbaMetrics) -> dict[str, list[tuple[dict[str, str], float]]]:
-    parsed: dict[str, list[tuple[dict[str, str], float]]] = {}
-    for family in text_string_to_metric_families(generate_latest(metrics.registry).decode()):
-        for sample in family.samples:
-            parsed.setdefault(sample.name, []).append((sample.labels, sample.value))
-    return parsed
-
-
-def value(
-    samples: dict[str, list[tuple[dict[str, str], float]]],
-    name: str,
-    **expected_labels: str,
-) -> float:
-    matches = [
-        sample_value
-        for labels, sample_value in samples[name]
-        if all(labels.get(key) == label for key, label in expected_labels.items())
-    ]
-    assert len(matches) == 1
-    return matches[0]
-
-
 def test_collects_typed_controller_and_drive_metrics() -> None:
     metrics = HbaMetrics()
     metrics.collect(
@@ -117,7 +97,7 @@ def test_collects_typed_controller_and_drive_metrics() -> None:
         },
     )
 
-    samples = metric_samples(metrics)
+    samples = metric_samples(metrics.registry)
     assert value(samples, "host_observability_hba_collect_success", controller="0") == 1
     assert (
         value(
@@ -201,7 +181,7 @@ def test_failed_controller_marks_collection_unavailable() -> None:
     metrics = HbaMetrics()
     metrics.collect(storcli_document(command_status="Failure"), {})
 
-    samples = metric_samples(metrics)
+    samples = metric_samples(metrics.registry)
     assert value(samples, "host_observability_hba_collect_success", controller="0") == 0
     assert value(samples, "host_observability_hba_collect_success", controller="all") == 0
 
