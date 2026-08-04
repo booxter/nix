@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptive-upload-controller"
+version = "0.1.0"
+description = "Coordinate Jellyfin-aware torrent upload limits"
+requires-python = ">=3.11"
+dependencies = ["transmission-common"]
+
+[project.scripts]
+adaptive-upload-controller = "adaptive_upload_controller.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100

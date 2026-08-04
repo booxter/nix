@@ -2,20 +2,35 @@
   iproute2,
   lib,
   python3,
+  ruff,
   transmissionCommon,
-  writeShellApplication,
 }:
 let
-  pythonWithDeps = python3.withPackages (_: [
-    transmissionCommon
-  ]);
+  pythonPackages = python3.pkgs;
 in
-writeShellApplication {
-  name = "adaptive-upload-controller";
-  runtimeInputs = [ iproute2 ];
-  text = ''
-    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
+pythonPackages.buildPythonApplication {
+  pname = "adaptive-upload-controller";
+  version = "0.1.0";
+  pyproject = true;
+
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  dependencies = [ transmissionCommon ];
+
+  nativeCheckInputs = [ ruff ];
+
+  makeWrapperArgs = [
+    "--prefix PATH : ${lib.makeBinPath [ iproute2 ]}"
+  ];
+
+  preCheck = ''
+    ruff format --check src
+    ruff check src
   '';
+
+  pythonImportsCheck = [ "adaptive_upload_controller" ];
 
   meta = {
     description = "Adaptive upload policy controller for Jellyfin-aware torrent shaping";

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import argparse
 import datetime
 import ipaddress
@@ -75,9 +73,7 @@ def parse_utc_iso8601(value: str) -> datetime.datetime | None:
 
 def write_json_atomic(path: Path, data: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(
-        dir=str(path.parent), prefix=f".{path.name}.", text=True
-    )
+    fd, tmp_path = tempfile.mkstemp(dir=str(path.parent), prefix=f".{path.name}.", text=True)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(data, handle, indent=2, sort_keys=True)
@@ -115,9 +111,7 @@ def format_target_mbit(target_mbit: float) -> str:
     return f"{round_target_mbit(target_mbit):.1f}".rstrip("0").rstrip(".")
 
 
-def calculate_transmission_upload_limit_kbps(
-    target_mbit: float, headroom_fraction: float
-) -> int:
+def calculate_transmission_upload_limit_kbps(target_mbit: float, headroom_fraction: float) -> int:
     return max(1, int((target_mbit * 1000.0 / 8.0) * headroom_fraction))
 
 
@@ -137,9 +131,7 @@ def nonnegative_float(value: object) -> float:
 
 
 def render_metrics_text(state: dict) -> str:
-    transmission_upload_limit_kbps = nonnegative_int(
-        state.get("transmission_upload_limit_kbps")
-    )
+    transmission_upload_limit_kbps = nonnegative_int(state.get("transmission_upload_limit_kbps"))
     relaxation_pending_target_mbit = state.get("relaxation_pending_target_mbit")
     relaxation_pending = (
         isinstance(relaxation_pending_target_mbit, (int, float))
@@ -211,12 +203,7 @@ def default_policy_state(
 
 
 def decode_prometheus_label_value(value: str) -> str:
-    return (
-        value.replace(r"\\", "\\")
-        .replace(r"\"", '"')
-        .replace(r"\n", "\n")
-        .replace(r"\t", "\t")
-    )
+    return value.replace(r"\\", "\\").replace(r"\"", '"').replace(r"\n", "\n").replace(r"\t", "\t")
 
 
 def parse_prometheus_labels(label_text: str) -> dict[str, str]:
@@ -261,9 +248,7 @@ def build_https_context(
         context = ssl.create_default_context(cafile=ca_file or None)
         if client_cert_file or client_key_file:
             if not client_cert_file or not client_key_file:
-                raise ControllerError(
-                    "both client certificate and key must be configured together"
-                )
+                raise ControllerError("both client certificate and key must be configured together")
             context.load_cert_chain(client_cert_file, client_key_file)
     except (OSError, ssl.SSLError) as exc:
         raise ControllerError(f"failed to build HTTPS client context: {exc}") from exc
@@ -287,9 +272,7 @@ def fetch_url_text(
             client_key_file,
         )
     try:
-        with urllib.request.urlopen(
-            request, timeout=timeout_seconds, **kwargs
-        ) as response:
+        with urllib.request.urlopen(request, timeout=timeout_seconds, **kwargs) as response:
             return response.read().decode("utf-8")
     except (TimeoutError, socket.timeout, urllib.error.URLError) as exc:
         raise ControllerError(f"request to {url} failed: {exc}") from exc
@@ -431,8 +414,7 @@ def observed_policy_state_from_stream_stats(
                 float(args.no_streams_mbit),
                 max(
                     float(args.minimum_streams_mbit),
-                    float(args.no_streams_mbit)
-                    - reserved_external_media_bandwidth_mbit,
+                    float(args.no_streams_mbit) - reserved_external_media_bandwidth_mbit,
                 ),
             )
         )
@@ -445,13 +427,9 @@ def observed_policy_state_from_stream_stats(
         "active_external_media_streams": active_external_media_streams,
         "active_media_streams_total": total_media_streams,
         "exporter_ok": True,
-        "missing_external_media_bitrate_sessions": (
-            missing_external_media_bitrate_sessions
-        ),
+        "missing_external_media_bitrate_sessions": (missing_external_media_bitrate_sessions),
         "reason": reason,
-        "reserved_external_media_bandwidth_mbit": (
-            reserved_external_media_bandwidth_mbit
-        ),
+        "reserved_external_media_bandwidth_mbit": (reserved_external_media_bandwidth_mbit),
         "target_mbit": target_mbit,
     }
 
@@ -490,8 +468,7 @@ def load_decider_state(
     else:
         effective_target_mbit = round_target_mbit(float(effective_target_mbit))
         if (
-            effective_target_mbit
-            < float(args.minimum_streams_mbit) - TARGET_MBIT_EPSILON
+            effective_target_mbit < float(args.minimum_streams_mbit) - TARGET_MBIT_EPSILON
             or effective_target_mbit > float(args.no_streams_mbit) + TARGET_MBIT_EPSILON
         ):
             effective_target_mbit = None
@@ -537,9 +514,7 @@ def build_policy_state(
         "active_external_media_bitrate_bits_per_second": observed_state[
             "active_external_media_bitrate_bits_per_second"
         ],
-        "active_external_media_streams": observed_state[
-            "active_external_media_streams"
-        ],
+        "active_external_media_streams": observed_state["active_external_media_streams"],
         "active_media_streams_total": observed_state["active_media_streams_total"],
         "exporter_ok": observed_state["exporter_ok"],
         "missing_external_media_bitrate_sessions": observed_state[
@@ -591,9 +566,7 @@ def decide_observed_policy_state(args: argparse.Namespace) -> dict:
             active_external_media_bitrate_bits_per_second=(
                 active_external_media_bitrate_bits_per_second
             ),
-            missing_external_media_bitrate_sessions=(
-                missing_external_media_bitrate_sessions
-            ),
+            missing_external_media_bitrate_sessions=(missing_external_media_bitrate_sessions),
         )
     except ControllerError as exc:
         LOG.warning("using conservative fallback after exporter failure: %s", exc)
@@ -643,17 +616,14 @@ def decide_effective_policy_state(args: argparse.Namespace, state_file: Path) ->
 
     if (
         relaxation_pending_target_mbit is None
-        or abs(relaxation_pending_target_mbit - observed_target_mbit)
-        > TARGET_MBIT_EPSILON
+        or abs(relaxation_pending_target_mbit - observed_target_mbit) > TARGET_MBIT_EPSILON
         or relaxation_pending_since is None
     ):
         return build_policy_state(
             args=args,
             observed_state=observed_state,
             effective_target_mbit=current_effective_target_mbit,
-            effective_reason=(
-                f"holding_before_relaxation_to_{observed_state['reason']}"
-            ),
+            effective_reason=(f"holding_before_relaxation_to_{observed_state['reason']}"),
             relaxation_pending_target_mbit=observed_target_mbit,
             relaxation_pending_since=now,
         )
@@ -717,20 +687,14 @@ def load_policy_state(
         or not isinstance(transmission_upload_limit_kbps, int)
         or transmission_upload_limit_kbps <= 0
     ):
-        LOG.warning(
-            "state file %s is missing expected numeric policy fields", state_file
-        )
+        LOG.warning("state file %s is missing expected numeric policy fields", state_file)
         return fallback_state
 
     if max_state_age_seconds is not None:
         updated_at = parsed.get("updated_at")
-        parsed_updated_at = (
-            parse_utc_iso8601(updated_at) if isinstance(updated_at, str) else None
-        )
+        parsed_updated_at = parse_utc_iso8601(updated_at) if isinstance(updated_at, str) else None
         if parsed_updated_at is None:
-            LOG.warning(
-                "state file %s is missing a valid updated_at timestamp", state_file
-            )
+            LOG.warning("state file %s is missing a valid updated_at timestamp", state_file)
             fallback_state["reason"] = "stale_or_invalid_state_file"
             return fallback_state
 
@@ -768,9 +732,7 @@ def transmission_get_current_upload_limit_enabled(
 
 def run_decider(args: argparse.Namespace) -> int:
     state_file = Path(args.state_file)
-    metrics_file = (
-        Path(args.metrics_file.strip()) if args.metrics_file.strip() else None
-    )
+    metrics_file = Path(args.metrics_file.strip()) if args.metrics_file.strip() else None
     last_signature: tuple | None = None
 
     while True:
@@ -839,12 +801,8 @@ def run_transmission_applier(args: argparse.Namespace) -> int:
             )
             target_limit = state["transmission_upload_limit_kbps"]
             session_arguments = client.call("session_get")
-            current_limit = transmission_get_current_upload_limit_kbps(
-                session_arguments
-            )
-            current_enabled = transmission_get_current_upload_limit_enabled(
-                session_arguments
-            )
+            current_limit = transmission_get_current_upload_limit_kbps(session_arguments)
+            current_enabled = transmission_get_current_upload_limit_enabled(session_arguments)
             if current_limit != target_limit or current_enabled is not True:
                 client.call(
                     "session_set",
@@ -863,13 +821,9 @@ def run_transmission_applier(args: argparse.Namespace) -> int:
                 LOG.info("Transmission upload limit already at %s kB/s", target_limit)
                 last_applied_limit = target_limit
         except TransmissionRpcError as exc:
-            LOG.warning(
-                "skipping Transmission apply iteration after RPC failure: %s", exc
-            )
+            LOG.warning("skipping Transmission apply iteration after RPC failure: %s", exc)
         except Exception:
-            LOG.exception(
-                "skipping Transmission apply iteration after unexpected failure"
-            )
+            LOG.exception("skipping Transmission apply iteration after unexpected failure")
 
         sleep_for = max(0.0, args.interval_seconds - (time.monotonic() - started_at))
         time.sleep(sleep_for)
@@ -889,9 +843,7 @@ def determine_default_egress_interface(route_probe_address: str) -> str:
     raise ControllerError("failed to determine default egress interface")
 
 
-def run_command(
-    command: list[str], *, check: bool = True
-) -> subprocess.CompletedProcess:
+def run_command(command: list[str], *, check: bool = True) -> subprocess.CompletedProcess:
     return subprocess.run(command, check=check, text=True, capture_output=True)
 
 
@@ -989,12 +941,8 @@ def parse_args() -> argparse.Namespace:
     decider = subparsers.add_parser(
         "decide", help="Poll Jellyfin exporter and write the desired upload policy."
     )
-    decider.add_argument(
-        "--exporter-url", required=True, help="Jellyfin exporter metrics URL."
-    )
-    decider.add_argument(
-        "--state-file", required=True, help="Path to the shared state JSON file."
-    )
+    decider.add_argument("--exporter-url", required=True, help="Jellyfin exporter metrics URL.")
+    decider.add_argument("--state-file", required=True, help="Path to the shared state JSON file.")
     decider.add_argument("--interval-seconds", type=float, default=30.0)
     decider.add_argument("--request-timeout-seconds", type=float, default=10.0)
     decider.add_argument(
@@ -1041,9 +989,7 @@ def parse_args() -> argparse.Namespace:
     transmission.add_argument("--interval-seconds", type=float, default=30.0)
     transmission.add_argument("--request-timeout-seconds", type=float, default=15.0)
     transmission.add_argument("--fallback-mbit", type=float, default=8.0)
-    transmission.add_argument(
-        "--transmission-headroom-fraction", type=float, default=0.95
-    )
+    transmission.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
     transmission.add_argument("--max-state-age-seconds", type=float, default=90.0)
 
     tc_applier = subparsers.add_parser(
@@ -1055,9 +1001,7 @@ def parse_args() -> argparse.Namespace:
     )
     tc_applier.add_argument("--interval-seconds", type=float, default=30.0)
     tc_applier.add_argument("--fallback-mbit", type=float, default=8.0)
-    tc_applier.add_argument(
-        "--transmission-headroom-fraction", type=float, default=0.95
-    )
+    tc_applier.add_argument("--transmission-headroom-fraction", type=float, default=0.95)
     tc_applier.add_argument("--max-state-age-seconds", type=float, default=90.0)
     tc_applier.add_argument(
         "--outer-link-rate",
@@ -1082,9 +1026,7 @@ def main() -> int:
     args = parse_args()
     if args.command == "decide":
         if bool(args.client_cert_file) != bool(args.client_key_file):
-            raise SystemExit(
-                "--client-cert-file and --client-key-file must be provided together"
-            )
+            raise SystemExit("--client-cert-file and --client-key-file must be provided together")
     logging.basicConfig(
         level=getattr(logging, args.log_level),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
