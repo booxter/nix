@@ -30,7 +30,7 @@ in
     inherit transmissionCommon;
   };
 
-  audiobookshelf-oidc-bootstrap = pkgs.callPackage ./audiobookshelf-oidc-bootstrap { };
+  audiobookshelf-tools = pkgs.callPackage ./audiobookshelf-tools { };
 
   ebook-converter = pkgs.callPackage ./ebook-converter {
     inherit ebookConverterCli;
