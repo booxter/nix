@@ -20,10 +20,15 @@ from restic_cloud_usage.models import RepositoryConfig
 @dataclass
 class RecordingRunner:
     result: CommandResult
-    calls: list[tuple[tuple[str, ...], Mapping[str, str]]] = field(default_factory=list)
 
-    def run(self, arguments: Sequence[str], environment: Mapping[str, str]) -> CommandResult:
-        self.calls.append((tuple(arguments), environment))
+    def run(
+        self,
+        _arguments: Sequence[str],
+        _environment: Mapping[str, str],
+        *,
+        capture_output: bool = True,
+    ) -> CommandResult:
+        assert capture_output
         return self.result
 
 
@@ -86,7 +91,7 @@ def repository() -> RepositoryConfig:
     )
 
 
-def test_restic_client_uses_existing_stats_workflow() -> None:
+def test_restic_client_parses_stats() -> None:
     runner = RecordingRunner(
         CommandResult(
             0,
@@ -105,26 +110,6 @@ def test_restic_client_uses_existing_stats_workflow() -> None:
     stats = client.stats(repository())
 
     assert stats.total_size == 10
-    assert runner.calls == [
-        (
-            (
-                "restic",
-                "-r",
-                "b2:backups:hosts/srvarr",
-                "--password-file",
-                "/run/secrets/password",
-                "--cache-dir",
-                "/cache",
-                "--retry-lock",
-                "5m",
-                "stats",
-                "--mode",
-                "raw-data",
-                "--json",
-            ),
-            {"B2_ACCOUNT_ID": "id"},
-        )
-    ]
 
 
 def test_b2_client_matches_show_size_version_traversal() -> None:

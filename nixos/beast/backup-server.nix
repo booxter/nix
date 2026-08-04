@@ -1,7 +1,9 @@
 {
+  beastPkgs,
   config,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -13,10 +15,10 @@ let
   cloudBackupCeil = "10gbit";
   # Keep cloud-copy uploads smaller so each B2 request finishes sooner under
   # the shaped uplink instead of timing out mid-pack.
-  cloudCopyPackSize = "4";
+  cloudCopyPackSize = 4;
   # Keep native B2 uploads serialized to stay close to the previous single-
   # transfer rclone path while we validate direct restic offload.
-  cloudB2Connections = "1";
+  cloudB2Connections = 1;
   # Add future backup sources here. Each client gets a dedicated SSH-only user,
   # its own repository path, and its own public key in config.
   backupClients = {
@@ -118,65 +120,33 @@ let
   sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
   sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
   sharedB2ApplicationKeySecret = "backup/restic/cloud/b2/applicationKey";
-  mkCloudOffloadScript =
+  mkCloudOffloadConfig =
     name:
     let
       backupRepo = mkBackupRepo name;
-      pruneArgs = lib.escapeShellArgs backupClients.${name}.cloud.pruneOpts;
       srcPasswordFile = config.sops.secrets.${mkCloudSecret name "localPassword"}.path;
       dstPasswordFile = config.sops.secrets.${mkCloudSecret name "password"}.path;
       b2AccountIdFile = config.sops.secrets.${sharedB2ApplicationKeyIdSecret}.path;
       b2AccountKeyFile = config.sops.secrets.${sharedB2ApplicationKeySecret}.path;
     in
-    pkgs.writeShellScript "restic-${name}-cloud-offload" ''
-      set -euo pipefail
-
-      dst_repo="${backupClients.${name}.cloud.repository}"
-      src_repo="${backupRepo}"
-      src_password_file="${srcPasswordFile}"
-      dst_password_file="${dstPasswordFile}"
-      export B2_ACCOUNT_ID="$(${pkgs.coreutils}/bin/cat ${b2AccountIdFile})"
-      export B2_ACCOUNT_KEY="$(${pkgs.coreutils}/bin/cat ${b2AccountKeyFile})"
-
-      restic_dst() {
-        ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" "$@"
-      }
-
-      cleanup() {
-        exit_code=$?
-        if [ "$exit_code" -ne 0 ]; then
-          restic_dst unlock || true
-        fi
-      }
-      trap cleanup EXIT
-
-      if ! restic_dst cat config >/dev/null 2>&1; then
-        restic_dst \
-          init \
-          --from-repo "$src_repo" \
-          --from-password-file "$src_password_file" \
-          --copy-chunker-params
-      fi
-
-      # The destination repo is only used by this offload job, so clear stale
-      # locks left behind by previously failed runs before starting new work.
-      restic_dst unlock || true
-
-      restic_dst \
-        -o b2.connections=${cloudB2Connections} \
-        --pack-size ${cloudCopyPackSize} \
-        copy \
-        --from-repo "$src_repo" \
-        --from-password-file "$src_password_file" \
-        --verbose
-
-      restic_dst unlock || true
-
-      restic_dst \
-        forget \
-        --prune \
-        ${pruneArgs}
-    '';
+    (pkgs.formats.json { }).generate "restic-${name}-cloud-offload.json" {
+      sourceRepository = backupRepo;
+      sourcePasswordFile = srcPasswordFile;
+      destinationRepository = backupClients.${name}.cloud.repository;
+      destinationPasswordFile = dstPasswordFile;
+      b2ApplicationKeyIdFile = b2AccountIdFile;
+      b2ApplicationKeyFile = b2AccountKeyFile;
+      b2Connections = cloudB2Connections;
+      packSizeMib = cloudCopyPackSize;
+      pruneOptions = backupClients.${name}.cloud.pruneOpts;
+    };
+  mkCloudOffloadCommand =
+    name:
+    utils.escapeSystemdExecArgs [
+      (lib.getExe' beastPkgs.restic-cloud-usage "restic-cloud-offload")
+      "--config"
+      (mkCloudOffloadConfig name)
+    ];
   cloudShapingScript = pkgs.writeShellScript "restic-cloud-traffic-shaping" ''
     set -euo pipefail
 
@@ -431,7 +401,7 @@ in
             Group = mkOffloadUser name;
             StateDirectory = mkCloudStateDir name;
             Environment = "RESTIC_CACHE_DIR=/var/lib/${mkCloudStateDir name}/cache";
-            ExecStart = mkCloudOffloadScript name;
+            ExecStart = mkCloudOffloadCommand name;
           };
         };
       }

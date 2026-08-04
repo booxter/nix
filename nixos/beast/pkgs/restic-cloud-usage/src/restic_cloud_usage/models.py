@@ -32,6 +32,18 @@ class ExporterConfig(StrictModel):
     repositories: tuple[RepositoryConfig, ...]
 
 
+class OffloadConfig(StrictModel):
+    source_repository: Path = Field(alias="sourceRepository")
+    source_password_file: Path = Field(alias="sourcePasswordFile")
+    destination_repository: str = Field(alias="destinationRepository", min_length=1)
+    destination_password_file: Path = Field(alias="destinationPasswordFile")
+    b2_application_key_id_file: Path = Field(alias="b2ApplicationKeyIdFile")
+    b2_application_key_file: Path = Field(alias="b2ApplicationKeyFile")
+    b2_connections: int = Field(alias="b2Connections", gt=0)
+    pack_size_mib: int = Field(alias="packSizeMib", gt=0)
+    prune_options: tuple[str, ...] = Field(alias="pruneOptions")
+
+
 class AttemptState(StrictModel):
     last_run_timestamp_seconds: float = 0
     last_success_timestamp_seconds: float = 0

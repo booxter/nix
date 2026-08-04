@@ -79,23 +79,35 @@ class CommandResult:
 
 
 class CommandRunner(Protocol):
-    def run(self, arguments: Sequence[str], environment: Mapping[str, str]) -> CommandResult: ...
+    def run(
+        self,
+        arguments: Sequence[str],
+        environment: Mapping[str, str],
+        *,
+        capture_output: bool = True,
+    ) -> CommandResult: ...
 
 
 @dataclass(frozen=True)
 class SubprocessRunner:
-    def run(self, arguments: Sequence[str], environment: Mapping[str, str]) -> CommandResult:
+    def run(
+        self,
+        arguments: Sequence[str],
+        environment: Mapping[str, str],
+        *,
+        capture_output: bool = True,
+    ) -> CommandResult:
         try:
             process = subprocess.run(
                 arguments,
                 check=False,
-                capture_output=True,
+                capture_output=capture_output,
                 text=True,
                 env=environment,
             )
         except OSError:
             return CommandResult(127, "")
-        return CommandResult(process.returncode, process.stdout, process.stderr)
+        return CommandResult(process.returncode, process.stdout or "", process.stderr or "")
 
 
 class RepositoryUsageClient(Protocol):
@@ -144,10 +156,25 @@ def restic_environment(
     cache_dir: str,
 ) -> dict[str, str]:
     return {
+        **b2_environment(
+            environment,
+            application_key_id=application_key_id,
+            application_key=application_key,
+        ),
+        "RESTIC_CACHE_DIR": cache_dir,
+    }
+
+
+def b2_environment(
+    environment: Mapping[str, str],
+    *,
+    application_key_id: str,
+    application_key: str,
+) -> dict[str, str]:
+    return {
         **environment,
         "B2_ACCOUNT_ID": application_key_id,
         "B2_ACCOUNT_KEY": application_key,
-        "RESTIC_CACHE_DIR": cache_dir,
     }
 
 
