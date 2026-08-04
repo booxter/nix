@@ -143,28 +143,6 @@ let
   seerrRequestStoragePackage = appPackages.seerr-request-storage;
   seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
   pkiRotationPackage = pkgs.pki-rotation;
-  issueObservabilityCertApp = pkgs.writeShellApplication {
-    name = "issue-observability-cert-app";
-    text = ''
-      exec ${issueObservabilityCertPackage}/bin/issue-observability-cert "$@"
-    '';
-  };
-  issueInternalServiceCertApp = pkgs.writeShellApplication {
-    name = "issue-internal-service-cert-app";
-    text = ''
-      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_COMMON_NAME=${pkgs.lib.escapeShellArg "unifi.${lan.domain}"}
-      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_SANS_JSON=${
-        pkgs.lib.escapeShellArg (
-          builtins.toJSON [
-            "unifi.${lan.domain}"
-            "unifi"
-          ]
-        )
-      }
-      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_GATEWAY_IP=${pkgs.lib.escapeShellArg lan.gateway.address}
-      exec ${issueInternalServiceCertPackage}/bin/issue-internal-service-cert "$@"
-    '';
-  };
   issueProxmoxExporterTokenApp = pkgs.writeShellApplication {
     name = "issue-proxmox-exporter-token-app";
     text = ''
@@ -189,8 +167,8 @@ in
     get-local-builders = getLocalBuilders;
     run-check-target = runCheckTarget;
     get-hosts = getHosts;
-    issue-observability-cert = issueObservabilityCertApp;
-    issue-internal-service-cert = issueInternalServiceCertApp;
+    issue-observability-cert = issueObservabilityCertPackage;
+    issue-internal-service-cert = issueInternalServiceCertPackage;
     issue-proxmox-exporter-token = issueProxmoxExporterTokenApp;
     seerr-request-storage = seerrRequestStoragePackage;
     seerr-update-user-tags = seerrUpdateUserTagsPackage;
@@ -209,9 +187,9 @@ in
     "run-check-target" =
       mkApp "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
     "issue-observability-cert" =
-      mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+      mkApp "${issueObservabilityCertPackage}/bin/issue-observability-cert" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
     "issue-internal-service-cert" =
-      mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+      mkApp "${issueInternalServiceCertPackage}/bin/issue-internal-service-cert" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
     "issue-proxmox-exporter-token" =
       mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
     "seerr-request-storage" =

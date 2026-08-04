@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pki-certificates"
+version = "0.1.0"
+description = "Issue and store fleet PKI certificates"
+requires-python = ">=3.11"
+dependencies = ["pydantic", "sops-tools"]
+
+[project.scripts]
+issue-internal-service-cert = "pki_certificates.cli:internal_main"
+issue-observability-cert = "pki_certificates.cli:observability_main"
+pki-issue-certificate-remote = "pki_certificates.remote:main"
+
+[tool.mypy]
+files = ["src/pki_certificates"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=pki_certificates --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

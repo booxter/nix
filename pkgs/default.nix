@@ -35,6 +35,8 @@ in
 
   patch-context = pkgs.callPackage ./patch-context { };
 
+  pki-certificates = appPackages.issue-internal-service-cert;
+
   pki-rotation = pkgs.callPackage ./pki-rotation {
     issueInternalServiceCert = appPackages.issue-internal-service-cert;
     issueObservabilityCert = appPackages.issue-observability-cert;

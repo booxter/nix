@@ -2,11 +2,8 @@ pkgs:
 let
   hostInventory = import ../lib/inventory.nix { inherit (pkgs) lib; };
   sopsTools = import ./sops/package.nix { inherit hostInventory pkgs; };
-  issueInternalServiceCert = pkgs.callPackage ./issue-internal-service-cert {
-    inherit sopsTools;
-  };
-  issueObservabilityCert = pkgs.callPackage ./issue-observability-cert {
-    inherit sopsTools;
+  certificateTools = pkgs.callPackage ./pki-certificates {
+    inherit hostInventory sopsTools;
   };
   issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token {
     inherit hostInventory sopsTools;
@@ -17,9 +14,9 @@ in
 {
   get-ff-cookie = getFfCookie;
 
-  issue-internal-service-cert = issueInternalServiceCert;
+  issue-internal-service-cert = certificateTools;
 
-  issue-observability-cert = issueObservabilityCert;
+  issue-observability-cert = certificateTools;
 
   issue-proxmox-exporter-token = issueProxmoxExporterToken;
 
