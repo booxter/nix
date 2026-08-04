@@ -98,11 +98,3 @@ def test_repository_reports_missing_secret_role(tmp_path: Path) -> None:
 
     with pytest.raises(ToolError, match="Destination secret not found"):
         repository.require_secret("missing", role="Destination")
-
-
-def test_target_system_comes_from_host_inventory(tmp_path: Path) -> None:
-    systems = tmp_path / "systems.json"
-    systems.write_text(json.dumps({"beast": "x86_64-linux"}))
-    environment = runtime(tmp_path, extra={"SOPS_HOST_SYSTEMS_FILE": str(systems)})
-
-    assert environment.registered_system("beast") == "x86_64-linux"

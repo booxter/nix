@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import os
+import shlex
 import shutil
 import sys
 from dataclasses import dataclass
@@ -35,7 +37,6 @@ class OperatorRecipientProvider(Protocol):
 class CommandRuntimeKeyProvider:
     runner: ProcessRunner
     repo_root: Path
-    target_system: str
 
     def recipient(self, host: str, user: str, *, local: bool) -> str:
         if local:
@@ -64,22 +65,28 @@ class CommandRuntimeKeyProvider:
         ).strip()
 
     def _remote_recipient(self, target: str) -> str:
-        package = self._build_target_package()
-        self.runner.run(["nix", "copy", "--to", f"ssh://{target}", str(package)])
+        source = self._archive_source()
+        self.runner.run(["nix", "copy", "--to", f"ssh://{target}", str(source)])
         remote_root = self.runner.run(["ssh", target, "id", "-u"]).strip() == "0"
-        privilege = [] if remote_root else ["sudo"]
-        output = self.runner.run_streaming(
+        privilege = [] if remote_root else ["sudo", "-H"]
+        # OpenSSH has no remote argv protocol. This fixed command contains no
+        # user input; the source path is a validated Nix store path.
+        command = shlex.join(
             [
-                "ssh",
-                "-tt",
-                target,
                 *privilege,
-                str(package / "bin/sops-runtime-key"),
+                "nix",
+                "shell",
+                "-L",
+                "--show-trace",
+                f"path:{source}#sops-tools",
+                "--command",
+                "sops-runtime-key",
                 "--age-keygen",
                 "age-keygen",
                 str(_RUNTIME_KEY),
             ]
         )
+        output = self.runner.run_streaming(["ssh", "-tt", target, command])
         recipients = [
             line.strip()
             for line in output.replace("\r", "").splitlines()
@@ -89,16 +96,22 @@ class CommandRuntimeKeyProvider:
             raise ToolError(f"Failed to read age public key from remote host: {target}")
         return recipients[-1]
 
-    def _build_target_package(self) -> Path:
-        flake = f"path:{self.repo_root}#packages.{self.target_system}.sops-tools"
-        outputs = self.runner.run(
-            ["nix", "build", "--no-link", "--print-out-paths", flake]
-        ).splitlines()
-        if len(outputs) != 1 or not outputs[0].startswith("/nix/store/"):
-            raise ToolError(
-                f"Failed to build sops-tools for target system {self.target_system}."
-            )
-        return Path(outputs[0])
+    def _archive_source(self) -> Path:
+        output = self.runner.run(
+            ["nix", "flake", "archive", "--json", f"path:{self.repo_root}"]
+        )
+        try:
+            payload: object = json.loads(output)
+        except json.JSONDecodeError as error:
+            raise ToolError(f"Failed to archive sops-tools source: {error}") from error
+        if not isinstance(payload, dict):
+            raise ToolError("Failed to archive sops-tools source.")
+        path = payload.get("path")
+        if not isinstance(path, str):
+            raise ToolError("Failed to archive sops-tools source.")
+        if not path.startswith("/nix/store/"):
+            raise ToolError("Failed to archive sops-tools source.")
+        return Path(path)
 
     @staticmethod
     def _executable(name: str) -> str:
