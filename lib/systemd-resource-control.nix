@@ -6,12 +6,14 @@ let
       MemoryHigh = "512M";
       MemoryMax = "1G";
       TasksMax = 128;
+      TimeoutStartSec = "15m";
     };
     medium = {
       Slice = "background.slice";
       MemoryHigh = "2G";
       MemoryMax = "4G";
       TasksMax = 512;
+      TimeoutStartSec = "1h";
     };
     critical = {
       ManagedOOMPreference = "avoid";

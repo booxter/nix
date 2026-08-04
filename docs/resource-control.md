@@ -22,15 +22,15 @@ CPU quotas are reserved for workloads that need a hard throughput ceiling.
 
 ## Service Classes
 
-| Class | Memory high | Memory max | Tasks max | Use |
-| --- | ---: | ---: | ---: | --- |
-| Lightweight | 512 MiB | 1 GiB | 128 | Probes, sync jobs, reconcilers |
-| Medium | 2 GiB | 4 GiB | 512 | Indexers and bounded processing |
-| Heavy | Explicit | Explicit | Explicit | Builds, LLMs, databases, backups |
-| Critical | None | None | Explicit | Services deliberately kept unconstrained |
+| Class | High | Max | Tasks | Start | Use |
+| --- | ---: | ---: | ---: | ---: | --- |
+| Lightweight | 512 MiB | 1 GiB | 128 | 15 min | Probes, sync, reconcilers |
+| Medium | 2 GiB | 4 GiB | 512 | 1 hour | Indexers and bounded processing |
+| Heavy | Explicit | Explicit | Explicit | Explicit | Large explicit workloads |
+| Critical | None | None | Explicit | None | Unconstrained continuity services |
 
-Background services run in `background.slice`. Oneshot jobs must also declare
-an activation deadline with `TimeoutStartSec`; long-running services use an
+Background services run in `background.slice`. Heavy oneshot jobs declare an
+activation deadline with `TimeoutStartSec`; long-running services use an
 appropriate runtime or application-level deadline.
 
 Critical services remain in the normal system slice with no generic memory or
