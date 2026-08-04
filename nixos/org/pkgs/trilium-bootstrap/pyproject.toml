@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trilium-bootstrap"
+version = "0.1.0"
+description = "Initialize Trilium Notes and reconcile its OIDC settings"
+requires-python = ">=3.11"
+dependencies = ["pydantic"]
+
+[project.scripts]
+trilium-bootstrap = "trilium_bootstrap.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+trilium_bootstrap = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=trilium_bootstrap --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/trilium_bootstrap"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

@@ -23,4 +23,5 @@ in
   search-stack-probes = pkgs.callPackage ./search-stack-probes { };
   searchless-ngx = pkgs.callPackage ./searchless-ngx { };
   telegram-archive = pkgs.callPackage ./telegram-archive { };
+  trilium-bootstrap = pkgs.callPackage ./trilium-bootstrap { };
 }

@@ -2,7 +2,9 @@
   config,
   hostInventory,
   lib,
+  orgPkgs,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -24,111 +26,17 @@ let
     TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERBASEURL = oidc.openidBaseUrl oidcClientId;
     TRILIUM_MULTIFACTORAUTHENTICATION_OAUTHISSUERNAME = "SSO";
   };
-  bootstrapScript = pkgs.writeShellApplication {
-    name = "trilium-bootstrap";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.curl
-      pkgs.jq
-      pkgs.sqlite
-    ];
-    text = ''
-      database="''${TRILIUM_DATA_DIR}/document.db"
-      base_url=${lib.escapeShellArg "http://127.0.0.1:${toString bootstrapPort}"}
-      : "''${TRILIUM_LOCAL_PASSWORD_FILE:?}"
-
-      database_value() {
-        sqlite3 "$database" "$1" 2>/dev/null || true
-      }
-
-      is_initialized() {
-        test -f "$database" &&
-          test "$(database_value "SELECT value FROM options WHERE name = 'initialized';")" = "true"
-      }
-
-      is_password_set() {
-        test -n "$(database_value "SELECT value FROM options WHERE name = 'passwordVerificationHash';")"
-      }
-
-      server_pid=""
-      cleanup() {
-        if test -n "$server_pid" && kill -0 "$server_pid" 2>/dev/null; then
-          kill "$server_pid"
-          wait "$server_pid" || true
-        fi
-        server_pid=""
-      }
-      trap cleanup EXIT
-
-      needs_initialization=true
-      is_initialized && needs_initialization=false
-      needs_password=true
-      is_password_set && needs_password=false
-
-      if "$needs_initialization" || "$needs_password"; then
-        ${lib.getExe pkgs.trilium-next-server} &
-        server_pid=$!
-
-        status=""
-        for _ in $(seq 1 120); do
-          if status="$(curl --fail --silent --show-error "$base_url/api/setup/status")"; then
-            break
-          fi
-          if ! kill -0 "$server_pid" 2>/dev/null; then
-            echo "Trilium exited before bootstrap completed" >&2
-            exit 1
-          fi
-          sleep 1
-        done
-        if test -z "$status"; then
-          echo "Timed out waiting for Trilium's setup API" >&2
-          exit 1
-        fi
-
-        if test "$(jq --raw-output .isInitialized <<<"$status")" != "true"; then
-          curl --fail --silent --show-error \
-            --request POST \
-            "$base_url/api/setup/new-document" \
-            >/dev/null
-        fi
-
-        if ! is_password_set; then
-          http_code="$(
-            curl --silent --show-error \
-              --output /dev/null \
-              --write-out '%{http_code}' \
-              --request POST \
-              --data-urlencode "password1@''${TRILIUM_LOCAL_PASSWORD_FILE}" \
-              --data-urlencode "password2@''${TRILIUM_LOCAL_PASSWORD_FILE}" \
-              "$base_url/set-password"
-          )"
-          if test "$http_code" != "302"; then
-            echo "Setting the Trilium break-glass password returned HTTP $http_code" >&2
-            exit 1
-          fi
-        fi
-
-        cleanup
-      fi
-
-      if ! is_initialized || ! is_password_set; then
-        echo "Trilium database initialization did not complete" >&2
-        exit 1
-      fi
-
-      sqlite3 "$database" "
-        BEGIN IMMEDIATE;
-        UPDATE options SET value = 'true' WHERE name = 'mfaEnabled';
-        UPDATE options SET value = 'oauth' WHERE name = 'mfaMethod';
-        COMMIT;
-      "
-
-      if test "$(database_value "SELECT value FROM options WHERE name = 'mfaMethod';")" != "oauth"; then
-        echo "Trilium OIDC bootstrap did not complete" >&2
-        exit 1
-      fi
-    '';
-  };
+  bootstrapCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe orgPkgs.trilium-bootstrap)
+    "--database"
+    "${stateDir}/document.db"
+    "--base-url"
+    "http://127.0.0.1:${toString bootstrapPort}"
+    "--password-file"
+    config.sops.secrets.trilium-local-password.path
+    "--server-command"
+    (lib.getExe pkgs.trilium-next-server)
+  ];
 in
 {
   users.groups.${serviceName} = { };
@@ -183,7 +91,6 @@ in
       ];
       before = [ "${serviceName}.service" ];
       environment = serviceEnvironment // {
-        TRILIUM_LOCAL_PASSWORD_FILE = config.sops.secrets.trilium-local-password.path;
         TRILIUM_NETWORK_PORT = toString bootstrapPort;
       };
       serviceConfig = {
@@ -195,7 +102,7 @@ in
         StateDirectory = serviceName;
         StateDirectoryMode = "0750";
         WorkingDirectory = stateDir;
-        ExecStart = lib.getExe bootstrapScript;
+        ExecStart = bootstrapCommand;
         TimeoutStartSec = "5min";
         UMask = "0027";
         NoNewPrivileges = true;
