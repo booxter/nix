@@ -25,6 +25,7 @@ let
         {
           inherit system;
           configuration = if nixosSpec != null then "nixosConfigurations" else "darwinConfigurations";
+          runtimeHost = spec.hostname or name;
           secretDomain = hostInventory.secretDomainsByHost.${name};
           caUrl =
             if caServer == null then
@@ -81,6 +82,11 @@ pythonPackages.buildPythonApplication {
   '';
 
   pythonImportsCheck = [ "pki_certificates" ];
+
+  passthru = {
+    inherit hostsFile unifiDefaultsFile;
+    queryFile = ./query.nix;
+  };
 
   postFixup = ''
     for program in "$out"/bin/*; do

@@ -60,6 +60,9 @@ class NixConfigSource:
     query: Path
     _cache: dict[str, HostCertificateConfig] = field(default_factory=dict)
 
+    def certificate_config(self, host: str) -> HostCertificateConfig:
+        return self._config(host)
+
     def internal_service_names(self, host: str) -> list[str]:
         config = self._config(host)
         names = sorted(

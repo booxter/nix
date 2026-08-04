@@ -69,12 +69,14 @@ def fleet_hosts() -> FleetHosts:
             "host": {
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
+                "runtimeHost": "host-runtime",
                 "secretDomain": "main",
                 "caUrl": None,
             },
             "pki": {
                 "system": "x86_64-linux",
                 "configuration": "nixosConfigurations",
+                "runtimeHost": "pki-runtime",
                 "secretDomain": "main",
                 "caUrl": "https://pki.home.arpa:8443",
             },
@@ -366,6 +368,7 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
     assert source.observability_client_names("host") == ["scraper"]
     assert source.observability_client("host", "scraper").common_name == "scraper.host"
     assert source.host_identity("host").avahi_name == "host-avahi"
+    assert source.certificate_config("host").identity.dns_name == "host.home.arpa"
     assert len(runner.calls) == 1
     assert runner.calls[0] == [
         "nix-instantiate",

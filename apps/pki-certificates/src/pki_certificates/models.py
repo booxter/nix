@@ -10,6 +10,7 @@ class HostFacts(BaseModel):
 
     system: str
     configuration: Literal["nixosConfigurations", "darwinConfigurations"]
+    runtime_host: str = Field(alias="runtimeHost")
     secret_domain: str = Field(alias="secretDomain")
     ca_url: str | None = Field(alias="caUrl")
 
