@@ -7,7 +7,7 @@ name = "lidarr-cue-splitter"
 version = "0.1.0"
 description = "Split completed Lidarr CUE images for manual import"
 requires-python = ">=3.11"
-dependencies = ["aiopyarr", "pydantic"]
+dependencies = ["aiopyarr", "prometheus-client", "pydantic"]
 
 [tool.mypy]
 files = ["src/lidarr_cue_splitter"]

@@ -9,6 +9,16 @@ from .errors import CueSplitterError
 from .files import atomic_write
 
 
+ACTIVE_JOB_STATES = {
+    "settling",
+    "splitting",
+    "verifying",
+    "matching",
+    "importing",
+    "awaiting_queue_removal",
+}
+PROCESSING_JOB_STATES = {"splitting", "verifying", "matching", "importing"}
+PROBLEM_JOB_STATES = {"failed", "automation_failed", "needs_attention"}
 EXPIRING_JOB_STATES = {
     "complete",
     "dismissed",
@@ -17,6 +27,16 @@ EXPIRING_JOB_STATES = {
     "source_invalid",
     "source_unavailable",
 }
+KNOWN_JOB_STATES = (
+    ACTIVE_JOB_STATES
+    | EXPIRING_JOB_STATES
+    | {
+        "automation_failed",
+        "awaiting_manual_match",
+        "failed",
+        "needs_attention",
+    }
+)
 
 
 @dataclass

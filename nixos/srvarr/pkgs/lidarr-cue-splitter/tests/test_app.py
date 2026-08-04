@@ -9,8 +9,9 @@ from pathlib import Path
 from threading import Thread
 from typing import Iterator
 
-from pydantic import TypeAdapter
 from aiopyarr.models.const import ProtocolType
+from prometheus_client.parser import text_string_to_metric_families
+from pydantic import TypeAdapter
 
 from lidarr_cue_splitter.app import (
     CueSplitterError,
@@ -24,10 +25,10 @@ from lidarr_cue_splitter.app import (
     inspection_summary,
     is_within,
     output_fingerprint,
-    prometheus_metrics,
     read_api_key,
     safe_component,
 )
+from lidarr_cue_splitter.metrics import render_metrics
 from lidarr_cue_splitter.models import (
     CommandStatus,
     ManualImportCandidate,
@@ -52,6 +53,15 @@ def inspections(payload):
 
 def import_candidates(payload):
     return IMPORT_CANDIDATES.validate_python(payload)
+
+
+def metric_value(metrics, name, labels=None):
+    expected_labels = labels or {}
+    for family in text_string_to_metric_families(metrics):
+        for sample in family.samples:
+            if sample.name == name and sample.labels == expected_labels:
+                return sample.value
+    raise AssertionError(f"missing metric {name} with labels {expected_labels}")
 
 
 class CueSplitterTests(unittest.TestCase):
@@ -379,17 +389,31 @@ class CueSplitterTests(unittest.TestCase):
             store.state.totals.ignored = 2
             store.state.totals.manual = 1
             store.state.totals.tracks = 24
-            metrics = prometheus_metrics(store, True, 1234.0)
-            self.assertIn("host_observability_lidarr_cue_splitter_ok 1", metrics)
-            self.assertIn(
-                'host_observability_lidarr_cue_splitter_jobs{state="awaiting_manual_match"} 1',
-                metrics,
+            metrics = render_metrics(store.state, ok=True, now=1234.0)
+            self.assertEqual(
+                metric_value(metrics, "host_observability_lidarr_cue_splitter_ok"),
+                1,
             )
-            self.assertIn(
-                'host_observability_lidarr_cue_splitter_jobs_total{result="success"} 3',
-                metrics,
+            self.assertEqual(
+                metric_value(
+                    metrics,
+                    "host_observability_lidarr_cue_splitter_jobs",
+                    {"state": "awaiting_manual_match"},
+                ),
+                1,
             )
-            self.assertIn("host_observability_lidarr_cue_splitter_tracks_total 24", metrics)
+            self.assertEqual(
+                metric_value(
+                    metrics,
+                    "host_observability_lidarr_cue_splitter_jobs_total",
+                    {"result": "success"},
+                ),
+                3,
+            )
+            self.assertEqual(
+                metric_value(metrics, "host_observability_lidarr_cue_splitter_tracks_total"),
+                24,
+            )
 
     def test_state_round_trip_is_typed_and_rejects_invalid_data(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -887,14 +911,22 @@ class CueSplitterTests(unittest.TestCase):
             service.iteration()
             self.assertEqual(store.state.jobs["abc"].status, "dismissed")
             self.assertEqual(store.state.jobs["abc"].error, "malformed cue")
-            metrics = prometheus_metrics(store, True, now[0])
-            self.assertIn(
-                'host_observability_lidarr_cue_splitter_jobs{state="dismissed"} 1',
-                metrics,
+            metrics = render_metrics(store.state, ok=True, now=now[0])
+            self.assertEqual(
+                metric_value(
+                    metrics,
+                    "host_observability_lidarr_cue_splitter_jobs",
+                    {"state": "dismissed"},
+                ),
+                1,
             )
-            self.assertIn(
-                'host_observability_lidarr_cue_splitter_jobs{state="needs_attention"} 0',
-                metrics,
+            self.assertEqual(
+                metric_value(
+                    metrics,
+                    "host_observability_lidarr_cue_splitter_jobs",
+                    {"state": "needs_attention"},
+                ),
+                0,
             )
 
             now[0] += 7 * 86400

@@ -20,6 +20,7 @@ pythonPackages.buildPythonApplication {
 
   dependencies = with pythonPackages; [
     aiopyarr
+    prometheus-client
     pydantic
   ];
 
