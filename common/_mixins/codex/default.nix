@@ -3,7 +3,6 @@
   lib,
   pkgs,
   username,
-  hostname,
   ...
 }:
 let
@@ -25,7 +24,8 @@ let
     // lib.optionalAttrs mcps.enabled mcps.settings
   );
   generatedCodexConfig = tomlFormat.generate "codex-system-config" effectiveCodexSettings;
-  hostSecretFile = ../../../secrets + "/${config.host.secretDomain}/${hostname}.yaml";
+  hostSecretFile =
+    ../../../secrets + "/${config.host.secretDomain}/${config.networking.hostName}.yaml";
 in
 {
   options.host.codex.mcp = mcps.options;

@@ -35,7 +35,7 @@ in
 
   home-manager.users.${username}.programs.sketchybarJellyfin = lib.mkIf enable {
     enable = true;
-    metricsUrl = "https://${beastConfig.host.dnsName}:${toString endpoint.port}${endpoint.path}";
+    metricsUrl = "https://${beastConfig.networking.hostName}:${toString endpoint.port}${endpoint.path}";
     dashboardUrl = "https://grafana.${hostInventory.site.lan.domain}/d/fana-media-pipe";
     clientCertificate = config.sops.secrets.${clientCertificateSecret}.path;
     clientKey = config.sops.secrets.${clientKeySecret}.path;

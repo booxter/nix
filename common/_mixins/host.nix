@@ -59,6 +59,27 @@ in
       internal = true;
       description = "Whether this is a work-managed host.";
     };
+
+    isVM = lib.mkOption {
+      type = lib.types.bool;
+      readOnly = true;
+      internal = true;
+      description = "Whether this host is a virtual machine.";
+    };
+
+    isCritical = lib.mkOption {
+      type = lib.types.bool;
+      readOnly = true;
+      internal = true;
+      description = "Whether this host should avoid frequent unattended reboots.";
+    };
+
+    secretDomain = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      internal = true;
+      description = "SOPS secret domain selected for this host.";
+    };
   };
 
   config = {
@@ -70,13 +91,17 @@ in
     ];
 
     nixpkgs.hostPlatform = system;
+    networking.hostName = hostname;
     host = {
       platform = system;
       inherit isDarwin isLinux;
       isBuilder = hostSpec.isBuilder or false;
+      isCritical = hostSpec.critical or false;
       isDesktop = hostSpec.isDesktop or false;
       isLaptop = hostSpec.isLaptop or false;
+      isVM = hostSpec.isVM or false;
       isWork = hostSpec.isWork or false;
+      secretDomain = hostInventory.toSecretDomain hostSpec;
     };
   };
 }

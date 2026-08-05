@@ -6,8 +6,8 @@
 let
   flake = builtins.getFlake "path:${repo}";
   configuredHost = (builtins.getAttr host (builtins.getAttr configuration flake)).config;
-  dnsName = configuredHost.host.dnsName;
-  networkingName = configuredHost.networking.hostName;
+  dnsName = configuredHost.networking.hostName;
+  networkingName = dnsName;
   avahiName = configuredHost.services.avahi.hostName or dnsName;
   nodeExporterEnabled = configuredHost.host.observability.client.nodeExporter.mtls.enable or false;
 in

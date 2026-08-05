@@ -163,7 +163,7 @@ in
 
                 serverName = lib.mkOption {
                   type = str;
-                  default = config.host.dnsName;
+                  default = config.networking.hostName;
                   description = "Server name presented by the nginx vhost for this endpoint.";
                 };
 
@@ -216,7 +216,7 @@ in
 
                 commonName = lib.mkOption {
                   type = str;
-                  default = "${name}.${config.host.dnsName}";
+                  default = "${name}.${config.networking.hostName}";
                   description = "Leaf certificate common name to issue for this client identity.";
                 };
 

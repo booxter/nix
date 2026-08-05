@@ -94,7 +94,7 @@ in
 
               commonName = lib.mkOption {
                 type = lib.types.str;
-                default = "${name}.${config.host.dnsName}";
+                default = "${name}.${config.networking.hostName}";
                 description = "Leaf certificate common name to issue for this client identity.";
               };
 

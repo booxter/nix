@@ -18,10 +18,6 @@ let
   principalsFile = pkgs.writeText "${username}-authorized_principals" (
     lib.concatMapStrings (principal: "${principal}\n") cfg.principals
   );
-  defaultPrincipalNames = lib.unique [
-    config.host.dnsName
-    config.networking.hostName
-  ];
 in
 {
   options.host.sshTicket = {
@@ -40,20 +36,15 @@ in
 
     principal = lib.mkOption {
       type = lib.types.singleLineStr;
-      default = "${username}@${config.host.dnsName}";
-      defaultText = lib.literalExpression ''"${username}@${config.host.dnsName}"'';
+      default = "${username}@${config.networking.hostName}";
+      defaultText = lib.literalExpression ''"${username}@${config.networking.hostName}"'';
       description = "Certificate principal accepted for ${username} on this host.";
     };
 
     principalNames = lib.mkOption {
       type = lib.types.listOf lib.types.singleLineStr;
-      default = defaultPrincipalNames;
-      defaultText = lib.literalExpression ''
-        lib.unique [
-          config.host.dnsName
-          config.networking.hostName
-        ]
-      '';
+      default = [ config.networking.hostName ];
+      defaultText = lib.literalExpression "[ config.networking.hostName ]";
       description = "Host identity names accepted as SSH certificate principals for ${username}.";
     };
 
@@ -71,11 +62,8 @@ in
 
     aliases = lib.mkOption {
       type = lib.types.listOf lib.types.singleLineStr;
-      default = lib.unique ([
-        config.networking.hostName
-        config.host.dnsName
-      ]);
-      defaultText = lib.literalExpression "[ config.networking.hostName config.host.dnsName ]";
+      default = [ config.networking.hostName ];
+      defaultText = lib.literalExpression "[ config.networking.hostName ]";
       description = "Client-side names that resolve to this ticket scope.";
     };
 

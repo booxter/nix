@@ -3,12 +3,10 @@
   hostInventory,
   inputs,
   lib,
-  hostname,
-  secretDomain,
   ...
 }:
 let
-  hostSecretFile = ../../../secrets/${secretDomain}/${hostname}.yaml;
+  hostSecretFile = ../../../secrets/${config.host.secretDomain}/${config.networking.hostName}.yaml;
   flakehubCacheKeys =
     let
       # FlakeHub does not expose a separate machine-readable cache key

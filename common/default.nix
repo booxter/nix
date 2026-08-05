@@ -3,8 +3,6 @@
   lib,
   pkgs,
   username,
-  hostname,
-  secretDomain,
   ...
 }:
 let
@@ -44,32 +42,7 @@ in
     ./_mixins/builders/work.nix
   ];
 
-  options.host.isVM = lib.mkOption {
-    type = lib.types.bool;
-    readOnly = true;
-    internal = true;
-    description = "Whether this host is a virtual machine.";
-  };
-
-  options.host.secretDomain = lib.mkOption {
-    type = lib.types.str;
-    readOnly = true;
-    description = "SOPS secret domain selected for this host.";
-  };
-
-  options.host.isCritical = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-    description = "Whether this host should avoid frequent unattended reboots.";
-  };
-
-  options.host.dnsName = lib.mkOption {
-    type = lib.types.str;
-    default = hostname;
-  };
-
   config = {
-    networking.hostName = hostname;
     sops.age.keyFile = "/var/lib/sops-nix/key.txt";
 
     # Some packages that I'd like to have available on managed machines.
@@ -121,6 +94,5 @@ in
     };
 
     programs.zsh.enable = true;
-    host.secretDomain = secretDomain;
   };
 }

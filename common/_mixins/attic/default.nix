@@ -1,12 +1,10 @@
 {
   config,
   lib,
-  hostname,
-  secretDomain,
   ...
 }:
 let
-  hostSecretFile = ../../../secrets/${secretDomain}/${hostname}.yaml;
+  hostSecretFile = ../../../secrets/${config.host.secretDomain}/${config.networking.hostName}.yaml;
 in
 {
   config = lib.mkIf (!config.host.isWork) {

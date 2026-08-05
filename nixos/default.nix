@@ -6,7 +6,6 @@
   inputs,
   lib,
   pkgs,
-  secretDomain,
   stateVersion,
   username,
   ...
@@ -16,7 +15,7 @@ let
   isVM = hostSpec.isVM or false;
   upsShutdownDelaySeconds = if isVM then 450 else 900;
   configName = ./${hostSpec.name};
-  hostSecretFile = ../secrets + "/${secretDomain}/${hostname}.yaml";
+  hostSecretFile = ../secrets + "/${config.host.secretDomain}/${hostname}.yaml";
   upsServerName = hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
@@ -91,8 +90,6 @@ in
     };
     virtualisation.containers.enable = true;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.isWork;
-    host.isCritical = lib.mkDefault (hostSpec.critical or false);
-
     time.timeZone = "America/New_York";
 
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)

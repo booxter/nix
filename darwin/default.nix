@@ -66,7 +66,6 @@
     users.${username} = ../hm;
   };
 
-  host.isVM = false;
   host.remoteGui.x11.enable = lib.mkDefault (!config.host.isWork && config.host.isDesktop);
 
   system.primaryUser = username;

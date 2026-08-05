@@ -74,24 +74,18 @@
         inherit username;
         lib = inputs.nixpkgs.lib;
       };
-      hostSpecialArgs =
-        spec:
-        let
-          hostUsername = spec.username or username;
-        in
-        {
-          inherit
-            inputs
-            outputs
-            hostInventory
-            ;
-          hostname = spec.name;
-          hostPlatform = inputs.nixpkgs.lib.systems.elaborate spec.platform;
-          username = hostUsername;
-          stateVersion = spec.stateVersion;
-          hmFull = spec.hmFull or true;
-          secretDomain = hostInventory.toSecretDomain spec;
-        };
+      hostSpecialArgs = spec: {
+        inherit
+          inputs
+          outputs
+          hostInventory
+          ;
+        hostname = spec.name;
+        hostPlatform = inputs.nixpkgs.lib.systems.elaborate spec.platform;
+        username = spec.username or username;
+        stateVersion = spec.stateVersion;
+        hmFull = spec.hmFull or true;
+      };
       mkNixos =
         spec:
         inputs.nixpkgs.lib.nixosSystem {

@@ -58,7 +58,7 @@ let
         instance = name;
         scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
-      targets = [ "${hostConfig.host.dnsName}:9100" ];
+      targets = [ "${hostConfig.networking.hostName}:9100" ];
     };
   darwinNodeExporterTargetNames = builtins.filter (
     name:

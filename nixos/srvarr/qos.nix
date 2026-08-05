@@ -28,7 +28,7 @@ in
   imports = [
     ../_mixins/wireguard-qos
     (import ./adaptive-upload-policy.nix {
-      jellyfinExporterUrl = "https://${beastHostConfig.host.dnsName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
+      jellyfinExporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
       fallbackUploadRateMbit = tuning.wgConservativeUploadRateMbit;
       inherit
         networkOnlineUnitDeps

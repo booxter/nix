@@ -65,7 +65,7 @@ in
 
     serverName = lib.mkOption {
       type = lib.types.str;
-      default = config.host.dnsName;
+      default = config.networking.hostName;
       description = "Primary DNS name used for the Proxmox VE API certificate.";
     };
 
