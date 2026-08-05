@@ -2,10 +2,10 @@
   config,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   managePasswordSecrets = !config.host.isWork;
   rootPasswordSecret = "users/root/hashedPassword";
   userPasswordSecret = "users/${username}/hashedPassword";

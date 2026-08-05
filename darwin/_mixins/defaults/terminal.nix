@@ -1,13 +1,14 @@
 {
+  config,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
   profileName = "Nix";
   profileKey = "Window Settings.${profileName}";
   terminalProfile = ./Nix.terminal;
+  username = config.host.username;
   installTerminalProfile = pkgs.writeShellScript "install-terminal-profile" ''
     set -eu
 

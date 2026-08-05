@@ -5,11 +5,11 @@
   inputs,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
   hostname = hostSpec.name;
+  username = hostSpec.username;
   stateVersion = hostSpec.stateVersion;
   isVM = hostSpec.isVM or false;
   upsShutdownDelaySeconds = if isVM then 450 else 900;
@@ -77,7 +77,6 @@ in
           hostInventory
           hostSpec
           inputs
-          username
           ;
       };
       useGlobalPkgs = true;

@@ -3,10 +3,10 @@
   hostInventory,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   nixCaches = hostInventory.site.nixCaches;
   extraSubstituters = lib.remove nixCaches.flakehub.url (
     config.nix.settings."extra-substituters" or [ ]

@@ -81,7 +81,6 @@
           hostInventory
           ;
         hostSpec = spec;
-        username = spec.username or username;
       };
       mkNixos =
         spec:

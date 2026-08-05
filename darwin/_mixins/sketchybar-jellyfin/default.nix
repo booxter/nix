@@ -3,10 +3,10 @@
   hostInventory,
   lib,
   outputs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   clientName = "sketchybar-jellyfin";
   client = config.host.observability.client.mtlsClients.${clientName};
   clientCertificateSecret = "sketchybar-jellyfin-client-crt";

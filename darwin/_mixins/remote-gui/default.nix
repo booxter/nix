@@ -2,11 +2,11 @@
   config,
   inputs,
   lib,
-  username,
   ...
 }:
 let
   cfg = config.host.remoteGui;
+  username = config.host.username;
 in
 {
   options.host.remoteGui = {

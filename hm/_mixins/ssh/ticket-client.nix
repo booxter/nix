@@ -4,10 +4,10 @@
   hostSpec,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.home.username;
   homeManagerPkgs = import ../../pkgs pkgs;
   ticketPackage = homeManagerPkgs.ssh-ticket;
   cfg = config.programs.sshTicket;

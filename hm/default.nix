@@ -2,7 +2,6 @@
   hostSpec,
   lib,
   pkgs,
-  username,
   osConfig,
   ...
 }:
@@ -10,6 +9,7 @@ let
   inherit (osConfig.host) isDarwin isDesktop isWork;
   hmFull = hostSpec.hmFull or true;
   stateVersion = if isDarwin then hostSpec.hmStateVersion else hostSpec.stateVersion;
+  username = hostSpec.username;
 in
 {
   imports = [

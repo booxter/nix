@@ -3,10 +3,10 @@
   hostInventory,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
 in
 {

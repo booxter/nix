@@ -2,10 +2,10 @@
   lib,
   config,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   linuxFeatures = [
     "benchmark"

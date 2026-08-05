@@ -1,11 +1,11 @@
 {
   config,
   lib,
-  username,
   ...
 }:
 let
   cacheDir = "/nix/var/nixpkgs-review";
+  username = config.host.username;
 in
 {
   options.host.nixpkgsReview.builders = lib.mkOption {

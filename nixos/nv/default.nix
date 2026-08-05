@@ -1,4 +1,7 @@
-{ username, ... }:
+{ config, ... }:
+let
+  username = config.host.username;
+in
 {
   # Work machines do not use sops-managed login passwords; this VM does not
   # currently configure a login password.

@@ -4,10 +4,10 @@
   inputs,
   lib,
   modulesPath,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   isVM = hostSpec.isVM or false;
   cores = hostSpec.cores or 4;
   memorySize = hostSpec.memorySize or 8;

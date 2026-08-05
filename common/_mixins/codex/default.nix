@@ -2,10 +2,10 @@
   config,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   hmConfig = config.home-manager.users.${username};
   codexConfig = hmConfig.programs.codex;
   codexConfigEnabled =

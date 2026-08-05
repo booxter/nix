@@ -1,4 +1,7 @@
-{ username, ... }:
+{ config, ... }:
+let
+  username = config.host.username;
+in
 {
   imports = [
     (import ../disko { })

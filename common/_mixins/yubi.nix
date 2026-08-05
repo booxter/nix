@@ -5,10 +5,10 @@
   inputs,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   inherit (inputs.nixpkgs.lib.systems.elaborate hostSpec.platform) isDarwin isLinux;
   hostname = config.networking.hostName;
   cfg = config.programs.yubi;

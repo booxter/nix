@@ -82,6 +82,13 @@ in
       internal = true;
       description = "SOPS secret domain selected for this host.";
     };
+
+    username = lib.mkOption {
+      type = lib.types.str;
+      readOnly = true;
+      internal = true;
+      description = "Primary user declared by the host inventory.";
+    };
   };
 
   config = {
@@ -107,6 +114,7 @@ in
       isVM = hostSpec.isVM or false;
       isWork = hostSpec.isWork or false;
       secretDomain = hostInventory.toSecretDomain hostSpec;
+      username = hostSpec.username;
     };
   };
 }

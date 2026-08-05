@@ -2,11 +2,11 @@
   config,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
   cfg = config.host.browser.firefox.touchIdPasskeys;
+  username = config.host.username;
 in
 {
   options.host.browser.firefox.touchIdPasskeys.enable = lib.mkEnableOption (

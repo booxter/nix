@@ -2,10 +2,10 @@
   config,
   hostInventory,
   lib,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   clientName = "sketchybar-alertmanager";
   secretAttrName = "internal-https-client-${clientName}";
   lanDomain = hostInventory.site.lan.domain;

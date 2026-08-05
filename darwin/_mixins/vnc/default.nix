@@ -1,10 +1,10 @@
 {
   config,
   lib,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   kickstart = "/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart";
 in
 {

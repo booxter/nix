@@ -2,9 +2,11 @@
   config,
   inputs,
   lib,
-  username,
   ...
 }:
+let
+  username = config.host.username;
+in
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''
     if [ -x /usr/bin/xcodebuild ] && [ -x /usr/bin/xcode-select ]; then

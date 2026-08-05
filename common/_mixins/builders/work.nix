@@ -1,10 +1,10 @@
 {
   config,
   lib,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   identityFile = "${config.users.users.${username}.home}/.ssh/jgwxhwdl4x-nix-builder";
   user = "ihrachyshka";
 in

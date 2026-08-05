@@ -2,10 +2,10 @@
   config,
   hostInventory,
   lib,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;

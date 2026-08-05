@@ -5,11 +5,11 @@
   inputs,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
   hostname = hostSpec.name;
+  username = hostSpec.username;
 in
 {
   imports = [
@@ -56,7 +56,6 @@ in
         hostInventory
         hostSpec
         inputs
-        username
         ;
     };
     useGlobalPkgs = true;

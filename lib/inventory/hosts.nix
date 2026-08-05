@@ -1,7 +1,6 @@
 {
   frame,
   lib,
-  username,
 }:
 {
   lanDomain,
@@ -82,7 +81,6 @@ let
         macAddress
         name
         proxmoxUpgradeTime
-        username
         ;
       platform = "x86_64-linux";
       hmFull = false;
@@ -255,7 +253,6 @@ in
       hostKind = "proxmox";
       name = nvws;
       platform = "x86_64-linux";
-      inherit username;
       isBuilder = true;
       isWork = true;
       hmFull = false;

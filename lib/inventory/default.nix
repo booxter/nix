@@ -11,7 +11,7 @@ let
   frame = "frame";
   mmini = "mmini";
 
-  hostFactsFor = import ./hosts.nix { inherit frame lib username; };
+  hostFactsFor = import ./hosts.nix { inherit frame lib; };
   serviceFacts = import ./services.nix { inherit publicDomain; };
   glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
   publicServiceHosts = map (service: service.publicHost) (
@@ -20,6 +20,7 @@ let
   hostFacts = hostFactsFor {
     inherit lanDomain publicDomain publicServiceHosts;
   };
+  normalizeHostSpec = spec: { inherit username; } // spec;
 
   sshTicketFacts = import ./ssh-ticket.nix {
     inherit
@@ -169,7 +170,9 @@ rec {
 
   services = map (normalizeService glanceCategoryIds toLocalDnsName) serviceFacts.definitions;
 
-  inherit (hostFacts) darwinHosts nixosHostSpecs staticDhcpReservations;
+  darwinHosts = lib.mapAttrs (_: normalizeHostSpec) hostFacts.darwinHosts;
+  nixosHostSpecs = map normalizeHostSpec hostFacts.nixosHostSpecs;
+  inherit (hostFacts) staticDhcpReservations;
 
   managedDhcpReservations = map (spec: spec.dhcpReservation // { hostname = spec.name; }) (
     builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs
