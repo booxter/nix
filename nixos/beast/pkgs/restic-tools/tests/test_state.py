@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from restic_cloud_usage.cli import _load_state
-from restic_cloud_usage.models import ExporterState
+from restic_tools.cli import _load_state
+from restic_tools.models import ExporterState
 
 
 def test_missing_or_invalid_state_starts_empty(tmp_path: Path) -> None:

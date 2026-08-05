@@ -3,9 +3,9 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "restic-cloud-usage"
+name = "restic-tools"
 version = "0.1.0"
-description = "Export B2 bucket and restic repository usage metrics"
+description = "Restic backup utilities: cloud offload and B2 usage metrics"
 requires-python = ">=3.11"
 dependencies = [
   "atomic-file-writes",
@@ -15,8 +15,8 @@ dependencies = [
 ]
 
 [project.scripts]
-restic-cloud-usage = "restic_cloud_usage.cli:main"
-restic-cloud-offload = "restic_cloud_usage.offload_cli:main"
+restic-cloud-usage = "restic_tools.cli:main"
+restic-cloud-offload = "restic_tools.offload_cli:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -25,17 +25,17 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-restic_cloud_usage = ["py.typed"]
+restic_tools = ["py.typed"]
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=restic_cloud_usage --cov-report=term-missing --cov-fail-under=85"
+addopts = "-q --cov=restic_tools --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
 [tool.coverage.report]
 precision = 2
 
 [tool.mypy]
-files = ["src/restic_cloud_usage"]
+files = ["src/restic_tools"]
 plugins = ["pydantic.mypy"]
 strict = true
 

@@ -7,14 +7,14 @@ from pathlib import Path
 
 import pytest
 
-from restic_cloud_usage.clients import (
+from restic_tools.clients import (
     B2SdkBucketUsageClient,
     CommandResult,
     ResticRepositoryUsageClient,
     restic_environment,
 )
-from restic_cloud_usage.errors import CollectionFailure
-from restic_cloud_usage.models import RepositoryConfig
+from restic_tools.errors import CollectionFailure
+from restic_tools.models import RepositoryConfig
 
 
 @dataclass

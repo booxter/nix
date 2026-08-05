@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from restic_cloud_usage.collector import UsageCollector
-from restic_cloud_usage.errors import CollectionFailure
-from restic_cloud_usage.models import (
+from restic_tools.collector import UsageCollector
+from restic_tools.errors import CollectionFailure
+from restic_tools.models import (
     BucketState,
     BucketUsage,
     ExporterConfig,
