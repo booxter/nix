@@ -19,7 +19,6 @@
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
-    ./jellystat.nix
     ./meilisearch.nix
     ./library-dirs.nix
     ./lolek.nix

@@ -270,14 +270,6 @@ rec {
       };
     };
 
-    jfstat = mkClient "jfstat" {
-      displayName = "Jellystat";
-      originUrl = "https://jfstat.${lan.domain}/oauth2/callback";
-      originLanding = "https://jfstat.${lan.domain}/";
-      scopeMaps."media-admins" = scopeWith [ "media_groups" ];
-      claimMaps.media_groups.valuesByGroup."media-admins" = [ "media-admins" ];
-    };
-
     watchstate = mkClient "watchstate" {
       displayName = "WatchState";
       originUrl = "https://watchstate.${lan.domain}/oauth2/callback";

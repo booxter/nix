@@ -182,17 +182,12 @@ In Prometheus, the cleanest way to target it is to filter
 `node_hwmon_sensor_label` so dashboard legends use stable human labels like
 `power total`, `v_out +12v`, `curr +5v`, `vrm temp`, and `psu fan`.
 
-## Jellyfin and Jellystat backups
+## Jellyfin and WatchState backups
 
 `beast` can trigger Jellyfin's built-in backup API and then offload the
 generated ZIP archives from `/var/lib/jellyfin/data/backups` into the local
 restic repository at `/volume2/backups/restic-prod/hosts/beast`, which is then
 offloaded to Backblaze B2 by the existing `beast` cloud sync flow.
-
-Jellystat is backed up by triggering its built-in backup API before the same
-local restic job runs. The app writes JSON backups into
-`/app/backend/backup-data`, which is mounted from
-`/var/lib/jellystat/backup-data` and included in restic.
 
 WatchState runs its native portable play-state backup before creating a
 consistent archive of that output, its configuration, and its SQLite state in
@@ -209,7 +204,6 @@ Secrets required in `secrets/main/beast.yaml`:
 Relevant units:
 
 - `jellyfin-built-in-backup.service`
-- `jellystat-built-in-backup.service`
 - `watchstate-native-backup.service`
 - `restic-backups-beast.service`
 - `restic-beast-cloud-offload.service`
@@ -218,7 +212,6 @@ Manual trigger:
 
 ```bash
 sudo systemctl start jellyfin-built-in-backup.service
-sudo systemctl start jellystat-built-in-backup.service
 sudo systemctl start restic-backups-beast.service
 sudo systemctl start restic-beast-cloud-offload.service
 ```

@@ -47,14 +47,6 @@
       glanceCategory = "user";
     }
     {
-      id = "jfstat";
-      title = "Jellystat";
-      icon = "di:jellystat";
-      owner = "beast";
-      probePath = "/auth/isConfigured";
-      glanceCategory = "media-admin";
-    }
-    {
       id = "watchstate";
       title = "WatchState";
       icon = "sh:watchstate.png";
