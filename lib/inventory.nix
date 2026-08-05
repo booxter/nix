@@ -153,7 +153,6 @@ rec {
   virtPlatform = "aarch64-darwin";
 
   isNixosVM = spec: spec.isVM or false;
-  isNixosBM = spec: !(isNixosVM spec);
   toSecretDomain = spec: spec.secretDomain or (if spec.isWork or false then "work" else "main");
   toNixosConfigName = spec: spec.name;
   toNixosRuntimeHostName = spec: spec.hostname or (spec.dhcpReservation.hostname or spec.name);
@@ -186,7 +185,6 @@ rec {
       "${shortName}.${site.lan.domain}"
       (toLocalDnsName shortName)
     ]);
-  toNixosLanDnsAliasLabels = spec: lib.unique (spec.localDnsAliases or [ ]);
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
@@ -313,7 +311,7 @@ rec {
             spec:
             (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
             ++ map (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec)) (
-              toNixosLanDnsAliasLabels spec
+              lib.unique (spec.localDnsAliases or [ ])
             );
         in
         staticDnsRecords ++ builtins.concatMap renderHostDnsRecords nixosHostSpecs;
