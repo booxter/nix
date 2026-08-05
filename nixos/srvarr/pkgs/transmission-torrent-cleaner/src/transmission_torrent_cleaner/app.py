@@ -5,7 +5,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Protocol, cast
+from typing import Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from transmission_common.transmission import (
@@ -161,7 +161,7 @@ def torrent_matches_tracker_hosts(torrent: Torrent, tracker_hosts: set[str]) -> 
         for raw_host in (tracker.host, tracker.announce):
             if raw_host is None:
                 continue
-            host = cast(str, normalize_tracker_host(raw_host))
+            host = normalize_tracker_host(raw_host)
             if host and host in tracker_hosts:
                 return True
     return False
@@ -234,7 +234,7 @@ def format_age_days(age_days: float) -> str:
 
 
 def load_tracker_hosts(path: Path) -> set[str]:
-    return cast(set[str], read_tracker_hosts(path))
+    return read_tracker_hosts(path)
 
 
 def run_cleanup(settings: Settings, client: TorrentClient, clock: Clock) -> int:
