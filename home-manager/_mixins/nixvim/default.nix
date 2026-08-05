@@ -1,6 +1,7 @@
 {
   inputs,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
@@ -15,7 +16,7 @@
 
     defaultEditor = true;
 
-    env = lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+    env = lib.optionalAttrs osConfig.host.isDarwin {
       LLDB_DEBUGSERVER_PATH = lib.getExe pkgs.debugserver;
     };
 

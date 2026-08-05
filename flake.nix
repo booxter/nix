@@ -123,8 +123,6 @@
                   stateVersion = args.stateVersion or "25.11";
                   hostSpecName = name;
                   hostname = hostInventory.toNixosRuntimeHostName hostInventory.nixosHostSpecsByName.${name};
-                  platform = "x86_64-linux";
-                  virtPlatform = "x86_64-linux";
                 }
               )
             else

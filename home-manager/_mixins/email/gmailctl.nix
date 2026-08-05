@@ -1,11 +1,12 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
-  isDarwin,
   ...
 }:
 let
+  inherit (osConfig.host) isDarwin;
   gmailctlConfigDir = "${config.home.homeDirectory}/.gmailctl";
   gmailctlExe = lib.getExe' pkgs.gmailctl "gmailctl";
   gmailctlKeepaliveCommand = [

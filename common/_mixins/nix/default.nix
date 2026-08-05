@@ -2,7 +2,6 @@
   config,
   hostInventory,
   isBuilder,
-  isDarwin,
   isDesktop,
   lib,
   pkgs,
@@ -41,7 +40,7 @@ in
           (readPublicKey ../../../public-keys/nix-cache/proxmox-nixos.pub)
         ];
       }
-      // lib.optionalAttrs isDarwin {
+      // lib.optionalAttrs config.host.isDarwin {
         sandbox = "relaxed";
       }
       // lib.optionalAttrs (!isWork) {

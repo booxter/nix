@@ -4,11 +4,14 @@
   stateVersion,
   username,
   hmFull,
-  isDarwin,
   isDesktop,
   isWork,
+  osConfig,
   ...
 }:
+let
+  inherit (osConfig.host) isDarwin;
+in
 {
   imports = [
     ./_mixins/nix

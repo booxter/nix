@@ -1,15 +1,15 @@
 {
   config,
   hostInventory,
+  hostPlatform,
   hostname,
-  isDarwin,
-  isLinux,
   lib,
   pkgs,
   username,
   ...
 }:
 let
+  inherit (hostPlatform) isDarwin isLinux;
   cfg = config.programs.yubi;
   personalYubi = hostInventory.yubi.devices.personal;
   residentSsh = personalYubi.applets.fido2.residentSsh;

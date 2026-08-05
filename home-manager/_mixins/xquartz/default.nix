@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
@@ -19,7 +20,7 @@ in
       {
         assertions = [
           {
-            assertion = pkgs.stdenv.isDarwin;
+            assertion = osConfig.host.isDarwin;
             message = "`programs.xquartz.enable` is only supported on Darwin.";
           }
         ];

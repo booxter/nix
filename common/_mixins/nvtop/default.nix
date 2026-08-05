@@ -1,14 +1,15 @@
 {
+  config,
   hostInventory,
   hostSpecName,
   hostname,
-  isDarwin ? false,
   isVM ? false,
   lib,
   pkgs,
   ...
 }:
 let
+  isDarwin = config.host.isDarwin;
   hostSpecs = if isDarwin then hostInventory.darwinHosts else hostInventory.nixosHostSpecsByName;
   hostSpec = hostSpecs.${hostSpecName} or { };
   gpuFamilies = hostSpec.hardware.gpuFamilies or [ ];

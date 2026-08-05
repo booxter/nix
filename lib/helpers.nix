@@ -28,7 +28,7 @@ rec {
       stateVersion,
       hostSpecName ? hostname,
       username ? defaultUsername,
-      platform ? "x86_64-linux",
+      platform,
       virtPlatform ? platform,
       homeManagerInput ? inputs.home-manager,
       hmFull ? true,
@@ -43,8 +43,7 @@ rec {
       ...
     }:
     let
-      isDarwin = false;
-      isLinux = true;
+      hostPlatform = nixpkgsInput.lib.systems.elaborate platform;
     in
     nixpkgsInput.lib.nixosSystem {
       specialArgs = {
@@ -54,7 +53,7 @@ rec {
           hostInventory
           hostname
           hostSpecName
-          platform
+          hostPlatform
           virtPlatform
           username
           stateVersion
@@ -64,8 +63,6 @@ rec {
           isLaptop
           isWork
           secretDomain
-          isDarwin
-          isLinux
           ;
         upsShutdownDelaySeconds = upsShutdownDelaySeconds isVM;
       };
@@ -83,7 +80,6 @@ rec {
             hmFull
             isDesktop
             isWork
-            isDarwin
             stateVersion
             ;
         })
@@ -96,7 +92,7 @@ rec {
       extraModules ? [ ],
       sshPort ? null,
       username ? defaultUsername,
-      platform ? "x86_64-linux",
+      platform,
       virtPlatform ? platform,
       cores ? 4,
       memorySize ? 8, # GB
@@ -206,17 +202,14 @@ rec {
       ipAddress,
       macAddress ? null,
       isVM ? false,
+      platform,
       proxmoxUpgradeTime ? "Mon 04:00",
       extraModules ? [ ],
       ...
     }:
-    let
-      platform = "x86_64-linux";
-    in
     mkNixos (
       args
       // {
-        inherit platform;
         hmFull = false;
         extraModules =
           extraModules
@@ -340,7 +333,7 @@ rec {
       stateVersion,
       hmStateVersion,
       username ? defaultUsername,
-      platform ? "aarch64-darwin",
+      platform,
       hostSpecName ? hostname,
       homeManagerInput ? inputs.home-manager,
       hmFull ? true,
@@ -353,8 +346,7 @@ rec {
       ...
     }:
     let
-      isDarwin = true;
-      isLinux = false;
+      hostPlatform = inputs.nixpkgs.lib.systems.elaborate platform;
       isVM = false;
     in
     inputs.nix-darwin.lib.darwinSystem {
@@ -365,7 +357,7 @@ rec {
           hostInventory
           hostname
           hostSpecName
-          platform
+          hostPlatform
           username
           stateVersion
           hmStateVersion
@@ -375,8 +367,6 @@ rec {
           isLaptop
           isWork
           secretDomain
-          isDarwin
-          isLinux
           isVM
           ;
         # If we ever add macOS VMs, thread isVM here and compute accordingly.
@@ -397,7 +387,6 @@ rec {
             hmFull
             isDesktop
             isWork
-            isDarwin
             ;
           stateVersion = hmStateVersion;
         })

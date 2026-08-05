@@ -1,13 +1,14 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   hostSpecName,
   isWork,
   ...
 }:
 let
-  inherit (pkgs.stdenv) isDarwin isLinux;
+  inherit (osConfig.host) isDarwin isLinux;
   useSecretive = isDarwin && hostSpecName == "mair";
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
   sshAskpass =

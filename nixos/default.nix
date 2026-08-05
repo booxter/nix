@@ -5,7 +5,6 @@
   hostname,
   hostSpecName,
   hostInventory,
-  platform,
   stateVersion,
   upsShutdownDelaySeconds,
   isVM,
@@ -66,7 +65,6 @@ in
       ];
 
     system.stateVersion = stateVersion;
-    nixpkgs.hostPlatform = platform;
     virtualisation.containers.enable = true;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.isWork;
     host.isCritical = lib.mkDefault (hostSpec.critical or false);

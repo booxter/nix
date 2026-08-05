@@ -55,6 +55,7 @@ let
       isBuilder = true;
       isVM = true;
       name = "builder${idx'}";
+      platform = "x86_64-linux";
       proxNode = "prx${idx'}-lab";
       dhcpReservation = builderDhcpReservations.${idx'};
       stateVersion = "25.11";
@@ -1037,6 +1038,7 @@ rec {
     {
       hostKind = "proxmox";
       name = nvws;
+      platform = "x86_64-linux";
       inherit username;
       isBuilder = true;
       isWork = true;
@@ -1093,6 +1095,7 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx1-lab";
+      platform = "x86_64-linux";
       inherit username;
       stateVersion = prxStateVersion;
       proxmoxUpgradeTime = "Mon 03:50";
@@ -1110,6 +1113,7 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx2-lab";
+      platform = "x86_64-linux";
       inherit username;
       upsHost = "prx1-lab";
       stateVersion = prxStateVersion;
@@ -1127,6 +1131,7 @@ rec {
     {
       hostKind = "proxmox";
       name = "prx3-lab";
+      platform = "x86_64-linux";
       inherit username;
       upsHost = "prx1-lab";
       stateVersion = prxStateVersion;
@@ -1144,6 +1149,7 @@ rec {
     {
       isVM = true;
       name = "nv";
+      platform = "x86_64-linux";
       isWork = true;
       upsHost = nvws;
       dhcpReservation = {
@@ -1160,6 +1166,7 @@ rec {
     {
       isVM = true;
       name = "cache";
+      platform = "x86_64-linux";
       upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
@@ -1276,6 +1283,7 @@ rec {
     {
       isVM = true;
       name = "gw";
+      platform = "x86_64-linux";
       upsHost = "prx1-lab";
       resourceControl.systemServices.lightweight = [
         "prometheus-node-exporter"
@@ -1439,7 +1447,7 @@ rec {
     // builtins.listToAttrs (
       map (spec: {
         name = toNixosRuntimeHostName spec;
-        value = spec.platform or "x86_64-linux";
+        value = spec.platform;
       }) nixosHostSpecs
     );
 

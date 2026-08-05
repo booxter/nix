@@ -1,11 +1,12 @@
 {
   hostInventory,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
-  inherit (pkgs.stdenv.hostPlatform) isDarwin;
+  inherit (osConfig.host) isDarwin;
   dashUrl = hostInventory.servicesById.dash.url;
   degoogUrl = hostInventory.servicesById.goo.url;
   firefoxDohExcludedDomains = [ hostInventory.site.public.domain ];

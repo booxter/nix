@@ -1,12 +1,12 @@
 {
   config,
-  isDarwin,
   lib,
   osConfig,
   pkgs,
   ...
 }:
 let
+  inherit (osConfig.host) isDarwin;
   cfg = osConfig.host.syncGitMains;
   cliPkgs = import ./pkgs { inherit pkgs; };
   syncGitMains = cliPkgs.sync-git-mains;

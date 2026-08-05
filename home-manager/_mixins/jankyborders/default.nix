@@ -1,11 +1,11 @@
 {
   config,
   lib,
-  pkgs,
+  osConfig,
   ...
 }:
 let
-  inherit (pkgs.stdenv.hostPlatform) isDarwin;
+  inherit (osConfig.host) isDarwin;
   inherit (config.lib.stylix) colors;
 in
 {

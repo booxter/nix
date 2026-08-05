@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -79,7 +78,7 @@ in
           group = client.group;
           mode = client.mode;
         }
-        // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        // lib.optionalAttrs config.host.isLinux {
           restartUnits = client.restartUnits;
         }
       )
@@ -93,7 +92,7 @@ in
           group = client.group;
           mode = client.mode;
         }
-        // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+        // lib.optionalAttrs config.host.isLinux {
           restartUnits = client.restartUnits;
         }
       )

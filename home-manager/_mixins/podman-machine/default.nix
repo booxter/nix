@@ -1,11 +1,12 @@
 {
   config,
-  isDarwin,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
+  inherit (osConfig.host) isDarwin;
   cfg = config.programs.podman-machine;
   machineConfig = pkgs.writeText "podman-machine.conf" ''
     [machine]

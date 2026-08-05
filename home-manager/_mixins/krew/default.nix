@@ -1,7 +1,7 @@
 {
   config,
   lib,
-  pkgs,
+  osConfig,
   ...
 }:
 
@@ -13,7 +13,7 @@ let
   isHomeManager = lib.hasAttr "hm" lib;
 in
 {
-  config = lib.mkIf pkgs.stdenv.isDarwin (
+  config = lib.mkIf osConfig.host.isDarwin (
     lib.optionalAttrs isHomeManager {
       home.activation.krewInstall = lib.hm.dag.entryAfter [ "writeBoundary" ] installScript;
     }

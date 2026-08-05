@@ -1,13 +1,14 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   isWork,
   username,
   ...
 }:
 let
-  inherit (pkgs.stdenv) isDarwin;
+  inherit (osConfig.host) isDarwin;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   scmPkgs = import ./pkgs { inherit pkgs; };
   fullName = "Ihar Hrachyshka";

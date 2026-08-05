@@ -1,11 +1,12 @@
 {
   config,
-  isDarwin,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
+  inherit (osConfig.host) isDarwin;
   podmanMachine = config.programs.podman-machine;
   podmanPackage = if isDarwin then podmanMachine.package else pkgs.podman;
   podmanSocket =

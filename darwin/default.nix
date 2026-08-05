@@ -3,7 +3,6 @@
   lib,
   pkgs,
   username,
-  platform,
   stateVersion,
   isDesktop,
   isWork,
@@ -45,8 +44,6 @@
     ++ lib.optionals (hostname == "mair") [
       ./_mixins/secretive
     ];
-
-  nixpkgs.hostPlatform = lib.mkDefault platform;
 
   system.stateVersion = stateVersion;
 

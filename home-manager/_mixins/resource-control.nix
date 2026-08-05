@@ -2,11 +2,12 @@
   config,
   hostInventory,
   hostSpecName,
-  isDarwin,
   lib,
+  osConfig,
   ...
 }:
 let
+  inherit (osConfig.host) isDarwin;
   resourceControl = import ../../lib/systemd-resource-control.nix { inherit lib; };
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   inventory = hostSpec.resourceControl or { };

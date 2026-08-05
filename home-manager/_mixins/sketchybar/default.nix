@@ -1,13 +1,14 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
   isWork,
   ...
 }:
 let
   internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
-  inherit (pkgs.stdenv.hostPlatform) isDarwin;
+  inherit (osConfig.host) isDarwin;
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
   workspaceNames = import ../aerospace/workspaces.nix { inherit lib isWork; };
