@@ -24,7 +24,7 @@ in
 rec {
   mkNixos =
     {
-      hostname,
+      name,
       stateVersion,
       username ? defaultUsername,
       platform,
@@ -40,6 +40,7 @@ rec {
       ...
     }:
     let
+      hostname = name;
       hostPlatform = inputs.nixpkgs.lib.systems.elaborate platform;
     in
     inputs.nixpkgs.lib.nixosSystem {
@@ -148,7 +149,7 @@ rec {
 
   mkDarwin =
     {
-      hostname,
+      name,
       stateVersion,
       hmStateVersion,
       username ? defaultUsername,
@@ -163,6 +164,7 @@ rec {
       ...
     }:
     let
+      hostname = name;
       hostPlatform = inputs.nixpkgs.lib.systems.elaborate platform;
       isVM = false;
     in

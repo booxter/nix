@@ -96,25 +96,11 @@
       selectPerSystem = outputName: builtins.mapAttrs (_: value: value.${outputName}) perSystem;
 
       specToNixosConfig =
-        name: spec:
-        let
-          hostArgs = spec // {
-            hostname = name;
-          };
-        in
-        if hostInventory.isNixosVM spec then helpers.mkVM hostArgs else helpers.mkNixos hostArgs;
+        _: spec: if hostInventory.isNixosVM spec then helpers.mkVM spec else helpers.mkNixos spec;
 
     in
     {
-      darwinConfigurations = builtins.mapAttrs (
-        name: cfg:
-        helpers.mkDarwin (
-          cfg
-          // {
-            hostname = name;
-          }
-        )
-      ) hostInventory.darwinHosts;
+      darwinConfigurations = builtins.mapAttrs (_: helpers.mkDarwin) hostInventory.darwinHosts;
 
       nixosConfigurations = builtins.mapAttrs specToNixosConfig hostInventory.nixosHostSpecsByName;
 
