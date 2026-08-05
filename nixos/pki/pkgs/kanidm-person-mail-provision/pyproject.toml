@@ -7,6 +7,7 @@ name = "kanidm-person-mail-provision"
 version = "0.1.0"
 description = "Render person mail addresses as Kanidm provisioning JSON"
 requires-python = ">=3.11"
+dependencies = ["atomic-file-writes"]
 
 [project.scripts]
 kanidm-person-mail-provision = "kanidm_person_mail_provision.cli:main"

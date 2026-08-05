@@ -4,7 +4,9 @@ let
   unifiSync = pkgs.callPackage ./unifi-sync { };
 in
 {
-  kanidm-person-mail-provision = pkgs.callPackage ./kanidm-person-mail-provision { };
+  kanidm-person-mail-provision = pkgs.callPackage ./kanidm-person-mail-provision {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
 
   kanidm-mail-sender-bootstrap = kanidmTools;
 

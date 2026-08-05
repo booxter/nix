@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
-import tempfile
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TextIO, TypedDict
+
+from atomic_file_writes import write_text_atomic
 
 
 class ProvisionError(RuntimeError):
@@ -97,22 +97,7 @@ def render_document(sources: Sequence[MailSource]) -> ProvisionDocument:
 
 
 def write_document(output: Path, document: ProvisionDocument) -> None:
-    output_directory = output.parent
-    descriptor, temporary_name = tempfile.mkstemp(
-        dir=output_directory,
-        prefix=".persons.json.",
-        text=True,
-    )
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
-            json.dump(document, stream, separators=(",", ":"))
-            stream.write("\n")
-            stream.flush()
-            os.fsync(stream.fileno())
-        os.replace(temporary, output)
-    finally:
-        temporary.unlink(missing_ok=True)
+    write_text_atomic(output, json.dumps(document, separators=(",", ":")) + "\n")
 
 
 def provision(output: Path, sources: Sequence[MailSource]) -> None:
