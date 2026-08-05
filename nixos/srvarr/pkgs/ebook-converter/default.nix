@@ -1,4 +1,5 @@
 {
+  atomicFileWrites,
   ebookConverterCli,
   lib,
   python3,
@@ -17,6 +18,7 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
 
   dependencies = with pythonPackages; [
+    atomicFileWrites
     prometheus-client
     pydantic
   ];

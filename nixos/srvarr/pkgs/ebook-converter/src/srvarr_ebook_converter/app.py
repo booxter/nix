@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterator, Protocol, TextIO, cast
 
+from atomic_file_writes import write_text_atomic
 from pydantic import ValidationError
 
 from .metrics import prometheus_metrics
@@ -152,20 +153,6 @@ def source_lock(source: Path, lock_root: Path) -> Iterator[None]:
 
 def hidden_source_path(source: Path) -> Path:
     return source.with_name(f".{source.stem}.ebook-converter-source{source.suffix.lower()}")
-
-
-def atomic_write_text(path: Path, contents: str, mode: int = 0o660) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{uuid.uuid4().hex}.tmp")
-    try:
-        with temporary.open("x", encoding="utf-8") as output:
-            output.write(contents)
-            output.flush()
-            os.fsync(output.fileno())
-        os.chmod(temporary, mode)
-        os.replace(temporary, path)
-    finally:
-        temporary.unlink(missing_ok=True)
 
 
 def convert_path(
@@ -375,9 +362,10 @@ class StateStore:
             raise EbookConverterError(f"failed to read state file {self.path}: {exc}") from exc
 
     def save(self) -> None:
-        atomic_write_text(
+        write_text_atomic(
             self.path,
             self.data.model_dump_json(indent=2) + "\n",
+            mode=0o660,
         )
 
 
@@ -541,9 +529,10 @@ def watch_command(args: argparse.Namespace) -> int:
             ok = False
             LOG.exception("ebook converter iteration failed")
         try:
-            atomic_write_text(
+            write_text_atomic(
                 Path(args.metrics_file),
                 prometheus_metrics(store.data, ok, time.time()),
+                mode=0o660,
             )
         except OSError:
             ok = False

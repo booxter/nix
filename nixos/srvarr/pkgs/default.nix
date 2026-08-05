@@ -37,6 +37,7 @@ in
   audiobookshelf-tools = pkgs.callPackage ./audiobookshelf-tools { };
 
   ebook-converter = pkgs.callPackage ./ebook-converter {
+    atomicFileWrites = pkgs.atomic-file-writes;
     inherit ebookConverterCli;
   };
 
