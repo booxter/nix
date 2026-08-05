@@ -52,7 +52,7 @@ let
     lib.concatMap hostInventory.toInternalHttpsServiceHosts hostInventory.srvarrAdminAppIds
   );
 in
-rec {
+{
   inherit
     authorizationUrl
     baseScopes
@@ -247,22 +247,4 @@ rec {
       claimMaps.media_groups.valuesByGroup."media-admins" = [ "media-admins" ];
     };
   };
-
-  kanidmProvisionClients =
-    secretPathFor:
-    lib.mapAttrs (_: client: {
-      inherit (client)
-        allowInsecureClientDisablePkce
-        claimMaps
-        displayName
-        enableLocalhostRedirects
-        enableLegacyCrypto
-        originLanding
-        originUrl
-        preferShortUsername
-        public
-        scopeMaps
-        ;
-      basicSecretFile = if client.public then null else secretPathFor client.clientId;
-    }) clients;
 }
