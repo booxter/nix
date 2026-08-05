@@ -28,12 +28,6 @@
         ) "Transmission must stay on the 4.1.x release series; got ${releaseTransmissionVersion}";
         releaseTransmission
       );
-      lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
-      lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          ../lib/patches/yt-dlp-twitter-only-own-status-media.patch
-        ];
-      });
     in
     {
       inherit (pkgsNixpkgsUnstable) claude-code;
@@ -99,7 +93,16 @@
 
       inherit (pkgsNixpkgsUnstable) codex;
 
-      lolek = lolekPackage.override { yt-dlp = lolekYtDlp; };
+      lolek =
+        let
+          lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
+          lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              ../lib/patches/yt-dlp-twitter-only-own-status-media.patch
+            ];
+          });
+        in
+        lolekPackage.override { yt-dlp = lolekYtDlp; };
 
       # Advertise ReFrame's absolute pointer as a touchscreen only. Declaring
       # the same uinput device as both absolute and relative breaks movement
