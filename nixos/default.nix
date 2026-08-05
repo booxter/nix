@@ -90,7 +90,7 @@ in
       };
       useGlobalPkgs = true;
       useUserPackages = true;
-      users.${username} = ../home-manager;
+      users.${username} = ../hm;
     };
     virtualisation.containers.enable = true;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.isWork;

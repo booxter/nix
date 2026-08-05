@@ -71,7 +71,7 @@
     };
     useGlobalPkgs = true;
     useUserPackages = true;
-    users.${username} = ../home-manager;
+    users.${username} = ../hm;
   };
 
   host.remoteGui.x11.enable = lib.mkDefault (!isWork && isDesktop);
