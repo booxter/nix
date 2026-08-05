@@ -11,7 +11,8 @@ let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   scmPkgs = import ./pkgs { inherit pkgs; };
   fullName = "Ihar Hrachyshka";
-  email = if isWork then "${username}@nvidia.com" else "ihar.hrachyshka@gmail.com";
+  privateEmail = "ihar.hrachyshka@gmail.com";
+  email = if isWork then "${username}@nvidia.com" else privateEmail;
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
   gitPackage = if isDarwin then pkgs.gitDarwinPrecompose else pkgs.gitFull;
   pushDisabledGitHubRepos = [
@@ -45,6 +46,11 @@ in
     includes = [
       {
         path = "~/.config/git/config-local";
+      }
+      {
+        condition = "gitdir:~/src/nix/";
+        contents.user.email = privateEmail;
+        contentSuffix = "nix-repo-email";
       }
     ];
 
