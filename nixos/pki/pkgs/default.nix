@@ -10,10 +10,6 @@ in
 
   kanidm-mail-sender-bootstrap = kanidmTools;
 
-  oidc-synthetic-probe = pkgs.callPackage ./oidc-synthetic-probe {
-    atomicFileWrites = pkgs.atomic-file-writes;
-  };
-
   reset-oidc = kanidmTools;
 
   step-ca-bootstrap = pkgs.callPackage ./step-ca-bootstrap { };

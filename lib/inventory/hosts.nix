@@ -487,8 +487,6 @@ in
         lightweight = [
           "kanidm-mail-sender"
           "kanidm-mail-sender-bootstrap"
-          "kanidm-oidc-probe-bootstrap"
-          "kanidm-oidc-synthetic-probe"
           "kanidm-person-mail-provision"
           "pki-rotate"
           "pki-status-export"

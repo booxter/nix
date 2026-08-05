@@ -54,14 +54,8 @@
     "trilium-users" = {
       title = "Trilium Notes users";
     };
-    "ai-users" = {
-      title = "Search users";
-    };
-    "oidc-probe-users" = {
-      title = "OIDC synthetic probe users";
-    };
-    "search-probe-users" = {
-      title = "Search synthetic probe users";
+    "degoog-users" = {
+      title = "Degoog users";
     };
     "romm-admins" = {
       title = "RomM administrators";
@@ -94,7 +88,7 @@
         "paperless-users"
         "vikunja-users"
         "trilium-users"
-        "ai-users"
+        "degoog-users"
         "romm-admins"
         "media-admins"
         "media-users"
@@ -106,7 +100,7 @@
       groups = [
         "paperless-users"
         "vikunja-users"
-        "ai-users"
+        "degoog-users"
         "media-admins"
         "media-users"
         "romm-viewers"
@@ -117,18 +111,10 @@
       displayName = "eugene";
       mailAddressSopsKey = "kanidm/person_mail_addresses/eugene";
       groups = [
-        "ai-users"
+        "degoog-users"
         "media-users"
         "vikunja-users"
         "romm-viewers"
-      ];
-    };
-    oidc-probe-user = {
-      displayName = "OIDC synthetic probe";
-      mailAddressSopsKey = "kanidm/person_mail_addresses/oidc-probe-user";
-      groups = [
-        "oidc-probe-users"
-        "search-probe-users"
       ];
     };
   };

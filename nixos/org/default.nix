@@ -22,7 +22,6 @@ in
     ./backup.nix
     ./degoog.nix
     ./paperless.nix
-    ./searxng.nix
     ./trilium.nix
   ];
 

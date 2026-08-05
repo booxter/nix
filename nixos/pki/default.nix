@@ -53,7 +53,6 @@ in
 
   imports = [
     ./id.nix
-    ./oidc-probes.nix
     ./backup.nix
     ./unifi-sync.nix
     ./uptimerobot-sync.nix

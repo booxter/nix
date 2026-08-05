@@ -2,7 +2,6 @@
   hostInventory,
   outputs,
   prometheusMtlsTlsConfig,
-  searxngMetricsPasswordFile,
 }:
 let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
@@ -19,7 +18,6 @@ let
   orgHostConfig = outputs.nixosConfigurations.org.config;
   orgTargetHost = hostInventory.nixosHostSpecsByName.org.name;
   paperlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.paperless;
-  searxngEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.searxng;
   vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
@@ -102,22 +100,6 @@ in
       static_configs = [
         {
           targets = [ "${orgTargetHost}:${toString paperlessEndpoint.port}" ];
-          labels.instance = "org";
-        }
-      ];
-    }
-    {
-      job_name = "searxng";
-      metrics_path = searxngEndpoint.path;
-      scheme = "https";
-      tls_config = prometheusMtlsTlsConfig;
-      basic_auth = {
-        username = "prometheus";
-        password_file = searxngMetricsPasswordFile;
-      };
-      static_configs = [
-        {
-          targets = [ "${orgTargetHost}:${toString searxngEndpoint.port}" ];
           labels.instance = "org";
         }
       ];

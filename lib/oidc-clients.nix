@@ -115,35 +115,12 @@ rec {
       scopeMaps."trilium-users" = baseScopes;
     };
 
-    search = mkClient "search" {
-      displayName = "Search";
-      originUrl = "${serviceUrl "search"}/oauth2/callback";
-      originLanding = "${serviceUrl "search"}/";
-      scopeMaps = {
-        "ai-users" = scopeWith [ "ai_groups" ];
-        "search-probe-users" = scopeWith [ "ai_groups" ];
-      };
-      claimMaps.ai_groups.valuesByGroup = {
-        "ai-users" = [ "ai-users" ];
-        "search-probe-users" = [ "search-probe-users" ];
-      };
-    };
-
     goo = mkClient "goo" {
       displayName = "Degoog";
       originUrl = "${serviceUrl "goo"}/oauth2/callback";
       originLanding = "${serviceUrl "goo"}/";
-      scopeMaps."ai-users" = scopeWith [ "ai_groups" ];
-      claimMaps.ai_groups.valuesByGroup."ai-users" = [ "ai-users" ];
-    };
-
-    oidc-synthetic-probe = mkClient "oidc-synthetic-probe" {
-      displayName = "OIDC synthetic probe";
-      public = true;
-      enableLocalhostRedirects = true;
-      originUrl = "http://127.0.0.1:9/oidc-synthetic-probe/callback";
-      originLanding = issuerBaseUrl;
-      scopeMaps."oidc-probe-users" = baseScopes;
+      scopeMaps."degoog-users" = scopeWith [ "degoog_groups" ];
+      claimMaps.degoog_groups.valuesByGroup."degoog-users" = [ "degoog-users" ];
     };
 
     proxmox = mkClient "proxmox" {

@@ -3,7 +3,7 @@ groups:
     interval: 30s
     rules:
       - alert: ApplicationMetricsScrapeDown
-        expr: up{job=~"home-assistant|jellyfin|lolek|paperless|sabnzbd|searxng|vikunja"} < 1
+        expr: up{job=~"home-assistant|jellyfin|lolek|paperless|sabnzbd|vikunja"} < 1
         for: 5m
         labels:
           severity: warning

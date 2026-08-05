@@ -198,16 +198,6 @@
       glanceCategory = "infrastructure";
     }
     {
-      id = "search";
-      title = "Search";
-      icon = "sh:searxng";
-      owner = "org";
-      publicHost = "search.${publicDomain}";
-      probePath = "/oauth2/sign_in";
-      backendProbe.path = "/healthz";
-      glanceCategory = "user";
-    }
-    {
       id = "goo";
       title = "Degoog";
       icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
