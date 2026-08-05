@@ -21,7 +21,6 @@ in
     mkNixos
     mkProxmox
     mkVM
-    mkVmHostPkgs
     forAllSystems
     ;
 }

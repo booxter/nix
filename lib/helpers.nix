@@ -20,11 +20,6 @@ let
   upsNonVmShutdownDelaySeconds = 900;
   upsShutdownDelaySeconds =
     isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
-  mkVmHostPkgs = virtPlatform: import inputs.nixpkgs { system = virtPlatform; };
-  mkLocalVmVariantVirtualisation = virtPlatform: {
-    host.pkgs = mkVmHostPkgs virtPlatform;
-    graphics = false;
-  };
 in
 rec {
   mkNixos =
@@ -133,7 +128,9 @@ rec {
 
             # build-vm (local) vms
             {
-              virtualisation.vmVariant.virtualisation = (mkLocalVmVariantVirtualisation virtPlatform) // {
+              virtualisation.vmVariant.virtualisation = {
+                host.pkgs = inputs.nixpkgs.legacyPackages.${virtPlatform};
+                graphics = false;
                 # limit cores to avoid overloading host
                 cores = inputs.nixpkgs.lib.min cores 8;
                 memorySize = memorySize * 1024;
@@ -413,5 +410,4 @@ rec {
     "x86_64-linux"
     "aarch64-darwin"
   ];
-  inherit mkVmHostPkgs;
 }

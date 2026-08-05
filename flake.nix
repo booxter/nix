@@ -208,7 +208,7 @@
         // fleetPackages
         // updateTargetPackages
         // {
-          qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
+          qemu-host-package = inputs.nixpkgs.legacyPackages.${system}.qemu;
         }
       );
       apps = helpers.forAllSystems (
