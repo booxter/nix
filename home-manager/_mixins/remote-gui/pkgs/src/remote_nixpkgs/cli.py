@@ -46,7 +46,6 @@ def _parser(program: str, transport: Transport) -> ArgumentParser:
     parser.add_argument("--allow-unfree", action="store_true")
     parser.add_argument("--ssh-option", action="append", default=[])
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--trusted", action="store_true")
     parser.add_argument("source")
     parser.add_argument("package_attribute")
     parser.add_argument("program_arguments", nargs=argparse.REMAINDER)
@@ -74,8 +73,6 @@ def main(
     parser = _parser(program_name, transport)
     try:
         arguments = parser.parse_args(argv)
-        if arguments.trusted and transport is not Transport.X11:
-            raise UsageError("--trusted is only available for X11 forwarding")
     except UsageError as error:
         print(f"{program_name}: {error}", file=stderr)
         print(parser.format_usage(), end="", file=stderr)
@@ -94,12 +91,11 @@ def main(
         program_arguments=program_arguments,
     )
 
-    forwarding = "-Y" if arguments.trusted else "-X"
     if arguments.dry_run:
         print(f"ssh host: {host}", file=stdout)
         print(f"transport: {transport}", file=stdout)
         if transport is Transport.X11:
-            print(f"x11 forwarding: {forwarding}", file=stdout)
+            print("x11 forwarding: -Y", file=stdout)
         else:
             print(
                 f"remote waypipe: {environ.get('WRUN_NIXPKGS_REMOTE_WAYPIPE', 'waypipe')}",
@@ -115,7 +111,6 @@ def main(
         controller,
         host,
         tuple(arguments.ssh_option),
-        forwarding,
     )
     if transport is Transport.X11:
         session: RemoteSession = ssh

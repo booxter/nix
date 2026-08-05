@@ -82,7 +82,6 @@ class OpenSshSession:
     process: ProcessController
     host: str
     options: tuple[str, ...] = ()
-    forwarding: str = "-X"
 
     def option_arguments(self) -> list[str]:
         return [argument for option in self.options for argument in ("-o", option)]
@@ -105,7 +104,7 @@ class OpenSshSession:
         self.process.replace(
             [
                 "ssh",
-                self.forwarding,
+                "-Y",
                 *self.option_arguments(),
                 self.host,
                 _remote_command(arguments),
@@ -264,7 +263,7 @@ class WaypipeSession:
                 "StreamLocalBindUnlink=yes",
                 *self.ssh.option_arguments(),
                 self.host,
-                _remote_command(arguments),
+                _remote_command(arguments, {"NIXOS_OZONE_WL": "1"}),
             ],
             environment,
         )
