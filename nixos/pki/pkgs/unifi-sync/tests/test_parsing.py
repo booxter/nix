@@ -2,7 +2,7 @@ import ipaddress
 
 import pytest
 
-from unifi_sync import cli
+from unifi_sync import cli, dns
 
 
 @pytest.mark.parametrize(
@@ -89,7 +89,7 @@ def test_parse_domain_search_rejects_empty_labels():
 
 
 def test_parse_dns_records_supports_a_and_cname_records():
-    records = cli.parse_dns_records(
+    records = dns.parse_records(
         """
         [
           {
@@ -109,13 +109,13 @@ def test_parse_dns_records_supports_a_and_cname_records():
     )
 
     assert records == [
-        cli.DnsRecordSpec(
+        dns.DnsRecordSpec(
             record_type="A_RECORD",
             domain="router.home.arpa",
             ttl_seconds=60,
             ipv4_address=ipaddress.IPv4Address("192.168.1.1"),
         ),
-        cli.DnsRecordSpec(
+        dns.DnsRecordSpec(
             record_type="CNAME_RECORD",
             domain="gateway.home.arpa",
             ttl_seconds=120,
@@ -125,8 +125,8 @@ def test_parse_dns_records_supports_a_and_cname_records():
 
 
 def test_parse_dns_records_rejects_unsupported_types():
-    with pytest.raises(cli.UnifiError, match="unsupported type"):
-        cli.parse_dns_records(
+    with pytest.raises(dns.UnifiError, match="unsupported type"):
+        dns.parse_records(
             '[{"type":"TXT_RECORD","domain":"home.arpa","ttlSeconds":60}]'
         )
 
@@ -171,5 +171,5 @@ def test_choose_site_matches_any_supported_identifier():
         {"id": "other-id", "internalReference": "other", "name": "Other"},
     ]
 
-    assert cli.choose_site(sites, "default")["id"] == "site-id"
-    assert cli.choose_site(sites, "Other")["id"] == "other-id"
+    assert dns.choose_site(sites, "default")["id"] == "site-id"
+    assert dns.choose_site(sites, "Other")["id"] == "other-id"

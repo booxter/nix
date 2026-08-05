@@ -1,28 +1,27 @@
 pkgs:
 let
+  atomicFileWrites = pkgs.python3Packages.callPackage ../pkgs/atomic-file-writes { };
   hostInventory = import ../lib/inventory.nix { inherit (pkgs) lib; };
   sopsTools = import ./sops/package.nix { inherit hostInventory pkgs; };
-  issueInternalServiceCert = pkgs.callPackage ./issue-internal-service-cert {
-    inherit sopsTools;
+  certificateTools = pkgs.callPackage ./pki-certificates {
+    inherit atomicFileWrites hostInventory sopsTools;
   };
-  issueObservabilityCert = pkgs.callPackage ./issue-observability-cert {
-    inherit sopsTools;
+  issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token {
+    inherit hostInventory sopsTools;
   };
-  issueProxmoxExporterToken = pkgs.callPackage ./issue-proxmox-exporter-token { };
   getFfCookie = pkgs.callPackage ./get-ff-cookie { };
-  seerrRequestStorage = pkgs.callPackage ./seerr-request-storage { };
-  seerrUpdateUserTags = pkgs.callPackage ./seerr-update-user-tags { };
+  seerrTools = pkgs.callPackage ../nixos/srvarr/pkgs/seerr-tools { };
 in
 {
   get-ff-cookie = getFfCookie;
 
-  issue-internal-service-cert = issueInternalServiceCert;
+  issue-internal-service-cert = certificateTools;
 
-  issue-observability-cert = issueObservabilityCert;
+  issue-observability-cert = certificateTools;
 
   issue-proxmox-exporter-token = issueProxmoxExporterToken;
 
-  seerr-request-storage = seerrRequestStorage;
+  seerr-request-storage = seerrTools.requestStorage;
 
-  seerr-update-user-tags = seerrUpdateUserTags;
+  seerr-update-user-tags = seerrTools.updateUserTags;
 }

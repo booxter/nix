@@ -23,6 +23,9 @@ where = ["src"]
 addopts = "-q --cov=attention_inbox --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/attention_inbox"]
 strict = true

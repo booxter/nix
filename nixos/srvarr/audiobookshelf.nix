@@ -4,6 +4,7 @@
   lib,
   pkgs,
   srvarrPkgs,
+  utils,
   ...
 }:
 let
@@ -22,42 +23,6 @@ let
       maxBackupSize = 1;
     }
   );
-  backupBootstrap = pkgs.writeShellApplication {
-    name = "audiobookshelf-backup-bootstrap";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.curl
-    ];
-    text = ''
-      set -euo pipefail
-
-      credentials_dir="''${CREDENTIALS_DIRECTORY:?}"
-      header_file="$(mktemp)"
-      response_file="$(mktemp)"
-      trap 'rm -f "$header_file" "$response_file"' EXIT
-
-      chmod 0600 "$header_file" "$response_file"
-      printf 'Authorization: Bearer %s\n' "$(tr -d '\n' < "$credentials_dir/api-token")" > "$header_file"
-
-      status="$(${pkgs.curl}/bin/curl -sS -o "$response_file" -w '%{http_code}' \
-        --retry 30 --retry-all-errors --retry-delay 2 \
-        -X PATCH \
-        -H "@$header_file" \
-        -H 'Content-Type: application/json' \
-        --data-binary @${backupSettingsFile} \
-        http://127.0.0.1:${toString port}/api/settings)"
-
-      case "$status" in
-        2*) ;;
-        *)
-          echo "failed to configure Audiobookshelf backups; HTTP status: $status" >&2
-          exit 1
-          ;;
-      esac
-
-      echo "Enabled daily Audiobookshelf backups."
-    '';
-  };
   oidcSettingsFile = pkgs.writeText "audiobookshelf-oidc-settings.json" (
     builtins.toJSON {
       authActiveAuthMethods = [
@@ -86,12 +51,28 @@ let
       authOpenIDSubfolderForRedirectURLs = "";
     }
   );
-  bootstrapChangedFile = "/run/audiobookshelf-oidc-bootstrap/changed";
-  restartIfBootstrapChanged = pkgs.writeShellScript "audiobookshelf-oidc-restart-if-changed" ''
-    if [ -e ${lib.escapeShellArg bootstrapChangedFile} ]; then
-      exec ${pkgs.systemd}/bin/systemctl try-restart audiobookshelf.service
-    fi
-  '';
+  oidcBootstrapCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.audiobookshelf-tools "audiobookshelf-oidc-bootstrap")
+    "--url"
+    "http://127.0.0.1:${toString port}"
+    "--api-token-file"
+    config.sops.secrets."audiobookshelf/bootstrap/api_token".path
+    "--client-secret-file"
+    config.sops.secrets."audiobookshelf/oidc/client_secret".path
+    "--settings-file"
+    oidcSettingsFile
+    "--restart-unit"
+    "audiobookshelf.service"
+  ];
+  backupBootstrapCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.audiobookshelf-tools "audiobookshelf-backup-bootstrap")
+    "--url"
+    "http://127.0.0.1:${toString port}"
+    "--credential-name"
+    "api-token"
+    "--settings-file"
+    backupSettingsFile
+  ];
 in
 {
   sops.secrets = {
@@ -149,14 +130,7 @@ in
     ];
     serviceConfig = {
       Type = "oneshot";
-      RuntimeDirectory = "audiobookshelf-oidc-bootstrap";
-      RuntimeDirectoryMode = "0700";
-      ExecStart = "${lib.getExe srvarrPkgs.audiobookshelf-oidc-bootstrap} --url http://127.0.0.1:${toString port} --api-token-file ${
-        config.sops.secrets."audiobookshelf/bootstrap/api_token".path
-      } --client-secret-file ${
-        config.sops.secrets."audiobookshelf/oidc/client_secret".path
-      } --settings-file ${oidcSettingsFile} --changed-file ${bootstrapChangedFile}";
-      ExecStartPost = restartIfBootstrapChanged;
+      ExecStart = oidcBootstrapCommand;
     };
   };
 
@@ -178,7 +152,7 @@ in
       PrivateTmp = true;
       ProtectHome = true;
       ProtectSystem = "strict";
-      ExecStart = lib.getExe backupBootstrap;
+      ExecStart = backupBootstrapCommand;
     };
   };
 

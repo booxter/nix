@@ -2,52 +2,29 @@
   config,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
   cfg = config.host.backups.artifacts;
-  shellArg = lib.escapeShellArg;
-
+  package = pkgs.callPackage ./backup-artifacts/pkgs/backup-artifact-tools { };
   defaultTimerConfig = {
     OnCalendar = "04:30";
     RandomizedDelaySec = "0";
   };
 
   commonArtifactOptions =
+    { name }:
     {
-      name,
-      config,
-      kind,
-      defaultDestinationFile,
-    }:
-    {
-      serviceName = lib.mkOption {
-        type = lib.types.str;
-        default = "${name}-backup";
-        description = "Name of the generated pre-backup systemd service.";
-      };
-
       displayName = lib.mkOption {
         type = lib.types.str;
         default = name;
-        description = "Human-readable service name used in the generated description.";
-      };
-
-      description = lib.mkOption {
-        type = lib.types.str;
-        default = "Create a consistent ${config.displayName} ${kind} backup artifact";
-        description = "systemd description for the generated pre-backup service.";
+        description = "Human-readable name used in the generated service description.";
       };
 
       destinationDir = lib.mkOption {
         type = lib.types.str;
         description = "Directory where the latest backup artifact is staged for restic.";
-      };
-
-      destinationFile = lib.mkOption {
-        type = lib.types.str;
-        default = defaultDestinationFile;
-        description = "Filename for the primary backup artifact inside destinationDir.";
       };
 
       requiresMountsFor = lib.mkOption {
@@ -62,93 +39,34 @@ let
         description = "Whether destinationDir is appended to host.backups.beast.paths.";
       };
 
-      timerConfig = lib.mkOption {
-        type = with lib.types; attrsOf anything;
-        default = defaultTimerConfig;
-        description = "Timer settings for the generated pre-backup timer.";
-      };
-
-      user = lib.mkOption {
-        type = lib.types.str;
-        default = "root";
-        description = "User to run the pre-backup service as.";
-      };
-
-      group = lib.mkOption {
-        type = lib.types.str;
-        default = "root";
-        description = "Group to run the pre-backup service as.";
-      };
-
-      serviceConfig = lib.mkOption {
-        type = with lib.types; attrsOf anything;
-        default = { };
-        description = "Extra serviceConfig fields merged into the generated oneshot.";
-      };
-
-      unitConfig = lib.mkOption {
-        type = with lib.types; attrsOf anything;
-        default = { };
-        description = "Extra unitConfig fields merged into the generated oneshot.";
-      };
     };
 
   postgresqlArtifactModule =
-    { name, config, ... }:
+    { name, ... }:
     {
-      options =
-        commonArtifactOptions {
-          inherit name config;
-          kind = "PostgreSQL";
-          defaultDestinationFile = "${name}.dump";
-        }
-        // {
-          database = lib.mkOption {
-            type = lib.types.str;
-            default = name;
-            description = "PostgreSQL database to dump with pg_dump.";
-          };
-
-          postgresUser = lib.mkOption {
-            type = lib.types.str;
-            default = "postgres";
-            description = "Local user used to run pg_dump.";
-          };
-        };
+      options = commonArtifactOptions { inherit name; };
     };
 
   mariadbArtifactModule =
-    { name, config, ... }:
+    { name, ... }:
     {
-      options =
-        commonArtifactOptions {
-          inherit name config;
-          kind = "MariaDB";
-          defaultDestinationFile = "${name}.sql";
-        }
-        // {
-          database = lib.mkOption {
-            type = lib.types.str;
-            default = name;
-            description = "MariaDB database to dump with mariadb-dump.";
-          };
-
-          mariadbUser = lib.mkOption {
-            type = lib.types.str;
-            default = "root";
-            description = "MariaDB user used to create the logical dump.";
-          };
-
-          socket = lib.mkOption {
-            type = lib.types.str;
-            default = "/run/mysqld/mysqld.sock";
-            description = "Unix socket used to connect to MariaDB.";
-          };
+      options = commonArtifactOptions { inherit name; } // {
+        after = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+          description = "Additional units that must start before the dump.";
         };
+
+        requires = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+          description = "Additional units required by the dump service.";
+        };
+      };
     };
 
   sqliteExtraCopyModule =
-    { config, ... }:
+    { ... }:
     {
       options = {
         source = lib.mkOption {
@@ -156,14 +74,8 @@ let
           description = "Path to an additional file copied into the SQLite backup artifact.";
         };
 
-        destination = lib.mkOption {
-          type = lib.types.str;
-          default = builtins.baseNameOf config.source;
-          description = "Relative destination path inside destinationDir.";
-        };
-
         mode = lib.mkOption {
-          type = lib.types.str;
+          type = lib.types.strMatching "^0[0-7]{3}$";
           default = "0640";
           description = "Install mode used when staging this file.";
         };
@@ -177,238 +89,116 @@ let
     };
 
   sqliteArtifactModule =
-    { name, config, ... }:
+    { name, ... }:
     {
-      options =
-        commonArtifactOptions {
-          inherit name config;
-          kind = "SQLite";
-          defaultDestinationFile = builtins.baseNameOf config.databasePath;
-        }
-        // {
-          databasePath = lib.mkOption {
-            type = lib.types.str;
-            description = "SQLite database path to back up with sqlite3 .backup.";
-          };
-
-          extraCopies = lib.mkOption {
-            type = with lib.types; listOf (submodule sqliteExtraCopyModule);
-            default = [ ];
-            description = "Additional files copied into the same artifact directory.";
-          };
+      options = commonArtifactOptions { inherit name; } // {
+        databasePath = lib.mkOption {
+          type = lib.types.str;
+          description = "SQLite database path to back up with the native backup API.";
         };
-    };
 
-  mkPostgresqlScript =
-    artifact:
-    pkgs.writeShellApplication {
-      name = artifact.serviceName;
-      runtimeInputs = [
-        pkgs.coreutils
-        pkgs.postgresql
-        pkgs.util-linux
-      ];
-      text = ''
-        set -euo pipefail
+        extraCopies = lib.mkOption {
+          type = with lib.types; listOf (submodule sqliteExtraCopyModule);
+          default = [ ];
+          description = "Additional files copied into the same artifact directory.";
+        };
 
-        dst_dir=${shellArg artifact.destinationDir}
-        dst_file=${shellArg artifact.destinationFile}
-        backup_root="$(dirname "$dst_dir")"
-
-        install -d -m 0750 "$backup_root"
-        tmp_dir="$(mktemp -d "$backup_root/.tmp.XXXXXX")"
-        trap 'rm -rf "$tmp_dir"' EXIT
-
-        install -d -m 0750 "$dst_dir"
-
-        runuser -u ${shellArg artifact.postgresUser} -- pg_dump --format=custom ${shellArg artifact.database} > "$tmp_dir/$dst_file"
-        date --iso-8601=seconds > "$tmp_dir/created-at.txt"
-
-        mv "$tmp_dir/$dst_file" "$dst_dir/$dst_file"
-        mv "$tmp_dir/created-at.txt" "$dst_dir/created-at.txt"
-      '';
-    };
-
-  mkMariadbScript =
-    artifact:
-    pkgs.writeShellApplication {
-      name = artifact.serviceName;
-      runtimeInputs = [
-        pkgs.coreutils
-        pkgs.mariadb
-      ];
-      text = ''
-        set -euo pipefail
-
-        dst_dir=${shellArg artifact.destinationDir}
-        dst_file=${shellArg artifact.destinationFile}
-        backup_root="$(dirname "$dst_dir")"
-
-        install -d -m 0750 "$backup_root"
-        tmp_dir="$(mktemp -d "$backup_root/.tmp.XXXXXX")"
-        trap 'rm -rf "$tmp_dir"' EXIT
-
-        install -d -m 0750 "$dst_dir"
-
-        mariadb-dump \
-          --user=${shellArg artifact.mariadbUser} \
-          --socket=${shellArg artifact.socket} \
-          --single-transaction \
-          --routines \
-          --events \
-          --triggers \
-          --hex-blob \
-          --databases ${shellArg artifact.database} \
-          > "$tmp_dir/$dst_file"
-        date --iso-8601=seconds > "$tmp_dir/created-at.txt"
-
-        mv "$tmp_dir/$dst_file" "$dst_dir/$dst_file"
-        mv "$tmp_dir/created-at.txt" "$dst_dir/created-at.txt"
-      '';
-    };
-
-  mkExtraCopyScript = copy: ''
-    copy_src=${shellArg copy.source}
-    copy_dst=${shellArg copy.destination}
-    copy_mode=${shellArg copy.mode}
-    if [ -f "$copy_src" ]; then
-      install -d -m 0750 "$(dirname "$tmp_dir/$copy_dst")"
-      install -m "$copy_mode" "$copy_src" "$tmp_dir/$copy_dst"
-    ${
-      if copy.optional then
-        "fi"
-      else
-        ''
-          else
-            echo "missing extra backup file at $copy_src" >&2
-            exit 1
-          fi
-        ''
-    }
-  '';
-
-  mkExtraMoveScript = copy: ''
-    copy_dst=${shellArg copy.destination}
-    if [ -f "$tmp_dir/$copy_dst" ]; then
-      install -d -m 0750 "$(dirname "$dst_dir/$copy_dst")"
-      mv "$tmp_dir/$copy_dst" "$dst_dir/$copy_dst"
-    fi
-  '';
-
-  mkSqliteScript =
-    artifact:
-    pkgs.writeShellApplication {
-      name = artifact.serviceName;
-      runtimeInputs = [
-        pkgs.coreutils
-        pkgs.sqlite
-      ];
-      text = ''
-        set -euo pipefail
-
-        src_db=${shellArg artifact.databasePath}
-        dst_dir=${shellArg artifact.destinationDir}
-        dst_file=${shellArg artifact.destinationFile}
-        backup_root="$(dirname "$dst_dir")"
-
-        install -d -m 0750 "$backup_root"
-        tmp_dir="$(mktemp -d "$backup_root/.tmp.XXXXXX")"
-        trap 'rm -rf "$tmp_dir"' EXIT
-
-        install -d -m 0750 "$dst_dir"
-
-        if [ ! -f "$src_db" ]; then
-          echo "missing ${artifact.displayName} database at $src_db" >&2
-          exit 1
-        fi
-
-        sqlite3 "$src_db" ".backup '$tmp_dir/$dst_file'"
-        ${lib.concatMapStrings mkExtraCopyScript artifact.extraCopies}
-        date --iso-8601=seconds > "$tmp_dir/created-at.txt"
-
-        mv "$tmp_dir/$dst_file" "$dst_dir/$dst_file"
-        ${lib.concatMapStrings mkExtraMoveScript artifact.extraCopies}
-        mv "$tmp_dir/created-at.txt" "$dst_dir/created-at.txt"
-      '';
-    };
-
-  mkPostgresqlService =
-    _: artifact:
-    lib.nameValuePair artifact.serviceName {
-      inherit (artifact)
-        description
-        group
-        serviceConfig
-        timerConfig
-        user
-        ;
-      script = mkPostgresqlScript artifact;
-      unitConfig = lib.mkMerge [
-        {
-          After = [ "postgresql.service" ];
-          RequiresMountsFor = [ artifact.destinationDir ] ++ artifact.requiresMountsFor;
-        }
-        artifact.unitConfig
-      ];
-    };
-
-  mkMariadbService =
-    _: artifact:
-    lib.nameValuePair artifact.serviceName {
-      inherit (artifact)
-        description
-        group
-        serviceConfig
-        timerConfig
-        user
-        ;
-      script = mkMariadbScript artifact;
-      unitConfig = artifact.unitConfig // {
-        After = [ "mysql.service" ] ++ (artifact.unitConfig.After or [ ]);
-        Requires = [ "mysql.service" ] ++ (artifact.unitConfig.Requires or [ ]);
-        RequiresMountsFor = [ artifact.destinationDir ] ++ artifact.requiresMountsFor;
+        conditionPathExists = lib.mkOption {
+          type = with lib.types; nullOr str;
+          default = null;
+          description = "Skip the backup service when this path does not exist.";
+        };
       };
     };
 
+  artifactCommand =
+    artifactConfig:
+    utils.escapeSystemdExecArgs [
+      (lib.getExe package)
+      "--config"
+      artifactConfig
+    ];
+
+  mkArtifactService = artifact: kind: artifactConfig: extraUnitConfig: {
+    description = "Create a consistent ${artifact.displayName} ${kind} backup artifact";
+    timerConfig = defaultTimerConfig;
+    unitConfig = lib.mkMerge [
+      {
+        RequiresMountsFor = [ artifact.destinationDir ] ++ artifact.requiresMountsFor;
+      }
+      extraUnitConfig
+    ];
+    execStart = artifactCommand artifactConfig;
+  };
+
+  mkPostgresqlService =
+    name: artifact:
+    let
+      artifactConfig = (pkgs.formats.json { }).generate "${name}-backup.json" {
+        kind = "postgresql";
+        database = name;
+        destinationDir = artifact.destinationDir;
+        executable = lib.getExe' pkgs.postgresql "pg_dump";
+      };
+    in
+    lib.nameValuePair "${name}-backup" (
+      mkArtifactService artifact "PostgreSQL" artifactConfig { After = [ "postgresql.service" ]; }
+    );
+
+  mkMariadbService =
+    name: artifact:
+    let
+      artifactConfig = (pkgs.formats.json { }).generate "${name}-backup.json" {
+        kind = "mariadb";
+        database = name;
+        destinationDir = artifact.destinationDir;
+        executable = lib.getExe' pkgs.mariadb "mariadb-dump";
+      };
+    in
+    lib.nameValuePair "${name}-backup" (
+      mkArtifactService artifact "MariaDB" artifactConfig {
+        After = [ "mysql.service" ] ++ artifact.after;
+        Requires = [ "mysql.service" ] ++ artifact.requires;
+      }
+    );
+
   mkSqliteService =
-    _: artifact:
-    lib.nameValuePair artifact.serviceName {
-      inherit (artifact)
-        description
-        group
-        serviceConfig
-        timerConfig
-        user
-        ;
-      script = mkSqliteScript artifact;
-      unitConfig = lib.mkMerge [
-        {
-          RequiresMountsFor = [ artifact.destinationDir ] ++ artifact.requiresMountsFor;
+    name: artifact:
+    let
+      artifactConfig = (pkgs.formats.json { }).generate "${name}-backup.json" {
+        kind = "sqlite";
+        databasePath = artifact.databasePath;
+        destinationDir = artifact.destinationDir;
+        extraCopies = map (copy: { inherit (copy) mode optional source; }) artifact.extraCopies;
+      };
+    in
+    lib.nameValuePair "${name}-backup" (
+      mkArtifactService artifact "SQLite" artifactConfig (
+        lib.optionalAttrs (artifact.conditionPathExists != null) {
+          ConditionPathExists = artifact.conditionPathExists;
         }
-        artifact.unitConfig
-      ];
-    };
+      )
+    );
 
   mariadbServices = lib.mapAttrsToList mkMariadbService cfg.mariadb;
   postgresqlServices = lib.mapAttrsToList mkPostgresqlService cfg.postgresql;
   sqliteServices = lib.mapAttrsToList mkSqliteService cfg.sqlite;
   hasArtifacts = cfg.mariadb != { } || cfg.postgresql != { } || cfg.sqlite != { };
   artifactPaths = lib.unique (
-    (lib.concatLists (
-      lib.mapAttrsToList (
-        _: artifact: lib.optional artifact.includeInBeastBackup artifact.destinationDir
-      ) cfg.mariadb
-    ))
-    ++ (lib.concatLists (
-      lib.mapAttrsToList (
-        _: artifact: lib.optional artifact.includeInBeastBackup artifact.destinationDir
-      ) cfg.postgresql
-    ))
-    ++ (lib.concatLists (
-      lib.mapAttrsToList (
-        _: artifact: lib.optional artifact.includeInBeastBackup artifact.destinationDir
-      ) cfg.sqlite
-    ))
+    lib.concatMap
+      (
+        artifacts:
+        lib.concatLists (
+          lib.mapAttrsToList (
+            _: artifact: lib.optional artifact.includeInBeastBackup artifact.destinationDir
+          ) artifacts
+        )
+      )
+      [
+        cfg.mariadb
+        cfg.postgresql
+        cfg.sqlite
+      ]
   );
 in
 {

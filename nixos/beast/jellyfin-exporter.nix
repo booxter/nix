@@ -2,7 +2,6 @@
   beastPkgs,
   config,
   lib,
-  pkgs,
   ...
 }:
 let

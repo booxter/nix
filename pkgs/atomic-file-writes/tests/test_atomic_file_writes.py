@@ -1,0 +1,70 @@
+import os
+from pathlib import Path
+
+import pytest
+
+from atomic_file_writes import atomic_path, write_bytes_atomic, write_text_atomic
+
+
+def test_creates_parent_and_file_with_explicit_mode(tmp_path: Path) -> None:
+    path = tmp_path / "nested" / "state.txt"
+
+    write_text_atomic(path, "hello\n", mode=0o640)
+
+    assert path.read_text() == "hello\n"
+    assert path.stat().st_mode & 0o777 == 0o640
+    assert list(path.parent.iterdir()) == [path]
+
+
+def test_replaces_existing_content_and_mode(tmp_path: Path) -> None:
+    path = tmp_path / "state.txt"
+    path.write_text("old")
+    path.chmod(0o644)
+
+    write_text_atomic(path, "new", mode=0o600)
+
+    assert path.read_text() == "new"
+    assert path.stat().st_mode & 0o777 == 0o600
+
+
+def test_sets_explicit_owner_before_replacement(tmp_path: Path) -> None:
+    path = tmp_path / "state.txt"
+
+    write_text_atomic(path, "owned", uid=os.getuid(), gid=os.getgid())
+
+    stat = path.stat()
+    assert stat.st_uid == os.getuid()
+    assert stat.st_gid == os.getgid()
+
+
+def test_atomic_path_supports_path_based_writers(tmp_path: Path) -> None:
+    path = tmp_path / "state.bin"
+
+    with atomic_path(path, mode=0o640) as temporary:
+        temporary.write_bytes(b"generated\0content")
+
+    assert path.read_bytes() == b"generated\0content"
+    assert path.stat().st_mode & 0o777 == 0o640
+    assert list(path.parent.iterdir()) == [path]
+
+
+def test_writes_binary_content(tmp_path: Path) -> None:
+    path = tmp_path / "nested" / "state.bin"
+
+    write_bytes_atomic(path, b"generated\0content", mode=0o640)
+
+    assert path.read_bytes() == b"generated\0content"
+    assert path.stat().st_mode & 0o777 == 0o640
+
+
+def test_atomic_path_preserves_existing_file_when_writer_fails(tmp_path: Path) -> None:
+    path = tmp_path / "state.txt"
+    path.write_text("old")
+
+    with pytest.raises(RuntimeError, match="failed"):
+        with atomic_path(path) as temporary:
+            temporary.write_text("incomplete")
+            raise RuntimeError("writer failed")
+
+    assert path.read_text() == "old"
+    assert list(path.parent.iterdir()) == [path]

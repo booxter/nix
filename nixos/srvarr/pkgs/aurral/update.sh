@@ -4,7 +4,7 @@ set -euo pipefail
 attr="${UPDATE_NIX_ATTR_PATH:-aurral}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
 package_file="nixos/srvarr/pkgs/aurral/default.nix"
-nodejs_selector="apps/package-updates/select-nodejs.py"
+nodejs_selector="${PACKAGE_UPDATES_SELECT_NODEJS:-select-nodejs}"
 
 repo_root="$(git rev-parse --show-toplevel)"
 cd "$repo_root"
@@ -57,7 +57,7 @@ if [[ -n "$nodejs_requirement" ]]; then
         '
     )"; then
       if nodejs_selection="$(
-        python3 "$nodejs_selector" \
+        "$nodejs_selector" \
           --requirement "$nodejs_requirement" \
           --current-attribute "$current_nodejs_attr" \
           --candidates-json "$nodejs_candidates"

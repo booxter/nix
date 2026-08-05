@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paperless-gpt-configure"
+version = "0.1.0"
+description = "Configure Paperless workflows used by paperless-gpt"
+requires-python = ">=3.11"
+dependencies = ["pydantic"]
+
+[project.scripts]
+paperless-gpt-configure = "paperless_gpt_configure.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=paperless_gpt_configure --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/paperless_gpt_configure"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

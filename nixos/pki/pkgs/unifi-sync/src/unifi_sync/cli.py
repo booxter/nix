@@ -1,29 +1,22 @@
 from __future__ import annotations
 
 import argparse
-import base64
 import ipaddress
 import json
 import os
 import re
-import ssl
 import sys
-import urllib.error
-import urllib.parse
-import urllib.request
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from http.cookiejar import CookieJar
 from typing import Any
+
+from .client import UnifiLegacyClient
+from .dns import normalize_dns_name, parse_records, sync_records
+from .errors import UnifiError
 
 
 MAC_RE = re.compile(r"^[0-9a-f]{2}(:[0-9a-f]{2}){5}$")
 DEFAULT_GROUP_NAMES = {"default"}
-SUPPORTED_DNS_RECORD_TYPES = {"A_RECORD", "CNAME_RECORD"}
-
-
-class UnifiError(RuntimeError):
-    pass
 
 
 class Arguments(argparse.Namespace):
@@ -84,16 +77,6 @@ class NetworkDhcpSettingsSpec:
     classless_static_routes_option: DhcpCustomOptionSpec | None
     tftp_server: str | None
     bootfile: str | None
-
-
-@dataclass(frozen=True)
-class DnsRecordSpec:
-    record_type: str
-    domain: str
-    ttl_seconds: int
-    enabled: bool = True
-    ipv4_address: ipaddress.IPv4Address | None = None
-    target_domain: str | None = None
 
 
 @dataclass(frozen=True)
@@ -335,257 +318,6 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-class UnifiLegacyClient:
-    def __init__(
-        self, base_url: str, api_key: str, site: str, verify_tls: bool, debug: bool
-    ):
-        if not base_url:
-            raise UnifiError(
-                "missing UniFi base URL; pass --base-url or set UNIFI_BASE_URL"
-            )
-        if not api_key:
-            raise UnifiError(
-                "missing UniFi API key; pass --api-key or set UNIFI_API_KEY"
-            )
-
-        self.base_url = base_url.rstrip("/")
-        self.api_key = api_key
-        self.site = site
-        self.debug = debug
-        self.cookie_jar: CookieJar = CookieJar()
-
-        if verify_tls:
-            context = ssl.create_default_context()
-        else:
-            context = ssl._create_unverified_context()
-
-        self.opener = urllib.request.build_opener(
-            urllib.request.HTTPSHandler(context=context),
-            urllib.request.HTTPCookieProcessor(self.cookie_jar),
-        )
-
-    def _url(self, path: str) -> str:
-        return f"{self.base_url}/proxy/network{path}"
-
-    def _csrf_header(self) -> dict[str, str]:
-        for cookie in self.cookie_jar:
-            if cookie.name != "TOKEN":
-                continue
-
-            cookie_value = cookie.value
-            if cookie_value is None:
-                continue
-
-            parts = cookie_value.split(".")
-            if len(parts) < 2:
-                continue
-
-            payload = parts[1]
-            payload += "=" * (-len(payload) % 4)
-            try:
-                decoded = base64.urlsafe_b64decode(payload.encode("ascii"))
-                token = json.loads(decoded.decode("utf-8"))["csrfToken"]
-            except (KeyError, ValueError, json.JSONDecodeError):
-                continue
-            return {"x-csrf-token": token}
-
-        return {}
-
-    def request_json(self, method: str, path: str, payload: Any | None = None) -> Any:
-        headers = {
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-            "X-API-Key": self.api_key,
-        }
-
-        data = None
-        if payload is not None:
-            headers.update(self._csrf_header())
-            data = json.dumps(payload, separators=(",", ":")).encode("utf-8")
-
-        url = self._url(path)
-        if self.debug:
-            print(f"[debug] {method} {url}", file=sys.stderr)
-            if payload is not None:
-                print(f"[debug] payload={format_json(payload)}", file=sys.stderr)
-
-        request = urllib.request.Request(url, method=method, headers=headers, data=data)
-        try:
-            with self.opener.open(request) as response:
-                body = response.read().decode("utf-8")
-        except urllib.error.HTTPError as error:
-            body = error.read().decode("utf-8", errors="replace")
-            raise UnifiError(
-                f"{method} {url} failed with HTTP {error.code}\n{body}"
-            ) from error
-        except urllib.error.URLError as error:
-            raise UnifiError(f"{method} {url} failed: {error.reason}") from error
-
-        if self.debug and body:
-            print(f"[debug] response={body}", file=sys.stderr)
-
-        if not body:
-            return None
-
-        try:
-            decoded = json.loads(body)
-        except json.JSONDecodeError as error:
-            raise UnifiError(
-                f"{method} {url} returned invalid JSON:\n{body}"
-            ) from error
-
-        meta = decoded.get("meta")
-        if isinstance(meta, dict) and meta.get("rc") not in (None, "ok"):
-            raise UnifiError(f"{method} {url} returned rc={meta.get('rc')}:\n{body}")
-
-        return decoded
-
-    def request(self, method: str, path: str, payload: Any | None = None) -> Any:
-        decoded = self.request_json(method, path, payload)
-        return decoded.get("data", decoded)
-
-    def list_known_clients(self) -> list[dict[str, Any]]:
-        data = self.request("GET", f"/api/s/{self.site}/list/user")
-        if not isinstance(data, list):
-            raise UnifiError("unexpected response shape for known clients")
-        return data
-
-    def list_usergroups(self) -> list[dict[str, Any]]:
-        data = self.request("GET", f"/api/s/{self.site}/list/usergroup")
-        if not isinstance(data, list):
-            raise UnifiError("unexpected response shape for user groups")
-        return data
-
-    def list_networks(self) -> list[dict[str, Any]]:
-        data = self.request("GET", f"/api/s/{self.site}/rest/networkconf")
-        if not isinstance(data, list):
-            raise UnifiError("unexpected response shape for networks")
-        return data
-
-    def list_dhcp_options(self) -> list[dict[str, Any]]:
-        data = self.request("GET", f"/api/s/{self.site}/rest/dhcpoption")
-        if not isinstance(data, list):
-            raise UnifiError("unexpected response shape for DHCP options")
-        return data
-
-    def create_dhcp_option(self, payload: dict[str, Any]) -> dict[str, Any]:
-        data = self.request("POST", f"/api/s/{self.site}/rest/dhcpoption", payload)
-        if (
-            not isinstance(data, list)
-            or len(data) != 1
-            or not isinstance(data[0], dict)
-        ):
-            raise UnifiError("unexpected response shape when creating DHCP option")
-        return data[0]
-
-    def create_known_client(
-        self,
-        mac: str,
-        usergroup_id: str,
-        client_name: str | None,
-    ) -> Any:
-        client_data: dict[str, Any] = {
-            "mac": mac,
-            "usergroup_id": usergroup_id,
-            "is_wired": True,
-        }
-        if client_name:
-            client_data["name"] = client_name
-
-        return self.request(
-            "POST",
-            f"/api/s/{self.site}/group/user",
-            {"objects": [{"data": client_data}]},
-        )
-
-    def update_client(self, client_id: str, payload: dict[str, Any]) -> Any:
-        return self.request(
-            "PUT",
-            f"/api/s/{self.site}/rest/user/{urllib.parse.quote(client_id, safe='')}",
-            {"_id": client_id, **payload},
-        )
-
-    def update_network(self, network_id: str, payload: dict[str, Any]) -> Any:
-        return self.request(
-            "PUT",
-            f"/api/s/{self.site}/rest/networkconf/{urllib.parse.quote(network_id, safe='')}",
-            {"_id": network_id, **payload},
-        )
-
-    def list_static_routes(self) -> list[dict[str, Any]]:
-        data = self.request("GET", f"/api/s/{self.site}/rest/routing")
-        if not isinstance(data, list):
-            raise UnifiError("unexpected response shape for static routes")
-        return data
-
-    def create_static_route(self, payload: dict[str, Any]) -> Any:
-        return self.request("POST", f"/api/s/{self.site}/rest/routing", payload)
-
-    def update_static_route(self, route_id: str, payload: dict[str, Any]) -> Any:
-        return self.request(
-            "PUT",
-            f"/api/s/{self.site}/rest/routing/{urllib.parse.quote(route_id, safe='')}",
-            {"_id": route_id, **payload},
-        )
-
-    def list_sites(self) -> list[dict[str, Any]]:
-        return self._list_paginated("/integration/v1/sites")
-
-    def list_dns_policies(self, site_id: str) -> list[dict[str, Any]]:
-        return self._list_paginated(
-            f"/integration/v1/sites/{urllib.parse.quote(site_id, safe='')}/dns/policies"
-        )
-
-    def create_dns_policy(self, site_id: str, payload: dict[str, Any]) -> Any:
-        return self.request_json(
-            "POST",
-            f"/integration/v1/sites/{urllib.parse.quote(site_id, safe='')}/dns/policies",
-            payload,
-        )
-
-    def update_dns_policy(
-        self, site_id: str, policy_id: str, payload: dict[str, Any]
-    ) -> Any:
-        return self.request_json(
-            "PUT",
-            (
-                f"/integration/v1/sites/{urllib.parse.quote(site_id, safe='')}/dns/policies/"
-                f"{urllib.parse.quote(policy_id, safe='')}"
-            ),
-            payload,
-        )
-
-    def _list_paginated(self, path: str, limit: int = 200) -> list[dict[str, Any]]:
-        offset = 0
-        items: list[dict[str, Any]] = []
-
-        while True:
-            separator = "&" if "?" in path else "?"
-            page = self.request_json(
-                "GET",
-                f"{path}{separator}offset={offset}&limit={limit}",
-            )
-            if not isinstance(page, dict):
-                raise UnifiError(f"unexpected paginated response shape for {path}")
-
-            data = page.get("data")
-            if not isinstance(data, list):
-                raise UnifiError(f"unexpected paginated data shape for {path}")
-
-            items.extend(item for item in data if isinstance(item, dict))
-
-            count = page.get("count")
-            total_count = page.get("totalCount")
-            if not isinstance(count, int) or count <= 0:
-                break
-            if isinstance(total_count, int) and offset + count >= total_count:
-                break
-
-            offset += count
-
-        return items
-
-
 def _id(item: dict[str, Any]) -> str:
     value = item.get("_id")
     return str(value) if value is not None else "<missing-id>"
@@ -790,25 +522,6 @@ def parse_domain_search(raw_json: str) -> tuple[str, ...] | None:
     return tuple(parsed)
 
 
-def normalize_dns_name(value: str) -> str:
-    normalized = value.strip().rstrip(".").lower()
-    if not normalized:
-        raise UnifiError("DNS name must not be empty")
-
-    labels = normalized.split(".")
-    for label in labels:
-        if not label:
-            raise UnifiError(f"DNS name has an empty label: {value}")
-        if len(label.encode("idna")) > 63:
-            raise UnifiError(f"DNS label is too long in {value}")
-
-    encoded_length = sum(len(label.encode("idna")) + 1 for label in labels) + 1
-    if encoded_length > 255:
-        raise UnifiError(f"DNS name is too long: {value}")
-
-    return normalized
-
-
 def normalize_tftp_server(value: str) -> str:
     normalized = value.strip().rstrip(".")
     if not normalized:
@@ -930,82 +643,6 @@ def parse_classless_static_routes_option_json(
         label="classless-static-routes",
         normalize_encoding=normalize_classless_static_routes_option_encoding,
     )
-
-
-def parse_dns_records(raw_json: str) -> list[DnsRecordSpec] | None:
-    if not raw_json:
-        return None
-
-    try:
-        decoded = json.loads(raw_json)
-    except json.JSONDecodeError as error:
-        raise UnifiError(f"invalid DNS records JSON: {error}") from error
-
-    if not isinstance(decoded, list):
-        raise UnifiError("DNS records JSON must be a list")
-
-    records: list[DnsRecordSpec] = []
-    for index, item in enumerate(decoded):
-        if not isinstance(item, dict):
-            raise UnifiError(f"DNS record item {index} is not an object")
-
-        record_type = item.get("type")
-        domain = item.get("domain")
-        ttl_seconds = item.get("ttlSeconds")
-        enabled = item.get("enabled", True)
-        if not isinstance(record_type, str):
-            raise UnifiError(f"DNS record item {index} is missing type")
-        if not isinstance(domain, str):
-            raise UnifiError(f"DNS record item {index} is missing domain")
-        if not isinstance(ttl_seconds, int) or ttl_seconds < 0:
-            raise UnifiError(
-                f"DNS record item {index} is missing non-negative integer ttlSeconds"
-            )
-        if not isinstance(enabled, bool):
-            raise UnifiError(f"DNS record item {index} enabled must be boolean")
-
-        normalized_type = record_type.strip().upper()
-        if normalized_type not in SUPPORTED_DNS_RECORD_TYPES:
-            supported = ", ".join(sorted(SUPPORTED_DNS_RECORD_TYPES))
-            raise UnifiError(
-                f"DNS record item {index} uses unsupported type {record_type!r}; supported: {supported}"
-            )
-
-        normalized_domain = normalize_dns_name(domain)
-        if normalized_type == "A_RECORD":
-            ipv4_address = item.get("ipv4Address")
-            if not isinstance(ipv4_address, str):
-                raise UnifiError(f"DNS A record item {index} is missing ipv4Address")
-            parsed_ip = ipaddress.ip_address(ipv4_address)
-            if not isinstance(parsed_ip, ipaddress.IPv4Address):
-                raise UnifiError(
-                    f"DNS A record item {index} is not IPv4: {ipv4_address}"
-                )
-            records.append(
-                DnsRecordSpec(
-                    record_type=normalized_type,
-                    domain=normalized_domain,
-                    ttl_seconds=ttl_seconds,
-                    enabled=enabled,
-                    ipv4_address=parsed_ip,
-                )
-            )
-            continue
-
-        target_domain = item.get("targetDomain")
-        if not isinstance(target_domain, str):
-            raise UnifiError(f"DNS CNAME record item {index} is missing targetDomain")
-        records.append(
-            DnsRecordSpec(
-                record_type=normalized_type,
-                domain=normalized_domain,
-                ttl_seconds=ttl_seconds,
-                enabled=enabled,
-                target_domain=normalize_dns_name(target_domain),
-            )
-        )
-
-    return records
 
 
 def parse_static_routes(raw_json: str) -> list[StaticRouteSpec] | None:
@@ -1249,122 +886,6 @@ def build_change(current: object, desired: object) -> dict[str, object]:
         "current": current,
         "desired": desired,
     }
-
-
-def choose_site(sites: list[dict[str, Any]], requested_site: str) -> dict[str, Any]:
-    matches = [
-        site
-        for site in sites
-        if requested_site
-        and requested_site
-        in {
-            stringify(site.get("id")),
-            stringify(site.get("internalReference")),
-            stringify(site.get("name")),
-        }
-    ]
-    if len(matches) == 1:
-        return matches[0]
-    if len(matches) > 1:
-        choices = ", ".join(
-            f"{site.get('name', '<unnamed>')}[{site.get('internalReference', '?')}:{site.get('id', '?')}]"
-            for site in matches
-        )
-        raise UnifiError(f"multiple UniFi sites match {requested_site!r}: {choices}")
-
-    if len(sites) == 1:
-        return sites[0]
-
-    choices = ", ".join(
-        f"{site.get('name', '<unnamed>')}[{site.get('internalReference', '?')}:{site.get('id', '?')}]"
-        for site in sites
-    )
-    raise UnifiError(
-        f"could not match UniFi site {requested_site!r} in official API site list. Available: {choices}"
-    )
-
-
-def dns_policy_key(record_type: str, domain: str) -> tuple[str, str]:
-    return record_type.upper(), normalize_dns_name(domain)
-
-
-def build_dns_policies_by_key(
-    policies: list[dict[str, Any]],
-) -> dict[tuple[str, str], dict[str, Any]]:
-    by_key: dict[tuple[str, str], dict[str, Any]] = {}
-    for policy in policies:
-        record_type = policy.get("type")
-        domain = policy.get("domain")
-        if not isinstance(record_type, str) or not isinstance(domain, str):
-            continue
-
-        key = dns_policy_key(record_type, domain)
-        if key in by_key:
-            raise UnifiError(
-                f"multiple UniFi DNS policies share the same key {record_type}:{domain}"
-            )
-        by_key[key] = policy
-    return by_key
-
-
-def build_dns_policy_payload(record: DnsRecordSpec) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "enabled": record.enabled,
-        "type": record.record_type,
-        "domain": record.domain,
-        "ttlSeconds": record.ttl_seconds,
-    }
-    if record.record_type == "A_RECORD":
-        payload["ipv4Address"] = str(record.ipv4_address)
-    elif record.record_type == "CNAME_RECORD":
-        payload["targetDomain"] = record.target_domain
-    else:
-        raise UnifiError(f"unsupported DNS record type: {record.record_type}")
-    return payload
-
-
-def build_dns_policy_update_plan(
-    existing_policy: dict[str, Any] | None,
-    record: DnsRecordSpec,
-) -> tuple[str, dict[str, Any], dict[str, Any]]:
-    desired_payload = build_dns_policy_payload(record)
-    changes: dict[str, Any] = {}
-
-    if existing_policy is None:
-        for key, value in desired_payload.items():
-            changes[key] = build_change(None, value)
-        return "create", desired_payload, changes
-
-    payload: dict[str, Any] = {}
-    current_enabled = bool(existing_policy.get("enabled"))
-    if current_enabled != record.enabled:
-        payload["enabled"] = record.enabled
-        changes["enabled"] = build_change(current_enabled, record.enabled)
-
-    current_domain = stringify(existing_policy.get("domain"))
-    if current_domain != record.domain:
-        changes["domain"] = build_change(current_domain, record.domain)
-
-    current_ttl_seconds = existing_policy.get("ttlSeconds")
-    if current_ttl_seconds != record.ttl_seconds:
-        changes["ttlSeconds"] = build_change(current_ttl_seconds, record.ttl_seconds)
-
-    if record.record_type == "A_RECORD":
-        desired_ipv4 = str(record.ipv4_address)
-        current_ipv4 = stringify(existing_policy.get("ipv4Address"))
-        if current_ipv4 != desired_ipv4:
-            changes["ipv4Address"] = build_change(current_ipv4, desired_ipv4)
-    elif record.record_type == "CNAME_RECORD":
-        current_target = stringify(existing_policy.get("targetDomain"))
-        desired_target = record.target_domain
-        if current_target != desired_target:
-            changes["targetDomain"] = build_change(current_target, desired_target)
-    else:
-        raise UnifiError(f"unsupported DNS record type: {record.record_type}")
-
-    if changes:
-        return "update", desired_payload, changes
-    return "noop", {}, changes
 
 
 def static_route_key(destination: ipaddress.IPv4Network) -> str:
@@ -1786,9 +1307,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         mode, reservations = load_reservations(args)
         network_settings = build_network_settings(args)
         dns_records = (
-            None
-            if args.no_dns_records_update
-            else parse_dns_records(args.dns_records_json)
+            None if args.no_dns_records_update else parse_records(args.dns_records_json)
         )
         static_routes = (
             None
@@ -1940,75 +1459,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             }
 
         if dns_records is not None:
-            if dns_records:
-                official_sites = client.list_sites()
-                selected_site = choose_site(official_sites, args.site)
-                site_id = stringify(selected_site.get("id"))
-                if not site_id:
-                    raise UnifiError("selected official UniFi site has no id")
-
-                existing_dns_policies = client.list_dns_policies(site_id)
-                existing_dns_by_key = build_dns_policies_by_key(existing_dns_policies)
-
-                dns_results: list[dict[str, Any]] = []
-                for record in dns_records:
-                    existing_policy = existing_dns_by_key.get(
-                        dns_policy_key(record.record_type, record.domain)
-                    )
-                    action, payload, changes = build_dns_policy_update_plan(
-                        existing_policy=existing_policy,
-                        record=record,
-                    )
-                    changed = bool(payload)
-                    result = None
-                    if changed and not args.dry_run:
-                        if existing_policy is None:
-                            result = client.create_dns_policy(site_id, payload)
-                        else:
-                            policy_id = stringify(existing_policy.get("id"))
-                            if not policy_id:
-                                raise UnifiError(
-                                    f"existing UniFi DNS policy for {record.domain} has no id"
-                                )
-                            result = client.update_dns_policy(
-                                site_id, policy_id, payload
-                            )
-
-                    dns_results.append(
-                        {
-                            "type": record.record_type,
-                            "domain": record.domain,
-                            "enabled": record.enabled,
-                            "policy_id": stringify(existing_policy.get("id"))
-                            if existing_policy is not None
-                            else None,
-                            "action": action,
-                            "changed": changed,
-                            "dry_run": args.dry_run,
-                            "changes": changes,
-                            "result": result,
-                        }
-                    )
-            else:
-                selected_site = None
-                site_id = None
-                dns_results = []
-
-            dns_records_result = {
-                "site_id": site_id,
-                "site_name": selected_site.get("name")
-                if selected_site is not None
-                else None,
-                "site_internal_reference": (
-                    selected_site.get("internalReference")
-                    if selected_site is not None
-                    else None
-                ),
-                "dry_run": args.dry_run,
-                "count": len(dns_results),
-                "changed_count": sum(1 for result in dns_results if result["changed"]),
-                "results": dns_results,
-            }
+            dns_records_result = sync_records(
+                client,
+                requested_site=args.site,
+                records=dns_records,
+                dry_run=args.dry_run,
+            )
 
         if static_routes is not None:
             existing_static_routes = client.list_static_routes()

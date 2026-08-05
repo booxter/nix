@@ -13,11 +13,14 @@ buildGoModule {
 
   subPackages = [
     "cmd/sketchybar-alertmanager"
+    "cmd/sketchybar-clock"
     "cmd/sketchybar-disk"
     "cmd/sketchybar-github-status"
     "cmd/sketchybar-ip-address"
     "cmd/sketchybar-jellyfin"
     "cmd/sketchybar-network"
+    "cmd/sketchybar-stock"
+    "cmd/sketchybar-volume"
   ];
 
   preCheck = ''
@@ -25,6 +28,8 @@ buildGoModule {
     go vet ./...
   '';
   checkFlags = [ "-cover" ];
+
+  __darwinAllowLocalNetworking = true;
 
   meta = {
     description = "Native personal plugins for SketchyBar";

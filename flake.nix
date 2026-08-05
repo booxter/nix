@@ -182,8 +182,12 @@
           basePackages = import ./pkgs pkgs;
           nvPackages = import ./home-manager/_mixins/nv/pkgs { inherit pkgs; };
           orgPackages = import ./nixos/org/pkgs pkgs;
+          fleet = import ./apps/fleet.nix {
+            inherit pkgs username;
+          };
           fleetPackages = {
             inherit (inputs.disko.packages.${system}) disko-install;
+            fleet-tools = fleet.packages.fleet-tools;
           };
           updateTargetPackages =
             pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
@@ -276,6 +280,7 @@
           name = "formatter";
           runtimeInputs = with pkgs; [
             coreutils
+            deadnix
             nixfmt-tree
             shellcheck
             ruff

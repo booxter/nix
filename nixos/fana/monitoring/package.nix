@@ -1,6 +1,5 @@
 {
   gettext,
-  lib,
   prometheus,
   prometheus-alertmanager,
   stdenvNoCC,

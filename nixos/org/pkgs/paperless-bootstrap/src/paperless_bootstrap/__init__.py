@@ -1,0 +1,1 @@
+"""Declarative Paperless-ngx bootstrap."""

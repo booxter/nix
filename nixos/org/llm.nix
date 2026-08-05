@@ -3,6 +3,7 @@
   hostInventory,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -157,12 +158,21 @@ let
       request_timeout = 600;
     };
   };
+  setDatabasePasswordCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe pkgs.postgresql-role-password)
+    "--database"
+    litellmDatabase
+    "--role"
+    litellmUser
+    "--password-file"
+    config.sops.secrets."litellm/database/password".path
+  ];
 in
 {
   sops.secrets = {
     "litellm/database/password" = {
-      owner = "root";
-      group = "root";
+      owner = "postgres";
+      group = "postgres";
       mode = "0400";
       restartUnits = [
         "litellm-postgresql-password.service"
@@ -252,36 +262,20 @@ in
     litellm-postgresql-password = {
       description = "Apply LiteLLM PostgreSQL password";
       wantedBy = [ "multi-user.target" ];
-      wants = [
-        "postgresql.service"
-        "sops-install-secrets.service"
-      ];
+      requires = [ "postgresql-setup.service" ];
+      wants = [ "sops-install-secrets.service" ];
       after = [
-        "postgresql.service"
+        "postgresql-setup.service"
         "sops-install-secrets.service"
       ];
       before = [ "podman-litellm.service" ];
-      path = [
-        pkgs.postgresql
-        pkgs.util-linux
-      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        User = "postgres";
+        Group = "postgres";
+        ExecStart = setDatabasePasswordCommand;
       };
-      script = ''
-        password="$(cat ${config.sops.secrets."litellm/database/password".path})"
-        runuser -u postgres -- psql --set=ON_ERROR_STOP=1 --set=password="$password" <<'SQL'
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'litellm') THEN
-            CREATE ROLE litellm LOGIN;
-          END IF;
-        END
-        $$;
-        ALTER ROLE litellm WITH LOGIN PASSWORD :'password';
-        SQL
-      '';
     };
     podman-litellm = {
       # Podman snapshots the host resolver configuration when it creates the

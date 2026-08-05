@@ -35,6 +35,9 @@ nix run .#prox-deploy -- org prx1-lab
 nix run .#deploy -- --disko frame /dev/sdX
 ```
 
+Local VM and disk provisioning commands resolve the enclosing Git checkout at
+runtime and must be run from inside one.
+
 ## Fleet updates
 
 Update multiple machines over SSH with `nix run .#deploy` (defaults to
@@ -93,6 +96,8 @@ Run `sops-update` when a host secret should receive missing template keys.
 Backup and restore procedures are documented in [common/backup.md](common/backup.md).
 `srvarr`'s adaptive upload policy and tracker prioritization are documented in
 [nixos/srvarr/upload-policy.md](nixos/srvarr/upload-policy.md).
+Fleet service limits and workload classes are documented in
+[docs/resource-control.md](docs/resource-control.md).
 
 ## Tests
 

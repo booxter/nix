@@ -2,6 +2,7 @@
   config,
   hostInventory,
   lib,
+  srvarrPkgs,
   ...
 }:
 let
@@ -16,6 +17,8 @@ in
     enable = true;
     configDir = stateDir;
   };
+
+  environment.systemPackages = [ srvarrPkgs.seerr-tools ];
 
   systemd.tmpfiles.rules = [
     "d '${stateDir}' 0700 ${user} root - -"

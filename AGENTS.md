@@ -15,7 +15,8 @@ Scope: whole repository.
 - Treat in-tree Nix modules, mixins, and options as internal to this repository.
   When editing them, update all in-repo call sites and do not preserve legacy
   aliases, compatibility shims, or backwards-compatible option names solely for
-  out-of-tree consumers.
+  out-of-tree consumers. Remove unused options and features together with their
+  in-tree wiring; Git history is the fallback for code needed later.
 - Never modify, restore, reformat, stage, or commit changes you did not produce.
   Unrelated dirty files may be human edits or another agent working in parallel.
   Do not try to repair, revert, or normalize unrelated dirty paths.
@@ -50,23 +51,34 @@ Scope: whole repository.
   client libraries over subprocesses. When a CLI is the necessary interface,
   pass argument lists; no embedded shell or `shell=True` unless required.
   Consider Go or Rust for larger applications and systems-level work.
+- Dulwich sucks for huge repositories; do not use it there. Prefer the Git CLI
+  behind the repository's typed command-runner interface when native libraries
+  would compromise Git semantics or performance.
 - Python apps are `pyproject.toml` projects with `src/` packages and console
   entry points, never loose `.py` files. Require full typing, strict mypy, Ruff,
-  and explicit models such as dataclasses instead of untyped dictionaries.
+  and explicit models instead of untyped dictionaries. Prefer dataclasses for
+  internal state; use Pydantic when external data benefits from runtime
+  validation, aliases, or serialization.
 - Put I/O and external commands behind narrow injected interfaces (`Protocol`).
   Test with explicit fakes, not mocks, implementation monkeypatches, or global
   mutable hooks.
-- Test behavior and failures, not generated source or implementation text. Keep
-  tests beside the package and run pytest with coverage and a minimum threshold
-  in Nix `checkPhase`; keep package tests out of top-level `tests/`.
+- Test behavior and failures, not generated source, implementation text, or
+  command argv/call order copied from the implementation. Keep tests beside the
+  package and run pytest with coverage and a minimum threshold in Nix
+  `checkPhase`; keep package tests out of top-level `tests/`.
+- For tests that bind loopback in Darwin derivations, use the real local server
+  and set `__darwinAllowLocalNetworking = true;`; do not substitute fake
+  transports solely to satisfy the sandbox.
 - Every package must be built by a consumer or CI. Check shared portable apps on
   both Linux and macOS; keep host-specific packages under that host's `pkgs/`.
 - Parse and emit JSON, YAML, and similar formats with libraries, never string
   concatenation or hand-written serialization templates.
 - Declare and wrap external runtime executables; build inputs alone do not put
   programs on the installed runtime `PATH`.
-- Assume Nix on managed machines. Build for the target system and use `nix copy`
-  for closures, not `scp`, copied sources, or host-architecture executables.
+- Assume Nix on managed machines. For remote helpers, copy only a
+  content-addressed flake source and build on the target. Do not copy unsigned
+  local build outputs into signature-enforcing target stores, use `scp`, or run
+  host-architecture executables remotely.
 
 ## Security
 
@@ -89,6 +101,10 @@ Scope: whole repository.
   ```sh
   ssh <target> [command ...]
   ```
+
+- OpenSSH transports a remote command as shell text rather than an argv array.
+  Keep that unavoidable boundary fixed or quote every typed argument, and pass
+  structured dynamic input over stdin where practical.
 
 - On configured clients, OpenSSH transparently runs `ssh-ticket ensure`; wait for
   any macOS TTL/Secretive approval prompts. Treat `ssh-ticket`/`ssht` as

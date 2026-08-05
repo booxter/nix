@@ -4,9 +4,11 @@
   hostInventory,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
+  pkiPkgs = import ./pkgs pkgs;
   caServer = hostInventory.nixosHostSpecsByName.pki.caServer;
   hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   caName = "Home Internal PKI";
@@ -19,9 +21,7 @@ let
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
   pkiRotationMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-rotation.prom";
   stepStateDir = "/var/lib/step-ca";
-  stepDefaultsFile = "${stepStateDir}/config/defaults.json";
   stepPasswordFile = "${stepStateDir}/password.txt";
-  stepProvisionerPasswordFile = "${stepStateDir}/provisioner-password.txt";
   caDnsNames = lib.unique (
     hostInventory.toNixosHostCertificateDnsNames hostSpec
     ++ [
@@ -31,66 +31,25 @@ let
       (hostInventory.toLocalDnsName config.services.avahi.hostName)
     ]
   );
-  caDnsNamesJson = builtins.toJSON caDnsNames;
-  caDnsArgs = lib.concatMapStringsSep " " (name: "--dns ${lib.escapeShellArg name}") caDnsNames;
-  bootstrapScript = pkgs.writeShellScript "step-ca-bootstrap" ''
-    set -eu
-    umask 077
-
-    if [ ! -s "${stepStateDir}/config/ca.json" ]; then
-      if [ ! -s "${stepPasswordFile}" ]; then
-        ${pkgs.openssl}/bin/openssl rand -base64 48 > "${stepPasswordFile}"
-        chmod 600 "${stepPasswordFile}"
-      fi
-
-      if [ ! -s "${stepProvisionerPasswordFile}" ]; then
-        ${pkgs.openssl}/bin/openssl rand -base64 48 > "${stepProvisionerPasswordFile}"
-        chmod 600 "${stepProvisionerPasswordFile}"
-      fi
-
-      ${pkgs.step-cli}/bin/step ca init \
-        --deployment-type standalone \
-        --name ${lib.escapeShellArg caName} \
-        ${caDnsArgs} \
-        --address ${lib.escapeShellArg ":${toString caPort}"} \
-        --provisioner ${lib.escapeShellArg caProvisioner} \
-        --password-file ${lib.escapeShellArg stepPasswordFile} \
-        --provisioner-password-file ${lib.escapeShellArg stepProvisionerPasswordFile} \
-        --acme
-    fi
-
-    tmp_json="$(mktemp)"
-    ${pkgs.jq}/bin/jq \
-      --arg provisioner ${lib.escapeShellArg caProvisioner} \
-      --arg cert_lifetime ${lib.escapeShellArg certLifetime} \
-      --argjson dns_names ${lib.escapeShellArg caDnsNamesJson} \
-      '
-        .dnsNames = $dns_names
-        |
-        .authority.provisioners |= map(
-          if .name == $provisioner then
-            .claims = ((.claims // {}) + {
-              defaultTLSCertDuration: $cert_lifetime,
-              maxTLSCertDuration: $cert_lifetime
-            })
-          else
-            .
-          end
-        )
-      ' \
-      "${stepStateDir}/config/ca.json" > "$tmp_json"
-    mv "$tmp_json" "${stepStateDir}/config/ca.json"
-
-    tmp_defaults="$(mktemp)"
-    ${pkgs.jq}/bin/jq \
-      --arg ca_url ${lib.escapeShellArg caUrl} \
-      '."ca-url" = $ca_url' \
-      "${stepDefaultsFile}" > "$tmp_defaults"
-    mv "$tmp_defaults" "${stepDefaultsFile}"
-  '';
+  bootstrapConfig = (pkgs.formats.json { }).generate "step-ca-bootstrap.json" {
+    stateDirectory = stepStateDir;
+    name = caName;
+    url = caUrl;
+    dnsNames = caDnsNames;
+    address = ":${toString caPort}";
+    provisioner = caProvisioner;
+    certificateLifetime = certLifetime;
+  };
+  bootstrapCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe pkiPkgs.step-ca-bootstrap)
+    "--config"
+    bootstrapConfig
+    "--step"
+    (lib.getExe pkgs.step-cli)
+  ];
 in
 {
-  _module.args.pkiPkgs = import ./pkgs pkgs;
+  _module.args = { inherit pkiPkgs; };
 
   imports = [
     ./id.nix
@@ -146,7 +105,7 @@ in
         "HOME=${stepStateDir}"
         "STEPPATH=${stepStateDir}"
       ];
-      ExecStartPre = bootstrapScript;
+      ExecStartPre = bootstrapCommand;
       ExecStart = "${pkgs.step-ca}/bin/step-ca ${stepStateDir}/config/ca.json --password-file ${stepPasswordFile}";
       Restart = "on-failure";
       RestartSec = "5s";

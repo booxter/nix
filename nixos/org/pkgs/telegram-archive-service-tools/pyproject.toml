@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "telegram-archive-service-tools"
+version = "0.1.0"
+description = "Host integration tools for Telegram Archive"
+requires-python = ">=3.11"
+dependencies = ["pydantic", "pystemd"]
+
+[project.scripts]
+telegram-archive-scheduler = "telegram_archive_service_tools.cli:scheduler_main"
+telegram-archive-viewer = "telegram_archive_service_tools.cli:viewer_main"
+telegram-archive-auth = "telegram_archive_service_tools.cli:auth_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+telegram_archive_service_tools = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=telegram_archive_service_tools --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/telegram_archive_service_tools"]
+strict = true
+
+[tool.ruff]
+line-length = 100

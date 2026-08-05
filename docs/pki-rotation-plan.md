@@ -2,8 +2,8 @@
 
 This repo manages internal PKI leaf certificates through encrypted host
 secrets, so rotation should happen centrally from `pki`, not on each
-host. `pki` already runs `step-ca` and the issuer apps, and the fleet already
-converges from Git state via the normal review and upgrade flow.
+host. `pki` already runs `step-ca` and the certificate service. The fleet
+converges from Git state through the normal review and upgrade flow.
 
 ## Policy
 
@@ -43,11 +43,11 @@ This is intentional:
     certs
 - `pki-rotate`
   - runs on a timer
-  - reuses the existing issuer apps for internal HTTPS, observability server,
-    and mTLS client certs
+  - reuses the typed certificate service for internal HTTPS, observability
+    server, and mTLS client certs
   - clones the repo to a temporary worktree
   - updates encrypted host secrets for due leaf certs
-  - force-pushes a dedicated automation branch
+  - updates a dedicated automation branch with force-with-lease protection
   - creates or updates a review PR instead of writing directly to the tracked
     branch
 
@@ -60,8 +60,8 @@ branch.
 2. If no leaf cert is inside the `45d` rotation window, the run exits cleanly.
 3. If one or more leaf certs are due, `pki-rotate` reissues them from the local
    `step-ca` on `pki`.
-4. Updated certs are written back into the corresponding `secrets/*.yaml`
-   files.
+4. Updated certs are written back into the corresponding
+   `secrets/<domain>/*.yaml` files.
 5. The controller commits those encrypted updates to `ci/pki-rotate`.
 6. It opens or updates a PR against the base branch.
 7. After review and merge, the existing upgrade and deploy flow rolls the new

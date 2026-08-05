@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "postgresql-role-password"
+version = "0.1.0"
+description = "Set PostgreSQL role passwords from secret files"
+requires-python = ">=3.11"
+dependencies = ["psycopg"]
+
+[project.scripts]
+postgresql-set-role-password = "postgresql_role_password.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+postgresql_role_password = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=postgresql_role_password --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/postgresql_role_password"]
+strict = true
+
+[tool.ruff]
+line-length = 100

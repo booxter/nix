@@ -279,6 +279,7 @@ rec {
       ipAddress,
       macAddress ? null,
       isVM ? false,
+      proxmoxUpgradeTime ? "Mon 04:00",
       extraModules ? [ ],
       ...
     }:
@@ -303,15 +304,17 @@ rec {
             )
 
             (
-              { pkgs, ... }:
+              { lib, pkgs, ... }:
               let
                 brname = "vmbr0";
-                lanDomain = hostInventory.site.lan.domain;
               in
               {
                 # Hypervisors upgrade on a separate schedule to avoid
                 # disrupting guest VMs running on top.
-                system.autoUpgrade.dates = "Mon 04:00";
+                system.autoUpgrade = {
+                  dates = proxmoxUpgradeTime;
+                  rebootWindow.lower = lib.mkForce "03:45";
+                };
 
                 nixpkgs.overlays = [
                   inputs.proxmox-nixos.overlays.${platform}

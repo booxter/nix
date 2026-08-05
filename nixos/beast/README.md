@@ -120,7 +120,10 @@ and its WatchState destination are managed declaratively by Jellarr.
 The WatchState system user is supplied declaratively from
 `sso.applications.watchstate.bootstrapOwner` in `lib/inventory.nix`; its
 password comes from `watchstate/system/password` in `secrets/main/beast.yaml`.
-Password changes restart WatchState.
+These credentials bootstrap WatchState's internal token but are not presented
+to users: after the outer OIDC gate succeeds, WatchState trusts nginx's
+loopback connection and logs the user in automatically. Password changes
+restart WatchState.
 
 WatchState generates its Media Health report daily at 05:00, after the
 midnight import. The report combines backend coverage, duplicate references,
@@ -132,8 +135,8 @@ the restricted `jellyfin_shared` backend cannot see a library.
 
 The remaining initial configuration is an explicit, staged operation:
 
-1. Sign in to WatchState as the inventory bootstrap owner using the sops-managed
-   password.
+1. Sign in through the OIDC gate; WatchState automatically uses the inventory
+   bootstrap owner internally.
 2. Add the same `https://jf.ihar.dev` Jellyfin server twice,
    using distinct backend names such as `jellyfin_user` and
    `jellyfin_shared` and selecting `Ihar` and `jellyfin`, respectively.

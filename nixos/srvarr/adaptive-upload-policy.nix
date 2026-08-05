@@ -2,8 +2,6 @@
   jellyfinExporterUrl,
   fallbackUploadRateMbit,
   networkOnlineUnitDeps,
-  wgEndpointPort,
-  wgOuterLinkRate,
   wgUnitDepsBase,
 }:
 {
@@ -173,10 +171,6 @@ in
         (toString fallbackUploadRateMbit)
         "--max-state-age-seconds"
         maxStateAgeSeconds
-        "--outer-link-rate"
-        wgOuterLinkRate
-        "--endpoint-port"
-        (toString wgEndpointPort)
       ];
       Restart = "always";
       RestartSec = "10s";

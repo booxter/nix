@@ -21,6 +21,9 @@ where = ["src"]
 addopts = "-q --cov=git_send_email_store_password --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/git_send_email_store_password"]
 strict = true

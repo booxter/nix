@@ -3,42 +3,27 @@
   hostInventory,
   lib,
   pkgs,
+  srvarrPkgs,
+  utils,
   ...
 }:
 let
   cfg = config.host.vpnNamespaceBridgeAccess;
   wgBridgeAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.bridgeAddress;
   tcpPorts = lib.unique cfg.tcpPorts;
-  bridgeAccessScript = pkgs.writeShellApplication {
-    name = "wg-bridge-access";
-    runtimeInputs = [
-      pkgs.iproute2
-      pkgs.iptables
-    ];
-    text = ''
-      set -euo pipefail
-
-      case "''${1:-start}" in
-        start)
-          for port in ${lib.escapeShellArgs (map builtins.toString tcpPorts)}; do
-            rule=(-s ${wgBridgeAddress}/32 -p tcp --dport "$port" -j ACCEPT)
-            ip netns exec wg iptables -C INPUT "''${rule[@]}" 2>/dev/null \
-              || ip netns exec wg iptables -I INPUT 1 "''${rule[@]}"
-          done
-          ;;
-        stop)
-          for port in ${lib.escapeShellArgs (map builtins.toString tcpPorts)}; do
-            rule=(-s ${wgBridgeAddress}/32 -p tcp --dport "$port" -j ACCEPT)
-            ip netns exec wg iptables -D INPUT "''${rule[@]}" 2>/dev/null || true
-          done
-          ;;
-        *)
-          echo "usage: $0 [start|stop]" >&2
-          exit 2
-          ;;
-      esac
-    '';
+  bridgeAccessConfig = (pkgs.formats.json { }).generate "wg-bridge-access.json" {
+    namespace = "wg";
+    sourceAddress = wgBridgeAddress;
+    inherit tcpPorts;
   };
+  bridgeAccessCommand =
+    action:
+    utils.escapeSystemdExecArgs [
+      (lib.getExe srvarrPkgs.network-tools)
+      action
+      "--config"
+      bridgeAccessConfig
+    ];
 in
 {
   options.host.vpnNamespaceBridgeAccess.tcpPorts = lib.mkOption {
@@ -58,8 +43,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${lib.getExe bridgeAccessScript} start";
-        ExecStop = "${lib.getExe bridgeAccessScript} stop";
+        ExecStart = bridgeAccessCommand "apply";
+        ExecStop = bridgeAccessCommand "remove";
       };
     };
   };

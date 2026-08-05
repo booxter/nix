@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptive-upload-controller"
+version = "0.1.0"
+description = "Coordinate Jellyfin-aware torrent upload limits"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "httpx", "prometheus-client", "pydantic", "pyroute2", "transmission-common"]
+
+[project.scripts]
+adaptive-upload-controller = "adaptive_upload_controller.app:main"
+
+[tool.mypy]
+files = ["src/adaptive_upload_controller"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=adaptive_upload_controller --cov-report=term-missing --cov-fail-under=55"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.ruff]
+line-length = 100

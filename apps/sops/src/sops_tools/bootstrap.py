@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import shutil
 import sys
 from dataclasses import dataclass
@@ -9,6 +10,7 @@ from typing import Protocol
 
 from .age import AgeRecipientResolver
 from .errors import ToolError
+from .flake import archive_flake_source
 from .model import JsonValue
 from .policy import SopsPolicy
 from .process import ProcessRunner
@@ -18,7 +20,9 @@ from .runtime_key import (
     RuntimeKeyError,
     ensure_runtime_key,
 )
-from .secrets import SopsBackend, load_yaml, write_atomic
+from atomic_file_writes import write_text_atomic
+
+from .secrets import SopsBackend, load_yaml
 
 _RUNTIME_KEY = Path("/var/lib/sops-nix/key.txt")
 
@@ -35,7 +39,6 @@ class OperatorRecipientProvider(Protocol):
 class CommandRuntimeKeyProvider:
     runner: ProcessRunner
     repo_root: Path
-    target_system: str
 
     def recipient(self, host: str, user: str, *, local: bool) -> str:
         if local:
@@ -64,22 +67,28 @@ class CommandRuntimeKeyProvider:
         ).strip()
 
     def _remote_recipient(self, target: str) -> str:
-        package = self._build_target_package()
-        self.runner.run(["nix", "copy", "--to", f"ssh://{target}", str(package)])
+        source = self._archive_source()
+        self.runner.run(["nix", "copy", "--to", f"ssh://{target}", str(source)])
         remote_root = self.runner.run(["ssh", target, "id", "-u"]).strip() == "0"
-        privilege = [] if remote_root else ["sudo"]
-        output = self.runner.run_streaming(
+        privilege = [] if remote_root else ["sudo", "-H"]
+        # OpenSSH has no remote argv protocol. This fixed command contains no
+        # user input; the source path is a validated Nix store path.
+        command = shlex.join(
             [
-                "ssh",
-                "-tt",
-                target,
                 *privilege,
-                str(package / "bin/sops-runtime-key"),
+                "nix",
+                "shell",
+                "-L",
+                "--show-trace",
+                f"path:{source}#sops-tools",
+                "--command",
+                "sops-runtime-key",
                 "--age-keygen",
                 "age-keygen",
                 str(_RUNTIME_KEY),
             ]
         )
+        output = self.runner.run_streaming(["ssh", "-tt", target, command])
         recipients = [
             line.strip()
             for line in output.replace("\r", "").splitlines()
@@ -89,16 +98,8 @@ class CommandRuntimeKeyProvider:
             raise ToolError(f"Failed to read age public key from remote host: {target}")
         return recipients[-1]
 
-    def _build_target_package(self) -> Path:
-        flake = f"path:{self.repo_root}#packages.{self.target_system}.sops-tools"
-        outputs = self.runner.run(
-            ["nix", "build", "--no-link", "--print-out-paths", flake]
-        ).splitlines()
-        if len(outputs) != 1 or not outputs[0].startswith("/nix/store/"):
-            raise ToolError(
-                f"Failed to build sops-tools for target system {self.target_system}."
-            )
-        return Path(outputs[0])
+    def _archive_source(self) -> Path:
+        return archive_flake_source(self.runner, self.repo_root)
 
     @staticmethod
     def _executable(name: str) -> str:
@@ -214,7 +215,7 @@ class BootstrapService:
             encrypted = self.sops.encrypt_data(secret, plaintext)
             if not encrypted:
                 raise ToolError(f"Failed to create encrypted secret for {secret}.")
-            write_atomic(secret, encrypted)
+            write_text_atomic(secret, encrypted)
             relative = secret.relative_to(self.runtime.repo_root)
             messages.append(f"Created encrypted {relative}.")
         return BootstrapResult(tuple(messages))

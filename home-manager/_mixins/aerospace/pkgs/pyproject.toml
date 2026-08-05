@@ -23,6 +23,9 @@ where = ["src"]
 addopts = "-q --cov=aerospace_x11 --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.coverage.run]
 omit = ["*/aerospace_x11/native.py"]
 

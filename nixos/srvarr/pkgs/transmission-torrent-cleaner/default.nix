@@ -1,29 +1,40 @@
 {
   lib,
   python3,
+  ruff,
   transmissionCommon,
-  writeShellApplication,
 }:
 let
-  sourceDir = ./.;
-  pythonWithDeps = python3.withPackages (_: [
-    transmissionCommon
-  ]);
+  pythonPackages = python3.pkgs;
 in
-writeShellApplication {
-  name = "transmission-torrent-cleaner";
-  text = ''
-    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
+pythonPackages.buildPythonApplication {
+  pname = "transmission-torrent-cleaner";
+  version = "0.1.0";
+  pyproject = true;
+
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  dependencies = [
+    pythonPackages.pydantic
+    transmissionCommon
+  ];
+
+  nativeCheckInputs = [
+    pythonPackages.mypy
+    pythonPackages.pytestCheckHook
+    pythonPackages.pytest-cov
+    ruff
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/transmission_torrent_cleaner
   '';
-  derivationArgs = {
-    doCheck = true;
-  };
-  checkPhase = ''
-    runHook preCheck
-    PYTHONPATH="${sourceDir}" \
-      ${pythonWithDeps}/bin/python3 -m unittest discover -s "${sourceDir}" -p 'test_*.py'
-    runHook postCheck
-  '';
+
+  pythonImportsCheck = [ "transmission_torrent_cleaner" ];
 
   meta = {
     description = "Cleanup utility for old high-ratio or over-age non-priority Transmission torrents";

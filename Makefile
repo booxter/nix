@@ -89,7 +89,7 @@ darwin-eval:
 	nix eval $(ARGS) ".#darwinConfigurations.$(WHAT).system.drvPath"
 
 check:
-	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" apps/run-check-target.sh checks checks check
+	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" nix run --quiet .#run-check-target -- checks checks check
 
 check-nixos:
-	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" apps/run-check-target.sh nixosTests "nixos checks" "nixos check"
+	@WHAT="$(WHAT)" REMOTE="$(REMOTE)" nix run --quiet .#run-check-target -- nixosTests "nixos checks" "nixos check"

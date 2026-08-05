@@ -1,4 +1,5 @@
 {
+  atomicFileWrites,
   lib,
   python3,
   ruff,
@@ -14,6 +15,8 @@ pythonPackages.buildPythonApplication {
   src = ./.;
 
   build-system = [ pythonPackages.setuptools ];
+
+  dependencies = [ atomicFileWrites ];
 
   nativeCheckInputs = [
     ruff

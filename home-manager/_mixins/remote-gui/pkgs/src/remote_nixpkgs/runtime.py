@@ -82,7 +82,7 @@ class OpenSshSession:
     process: ProcessController
     host: str
     options: tuple[str, ...] = ()
-    forwarding: str = "-X"
+    local_environment: Mapping[str, str] | None = None
 
     def option_arguments(self) -> list[str]:
         return [argument for option in self.options for argument in ("-o", option)]
@@ -105,11 +105,12 @@ class OpenSshSession:
         self.process.replace(
             [
                 "ssh",
-                self.forwarding,
+                "-Y",
                 *self.option_arguments(),
                 self.host,
                 _remote_command(arguments),
-            ]
+            ],
+            self.local_environment,
         )
 
 
@@ -264,7 +265,15 @@ class WaypipeSession:
                 "StreamLocalBindUnlink=yes",
                 *self.ssh.option_arguments(),
                 self.host,
-                _remote_command(arguments),
+                # Nix enables Electron's automatic Wayland hint with NIXOS_OZONE_WL;
+                # XDG_SESSION_TYPE makes that hint select Wayland on a headless host.
+                _remote_command(
+                    arguments,
+                    {
+                        "NIXOS_OZONE_WL": "1",
+                        "XDG_SESSION_TYPE": "wayland",
+                    },
+                ),
             ],
             environment,
         )

@@ -8,5 +8,12 @@ version = "0.1.0"
 description = "Shared Transmission RPC helpers for local service scripts"
 requires-python = ">=3.10"
 
+[tool.mypy]
+files = ["transmission_common"]
+strict = true
+
+[tool.setuptools.package-data]
+transmission_common = ["py.typed"]
+
 [tool.setuptools.packages.find]
 where = ["."]

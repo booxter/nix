@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import json
-import os
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
 import yaml
+from atomic_file_writes import write_text_atomic
 
 from .errors import ToolError
 from .model import (
@@ -29,23 +28,6 @@ def load_yaml(path: Path) -> JsonValue:
     except (OSError, yaml.YAMLError) as error:
         raise ToolError(f"Unable to read YAML from {path}: {error}") from error
     return require_json_value(value, source=str(path))
-
-
-def write_atomic(path: Path, content: str) -> None:
-    temporary_name: str | None = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            delete=False,
-        ) as temporary:
-            temporary.write(content)
-            temporary_name = temporary.name
-        os.replace(temporary_name, path)
-    finally:
-        if temporary_name is not None:
-            Path(temporary_name).unlink(missing_ok=True)
 
 
 class SopsBackend(Protocol):
@@ -176,7 +158,7 @@ class SecretService:
             return UpdateResult(secret, changed=False, reencrypted=False)
 
         if force:
-            write_atomic(secret, self.sops.encrypt_data(secret, desired))
+            write_text_atomic(secret, self.sops.encrypt_data(secret, desired))
             return UpdateResult(secret, changed=True, reencrypted=True)
 
         missing = [
@@ -189,5 +171,5 @@ class SecretService:
                 self.sops.set_value(secret, path, value)
             return UpdateResult(secret, changed=True, reencrypted=False)
 
-        write_atomic(secret, self.sops.encrypt_data(secret, desired))
+        write_text_atomic(secret, self.sops.encrypt_data(secret, desired))
         return UpdateResult(secret, changed=True, reencrypted=True)

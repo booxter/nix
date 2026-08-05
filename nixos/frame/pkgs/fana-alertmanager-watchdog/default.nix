@@ -1,19 +1,36 @@
 {
+  atomicFileWrites,
   lib,
   python3,
-  writeShellApplication,
 }:
-let
-  pythonWithDeps = python3.withPackages (pythonPackages: [
-    pythonPackages.python-telegram-bot
-  ]);
-in
+python3.pkgs.buildPythonApplication {
+  pname = "fana-alertmanager-watchdog";
+  version = "0.1.0";
+  pyproject = true;
 
-writeShellApplication {
-  name = "fana-alertmanager-watchdog";
-  text = ''
-    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
+  src = ./.;
+
+  build-system = [ python3.pkgs.setuptools ];
+
+  dependencies = [
+    atomicFileWrites
+    python3.pkgs.python-telegram-bot
+  ];
+
+  nativeCheckInputs = with python3.pkgs; [
+    mypy
+    pytestCheckHook
+    pytest-cov
+    ruff
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/fana_alertmanager_watchdog
   '';
+
+  pythonImportsCheck = [ "fana_alertmanager_watchdog" ];
 
   meta = {
     description = "Watch fana Alertmanager readiness and send direct Telegram notifications";

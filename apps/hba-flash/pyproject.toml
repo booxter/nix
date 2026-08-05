@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hba-flash"
+version = "0.2.0"
+description = "Preflight and flash the Broadcom HBA on beast"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+hba-flash = "hba_flash.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+hba_flash = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=hba_flash --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/hba_flash"]
+strict = true
+
+[tool.ruff]
+line-length = 100

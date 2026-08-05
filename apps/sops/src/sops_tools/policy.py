@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import os
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
 import yaml
+from atomic_file_writes import write_text_atomic
 
 from .errors import ToolError
 from .model import JsonValue, require_json_value
@@ -145,20 +144,7 @@ class SopsPolicy:
 
     def write(self, path: Path) -> None:
         content = yaml.safe_dump(self.document, sort_keys=False)
-        temporary_name: str | None = None
-        try:
-            with tempfile.NamedTemporaryFile(
-                mode="w",
-                dir=path.parent,
-                prefix=f".{path.name}.",
-                delete=False,
-            ) as temporary:
-                temporary.write(content)
-                temporary_name = temporary.name
-            os.replace(temporary_name, path)
-        finally:
-            if temporary_name is not None:
-                Path(temporary_name).unlink(missing_ok=True)
+        write_text_atomic(path, content)
 
 
 def validate_repository(root: Path) -> None:

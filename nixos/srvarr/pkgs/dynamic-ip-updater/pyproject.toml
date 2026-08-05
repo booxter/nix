@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dynamic-ip-updater"
+version = "0.1.0"
+description = "Update the MyAnonamouse dynamic seedbox address"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "pydantic"]
+
+[project.scripts]
+update-dynamic-ip = "dynamic_ip_updater.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+dynamic_ip_updater = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=dynamic_ip_updater --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/dynamic_ip_updater"]
+strict = true
+
+[tool.ruff]
+line-length = 100

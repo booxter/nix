@@ -45,8 +45,8 @@ The repository should not store manually encoded DHCP payloads as configuration.
 
 WireGuard peer DNS overrides are handled by `wg-home-dns-sync`, a separate
 systemd service on the same host. It observes WireGuard exporter metrics over
-mTLS, derives which peer-specific DNS overrides should exist, and invokes
-`unifi-sync` to apply that DNS subset.
+mTLS, derives which peer-specific DNS overrides should exist, and applies that
+DNS subset through the shared in-process UniFi client and reconciler.
 
 Keeping this logic separate lets normal inventory sync run on its timer while
 WireGuard DNS can react on a shorter polling loop.

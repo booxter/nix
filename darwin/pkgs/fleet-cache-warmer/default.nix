@@ -1,12 +1,12 @@
 {
   lib,
   attic-client,
-  coreutils,
-  name ? "fleet-cache-warmer",
+  clippy,
   nix,
   pushToAttic ? true,
+  rustfmt,
+  rustPlatform,
   targetFilter ? "non-work",
-  writeShellApplication,
 }:
 
 let
@@ -30,133 +30,45 @@ let
       inventory.buildTargets ++ inventory.regularChecks ++ inventory.nixosTests
     )
   );
-  embeddedTargetAssignments = lib.concatMapStringsSep "\n" (
-    target: ''target_suffixes+=("${target}")''
-  ) ciValidatedWarmTargets;
 in
-writeShellApplication {
-  inherit name;
-  passthru.ciWarmTargets = ciValidatedWarmTargets;
-  text = ''
-        set -euo pipefail
+rustPlatform.buildRustPackage {
+  pname = "fleet-cache-warmer";
+  version = "0.1.0";
 
-        log() {
-          printf '[%s] %s\n' "$(${coreutils}/bin/date '+%Y-%m-%dT%H:%M:%S%z')" "$*" >&2
-        }
+  src = lib.fileset.toSource {
+    root = ./.;
+    fileset = lib.fileset.unions [
+      ./Cargo.lock
+      ./Cargo.toml
+      ./src
+    ];
+  };
 
-        usage() {
-          cat <<'EOF'
-    Usage: ${name} [--print-targets]
+  cargoHash = "sha256-BS46DRuN9fU1vQBWKuHtG47l8n/mjKJR5WhOZltJ4Ao=";
 
-    Build the selected CI-validated fleet outputs.
-    The flake reference can be overridden with:
+  FLEET_CACHE_WARMER_ATTIC = lib.optionalString pushToAttic (lib.getExe attic-client);
+  FLEET_CACHE_WARMER_NIX = lib.getExe nix;
+  FLEET_CACHE_WARMER_PUSH_TO_ATTIC = builtins.toJSON pushToAttic;
+  FLEET_CACHE_WARMER_TARGETS_JSON = builtins.toJSON ciValidatedWarmTargets;
 
-      FLEET_CACHE_WARMER_FLAKE
-    ${lib.optionalString pushToAttic ''
-      The Attic cache name can be overridden with:
+  nativeCheckInputs = [
+    clippy
+    rustfmt
+  ];
 
-        FLEET_CACHE_WARMER_ATTIC_CACHE
-    ''}
-    EOF
-        }
-
-        flake_ref="''${FLEET_CACHE_WARMER_FLAKE:-github:booxter/nix}"
-    ${lib.optionalString pushToAttic ''
-      attic_cache="''${FLEET_CACHE_WARMER_ATTIC_CACHE:-default}"
-    ''}
-
-        declare -a target_suffixes=()
-        ${embeddedTargetAssignments}
-
-        declare -a targets=()
-        for suffix in "''${target_suffixes[@]}"; do
-          targets+=("''${flake_ref}#''${suffix}")
-        done
-
-        case "''${1:-run}" in
-          --print-targets)
-            printf '%s\n' "''${targets[@]}"
-            exit 0
-            ;;
-          --help|-h)
-            usage
-            exit 0
-            ;;
-          run)
-            ;;
-          *)
-            usage >&2
-            exit 1
-            ;;
-        esac
-
-        out_paths_file="$(${coreutils}/bin/mktemp -t ${name}.XXXXXX)"
-        trap '${coreutils}/bin/rm -f "$out_paths_file"' EXIT
-
-        declare -a buildable_targets=()
-        skipped_inventory_count=0
-        log "Resolving ''${#targets[@]} warm target(s) from $flake_ref"
-        for i in "''${!targets[@]}"; do
-          target="''${targets[$i]}"
-          log "Resolving target $((i + 1))/''${#targets[@]}: $target"
-          if ${lib.getExe nix} eval --raw "$target.outPath" >/dev/null 2>&1; then
-            buildable_targets+=("$target")
-            log "Resolved target $((i + 1))/''${#targets[@]}: $target"
-          else
-            skipped_inventory_count=$((skipped_inventory_count + 1))
-            log "${name}: target is missing or does not evaluate, skipping: $target"
-          fi
-        done
-
-        if [ "''${#buildable_targets[@]}" -eq 0 ]; then
-          log "${name}: no warm targets resolved successfully"
-          exit 0
-        fi
-
-        log "Building ''${#buildable_targets[@]} resolved warm target(s) from $flake_ref"
-        : >"$out_paths_file"
-        if ${lib.getExe nix} build -L --keep-going --no-link --print-out-paths "''${buildable_targets[@]}" >>"$out_paths_file"; then
-          log "Batched build completed"
-        else
-          log "${name}: batched build reported failures; continuing with any successful outputs"
-        fi
-
-        fallback_failed_count=0
-        if ! ${coreutils}/bin/test -s "$out_paths_file"; then
-          log "${name}: batched build produced no successful outputs; retrying target-by-target"
-          for target in "''${buildable_targets[@]}"; do
-            log "Warming $target"
-            if ${lib.getExe nix} build -L --no-link --print-out-paths "$target" >>"$out_paths_file"; then
-              log "Warmed $target"
-            else
-              fallback_failed_count=$((fallback_failed_count + 1))
-              log "${name}: target failed, skipping: $target"
-            fi
-          done
-        fi
-
-        if ! ${coreutils}/bin/test -s "$out_paths_file"; then
-          log "${name}: no targets built successfully"
-          exit 0
-        fi
-
-        realized_output_count="$(${coreutils}/bin/sort -u "$out_paths_file" | ${coreutils}/bin/wc -l | ${coreutils}/bin/tr -d ' ')"
-    ${lib.optionalString pushToAttic ''
-      log "Pushing $realized_output_count warmed output path(s) to Attic cache $attic_cache"
-      ${coreutils}/bin/sort -u "$out_paths_file" \
-        | ${lib.getExe attic-client} push --ignore-upstream-cache-filter --stdin "$attic_cache"
-      log "Pushed $realized_output_count warmed output path(s) to Attic cache $attic_cache"
-    ''}
-    ${lib.optionalString (!pushToAttic) ''
-      log "Built $realized_output_count warmed output path(s); Attic push disabled"
-    ''}
-
-        if [ "$skipped_inventory_count" -gt 0 ]; then
-          log "${name}: skipped $skipped_inventory_count missing or unevaluable inventory target(s)"
-        fi
-
-        if [ "$fallback_failed_count" -gt 0 ]; then
-          log "${name}: completed with $fallback_failed_count skipped target failure(s) after batch fallback"
-        fi
+  preCheck = ''
+    cargo fmt --check
+    cargo clippy --all-targets -- -D warnings
   '';
+  cargoTestFlags = [ "--all-targets" ];
+
+  passthru.ciWarmTargets = ciValidatedWarmTargets;
+
+  meta = {
+    description = "Build CI-validated fleet outputs and optionally push them to Attic";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [ booxter ];
+    mainProgram = "fleet-cache-warmer";
+    platforms = lib.platforms.darwin;
+  };
 }

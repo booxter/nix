@@ -3,11 +3,5 @@ pkgs: {
 
   fleet-cache-warmer = pkgs.callPackage ./fleet-cache-warmer { };
 
-  fleet-cache-warmer-work = pkgs.callPackage ./fleet-cache-warmer {
-    name = "fleet-cache-warmer-work";
-    pushToAttic = false;
-    targetFilter = "work";
-  };
-
   ismc = pkgs.callPackage ./ismc { };
 }

@@ -60,7 +60,7 @@ def test_recognizes_weekly_window_moved_into_primary_slot() -> None:
                     },
                     "secondary_window": None,
                 },
-                "rate_limit_reached_type": "primary",
+                "rate_limit_reached_type": {"type": "primary"},
             },
             RESET_CREDITS_ENDPOINT: {"available_count": 0, "credits": []},
         }
@@ -72,6 +72,26 @@ def test_recognizes_weekly_window_moved_into_primary_slot() -> None:
     assert usage.weekly is not None
     assert usage.weekly.remaining_percent == 96
     assert usage.limit_reached_type == "weekly"
+
+
+def test_accepts_structured_rate_limit_reached_type() -> None:
+    client = FakeJsonHttpClient(
+        {
+            USAGE_ENDPOINT: {
+                "rate_limit": {"limit_reached": True},
+                "rate_limit_reached_type": {
+                    "type": "rate_limit_reached",
+                    "details": "default",
+                },
+            },
+            RESET_CREDITS_ENDPOINT: {"available_count": 0, "credits": []},
+        }
+    )
+
+    usage = PersonalUsageService(client).fetch(CodexAuth("test-token", None), now=0)
+
+    assert usage.limit_reached is True
+    assert usage.limit_reached_type is None
 
 
 def test_uses_fallback_reset_credits_when_optional_request_fails() -> None:
@@ -126,7 +146,7 @@ def test_normalizes_reset_credit_expiry_and_secondary_limit_type() -> None:
                         "limit_window_seconds": 18_000,
                     },
                 },
-                "rate_limit_reached_type": "secondary_window",
+                "rate_limit_reached_type": {"type": "secondary_window"},
                 "rate_limit_reset_credits": {"available_count": 3},
             },
             RESET_CREDITS_ENDPOINT: {

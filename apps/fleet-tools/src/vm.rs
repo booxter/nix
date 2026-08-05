@@ -9,7 +9,6 @@ const NIX_PROGRAM: &str = match option_env!("VM_NIX") {
     Some(path) => path,
     None => "nix",
 };
-const REPO_ROOT: &str = env!("VM_REPO_ROOT");
 const RUNNER_NIX: &str = env!("VM_RUNNER_NIX");
 const TARGETS_JSON: &str = env!("VM_TARGETS_JSON");
 
@@ -45,13 +44,15 @@ pub struct NativeVmRunner {
     runner_nix: PathBuf,
 }
 
-impl Default for NativeVmRunner {
-    fn default() -> Self {
-        Self {
+impl NativeVmRunner {
+    pub fn from_current_checkout() -> Result<Self> {
+        let current_directory =
+            std::env::current_dir().context("failed to resolve current directory")?;
+        Ok(Self {
             nix: PathBuf::from(NIX_PROGRAM),
-            repo_root: PathBuf::from(REPO_ROOT),
+            repo_root: crate::repository::checkout_root(&current_directory)?,
             runner_nix: PathBuf::from(RUNNER_NIX),
-        }
+        })
     }
 }
 

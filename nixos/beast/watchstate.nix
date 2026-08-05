@@ -1,8 +1,10 @@
 {
+  beastPkgs,
   config,
   hostInventory,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -18,62 +20,24 @@ let
   watchstateDataDir = "/var/lib/watchstate";
   watchstateBackupStagingDir = "/volume2/backups/staging/watchstate";
   watchstateUid = 296;
-  watchstateBackupScript = pkgs.writeShellApplication {
-    name = "watchstate-native-backup";
-    runtimeInputs = with pkgs; [
-      coreutils
-      findutils
-      gawk
-      gzip
-      gnutar
-      podman
-      rsync
-      sqlite
-    ];
-    text = ''
-      set -euo pipefail
-
-      data_dir=${lib.escapeShellArg watchstateDataDir}
-      staging_dir=${lib.escapeShellArg watchstateBackupStagingDir}
-      archive_name="watchstate-backup-$(date --utc +%Y%m%dT%H%M%SZ).tar.gz"
-
-      install -d -m 0750 -o root -g restic-cloud "$staging_dir"
-      work_dir="$(mktemp -d --tmpdir="$staging_dir" .watchstate-backup.XXXXXX)"
-      trap 'rm -rf "$work_dir"' EXIT
-      install -d -m 0700 "$work_dir/state/db"
-
-      podman exec watchstate \
-        /opt/bin/console state:backup --keep --sync-requests --no-interaction -v
-
-      rsync \
-        --archive \
-        --exclude=/db/watchstate_v02.db \
-        --exclude=/db/watchstate_v02.db-shm \
-        --exclude=/db/watchstate_v02.db-wal \
-        "$data_dir/" \
-        "$work_dir/state/"
-
-      sqlite3 "$data_dir/db/watchstate_v02.db" \
-        ".backup '$work_dir/state/db/watchstate_v02.db'"
-
-      tar --create --gzip --file "$work_dir/$archive_name" --directory "$work_dir" state
-      install \
-        -m 0640 \
-        -o root \
-        -g restic-cloud \
-        "$work_dir/$archive_name" \
-        "$staging_dir/$archive_name"
-
-      mapfile -t archives < <(
-        find "$staging_dir" -maxdepth 1 -type f -name 'watchstate-backup-*.tar.gz' -printf '%T@ %p\n' \
-          | sort -nr \
-          | awk '{ print $2 }'
-      )
-      if [ "''${#archives[@]}" -gt 7 ]; then
-        rm -f -- "''${archives[@]:7}"
-      fi
-    '';
-  };
+  renderAuthCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' beastPkgs.watchstate-tools "watchstate-render-auth")
+    "--system-user"
+    watchstateSystemUser
+    "--password-file"
+    config.sops.secrets."watchstate/system/password".path
+    "--output"
+    "/run/watchstate-auth/auth.env"
+  ];
+  backupCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' beastPkgs.watchstate-tools "watchstate-native-backup")
+    "--data-dir"
+    watchstateDataDir
+    "--staging-dir"
+    watchstateBackupStagingDir
+    "--keep"
+    "7"
+  ];
 in
 {
   users.groups.watchstate.gid = watchstateUid;
@@ -101,10 +65,6 @@ in
     requires = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];
     before = [ "podman-watchstate.service" ];
-    path = [
-      pkgs.apacheHttpd
-      pkgs.coreutils
-    ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -114,29 +74,8 @@ in
       RuntimeDirectory = "watchstate-auth";
       RuntimeDirectoryMode = "0700";
       UMask = "0077";
+      ExecStart = renderAuthCommand;
     };
-    script = ''
-      env_file="$RUNTIME_DIRECTORY/auth.env"
-      tmp_file="$env_file.tmp"
-      trap 'rm -f "$tmp_file"' EXIT
-
-      password_hash="$(
-        htpasswd \
-          -niBC 12 \
-          watchstate \
-          < ${config.sops.secrets."watchstate/system/password".path}
-      )"
-      password_hash="''${password_hash#watchstate:}"
-
-      {
-        printf 'WS_SYSTEM_USER=%s\n' ${lib.escapeShellArg watchstateSystemUser}
-        printf 'WS_SYSTEM_PASSWORD=ws_hash@:%s\n' "$password_hash"
-      } > "$tmp_file"
-
-      chmod 0400 "$tmp_file"
-      mv "$tmp_file" "$env_file"
-      trap - EXIT
-    '';
   };
 
   virtualisation.oci-containers = {
@@ -148,6 +87,10 @@ in
       user = "${toString watchstateUid}:${toString watchstateUid}";
       environment = {
         TZ = "America/New_York";
+        # oauth2-proxy remains the browser-facing authentication boundary.
+        # Trust nginx's loopback connection so WatchState mints its internal
+        # token after SSO instead of prompting for a second password.
+        WS_TRUST_LOCAL = "true";
         # Webhooks provide low-latency updates, while these staggered jobs
         # reconcile events that Jellyfin or WatchState may have missed. Import
         # first so the following export works from the freshest combined state.
@@ -192,6 +135,7 @@ in
 
   systemd.tmpfiles.rules = [
     "d ${watchstateDataDir} 0700 watchstate watchstate - -"
+    "d ${watchstateBackupStagingDir} 0750 root restic-cloud - -"
   ];
 
   systemd.services.podman-watchstate = {
@@ -214,14 +158,21 @@ in
     restartIfChanged = false;
     stopIfChanged = false;
     before = [ "restic-backups-beast.service" ];
-    requires = [ "podman-watchstate.service" ];
-    after = [ "podman-watchstate.service" ];
+    requires = [
+      "podman-watchstate.service"
+      "podman.socket"
+    ];
+    after = [
+      "podman-watchstate.service"
+      "podman.socket"
+    ];
     unitConfig.RequiresMountsFor = [ watchstateBackupStagingDir ];
     serviceConfig = {
       Type = "oneshot";
       User = "root";
-      Group = "root";
-      ExecStart = lib.getExe watchstateBackupScript;
+      Group = "restic-cloud";
+      UMask = "0027";
+      ExecStart = backupCommand;
       TimeoutStartSec = "2h";
     };
   };

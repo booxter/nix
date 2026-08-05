@@ -1,7 +1,8 @@
 {
   hostInventory,
   lib,
-  pkgs,
+  srvarrPkgs,
+  utils,
   ...
 }:
 let
@@ -27,7 +28,8 @@ in
     (import ./update-dynamic-ip.nix {
       inherit
         lib
-        pkgs
+        srvarrPkgs
+        utils
         wgTimerDeps
         wgUnitDepsBase
         ;
