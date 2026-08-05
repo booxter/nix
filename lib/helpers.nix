@@ -252,28 +252,6 @@ rec {
       }
     );
 
-  mkBM =
-    { mkHost, name, ... }@args:
-    let
-      hostArgs =
-        removeAttrs
-          (
-            args
-            // {
-              hostname = args.hostname or name;
-              hostSpecName = args.hostSpecName or name;
-            }
-          )
-          [
-            "mkHost"
-            "name"
-          ];
-      cfg = mkHost hostArgs;
-    in
-    {
-      "${name}" = cfg;
-    };
-
   mkProxmox =
     args@{
       netIface,

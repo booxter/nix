@@ -20,7 +20,6 @@ in
     mkDarwin
     mkNixos
     mkProxmox
-    mkBM
     mkVM
     mkVmHostPkgs
     forAllSystems

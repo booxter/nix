@@ -94,69 +94,54 @@
         proxmox = helpers.mkProxmox;
       };
 
-      staticHostModule =
+      specToNixosConfig =
         spec:
-        { lib, ... }:
-        {
-          config.host = lib.optionalAttrs (spec ? dnsName) {
-            dnsName = spec.dnsName;
+        let
+          inherit (spec) name;
+          extraModules = inputs.nixpkgs.lib.optional (spec ? dnsName) {
+            host.dnsName = spec.dnsName;
           };
-        };
-
-      VM =
-        args@{
-          name,
-          stateVersion ? "25.11",
-          ...
-        }:
-        let
-          runtimeHostname = hostInventory.toNixosRuntimeHostName hostInventory.nixosHostSpecsByName.${name};
-        in
-        {
-          "${name}" = helpers.mkVM (
-            args
-            // {
-              inherit stateVersion;
-              hostSpecName = name;
-              hostname = runtimeHostname;
-              platform = "x86_64-linux";
-              virtPlatform = "x86_64-linux";
-            }
-          );
-        };
-
-      BM = args: helpers.mkBM args;
-
-      specToNixosConfigs =
-        spec:
-        let
-          extraModules = inputs.nixpkgs.lib.optionals (spec ? dnsName) [ (staticHostModule spec) ];
           args = removeAttrs spec [
             "hostKind"
             "isVM"
             "homeManagerInput"
             "nixpkgsInput"
             "dnsName"
+            "name"
           ];
           inputArgs =
             (if spec ? homeManagerInput then { homeManagerInput = inputs.${spec.homeManagerInput}; } else { })
             // (if spec ? nixpkgsInput then { nixpkgsInput = inputs.${spec.nixpkgsInput}; } else { });
+          hostArgs = args // {
+            extraModules = (args.extraModules or [ ]) ++ extraModules;
+          };
+          value =
+            if hostInventory.isNixosVM spec then
+              helpers.mkVM (
+                hostArgs
+                // {
+                  stateVersion = args.stateVersion or "25.11";
+                  hostSpecName = name;
+                  hostname = hostInventory.toNixosRuntimeHostName hostInventory.nixosHostSpecsByName.${name};
+                  platform = "x86_64-linux";
+                  virtPlatform = "x86_64-linux";
+                }
+              )
+            else
+              hostKindToMkHost.${spec.hostKind} (
+                hostArgs
+                // inputArgs
+                // {
+                  hostname = args.hostname or name;
+                  hostSpecName = args.hostSpecName or name;
+                }
+              );
         in
-        if hostInventory.isNixosVM spec then
-          VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
-        else
-          BM (
-            args
-            // inputArgs
-            // {
-              mkHost = hostKindToMkHost.${spec.hostKind};
-              extraModules = (args.extraModules or [ ]) ++ extraModules;
-            }
-          );
+        {
+          inherit name value;
+        };
 
-      canonicalNixosConfigurations = builtins.foldl' (
-        acc: spec: acc // specToNixosConfigs spec
-      ) { } nixosHostSpecs;
+      canonicalNixosConfigurations = builtins.listToAttrs (map specToNixosConfig nixosHostSpecs);
 
     in
     {
