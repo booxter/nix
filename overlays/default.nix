@@ -83,51 +83,6 @@
         '';
       });
 
-      # https://github.com/NixOS/nixpkgs/pull/546543
-      audiobookshelf =
-        let
-          version = "2.36.0";
-          nixpkgsVersion = lib.getVersion prev.audiobookshelf;
-          src = prev.fetchFromGitHub {
-            owner = "advplyr";
-            repo = "audiobookshelf";
-            tag = "v${version}";
-            hash = "sha256-oohjRiKARpIyoPFEXR24nlKK4xBBEHUMVTaq/i6NfV8=";
-          };
-          client = prev.buildNpmPackage {
-            pname = "audiobookshelf-client";
-            inherit version;
-
-            nodejs = prev.nodejs_22;
-            src = prev.runCommand "cp-source" { } ''
-              cp -r ${src}/client $out
-            '';
-
-            CYPRESS_INSTALL_BINARY = 0;
-            NODE_OPTIONS = "--openssl-legacy-provider";
-            npmBuildScript = "generate";
-            npmDepsHash = "sha256-0xqqpls8FLuXngjjdwjoNLpq9dSixWouROviTjsFCbU=";
-          };
-        in
-        assert lib.asserts.assertMsg (lib.versionOlder nixpkgsVersion version)
-          "audiobookshelf overlay is stale: nixpkgs ${nixpkgsVersion} already provides ${version} or newer";
-        prev.audiobookshelf.overrideAttrs (old: {
-          inherit version src;
-          npmDeps = prev.fetchNpmDeps {
-            inherit src;
-            name = "audiobookshelf-${version}-npm-deps";
-            hash = "sha256-uDIL9PxbFUa3MwLoPomTfq1A/R1ewDIv+EFWml/8uy8=";
-          };
-          installPhase = old.installPhase + ''
-            chmod -R u+w $out/opt/client/dist
-            rm -rf $out/opt/client/dist
-            cp -r ${client}/lib/node_modules/audiobookshelf-client/dist $out/opt/client/dist
-          '';
-          meta = old.meta // {
-            changelog = "https://github.com/advplyr/audiobookshelf/releases/tag/v${version}";
-          };
-        });
-
       # Pick up the latest window-management fixes ahead of the stable branch.
       inherit (pkgsNixpkgsUnstable) aerospace;
 
