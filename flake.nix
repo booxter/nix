@@ -74,22 +74,44 @@
         inherit username;
         lib = inputs.nixpkgs.lib;
       };
-      mkNixos = import ./nixos/configuration.nix {
-        defaultUsername = username;
-        inherit
-          hostInventory
-          inputs
-          outputs
-          ;
-      };
-      mkDarwin = import ./darwin/configuration.nix {
-        defaultUsername = username;
-        inherit
-          hostInventory
-          inputs
-          outputs
-          ;
-      };
+      hostSpecialArgs =
+        spec:
+        let
+          hostUsername = spec.username or username;
+          isWork = spec.isWork or false;
+        in
+        {
+          inherit
+            inputs
+            outputs
+            hostInventory
+            isWork
+            ;
+          hostname = spec.name;
+          hostPlatform = inputs.nixpkgs.lib.systems.elaborate spec.platform;
+          username = hostUsername;
+          stateVersion = spec.stateVersion;
+          hmFull = spec.hmFull or true;
+          isBuilder = spec.isBuilder or false;
+          isDesktop = spec.isDesktop or false;
+          isLaptop = spec.isLaptop or false;
+          secretDomain = spec.secretDomain or (if isWork then "work" else "main");
+        };
+      mkNixos =
+        spec:
+        inputs.nixpkgs.lib.nixosSystem {
+          specialArgs = hostSpecialArgs spec;
+          modules = [ ./nixos ] ++ (spec.extraModules or [ ]);
+        };
+      mkDarwin =
+        spec:
+        inputs.nix-darwin.lib.darwinSystem {
+          specialArgs = hostSpecialArgs spec // {
+            hmStateVersion = spec.hmStateVersion;
+            upsShutdownDelaySeconds = 900;
+          };
+          modules = [ ./darwin ] ++ (spec.extraModules or [ ]);
+        };
       perSystem =
         inputs.nixpkgs.lib.genAttrs
           [
