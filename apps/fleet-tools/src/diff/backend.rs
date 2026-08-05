@@ -158,7 +158,18 @@ impl DiffBackend for NativeBackend {
             .arg(color)
             .arg(old_link)
             .arg(new_link);
-        checked_output(command, "dix failed to compare the configurations")
+        let output = command
+            .output()
+            .with_context(|| format!("Unable to start {DIX}"))?;
+        match output.status.code() {
+            Some(0) | Some(1) => {
+                String::from_utf8(output.stdout).with_context(|| "dix returned non-UTF-8 output")
+            }
+            _ => Err(command_error(
+                "dix failed to compare the configurations",
+                &output,
+            )),
+        }
     }
 
     fn nginx_config(&self, revision: &Revision) -> Result<Option<PathBuf>> {
