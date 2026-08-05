@@ -301,7 +301,7 @@ def main(cli_arguments: Sequence[str] | None = None) -> int:
     try:
         repo_root = find_repo_root(Path.cwd())
         pins_file = arguments.pins_file or Path(
-            os.environ.get("OCI_IMAGE_PINS_FILE", repo_root / "oci/images.json")
+            os.environ.get("OCI_IMAGE_PINS_FILE", repo_root / "lib/oci-images/images.json")
         )
         pins = load_pins(pins_file)
         if arguments.list_targets:

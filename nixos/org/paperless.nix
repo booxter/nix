@@ -56,7 +56,7 @@ let
       );
   ollamaTunnelPort = 11435;
   ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
-  ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
+  ociImages = import ../../lib/oci-images { inherit pkgs; };
   paperlessGptImage = ociImages.paperless-gpt.ref;
   paperlessGptImageFile = ociImages.paperless-gpt.imageFile;
 
