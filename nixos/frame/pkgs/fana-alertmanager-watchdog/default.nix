@@ -1,4 +1,5 @@
 {
+  atomicFileWrites,
   lib,
   python3,
 }:
@@ -11,7 +12,10 @@ python3.pkgs.buildPythonApplication {
 
   build-system = [ python3.pkgs.setuptools ];
 
-  dependencies = [ python3.pkgs.python-telegram-bot ];
+  dependencies = [
+    atomicFileWrites
+    python3.pkgs.python-telegram-bot
+  ];
 
   nativeCheckInputs = with python3.pkgs; [
     mypy

@@ -6,7 +6,6 @@ import html
 import os
 import ssl
 import sys
-import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -16,6 +15,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Protocol
 
+from atomic_file_writes import write_text_atomic
 from telegram import Bot
 
 DEFAULT_REPEAT_AFTER_SECONDS = 6 * 60 * 60
@@ -116,11 +116,11 @@ class StateStore:
 
     def record_down(self, notified_at: int | None) -> None:
         if notified_at is not None:
-            atomic_write(self.notified_file, f"{notified_at}\n")
-        atomic_write(self.status_file, f"{Status.DOWN}\n")
+            write_text_atomic(self.notified_file, f"{notified_at}\n")
+        write_text_atomic(self.status_file, f"{Status.DOWN}\n")
 
     def record_up(self) -> None:
-        atomic_write(self.status_file, f"{Status.UP}\n")
+        write_text_atomic(self.status_file, f"{Status.UP}\n")
         remove_file(self.notified_file)
         remove_file(self.error_file)
 
@@ -146,20 +146,6 @@ def read_secret(path: Path) -> str:
     if not value:
         raise RuntimeError(f"secret file is empty or missing: {path}")
     return value
-
-
-def atomic_write(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", dir=path.parent, text=True
-    )
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8") as output:
-            output.write(content)
-        os.replace(temporary, path)
-    finally:
-        remove_file(temporary)
 
 
 def remove_file(path: Path) -> None:
@@ -238,7 +224,7 @@ def run(runtime: Runtime, now: int) -> None:
         runtime.state.last_notified(),
         runtime.repeat_after_seconds,
     )
-    atomic_write(runtime.state.error_file, f"{result.detail}\n")
+    write_text_atomic(runtime.state.error_file, f"{result.detail}\n")
     if notify:
         runtime.notifier.send(format_status_message(runtime.url, result.detail, Status.DOWN))
     runtime.state.record_down(now if notify else None)
