@@ -90,6 +90,7 @@ let
         username
         ;
       platform = "x86_64-linux";
+      hmFull = false;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
       hardware.gpuFamilies = [ "intel" ];
@@ -268,6 +269,7 @@ in
       inherit username;
       isBuilder = true;
       isWork = true;
+      hmFull = false;
       stateVersion = "25.11";
       netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";

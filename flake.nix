@@ -89,11 +89,6 @@
         nixosHostSpecs
         ;
 
-      hostKindToMkHost = {
-        nixos = helpers.mkNixos;
-        proxmox = helpers.mkProxmox;
-      };
-
       specToNixosConfig =
         spec:
         let
@@ -126,7 +121,7 @@
                 }
               )
             else
-              hostKindToMkHost.${spec.hostKind} (
+              helpers.mkNixos (
                 hostArgs
                 // inputArgs
                 // {

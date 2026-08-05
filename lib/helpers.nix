@@ -96,11 +96,7 @@ rec {
       virtPlatform ? platform,
       cores ? 4,
       memorySize ? 8, # GB
-      balloonSize ? null, # GB
       diskSize ? 100, # GB
-      dhcpReservation ? null,
-      hostname,
-      proxNode ? "prx1-lab", # TODO: can we avoid picking a node in a cluster?
       ...
     }:
     mkNixos (
@@ -139,48 +135,6 @@ rec {
                 system.build.vmQemu = config.virtualisation.vmVariant.virtualisation.host.pkgs.qemu;
               }
             )
-
-            inputs.proxmox-nixos.nixosModules.declarative-vms
-            {
-              imports = [
-                (import ../nixos/disko { device = "/dev/sda"; })
-              ];
-              virtualisation.proxmox = {
-                inherit cores;
-                name = hostname;
-                node = proxNode;
-                autoInstall = true;
-                memory = memorySize * 1024;
-                balloon = if balloonSize == null then null else balloonSize * 1024;
-                cpu.cputype = "host";
-                agent = {
-                  enabled = true;
-                  type = "virtio";
-                  freeze-fs-on-backup = true;
-                  fstrim_cloned_disks = true;
-                };
-                net = [
-                  (
-                    {
-                      model = "virtio";
-                      bridge = "vmbr0";
-                    }
-                    // inputs.nixpkgs.lib.optionalAttrs (dhcpReservation != null) {
-                      macaddr = dhcpReservation.match;
-                    }
-                  )
-                ];
-                scsi = [
-                  {
-                    file = "local:${toString diskSize}";
-                    discard = "on";
-                  }
-                ];
-                onboot = true;
-              };
-
-              boot.growPartition = true;
-            }
           ]
           ++ inputs.nixpkgs.lib.optionals (sshPort != null) [
             {
@@ -191,137 +145,6 @@ rec {
                   host.port = sshPort;
                 }
               ];
-            }
-          ];
-      }
-    );
-
-  mkProxmox =
-    args@{
-      netIface,
-      ipAddress,
-      macAddress ? null,
-      isVM ? false,
-      platform,
-      proxmoxUpgradeTime ? "Mon 04:00",
-      extraModules ? [ ],
-      ...
-    }:
-    mkNixos (
-      args
-      // {
-        hmFull = false;
-        extraModules =
-          extraModules
-          ++ [
-            inputs.proxmox-nixos.nixosModules.proxmox-ve
-
-            {
-              host.isProxmox = true;
-            }
-
-            (
-              { lib, pkgs, ... }:
-              let
-                brname = "vmbr0";
-              in
-              {
-                # Hypervisors upgrade on a separate schedule to avoid
-                # disrupting guest VMs running on top.
-                system.autoUpgrade = {
-                  dates = proxmoxUpgradeTime;
-                  rebootWindow.lower = lib.mkForce "03:45";
-                };
-
-                nixpkgs.overlays = [
-                  inputs.proxmox-nixos.overlays.${platform}
-                  (
-                    _final: prev:
-                    let
-                      patchedPveManager = prev.pve-manager.overrideAttrs (old: {
-                        patches = (old.patches or [ ]) ++ [
-                          ./patches/pve-manager-disable-subscription-popup.patch
-                        ];
-                      });
-                    in
-                    {
-                      pve-manager = patchedPveManager;
-                      proxmox-ve = prev.proxmox-ve.override {
-                        pve-manager = patchedPveManager;
-                      };
-                    }
-                  )
-                ];
-
-                services.proxmox-ve = {
-                  inherit ipAddress;
-                  enable = true;
-                };
-
-                # Some packages useful when debugging Proxmox VE.
-                environment.systemPackages = with pkgs; [
-                  bridge-utils
-                ];
-
-                # Bridge to the LAN, while retaining IP address on the main
-                # interface, with its MAC address - as expected by DHCP server.
-                services.proxmox-ve.bridges = [ brname ];
-
-                networking.useNetworkd = true;
-                systemd.network.enable = true;
-
-                services.resolved.settings.Resolve = {
-                  ResolveUnicastSingleLabel = true;
-                };
-
-                systemd.network.networks."10-lan" = {
-                  matchConfig.Name = [ netIface ];
-                  networkConfig = {
-                    Bridge = brname;
-                  };
-                };
-
-                systemd.network.netdevs."10-lan-bridge" = {
-                  netdevConfig = {
-                    Name = brname;
-                    Kind = "bridge";
-                  }
-                  // inputs.nixpkgs.lib.optionalAttrs (macAddress != null) {
-                    MACAddress = macAddress;
-                  };
-                };
-
-                systemd.network.networks."10-lan-bridge" = {
-                  matchConfig.Name = brname;
-                  networkConfig = {
-                    IPv6AcceptRA = true;
-                    DHCP = "ipv4";
-                  };
-                  dhcpV4Config = {
-                    # systemd-networkd receives DOMAINNAME=home.arpa from DHCP,
-                    # but does not install it as a search domain unless enabled.
-                    UseDomains = true;
-                  };
-                  linkConfig = {
-                    RequiredForOnline = "routable";
-                  };
-                };
-              }
-            )
-          ]
-          ++ inputs.nixpkgs.lib.optionals isVM [
-            {
-              virtualisation.vmVariant.virtualisation.forwardPorts =
-                let
-                  proxmoxPort = 8006;
-                in
-                [
-                  {
-                    from = "host";
-                    guest.port = proxmoxPort;
-                    host.port = proxmoxPort;
-                  }
-                ];
             }
           ];
       }

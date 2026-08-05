@@ -70,11 +70,6 @@ in
     description = "SOPS secret domain selected for this host.";
   };
 
-  options.host.isProxmox = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-  };
-
   options.host.isCritical = lib.mkOption {
     type = lib.types.bool;
     default = false;

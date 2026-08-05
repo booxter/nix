@@ -16,7 +16,8 @@ in
   nix =
     let
       nixCaches = hostInventory.site.nixCaches;
-      needsProxmoxCache = config.host.isProxmox || isBuilder || isDesktop; # Desktops may be used for development.
+      # Desktops may be used for Proxmox development.
+      needsProxmoxCache = (config.host.isLinux && config.host.isProxmox) || isBuilder || isDesktop;
     in
     {
       package = lib.mkForce pkgs.nixVersions.latest;
