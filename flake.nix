@@ -133,50 +133,13 @@
       overlays = import ./overlays { inherit inputs; };
       packages = helpers.forAllSystems (
         system:
-        let
+        import ./packages.nix {
+          inherit
+            inputs
+            system
+            username
+            ;
           pkgs = inputs.nixpkgs.legacyPackages.${system};
-          basePackages = import ./pkgs pkgs;
-          nvPackages = import ./home-manager/_mixins/nv/pkgs { inherit pkgs; };
-          orgPackages = import ./nixos/org/pkgs pkgs;
-          fleet = import ./apps/fleet.nix {
-            inherit pkgs username;
-          };
-          fleetPackages = {
-            inherit (inputs.disko.packages.${system}) disko-install;
-            fleet-tools = fleet.packages.fleet-tools;
-          };
-          updateTargetPackages =
-            pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-              aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
-              inherit (orgPackages)
-                degoog
-                degoog-devinside-extensions
-                degoog-georgvwt-extensions
-                degoog-official-extensions
-                degoog-stackexchange-engine
-                degoog-toolkit-extensions
-                ;
-              ebook-converter-cli = pkgs.callPackage ./nixos/srvarr/pkgs/ebook-converter-cli { };
-              houndarr = pkgs.callPackage ./nixos/srvarr/pkgs/houndarr { };
-            }
-            // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-              ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
-            }
-            # nix-update runs on GitHub-hosted Linux. Expose this Darwin-only
-            # package there so its fixed-output source can be prefetched without
-            # trying to build an aarch64-darwin fetcher on Linux.
-            // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-              ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
-            }
-            // {
-              inherit (nvPackages) nico-cli;
-            };
-        in
-        basePackages
-        // fleetPackages
-        // updateTargetPackages
-        // {
-          qemu-host-package = inputs.nixpkgs.legacyPackages.${system}.qemu;
         }
       );
       apps = helpers.forAllSystems (
