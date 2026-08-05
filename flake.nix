@@ -98,12 +98,7 @@
       specToNixosConfig =
         name: spec:
         let
-          args = removeAttrs spec [
-            "hostKind"
-            "isVM"
-            "name"
-          ];
-          hostArgs = args // {
+          hostArgs = spec // {
             hostname = name;
             hostSpecName = name;
           };
