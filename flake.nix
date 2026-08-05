@@ -74,33 +74,48 @@
         inherit username;
         lib = inputs.nixpkgs.lib;
       };
-      helpers = import ./lib {
+      nixos = import ./nixos/configuration.nix {
+        defaultUsername = username;
         inherit
           hostInventory
           inputs
           outputs
-          username
           ;
       };
-      perSystem = helpers.forAllSystems (
-        system:
-        import ./per-system.nix {
-          inherit
-            inputs
-            outputs
-            system
-            username
-            ;
-        }
-      );
+      mkDarwin = import ./darwin/configuration.nix {
+        defaultUsername = username;
+        inherit
+          hostInventory
+          inputs
+          outputs
+          ;
+      };
+      perSystem =
+        inputs.nixpkgs.lib.genAttrs
+          [
+            "aarch64-linux"
+            "x86_64-linux"
+            "aarch64-darwin"
+          ]
+          (
+            system:
+            import ./per-system.nix {
+              inherit
+                inputs
+                outputs
+                system
+                username
+                ;
+            }
+          );
       selectPerSystem = outputName: builtins.mapAttrs (_: value: value.${outputName}) perSystem;
 
       specToNixosConfig =
-        _: spec: if hostInventory.isNixosVM spec then helpers.mkVM spec else helpers.mkNixos spec;
+        _: spec: if hostInventory.isNixosVM spec then nixos.mkVM spec else nixos.mkNixos spec;
 
     in
     {
-      darwinConfigurations = builtins.mapAttrs (_: helpers.mkDarwin) hostInventory.darwinHosts;
+      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) hostInventory.darwinHosts;
 
       nixosConfigurations = builtins.mapAttrs specToNixosConfig hostInventory.nixosHostSpecsByName;
 

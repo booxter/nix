@@ -3,14 +3,12 @@
   hostInventory,
   inputs,
   outputs,
-  ...
 }:
 let
   upsNonVmShutdownDelaySeconds = 900;
   upsShutdownDelaySeconds =
     isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
-in
-rec {
+
   mkNixos =
     {
       name,
@@ -53,8 +51,11 @@ rec {
           ;
         upsShutdownDelaySeconds = upsShutdownDelaySeconds isVM;
       };
-      modules = [ ../nixos ] ++ extraModules;
+      modules = [ ./default.nix ] ++ extraModules;
     };
+in
+{
+  inherit mkNixos;
 
   mkVM =
     args@{
@@ -118,56 +119,4 @@ rec {
           ];
       }
     );
-
-  mkDarwin =
-    {
-      name,
-      stateVersion,
-      hmStateVersion,
-      username ? defaultUsername,
-      platform,
-      hmFull ? true,
-      isBuilder ? false,
-      isDesktop ? false,
-      isLaptop ? false,
-      isWork ? false,
-      secretDomain ? (if isWork then "work" else "main"),
-      extraModules ? [ ],
-      ...
-    }:
-    let
-      hostname = name;
-      hostPlatform = inputs.nixpkgs.lib.systems.elaborate platform;
-      isVM = false;
-    in
-    inputs.nix-darwin.lib.darwinSystem {
-      specialArgs = {
-        inherit
-          inputs
-          outputs
-          hostInventory
-          hostname
-          hostPlatform
-          username
-          stateVersion
-          hmStateVersion
-          hmFull
-          isBuilder
-          isDesktop
-          isLaptop
-          isWork
-          secretDomain
-          isVM
-          ;
-        # If we ever add macOS VMs, thread isVM here and compute accordingly.
-        upsShutdownDelaySeconds = upsShutdownDelaySeconds false;
-      };
-      modules = [ ../darwin ] ++ extraModules;
-    };
-
-  forAllSystems = inputs.nixpkgs.lib.genAttrs [
-    "aarch64-linux"
-    "x86_64-linux"
-    "aarch64-darwin"
-  ];
 }
