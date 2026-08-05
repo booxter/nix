@@ -92,7 +92,6 @@ let
       hmFull = false;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
-      hardware.gpuFamilies = [ "intel" ];
       dhcpReservation = {
         match = macAddress;
         ip = ipAddress;
@@ -137,7 +136,6 @@ in
       isDesktop = true;
       isLaptop = true;
       vnc.enable = true;
-      hardware.gpuFamilies = [ "apple" ];
       lanWanInterfaces = [ "en0" ];
     };
     mmini = {
@@ -147,7 +145,6 @@ in
       isBuilder = true;
       isDesktop = true;
       vnc.enable = true;
-      hardware.gpuFamilies = [ "apple" ];
       upsHost = frame;
       lanWanInterfaces = [ "en0" ];
     };
@@ -158,7 +155,6 @@ in
       isDesktop = true;
       isLaptop = true;
       isWork = true;
-      hardware.gpuFamilies = [ "apple" ];
       lanWanInterfaces = [
         "en0"
         "en7"
@@ -238,7 +234,6 @@ in
             };
         in
         {
-          gpuFamilies = [ "amd" ];
           # Shared display topology for the kernel, GDM, Hyprland, and ReFrame.
           drmCard = "card1";
           displays = [
@@ -272,7 +267,6 @@ in
       netIface = "enp3s0f0";
       ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
-      hardware.gpuFamilies = [ "nvidia" ];
       dhcpReservation = {
         match = "ac:b4:80:40:05:2e";
         ip = "192.168.15.100";
@@ -303,7 +297,6 @@ in
         ];
       };
       hmFull = false;
-      hardware.gpuFamilies = [ "intel" ];
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
         match = "bc:fc:e7:3b:fe:da";

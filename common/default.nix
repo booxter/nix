@@ -34,7 +34,6 @@ in
     ./_mixins/nixpkgs
     ./_mixins/nixpkgs-review
     ./_mixins/nix-gc
-    ./_mixins/nvtop
     ./_mixins/ssh
     ./_mixins/stylix
     ./_mixins/terminfo
