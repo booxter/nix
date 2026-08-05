@@ -88,7 +88,7 @@ let
     };
 
   normalizeService =
-    hostSpecsByName: localDnsName:
+    localDnsName:
     {
       id,
       owner,
@@ -118,7 +118,6 @@ let
       }
       // lib.optionalAttrs (backendProbe != null) { inherit backendProbe; }
       // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
-      ownerSpec = hostSpecsByName.${owner};
       resolvedService =
         service
         // lib.optionalAttrs (service ? publicHost) (rec {
@@ -127,8 +126,8 @@ let
           probeUrl = "${url}${service.probePath}";
         })
         // lib.optionalAttrs (service.scope == "internal") {
-          displayHost = localDnsName ownerSpec.name;
-          probeHost = ownerSpec.name;
+          displayHost = localDnsName owner;
+          probeHost = owner;
         };
       category = glanceCategory;
       categoryLabel = if category == null then "<missing>" else category;
@@ -562,7 +561,7 @@ rec {
     };
   };
 
-  services = map (normalizeService nixosHostSpecsByName toLocalDnsName) [
+  services = map (normalizeService toLocalDnsName) [
     {
       id = "id";
       title = "SSO";
