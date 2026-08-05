@@ -21,7 +21,6 @@ in
   imports = [
     ./backup.nix
     ./degoog.nix
-    ./llm.nix
     ./paperless.nix
     ./searxng.nix
     ./trilium.nix

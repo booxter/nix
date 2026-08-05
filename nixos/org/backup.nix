@@ -1,6 +1,5 @@
 let
   degoogStateDir = "/var/lib/degoog";
-  litellmBackupDir = "/var/lib/litellm-backup/latest";
   paperlessBackupDir = "/var/lib/paperless-backup/latest";
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
@@ -22,11 +21,6 @@ in
 {
   host.backups.artifacts = {
     postgresql = {
-      litellm = {
-        displayName = "LiteLLM";
-        destinationDir = litellmBackupDir;
-      };
-
       paperless = {
         displayName = "Paperless";
         destinationDir = paperlessBackupDir;

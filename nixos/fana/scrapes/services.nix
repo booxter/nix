@@ -18,7 +18,6 @@ let
   sabnzbdTargetHost = hostInventory.nixosHostSpecsByName.srvarr.name;
   orgHostConfig = outputs.nixosConfigurations.org.config;
   orgTargetHost = hostInventory.nixosHostSpecsByName.org.name;
-  litellmEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
   paperlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.paperless;
   searxngEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.searxng;
   vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
@@ -95,18 +94,6 @@ in
     }
     # TODO: Restore the beast IPMI scrape target when the local IPMI card is
     # back and the exporter is re-enabled on beast.
-    {
-      job_name = "litellm";
-      metrics_path = litellmEndpoint.path;
-      scheme = "https";
-      tls_config = prometheusMtlsTlsConfig;
-      static_configs = [
-        {
-          targets = [ "${orgTargetHost}:${toString litellmEndpoint.port}" ];
-          labels.instance = "org";
-        }
-      ];
-    }
     {
       job_name = "paperless";
       metrics_path = paperlessEndpoint.path;

@@ -198,15 +198,6 @@
       glanceCategory = "infrastructure";
     }
     {
-      id = "llm";
-      title = "LLM Gateway";
-      icon = "sh:litellm";
-      owner = "org";
-      publicHost = "llm.${publicDomain}";
-      probePath = "/health/liveliness";
-      glanceCategory = "infrastructure";
-    }
-    {
       id = "search";
       title = "Search";
       icon = "sh:searxng";

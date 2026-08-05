@@ -42,8 +42,8 @@ DNS stay converged with inventory.
 - Enrollment and credential reset emails are issued with
   `nix run .#reset-oidc -- <user-id> [email]`.
 - Current declarative OAuth clients cover Grafana, Home Assistant, Vikunja,
-  LiteLLM, Paperless, RomM, Audiobookshelf, Aurral, Shelfmark, and the `srvarr`
-  admin-app proxy gates.
+  Paperless, RomM, Audiobookshelf, Aurral, Shelfmark, and the `srvarr` admin-app
+  proxy gates.
 
 ## PKI Apps
 

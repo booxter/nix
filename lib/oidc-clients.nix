@@ -154,14 +154,6 @@ rec {
       claimMaps.infra_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
     };
 
-    litellm = mkClient "litellm" {
-      displayName = "LiteLLM";
-      originUrl = "${serviceUrl "llm"}/sso/callback";
-      originLanding = "${serviceUrl "llm"}/ui/";
-      scopeMaps."infra-admins" = scopeWith [ "litellm_groups" ];
-      claimMaps.litellm_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
-    };
-
     paperless = mkClient "paperless" {
       displayName = "Paperless";
       originUrl = "${serviceUrl "paperless"}/accounts/oidc/sso/login/callback/";
