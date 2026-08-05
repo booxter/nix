@@ -63,3 +63,16 @@ def write_text_atomic(
     """Durably replace a text file without exposing partial content."""
     with atomic_path(path, mode=mode, uid=uid, gid=gid) as temporary:
         temporary.write_text(content, encoding=encoding)
+
+
+def write_bytes_atomic(
+    path: Path,
+    content: bytes,
+    *,
+    mode: int = 0o600,
+    uid: int | None = None,
+    gid: int | None = None,
+) -> None:
+    """Durably replace a binary file without exposing partial content."""
+    with atomic_path(path, mode=mode, uid=uid, gid=gid) as temporary:
+        temporary.write_bytes(content)

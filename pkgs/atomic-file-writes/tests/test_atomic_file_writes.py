@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from atomic_file_writes import atomic_path, write_text_atomic
+from atomic_file_writes import atomic_path, write_bytes_atomic, write_text_atomic
 
 
 def test_creates_parent_and_file_with_explicit_mode(tmp_path: Path) -> None:
@@ -46,6 +46,15 @@ def test_atomic_path_supports_path_based_writers(tmp_path: Path) -> None:
     assert path.read_bytes() == b"generated\0content"
     assert path.stat().st_mode & 0o777 == 0o640
     assert list(path.parent.iterdir()) == [path]
+
+
+def test_writes_binary_content(tmp_path: Path) -> None:
+    path = tmp_path / "nested" / "state.bin"
+
+    write_bytes_atomic(path, b"generated\0content", mode=0o640)
+
+    assert path.read_bytes() == b"generated\0content"
+    assert path.stat().st_mode & 0o777 == 0o640
 
 
 def test_atomic_path_preserves_existing_file_when_writer_fails(tmp_path: Path) -> None:
