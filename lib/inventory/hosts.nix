@@ -68,6 +68,42 @@ let
         )
       ];
     };
+
+  labProxmoxSpec =
+    {
+      index,
+      macAddress,
+      proxmoxUpgradeTime,
+    }:
+    let
+      index' = toString index;
+      name = "prx${index'}-lab";
+      ipAddress = "192.168.15.${toString (index + 9)}";
+    in
+    {
+      hostKind = "proxmox";
+      inherit
+        ipAddress
+        macAddress
+        name
+        proxmoxUpgradeTime
+        username
+        ;
+      platform = "x86_64-linux";
+      stateVersion = prxStateVersion;
+      netIface = prxNetIface;
+      hardware.gpuFamilies = [ "intel" ];
+      dhcpReservation = {
+        match = macAddress;
+        ip = ipAddress;
+      };
+    }
+    // lib.optionalAttrs (index == 1) {
+      dnsAliases = [ "proxmox.${lanDomain}" ];
+    }
+    // lib.optionalAttrs (index != 1) {
+      upsHost = "prx1-lab";
+    };
 in
 {
   staticDhcpReservations = [
@@ -274,57 +310,21 @@ in
         ip = "192.168.16.3";
       };
     }
-    {
-      hostKind = "proxmox";
-      name = "prx1-lab";
-      platform = "x86_64-linux";
-      inherit username;
-      stateVersion = prxStateVersion;
+    (labProxmoxSpec {
+      index = 1;
       proxmoxUpgradeTime = "Mon 03:50";
-      netIface = prxNetIface;
-      ipAddress = "192.168.15.10";
       macAddress = "38:05:25:30:7d:89";
-      hardware.gpuFamilies = [ "intel" ];
-      dnsAliases = [ "proxmox.${lanDomain}" ];
-      dhcpReservation = {
-        match = "38:05:25:30:7d:89";
-        ip = "192.168.15.10";
-      };
-    }
-    {
-      hostKind = "proxmox";
-      name = "prx2-lab";
-      platform = "x86_64-linux";
-      inherit username;
-      upsHost = "prx1-lab";
-      stateVersion = prxStateVersion;
+    })
+    (labProxmoxSpec {
+      index = 2;
       proxmoxUpgradeTime = "Mon 04:20";
-      netIface = prxNetIface;
-      ipAddress = "192.168.15.11";
       macAddress = "38:05:25:30:7f:7d";
-      hardware.gpuFamilies = [ "intel" ];
-      dhcpReservation = {
-        match = "38:05:25:30:7f:7d";
-        ip = "192.168.15.11";
-      };
-    }
-    {
-      hostKind = "proxmox";
-      name = "prx3-lab";
-      platform = "x86_64-linux";
-      inherit username;
-      upsHost = "prx1-lab";
-      stateVersion = prxStateVersion;
+    })
+    (labProxmoxSpec {
+      index = 3;
       proxmoxUpgradeTime = "Mon 04:50";
-      netIface = prxNetIface;
-      ipAddress = "192.168.15.12";
       macAddress = "38:05:25:30:7d:69";
-      hardware.gpuFamilies = [ "intel" ];
-      dhcpReservation = {
-        match = "38:05:25:30:7d:69";
-        ip = "192.168.15.12";
-      };
-    }
+    })
     {
       isVM = true;
       name = "nv";
