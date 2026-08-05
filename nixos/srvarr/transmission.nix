@@ -6,7 +6,7 @@
 }:
 let
   mediaDir = config.host.srvarrPaths.mediaDir;
-  srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
+  srvarrSpec = hostInventory.nixosHosts.srvarr;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
   tuning = config.host.srvarrTuning;

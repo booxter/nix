@@ -7,7 +7,7 @@
 }:
 let
   username = config.host.username;
-  builderSpec = n: hostInventory.nixosHostSpecsByName."builder${toString n}";
+  builderSpec = n: hostInventory.nixosHosts."builder${toString n}";
   builderSpecs = map builderSpec (lib.range 1 3);
 in
 {
@@ -62,7 +62,7 @@ in
       in
       (map (toBuilder builderSpeedFactor) builderSpecs)
       ++ lib.optional (config.networking.hostName != "frame") (
-        toBuilder 200 hostInventory.nixosHostSpecsByName.frame
+        toBuilder 200 hostInventory.nixosHosts.frame
       )
       ++ lib.optional (config.networking.hostName != "mmini") {
         hostName = "mmini";

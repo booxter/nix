@@ -6,17 +6,17 @@
 let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
-  beastTargetHost = hostInventory.nixosHostSpecsByName.beast.name;
+  beastTargetHost = hostInventory.nixosHosts.beast.name;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
   homeHostConfig = outputs.nixosConfigurations.home.config;
-  homeTargetHost = hostInventory.nixosHostSpecsByName.home.name;
+  homeTargetHost = hostInventory.nixosHosts.home.name;
   homeAssistantEndpoint =
     homeHostConfig.host.observability.client.prometheusMtlsEndpoints.home-assistant;
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
-  sabnzbdTargetHost = hostInventory.nixosHostSpecsByName.srvarr.name;
+  sabnzbdTargetHost = hostInventory.nixosHosts.srvarr.name;
   orgHostConfig = outputs.nixosConfigurations.org.config;
-  orgTargetHost = hostInventory.nixosHostSpecsByName.org.name;
+  orgTargetHost = hostInventory.nixosHosts.org.name;
   paperlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.paperless;
   vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in

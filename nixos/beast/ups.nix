@@ -1,6 +1,6 @@
 { pkgs, hostInventory, ... }:
 let
-  beastSpec = hostInventory.nixosHostSpecsByName.beast;
+  beastSpec = hostInventory.nixosHosts.beast;
 in
 {
   imports = [

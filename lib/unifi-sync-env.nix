@@ -2,7 +2,7 @@
 let
   lan = hostInventory.site.lan;
   netboot = lan.netboot;
-  netbootHost = hostInventory.nixosHostSpecsByName.${netboot.host};
+  netbootHost = hostInventory.nixosHosts.${netboot.host};
 
   isMacAddress = identifier: builtins.match "([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}" identifier != null;
 

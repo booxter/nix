@@ -15,8 +15,7 @@ let
   upsShutdownDelaySeconds = if isVM then 450 else 900;
   configName = ./${hostSpec.name};
   upsServerName = hostSpec.upsHost or null;
-  upsServerSpec =
-    if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
+  upsServerSpec = if upsServerName == null then null else hostInventory.nixosHosts.${upsServerName};
   useLiteralUpsPassword =
     upsServerSpec != null && ((hostSpec.isWork or false) || (upsServerSpec.isWork or false));
 in

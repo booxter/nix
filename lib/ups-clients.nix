@@ -3,7 +3,7 @@
   hostInventory ? import ./inventory { inherit lib; },
 }:
 let
-  serverIsWork = server: (hostInventory.nixosHostSpecsByName.${server}.isWork or false);
+  serverIsWork = server: (hostInventory.nixosHosts.${server}.isWork or false);
 
   includeClient = spec: spec ? upsHost && !(spec.isWork or false) && !(serverIsWork spec.upsHost);
 

@@ -9,7 +9,7 @@ let
   mediaDir = config.host.srvarrPaths.mediaDir;
   port = 6336;
   user = "sabnzbd";
-  wgNamespaceAddress = hostInventory.nixosHostSpecsByName.srvarr.wgNamespace.namespaceAddress;
+  wgNamespaceAddress = hostInventory.nixosHosts.srvarr.wgNamespace.namespaceAddress;
   sabnzbdServerNames = [
     "news.frugalusenet.com"
     "news.newshosting.com"

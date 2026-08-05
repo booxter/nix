@@ -1,6 +1,6 @@
 { pkgs, hostInventory, ... }:
 let
-  prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
+  prx1Spec = hostInventory.nixosHosts."prx1-lab";
 in
 {
   imports = [

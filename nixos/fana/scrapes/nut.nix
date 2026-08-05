@@ -4,9 +4,9 @@
   pkgs,
 }:
 let
-  beastSpec = hostInventory.nixosHostSpecsByName.beast;
-  frameSpec = hostInventory.nixosHostSpecsByName.frame;
-  prx1Spec = hostInventory.nixosHostSpecsByName."prx1-lab";
+  beastSpec = hostInventory.nixosHosts.beast;
+  frameSpec = hostInventory.nixosHosts.frame;
+  prx1Spec = hostInventory.nixosHosts."prx1-lab";
   nutExporterPort = 9199;
   nutExporterVariables = lib.concatStringsSep "," [
     "battery.charge"

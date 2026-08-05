@@ -6,7 +6,7 @@
   ...
 }:
 let
-  srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
+  srvarrSpec = hostInventory.nixosHosts.srvarr;
   networkOnlineUnitDeps = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];

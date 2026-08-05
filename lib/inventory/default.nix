@@ -133,7 +133,7 @@ rec {
     (toLocalDnsName spec.name)
   ];
   toHostIpv4Address = aliasIpv4Address;
-  toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
+  toNixosHostIpv4Address = name: toHostIpv4Address nixosHosts.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
   srvarrAdminAppIds = map (service: service.id) (
     builtins.filter (
@@ -185,14 +185,14 @@ rec {
     }) (managedDhcpReservations ++ staticDhcpReservations)
   );
 
-  nixosHostSpecsByName = builtins.listToAttrs (
+  nixosHosts = builtins.listToAttrs (
     map (spec: {
       name = spec.name;
       value = spec;
     }) nixosHostSpecs
   );
 
-  hostSpecsByName = darwinHosts // nixosHostSpecsByName;
+  hostSpecsByName = darwinHosts // nixosHosts;
 
   secretDomainsByHost = lib.mapAttrs (_: toSecretDomain) hostSpecsByName;
 

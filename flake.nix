@@ -117,7 +117,7 @@
     {
       darwinConfigurations = builtins.mapAttrs (_: mkDarwin) hostInventory.darwinHosts;
 
-      nixosConfigurations = builtins.mapAttrs (_: mkNixos) hostInventory.nixosHostSpecsByName;
+      nixosConfigurations = builtins.mapAttrs (_: mkNixos) hostInventory.nixosHosts;
 
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";
