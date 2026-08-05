@@ -25,6 +25,7 @@ in
       [
         devspace
         dive
+        docker-client
         gitlab-ci-local
         gpclient
         homeManagerPkgs.jinjanator

@@ -44,7 +44,6 @@
     ./_mixins/browser
     ./_mixins/vnc
     ./_mixins/vnc-open
-    ./_mixins/docker-desktop
   ]
   ++ lib.optionals (hostname == "mair") [
     ./_mixins/secretive
