@@ -127,7 +127,8 @@ class PodmanSetupRuntime:
                 entrypoint=[task.executable],
                 environment=dict(environment),
                 log_config={"Type": "journald"},
-                network_mode="slirp4netns:allow_host_loopback=true",
+                network_mode="slirp4netns",
+                network_options={"slirp4netns": ["allow_host_loopback=true"]},
                 no_new_privileges=True,
                 volumes=volumes,
                 workdir="/backend",
@@ -136,7 +137,7 @@ class PodmanSetupRuntime:
             _write_logs(cast(bytes | Iterable[bytes] | None, error.stderr), output)
             raise Error(f"RomM {task.label} exited with status {error.exit_status}") from error
         except (PodmanError, RequestException, ValueError) as error:
-            raise Error(f"failed to run RomM {task.label}") from error
+            raise Error(f"failed to run RomM {task.label}: {error}") from error
         _write_logs(cast(bytes | Iterable[bytes] | None, logs), output)
 
 
