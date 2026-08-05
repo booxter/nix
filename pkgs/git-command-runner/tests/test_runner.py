@@ -60,7 +60,7 @@ def test_times_out_command_and_terminates_descendants(tmp_path: Path) -> None:
     sentinel = tmp_path / "child-survived"
     child = (
         "import pathlib,time; "
-        "time.sleep(0.5); "
+        "time.sleep(1.5); "
         f"pathlib.Path({str(sentinel)!r}).write_text('alive', encoding='utf-8')"
     )
     parent = (
@@ -70,11 +70,11 @@ def test_times_out_command_and_terminates_descendants(tmp_path: Path) -> None:
         "time.sleep(60)"
     )
 
-    result = SubprocessGitRunner(executable=sys.executable, timeout_seconds=0.1).run(["-c", parent])
+    result = SubprocessGitRunner(executable=sys.executable, timeout_seconds=1).run(["-c", parent])
 
     assert result.returncode == 124
     assert result.stdout == "started\n"
-    assert "timed out after 0.1 seconds" in result.stderr
+    assert "timed out after 1 seconds" in result.stderr
     time.sleep(0.7)
     assert not sentinel.exists()
 
@@ -84,7 +84,7 @@ def test_force_kills_command_group_that_ignores_termination(tmp_path: Path) -> N
     child = (
         "import pathlib,signal,time; "
         "signal.signal(signal.SIGTERM, signal.SIG_IGN); "
-        "time.sleep(0.5); "
+        "time.sleep(1.5); "
         f"pathlib.Path({str(sentinel)!r}).write_text('alive', encoding='utf-8')"
     )
     parent = (
@@ -97,12 +97,12 @@ def test_force_kills_command_group_that_ignores_termination(tmp_path: Path) -> N
 
     result = SubprocessGitRunner(
         executable=sys.executable,
-        timeout_seconds=0.1,
+        timeout_seconds=1,
         termination_grace_seconds=0.1,
     ).run(["-c", parent])
 
     assert result.returncode == 124
     assert result.stdout == "started\n"
-    assert "timed out after 0.1 seconds" in result.stderr
+    assert "timed out after 1 seconds" in result.stderr
     time.sleep(0.7)
     assert not sentinel.exists()
