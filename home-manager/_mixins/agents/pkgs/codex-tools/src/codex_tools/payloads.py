@@ -55,9 +55,14 @@ class ResetCreditsPayload(Payload):
     credits: list[ResetCreditPayload] = Field(default_factory=list)
 
 
+class RateLimitReachedTypePayload(Payload):
+    type: str | None = None
+    details: str | None = None
+
+
 class PersonalUsagePayload(Payload):
     rate_limit: RateLimitPayload = Field(default_factory=RateLimitPayload)
-    rate_limit_reached_type: str | None = None
+    rate_limit_reached_type: RateLimitReachedTypePayload | None = None
     rate_limit_reset_credits: ResetCreditsPayload | None = None
 
 
