@@ -19,7 +19,6 @@ in
   _module.args.orgPkgs = import ./pkgs pkgs;
 
   imports = [
-    ./ai.nix
     ./backup.nix
     ./degoog.nix
     ./llm.nix

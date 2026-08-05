@@ -12,9 +12,7 @@ let
   litellmPort = 4000;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   ollamaTunnelPort = 11435;
-  paperlessOpenWebuiGroup = "paperless-users";
   paperlessService = hostInventory.servicesById.paperless;
-  paperlessToolServerId = "paperless-mcp-server";
   searchlessMetricsFile = "${nodeExporterTextfileDir}/searchless-ngx.prom";
   searchlessPort = 8001;
   searchlessMetricsCommand = utils.escapeSystemdExecArgs [
@@ -27,30 +25,6 @@ let
   searchlessStateDir = "/var/lib/searchless-ngx";
   searchlessUser = "searchless-ngx";
 
-  toolServerConnections = [
-    {
-      type = "mcp";
-      url = "http://127.0.0.1:${toString searchlessPort}/mcp";
-      spec_type = "url";
-      spec = "";
-      path = "openapi.json";
-      auth_type = "none";
-      key = "";
-      config = {
-        enable = true;
-        access_control = null;
-        # The post-start reconciler resolves the SSO-managed group's Open WebUI
-        # ID and replaces this fail-closed default at runtime.
-        access_grants = [ ];
-        function_name_filter_list = "";
-      };
-      info = {
-        id = paperlessToolServerId;
-        name = "Paperless MCP";
-        description = "Searchless-ngx RAG tools for Paperless-ngx";
-      };
-    }
-  ];
 in
 {
   users.groups.${searchlessUser} = { };
@@ -76,23 +50,7 @@ in
     restartUnits = [ "searchless-ngx.service" ];
   };
 
-  services.open-webui.environment.TOOL_SERVER_CONNECTIONS = builtins.toJSON toolServerConnections;
-
   systemd.services = {
-    open-webui = {
-      wants = [ "searchless-ngx.service" ];
-      after = [ "searchless-ngx.service" ];
-      environment = {
-        OPEN_WEBUI_ACCESS_GROUP = paperlessOpenWebuiGroup;
-        OPEN_WEBUI_ADMIN_EMAIL = config.services.open-webui.environment.WEBUI_ADMIN_EMAIL;
-        OPEN_WEBUI_BASE_URL = "http://127.0.0.1:${toString config.services.open-webui.port}";
-        OPEN_WEBUI_TOOL_SERVER_ID = paperlessToolServerId;
-      };
-      serviceConfig.ExecStartPost = utils.escapeSystemdExecArgs [
-        (lib.getExe orgPkgs.open-webui-tool-acl-reconcile)
-      ];
-    };
-
     searchless-chroma = {
       description = "Chroma vector store for Searchless-ngx";
       wantedBy = [ "multi-user.target" ];

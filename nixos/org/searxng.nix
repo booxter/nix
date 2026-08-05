@@ -1,38 +1,14 @@
 {
   config,
   hostInventory,
-  lib,
-  orgPkgs,
-  utils,
   ...
 }:
 let
   searchService = hostInventory.servicesById.search;
   oauth2ClientId = "search";
   oauth2ProxyCookieName = "_search_sso";
-  nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
-  openWebuiDefaultModelMetadata = {
-    # Enables Open WebUI's web-search feature by default for model chats.
-    # Without this metadata, asking the model to search does not trigger the
-    # SearXNG-backed retrieval path unless the user manually toggles search.
-    capabilities.web_search = true;
-    defaultFeatureIds = [ "web_search" ];
-    builtinTools = {
-      automations = false;
-      calendar = false;
-      knowledge = false;
-    };
-  };
   searxMetricsMtlsPort = 9349;
   searxPort = 18083;
-  searxProbeMetricsFile = "${nodeExporterTextfileDir}/open-webui-searxng.prom";
-  searxProbeCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe' orgPkgs.search-stack-probes "open-webui-searxng-probe")
-    "--url"
-    "http://127.0.0.1:${toString searxPort}/search"
-    "--metrics-file"
-    searxProbeMetricsFile
-  ];
 in
 {
   sops.secrets = {
@@ -62,21 +38,6 @@ in
       "searx-init.service"
       "searx.service"
     ];
-  };
-
-  services.open-webui.environment = {
-    DEFAULT_MODEL_METADATA = builtins.toJSON openWebuiDefaultModelMetadata;
-    ENABLE_WEB_SEARCH = "True";
-    SEARXNG_LANGUAGE = "all";
-    SEARXNG_QUERY_URL = "http://127.0.0.1:${toString searxPort}/search";
-    WEB_SEARCH_CONCURRENT_REQUESTS = "2";
-    WEB_SEARCH_ENGINE = "searxng";
-    WEB_SEARCH_RESULT_COUNT = "5";
-  };
-
-  systemd.services.open-webui = {
-    wants = [ "searx.service" ];
-    after = [ "searx.service" ];
   };
 
   services.searx = {
@@ -168,26 +129,4 @@ in
     upstream = "http://127.0.0.1:${toString searxPort}/metrics";
   };
 
-  systemd.tmpfiles.rules = [
-    "d ${nodeExporterTextfileDir} 0755 root root - -"
-  ];
-
-  systemd.services.open-webui-searxng-probe = {
-    description = "Probe Open WebUI SearXNG search dependency";
-    wants = [ "searx.service" ];
-    after = [ "searx.service" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = searxProbeCommand;
-    };
-  };
-
-  systemd.timers.open-webui-searxng-probe = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "2m";
-      OnUnitActiveSec = "5m";
-      AccuracySec = "30s";
-    };
-  };
 }

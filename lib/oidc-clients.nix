@@ -115,20 +115,6 @@ rec {
       scopeMaps."trilium-users" = baseScopes;
     };
 
-    open-webui = mkClient "open-webui" {
-      displayName = "Open WebUI";
-      originUrl = "${serviceUrl "ai"}/oauth/oidc/login/callback";
-      originLanding = "${serviceUrl "ai"}/";
-      scopeMaps."ai-users" = scopeWith [ "open_webui_groups" ];
-      claimMaps = {
-        open_webui_groups.valuesByGroup."paperless-users" = [ "paperless-users" ];
-        open_webui_role.valuesByGroup = {
-          "ai-users" = [ "user" ];
-          "sso-admins" = [ "admin" ];
-        };
-      };
-    };
-
     search = mkClient "search" {
       displayName = "Search";
       originUrl = "${serviceUrl "search"}/oauth2/callback";

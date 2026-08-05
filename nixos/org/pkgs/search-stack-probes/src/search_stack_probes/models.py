@@ -27,12 +27,6 @@ class SyncResponse(BaseModel):
     bulk_sync_limit: NonNegativeInt | None = None
 
 
-class SearxResponse(BaseModel):
-    model_config = ConfigDict(extra="ignore", frozen=True)
-
-    results: list[dict[str, object]]
-
-
 @dataclass(frozen=True)
 class SearchlessSnapshot:
     timestamp: float
@@ -48,13 +42,3 @@ class SearchlessSnapshot:
     @property
     def collection_success(self) -> bool:
         return self.health_success and self.test_connection_success and self.sync_status_success
-
-
-@dataclass(frozen=True)
-class SearxSnapshot:
-    timestamp: float
-    ok: bool
-    duration: float
-    http_status: int
-    transport_error: bool
-    results: int

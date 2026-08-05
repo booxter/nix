@@ -207,15 +207,6 @@
       glanceCategory = "infrastructure";
     }
     {
-      id = "ai";
-      title = "Open WebUI";
-      icon = "sh:open-webui";
-      owner = "org";
-      publicHost = "ai.${publicDomain}";
-      probePath = "/";
-      glanceCategory = "user";
-    }
-    {
       id = "search";
       title = "Search";
       icon = "sh:searxng";

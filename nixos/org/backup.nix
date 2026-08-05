@@ -1,10 +1,6 @@
 let
   degoogStateDir = "/var/lib/degoog";
   litellmBackupDir = "/var/lib/litellm-backup/latest";
-  openWebuiBackupDir = "/var/lib/open-webui-backup/latest";
-  openWebuiStateDir = "/var/lib/open-webui";
-  openWebuiDataDir = "${openWebuiStateDir}/data";
-  openWebuiDatabasePath = "${openWebuiDataDir}/webui.db";
   paperlessBackupDir = "/var/lib/paperless-backup/latest";
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
@@ -13,7 +9,6 @@ let
   triliumStateDir = "/var/lib/trilium";
   backupPaths = [
     degoogStateDir
-    openWebuiStateDir
     paperlessDataDir
     paperlessGptStateDir
     paperlessStoragePath
@@ -22,8 +17,6 @@ let
     "/var/lib/vikunja/files"
   ];
   backupExclude = [
-    openWebuiDatabasePath
-    "${openWebuiDatabasePath}-*"
     "${triliumStateDir}/document.db"
     "${triliumStateDir}/document.db-*"
   ];
@@ -44,13 +37,6 @@ in
     };
 
     sqlite = {
-      open-webui = {
-        displayName = "Open WebUI";
-        databasePath = openWebuiDatabasePath;
-        destinationDir = openWebuiBackupDir;
-        requiresMountsFor = [ openWebuiDataDir ];
-      };
-
       vikunja = {
         displayName = "Vikunja";
         databasePath = "/var/lib/vikunja/vikunja.db";

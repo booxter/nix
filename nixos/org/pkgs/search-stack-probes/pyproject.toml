@@ -10,7 +10,6 @@ requires-python = ">=3.11"
 dependencies = ["httpx", "prometheus-client", "pydantic"]
 
 [project.scripts]
-open-webui-searxng-probe = "search_stack_probes.cli:searx_main"
 searchless-ngx-metrics = "search_stack_probes.cli:searchless_main"
 
 [tool.setuptools]

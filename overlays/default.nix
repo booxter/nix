@@ -146,12 +146,6 @@
         ];
       });
 
-      open-webui = prev.open-webui.overridePythonAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          ../lib/patches/open-webui-apply-default-model-system-prompt.patch
-        ];
-      });
-
       vikunja = prev.vikunja.overrideAttrs (
         old:
         let

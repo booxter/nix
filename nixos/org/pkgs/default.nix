@@ -17,7 +17,6 @@ in
     degoogVersion = degoogPackage.version;
   };
   degoog-trusted-header-settings-auth = pkgs.callPackage ./degoog-trusted-header-settings-auth { };
-  open-webui-tool-acl-reconcile = pkgs.callPackage ./open-webui-tool-acl-reconcile { };
   paperless-bootstrap = pkgs.callPackage ./paperless-bootstrap { };
   paperless-gpt-configure = pkgs.callPackage ./paperless-gpt-configure { };
   prometheus-paperless-exporter = pkgs.callPackage ./prometheus-paperless-exporter { };

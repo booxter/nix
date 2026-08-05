@@ -4,7 +4,7 @@ from pathlib import Path
 
 from prometheus_client import CollectorRegistry, Gauge, write_to_textfile
 
-from .models import SearchlessSnapshot, SearxSnapshot
+from .models import SearchlessSnapshot
 
 
 def _gauge(registry: CollectorRegistry, name: str, documentation: str, value: float) -> None:
@@ -66,47 +66,6 @@ def searchless_registry(snapshot: SearchlessSnapshot) -> CollectorRegistry:
         ),
     ):
         _gauge(registry, name, documentation, float(value))
-    return registry
-
-
-def searx_registry(snapshot: SearxSnapshot) -> CollectorRegistry:
-    registry = CollectorRegistry()
-    prefix = "host_observability_openwebui_searxng_probe"
-    for suffix, documentation, value in (
-        (
-            "ok",
-            "Whether the most recent Open WebUI SearXNG dependency probe succeeded.",
-            snapshot.ok,
-        ),
-        (
-            "timestamp_seconds",
-            "Unix timestamp of the most recent Open WebUI SearXNG dependency probe.",
-            snapshot.timestamp,
-        ),
-        (
-            "duration_seconds",
-            "Duration of the most recent Open WebUI SearXNG dependency probe.",
-            snapshot.duration,
-        ),
-        (
-            "http_status_code",
-            "HTTP status code returned by the most recent Open WebUI SearXNG dependency probe.",
-            snapshot.http_status,
-        ),
-        (
-            # Preserve the old curl-specific series name for query
-            # compatibility even though HTTP is now handled in-process.
-            "curl_exit_code",
-            "Transport exit code from the most recent Open WebUI SearXNG dependency probe.",
-            snapshot.transport_error,
-        ),
-        (
-            "results",
-            "Search result count returned by the most recent Open WebUI SearXNG dependency probe.",
-            snapshot.results,
-        ),
-    ):
-        _gauge(registry, f"{prefix}_{suffix}", documentation, float(value))
     return registry
 
 

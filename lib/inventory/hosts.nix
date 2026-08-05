@@ -459,7 +459,6 @@ in
       name = "org";
       platform = "x86_64-linux";
       resourceControl.systemServices.lightweight = [
-        "open-webui-searxng-probe"
         "prometheus-node-exporter"
         "prometheus-paperless-exporter"
         "searchless-ngx-metrics"

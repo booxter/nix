@@ -55,7 +55,7 @@
       title = "Trilium Notes users";
     };
     "ai-users" = {
-      title = "Open WebUI users";
+      title = "Search users";
     };
     "oidc-probe-users" = {
       title = "OIDC synthetic probe users";
