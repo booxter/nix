@@ -20,7 +20,5 @@ in
   paperless-bootstrap = pkgs.callPackage ./paperless-bootstrap { };
   paperless-gpt-configure = pkgs.callPackage ./paperless-gpt-configure { };
   prometheus-paperless-exporter = pkgs.callPackage ./prometheus-paperless-exporter { };
-  search-stack-probes = pkgs.callPackage ./search-stack-probes { };
-  searchless-ngx = pkgs.callPackage ./searchless-ngx { };
   trilium-bootstrap = pkgs.callPackage ./trilium-bootstrap { };
 }

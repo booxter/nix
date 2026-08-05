@@ -461,7 +461,6 @@ in
       resourceControl.systemServices.lightweight = [
         "prometheus-node-exporter"
         "prometheus-paperless-exporter"
-        "searchless-ngx-metrics"
       ];
       upsHost = "prx1-lab";
       cores = 4;

@@ -5,14 +5,12 @@ let
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessStoragePath = "/data/paperless";
-  searchlessStateDir = "/var/lib/searchless-ngx";
   triliumStateDir = "/var/lib/trilium";
   backupPaths = [
     degoogStateDir
     paperlessDataDir
     paperlessGptStateDir
     paperlessStoragePath
-    searchlessStateDir
     triliumStateDir
     "/var/lib/vikunja/files"
   ];

@@ -23,7 +23,6 @@ in
     ./degoog.nix
     ./llm.nix
     ./paperless.nix
-    ./searchless-ngx.nix
     ./searxng.nix
     ./trilium.nix
   ];
