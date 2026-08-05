@@ -1,7 +1,9 @@
 {
+  beastPkgs,
   config,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -9,14 +11,14 @@ let
   backupRoot = "/volume2/backups/restic-prod";
   cloudOffloadUser = "restic-cloud";
   cloudBucketName = "ihar-restic-prod";
-  cloudBackupRate = "10mbit";
-  cloudBackupCeil = "10gbit";
+  cloudBackupRateBits = 10 * 1000 * 1000;
+  cloudBackupCeilBits = 10 * 1000 * 1000 * 1000;
   # Keep cloud-copy uploads smaller so each B2 request finishes sooner under
   # the shaped uplink instead of timing out mid-pack.
-  cloudCopyPackSize = "4";
+  cloudCopyPackSize = 4;
   # Keep native B2 uploads serialized to stay close to the previous single-
   # transfer rclone path while we validate direct restic offload.
-  cloudB2Connections = "1";
+  cloudB2Connections = 1;
   # Add future backup sources here. Each client gets a dedicated SSH-only user,
   # its own repository path, and its own public key in config.
   backupClients = {
@@ -118,106 +120,62 @@ let
   sshBackupClients = lib.filterAttrs (_: client: client.publicKey != null) backupClients;
   sharedB2ApplicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
   sharedB2ApplicationKeySecret = "backup/restic/cloud/b2/applicationKey";
-  mkCloudOffloadScript =
+  mkCloudOffloadConfig =
     name:
     let
       backupRepo = mkBackupRepo name;
-      pruneArgs = lib.escapeShellArgs backupClients.${name}.cloud.pruneOpts;
       srcPasswordFile = config.sops.secrets.${mkCloudSecret name "localPassword"}.path;
       dstPasswordFile = config.sops.secrets.${mkCloudSecret name "password"}.path;
       b2AccountIdFile = config.sops.secrets.${sharedB2ApplicationKeyIdSecret}.path;
       b2AccountKeyFile = config.sops.secrets.${sharedB2ApplicationKeySecret}.path;
     in
-    pkgs.writeShellScript "restic-${name}-cloud-offload" ''
-      set -euo pipefail
-
-      dst_repo="${backupClients.${name}.cloud.repository}"
-      src_repo="${backupRepo}"
-      src_password_file="${srcPasswordFile}"
-      dst_password_file="${dstPasswordFile}"
-      export B2_ACCOUNT_ID="$(${pkgs.coreutils}/bin/cat ${b2AccountIdFile})"
-      export B2_ACCOUNT_KEY="$(${pkgs.coreutils}/bin/cat ${b2AccountKeyFile})"
-
-      restic_dst() {
-        ${pkgs.restic}/bin/restic -r "$dst_repo" --password-file "$dst_password_file" "$@"
-      }
-
-      cleanup() {
-        exit_code=$?
-        if [ "$exit_code" -ne 0 ]; then
-          restic_dst unlock || true
-        fi
-      }
-      trap cleanup EXIT
-
-      if ! restic_dst cat config >/dev/null 2>&1; then
-        restic_dst \
-          init \
-          --from-repo "$src_repo" \
-          --from-password-file "$src_password_file" \
-          --copy-chunker-params
-      fi
-
-      # The destination repo is only used by this offload job, so clear stale
-      # locks left behind by previously failed runs before starting new work.
-      restic_dst unlock || true
-
-      restic_dst \
-        -o b2.connections=${cloudB2Connections} \
-        --pack-size ${cloudCopyPackSize} \
-        copy \
-        --from-repo "$src_repo" \
-        --from-password-file "$src_password_file" \
-        --verbose
-
-      restic_dst unlock || true
-
-      restic_dst \
-        forget \
-        --prune \
-        ${pruneArgs}
-    '';
-  cloudShapingScript = pkgs.writeShellScript "restic-cloud-traffic-shaping" ''
-    set -euo pipefail
-
-    iface="$(${pkgs.iproute2}/bin/ip -o route get 1.1.1.1 | ${pkgs.gawk}/bin/awk '{for (i = 1; i <= NF; i++) if ($i == "dev") { print $(i + 1); exit }}')"
-    if [ -z "$iface" ]; then
-      echo "failed to determine default egress interface" >&2
-      exit 1
-    fi
-
-    case "''${1:-start}" in
-      start)
-        ${pkgs.nftables}/bin/nft delete table inet backup_cloud_shaping 2>/dev/null || true
-        ${pkgs.nftables}/bin/nft add table inet backup_cloud_shaping
-        ${pkgs.nftables}/bin/nft \
-          "add chain inet backup_cloud_shaping output { type route hook output priority mangle; policy accept; }"
-        ${lib.concatMapStringsSep "\n" (name: ''
-          uid="$(${pkgs.coreutils}/bin/id -u ${mkOffloadUser name})"
-          ${pkgs.nftables}/bin/nft \
-            add rule inet backup_cloud_shaping output meta skuid "$uid" meta mark set 0x1
-        '') (builtins.attrNames backupClients)}
-
-        ${pkgs.iproute2}/bin/tc qdisc del dev "$iface" root 2>/dev/null || true
-        ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" root handle 1: htb default 20 r2q 1000
-        ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1: classid 1:1 htb rate ${cloudBackupCeil} ceil ${cloudBackupCeil}
-        ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:10 htb rate ${cloudBackupRate} ceil ${cloudBackupRate}
-        ${pkgs.iproute2}/bin/tc class add dev "$iface" parent 1:1 classid 1:20 htb rate ${cloudBackupCeil} ceil ${cloudBackupCeil}
-        ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:10 handle 10: fq_codel
-        ${pkgs.iproute2}/bin/tc qdisc add dev "$iface" parent 1:20 handle 20: fq_codel
-        ${pkgs.iproute2}/bin/tc filter add dev "$iface" parent 1: protocol ip prio 10 handle 1 fw classid 1:10
-        ${pkgs.iproute2}/bin/tc filter add dev "$iface" parent 1: protocol ipv6 prio 11 handle 1 fw classid 1:10
-        ;;
-      stop)
-        ${pkgs.nftables}/bin/nft delete table inet backup_cloud_shaping 2>/dev/null || true
-        ${pkgs.iproute2}/bin/tc qdisc del dev "$iface" root 2>/dev/null || true
-        ;;
-      *)
-        echo "usage: $0 [start|stop]" >&2
-        exit 2
-        ;;
-    esac
-  '';
+    (pkgs.formats.json { }).generate "restic-${name}-cloud-offload.json" {
+      sourceRepository = backupRepo;
+      sourcePasswordFile = srcPasswordFile;
+      destinationRepository = backupClients.${name}.cloud.repository;
+      destinationPasswordFile = dstPasswordFile;
+      b2ApplicationKeyIdFile = b2AccountIdFile;
+      b2ApplicationKeyFile = b2AccountKeyFile;
+      b2Connections = cloudB2Connections;
+      packSizeMib = cloudCopyPackSize;
+      pruneOptions = backupClients.${name}.cloud.pruneOpts;
+    };
+  mkCloudOffloadCommand =
+    name:
+    utils.escapeSystemdExecArgs [
+      (lib.getExe' beastPkgs.restic-cloud-usage "restic-cloud-offload")
+      "--config"
+      (mkCloudOffloadConfig name)
+    ];
+  cloudShapingConfig = (pkgs.formats.json { }).generate "restic-cloud-qos.json" {
+    routeProbe = "1.1.1.1";
+    users = map mkOffloadUser (builtins.attrNames backupClients);
+    mark = 1;
+    outerRateBits = cloudBackupCeilBits;
+    cloudRateBits = cloudBackupRateBits;
+  };
+  cloudShapingCommand =
+    action:
+    utils.escapeSystemdExecArgs [
+      (lib.getExe' beastPkgs.backup-server-tools "restic-cloud-qos")
+      "--config"
+      cloudShapingConfig
+      action
+    ];
+  mkRepoAclConfig =
+    name:
+    (pkgs.formats.json { }).generate "restic-${name}-repo-acl.json" {
+      repository = mkBackupRepo name;
+      user = mkOffloadUser name;
+      setfaclExecutable = lib.getExe' pkgs.acl "setfacl";
+    };
+  mkRepoAclCommand =
+    name:
+    utils.escapeSystemdExecArgs [
+      (lib.getExe' beastPkgs.backup-server-tools "restic-repo-acl")
+      "--config"
+      (mkRepoAclConfig name)
+    ];
 in
 {
   imports = [
@@ -349,8 +307,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = "${cloudShapingScript} start";
-        ExecStop = "${cloudShapingScript} stop";
+        ExecStart = cloudShapingCommand "start";
+        ExecStop = cloudShapingCommand "stop";
       };
     };
   }
@@ -366,37 +324,7 @@ in
           Type = "oneshot";
           User = "root";
           Group = "root";
-          ExecStart = pkgs.writeShellScript "restic-${name}-repo-acl" ''
-            set -euo pipefail
-
-            repo="${mkBackupRepo name}"
-            offload_user="${mkOffloadUser name}"
-            marker="$repo/.offload-acl-initialized"
-
-            if [ ! -d "$repo" ]; then
-              exit 0
-            fi
-
-            ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwx,m::rwx" "$repo"
-            ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" "$repo"
-
-            if [ ! -f "$repo/config" ]; then
-              exit 0
-            fi
-
-            if [ ! -e "$marker" ] || [ "$repo/config" -nt "$marker" ]; then
-              ${pkgs.acl}/bin/setfacl -R -m "u:$offload_user:rwX,m::rwX" "$repo"
-              ${pkgs.findutils}/bin/find "$repo" -type d -exec \
-                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" '{}' +
-            else
-              ${pkgs.findutils}/bin/find "$repo" -newer "$marker" -exec \
-                ${pkgs.acl}/bin/setfacl -m "u:$offload_user:rwX,m::rwX" '{}' +
-              ${pkgs.findutils}/bin/find "$repo" -type d -newer "$marker" -exec \
-                ${pkgs.acl}/bin/setfacl -d -m "u:$offload_user:rwx,m::rwx" '{}' +
-            fi
-
-            ${pkgs.coreutils}/bin/touch "$marker"
-          '';
+          ExecStart = mkRepoAclCommand name;
         };
       };
     }) (builtins.attrNames sshBackupClients))
@@ -431,7 +359,7 @@ in
             Group = mkOffloadUser name;
             StateDirectory = mkCloudStateDir name;
             Environment = "RESTIC_CACHE_DIR=/var/lib/${mkCloudStateDir name}/cache";
-            ExecStart = mkCloudOffloadScript name;
+            ExecStart = mkCloudOffloadCommand name;
           };
         };
       }

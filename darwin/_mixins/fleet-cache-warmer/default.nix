@@ -7,7 +7,6 @@
 let
   cfg = config.host.fleetCacheWarmer;
   warmerPackage = pkgs.callPackage ../../pkgs/fleet-cache-warmer {
-    name = cfg.serviceName;
     inherit (cfg) pushToAttic targetFilter;
   };
 in
@@ -42,12 +41,6 @@ in
       description = "Attic cache name used when pushToAttic is enabled.";
     };
 
-    serviceName = lib.mkOption {
-      type = lib.types.str;
-      default = "fleet-cache-warmer";
-      description = "launchd service label and command name.";
-    };
-
     startCalendarInterval = lib.mkOption {
       type = lib.types.listOf (lib.types.attrsOf lib.types.int);
       default = [
@@ -77,7 +70,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    launchd.daemons.${cfg.serviceName} = {
+    launchd.daemons.fleet-cache-warmer = {
       serviceConfig = {
         ProgramArguments = [
           (lib.getExe warmerPackage)

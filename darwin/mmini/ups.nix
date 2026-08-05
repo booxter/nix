@@ -34,9 +34,9 @@ in
     mode = "0400";
     content = ''
       MINSUPPLIES 1
-      MONITOR ${hostInventory.toUpsName frameSpec.name}@${
-        frameSpec.dnsName or frameSpec.name
-      } 1 upsslave ${config.sops.placeholder.${monitorPasswordSecret}} slave
+      MONITOR ${hostInventory.toUpsName frameSpec.name}@${hostInventory.toHostIpv4Address frameSpec} 1 upsslave ${
+        config.sops.placeholder.${monitorPasswordSecret}
+      } slave
       NOTIFYCMD ${pkgs.nut}/bin/upssched
       NOTIFYFLAG ONBATT SYSLOG+EXEC
       NOTIFYFLAG ONLINE SYSLOG+EXEC

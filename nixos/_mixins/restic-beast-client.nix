@@ -24,34 +24,7 @@ let
   };
   localSshKey = config.sops.secrets.${localSshKeySecret}.path;
   preBackupServiceNames = builtins.attrNames cfg.preBackupServices;
-  reapResticSshHelper = pkgs.writeShellApplication {
-    name = "reap-restic-sftp-ssh-helper";
-    runtimeInputs = [
-      pkgs.coreutils
-      pkgs.gawk
-    ];
-    text = ''
-      set -euo pipefail
-
-      cgroup_path="$(awk -F: '$1 == "0" { print $3 }' /proc/self/cgroup)"
-      procs_file="/sys/fs/cgroup''${cgroup_path}/cgroup.procs"
-
-      [ -r "$procs_file" ] || exit 0
-
-      while read -r pid; do
-        [ -n "$pid" ] || continue
-        [ "$pid" = "$$" ] && continue
-
-        comm="$(cat "/proc/$pid/comm" 2>/dev/null || true)"
-        [ "$comm" = "ssh" ] || continue
-
-        echo "reaping leftover restic ssh helper pid $pid"
-        kill "$pid" 2>/dev/null || true
-        sleep 1
-        kill -9 "$pid" 2>/dev/null || true
-      done < "$procs_file"
-    '';
-  };
+  resticClientTools = pkgs.callPackage ./restic-beast-client/pkgs/restic-client-tools { };
 in
 {
   options.host.backups.beast = {
@@ -111,33 +84,15 @@ in
               description = "systemd description for this pre-backup oneshot.";
             };
 
-            script = lib.mkOption {
-              type = package;
-              description = "Executable package to run before restic starts.";
+            execStart = lib.mkOption {
+              type = str;
+              description = "Escaped systemd command for the pre-backup service.";
             };
 
             timerConfig = lib.mkOption {
               type = attrsOf anything;
               default = defaultPreBackupTimerConfig;
               description = "Timer settings for this generated pre-backup timer.";
-            };
-
-            user = lib.mkOption {
-              type = str;
-              default = "root";
-              description = "User to run the pre-backup service as.";
-            };
-
-            group = lib.mkOption {
-              type = str;
-              default = "root";
-              description = "Group to run the pre-backup service as.";
-            };
-
-            serviceConfig = lib.mkOption {
-              type = attrsOf anything;
-              default = { };
-              description = "Extra serviceConfig fields merged into the generated oneshot.";
             };
 
             unitConfig = lib.mkOption {
@@ -192,9 +147,9 @@ in
         };
 
         systemd.services.restic-backups-beast = {
-          postStop = lib.mkAfter ''
-            ${lib.getExe reapResticSshHelper}
-          '';
+          # Run after the upstream restic include-file cleanup but before the
+          # mkAfter backup-metrics recorder observes the final unit result.
+          serviceConfig.ExecStopPost = lib.mkOrder 1400 [ (lib.getExe resticClientTools) ];
         }
         // lib.optionalAttrs (preBackupServiceNames != [ ]) {
           after = map (name: "${name}.service") preBackupServiceNames;
@@ -216,16 +171,15 @@ in
       }
 
       {
-        systemd.services = builtins.mapAttrs (name: service: {
+        systemd.services = builtins.mapAttrs (_: service: {
           inherit (service) description unitConfig;
           before = [ "restic-backups-beast.service" ];
           serviceConfig = {
             Type = "oneshot";
-            User = service.user;
-            Group = service.group;
-            ExecStart = lib.getExe service.script;
-          }
-          // service.serviceConfig;
+            User = "root";
+            Group = "root";
+            ExecStart = service.execStart;
+          };
         }) cfg.preBackupServices;
 
         systemd.timers = builtins.mapAttrs (_: service: {

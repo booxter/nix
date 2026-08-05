@@ -12,16 +12,9 @@ let
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
   sshAskpass =
     if isDarwin then
-      pkgs.writeShellApplication {
-        name = "ssh-askpass-macos";
-        text = builtins.readFile ./ssh-askpass-macos.sh;
-      }
+      pkgs.callPackage ./pkgs/ssh-askpass-macos { }
     else
-      pkgs.writeShellApplication {
-        name = "ssh-askpass-linux";
-        runtimeInputs = [ pkgs.zenity ];
-        text = builtins.readFile ./ssh-askpass-linux.sh;
-      };
+      pkgs.callPackage ./pkgs/ssh-askpass-linux { };
   secretiveAuthSockInit = ''
     if [ -z "$SSH_AUTH_SOCK" -o -z "$SSH_CONNECTION" ]; then
       export SSH_AUTH_SOCK="${secretiveSocket}"

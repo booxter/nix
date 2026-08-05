@@ -114,38 +114,36 @@ def test_main_bootstrap_inherits_control_plane_recipient(tmp_path: Path) -> None
     ]
 
 
-def test_remote_runtime_key_uses_the_exact_nix_package() -> None:
-    package = "/nix/store/test-sops-tools"
+def test_remote_runtime_key_builds_archived_source_on_target() -> None:
+    source = "/nix/store/test-repository-source"
     repo_root = Path("/nix/store/test-repository")
     runner = RecordingRunner(
-        outputs=[f"{package}\n", "", "1000\n"],
+        outputs=[json.dumps({"path": source}), "", "1000\n"],
         streaming_outputs=["age1remote\r\n"],
     )
-    provider = CommandRuntimeKeyProvider(runner, repo_root, "x86_64-linux")
+    provider = CommandRuntimeKeyProvider(runner, repo_root)
 
     assert provider.recipient("newhost", "operator", local=False) == "age1remote"
 
     assert runner.calls[0][0] == [
         "nix",
-        "build",
-        "--no-link",
-        "--print-out-paths",
-        f"path:{repo_root}#packages.x86_64-linux.sops-tools",
+        "flake",
+        "archive",
+        "--json",
+        f"path:{repo_root}",
     ]
     assert runner.calls[1][0] == [
         "nix",
         "copy",
         "--to",
         "ssh://operator@newhost",
-        package,
+        source,
     ]
     assert runner.streaming_calls[0] == [
         "ssh",
         "-tt",
         "operator@newhost",
-        "sudo",
-        f"{package}/bin/sops-runtime-key",
-        "--age-keygen",
-        "age-keygen",
-        "/var/lib/sops-nix/key.txt",
+        "sudo -H nix shell -L --show-trace "
+        "'path:/nix/store/test-repository-source#sops-tools' --command "
+        "sops-runtime-key --age-keygen age-keygen /var/lib/sops-nix/key.txt",
     ]

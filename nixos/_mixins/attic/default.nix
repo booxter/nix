@@ -1,26 +1,18 @@
 {
   config,
   lib,
-  hostname,
-  secretDomain,
   pkgs,
+  utils,
   ...
 }:
 let
-  hostSecretFile = ../../../secrets/${secretDomain}/${hostname}.yaml;
   rootDir = "/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
-  watchStore = pkgs.writeShellApplication {
-    name = "attic-watch-store";
-    runtimeInputs = [
-      pkgs.attic-client
-    ];
-    text = ''
-      set -euo pipefail
-      export HOME=${lib.escapeShellArg rootDir}
-      exec attic watch-store default
-    '';
-  };
+  watchStoreCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe pkgs.attic-client)
+    "watch-store"
+    "default"
+  ];
 in
 lib.mkMerge [
   {
@@ -29,8 +21,9 @@ lib.mkMerge [
       wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
+      environment.HOME = rootDir;
       serviceConfig = {
-        ExecStart = lib.getExe watchStore;
+        ExecStart = watchStoreCommand;
         Restart = "always";
         RestartSec = "15s";
         WorkingDirectory = rootDir;

@@ -1,32 +1,22 @@
 {
   config,
   lib,
-  hostname,
-  secretDomain,
   pkgs,
   ...
 }:
 let
-  hostSecretFile = ../../../secrets/${secretDomain}/${hostname}.yaml;
   rootDir = "/private/var/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
-  watchStore = pkgs.writeShellApplication {
-    name = "attic-watch-store";
-    runtimeInputs = [
-      pkgs.attic-client
-    ];
-    text = ''
-      set -euo pipefail
-      export HOME=${lib.escapeShellArg rootDir}
-      exec attic watch-store default
-    '';
-  };
 in
 lib.mkMerge [
   {
     launchd.daemons.attic-watch-store = {
-      command = lib.escapeShellArg (lib.getExe watchStore);
       serviceConfig = {
+        ProgramArguments = [
+          (lib.getExe pkgs.attic-client)
+          "watch-store"
+          "default"
+        ];
         RunAtLoad = true;
         KeepAlive = true;
         WorkingDirectory = rootDir;

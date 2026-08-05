@@ -1,8 +1,8 @@
 {
   config,
+  homeAssistantTools,
   hostInventory,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -11,22 +11,8 @@ let
   homeAssistantPort = 8123;
   homeAssistantSso = hostInventory.sso.applications.home-assistant;
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
-  backupPython = pkgs.replaceVarsWith {
-    src = ./home-assistant-backup.py;
-    replacements = {
-      baseUrl = "http://127.0.0.1:${toString homeAssistantPort}";
-      clientId = "http://127.0.0.1:${toString homeAssistantPort}/";
-      ownerUsername = homeAssistantSso.bootstrapOwner;
-      passwordFile = config.sops.secrets.${bootstrapPasswordSecret}.path;
-    };
-  };
-  python = pkgs.python3.withPackages (pythonPackages: [ pythonPackages.websockets ]);
-  backupScript = pkgs.writeShellApplication {
-    name = "home-assistant-native-backup";
-    text = ''
-      exec ${python}/bin/python ${backupPython}
-    '';
-  };
+  baseUrl = "http://127.0.0.1:${toString homeAssistantPort}";
+  clientId = "http://127.0.0.1:${toString homeAssistantPort}/";
 in
 {
   systemd.services.home-assistant-native-backup = {
@@ -41,7 +27,18 @@ in
       Type = "oneshot";
       User = "root";
       Group = "root";
-      ExecStart = lib.getExe backupScript;
+      ExecStart = lib.escapeShellArgs [
+        (lib.getExe homeAssistantTools)
+        "backup"
+        "--base-url"
+        baseUrl
+        "--client-id"
+        clientId
+        "--owner-username"
+        homeAssistantSso.bootstrapOwner
+        "--password-file"
+        config.sops.secrets.${bootstrapPasswordSecret}.path
+      ];
       TimeoutStartSec = "2h15m";
     };
   };

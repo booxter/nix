@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oidc-synthetic-probe"
+version = "0.1.0"
+description = "Synthetic OIDC and oauth2-proxy probe"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "httpx", "prometheus-client", "pydantic"]
+
+[project.scripts]
+oidc-synthetic-probe = "oidc_synthetic_probe.app:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=oidc_synthetic_probe --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/oidc_synthetic_probe"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

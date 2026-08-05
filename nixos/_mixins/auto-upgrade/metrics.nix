@@ -1,29 +1,20 @@
 {
+  autoUpgradeTools,
   config,
   lib,
-  pkgs,
+  utils,
   ...
 }:
 let
   cfg = config.host.observability.nixosUpgrade;
   textfileCollectorHandledByOtherMixin = config.host.observability.lanWan.enable;
   textfileCollectorNeeded = cfg.exportToNodeExporter && !textfileCollectorHandledByOtherMixin;
-  writeSuccessMetric = pkgs.writeShellScript "write-nixos-upgrade-success-metric" ''
-    set -euo pipefail
-
-    ${pkgs.coreutils}/bin/mkdir -p ${cfg.textfileDir}
-    tmp_file="$(${pkgs.coreutils}/bin/mktemp ${cfg.textfileDir}/nixos-upgrade.prom.XXXXXX)"
-    trap '${pkgs.coreutils}/bin/rm -f "$tmp_file"' EXIT
-
-    cat >"$tmp_file" <<EOF
-    # HELP node_nixos_upgrade_last_success_time_seconds Unix time of the last successful nixos-upgrade.service run.
-    # TYPE node_nixos_upgrade_last_success_time_seconds gauge
-    node_nixos_upgrade_last_success_time_seconds $(${pkgs.coreutils}/bin/date +%s)
-    EOF
-
-    ${pkgs.coreutils}/bin/chmod 0644 "$tmp_file"
-    ${pkgs.coreutils}/bin/mv "$tmp_file" ${cfg.textfileDir}/nixos-upgrade.prom
-  '';
+  writeSuccessMetric = utils.escapeSystemdExecArgs [
+    (lib.getExe autoUpgradeTools)
+    "write-success-metric"
+    "--output"
+    "${cfg.textfileDir}/nixos-upgrade.prom"
+  ];
 in
 {
   options.host.observability.nixosUpgrade = {

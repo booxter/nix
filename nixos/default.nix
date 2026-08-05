@@ -39,6 +39,7 @@ in
         ./_mixins/nix
         ./_mixins/observability-client
         ./_mixins/proxmox
+        ./_mixins/resource-control.nix
         ./_mixins/restic-beast-client.nix
         ./_mixins/sso-oauth2-proxy-gate.nix
         ./_mixins/unifi-sync
@@ -55,9 +56,7 @@ in
           {
             inherit pkgs upsShutdownDelaySeconds;
             monitorName = upsServerSpec.name;
-            system = "${hostInventory.toUpsName upsServerSpec.name}@${
-              upsServerSpec.dnsName or upsServerSpec.name
-            }";
+            system = "${hostInventory.toUpsName upsServerSpec.name}@${hostInventory.toHostIpv4Address upsServerSpec}";
             user = "upsslave";
           }
           // lib.optionalAttrs useLiteralUpsPassword {

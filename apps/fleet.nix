@@ -8,36 +8,6 @@ let
     inherit program;
     meta = { inherit description; };
   };
-  mkBatsCheck =
-    {
-      environment ? { },
-      nativeCheckInputs ? [ ],
-      test,
-      targetEnvironmentVariable ? null,
-    }:
-    {
-      derivationArgs = {
-        doCheck = true;
-        inherit nativeCheckInputs;
-      };
-      checkPhase = ''
-        runHook preCheck
-        ${pkgs.lib.getExe pkgs.bash} -n "$target"
-        ${pkgs.lib.getExe pkgs.shellcheck} "$target"
-        ${pkgs.lib.concatStringsSep "\n" (
-          pkgs.lib.mapAttrsToList (
-            name: value: "export ${name}=${pkgs.lib.escapeShellArg (toString value)}"
-          ) environment
-        )}
-        ${pkgs.lib.optionalString (targetEnvironmentVariable != null) ''
-          export ${targetEnvironmentVariable}="$target"
-        ''}
-        cd ${../.}
-        ${pkgs.lib.getExe pkgs.bats} --print-output-on-failure ${test}
-        runHook postCheck
-      '';
-    };
-
   hostInventory = import ../lib/inventory.nix {
     inherit username;
     lib = pkgs.lib;
@@ -48,13 +18,39 @@ let
   appPackages = import ./default.nix pkgs;
 
   fleetInventory = {
-    darwin = pkgs.lib.mapAttrs (_name: config: {
+    aliases =
+      builtins.listToAttrs (
+        map (spec: {
+          name = hostInventory.toNixosConfigName spec;
+          value = hostInventory.toNixosConfigName spec;
+        }) hostInventory.nixosHostSpecs
+      )
+      // pkgs.lib.foldlAttrs (
+        aliases: name: config:
+        let
+          hostname = config.hostname or name;
+        in
+        aliases // { ${name} = name; } // pkgs.lib.optionalAttrs (hostname != name) { ${hostname} = name; }
+      ) { } hostInventory.darwinHosts;
+    darwin = pkgs.lib.mapAttrs (name: config: {
+      displayName = name;
       isWork = config.isWork or false;
+      platform = config.platform;
+      runtimeHost = config.hostname or name;
+      sshHost = config.hostname or name;
     }) hostInventory.darwinHosts;
+    lanDnsServer = lan.gateway.address;
+    lanDomain = lan.domain;
     nixos = builtins.listToAttrs (
       map (spec: {
         name = hostInventory.toNixosConfigName spec;
-        value.isWork = spec.isWork or false;
+        value = {
+          displayName = hostInventory.toNixosConfigName spec;
+          isWork = spec.isWork or false;
+          platform = spec.platform or "x86_64-linux";
+          runtimeHost = hostInventory.toNixosRuntimeHostName spec;
+          sshHost = hostInventory.toNixosShortDnsName spec;
+        };
       }) hostInventory.nixosHostSpecs
     );
   };
@@ -114,151 +110,19 @@ let
 
   getHosts = fleetTools;
 
-  deploy = pkgs.writeShellApplication {
-    name = "deploy";
-    runtimeInputs =
-      (with pkgs; [
-        bind
-        fzf
-        git
-        jq
-        nix
-        openssh
-      ])
-      ++ [ getHosts ];
-    text = ''
-      set -euo pipefail
-
-      usage() {
-        cat <<'EOF'
-      Usage:
-        deploy [fleet deploy args]
-        deploy --disko <host> <device>
-
-      GitHub branch deployments merge the latest origin/master by default.
-      Pass --no-merge to deploy the selected branch exactly as published.
-      Pass --no-inhibit to bypass NixOS activation checks explicitly.
-
-      Examples:
-        deploy
-        deploy -A --select
-        deploy --branch ci/flake-update --boot srvarr
-        deploy --branch ci/flake-update --no-merge srvarr
-        deploy --no-inhibit beast
-        deploy --branch dhcp-unifi --test beast
-        deploy --local mair
-        deploy --disko frame /dev/sdX
-      EOF
-      }
-
-      if [ "$#" -eq 1 ] && [ "$1" = "--help" ]; then
-        usage
-        exit 0
-      fi
-
-      if [ "$#" -gt 0 ] && [ "$1" = "--disko" ]; then
-        shift
-
-        if [ "$#" -ne 2 ]; then
-          usage >&2
-          exit 1
-        fi
-
-        host="$1"
-        device="$2"
-        disko_cmd=(
-          nix
-          --extra-experimental-features "nix-command flakes"
-          run
-          -L
-          --show-trace
-          "${../.}#disko-install"
-          --
-          --flake "${../.}#''${host}"
-          --disk main
-          "''${device}"
-        )
-
-        if [ "''${EUID}" -eq 0 ]; then
-          exec "''${disko_cmd[@]}"
-        fi
-        exec sudo "''${disko_cmd[@]}"
-      fi
-
-      export UPDATE_MACHINES_GET_HOSTS_BIN=${pkgs.lib.getExe getHosts}
-      exec ${pkgs.bash}/bin/bash ${../.}/apps/update-machines.sh "$@"
-    '';
-    inherit
-      (mkBatsCheck {
-        test = ./update-machines.bats;
-        environment = {
-          FLEET_TEST_REPO_ROOT = "${../.}";
-          UPDATE_MACHINES_BIN = "${../.}/apps/update-machines.sh";
-        };
-        nativeCheckInputs = with pkgs; [
-          fzf
-          git
-          jq
-          openssh
-        ];
-      })
-      derivationArgs
-      checkPhase
-      ;
-  };
+  deploy = fleetTools;
 
   vm = fleetTools;
 
-  diffConfig = pkgs.writeShellApplication {
-    name = "diff";
-    runtimeInputs = with pkgs; [
-      coreutils
-      diffutils
-      dix
-      findutils
-      git
-      gnugrep
-      gnused
-      jq
-      nh
-      nix
-    ];
-    text = ''
-      export DIFF_CONFIG_PROGRAM_NAME=diff
-      exec ${pkgs.bash}/bin/bash ${../apps/diff-config.sh} "$@"
-    '';
-    inherit
-      (mkBatsCheck {
-        test = ./diff-config.bats;
-        environment.DIFF_CONFIG_BIN = "${./diff-config.sh}";
-        nativeCheckInputs = with pkgs; [
-          git
-          jq
-        ];
-      })
-      derivationArgs
-      checkPhase
-      ;
-  };
+  diffConfig = fleetTools;
 
   getLocalBuilders = fleetTools;
 
-  hbaFlash = pkgs.writeShellApplication {
-    name = "hba-flash";
-    runtimeInputs = with pkgs; [
-      coreutils
-      findutils
-      gnugrep
-      gnused
-      openssh
-      unzip
-      util-linux
-    ];
-    text = ''
-      export HBA_FLASH_DEFAULT_SAS3FLASH_BUNDLE="${broadcomSas3flashP15}"
-      export HBA_FLASH_DEFAULT_FIRMWARE_BUNDLE="${broadcomSas9305_24iP16_12}"
-    ''
-    + builtins.readFile ../apps/hba-flash.sh;
+  runCheckTarget = fleetTools;
+
+  hbaFlash = pkgs.callPackage ./hba-flash {
+    defaultSas3flashBundle = broadcomSas3flashP15;
+    defaultFirmwareBundle = broadcomSas9305_24iP16_12;
   };
   issueInternalServiceCertPackage = appPackages.issue-internal-service-cert;
   issueObservabilityCertPackage = appPackages.issue-observability-cert;
@@ -266,41 +130,6 @@ let
   seerrRequestStoragePackage = appPackages.seerr-request-storage;
   seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
   pkiRotationPackage = pkgs.pki-rotation;
-  issueObservabilityCertApp = pkgs.writeShellApplication {
-    name = "issue-observability-cert-app";
-    text = ''
-      exec ${issueObservabilityCertPackage}/bin/issue-observability-cert "$@"
-    '';
-  };
-  issueInternalServiceCertApp = pkgs.writeShellApplication {
-    name = "issue-internal-service-cert-app";
-    text = ''
-      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_COMMON_NAME=${pkgs.lib.escapeShellArg "unifi.${lan.domain}"}
-      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_SANS_JSON=${
-        pkgs.lib.escapeShellArg (
-          builtins.toJSON [
-            "unifi.${lan.domain}"
-            "unifi"
-          ]
-        )
-      }
-      export ISSUE_INTERNAL_SERVICE_CERT_UNIFI_GATEWAY_IP=${pkgs.lib.escapeShellArg lan.gateway.address}
-      exec ${issueInternalServiceCertPackage}/bin/issue-internal-service-cert "$@"
-    '';
-  };
-  issueProxmoxExporterTokenApp = pkgs.writeShellApplication {
-    name = "issue-proxmox-exporter-token-app";
-    text = ''
-      exec ${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token "$@"
-    '';
-  };
-  pkiRotationApp = pkgs.writeShellApplication {
-    name = "pki-rotation-app";
-    text = ''
-      export PKI_ROTATION_REPO_ROOT="${../.}"
-      exec ${pkiRotationPackage}/bin/pki-rotation "$@"
-    '';
-  };
   resetOidc = pkgs.callPackage ../nixos/pki/pkgs/kanidm-tools { };
   wgHomeClientConfig = fleetTools;
 in
@@ -308,14 +137,16 @@ in
   packages = {
     inherit deploy vm;
     diff = diffConfig;
+    fleet-tools = fleetTools;
     get-local-builders = getLocalBuilders;
+    run-check-target = runCheckTarget;
     get-hosts = getHosts;
-    issue-observability-cert = issueObservabilityCertApp;
-    issue-internal-service-cert = issueInternalServiceCertApp;
-    issue-proxmox-exporter-token = issueProxmoxExporterTokenApp;
+    issue-observability-cert = issueObservabilityCertPackage;
+    issue-internal-service-cert = issueInternalServiceCertPackage;
+    issue-proxmox-exporter-token = issueProxmoxExporterTokenPackage;
     seerr-request-storage = seerrRequestStoragePackage;
     seerr-update-user-tags = seerrUpdateUserTagsPackage;
-    pki-rotation = pkiRotationApp;
+    pki-rotation = pkiRotationPackage;
     reset-oidc = resetOidc;
     join-media-parts = pkgs.join-media-parts;
     hba-flash = hbaFlash;
@@ -327,18 +158,20 @@ in
     diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
     "get-local-builders" =
       mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+    "run-check-target" =
+      mkApp "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
     "issue-observability-cert" =
-      mkApp "${issueObservabilityCertApp}/bin/issue-observability-cert-app" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+      mkApp "${issueObservabilityCertPackage}/bin/issue-observability-cert" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
     "issue-internal-service-cert" =
-      mkApp "${issueInternalServiceCertApp}/bin/issue-internal-service-cert-app" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+      mkApp "${issueInternalServiceCertPackage}/bin/issue-internal-service-cert" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
     "issue-proxmox-exporter-token" =
-      mkApp "${issueProxmoxExporterTokenApp}/bin/issue-proxmox-exporter-token-app" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
+      mkApp "${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
     "seerr-request-storage" =
       mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
     "seerr-update-user-tags" =
       mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
     "pki-rotation" =
-      mkApp "${pkiRotationApp}/bin/pki-rotation-app" "Inspect repo-managed internal PKI certificates and export rotation status.";
+      mkApp "${pkiRotationPackage}/bin/pki-rotation" "Inspect repo-managed internal PKI certificates and export rotation status.";
     "reset-oidc" =
       mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
     "join-media-parts" =

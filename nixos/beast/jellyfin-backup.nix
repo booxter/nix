@@ -1,7 +1,8 @@
 {
+  beastPkgs,
   config,
   lib,
-  pkgs,
+  utils,
   ...
 }:
 let
@@ -12,73 +13,21 @@ let
   backupApiKeySecret = "jellyfin/apiKey";
   localRepoPasswordSecret = "backup/restic/beast/cloud/localPassword";
   localRepo = "/volume2/backups/restic-prod/hosts/beast";
-  jellyfinBackupScript = pkgs.writeShellApplication {
-    name = "jellyfin-built-in-backup";
-    runtimeInputs = with pkgs; [
-      coreutils
-      curl
-      findutils
-      gnugrep
-      gawk
-      jq
-    ];
-    text = ''
-      set -euo pipefail
-
-      backup_dir="${jellyfinBackupDir}"
-      staging_dir="${stagingDir}"
-      keep="${toString keepLocalBackups}"
-      keep_source="${toString keepJellyfinSourceBackups}"
-      api_key="$(tr -d '\n' < ${lib.escapeShellArg config.sops.secrets.${backupApiKeySecret}.path})"
-
-      response="$(
-        curl \
-          --silent \
-          --show-error \
-          --fail-with-body \
-          --request POST \
-          --url http://127.0.0.1:8096/Backup/Create \
-          --header "Authorization: MediaBrowser Token=\"$api_key\"" \
-          --header "X-Emby-Token: $api_key" \
-          --header 'Content-Type: application/json' \
-          --data '{"Database":true,"Metadata":false,"Subtitles":false,"Trickplay":false}'
-      )"
-
-      created_path="$(printf '%s' "$response" | jq -r '.Path // .path // empty')"
-      if [ -z "$created_path" ] || [ ! -f "$created_path" ]; then
-        echo "Jellyfin backup API did not return a valid archive path" >&2
-        printf '%s\n' "$response" >&2
-        exit 1
-      fi
-
-      install -d -m 0750 -o root -g restic-cloud "$staging_dir"
-      install -m 0640 -o root -g restic-cloud "$created_path" "$staging_dir/$(basename "$created_path")"
-
-      mapfile -t archives < <(
-        find "$staging_dir" -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\n' \
-          | sort -nr \
-          | awk '{ print $2 }'
-      )
-
-      if [ "''${#archives[@]}" -gt "$keep" ]; then
-        for old_archive in "''${archives[@]:$keep}"; do
-          rm -f -- "$old_archive"
-        done
-      fi
-
-      mapfile -t source_archives < <(
-        find "$backup_dir" -maxdepth 1 -type f -name 'jellyfin-backup-*.zip' -printf '%T@ %p\n' \
-          | sort -nr \
-          | awk '{ print $2 }'
-      )
-
-      if [ "''${#source_archives[@]}" -gt "$keep_source" ]; then
-        for old_archive in "''${source_archives[@]:$keep_source}"; do
-          rm -f -- "$old_archive"
-        done
-      fi
-    '';
-  };
+  backupCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' beastPkgs.jellyfin-tools "jellyfin-built-in-backup")
+    "--url"
+    "http://127.0.0.1:8096"
+    "--api-key-file"
+    config.sops.secrets.${backupApiKeySecret}.path
+    "--source-dir"
+    jellyfinBackupDir
+    "--staging-dir"
+    stagingDir
+    "--keep-staging"
+    (toString keepLocalBackups)
+    "--keep-source"
+    (toString keepJellyfinSourceBackups)
+  ];
 in
 {
   sops = {
@@ -90,6 +39,10 @@ in
       };
     };
   };
+
+  systemd.tmpfiles.rules = [
+    "d ${stagingDir} 0750 root restic-cloud - -"
+  ];
 
   systemd.services.jellyfin-built-in-backup = {
     description = "Create a built-in Jellyfin backup archive";
@@ -111,8 +64,9 @@ in
     serviceConfig = {
       Type = "oneshot";
       User = "root";
-      Group = "root";
-      ExecStart = lib.getExe jellyfinBackupScript;
+      Group = "restic-cloud";
+      UMask = "0027";
+      ExecStart = backupCommand;
     };
   };
 

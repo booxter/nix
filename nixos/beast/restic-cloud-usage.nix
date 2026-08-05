@@ -6,8 +6,8 @@
   sharedB2ApplicationKeySecret,
 }:
 {
+  beastPkgs,
   config,
-  lib,
   pkgs,
   ...
 }:
@@ -27,18 +27,6 @@ let
       passwordFile = config.sops.secrets.${mkCloudSecret name "password"}.path;
     }) (builtins.attrNames backupClients);
   };
-  exporter = pkgs.writeShellScript "restic-cloud-usage-export" ''
-    set -euo pipefail
-
-    exec ${pkgs.python3}/bin/python3 ${./restic-cloud-usage-exporter.py} \
-      --config ${usageConfig} \
-      --state-file /var/lib/${stateDir}/state.json \
-      --metrics-file ${textfileDir}/restic-cloud-usage.prom \
-      --b2-cli ${lib.getExe pkgs.backblaze-b2} \
-      --restic ${pkgs.restic}/bin/restic \
-      --b2-account-info-file /var/lib/${stateDir}/b2-account-info \
-      --restic-cache-dir /var/lib/${stateDir}/restic-cache
-  '';
 in
 {
   systemd.tmpfiles.rules = [
@@ -59,7 +47,7 @@ in
       Type = "oneshot";
       StateDirectory = stateDir;
       TimeoutStartSec = "2h";
-      ExecStart = exporter;
+      ExecStart = "${beastPkgs.restic-cloud-usage}/bin/restic-cloud-usage --config ${usageConfig} --state-file /var/lib/${stateDir}/state.json --metrics-file ${textfileDir}/restic-cloud-usage.prom --restic-cache-dir /var/lib/${stateDir}/restic-cache";
     };
   };
 

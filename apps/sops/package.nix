@@ -1,15 +1,13 @@
 { hostInventory, pkgs }:
 let
   pythonPackages = pkgs.python3Packages;
+  atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
   upsClientsByServer = import ../../lib/ups-clients.nix { lib = pkgs.lib; };
   upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
     builtins.toJSON upsClientsByServer
   );
   secretDomainsByHostFile = pkgs.writeText "secret-domains-by-host.json" (
     builtins.toJSON hostInventory.secretDomainsByHost
-  );
-  systemsByHostFile = pkgs.writeText "systems-by-host.json" (
-    builtins.toJSON hostInventory.systemsByHost
   );
   source = pkgs.lib.fileset.toSource {
     root = ../..;
@@ -45,7 +43,10 @@ pythonPackages.buildPythonApplication {
   sourceRoot = "source/apps/sops";
 
   build-system = [ pythonPackages.setuptools ];
-  dependencies = [ pythonPackages.pyyaml ];
+  dependencies = [
+    atomicFileWrites
+    pythonPackages.pyyaml
+  ];
 
   nativeBuildInputs = [ pkgs.makeWrapper ];
   nativeCheckInputs = with pythonPackages; [
@@ -69,9 +70,7 @@ pythonPackages.buildPythonApplication {
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set-default SOPS_TOOLS_REPO_ROOT ${../..} \
         --set SOPS_SECRET_DOMAINS_FILE ${secretDomainsByHostFile} \
-        --set SOPS_HOST_SYSTEMS_FILE ${systemsByHostFile} \
         --set UPS_CLIENTS_BY_SERVER_FILE ${upsClientsByServerFile}
     done
   '';

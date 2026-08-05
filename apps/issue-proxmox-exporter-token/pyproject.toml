@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "issue-proxmox-exporter-token"
+version = "0.1.0"
+description = "Issue and store Proxmox exporter API tokens"
+requires-python = ">=3.11"
+dependencies = ["pydantic", "sops-tools"]
+
+[project.scripts]
+issue-proxmox-exporter-token = "proxmox_exporter_token.app:main"
+issue-proxmox-exporter-token-remote = "proxmox_exporter_token.remote:main"
+
+[tool.mypy]
+files = ["src/proxmox_exporter_token"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=proxmox_exporter_token --cov-report=term-missing --cov-fail-under=70"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.ruff]
+line-length = 100
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,4 +1,6 @@
 {
+  git,
+  gitCommandRunner,
   lib,
   openssh,
   python3,
@@ -16,9 +18,10 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [ pythonPackages.dulwich ];
+  dependencies = [ gitCommandRunner ];
 
   nativeCheckInputs = with pythonPackages; [
+    git
     ruff
     mypy
     pytestCheckHook
@@ -26,7 +29,12 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
-    "--prefix PATH : ${lib.makeBinPath [ openssh ]}"
+    "--prefix PATH : ${
+      lib.makeBinPath [
+        git
+        openssh
+      ]
+    }"
   ];
 
   preCheck = ''

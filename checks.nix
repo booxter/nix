@@ -21,6 +21,7 @@ helpers.forAllSystems (
   in
   {
     get-ff-cookie = getFfCookie;
+    join-media-parts = pkgs.join-media-parts;
 
     sops-tools = pkgs.sops-tools;
     patch-context = pkgs.patch-context;

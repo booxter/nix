@@ -4,6 +4,7 @@
   hostInventory,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -21,6 +22,42 @@ let
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
   pveExporterUser = config.services.prometheus.exporters.pve.user;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
+  proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
+  certInstallCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' proxmoxHostTools "proxmox-install-api-certificate")
+    "--certificate-source"
+    config.sops.secrets.proxmoxApiServerCrt.path
+    "--certificate-destination"
+    cfg.certificatePath
+    "--key-source"
+    config.sops.secrets.proxmoxApiServerKey.path
+    "--key-destination"
+    cfg.keyPath
+  ];
+  oidcRealmConfig = (pkgs.formats.json { }).generate "proxmox-oidc-realm.json" {
+    inherit pveum;
+    pmxcfs_directory = "/etc/pve";
+    client_secret_file = config.sops.secrets.proxmoxOidcClientSecret.path;
+    realm = oidcCfg.realm;
+    issuer_url = oidcCfg.issuerUrl;
+    client_id = oidcCfg.clientId;
+    autocreate_users = oidcCfg.autocreateUsers;
+    groups_claim = oidcCfg.groupsClaim;
+    autocreate_groups = oidcCfg.autocreateGroups;
+    overwrite_groups = oidcCfg.overwriteGroups;
+    scopes = oidcCfg.scopes;
+    comment = oidcCfg.comment;
+    username_claim = oidcCfg.usernameClaim;
+    mapped_group = oidcMappedAdminGroup;
+    group_comment = "Kanidm ${oidcCfg.allowedGroup} OIDC group";
+    acl_path = oidcCfg.aclPath;
+    role = oidcCfg.role;
+  };
+  oidcRealmCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' proxmoxHostTools "proxmox-configure-oidc")
+    "--config"
+    oidcRealmConfig
+  ];
 in
 {
   options.host.proxmox.apiCertificate = {
@@ -283,60 +320,10 @@ in
           "corosync.service"
         ]
         ++ sopsInstallSecretsUnit;
-        path = with pkgs; [
-          coreutils
-        ];
-        script = ''
-          set -euo pipefail
-          cert_path=${lib.escapeShellArg (toString cfg.certificatePath)}
-          key_path=${lib.escapeShellArg (toString cfg.keyPath)}
-
-          cleanup() {
-            rm -f \
-              "$cert_path.tmp.$$" "$key_path.tmp.$$" \
-              "$cert_path.probe.$$" "$key_path.probe.$$"
-          }
-          trap cleanup EXIT
-
-          wait_pmxcfs_writable() {
-            dst="$1"
-            probe="$dst.probe.$$"
-
-            for attempt in $(seq 1 60); do
-              if : > "$probe" 2>/dev/null; then
-                rm -f "$probe"
-                return 0
-              fi
-
-              if [ "$attempt" -eq 1 ]; then
-                echo "waiting for writable Proxmox cluster filesystem before installing $dst" >&2
-              fi
-              sleep 1
-            done
-
-            echo "timed out waiting for writable Proxmox cluster filesystem before installing $dst" >&2
-            return 1
-          }
-
-          # /etc/pve is Proxmox pmxcfs, which rejects normal chmod/chown
-          # operations. Copy files into it and let pmxcfs assign its own
-          # root:www-data permissions.
-          copy_pmxcfs() {
-            src="$1"
-            dst="$2"
-            tmp="$dst.tmp.$$"
-
-            wait_pmxcfs_writable "$dst"
-            cp "$src" "$tmp"
-            mv -f "$tmp" "$dst"
-          }
-
-          copy_pmxcfs ${config.sops.secrets.proxmoxApiServerCrt.path} "$cert_path"
-          copy_pmxcfs ${config.sops.secrets.proxmoxApiServerKey.path} "$key_path"
-        '';
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
+          ExecStart = certInstallCommand;
         };
       };
 
@@ -379,80 +366,11 @@ in
           "corosync.service"
         ]
         ++ sopsInstallSecretsUnit;
-        path = with pkgs; [
-          coreutils
-          jq
-        ];
-        script = ''
-          set -euo pipefail
-
-          realm=${lib.escapeShellArg oidcCfg.realm}
-          mapped_group=${lib.escapeShellArg oidcMappedAdminGroup}
-          group_comment=${lib.escapeShellArg "Kanidm ${oidcCfg.allowedGroup} OIDC group"}
-          acl_path=${lib.escapeShellArg oidcCfg.aclPath}
-          role=${lib.escapeShellArg oidcCfg.role}
-          pveum=${lib.escapeShellArg pveum}
-          client_key="$(tr -d '\n' < ${lib.escapeShellArg config.sops.secrets.proxmoxOidcClientSecret.path})"
-
-          cleanup() {
-            rm -f "/etc/pve/.proxmox-oidc-realm.probe.$$"
-          }
-          trap cleanup EXIT
-
-          wait_pmxcfs_writable() {
-            probe="/etc/pve/.proxmox-oidc-realm.probe.$$"
-
-            for attempt in $(seq 1 60); do
-              if : > "$probe" 2>/dev/null; then
-                rm -f "$probe"
-                return 0
-              fi
-
-              if [ "$attempt" -eq 1 ]; then
-                echo "waiting for writable Proxmox cluster filesystem before configuring OIDC" >&2
-              fi
-              sleep 1
-            done
-
-            echo "timed out waiting for writable Proxmox cluster filesystem before configuring OIDC" >&2
-            return 1
-          }
-
-          wait_pmxcfs_writable
-
-          realm_common_args=(
-            --issuer-url ${lib.escapeShellArg oidcCfg.issuerUrl}
-            --client-id ${lib.escapeShellArg oidcCfg.clientId}
-            --client-key "$client_key"
-            --autocreate ${if oidcCfg.autocreateUsers then "1" else "0"}
-            --groups-claim ${lib.escapeShellArg oidcCfg.groupsClaim}
-            --groups-autocreate ${if oidcCfg.autocreateGroups then "1" else "0"}
-            --groups-overwrite ${if oidcCfg.overwriteGroups then "1" else "0"}
-            --scopes ${lib.escapeShellArg (lib.concatStringsSep " " oidcCfg.scopes)}
-            --comment ${lib.escapeShellArg oidcCfg.comment}
-          )
-
-          if "$pveum" realm list --output-format json \
-            | jq -e --arg realm "$realm" '.[] | select((.realm // .realmid // .id) == $realm)' >/dev/null; then
-            "$pveum" realm modify "$realm" "''${realm_common_args[@]}"
-          else
-            "$pveum" realm add "$realm" \
-              --type openid \
-              --username-claim ${lib.escapeShellArg oidcCfg.usernameClaim} \
-              "''${realm_common_args[@]}"
-          fi
-
-          if ! "$pveum" group list --output-format json \
-            | jq -e --arg group "$mapped_group" '.[] | select((.groupid // .group // .id) == $group)' >/dev/null; then
-            "$pveum" group add "$mapped_group" --comment "$group_comment"
-          fi
-
-          "$pveum" aclmod "$acl_path" -groups "$mapped_group" -roles "$role"
-        '';
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
           UMask = "0077";
+          ExecStart = oidcRealmCommand;
         };
       };
     })

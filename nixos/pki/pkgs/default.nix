@@ -1,19 +1,26 @@
 pkgs:
 let
   kanidmTools = pkgs.callPackage ./kanidm-tools { };
+  unifiSync = pkgs.callPackage ./unifi-sync { };
 in
 {
-  kanidm-person-mail-provision = pkgs.callPackage ./kanidm-person-mail-provision { };
+  kanidm-person-mail-provision = pkgs.callPackage ./kanidm-person-mail-provision {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
 
   kanidm-mail-sender-bootstrap = kanidmTools;
 
-  oidc-synthetic-probe = pkgs.callPackage ./oidc-synthetic-probe { };
+  oidc-synthetic-probe = pkgs.callPackage ./oidc-synthetic-probe {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
 
   reset-oidc = kanidmTools;
 
-  unifi-sync = pkgs.callPackage ./unifi-sync { };
+  step-ca-bootstrap = pkgs.callPackage ./step-ca-bootstrap { };
+
+  unifi-sync = unifiSync;
 
   uptimerobot-sync = pkgs.callPackage ./uptimerobot-sync { };
 
-  wg-home-dns-sync = pkgs.callPackage ./wg-home-dns-sync { };
+  wg-home-dns-sync = pkgs.callPackage ./wg-home-dns-sync { inherit unifiSync; };
 }

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "degoog-settings"
+version = "0.1.0"
+description = "Merge managed Degoog plugin settings"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "deepmerge", "pydantic"]
+
+[project.scripts]
+degoog-merge-plugin-settings = "degoog_settings.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+degoog_settings = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=degoog_settings --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/degoog_settings"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

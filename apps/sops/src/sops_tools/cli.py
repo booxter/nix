@@ -287,14 +287,13 @@ def bootstrap_main(
         domain = current.runtime.resolve_domain(args.domain, require_identity=False)
         environment = current.runtime.command_environment(domain)
         runner = SubprocessRunner(environment)
-        target_system = current.runtime.registered_system(args.host)
         service = BootstrapService(
             current.runtime,
             SecretRepository(current.runtime.repo_root, domain),
             current.backend_factory.create(
                 environment, current.runtime.repo_root / ".sops.yaml"
             ),
-            CommandRuntimeKeyProvider(runner, current.runtime.repo_root, target_system),
+            CommandRuntimeKeyProvider(runner, current.runtime.repo_root),
             CommandOperatorRecipientProvider(
                 current.runtime, runner, AgeRecipientResolver(runner)
             ),

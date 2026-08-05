@@ -7,8 +7,10 @@ use anyhow::{bail, ensure, Context, Result};
 use clap::Parser;
 use serde::{Deserialize, Serialize};
 
+mod atomic;
 mod client;
 pub mod mail_sender;
+pub mod mail_sender_config;
 
 const PROTOCOL_VERSION: u8 = 1;
 const TTL_SECONDS: u64 = 86_400;

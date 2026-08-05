@@ -7,7 +7,7 @@ name = "sync-git-mains"
 version = "0.1.0"
 description = "Fast-forward local Git main branches from origin"
 requires-python = ">=3.11"
-dependencies = ["dulwich"]
+dependencies = ["git-command-runner"]
 
 [project.scripts]
 sync-git-mains = "sync_git_mains.cli:main"
@@ -21,6 +21,9 @@ where = ["src"]
 [tool.pytest.ini_options]
 addopts = "-q --cov=sync_git_mains --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
 
 [tool.mypy]
 files = ["src/sync_git_mains"]

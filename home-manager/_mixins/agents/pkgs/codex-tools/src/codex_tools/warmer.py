@@ -2,12 +2,22 @@ from dataclasses import dataclass
 from typing import Final, Literal, Protocol
 
 from openai import OpenAI, OpenAIError
+from openai.types.responses import ResponseInputParam
 
 from codex_tools.auth import CodexAuth
 from codex_tools.errors import CodexToolsError
-from codex_tools.usage import PersonalUsageService
+from codex_tools.usage import PersonalUsageService, UsageWindow
 
 RESPONSES_ENDPOINT: Final = "https://chatgpt.com/backend-api/codex/responses"
+
+
+def _needs_warmup(window: UsageWindow | None) -> bool:
+    return (
+        window is not None
+        and window.limit_window_seconds is not None
+        and window.reset_after_seconds is not None
+        and window.reset_after_seconds <= 0
+    )
 
 
 @dataclass(frozen=True)
@@ -17,6 +27,15 @@ class WarmupRequest:
     prompt: str = "OK"
     reasoning_effort: Literal["low"] = "low"
     verbosity: Literal["low"] = "low"
+
+    @property
+    def input_items(self) -> ResponseInputParam:
+        return [
+            {
+                "role": "user",
+                "content": [{"type": "input_text", "text": self.prompt}],
+            }
+        ]
 
 
 class ResponsesClient(Protocol):
@@ -56,7 +75,7 @@ class OpenAIResponsesClient:
                 stream = client.responses.create(
                     model=request.model,
                     instructions=request.instructions,
-                    input=request.prompt,
+                    input=request.input_items,
                     reasoning={"effort": request.reasoning_effort},
                     store=False,
                     stream=True,
@@ -75,13 +94,7 @@ class WarmerService:
 
     def warm_if_needed(self, auth: CodexAuth, *, now: float) -> bool:
         usage = self.usage_service.fetch(auth, now=now)
-        window = usage.five_hour
-        if (
-            window is not None
-            and window.limit_window_seconds is not None
-            and window.reset_after_seconds is not None
-            and 0 < window.reset_after_seconds < window.limit_window_seconds
-        ):
+        if not any(_needs_warmup(window) for window in (usage.five_hour, usage.weekly)):
             return False
         if not auth.account_id:
             raise CodexToolsError("Codex account ID is required to start the usage window")

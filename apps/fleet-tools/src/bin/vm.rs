@@ -17,5 +17,5 @@ fn main() -> ExitCode {
 }
 
 fn execute() -> Result<i32> {
-    run(VmArgs::parse(), &NativeVmRunner::default())
+    run(VmArgs::parse(), &NativeVmRunner::from_current_checkout()?)
 }

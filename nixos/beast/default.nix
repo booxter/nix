@@ -2,7 +2,6 @@
   hostInventory,
   inputs,
   pkgs,
-  username,
   ...
 }:
 {

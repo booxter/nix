@@ -1,27 +1,51 @@
 {
-  iproute2,
+  atomicFileWrites,
   lib,
   python3,
+  ruff,
   transmissionCommon,
-  writeShellApplication,
 }:
 let
-  pythonWithDeps = python3.withPackages (_: [
-    transmissionCommon
-  ]);
+  pythonPackages = python3.pkgs;
 in
-writeShellApplication {
-  name = "adaptive-upload-controller";
-  runtimeInputs = [ iproute2 ];
-  text = ''
-    exec ${pythonWithDeps}/bin/python3 ${./main.py} "$@"
+pythonPackages.buildPythonApplication {
+  pname = "adaptive-upload-controller";
+  version = "0.1.0";
+  pyproject = true;
+
+  src = ./.;
+
+  build-system = [ pythonPackages.setuptools ];
+
+  dependencies = with pythonPackages; [
+    atomicFileWrites
+    httpx
+    prometheus-client
+    pydantic
+    pyroute2
+    transmissionCommon
+  ];
+
+  nativeCheckInputs = [
+    ruff
+    pythonPackages.mypy
+    pythonPackages.pytestCheckHook
+    pythonPackages.pytest-cov
+  ];
+
+  preCheck = ''
+    ruff format --check src tests
+    ruff check src tests
+    mypy src/adaptive_upload_controller
   '';
+
+  pythonImportsCheck = [ "adaptive_upload_controller" ];
 
   meta = {
     description = "Adaptive upload policy controller for Jellyfin-aware torrent shaping";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "adaptive-upload-controller";
-    platforms = lib.platforms.unix;
+    platforms = lib.platforms.linux;
   };
 }

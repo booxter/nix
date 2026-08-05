@@ -10,9 +10,15 @@ in
     owner = "root";
     group = "root";
     mode = "0400";
+    restartUnits = [ "prometheus-sabnzbd-exporter.service" ];
     content = ''
       ${config.sops.placeholder."sabnzbd/apiKey"}
     '';
+  };
+
+  systemd.services.prometheus-sabnzbd-exporter = {
+    wants = [ "sops-install-secrets.service" ];
+    after = [ "sops-install-secrets.service" ];
   };
 
   services.prometheus.exporters.sabnzbd = {

@@ -1,6 +1,7 @@
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 import json
 import socket
+from typing import cast
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -18,7 +19,11 @@ class TransmissionRpcClient:
         self.session_id: str | None = None
         self.next_request_id = 1
 
-    def call(self, method: str, params: dict | None = None) -> dict:
+    def call(
+        self,
+        method: str,
+        params: Mapping[str, object] | None = None,
+    ) -> dict[str, object]:
         request_id = self.next_request_id
         self.next_request_id += 1
         payload = json.dumps(
@@ -89,12 +94,12 @@ class TransmissionRpcClient:
                     )
                 raise TransmissionRpcError(f"Transmission RPC returned {error!r}")
 
-            result = parsed.get("result", {})
+            result: object = parsed.get("result", {})
             if not isinstance(result, dict):
                 raise TransmissionRpcError(
                     "Transmission RPC returned invalid result payload"
                 )
-            return result
+            return cast(dict[str, object], result)
 
         raise TransmissionRpcError("failed to negotiate Transmission session id")
 
@@ -138,8 +143,14 @@ def read_tracker_hosts(
     return hosts
 
 
-def torrent_matches_tracker_hosts(torrent: dict, tracker_hosts: set[str]) -> bool:
-    for tracker in torrent.get("tracker_stats", []):
+def torrent_matches_tracker_hosts(
+    torrent: Mapping[str, object],
+    tracker_hosts: set[str],
+) -> bool:
+    tracker_stats = torrent.get("tracker_stats", [])
+    if not isinstance(tracker_stats, list):
+        return False
+    for tracker in tracker_stats:
         if not isinstance(tracker, dict):
             continue
         host = normalize_tracker_host(str(tracker.get("host", "")))

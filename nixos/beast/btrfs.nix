@@ -1,33 +1,39 @@
-{ lib, pkgs, ... }:
+{
+  beastPkgs,
+  lib,
+  pkgs,
+  utils,
+  ...
+}:
 let
   volume2 = "/volume2";
-  btrfs = "${pkgs.btrfs-progs}/bin/btrfs";
-  scrubStartOrResume = pkgs.writeShellScript "btrfs-scrub-start-or-resume-volume2" ''
-    ${btrfs} scrub resume -B ${volume2}
-    status=$?
-
-    if [ "$status" -eq 0 ]; then
-      exit 0
-    fi
-
-    if [ "$status" -eq 2 ]; then
-      exec ${btrfs} scrub start -B ${volume2}
-    fi
-
-    exit "$status"
-  '';
-  scrubResumeIfInterrupted = pkgs.writeShellScript "btrfs-scrub-resume-if-interrupted-volume2" ''
-    status="$(${btrfs} scrub status ${volume2} || true)"
-
-    case "$status" in
-      *"Status:"*"interrupted"*|*"Status:"*"cancelled"*|*"Status:"*"canceled"*)
-        exec ${btrfs} scrub resume -B ${volume2}
-        ;;
-      *)
-        exit 0
-        ;;
-    esac
-  '';
+  maintenance = lib.getExe' beastPkgs.backup-server-tools "btrfs-maintenance";
+  btrfs = lib.getExe pkgs.btrfs-progs;
+  maintenanceCommand =
+    command: extraArguments:
+    utils.escapeSystemdExecArgs (
+      [
+        maintenance
+        command
+        "--btrfs"
+        btrfs
+      ]
+      ++ extraArguments
+    );
+  ensureSnapshots = maintenanceCommand "ensure-subvolume" [
+    "--path"
+    "${volume2}/.snapshots"
+    "--mode"
+    "0750"
+  ];
+  scrubStartOrResume = maintenanceCommand "scrub-start-or-resume" [
+    "--mount"
+    volume2
+  ];
+  scrubResumeIfInterrupted = maintenanceCommand "scrub-resume-if-interrupted" [
+    "--mount"
+    volume2
+  ];
 in
 {
   boot.supportedFilesystems = [ "btrfs" ];
@@ -65,8 +71,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.btrfs-progs}/bin/btrfs subvolume show /volume2/.snapshots >/dev/null 2>&1 || ${pkgs.btrfs-progs}/bin/btrfs subvolume create /volume2/.snapshots'";
-      ExecStartPost = "${pkgs.coreutils}/bin/chmod 0750 /volume2/.snapshots";
+      ExecStart = ensureSnapshots;
     };
   };
 
@@ -84,6 +89,8 @@ in
   systemd.services."btrfs-scrub-volume2" = {
     after = [ "volume2.mount" ];
     requires = [ "volume2.mount" ];
+    # btrfs-progs owns persisted scrub state and resume semantics, so the
+    # native tool deliberately keeps its CLI as the kernel/userspace edge.
     serviceConfig.ExecStart = lib.mkForce scrubStartOrResume;
   };
 

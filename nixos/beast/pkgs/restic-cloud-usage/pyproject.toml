@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "restic-cloud-usage"
+version = "0.1.0"
+description = "Export B2 bucket and restic repository usage metrics"
+requires-python = ">=3.11"
+dependencies = [
+  "atomic-file-writes",
+  "b2sdk",
+  "prometheus-client",
+  "pydantic",
+]
+
+[project.scripts]
+restic-cloud-usage = "restic_cloud_usage.cli:main"
+restic-cloud-offload = "restic_cloud_usage.offload_cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+restic_cloud_usage = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=restic_cloud_usage --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/restic_cloud_usage"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

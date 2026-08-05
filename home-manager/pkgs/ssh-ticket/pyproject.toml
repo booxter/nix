@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ssh-ticket"
+version = "0.1.0"
+description = "Issue per-host short-lived SSH user certificates"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "pydantic"]
+
+[project.scripts]
+ssh-ticket = "ssh_ticket.app:cli"
+ssht = "ssh_ticket.app:ssht_cli"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=ssh_ticket --cov-report=term-missing --cov-fail-under=85"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/ssh_ticket"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

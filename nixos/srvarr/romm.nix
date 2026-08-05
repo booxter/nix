@@ -3,6 +3,8 @@
   hostInventory,
   lib,
   pkgs,
+  srvarrPkgs,
+  utils,
   ...
 }:
 let
@@ -40,70 +42,27 @@ let
   user = "romm";
   apiPort = 5081;
   redisPort = 6380;
-  rommDefaultCoreHeadReplacement = "  <script src=\"/assets/romm-default-core.js\"></script>\n</head>";
-  rommDefaultCoreScript = pkgs.writeText "romm-default-core.js" ''
-    (() => {
-      const platform = "arcade";
-      const defaultCore = "mame2003_plus";
-      const previousDefaultCore = "mame2003";
-      const key = `player:''${platform}:core`;
-      const migrationKey = `player:''${platform}:core-default:''${defaultCore}`;
-
-      try {
-        const currentCore = window.localStorage.getItem(key);
-
-        if (currentCore === null) {
-          window.localStorage.setItem(key, defaultCore);
-          window.localStorage.setItem(migrationKey, "true");
-          return;
-        }
-
-        if (
-          currentCore === previousDefaultCore &&
-          window.localStorage.getItem(migrationKey) !== "true"
-        ) {
-          window.localStorage.setItem(key, defaultCore);
-          window.localStorage.setItem(migrationKey, "true");
-        }
-      } catch (_error) {
-        // Browser storage can be unavailable in restricted/private contexts.
-      }
-    })();
-  '';
-  rommReplaceFail = pkgs.writeShellScript "romm-replace-fail" ''
-    set -euo pipefail
-
-    if [ "$#" -ne 3 ]; then
-      echo "usage: $0 <file> <pattern> <replacement>" >&2
-      exit 2
-    fi
-
-    pattern=$2
-    replacement=$3
-
-    ${pkgs.perl}/bin/perl -0pi -e '
-      BEGIN {
-        $pattern = shift @ARGV;
-        $replacement = shift @ARGV;
-        $file = $ARGV[0] // "<input>";
-        $matches = 0;
-      }
-
-      $matches += s/\Q$pattern\E/$replacement/g;
-
-      END {
-        if ($matches == 0) {
-          print STDERR "replace-fail: pattern not found in $file\n";
-          exit 1;
-        }
-      }
-    ' "$pattern" "$replacement" "$1"
-  '';
   ociImages = import ../../lib/oci-images.nix { inherit pkgs; };
   rommImage = ociImages.romm.ref;
   rommImageFile = ociImages.romm.imageFile;
   rommService = hostInventory.servicesById.romm;
   rommOidcClientId = oidc.clients.romm.clientId;
+  rommDbInitCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.romm-tools "romm-db-init")
+    "--socket"
+    "/run/mysqld/mysqld.sock"
+  ];
+  rommAssetsCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.romm-tools "romm-prepare-assets")
+    "--socket-url"
+    "http+unix:///run/user/${toString accounts.uids.romm}/podman/podman.sock"
+    "--image-ref"
+    rommImage
+    "--image-file"
+    rommImageFile
+    "--state-dir"
+    stateDir
+  ];
 
   commonEnvironment = {
     PATH = "/src/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin";
@@ -148,11 +107,26 @@ let
     OIDC_USERNAME_ATTRIBUTE = "preferred_username";
   };
 
-  containerVolumes = [
-    "${rommBasePath}:/romm:rw"
-    "/run/mysqld:/run/mysqld:ro"
-    "${rommZipCacheModule}:/backend/utils/zip_cache.py:ro"
+  containerMounts = [
+    {
+      source = rommBasePath;
+      target = "/romm";
+      readOnly = false;
+    }
+    {
+      source = "/run/mysqld";
+      target = "/run/mysqld";
+      readOnly = true;
+    }
+    {
+      source = rommZipCacheModule;
+      target = "/backend/utils/zip_cache.py";
+      readOnly = true;
+    }
   ];
+  containerVolumes = map (
+    mount: "${mount.source}:${mount.target}:${if mount.readOnly then "ro" else "rw"}"
+  ) containerMounts;
 
   containerNetworks = [ "slirp4netns:allow_host_loopback=true" ];
 
@@ -166,7 +140,6 @@ let
     volumes = containerVolumes;
     networks = containerNetworks;
     workdir = "/backend";
-    entrypoint = "/bin/bash";
     extraOptions = [
       "--cap-drop=all"
       "--security-opt=no-new-privileges"
@@ -201,37 +174,26 @@ let
     HOME = stateDir;
     XDG_RUNTIME_DIR = "/run/user/${toString accounts.uids.romm}";
   };
-
-  podmanRunArgs = [
-    "--rm"
-    "--name=romm-setup"
-    "--log-driver=journald"
-    "--env-file"
+  rommSetupConfig = pkgs.writeText "romm-setup.json" (
+    builtins.toJSON {
+      image = rommImage;
+      environment = commonEnvironment;
+      mounts = map (mount: {
+        source = mount.source;
+        target = mount.target;
+        read_only = mount.readOnly;
+      }) containerMounts;
+    }
+  );
+  rommSetupCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' srvarrPkgs.romm-tools "romm-run-setup")
+    "--socket-url"
+    "http+unix:///run/user/${toString accounts.uids.romm}/podman/podman.sock"
+    "--config"
+    rommSetupConfig
+    "--environment-file"
     config.sops.templates."romm.env".path
-  ]
-  ++ lib.flatten (
-    lib.mapAttrsToList (name: value: [
-      "-e"
-      "${name}=${value}"
-    ]) commonEnvironment
-  )
-  ++ [
-    "-v"
-    "${rommBasePath}:/romm:rw"
-    "-v"
-    "/run/mysqld:/run/mysqld:ro"
-    "-v"
-    "${rommZipCacheModule}:/backend/utils/zip_cache.py:ro"
-    "--network=slirp4netns:allow_host_loopback=true"
-    "--cap-drop=all"
-    "--security-opt=no-new-privileges"
-    "--entrypoint"
-    "/bin/bash"
-    "--pull=never"
-    rommImage
   ];
-
-  podmanRunCommon = lib.concatMapStringsSep " " lib.escapeShellArg podmanRunArgs;
 in
 {
   sops.secrets = {
@@ -323,18 +285,8 @@ in
     serviceConfig = {
       Type = "oneshot";
       EnvironmentFile = config.sops.templates."romm.env".path;
+      ExecStart = rommDbInitCommand;
     };
-    script = ''
-      set -euo pipefail
-
-      ${pkgs.mariadb}/bin/mariadb --protocol=socket -u root <<SQL
-      CREATE DATABASE IF NOT EXISTS romm CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-      CREATE USER IF NOT EXISTS 'romm'@'localhost' IDENTIFIED BY '$DB_PASSWD';
-      ALTER USER 'romm'@'localhost' IDENTIFIED BY '$DB_PASSWD';
-      GRANT ALL PRIVILEGES ON romm.* TO 'romm'@'localhost';
-      FLUSH PRIVILEGES;
-      SQL
-    '';
   };
 
   systemd.services.romm-valkey = {
@@ -377,10 +329,6 @@ in
     wants = rommPodmanBaseUnits;
     after = rommPodmanBaseUnits ++ tmpfilesSetupUnits;
     unitConfig.RequiresMountsFor = stateDir;
-    path = [
-      pkgs.coreutils
-      config.virtualisation.podman.package
-    ];
     environment = podmanRuntimeEnvironment;
     serviceConfig = {
       Type = "oneshot";
@@ -389,65 +337,9 @@ in
       WorkingDirectory = stateDir;
       UMask = "0027";
       RemainAfterExit = true;
+      ExecStart = rommAssetsCommand;
+      TimeoutStartSec = "10min";
     };
-    script = ''
-      set -euo pipefail
-
-      podman load -i ${lib.escapeShellArg "${rommImageFile}"}
-      cid="$(podman create ${lib.escapeShellArg rommImage})"
-      cleanup() {
-        podman rm -f "$cid" >/dev/null 2>&1 || true
-      }
-      trap cleanup EXIT
-
-      rm -rf \
-        ${lib.escapeShellArg "${webDir}.new"} \
-        ${lib.escapeShellArg "${nginxDir}.new"} \
-        ${lib.escapeShellArg "${integrationDir}.new"}
-      mkdir -p \
-        ${lib.escapeShellArg "${webDir}.new"} \
-        ${lib.escapeShellArg "${nginxDir}.new"} \
-        ${lib.escapeShellArg "${integrationDir}.new/utils"}
-      podman cp "$cid:/var/www/html/." ${lib.escapeShellArg "${webDir}.new/"}
-      podman cp "$cid:/etc/nginx/js/." ${lib.escapeShellArg "${nginxDir}.new/"}
-      podman cp \
-        "$cid:/backend/utils/zip_cache.py" \
-        ${lib.escapeShellArg "${integrationDir}.new/utils/zip_cache.py"}
-
-      install -m 0644 ${rommDefaultCoreScript} ${lib.escapeShellArg "${webDir}.new/assets/romm-default-core.js"}
-      ${rommReplaceFail} \
-        ${lib.escapeShellArg "${webDir}.new/index.html"} \
-        ${lib.escapeShellArg "</head>"} \
-        ${lib.escapeShellArg rommDefaultCoreHeadReplacement}
-      ${rommReplaceFail} \
-        ${lib.escapeShellArg "${integrationDir}.new/utils/zip_cache.py"} \
-        ${lib.escapeShellArg "        os.rename(tmp_path, target)"} \
-        ${lib.escapeShellArg "        os.chmod(tmp_path, 0o640)\n        os.rename(tmp_path, target)"}
-
-      rm -f ${lib.escapeShellArg "${webDir}.new/assets/romm/resources"}
-      mkdir -p ${lib.escapeShellArg "${webDir}.new/assets/romm"}
-
-      rm -rf \
-        ${lib.escapeShellArg "${webDir}.old"} \
-        ${lib.escapeShellArg "${nginxDir}.old"} \
-        ${lib.escapeShellArg "${integrationDir}.old"}
-      if [ -e ${lib.escapeShellArg webDir} ]; then
-        mv ${lib.escapeShellArg webDir} ${lib.escapeShellArg "${webDir}.old"}
-      fi
-      if [ -e ${lib.escapeShellArg nginxDir} ]; then
-        mv ${lib.escapeShellArg nginxDir} ${lib.escapeShellArg "${nginxDir}.old"}
-      fi
-      if [ -e ${lib.escapeShellArg integrationDir} ]; then
-        mv ${lib.escapeShellArg integrationDir} ${lib.escapeShellArg "${integrationDir}.old"}
-      fi
-      mv ${lib.escapeShellArg "${webDir}.new"} ${lib.escapeShellArg webDir}
-      mv ${lib.escapeShellArg "${nginxDir}.new"} ${lib.escapeShellArg nginxDir}
-      mv ${lib.escapeShellArg "${integrationDir}.new"} ${lib.escapeShellArg integrationDir}
-      rm -rf \
-        ${lib.escapeShellArg "${webDir}.old"} \
-        ${lib.escapeShellArg "${nginxDir}.old"} \
-        ${lib.escapeShellArg "${integrationDir}.old"}
-    '';
   };
 
   systemd.services.romm-setup = {
@@ -463,10 +355,6 @@ in
       mediaDir
       stateDir
     ];
-    path = [
-      config.virtualisation.podman.package
-      pkgs.slirp4netns
-    ];
     environment = podmanRuntimeEnvironment;
     serviceConfig = {
       Type = "oneshot";
@@ -476,14 +364,9 @@ in
       RemainAfterExit = true;
       Restart = "on-failure";
       RestartSec = "5s";
+      ExecStart = rommSetupCommand;
+      TimeoutStartSec = "10min";
     };
-    script = ''
-      set -euo pipefail
-
-      podman load -i ${lib.escapeShellArg "${rommImageFile}"}
-      podman run ${podmanRunCommon} \
-        -c 'cd /backend && alembic upgrade head && python3 startup.py'
-    '';
   };
 
   virtualisation = {
@@ -493,27 +376,72 @@ in
       containers = {
         romm-api = commonContainer // {
           ports = [ "127.0.0.1:${toString apiPort}:${toString apiPort}" ];
+          entrypoint = "/src/.venv/bin/gunicorn";
           cmd = [
-            "-c"
-            "exec gunicorn --bind 0.0.0.0:${toString apiPort} --forwarded-allow-ips='*' --worker-class uvicorn_worker.UvicornWorker --workers 1 --timeout 300 --keep-alive 2 --max-requests 1000 --max-requests-jitter 100 --worker-connections 1000 --error-logfile - main:app"
+            "--bind"
+            "0.0.0.0:${toString apiPort}"
+            "--forwarded-allow-ips"
+            "*"
+            "--worker-class"
+            "uvicorn_worker.UvicornWorker"
+            "--workers"
+            "1"
+            "--timeout"
+            "300"
+            "--keep-alive"
+            "2"
+            "--max-requests"
+            "1000"
+            "--max-requests-jitter"
+            "100"
+            "--worker-connections"
+            "1000"
+            "--error-logfile"
+            "-"
+            "main:app"
           ];
         };
         romm-worker = commonContainer // {
+          entrypoint = "/src/.venv/bin/rq";
           cmd = [
-            "-c"
-            "exec rq worker --path /backend --url redis://10.0.2.2:${toString redisPort}/0 --results-ttl 86400 --logging_level INFO high default low"
+            "worker"
+            "--path"
+            "/backend"
+            "--url"
+            "redis://10.0.2.2:${toString redisPort}/0"
+            "--results-ttl"
+            "86400"
+            "--logging_level"
+            "INFO"
+            "high"
+            "default"
+            "low"
           ];
         };
         romm-scheduler = commonContainer // {
+          environment = commonEnvironment // {
+            RQ_REDIS_HOST = "10.0.2.2";
+            RQ_REDIS_PORT = toString redisPort;
+            RQ_REDIS_DB = "0";
+            RQ_REDIS_SSL = "0";
+          };
+          entrypoint = "/src/.venv/bin/rqscheduler";
           cmd = [
-            "-c"
-            "exec env RQ_REDIS_HOST=10.0.2.2 RQ_REDIS_PORT=${toString redisPort} RQ_REDIS_DB=0 RQ_REDIS_SSL=0 rqscheduler --path /backend --pid /tmp/rq_scheduler.pid"
+            "--path"
+            "/backend"
+            "--pid"
+            "/tmp/rq_scheduler.pid"
           ];
         };
         romm-watcher = commonContainer // {
+          entrypoint = "/src/.venv/bin/watchfiles";
+          # watchfiles' command-target interface intentionally accepts the
+          # child command as one argument; no shell wraps the container itself.
           cmd = [
-            "-c"
-            "exec watchfiles --target-type command 'python3 watcher.py' /romm/library"
+            "--target-type"
+            "command"
+            "/src/.venv/bin/python3 watcher.py"
+            "/romm/library"
           ];
         };
       };

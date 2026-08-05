@@ -3,7 +3,7 @@
   additions = final: _prev: import ../pkgs final.pkgs;
 
   modifications =
-    final: prev:
+    _: prev:
     let
       inherit (prev) lib;
 
@@ -58,6 +58,18 @@
     in
     {
       inherit (pkgsNixpkgsUnstable) claude-code;
+
+      pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
+        (pythonFinal: pythonPrev: {
+          # FIXME(nixpkgs): pystemd installs complete .pyi files but omits
+          # the PEP 561 marker. Fix this in the upstream nixpkgs dependency.
+          pystemd = pythonPrev.pystemd.overrideAttrs (old: {
+            postInstall = (old.postInstall or "") + ''
+              touch "$out/${pythonFinal.python.sitePackages}/pystemd/py.typed"
+            '';
+          });
+        })
+      ];
 
       bazarr =
         withStandaloneSsoReauthentication prev.bazarr ./bazarr-sso-reauthentication.patch

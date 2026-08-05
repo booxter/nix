@@ -8,12 +8,15 @@
 let
   gmailctlConfigDir = "${config.home.homeDirectory}/.gmailctl";
   gmailctlExe = lib.getExe' pkgs.gmailctl "gmailctl";
-  gmailctlKeepalive = pkgs.writeShellApplication {
-    name = "gmailctl-token-keepalive";
-    text = ''
-      exec ${gmailctlExe} --color=never --config ${lib.escapeShellArg gmailctlConfigDir} download --output /dev/null
-    '';
-  };
+  gmailctlKeepaliveCommand = [
+    gmailctlExe
+    "--color=never"
+    "--config"
+    gmailctlConfigDir
+    "download"
+    "--output"
+    "/dev/null"
+  ];
 in
 {
   home.packages = [
@@ -23,7 +26,7 @@ in
   launchd.agents.gmailctl-token-keepalive = lib.mkIf isDarwin {
     enable = true;
     config = {
-      ProgramArguments = [ (lib.getExe gmailctlKeepalive) ];
+      ProgramArguments = gmailctlKeepaliveCommand;
       ProcessType = "Background";
       StartCalendarInterval = {
         Weekday = 1;
@@ -39,7 +42,7 @@ in
 
     Service = {
       Type = "oneshot";
-      ExecStart = lib.getExe gmailctlKeepalive;
+      ExecStart = lib.escapeShellArgs gmailctlKeepaliveCommand;
     };
   };
 

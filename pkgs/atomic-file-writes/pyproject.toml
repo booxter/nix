@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atomic-file-writes"
+version = "0.1.0"
+description = "Typed durable atomic file replacement helpers"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+atomic_file_writes = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=atomic_file_writes --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/atomic_file_writes"]
+strict = true
+
+[tool.ruff]
+line-length = 100

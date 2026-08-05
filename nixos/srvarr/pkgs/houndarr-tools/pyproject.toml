@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "houndarr-tools"
+version = "0.1.0"
+description = "Readiness and status helpers for the srvarr Houndarr service"
+requires-python = ">=3.11"
+dependencies = ["httpx", "prometheus-client", "pydantic"]
+
+[project.scripts]
+houndarr-status-collector = "houndarr_tools.cli:status_main"
+wait-for-houndarr-arr-backends = "houndarr_tools.cli:wait_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+houndarr_tools = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=houndarr_tools --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/houndarr_tools"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

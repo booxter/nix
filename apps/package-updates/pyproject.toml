@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "package-update-tools"
+version = "0.1.0"
+description = "Typed package and OCI update automation for the repository"
+requires-python = ">=3.11"
+dependencies = ["atomic-file-writes", "natsort", "pydantic", "semantic-version"]
+
+[project.scripts]
+select-nodejs = "package_updates.nodejs:main"
+update-oci-images = "package_updates.oci:main"
+update-packages = "package_updates.packages:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=package_updates --cov-report=term-missing --cov-fail-under=95"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/package_updates"]
+strict = true
+
+[tool.ruff]
+line-length = 100

@@ -46,7 +46,6 @@ def _parser(program: str, transport: Transport) -> ArgumentParser:
     parser.add_argument("--allow-unfree", action="store_true")
     parser.add_argument("--ssh-option", action="append", default=[])
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--trusted", action="store_true")
     parser.add_argument("source")
     parser.add_argument("package_attribute")
     parser.add_argument("program_arguments", nargs=argparse.REMAINDER)
@@ -55,6 +54,20 @@ def _parser(program: str, transport: Transport) -> ArgumentParser:
 
 def _environment_bool(environment: Mapping[str, str], name: str) -> bool:
     return environment.get(name, "").lower() in {"1", "true", "yes"}
+
+
+def _current_xquartz_environment(
+    process: ProcessController,
+    environment: Mapping[str, str],
+) -> Mapping[str, str]:
+    # Long-lived shells can retain a socket from an earlier launchd GUI bootstrap.
+    result = process.run(["/bin/launchctl", "getenv", "DISPLAY"])
+    display = result.stdout.strip()
+    if result.returncode != 0 or not display:
+        raise RunError("Unable to determine the current XQuartz display through launchd.")
+    current = dict(environment)
+    current["DISPLAY"] = display
+    return current
 
 
 def main(
@@ -68,14 +81,13 @@ def main(
     stderr: TextIO = sys.stderr,
     uid: int | None = None,
     find_executable: Callable[[str], str | None] = shutil.which,
+    system: str | None = None,
 ) -> int:
     environ = os.environ if environment is None else environment
     program_name = program or ("xrun-nixpkgs" if transport is Transport.X11 else "wrun-nixpkgs")
     parser = _parser(program_name, transport)
     try:
         arguments = parser.parse_args(argv)
-        if arguments.trusted and transport is not Transport.X11:
-            raise UsageError("--trusted is only available for X11 forwarding")
     except UsageError as error:
         print(f"{program_name}: {error}", file=stderr)
         print(parser.format_usage(), end="", file=stderr)
@@ -94,12 +106,11 @@ def main(
         program_arguments=program_arguments,
     )
 
-    forwarding = "-Y" if arguments.trusted else "-X"
     if arguments.dry_run:
         print(f"ssh host: {host}", file=stdout)
         print(f"transport: {transport}", file=stdout)
         if transport is Transport.X11:
-            print(f"x11 forwarding: {forwarding}", file=stdout)
+            print("x11 forwarding: -Y", file=stdout)
         else:
             print(
                 f"remote waypipe: {environ.get('WRUN_NIXPKGS_REMOTE_WAYPIPE', 'waypipe')}",
@@ -111,11 +122,18 @@ def main(
         return 0
 
     controller = process or SystemProcessController()
+    local_environment = None
+    if transport is Transport.X11 and (sys.platform if system is None else system) == "darwin":
+        try:
+            local_environment = _current_xquartz_environment(controller, environ)
+        except RunError as error:
+            print(f"{program_name}: {error}", file=stderr)
+            return 1
     ssh = OpenSshSession(
         controller,
         host,
         tuple(arguments.ssh_option),
-        forwarding,
+        local_environment=local_environment,
     )
     if transport is Transport.X11:
         session: RemoteSession = ssh

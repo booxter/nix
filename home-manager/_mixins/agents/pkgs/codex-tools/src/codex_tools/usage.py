@@ -9,6 +9,7 @@ from codex_tools.http import JsonHttpClient
 from codex_tools.json import JsonObject
 from codex_tools.payloads import (
     PersonalUsagePayload,
+    RateLimitReachedTypePayload,
     ResetCreditsPayload,
     UsageWindowPayload,
     validate_payload,
@@ -118,6 +119,24 @@ def _window_kind(source: UsageWindowPayload | None) -> str | None:
     return None
 
 
+def _normalize_reached_type(
+    source: RateLimitReachedTypePayload | None,
+) -> str | None:
+    if source is None:
+        return None
+    for value in (source.type, source.details):
+        if value in {
+            "primary",
+            "primary_window",
+            "five_hour",
+            "secondary",
+            "secondary_window",
+            "weekly",
+        }:
+            return value
+    return None
+
+
 def _parse_expiry(value: str | None) -> int | None:
     if value is None:
         return None
@@ -182,7 +201,7 @@ def normalize_personal_usage(
     fallback_credits = payload.rate_limit_reset_credits
     reset_source = reset_payload or fallback_credits or ResetCreditsPayload()
 
-    reached_type = payload.rate_limit_reached_type
+    reached_type = _normalize_reached_type(payload.rate_limit_reached_type)
     if reached_type in {"primary", "primary_window"}:
         reached_type = _window_kind(primary) or reached_type
     elif reached_type in {"secondary", "secondary_window"}:

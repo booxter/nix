@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "audiobookshelf-tools"
+version = "0.1.0"
+description = "Reconcile srvarr Audiobookshelf settings"
+requires-python = ">=3.11"
+dependencies = ["httpx", "pydantic", "pystemd"]
+
+[project.scripts]
+audiobookshelf-backup-bootstrap = "audiobookshelf_tools.cli:backup_main"
+audiobookshelf-oidc-bootstrap = "audiobookshelf_tools.cli:oidc_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+audiobookshelf_tools = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q --cov=audiobookshelf_tools --cov-report=term-missing --cov-fail-under=90"
+testpaths = ["tests"]
+
+[tool.coverage.report]
+precision = 2
+
+[tool.mypy]
+files = ["src/audiobookshelf_tools"]
+plugins = ["pydantic.mypy"]
+strict = true
+
+[tool.ruff]
+line-length = 100

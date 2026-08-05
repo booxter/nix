@@ -3,6 +3,7 @@
   hostSpecName,
   lib,
   pkgs,
+  utils,
   ...
 }:
 let
@@ -10,13 +11,11 @@ let
   monitoringPackage = pkgs.callPackage ./package.nix { };
   alertmanagerPort = 9093;
   grafanaPort = config.services.grafana.settings.server.http_port;
-  validateAlertmanagerConfig = pkgs.writeShellApplication {
-    name = "validate-alertmanager-config";
-    runtimeInputs = [ config.services.prometheus.alertmanager.package ];
-    text = ''
-      exec amtool check-config /tmp/alert-manager-substituted.yaml
-    '';
-  };
+  validateAlertmanagerConfig = utils.escapeSystemdExecArgs [
+    (lib.getExe' config.services.prometheus.alertmanager.package "amtool")
+    "check-config"
+    "/tmp/alert-manager-substituted.yaml"
+  ];
 in
 {
   assertions = [
@@ -122,7 +121,7 @@ in
       LoadCredential = [
         "telegram-bot-token:${config.sops.secrets.grafanaAlertingTelegramBotToken.path}"
       ];
-      ExecStartPre = lib.mkAfter [ (lib.getExe validateAlertmanagerConfig) ];
+      ExecStartPre = lib.mkAfter [ validateAlertmanagerConfig ];
     };
   };
 }

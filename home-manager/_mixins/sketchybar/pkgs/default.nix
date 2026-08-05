@@ -26,31 +26,29 @@ let
     "stock"
     "volume"
   ];
-  nativePluginNames = [
+  goPluginNames = [
     "alertmanager"
+    "clock"
     "disk"
     "github-status"
     "ip_address"
     "jellyfin"
     "network"
+    "stock"
+    "volume"
   ];
-  packagedPluginNames = nativePluginNames ++ [
+  packagedPluginNames = goPluginNames ++ [
     "attention-inbox"
+    "battery"
     "codex"
     "codex-work"
     "spotify"
   ];
   shellPluginNames = builtins.filter (name: !builtins.elem name packagedPluginNames) pluginNames;
   sketchybarTools = pkgs.callPackage ./sketchybar-tools { };
-  spotifyApplet = pkgs.callPackage ./spotify { };
+  swiftApplets = pkgs.callPackage ./swift-applets { };
   runtimePath = lib.makeBinPath [
     pkgs.bash
-    pkgs.coreutils
-    pkgs.curl
-    pkgs.gawk
-    pkgs.gnugrep
-    pkgs.gnused
-    pkgs.jq
     pkgs.sketchybar
   ];
   pluginEnvironments = {
@@ -68,6 +66,9 @@ let
       JELLYFIN_CA_CERTIFICATE = jellyfin.caCertificate;
       JELLYFIN_CLIENT_CERTIFICATE = jellyfin.clientCertificate;
       JELLYFIN_CLIENT_KEY = jellyfin.clientKey;
+    };
+    stock = {
+      STOCK_API_URL = "https://api.nasdaq.com/api/quote";
     };
   };
   environmentArguments =
@@ -101,7 +102,7 @@ let
       makeWrapper ${lib.getExe' package executable} "$out/bin/${name}" \
         ${environmentArguments environment}
     '';
-  makeNativePluginWrapper = name: executable: makeBinaryPluginWrapper name sketchybarTools executable;
+  makeGoPluginWrapper = name: executable: makeBinaryPluginWrapper name sketchybarTools executable;
 in
 pkgs.stdenvNoCC.mkDerivation {
   pname = "sketchybar-plugins";
@@ -129,15 +130,19 @@ pkgs.stdenvNoCC.mkDerivation {
     install -m 0755 "$src"/*.sh "$out/libexec/sketchybar/"
     ${lib.concatMapStringsSep "\n" makePluginWrapper shellPluginNames}
     ${makeBinaryPluginWrapper "attention-inbox" attentionInbox "attention-inbox-sketchybar"}
+    ${makeBinaryPluginWrapper "battery" swiftApplets "sketchybar-battery"}
     ${makeBinaryPluginWrapper "codex" codexTools "codex-sketchybar"}
     ${makeBinaryPluginWrapper "codex-work" codexTools "codex-work-sketchybar"}
-    ${makeBinaryPluginWrapper "spotify" spotifyApplet "sketchybar-spotify"}
-    ${makeNativePluginWrapper "alertmanager" "sketchybar-alertmanager"}
-    ${makeNativePluginWrapper "disk" "sketchybar-disk"}
-    ${makeNativePluginWrapper "github-status" "sketchybar-github-status"}
-    ${makeNativePluginWrapper "ip_address" "sketchybar-ip-address"}
-    ${makeNativePluginWrapper "jellyfin" "sketchybar-jellyfin"}
-    ${makeNativePluginWrapper "network" "sketchybar-network"}
+    ${makeBinaryPluginWrapper "spotify" swiftApplets "sketchybar-spotify"}
+    ${makeGoPluginWrapper "alertmanager" "sketchybar-alertmanager"}
+    ${makeGoPluginWrapper "clock" "sketchybar-clock"}
+    ${makeGoPluginWrapper "disk" "sketchybar-disk"}
+    ${makeGoPluginWrapper "github-status" "sketchybar-github-status"}
+    ${makeGoPluginWrapper "ip_address" "sketchybar-ip-address"}
+    ${makeGoPluginWrapper "jellyfin" "sketchybar-jellyfin"}
+    ${makeGoPluginWrapper "network" "sketchybar-network"}
+    ${makeGoPluginWrapper "stock" "sketchybar-stock"}
+    ${makeGoPluginWrapper "volume" "sketchybar-volume"}
     runHook postInstall
   '';
 

@@ -181,7 +181,7 @@ were removed from the `Media Pipe` dashboard.
 
 ## Related Files
 
-- [pkgs/adaptive-upload-controller/main.py](./pkgs/adaptive-upload-controller/main.py)
+- [pkgs/adaptive-upload-controller](./pkgs/adaptive-upload-controller)
 - [pkgs/transmission-tracker-prioritizer/prioritizer.py](./pkgs/transmission-tracker-prioritizer/prioritizer.py)
 - [pkgs/transmission-tracker-prioritizer/collector.py](./pkgs/transmission-tracker-prioritizer/collector.py)
 - [pkgs/transmission-tracker-prioritizer/main.py](./pkgs/transmission-tracker-prioritizer/main.py)

@@ -2,7 +2,6 @@
   config,
   hostInventory,
   lib,
-  pkgs,
   srvarrPkgs,
   ...
 }:
@@ -16,16 +15,6 @@ let
   user = "shelfmark";
   shelfmarkService = hostInventory.servicesById.shelfmark;
   oidcClientId = oidc.clients.shelfmark.clientId;
-  ebookConverterHook = pkgs.writeShellApplication {
-    name = "shelfmark-ebook-converter-hook";
-    text = ''
-      export XDG_CONFIG_HOME=${lib.escapeShellArg ebookConverterStateDir}
-      exec ${lib.getExe srvarrPkgs.ebook-converter} hook \
-        --library-root ${lib.escapeShellArg booksDir} \
-        --lock-root ${lib.escapeShellArg ebookConverterStateDir} \
-        "$@"
-    '';
-  };
 in
 {
   sops.secrets."shelfmark/oidc/client_secret" = {
@@ -50,10 +39,12 @@ in
     environment = {
       AUTH_METHOD = "oidc";
       CONFIG_DIR = stateDir;
-      CUSTOM_SCRIPT = lib.getExe ebookConverterHook;
+      CUSTOM_SCRIPT = "${srvarrPkgs.ebook-converter}/bin/shelfmark-ebook-converter-hook";
       CUSTOM_SCRIPT_JSON_PAYLOAD = "true";
       CUSTOM_SCRIPT_PATH_MODE = "absolute";
       DISABLE_LOCAL_AUTH = "true";
+      EBOOK_CONVERTER_LIBRARY_ROOT = booksDir;
+      EBOOK_CONVERTER_STATE_DIR = ebookConverterStateDir;
       FLASK_HOST = "127.0.0.1";
       HIDE_LOCAL_AUTH = "true";
       OIDC_ADMIN_GROUP = "media-admins";

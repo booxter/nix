@@ -90,7 +90,7 @@ pkgs.testers.runNixOSTest {
   name = "oauth2-proxy-gate";
 
   containers.machine =
-    { config, lib, ... }:
+    { lib, ... }:
     {
       imports = [
         ../../nixos/_mixins/external-service.nix
