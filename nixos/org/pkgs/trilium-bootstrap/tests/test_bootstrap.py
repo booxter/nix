@@ -4,6 +4,7 @@ import io
 import socket
 import sqlite3
 import sys
+from contextlib import closing
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -34,13 +35,14 @@ def create_database(
         values.append(("mfaEnabled", "false"))
     if include_mfa_method:
         values.append(("mfaMethod", "local"))
-    with sqlite3.connect(path) as connection:
-        connection.execute("CREATE TABLE options (name TEXT PRIMARY KEY, value TEXT NOT NULL)")
-        connection.executemany("INSERT INTO options(name, value) VALUES (?, ?)", values)
+    with closing(sqlite3.connect(path)) as connection:
+        with connection:
+            connection.execute("CREATE TABLE options (name TEXT PRIMARY KEY, value TEXT NOT NULL)")
+            connection.executemany("INSERT INTO options(name, value) VALUES (?, ?)", values)
 
 
 def read_options(path: Path) -> dict[str, str]:
-    with sqlite3.connect(path) as connection:
+    with closing(sqlite3.connect(path)) as connection:
         return dict(connection.execute("SELECT name, value FROM options"))
 
 
@@ -192,3 +194,24 @@ def test_empty_password_is_rejected_before_server_start(tmp_path: Path) -> None:
 
     assert status == 1
     assert "password is empty" in stderr.getvalue()
+
+
+def test_missing_password_file_is_reported_before_server_start(tmp_path: Path) -> None:
+    stderr = io.StringIO()
+
+    status = run(
+        [
+            "--database",
+            str(tmp_path / "document.db"),
+            "--base-url",
+            "http://127.0.0.1:1",
+            "--password-file",
+            str(tmp_path / "missing-password"),
+            "--server-command",
+            "/definitely/not/a/server",
+        ],
+        stderr,
+    )
+
+    assert status == 1
+    assert "failed to read Trilium password" in stderr.getvalue()
