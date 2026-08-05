@@ -110,3 +110,21 @@ def test_http_adapter_reports_transport_and_model_failures() -> None:
                 await api.onboarding_status()
 
     asyncio.run(exercise())
+
+
+def test_missing_onboarding_view_means_onboarding_is_complete() -> None:
+    client = httpx.AsyncClient(
+        base_url="http://home",
+        transport=httpx.MockTransport(lambda _request: httpx.Response(404)),
+    )
+
+    async def exercise() -> None:
+        async with HttpxHomeAssistantApi("http://home", http_client=client) as api:
+            status = await api.onboarding_status()
+            assert status.complete
+            assert status.is_done("user")
+            assert status.is_done("core_config")
+            assert status.is_done("analytics")
+            assert status.is_done("integration")
+
+    asyncio.run(exercise())

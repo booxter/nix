@@ -17,6 +17,15 @@ class OnboardingStep(ApiModel):
 
 
 class OnboardingStatus(RootModel[list[OnboardingStep]]):
+    @classmethod
+    def completed(cls) -> OnboardingStatus:
+        return cls(
+            [
+                OnboardingStep(step=step, done=True)
+                for step in ("user", "core_config", "analytics", "integration")
+            ]
+        )
+
     def is_done(self, step: str) -> bool:
         return any(item.step == step and item.done for item in self.root)
 

@@ -83,6 +83,7 @@ class HttpxHomeAssistantApi:
         json_body: object | None = None,
         form: Mapping[str, str] | None = None,
         headers: Mapping[str, str] | None = None,
+        allow_not_found: bool = False,
     ) -> httpx.Response:
         try:
             response = await self.client.request(
@@ -92,7 +93,8 @@ class HttpxHomeAssistantApi:
                 data=form,
                 headers=headers,
             )
-            response.raise_for_status()
+            if not (allow_not_found and response.status_code == 404):
+                response.raise_for_status()
         except httpx.HTTPError as error:
             raise HomeAssistantUnavailable(f"Home Assistant request failed: {error}") from error
         return response
@@ -105,7 +107,9 @@ class HttpxHomeAssistantApi:
             raise HomeAssistantError(f"invalid Home Assistant response: {error}") from error
 
     async def onboarding_status(self) -> OnboardingStatus:
-        response = await self._request("GET", "/api/onboarding")
+        response = await self._request("GET", "/api/onboarding", allow_not_found=True)
+        if response.status_code == 404:
+            return OnboardingStatus.completed()
         return self._model(response, OnboardingStatus)
 
     async def create_owner(
