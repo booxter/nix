@@ -40,6 +40,7 @@
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
+    nur.inputs.nixpkgs.follows = "nixpkgs";
 
     proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
 
