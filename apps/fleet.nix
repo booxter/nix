@@ -106,8 +106,6 @@ let
 
   diffConfig = fleetTools;
 
-  getLocalBuilders = fleetTools;
-
   runCheckTarget = fleetTools;
 
   hbaFlash = pkgs.callPackage ./hba-flash {
@@ -128,7 +126,6 @@ in
     inherit deploy vm;
     diff = diffConfig;
     fleet-tools = fleetTools;
-    get-local-builders = getLocalBuilders;
     run-check-target = runCheckTarget;
     get-hosts = getHosts;
     issue-observability-cert = issueObservabilityCertPackage;
@@ -146,8 +143,6 @@ in
     deploy = appSpec "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
     vm = appSpec "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
     diff = appSpec "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
-    "get-local-builders" =
-      appSpec "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
     "run-check-target" =
       appSpec "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
     "issue-observability-cert" =

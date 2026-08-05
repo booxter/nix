@@ -29,10 +29,9 @@ fn main() -> ExitCode {
         flake_attribute: arguments.flake_attribute,
         label_plural: arguments.label_plural,
         label_singular: arguments.label_singular,
-        remote: env::var("REMOTE").map_or(true, |value| value != "false"),
         what: env::var("WHAT").ok(),
     };
-    let mut backend = SystemBackend::from_environment();
+    let mut backend = SystemBackend;
     match run(
         &options,
         CURRENT_SYSTEM,

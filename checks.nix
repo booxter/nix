@@ -27,7 +27,6 @@ helpers.forAllSystems (
     patch-context = pkgs.patch-context;
     deploy = fleet.packages.deploy;
     diff = fleet.packages.diff;
-    get-local-builders = fleet.packages.get-local-builders;
     reset-oidc = fleet.packages.reset-oidc;
     vm = fleet.packages.vm;
     wg-home-client-config = fleet.packages.wg-home-client-config;

@@ -1,13 +1,7 @@
-use std::env;
 use std::io::Write;
-use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use anyhow::{bail, Context, Result};
-
-use crate::local_builders::{
-    local_builders, read_builders, DEFAULT_NIX_CONF, DEFAULT_NIX_MACHINES,
-};
 
 const CHECK_NIX: &str = env!("CHECK_NIX");
 const CHECK_NOM: &str = env!("CHECK_NOM");
@@ -17,34 +11,16 @@ pub struct CheckTargetOptions {
     pub flake_attribute: String,
     pub label_plural: String,
     pub label_singular: String,
-    pub remote: bool,
     pub what: Option<String>,
 }
 
 pub trait Backend {
     fn evaluate_names(&mut self, flake_attribute: &str, system: &str) -> Result<Vec<String>>;
-    fn local_builders(&self) -> String;
-    fn build(&mut self, attribute: &str, builders: Option<&str>) -> Result<i32>;
+    fn build(&mut self, attribute: &str) -> Result<i32>;
 }
 
 #[derive(Debug)]
-pub struct SystemBackend {
-    nix_conf: PathBuf,
-    nix_machines: PathBuf,
-}
-
-impl SystemBackend {
-    pub fn from_environment() -> Self {
-        Self {
-            nix_conf: env::var_os("NIX_CONF")
-                .map(PathBuf::from)
-                .unwrap_or_else(|| PathBuf::from(DEFAULT_NIX_CONF)),
-            nix_machines: env::var_os("NIX_MACHINES")
-                .map(PathBuf::from)
-                .unwrap_or_else(|| PathBuf::from(DEFAULT_NIX_MACHINES)),
-        }
-    }
-}
+pub struct SystemBackend;
 
 impl Backend for SystemBackend {
     fn evaluate_names(&mut self, flake_attribute: &str, system: &str) -> Result<Vec<String>> {
@@ -67,18 +43,9 @@ impl Backend for SystemBackend {
             .with_context(|| format!("nix eval returned invalid JSON for {attribute}"))
     }
 
-    fn local_builders(&self) -> String {
-        read_builders(&self.nix_conf, &self.nix_machines)
-            .map(|builders| local_builders(&builders))
-            .unwrap_or_default()
-    }
-
-    fn build(&mut self, attribute: &str, builders: Option<&str>) -> Result<i32> {
+    fn build(&mut self, attribute: &str) -> Result<i32> {
         let mut command = Command::new(CHECK_NOM);
         command.arg("build");
-        if let Some(builders) = builders {
-            command.args(["--option", "builders", builders]);
-        }
         let status = command
             .args([attribute, "-L", "--show-trace"])
             .status()
@@ -103,7 +70,6 @@ pub fn run(
         current_system
     };
     let checks = backend.evaluate_names(&options.flake_attribute, check_system)?;
-    let local_builders = (!options.remote).then(|| backend.local_builders());
 
     let Some(what) = options.what.as_deref().filter(|value| !value.is_empty()) else {
         if checks.is_empty() {
@@ -112,10 +78,11 @@ pub fn run(
         }
         for check in checks {
             writeln!(output, "Running {check} on {check_system}...")?;
-            let status = backend.build(
-                &check_attribute(&options.flake_attribute, check_system, &check),
-                local_builders.as_deref(),
-            )?;
+            let status = backend.build(&check_attribute(
+                &options.flake_attribute,
+                check_system,
+                &check,
+            ))?;
             if status != 0 {
                 return Ok(status);
             }
@@ -124,10 +91,11 @@ pub fn run(
     };
 
     if checks.iter().any(|check| check == what) {
-        return backend.build(
-            &check_attribute(&options.flake_attribute, check_system, what),
-            local_builders.as_deref(),
-        );
+        return backend.build(&check_attribute(
+            &options.flake_attribute,
+            check_system,
+            what,
+        ));
     }
 
     writeln!(output, "Unknown {}: {what}", options.label_singular)?;
@@ -163,8 +131,7 @@ mod tests {
     #[derive(Default)]
     struct RecordingBackend {
         names: BTreeMap<(String, String), Vec<String>>,
-        builders: String,
-        builds: Vec<(String, Option<String>)>,
+        builds: Vec<String>,
         build_statuses: Vec<i32>,
         evaluations: Vec<(String, String)>,
     }
@@ -180,13 +147,8 @@ mod tests {
                 .unwrap_or_default())
         }
 
-        fn local_builders(&self) -> String {
-            self.builders.clone()
-        }
-
-        fn build(&mut self, attribute: &str, builders: Option<&str>) -> Result<i32> {
-            self.builds
-                .push((attribute.to_owned(), builders.map(ToOwned::to_owned)));
+        fn build(&mut self, attribute: &str) -> Result<i32> {
+            self.builds.push(attribute.to_owned());
             Ok(if self.build_statuses.is_empty() {
                 0
             } else {
@@ -200,7 +162,6 @@ mod tests {
             flake_attribute: flake_attribute.to_owned(),
             label_plural: "checks".to_owned(),
             label_singular: "check".to_owned(),
-            remote: true,
             what: what.map(ToOwned::to_owned),
         }
     }
@@ -215,7 +176,6 @@ mod tests {
     #[test]
     fn runs_every_check_in_order_and_stops_on_failure() {
         let mut backend = RecordingBackend {
-            builders: "localhost".to_owned(),
             build_statuses: vec![0, 7],
             ..RecordingBackend::default()
         };
@@ -225,25 +185,23 @@ mod tests {
             "aarch64-darwin",
             &["alpha", "beta", "gamma"],
         );
-        let mut request = options("checks", None);
-        request.remote = false;
         let mut output = Vec::new();
 
         assert_eq!(
-            run(&request, "aarch64-darwin", &mut backend, &mut output).unwrap(),
+            run(
+                &options("checks", None),
+                "aarch64-darwin",
+                &mut backend,
+                &mut output,
+            )
+            .unwrap(),
             7
         );
         assert_eq!(
             backend.builds,
             [
-                (
-                    ".#checks.aarch64-darwin.alpha".to_owned(),
-                    Some("localhost".to_owned())
-                ),
-                (
-                    ".#checks.aarch64-darwin.beta".to_owned(),
-                    Some("localhost".to_owned())
-                ),
+                ".#checks.aarch64-darwin.alpha".to_owned(),
+                ".#checks.aarch64-darwin.beta".to_owned(),
             ]
         );
         assert_eq!(
@@ -253,7 +211,7 @@ mod tests {
     }
 
     #[test]
-    fn runs_one_named_check_without_local_builder_override() {
+    fn runs_one_named_check() {
         let mut backend = RecordingBackend::default();
         add_names(&mut backend, "checks", "x86_64-linux", &["alpha", "beta"]);
         let mut output = Vec::new();
@@ -268,10 +226,7 @@ mod tests {
             .unwrap(),
             0
         );
-        assert_eq!(
-            backend.builds,
-            [(".#checks.x86_64-linux.beta".to_owned(), None)]
-        );
+        assert_eq!(backend.builds, [".#checks.x86_64-linux.beta".to_owned()]);
         assert!(output.is_empty());
     }
 
@@ -292,7 +247,7 @@ mod tests {
         );
         assert_eq!(
             backend.builds,
-            [(".#nixosTests.aarch64-linux.boot".to_owned(), None)]
+            [".#nixosTests.aarch64-linux.boot".to_owned()]
         );
     }
 

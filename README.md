@@ -9,7 +9,6 @@ This repo provides flake apps and scripts as the primary interfaces. The
 # Host builds
 make nixos WHAT=frame
 make darwin WHAT=mair
-make nixos WHAT=beast REMOTE=false
 
 # Local VMs
 nix run .#vm -- --help
