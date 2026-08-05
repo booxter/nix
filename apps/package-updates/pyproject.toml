@@ -7,7 +7,7 @@ name = "package-update-tools"
 version = "0.1.0"
 description = "Typed package and OCI update automation for the repository"
 requires-python = ">=3.11"
-dependencies = ["natsort", "pydantic", "semantic-version"]
+dependencies = ["atomic-file-writes", "natsort", "pydantic", "semantic-version"]
 
 [project.scripts]
 select-nodejs = "package_updates.nodejs:main"

@@ -4,11 +4,12 @@ import json
 import os
 import subprocess
 import sys
-import tempfile
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, TextIO
+
+from atomic_file_writes import write_text_atomic
 
 
 class UpdateError(RuntimeError):
@@ -93,26 +94,9 @@ def find_repo_root(start: Path) -> Path:
 
 
 def atomic_write_json(path: Path, value: object) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
     mode = path.stat().st_mode & 0o777 if path.exists() else 0o644
-    temporary_path: Path | None = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            "w",
-            dir=path.parent,
-            prefix=f".{path.name}.tmp.",
-            delete=False,
-        ) as temporary:
-            temporary_path = Path(temporary.name)
-            json.dump(value, temporary, indent=2, sort_keys=True)
-            temporary.write("\n")
-            temporary.flush()
-            os.fsync(temporary.fileno())
-        temporary_path.chmod(mode)
-        temporary_path.replace(path)
-    finally:
-        if temporary_path is not None and temporary_path.exists():
-            temporary_path.unlink()
+    content = json.dumps(value, indent=2, sort_keys=True) + "\n"
+    write_text_atomic(path, content, mode=mode)
 
 
 def checked(result: CommandResult, description: str) -> str:

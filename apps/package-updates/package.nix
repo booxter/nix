@@ -1,6 +1,7 @@
 { pkgs }:
 let
   pythonPackages = pkgs.python3.pkgs;
+  atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
 in
 pythonPackages.buildPythonApplication {
   pname = "package-update-tools";
@@ -18,6 +19,7 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
   dependencies = with pythonPackages; [
+    atomicFileWrites
     natsort
     pydantic
     semantic-version
