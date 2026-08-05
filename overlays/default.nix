@@ -30,7 +30,13 @@
       );
     in
     {
-      inherit (pkgsNixpkgsUnstable) claude-code;
+      inherit (pkgsNixpkgsUnstable) aerospace claude-code codex;
+
+      # CI renders two-revision config diffs by calling standalone dix, not
+      # nh's internal dix library. Stable dix 1.4.x omits the per-package size
+      # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI
+      # on unstable until the stable branch catches up.
+      inherit (pkgsNixpkgsUnstable) dix;
 
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
         (pythonFinal: pythonPrev: {
@@ -43,9 +49,6 @@
           });
         })
       ];
-
-      # Pick up the latest window-management fixes ahead of the stable branch.
-      inherit (pkgsNixpkgsUnstable) aerospace;
 
       # Build passthru.tests for all changed packages with --tests. Drop when
       # https://github.com/Mic92/nixpkgs-review/pull/397 lands in nixpkgs-review.
@@ -66,12 +69,6 @@
         ];
       });
 
-      # CI renders two-revision config diffs by calling standalone dix, not
-      # nh's internal dix library. Stable dix 1.4.x omits the per-package size
-      # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI
-      # on unstable until the stable branch catches up.
-      inherit (pkgsNixpkgsUnstable) dix;
-
       # Support Kubernetes 1.36 while carrying the nixpkgs update.
       # https://github.com/NixOS/nixpkgs/pull/539773
       kind = prev.kind.overrideAttrs (old: {
@@ -90,8 +87,6 @@
           })
         ];
       });
-
-      inherit (pkgsNixpkgsUnstable) codex;
 
       lolek =
         let
