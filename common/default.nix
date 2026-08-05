@@ -15,8 +15,9 @@ let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   canUsePersonalBuilders = !isWork && isDesktop;
   canUseWorkBuilders = isWork && !isBuilder;
+  workUserKey = readPublicKey ../public-keys/users/jgwxhwdl4x.pub;
   workKeys = [
-    (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
+    workUserKey
     (readPublicKey ../public-keys/users/jgwxhwdl4x-nix-builder.pub)
   ];
   personalKeys = [
@@ -25,6 +26,7 @@ let
     (readPublicKey ../public-keys/users/frame.pub)
     (readPublicKey ../public-keys/yubikey.pub)
     (readPublicKey ../public-keys/mair-secretive.pub)
+    workUserKey
   ];
 
 in
