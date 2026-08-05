@@ -10,7 +10,7 @@ let
   pythonPackages = python3.pkgs;
 in
 pythonPackages.buildPythonApplication {
-  pname = "restic-cloud-usage";
+  pname = "restic-tools";
   version = "0.1.0";
   pyproject = true;
 
@@ -35,10 +35,10 @@ pythonPackages.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/restic_cloud_usage
+    mypy src/restic_tools
   '';
 
-  pythonImportsCheck = [ "restic_cloud_usage" ];
+  pythonImportsCheck = [ "restic_tools" ];
 
   postFixup = ''
     wrapProgram "$out/bin/restic-cloud-usage" \
@@ -48,7 +48,7 @@ pythonPackages.buildPythonApplication {
   '';
 
   meta = {
-    description = "Export B2 bucket and restic repository usage metrics";
+    description = "Restic backup utilities: cloud offload and B2 usage metrics";
     license = lib.licenses.mit;
     maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "restic-cloud-usage";

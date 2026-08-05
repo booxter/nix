@@ -1,7 +1,7 @@
 from prometheus_client.parser import text_string_to_metric_families
 
-from restic_cloud_usage.metrics import render_metrics
-from restic_cloud_usage.models import BucketState, ExporterState, RepositoryState
+from restic_tools.metrics import render_metrics
+from restic_tools.models import BucketState, ExporterState, RepositoryState
 
 from .test_collector import config
 

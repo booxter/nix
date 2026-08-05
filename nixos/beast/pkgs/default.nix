@@ -19,7 +19,7 @@ in
     src = inputs.jellarr;
   };
 
-  restic-cloud-usage = pkgs.callPackage ./restic-cloud-usage {
+  restic-tools = pkgs.callPackage ./restic-tools {
     inherit atomicFileWrites;
   };
 

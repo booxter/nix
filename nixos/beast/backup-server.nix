@@ -143,7 +143,7 @@ let
   mkCloudOffloadCommand =
     name:
     utils.escapeSystemdExecArgs [
-      (lib.getExe' beastPkgs.restic-cloud-usage "restic-cloud-offload")
+      (lib.getExe' beastPkgs.restic-tools "restic-cloud-offload")
       "--config"
       (mkCloudOffloadConfig name)
     ];
@@ -179,7 +179,7 @@ let
 in
 {
   imports = [
-    (import ./restic-cloud-usage.nix {
+    (import ./restic-tools.nix {
       inherit
         backupClients
         cloudBucketName

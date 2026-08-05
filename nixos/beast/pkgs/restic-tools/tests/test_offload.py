@@ -6,9 +6,9 @@ from pathlib import Path
 
 import pytest
 
-from restic_cloud_usage.models import OffloadConfig
-from restic_cloud_usage.offload import OffloadFailure, offload
-from restic_cloud_usage.offload_cli import parser, run
+from restic_tools.models import OffloadConfig
+from restic_tools.offload import OffloadFailure, offload
+from restic_tools.offload_cli import parser, run
 
 
 @dataclass

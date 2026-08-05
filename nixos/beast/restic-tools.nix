@@ -47,7 +47,7 @@ in
       Type = "oneshot";
       StateDirectory = stateDir;
       TimeoutStartSec = "2h";
-      ExecStart = "${beastPkgs.restic-cloud-usage}/bin/restic-cloud-usage --config ${usageConfig} --state-file /var/lib/${stateDir}/state.json --metrics-file ${textfileDir}/restic-cloud-usage.prom --restic-cache-dir /var/lib/${stateDir}/restic-cache";
+      ExecStart = "${beastPkgs.restic-tools}/bin/restic-cloud-usage --config ${usageConfig} --state-file /var/lib/${stateDir}/state.json --metrics-file ${textfileDir}/restic-cloud-usage.prom --restic-cache-dir /var/lib/${stateDir}/restic-cache";
     };
   };
 
