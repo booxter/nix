@@ -7,8 +7,9 @@ import time
 from pathlib import Path
 from typing import Callable
 
+from atomic_file_writes import write_text_atomic
+
 from .errors import CueSplitterError, ManualMatchRequired, NeedsAttention, SourceInvalid
-from .files import atomic_write
 from .lidarr import Lidarr
 from .media import (
     STAGING_DIR_NAME,
@@ -555,7 +556,8 @@ class CueSplitterService:
         self.store.save()
 
     def write_metrics(self, ok: bool) -> None:
-        atomic_write(
+        write_text_atomic(
             self.metrics_file,
             render_metrics(self.store.state, ok=ok, now=self.now()),
+            mode=0o644,
         )

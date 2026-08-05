@@ -3,10 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from atomic_file_writes import write_text_atomic
 from pydantic import TypeAdapter, ValidationError
 
 from .errors import CueSplitterError
-from .files import atomic_write
 
 
 ACTIVE_JOB_STATES = {
@@ -97,7 +97,7 @@ class StateStore:
 
     def save(self) -> None:
         content = STATE_ADAPTER.dump_json(self.state, indent=2).decode()
-        atomic_write(self.path, f"{content}\n")
+        write_text_atomic(self.path, f"{content}\n", mode=0o644)
 
     def job(self, download_id: str, *, title: str = "") -> Job:
         return self.state.jobs.setdefault(

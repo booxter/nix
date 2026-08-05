@@ -1,4 +1,5 @@
 {
+  atomicFileWrites,
   ffmpeg,
   flac,
   lib,
@@ -19,6 +20,7 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
 
   dependencies = with pythonPackages; [
+    atomicFileWrites
     aiopyarr
     prometheus-client
     pydantic

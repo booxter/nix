@@ -42,7 +42,9 @@ in
     inherit ebookConverterCli;
   };
 
-  lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter { };
+  lidarr-cue-splitter = pkgs.callPackage ./lidarr-cue-splitter {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
 
   network-tools = pkgs.callPackage ./network-tools { };
 
