@@ -97,7 +97,6 @@
         inputs.nix-darwin.lib.darwinSystem {
           specialArgs = hostSpecialArgs spec // {
             hmStateVersion = spec.hmStateVersion;
-            upsShutdownDelaySeconds = 900;
           };
           modules = [ ./darwin ] ++ (spec.extraModules or [ ]);
         };
