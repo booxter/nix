@@ -9,6 +9,7 @@ let
   srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
+  transmissionEndpointName = hostInventory.servicesById.transmission.internalEndpointName;
   tuning = config.host.srvarrTuning;
   wgNamespaceAddress = srvarrSpec.wgNamespace.namespaceAddress;
   # Keep Transmission a little below the conservative tc floor so
@@ -135,8 +136,8 @@ in
 
   host.internalHttps.services.transmission = {
     enable = true;
-    serverName = "tmission.${hostInventory.site.lan.domain}";
-    localAliases = [ "tmission" ];
+    serverName = "${transmissionEndpointName}.${hostInventory.site.lan.domain}";
+    localAliases = [ transmissionEndpointName ];
     upstream = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}";
     recommendedProxySettings = false;
     # Transmission RPC rejects the public LAN hostname, so preserve the

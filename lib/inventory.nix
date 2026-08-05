@@ -99,6 +99,7 @@ let
       blackboxProbe ? true,
       backendProbe ? null,
       glanceCategory ? null,
+      internalEndpointName ? id,
     }:
     let
       scope = if publicHost == null then "internal" else "external";
@@ -109,6 +110,7 @@ let
           glanceCategory
           icon
           id
+          internalEndpointName
           owner
           probePath
           scope
@@ -168,16 +170,16 @@ rec {
   toInternalHttpsServiceHosts =
     serviceName:
     let
-      mkHosts = label: [
-        "${label}.${site.lan.domain}"
-        label
-        (toLocalDnsName label)
-      ];
-      serviceLabels = {
-        transmission = [ "tmission" ];
-      };
+      endpointName = servicesById.${serviceName}.internalEndpointName;
     in
-    lib.unique (lib.concatMap mkHosts (serviceLabels.${serviceName} or [ serviceName ]));
+    if endpointName == null then
+      throw "service ${serviceName} does not have an internal HTTPS endpoint"
+    else
+      [
+        "${endpointName}.${site.lan.domain}"
+        endpointName
+        (toLocalDnsName endpointName)
+      ];
   toNixosHostCertificateDnsNames =
     spec:
     let
@@ -580,6 +582,7 @@ rec {
     }
     {
       id = "jellyfin";
+      internalEndpointName = null;
       owner = "beast";
       publicHost = "jf.${site.public.domain}";
       probePath = "/web/";
@@ -802,6 +805,7 @@ rec {
     }
     {
       id = "transmission";
+      internalEndpointName = "tmission";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe = {
