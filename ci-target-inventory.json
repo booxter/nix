@@ -321,23 +321,6 @@
   ],
   "nixosTests": [
     {
-      "attr": "nixosTests.x86_64-linux.cache",
-      "name": "NixOS test: cache",
-      "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "cache"
-        ],
-        "prefixes": [
-          "nixos/cache/",
-          "tests/nixos/cache.nix",
-          "tests/nixos/fixtures/atticd.env"
-        ]
-      },
-      "system": "x86_64-linux",
-      "warm": true
-    },
-    {
       "attr": "nixosTests.x86_64-linux.oauth2-proxy-gate",
       "name": "NixOS test: OAuth2 proxy gate",
       "runner": "ubuntu-latest",
