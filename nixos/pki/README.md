@@ -150,5 +150,4 @@ printf '%s' 'user@example.com' \
 ## Related Docs
 
 - [unifi-sync.md](./unifi-sync.md)
-- [http-to-https-rollout.md](./http-to-https-rollout.md)
 - [../../docs/pki-rotation-plan.md](../../docs/pki-rotation-plan.md)
