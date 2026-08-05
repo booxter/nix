@@ -6,17 +6,16 @@ from beast_storage_observability.disk_bays import DiskBayExporter
 from tests.metrics import text_samples
 
 
-def block_device(root: Path, name: str, serial: str) -> None:
-    device = root / name / "device"
-    device.mkdir(parents=True)
-    (device / "serial").write_text(f"{serial}\n", encoding="utf-8")
+class FakeLsbkSource:
+    def __init__(self, serials: dict[str, str] | None = None) -> None:
+        self._serials = serials or {}
+
+    def collect(self) -> dict[str, str]:
+        return dict(self._serials)
 
 
-def test_exports_visible_mapped_disks_from_sysfs(tmp_path: Path) -> None:
-    sys_block = tmp_path / "sys-block"
-    block_device(sys_block, "sda", "SERIAL-1")
-    block_device(sys_block, "sdb", "UNMAPPED")
-    (sys_block / "loop0").mkdir()
+def test_exports_visible_mapped_disks_from_lsblk(tmp_path: Path) -> None:
+    source = FakeLsbkSource({"SERIAL-1": "sda", "UNMAPPED": "sdb"})
     bay_map = tmp_path / "bay-map.json"
     bay_map.write_text(
         json.dumps(
@@ -44,7 +43,7 @@ def test_exports_visible_mapped_disks_from_sysfs(tmp_path: Path) -> None:
     assert (
         disk_bay_main(
             ["--bay-map", str(bay_map), "--output-file", str(output)],
-            DiskBayExporter(sys_block),
+            DiskBayExporter(source),
         )
         == 0
     )

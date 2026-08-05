@@ -5,6 +5,7 @@
   python3,
   ruff,
   storcli,
+  utillinux,
 }:
 let
   pythonPackages = python3.pkgs;
@@ -42,6 +43,8 @@ pythonPackages.buildPythonApplication {
   postFixup = ''
     wrapProgram "$out/bin/beast-hba-metrics" \
       --prefix PATH : ${lib.makeBinPath [ storcli ]}
+    wrapProgram "$out/bin/beast-disk-bay-metrics" \
+      --prefix PATH : ${lib.makeBinPath [ utillinux ]}
   '';
 
   meta = {

@@ -7,7 +7,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from .disk_bays import DiskBayExporter
+from .disk_bays import DiskBayExporter, SubprocessLsbkSource
 from .hba import HbaError, HbaExporter, SubprocessStorcliSource
 from .md import MdExporter
 
@@ -28,7 +28,9 @@ def disk_bay_main(
 ) -> int:
     arguments = disk_bay_parser().parse_args(argv if argv is not None else sys.argv[1:])
     try:
-        (exporter or DiskBayExporter()).run(arguments.bay_map, arguments.output_file)
+        (exporter or DiskBayExporter(SubprocessLsbkSource())).run(
+            arguments.bay_map, arguments.output_file
+        )
     except (OSError, ValidationError) as error:
         print(f"beast-disk-bay-metrics: {error}", file=sys.stderr)
         return 1
