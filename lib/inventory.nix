@@ -91,7 +91,6 @@ let
     hostSpecsByName: localDnsName:
     {
       id,
-      scope,
       owner,
       probePath,
       publicHost ? null,
@@ -99,10 +98,11 @@ let
       icon ? "sh:${id}",
       blackboxProbe ? true,
       backendProbe ? null,
-      showInGlance ? true,
       glanceCategory ? null,
     }:
     let
+      scope = if publicHost == null then "internal" else "external";
+      showInGlance = glanceCategory != null;
       service = {
         inherit
           blackboxProbe
@@ -130,12 +130,9 @@ let
           displayHost = localDnsName ownerSpec.name;
           probeHost = ownerSpec.name;
         };
-      category = service.glanceCategory or null;
+      category = glanceCategory;
       categoryLabel = if category == null then "<missing>" else category;
     in
-    assert lib.asserts.assertMsg (
-      !service.showInGlance || category != null
-    ) "Glance service ${service.id} must set glanceCategory";
     assert lib.asserts.assertMsg (
       category == null || builtins.elem category glanceCategoryIds
     ) "Glance service ${service.id} uses unknown glanceCategory '${categoryLabel}'";
@@ -198,16 +195,11 @@ rec {
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
-  srvarrAdminAppIds = [
-    "bazarr"
-    "houndarr"
-    "lidarr"
-    "prowlarr"
-    "radarr"
-    "sabnzbd"
-    "sonarr"
-    "transmission"
-  ];
+  srvarrAdminAppIds = map (service: service.id) (
+    builtins.filter (
+      service: service.owner == "srvarr" && service.glanceCategory == "media-admin"
+    ) services
+  );
   site = rec {
     public = {
       domain = "ihar.dev";
@@ -575,25 +567,20 @@ rec {
       id = "id";
       title = "SSO";
       icon = "sh:kanidm";
-      scope = "external";
       owner = "pki";
       publicHost = "id.${site.public.domain}";
       probePath = "/status";
-      showInGlance = false;
     }
     {
       id = "dash";
       title = "Dashboard";
       icon = "sh:glance";
-      scope = "external";
       owner = "srvarr";
       publicHost = "dash.${site.public.domain}";
       probePath = "/";
-      showInGlance = false;
     }
     {
       id = "jellyfin";
-      scope = "external";
       owner = "beast";
       publicHost = "jf.${site.public.domain}";
       probePath = "/web/";
@@ -603,7 +590,6 @@ rec {
       id = "jfstat";
       title = "Jellystat";
       icon = "di:jellystat";
-      scope = "internal";
       owner = "beast";
       probePath = "/auth/isConfigured";
       glanceCategory = "media-admin";
@@ -612,7 +598,6 @@ rec {
       id = "watchstate";
       title = "WatchState";
       icon = "sh:watchstate.png";
-      scope = "internal";
       owner = "beast";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/v1/api/system/healthcheck";
@@ -620,7 +605,6 @@ rec {
     }
     {
       id = "seerr";
-      scope = "external";
       owner = "srvarr";
       publicHost = "js.${site.public.domain}";
       probePath = "/login";
@@ -629,7 +613,6 @@ rec {
     {
       id = "romm";
       title = "RomM";
-      scope = "external";
       owner = "srvarr";
       publicHost = "game.${site.public.domain}";
       probePath = "/api/heartbeat";
@@ -637,7 +620,6 @@ rec {
     }
     {
       id = "grafana";
-      scope = "internal";
       owner = "fana";
       probePath = "/login";
       glanceCategory = "infrastructure";
@@ -646,7 +628,6 @@ rec {
       id = "home";
       title = "Home Assistant";
       icon = "sh:home-assistant";
-      scope = "internal";
       owner = "home";
       probePath = "/";
       glanceCategory = "infrastructure";
@@ -654,7 +635,6 @@ rec {
     {
       id = "houndarr";
       icon = "sh:houndarr.png";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health";
@@ -662,7 +642,6 @@ rec {
     }
     {
       id = "radarr";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
@@ -670,7 +649,6 @@ rec {
     }
     {
       id = "sonarr";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
@@ -678,7 +656,6 @@ rec {
     }
     {
       id = "lidarr";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
@@ -687,14 +664,11 @@ rec {
     {
       id = "letterboxd-list-radarr";
       title = "Letterboxd Radarr";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/";
-      showInGlance = false;
     }
     {
       id = "aurral";
-      scope = "external";
       owner = "srvarr";
       publicHost = "mu.${site.public.domain}";
       probePath = "/oauth2/sign_in";
@@ -703,7 +677,6 @@ rec {
     }
     {
       id = "audiobookshelf";
-      scope = "external";
       owner = "srvarr";
       publicHost = "au.${site.public.domain}";
       probePath = "";
@@ -713,7 +686,6 @@ rec {
       id = "pinepods";
       title = "PinePods";
       icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";
-      scope = "external";
       owner = "srvarr";
       publicHost = "pod.${site.public.domain}";
       probePath = "/api/health";
@@ -721,7 +693,6 @@ rec {
     }
     {
       id = "shelfmark";
-      scope = "external";
       owner = "srvarr";
       publicHost = "shelf.${site.public.domain}";
       probePath = "/api/health";
@@ -729,7 +700,6 @@ rec {
     }
     {
       id = "vikunja";
-      scope = "external";
       owner = "org";
       publicHost = "vi.${site.public.domain}";
       probePath = "";
@@ -739,7 +709,6 @@ rec {
       id = "notes";
       title = "Trilium Notes";
       icon = "sh:trilium-notes";
-      scope = "external";
       owner = "org";
       publicHost = "notes.${site.public.domain}";
       probePath = "/authenticate";
@@ -750,7 +719,6 @@ rec {
       id = "paperless";
       title = "Paperless";
       icon = "sh:paperless-ngx";
-      scope = "external";
       owner = "org";
       publicHost = "papers.${site.public.domain}";
       probePath = "/accounts/login/";
@@ -760,7 +728,6 @@ rec {
       id = "paperless-gpt";
       title = "Paperless GPT";
       icon = "sh:paperless-ngx";
-      scope = "internal";
       owner = "org";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/version";
@@ -770,7 +737,6 @@ rec {
       id = "llm";
       title = "LLM Gateway";
       icon = "sh:litellm";
-      scope = "external";
       owner = "org";
       publicHost = "llm.${site.public.domain}";
       probePath = "/health/liveliness";
@@ -780,7 +746,6 @@ rec {
       id = "ai";
       title = "Open WebUI";
       icon = "sh:open-webui";
-      scope = "external";
       owner = "org";
       publicHost = "ai.${site.public.domain}";
       probePath = "/";
@@ -790,7 +755,6 @@ rec {
       id = "search";
       title = "Search";
       icon = "sh:searxng";
-      scope = "external";
       owner = "org";
       publicHost = "search.${site.public.domain}";
       probePath = "/oauth2/sign_in";
@@ -801,7 +765,6 @@ rec {
       id = "goo";
       title = "Degoog";
       icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
-      scope = "external";
       owner = "org";
       publicHost = "goo.${site.public.domain}";
       probePath = "/oauth2/sign_in";
@@ -812,7 +775,6 @@ rec {
       id = "tg";
       title = "Telegram Archive";
       icon = "sh:telegram";
-      scope = "internal";
       owner = "org";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health";
@@ -821,15 +783,12 @@ rec {
     {
       id = "ollama";
       title = "Ollama";
-      scope = "internal";
       owner = "frame";
       probePath = "/";
       blackboxProbe = false;
-      showInGlance = false;
     }
     {
       id = "bazarr";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/system/ping";
@@ -837,7 +796,6 @@ rec {
     }
     {
       id = "prowlarr";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
@@ -845,7 +803,6 @@ rec {
     }
     {
       id = "transmission";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe = {
@@ -858,7 +815,6 @@ rec {
       id = "sabnzbd";
       title = "SABNZB";
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
-      scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/__probe/sabnzbd-version";
