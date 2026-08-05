@@ -35,6 +35,9 @@ pki_rotation = ["py.typed"]
 addopts = "-q --cov=pki_rotation --cov-report=term-missing --cov-fail-under=80"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/pki_rotation"]
 plugins = ["pydantic.mypy"]

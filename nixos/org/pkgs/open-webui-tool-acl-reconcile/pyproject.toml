@@ -22,6 +22,9 @@ where = ["src"]
 addopts = "-q --cov=open_webui_tool_acl_reconcile --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/open_webui_tool_acl_reconcile"]
 plugins = ["pydantic.mypy"]

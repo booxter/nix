@@ -24,6 +24,9 @@ where = ["src"]
 addopts = "-q --cov=package_updates --cov-report=term-missing --cov-fail-under=95"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/package_updates"]
 strict = true

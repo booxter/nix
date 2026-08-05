@@ -25,6 +25,9 @@ home_assistant_tools = ["py.typed"]
 addopts = "-q --cov=home_assistant_tools --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/home_assistant_tools"]
 plugins = ["pydantic.mypy"]

@@ -25,6 +25,9 @@ degoog_settings = ["py.typed"]
 addopts = "-q --cov=degoog_settings --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/degoog_settings"]
 plugins = ["pydantic.mypy"]

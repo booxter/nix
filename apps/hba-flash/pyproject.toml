@@ -25,6 +25,9 @@ hba_flash = ["py.typed"]
 addopts = "-q --cov=hba_flash --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/hba_flash"]
 strict = true

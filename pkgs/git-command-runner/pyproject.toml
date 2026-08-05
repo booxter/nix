@@ -22,6 +22,9 @@ git_command_runner = ["py.typed"]
 addopts = "-q --cov=git_command_runner --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/git_command_runner"]
 strict = true

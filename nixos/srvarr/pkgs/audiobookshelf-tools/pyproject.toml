@@ -26,6 +26,9 @@ audiobookshelf_tools = ["py.typed"]
 addopts = "-q --cov=audiobookshelf_tools --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/audiobookshelf_tools"]
 plugins = ["pydantic.mypy"]

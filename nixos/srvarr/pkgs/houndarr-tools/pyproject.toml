@@ -26,6 +26,9 @@ houndarr_tools = ["py.typed"]
 addopts = "-q --cov=houndarr_tools --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/houndarr_tools"]
 plugins = ["pydantic.mypy"]

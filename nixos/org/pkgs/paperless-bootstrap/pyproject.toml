@@ -21,6 +21,9 @@ paperless_bootstrap = ["py.typed"]
 addopts = "-q --cov=paperless_bootstrap --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/paperless_bootstrap"]
 strict = true

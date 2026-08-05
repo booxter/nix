@@ -21,6 +21,9 @@ where = ["src"]
 addopts = "-q --cov=check_commit_message --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/check_commit_message"]
 strict = true

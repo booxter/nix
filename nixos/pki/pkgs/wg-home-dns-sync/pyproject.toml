@@ -22,6 +22,9 @@ where = ["src"]
 addopts = "-q --cov=wg_home_dns_sync --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/wg_home_dns_sync"]
 plugins = ["pydantic.mypy"]

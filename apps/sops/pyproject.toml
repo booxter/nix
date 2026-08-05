@@ -33,6 +33,9 @@ where = ["src"]
 addopts = "-q --cov=sops_tools --cov-report=term-missing --cov-fail-under=75"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/sops_tools"]
 strict = true

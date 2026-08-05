@@ -25,6 +25,9 @@ dynamic_ip_updater = ["py.typed"]
 addopts = "-q --cov=dynamic_ip_updater --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/dynamic_ip_updater"]
 strict = true

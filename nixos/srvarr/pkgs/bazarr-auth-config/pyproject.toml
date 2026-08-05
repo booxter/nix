@@ -25,6 +25,9 @@ bazarr_auth_config = ["py.typed"]
 addopts = "-q --cov=bazarr_auth_config --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/bazarr_auth_config"]
 strict = true

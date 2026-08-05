@@ -22,6 +22,9 @@ where = ["src"]
 addopts = "-q --cov=paperless_gpt_configure --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/paperless_gpt_configure"]
 plugins = ["pydantic.mypy"]

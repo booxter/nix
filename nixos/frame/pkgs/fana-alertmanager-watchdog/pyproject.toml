@@ -22,6 +22,9 @@ where = ["src"]
 addopts = "-q --cov=fana_alertmanager_watchdog --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/fana_alertmanager_watchdog"]
 strict = true

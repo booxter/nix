@@ -23,6 +23,9 @@ strict = true
 addopts = "-q --cov=pki_certificates --cov-report=term-missing --cov-fail-under=70"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.ruff]
 line-length = 100
 

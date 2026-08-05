@@ -27,5 +27,8 @@ where = ["src"]
 addopts = "-q --cov=lidarr_cue_splitter --cov-report=term-missing --cov-fail-under=70"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.ruff]
 line-length = 100

@@ -22,6 +22,9 @@ atomic_file_writes = ["py.typed"]
 addopts = "-q --cov=atomic_file_writes --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/atomic_file_writes"]
 strict = true

@@ -21,6 +21,9 @@ where = ["src"]
 addopts = "-q --cov=get_ff_cookie --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/get_ff_cookie"]
 strict = true

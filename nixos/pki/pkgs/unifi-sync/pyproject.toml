@@ -24,6 +24,9 @@ unifi_sync = ["py.typed"]
 addopts = "-q --cov=unifi_sync --cov-report=term-missing --cov-fail-under=70"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/unifi_sync"]
 strict = true

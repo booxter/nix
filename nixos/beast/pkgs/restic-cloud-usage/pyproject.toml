@@ -31,6 +31,9 @@ restic_cloud_usage = ["py.typed"]
 addopts = "-q --cov=restic_cloud_usage --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/restic_cloud_usage"]
 plugins = ["pydantic.mypy"]

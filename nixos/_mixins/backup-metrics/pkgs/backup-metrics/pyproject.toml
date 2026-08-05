@@ -26,6 +26,9 @@ backup_metrics = ["py.typed"]
 addopts = "-q --cov=backup_metrics --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/backup_metrics"]
 plugins = ["pydantic.mypy"]

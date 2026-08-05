@@ -27,5 +27,8 @@ where = ["src"]
 addopts = "-q --cov=adaptive_upload_controller --cov-report=term-missing --cov-fail-under=55"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.ruff]
 line-length = 100

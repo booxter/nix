@@ -23,6 +23,9 @@ where = ["src"]
 addopts = "-q --cov=frame_observability --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/frame_observability"]
 strict = true

@@ -21,6 +21,9 @@ strict = true
 addopts = "-q --cov=backup_artifact_tools --cov-report=term-missing --cov-fail-under=70"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.ruff]
 line-length = 100
 

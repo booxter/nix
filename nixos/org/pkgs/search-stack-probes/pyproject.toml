@@ -26,6 +26,9 @@ search_stack_probes = ["py.typed"]
 addopts = "-q --cov=search_stack_probes --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/search_stack_probes"]
 plugins = ["pydantic.mypy"]

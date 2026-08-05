@@ -22,6 +22,9 @@ where = ["src"]
 addopts = "-q --cov=transmission_torrent_cleaner --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/transmission_torrent_cleaner"]
 plugins = ["pydantic.mypy"]

@@ -22,6 +22,9 @@ where = ["src"]
 addopts = "-q --cov=prox_deploy --cov-report=term-missing --cov-fail-under=95"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/prox_deploy"]
 strict = true

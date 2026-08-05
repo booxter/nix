@@ -23,6 +23,9 @@ where = ["src"]
 addopts = "-q --cov=srvarr_ebook_converter --cov-report=term-missing --cov-fail-under=70"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/srvarr_ebook_converter"]
 plugins = ["pydantic.mypy"]

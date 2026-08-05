@@ -22,6 +22,9 @@ where = ["src"]
 addopts = "-q --cov=oidc_synthetic_probe --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/oidc_synthetic_probe"]
 plugins = ["pydantic.mypy"]

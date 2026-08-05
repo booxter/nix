@@ -25,6 +25,9 @@ postgresql_role_password = ["py.typed"]
 addopts = "-q --cov=postgresql_role_password --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/postgresql_role_password"]
 strict = true

@@ -35,6 +35,9 @@ romm_tools = ["py.typed"]
 addopts = "-q --cov=romm_tools --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/romm_tools"]
 strict = true

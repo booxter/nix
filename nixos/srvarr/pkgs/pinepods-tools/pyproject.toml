@@ -26,6 +26,9 @@ pinepods_tools = ["py.typed"]
 addopts = "-q --cov=pinepods_tools --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/pinepods_tools"]
 plugins = ["pydantic.mypy"]

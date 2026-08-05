@@ -27,6 +27,9 @@ beast_storage_observability = ["py.typed"]
 addopts = "-q --cov=beast_storage_observability --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/beast_storage_observability"]
 plugins = ["pydantic.mypy"]

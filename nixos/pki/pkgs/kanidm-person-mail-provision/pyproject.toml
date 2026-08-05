@@ -22,6 +22,9 @@ where = ["src"]
 addopts = "-q --cov=kanidm_person_mail_provision --cov-report=term-missing --cov-fail-under=95"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/kanidm_person_mail_provision"]
 strict = true

@@ -23,6 +23,9 @@ where = ["src"]
 addopts = "-q --cov=ssh_ticket --cov-report=term-missing --cov-fail-under=85"
 testpaths = ["tests"]
 
+[tool.coverage.report]
+precision = 2
+
 [tool.mypy]
 files = ["src/ssh_ticket"]
 plugins = ["pydantic.mypy"]
