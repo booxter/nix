@@ -6,13 +6,13 @@ import logging
 from pathlib import Path
 import time
 
+from atomic_file_writes import write_text_atomic
 from transmission_common.transmission import (
     TransmissionRpcClient,
     TransmissionRpcError,
 )
 
 from .errors import ControllerError
-from .files import write_text_atomic
 from .metrics import render_metrics_text
 from .policy import (
     DecisionConfig,

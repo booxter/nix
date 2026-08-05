@@ -1,4 +1,5 @@
 {
+  atomicFileWrites,
   lib,
   python3,
   ruff,
@@ -17,6 +18,7 @@ pythonPackages.buildPythonApplication {
   build-system = [ pythonPackages.setuptools ];
 
   dependencies = with pythonPackages; [
+    atomicFileWrites
     httpx
     prometheus-client
     pydantic

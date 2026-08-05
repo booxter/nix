@@ -5,6 +5,7 @@ import datetime
 import logging
 from pathlib import Path
 
+from atomic_file_writes import write_text_atomic
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -14,7 +15,6 @@ from pydantic import (
 )
 
 from .errors import ControllerError
-from .files import write_text_atomic
 from .jellyfin import collect_media_stream_stats, fetch_url_text
 
 
