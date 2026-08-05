@@ -3,11 +3,7 @@
   username ? "ihrachyshka",
 }:
 let
-  mkApp = program: description: {
-    type = "app";
-    inherit program;
-    meta = { inherit description; };
-  };
+  appSpec = import ./app-spec.nix;
   hostInventory = import ../lib/inventory {
     inherit username;
     lib = pkgs.lib;
@@ -15,7 +11,7 @@ let
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wireguardGatewaySshHost = wgHome.gateway.host;
-  appPackages = import ./default.nix pkgs;
+  appPackages = import ./packages.nix pkgs;
 
   fleetInventory = {
     aliases =
@@ -146,33 +142,33 @@ in
     hba-flash = hbaFlash;
     wg-home-client-config = wgHomeClientConfig;
   };
-  apps = {
-    deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
-    vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
-    diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
+  appSpecs = {
+    deploy = appSpec "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
+    vm = appSpec "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
+    diff = appSpec "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
     "get-local-builders" =
-      mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+      appSpec "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
     "run-check-target" =
-      mkApp "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
+      appSpec "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
     "issue-observability-cert" =
-      mkApp "${issueObservabilityCertPackage}/bin/issue-observability-cert" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+      appSpec "${issueObservabilityCertPackage}/bin/issue-observability-cert" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
     "issue-internal-service-cert" =
-      mkApp "${issueInternalServiceCertPackage}/bin/issue-internal-service-cert" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+      appSpec "${issueInternalServiceCertPackage}/bin/issue-internal-service-cert" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
     "issue-proxmox-exporter-token" =
-      mkApp "${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
+      appSpec "${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
     "seerr-request-storage" =
-      mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
+      appSpec "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
     "seerr-update-user-tags" =
-      mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
+      appSpec "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
     "pki-rotation" =
-      mkApp "${pkiRotationPackage}/bin/pki-rotation" "Inspect repo-managed internal PKI certificates and export rotation status.";
+      appSpec "${pkiRotationPackage}/bin/pki-rotation" "Inspect repo-managed internal PKI certificates and export rotation status.";
     "reset-oidc" =
-      mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
+      appSpec "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
     "join-media-parts" =
-      mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
+      appSpec "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
     "hba-flash" =
-      mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
+      appSpec "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
     "wg-home-client-config" =
-      mkApp "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
+      appSpec "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
   };
 }

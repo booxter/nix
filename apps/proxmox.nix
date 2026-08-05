@@ -8,11 +8,7 @@ let
   hostInventory = import ../lib/inventory { lib = pkgs.lib; };
   vmSpecs = builtins.filter hostInventory.isNixosVM hostInventory.nixosHostSpecs;
   vmTypes = map (spec: spec.name) vmSpecs;
-  mkApp = program: description: {
-    type = "app";
-    inherit program;
-    meta = { inherit description; };
-  };
+  appSpec = import ./app-spec.nix;
   proxDeploy = pkgs.callPackage ./prox-deploy {
     nixmoxer = proxmoxPkgs.nixmoxer;
     inherit vmTypes;
@@ -22,7 +18,7 @@ in
   packages = {
     prox-deploy = proxDeploy;
   };
-  apps = {
-    prox-deploy = mkApp "${proxDeploy}/bin/prox-deploy" "Deploy a prox VM via nixmoxer.";
+  appSpecs = {
+    prox-deploy = appSpec "${proxDeploy}/bin/prox-deploy" "Deploy a prox VM via nixmoxer.";
   };
 }

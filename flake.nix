@@ -190,30 +190,15 @@
               outputs.overlays.modifications
             ];
           };
-          sopsApps = import ./apps/sops {
-            sopsTools = pkgs.sops-tools;
-          };
-          packageUpdates = import ./apps/package-updates { inherit pkgs; };
-          fleet = import ./apps/fleet.nix {
-            inherit pkgs username;
-          };
-          mkApp = program: description: {
-            type = "app";
-            inherit program;
-            meta = { inherit description; };
-          };
-          get-ff-cookie = pkgs.get-ff-cookie;
-          cookieApps = {
-            get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
-          };
-          repositoryApps = {
-            flake-input-update-summary = mkApp "${pkgs.flake-input-update-summary}/bin/flake-input-update-summary" "Generate a revision-linked flake input update summary.";
-          };
-          proxmox = import ./apps/proxmox.nix {
-            inherit inputs system;
-          };
         in
-        sopsApps // packageUpdates.apps // fleet.apps // proxmox.apps // cookieApps // repositoryApps
+        import ./apps {
+          inherit
+            inputs
+            pkgs
+            system
+            username
+            ;
+        }
       );
       formatter = helpers.forAllSystems (
         system:

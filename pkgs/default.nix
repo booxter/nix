@@ -1,7 +1,7 @@
 # You can build them using 'nix build .#example'
 pkgs:
 let
-  appPackages = import ../apps pkgs;
+  appPackages = import ../apps/packages.nix pkgs;
   atomicFileWrites = pkgs.python3Packages.callPackage ./atomic-file-writes { };
   gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
   hostInventory = import ../lib/inventory { inherit (pkgs) lib; };
