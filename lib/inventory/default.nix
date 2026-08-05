@@ -11,8 +11,8 @@ let
   frame = "frame";
   mmini = "mmini";
 
-  hostFactsFor = import ./inventory/hosts.nix { inherit frame lib username; };
-  serviceFacts = import ./inventory/services.nix { inherit publicDomain; };
+  hostFactsFor = import ./hosts.nix { inherit frame lib username; };
+  serviceFacts = import ./services.nix { inherit publicDomain; };
   glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
   publicServiceHosts = map (service: service.publicHost) (
     builtins.filter (service: service ? publicHost) serviceFacts.definitions
@@ -21,16 +21,16 @@ let
     inherit lanDomain publicDomain publicServiceHosts;
   };
 
-  sshTicketFacts = import ./inventory/ssh-ticket.nix {
+  sshTicketFacts = import ./ssh-ticket.nix {
     inherit
       frame
       mmini
       readPublicKey
       ;
   };
-  ssoFacts = import ./inventory/sso.nix;
-  siteFacts = import ./inventory/site.nix { inherit lanDomain publicDomain readPublicKey; };
-  yubiFacts = import ./inventory/yubi.nix { inherit frame mmini username; };
+  ssoFacts = import ./sso.nix;
+  siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
+  yubiFacts = import ./yubi.nix { inherit frame mmini username; };
 
   normalizeService =
     glanceCategoryIds: localDnsName:

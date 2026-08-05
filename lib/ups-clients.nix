@@ -1,6 +1,6 @@
 {
   lib,
-  hostInventory ? import ./inventory.nix { inherit lib; },
+  hostInventory ? import ./inventory { inherit lib; },
 }:
 let
   serverIsWork = server: (hostInventory.nixosHostSpecsByName.${server}.isWork or false);

@@ -11,7 +11,7 @@
 
 let
   inventory = builtins.fromJSON (builtins.readFile ../../../ci-target-inventory.json);
-  hostInventory = import ../../../lib/inventory.nix { inherit lib; };
+  hostInventory = import ../../../lib/inventory { inherit lib; };
   workHosts = lib.genAttrs (
     (map (spec: spec.name) (lib.filter (spec: spec.isWork or false) hostInventory.nixosHostSpecs))
     ++ (lib.attrNames (lib.filterAttrs (_: cfg: cfg.isWork or false) hostInventory.darwinHosts))

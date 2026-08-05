@@ -1,7 +1,7 @@
 pkgs:
 let
   atomicFileWrites = pkgs.python3Packages.callPackage ../pkgs/atomic-file-writes { };
-  hostInventory = import ../lib/inventory.nix { inherit (pkgs) lib; };
+  hostInventory = import ../lib/inventory { inherit (pkgs) lib; };
   sopsTools = import ./sops/package.nix { inherit hostInventory pkgs; };
   certificateTools = pkgs.callPackage ./pki-certificates {
     inherit atomicFileWrites hostInventory sopsTools;

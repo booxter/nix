@@ -8,7 +8,7 @@ let
     inherit program;
     meta = { inherit description; };
   };
-  hostInventory = import ../lib/inventory.nix {
+  hostInventory = import ../lib/inventory {
     inherit username;
     lib = pkgs.lib;
   };
