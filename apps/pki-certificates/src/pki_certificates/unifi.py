@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import os
-import tempfile
 from dataclasses import dataclass
 from pathlib import Path, PurePath
 
+from atomic_file_writes import write_text_atomic
 from sops_tools.errors import ToolError
 
 from .issuer import CertificateIssuer
@@ -22,22 +21,7 @@ def validate_basename(value: str) -> str:
 def write_output(path: Path, text: str, mode: int, *, force: bool) -> None:
     if path.exists() and not force:
         raise ToolError(f"refusing to overwrite existing file: {path}")
-    temporary_name: str | None = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            delete=False,
-        ) as temporary:
-            temporary.write(text)
-            temporary_name = temporary.name
-        os.chmod(temporary_name, mode)
-        os.replace(temporary_name, path)
-    finally:
-        if temporary_name is not None:
-            Path(temporary_name).unlink(missing_ok=True)
+    write_text_atomic(path, text, mode=mode)
 
 
 @dataclass(frozen=True)

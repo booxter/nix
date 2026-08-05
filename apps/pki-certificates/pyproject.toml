@@ -7,7 +7,7 @@ name = "pki-certificates"
 version = "0.1.0"
 description = "Issue and store fleet PKI certificates"
 requires-python = ">=3.11"
-dependencies = ["pydantic", "sops-tools"]
+dependencies = ["atomic-file-writes", "pydantic", "sops-tools"]
 
 [project.scripts]
 issue-internal-service-cert = "pki_certificates.cli:internal_main"

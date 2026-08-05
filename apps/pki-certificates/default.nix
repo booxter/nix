@@ -1,5 +1,6 @@
 {
   age-plugin-se,
+  atomicFileWrites,
   hostInventory,
   lib,
   makeWrapper,
@@ -63,6 +64,7 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
   dependencies = [
+    atomicFileWrites
     pythonPackages.pydantic
     sopsTools
   ];
