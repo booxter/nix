@@ -82,13 +82,15 @@ in
     open-webui = {
       wants = [ "searchless-ngx.service" ];
       after = [ "searchless-ngx.service" ];
-      postStart = ''
-        OPEN_WEBUI_BASE_URL=http://127.0.0.1:${toString config.services.open-webui.port} \
-        OPEN_WEBUI_ADMIN_EMAIL=${lib.escapeShellArg config.services.open-webui.environment.WEBUI_ADMIN_EMAIL} \
-        OPEN_WEBUI_ACCESS_GROUP=${lib.escapeShellArg paperlessOpenWebuiGroup} \
-        OPEN_WEBUI_TOOL_SERVER_ID=${lib.escapeShellArg paperlessToolServerId} \
-          ${lib.getExe orgPkgs.open-webui-tool-acl-reconcile}
-      '';
+      environment = {
+        OPEN_WEBUI_ACCESS_GROUP = paperlessOpenWebuiGroup;
+        OPEN_WEBUI_ADMIN_EMAIL = config.services.open-webui.environment.WEBUI_ADMIN_EMAIL;
+        OPEN_WEBUI_BASE_URL = "http://127.0.0.1:${toString config.services.open-webui.port}";
+        OPEN_WEBUI_TOOL_SERVER_ID = paperlessToolServerId;
+      };
+      serviceConfig.ExecStartPost = utils.escapeSystemdExecArgs [
+        (lib.getExe orgPkgs.open-webui-tool-acl-reconcile)
+      ];
     };
 
     searchless-chroma = {
