@@ -47,20 +47,6 @@ let
       hmFull = false;
       nspawnTestBuilder = true;
       resourceControl.diskSwapGiB = 8;
-      extraModules = [
-        (
-          { lib, ... }:
-          {
-            system.autoUpgrade = {
-              dates = "Mon 03:00";
-              rebootWindow = {
-                lower = lib.mkForce "02:59";
-                upper = lib.mkForce "06:00";
-              };
-            };
-          }
-        )
-      ];
     };
 
   labProxmoxSpec =

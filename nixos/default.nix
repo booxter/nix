@@ -37,6 +37,7 @@ in
       ./_mixins/auto-upgrade
       ./_mixins/backup-artifacts.nix
       ./_mixins/backup-metrics/default.nix
+      ./_mixins/builder.nix
       ./_mixins/external-service.nix
       ./_mixins/internal-https-service.nix
       ./_mixins/lan-wan-accounting

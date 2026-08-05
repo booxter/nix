@@ -86,13 +86,13 @@
         spec:
         inputs.nixpkgs.lib.nixosSystem {
           specialArgs = hostSpecialArgs spec;
-          modules = [ ./nixos ] ++ (spec.extraModules or [ ]);
+          modules = [ ./nixos ];
         };
       mkDarwin =
         spec:
         inputs.nix-darwin.lib.darwinSystem {
           specialArgs = hostSpecialArgs spec;
-          modules = [ ./darwin ] ++ (spec.extraModules or [ ]);
+          modules = [ ./darwin ];
         };
       perSystem =
         inputs.nixpkgs.lib.genAttrs
