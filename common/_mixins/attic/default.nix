@@ -1,16 +1,12 @@
 {
   config,
-  hostInventory,
   lib,
   hostname,
-  hostSpecName ? hostname,
   secretDomain,
   ...
 }:
 let
-  hostSecretName =
-    if builtins.hasAttr hostSpecName hostInventory.nixosHostSpecsByName then hostSpecName else hostname;
-  hostSecretFile = ../../../secrets/${secretDomain}/${hostSecretName}.yaml;
+  hostSecretFile = ../../../secrets/${secretDomain}/${hostname}.yaml;
 in
 lib.mkMerge [
   {

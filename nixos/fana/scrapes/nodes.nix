@@ -1,7 +1,7 @@
 {
   config,
   hostInventory,
-  hostSpecName,
+  hostname,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
@@ -97,9 +97,9 @@ in
           labels = {
             host_network_charts = "true";
             host_network_source = "node";
-            host_class = hostClassForName hostSpecName;
-            host_virtual = lib.boolToString (isVirtualNodeName hostSpecName);
-            instance = hostSpecName;
+            host_class = hostClassForName hostname;
+            host_virtual = lib.boolToString (isVirtualNodeName hostname);
+            instance = hostname;
             scrape_expectation = scrapeExpectationForHostConfig config;
           };
         }

@@ -1,7 +1,7 @@
 {
   config,
   hostInventory,
-  hostSpecName,
+  hostname,
   inputs,
   isVM,
   lib,
@@ -9,7 +9,7 @@
   ...
 }:
 let
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   bridgeName = "vmbr0";
   macAddress = hostSpec.macAddress or null;
   cores = hostSpec.cores or 4;

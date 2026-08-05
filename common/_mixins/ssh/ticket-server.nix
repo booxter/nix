@@ -2,8 +2,6 @@
   config,
   hostPlatform,
   hostInventory,
-  hostname,
-  hostSpecName ? hostname,
   lib,
   pkgs,
   username,
@@ -23,7 +21,6 @@ let
   defaultPrincipalNames = lib.unique [
     config.host.dnsName
     config.networking.hostName
-    hostSpecName
   ];
 in
 {
@@ -55,7 +52,6 @@ in
         lib.unique [
           config.host.dnsName
           config.networking.hostName
-          hostSpecName
         ]
       '';
       description = "Host identity names accepted as SSH certificate principals for ${username}.";
@@ -78,9 +74,8 @@ in
       default = lib.unique ([
         config.networking.hostName
         config.host.dnsName
-        hostSpecName
       ]);
-      defaultText = lib.literalExpression "[ config.networking.hostName config.host.dnsName hostSpecName ]";
+      defaultText = lib.literalExpression "[ config.networking.hostName config.host.dnsName ]";
       description = "Client-side names that resolve to this ticket scope.";
     };
 

@@ -52,12 +52,11 @@ let
         (
           {
             hostname,
-            hostSpecName ? hostname,
             lib,
             ...
           }:
           {
-            system.autoUpgrade = lib.mkIf (lib.hasPrefix "builder" hostSpecName) {
+            system.autoUpgrade = lib.mkIf (lib.hasPrefix "builder" hostname) {
               dates = "Mon 03:00";
               rebootWindow = {
                 lower = lib.mkForce "02:59";

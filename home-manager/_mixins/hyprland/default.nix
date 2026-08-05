@@ -1,7 +1,7 @@
 # TODO: refactor the module
 {
   hostInventory,
-  hostSpecName,
+  hostname,
   lib,
   pkgs,
   ...
@@ -9,7 +9,7 @@
 let
   super = "MOD1";
   cmdButton = "MOD4";
-  displays = hostInventory.nixosHostSpecsByName.${hostSpecName}.hardware.displays;
+  displays = hostInventory.nixosHostSpecsByName.${hostname}.hardware.displays;
   displaysByName = lib.listToAttrs (map (display: lib.nameValuePair display.name display) displays);
   inherit (displaysByName) left right;
   renderMonitor =

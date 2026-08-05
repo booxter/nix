@@ -26,7 +26,6 @@ rec {
     {
       hostname,
       stateVersion,
-      hostSpecName ? hostname,
       username ? defaultUsername,
       platform,
       virtPlatform ? platform,
@@ -50,7 +49,6 @@ rec {
           outputs
           hostInventory
           hostname
-          hostSpecName
           hostPlatform
           virtPlatform
           username
@@ -74,7 +72,7 @@ rec {
         (commonHMConfig {
           inherit
             username
-            hostSpecName
+            hostname
             hmFull
             isDesktop
             isWork
@@ -155,7 +153,6 @@ rec {
       hmStateVersion,
       username ? defaultUsername,
       platform,
-      hostSpecName ? hostname,
       hmFull ? true,
       isBuilder ? false,
       isDesktop ? false,
@@ -176,7 +173,6 @@ rec {
           outputs
           hostInventory
           hostname
-          hostSpecName
           hostPlatform
           username
           stateVersion
@@ -203,7 +199,7 @@ rec {
         (commonHMConfig {
           inherit
             username
-            hostSpecName
+            hostname
             hmFull
             isDesktop
             isWork

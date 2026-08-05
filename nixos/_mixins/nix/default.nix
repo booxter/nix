@@ -1,11 +1,11 @@
 {
   hostInventory,
-  hostSpecName,
+  hostname,
   lib,
   ...
 }:
 let
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
 in
 {
   nix.gc.dates = "*-*-* 03:15:00";

@@ -3,7 +3,6 @@
   lib,
   pkgs,
   hostname,
-  hostSpecName,
   hostInventory,
   stateVersion,
   upsShutdownDelaySeconds,
@@ -12,9 +11,9 @@
   ...
 }:
 let
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
+  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   configName = ./${hostSpec.name};
-  hostSecretFile = ../secrets + "/${secretDomain}/${hostSpecName}.yaml";
+  hostSecretFile = ../secrets + "/${secretDomain}/${hostname}.yaml";
   upsServerName = hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};

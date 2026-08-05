@@ -1,6 +1,6 @@
 {
   config,
-  hostSpecName,
+  hostname,
   lib,
   pkgs,
   utils,
@@ -29,7 +29,7 @@ in
 
       system.autoUpgrade = {
         enable = true;
-        flake = "github:booxter/nix#${hostSpecName}";
+        flake = "github:booxter/nix#${hostname}";
         flags = [
           "-L"
           "--show-trace"

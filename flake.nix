@@ -100,7 +100,6 @@
         let
           hostArgs = spec // {
             hostname = name;
-            hostSpecName = name;
           };
         in
         if hostInventory.isNixosVM spec then helpers.mkVM hostArgs else helpers.mkNixos hostArgs;
@@ -113,7 +112,6 @@
           cfg
           // {
             hostname = name;
-            hostSpecName = name;
           }
         )
       ) hostInventory.darwinHosts;

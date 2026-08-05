@@ -1,6 +1,5 @@
 {
   hostInventory,
-  hostSpecName,
   hostname,
   isVM ? false,
   lib,
@@ -8,7 +7,7 @@
   ...
 }:
 let
-  hostSpec = hostInventory.hostSpecsByName.${hostSpecName} or { };
+  hostSpec = hostInventory.hostSpecsByName.${hostname} or { };
   gpuFamilies = hostSpec.hardware.gpuFamilies or [ ];
   knownGpuFamilies = [
     "amd"

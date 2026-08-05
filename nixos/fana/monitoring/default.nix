@@ -1,6 +1,6 @@
 {
   config,
-  hostSpecName,
+  hostname,
   lib,
   pkgs,
   utils,
@@ -42,7 +42,7 @@ in
         static_configs = [
           {
             targets = [ "127.0.0.1:${toString alertmanagerPort}" ];
-            labels.instance = hostSpecName;
+            labels.instance = hostname;
           }
         ];
       }
@@ -51,7 +51,7 @@ in
         static_configs = [
           {
             targets = [ "127.0.0.1:${toString grafanaPort}" ];
-            labels.instance = hostSpecName;
+            labels.instance = hostname;
           }
         ];
       }
