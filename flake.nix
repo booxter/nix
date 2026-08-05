@@ -98,17 +98,12 @@
       specToNixosConfig =
         name: spec:
         let
-          extraModules = inputs.nixpkgs.lib.optional (spec ? dnsName) {
-            host.dnsName = spec.dnsName;
-          };
           args = removeAttrs spec [
             "hostKind"
             "isVM"
-            "dnsName"
             "name"
           ];
           hostArgs = args // {
-            extraModules = (args.extraModules or [ ]) ++ extraModules;
             hostname = name;
             hostSpecName = name;
           };

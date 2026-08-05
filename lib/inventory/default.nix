@@ -115,7 +115,6 @@ rec {
 
   isNixosVM = spec: spec.isVM or false;
   toSecretDomain = spec: spec.secretDomain or (if spec.isWork or false then "work" else "main");
-  toNixosPrimaryDnsName = spec: spec.dnsName or spec.name;
   toLocalDnsName = label: "${label}.local";
   toInternalHttpsServiceHosts =
     serviceName:
@@ -130,19 +129,11 @@ rec {
         endpointName
         (toLocalDnsName endpointName)
       ];
-  toNixosHostCertificateDnsNames =
-    spec:
-    let
-      primaryName = toNixosPrimaryDnsName spec;
-      shortName = spec.name;
-    in
-    lib.unique ([
-      primaryName
-      shortName
-      "${primaryName}.${site.lan.domain}"
-      "${shortName}.${site.lan.domain}"
-      (toLocalDnsName shortName)
-    ]);
+  toNixosHostCertificateDnsNames = spec: [
+    spec.name
+    "${spec.name}.${site.lan.domain}"
+    (toLocalDnsName spec.name)
+  ];
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHostSpecsByName.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";

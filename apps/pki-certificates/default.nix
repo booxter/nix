@@ -28,11 +28,7 @@ let
           configuration = if isLinux then "nixosConfigurations" else "darwinConfigurations";
           runtimeHost = spec.name;
           secretDomain = hostInventory.secretDomainsByHost.${name};
-          caUrl =
-            if caServer == null then
-              null
-            else
-              "https://${hostInventory.toNixosPrimaryDnsName spec}:${toString caServer.port}";
+          caUrl = if caServer == null then null else "https://${spec.name}:${toString caServer.port}";
         }
       ) hostInventory.systemsByHost
     )

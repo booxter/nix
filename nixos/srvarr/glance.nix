@@ -16,10 +16,7 @@ let
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
   pkiSpec = hostInventory.nixosHostSpecsByName.pki;
   pkiCaServer = pkiSpec.caServer;
-  pkiRootCaUrl =
-    "https://${hostInventory.toNixosPrimaryDnsName pkiSpec}:"
-    + toString pkiCaServer.port
-    + pkiCaServer.rootsPath;
+  pkiRootCaUrl = "https://${pkiSpec.name}:" + toString pkiCaServer.port + pkiCaServer.rootsPath;
   srvarrHttpsServices = config.host.internalHttps.services;
   internalHttpsServicesFor =
     service:

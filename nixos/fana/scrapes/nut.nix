@@ -28,7 +28,7 @@ let
       metrics_path = "/ups_metrics";
       params = {
         # Use the stable LAN DNS hostname rather than .local/mDNS.
-        server = [ (spec.dnsName or spec.name) ];
+        server = [ spec.name ];
         ups = [ (hostInventory.toUpsName spec.name) ];
       };
       static_configs = [
