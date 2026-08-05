@@ -16,7 +16,9 @@ const GIB: u64 = 1024 * 1024 * 1024;
 const DEPLOY_NH: &str = env!("DEPLOY_NH");
 const DEPLOY_NIX: &str = env!("DEPLOY_NIX");
 const DEPLOY_NIX_COLLECT_GARBAGE: &str = env!("DEPLOY_NIX_COLLECT_GARBAGE");
+const DEPLOY_NIX_STORE: &str = env!("DEPLOY_NIX_STORE");
 const NIXOS_REBUILD: &str = "/run/current-system/sw/bin/nixos-rebuild";
+const NIX_STORE: &str = "/nix/store";
 
 #[cfg(target_os = "macos")]
 const SUDO: &str = "/usr/bin/sudo";
@@ -155,12 +157,53 @@ impl Backend for SystemBackend {
 
 pub fn deploy(backend: &mut impl Backend, request: &DeployRequest) -> Result<()> {
     validate_request(backend, request)?;
+    let _gc_roots = protect_deployment_paths(backend, &request.source)?;
     ensure_free_space(backend, request.min_free_gib, request.gc_headroom_gib)?;
 
     match backend.target_os() {
         TargetOs::Darwin => deploy_darwin(backend, request),
         TargetOs::Linux => deploy_linux(backend, request),
     }
+}
+
+fn protect_deployment_paths(
+    backend: &mut impl Backend,
+    source: &Path,
+) -> Result<tempfile::TempDir> {
+    let directory = tempfile::tempdir().context("failed to create deployment GC root directory")?;
+    let executable = backend.current_exe()?;
+    let helper = enclosing_store_path(&executable).with_context(|| {
+        format!(
+            "deploy helper executable {} is not in the Nix store",
+            executable.display()
+        )
+    })?;
+    add_gc_root(backend, &directory, "helper", &helper)?;
+    if source.starts_with(NIX_STORE) {
+        add_gc_root(backend, &directory, "source", source)?;
+    }
+    Ok(directory)
+}
+
+fn add_gc_root(
+    backend: &mut impl Backend,
+    directory: &tempfile::TempDir,
+    name: &str,
+    path: &Path,
+) -> Result<()> {
+    backend.run(CommandSpec::new(DEPLOY_NIX_STORE).args([
+        "--add-root".to_owned(),
+        directory.path().join(name).display().to_string(),
+        "--indirect".to_owned(),
+        "--realise".to_owned(),
+        path.display().to_string(),
+    ]))
+}
+
+fn enclosing_store_path(path: &Path) -> Option<PathBuf> {
+    path.ancestors()
+        .find(|ancestor| ancestor.parent() == Some(Path::new(NIX_STORE)))
+        .map(Path::to_path_buf)
 }
 
 pub fn activate_darwin(backend: &mut impl Backend, system_config: &Path) -> Result<()> {
@@ -491,10 +534,11 @@ mod tests {
 
         deploy(&mut backend, &request(source.path())).expect("deployment should succeed");
 
-        assert_eq!(backend.commands[0].program, Path::new(SUDO));
-        assert!(backend.commands[0].args.contains(&"--max-freed".to_owned()));
-        assert_eq!(backend.commands[1].args.last().unwrap(), "-d");
-        assert_eq!(backend.commands[2].program, Path::new(DEPLOY_NH));
+        assert_eq!(backend.commands[0].program, Path::new(DEPLOY_NIX_STORE));
+        assert_eq!(backend.commands[1].program, Path::new(SUDO));
+        assert!(backend.commands[1].args.contains(&"--max-freed".to_owned()));
+        assert_eq!(backend.commands[2].args.last().unwrap(), "-d");
+        assert_eq!(backend.commands[3].program, Path::new(DEPLOY_NH));
     }
 
     #[test]
@@ -506,11 +550,11 @@ mod tests {
 
         deploy(&mut backend, &request).expect("deployment should succeed");
 
-        assert_eq!(backend.commands.len(), 1);
-        assert_eq!(backend.commands[0].program, Path::new(DEPLOY_NH));
-        assert_eq!(backend.commands[0].args[0..2], ["os", "switch"]);
-        assert_eq!(backend.commands[0].env["NIXOS_NO_CHECK"], "1");
-        assert_eq!(backend.commands[0].cwd.as_deref(), Some(source.path()));
+        assert_eq!(backend.commands.len(), 2);
+        assert_eq!(backend.commands[1].program, Path::new(DEPLOY_NH));
+        assert_eq!(backend.commands[1].args[0..2], ["os", "switch"]);
+        assert_eq!(backend.commands[1].env["NIXOS_NO_CHECK"], "1");
+        assert_eq!(backend.commands[1].cwd.as_deref(), Some(source.path()));
     }
 
     #[test]
@@ -523,10 +567,10 @@ mod tests {
 
         deploy(&mut backend, &request).expect("deployment should succeed");
 
-        assert_eq!(backend.commands[0].program, Path::new(SUDO));
-        assert_eq!(backend.commands[0].args[0], "NIXOS_NO_CHECK=1");
-        assert_eq!(backend.commands[0].args[1], NIXOS_REBUILD);
-        assert!(backend.commands[0]
+        assert_eq!(backend.commands[1].program, Path::new(SUDO));
+        assert_eq!(backend.commands[1].args[0], "NIXOS_NO_CHECK=1");
+        assert_eq!(backend.commands[1].args[1], NIXOS_REBUILD);
+        assert!(backend.commands[1]
             .args
             .contains(&"path:.#beast".to_owned()));
     }
@@ -556,17 +600,54 @@ mod tests {
 
         deploy(&mut backend, &request).expect("deployment should succeed");
 
-        assert_eq!(backend.commands.len(), 2);
-        assert_eq!(backend.commands[0].args[0..2], ["darwin", "build"]);
-        assert_eq!(backend.commands[1].program, Path::new(SUDO));
-        assert_eq!(backend.commands[1].args[0], "-A");
+        assert_eq!(backend.commands.len(), 3);
+        assert_eq!(backend.commands[1].args[0..2], ["darwin", "build"]);
+        assert_eq!(backend.commands[2].program, Path::new(SUDO));
+        assert_eq!(backend.commands[2].args[0], "-A");
         assert_eq!(
-            backend.commands[1].env["SUDO_ASKPASS"],
+            backend.commands[2].env["SUDO_ASKPASS"],
             backend.current_exe.display().to_string()
         );
-        assert!(backend.commands[1]
+        assert!(backend.commands[2]
             .args
             .contains(&"activate-darwin".to_owned()));
+    }
+
+    #[test]
+    fn finds_the_enclosing_nix_store_path() {
+        assert_eq!(
+            enclosing_store_path(Path::new(
+                "/nix/store/abc-fleet-tools/bin/.fleet-deploy-remote-wrapped"
+            )),
+            Some(PathBuf::from("/nix/store/abc-fleet-tools"))
+        );
+        assert_eq!(enclosing_store_path(Path::new("/tmp/helper")), None);
+    }
+
+    #[test]
+    fn protects_the_helper_and_source_with_indirect_gc_roots() {
+        let mut backend = FakeBackend::new(TargetOs::Linux);
+
+        let _roots = protect_deployment_paths(&mut backend, Path::new("/nix/store/source"))
+            .expect("deployment paths should be protected");
+
+        assert_eq!(backend.commands.len(), 2);
+        assert!(backend
+            .commands
+            .iter()
+            .all(|command| command.program == Path::new(DEPLOY_NIX_STORE)));
+        assert!(backend
+            .commands
+            .iter()
+            .all(|command| command.args.contains(&"--indirect".to_owned())));
+        assert_eq!(
+            backend.commands[0].args.last().unwrap(),
+            "/nix/store/deploy"
+        );
+        assert_eq!(
+            backend.commands[1].args.last().unwrap(),
+            "/nix/store/source"
+        );
     }
 
     #[test]

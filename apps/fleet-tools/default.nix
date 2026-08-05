@@ -46,6 +46,7 @@ rustPlatform.buildRustPackage {
   DEPLOY_FZF = lib.getExe fzf;
   DEPLOY_NIX = lib.getExe nix;
   DEPLOY_NIX_COLLECT_GARBAGE = lib.getExe' nix "nix-collect-garbage";
+  DEPLOY_NIX_STORE = lib.getExe' nix "nix-store";
   DEPLOY_REPO_URL = "https://github.com/booxter/nix.git";
   DEPLOY_SSH = lib.getExe openssh;
   FLEET_HOSTS_JSON = builtins.toJSON fleetInventory;
