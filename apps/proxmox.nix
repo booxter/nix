@@ -6,7 +6,7 @@ let
   pkgs = inputs.nixpkgs.legacyPackages.${system};
   proxmoxPkgs = inputs.proxmox-nixos.packages.${system};
   hostInventory = import ../lib/inventory { lib = pkgs.lib; };
-  vmSpecs = builtins.filter hostInventory.isNixosVM hostInventory.nixosHostSpecs;
+  vmSpecs = builtins.filter (spec: spec.isVM or false) hostInventory.nixosHostSpecs;
   vmTypes = map (spec: spec.name) vmSpecs;
   appSpec = import ./app-spec.nix;
   proxDeploy = pkgs.callPackage ./prox-deploy {

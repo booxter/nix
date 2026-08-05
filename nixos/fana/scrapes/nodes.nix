@@ -11,7 +11,7 @@ let
   isVirtualNodeName =
     name:
     builtins.hasAttr name hostInventory.nixosHostSpecsByName
-    && hostInventory.isNixosVM hostInventory.nixosHostSpecsByName.${name};
+    && (hostInventory.nixosHostSpecsByName.${name}.isVM or false);
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   scrapeExpectationForHostConfig =
     hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";

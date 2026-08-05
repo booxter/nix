@@ -74,7 +74,7 @@
         inherit username;
         lib = inputs.nixpkgs.lib;
       };
-      nixos = import ./nixos/configuration.nix {
+      mkNixos = import ./nixos/configuration.nix {
         defaultUsername = username;
         inherit
           hostInventory
@@ -110,14 +110,11 @@
           );
       selectPerSystem = outputName: builtins.mapAttrs (_: value: value.${outputName}) perSystem;
 
-      specToNixosConfig =
-        _: spec: if hostInventory.isNixosVM spec then nixos.mkVM spec else nixos.mkNixos spec;
-
     in
     {
       darwinConfigurations = builtins.mapAttrs (_: mkDarwin) hostInventory.darwinHosts;
 
-      nixosConfigurations = builtins.mapAttrs specToNixosConfig hostInventory.nixosHostSpecsByName;
+      nixosConfigurations = builtins.mapAttrs (_: mkNixos) hostInventory.nixosHostSpecsByName;
 
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";

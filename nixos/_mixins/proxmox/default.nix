@@ -3,13 +3,13 @@
   hostInventory,
   hostname,
   inputs,
-  isVM,
   lib,
   pkgs,
   ...
 }:
 let
   hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
+  isVM = hostSpec.isVM or false;
   bridgeName = "vmbr0";
   macAddress = hostSpec.macAddress or null;
   cores = hostSpec.cores or 4;

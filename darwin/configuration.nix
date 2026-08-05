@@ -22,7 +22,6 @@
 let
   hostname = name;
   hostPlatform = inputs.nixpkgs.lib.systems.elaborate platform;
-  isVM = false;
 in
 inputs.nix-darwin.lib.darwinSystem {
   specialArgs = {
@@ -41,7 +40,6 @@ inputs.nix-darwin.lib.darwinSystem {
       isLaptop
       isWork
       secretDomain
-      isVM
       ;
     upsShutdownDelaySeconds = 900;
   };

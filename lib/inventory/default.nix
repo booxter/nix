@@ -111,9 +111,6 @@ rec {
   sso = ssoFacts;
   yubi = yubiFacts;
 
-  virtPlatform = "aarch64-darwin";
-
-  isNixosVM = spec: spec.isVM or false;
   toSecretDomain = spec: spec.secretDomain or (if spec.isWork or false then "work" else "main");
   toLocalDnsName = label: "${label}.local";
   toInternalHttpsServiceHosts =

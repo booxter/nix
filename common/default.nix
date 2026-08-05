@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   username,
@@ -8,7 +9,6 @@
   isLaptop ? false,
   isWork,
   secretDomain,
-  isVM,
   ...
 }:
 let
@@ -62,6 +62,13 @@ in
   options.host.isWork = lib.mkOption {
     type = lib.types.bool;
     default = false;
+  };
+
+  options.host.isVM = lib.mkOption {
+    type = lib.types.bool;
+    readOnly = true;
+    internal = true;
+    description = "Whether this host is a virtual machine.";
   };
 
   options.host.secretDomain = lib.mkOption {
@@ -132,7 +139,7 @@ in
         zip
         ipmitool
       ]
-      ++ lib.optionals (!isWork && !isVM) [
+      ++ lib.optionals (!isWork && !config.host.isVM) [
         whichllm
       ]
       ++ lib.optionals isDesktop [

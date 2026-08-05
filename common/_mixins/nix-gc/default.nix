@@ -1,7 +1,7 @@
 {
+  config,
   hostInventory,
   hostname,
-  isVM,
   lib,
   ...
 }:
@@ -10,7 +10,7 @@ let
   vmDiskSizeGiB = hostInventory.nixosHostSpecsByName.${hostname}.diskSize or 100;
   # VM disks can be much smaller than physical hosts. Start GC at 20%
   # free and target 40%, capped at the physical-host thresholds.
-  minFreeGiB = if isVM then lib.min 40 (builtins.div vmDiskSizeGiB 5) else 40;
+  minFreeGiB = if config.host.isVM then lib.min 40 (builtins.div vmDiskSizeGiB 5) else 40;
   maxFreeGiB = 2 * minFreeGiB;
 in
 {

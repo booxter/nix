@@ -1,7 +1,7 @@
 {
+  config,
   hostInventory,
   hostname,
-  isVM ? false,
   lib,
   pkgs,
   ...
@@ -19,7 +19,7 @@ let
   validGpuFamilies = lib.filter (gpu: builtins.elem gpu knownGpuFamilies) gpuFamilies;
   nvtopSupport =
     (lib.genAttrs knownGpuFamilies (_: false)) // (lib.genAttrs validGpuFamilies (_: true));
-  shouldInstall = !isVM && gpuFamilies != [ ];
+  shouldInstall = !config.host.isVM && gpuFamilies != [ ];
   nvtopPackage =
     if builtins.length validGpuFamilies == 1 then
       pkgs.nvtopPackages.${builtins.head validGpuFamilies}

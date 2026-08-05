@@ -31,7 +31,6 @@ let
 in
 {
   # local qemu vms override filesystems
-  # TODO: move this special handling for FS to mkVM?
   fileSystems.${nfsPath} = cache;
   virtualisation.vmVariant.virtualisation.fileSystems.${nfsPath} = cache;
 

@@ -5,18 +5,18 @@
   hostname,
   inputs,
   isDesktop,
-  isVM,
   isWork,
   lib,
   pkgs,
   secretDomain,
   stateVersion,
-  upsShutdownDelaySeconds,
   username,
   ...
 }:
 let
   hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
+  isVM = hostSpec.isVM or false;
+  upsShutdownDelaySeconds = if isVM then 450 else 900;
   configName = ./${hostSpec.name};
   hostSecretFile = ../secrets + "/${secretDomain}/${hostname}.yaml";
   upsServerName = hostSpec.upsHost or null;
@@ -53,6 +53,7 @@ in
       ./_mixins/sso-oauth2-proxy-gate.nix
       ./_mixins/unifi-sync
       ./_mixins/user
+      ./_mixins/vm.nix
     ]
     ++ lib.optionals (!isVM) [
       ./_mixins/firmware
