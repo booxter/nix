@@ -87,7 +87,8 @@ let
       ];
     };
 
-  mkService =
+  normalizeService =
+    hostSpecsByName: localDnsName:
     {
       id,
       scope,
@@ -101,25 +102,34 @@ let
       showInGlance ? true,
       glanceCategory ? null,
     }:
-    {
-      inherit
-        blackboxProbe
-        glanceCategory
-        icon
-        id
-        owner
-        probePath
-        scope
-        showInGlance
-        title
-        ;
-    }
-    // lib.optionalAttrs (backendProbe != null) { inherit backendProbe; }
-    // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
-
-  assertValidService =
-    service:
     let
+      service = {
+        inherit
+          blackboxProbe
+          glanceCategory
+          icon
+          id
+          owner
+          probePath
+          scope
+          showInGlance
+          title
+          ;
+      }
+      // lib.optionalAttrs (backendProbe != null) { inherit backendProbe; }
+      // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
+      ownerSpec = hostSpecsByName.${owner};
+      resolvedService =
+        service
+        // lib.optionalAttrs (service ? publicHost) (rec {
+          inherit (service) publicHost;
+          url = "https://${publicHost}";
+          probeUrl = "${url}${service.probePath}";
+        })
+        // lib.optionalAttrs (service.scope == "internal") {
+          displayHost = localDnsName ownerSpec.name;
+          probeHost = ownerSpec.name;
+        };
       category = service.glanceCategory or null;
       categoryLabel = if category == null then "<missing>" else category;
     in
@@ -129,7 +139,7 @@ let
     assert lib.asserts.assertMsg (
       category == null || builtins.elem category glanceCategoryIds
     ) "Glance service ${service.id} uses unknown glanceCategory '${categoryLabel}'";
-    service;
+    resolvedService;
 
   mkDnsARecord = domain: ipv4Address: {
     type = "A_RECORD";
@@ -198,23 +208,6 @@ rec {
     "sonarr"
     "transmission"
   ];
-  resolveService =
-    service:
-    service
-    // lib.optionalAttrs (service ? publicHost) (rec {
-      inherit (service) publicHost;
-      url = "https://${publicHost}";
-      probeUrl = "${url}${service.probePath}";
-    })
-    // lib.optionalAttrs (service.scope == "internal") {
-      displayHost = toLocalDnsName (nixosHostSpecsByName.${service.owner}.name);
-      probeHost =
-        let
-          spec = nixosHostSpecsByName.${service.owner};
-        in
-        toNixosShortDnsName spec;
-    };
-
   site = rec {
     public = {
       domain = "ihar.dev";
@@ -577,8 +570,8 @@ rec {
     };
   };
 
-  services = map assertValidService [
-    (resolveService (mkService {
+  services = map (normalizeService nixosHostSpecsByName toLocalDnsName) [
+    {
       id = "id";
       title = "SSO";
       icon = "sh:kanidm";
@@ -587,8 +580,8 @@ rec {
       publicHost = "id.${site.public.domain}";
       probePath = "/status";
       showInGlance = false;
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "dash";
       title = "Dashboard";
       icon = "sh:glance";
@@ -597,16 +590,16 @@ rec {
       publicHost = "dash.${site.public.domain}";
       probePath = "/";
       showInGlance = false;
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "jellyfin";
       scope = "external";
       owner = "beast";
       publicHost = "jf.${site.public.domain}";
       probePath = "/web/";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "jfstat";
       title = "Jellystat";
       icon = "di:jellystat";
@@ -614,8 +607,8 @@ rec {
       owner = "beast";
       probePath = "/auth/isConfigured";
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "watchstate";
       title = "WatchState";
       icon = "sh:watchstate.png";
@@ -624,16 +617,16 @@ rec {
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/v1/api/system/healthcheck";
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "seerr";
       scope = "external";
       owner = "srvarr";
       publicHost = "js.${site.public.domain}";
       probePath = "/login";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "romm";
       title = "RomM";
       scope = "external";
@@ -641,15 +634,15 @@ rec {
       publicHost = "game.${site.public.domain}";
       probePath = "/api/heartbeat";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "grafana";
       scope = "internal";
       owner = "fana";
       probePath = "/login";
       glanceCategory = "infrastructure";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "home";
       title = "Home Assistant";
       icon = "sh:home-assistant";
@@ -657,8 +650,8 @@ rec {
       owner = "home";
       probePath = "/";
       glanceCategory = "infrastructure";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "houndarr";
       icon = "sh:houndarr.png";
       scope = "internal";
@@ -666,40 +659,40 @@ rec {
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health";
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "radarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "sonarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "lidarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "letterboxd-list-radarr";
       title = "Letterboxd Radarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/";
       showInGlance = false;
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "aurral";
       scope = "external";
       owner = "srvarr";
@@ -707,16 +700,16 @@ rec {
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health/live";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "audiobookshelf";
       scope = "external";
       owner = "srvarr";
       publicHost = "au.${site.public.domain}";
       probePath = "";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "pinepods";
       title = "PinePods";
       icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";
@@ -725,24 +718,24 @@ rec {
       publicHost = "pod.${site.public.domain}";
       probePath = "/api/health";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "shelfmark";
       scope = "external";
       owner = "srvarr";
       publicHost = "shelf.${site.public.domain}";
       probePath = "/api/health";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "vikunja";
       scope = "external";
       owner = "org";
       publicHost = "vi.${site.public.domain}";
       probePath = "";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "notes";
       title = "Trilium Notes";
       icon = "sh:trilium-notes";
@@ -752,8 +745,8 @@ rec {
       probePath = "/authenticate";
       backendProbe.path = "/api/health-check";
       glanceCategory = "infrastructure";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "paperless";
       title = "Paperless";
       icon = "sh:paperless-ngx";
@@ -762,8 +755,8 @@ rec {
       publicHost = "papers.${site.public.domain}";
       probePath = "/accounts/login/";
       glanceCategory = "infrastructure";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "paperless-gpt";
       title = "Paperless GPT";
       icon = "sh:paperless-ngx";
@@ -772,8 +765,8 @@ rec {
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/version";
       glanceCategory = "infrastructure";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "llm";
       title = "LLM Gateway";
       icon = "sh:litellm";
@@ -782,8 +775,8 @@ rec {
       publicHost = "llm.${site.public.domain}";
       probePath = "/health/liveliness";
       glanceCategory = "infrastructure";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "ai";
       title = "Open WebUI";
       icon = "sh:open-webui";
@@ -792,8 +785,8 @@ rec {
       publicHost = "ai.${site.public.domain}";
       probePath = "/";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "search";
       title = "Search";
       icon = "sh:searxng";
@@ -803,8 +796,8 @@ rec {
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/healthz";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "goo";
       title = "Degoog";
       icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
@@ -814,8 +807,8 @@ rec {
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/readyz";
       glanceCategory = "user";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "tg";
       title = "Telegram Archive";
       icon = "sh:telegram";
@@ -824,8 +817,8 @@ rec {
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health";
       glanceCategory = "infrastructure";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "ollama";
       title = "Ollama";
       scope = "internal";
@@ -833,24 +826,24 @@ rec {
       probePath = "/";
       blackboxProbe = false;
       showInGlance = false;
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "bazarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/system/ping";
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "prowlarr";
       scope = "internal";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "transmission";
       scope = "internal";
       owner = "srvarr";
@@ -860,8 +853,8 @@ rec {
         blackboxModule = "http_service_409";
       };
       glanceCategory = "media-admin";
-    }))
-    (resolveService (mkService {
+    }
+    {
       id = "sabnzbd";
       title = "SABNZB";
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
@@ -870,7 +863,7 @@ rec {
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/__probe/sabnzbd-version";
       glanceCategory = "media-admin";
-    }))
+    }
   ];
 
   staticDhcpReservations = [
