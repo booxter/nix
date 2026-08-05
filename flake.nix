@@ -136,7 +136,6 @@
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";
       formatter = selectPerSystem "formatter";
-      nixosTests = import ./nixos-tests.nix { inherit inputs helpers; };
 
       overlays = import ./overlays { inherit inputs; };
       packages = selectPerSystem "packages";

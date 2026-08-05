@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help nixos nixos-eval darwin darwin-eval check check-nixos
+.PHONY: help nixos nixos-eval darwin darwin-eval check
 
 ARGS = -L --show-trace
 NH_ARGS = --print-build-logs --show-trace
@@ -43,7 +43,6 @@ help:
 	@echo "  make darwin WHAT=<host>"
 	@echo "  make darwin-eval WHAT=<host>"
 	@echo "  make check [WHAT=<check-name>]"
-	@echo "  make check-nixos [WHAT=<nixos-check-name>]"
 
 nixos:
 	@known="$$($(call config-hosts,.#nixosConfigurations))"; \
@@ -71,6 +70,3 @@ darwin-eval:
 
 check:
 	@WHAT="$(WHAT)" nix run --quiet .#run-check-target -- checks checks check
-
-check-nixos:
-	@WHAT="$(WHAT)" nix run --quiet .#run-check-target -- nixosTests "nixos checks" "nixos check"

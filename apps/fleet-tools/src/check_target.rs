@@ -60,27 +60,18 @@ pub fn run(
     backend: &mut impl Backend,
     output: &mut impl Write,
 ) -> Result<i32> {
-    let linux_system = current_system
-        .strip_suffix("-darwin")
-        .map(|architecture| format!("{architecture}-linux"))
-        .unwrap_or_else(|| current_system.to_owned());
-    let check_system = if options.flake_attribute == "nixosTests" {
-        &linux_system
-    } else {
-        current_system
-    };
-    let checks = backend.evaluate_names(&options.flake_attribute, check_system)?;
+    let checks = backend.evaluate_names(&options.flake_attribute, current_system)?;
 
     let Some(what) = options.what.as_deref().filter(|value| !value.is_empty()) else {
         if checks.is_empty() {
-            writeln!(output, "No {} for {check_system}.", options.label_plural)?;
+            writeln!(output, "No {} for {current_system}.", options.label_plural)?;
             return Ok(0);
         }
         for check in checks {
-            writeln!(output, "Running {check} on {check_system}...")?;
+            writeln!(output, "Running {check} on {current_system}...")?;
             let status = backend.build(&check_attribute(
                 &options.flake_attribute,
-                check_system,
+                current_system,
                 &check,
             ))?;
             if status != 0 {
@@ -93,7 +84,7 @@ pub fn run(
     if checks.iter().any(|check| check == what) {
         return backend.build(&check_attribute(
             &options.flake_attribute,
-            check_system,
+            current_system,
             what,
         ));
     }
@@ -102,20 +93,13 @@ pub fn run(
     writeln!(output)?;
     writeln!(
         output,
-        "Available {} for {check_system}:",
+        "Available {} for {current_system}:",
         options.label_plural
     )?;
     for check in &checks {
         writeln!(output, "{check}")?;
     }
 
-    if options.flake_attribute == "checks" {
-        let nixos_checks = backend.evaluate_names("nixosTests", &linux_system)?;
-        if nixos_checks.iter().any(|check| check == what) {
-            writeln!(output)?;
-            writeln!(output, "Hint: use make check-nixos WHAT={what}")?;
-        }
-    }
     Ok(1)
 }
 
@@ -231,28 +215,7 @@ mod tests {
     }
 
     #[test]
-    fn runs_nixos_tests_for_matching_linux_architecture() {
-        let mut backend = RecordingBackend::default();
-        add_names(&mut backend, "nixosTests", "aarch64-linux", &["boot"]);
-
-        assert_eq!(
-            run(
-                &options("nixosTests", Some("boot")),
-                "aarch64-darwin",
-                &mut backend,
-                &mut Vec::new(),
-            )
-            .unwrap(),
-            0
-        );
-        assert_eq!(
-            backend.builds,
-            [".#nixosTests.aarch64-linux.boot".to_owned()]
-        );
-    }
-
-    #[test]
-    fn reports_empty_sets_and_unknown_checks_with_nixos_hint() {
+    fn reports_empty_sets_and_unknown_checks() {
         let mut empty = RecordingBackend::default();
         let mut empty_output = Vec::new();
         assert_eq!(
@@ -272,7 +235,6 @@ mod tests {
 
         let mut unknown = RecordingBackend::default();
         add_names(&mut unknown, "checks", "aarch64-darwin", &["darwin-check"]);
-        add_names(&mut unknown, "nixosTests", "aarch64-linux", &["boot"]);
         let mut output = Vec::new();
         assert_eq!(
             run(
@@ -287,7 +249,7 @@ mod tests {
         assert_eq!(
             String::from_utf8(output).unwrap(),
             "Unknown check: boot\n\nAvailable checks for aarch64-darwin:\n\
-             darwin-check\n\nHint: use make check-nixos WHAT=boot\n"
+             darwin-check\n"
         );
     }
 }

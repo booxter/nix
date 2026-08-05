@@ -451,14 +451,14 @@ Current scope:
 
 ### Integration Tests In CI
 
-If we add runtime or service-level alerting tests later, they should fit into
-the existing NixOS test path rather than bypassing it.
+If we add runtime or service-level alerting tests later, they should be exposed
+through the flake's standard `checks` output.
 
 That means:
 
 - fast static checks belong in flake `checks`
-- heavier runtime tests belong in NixOS test jobs where justified
-- the split should be based on cost, not on convenience
+- heavier runtime tests use the NixOS test framework where justified
+- both run through the same per-system check interface
 
 ### Practical Rule
 

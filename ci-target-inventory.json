@@ -319,9 +319,9 @@
       "warm": true
     }
   ],
-  "nixosTests": [
+  "regularChecks": [
     {
-      "attr": "nixosTests.x86_64-linux.oauth2-proxy-gate",
+      "attr": "checks.x86_64-linux.oauth2-proxy-gate",
       "name": "NixOS test: OAuth2 proxy gate",
       "runner": "ubuntu-latest",
       "selection": {
@@ -335,9 +335,7 @@
       },
       "system": "x86_64-linux",
       "warm": true
-    }
-  ],
-  "regularChecks": [
+    },
     {
       "attr": "checks.x86_64-linux.wg-home-client-config",
       "name": "wg-home-client-config",

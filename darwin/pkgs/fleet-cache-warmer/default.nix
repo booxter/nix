@@ -27,7 +27,7 @@ let
       throw "unknown fleet-cache-warmer targetFilter: ${targetFilter}";
   ciValidatedWarmTargets = map (target: target.attr) (
     lib.filter (target: target.warm && matchesTargetFilter target) (
-      inventory.buildTargets ++ inventory.regularChecks ++ inventory.nixosTests
+      inventory.buildTargets ++ inventory.regularChecks
     )
   );
 in

@@ -19,3 +19,6 @@
   update-oci-images = packageUpdates.packages.update-oci-images;
   prox-deploy = proxmox.packages.prox-deploy;
 }
+// pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
+  oauth2-proxy-gate = import ./tests/nixos/oauth2-proxy-gate.nix { inherit pkgs; };
+}
