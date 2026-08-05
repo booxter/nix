@@ -331,6 +331,7 @@ in
       isVM = true;
       name = "nv";
       platform = "x86_64-linux";
+      stateVersion = "25.11";
       isWork = true;
       upsHost = nvws;
       dhcpReservation = {
@@ -347,6 +348,7 @@ in
       isVM = true;
       name = "cache";
       platform = "x86_64-linux";
+      stateVersion = "25.11";
       upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
@@ -364,6 +366,7 @@ in
       isVM = true;
       name = "srvarr";
       platform = "x86_64-linux";
+      stateVersion = "25.11";
       upsHost = "prx1-lab";
       dnsAliases = [ "dash.${publicDomain}" ];
       wgNamespace = {
@@ -412,6 +415,7 @@ in
       isVM = true;
       name = "fana";
       platform = "x86_64-linux";
+      stateVersion = "25.11";
       upsHost = "prx1-lab";
       resourceControl.systemServices = {
         lightweight = [
@@ -437,6 +441,7 @@ in
       isVM = true;
       name = "gw";
       platform = "x86_64-linux";
+      stateVersion = "25.11";
       upsHost = "prx1-lab";
       resourceControl.systemServices.lightweight = [
         "prometheus-node-exporter"
@@ -458,6 +463,7 @@ in
       isVM = true;
       name = "org";
       platform = "x86_64-linux";
+      stateVersion = "25.11";
       resourceControl.systemServices.lightweight = [
         "prometheus-node-exporter"
         "prometheus-paperless-exporter"
@@ -478,6 +484,7 @@ in
       isVM = true;
       name = "pki";
       platform = "x86_64-linux";
+      stateVersion = "25.11";
       caServer = {
         port = 8443;
         # Fixed step-ca HTTP API route for the trusted root bundle.

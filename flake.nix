@@ -108,10 +108,7 @@
             hostSpecName = name;
           };
         in
-        if hostInventory.isNixosVM spec then
-          helpers.mkVM (hostArgs // { stateVersion = args.stateVersion or "25.11"; })
-        else
-          helpers.mkNixos hostArgs;
+        if hostInventory.isNixosVM spec then helpers.mkVM hostArgs else helpers.mkNixos hostArgs;
 
     in
     {
