@@ -72,14 +72,6 @@
       "system": "x86_64-linux"
     },
     {
-      "attr": "telegram-archive",
-      "nixUpdateArgs": [
-        "--src-only",
-        "--use-github-releases"
-      ],
-      "system": "x86_64-linux"
-    },
-    {
       "attr": "ismc",
       "nixUpdateArgs": [
         "--use-github-releases"

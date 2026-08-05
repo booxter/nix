@@ -23,7 +23,5 @@ in
   prometheus-paperless-exporter = pkgs.callPackage ./prometheus-paperless-exporter { };
   search-stack-probes = pkgs.callPackage ./search-stack-probes { };
   searchless-ngx = pkgs.callPackage ./searchless-ngx { };
-  telegram-archive = pkgs.callPackage ./telegram-archive { };
-  telegram-archive-service-tools = pkgs.callPackage ./telegram-archive-service-tools { };
   trilium-bootstrap = pkgs.callPackage ./trilium-bootstrap { };
 }

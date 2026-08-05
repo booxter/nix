@@ -236,15 +236,6 @@
       glanceCategory = "user";
     }
     {
-      id = "tg";
-      title = "Telegram Archive";
-      icon = "sh:telegram";
-      owner = "org";
-      probePath = "/oauth2/sign_in";
-      backendProbe.path = "/api/health";
-      glanceCategory = "infrastructure";
-    }
-    {
       id = "ollama";
       title = "Ollama";
       owner = "frame";

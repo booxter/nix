@@ -10,10 +10,6 @@ let
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessStoragePath = "/data/paperless";
   searchlessStateDir = "/var/lib/searchless-ngx";
-  telegramArchiveStateDir = "/var/lib/telegram-archive";
-  telegramArchiveBackupDir = "/var/lib/telegram-archive-backup";
-  telegramArchiveDatabasePath = "${telegramArchiveStateDir}/backups/telegram_backup.db";
-  telegramArchiveSessionPath = "${telegramArchiveStateDir}/session/telegram_archive.session";
   triliumStateDir = "/var/lib/trilium";
   backupPaths = [
     degoogStateDir
@@ -22,17 +18,12 @@ let
     paperlessGptStateDir
     paperlessStoragePath
     searchlessStateDir
-    telegramArchiveStateDir
     triliumStateDir
     "/var/lib/vikunja/files"
   ];
   backupExclude = [
     openWebuiDatabasePath
     "${openWebuiDatabasePath}-*"
-    telegramArchiveDatabasePath
-    "${telegramArchiveDatabasePath}-*"
-    telegramArchiveSessionPath
-    "${telegramArchiveSessionPath}-*"
     "${triliumStateDir}/document.db"
     "${triliumStateDir}/document.db-*"
   ];
@@ -64,26 +55,6 @@ in
         displayName = "Vikunja";
         databasePath = "/var/lib/vikunja/vikunja.db";
         destinationDir = "/var/lib/vikunja-backup/latest";
-      };
-
-      telegram-archive = {
-        displayName = "Telegram Archive";
-        databasePath = telegramArchiveDatabasePath;
-        destinationDir = "${telegramArchiveBackupDir}/database/latest";
-        conditionPathExists = telegramArchiveDatabasePath;
-      };
-
-      telegram-archive-session = {
-        displayName = "Telegram Archive authenticated session";
-        databasePath = telegramArchiveSessionPath;
-        destinationDir = "${telegramArchiveBackupDir}/session/latest";
-        conditionPathExists = telegramArchiveSessionPath;
-        extraCopies = [
-          {
-            source = "${telegramArchiveSessionPath}.authenticated";
-            mode = "0600";
-          }
-        ];
       };
 
       trilium = {

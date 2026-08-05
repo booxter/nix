@@ -186,7 +186,6 @@
                 degoog-stackexchange-engine
                 degoog-toolkit-extensions
                 searchless-ngx
-                telegram-archive
                 ;
               ebook-converter-cli = pkgs.callPackage ./nixos/srvarr/pkgs/ebook-converter-cli { };
               houndarr = pkgs.callPackage ./nixos/srvarr/pkgs/houndarr { };

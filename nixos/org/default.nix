@@ -26,7 +26,6 @@ in
     ./paperless.nix
     ./searchless-ngx.nix
     ./searxng.nix
-    ./telegram-archive.nix
     ./trilium.nix
   ];
 
