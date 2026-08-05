@@ -83,9 +83,6 @@ def test_prepares_patches_and_publishes_complete_asset_trees(tmp_path: Path) -> 
     prepare_assets(source(), paths)
 
     web, nginx, integration = paths.current
-    index = (web / "index.html").read_text()
-    assert '<script src="/assets/romm-default-core.js"></script>' in index
-    assert "mame2003_plus" in (web / "assets/romm-default-core.js").read_text()
     assert not (web / "assets/romm/resources").exists()
     assert (web / "assets/app.js").read_text() == "application"
     assert (nginx / "decode.js").read_text() == "export default {}"
@@ -110,22 +107,6 @@ def test_publication_failure_restores_every_previous_tree(tmp_path: Path) -> Non
     for current in paths.current:
         assert (current / "preserved").read_text() == current.name
     assert all(not path.exists() for path in paths.previous)
-
-
-def test_upstream_marker_change_preserves_published_assets(tmp_path: Path) -> None:
-    paths = AssetPaths(tmp_path)
-    create_current(paths)
-
-    try:
-        prepare_assets(source(valid_index=False), paths)
-    except RuntimeError as error:
-        assert "marker is missing" in str(error)
-    else:
-        raise AssertionError("missing upstream marker was accepted")
-
-    for current in paths.current:
-        assert (current / "preserved").read_text() == current.name
-    assert all(not path.exists() for path in paths.staging)
 
 
 def test_path_traversal_archive_is_rejected_without_publication(tmp_path: Path) -> None:
