@@ -227,7 +227,6 @@
           fleet = import ./apps/fleet.nix {
             inherit pkgs username;
           };
-          darwinPackages = import ./darwin/pkgs pkgs;
           mkApp = program: description: {
             type = "app";
             inherit program;
@@ -240,20 +239,11 @@
           repositoryApps = {
             flake-input-update-summary = mkApp "${pkgs.flake-input-update-summary}/bin/flake-input-update-summary" "Generate a revision-linked flake input update summary.";
           };
-          darwinApps = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-            lan-wan-bpf = mkApp "${darwinPackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
-          };
           proxmox = import ./apps/proxmox.nix {
             inherit inputs system;
           };
         in
-        sopsApps
-        // packageUpdates.apps
-        // fleet.apps
-        // proxmox.apps
-        // cookieApps
-        // repositoryApps
-        // darwinApps
+        sopsApps // packageUpdates.apps // fleet.apps // proxmox.apps // cookieApps // repositoryApps
       );
       formatter = helpers.forAllSystems (
         system:
