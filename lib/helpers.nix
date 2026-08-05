@@ -1,4 +1,5 @@
 {
+  defaultUsername,
   hostInventory,
   inputs,
   outputs,
@@ -58,7 +59,7 @@ rec {
       hostname,
       stateVersion,
       hostSpecName ? hostname,
-      username ? "ihrachyshka",
+      username ? defaultUsername,
       platform ? "x86_64-linux",
       virtPlatform ? platform,
       homeManagerInput ? inputs.home-manager,
@@ -132,7 +133,7 @@ rec {
     args@{
       extraModules ? [ ],
       sshPort ? null,
-      username ? "ihrachyshka",
+      username ? defaultUsername,
       platform ? "x86_64-linux",
       virtPlatform ? platform,
       cores ? 4,
@@ -418,7 +419,7 @@ rec {
       hostname,
       stateVersion,
       hmStateVersion,
-      username ? "ihrachyshka",
+      username ? defaultUsername,
       platform ? "aarch64-darwin",
       hostSpecName ? hostname,
       homeManagerInput ? inputs.home-manager,

@@ -7,11 +7,11 @@
 }:
 let
   helpers = import ./helpers.nix {
+    defaultUsername = username;
     inherit
       hostInventory
       inputs
       outputs
-      username
       ;
   };
 in
