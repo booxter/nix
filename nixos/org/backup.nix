@@ -1,4 +1,3 @@
-{ ... }:
 let
   degoogStateDir = "/var/lib/degoog";
   litellmBackupDir = "/var/lib/litellm-backup/latest";

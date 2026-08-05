@@ -1,4 +1,3 @@
-{ ... }:
 let
   lokiPort = 3100;
   retentionDays = 365;

@@ -119,12 +119,9 @@ rec {
         extraModules =
           extraModules
           ++ [
-            (
-              { ... }:
-              {
-                services.getty.autologinUser = username;
-              }
-            )
+            {
+              services.getty.autologinUser = username;
+            }
 
             (
               { modulesPath, ... }:
@@ -135,86 +132,73 @@ rec {
             )
 
             # build-vm (local) vms
-            (
-              { ... }:
-              let
-                min = x: y: if x < y then x else y;
-              in
-              {
-                virtualisation.vmVariant.virtualisation = (mkLocalVmVariantVirtualisation virtPlatform) // {
-                  # limit cores to avoid overloading host
-                  cores = min cores 8;
-                  memorySize = memorySize * 1024;
-                  diskSize = diskSize * 1024;
-                };
-              }
-            )
+            {
+              virtualisation.vmVariant.virtualisation = (mkLocalVmVariantVirtualisation virtPlatform) // {
+                # limit cores to avoid overloading host
+                cores = inputs.nixpkgs.lib.min cores 8;
+                memorySize = memorySize * 1024;
+                diskSize = diskSize * 1024;
+              };
+            }
             (
               { config, ... }:
               {
                 system.build.vmQemu = config.virtualisation.vmVariant.virtualisation.host.pkgs.qemu;
               }
             )
-          ]
-          ++ [
-            inputs.proxmox-nixos.nixosModules.declarative-vms
-            (
-              { ... }:
-              {
-                imports = [
-                  (import ../nixos/disko { device = "/dev/sda"; })
-                ];
-                virtualisation.proxmox = {
-                  inherit cores;
-                  name = hostname;
-                  node = proxNode;
-                  autoInstall = true;
-                  memory = memorySize * 1024;
-                  balloon = if balloonSize == null then null else balloonSize * 1024;
-                  cpu.cputype = "host";
-                  agent = {
-                    enabled = true;
-                    type = "virtio";
-                    freeze-fs-on-backup = true;
-                    fstrim_cloned_disks = true;
-                  };
-                  net = [
-                    (
-                      {
-                        model = "virtio";
-                        bridge = "vmbr0";
-                      }
-                      // inputs.nixpkgs.lib.optionalAttrs (dhcpReservation != null) {
-                        macaddr = dhcpReservation.match;
-                      }
-                    )
-                  ];
-                  scsi = [
-                    {
-                      file = "local:${toString diskSize}";
-                      discard = "on";
-                    }
-                  ];
-                  onboot = true;
-                };
 
-                boot.growPartition = true;
-              }
-            )
-          ]
-          ++ inputs.nixpkgs.lib.optionals (sshPort != null) [
-            (
-              { ... }:
-              {
-                virtualisation.vmVariant.virtualisation.forwardPorts = [
+            inputs.proxmox-nixos.nixosModules.declarative-vms
+            {
+              imports = [
+                (import ../nixos/disko { device = "/dev/sda"; })
+              ];
+              virtualisation.proxmox = {
+                inherit cores;
+                name = hostname;
+                node = proxNode;
+                autoInstall = true;
+                memory = memorySize * 1024;
+                balloon = if balloonSize == null then null else balloonSize * 1024;
+                cpu.cputype = "host";
+                agent = {
+                  enabled = true;
+                  type = "virtio";
+                  freeze-fs-on-backup = true;
+                  fstrim_cloned_disks = true;
+                };
+                net = [
+                  (
+                    {
+                      model = "virtio";
+                      bridge = "vmbr0";
+                    }
+                    // inputs.nixpkgs.lib.optionalAttrs (dhcpReservation != null) {
+                      macaddr = dhcpReservation.match;
+                    }
+                  )
+                ];
+                scsi = [
                   {
-                    from = "host";
-                    guest.port = 22;
-                    host.port = sshPort;
+                    file = "local:${toString diskSize}";
+                    discard = "on";
                   }
                 ];
-              }
-            )
+                onboot = true;
+              };
+
+              boot.growPartition = true;
+            }
+          ]
+          ++ inputs.nixpkgs.lib.optionals (sshPort != null) [
+            {
+              virtualisation.vmVariant.virtualisation.forwardPorts = [
+                {
+                  from = "host";
+                  guest.port = 22;
+                  host.port = sshPort;
+                }
+              ];
+            }
           ];
       }
     );
@@ -242,12 +226,9 @@ rec {
           ++ [
             inputs.proxmox-nixos.nixosModules.proxmox-ve
 
-            (
-              { ... }:
-              {
-                host.isProxmox = true;
-              }
-            )
+            {
+              host.isProxmox = true;
+            }
 
             (
               { lib, pkgs, ... }:
@@ -339,22 +320,19 @@ rec {
             )
           ]
           ++ inputs.nixpkgs.lib.optionals isVM [
-            (
-              { ... }:
-              {
-                virtualisation.vmVariant.virtualisation.forwardPorts =
-                  let
-                    proxmoxPort = 8006;
-                  in
-                  [
-                    {
-                      from = "host";
-                      guest.port = proxmoxPort;
-                      host.port = proxmoxPort;
-                    }
-                  ];
-              }
-            )
+            {
+              virtualisation.vmVariant.virtualisation.forwardPorts =
+                let
+                  proxmoxPort = 8006;
+                in
+                [
+                  {
+                    from = "host";
+                    guest.port = proxmoxPort;
+                    host.port = proxmoxPort;
+                  }
+                ];
+            }
           ];
       }
     );
