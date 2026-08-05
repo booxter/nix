@@ -7,7 +7,7 @@ name = "oidc-synthetic-probe"
 version = "0.1.0"
 description = "Synthetic OIDC and oauth2-proxy probe"
 requires-python = ">=3.11"
-dependencies = ["httpx", "prometheus-client", "pydantic"]
+dependencies = ["atomic-file-writes", "httpx", "prometheus-client", "pydantic"]
 
 [project.scripts]
 oidc-synthetic-probe = "oidc_synthetic_probe.app:main"
