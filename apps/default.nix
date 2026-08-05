@@ -1,21 +1,12 @@
 {
-  inputs,
+  fleet,
+  packageUpdates,
   pkgs,
-  system,
-  username,
+  proxmox,
+  sops,
 }:
 let
   appSpec = import ./app-spec.nix;
-  sops = import ./sops {
-    sopsTools = pkgs.sops-tools;
-  };
-  packageUpdates = import ./package-updates { inherit pkgs; };
-  fleet = import ./fleet.nix {
-    inherit pkgs username;
-  };
-  proxmox = import ./proxmox.nix {
-    inherit inputs system;
-  };
   appSpecs =
     sops.appSpecs
     // packageUpdates.appSpecs

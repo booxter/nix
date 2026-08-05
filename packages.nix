@@ -1,8 +1,8 @@
 {
+  fleet,
   inputs,
   pkgs,
   system,
-  username,
 }:
 let
   orgPackages = import ./nixos/org/pkgs pkgs;
@@ -12,7 +12,7 @@ in
   inherit (inputs.disko.packages.${system}) disko-install;
   inherit (import ./home-manager/_mixins/nv/pkgs { inherit pkgs; }) nico-cli;
 
-  fleet-tools = (import ./apps/fleet.nix { inherit pkgs username; }).packages.fleet-tools;
+  fleet-tools = fleet.packages.fleet-tools;
 
   # nix-update runs on GitHub-hosted Linux. Expose this Darwin-only package
   # there so its fixed-output source can be prefetched without trying to build

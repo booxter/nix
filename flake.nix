@@ -82,6 +82,18 @@
           username
           ;
       };
+      perSystem = helpers.forAllSystems (
+        system:
+        import ./per-system.nix {
+          inherit
+            inputs
+            outputs
+            system
+            username
+            ;
+        }
+      );
+      selectPerSystem = outputName: builtins.mapAttrs (_: value: value.${outputName}) perSystem;
 
       specToNixosConfig =
         name: spec:
@@ -121,51 +133,13 @@
 
       nixosConfigurations = builtins.mapAttrs specToNixosConfig hostInventory.nixosHostSpecsByName;
 
-      checks = import ./checks.nix {
-        inherit
-          helpers
-          inputs
-          outputs
-          ;
-      };
+      apps = selectPerSystem "apps";
+      checks = selectPerSystem "checks";
+      formatter = selectPerSystem "formatter";
       nixosTests = import ./nixos-tests.nix { inherit inputs helpers; };
 
       overlays = import ./overlays { inherit inputs; };
-      packages = helpers.forAllSystems (
-        system:
-        import ./packages.nix {
-          inherit
-            inputs
-            system
-            username
-            ;
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
-        }
-      );
-      apps = helpers.forAllSystems (
-        system:
-        let
-          pkgs = import inputs.nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-            overlays = [
-              outputs.overlays.additions
-              outputs.overlays.modifications
-            ];
-          };
-        in
-        import ./apps {
-          inherit
-            inputs
-            pkgs
-            system
-            username
-            ;
-        }
-      );
-      formatter = helpers.forAllSystems (
-        system: import ./apps/formatter.nix inputs.nixpkgs.legacyPackages.${system}
-      );
+      packages = selectPerSystem "packages";
 
     };
 }
