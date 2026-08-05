@@ -60,7 +60,7 @@ def valid_searchless_routes() -> dict[str, Response]:
         ),
         "/sync/status": (
             200,
-            {"paperless_documents": 12, "chroma_chunks": 34, "bulk_sync_limit": 56},
+            {"paperless_documents": 12, "chroma_chunks": 34, "bulk_sync_limit": None},
         ),
     }
 
@@ -75,7 +75,7 @@ def test_searchless_collects_typed_endpoint_state() -> None:
     assert snapshot.vector_store_initialized
     assert snapshot.paperless_documents == 12
     assert snapshot.chroma_chunks == 34
-    assert snapshot.bulk_sync_limit == 56
+    assert snapshot.bulk_sync_limit == 0
     metrics = values(searchless_registry(snapshot))
     assert metrics["searchless_metrics_collection_success"] == 1
     assert metrics["searchless_chroma_chunks"] == 34

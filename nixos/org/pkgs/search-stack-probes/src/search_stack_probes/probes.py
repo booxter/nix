@@ -46,7 +46,7 @@ def collect_searchless(client: httpx.Client, *, now: float) -> SearchlessSnapsho
         ),
         paperless_documents=sync.paperless_documents if sync is not None else 0,
         chroma_chunks=sync.chroma_chunks if sync is not None else 0,
-        bulk_sync_limit=sync.bulk_sync_limit if sync is not None else 0,
+        bulk_sync_limit=(sync.bulk_sync_limit or 0) if sync is not None else 0,
     )
 
 

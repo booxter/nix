@@ -24,7 +24,7 @@ class SyncResponse(BaseModel):
 
     paperless_documents: NonNegativeInt = 0
     chroma_chunks: NonNegativeInt = 0
-    bulk_sync_limit: NonNegativeInt = 0
+    bulk_sync_limit: NonNegativeInt | None = None
 
 
 class SearxResponse(BaseModel):
