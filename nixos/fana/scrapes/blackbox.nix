@@ -11,7 +11,7 @@
 let
   lan = hostInventory.site.lan;
   blackboxServices = builtins.filter (service: service.blackboxProbe) hostInventory.services;
-  nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
+  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   publicWanHost = beastHostConfig.host.externalService.ddns.hostname;
@@ -241,8 +241,6 @@ let
     !(outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.mtls.enable or false
     )
   ) remoteBlackboxProbeSourceNames;
-  targetHostForNixosName =
-    name: hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.${name};
   mkRemoteBlackboxProbeSourceConfig =
     name:
     let
@@ -250,7 +248,7 @@ let
       mtlsEndpoint = hostConfig.host.observability.client.prometheusMtlsEndpoints.blackbox;
     in
     {
-      exporter = "${targetHostForNixosName name}:${toString mtlsEndpoint.port}";
+      exporter = "${name}:${toString mtlsEndpoint.port}";
       scheme = "https";
       source = hostConfig.services.avahi.hostName;
     };

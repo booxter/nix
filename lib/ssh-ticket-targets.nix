@@ -55,36 +55,21 @@ let
   mkNixosTarget =
     spec:
     let
-      localSshHost = hostInventory.toLocalDnsName (hostInventory.toNixosShortDnsName spec);
+      localSshHost = hostInventory.toLocalDnsName spec.name;
+      dnsName = spec.dnsName or spec.name;
     in
-    if hostInventory.isNixosVM spec then
-      let
-        sshHost = hostInventory.toNixosShortDnsName spec;
-      in
-      mkTarget {
-        kind = "nixos";
-        name = spec.name;
-        inherit sshHost;
-        aliases = [
-          spec.name
-          localSshHost
-        ];
-        allowX11Forwarding = spec.sshTicket.allowX11Forwarding or false;
-        isWork = spec.isWork or false;
-      }
-    else
-      mkTarget {
-        kind = "nixos";
-        name = spec.name;
-        aliases = [
-          (spec.hostname or spec.name)
-          localSshHost
-          (spec.dnsName or (spec.hostname or spec.name))
-        ];
-        dnsName = spec.dnsName or (spec.hostname or spec.name);
-        allowX11Forwarding = spec.sshTicket.allowX11Forwarding or false;
-        isWork = spec.isWork or false;
-      };
+    mkTarget {
+      kind = "nixos";
+      name = spec.name;
+      aliases = [
+        spec.name
+        localSshHost
+        dnsName
+      ];
+      inherit dnsName;
+      allowX11Forwarding = spec.sshTicket.allowX11Forwarding or false;
+      isWork = spec.isWork or false;
+    };
 in
 map mkNixosTarget hostInventory.nixosHostSpecs
 ++ lib.mapAttrsToList mkDarwinTarget hostInventory.darwinHosts

@@ -31,17 +31,14 @@ let
   builderDhcpReservations = {
     "1" = {
       match = "bc:24:11:49:bf:fc";
-      hostname = "builder1";
       ip = "192.168.12.106";
     };
     "2" = {
       match = "bc:24:11:dc:ea:2c";
-      hostname = "builder2";
       ip = "192.168.13.243";
     };
     "3" = {
       match = "bc:24:11:2a:ee:d7";
-      hostname = "builder3";
       ip = "192.168.11.114";
     };
   };
@@ -168,10 +165,7 @@ rec {
 
   isNixosVM = spec: spec.isVM or false;
   toSecretDomain = spec: spec.secretDomain or (if spec.isWork or false then "work" else "main");
-  toNixosConfigName = spec: spec.name;
-  toNixosRuntimeHostName = spec: spec.hostname or (spec.dhcpReservation.hostname or spec.name);
-  toNixosPrimaryDnsName = spec: spec.dnsName or (toNixosRuntimeHostName spec);
-  toNixosShortDnsName = spec: spec.name;
+  toNixosPrimaryDnsName = spec: spec.dnsName or spec.name;
   toLocalDnsName = label: "${label}.local";
   toInternalHttpsServiceHosts =
     serviceName:
@@ -190,7 +184,7 @@ rec {
     spec:
     let
       primaryName = toNixosPrimaryDnsName spec;
-      shortName = toNixosShortDnsName spec;
+      shortName = spec.name;
     in
     lib.unique ([
       primaryName
@@ -1003,7 +997,6 @@ rec {
         };
       dhcpReservation = {
         match = "9c:bf:0d:00:fa:0a";
-        hostname = "frame";
         ip = "192.168.11.228";
       };
     }
@@ -1021,7 +1014,6 @@ rec {
       hardware.gpuFamilies = [ "nvidia" ];
       dhcpReservation = {
         match = "ac:b4:80:40:05:2e";
-        hostname = "nvws";
         ip = "192.168.15.100";
       };
     }
@@ -1056,7 +1048,6 @@ rec {
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
         match = "bc:fc:e7:3b:fe:da";
-        hostname = "beast";
         ip = "192.168.16.3";
       };
     }
@@ -1074,7 +1065,6 @@ rec {
       dnsAliases = [ "proxmox.${site.lan.domain}" ];
       dhcpReservation = {
         match = "38:05:25:30:7d:89";
-        hostname = "prx1-lab";
         ip = "192.168.15.10";
       };
     }
@@ -1092,7 +1082,6 @@ rec {
       hardware.gpuFamilies = [ "intel" ];
       dhcpReservation = {
         match = "38:05:25:30:7f:7d";
-        hostname = "prx2-lab";
         ip = "192.168.15.11";
       };
     }
@@ -1110,7 +1099,6 @@ rec {
       hardware.gpuFamilies = [ "intel" ];
       dhcpReservation = {
         match = "38:05:25:30:7d:69";
-        hostname = "prx3-lab";
         ip = "192.168.15.12";
       };
     }
@@ -1122,7 +1110,6 @@ rec {
       upsHost = nvws;
       dhcpReservation = {
         match = "bc:24:11:ed:30:d3";
-        hostname = "nv";
         ip = "192.168.10.138";
       };
       cores = 64;
@@ -1139,7 +1126,6 @@ rec {
       localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
-        hostname = "cache";
         ip = "192.168.20.7";
       };
       sshPort = 10004;
@@ -1194,7 +1180,6 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:19:4d:d1";
-        hostname = "srvarr";
         ip = "192.168.20.2";
       };
     }
@@ -1220,7 +1205,6 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:06:e8:8b";
-        hostname = "fana";
         ip = "192.168.13.110";
       };
     }
@@ -1242,7 +1226,6 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:91:b5:77";
-        hostname = "gw";
         ip = "192.168.20.3";
       };
     }
@@ -1265,7 +1248,6 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:fd:eb:9c";
-        hostname = "org";
         ip = "192.168.20.4";
       };
     }
@@ -1306,7 +1288,6 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "bc:24:11:c6:ab:fc";
-        hostname = "pki";
         ip = "192.168.20.5";
       };
     }
@@ -1333,7 +1314,6 @@ rec {
       hmFull = false;
       dhcpReservation = {
         match = "02:48:4f:4d:45:01";
-        hostname = "home";
         ip = "192.168.20.6";
       };
     }
@@ -1344,7 +1324,7 @@ rec {
     3
   ];
 
-  managedDhcpReservations = map (spec: spec.dhcpReservation) (
+  managedDhcpReservations = map (spec: spec.dhcpReservation // { hostname = spec.name; }) (
     builtins.filter (spec: spec ? dhcpReservation) nixosHostSpecs
   );
 
@@ -1368,7 +1348,7 @@ rec {
     ) darwinHosts)
     // builtins.listToAttrs (
       map (spec: {
-        name = toNixosRuntimeHostName spec;
+        name = spec.name;
         value = toSecretDomain spec;
       }) nixosHostSpecs
     );
@@ -1377,7 +1357,7 @@ rec {
     (lib.mapAttrs' (name: spec: lib.nameValuePair (spec.hostname or name) spec.platform) darwinHosts)
     // builtins.listToAttrs (
       map (spec: {
-        name = toNixosRuntimeHostName spec;
+        name = spec.name;
         value = spec.platform;
       }) nixosHostSpecs
     );

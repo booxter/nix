@@ -9,7 +9,7 @@ let
 
   nixosEntries = map (spec: {
     server = spec.upsHost;
-    client = hostInventory.toNixosConfigName spec;
+    client = spec.name;
   }) (builtins.filter includeClient hostInventory.nixosHostSpecs);
 
   darwinEntries = map (spec: {

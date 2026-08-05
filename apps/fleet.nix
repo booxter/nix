@@ -14,15 +14,15 @@ let
   };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
-  wireguardGatewaySshHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.gw;
+  wireguardGatewaySshHost = wgHome.gateway.host;
   appPackages = import ./default.nix pkgs;
 
   fleetInventory = {
     aliases =
       builtins.listToAttrs (
         map (spec: {
-          name = hostInventory.toNixosConfigName spec;
-          value = hostInventory.toNixosConfigName spec;
+          inherit (spec) name;
+          value = spec.name;
         }) hostInventory.nixosHostSpecs
       )
       // pkgs.lib.foldlAttrs (
@@ -43,13 +43,13 @@ let
     lanDomain = lan.domain;
     nixos = builtins.listToAttrs (
       map (spec: {
-        name = hostInventory.toNixosConfigName spec;
+        inherit (spec) name;
         value = {
-          displayName = hostInventory.toNixosConfigName spec;
+          displayName = spec.name;
           isWork = spec.isWork or false;
           platform = spec.platform or "x86_64-linux";
-          runtimeHost = hostInventory.toNixosRuntimeHostName spec;
-          sshHost = hostInventory.toNixosShortDnsName spec;
+          runtimeHost = spec.name;
+          sshHost = spec.name;
         };
       }) hostInventory.nixosHostSpecs
     );
@@ -70,8 +70,8 @@ let
   };
   vmTargets = builtins.listToAttrs (
     map (spec: {
-      name = spec.name;
-      value = hostInventory.toNixosConfigName spec;
+      inherit (spec) name;
+      value = spec.name;
     }) hostInventory.nixosHostSpecs
   );
   fleetTools = pkgs.callPackage ./fleet-tools {

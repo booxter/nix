@@ -10,7 +10,6 @@
 let
   builderSpec = n: hostInventory.nixosHostSpecsByName."builder${toString n}";
   builderSpecs = map builderSpec (lib.range 1 3);
-  toBuilderName = hostInventory.toNixosShortDnsName;
 in
 {
   programs.ssh = {
@@ -33,7 +32,7 @@ in
             "mmini"
             "mair"
           ]
-          ++ (map toBuilderName builderSpecs)
+          ++ (map (spec: spec.name) builderSpecs)
         )
       );
   };
@@ -53,7 +52,7 @@ in
       ];
       builderSpeedFactor = 100; # prefer these builders; higher the better
       toBuilder = speedFactor: hostSpec: {
-        hostName = toBuilderName hostSpec;
+        hostName = hostSpec.name;
         inherit speedFactor;
         system = "x86_64-linux";
         protocol = "ssh-ng";

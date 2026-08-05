@@ -122,7 +122,7 @@
                 // {
                   stateVersion = args.stateVersion or "25.11";
                   hostSpecName = name;
-                  hostname = hostInventory.toNixosRuntimeHostName hostInventory.nixosHostSpecsByName.${name};
+                  hostname = name;
                 }
               )
             else
@@ -130,8 +130,8 @@
                 hostArgs
                 // inputArgs
                 // {
-                  hostname = args.hostname or name;
-                  hostSpecName = args.hostSpecName or name;
+                  hostname = name;
+                  hostSpecName = name;
                 }
               );
         in

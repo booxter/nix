@@ -7,7 +7,7 @@
   prometheusMtlsTlsConfig,
 }:
 let
-  nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
+  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
   isVirtualNodeName =
     name:
     builtins.hasAttr name hostInventory.nixosHostSpecsByName
@@ -15,8 +15,6 @@ let
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   scrapeExpectationForHostConfig =
     hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";
-  targetHostForNixosName =
-    name: hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.${name};
   mkRemoteNixosNodeTargetConfig =
     name:
     let
@@ -31,7 +29,7 @@ let
         instance = name;
         scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
-      targets = [ "${targetHostForNixosName name}:9100" ];
+      targets = [ "${name}:9100" ];
     };
   nixosNodeExporterTargetNames = builtins.filter (
     name:

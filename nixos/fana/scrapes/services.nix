@@ -7,17 +7,17 @@
 let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
-  beastTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.beast;
+  beastTargetHost = hostInventory.nixosHostSpecsByName.beast.name;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
   homeHostConfig = outputs.nixosConfigurations.home.config;
-  homeTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.home;
+  homeTargetHost = hostInventory.nixosHostSpecsByName.home.name;
   homeAssistantEndpoint =
     homeHostConfig.host.observability.client.prometheusMtlsEndpoints.home-assistant;
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
-  sabnzbdTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.srvarr;
+  sabnzbdTargetHost = hostInventory.nixosHostSpecsByName.srvarr.name;
   orgHostConfig = outputs.nixosConfigurations.org.config;
-  orgTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
+  orgTargetHost = hostInventory.nixosHostSpecsByName.org.name;
   litellmEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
   openWebuiEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints."open-webui";
   paperlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.paperless;
