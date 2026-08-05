@@ -139,6 +139,12 @@ let
     ) "Glance service ${service.id} uses unknown glanceCategory '${categoryLabel}'";
     resolvedService;
 
+  serviceLocalDnsAliases =
+    services: owner:
+    map (service: service.internalEndpointName) (
+      builtins.filter (service: service.owner == owner && service.internalEndpointName != null) services
+    );
+
   mkDnsARecord = domain: ipv4Address: {
     type = "A_RECORD";
     ttlSeconds = lanDnsRecordTtlSeconds;
@@ -297,7 +303,7 @@ rec {
             spec:
             (map (domain: mkDnsARecord domain (aliasIpv4Address spec)) (spec.dnsAliases or [ ]))
             ++ map (label: mkDnsARecord "${label}.${lanDomain}" (aliasIpv4Address spec)) (
-              lib.unique (spec.localDnsAliases or [ ])
+              lib.unique ((spec.localDnsAliases or [ ]) ++ serviceLocalDnsAliases services spec.name)
             );
         in
         staticDnsRecords ++ builtins.concatMap renderHostDnsRecords nixosHostSpecs;
@@ -898,7 +904,6 @@ rec {
       isDesktop = true;
       nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
-      localDnsAliases = [ "ollama" ];
       resourceControl.diskSwapGiB = 8;
       resourceControl.systemServices = {
         lightweight = [
@@ -1012,10 +1017,6 @@ rec {
       dnsAliases = builtins.filter (domain: domain != "dash.${site.public.domain}") (
         map (service: service.publicHost) publicServices
       );
-      localDnsAliases = [
-        "jfstat"
-        "watchstate"
-      ];
       resourceControl.diskSwapGiB = 8;
       resourceControl.systemServices = {
         lightweight = [
@@ -1137,25 +1138,7 @@ rec {
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
       dnsAliases = [ "dash.${site.public.domain}" ];
-      localDnsAliases = [
-        "dash"
-        "glance"
-        "seerr"
-        "houndarr"
-        "radarr"
-        "sonarr"
-        "lidarr"
-        "bazarr"
-        "prowlarr"
-        "letterboxd-list-radarr"
-        "romm"
-        "aurral"
-        "audiobookshelf"
-        "pinepods"
-        "shelfmark"
-        "sabnzbd"
-        "tmission"
-      ];
+      localDnsAliases = [ "glance" ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
         namespaceAddress = "192.168.50.1";
@@ -1206,7 +1189,6 @@ rec {
       upsHost = "prx1-lab";
       localDnsAliases = [
         "alertmanager"
-        "grafana"
         "loki"
       ];
       resourceControl.systemServices = {
@@ -1256,17 +1238,6 @@ rec {
       isVM = true;
       name = "org";
       platform = "x86_64-linux";
-      localDnsAliases = [
-        "vikunja"
-        "notes"
-        "paperless"
-        "paperless-gpt"
-        "llm"
-        "ai"
-        "search"
-        "goo"
-        "tg"
-      ];
       resourceControl.systemServices.lightweight = [
         "open-webui-searxng-probe"
         "prometheus-node-exporter"
@@ -1290,7 +1261,6 @@ rec {
       isVM = true;
       name = "pki";
       platform = "x86_64-linux";
-      localDnsAliases = [ "id" ];
       caServer = {
         port = 8443;
         # Fixed step-ca HTTP API route for the trusted root bundle.
@@ -1335,7 +1305,6 @@ rec {
       stateVersion = "26.05";
       upsHost = "prx1-lab";
       proxNode = "prx2-lab";
-      localDnsAliases = [ "home" ];
       resourceControl.systemServices = {
         lightweight = [
           "home-assistant-bootstrap"
