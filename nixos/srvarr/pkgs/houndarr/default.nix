@@ -43,8 +43,6 @@ python313Packages.buildPythonApplication (finalAttrs: {
     hash = "sha256-SVhgMJI4Iqo0lUWD6CV2Wau/e/w2DmfI9buQvFkVpaQ=";
   };
 
-  patches = [ ./sso-reauthentication-contract.patch ];
-
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname src version;
     fetcherVersion = 4;

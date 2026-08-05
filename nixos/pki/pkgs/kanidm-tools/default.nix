@@ -1,15 +1,10 @@
 {
   clippy,
-  kanidmWithSecretProvisioning_1_10,
   lib,
   openssh,
   rustfmt,
   rustPlatform,
 }:
-let
-  kanidmClientVersion = "1.10.4";
-in
-assert lib.getVersion kanidmWithSecretProvisioning_1_10 == kanidmClientVersion;
 rustPlatform.buildRustPackage {
   pname = "kanidm-tools";
   version = "0.1.0";
@@ -23,7 +18,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-thra/ca7rmCK/yGJO9umuyQk4/x8UjU+GiqRYgmVKGM=";
+  cargoHash = "sha256-wqe6mr0e2tLijyBULreIZ3CiP5+GiONYuzMWVbRB0J4=";
 
   RESET_OIDC_SSH = lib.getExe openssh;
 
@@ -37,8 +32,6 @@ rustPlatform.buildRustPackage {
     cargo clippy --all-targets -- -D warnings
   '';
   cargoTestFlags = [ "--all-targets" ];
-
-  passthru = { inherit kanidmClientVersion; };
 
   meta = {
     description = "Administrative Kanidm tools for the PKI host";

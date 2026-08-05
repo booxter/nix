@@ -26,10 +26,6 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     # Backport the corrected test from upstream develop commit 6825b7d3. The
     # release test expected an empty index to advertise a web search type.
     ./backport-indexer-engine-selection-test-fix.patch
-
-    # Teach browser API and EventSource traffic to recover from a marked
-    # oauth2-proxy session expiry. Patch application is the upgrade guard.
-    ./sso-reauthentication.patch
   ];
 
   nativeBuildInputs = [

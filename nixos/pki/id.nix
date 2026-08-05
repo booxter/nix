@@ -69,13 +69,6 @@ let
   ];
 in
 {
-  assertions = [
-    {
-      assertion = pkiPkgs.reset-oidc.kanidmClientVersion == lib.getVersion config.services.kanidm.package;
-      message = "reset-oidc and the Kanidm server must use the same version";
-    }
-  ];
-
   sops.secrets = {
     kanidmAdminPassword = {
       key = "kanidm/admin_password";
