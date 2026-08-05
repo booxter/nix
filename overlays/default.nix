@@ -17,38 +17,17 @@
         };
 
       pkgsNixpkgsUnstable = getPkgs inputs.nixpkgs-unstable;
-      withServarrSsoReauthentication =
-        package:
-        package.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [ ./servarr-sso-reauthentication.patch ];
-          nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ prev.nodejs ];
-          postCheck = (old.postCheck or "") + ''
-            ${lib.getExe prev.nodejs} --test tests/sso-reauth.test.mjs
-          '';
-        });
-      withStandaloneSsoReauthentication =
-        package: patch: testPath:
-        package.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [ patch ];
-          doCheck = true;
-          nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ prev.nodejs ];
-          checkPhase = ''
-            runHook preCheck
-            ${lib.getExe prev.nodejs} --test "$NIX_BUILD_TOP/$sourceRoot/${testPath}"
-            runHook postCheck
-          '';
-        });
       releaseTransmission = prev.transmission_4;
       releaseTransmissionVersion = lib.getVersion releaseTransmission;
       # Track the release branch now that trackers allow 4.1.x, but fail
       # evaluation before accepting an unvetted 4.2.x+ daemon.
-      guardedTransmission = withStandaloneSsoReauthentication (
+      guardedTransmission = (
         assert lib.asserts.assertMsg (
           lib.versionAtLeast releaseTransmissionVersion "4.1.0"
           && lib.versionOlder releaseTransmissionVersion "4.2.0"
         ) "Transmission must stay on the 4.1.x release series; got ${releaseTransmissionVersion}";
         releaseTransmission
-      ) ./transmission-sso-reauthentication.patch "web/sso-reauth.test.cjs";
+      );
       lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
       lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
@@ -58,10 +37,6 @@
     in
     {
       inherit (pkgsNixpkgsUnstable) claude-code;
-
-      bazarr =
-        withStandaloneSsoReauthentication prev.bazarr ./bazarr-sso-reauthentication.patch
-          "tests/sso-reauth.test.cjs";
 
       # Pick up the latest window-management fixes ahead of the stable branch.
       inherit (pkgsNixpkgsUnstable) aerospace;
@@ -84,27 +59,6 @@
           })
         ];
       });
-
-      # Preserve POST form data across an oauth2-proxy reauthentication. The
-      # unconditional template patch is the expiry guard: if upstream changes
-      # its integration point, the package build fails for an explicit review.
-      searxng = prev.searxng.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [ ./searxng-load-sso-reauth-script.patch ];
-
-        doCheck = true;
-        nativeCheckInputs = (old.nativeCheckInputs or [ ]) ++ [ prev.nodejs ];
-
-        checkPhase = ''
-          runHook preCheck
-          ${lib.getExe prev.nodejs} --test tests/unit/client/sso-reauth.test.mjs
-          runHook postCheck
-        '';
-      });
-
-      lidarr = withServarrSsoReauthentication prev.lidarr;
-      prowlarr = withServarrSsoReauthentication prev.prowlarr;
-      radarr = withServarrSsoReauthentication prev.radarr;
-      sonarr = withServarrSsoReauthentication prev.sonarr;
 
       # CI renders two-revision config diffs by calling standalone dix, not
       # nh's internal dix library. Stable dix 1.4.x omits the per-package size
@@ -261,14 +215,16 @@
       # deletion can safely remove sorted outputs and temporary unpack trees
       # without carrying a private DB schema change.
       # https://github.com/sabnzbd/sabnzbd/issues/2754
-      sabnzbd = withStandaloneSsoReauthentication (prev.sabnzbd.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            url = "https://github.com/booxter/sabnzbd/commit/2ee3243723ff613104f179167a8467025ec051b4.patch";
-            hash = "sha256-anr7OPO3ZgW3PSaw32eNpkcAKa+SXonUQU+K11dc414=";
-          })
-        ];
-      })) ./sabnzbd-sso-reauthentication.patch "tests/sso-reauth.test.cjs";
+      sabnzbd = (
+        prev.sabnzbd.overrideAttrs (old: {
+          patches = (old.patches or [ ]) ++ [
+            (prev.fetchpatch {
+              url = "https://github.com/booxter/sabnzbd/commit/2ee3243723ff613104f179167a8467025ec051b4.patch";
+              hash = "sha256-anr7OPO3ZgW3PSaw32eNpkcAKa+SXonUQU+K11dc414=";
+            })
+          ];
+        })
+      );
 
       vikunja = prev.vikunja.overrideAttrs (
         old:
