@@ -52,7 +52,8 @@ fn copy_node(source: &Path, destination: &Path) -> Result<()> {
         )?;
         return Ok(());
     }
-    if fs::metadata(source)?.is_dir() {
+    let metadata = fs::metadata(source)?;
+    if metadata.is_dir() {
         fs::create_dir_all(destination)?;
         let mut entries: Vec<_> = fs::read_dir(source)?.collect::<io::Result<_>>()?;
         entries.sort_by_key(|entry| entry.file_name());
@@ -62,6 +63,10 @@ fn copy_node(source: &Path, destination: &Path) -> Result<()> {
                 copy_node(&child, &destination.join(entry.file_name()))?;
             }
         }
+        return Ok(());
+    }
+
+    if !metadata.is_file() {
         return Ok(());
     }
 
