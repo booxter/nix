@@ -113,9 +113,6 @@ in
         zip
         ipmitool
       ]
-      ++ lib.optionals (!config.host.isWork && !config.host.isVM) [
-        whichllm
-      ]
       ++ lib.optionals config.host.isDesktop [
         sops-tools
       ]
