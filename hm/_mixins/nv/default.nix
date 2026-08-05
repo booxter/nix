@@ -1,7 +1,7 @@
 {
   lib,
+  osConfig,
   pkgs,
-  isDesktop,
   ...
 }:
 let
@@ -42,7 +42,7 @@ in
         trivy
         vault-bin
       ]
-      ++ lib.optionals isDesktop [
+      ++ lib.optionals osConfig.host.isDesktop [
         slack
         zoom-us
       ]

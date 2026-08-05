@@ -1,7 +1,6 @@
 {
   config,
   inputs,
-  isDesktop,
   lib,
   username,
   ...
@@ -19,11 +18,11 @@ in
     {
       assertions = [
         {
-          assertion = !cfg.x11.enable || isDesktop;
+          assertion = !cfg.x11.enable || config.host.isDesktop;
           message = "host.remoteGui.x11 requires a desktop host";
         }
         {
-          assertion = !cfg.wayland.enable || isDesktop;
+          assertion = !cfg.wayland.enable || config.host.isDesktop;
           message = "host.remoteGui.wayland requires a desktop host";
         }
       ];

@@ -4,11 +4,10 @@
   osConfig,
   pkgs,
   username,
-  isWork,
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.host) isDarwin isWork;
   thunderbirdProfilesPath = if isDarwin then "Library/Thunderbird/Profiles" else ".thunderbird";
 in
 {

@@ -1,6 +1,8 @@
-{ isWork, lib, ... }:
 {
-  imports = [ ./known-hosts.nix ] ++ lib.optionals (!isWork) [ ./ticket-server.nix ];
+  imports = [
+    ./known-hosts.nix
+    ./ticket-server.nix
+  ];
 
   services.openssh.enable = true;
 }

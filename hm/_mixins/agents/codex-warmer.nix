@@ -3,14 +3,13 @@
   lib,
   osConfig,
   pkgs,
-  isWork,
   ...
 }:
 let
   codexWarmerPackage = (import ./pkgs { inherit pkgs; }).codex-warmer;
   codexWarmer = lib.getExe' codexWarmerPackage "codex-warmer";
   codexWarmerEnabled = !isWork;
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.host) isDarwin isWork;
 in
 {
   home.packages = lib.optionals codexWarmerEnabled [ codexWarmerPackage ];

@@ -1,12 +1,9 @@
 {
   config,
   hostInventory,
-  isBuilder,
-  isDesktop,
   lib,
   pkgs,
   username,
-  isWork,
   ...
 }:
 let
@@ -17,7 +14,8 @@ in
     let
       nixCaches = hostInventory.site.nixCaches;
       # Desktops may be used for Proxmox development.
-      needsProxmoxCache = (config.host.isLinux && config.host.isProxmox) || isBuilder || isDesktop;
+      needsProxmoxCache =
+        (config.host.isLinux && config.host.isProxmox) || config.host.isBuilder || config.host.isDesktop;
     in
     {
       package = lib.mkForce pkgs.nixVersions.latest;
@@ -44,7 +42,7 @@ in
       // lib.optionalAttrs config.host.isDarwin {
         sandbox = "relaxed";
       }
-      // lib.optionalAttrs (!isWork) {
+      // lib.optionalAttrs (!config.host.isWork) {
         substituters = lib.mkForce [
           nixCaches.nixos.url
           nixCaches.home.defaultUrl

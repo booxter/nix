@@ -1,13 +1,12 @@
 {
   config,
-  isDesktop,
   lib,
   osConfig,
   pkgs,
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.host) isDarwin isDesktop;
   cfg = config.programs.remoteGui;
   remoteGuiRunners = pkgs.callPackage ./pkgs { };
 in

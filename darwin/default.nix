@@ -1,11 +1,10 @@
 {
+  config,
   hmFull,
   hmStateVersion,
   hostInventory,
   hostname,
   inputs,
-  isDesktop,
-  isWork,
   lib,
   pkgs,
   username,
@@ -41,14 +40,10 @@
     ./_mixins/sudo
     ./_mixins/thermal-accounting
     ./_mixins/xquartz
-  ]
-  ++ lib.optionals (!isWork) [
     ./_mixins/attic
     ./_mixins/browser
     ./_mixins/vnc
     ./_mixins/vnc-open
-  ]
-  ++ lib.optionals isWork [
     ./_mixins/docker-desktop
   ]
   ++ lib.optionals (hostname == "mair") [
@@ -63,8 +58,6 @@
         hostInventory
         hostname
         inputs
-        isDesktop
-        isWork
         username
         ;
       stateVersion = hmStateVersion;
@@ -75,7 +68,7 @@
   };
 
   host.isVM = false;
-  host.remoteGui.x11.enable = lib.mkDefault (!isWork && isDesktop);
+  host.remoteGui.x11.enable = lib.mkDefault (!config.host.isWork && config.host.isDesktop);
 
   system.primaryUser = username;
 
@@ -86,7 +79,7 @@
     shell = pkgs.zsh;
   };
 
-  system.defaults.smb = lib.optionalAttrs (!isWork) {
+  system.defaults.smb = lib.optionalAttrs (!config.host.isWork) {
     NetBIOSName = hostname;
     ServerDescription = hostname;
   };

@@ -4,17 +4,11 @@
   pkgs,
   username,
   hostname,
-  isBuilder,
-  isDesktop,
-  isLaptop ? false,
-  isWork,
   secretDomain,
   ...
 }:
 let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  canUsePersonalBuilders = !isWork && isDesktop;
-  canUseWorkBuilders = isWork && !isBuilder;
   workUserKey = readPublicKey ../public-keys/users/jgwxhwdl4x.pub;
   workKeys = [
     workUserKey
@@ -34,6 +28,7 @@ in
   imports = [
     ./_mixins/codex
     ./_mixins/host-platform.nix
+    ./_mixins/host-role.nix
     ./_mixins/internal-https-mtls-client.nix
     ./_mixins/internal-pki
     ./_mixins/nix
@@ -46,23 +41,12 @@ in
     ./_mixins/sync-git-mains
     ./_mixins/terminfo
     ./_mixins/yubi.nix
-  ]
-  ++ lib.optionals (!isWork) [
     ./_mixins/attic
     ./_mixins/flakehub-cache
-  ]
-  ++ lib.optionals canUsePersonalBuilders [
     ./_mixins/community-builders
     ./_mixins/personal-builders
-  ]
-  ++ lib.optionals canUseWorkBuilders [
     ./_mixins/work-builders
   ];
-
-  options.host.isWork = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-  };
 
   options.host.isVM = lib.mkOption {
     type = lib.types.bool;
@@ -81,12 +65,6 @@ in
     type = lib.types.bool;
     default = false;
     description = "Whether this host should avoid frequent unattended reboots.";
-  };
-
-  options.host.isLaptop = lib.mkOption {
-    type = lib.types.bool;
-    default = false;
-    description = "Whether this host is intermittently available like a laptop.";
   };
 
   options.host.dnsName = lib.mkOption {
@@ -139,25 +117,23 @@ in
         zip
         ipmitool
       ]
-      ++ lib.optionals (!isWork && !config.host.isVM) [
+      ++ lib.optionals (!config.host.isWork && !config.host.isVM) [
         whichllm
       ]
-      ++ lib.optionals isDesktop [
+      ++ lib.optionals config.host.isDesktop [
         sops-tools
       ]
-      ++ lib.optionals (!isWork) [
+      ++ lib.optionals (!config.host.isWork) [
         age
         restic
         sops
       ];
 
     users.users.${username} = {
-      openssh.authorizedKeys.keys = if isWork then workKeys else personalKeys;
+      openssh.authorizedKeys.keys = if config.host.isWork then workKeys else personalKeys;
     };
 
     programs.zsh.enable = true;
-    host.isLaptop = lib.mkDefault isLaptop;
-    host.isWork = isWork;
     host.secretDomain = secretDomain;
   };
 }

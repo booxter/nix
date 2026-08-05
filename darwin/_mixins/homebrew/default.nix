@@ -1,7 +1,6 @@
 {
   config,
   inputs,
-  isWork,
   lib,
   username,
   ...
@@ -39,7 +38,7 @@
       "wireshark-chmodbpf"
       "chatgpt"
     ]
-    ++ lib.optionals (!isWork) [ "homerow" ];
+    ++ lib.optionals (!config.host.isWork) [ "homerow" ];
   };
 
   nix-homebrew = {

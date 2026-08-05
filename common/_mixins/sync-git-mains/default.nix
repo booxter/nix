@@ -1,8 +1,4 @@
-{
-  isDesktop,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 {
   options.host.syncGitMains = {
     enable = lib.mkEnableOption "periodic fast-forward updates of local Git main branches";
@@ -24,5 +20,5 @@
     };
   };
 
-  config.host.syncGitMains.enable = lib.mkDefault isDesktop;
+  config.host.syncGitMains.enable = lib.mkDefault config.host.isDesktop;
 }

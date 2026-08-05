@@ -1,4 +1,5 @@
 {
+  config,
   hostInventory,
   lib,
   pkgs,
@@ -162,5 +163,5 @@ let
   };
 in
 {
-  environment.systemPackages = [ vncOpen ];
+  environment.systemPackages = lib.mkIf (!config.host.isWork) [ vncOpen ];
 }

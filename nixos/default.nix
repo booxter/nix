@@ -4,8 +4,6 @@
   hostInventory,
   hostname,
   inputs,
-  isDesktop,
-  isWork,
   lib,
   pkgs,
   secretDomain,
@@ -83,8 +81,6 @@ in
           hostInventory
           hostname
           inputs
-          isDesktop
-          isWork
           stateVersion
           username
           ;

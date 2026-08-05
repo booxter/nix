@@ -13,7 +13,7 @@ in
     "Firefox Touch ID/passkey support through the signed upstream app"
   );
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg.enable && !config.host.isWork) {
     home-manager.users.${username} = {
       programs.firefox = {
         # Keep Home Manager managing Firefox profiles, settings, extensions,

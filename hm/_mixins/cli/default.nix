@@ -2,12 +2,11 @@
   config,
   lib,
   pkgs,
-  isWork,
   osConfig,
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.host) isDarwin isWork;
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
   nr = cliPkgs.nr.override {

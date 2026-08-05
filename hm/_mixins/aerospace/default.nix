@@ -3,11 +3,10 @@
   config,
   osConfig,
   pkgs,
-  isWork,
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.host) isDarwin isWork;
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
   sketchybarHeight = 30; # TODO: parametrize it?
 

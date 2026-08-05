@@ -1,8 +1,6 @@
 {
   config,
   hostInventory,
-  isDesktop,
-  isWork,
   lib,
   outputs,
   username,
@@ -15,7 +13,7 @@ let
   clientKeySecret = "sketchybar-jellyfin-client-key";
   beastConfig = outputs.nixosConfigurations.beast.config;
   endpoint = beastConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;
-  enable = isDesktop && !isWork;
+  enable = config.host.isDesktop && !config.host.isWork;
 in
 {
   host.observability.client.mtlsClients.${clientName}.enable = enable;

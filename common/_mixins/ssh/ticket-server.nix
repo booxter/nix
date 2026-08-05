@@ -94,7 +94,7 @@ in
 
   config = lib.mkMerge [
     {
-      host.sshTicket.enable = lib.mkDefault true;
+      host.sshTicket.enable = lib.mkDefault (!config.host.isWork);
       host.sshTicket.caPublicKeys = lib.mkIf cfg.enable (lib.mkDefault inventoryCaPublicKeys);
     }
     (lib.optionalAttrs isLinux {

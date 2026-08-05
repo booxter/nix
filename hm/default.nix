@@ -4,13 +4,11 @@
   stateVersion,
   username,
   hmFull,
-  isDesktop,
-  isWork,
   osConfig,
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin;
+  inherit (osConfig.host) isDarwin isDesktop isWork;
 in
 {
   imports = [

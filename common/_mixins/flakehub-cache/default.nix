@@ -25,8 +25,8 @@ let
     in
     lib.filter (key: key != null) (map keyFromLine (lib.splitString "\n" installerSource));
 in
-lib.mkMerge [
-  {
+{
+  config = lib.mkIf (!config.host.isWork) {
     nix.settings = {
       netrc-file = config.sops.templates."flakehub-netrc".path;
       extra-substituters = [ hostInventory.site.nixCaches.flakehub.url ];
@@ -52,5 +52,5 @@ lib.mkMerge [
         '';
       };
     };
-  }
-]
+  };
+}

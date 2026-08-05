@@ -1,11 +1,12 @@
 {
   config,
   lib,
+  osConfig,
   pkgs,
-  isWork,
   ...
 }:
 let
+  inherit (osConfig.host) isWork;
   codexPkgs = import ./pkgs {
     inherit pkgs;
     codex = config.programs.codex.package;

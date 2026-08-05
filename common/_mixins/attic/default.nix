@@ -8,8 +8,8 @@
 let
   hostSecretFile = ../../../secrets/${secretDomain}/${hostname}.yaml;
 in
-lib.mkMerge [
-  {
+{
+  config = lib.mkIf (!config.host.isWork) {
     sops = {
       defaultSopsFile = hostSecretFile;
     }
@@ -29,5 +29,5 @@ lib.mkMerge [
         '';
       };
     };
-  }
-]
+  };
+}

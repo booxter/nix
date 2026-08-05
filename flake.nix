@@ -78,24 +78,19 @@
         spec:
         let
           hostUsername = spec.username or username;
-          isWork = spec.isWork or false;
         in
         {
           inherit
             inputs
             outputs
             hostInventory
-            isWork
             ;
           hostname = spec.name;
           hostPlatform = inputs.nixpkgs.lib.systems.elaborate spec.platform;
           username = hostUsername;
           stateVersion = spec.stateVersion;
           hmFull = spec.hmFull or true;
-          isBuilder = spec.isBuilder or false;
-          isDesktop = spec.isDesktop or false;
-          isLaptop = spec.isLaptop or false;
-          secretDomain = spec.secretDomain or (if isWork then "work" else "main");
+          secretDomain = hostInventory.toSecretDomain spec;
         };
       mkNixos =
         spec:

@@ -1,6 +1,5 @@
 {
   config,
-  isDesktop,
   lib,
   ...
 }:
@@ -65,7 +64,7 @@ in
         nodeExporter.mtls.enable = lib.mkDefault (!config.host.isWork);
       };
 
-      host.observability.lanWan.enable = lib.mkDefault isDesktop;
+      host.observability.lanWan.enable = lib.mkDefault config.host.isDesktop;
       host.observability.thermal.enable = lib.mkDefault (!config.host.isWork);
     }
     (lib.mkIf cfg.enable (

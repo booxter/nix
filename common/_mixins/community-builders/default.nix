@@ -42,31 +42,33 @@ let
   formatList = values: if values == [ ] then "-" else lib.concatStringsSep "," values;
 in
 {
-  programs.ssh = {
-    knownHosts = lib.mapAttrs' (
-      _: builder:
-      lib.nameValuePair builder.hostName {
-        publicKey = readPublicKey builder.publicKeyFile;
-      }
+  config = lib.mkIf (!config.host.isWork && config.host.isDesktop) {
+    programs.ssh = {
+      knownHosts = lib.mapAttrs' (
+        _: builder:
+        lib.nameValuePair builder.hostName {
+          publicKey = readPublicKey builder.publicKeyFile;
+        }
+      ) communityBuilders;
+      extraConfig =
+        let
+          communityBuilderIdentityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
+          user = "booxter";
+        in
+        lib.concatStringsSep "\n" (
+          lib.mapAttrsToList (name: builder: ''
+            Host ${name}
+              Hostname ${builder.hostName}
+              IdentityFile ${communityBuilderIdentityFile}
+              User ${user}
+          '') communityBuilders
+        );
+    };
+    environment.systemPackages = [ pkgs.openssh ];
+    host.nixpkgsReview.builders = lib.mapAttrsToList (
+      name: builder:
+      "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "
+      + "${toString builder.speedFactor} ${formatList builder.supportedFeatures} - -"
     ) communityBuilders;
-    extraConfig =
-      let
-        communityBuilderIdentityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
-        user = "booxter";
-      in
-      lib.concatStringsSep "\n" (
-        lib.mapAttrsToList (name: builder: ''
-          Host ${name}
-            Hostname ${builder.hostName}
-            IdentityFile ${communityBuilderIdentityFile}
-            User ${user}
-        '') communityBuilders
-      );
   };
-  environment.systemPackages = [ pkgs.openssh ];
-  host.nixpkgsReview.builders = lib.mapAttrsToList (
-    name: builder:
-    "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "
-    + "${toString builder.speedFactor} ${formatList builder.supportedFeatures} - -"
-  ) communityBuilders;
 }
