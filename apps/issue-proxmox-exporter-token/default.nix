@@ -67,7 +67,6 @@ pythonPackages.buildPythonApplication {
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set-default PKI_TOOLS_REPO_ROOT ${../..} \
         --set PKI_TOOLS_HOSTS_FILE ${hostsFile}
     done
   '';

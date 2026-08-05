@@ -92,7 +92,6 @@ pythonPackages.buildPythonApplication {
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
-        --set-default PKI_TOOLS_REPO_ROOT ${../..} \
         --set PKI_CERTIFICATE_HOSTS_FILE ${hostsFile} \
         --set PKI_CERTIFICATE_QUERY_FILE ${./query.nix} \
         --set PKI_UNIFI_DEFAULTS_FILE ${unifiDefaultsFile}
