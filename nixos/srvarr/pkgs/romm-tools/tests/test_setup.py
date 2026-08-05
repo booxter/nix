@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 import json
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import BinaryIO
 
@@ -11,6 +11,7 @@ import pytest
 
 from romm_tools.setup import (
     Error,
+    PodmanSetupRuntime,
     SetupConfig,
     SetupRuntime,
     SetupTask,
@@ -20,6 +21,72 @@ from romm_tools.setup import (
     run_setup,
     setup_environment,
 )
+
+
+@dataclass
+class FinishedContainer:
+    logs_output: bytes
+    exit_status: int = 0
+    started: bool = False
+    exited: bool = False
+    removed: bool = False
+
+    def start(self) -> None:
+        self.started = True
+
+    def wait(self) -> int:
+        assert self.started
+        self.exited = True
+        return self.exit_status
+
+    def logs(self, **kwargs: object) -> bytes:
+        assert self.exited
+        assert kwargs == {"stdout": True, "stderr": True}
+        return self.logs_output
+
+    def remove(self, **kwargs: object) -> None:
+        assert self.exited
+        assert kwargs == {"v": True, "force": True}
+        self.removed = True
+
+
+@dataclass
+class RecordingContainers:
+    container: FinishedContainer
+    create_options: dict[str, object] | None = None
+
+    def create(self, image: object, command: list[str], **kwargs: object) -> FinishedContainer:
+        self.create_options = {"image": image, "command": command, **kwargs}
+        return self.container
+
+
+class FixedImages:
+    def get(self, name: str) -> str:
+        return f"resolved:{name}"
+
+
+@dataclass
+class RecordingPodmanClient:
+    containers: RecordingContainers
+    images: FixedImages = field(default_factory=FixedImages)
+
+
+def test_podman_runtime_waits_before_reading_logs(tmp_path: Path) -> None:
+    container = FinishedContainer(b"migration complete\n")
+    containers = RecordingContainers(container)
+    runtime = PodmanSetupRuntime(RecordingPodmanClient(containers))  # type: ignore[arg-type]
+    config = load_config(write_config(tmp_path))
+    output = io.BytesIO()
+
+    runtime.run_task(SetupTask.MIGRATE, config, {"DB_PASSWD": "secret"}, output)
+
+    assert output.getvalue() == b"migration complete\n"
+    assert container.removed
+    assert containers.create_options is not None
+    assert containers.create_options["network_mode"] == "slirp4netns"
+    assert containers.create_options["network_options"] == {
+        "slirp4netns": ["allow_host_loopback=true"]
+    }
 
 
 def config_data(tmp_path: Path) -> dict[str, object]:

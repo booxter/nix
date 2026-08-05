@@ -6,11 +6,12 @@ from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path, PurePosixPath
-from typing import BinaryIO, Protocol, TextIO, cast
+from typing import BinaryIO, Protocol, TextIO
 
 from dotenv import dotenv_values
 from podman import PodmanClient
-from podman.errors import ContainerError, PodmanError
+from podman.domain.containers import Container
+from podman.errors import PodmanError
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, ValidationError, field_validator
 from requests import RequestException
 
@@ -112,33 +113,35 @@ class PodmanSetupRuntime:
             }
             for mount in config.mounts
         }
+        container: Container | None = None
         try:
-            # Resolve the image before run(): podman-py's convenience method
-            # otherwise pulls a missing image, while this service must consume
-            # the exact archive loaded by romm-prepare-assets.
-            image = self.client.images.get(config.image)
-            logs = self.client.containers.run(
-                image,
-                list(task.arguments),
-                remove=True,
-                stdout=True,
-                stderr=True,
-                cap_drop=["ALL"],
-                entrypoint=[task.executable],
-                environment=dict(environment),
-                log_config={"Type": "journald"},
-                network_mode="slirp4netns",
-                network_options={"slirp4netns": ["allow_host_loopback=true"]},
-                no_new_privileges=True,
-                volumes=volumes,
-                workdir="/backend",
-            )
-        except ContainerError as error:
-            _write_logs(cast(bytes | Iterable[bytes] | None, error.stderr), output)
-            raise Error(f"RomM {task.label} exited with status {error.exit_status}") from error
+            try:
+                image = self.client.images.get(config.image)
+                container = self.client.containers.create(
+                    image,
+                    list(task.arguments),
+                    cap_drop=["ALL"],
+                    entrypoint=[task.executable],
+                    environment=dict(environment),
+                    log_config={"Type": "journald"},
+                    network_mode="slirp4netns",
+                    network_options={"slirp4netns": ["allow_host_loopback=true"]},
+                    no_new_privileges=True,
+                    volumes=volumes,
+                    workdir="/backend",
+                )
+                container.start()
+                exit_status = container.wait()
+                _write_logs(container.logs(stdout=True, stderr=True), output)
+                if exit_status != 0:
+                    raise Error(f"RomM {task.label} exited with status {exit_status}")
+            finally:
+                if container is not None:
+                    container.remove(v=True, force=True)
+        except Error:
+            raise
         except (PodmanError, RequestException, ValueError) as error:
             raise Error(f"failed to run RomM {task.label}: {error}") from error
-        _write_logs(cast(bytes | Iterable[bytes] | None, logs), output)
 
 
 def load_config(path: Path) -> SetupConfig:
