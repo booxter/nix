@@ -201,30 +201,7 @@
         }
       );
       formatter = helpers.forAllSystems (
-        system:
-        let
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
-        in
-        pkgs.writeShellApplication {
-          name = "formatter";
-          runtimeInputs = with pkgs; [
-            coreutils
-            deadnix
-            nixfmt-tree
-            shellcheck
-            ruff
-            nodejs
-            prettier
-            eslint
-            jq
-            mbake
-            actionlint
-            markdownlint-cli2
-            git
-            findutils
-          ];
-          text = builtins.readFile ./apps/formatter.sh;
-        }
+        system: import ./apps/formatter.nix inputs.nixpkgs.legacyPackages.${system}
       );
 
     };
