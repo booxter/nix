@@ -28,15 +28,15 @@
         ) "Transmission must stay on the 4.1.x release series; got ${releaseTransmissionVersion}";
         releaseTransmission
       );
-      lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
-      lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          ../lib/patches/yt-dlp-twitter-only-own-status-media.patch
-        ];
-      });
     in
     {
-      inherit (pkgsNixpkgsUnstable) claude-code;
+      inherit (pkgsNixpkgsUnstable) aerospace claude-code codex;
+
+      # CI renders two-revision config diffs by calling standalone dix, not
+      # nh's internal dix library. Stable dix 1.4.x omits the per-package size
+      # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI
+      # on unstable until the stable branch catches up.
+      inherit (pkgsNixpkgsUnstable) dix;
 
       pythonPackagesExtensions = (prev.pythonPackagesExtensions or [ ]) ++ [
         (pythonFinal: pythonPrev: {
@@ -49,9 +49,6 @@
           });
         })
       ];
-
-      # Pick up the latest window-management fixes ahead of the stable branch.
-      inherit (pkgsNixpkgsUnstable) aerospace;
 
       # Build passthru.tests for all changed packages with --tests. Drop when
       # https://github.com/Mic92/nixpkgs-review/pull/397 lands in nixpkgs-review.
@@ -72,12 +69,6 @@
         ];
       });
 
-      # CI renders two-revision config diffs by calling standalone dix, not
-      # nh's internal dix library. Stable dix 1.4.x omits the per-package size
-      # deltas that nh 4.4's dix 2.x reports during activation, so keep the CLI
-      # on unstable until the stable branch catches up.
-      inherit (pkgsNixpkgsUnstable) dix;
-
       # Support Kubernetes 1.36 while carrying the nixpkgs update.
       # https://github.com/NixOS/nixpkgs/pull/539773
       kind = prev.kind.overrideAttrs (old: {
@@ -97,9 +88,16 @@
         ];
       });
 
-      inherit (pkgsNixpkgsUnstable) codex;
-
-      lolek = lolekPackage.override { yt-dlp = lolekYtDlp; };
+      lolek =
+        let
+          lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
+          lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
+            patches = (old.patches or [ ]) ++ [
+              ../lib/patches/yt-dlp-twitter-only-own-status-media.patch
+            ];
+          });
+        in
+        lolekPackage.override { yt-dlp = lolekYtDlp; };
 
       # Advertise ReFrame's absolute pointer as a touchscreen only. Declaring
       # the same uinput device as both absolute and relative breaks movement
@@ -113,50 +111,8 @@
         ];
       });
 
-      # https://github.com/NixOS/nixpkgs/pull/545760
-      telegram-bot-api =
-        let
-          nixpkgsVersion = lib.getVersion prev.telegram-bot-api;
-        in
-        assert lib.asserts.assertMsg (lib.versionAtLeast "10.2" nixpkgsVersion)
-          "telegram-bot-api overlay is stale: nixpkgs has ${nixpkgsVersion}, newer than 10.2";
-        prev.telegram-bot-api.overrideAttrs (_old: {
-          version = "10.2";
-          src = prev.fetchFromGitHub {
-            owner = "tdlib";
-            repo = "telegram-bot-api";
-            # https://github.com/tdlib/telegram-bot-api/issues/783
-            rev = "adfd7f6a8e990272851777eeb3ae0def4216f161";
-            hash = "sha256-sICBisUDMirUOMN5ORQ2B9Wo8KC91hIn1sHyt2xClJ0=";
-            fetchSubmodules = true;
-          };
-        });
-
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
-
-      # Fix XQuartz crashes under launchd socket activation and restore the
-      # strictflexarrays1 hardening check.
-      # https://github.com/NixOS/nixpkgs/pull/543662
-      xorg-server =
-        if prev.stdenv.hostPlatform.isDarwin then
-          (prev.xorg-server.override {
-            # Keep the patched xtrans private to XQuartz's xorg-server
-            # dependency graph so unrelated X11 consumers do not rebuild.
-            xtrans = prev.xtrans.overrideAttrs (old: {
-              patches = (old.patches or [ ]) ++ [
-                (prev.fetchpatch {
-                  url = "https://gitlab.freedesktop.org/xorg/lib/libxtrans/-/commit/79f6b0bfe2170496e8c37626043d009f4cd3f1e1.patch";
-                  hash = "sha256-Y8QY1yAiOI/rSNi71/Qhsn6UEql556/pS2av7+vmGQA=";
-                })
-              ];
-            });
-          }).overrideAttrs
-            (old: {
-              hardeningDisable = lib.remove "strictflexarrays1" (old.hardeningDisable or [ ]);
-            })
-        else
-          prev.xorg-server;
 
       # NixOS can expose the same D-Bus service file through both direct package
       # paths and system-path symlinks. Do not let dbus-broker report those
@@ -165,33 +121,6 @@
       dbus-broker = prev.dbus-broker.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
           ../lib/patches/dbus-broker-ignore-duplicate-canonical-service-paths.patch
-        ];
-      });
-
-      # Backport the partial rename chunk fix to the older Darwin package.
-      # Applying it unconditionally there makes a future upgrade fail until
-      # this backport is removed.
-      diff-so-fancy =
-        if prev.stdenv.hostPlatform.isDarwin then
-          prev.diff-so-fancy.overrideAttrs (old: {
-            patches = (old.patches or [ ]) ++ [
-              (prev.fetchpatch {
-                url = "https://github.com/so-fancy/diff-so-fancy/commit/9a8b325a72de44d492b079a4b02cef4e2c33ab81.patch";
-                hash = "sha256-v3sk7VjKMLO+aGMtWCyrI9DOy+LeyGAb25UrEX3oXbs=";
-              })
-            ];
-          })
-        else
-          prev.diff-so-fancy;
-
-      # Backport Grafana fix for /alerting/groups showing a bogus 404 header.
-      # Upstream: https://github.com/grafana/grafana/pull/123286
-      grafana = prev.grafana.overrideAttrs (old: {
-        patches = (old.patches or [ ]) ++ [
-          (prev.fetchpatch {
-            url = "https://github.com/grafana/grafana/pull/123286.patch";
-            hash = "sha256-G9kIyw10aMq/SlSQ9kjdvZWtPFSwxIOnTygcaAmsHic=";
-          })
         ];
       });
 
@@ -222,21 +151,6 @@
           ../lib/patches/open-webui-apply-default-model-system-prompt.patch
         ];
       });
-
-      # Track exact SAB cleanup artifacts at post-processing time so history
-      # deletion can safely remove sorted outputs and temporary unpack trees
-      # without carrying a private DB schema change.
-      # https://github.com/sabnzbd/sabnzbd/issues/2754
-      sabnzbd = (
-        prev.sabnzbd.overrideAttrs (old: {
-          patches = (old.patches or [ ]) ++ [
-            (prev.fetchpatch {
-              url = "https://github.com/booxter/sabnzbd/commit/2ee3243723ff613104f179167a8467025ec051b4.patch";
-              hash = "sha256-anr7OPO3ZgW3PSaw32eNpkcAKa+SXonUQU+K11dc414=";
-            })
-          ];
-        })
-      );
 
       vikunja = prev.vikunja.overrideAttrs (
         old:

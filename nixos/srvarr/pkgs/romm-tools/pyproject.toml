@@ -29,7 +29,6 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 romm_tools = ["py.typed"]
-"romm_tools.data" = ["*.js"]
 
 [tool.pytest.ini_options]
 addopts = "-q --cov=romm_tools --cov-report=term-missing --cov-fail-under=90"

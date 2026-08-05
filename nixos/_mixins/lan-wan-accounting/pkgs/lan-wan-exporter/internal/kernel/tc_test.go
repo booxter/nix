@@ -6,17 +6,31 @@ import (
 	tc "github.com/florianl/go-tc"
 )
 
-func TestClassBytesUsesMatchingHandleStatistics(t *testing.T) {
+func TestClassBytesReturnsStatsBytes(t *testing.T) {
 	handle, err := parseClassID("1:10")
 	if err != nil {
 		t.Fatal(err)
 	}
 	classes := []tc.Object{
-		{Msg: tc.Msg{Handle: 0x10001}, Attribute: tc.Attribute{Stats2: &tc.Stats2{Bytes: 12}}},
-		{Msg: tc.Msg{Handle: handle}, Attribute: tc.Attribute{Stats2: &tc.Stats2{Bytes: 345}}},
+		{Msg: tc.Msg{Handle: handle}, Attribute: tc.Attribute{
+			Stats: &tc.Stats{Bytes: 123},
+		}},
 	}
-	if got := classBytes(classes, handle); got != 345 {
-		t.Fatalf("unexpected class bytes: %d", got)
+	if got := classBytes(classes, handle); got != 123 {
+		t.Fatalf("expected Stats.Bytes 123, got %d", got)
+	}
+}
+
+func TestClassBytesReturnsZeroWhenNoStats(t *testing.T) {
+	handle, err := parseClassID("1:10")
+	if err != nil {
+		t.Fatal(err)
+	}
+	classes := []tc.Object{
+		{Msg: tc.Msg{Handle: handle}, Attribute: tc.Attribute{}},
+	}
+	if got := classBytes(classes, handle); got != 0 {
+		t.Fatalf("expected 0 for missing stats, got %d", got)
 	}
 }
 

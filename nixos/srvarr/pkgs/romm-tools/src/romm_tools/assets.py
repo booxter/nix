@@ -8,7 +8,6 @@ import tarfile
 import tempfile
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from importlib.resources import files
 from pathlib import Path, PurePosixPath
 from typing import Protocol, TextIO, cast
 
@@ -24,8 +23,6 @@ HTML_PATH = "/var/www/html/."
 NGINX_PATH = "/etc/nginx/js/."
 ZIP_CACHE_PATH = "/backend/utils/zip_cache.py"
 
-HEAD_MARKER = b"</head>"
-HEAD_REPLACEMENT = b'  <script src="/assets/romm-default-core.js"></script>\n</head>'
 ZIP_CACHE_MARKER = b"        os.rename(tmp_path, target)"
 ZIP_CACHE_REPLACEMENT = b"        os.chmod(tmp_path, 0o640)\n        os.rename(tmp_path, target)"
 
@@ -201,13 +198,6 @@ def prepare_assets(source: ArchiveSource, paths: AssetPaths) -> None:
         extract_archive(source.archive(NGINX_PATH), nginx)
         extract_archive(source.archive(ZIP_CACHE_PATH), integration / "utils")
 
-        default_core = files("romm_tools.data").joinpath("romm-default-core.js").read_bytes()
-        script_path = web / "assets/romm-default-core.js"
-        script_path.parent.mkdir(parents=True, exist_ok=True)
-        script_path.write_bytes(default_core)
-        script_path.chmod(0o644)
-
-        replace_required(web / "index.html", HEAD_MARKER, HEAD_REPLACEMENT)
         replace_required(
             integration / "utils/zip_cache.py",
             ZIP_CACHE_MARKER,

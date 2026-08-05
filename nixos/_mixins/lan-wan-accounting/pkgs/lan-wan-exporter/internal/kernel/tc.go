@@ -57,12 +57,10 @@ func classBytes(classes []tc.Object, handle uint32) uint64 {
 		if class.Handle != handle {
 			continue
 		}
-		if class.Stats2 != nil {
-			return class.Stats2.Bytes
-		}
 		if class.Stats != nil {
 			return class.Stats.Bytes
 		}
+		return 0
 	}
 	return 0
 }

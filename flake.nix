@@ -40,6 +40,7 @@
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
 
     nur.url = "github:nix-community/NUR";
+    nur.inputs.nixpkgs.follows = "nixpkgs";
 
     proxmox-nixos.url = "github:booxter/proxmox-nixos/my-fork";
 
@@ -130,7 +131,7 @@
         spec:
         let
           extraModules = inputs.nixpkgs.lib.optionals (spec ? dnsName) [ (staticHostModule spec) ];
-          args = builtins.removeAttrs spec [
+          args = removeAttrs spec [
             "hostKind"
             "isVM"
             "homeManagerInput"
