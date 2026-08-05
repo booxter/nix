@@ -40,9 +40,9 @@ in
     ./_mixins/yubi.nix
     ./_mixins/attic
     ./_mixins/flakehub-cache
-    ./_mixins/community-builders
-    ./_mixins/personal-builders
-    ./_mixins/work-builders
+    ./_mixins/builders/community.nix
+    ./_mixins/builders/personal.nix
+    ./_mixins/builders/work.nix
   ];
 
   options.host.isVM = lib.mkOption {
