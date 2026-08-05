@@ -16,7 +16,7 @@ let
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
-  ticketTargets = import ../../../lib/ssh-ticket-targets.nix {
+  ticketTargets = import ./ticket-targets.nix {
     inherit
       hostInventory
       lib
