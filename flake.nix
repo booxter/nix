@@ -229,8 +229,7 @@
             shellcheck
             ruff
             nodejs
-            # TODO: reenable when https://github.com/NixOS/nixpkgs/pull/540892 reaches nixos-26.05
-            #prettier
+            prettier
             eslint
             jq
             mbake
