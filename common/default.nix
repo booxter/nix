@@ -20,7 +20,6 @@ let
     (readPublicKey ../public-keys/users/frame.pub)
     (readPublicKey ../public-keys/yubikey.pub)
     (readPublicKey ../public-keys/mair-secretive.pub)
-    workUserKey
   ];
 
 in
