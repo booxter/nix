@@ -587,6 +587,12 @@ rec {
       probePath = "/";
     }
     {
+      id = "glance";
+      owner = "srvarr";
+      probePath = "/";
+      blackboxProbe = false;
+    }
+    {
       id = "jellyfin";
       internalEndpointName = null;
       owner = "beast";
@@ -631,6 +637,18 @@ rec {
       owner = "fana";
       probePath = "/login";
       glanceCategory = "infrastructure";
+    }
+    {
+      id = "alertmanager";
+      owner = "fana";
+      probePath = "/-/ready";
+      blackboxProbe = false;
+    }
+    {
+      id = "loki";
+      owner = "fana";
+      probePath = "/ready";
+      blackboxProbe = false;
     }
     {
       id = "home";
@@ -1138,7 +1156,6 @@ rec {
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
       dnsAliases = [ "dash.${site.public.domain}" ];
-      localDnsAliases = [ "glance" ];
       wgNamespace = {
         bridgeAddress = "192.168.50.5";
         namespaceAddress = "192.168.50.1";
@@ -1187,10 +1204,6 @@ rec {
       name = "fana";
       platform = "x86_64-linux";
       upsHost = "prx1-lab";
-      localDnsAliases = [
-        "alertmanager"
-        "loki"
-      ];
       resourceControl.systemServices = {
         lightweight = [
           "prometheus-blackbox-exporter"
