@@ -14,10 +14,6 @@ let
   };
 in
 {
-  imports = [
-    ./sync-git-mains.nix
-  ];
-
   programs.bash.enable = true;
 
   home.shellAliases = {

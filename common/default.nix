@@ -37,7 +37,6 @@ in
     ./_mixins/nvtop
     ./_mixins/ssh
     ./_mixins/stylix
-    ./_mixins/sync-git-mains
     ./_mixins/terminfo
     ./_mixins/yubi.nix
     ./_mixins/attic

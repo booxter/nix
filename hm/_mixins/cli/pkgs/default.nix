@@ -11,7 +11,5 @@ in
 
   nr = pkgs.callPackage ./nr { };
 
-  sync-git-mains = pkgs.callPackage ./sync-git-mains { inherit gitCommandRunner; };
-
   sync-repo = pkgs.callPackage ./sync-repo { inherit gitCommandRunner; };
 }

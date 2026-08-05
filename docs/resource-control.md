@@ -66,7 +66,7 @@ resourceControl = {
     };
   };
 
-  userServices.lightweight = [ "sync-git-mains" ];
+  userServices.lightweight = [ "codex-warmer" ];
 };
 ```
 

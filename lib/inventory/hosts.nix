@@ -196,7 +196,6 @@ in
       resourceControl.userServices.lightweight = [
         "codex-warmer"
         "gmailctl-token-keepalive"
-        "sync-git-mains"
       ];
       vnc = {
         enable = true;
