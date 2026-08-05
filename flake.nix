@@ -83,58 +83,28 @@
           ;
       };
 
-      hostSpecs = hostInventory;
-      inherit (hostSpecs)
-        darwinHosts
-        nixosHostSpecs
-        ;
-
       specToNixosConfig =
-        spec:
+        name: spec:
         let
-          inherit (spec) name;
           extraModules = inputs.nixpkgs.lib.optional (spec ? dnsName) {
             host.dnsName = spec.dnsName;
           };
           args = removeAttrs spec [
             "hostKind"
             "isVM"
-            "homeManagerInput"
-            "nixpkgsInput"
             "dnsName"
             "name"
           ];
-          inputArgs =
-            (if spec ? homeManagerInput then { homeManagerInput = inputs.${spec.homeManagerInput}; } else { })
-            // (if spec ? nixpkgsInput then { nixpkgsInput = inputs.${spec.nixpkgsInput}; } else { });
           hostArgs = args // {
             extraModules = (args.extraModules or [ ]) ++ extraModules;
+            hostname = name;
+            hostSpecName = name;
           };
-          value =
-            if hostInventory.isNixosVM spec then
-              helpers.mkVM (
-                hostArgs
-                // {
-                  stateVersion = args.stateVersion or "25.11";
-                  hostSpecName = name;
-                  hostname = name;
-                }
-              )
-            else
-              helpers.mkNixos (
-                hostArgs
-                // inputArgs
-                // {
-                  hostname = name;
-                  hostSpecName = name;
-                }
-              );
         in
-        {
-          inherit name value;
-        };
-
-      canonicalNixosConfigurations = builtins.listToAttrs (map specToNixosConfig nixosHostSpecs);
+        if hostInventory.isNixosVM spec then
+          helpers.mkVM (hostArgs // { stateVersion = args.stateVersion or "25.11"; })
+        else
+          helpers.mkNixos hostArgs;
 
     in
     {
@@ -147,9 +117,9 @@
             hostSpecName = name;
           }
         )
-      ) darwinHosts;
+      ) hostInventory.darwinHosts;
 
-      nixosConfigurations = canonicalNixosConfigurations;
+      nixosConfigurations = builtins.mapAttrs specToNixosConfig hostInventory.nixosHostSpecsByName;
 
       checks = import ./checks.nix {
         inherit

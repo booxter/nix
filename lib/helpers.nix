@@ -30,7 +30,6 @@ rec {
       username ? defaultUsername,
       platform,
       virtPlatform ? platform,
-      homeManagerInput ? inputs.home-manager,
       hmFull ? true,
       isBuilder ? false,
       isDesktop ? false,
@@ -38,14 +37,13 @@ rec {
       isWork ? false,
       secretDomain ? (if isWork then "work" else "main"),
       isVM ? false,
-      nixpkgsInput ? inputs.nixpkgs,
       extraModules ? [ ],
       ...
     }:
     let
-      hostPlatform = nixpkgsInput.lib.systems.elaborate platform;
+      hostPlatform = inputs.nixpkgs.lib.systems.elaborate platform;
     in
-    nixpkgsInput.lib.nixosSystem {
+    inputs.nixpkgs.lib.nixosSystem {
       specialArgs = {
         inherit
           inputs
@@ -72,7 +70,7 @@ rec {
         ../nixos
         inputs.disko.nixosModules.disko
         inputs.sops-nix.nixosModules.sops
-        homeManagerInput.nixosModules.home-manager
+        inputs.home-manager.nixosModules.home-manager
         (commonHMConfig {
           inherit
             username
@@ -158,7 +156,6 @@ rec {
       username ? defaultUsername,
       platform,
       hostSpecName ? hostname,
-      homeManagerInput ? inputs.home-manager,
       hmFull ? true,
       isBuilder ? false,
       isDesktop ? false,
@@ -202,7 +199,7 @@ rec {
         ../common
         ../darwin
 
-        homeManagerInput.darwinModules.home-manager
+        inputs.home-manager.darwinModules.home-manager
         (commonHMConfig {
           inherit
             username
