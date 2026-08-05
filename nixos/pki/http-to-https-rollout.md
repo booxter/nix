@@ -10,7 +10,7 @@ Already done:
 - `grafana.home.arpa`
 - `loki.home.arpa` with mTLS log shipping from non-work NixOS hosts
 - internal HTTPS for `radarr`, `sonarr`, `lidarr`, `bazarr`, and `prowlarr`
-- internal HTTPS for `tmission.home.arpa`
+- internal HTTPS for `transmission.home.arpa`
 - internal HTTPS for `sabnzbd.home.arpa`
 - backend mTLS for the public `beast` ingress:
   - `js.ihar.dev`

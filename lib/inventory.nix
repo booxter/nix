@@ -829,7 +829,6 @@ rec {
     }
     {
       id = "transmission";
-      internalEndpointName = "tmission";
       owner = "srvarr";
       probePath = "/oauth2/sign_in";
       backendProbe = {
