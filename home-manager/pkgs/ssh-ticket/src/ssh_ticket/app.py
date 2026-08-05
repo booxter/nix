@@ -8,10 +8,10 @@ import os
 import pathlib
 import re
 import sys
-import tempfile
 from collections.abc import Iterator, Sequence
 from typing import NoReturn, cast
 
+from atomic_file_writes import write_text_atomic
 from pydantic import ValidationError
 
 from .durations import (
@@ -196,23 +196,11 @@ def read_metadata(path: pathlib.Path) -> TicketMetadata | None:
 
 def write_metadata(path: pathlib.Path, value: TicketMetadata) -> None:
     path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    temporary_path = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            encoding="utf-8",
-            dir=path.parent,
-            prefix=f".{path.name}.",
-            delete=False,
-        ) as output:
-            temporary_path = pathlib.Path(output.name)
-            os.fchmod(output.fileno(), 0o600)
-            output.write(value.model_dump_json(by_alias=True, indent=2))
-            output.write("\n")
-        os.replace(temporary_path, path)
-    finally:
-        if temporary_path is not None:
-            temporary_path.unlink(missing_ok=True)
+    write_text_atomic(
+        path,
+        value.model_dump_json(by_alias=True, indent=2) + "\n",
+        mode=0o600,
+    )
 
 
 def existing_ticket_valid(target: Target, paths: TicketPaths, runtime: Runtime) -> bool:

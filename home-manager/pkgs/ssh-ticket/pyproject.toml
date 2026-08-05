@@ -7,7 +7,7 @@ name = "ssh-ticket"
 version = "0.1.0"
 description = "Issue per-host short-lived SSH user certificates"
 requires-python = ">=3.11"
-dependencies = ["pydantic"]
+dependencies = ["atomic-file-writes", "pydantic"]
 
 [project.scripts]
 ssh-ticket = "ssh_ticket.app:cli"

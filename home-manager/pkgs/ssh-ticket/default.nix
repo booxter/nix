@@ -1,4 +1,5 @@
 {
+  atomicFileWrites,
   lib,
   openssh,
   python3,
@@ -16,7 +17,10 @@ pythonPackages.buildPythonApplication {
 
   build-system = [ pythonPackages.setuptools ];
 
-  dependencies = [ pythonPackages.pydantic ];
+  dependencies = [
+    atomicFileWrites
+    pythonPackages.pydantic
+  ];
 
   nativeCheckInputs = with pythonPackages; [
     ruff
