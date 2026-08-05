@@ -185,13 +185,14 @@ func (kernel *Kernel) addClass(link netlink.Link, class Class) error {
 	if class.Parent != 0 {
 		parent = netlink.MakeHandle(1, class.Parent)
 	}
+	rateBytes := class.RateBits / 8
 	htbClass := netlink.NewHtbClass(
 		netlink.ClassAttrs{
 			LinkIndex: link.Attrs().Index,
 			Handle:    netlink.MakeHandle(1, class.Minor),
 			Parent:    parent,
 		},
-		netlink.HtbClassAttrs{Rate: class.RateBits, Ceil: class.RateBits},
+		netlink.HtbClassAttrs{Rate: rateBytes, Ceil: rateBytes},
 	)
 	if err := kernel.netlink.ClassAdd(htbClass); err != nil {
 		return fmt.Errorf("add HTB class 1:%x on %s: %w", class.Minor, link.Attrs().Name, err)
