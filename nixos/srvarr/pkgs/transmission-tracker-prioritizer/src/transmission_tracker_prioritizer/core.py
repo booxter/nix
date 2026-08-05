@@ -5,7 +5,7 @@ import time
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Protocol, cast
+from typing import Literal, Protocol
 
 from prometheus_client import CollectorRegistry, Gauge, write_to_textfile
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -175,13 +175,10 @@ def load_tracker_hosts(trackers_file: Path) -> set[str] | None:
     if not trackers_file.exists():
         return None
     try:
-        return cast(
-            set[str],
-            read_tracker_hosts(
-                trackers_file,
-                on_empty_entry=lambda line_number: LOG.warning(
-                    "ignoring empty tracker host entry on line %s", line_number
-                ),
+        return read_tracker_hosts(
+            trackers_file,
+            on_empty_entry=lambda line_number: LOG.warning(
+                "ignoring empty tracker host entry on line %s", line_number
             ),
         )
     except OSError as exc:
@@ -194,7 +191,7 @@ def tracker_matches(torrent: Torrent, tracker_hosts: set[str]) -> bool:
         for raw_host in (tracker.host, tracker.announce):
             if raw_host is None:
                 continue
-            host = cast(str, normalize_tracker_host(raw_host))
+            host = normalize_tracker_host(raw_host)
             if host and host in tracker_hosts:
                 return True
     return False
