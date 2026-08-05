@@ -56,6 +56,20 @@ def _environment_bool(environment: Mapping[str, str], name: str) -> bool:
     return environment.get(name, "").lower() in {"1", "true", "yes"}
 
 
+def _current_xquartz_environment(
+    process: ProcessController,
+    environment: Mapping[str, str],
+) -> Mapping[str, str]:
+    # Long-lived shells can retain a socket from an earlier launchd GUI bootstrap.
+    result = process.run(["/bin/launchctl", "getenv", "DISPLAY"])
+    display = result.stdout.strip()
+    if result.returncode != 0 or not display:
+        raise RunError("Unable to determine the current XQuartz display through launchd.")
+    current = dict(environment)
+    current["DISPLAY"] = display
+    return current
+
+
 def main(
     transport: Transport,
     argv: Sequence[str] | None = None,
@@ -67,6 +81,7 @@ def main(
     stderr: TextIO = sys.stderr,
     uid: int | None = None,
     find_executable: Callable[[str], str | None] = shutil.which,
+    system: str | None = None,
 ) -> int:
     environ = os.environ if environment is None else environment
     program_name = program or ("xrun-nixpkgs" if transport is Transport.X11 else "wrun-nixpkgs")
@@ -107,10 +122,18 @@ def main(
         return 0
 
     controller = process or SystemProcessController()
+    local_environment = None
+    if transport is Transport.X11 and (sys.platform if system is None else system) == "darwin":
+        try:
+            local_environment = _current_xquartz_environment(controller, environ)
+        except RunError as error:
+            print(f"{program_name}: {error}", file=stderr)
+            return 1
     ssh = OpenSshSession(
         controller,
         host,
         tuple(arguments.ssh_option),
+        local_environment=local_environment,
     )
     if transport is Transport.X11:
         session: RemoteSession = ssh

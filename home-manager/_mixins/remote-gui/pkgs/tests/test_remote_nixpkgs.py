@@ -70,6 +70,7 @@ def invoke(
     process: FakeProcessController | None = None,
     environment: Mapping[str, str] | None = None,
     find_executable: str | None = None,
+    system: str = "linux",
 ) -> tuple[int, str, str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
@@ -82,6 +83,7 @@ def invoke(
         stderr=stderr,
         uid=501,
         find_executable=lambda _: find_executable,
+        system=system,
     )
     return status, stdout.getvalue(), stderr.getvalue()
 
@@ -143,6 +145,7 @@ def test_rejects_invalid_arguments() -> None:
 def test_builds_and_runs_through_x11() -> None:
     process = FakeProcessController(
         [
+            CommandResult(0, "/var/run/current-xquartz:0\n"),
             CommandResult(0, "/nix/store/example-foot\n", "build log\n"),
             CommandResult(0, "foot\n"),
             CommandResult(0),
@@ -163,12 +166,15 @@ def test_builds_and_runs_through_x11() -> None:
                 "two words",
             ],
             process=process,
+            environment={"DISPLAY": "/var/run/stale-xquartz:0"},
+            system="darwin",
         )
 
-    build_command = shlex.split(process.calls[0][-1])
+    assert process.calls[0] == ("/bin/launchctl", "getenv", "DISPLAY")
+    build_command = shlex.split(process.calls[1][-1])
     assert build_command[:3] == ["env", "NIXPKGS_ALLOW_UNFREE=1", "nix"]
     assert "--impure" in build_command
-    assert process.calls[0][:-1] == (
+    assert process.calls[1][:-1] == (
         "ssh",
         "-o",
         "ServerAliveInterval=10",
@@ -186,6 +192,21 @@ def test_builds_and_runs_through_x11() -> None:
         "--title",
         "two words",
     ]
+    assert replaced.value.environment["DISPLAY"] == "/var/run/current-xquartz:0"
+
+
+def test_x11_reports_an_unavailable_launchd_display() -> None:
+    process = FakeProcessController([CommandResult(1)])
+
+    status, _, stderr = invoke(
+        Transport.X11,
+        ["nixpkgs", "foot"],
+        process=process,
+        system="darwin",
+    )
+
+    assert status == 1
+    assert "Unable to determine the current XQuartz display through launchd" in stderr
 
 
 def test_falls_back_to_attribute_name_and_reports_available_executables() -> None:
@@ -260,6 +281,7 @@ def test_waypipe_uses_a_live_native_wayland_socket() -> None:
         assert shlex.split(replaced.value.arguments[-1]) == [
             "env",
             "NIXOS_OZONE_WL=1",
+            "XDG_SESSION_TYPE=wayland",
             "/nix/store/example-foot/bin/foot",
         ]
 
