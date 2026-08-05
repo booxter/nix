@@ -43,6 +43,8 @@ pythonPackages.buildPythonApplication {
   postFixup = ''
     wrapProgram "$out/bin/restic-cloud-usage" \
       --prefix PATH : ${lib.makeBinPath [ restic ]}
+    wrapProgram "$out/bin/restic-cloud-offload" \
+      --prefix PATH : ${lib.makeBinPath [ restic ]}
   '';
 
   meta = {
