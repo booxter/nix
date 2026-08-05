@@ -19,79 +19,39 @@ let
   litellmPort = 4000;
   litellmUser = "litellm";
   ollamaTunnelPort = 11435;
+  mkOllamaModel = prefix: name: extraModelInfo: {
+    model_name = name;
+    litellm_params = {
+      model = "${prefix}/${name}";
+      api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
+      keep_alive = "30m";
+    };
+    model_info = {
+      mode = "chat";
+      input_cost_per_token = 0.0;
+      output_cost_per_token = 0.0;
+    }
+    // extraModelInfo;
+  };
+  mkOllamaChatModel = mkOllamaModel "ollama_chat";
   litellmConfig = (pkgs.formats.yaml { }).generate "litellm-config.yaml" {
     model_list = [
-      {
-        model_name = "gemma4:31b";
-        litellm_params = {
-          model = "ollama_chat/gemma4:31b";
-          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
-          keep_alive = "30m";
-        };
-        model_info = {
-          mode = "chat";
-          supports_function_calling = true;
-          supports_vision = true;
-          input_cost_per_token = 0.0;
-          output_cost_per_token = 0.0;
-        };
-      }
-      {
-        model_name = "granite4:32b-a9b-h";
-        litellm_params = {
-          model = "ollama_chat/granite4:32b-a9b-h";
-          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
-          keep_alive = "30m";
-        };
-        model_info = {
-          mode = "chat";
-          supports_function_calling = true;
-          input_cost_per_token = 0.0;
-          output_cost_per_token = 0.0;
-        };
-      }
-      {
-        model_name = "nemotron-cascade-2:30b";
-        litellm_params = {
-          model = "ollama_chat/nemotron-cascade-2:30b";
-          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
-          keep_alive = "30m";
-        };
-        model_info = {
-          mode = "chat";
-          supports_function_calling = true;
-          input_cost_per_token = 0.0;
-          output_cost_per_token = 0.0;
-        };
-      }
-      {
-        model_name = "qwen3-next:80b";
-        litellm_params = {
-          model = "ollama_chat/qwen3-next:80b";
-          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
-          keep_alive = "30m";
-        };
-        model_info = {
-          mode = "chat";
-          supports_function_calling = true;
-          input_cost_per_token = 0.0;
-          output_cost_per_token = 0.0;
-        };
-      }
-      {
-        model_name = "qwen3-vl:8b-instruct";
-        litellm_params = {
-          model = "ollama/qwen3-vl:8b-instruct";
-          api_base = "http://127.0.0.1:${toString ollamaTunnelPort}";
-          keep_alive = "30m";
-        };
-        model_info = {
-          mode = "chat";
-          supports_vision = true;
-          input_cost_per_token = 0.0;
-          output_cost_per_token = 0.0;
-        };
-      }
+      (mkOllamaChatModel "gemma4:31b" {
+        supports_function_calling = true;
+        supports_vision = true;
+      })
+      (mkOllamaChatModel "granite4:32b-a9b-h" {
+        supports_function_calling = true;
+      })
+      (mkOllamaChatModel "nemotron-cascade-2:30b" {
+        supports_function_calling = true;
+      })
+      (mkOllamaChatModel "qwen3-next:80b" {
+        supports_function_calling = true;
+      })
+      (mkOllamaModel "ollama" "qwen3-vl:8b-instruct" {
+        supports_vision = true;
+      })
     ];
     general_settings = {
       database_url = "os.environ/DATABASE_URL";
