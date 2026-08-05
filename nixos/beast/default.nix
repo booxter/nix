@@ -37,10 +37,6 @@
   # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
   host.observability.lanWan.interface = "enp6s0";
 
-  sops = {
-    defaultSopsFile = ../../secrets/main/beast.yaml;
-  };
-
   networking.resolvconf.enable = true;
 
   environment.systemPackages = [ pkgs.join-media-parts ];

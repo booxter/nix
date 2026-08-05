@@ -6,7 +6,6 @@
   ...
 }:
 let
-  hostSecretFile = ../../../secrets/${config.host.secretDomain}/${config.networking.hostName}.yaml;
   flakehubCacheKeys =
     let
       # FlakeHub does not expose a separate machine-readable cache key
@@ -32,9 +31,6 @@ in
     };
 
     sops = {
-      defaultSopsFile = hostSecretFile;
-    }
-    // {
       secrets = {
         "flakehub/token" = { };
       };

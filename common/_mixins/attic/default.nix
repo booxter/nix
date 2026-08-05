@@ -1,17 +1,7 @@
-{
-  config,
-  lib,
-  ...
-}:
-let
-  hostSecretFile = ../../../secrets/${config.host.secretDomain}/${config.networking.hostName}.yaml;
-in
+{ config, lib, ... }:
 {
   config = lib.mkIf (!config.host.isWork) {
     sops = {
-      defaultSopsFile = hostSecretFile;
-    }
-    // {
       secrets = {
         "attic/token" = { };
       };

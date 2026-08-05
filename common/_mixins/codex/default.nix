@@ -24,8 +24,6 @@ let
     // lib.optionalAttrs mcps.enabled mcps.settings
   );
   generatedCodexConfig = tomlFormat.generate "codex-system-config" effectiveCodexSettings;
-  hostSecretFile =
-    ../../../secrets + "/${config.host.secretDomain}/${config.networking.hostName}.yaml";
 in
 {
   options.host.codex.mcp = mcps.options;
@@ -39,7 +37,6 @@ in
     };
 
     sops = lib.mkIf mcps.enabled {
-      defaultSopsFile = hostSecretFile;
       secrets = mcps.secrets;
       templates."codex-config.toml" = {
         owner = username;

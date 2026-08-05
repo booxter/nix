@@ -1,4 +1,5 @@
 {
+  config,
   hostInventory,
   hostname,
   hostPlatform,
@@ -92,6 +93,9 @@ in
 
     nixpkgs.hostPlatform = system;
     networking.hostName = hostname;
+    sops.defaultSopsFile = lib.mkDefault (
+      ../../secrets + "/${config.host.secretDomain}/${config.networking.hostName}.yaml"
+    );
     host = {
       platform = system;
       inherit isDarwin isLinux;

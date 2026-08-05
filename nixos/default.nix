@@ -15,7 +15,6 @@ let
   isVM = hostSpec.isVM or false;
   upsShutdownDelaySeconds = if isVM then 450 else 900;
   configName = ./${hostSpec.name};
-  hostSecretFile = ../secrets + "/${config.host.secretDomain}/${hostname}.yaml";
   upsServerName = hostSpec.upsHost or null;
   upsServerSpec =
     if upsServerName == null then null else hostInventory.nixosHostSpecsByName.${upsServerName};
@@ -114,7 +113,6 @@ in
 
   }
   // {
-    sops.defaultSopsFile = lib.mkDefault hostSecretFile;
     # Install regular secrets through a sysinit unit so services that consume
     # them can order themselves after sops-install-secrets.service. Password
     # secrets marked neededForUsers still use the early users activation path.
