@@ -1,51 +1,78 @@
 {
+  hmFull,
+  hmStateVersion,
+  hostInventory,
   hostname,
+  inputs,
+  isDesktop,
+  isWork,
   lib,
   pkgs,
   username,
   stateVersion,
-  isDesktop,
-  isWork,
   ...
 }:
 {
-  imports =
-    lib.optionals (builtins.pathExists ./${hostname}) [
-      ./${hostname}
-    ]
-    ++ [
-      ./_mixins/defaults
-      ./_mixins/fonts
-      ./_mixins/fleet-cache-warmer
-      ./_mixins/homebrew
-      ./_mixins/internal-pki
-      ./_mixins/lan-wan-accounting
-      ./_mixins/logs-client
-      ./_mixins/networking
-      ./_mixins/nix-gc
-      ./_mixins/nix-store
-      ./_mixins/observability-client
-      ./_mixins/remote-gui
-      ./_mixins/sketchybar-alertmanager
-      ./_mixins/sketchybar-jellyfin
-      ./_mixins/sudo
-      ./_mixins/thermal-accounting
-      ./_mixins/xquartz
-    ]
-    ++ lib.optionals (!isWork) [
-      ./_mixins/attic
-      ./_mixins/browser
-      ./_mixins/vnc
-      ./_mixins/vnc-open
-    ]
-    ++ lib.optionals isWork [
-      ./_mixins/docker-desktop
-    ]
-    ++ lib.optionals (hostname == "mair") [
-      ./_mixins/secretive
-    ];
+  imports = [
+    inputs.nix-homebrew.darwinModules.nix-homebrew
+    inputs.sops-nix.darwinModules.sops
+    inputs.stylix.darwinModules.stylix
+    ../common
+    inputs.home-manager.darwinModules.home-manager
+  ]
+  ++ lib.optionals (builtins.pathExists ./${hostname}) [
+    ./${hostname}
+  ]
+  ++ [
+    ./_mixins/defaults
+    ./_mixins/fonts
+    ./_mixins/fleet-cache-warmer
+    ./_mixins/homebrew
+    ./_mixins/internal-pki
+    ./_mixins/lan-wan-accounting
+    ./_mixins/logs-client
+    ./_mixins/networking
+    ./_mixins/nix-gc
+    ./_mixins/nix-store
+    ./_mixins/observability-client
+    ./_mixins/remote-gui
+    ./_mixins/sketchybar-alertmanager
+    ./_mixins/sketchybar-jellyfin
+    ./_mixins/sudo
+    ./_mixins/thermal-accounting
+    ./_mixins/xquartz
+  ]
+  ++ lib.optionals (!isWork) [
+    ./_mixins/attic
+    ./_mixins/browser
+    ./_mixins/vnc
+    ./_mixins/vnc-open
+  ]
+  ++ lib.optionals isWork [
+    ./_mixins/docker-desktop
+  ]
+  ++ lib.optionals (hostname == "mair") [
+    ./_mixins/secretive
+  ];
 
   system.stateVersion = stateVersion;
+  home-manager = {
+    extraSpecialArgs = {
+      inherit
+        hmFull
+        hostInventory
+        hostname
+        inputs
+        isDesktop
+        isWork
+        username
+        ;
+      stateVersion = hmStateVersion;
+    };
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    users.${username} = ../home-manager;
+  };
 
   host.remoteGui.x11.enable = lib.mkDefault (!isWork && isDesktop);
 

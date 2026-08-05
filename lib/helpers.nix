@@ -6,17 +6,6 @@
   ...
 }:
 let
-  commonHMConfig =
-    { username, ... }@hostArgs:
-    {
-      home-manager.extraSpecialArgs = {
-        inherit inputs hostInventory;
-      }
-      // hostArgs;
-      home-manager.useGlobalPkgs = true;
-      home-manager.useUserPackages = true;
-      home-manager.users.${username} = ../home-manager;
-    };
   upsNonVmShutdownDelaySeconds = 900;
   upsShutdownDelaySeconds =
     isVM: if isVM then builtins.div upsNonVmShutdownDelaySeconds 2 else upsNonVmShutdownDelaySeconds;
@@ -54,6 +43,7 @@ rec {
           virtPlatform
           username
           stateVersion
+          hmFull
           isVM
           isBuilder
           isDesktop
@@ -63,25 +53,7 @@ rec {
           ;
         upsShutdownDelaySeconds = upsShutdownDelaySeconds isVM;
       };
-      modules = [
-        inputs.stylix.nixosModules.stylix
-        ../common
-        ../nixos
-        inputs.disko.nixosModules.disko
-        inputs.sops-nix.nixosModules.sops
-        inputs.home-manager.nixosModules.home-manager
-        (commonHMConfig {
-          inherit
-            username
-            hostname
-            hmFull
-            isDesktop
-            isWork
-            stateVersion
-            ;
-        })
-      ]
-      ++ extraModules;
+      modules = [ ../nixos ] ++ extraModules;
     };
 
   mkVM =
@@ -190,26 +162,7 @@ rec {
         # If we ever add macOS VMs, thread isVM here and compute accordingly.
         upsShutdownDelaySeconds = upsShutdownDelaySeconds false;
       };
-      modules = [
-        inputs.nix-homebrew.darwinModules.nix-homebrew
-        inputs.sops-nix.darwinModules.sops
-        inputs.stylix.darwinModules.stylix
-        ../common
-        ../darwin
-
-        inputs.home-manager.darwinModules.home-manager
-        (commonHMConfig {
-          inherit
-            username
-            hostname
-            hmFull
-            isDesktop
-            isWork
-            ;
-          stateVersion = hmStateVersion;
-        })
-      ]
-      ++ extraModules;
+      modules = [ ../darwin ] ++ extraModules;
     };
 
   forAllSystems = inputs.nixpkgs.lib.genAttrs [

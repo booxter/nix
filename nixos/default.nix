@@ -1,13 +1,18 @@
 {
   config,
+  hmFull,
+  hostInventory,
+  hostname,
+  inputs,
+  isDesktop,
+  isVM,
+  isWork,
   lib,
   pkgs,
-  hostname,
-  hostInventory,
+  secretDomain,
   stateVersion,
   upsShutdownDelaySeconds,
-  isVM,
-  secretDomain,
+  username,
   ...
 }:
 let
@@ -22,48 +27,71 @@ let
 in
 (
   {
-    imports =
-      lib.optionals (builtins.pathExists configName) [
-        configName
-      ]
-      ++ [
-        ./_mixins/avahi
-        ./_mixins/auto-upgrade
-        ./_mixins/backup-artifacts.nix
-        ./_mixins/backup-metrics/default.nix
-        ./_mixins/external-service.nix
-        ./_mixins/internal-https-service.nix
-        ./_mixins/lan-wan-accounting
-        ./_mixins/nix
-        ./_mixins/observability-client
-        ./_mixins/proxmox
-        ./_mixins/resource-control.nix
-        ./_mixins/restic-beast-client.nix
-        ./_mixins/sso-oauth2-proxy-gate.nix
-        ./_mixins/unifi-sync
-        ./_mixins/user
-      ]
-      ++ lib.optionals (!isVM) [
-        ./_mixins/firmware
-      ]
-      ++ lib.optionals (!(hostSpec.isWork or false)) [
-        ./_mixins/attic
-      ]
-      ++ lib.optionals (upsServerSpec != null) [
-        (import ./_mixins/ups-client (
-          {
-            inherit pkgs upsShutdownDelaySeconds;
-            monitorName = upsServerSpec.name;
-            system = "${hostInventory.toUpsName upsServerSpec.name}@${hostInventory.toHostIpv4Address upsServerSpec}";
-            user = "upsslave";
-          }
-          // lib.optionalAttrs useLiteralUpsPassword {
-            passwordText = "upsslave123";
-          }
-        ))
-      ];
+    imports = [
+      inputs.stylix.nixosModules.stylix
+      ../common
+      inputs.disko.nixosModules.disko
+      inputs.sops-nix.nixosModules.sops
+      inputs.home-manager.nixosModules.home-manager
+    ]
+    ++ lib.optionals (builtins.pathExists configName) [
+      configName
+    ]
+    ++ [
+      ./_mixins/avahi
+      ./_mixins/auto-upgrade
+      ./_mixins/backup-artifacts.nix
+      ./_mixins/backup-metrics/default.nix
+      ./_mixins/external-service.nix
+      ./_mixins/internal-https-service.nix
+      ./_mixins/lan-wan-accounting
+      ./_mixins/nix
+      ./_mixins/observability-client
+      ./_mixins/proxmox
+      ./_mixins/resource-control.nix
+      ./_mixins/restic-beast-client.nix
+      ./_mixins/sso-oauth2-proxy-gate.nix
+      ./_mixins/unifi-sync
+      ./_mixins/user
+    ]
+    ++ lib.optionals (!isVM) [
+      ./_mixins/firmware
+    ]
+    ++ lib.optionals (!(hostSpec.isWork or false)) [
+      ./_mixins/attic
+    ]
+    ++ lib.optionals (upsServerSpec != null) [
+      (import ./_mixins/ups-client (
+        {
+          inherit pkgs upsShutdownDelaySeconds;
+          monitorName = upsServerSpec.name;
+          system = "${hostInventory.toUpsName upsServerSpec.name}@${hostInventory.toHostIpv4Address upsServerSpec}";
+          user = "upsslave";
+        }
+        // lib.optionalAttrs useLiteralUpsPassword {
+          passwordText = "upsslave123";
+        }
+      ))
+    ];
 
     system.stateVersion = stateVersion;
+    home-manager = {
+      extraSpecialArgs = {
+        inherit
+          hmFull
+          hostInventory
+          hostname
+          inputs
+          isDesktop
+          isWork
+          stateVersion
+          username
+          ;
+      };
+      useGlobalPkgs = true;
+      useUserPackages = true;
+      users.${username} = ../home-manager;
+    };
     virtualisation.containers.enable = true;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.isWork;
     host.isCritical = lib.mkDefault (hostSpec.critical or false);
