@@ -1,12 +1,12 @@
 {
   config,
   hostInventory,
-  hostname,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
+  hostname = config.networking.hostName;
   nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
   isVirtualNodeName =
     name:

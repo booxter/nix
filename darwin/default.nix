@@ -1,16 +1,16 @@
 {
   config,
-  hmFull,
-  hmStateVersion,
   hostInventory,
-  hostname,
+  hostSpec,
   inputs,
   lib,
   pkgs,
   username,
-  stateVersion,
   ...
 }:
+let
+  hostname = hostSpec.name;
+in
 {
   imports = [
     inputs.nix-homebrew.darwinModules.nix-homebrew
@@ -49,17 +49,15 @@
     ./_mixins/secretive
   ];
 
-  system.stateVersion = stateVersion;
+  system.stateVersion = hostSpec.stateVersion;
   home-manager = {
     extraSpecialArgs = {
       inherit
-        hmFull
         hostInventory
-        hostname
+        hostSpec
         inputs
         username
         ;
-      stateVersion = hmStateVersion;
     };
     useGlobalPkgs = true;
     useUserPackages = true;

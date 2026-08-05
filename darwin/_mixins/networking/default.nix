@@ -1,12 +1,12 @@
 {
   config,
   hostInventory,
-  hostname,
   lib,
   ...
 }:
 let
   lan = hostInventory.site.lan;
+  hostname = config.networking.hostName;
 in
 {
   environment.etc."resolver/${lan.domain}".text = ''

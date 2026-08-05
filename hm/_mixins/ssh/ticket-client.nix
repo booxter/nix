@@ -1,7 +1,7 @@
 {
   config,
   hostInventory,
-  hostname,
+  hostSpec,
   lib,
   pkgs,
   username,
@@ -11,7 +11,7 @@ let
   homeManagerPkgs = import ../../pkgs pkgs;
   ticketPackage = homeManagerPkgs.ssh-ticket;
   cfg = config.programs.sshTicket;
-  issuer = hostInventory.sshTicket.issuers.${hostname} or null;
+  issuer = hostInventory.sshTicket.issuers.${hostSpec.name} or null;
   ticketStateDir = "${config.home.homeDirectory}/.local/state/ssh-ticket";
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
@@ -85,11 +85,11 @@ in
     assertions = [
       {
         assertion = !cfg.enableKnownHosts || issuer != null;
-        message = "programs.sshTicket.enableKnownHosts requires an SSH ticket issuer for ${hostname}";
+        message = "programs.sshTicket.enableKnownHosts requires an SSH ticket issuer for ${hostSpec.name}";
       }
       {
         assertion = issuer == null || lib.elem issuer.publicKey hostInventory.sshTicket.trustedCaPublicKeys;
-        message = "SSH ticket issuer for ${hostname} is not trusted by ticket servers";
+        message = "SSH ticket issuer for ${hostSpec.name} is not trusted by ticket servers";
       }
     ];
 

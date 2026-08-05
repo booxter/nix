@@ -1,7 +1,7 @@
 {
   config,
-  hostname,
   hostInventory,
+  hostSpec,
   lib,
   pkgs,
   utils,
@@ -15,7 +15,6 @@ let
   oidcMappedAdminGroup = "${oidcCfg.allowedGroup}-${oidcCfg.realm}";
   oidcRealmUnit = "proxmox-oidc-realm.service";
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   certInstallUnit = "proxmox-api-certificate.service";
   internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
@@ -260,7 +259,7 @@ in
     {
       host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.isProxmox && !config.host.isWork);
       host.proxmox.oidc.enable = lib.mkDefault (
-        config.host.isProxmox && !config.host.isWork && hostname == oidcCfg.managerHost
+        config.host.isProxmox && !config.host.isWork && hostSpec.name == oidcCfg.managerHost
       );
       host.proxmox.prometheusExporter.enable = lib.mkDefault (
         config.host.isProxmox && !config.host.isWork

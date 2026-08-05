@@ -2,7 +2,7 @@
   beastPkgs,
   config,
   hostInventory,
-  hostname,
+  hostSpec,
   lib,
   inputs,
   ...
@@ -10,7 +10,6 @@
 let
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix;
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   watchstatePort = hostInventory.site.ports.watchstate;
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {

@@ -1,7 +1,7 @@
 {
   config,
-  hostname,
   hostInventory,
+  hostSpec,
   lib,
   pkgs,
   utils,
@@ -10,7 +10,6 @@
 let
   pkiPkgs = import ./pkgs pkgs;
   caServer = hostInventory.nixosHostSpecsByName.pki.caServer;
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";

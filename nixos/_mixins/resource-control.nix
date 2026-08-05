@@ -1,13 +1,11 @@
 {
   config,
-  hostInventory,
-  hostname,
+  hostSpec,
   lib,
   ...
 }:
 let
   resourceControl = import ../../lib/systemd-resource-control.nix { inherit lib; };
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   inventory = hostSpec.resourceControl or { };
   diskSwapGiB = inventory.diskSwapGiB or null;
   settingsByService = resourceControl.compile (inventory.systemServices or { });

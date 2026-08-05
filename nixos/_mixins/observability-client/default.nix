@@ -1,14 +1,13 @@
 {
   config,
-  hostname,
   hostInventory,
+  hostSpec,
   lib,
   pkgs,
   ...
 }:
 let
   cfg = config.host.observability.client;
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   hostLabel = config.services.avahi.hostName;
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
@@ -244,7 +243,7 @@ in
           enable = lib.mkDefault (!config.host.isWork);
           secretPrefix = "observability/clients/loki";
         };
-        nodeExporter.mtls.enable = lib.mkDefault (hostname != "fana");
+        nodeExporter.mtls.enable = lib.mkDefault (config.networking.hostName != "fana");
       };
 
       host.observability.lanWan = {

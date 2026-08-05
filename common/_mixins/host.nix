@@ -1,13 +1,14 @@
 {
   config,
   hostInventory,
-  hostname,
-  hostPlatform,
+  hostSpec,
+  inputs,
   lib,
   ...
 }:
 let
-  hostSpec = hostInventory.hostSpecsByName.${hostname};
+  hostname = hostSpec.name;
+  hostPlatform = inputs.nixpkgs.lib.systems.elaborate hostSpec.platform;
   inherit (hostPlatform) isDarwin isLinux system;
 in
 {

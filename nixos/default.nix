@@ -1,17 +1,16 @@
 {
   config,
-  hmFull,
   hostInventory,
-  hostname,
+  hostSpec,
   inputs,
   lib,
   pkgs,
-  stateVersion,
   username,
   ...
 }:
 let
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
+  hostname = hostSpec.name;
+  stateVersion = hostSpec.stateVersion;
   isVM = hostSpec.isVM or false;
   upsShutdownDelaySeconds = if isVM then 450 else 900;
   configName = ./${hostSpec.name};
@@ -75,11 +74,9 @@ in
     home-manager = {
       extraSpecialArgs = {
         inherit
-          hmFull
           hostInventory
-          hostname
+          hostSpec
           inputs
-          stateVersion
           username
           ;
       };

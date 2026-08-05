@@ -80,11 +80,8 @@
           outputs
           hostInventory
           ;
-        hostname = spec.name;
-        hostPlatform = inputs.nixpkgs.lib.systems.elaborate spec.platform;
+        hostSpec = spec;
         username = spec.username or username;
-        stateVersion = spec.stateVersion;
-        hmFull = spec.hmFull or true;
       };
       mkNixos =
         spec:
@@ -95,9 +92,7 @@
       mkDarwin =
         spec:
         inputs.nix-darwin.lib.darwinSystem {
-          specialArgs = hostSpecialArgs spec // {
-            hmStateVersion = spec.hmStateVersion;
-          };
+          specialArgs = hostSpecialArgs spec;
           modules = [ ./darwin ] ++ (spec.extraModules or [ ]);
         };
       perSystem =

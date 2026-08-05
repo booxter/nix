@@ -1,13 +1,13 @@
 {
   autoUpgradeTools,
   config,
-  hostname,
   lib,
   pkgs,
   utils,
   ...
 }:
 let
+  hostname = config.networking.hostName;
   cfg = config.host.autoUpgrade;
   metricsCfg = config.host.observability.nixosUpgrade;
   isoDatePattern = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$";

@@ -1,14 +1,15 @@
 {
   config,
-  hostPlatform,
+  hostSpec,
   hostInventory,
+  inputs,
   lib,
   pkgs,
   username,
   ...
 }:
 let
-  inherit (hostPlatform) isDarwin isLinux;
+  inherit (inputs.nixpkgs.lib.systems.elaborate hostSpec.platform) isDarwin isLinux;
   cfg = config.host.sshTicket;
   caPublicKeyPath = "/etc/ssh/fleet-user-cas.pub";
   inventoryCaPublicKeys = hostInventory.sshTicket.trustedCaPublicKeys;

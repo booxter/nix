@@ -4,7 +4,6 @@
   hostInventory,
   pkgs,
   username,
-  hostname,
   ...
 }:
 let
@@ -62,8 +61,10 @@ in
         };
       in
       (map (toBuilder builderSpeedFactor) builderSpecs)
-      ++ lib.optional (hostname != "frame") (toBuilder 200 hostInventory.nixosHostSpecsByName.frame)
-      ++ lib.optional (hostname != "mmini") {
+      ++ lib.optional (config.networking.hostName != "frame") (
+        toBuilder 200 hostInventory.nixosHostSpecsByName.frame
+      )
+      ++ lib.optional (config.networking.hostName != "mmini") {
         hostName = "mmini";
         systems = [ "aarch64-darwin" ];
         protocol = "ssh-ng";

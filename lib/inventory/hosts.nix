@@ -50,13 +50,9 @@ let
       resourceControl.diskSwapGiB = 8;
       extraModules = [
         (
+          { lib, ... }:
           {
-            hostname,
-            lib,
-            ...
-          }:
-          {
-            system.autoUpgrade = lib.mkIf (lib.hasPrefix "builder" hostname) {
+            system.autoUpgrade = {
               dates = "Mon 03:00";
               rebootWindow = {
                 lower = lib.mkForce "02:59";

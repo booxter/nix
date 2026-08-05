@@ -1,13 +1,11 @@
 {
   config,
-  hostname,
   hostInventory,
+  hostSpec,
   lib,
   ...
 }:
 let
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
-
   aliasAddress = hostInventory.toHostIpv4Address hostSpec;
   aliases = lib.unique ((hostSpec.localDnsAliases or [ ]) ++ config.host.internalHttps.localAliases);
   aliasService = alias: {

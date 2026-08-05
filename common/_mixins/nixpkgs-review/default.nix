@@ -1,6 +1,5 @@
 {
   config,
-  hostPlatform,
   lib,
   username,
   ...
@@ -25,7 +24,7 @@ in
         in
         lib.filter (builder: builder != "") (lib.splitString "\n" configuredBuilders);
     }
-    (lib.mkIf (hostPlatform.isDarwin && config.host.isWork) {
+    (lib.mkIf (config.host.isDarwin && config.host.isWork) {
       # Keep nixpkgs-review's worktrees in a dedicated real directory under
       # /nix/var.
       home-manager.users.${username}.home.sessionVariables.NIXPKGS_REVIEW_CACHE_DIR = cacheDir;

@@ -1,12 +1,12 @@
 {
   config,
-  hostname,
   lib,
   pkgs,
   utils,
   ...
 }:
 let
+  hostname = config.networking.hostName;
   catalog = import ./catalog.nix;
   monitoringPackage = pkgs.callPackage ./package.nix { };
   alertmanagerPort = 9093;
