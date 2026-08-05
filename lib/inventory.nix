@@ -1372,8 +1372,6 @@ rec {
 
   publicServices = builtins.filter (service: service.scope == "external") services;
 
-  glanceServices = builtins.filter (service: service.showInGlance) services;
-
   blackboxServices = builtins.filter (service: service.blackboxProbe) services;
 
   servicesById = builtins.listToAttrs (

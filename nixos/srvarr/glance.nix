@@ -9,6 +9,7 @@
 let
   glanceInternalPort = 18080;
   glanceExternalPort = 18081;
+  glanceServices = builtins.filter (service: service.showInGlance) hostInventory.services;
   dashService = hostInventory.servicesById.dash;
   degoogService = hostInventory.servicesById.goo;
   fanaHostConfig = outputs.nixosConfigurations.fana.config;
@@ -50,7 +51,7 @@ let
       // {
         url = "https://${httpsService.serverName}/";
       }
-  ) hostInventory.glanceServices;
+  ) glanceServices;
   infrastructureLinks = [
     {
       icon = "sh:proxmox";
