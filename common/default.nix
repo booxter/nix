@@ -73,54 +73,48 @@ in
     sops.age.keyFile = "/var/lib/sops-nix/key.txt";
 
     # Some packages that I'd like to have available on managed machines.
-    environment.systemPackages =
-      with pkgs;
-      [
-        bind.dnsutils
-        coreutils
-        dig
-        file
-        findutils
-        gawk
-        git
-        gnugrep
-        gnumake
-        gnused
-        gzip
-        htop
-        iftop
-        ipcalc
-        iperf3
-        jq
-        lsof
-        man-pages
-        moreutils
-        ngrep
-        pstree
-        python3
-        rclone
-        ripgrep
-        speedtest-cli
-        sqlite
-        tcpdump
-        tmux
-        tree
-        unzip
-        viddy
-        vim
-        watch
-        yq
-        zip
-        ipmitool
-      ]
-      ++ lib.optionals config.host.isDesktop [
-        sops-tools
-      ]
-      ++ lib.optionals (!config.host.isWork) [
-        age
-        restic
-        sops
-      ];
+    environment.systemPackages = with pkgs; [
+      bind.dnsutils
+      coreutils
+      dig
+      file
+      findutils
+      gawk
+      git
+      gnugrep
+      gnumake
+      gnused
+      gzip
+      htop
+      iftop
+      ipcalc
+      iperf3
+      jq
+      lsof
+      man-pages
+      moreutils
+      ngrep
+      pstree
+      python3
+      rclone
+      ripgrep
+      speedtest-cli
+      sqlite
+      tcpdump
+      tmux
+      tree
+      unzip
+      viddy
+      vim
+      watch
+      yq
+      zip
+      ipmitool
+      sops-tools
+      age
+      restic
+      sops
+    ];
 
     users.users.${username} = {
       openssh.authorizedKeys.keys = if config.host.isWork then workKeys else personalKeys;
