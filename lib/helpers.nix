@@ -7,39 +7,12 @@
 }:
 let
   commonHMConfig =
-    {
-      inputs,
-      outputs,
-      hostInventory,
-      username,
-      platform,
-      hostSpecName,
-      hmFull,
-      isDesktop,
-      isLaptop,
-      isWork,
-      isDarwin,
-      isLinux,
-      stateVersion,
-    }:
+    { username, ... }@hostArgs:
     {
       home-manager.extraSpecialArgs = {
-        inherit
-          inputs
-          outputs
-          hostInventory
-          username
-          platform
-          hostSpecName
-          hmFull
-          isDesktop
-          isLaptop
-          isWork
-          isDarwin
-          isLinux
-          stateVersion
-          ;
-      };
+        inherit inputs hostInventory;
+      }
+      // hostArgs;
       home-manager.useGlobalPkgs = true;
       home-manager.useUserPackages = true;
       home-manager.users.${username} = ../home-manager;
@@ -110,18 +83,12 @@ rec {
         homeManagerInput.nixosModules.home-manager
         (commonHMConfig {
           inherit
-            inputs
-            outputs
-            hostInventory
             username
-            platform
             hostSpecName
             hmFull
             isDesktop
-            isLaptop
             isWork
             isDarwin
-            isLinux
             stateVersion
             ;
         })
@@ -450,18 +417,12 @@ rec {
         homeManagerInput.darwinModules.home-manager
         (commonHMConfig {
           inherit
-            inputs
-            outputs
-            hostInventory
             username
-            platform
             hostSpecName
             hmFull
             isDesktop
-            isLaptop
             isWork
             isDarwin
-            isLinux
             ;
           stateVersion = hmStateVersion;
         })
