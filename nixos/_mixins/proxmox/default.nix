@@ -50,7 +50,7 @@ in
             let
               patchedPveManager = prev.pve-manager.overrideAttrs (old: {
                 patches = (old.patches or [ ]) ++ [
-                  ../../../lib/patches/pve-manager-disable-subscription-popup.patch
+                  ../../../patches/pve-manager-disable-subscription-popup.patch
                 ];
               });
             in

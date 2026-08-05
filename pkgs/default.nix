@@ -9,7 +9,7 @@ let
   sopsTools = import ../apps/sops/package.nix {
     inherit hostInventory pkgs;
   };
-  gitPrecomposePatch = ../lib/patches/git-precompose-utf8-flex-array.patch;
+  gitPrecomposePatch = ../patches/git-precompose-utf8-flex-array.patch;
   # Keep this as opt-in packages instead of overriding pkgs.git globally: Git
   # is a common build tool, so a global override can fan out into many rebuilds.
   patchGitPrecompose =

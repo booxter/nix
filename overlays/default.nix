@@ -93,7 +93,7 @@
           lolekPackage = inputs.lolek.packages.${prev.system}.lolek;
           lolekYtDlp = prev.yt-dlp.overrideAttrs (old: {
             patches = (old.patches or [ ]) ++ [
-              ../lib/patches/yt-dlp-twitter-only-own-status-media.patch
+              ../patches/yt-dlp-twitter-only-own-status-media.patch
             ];
           });
         in
@@ -120,7 +120,7 @@
       # https://github.com/NixOS/nixpkgs/issues/303078
       dbus-broker = prev.dbus-broker.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
-          ../lib/patches/dbus-broker-ignore-duplicate-canonical-service-paths.patch
+          ../patches/dbus-broker-ignore-duplicate-canonical-service-paths.patch
         ];
       });
 
@@ -153,7 +153,7 @@
             patches = (frontendOld.patches or [ ]) ++ [
               # TODO: send upstream.
               # Confirm label creation from the multiselect input.
-              ../lib/patches/vikunja-confirm-label-creation.patch
+              ../patches/vikunja-confirm-label-creation.patch
             ];
           });
         in
@@ -175,7 +175,7 @@
           prev.attic-client.overrideAttrs (
             old:
             let
-              atticPatch = ../lib/patches/attic-client-use-fsevents.patch;
+              atticPatch = ../patches/attic-client-use-fsevents.patch;
             in
             {
               patches = (old.patches or [ ]) ++ [ atticPatch ];
@@ -194,10 +194,10 @@
       # canceller for direct downloads, but do not auto-cancel torrent jobs.
       shelfmark = prev.shelfmark.overrideAttrs (old: {
         patches = (old.patches or [ ]) ++ [
-          ../lib/patches/shelfmark-disable-torrent-stall-cancel.patch
-          ../lib/patches/shelfmark-add-download-poll-debug-state.patch
-          ../lib/patches/shelfmark-add-download-diagnostic-signal.patch
-          ../lib/patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
+          ../patches/shelfmark-disable-torrent-stall-cancel.patch
+          ../patches/shelfmark-add-download-poll-debug-state.patch
+          ../patches/shelfmark-add-download-diagnostic-signal.patch
+          ../patches/shelfmark-add-throttled-poll-heartbeat-logs.patch
         ];
       });
     };
