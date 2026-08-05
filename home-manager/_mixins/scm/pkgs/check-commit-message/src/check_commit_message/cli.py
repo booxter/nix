@@ -1,16 +1,18 @@
+from __future__ import annotations
+
+import argparse
 import re
 import shlex
 import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol, TextIO
 
 
 MAX_LINE_LENGTH = 72
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
-TRAILER_RE = re.compile(
-    r"^[A-Za-z0-9][A-Za-z0-9-]*(?:[ -][A-Za-z0-9][A-Za-z0-9-]*)*:[ \t]+\S"
-)
+TRAILER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9-]*(?:[ -][A-Za-z0-9][A-Za-z0-9-]*)*:[ \t]+\S")
 
 
 @dataclass(frozen=True)
@@ -21,10 +23,39 @@ class Violation:
     text: str
 
 
+class Arguments(argparse.Namespace):
+    message_file: Path
+
+
+class CommentPrefixSource(Protocol):
+    def comment_prefix(self) -> str: ...
+
+
+@dataclass(frozen=True)
+class GitCommentPrefixSource:
+    executable: str = "git"
+
+    def comment_prefix(self) -> str:
+        try:
+            result = subprocess.run(
+                [self.executable, "stripspace", "--comment-lines"],
+                input="probe\n",
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+        except OSError:
+            return "#"
+
+        suffix = " probe\n"
+        if result.returncode == 0 and result.stdout.endswith(suffix):
+            return result.stdout[: -len(suffix)]
+        return "#"
+
+
 def trailer_line_indexes(lines: list[str]) -> set[int]:
     """Return indexes belonging to a trailer block at the end of a message."""
     end = len(lines) - 1
-
     while end >= 0 and not lines[end].strip():
         end -= 1
 
@@ -41,7 +72,6 @@ def trailer_line_indexes(lines: list[str]) -> set[int]:
             saw_trailer = True
         elif not (saw_trailer and (line.startswith(" ") or line.startswith("\t"))):
             return set()
-
     return indexes if saw_trailer else set()
 
 
@@ -49,7 +79,6 @@ def literal_line_indexes(lines: list[str]) -> set[int]:
     """Return indexes for fenced or indented literal content in the body."""
     indexes: set[int] = set()
     fence: str | None = None
-
     for index, line in enumerate(lines[2:], start=2):
         match = FENCE_RE.match(line)
         if match:
@@ -60,10 +89,8 @@ def literal_line_indexes(lines: list[str]) -> set[int]:
             elif marker == fence:
                 fence = None
             continue
-
         if fence is not None or line.startswith("    ") or line.startswith("\t"):
             indexes.add(index)
-
     return indexes
 
 
@@ -71,25 +98,6 @@ def is_indivisible_body_line(line: str) -> bool:
     """Allow long URLs, paths, hashes, and similar single-token content."""
     stripped = line.strip()
     return bool(stripped) and not any(character.isspace() for character in stripped)
-
-
-def git_comment_prefix() -> str:
-    """Return the comment prefix Git applies to edited messages."""
-    try:
-        result = subprocess.run(
-            ["git", "stripspace", "--comment-lines"],
-            input="probe\n",
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-    except OSError:
-        return "#"
-
-    suffix = " probe\n"
-    if result.returncode == 0 and result.stdout.endswith(suffix):
-        return result.stdout[: -len(suffix)]
-    return "#"
 
 
 def validate_message(message: str, comment_prefix: str = "#") -> list[Violation]:
@@ -141,7 +149,6 @@ def validate_message(message: str, comment_prefix: str = "#") -> list[Violation]
                 line,
             )
         )
-
     return violations
 
 
@@ -152,38 +159,49 @@ def format_violation(violation: Violation) -> str:
     return f"  {detail}\n    {violation.text}"
 
 
-def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print(f"usage: {Path(argv[0]).name} <commit-message-file>", file=sys.stderr)
-        return 2
+def parser() -> argparse.ArgumentParser:
+    command = argparse.ArgumentParser(
+        prog="check-commit-message",
+        description="Validate the global Git commit message format.",
+    )
+    command.add_argument("message_file", type=Path, metavar="COMMIT_MESSAGE_FILE")
+    return command
 
-    message_path = Path(argv[1])
+
+def run(message_path: Path, comment_prefix: str, stderr: TextIO) -> int:
     try:
         message = message_path.read_text(encoding="utf-8")
     except OSError as error:
-        print(f"cannot read commit message {message_path}: {error}", file=sys.stderr)
+        print(f"cannot read commit message {message_path}: {error}", file=stderr)
         return 2
 
-    violations = validate_message(message, git_comment_prefix())
+    violations = validate_message(message, comment_prefix)
     if not violations:
         return 0
 
-    print("commit message does not follow the global 50/72 format:", file=sys.stderr)
+    print("commit message does not follow the global 50/72 format:", file=stderr)
     for violation in violations:
-        print(format_violation(violation), file=sys.stderr)
+        print(format_violation(violation), file=stderr)
     print(
         "\nHard-wrap body prose by inserting newlines. Long single tokens, "
         "literal content, and terminal Git trailers are exempt.",
-        file=sys.stderr,
+        file=stderr,
     )
     quoted_path = shlex.quote(str(message_path))
     print(
         f"Edit {message_path}, run `git hook run commit-msg -- {quoted_path}`, "
         "then retry the commit once.",
-        file=sys.stderr,
+        file=stderr,
     )
     return 1
 
 
-if __name__ == "__main__":
-    raise SystemExit(main(sys.argv))
+def main(
+    argv: list[str] | None = None,
+    *,
+    prefix_source: CommentPrefixSource | None = None,
+    stderr: TextIO = sys.stderr,
+) -> int:
+    arguments = parser().parse_args(argv, namespace=Arguments())
+    source = prefix_source or GitCommentPrefixSource()
+    return run(arguments.message_file, source.comment_prefix(), stderr)
