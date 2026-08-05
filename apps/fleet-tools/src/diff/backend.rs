@@ -254,7 +254,7 @@ impl DiffBackend for NativeBackend {
 
         match output.status.code() {
             Some(0) => Ok(RecursiveDiff::Identical),
-            Some(1) => Ok(RecursiveDiff::Different(filter_binary_diff_output(
+            Some(1 | 2) => Ok(RecursiveDiff::Different(filter_binary_diff_output(
                 &String::from_utf8_lossy(&output.stdout),
             ))),
             _ => Err(command_error(
