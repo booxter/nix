@@ -144,7 +144,14 @@
     in
     {
       darwinConfigurations = builtins.mapAttrs (
-        name: cfg: helpers.mkDarwin (cfg // { hostSpecName = name; })
+        name: cfg:
+        helpers.mkDarwin (
+          cfg
+          // {
+            hostname = name;
+            hostSpecName = name;
+          }
+        )
       ) darwinHosts;
 
       nixosConfigurations = canonicalNixosConfigurations;

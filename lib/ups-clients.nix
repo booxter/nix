@@ -14,7 +14,7 @@ let
 
   darwinEntries = map (spec: {
     server = spec.upsHost;
-    client = spec.hostname;
+    client = spec.name;
   }) (builtins.attrValues (lib.filterAttrs (_: includeClient) hostInventory.darwinHosts));
 
   addEntry =

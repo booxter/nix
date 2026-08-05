@@ -17,7 +17,7 @@ let
       lib.mapAttrs (
         name: system:
         let
-          spec = hostInventory.nixosHostSpecsByName.${name} or hostInventory.darwinHosts.${name};
+          spec = hostInventory.hostSpecsByName.${name};
         in
         {
           inherit system;

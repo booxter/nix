@@ -17,11 +17,9 @@ let
   darwinKnownHosts = lib.mapAttrs' (
     name: spec:
     let
-      hostname = spec.hostname or name;
-      dnsName = spec.dnsName or hostname;
+      dnsName = spec.dnsName or spec.name;
       names = [
-        name
-        hostname
+        spec.name
         dnsName
       ];
     in

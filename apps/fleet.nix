@@ -25,19 +25,13 @@ let
           value = spec.name;
         }) hostInventory.nixosHostSpecs
       )
-      // pkgs.lib.foldlAttrs (
-        aliases: name: config:
-        let
-          hostname = config.hostname or name;
-        in
-        aliases // { ${name} = name; } // pkgs.lib.optionalAttrs (hostname != name) { ${hostname} = name; }
-      ) { } hostInventory.darwinHosts;
-    darwin = pkgs.lib.mapAttrs (name: config: {
-      displayName = name;
-      isWork = config.isWork or false;
-      platform = config.platform;
-      runtimeHost = config.hostname or name;
-      sshHost = config.hostname or name;
+      // pkgs.lib.mapAttrs (name: _: name) hostInventory.darwinHosts;
+    darwin = pkgs.lib.mapAttrs (_: spec: {
+      displayName = spec.name;
+      isWork = spec.isWork or false;
+      platform = spec.platform;
+      runtimeHost = spec.name;
+      sshHost = spec.name;
     }) hostInventory.darwinHosts;
     lanDnsServer = lan.gateway.address;
     lanDomain = lan.domain;

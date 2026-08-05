@@ -865,11 +865,10 @@ rec {
     }
   ];
 
-  darwinHosts = {
+  darwinHosts = lib.mapAttrs (name: spec: spec // { inherit name; }) {
     mair = {
       stateVersion = 6;
       hmStateVersion = "25.11";
-      hostname = "mair";
       platform = "aarch64-darwin";
       isDesktop = true;
       isLaptop = true;
@@ -880,7 +879,6 @@ rec {
     mmini = {
       stateVersion = 5;
       hmStateVersion = "25.11";
-      hostname = "mmini";
       platform = "aarch64-darwin";
       isBuilder = true;
       isDesktop = true;
@@ -892,7 +890,6 @@ rec {
     JGWXHWDL4X = {
       stateVersion = 5;
       hmStateVersion = "25.11";
-      hostname = "JGWXHWDL4X";
       platform = "aarch64-darwin";
       isDesktop = true;
       isLaptop = true;
@@ -1342,25 +1339,11 @@ rec {
     }) nixosHostSpecs
   );
 
-  secretDomainsByHost =
-    (lib.mapAttrs' (
-      name: spec: lib.nameValuePair (spec.hostname or name) (toSecretDomain spec)
-    ) darwinHosts)
-    // builtins.listToAttrs (
-      map (spec: {
-        name = spec.name;
-        value = toSecretDomain spec;
-      }) nixosHostSpecs
-    );
+  hostSpecsByName = darwinHosts // nixosHostSpecsByName;
 
-  systemsByHost =
-    (lib.mapAttrs' (name: spec: lib.nameValuePair (spec.hostname or name) spec.platform) darwinHosts)
-    // builtins.listToAttrs (
-      map (spec: {
-        name = spec.name;
-        value = spec.platform;
-      }) nixosHostSpecs
-    );
+  secretDomainsByHost = lib.mapAttrs (_: toSecretDomain) hostSpecsByName;
+
+  systemsByHost = lib.mapAttrs (_: spec: spec.platform) hostSpecsByName;
 
   publicServices = builtins.filter (service: service.scope == "external") services;
 

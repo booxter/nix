@@ -37,7 +37,7 @@ let
   mkDarwinTarget =
     name: spec:
     let
-      sshHost = spec.hostname or name;
+      sshHost = spec.name;
     in
     mkTarget {
       kind = "darwin";
