@@ -111,25 +111,6 @@
         ];
       });
 
-      # https://github.com/NixOS/nixpkgs/pull/545760
-      telegram-bot-api =
-        let
-          nixpkgsVersion = lib.getVersion prev.telegram-bot-api;
-        in
-        assert lib.asserts.assertMsg (lib.versionAtLeast "10.2" nixpkgsVersion)
-          "telegram-bot-api overlay is stale: nixpkgs has ${nixpkgsVersion}, newer than 10.2";
-        prev.telegram-bot-api.overrideAttrs (_old: {
-          version = "10.2";
-          src = prev.fetchFromGitHub {
-            owner = "tdlib";
-            repo = "telegram-bot-api";
-            # https://github.com/tdlib/telegram-bot-api/issues/783
-            rev = "adfd7f6a8e990272851777eeb3ae0def4216f161";
-            hash = "sha256-sICBisUDMirUOMN5ORQ2B9Wo8KC91hIn1sHyt2xClJ0=";
-            fetchSubmodules = true;
-          };
-        });
-
       transmission_4 = guardedTransmission;
       transmission = guardedTransmission;
 
