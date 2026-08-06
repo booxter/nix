@@ -34,6 +34,7 @@ in
       ./_mixins/observability-client
       ./_mixins/proxmox
       ./_mixins/qos
+      ./_mixins/sso
       ./_mixins/sso-oauth2-proxy-gate.nix
       ./_mixins/attic
       ./_mixins/unifi-sync
