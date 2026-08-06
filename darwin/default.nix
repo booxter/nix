@@ -28,8 +28,7 @@ in
     ./_mixins/lan-wan-accounting
     ./_mixins/logs-client
     ./_mixins/networking
-    ./_mixins/nix-gc
-    ./_mixins/nix-store
+    ./_mixins/nix
     ./_mixins/observability
     ./_mixins/remote-gui
     ./_mixins/secretive

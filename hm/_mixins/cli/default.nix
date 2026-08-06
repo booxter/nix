@@ -9,8 +9,16 @@ let
   inherit (osConfig.host) isDarwin isWork;
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
+  configuredReviewBuilders =
+    let
+      configuredBuilders =
+        if osConfig.nix.buildMachines == [ ] then "" else osConfig.environment.etc."nix/machines".text;
+    in
+    lib.filter (builder: builder != "") (lib.splitString "\n" configuredBuilders);
   nr = cliPkgs.nr.override {
-    builders = lib.concatStringsSep " ; " osConfig.host.nixpkgsReview.builders;
+    builders = lib.concatStringsSep " ; " (
+      configuredReviewBuilders ++ osConfig.host.nixpkgsReview.extraBuilders
+    );
   };
 in
 {

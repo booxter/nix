@@ -65,7 +65,7 @@ in
         );
     };
     environment.systemPackages = [ pkgs.openssh ];
-    host.nixpkgsReview.builders = lib.mapAttrsToList (
+    host.nixpkgsReview.extraBuilders = lib.mapAttrsToList (
       name: builder:
       "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "
       + "${toString builder.speedFactor} ${formatList builder.supportedFeatures} - -"
