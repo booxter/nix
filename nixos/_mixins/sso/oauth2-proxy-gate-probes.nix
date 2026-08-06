@@ -1,7 +1,6 @@
 { lib }:
 let
-  # Internal service names that request exact backend probe locations. Example:
-  # the Search gate has `probeLocationsByName.search."= /healthz"`.
+  # Internal service names that request exact backend probe locations.
   serviceNamesFor = gate: builtins.attrNames gate.probeLocationsByName;
 
   # Probe location sets must be non-empty so enabling a probe listener always

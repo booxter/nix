@@ -18,6 +18,16 @@ let
   kanidmOAuthSecretAttrName = clientId: "kanidm-oauth2-${clientId}-client-secret";
   kanidmOAuthSecretKey = clientId: "kanidm/oauth2/${clientId}/client_secret";
   confidentialOidcClients = lib.filterAttrs (_: client: !client.public) oidcClients;
+  referencedOidcGroups = lib.unique (
+    lib.concatMap (
+      client:
+      builtins.attrNames client.scopeMaps
+      ++ lib.concatMap (claimMap: builtins.attrNames claimMap.valuesByGroup) (
+        builtins.attrValues client.claimMaps
+      )
+    ) (builtins.attrValues oidcClients)
+  );
+  unknownOidcGroups = lib.subtractLists (builtins.attrNames sso.groups) referencedOidcGroups;
   kanidmProvisionClients =
     secretPathFor:
     lib.mapAttrs (_: client: {
@@ -95,6 +105,13 @@ let
   ];
 in
 {
+  assertions = [
+    {
+      assertion = unknownOidcGroups == [ ];
+      message = "OIDC registrations reference unknown Kanidm groups: ${lib.concatStringsSep ", " unknownOidcGroups}";
+    }
+  ];
+
   sops.secrets = {
     kanidmAdminPassword = {
       key = "kanidm/admin_password";

@@ -328,8 +328,7 @@
         "hosts": [],
         "prefixes": [
           "nixos/_mixins/external-service.nix",
-          "nixos/_mixins/sso-oauth2-proxy-gate.nix",
-          "nixos/_mixins/sso-oauth2-proxy-gate-probes.nix",
+          "nixos/_mixins/sso",
           "tests/nixos/oauth2-proxy-gate.nix"
         ]
       },

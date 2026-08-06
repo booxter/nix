@@ -8,7 +8,7 @@
 let
   cfg = config.host.sso.oauth2ProxyGates;
   oidcBaseScopes = config.host.sso.oidc.baseScopes;
-  probeHelpers = import ./sso-oauth2-proxy-gate-probes.nix { inherit lib; };
+  probeHelpers = import ./oauth2-proxy-gate-probes.nix { inherit lib; };
 
   gateSubmodule =
     gateName:
