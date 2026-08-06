@@ -65,7 +65,6 @@ class ToolPaths:
     nix_update: str
     nix_prefetch_docker: str
     skopeo: str
-    cosign: str
     select_nodejs: str
 
     @classmethod
@@ -77,7 +76,6 @@ class ToolPaths:
                 "PACKAGE_UPDATES_NIX_PREFETCH_DOCKER", "nix-prefetch-docker"
             ),
             skopeo=os.environ.get("PACKAGE_UPDATES_SKOPEO", "skopeo"),
-            cosign=os.environ.get("PACKAGE_UPDATES_COSIGN", "cosign"),
             select_nodejs=os.environ.get(
                 "PACKAGE_UPDATES_SELECT_NODEJS",
                 str(Path(sys.argv[0]).resolve().with_name("select-nodejs")),

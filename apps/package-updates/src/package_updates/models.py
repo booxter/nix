@@ -22,15 +22,8 @@ class PackageTargets(BaseModel):
     targets: tuple[PackageTarget, ...]
 
 
-class Signature(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    type: str | None = None
-    key: str | None = None
-
-
 class OciPin(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     image: str = Field(min_length=1)
     tag: str = Field(min_length=1)
@@ -41,7 +34,6 @@ class OciPin(BaseModel):
         alias="tagRegex",
     )
     changelog: str = ""
-    signature: Signature = Field(default_factory=Signature)
 
 
 class OciPins(RootModel[dict[str, OciPin]]):

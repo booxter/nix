@@ -75,7 +75,6 @@ TOOLS = ToolPaths(
     nix_update="nix-update",
     nix_prefetch_docker="prefetch",
     skopeo="skopeo",
-    cosign="cosign",
     select_nodejs="/package/bin/select-nodejs",
 )
 
