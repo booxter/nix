@@ -18,9 +18,7 @@
     ./_mixins/yubi.nix
     ./_mixins/attic
     ./_mixins/flakehub-cache
-    ./_mixins/builders/community.nix
-    ./_mixins/builders/personal.nix
-    ./_mixins/builders/work.nix
+    ./_mixins/builders
   ];
 
   config = {
