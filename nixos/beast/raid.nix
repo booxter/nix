@@ -64,15 +64,7 @@ in
     # node_exporter 1.10.x cannot parse md raid_disks values like "11 (10)"
     # during reshape, so keep md visibility on this host through our custom
     # textfile exporter instead of the built-in mdadm collector.
-    extraFlags = lib.mkForce (
-      [
-        "--collector.textfile.directory=${textfileDir}"
-        "--no-collector.mdadm"
-      ]
-      ++ lib.optionals config.host.observability.client.nodeExporter.mtls.enable [
-        "--web.config.file=${config.sops.templates."node-exporter-web-config.yaml".path}"
-      ]
-    );
+    extraFlags = [ "--no-collector.mdadm" ];
   };
   systemd.services.beast-md-sync-export = {
     description = "Export md sync status for node exporter";
