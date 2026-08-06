@@ -16,7 +16,7 @@ let
     name:
     let
       hostConfig = outputs.nixosConfigurations.${name}.config;
-      endpoint = hostConfig.host.observability.client.prometheusMtlsEndpoints.pve;
+      endpoint = hostConfig.host.observability.prometheusEndpoints.pve;
     in
     {
       labels = {

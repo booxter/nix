@@ -27,7 +27,7 @@ in
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
-  host.observability.client.mtlsClients."wg-home-dns-sync" = {
+  host.observability.mtlsClients."wg-home-dns-sync" = {
     enable = true;
     secretPrefix = wgHomeDnsSyncClientSecretPrefix;
   };

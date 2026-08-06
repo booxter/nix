@@ -11,7 +11,7 @@
     ./monitoring
   ];
 
-  host.observability.client = {
+  host.observability = {
     nodeExporter = {
       listenAddress = "127.0.0.1";
       openFirewall = lib.mkForce false;

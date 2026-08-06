@@ -219,7 +219,7 @@ let
       };
     }) publicServiceCatalog
   );
-  httpServiceModule = config.host.observability.client.blackbox.baseModules.http_service;
+  httpServiceModule = config.host.observability.blackbox.baseModules.http_service;
   blackboxModules =
     publicDnsBlackboxModules
     // lib.optionalAttrs usesHttpMtls {
@@ -232,13 +232,13 @@ let
   remoteBlackboxProbeSourceNames = builtins.filter (
     name:
     name != "fana"
-    && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.remote.enable
+    && outputs.nixosConfigurations.${name}.config.host.observability.blackbox.remote.enable
   ) nixosConfigNames;
   mkRemoteBlackboxProbeSourceConfig =
     name:
     let
       hostConfig = outputs.nixosConfigurations.${name}.config;
-      mtlsEndpoint = hostConfig.host.observability.client.prometheusMtlsEndpoints.blackbox;
+      mtlsEndpoint = hostConfig.host.observability.prometheusEndpoints.blackbox;
     in
     {
       exporter = "${name}:${toString mtlsEndpoint.port}";

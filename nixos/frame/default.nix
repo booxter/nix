@@ -27,7 +27,7 @@ in
   # This host needs manual local or remote unlock after boot; never auto-reboot
   # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
-  host.observability.client.blackbox.remote.enable = true;
+  host.observability.blackbox.remote.enable = true;
   home-manager.users.${username}.programs.sshTicket.enableKnownHosts = true;
 
   nixpkgs.config.rocmSupport = true;

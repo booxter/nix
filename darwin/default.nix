@@ -30,7 +30,7 @@ in
     ./_mixins/networking
     ./_mixins/nix-gc
     ./_mixins/nix-store
-    ./_mixins/observability-client
+    ./_mixins/observability
     ./_mixins/remote-gui
     ./_mixins/secretive
     ./_mixins/sketchybar-alertmanager

@@ -48,7 +48,7 @@ pkgs.testers.runNixOSTest {
   nodes.machine =
     { lib, ... }:
     {
-      imports = [ ../../nixos/_mixins/observability-client ];
+      imports = [ ../../nixos/_mixins/observability ];
 
       options = {
         host = {
@@ -96,27 +96,6 @@ pkgs.testers.runNixOSTest {
             default = { };
           };
 
-          templates = lib.mkOption {
-            type = lib.types.attrsOf (
-              lib.types.submodule (
-                { name, ... }:
-                {
-                  freeformType = lib.types.attrsOf lib.types.anything;
-                  options = {
-                    content = lib.mkOption {
-                      type = lib.types.lines;
-                      default = "";
-                    };
-                    path = lib.mkOption {
-                      type = lib.types.str;
-                      default = "/run/secrets/rendered/${name}";
-                    };
-                  };
-                }
-              )
-            );
-            default = { };
-          };
         };
       };
 
@@ -138,9 +117,9 @@ pkgs.testers.runNixOSTest {
           };
         };
 
-        host.observability.client = {
+        host.observability = {
           enable = true;
-          lokiWriteUrl = null;
+          loki.writeUrl = null;
           loki.mtls.enable = false;
           mtlsClients.loki.enable = false;
           nodeExporter.mtls.enable = false;

@@ -8,7 +8,7 @@ let
   tuning = config.host.srvarrTuning;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
-  beastJellyfinEndpoint = beastHostConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;
+  beastJellyfinEndpoint = beastHostConfig.host.observability.prometheusEndpoints.jellyfin;
   beastNfsPort = hostInventory.site.ports.nfs;
   beastNfsRateMbit = 1500;
   wgEndpointPort = 1637;

@@ -49,7 +49,7 @@ in
     after = [ "modprobe@sd_mod.service" ];
   };
 
-  host.observability.client.prometheusMtlsEndpoints.smartctl = {
+  host.observability.prometheusEndpoints.smartctl = {
     enable = true;
     port = smartctlExporterPort;
     upstream = "http://127.0.0.1:${toString smartctlExporterInternalPort}/metrics";

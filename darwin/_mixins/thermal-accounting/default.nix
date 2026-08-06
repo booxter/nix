@@ -26,26 +26,31 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ cfg.package ];
+  config = lib.mkMerge [
+    {
+      host.observability.thermal.enable = lib.mkDefault (!config.host.isWork);
+    }
+    (lib.mkIf cfg.enable {
+      environment.systemPackages = [ cfg.package ];
 
-    assertions = [
-      {
-        assertion = config.host.observability.lanWan.enable;
-        message = "Darwin thermal export currently requires host.observability.lanWan.enable so node exporter textfile support is configured.";
-      }
-    ];
-
-    launchd.daemons.observability-thermal-export.serviceConfig = {
-      ProgramArguments = [
-        (lib.getExe thermalExporter)
-        "--ismc"
-        (lib.getExe cfg.package)
+      assertions = [
+        {
+          assertion = config.host.observability.lanWan.enable;
+          message = "Darwin thermal export currently requires host.observability.lanWan.enable so node exporter textfile support is configured.";
+        }
       ];
-      RunAtLoad = true;
-      StartInterval = cfg.intervalSeconds;
-      StandardOutPath = "/var/log/observability-thermal-export.log";
-      StandardErrorPath = "/var/log/observability-thermal-export.log";
-    };
-  };
+
+      launchd.daemons.observability-thermal-export.serviceConfig = {
+        ProgramArguments = [
+          (lib.getExe thermalExporter)
+          "--ismc"
+          (lib.getExe cfg.package)
+        ];
+        RunAtLoad = true;
+        StartInterval = cfg.intervalSeconds;
+        StandardOutPath = "/var/log/observability-thermal-export.log";
+        StandardErrorPath = "/var/log/observability-thermal-export.log";
+      };
+    })
+  ];
 }

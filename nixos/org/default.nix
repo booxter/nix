@@ -99,7 +99,7 @@ in
     mtls.enable = true;
   };
 
-  host.observability.client.prometheusMtlsEndpoints.vikunja = {
+  host.observability.prometheusEndpoints.vikunja = {
     enable = true;
     port = vikunjaMetricsMtlsPort;
     upstream = "http://127.0.0.1:${toString vikunjaPort}/api/v1/metrics";

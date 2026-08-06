@@ -5,8 +5,8 @@
   ...
 }:
 let
-  clientCfg = config.host.observability.client;
-  cfg = clientCfg.nodeExporter;
+  observabilityCfg = config.host.observability;
+  cfg = observabilityCfg.nodeExporter;
   certificateSecret = config.sops.secrets.prometheusNodeExporterServerCrt;
   keySecret = config.sops.secrets.prometheusNodeExporterServerKey;
   webConfig = (pkgs.formats.yaml { }).generate "node-exporter-web-config.yaml" {
@@ -19,7 +19,7 @@ let
   };
 in
 {
-  options.host.observability.client.nodeExporter = {
+  options.host.observability.nodeExporter = {
     listenAddress = lib.mkOption {
       type = lib.types.str;
       default = "0.0.0.0";
@@ -57,7 +57,7 @@ in
     };
   };
 
-  config = lib.mkIf (clientCfg.enable && cfg.mtls.enable) {
+  config = lib.mkIf (observabilityCfg.enable && cfg.mtls.enable) {
     sops.secrets = {
       prometheusNodeExporterServerCrt = {
         key = "${cfg.mtls.secretPrefix}/server_crt_unencrypted";

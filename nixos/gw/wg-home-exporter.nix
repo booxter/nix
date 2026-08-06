@@ -10,7 +10,7 @@ let
   wgExporterPublicPort = 9586;
 in
 {
-  host.observability.client.prometheusMtlsEndpoints."wg-home" = {
+  host.observability.prometheusEndpoints."wg-home" = {
     enable = true;
     port = wgExporterPublicPort;
     path = "/metrics";

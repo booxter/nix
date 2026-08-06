@@ -32,7 +32,7 @@
 
   users.groups.media.gid = hostInventory.site.gids.media;
 
-  host.observability.client.blackbox.remote.enable = true;
+  host.observability.blackbox.remote.enable = true;
   # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
   host.observability.lanWan.interface = "enp6s0";
 

@@ -443,7 +443,7 @@ in
         environment.REQUESTS_CA_BUNDLE = toString internalPkiRootCaPath;
       };
 
-      host.observability.client.prometheusMtlsEndpoints.pve = {
+      host.observability.prometheusEndpoints.pve = {
         enable = true;
         port = exporterCfg.publicPort;
         path = "/";

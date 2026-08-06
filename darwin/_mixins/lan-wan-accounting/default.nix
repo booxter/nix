@@ -99,65 +99,70 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ cfg.package ];
+  config = lib.mkMerge [
+    {
+      host.observability.lanWan.enable = lib.mkDefault config.host.isDesktop;
+    }
+    (lib.mkIf cfg.enable {
+      environment.systemPackages = [ cfg.package ];
 
-    services.prometheus.exporters.node = lib.mkIf cfg.exportToNodeExporter {
-      extraFlags = [
-        "--collector.textfile"
-        "--collector.textfile.directory=${textfileDir}"
-      ];
-    };
-
-    # Work around nix-darwin node-exporter flag joining while still letting
-    # nix-darwin generate the wait4path wrapper from launchd.command.
-    launchd.daemons.prometheus-node-exporter.command = lib.mkIf cfg.exportToNodeExporter (
-      lib.mkForce "${lib.getExe nodeCfg.package} ${nodeExporterArgs}"
-    );
-
-    ids.uids.${serviceUser} = serviceUid;
-
-    users.users.${serviceUser} = {
-      uid = config.ids.uids.${serviceUser};
-      gid = accessBpfGid;
-      createHome = false;
-      shell = "/usr/bin/false";
-      description = "System user for Darwin LAN/WAN BPF accounting";
-    };
-    users.knownUsers = [ serviceUser ];
-
-    system.activationScripts.launchd.text = lib.mkBefore ''
-      access_bpf_gid="$(/usr/bin/dscacheutil -q group -a name ${accessBpfGroup} | /usr/bin/awk '/^gid:/ { print $2; exit }')"
-      if [ "$access_bpf_gid" != "${toString accessBpfGid}" ]; then
-        echo "Expected ${accessBpfGroup} gid ${toString accessBpfGid}, got ''${access_bpf_gid:-missing}" >&2
-        exit 1
-      fi
-
-      bpf_group="$(/usr/bin/stat -f '%Sg' /dev/bpf0)"
-      bpf_mode="$(/usr/bin/stat -f '%OLp' /dev/bpf0)"
-      if [ "$bpf_group" != "${accessBpfGroup}" ] || [ "$bpf_mode" != "660" ]; then
-        echo "Expected /dev/bpf0 to be root:${accessBpfGroup} 660, got group=$bpf_group mode=$bpf_mode" >&2
-        exit 1
-      fi
-
-      mkdir -p ${textfileDir} ${stateDir}
-      chown ${serviceUser}:${accessBpfGroup} ${textfileDir} ${stateDir}
-      chmod 0755 ${textfileDir} ${stateDir}
-    '';
-
-    launchd.daemons.observability-lan-wan-accounting = {
-      inherit command;
-      serviceConfig = {
-        RunAtLoad = true;
-        KeepAlive = true;
-        UserName = serviceUser;
-        GroupName = accessBpfGroup;
-        InitGroups = false;
-        ProcessType = "Background";
-        LowPriorityIO = true;
-        StandardOutPath = "${stateDir}/lan-wan.log";
-        StandardErrorPath = "${stateDir}/lan-wan.log";
+      services.prometheus.exporters.node = lib.mkIf cfg.exportToNodeExporter {
+        extraFlags = [
+          "--collector.textfile"
+          "--collector.textfile.directory=${textfileDir}"
+        ];
       };
-    };
-  };
+
+      # Work around nix-darwin node-exporter flag joining while still letting
+      # nix-darwin generate the wait4path wrapper from launchd.command.
+      launchd.daemons.prometheus-node-exporter.command = lib.mkIf cfg.exportToNodeExporter (
+        lib.mkForce "${lib.getExe nodeCfg.package} ${nodeExporterArgs}"
+      );
+
+      ids.uids.${serviceUser} = serviceUid;
+
+      users.users.${serviceUser} = {
+        uid = config.ids.uids.${serviceUser};
+        gid = accessBpfGid;
+        createHome = false;
+        shell = "/usr/bin/false";
+        description = "System user for Darwin LAN/WAN BPF accounting";
+      };
+      users.knownUsers = [ serviceUser ];
+
+      system.activationScripts.launchd.text = lib.mkBefore ''
+        access_bpf_gid="$(/usr/bin/dscacheutil -q group -a name ${accessBpfGroup} | /usr/bin/awk '/^gid:/ { print $2; exit }')"
+        if [ "$access_bpf_gid" != "${toString accessBpfGid}" ]; then
+          echo "Expected ${accessBpfGroup} gid ${toString accessBpfGid}, got ''${access_bpf_gid:-missing}" >&2
+          exit 1
+        fi
+
+        bpf_group="$(/usr/bin/stat -f '%Sg' /dev/bpf0)"
+        bpf_mode="$(/usr/bin/stat -f '%OLp' /dev/bpf0)"
+        if [ "$bpf_group" != "${accessBpfGroup}" ] || [ "$bpf_mode" != "660" ]; then
+          echo "Expected /dev/bpf0 to be root:${accessBpfGroup} 660, got group=$bpf_group mode=$bpf_mode" >&2
+          exit 1
+        fi
+
+        mkdir -p ${textfileDir} ${stateDir}
+        chown ${serviceUser}:${accessBpfGroup} ${textfileDir} ${stateDir}
+        chmod 0755 ${textfileDir} ${stateDir}
+      '';
+
+      launchd.daemons.observability-lan-wan-accounting = {
+        inherit command;
+        serviceConfig = {
+          RunAtLoad = true;
+          KeepAlive = true;
+          UserName = serviceUser;
+          GroupName = accessBpfGroup;
+          InitGroups = false;
+          ProcessType = "Background";
+          LowPriorityIO = true;
+          StandardOutPath = "${stateDir}/lan-wan.log";
+          StandardErrorPath = "${stateDir}/lan-wan.log";
+        };
+      };
+    })
+  ];
 }

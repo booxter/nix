@@ -152,7 +152,7 @@ in
     '';
   };
 
-  host.observability.client.prometheusMtlsEndpoints.home-assistant = {
+  host.observability.prometheusEndpoints.home-assistant = {
     enable = true;
     port = homeAssistantMetricsPort;
     upstream = "http://127.0.0.1:${toString homeAssistantPort}/api/prometheus";

@@ -394,7 +394,7 @@ in
     };
   };
 
-  host.observability.client.prometheusMtlsEndpoints.paperless = {
+  host.observability.prometheusEndpoints.paperless = {
     enable = true;
     port = paperlessMetricsMtlsPort;
     upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";

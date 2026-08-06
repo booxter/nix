@@ -8,15 +8,15 @@
 let
   username = config.host.username;
   clientName = "sketchybar-jellyfin";
-  client = config.host.observability.client.mtlsClients.${clientName};
+  client = config.host.observability.mtlsClients.${clientName};
   clientCertificateSecret = "sketchybar-jellyfin-client-crt";
   clientKeySecret = "sketchybar-jellyfin-client-key";
   beastConfig = outputs.nixosConfigurations.beast.config;
-  endpoint = beastConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;
+  endpoint = beastConfig.host.observability.prometheusEndpoints.jellyfin;
   enable = config.host.isDesktop && !config.host.isWork;
 in
 {
-  host.observability.client.mtlsClients.${clientName}.enable = enable;
+  host.observability.mtlsClients.${clientName}.enable = enable;
 
   sops.secrets = lib.mkIf enable {
     ${clientCertificateSecret} = {

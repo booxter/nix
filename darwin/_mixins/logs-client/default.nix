@@ -7,9 +7,9 @@
 }:
 let
   cfg = config.host.observability.logs;
-  clientCfg = config.host.observability.client;
+  observabilityCfg = config.host.observability;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  enabledMtlsClients = lib.filterAttrs (_: client: client.enable) clientCfg.mtlsClients;
+  enabledMtlsClients = lib.filterAttrs (_: client: client.enable) observabilityCfg.mtlsClients;
   lokiMtlsClient =
     if cfg.loki.mtls.enable && builtins.hasAttr cfg.loki.mtls.clientName enabledMtlsClients then
       enabledMtlsClients.${cfg.loki.mtls.clientName}
@@ -116,7 +116,7 @@ in
       clientName = lib.mkOption {
         type = lib.types.str;
         default = "loki";
-        description = "Name of the host.observability.client.mtlsClients entry used for Loki writes.";
+        description = "Name of the host.observability.mtlsClients entry used for Loki writes.";
       };
 
       serverName = lib.mkOption {
@@ -174,7 +174,7 @@ in
         loki.mtls.enable = lib.mkDefault (cfg.enable && cfg.lokiWriteUrl != null);
       };
 
-      host.observability.client.mtlsClients.loki = {
+      host.observability.mtlsClients.loki = {
         enable = lib.mkDefault (cfg.enable && cfg.lokiWriteUrl != null && cfg.loki.mtls.enable);
         secretPrefix = "observability/clients/loki";
       };
@@ -212,7 +212,7 @@ in
           assertions = [
             {
               assertion = lokiMtlsClient != null;
-              message = "host.observability.logs.loki.mtls.clientName must reference an enabled host.observability.client.mtlsClients entry.";
+              message = "host.observability.logs.loki.mtls.clientName must reference an enabled host.observability.mtlsClients entry.";
             }
           ];
 

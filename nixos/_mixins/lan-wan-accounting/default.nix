@@ -156,63 +156,71 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    services.prometheus.exporters.node = {
-      enabledCollectors = [ "textfile" ];
-      extraFlags = [ "--collector.textfile.directory=${textfileDir}" ];
-    };
-
-    systemd.tmpfiles.rules = [
-      "d ${textfileDir} 0755 root root - -"
-    ];
-
-    systemd.services.observability-lan-wan-accounting = {
-      description = "Install nftables LAN/WAN accounting rules";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network-pre.target" ];
-      wants = [ "network-pre.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStartPre = "-${removeCommand}";
-        ExecStart = utils.escapeSystemdExecArgs [
-          nft
-          "-f"
-          rulesFile
-        ];
-        ExecStop = "-${removeCommand}";
+  config = lib.mkMerge [
+    {
+      host.observability.lanWan = {
+        enable = lib.mkDefault (!config.host.isWork);
+        mode = lib.mkDefault (if config.host.isProxmox then "host-local" else "interface-path");
       };
-    };
-
-    systemd.services.observability-lan-wan-export = {
-      description = "Export LAN/WAN accounting metrics for node exporter";
-      after = [ "observability-lan-wan-accounting.service" ];
-      requires = [ "observability-lan-wan-accounting.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = exportCommand;
+    }
+    (lib.mkIf cfg.enable {
+      services.prometheus.exporters.node = {
+        enabledCollectors = [ "textfile" ];
+        extraFlags = [ "--collector.textfile.directory=${textfileDir}" ];
       };
-    };
 
-    systemd.timers.observability-lan-wan-export = {
-      description = "Refresh LAN/WAN accounting metrics";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "30s";
-        OnUnitActiveSec = "15s";
-        Unit = "observability-lan-wan-export.service";
+      systemd.tmpfiles.rules = [
+        "d ${textfileDir} 0755 root root - -"
+      ];
+
+      systemd.services.observability-lan-wan-accounting = {
+        description = "Install nftables LAN/WAN accounting rules";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "network-pre.target" ];
+        wants = [ "network-pre.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStartPre = "-${removeCommand}";
+          ExecStart = utils.escapeSystemdExecArgs [
+            nft
+            "-f"
+            rulesFile
+          ];
+          ExecStop = "-${removeCommand}";
+        };
       };
-    };
 
-    assertions = [
-      {
-        assertion = cfg.wanTransmitTcClass == null || cfg.interface != null;
-        message = "host.observability.lanWan.wanTransmitTcClass requires host.observability.lanWan.interface to be set.";
-      }
-      {
-        assertion = cfg.wanTransmitTcClass == null || cfg.wanUdpSubclass != null;
-        message = "host.observability.lanWan.wanTransmitTcClass requires host.observability.lanWan.wanUdpSubclass so WAN total can include unmatched WAN traffic.";
-      }
-    ];
-  };
+      systemd.services.observability-lan-wan-export = {
+        description = "Export LAN/WAN accounting metrics for node exporter";
+        after = [ "observability-lan-wan-accounting.service" ];
+        requires = [ "observability-lan-wan-accounting.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = exportCommand;
+        };
+      };
+
+      systemd.timers.observability-lan-wan-export = {
+        description = "Refresh LAN/WAN accounting metrics";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "30s";
+          OnUnitActiveSec = "15s";
+          Unit = "observability-lan-wan-export.service";
+        };
+      };
+
+      assertions = [
+        {
+          assertion = cfg.wanTransmitTcClass == null || cfg.interface != null;
+          message = "host.observability.lanWan.wanTransmitTcClass requires host.observability.lanWan.interface to be set.";
+        }
+        {
+          assertion = cfg.wanTransmitTcClass == null || cfg.wanUdpSubclass != null;
+          message = "host.observability.lanWan.wanTransmitTcClass requires host.observability.lanWan.wanUdpSubclass so WAN total can include unmatched WAN traffic.";
+        }
+      ];
+    })
+  ];
 }

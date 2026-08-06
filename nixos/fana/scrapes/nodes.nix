@@ -33,14 +33,12 @@ let
   nixosNodeExporterTargetNames = builtins.filter (
     name:
     name != "fana"
-    && (outputs.nixosConfigurations.${name}.config.host.observability.client.enable or false)
+    && (outputs.nixosConfigurations.${name}.config.host.observability.enable or false)
     && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
   ) nixosConfigNames;
   remoteNixosNonMtlsNodeTargetNames = builtins.filter (
     name:
-    !(outputs.nixosConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
-      or false
-    )
+    !(outputs.nixosConfigurations.${name}.config.host.observability.nodeExporter.mtls.enable or false)
   ) nixosNodeExporterTargetNames;
   remoteNixosNodeTargetConfigs = map mkRemoteNixosNodeTargetConfig nixosNodeExporterTargetNames;
   mkRemoteDarwinNodeTargetConfig =
@@ -61,14 +59,12 @@ let
     };
   darwinNodeExporterTargetNames = builtins.filter (
     name:
-    (outputs.darwinConfigurations.${name}.config.host.observability.client.enable or false)
+    (outputs.darwinConfigurations.${name}.config.host.observability.enable or false)
     && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
   ) (builtins.attrNames outputs.darwinConfigurations);
   remoteDarwinNonMtlsNodeTargetNames = builtins.filter (
     name:
-    !(outputs.darwinConfigurations.${name}.config.host.observability.client.nodeExporter.mtls.enable
-      or false
-    )
+    !(outputs.darwinConfigurations.${name}.config.host.observability.nodeExporter.mtls.enable or false)
   ) darwinNodeExporterTargetNames;
   remoteDarwinNodeTargetConfigs = map mkRemoteDarwinNodeTargetConfig darwinNodeExporterTargetNames;
   remoteNodeTargetConfigs = remoteNixosNodeTargetConfigs ++ remoteDarwinNodeTargetConfigs;

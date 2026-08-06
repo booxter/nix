@@ -5,8 +5,8 @@
   ...
 }:
 let
-  clientCfg = config.host.observability.client;
-  cfg = clientCfg.blackbox;
+  observabilityCfg = config.host.observability;
+  cfg = observabilityCfg.blackbox;
   httpService = {
     http = {
       follow_redirects = true;
@@ -17,7 +17,7 @@ let
   };
 in
 {
-  options.host.observability.client.blackbox = {
+  options.host.observability.blackbox = {
     enable = lib.mkEnableOption "host-side blackbox exporter probes";
 
     listenAddress = lib.mkOption {
@@ -70,7 +70,7 @@ in
 
   config = lib.mkMerge [
     {
-      host.observability.client.blackbox.baseModules = {
+      host.observability.blackbox.baseModules = {
         dns_udp = {
           dns = {
             preferred_ip_protocol = "ip4";
@@ -104,9 +104,9 @@ in
         };
       };
 
-      host.observability.client.blackbox.modules = cfg.baseModules;
+      host.observability.blackbox.modules = cfg.baseModules;
     }
-    (lib.mkIf (clientCfg.enable && cfg.enable) {
+    (lib.mkIf (observabilityCfg.enable && cfg.enable) {
       services.prometheus.exporters.blackbox = {
         enable = true;
         inherit (cfg) listenAddress port;
@@ -116,9 +116,9 @@ in
       };
     })
     (lib.mkIf cfg.remote.enable {
-      host.observability.client = {
+      host.observability = {
         blackbox.enable = true;
-        prometheusMtlsEndpoints.blackbox = {
+        prometheusEndpoints.blackbox = {
           enable = true;
           listenAddress = cfg.remote.listenAddress;
           port = cfg.remote.port;

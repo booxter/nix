@@ -31,7 +31,7 @@ in
       ./_mixins/internal-https-service.nix
       ./_mixins/lan-wan-accounting
       ./_mixins/nix
-      ./_mixins/observability-client
+      ./_mixins/observability
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/sso
