@@ -7,7 +7,6 @@ pkgs.writeShellApplication {
     nixfmt-tree
     shellcheck
     ruff
-    nodejs
     prettier
     eslint
     jq
