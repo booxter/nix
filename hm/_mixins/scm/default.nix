@@ -14,7 +14,6 @@ let
   privateEmail = "ihar.hrachyshka@gmail.com";
   email = if isWork then "${username}@nvidia.com" else privateEmail;
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
-  gitPackage = if isDarwin then pkgs.gitDarwinPrecompose else pkgs.gitFull;
   pushDisabledGitHubRepos = [
     "NixOS/nixpkgs"
     "ovn-kubernetes/ovn-kubernetes"
@@ -35,9 +34,7 @@ in
   # Git
   programs.git = {
     enable = true;
-    # Use regular git on macos for now, due to: https://github.com/NixOS/nixpkgs/issues/208951
-    # with a scoped precompose fix until upstream/nixpkgs includes it.
-    package = gitPackage;
+    package = pkgs.gitFull;
 
     ignores = [
       "*.swp"
