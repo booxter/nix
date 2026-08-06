@@ -1,7 +1,13 @@
-{ config, lib, ... }:
+{
+  config,
+  hostInventory,
+  lib,
+  ...
+}:
 let
   rootConfig = config;
   cfg = config.host.internalPki;
+  realmInternalPki = hostInventory.realms.${config.host.realm}.services.internalPki or null;
   enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
   secretBaseName =
     clientName: materializationName:
@@ -70,12 +76,18 @@ let
 in
 {
   options.host.internalPki = {
+    enable = lib.mkEnableOption "trust in and client identities for the realm's internal PKI";
+
     rootCaCertificate = lib.mkOption {
       type = lib.types.path;
-      default = ./home-internal-pki-root-ca.crt;
+      default =
+        if realmInternalPki == null then
+          hostInventory.realms.home.services.internalPki.rootCaCertificate
+        else
+          realmInternalPki.rootCaCertificate;
       readOnly = true;
       internal = true;
-      description = "Root CA certificate for the home internal PKI.";
+      description = "Root CA certificate for the realm's internal PKI.";
     };
 
     clients = lib.mkOption {
@@ -134,21 +146,34 @@ in
     };
   };
 
-  config.security.pki.certificateFiles = lib.mkIf (!config.host.isWork) [
-    config.host.internalPki.rootCaCertificate
-  ];
+  config = {
+    host.internalPki.enable = lib.mkDefault (realmInternalPki != null);
 
-  config.sops.secrets = lib.concatMapAttrs (
-    clientName: client:
-    lib.concatMapAttrs (
-      materializationName: materialization:
-      let
-        baseName = secretBaseName clientName materializationName;
-      in
+    assertions = [
       {
-        "${baseName}-crt" = mkClientSecret materialization "${client.secretPrefix}/client_crt_unencrypted";
-        "${baseName}-key" = mkClientSecret materialization "${client.secretPrefix}/client_key";
+        assertion = cfg.enable || enabledClients == { };
+        message =
+          "realm '${config.host.realm}' does not define an internal PKI, but host '${config.networking.hostName}' enables clients: "
+          + lib.concatStringsSep ", " (builtins.attrNames enabledClients);
       }
-    ) client.materializations
-  ) enabledClients;
+    ];
+
+    security.pki.certificateFiles = lib.mkIf cfg.enable [
+      cfg.rootCaCertificate
+    ];
+
+    sops.secrets = lib.concatMapAttrs (
+      clientName: client:
+      lib.concatMapAttrs (
+        materializationName: materialization:
+        let
+          baseName = secretBaseName clientName materializationName;
+        in
+        {
+          "${baseName}-crt" = mkClientSecret materialization "${client.secretPrefix}/client_crt_unencrypted";
+          "${baseName}-key" = mkClientSecret materialization "${client.secretPrefix}/client_key";
+        }
+      ) client.materializations
+    ) enabledClients;
+  };
 }

@@ -7,6 +7,7 @@
         cacheName = "local";
         endpoint = "https://nix-cache.${lanDomain}";
       };
+      internalPki.rootCaCertificate = ../public-keys/internal-pki/home-root-ca.crt;
       observability = {
         loki = {
           writeUrl = "https://loki.${lanDomain}/loki/api/v1/push";
