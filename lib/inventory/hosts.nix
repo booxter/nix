@@ -223,6 +223,7 @@ in
       platform = "x86_64-linux";
       isBuilder = true;
       isWork = true;
+      nspawnTestBuilder = true;
       hmFull = false;
       stateVersion = "25.11";
       netIface = "enp3s0f0";
