@@ -10,13 +10,7 @@
 let
   hostname = hostSpec.name;
   username = hostSpec.username;
-  isVM = hostSpec.isVM or false;
-  upsShutdownDelaySeconds = if isVM then 450 else 900;
   configName = ./${hostSpec.name};
-  upsServerName = hostSpec.upsHost or null;
-  upsServerSpec = if upsServerName == null then null else hostInventory.nixosHosts.${upsServerName};
-  useLiteralUpsPassword =
-    upsServerSpec != null && ((hostSpec.isWork or false) || (upsServerSpec.isWork or false));
 in
 (
   {
@@ -37,6 +31,7 @@ in
       ./_mixins/backup-metrics/default.nix
       ./_mixins/builder.nix
       ./_mixins/external-service.nix
+      ./_mixins/firmware
       ./_mixins/internal-https-service.nix
       ./_mixins/lan-wan-accounting
       ./_mixins/nix
@@ -44,28 +39,12 @@ in
       ./_mixins/proxmox
       ./_mixins/restic-beast-client.nix
       ./_mixins/sso-oauth2-proxy-gate.nix
+      ./_mixins/attic
       ./_mixins/unifi-sync
+      ./_mixins/ups-client
+      ./_mixins/ups-sched.nix
       ./_mixins/user
       ./_mixins/vm.nix
-    ]
-    ++ lib.optionals (!isVM) [
-      ./_mixins/firmware
-    ]
-    ++ lib.optionals (!(hostSpec.isWork or false)) [
-      ./_mixins/attic
-    ]
-    ++ lib.optionals (upsServerSpec != null) [
-      (import ./_mixins/ups-client (
-        {
-          inherit pkgs upsShutdownDelaySeconds;
-          monitorName = upsServerSpec.name;
-          system = "${hostInventory.toUpsName upsServerSpec.name}@${hostInventory.toHostIpv4Address upsServerSpec}";
-          user = "upsslave";
-        }
-        // lib.optionalAttrs useLiteralUpsPassword {
-          passwordText = "upsslave123";
-        }
-      ))
     ];
 
     home-manager = {

@@ -89,6 +89,13 @@ in
       internal = true;
       description = "Primary user declared by the host inventory.";
     };
+
+    ups.client.server = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      readOnly = true;
+      internal = true;
+      description = "Inventory host providing this host's UPS service.";
+    };
   };
 
   config = {
@@ -115,6 +122,7 @@ in
       isVM = hostSpec.isVM or false;
       isWork = hostSpec.isWork or false;
       secretDomain = hostInventory.toSecretDomain hostSpec;
+      ups.client.server = hostSpec.upsHost or null;
       username = hostSpec.username;
     };
   };

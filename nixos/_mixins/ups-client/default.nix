@@ -1,57 +1,58 @@
 {
-  pkgs,
-  upsShutdownDelaySeconds,
-  isCriticalNode ? false,
-  monitorName,
-  system,
-  user,
-  passwordText ? null,
+  config,
+  hostInventory,
+  lib,
   ...
 }:
-{ config, lib, ... }:
 let
+  serverName = config.host.ups.client.server;
+  serverSpec = if serverName == null then null else hostInventory.nixosHosts.${serverName};
+  monitorName = if serverSpec == null then "" else serverSpec.name;
+  monitorSecret = "nut/monitors/${monitorName}/password";
+  useLiteralPassword =
+    serverSpec != null
+    && (config.host.isWork || hostInventory.secretDomainsByHost.${serverName} == "work");
   passwordFile =
-    if passwordText == null then
-      config.sops.secrets."nut/monitors/${monitorName}/password".path
-    else
-      "/etc/nut/upsclient.pass";
+    if useLiteralPassword then "/etc/nut/upsclient.pass" else config.sops.secrets.${monitorSecret}.path;
 in
 {
-  imports = [
-    (import ../ups-sched.nix { inherit pkgs upsShutdownDelaySeconds isCriticalNode; })
-  ];
+  config = lib.mkIf (serverSpec != null) {
+    host.ups.scheduler = {
+      enable = true;
+      shutdownDelaySeconds = if config.host.isVM then 450 else 900;
+    };
 
-  environment.etc."nut/upsclient.pass" = lib.mkIf (passwordText != null) {
-    text = "${passwordText}\n";
-    mode = "0600";
-  };
+    environment.etc."nut/upsclient.pass" = lib.mkIf useLiteralPassword {
+      text = "upsslave123\n";
+      mode = "0600";
+    };
 
-  sops.secrets = lib.mkIf (passwordText == null) {
-    "nut/monitors/${monitorName}/password" = {
+    sops.secrets.${monitorSecret} = lib.mkIf (!useLiteralPassword) {
       mode = "0400";
       restartUnits = [ "upsmon.service" ];
     };
-  };
 
-  power.ups = {
-    enable = true;
-    mode = "netclient";
-    upsmon.monitor.${monitorName} = {
-      inherit system user;
-      inherit passwordFile;
-      type = "slave";
+    power.ups = {
+      enable = true;
+      mode = "netclient";
+      upsmon.monitor.${monitorName} = {
+        system = "${hostInventory.toUpsName serverName}@${hostInventory.toHostIpv4Address serverSpec}";
+        user = "upsslave";
+        inherit passwordFile;
+        type = "slave";
+      };
     };
-  };
 
-  # Netclient mode depends on network reachability to the UPS server.
-  systemd.services.upsmon = {
-    wants = [
-      "network-online.target"
-    ]
-    ++ lib.optional (passwordText == null) "sops-install-secrets.service";
-    after = [
-      "network-online.target"
-    ]
-    ++ lib.optional (passwordText == null) "sops-install-secrets.service";
+    # Netclient mode depends on network reachability to the UPS server.
+    systemd.services.upsmon = {
+      wants = [
+        "network-online.target"
+      ]
+      ++ lib.optional (!useLiteralPassword) "sops-install-secrets.service";
+      after = [
+        "network-online.target"
+      ]
+      ++ lib.optional (!useLiteralPassword) "sops-install-secrets.service";
+    };
   };
 }
