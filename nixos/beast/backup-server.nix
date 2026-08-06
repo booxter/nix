@@ -11,8 +11,6 @@ let
   backupRoot = "/volume2/backups/restic-prod";
   cloudOffloadUser = "restic-cloud";
   cloudBucketName = "ihar-restic-prod";
-  cloudBackupRateBits = 10 * 1000 * 1000;
-  cloudBackupCeilBits = 10 * 1000 * 1000 * 1000;
   # Keep cloud-copy uploads smaller so each B2 request finishes sooner under
   # the shaped uplink instead of timing out mid-pack.
   cloudCopyPackSize = 4;
@@ -147,21 +145,6 @@ let
       "--config"
       (mkCloudOffloadConfig name)
     ];
-  cloudShapingConfig = (pkgs.formats.json { }).generate "restic-cloud-qos.json" {
-    routeProbe = "1.1.1.1";
-    users = map mkOffloadUser (builtins.attrNames backupClients);
-    mark = 1;
-    outerRateBits = cloudBackupCeilBits;
-    cloudRateBits = cloudBackupRateBits;
-  };
-  cloudShapingCommand =
-    action:
-    utils.escapeSystemdExecArgs [
-      (lib.getExe' beastPkgs.backup-server-tools "restic-cloud-qos")
-      "--config"
-      cloudShapingConfig
-      action
-    ];
   mkRepoAclConfig =
     name:
     (pkgs.formats.json { }).generate "restic-${name}-repo-acl.json" {
@@ -197,6 +180,14 @@ in
     in
     "d ${mkBackupRepo name} 0750 ${owner} ${owner} - -"
   ) (builtins.attrNames backupClients);
+
+  host.qos.interfaces.wan = {
+    device = "enp6s0";
+    limits.cloud-backup = {
+      rateMbit = 10;
+      match.users = map mkOffloadUser (builtins.attrNames backupClients);
+    };
+  };
 
   sops = {
     secrets =
@@ -298,21 +289,7 @@ in
     '') (builtins.attrNames sshBackupClients)
   );
 
-  systemd.services = {
-    restic-cloud-traffic-shaping = {
-      description = "Shape cloud backup offload traffic";
-      wantedBy = [ "multi-user.target" ];
-      after = [ "network-online.target" ];
-      wants = [ "network-online.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        ExecStart = cloudShapingCommand "start";
-        ExecStop = cloudShapingCommand "stop";
-      };
-    };
-  }
-  // builtins.listToAttrs (
+  systemd.services = builtins.listToAttrs (
     (map (name: {
       name = "restic-${name}-repo-acl";
       value = {
@@ -341,17 +318,17 @@ in
           stopIfChanged = false;
           wants = [
             "network-online.target"
-            "restic-cloud-traffic-shaping.service"
+            "qos-wan.service"
             "sops-install-secrets.service"
           ]
           ++ repoAclDeps;
           after = [
             "network-online.target"
-            "restic-cloud-traffic-shaping.service"
+            "qos-wan.service"
             "sops-install-secrets.service"
           ]
           ++ repoAclDeps;
-          requires = [ "restic-cloud-traffic-shaping.service" ];
+          requires = [ "qos-wan.service" ];
           unitConfig.RequiresMountsFor = backupRoot;
           serviceConfig = {
             Type = "oneshot";
