@@ -44,8 +44,5 @@ in
         ++ lib.optionals (builderSpec.nspawnTestBuilder or false) nspawnFeatures;
       }
     ];
-
-    nix.settings.builders-use-substitutes = true;
-    nix.distributedBuilds = true;
   };
 }

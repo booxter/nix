@@ -72,8 +72,5 @@ in
         speedFactor = 100;
         supportedFeatures = features;
       };
-
-    nix.settings.builders-use-substitutes = true;
-    nix.distributedBuilds = true;
   };
 }
