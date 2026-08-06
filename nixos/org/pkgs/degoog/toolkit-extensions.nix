@@ -11,15 +11,15 @@ assert lib.assertMsg (lib.versionOlder degoogVersion "0.24.0") ''
 '';
 stdenvNoCC.mkDerivation {
   pname = "degoog-toolkit-extensions";
-  version = "0-unstable-2026-07-26";
+  version = "0-unstable-2026-08-03";
 
   # Upstream publishes neither tags nor releases. Follow main through the
   # package update job while keeping the source pinned for reproducible builds.
   src = fetchFromGitHub {
     owner = "SoPat712";
     repo = "degoog-toolkit";
-    rev = "b6f572fab75e177fc3185329d98478a6a650a3ff";
-    hash = "sha256-0avQE1Ens+fyyPKgcfd14PaEBBAa9su48rJ5Tau3mTI=";
+    rev = "a8c3dab41b7ddd004da4fd59547c7160fe03d351";
+    hash = "sha256-gSgbxgQpIYDPOn675Y2AfuSBt+jVCp1lkriKkjuTBDE=";
   };
 
   patches = [ ./stocks-degoog-0.23-slot-position.patch ];
