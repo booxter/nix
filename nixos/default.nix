@@ -33,6 +33,7 @@ in
       ./_mixins/nix
       ./_mixins/observability-client
       ./_mixins/proxmox
+      ./_mixins/qos
       ./_mixins/restic-beast-client.nix
       ./_mixins/sso-oauth2-proxy-gate.nix
       ./_mixins/attic
