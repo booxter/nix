@@ -53,5 +53,5 @@ in
     fleet = plainFleet;
     pkgs = plainPkgs;
   };
-  formatter = import ./apps/formatter.nix plainPkgs;
+  formatter = import ./fmt plainPkgs;
 }

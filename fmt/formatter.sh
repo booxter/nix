@@ -22,7 +22,7 @@ treefmt --tree-root "$PWD" "$@"
 if (( ${#deadnix_targets[@]} > 0 )); then
   deadnix --fail "${deadnix_targets[@]}"
 fi
-mbake format --config ./.bake.toml Makefile
+mbake format --config ./fmt/bake.toml Makefile
 git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
 while IFS= read -r -d '' file; do
   tmp=$(mktemp)
@@ -46,4 +46,4 @@ git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff format
 git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff check
 git ls-files -z -- '*.js' '**/*.js' | xargs -0 -r eslint \
   --no-config-lookup \
-  --config ./eslint.config.js
+  --config ./fmt/eslint.config.js

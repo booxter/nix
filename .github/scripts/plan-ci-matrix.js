@@ -81,10 +81,11 @@ function filterSelectionPaths(paths, { ignore = [] } = {}) {
 function defaultSelectionPathFilter(paths) {
   return filterSelectionPaths(paths, {
     ignore: [
-      "eslint.config.js",
+      "fmt/bake.toml",
+      "fmt/eslint.config.js",
       "apps/fleet.nix",
       ".github/scripts/plan-ci-matrix.js",
-      "apps/formatter.sh",
+      "fmt/formatter.sh",
     ],
   });
 }
