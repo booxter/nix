@@ -52,7 +52,6 @@ class TrafficControlRuntimeConfig:
     fallback_mbit: float
     transmission_headroom_fraction: float
     max_state_age_seconds: float
-    route_probe_address: str
 
 
 def transmission_get_current_upload_limit_kbps(
@@ -181,7 +180,7 @@ def run_tc_applier(
     config: TrafficControlRuntimeConfig,
     traffic_control: TrafficControl,
 ) -> int:
-    last_applied: tuple[str, str] | None = None
+    last_applied: float | None = None
 
     while True:
         started_at = time.monotonic()
@@ -192,17 +191,14 @@ def run_tc_applier(
                 transmission_headroom_fraction=(config.transmission_headroom_fraction),
                 max_state_age_seconds=config.max_state_age_seconds,
             )
-            iface = traffic_control.default_egress_interface(config.route_probe_address)
-            desired = (iface, state.target_tc_rate)
-            if desired != last_applied:
-                traffic_control.apply_shape(iface, state.target_tc_rate)
+            if state.target_mbit != last_applied:
+                traffic_control.apply_rate(state.target_mbit)
                 LOG.info(
-                    "updated tc WireGuard upload shaping on %s to %s (reason=%s)",
-                    iface,
+                    "updated WireGuard upload shaping to %s (reason=%s)",
                     state.target_tc_rate,
                     state.reason,
                 )
-                last_applied = desired
+                last_applied = state.target_mbit
         except ControllerError as error:
             LOG.warning("skipping tc apply iteration: %s", error)
         except Exception:

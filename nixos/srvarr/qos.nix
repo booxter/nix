@@ -16,38 +16,45 @@ let
     After = [ "network-online.target" ];
   };
   wgEndpointPort = 1637;
-  wgUnitDepsBase = networkOnlineUnitDeps // {
-    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
-    BindsTo = [ "wg.service" ];
-    PartOf = [ "wg.service" ];
-  };
 in
 {
   host.observability.client.mtlsClients."jellyfin-upload-policy".enable = true;
 
   imports = [
-    ../_mixins/wireguard-qos
     (import ./adaptive-upload-policy.nix {
       jellyfinExporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
       fallbackUploadRateMbit = tuning.wgConservativeUploadRateMbit;
-      inherit
-        networkOnlineUnitDeps
-        wgUnitDepsBase
-        ;
+      inherit networkOnlineUnitDeps;
     })
   ];
 
-  host.wireguardQos = {
-    enable = true;
-    wireguardUnit = "wg.service";
-    port = wgEndpointPort;
-    egressPort = "destination";
-    uploadRateMbit = tuning.wgConservativeUploadRateMbit;
-    downloadRateMbit = 400;
-    nfs = {
-      address = beastNfsAddress;
-      port = beastNfsPort;
-      rateMbit = beastNfsRateMbit;
+  host.qos.interfaces.wan = {
+    device = "ens18";
+    limits = {
+      nfs = {
+        rateMbit = beastNfsRateMbit;
+        match = {
+          protocol = "tcp";
+          destinationAddress = beastNfsAddress;
+          destinationPort = beastNfsPort;
+        };
+      };
+      wireguard-download = {
+        direction = "ingress";
+        rateMbit = 400;
+        match = {
+          protocol = "udp";
+          sourcePort = wgEndpointPort;
+        };
+      };
+      wireguard-upload = {
+        rateMbit = tuning.wgConservativeUploadRateMbit;
+        queue = "cake";
+        match = {
+          protocol = "udp";
+          destinationPort = wgEndpointPort;
+        };
+      };
     };
   };
 
@@ -55,14 +62,11 @@ in
     interface = "ens18";
     # nft postrouting overcounts the WireGuard transport on this host, so use
     # the shaped tc class as the authoritative WAN egress counter instead.
-    wanTransmitTcClass = "1:10";
+    wanTransmitTcClass = config.host.qos.classIds.wan.wireguard-upload;
     wanUdpSubclass = {
       name = "wg";
       port = wgEndpointPort;
     };
   };
 
-  # The native QoS module applies a conservative bidirectional WireGuard
-  # baseline and caps NFS writes below this path's unstable single-flow
-  # ceiling. The adaptive controller can still raise class 1:10 at runtime.
 }

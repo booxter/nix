@@ -103,6 +103,12 @@ let
     };
   };
   profileNames = builtins.attrNames cfg.interfaces;
+  profileIndexes = builtins.listToAttrs (
+    lib.imap0 (index: name: {
+      inherit name;
+      value = index;
+    }) profileNames
+  );
   profileData = builtins.mapAttrs (
     profileName: profile:
     let
@@ -118,7 +124,7 @@ let
       ifbInterfaces = builtins.listToAttrs (
         lib.imap0 (index: name: {
           inherit name;
-          value = "ifb-qos${toString index}";
+          value = "ifb-q${toString profileIndexes.${profileName}}-${toString index}";
         }) ingressNames
       );
       limits = map (
@@ -192,6 +198,20 @@ in
       internal = true;
       description = "Derived tc class IDs for egress limits.";
     };
+
+    configFiles = lib.mkOption {
+      type = with lib.types; attrsOf path;
+      readOnly = true;
+      internal = true;
+      description = "Generated runtime configurations for QoS profiles.";
+    };
+
+    package = lib.mkOption {
+      type = lib.types.package;
+      readOnly = true;
+      internal = true;
+      description = "QoS control package shared with runtime rate controllers.";
+    };
   };
 
   config = {
@@ -217,6 +237,8 @@ in
     host.qos.classIds = builtins.mapAttrs (
       _: data: builtins.mapAttrs (_: minor: "1:${lib.toLower (lib.toHexString minor)}") data.classMinors
     ) profileData;
+    host.qos.configFiles = builtins.mapAttrs (_: data: data.configFile) profileData;
+    host.qos.package = package;
 
     boot.kernelModules = lib.optional hasIngress "ifb";
 

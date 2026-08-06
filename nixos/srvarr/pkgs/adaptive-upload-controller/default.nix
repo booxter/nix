@@ -22,7 +22,6 @@ pythonPackages.buildPythonApplication {
     httpx
     prometheus-client
     pydantic
-    pyroute2
     transmissionCommon
   ];
 

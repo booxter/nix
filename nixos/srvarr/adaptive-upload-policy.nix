@@ -2,7 +2,6 @@
   jellyfinExporterUrl,
   fallbackUploadRateMbit,
   networkOnlineUnitDeps,
-  wgUnitDepsBase,
 }:
 {
   config,
@@ -146,18 +145,16 @@ in
   systemd.services.jellyfin-upload-policy-tc = {
     description = "Apply adaptive upload policy to WireGuard tc shaping";
     wantedBy = [ "multi-user.target" ];
-    unitConfig = wgUnitDepsBase // {
-      Wants = (wgUnitDepsBase.Wants or [ ]) ++ [
+    unitConfig = networkOnlineUnitDeps // {
+      Wants = (networkOnlineUnitDeps.Wants or [ ]) ++ [
         "jellyfin-upload-policy.service"
-        "wg-qos.service"
+        "qos-wan.service"
       ];
-      After = (wgUnitDepsBase.After or [ ]) ++ [
+      After = (networkOnlineUnitDeps.After or [ ]) ++ [
         "jellyfin-upload-policy.service"
-        "wg-qos.service"
+        "qos-wan.service"
       ];
-      PartOf = (wgUnitDepsBase.PartOf or [ ]) ++ [
-        "wg-qos.service"
-      ];
+      PartOf = [ "qos-wan.service" ];
     };
     serviceConfig = {
       ExecStart = lib.concatStringsSep " " [
@@ -171,6 +168,12 @@ in
         (toString fallbackUploadRateMbit)
         "--max-state-age-seconds"
         maxStateAgeSeconds
+        "--qosctl"
+        (lib.getExe config.host.qos.package)
+        "--qos-config"
+        config.host.qos.configFiles.wan
+        "--qos-limit"
+        "wireguard-upload"
       ];
       Restart = "always";
       RestartSec = "10s";

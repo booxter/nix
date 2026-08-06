@@ -15,7 +15,7 @@ from .runtime import (
     run_tc_applier,
     run_transmission_applier,
 )
-from .traffic_control import PyrouteTrafficControl
+from .traffic_control import QosctlTrafficControl, SubprocessRunner
 
 
 def parse_args() -> argparse.Namespace:
@@ -118,7 +118,9 @@ def parse_args() -> argparse.Namespace:
         default=0.95,
     )
     tc_applier.add_argument("--max-state-age-seconds", type=float, default=90.0)
-    tc_applier.add_argument("--route-probe-address", default="1.1.1.1")
+    tc_applier.add_argument("--qosctl", required=True)
+    tc_applier.add_argument("--qos-config", required=True)
+    tc_applier.add_argument("--qos-limit", required=True)
 
     parser.add_argument(
         "--log-level",
@@ -179,7 +181,6 @@ def _traffic_control_runtime_config(
         fallback_mbit=float(args.fallback_mbit),
         transmission_headroom_fraction=float(args.transmission_headroom_fraction),
         max_state_age_seconds=float(args.max_state_age_seconds),
-        route_probe_address=str(args.route_probe_address),
     )
 
 
@@ -201,12 +202,14 @@ def main() -> int:
     if args.command == "apply-transmission":
         return run_transmission_applier(_transmission_runtime_config(args))
     if args.command == "apply-tc":
-        traffic_control = PyrouteTrafficControl.open()
-        try:
-            return run_tc_applier(
-                _traffic_control_runtime_config(args),
-                traffic_control,
-            )
-        finally:
-            traffic_control.close()
+        traffic_control = QosctlTrafficControl(
+            executable=str(args.qosctl),
+            config_file=str(args.qos_config),
+            limit=str(args.qos_limit),
+            runner=SubprocessRunner(),
+        )
+        return run_tc_applier(
+            _traffic_control_runtime_config(args),
+            traffic_control,
+        )
     return _unknown_command(args.command)

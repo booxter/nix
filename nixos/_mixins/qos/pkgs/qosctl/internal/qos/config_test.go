@@ -63,7 +63,7 @@ func TestWireGuardAndNFSTopology(t *testing.T) {
 				Direction:    Ingress,
 				RateBits:     400_000_000,
 				Queue:        CakeQdisc,
-				IFBInterface: "ifb-qos0",
+				IFBInterface: "ifb-q0-0",
 				Match: Match{
 					Family:     BothFamilies,
 					Protocol:   UDP,
@@ -81,8 +81,8 @@ func TestWireGuardAndNFSTopology(t *testing.T) {
 	assertPacketFilter(t, topology.EgressFilters, IPv4, UDP, 0, 1637, "", 0x10, "")
 	assertPacketFilter(t, topology.EgressFilters, IPv6, UDP, 0, 1637, "", 0x10, "")
 	assertPacketFilter(t, topology.EgressFilters, IPv4, TCP, 0, 2049, "192.0.2.10", 0x11, "")
-	assertPacketFilter(t, topology.IngressFilters, IPv4, UDP, 1637, 0, "", 0, "ifb-qos0")
-	assertPacketFilter(t, topology.IngressFilters, IPv6, UDP, 1637, 0, "", 0, "ifb-qos0")
+	assertPacketFilter(t, topology.IngressFilters, IPv4, UDP, 1637, 0, "", 0, "ifb-q0-0")
+	assertPacketFilter(t, topology.IngressFilters, IPv6, UDP, 1637, 0, "", 0, "ifb-q0-0")
 	if len(topology.Ingress) != 1 || topology.Ingress[0].RateBits != 400_000_000 {
 		t.Fatalf("unexpected ingress topology: %#v", topology.Ingress)
 	}
