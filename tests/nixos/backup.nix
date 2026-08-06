@@ -26,6 +26,8 @@ pkgs.testers.runNixOSTest {
 
   nodes = {
     server = {
+      imports = [ ../../nixos/_mixins/backups ];
+
       networking.firewall.allowedTCPPorts = [ 22 ];
 
       environment.etc = {
@@ -45,31 +47,13 @@ pkgs.testers.runNixOSTest {
           }
         ];
         settings.PasswordAuthentication = false;
-        extraConfig = ''
-          Match User restic-test
-            ForceCommand internal-sftp
-            PermitTTY no
-            X11Forwarding no
-            AllowTcpForwarding no
-        '';
       };
 
-      users = {
-        groups.restic-test = { };
-        users.restic-test = {
-          isSystemUser = true;
-          group = "restic-test";
-          home = "/srv/restic";
-          createHome = false;
-          shell = pkgs.bashInteractive;
-          openssh.authorizedKeys.keys = [ clientPublicKey ];
-        };
+      host.backups.server = {
+        enable = true;
+        repositoryRoot = "/srv/restic";
+        clients.test.publicKey = clientPublicKey;
       };
-
-      systemd.tmpfiles.rules = [
-        "d /srv/restic 0755 root root -"
-        "d /srv/restic/test 0750 restic-test restic-test -"
-      ];
     };
 
     client =

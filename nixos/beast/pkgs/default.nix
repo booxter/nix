@@ -7,7 +7,7 @@ let
   atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
 in
 {
-  backup-server-tools = pkgs.callPackage ./backup-server-tools { };
+  backup-server-tools = pkgs.callPackage ../../_mixins/backups/server/pkgs/backup-server-tools { };
 
   jellyfin-exporter = pkgs.callPackage ./jellyfin-exporter { };
 
@@ -15,10 +15,6 @@ in
 
   jellarr = pkgs.callPackage ./jellarr {
     src = inputs.jellarr;
-  };
-
-  restic-tools = pkgs.callPackage ./restic-tools {
-    inherit atomicFileWrites;
   };
 
   storage-observability = pkgs.callPackage ./storage-observability {
