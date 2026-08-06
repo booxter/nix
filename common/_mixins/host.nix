@@ -19,6 +19,7 @@ in
   options.host = {
     platform = lib.mkOption {
       type = lib.types.str;
+      default = system;
       readOnly = true;
       internal = true;
       description = "Nix platform declared by the host inventory.";
@@ -26,6 +27,7 @@ in
 
     isDarwin = lib.mkOption {
       type = lib.types.bool;
+      default = isDarwin;
       readOnly = true;
       internal = true;
       description = "Whether the inventory platform uses the Darwin kernel.";
@@ -33,6 +35,7 @@ in
 
     isLinux = lib.mkOption {
       type = lib.types.bool;
+      default = isLinux;
       readOnly = true;
       internal = true;
       description = "Whether the inventory platform uses the Linux kernel.";
@@ -40,6 +43,7 @@ in
 
     isBuilder = lib.mkOption {
       type = lib.types.bool;
+      default = hostSpec.isBuilder or false;
       readOnly = true;
       internal = true;
       description = "Whether this host is a Nix builder.";
@@ -47,6 +51,7 @@ in
 
     isDesktop = lib.mkOption {
       type = lib.types.bool;
+      default = hostSpec.isDesktop or false;
       readOnly = true;
       internal = true;
       description = "Whether this host has a desktop environment.";
@@ -86,6 +91,7 @@ in
 
     isWork = lib.mkOption {
       type = lib.types.bool;
+      default = hostSpec.isWork or false;
       readOnly = true;
       internal = true;
       description = "Whether this is a work-managed host.";
@@ -93,6 +99,7 @@ in
 
     isVM = lib.mkOption {
       type = lib.types.bool;
+      default = hostSpec.isVM or false;
       readOnly = true;
       internal = true;
       description = "Whether this host is a virtual machine.";
@@ -100,6 +107,7 @@ in
 
     isCritical = lib.mkOption {
       type = lib.types.bool;
+      default = hostSpec.critical or false;
       readOnly = true;
       internal = true;
       description = "Whether this host should avoid frequent unattended reboots.";
@@ -107,6 +115,7 @@ in
 
     secretDomain = lib.mkOption {
       type = lib.types.str;
+      default = hostInventory.toSecretDomain hostSpec;
       readOnly = true;
       internal = true;
       description = "SOPS secret domain selected for this host.";
@@ -114,6 +123,7 @@ in
 
     username = lib.mkOption {
       type = lib.types.str;
+      default = hostSpec.username;
       readOnly = true;
       internal = true;
       description = "Primary user declared by the host inventory.";
@@ -121,6 +131,7 @@ in
 
     ups.client.server = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
+      default = hostSpec.upsHost or null;
       readOnly = true;
       internal = true;
       description = "Inventory host providing this host's UPS service.";
@@ -145,17 +156,5 @@ in
     sops.defaultSopsFile = lib.mkDefault (
       ../../secrets + "/${config.host.secretDomain}/${config.networking.hostName}.yaml"
     );
-    host = {
-      platform = system;
-      inherit isDarwin isLinux;
-      isBuilder = hostSpec.isBuilder or false;
-      isCritical = hostSpec.critical or false;
-      isDesktop = hostSpec.isDesktop or false;
-      isVM = hostSpec.isVM or false;
-      isWork = hostSpec.isWork or false;
-      secretDomain = hostInventory.toSecretDomain hostSpec;
-      ups.client.server = hostSpec.upsHost or null;
-      username = hostSpec.username;
-    };
   };
 }
