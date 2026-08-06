@@ -10,7 +10,6 @@
 let
   hostname = hostSpec.name;
   username = hostSpec.username;
-  stateVersion = hostSpec.stateVersion;
   isVM = hostSpec.isVM or false;
   upsShutdownDelaySeconds = if isVM then 450 else 900;
   configName = ./${hostSpec.name};
@@ -69,7 +68,6 @@ in
       ))
     ];
 
-    system.stateVersion = stateVersion;
     home-manager = {
       extraSpecialArgs = {
         inherit

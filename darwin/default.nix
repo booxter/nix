@@ -47,7 +47,6 @@ in
     ./_mixins/vnc-open
   ];
 
-  system.stateVersion = hostSpec.stateVersion;
   home-manager = {
     extraSpecialArgs = {
       inherit
