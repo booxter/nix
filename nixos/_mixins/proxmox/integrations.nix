@@ -10,8 +10,8 @@
 let
   cfg = config.host.proxmox.apiCertificate;
   exporterCfg = config.host.proxmox.prometheusExporter;
-  oidc = import ../../../lib/oidc-clients.nix { inherit lib hostInventory; };
   oidcCfg = config.host.proxmox.oidc;
+  oidcScopes = config.host.sso.oidc.baseScopes;
   oidcMappedAdminGroup = "${oidcCfg.allowedGroup}-${oidcCfg.realm}";
   oidcRealmUnit = "proxmox-oidc-realm.service";
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
@@ -22,6 +22,20 @@ let
   pveExporterUser = config.services.prometheus.exporters.pve.user;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
+  proxmoxLabHostSpecs = builtins.filter (
+    spec: (spec.hostKind or null) == "proxmox" && !(spec.isWork or false)
+  ) hostInventory.nixosHostSpecs;
+  proxmoxLabHosts = lib.unique (
+    lib.concatMap hostInventory.toNixosHostCertificateDnsNames proxmoxLabHostSpecs
+  );
+  proxmoxCanonicalHost = "proxmox.${hostInventory.site.lan.domain}";
+  proxmoxOriginUrls = lib.unique (
+    [
+      "https://${proxmoxCanonicalHost}"
+      "https://proxmox"
+    ]
+    ++ map (host: "https://${host}") proxmoxLabHosts
+  );
   certInstallCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' proxmoxHostTools "proxmox-install-api-certificate")
     "--certificate-source"
@@ -126,13 +140,13 @@ in
 
     clientId = lib.mkOption {
       type = lib.types.str;
-      default = oidc.clients.proxmox.clientId;
+      default = "proxmox";
       description = "Kanidm OAuth2 client ID used by Proxmox VE.";
     };
 
     issuerUrl = lib.mkOption {
       type = lib.types.str;
-      default = oidc.openidBaseUrl oidcCfg.clientId;
+      default = "https://${hostInventory.servicesById.id.publicHost}/oauth2/openid/${oidcCfg.clientId}";
       defaultText = "\${issuerBase}/oauth2/openid/\${clientId}";
       description = "OIDC issuer URL used by the Proxmox VE realm.";
     };
@@ -335,26 +349,32 @@ in
       };
     })
     (lib.mkIf oidcCfg.enable {
+      host.sso.oidc.registrations.proxmox = {
+        clientId = oidcCfg.clientId;
+        displayName = "Proxmox VE";
+        originUrls = proxmoxOriginUrls;
+        originLanding = "https://${proxmoxCanonicalHost}/";
+        scopeMaps.${oidcCfg.allowedGroup} = oidcScopes ++ [ oidcCfg.groupsClaim ];
+        claimMaps.${oidcCfg.groupsClaim}.valuesByGroup.${oidcCfg.allowedGroup} = [
+          oidcCfg.allowedGroup
+        ];
+        secret = {
+          sopsKey = oidcCfg.clientSecretKey;
+          name = "proxmoxOidcClientSecret";
+          restartUnits = [ oidcRealmUnit ];
+        };
+      };
+
       assertions = [
         {
           assertion = config.services.proxmox-ve.enable;
           message = "host.proxmox.oidc requires services.proxmox-ve.enable.";
         }
         {
-          assertion = builtins.hasAttr oidcCfg.clientId oidc.clients;
-          message = "host.proxmox.oidc.clientId must exist in lib/oidc-clients.nix.";
-        }
-        {
           assertion = oidcCfg.scopes != [ ];
           message = "host.proxmox.oidc.scopes must not be empty.";
         }
       ];
-
-      sops.secrets.proxmoxOidcClientSecret = {
-        key = oidcCfg.clientSecretKey;
-        mode = "0400";
-        restartUnits = [ oidcRealmUnit ];
-      };
 
       systemd.services.proxmox-oidc-realm = {
         description = "Configure Proxmox VE Kanidm OIDC realm";

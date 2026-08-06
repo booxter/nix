@@ -162,6 +162,13 @@ let
 in
 {
   options.host.sso.oidc = {
+    baseScopes = mkOption {
+      type = types.listOf types.str;
+      readOnly = true;
+      internal = true;
+      description = "Standard scopes requested by every OIDC client.";
+    };
+
     registrations = mkOption {
       type = types.attrsOf registrationType;
       default = { };
@@ -188,7 +195,10 @@ in
       }
     ]) (builtins.attrValues registrations);
 
-    host.sso.oidc.clients = clients;
+    host.sso.oidc = {
+      inherit baseScopes;
+      clients = clients;
+    };
 
     sops.secrets = lib.mapAttrs' (
       _: registration:

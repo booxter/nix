@@ -10,13 +10,13 @@
 let
   accounts = import ./accounts.nix;
   ociImages = import ../../lib/oci-images { inherit pkgs; };
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
 
   pinepodsService = hostInventory.servicesById.pinepods;
   pinepodsSso = hostInventory.sso.applications.pinepods;
   bootstrapOwnerName = pinepodsSso.bootstrapOwner;
   bootstrapAdmin = hostInventory.sso.users.${bootstrapOwnerName};
-  oidcClientId = oidc.clients.pinepods.clientId;
+  oidcClient = config.host.sso.oidc.clients.pinepods;
+  oidcScopes = config.host.sso.oidc.baseScopes;
   image = ociImages.pinepods.ref;
   imageFile = ociImages.pinepods.imageFile;
 
@@ -68,6 +68,27 @@ let
   ];
 in
 {
+  host.sso.oidc.registrations.pinepods = {
+    displayName = "PinePods";
+    originUrls = [ "${pinepodsService.url}/api/auth/callback" ];
+    originLanding = "${pinepodsService.url}/";
+    # PinePods 0.9.0 explicitly requires a confidential client without PKCE.
+    allowInsecureClientDisablePkce = true;
+    scopeMaps = {
+      ${pinepodsSso.adminGroup} = oidcScopes ++ [ "pinepods_roles" ];
+      ${pinepodsSso.userGroup} = oidcScopes ++ [ "pinepods_roles" ];
+    };
+    claimMaps.pinepods_roles.valuesByGroup = {
+      ${pinepodsSso.adminGroup} = [ "admin" ];
+      ${pinepodsSso.userGroup} = [ "user" ];
+    };
+    secret = {
+      sopsKey = "pinepods/oidc/client_secret";
+      name = "pinepods/oidc/client_secret";
+      restartUnits = [ "podman-pinepods.service" ];
+    };
+  };
+
   sops.secrets = {
     "pinepods/postgresql/password" = {
       owner = "postgres";
@@ -84,10 +105,6 @@ in
         "pinepods-valkey.service"
         "podman-pinepods.service"
       ];
-    };
-    "pinepods/oidc/client_secret" = {
-      mode = "0400";
-      restartUnits = [ "podman-pinepods.service" ];
     };
     "pinepods/bootstrap/password" = {
       mode = "0400";
@@ -107,7 +124,7 @@ in
       content = ''
         DB_PASSWORD=${config.sops.placeholder."pinepods/postgresql/password"}
         VALKEY_PASSWORD=${config.sops.placeholder."pinepods/valkey/password"}
-        OIDC_CLIENT_SECRET=${config.sops.placeholder."pinepods/oidc/client_secret"}
+        OIDC_CLIENT_SECRET=${oidcClient.secret.placeholder}
       '';
       restartUnits = [ "podman-pinepods.service" ];
     };
@@ -198,12 +215,12 @@ in
           # while making SSO the normal browser account-provisioning path.
           OIDC_DISABLE_STANDARD_LOGIN = "false";
           OIDC_PROVIDER_NAME = "SSO";
-          OIDC_CLIENT_ID = oidcClientId;
-          OIDC_AUTHORIZATION_URL = oidc.authorizationUrl;
-          OIDC_TOKEN_URL = oidc.tokenUrl;
-          OIDC_USER_INFO_URL = oidc.userinfoUrl oidcClientId;
+          OIDC_CLIENT_ID = oidcClient.clientId;
+          OIDC_AUTHORIZATION_URL = oidcClient.authorizationUrl;
+          OIDC_TOKEN_URL = oidcClient.tokenUrl;
+          OIDC_USER_INFO_URL = oidcClient.userinfoUrl;
           OIDC_BUTTON_TEXT = "Login with SSO";
-          OIDC_SCOPE = lib.concatStringsSep " " (oidc.scopeWith [ "pinepods_roles" ]);
+          OIDC_SCOPE = lib.concatStringsSep " " (oidcScopes ++ [ "pinepods_roles" ]);
           OIDC_BUTTON_COLOR = "#111827";
           OIDC_BUTTON_TEXT_COLOR = "#ffffff";
           OIDC_NAME_CLAIM = "name";

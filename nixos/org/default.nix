@@ -6,10 +6,10 @@
   ...
 }:
 let
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   vikunjaService = hostInventory.servicesById.vikunja;
   vikunjaMetricsMtlsPort = 9345;
-  vikunjaOidcClientId = oidc.clients.vikunja.clientId;
+  oidcClient = config.host.sso.oidc.clients.vikunja;
+  oidcScopes = config.host.sso.oidc.baseScopes;
   vikunjaOidcProviderKey = "sso";
   vikunjaPort = 3456;
   # Vikunja expects an IANA tz database name here, not a fixed abbreviation.
@@ -24,13 +24,22 @@ in
     ./paperless.nix
   ];
 
+  host.sso.oidc.registrations.vikunja = {
+    displayName = "Vikunja";
+    originUrls = [ "${vikunjaService.url}/auth/openid/sso" ];
+    originLanding = "${vikunjaService.url}/";
+    allowInsecureClientDisablePkce = true;
+    scopeMaps."vikunja-users" = oidcScopes;
+    secret = {
+      sopsKey = "vikunja/oidc/client_secret";
+      name = "vikunjaOidcClientSecret";
+      restartUnits = [ "vikunja.service" ];
+    };
+  };
+
   sops.secrets = {
     vikunjaMailerPassword = {
       key = "vikunja/mailer/password";
-      restartUnits = [ "vikunja.service" ];
-    };
-    vikunjaOidcClientSecret = {
-      key = "vikunja/oidc/client_secret";
       restartUnits = [ "vikunja.service" ];
     };
   };
@@ -38,7 +47,7 @@ in
   sops.templates."vikunja-secrets.env" = {
     content = ''
       VIKUNJA_MAILER_PASSWORD=${config.sops.placeholder.vikunjaMailerPassword}
-      VIKUNJA_AUTH_OPENID_PROVIDERS_${vikunjaOidcProviderKey}_CLIENTSECRET=${config.sops.placeholder.vikunjaOidcClientSecret}
+      VIKUNJA_AUTH_OPENID_PROVIDERS_${vikunjaOidcProviderKey}_CLIENTSECRET=${oidcClient.secret.placeholder}
     '';
     restartUnits = [ "vikunja.service" ];
   };
@@ -72,10 +81,10 @@ in
           enabled = true;
           providers.${vikunjaOidcProviderKey} = {
             name = "SSO";
-            authurl = oidc.openidBaseUrl vikunjaOidcClientId;
-            clientid = vikunjaOidcClientId;
+            authurl = oidcClient.issuerUrl;
+            clientid = oidcClient.clientId;
             clientsecret = "";
-            scope = lib.concatStringsSep " " oidc.baseScopes;
+            scope = lib.concatStringsSep " " oidcClient.baseScopes;
             emailfallback = true;
           };
         };

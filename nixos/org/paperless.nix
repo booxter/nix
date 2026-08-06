@@ -8,7 +8,6 @@
   ...
 }:
 let
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   paperlessService = hostInventory.servicesById.paperless;
   paperlessGptService = hostInventory.servicesById."paperless-gpt";
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
@@ -24,15 +23,15 @@ let
   paperlessGptPort = 8080;
   paperlessGptHost = "${paperlessGptService.id}.${hostInventory.site.lan.domain}";
   paperlessGptOauth2ProxyPort = 4181;
-  paperlessOidcClientId = oidc.clients.paperless.clientId;
+  oidcClient = config.host.sso.oidc.clients.paperless;
+  oidcScopes = config.host.sso.oidc.baseScopes;
   paperlessOidcProviderId = "sso";
   paperlessOidcClientSecretPlaceholder = "__PAPERLESS_OIDC_CLIENT_SECRET__";
-  paperlessOidcDiscoveryUrl = oidc.discoveryUrl paperlessOidcClientId;
   paperlessOidcProvidersJson =
     builtins.replaceStrings
       [ paperlessOidcClientSecretPlaceholder ]
       [
-        config.sops.placeholder."paperless/oidc/client_secret"
+        oidcClient.secret.placeholder
       ]
       (
         builtins.toJSON {
@@ -40,15 +39,15 @@ let
             {
               provider_id = paperlessOidcProviderId;
               name = "SSO";
-              client_id = paperlessOidcClientId;
+              client_id = oidcClient.clientId;
               secret = paperlessOidcClientSecretPlaceholder;
               settings = {
                 email_authentication = true;
                 oauth_pkce_enabled = true;
-                server_url = paperlessOidcDiscoveryUrl;
+                server_url = oidcClient.discoveryUrl;
                 token_auth_method = "client_secret_basic";
                 verified_email = true;
-                scope = oidc.scopeWith [ "groups" ];
+                scope = oidcScopes ++ [ "groups" ];
               };
             }
           ];
@@ -87,6 +86,29 @@ let
 
 in
 {
+  host.sso.oidc.registrations.paperless = {
+    displayName = "Paperless";
+    originUrls = [ "${paperlessService.url}/accounts/oidc/sso/login/callback/" ];
+    originLanding = "${paperlessService.url}/";
+    scopeMaps = {
+      "paperless-admins" = oidcScopes ++ [ "groups" ];
+      "paperless-users" = oidcScopes ++ [ "groups" ];
+    };
+    claimMaps.groups.valuesByGroup = {
+      "paperless-admins" = [ "paperless-admins" ];
+      "paperless-users" = [ "paperless-users" ];
+    };
+    secret = {
+      sopsKey = "paperless/oidc/client_secret";
+      name = "paperless/oidc/client_secret";
+      restartUnits = [
+        "paperless-scheduler.service"
+        "paperless-task-queue.service"
+        "paperless-web.service"
+      ];
+    };
+  };
+
   boot.supportedFilesystems = [ "nfs" ];
 
   fileSystems.${paperlessStoragePath} = {
@@ -126,16 +148,6 @@ in
         "paperless-gpt-configure.service"
         "prometheus-paperless-exporter.service"
         "podman-paperless-gpt.service"
-      ];
-    };
-    "paperless/oidc/client_secret" = {
-      owner = "root";
-      group = "root";
-      mode = "0400";
-      restartUnits = [
-        "paperless-scheduler.service"
-        "paperless-task-queue.service"
-        "paperless-web.service"
       ];
     };
   };

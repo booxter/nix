@@ -16,10 +16,28 @@ let
   bootstrapBaseUrl = "http://127.0.0.1:${toString homeAssistantPort}";
   bootstrapClientId = "http://127.0.0.1:${toString homeAssistantPort}/";
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
-  oidcClient = oidc.clients.home-assistant;
+  oidcClient = config.host.sso.oidc.clients.home-assistant;
+  oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
+  host.sso.oidc.registrations.home-assistant = {
+    displayName = "Home Assistant";
+    public = true;
+    originUrls = [
+      "https://home.${hostInventory.site.lan.domain}/auth/oidc/welcome"
+      "https://home.${hostInventory.site.lan.domain}/auth/oidc/callback"
+    ];
+    originLanding = "https://home.${hostInventory.site.lan.domain}/";
+    scopeMaps = {
+      ${homeAssistantSso.adminGroup} = oidcScopes ++ [ "home_groups" ];
+      ${homeAssistantSso.userGroup} = oidcScopes ++ [ "home_groups" ];
+    };
+    claimMaps.home_groups.valuesByGroup = {
+      ${homeAssistantSso.adminGroup} = [ homeAssistantSso.adminGroup ];
+      ${homeAssistantSso.userGroup} = [ homeAssistantSso.userGroup ];
+    };
+  };
+
   sops.secrets.${bootstrapPasswordSecret} = {
     owner = "root";
     group = "root";
@@ -57,7 +75,7 @@ in
 
       auth_oidc = {
         client_id = oidcClient.clientId;
-        discovery_url = oidc.discoveryUrl oidcClient.clientId;
+        discovery_url = oidcClient.discoveryUrl;
         display_name = "SSO";
         id_token_signing_alg = "ES256";
         groups_scope = "home_groups";

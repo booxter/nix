@@ -9,7 +9,6 @@
 }:
 let
   accounts = import ./accounts.nix;
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   rommSso = hostInventory.sso.applications.romm;
   rommAccessGroups = [
     rommSso.adminGroup
@@ -46,7 +45,8 @@ let
   rommImage = ociImages.romm.ref;
   rommImageFile = ociImages.romm.imageFile;
   rommService = hostInventory.servicesById.romm;
-  rommOidcClientId = oidc.clients.romm.clientId;
+  oidcClient = config.host.sso.oidc.clients.romm;
+  oidcScopes = config.host.sso.oidc.baseScopes;
   rommDbInitCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' srvarrPkgs.romm-tools "romm-db-init")
     "--socket"
@@ -93,10 +93,10 @@ let
     OIDC_ENABLED = "true";
     OIDC_AUTOLOGIN = "false";
     OIDC_PROVIDER = "SSO";
-    OIDC_CLIENT_ID = rommOidcClientId;
+    OIDC_CLIENT_ID = oidcClient.clientId;
     OIDC_REDIRECT_URI = "${rommService.url}/api/oauth/openid";
-    OIDC_SERVER_APPLICATION_URL = oidc.openidBaseUrl rommOidcClientId;
-    OIDC_SERVER_METADATA_URL = oidc.discoveryUrl rommOidcClientId;
+    OIDC_SERVER_APPLICATION_URL = oidcClient.issuerUrl;
+    OIDC_SERVER_METADATA_URL = oidcClient.discoveryUrl;
     OIDC_CLAIM_ROLES = "romm_roles";
     OIDC_ROLE_ADMIN = rommSso.adminGroup;
     # RomM 5 maps both legacy editor and viewer claims to its non-admin `user`
@@ -196,13 +196,26 @@ let
   ];
 in
 {
-  sops.secrets = {
-    "romm/authSecretKey" = { };
-    "romm/dbPassword" = { };
-    "romm/oidc/clientSecret" = {
+  host.sso.oidc.registrations.romm = {
+    displayName = "RomM";
+    originUrls = [ "${rommService.url}/api/oauth/openid" ];
+    originLanding = "${rommService.url}/";
+    allowInsecureClientDisablePkce = true;
+    scopeMaps = {
+      ${rommSso.adminGroup} = oidcScopes ++ [ "romm_roles" ];
+      ${rommSso.editorGroup} = oidcScopes ++ [ "romm_roles" ];
+      ${rommSso.viewerGroup} = oidcScopes ++ [ "romm_roles" ];
+    };
+    claimMaps.romm_roles.valuesByGroup = {
+      ${rommSso.adminGroup} = [ rommSso.adminGroup ];
+      ${rommSso.editorGroup} = [ rommSso.editorGroup ];
+      ${rommSso.viewerGroup} = [ rommSso.viewerGroup ];
+    };
+    secret = {
+      sopsKey = "romm/oidc/clientSecret";
+      name = "romm/oidc/clientSecret";
       owner = user;
       group = "media";
-      mode = "0400";
       restartUnits = [
         "romm-setup.service"
         "podman-romm-api.service"
@@ -213,6 +226,11 @@ in
     };
   };
 
+  sops.secrets = {
+    "romm/authSecretKey" = { };
+    "romm/dbPassword" = { };
+  };
+
   sops.templates."romm.env" = {
     owner = user;
     group = "media";
@@ -220,7 +238,7 @@ in
     content = ''
       ROMM_AUTH_SECRET_KEY=${config.sops.placeholder."romm/authSecretKey"}
       DB_PASSWD=${config.sops.placeholder."romm/dbPassword"}
-      OIDC_CLIENT_SECRET=${config.sops.placeholder."romm/oidc/clientSecret"}
+      OIDC_CLIENT_SECRET=${oidcClient.secret.placeholder}
     '';
     restartUnits = [
       "romm-db-init.service"

@@ -9,13 +9,12 @@
 }:
 let
   accounts = import ./accounts.nix;
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   port = 9292;
   stateDir = "${config.host.srvarrPaths.stateDir}/audiobookshelf";
   user = "audiobookshelf";
   audiobookshelfService = hostInventory.servicesById.audiobookshelf;
-  oidcClientId = oidc.clients.audiobookshelf.clientId;
-  oidcIssuerBase = oidc.openidBaseUrl oidcClientId;
+  oidcClient = config.host.sso.oidc.clients.audiobookshelf;
+  oidcScopes = config.host.sso.oidc.baseScopes;
   backupSettingsFile = pkgs.writeText "audiobookshelf-backup-settings.json" (
     builtins.toJSON {
       backupSchedule = "15 4 * * *";
@@ -29,13 +28,13 @@ let
         "local"
         "openid"
       ];
-      authOpenIDIssuerURL = oidcIssuerBase;
-      authOpenIDAuthorizationURL = oidc.authorizationUrl;
-      authOpenIDTokenURL = oidc.tokenUrl;
-      authOpenIDUserInfoURL = oidc.userinfoUrl oidcClientId;
-      authOpenIDJwksURL = oidc.jwksUrl oidcClientId;
+      authOpenIDIssuerURL = oidcClient.issuerUrl;
+      authOpenIDAuthorizationURL = oidcClient.authorizationUrl;
+      authOpenIDTokenURL = oidcClient.tokenUrl;
+      authOpenIDUserInfoURL = oidcClient.userinfoUrl;
+      authOpenIDJwksURL = oidcClient.jwksUrl;
       authOpenIDLogoutURL = null;
-      authOpenIDClientID = oidcClientId;
+      authOpenIDClientID = oidcClient.clientId;
       authOpenIDClientSecret = null;
       authOpenIDTokenSigningAlgorithm = "ES256";
       authOpenIDButtonText = "SSO";
@@ -58,7 +57,7 @@ let
     "--api-token-file"
     config.sops.secrets."audiobookshelf/bootstrap/api_token".path
     "--client-secret-file"
-    config.sops.secrets."audiobookshelf/oidc/client_secret".path
+    oidcClient.secret.path
     "--settings-file"
     oidcSettingsFile
     "--restart-unit"
@@ -75,6 +74,28 @@ let
   ];
 in
 {
+  host.sso.oidc.registrations.audiobookshelf = {
+    displayName = "Audiobookshelf";
+    originUrls = [
+      "${audiobookshelfService.url}/auth/openid/callback"
+      "${audiobookshelfService.url}/auth/openid/mobile-redirect"
+    ];
+    originLanding = "${audiobookshelfService.url}/";
+    scopeMaps = {
+      "media-admins" = oidcScopes ++ [ "abs_groups" ];
+      "media-users" = oidcScopes ++ [ "abs_groups" ];
+    };
+    claimMaps.abs_groups.valuesByGroup = {
+      "media-admins" = [ "admin" ];
+      "media-users" = [ "user" ];
+    };
+    secret = {
+      sopsKey = "audiobookshelf/oidc/client_secret";
+      name = "audiobookshelf/oidc/client_secret";
+      restartUnits = [ "audiobookshelf-oidc-bootstrap.service" ];
+    };
+  };
+
   sops.secrets = {
     "audiobookshelf/bootstrap/api_token" = {
       mode = "0400";
@@ -82,10 +103,6 @@ in
         "audiobookshelf-backup-bootstrap.service"
         "audiobookshelf-oidc-bootstrap.service"
       ];
-    };
-    "audiobookshelf/oidc/client_secret" = {
-      mode = "0400";
-      restartUnits = [ "audiobookshelf-oidc-bootstrap.service" ];
     };
   };
 
