@@ -157,7 +157,6 @@ in
     description = "Create a native WatchState backup archive";
     restartIfChanged = false;
     stopIfChanged = false;
-    before = [ "restic-backups-beast.service" ];
     requires = [
       "podman-watchstate.service"
       "podman.socket"
@@ -177,18 +176,10 @@ in
     };
   };
 
-  systemd.services.restic-backups-beast = {
-    after = [ "watchstate-native-backup.service" ];
-    wants = [ "watchstate-native-backup.service" ];
-    requires = [ "watchstate-native-backup.service" ];
-  };
-
-  services.restic.backups.beast.paths = [ watchstateBackupStagingDir ];
-
-  host.observability.backupMetrics.jobs.watchstate-native-backup = {
+  host.backups.jobs.beast.preparations.watchstate-native-backup = {
     service = "watchstate-native-backup";
     title = "WatchState Native Backup";
-    phase = "prep";
+    paths = [ watchstateBackupStagingDir ];
   };
 
   host.internalHttps.services.watchstate = {

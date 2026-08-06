@@ -11,6 +11,8 @@ let
   homeAssistantPort = 8123;
   homeAssistantSso = hostInventory.sso.applications.home-assistant;
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
+  resticPasswordSecret = "backup/restic/local/password";
+  resticSshKeySecret = "backup/restic/local/ssh/privateKey";
   baseUrl = "http://127.0.0.1:${toString homeAssistantPort}";
   clientId = "http://127.0.0.1:${toString homeAssistantPort}/";
 in
@@ -19,7 +21,6 @@ in
     description = "Create a native Home Assistant backup archive";
     restartIfChanged = false;
     stopIfChanged = false;
-    before = [ "restic-backups-beast.service" ];
     requires = [ "home-assistant.service" ];
     after = [ "home-assistant.service" ];
     unitConfig.RequiresMountsFor = [ stateDir ];
@@ -43,21 +44,17 @@ in
     };
   };
 
-  systemd.services.restic-backups-beast = {
-    after = [ "home-assistant-native-backup.service" ];
-    wants = [ "home-assistant-native-backup.service" ];
-    requires = [ "home-assistant-native-backup.service" ];
+  sops.secrets = {
+    ${resticPasswordSecret} = { };
+    ${resticSshKeySecret} = {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
   };
 
-  host.observability.backupMetrics.jobs.home-assistant-native-backup = {
-    service = "home-assistant-native-backup";
-    title = "Home Assistant Native Backup";
-    phase = "prep";
-  };
-
-  host.backups.beast = {
-    enable = true;
-    clientName = "home";
+  host.backups.jobs.beast = {
+    title = "Restic To Beast";
     paths = [ stateDir ];
     exclude = [
       databasePath
@@ -69,5 +66,20 @@ in
       "${stateDir}/tts"
       "${stateDir}/tts/**"
     ];
+    repository = {
+      type = "sftp";
+      path = "/volume2/backups/restic-prod/hosts/home";
+      passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
+      dependencyUnits = [ "sops-install-secrets.service" ];
+      sftp = {
+        host = "beast";
+        user = "restic-home";
+        identityFile = config.sops.secrets.${resticSshKeySecret}.path;
+      };
+    };
+    preparations.home-assistant-native-backup = {
+      service = "home-assistant-native-backup";
+      title = "Home Assistant Native Backup";
+    };
   };
 }

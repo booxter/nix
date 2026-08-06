@@ -330,7 +330,6 @@ in
       description = "Create a native PinePods database backup";
       restartIfChanged = false;
       stopIfChanged = false;
-      before = [ "restic-backups-beast.service" ];
       requires = [ "podman-pinepods.service" ];
       after = [ "podman-pinepods.service" ];
       unitConfig.RequiresMountsFor = [ backupDir ];
@@ -343,17 +342,11 @@ in
       };
     };
 
-    restic-backups-beast = {
-      after = [ "pinepods-native-backup.service" ];
-      wants = [ "pinepods-native-backup.service" ];
-      requires = [ "pinepods-native-backup.service" ];
-    };
   };
 
-  host.observability.backupMetrics.jobs.pinepods-native-backup = {
+  host.backups.jobs.beast.preparations.pinepods-native-backup = {
     service = "pinepods-native-backup";
     title = "PinePods Native Backup";
-    phase = "prep";
   };
 
   host.internalHttps.services.pinepods = {

@@ -8,14 +8,15 @@
 let
   cfg = config.host.backups.artifacts;
   package = pkgs.callPackage ./backup-artifacts/pkgs/backup-artifact-tools { };
-  defaultTimerConfig = {
-    OnCalendar = "04:30";
-    RandomizedDelaySec = "0";
-  };
 
   commonArtifactOptions =
     { name }:
     {
+      job = lib.mkOption {
+        type = lib.types.str;
+        description = "Backup job that consumes this artifact.";
+      };
+
       displayName = lib.mkOption {
         type = lib.types.str;
         default = name;
@@ -24,21 +25,20 @@ let
 
       destinationDir = lib.mkOption {
         type = lib.types.str;
-        description = "Directory where the latest backup artifact is staged for restic.";
+        description = "Directory where the latest backup artifact is staged for Restic.";
       };
 
       requiresMountsFor = lib.mkOption {
         type = with lib.types; listOf str;
         default = [ ];
-        description = "Additional paths to include in the generated unit's RequiresMountsFor.";
+        description = "Additional paths included in the generated unit's RequiresMountsFor.";
       };
 
-      includeInBeastBackup = lib.mkOption {
+      includeInJob = lib.mkOption {
         type = lib.types.bool;
         default = true;
-        description = "Whether destinationDir is appended to host.backups.beast.paths.";
+        description = "Whether destinationDir is added to the consuming backup job.";
       };
-
     };
 
   postgresqlArtifactModule =
@@ -92,7 +92,7 @@ let
       options = commonArtifactOptions { inherit name; } // {
         databasePath = lib.mkOption {
           type = lib.types.str;
-          description = "SQLite database path to back up with the native backup API.";
+          description = "SQLite database path backed up with the native backup API.";
         };
 
         extraCopies = lib.mkOption {
@@ -119,111 +119,121 @@ let
 
   mkArtifactService = artifact: kind: artifactConfig: extraUnitConfig: {
     description = "Create a consistent ${artifact.displayName} ${kind} backup artifact";
-    timerConfig = defaultTimerConfig;
+    restartIfChanged = false;
+    stopIfChanged = false;
     unitConfig = lib.mkMerge [
       {
         RequiresMountsFor = [ artifact.destinationDir ] ++ artifact.requiresMountsFor;
       }
       extraUnitConfig
     ];
-    execStart = artifactCommand artifactConfig;
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+      Group = "root";
+      ExecStart = artifactCommand artifactConfig;
+    };
   };
 
-  mkPostgresqlService =
+  mkPostgresqlEntry =
     name: artifact:
     let
-      artifactConfig = (pkgs.formats.json { }).generate "${name}-backup.json" {
+      service = "${name}-backup";
+      artifactConfig = (pkgs.formats.json { }).generate "${service}.json" {
         kind = "postgresql";
         database = name;
         destinationDir = artifact.destinationDir;
         executable = lib.getExe' pkgs.postgresql "pg_dump";
       };
     in
-    lib.nameValuePair "${name}-backup" (
-      mkArtifactService artifact "PostgreSQL" artifactConfig { After = [ "postgresql.service" ]; }
-    );
+    {
+      inherit artifact service;
+      serviceConfig = mkArtifactService artifact "PostgreSQL" artifactConfig {
+        After = [ "postgresql.service" ];
+      };
+    };
 
-  mkMariadbService =
+  mkMariadbEntry =
     name: artifact:
     let
-      artifactConfig = (pkgs.formats.json { }).generate "${name}-backup.json" {
+      service = "${name}-backup";
+      artifactConfig = (pkgs.formats.json { }).generate "${service}.json" {
         kind = "mariadb";
         database = name;
         destinationDir = artifact.destinationDir;
         executable = lib.getExe' pkgs.mariadb "mariadb-dump";
       };
     in
-    lib.nameValuePair "${name}-backup" (
-      mkArtifactService artifact "MariaDB" artifactConfig {
+    {
+      inherit artifact service;
+      serviceConfig = mkArtifactService artifact "MariaDB" artifactConfig {
         After = [ "mysql.service" ] ++ artifact.after;
         Requires = [ "mysql.service" ] ++ artifact.requires;
-      }
-    );
+      };
+    };
 
-  mkSqliteService =
+  mkSqliteEntry =
     name: artifact:
     let
-      artifactConfig = (pkgs.formats.json { }).generate "${name}-backup.json" {
+      service = "${name}-backup";
+      artifactConfig = (pkgs.formats.json { }).generate "${service}.json" {
         kind = "sqlite";
         databasePath = artifact.databasePath;
         destinationDir = artifact.destinationDir;
         extraCopies = map (copy: { inherit (copy) mode optional source; }) artifact.extraCopies;
       };
     in
-    lib.nameValuePair "${name}-backup" (
-      mkArtifactService artifact "SQLite" artifactConfig (
+    {
+      inherit artifact service;
+      serviceConfig = mkArtifactService artifact "SQLite" artifactConfig (
         lib.optionalAttrs (artifact.conditionPathExists != null) {
           ConditionPathExists = artifact.conditionPathExists;
         }
-      )
-    );
+      );
+    };
 
-  mariadbServices = lib.mapAttrsToList mkMariadbService cfg.mariadb;
-  postgresqlServices = lib.mapAttrsToList mkPostgresqlService cfg.postgresql;
-  sqliteServices = lib.mapAttrsToList mkSqliteService cfg.sqlite;
-  hasArtifacts = cfg.mariadb != { } || cfg.postgresql != { } || cfg.sqlite != { };
-  artifactPaths = lib.unique (
-    lib.concatMap
-      (
-        artifacts:
-        lib.concatLists (
-          lib.mapAttrsToList (
-            _: artifact: lib.optional artifact.includeInBeastBackup artifact.destinationDir
-          ) artifacts
-        )
-      )
-      [
-        cfg.mariadb
-        cfg.postgresql
-        cfg.sqlite
-      ]
-  );
+  entries =
+    (lib.mapAttrsToList mkMariadbEntry cfg.mariadb)
+    ++ (lib.mapAttrsToList mkPostgresqlEntry cfg.postgresql)
+    ++ (lib.mapAttrsToList mkSqliteEntry cfg.sqlite);
 in
 {
   options.host.backups.artifacts = {
     mariadb = lib.mkOption {
       type = with lib.types; attrsOf (submodule mariadbArtifactModule);
       default = { };
-      description = "MariaDB backup artifacts generated before restic runs.";
+      description = "MariaDB backup artifacts generated before Restic runs.";
     };
 
     postgresql = lib.mkOption {
       type = with lib.types; attrsOf (submodule postgresqlArtifactModule);
       default = { };
-      description = "PostgreSQL backup artifacts generated before restic runs.";
+      description = "PostgreSQL backup artifacts generated before Restic runs.";
     };
 
     sqlite = lib.mkOption {
       type = with lib.types; attrsOf (submodule sqliteArtifactModule);
       default = { };
-      description = "SQLite backup artifacts generated before restic runs.";
+      description = "SQLite backup artifacts generated before Restic runs.";
     };
   };
 
-  config = lib.mkIf hasArtifacts {
-    host.backups.beast = {
-      paths = lib.mkBefore artifactPaths;
-      preBackupServices = builtins.listToAttrs (mariadbServices ++ postgresqlServices ++ sqliteServices);
-    };
+  config = lib.mkIf (entries != [ ]) {
+    systemd.services = builtins.listToAttrs (
+      map (entry: {
+        name = entry.service;
+        value = entry.serviceConfig;
+      }) entries
+    );
+
+    host.backups.jobs = lib.mkMerge (
+      map (entry: {
+        ${entry.artifact.job}.preparations.${entry.service} = {
+          service = entry.service;
+          title = entry.serviceConfig.description;
+          paths = lib.optional entry.artifact.includeInJob entry.artifact.destinationDir;
+        };
+      }) entries
+    );
   };
 }

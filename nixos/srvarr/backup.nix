@@ -24,29 +24,43 @@ let
     pinepodsDatabaseDir
     "${pinepodsDatabaseDir}/**"
   ];
+  resticPasswordSecret = "backup/restic/local/password";
+  resticSshKeySecret = "backup/restic/local/ssh/privateKey";
 in
 {
+  sops.secrets = {
+    ${resticPasswordSecret} = { };
+    ${resticSshKeySecret} = {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+  };
+
   host.backups.artifacts.mariadb.romm = {
+    job = "beast";
     displayName = "RomM";
     destinationDir = rommDatabaseBackupDir;
-    includeInBeastBackup = false;
+    includeInJob = false;
     requiresMountsFor = [ stateRoot ];
     after = [ "romm-db-init.service" ];
     requires = [ "romm-db-init.service" ];
   };
 
   host.backups.artifacts.sqlite.aurral = {
+    job = "beast";
     displayName = "Aurral";
     databasePath = "${aurralConfigDir}/aurral.db";
     destinationDir = aurralBackupDir;
-    includeInBeastBackup = false;
+    includeInJob = false;
   };
 
   host.backups.artifacts.sqlite.seerr = {
+    job = "beast";
     displayName = "Seerr";
     databasePath = "${seerrConfigDir}/db/db.sqlite3";
     destinationDir = seerrBackupDir;
-    includeInBeastBackup = false;
+    includeInJob = false;
     extraCopies = [
       { source = "${seerrConfigDir}/settings.json"; }
     ];
@@ -56,10 +70,11 @@ in
   # SQLite database plus the Fernet master key used to decrypt stored Arr API
   # keys, so stage an online-consistent database copy and its matching key.
   host.backups.artifacts.sqlite.houndarr = {
+    job = "beast";
     displayName = "Houndarr";
     databasePath = "${houndarrConfigDir}/houndarr.db";
     destinationDir = houndarrBackupDir;
-    includeInBeastBackup = false;
+    includeInJob = false;
     extraCopies = [
       {
         source = "${houndarrConfigDir}/houndarr.masterkey";
@@ -69,11 +84,21 @@ in
     ];
   };
 
-  host.backups.beast = {
-    enable = true;
-    clientName = "srvarr";
+  host.backups.jobs.beast = {
+    title = "Restic To Beast";
     paths = backupPaths;
     exclude = backupExclude;
+    repository = {
+      type = "sftp";
+      path = "/volume2/backups/restic-prod/hosts/srvarr";
+      passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
+      dependencyUnits = [ "sops-install-secrets.service" ];
+      sftp = {
+        host = "beast";
+        user = "restic-srvarr";
+        identityFile = config.sops.secrets.${resticSshKeySecret}.path;
+      };
+    };
   };
 
   # PinePods' downloaded podcast media lives under the separate media root and

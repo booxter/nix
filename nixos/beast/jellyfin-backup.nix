@@ -48,7 +48,6 @@ in
     description = "Create a built-in Jellyfin backup archive";
     restartIfChanged = false;
     stopIfChanged = false;
-    before = [ "restic-backups-beast.service" ];
     wants = [
       "jellyfin.service"
       "sops-install-secrets.service"
@@ -70,42 +69,24 @@ in
     };
   };
 
-  services.restic.backups.beast = {
-    initialize = true;
+  host.backups.jobs.beast = {
+    title = "Beast Local Restic";
     user = "restic-cloud";
-    passwordFile = config.sops.secrets.${localRepoPasswordSecret}.path;
-    repository = localRepo;
-    paths = [ stagingDir ];
-    pruneOpts = [
-      "--keep-daily 7"
-      "--keep-weekly 8"
-      "--keep-monthly 6"
-    ];
+    repository = {
+      type = "local";
+      path = localRepo;
+      passwordFile = config.sops.secrets.${localRepoPasswordSecret}.path;
+      dependencyUnits = [ "sops-install-secrets.service" ];
+    };
+    preparations.jellyfin-built-in-backup = {
+      service = "jellyfin-built-in-backup";
+      title = "Jellyfin Built-In Backup";
+      paths = [ stagingDir ];
+    };
     timerConfig = {
       OnCalendar = "04:45";
       RandomizedDelaySec = "5m";
       Persistent = true;
-    };
-  };
-
-  systemd.services.restic-backups-beast = {
-    restartIfChanged = false;
-    stopIfChanged = false;
-    after = [ "jellyfin-built-in-backup.service" ];
-    wants = [ "jellyfin-built-in-backup.service" ];
-    requires = [ "jellyfin-built-in-backup.service" ];
-  };
-
-  host.observability.backupMetrics.jobs = {
-    "jellyfin-built-in-backup" = {
-      service = "jellyfin-built-in-backup";
-      title = "Jellyfin Built-In Backup";
-      phase = "prep";
-    };
-    "beast-restic-local" = {
-      service = "restic-backups-beast";
-      title = "Beast Local Restic";
-      phase = "local";
     };
   };
 }
