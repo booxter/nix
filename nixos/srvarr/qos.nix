@@ -11,22 +11,30 @@ let
   beastJellyfinEndpoint = beastHostConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;
   beastNfsPort = hostInventory.site.ports.nfs;
   beastNfsRateMbit = 1500;
-  networkOnlineUnitDeps = {
-    Wants = [ "network-online.target" ];
-    After = [ "network-online.target" ];
-  };
   wgEndpointPort = 1637;
 in
 {
-  host.observability.client.mtlsClients."jellyfin-upload-policy".enable = true;
-
-  imports = [
-    (import ./adaptive-upload-policy.nix {
-      jellyfinExporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
-      fallbackUploadRateMbit = tuning.wgConservativeUploadRateMbit;
-      inherit networkOnlineUnitDeps;
-    })
-  ];
+  services.adaptive-upload-policy = {
+    enable = true;
+    fallbackRateMbit = tuning.wgConservativeUploadRateMbit;
+    source.jellyfin = {
+      exporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
+      mtls = {
+        enable = true;
+        clientName = "jellyfin-upload-policy";
+        secretPrefix = "prometheus/clients/jellyfin-upload-policy";
+      };
+    };
+    outputs = {
+      transmission.enable = true;
+      qos = {
+        enable = true;
+        profile = "wan";
+        limit = "wireguard-upload";
+      };
+    };
+    group = "media";
+  };
 
   host.qos.interfaces.wan = {
     device = "ens18";

@@ -30,11 +30,6 @@ in
 
   seerr-tools = seerrTools.package;
 
-  adaptive-upload-controller = pkgs.callPackage ./adaptive-upload-controller {
-    atomicFileWrites = pkgs.atomic-file-writes;
-    inherit transmissionCommon;
-  };
-
   audiobookshelf-tools = pkgs.callPackage ./audiobookshelf-tools { };
 
   ebook-converter = pkgs.callPackage ./ebook-converter {

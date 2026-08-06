@@ -21,6 +21,7 @@ in
       inputs.home-manager.nixosModules.home-manager
     ]
     ++ [
+      ./_mixins/adaptive-upload-policy
       ./_mixins/avahi
       ./_mixins/auto-upgrade
       ./_mixins/backup-artifacts.nix
