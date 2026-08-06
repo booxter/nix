@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.host.backups.artifacts;
-  package = pkgs.callPackage ./backup-artifacts/pkgs/backup-artifact-tools { };
+  package = pkgs.callPackage ./artifacts/pkgs/backup-artifact-tools { };
 
   commonArtifactOptions =
     { name }:

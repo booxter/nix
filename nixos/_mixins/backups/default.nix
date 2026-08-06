@@ -1,7 +1,7 @@
 {
   imports = [
+    ./artifacts.nix
     ./jobs.nix
-    ../backup-artifacts.nix
-    ../backup-metrics
+    ./metrics
   ];
 }
