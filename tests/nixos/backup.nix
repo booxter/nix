@@ -28,8 +28,6 @@ pkgs.testers.runNixOSTest {
     server = {
       imports = [ ../../nixos/_mixins/backups ];
 
-      networking.firewall.allowedTCPPorts = [ 22 ];
-
       environment.etc = {
         "ssh/ssh_host_ed25519_key" = {
           text = serverPrivateKey;
@@ -40,7 +38,6 @@ pkgs.testers.runNixOSTest {
       };
 
       services.openssh = {
-        enable = true;
         hostKeys = [
           {
             path = "/etc/ssh/ssh_host_ed25519_key";

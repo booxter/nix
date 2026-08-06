@@ -253,6 +253,8 @@ in
 
     host.backups.server.generated.offloadUsers = offloadUsers;
 
+    services.openssh.enable = true;
+
     systemd.tmpfiles.rules =
       lib.mapAttrsToList (
         name: _:
