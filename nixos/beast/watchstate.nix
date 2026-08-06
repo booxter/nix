@@ -194,6 +194,8 @@ in
   host.sso.oauth2ProxyGates.watchstate = {
     enable = true;
     clientId = "watchstate";
+    displayName = "WatchState";
+    originLanding = "https://${watchstateHostName}/";
     httpAddress = "http://127.0.0.1:4182";
     cookieName = "_watchstate_sso";
     allowedGroups = [ watchstateSso.adminGroup ];

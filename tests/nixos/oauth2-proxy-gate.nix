@@ -94,6 +94,7 @@ pkgs.testers.runNixOSTest {
     {
       imports = [
         ../../nixos/_mixins/external-service.nix
+        ../../nixos/_mixins/sso/oidc.nix
         ../../nixos/_mixins/sso-oauth2-proxy-gate.nix
       ];
 
@@ -123,13 +124,21 @@ pkgs.testers.runNixOSTest {
           type = lib.types.bool;
           default = false;
         };
+
+        sops.placeholder = lib.mkOption {
+          type = lib.types.attrsOf lib.types.str;
+          default = { };
+        };
       };
 
       config = {
         _module.args.hostInventory = {
           servicesById.id.publicHost = "id.example.invalid";
           site.lan.domain = "example.invalid";
+          toInternalHttpsServiceHosts = serviceName: [ "${serviceName}.example.invalid" ];
         };
+
+        sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";
 
         host.externalService = {
           openFirewall = false;
@@ -143,7 +152,8 @@ pkgs.testers.runNixOSTest {
         host.sso.oauth2ProxyGates.test = {
           enable = true;
           clientId = "test";
-          issuerUrl = "https://id.example.invalid/oauth2/openid/test";
+          displayName = "Test";
+          originLanding = "https://test.example.invalid/";
           httpAddress = "http://127.0.0.1:4180";
           serviceName = "oauth2-proxy-gate-test";
           groupClaim = "groups";

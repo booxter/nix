@@ -225,6 +225,8 @@ in
   host.sso.oauth2ProxyGates.goo = {
     enable = true;
     clientId = "goo";
+    displayName = "Degoog";
+    originLanding = "${degoogService.url}/";
     httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";
     cookieName = "_goo_sso";
     allowedGroups = [ "degoog-users" ];

@@ -376,6 +376,8 @@ in
   host.sso.oauth2ProxyGates.paperless-gpt = {
     enable = true;
     clientId = "paperless-gpt";
+    displayName = "Paperless GPT";
+    originLanding = "https://${paperlessGptHost}/";
     httpAddress = "http://127.0.0.1:${toString paperlessGptOauth2ProxyPort}";
     cookieName = "_paperless_gpt_sso";
     allowedGroups = [ "paperless-admins" ];

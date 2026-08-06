@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.host.sso.oauth2ProxyGates;
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
+  oidcBaseScopes = config.host.sso.oidc.baseScopes;
   probeHelpers = import ./sso-oauth2-proxy-gate-probes.nix { inherit lib; };
 
   gateSubmodule =
@@ -27,11 +27,14 @@ let
           description = "OIDC client ID used by oauth2-proxy.";
         };
 
-        issuerUrl = lib.mkOption {
+        displayName = lib.mkOption {
           type = lib.types.str;
-          default = oidc.openidBaseUrl config.clientId;
-          defaultText = "\${issuerBase}/oauth2/openid/\${clientId}";
-          description = "OIDC issuer URL for oauth2-proxy.";
+          description = "Display name shown by the identity provider.";
+        };
+
+        originLanding = lib.mkOption {
+          type = lib.types.str;
+          description = "Landing page shown for the OIDC client.";
         };
 
         httpAddress = lib.mkOption {
@@ -131,7 +134,7 @@ let
 
         scope = lib.mkOption {
           type = lib.types.str;
-          default = lib.concatStringsSep " " (oidc.scopeWith [ config.groupClaim ]);
+          default = lib.concatStringsSep " " (oidcBaseScopes ++ [ config.groupClaim ]);
           description = "OAuth scope requested by oauth2-proxy.";
         };
 
@@ -229,11 +232,25 @@ let
 
   enabledGates = lib.filterAttrs (_: gate: gate.enable) cfg;
   secretNameFor = gateName: kind: "oauth2-proxy-gate-${gateName}-${kind}";
+  originUrlsFor =
+    gate:
+    if gate.externalOrigin != null then
+      [ "${gate.externalOrigin}/oauth2/callback" ]
+    else
+      lib.unique (
+        map (host: "https://${host}/oauth2/callback") gate.externalHostNames
+        ++ map (host: "https://${host}/oauth2/callback") (
+          lib.concatMap hostInventory.toInternalHttpsServiceHosts gate.internalHttpsServiceNames
+        )
+      );
 
   mkArg = name: value: "--${name}=${lib.escapeShellArg (toString value)}";
   mkArgs = name: values: map (mkArg name) values;
   oauth2ProxyArgs =
-    gate:
+    gateName: gate:
+    let
+      oidcClient = config.host.sso.oidc.clients.${gateName};
+    in
     [
       (mkArg "approval-prompt" "auto")
       (mkArg "client-id" gate.clientId)
@@ -246,7 +263,7 @@ let
       (mkArg "email-domain" "*")
       (mkArg "http-address" gate.httpAddress)
       (mkArg "oidc-groups-claim" gate.groupClaim)
-      (mkArg "oidc-issuer-url" gate.issuerUrl)
+      (mkArg "oidc-issuer-url" oidcClient.issuerUrl)
       (mkArg "pass-access-token" "false")
       (mkArg "pass-basic-auth" "false")
       (mkArg "pass-host-header" "true")
@@ -394,6 +411,24 @@ in
   };
 
   config = lib.mkIf (enabledGates != { }) {
+    host.sso.oidc.registrations = lib.mapAttrs (gateName: gate: {
+      inherit (gate)
+        clientId
+        displayName
+        originLanding
+        ;
+      originUrls = originUrlsFor gate;
+      scopeMaps = lib.genAttrs gate.allowedGroups (_: oidcBaseScopes ++ [ gate.groupClaim ]);
+      claimMaps.${gate.groupClaim}.valuesByGroup = lib.genAttrs gate.allowedGroups (group: [ group ]);
+      secret = {
+        sopsKey = gate.clientSecretSopsKey;
+        name = secretNameFor gateName "client-secret";
+        owner = gate.secretOwner;
+        group = gate.secretGroup;
+        restartUnits = [ "${gate.serviceName}.service" ];
+      };
+    }) enabledGates;
+
     assertions =
       builtins.concatLists (
         lib.mapAttrsToList (
@@ -456,27 +491,16 @@ in
       }) (lib.unique (map (gate: gate.user) (builtins.attrValues enabledGates)))
     );
 
-    sops.secrets =
-      lib.mapAttrs' (
-        gateName: gate:
-        lib.nameValuePair (secretNameFor gateName "client-secret") {
-          key = gate.clientSecretSopsKey;
-          owner = gate.secretOwner;
-          group = gate.secretGroup;
-          mode = "0400";
-          restartUnits = [ "${gate.serviceName}.service" ];
-        }
-      ) enabledGates
-      // lib.mapAttrs' (
-        gateName: gate:
-        lib.nameValuePair (secretNameFor gateName "cookie-secret") {
-          key = gate.cookieSecretSopsKey;
-          owner = gate.secretOwner;
-          group = gate.secretGroup;
-          mode = "0400";
-          restartUnits = [ "${gate.serviceName}.service" ];
-        }
-      ) enabledGates;
+    sops.secrets = lib.mapAttrs' (
+      gateName: gate:
+      lib.nameValuePair (secretNameFor gateName "cookie-secret") {
+        key = gate.cookieSecretSopsKey;
+        owner = gate.secretOwner;
+        group = gate.secretGroup;
+        mode = "0400";
+        restartUnits = [ "${gate.serviceName}.service" ];
+      }
+    ) enabledGates;
 
     host.internalHttps.services = lib.mkMerge (
       builtins.concatLists (
@@ -570,7 +594,7 @@ in
         serviceConfig = {
           User = gate.user;
           Group = gate.group;
-          ExecStart = "${lib.getExe gate.package} ${lib.concatStringsSep " " (oauth2ProxyArgs gate)}";
+          ExecStart = "${lib.getExe gate.package} ${lib.concatStringsSep " " (oauth2ProxyArgs gateName gate)}";
           LoadCredential = [
             "client-secret:${config.sops.secrets.${secretNameFor gateName "client-secret"}.path}"
             "cookie-secret:${config.sops.secrets.${secretNameFor gateName "cookie-secret"}.path}"

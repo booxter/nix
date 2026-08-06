@@ -132,6 +132,8 @@ in
   host.sso.oauth2ProxyGates.srvarr-admin-apps = {
     enable = true;
     inherit clientId;
+    displayName = "srvarr admin apps";
+    originLanding = "https://bazarr.${hostInventory.site.lan.domain}/";
     cookieName = oauth2ProxyCookieName;
     allowedGroups = [ "media-admins" ];
     groupClaim = "media_groups";
