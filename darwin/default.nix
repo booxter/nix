@@ -35,6 +35,7 @@ in
     ./_mixins/nix-store
     ./_mixins/observability-client
     ./_mixins/remote-gui
+    ./_mixins/secretive
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
     ./_mixins/sudo
@@ -44,9 +45,6 @@ in
     ./_mixins/browser
     ./_mixins/vnc
     ./_mixins/vnc-open
-  ]
-  ++ lib.optionals (hostname == "mair") [
-    ./_mixins/secretive
   ];
 
   system.stateVersion = hostSpec.stateVersion;
