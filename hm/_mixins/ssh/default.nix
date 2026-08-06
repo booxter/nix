@@ -7,8 +7,7 @@
 }:
 let
   inherit (osConfig.host) isDarwin isLinux isWork;
-  hostname = osConfig.networking.hostName;
-  useSecretive = isDarwin && hostname == "mair";
+  useSecretive = osConfig.host.secretive.enable or false;
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
   sshAskpass =
     if isDarwin then

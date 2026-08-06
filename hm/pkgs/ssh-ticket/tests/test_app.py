@@ -175,7 +175,7 @@ def test_resolve_target_rejects_ambiguous_alias():
 
 
 def test_resolve_target_rejects_disabled_target():
-    with pytest.raises(ssh_ticket.Error, match="host.sshTicket.enable is false"):
+    with pytest.raises(ssh_ticket.Error, match="ticket target srvarr is disabled"):
         ssh_ticket.resolve_target([target(enabled=False)], "srvarr")
 
 

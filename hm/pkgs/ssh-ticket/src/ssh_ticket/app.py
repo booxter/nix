@@ -133,7 +133,7 @@ def resolve_target(
         target = next(iter(unique.values()))
 
     if not target.enabled and not allow_disabled:
-        raise Error(f"ticket target {target.name} exists but host.sshTicket.enable is false")
+        raise Error(f"ticket target {target.name} is disabled")
     return target
 
 
@@ -497,7 +497,7 @@ def add_common_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--allow-disabled",
         action="store_true",
-        help="allow issuing for a target whose host.sshTicket.enable is false",
+        help="allow issuing for a disabled ticket target",
     )
 
 
@@ -565,22 +565,11 @@ def main(argv: Sequence[str], runtime: Runtime | None = None) -> int:
         return 1
 
 
-def configure_darwin_ssh_agent() -> None:
-    if sys.platform == "darwin":
-        socket = os.environ.get("SSHT_SECRETIVE_SOCKET") or (
-            pathlib.Path.home()
-            / "Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh"
-        )
-        os.environ["SSH_AUTH_SOCK"] = str(socket)
-
-
 def cli() -> int:
-    configure_darwin_ssh_agent()
     return main(sys.argv[1:])
 
 
 def ssht_cli() -> int:
-    configure_darwin_ssh_agent()
     return main(["ssht", *sys.argv[1:]])
 
 
