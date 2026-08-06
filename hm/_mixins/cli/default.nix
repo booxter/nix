@@ -137,8 +137,10 @@ in
       (homeManagerPkgs.page.override { neovim = config.programs.nixvim.build.package; })
       nh
       nix-init
+      nix-output-monitor
       nix-search-cli
       nix-tree
+      nixpkgs-reviewFull
       nr
       nurl
       openssl

@@ -13,7 +13,6 @@ let
 in
 {
   imports = [
-    ./_mixins/nix
     ./_mixins/podman-machine
     ./_mixins/xquartz
     ./_mixins/zsh
