@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 let
@@ -64,7 +63,6 @@ in
           '') communityBuilders
         );
     };
-    environment.systemPackages = [ pkgs.openssh ];
     host.nixpkgsReview.extraBuilders = lib.mapAttrsToList (
       name: builder:
       "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "

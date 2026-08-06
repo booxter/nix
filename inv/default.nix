@@ -134,6 +134,19 @@ rec {
 
   toSecretDomain = spec: spec.secretDomain or (if spec.isWork or false then "work" else "main");
   toLocalDnsName = label: "${label}.local";
+  toSshKnownHostNames =
+    spec:
+    let
+      inherit (spec) name;
+      lowercaseName = lib.toLower name;
+    in
+    lib.unique (
+      [ name ]
+      ++ lib.optional (lowercaseName != name) lowercaseName
+      ++ lib.optional (lib.hasSuffix "-linux" spec.platform) "${name}.${site.lan.domain}"
+      ++ [ (toLocalDnsName name) ]
+      ++ lib.optional (lowercaseName != name) (toLocalDnsName lowercaseName)
+    );
   toInternalHttpsServiceHosts =
     serviceName:
     let

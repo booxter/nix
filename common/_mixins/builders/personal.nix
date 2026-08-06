@@ -2,7 +2,6 @@
   lib,
   config,
   hostInventory,
-  pkgs,
   ...
 }:
 let
@@ -36,8 +35,6 @@ in
           )
         );
     };
-    environment.systemPackages = [ pkgs.openssh ];
-
     nix.buildMachines =
       let
         features = [
