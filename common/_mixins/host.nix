@@ -129,9 +129,17 @@ in
       description = "Whether this host should avoid frequent unattended reboots.";
     };
 
+    realm = lib.mkOption {
+      type = lib.types.enum (builtins.attrNames hostInventory.realms);
+      default = hostSpec.realm;
+      readOnly = true;
+      internal = true;
+      description = "Infrastructure and trust realm declared by the host inventory.";
+    };
+
     secretDomain = lib.mkOption {
       type = lib.types.str;
-      default = hostInventory.toSecretDomain hostSpec;
+      default = hostInventory.realms.${config.host.realm}.secretDomain;
       readOnly = true;
       internal = true;
       description = "SOPS secret domain selected for this host.";

@@ -11,6 +11,7 @@ let
   frame = "frame";
   mmini = "mmini";
 
+  realms = import ./realms.nix;
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
   backupClients = lib.mapAttrs (
@@ -30,7 +31,13 @@ let
   hostFacts = hostFactsFor {
     inherit lanDomain publicDomain publicServiceHosts;
   };
-  normalizeHostSpec = spec: { inherit username; } // spec;
+  realmFor =
+    spec:
+    let
+      realmName = spec.realm or (throw "host ${spec.name} does not declare a realm");
+    in
+    realms.${realmName} or (throw "host ${spec.name} declares unknown realm '${realmName}'");
+  normalizeHostSpec = spec: builtins.seq (realmFor spec) ({ inherit username; } // spec);
   normalizedDarwinHosts = lib.mapAttrs (_: normalizeHostSpec) hostFacts.darwinHosts;
   normalizedNixosHostSpecs = map normalizeHostSpec hostFacts.nixosHostSpecs;
 
@@ -127,12 +134,12 @@ rec {
   };
 
   inherit (serviceFacts) glanceCategories;
+  inherit realms;
 
   sshTicket = sshTicketFacts;
   sso = ssoFacts;
   yubi = yubiFacts;
 
-  toSecretDomain = spec: spec.secretDomain or (if spec.isWork or false then "work" else "main");
   toLocalDnsName = label: "${label}.local";
   toSshKnownHostNames =
     spec:
@@ -227,7 +234,7 @@ rec {
 
   hostSpecsByName = darwinHosts // nixosHosts;
 
-  secretDomainsByHost = lib.mapAttrs (_: toSecretDomain) hostSpecsByName;
+  secretDomainsByHost = lib.mapAttrs (_: spec: (realmFor spec).secretDomain) hostSpecsByName;
 
   systemsByHost = lib.mapAttrs (_: spec: spec.platform) hostSpecsByName;
 

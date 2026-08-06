@@ -37,6 +37,7 @@ let
       isVM = true;
       name = "builder${idx'}";
       platform = "x86_64-linux";
+      realm = "home";
       proxNode = "prx${idx'}-lab";
       dhcpReservation = builderDhcpReservations.${idx'};
       stateVersion = "25.11";
@@ -68,6 +69,7 @@ let
         proxmoxUpgradeTime
         ;
       platform = "x86_64-linux";
+      realm = "home";
       hmFull = false;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
@@ -112,6 +114,7 @@ in
       stateVersion = 6;
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
+      realm = "home";
       isDesktop = true;
       isLaptop = true;
       isSecretsOperator = true;
@@ -122,6 +125,7 @@ in
       stateVersion = 5;
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
+      realm = "home";
       isBuilder = true;
       isDesktop = true;
       isSecretsOperator = true;
@@ -133,6 +137,7 @@ in
       stateVersion = 5;
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
+      realm = "work";
       isDesktop = true;
       isLaptop = true;
       isSecretsOperator = true;
@@ -150,6 +155,7 @@ in
       name = frame;
       stateVersion = "25.11";
       platform = "x86_64-linux";
+      realm = "home";
       isBuilder = true;
       isDesktop = true;
       isSecretsOperator = true;
@@ -221,6 +227,7 @@ in
       hostKind = "proxmox";
       name = nvws;
       platform = "x86_64-linux";
+      realm = "work";
       isBuilder = true;
       isWork = true;
       nspawnTestBuilder = true;
@@ -239,6 +246,7 @@ in
       name = "beast";
       stateVersion = "25.11";
       platform = "x86_64-linux";
+      realm = "home";
       critical = true;
       dnsAliases = builtins.filter (domain: domain != "dash.${publicDomain}") publicServiceHosts;
       hmFull = false;
@@ -267,6 +275,7 @@ in
       isVM = true;
       name = "nv";
       platform = "x86_64-linux";
+      realm = "work";
       stateVersion = "25.11";
       isWork = true;
       upsHost = nvws;
@@ -283,6 +292,7 @@ in
       isVM = true;
       name = "cache";
       platform = "x86_64-linux";
+      realm = "home";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
@@ -300,6 +310,7 @@ in
       isVM = true;
       name = "srvarr";
       platform = "x86_64-linux";
+      realm = "home";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       dnsAliases = [ "dash.${publicDomain}" ];
@@ -325,6 +336,7 @@ in
       isVM = true;
       name = "fana";
       platform = "x86_64-linux";
+      realm = "home";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       cores = 8;
@@ -341,6 +353,7 @@ in
       isVM = true;
       name = "gw";
       platform = "x86_64-linux";
+      realm = "home";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       cores = 2;
@@ -357,6 +370,7 @@ in
       isVM = true;
       name = "org";
       platform = "x86_64-linux";
+      realm = "home";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       cores = 4;
@@ -373,6 +387,7 @@ in
       isVM = true;
       name = "pki";
       platform = "x86_64-linux";
+      realm = "home";
       stateVersion = "25.11";
       caServer = {
         port = 8443;
@@ -394,6 +409,7 @@ in
       isVM = true;
       name = "home";
       platform = "x86_64-linux";
+      realm = "home";
       stateVersion = "26.05";
       upsHost = "prx1-lab";
       proxNode = "prx2-lab";
