@@ -37,7 +37,6 @@ let
       hostInventory
       lib
       outputs
-      pkgs
       blackboxHttpMtlsTlsConfig
       prometheusMtlsTlsConfig
       ;
@@ -76,7 +75,13 @@ let
   prometheusRetention = "${toString retentionDays}d";
 in
 {
-  assertions = nodeScrapes.assertions ++ blackboxScrapes.assertions;
+  assertions = nodeScrapes.assertions;
+
+  host.observability.client.blackbox = {
+    enable = true;
+    modules = blackboxScrapes.modules;
+    port = 9115;
+  };
 
   host.observability.client.mtlsClients."prometheus-scrape-node" = {
     enable = true;
@@ -158,7 +163,4 @@ in
     ++ unpollerScrapes.scrapeConfigs
     ++ wireguardScrapes.scrapeConfigs;
   };
-
-  # Blackbox exporter probes service endpoints to track reachability and latency.
-  services.prometheus.exporters.blackbox = blackboxScrapes.exporterConfig;
 }

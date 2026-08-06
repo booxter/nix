@@ -11,7 +11,6 @@ let
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   hostLabel = config.services.avahi.hostName;
-  blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
   nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix {
     inherit internalPkiRootCaPath;
   };
@@ -43,6 +42,8 @@ let
   '';
 in
 {
+  imports = [ ./blackbox.nix ];
+
   options.host.observability.client = {
     enable = lib.mkEnableOption "host-side observability client services";
 
@@ -88,38 +89,6 @@ in
       };
 
       mtls.enable = lib.mkEnableOption "mTLS protection for the Prometheus node exporter";
-    };
-
-    blackbox = {
-      enable = lib.mkEnableOption "host-side blackbox exporter probes";
-
-      listenAddress = lib.mkOption {
-        type = lib.types.str;
-        default = "0.0.0.0";
-        description = "Address for the Prometheus blackbox exporter to bind.";
-      };
-
-      openFirewall = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to open the firewall for the Prometheus blackbox exporter.";
-      };
-
-      mtls = {
-        enable = lib.mkEnableOption "mTLS protection for the Prometheus blackbox exporter";
-
-        internalPort = lib.mkOption {
-          type = lib.types.port;
-          default = 19115;
-          description = "Loopback-only port for the local blackbox exporter when fronted by the mTLS proxy.";
-        };
-
-        publicPort = lib.mkOption {
-          type = lib.types.port;
-          default = 9115;
-          description = "LAN-visible port for the mTLS-wrapped blackbox exporter endpoint.";
-        };
-      };
     };
 
     prometheusMtlsEndpoints = lib.mkOption {
@@ -313,25 +282,6 @@ in
             '';
           };
 
-          # Optional blackbox exporter lets Prometheus run the same reachability
-          # probes from other LAN nodes for WAN comparison.
-          services.prometheus.exporters.blackbox = lib.mkIf cfg.blackbox.enable {
-            enable = true;
-            listenAddress = "127.0.0.1";
-            port = cfg.blackbox.mtls.internalPort;
-            configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
-              modules = blackboxModules;
-            };
-          };
-
-          host.observability.client.prometheusMtlsEndpoints.blackbox = lib.mkIf cfg.blackbox.enable {
-            enable = true;
-            listenAddress = cfg.blackbox.listenAddress;
-            port = cfg.blackbox.mtls.publicPort;
-            path = "/probe";
-            upstream = "http://127.0.0.1:${toString cfg.blackbox.mtls.internalPort}/probe";
-            openFirewall = cfg.blackbox.openFirewall;
-          };
         }
         (lib.mkIf (cfg.lokiWriteUrl != null && cfg.loki.mtls.enable) {
           assertions = [
@@ -471,14 +421,6 @@ in
             after = [ "sops-install-secrets.service" ];
           };
         })
-        {
-          assertions = [
-            {
-              assertion = !(cfg.blackbox.enable && !cfg.blackbox.mtls.enable);
-              message = "host.observability.client.blackbox now requires mTLS; set host.observability.client.blackbox.mtls.enable = true.";
-            }
-          ];
-        }
       ]
     ))
   ];

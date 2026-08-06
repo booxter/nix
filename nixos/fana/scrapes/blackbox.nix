@@ -4,7 +4,6 @@
   hostInventory,
   lib,
   outputs,
-  pkgs,
   blackboxHttpMtlsTlsConfig,
   prometheusMtlsTlsConfig,
 }:
@@ -220,13 +219,12 @@ let
       };
     }) publicServiceCatalog
   );
-  baseBlackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
+  httpServiceModule = config.host.observability.client.blackbox.baseModules.http_service;
   blackboxModules =
-    baseBlackboxModules
-    // publicDnsBlackboxModules
+    publicDnsBlackboxModules
     // lib.optionalAttrs usesHttpMtls {
-      http_service_mtls = baseBlackboxModules.http_service // {
-        http = baseBlackboxModules.http_service.http // {
+      http_service_mtls = httpServiceModule // {
+        http = httpServiceModule.http // {
           tls_config = blackboxHttpMtlsTlsConfig;
         };
       };
@@ -234,13 +232,8 @@ let
   remoteBlackboxProbeSourceNames = builtins.filter (
     name:
     name != "fana"
-    && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.enable
+    && outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.remote.enable
   ) nixosConfigNames;
-  remotePlainBlackboxProbeSourceNames = builtins.filter (
-    name:
-    !(outputs.nixosConfigurations.${name}.config.host.observability.client.blackbox.mtls.enable or false
-    )
-  ) remoteBlackboxProbeSourceNames;
   mkRemoteBlackboxProbeSourceConfig =
     name:
     let
@@ -369,21 +362,7 @@ let
 in
 {
   inherit usesHttpMtls;
-
-  assertions = [
-    {
-      assertion = remotePlainBlackboxProbeSourceNames == [ ];
-      message = "All remote blackbox probe sources must use mTLS. Offenders: ${lib.concatStringsSep ", " remotePlainBlackboxProbeSourceNames}";
-    }
-  ];
-
-  exporterConfig = {
-    enable = true;
-    listenAddress = "127.0.0.1";
-    configFile = (pkgs.formats.yaml { }).generate "blackbox.yml" {
-      modules = blackboxModules;
-    };
-  };
+  modules = blackboxModules;
 
   scrapeConfigs = [
     (mkServiceHttpScrapeConfig "blackbox-arr" serviceCatalog)
