@@ -1,9 +1,6 @@
 {
-  pkgs,
-  ...
-}:
-{
   imports = [
+    ./_mixins/cli
     ./_mixins/codex
     ./_mixins/host.nix
     ./_mixins/internal-https-mtls-client.nix
@@ -20,48 +17,4 @@
     ./_mixins/flakehub-cache
     ./_mixins/builders
   ];
-
-  config = {
-    # Some packages that I'd like to have available on managed machines.
-    environment.systemPackages = with pkgs; [
-      bind.dnsutils
-      coreutils
-      dig
-      file
-      findutils
-      gawk
-      git
-      gnugrep
-      gnumake
-      gnused
-      gzip
-      htop
-      iftop
-      ipcalc
-      iperf3
-      jq
-      lsof
-      man-pages
-      moreutils
-      ngrep
-      pstree
-      python3
-      rclone
-      ripgrep
-      speedtest-cli
-      sqlite
-      tcpdump
-      tmux
-      tree
-      unzip
-      viddy
-      vim
-      watch
-      yq
-      zip
-      ipmitool
-    ];
-
-    programs.zsh.enable = true;
-  };
 }
