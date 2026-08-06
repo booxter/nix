@@ -3,25 +3,11 @@
 
 set -euo pipefail
 
-deadnix_targets=()
-if (( $# == 0 )); then
-  deadnix_targets=(.)
-else
-  for target in "$@"; do
-    if [[ -d "$target" || "$target" == *.nix ]]; then
-      deadnix_targets+=("$target")
-    fi
-  done
-fi
+cd -- "$(git rev-parse --show-toplevel)"
 
-if (( ${#deadnix_targets[@]} > 0 )); then
-  deadnix --edit "${deadnix_targets[@]}"
-fi
-
-treefmt --tree-root "$PWD" "$@"
-if (( ${#deadnix_targets[@]} > 0 )); then
-  deadnix --fail "${deadnix_targets[@]}"
-fi
+deadnix --edit .
+treefmt --tree-root "$PWD" .
+deadnix --fail .
 mbake format --config ./fmt/bake.toml Makefile
 git ls-files -z -- '*.sh' | xargs -0 -r shellcheck
 while IFS= read -r -d '' file; do
