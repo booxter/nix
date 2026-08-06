@@ -51,9 +51,6 @@
     "vikunja-users" = {
       title = "Vikunja users";
     };
-    "trilium-users" = {
-      title = "Trilium Notes users";
-    };
     "degoog-users" = {
       title = "Degoog users";
     };
@@ -87,7 +84,6 @@
         "paperless-admins"
         "paperless-users"
         "vikunja-users"
-        "trilium-users"
         "degoog-users"
         "romm-admins"
         "media-admins"

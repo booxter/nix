@@ -107,14 +107,6 @@ in
       scopeMaps."vikunja-users" = baseScopes;
     };
 
-    trilium = mkClient "trilium" {
-      displayName = "Trilium Notes";
-      enableLegacyCrypto = true;
-      originUrl = "${serviceUrl "notes"}/callback";
-      originLanding = "${serviceUrl "notes"}/";
-      scopeMaps."trilium-users" = baseScopes;
-    };
-
     goo = mkClient "goo" {
       displayName = "Degoog";
       originUrl = "${serviceUrl "goo"}/oauth2/callback";

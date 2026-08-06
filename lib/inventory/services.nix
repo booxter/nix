@@ -170,16 +170,6 @@
       glanceCategory = "user";
     }
     {
-      id = "notes";
-      title = "Trilium Notes";
-      icon = "sh:trilium-notes";
-      owner = "org";
-      publicHost = "notes.${publicDomain}";
-      probePath = "/authenticate";
-      backendProbe.path = "/api/health-check";
-      glanceCategory = "infrastructure";
-    }
-    {
       id = "paperless";
       title = "Paperless";
       icon = "sh:paperless-ngx";
