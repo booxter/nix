@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.services.unifi-sync;
-  unifiSyncEnv = import ../../lib/unifi-sync-env.nix { inherit hostInventory; };
+  unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
 in
 {
   services.unifi-sync = {
