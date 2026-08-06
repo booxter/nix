@@ -23,7 +23,7 @@ if (( ${#deadnix_targets[@]} > 0 )); then
   deadnix --fail "${deadnix_targets[@]}"
 fi
 mbake format --config ./fmt/bake.toml Makefile
-git ls-files -z -- '*.sh' '**/*.sh' | xargs -0 -r shellcheck
+git ls-files -z -- '*.sh' | xargs -0 -r shellcheck
 while IFS= read -r -d '' file; do
   tmp=$(mktemp)
   trap 'rm -f "$tmp"' EXIT
@@ -32,18 +32,13 @@ while IFS= read -r -d '' file; do
   chown --reference="$file" "$tmp" 2>/dev/null || true
   mv "$tmp" "$file"
   trap - EXIT
-done < <(git ls-files -z -- '*.json' '**/*.json')
+done < <(git ls-files -z -- '*.json')
 actionlint .github/workflows/*.yml
-while IFS= read -r -d '' file; do
-  case "$file" in
-  secrets/*/*.yaml) continue ;;
-  esac
-  printf '%s\0' "$file"
-done < <(git ls-files -z -- '*.yaml' '**/*.yaml' '*.yml' '**/*.yml') |
+git ls-files -z -- '*.yaml' '*.yml' ':(exclude)secrets/*/*.yaml' |
   xargs -0 -r prettier --write --log-level warn
-git ls-files -z -- '*.md' '**/*.md' | xargs -0 -r markdownlint-cli2
-git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff format
-git ls-files -z -- '*.py' '**/*.py' | xargs -0 -r ruff check
-git ls-files -z -- '*.js' '**/*.js' | xargs -0 -r eslint \
+git ls-files -z -- '*.md' | xargs -0 -r markdownlint-cli2
+git ls-files -z -- '*.py' | xargs -0 -r ruff format
+git ls-files -z -- '*.py' | xargs -0 -r ruff check
+git ls-files -z -- '*.js' | xargs -0 -r eslint \
   --no-config-lookup \
   --config ./fmt/eslint.config.js
