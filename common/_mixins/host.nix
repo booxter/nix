@@ -161,8 +161,5 @@ in
     nixpkgs.hostPlatform = system;
     networking.hostName = hostname;
     system.stateVersion = hostSpec.stateVersion;
-    sops.defaultSopsFile = lib.mkDefault (
-      ../../secrets + "/${config.host.secretDomain}/${config.networking.hostName}.yaml"
-    );
   };
 }
