@@ -11,7 +11,11 @@ let
   frame = "frame";
   mmini = "mmini";
 
-  realms = import ./realms.nix { inherit lanDomain; };
+  siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
+  realms = import ./realms.nix {
+    inherit lanDomain;
+    nixCaches = siteFacts.nixCaches;
+  };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
   backupClients = lib.mapAttrs (
@@ -53,7 +57,6 @@ let
     nixosHostSpecs = normalizedNixosHostSpecs;
   };
   ssoFacts = import ./sso.nix;
-  siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
   yubiFacts = import ./yubi.nix { inherit frame mmini username; };
 
   normalizeService =

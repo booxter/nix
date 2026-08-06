@@ -6,20 +6,44 @@
   ...
 }:
 let
+  cfg = config.host.nixCache;
+  realmNixCache = hostInventory.realms.${config.host.realm}.services.nixCache or null;
   username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   GiB = 1024 * 1024 * 1024;
   hasBuildMachines = config.nix.buildMachines != [ ];
+  # Desktops may be used for Proxmox development.
+  needsProxmoxCache =
+    (config.host.isLinux && config.host.isProxmox) || config.host.isBuilder || config.host.isDesktop;
 in
 {
-  nix =
-    let
-      nixCaches = hostInventory.site.nixCaches;
-      # Desktops may be used for Proxmox development.
-      needsProxmoxCache =
-        (config.host.isLinux && config.host.isProxmox) || config.host.isBuilder || config.host.isDesktop;
-    in
-    {
+  options.host.nixCache = {
+    enable = lib.mkEnableOption "realm-provided Nix binary caches";
+
+    substituters = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = if realmNixCache == null then [ ] else realmNixCache.substituters;
+      description = "Nix substituters provided by this host's realm.";
+    };
+
+    trustedPublicKeys = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = if realmNixCache == null then [ ] else realmNixCache.trustedPublicKeys;
+      description = "Trusted Nix cache signing keys provided by this host's realm.";
+    };
+  };
+
+  config = {
+    host.nixCache.enable = lib.mkDefault (realmNixCache != null);
+
+    assertions = [
+      {
+        assertion = !cfg.enable || realmNixCache != null;
+        message = "realm '${config.host.realm}' does not define Nix binary caches";
+      }
+    ];
+
+    nix = {
       gc = {
         automatic = true;
         options = "--delete-older-than 1d";
@@ -55,15 +79,10 @@ in
       // lib.optionalAttrs config.host.isDarwin {
         sandbox = "relaxed";
       }
-      // lib.optionalAttrs (!config.host.isWork) {
-        substituters = lib.mkForce [
-          nixCaches.nixos.url
-          nixCaches.home.defaultUrl
-        ];
-        trusted-public-keys = lib.mkForce [
-          nixCaches.nixos.key
-          nixCaches.home.key
-        ];
+      // lib.optionalAttrs cfg.enable {
+        substituters = lib.mkForce cfg.substituters;
+        trusted-public-keys = lib.mkForce cfg.trustedPublicKeys;
       };
     };
+  };
 }
