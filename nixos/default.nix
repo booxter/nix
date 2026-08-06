@@ -41,6 +41,7 @@ in
       ./_mixins/ups-sched.nix
       ./_mixins/user
       ./_mixins/vm.nix
+      ./_mixins/yubi.nix
     ];
 
     home-manager = {

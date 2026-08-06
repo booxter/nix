@@ -99,7 +99,7 @@ in
 
     hasYubiAgeIdentity = lib.mkOption {
       type = lib.types.bool;
-      default = builtins.elem hostname hostInventory.yubi.ageIdentityHosts;
+      default = builtins.elem hostname hostInventory.yubi.ageIdentity.hosts;
       readOnly = true;
       internal = true;
       description = "Whether the YubiKey inventory assigns an age identity to this host.";

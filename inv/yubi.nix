@@ -20,7 +20,7 @@ in
 {
   # Public YubiKey allocation facts. Keep PINs, PUKs, management keys, and
   # private key material out of inventory.
-  ageIdentityHosts = sopsAgeIdentity.hosts;
+  ageIdentity = sopsAgeIdentity;
 
   devices.personal = {
     owner = username;

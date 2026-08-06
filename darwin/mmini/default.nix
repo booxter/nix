@@ -11,7 +11,6 @@
   };
 
   programs.yubi = {
-    ssh.enable = true;
     smartCard = {
       enable = true;
       sshSudoPassword.enable = true;

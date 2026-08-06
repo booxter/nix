@@ -10,7 +10,7 @@
     ./_mixins/ssh
     ./_mixins/stylix
     ./_mixins/terminfo
-    ./_mixins/yubi.nix
+    ./_mixins/yubi
     ./_mixins/attic
     ./_mixins/flakehub-cache
     ./_mixins/builders

@@ -37,6 +37,7 @@ in
     ./_mixins/sudo
     ./_mixins/thermal-accounting
     ./_mixins/xquartz
+    ./_mixins/yubi.nix
     ./_mixins/attic
     ./_mixins/browser
     ./_mixins/vnc

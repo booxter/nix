@@ -55,11 +55,6 @@ in
   security.pam.services.hyprlock = { };
   services.openssh.settings.X11Forwarding = true;
 
-  programs.yubi = {
-    ssh.enable = true;
-    pamU2f.enable = true;
-  };
-
   services.ollama = {
     enable = true;
     package = pkgs.ollama-rocm;
