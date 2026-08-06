@@ -1,14 +1,13 @@
 {
   config,
-  hostSpecName,
   hostInventory,
+  hostSpec,
   lib,
   pkgs,
   ...
 }:
 let
   cfg = config.host.observability.client;
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   hostLabel = config.services.avahi.hostName;
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
@@ -163,7 +162,7 @@ in
 
                 serverName = lib.mkOption {
                   type = str;
-                  default = config.host.dnsName;
+                  default = config.networking.hostName;
                   description = "Server name presented by the nginx vhost for this endpoint.";
                 };
 
@@ -216,7 +215,7 @@ in
 
                 commonName = lib.mkOption {
                   type = str;
-                  default = "${name}.${config.host.dnsName}";
+                  default = "${name}.${config.networking.hostName}";
                   description = "Leaf certificate common name to issue for this client identity.";
                 };
 
@@ -244,7 +243,7 @@ in
           enable = lib.mkDefault (!config.host.isWork);
           secretPrefix = "observability/clients/loki";
         };
-        nodeExporter.mtls.enable = lib.mkDefault (hostSpecName != "fana");
+        nodeExporter.mtls.enable = lib.mkDefault (config.networking.hostName != "fana");
       };
 
       host.observability.lanWan = {

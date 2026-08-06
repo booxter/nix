@@ -1,4 +1,3 @@
-{ ... }:
 {
   host.codex.mcp.maasGitLab.enable = true;
   host.codex.mcp.maasJira.enable = true;

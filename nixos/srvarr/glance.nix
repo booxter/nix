@@ -9,16 +9,14 @@
 let
   glanceInternalPort = 18080;
   glanceExternalPort = 18081;
+  glanceServices = builtins.filter (service: service.showInGlance) hostInventory.services;
   dashService = hostInventory.servicesById.dash;
   degoogService = hostInventory.servicesById.goo;
   fanaHostConfig = outputs.nixosConfigurations.fana.config;
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
-  pkiSpec = hostInventory.nixosHostSpecsByName.pki;
+  pkiSpec = hostInventory.nixosHosts.pki;
   pkiCaServer = pkiSpec.caServer;
-  pkiRootCaUrl =
-    "https://${hostInventory.toNixosPrimaryDnsName pkiSpec}:"
-    + toString pkiCaServer.port
-    + pkiCaServer.rootsPath;
+  pkiRootCaUrl = "https://${pkiSpec.name}:" + toString pkiCaServer.port + pkiCaServer.rootsPath;
   srvarrHttpsServices = config.host.internalHttps.services;
   internalHttpsServicesFor =
     service:
@@ -50,7 +48,7 @@ let
       // {
         url = "https://${httpsService.serverName}/";
       }
-  ) hostInventory.glanceServices;
+  ) glanceServices;
   infrastructureLinks = [
     {
       icon = "sh:proxmox";

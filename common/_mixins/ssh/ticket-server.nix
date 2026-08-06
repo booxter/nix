@@ -1,16 +1,15 @@
 {
   config,
+  hostSpec,
   hostInventory,
-  hostname,
-  hostSpecName ? hostname,
-  isDarwin,
-  isLinux,
+  inputs,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
+  inherit (inputs.nixpkgs.lib.systems.elaborate hostSpec.platform) isDarwin isLinux;
   cfg = config.host.sshTicket;
   caPublicKeyPath = "/etc/ssh/fleet-user-cas.pub";
   inventoryCaPublicKeys = hostInventory.sshTicket.trustedCaPublicKeys;
@@ -20,11 +19,6 @@ let
   principalsFile = pkgs.writeText "${username}-authorized_principals" (
     lib.concatMapStrings (principal: "${principal}\n") cfg.principals
   );
-  defaultPrincipalNames = lib.unique [
-    config.host.dnsName
-    config.networking.hostName
-    hostSpecName
-  ];
 in
 {
   options.host.sshTicket = {
@@ -43,21 +37,15 @@ in
 
     principal = lib.mkOption {
       type = lib.types.singleLineStr;
-      default = "${username}@${config.host.dnsName}";
-      defaultText = lib.literalExpression ''"${username}@${config.host.dnsName}"'';
+      default = "${username}@${config.networking.hostName}";
+      defaultText = lib.literalExpression ''"${username}@${config.networking.hostName}"'';
       description = "Certificate principal accepted for ${username} on this host.";
     };
 
     principalNames = lib.mkOption {
       type = lib.types.listOf lib.types.singleLineStr;
-      default = defaultPrincipalNames;
-      defaultText = lib.literalExpression ''
-        lib.unique [
-          config.host.dnsName
-          config.networking.hostName
-          hostSpecName
-        ]
-      '';
+      default = [ config.networking.hostName ];
+      defaultText = lib.literalExpression "[ config.networking.hostName ]";
       description = "Host identity names accepted as SSH certificate principals for ${username}.";
     };
 
@@ -75,12 +63,8 @@ in
 
     aliases = lib.mkOption {
       type = lib.types.listOf lib.types.singleLineStr;
-      default = lib.unique ([
-        config.networking.hostName
-        config.host.dnsName
-        hostSpecName
-      ]);
-      defaultText = lib.literalExpression "[ config.networking.hostName config.host.dnsName hostSpecName ]";
+      default = [ config.networking.hostName ];
+      defaultText = lib.literalExpression "[ config.networking.hostName ]";
       description = "Client-side names that resolve to this ticket scope.";
     };
 
@@ -99,7 +83,7 @@ in
 
   config = lib.mkMerge [
     {
-      host.sshTicket.enable = lib.mkDefault true;
+      host.sshTicket.enable = lib.mkDefault (!config.host.isWork);
       host.sshTicket.caPublicKeys = lib.mkIf cfg.enable (lib.mkDefault inventoryCaPublicKeys);
     }
     (lib.optionalAttrs isLinux {

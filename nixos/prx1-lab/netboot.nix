@@ -1,12 +1,11 @@
 {
   hostInventory,
-  hostname,
+  hostSpec,
   pkgs,
   ...
 }:
 let
   netboot = hostInventory.site.lan.netboot;
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
 in
 {
   services.atftpd = {

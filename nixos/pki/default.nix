@@ -1,7 +1,7 @@
 {
   config,
-  hostSpecName,
   hostInventory,
+  hostSpec,
   lib,
   pkgs,
   utils,
@@ -9,13 +9,12 @@
 }:
 let
   pkiPkgs = import ./pkgs pkgs;
-  caServer = hostInventory.nixosHostSpecsByName.pki.caServer;
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
+  caServer = hostInventory.nixosHosts.pki.caServer;
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
   caPort = caServer.port;
-  caUrl = "https://${config.host.dnsName}:${toString caPort}";
+  caUrl = "https://${config.networking.hostName}:${toString caPort}";
   caProvisioner = "bootstrap@home.arpa";
   pkiRotationBaseBranch = "master";
   pkiStatusMetricsPath = "/var/lib/prometheus-node-exporter-textfile/pki-certs.prom";
@@ -26,7 +25,6 @@ let
     hostInventory.toNixosHostCertificateDnsNames hostSpec
     ++ [
       config.networking.hostName
-      config.host.dnsName
       config.services.avahi.hostName
       (hostInventory.toLocalDnsName config.services.avahi.hostName)
     ]
@@ -53,7 +51,6 @@ in
 
   imports = [
     ./id.nix
-    ./oidc-probes.nix
     ./backup.nix
     ./unifi-sync.nix
     ./uptimerobot-sync.nix

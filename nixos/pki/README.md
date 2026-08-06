@@ -42,19 +42,8 @@ DNS stay converged with inventory.
 - Enrollment and credential reset emails are issued with
   `nix run .#reset-oidc -- <user-id> [email]`.
 - Current declarative OAuth clients cover Grafana, Home Assistant, Vikunja,
-  Open WebUI, LiteLLM, Paperless, RomM, Audiobookshelf, Aurral, Shelfmark, and
-  the Telegram Archive and `srvarr` admin-app proxy gates.
-
-### Open WebUI Paperless access
-
-The `ai-users` group grants access to Open WebUI, while the narrower
-`paperless-users` group grants access to its Paperless MCP tool.
-
-Open WebUI ACLs use internal group UUIDs rather than group names. Its
-post-start reconciler therefore creates or finds the private group, resolves
-the UUID, and replaces the Paperless tool's fail-closed ACL with one group read
-grant. This avoids manual ID management and keeps the tool unavailable if
-reconciliation fails.
+  Paperless, RomM, Audiobookshelf, Aurral, Shelfmark, and the `srvarr` admin-app
+  proxy gates.
 
 ## PKI Apps
 
@@ -150,5 +139,4 @@ printf '%s' 'user@example.com' \
 ## Related Docs
 
 - [unifi-sync.md](./unifi-sync.md)
-- [http-to-https-rollout.md](./http-to-https-rollout.md)
 - [../../docs/pki-rotation-plan.md](../../docs/pki-rotation-plan.md)

@@ -1,56 +1,63 @@
 {
-  hostname,
+  config,
+  hostInventory,
+  hostSpec,
+  inputs,
   lib,
   pkgs,
-  username,
-  platform,
-  stateVersion,
-  isDesktop,
-  isWork,
   ...
 }:
+let
+  hostname = hostSpec.name;
+  username = hostSpec.username;
+in
 {
-  imports =
-    lib.optionals (builtins.pathExists ./${hostname}) [
-      ./${hostname}
-    ]
-    ++ [
-      ./_mixins/defaults
-      ./_mixins/fonts
-      ./_mixins/fleet-cache-warmer
-      ./_mixins/homebrew
-      ./_mixins/internal-pki
-      ./_mixins/lan-wan-accounting
-      ./_mixins/logs-client
-      ./_mixins/networking
-      ./_mixins/nix-gc
-      ./_mixins/nix-store
-      ./_mixins/observability-client
-      ./_mixins/remote-gui
-      ./_mixins/sketchybar-alertmanager
-      ./_mixins/sketchybar-jellyfin
-      ./_mixins/sudo
-      ./_mixins/thermal-accounting
-      ./_mixins/xquartz
-    ]
-    ++ lib.optionals (!isWork) [
-      ./_mixins/attic
-      ./_mixins/browser
-      ./_mixins/vnc
-      ./_mixins/vnc-open
-    ]
-    ++ lib.optionals isWork [
-      ./_mixins/docker-desktop
-    ]
-    ++ lib.optionals (hostname == "mair") [
-      ./_mixins/secretive
-    ];
+  imports = [
+    inputs.nix-homebrew.darwinModules.nix-homebrew
+    inputs.sops-nix.darwinModules.sops
+    inputs.stylix.darwinModules.stylix
+    ../common
+    inputs.home-manager.darwinModules.home-manager
+  ]
+  ++ [
+    ./_mixins/defaults
+    ./_mixins/fonts
+    ./_mixins/fleet-cache-warmer
+    ./_mixins/homebrew
+    ./_mixins/internal-pki
+    ./_mixins/lan-wan-accounting
+    ./_mixins/logs-client
+    ./_mixins/networking
+    ./_mixins/nix-gc
+    ./_mixins/nix-store
+    ./_mixins/observability-client
+    ./_mixins/remote-gui
+    ./_mixins/secretive
+    ./_mixins/sketchybar-alertmanager
+    ./_mixins/sketchybar-jellyfin
+    ./_mixins/sudo
+    ./_mixins/thermal-accounting
+    ./_mixins/xquartz
+    ./_mixins/attic
+    ./_mixins/browser
+    ./_mixins/vnc
+    ./_mixins/vnc-open
+  ];
 
-  nixpkgs.hostPlatform = lib.mkDefault platform;
+  home-manager = {
+    extraSpecialArgs = {
+      inherit
+        hostInventory
+        hostSpec
+        inputs
+        ;
+    };
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    users.${username} = ../hm;
+  };
 
-  system.stateVersion = stateVersion;
-
-  host.remoteGui.x11.enable = lib.mkDefault (!isWork && isDesktop);
+  host.remoteGui.x11.enable = lib.mkDefault (!config.host.isWork && config.host.isDesktop);
 
   system.primaryUser = username;
 
@@ -61,7 +68,7 @@
     shell = pkgs.zsh;
   };
 
-  system.defaults.smb = lib.optionalAttrs (!isWork) {
+  system.defaults.smb = lib.optionalAttrs (!config.host.isWork) {
     NetBIOSName = hostname;
     ServerDescription = hostname;
   };

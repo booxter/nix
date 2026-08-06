@@ -19,14 +19,9 @@ in
   _module.args.orgPkgs = import ./pkgs pkgs;
 
   imports = [
-    ./ai.nix
     ./backup.nix
     ./degoog.nix
-    ./llm.nix
     ./paperless.nix
-    ./searchless-ngx.nix
-    ./searxng.nix
-    ./telegram-archive.nix
     ./trilium.nix
   ];
 

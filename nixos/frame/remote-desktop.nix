@@ -1,13 +1,11 @@
 {
   config,
-  hostInventory,
-  hostSpecName,
+  hostSpec,
   lib,
   pkgs,
   ...
 }:
 let
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
   inherit (hostSpec) vnc;
   displayHardware = hostSpec.hardware;
   inherit (displayHardware) displays;

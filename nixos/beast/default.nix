@@ -19,7 +19,6 @@
     ./jellyfin-exporter.nix
     ./jellyfin-backup.nix
     ./jellarr.nix
-    ./jellystat.nix
     ./meilisearch.nix
     ./library-dirs.nix
     ./lolek.nix
@@ -37,10 +36,6 @@
   host.observability.client.blackbox.mtls.enable = true;
   # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
   host.observability.lanWan.interface = "enp6s0";
-
-  sops = {
-    defaultSopsFile = ../../secrets/main/beast.yaml;
-  };
 
   networking.resolvconf.enable = true;
 

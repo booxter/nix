@@ -65,28 +65,26 @@ let
       };
     };
 
-  sqliteExtraCopyModule =
-    { ... }:
-    {
-      options = {
-        source = lib.mkOption {
-          type = lib.types.str;
-          description = "Path to an additional file copied into the SQLite backup artifact.";
-        };
+  sqliteExtraCopyModule = {
+    options = {
+      source = lib.mkOption {
+        type = lib.types.str;
+        description = "Path to an additional file copied into the SQLite backup artifact.";
+      };
 
-        mode = lib.mkOption {
-          type = lib.types.strMatching "^0[0-7]{3}$";
-          default = "0640";
-          description = "Install mode used when staging this file.";
-        };
+      mode = lib.mkOption {
+        type = lib.types.strMatching "^0[0-7]{3}$";
+        default = "0640";
+        description = "Install mode used when staging this file.";
+      };
 
-        optional = lib.mkOption {
-          type = lib.types.bool;
-          default = true;
-          description = "Whether a missing source file is ignored.";
-        };
+      optional = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether a missing source file is ignored.";
       };
     };
+  };
 
   sqliteArtifactModule =
     { name, ... }:

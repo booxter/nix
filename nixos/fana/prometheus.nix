@@ -2,7 +2,6 @@
   config,
   lib,
   hostInventory,
-  hostSpecName,
   outputs,
   pkgs,
   ...
@@ -26,7 +25,6 @@ let
     inherit
       config
       hostInventory
-      hostSpecName
       lib
       outputs
       prometheusMtlsTlsConfig
@@ -57,7 +55,6 @@ let
       outputs
       prometheusMtlsTlsConfig
       ;
-    searxngMetricsPasswordFile = config.sops.secrets."searxng/open_metrics_password".path;
   };
   wireguardScrapes = import ./scrapes/wireguard.nix {
     inherit
@@ -122,13 +119,6 @@ in
     mode = "0400";
     restartUnits = [ "prometheus-blackbox-exporter.service" ];
   };
-  sops.secrets."searxng/open_metrics_password" = {
-    owner = "prometheus";
-    group = "prometheus";
-    mode = "0400";
-    restartUnits = [ "prometheus.service" ];
-  };
-
   systemd.services.prometheus = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];

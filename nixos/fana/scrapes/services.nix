@@ -2,26 +2,22 @@
   hostInventory,
   outputs,
   prometheusMtlsTlsConfig,
-  searxngMetricsPasswordFile,
 }:
 let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
-  beastTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.beast;
+  beastTargetHost = hostInventory.nixosHosts.beast.name;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
   homeHostConfig = outputs.nixosConfigurations.home.config;
-  homeTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.home;
+  homeTargetHost = hostInventory.nixosHosts.home.name;
   homeAssistantEndpoint =
     homeHostConfig.host.observability.client.prometheusMtlsEndpoints.home-assistant;
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
-  sabnzbdTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.srvarr;
+  sabnzbdTargetHost = hostInventory.nixosHosts.srvarr.name;
   orgHostConfig = outputs.nixosConfigurations.org.config;
-  orgTargetHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.org;
-  litellmEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.litellm;
-  openWebuiEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints."open-webui";
+  orgTargetHost = hostInventory.nixosHosts.org.name;
   paperlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.paperless;
-  searxngEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.searxng;
   vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
 in
 {
@@ -97,30 +93,6 @@ in
     # TODO: Restore the beast IPMI scrape target when the local IPMI card is
     # back and the exporter is re-enabled on beast.
     {
-      job_name = "litellm";
-      metrics_path = litellmEndpoint.path;
-      scheme = "https";
-      tls_config = prometheusMtlsTlsConfig;
-      static_configs = [
-        {
-          targets = [ "${orgTargetHost}:${toString litellmEndpoint.port}" ];
-          labels.instance = "org";
-        }
-      ];
-    }
-    {
-      job_name = "open-webui";
-      metrics_path = openWebuiEndpoint.path;
-      scheme = "https";
-      tls_config = prometheusMtlsTlsConfig;
-      static_configs = [
-        {
-          targets = [ "${orgTargetHost}:${toString openWebuiEndpoint.port}" ];
-          labels.instance = "org";
-        }
-      ];
-    }
-    {
       job_name = "paperless";
       metrics_path = paperlessEndpoint.path;
       scheme = "https";
@@ -128,22 +100,6 @@ in
       static_configs = [
         {
           targets = [ "${orgTargetHost}:${toString paperlessEndpoint.port}" ];
-          labels.instance = "org";
-        }
-      ];
-    }
-    {
-      job_name = "searxng";
-      metrics_path = searxngEndpoint.path;
-      scheme = "https";
-      tls_config = prometheusMtlsTlsConfig;
-      basic_auth = {
-        username = "prometheus";
-        password_file = searxngMetricsPasswordFile;
-      };
-      static_configs = [
-        {
-          targets = [ "${orgTargetHost}:${toString searxngEndpoint.port}" ];
           labels.instance = "org";
         }
       ];

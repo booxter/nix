@@ -1,5 +1,4 @@
 {
-  pkgs,
   upsName,
   upsDescription,
   upsShutdownDelaySeconds ? 600,
@@ -22,9 +21,11 @@ let
       "/etc/nut/upsslave.pass";
 in
 {
-  imports = [
-    (import ./ups-sched.nix { inherit pkgs upsShutdownDelaySeconds isCriticalNode; })
-  ];
+  host.ups.scheduler = {
+    enable = true;
+    critical = isCriticalNode;
+    shutdownDelaySeconds = upsShutdownDelaySeconds;
+  };
 
   environment.etc."nut/upsmon.pass" = lib.mkIf (upsmonPasswordText != null) {
     text = "${upsmonPasswordText}\n";

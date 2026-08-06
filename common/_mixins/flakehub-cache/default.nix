@@ -3,16 +3,9 @@
   hostInventory,
   inputs,
   lib,
-  pkgs,
-  hostname,
-  hostSpecName ? hostname,
-  secretDomain,
   ...
 }:
 let
-  hostSecretName =
-    if builtins.hasAttr hostSpecName hostInventory.nixosHostSpecsByName then hostSpecName else hostname;
-  hostSecretFile = ../../../secrets/${secretDomain}/${hostSecretName}.yaml;
   flakehubCacheKeys =
     let
       # FlakeHub does not expose a separate machine-readable cache key
@@ -29,8 +22,8 @@ let
     in
     lib.filter (key: key != null) (map keyFromLine (lib.splitString "\n" installerSource));
 in
-lib.mkMerge [
-  {
+{
+  config = lib.mkIf (!config.host.isWork) {
     nix.settings = {
       netrc-file = config.sops.templates."flakehub-netrc".path;
       extra-substituters = [ hostInventory.site.nixCaches.flakehub.url ];
@@ -38,16 +31,13 @@ lib.mkMerge [
     };
 
     sops = {
-      defaultSopsFile = hostSecretFile;
-    }
-    // {
       secrets = {
         "flakehub/token" = { };
       };
       templates."flakehub-netrc" = {
         owner = "root";
         # macOS names gid 0 "wheel"; there is no root group.
-        group = if pkgs.stdenv.hostPlatform.isDarwin then "wheel" else "root";
+        group = if config.host.isDarwin then "wheel" else "root";
         mode = "0400";
         content = ''
           machine flakehub.com login flakehub password ${config.sops.placeholder."flakehub/token"}
@@ -56,5 +46,5 @@ lib.mkMerge [
         '';
       };
     };
-  }
-]
+  };
+}

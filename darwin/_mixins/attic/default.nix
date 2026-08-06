@@ -8,8 +8,8 @@ let
   rootDir = "/private/var/root";
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
 in
-lib.mkMerge [
-  {
+{
+  config = lib.mkIf (!config.host.isWork) {
     launchd.daemons.attic-watch-store = {
       serviceConfig = {
         ProgramArguments = [
@@ -39,5 +39,5 @@ lib.mkMerge [
         config.sops.templates."attic-client-config.toml".path
       } "${atticConfigPath}"
     '';
-  }
-]
+  };
+}

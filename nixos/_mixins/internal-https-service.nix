@@ -37,8 +37,8 @@ let
     }
   ];
   # TLS and optional client-cert verification common to every vhost surface for
-  # a service. Example: `internal-https-search`, `search.ihar.dev`, and
-  # `internal-https-search-probe` reuse the same certificate and mTLS policy.
+  # a service. Its main vhost and probe listener reuse the same certificate
+  # and mTLS policy.
   mkTlsVhost = serviceName: service: port: {
     extraConfig = lib.optionalString service.mtls.enable ''
       ssl_client_certificate ${service.mtls.trustedCaCertificate};
@@ -49,8 +49,8 @@ let
     sslCertificateKey = config.sops.secrets."${secretAttrName serviceName}-server-key".path;
     sslTrustedCertificate = internalPkiRootCaPath;
   };
-  # The normal application proxy location for a service. Example: Search maps
-  # `/` to SearXNG, while RomM maps `/api` to its API upstream.
+  # The normal application proxy location for a service. Some map `/`, while
+  # RomM maps `/api` to its API upstream.
   mkServiceLocations = service: {
     ${service.path} = {
       proxyPass = service.upstream;
@@ -61,8 +61,8 @@ let
   };
   # Builds a normal service surface on the service port. It is parameterized so
   # both the canonical internal host and public sibling hosts share one shape.
-  # Examples: `search.home.arpa` and `search.ihar.dev` both proxy to SearXNG on
-  # :443, but they are separate nginx vhosts.
+  # Canonical internal hosts and public sibling hosts use separate nginx
+  # vhosts even when both proxy to the same upstream on :443.
   mkProxyVhost =
     {
       serviceName,

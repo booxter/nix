@@ -1,12 +1,8 @@
 {
-  hostInventory,
-  hostSpecName,
+  hostSpec,
   lib,
   ...
 }:
-let
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostSpecName};
-in
 {
   nix.gc.dates = "*-*-* 03:15:00";
   nix.optimise.dates = [ "*-*-* 04:15:00" ];

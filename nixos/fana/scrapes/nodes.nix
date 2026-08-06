@@ -1,22 +1,19 @@
 {
   config,
   hostInventory,
-  hostSpecName,
   lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
-  nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
+  hostname = config.networking.hostName;
+  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
   isVirtualNodeName =
     name:
-    builtins.hasAttr name hostInventory.nixosHostSpecsByName
-    && hostInventory.isNixosVM hostInventory.nixosHostSpecsByName.${name};
+    builtins.hasAttr name hostInventory.nixosHosts && (hostInventory.nixosHosts.${name}.isVM or false);
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
   scrapeExpectationForHostConfig =
     hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";
-  targetHostForNixosName =
-    name: hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.${name};
   mkRemoteNixosNodeTargetConfig =
     name:
     let
@@ -31,7 +28,7 @@ let
         instance = name;
         scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
-      targets = [ "${targetHostForNixosName name}:9100" ];
+      targets = [ "${name}:9100" ];
     };
   nixosNodeExporterTargetNames = builtins.filter (
     name:
@@ -60,7 +57,7 @@ let
         instance = name;
         scrape_expectation = scrapeExpectationForHostConfig hostConfig;
       };
-      targets = [ "${hostConfig.host.dnsName}:9100" ];
+      targets = [ "${hostConfig.networking.hostName}:9100" ];
     };
   darwinNodeExporterTargetNames = builtins.filter (
     name:
@@ -99,9 +96,9 @@ in
           labels = {
             host_network_charts = "true";
             host_network_source = "node";
-            host_class = hostClassForName hostSpecName;
-            host_virtual = lib.boolToString (isVirtualNodeName hostSpecName);
-            instance = hostSpecName;
+            host_class = hostClassForName hostname;
+            host_virtual = lib.boolToString (isVirtualNodeName hostname);
+            instance = hostname;
             scrape_expectation = scrapeExpectationForHostConfig config;
           };
         }

@@ -1,6 +1,5 @@
 {
   config,
-  isDesktop,
   lib,
   ...
 }:
@@ -40,7 +39,7 @@ in
 
                 commonName = lib.mkOption {
                   type = str;
-                  default = "${name}.${config.host.dnsName}";
+                  default = "${name}.${config.networking.hostName}";
                   description = "Leaf certificate common name to issue for this client identity.";
                 };
 
@@ -65,7 +64,7 @@ in
         nodeExporter.mtls.enable = lib.mkDefault (!config.host.isWork);
       };
 
-      host.observability.lanWan.enable = lib.mkDefault isDesktop;
+      host.observability.lanWan.enable = lib.mkDefault config.host.isDesktop;
       host.observability.thermal.enable = lib.mkDefault (!config.host.isWork);
     }
     (lib.mkIf cfg.enable (

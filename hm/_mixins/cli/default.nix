@@ -1,0 +1,182 @@
+{
+  config,
+  lib,
+  pkgs,
+  osConfig,
+  ...
+}:
+let
+  inherit (osConfig.host) isDarwin isWork;
+  homeManagerPkgs = import ../../pkgs pkgs;
+  cliPkgs = import ./pkgs { inherit pkgs; };
+  nr = cliPkgs.nr.override {
+    builders = lib.concatStringsSep " ; " osConfig.host.nixpkgsReview.builders;
+  };
+in
+{
+  programs.bash.enable = true;
+
+  home.shellAliases = {
+    # Beautify ls output.
+    ll = "ls --hyperlink=auto --color=auto -Fal";
+    ls = "ls --hyperlink=auto --color=auto -F";
+
+    view = "vim -R";
+
+    # enable hyperlinks in kitty
+    rg = "rg --hyperlink-format=kitty";
+
+    # cat images in kitty
+    icat = "kitten icat";
+
+    # eza
+    q = "eza";
+    qq = "eza -l";
+  };
+
+  programs.zsh = {
+    autosuggestion = {
+      enable = true;
+      strategy = [
+        "match_prev_cmd"
+        "completion"
+      ];
+    };
+
+    syntaxHighlighting.enable = true;
+
+    initContent = ''
+      [ -f /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
+
+      autoload -U compinit
+      ZSH_COMPDUMP="${config.xdg.cacheHome}/zsh/zcompdump-$ZSH_VERSION"
+      mkdir -p "$(dirname "$ZSH_COMPDUMP")"
+      if [[ -f "$ZSH_COMPDUMP" ]]; then
+        compinit -d "$ZSH_COMPDUMP" -C
+      else
+        compinit -d "$ZSH_COMPDUMP"
+      fi
+    '';
+
+    envExtra = ''
+      ${lib.optionalString isDarwin ''
+        # Repair shells that inherit the Nix initialization guards without the
+        # corresponding profile paths, such as Terminal launched by Codex.
+        if [[ ":$PATH:" != *":/run/current-system/sw/bin:"* ]]; then
+          export PATH="$HOME/.priv-bin:$HOME/.nix-profile/bin:/etc/profiles/per-user/$USER/bin:/run/current-system/sw/bin:/nix/var/nix/profiles/default/bin:/usr/local/bin:/usr/sbin:/sbin:$PATH"
+        fi
+      ''}
+
+      # Reinitialize SSH_AUTH_SOCK in tmux on reconnect
+      # from: @tom-wiley-cotton/nix-config
+      if [ -n "$TMUX" ]; then
+        function refresh {
+          export $(tmux show-environment | grep "^SSH_AUTH_SOCK") > /dev/null
+        }
+      else
+        function refresh { }
+      fi
+
+      function preexec {
+         refresh
+      }
+    '';
+  };
+
+  # eza, ls alternative (`q` and `qq` aliases set for shell)
+  programs.eza = {
+    enable = true;
+    git = true;
+    icons = "auto";
+    extraOptions = [
+      "--group-directories-first"
+      "--header"
+      "--hyperlink"
+      "--follow-symlinks"
+    ];
+  };
+
+  programs.jq.enable = true;
+  programs.less.enable = true;
+
+  # cli password manager
+  programs.password-store = {
+    enable = true;
+    settings = {
+      # Restore pass location to what was before https://github.com/nix-community/home-manager/pull/7833
+      PASSWORD_STORE_DIR = "${config.xdg.dataHome}/password-store";
+    };
+  };
+
+  # starship prompt
+  programs.starship = {
+    enable = true;
+    enableZshIntegration = true;
+    settings = fromTOML (builtins.readFile ./starship.toml);
+  };
+
+  home.packages =
+    with pkgs;
+    [
+      (ripgrep.override { withPCRE2 = true; })
+      ack
+      act
+      cliPkgs.attention-inbox
+      bc
+      curl
+      delve # go debugger
+      devenv
+      fd
+      fzf
+      cliPkgs.gh-restart-failed-jobs
+      gnupg
+      go
+      hydra-check
+      (lima.override { withAdditionalGuestAgents = true; })
+      mkpasswd
+      (homeManagerPkgs.page.override { neovim = config.programs.nixvim.build.package; })
+      nh
+      nix-init
+      nix-search-cli
+      nix-tree
+      nr
+      nurl
+      openssl
+      pre-commit
+      wget
+      yq-go
+      yubikey-manager
+      zstd
+
+      # python
+      python313
+    ]
+    ++ lib.optionals isDarwin [
+      container
+    ]
+    ++ lib.optionals (!isWork) [
+      age
+      age-plugin-se
+      cliPkgs.sync-repo
+      ramalama
+      sops
+    ];
+
+  home.sessionVariables = {
+    PAGER = "page -WO -q 90000";
+    MANPAGER = "page -t man";
+  };
+
+  home.sessionPath = lib.optionals (!isWork) [
+    "$HOME/.priv-bin"
+  ];
+
+  home.file = {
+    # TODO: use native readline module for inputrc
+    ".inputrc".source = ./inputrc;
+  };
+
+  home.activation.clearZshCompdump = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    rm -f "${config.xdg.cacheHome}/zsh/zcompdump-"*
+  '';
+}

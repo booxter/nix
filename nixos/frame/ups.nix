@@ -1,6 +1,6 @@
 { pkgs, hostInventory, ... }:
 let
-  frameSpec = hostInventory.nixosHostSpecsByName.frame;
+  frameSpec = hostInventory.nixosHosts.frame;
 in
 {
   imports = [

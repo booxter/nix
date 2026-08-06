@@ -4,7 +4,7 @@
   prometheusMtlsTlsConfig,
 }:
 let
-  nixosConfigNames = map hostInventory.toNixosConfigName hostInventory.nixosHostSpecs;
+  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
@@ -12,8 +12,6 @@ let
     && (outputs.nixosConfigurations.${name}.config.host.proxmox.prometheusExporter.enable or false)
   ) nixosConfigNames;
   proxmoxClusterScrapeNodeName = "prx1-lab";
-  targetHostForNixosName =
-    name: hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.${name};
   mkProxmoxPveTargetConfig =
     name:
     let
@@ -26,7 +24,7 @@ let
         proxmox_node = hostConfig.networking.hostName;
         pve_target = hostConfig.host.proxmox.apiCertificate.serverName;
       };
-      targets = [ "${targetHostForNixosName name}:${toString endpoint.port}" ];
+      targets = [ "${name}:${toString endpoint.port}" ];
     };
   proxmoxPveTargetConfigs = map mkProxmoxPveTargetConfig proxmoxLabNodeNames;
   proxmoxClusterTargetConfigs = [ (mkProxmoxPveTargetConfig proxmoxClusterScrapeNodeName) ];

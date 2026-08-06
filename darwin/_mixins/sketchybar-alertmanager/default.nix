@@ -1,17 +1,15 @@
 {
   config,
   hostInventory,
-  isDesktop,
-  isWork,
   lib,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   clientName = "sketchybar-alertmanager";
   secretAttrName = "internal-https-client-${clientName}";
   lanDomain = hostInventory.site.lan.domain;
-  enable = isDesktop && !isWork;
+  enable = config.host.isDesktop && !config.host.isWork;
 in
 {
   host.internalHttps.mtlsClients.${clientName} = {

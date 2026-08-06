@@ -1,13 +1,11 @@
 {
   config,
-  hostInventory,
-  hostname,
+  hostSpec,
   inputs,
   pkgs,
   ...
 }:
 let
-  hostSpec = hostInventory.nixosHostSpecsByName.${hostname};
   lolekMetricsInternalPort = 19568;
   lolekMetricsMtlsPort = 9568;
 in

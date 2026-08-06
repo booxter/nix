@@ -9,7 +9,6 @@ This repo provides flake apps and scripts as the primary interfaces. The
 # Host builds
 make nixos WHAT=frame
 make darwin WHAT=mair
-make nixos WHAT=beast REMOTE=false
 
 # Local VMs
 nix run .#vm -- --help
@@ -93,11 +92,8 @@ nix run .#sops-copy -- mair prx1-lab flakehub
 Run `sops-update` when a host secret should receive missing template keys.
 `sops-edit` only opens the selected secret for editing.
 
-Backup and restore procedures are documented in [common/backup.md](common/backup.md).
 `srvarr`'s adaptive upload policy and tracker prioritization are documented in
 [nixos/srvarr/upload-policy.md](nixos/srvarr/upload-policy.md).
-Fleet service limits and workload classes are documented in
-[docs/resource-control.md](docs/resource-control.md).
 
 ## Tests
 

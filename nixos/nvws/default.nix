@@ -1,9 +1,14 @@
-{ username, ... }:
+{ config, ... }:
+let
+  username = config.host.username;
+in
 {
   imports = [
     (import ../disko { })
     ./ups.nix
   ];
+
+  host.isProxmox = true;
 
   # Work machines do not use sops-managed login passwords.
   users.users = {

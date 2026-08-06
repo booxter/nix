@@ -2,11 +2,10 @@
   config,
   lib,
   pkgs,
-  username,
-  hostname,
   ...
 }:
 let
+  username = config.host.username;
   hmConfig = config.home-manager.users.${username};
   codexConfig = hmConfig.programs.codex;
   codexConfigEnabled =
@@ -25,7 +24,6 @@ let
     // lib.optionalAttrs mcps.enabled mcps.settings
   );
   generatedCodexConfig = tomlFormat.generate "codex-system-config" effectiveCodexSettings;
-  hostSecretFile = ../../../secrets + "/${config.host.secretDomain}/${hostname}.yaml";
 in
 {
   options.host.codex.mcp = mcps.options;
@@ -39,7 +37,6 @@ in
     };
 
     sops = lib.mkIf mcps.enabled {
-      defaultSopsFile = hostSecretFile;
       secrets = mcps.secrets;
       templates."codex-config.toml" = {
         owner = username;

@@ -14,8 +14,8 @@ let
     "default"
   ];
 in
-lib.mkMerge [
-  {
+{
+  config = lib.mkIf (!config.host.isWork) {
     systemd.services.attic-watch-store = {
       description = "Watch the Nix store and push new paths to Attic";
       wantedBy = [ "multi-user.target" ];
@@ -36,5 +36,5 @@ lib.mkMerge [
         config.sops.templates."attic-client-config.toml".path
       } "${atticConfigPath}"
     '';
-  }
-]
+  };
+}

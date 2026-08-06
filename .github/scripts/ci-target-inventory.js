@@ -1,6 +1,6 @@
 "use strict";
 
-const inventory = require("../../ci-target-inventory.json");
+const inventory = require("../../ci/ci-target-inventory.json");
 
 function nixBuildCmd(attr) {
   return `nix build .#${attr} -L --show-trace`;

@@ -1,14 +1,13 @@
 {
   config,
-  hostname,
   hostInventory,
+  hostSpec,
   lib,
   pkgs,
   ...
 }:
 let
   cfg = config.host.observability.lanWan;
-  hostSpec = hostInventory.darwinHosts.${hostname};
   nodeCfg = config.services.prometheus.exporters.node;
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
   textfilePath = "${textfileDir}/lan-wan.prom";

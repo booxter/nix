@@ -19,8 +19,8 @@ to converge the configured site.
 
 The data path is:
 
-1. Fleet facts are defined in [inventory.nix](../../lib/inventory.nix).
-2. [unifi-sync-env.nix](../../lib/unifi-sync-env.nix) renders those facts into
+1. Fleet facts are defined in [inventory/default.nix](../../lib/inventory/default.nix).
+2. [unifi-sync-env.nix](./unifi-sync-env.nix) renders those facts into
    the environment consumed by the service.
 3. The [unifi-sync module](../_mixins/unifi-sync/default.nix) defines the
    service and timer, while [unifi-sync.nix](./unifi-sync.nix) supplies the

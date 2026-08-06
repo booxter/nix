@@ -3,11 +3,11 @@
   lib,
   pkgs,
   hostInventory,
-  upsShutdownDelaySeconds,
   ...
 }:
 let
-  frameSpec = hostInventory.nixosHostSpecsByName.frame;
+  upsShutdownDelaySeconds = 900;
+  frameSpec = hostInventory.nixosHosts.frame;
   monitorName = frameSpec.name;
   monitorPasswordSecret = "nut/monitors/${monitorName}/password";
 in

@@ -9,7 +9,7 @@
 let
   internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
   unifiSyncCfg = config.services.unifi-sync;
-  unifiSyncEnv = import ../../lib/unifi-sync-env.nix { inherit hostInventory; };
+  unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wgHomeExporterPort = 9586;

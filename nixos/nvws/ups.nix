@@ -1,6 +1,6 @@
 { pkgs, hostInventory, ... }:
 let
-  nvwsSpec = hostInventory.nixosHostSpecsByName.nvws;
+  nvwsSpec = hostInventory.nixosHosts.nvws;
 in
 {
   # Work UPS credentials intentionally stay literal.

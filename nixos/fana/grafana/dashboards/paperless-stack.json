@@ -105,80 +105,6 @@
                 "0": {
                   "color": "red",
                   "index": 0,
-                  "text": "Down"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "Up"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 4,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "max(searchless_metrics_collection_success{job=\"node-mtls\",instance=\"org\"})",
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Searchless Metrics",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
                   "text": "Problem"
                 },
                 "1": {
@@ -247,80 +173,6 @@
       "datasource": "Prometheus",
       "fieldConfig": {
         "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "Problem"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "OK"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 12,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "min({__name__=~\"searchless_metrics_collection_success|searchless_health_success|searchless_test_connection_success|searchless_sync_status_success|searchless_paperless_connected|searchless_vector_store_initialized\",job=\"node-mtls\",instance=\"org\"})",
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Searchless Health",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -366,57 +218,6 @@
         }
       ],
       "title": "Documents",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 4,
-        "x": 20,
-        "y": 0
-      },
-      "id": 6,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "searchless_chroma_chunks{job=\"node-mtls\",instance=\"org\"}",
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Chroma Chunks",
       "type": "stat"
     },
     {
@@ -571,87 +372,6 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "Problem"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "OK"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 16,
-        "y": 4
-      },
-      "id": 9,
-      "options": {
-        "displayMode": "basic",
-        "maxVizHeight": 300,
-        "minVizHeight": 16,
-        "minVizWidth": 8,
-        "namePlacement": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showUnfilled": false,
-        "sizing": "auto",
-        "valueMode": "color"
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "label_replace(searchless_health_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"health\", \"__name__\", \".*\") or label_replace(searchless_metrics_collection_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"metrics\", \"__name__\", \".*\") or label_replace(searchless_paperless_connected{job=\"node-mtls\",instance=\"org\"}, \"component\", \"paperless api\", \"__name__\", \".*\") or label_replace(searchless_sync_status_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"sync\", \"__name__\", \".*\") or label_replace(searchless_test_connection_success{job=\"node-mtls\",instance=\"org\"}, \"component\", \"test connection\", \"__name__\", \".*\") or label_replace(searchless_vector_store_initialized{job=\"node-mtls\",instance=\"org\"}, \"component\", \"vector store\", \"__name__\", \".*\")",
-          "legendFormat": "{{component}}",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "Searchless Components",
-      "type": "bargauge"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
             "mode": "palette-classic"
           },
           "custom": {
@@ -728,25 +448,9 @@
           "legendFormat": "paperless documents",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "searchless_paperless_documents{job=\"node-mtls\",instance=\"org\"}",
-          "legendFormat": "searchless visible documents",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "searchless_chroma_chunks{job=\"node-mtls\",instance=\"org\"}",
-          "legendFormat": "chroma chunks",
-          "range": true,
-          "refId": "C"
         }
       ],
-      "title": "Documents And Embeddings",
+      "title": "Documents Over Time",
       "type": "timeseries"
     },
     {
@@ -1028,7 +732,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "label_replace(paperless_statistics_tag_count{job=\"paperless\"}, \"item\", \"tags\", \"__name__\", \".*\") or label_replace(paperless_statistics_correspondent_count{job=\"paperless\"}, \"item\", \"correspondents\", \"__name__\", \".*\") or label_replace(paperless_statistics_document_type_count{job=\"paperless\"}, \"item\", \"document types\", \"__name__\", \".*\") or label_replace(paperless_statistics_storage_path_count{job=\"paperless\"}, \"item\", \"storage paths\", \"__name__\", \".*\") or label_replace(searchless_bulk_sync_limit{job=\"node-mtls\",instance=\"org\"}, \"item\", \"searchless bulk sync limit\", \"__name__\", \".*\")",
+          "expr": "label_replace(paperless_statistics_tag_count{job=\"paperless\"}, \"item\", \"tags\", \"__name__\", \".*\") or label_replace(paperless_statistics_correspondent_count{job=\"paperless\"}, \"item\", \"correspondents\", \"__name__\", \".*\") or label_replace(paperless_statistics_document_type_count{job=\"paperless\"}, \"item\", \"document types\", \"__name__\", \".*\") or label_replace(paperless_statistics_storage_path_count{job=\"paperless\"}, \"item\", \"storage paths\", \"__name__\", \".*\")",
           "format": "table",
           "instant": true,
           "range": false,
@@ -1212,8 +916,7 @@
   "tags": [
     "org",
     "paperless",
-    "paperless-gpt",
-    "searchless"
+    "paperless-gpt"
   ],
   "templating": {
     "list": []

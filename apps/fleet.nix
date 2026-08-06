@@ -3,53 +3,43 @@
   username ? "ihrachyshka",
 }:
 let
-  mkApp = program: description: {
-    type = "app";
-    inherit program;
-    meta = { inherit description; };
-  };
-  hostInventory = import ../lib/inventory.nix {
+  appSpec = import ./app-spec.nix;
+  hostInventory = import ../lib/inventory {
     inherit username;
     lib = pkgs.lib;
   };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
-  wireguardGatewaySshHost = hostInventory.toNixosShortDnsName hostInventory.nixosHostSpecsByName.gw;
-  appPackages = import ./default.nix pkgs;
+  wireguardGatewaySshHost = wgHome.gateway.host;
+  appPackages = import ./packages.nix pkgs;
 
   fleetInventory = {
     aliases =
       builtins.listToAttrs (
         map (spec: {
-          name = hostInventory.toNixosConfigName spec;
-          value = hostInventory.toNixosConfigName spec;
+          inherit (spec) name;
+          value = spec.name;
         }) hostInventory.nixosHostSpecs
       )
-      // pkgs.lib.foldlAttrs (
-        aliases: name: config:
-        let
-          hostname = config.hostname or name;
-        in
-        aliases // { ${name} = name; } // pkgs.lib.optionalAttrs (hostname != name) { ${hostname} = name; }
-      ) { } hostInventory.darwinHosts;
-    darwin = pkgs.lib.mapAttrs (name: config: {
-      displayName = name;
-      isWork = config.isWork or false;
-      platform = config.platform;
-      runtimeHost = config.hostname or name;
-      sshHost = config.hostname or name;
+      // pkgs.lib.mapAttrs (name: _: name) hostInventory.darwinHosts;
+    darwin = pkgs.lib.mapAttrs (_: spec: {
+      displayName = spec.name;
+      isWork = spec.isWork or false;
+      platform = spec.platform;
+      runtimeHost = spec.name;
+      sshHost = spec.name;
     }) hostInventory.darwinHosts;
     lanDnsServer = lan.gateway.address;
     lanDomain = lan.domain;
     nixos = builtins.listToAttrs (
       map (spec: {
-        name = hostInventory.toNixosConfigName spec;
+        inherit (spec) name;
         value = {
-          displayName = hostInventory.toNixosConfigName spec;
+          displayName = spec.name;
           isWork = spec.isWork or false;
           platform = spec.platform or "x86_64-linux";
-          runtimeHost = hostInventory.toNixosRuntimeHostName spec;
-          sshHost = hostInventory.toNixosShortDnsName spec;
+          runtimeHost = spec.name;
+          sshHost = spec.name;
         };
       }) hostInventory.nixosHostSpecs
     );
@@ -70,8 +60,8 @@ let
   };
   vmTargets = builtins.listToAttrs (
     map (spec: {
-      name = spec.name;
-      value = hostInventory.toNixosConfigName spec;
+      inherit (spec) name;
+      value = spec.name;
     }) hostInventory.nixosHostSpecs
   );
   fleetTools = pkgs.callPackage ./fleet-tools {
@@ -116,8 +106,6 @@ let
 
   diffConfig = fleetTools;
 
-  getLocalBuilders = fleetTools;
-
   runCheckTarget = fleetTools;
 
   hbaFlash = pkgs.callPackage ./hba-flash {
@@ -138,7 +126,6 @@ in
     inherit deploy vm;
     diff = diffConfig;
     fleet-tools = fleetTools;
-    get-local-builders = getLocalBuilders;
     run-check-target = runCheckTarget;
     get-hosts = getHosts;
     issue-observability-cert = issueObservabilityCertPackage;
@@ -152,33 +139,31 @@ in
     hba-flash = hbaFlash;
     wg-home-client-config = wgHomeClientConfig;
   };
-  apps = {
-    deploy = mkApp "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
-    vm = mkApp "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
-    diff = mkApp "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
-    "get-local-builders" =
-      mkApp "${getLocalBuilders}/bin/get-local-builders" "Read local Nix builders from nix.conf or nix.machines.";
+  appSpecs = {
+    deploy = appSpec "${deploy}/bin/deploy" "Apply fleet operations: host deploys (default) or disk provisioning (--disko).";
+    vm = appSpec "${vm}/bin/vm" "Run a local NixOS VM for a nixosConfigurations host.";
+    diff = appSpec "${diffConfig}/bin/diff" "Build and diff a NixOS or nix-darwin host configuration between two Git revisions.";
     "run-check-target" =
-      mkApp "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
+      appSpec "${runCheckTarget}/bin/run-check-target" "Build repository checks by name or as a complete set.";
     "issue-observability-cert" =
-      mkApp "${issueObservabilityCertPackage}/bin/issue-observability-cert" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
+      appSpec "${issueObservabilityCertPackage}/bin/issue-observability-cert" "Issue internal PKI certs for Prometheus mTLS scrape endpoints and store them in host sops secrets.";
     "issue-internal-service-cert" =
-      mkApp "${issueInternalServiceCertPackage}/bin/issue-internal-service-cert" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
+      appSpec "${issueInternalServiceCertPackage}/bin/issue-internal-service-cert" "Issue internal PKI certs for internal HTTPS services and store them in host sops secrets.";
     "issue-proxmox-exporter-token" =
-      mkApp "${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
+      appSpec "${issueProxmoxExporterTokenPackage}/bin/issue-proxmox-exporter-token" "Issue the Proxmox VE prometheus-pve-exporter API token and store it in host sops secrets.";
     "seerr-request-storage" =
-      mkApp "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
+      appSpec "${seerrRequestStoragePackage}/bin/seerr-request-storage" "Report storage consumed by Radarr and Sonarr files attributable to Seerr requests.";
     "seerr-update-user-tags" =
-      mkApp "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
+      appSpec "${seerrUpdateUserTagsPackage}/bin/seerr-update-user-tags" "Backfill Seerr requester tags onto existing Radarr and Sonarr items.";
     "pki-rotation" =
-      mkApp "${pkiRotationPackage}/bin/pki-rotation" "Inspect repo-managed internal PKI certificates and export rotation status.";
+      appSpec "${pkiRotationPackage}/bin/pki-rotation" "Inspect repo-managed internal PKI certificates and export rotation status.";
     "reset-oidc" =
-      mkApp "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
+      appSpec "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
     "join-media-parts" =
-      mkApp "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
+      appSpec "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
     "hba-flash" =
-      mkApp "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
+      appSpec "${hbaFlash}/bin/hba-flash" "Preflight and flash the Broadcom/LSI HBA on beast using pinned Broadcom bundles by default.";
     "wg-home-client-config" =
-      mkApp "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
+      appSpec "${wgHomeClientConfig}/bin/wg-home-client-config" "Generate a home WireGuard client config from fleet topology.";
   };
 }

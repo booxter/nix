@@ -1,12 +1,12 @@
 {
   config,
-  hostSpecName,
   lib,
   pkgs,
   utils,
   ...
 }:
 let
+  hostname = config.networking.hostName;
   catalog = import ./catalog.nix;
   monitoringPackage = pkgs.callPackage ./package.nix { };
   alertmanagerPort = 9093;
@@ -42,7 +42,7 @@ in
         static_configs = [
           {
             targets = [ "127.0.0.1:${toString alertmanagerPort}" ];
-            labels.instance = hostSpecName;
+            labels.instance = hostname;
           }
         ];
       }
@@ -51,7 +51,7 @@ in
         static_configs = [
           {
             targets = [ "127.0.0.1:${toString grafanaPort}" ];
-            labels.instance = hostSpecName;
+            labels.instance = hostname;
           }
         ];
       }
@@ -71,7 +71,6 @@ in
     enable = true;
     upstream = "http://127.0.0.1:${toString alertmanagerPort}";
     path = "= /-/ready";
-    localAliases = [ ];
     proxyWebsockets = false;
     mtls.enable = true;
     locationExtraConfig = ''

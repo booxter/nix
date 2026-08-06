@@ -31,333 +31,6 @@
                 "0": {
                   "color": "red",
                   "index": 0,
-                  "text": "Fail"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "OK"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 0,
-        "y": 0
-      },
-      "id": 1,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value_and_name",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "host_observability_oidc_synthetic_probe_ok{job=\"node-mtls\",instance=\"pki\"}",
-          "instant": true,
-          "legendFormat": "{{probe}}",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "OIDC Test User Result",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
-                  "text": "Fail"
-                },
-                "1": {
-                  "color": "green",
-                  "index": 1,
-                  "text": "OK"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "max": 1,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "green",
-                "value": 1
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 8,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value_and_name",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "min by (probe) (host_observability_oidc_synthetic_probe_phase_ok{job=\"node-mtls\",instance=\"pki\"})",
-          "instant": true,
-          "legendFormat": "{{probe}} phases",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "OIDC Test User Phases",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 600
-              },
-              {
-                "color": "red",
-                "value": 900
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 4,
-        "w": 8,
-        "x": 16,
-        "y": 0
-      },
-      "id": 3,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value_and_name",
-        "wideLayout": true
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "time() - host_observability_oidc_synthetic_probe_last_success_timestamp_seconds{job=\"node-mtls\",instance=\"pki\"}",
-          "instant": true,
-          "legendFormat": "{{probe}}",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "OIDC Test User Last Success",
-      "type": "stat"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 10
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 0,
-        "y": 4
-      },
-      "id": 4,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "host_observability_oidc_synthetic_probe_duration_seconds{job=\"node-mtls\",instance=\"pki\"}",
-          "legendFormat": "{{probe}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "OIDC Test User Duration",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 300
-              },
-              {
-                "color": "red",
-                "value": 500
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 8,
-        "x": 8,
-        "y": 4
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        }
-      },
-      "targets": [
-        {
-          "datasource": "Prometheus",
-          "editorMode": "code",
-          "expr": "host_observability_oidc_synthetic_probe_http_status_code{job=\"node-mtls\",instance=\"pki\"}",
-          "legendFormat": "{{probe}} / {{phase}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "OIDC Test User HTTP Status",
-      "type": "timeseries"
-    },
-    {
-      "datasource": "Prometheus",
-      "fieldConfig": {
-        "defaults": {
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "red",
-                  "index": 0,
                   "text": "Down"
                 },
                 "1": {
@@ -390,9 +63,9 @@
       },
       "gridPos": {
         "h": 7,
-        "w": 8,
-        "x": 16,
-        "y": 4
+        "w": 24,
+        "x": 0,
+        "y": 0
       },
       "id": 6,
       "options": {
@@ -415,14 +88,14 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "label_replace(node_systemd_unit_state{job=\"node-mtls\",state=\"active\",instance=~\"pki|org|fana\",name=\"kanidm.service\"}, \"unit\", \"kanidm\", \"name\", \".*\") or label_replace(node_systemd_unit_state{job=\"node-mtls\",state=\"active\",instance=~\"pki|org|fana\",name=\"kanidm-oidc-synthetic-probe.timer\"}, \"unit\", \"probe timer\", \"name\", \".*\") or label_replace(node_systemd_unit_state{job=\"node-mtls\",state=\"active\",instance=~\"pki|org|fana\",name=\"oauth2-proxy-paperless-gpt.service\"}, \"unit\", \"paperless proxy\", \"name\", \".*\") or label_replace(node_systemd_unit_state{job=\"node-mtls\",state=\"active\",instance=~\"pki|org|fana\",name=\"oauth2-proxy-search.service\"}, \"unit\", \"search proxy\", \"name\", \".*\") or label_replace(node_systemd_unit_state{job=\"node-mtls\",state=\"active\",instance=~\"pki|org|fana\",name=\"grafana.service\"}, \"unit\", \"grafana\", \"name\", \".*\")",
+          "expr": "label_replace(node_systemd_unit_state{job=\"node-mtls\",state=\"active\",instance=~\"pki|org|fana\",name=\"kanidm.service\"}, \"unit\", \"kanidm\", \"name\", \".*\") or label_replace(node_systemd_unit_state{job=\"node-mtls\",state=\"active\",instance=~\"pki|org|fana\",name=\"oauth2-proxy-paperless-gpt.service\"}, \"unit\", \"paperless proxy\", \"name\", \".*\") or label_replace(node_systemd_unit_state{job=\"node-mtls\",state=\"active\",instance=~\"pki|org|fana\",name=\"grafana.service\"}, \"unit\", \"grafana\", \"name\", \".*\")",
           "instant": true,
           "legendFormat": "{{instance}} / {{unit}}",
           "range": false,
           "refId": "A"
         }
       ],
-      "title": "OIDC Controller Units",
+      "title": "OIDC Service Units",
       "type": "stat"
     },
     {
@@ -469,7 +142,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 7
       },
       "id": 7,
       "options": {
@@ -487,7 +160,7 @@
         {
           "datasource": "Prometheus",
           "editorMode": "code",
-          "expr": "probe_success{job=\"blackbox-arr\",service=~\"id|search|grafana\"}",
+          "expr": "probe_success{job=\"blackbox-arr\",service=~\"id|grafana\"}",
           "legendFormat": "{{service_title}} / {{source}}",
           "range": true,
           "refId": "A"

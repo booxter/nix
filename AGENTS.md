@@ -39,8 +39,8 @@ Scope: whole repository.
 - Host config: `nixos/<host>/`, `darwin/<host>/`; host-local packages:
   `<host>/pkgs/`.
 - Shared modules: `common/_mixins/`, `nixos/_mixins/`, `darwin/_mixins/`,
-  `home-manager/_mixins/`.
-- Fleet facts: `lib/inventory.nix`.
+  `hm/_mixins/`.
+- Fleet facts: `lib/inventory/default.nix`.
 - Shared packages: `pkgs/`; checkout-run apps/scripts: `apps/`.
 - Secrets: `secrets/`; checks: `tests/`, `checks.nix`.
 

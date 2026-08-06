@@ -52,7 +52,7 @@ let
     lib.concatMap hostInventory.toInternalHttpsServiceHosts hostInventory.srvarrAdminAppIds
   );
 in
-rec {
+{
   inherit
     authorizationUrl
     baseScopes
@@ -115,57 +115,12 @@ rec {
       scopeMaps."trilium-users" = baseScopes;
     };
 
-    open-webui = mkClient "open-webui" {
-      displayName = "Open WebUI";
-      originUrl = "${serviceUrl "ai"}/oauth/oidc/login/callback";
-      originLanding = "${serviceUrl "ai"}/";
-      scopeMaps."ai-users" = scopeWith [ "open_webui_groups" ];
-      claimMaps = {
-        open_webui_groups.valuesByGroup."paperless-users" = [ "paperless-users" ];
-        open_webui_role.valuesByGroup = {
-          "ai-users" = [ "user" ];
-          "sso-admins" = [ "admin" ];
-        };
-      };
-    };
-
-    search = mkClient "search" {
-      displayName = "Search";
-      originUrl = "${serviceUrl "search"}/oauth2/callback";
-      originLanding = "${serviceUrl "search"}/";
-      scopeMaps = {
-        "ai-users" = scopeWith [ "ai_groups" ];
-        "search-probe-users" = scopeWith [ "ai_groups" ];
-      };
-      claimMaps.ai_groups.valuesByGroup = {
-        "ai-users" = [ "ai-users" ];
-        "search-probe-users" = [ "search-probe-users" ];
-      };
-    };
-
     goo = mkClient "goo" {
       displayName = "Degoog";
       originUrl = "${serviceUrl "goo"}/oauth2/callback";
       originLanding = "${serviceUrl "goo"}/";
-      scopeMaps."ai-users" = scopeWith [ "ai_groups" ];
-      claimMaps.ai_groups.valuesByGroup."ai-users" = [ "ai-users" ];
-    };
-
-    tg = mkClient "tg" {
-      displayName = "Telegram Archive";
-      originUrl = "https://tg.${lan.domain}/oauth2/callback";
-      originLanding = "https://tg.${lan.domain}/";
-      scopeMaps."infra-admins" = scopeWith [ "infra_groups" ];
-      claimMaps.infra_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
-    };
-
-    oidc-synthetic-probe = mkClient "oidc-synthetic-probe" {
-      displayName = "OIDC synthetic probe";
-      public = true;
-      enableLocalhostRedirects = true;
-      originUrl = "http://127.0.0.1:9/oidc-synthetic-probe/callback";
-      originLanding = issuerBaseUrl;
-      scopeMaps."oidc-probe-users" = baseScopes;
+      scopeMaps."degoog-users" = scopeWith [ "degoog_groups" ];
+      claimMaps.degoog_groups.valuesByGroup."degoog-users" = [ "degoog-users" ];
     };
 
     proxmox = mkClient "proxmox" {
@@ -174,14 +129,6 @@ rec {
       originLanding = "https://${proxmoxCanonicalHost}/";
       scopeMaps."infra-admins" = scopeWith [ "infra_groups" ];
       claimMaps.infra_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
-    };
-
-    litellm = mkClient "litellm" {
-      displayName = "LiteLLM";
-      originUrl = "${serviceUrl "llm"}/sso/callback";
-      originLanding = "${serviceUrl "llm"}/ui/";
-      scopeMaps."infra-admins" = scopeWith [ "litellm_groups" ];
-      claimMaps.litellm_groups.valuesByGroup."infra-admins" = [ "infra-admins" ];
     };
 
     paperless = mkClient "paperless" {
@@ -270,14 +217,6 @@ rec {
       };
     };
 
-    jfstat = mkClient "jfstat" {
-      displayName = "Jellystat";
-      originUrl = "https://jfstat.${lan.domain}/oauth2/callback";
-      originLanding = "https://jfstat.${lan.domain}/";
-      scopeMaps."media-admins" = scopeWith [ "media_groups" ];
-      claimMaps.media_groups.valuesByGroup."media-admins" = [ "media-admins" ];
-    };
-
     watchstate = mkClient "watchstate" {
       displayName = "WatchState";
       originUrl = "https://watchstate.${lan.domain}/oauth2/callback";
@@ -308,22 +247,4 @@ rec {
       claimMaps.media_groups.valuesByGroup."media-admins" = [ "media-admins" ];
     };
   };
-
-  kanidmProvisionClients =
-    secretPathFor:
-    lib.mapAttrs (_: client: {
-      inherit (client)
-        allowInsecureClientDisablePkce
-        claimMaps
-        displayName
-        enableLocalhostRedirects
-        enableLegacyCrypto
-        originLanding
-        originUrl
-        preferShortUsername
-        public
-        scopeMaps
-        ;
-      basicSecretFile = if client.public then null else secretPathFor client.clientId;
-    }) clients;
 }

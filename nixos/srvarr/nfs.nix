@@ -66,7 +66,6 @@ in
   ];
 
   # local qemu vms override filesystems
-  # TODO: move this special handling for FS to mkVM?
   fileSystems."${mediaPath}" = media;
   virtualisation.vmVariant.virtualisation.fileSystems."${mediaPath}" = media;
   environment.etc."tmpfiles.d/00-nixos.conf".text = ''

@@ -6,7 +6,7 @@
 }:
 let
   mediaDir = config.host.srvarrPaths.mediaDir;
-  srvarrSpec = hostInventory.nixosHostSpecsByName.srvarr;
+  srvarrSpec = hostInventory.nixosHosts.srvarr;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
   tuning = config.host.srvarrTuning;
@@ -135,8 +135,6 @@ in
 
   host.internalHttps.services.transmission = {
     enable = true;
-    serverName = "tmission.${hostInventory.site.lan.domain}";
-    localAliases = [ "tmission" ];
     upstream = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}";
     recommendedProxySettings = false;
     # Transmission RPC rejects the public LAN hostname, so preserve the

@@ -2,18 +2,18 @@
   config,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
   cfg = config.host.browser.firefox.touchIdPasskeys;
+  username = config.host.username;
 in
 {
   options.host.browser.firefox.touchIdPasskeys.enable = lib.mkEnableOption (
     "Firefox Touch ID/passkey support through the signed upstream app"
   );
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (cfg.enable && !config.host.isWork) {
     home-manager.users.${username} = {
       programs.firefox = {
         # Keep Home Manager managing Firefox profiles, settings, extensions,

@@ -1,13 +1,12 @@
 {
   config,
   inputs,
-  isDesktop,
   lib,
-  username,
   ...
 }:
 let
   cfg = config.host.remoteGui;
+  username = config.host.username;
 in
 {
   options.host.remoteGui = {
@@ -19,11 +18,11 @@ in
     {
       assertions = [
         {
-          assertion = !cfg.x11.enable || isDesktop;
+          assertion = !cfg.x11.enable || config.host.isDesktop;
           message = "host.remoteGui.x11 requires a desktop host";
         }
         {
-          assertion = !cfg.wayland.enable || isDesktop;
+          assertion = !cfg.wayland.enable || config.host.isDesktop;
           message = "host.remoteGui.wayland requires a desktop host";
         }
       ];

@@ -127,8 +127,7 @@ ssh org \
 
 ## Restore
 
-Restore into a staging directory first, following `common/backup.md`. Restore
-only the consistent artifact:
+Restore into a staging directory first. Restore only the consistent artifact:
 
 ```sh
 ssh org "sudo sh -c '

@@ -2,7 +2,10 @@
 let
   pythonPackages = pkgs.python3Packages;
   atomicFileWrites = pythonPackages.callPackage ../../pkgs/atomic-file-writes { };
-  upsClientsByServer = import ../../lib/ups-clients.nix { lib = pkgs.lib; };
+  upsClientsByServer = import ./ups-clients.nix {
+    inherit hostInventory;
+    lib = pkgs.lib;
+  };
   upsClientsByServerFile = pkgs.writeText "ups-clients-by-server.json" (
     builtins.toJSON upsClientsByServer
   );

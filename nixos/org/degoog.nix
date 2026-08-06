@@ -227,8 +227,8 @@ in
     clientId = "goo";
     httpAddress = "http://127.0.0.1:${toString oauth2ProxyPort}";
     cookieName = "_goo_sso";
-    allowedGroups = [ "ai-users" ];
-    groupClaim = "ai_groups";
+    allowedGroups = [ "degoog-users" ];
+    groupClaim = "degoog_groups";
     externalOrigin = degoogService.url;
     whitelistDomains = [ degoogService.publicHost ];
     internalHttpsServiceNames = [ "goo" ];

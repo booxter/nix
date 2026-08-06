@@ -29,15 +29,30 @@ jobs:
         include:
           - os: ubuntu-latest
             system: x86_64-linux
+            extra_conf: |
+              extra-experimental-features = auto-allocate-uids cgroups
+              auto-allocate-uids = true
+            nix_config: system-features = benchmark big-parallel kvm nixos-test uid-range
           - os: macos-26
             system: aarch64-darwin
+            extra_conf: ""
+            nix_config: ""
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 180
+    env:
+      NIX_CONFIG: ${{ matrix.nix_config }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Free disk space
+        if: matrix.system == 'x86_64-linux'
+        uses: ./.github/actions/free-disk-space
+
       - name: Prepare Nix environment
         uses: ./.github/actions/prepare-nix-env
+        with:
+          extra-conf: ${{ matrix.extra_conf }}
 
       - name: Run regular checks
         run: make check
@@ -58,128 +73,3 @@ jobs:
             exit 1
           fi
           echo "All regular checks passed."
-
-  plan-nixos-tests:
-    name: plan NixOS tests
-    runs-on: ubuntu-slim
-    outputs:
-      matrix: ${{ steps.plan.outputs.matrix }}
-      has_tests: ${{ steps.plan.outputs.has_tests }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Compute NixOS test matrix
-        id: plan
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          script: |
-            const planner = require("./.github/scripts/plan-ci-matrix.js");
-            const targetInventory = require("./.github/scripts/ci-target-inventory.js");
-            const nixosTests = targetInventory.inventory.nixosTests;
-            const fullMatrix = {
-              include: targetInventory.toBuildMatrixEntries(nixosTests)
-            };
-            const machinePathMap = targetInventory.buildMachinePathMap(nixosTests, "tests");
-
-            if (context.eventName !== "pull_request") {
-              core.info("Non-PR event, using full NixOS test matrix.");
-              core.setOutput("matrix", JSON.stringify(fullMatrix));
-              core.setOutput("has_tests", "true");
-              return;
-            }
-
-            const result = await planner.planMatrix({
-              context,
-              github,
-              eventName: context.eventName,
-              fullMatrix,
-              machinePathMap,
-              mappingField: "tests",
-              skipWhenDocsOnly: true,
-              skipWhenSelectionEmpty: true,
-              skipWhenOnlyDarwin: true,
-            });
-            core.info(`Changed files (${result.paths.length}): ${result.paths.join(", ")}`);
-            core.info(`Selection files (${result.selectionPaths.length}): ${result.selectionPaths.join(", ")}`);
-            const isHostSpecificMachinePath = (filePath) => {
-              const parts = filePath.split("/");
-              if (parts.length >= 3 && parts[0] === "nixos" && !parts[1].startsWith("_")) {
-                return true;
-              }
-              if (parts.length === 2 && parts[0] === "secrets" && parts[1] !== "_template.yaml") {
-                return true;
-              }
-              return parts.length === 3 && parts[0] === "secrets" && parts[1] === "_templates";
-            };
-            const hasMappedPath = result.selectionPaths.some((filePath) =>
-              machinePathMap.some((entry) => filePath.startsWith(entry.prefix))
-            );
-            const onlyUnmappedHostSpecificMachinePaths =
-              !hasMappedPath &&
-              result.selectionPaths.length > 0 &&
-              result.selectionPaths.every((filePath) =>
-                !machinePathMap.some((entry) => filePath.startsWith(entry.prefix)) &&
-                isHostSpecificMachinePath(filePath)
-              );
-            if (result.docsOnly) {
-              core.info("Docs-only pull request detected, skipping NixOS tests.");
-              core.setOutput("matrix", JSON.stringify({ include: [] }));
-              core.setOutput("has_tests", "false");
-              return;
-            }
-            if (result.ignoredOnly) {
-              core.info("Only selection-neutral files changed, skipping NixOS tests.");
-              core.setOutput("matrix", JSON.stringify({ include: [] }));
-              core.setOutput("has_tests", "false");
-              return;
-            }
-            if (onlyUnmappedHostSpecificMachinePaths) {
-              core.info("Only non-cache host-specific machine paths changed, skipping cache NixOS tests.");
-              core.setOutput("matrix", JSON.stringify({ include: [] }));
-              core.setOutput("has_tests", "false");
-              return;
-            }
-            if (result.scopeReason === "darwin" && result.matrix.include.length === 0) {
-              core.info("Darwin-only pull request detected, skipping NixOS tests.");
-              core.setOutput("matrix", JSON.stringify({ include: [] }));
-              core.setOutput("has_tests", "false");
-              return;
-            }
-            core.info(
-              result.machineSpecific
-                ? `Using machine-specific NixOS test matrix with ${result.matrix.include.length} job(s).`
-                : `Using full NixOS test matrix with ${result.matrix.include.length} job(s).`
-            );
-
-            core.setOutput("matrix", JSON.stringify(result.matrix));
-            core.setOutput("has_tests", result.matrix.include.length > 0 ? "true" : "false");
-
-  check-nixos:
-    if: needs.plan-nixos-tests.outputs.has_tests == 'true'
-    needs:
-      - plan-nixos-tests
-    name: ${{ matrix.name }}
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJson(needs.plan-nixos-tests.outputs.matrix) }}
-    timeout-minutes: 180
-    env:
-      NIX_CONFIG: system-features = benchmark big-parallel kvm nixos-test uid-range
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
-
-      - name: Prepare Nix environment
-        uses: ./.github/actions/prepare-nix-env
-        with:
-          extra-conf: |
-            extra-experimental-features = auto-allocate-uids cgroups
-            auto-allocate-uids = true
-
-      - name: Run NixOS tests
-        run: ${{ matrix.cmd }}

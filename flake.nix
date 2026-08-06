@@ -70,235 +70,61 @@
     let
       inherit (self) outputs;
       username = "ihrachyshka";
-      hostInventory = import ./lib/inventory.nix {
+      hostInventory = import ./lib/inventory {
         inherit username;
         lib = inputs.nixpkgs.lib;
       };
-      helpers = import ./lib {
+      hostSpecialArgs = spec: {
         inherit
-          hostInventory
           inputs
           outputs
-          username
+          hostInventory
           ;
+        hostSpec = spec;
       };
-
-      hostSpecs = hostInventory;
-      inherit (hostSpecs)
-        darwinHosts
-        nixosHostSpecs
-        ;
-
-      hostKindToMkHost = {
-        nixos = helpers.mkNixos;
-        proxmox = helpers.mkProxmox;
-      };
-
-      staticHostModule =
+      mkNixos =
         spec:
-        { lib, ... }:
-        {
-          config.host = lib.optionalAttrs (spec ? dnsName) {
-            dnsName = spec.dnsName;
-          };
+        inputs.nixpkgs.lib.nixosSystem {
+          specialArgs = hostSpecialArgs spec;
+          modules = [ ./nixos ];
         };
-
-      VM =
-        args@{
-          name,
-          stateVersion ? "25.11",
-          ...
-        }:
-        let
-          runtimeHostname = hostInventory.toNixosRuntimeHostName hostInventory.nixosHostSpecsByName.${name};
-        in
-        {
-          "${name}" = helpers.mkVM (
-            args
-            // {
-              inherit stateVersion;
-              hostSpecName = name;
-              hostname = runtimeHostname;
-              platform = "x86_64-linux";
-              virtPlatform = "x86_64-linux";
+      mkDarwin =
+        spec:
+        inputs.nix-darwin.lib.darwinSystem {
+          specialArgs = hostSpecialArgs spec;
+          modules = [ ./darwin ];
+        };
+      perSystem =
+        inputs.nixpkgs.lib.genAttrs
+          [
+            "x86_64-linux"
+            "aarch64-darwin"
+          ]
+          (
+            system:
+            import ./per-system.nix {
+              inherit
+                inputs
+                outputs
+                system
+                username
+                ;
             }
           );
-        };
-
-      BM = args: helpers.mkBM args;
-
-      specToNixosConfigs =
-        spec:
-        let
-          extraModules = inputs.nixpkgs.lib.optionals (spec ? dnsName) [ (staticHostModule spec) ];
-          args = removeAttrs spec [
-            "hostKind"
-            "isVM"
-            "homeManagerInput"
-            "nixpkgsInput"
-            "dnsName"
-          ];
-          inputArgs =
-            (if spec ? homeManagerInput then { homeManagerInput = inputs.${spec.homeManagerInput}; } else { })
-            // (if spec ? nixpkgsInput then { nixpkgsInput = inputs.${spec.nixpkgsInput}; } else { });
-        in
-        if hostInventory.isNixosVM spec then
-          VM (args // { extraModules = (args.extraModules or [ ]) ++ extraModules; })
-        else
-          BM (
-            args
-            // inputArgs
-            // {
-              mkHost = hostKindToMkHost.${spec.hostKind};
-              extraModules = (args.extraModules or [ ]) ++ extraModules;
-            }
-          );
-
-      canonicalNixosConfigurations = builtins.foldl' (
-        acc: spec: acc // specToNixosConfigs spec
-      ) { } nixosHostSpecs;
+      selectPerSystem = outputName: builtins.mapAttrs (_: value: value.${outputName}) perSystem;
 
     in
     {
-      darwinConfigurations = builtins.mapAttrs (
-        name: cfg: helpers.mkDarwin (cfg // { hostSpecName = name; })
-      ) darwinHosts;
+      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) hostInventory.darwinHosts;
 
-      nixosConfigurations = canonicalNixosConfigurations;
+      nixosConfigurations = builtins.mapAttrs (_: mkNixos) hostInventory.nixosHosts;
 
-      checks = import ./checks.nix {
-        inherit
-          helpers
-          inputs
-          outputs
-          ;
-      };
-      nixosTests = import ./nixos-tests.nix { inherit inputs helpers; };
+      apps = selectPerSystem "apps";
+      checks = selectPerSystem "checks";
+      formatter = selectPerSystem "formatter";
 
       overlays = import ./overlays { inherit inputs; };
-      packages = helpers.forAllSystems (
-        system:
-        let
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
-          basePackages = import ./pkgs pkgs;
-          nvPackages = import ./home-manager/_mixins/nv/pkgs { inherit pkgs; };
-          orgPackages = import ./nixos/org/pkgs pkgs;
-          fleet = import ./apps/fleet.nix {
-            inherit pkgs username;
-          };
-          fleetPackages = {
-            inherit (inputs.disko.packages.${system}) disko-install;
-            fleet-tools = fleet.packages.fleet-tools;
-          };
-          updateTargetPackages =
-            pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-              aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
-              inherit (orgPackages)
-                degoog
-                degoog-devinside-extensions
-                degoog-georgvwt-extensions
-                degoog-official-extensions
-                degoog-stackexchange-engine
-                degoog-toolkit-extensions
-                searchless-ngx
-                telegram-archive
-                ;
-              ebook-converter-cli = pkgs.callPackage ./nixos/srvarr/pkgs/ebook-converter-cli { };
-              houndarr = pkgs.callPackage ./nixos/srvarr/pkgs/houndarr { };
-            }
-            // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-              ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
-            }
-            # nix-update runs on GitHub-hosted Linux. Expose this Darwin-only
-            # package there so its fixed-output source can be prefetched without
-            # trying to build an aarch64-darwin fetcher on Linux.
-            // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
-              ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
-            }
-            // {
-              inherit (nvPackages) nico-cli;
-            };
-        in
-        basePackages
-        // fleetPackages
-        // updateTargetPackages
-        // {
-          qemu-host-package = (helpers.mkVmHostPkgs system).qemu;
-        }
-      );
-      apps = helpers.forAllSystems (
-        system:
-        let
-          pkgs = import inputs.nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-            overlays = [
-              outputs.overlays.additions
-              outputs.overlays.modifications
-            ];
-          };
-          sopsApps = import ./apps/sops {
-            sopsTools = pkgs.sops-tools;
-          };
-          packageUpdates = import ./apps/package-updates { inherit pkgs; };
-          fleet = import ./apps/fleet.nix {
-            inherit pkgs username;
-          };
-          darwinPackages = import ./darwin/pkgs pkgs;
-          mkApp = program: description: {
-            type = "app";
-            inherit program;
-            meta = { inherit description; };
-          };
-          get-ff-cookie = pkgs.get-ff-cookie;
-          cookieApps = {
-            get-ff-cookie = mkApp "${get-ff-cookie}/bin/get-ff-cookie" "Export Firefox cookies as Netscape cookies.txt on stdout.";
-          };
-          repositoryApps = {
-            flake-input-update-summary = mkApp "${pkgs.flake-input-update-summary}/bin/flake-input-update-summary" "Generate a revision-linked flake input update summary.";
-          };
-          darwinApps = pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
-            lan-wan-bpf = mkApp "${darwinPackages.darwin-lan-wan-bpf}/bin/darwin-lan-wan-bpf" "Capture Darwin interface traffic and emit LAN/WAN byte counters using BPF.";
-          };
-          proxmox = import ./apps/proxmox.nix {
-            inherit inputs system;
-          };
-        in
-        sopsApps
-        // packageUpdates.apps
-        // fleet.apps
-        // proxmox.apps
-        // cookieApps
-        // repositoryApps
-        // darwinApps
-      );
-      formatter = helpers.forAllSystems (
-        system:
-        let
-          pkgs = inputs.nixpkgs.legacyPackages.${system};
-        in
-        pkgs.writeShellApplication {
-          name = "formatter";
-          runtimeInputs = with pkgs; [
-            coreutils
-            deadnix
-            nixfmt-tree
-            shellcheck
-            ruff
-            nodejs
-            # TODO: reenable when https://github.com/NixOS/nixpkgs/pull/540892 reaches nixos-26.05
-            #prettier
-            eslint
-            jq
-            mbake
-            actionlint
-            markdownlint-cli2
-            git
-            findutils
-          ];
-          text = builtins.readFile ./apps/formatter.sh;
-        }
-      );
+      packages = selectPerSystem "packages";
 
     };
 }

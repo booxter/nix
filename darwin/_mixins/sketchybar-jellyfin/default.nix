@@ -1,21 +1,19 @@
 {
   config,
   hostInventory,
-  isDesktop,
-  isWork,
   lib,
   outputs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   clientName = "sketchybar-jellyfin";
   client = config.host.observability.client.mtlsClients.${clientName};
   clientCertificateSecret = "sketchybar-jellyfin-client-crt";
   clientKeySecret = "sketchybar-jellyfin-client-key";
   beastConfig = outputs.nixosConfigurations.beast.config;
   endpoint = beastConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;
-  enable = isDesktop && !isWork;
+  enable = config.host.isDesktop && !config.host.isWork;
 in
 {
   host.observability.client.mtlsClients.${clientName}.enable = enable;
@@ -37,7 +35,7 @@ in
 
   home-manager.users.${username}.programs.sketchybarJellyfin = lib.mkIf enable {
     enable = true;
-    metricsUrl = "https://${beastConfig.host.dnsName}:${toString endpoint.port}${endpoint.path}";
+    metricsUrl = "https://${beastConfig.networking.hostName}:${toString endpoint.port}${endpoint.path}";
     dashboardUrl = "https://grafana.${hostInventory.site.lan.domain}/d/fana-media-pipe";
     clientCertificate = config.sops.secrets.${clientCertificateSecret}.path;
     clientKey = config.sops.secrets.${clientKeySecret}.path;

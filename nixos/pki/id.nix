@@ -13,6 +13,23 @@ let
   oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   kanidmOAuthSecretAttrName = clientId: "kanidm-oauth2-${clientId}-client-secret";
   confidentialOidcClients = lib.filterAttrs (_: client: !client.public) oidc.clients;
+  kanidmProvisionClients =
+    secretPathFor:
+    lib.mapAttrs (_: client: {
+      inherit (client)
+        allowInsecureClientDisablePkce
+        claimMaps
+        displayName
+        enableLocalhostRedirects
+        enableLegacyCrypto
+        originLanding
+        originUrl
+        preferShortUsername
+        public
+        scopeMaps
+        ;
+      basicSecretFile = if client.public then null else secretPathFor client.clientId;
+    }) oidc.clients;
   kanidmPort = 18085;
   kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
@@ -156,7 +173,7 @@ in
       instanceUrl = "https://localhost:${toString kanidmPort}";
       groups = kanidmProvisionGroups;
       persons = kanidmProvisionPersons;
-      systems.oauth2 = oidc.kanidmProvisionClients (
+      systems.oauth2 = kanidmProvisionClients (
         clientId: config.sops.secrets."${kanidmOAuthSecretAttrName clientId}".path
       );
     };

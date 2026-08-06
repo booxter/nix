@@ -1,11 +1,12 @@
 {
   config,
   inputs,
-  isWork,
   lib,
-  username,
   ...
 }:
+let
+  username = config.host.username;
+in
 {
   system.activationScripts.preActivation.text = lib.mkBefore ''
     if [ -x /usr/bin/xcodebuild ] && [ -x /usr/bin/xcode-select ]; then
@@ -39,7 +40,7 @@
       "wireshark-chmodbpf"
       "chatgpt"
     ]
-    ++ lib.optionals (!isWork) [ "homerow" ];
+    ++ lib.optionals (!config.host.isWork) [ "homerow" ];
   };
 
   nix-homebrew = {

@@ -1,4 +1,3 @@
-{ ... }:
 let
   kanidmBackupDir = "/var/lib/kanidm/backups";
   stepStateDir = "/var/lib/step-ca";

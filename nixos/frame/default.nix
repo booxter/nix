@@ -4,10 +4,10 @@
   inputs,
   lib,
   pkgs,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   framePkgs = import ./pkgs pkgs;
   ollamaService = hostInventory.servicesById.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";

@@ -2,10 +2,10 @@
   config,
   hostInventory,
   lib,
-  username,
   ...
 }:
 let
+  username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
@@ -25,6 +25,7 @@ in
 
   host.browser.firefox.touchIdPasskeys.enable = true;
   host.remoteGui.wayland.enable = true;
+  host.secretive.enable = true;
 
   sops.secrets."wireguard/gw/privateKey" = {
     owner = "root";

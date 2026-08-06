@@ -16,7 +16,7 @@ let
     else
       null;
   stateDir = "/var/lib/grafana-alloy";
-  hostLabel = config.host.dnsName;
+  hostLabel = config.networking.hostName;
   renderLabelMap =
     labels:
     "{ ${

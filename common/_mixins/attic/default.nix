@@ -1,23 +1,7 @@
+{ config, lib, ... }:
 {
-  config,
-  hostInventory,
-  lib,
-  hostname,
-  hostSpecName ? hostname,
-  secretDomain,
-  ...
-}:
-let
-  hostSecretName =
-    if builtins.hasAttr hostSpecName hostInventory.nixosHostSpecsByName then hostSpecName else hostname;
-  hostSecretFile = ../../../secrets/${secretDomain}/${hostSecretName}.yaml;
-in
-lib.mkMerge [
-  {
+  config = lib.mkIf (!config.host.isWork) {
     sops = {
-      defaultSopsFile = hostSecretFile;
-    }
-    // {
       secrets = {
         "attic/token" = { };
       };
@@ -33,5 +17,5 @@ lib.mkMerge [
         '';
       };
     };
-  }
-]
+  };
+}

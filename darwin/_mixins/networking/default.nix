@@ -1,12 +1,12 @@
 {
+  config,
   hostInventory,
-  hostname,
-  isWork,
   lib,
   ...
 }:
 let
   lan = hostInventory.site.lan;
+  hostname = config.networking.hostName;
 in
 {
   environment.etc."resolver/${lan.domain}".text = ''
@@ -14,7 +14,7 @@ in
   '';
 
   # Can't configure networking on managed work devices
-  networking = lib.optionalAttrs (!isWork) {
+  networking = lib.optionalAttrs (!config.host.isWork) {
     knownNetworkServices =
       # mair - laptop - doesn't have builtin ethernet
       lib.optionals (hostname != "mair") [

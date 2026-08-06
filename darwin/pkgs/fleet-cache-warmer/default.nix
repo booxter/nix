@@ -10,8 +10,8 @@
 }:
 
 let
-  inventory = builtins.fromJSON (builtins.readFile ../../../ci-target-inventory.json);
-  hostInventory = import ../../../lib/inventory.nix { inherit lib; };
+  inventory = builtins.fromJSON (builtins.readFile ../../../ci/ci-target-inventory.json);
+  hostInventory = import ../../../lib/inventory { inherit lib; };
   workHosts = lib.genAttrs (
     (map (spec: spec.name) (lib.filter (spec: spec.isWork or false) hostInventory.nixosHostSpecs))
     ++ (lib.attrNames (lib.filterAttrs (_: cfg: cfg.isWork or false) hostInventory.darwinHosts))
@@ -27,7 +27,7 @@ let
       throw "unknown fleet-cache-warmer targetFilter: ${targetFilter}";
   ciValidatedWarmTargets = map (target: target.attr) (
     lib.filter (target: target.warm && matchesTargetFilter target) (
-      inventory.buildTargets ++ inventory.regularChecks ++ inventory.nixosTests
+      inventory.buildTargets ++ inventory.regularChecks
     )
   );
 in

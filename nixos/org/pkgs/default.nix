@@ -17,13 +17,8 @@ in
     degoogVersion = degoogPackage.version;
   };
   degoog-trusted-header-settings-auth = pkgs.callPackage ./degoog-trusted-header-settings-auth { };
-  open-webui-tool-acl-reconcile = pkgs.callPackage ./open-webui-tool-acl-reconcile { };
   paperless-bootstrap = pkgs.callPackage ./paperless-bootstrap { };
   paperless-gpt-configure = pkgs.callPackage ./paperless-gpt-configure { };
   prometheus-paperless-exporter = pkgs.callPackage ./prometheus-paperless-exporter { };
-  search-stack-probes = pkgs.callPackage ./search-stack-probes { };
-  searchless-ngx = pkgs.callPackage ./searchless-ngx { };
-  telegram-archive = pkgs.callPackage ./telegram-archive { };
-  telegram-archive-service-tools = pkgs.callPackage ./telegram-archive-service-tools { };
   trilium-bootstrap = pkgs.callPackage ./trilium-bootstrap { };
 }

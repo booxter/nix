@@ -1,4 +1,4 @@
-{ isWork, lib, ... }:
+{ config, lib, ... }:
 {
   imports = [
     ./terminal.nix
@@ -116,7 +116,7 @@
     };
   };
 
-  system.defaults.CustomUserPreferences."com.superultra.Homerow" = lib.mkIf (!isWork) {
+  system.defaults.CustomUserPreferences."com.superultra.Homerow" = lib.mkIf (!config.host.isWork) {
     SUEnableAutomaticChecks = 1;
     SUHasLaunchedBefore = 1;
     "check-for-updates-automatically" = 1;

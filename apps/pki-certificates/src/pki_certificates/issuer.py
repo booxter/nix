@@ -90,7 +90,10 @@ class RemoteCertificateIssuer:
             )
         else:
             source = self._archive_source()
-            self.runner.run(["nix", "copy", "--to", f"ssh-ng://{ca_host}", str(source)])
+            self.runner.run(
+                ["nix", "copy", "--to", f"ssh-ng://{ca_host}", str(source)],
+                capture_output=False,
+            )
             # OpenSSH has no remote argv protocol. This fixed command contains
             # no request data; the validated request travels over stdin.
             command = shlex.join(

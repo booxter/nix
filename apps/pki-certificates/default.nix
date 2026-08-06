@@ -19,20 +19,16 @@ let
       lib.mapAttrs (
         name: system:
         let
-          nixosSpec = hostInventory.nixosHostSpecsByName.${name} or null;
-          spec = if nixosSpec != null then nixosSpec else hostInventory.darwinHosts.${name};
+          isLinux = lib.hasSuffix "-linux" system;
+          spec = hostInventory.hostSpecsByName.${name};
           caServer = spec.caServer or null;
         in
         {
           inherit system;
-          configuration = if nixosSpec != null then "nixosConfigurations" else "darwinConfigurations";
-          runtimeHost = spec.hostname or name;
+          configuration = if isLinux then "nixosConfigurations" else "darwinConfigurations";
+          runtimeHost = spec.name;
           secretDomain = hostInventory.secretDomainsByHost.${name};
-          caUrl =
-            if caServer == null then
-              null
-            else
-              "https://${hostInventory.toNixosPrimaryDnsName spec}:${toString caServer.port}";
+          caUrl = if caServer == null then null else "https://${spec.name}:${toString caServer.port}";
         }
       ) hostInventory.systemsByHost
     )
