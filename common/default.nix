@@ -11,6 +11,7 @@
     ./_mixins/nix
     ./_mixins/nixpkgs
     ./_mixins/nixpkgs-review
+    ./_mixins/secrets
     ./_mixins/ssh
     ./_mixins/stylix
     ./_mixins/terminfo
@@ -61,10 +62,7 @@
       yq
       zip
       ipmitool
-      sops-tools
-      age
       restic
-      sops
     ];
 
     programs.zsh.enable = true;

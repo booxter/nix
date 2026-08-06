@@ -114,6 +114,7 @@ in
       platform = "aarch64-darwin";
       isDesktop = true;
       isLaptop = true;
+      isSecretsOperator = true;
       vnc.enable = true;
       lanWanInterfaces = [ "en0" ];
     };
@@ -123,6 +124,7 @@ in
       platform = "aarch64-darwin";
       isBuilder = true;
       isDesktop = true;
+      isSecretsOperator = true;
       vnc.enable = true;
       upsHost = frame;
       lanWanInterfaces = [ "en0" ];
@@ -133,6 +135,7 @@ in
       platform = "aarch64-darwin";
       isDesktop = true;
       isLaptop = true;
+      isSecretsOperator = true;
       isWork = true;
       lanWanInterfaces = [
         "en0"
@@ -149,6 +152,7 @@ in
       platform = "x86_64-linux";
       isBuilder = true;
       isDesktop = true;
+      isSecretsOperator = true;
       nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
       vnc = {

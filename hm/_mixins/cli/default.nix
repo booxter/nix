@@ -155,11 +155,8 @@ in
       container
     ]
     ++ lib.optionals (!isWork) [
-      age
-      age-plugin-se
       cliPkgs.sync-repo
       ramalama
-      sops
     ];
 
   home.sessionVariables = {

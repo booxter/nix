@@ -60,7 +60,6 @@ in
   services.openssh.settings.X11Forwarding = true;
 
   programs.yubi = {
-    age.enable = true;
     ssh.enable = true;
     pamU2f.enable = true;
   };

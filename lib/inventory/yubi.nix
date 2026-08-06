@@ -3,9 +3,25 @@
   mmini,
   username,
 }:
+let
+  sopsAgeIdentity = {
+    hosts = [
+      frame
+      mmini
+    ];
+    purpose = "age-plugin-yubikey sops identity";
+    name = "nix sops age";
+    recipient = "age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r";
+    identityFileName = "yubi-nix.txt";
+    pinPolicy = "once";
+    touchPolicy = "cached";
+  };
+in
 {
   # Public YubiKey allocation facts. Keep PINs, PUKs, management keys, and
   # private key material out of inventory.
+  ageIdentityHosts = sopsAgeIdentity.hosts;
+
   devices.personal = {
     owner = username;
     hosts = [
@@ -60,18 +76,7 @@
         };
 
         retiredSlots = {
-          "1" = {
-            hosts = [
-              frame
-              mmini
-            ];
-            purpose = "age-plugin-yubikey sops identity";
-            name = "nix sops age";
-            recipient = "age1yubikey1qgnnyzk9ftl6uetyk6r8kd8eqxe7emcsgedaq7jycjk6sxt483p55chyk9r";
-            identityFileName = "yubi-nix.txt";
-            pinPolicy = "once";
-            touchPolicy = "cached";
-          };
+          "1" = sopsAgeIdentity;
         };
       };
     };
