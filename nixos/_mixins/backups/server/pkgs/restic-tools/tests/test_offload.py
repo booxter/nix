@@ -109,3 +109,38 @@ def test_cli_loads_config_and_credentials(tmp_path: Path) -> None:
     assert factory.environment["B2_ACCOUNT_ID"] == "application-id"
     assert factory.environment["B2_ACCOUNT_KEY"] == "application-key"
     assert client.copied
+
+
+def test_cli_supports_destination_without_b2_credentials(tmp_path: Path) -> None:
+    offload_config = config(tmp_path).model_copy(
+        update={
+            "destination_repository": str(tmp_path / "destination"),
+            "b2_application_key_id_file": None,
+            "b2_application_key_file": None,
+        }
+    )
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        offload_config.model_dump_json(by_alias=True),
+        encoding="utf-8",
+    )
+    client = StatefulRestic(exists=True)
+    factory = RecordingFactory(client)
+
+    assert run(parser().parse_args(["--config", str(config_path)]), factory) == 0
+    assert factory.environment is not None
+    assert "B2_ACCOUNT_ID" not in factory.environment
+    assert "B2_ACCOUNT_KEY" not in factory.environment
+    assert client.copied
+
+
+def test_cli_rejects_partial_b2_credentials(tmp_path: Path) -> None:
+    offload_config = config(tmp_path).model_copy(update={"b2_application_key_file": None})
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        offload_config.model_dump_json(by_alias=True),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="both B2 application key files"):
+        run(parser().parse_args(["--config", str(config_path)]))

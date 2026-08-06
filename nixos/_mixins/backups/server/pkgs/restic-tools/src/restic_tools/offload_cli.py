@@ -48,11 +48,18 @@ def run(
     client_factory: ClientFactory = SystemClientFactory(),
 ) -> int:
     config = OffloadConfig.model_validate_json(arguments.config.read_text(encoding="utf-8"))
-    environment = b2_environment(
-        system_environment(),
-        application_key_id=_read_secret(config.b2_application_key_id_file),
-        application_key=_read_secret(config.b2_application_key_file),
-    )
+    if config.b2_application_key_id_file is None and config.b2_application_key_file is None:
+        environment = system_environment()
+    elif (
+        config.b2_application_key_id_file is not None and config.b2_application_key_file is not None
+    ):
+        environment = b2_environment(
+            system_environment(),
+            application_key_id=_read_secret(config.b2_application_key_id_file),
+            application_key=_read_secret(config.b2_application_key_file),
+        )
+    else:
+        raise ValueError("both B2 application key files must be configured together")
     offload(client_factory(config, environment))
     return 0
 

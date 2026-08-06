@@ -79,11 +79,15 @@ class ResticOffloadClient:
         )
 
     def copy(self) -> None:
+        backend_options = (
+            ("-o", f"b2.connections={self.config.b2_connections}")
+            if self.config.destination_repository.startswith("b2:")
+            else ()
+        )
         self._checked(
             "copy",
             (
-                "-o",
-                f"b2.connections={self.config.b2_connections}",
+                *backend_options,
                 "--pack-size",
                 str(self.config.pack_size_mib),
                 "copy",

@@ -13,6 +13,10 @@ let
     atomicFileWrites = pkgs.atomic-file-writes;
   };
   enabledCloudClients = lib.filterAttrs (_: client: client.cloud.enable) cfg.clients;
+  b2Clients = lib.filterAttrs (
+    _: client: lib.hasPrefix "b2:" client.cloud.repository
+  ) enabledCloudClients;
+  usageEnabled = b2Clients != { };
   sshClients = lib.filterAttrs (_: client: client.publicKey != null) cfg.clients;
   ingestUser = name: "restic-${name}";
   repositoryPath = name: "${cfg.repositoryRoot}/${cfg.clients.${name}.storageName}";
@@ -33,17 +37,21 @@ let
     let
       client = cfg.clients.${name};
     in
-    (pkgs.formats.json { }).generate "${offloadService name}.json" {
-      sourceRepository = repositoryPath name;
-      sourcePasswordFile = client.cloud.sourcePasswordFile;
-      destinationRepository = client.cloud.repository;
-      destinationPasswordFile = client.cloud.passwordFile;
-      b2ApplicationKeyIdFile = cfg.cloud.applicationKeyIdFile;
-      b2ApplicationKeyFile = cfg.cloud.applicationKeyFile;
-      b2Connections = cfg.cloud.b2Connections;
-      packSizeMib = cfg.cloud.packSizeMib;
-      pruneOptions = client.cloud.pruneOpts;
-    };
+    (pkgs.formats.json { }).generate "${offloadService name}.json" (
+      {
+        sourceRepository = repositoryPath name;
+        sourcePasswordFile = client.cloud.sourcePasswordFile;
+        destinationRepository = client.cloud.repository;
+        destinationPasswordFile = client.cloud.passwordFile;
+        packSizeMib = cfg.cloud.packSizeMib;
+        pruneOptions = client.cloud.pruneOpts;
+      }
+      // lib.optionalAttrs (builtins.hasAttr name b2Clients) {
+        b2ApplicationKeyIdFile = cfg.cloud.applicationKeyIdFile;
+        b2ApplicationKeyFile = cfg.cloud.applicationKeyFile;
+        b2Connections = cfg.cloud.b2Connections;
+      }
+    );
   usageConfig = (pkgs.formats.json { }).generate "restic-cloud-usage.json" {
     buckets = [ cfg.cloud.bucketName ];
     b2ApplicationKeyIdFile = cfg.cloud.applicationKeyIdFile;
@@ -55,7 +63,7 @@ let
       bucket = cfg.cloud.bucketName;
       inherit (client.cloud) prefix repository;
       passwordFile = client.cloud.passwordFile;
-    }) enabledCloudClients;
+    }) b2Clients;
   };
   command = executable: arguments: utils.escapeSystemdExecArgs ([ executable ] ++ arguments);
 in
@@ -154,18 +162,18 @@ in
       };
 
       bucketName = lib.mkOption {
-        type = lib.types.str;
-        default = "";
+        type = with lib.types; nullOr str;
+        default = null;
       };
 
       applicationKeyIdFile = lib.mkOption {
-        type = lib.types.str;
-        default = "";
+        type = with lib.types; nullOr str;
+        default = null;
       };
 
       applicationKeyFile = lib.mkOption {
-        type = lib.types.str;
-        default = "";
+        type = with lib.types; nullOr str;
+        default = null;
       };
 
       b2Connections = lib.mkOption {
@@ -228,12 +236,17 @@ in
         !client.cloud.enable
         || (
           client.cloud.repository != ""
-          && client.cloud.prefix != ""
           && client.cloud.sourcePasswordFile != ""
           && client.cloud.passwordFile != ""
-          && cfg.cloud.bucketName != ""
-          && cfg.cloud.applicationKeyIdFile != ""
-          && cfg.cloud.applicationKeyFile != ""
+          && (
+            !lib.hasPrefix "b2:" client.cloud.repository
+            || (
+              client.cloud.prefix != ""
+              && cfg.cloud.bucketName != null
+              && cfg.cloud.applicationKeyIdFile != null
+              && cfg.cloud.applicationKeyFile != null
+            )
+          )
         );
       message = "host.backups.server.clients.${name}.cloud requires complete repository credentials";
     }) cfg.clients;
@@ -349,7 +362,7 @@ in
           };
         }
       ) enabledCloudClients
-      // lib.optionalAttrs (enabledCloudClients != { }) {
+      // lib.optionalAttrs usageEnabled {
         restic-cloud-usage-export = {
           description = "Export Restic cloud and B2 usage metrics";
           wants = cfg.cloud.dependencyUnits;
@@ -381,7 +394,7 @@ in
           timerConfig = client.cloud.timerConfig;
         }
       ) enabledCloudClients
-      // lib.optionalAttrs (enabledCloudClients != { }) {
+      // lib.optionalAttrs usageEnabled {
         restic-cloud-usage-export = {
           wantedBy = [ "timers.target" ];
           timerConfig = cfg.cloud.usageTimerConfig;

@@ -29,6 +29,7 @@ pkgs.testers.runNixOSTest {
       imports = [ ../../nixos/_mixins/backups ];
 
       networking.firewall.allowedTCPPorts = [ 22 ];
+      environment.systemPackages = [ pkgs.restic ];
 
       environment.etc = {
         "ssh/ssh_host_ed25519_key" = {
@@ -36,6 +37,7 @@ pkgs.testers.runNixOSTest {
           mode = "0600";
         };
         "ssh/ssh_host_ed25519_key.pub".text = serverPublicKey;
+        "backup-test/password".text = "test-password\n";
       };
 
       services.openssh = {
@@ -52,8 +54,21 @@ pkgs.testers.runNixOSTest {
       host.backups.server = {
         enable = true;
         repositoryRoot = "/srv/restic";
-        clients.test.publicKey = clientPublicKey;
+        clients.test = {
+          publicKey = clientPublicKey;
+          cloud = {
+            enable = true;
+            repository = "/srv/cloud/test";
+            sourcePasswordFile = "/etc/backup-test/password";
+            passwordFile = "/etc/backup-test/password";
+            timerConfig.OnCalendar = "2099-01-01";
+          };
+        };
       };
+
+      systemd.tmpfiles.rules = [
+        "d /srv/cloud 0750 restic-test-offload restic-test-offload - -"
+      ];
     };
 
     client =
@@ -136,15 +151,22 @@ pkgs.testers.runNixOSTest {
         return len(json.loads(client.succeed("restic-test snapshots --json")))
 
 
-    def assert_metric(file_name, metric, value):
-        metrics = client.succeed(f"cat /var/lib/prometheus-node-exporter-textfile/{file_name}")
+    def cloud_snapshot_count():
+        command = "restic -r /srv/cloud/test --password-file /etc/backup-test/password snapshots --json"
+        return len(json.loads(server.succeed(command)))
+
+
+    def assert_metric(machine, file_name, metric, value):
+        metrics = machine.succeed(f"cat /var/lib/prometheus-node-exporter-textfile/{file_name}")
         matches = [line for line in metrics.splitlines() if line.startswith(metric + "{")]
         assert len(matches) == 1, (metric, metrics)
         assert matches[0].endswith(f" {value}"), matches[0]
+        return metrics
 
 
     start_all()
     server.wait_for_unit("sshd.service")
+    server.succeed("systemctl start restic-test-repo-acl.service")
     client.wait_for_unit("multi-user.target")
     client.wait_for_unit("backup-metrics-configured.service")
     client.succeed("printf 'first version\\n' > /var/lib/backup-test/source.txt")
@@ -152,13 +174,26 @@ pkgs.testers.runNixOSTest {
     with subtest("only the complete pipeline has a timer"):
         client.succeed("systemctl cat restic-backups-test.timer")
         client.fail("systemctl cat prepare-backup-test.timer")
+        server.succeed("systemctl cat restic-test-cloud-offload.timer")
+        server.fail("systemctl cat restic-cloud-usage-export.timer")
 
     with subtest("pipeline prepares and snapshots once"):
         client.succeed("systemctl start restic-backups-test.service")
         assert client.succeed("cat /var/lib/backup-test/preparation-count").strip() == "1"
         assert snapshot_count() == 1
-        assert_metric("prepare-backup-test.prom", "host_observability_backup_last_success", "1.0")
-        assert_metric("restic-test.prom", "host_observability_backup_last_success", "1.0")
+        assert_metric(client, "prepare-backup-test.prom", "host_observability_backup_last_success", "1.0")
+        assert_metric(client, "restic-test.prom", "host_observability_backup_last_success", "1.0")
+
+    with subtest("server offloads the repository"):
+        server.succeed("systemctl start restic-test-cloud-offload.service")
+        assert cloud_snapshot_count() == 1
+        metrics = assert_metric(
+            server,
+            "restic-test-cloud-offload.prom",
+            "host_observability_backup_last_success",
+            "1.0",
+        )
+        assert 'backup_job="restic-test-cloud-offload"' in metrics
 
     with subtest("snapshot restores the prepared content"):
         client.succeed("rm -rf /tmp/restore")
@@ -170,7 +205,7 @@ pkgs.testers.runNixOSTest {
         client.succeed("touch /run/fail-backup-preparation")
         client.fail("systemctl start restic-backups-test.service")
         assert snapshot_count() == 1
-        assert_metric("prepare-backup-test.prom", "host_observability_backup_last_success", "0.0")
+        assert_metric(client, "prepare-backup-test.prom", "host_observability_backup_last_success", "0.0")
 
     with subtest("SFTP account cannot execute commands"):
         client.fail("ssh restic-test@restic-backup-test true")
