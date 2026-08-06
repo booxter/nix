@@ -12,6 +12,16 @@ let
   mmini = "mmini";
 
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
+  backupFacts = import ./backups.nix { inherit readPublicKey; };
+  backupClients = lib.mapAttrs (
+    name: client:
+    client
+    // rec {
+      storageName = client.storageName or name;
+      repositoryPath = "${backupFacts.server.repositoryRoot}/${storageName}";
+      ingestUser = "restic-${name}";
+    }
+  ) backupFacts.clients;
   serviceFacts = import ./services.nix { inherit publicDomain; };
   glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
   publicServiceHosts = map (service: service.publicHost) (
@@ -106,6 +116,10 @@ let
       throw "host ${spec.name} does not have a stable IPv4 address";
 in
 rec {
+  backups = backupFacts // {
+    clients = backupClients;
+  };
+
   inherit (serviceFacts) glanceCategories;
 
   sshTicket = sshTicketFacts;

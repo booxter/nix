@@ -1,25 +1,14 @@
 {
   config,
+  hostInventory,
   lib,
   ...
 }:
 let
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
+  backupInventory = hostInventory.backups;
   cloudGroup = "restic-cloud";
-  cloudBucketName = "ihar-restic-prod";
-  backupClients = {
-    beast.publicKey = null;
-    srvarr.publicKey = readPublicKey ../../public-keys/restic/srvarr.pub;
-    org = {
-      publicKey = readPublicKey ../../public-keys/restic/org.pub;
-      # Repository names are durable storage identities. Keep the pre-rename
-      # namespace so existing local and B2 snapshot history remains intact.
-      storageName = "orgvm";
-    };
-    home.publicKey = readPublicKey ../../public-keys/restic/home.pub;
-    pki.publicKey = readPublicKey ../../public-keys/restic/pki.pub;
-  };
-  storageName = name: backupClients.${name}.storageName or name;
+  inherit (backupInventory) clients;
+  inherit (backupInventory.cloud) bucketName;
   offloadUser = name: if name == "beast" then cloudGroup else "restic-${name}-offload";
   cloudSecret = name: field: "backup/restic/${name}/cloud/${field}";
   applicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
@@ -28,21 +17,19 @@ in
 {
   host.backups.server = {
     enable = true;
-    repositoryRoot = "/volume2/backups/restic-prod/hosts";
-    localClient = "beast";
+    inherit (backupInventory.server) localClient repositoryRoot;
     clients = lib.mapAttrs (name: client: {
-      inherit (client) publicKey;
-      storageName = storageName name;
+      inherit (client) publicKey storageName;
       cloud = {
         enable = true;
-        repository = "b2:${cloudBucketName}:hosts/${storageName name}";
-        prefix = "hosts/${storageName name}";
+        repository = "b2:${bucketName}:hosts/${client.storageName}";
+        prefix = "hosts/${client.storageName}";
         sourcePasswordFile = config.sops.secrets.${cloudSecret name "localPassword"}.path;
         passwordFile = config.sops.secrets.${cloudSecret name "password"}.path;
       };
-    }) backupClients;
+    }) clients;
     cloud = {
-      bucketName = cloudBucketName;
+      inherit bucketName;
       applicationKeyIdFile = config.sops.secrets.${applicationKeyIdSecret}.path;
       applicationKeyFile = config.sops.secrets.${applicationKeySecret}.path;
       # Keep uploads serialized and packs small so shaped B2 requests finish
@@ -84,7 +71,7 @@ in
             mode = "0400";
           };
         }
-      ]) (builtins.attrNames backupClients)
+      ]) (builtins.attrNames clients)
     )
     // {
       ${applicationKeyIdSecret} = {

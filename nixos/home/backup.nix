@@ -10,6 +10,8 @@ let
   databasePath = "${stateDir}/home-assistant_v2.db";
   homeAssistantPort = 8123;
   homeAssistantSso = hostInventory.sso.applications.home-assistant;
+  backup = hostInventory.backups;
+  backupClient = backup.clients.${config.networking.hostName};
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
   resticPasswordSecret = "backup/restic/local/password";
   resticSshKeySecret = "backup/restic/local/ssh/privateKey";
@@ -68,12 +70,12 @@ in
     ];
     repository = {
       type = "sftp";
-      path = "/volume2/backups/restic-prod/hosts/home";
+      path = backupClient.repositoryPath;
       passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
       dependencyUnits = [ "sops-install-secrets.service" ];
       sftp = {
-        host = "beast";
-        user = "restic-home";
+        host = backup.server.host;
+        user = backupClient.ingestUser;
         identityFile = config.sops.secrets.${resticSshKeySecret}.path;
       };
     };

@@ -1,5 +1,11 @@
-{ config, ... }:
+{
+  config,
+  hostInventory,
+  ...
+}:
 let
+  backup = hostInventory.backups;
+  backupClient = backup.clients.${config.networking.hostName};
   degoogStateDir = "/var/lib/degoog";
   paperlessBackupDir = "/var/lib/paperless-backup/latest";
   paperlessDataDir = "/var/lib/paperless";
@@ -50,14 +56,12 @@ in
     paths = backupPaths;
     repository = {
       type = "sftp";
-      # Keep the historical storage namespace so existing snapshots remain in
-      # the same local and B2 repositories.
-      path = "/volume2/backups/restic-prod/hosts/orgvm";
+      path = backupClient.repositoryPath;
       passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
       dependencyUnits = [ "sops-install-secrets.service" ];
       sftp = {
-        host = "beast";
-        user = "restic-org";
+        host = backup.server.host;
+        user = backupClient.ingestUser;
         identityFile = config.sops.secrets.${resticSshKeySecret}.path;
       };
     };

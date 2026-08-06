@@ -1,5 +1,11 @@
-{ config, ... }:
+{
+  config,
+  hostInventory,
+  ...
+}:
 let
+  backup = hostInventory.backups;
+  backupClient = backup.clients.${config.networking.hostName};
   kanidmBackupDir = "/var/lib/kanidm/backups";
   stepStateDir = "/var/lib/step-ca";
   resticPasswordSecret = "backup/restic/local/password";
@@ -32,12 +38,12 @@ in
     };
     repository = {
       type = "sftp";
-      path = "/volume2/backups/restic-prod/hosts/pki";
+      path = backupClient.repositoryPath;
       passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
       dependencyUnits = [ "sops-install-secrets.service" ];
       sftp = {
-        host = "beast";
-        user = "restic-pki";
+        host = backup.server.host;
+        user = backupClient.ingestUser;
         identityFile = config.sops.secrets.${resticSshKeySecret}.path;
       };
     };

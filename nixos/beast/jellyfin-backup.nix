@@ -1,6 +1,7 @@
 {
   beastPkgs,
   config,
+  hostInventory,
   lib,
   utils,
   ...
@@ -12,7 +13,7 @@ let
   keepJellyfinSourceBackups = 1;
   backupApiKeySecret = "jellyfin/apiKey";
   localRepoPasswordSecret = "backup/restic/beast/cloud/localPassword";
-  localRepo = "/volume2/backups/restic-prod/hosts/beast";
+  localRepo = hostInventory.backups.clients.${config.networking.hostName}.repositoryPath;
   backupCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' beastPkgs.jellyfin-tools "jellyfin-built-in-backup")
     "--url"

@@ -1,8 +1,11 @@
 {
   config,
+  hostInventory,
   ...
 }:
 let
+  backup = hostInventory.backups;
+  backupClient = backup.clients.${config.networking.hostName};
   stateRoot = config.host.srvarrPaths.stateDir;
   mysqlDataDir = "${stateRoot}/mysql";
   pinepodsDatabaseDir = "${stateRoot}/pinepods/postgresql";
@@ -90,12 +93,12 @@ in
     exclude = backupExclude;
     repository = {
       type = "sftp";
-      path = "/volume2/backups/restic-prod/hosts/srvarr";
+      path = backupClient.repositoryPath;
       passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
       dependencyUnits = [ "sops-install-secrets.service" ];
       sftp = {
-        host = "beast";
-        user = "restic-srvarr";
+        host = backup.server.host;
+        user = backupClient.ingestUser;
         identityFile = config.sops.secrets.${resticSshKeySecret}.path;
       };
     };
