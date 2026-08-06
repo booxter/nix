@@ -46,7 +46,6 @@ let
       cores = 24;
       hmFull = false;
       nspawnTestBuilder = true;
-      resourceControl.diskSwapGiB = 8;
     };
 
   labProxmoxSpec =
@@ -152,27 +151,6 @@ in
       isDesktop = true;
       nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
-      resourceControl.diskSwapGiB = 8;
-      resourceControl.systemServices = {
-        lightweight = [
-          "fana-alertmanager-watchdog"
-          "frame-amdgpu-metrics"
-          "frame-ollama-metrics"
-          "ollama-model-loader"
-          "prometheus-blackbox-exporter"
-          "prometheus-node-exporter"
-        ];
-        heavy.ollama = {
-          memoryHigh = "80%";
-          memoryMax = "90%";
-          memorySwapMax = "8G";
-          tasksMax = 4096;
-        };
-      };
-      resourceControl.userServices.lightweight = [
-        "codex-warmer"
-        "gmailctl-token-keepalive"
-      ];
       vnc = {
         enable = true;
         # ReFrame exposes one loopback listener per inventory display.
@@ -258,23 +236,6 @@ in
       platform = "x86_64-linux";
       critical = true;
       dnsAliases = builtins.filter (domain: domain != "dash.${publicDomain}") publicServiceHosts;
-      resourceControl.diskSwapGiB = 8;
-      resourceControl.systemServices = {
-        lightweight = [
-          "beast-disk-bay-export"
-          "beast-hba-export"
-          "beast-md-sync-export"
-          "jellarr"
-          "jellyfin-exporter"
-          "prometheus-node-exporter"
-          "prometheus-smartctl-exporter"
-          "restic-cloud-usage-export"
-        ];
-        critical = [
-          "jellyfin"
-          "nfs-server"
-        ];
-      };
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";
       dhcpReservation = {
@@ -312,7 +273,6 @@ in
       memorySize = 128;
       sshPort = 10000;
       proxNode = "nvws";
-      resourceControl.diskSwapGiB = 8;
     }
     {
       isVM = true;
@@ -330,7 +290,6 @@ in
       cores = 16;
       memorySize = 16;
       diskSize = 50; # actual cache is on NFS
-      resourceControl.diskSwapGiB = 4;
     }
     {
       isVM = true;
@@ -348,32 +307,8 @@ in
           transmission = 45486;
         };
       };
-      resourceControl.systemServices = {
-        lightweight = [
-          "audiobookshelf-backup-bootstrap"
-          "audiobookshelf-oidc-bootstrap"
-          "houndarr-status-collector"
-          "jellyfin-upload-policy"
-          "jellyfin-upload-policy-tc"
-          "jellyfin-upload-policy-transmission"
-          "letterboxd-list-radarr"
-          "prometheus-node-exporter"
-          "prometheus-sabnzbd-exporter"
-          "transmission-collector"
-          "transmission-prioritizer"
-          "transmission-torrent-cleaner"
-          "update-dynamic-ip"
-          "wg-bridge-access"
-          "wg-qos"
-        ];
-        medium = [
-          "ebook-converter"
-          "lidarr-cue-splitter"
-        ];
-      };
       cores = 16;
       memorySize = 32;
-      resourceControl.diskSwapGiB = 4;
       sshPort = 10005;
       hmFull = false;
       dhcpReservation = {
@@ -387,19 +322,9 @@ in
       platform = "x86_64-linux";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
-      resourceControl.systemServices = {
-        lightweight = [
-          "prometheus-blackbox-exporter"
-          "prometheus-node-exporter"
-          "prometheus-nut-exporter"
-          "unpoller"
-        ];
-        critical = [ "alertmanager" ];
-      };
       cores = 8;
       memorySize = 16;
       diskSize = 300;
-      resourceControl.diskSwapGiB = 4;
       sshPort = 10006;
       hmFull = false;
       dhcpReservation = {
@@ -413,15 +338,9 @@ in
       platform = "x86_64-linux";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
-      resourceControl.systemServices.lightweight = [
-        "prometheus-node-exporter"
-        "prometheus-wireguard-exporter"
-        "wg-qos"
-      ];
       cores = 2;
       memorySize = 8;
       diskSize = 64;
-      resourceControl.diskSwapGiB = 2;
       sshPort = 10008;
       hmFull = false;
       dhcpReservation = {
@@ -434,15 +353,10 @@ in
       name = "org";
       platform = "x86_64-linux";
       stateVersion = "25.11";
-      resourceControl.systemServices.lightweight = [
-        "prometheus-node-exporter"
-        "prometheus-paperless-exporter"
-      ];
       upsHost = "prx1-lab";
       cores = 4;
       memorySize = 16;
       diskSize = 80;
-      resourceControl.diskSwapGiB = 4;
       sshPort = 10009;
       hmFull = false;
       dhcpReservation = {
@@ -460,28 +374,10 @@ in
         # Fixed step-ca HTTP API route for the trusted root bundle.
         rootsPath = "/roots.pem";
       };
-      resourceControl.systemServices = {
-        lightweight = [
-          "kanidm-mail-sender"
-          "kanidm-mail-sender-bootstrap"
-          "kanidm-person-mail-provision"
-          "pki-rotate"
-          "pki-status-export"
-          "prometheus-node-exporter"
-          "unifi-sync"
-          "uptimerobot-sync"
-          "wg-home-dns-sync"
-        ];
-        critical = [
-          "kanidm"
-          "step-ca"
-        ];
-      };
       upsHost = "prx1-lab";
       cores = 2;
       memorySize = 4;
       diskSize = 50;
-      resourceControl.diskSwapGiB = 2;
       sshPort = 10010;
       hmFull = false;
       dhcpReservation = {
@@ -496,18 +392,9 @@ in
       stateVersion = "26.05";
       upsHost = "prx1-lab";
       proxNode = "prx2-lab";
-      resourceControl.systemServices = {
-        lightweight = [
-          "home-assistant-bootstrap"
-          "home-assistant-native-backup"
-          "prometheus-node-exporter"
-        ];
-        critical = [ "home-assistant" ];
-      };
       cores = 4;
       memorySize = 8;
       diskSize = 80;
-      resourceControl.diskSwapGiB = 2;
       sshPort = 10011;
       hmFull = false;
       dhcpReservation = {

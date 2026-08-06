@@ -95,8 +95,6 @@ Run `sops-update` when a host secret should receive missing template keys.
 Backup and restore procedures are documented in [common/backup.md](common/backup.md).
 `srvarr`'s adaptive upload policy and tracker prioritization are documented in
 [nixos/srvarr/upload-policy.md](nixos/srvarr/upload-policy.md).
-Fleet service limits and workload classes are documented in
-[docs/resource-control.md](docs/resource-control.md).
 
 ## Tests
 

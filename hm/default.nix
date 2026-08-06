@@ -15,7 +15,6 @@ in
   imports = [
     ./_mixins/nix
     ./_mixins/podman-machine
-    ./_mixins/resource-control.nix
     ./_mixins/xquartz
     ./_mixins/zsh
   ]
