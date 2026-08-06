@@ -80,11 +80,6 @@ let
     inherit (config.home.sessionVariables) SSH_ASKPASS;
     SSH_ASKPASS_REQUIRE = "force";
   };
-  codexConfigDir =
-    if config.home.preferXdgDirectories then
-      "${lib.removePrefix config.home.homeDirectory config.xdg.configHome}/codex"
-    else
-      ".codex";
 in
 {
   imports = [ ./codex-warmer.nix ];
@@ -113,8 +108,6 @@ in
         "context-remaining"
       ];
       mcp_servers = codexMcpServers;
-    }
-    // lib.optionalAttrs (codingAgentEnv != { }) {
       shell_environment_policy.set = codingAgentEnv;
     };
   };
@@ -133,33 +126,21 @@ in
         defaultMode = "auto";
         disableBypassPermissionsMode = "disable";
       };
-    }
-    // lib.optionalAttrs (codingAgentEnv != { }) {
       env = codingAgentEnv;
     };
   };
 
   home.packages =
-    lib.optionals (!isWork) [
-      codexPkgs.codex-usage-status
-      codexPkgs.codex-rate-limit-reset-credits
-    ]
-    ++ lib.optionals isWork [
-      codexPkgs.codex-mcp-init
-      codexPkgs.codex-work-usage-status
-    ];
-
-  # Preserve edits made by the removed local-overlay patch. Run after Home
-  # Manager removes its old config.toml symlink, and never replace a user file.
-  home.activation.migrateCodexLocalConfig = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    localConfig="$HOME/${codexConfigDir}/config.local.toml"
-    userConfig="$HOME/${codexConfigDir}/config.toml"
-
-    if [[ -f "$localConfig" && ! -e "$userConfig" && ! -L "$userConfig" ]]; then
-      verboseEcho "Moving $localConfig to writable Codex user config $userConfig"
-      run mv $VERBOSE_ARG "$localConfig" "$userConfig"
-    fi
-  '';
+    if isWork then
+      [
+        codexPkgs.codex-mcp-init
+        codexPkgs.codex-work-usage-status
+      ]
+    else
+      [
+        codexPkgs.codex-usage-status
+        codexPkgs.codex-rate-limit-reset-credits
+      ];
 
   # Work remote settings pin the default model and effort; user settings lose to
   # that managed layer, but CLI flags still win for shell launches.
