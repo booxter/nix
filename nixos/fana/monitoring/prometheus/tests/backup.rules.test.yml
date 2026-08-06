@@ -100,9 +100,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="beast",backup_job="srvarr-cloud-offload",backup_title="srvarr Cloud Offload",phase="cloud",unit="restic-srvarr-cloud-offload.service"}'
+      - series: 'host_observability_backup_job_configured{job="node-mtls",instance="beast",backup_job="restic-srvarr-cloud-offload",backup_title="srvarr Cloud Offload",phase="cloud",unit="restic-srvarr-cloud-offload.service"}'
         values: "1x7500"
-      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="beast",backup_job="srvarr-cloud-offload",backup_title="srvarr Cloud Offload",phase="cloud",unit="restic-srvarr-cloud-offload.service"}'
+      - series: 'host_observability_backup_last_success_timestamp_seconds{job="node-mtls",instance="beast",backup_job="restic-srvarr-cloud-offload",backup_title="srvarr Cloud Offload",phase="cloud",unit="restic-srvarr-cloud-offload.service"}'
         values: "3600x7500"
     alert_rule_test:
       - eval_time: 60h30m
@@ -112,7 +112,7 @@ tests:
         exp_alerts:
           - exp_labels:
               alertname: BackupJobStaleCritical
-              backup_job: srvarr-cloud-offload
+              backup_job: restic-srvarr-cloud-offload
               backup_title: srvarr Cloud Offload
               category: backup
               instance: beast
