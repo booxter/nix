@@ -254,14 +254,16 @@ func htbClass(link netlink.Link, class Class) netlink.Class {
 	if class.Parent != 0 {
 		parent = netlink.MakeHandle(1, class.Parent)
 	}
-	rateBytes := class.RateBits / 8
+	// netlink.NewHtbClass accepts bits per second and converts them to the
+	// bytes-per-second value used by the kernel internally. This differs from
+	// go-tc's raw CAKE attribute below.
 	return netlink.NewHtbClass(
 		netlink.ClassAttrs{
 			LinkIndex: link.Attrs().Index,
 			Handle:    netlink.MakeHandle(1, class.Minor),
 			Parent:    parent,
 		},
-		netlink.HtbClassAttrs{Rate: rateBytes, Ceil: rateBytes},
+		netlink.HtbClassAttrs{Rate: class.RateBits, Ceil: class.RateBits},
 	)
 }
 
@@ -282,6 +284,8 @@ func (kernel *Kernel) changeCake(link netlink.Link, minor uint16, rateBits uint6
 }
 
 func cakeObject(link netlink.Link, minor uint16, rateBits uint64, ingress bool) *tc.Object {
+	// CAKE's TCA_CAKE_BASE_RATE64 attribute is bytes per second. Unlike the
+	// netlink HTB constructor above, go-tc passes this value through unchanged.
 	baseRate := rateBits / 8
 	bestEffort := uint32(3)
 	enabled := uint32(1)
@@ -373,9 +377,10 @@ func (kernel *Kernel) addFilter(link netlink.Link, parent uint32, redirect netli
 			LinkIndex: link.Attrs().Index,
 			Parent:    parent,
 			Priority:  filter.Priority,
-			Protocol:  protocol,
+			Protocol:  unix.ETH_P_ALL,
 		},
 		ClassId:  netlink.MakeHandle(1, filter.ClassMinor),
+		EthType:  protocol,
 		IPProto:  &ipProtocol,
 		SrcIP:    filter.SourceIP,
 		DestIP:   filter.DestIP,
