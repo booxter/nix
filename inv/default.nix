@@ -31,13 +31,19 @@ let
     inherit lanDomain publicDomain publicServiceHosts;
   };
   normalizeHostSpec = spec: { inherit username; } // spec;
+  normalizedDarwinHosts = lib.mapAttrs (_: normalizeHostSpec) hostFacts.darwinHosts;
+  normalizedNixosHostSpecs = map normalizeHostSpec hostFacts.nixosHostSpecs;
 
   sshTicketFacts = import ./ssh-ticket.nix {
     inherit
+      lib
       frame
       mmini
       readPublicKey
+      username
       ;
+    darwinHosts = normalizedDarwinHosts;
+    nixosHostSpecs = normalizedNixosHostSpecs;
   };
   ssoFacts = import ./sso.nix;
   siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
@@ -184,8 +190,8 @@ rec {
 
   services = map (normalizeService glanceCategoryIds toLocalDnsName) serviceFacts.definitions;
 
-  darwinHosts = lib.mapAttrs (_: normalizeHostSpec) hostFacts.darwinHosts;
-  nixosHostSpecs = map normalizeHostSpec hostFacts.nixosHostSpecs;
+  darwinHosts = normalizedDarwinHosts;
+  nixosHostSpecs = normalizedNixosHostSpecs;
   inherit (hostFacts) staticDhcpReservations;
 
   managedDhcpReservations = map (spec: spec.dhcpReservation // { hostname = spec.name; }) (
