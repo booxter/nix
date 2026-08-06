@@ -8,28 +8,18 @@
 let
   username = config.host.username;
   clientName = "sketchybar-jellyfin";
-  client = config.host.observability.mtlsClients.${clientName};
-  clientCertificateSecret = "sketchybar-jellyfin-client-crt";
-  clientKeySecret = "sketchybar-jellyfin-client-key";
+  client = config.host.internalPki.clients.${clientName};
   beastConfig = outputs.nixosConfigurations.beast.config;
   endpoint = beastConfig.host.observability.prometheusEndpoints.jellyfin;
   enable = config.host.isDesktop && !config.host.isWork;
 in
 {
-  host.observability.mtlsClients.${clientName}.enable = enable;
-
-  sops.secrets = lib.mkIf enable {
-    ${clientCertificateSecret} = {
-      key = "${client.secretPrefix}/client_crt_unencrypted";
+  host.internalPki.clients.${clientName} = {
+    inherit enable;
+    category = "observability";
+    materializations.default = {
       owner = username;
       group = "staff";
-      mode = "0400";
-    };
-    ${clientKeySecret} = {
-      key = "${client.secretPrefix}/client_key";
-      owner = username;
-      group = "staff";
-      mode = "0400";
     };
   };
 
@@ -37,7 +27,8 @@ in
     enable = true;
     metricsUrl = "https://${beastConfig.networking.hostName}:${toString endpoint.port}${endpoint.path}";
     dashboardUrl = "https://grafana.${hostInventory.site.lan.domain}/d/fana-media-pipe";
-    clientCertificate = config.sops.secrets.${clientCertificateSecret}.path;
-    clientKey = config.sops.secrets.${clientKeySecret}.path;
+    clientCertificate =
+      config.sops.secrets.${client.materializations.default.certificateSecretName}.path;
+    clientKey = config.sops.secrets.${client.materializations.default.keySecretName}.path;
   };
 }

@@ -10,16 +10,18 @@ let
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   grafanaPort = 3000;
   prometheusPort = 9090;
-  prometheusScrapeClient = config.host.observability.mtlsClients."prometheus-scrape-node";
+  prometheusScrapeClient = config.host.internalPki.clients."prometheus-scrape-node";
+  prometheusScrapeMaterialization = prometheusScrapeClient.materializations.default;
+  blackboxScrapeMaterialization = prometheusScrapeClient.materializations.blackbox;
   prometheusMtlsTlsConfig = {
     ca_file = toString internalPkiRootCaPath;
-    cert_file = config.sops.secrets.prometheusScrapeNodeClientCrt.path;
-    key_file = config.sops.secrets.prometheusScrapeNodeClientKey.path;
+    cert_file = config.sops.secrets.${prometheusScrapeMaterialization.certificateSecretName}.path;
+    key_file = config.sops.secrets.${prometheusScrapeMaterialization.keySecretName}.path;
   };
   blackboxHttpMtlsTlsConfig = {
     ca_file = toString internalPkiRootCaPath;
-    cert_file = config.sops.secrets.prometheusBlackboxHttpClientCrt.path;
-    key_file = config.sops.secrets.prometheusBlackboxHttpClientKey.path;
+    cert_file = config.sops.secrets.${blackboxScrapeMaterialization.certificateSecretName}.path;
+    key_file = config.sops.secrets.${blackboxScrapeMaterialization.keySecretName}.path;
   };
   nodeScrapes = import ./scrapes/nodes.nix {
     inherit
@@ -83,10 +85,23 @@ in
     port = 9115;
   };
 
-  host.observability.mtlsClients."prometheus-scrape-node" = {
+  host.internalPki.clients."prometheus-scrape-node" = {
     enable = true;
+    category = "observability";
     secretPrefix = "prometheus/scrape_node";
     commonName = "prometheus-node-scraper";
+    materializations = {
+      default = {
+        owner = "prometheus";
+        group = "prometheus";
+        restartUnits = [ "prometheus.service" ];
+      };
+      blackbox = lib.mkIf blackboxScrapes.usesHttpMtls {
+        owner = "blackbox-exporter";
+        group = "blackbox-exporter";
+        restartUnits = [ "prometheus-blackbox-exporter.service" ];
+      };
+    };
   };
 
   users.groups.blackbox-exporter = lib.mkIf blackboxScrapes.usesHttpMtls { };
@@ -96,34 +111,6 @@ in
     group = "blackbox-exporter";
   };
 
-  sops.secrets.prometheusScrapeNodeClientCrt = {
-    key = "${prometheusScrapeClient.secretPrefix}/client_crt_unencrypted";
-    owner = "prometheus";
-    group = "prometheus";
-    mode = "0400";
-    restartUnits = [ "prometheus.service" ];
-  };
-  sops.secrets.prometheusScrapeNodeClientKey = {
-    key = "${prometheusScrapeClient.secretPrefix}/client_key";
-    owner = "prometheus";
-    group = "prometheus";
-    mode = "0400";
-    restartUnits = [ "prometheus.service" ];
-  };
-  sops.secrets.prometheusBlackboxHttpClientCrt = lib.mkIf blackboxScrapes.usesHttpMtls {
-    key = "${prometheusScrapeClient.secretPrefix}/client_crt_unencrypted";
-    owner = "blackbox-exporter";
-    group = "blackbox-exporter";
-    mode = "0400";
-    restartUnits = [ "prometheus-blackbox-exporter.service" ];
-  };
-  sops.secrets.prometheusBlackboxHttpClientKey = lib.mkIf blackboxScrapes.usesHttpMtls {
-    key = "${prometheusScrapeClient.secretPrefix}/client_key";
-    owner = "blackbox-exporter";
-    group = "blackbox-exporter";
-    mode = "0400";
-    restartUnits = [ "prometheus-blackbox-exporter.service" ];
-  };
   systemd.services.prometheus = {
     wants = [ "sops-install-secrets.service" ];
     after = [ "sops-install-secrets.service" ];

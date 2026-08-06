@@ -58,6 +58,12 @@ let
   '';
 in
 {
+  host.internalPki.clients = builtins.mapAttrs (_: _: {
+    enable = true;
+    category = "internal";
+    materializations.default.restartUnits = [ "stunnel.service" ];
+  }) backendMtlsServices;
+
   # Keep public gateway config-only changes from dropping long-lived proxied streams.
   services.nginx.enableReload = true;
 
@@ -109,9 +115,6 @@ in
       hostname = "ihrachyshka-beast.freeddns.org";
       username = "ihrachyshka";
     };
-    mtlsClients = builtins.mapAttrs (_: _: {
-      enable = true;
-    }) backendMtlsServices;
     virtualHosts = builtins.listToAttrs (
       map (service: {
         name = service.publicHost;

@@ -8,12 +8,14 @@
 let
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   watchdogName = "fana-alertmanager-watchdog";
+  watchdogClient = config.host.internalPki.clients.${watchdogName};
   alertmanagerReadyUrl = "https://alertmanager.${hostInventory.site.lan.domain}/-/ready";
 in
 {
-  host.internalHttps.mtlsClients.${watchdogName} = {
+  host.internalPki.clients.${watchdogName} = {
     enable = true;
-    restartUnits = [ "${watchdogName}.service" ];
+    category = "internal";
+    materializations.default.restartUnits = [ "${watchdogName}.service" ];
   };
 
   sops.secrets.fanaAlertmanagerWatchdogTelegramBotToken = {
@@ -57,8 +59,12 @@ in
       LoadCredential = [
         "telegram-bot-token:${config.sops.secrets.fanaAlertmanagerWatchdogTelegramBotToken.path}"
         "telegram-chat-id:${config.sops.secrets.fanaAlertmanagerWatchdogTelegramChatId.path}"
-        "mtls-client-crt:${config.sops.secrets."internal-https-client-${watchdogName}-crt".path}"
-        "mtls-client-key:${config.sops.secrets."internal-https-client-${watchdogName}-key".path}"
+        "mtls-client-crt:${
+          config.sops.secrets.${watchdogClient.materializations.default.certificateSecretName}.path
+        }"
+        "mtls-client-key:${
+          config.sops.secrets.${watchdogClient.materializations.default.keySecretName}.path
+        }"
       ];
       NoNewPrivileges = true;
       PrivateDevices = true;

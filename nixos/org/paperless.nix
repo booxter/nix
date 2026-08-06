@@ -55,6 +55,7 @@ let
       );
   ollamaTunnelPort = 11435;
   ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
+  ollamaClient = config.host.internalPki.clients.ollama;
   ociImages = import ../../oci { inherit pkgs; };
   paperlessGptImage = ociImages.paperless-gpt.ref;
   paperlessGptImageFile = ociImages.paperless-gpt.imageFile;
@@ -400,10 +401,11 @@ in
     upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
   };
 
-  host.internalHttps.mtlsClients.ollama = {
+  host.internalPki.clients.ollama = {
     enable = true;
+    category = "internal";
     commonName = "ollama.org";
-    restartUnits = [ "stunnel.service" ];
+    materializations.default.restartUnits = [ "stunnel.service" ];
   };
 
   services.stunnel = {
@@ -414,8 +416,8 @@ in
     clients.ollama = {
       accept = "127.0.0.1:${toString ollamaTunnelPort}";
       connect = "${ollamaInternalHost}:443";
-      cert = config.sops.secrets."internal-https-client-ollama-crt".path;
-      key = config.sops.secrets."internal-https-client-ollama-key".path;
+      cert = config.sops.secrets.${ollamaClient.materializations.default.certificateSecretName}.path;
+      key = config.sops.secrets.${ollamaClient.materializations.default.keySecretName}.path;
       checkHost = ollamaInternalHost;
       sni = ollamaInternalHost;
       CAFile = toString config.host.internalPki.rootCaCertificate;

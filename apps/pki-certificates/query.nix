@@ -18,15 +18,13 @@ in
     avahi_name = avahiName;
   };
   internal_services = configuredHost.host.internalHttps.services or { };
-  internal_clients = configuredHost.host.internalHttps.mtlsClients or { };
-  external_clients = configuredHost.host.externalService.mtlsClients or { };
+  clients = configuredHost.host.internalPki.clients or { };
   proxmox_api =
     if configuredHost.host.proxmox.apiCertificate.enable or false then
       configuredHost.host.proxmox.apiCertificate
     else
       null;
   observability_endpoints = configuredHost.host.observability.prometheusEndpoints or { };
-  observability_clients = configuredHost.host.observability.mtlsClients or { };
   node_exporter =
     if nodeExporterEnabled then
       {

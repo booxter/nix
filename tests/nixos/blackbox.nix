@@ -57,6 +57,11 @@ pkgs.testers.runNixOSTest {
             default = "${testPki}/ca.crt";
           };
 
+          internalPki.clients = lib.mkOption {
+            type = lib.types.attrsOf lib.types.anything;
+            default = { };
+          };
+
           isProxmox = lib.mkOption {
             type = lib.types.bool;
             default = false;
@@ -121,7 +126,6 @@ pkgs.testers.runNixOSTest {
           enable = true;
           loki.writeUrl = null;
           loki.mtls.enable = false;
-          mtlsClients.loki.enable = false;
           nodeExporter.mtls.enable = false;
           blackbox = {
             remote.enable = true;
@@ -135,6 +139,8 @@ pkgs.testers.runNixOSTest {
             };
           };
         };
+
+        host.internalPki.clients.loki.enable = false;
 
         sops.secrets = {
           "prometheus-mtls-blackbox-server-crt".path = "${testPki}/server.crt";

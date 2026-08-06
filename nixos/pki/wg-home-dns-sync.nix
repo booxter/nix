@@ -15,6 +15,7 @@ let
   wgHomeExporterPort = 9586;
   wgHomeExporterHost = "gw.${lan.domain}";
   wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";
+  wgHomeDnsSyncClient = config.host.internalPki.clients."wg-home-dns-sync";
   wgHomeDnsPeers = lib.mapAttrsToList (name: peer: {
     inherit name;
     address = builtins.head (lib.splitString "/" peer.address);
@@ -27,25 +28,15 @@ in
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
-  host.observability.mtlsClients."wg-home-dns-sync" = {
+  host.internalPki.clients."wg-home-dns-sync" = {
     enable = true;
+    category = "observability";
     secretPrefix = wgHomeDnsSyncClientSecretPrefix;
-  };
-
-  sops.secrets.wgHomeDnsSyncClientCrt = {
-    key = "${wgHomeDnsSyncClientSecretPrefix}/client_crt_unencrypted";
-    owner = unifiSyncCfg.user;
-    group = unifiSyncCfg.group;
-    mode = "0400";
-    restartUnits = [ "wg-home-dns-sync.service" ];
-  };
-
-  sops.secrets.wgHomeDnsSyncClientKey = {
-    key = "${wgHomeDnsSyncClientSecretPrefix}/client_key";
-    owner = unifiSyncCfg.user;
-    group = unifiSyncCfg.group;
-    mode = "0400";
-    restartUnits = [ "wg-home-dns-sync.service" ];
+    materializations.default = {
+      owner = unifiSyncCfg.user;
+      group = unifiSyncCfg.group;
+      restartUnits = [ "wg-home-dns-sync.service" ];
+    };
   };
 
   systemd.services.wg-home-dns-sync = {
@@ -67,7 +58,11 @@ in
       User = unifiSyncCfg.user;
       Group = unifiSyncCfg.group;
       EnvironmentFile = config.sops.templates."unifi-sync.env".path;
-      ExecStart = "${lib.getExe pkiPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${config.sops.secrets.wgHomeDnsSyncClientCrt.path} --client-key-file ${config.sops.secrets.wgHomeDnsSyncClientKey.path} --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile}";
+      ExecStart = "${lib.getExe pkiPkgs.wg-home-dns-sync} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${
+        config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.certificateSecretName}.path
+      } --client-key-file ${
+        config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.keySecretName}.path
+      } --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile}";
       NoNewPrivileges = true;
       PrivateTmp = true;
       ProtectHome = true;

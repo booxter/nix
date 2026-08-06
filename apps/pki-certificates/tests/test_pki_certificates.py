@@ -109,6 +109,7 @@ class StaticConfigSource:
         default_factory=lambda: CertificateClientConfig.model_validate(
             {
                 "enable": True,
+                "category": "internal",
                 "commonName": "client.host",
                 "sans": ["client-alt"],
                 "secretPrefix": "internal_https/clients/client",
@@ -319,19 +320,25 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
             "serverName": "host",
             "serverAliases": ["host.home.arpa"],
         },
-        "internal_clients": {
+        "clients": {
             "internal": {
                 "enable": True,
+                "category": "internal",
                 "commonName": "internal.host",
                 "secretPrefix": "internal/client",
-            }
-        },
-        "external_clients": {
+            },
             "external": {
                 "enable": True,
+                "category": "internal",
                 "commonName": "external.host",
                 "secretPrefix": "external/client",
-            }
+            },
+            "scraper": {
+                "enable": True,
+                "category": "observability",
+                "commonName": "scraper.host",
+                "secretPrefix": "prometheus/clients/scraper",
+            },
         },
         "node_exporter": {
             "enable": True,
@@ -345,13 +352,6 @@ def test_nix_config_source_validates_and_combines_fleet_configuration():
                 "port": 9999,
                 "secretPrefix": "prometheus/metrics",
                 "sans": ["host"],
-            }
-        },
-        "observability_clients": {
-            "scraper": {
-                "enable": True,
-                "commonName": "scraper.host",
-                "secretPrefix": "prometheus/clients/scraper",
             }
         },
     }

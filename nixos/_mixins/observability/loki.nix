@@ -8,12 +8,14 @@
 let
   cfg = config.host.observability;
   lokiCfg = cfg.loki;
-  enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
+  enabledPkiClients = lib.filterAttrs (
+    _: client: client.enable && client.category == "observability"
+  ) config.host.internalPki.clients;
   lokiClientCertCredentialPath = "/run/credentials/alloy.service/loki-client.crt";
   lokiClientKeyCredentialPath = "/run/credentials/alloy.service/loki-client.key";
   lokiMtlsClient =
-    if lokiCfg.mtls.enable && builtins.hasAttr lokiCfg.mtls.clientName enabledMtlsClients then
-      enabledMtlsClients.${lokiCfg.mtls.clientName}
+    if lokiCfg.mtls.enable && builtins.hasAttr lokiCfg.mtls.clientName enabledPkiClients then
+      enabledPkiClients.${lokiCfg.mtls.clientName}
     else
       null;
   lokiTlsConfig = lib.optionalString lokiCfg.mtls.enable ''
@@ -40,7 +42,7 @@ in
       clientName = lib.mkOption {
         type = lib.types.str;
         default = "loki";
-        description = "Name of the host.observability.mtlsClients entry used for Loki writes.";
+        description = "Name of the host.internalPki.clients entry used for Loki writes.";
       };
 
       serverName = lib.mkOption {
@@ -59,15 +61,15 @@ in
 
   config = lib.mkMerge [
     {
-      host.observability = {
-        loki = {
-          writeUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
-          mtls.enable = lib.mkDefault (!config.host.isWork);
-        };
-        mtlsClients.loki = {
-          enable = lib.mkDefault (!config.host.isWork);
-          secretPrefix = "observability/clients/loki";
-        };
+      host.observability.loki = {
+        writeUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
+        mtls.enable = lib.mkDefault (!config.host.isWork);
+      };
+      host.internalPki.clients.loki = {
+        enable = lib.mkDefault (!config.host.isWork);
+        category = "observability";
+        secretPrefix = "observability/clients/loki";
+        materializations.default.restartUnits = [ "alloy.service" ];
       };
     }
     (lib.mkIf cfg.enable (
@@ -125,28 +127,20 @@ in
           assertions = [
             {
               assertion = lokiMtlsClient != null;
-              message = "host.observability.loki.mtls.clientName must reference an enabled host.observability.mtlsClients entry.";
+              message = "host.observability.loki.mtls.clientName must reference an enabled observability-category host.internalPki.clients entry.";
             }
           ];
-
-          sops.secrets.observabilityLokiClientCrt = {
-            key = "${lokiMtlsClient.secretPrefix}/client_crt_unencrypted";
-            mode = "0400";
-            restartUnits = [ "alloy.service" ];
-          };
-
-          sops.secrets.observabilityLokiClientKey = {
-            key = "${lokiMtlsClient.secretPrefix}/client_key";
-            mode = "0400";
-            restartUnits = [ "alloy.service" ];
-          };
 
           systemd.services.alloy = {
             wants = [ "sops-install-secrets.service" ];
             after = [ "sops-install-secrets.service" ];
             serviceConfig.LoadCredential = [
-              "loki-client.crt:${config.sops.secrets.observabilityLokiClientCrt.path}"
-              "loki-client.key:${config.sops.secrets.observabilityLokiClientKey.path}"
+              "loki-client.crt:${
+                config.sops.secrets.${lokiMtlsClient.materializations.default.certificateSecretName}.path
+              }"
+              "loki-client.key:${
+                config.sops.secrets.${lokiMtlsClient.materializations.default.keySecretName}.path
+              }"
             ];
           };
         })

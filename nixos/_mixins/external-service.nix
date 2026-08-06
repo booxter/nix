@@ -3,9 +3,10 @@ let
   cfg = config.host.externalService;
   hasPublicVhosts = cfg.virtualHosts != { };
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
+  enabledMtlsClients = lib.filterAttrs (
+    _: client: client.enable && client.category == "internal"
+  ) config.host.internalPki.clients;
   enabledUpstreamTlsVhosts = lib.filterAttrs (_: vhost: vhost.upstreamTls.enable) cfg.virtualHosts;
-  mtlsClientSecretAttrName = clientName: "external-service-mtls-${clientName}";
   recommendedProxyHeaders = hostHeader: ''
     proxy_set_header Host ${hostHeader};
     proxy_set_header X-Real-IP $remote_addr;
@@ -78,39 +79,6 @@ in
       };
     };
 
-    mtlsClients = lib.mkOption {
-      type = lib.types.attrsOf (
-        lib.types.submodule (
-          { name, ... }:
-          {
-            options = {
-              enable = lib.mkEnableOption "internal PKI mTLS client identity";
-
-              secretPrefix = lib.mkOption {
-                type = lib.types.str;
-                default = "internal_https/clients/${name}";
-                description = "Secret prefix containing client_crt_unencrypted and client_key for this client identity.";
-              };
-
-              commonName = lib.mkOption {
-                type = lib.types.str;
-                default = "${name}.${config.networking.hostName}";
-                description = "Leaf certificate common name to issue for this client identity.";
-              };
-
-              sans = lib.mkOption {
-                type = with lib.types; listOf str;
-                default = [ ];
-                description = "Optional SANs for this client certificate.";
-              };
-            };
-          }
-        )
-      );
-      default = { };
-      description = "mTLS client identities used by public ingress when proxying to internal backends.";
-    };
-
     virtualHosts = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
@@ -150,7 +118,7 @@ in
               clientName = lib.mkOption {
                 type = lib.types.str;
                 default = "";
-                description = "Name of the host.externalService.mtlsClients entry used for the upstream connection.";
+                description = "Name of the internal-category host.internalPki.clients entry used for the upstream connection.";
               };
 
               serverName = lib.mkOption {
@@ -210,7 +178,7 @@ in
               }
               {
                 assertion = builtins.hasAttr vhost.upstreamTls.clientName enabledMtlsClients;
-                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled host.externalService.mtlsClients entry.";
+                message = "host.externalService.virtualHosts.${hostName}.upstreamTls.clientName must reference an enabled internal-category host.internalPki.clients entry.";
               }
             ]
           ) cfg.virtualHosts
@@ -279,28 +247,6 @@ in
         }
       ];
 
-      sops.secrets =
-        lib.mapAttrs' (
-          clientName: client:
-          lib.nameValuePair "${mtlsClientSecretAttrName clientName}-crt" {
-            key = "${client.secretPrefix}/client_crt_unencrypted";
-            owner = "root";
-            group = "root";
-            mode = "0400";
-            restartUnits = [ "stunnel.service" ];
-          }
-        ) enabledMtlsClients
-        // lib.mapAttrs' (
-          clientName: client:
-          lib.nameValuePair "${mtlsClientSecretAttrName clientName}-key" {
-            key = "${client.secretPrefix}/client_key";
-            owner = "root";
-            group = "root";
-            mode = "0400";
-            restartUnits = [ "stunnel.service" ];
-          }
-        ) enabledMtlsClients;
-
       security.acme = {
         acceptTerms = true;
         defaults.email = cfg.acmeEmail;
@@ -323,8 +269,14 @@ in
         clients = lib.mapAttrs (_: vhost: {
           accept = "127.0.0.1:${toString vhost.upstreamTls.localPort}";
           connect = "${vhost.upstreamTls.serverName}:443";
-          cert = config.sops.secrets."${mtlsClientSecretAttrName vhost.upstreamTls.clientName}-crt".path;
-          key = config.sops.secrets."${mtlsClientSecretAttrName vhost.upstreamTls.clientName}-key".path;
+          cert =
+            config.sops.secrets.${
+              enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.certificateSecretName
+            }.path;
+          key =
+            config.sops.secrets.${
+              enabledMtlsClients.${vhost.upstreamTls.clientName}.materializations.default.keySecretName
+            }.path;
           checkHost = vhost.upstreamTls.serverName;
           sni = vhost.upstreamTls.serverName;
           CAFile = toString vhost.upstreamTls.trustedCaCertificate;

@@ -13,7 +13,7 @@ let
   beastNfsRateMbit = 1500;
   wgEndpointPort = 1637;
   jellyfinClientName = "jellyfin-upload-policy";
-  jellyfinClientSecretName = "internal-https-client-${jellyfinClientName}";
+  jellyfinClient = config.host.internalPki.clients.${jellyfinClientName};
 in
 {
   services.adaptive-upload-policy = {
@@ -23,8 +23,9 @@ in
       exporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
       mtls = {
         enable = true;
-        certificateFile = config.sops.secrets."${jellyfinClientSecretName}-crt".path;
-        keyFile = config.sops.secrets."${jellyfinClientSecretName}-key".path;
+        certificateFile =
+          config.sops.secrets.${jellyfinClient.materializations.default.certificateSecretName}.path;
+        keyFile = config.sops.secrets.${jellyfinClient.materializations.default.keySecretName}.path;
         dependencyUnits = [ "sops-install-secrets.service" ];
       };
     };
@@ -39,13 +40,15 @@ in
     group = "media";
   };
 
-  host.internalHttps.mtlsClients.${jellyfinClientName} = {
+  host.internalPki.clients.${jellyfinClientName} = {
     enable = true;
+    category = "internal";
     secretPrefix = "prometheus/clients/jellyfin-upload-policy";
-    owner = config.services.adaptive-upload-policy.user;
-    group = config.services.adaptive-upload-policy.group;
-    mode = "0400";
-    restartUnits = [ "adaptive-upload-policy.service" ];
+    materializations.default = {
+      owner = config.services.adaptive-upload-policy.user;
+      group = config.services.adaptive-upload-policy.group;
+      restartUnits = [ "adaptive-upload-policy.service" ];
+    };
   };
 
   host.qos.interfaces.wan = {

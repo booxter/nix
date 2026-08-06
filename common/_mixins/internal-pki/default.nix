@@ -1,21 +1,76 @@
 { config, lib, ... }:
 let
-  cfg = config.host.internalHttps;
-  enabledClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
-  secretAttrName = clientName: "internal-https-client-${clientName}";
+  rootConfig = config;
+  cfg = config.host.internalPki;
+  enabledClients = lib.filterAttrs (_: client: client.enable) cfg.clients;
+  secretBaseName =
+    clientName: materializationName:
+    "internal-pki-client-${clientName}"
+    + lib.optionalString (materializationName != "default") "-${materializationName}";
+  materializationType =
+    clientName:
+    lib.types.submodule (
+      { name, ... }:
+      let
+        baseName = secretBaseName clientName name;
+      in
+      {
+        options = {
+          owner = lib.mkOption {
+            type = lib.types.str;
+            default = "root";
+            description = "Owner for the materialized client certificate and key.";
+          };
+
+          group = lib.mkOption {
+            type = lib.types.str;
+            default = "root";
+            description = "Group for the materialized client certificate and key.";
+          };
+
+          mode = lib.mkOption {
+            type = lib.types.str;
+            default = "0400";
+            description = "Mode for the materialized client certificate and key.";
+          };
+
+          restartUnits = lib.mkOption {
+            type = with lib.types; listOf str;
+            default = [ ];
+            description = "Units restarted when this client certificate changes.";
+          };
+
+          certificateSecretName = lib.mkOption {
+            type = lib.types.str;
+            default = "${baseName}-crt";
+            readOnly = true;
+            internal = true;
+            description = "SOPS secret attribute containing the materialized client certificate.";
+          };
+
+          keySecretName = lib.mkOption {
+            type = lib.types.str;
+            default = "${baseName}-key";
+            readOnly = true;
+            internal = true;
+            description = "SOPS secret attribute containing the materialized client private key.";
+          };
+        };
+      }
+    );
   mkClientSecret =
-    client: key:
+    materialization: key:
     {
-      inherit (client) owner group mode;
+      inherit (materialization) owner group mode;
       inherit key;
     }
     // lib.optionalAttrs config.host.isLinux {
-      restartUnits = client.restartUnits;
+      restartUnits = materialization.restartUnits;
     };
 in
 {
-  options.host = {
-    internalPki.rootCaCertificate = lib.mkOption {
+  options.host.internalPki = {
+    rootCaCertificate = lib.mkOption {
       type = lib.types.path;
       default = ./home-internal-pki-root-ca.crt;
       readOnly = true;
@@ -23,25 +78,37 @@ in
       description = "Root CA certificate for the home internal PKI.";
     };
 
-    internalHttps.mtlsClients = lib.mkOption {
+    clients = lib.mkOption {
       type =
         with lib.types;
         attrsOf (
           submodule (
-            { name, ... }:
+            { name, config, ... }:
             {
               options = {
-                enable = lib.mkEnableOption "internal HTTPS mTLS client identity";
+                enable = lib.mkEnableOption "internal PKI client identity";
+
+                category = lib.mkOption {
+                  type = enum [
+                    "internal"
+                    "observability"
+                  ];
+                  description = "Certificate issuance workflow that owns this client identity.";
+                };
 
                 secretPrefix = lib.mkOption {
                   type = str;
-                  default = "internal_https/clients/${name}";
+                  default =
+                    if config.category == "observability" then
+                      "prometheus/clients/${name}"
+                    else
+                      "internal_https/clients/${name}";
                   description = "SOPS key prefix containing client_crt_unencrypted and client_key for this client identity.";
                 };
 
                 commonName = lib.mkOption {
                   type = str;
-                  default = "${name}.${config.networking.hostName}";
+                  default = "${name}.${rootConfig.networking.hostName}";
                   description = "Leaf certificate common name to issue for this client identity.";
                 };
 
@@ -51,35 +118,19 @@ in
                   description = "Optional SANs for this client certificate.";
                 };
 
-                owner = lib.mkOption {
-                  type = str;
-                  default = "root";
-                  description = "Owner for generated client certificate and key secret files.";
-                };
-
-                group = lib.mkOption {
-                  type = str;
-                  default = "root";
-                  description = "Group for generated client certificate and key secret files.";
-                };
-
-                mode = lib.mkOption {
-                  type = str;
-                  default = "0400";
-                  description = "Mode for generated client certificate and key secret files.";
-                };
-
-                restartUnits = lib.mkOption {
-                  type = listOf str;
-                  default = [ ];
-                  description = "Units restarted when this client certificate changes.";
+                materializations = lib.mkOption {
+                  type = attrsOf (materializationType name);
+                  default = {
+                    default = { };
+                  };
+                  description = "Runtime certificate and key copies for consumers of this identity.";
                 };
               };
             }
           )
         );
       default = { };
-      description = "Internal HTTPS mTLS client identities used by services on this host.";
+      description = "Internal PKI client identities used by services on this host.";
     };
   };
 
@@ -87,9 +138,17 @@ in
     config.host.internalPki.rootCaCertificate
   ];
 
-  config.sops.secrets = lib.concatMapAttrs (clientName: client: {
-    "${secretAttrName clientName}-crt" =
-      mkClientSecret client "${client.secretPrefix}/client_crt_unencrypted";
-    "${secretAttrName clientName}-key" = mkClientSecret client "${client.secretPrefix}/client_key";
-  }) enabledClients;
+  config.sops.secrets = lib.concatMapAttrs (
+    clientName: client:
+    lib.concatMapAttrs (
+      materializationName: materialization:
+      let
+        baseName = secretBaseName clientName materializationName;
+      in
+      {
+        "${baseName}-crt" = mkClientSecret materialization "${client.secretPrefix}/client_crt_unencrypted";
+        "${baseName}-key" = mkClientSecret materialization "${client.secretPrefix}/client_key";
+      }
+    ) client.materializations
+  ) enabledClients;
 }
