@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -24,7 +23,6 @@ let
   };
   localSshKey = config.sops.secrets.${localSshKeySecret}.path;
   preBackupServiceNames = builtins.attrNames cfg.preBackupServices;
-  resticClientTools = pkgs.callPackage ./restic-beast-client/pkgs/restic-client-tools { };
 in
 {
   options.host.backups.beast = {
@@ -146,12 +144,7 @@ in
           inherit (cfg) exclude;
         };
 
-        systemd.services.restic-backups-beast = {
-          # Run after the upstream restic include-file cleanup but before the
-          # mkAfter backup-metrics recorder observes the final unit result.
-          serviceConfig.ExecStopPost = lib.mkOrder 1400 [ (lib.getExe resticClientTools) ];
-        }
-        // lib.optionalAttrs (preBackupServiceNames != [ ]) {
+        systemd.services.restic-backups-beast = lib.optionalAttrs (preBackupServiceNames != [ ]) {
           after = map (name: "${name}.service") preBackupServiceNames;
           requires = map (name: "${name}.service") preBackupServiceNames;
         };
