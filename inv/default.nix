@@ -11,7 +11,7 @@ let
   frame = "frame";
   mmini = "mmini";
 
-  realms = import ./realms.nix;
+  realms = import ./realms.nix { inherit lanDomain; };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
   backupClients = lib.mapAttrs (

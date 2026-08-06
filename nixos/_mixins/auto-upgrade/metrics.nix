@@ -36,8 +36,8 @@ in
   config = lib.mkMerge [
     {
       host.observability.nixosUpgrade = {
-        enable = lib.mkDefault true;
-        exportToNodeExporter = lib.mkDefault (!config.host.isWork);
+        enable = lib.mkDefault config.host.observability.enable;
+        exportToNodeExporter = lib.mkDefault config.host.observability.enable;
       };
     }
     (lib.mkIf cfg.enable {

@@ -60,7 +60,7 @@ in
 
     exportToNodeExporter = lib.mkOption {
       type = lib.types.bool;
-      default = !config.host.isWork;
+      default = config.host.observability.enable;
       description = "Whether to expose LAN/WAN accounting through node exporter's textfile collector.";
     };
 
@@ -101,7 +101,9 @@ in
 
   config = lib.mkMerge [
     {
-      host.observability.lanWan.enable = lib.mkDefault config.host.isDesktop;
+      host.observability.lanWan.enable = lib.mkDefault (
+        config.host.observability.enable && config.host.isDesktop
+      );
     }
     (lib.mkIf cfg.enable {
       environment.systemPackages = [ cfg.package ];

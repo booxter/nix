@@ -28,7 +28,7 @@ in
 
   config = lib.mkMerge [
     {
-      host.observability.thermal.enable = lib.mkDefault (!config.host.isWork);
+      host.observability.thermal.enable = lib.mkDefault config.host.observability.enable;
     }
     (lib.mkIf cfg.enable {
       environment.systemPackages = [ cfg.package ];

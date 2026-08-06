@@ -67,9 +67,9 @@ pkgs.testers.runNixOSTest {
             default = false;
           };
 
-          isWork = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
+          realm = lib.mkOption {
+            type = lib.types.str;
+            default = "test";
           };
 
           observability.lanWan = {
@@ -107,6 +107,13 @@ pkgs.testers.runNixOSTest {
       config = {
         _module.args = {
           hostInventory = {
+            realms.test.services.observability = {
+              loki = {
+                writeUrl = null;
+                mtls = false;
+              };
+              nodeExporter.mtls = false;
+            };
             site.lan.domain = "example.invalid";
             toNixosHostCertificateDnsNames = _: [ "blackbox" ];
           };

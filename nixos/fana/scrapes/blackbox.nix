@@ -113,7 +113,6 @@ let
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
-    && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
     && (outputs.nixosConfigurations.${name}.config.host.proxmox.apiCertificate.enable or false)
   ) nixosConfigNames;
   proxmoxServiceCatalog = map (

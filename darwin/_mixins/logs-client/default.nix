@@ -7,6 +7,15 @@
 }:
 let
   cfg = config.host.observability.logs;
+  realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
+  realmLoki =
+    if realmObservability == null then
+      {
+        writeUrl = null;
+        mtls = false;
+      }
+    else
+      realmObservability.loki;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   enabledPkiClients = lib.filterAttrs (
     _: client: client.enable && client.category == "observability"
@@ -172,9 +181,9 @@ in
   config = lib.mkMerge [
     {
       host.observability.logs = {
-        enable = lib.mkDefault (!config.host.isWork);
-        lokiWriteUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
-        loki.mtls.enable = lib.mkDefault (cfg.enable && cfg.lokiWriteUrl != null);
+        enable = lib.mkDefault config.host.observability.enable;
+        lokiWriteUrl = lib.mkDefault realmLoki.writeUrl;
+        loki.mtls.enable = lib.mkDefault realmLoki.mtls;
       };
 
       host.internalPki.clients.loki = {

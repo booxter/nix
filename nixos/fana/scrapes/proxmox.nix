@@ -8,7 +8,6 @@ let
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
-    && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
     && (outputs.nixosConfigurations.${name}.config.host.proxmox.prometheusExporter.enable or false)
   ) nixosConfigNames;
   proxmoxClusterScrapeNodeName = "prx1-lab";

@@ -1,7 +1,14 @@
+{ lanDomain }:
 {
   home = {
     secretDomain = "main";
-    services = { };
+    services.observability = {
+      loki = {
+        writeUrl = "https://loki.${lanDomain}/loki/api/v1/push";
+        mtls = true;
+      };
+      nodeExporter.mtls = true;
+    };
   };
 
   work = {

@@ -276,7 +276,7 @@ in
         config.host.isProxmox && !config.host.isWork && hostSpec.name == oidcCfg.managerHost
       );
       host.proxmox.prometheusExporter.enable = lib.mkDefault (
-        config.host.isProxmox && !config.host.isWork
+        config.host.isProxmox && config.host.observability.enable
       );
     }
     (lib.mkIf cfg.enable {

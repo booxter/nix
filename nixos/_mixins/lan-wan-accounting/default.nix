@@ -159,7 +159,7 @@ in
   config = lib.mkMerge [
     {
       host.observability.lanWan = {
-        enable = lib.mkDefault (!config.host.isWork);
+        enable = lib.mkDefault config.host.observability.enable;
         mode = lib.mkDefault (if config.host.isProxmox then "host-local" else "interface-path");
       };
     }

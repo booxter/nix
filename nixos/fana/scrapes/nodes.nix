@@ -32,9 +32,7 @@ let
     };
   nixosNodeExporterTargetNames = builtins.filter (
     name:
-    name != "fana"
-    && (outputs.nixosConfigurations.${name}.config.host.observability.enable or false)
-    && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
+    name != "fana" && (outputs.nixosConfigurations.${name}.config.host.observability.enable or false)
   ) nixosConfigNames;
   remoteNixosNonMtlsNodeTargetNames = builtins.filter (
     name:
@@ -58,9 +56,7 @@ let
       targets = [ "${hostConfig.networking.hostName}:9100" ];
     };
   darwinNodeExporterTargetNames = builtins.filter (
-    name:
-    (outputs.darwinConfigurations.${name}.config.host.observability.enable or false)
-    && !(outputs.darwinConfigurations.${name}.config.host.isWork or false)
+    name: (outputs.darwinConfigurations.${name}.config.host.observability.enable or false)
   ) (builtins.attrNames outputs.darwinConfigurations);
   remoteDarwinNonMtlsNodeTargetNames = builtins.filter (
     name:

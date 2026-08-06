@@ -8,6 +8,15 @@
 let
   cfg = config.host.observability;
   lokiCfg = cfg.loki;
+  realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
+  realmLoki =
+    if realmObservability == null then
+      {
+        writeUrl = null;
+        mtls = false;
+      }
+    else
+      realmObservability.loki;
   enabledPkiClients = lib.filterAttrs (
     _: client: client.enable && client.category == "observability"
   ) config.host.internalPki.clients;
@@ -62,11 +71,11 @@ in
   config = lib.mkMerge [
     {
       host.observability.loki = {
-        writeUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
-        mtls.enable = lib.mkDefault (!config.host.isWork);
+        writeUrl = lib.mkDefault realmLoki.writeUrl;
+        mtls.enable = lib.mkDefault realmLoki.mtls;
       };
       host.internalPki.clients.loki = {
-        enable = lib.mkDefault (!config.host.isWork);
+        enable = lib.mkDefault (cfg.enable && lokiCfg.writeUrl != null && lokiCfg.mtls.enable);
         category = "observability";
         secretPrefix = "observability/clients/loki";
         materializations.default.restartUnits = [ "alloy.service" ];
