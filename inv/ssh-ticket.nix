@@ -8,8 +8,8 @@
   username,
 }:
 let
-  secretivePublicKey = readPublicKey ../../public-keys/ssh-ca/fleet-user-ca.pub;
-  yubikeyPublicKey = readPublicKey ../../public-keys/yubikey.pub;
+  secretivePublicKey = readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub;
+  yubikeyPublicKey = readPublicKey ../public-keys/yubikey.pub;
   trustedCaPublicKeys = [
     secretivePublicKey
     yubikeyPublicKey

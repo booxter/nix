@@ -28,11 +28,11 @@ rec {
     {
       nixos = {
         url = "https://cache.nixos.org/";
-        key = readPublicKey ../../public-keys/nix-cache/nixos.pub;
+        key = readPublicKey ../public-keys/nix-cache/nixos.pub;
       };
       home = {
         url = homeUrl;
-        key = readPublicKey ../../public-keys/nix-cache/home.pub;
+        key = readPublicKey ../public-keys/nix-cache/home.pub;
         defaultUrl = nixCacheUrlWithPriority homeUrl 30;
         lanUrl = nixCacheUrlWithPriority homeUrl 10;
         vpnUrl = nixCacheUrlWithPriority homeUrl 30;
@@ -97,11 +97,11 @@ rec {
       mair = {
         host = "mair";
         address = "10.83.0.10/32";
-        publicKey = readPublicKey ../../public-keys/wireguard/home-mair.pub;
+        publicKey = readPublicKey ../public-keys/wireguard/home-mair.pub;
       };
       unifi-travel-router = {
         address = "10.83.0.20/32";
-        publicKey = readPublicKey ../../public-keys/wireguard/home-unifi-travel-router.pub;
+        publicKey = readPublicKey ../public-keys/wireguard/home-unifi-travel-router.pub;
       };
     };
   };
