@@ -7,7 +7,6 @@
   ...
 }:
 let
-  username = config.host.username;
   framePkgs = import ./pkgs pkgs;
   ollamaService = hostInventory.servicesById.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
@@ -28,8 +27,6 @@ in
   # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
   host.observability.blackbox.remote.enable = true;
-  home-manager.users.${username}.programs.sshTicket.enableKnownHosts = true;
-
   nixpkgs.config.rocmSupport = true;
 
   networking.wireless.enable = false;

@@ -20,7 +20,6 @@ in
     home.sessionVariables.SOPS_AGE_KEY_FILE = "/Users/${username}/.config/sops/age/mair-se.txt";
     home.file.".ssh/secretive.pub".source = ../../public-keys/mair-secretive.pub;
     programs.git.settings.user.signingKey = "/Users/${username}/.ssh/secretive.pub";
-    programs.sshTicket.enableKnownHosts = true;
   };
 
   host.browser.firefox.touchIdPasskeys.enable = true;
