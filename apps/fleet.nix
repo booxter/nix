@@ -4,7 +4,7 @@
 }:
 let
   appSpec = import ./app-spec.nix;
-  hostInventory = import ../lib/inventory {
+  hostInventory = import ../inv {
     inherit username;
     lib = pkgs.lib;
   };

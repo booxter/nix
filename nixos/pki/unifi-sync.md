@@ -19,7 +19,7 @@ to converge the configured site.
 
 The data path is:
 
-1. Fleet facts are defined in [inventory/default.nix](../../lib/inventory/default.nix).
+1. Fleet facts are defined in [inv/default.nix](../../inv/default.nix).
 2. [unifi-sync-env.nix](./unifi-sync-env.nix) renders those facts into
    the environment consumed by the service.
 3. The [unifi-sync module](../_mixins/unifi-sync/default.nix) defines the

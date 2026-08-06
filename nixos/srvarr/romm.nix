@@ -41,7 +41,7 @@ let
   user = "romm";
   apiPort = 5081;
   redisPort = 6380;
-  ociImages = import ../../lib/oci-images { inherit pkgs; };
+  ociImages = import ../../oci { inherit pkgs; };
   rommImage = ociImages.romm.ref;
   rommImageFile = ociImages.romm.imageFile;
   rommService = hostInventory.servicesById.romm;

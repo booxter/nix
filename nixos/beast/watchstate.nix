@@ -9,7 +9,7 @@
 }:
 let
   mediaPaths = import ./media-paths.nix;
-  ociImages = import ../../lib/oci-images { inherit pkgs; };
+  ociImages = import ../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
   watchstateHostName = "watchstate.${hostInventory.site.lan.domain}";

@@ -4,7 +4,7 @@ let
   appPackages = import ../apps/packages.nix pkgs;
   atomicFileWrites = pkgs.python3Packages.callPackage ./atomic-file-writes { };
   gitCommandRunner = pkgs.python3Packages.callPackage ./git-command-runner { };
-  hostInventory = import ../lib/inventory { inherit (pkgs) lib; };
+  hostInventory = import ../inv { inherit (pkgs) lib; };
   pkiCertificates = appPackages.issue-internal-service-cert;
   sopsTools = import ../apps/sops/package.nix {
     inherit hostInventory pkgs;
