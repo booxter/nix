@@ -65,6 +65,14 @@ in
       description = "Whether this host is intermittently available like a laptop.";
     };
 
+    hasTouchId = lib.mkOption {
+      type = lib.types.bool;
+      default = config.host.isDarwin && config.host.isLaptop;
+      readOnly = true;
+      internal = true;
+      description = "Whether this host has Touch ID-backed authentication.";
+    };
+
     isSecretsOperator = lib.mkOption {
       type = lib.types.bool;
       default = hostSpec.isSecretsOperator or false;
@@ -75,7 +83,7 @@ in
 
     hasHardwareAgeIdentity = lib.mkOption {
       type = lib.types.bool;
-      default = config.host.hasYubiAgeIdentity || (config.host.isDarwin && config.host.isLaptop);
+      default = config.host.hasTouchId || config.host.hasYubiAgeIdentity;
       readOnly = true;
       internal = true;
       description = "Whether this host can use a hardware-backed age identity.";

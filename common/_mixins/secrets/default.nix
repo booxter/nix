@@ -15,6 +15,6 @@
         sops
         sops-tools
       ]
-      ++ lib.optional (config.host.isDarwin && config.host.isLaptop) age-plugin-se;
+      ++ lib.optional config.host.hasTouchId age-plugin-se;
   };
 }
