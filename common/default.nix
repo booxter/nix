@@ -22,8 +22,6 @@
   ];
 
   config = {
-    sops.age.keyFile = "/var/lib/sops-nix/key.txt";
-
     # Some packages that I'd like to have available on managed machines.
     environment.systemPackages = with pkgs; [
       bind.dnsutils
