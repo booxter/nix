@@ -3,7 +3,6 @@
     ./_mixins/cli
     ./_mixins/codex
     ./_mixins/host.nix
-    ./_mixins/internal-https-mtls-client.nix
     ./_mixins/internal-pki
     ./_mixins/nix
     ./_mixins/nixpkgs
