@@ -60,7 +60,6 @@
       yq
       zip
       ipmitool
-      restic
     ];
 
     programs.zsh.enable = true;

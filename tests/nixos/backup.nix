@@ -29,7 +29,6 @@ pkgs.testers.runNixOSTest {
       imports = [ ../../nixos/_mixins/backups ];
 
       networking.firewall.allowedTCPPorts = [ 22 ];
-      environment.systemPackages = [ pkgs.restic ];
 
       environment.etc = {
         "ssh/ssh_host_ed25519_key" = {
