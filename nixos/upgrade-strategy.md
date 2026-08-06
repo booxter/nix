@@ -78,7 +78,7 @@ Those excluded items either are not warmed yet by policy or do not produce
 useful Nix store closures for Attic warming.
 
 The authoritative source for these targets at system build time is
-[`ci-target-inventory.json`](/Users/ihrachyshka/src/nix/ci-target-inventory.json:1).
+[`ci/ci-target-inventory.json`](/Users/ihrachyshka/src/nix/ci/ci-target-inventory.json:1).
 Both CI and the `fleet-cache-warmer` package read from that inventory; the
 warmer package also filters targets based on `isWork` in
 [`lib/inventory/default.nix`](/Users/ihrachyshka/src/nix/lib/inventory/default.nix:1).
