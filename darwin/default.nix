@@ -19,9 +19,6 @@ in
     ../common
     inputs.home-manager.darwinModules.home-manager
   ]
-  ++ lib.optionals (builtins.pathExists ./${hostname}) [
-    ./${hostname}
-  ]
   ++ [
     ./_mixins/defaults
     ./_mixins/fonts

@@ -10,8 +10,12 @@ let
   hostname = hostSpec.name;
   hostPlatform = inputs.nixpkgs.lib.systems.elaborate hostSpec.platform;
   inherit (hostPlatform) isDarwin isLinux system;
+  platformDirectory = if isDarwin then ../../darwin else ../../nixos;
+  hostModule = platformDirectory + "/${hostname}";
 in
 {
+  imports = lib.optional (builtins.pathExists hostModule) hostModule;
+
   options.host = {
     platform = lib.mkOption {
       type = lib.types.str;

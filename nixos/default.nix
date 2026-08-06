@@ -10,7 +10,6 @@
 let
   hostname = hostSpec.name;
   username = hostSpec.username;
-  configName = ./${hostSpec.name};
 in
 (
   {
@@ -20,9 +19,6 @@ in
       inputs.disko.nixosModules.disko
       inputs.sops-nix.nixosModules.sops
       inputs.home-manager.nixosModules.home-manager
-    ]
-    ++ lib.optionals (builtins.pathExists configName) [
-      configName
     ]
     ++ [
       ./_mixins/avahi
