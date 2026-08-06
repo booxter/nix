@@ -8,7 +8,7 @@
 let
   cfg = config.host.observability.logs;
   clientCfg = config.host.observability.client;
-  internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   enabledMtlsClients = lib.filterAttrs (_: client: client.enable) clientCfg.mtlsClients;
   lokiMtlsClient =
     if cfg.loki.mtls.enable && builtins.hasAttr cfg.loki.mtls.clientName enabledMtlsClients then

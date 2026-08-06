@@ -7,7 +7,7 @@
 }:
 let
   cfg = config.services.adaptive-upload-policy;
-  internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   transmissionCommon = pkgs.callPackage ../../srvarr/pkgs/transmission-common { };
   defaultPackage = pkgs.callPackage ./pkgs/controller {
     atomicFileWrites = pkgs.atomic-file-writes;

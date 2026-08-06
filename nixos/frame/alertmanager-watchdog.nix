@@ -6,7 +6,7 @@
   ...
 }:
 let
-  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   watchdogName = "fana-alertmanager-watchdog";
   alertmanagerReadyUrl = "https://alertmanager.${hostInventory.site.lan.domain}/-/ready";
 in

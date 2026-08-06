@@ -7,7 +7,7 @@
   ...
 }:
 let
-  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   grafanaPort = 3000;
   prometheusPort = 9090;
   prometheusScrapeClient = config.host.observability.client.mtlsClients."prometheus-scrape-node";

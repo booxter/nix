@@ -418,7 +418,7 @@ in
       key = config.sops.secrets."internal-https-client-ollama-key".path;
       checkHost = ollamaInternalHost;
       sni = ollamaInternalHost;
-      CAFile = toString (import ../../lib/home-internal-pki-root-ca.nix);
+      CAFile = toString config.host.internalPki.rootCaCertificate;
       verifyChain = true;
       OCSPaia = false;
     };

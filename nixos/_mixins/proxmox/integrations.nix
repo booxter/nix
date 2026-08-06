@@ -17,7 +17,7 @@ let
   pveum = lib.getExe' config.services.proxmox-ve.package "pveum";
   hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   certInstallUnit = "proxmox-api-certificate.service";
-  internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   pveExporterGroup = config.services.prometheus.exporters.pve.group;
   pveExporterUser = config.services.prometheus.exporters.pve.user;
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";

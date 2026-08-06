@@ -5,7 +5,7 @@
   ...
 }:
 let
-  rootCertPath = import ../../../lib/home-internal-pki-root-ca.nix;
+  rootCertPath = config.host.internalPki.rootCaCertificate;
 in
 {
   system.activationScripts.postActivation.text = lib.mkIf (!config.host.isWork) (

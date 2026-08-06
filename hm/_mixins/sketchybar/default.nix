@@ -6,7 +6,7 @@
   ...
 }:
 let
-  internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
   inherit (osConfig.host) isDarwin isWork;
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };

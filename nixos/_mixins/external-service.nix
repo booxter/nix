@@ -2,7 +2,7 @@
 let
   cfg = config.host.externalService;
   hasPublicVhosts = cfg.virtualHosts != { };
-  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;
   enabledUpstreamTlsVhosts = lib.filterAttrs (_: vhost: vhost.upstreamTls.enable) cfg.virtualHosts;
   mtlsClientSecretAttrName = clientName: "external-service-mtls-${clientName}";

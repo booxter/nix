@@ -5,7 +5,9 @@
 }:
 let
   cfg = config.host.observability.client;
-  nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix;
+  nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix {
+    internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  };
 in
 {
   options.host.observability.client = {

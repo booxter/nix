@@ -8,14 +8,14 @@
 }:
 let
   cfg = config.host.observability.client;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   hostCertificateDnsNames = hostInventory.toNixosHostCertificateDnsNames hostSpec;
   hostLabel = config.services.avahi.hostName;
   blackboxModules = import ../../../lib/prometheus-blackbox-modules.nix;
-  nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix;
-  inherit (nodeExporterMtls)
-    internalPkiRootCaPath
-    nodeExporterSecretPrefix
-    ;
+  nodeExporterMtls = import ../../../lib/prometheus-node-exporter-mtls.nix {
+    inherit internalPkiRootCaPath;
+  };
+  inherit (nodeExporterMtls) nodeExporterSecretPrefix;
   nodeExporterGroup = config.services.prometheus.exporters.node.group;
   nodeExporterUser = config.services.prometheus.exporters.node.user;
   enabledMtlsClients = lib.filterAttrs (_: client: client.enable) cfg.mtlsClients;

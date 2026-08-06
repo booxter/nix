@@ -7,7 +7,7 @@
   ...
 }:
 let
-  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
   unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
   lan = hostInventory.site.lan;
