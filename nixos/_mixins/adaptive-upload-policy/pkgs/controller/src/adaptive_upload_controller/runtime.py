@@ -16,6 +16,7 @@ from .errors import ControllerError
 from .metrics import render_metrics_text
 from .policy import (
     DecisionConfig,
+    calculate_transmission_upload_limit_kbps,
     decide_effective_policy,
     load_policy_state,
     save_policy_state,
@@ -46,11 +47,10 @@ class TransmissionRuntimeConfig:
 
 
 @dataclass(frozen=True)
-class TrafficControlRuntimeConfig:
+class QosRuntimeConfig:
     state_file: Path
     interval_seconds: float
     fallback_mbit: float
-    transmission_headroom_fraction: float
     max_state_age_seconds: float
 
 
@@ -87,7 +87,6 @@ def run_decider(config: DeciderRuntimeConfig) -> int:
             if signature != last_signature:
                 LOG.info(
                     "policy updated: observed_target_mbit=%s target_mbit=%s "
-                    "transmission_upload_limit_kbps=%s "
                     "active_external_media_streams=%s "
                     "active_external_media_bitrate_bits_per_second=%s "
                     "active_media_streams_total=%s "
@@ -98,7 +97,6 @@ def run_decider(config: DeciderRuntimeConfig) -> int:
                     "relaxation_pending_since=%s",
                     state.observed_target_mbit,
                     state.target_mbit,
-                    state.transmission_upload_limit_kbps,
                     state.active_external_media_streams,
                     state.active_external_media_bitrate_bits_per_second,
                     state.active_media_streams_total,
@@ -134,10 +132,12 @@ def run_transmission_applier(config: TransmissionRuntimeConfig) -> int:
             state = load_policy_state(
                 state_file=config.state_file,
                 fallback_mbit=config.fallback_mbit,
-                transmission_headroom_fraction=(config.transmission_headroom_fraction),
                 max_state_age_seconds=config.max_state_age_seconds,
             )
-            target_limit = state.transmission_upload_limit_kbps
+            target_limit = calculate_transmission_upload_limit_kbps(
+                state.target_mbit,
+                config.transmission_headroom_fraction,
+            )
             session_arguments = client.call("session_get")
             current_limit = transmission_get_current_upload_limit_kbps(session_arguments)
             current_enabled = transmission_get_current_upload_limit_enabled(session_arguments)
@@ -176,8 +176,8 @@ def run_transmission_applier(config: TransmissionRuntimeConfig) -> int:
         time.sleep(sleep_for)
 
 
-def run_tc_applier(
-    config: TrafficControlRuntimeConfig,
+def run_qos_applier(
+    config: QosRuntimeConfig,
     traffic_control: TrafficControl,
 ) -> int:
     last_applied: float | None = None
@@ -188,21 +188,20 @@ def run_tc_applier(
             state = load_policy_state(
                 state_file=config.state_file,
                 fallback_mbit=config.fallback_mbit,
-                transmission_headroom_fraction=(config.transmission_headroom_fraction),
                 max_state_age_seconds=config.max_state_age_seconds,
             )
             if state.target_mbit != last_applied:
                 traffic_control.apply_rate(state.target_mbit)
                 LOG.info(
-                    "updated WireGuard upload shaping to %s (reason=%s)",
-                    state.target_tc_rate,
+                    "updated QoS limit to %s Mbit/s (reason=%s)",
+                    state.target_mbit,
                     state.reason,
                 )
                 last_applied = state.target_mbit
         except ControllerError as error:
-            LOG.warning("skipping tc apply iteration: %s", error)
+            LOG.warning("skipping QoS apply iteration: %s", error)
         except Exception:
-            LOG.exception("skipping tc apply iteration after unexpected failure")
+            LOG.exception("skipping QoS apply iteration after unexpected failure")
 
         sleep_for = max(
             0.0,

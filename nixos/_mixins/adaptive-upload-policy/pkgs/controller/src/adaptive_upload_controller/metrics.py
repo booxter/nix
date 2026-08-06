@@ -16,7 +16,7 @@ def render_metrics_text(state: PolicyState) -> str:
 
     gauge(
         "target_mbit",
-        "Effective adaptive WireGuard upload cap in megabits per second.",
+        "Effective adaptive upload target in megabits per second.",
         state.target_mbit,
     )
     gauge(
@@ -28,11 +28,6 @@ def render_metrics_text(state: PolicyState) -> str:
         "reserved_external_media_bandwidth_mbit",
         "External media bitrate reserved by the adaptive upload controller in megabits per second.",
         state.reserved_external_media_bandwidth_mbit or 0,
-    )
-    gauge(
-        "transmission_upload_limit_bytes_per_second",
-        "Effective Transmission session upload cap derived from the adaptive upload controller.",
-        state.transmission_upload_limit_kbps * 1000,
     )
     gauge(
         "active_external_media_streams",

@@ -6,6 +6,7 @@ from threading import Thread
 
 from prometheus_client.parser import text_string_to_metric_families
 
+from adaptive_upload_controller.config import load_config
 from adaptive_upload_controller.jellyfin import (
     DEFAULT_MEDIA_TYPES,
     MediaStreamStats,
@@ -15,6 +16,7 @@ from adaptive_upload_controller.jellyfin import (
 from adaptive_upload_controller.metrics import render_metrics_text
 from adaptive_upload_controller.policy import (
     DecisionConfig,
+    calculate_transmission_upload_limit_kbps,
     decide_effective_policy,
     decide_observed_policy,
     default_policy_state,
@@ -42,7 +44,6 @@ def policy_args(**overrides):
         "fallback_mbit": 8.0,
         "stream_bitrate_headroom_fraction": 0.1,
         "relaxation_hold_seconds": 90.0,
-        "transmission_headroom_fraction": 0.95,
     }
     values.update(overrides)
     return DecisionConfig(**values)
@@ -173,28 +174,26 @@ def test_stale_or_invalid_state_uses_safe_policy(tmp_path):
     missing = load_policy_state(
         tmp_path / "missing.json",
         fallback_mbit=8.0,
-        transmission_headroom_fraction=0.95,
         max_state_age_seconds=90.0,
     )
     assert missing.reason == "missing_or_invalid_state_file"
-    assert missing.transmission_upload_limit_kbps == 950
 
     stale_path = tmp_path / "stale.json"
-    stale = default_policy_state(12.0, 0.95, "current", True, 0).model_copy(
+    stale = default_policy_state(12.0, "current", True, 0).model_copy(
         update={"updated_at": datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)}
     )
     save_policy_state(stale_path, stale)
-    loaded = load_policy_state(stale_path, 8.0, 0.95, 90.0)
+    loaded = load_policy_state(stale_path, 8.0, 90.0)
     assert loaded.reason == "stale_state_file"
     assert loaded.target_mbit == 8.0
 
     stale_path.write_text(json.dumps({"target_mbit": "bad"}), encoding="utf-8")
-    invalid = load_policy_state(stale_path, 8.0, 0.95, None)
+    invalid = load_policy_state(stale_path, 8.0, None)
     assert invalid.reason == "missing_or_invalid_state_file"
 
 
 def test_metrics_render_current_policy_values():
-    state = default_policy_state(8.0, 0.95, "fallback", False, 2).model_copy(
+    state = default_policy_state(8.0, "fallback", False, 2).model_copy(
         update={
             "observed_target_mbit": 7.0,
             "reserved_external_media_bandwidth_mbit": 3.5,
@@ -206,13 +205,6 @@ def test_metrics_render_current_policy_values():
 
     metrics = render_metrics_text(state)
     assert metric_value(metrics, "host_observability_adaptive_upload_target_mbit") == 8.0
-    assert (
-        metric_value(
-            metrics,
-            "host_observability_adaptive_upload_transmission_upload_limit_bytes_per_second",
-        )
-        == 950_000
-    )
     assert metric_value(metrics, "host_observability_adaptive_upload_relaxation_pending") == 1
 
 
@@ -226,6 +218,51 @@ def test_endpoint_and_transmission_value_normalization():
     assert transmission_get_current_upload_limit_kbps({"speed_limit_up": "123"}) is None
     assert transmission_get_current_upload_limit_kbps({"speed_limit_up": True}) is None
     assert transmission_get_current_upload_limit_enabled({"speed_limit_up_enabled": True})
+    assert calculate_transmission_upload_limit_kbps(8.0, 0.95) == 950
+
+
+def test_loads_shared_controller_configuration(tmp_path):
+    config_path = tmp_path / "config.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "state_file": "/run/adaptive-upload-policy/state.json",
+                "metrics_file": None,
+                "interval_seconds": 5,
+                "max_state_age_seconds": 15,
+                "fallback_rate_mbit": 8,
+                "jellyfin": {
+                    "exporter_url": "https://beast:9594/metrics",
+                    "request_timeout_seconds": 10,
+                    "media_types": ["movie", "episode"],
+                    "idle_rate_mbit": 25,
+                    "minimum_rate_mbit": 0.5,
+                    "bitrate_headroom_fraction": 0.1,
+                    "relaxation_hold_seconds": 90,
+                },
+                "transmission": {
+                    "rpc_url": "http://127.0.0.1:9091/transmission/rpc",
+                    "request_timeout_seconds": 20,
+                    "headroom_fraction": 0.95,
+                },
+                "qos": {
+                    "executable": "/bin/qosctl",
+                    "config_file": "/etc/qos/wan.json",
+                    "limit": "wireguard-upload",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    config = load_config(config_path)
+
+    assert config.fallback_rate_mbit == 8
+    assert config.jellyfin.media_types == frozenset({"movie", "episode"})
+    assert config.transmission is not None
+    assert config.transmission.headroom_fraction == 0.95
+    assert config.qos is not None
+    assert config.qos.limit == "wireguard-upload"
 
 
 def test_traffic_control_updates_named_qos_limit():

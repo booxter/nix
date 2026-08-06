@@ -35,7 +35,6 @@ class DecisionConfig:
     fallback_mbit: float
     stream_bitrate_headroom_fraction: float
     relaxation_hold_seconds: float
-    transmission_headroom_fraction: float
 
 
 @dataclass(frozen=True)
@@ -72,8 +71,6 @@ class PolicyState(BaseModel):
     relaxation_pending_target_mbit: float | None = Field(default=None, gt=0)
     reserved_external_media_bandwidth_mbit: float | None = Field(default=None, ge=0)
     target_mbit: float = Field(gt=0)
-    target_tc_rate: str
-    transmission_upload_limit_kbps: int = Field(gt=0)
     updated_at: datetime.datetime
 
     @field_validator("relaxation_pending_since", "updated_at")
@@ -92,7 +89,6 @@ class PolicyState(BaseModel):
         return (
             self.target_mbit,
             self.observed_target_mbit,
-            self.transmission_upload_limit_kbps,
             self.active_external_media_streams,
             self.active_external_media_bitrate_bits_per_second,
             self.active_media_streams_total,
@@ -114,10 +110,6 @@ def round_target_mbit(target_mbit: float) -> float:
     return round(target_mbit, 1)
 
 
-def format_target_mbit(target_mbit: float) -> str:
-    return f"{round_target_mbit(target_mbit):.1f}".rstrip("0").rstrip(".")
-
-
 def calculate_transmission_upload_limit_kbps(
     target_mbit: float,
     headroom_fraction: float,
@@ -127,7 +119,6 @@ def calculate_transmission_upload_limit_kbps(
 
 def default_policy_state(
     fallback_mbit: float,
-    transmission_headroom_fraction: float,
     reason: str,
     exporter_ok: bool,
     active_external_media_streams: int | None,
@@ -142,11 +133,6 @@ def default_policy_state(
         reason=reason,
         relaxation_hold_seconds=0,
         target_mbit=target_mbit,
-        target_tc_rate=f"{format_target_mbit(target_mbit)}mbit",
-        transmission_upload_limit_kbps=calculate_transmission_upload_limit_kbps(
-            target_mbit,
-            transmission_headroom_fraction,
-        ),
         updated_at=utc_now(),
     )
 
@@ -269,11 +255,6 @@ def build_policy_state(
         ),
         reserved_external_media_bandwidth_mbit=(observed.reserved_external_media_bandwidth_mbit),
         target_mbit=effective_target_mbit,
-        target_tc_rate=f"{format_target_mbit(effective_target_mbit)}mbit",
-        transmission_upload_limit_kbps=calculate_transmission_upload_limit_kbps(
-            effective_target_mbit,
-            config.transmission_headroom_fraction,
-        ),
         updated_at=utc_now(),
     )
 
@@ -367,14 +348,12 @@ def save_policy_state(path: Path, state: PolicyState) -> None:
 def load_policy_state(
     state_file: Path,
     fallback_mbit: float,
-    transmission_headroom_fraction: float,
     max_state_age_seconds: float | None,
     *,
     now: datetime.datetime | None = None,
 ) -> PolicyState:
     fallback = default_policy_state(
         fallback_mbit,
-        transmission_headroom_fraction,
         "missing_or_invalid_state_file",
         False,
         None,

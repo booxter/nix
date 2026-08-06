@@ -23,9 +23,6 @@ let
   controller = lib.getExe cfg.package;
   deciderUnit = "adaptive-upload-policy.service";
   mtls = cfg.source.jellyfin.mtls;
-  mtlsSecretName = "internal-https-client-${mtls.clientName}";
-  clientCertificate = config.sops.secrets."${mtlsSecretName}-crt".path;
-  clientKey = config.sops.secrets."${mtlsSecretName}-key".path;
   transmissionRpcUrl =
     if cfg.outputs.transmission.rpcUrl != null then
       cfg.outputs.transmission.rpcUrl
@@ -34,84 +31,51 @@ let
   qosProfile = config.host.qos.interfaces.${cfg.outputs.qos.profile} or null;
   qosLimit = if qosProfile != null then qosProfile.limits.${cfg.outputs.qos.limit} or null else null;
   qosService = "qos-${cfg.outputs.qos.profile}.service";
-  deciderCommand = utils.escapeSystemdExecArgs (
-    [
+  controllerConfig = (pkgs.formats.json { }).generate "adaptive-upload-policy.json" {
+    state_file = cfg.stateFile;
+    metrics_file = if cfg.metrics.enable then metricsFile else null;
+    interval_seconds = cfg.intervalSeconds;
+    max_state_age_seconds = maxStateAgeSeconds;
+    fallback_rate_mbit = cfg.fallbackRateMbit;
+    jellyfin = {
+      exporter_url = cfg.source.jellyfin.exporterUrl;
+      request_timeout_seconds = cfg.source.jellyfin.requestTimeoutSeconds;
+      ca_file = if mtls.enable then toString mtls.caFile else "";
+      client_cert_file = if mtls.enable && mtls.certificateFile != null then mtls.certificateFile else "";
+      client_key_file = if mtls.enable && mtls.keyFile != null then mtls.keyFile else "";
+      media_types = cfg.source.jellyfin.mediaTypes;
+      idle_rate_mbit = cfg.policy.idleRateMbit;
+      minimum_rate_mbit = cfg.policy.minimumRateMbit;
+      bitrate_headroom_fraction = cfg.policy.bitrateHeadroomFraction;
+      relaxation_hold_seconds = cfg.policy.relaxationHoldSeconds;
+    };
+    transmission =
+      if cfg.outputs.transmission.enable then
+        {
+          rpc_url = transmissionRpcUrl;
+          request_timeout_seconds = cfg.outputs.transmission.requestTimeoutSeconds;
+          headroom_fraction = cfg.outputs.transmission.headroomFraction;
+        }
+      else
+        null;
+    qos =
+      if cfg.outputs.qos.enable then
+        {
+          executable = lib.getExe config.host.qos.package;
+          config_file = config.host.qos.configFiles.${cfg.outputs.qos.profile};
+          limit = cfg.outputs.qos.limit;
+        }
+      else
+        null;
+  };
+  command =
+    action:
+    utils.escapeSystemdExecArgs [
       controller
-      "decide"
-      "--exporter-url"
-      cfg.source.jellyfin.exporterUrl
-      "--state-file"
-      cfg.stateFile
-      "--interval-seconds"
-      (toString cfg.intervalSeconds)
-      "--request-timeout-seconds"
-      (toString cfg.source.jellyfin.requestTimeoutSeconds)
-      "--no-streams-mbit"
-      (toString cfg.policy.idleRateMbit)
-      "--minimum-streams-mbit"
-      (toString cfg.policy.minimumRateMbit)
-      "--fallback-mbit"
-      (toString cfg.fallbackRateMbit)
-      "--stream-bitrate-headroom-fraction"
-      (toString cfg.policy.bitrateHeadroomFraction)
-      "--relaxation-hold-seconds"
-      (toString cfg.policy.relaxationHoldSeconds)
-      "--transmission-headroom-fraction"
-      (toString cfg.outputs.transmission.headroomFraction)
-    ]
-    ++ lib.optionals cfg.metrics.enable [
-      "--metrics-file"
-      metricsFile
-    ]
-    ++ [ "--media-types" ]
-    ++ cfg.source.jellyfin.mediaTypes
-    ++ lib.optionals mtls.enable [
-      "--ca-file"
-      (toString mtls.caFile)
-      "--client-cert-file"
-      clientCertificate
-      "--client-key-file"
-      clientKey
-    ]
-  );
-  transmissionCommand = utils.escapeSystemdExecArgs [
-    controller
-    "apply-transmission"
-    "--rpc-url"
-    transmissionRpcUrl
-    "--state-file"
-    cfg.stateFile
-    "--interval-seconds"
-    (toString cfg.intervalSeconds)
-    "--request-timeout-seconds"
-    (toString cfg.outputs.transmission.requestTimeoutSeconds)
-    "--fallback-mbit"
-    (toString cfg.fallbackRateMbit)
-    "--transmission-headroom-fraction"
-    (toString cfg.outputs.transmission.headroomFraction)
-    "--max-state-age-seconds"
-    (toString maxStateAgeSeconds)
-  ];
-  qosCommand = utils.escapeSystemdExecArgs [
-    controller
-    "apply-tc"
-    "--state-file"
-    cfg.stateFile
-    "--interval-seconds"
-    (toString cfg.intervalSeconds)
-    "--fallback-mbit"
-    (toString cfg.fallbackRateMbit)
-    "--transmission-headroom-fraction"
-    (toString cfg.outputs.transmission.headroomFraction)
-    "--max-state-age-seconds"
-    (toString maxStateAgeSeconds)
-    "--qosctl"
-    (lib.getExe config.host.qos.package)
-    "--qos-config"
-    config.host.qos.configFiles.${cfg.outputs.qos.profile}
-    "--qos-limit"
-    cfg.outputs.qos.limit
-  ];
+      action
+      "--config"
+      controllerConfig
+    ];
   commonServiceConfig = {
     Restart = "always";
     RestartSec = "10s";
@@ -239,22 +203,28 @@ in
       mtls = {
         enable = lib.mkEnableOption "mTLS authentication to the Jellyfin exporter";
 
-        clientName = lib.mkOption {
-          type = lib.types.str;
-          default = "adaptive-upload-policy";
-          description = "Internal HTTPS client identity name.";
-        };
-
-        secretPrefix = lib.mkOption {
-          type = lib.types.str;
-          default = "internal_https/clients/${mtls.clientName}";
-          description = "SOPS prefix containing the mTLS client certificate and key.";
-        };
-
         caFile = lib.mkOption {
           type = lib.types.path;
           default = internalPkiRootCaPath;
           description = "CA certificate used to verify the Jellyfin exporter.";
+        };
+
+        certificateFile = lib.mkOption {
+          type = with lib.types; nullOr str;
+          default = null;
+          description = "Client certificate used to authenticate to the Jellyfin exporter.";
+        };
+
+        keyFile = lib.mkOption {
+          type = with lib.types; nullOr str;
+          default = null;
+          description = "Client private key used to authenticate to the Jellyfin exporter.";
+        };
+
+        dependencyUnits = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = [ ];
+          description = "Units that must start before the mTLS credentials are available.";
         };
       };
     };
@@ -326,6 +296,14 @@ in
         message = "services.adaptive-upload-policy requires at least one enabled output";
       }
       {
+        assertion = !mtls.enable || mtls.certificateFile != null;
+        message = "services.adaptive-upload-policy requires an mTLS certificate file";
+      }
+      {
+        assertion = !mtls.enable || mtls.keyFile != null;
+        message = "services.adaptive-upload-policy requires an mTLS private key file";
+      }
+      {
         assertion = !cfg.outputs.qos.enable || qosProfile != null;
         message = "services.adaptive-upload-policy.outputs.qos.profile must reference a host.qos profile";
       }
@@ -351,15 +329,6 @@ in
       group = cfg.group;
     };
 
-    host.internalHttps.mtlsClients.${mtls.clientName} = lib.mkIf mtls.enable {
-      enable = true;
-      inherit (mtls) secretPrefix;
-      owner = cfg.user;
-      group = cfg.group;
-      mode = "0400";
-      restartUnits = [ deciderUnit ];
-    };
-
     systemd.tmpfiles.rules = [
       "d ${stateDir} 0750 ${cfg.user} ${cfg.group} -"
     ]
@@ -369,10 +338,10 @@ in
       adaptive-upload-policy = {
         description = "Decide adaptive upload policy from Jellyfin playback";
         wantedBy = [ "multi-user.target" ];
-        wants = [ "network-online.target" ] ++ lib.optional mtls.enable "sops-install-secrets.service";
-        after = [ "network-online.target" ] ++ lib.optional mtls.enable "sops-install-secrets.service";
+        wants = [ "network-online.target" ] ++ lib.optionals mtls.enable mtls.dependencyUnits;
+        after = [ "network-online.target" ] ++ lib.optionals mtls.enable mtls.dependencyUnits;
         serviceConfig = commonServiceConfig // {
-          ExecStart = deciderCommand;
+          ExecStart = command "decide";
           ReadWritePaths = [ stateDir ] ++ lib.optional cfg.metrics.enable cfg.metrics.directory;
           RestrictAddressFamilies = [
             "AF_UNIX"
@@ -396,7 +365,7 @@ in
           "transmission.service"
         ];
         serviceConfig = commonServiceConfig // {
-          ExecStart = transmissionCommand;
+          ExecStart = command "apply-transmission";
           RestrictAddressFamilies = [
             "AF_UNIX"
             "AF_INET"
@@ -418,7 +387,7 @@ in
         ];
         partOf = [ qosService ];
         serviceConfig = commonServiceConfig // {
-          ExecStart = qosCommand;
+          ExecStart = command "apply-qos";
           AmbientCapabilities = [ "CAP_NET_ADMIN" ];
           CapabilityBoundingSet = [ "CAP_NET_ADMIN" ];
           RestrictAddressFamilies = [

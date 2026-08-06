@@ -21,11 +21,15 @@ pkgs.testers.runNixOSTest {
     shaper =
       {
         config,
+        lib,
         pkgs,
         ...
       }:
       {
-        imports = [ ../../nixos/_mixins/qos ];
+        imports = [
+          ../../nixos/_mixins/adaptive-upload-policy
+          ../../nixos/_mixins/qos
+        ];
 
         networking.firewall = {
           enable = true;
@@ -100,13 +104,29 @@ pkgs.testers.runNixOSTest {
           };
         };
 
+        services.adaptive-upload-policy = {
+          enable = true;
+          fallbackRateMbit = 3;
+          source.jellyfin.exporterUrl = "http://127.0.0.1:1/metrics";
+          outputs.qos = {
+            enable = true;
+            profile = "wan";
+            limit = "cake-egress";
+          };
+          metrics.enable = false;
+        };
+
+        systemd.services = {
+          adaptive-upload-policy.wantedBy = lib.mkForce [ ];
+          adaptive-upload-policy-qos.wantedBy = lib.mkForce [ ];
+        };
+
         environment = {
           etc."qos-test/classes.json".source = (pkgs.formats.json { }).generate "qos-test-classes.json" (
             config.host.qos.classIds.wan
           );
           etc."qos-test/config.json".source = config.host.qos.configFiles.wan;
           systemPackages = [
-            config.host.qos.package
             pkgs.iperf3
             pkgs.iproute2
             pkgs.nftables
@@ -244,16 +264,6 @@ pkgs.testers.runNixOSTest {
         )
 
 
-    def set_rate(name, rate_mbit):
-        shaper.succeed(command([
-            "qosctl",
-            "--config", "/etc/qos-test/config.json",
-            "--limit", name,
-            "--rate-mbit", rate_mbit,
-            "set-rate",
-        ]))
-
-
     start_all()
     shaper.wait_for_unit("qos-wan.service")
     shaper.wait_for_unit("multi-user.target")
@@ -331,9 +341,16 @@ pkgs.testers.runNixOSTest {
             f"unclassified traffic was not clearly faster: {unclassified:.1f} Mbit/s"
         )
 
-    with subtest("runtime update changes the named CAKE limit"):
-        set_rate("cake-egress", 3)
-        assert_limited("updated CAKE egress", iperf_rate(shaper, PEER, 5208), 3)
+    with subtest("adaptive policy updates the named CAKE limit"):
+        shaper.succeed("systemctl start adaptive-upload-policy-qos.service")
+        shaper.wait_for_unit("adaptive-upload-policy-qos.service")
+        shaper.wait_until_succeeds(
+            "journalctl -u adaptive-upload-policy-qos.service -o cat "
+            "| grep -F 'updated QoS limit to 3.0 Mbit/s'"
+        )
+        assert_limited("adaptive CAKE egress", iperf_rate(shaper, PEER, 5208), 3)
+        shaper.succeed("systemctl stop adaptive-upload-policy-qos.service")
+        shaper.succeed("systemctl stop adaptive-upload-policy.service")
 
     with subtest("restart restores declarative topology"):
         shaper.succeed("systemctl restart qos-wan.service")
