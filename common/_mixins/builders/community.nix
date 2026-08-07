@@ -4,7 +4,6 @@
   ...
 }:
 let
-  username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   linuxFeatures = [
     "benchmark"
@@ -52,7 +51,7 @@ in
       ) communityBuilders;
       extraConfig =
         let
-          communityBuilderIdentityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
+          communityBuilderIdentityFile = "${config.host.ssh.userDirectory}/nix-community-builders";
           user = config.host.github.login;
         in
         lib.concatStringsSep "\n" (

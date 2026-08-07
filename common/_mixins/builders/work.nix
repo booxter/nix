@@ -6,7 +6,7 @@
 }:
 let
   username = config.host.username;
-  identityFile = "${config.users.users.${username}.home}/.ssh/jgwxhwdl4x-nix-builder";
+  identityFile = "${config.host.ssh.userDirectory}/jgwxhwdl4x-nix-builder";
   builderSpec = hostInventory.nixosHosts.nvws;
   nspawnFeatures = [
     "devnet"

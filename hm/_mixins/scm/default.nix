@@ -15,7 +15,10 @@ let
   inherit (hostInventory.user) fullName;
   privateEmail = hostInventory.user.emails.personal;
   email = hostInventory.user.emails.${osConfig.host.userProfile};
-  sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
+  sshDirectory = osConfig.host.ssh.userDirectory;
+  sshSigningKeyPath = "${sshDirectory}/id_ed25519.pub";
+  githubSshConfigFile = lib.removePrefix "${config.home.homeDirectory}/" "${sshDirectory}/config.d/github.com";
+  githubKnownHostsFile = lib.removePrefix "${config.home.homeDirectory}/" "${sshDirectory}/known_hosts.d/github.com";
   pushDisabledGitHubRepos = [
     "NixOS/nixpkgs"
     "ovn-kubernetes/ovn-kubernetes"
@@ -213,15 +216,15 @@ in
 
   # Register GitHub as a known host in SSH config
   home.file = {
-    ".ssh/config.d/github.com".text = ''
+    ${githubSshConfigFile}.text = ''
       Host github.com
         Hostname github.com
         HostKeyAlias github.com
-        UserKnownHostsFile ~/.ssh/known_hosts.d/github.com
+        UserKnownHostsFile ${sshDirectory}/known_hosts.d/github.com
         User git
     '';
 
-    ".ssh/known_hosts.d/github.com".text =
+    ${githubKnownHostsFile}.text =
       lib.concatMapStringsSep "\n" readPublicKey [
         ../../../public-keys/hosts/github.com.ed25519.pub
         ../../../public-keys/hosts/github.com.rsa.pub

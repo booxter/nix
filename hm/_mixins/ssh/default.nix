@@ -84,7 +84,7 @@ in
         # local config
         "config.backup" # prior to home-manager activation
         "config.local" # whatever I may want to add manually
-        "~/.ssh/config.d/*"
+        "${osConfig.host.ssh.userDirectory}/config.d/*"
       ];
 
       # some servers have a problem with kitty terminfo, be conservative

@@ -14,7 +14,7 @@ in
     programs.ssh = {
       extraConfig =
         let
-          identityFile = "${config.users.users.${username}.home}/.ssh/id_ed25519";
+          identityFile = "${config.host.ssh.userDirectory}/id_ed25519";
           toHost = hostname: ''
             Host ${hostname}
               Hostname ${hostname}

@@ -9,8 +9,9 @@
 let
   cfg = osConfig.programs.yubi;
   residentSsh = hostInventory.yubi.devices.personal.applets.fido2.residentSsh;
-  yubikeySshKey = "${config.home.homeDirectory}/.ssh/${residentSsh.keyName}";
-  fallbackSshKey = "${config.home.homeDirectory}/.ssh/id_ed25519";
+  sshDirectory = osConfig.host.ssh.userDirectory;
+  yubikeySshKey = "${sshDirectory}/${residentSsh.keyName}";
+  fallbackSshKey = "${sshDirectory}/id_ed25519";
   yubikeyAgeIdentityFile = "${config.xdg.configHome}/sops/age/${hostInventory.yubi.ageIdentity.identityFileName}";
   sshSudoPasswordEnabled =
     osConfig.host.isDarwin && osConfig.programs.yubi.smartCard.sshSudoPassword.enable;

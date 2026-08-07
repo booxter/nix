@@ -34,6 +34,14 @@ in
       description = "Whether SSH clients should expose home fleet pre-boot aliases.";
     };
 
+    userDirectory = lib.mkOption {
+      type = lib.types.str;
+      default = "${config.users.users.${username}.home}/.ssh";
+      readOnly = true;
+      internal = true;
+      description = "Primary user's OpenSSH directory.";
+    };
+
     tickets.enable = lib.mkOption {
       type = lib.types.bool;
       default = realmSsh ? tickets;

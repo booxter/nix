@@ -14,8 +14,10 @@ let
   ticketPackage = homeManagerPkgs.ssh-ticket;
   issuer = hostInventory.sshTicket.issuers.${hostname} or null;
   ticketStateDir = "${config.xdg.stateHome}/ssh-ticket";
-  ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
-  caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
+  sshDirectory = osConfig.host.ssh.userDirectory;
+  ticketKeyPath = "${sshDirectory}/fleet-ticket/id_ed25519";
+  caKeyPath = "${sshDirectory}/${issuer.keyName}";
+  caPublicKeyFile = lib.removePrefix "${config.home.homeDirectory}/" "${sshDirectory}/fleet-user-ca.pub";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
   ticketTargets = builtins.filter (target: target.realm == realm) hostInventory.sshTicket.targets;
   ticketTargetsFile = pkgs.writeText "ssh-ticket-targets.json" (builtins.toJSON ticketTargets);
@@ -75,7 +77,7 @@ in
       SSHT_CA_AGENT = lib.boolToString issuer.useAgent;
     };
 
-    home.file.".ssh/fleet-user-ca.pub" = lib.mkIf issuer.useAgent {
+    home.file.${caPublicKeyFile} = lib.mkIf issuer.useAgent {
       text = "${issuer.publicKey}\n";
     };
 

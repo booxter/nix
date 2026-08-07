@@ -7,6 +7,8 @@
 let
   username = config.host.username;
   userHome = config.users.users.${username}.home;
+  sshDirectory = config.host.ssh.userDirectory;
+  secretivePublicKeyFile = lib.removePrefix "${userHome}/" "${sshDirectory}/secretive.pub";
 in
 {
   options.host.secretive.enable = lib.mkEnableOption "Secretive system application installation";
@@ -32,8 +34,8 @@ in
     '';
 
     home-manager.users.${username} = {
-      home.file.".ssh/secretive.pub".source = ../../../public-keys/mair-secretive.pub;
-      programs.git.settings.user.signingKey = "${userHome}/.ssh/secretive.pub";
+      home.file.${secretivePublicKeyFile}.source = ../../../public-keys/mair-secretive.pub;
+      programs.git.settings.user.signingKey = "${sshDirectory}/secretive.pub";
     };
   };
 }
