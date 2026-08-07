@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from prometheus_client import CollectorRegistry, Gauge, write_to_textfile
+from atomic_file_writes import write_text_atomic
+from prometheus_client import CollectorRegistry, Gauge, generate_latest
 
 from .models import BackupJob, BackupState, JobsConfig
 
@@ -73,4 +74,4 @@ def result_registry(job: BackupJob, state: BackupState) -> CollectorRegistry:
 
 def write_registry(path: Path, registry: CollectorRegistry) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    write_to_textfile(str(path), registry)
+    write_text_atomic(path, generate_latest(registry).decode(), mode=0o644)
