@@ -57,7 +57,7 @@ class JellyfinApi:
             "beast-jellyfin-tools",
         )
         client.config.auth(base_url, "", token=api_key, ssl=False)
-        client.config.http(max_retries=0, timeout=10)
+        client.config.http(max_retries=0, timeout=120)
         self.api = client.jellyfin
 
     def sessions(self) -> tuple[Session, ...]:
