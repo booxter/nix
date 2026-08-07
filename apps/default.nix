@@ -1,5 +1,6 @@
 {
   fleet,
+  nixosConfigurations,
   packageUpdates,
   pkgs,
   proxmox,
@@ -15,6 +16,13 @@ let
     // {
       get-ff-cookie = appSpec (pkgs.lib.getExe pkgs.get-ff-cookie) "Export Firefox cookies as Netscape cookies.txt on stdout.";
       flake-input-update-summary = appSpec (pkgs.lib.getExe pkgs.flake-input-update-summary) "Generate a revision-linked flake input update summary.";
+      upgrade-show = import ./upgrade-show.nix {
+        inherit
+          appSpec
+          nixosConfigurations
+          pkgs
+          ;
+      };
     };
   mkApp = _name: appSpec: {
     type = "app";

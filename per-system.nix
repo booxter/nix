@@ -1,5 +1,6 @@
 {
   inputs,
+  nixosConfigurations,
   outputs,
   system,
 }:
@@ -29,6 +30,7 @@ in
   apps = import ./apps {
     inherit
       fleet
+      nixosConfigurations
       packageUpdates
       pkgs
       proxmox

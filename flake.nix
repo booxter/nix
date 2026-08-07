@@ -92,6 +92,8 @@
           specialArgs = hostSpecialArgs spec;
           modules = [ ./darwin ];
         };
+      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) hostInventory.darwinHosts;
+      nixosConfigurations = builtins.mapAttrs (_: mkNixos) hostInventory.nixosHosts;
       perSystem =
         inputs.nixpkgs.lib.genAttrs
           [
@@ -103,6 +105,7 @@
             import ./per-system.nix {
               inherit
                 inputs
+                nixosConfigurations
                 outputs
                 system
                 ;
@@ -112,9 +115,7 @@
 
     in
     {
-      darwinConfigurations = builtins.mapAttrs (_: mkDarwin) hostInventory.darwinHosts;
-
-      nixosConfigurations = builtins.mapAttrs (_: mkNixos) hostInventory.nixosHosts;
+      inherit darwinConfigurations nixosConfigurations;
 
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";
