@@ -41,7 +41,7 @@ let
   formatList = values: if values == [ ] then "-" else lib.concatStringsSep "," values;
 in
 {
-  config = lib.mkIf (!config.host.isWork && config.host.isDesktop) {
+  config = lib.mkIf (builtins.elem "community" config.host.build.pools && config.host.isDesktop) {
     programs.ssh = {
       knownHosts = lib.mapAttrs' (
         _: builder:

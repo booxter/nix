@@ -5,6 +5,13 @@
 }:
 {
   home = {
+    build = {
+      includeUnscopedCiTargets = true;
+      pools = [
+        "community"
+        "personal"
+      ];
+    };
     secretDomain = "main";
     trust.ssh = {
       authorizedKeys = [
@@ -48,6 +55,7 @@
   };
 
   work = {
+    build.pools = [ "work" ];
     secretDomain = "work";
     services = { };
     trust.ssh.authorizedKeys = [

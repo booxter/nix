@@ -10,7 +10,7 @@ let
   builderSpecs = map builderSpec (lib.range 1 3);
 in
 {
-  config = lib.mkIf (!config.host.isWork && config.host.isDesktop) {
+  config = lib.mkIf (builtins.elem "personal" config.host.build.pools && config.host.isDesktop) {
     programs.ssh = {
       extraConfig =
         let

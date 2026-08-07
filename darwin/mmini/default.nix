@@ -6,7 +6,7 @@
 
   host.fleetCacheWarmer = {
     enable = true;
-    targetFilter = "non-work";
+    targetRealm = "home";
     pushToAttic = true;
   };
 

@@ -15,7 +15,7 @@ let
   ];
 in
 {
-  config = lib.mkIf (config.host.isWork && !config.host.isBuilder) {
+  config = lib.mkIf (builtins.elem "work" config.host.build.pools && !config.host.isBuilder) {
     programs.ssh = {
       extraConfig = ''
         Host nvws.local

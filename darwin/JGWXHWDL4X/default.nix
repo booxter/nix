@@ -3,7 +3,7 @@
 
   host.fleetCacheWarmer = {
     enable = true;
-    targetFilter = "work";
+    targetRealm = "work";
     pushToAttic = false;
   };
 }
