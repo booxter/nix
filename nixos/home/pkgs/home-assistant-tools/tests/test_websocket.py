@@ -28,7 +28,7 @@ class InMemoryWebsocket:
             self.backups.append(
                 {
                     "backup_id": "generated",
-                    "agents": ["backup.local"],
+                    "agents": {"backup.local": {"protected": False, "size": 0}},
                     "database_included": True,
                     "homeassistant_included": True,
                     "date": datetime.now(UTC).isoformat(),

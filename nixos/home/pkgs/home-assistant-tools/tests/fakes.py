@@ -155,7 +155,9 @@ class FakeTime:
 def backup(backup_id: str, days_ago: int, *, local: bool = True) -> Backup:
     return Backup(
         backup_id=backup_id,
-        agents=["backup.local"] if local else ["backup.remote"],
+        agents={"backup.local": {"protected": False, "size": 0}}
+        if local
+        else {"backup.remote": {"protected": False, "size": 0}},
         database_included=True,
         homeassistant_included=True,
         date=(datetime.now(UTC) - timedelta(days=days_ago)).isoformat(),

@@ -52,7 +52,7 @@ class AccessToken(ApiModel):
 
 class Backup(ApiModel):
     backup_id: str
-    agents: list[str]
+    agents: dict[str, object]
     database_included: bool
     homeassistant_included: bool
     date: str
