@@ -37,9 +37,14 @@ let
   hostFacts = hostFactsFor {
     inherit lanDomain publicDomain publicServiceHosts;
   };
+  rawHostSpecs = hostFacts.nixosHostSpecs ++ builtins.attrValues hostFacts.darwinHosts;
+  builderFacts = import ./builders.nix {
+    inherit lib;
+    hostSpecs = rawHostSpecs;
+  };
   sshFacts = import ./ssh.nix {
     inherit lib readPublicKey username;
-    hostSpecs = hostFacts.nixosHostSpecs ++ builtins.attrValues hostFacts.darwinHosts;
+    hostSpecs = rawHostSpecs;
   };
   realmFor =
     spec:
@@ -149,6 +154,7 @@ rec {
   backups = backupFacts // {
     clients = backupClients;
   };
+  builders = builderFacts;
 
   inherit (serviceFacts) glanceCategories;
   inherit

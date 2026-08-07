@@ -55,7 +55,8 @@ in
           system = "x86_64-linux";
           protocol = "ssh-ng";
           maxJobs = 4;
-          supportedFeatures = features ++ lib.optionals (hostSpec.nspawnTestBuilder or false) nspawnFeatures;
+          supportedFeatures =
+            features ++ lib.optionals (hostSpec.builder.supportsNspawnTests or false) nspawnFeatures;
         };
       in
       (map (toBuilder builderSpeedFactor) builderSpecs)

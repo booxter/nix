@@ -33,7 +33,10 @@ let
       idx' = toString idx;
     in
     {
-      isBuilder = true;
+      builder = {
+        pool = "personal";
+        supportsNspawnTests = true;
+      };
       isVM = true;
       name = "builder${idx'}";
       platform = "x86_64-linux";
@@ -47,7 +50,6 @@ let
       diskSize = 150;
       cores = 24;
       hmFull = false;
-      nspawnTestBuilder = true;
     };
 
   labProxmoxSpec =
@@ -132,7 +134,7 @@ in
       platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
-      isBuilder = true;
+      builder.pool = "personal";
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
@@ -166,11 +168,14 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      isBuilder = true;
+      builder = {
+        pool = "personal";
+        speedFactor = 200;
+        supportsNspawnTests = true;
+      };
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
       vnc = {
         enable = true;
@@ -240,8 +245,11 @@ in
       platform = "x86_64-linux";
       realm = "work";
       userProfile = "nvidia";
-      isBuilder = true;
-      nspawnTestBuilder = true;
+      builder = {
+        pool = "work";
+        sshHost = "nvws.local";
+        supportsNspawnTests = true;
+      };
       hmFull = false;
       stateVersion = "25.11";
       netIface = "enp3s0f0";

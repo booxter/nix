@@ -46,7 +46,7 @@ in
           "big-parallel"
           "kvm"
         ]
-        ++ lib.optionals (builderSpec.nspawnTestBuilder or false) nspawnFeatures;
+        ++ lib.optionals (builderSpec.builder.supportsNspawnTests or false) nspawnFeatures;
       }
     ];
   };

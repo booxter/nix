@@ -44,7 +44,7 @@ in
 
     isBuilder = lib.mkOption {
       type = lib.types.bool;
-      default = hostSpec.isBuilder or false;
+      default = hostSpec ? builder;
       readOnly = true;
       internal = true;
       description = "Whether this host is a Nix builder.";
@@ -52,7 +52,7 @@ in
 
     builder.supportsNspawnTests = lib.mkOption {
       type = lib.types.bool;
-      default = hostSpec.nspawnTestBuilder or false;
+      default = if hostSpec ? builder then hostSpec.builder.supportsNspawnTests or false else false;
       readOnly = true;
       internal = true;
       description = "Whether this builder supports nspawn-based NixOS tests.";
