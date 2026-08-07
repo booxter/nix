@@ -1,28 +1,24 @@
 { config, lib, ... }:
 {
-  config = lib.mkMerge [
-    (lib.mkIf config.host.isBuilder {
-      system.autoUpgrade = {
-        dates = lib.mkOverride 900 "Mon 03:00";
-        rebootWindow = {
-          lower = lib.mkOverride 900 "02:59";
-          upper = lib.mkOverride 900 "06:00";
-        };
+  config = lib.mkIf config.host.isBuilder {
+    system.autoUpgrade = {
+      dates = lib.mkOverride 900 "Mon 03:00";
+      rebootWindow = {
+        lower = lib.mkOverride 900 "02:59";
+        upper = lib.mkOverride 900 "06:00";
       };
-    })
-    (lib.mkIf config.host.builder.supportsNspawnTests {
-      nix.settings = {
-        auto-allocate-uids = true;
-        extra-experimental-features = [
-          "auto-allocate-uids"
-          "cgroups"
-        ];
-        extra-system-features = [
-          "devnet"
-          "uid-range"
-        ];
-        extra-sandbox-paths = [ "/dev/net" ];
-      };
-    })
-  ];
+    };
+    nix.settings = {
+      auto-allocate-uids = true;
+      extra-experimental-features = [
+        "auto-allocate-uids"
+        "cgroups"
+      ];
+      extra-system-features = [
+        "devnet"
+        "uid-range"
+      ];
+      extra-sandbox-paths = [ "/dev/net" ];
+    };
+  };
 }

@@ -33,10 +33,7 @@ let
       idx' = toString idx;
     in
     {
-      builder = {
-        pool = "personal";
-        supportsNspawnTests = true;
-      };
+      builder.pool = "personal";
       isVM = true;
       name = "builder${idx'}";
       platform = "x86_64-linux";
@@ -171,7 +168,6 @@ in
       builder = {
         pool = "personal";
         speedFactor = 200;
-        supportsNspawnTests = true;
       };
       isDesktop = true;
       isOperatorSeat = true;
@@ -248,7 +244,6 @@ in
       builder = {
         pool = "work";
         sshHost = "nvws.local";
-        supportsNspawnTests = true;
       };
       hmFull = false;
       stateVersion = "25.11";

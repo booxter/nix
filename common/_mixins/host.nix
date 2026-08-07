@@ -50,14 +50,6 @@ in
       description = "Whether this host is a Nix builder.";
     };
 
-    builder.supportsNspawnTests = lib.mkOption {
-      type = lib.types.bool;
-      default = if hostSpec ? builder then hostSpec.builder.supportsNspawnTests or false else false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this builder supports nspawn-based NixOS tests.";
-    };
-
     isDesktop = lib.mkOption {
       type = lib.types.bool;
       default = hostSpec.isDesktop or false;
@@ -246,10 +238,6 @@ in
       {
         assertion = !config.host.isSecretsOperator || config.host.hasHardwareAgeIdentity;
         message = "Secrets operator ${hostname} must have a hardware-backed age identity.";
-      }
-      {
-        assertion = !config.host.builder.supportsNspawnTests || config.host.isBuilder;
-        message = "nspawn test support requires ${hostname} to be a Nix builder.";
       }
     ];
 
