@@ -1,12 +1,14 @@
 {
   beastPkgs,
+  config,
   lib,
   pkgs,
   utils,
   ...
 }:
 let
-  volume2 = "/volume2";
+  dataVolume = config.host.storage.volumes.data;
+  volume2 = dataVolume.mountPoint;
   maintenance = lib.getExe' beastPkgs.backup-server-tools "btrfs-maintenance";
   btrfs = lib.getExe pkgs.btrfs-progs;
   maintenanceCommand =
@@ -31,9 +33,8 @@ in
   imports = [ ../_mixins/btrfs-scrub.nix ];
 
   # Keep /volume2 for compatibility with existing NFS client paths.
-  fileSystems."/volume2" = {
-    device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
-    fsType = "btrfs";
+  fileSystems.${volume2} = {
+    inherit (dataVolume) device fsType;
     options = [
       "compress=zstd"
       "noatime"

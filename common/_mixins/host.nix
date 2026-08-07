@@ -13,6 +13,7 @@ let
   inherit (hostPlatform) isDarwin isLinux system;
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
   hostModule = platformDirectory + "/${hostname}";
+  hostStorage = hostInventory.storage.hosts.${hostname} or { };
 in
 {
   imports = lib.optional (builtins.pathExists hostModule) hostModule;
@@ -160,6 +161,31 @@ in
       readOnly = true;
       internal = true;
       description = "SOPS secret domain selected for this host.";
+    };
+
+    storage.volumes = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule {
+          options = {
+            mountPoint = lib.mkOption {
+              type = lib.types.str;
+              description = "Filesystem mount point.";
+            };
+            device = lib.mkOption {
+              type = lib.types.str;
+              description = "Filesystem device.";
+            };
+            fsType = lib.mkOption {
+              type = lib.types.str;
+              description = "Filesystem type.";
+            };
+          };
+        }
+      );
+      default = hostStorage.volumes or { };
+      readOnly = true;
+      internal = true;
+      description = "Storage volumes declared for this host by inventory.";
     };
 
     management = {
