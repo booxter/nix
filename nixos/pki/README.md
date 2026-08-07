@@ -114,8 +114,8 @@ SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt" \
 OIDC credential reset email:
 
 ```bash
-nix run .#reset-oidc -- ihar
-nix run .#reset-oidc -- kasia
+nix run .#reset-oidc -- alice
+nix run .#reset-oidc -- bob
 ```
 
 Kanidm person email addresses are stored under

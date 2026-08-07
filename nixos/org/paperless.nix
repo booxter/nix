@@ -8,6 +8,18 @@
   ...
 }:
 let
+  ssoAdministrator = hostInventory.sso.administrator;
+  paperlessSso = hostInventory.sso.applications.paperless;
+  paperlessUserNames = builtins.attrNames (
+    lib.filterAttrs (
+      name: person: name != ssoAdministrator && builtins.elem paperlessSso.userGroup person.groups
+    ) hostInventory.sso.users
+  );
+  paperlessUser =
+    if builtins.length paperlessUserNames == 1 then
+      builtins.head paperlessUserNames
+    else
+      throw "Paperless bootstrap requires exactly one non-administrator user";
   paperlessService = hostInventory.servicesById.paperless;
   paperlessGptService = hostInventory.servicesById."paperless-gpt";
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
@@ -87,17 +99,26 @@ let
 
 in
 {
+  assertions = [
+    {
+      assertion =
+        builtins.elem paperlessSso.adminGroup
+          hostInventory.sso.users.${ssoAdministrator}.groups;
+      message = "The SSO administrator must belong to the Paperless admin group.";
+    }
+  ];
+
   host.sso.oidc.registrations.paperless = {
     displayName = "Paperless";
     originUrls = [ "${paperlessService.url}/accounts/oidc/sso/login/callback/" ];
     originLanding = "${paperlessService.url}/";
     scopeMaps = {
-      "paperless-admins" = oidcScopes ++ [ "groups" ];
-      "paperless-users" = oidcScopes ++ [ "groups" ];
+      ${paperlessSso.adminGroup} = oidcScopes ++ [ "groups" ];
+      ${paperlessSso.userGroup} = oidcScopes ++ [ "groups" ];
     };
     claimMaps.groups.valuesByGroup = {
-      "paperless-admins" = [ "paperless-admins" ];
-      "paperless-users" = [ "paperless-users" ];
+      ${paperlessSso.adminGroup} = [ paperlessSso.adminGroup ];
+      ${paperlessSso.userGroup} = [ paperlessSso.userGroup ];
     };
     secret = {
       sopsKey = "paperless/oidc/client_secret";
@@ -187,7 +208,7 @@ in
     consumptionDir = "${paperlessStoragePath}/consume";
     passwordFile = config.sops.secrets."paperless/admin/password".path;
     settings = {
-      PAPERLESS_ADMIN_USER = "ihar";
+      PAPERLESS_ADMIN_USER = ssoAdministrator;
       PAPERLESS_ADMIN_MAIL = hostInventory.user.emails.personal;
       PAPERLESS_ACCOUNT_ALLOW_SIGNUPS = false;
       PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
@@ -239,9 +260,11 @@ in
         User = "paperless";
         Group = "paperless";
         Environment = [
+          "PAPERLESS_ADMIN_USERNAME=${ssoAdministrator}"
           "PAPERLESS_ADMIN_EMAIL=${hostInventory.user.emails.personal}"
-          "PAPERLESS_IHAR_PASSWORD_FILE=${config.sops.secrets."paperless/admin/password".path}"
-          "PAPERLESS_KASIA_PASSWORD_FILE=${config.sops.secrets."paperless/users/kasia/password".path}"
+          "PAPERLESS_ADMIN_PASSWORD_FILE=${config.sops.secrets."paperless/admin/password".path}"
+          "PAPERLESS_USER_USERNAME=${paperlessUser}"
+          "PAPERLESS_USER_PASSWORD_FILE=${config.sops.secrets."paperless/users/kasia/password".path}"
           "PAPERLESS_GPT_API_TOKEN_FILE=${config.sops.secrets."paperless/api/token".path}"
           "PYTHONPATH=${orgPkgs.paperless-bootstrap}/${orgPkgs.paperless-bootstrap.python.sitePackages}"
         ];
@@ -382,7 +405,7 @@ in
     originLanding = "https://${paperlessGptHost}/";
     httpAddress = "http://127.0.0.1:${toString paperlessGptOauth2ProxyPort}";
     cookieName = "_paperless_gpt_sso";
-    allowedGroups = [ "paperless-admins" ];
+    allowedGroups = [ paperlessSso.adminGroup ];
     groupClaim = "paperless_groups";
     whitelistDomains = [ paperlessGptHost ];
     internalHttpsServiceNames = [ "paperless-gpt" ];

@@ -43,37 +43,40 @@ def read_secret(path: Path) -> str:
 
 
 def required_path(environment: Mapping[str, str], name: str) -> Path:
-    try:
-        value = environment[name]
-    except KeyError as error:
-        raise Error(f"required Paperless environment variable is missing: {name}") from error
+    value = required_value(environment, name)
     path = Path(value)
     if not path.is_absolute():
         raise Error(f"Paperless secret path must be absolute: {name}")
     return path
 
 
-def users(environment: Mapping[str, str]) -> tuple[UserSpec, ...]:
+def required_value(environment: Mapping[str, str], name: str) -> str:
     try:
-        admin_email = environment["PAPERLESS_ADMIN_EMAIL"]
+        value = environment[name]
     except KeyError as error:
-        raise Error(
-            "required Paperless environment variable is missing: PAPERLESS_ADMIN_EMAIL"
-        ) from error
-    if not admin_email:
-        raise Error("PAPERLESS_ADMIN_EMAIL is empty")
+        raise Error(f"required Paperless environment variable is missing: {name}") from error
+    if not value:
+        raise Error(f"required Paperless environment variable is empty: {name}")
+    return value
+
+
+def users(
+    admin_username: str,
+    admin_email: str,
+    user_username: str,
+) -> tuple[UserSpec, ...]:
     return (
         UserSpec(
-            username="ihar",
+            username=admin_username,
             email=admin_email,
-            password_environment="PAPERLESS_IHAR_PASSWORD_FILE",
+            password_environment="PAPERLESS_ADMIN_PASSWORD_FILE",
             is_staff=True,
             is_superuser=True,
         ),
         UserSpec(
-            username="kasia",
+            username=user_username,
             email="",
-            password_environment="PAPERLESS_KASIA_PASSWORD_FILE",
+            password_environment="PAPERLESS_USER_PASSWORD_FILE",
             is_staff=False,
             is_superuser=False,
         ),
@@ -81,7 +84,10 @@ def users(environment: Mapping[str, str]) -> tuple[UserSpec, ...]:
 
 
 def reconcile(repository: Repository, environment: Mapping[str, str]) -> None:
-    configured_users = users(environment)
+    admin_username = required_value(environment, "PAPERLESS_ADMIN_USERNAME")
+    admin_email = required_value(environment, "PAPERLESS_ADMIN_EMAIL")
+    user_username = required_value(environment, "PAPERLESS_USER_USERNAME")
+    configured_users = users(admin_username, admin_email, user_username)
     passwords = {
         user.username: read_secret(required_path(environment, user.password_environment))
         for user in configured_users
@@ -96,4 +102,4 @@ def reconcile(repository: Repository, environment: Mapping[str, str]) -> None:
         repository.reconcile_user(user, passwords[user.username])
         if user.email:
             repository.reconcile_primary_email(user.username, user.email)
-    repository.reconcile_token("ihar", token)
+    repository.reconcile_token(admin_username, token)

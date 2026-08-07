@@ -11,8 +11,8 @@ let
   homeAssistantMetricsPort = 9346;
   homeAssistantService = hostInventory.servicesById.home;
   homeAssistantSso = hostInventory.sso.applications.home-assistant;
-  bootstrapOwnerName = homeAssistantSso.bootstrapOwner;
-  bootstrapOwner = hostInventory.sso.users.${bootstrapOwnerName};
+  administratorName = hostInventory.sso.administrator;
+  administrator = hostInventory.sso.users.${administratorName};
   bootstrapBaseUrl = "http://127.0.0.1:${toString homeAssistantPort}";
   bootstrapClientId = "http://127.0.0.1:${toString homeAssistantPort}/";
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
@@ -185,11 +185,11 @@ in
         "--client-id"
         bootstrapClientId
         "--owner-display-name"
-        bootstrapOwner.displayName
+        administrator.displayName
         "--owner-language"
         homeAssistantSso.bootstrapLanguage
         "--owner-username"
-        bootstrapOwnerName
+        administratorName
         "--password-file"
         config.sops.secrets.${bootstrapPasswordSecret}.path
       ];
@@ -213,12 +213,12 @@ in
       message = "The Home Assistant service catalog entry must be owned by the home host.";
     }
     {
-      assertion = builtins.elem homeAssistantSso.adminGroup bootstrapOwner.groups;
-      message = "The Home Assistant bootstrap owner must belong to its SSO admin group.";
+      assertion = builtins.elem homeAssistantSso.adminGroup administrator.groups;
+      message = "The SSO administrator must belong to the Home Assistant admin group.";
     }
     {
-      assertion = builtins.elem homeAssistantSso.userGroup bootstrapOwner.groups;
-      message = "The Home Assistant bootstrap owner must belong to its SSO user group.";
+      assertion = builtins.elem homeAssistantSso.userGroup administrator.groups;
+      message = "The SSO administrator must belong to the Home Assistant user group.";
     }
   ];
 }

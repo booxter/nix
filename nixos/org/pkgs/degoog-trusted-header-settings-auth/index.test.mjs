@@ -8,10 +8,10 @@ const requestFor = (user) =>
     headers: user ? { "X-User": user } : {},
   });
 
-test.beforeEach(() => middleware.configure({ allowedUsers: "ihar" }));
+test.beforeEach(() => middleware.configure({ allowedUsers: "alice" }));
 
 test("offers the Degoog callback to an allowed user", async () => {
-  const response = await middleware.handle(requestFor("IHAR"), {
+  const response = await middleware.handle(requestFor("ALICE"), {
     route: "settings-auth",
   });
 
@@ -25,7 +25,7 @@ test("offers the Degoog callback to an allowed user", async () => {
 });
 
 test("completes the callback for an allowed user", async () => {
-  const result = await middleware.handle(requestFor("ihar"), {
+  const result = await middleware.handle(requestFor("alice"), {
     route: "settings-auth-callback",
   });
 
@@ -33,7 +33,7 @@ test("completes the callback for an allowed user", async () => {
 });
 
 test("rejects a different authenticated user", async () => {
-  const response = await middleware.handle(requestFor("kasia"), {
+  const response = await middleware.handle(requestFor("bob"), {
     route: "settings-auth",
   });
 
@@ -48,7 +48,7 @@ test("rejects a different authenticated user", async () => {
 test("fails closed without an allowed-user configuration", async () => {
   middleware.configure({});
 
-  const response = await middleware.handle(requestFor("ihar"), {
+  const response = await middleware.handle(requestFor("alice"), {
     route: "settings-auth-callback",
   });
 
@@ -57,7 +57,7 @@ test("fails closed without an allowed-user configuration", async () => {
 });
 
 test("does not accept password login while the SSO gate is active", async () => {
-  const response = await middleware.handle(requestFor("ihar"), {
+  const response = await middleware.handle(requestFor("alice"), {
     route: "settings-auth-post",
   });
 

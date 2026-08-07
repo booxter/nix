@@ -1,32 +1,31 @@
 {
+  administrator = "ihar";
+
   applications = {
     "home-assistant" = {
       adminGroup = "home-admins";
       userGroup = "home-users";
-      bootstrapOwner = "ihar";
       bootstrapLanguage = "en";
     };
     pinepods = {
       adminGroup = "media-admins";
       userGroup = "media-users";
-      bootstrapOwner = "ihar";
+    };
+    paperless = {
+      adminGroup = "paperless-admins";
+      userGroup = "paperless-users";
     };
     romm = {
       adminGroup = "romm-admins";
       editorGroup = "romm-editors";
       viewerGroup = "romm-viewers";
-      bootstrapOwner = "ihar";
     };
     watchstate = {
       adminGroup = "media-admins";
-      bootstrapOwner = "ihar";
     };
   };
 
   groups = {
-    "sso-admins" = {
-      title = "SSO administrators";
-    };
     "infra-admins" = {
       title = "Infrastructure administrators";
     };
@@ -76,7 +75,6 @@
       displayName = "ihar";
       mailAddressSopsKey = "kanidm/person_mail_addresses/ihar";
       groups = [
-        "sso-admins"
         "infra-admins"
         "grafana-admins"
         "home-admins"

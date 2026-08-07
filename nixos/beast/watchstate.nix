@@ -14,7 +14,7 @@ let
   watchstateImageFile = ociImages.watchstate.imageFile;
   watchstateHostName = "watchstate.${hostInventory.site.lan.domain}";
   watchstateSso = hostInventory.sso.applications.watchstate;
-  watchstateSystemUser = watchstateSso.bootstrapOwner;
+  watchstateSystemUser = hostInventory.sso.administrator;
   watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
   watchstatePort = hostInventory.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";

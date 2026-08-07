@@ -24,7 +24,7 @@ const SSH_PROGRAM: &str = match option_env!("RESET_OIDC_SSH") {
 #[command(
     version,
     about = "Send a Kanidm OIDC credential reset email through pki",
-    after_help = "Examples:\n  reset-oidc ihar\n  reset-oidc kasia"
+    after_help = "Examples:\n  reset-oidc alice\n  reset-oidc bob"
 )]
 pub struct ClientArgs {
     /// Kanidm person account ID.
@@ -220,11 +220,11 @@ mod tests {
 
     #[test]
     fn parses_existing_positional_interface() {
-        let arguments = ClientArgs::try_parse_from(["reset-oidc", "ihar", "i@example.com"])
+        let arguments = ClientArgs::try_parse_from(["reset-oidc", "alice", "alice@example.com"])
             .expect("arguments should parse");
 
-        assert_eq!(arguments.user_id, "ihar");
-        assert_eq!(arguments.email.as_deref(), Some("i@example.com"));
+        assert_eq!(arguments.user_id, "alice");
+        assert_eq!(arguments.email.as_deref(), Some("alice@example.com"));
         assert_eq!(arguments.target, "pki");
     }
 
@@ -234,7 +234,7 @@ mod tests {
             ClientArgs::try_parse_from(["reset-oidc", ""]).expect_err("empty user should fail");
         assert_eq!(empty.kind(), ErrorKind::ValueValidation);
 
-        let target = ClientArgs::try_parse_from(["reset-oidc", "--target=-V", "ihar"])
+        let target = ClientArgs::try_parse_from(["reset-oidc", "--target=-V", "alice"])
             .expect_err("option-shaped target should fail");
         assert_eq!(target.kind(), ErrorKind::ValueValidation);
     }
@@ -243,8 +243,8 @@ mod tests {
     fn client_sends_request_and_reports_selected_email() {
         let transport = FakeTransport::default();
         let arguments = ClientArgs {
-            user_id: "ihar".to_owned(),
-            email: Some("i@example.com".to_owned()),
+            user_id: "alice".to_owned(),
+            email: Some("alice@example.com".to_owned()),
             target: "pki.example".to_owned(),
         };
         let mut output = Vec::new();
@@ -254,11 +254,11 @@ mod tests {
         let sent = transport.sent.borrow();
         assert_eq!(sent.len(), 1);
         assert_eq!(sent[0].0, "pki.example");
-        assert_eq!(sent[0].1.user_id, "ihar");
-        assert_eq!(sent[0].1.email.as_deref(), Some("i@example.com"));
+        assert_eq!(sent[0].1.user_id, "alice");
+        assert_eq!(sent[0].1.email.as_deref(), Some("alice@example.com"));
         assert_eq!(
             String::from_utf8(output).expect("output should be UTF-8"),
-            "Requested OIDC credential reset email for ihar at i@example.com.\n"
+            "Requested OIDC credential reset email for alice at alice@example.com.\n"
         );
     }
 
@@ -269,7 +269,7 @@ mod tests {
             ..FakeTransport::default()
         };
         let arguments = ClientArgs {
-            user_id: "ihar".to_owned(),
+            user_id: "alice".to_owned(),
             email: None,
             target: "pki".to_owned(),
         };
@@ -284,11 +284,10 @@ mod tests {
 
     #[tokio::test]
     async fn server_decodes_and_dispatches_request() {
-        let input =
-            Cursor::new(br#"{"protocol_version":1,"user_id":"kasia","email":null}"#.to_vec());
+        let input = Cursor::new(br#"{"protocol_version":1,"user_id":"bob","email":null}"#.to_vec());
 
         run_server(input, |request| async move {
-            assert_eq!(request.user_id, "kasia");
+            assert_eq!(request.user_id, "bob");
             assert_eq!(request.email, None);
             Ok(())
         })
@@ -299,7 +298,7 @@ mod tests {
     #[tokio::test]
     async fn server_rejects_wrong_protocol_before_dispatch() {
         let input =
-            Cursor::new(br#"{"protocol_version":2,"user_id":"ihar","email":null}"#.to_vec());
+            Cursor::new(br#"{"protocol_version":2,"user_id":"alice","email":null}"#.to_vec());
         let dispatched = RefCell::new(false);
 
         let error = run_server(input, |_| async {
@@ -318,7 +317,7 @@ mod tests {
     #[tokio::test]
     async fn server_rejects_unknown_fields() {
         let input = Cursor::new(
-            br#"{"protocol_version":1,"user_id":"ihar","email":null,"ttl":1}"#.to_vec(),
+            br#"{"protocol_version":1,"user_id":"alice","email":null,"ttl":1}"#.to_vec(),
         );
 
         let error = run_server(input, |_| async { Ok(()) })

@@ -13,8 +13,8 @@ let
 
   pinepodsService = hostInventory.servicesById.pinepods;
   pinepodsSso = hostInventory.sso.applications.pinepods;
-  bootstrapOwnerName = pinepodsSso.bootstrapOwner;
-  bootstrapAdmin = hostInventory.sso.users.${bootstrapOwnerName};
+  administratorName = hostInventory.sso.administrator;
+  administrator = hostInventory.sso.users.${administratorName};
   oidcClient = config.host.sso.oidc.clients.pinepods;
   oidcScopes = config.host.sso.oidc.baseScopes;
   image = ociImages.pinepods.ref;
@@ -49,9 +49,9 @@ let
     "--url"
     "http://127.0.0.1:${toString port}"
     "--username"
-    bootstrapOwnerName
+    administratorName
     "--full-name"
-    bootstrapAdmin.displayName
+    administrator.displayName
     "--email-file"
     config.sops.secrets."pinepods/bootstrap/email".path
     "--password-file"
@@ -386,12 +386,12 @@ in
 
   assertions = [
     {
-      assertion = builtins.elem pinepodsSso.adminGroup bootstrapAdmin.groups;
-      message = "The PinePods bootstrap owner must belong to its SSO admin group.";
+      assertion = builtins.elem pinepodsSso.adminGroup administrator.groups;
+      message = "The SSO administrator must belong to the PinePods admin group.";
     }
     {
-      assertion = builtins.elem pinepodsSso.userGroup bootstrapAdmin.groups;
-      message = "The PinePods bootstrap owner must belong to its SSO user group.";
+      assertion = builtins.elem pinepodsSso.userGroup administrator.groups;
+      message = "The SSO administrator must belong to the PinePods user group.";
     }
   ];
 }

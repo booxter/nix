@@ -118,7 +118,7 @@ internal HTTPS and `media-admins` OIDC gate. Jellyfin's official Webhook plugin
 and its WatchState destination are managed declaratively by Jellarr.
 
 The WatchState system user is supplied declaratively from
-`sso.applications.watchstate.bootstrapOwner` in `inv/default.nix`; its
+`sso.administrator` in `inv/sso.nix`; its
 password comes from `watchstate/system/password` in `secrets/main/beast.yaml`.
 These credentials bootstrap WatchState's internal token but are not presented
 to users: after the outer OIDC gate succeeds, WatchState trusts nginx's

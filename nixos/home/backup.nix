@@ -9,7 +9,6 @@ let
   stateDir = "/var/lib/hass";
   databasePath = "${stateDir}/home-assistant_v2.db";
   homeAssistantPort = 8123;
-  homeAssistantSso = hostInventory.sso.applications.home-assistant;
   backup = hostInventory.backups;
   backupClient = backup.clients.${config.networking.hostName};
   bootstrapPasswordSecret = "home-assistant/bootstrap-password";
@@ -38,7 +37,7 @@ in
         "--client-id"
         clientId
         "--owner-username"
-        homeAssistantSso.bootstrapOwner
+        hostInventory.sso.administrator
         "--password-file"
         config.sops.secrets.${bootstrapPasswordSecret}.path
       ];

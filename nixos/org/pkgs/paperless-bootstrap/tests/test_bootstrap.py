@@ -17,6 +17,9 @@ from paperless_bootstrap.bootstrap import (
 )
 from paperless_bootstrap.django import DjangoRepository, main
 
+ADMIN_USERNAME = "test-admin"
+USER_USERNAME = "test-user"
+
 
 @pytest.fixture(scope="module")
 def paperless(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
@@ -63,13 +66,13 @@ def paperless_state() -> dict[str, object]:
             "is_staff": user.is_staff,
             "is_superuser": user.is_superuser,
             "password": user.check_password("new-admin")
-            if user.username == "ihar"
-            else user.check_password("kasia-pass"),
+            if user.username == ADMIN_USERNAME
+            else user.check_password("user-pass"),
         }
-        for user in user_model.objects.filter(username__in=["ihar", "kasia"])
+        for user in user_model.objects.filter(username__in=[ADMIN_USERNAME, USER_USERNAME])
     }
     emails = list(
-        EmailAddress.objects.filter(user__username="ihar")
+        EmailAddress.objects.filter(user__username=ADMIN_USERNAME)
         .order_by("email")
         .values("email", "verified", "primary")
     )
@@ -77,7 +80,9 @@ def paperless_state() -> dict[str, object]:
         "groups": sorted(Group.objects.values_list("name", flat=True)),
         "users": users,
         "emails": emails,
-        "tokens": list(Token.objects.filter(user__username="ihar").values_list("key", flat=True)),
+        "tokens": list(
+            Token.objects.filter(user__username=ADMIN_USERNAME).values_list("key", flat=True)
+        ),
     }
 
 
@@ -90,21 +95,23 @@ def test_real_paperless_state_converges_and_rotates_credentials(
     from django.contrib.auth import get_user_model
 
     admin_password = tmp_path / "admin-password"
-    kasia_password = tmp_path / "kasia-password"
+    user_password = tmp_path / "user-password"
     token = tmp_path / "token"
     admin_password.write_text("old-admin\n")
-    kasia_password.write_text("kasia-pass\n")
+    user_password.write_text("user-pass\n")
     token.write_text("a" * 40 + "\n")
     bootstrap_environment = {
+        "PAPERLESS_ADMIN_USERNAME": ADMIN_USERNAME,
         "PAPERLESS_ADMIN_EMAIL": "admin@example.com",
-        "PAPERLESS_IHAR_PASSWORD_FILE": str(admin_password),
-        "PAPERLESS_KASIA_PASSWORD_FILE": str(kasia_password),
+        "PAPERLESS_ADMIN_PASSWORD_FILE": str(admin_password),
+        "PAPERLESS_USER_USERNAME": USER_USERNAME,
+        "PAPERLESS_USER_PASSWORD_FILE": str(user_password),
         "PAPERLESS_GPT_API_TOKEN_FILE": str(token),
     }
 
     reconcile(DjangoRepository(), bootstrap_environment)
 
-    user = get_user_model().objects.get(username="ihar")
+    user = get_user_model().objects.get(username=ADMIN_USERNAME)
     user.email = "wrong@example.invalid"
     user.is_staff = False
     user.is_superuser = False
@@ -130,13 +137,13 @@ def test_real_paperless_state_converges_and_rotates_credentials(
     assert paperless_state() == {
         "groups": ["paperless-admins", "paperless-users"],
         "users": {
-            "ihar": {
+            ADMIN_USERNAME: {
                 "email": "admin@example.com",
                 "is_staff": True,
                 "is_superuser": True,
                 "password": True,
             },
-            "kasia": {
+            USER_USERNAME: {
                 "email": "",
                 "is_staff": False,
                 "is_superuser": False,
@@ -175,19 +182,21 @@ class UntouchedRepository(Repository):
 
 def test_invalid_token_fails_before_mutating_paperless(tmp_path: Path) -> None:
     admin = tmp_path / "admin"
-    kasia = tmp_path / "kasia"
+    user = tmp_path / "user"
     token = tmp_path / "token"
     admin.write_text("admin")
-    kasia.write_text("kasia")
+    user.write_text("user")
     token.write_text("short")
 
     with pytest.raises(Error, match="40-character"):
         reconcile(
             UntouchedRepository(),
             {
+                "PAPERLESS_ADMIN_USERNAME": ADMIN_USERNAME,
                 "PAPERLESS_ADMIN_EMAIL": "admin@example.com",
-                "PAPERLESS_IHAR_PASSWORD_FILE": str(admin),
-                "PAPERLESS_KASIA_PASSWORD_FILE": str(kasia),
+                "PAPERLESS_ADMIN_PASSWORD_FILE": str(admin),
+                "PAPERLESS_USER_USERNAME": USER_USERNAME,
+                "PAPERLESS_USER_PASSWORD_FILE": str(user),
                 "PAPERLESS_GPT_API_TOKEN_FILE": str(token),
             },
         )

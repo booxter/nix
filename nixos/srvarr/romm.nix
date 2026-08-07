@@ -623,8 +623,8 @@ in
 
   assertions = [
     {
-      assertion = builtins.attrNames rommAdmins == [ rommSso.bootstrapOwner ];
-      message = "The RomM bootstrap owner must be its only SSO administrator.";
+      assertion = builtins.attrNames rommAdmins == [ hostInventory.sso.administrator ];
+      message = "The SSO administrator must be the only RomM administrator.";
     }
     {
       assertion = lib.all (person: builtins.length (rommGroupsFor person) == 1) (

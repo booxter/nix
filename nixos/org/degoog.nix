@@ -130,7 +130,7 @@ in
       pross-degoog-stackexchange-engine-stackexchange-engine.apiKey =
         config.sops.placeholder."degoog/stackexchange_api_key";
       theme.active = "georgvwt-georgvwt-degoog-stuff-gruvbox-theme";
-      trusted-header-settings-auth-middleware.allowedUsers = "ihar";
+      trusted-header-settings-auth-middleware.allowedUsers = hostInventory.sso.administrator;
     };
     restartUnits = [ "degoog.service" ];
   };
