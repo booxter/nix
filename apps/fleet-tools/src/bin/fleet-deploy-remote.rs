@@ -25,10 +25,6 @@ enum FleetCommand {
         config_name: String,
         #[arg(long)]
         expected_runtime_host: String,
-        #[arg(long, default_value_t = 5)]
-        gc_headroom_gib: u64,
-        #[arg(long, default_value_t = 30)]
-        min_free_gib: u64,
         #[arg(long)]
         no_inhibit: bool,
         #[arg(long)]
@@ -60,8 +56,6 @@ fn execute(arguments: Arguments) -> Result<()> {
             action,
             config_name,
             expected_runtime_host,
-            gc_headroom_gib,
-            min_free_gib,
             no_inhibit,
             source,
         } => deploy(
@@ -70,8 +64,6 @@ fn execute(arguments: Arguments) -> Result<()> {
                 action,
                 config_name,
                 expected_runtime_host,
-                gc_headroom_gib,
-                min_free_gib,
                 no_inhibit,
                 source,
             },

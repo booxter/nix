@@ -14,7 +14,6 @@ struct FakeBackend {
     activations: Vec<(String, ActivationRequest, bool)>,
     builds: Vec<String>,
     diskos: Vec<DiskoRequest>,
-    ensure_calls: usize,
     fail_hosts: BTreeSet<String>,
     hostname: String,
     selected_candidates: Vec<String>,
@@ -61,11 +60,6 @@ impl Backend for FakeBackend {
 
     fn disko(&mut self, request: &DiskoRequest) -> Result<()> {
         self.diskos.push(request.clone());
-        Ok(())
-    }
-
-    fn ensure_local_space(&mut self, _min_free_gib: u64, _gc_headroom_gib: u64) -> Result<()> {
-        self.ensure_calls += 1;
         Ok(())
     }
 
@@ -174,7 +168,6 @@ fn dry_run_defaults_to_current_host_without_side_effects() {
         String::from_utf8(output).unwrap(),
         "Dry run: would update controller.\n"
     );
-    assert_eq!(backend.ensure_calls, 0);
     assert_eq!(backend.stage_calls, 0);
     assert!(backend.activations.is_empty());
 }
@@ -221,7 +214,6 @@ fn canceled_selection_stops_before_deployment_side_effects() {
     .unwrap_err();
 
     assert!(error.to_string().contains("selection canceled"));
-    assert_eq!(backend.ensure_calls, 0);
     assert_eq!(backend.stage_calls, 0);
     assert!(backend.activations.is_empty());
 }
@@ -267,7 +259,6 @@ fn deployment_stages_requested_source_and_builds_only_local_helper() {
     )
     .unwrap());
 
-    assert_eq!(backend.ensure_calls, 1);
     assert_eq!(backend.stage_calls, 1);
     assert_eq!(
         backend.source_requests,
@@ -330,7 +321,6 @@ fn deployment_requires_a_terminal_before_staging_source() {
     .unwrap_err();
 
     assert!(error.to_string().contains("no TTY"));
-    assert_eq!(backend.ensure_calls, 0);
     assert_eq!(backend.stage_calls, 0);
 }
 

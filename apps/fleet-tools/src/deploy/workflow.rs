@@ -54,7 +54,6 @@ pub(super) fn run_with_backend(
         bail!("no TTY available for sudo; run deploy from a real terminal");
     }
 
-    backend.ensure_local_space(20, 5)?;
     let source_selection = if arguments.local {
         SourceSelection::Local {
             merge_master: !arguments.no_merge,

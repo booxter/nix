@@ -5,7 +5,6 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output, Stdio};
 
 use anyhow::{bail, Context, Result};
-use rustix::fs::statvfs;
 use rustix::process::getuid;
 use rustix::system::uname;
 
@@ -20,9 +19,7 @@ use super::{
 const DIG: &str = env!("DEPLOY_DIG");
 const FZF: &str = env!("DEPLOY_FZF");
 const NIX: &str = env!("DEPLOY_NIX");
-const NIX_COLLECT_GARBAGE: &str = env!("DEPLOY_NIX_COLLECT_GARBAGE");
 const SSH: &str = env!("DEPLOY_SSH");
-const GIB: u64 = 1024 * 1024 * 1024;
 
 #[cfg(target_os = "macos")]
 const SUDO: &str = "/usr/bin/sudo";
@@ -35,7 +32,6 @@ pub struct SystemBackend {
     lan_dns_server: String,
     lan_domain: String,
     nix: PathBuf,
-    nix_collect_garbage: PathBuf,
     ssh: PathBuf,
     ssh_options: Vec<String>,
 }
@@ -53,7 +49,6 @@ impl SystemBackend {
             lan_dns_server: inventory.lan_dns_server.clone(),
             lan_domain: inventory.lan_domain.clone(),
             nix: NIX.into(),
-            nix_collect_garbage: NIX_COLLECT_GARBAGE.into(),
             ssh: SSH.into(),
             ssh_options,
         })
@@ -247,39 +242,6 @@ impl Backend for SystemBackend {
         self.run_privileged(&nix, &arguments, "disko install")
     }
 
-    fn ensure_local_space(&mut self, min_free_gib: u64, gc_headroom_gib: u64) -> Result<()> {
-        let store = Path::new("/nix/store");
-        let mut available = available_bytes(store)?;
-        eprintln!(
-            "Local available disk on {}: {:.1} GiB",
-            store.display(),
-            gib(available)
-        );
-        let minimum = min_free_gib.saturating_mul(GIB);
-        if available >= minimum {
-            return Ok(());
-        }
-        let target = minimum
-            .saturating_sub(available)
-            .saturating_add(gc_headroom_gib.saturating_mul(GIB));
-        let bounded = vec![
-            "-d".to_owned(),
-            "--max-freed".to_owned(),
-            format!("{}K", target / 1024),
-        ];
-        let collector = self.nix_collect_garbage.clone();
-        self.run_privileged(&collector, &bounded, "bounded local Nix garbage collection")?;
-        available = available_bytes(store)?;
-        if available < minimum {
-            self.run_privileged(
-                &collector,
-                &["-d".to_owned()],
-                "full local Nix garbage collection",
-            )?;
-        }
-        Ok(())
-    }
-
     fn hostname(&self) -> Result<String> {
         let system = uname();
         let hostname = system.nodename().to_string_lossy();
@@ -372,10 +334,6 @@ fn activation_arguments(source: &Path, request: &ActivationRequest) -> Vec<Strin
         request.config_name.clone(),
         "--expected-runtime-host".to_owned(),
         request.expected_runtime_host.clone(),
-        "--gc-headroom-gib".to_owned(),
-        "5".to_owned(),
-        "--min-free-gib".to_owned(),
-        "30".to_owned(),
         "--source".to_owned(),
         source.display().to_string(),
     ];
@@ -410,19 +368,6 @@ pub(super) fn parse_store_path(stdout: &[u8], operation: &str) -> Result<PathBuf
         bail!("{operation} returned a non-store path: {}", path.display());
     }
     Ok(path)
-}
-
-fn available_bytes(path: &Path) -> Result<u64> {
-    let status = statvfs(path)
-        .with_context(|| format!("failed to inspect free space on {}", path.display()))?;
-    status
-        .f_bavail
-        .checked_mul(status.f_frsize)
-        .context("available disk size overflowed u64")
-}
-
-fn gib(bytes: u64) -> f64 {
-    bytes as f64 / GIB as f64
 }
 
 pub(super) fn config_uses_proxy(config: &str) -> bool {

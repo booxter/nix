@@ -145,7 +145,6 @@ pub(super) trait Backend {
     ) -> Result<()>;
     fn build_helper(&mut self, source: &Path, platform: &str) -> Result<PathBuf>;
     fn disko(&mut self, request: &DiskoRequest) -> Result<()>;
-    fn ensure_local_space(&mut self, min_free_gib: u64, gc_headroom_gib: u64) -> Result<()>;
     fn hostname(&self) -> Result<String>;
     fn select(&mut self, candidates: &[String]) -> Result<Vec<String>>;
     fn stage_source(&mut self, source: &SourceSelection, cwd: &Path) -> Result<StagedSource>;

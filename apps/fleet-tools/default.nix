@@ -46,7 +46,6 @@ rustPlatform.buildRustPackage {
   DEPLOY_DIG = lib.getExe' bind "dig";
   DEPLOY_FZF = lib.getExe fzf;
   DEPLOY_NIX = lib.getExe nix;
-  DEPLOY_NIX_COLLECT_GARBAGE = lib.getExe' nix "nix-collect-garbage";
   DEPLOY_NIX_STORE = lib.getExe' nix "nix-store";
   DEPLOY_REPO_URL = repoUrl;
   DEPLOY_SSH = lib.getExe openssh;

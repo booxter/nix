@@ -8,14 +8,11 @@ use std::process::Command;
 
 use anyhow::{bail, Context, Result};
 use clap::ValueEnum;
-use rustix::fs::statvfs;
 use rustix::system::uname;
 use rustix::termios::{self, LocalModes, OptionalActions, Termios};
 
-const GIB: u64 = 1024 * 1024 * 1024;
 const DEPLOY_NH: &str = env!("DEPLOY_NH");
 const DEPLOY_NIX: &str = env!("DEPLOY_NIX");
-const DEPLOY_NIX_COLLECT_GARBAGE: &str = env!("DEPLOY_NIX_COLLECT_GARBAGE");
 const DEPLOY_NIX_STORE: &str = env!("DEPLOY_NIX_STORE");
 const NIXOS_REBUILD: &str = "/run/current-system/sw/bin/nixos-rebuild";
 const NIX_STORE: &str = "/nix/store";
@@ -43,8 +40,6 @@ pub struct DeployRequest {
     pub action: DeployAction,
     pub config_name: String,
     pub expected_runtime_host: String,
-    pub gc_headroom_gib: u64,
-    pub min_free_gib: u64,
     pub no_inhibit: bool,
     pub source: PathBuf,
 }
@@ -84,7 +79,6 @@ impl CommandSpec {
 }
 
 pub trait Backend {
-    fn available_bytes(&mut self, path: &Path) -> Result<u64>;
     fn current_exe(&self) -> Result<PathBuf>;
     fn hostname(&self) -> Result<String>;
     fn read_link(&self, path: &Path) -> Result<PathBuf>;
@@ -96,15 +90,6 @@ pub trait Backend {
 pub struct SystemBackend;
 
 impl Backend for SystemBackend {
-    fn available_bytes(&mut self, path: &Path) -> Result<u64> {
-        let status = statvfs(path)
-            .with_context(|| format!("failed to inspect free space on {}", path.display()))?;
-        status
-            .f_bavail
-            .checked_mul(status.f_frsize)
-            .context("available disk size overflowed u64")
-    }
-
     fn current_exe(&self) -> Result<PathBuf> {
         env::current_exe().context("failed to locate the deploy helper executable")
     }
@@ -158,7 +143,6 @@ impl Backend for SystemBackend {
 pub fn deploy(backend: &mut impl Backend, request: &DeployRequest) -> Result<()> {
     validate_request(backend, request)?;
     let _gc_roots = protect_deployment_paths(backend, &request.source)?;
-    ensure_free_space(backend, request.min_free_gib, request.gc_headroom_gib)?;
 
     match backend.target_os() {
         TargetOs::Darwin => deploy_darwin(backend, request),
@@ -285,51 +269,6 @@ fn validate_request(backend: &impl Backend, request: &DeployRequest) -> Result<(
     Ok(())
 }
 
-fn ensure_free_space(
-    backend: &mut impl Backend,
-    min_free_gib: u64,
-    gc_headroom_gib: u64,
-) -> Result<()> {
-    let store = Path::new("/nix/store");
-    let mut available = backend.available_bytes(store)?;
-    eprintln!(
-        "Available disk on {}: {:.1} GiB",
-        store.display(),
-        gib(available)
-    );
-    let minimum = min_free_gib.saturating_mul(GIB);
-    if available >= minimum {
-        return Ok(());
-    }
-
-    let target = minimum
-        .saturating_sub(available)
-        .saturating_add(gc_headroom_gib.saturating_mul(GIB));
-    eprintln!(
-        "Low disk space (<{min_free_gib} GiB). Running bounded garbage collection for {:.1} GiB.",
-        gib(target)
-    );
-    run_sudo(
-        backend,
-        CommandSpec::new(DEPLOY_NIX_COLLECT_GARBAGE).args([
-            "-d".to_owned(),
-            "--max-freed".to_owned(),
-            format!("{}K", bytes_to_kib(target)),
-        ]),
-    )?;
-
-    available = backend.available_bytes(store)?;
-    eprintln!("Available disk after cleanup: {:.1} GiB", gib(available));
-    if available < minimum {
-        eprintln!("Bounded garbage collection was insufficient; running full cleanup.");
-        run_sudo(
-            backend,
-            CommandSpec::new(DEPLOY_NIX_COLLECT_GARBAGE).args(["-d"]),
-        )?;
-    }
-    Ok(())
-}
-
 fn deploy_linux(backend: &mut impl Backend, request: &DeployRequest) -> Result<()> {
     let flake = format!("path:.#{}", request.config_name);
     match request.action {
@@ -418,14 +357,6 @@ fn run_sudo(backend: &mut impl Backend, command: CommandSpec) -> Result<()> {
     backend.run(sudo)
 }
 
-fn bytes_to_kib(bytes: u64) -> u64 {
-    bytes.div_ceil(1024)
-}
-
-fn gib(bytes: u64) -> f64 {
-    bytes as f64 / GIB as f64
-}
-
 fn format_command(program: &Path, args: &[String]) -> String {
     std::iter::once(program.display().to_string())
         .chain(args.iter().cloned())
@@ -435,12 +366,9 @@ fn format_command(program: &Path, args: &[String]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::VecDeque;
-
     use super::*;
 
     struct FakeBackend {
-        available: VecDeque<u64>,
         commands: Vec<CommandSpec>,
         current_exe: PathBuf,
         hostname: String,
@@ -452,7 +380,6 @@ mod tests {
     impl FakeBackend {
         fn new(os: TargetOs) -> Self {
             Self {
-                available: VecDeque::from([40 * GIB]),
                 commands: Vec::new(),
                 current_exe: PathBuf::from("/nix/store/deploy/bin/fleet-deploy-remote"),
                 hostname: "beast".to_owned(),
@@ -464,12 +391,6 @@ mod tests {
     }
 
     impl Backend for FakeBackend {
-        fn available_bytes(&mut self, _path: &Path) -> Result<u64> {
-            self.available
-                .pop_front()
-                .context("test did not provide enough disk readings")
-        }
-
         fn current_exe(&self) -> Result<PathBuf> {
             Ok(self.current_exe.clone())
         }
@@ -507,8 +428,6 @@ mod tests {
             action: DeployAction::Switch,
             config_name: "beast".to_owned(),
             expected_runtime_host: "beast".to_owned(),
-            gc_headroom_gib: 5,
-            min_free_gib: 30,
             no_inhibit: false,
             source: source.to_path_buf(),
         }
@@ -524,21 +443,6 @@ mod tests {
 
         assert!(error.to_string().contains("SSH landed on other"));
         assert!(backend.commands.is_empty());
-    }
-
-    #[test]
-    fn runs_bounded_then_full_gc_when_space_stays_low() {
-        let source = source();
-        let mut backend = FakeBackend::new(TargetOs::Linux);
-        backend.available = VecDeque::from([10 * GIB, 20 * GIB]);
-
-        deploy(&mut backend, &request(source.path())).expect("deployment should succeed");
-
-        assert_eq!(backend.commands[0].program, Path::new(DEPLOY_NIX_STORE));
-        assert_eq!(backend.commands[1].program, Path::new(SUDO));
-        assert!(backend.commands[1].args.contains(&"--max-freed".to_owned()));
-        assert_eq!(backend.commands[2].args.last().unwrap(), "-d");
-        assert_eq!(backend.commands[3].program, Path::new(DEPLOY_NH));
     }
 
     #[test]
