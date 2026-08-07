@@ -46,7 +46,8 @@ let
       in
       service
       // {
-        url = "https://${httpsService.serverName}${service.probePath}";
+        url = "https://${httpsService.serverName}/";
+        probeUrl = "https://${httpsService.serverName}${service.probePath}";
       }
   ) glanceServices;
   infrastructureLinks = [
@@ -72,13 +73,18 @@ let
       [ ];
   servicesForCategory =
     category: builtins.filter (service: service.glanceCategory == category.id) serviceCatalog;
-  siteFor = site: {
-    inherit (site)
-      icon
-      title
-      ;
-    url = if site ? probeUrl then site.probeUrl else site.url;
-  };
+  siteFor =
+    site:
+    {
+      inherit (site)
+        icon
+        title
+        url
+        ;
+    }
+    // lib.optionalAttrs (site ? probeUrl) {
+      check-url = site.probeUrl;
+    };
   monitorWidgetFor = section: {
     type = "monitor";
     cache = "1m";
