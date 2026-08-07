@@ -52,13 +52,14 @@
         nodeExporter.mtls = true;
       };
       proxmox.oidcManagerHost = "prx1-lab";
+      ups.credentialMode = "sops";
     };
   };
 
   work = {
     build.pools = [ "work" ];
     secretDomain = "work";
-    services = { };
+    services.ups.credentialMode = "literal";
     trust.ssh.authorizedKeys = [
       (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
       (readPublicKey ../public-keys/users/jgwxhwdl4x-nix-builder.pub)

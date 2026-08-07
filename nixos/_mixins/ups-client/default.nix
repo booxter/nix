@@ -7,11 +7,16 @@
 let
   serverName = config.host.ups.client.server;
   serverSpec = if serverName == null then null else hostInventory.nixosHosts.${serverName};
+  clientCredentialMode = hostInventory.realms.${config.host.realm}.services.ups.credentialMode;
+  serverCredentialMode =
+    if serverSpec == null then
+      null
+    else
+      hostInventory.realms.${serverSpec.realm}.services.ups.credentialMode;
   monitorName = if serverSpec == null then "" else serverSpec.name;
   monitorSecret = "nut/monitors/${monitorName}/password";
   useLiteralPassword =
-    serverSpec != null
-    && (config.host.isWork || hostInventory.secretDomainsByHost.${serverName} == "work");
+    serverSpec != null && (clientCredentialMode == "literal" || serverCredentialMode == "literal");
   passwordFile =
     if useLiteralPassword then "/etc/nut/upsclient.pass" else config.sops.secrets.${monitorSecret}.path;
 in
