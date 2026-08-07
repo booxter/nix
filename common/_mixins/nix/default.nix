@@ -53,7 +53,6 @@ in
       optimise.automatic = true;
       package = lib.mkForce pkgs.nixVersions.latest;
       settings = {
-        builders-use-substitutes = hasBuildMachines;
         experimental-features = "nix-command flakes";
         warn-dirty = false;
         nix-path = [ "nixpkgs=flake:nixpkgs" ];
@@ -76,6 +75,9 @@ in
         extra-trusted-public-keys = lib.optionals needsProxmoxCache [
           (readPublicKey ../../../public-keys/nix-cache/proxmox-nixos.pub)
         ];
+      }
+      // lib.optionalAttrs hasBuildMachines {
+        builders-use-substitutes = true;
       }
       // lib.optionalAttrs config.host.isDarwin {
         sandbox = "relaxed";
