@@ -113,23 +113,23 @@ class CertificateInventoryBuilder:
                     "server_crt_unencrypted",
                 )
             )
-        for category, clients in (
-            (CertificateCategory.INTERNAL_HTTPS_CLIENT, config.internal_clients),
-            (CertificateCategory.EXTERNAL_SERVICE_CLIENT, config.external_clients),
-            (CertificateCategory.OBSERVABILITY_CLIENT, config.observability_clients),
-        ):
-            for name, client in sorted(clients.items()):
-                if client.enable:
-                    specs.append(
-                        self._secret_spec(
-                            host,
-                            secret_path,
-                            category,
-                            name,
-                            client.secret_prefix,
-                            "client_crt_unencrypted",
-                        )
+        for name, client in sorted(config.clients.items()):
+            if client.enable:
+                category = (
+                    CertificateCategory.OBSERVABILITY_CLIENT
+                    if client.category == "observability"
+                    else CertificateCategory.INTERNAL_HTTPS_CLIENT
+                )
+                specs.append(
+                    self._secret_spec(
+                        host,
+                        secret_path,
+                        category,
+                        name,
+                        client.secret_prefix,
+                        "client_crt_unencrypted",
                     )
+                )
         endpoints = dict(config.observability_endpoints)
         if config.node_exporter is not None:
             endpoints["node_exporter"] = config.node_exporter

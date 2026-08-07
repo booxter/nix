@@ -6,9 +6,9 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="external_service_client"}'
+      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="internal_https_client"}'
         values: "1x22"
-      - series: 'host_observability_pki_cert_expected{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="external_service_client"}'
+      - series: 'host_observability_pki_cert_expected{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="internal_https_client"}'
         values: "1x32"
       - series: 'up{job="node-mtls",instance="pki"}'
         values: "1x32"
@@ -20,7 +20,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="external_service_client"}'
+      - series: 'host_observability_pki_cert_parse_success{job="node-mtls",instance="pki",host="beast",cert_name="vikunja",category="internal_https_client"}'
         values: "0x20 1x2"
     alert_rule_test:
       - eval_time: 9m30s
@@ -32,14 +32,14 @@ tests:
               alertname: InternalPKICertMissing
               category: pki
               cert_name: vikunja
-              cert_category: external_service_client
+              cert_category: internal_https_client
               host: beast
               instance: pki
               job: node-mtls
               severity: critical
             exp_annotations:
               summary: "Managed PKI cert missing: beast / vikunja"
-              description: "The managed certificate vikunja for beast (external_service_client) is expected but missing or unparsable in the repo-managed PKI inventory."
+              description: "The managed certificate vikunja for beast (internal_https_client) is expected but missing or unparsable in the repo-managed PKI inventory."
       - eval_time: 10m30s
         alertname: InternalPKICertMissing
 

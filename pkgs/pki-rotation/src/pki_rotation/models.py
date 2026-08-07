@@ -11,7 +11,6 @@ class CertificateCategory(StrEnum):
     CA = "ca"
     INTERNAL_HTTPS_SERVER = "internal_https_server"
     INTERNAL_HTTPS_CLIENT = "internal_https_client"
-    EXTERNAL_SERVICE_CLIENT = "external_service_client"
     OBSERVABILITY_ENDPOINT_SERVER = "observability_endpoint_server"
     OBSERVABILITY_CLIENT = "observability_client"
 

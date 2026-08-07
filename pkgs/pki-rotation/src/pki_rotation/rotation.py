@@ -105,10 +105,7 @@ class ManagedCertificateRotator:
         for record in records:
             if record.category is CertificateCategory.INTERNAL_HTTPS_SERVER:
                 service.issue_internal_service(record.host, record.cert_name, self.ca_host)
-            elif record.category in {
-                CertificateCategory.INTERNAL_HTTPS_CLIENT,
-                CertificateCategory.EXTERNAL_SERVICE_CLIENT,
-            }:
+            elif record.category is CertificateCategory.INTERNAL_HTTPS_CLIENT:
                 service.issue_internal_client(record.host, record.cert_name, self.ca_host)
             elif record.category is CertificateCategory.OBSERVABILITY_ENDPOINT_SERVER:
                 service.issue_observability_endpoint(record.host, record.cert_name, self.ca_host)

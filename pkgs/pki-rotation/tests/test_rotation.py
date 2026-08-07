@@ -243,7 +243,6 @@ def test_managed_rotator_dispatches_each_leaf_category() -> None:
         for category in (
             CertificateCategory.INTERNAL_HTTPS_SERVER,
             CertificateCategory.INTERNAL_HTTPS_CLIENT,
-            CertificateCategory.EXTERNAL_SERVICE_CLIENT,
             CertificateCategory.OBSERVABILITY_ENDPOINT_SERVER,
             CertificateCategory.OBSERVABILITY_CLIENT,
         )
@@ -257,7 +256,6 @@ def test_managed_rotator_dispatches_each_leaf_category() -> None:
 
     assert service.calls == [
         ("service", "web"),
-        ("client", "web"),
         ("client", "web"),
         ("endpoint", "web"),
         ("observability-client", "web"),
