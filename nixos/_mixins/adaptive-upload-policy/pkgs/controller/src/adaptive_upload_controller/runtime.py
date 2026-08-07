@@ -83,6 +83,7 @@ def run_decider(config: DeciderRuntimeConfig) -> int:
                 write_text_atomic(
                     config.metrics_file,
                     render_metrics_text(state),
+                    mode=0o644,
                 )
             if signature != last_signature:
                 LOG.info(

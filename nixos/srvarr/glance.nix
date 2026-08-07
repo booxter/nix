@@ -46,7 +46,7 @@ let
       in
       service
       // {
-        url = "https://${httpsService.serverName}/";
+        url = "https://${httpsService.serverName}${service.probePath}";
       }
   ) glanceServices;
   infrastructureLinks = [
@@ -76,8 +76,8 @@ let
     inherit (site)
       icon
       title
-      url
       ;
+    url = if site ? probeUrl then site.probeUrl else site.url;
   };
   monitorWidgetFor = section: {
     type = "monitor";
