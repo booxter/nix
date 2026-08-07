@@ -57,7 +57,7 @@ in
       users.${username} = ../hm;
     };
     virtualisation.containers.enable = true;
-    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.isWork;
+    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;
     time.timeZone = "America/New_York";
 
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)

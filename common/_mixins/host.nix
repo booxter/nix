@@ -9,6 +9,7 @@
 let
   hostname = hostSpec.name;
   hostPlatform = inputs.nixpkgs.lib.systems.elaborate hostSpec.platform;
+  realm = hostInventory.realms.${config.host.realm};
   inherit (hostPlatform) isDarwin isLinux system;
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
   hostModule = platformDirectory + "/${hostname}";
@@ -143,6 +144,32 @@ in
       readOnly = true;
       internal = true;
       description = "SOPS secret domain selected for this host.";
+    };
+
+    management = {
+      manageNetworkIdentity = lib.mkOption {
+        type = lib.types.bool;
+        default = realm.management.manageNetworkIdentity;
+        readOnly = true;
+        internal = true;
+        description = "Whether this host manages its network identity.";
+      };
+
+      managePasswordSecrets = lib.mkOption {
+        type = lib.types.bool;
+        default = realm.management.managePasswordSecrets;
+        readOnly = true;
+        internal = true;
+        description = "Whether this host manages local password secrets.";
+      };
+
+      sudoWheelNeedsPassword = lib.mkOption {
+        type = lib.types.bool;
+        default = realm.management.sudoWheelNeedsPassword;
+        readOnly = true;
+        internal = true;
+        description = "Whether wheel users must enter a password for sudo.";
+      };
     };
 
     username = lib.mkOption {

@@ -13,6 +13,11 @@
       ];
     };
     secretDomain = "main";
+    management = {
+      manageNetworkIdentity = true;
+      managePasswordSecrets = true;
+      sudoWheelNeedsPassword = false;
+    };
     trust.ssh = {
       authorizedKeys = [
         (readPublicKey ../public-keys/users/mmini.pub)
@@ -59,6 +64,11 @@
   work = {
     build.pools = [ "work" ];
     secretDomain = "work";
+    management = {
+      manageNetworkIdentity = false;
+      managePasswordSecrets = false;
+      sudoWheelNeedsPassword = true;
+    };
     services.ups.credentialMode = "literal";
     trust.ssh.authorizedKeys = [
       (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)

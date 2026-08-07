@@ -68,7 +68,7 @@ in
     shell = pkgs.zsh;
   };
 
-  system.defaults.smb = lib.optionalAttrs (!config.host.isWork) {
+  system.defaults.smb = lib.optionalAttrs config.host.management.manageNetworkIdentity {
     NetBIOSName = hostname;
     ServerDescription = hostname;
   };
