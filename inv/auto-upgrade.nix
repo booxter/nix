@@ -1,6 +1,8 @@
 { lib }:
 let
   clock = hour: minute: { inherit hour minute; };
+  clockMinutes = value: value.hour * 60 + value.minute;
+  clockFromMinutes = value: clock (builtins.div value 60) (lib.mod value 60);
   daily = at: {
     cadence = "daily";
     inherit at;
@@ -9,20 +11,22 @@ let
     cadence = "weekly";
     inherit at weekday;
   };
-  randomizedDelayMinutes = 5;
-  minimumInfrastructureBufferMinutes = 20;
-  night = {
-    start = clock 0 0;
-    end = clock 6 0;
+  slotDurationMinutes = 30;
+  maintenanceWindow = {
+    start = clock 3 30;
+    end = clock 6 30;
   };
-  clockMinutes = clock: clock.hour * 60 + clock.minute;
-  validClock = clock: clock.hour >= 0 && clock.hour < 24 && clock.minute >= 0 && clock.minute < 60;
+  rebootWindowFor = start: {
+    lower = start;
+    upper = clockFromMinutes (clockMinutes start + slotDurationMinutes);
+  };
+  validClock = value: value.hour >= 0 && value.hour < 24 && value.minute >= 0 && value.minute < 60;
   formatClock =
-    clock:
+    value:
     let
-      pad = value: if value < 10 then "0${toString value}" else toString value;
+      pad = part: if part < 10 then "0${toString part}" else toString part;
     in
-    "${pad clock.hour}:${pad clock.minute}";
+    "${pad value.hour}:${pad value.minute}";
   renderSchedule =
     schedule:
     lib.optionalString (schedule.cadence == "weekly") "${schedule.weekday} " + formatClock schedule.at;
@@ -30,127 +34,99 @@ let
     lower = formatClock window.lower;
     upper = formatClock window.upper;
   };
-  workloadRebootWindow = {
-    lower = clock 4 0;
-    upper = night.end;
+  hypervisorAtByRealm = {
+    home = {
+      prx1-lab = clock 4 30;
+      prx2-lab = clock 5 0;
+      prx3-lab = clock 5 30;
+    };
+    work.nvws = clock 4 30;
   };
+  hypervisorAtByHost = lib.mergeAttrsList (builtins.attrValues hypervisorAtByRealm);
   phases = {
-    workload = {
-      upgrade = daily (clock 5 15);
-      rebootWindow = workloadRebootWindow;
-    };
-
-    builder = {
-      upgrade = weekly "Mon" (clock 3 0);
-      rebootWindow = {
-        lower = clock 2 59;
-        upper = night.end;
-      };
-    };
-
-    cache = {
-      upgrade = weekly "Mon" (clock 3 30);
-      rebootWindow = {
-        lower = clock 2 59;
-        upper = night.end;
-      };
-    };
-
+    builder.upgrade = weekly "Mon" maintenanceWindow.start;
+    cache.upgrade = weekly "Mon" (clock 4 0);
     hypervisor = {
       cadence = "weekly";
       weekday = "Mon";
-      atByHost = {
-        prx1-lab = clock 3 50;
-        nvws = clock 4 0;
-        prx2-lab = clock 4 20;
-        prx3-lab = clock 4 50;
-      };
-      rebootWindow = {
-        lower = clock 3 45;
-        upper = night.end;
-      };
+      atByHost = hypervisorAtByHost;
     };
+    workload.upgrade = daily (clock 6 0);
   };
-  weeklyReboot = weekly "Sat" (clock 4 0);
+  weeklyReboot = weekly "Sat" (clock 5 30);
   infrastructureSchedules = [
     phases.builder.upgrade
     phases.cache.upgrade
   ]
-  ++ map (weekly phases.hypervisor.weekday) (builtins.attrValues phases.hypervisor.atByHost);
+  ++ map (weekly phases.hypervisor.weekday) (builtins.attrValues hypervisorAtByHost);
   infrastructureStarts = map (schedule: schedule.at) infrastructureSchedules;
-  orderedStarts = lib.sort (left: right: clockMinutes left < clockMinutes right) (
-    infrastructureStarts ++ [ phases.workload.upgrade.at ]
+  maintenanceStarts = infrastructureStarts ++ [ phases.workload.upgrade.at ];
+  orderedSlots = lib.unique (
+    lib.sort (left: right: clockMinutes left < clockMinutes right) maintenanceStarts
   );
-  startWindowsDoNotOverlap =
-    clocks:
-    if builtins.length clocks < 2 then
+  slotsDoNotOverlap =
+    starts:
+    if builtins.length starts < 2 then
       true
     else
-      clockMinutes (builtins.head clocks) + randomizedDelayMinutes
-      < clockMinutes (builtins.head (builtins.tail clocks))
-      && startWindowsDoNotOverlap (builtins.tail clocks);
-  latestInfrastructureStart = lib.foldl' lib.max 0 (map clockMinutes infrastructureStarts);
-  allStarts = infrastructureStarts ++ [
-    phases.workload.upgrade.at
-    weeklyReboot.at
-  ];
-  rebootWindows =
-    map (phase: phase.rebootWindow) (builtins.attrValues (builtins.removeAttrs phases [ "hypervisor" ]))
-    ++ [ phases.hypervisor.rebootWindow ];
-  allRebootClocks = builtins.concatMap (window: [
-    window.lower
-    window.upper
-  ]) rebootWindows;
+      clockMinutes (builtins.head starts) + slotDurationMinutes
+      <= clockMinutes (builtins.head (builtins.tail starts))
+      && slotsDoNotOverlap (builtins.tail starts);
+  startsFitMaintenanceWindow = lib.all (
+    start:
+    clockMinutes start >= clockMinutes maintenanceWindow.start
+    && clockMinutes start + slotDurationMinutes <= clockMinutes maintenanceWindow.end
+  ) (maintenanceStarts ++ [ weeklyReboot.at ]);
   infrastructureCadenceIsWeekly = lib.all (
     schedule: schedule.cadence == "weekly" && schedule.weekday == phases.hypervisor.weekday
   ) infrastructureSchedules;
-  startsAreAtNight = lib.all (
-    clock:
-    clockMinutes clock >= clockMinutes night.start
-    && clockMinutes clock + randomizedDelayMinutes <= clockMinutes night.end
-  ) allStarts;
-  rebootWindowsAreAtNight = lib.all (
-    clock:
-    clockMinutes clock >= clockMinutes night.start && clockMinutes clock <= clockMinutes night.end
-  ) allRebootClocks;
-  rebootWindowsAreOrdered = lib.all (
-    window: clockMinutes window.lower < clockMinutes window.upper
-  ) rebootWindows;
+  hypervisorSlotsDoNotOverlap = lib.all (
+    realmSlots:
+    let
+      starts = builtins.attrValues realmSlots;
+      ordered = lib.sort (left: right: clockMinutes left < clockMinutes right) starts;
+    in
+    builtins.length starts == builtins.length (lib.unique (map clockMinutes starts))
+    && slotsDoNotOverlap ordered
+  ) (builtins.attrValues hypervisorAtByRealm);
+  hypervisorNames = builtins.concatMap builtins.attrNames (builtins.attrValues hypervisorAtByRealm);
 in
 assert lib.asserts.assertMsg (lib.all validClock (
-  allStarts ++ allRebootClocks
+  maintenanceStarts
+  ++ [
+    maintenanceWindow.start
+    maintenanceWindow.end
+    weeklyReboot.at
+  ]
 )) "auto-upgrade policy contains an invalid clock time";
 assert lib.asserts.assertMsg infrastructureCadenceIsWeekly
   "all build-infrastructure maintenance must use the weekly hypervisor weekday";
 assert lib.asserts.assertMsg (
   phases.workload.upgrade.cadence == "daily"
 ) "workload auto-upgrades must remain daily";
-assert lib.asserts.assertMsg startsAreAtNight
-  "all auto-upgrade starts, including random delay, must remain inside the night window";
-assert lib.asserts.assertMsg rebootWindowsAreAtNight
-  "all auto-upgrade reboot windows must remain inside the night window";
-assert lib.asserts.assertMsg rebootWindowsAreOrdered
-  "auto-upgrade reboot windows must end after they begin";
-assert lib.asserts.assertMsg (startWindowsDoNotOverlap orderedStarts)
-  "auto-upgrade randomized start ranges must not overlap";
-assert lib.asserts.assertMsg
-  (
-    clockMinutes phases.workload.upgrade.at - (latestInfrastructureStart + randomizedDelayMinutes)
-    >= minimumInfrastructureBufferMinutes
-  )
-  "workload upgrades must start at least ${toString minimumInfrastructureBufferMinutes} minutes after the infrastructure launch range";
+assert lib.asserts.assertMsg startsFitMaintenanceWindow
+  "all auto-upgrade and reboot slots must fit inside the 03:30-06:30 maintenance window";
+assert lib.asserts.assertMsg (slotsDoNotOverlap orderedSlots)
+  "auto-upgrade maintenance slots must not overlap";
+assert lib.asserts.assertMsg hypervisorSlotsDoNotOverlap
+  "hypervisor maintenance slots must not overlap within a realm";
+assert lib.asserts.assertMsg (
+  clockMinutes weeklyReboot.at + slotDurationMinutes <= clockMinutes phases.workload.upgrade.at
+) "the deferred weekly reboot must complete before the workload upgrade phase";
+assert lib.asserts.assertMsg (
+  builtins.length hypervisorNames == builtins.length (lib.unique hypervisorNames)
+) "each hypervisor must have exactly one maintenance slot";
 {
   inherit
-    formatClock
-    minimumInfrastructureBufferMinutes
-    night
+    maintenanceWindow
     phases
+    rebootWindowFor
     renderRebootWindow
     renderSchedule
+    slotDurationMinutes
     weeklyReboot
     ;
-  randomizedDelaySec = "${toString randomizedDelayMinutes}min";
+  randomizedDelaySec = "0min";
   persistent = false;
-
   holds = [ ];
 }

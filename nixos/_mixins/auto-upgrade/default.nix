@@ -98,7 +98,7 @@ in
           if config.host.autoUpgrade.rebootMode == "weekly-if-needed" then
             null
           else
-            upgradePolicy.renderRebootWindow phasePolicy.rebootWindow;
+            upgradePolicy.renderRebootWindow (upgradePolicy.rebootWindowFor upgradeSchedule.at);
       };
 
       host.autoUpgrade.holds = upgradePolicy.holds;
