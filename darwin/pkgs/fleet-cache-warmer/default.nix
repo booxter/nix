@@ -10,26 +10,12 @@
 }:
 
 let
-  inventory = builtins.fromJSON (builtins.readFile ../../../ci/ci-target-inventory.json);
   hostInventory = import ../../../inv { inherit lib; };
-  realm = hostInventory.realms.${targetRealm};
-  hostForTarget =
-    target:
-    let
-      match = builtins.match "(nixos|darwin)Configurations\\.([^.]+)\\..*" target.attr;
-    in
-    if match == null then null else builtins.elemAt match 1;
-  matchesTargetFilter =
-    target:
-    let
-      host = hostForTarget target;
-    in
-    if host == null then
-      realm.build.includeUnscopedCiTargets or false
-    else
-      hostInventory.hostSpecsByName.${host}.realm == targetRealm;
+  inventory = import ../../../ci { inherit hostInventory lib; };
   ciValidatedWarmTargets = map (target: target.attr) (
-    lib.filter (target: target.warm && matchesTargetFilter target) inventory.buildTargets
+    lib.filter (
+      target: hostInventory.hostSpecsByName.${target.host}.realm == targetRealm
+    ) inventory.buildTargets
   );
 in
 rustPlatform.buildRustPackage {

@@ -63,22 +63,22 @@ before the inherited `05:15` fleet upgrade window.
 Nix store.
 
 - `x86_64-linux` NixOS system closures
-- `aarch64-linux` NixOS system closures
 - `x86_64-linux` VM artifacts used by CI
 - `aarch64-darwin` system and VM outputs that CI validates
 
-The home-realm warmer intentionally excludes:
+The home-realm warmer excludes:
 
 - targets selected exclusively for hosts in another realm
 - formatting checks such as `nix fmt`
 
-Those excluded items either are not warmed yet by policy or do not produce
-useful Nix store closures for Attic warming.
+Those excluded items do not belong in the home cache or do not produce useful
+Nix store closures for Attic warming.
 
 The authoritative source for these targets at system build time is
-[`ci/ci-target-inventory.json`](/Users/ihrachyshka/src/nix/ci/ci-target-inventory.json:1).
-Both CI and the `fleet-cache-warmer` package read from that inventory; the
-warmer package also filters host-backed targets by their inventory realm in
+[`ci/default.nix`](/Users/ihrachyshka/src/nix/ci/default.nix:1).
+Both CI and the `fleet-cache-warmer` package read from that inventory. Every
+target has an owning host, and the warmer selects targets whose host belongs to
+its configured realm in
 [`inv/default.nix`](/Users/ihrachyshka/src/nix/inv/default.nix:1).
 The filtered list is embedded in the installed launchd closure.
 

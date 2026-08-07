@@ -1,7 +1,5 @@
 "use strict";
 
-const inventory = require("../../ci/ci-target-inventory.json");
-
 function nixBuildCmd(attr) {
   return `nix build .#${attr} -L --show-trace`;
 }
@@ -78,7 +76,6 @@ function buildHostPathMap(targets, field) {
 
 module.exports = {
   buildHostPathMap,
-  inventory,
   nixBuildCmd,
   toBuildMatrixEntries,
 };

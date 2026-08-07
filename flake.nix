@@ -123,6 +123,11 @@
       checks = selectPerSystem "checks";
       formatter = selectPerSystem "formatter";
 
+      lib.ciTargetInventory = import ./ci {
+        inherit hostInventory;
+        lib = inputs.nixpkgs.lib;
+      };
+
       overlays = import ./overlays { inherit inputs; };
       packages = selectPerSystem "packages";
 

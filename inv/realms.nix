@@ -5,13 +5,10 @@
 }:
 {
   home = {
-    build = {
-      includeUnscopedCiTargets = true;
-      pools = [
-        "community"
-        "personal"
-      ];
-    };
+    build.pools = [
+      "community"
+      "personal"
+    ];
     secretDomain = "main";
     management = {
       manageNetworkIdentity = true;
