@@ -12,8 +12,6 @@ let
     name:
     builtins.hasAttr name hostInventory.nixosHosts && (hostInventory.nixosHosts.${name}.isVM or false);
   hostClassForName = name: if isVirtualNodeName name then "virtual" else "hardware";
-  scrapeExpectationForHostConfig =
-    hostConfig: if hostConfig.host.isLaptop then "intermittent" else "always";
   mkRemoteNixosNodeTargetConfig =
     name:
     let
@@ -26,7 +24,7 @@ let
         host_class = hostClassForName name;
         host_virtual = lib.boolToString (isVirtualNodeName name);
         instance = name;
-        scrape_expectation = scrapeExpectationForHostConfig hostConfig;
+        scrape_expectation = hostConfig.host.availability;
       };
       targets = [ "${name}:9100" ];
     };
@@ -51,7 +49,7 @@ let
         host_class = "hardware";
         host_virtual = "false";
         instance = name;
-        scrape_expectation = scrapeExpectationForHostConfig hostConfig;
+        scrape_expectation = hostConfig.host.availability;
       };
       targets = [ "${hostConfig.networking.hostName}:9100" ];
     };
@@ -91,7 +89,7 @@ in
             host_class = hostClassForName hostname;
             host_virtual = lib.boolToString (isVirtualNodeName hostname);
             instance = hostname;
-            scrape_expectation = scrapeExpectationForHostConfig config;
+            scrape_expectation = config.host.availability;
           };
         }
       ];

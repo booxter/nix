@@ -66,17 +66,20 @@ in
       description = "Whether this host has a desktop environment.";
     };
 
-    isLaptop = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.isLaptop or false;
+    availability = lib.mkOption {
+      type = lib.types.enum [
+        "always"
+        "intermittent"
+      ];
+      default = hostSpec.availability or "always";
       readOnly = true;
       internal = true;
-      description = "Whether this host is intermittently available like a laptop.";
+      description = "Expected host availability for monitoring.";
     };
 
     hasTouchId = lib.mkOption {
       type = lib.types.bool;
-      default = config.host.isDarwin && config.host.isLaptop;
+      default = hostSpec.hasTouchId or false;
       readOnly = true;
       internal = true;
       description = "Whether this host has Touch ID-backed authentication.";

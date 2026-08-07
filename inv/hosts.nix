@@ -118,8 +118,9 @@ in
       platform = "aarch64-darwin";
       realm = "home";
       userProfile = "personal";
+      availability = "intermittent";
+      hasTouchId = true;
       isDesktop = true;
-      isLaptop = true;
       isSecretsOperator = true;
       vnc.enable = true;
       lanWanInterfaces = [ "en0" ];
@@ -143,8 +144,9 @@ in
       platform = "aarch64-darwin";
       realm = "work";
       userProfile = "nvidia";
+      availability = "intermittent";
+      hasTouchId = true;
       isDesktop = true;
-      isLaptop = true;
       isSecretsOperator = true;
       lanWanInterfaces = [
         "en0"

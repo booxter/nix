@@ -13,8 +13,8 @@ let
   tomlFormat = pkgs.formats.toml { };
   mcps = import ./mcps.nix { inherit config lib; };
   effectiveCodexSettings = lib.recursiveUpdate codexConfig.settings (
-    lib.optionalAttrs (!config.host.isLaptop) {
-      desktop.keepRemoteControlAwakeWhilePluggedIn = false;
+    {
+      desktop.keepRemoteControlAwakeWhilePluggedIn = true;
     }
     // lib.optionalAttrs mcps.enabled mcps.settings
   );
