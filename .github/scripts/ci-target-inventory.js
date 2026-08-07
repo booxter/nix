@@ -6,20 +6,21 @@ function nixBuildCmd(attr) {
   return `nix build .#${attr} -L --show-trace`;
 }
 
+function hostTargetForAttr(attr) {
+  const match = attr.match(/^(nixos|darwin)Configurations\.([^.]+)\./);
+  return match ? { platform: match[1], host: match[2] } : null;
+}
+
 function diffMachineForAttr(attr) {
-  const nixosMatch = attr.match(
-    /^nixosConfigurations\.([^.]+)\.config\.system\.build\.toplevel$/,
-  );
-  if (nixosMatch) {
-    return nixosMatch[1];
+  const target = hostTargetForAttr(attr);
+  if (!target) {
+    return null;
   }
-
-  const darwinMatch = attr.match(/^darwinConfigurations\.([^.]+)\.system$/);
-  if (darwinMatch) {
-    return darwinMatch[1];
-  }
-
-  return null;
+  const expected =
+    target.platform === "nixos"
+      ? `nixosConfigurations.${target.host}.config.system.build.toplevel`
+      : `darwinConfigurations.${target.host}.system`;
+  return attr === expected ? target.host : null;
 }
 
 function toBuildMatrixEntries(targets) {
@@ -54,21 +55,15 @@ function appendMapping(mapping, prefix, field, name) {
   mapping.get(prefix).add(name);
 }
 
-function buildMachinePathMap(targets, field) {
+function buildHostPathMap(targets, field) {
   const mapping = new Map();
 
   for (const target of targets) {
-    const selection = target.selection || {};
-
-    for (const prefix of selection.prefixes || []) {
-      appendMapping(mapping, prefix, field, target.name);
-    }
-
-    for (const host of selection.hosts || []) {
-      appendMapping(mapping, `secrets/${host}.yaml`, field, target.name);
+    const hostTarget = hostTargetForAttr(target.attr);
+    if (hostTarget) {
       appendMapping(
         mapping,
-        `secrets/_templates/${host}.yaml`,
+        `${hostTarget.platform}/${hostTarget.host}/`,
         field,
         target.name,
       );
@@ -82,7 +77,7 @@ function buildMachinePathMap(targets, field) {
 }
 
 module.exports = {
-  buildMachinePathMap,
+  buildHostPathMap,
   inventory,
   nixBuildCmd,
   toBuildMatrixEntries,

@@ -13,19 +13,21 @@ let
   inventory = builtins.fromJSON (builtins.readFile ../../../ci/ci-target-inventory.json);
   hostInventory = import ../../../inv { inherit lib; };
   realm = hostInventory.realms.${targetRealm};
-  realmForHost = host: hostInventory.hostSpecsByName.${host}.realm;
+  hostForTarget =
+    target:
+    let
+      match = builtins.match "(nixos|darwin)Configurations\\.([^.]+)\\..*" target.attr;
+    in
+    if match == null then null else builtins.elemAt match 1;
   matchesTargetFilter =
     target:
     let
-      hosts = target.selection.hosts or [ ];
-      targetRealms = lib.unique (map realmForHost hosts);
+      host = hostForTarget target;
     in
-    if hosts == [ ] then
+    if host == null then
       realm.build.includeUnscopedCiTargets or false
-    else if builtins.length targetRealms == 1 then
-      builtins.head targetRealms == targetRealm
     else
-      throw "CI target ${target.attr} spans multiple realms: ${lib.concatStringsSep ", " targetRealms}";
+      hostInventory.hostSpecsByName.${host}.realm == targetRealm;
   ciValidatedWarmTargets = map (target: target.attr) (
     lib.filter (target: target.warm && matchesTargetFilter target) (
       inventory.buildTargets ++ inventory.regularChecks

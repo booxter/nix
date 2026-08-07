@@ -68,7 +68,7 @@ jobs:
             const fullMatrix = {
               include: targetInventory.toBuildMatrixEntries(buildTargets)
             };
-            const machinePathMap = targetInventory.buildMachinePathMap(buildTargets, "jobs");
+            const hostPathMap = targetInventory.buildHostPathMap(buildTargets, "jobs");
 
             if (context.eventName !== "pull_request") {
               core.info("Non-PR event, using full build matrix.");
@@ -82,7 +82,7 @@ jobs:
               github,
               eventName: context.eventName,
               fullMatrix,
-              machinePathMap,
+              machinePathMap: hostPathMap,
               mappingField: "jobs",
               skipWhenDocsOnly: true,
               skipWhenSelectionEmpty: true,

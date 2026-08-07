@@ -4,14 +4,6 @@
       "attr": "nixosConfigurations.frame.config.system.build.toplevel",
       "name": "frame (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "frame"
-        ],
-        "prefixes": [
-          "nixos/frame/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -19,14 +11,6 @@
       "attr": "nixosConfigurations.nvws.config.system.build.toplevel",
       "name": "nvws (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "nvws"
-        ],
-        "prefixes": [
-          "nixos/nvws/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -34,14 +18,6 @@
       "attr": "nixosConfigurations.nv.config.system.build.toplevel",
       "name": "nv (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "nv"
-        ],
-        "prefixes": [
-          "nixos/nv/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -49,14 +25,6 @@
       "attr": "nixosConfigurations.prx1-lab.config.system.build.toplevel",
       "name": "prx1-lab (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "prx1-lab"
-        ],
-        "prefixes": [
-          "nixos/prx1-lab/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -64,14 +32,6 @@
       "attr": "nixosConfigurations.prx2-lab.config.system.build.toplevel",
       "name": "prx2-lab (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "prx2-lab"
-        ],
-        "prefixes": [
-          "nixos/prx2-lab/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -79,14 +39,6 @@
       "attr": "nixosConfigurations.prx3-lab.config.system.build.toplevel",
       "name": "prx3-lab (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "prx3-lab"
-        ],
-        "prefixes": [
-          "nixos/prx3-lab/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -94,12 +46,6 @@
       "attr": "nixosConfigurations.builder1.config.system.build.toplevel",
       "name": "builder (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "builder1"
-        ],
-        "prefixes": []
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -107,14 +53,6 @@
       "attr": "nixosConfigurations.cache.config.system.build.toplevel",
       "name": "cache (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "cache"
-        ],
-        "prefixes": [
-          "nixos/cache/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -122,14 +60,6 @@
       "attr": "nixosConfigurations.beast.config.system.build.toplevel",
       "name": "beast (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "beast"
-        ],
-        "prefixes": [
-          "nixos/beast/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -137,14 +67,6 @@
       "attr": "nixosConfigurations.srvarr.config.system.build.toplevel",
       "name": "srvarr (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "srvarr"
-        ],
-        "prefixes": [
-          "nixos/srvarr/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -152,14 +74,6 @@
       "attr": "nixosConfigurations.fana.config.system.build.toplevel",
       "name": "fana (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "fana"
-        ],
-        "prefixes": [
-          "nixos/fana/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -167,14 +81,6 @@
       "attr": "nixosConfigurations.gw.config.system.build.toplevel",
       "name": "gw (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "gw"
-        ],
-        "prefixes": [
-          "nixos/gw/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -182,14 +88,6 @@
       "attr": "nixosConfigurations.org.config.system.build.toplevel",
       "name": "org (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "org"
-        ],
-        "prefixes": [
-          "nixos/org/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -197,14 +95,6 @@
       "attr": "nixosConfigurations.pki.config.system.build.toplevel",
       "name": "pki (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "pki"
-        ],
-        "prefixes": [
-          "nixos/pki/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -212,14 +102,6 @@
       "attr": "nixosConfigurations.home.config.system.build.toplevel",
       "name": "home (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "home"
-        ],
-        "prefixes": [
-          "nixos/home/"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -227,12 +109,6 @@
       "attr": "nixosConfigurations.builder1.config.system.build.vm",
       "name": "nixos vm builder1 (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "builder1"
-        ],
-        "prefixes": []
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -240,14 +116,6 @@
       "attr": "darwinConfigurations.mair.system",
       "name": "mair (aarch64-darwin)",
       "runner": "macos-26",
-      "selection": {
-        "hosts": [
-          "mair"
-        ],
-        "prefixes": [
-          "darwin/mair/"
-        ]
-      },
       "system": "aarch64-darwin",
       "warm": true
     },
@@ -255,14 +123,6 @@
       "attr": "darwinConfigurations.mmini.system",
       "name": "mmini (aarch64-darwin)",
       "runner": "macos-26",
-      "selection": {
-        "hosts": [
-          "mmini"
-        ],
-        "prefixes": [
-          "darwin/mmini/"
-        ]
-      },
       "system": "aarch64-darwin",
       "warm": true
     },
@@ -270,14 +130,6 @@
       "attr": "darwinConfigurations.JGWXHWDL4X.system",
       "name": "JGWXHWDL4X (aarch64-darwin)",
       "runner": "macos-26",
-      "selection": {
-        "hosts": [
-          "JGWXHWDL4X"
-        ],
-        "prefixes": [
-          "darwin/JGWXHWDL4X/"
-        ]
-      },
       "system": "aarch64-darwin",
       "warm": true
     },
@@ -285,12 +137,6 @@
       "attr": "nixosConfigurations.builder1.config.system.build.vmQemu",
       "name": "nixos vm qemu (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "builder1"
-        ],
-        "prefixes": []
-      },
       "system": "x86_64-linux",
       "warm": true
     },
@@ -298,10 +144,6 @@
       "attr": "packages.aarch64-darwin.qemu-host-package",
       "name": "nixos vm qemu (aarch64-darwin)",
       "runner": "macos-26",
-      "selection": {
-        "hosts": [],
-        "prefixes": []
-      },
       "system": "aarch64-darwin",
       "warm": true
     },
@@ -309,12 +151,6 @@
       "attr": "nixosConfigurations.builder1.config.virtualisation.proxmox.iso",
       "name": "nixos vm proxmox iso (x86_64-linux)",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [
-          "builder1"
-        ],
-        "prefixes": []
-      },
       "system": "x86_64-linux",
       "warm": true
     }
