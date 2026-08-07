@@ -21,6 +21,7 @@ in
   ]
   ++ [
     ./_mixins/defaults
+    ./_mixins/etc
     ./_mixins/fonts
     ./_mixins/fleet-cache-warmer
     ./_mixins/homebrew

@@ -30,33 +30,25 @@ in
       ];
     })
     (lib.optionalAttrs isDarwin {
+      environment.etc = {
+        "ssh/fleet-user-cas.pub" = lib.mkIf target.enabled {
+          source = caPublicKeyFile;
+          mode = "0444";
+          user = "root";
+          group = "wheel";
+        };
+        "ssh/authorized_principals.d/${username}" = lib.mkIf target.enabled {
+          source = principalsFile;
+          mode = "0444";
+          user = "root";
+          group = "wheel";
+        };
+      };
+
       services.openssh.extraConfig = lib.mkIf target.enabled ''
         TrustedUserCAKeys ${caPublicKeyPath}
         AuthorizedPrincipalsFile /etc/ssh/authorized_principals.d/%u
       '';
-
-      system.activationScripts.etc.text = lib.mkIf target.enabled (
-        lib.mkAfter ''
-          # nix-darwin environment.etc only creates symlinks. Mirror NixOS'
-          # copied /etc files here because sshd StrictModes rejects cert auth
-          # files reached through group-writable /nix/store parents.
-          # TODO: expand nix-darwin environment.etc to support NixOS-style
-          # copy mode/owner semantics, then replace this targeted workaround.
-          install -d -m 0755 -o root -g wheel /etc/ssh/authorized_principals.d
-
-          install -m 0444 -o root -g wheel \
-            "${caPublicKeyFile}" \
-            /etc/ssh/fleet-user-cas.pub.tmp
-          mv -f /etc/ssh/fleet-user-cas.pub.tmp /etc/ssh/fleet-user-cas.pub
-
-          install -m 0444 -o root -g wheel \
-            "${principalsFile}" \
-            /etc/ssh/authorized_principals.d/${username}.tmp
-          mv -f \
-            /etc/ssh/authorized_principals.d/${username}.tmp \
-            /etc/ssh/authorized_principals.d/${username}
-        ''
-      );
     })
   ];
 }
