@@ -9,6 +9,7 @@
 let
   username = config.home.username;
   hostname = osConfig.networking.hostName;
+  realm = osConfig.host.realm;
   homeManagerPkgs = import ../../pkgs pkgs;
   ticketPackage = homeManagerPkgs.ssh-ticket;
   issuer = hostInventory.sshTicket.issuers.${hostname} or null;
@@ -16,7 +17,7 @@ let
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
-  ticketTargets = hostInventory.sshTicket.targets;
+  ticketTargets = builtins.filter (target: target.realm == realm) hostInventory.sshTicket.targets;
   ticketTargetsFile = pkgs.writeText "ssh-ticket-targets.json" (builtins.toJSON ticketTargets);
   enabledTicketTargets = builtins.filter (target: target.enabled) ticketTargets;
   ticketHostBlock =
@@ -65,7 +66,7 @@ let
   );
 in
 {
-  config = lib.mkIf (issuer != null) {
+  config = lib.mkIf (osConfig.host.ssh.tickets.enable && issuer != null) {
     home.packages = [ ticketPackage ];
 
     home.sessionVariables.SSHT_TARGETS_FILE = "${ticketTargetsFile}";
@@ -76,7 +77,7 @@ in
 
     assertions = [
       {
-        assertion = lib.elem issuer.publicKey hostInventory.sshTicket.trustedCaPublicKeys;
+        assertion = lib.elem issuer.publicKey hostInventory.sshTicket.trustedCaPublicKeysByRealm.${realm};
         message = "SSH ticket issuer for ${hostname} is not trusted by ticket servers";
       }
     ];

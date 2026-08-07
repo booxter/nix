@@ -1,10 +1,25 @@
 {
   lanDomain,
   nixCaches,
+  readPublicKey,
 }:
 {
   home = {
     secretDomain = "main";
+    trust.ssh = {
+      authorizedKeys = [
+        (readPublicKey ../public-keys/users/mmini.pub)
+        (readPublicKey ../public-keys/users/mair.pub)
+        (readPublicKey ../public-keys/users/frame.pub)
+        (readPublicKey ../public-keys/yubikey.pub)
+        (readPublicKey ../public-keys/mair-secretive.pub)
+      ];
+      fleetBootHosts = true;
+      tickets.trustedCaPublicKeys = [
+        (readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub)
+        (readPublicKey ../public-keys/yubikey.pub)
+      ];
+    };
     services = {
       attic = {
         cacheName = "local";
@@ -35,5 +50,9 @@
   work = {
     secretDomain = "work";
     services = { };
+    trust.ssh.authorizedKeys = [
+      (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
+      (readPublicKey ../public-keys/users/jgwxhwdl4x-nix-builder.pub)
+    ];
   };
 }

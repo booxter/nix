@@ -13,7 +13,7 @@ let
 
   siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
   realms = import ./realms.nix {
-    inherit lanDomain;
+    inherit lanDomain readPublicKey;
     nixCaches = siteFacts.nixCaches;
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
@@ -51,6 +51,7 @@ let
       frame
       mmini
       readPublicKey
+      realms
       username
       ;
     darwinHosts = normalizedDarwinHosts;

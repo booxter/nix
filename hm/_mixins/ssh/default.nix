@@ -6,7 +6,7 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isLinux isWork;
+  inherit (osConfig.host) isDarwin isLinux;
   useSecretive = osConfig.host.secretive.enable or false;
   secretiveSocket = "${config.home.homeDirectory}/Library/Containers/com.maxgoedjen.Secretive.SecretAgent/Data/socket.ssh";
   sshAskpass =
@@ -21,7 +21,7 @@ let
   '';
 in
 {
-  imports = lib.optionals (!isWork) [ ./ticket-client.nix ];
+  imports = [ ./ticket-client.nix ];
 
   config = {
     home.sessionVariables = {
@@ -60,7 +60,7 @@ in
           AddKeysToAgent = if useSecretive then "no" else "yes";
         };
       }
-      // lib.optionalAttrs (!isWork) {
+      // lib.optionalAttrs osConfig.host.ssh.fleetBootHosts {
         frame-boot = {
           HostName = "frame";
           HostKeyAlias = "frame-initrd";

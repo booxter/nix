@@ -13,7 +13,7 @@ let
   target = hostInventory.sshTicket.targetsByName.${config.networking.hostName};
   caPublicKeyPath = "/etc/ssh/fleet-user-cas.pub";
   caPublicKeyFile = pkgs.writeText "fleet-user-cas.pub" (
-    lib.concatMapStrings (publicKey: "${publicKey}\n") hostInventory.sshTicket.trustedCaPublicKeys
+    lib.concatMapStrings (publicKey: "${publicKey}\n") target.trustedCaPublicKeys
   );
   principalsFile = pkgs.writeText "${username}-authorized_principals" "${target.principal}\n";
 in
