@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   hostSpec,
   inputs,
   lib,
@@ -7,6 +8,7 @@
   ...
 }:
 let
+  upgradePolicy = hostInventory.autoUpgrade.proxmox;
   isVM = hostSpec.isVM or false;
   bridgeName = "vmbr0";
   macAddress = hostSpec.macAddress or null;
@@ -39,8 +41,8 @@ in
         # Hypervisors upgrade on a separate schedule to avoid disrupting guest
         # VMs running on top.
         system.autoUpgrade = {
-          dates = hostSpec.proxmoxUpgradeTime or "Mon 04:00";
-          rebootWindow.lower = lib.mkForce "03:45";
+          dates = upgradePolicy.datesByHost.${config.networking.hostName} or upgradePolicy.defaultDates;
+          rebootWindow.lower = lib.mkForce upgradePolicy.rebootWindow.lower;
         };
 
         nixpkgs.overlays = [

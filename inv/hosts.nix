@@ -53,7 +53,6 @@ let
     {
       index,
       macAddress,
-      proxmoxUpgradeTime,
     }:
     let
       index' = toString index;
@@ -66,7 +65,6 @@ let
         ipAddress
         macAddress
         name
-        proxmoxUpgradeTime
         ;
       platform = "x86_64-linux";
       realm = "home";
@@ -273,17 +271,14 @@ in
     }
     (labProxmoxSpec {
       index = 1;
-      proxmoxUpgradeTime = "Mon 03:50";
       macAddress = "38:05:25:30:7d:89";
     })
     (labProxmoxSpec {
       index = 2;
-      proxmoxUpgradeTime = "Mon 04:20";
       macAddress = "38:05:25:30:7f:7d";
     })
     (labProxmoxSpec {
       index = 3;
-      proxmoxUpgradeTime = "Mon 04:50";
       macAddress = "38:05:25:30:7d:69";
     })
     {

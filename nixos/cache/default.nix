@@ -5,6 +5,7 @@
   ...
 }:
 let
+  upgradePolicy = hostInventory.autoUpgrade.cache;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   nfsPath = "/cache";
   # Same recovery semantics as other NFS clients:
@@ -97,11 +98,11 @@ in
 
   # Upgrade cache before the Monday critical-infra window so the cache is
   # ready before machines that may consume it during their own auto-updates.
-  system.autoUpgrade.dates = lib.mkForce "Mon 03:30";
-  system.autoUpgrade.randomizedDelaySec = lib.mkForce "5min";
+  system.autoUpgrade.dates = lib.mkForce upgradePolicy.dates;
+  system.autoUpgrade.randomizedDelaySec = lib.mkForce upgradePolicy.randomizedDelaySec;
   system.autoUpgrade.rebootWindow = {
-    lower = lib.mkForce "02:59";
-    upper = lib.mkForce "06:00";
+    lower = lib.mkForce upgradePolicy.rebootWindow.lower;
+    upper = lib.mkForce upgradePolicy.rebootWindow.upper;
   };
 
   systemd.services.atticd.unitConfig.RequiresMountsFor = "/cache";

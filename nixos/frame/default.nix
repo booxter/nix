@@ -25,7 +25,7 @@ in
 
   # This host needs manual local or remote unlock after boot; never auto-reboot
   # on upgrades.
-  system.autoUpgrade.allowReboot = lib.mkForce false;
+  system.autoUpgrade.allowReboot = lib.mkForce hostInventory.autoUpgrade.hosts.frame.allowReboot;
   host.observability.blackbox.remote.enable = true;
   nixpkgs.config.rocmSupport = true;
 

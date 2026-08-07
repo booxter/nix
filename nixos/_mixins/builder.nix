@@ -1,11 +1,19 @@
-{ config, lib, ... }:
+{
+  config,
+  hostInventory,
+  lib,
+  ...
+}:
+let
+  upgradePolicy = hostInventory.autoUpgrade.builder;
+in
 {
   config = lib.mkIf config.host.isBuilder {
     system.autoUpgrade = {
-      dates = lib.mkOverride 900 "Mon 03:00";
+      dates = lib.mkOverride 900 upgradePolicy.dates;
       rebootWindow = {
-        lower = lib.mkOverride 900 "02:59";
-        upper = lib.mkOverride 900 "06:00";
+        lower = lib.mkOverride 900 upgradePolicy.rebootWindow.lower;
+        upper = lib.mkOverride 900 upgradePolicy.rebootWindow.upper;
       };
     };
     nix.settings = {

@@ -10,6 +10,7 @@ let
   user = import ./user.nix;
   fleetRepository = import ./repository.nix;
   regional = import ./regional.nix;
+  autoUpgradeFacts = import ./auto-upgrade.nix;
   inherit (user) username;
 
   siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
@@ -151,6 +152,7 @@ let
       throw "host ${spec.name} does not have a stable IPv4 address";
 in
 rec {
+  autoUpgrade = autoUpgradeFacts;
   backups = backupFacts // {
     clients = backupClients;
   };

@@ -7,6 +7,7 @@
   ...
 }:
 let
+  upgradePolicy = hostInventory.autoUpgrade;
   autoUpgradeTools = pkgs.callPackage ./pkgs/auto-upgrade-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
@@ -35,27 +36,21 @@ in
           "--show-trace"
         ];
         # Run inherited daily upgrades after the Monday Proxmox node window.
-        dates = lib.mkDefault "05:15";
-        randomizedDelaySec = "5min";
-        persistent = false;
-        allowReboot = true;
-        rebootWindow = {
-          lower = "04:00";
-          upper = "06:00";
-        };
+        dates = lib.mkDefault upgradePolicy.default.dates;
+        inherit (upgradePolicy.default)
+          allowReboot
+          persistent
+          randomizedDelaySec
+          rebootWindow
+          ;
       };
 
-      host.autoUpgrade.holds = [
-        {
-          startDate = "2026-06-08";
-          stopDate = "2026-06-28";
-        }
-      ];
+      host.autoUpgrade.holds = upgradePolicy.holds;
     }
     (lib.mkIf (config.host.isCritical && config.system.autoUpgrade.enable) {
       system.autoUpgrade = {
-        allowReboot = lib.mkForce false;
-        rebootWindow = lib.mkForce null;
+        allowReboot = lib.mkForce upgradePolicy.critical.allowReboot;
+        rebootWindow = lib.mkForce upgradePolicy.critical.rebootWindow;
       };
 
       systemd.services.nixos-weekly-reboot-if-needed = {
@@ -69,9 +64,9 @@ in
       systemd.timers.nixos-weekly-reboot-if-needed = {
         wantedBy = [ "timers.target" ];
         timerConfig = {
-          OnCalendar = "Sat 04:00";
-          RandomizedDelaySec = "5min";
-          Persistent = false;
+          OnCalendar = upgradePolicy.critical.weeklyReboot.dates;
+          RandomizedDelaySec = upgradePolicy.critical.weeklyReboot.randomizedDelaySec;
+          Persistent = upgradePolicy.critical.weeklyReboot.persistent;
           Unit = "nixos-weekly-reboot-if-needed.service";
         };
       };
