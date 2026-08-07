@@ -132,6 +132,20 @@ in
       description = "Whether boot requires an interactive disk-unlock credential.";
     };
 
+    nixStore.capacityGiB = lib.mkOption {
+      type = with lib.types; nullOr ints.positive;
+      default =
+        if hostSpec ? nixStoreCapacityGiB then
+          hostSpec.nixStoreCapacityGiB
+        else if hostSpec.isVM or false then
+          hostSpec.diskSize or 100
+        else
+          null;
+      readOnly = true;
+      internal = true;
+      description = "Capacity of the filesystem containing /nix/store, when declared by inventory.";
+    };
+
     realm = lib.mkOption {
       type = lib.types.enum (builtins.attrNames hostInventory.realms);
       default = hostSpec.realm;

@@ -11,6 +11,13 @@ let
   username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   GiB = 1024 * 1024 * 1024;
+  nixStoreCapacityGiB = config.host.nixStore.capacityGiB;
+  minFreeGiB =
+    if nixStoreCapacityGiB == null then
+      40
+    else
+      lib.min 40 (lib.max 1 (builtins.div nixStoreCapacityGiB 10));
+  maxFreeGiB = if nixStoreCapacityGiB == null then 80 else 2 * minFreeGiB;
   hasBuildMachines = config.nix.buildMachines != [ ];
   needsProxmoxCache =
     (config.host.isLinux && config.host.isProxmox)
@@ -66,8 +73,8 @@ in
         gc-reserved-space = GiB;
         keep-derivations = false;
         max-jobs = 5;
-        min-free = lib.mkDefault (40 * GiB);
-        max-free = lib.mkDefault (80 * GiB);
+        min-free = minFreeGiB * GiB;
+        max-free = maxFreeGiB * GiB;
 
         extra-substituters = lib.optionals needsProxmoxCache [
           "https://cache.saumon.network/proxmox-nixos"

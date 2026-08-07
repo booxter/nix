@@ -14,20 +14,11 @@ let
   diskSize = hostSpec.diskSize or 100;
   sshPort = hostSpec.sshPort or null;
   virtPlatform = hostSpec.virtPlatform or hostSpec.platform;
-  GiB = 1024 * 1024 * 1024;
-  # VM disks can be much smaller than physical hosts. Start GC at 20%
-  # free and target 40%, capped at the physical-host thresholds.
-  minFreeGiB = lib.min 40 (builtins.div diskSize 5);
 in
 {
   imports = lib.optionals isVM [ (modulesPath + "/profiles/qemu-guest.nix") ];
 
   config = lib.mkIf config.host.isVM {
-    nix.settings = {
-      min-free = minFreeGiB * GiB;
-      max-free = 2 * minFreeGiB * GiB;
-    };
-
     services.getty.autologinUser = username;
     services.qemuGuest.enable = true;
 
