@@ -8,7 +8,6 @@ class HostFacts(BaseModel):
 
     system: str
     secret_domain: str = Field(alias="secretDomain")
-    is_work: bool = Field(alias="isWork")
 
 
 class FleetHosts(RootModel[dict[str, HostFacts]]):

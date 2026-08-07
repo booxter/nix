@@ -51,6 +51,7 @@
         };
         nodeExporter.mtls = true;
       };
+      proxmox.oidcManagerHost = "prx1-lab";
     };
   };
 

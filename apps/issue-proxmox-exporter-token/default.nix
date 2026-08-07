@@ -14,17 +14,10 @@ let
   pythonPackages = python3.pkgs;
   hostsFile = builtins.toFile "pki-tool-hosts.json" (
     builtins.toJSON (
-      lib.mapAttrs (
-        name: system:
-        let
-          spec = hostInventory.hostSpecsByName.${name};
-        in
-        {
-          inherit system;
-          secretDomain = hostInventory.secretDomainsByHost.${name};
-          isWork = spec.isWork or false;
-        }
-      ) hostInventory.systemsByHost
+      lib.mapAttrs (name: system: {
+        inherit system;
+        secretDomain = hostInventory.secretDomainsByHost.${name};
+      }) hostInventory.systemsByHost
     )
   );
   runtimePath = lib.makeBinPath [

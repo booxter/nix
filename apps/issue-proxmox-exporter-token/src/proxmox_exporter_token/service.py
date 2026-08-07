@@ -168,7 +168,7 @@ class TokenService:
     def _enabled_exporter_hosts(self) -> list[str]:
         selected: list[str] = []
         for host, facts in sorted(self.hosts.root.items()):
-            if facts.is_work or not facts.system.endswith("-linux"):
+            if not facts.system.endswith("-linux"):
                 continue
             config = self.evaluator.optional_exporter_config(host)
             if config is not None and config.enable:

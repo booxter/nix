@@ -11,6 +11,7 @@ let
   cfg = config.host.proxmox.apiCertificate;
   exporterCfg = config.host.proxmox.prometheusExporter;
   oidcCfg = config.host.proxmox.oidc;
+  realmProxmox = hostInventory.realms.${config.host.realm}.services.proxmox or null;
   oidcScopes = config.host.sso.oidc.baseScopes;
   oidcMappedAdminGroup = "${oidcCfg.allowedGroup}-${oidcCfg.realm}";
   oidcRealmUnit = "proxmox-oidc-realm.service";
@@ -23,7 +24,9 @@ let
   sopsInstallSecretsUnit = lib.optional config.sops.useSystemdActivation "sops-install-secrets.service";
   proxmoxHostTools = pkgs.callPackage ./pkgs/proxmox-host-tools { };
   proxmoxLabHostSpecs = builtins.filter (
-    spec: (spec.hostKind or null) == "proxmox" && !(spec.isWork or false)
+    spec:
+    (spec.hostKind or null) == "proxmox"
+    && (hostInventory.realms.${spec.realm}.services.proxmox or null) != null
   ) hostInventory.nixosHostSpecs;
   proxmoxLabHosts = lib.unique (
     lib.concatMap hostInventory.toNixosHostCertificateDnsNames proxmoxLabHostSpecs
@@ -128,7 +131,7 @@ in
 
     managerHost = lib.mkOption {
       type = lib.types.str;
-      default = "prx1-lab";
+      default = if realmProxmox == null then "" else realmProxmox.oidcManagerHost;
       description = "Proxmox node that declaratively manages the cluster-wide OIDC realm.";
     };
 
@@ -271,13 +274,19 @@ in
 
   config = lib.mkMerge [
     {
-      host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.isProxmox && !config.host.isWork);
+      host.proxmox.apiCertificate.enable = lib.mkDefault (config.host.isProxmox && realmProxmox != null);
       host.proxmox.oidc.enable = lib.mkDefault (
-        config.host.isProxmox && !config.host.isWork && hostSpec.name == oidcCfg.managerHost
+        config.host.isProxmox && realmProxmox != null && hostSpec.name == oidcCfg.managerHost
       );
       host.proxmox.prometheusExporter.enable = lib.mkDefault (
         config.host.isProxmox && config.host.observability.enable
       );
+      assertions = [
+        {
+          assertion = (!cfg.enable && !oidcCfg.enable) || realmProxmox != null;
+          message = "realm '${config.host.realm}' does not define managed Proxmox services";
+        }
+      ];
     }
     (lib.mkIf cfg.enable {
       assertions = [
