@@ -26,7 +26,7 @@ in
   config = {
     assertions = mcps.assertions;
 
-    environment.etc."codex/config.toml" = {
+    environment.etc."codex/config.toml" = lib.mkIf codexConfig.enable {
       source =
         if mcps.enabled then config.sops.templates."codex-config.toml".path else generatedCodexConfig;
     };
