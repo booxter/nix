@@ -27,16 +27,7 @@ let
     else
       hostSpec.autoUpgrade.rebootMode or "after-upgrade";
   phasePolicy = upgradePolicy.phases.${config.host.autoUpgrade.phase};
-  upgradeSchedule =
-    if config.host.autoUpgrade.phase == "hypervisor" then
-      {
-        inherit (phasePolicy) cadence weekday;
-        at =
-          phasePolicy.atByHost.${hostname}
-            or (throw "Proxmox host ${hostname} has no explicit auto-upgrade slot");
-      }
-    else
-      phasePolicy.upgrade;
+  upgradeSchedule = phasePolicy.upgrade;
   autoUpgradeTools = pkgs.callPackage ./pkgs/auto-upgrade-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };

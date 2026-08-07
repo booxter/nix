@@ -34,31 +34,18 @@ let
     lower = formatClock window.lower;
     upper = formatClock window.upper;
   };
-  hypervisorAtByRealm = {
-    home = {
-      prx1-lab = clock 4 30;
-      prx2-lab = clock 5 0;
-      prx3-lab = clock 5 30;
-    };
-    work.nvws = clock 4 30;
-  };
-  hypervisorAtByHost = lib.mergeAttrsList (builtins.attrValues hypervisorAtByRealm);
   phases = {
     builder.upgrade = weekly "Mon" maintenanceWindow.start;
     cache.upgrade = weekly "Mon" (clock 4 0);
-    hypervisor = {
-      cadence = "weekly";
-      weekday = "Mon";
-      atByHost = hypervisorAtByHost;
-    };
+    hypervisor.upgrade = weekly "Mon" (clock 4 30);
     workload.upgrade = daily (clock 6 0);
   };
   weeklyReboot = weekly "Sat" (clock 5 30);
   infrastructureSchedules = [
     phases.builder.upgrade
     phases.cache.upgrade
-  ]
-  ++ map (weekly phases.hypervisor.weekday) (builtins.attrValues hypervisorAtByHost);
+    phases.hypervisor.upgrade
+  ];
   infrastructureStarts = map (schedule: schedule.at) infrastructureSchedules;
   maintenanceStarts = infrastructureStarts ++ [ phases.workload.upgrade.at ];
   orderedSlots = lib.unique (
@@ -78,18 +65,8 @@ let
     && clockMinutes start + slotDurationMinutes <= clockMinutes maintenanceWindow.end
   ) (maintenanceStarts ++ [ weeklyReboot.at ]);
   infrastructureCadenceIsWeekly = lib.all (
-    schedule: schedule.cadence == "weekly" && schedule.weekday == phases.hypervisor.weekday
+    schedule: schedule.cadence == "weekly" && schedule.weekday == phases.hypervisor.upgrade.weekday
   ) infrastructureSchedules;
-  hypervisorSlotsDoNotOverlap = lib.all (
-    realmSlots:
-    let
-      starts = builtins.attrValues realmSlots;
-      ordered = lib.sort (left: right: clockMinutes left < clockMinutes right) starts;
-    in
-    builtins.length starts == builtins.length (lib.unique (map clockMinutes starts))
-    && slotsDoNotOverlap ordered
-  ) (builtins.attrValues hypervisorAtByRealm);
-  hypervisorNames = builtins.concatMap builtins.attrNames (builtins.attrValues hypervisorAtByRealm);
 in
 assert lib.asserts.assertMsg (lib.all validClock (
   maintenanceStarts
@@ -108,14 +85,9 @@ assert lib.asserts.assertMsg startsFitMaintenanceWindow
   "all auto-upgrade and reboot slots must fit inside the 03:30-06:30 maintenance window";
 assert lib.asserts.assertMsg (slotsDoNotOverlap orderedSlots)
   "auto-upgrade maintenance slots must not overlap";
-assert lib.asserts.assertMsg hypervisorSlotsDoNotOverlap
-  "hypervisor maintenance slots must not overlap within a realm";
 assert lib.asserts.assertMsg (
   clockMinutes weeklyReboot.at + slotDurationMinutes <= clockMinutes phases.workload.upgrade.at
 ) "the deferred weekly reboot must complete before the workload upgrade phase";
-assert lib.asserts.assertMsg (
-  builtins.length hypervisorNames == builtins.length (lib.unique hypervisorNames)
-) "each hypervisor must have exactly one maintenance slot";
 {
   inherit
     maintenanceWindow
