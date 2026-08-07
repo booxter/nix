@@ -30,7 +30,7 @@ The schedule is organized around a few ordering rules:
 
 ## Time Table
 
-All times below are in `America/New_York`.
+All times below use the fleet timezone from `inv/regional.nix`.
 
 <!-- markdownlint-disable MD013 -->
 | Time | Event | Notes |

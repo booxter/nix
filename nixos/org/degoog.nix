@@ -173,7 +173,7 @@ in
       DEGOOG_UNIX_SOCKET = socketPath;
       LOG_LEVEL = "info";
       NO_COLOR = "1";
-      TZ = "America/New_York";
+      TZ = config.time.timeZone;
     };
     serviceConfig = {
       ExecStart = lib.getExe degoogPackage;

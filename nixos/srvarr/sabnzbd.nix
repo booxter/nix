@@ -99,6 +99,7 @@ in
     group = "media";
     secretFiles = [ config.sops.templates."sabnzbd-secret.ini".path ];
     settings = import ./sabnzbd-settings.nix {
+      language = hostInventory.regional.language.code;
       hostWhitelist = [
         config.networking.hostName
       ]

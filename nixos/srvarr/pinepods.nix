@@ -206,8 +206,8 @@ in
           SEARCH_API_URL = "https://search.pinepods.online/api/search";
           PEOPLE_API_URL = "https://people.pinepods.online";
           DEBUG_MODE = "true";
-          DEFAULT_LANGUAGE = "en";
-          TZ = "America/New_York";
+          DEFAULT_LANGUAGE = hostInventory.regional.language.code;
+          TZ = config.time.timeZone;
           PUID = toString accounts.uids.pinepods;
           PGID = toString hostInventory.site.gids.media;
 

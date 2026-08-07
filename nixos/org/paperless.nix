@@ -225,7 +225,7 @@ in
         ".DS_STORE/*"
         "desktop.ini"
       ];
-      PAPERLESS_OCR_LANGUAGE = "eng";
+      PAPERLESS_OCR_LANGUAGE = hostInventory.regional.language.ocrCode;
       PAPERLESS_REDIRECT_LOGIN_TO_SSO = false;
       PAPERLESS_SOCIALACCOUNT_ALLOW_SIGNUPS = false;
       PAPERLESS_SOCIAL_ACCOUNT_SYNC_GROUPS = true;
@@ -481,7 +481,7 @@ in
         CREATE_NEW_TAGS = "false";
         FAIL_TAG = "paperless-gpt-failed";
         HOME = "/home/paperless-gpt";
-        LLM_LANGUAGE = "English";
+        LLM_LANGUAGE = hostInventory.regional.language.name;
         LLM_MODEL = "granite4:32b-a9b-h";
         LLM_PROVIDER = "ollama";
         LISTEN_INTERFACE = "127.0.0.1:${toString paperlessGptPort}";

@@ -56,8 +56,8 @@ in
 
       homeassistant = {
         name = "Home";
-        country = "US";
-        currency = "USD";
+        country = hostInventory.regional.countryCode;
+        currency = hostInventory.regional.currencyCode;
         internal_url = "https://home.${hostInventory.site.lan.domain}";
         unit_system = "us_customary";
         time_zone = config.time.timeZone;
@@ -187,7 +187,7 @@ in
         "--owner-display-name"
         administrator.displayName
         "--owner-language"
-        homeAssistantSso.bootstrapLanguage
+        hostInventory.regional.language.code
         "--owner-username"
         administratorName
         "--password-file"

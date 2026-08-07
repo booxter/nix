@@ -13,7 +13,7 @@ let
   vikunjaOidcProviderKey = "sso";
   vikunjaPort = 3456;
   # Vikunja expects an IANA tz database name here, not a fixed abbreviation.
-  vikunjaTimezone = "America/New_York";
+  vikunjaTimezone = config.time.timeZone;
 in
 {
   _module.args.orgPkgs = import ./pkgs pkgs;
@@ -61,7 +61,7 @@ in
     settings = {
       defaultsettings = {
         timezone = vikunjaTimezone;
-        week_start = 1;
+        week_start = hostInventory.regional.weekStartIso;
       };
       metrics.enabled = true;
       mailer = {

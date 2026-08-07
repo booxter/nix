@@ -9,6 +9,7 @@ let
   mmini = "mmini";
   user = import ./user.nix;
   fleetRepository = import ./repository.nix;
+  regional = import ./regional.nix;
   inherit (user) username;
 
   siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
@@ -138,7 +139,12 @@ rec {
   };
 
   inherit (serviceFacts) glanceCategories;
-  inherit fleetRepository realms user;
+  inherit
+    fleetRepository
+    realms
+    regional
+    user
+    ;
 
   sshTicket = sshTicketFacts;
   sso = ssoFacts;

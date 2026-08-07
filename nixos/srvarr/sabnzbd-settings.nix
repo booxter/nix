@@ -1,5 +1,6 @@
 {
   hostWhitelist,
+  language,
   mediaDir,
   port,
   wgNamespaceAddress,
@@ -30,7 +31,7 @@
     sorters_converted = 1;
     check_new_rel = 0;
     auto_browser = 0;
-    language = "en";
+    inherit language;
     enable_https_verification = 1;
     https_port = "";
     bandwidth_max = "100M";

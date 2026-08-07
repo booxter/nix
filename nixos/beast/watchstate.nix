@@ -86,7 +86,7 @@ in
       pull = "never";
       user = "${toString watchstateUid}:${toString watchstateUid}";
       environment = {
-        TZ = "America/New_York";
+        TZ = config.time.timeZone;
         # oauth2-proxy remains the browser-facing authentication boundary.
         # Trust nginx's loopback connection so WatchState mints its internal
         # token after SSO instead of prompting for a second password.

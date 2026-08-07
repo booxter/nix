@@ -14,7 +14,6 @@ in
     "home-assistant" = {
       adminGroup = "home-admins";
       userGroup = "home-users";
-      bootstrapLanguage = "en";
     };
     pinepods = {
       adminGroup = "media-admins";
