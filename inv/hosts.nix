@@ -260,7 +260,7 @@ in
       platform = "x86_64-linux";
       realm = "home";
       userProfile = "personal";
-      critical = true;
+      autoUpgrade.rebootMode = "weekly-if-needed";
       dnsAliases = builtins.filter (domain: domain != "dash.${publicDomain}") publicServiceHosts;
       hmFull = false;
       hardware.igpu.renderDevice = "/dev/dri/renderD128";

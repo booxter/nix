@@ -125,12 +125,11 @@ in
       description = "Whether this host is a virtual machine.";
     };
 
-    isCritical = lib.mkOption {
+    boot.requiresInteractiveUnlock = lib.mkOption {
       type = lib.types.bool;
-      default = hostSpec.critical or false;
-      readOnly = true;
+      default = false;
       internal = true;
-      description = "Whether this host should avoid frequent unattended reboots.";
+      description = "Whether boot requires an interactive disk-unlock credential.";
     };
 
     realm = lib.mkOption {

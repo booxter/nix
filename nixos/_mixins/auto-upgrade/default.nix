@@ -1,6 +1,7 @@
 {
   config,
   hostInventory,
+  hostSpec,
   lib,
   pkgs,
   utils,
@@ -9,44 +10,33 @@
 let
   upgradePolicy = hostInventory.autoUpgrade;
   hostname = config.networking.hostName;
+  realmAttic = hostInventory.realms.${config.host.realm}.services.attic or null;
+  isCacheHost = realmAttic != null && realmAttic.serverHost == hostname;
   selectedPhase =
     if config.host.isProxmox then
       "hypervisor"
-    else if hostname == upgradePolicy.cacheHost then
+    else if isCacheHost then
       "cache"
     else if config.host.isBuilder then
       "builder"
     else
       "workload";
   selectedRebootMode =
-    if builtins.elem hostname upgradePolicy.manualRebootHosts then
+    if config.host.boot.requiresInteractiveUnlock then
       "manual"
-    else if config.host.isCritical then
-      "weekly-if-needed"
     else
-      "after-upgrade";
+      hostSpec.autoUpgrade.rebootMode or "after-upgrade";
   phasePolicy = upgradePolicy.phases.${config.host.autoUpgrade.phase};
   upgradeSchedule =
     if config.host.autoUpgrade.phase == "hypervisor" then
       {
         inherit (phasePolicy) cadence weekday;
-        at = phasePolicy.atByHost.${hostname} or phasePolicy.defaultAt;
+        at =
+          phasePolicy.atByHost.${hostname}
+            or (throw "Proxmox host ${hostname} has no explicit auto-upgrade slot");
       }
     else
       phasePolicy.upgrade;
-  formatClock =
-    clock:
-    let
-      pad = value: if value < 10 then "0${toString value}" else toString value;
-    in
-    "${pad clock.hour}:${pad clock.minute}";
-  renderSchedule =
-    schedule:
-    lib.optionalString (schedule.cadence == "weekly") "${schedule.weekday} " + formatClock schedule.at;
-  renderRebootWindow = window: {
-    lower = formatClock window.lower;
-    upper = formatClock window.upper;
-  };
   autoUpgradeTools = pkgs.callPackage ./pkgs/auto-upgrade-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
@@ -101,17 +91,48 @@ in
           "-L"
           "--show-trace"
         ];
-        dates = renderSchedule upgradeSchedule;
+        dates = upgradePolicy.renderSchedule upgradeSchedule;
         inherit (upgradePolicy) persistent randomizedDelaySec;
         allowReboot = config.host.autoUpgrade.rebootMode == "after-upgrade";
         rebootWindow =
           if config.host.autoUpgrade.rebootMode == "weekly-if-needed" then
             null
           else
-            renderRebootWindow phasePolicy.rebootWindow;
+            upgradePolicy.renderRebootWindow phasePolicy.rebootWindow;
       };
 
       host.autoUpgrade.holds = upgradePolicy.holds;
+
+      assertions = [
+        {
+          assertion = !config.host.isProxmox || config.host.autoUpgrade.phase == "hypervisor";
+          message = "Proxmox hosts must use the hypervisor auto-upgrade phase.";
+        }
+        {
+          assertion = !isCacheHost || config.host.autoUpgrade.phase == "cache";
+          message = "The realm Nix cache host must use the cache auto-upgrade phase.";
+        }
+        {
+          assertion =
+            !config.host.isBuilder
+            || builtins.elem config.host.autoUpgrade.phase [
+              "builder"
+              "hypervisor"
+            ];
+          message = "Nix builders must use a build-infrastructure auto-upgrade phase.";
+        }
+        {
+          assertion =
+            !config.host.boot.requiresInteractiveUnlock || config.host.autoUpgrade.rebootMode == "manual";
+          message = "Hosts requiring interactive disk unlock must not reboot automatically.";
+        }
+        {
+          assertion =
+            !config.host.isProxmox
+            || (upgradeSchedule.cadence == "weekly" && config.host.autoUpgrade.rebootMode == "after-upgrade");
+          message = "Proxmox hosts must have one weekly conditional reboot opportunity.";
+        }
+      ];
     }
     (lib.mkIf
       (config.host.autoUpgrade.rebootMode == "weekly-if-needed" && config.system.autoUpgrade.enable)
@@ -127,7 +148,7 @@ in
         systemd.timers.nixos-weekly-reboot-if-needed = {
           wantedBy = [ "timers.target" ];
           timerConfig = {
-            OnCalendar = renderSchedule (upgradePolicy.weeklyReboot // { cadence = "weekly"; });
+            OnCalendar = upgradePolicy.renderSchedule upgradePolicy.weeklyReboot;
             RandomizedDelaySec = upgradePolicy.randomizedDelaySec;
             Persistent = upgradePolicy.persistent;
             Unit = "nixos-weekly-reboot-if-needed.service";

@@ -32,7 +32,7 @@ in
     TimeoutStartSec = "infinity";
   };
 
-  # Critical hosts reboot separately from their daily auto-upgrade switch.
+  # This host reboots separately from its daily auto-upgrade switch.
   systemd.services.nixos-weekly-reboot-if-needed.serviceConfig = {
     ExecStartPre = [ waitForJellyfinIdleCommand ];
     TimeoutStartSec = "infinity";

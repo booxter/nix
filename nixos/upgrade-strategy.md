@@ -37,9 +37,10 @@ All times below use the fleet timezone from `inv/regional.nix`.
 | --- | --- | --- |
 | `06:00` daily | Flake input bump workflow | GitHub Actions runs `.github/workflows/auto-update.yml`, updates `flake.lock`, and opens a PR. |
 | `08:30` and `20:30` daily | LAN cache warmup | `mmini` runs `fleet-cache-warmer` as a `launchd` daemon and pushes the realized non-work closures into Attic. |
-| `03:00` Monday | Nix builder VM upgrade window | Set in `inv/auto-upgrade.nix` for hosts with the builder role. |
+| `03:00` Monday | Nix builder upgrade window | Set in `inv/auto-upgrade.nix` for non-hypervisor hosts with the builder role. |
 | `03:30` Monday | `cache` upgrade window | Set in `inv/auto-upgrade.nix`. |
-| `03:50`, `04:20`, and `04:50` Monday | Proxmox lab hypervisor upgrade windows | The nodes are staggered by 30 minutes in `inv/auto-upgrade.nix` to preserve cluster quorum. |
+| `03:50`, `04:20`, and `04:50` Monday | Proxmox lab hypervisor upgrade windows | The nodes are staggered in `inv/auto-upgrade.nix` to preserve cluster quorum. |
+| `04:00` Monday | `nvws` Proxmox upgrade window | The work hypervisor uses the same infrastructure lane independently of the home cluster. |
 | `05:15` daily | Default NixOS upgrade window | Most NixOS hosts inherit this from `inv/auto-upgrade.nix`. |
 <!-- markdownlint-enable MD013 -->
 

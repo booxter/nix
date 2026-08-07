@@ -4,6 +4,8 @@
   ...
 }:
 {
+  host.boot.requiresInteractiveUnlock = true;
+
   disko.devices = {
     disk = {
       main = {
