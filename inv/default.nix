@@ -10,7 +10,7 @@ let
   user = import ./user.nix;
   fleetRepository = import ./repository.nix;
   regional = import ./regional.nix;
-  autoUpgradeFacts = import ./auto-upgrade.nix { inherit lib; };
+  autoUpgradeFacts = import ./auto-upgrade { inherit lib; };
   inherit (user) username;
 
   siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
