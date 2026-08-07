@@ -13,9 +13,13 @@ let
     "devnet"
     "uid-range"
   ];
+  enabled =
+    builtins.elem "work" config.host.build.pools
+    && config.host.isOperatorSeat
+    && !config.host.isBuilder;
 in
 {
-  config = lib.mkIf (builtins.elem "work" config.host.build.pools && !config.host.isBuilder) {
+  config = lib.mkIf enabled {
     programs.ssh = {
       extraConfig = ''
         Host nvws.local

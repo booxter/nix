@@ -39,9 +39,10 @@ let
     };
   };
   formatList = values: if values == [ ] then "-" else lib.concatStringsSep "," values;
+  enabled = builtins.elem "community" config.host.build.pools && config.host.isOperatorSeat;
 in
 {
-  config = lib.mkIf (builtins.elem "community" config.host.build.pools && config.host.isDesktop) {
+  config = lib.mkIf enabled {
     programs.ssh = {
       knownHosts = lib.mapAttrs' (
         _: builder:

@@ -12,9 +12,10 @@ let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   GiB = 1024 * 1024 * 1024;
   hasBuildMachines = config.nix.buildMachines != [ ];
-  # Desktops may be used for Proxmox development.
   needsProxmoxCache =
-    (config.host.isLinux && config.host.isProxmox) || config.host.isBuilder || config.host.isDesktop;
+    (config.host.isLinux && config.host.isProxmox)
+    || config.host.isBuilder
+    || config.host.isOperatorSeat;
 in
 {
   options.host.nixCache = {

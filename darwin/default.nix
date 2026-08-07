@@ -34,6 +34,7 @@ in
     ./_mixins/secretive
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
+    ./_mixins/sketchybar-network
     ./_mixins/sudo
     ./_mixins/thermal-accounting
     ./_mixins/xquartz

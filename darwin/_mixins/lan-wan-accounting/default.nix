@@ -83,8 +83,8 @@ in
     };
 
     interfaces = lib.mkOption {
-      type = with lib.types; nonEmptyListOf str;
-      default = hostSpec.lanWanInterfaces or [ "en0" ];
+      type = with lib.types; listOf str;
+      default = hostSpec.lanWanInterfaces or [ ];
       example = [
         "en0"
         "en1"
@@ -101,9 +101,12 @@ in
 
   config = lib.mkMerge [
     {
-      host.observability.lanWan.enable = lib.mkDefault (
-        config.host.observability.enable && config.host.isDesktop
-      );
+      assertions = [
+        {
+          assertion = !cfg.enable || cfg.interfaces != [ ];
+          message = "host.observability.lanWan requires at least one interface";
+        }
+      ];
     }
     (lib.mkIf cfg.enable {
       environment.systemPackages = [ cfg.package ];

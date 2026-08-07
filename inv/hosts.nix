@@ -121,6 +121,7 @@ in
       availability = "intermittent";
       hasTouchId = true;
       isDesktop = true;
+      isOperatorSeat = true;
       isSecretsOperator = true;
       vnc.enable = true;
       lanWanInterfaces = [ "en0" ];
@@ -133,6 +134,7 @@ in
       userProfile = "personal";
       isBuilder = true;
       isDesktop = true;
+      isOperatorSeat = true;
       isSecretsOperator = true;
       vnc.enable = true;
       upsHost = frame;
@@ -147,6 +149,7 @@ in
       availability = "intermittent";
       hasTouchId = true;
       isDesktop = true;
+      isOperatorSeat = true;
       isSecretsOperator = true;
       lanWanInterfaces = [
         "en0"
@@ -165,6 +168,7 @@ in
       userProfile = "personal";
       isBuilder = true;
       isDesktop = true;
+      isOperatorSeat = true;
       isSecretsOperator = true;
       nspawnTestBuilder = true;
       sshTicket.allowX11Forwarding = true;
@@ -285,6 +289,7 @@ in
       platform = "x86_64-linux";
       realm = "work";
       userProfile = "nvidia";
+      isOperatorSeat = true;
       stateVersion = "25.11";
       upsHost = nvws;
       dhcpReservation = {
