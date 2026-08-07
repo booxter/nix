@@ -6,8 +6,7 @@
 }:
 {
   imports = [
-    ./community.nix
-    ./managed.nix
+    ./client.nix
   ];
 
   options.host = {

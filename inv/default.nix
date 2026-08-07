@@ -40,7 +40,12 @@ let
   };
   rawHostSpecs = hostFacts.nixosHostSpecs ++ builtins.attrValues hostFacts.darwinHosts;
   builderFacts = import ./builders.nix {
-    inherit lib;
+    inherit
+      lib
+      readPublicKey
+      username
+      ;
+    githubLogin = user.github.login;
     hostSpecs = rawHostSpecs;
   };
   sshFacts = import ./ssh.nix {
