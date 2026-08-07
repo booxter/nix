@@ -1,54 +1,111 @@
 let
   randomizedDelaySec = "5min";
-  earlyRebootWindow = {
-    lower = "02:59";
-    upper = "06:00";
+  persistent = false;
+  workloadRebootWindow = {
+    lower = {
+      hour = 4;
+      minute = 0;
+    };
+    upper = {
+      hour = 6;
+      minute = 0;
+    };
   };
 in
 {
-  default = {
-    dates = "05:15";
-    inherit randomizedDelaySec;
-    persistent = false;
-    allowReboot = true;
-    rebootWindow = {
-      lower = "04:00";
-      upper = "06:00";
+  inherit persistent randomizedDelaySec;
+
+  phases = {
+    workload = {
+      upgrade = {
+        cadence = "daily";
+        at = {
+          hour = 5;
+          minute = 15;
+        };
+      };
+      rebootWindow = workloadRebootWindow;
+    };
+
+    builder = {
+      upgrade = {
+        cadence = "weekly";
+        weekday = "Mon";
+        at = {
+          hour = 3;
+          minute = 0;
+        };
+      };
+      # Preserve the current effective window. The old builder definitions
+      # attempted to set 02:59, but lost to the default module priority.
+      rebootWindow = workloadRebootWindow;
+    };
+
+    cache = {
+      upgrade = {
+        cadence = "weekly";
+        weekday = "Mon";
+        at = {
+          hour = 3;
+          minute = 30;
+        };
+      };
+      rebootWindow = {
+        lower = {
+          hour = 2;
+          minute = 59;
+        };
+        upper = {
+          hour = 6;
+          minute = 0;
+        };
+      };
+    };
+
+    hypervisor = {
+      cadence = "weekly";
+      weekday = "Mon";
+      defaultAt = {
+        hour = 4;
+        minute = 0;
+      };
+      atByHost = {
+        prx1-lab = {
+          hour = 3;
+          minute = 50;
+        };
+        prx2-lab = {
+          hour = 4;
+          minute = 20;
+        };
+        prx3-lab = {
+          hour = 4;
+          minute = 50;
+        };
+      };
+      rebootWindow = {
+        lower = {
+          hour = 3;
+          minute = 45;
+        };
+        upper = {
+          hour = 6;
+          minute = 0;
+        };
+      };
     };
   };
 
-  builder = {
-    dates = "Mon 03:00";
-    rebootWindow = earlyRebootWindow;
-  };
+  cacheHost = "cache";
+  manualRebootHosts = [ "frame" ];
 
-  cache = {
-    dates = "Mon 03:30";
-    inherit randomizedDelaySec;
-    rebootWindow = earlyRebootWindow;
-  };
-
-  proxmox = {
-    defaultDates = "Mon 04:00";
-    datesByHost = {
-      prx1-lab = "Mon 03:50";
-      prx2-lab = "Mon 04:20";
-      prx3-lab = "Mon 04:50";
-    };
-    rebootWindow.lower = "03:45";
-  };
-
-  critical = {
-    allowReboot = false;
-    rebootWindow = null;
-    weeklyReboot = {
-      dates = "Sat 04:00";
-      inherit randomizedDelaySec;
-      persistent = false;
+  weeklyReboot = {
+    weekday = "Sat";
+    at = {
+      hour = 4;
+      minute = 0;
     };
   };
-
-  hosts.frame.allowReboot = false;
 
   holds = [
     {

@@ -86,9 +86,12 @@ in
     (lib.mkIf (cfg.holds != [ ]) {
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
-    (lib.mkIf (cfg.holds != [ ] && config.host.isCritical && config.system.autoUpgrade.enable) {
-      systemd.services.nixos-weekly-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
-    })
+    (lib.mkIf
+      (cfg.holds != [ ] && cfg.rebootMode == "weekly-if-needed" && config.system.autoUpgrade.enable)
+      {
+        systemd.services.nixos-weekly-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
+      }
+    )
     (lib.mkIf metricsCfg.enable {
       # Update immediately on switch so adding or removing a hold changes alert
       # suppression without waiting for the next hourly timer tick.

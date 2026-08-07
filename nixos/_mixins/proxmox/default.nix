@@ -1,6 +1,5 @@
 {
   config,
-  hostInventory,
   hostSpec,
   inputs,
   lib,
@@ -8,7 +7,6 @@
   ...
 }:
 let
-  upgradePolicy = hostInventory.autoUpgrade.proxmox;
   isVM = hostSpec.isVM or false;
   bridgeName = "vmbr0";
   macAddress = hostSpec.macAddress or null;
@@ -38,13 +36,6 @@ in
   config = lib.mkMerge (
     [
       (lib.mkIf config.host.isProxmox {
-        # Hypervisors upgrade on a separate schedule to avoid disrupting guest
-        # VMs running on top.
-        system.autoUpgrade = {
-          dates = upgradePolicy.datesByHost.${config.networking.hostName} or upgradePolicy.defaultDates;
-          rebootWindow.lower = lib.mkForce upgradePolicy.rebootWindow.lower;
-        };
-
         nixpkgs.overlays = [
           inputs.proxmox-nixos.overlays.${hostSpec.platform}
           (
