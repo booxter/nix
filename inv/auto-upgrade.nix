@@ -152,10 +152,5 @@ assert lib.asserts.assertMsg
   randomizedDelaySec = "${toString randomizedDelayMinutes}min";
   persistent = false;
 
-  holds = [
-    {
-      startDate = "2026-06-08";
-      stopDate = "2026-06-28";
-    }
-  ];
+  holds = [ ];
 }
