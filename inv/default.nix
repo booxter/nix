@@ -15,7 +15,7 @@ let
 
   siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
   realms = import ./realms.nix {
-    inherit lanDomain;
+    inherit lanDomain readPublicKey;
     nixCaches = siteFacts.nixCaches;
     ssh = sshFacts;
   };

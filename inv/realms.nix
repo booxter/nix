@@ -1,6 +1,7 @@
 {
   lanDomain,
   nixCaches,
+  readPublicKey,
   ssh,
 }:
 {
@@ -18,6 +19,10 @@
     trust.ssh = {
       authorizedKeys = ssh.authorizedKeysForRealm "home";
       fleetBootHosts = true;
+      knownHosts.frame-initrd = {
+        hostNames = [ "frame-initrd" ];
+        publicKey = readPublicKey ../public-keys/hosts/frame-initrd.pub;
+      };
       tickets.trustedCaPublicKeys = ssh.trustedCaPublicKeysForRealm "home";
     };
     services = {

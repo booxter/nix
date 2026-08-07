@@ -55,12 +55,7 @@ in
   config = {
     services.openssh.enable = true;
 
-    programs.ssh.knownHosts = managedKnownHosts // {
-      frame-initrd = {
-        hostNames = [ "frame-initrd" ];
-        publicKey = readPublicKey ../../../public-keys/hosts/frame-initrd.pub;
-      };
-    };
+    programs.ssh.knownHosts = managedKnownHosts // (realmSsh.knownHosts or { });
 
     users.users.${username}.openssh.authorizedKeys.keys = config.host.ssh.authorizedKeys;
   };
