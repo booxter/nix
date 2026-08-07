@@ -41,13 +41,7 @@ class CertificateInventoryBuilder:
                 category=CertificateCategory.CA,
                 name="root",
                 source_kind=SourceKind.REPOSITORY_FILE,
-                file_path=(
-                    self.repo_root
-                    / "common"
-                    / "_mixins"
-                    / "internal-pki"
-                    / "home-internal-pki-root-ca.crt"
-                ),
+                file_path=(self.repo_root / "public-keys" / "internal-pki" / "home-root-ca.crt"),
             ),
             CertificateSpec(
                 host=pki.runtime_host,
