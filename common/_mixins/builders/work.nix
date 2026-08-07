@@ -7,7 +7,6 @@
 let
   username = config.host.username;
   identityFile = "${config.users.users.${username}.home}/.ssh/jgwxhwdl4x-nix-builder";
-  user = "ihrachyshka";
   builderSpec = hostInventory.nixosHosts.nvws;
   nspawnFeatures = [
     "devnet"
@@ -26,7 +25,7 @@ in
           Hostname nvws.local
           IdentityFile ${identityFile}
           IdentitiesOnly yes
-          User ${user}
+          User ${username}
       '';
     };
 
@@ -36,7 +35,7 @@ in
         system = "x86_64-linux";
         protocol = "ssh-ng";
         sshKey = identityFile;
-        sshUser = user;
+        sshUser = username;
         maxJobs = 4;
         speedFactor = 100;
         supportedFeatures = [

@@ -46,7 +46,7 @@ def target(name="srvarr", **overrides):
         "name": name,
         "enabled": True,
         "ssh_host": name,
-        "principal": f"ihrachyshka@{name}",
+        "principal": f"test-user@{name}",
     }
     values.update(overrides)
     return Target.model_validate(values)

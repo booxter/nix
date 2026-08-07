@@ -137,7 +137,7 @@ impl DiffBackend for FakeBackend {
         _revision: &Revision,
     ) -> anyhow::Result<Vec<String>> {
         Ok(if self.details {
-            vec!["ihrachyshka".to_owned()]
+            vec!["test-user".to_owned()]
         } else {
             Vec::new()
         })
@@ -178,13 +178,13 @@ impl DiffBackend for FakeBackend {
         );
         assert_eq!(
             fs::read_to_string(
-                root.join("old/home-manager/ihrachyshka/home-files/.config/hm.conf")
+                root.join("old/home-manager/test-user/home-files/.config/hm.conf")
             )?,
             "home=old\n"
         );
         assert_eq!(
             fs::read_to_string(root.join(
-                "new/home-manager/ihrachyshka/session-vars/etc/profile.d/hm-session-vars.sh"
+                "new/home-manager/test-user/session-vars/etc/profile.d/hm-session-vars.sh"
             ))?,
             "session=new\n"
         );

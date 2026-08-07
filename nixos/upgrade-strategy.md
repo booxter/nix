@@ -75,11 +75,11 @@ Those excluded items do not belong in the home cache or do not produce useful
 Nix store closures for Attic warming.
 
 The authoritative source for these targets at system build time is
-[`ci/default.nix`](/Users/ihrachyshka/src/nix/ci/default.nix:1).
+[`ci/default.nix`](../ci/default.nix).
 Both CI and the `fleet-cache-warmer` package read from that inventory. Every
 target has an owning host, and the warmer selects targets whose host belongs to
 its configured realm in
-[`inv/default.nix`](/Users/ihrachyshka/src/nix/inv/default.nix:1).
+[`inv/default.nix`](../inv/default.nix).
 The filtered list is embedded in the installed launchd closure.
 
 ## Why `mmini`

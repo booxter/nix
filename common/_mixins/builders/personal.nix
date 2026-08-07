@@ -15,13 +15,12 @@ in
       extraConfig =
         let
           identityFile = "${config.users.users.${username}.home}/.ssh/id_ed25519";
-          user = "ihrachyshka";
           toHost = hostname: ''
             Host ${hostname}
               Hostname ${hostname}
               IdentityFile ${identityFile}
               IdentitiesOnly yes
-              User ${user}
+              User ${username}
           '';
         in
         lib.concatStringsSep "\n" (

@@ -61,7 +61,7 @@ in
           "9A" = {
             host = mmini;
             purpose = "macOS SmartCardServices login";
-            subject = "CN=ihrachyshka@mmini PIV auth";
+            subject = "CN=${username}@${mmini} PIV auth";
             certificateSha1 = "EE:44:3A:CB:F7:9B:70:13:C2:9A:D8:53:1C:47:25:F3:FF:4C:57:85";
             macosIdentityHash = "1CD7472BD8C5B0129801906597B581CC8FE05968";
             macosToken = "com.apple.pivtoken:9F19388BE1FB4DEF83A8F2AC72223BF6";
@@ -70,7 +70,7 @@ in
           "9D" = {
             host = mmini;
             purpose = "PIV key management certificate";
-            subject = "CN=ihrachyshka@mmini PIV key management";
+            subject = "CN=${username}@${mmini} PIV key management";
             certificateSha1 = "8F:60:00:48:80:3B:94:E8:DB:6A:E9:28:41:8C:EF:8E:3A:3B:EF:C7";
           };
         };
