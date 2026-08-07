@@ -56,7 +56,9 @@ pub(super) fn run_with_backend(
 
     backend.ensure_local_space(20, 5)?;
     let source_selection = if arguments.local {
-        SourceSelection::Local
+        SourceSelection::Local {
+            merge_master: !arguments.no_merge,
+        }
     } else {
         SourceSelection::Remote {
             branch: arguments.branch.unwrap_or_else(|| "master".to_owned()),

@@ -12,6 +12,7 @@ use tempfile::TempDir;
 pub enum SourceRequest<'a> {
     Local {
         start: &'a Path,
+        merge_master: bool,
     },
     Remote {
         branch: &'a str,
@@ -38,7 +39,10 @@ impl PreparedSource {
 
 pub fn prepare_source(request: SourceRequest<'_>) -> Result<PreparedSource> {
     match request {
-        SourceRequest::Local { start } => prepare_local(start),
+        SourceRequest::Local {
+            start,
+            merge_master,
+        } => prepare_local(start, merge_master),
         SourceRequest::Remote {
             branch,
             merge_master,
@@ -47,7 +51,7 @@ pub fn prepare_source(request: SourceRequest<'_>) -> Result<PreparedSource> {
     }
 }
 
-fn prepare_local(start: &Path) -> Result<PreparedSource> {
+fn prepare_local(start: &Path, merge_master: bool) -> Result<PreparedSource> {
     let repository = gix::discover(start).map_err(|_| {
         anyhow!(
             "--local must be run from inside a Git checkout: {}",
@@ -58,7 +62,12 @@ fn prepare_local(start: &Path) -> Result<PreparedSource> {
         .head_commit()
         .context("failed to resolve the committed HEAD for --local")?;
     let revision = commit.id().to_string();
-    let tree_id = commit.tree()?.id;
+    let tree_id = if merge_master {
+        let master = resolve_master(&repository)?;
+        merge_tree(&repository, commit.id, master.id)?
+    } else {
+        commit.tree()?.id
+    };
     prepare_tree(&repository, tree_id, revision)
 }
 
@@ -290,6 +299,7 @@ mod tests {
 
         let prepared = prepare_source(SourceRequest::Local {
             start: checkout.path(),
+            merge_master: false,
         })
         .expect("prepare committed source");
 
@@ -311,6 +321,54 @@ mod tests {
                 & 0o111,
             0o111
         );
+    }
+
+    #[test]
+    fn local_source_with_merge_combines_diverged_branch_and_master() {
+        let checkout = tempfile::tempdir().expect("temporary checkout");
+        let repository = gix::init(checkout.path()).expect("initialize repository");
+        let base_tree = tree(
+            &repository,
+            None,
+            &[("flake.nix", EntryKind::Blob, b"{}\n")],
+        );
+        let base = commit(&repository, "HEAD", "base", base_tree, std::iter::empty());
+        let master_tree = tree(
+            &repository,
+            Some(base_tree),
+            &[("master-file", EntryKind::Blob, b"master\n")],
+        );
+        let _master = commit(
+            &repository,
+            "refs/remotes/origin/master",
+            "master",
+            master_tree,
+            [base],
+        );
+        let branch_tree = tree(
+            &repository,
+            Some(base_tree),
+            &[("feature", EntryKind::Blob, b"feature\n")],
+        );
+        let branch = commit(&repository, "HEAD", "feature", branch_tree, [base]);
+        drop(repository);
+
+        let prepared = prepare_source(SourceRequest::Local {
+            start: checkout.path(),
+            merge_master: true,
+        })
+        .expect("prepare merged source");
+
+        assert_eq!(prepared.revision(), branch.to_string());
+        assert_eq!(
+            fs::read_to_string(prepared.root().join("feature")).unwrap(),
+            "feature\n"
+        );
+        assert_eq!(
+            fs::read_to_string(prepared.root().join("master-file")).unwrap(),
+            "master\n"
+        );
+        assert!(prepared.root().join("flake.nix").exists());
     }
 
     #[test]

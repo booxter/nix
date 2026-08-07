@@ -309,7 +309,10 @@ fn activation_failures_are_aggregated_after_all_hosts_are_attempted() {
     let output = String::from_utf8(output).unwrap();
     assert!(output.contains("Update failed: 0/2 succeeded"));
     assert!(output.contains("Failed hosts: alpha, beta"));
-    assert_eq!(backend.source_requests, [SourceSelection::Local]);
+    assert_eq!(
+        backend.source_requests,
+        [SourceSelection::Local { merge_master: true }]
+    );
 }
 
 #[test]

@@ -321,7 +321,10 @@ impl Backend for SystemBackend {
 
     fn stage_source(&mut self, source: &SourceSelection, cwd: &Path) -> Result<StagedSource> {
         let prepared = match source {
-            SourceSelection::Local => prepare_source(SourceRequest::Local { start: cwd })?,
+            SourceSelection::Local { merge_master } => prepare_source(SourceRequest::Local {
+                start: cwd,
+                merge_master: *merge_master,
+            })?,
             SourceSelection::Remote {
                 branch,
                 merge_master,
