@@ -208,7 +208,7 @@ fn build_revision(
         revision.side.label(),
         revision.id
     )?;
-    backend.build_toplevel(kind, revision, out_link)
+    backend.build_toplevel(kind, revision, out_link, stderr)
 }
 
 fn default_generated_paths(kind: TargetKind) -> Vec<GeneratedPath> {

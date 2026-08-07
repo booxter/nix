@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Output};
+use std::process::{Command, Output, Stdio};
 
 use anyhow::{anyhow, bail, Context, Result};
 use serde::Deserialize;
@@ -34,7 +35,13 @@ pub(super) enum RecursiveDiff {
 pub(super) trait DiffBackend {
     fn detect_target(&self, revision: &Revision) -> Result<Option<TargetKind>>;
 
-    fn build_toplevel(&self, kind: TargetKind, revision: &Revision, out_link: &Path) -> Result<()>;
+    fn build_toplevel(
+        &self,
+        kind: TargetKind,
+        revision: &Revision,
+        out_link: &Path,
+        diagnostics: &mut dyn Write,
+    ) -> Result<()>;
 
     fn package_diff(&self, old_link: &Path, new_link: &Path, color: &str) -> Result<String>;
 
@@ -124,8 +131,15 @@ impl DiffBackend for NativeBackend {
         }
     }
 
-    fn build_toplevel(&self, kind: TargetKind, revision: &Revision, out_link: &Path) -> Result<()> {
-        let status = Command::new(NH)
+    fn build_toplevel(
+        &self,
+        kind: TargetKind,
+        revision: &Revision,
+        out_link: &Path,
+        diagnostics: &mut dyn Write,
+    ) -> Result<()> {
+        let mut command = Command::new(NH);
+        command
             .args([
                 kind.nh_subcommand(),
                 "build",
@@ -139,8 +153,20 @@ impl DiffBackend for NativeBackend {
             .arg(out_link)
             .args(["--print-build-logs", "--show-trace"])
             .arg(&revision.flake_ref)
-            .status()
+            .stdout(Stdio::piped())
+            .stderr(Stdio::inherit());
+        let mut child = command
+            .spawn()
             .with_context(|| format!("Unable to start {NH}"))?;
+        let mut stdout = child
+            .stdout
+            .take()
+            .context("Unable to capture nh build output")?;
+        let copy_result = io::copy(&mut stdout, diagnostics);
+        let status = child
+            .wait()
+            .with_context(|| format!("Unable to wait for {NH}"))?;
+        copy_result.context("Unable to write nh build diagnostics")?;
         if !status.success() {
             bail!(
                 "Unable to build the {} {} configuration (exit status {status})",
