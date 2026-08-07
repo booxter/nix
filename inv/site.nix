@@ -11,6 +11,14 @@ rec {
     domain = publicDomain;
   };
 
+  dynamicDns.freeDns = {
+    username = "ihrachyshka";
+    records = {
+      beast = "ihrachyshka-beast.freeddns.org";
+      gw = "ihrachyshka-gw.freeddns.org";
+    };
+  };
+
   gids = {
     media = 169;
   };

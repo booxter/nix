@@ -5,6 +5,7 @@
   ...
 }:
 let
+  freeDns = hostInventory.site.dynamicDns.freeDns;
   wgHome = hostInventory.site.wireguard.home;
   wgInterface = "wg0";
   wgListenPort = wgHome.gateway.listenPort;
@@ -25,8 +26,8 @@ in
 
   host.externalService.ddns = {
     enable = true;
-    hostname = "ihrachyshka-gw.freeddns.org";
-    username = "ihrachyshka";
+    hostname = freeDns.records.gw;
+    inherit (freeDns) username;
   };
 
   assertions = [

@@ -5,6 +5,7 @@
   ...
 }:
 let
+  freeDns = hostInventory.site.dynamicDns.freeDns;
   arrVmAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   orgVmAddress = hostInventory.toNixosHostIpv4Address "org";
   backendMtlsServicePorts = {
@@ -112,8 +113,8 @@ in
   host.externalService = {
     ddns = {
       enable = true;
-      hostname = "ihrachyshka-beast.freeddns.org";
-      username = "ihrachyshka";
+      hostname = freeDns.records.beast;
+      inherit (freeDns) username;
     };
     virtualHosts = builtins.listToAttrs (
       map (service: {
