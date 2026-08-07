@@ -8,7 +8,7 @@ let
   kickstart = "/System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart";
 in
 {
-  config = lib.mkIf (!config.host.isWork) {
+  config = lib.mkIf config.host.remoteAccess.appleRemoteManagement {
     system.activationScripts.postActivation.text = lib.mkAfter ''
       echo "Configuring Apple Remote Management for ${username}."
 

@@ -57,6 +57,11 @@
         nodeExporter.mtls = true;
       };
       proxmox.oidcManagerHost = "prx1-lab";
+      remoteAccess = {
+        appleRemoteManagement = true;
+        vncClient = true;
+        x11 = true;
+      };
       ups.credentialMode = "sops";
     };
   };
