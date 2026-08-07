@@ -66,8 +66,6 @@ Nix store.
 - `aarch64-linux` NixOS system closures
 - `x86_64-linux` VM artifacts used by CI
 - `aarch64-darwin` system and VM outputs that CI validates
-- `x86_64-linux` checks from `.github/workflows/checks.yml`, including NixOS
-  tests
 
 The home-realm warmer intentionally excludes:
 

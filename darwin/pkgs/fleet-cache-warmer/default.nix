@@ -29,9 +29,7 @@ let
     else
       hostInventory.hostSpecsByName.${host}.realm == targetRealm;
   ciValidatedWarmTargets = map (target: target.attr) (
-    lib.filter (target: target.warm && matchesTargetFilter target) (
-      inventory.buildTargets ++ inventory.regularChecks
-    )
+    lib.filter (target: target.warm && matchesTargetFilter target) inventory.buildTargets
   );
 in
 rustPlatform.buildRustPackage {
