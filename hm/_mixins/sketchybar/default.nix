@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   osConfig,
   pkgs,
@@ -10,7 +11,10 @@ let
   inherit (osConfig.host) isDarwin;
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
-  cliPkgs = import ../cli/pkgs { inherit pkgs; };
+  cliPkgs = import ../cli/pkgs {
+    inherit pkgs;
+    githubLogin = hostInventory.user.github.login;
+  };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
   workspaceNames = import ../aerospace/workspaces.nix { inherit isNvidia lib; };
   inherit (config.lib.stylix) colors;
