@@ -72,15 +72,13 @@ let
       [ ];
   servicesForCategory =
     category: builtins.filter (service: service.glanceCategory == category.id) serviceCatalog;
-  siteFor =
-    site:
-    {
-      inherit (site)
-        icon
-        title
-        ;
-      url = if site ? probeUrl then site.probeUrl else site.url;
-    };
+  siteFor = site: {
+    inherit (site)
+      icon
+      title
+      ;
+    url = if site ? probeUrl then site.probeUrl else site.url;
+  };
   monitorWidgetFor = section: {
     type = "monitor";
     cache = "1m";
