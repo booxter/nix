@@ -11,20 +11,20 @@ let
     let
       config = nixosConfigurations.${name}.config;
       upgrade = config.system.autoUpgrade;
-      rebootMode = config.host.autoUpgrade.rebootMode;
+      rebootPolicy = config.host.autoUpgrade.rebootPolicy;
       rebootWindow = upgrade.rebootWindow;
       weeklyReboot = config.systemd.timers.nixos-weekly-reboot-if-needed.timerConfig.OnCalendar or null;
       schedule = if lib.hasInfix " " upgrade.dates then upgrade.dates else "daily ${upgrade.dates}";
-      policy =
-        if rebootMode == "after-upgrade" then
-          "${rebootMode} ${rebootWindow.lower}-${rebootWindow.upper}"
-        else if rebootMode == "weekly-if-needed" then
-          "${rebootMode} ${weeklyReboot}"
+      renderedRebootPolicy =
+        if rebootPolicy == "after-upgrade-if-needed" then
+          "${rebootPolicy} ${rebootWindow.lower}-${rebootWindow.upper}"
+        else if rebootPolicy == "weekly-if-needed" then
+          "${rebootPolicy} ${weeklyReboot}"
         else
-          rebootMode;
+          rebootPolicy;
     in
     {
-      inherit name policy schedule;
+      inherit name renderedRebootPolicy schedule;
       phase = config.host.autoUpgrade.phase;
     };
   rows = map rowFor hostNames;
@@ -32,25 +32,25 @@ let
   hostWidth = maxLength ([ "HOST" ] ++ map (row: row.name) rows);
   phaseWidth = maxLength ([ "PHASE" ] ++ map (row: row.phase) rows);
   scheduleWidth = maxLength ([ "UPGRADES" ] ++ map (row: row.schedule) rows);
-  policyWidth = maxLength ([ "POLICY" ] ++ map (row: row.policy) rows);
+  rebootPolicyWidth = maxLength ([ "REBOOT POLICY" ] ++ map (row: row.renderedRebootPolicy) rows);
   repeat = count: value: lib.concatStrings (lib.replicate count value);
   pad = width: value: value + repeat (width - builtins.stringLength value) " ";
   renderRow =
     row:
-    "${pad hostWidth row.name}  ${pad phaseWidth row.phase}  ${pad scheduleWidth row.schedule}  ${row.policy}";
+    "${pad hostWidth row.name}  ${pad phaseWidth row.phase}  ${pad scheduleWidth row.schedule}  ${row.renderedRebootPolicy}";
   table = lib.concatStringsSep "\n" (
     [
       (renderRow {
         name = "HOST";
         phase = "PHASE";
         schedule = "UPGRADES";
-        policy = "POLICY";
+        renderedRebootPolicy = "REBOOT POLICY";
       })
       (lib.concatStringsSep "  " [
         (repeat hostWidth "-")
         (repeat phaseWidth "-")
         (repeat scheduleWidth "-")
-        (repeat policyWidth "-")
+        (repeat rebootPolicyWidth "-")
       ])
     ]
     ++ map renderRow rows

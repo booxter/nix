@@ -21,11 +21,11 @@ let
       "builder"
     else
       "workload";
-  selectedRebootMode =
+  selectedRebootPolicy =
     if config.host.boot.requiresInteractiveUnlock then
-      "manual"
+      "manual-reboot"
     else
-      hostSpec.autoUpgrade.rebootMode or "after-upgrade";
+      hostSpec.autoUpgrade.rebootPolicy or "after-upgrade-if-needed";
   phasePolicy = upgradePolicy.phases.${config.host.autoUpgrade.phase};
   upgradeSchedule = phasePolicy.upgrade;
   autoUpgradeTools = pkgs.callPackage ./pkgs/auto-upgrade-tools {
@@ -58,16 +58,16 @@ in
       description = "Fleet maintenance phase selected for this host.";
     };
 
-    rebootMode = lib.mkOption {
+    rebootPolicy = lib.mkOption {
       type = lib.types.enum [
-        "after-upgrade"
-        "manual"
+        "after-upgrade-if-needed"
+        "manual-reboot"
         "weekly-if-needed"
       ];
-      default = selectedRebootMode;
+      default = selectedRebootPolicy;
       readOnly = true;
       internal = true;
-      description = "How unattended upgrades may reboot this host.";
+      description = "When unattended maintenance may reboot this host.";
     };
   };
 
@@ -84,9 +84,9 @@ in
         ];
         dates = upgradePolicy.renderSchedule upgradeSchedule;
         inherit (upgradePolicy) persistent randomizedDelaySec;
-        allowReboot = config.host.autoUpgrade.rebootMode == "after-upgrade";
+        allowReboot = config.host.autoUpgrade.rebootPolicy == "after-upgrade-if-needed";
         rebootWindow =
-          if config.host.autoUpgrade.rebootMode == "weekly-if-needed" then
+          if config.host.autoUpgrade.rebootPolicy == "weekly-if-needed" then
             null
           else
             upgradePolicy.renderRebootWindow (upgradePolicy.rebootWindowFor upgradeSchedule.at);
@@ -114,19 +114,23 @@ in
         }
         {
           assertion =
-            !config.host.boot.requiresInteractiveUnlock || config.host.autoUpgrade.rebootMode == "manual";
+            !config.host.boot.requiresInteractiveUnlock
+            || config.host.autoUpgrade.rebootPolicy == "manual-reboot";
           message = "Hosts requiring interactive disk unlock must not reboot automatically.";
         }
         {
           assertion =
             !config.host.isProxmox
-            || (upgradeSchedule.cadence == "weekly" && config.host.autoUpgrade.rebootMode == "after-upgrade");
+            || (
+              upgradeSchedule.cadence == "weekly"
+              && config.host.autoUpgrade.rebootPolicy == "after-upgrade-if-needed"
+            );
           message = "Proxmox hosts must have one weekly conditional reboot opportunity.";
         }
       ];
     }
     (lib.mkIf
-      (config.host.autoUpgrade.rebootMode == "weekly-if-needed" && config.system.autoUpgrade.enable)
+      (config.host.autoUpgrade.rebootPolicy == "weekly-if-needed" && config.system.autoUpgrade.enable)
       {
         systemd.services.nixos-weekly-reboot-if-needed = {
           description = "Reboot once a week if the current NixOS profile needs it";

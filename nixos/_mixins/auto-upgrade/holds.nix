@@ -87,7 +87,7 @@ in
       systemd.services.nixos-upgrade.serviceConfig.ExecCondition = upgradeHoldGuard;
     })
     (lib.mkIf
-      (cfg.holds != [ ] && cfg.rebootMode == "weekly-if-needed" && config.system.autoUpgrade.enable)
+      (cfg.holds != [ ] && cfg.rebootPolicy == "weekly-if-needed" && config.system.autoUpgrade.enable)
       {
         systemd.services.nixos-weekly-reboot-if-needed.serviceConfig.ExecCondition = upgradeHoldGuard;
       }
