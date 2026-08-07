@@ -89,7 +89,6 @@ def test_loads_and_selects_typed_targets(tmp_path: Path) -> None:
                     {
                         "attr": "two",
                         "system": "aarch64-darwin",
-                        "nixUpdateSystem": "x86_64-linux",
                         "nixUpdateArgs": ["--src-only"],
                     },
                 ]
@@ -98,7 +97,7 @@ def test_loads_and_selects_typed_targets(tmp_path: Path) -> None:
     )
     targets = load_targets(path)
     selected = selected_targets(targets, "two")
-    assert selected[0].update_system == "x86_64-linux"
+    assert selected[0].system == "aarch64-darwin"
     assert selected[0].nix_update_args == ("--src-only",)
     with pytest.raises(UpdateError, match="No package update targets matched"):
         selected_targets(targets, "missing")
@@ -162,12 +161,13 @@ def test_update_script_payloads_are_validated() -> None:
 def test_command_backend_runs_json_update_script_with_selector_environment(tmp_path: Path) -> None:
     runner = PackageRunner(["/store/update", "--flag"])
     backend = CommandPackageBackend(tmp_path, TOOLS, runner)
-    target = PackageTarget(attr="demo", nixUpdateSystem="x86_64-linux")
+    target = PackageTarget(attr="demo", system="aarch64-darwin")
     backend.update(target)
     command, environment, capture = runner.calls[-1]
     assert command == ("/store/update", "--flag")
     assert environment is not None
     assert environment["UPDATE_NIX_ATTR_PATH"] == "demo"
+    assert environment["UPDATE_NIX_SYSTEM"] == "aarch64-darwin"
     assert environment["PACKAGE_UPDATES_SELECT_NODEJS"] == "/package/bin/select-nodejs"
     assert capture is False
 

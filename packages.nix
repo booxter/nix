@@ -5,21 +5,22 @@
   system,
 }:
 let
+  basePackages = pkgs.lib.filterAttrs (
+    _: package: pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform package
+  ) (import ./pkgs pkgs);
   orgPackages = import ./nixos/org/pkgs pkgs;
 in
-(import ./pkgs pkgs)
+basePackages
 // {
   inherit (inputs.disko.packages.${system}) disko-install;
   inherit (import ./hm/_mixins/nv/pkgs { inherit pkgs; }) nico-cli;
 
   fleet-tools = fleet.packages.fleet-tools;
 
-  # nix-update runs on GitHub-hosted Linux. Expose this Darwin-only package
-  # there so its fixed-output source can be prefetched without trying to build
-  # an aarch64-darwin fetcher on Linux.
-  ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
-
   qemu-host-package = pkgs.qemu;
+}
+// pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isDarwin {
+  ismc = pkgs.callPackage ./darwin/pkgs/ismc { };
 }
 // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };

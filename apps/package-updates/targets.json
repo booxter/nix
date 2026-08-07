@@ -43,7 +43,6 @@
     {
       "attr": "debugserver",
       "nixUpdateArgs": [],
-      "nixUpdateSystem": "x86_64-linux",
       "system": "aarch64-darwin"
     },
     {
@@ -68,7 +67,6 @@
       "nixUpdateArgs": [
         "--use-github-releases"
       ],
-      "nixUpdateSystem": "x86_64-linux",
       "system": "aarch64-darwin"
     },
     {

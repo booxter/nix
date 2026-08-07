@@ -8,12 +8,7 @@ class PackageTarget(BaseModel):
 
     attr: str = Field(min_length=1)
     system: str = "x86_64-linux"
-    nix_update_system: str | None = Field(default=None, alias="nixUpdateSystem")
     nix_update_args: tuple[str, ...] = Field(default=(), alias="nixUpdateArgs")
-
-    @property
-    def update_system(self) -> str:
-        return self.nix_update_system or self.system
 
 
 class PackageTargets(BaseModel):

@@ -98,7 +98,7 @@ class CommandPackageBackend:
         )
 
     def _run_update_script(self, target: PackageTarget) -> bool:
-        installable = f".#packages.{target.update_system}.{target.attr}.passthru.updateScript"
+        installable = f".#packages.{target.system}.{target.attr}.passthru.updateScript"
         build = self.runner.run(
             [self.tools.nix, "build", "--no-link", "--print-out-paths", installable],
             cwd=self.repo_root,
@@ -132,7 +132,7 @@ class CommandPackageBackend:
         print("running passthru.updateScript")
         environment = os.environ | {
             "UPDATE_NIX_ATTR_PATH": target.attr,
-            "UPDATE_NIX_SYSTEM": target.update_system,
+            "UPDATE_NIX_SYSTEM": target.system,
             "PACKAGE_UPDATES_SELECT_NODEJS": self.tools.select_nodejs,
         }
         checked(
@@ -155,7 +155,7 @@ class CommandPackageBackend:
                     self.tools.nix_update,
                     "--flake",
                     "--system",
-                    target.update_system,
+                    target.system,
                     *target.nix_update_args,
                     target.attr,
                 ],
@@ -220,8 +220,6 @@ def update_packages(
             old = backend.metadata(target)
             print(f"::group::Updating {target.attr}", file=stdout)
             print(f"system: {target.system}", file=stdout)
-            if target.update_system != target.system:
-                print(f"nix-update system: {target.update_system}", file=stdout)
             if old.version:
                 print(f"old version: {old.version}", file=stdout)
             if old.changelog:
