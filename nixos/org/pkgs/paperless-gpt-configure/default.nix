@@ -35,7 +35,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Configure Paperless workflows used by paperless-gpt";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "paperless-gpt-configure";
     platforms = lib.platforms.linux;
   };

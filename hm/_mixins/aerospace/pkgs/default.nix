@@ -43,7 +43,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Route AeroSpace move and resize actions to active X11 windows";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.darwin;
   };
 }

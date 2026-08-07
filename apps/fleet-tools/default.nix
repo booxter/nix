@@ -112,7 +112,6 @@ rustPlatform.buildRustPackage {
     description = "Typed command-line tools for this Nix fleet";
     license = lib.licenses.mit;
     mainProgram = "get-hosts";
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.unix;
   };
 }

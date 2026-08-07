@@ -36,7 +36,6 @@ python3.pkgs.buildPythonPackage {
   meta = {
     description = "Shared Transmission RPC helpers for local service scripts";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.unix;
   };
 }

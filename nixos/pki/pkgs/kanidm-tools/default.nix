@@ -37,7 +37,6 @@ rustPlatform.buildRustPackage {
     description = "Administrative Kanidm tools for the PKI host";
     license = lib.licenses.mit;
     mainProgram = "reset-oidc";
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.unix;
   };
 }

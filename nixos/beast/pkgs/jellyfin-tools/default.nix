@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Back up Jellyfin and gate Beast maintenance on playback";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

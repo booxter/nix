@@ -37,7 +37,6 @@ buildGoModule rec {
     homepage = "https://github.com/NVIDIA/infra-controller";
     changelog = "https://github.com/NVIDIA/infra-controller/tree/v${version}";
     license = lib.licenses.asl20;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "nicocli";
     platforms = lib.platforms.unix;
   };

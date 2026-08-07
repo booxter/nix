@@ -40,7 +40,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Persist systemd backup outcomes as Prometheus metrics";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

@@ -99,7 +99,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Issue and store fleet PKI certificates";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "issue-internal-service-cert";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

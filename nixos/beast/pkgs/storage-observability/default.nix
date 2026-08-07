@@ -50,7 +50,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Typed Prometheus storage collectors for beast";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "beast-hba-metrics";
     platforms = lib.platforms.linux;
   };

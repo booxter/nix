@@ -39,7 +39,6 @@ let
     meta = {
       description = "Transmission priority enforcement and metrics collection";
       license = lib.licenses.mit;
-      maintainers = with lib.maintainers; [ booxter ];
       platforms = lib.platforms.linux;
     };
   };

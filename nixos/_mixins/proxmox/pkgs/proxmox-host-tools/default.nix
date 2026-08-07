@@ -34,7 +34,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Host integration tools for Proxmox VE nodes";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "proxmox-install-api-certificate";
     platforms = lib.platforms.linux;
   };

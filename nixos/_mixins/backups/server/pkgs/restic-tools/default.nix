@@ -50,7 +50,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Restic backup utilities: cloud offload and B2 usage metrics";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "restic-cloud-usage";
     platforms = lib.platforms.linux;
   };

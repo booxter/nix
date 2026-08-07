@@ -44,7 +44,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Issue per-host short-lived SSH user certificates and connect through ssht";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "ssh-ticket";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

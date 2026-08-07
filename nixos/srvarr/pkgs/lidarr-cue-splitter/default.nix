@@ -78,7 +78,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Split completed Lidarr CUE images and submit their tracks for manual import";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "lidarr-cue-splitter";
     platforms = lib.platforms.linux;
   };

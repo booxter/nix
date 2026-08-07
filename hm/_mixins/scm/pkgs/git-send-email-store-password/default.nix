@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Store the configured Git SMTP password in macOS Keychain";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "git-send-email-store-password";
     platforms = lib.platforms.darwin;
   };

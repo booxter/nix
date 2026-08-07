@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Readiness and status helpers for the srvarr Houndarr service";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

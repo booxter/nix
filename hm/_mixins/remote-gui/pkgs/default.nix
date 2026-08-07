@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Run remote Linux nixpkgs applications over X11 or Waypipe";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };
 }

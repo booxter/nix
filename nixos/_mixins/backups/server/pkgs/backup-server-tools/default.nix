@@ -27,7 +27,6 @@ buildGoModule {
   meta = {
     description = "Native maintenance tools for the Beast backup server";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

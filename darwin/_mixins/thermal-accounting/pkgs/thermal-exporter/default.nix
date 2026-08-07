@@ -33,7 +33,6 @@ swiftPackages.stdenv.mkDerivation {
   meta = {
     description = "Native Darwin thermal and power metrics exporter";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "observability-thermal-export";
     platforms = lib.platforms.darwin;
   };

@@ -50,7 +50,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Synchronize a personal Git repository on demand";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "sync-repo";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

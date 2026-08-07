@@ -43,7 +43,6 @@ python3.pkgs.buildPythonApplication {
   meta = {
     description = "Typed Prometheus textfile collectors for frame";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "frame-ollama-metrics";
     platforms = lib.platforms.linux;
   };

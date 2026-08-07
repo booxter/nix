@@ -39,7 +39,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "NixOS auto-upgrade hold, metric, and reboot helpers";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "auto-upgrade-tools";
     platforms = lib.platforms.linux;
   };

@@ -41,7 +41,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Sync home WireGuard peer DNS overrides to UniFi";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "wg-home-dns-sync";
     platforms = lib.platforms.linux;
   };

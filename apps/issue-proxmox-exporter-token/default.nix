@@ -67,7 +67,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Issue the Proxmox exporter API token and store it with SOPS";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "issue-proxmox-exporter-token";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

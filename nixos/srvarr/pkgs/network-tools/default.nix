@@ -24,7 +24,6 @@ buildGoModule {
   meta = {
     description = "Native network namespace tools for srvarr";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "wg-bridge-access";
     platforms = lib.platforms.linux;
   };

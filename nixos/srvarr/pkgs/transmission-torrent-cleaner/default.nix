@@ -39,7 +39,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Cleanup utility for old high-ratio or over-age non-priority Transmission torrents";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "transmission-torrent-cleaner";
     platforms = lib.platforms.linux;
   };

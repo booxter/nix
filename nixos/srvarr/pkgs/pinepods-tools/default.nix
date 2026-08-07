@@ -38,7 +38,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Bootstrap and back up the srvarr PinePods service";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     platforms = lib.platforms.linux;
   };
 }

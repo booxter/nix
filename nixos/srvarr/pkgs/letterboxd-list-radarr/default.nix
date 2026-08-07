@@ -43,7 +43,6 @@ buildNpmPackage rec {
     description = "Convert Letterboxd lists to Radarr-compatible JSON import lists";
     homepage = "https://github.com/screeny05/letterboxd-list-radarr";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = pname;
     platforms = lib.platforms.linux;
   };

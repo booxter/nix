@@ -34,7 +34,6 @@ pythonPackages.buildPythonApplication {
   meta = {
     description = "Create consistent database artifacts for host backups";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [ booxter ];
     mainProgram = "backup-artifact";
     platforms = lib.platforms.linux;
   };
