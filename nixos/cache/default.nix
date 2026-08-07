@@ -4,7 +4,8 @@
   ...
 }:
 let
-  beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
+  nixCacheExport = hostInventory.storage.nfs.exports.nixCache;
+  beastNfsAddress = hostInventory.toNixosHostIpv4Address nixCacheExport.server;
   nfsPath = "/cache";
   # Same recovery semantics as other NFS clients:
   # - block writes/reads until NAS returns
@@ -23,7 +24,7 @@ let
     "x-systemd.after=network-online.target"
   ];
   cache = {
-    device = "${beastNfsAddress}:/volume2/nix-cache";
+    device = "${beastNfsAddress}:${nixCacheExport.path}";
     fsType = "nfs";
     options = nfsMountOptions;
   };

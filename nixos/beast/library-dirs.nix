@@ -1,9 +1,13 @@
-{ lib, ... }:
+{
+  hostInventory,
+  lib,
+  ...
+}:
 let
   mediaLibraries = import ./media-libraries.nix;
-  mediaPaths = import ./media-paths.nix;
+  mediaPaths = import ./media-paths.nix { inherit hostInventory; };
   servarrAccounts = import ../srvarr/accounts.nix;
-  mediaRoot = "/volume2/Media";
+  mediaRoot = hostInventory.storage.nfs.exports.media.path;
   mediaPodcastsRoot = "${mediaRoot}/podcasts";
   mediaRommRoot = "${mediaRoot}/romm";
   mediaSlskdRoot = "${mediaRoot}/slskd";
@@ -43,7 +47,7 @@ let
       user = "root";
       group = "media";
     }
-    # /volume2/Media is exported to srvarr. Use srvarr's numeric service IDs
+    # The media tree is exported to srvarr. Use srvarr's numeric service IDs
     # so ownership is meaningful on the NFS client.
     {
       path = mediaPodcastsRoot;

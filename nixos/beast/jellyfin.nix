@@ -1,5 +1,14 @@
-{ pkgs, ... }:
+{
+  config,
+  hostInventory,
+  pkgs,
+  utils,
+  ...
+}:
 let
+  dataMountPoint = config.host.storage.volumes.data.mountPoint;
+  dataMountUnit = "${utils.escapeSystemdPath dataMountPoint}.mount";
+  mediaExport = hostInventory.storage.nfs.exports.media;
   jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (
     builtins.toJSON {
       Serilog = {
@@ -31,7 +40,7 @@ in
   users.users.jellyfin.extraGroups = [ "media" ];
 
   systemd.services.jellyfin = {
-    # If /volume2 is slow during boot and /media mounts later, bring Jellyfin
+    # If the data volume is slow during boot and /media mounts later, bring Jellyfin
     # back with the media bind mount instead of leaving nginx with a dead
     # upstream.
     wantedBy = [ "media.mount" ];
@@ -41,13 +50,13 @@ in
 
   # Keep the existing /media path expected by Jellyfin/Jellarr.
   fileSystems."/media" = {
-    device = "/volume2/Media";
+    device = mediaExport.path;
     fsType = "none";
     options = [
       "bind"
       "nofail"
-      "x-systemd.requires-mounts-for=/volume2"
-      "x-systemd.wanted-by=volume2.mount"
+      "x-systemd.requires-mounts-for=${dataMountPoint}"
+      "x-systemd.wanted-by=${dataMountUnit}"
     ];
   };
 }

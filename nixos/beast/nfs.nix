@@ -2,14 +2,21 @@
   config,
   hostInventory,
   lib,
+  utils,
   ...
 }:
 let
   nfsPort = hostInventory.site.ports.nfs;
+  dataVolume = config.host.storage.volumes.data;
+  nfsExports = hostInventory.storage.nfs.exports;
+  mediaExport = nfsExports.media;
+  nixCacheExport = nfsExports.nixCache;
+  paperlessExport = nfsExports.paperless;
+  dataMountUnit = "${utils.escapeSystemdPath dataVolume.mountPoint}.mount";
   srvarrNfsAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   cacheNfsAddress = hostInventory.toNixosHostIpv4Address "cache";
   orgNfsAddress = hostInventory.toNixosHostIpv4Address "org";
-  paperlessExportPath = "/volume2/paperless";
+  paperlessExportPath = paperlessExport.path;
   paperlessUid = config.ids.uids.paperless;
   paperlessGid = config.ids.gids.paperless;
 
@@ -38,19 +45,19 @@ in
     enable = true;
     exports = ''
       ${mkNfsExport {
-        path = "/volume2/Media";
+        path = mediaExport.path;
         client = srvarrNfsAddress;
-        fsid = 10; # media export
+        fsid = mediaExport.fsid;
       }}
       ${mkNfsExport {
-        path = "/volume2/nix-cache";
+        path = nixCacheExport.path;
         client = cacheNfsAddress;
-        fsid = 11; # binary cache export
+        fsid = nixCacheExport.fsid;
       }}
       ${mkNfsExport {
         path = paperlessExportPath;
         client = orgNfsAddress;
-        fsid = 12; # paperless document storage export
+        fsid = paperlessExport.fsid;
         # Preserve root_squash while allowing root-run backup jobs on org to
         # read the Paperless-owned export as the Paperless service identity.
         extraOptions = [
@@ -78,13 +85,13 @@ in
   ];
 
   systemd.services.nfs-server = {
-    # If /volume2 misses the initial boot transaction but mounts later, pull
+    # If the data volume misses the initial boot transaction but mounts later, pull
     # NFS back up with it instead of leaving clients stuck until manual repair.
-    wantedBy = [ "volume2.mount" ];
+    wantedBy = [ dataMountUnit ];
     unitConfig.RequiresMountsFor = [
-      "/volume2"
-      "/volume2/Media"
-      "/volume2/nix-cache"
+      dataVolume.mountPoint
+      mediaExport.path
+      nixCacheExport.path
       paperlessExportPath
     ];
   };

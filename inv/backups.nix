@@ -1,8 +1,11 @@
-{ readPublicKey }:
+{
+  readPublicKey,
+  storage,
+}:
 {
   server = {
     host = "beast";
-    repositoryRoot = "/volume2/backups/restic-prod/hosts";
+    repositoryRoot = "${storage.hosts.beast.volumes.data.mountPoint}/backups/restic-prod/hosts";
     localClient = "beast";
   };
 

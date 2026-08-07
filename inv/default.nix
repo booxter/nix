@@ -20,7 +20,10 @@ let
     ssh = sshFacts;
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
-  backupFacts = import ./backups.nix { inherit readPublicKey; };
+  backupFacts = import ./backups.nix {
+    inherit readPublicKey;
+    storage = storageFacts;
+  };
   backupClients = lib.mapAttrs (
     name: client:
     client

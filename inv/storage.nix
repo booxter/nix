@@ -1,7 +1,22 @@
-{
-  hosts.beast.volumes.data = {
+let
+  beast = "beast";
+  dataVolume = {
     mountPoint = "/volume2";
     device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
     fsType = "btrfs";
+  };
+  export = path: fsid: {
+    server = beast;
+    path = "${dataVolume.mountPoint}/${path}";
+    inherit fsid;
+  };
+in
+{
+  hosts.${beast}.volumes.data = dataVolume;
+
+  nfs.exports = {
+    media = export "Media" 10;
+    nixCache = export "nix-cache" 11;
+    paperless = export "paperless" 12;
   };
 }

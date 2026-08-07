@@ -9,7 +9,7 @@
 }:
 let
   mediaLibraries = import ./media-libraries.nix;
-  mediaPaths = import ./media-paths.nix;
+  mediaPaths = import ./media-paths.nix { inherit hostInventory; };
   watchstatePort = hostInventory.site.ports.watchstate;
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {

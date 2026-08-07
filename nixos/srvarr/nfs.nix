@@ -5,7 +5,8 @@
   ...
 }:
 let
-  beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
+  mediaExport = hostInventory.storage.nfs.exports.media;
+  beastNfsAddress = hostInventory.toNixosHostIpv4Address mediaExport.server;
   mediaPath = "/data/media";
   # Resilient NFS client behavior:
   # - hard: block I/O until the server is back (avoid soft I/O errors).
@@ -25,7 +26,7 @@ let
     "x-systemd.after=network-online.target"
   ];
   media = {
-    device = "${beastNfsAddress}:/volume2/Media";
+    device = "${beastNfsAddress}:${mediaExport.path}";
     fsType = "nfs";
     options = mediaMountOptions;
   };

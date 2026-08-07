@@ -8,7 +8,7 @@
   ...
 }:
 let
-  mediaPaths = import ./media-paths.nix;
+  mediaPaths = import ./media-paths.nix { inherit hostInventory; };
   ociImages = import ../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
@@ -18,7 +18,7 @@ let
   watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
   watchstatePort = hostInventory.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";
-  watchstateBackupStagingDir = "/volume2/backups/staging/watchstate";
+  watchstateBackupStagingDir = "${config.host.storage.volumes.data.mountPoint}/backups/staging/watchstate";
   watchstateUid = 296;
   renderAuthCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' beastPkgs.watchstate-tools "watchstate-render-auth")

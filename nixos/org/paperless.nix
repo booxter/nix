@@ -22,7 +22,8 @@ let
       throw "Paperless bootstrap requires exactly one non-administrator user";
   paperlessService = hostInventory.servicesById.paperless;
   paperlessGptService = hostInventory.servicesById."paperless-gpt";
-  beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
+  paperlessExport = hostInventory.storage.nfs.exports.paperless;
+  beastNfsAddress = hostInventory.toNixosHostIpv4Address paperlessExport.server;
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
   paperlessStoragePath = "/data/paperless";
@@ -134,13 +135,13 @@ in
   boot.supportedFilesystems = [ "nfs" ];
 
   fileSystems.${paperlessStoragePath} = {
-    device = "${beastNfsAddress}:/volume2/paperless";
+    device = "${beastNfsAddress}:${paperlessExport.path}";
     fsType = "nfs";
     options = nfsMountOptions;
   };
 
   virtualisation.vmVariant.virtualisation.fileSystems.${paperlessStoragePath} = {
-    device = "${beastNfsAddress}:/volume2/paperless";
+    device = "${beastNfsAddress}:${paperlessExport.path}";
     fsType = "nfs";
     options = nfsMountOptions;
   };

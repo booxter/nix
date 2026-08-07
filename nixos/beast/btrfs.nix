@@ -9,6 +9,7 @@
 let
   dataVolume = config.host.storage.volumes.data;
   volume2 = dataVolume.mountPoint;
+  volume2MountUnit = "${utils.escapeSystemdPath volume2}.mount";
   maintenance = lib.getExe' beastPkgs.backup-server-tools "btrfs-maintenance";
   btrfs = lib.getExe pkgs.btrfs-progs;
   maintenanceCommand =
@@ -32,7 +33,7 @@ in
 {
   imports = [ ../_mixins/btrfs-scrub.nix ];
 
-  # Keep /volume2 for compatibility with existing NFS client paths.
+  # Keep the existing mount point for compatibility with storage consumers.
   fileSystems.${volume2} = {
     inherit (dataVolume) device fsType;
     options = [
@@ -44,9 +45,9 @@ in
     ];
   };
 
-  # Snapshot schedule for /volume2. This creates /volume2/.snapshots.
+  # Snapshot schedule for the data volume.
   services.snapper.configs.volume2 = {
-    SUBVOLUME = "/volume2";
+    SUBVOLUME = volume2;
     TIMELINE_CREATE = true;
     TIMELINE_CLEANUP = true;
     TIMELINE_LIMIT_HOURLY = "0";
@@ -57,10 +58,10 @@ in
   };
 
   systemd.services.volume2-snapshots-dir = {
-    description = "Ensure /volume2/.snapshots exists";
+    description = "Ensure ${volume2}/.snapshots exists";
     wantedBy = [ "multi-user.target" ];
-    after = [ "volume2.mount" ];
-    requires = [ "volume2.mount" ];
+    after = [ volume2MountUnit ];
+    requires = [ volume2MountUnit ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
@@ -76,7 +77,7 @@ in
   # Regular btrfs scrubs for data integrity.
   services.btrfs.autoScrub = {
     enable = true;
-    fileSystems = [ "/volume2" ];
+    fileSystems = [ volume2 ];
     interval = "monthly";
     resumeInterrupted = {
       enable = true;

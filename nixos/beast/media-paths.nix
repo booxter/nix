@@ -1,4 +1,5 @@
+{ hostInventory }:
 {
-  sourceLibraryRoot = "/volume2/Media/library";
+  sourceLibraryRoot = "${hostInventory.storage.nfs.exports.media.path}/library";
   jellyfinLibraryRoot = "/media/library";
 }
