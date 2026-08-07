@@ -4,6 +4,10 @@
   pkgs,
   ...
 }:
+let
+  username = config.host.username;
+  userHome = config.users.users.${username}.home;
+in
 {
   options.host.secretive.enable = lib.mkEnableOption "Secretive system application installation";
 
@@ -26,5 +30,10 @@
       ${lib.getExe pkgs.rsync} "''${rsyncFlags[@]}" \
         ${pkgs.secretive}/Applications/Secretive.app/ /Applications/Secretive.app
     '';
+
+    home-manager.users.${username} = {
+      home.file.".ssh/secretive.pub".source = ../../../public-keys/mair-secretive.pub;
+      programs.git.settings.user.signingKey = "${userHome}/.ssh/secretive.pub";
+    };
   };
 }

@@ -24,6 +24,8 @@ jobs:
   format:
     name: Format check
     runs-on: ubuntu-slim
+    outputs:
+      ci_target_inventory: ${{ steps.ci_target_inventory.outputs.inventory }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -45,8 +47,15 @@ jobs:
             exit 1
           fi
 
+      - name: Resolve CI target inventory
+        id: ci_target_inventory
+        shell: bash
+        run: printf 'inventory=%s\n' "$(nix eval --json .#lib.ciTargetInventory)" >>"${GITHUB_OUTPUT}"
+
   plan-build-matrix:
     name: plan build matrix
+    needs:
+      - format
     runs-on: ubuntu-slim
     outputs:
       docs_only: ${{ steps.plan.outputs.docs_only }}
@@ -60,15 +69,17 @@ jobs:
       - name: Compute build matrix
         id: plan
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          CI_TARGET_INVENTORY: ${{ needs.format.outputs.ci_target_inventory }}
         with:
           script: |
             const planner = require("./.github/scripts/plan-ci-matrix.js");
             const targetInventory = require("./.github/scripts/ci-target-inventory.js");
-            const buildTargets = targetInventory.inventory.buildTargets;
+            const buildTargets = JSON.parse(process.env.CI_TARGET_INVENTORY).buildTargets;
             const fullMatrix = {
               include: targetInventory.toBuildMatrixEntries(buildTargets)
             };
-            const machinePathMap = targetInventory.buildMachinePathMap(buildTargets, "jobs");
+            const hostPathMap = targetInventory.buildHostPathMap(buildTargets, "jobs");
 
             if (context.eventName !== "pull_request") {
               core.info("Non-PR event, using full build matrix.");
@@ -82,7 +93,7 @@ jobs:
               github,
               eventName: context.eventName,
               fullMatrix,
-              machinePathMap,
+              machinePathMap: hostPathMap,
               mappingField: "jobs",
               skipWhenDocsOnly: true,
               skipWhenSelectionEmpty: true,

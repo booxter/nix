@@ -1,27 +1,58 @@
-{ config, lib, ... }:
+{
+  config,
+  hostInventory,
+  lib,
+  ...
+}:
 let
   username = config.host.username;
+  realmSsh = hostInventory.realms.${config.host.realm}.trust.ssh;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
-  workKeys = [
-    (readPublicKey ../../../public-keys/users/jgwxhwdl4x.pub)
-    (readPublicKey ../../../public-keys/users/jgwxhwdl4x-nix-builder.pub)
-  ];
-  personalKeys = [
-    (readPublicKey ../../../public-keys/users/mmini.pub)
-    (readPublicKey ../../../public-keys/users/mair.pub)
-    (readPublicKey ../../../public-keys/users/frame.pub)
-    (readPublicKey ../../../public-keys/yubikey.pub)
-    (readPublicKey ../../../public-keys/mair-secretive.pub)
-  ];
+  hostKeyPath = name: ../../../public-keys/hosts + "/${name}.pub";
+  managedKnownHosts = lib.mapAttrs (name: spec: {
+    hostNames = hostInventory.toSshKnownHostNames spec;
+    publicKey = readPublicKey (hostKeyPath name);
+  }) hostInventory.hostSpecsByName;
 in
 {
-  imports = [
-    ./known-hosts.nix
-    ./ticket-server.nix
-  ];
+  imports = [ ./ticket-server.nix ];
 
-  services.openssh.enable = true;
+  options.host.ssh = {
+    authorizedKeys = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = realmSsh.authorizedKeys;
+      readOnly = true;
+      internal = true;
+      description = "Authorized SSH keys selected by the host realm.";
+    };
 
-  users.users.${username}.openssh.authorizedKeys.keys =
-    if config.host.isWork then workKeys else personalKeys;
+    fleetBootHosts = lib.mkOption {
+      type = lib.types.bool;
+      default = realmSsh.fleetBootHosts or false;
+      readOnly = true;
+      internal = true;
+      description = "Whether SSH clients should expose home fleet pre-boot aliases.";
+    };
+
+    tickets.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = realmSsh ? tickets;
+      readOnly = true;
+      internal = true;
+      description = "Whether this realm participates in SSH ticket authentication.";
+    };
+  };
+
+  config = {
+    services.openssh.enable = true;
+
+    programs.ssh.knownHosts = managedKnownHosts // {
+      frame-initrd = {
+        hostNames = [ "frame-initrd" ];
+        publicKey = readPublicKey ../../../public-keys/hosts/frame-initrd.pub;
+      };
+    };
+
+    users.users.${username}.openssh.authorizedKeys.keys = config.host.ssh.authorizedKeys;
+  };
 }

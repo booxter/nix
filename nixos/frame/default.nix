@@ -7,7 +7,6 @@
   ...
 }:
 let
-  username = config.host.username;
   framePkgs = import ./pkgs pkgs;
   ollamaService = hostInventory.servicesById.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
@@ -27,10 +26,7 @@ in
   # This host needs manual local or remote unlock after boot; never auto-reboot
   # on upgrades.
   system.autoUpgrade.allowReboot = lib.mkForce false;
-  host.observability.client.blackbox.enable = true;
-  host.observability.client.blackbox.mtls.enable = true;
-  home-manager.users.${username}.programs.sshTicket.enableKnownHosts = true;
-
+  host.observability.blackbox.remote.enable = true;
   nixpkgs.config.rocmSupport = true;
 
   networking.wireless.enable = false;
@@ -58,12 +54,6 @@ in
 
   security.pam.services.hyprlock = { };
   services.openssh.settings.X11Forwarding = true;
-
-  programs.yubi = {
-    age.enable = true;
-    ssh.enable = true;
-    pamU2f.enable = true;
-  };
 
   services.ollama = {
     enable = true;

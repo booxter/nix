@@ -8,46 +8,76 @@ let
   tuning = config.host.srvarrTuning;
   beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
   beastHostConfig = outputs.nixosConfigurations.beast.config;
-  beastJellyfinEndpoint = beastHostConfig.host.observability.client.prometheusMtlsEndpoints.jellyfin;
+  beastJellyfinEndpoint = beastHostConfig.host.observability.prometheusEndpoints.jellyfin;
   beastNfsPort = hostInventory.site.ports.nfs;
   beastNfsRateMbit = 1500;
-  networkOnlineUnitDeps = {
-    Wants = [ "network-online.target" ];
-    After = [ "network-online.target" ];
-  };
   wgEndpointPort = 1637;
-  wgUnitDepsBase = networkOnlineUnitDeps // {
-    After = networkOnlineUnitDeps.After ++ [ "wg.service" ];
-    BindsTo = [ "wg.service" ];
-    PartOf = [ "wg.service" ];
-  };
+  jellyfinClientName = "jellyfin-upload-policy";
+  jellyfinClient = config.host.internalPki.clients.${jellyfinClientName};
 in
 {
-  host.observability.client.mtlsClients."jellyfin-upload-policy".enable = true;
-
-  imports = [
-    ../_mixins/wireguard-qos
-    (import ./adaptive-upload-policy.nix {
-      jellyfinExporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
-      fallbackUploadRateMbit = tuning.wgConservativeUploadRateMbit;
-      inherit
-        networkOnlineUnitDeps
-        wgUnitDepsBase
-        ;
-    })
-  ];
-
-  host.wireguardQos = {
+  services.adaptive-upload-policy = {
     enable = true;
-    wireguardUnit = "wg.service";
-    port = wgEndpointPort;
-    egressPort = "destination";
-    uploadRateMbit = tuning.wgConservativeUploadRateMbit;
-    downloadRateMbit = 400;
-    nfs = {
-      address = beastNfsAddress;
-      port = beastNfsPort;
-      rateMbit = beastNfsRateMbit;
+    fallbackRateMbit = tuning.wgConservativeUploadRateMbit;
+    source.jellyfin = {
+      exporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
+      mtls = {
+        enable = true;
+        certificateFile =
+          config.sops.secrets.${jellyfinClient.materializations.default.certificateSecretName}.path;
+        keyFile = config.sops.secrets.${jellyfinClient.materializations.default.keySecretName}.path;
+        dependencyUnits = [ "sops-install-secrets.service" ];
+      };
+    };
+    outputs = {
+      transmission.enable = true;
+      qos = {
+        enable = true;
+        profile = "wan";
+        limit = "wireguard-upload";
+      };
+    };
+    group = "media";
+  };
+
+  host.internalPki.clients.${jellyfinClientName} = {
+    enable = true;
+    category = "internal";
+    secretPrefix = "prometheus/clients/jellyfin-upload-policy";
+    materializations.default = {
+      owner = config.services.adaptive-upload-policy.user;
+      group = config.services.adaptive-upload-policy.group;
+      restartUnits = [ "adaptive-upload-policy.service" ];
+    };
+  };
+
+  host.qos.interfaces.wan = {
+    device = "ens18";
+    limits = {
+      nfs = {
+        rateMbit = beastNfsRateMbit;
+        match = {
+          protocol = "tcp";
+          destinationAddress = beastNfsAddress;
+          destinationPort = beastNfsPort;
+        };
+      };
+      wireguard-download = {
+        direction = "ingress";
+        rateMbit = 400;
+        match = {
+          protocol = "udp";
+          sourcePort = wgEndpointPort;
+        };
+      };
+      wireguard-upload = {
+        rateMbit = tuning.wgConservativeUploadRateMbit;
+        queue = "cake";
+        match = {
+          protocol = "udp";
+          destinationPort = wgEndpointPort;
+        };
+      };
     };
   };
 
@@ -55,14 +85,11 @@ in
     interface = "ens18";
     # nft postrouting overcounts the WireGuard transport on this host, so use
     # the shaped tc class as the authoritative WAN egress counter instead.
-    wanTransmitTcClass = "1:10";
+    wanTransmitTcClass = config.host.qos.classIds.wan.wireguard-upload;
     wanUdpSubclass = {
       name = "wg";
       port = wgEndpointPort;
     };
   };
 
-  # The native QoS module applies a conservative bidirectional WireGuard
-  # baseline and caps NFS writes below this path's unstable single-flow
-  # ceiling. The adaptive controller can still raise class 1:10 at runtime.
 }

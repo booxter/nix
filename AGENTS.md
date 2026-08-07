@@ -40,7 +40,7 @@ Scope: whole repository.
   `<host>/pkgs/`.
 - Shared modules: `common/_mixins/`, `nixos/_mixins/`, `darwin/_mixins/`,
   `hm/_mixins/`.
-- Fleet facts: `lib/inventory/default.nix`.
+- Fleet facts: `inv/default.nix`.
 - Shared packages: `pkgs/`; checkout-run apps/scripts: `apps/`.
 - Secrets: `secrets/`; checks: `tests/`, `checks.nix`.
 

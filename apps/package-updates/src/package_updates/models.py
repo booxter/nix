@@ -8,12 +8,7 @@ class PackageTarget(BaseModel):
 
     attr: str = Field(min_length=1)
     system: str = "x86_64-linux"
-    nix_update_system: str | None = Field(default=None, alias="nixUpdateSystem")
     nix_update_args: tuple[str, ...] = Field(default=(), alias="nixUpdateArgs")
-
-    @property
-    def update_system(self) -> str:
-        return self.nix_update_system or self.system
 
 
 class PackageTargets(BaseModel):
@@ -22,15 +17,8 @@ class PackageTargets(BaseModel):
     targets: tuple[PackageTarget, ...]
 
 
-class Signature(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-    type: str | None = None
-    key: str | None = None
-
-
 class OciPin(BaseModel):
-    model_config = ConfigDict(extra="allow", populate_by_name=True)
+    model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
     image: str = Field(min_length=1)
     tag: str = Field(min_length=1)
@@ -41,7 +29,6 @@ class OciPin(BaseModel):
         alias="tagRegex",
     )
     changelog: str = ""
-    signature: Signature = Field(default_factory=Signature)
 
 
 class OciPins(RootModel[dict[str, OciPin]]):

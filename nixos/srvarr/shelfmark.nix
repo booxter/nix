@@ -6,7 +6,6 @@
   ...
 }:
 let
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   accounts = import ./accounts.nix;
   stateDir = "${config.host.srvarrPaths.stateDir}/shelfmark";
   mediaDir = config.host.srvarrPaths.mediaDir;
@@ -14,14 +13,27 @@ let
   ebookConverterStateDir = "/var/lib/ebook-converter";
   user = "shelfmark";
   shelfmarkService = hostInventory.servicesById.shelfmark;
-  oidcClientId = oidc.clients.shelfmark.clientId;
+  oidcClient = config.host.sso.oidc.clients.shelfmark;
+  oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
-  sops.secrets."shelfmark/oidc/client_secret" = {
-    owner = "root";
-    group = "root";
-    mode = "0400";
-    restartUnits = [ "shelfmark.service" ];
+  host.sso.oidc.registrations.shelfmark = {
+    displayName = "Shelfmark";
+    originUrls = [ "${shelfmarkService.url}/api/auth/oidc/callback" ];
+    originLanding = "${shelfmarkService.url}/";
+    scopeMaps = {
+      "media-admins" = oidcScopes ++ [ "media_groups" ];
+      "media-users" = oidcScopes ++ [ "media_groups" ];
+    };
+    claimMaps.media_groups.valuesByGroup = {
+      "media-admins" = [ "media-admins" ];
+      "media-users" = [ "media-users" ];
+    };
+    secret = {
+      sopsKey = "shelfmark/oidc/client_secret";
+      name = "shelfmark/oidc/client_secret";
+      restartUnits = [ "shelfmark.service" ];
+    };
   };
 
   sops.templates."shelfmark-oidc.env" = {
@@ -29,7 +41,7 @@ in
     group = "media";
     mode = "0400";
     content = ''
-      OIDC_CLIENT_SECRET=${config.sops.placeholder."shelfmark/oidc/client_secret"}
+      OIDC_CLIENT_SECRET=${oidcClient.secret.placeholder}
     '';
     restartUnits = [ "shelfmark.service" ];
   };
@@ -50,10 +62,10 @@ in
       OIDC_ADMIN_GROUP = "media-admins";
       OIDC_AUTO_PROVISION = "true";
       OIDC_BUTTON_LABEL = "SSO";
-      OIDC_CLIENT_ID = oidcClientId;
-      OIDC_DISCOVERY_URL = oidc.discoveryUrl oidcClientId;
+      OIDC_CLIENT_ID = oidcClient.clientId;
+      OIDC_DISCOVERY_URL = oidcClient.discoveryUrl;
       OIDC_GROUP_CLAIM = "media_groups";
-      OIDC_SCOPES = lib.concatStringsSep "," (oidc.scopeWith [ "media_groups" ]);
+      OIDC_SCOPES = lib.concatStringsSep "," (oidcScopes ++ [ "media_groups" ]);
       OIDC_USE_ADMIN_GROUP = "true";
       SESSION_COOKIE_SECURE = "true";
     };

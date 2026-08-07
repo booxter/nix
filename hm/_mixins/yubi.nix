@@ -2,35 +2,30 @@
   config,
   hostInventory,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
-  cfg = config.programs.yubi;
+  cfg = osConfig.programs.yubi;
   residentSsh = hostInventory.yubi.devices.personal.applets.fido2.residentSsh;
-  yubikeySshKey = "${config.home.homeDirectory}/.ssh/${cfg.ssh.keyName}";
-  fallbackSshKey = "${config.home.homeDirectory}/.ssh/${cfg.ssh.remoteFallbackKeyName}";
-  yubikeyAgeIdentityFile = "${config.home.homeDirectory}/.config/sops/age/${cfg.age.identityFileName}";
-  localSshIdentityConfig =
-    if cfg.ssh.localOnly then
-      ''
-        Match exec "test -z \"$SSH_CONNECTION\""
-          IdentityFile ${yubikeySshKey}
-          IdentitiesOnly yes
+  yubikeySshKey = "${config.home.homeDirectory}/.ssh/${residentSsh.keyName}";
+  fallbackSshKey = "${config.home.homeDirectory}/.ssh/id_ed25519";
+  yubikeyAgeIdentityFile = "${config.xdg.configHome}/sops/age/${hostInventory.yubi.ageIdentity.identityFileName}";
+  sshSudoPasswordEnabled =
+    osConfig.host.isDarwin && osConfig.programs.yubi.smartCard.sshSudoPassword.enable;
+  localSshIdentityConfig = ''
+    Match exec "test -z \"$SSH_CONNECTION\""
+      IdentityFile ${yubikeySshKey}
+      IdentitiesOnly yes
 
-        Match exec "test -n \"$SSH_CONNECTION\""
-          IdentityFile ${fallbackSshKey}
-          IdentitiesOnly yes
-          IdentityAgent none
+    Match exec "test -n \"$SSH_CONNECTION\""
+      IdentityFile ${fallbackSshKey}
+      IdentitiesOnly yes
+      IdentityAgent none
 
-        Host *
-      ''
-    else
-      ''
-        Host *
-          IdentityFile ${yubikeySshKey}
-          IdentitiesOnly yes
-      '';
+    Host *
+  '';
   gitSshSign = pkgs.writeShellScript "git-ssh-sign" ''
     args=("$@")
 
@@ -62,46 +57,6 @@ let
   '';
 in
 {
-  options.programs.yubi = {
-    ssh = {
-      enable = lib.mkEnableOption "YubiKey-backed resident SSH key defaults";
-
-      keyName = lib.mkOption {
-        type = lib.types.str;
-        default = residentSsh.keyName;
-        description = "Resident SSH key stub filename under ~/.ssh.";
-      };
-
-      localOnly = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to use the YubiKey SSH identity only outside SSH login sessions.";
-      };
-
-      remoteFallbackKeyName = lib.mkOption {
-        type = lib.types.str;
-        default = "id_ed25519";
-        description = "Non-interactive SSH fallback key filename under ~/.ssh for remote sessions.";
-      };
-    };
-
-    age = {
-      enable = lib.mkEnableOption "YubiKey-backed age identity tooling";
-
-      identityFileName = lib.mkOption {
-        type = lib.types.str;
-        default = "yubi-nix.txt";
-        description = "YubiKey age identity filename under ~/.config/sops/age.";
-      };
-    };
-
-    smartCard = {
-      sshSudoPassword = {
-        enable = lib.mkEnableOption "password-only sudo authentication for interactive SSH sessions";
-      };
-    };
-  };
-
   config = lib.mkMerge [
     (lib.mkIf cfg.ssh.enable {
       programs.git.settings = {
@@ -116,7 +71,7 @@ in
       home.sessionVariables.SOPS_AGE_KEY_FILE = lib.mkDefault yubikeyAgeIdentityFile;
     })
 
-    (lib.mkIf cfg.smartCard.sshSudoPassword.enable {
+    (lib.mkIf sshSudoPasswordEnabled {
       programs.zsh.initContent = lib.mkAfter ''
         sudo() {
           if [[ -n "''${SSH_CONNECTION:-}" && -t 0 && -t 1 ]]; then

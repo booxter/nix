@@ -1,7 +1,6 @@
 {
   lib,
   config,
-  pkgs,
   ...
 }:
 let
@@ -40,9 +39,10 @@ let
     };
   };
   formatList = values: if values == [ ] then "-" else lib.concatStringsSep "," values;
+  enabled = builtins.elem "community" config.host.build.pools && config.host.isOperatorSeat;
 in
 {
-  config = lib.mkIf (!config.host.isWork && config.host.isDesktop) {
+  config = lib.mkIf enabled {
     programs.ssh = {
       knownHosts = lib.mapAttrs' (
         _: builder:
@@ -64,8 +64,7 @@ in
           '') communityBuilders
         );
     };
-    environment.systemPackages = [ pkgs.openssh ];
-    host.nixpkgsReview.builders = lib.mapAttrsToList (
+    host.nixpkgsReview.extraBuilders = lib.mapAttrsToList (
       name: builder:
       "ssh://${name} ${formatList builder.systems} - ${toString builder.maxJobs} "
       + "${toString builder.speedFactor} ${formatList builder.supportedFeatures} - -"

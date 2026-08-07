@@ -28,16 +28,17 @@ in
     ./_mixins/lan-wan-accounting
     ./_mixins/logs-client
     ./_mixins/networking
-    ./_mixins/nix-gc
-    ./_mixins/nix-store
-    ./_mixins/observability-client
+    ./_mixins/nix
+    ./_mixins/observability
     ./_mixins/remote-gui
     ./_mixins/secretive
     ./_mixins/sketchybar-alertmanager
     ./_mixins/sketchybar-jellyfin
+    ./_mixins/sketchybar-network
     ./_mixins/sudo
     ./_mixins/thermal-accounting
     ./_mixins/xquartz
+    ./_mixins/yubi.nix
     ./_mixins/attic
     ./_mixins/browser
     ./_mixins/vnc
@@ -57,7 +58,7 @@ in
     users.${username} = ../hm;
   };
 
-  host.remoteGui.x11.enable = lib.mkDefault (!config.host.isWork && config.host.isDesktop);
+  host.remoteGui.x11.enable = lib.mkDefault (config.host.remoteAccess.x11 && config.host.isDesktop);
 
   system.primaryUser = username;
 
@@ -68,7 +69,7 @@ in
     shell = pkgs.zsh;
   };
 
-  system.defaults.smb = lib.optionalAttrs (!config.host.isWork) {
+  system.defaults.smb = lib.optionalAttrs config.host.management.manageNetworkIdentity {
     NetBIOSName = hostname;
     ServerDescription = hostname;
   };

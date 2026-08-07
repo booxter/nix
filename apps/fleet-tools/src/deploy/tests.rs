@@ -95,11 +95,11 @@ impl Backend for FakeBackend {
     }
 }
 
-fn host(name: &str, platform: &str, runtime: &str, is_work: bool) -> Host {
+fn host(name: &str, platform: &str, runtime: &str, realm: &str) -> Host {
     Host {
         display_name: name.to_owned(),
-        is_work,
         platform: platform.to_owned(),
+        realm: realm.to_owned(),
         runtime_host: runtime.to_owned(),
         ssh_host: name.to_owned(),
     }
@@ -117,26 +117,26 @@ fn inventory() -> HostInventory {
         ]),
         darwin: BTreeMap::from([(
             "mair".to_owned(),
-            host("mair", "aarch64-darwin", "mair", false),
+            host("mair", "aarch64-darwin", "mair", "home"),
         )]),
         lan_dns_server: "192.0.2.53".to_owned(),
         lan_domain: "example.test".to_owned(),
         nixos: BTreeMap::from([
             (
                 "alpha".to_owned(),
-                host("alpha", "x86_64-linux", "alpha", false),
+                host("alpha", "x86_64-linux", "alpha", "home"),
             ),
             (
                 "beta".to_owned(),
-                host("beta", "x86_64-linux", "beta", false),
+                host("beta", "x86_64-linux", "beta", "home"),
             ),
             (
                 "controller".to_owned(),
-                host("controller", "x86_64-linux", "controller", false),
+                host("controller", "x86_64-linux", "controller", "home"),
             ),
             (
                 "work".to_owned(),
-                host("work", "x86_64-linux", "work", true),
+                host("work", "x86_64-linux", "work", "work"),
             ),
         ]),
     }

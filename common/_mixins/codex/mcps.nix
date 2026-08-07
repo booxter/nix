@@ -1,81 +1,40 @@
 { config, lib }:
 let
-  mkMaasService =
-    {
-      codexName,
-      displayName,
-      oauthClientIdSecret ? null,
-      settings ? { },
-    }:
-    {
-      description = "the NVIDIA MaaS ${displayName} MCP server";
-      urlSecret = "codex/mcp/${codexName}/url";
-      requiredSecretDomain = "work";
-      settings = {
-        auth = "oauth";
-        default_tools_approval_mode = "writes";
-      }
-      // lib.optionalAttrs (oauthClientIdSecret != null) {
-        oauth.client_id = config.sops.placeholder.${oauthClientIdSecret};
-      }
-      // settings;
-      inherit codexName oauthClientIdSecret;
-    };
-
-  services = {
-    maasGitLab = mkMaasService {
-      codexName = "maas_gitlab";
-      displayName = "GitLab";
-    };
-
-    maasJira = mkMaasService {
-      codexName = "maas_jira";
-      displayName = "Jira";
-    };
-
-    maasNVBugs = mkMaasService {
-      codexName = "maas_nvbugs";
-      displayName = "NVBugs";
-      oauthClientIdSecret = "codex/mcp/maas_nvbugs/oauth/client_id";
-    };
-
-    maasRedmine = mkMaasService {
-      codexName = "maas_redmine";
-      displayName = "Redmine";
-    };
-  };
-
-  enabledServices = lib.filterAttrs (
-    optionName: _: config.host.codex.mcp.${optionName}.enable
-  ) services;
-  enabledServiceList = lib.attrValues enabledServices;
-  enabledSecretNames = lib.concatMap (
-    service:
-    [ service.urlSecret ]
-    ++ lib.optional (service.oauthClientIdSecret != null) service.oauthClientIdSecret
-  ) enabledServiceList;
+  enabled = config.host.codex.mcp.maas.enable;
+  serviceNames = [
+    "maas_gitlab"
+    "maas_jira"
+    "maas_nvbugs"
+    "maas_redmine"
+  ];
+  oauthClientIdServices = [ "maas_nvbugs" ];
+  urlSecret = name: "codex/mcp/${name}/url";
+  oauthClientIdSecret = name: "codex/mcp/${name}/oauth/client_id";
+  secretNames = map urlSecret serviceNames ++ map oauthClientIdSecret oauthClientIdServices;
 in
 {
-  options = lib.mapAttrs (_: service: {
-    enable = lib.mkEnableOption service.description;
-  }) services;
+  options.maas.enable = lib.mkEnableOption "NVIDIA MaaS MCP servers";
 
-  enabled = enabledServices != { };
+  inherit enabled;
 
-  settings.mcp_servers = lib.mapAttrs' (
-    _: service:
-    lib.nameValuePair service.codexName (
-      service.settings
-      // {
-        url = config.sops.placeholder.${service.urlSecret};
-      }
-    )
-  ) enabledServices;
+  settings.mcp_servers = lib.genAttrs serviceNames (
+    name:
+    {
+      auth = "oauth";
+      default_tools_approval_mode = "writes";
+      url = config.sops.placeholder.${urlSecret name};
+    }
+    // lib.optionalAttrs (builtins.elem name oauthClientIdServices) {
+      oauth.client_id = config.sops.placeholder.${oauthClientIdSecret name};
+    }
+  );
 
-  secrets = lib.genAttrs enabledSecretNames (_: { });
+  secrets = lib.genAttrs secretNames (_: { });
 
-  assertions = map (service: {
-    assertion = config.host.secretDomain == service.requiredSecretDomain;
-    message = "${service.description} must use the isolated ${service.requiredSecretDomain} SOPS domain.";
-  }) enabledServiceList;
+  assertions = [
+    {
+      assertion = !enabled || config.host.secretDomain == "work";
+      message = "NVIDIA MaaS MCP servers require the isolated work SOPS domain.";
+    }
+  ];
 }

@@ -7,12 +7,22 @@
 }:
 let
   cfg = config.host.observability.logs;
-  clientCfg = config.host.observability.client;
-  internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
-  enabledMtlsClients = lib.filterAttrs (_: client: client.enable) clientCfg.mtlsClients;
+  realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
+  realmLoki =
+    if realmObservability == null then
+      {
+        writeUrl = null;
+        mtls = false;
+      }
+    else
+      realmObservability.loki;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  enabledPkiClients = lib.filterAttrs (
+    _: client: client.enable && client.category == "observability"
+  ) config.host.internalPki.clients;
   lokiMtlsClient =
-    if cfg.loki.mtls.enable && builtins.hasAttr cfg.loki.mtls.clientName enabledMtlsClients then
-      enabledMtlsClients.${cfg.loki.mtls.clientName}
+    if cfg.loki.mtls.enable && builtins.hasAttr cfg.loki.mtls.clientName enabledPkiClients then
+      enabledPkiClients.${cfg.loki.mtls.clientName}
     else
       null;
   stateDir = "/var/lib/grafana-alloy";
@@ -36,8 +46,10 @@ let
   lokiTlsConfig = lib.optionalString cfg.loki.mtls.enable ''
     tls_config {
       ca_file = "${cfg.loki.mtls.trustedCaCertificate}"
-      cert_file = "${config.sops.secrets.observabilityLokiClientCrt.path}"
-      key_file = "${config.sops.secrets.observabilityLokiClientKey.path}"
+      cert_file = "${
+        config.sops.secrets.${lokiMtlsClient.materializations.default.certificateSecretName}.path
+      }"
+      key_file = "${config.sops.secrets.${lokiMtlsClient.materializations.default.keySecretName}.path}"
       server_name = "${cfg.loki.mtls.serverName}"
     }
   '';
@@ -116,7 +128,7 @@ in
       clientName = lib.mkOption {
         type = lib.types.str;
         default = "loki";
-        description = "Name of the host.observability.client.mtlsClients entry used for Loki writes.";
+        description = "Name of the host.internalPki.clients entry used for Loki writes.";
       };
 
       serverName = lib.mkOption {
@@ -169,14 +181,16 @@ in
   config = lib.mkMerge [
     {
       host.observability.logs = {
-        enable = lib.mkDefault (!config.host.isWork);
-        lokiWriteUrl = lib.mkDefault "https://loki.${hostInventory.site.lan.domain}/loki/api/v1/push";
-        loki.mtls.enable = lib.mkDefault (cfg.enable && cfg.lokiWriteUrl != null);
+        enable = lib.mkDefault config.host.observability.enable;
+        lokiWriteUrl = lib.mkDefault realmLoki.writeUrl;
+        loki.mtls.enable = lib.mkDefault realmLoki.mtls;
       };
 
-      host.observability.client.mtlsClients.loki = {
+      host.internalPki.clients.loki = {
         enable = lib.mkDefault (cfg.enable && cfg.lokiWriteUrl != null && cfg.loki.mtls.enable);
+        category = "observability";
         secretPrefix = "observability/clients/loki";
+        materializations.default.group = "wheel";
       };
     }
     (lib.mkIf (cfg.enable && cfg.lokiWriteUrl != null) (
@@ -212,23 +226,9 @@ in
           assertions = [
             {
               assertion = lokiMtlsClient != null;
-              message = "host.observability.logs.loki.mtls.clientName must reference an enabled host.observability.client.mtlsClients entry.";
+              message = "host.observability.logs.loki.mtls.clientName must reference an enabled observability-category host.internalPki.clients entry.";
             }
           ];
-
-          sops.secrets.observabilityLokiClientCrt = {
-            key = "${lokiMtlsClient.secretPrefix}/client_crt_unencrypted";
-            owner = "root";
-            group = "wheel";
-            mode = "0400";
-          };
-
-          sops.secrets.observabilityLokiClientKey = {
-            key = "${lokiMtlsClient.secretPrefix}/client_key";
-            owner = "root";
-            group = "wheel";
-            mode = "0400";
-          };
         })
       ]
     ))

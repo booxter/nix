@@ -2,7 +2,6 @@
   lib,
   config,
   hostInventory,
-  pkgs,
   ...
 }:
 let
@@ -11,7 +10,7 @@ let
   builderSpecs = map builderSpec (lib.range 1 3);
 in
 {
-  config = lib.mkIf (!config.host.isWork && config.host.isDesktop) {
+  config = lib.mkIf (builtins.elem "personal" config.host.build.pools && config.host.isOperatorSeat) {
     programs.ssh = {
       extraConfig =
         let
@@ -36,8 +35,6 @@ in
           )
         );
     };
-    environment.systemPackages = [ pkgs.openssh ];
-
     nix.buildMachines =
       let
         features = [
@@ -72,8 +69,5 @@ in
         speedFactor = 100;
         supportedFeatures = features;
       };
-
-    nix.settings.builders-use-substitutes = true;
-    nix.distributedBuilds = true;
   };
 }

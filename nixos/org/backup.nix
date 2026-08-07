@@ -1,27 +1,40 @@
+{
+  config,
+  hostInventory,
+  ...
+}:
 let
+  backup = hostInventory.backups;
+  backupClient = backup.clients.${config.networking.hostName};
   degoogStateDir = "/var/lib/degoog";
   paperlessBackupDir = "/var/lib/paperless-backup/latest";
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessStoragePath = "/data/paperless";
-  triliumStateDir = "/var/lib/trilium";
   backupPaths = [
     degoogStateDir
     paperlessDataDir
     paperlessGptStateDir
     paperlessStoragePath
-    triliumStateDir
     "/var/lib/vikunja/files"
   ];
-  backupExclude = [
-    "${triliumStateDir}/document.db"
-    "${triliumStateDir}/document.db-*"
-  ];
+  resticPasswordSecret = "backup/restic/local/password";
+  resticSshKeySecret = "backup/restic/local/ssh/privateKey";
 in
 {
+  sops.secrets = {
+    ${resticPasswordSecret} = { };
+    ${resticSshKeySecret} = {
+      owner = "root";
+      group = "root";
+      mode = "0400";
+    };
+  };
+
   host.backups.artifacts = {
     postgresql = {
       paperless = {
+        job = "beast";
         displayName = "Paperless";
         destinationDir = paperlessBackupDir;
         requiresMountsFor = [ paperlessDataDir ];
@@ -30,27 +43,27 @@ in
 
     sqlite = {
       vikunja = {
+        job = "beast";
         displayName = "Vikunja";
         databasePath = "/var/lib/vikunja/vikunja.db";
         destinationDir = "/var/lib/vikunja-backup/latest";
       };
-
-      trilium = {
-        displayName = "Trilium Notes";
-        databasePath = "${triliumStateDir}/document.db";
-        destinationDir = "/var/lib/trilium-backup/latest";
-        requiresMountsFor = [ triliumStateDir ];
-      };
     };
   };
 
-  host.backups.beast = {
-    enable = true;
-    clientName = "org";
-    # Keep the historical storage namespace: changing it would create new
-    # local and B2 repositories instead of preserving the existing snapshots.
-    storageName = "orgvm";
+  host.backups.jobs.beast = {
+    title = "Restic To Beast";
     paths = backupPaths;
-    exclude = backupExclude;
+    repository = {
+      type = "sftp";
+      path = backupClient.repositoryPath;
+      passwordFile = config.sops.secrets.${resticPasswordSecret}.path;
+      dependencyUnits = [ "sops-install-secrets.service" ];
+      sftp = {
+        host = backup.server.host;
+        user = backupClient.ingestUser;
+        identityFile = config.sops.secrets.${resticSshKeySecret}.path;
+      };
+    };
   };
 }

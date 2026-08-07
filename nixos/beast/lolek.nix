@@ -76,7 +76,7 @@ in
     };
   };
 
-  host.observability.client.prometheusMtlsEndpoints.lolek = {
+  host.observability.prometheusEndpoints.lolek = {
     enable = true;
     port = lolekMetricsMtlsPort;
     upstream = "http://127.0.0.1:${toString lolekMetricsInternalPort}/metrics";

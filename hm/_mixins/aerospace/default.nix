@@ -6,12 +6,13 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isWork;
+  inherit (osConfig.host) isDarwin;
+  isNvidia = osConfig.host.userProfile == "nvidia";
   sketchybar = "${config.programs.sketchybar.finalPackage}/bin/sketchybar";
   sketchybarHeight = 30; # TODO: parametrize it?
 
   aerospaceX11Actions = pkgs.callPackage ./pkgs { };
-  workspaceNames = import ./workspaces.nix { inherit lib isWork; };
+  workspaceNames = import ./workspaces.nix { inherit isNvidia lib; };
   moveCommand =
     direction:
     if config.programs.xquartz.enable then
@@ -163,7 +164,7 @@ in
           run = [ "move-node-to-workspace e" ];
         }
       ]
-      ++ lib.optionals isWork [
+      ++ lib.optionals isNvidia [
         {
           "if" = "test %{app-bundle-id} = com.microsoft.teams2";
           run = [ "move-node-to-workspace t" ];

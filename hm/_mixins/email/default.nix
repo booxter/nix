@@ -6,12 +6,14 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isWork;
+  inherit (osConfig.host) isDarwin;
+  isNvidia = osConfig.host.userProfile == "nvidia";
+  isPersonal = osConfig.host.userProfile == "personal";
   username = config.home.username;
   thunderbirdProfilesPath = if isDarwin then "Library/Thunderbird/Profiles" else ".thunderbird";
 in
 {
-  imports = lib.optionals (!isWork) [
+  imports = lib.optionals isPersonal [
     ./gmailctl.nix
   ];
 
@@ -73,7 +75,7 @@ in
             "mail.server.server_${id}.directory" =
               "${config.home.homeDirectory}/${thunderbirdProfilesPath}/default/ImapMail/${id}";
             "mail.smtpserver.smtp_${id}.authMethod" =
-              if isWork then
+              if isNvidia then
                 3 # plain
               else
                 10; # OAuth2
@@ -85,7 +87,7 @@ in
     {
       default =
         (
-          if isWork then
+          if isNvidia then
             {
               flavor = "outlook.office365.com";
               address = "${username}@nvidia.com";

@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
@@ -7,20 +8,17 @@
 let
   cfg = config.host.fleetCacheWarmer;
   warmerPackage = pkgs.callPackage ../../pkgs/fleet-cache-warmer {
-    inherit (cfg) pushToAttic targetFilter;
+    inherit (cfg) pushToAttic targetRealm;
   };
 in
 {
   options.host.fleetCacheWarmer = {
     enable = lib.mkEnableOption "scheduled fleet cache warming";
 
-    targetFilter = lib.mkOption {
-      type = lib.types.enum [
-        "non-work"
-        "work"
-      ];
-      default = "non-work";
-      description = "Which CI inventory targets to warm, based on host isWork flags.";
+    targetRealm = lib.mkOption {
+      type = lib.types.enum (builtins.attrNames hostInventory.realms);
+      default = config.host.realm;
+      description = "Realm whose CI inventory targets should be warmed.";
     };
 
     pushToAttic = lib.mkOption {

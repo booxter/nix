@@ -6,13 +6,15 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isWork;
+  inherit (osConfig.host) isDarwin;
+  isNvidia = osConfig.host.userProfile == "nvidia";
+  isPersonal = osConfig.host.userProfile == "personal";
   username = config.home.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   scmPkgs = import ./pkgs { inherit pkgs; };
   fullName = "Ihar Hrachyshka";
   privateEmail = "ihar.hrachyshka@gmail.com";
-  email = if isWork then "${username}@nvidia.com" else privateEmail;
+  email = if isNvidia then "${username}@nvidia.com" else privateEmail;
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
   pushDisabledGitHubRepos = [
     "NixOS/nixpkgs"
@@ -86,7 +88,7 @@ in
       };
 
       sendemail =
-        if isWork then
+        if isNvidia then
           {
             confirm = "auto";
             smtpServer = "mail.nvidia.com";
@@ -254,12 +256,8 @@ in
       mergiraf
       tig
 
-      # for nix dev
-      nix-output-monitor
-      nixpkgs-reviewFull
-      nurl
     ]
-    ++ lib.optionals (isDarwin && !isWork) [
+    ++ lib.optionals (isDarwin && isPersonal) [
       scmPkgs.git-send-email-store-password
     ];
 

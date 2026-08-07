@@ -6,7 +6,7 @@
 }:
 let
   cfg = config.host.internalHttps;
-  internalPkiRootCaPath = import ../../lib/home-internal-pki-root-ca.nix;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   # A local alias like `search` is served both as the single-label name and as
   # mDNS, for example `search` and `search.local`.
   localServerAliasesFor = aliases: aliases ++ builtins.map hostInventory.toLocalDnsName aliases;

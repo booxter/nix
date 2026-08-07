@@ -9,7 +9,7 @@ let
   atticConfigPath = "${rootDir}/.config/attic/config.toml";
 in
 {
-  config = lib.mkIf (!config.host.isWork) {
+  config = lib.mkIf config.host.attic.enable {
     launchd.daemons.attic-watch-store = {
       serviceConfig = {
         ProgramArguments = [

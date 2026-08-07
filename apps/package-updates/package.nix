@@ -46,7 +46,6 @@ pythonPackages.buildPythonApplication {
         pkgs.prefetch-npm-deps
       ]
     }"
-    "--set PACKAGE_UPDATES_COSIGN ${pkgs.lib.getExe pkgs.cosign}"
     "--set PACKAGE_UPDATES_NIX ${pkgs.lib.getExe pkgs.nix}"
     "--set PACKAGE_UPDATES_NIX_PREFETCH_DOCKER ${pkgs.lib.getExe pkgs.nix-prefetch-docker}"
     "--set PACKAGE_UPDATES_NIX_UPDATE ${pkgs.lib.getExe pkgs.nix-update}"

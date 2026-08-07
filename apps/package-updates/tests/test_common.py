@@ -59,7 +59,6 @@ def test_tool_paths_accept_explicit_packaged_executables(monkeypatch: pytest.Mon
         "PACKAGE_UPDATES_NIX_UPDATE": "/nix-update",
         "PACKAGE_UPDATES_NIX_PREFETCH_DOCKER": "/prefetch",
         "PACKAGE_UPDATES_SKOPEO": "/skopeo",
-        "PACKAGE_UPDATES_COSIGN": "/cosign",
         "PACKAGE_UPDATES_SELECT_NODEJS": "/select-nodejs",
     }
     for name, value in values.items():

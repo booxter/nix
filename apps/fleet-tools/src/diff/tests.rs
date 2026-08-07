@@ -1,6 +1,7 @@
 use std::cell::{Cell, RefCell};
 use std::collections::BTreeMap;
 use std::fs;
+use std::io::Write;
 use std::os::unix::fs::{symlink, PermissionsExt};
 use std::path::{Path, PathBuf};
 
@@ -84,7 +85,13 @@ impl DiffBackend for FakeBackend {
         kind: TargetKind,
         revision: &Revision,
         out_link: &Path,
+        diagnostics: &mut dyn Write,
     ) -> anyhow::Result<()> {
+        writeln!(
+            diagnostics,
+            "backend build output for {}",
+            revision.side.label()
+        )?;
         self.builds.borrow_mut().push((revision.side, kind));
         if self.details {
             fs::create_dir_all(out_link.join("etc/nix"))?;
@@ -272,7 +279,9 @@ fn workflow_builds_both_revisions_and_filters_package_diff() {
     );
     let stderr = String::from_utf8(stderr).expect("UTF-8 diagnostics");
     assert!(stderr.contains("Building nixos configuration frame at old"));
+    assert!(stderr.contains("backend build output for old"));
     assert!(stderr.contains("Building nixos configuration frame at new"));
+    assert!(stderr.contains("backend build output for new"));
     assert!(stderr.contains("Diffing nixos configuration frame:"));
 }
 

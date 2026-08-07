@@ -40,7 +40,7 @@ in
       "wireshark-chmodbpf"
       "chatgpt"
     ]
-    ++ lib.optionals (!config.host.isWork) [ "homerow" ];
+    ++ lib.optionals (config.host.userProfile == "personal") [ "homerow" ];
   };
 
   nix-homebrew = {

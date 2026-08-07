@@ -1,34 +1,55 @@
 {
   config,
   hostInventory,
-  hostSpec,
   lib,
   pkgs,
   ...
 }:
 let
+  cfg = config.host.nixCache;
+  realmNixCache = hostInventory.realms.${config.host.realm}.services.nixCache or null;
   username = config.host.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   GiB = 1024 * 1024 * 1024;
-  vmDiskSizeGiB = hostSpec.diskSize or 100;
-  # VM disks can be much smaller than physical hosts. Start GC at 20%
-  # free and target 40%, capped at the physical-host thresholds.
-  minFreeGiB = if config.host.isVM then lib.min 40 (builtins.div vmDiskSizeGiB 5) else 40;
-  maxFreeGiB = 2 * minFreeGiB;
+  hasBuildMachines = config.nix.buildMachines != [ ];
+  needsProxmoxCache =
+    (config.host.isLinux && config.host.isProxmox)
+    || config.host.isBuilder
+    || config.host.isOperatorSeat;
 in
 {
-  nix =
-    let
-      nixCaches = hostInventory.site.nixCaches;
-      # Desktops may be used for Proxmox development.
-      needsProxmoxCache =
-        (config.host.isLinux && config.host.isProxmox) || config.host.isBuilder || config.host.isDesktop;
-    in
-    {
+  options.host.nixCache = {
+    enable = lib.mkEnableOption "realm-provided Nix binary caches";
+
+    substituters = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = if realmNixCache == null then [ ] else realmNixCache.substituters;
+      description = "Nix substituters provided by this host's realm.";
+    };
+
+    trustedPublicKeys = lib.mkOption {
+      type = with lib.types; listOf str;
+      default = if realmNixCache == null then [ ] else realmNixCache.trustedPublicKeys;
+      description = "Trusted Nix cache signing keys provided by this host's realm.";
+    };
+  };
+
+  config = {
+    host.nixCache.enable = lib.mkDefault (realmNixCache != null);
+
+    assertions = [
+      {
+        assertion = !cfg.enable || realmNixCache != null;
+        message = "realm '${config.host.realm}' does not define Nix binary caches";
+      }
+    ];
+
+    nix = {
       gc = {
         automatic = true;
         options = "--delete-older-than 1d";
       };
+      distributedBuilds = hasBuildMachines;
       optimise.automatic = true;
       package = lib.mkForce pkgs.nixVersions.latest;
       settings = {
@@ -45,8 +66,8 @@ in
         gc-reserved-space = GiB;
         keep-derivations = false;
         max-jobs = 5;
-        min-free = minFreeGiB * GiB;
-        max-free = maxFreeGiB * GiB;
+        min-free = lib.mkDefault (40 * GiB);
+        max-free = lib.mkDefault (80 * GiB);
 
         extra-substituters = lib.optionals needsProxmoxCache [
           "https://cache.saumon.network/proxmox-nixos"
@@ -55,18 +76,16 @@ in
           (readPublicKey ../../../public-keys/nix-cache/proxmox-nixos.pub)
         ];
       }
+      // lib.optionalAttrs hasBuildMachines {
+        builders-use-substitutes = true;
+      }
       // lib.optionalAttrs config.host.isDarwin {
         sandbox = "relaxed";
       }
-      // lib.optionalAttrs (!config.host.isWork) {
-        substituters = lib.mkForce [
-          nixCaches.nixos.url
-          nixCaches.home.defaultUrl
-        ];
-        trusted-public-keys = lib.mkForce [
-          nixCaches.nixos.key
-          nixCaches.home.key
-        ];
+      // lib.optionalAttrs cfg.enable {
+        substituters = lib.mkForce cfg.substituters;
+        trusted-public-keys = lib.mkForce cfg.trustedPublicKeys;
       };
     };
+  };
 }

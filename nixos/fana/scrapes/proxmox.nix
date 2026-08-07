@@ -8,7 +8,6 @@ let
   proxmoxLabNodeNames = builtins.filter (
     name:
     (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
-    && !(outputs.nixosConfigurations.${name}.config.host.isWork or false)
     && (outputs.nixosConfigurations.${name}.config.host.proxmox.prometheusExporter.enable or false)
   ) nixosConfigNames;
   proxmoxClusterScrapeNodeName = "prx1-lab";
@@ -16,7 +15,7 @@ let
     name:
     let
       hostConfig = outputs.nixosConfigurations.${name}.config;
-      endpoint = hostConfig.host.observability.client.prometheusMtlsEndpoints.pve;
+      endpoint = hostConfig.host.observability.prometheusEndpoints.pve;
     in
     {
       labels = {

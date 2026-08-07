@@ -6,11 +6,20 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isWork;
+  inherit (osConfig.host) isDarwin;
+  isPersonal = osConfig.host.userProfile == "personal";
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
+  configuredReviewBuilders =
+    let
+      configuredBuilders =
+        if osConfig.nix.buildMachines == [ ] then "" else osConfig.environment.etc."nix/machines".text;
+    in
+    lib.filter (builder: builder != "") (lib.splitString "\n" configuredBuilders);
   nr = cliPkgs.nr.override {
-    builders = lib.concatStringsSep " ; " osConfig.host.nixpkgsReview.builders;
+    builders = lib.concatStringsSep " ; " (
+      configuredReviewBuilders ++ osConfig.host.nixpkgsReview.extraBuilders
+    );
   };
 in
 {
@@ -137,8 +146,10 @@ in
       (homeManagerPkgs.page.override { neovim = config.programs.nixvim.build.package; })
       nh
       nix-init
+      nix-output-monitor
       nix-search-cli
       nix-tree
+      nixpkgs-reviewFull
       nr
       nurl
       openssl
@@ -154,12 +165,9 @@ in
     ++ lib.optionals isDarwin [
       container
     ]
-    ++ lib.optionals (!isWork) [
-      age
-      age-plugin-se
+    ++ lib.optionals isPersonal [
       cliPkgs.sync-repo
       ramalama
-      sops
     ];
 
   home.sessionVariables = {
@@ -167,7 +175,7 @@ in
     MANPAGER = "page -t man";
   };
 
-  home.sessionPath = lib.optionals (!isWork) [
+  home.sessionPath = lib.optionals isPersonal [
     "$HOME/.priv-bin"
   ];
 

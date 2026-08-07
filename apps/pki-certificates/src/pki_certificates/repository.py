@@ -10,6 +10,7 @@ from sops_tools.process import ProcessRunner
 
 from .models import (
     CertificateClientConfig,
+    ClientCategory,
     FleetHosts,
     HostCertificateConfig,
     HostFacts,
@@ -91,31 +92,10 @@ class NixConfigSource:
             raise ToolError(f"unknown internal HTTPS service {name} on host {host}") from error
 
     def internal_client_names(self, host: str) -> list[str]:
-        config = self._config(host)
-        return sorted(
-            {
-                name
-                for clients in (config.internal_clients, config.external_clients)
-                for name, client in clients.items()
-                if client.enable
-            }
-        )
+        return self._client_names(host, "internal")
 
     def internal_client(self, host: str, name: str) -> CertificateClientConfig:
-        config = self._config(host)
-        matches = [
-            clients[name]
-            for clients in (config.internal_clients, config.external_clients)
-            if name in clients
-        ]
-        enabled = [client for client in matches if client.enable]
-        if len(enabled) > 1:
-            raise ToolError(f"internal HTTPS client {name} is enabled twice on {host}")
-        if enabled:
-            return enabled[0]
-        if matches:
-            return matches[0]
-        raise ToolError(f"unknown internal HTTPS client {name} on host {host}")
+        return self._client(host, name, "internal")
 
     def observability_endpoint_names(self, host: str) -> list[str]:
         config = self._config(host)
@@ -141,17 +121,26 @@ class NixConfigSource:
             raise ToolError(f"unknown observability endpoint {name} on host {host}") from error
 
     def observability_client_names(self, host: str) -> list[str]:
-        return sorted(
-            name
-            for name, client in self._config(host).observability_clients.items()
-            if client.enable
-        )
+        return self._client_names(host, "observability")
 
     def observability_client(self, host: str, name: str) -> CertificateClientConfig:
+        return self._client(host, name, "observability")
+
+    def _client_names(self, host: str, category: ClientCategory) -> list[str]:
+        return sorted(
+            name
+            for name, client in self._config(host).clients.items()
+            if client.enable and client.category == category
+        )
+
+    def _client(self, host: str, name: str, category: ClientCategory) -> CertificateClientConfig:
         try:
-            return self._config(host).observability_clients[name]
+            client = self._config(host).clients[name]
         except KeyError as error:
-            raise ToolError(f"unknown observability client {name} on host {host}") from error
+            raise ToolError(f"unknown {category} client {name} on host {host}") from error
+        if client.category != category:
+            raise ToolError(f"client {name} on host {host} is not a {category} client")
+        return client
 
     def host_identity(self, host: str) -> HostIdentity:
         return self._config(host).identity

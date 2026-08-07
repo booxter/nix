@@ -64,8 +64,8 @@ in
   };
 
   # Run the PKI host behind the standard node-exporter mTLS configuration.
-  host.observability.client.enable = true;
-  host.observability.client.nodeExporter.mtls.enable = true;
+  host.observability.enable = true;
+  host.observability.nodeExporter.mtls.enable = true;
 
   networking.firewall.allowedTCPPorts = [ caPort ];
 

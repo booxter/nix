@@ -5,20 +5,19 @@
 }:
 let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
-  beastPrometheusEndpoints = beastHostConfig.host.observability.client.prometheusMtlsEndpoints;
+  beastPrometheusEndpoints = beastHostConfig.host.observability.prometheusEndpoints;
   beastTargetHost = hostInventory.nixosHosts.beast.name;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
   homeHostConfig = outputs.nixosConfigurations.home.config;
   homeTargetHost = hostInventory.nixosHosts.home.name;
-  homeAssistantEndpoint =
-    homeHostConfig.host.observability.client.prometheusMtlsEndpoints.home-assistant;
+  homeAssistantEndpoint = homeHostConfig.host.observability.prometheusEndpoints.home-assistant;
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
-  sabnzbdEndpoint = sabnzbdHostConfig.host.observability.client.prometheusMtlsEndpoints.sabnzbd;
+  sabnzbdEndpoint = sabnzbdHostConfig.host.observability.prometheusEndpoints.sabnzbd;
   sabnzbdTargetHost = hostInventory.nixosHosts.srvarr.name;
   orgHostConfig = outputs.nixosConfigurations.org.config;
   orgTargetHost = hostInventory.nixosHosts.org.name;
-  paperlessEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.paperless;
-  vikunjaEndpoint = orgHostConfig.host.observability.client.prometheusMtlsEndpoints.vikunja;
+  paperlessEndpoint = orgHostConfig.host.observability.prometheusEndpoints.paperless;
+  vikunjaEndpoint = orgHostConfig.host.observability.prometheusEndpoints.vikunja;
 in
 {
   scrapeConfigs = [

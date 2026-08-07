@@ -70,7 +70,7 @@
     let
       inherit (self) outputs;
       username = "ihrachyshka";
-      hostInventory = import ./lib/inventory {
+      hostInventory = import ./inv {
         inherit username;
         lib = inputs.nixpkgs.lib;
       };
@@ -122,6 +122,11 @@
       apps = selectPerSystem "apps";
       checks = selectPerSystem "checks";
       formatter = selectPerSystem "formatter";
+
+      lib.ciTargetInventory = import ./ci {
+        inherit hostInventory;
+        lib = inputs.nixpkgs.lib;
+      };
 
       overlays = import ./overlays { inherit inputs; };
       packages = selectPerSystem "packages";

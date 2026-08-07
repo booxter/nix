@@ -20,5 +20,4 @@ in
   paperless-bootstrap = pkgs.callPackage ./paperless-bootstrap { };
   paperless-gpt-configure = pkgs.callPackage ./paperless-gpt-configure { };
   prometheus-paperless-exporter = pkgs.callPackage ./prometheus-paperless-exporter { };
-  trilium-bootstrap = pkgs.callPackage ./trilium-bootstrap { };
 }

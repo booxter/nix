@@ -2,6 +2,7 @@
   config,
   hostInventory,
   lib,
+  outputs,
   pkiPkgs,
   pkgs,
   utils,
@@ -10,9 +11,23 @@
 let
   idService = hostInventory.servicesById.id;
   sso = hostInventory.sso;
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
+  oidcClients = import ./oidc-clients.nix {
+    inherit lib outputs;
+    providerHost = config.networking.hostName;
+  };
   kanidmOAuthSecretAttrName = clientId: "kanidm-oauth2-${clientId}-client-secret";
-  confidentialOidcClients = lib.filterAttrs (_: client: !client.public) oidc.clients;
+  kanidmOAuthSecretKey = clientId: "kanidm/oauth2/${clientId}/client_secret";
+  confidentialOidcClients = lib.filterAttrs (_: client: !client.public) oidcClients;
+  referencedOidcGroups = lib.unique (
+    lib.concatMap (
+      client:
+      builtins.attrNames client.scopeMaps
+      ++ lib.concatMap (claimMap: builtins.attrNames claimMap.valuesByGroup) (
+        builtins.attrValues client.claimMaps
+      )
+    ) (builtins.attrValues oidcClients)
+  );
+  unknownOidcGroups = lib.subtractLists (builtins.attrNames sso.groups) referencedOidcGroups;
   kanidmProvisionClients =
     secretPathFor:
     lib.mapAttrs (_: client: {
@@ -23,13 +38,17 @@ let
         enableLocalhostRedirects
         enableLegacyCrypto
         originLanding
-        originUrl
         preferShortUsername
         public
         scopeMaps
         ;
+      originUrl =
+        if builtins.length client.originUrls == 1 then
+          builtins.head client.originUrls
+        else
+          client.originUrls;
       basicSecretFile = if client.public then null else secretPathFor client.clientId;
-    }) oidc.clients;
+    }) oidcClients;
   kanidmPort = 18085;
   kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
@@ -86,6 +105,13 @@ let
   ];
 in
 {
+  assertions = [
+    {
+      assertion = unknownOidcGroups == [ ];
+      message = "OIDC registrations reference unknown Kanidm groups: ${lib.concatStringsSep ", " unknownOidcGroups}";
+    }
+  ];
+
   sops.secrets = {
     kanidmAdminPassword = {
       key = "kanidm/admin_password";
@@ -139,7 +165,7 @@ in
   // lib.mapAttrs' (
     _: client:
     lib.nameValuePair (kanidmOAuthSecretAttrName client.clientId) {
-      key = client.secretKey;
+      key = kanidmOAuthSecretKey client.clientId;
       owner = "kanidm";
       group = "kanidm";
       mode = "0400";

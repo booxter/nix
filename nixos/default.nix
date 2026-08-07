@@ -21,26 +21,27 @@ in
       inputs.home-manager.nixosModules.home-manager
     ]
     ++ [
+      ./_mixins/adaptive-upload-policy
       ./_mixins/avahi
       ./_mixins/auto-upgrade
-      ./_mixins/backup-artifacts.nix
-      ./_mixins/backup-metrics/default.nix
+      ./_mixins/backups
       ./_mixins/builder.nix
       ./_mixins/external-service.nix
       ./_mixins/firmware
       ./_mixins/internal-https-service.nix
       ./_mixins/lan-wan-accounting
       ./_mixins/nix
-      ./_mixins/observability-client
+      ./_mixins/observability
       ./_mixins/proxmox
-      ./_mixins/restic-beast-client.nix
-      ./_mixins/sso-oauth2-proxy-gate.nix
+      ./_mixins/qos
+      ./_mixins/sso
       ./_mixins/attic
       ./_mixins/unifi-sync
       ./_mixins/ups-client
       ./_mixins/ups-sched.nix
       ./_mixins/user
       ./_mixins/vm.nix
+      ./_mixins/yubi.nix
     ];
 
     home-manager = {
@@ -56,7 +57,7 @@ in
       users.${username} = ../hm;
     };
     virtualisation.containers.enable = true;
-    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.isWork;
+    security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;
     time.timeZone = "America/New_York";
 
     services.xserver.autoRepeatDelay = 210; # ms before repeat starts (macOS InitialKeyRepeat=14)

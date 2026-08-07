@@ -6,11 +6,13 @@
   ...
 }:
 let
-  internalPkiRootCaPath = import ../../../lib/home-internal-pki-root-ca.nix;
-  inherit (osConfig.host) isDarwin isWork;
+  internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
+  inherit (osConfig.host) isDarwin;
+  isNvidia = osConfig.host.userProfile == "nvidia";
+  isPersonal = osConfig.host.userProfile == "personal";
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
-  workspaceNames = import ../aerospace/workspaces.nix { inherit lib isWork; };
+  workspaceNames = import ../aerospace/workspaces.nix { inherit isNvidia lib; };
   inherit (config.lib.stylix) colors;
   sketchybarColors = {
     background = "0xff${colors.base00}";
@@ -109,6 +111,36 @@ let
                           icon.drawing=off                       \
                --subscribe disk system_woke
   '';
+  networkItem = pkgs.writeText "sketchybar-network-item.sh" (
+    lib.optionalString config.programs.sketchybarNetwork.enable ''
+      sketchybar --add item  network.up right                              \
+                 --set       network.up script="$PLUGIN_DIR/network.sh"    \
+                                        update_freq=20                     \
+                                        padding_left=2                     \
+                                        padding_right=2                    \
+                                        background.border_width=0          \
+                                        background.height=24               \
+                                        icon=⇡                             \
+                                        icon.color=$YELLOW                 \
+                                        label.color=$YELLOW                \
+                                                                           \
+                 --add item  network.down right                            \
+                 --set       network.down script="$PLUGIN_DIR/network.sh"  \
+                                     update_freq=20                        \
+                                     padding_left=8                        \
+                                     padding_right=2                       \
+                                     background.border_width=0             \
+                                     background.height=24                  \
+                                     icon=⇣                                \
+                                     icon.color=$GREEN                     \
+                                     label.color=$GREEN
+    ''
+    + ''
+      sketchybar --add bracket status ip_address${lib.optionalString config.programs.sketchybarNetwork.enable " network.up network.down"} \
+                 --set         status background.color=$BACKGROUND \
+                                      background.border_color=$BLUE
+    ''
+  );
   githubStatusItem = pkgs.writeText "sketchybar-github-status-item.sh" ''
     sketchybar --add item github-status right                           \
                --set github-status script="$PLUGIN_DIR/github-status.sh" \
@@ -194,7 +226,7 @@ let
     ''
   );
   attentionInboxItem = pkgs.writeText "sketchybar-attention-inbox-item.sh" (
-    lib.optionalString isWork ''
+    lib.optionalString isNvidia ''
       sketchybar --add item attention.inbox right                                \
                  --set attention.inbox script="$PLUGIN_DIR/attention-inbox.sh"   \
                                        update_freq=1200                          \
@@ -228,7 +260,7 @@ let
     ''
   );
   codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
-    lib.optionalString (!isWork) ''
+    lib.optionalString isPersonal ''
       sketchybar --add item codex.5h left                                  \
                  --set codex.5h script="$PLUGIN_DIR/codex.sh"             \
                                 update_freq=60                             \
@@ -273,7 +305,7 @@ let
                                           background.border_width=0         \
                                           background.height=24
     ''
-    + lib.optionalString isWork ''
+    + lib.optionalString isNvidia ''
       sketchybar --add item codex.work left                                 \
                  --set codex.work script="$PLUGIN_DIR/codex-work.sh"        \
                                   update_freq=60                            \
@@ -343,6 +375,7 @@ let
     rm -f "$out/items/disk.sh"
     rm -f "$out/items/alertmanager.sh"
     rm -f "$out/items/jellyfin.sh"
+    rm -f "$out/items/network.sh"
     rm -f "$out/items/attention-inbox.sh"
     rm -f "$out/items/github-status.sh"
     ln -s ${aerospaceSpacesItem} "$out/items/aerospace-spaces.sh"
@@ -350,6 +383,7 @@ let
     ln -s ${codexItem} "$out/items/codex.sh"
     ln -s ${alertmanagerItem} "$out/items/alertmanager.sh"
     ln -s ${jellyfinItem} "$out/items/jellyfin.sh"
+    ln -s ${networkItem} "$out/items/network.sh"
     ln -s ${attentionInboxItem} "$out/items/attention-inbox.sh"
     ln -s ${githubStatusItem} "$out/items/github-status.sh"
     ${lib.concatMapStringsSep "\n" (name: ''
@@ -358,6 +392,8 @@ let
   '';
 in
 {
+  options.programs.sketchybarNetwork.enable = lib.mkEnableOption "LAN/WAN traffic-rate indicators in SketchyBar";
+
   options.programs.sketchybarAlertmanager = {
     enable = lib.mkEnableOption "Alertmanager firing-alert indicator in SketchyBar";
 

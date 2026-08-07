@@ -74,17 +74,14 @@ def fleet_hosts() -> FleetHosts:
             "prx1-lab": {
                 "system": "x86_64-linux",
                 "secretDomain": "main",
-                "isWork": False,
             },
             "prx2-lab": {
                 "system": "x86_64-linux",
                 "secretDomain": "main",
-                "isWork": False,
             },
             "work": {
                 "system": "aarch64-darwin",
                 "secretDomain": "work",
-                "isWork": True,
             },
         }
     )

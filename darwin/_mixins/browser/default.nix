@@ -9,7 +9,7 @@
     ./firefox-touch-id-passkeys.nix
   ];
 
-  config = lib.mkIf (!config.host.isWork) {
+  config = lib.mkIf (config.host.userProfile == "personal") {
     environment.systemPackages = with pkgs; [
       defaultbrowser
     ];

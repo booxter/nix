@@ -20,14 +20,11 @@ from package_updates.oci import (
     selected_pins,
     summary_row,
     update_oci_images,
-    verify_signature,
 )
 
 
 class FakeOciBackend:
-    def __init__(self, *, verify_fails: bool = False) -> None:
-        self.verify_fails = verify_fails
-        self.verified: list[tuple[str, str, Path]] = []
+    def __init__(self) -> None:
         self.label_requests: list[tuple[str, str, str]] = []
 
     def list_tags(self, image: str) -> tuple[str, ...]:
@@ -45,11 +42,6 @@ class FakeOciBackend:
             "org.opencontainers.image.source": "https://github.com/example/romm",
             "org.opencontainers.image.revision": revision,
         }
-
-    def verify_signature(self, image: str, digest: str, key: Path) -> None:
-        self.verified.append((image, digest, key))
-        if self.verify_fails:
-            raise UpdateError(f"Cosign verification failed for {image}@{digest}")
 
 
 class OciRunner(Runner):
@@ -89,12 +81,7 @@ class OciRunner(Runner):
         return CommandResult(0)
 
 
-def make_pin(*, signed: bool = True, tag: str = "4.9.1") -> OciPin:
-    signature = (
-        {"type": "cosign-key", "key": "apps/package-updates/fixtures/oci-cosign.pub"}
-        if signed
-        else {}
-    )
+def make_pin(*, tag: str = "4.9.1") -> OciPin:
     return OciPin.model_validate(
         {
             "image": "docker.io/example/romm",
@@ -103,17 +90,13 @@ def make_pin(*, signed: bool = True, tag: str = "4.9.1") -> OciPin:
             "hash": "sha256-oldhash",
             "tagRegex": r"^[0-9]+\.[0-9]+\.[0-9]+$",
             "changelog": "https://example.invalid/releases/{tag}",
-            "signature": signature,
         }
     )
 
 
-def test_updates_signed_pin_after_verification_and_writes_summary(tmp_path: Path) -> None:
-    key = tmp_path / "apps/package-updates/fixtures/oci-cosign.pub"
-    key.parent.mkdir(parents=True)
-    key.write_text("public key")
+def test_updates_pin_and_writes_summary(tmp_path: Path) -> None:
     pins_file = tmp_path / "oci-images.json"
-    pins = OciPins({"romm": make_pin(), "other": make_pin(signed=False, tag="4.10.0")})
+    pins = OciPins({"romm": make_pin(), "other": make_pin(tag="4.10.0")})
     pins_file.write_text(json.dumps(pins.model_dump(mode="json", by_alias=True)))
     backend = FakeOciBackend()
     summary = tmp_path / "summary.md"
@@ -124,7 +107,6 @@ def test_updates_signed_pin_after_verification_and_writes_summary(tmp_path: Path
         selected_pins(pins, "romm"),
         pins_file,
         summary,
-        tmp_path,
         backend,
         stdout,
     )
@@ -134,19 +116,18 @@ def test_updates_signed_pin_after_verification_and_writes_summary(tmp_path: Path
     assert updated["romm"]["digest"] == "sha256:new"
     assert updated["romm"]["hash"] == "sha256-newhash"
     assert updated["other"]["tag"] == "4.10.0"
-    assert backend.verified == [("docker.io/example/romm", "sha256:new", key)]
     assert (
         "| `romm` | `docker.io/example/romm` | `4.9.1 -> 4.10.0` | "
         "`sha256:old -> sha256:new` | `sha256-oldhash -> sha256-newhash` | "
         "[link](https://example.invalid/releases/4.10.0) | "
-        "[compare](https://github.com/example/romm/compare/oldrev...newrev) | "
-        "`cosign verified` |" in summary.read_text()
+        "[compare](https://github.com/example/romm/compare/oldrev...newrev) |"
+        in summary.read_text()
     )
     assert "Wrote OCI image update summary" in stdout.getvalue()
 
 
 def test_same_tag_digest_change_skips_label_lookup(tmp_path: Path) -> None:
-    pins = OciPins({"romm": make_pin(signed=False, tag="4.10.0")})
+    pins = OciPins({"romm": make_pin(tag="4.10.0")})
     pins_file = tmp_path / "pins.json"
     pins_file.write_text(json.dumps(pins.model_dump(mode="json", by_alias=True)))
     backend = FakeOciBackend()
@@ -156,52 +137,12 @@ def test_same_tag_digest_change_skips_label_lookup(tmp_path: Path) -> None:
         selected_pins(pins, "romm"),
         pins_file,
         summary,
-        tmp_path,
         backend,
         io.StringIO(),
     )
     assert backend.label_requests == []
     assert "| `romm` | `docker.io/example/romm` | `4.10.0`" in summary.read_text()
-    assert "not set | `not configured`" in summary.read_text()
-
-
-def test_signature_failure_does_not_rewrite_pin(tmp_path: Path) -> None:
-    key = tmp_path / "apps/package-updates/fixtures/oci-cosign.pub"
-    key.parent.mkdir(parents=True)
-    key.write_text("public key")
-    pins = OciPins({"romm": make_pin()})
-    pins_file = tmp_path / "pins.json"
-    original = json.dumps(pins.model_dump(mode="json", by_alias=True))
-    pins_file.write_text(original)
-    with pytest.raises(UpdateError, match="Cosign verification failed"):
-        update_oci_images(
-            pins,
-            selected_pins(pins, "romm"),
-            pins_file,
-            tmp_path / "summary.md",
-            tmp_path,
-            FakeOciBackend(verify_fails=True),
-            io.StringIO(),
-        )
-    assert pins_file.read_text() == original
-
-
-def test_signature_configuration_rejects_remote_missing_and_unknown_keys(tmp_path: Path) -> None:
-    backend = FakeOciBackend()
-    remote = make_pin()
-    remote.signature.key = "https://example.invalid/key.pub"
-    with pytest.raises(UpdateError, match="vendored local path"):
-        verify_signature(backend, tmp_path, remote, "sha256:new")
-    missing = make_pin()
-    missing.signature.key = None
-    with pytest.raises(UpdateError, match="missing signature.key"):
-        verify_signature(backend, tmp_path, missing, "sha256:new")
-    unknown = make_pin()
-    unknown.signature.type = "keyless"
-    with pytest.raises(UpdateError, match="Unsupported signature"):
-        verify_signature(backend, tmp_path, unknown, "sha256:new")
-    absent = make_pin(signed=False)
-    assert verify_signature(backend, tmp_path, absent, "sha256:new") == "not configured"
+    assert "not set |" in summary.read_text()
 
 
 def test_tag_selection_uses_natural_order_and_reports_bad_filters() -> None:
@@ -229,13 +170,13 @@ def test_diff_falls_back_to_changelog_and_summary_helpers() -> None:
         def labels(self, image: str, tag: str, digest: str) -> dict[str, str]:
             return {}
 
-    pin = make_pin(signed=False)
+    pin = make_pin()
     pin.changelog = "https://github.com/example/romm/releases/tag/{tag}"
     assert image_diff_url(EmptyLabels(), pin.image, pin, "4.10.0", "sha256:new") == (
         "https://github.com/example/romm/compare/4.9.1...4.10.0"
     )
     assert changelog_for("https://example/{tag}/{tag}", "v1") == "https://example/v1/v1"
-    assert "`4.9.1 -> new`" in summary_row("demo", pin, "new", "digest", "hash", None, "ok")
+    assert "`4.9.1 -> new`" in summary_row("demo", pin, "new", "digest", "hash", None)
 
 
 def test_command_backend_parses_registry_boundaries(tmp_path: Path) -> None:
@@ -245,7 +186,6 @@ def test_command_backend_parses_registry_boundaries(tmp_path: Path) -> None:
         nix_update="nix-update",
         nix_prefetch_docker="prefetch",
         skopeo="skopeo",
-        cosign="cosign",
         select_nodejs="select-nodejs",
     )
     backend = CommandOciBackend(tmp_path, tools, runner)
@@ -254,16 +194,6 @@ def test_command_backend_parses_registry_boundaries(tmp_path: Path) -> None:
     assert (
         backend.labels("example/demo", "1.1.0", "sha256:new")["org.opencontainers.image.source"]
         == "https://github.com/example/demo"
-    )
-    key = tmp_path / "key.pub"
-    key.write_text("key")
-    backend.verify_signature("example/demo", "sha256:new", key)
-    assert runner.calls[-1] == (
-        "cosign",
-        "verify",
-        "--key",
-        str(key),
-        "example/demo@sha256:new",
     )
 
 

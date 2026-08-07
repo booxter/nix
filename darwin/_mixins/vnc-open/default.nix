@@ -163,5 +163,5 @@ let
   };
 in
 {
-  environment.systemPackages = lib.mkIf (!config.host.isWork) [ vncOpen ];
+  environment.systemPackages = lib.mkIf config.host.remoteAccess.vncClient [ vncOpen ];
 }

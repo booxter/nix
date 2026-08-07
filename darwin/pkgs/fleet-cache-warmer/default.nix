@@ -6,29 +6,16 @@
   pushToAttic ? true,
   rustfmt,
   rustPlatform,
-  targetFilter ? "non-work",
+  targetRealm,
 }:
 
 let
-  inventory = builtins.fromJSON (builtins.readFile ../../../ci/ci-target-inventory.json);
-  hostInventory = import ../../../lib/inventory { inherit lib; };
-  workHosts = lib.genAttrs (
-    (map (spec: spec.name) (lib.filter (spec: spec.isWork or false) hostInventory.nixosHostSpecs))
-    ++ (lib.attrNames (lib.filterAttrs (_: cfg: cfg.isWork or false) hostInventory.darwinHosts))
-  ) (_: true);
-  isWorkTarget = target: lib.any (host: workHosts.${host} or false) (target.selection.hosts or [ ]);
-  matchesTargetFilter =
-    target:
-    if targetFilter == "work" then
-      isWorkTarget target
-    else if targetFilter == "non-work" then
-      !(isWorkTarget target)
-    else
-      throw "unknown fleet-cache-warmer targetFilter: ${targetFilter}";
+  hostInventory = import ../../../inv { inherit lib; };
+  inventory = import ../../../ci { inherit hostInventory lib; };
   ciValidatedWarmTargets = map (target: target.attr) (
-    lib.filter (target: target.warm && matchesTargetFilter target) (
-      inventory.buildTargets ++ inventory.regularChecks
-    )
+    lib.filter (
+      target: hostInventory.hostSpecsByName.${target.host}.realm == targetRealm
+    ) inventory.buildTargets
   );
 in
 rustPlatform.buildRustPackage {

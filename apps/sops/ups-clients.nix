@@ -3,9 +3,11 @@
   lib,
 }:
 let
-  serverIsWork = server: (hostInventory.nixosHosts.${server}.isWork or false);
+  credentialMode = spec: hostInventory.realms.${spec.realm}.services.ups.credentialMode;
+  serverUsesSops = server: credentialMode hostInventory.nixosHosts.${server} == "sops";
 
-  includeClient = spec: spec ? upsHost && !(spec.isWork or false) && !(serverIsWork spec.upsHost);
+  includeClient =
+    spec: spec ? upsHost && credentialMode spec == "sops" && serverUsesSops spec.upsHost;
 
   nixosEntries = map (spec: {
     server = spec.upsHost;

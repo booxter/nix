@@ -9,7 +9,7 @@
 }:
 let
   mediaPaths = import ./media-paths.nix;
-  ociImages = import ../../lib/oci-images { inherit pkgs; };
+  ociImages = import ../../oci { inherit pkgs; };
   watchstateImage = ociImages.watchstate.ref;
   watchstateImageFile = ociImages.watchstate.imageFile;
   watchstateHostName = "watchstate.${hostInventory.site.lan.domain}";
@@ -157,7 +157,6 @@ in
     description = "Create a native WatchState backup archive";
     restartIfChanged = false;
     stopIfChanged = false;
-    before = [ "restic-backups-beast.service" ];
     requires = [
       "podman-watchstate.service"
       "podman.socket"
@@ -177,18 +176,10 @@ in
     };
   };
 
-  systemd.services.restic-backups-beast = {
-    after = [ "watchstate-native-backup.service" ];
-    wants = [ "watchstate-native-backup.service" ];
-    requires = [ "watchstate-native-backup.service" ];
-  };
-
-  services.restic.backups.beast.paths = [ watchstateBackupStagingDir ];
-
-  host.observability.backupMetrics.jobs.watchstate-native-backup = {
+  host.backups.jobs.beast.preparations.watchstate-native-backup = {
     service = "watchstate-native-backup";
     title = "WatchState Native Backup";
-    phase = "prep";
+    paths = [ watchstateBackupStagingDir ];
   };
 
   host.internalHttps.services.watchstate = {
@@ -203,6 +194,8 @@ in
   host.sso.oauth2ProxyGates.watchstate = {
     enable = true;
     clientId = "watchstate";
+    displayName = "WatchState";
+    originLanding = "https://${watchstateHostName}/";
     httpAddress = "http://127.0.0.1:4182";
     cookieName = "_watchstate_sso";
     allowedGroups = [ watchstateSso.adminGroup ];

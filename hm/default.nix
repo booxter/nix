@@ -6,14 +6,15 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isDesktop isWork;
+  inherit (osConfig.host) isDarwin isDesktop;
+  isNvidia = osConfig.host.userProfile == "nvidia";
+  isPersonal = osConfig.host.userProfile == "personal";
   hmFull = hostSpec.hmFull or true;
   stateVersion = if isDarwin then hostSpec.hmStateVersion else hostSpec.stateVersion;
   username = hostSpec.username;
 in
 {
   imports = [
-    ./_mixins/nix
     ./_mixins/podman-machine
     ./_mixins/xquartz
     ./_mixins/zsh
@@ -44,10 +45,10 @@ in
   ++ lib.optionals isDesktop [
     ./_mixins/spicetify
   ]
-  ++ lib.optionals (!isWork && isDesktop) [
+  ++ lib.optionals (isPersonal && isDesktop) [
     ./_mixins/firefox
   ]
-  ++ lib.optionals (hmFull && isWork) [
+  ++ lib.optionals (hmFull && isNvidia) [
     ./_mixins/krew
     ./_mixins/nv
   ];
@@ -67,7 +68,7 @@ in
 
   programs.home-manager.enable = true; # let it manage itself
   programs.podman-machine = {
-    enable = isDarwin && isDesktop && !isWork;
+    enable = isDarwin && isDesktop && isPersonal;
     provider = "libkrun";
     cpus = 4;
     memoryMiB = 8192;
@@ -89,7 +90,7 @@ in
       telegram-desktop
       wireshark
     ]
-    ++ lib.optionals (!isWork && isDesktop) [
+    ++ lib.optionals (isPersonal && isDesktop) [
       vlc
       podman-desktop
       wmctrl

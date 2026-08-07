@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel
 
+ClientCategory = Literal["internal", "observability"]
+
 
 class HostFacts(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
@@ -34,6 +36,7 @@ class CertificateClientConfig(BaseModel):
     model_config = ConfigDict(extra="ignore", frozen=True, strict=True)
 
     enable: bool = False
+    category: ClientCategory
     common_name: str = Field(alias="commonName")
     sans: list[str] = Field(default_factory=list)
     secret_prefix: str = Field(alias="secretPrefix")
@@ -61,11 +64,9 @@ class HostCertificateConfig(BaseModel):
 
     identity: HostIdentity
     internal_services: dict[str, InternalServiceConfig]
-    internal_clients: dict[str, CertificateClientConfig]
-    external_clients: dict[str, CertificateClientConfig]
+    clients: dict[str, CertificateClientConfig]
     proxmox_api: InternalServiceConfig | None
     observability_endpoints: dict[str, ObservabilityEndpointConfig]
-    observability_clients: dict[str, CertificateClientConfig]
     node_exporter: ObservabilityEndpointConfig | None
 
 

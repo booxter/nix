@@ -7,7 +7,7 @@
 let
   wgHome = hostInventory.site.wireguard.home;
   gatewayHostConfig = outputs.nixosConfigurations.${wgHome.gateway.host}.config;
-  wgHomeEndpoint = gatewayHostConfig.host.observability.client.prometheusMtlsEndpoints."wg-home";
+  wgHomeEndpoint = gatewayHostConfig.host.observability.prometheusEndpoints."wg-home";
   gatewayTargetHost = wgHome.gateway.host;
   peers = lib.mapAttrsToList (name: peer: {
     inherit name;

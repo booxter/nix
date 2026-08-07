@@ -1,4 +1,4 @@
-{ lib, isWork }:
+{ isNvidia, lib }:
 
 (map toString (lib.range 1 4))
 ++ [
@@ -6,4 +6,4 @@
   "e" # email
   "s" # spotify
 ]
-++ (lib.optional isWork "t")
+++ (lib.optional isNvidia "t")

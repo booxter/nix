@@ -76,34 +76,9 @@ sketchybar --add item  ip_address right                              \
                                   background.border_width=0          \
                                   background.corner_radius=6         \
                                   background.height=24               \
-           --subscribe ip_address wifi_change mouse.clicked          \
-                                                                     \
-           --add item  network.up right                              \
-           --set       network.up script="$PLUGIN_DIR/network.sh"    \
-                                  update_freq=20                     \
-                                  padding_left=2                     \
-                                  padding_right=2                    \
-                                  background.border_width=0          \
-                                  background.height=24               \
-                                  icon=⇡                             \
-                                  icon.color=$YELLOW                 \
-                                  label.color=$YELLOW                \
-                                                                     \
-           --add item  network.down right                            \
-           --set       network.down script="$PLUGIN_DIR/network.sh"  \
-                               update_freq=20                        \
-                               padding_left=8                        \
-                               padding_right=2                       \
-                               background.border_width=0             \
-                               background.height=24                  \
-                               icon=⇣                                \
-                               icon.color=$GREEN                     \
-                               label.color=$GREEN
+           --subscribe ip_address wifi_change mouse.clicked
 
-# Bracket
-sketchybar --add bracket status ip_address network.up network.down   \
-           --set         status background.color=$BACKGROUND         \
-                                background.border_color=$BLUE
+source "$CONFIG_DIR/items/network.sh"
 
 sketchybar --add item  stock right                              \
            --set       stock script="$PLUGIN_DIR/stock.sh" \

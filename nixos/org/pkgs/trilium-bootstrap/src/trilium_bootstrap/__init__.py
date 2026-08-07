@@ -1,1 +1,0 @@
-"""Trilium bootstrap support."""

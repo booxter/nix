@@ -22,6 +22,8 @@ in
   host.sso.oauth2ProxyGates.aurral = {
     enable = true;
     clientId = "aurral";
+    displayName = "Aurral";
+    originLanding = "${aurralService.url}/";
     cookieName = "_aurral_sso";
     allowedGroups = [
       "media-admins"

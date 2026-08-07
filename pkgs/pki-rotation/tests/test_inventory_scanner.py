@@ -70,8 +70,11 @@ def host_config() -> HostCertificateConfig:
                     "serverName": "proxmox.home.arpa",
                 },
             },
-            "internal_clients": {"internal": client},
-            "external_clients": {"external": client | {"secretPrefix": "clients/external"}},
+            "clients": {
+                "internal": client | {"category": "internal"},
+                "external": client | {"category": "internal", "secretPrefix": "clients/external"},
+                "loki": client | {"category": "observability", "secretPrefix": "prometheus/loki"},
+            },
             "proxmox_api": {
                 "enable": True,
                 "port": 8006,
@@ -85,7 +88,6 @@ def host_config() -> HostCertificateConfig:
                     "secretPrefix": "prometheus/api",
                 }
             },
-            "observability_clients": {"loki": client | {"secretPrefix": "prometheus/loki"}},
             "node_exporter": {
                 "enable": True,
                 "port": 9100,
@@ -125,7 +127,7 @@ def test_inventory_uses_secret_domains_and_all_managed_categories(tmp_path: Path
         (CertificateCategory.INTERNAL_HTTPS_SERVER, "web"),
         (CertificateCategory.INTERNAL_HTTPS_SERVER, "proxmox-api"),
         (CertificateCategory.INTERNAL_HTTPS_CLIENT, "internal"),
-        (CertificateCategory.EXTERNAL_SERVICE_CLIENT, "external"),
+        (CertificateCategory.INTERNAL_HTTPS_CLIENT, "external"),
         (CertificateCategory.OBSERVABILITY_ENDPOINT_SERVER, "api"),
         (CertificateCategory.OBSERVABILITY_ENDPOINT_SERVER, "node_exporter"),
         (CertificateCategory.OBSERVABILITY_CLIENT, "loki"),

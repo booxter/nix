@@ -96,7 +96,7 @@ impl SystemBackend {
 
     fn resolve_connection(&self, target: &DeploymentTarget) -> Result<SshConnection> {
         let mut destination = target.host.ssh_host.clone();
-        if target.host.is_work && is_bare_hostname(&destination) {
+        if target.host.realm == "work" && is_bare_hostname(&destination) {
             destination.push_str(".local");
         }
 

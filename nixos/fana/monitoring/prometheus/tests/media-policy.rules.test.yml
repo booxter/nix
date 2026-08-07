@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'node_systemd_unit_state{instance="srvarr",job="node-mtls",name="transmission-prioritizer.service",state="active"}'
+      - series: 'node_systemd_unit_state{instance="srvarr",job="node-mtls",name="adaptive-upload-policy-qos.service",state="active"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
@@ -14,7 +14,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'node_systemd_unit_state{instance="srvarr",job="node-mtls",name="transmission-prioritizer.service",state="active"}'
+      - series: 'node_systemd_unit_state{instance="srvarr",job="node-mtls",name="adaptive-upload-policy-qos.service",state="active"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
@@ -27,12 +27,12 @@ tests:
               category: media
               instance: srvarr
               job: node-mtls
-              name: transmission-prioritizer.service
+              name: adaptive-upload-policy-qos.service
               severity: warning
               state: active
             exp_annotations:
-              summary: "Media policy unit down: transmission-prioritizer.service"
-              description: "The media pipeline policy unit transmission-prioritizer.service on srvarr has not been active for 5 minutes."
+              summary: "Media policy unit down: adaptive-upload-policy-qos.service"
+              description: "The media pipeline policy unit adaptive-upload-policy-qos.service on srvarr has not been active for 5 minutes."
 
   - interval: 30s
     input_series:

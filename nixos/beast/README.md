@@ -67,7 +67,7 @@ curl -I https://search.ihar.dev/oauth2/sign_in
 
 ## NFS
 
-- Exports are restricted to `site.lan.cidr` from `lib/inventory/default.nix` and
+- Exports are restricted to `site.lan.cidr` from `inv/default.nix` and
   currently include:
   - `/volume2/Media`
   - `/volume2/nix-cache`
@@ -118,7 +118,7 @@ internal HTTPS and `media-admins` OIDC gate. Jellyfin's official Webhook plugin
 and its WatchState destination are managed declaratively by Jellarr.
 
 The WatchState system user is supplied declaratively from
-`sso.applications.watchstate.bootstrapOwner` in `lib/inventory/default.nix`; its
+`sso.applications.watchstate.bootstrapOwner` in `inv/default.nix`; its
 password comes from `watchstate/system/password` in `secrets/main/beast.yaml`.
 These credentials bootstrap WatchState's internal token but are not presented
 to users: after the outer OIDC gate succeeds, WatchState trusts nginx's

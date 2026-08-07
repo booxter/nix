@@ -5,10 +5,10 @@
   ...
 }:
 let
-  oidc = import ../../../lib/oidc-clients.nix { inherit lib hostInventory; };
   lan = hostInventory.site.lan;
   grafanaHost = "grafana.${lan.domain}";
-  oidcClientId = oidc.clients.grafana.clientId;
+  oidcClient = config.host.sso.oidc.clients.grafana;
+  oidcScopes = config.host.sso.oidc.baseScopes;
   alertmanagerPort = 9093;
   grafanaPort = 3000;
   prometheusPort = 9090;
@@ -18,6 +18,27 @@ let
   grafanaLokiUid = "P8E80F9AEF21F6940";
 in
 {
+  host.sso.oidc.registrations.grafana = {
+    displayName = "Grafana";
+    originUrls = [ "https://${grafanaHost}/login/generic_oauth" ];
+    originLanding = "https://${grafanaHost}/";
+    scopeMaps = {
+      "grafana-admins" = oidcScopes;
+      "grafana-viewers" = oidcScopes;
+    };
+    claimMaps.grafana_role.valuesByGroup = {
+      "grafana-admins" = [ "admin" ];
+      "grafana-viewers" = [ "viewer" ];
+    };
+    secret = {
+      sopsKey = "grafana/oidc/client_secret";
+      name = "grafanaOidcClientSecret";
+      owner = "grafana";
+      group = "grafana";
+      restartUnits = [ "grafana.service" ];
+    };
+  };
+
   sops.secrets.grafanaSecretKey = {
     key = "grafana/secret_key";
     owner = "grafana";
@@ -30,14 +51,6 @@ in
     group = "grafana";
     mode = "0400";
   };
-  sops.secrets.grafanaOidcClientSecret = {
-    key = "grafana/oidc/client_secret";
-    owner = "grafana";
-    group = "grafana";
-    mode = "0400";
-    restartUnits = [ "grafana.service" ];
-  };
-
   services.grafana = {
     enable = true;
     settings = {
@@ -71,17 +84,17 @@ in
         icon = "signin";
         allow_sign_up = true;
         auto_login = false;
-        client_id = oidcClientId;
-        client_secret = "$__file{${config.sops.secrets.grafanaOidcClientSecret.path}}";
-        scopes = lib.concatStringsSep " " oidc.baseScopes;
-        auth_url = oidc.authorizationUrl;
-        token_url = oidc.tokenUrl;
-        api_url = oidc.userinfoUrl oidcClientId;
+        client_id = oidcClient.clientId;
+        client_secret = "$__file{${oidcClient.secret.path}}";
+        scopes = lib.concatStringsSep " " oidcClient.baseScopes;
+        auth_url = oidcClient.authorizationUrl;
+        token_url = oidcClient.tokenUrl;
+        api_url = oidcClient.userinfoUrl;
         auth_style = "InHeader";
         use_pkce = true;
         use_refresh_token = false;
         validate_id_token = true;
-        jwk_set_url = oidc.jwksUrl oidcClientId;
+        jwk_set_url = oidcClient.jwksUrl;
         login_attribute_path = "preferred_username";
         name_attribute_path = "name";
         email_attribute_path = "email";

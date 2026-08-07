@@ -49,7 +49,7 @@ in
     };
   };
 
-  host.observability.client.prometheusMtlsEndpoints.jellyfin = {
+  host.observability.prometheusEndpoints.jellyfin = {
     enable = true;
     port = jellyfinExporterPort;
     upstream = "http://127.0.0.1:${toString jellyfinExporterInternalPort}/metrics";

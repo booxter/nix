@@ -8,7 +8,6 @@
   ...
 }:
 let
-  oidc = import ../../lib/oidc-clients.nix { inherit lib hostInventory; };
   paperlessService = hostInventory.servicesById.paperless;
   paperlessGptService = hostInventory.servicesById."paperless-gpt";
   beastNfsAddress = hostInventory.toNixosHostIpv4Address "beast";
@@ -24,15 +23,15 @@ let
   paperlessGptPort = 8080;
   paperlessGptHost = "${paperlessGptService.id}.${hostInventory.site.lan.domain}";
   paperlessGptOauth2ProxyPort = 4181;
-  paperlessOidcClientId = oidc.clients.paperless.clientId;
+  oidcClient = config.host.sso.oidc.clients.paperless;
+  oidcScopes = config.host.sso.oidc.baseScopes;
   paperlessOidcProviderId = "sso";
   paperlessOidcClientSecretPlaceholder = "__PAPERLESS_OIDC_CLIENT_SECRET__";
-  paperlessOidcDiscoveryUrl = oidc.discoveryUrl paperlessOidcClientId;
   paperlessOidcProvidersJson =
     builtins.replaceStrings
       [ paperlessOidcClientSecretPlaceholder ]
       [
-        config.sops.placeholder."paperless/oidc/client_secret"
+        oidcClient.secret.placeholder
       ]
       (
         builtins.toJSON {
@@ -40,15 +39,15 @@ let
             {
               provider_id = paperlessOidcProviderId;
               name = "SSO";
-              client_id = paperlessOidcClientId;
+              client_id = oidcClient.clientId;
               secret = paperlessOidcClientSecretPlaceholder;
               settings = {
                 email_authentication = true;
                 oauth_pkce_enabled = true;
-                server_url = paperlessOidcDiscoveryUrl;
+                server_url = oidcClient.discoveryUrl;
                 token_auth_method = "client_secret_basic";
                 verified_email = true;
-                scope = oidc.scopeWith [ "groups" ];
+                scope = oidcScopes ++ [ "groups" ];
               };
             }
           ];
@@ -56,7 +55,8 @@ let
       );
   ollamaTunnelPort = 11435;
   ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
-  ociImages = import ../../lib/oci-images { inherit pkgs; };
+  ollamaClient = config.host.internalPki.clients.ollama;
+  ociImages = import ../../oci { inherit pkgs; };
   paperlessGptImage = ociImages.paperless-gpt.ref;
   paperlessGptImageFile = ociImages.paperless-gpt.imageFile;
 
@@ -87,6 +87,29 @@ let
 
 in
 {
+  host.sso.oidc.registrations.paperless = {
+    displayName = "Paperless";
+    originUrls = [ "${paperlessService.url}/accounts/oidc/sso/login/callback/" ];
+    originLanding = "${paperlessService.url}/";
+    scopeMaps = {
+      "paperless-admins" = oidcScopes ++ [ "groups" ];
+      "paperless-users" = oidcScopes ++ [ "groups" ];
+    };
+    claimMaps.groups.valuesByGroup = {
+      "paperless-admins" = [ "paperless-admins" ];
+      "paperless-users" = [ "paperless-users" ];
+    };
+    secret = {
+      sopsKey = "paperless/oidc/client_secret";
+      name = "paperless/oidc/client_secret";
+      restartUnits = [
+        "paperless-scheduler.service"
+        "paperless-task-queue.service"
+        "paperless-web.service"
+      ];
+    };
+  };
+
   boot.supportedFilesystems = [ "nfs" ];
 
   fileSystems.${paperlessStoragePath} = {
@@ -126,16 +149,6 @@ in
         "paperless-gpt-configure.service"
         "prometheus-paperless-exporter.service"
         "podman-paperless-gpt.service"
-      ];
-    };
-    "paperless/oidc/client_secret" = {
-      owner = "root";
-      group = "root";
-      mode = "0400";
-      restartUnits = [
-        "paperless-scheduler.service"
-        "paperless-task-queue.service"
-        "paperless-web.service"
       ];
     };
   };
@@ -364,6 +377,8 @@ in
   host.sso.oauth2ProxyGates.paperless-gpt = {
     enable = true;
     clientId = "paperless-gpt";
+    displayName = "Paperless GPT";
+    originLanding = "https://${paperlessGptHost}/";
     httpAddress = "http://127.0.0.1:${toString paperlessGptOauth2ProxyPort}";
     cookieName = "_paperless_gpt_sso";
     allowedGroups = [ "paperless-admins" ];
@@ -380,16 +395,17 @@ in
     };
   };
 
-  host.observability.client.prometheusMtlsEndpoints.paperless = {
+  host.observability.prometheusEndpoints.paperless = {
     enable = true;
     port = paperlessMetricsMtlsPort;
     upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
   };
 
-  host.internalHttps.mtlsClients.ollama = {
+  host.internalPki.clients.ollama = {
     enable = true;
+    category = "internal";
     commonName = "ollama.org";
-    restartUnits = [ "stunnel.service" ];
+    materializations.default.restartUnits = [ "stunnel.service" ];
   };
 
   services.stunnel = {
@@ -400,11 +416,11 @@ in
     clients.ollama = {
       accept = "127.0.0.1:${toString ollamaTunnelPort}";
       connect = "${ollamaInternalHost}:443";
-      cert = config.sops.secrets."internal-https-client-ollama-crt".path;
-      key = config.sops.secrets."internal-https-client-ollama-key".path;
+      cert = config.sops.secrets.${ollamaClient.materializations.default.certificateSecretName}.path;
+      key = config.sops.secrets.${ollamaClient.materializations.default.keySecretName}.path;
       checkHost = ollamaInternalHost;
       sni = ollamaInternalHost;
-      CAFile = toString (import ../../lib/home-internal-pki-root-ca.nix);
+      CAFile = toString config.host.internalPki.rootCaCertificate;
       verifyChain = true;
       OCSPaia = false;
     };

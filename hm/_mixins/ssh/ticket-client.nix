@@ -1,28 +1,23 @@
 {
   config,
   hostInventory,
-  hostSpec,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
   username = config.home.username;
+  hostname = osConfig.networking.hostName;
+  realm = osConfig.host.realm;
   homeManagerPkgs = import ../../pkgs pkgs;
   ticketPackage = homeManagerPkgs.ssh-ticket;
-  cfg = config.programs.sshTicket;
-  issuer = hostInventory.sshTicket.issuers.${hostSpec.name} or null;
-  ticketStateDir = "${config.home.homeDirectory}/.local/state/ssh-ticket";
+  issuer = hostInventory.sshTicket.issuers.${hostname} or null;
+  ticketStateDir = "${config.xdg.stateHome}/ssh-ticket";
   ticketKeyPath = "${config.home.homeDirectory}/.ssh/fleet-ticket/id_ed25519";
   caKeyPath = "${config.home.homeDirectory}/.ssh/${issuer.keyName}";
   caSigningArgs = if issuer.useAgent then "--ca-agent" else "--no-ca-agent";
-  ticketTargets = import ./ticket-targets.nix {
-    inherit
-      hostInventory
-      lib
-      username
-      ;
-  };
+  ticketTargets = builtins.filter (target: target.realm == realm) hostInventory.sshTicket.targets;
   ticketTargetsFile = pkgs.writeText "ssh-ticket-targets.json" (builtins.toJSON ticketTargets);
   enabledTicketTargets = builtins.filter (target: target.enabled) ticketTargets;
   ticketHostBlock =
@@ -71,28 +66,26 @@ let
   );
 in
 {
-  options.programs.sshTicket.enableKnownHosts = lib.mkEnableOption "OpenSSH config for known ssh-ticket hosts";
-
-  config = {
+  config = lib.mkIf (osConfig.host.ssh.tickets.enable && issuer != null) {
     home.packages = [ ticketPackage ];
 
-    home.sessionVariables.SSHT_TARGETS_FILE = "${ticketTargetsFile}";
+    home.sessionVariables = {
+      SSHT_TARGETS_FILE = "${ticketTargetsFile}";
+      SSHT_CA_KEY = caKeyPath;
+      SSHT_CA_AGENT = lib.boolToString issuer.useAgent;
+    };
 
-    home.file.".ssh/fleet-user-ca.pub" = lib.mkIf cfg.enableKnownHosts {
+    home.file.".ssh/fleet-user-ca.pub" = lib.mkIf issuer.useAgent {
       text = "${issuer.publicKey}\n";
     };
 
     assertions = [
       {
-        assertion = !cfg.enableKnownHosts || issuer != null;
-        message = "programs.sshTicket.enableKnownHosts requires an SSH ticket issuer for ${hostSpec.name}";
-      }
-      {
-        assertion = issuer == null || lib.elem issuer.publicKey hostInventory.sshTicket.trustedCaPublicKeys;
-        message = "SSH ticket issuer for ${hostSpec.name} is not trusted by ticket servers";
+        assertion = lib.elem issuer.publicKey hostInventory.sshTicket.trustedCaPublicKeysByRealm.${realm};
+        message = "SSH ticket issuer for ${hostname} is not trusted by ticket servers";
       }
     ];
 
-    programs.ssh.settings = lib.mkIf cfg.enableKnownHosts ticketKnownHostSettings;
+    programs.ssh.settings = ticketKnownHostSettings;
   };
 }
