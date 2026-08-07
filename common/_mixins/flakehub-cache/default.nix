@@ -21,8 +21,12 @@ let
           matches = builtins.match ".*\"(cache\\.flakehub\\.com-[^\"]+)\".*" line;
         in
         if matches == null then null else builtins.elemAt matches 0;
+      keys = lib.filter (key: key != null) (map keyFromLine (lib.splitString "\n" installerSource));
     in
-    lib.filter (key: key != null) (map keyFromLine (lib.splitString "\n" installerSource));
+    assert lib.asserts.assertMsg (
+      keys != [ ]
+    ) "Determinate Nix Installer source does not contain any FlakeHub cache signing keys";
+    keys;
 in
 {
   options.host.flakehubCache = {
