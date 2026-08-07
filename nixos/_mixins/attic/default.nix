@@ -7,7 +7,6 @@
 }:
 let
   rootDir = "/root";
-  atticConfigPath = "${rootDir}/.config/attic/config.toml";
   watchStoreCommand = utils.escapeSystemdExecArgs [
     (lib.getExe pkgs.attic-client)
     "watch-store"
@@ -21,7 +20,10 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network-online.target" ];
       wants = [ "network-online.target" ];
-      environment.HOME = rootDir;
+      environment = {
+        HOME = rootDir;
+        XDG_CONFIG_HOME = "/etc";
+      };
       serviceConfig = {
         ExecStart = watchStoreCommand;
         Restart = "always";
@@ -29,12 +31,5 @@ in
         WorkingDirectory = rootDir;
       };
     };
-
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "${atticConfigPath}")"
-      ${pkgs.coreutils}/bin/ln -sf ${
-        config.sops.templates."attic-client-config.toml".path
-      } "${atticConfigPath}"
-    '';
   };
 }

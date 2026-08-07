@@ -6,7 +6,6 @@
 }:
 let
   rootDir = "/private/var/root";
-  atticConfigPath = "${rootDir}/.config/attic/config.toml";
 in
 {
   config = lib.mkIf config.host.attic.enable {
@@ -22,6 +21,7 @@ in
         WorkingDirectory = rootDir;
         EnvironmentVariables = {
           HOME = rootDir;
+          XDG_CONFIG_HOME = "/etc";
           NIX_SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
           SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
         };
@@ -30,14 +30,5 @@ in
         StandardErrorPath = "/var/log/attic-watch-store.log";
       };
     };
-
-    sops.templates."attic-client-config.toml".group = lib.mkForce "wheel";
-
-    system.activationScripts.postActivation.text = lib.mkAfter ''
-      ${pkgs.coreutils}/bin/mkdir -p "$(${pkgs.coreutils}/bin/dirname "${atticConfigPath}")"
-      ${pkgs.coreutils}/bin/ln -sf ${
-        config.sops.templates."attic-client-config.toml".path
-      } "${atticConfigPath}"
-    '';
   };
 }

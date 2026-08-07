@@ -2,11 +2,20 @@
   config,
   hostInventory,
   lib,
+  pkgs,
   ...
 }:
 let
   cfg = config.host.attic;
   realmAttic = hostInventory.realms.${config.host.realm}.services.attic or null;
+  toml = pkgs.formats.toml { };
+  clientConfig = toml.generate "attic-client-config.toml" {
+    default-server = cfg.cacheName;
+    servers.${cfg.cacheName} = {
+      endpoint = cfg.endpoint;
+      token-file = config.sops.secrets."attic/token".path;
+    };
+  };
 in
 {
   options.host.attic = {
@@ -50,20 +59,8 @@ in
       };
     })
     (lib.mkIf cfg.enable {
-      sops = {
-        secrets."attic/token" = { };
-        templates."attic-client-config.toml" = {
-          owner = "root";
-          group = "root";
-          mode = "0400";
-          content = ''
-            default-server = "${cfg.cacheName}"
-            [servers.${cfg.cacheName}]
-            endpoint = "${cfg.endpoint}"
-            token = "${config.sops.placeholder."attic/token"}"
-          '';
-        };
-      };
+      environment.etc."attic/config.toml".source = clientConfig;
+      sops.secrets."attic/token" = { };
     })
   ];
 }
