@@ -6,7 +6,7 @@
 }:
 let
   hostname = config.networking.hostName;
-  sshIdentity = hostInventory.ssh.identityFor hostname hostInventory.ssh.purposes.communityBuilderClient;
+  sshIdentity = hostInventory.ssh.identityForBuilderPool hostname "community";
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   linuxFeatures = [
     "benchmark"

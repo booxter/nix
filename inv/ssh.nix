@@ -6,15 +6,12 @@
 }:
 let
   purposes = {
-    communityBuilderClient = "community-builder-client";
     gitSigning = "git-signing";
     gitSigningFallback = "git-signing-fallback";
     interactiveSsh = "interactive-ssh";
-    personalBuilderClient = "personal-builder-client";
     remoteUnlock = "remote-unlock";
     sshFallback = "ssh-fallback";
     sshTicketCaSigning = "ssh-ticket-ca-signing";
-    workBuilderClient = "work-builder-client";
   };
   operatorHostsForRealm =
     realm:
@@ -29,6 +26,7 @@ let
       kind,
       fileName,
       availableOn,
+      builderPools ? [ ],
       purposes ? [ ],
       publicKey ? null,
       authorizedRealms ? [ ],
@@ -40,6 +38,7 @@ let
         authorizedHosts
         authorizedRealms
         availableOn
+        builderPools
         fileName
         kind
         name
@@ -57,10 +56,10 @@ let
       availableOn = [ host ];
       purposes = [
         purposes.gitSigningFallback
-        purposes.personalBuilderClient
         purposes.sshFallback
       ]
       ++ additionalPurposes;
+      builderPools = [ "personal" ];
       publicKey = readPublicKey publicKeyFile;
       authorizedRealms = [ "home" ];
     };
@@ -85,7 +84,7 @@ let
       kind = "file";
       fileName = "jgwxhwdl4x-nix-builder";
       availableOn = workOperatorHosts;
-      purposes = [ purposes.workBuilderClient ];
+      builderPools = [ "work" ];
       publicKey = readPublicKey ../public-keys/users/jgwxhwdl4x-nix-builder.pub;
       authorizedHosts = [ "nvws" ];
     };
@@ -94,7 +93,7 @@ let
       kind = "file";
       fileName = "nix-community-builders";
       availableOn = homeOperatorHosts;
-      purposes = [ purposes.communityBuilderClient ];
+      builderPools = [ "community" ];
     };
 
     yubikey = mkIdentity "yubikey" {
@@ -138,18 +137,18 @@ let
   identityValues = builtins.attrValues userIdentities;
   identitiesForPurpose =
     purpose: builtins.filter (identity: builtins.elem purpose identity.purposes) identityValues;
-  identityFor =
-    host: purpose:
+  selectIdentity =
+    host: description: predicate:
     let
       matches = builtins.filter (
-        identity: builtins.elem host identity.availableOn && builtins.elem purpose identity.purposes
+        identity: builtins.elem host identity.availableOn && predicate identity
       ) identityValues;
       matchNames = lib.concatMapStringsSep ", " (identity: identity.name) matches;
     in
     if builtins.length matches == 1 then
       builtins.head matches
     else
-      throw "host ${host} must have exactly one SSH identity for ${purpose}; found: ${matchNames}";
+      throw "host ${host} must have exactly one SSH identity for ${description}; found: ${matchNames}";
   publicKeysMatching =
     predicate:
     map (
@@ -163,10 +162,16 @@ in
 {
   inherit
     identitiesForPurpose
-    identityFor
     purposes
     userIdentities
     ;
+
+  identityFor =
+    host: purpose:
+    selectIdentity host "purpose ${purpose}" (identity: builtins.elem purpose identity.purposes);
+  identityForBuilderPool =
+    host: pool:
+    selectIdentity host "builder pool ${pool}" (identity: builtins.elem pool identity.builderPools);
 
   authorizedKeysForRealm =
     realm: publicKeysMatching (identity: builtins.elem realm identity.authorizedRealms);

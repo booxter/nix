@@ -7,8 +7,7 @@
 {
   imports = [
     ./community.nix
-    ./personal.nix
-    ./work.nix
+    ./managed.nix
   ];
 
   options.host = {
