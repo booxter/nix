@@ -14,7 +14,7 @@ let
   slotDurationMinutes = 30;
   maintenanceWindow = {
     start = clock 3 30;
-    end = clock 6 30;
+    end = clock 5 30;
   };
   rebootWindowFor = start: {
     lower = start;
@@ -38,9 +38,9 @@ let
     builder.upgrade = weekly "Mon" maintenanceWindow.start;
     cache.upgrade = weekly "Mon" (clock 4 0);
     hypervisor.upgrade = weekly "Mon" (clock 4 30);
-    workload.upgrade = daily (clock 6 0);
+    workload.upgrade = daily (clock 5 0);
   };
-  weeklyReboot = weekly "Sat" (clock 5 30);
+  weeklyReboot = weekly "Sat" (clock 4 30);
   infrastructureSchedules = [
     phases.builder.upgrade
     phases.cache.upgrade
@@ -82,7 +82,7 @@ assert lib.asserts.assertMsg (
   phases.workload.upgrade.cadence == "daily"
 ) "workload auto-upgrades must remain daily";
 assert lib.asserts.assertMsg startsFitMaintenanceWindow
-  "all auto-upgrade and reboot slots must fit inside the 03:30-06:30 maintenance window";
+  "all auto-upgrade and reboot slots must fit inside the 03:30-05:30 maintenance window";
 assert lib.asserts.assertMsg (slotsDoNotOverlap orderedSlots)
   "auto-upgrade maintenance slots must not overlap";
 assert lib.asserts.assertMsg (
