@@ -17,8 +17,8 @@ const COMPILED_HOSTS_JSON: &str = env!("FLEET_HOSTS_JSON");
 #[serde(rename_all = "camelCase")]
 pub struct Host {
     pub display_name: String,
-    pub is_work: bool,
     pub platform: String,
+    pub realm: String,
     pub runtime_host: String,
     pub ssh_host: String,
 }
@@ -66,12 +66,12 @@ mod tests {
     fn compiled_inventory_classifies_darwin_and_nixos_hosts() {
         let inventory = compiled_inventory().expect("compiled host inventory should be valid");
 
-        assert!(!inventory.darwin["mair"].is_work);
+        assert_eq!(inventory.darwin["mair"].realm, "home");
         assert_eq!(inventory.darwin["mair"].platform, "aarch64-darwin");
         assert_eq!(inventory.darwin["mair"].runtime_host, "mair");
-        assert!(!inventory.nixos["beast"].is_work);
+        assert_eq!(inventory.nixos["beast"].realm, "home");
         assert_eq!(inventory.nixos["beast"].platform, "x86_64-linux");
-        assert!(inventory.nixos["nv"].is_work);
+        assert_eq!(inventory.nixos["nv"].realm, "work");
         assert_eq!(inventory.aliases["JGWXHWDL4X"], "JGWXHWDL4X");
         assert!(!inventory.lan_dns_server.is_empty());
         assert!(!inventory.lan_domain.is_empty());
@@ -106,7 +106,7 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["beast", "nvws"]
         );
-        assert!(selected.nixos["nvws"].is_work);
+        assert_eq!(selected.nixos["nvws"].realm, "work");
         assert_eq!(selected.aliases, inventory.aliases);
     }
 }

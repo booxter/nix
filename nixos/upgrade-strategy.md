@@ -58,8 +58,9 @@ before the inherited `05:15` fleet upgrade window.
 ## Warmup Scope
 
 `fleet-cache-warmer` builds the selected CI-validated Nix outputs below. On
-`mmini`, it selects non-work targets and pushes them to Attic. On `JGWXHWDL4X`,
-it selects work targets and only realizes them in the local Nix store.
+`mmini`, it selects home-realm targets and pushes them to Attic. On
+`JGWXHWDL4X`, it selects work-realm targets and only realizes them in the local
+Nix store.
 
 - `x86_64-linux` NixOS system closures
 - `aarch64-linux` NixOS system closures
@@ -68,10 +69,9 @@ it selects work targets and only realizes them in the local Nix store.
 - `x86_64-linux` checks from `.github/workflows/checks.yml`, including NixOS
   tests
 
-The non-work warmer intentionally excludes:
+The home-realm warmer intentionally excludes:
 
-- targets selected for hosts marked with `isWork = true` in
-  [`inv/default.nix`](/Users/ihrachyshka/src/nix/inv/default.nix:1)
+- targets selected exclusively for hosts in another realm
 - formatting checks such as `nix fmt`
 
 Those excluded items either are not warmed yet by policy or do not produce
@@ -80,7 +80,7 @@ useful Nix store closures for Attic warming.
 The authoritative source for these targets at system build time is
 [`ci/ci-target-inventory.json`](/Users/ihrachyshka/src/nix/ci/ci-target-inventory.json:1).
 Both CI and the `fleet-cache-warmer` package read from that inventory; the
-warmer package also filters targets based on `isWork` in
+warmer package also filters host-backed targets by their inventory realm in
 [`inv/default.nix`](/Users/ihrachyshka/src/nix/inv/default.nix:1).
 The filtered list is embedded in the installed launchd closure.
 
@@ -100,12 +100,12 @@ work Attic cache. It uses configured Nix remote builders for work Linux targets.
 
 ## Procedure
 
-The daily non-work warmup procedure is:
+The daily home-realm warmup procedure is:
 
 1. `launchd` starts `fleet-cache-warmer` on `mmini` at `08:30` and `20:30`.
 2. The warmer uses the target list embedded in its installed launchd closure and
    builds those attributes from `github:booxter/nix`.
-3. The warmer selects targets based on the configured `isWork` filter.
+3. The warmer selects targets based on its configured `targetRealm`.
 4. The warmer filters out inventory entries that no longer evaluate at that
    flake revision.
 5. The warmer builds the remaining targets in one `nix build --keep-going`

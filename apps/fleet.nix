@@ -24,7 +24,7 @@ let
       // pkgs.lib.mapAttrs (name: _: name) hostInventory.darwinHosts;
     darwin = pkgs.lib.mapAttrs (_: spec: {
       displayName = spec.name;
-      isWork = spec.isWork or false;
+      inherit (spec) realm;
       platform = spec.platform;
       runtimeHost = spec.name;
       sshHost = spec.name;
@@ -36,7 +36,7 @@ let
         inherit (spec) name;
         value = {
           displayName = spec.name;
-          isWork = spec.isWork or false;
+          inherit (spec) realm;
           platform = spec.platform or "x86_64-linux";
           runtimeHost = spec.name;
           sshHost = spec.name;

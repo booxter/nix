@@ -147,9 +147,9 @@ fn select_targets(
         arguments.hosts.clone()
     };
     if discovered && !arguments.both {
-        let include_work = arguments.work;
+        let selected_realm = if arguments.work { "work" } else { "home" };
         names.retain(|name| {
-            find_target(inventory, name).is_ok_and(|target| target.host.is_work == include_work)
+            find_target(inventory, name).is_ok_and(|target| target.host.realm == selected_realm)
         });
     }
     if names.is_empty() {

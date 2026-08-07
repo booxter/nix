@@ -38,6 +38,7 @@ let
       name = "builder${idx'}";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       proxNode = "prx${idx'}-lab";
       dhcpReservation = builderDhcpReservations.${idx'};
       stateVersion = "25.11";
@@ -70,6 +71,7 @@ let
         ;
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       hmFull = false;
       stateVersion = prxStateVersion;
       netIface = prxNetIface;
@@ -115,6 +117,7 @@ in
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "home";
+      userProfile = "personal";
       isDesktop = true;
       isLaptop = true;
       isSecretsOperator = true;
@@ -126,6 +129,7 @@ in
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "home";
+      userProfile = "personal";
       isBuilder = true;
       isDesktop = true;
       isSecretsOperator = true;
@@ -138,10 +142,10 @@ in
       hmStateVersion = "25.11";
       platform = "aarch64-darwin";
       realm = "work";
+      userProfile = "nvidia";
       isDesktop = true;
       isLaptop = true;
       isSecretsOperator = true;
-      isWork = true;
       lanWanInterfaces = [
         "en0"
         "en7"
@@ -156,6 +160,7 @@ in
       stateVersion = "25.11";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       isBuilder = true;
       isDesktop = true;
       isSecretsOperator = true;
@@ -228,8 +233,8 @@ in
       name = nvws;
       platform = "x86_64-linux";
       realm = "work";
+      userProfile = "nvidia";
       isBuilder = true;
-      isWork = true;
       nspawnTestBuilder = true;
       hmFull = false;
       stateVersion = "25.11";
@@ -247,6 +252,7 @@ in
       stateVersion = "25.11";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       critical = true;
       dnsAliases = builtins.filter (domain: domain != "dash.${publicDomain}") publicServiceHosts;
       hmFull = false;
@@ -276,8 +282,8 @@ in
       name = "nv";
       platform = "x86_64-linux";
       realm = "work";
+      userProfile = "nvidia";
       stateVersion = "25.11";
-      isWork = true;
       upsHost = nvws;
       dhcpReservation = {
         match = "bc:24:11:ed:30:d3";
@@ -293,6 +299,7 @@ in
       name = "cache";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       localDnsAliases = [ "nix-cache" ];
@@ -311,6 +318,7 @@ in
       name = "srvarr";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       dnsAliases = [ "dash.${publicDomain}" ];
@@ -337,6 +345,7 @@ in
       name = "fana";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       cores = 8;
@@ -354,6 +363,7 @@ in
       name = "gw";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       cores = 2;
@@ -371,6 +381,7 @@ in
       name = "org";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
       cores = 4;
@@ -388,6 +399,7 @@ in
       name = "pki";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       stateVersion = "25.11";
       caServer = {
         port = 8443;
@@ -410,6 +422,7 @@ in
       name = "home";
       platform = "x86_64-linux";
       realm = "home";
+      userProfile = "personal";
       stateVersion = "26.05";
       upsHost = "prx1-lab";
       proxNode = "prx2-lab";

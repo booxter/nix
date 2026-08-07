@@ -116,12 +116,14 @@
     };
   };
 
-  system.defaults.CustomUserPreferences."com.superultra.Homerow" = lib.mkIf (!config.host.isWork) {
-    SUEnableAutomaticChecks = 1;
-    SUHasLaunchedBefore = 1;
-    "check-for-updates-automatically" = 1;
-    "include-beta-updates" = false;
-    "launch-at-login" = 1;
-  };
+  system.defaults.CustomUserPreferences."com.superultra.Homerow" =
+    lib.mkIf (config.host.userProfile == "personal")
+      {
+        SUEnableAutomaticChecks = 1;
+        SUHasLaunchedBefore = 1;
+        "check-for-updates-automatically" = 1;
+        "include-beta-updates" = false;
+        "launch-at-login" = 1;
+      };
 
 }

@@ -106,14 +106,6 @@ in
       description = "Whether the YubiKey inventory assigns an age identity to this host.";
     };
 
-    isWork = lib.mkOption {
-      type = lib.types.bool;
-      default = hostSpec.isWork or false;
-      readOnly = true;
-      internal = true;
-      description = "Whether this is a work-managed host.";
-    };
-
     isVM = lib.mkOption {
       type = lib.types.bool;
       default = hostSpec.isVM or false;
@@ -204,6 +196,17 @@ in
       readOnly = true;
       internal = true;
       description = "Primary user declared by the host inventory.";
+    };
+
+    userProfile = lib.mkOption {
+      type = lib.types.enum [
+        "nvidia"
+        "personal"
+      ];
+      default = hostSpec.userProfile;
+      readOnly = true;
+      internal = true;
+      description = "User environment profile declared by the host inventory.";
     };
 
     ups.client.server = lib.mkOption {

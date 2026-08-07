@@ -7,10 +7,12 @@
 }:
 let
   internalPkiRootCaPath = osConfig.host.internalPki.rootCaCertificate;
-  inherit (osConfig.host) isDarwin isWork;
+  inherit (osConfig.host) isDarwin;
+  isNvidia = osConfig.host.userProfile == "nvidia";
+  isPersonal = osConfig.host.userProfile == "personal";
   cliPkgs = import ../cli/pkgs { inherit pkgs; };
   codexPkgs = import ../agents/pkgs { inherit pkgs; };
-  workspaceNames = import ../aerospace/workspaces.nix { inherit lib isWork; };
+  workspaceNames = import ../aerospace/workspaces.nix { inherit isNvidia lib; };
   inherit (config.lib.stylix) colors;
   sketchybarColors = {
     background = "0xff${colors.base00}";
@@ -194,7 +196,7 @@ let
     ''
   );
   attentionInboxItem = pkgs.writeText "sketchybar-attention-inbox-item.sh" (
-    lib.optionalString isWork ''
+    lib.optionalString isNvidia ''
       sketchybar --add item attention.inbox right                                \
                  --set attention.inbox script="$PLUGIN_DIR/attention-inbox.sh"   \
                                        update_freq=1200                          \
@@ -228,7 +230,7 @@ let
     ''
   );
   codexItem = pkgs.writeText "sketchybar-codex-items.sh" (
-    lib.optionalString (!isWork) ''
+    lib.optionalString isPersonal ''
       sketchybar --add item codex.5h left                                  \
                  --set codex.5h script="$PLUGIN_DIR/codex.sh"             \
                                 update_freq=60                             \
@@ -273,7 +275,7 @@ let
                                           background.border_width=0         \
                                           background.height=24
     ''
-    + lib.optionalString isWork ''
+    + lib.optionalString isNvidia ''
       sketchybar --add item codex.work left                                 \
                  --set codex.work script="$PLUGIN_DIR/codex-work.sh"        \
                                   update_freq=60                            \

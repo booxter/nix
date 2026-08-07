@@ -6,7 +6,8 @@
   ...
 }:
 let
-  inherit (osConfig.host) isDarwin isWork;
+  inherit (osConfig.host) isDarwin;
+  isPersonal = osConfig.host.userProfile == "personal";
   homeManagerPkgs = import ../../pkgs pkgs;
   cliPkgs = import ./pkgs { inherit pkgs; };
   configuredReviewBuilders =
@@ -164,7 +165,7 @@ in
     ++ lib.optionals isDarwin [
       container
     ]
-    ++ lib.optionals (!isWork) [
+    ++ lib.optionals isPersonal [
       cliPkgs.sync-repo
       ramalama
     ];
@@ -174,7 +175,7 @@ in
     MANPAGER = "page -t man";
   };
 
-  home.sessionPath = lib.optionals (!isWork) [
+  home.sessionPath = lib.optionals isPersonal [
     "$HOME/.priv-bin"
   ];
 

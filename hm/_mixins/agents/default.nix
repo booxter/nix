@@ -6,14 +6,15 @@
   ...
 }:
 let
-  inherit (osConfig.host) isWork;
+  isNvidia = osConfig.host.userProfile == "nvidia";
+  isPersonal = osConfig.host.userProfile == "personal";
   codexPkgs = import ./pkgs {
     inherit pkgs;
     codex = config.programs.codex.package;
   };
   claudeModel = "opus";
   modelEffort = "high";
-  deployFirefoxDevtoolsMcp = !isWork;
+  deployFirefoxDevtoolsMcp = isPersonal;
   nixosMcpServer = {
     command = lib.getExe pkgs.mcp-nixos;
     args = [ ];
@@ -112,7 +113,7 @@ in
     };
   };
 
-  programs.claude-code = lib.mkIf isWork {
+  programs.claude-code = lib.mkIf isNvidia {
     enable = true;
     context = agentContext;
     mcpServers.nixos = nixosMcpServer;
@@ -131,7 +132,7 @@ in
   };
 
   home.packages =
-    if isWork then
+    if isNvidia then
       [
         codexPkgs.codex-mcp-init
         codexPkgs.codex-work-usage-status
@@ -144,7 +145,7 @@ in
 
   # Work remote settings pin the default model and effort; user settings lose to
   # that managed layer, but CLI flags still win for shell launches.
-  home.shellAliases = lib.optionalAttrs isWork {
+  home.shellAliases = lib.optionalAttrs isNvidia {
     claude = "command claude --model ${claudeModel} --effort ${modelEffort}";
   };
 }
