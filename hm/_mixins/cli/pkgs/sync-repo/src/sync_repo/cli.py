@@ -32,7 +32,15 @@ def main(
     arguments = parser.parse_args(argv)
     user_home = home or Path.home()
     environment = os.environ if environ is None else environ
-    repositories = specs or repository_specs(user_home, environment)
+    repositories: Mapping[str, RepositorySpec]
+    if specs is None:
+        github_login = environment.get("SYNC_REPO_GITHUB_LOGIN")
+        if not github_login:
+            print("sync-repo: SYNC_REPO_GITHUB_LOGIN is not configured", file=stderr)
+            return 1
+        repositories = repository_specs(user_home, environment, github_login)
+    else:
+        repositories = specs
     try:
         spec = repositories[arguments.name]
     except KeyError:

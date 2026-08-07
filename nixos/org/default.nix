@@ -68,8 +68,8 @@ in
         enabled = true;
         host = "smtp.gmail.com";
         port = 587;
-        username = "ihar.hrachyshka@gmail.com";
-        fromemail = "ihar.hrachyshka@gmail.com";
+        username = hostInventory.user.emails.personal;
+        fromemail = hostInventory.user.emails.personal;
       };
       service = {
         timezone = vikunjaTimezone;

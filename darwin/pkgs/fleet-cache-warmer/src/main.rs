@@ -11,6 +11,7 @@ use clap::Parser;
 const NAME: &str = "fleet-cache-warmer";
 const NIX: &str = env!("FLEET_CACHE_WARMER_NIX");
 const ATTIC: &str = env!("FLEET_CACHE_WARMER_ATTIC");
+const DEFAULT_FLAKE: &str = env!("FLEET_CACHE_WARMER_DEFAULT_FLAKE");
 const TARGETS_JSON: &str = env!("FLEET_CACHE_WARMER_TARGETS_JSON");
 const MAX_SUBSTITUTION_JOBS: &str = "4";
 const HTTP_CONNECTIONS: &str = "8";
@@ -295,7 +296,7 @@ fn targets(flake_ref: &str) -> Result<Vec<String>> {
 fn main() -> Result<()> {
     let arguments = Arguments::parse();
     let flake_ref =
-        env::var("FLEET_CACHE_WARMER_FLAKE").unwrap_or_else(|_| "github:booxter/nix".to_owned());
+        env::var("FLEET_CACHE_WARMER_FLAKE").unwrap_or_else(|_| DEFAULT_FLAKE.to_owned());
     let targets = targets(&flake_ref)?;
     if arguments.print_targets {
         for target in targets {

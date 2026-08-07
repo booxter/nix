@@ -1,5 +1,5 @@
 {
-  description = "booxter Nix* flake configs";
+  description = "Personal Nix fleet configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
@@ -69,9 +69,7 @@
     inputs@{ self, ... }:
     let
       inherit (self) outputs;
-      username = "ihrachyshka";
       hostInventory = import ./inv {
-        inherit username;
         lib = inputs.nixpkgs.lib;
       };
       hostSpecialArgs = spec: {
@@ -107,7 +105,6 @@
                 inputs
                 outputs
                 system
-                username
                 ;
             }
           );

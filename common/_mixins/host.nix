@@ -74,6 +74,14 @@ in
       description = "Whether this host is used interactively for fleet development and administration.";
     };
 
+    github.login = lib.mkOption {
+      type = lib.types.str;
+      default = hostInventory.user.github.login;
+      readOnly = true;
+      internal = true;
+      description = "GitHub login for the primary user on this host.";
+    };
+
     availability = lib.mkOption {
       type = lib.types.enum [
         "always"

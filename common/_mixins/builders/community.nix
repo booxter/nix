@@ -53,7 +53,7 @@ in
       extraConfig =
         let
           communityBuilderIdentityFile = "${config.users.users.${username}.home}/.ssh/nix-community-builders";
-          user = "booxter";
+          user = config.host.github.login;
         in
         lib.concatStringsSep "\n" (
           lib.mapAttrsToList (name: builder: ''

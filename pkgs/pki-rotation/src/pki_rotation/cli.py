@@ -33,7 +33,9 @@ from .scanner import CertificateScanner, Clock, SystemClock
 
 
 DEFAULT_INTERMEDIATE_CERTIFICATE = Path("/var/lib/step-ca/certs/intermediate_ca.crt")
-DEFAULT_REPOSITORY_URL = "https://github.com/booxter/nix.git"
+DEFAULT_REPOSITORY_URL = os.environ.get("PKI_ROTATION_REPO_URL")
+DEFAULT_REPOSITORY_OWNER = os.environ.get("PKI_ROTATION_REPO_OWNER")
+DEFAULT_REPOSITORY_NAME = os.environ.get("PKI_ROTATION_REPO_NAME")
 DEFAULT_BASE_BRANCH = "master"
 DEFAULT_SOPS_AGE_KEY_FILE = Path("/var/lib/sops-nix/key.txt")
 
@@ -173,8 +175,8 @@ def parser() -> argparse.ArgumentParser:
     rotate.add_argument("--dry-run", action="store_true")
     rotate.add_argument("--github-token-file", type=Path)
     rotate.add_argument("--repo-url", default=DEFAULT_REPOSITORY_URL)
-    rotate.add_argument("--repo-owner", default="booxter")
-    rotate.add_argument("--repo-name", default="nix")
+    rotate.add_argument("--repo-owner", default=DEFAULT_REPOSITORY_OWNER)
+    rotate.add_argument("--repo-name", default=DEFAULT_REPOSITORY_NAME)
     rotate.add_argument("--branch", default="ci/pki-rotate")
     rotate.add_argument("--base-branch", default=DEFAULT_BASE_BRANCH)
     rotate.add_argument("--commit-user-name", default="PKI Rotation Bot")

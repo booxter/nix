@@ -38,6 +38,7 @@ in
       pkiCertificates
       sopsTools
       ;
+    fleetRepository = hostInventory.fleetRepository;
   };
 
   postgresql-role-password = pkgs.callPackage ./postgresql-role-password { };

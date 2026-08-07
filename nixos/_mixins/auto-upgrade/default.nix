@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   utils,
@@ -28,7 +29,7 @@ in
 
       system.autoUpgrade = {
         enable = true;
-        flake = "github:booxter/nix#${config.networking.hostName}";
+        flake = "${hostInventory.fleetRepository.flakeRef}#${config.networking.hostName}";
         flags = [
           "-L"
           "--show-trace"

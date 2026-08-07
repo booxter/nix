@@ -13,6 +13,7 @@
   nix-output-monitor,
   openssh,
   pkg-config,
+  repoUrl,
   rustfmt,
   rustPlatform,
   stdenv,
@@ -47,7 +48,7 @@ rustPlatform.buildRustPackage {
   DEPLOY_NIX = lib.getExe nix;
   DEPLOY_NIX_COLLECT_GARBAGE = lib.getExe' nix "nix-collect-garbage";
   DEPLOY_NIX_STORE = lib.getExe' nix "nix-store";
-  DEPLOY_REPO_URL = "https://github.com/booxter/nix.git";
+  DEPLOY_REPO_URL = repoUrl;
   DEPLOY_SSH = lib.getExe openssh;
   FLEET_HOSTS_JSON = builtins.toJSON fleetInventory;
   WG_HOME_CONFIG_JSON = builtins.toJSON wireguardHome;

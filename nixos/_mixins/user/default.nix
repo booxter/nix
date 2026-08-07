@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
@@ -26,6 +27,7 @@ in
     hashedPasswordFile = config.sops.secrets.${rootPasswordSecret}.path;
   };
   users.users.${username} = {
+    description = hostInventory.user.fullName;
     extraGroups = [
       "wheel"
       "users"

@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  hostInventory,
+  lib,
+  ...
+}:
 let
   cfg = config.host.externalService;
   hasPublicVhosts = cfg.virtualHosts != { };
@@ -41,7 +46,7 @@ in
   options.host.externalService = {
     acmeEmail = lib.mkOption {
       type = lib.types.str;
-      default = "ihar.hrachyshka@gmail.com";
+      default = hostInventory.user.emails.personal;
       description = "Email address used for ACME registrations for public ingress.";
     };
 

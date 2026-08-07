@@ -29,7 +29,7 @@ in
 
     flakeRef = lib.mkOption {
       type = lib.types.str;
-      default = "github:booxter/nix";
+      default = hostInventory.fleetRepository.flakeRef;
       description = "Flake reference to warm.";
     };
 

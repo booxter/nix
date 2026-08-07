@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   osConfig,
   pkgs,
@@ -9,7 +10,6 @@ let
   inherit (osConfig.host) isDarwin;
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
-  username = config.home.username;
   thunderbirdProfilesPath = if isDarwin then "Library/Thunderbird/Profiles" else ".thunderbird";
 in
 {
@@ -61,7 +61,7 @@ in
   accounts.email.accounts =
     let
       commonCfg = {
-        realName = "Ihar Hrachyshka";
+        realName = hostInventory.user.fullName;
         thunderbird = {
           enable = true;
           perIdentitySettings = id: {
@@ -90,13 +90,13 @@ in
           if isNvidia then
             {
               flavor = "outlook.office365.com";
-              address = "${username}@nvidia.com";
+              address = hostInventory.user.emails.nvidia;
               smtp.host = lib.mkForce "mail.nvidia.com";
             }
           else
             {
               flavor = "gmail.com";
-              address = "ihar.hrachyshka@gmail.com";
+              address = hostInventory.user.emails.personal;
             }
         )
         // commonCfg;

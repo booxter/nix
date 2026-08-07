@@ -1,7 +1,4 @@
-{
-  lib,
-  username ? "ihrachyshka",
-}:
+{ lib }:
 let
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   lanDnsRecordTtlSeconds = 300;
@@ -10,6 +7,9 @@ let
 
   frame = "frame";
   mmini = "mmini";
+  user = import ./user.nix;
+  fleetRepository = import ./repository.nix;
+  inherit (user) username;
 
   siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
   realms = import ./realms.nix {
@@ -138,7 +138,7 @@ rec {
   };
 
   inherit (serviceFacts) glanceCategories;
-  inherit realms;
+  inherit fleetRepository realms user;
 
   sshTicket = sshTicketFacts;
   sso = ssoFacts;

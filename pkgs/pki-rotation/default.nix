@@ -1,5 +1,6 @@
 {
   atomicFileWrites,
+  fleetRepository,
   git,
   gitCommandRunner,
   lib,
@@ -66,6 +67,9 @@ pythonPackages.buildPythonApplication {
         --set PKI_ROTATION_HOSTS_FILE ${pkiCertificates.hostsFile} \
         --set PKI_ROTATION_QUERY_FILE ${pkiCertificates.queryFile} \
         --set PKI_ROTATION_CERTIFICATE_HELPER ${pkiCertificates}/bin/pki-issue-certificate-remote \
+        --set PKI_ROTATION_REPO_URL ${lib.escapeShellArg fleetRepository.httpsUrl} \
+        --set PKI_ROTATION_REPO_OWNER ${lib.escapeShellArg fleetRepository.owner} \
+        --set PKI_ROTATION_REPO_NAME ${lib.escapeShellArg fleetRepository.name} \
         --set PKI_ROTATION_GIT_ASKPASS "$out/bin/pki-rotation-git-askpass"
     done
   '';

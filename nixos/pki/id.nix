@@ -84,10 +84,10 @@ let
     schedule = "*/30 * * * * * *";
     instanceDisplayName = "SSO";
     instanceUrl = "https://${idService.publicHost}";
-    mailFromAddress = "ihar.hrachyshka@gmail.com";
-    mailReplyToAddress = "ihar.hrachyshka@gmail.com";
+    mailFromAddress = hostInventory.user.emails.personal;
+    mailReplyToAddress = hostInventory.user.emails.personal;
     mailRelay = "smtp.gmail.com";
-    mailUsername = "ihar.hrachyshka@gmail.com";
+    mailUsername = hostInventory.user.emails.personal;
     mailConnectTimeoutSeconds = 15;
   };
   writeMailSenderConfigCommand = utils.escapeSystemdExecArgs [

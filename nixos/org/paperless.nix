@@ -188,7 +188,7 @@ in
     passwordFile = config.sops.secrets."paperless/admin/password".path;
     settings = {
       PAPERLESS_ADMIN_USER = "ihar";
-      PAPERLESS_ADMIN_MAIL = "ihar.hrachyshka@gmail.com";
+      PAPERLESS_ADMIN_MAIL = hostInventory.user.emails.personal;
       PAPERLESS_ACCOUNT_ALLOW_SIGNUPS = false;
       PAPERLESS_APPS = "allauth.socialaccount.providers.openid_connect";
       PAPERLESS_ALLOWED_HOSTS = lib.concatStringsSep "," [
@@ -239,6 +239,7 @@ in
         User = "paperless";
         Group = "paperless";
         Environment = [
+          "PAPERLESS_ADMIN_EMAIL=${hostInventory.user.emails.personal}"
           "PAPERLESS_IHAR_PASSWORD_FILE=${config.sops.secrets."paperless/admin/password".path}"
           "PAPERLESS_KASIA_PASSWORD_FILE=${config.sops.secrets."paperless/users/kasia/password".path}"
           "PAPERLESS_GPT_API_TOKEN_FILE=${config.sops.secrets."paperless/api/token".path}"

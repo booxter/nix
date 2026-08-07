@@ -96,6 +96,7 @@ def test_real_paperless_state_converges_and_rotates_credentials(
     kasia_password.write_text("kasia-pass\n")
     token.write_text("a" * 40 + "\n")
     bootstrap_environment = {
+        "PAPERLESS_ADMIN_EMAIL": "admin@example.com",
         "PAPERLESS_IHAR_PASSWORD_FILE": str(admin_password),
         "PAPERLESS_KASIA_PASSWORD_FILE": str(kasia_password),
         "PAPERLESS_GPT_API_TOKEN_FILE": str(token),
@@ -108,7 +109,7 @@ def test_real_paperless_state_converges_and_rotates_credentials(
     user.is_staff = False
     user.is_superuser = False
     user.save()
-    address = EmailAddress.objects.get(user=user, email="ihar.hrachyshka@gmail.com")
+    address = EmailAddress.objects.get(user=user, email="admin@example.com")
     address.verified = False
     address.primary = False
     address.save()
@@ -130,7 +131,7 @@ def test_real_paperless_state_converges_and_rotates_credentials(
         "groups": ["paperless-admins", "paperless-users"],
         "users": {
             "ihar": {
-                "email": "ihar.hrachyshka@gmail.com",
+                "email": "admin@example.com",
                 "is_staff": True,
                 "is_superuser": True,
                 "password": True,
@@ -144,7 +145,7 @@ def test_real_paperless_state_converges_and_rotates_credentials(
         },
         "emails": [
             {
-                "email": "ihar.hrachyshka@gmail.com",
+                "email": "admin@example.com",
                 "verified": True,
                 "primary": True,
             },
@@ -184,6 +185,7 @@ def test_invalid_token_fails_before_mutating_paperless(tmp_path: Path) -> None:
         reconcile(
             UntouchedRepository(),
             {
+                "PAPERLESS_ADMIN_EMAIL": "admin@example.com",
                 "PAPERLESS_IHAR_PASSWORD_FILE": str(admin),
                 "PAPERLESS_KASIA_PASSWORD_FILE": str(kasia),
                 "PAPERLESS_GPT_API_TOKEN_FILE": str(token),

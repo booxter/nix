@@ -65,7 +65,7 @@ in
   users.users.${username} = {
     home = "/Users/${username}";
     createHome = true;
-    description = "Ihar Hrachyshka";
+    description = hostInventory.user.fullName;
     shell = pkgs.zsh;
   };
 

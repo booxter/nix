@@ -30,23 +30,24 @@ class RebaseFailed(SyncError):
 def repository_specs(
     home: Path,
     environ: Mapping[str, str],
+    github_login: str,
 ) -> dict[str, RepositorySpec]:
     xdg_data = Path(environ.get("XDG_DATA_HOME", home / ".local" / "share"))
     password_store = Path(environ.get("PASSWORD_STORE_DIR", xdg_data / "password-store"))
     return {
         "gmailctl": RepositorySpec(
             "gmailctl",
-            "git@github.com:booxter/gmailctl-private-config.git",
+            f"git@github.com:{github_login}/gmailctl-private-config.git",
             home / ".gmailctl",
         ),
         "pass": RepositorySpec(
             "pass",
-            "git@github.com:booxter/pass.git",
+            f"git@github.com:{github_login}/pass.git",
             password_store,
         ),
         "dotfiles": RepositorySpec(
             "dotfiles",
-            "git@github.com:booxter/dotfiles.git",
+            f"git@github.com:{github_login}/dotfiles.git",
             home / ".priv-bin",
         ),
     }

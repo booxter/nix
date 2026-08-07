@@ -22,24 +22,6 @@ class UserSpec:
     is_superuser: bool
 
 
-USERS = (
-    UserSpec(
-        username="ihar",
-        email="ihar.hrachyshka@gmail.com",
-        password_environment="PAPERLESS_IHAR_PASSWORD_FILE",
-        is_staff=True,
-        is_superuser=True,
-    ),
-    UserSpec(
-        username="kasia",
-        email="",
-        password_environment="PAPERLESS_KASIA_PASSWORD_FILE",
-        is_staff=False,
-        is_superuser=False,
-    ),
-)
-
-
 class Repository(Protocol):
     def ensure_group(self, name: str) -> None: ...
 
@@ -71,10 +53,38 @@ def required_path(environment: Mapping[str, str], name: str) -> Path:
     return path
 
 
+def users(environment: Mapping[str, str]) -> tuple[UserSpec, ...]:
+    try:
+        admin_email = environment["PAPERLESS_ADMIN_EMAIL"]
+    except KeyError as error:
+        raise Error(
+            "required Paperless environment variable is missing: PAPERLESS_ADMIN_EMAIL"
+        ) from error
+    if not admin_email:
+        raise Error("PAPERLESS_ADMIN_EMAIL is empty")
+    return (
+        UserSpec(
+            username="ihar",
+            email=admin_email,
+            password_environment="PAPERLESS_IHAR_PASSWORD_FILE",
+            is_staff=True,
+            is_superuser=True,
+        ),
+        UserSpec(
+            username="kasia",
+            email="",
+            password_environment="PAPERLESS_KASIA_PASSWORD_FILE",
+            is_staff=False,
+            is_superuser=False,
+        ),
+    )
+
+
 def reconcile(repository: Repository, environment: Mapping[str, str]) -> None:
+    configured_users = users(environment)
     passwords = {
         user.username: read_secret(required_path(environment, user.password_environment))
-        for user in USERS
+        for user in configured_users
     }
     token = read_secret(required_path(environment, "PAPERLESS_GPT_API_TOKEN_FILE"))
     if len(token) != TOKEN_LENGTH:
@@ -82,7 +92,7 @@ def reconcile(repository: Repository, environment: Mapping[str, str]) -> None:
 
     for group in GROUPS:
         repository.ensure_group(group)
-    for user in USERS:
+    for user in configured_users:
         repository.reconcile_user(user, passwords[user.username])
         if user.email:
             repository.reconcile_primary_email(user.username, user.email)

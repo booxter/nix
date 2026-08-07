@@ -248,11 +248,12 @@ def test_rejects_non_repository_and_detached_head(tmp_path: Path) -> None:
 def test_repository_paths_follow_environment(tmp_path: Path) -> None:
     home = tmp_path / "home"
 
-    defaults = repository_specs(home, {})
-    xdg = repository_specs(home, {"XDG_DATA_HOME": str(tmp_path / "data")})
+    defaults = repository_specs(home, {}, "github-user")
+    xdg = repository_specs(home, {"XDG_DATA_HOME": str(tmp_path / "data")}, "github-user")
     explicit = repository_specs(
         home,
         {"PASSWORD_STORE_DIR": str(tmp_path / "passwords")},
+        "github-user",
     )
 
     assert defaults["gmailctl"].path == home / ".gmailctl"
@@ -260,3 +261,23 @@ def test_repository_paths_follow_environment(tmp_path: Path) -> None:
     assert defaults["pass"].path == home / ".local" / "share" / "password-store"
     assert xdg["pass"].path == tmp_path / "data" / "password-store"
     assert explicit["pass"].path == tmp_path / "passwords"
+    assert defaults["gmailctl"].remote == "git@github.com:github-user/gmailctl-private-config.git"
+    assert defaults["pass"].remote == "git@github.com:github-user/pass.git"
+    assert defaults["dotfiles"].remote == "git@github.com:github-user/dotfiles.git"
+
+
+def test_default_repositories_require_github_login(tmp_path: Path) -> None:
+    stderr = io.StringIO()
+
+    assert main(["dotfiles"], home=tmp_path, environ={}, stderr=stderr) == 1
+    assert "SYNC_REPO_GITHUB_LOGIN is not configured" in stderr.getvalue()
+
+    stderr = io.StringIO()
+    status = main(
+        ["unknown"],
+        home=tmp_path,
+        environ={"SYNC_REPO_GITHUB_LOGIN": "github-user"},
+        stderr=stderr,
+    )
+    assert status == 2
+    assert "unknown repository: unknown" in stderr.getvalue()

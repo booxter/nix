@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   osConfig,
   pkgs,
@@ -9,12 +10,11 @@ let
   inherit (osConfig.host) isDarwin;
   isNvidia = osConfig.host.userProfile == "nvidia";
   isPersonal = osConfig.host.userProfile == "personal";
-  username = config.home.username;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   scmPkgs = import ./pkgs { inherit pkgs; };
-  fullName = "Ihar Hrachyshka";
-  privateEmail = "ihar.hrachyshka@gmail.com";
-  email = if isNvidia then "${username}@nvidia.com" else privateEmail;
+  inherit (hostInventory.user) fullName;
+  privateEmail = hostInventory.user.emails.personal;
+  email = hostInventory.user.emails.${osConfig.host.userProfile};
   sshSigningKeyPath = "${config.home.homeDirectory}/.ssh/id_ed25519.pub";
   pushDisabledGitHubRepos = [
     "NixOS/nixpkgs"
@@ -94,7 +94,7 @@ in
             smtpServer = "mail.nvidia.com";
             smtpServerPort = 587;
             smtpEncryption = "tls";
-            smtpUser = "${username}@nvidia.com";
+            smtpUser = email;
           }
         else
           {
@@ -102,7 +102,7 @@ in
             smtpServer = "smtp.gmail.com";
             smtpServerPort = 587;
             smtpEncryption = "tls";
-            smtpUser = "ihar.hrachyshka@gmail.com";
+            smtpUser = privateEmail;
           };
 
       # remember and repeat identical merges

@@ -1,4 +1,7 @@
-{ pkgs }:
+{
+  githubLogin,
+  pkgs,
+}:
 let
   gitCommandRunner = pkgs.python3Packages.callPackage ../../../../pkgs/git-command-runner { };
 in
@@ -11,5 +14,7 @@ in
 
   nr = pkgs.callPackage ./nr { };
 
-  sync-repo = pkgs.callPackage ./sync-repo { inherit gitCommandRunner; };
+  sync-repo = pkgs.callPackage ./sync-repo {
+    inherit gitCommandRunner githubLogin;
+  };
 }

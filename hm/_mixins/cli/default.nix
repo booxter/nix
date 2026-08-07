@@ -1,5 +1,6 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   osConfig,
@@ -9,7 +10,10 @@ let
   inherit (osConfig.host) isDarwin;
   isPersonal = osConfig.host.userProfile == "personal";
   homeManagerPkgs = import ../../pkgs pkgs;
-  cliPkgs = import ./pkgs { inherit pkgs; };
+  cliPkgs = import ./pkgs {
+    inherit pkgs;
+    githubLogin = hostInventory.user.github.login;
+  };
   configuredReviewBuilders =
     let
       configuredBuilders =

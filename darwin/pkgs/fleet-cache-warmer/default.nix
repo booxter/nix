@@ -34,6 +34,7 @@ rustPlatform.buildRustPackage {
   cargoHash = "sha256-BS46DRuN9fU1vQBWKuHtG47l8n/mjKJR5WhOZltJ4Ao=";
 
   FLEET_CACHE_WARMER_ATTIC = lib.optionalString pushToAttic (lib.getExe attic-client);
+  FLEET_CACHE_WARMER_DEFAULT_FLAKE = hostInventory.fleetRepository.flakeRef;
   FLEET_CACHE_WARMER_NIX = lib.getExe nix;
   FLEET_CACHE_WARMER_PUSH_TO_ATTIC = builtins.toJSON pushToAttic;
   FLEET_CACHE_WARMER_TARGETS_JSON = builtins.toJSON ciValidatedWarmTargets;

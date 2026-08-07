@@ -1,6 +1,7 @@
 {
   git,
   gitCommandRunner,
+  githubLogin,
   lib,
   openssh,
   python3,
@@ -29,6 +30,7 @@ pythonPackages.buildPythonApplication {
   ];
 
   makeWrapperArgs = [
+    "--set SYNC_REPO_GITHUB_LOGIN ${lib.escapeShellArg githubLogin}"
     "--prefix PATH : ${
       lib.makeBinPath [
         git
