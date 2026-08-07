@@ -1,3 +1,12 @@
+let
+  mkUsers = builtins.mapAttrs (
+    name: groups: {
+      inherit groups;
+      displayName = name;
+      mailAddressSopsKey = "kanidm/person_mail_addresses/${name}";
+    }
+  );
+in
 {
   administrator = "ihar";
 
@@ -70,46 +79,34 @@
     };
   };
 
-  users = {
-    ihar = {
-      displayName = "ihar";
-      mailAddressSopsKey = "kanidm/person_mail_addresses/ihar";
-      groups = [
-        "infra-admins"
-        "grafana-admins"
-        "home-admins"
-        "home-users"
-        "paperless-admins"
-        "paperless-users"
-        "vikunja-users"
-        "degoog-users"
-        "romm-admins"
-        "media-admins"
-        "media-users"
-      ];
-    };
-    kasia = {
-      displayName = "kasia";
-      mailAddressSopsKey = "kanidm/person_mail_addresses/kasia";
-      groups = [
-        "paperless-users"
-        "vikunja-users"
-        "degoog-users"
-        "media-admins"
-        "media-users"
-        "romm-viewers"
-        "home-users"
-      ];
-    };
-    eugene = {
-      displayName = "eugene";
-      mailAddressSopsKey = "kanidm/person_mail_addresses/eugene";
-      groups = [
-        "degoog-users"
-        "media-users"
-        "vikunja-users"
-        "romm-viewers"
-      ];
-    };
+  users = mkUsers {
+    ihar = [
+      "infra-admins"
+      "grafana-admins"
+      "home-admins"
+      "home-users"
+      "paperless-admins"
+      "paperless-users"
+      "vikunja-users"
+      "degoog-users"
+      "romm-admins"
+      "media-admins"
+      "media-users"
+    ];
+    kasia = [
+      "paperless-users"
+      "vikunja-users"
+      "degoog-users"
+      "media-admins"
+      "media-users"
+      "romm-viewers"
+      "home-users"
+    ];
+    eugene = [
+      "degoog-users"
+      "media-users"
+      "vikunja-users"
+      "romm-viewers"
+    ];
   };
 }

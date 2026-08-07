@@ -58,7 +58,7 @@ let
   mailSenderTokenFile = "${mailSenderStateDir}/token";
   mailSenderRuntimeDir = "/run/kanidm-mail-sender";
   mailSenderConfigFile = "${mailSenderRuntimeDir}/mail-sender.toml";
-  personMailUsers = lib.filterAttrs (_: person: person ? mailAddressSopsKey) sso.users;
+  personMailUsers = sso.users;
   personMailSecretName = name: "kanidm-person-mail-address-${name}";
   personMailProvisionService = "kanidm-person-mail-provision";
   personMailProvisionDir = "/run/${personMailProvisionService}";
