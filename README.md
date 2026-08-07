@@ -82,7 +82,7 @@ nix run .#sops-update -- mair
 nix run .#sops-pass -- beast root
 nix run .#sops-pass -- --gen gw root
 nix run .#sops-pass -- --gen gw both
-nix run .#sops-pass -- beast ihrachyshka
+nix run .#sops-pass -- beast user
 
 # Copy one section between host secrets
 nix run .#sops-copy -- mair prx1-lab attic

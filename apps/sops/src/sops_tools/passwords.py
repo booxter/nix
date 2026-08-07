@@ -10,7 +10,7 @@ from .process import ProcessRunner
 from .repository import SecretRepository
 from .secrets import SopsBackend
 
-LoginUser = Literal["root", "ihrachyshka", "both"]
+LoginTarget = Literal["root", "user", "both"]
 
 
 class PasswordStore(Protocol):
@@ -67,12 +67,13 @@ class PasswordResult:
     secret: Path
     entries: tuple[str, ...]
     action: Literal["Generated", "Inserted"]
-    user: LoginUser
+    users: tuple[str, ...]
 
 
 @dataclass
 class PasswordService:
     repository: SecretRepository
+    primary_user: str
     sops: SopsBackend
     store: PasswordStore
     hasher: PasswordHasher
@@ -80,7 +81,7 @@ class PasswordService:
     def update(
         self,
         host: str,
-        user: LoginUser,
+        target: LoginTarget,
         *,
         generate: bool,
         prefix: str = "host",
@@ -96,7 +97,8 @@ class PasswordService:
         if length <= 0:
             raise ToolError("SOPS_PASS_GENERATE_LENGTH must be positive.")
 
-        source_user = "root" if user == "both" else user
+        selected_user = self.primary_user if target == "user" else target
+        source_user = "root" if target == "both" else selected_user
         entry = f"{prefix}/{host}/{source_user}"
         if generate:
             self.store.generate(entry, length)
@@ -107,19 +109,19 @@ class PasswordService:
 
         password = self.store.read(entry)
         entries = [entry]
-        if user == "both":
-            extra_entry = f"{prefix}/{host}/ihrachyshka"
+        if target == "both":
+            extra_entry = f"{prefix}/{host}/{self.primary_user}"
             self.store.write(extra_entry, password)
             entries.append(extra_entry)
         if not password:
             raise ToolError(f"Stored password must not be empty: {entry}")
 
         password_hash = self.hasher.sha512(password)
-        users = ("root", "ihrachyshka") if user == "both" else (user,)
-        for target in users:
+        users = ("root", self.primary_user) if target == "both" else (selected_user,)
+        for username in users:
             self.sops.set_value(
                 secret,
-                KeyPath.from_segments("users", target, "hashedPassword"),
+                KeyPath.from_segments("users", username, "hashedPassword"),
                 password_hash,
             )
-        return PasswordResult(secret, tuple(entries), action, user)
+        return PasswordResult(secret, tuple(entries), action, users)

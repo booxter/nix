@@ -19,6 +19,8 @@ from .fakes import (
     StaticPasswordHasher,
 )
 
+PRIMARY_USER = "test-user"
+
 
 def service(
     tmp_path: Path,
@@ -32,7 +34,7 @@ def service(
             secret: {
                 "users": {
                     "root": {"hashedPassword": "old-root"},
-                    "ihrachyshka": {"hashedPassword": "old-user"},
+                    PRIMARY_USER: {"hashedPassword": "old-user"},
                 },
                 "keep": "value",
             }
@@ -40,7 +42,13 @@ def service(
     )
     store = MemoryPasswordStore()
     return (
-        PasswordService(repository, backend, store, StaticPasswordHasher()),
+        PasswordService(
+            repository,
+            PRIMARY_USER,
+            backend,
+            store,
+            StaticPasswordHasher(),
+        ),
         store,
         backend,
     )
@@ -60,7 +68,7 @@ def test_insert_updates_only_the_requested_user(tmp_path: Path) -> None:
     assert document == {
         "users": {
             "root": {"hashedPassword": "$6$hashed"},
-            "ihrachyshka": {"hashedPassword": "old-user"},
+            PRIMARY_USER: {"hashedPassword": "old-user"},
         },
         "keep": "value",
     }
@@ -71,14 +79,14 @@ def test_generate_honors_prefix_and_length(tmp_path: Path) -> None:
 
     result = passwords.update(
         "beast",
-        "ihrachyshka",
+        "user",
         generate=True,
         prefix="machines",
         length=47,
     )
 
-    assert result.entries == ("machines/beast/ihrachyshka",)
-    assert store.calls[0] == ("generate", "machines/beast/ihrachyshka", 47)
+    assert result.entries == (f"machines/beast/{PRIMARY_USER}",)
+    assert store.calls[0] == ("generate", f"machines/beast/{PRIMARY_USER}", 47)
 
 
 def test_both_users_share_one_password_and_hash(tmp_path: Path) -> None:
@@ -86,12 +94,12 @@ def test_both_users_share_one_password_and_hash(tmp_path: Path) -> None:
 
     result = passwords.update("beast", "both", generate=True)
 
-    assert result.entries == ("host/beast/root", "host/beast/ihrachyshka")
-    assert store.values["host/beast/root"] == store.values["host/beast/ihrachyshka"]
+    assert result.entries == ("host/beast/root", f"host/beast/{PRIMARY_USER}")
+    assert store.values["host/beast/root"] == store.values[f"host/beast/{PRIMARY_USER}"]
     document = backend.documents[passwords.repository.secret("beast")]
     assert document["users"] == {
         "root": {"hashedPassword": "$6$hashed"},
-        "ihrachyshka": {"hashedPassword": "$6$hashed"},
+        PRIMARY_USER: {"hashedPassword": "$6$hashed"},
     }
 
 

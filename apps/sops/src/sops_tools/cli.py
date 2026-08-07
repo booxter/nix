@@ -199,7 +199,7 @@ def pass_main(
         parser = _parser("Hash and store a host login password.")
         parser.add_argument("--gen", action="store_true")
         parser.add_argument("host")
-        parser.add_argument("user", choices=("root", "ihrachyshka", "both"))
+        parser.add_argument("target", choices=("root", "user", "both"))
         args = parser.parse_args(argv)
         current = application or Application.discover()
         domain = current.runtime.resolve_domain(args.domain)
@@ -210,6 +210,7 @@ def pass_main(
         )
         service = PasswordService(
             SecretRepository(current.runtime.repo_root, domain),
+            current.runtime.primary_user,
             backend,
             CommandPasswordStore(runner),
             CommandPasswordHasher(runner),
@@ -220,18 +221,15 @@ def pass_main(
             raise ToolError("SOPS_PASS_GENERATE_LENGTH must be an integer.") from error
         result = service.update(
             args.host,
-            args.user,
+            args.target,
             generate=args.gen,
             prefix=os.environ.get("SOPS_PASS_PREFIX", "host"),
             length=length,
         )
-        if result.user == "both":
-            print(
-                "Updated users/root/hashedPassword and "
-                f"users/ihrachyshka/hashedPassword in {result.secret}."
-            )
-        else:
-            print(f"Updated users/{result.user}/hashedPassword in {result.secret}.")
+        updated_paths = " and ".join(
+            f"users/{username}/hashedPassword" for username in result.users
+        )
+        print(f"Updated {updated_paths} in {result.secret}.")
         print(f"{result.action} {' and '.join(result.entries)}.")
         return 0
 

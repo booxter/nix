@@ -76,6 +76,16 @@ class RuntimeEnvironment:
     def machine_hostname(self) -> str:
         return self.values.get("SOPS_MACHINE_HOSTNAME", self.hostname)
 
+    @property
+    def primary_user(self) -> str:
+        username = self.values.get("SOPS_PRIMARY_USER")
+        if not username:
+            raise ToolError(
+                "SOPS_PRIMARY_USER is not set.\n"
+                "Run this helper through 'nix run .#sops-pass -- …'."
+            )
+        return username
+
     def registered_domain(self, host: str) -> str:
         inventory = self._domain_inventory()
         try:

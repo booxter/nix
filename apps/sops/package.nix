@@ -73,6 +73,7 @@ pythonPackages.buildPythonApplication {
     for program in "$out"/bin/*; do
       wrapProgram "$program" \
         --prefix PATH : ${runtimePath} \
+        --set SOPS_PRIMARY_USER ${hostInventory.user.username} \
         --set SOPS_SECRET_DOMAINS_FILE ${secretDomainsByHostFile} \
         --set UPS_CLIENTS_BY_SERVER_FILE ${upsClientsByServerFile}
     done
