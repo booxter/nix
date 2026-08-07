@@ -5,7 +5,9 @@
   ...
 }:
 let
+  hostname = config.networking.hostName;
   username = config.host.username;
+  sshIdentity = hostInventory.ssh.identityFor hostname hostInventory.ssh.purposes.personalBuilderClient;
   builderSpec = n: hostInventory.nixosHosts."builder${toString n}";
   builderSpecs = map builderSpec (lib.range 1 3);
 in
@@ -14,7 +16,7 @@ in
     programs.ssh = {
       extraConfig =
         let
-          identityFile = "${config.host.ssh.userDirectory}/id_ed25519";
+          identityFile = "${config.host.ssh.userDirectory}/${sshIdentity.fileName}";
           toHost = hostname: ''
             Host ${hostname}
               Hostname ${hostname}

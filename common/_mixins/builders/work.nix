@@ -5,8 +5,10 @@
   ...
 }:
 let
+  hostname = config.networking.hostName;
   username = config.host.username;
-  identityFile = "${config.host.ssh.userDirectory}/jgwxhwdl4x-nix-builder";
+  sshIdentity = hostInventory.ssh.identityFor hostname hostInventory.ssh.purposes.workBuilderClient;
+  identityFile = "${config.host.ssh.userDirectory}/${sshIdentity.fileName}";
   builderSpec = hostInventory.nixosHosts.nvws;
   nspawnFeatures = [
     "devnet"

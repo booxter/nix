@@ -1,7 +1,7 @@
 {
   lanDomain,
   nixCaches,
-  readPublicKey,
+  ssh,
 }:
 {
   home = {
@@ -16,18 +16,9 @@
       sudoWheelNeedsPassword = false;
     };
     trust.ssh = {
-      authorizedKeys = [
-        (readPublicKey ../public-keys/users/mmini.pub)
-        (readPublicKey ../public-keys/users/mair.pub)
-        (readPublicKey ../public-keys/users/frame.pub)
-        (readPublicKey ../public-keys/yubikey.pub)
-        (readPublicKey ../public-keys/mair-secretive.pub)
-      ];
+      authorizedKeys = ssh.authorizedKeysForRealm "home";
       fleetBootHosts = true;
-      tickets.trustedCaPublicKeys = [
-        (readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub)
-        (readPublicKey ../public-keys/yubikey.pub)
-      ];
+      tickets.trustedCaPublicKeys = ssh.trustedCaPublicKeysForRealm "home";
     };
     services = {
       attic = {
@@ -72,9 +63,6 @@
       sudoWheelNeedsPassword = true;
     };
     services.ups.credentialMode = "literal";
-    trust.ssh.authorizedKeys = [
-      (readPublicKey ../public-keys/users/jgwxhwdl4x.pub)
-      (readPublicKey ../public-keys/users/jgwxhwdl4x-nix-builder.pub)
-    ];
+    trust.ssh.authorizedKeys = ssh.authorizedKeysForRealm "work";
   };
 }

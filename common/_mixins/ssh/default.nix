@@ -5,6 +5,7 @@
   ...
 }:
 let
+  hostname = config.networking.hostName;
   username = config.host.username;
   realmSsh = hostInventory.realms.${config.host.realm}.trust.ssh;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
@@ -20,10 +21,10 @@ in
   options.host.ssh = {
     authorizedKeys = lib.mkOption {
       type = with lib.types; listOf str;
-      default = realmSsh.authorizedKeys;
+      default = realmSsh.authorizedKeys ++ hostInventory.ssh.authorizedKeysForHost hostname;
       readOnly = true;
       internal = true;
-      description = "Authorized SSH keys selected by the host realm.";
+      description = "Authorized SSH keys selected by realm and host-specific grants.";
     };
 
     fleetBootHosts = lib.mkOption {

@@ -1,9 +1,9 @@
-{ lib, ... }:
+{ hostInventory, ... }:
 let
-  readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   unlockKey =
-    path:
-    ''no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-user-rc,command="systemctl default" ${readPublicKey path}'';
+    publicKey:
+    ''no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-user-rc,command="systemctl default" ${publicKey}'';
+  unlockIdentities = hostInventory.ssh.identitiesForPurpose hostInventory.ssh.purposes.remoteUnlock;
 in
 {
   boot.initrd = {
@@ -13,10 +13,7 @@ in
       ssh = {
         enable = true;
         hostKeys = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
-        authorizedKeys = [
-          (unlockKey ../../public-keys/users/mair.pub)
-          (unlockKey ../../public-keys/users/mmini.pub)
-        ];
+        authorizedKeys = map (identity: unlockKey identity.publicKey) unlockIdentities;
       };
     };
     systemd.network = {

@@ -15,8 +15,9 @@ let
   inherit (hostInventory.user) fullName;
   privateEmail = hostInventory.user.emails.personal;
   email = hostInventory.user.emails.${osConfig.host.userProfile};
+  sshIdentity = hostInventory.ssh.identityFor osConfig.networking.hostName hostInventory.ssh.purposes.gitSigningFallback;
   sshDirectory = osConfig.host.ssh.userDirectory;
-  sshSigningKeyPath = "${sshDirectory}/id_ed25519.pub";
+  sshSigningKeyPath = "${sshDirectory}/${sshIdentity.fileName}.pub";
   githubSshConfigFile = lib.removePrefix "${config.home.homeDirectory}/" "${sshDirectory}/config.d/github.com";
   githubKnownHostsFile = lib.removePrefix "${config.home.homeDirectory}/" "${sshDirectory}/known_hosts.d/github.com";
   pushDisabledGitHubRepos = [

@@ -4,16 +4,16 @@
   lib,
   mmini,
   nixosHostSpecs,
-  readPublicKey,
   realms,
+  ssh,
   username,
 }:
 let
-  secretivePublicKey = readPublicKey ../public-keys/ssh-ca/fleet-user-ca.pub;
-  yubikeyPublicKey = readPublicKey ../public-keys/yubikey.pub;
+  secretiveIdentity = ssh.userIdentities.fleetUserCa;
+  yubikeyIdentity = ssh.userIdentities.yubikey;
   yubikeyIssuer = {
-    publicKey = yubikeyPublicKey;
-    keyName = "id_ed25519_sk_rk";
+    inherit (yubikeyIdentity) publicKey;
+    keyName = yubikeyIdentity.fileName;
     useAgent = false;
   };
   mkTarget =
@@ -61,8 +61,8 @@ in
 
   issuers = {
     mair = {
-      publicKey = secretivePublicKey;
-      keyName = "fleet-user-ca.pub";
+      inherit (secretiveIdentity) publicKey;
+      keyName = secretiveIdentity.fileName;
       useAgent = true;
     };
     ${frame} = yubikeyIssuer;

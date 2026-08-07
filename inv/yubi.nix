@@ -1,6 +1,7 @@
 {
   frame,
   mmini,
+  ssh,
   username,
 }:
 let
@@ -31,18 +32,7 @@ in
 
     applets = {
       fido2 = {
-        residentSsh = {
-          keyName = "id_ed25519_sk_rk";
-          hosts = [
-            frame
-            mmini
-          ];
-          purposes = [
-            "ssh-client-auth"
-            "git-ssh-signing"
-            "ssh-ticket-ca-signing"
-          ];
-        };
+        residentSshIdentity = ssh.userIdentities.yubikey.name;
 
         pamU2f.${frame} = {
           host = frame;

@@ -1,9 +1,12 @@
 {
   lib,
   config,
+  hostInventory,
   ...
 }:
 let
+  hostname = config.networking.hostName;
+  sshIdentity = hostInventory.ssh.identityFor hostname hostInventory.ssh.purposes.communityBuilderClient;
   readPublicKey = path: lib.removeSuffix "\n" (builtins.readFile path);
   linuxFeatures = [
     "benchmark"
@@ -51,7 +54,7 @@ in
       ) communityBuilders;
       extraConfig =
         let
-          communityBuilderIdentityFile = "${config.host.ssh.userDirectory}/nix-community-builders";
+          communityBuilderIdentityFile = "${config.host.ssh.userDirectory}/${sshIdentity.fileName}";
           user = config.host.github.login;
         in
         lib.concatStringsSep "\n" (

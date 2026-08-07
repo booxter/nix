@@ -14,8 +14,9 @@ let
 
   siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
   realms = import ./realms.nix {
-    inherit lanDomain readPublicKey;
+    inherit lanDomain;
     nixCaches = siteFacts.nixCaches;
+    ssh = sshFacts;
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
   backupFacts = import ./backups.nix { inherit readPublicKey; };
@@ -36,6 +37,10 @@ let
   hostFacts = hostFactsFor {
     inherit lanDomain publicDomain publicServiceHosts;
   };
+  sshFacts = import ./ssh.nix {
+    inherit lib readPublicKey username;
+    hostSpecs = hostFacts.nixosHostSpecs ++ builtins.attrValues hostFacts.darwinHosts;
+  };
   realmFor =
     spec:
     let
@@ -51,15 +56,22 @@ let
       lib
       frame
       mmini
-      readPublicKey
       realms
       username
       ;
+    ssh = sshFacts;
     darwinHosts = normalizedDarwinHosts;
     nixosHostSpecs = normalizedNixosHostSpecs;
   };
   ssoFacts = import ./sso.nix;
-  yubiFacts = import ./yubi.nix { inherit frame mmini username; };
+  yubiFacts = import ./yubi.nix {
+    inherit
+      frame
+      mmini
+      username
+      ;
+    ssh = sshFacts;
+  };
 
   normalizeService =
     glanceCategoryIds: localDnsName:
@@ -147,6 +159,7 @@ rec {
     ;
 
   sshTicket = sshTicketFacts;
+  ssh = sshFacts;
   sso = ssoFacts;
   yubi = yubiFacts;
 
