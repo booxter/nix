@@ -69,7 +69,11 @@ in
   config = lib.mkIf (osConfig.host.ssh.tickets.enable && issuer != null) {
     home.packages = [ ticketPackage ];
 
-    home.sessionVariables.SSHT_TARGETS_FILE = "${ticketTargetsFile}";
+    home.sessionVariables = {
+      SSHT_TARGETS_FILE = "${ticketTargetsFile}";
+      SSHT_CA_KEY = caKeyPath;
+      SSHT_CA_AGENT = lib.boolToString issuer.useAgent;
+    };
 
     home.file.".ssh/fleet-user-ca.pub" = lib.mkIf issuer.useAgent {
       text = "${issuer.publicKey}\n";
