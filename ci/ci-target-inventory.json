@@ -324,14 +324,6 @@
       "attr": "checks.x86_64-linux.oauth2-proxy-gate",
       "name": "NixOS test: OAuth2 proxy gate",
       "runner": "ubuntu-latest",
-      "selection": {
-        "hosts": [],
-        "prefixes": [
-          "nixos/_mixins/external-service.nix",
-          "nixos/_mixins/sso",
-          "tests/nixos/oauth2-proxy-gate.nix"
-        ]
-      },
       "system": "x86_64-linux",
       "warm": true
     },
