@@ -26,17 +26,9 @@ let
     "--mode"
     "0750"
   ];
-  scrubStartOrResume = maintenanceCommand "scrub-start-or-resume" [
-    "--mount"
-    volume2
-  ];
-  scrubResumeIfInterrupted = maintenanceCommand "scrub-resume-if-interrupted" [
-    "--mount"
-    volume2
-  ];
 in
 {
-  boot.supportedFilesystems = [ "btrfs" ];
+  imports = [ ../_mixins/btrfs-scrub.nix ];
 
   # Keep /volume2 for compatibility with existing NFS client paths.
   fileSystems."/volume2" = {
@@ -85,44 +77,9 @@ in
     enable = true;
     fileSystems = [ "/volume2" ];
     interval = "monthly";
-  };
-  systemd.services."btrfs-scrub-volume2" = {
-    after = [ "volume2.mount" ];
-    requires = [ "volume2.mount" ];
-    # btrfs-progs owns persisted scrub state and resume semantics, so the
-    # native tool deliberately keeps its CLI as the kernel/userspace edge.
-    serviceConfig.ExecStart = lib.mkForce scrubStartOrResume;
-  };
-
-  systemd.services."btrfs-scrub-resume-volume2" = {
-    description = "Resume interrupted btrfs scrub on /volume2";
-    after = [ "volume2.mount" ];
-    before = [
-      "shutdown.target"
-      "sleep.target"
-    ];
-    conflicts = [
-      "shutdown.target"
-      "sleep.target"
-    ];
-    requires = [ "volume2.mount" ];
-    serviceConfig = {
-      Type = "simple";
-      ExecStart = scrubResumeIfInterrupted;
-      IOSchedulingClass = "idle";
-      Nice = 19;
+    resumeInterrupted = {
+      enable = true;
+      onBootSec = "5min";
     };
   };
-
-  systemd.timers."btrfs-scrub-resume-volume2" = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "5min";
-      Unit = "btrfs-scrub-resume-volume2.service";
-    };
-  };
-
-  environment.systemPackages = [
-    pkgs.btrfs-progs
-  ];
 }
