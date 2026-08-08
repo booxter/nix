@@ -4,7 +4,6 @@
 
   imports = [
     ./backup.nix
-    ./degoog.nix
     ./paperless.nix
   ];
 }

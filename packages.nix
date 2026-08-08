@@ -8,7 +8,7 @@ let
   basePackages = pkgs.lib.filterAttrs (
     _: package: pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform package
   ) (import ./pkgs pkgs);
-  orgPackages = import ./nixos/org/pkgs pkgs;
+  degoogPackages = import ./nixos/_mixins/degoog/packages pkgs;
 in
 basePackages
 // {
@@ -24,7 +24,7 @@ basePackages
 }
 // pkgs.lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
   aurral = pkgs.callPackage ./nixos/srvarr/pkgs/aurral { };
-  inherit (orgPackages)
+  inherit (degoogPackages)
     degoog
     degoog-devinside-extensions
     degoog-georgvwt-extensions

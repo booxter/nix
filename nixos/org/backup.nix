@@ -6,13 +6,11 @@
 let
   backup = hostInventory.backups;
   backupClient = backup.clients.${config.networking.hostName};
-  degoogStateDir = "/var/lib/degoog";
   paperlessBackupDir = "/var/lib/paperless-backup/latest";
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessStoragePath = config.host.nfs.mounts.paperless;
   backupPaths = [
-    degoogStateDir
     paperlessDataDir
     paperlessGptStateDir
     paperlessStoragePath
