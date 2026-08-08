@@ -15,7 +15,6 @@
     ];
     secretDomain = "main";
     management = {
-      manageNetworkIdentity = true;
       managePasswordSecrets = true;
       sudoWheelNeedsPassword = false;
     };
@@ -121,7 +120,6 @@
     build.pools = [ "work" ];
     secretDomain = "work";
     management = {
-      manageNetworkIdentity = false;
       managePasswordSecrets = false;
       sudoWheelNeedsPassword = true;
     };

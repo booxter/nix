@@ -14,7 +14,7 @@ in
   '';
 
   # Can't configure networking on managed work devices
-  networking = lib.optionalAttrs config.host.management.manageNetworkIdentity {
+  networking = lib.optionalAttrs config.host.network.manageIdentity {
     knownNetworkServices =
       # mair - laptop - doesn't have builtin ethernet
       lib.optionals (hostname != "mair") [

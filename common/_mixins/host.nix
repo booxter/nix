@@ -214,6 +214,14 @@ in
     };
 
     network = {
+      manageIdentity = lib.mkOption {
+        type = lib.types.bool;
+        default = hostSpec.network.manageIdentity or true;
+        readOnly = true;
+        internal = true;
+        description = "Whether this host manages its network identity.";
+      };
+
       primaryInterface = lib.mkOption {
         type = with lib.types; nullOr str;
         default = hostSpec.network.primaryInterface or null;
@@ -401,14 +409,6 @@ in
     };
 
     management = {
-      manageNetworkIdentity = lib.mkOption {
-        type = lib.types.bool;
-        default = realm.management.manageNetworkIdentity;
-        readOnly = true;
-        internal = true;
-        description = "Whether this host manages its network identity.";
-      };
-
       managePasswordSecrets = lib.mkOption {
         type = lib.types.bool;
         default = realm.management.managePasswordSecrets;

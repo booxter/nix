@@ -161,6 +161,7 @@ in
       isOperatorSeat = true;
       isSecretsOperator = true;
       network = {
+        manageIdentity = false;
         primaryInterface = "en0";
         lanWanInterfaces = [
           "en0"
