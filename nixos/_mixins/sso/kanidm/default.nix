@@ -11,10 +11,10 @@ let
   kanidmPort = 18085;
   kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
-  kanidmBackupDir = "/var/lib/kanidm/backups";
 in
 {
   imports = [
+    ./backup.nix
     ./identities.nix
     ./mail-sender.nix
     ./oidc.nix
@@ -64,10 +64,6 @@ in
           origin = "https://${idService.publicHost}";
           tls_chain = config.sops.secrets.kanidmServerCrt.path;
           tls_key = config.sops.secrets.kanidmServerKey.path;
-          online_backup = {
-            schedule = "15 03 * * *";
-            versions = 14;
-          };
         };
       };
       client.settings.uri = kanidmLocalUrl;
@@ -93,12 +89,6 @@ in
     environment.systemPackages = [ config.services.kanidm.package ];
 
     networking.hosts."127.0.0.1" = [ kanidmLocalHost ];
-
-    systemd.tmpfiles.rules = [
-      "d ${kanidmBackupDir} 0700 kanidm kanidm - -"
-    ];
-
-    host.backups.jobs.${hostInventory.backups.server.host}.paths = lib.mkBefore [ kanidmBackupDir ];
 
     systemd.services.kanidm = {
       wants = [ "sops-install-secrets.service" ];
