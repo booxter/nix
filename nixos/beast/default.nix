@@ -10,8 +10,6 @@
     ./lolek.nix
   ];
 
-  networking.resolvconf.enable = true;
-
   environment.systemPackages = with pkgs; [
     hdparm
     join-media-parts
