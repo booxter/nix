@@ -84,10 +84,14 @@ in
         }
 
         (lib.mkIf cfg.metrics.enable {
-          host.observability.prometheusEndpoints.lolek = {
+          host.observability.metricsEndpoints.lolek = {
             enable = true;
             port = cfg.metrics.mtlsPort;
             upstream = "http://${cfg.metrics.listenAddress}:${toString cfg.metrics.port}/metrics";
+            scrape = {
+              enable = true;
+              service = "lolek";
+            };
           };
         })
 

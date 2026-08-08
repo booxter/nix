@@ -124,7 +124,7 @@ in
     (lib.mkIf isRemoteSource {
       host.observability = {
         blackbox.enable = true;
-        prometheusEndpoints.blackbox = {
+        metricsEndpoints.blackbox = {
           enable = true;
           listenAddress = cfg.remote.listenAddress;
           port = cfg.remote.port;

@@ -18,7 +18,7 @@ let
   vpnProfile = hostInventory.egressVpns.${instance.vpnConfinement.profile};
   sourceService = hostInventory.servicesById.${policy.sourceService};
   sourceHostConfig = outputs.nixosConfigurations.${hostInventory.serviceHost sourceService}.config;
-  sourceEndpoint = sourceHostConfig.host.observability.prometheusEndpoints.jellyfin;
+  sourceEndpoint = sourceHostConfig.host.observability.metricsEndpoints.jellyfin;
   clientName = "jellyfin-upload-policy";
   client = config.host.internalPki.clients.${clientName};
 in

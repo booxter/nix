@@ -19,7 +19,7 @@ let
     name:
     let
       hostConfig = outputs.nixosConfigurations.${name}.config;
-      endpoint = hostConfig.host.observability.prometheusEndpoints.pve;
+      endpoint = hostConfig.host.observability.metricsEndpoints.pve;
     in
     {
       labels = {

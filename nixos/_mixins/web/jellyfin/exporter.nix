@@ -79,10 +79,15 @@ in
       };
     };
 
-    host.observability.prometheusEndpoints.jellyfin = {
+    host.observability.metricsEndpoints.jellyfin = {
       enable = true;
       port = cfg.port;
       upstream = "http://127.0.0.1:${toString cfg.listenPort}/metrics";
+      scrape = {
+        enable = true;
+        interval = "5s";
+        service = "jellyfin";
+      };
     };
   };
 }

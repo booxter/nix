@@ -251,7 +251,7 @@ let
     name:
     let
       hostConfig = outputs.nixosConfigurations.${name}.config;
-      mtlsEndpoint = hostConfig.host.observability.prometheusEndpoints.blackbox;
+      mtlsEndpoint = hostConfig.host.observability.metricsEndpoints.blackbox;
     in
     {
       exporter = "${name}:${toString mtlsEndpoint.port}";

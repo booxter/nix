@@ -14,7 +14,7 @@ let
 in
 {
   config = lib.mkIf (cfg.name != null) {
-    host.observability.prometheusEndpoints.${metricsName} = {
+    host.observability.metricsEndpoints.${metricsName} = {
       enable = true;
       port = publicPort;
       path = "/metrics";

@@ -8,13 +8,13 @@
 let
   cfg = config.host.observability;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  enabledEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.prometheusEndpoints;
+  enabledEndpoints = lib.filterAttrs (_: endpoint: endpoint.enable) cfg.metricsEndpoints;
   endpointSecretAttrName = endpointName: "prometheus-mtls-${endpointName}";
   endpointPortValues = map (endpoint: endpoint.port) (builtins.attrValues enabledEndpoints);
 in
 {
   options.host.observability = {
-    prometheusEndpoints = lib.mkOption {
+    metricsEndpoints = lib.mkOption {
       type =
         with lib.types;
         attrsOf (
@@ -60,7 +60,7 @@ in
 
                 sans = lib.mkOption {
                   type = listOf str;
-                  default = cfg.prometheusEndpointSans;
+                  default = cfg.metricsEndpointSans;
                   description = "DNS SANs to include when issuing this endpoint certificate.";
                 };
 
@@ -75,6 +75,52 @@ in
                   default = "";
                   description = "Extra nginx location config for this endpoint.";
                 };
+
+                scrape = {
+                  enable = lib.mkEnableOption "automatic Prometheus scraping";
+
+                  jobName = lib.mkOption {
+                    type = str;
+                    default = name;
+                    description = "Prometheus job name for this endpoint.";
+                  };
+
+                  service = lib.mkOption {
+                    type = nullOr str;
+                    default = null;
+                    description = "Inventory service whose metrics this endpoint exposes.";
+                  };
+
+                  component = lib.mkOption {
+                    type = str;
+                    default = "exporter";
+                    description = "Stable component label attached to scraped metrics.";
+                  };
+
+                  profile = lib.mkOption {
+                    type = str;
+                    default = "application";
+                    description = "Scrape and alert policy profile for this endpoint.";
+                  };
+
+                  interval = lib.mkOption {
+                    type = nullOr str;
+                    default = null;
+                    description = "Optional Prometheus scrape interval override.";
+                  };
+
+                  timeout = lib.mkOption {
+                    type = nullOr str;
+                    default = null;
+                    description = "Optional Prometheus scrape timeout override.";
+                  };
+
+                  labels = lib.mkOption {
+                    type = attrsOf str;
+                    default = { };
+                    description = "Additional bounded labels attached to scraped metrics.";
+                  };
+                };
               };
             }
           )
@@ -83,7 +129,7 @@ in
       description = "Nginx-fronted mTLS endpoints for remote Prometheus scrapes.";
     };
 
-    prometheusEndpointSans = lib.mkOption {
+    metricsEndpointSans = lib.mkOption {
       type = with lib.types; listOf str;
       default = hostInventory.toNixosHostCertificateDnsNames hostSpec;
       description = "Default DNS SANs for host-level Prometheus mTLS server certificates.";
@@ -95,7 +141,7 @@ in
       {
         assertion =
           (builtins.length endpointPortValues) == (builtins.length (lib.unique endpointPortValues));
-        message = "host.observability.prometheusEndpoints must not reuse listen ports on the same host.";
+        message = "host.observability.metricsEndpoints must not reuse listen ports on the same host.";
       }
     ];
 

@@ -55,9 +55,10 @@ let
       prometheusMtlsTlsConfig
       ;
   };
-  serviceScrapes = import ./scrapes/services.nix {
+  endpointScrapes = import ./scrapes/endpoints.nix {
     inherit
       hostInventory
+      lib
       outputs
       prometheusMtlsTlsConfig
       ;
@@ -107,7 +108,11 @@ in
 
   config = lib.mkMerge [
     (lib.mkIf cfg.enable {
-      assertions = nodeScrapes.assertions ++ blackboxScrapes.assertions ++ proxmoxScrapes.assertions;
+      assertions =
+        nodeScrapes.assertions
+        ++ blackboxScrapes.assertions
+        ++ proxmoxScrapes.assertions
+        ++ endpointScrapes.assertions;
 
       host.observability.nodeExporter = {
         listenAddress = "127.0.0.1";
@@ -183,7 +188,7 @@ in
         ++ proxmoxScrapes.scrapeConfigs
         ++ nutScrapes.scrapeConfigs
         ++ blackboxScrapes.scrapeConfigs
-        ++ serviceScrapes.scrapeConfigs
+        ++ endpointScrapes.scrapeConfigs
         ++ wireguardScrapes.scrapeConfigs;
       };
     })

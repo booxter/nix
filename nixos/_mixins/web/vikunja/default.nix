@@ -90,10 +90,14 @@ in
       mtls.enable = true;
     };
 
-    host.observability.prometheusEndpoints.vikunja = {
+    host.observability.metricsEndpoints.vikunja = {
       enable = true;
       port = vikunjaMetricsMtlsPort;
       upstream = "http://127.0.0.1:${toString vikunjaPort}/api/v1/metrics";
+      scrape = {
+        enable = true;
+        service = "vikunja";
+      };
     };
 
     host.backups.artifacts.sqlite.vikunja = {

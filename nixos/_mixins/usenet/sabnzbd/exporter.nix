@@ -36,10 +36,14 @@ in
       ];
     };
 
-    host.observability.prometheusEndpoints.sabnzbd = {
+    host.observability.metricsEndpoints.sabnzbd = {
       enable = true;
       port = 9387;
       upstream = "http://127.0.0.1:${toString sabnzbdExporterInternalPort}/metrics";
+      scrape = {
+        enable = true;
+        service = "sabnzbd";
+      };
     };
   };
 }

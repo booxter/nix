@@ -10,7 +10,7 @@ let
   clientName = "sketchybar-jellyfin";
   client = config.host.internalPki.clients.${clientName};
   beastConfig = outputs.nixosConfigurations.beast.config;
-  endpoint = beastConfig.host.observability.prometheusEndpoints.jellyfin;
+  endpoint = beastConfig.host.observability.metricsEndpoints.jellyfin;
   enable = config.host.isDesktop && config.host.observability.enable;
 in
 {

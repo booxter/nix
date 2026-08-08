@@ -261,6 +261,7 @@ let
       blackboxProbe ? probePath != null,
       backendProbe ? null,
       internalEndpointName ? if probePath == null then null else id,
+      observability ? { },
     }:
     let
       normalizedInstances = lib.mapAttrs (
@@ -291,6 +292,7 @@ let
           title
           ;
         instances = normalizedInstances;
+        observability.availability = observability.availability or "always";
       }
       // lib.optionalAttrs (backendProbe != null) { inherit backendProbe; }
       // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
@@ -307,6 +309,12 @@ let
         };
     in
     assert lib.assertMsg (normalizedInstances != { }) "Service ${id} must have at least one instance";
+    assert lib.assertMsg
+      (builtins.elem resolvedService.observability.availability [
+        "always"
+        "intermittent"
+      ])
+      "Service ${id} has invalid observability availability '${resolvedService.observability.availability}'";
     resolvedService;
 
   normalizedServices = map (normalizeService toLocalDnsName) serviceFacts.definitions;

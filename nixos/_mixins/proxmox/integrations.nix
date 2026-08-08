@@ -460,7 +460,7 @@ in
         environment.REQUESTS_CA_BUNDLE = toString internalPkiRootCaPath;
       };
 
-      host.observability.prometheusEndpoints.pve = {
+      host.observability.metricsEndpoints.pve = {
         enable = true;
         port = exporterCfg.publicPort;
         path = "/";

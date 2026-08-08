@@ -23,7 +23,7 @@ let
     in
     {
       inherit name endpoint serviceName;
-      metrics = gatewayConfig.host.observability.prometheusEndpoints."wg-${name}";
+      metrics = gatewayConfig.host.observability.metricsEndpoints."wg-${name}";
       client = config.host.internalPki.clients.${serviceName};
       peersFile = pkgs.writeText "${serviceName}-peers.json" (
         builtins.toJSON (

@@ -13,7 +13,7 @@ let
     in
     {
       inherit name endpoint;
-      metrics = gatewayHostConfig.host.observability.prometheusEndpoints."wg-${name}";
+      metrics = gatewayHostConfig.host.observability.metricsEndpoints."wg-${name}";
       peers = lib.mapAttrsToList (peerName: peer: {
         name = peerName;
         address = builtins.head (lib.splitString "/" peer.address);

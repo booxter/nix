@@ -70,10 +70,15 @@ in
         after = [ "modprobe@sd_mod.service" ];
       };
 
-      host.observability.prometheusEndpoints.smartctl = {
+      host.observability.metricsEndpoints.smartctl = {
         enable = true;
         port = smartctlExporterPort;
         upstream = "http://127.0.0.1:${toString smartctlExporterInternalPort}/metrics";
+        scrape = {
+          enable = true;
+          component = "smartctl";
+          profile = "hardware";
+        };
       };
     })
   ];

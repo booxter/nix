@@ -42,10 +42,14 @@ in
       };
     };
 
-    host.observability.prometheusEndpoints.paperless = {
+    host.observability.metricsEndpoints.paperless = {
       enable = true;
       port = mtlsPort;
       upstream = "http://127.0.0.1:${toString internalPort}/metrics";
+      scrape = {
+        enable = true;
+        service = "paperless";
+      };
     };
   };
 }

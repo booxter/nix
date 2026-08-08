@@ -11,10 +11,14 @@ let
 in
 {
   config = lib.mkIf isLocal {
-    host.observability.prometheusEndpoints.home-assistant = {
+    host.observability.metricsEndpoints.home-assistant = {
       enable = true;
       port = 9346;
       upstream = "http://127.0.0.1:${toString port}/api/prometheus";
+      scrape = {
+        enable = true;
+        service = "home";
+      };
     };
   };
 }
