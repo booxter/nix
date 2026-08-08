@@ -13,7 +13,8 @@
     ./oauth2-proxy.nix
     ./paths.nix
     ./qos.nix
-    ./transmission.nix
+    ./transmission-prioritizer.nix
+    ./transmission-torrent-cleaner.nix
     ./tuning.nix
   ];
 }

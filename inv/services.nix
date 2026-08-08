@@ -251,11 +251,15 @@
     }
     {
       id = "transmission";
-      instances.srvarr.vpnConfinement = {
-        profile = "airvpn";
-        forwardedPort = {
-          port = 45486;
-          protocol = "both";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/transmission";
+        mediaDir = "/data/media";
+        vpnConfinement = {
+          profile = "airvpn";
+          forwardedPort = {
+            port = 45486;
+            protocol = "both";
+          };
         };
       };
       probePath = "/oauth2/sign_in";

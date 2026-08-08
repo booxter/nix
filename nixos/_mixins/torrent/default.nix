@@ -1,3 +1,6 @@
 {
-  imports = [ ./myanonamouse ];
+  imports = [
+    ./myanonamouse
+    ./transmission
+  ];
 }
