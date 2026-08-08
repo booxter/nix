@@ -51,6 +51,7 @@ in
       ./_mixins/proxmox
       ./_mixins/public-ingress.nix
       ./_mixins/qos
+      ./_mixins/remote-unlock.nix
       ./_mixins/smart-storage.nix
       ./_mixins/sso
       ./_mixins/storage-observability

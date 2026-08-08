@@ -171,6 +171,11 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
+      boot.remoteUnlock = {
+        enable = true;
+        interface = "enp191s0";
+        kernelModules = [ "r8169" ];
+      };
       sshTicket.allowX11Forwarding = true;
       vnc = {
         enable = true;

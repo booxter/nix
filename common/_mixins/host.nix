@@ -155,13 +155,41 @@ in
       };
     };
 
-    boot.requiresInteractiveUnlock = lib.mkOption {
-      type = lib.types.bool;
-      default =
-        config.host.storage.systemDisk != null && config.host.storage.systemDisk.layout == "luks-btrfs";
-      readOnly = true;
-      internal = true;
-      description = "Whether boot requires an interactive disk-unlock credential.";
+    boot = {
+      requiresInteractiveUnlock = lib.mkOption {
+        type = lib.types.bool;
+        default =
+          config.host.storage.systemDisk != null && config.host.storage.systemDisk.layout == "luks-btrfs";
+        readOnly = true;
+        internal = true;
+        description = "Whether boot requires an interactive disk-unlock credential.";
+      };
+
+      remoteUnlock = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = config.host.storage.useInventory && (hostSpec.boot.remoteUnlock.enable or false);
+          readOnly = true;
+          internal = true;
+          description = "Whether inventory enables remote initrd disk unlock.";
+        };
+
+        interface = lib.mkOption {
+          type = with lib.types; nullOr str;
+          default = hostSpec.boot.remoteUnlock.interface or null;
+          readOnly = true;
+          internal = true;
+          description = "Network interface used for remote initrd disk unlock.";
+        };
+
+        kernelModules = lib.mkOption {
+          type = with lib.types; listOf str;
+          default = hostSpec.boot.remoteUnlock.kernelModules or [ ];
+          readOnly = true;
+          internal = true;
+          description = "Kernel modules required by the initrd unlock network interface.";
+        };
+      };
     };
 
     nixStore.capacityGiB = lib.mkOption {
