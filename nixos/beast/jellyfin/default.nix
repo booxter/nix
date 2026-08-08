@@ -48,4 +48,12 @@
     supplementaryGroups = [ "media" ];
     useHostVideoAcceleration = true;
   };
+
+  host.publicIngress.exports.jellyfin = {
+    inherit (hostInventory.servicesById.jellyfin) publicHost;
+    backend = {
+      type = "local-http";
+      url = config.services.jellyfin.localUrl;
+    };
+  };
 }

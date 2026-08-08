@@ -2,13 +2,11 @@
   config,
   hostInventory,
   lib,
-  outputs,
   ...
 }:
 let
   freeDns = hostInventory.site.dynamicDns.freeDns;
-  arrVmAddress = hostInventory.toNixosHostIpv4Address "srvarr";
-  orgVmAddress = hostInventory.toNixosHostIpv4Address "org";
+  ingressServices = config.host.publicIngress.services;
   backendMtlsServicePorts = {
     id = 18443;
     dash = 18081;
@@ -25,27 +23,11 @@ let
     search = 18083;
     goo = 14444;
   };
-  backendMtlsServices = builtins.mapAttrs (id: localPort: {
+  backendMtlsServices = builtins.mapAttrs (id: service: {
     clientName = id;
-    serverName = "${id}.${hostInventory.site.lan.domain}";
-    inherit localPort;
-  }) backendMtlsServicePorts;
-  publicServiceBackendAddresses = {
-    beast = "127.0.0.1";
-    srvarr = arrVmAddress;
-    org = orgVmAddress;
-  };
-  publicServicePorts = {
-    jellyfin = config.services.jellyfin.localPort;
-    seerr = outputs.nixosConfigurations.srvarr.config.services.seerr.port;
-    aurral = outputs.nixosConfigurations.srvarr.config.systemd.services.aurral.environment.PORT;
-    audiobookshelf = outputs.nixosConfigurations.srvarr.config.services.audiobookshelf.port;
-    pinepods =
-      outputs.nixosConfigurations.srvarr.config.systemd.services.podman-pinepods.environment.PINEPODS_LISTEN_PORT;
-    shelfmark = outputs.nixosConfigurations.srvarr.config.services.shelfmark.environment.FLASK_PORT;
-    vikunja = outputs.nixosConfigurations.org.config.services.vikunja.port;
-    paperless = outputs.nixosConfigurations.org.config.services.paperless.port;
-  };
+    inherit (service.backend) serverName;
+    localPort = backendMtlsServicePorts.${id};
+  }) (lib.filterAttrs (_: service: service.backend.type == "internal-https") ingressServices);
 in
 {
   host.internalPki.clients = builtins.mapAttrs (_: _: {
@@ -93,9 +75,7 @@ in
             }
           else
             {
-              proxyPass = "http://${publicServiceBackendAddresses.${service.owner}}:${
-                toString publicServicePorts.${service.id}
-              }";
+              proxyPass = ingressServices.${service.id}.backend.url;
             };
       }) hostInventory.publicServices
     );
