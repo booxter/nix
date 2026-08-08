@@ -26,6 +26,9 @@ let
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
   paperlessStoragePath = "/data/paperless";
+  paperlessStoragePaths = builtins.mapAttrs (
+    _: value: "${paperlessStoragePath}/${value}"
+  ) hostInventory.storage.nfs.exports.paperless.layout;
   paperlessGptStateDir = "/var/lib/paperless-gpt";
   paperlessGptAutoTag = "paperless-gpt-auto";
   paperlessGptAutoOcrTag = "paperless-gpt-ocr-auto";
@@ -72,11 +75,7 @@ let
   paperlessGptImage = ociImages.paperless-gpt.ref;
   paperlessGptImageFile = ociImages.paperless-gpt.imageFile;
 
-  paperlessNfsPaths = [
-    "${paperlessStoragePath}/consume"
-    "${paperlessStoragePath}/export"
-    "${paperlessStoragePath}/media"
-  ];
+  paperlessNfsPaths = builtins.attrValues paperlessStoragePaths;
   paperlessBootstrapCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' config.services.paperless.manage "paperless-manage")
     "shell"
@@ -179,8 +178,8 @@ in
     database.createLocally = true;
     domain = paperlessService.publicHost;
     environmentFile = config.sops.templates."paperless-oidc.env".path;
-    mediaDir = "${paperlessStoragePath}/media";
-    consumptionDir = "${paperlessStoragePath}/consume";
+    mediaDir = paperlessStoragePaths.media;
+    consumptionDir = paperlessStoragePaths.consume;
     passwordFile = config.sops.secrets."paperless/admin/password".path;
     settings = {
       PAPERLESS_ADMIN_USER = ssoAdministrator;

@@ -10,7 +10,7 @@ let
   paperlessBackupDir = "/var/lib/paperless-backup/latest";
   paperlessDataDir = "/var/lib/paperless";
   paperlessGptStateDir = "/var/lib/paperless-gpt";
-  paperlessStoragePath = "/data/paperless";
+  paperlessStoragePath = config.host.nfs.mounts.paperless;
   backupPaths = [
     degoogStateDir
     paperlessDataDir
