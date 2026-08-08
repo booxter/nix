@@ -10,6 +10,8 @@
     (import ../disko { })
     ./backup-client.nix
     ./backup-server.nix
+    ./jellarr-libraries.nix
+    ./jellarr-users.nix
     ./jellarr.nix
     ./jellyfin.nix
     ./library-dirs.nix
