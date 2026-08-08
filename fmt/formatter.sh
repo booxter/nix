@@ -5,13 +5,19 @@ set -euo pipefail
 
 cd -- "$(git rev-parse --show-toplevel)"
 
-deadnix --edit .
-treefmt --tree-root "$PWD" .
 git ls-files -z -- '*Cargo.toml' |
   xargs -0 -r -n 1 cargo fmt --all --manifest-path
-deadnix --fail .
-mbake format --config ./fmt/bake.toml Makefile
 actionlint .github/workflows/*.yml
+
+fmt_nix() {
+  deadnix --edit "$@"
+  treefmt --tree-root "$PWD" "$@"
+  deadnix --fail "$@"
+}
+
+fmt_makefile() {
+  mbake format --config ./fmt/bake.toml "$@"
+}
 
 fmt_json() {
   local file tmp
@@ -48,6 +54,8 @@ fmt_javascript() {
 }
 
 declare -A tracked_formats=(
+  ["*.nix"]="nix"
+  ["Makefile"]="makefile"
   ["*.json"]="json"
   ["*.sh"]="shell"
   ["*.yaml *.yml :(exclude)secrets/*/*.yaml"]="yaml"
