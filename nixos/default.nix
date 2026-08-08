@@ -25,6 +25,7 @@ in
       ./_mixins/avahi
       ./_mixins/auto-upgrade
       ./_mixins/backups
+      ./_mixins/btrfs.nix
       ./_mixins/builder.nix
       ./_mixins/external-service.nix
       ./_mixins/firmware
@@ -57,6 +58,8 @@ in
       users.${username} = ../hm;
     };
     virtualisation.containers.enable = true;
+    # VM variants use synthetic filesystems rather than the host's physical storage.
+    virtualisation.vmVariant.host.storage.useInventory = false;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;
     time.timeZone = hostInventory.regional.timeZone;
     i18n.defaultLocale = hostInventory.regional.posixLocale;

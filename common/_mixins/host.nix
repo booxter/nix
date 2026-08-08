@@ -163,6 +163,13 @@ in
       description = "SOPS secret domain selected for this host.";
     };
 
+    storage.useInventory = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      internal = true;
+      description = "Whether this configuration represents the host's physical storage inventory.";
+    };
+
     storage.volumes = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
@@ -196,7 +203,7 @@ in
           };
         }
       );
-      default = hostStorage.volumes or { };
+      default = if config.host.storage.useInventory then hostStorage.volumes or { } else { };
       readOnly = true;
       internal = true;
       description = "Storage volumes declared for this host by inventory.";
