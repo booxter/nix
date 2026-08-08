@@ -14,7 +14,6 @@ in
     imports = [
       inputs.stylix.nixosModules.stylix
       ../common
-      inputs.disko.nixosModules.disko
       inputs.sops-nix.nixosModules.sops
       inputs.home-manager.nixosModules.home-manager
     ]
@@ -24,11 +23,9 @@ in
       ./_mixins/auto-upgrade
       ./_mixins/avahi
       ./_mixins/backups
-      ./_mixins/btrfs
       ./_mixins/builder.nix
       ./_mixins/degoog
       ./_mixins/desktop-environment.nix
-      ./_mixins/disko
       ./_mixins/external-service.nix
       ./_mixins/hardware
       ./_mixins/home-assistant
@@ -36,11 +33,8 @@ in
       ./_mixins/jellyfin
       ./_mixins/llm
       ./_mixins/lolek
-      ./_mixins/md-raid.nix
-      ./_mixins/media-storage.nix
       ./_mixins/netboot.nix
       ./_mixins/nix
-      ./_mixins/nfs
       ./_mixins/observability
       ./_mixins/paperless
       ./_mixins/paperless-gpt
@@ -50,10 +44,8 @@ in
       ./_mixins/qos
       ./_mixins/remote-gui
       ./_mixins/remote-unlock.nix
-      ./_mixins/smart-storage.nix
       ./_mixins/sso
-      ./_mixins/storage-observability
-      ./_mixins/storage.nix
+      ./_mixins/storage
       ./_mixins/unifi-sync
       ./_mixins/ups
       ./_mixins/user
@@ -77,8 +69,6 @@ in
       users.${username} = ../hm;
     };
     virtualisation.containers.enable = true;
-    # VM variants use synthetic filesystems rather than the host's physical storage.
-    virtualisation.vmVariant.host.storage.useInventory = false;
     security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;
     time.timeZone = hostInventory.regional.timeZone;
     i18n.defaultLocale = hostInventory.regional.posixLocale;

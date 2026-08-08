@@ -15,7 +15,7 @@ let
   mdEnabled = config.boot.swraid.enable;
   exporterEnabled = diskBaysEnabled || mdEnabled;
 
-  atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
+  atomicFileWrites = pkgs.python3Packages.callPackage ../../../../pkgs/atomic-file-writes { };
   package = pkgs.callPackage ./package { inherit atomicFileWrites; };
   textfileDir = config.host.observability.nodeExporter.textfile.directory;
   bayMapName = "disk-bay-map.json";
