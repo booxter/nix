@@ -9,6 +9,7 @@
 
   imports = [
     (import ../disko { })
+    ./backup-client.nix
     ./backup-server.nix
     ./jellarr.nix
     ./jellyfin-backup.nix
