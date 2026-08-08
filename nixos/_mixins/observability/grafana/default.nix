@@ -2,6 +2,7 @@
   config,
   hostInventory,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -22,6 +23,23 @@ let
   grafanaAlertmanagerUid = "P3A7B7B4C0D9E6F1";
   grafanaPrometheusUid = "PBFA97CFB590B2093";
   grafanaLokiUid = "P8E80F9AEF21F6940";
+  dashboardGenerator = pkgs.callPackage ./dashboards/package.nix { };
+  dashboardConfig = pkgs.writeText "grafana-dashboard-config.json" (
+    builtins.toJSON {
+      dataSources.prometheus = {
+        type = "prometheus";
+        uid = grafanaPrometheusUid;
+      };
+    }
+  );
+  generatedDashboards = pkgs.runCommandLocal "grafana-dashboards" { } ''
+    mkdir "$out"
+    cp ${./dashboards}/*.json "$out/"
+    chmod u+w "$out"/*.json
+    ${lib.getExe dashboardGenerator} \
+      --config ${dashboardConfig} \
+      --output "$out"
+  '';
 in
 {
   options.host.observability.grafana = {
@@ -207,7 +225,7 @@ in
                 disableDeletion = false;
                 editable = false;
                 updateIntervalSeconds = 30;
-                options.path = ./dashboards;
+                options.path = generatedDashboards;
               }
             ];
           };
