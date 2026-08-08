@@ -11,7 +11,6 @@
     (import ../disko { })
     ./sso.nix
     ./backup-server.nix
-    ./storage.nix
     ./disk-bays.nix
     ./igpu.nix
     ./jellyfin.nix

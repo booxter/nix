@@ -195,6 +195,11 @@ in
                       default = true;
                       description = "Whether the standard snapshot timeline applies to this mount.";
                     };
+                    requiredForBoot = lib.mkOption {
+                      type = lib.types.bool;
+                      default = true;
+                      description = "Whether boot requires this mount to succeed.";
+                    };
                   };
                 }
               );
