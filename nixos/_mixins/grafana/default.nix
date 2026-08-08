@@ -308,6 +308,18 @@ in
         wants = [ "sops-install-secrets.service" ];
         after = [ "sops-install-secrets.service" ];
       };
+
+      services.prometheus.scrapeConfigs = [
+        {
+          job_name = "grafana";
+          static_configs = [
+            {
+              targets = [ "127.0.0.1:${toString grafanaPort}" ];
+              labels.instance = hostname;
+            }
+          ];
+        }
+      ];
     })
   ];
 }

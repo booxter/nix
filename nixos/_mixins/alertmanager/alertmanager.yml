@@ -50,6 +50,6 @@ receivers:
           {{ else }}• {{ .Labels.alertname }}
           {{ end }}{{ end }}{{ end }}{{ end }}
 
-          <a href="https://grafana.home.arpa/alerting/groups">Open active alerts in Grafana</a>
+          <a href="$GRAFANA_URL/alerting/groups">Open active alerts in Grafana</a>
         parse_mode: HTML
         send_resolved: true

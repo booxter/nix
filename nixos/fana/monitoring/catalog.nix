@@ -1,5 +1,4 @@
 let
-  alertmanagerConfigFile = ./alertmanager/alertmanager.yml;
   backupRuleFile = ./prometheus/rules/backup.rules.yml;
   backupTestFile = ./prometheus/tests/backup.rules.test.yml;
   controlPlaneRuleFile = ./prometheus/rules/control-plane.rules.yml;
@@ -40,10 +39,6 @@ let
   wireguardTestFile = ./prometheus/tests/wireguard.rules.test.yml;
 in
 {
-  alertmanager = {
-    configFile = alertmanagerConfigFile;
-  };
-
   prometheus = {
     ruleFiles = [
       backupRuleFile

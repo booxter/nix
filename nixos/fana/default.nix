@@ -4,7 +4,6 @@
 }:
 {
   imports = [
-    ./monitoring
     ./prometheus.nix
   ];
 

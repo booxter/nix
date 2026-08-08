@@ -1,30 +1,20 @@
 {
-  gettext,
   prometheus,
-  prometheus-alertmanager,
   stdenvNoCC,
 }:
 let
   catalog = import ./catalog.nix;
-  sharePath = "share/fana-monitoring";
+  sharePath = "share/prometheus-monitoring";
 in
 stdenvNoCC.mkDerivation (finalAttrs: {
-  pname = "fana-monitoring";
+  pname = "prometheus-monitoring";
   version = "1";
   src = ./.;
 
   doCheck = true;
-  nativeCheckInputs = [
-    gettext
-    prometheus.cli
-    prometheus-alertmanager
-  ];
+  nativeCheckInputs = [ prometheus.cli ];
   checkPhase = ''
     runHook preCheck
-
-    export TELEGRAM_CHAT_ID='-1000000000000'
-    envsubst < alertmanager/alertmanager.yml > alertmanager.rendered.yml
-    amtool check-config alertmanager.rendered.yml
 
     for rule_file in prometheus/rules/*.rules.yml; do
       promtool check rules "$rule_file"
@@ -45,7 +35,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   installPhase = ''
     runHook preInstall
     mkdir -p "$out/${sharePath}"
-    cp -R alertmanager prometheus "$out/${sharePath}/"
+    cp -R prometheus "$out/${sharePath}/"
     runHook postInstall
   '';
 
@@ -55,5 +45,5 @@ stdenvNoCC.mkDerivation (finalAttrs: {
     ) catalog.prometheus.ruleFiles;
   };
 
-  meta.description = "Fana Alertmanager configuration and Prometheus alert rules";
+  meta.description = "Prometheus alert rules";
 })

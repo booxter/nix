@@ -74,6 +74,7 @@ let
       pkgs
       ;
   };
+  monitoringPackage = pkgs.callPackage ./monitoring/package.nix { };
   retentionDays = 365;
   prometheusRetention = "${toString retentionDays}d";
 in
@@ -132,6 +133,7 @@ in
     listenAddress = "127.0.0.1";
     port = prometheusPort;
     retentionTime = prometheusRetention;
+    ruleFiles = monitoringPackage.prometheusRuleFiles;
     scrapeConfigs = [
       {
         job_name = "prometheus";
