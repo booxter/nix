@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from dynamic_ip_updater.cli import run
+from myanonamouse_ip_updater.cli import run
 
 
 class UpdateHandler(BaseHTTPRequestHandler):

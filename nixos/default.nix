@@ -32,6 +32,7 @@ in
     ./_mixins/security
     ./_mixins/sso
     ./_mixins/storage
+    ./_mixins/torrent
     ./_mixins/ups
     ./_mixins/usenet
     ./_mixins/user

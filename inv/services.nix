@@ -265,6 +265,17 @@
       };
     }
     {
+      id = "myanonamouse";
+      title = "MyAnonamouse IP registration";
+      instances.srvarr = {
+        cookiePath = "/data/.secret/mam.cookies";
+        registersIpFor = [ "transmission" ];
+        vpnConfinement.profile = "airvpn";
+      };
+      internalEndpointName = null;
+      blackboxProbe = false;
+    }
+    {
       id = "sabnzbd";
       title = "SABNZB";
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";

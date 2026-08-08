@@ -6,10 +6,6 @@ let
   };
 in
 {
-  dynamic-ip-updater = pkgs.callPackage ./dynamic-ip-updater {
-    atomicFileWrites = pkgs.atomic-file-writes;
-  };
-
   transmission-common = transmissionCommon;
 
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner {

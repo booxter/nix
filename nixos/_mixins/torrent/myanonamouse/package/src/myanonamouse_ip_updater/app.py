@@ -32,7 +32,7 @@ class DynamicIPClient:
         opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookie_jar))
         request = urllib.request.Request(
             self.url,
-            headers={"User-Agent": "dynamic-ip-updater/0.1"},
+            headers={"User-Agent": "myanonamouse-ip-updater/0.1"},
         )
         with opener.open(request, timeout=self.timeout_seconds) as response:
             body = bytes(response.read(MAX_RESPONSE_BYTES + 1))

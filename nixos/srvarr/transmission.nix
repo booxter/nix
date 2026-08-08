@@ -26,7 +26,6 @@ in
   imports = [
     ./transmission-prioritizer.nix
     ./transmission-torrent-cleaner.nix
-    ./update-dynamic-ip.nix
   ];
 
   sops.secrets.transmissionTrackerHosts = {
@@ -114,7 +113,6 @@ in
     serviceEnabled = config.services.transmission.enable;
     systemdUnits = [
       "transmission"
-      "update-dynamic-ip"
     ];
     bridgeTcpPorts = [ config.services.transmission.settings.rpc-port ];
   };
