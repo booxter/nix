@@ -5,8 +5,6 @@
   ...
 }:
 {
-  _module.args.beastPkgs = import ./pkgs { inherit pkgs; };
-
   imports = [
     (import ../disko { })
     ./backup-client.nix

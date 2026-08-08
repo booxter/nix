@@ -1,5 +1,4 @@
 {
-  beastPkgs,
   config,
   hostInventory,
   lib,
@@ -20,8 +19,11 @@ let
   watchstateDataDir = "/var/lib/watchstate";
   watchstateBackupStagingDir = "${config.host.storage.volumes.data.mounts.data.mountPoint}/backups/staging/watchstate";
   watchstateUid = 296;
+  watchstateTools = pkgs.callPackage ./watchstate-tools {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
   renderAuthCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe' beastPkgs.watchstate-tools "watchstate-render-auth")
+    (lib.getExe' watchstateTools "watchstate-render-auth")
     "--system-user"
     watchstateSystemUser
     "--password-file"
@@ -30,7 +32,7 @@ let
     "/run/watchstate-auth/auth.env"
   ];
   backupCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe' beastPkgs.watchstate-tools "watchstate-native-backup")
+    (lib.getExe' watchstateTools "watchstate-native-backup")
     "--data-dir"
     watchstateDataDir
     "--staging-dir"
