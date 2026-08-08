@@ -4,7 +4,6 @@
   hostSpec,
   inputs,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -32,11 +31,9 @@ in
       ./_mixins/degoog
       ./_mixins/desktop-environment.nix
       ./_mixins/disko
-      ./_mixins/ethernet-pause.nix
       ./_mixins/external-service.nix
-      ./_mixins/firmware
       ./_mixins/grafana
-      ./_mixins/gpu
+      ./_mixins/hardware
       ./_mixins/home-assistant
       ./_mixins/internal-https-service.nix
       ./_mixins/jellyfin
@@ -95,14 +92,6 @@ in
     i18n.defaultLocale = hostInventory.regional.posixLocale;
 
     # TODO: revisit hw sensor monitoring (sensord or alternative).
-
-    environment.systemPackages = with pkgs; [
-      ethtool
-      pciutils
-      procps
-      psmisc
-      usbutils
-    ];
 
   }
   // {
