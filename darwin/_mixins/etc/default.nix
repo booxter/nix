@@ -35,7 +35,7 @@ let
         -m ${lib.escapeShellArg entry.mode} \
         -o ${lib.escapeShellArg entry.user} \
         -g ${lib.escapeShellArg entry.group} \
-        ${lib.escapeShellArg (toString entry.source)} \
+        ${lib.escapeShellArg "${entry.source}"} \
         "$temporary"
       mv -f "$temporary" "$target"
     '';
