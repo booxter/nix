@@ -38,7 +38,7 @@ func All(config Config) ([]Definition, error) {
 
 	return []Definition{
 		{
-			Path:      "scrape-health.json",
+			Path:      "Fleet/scrape-health.json",
 			Dashboard: scrapeHealth,
 		},
 	}, nil

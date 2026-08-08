@@ -34,7 +34,7 @@ let
   );
   generatedDashboards = pkgs.runCommandLocal "grafana-dashboards" { } ''
     mkdir "$out"
-    cp ${./dashboards}/*.json "$out/"
+    cp ${./dashboards/legacy}/*.json "$out/"
     chmod u+w "$out"/*.json
     ${lib.getExe dashboardGenerator} \
       --config ${dashboardConfig} \
@@ -225,7 +225,10 @@ in
                 disableDeletion = false;
                 editable = false;
                 updateIntervalSeconds = 30;
-                options.path = generatedDashboards;
+                options = {
+                  path = generatedDashboards;
+                  foldersFromFilesStructure = true;
+                };
               }
             ];
           };

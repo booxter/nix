@@ -35,7 +35,7 @@ func TestWriteAllProducesScrapeHealthDashboard(t *testing.T) {
 		t.Fatalf("WriteAll() error = %v", err)
 	}
 
-	path := filepath.Join(output, "scrape-health.json")
+	path := filepath.Join(output, "Fleet", "scrape-health.json")
 	contents, present := writer.files[path]
 	if !present {
 		t.Fatalf("WriteAll() did not write %s", path)
