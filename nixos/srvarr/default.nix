@@ -10,7 +10,5 @@
     ./nfs.nix
     ./oauth2-proxy.nix
     ./paths.nix
-    ./qos.nix
-    ./tuning.nix
   ];
 }

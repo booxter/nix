@@ -9,6 +9,8 @@
 let
   nfsPort = 2049;
   clientMounts = config.host.nfs.mounts;
+  qosLimits = config.host.nfs.qosLimits;
+  bandwidthTargets = config.host.network.bandwidthTargets;
   nfsMountOptions = [
     "nfsvers=4"
     "hard"
@@ -39,6 +41,25 @@ let
     _: export: export.server == hostSpec.name
   ) hostInventory.storage.nfs.exports;
   mountedExports = lib.mapAttrs (name: _: exportFor name) clientMounts;
+  validQosLimits = lib.filterAttrs (
+    _: rule:
+    builtins.hasAttr rule.export clientMounts && builtins.hasAttr rule.bandwidthTarget bandwidthTargets
+  ) qosLimits;
+  renderedQosLimits = lib.mapAttrs (
+    _: rule:
+    let
+      export = exportFor rule.export;
+      target = bandwidthTargets.${rule.bandwidthTarget};
+    in
+    {
+      inherit (target) rateMbit;
+      match = {
+        protocol = "tcp";
+        destinationAddress = hostInventory.toNixosHostIpv4Address export.server;
+        destinationPort = nfsPort;
+      };
+    }
+  ) validQosLimits;
   participatingExports = exports // mountedExports;
   sharedGroups = lib.mapAttrs' (
     _: export:
@@ -102,6 +123,26 @@ in
     description = "Local mount points keyed by NFS inventory export name.";
   };
 
+  options.host.nfs.qosLimits = lib.mkOption {
+    type = lib.types.attrsOf (
+      lib.types.submodule {
+        options = {
+          export = lib.mkOption {
+            type = lib.types.str;
+            description = "Mounted NFS inventory export to shape.";
+          };
+
+          bandwidthTarget = lib.mkOption {
+            type = lib.types.str;
+            description = "Realm bandwidth target applied to this NFS traffic.";
+          };
+        };
+      }
+    );
+    default = { };
+    description = "Named NFS client traffic limits.";
+  };
+
   config = lib.mkMerge [
     {
       users.groups = sharedGroups;
@@ -151,6 +192,40 @@ in
 
       fileSystems = mountFileSystems;
       virtualisation.vmVariant.virtualisation.fileSystems = mountFileSystems;
+    })
+
+    (lib.mkIf (qosLimits != { }) {
+      assertions = lib.flatten (
+        lib.mapAttrsToList (
+          name: rule:
+          let
+            target = bandwidthTargets.${rule.bandwidthTarget} or null;
+          in
+          [
+            {
+              assertion = builtins.hasAttr rule.export clientMounts;
+              message = "host.nfs.qosLimits.${name} references an NFS export that is not mounted.";
+            }
+            {
+              assertion = target != null;
+              message = "host.nfs.qosLimits.${name} references an unknown bandwidth target.";
+            }
+            {
+              assertion = target == null || (target.link == "lan" && target.direction == "egress");
+              message = "host.nfs.qosLimits.${name} requires an egress LAN bandwidth target.";
+            }
+            {
+              assertion = config.host.network.primaryInterface != null;
+              message = "NFS QoS requires an inventory primary network interface.";
+            }
+          ]
+        ) qosLimits
+      );
+
+      host.qos.interfaces.wan = {
+        device = config.host.network.primaryInterface;
+        limits = renderedQosLimits;
+      };
     })
   ];
 }

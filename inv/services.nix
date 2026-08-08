@@ -252,6 +252,13 @@
     {
       id = "transmission";
       instances.srvarr = {
+        adaptiveUpload.sourceService = "jellyfin";
+        bandwidthTargets = {
+          bulkDownload = "vpnBulkDownload";
+          conservativeUpload = "vpnConservativeUpload";
+          idleUpload = "mediaIdleUpload";
+          nfs = "nfsClient";
+        };
         dataDir = "/data/.state/nixarr/transmission";
         mediaDir = "/data/media";
         vpnConfinement = {

@@ -25,11 +25,17 @@ let
   # Transmission's own scheduler remains the bottleneck and can favor
   # private-tracker torrents before traffic hits the kernel shaper.
   transmissionConservativeUploadLimitKBps = builtins.floor (
-    (config.host.network.bandwidthTargets.vpnConservativeUpload.rateMbit * 1000.0 / 8.0) * 0.95
+    (
+      config.host.network.bandwidthTargets.${instance.bandwidthTargets.conservativeUpload}.rateMbit
+      * 1000.0
+      / 8.0
+    )
+    * 0.95
   );
 in
 {
   imports = [
+    ./adaptive-upload.nix
     ./cleaner.nix
     ./tracker-policy.nix
   ];
@@ -51,8 +57,13 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = instance ? dataDir && instance ? mediaDir && instance ? vpnConfinement;
-        message = "The Transmission inventory instance must define data, media, and VPN policy.";
+        assertion =
+          instance ? adaptiveUpload
+          && instance ? bandwidthTargets
+          && instance ? dataDir
+          && instance ? mediaDir
+          && instance ? vpnConfinement;
+        message = "The Transmission inventory instance must define storage, bandwidth, adaptive upload, and VPN policy.";
       }
       {
         assertion = vpnRequirement ? forwardedPort;
@@ -109,6 +120,11 @@ in
 
     host.nfs.mounts = lib.mkIf (!isMediaServer) {
       media = mediaDir;
+    };
+
+    host.nfs.qosLimits.nfs = {
+      export = "media";
+      bandwidthTarget = instance.bandwidthTargets.nfs;
     };
 
     users.users.${config.services.transmission.user}.uid =
