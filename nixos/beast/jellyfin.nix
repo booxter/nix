@@ -1,5 +1,4 @@
 {
-  beastPkgs,
   config,
   hostInventory,
   ...
@@ -7,11 +6,16 @@
 {
   services.jellyfin = {
     enable = true;
+    builtInBackup = {
+      enable = true;
+      backupJob = "beast";
+      group = "restic-cloud";
+      stagingDir = "${config.host.storage.volumes.data.mounts.data.mountPoint}/backups/staging/jellyfin";
+    };
     exporter.enable = true;
     logging.playbackDebug = true;
     maintenance = {
       enable = true;
-      package = beastPkgs.jellyfin-tools;
       units = [
         "nixos-upgrade"
         "nixos-weekly-reboot-if-needed"

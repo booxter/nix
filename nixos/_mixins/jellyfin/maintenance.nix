@@ -21,6 +21,7 @@ in
 
     package = lib.mkOption {
       type = lib.types.package;
+      default = jellyfinCfg.tools.package;
       description = "Package providing the Jellyfin maintenance helper.";
     };
 

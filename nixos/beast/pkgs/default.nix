@@ -9,8 +9,6 @@ in
 {
   backup-server-tools = pkgs.callPackage ../../_mixins/backups/server/pkgs/backup-server-tools { };
 
-  jellyfin-tools = pkgs.callPackage ./jellyfin-tools { };
-
   jellarr = pkgs.callPackage ./jellarr {
     src = inputs.jellarr;
   };
