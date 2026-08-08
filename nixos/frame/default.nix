@@ -14,6 +14,4 @@
     "landlock"
     "yama"
   ];
-
-  security.pam.services.hyprlock = { };
 }
