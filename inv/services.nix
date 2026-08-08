@@ -268,7 +268,10 @@
       id = "sabnzbd";
       title = "SABNZB";
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
-      instances.srvarr.vpnConfinement.profile = "airvpn";
+      instances.srvarr = {
+        mediaDir = "/data/media";
+        vpnConfinement.profile = "airvpn";
+      };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/__probe/sabnzbd-version";
     }

@@ -13,7 +13,6 @@
     ./oauth2-proxy.nix
     ./paths.nix
     ./qos.nix
-    ./sabnzbd.nix
     ./transmission.nix
     ./tuning.nix
   ];

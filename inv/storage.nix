@@ -176,6 +176,7 @@ in
         "pinepods"
         "radarr"
         "romm"
+        "sabnzbd"
         "shelfmark"
         "slskd"
         "sonarr"

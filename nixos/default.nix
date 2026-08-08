@@ -33,6 +33,7 @@ in
     ./_mixins/sso
     ./_mixins/storage
     ./_mixins/ups
+    ./_mixins/usenet
     ./_mixins/user
     ./_mixins/vm.nix
     ./_mixins/web

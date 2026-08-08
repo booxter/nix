@@ -81,6 +81,7 @@ let
   };
   displayFacts = import ./displays.nix;
   upsFacts = import ./ups.nix;
+  usenetFacts = import ./usenet.nix;
   publicServiceHosts = map (service: service.publicHost) (
     builtins.filter (service: service ? publicHost) serviceFacts.definitions
   );
@@ -404,6 +405,7 @@ rec {
   displays = displayFacts;
   inherit displaysByHost;
   ups = upsFacts;
+  usenet = usenetFacts;
 
   sshTicket = sshTicketFacts;
   ssh = sshFacts;
