@@ -64,7 +64,6 @@
         ];
       };
       observability = {
-        prometheusHost = "fana";
         alertmanager.watchdogHosts = [ "frame" ];
         blackbox.sourceHosts = [
           "fana"

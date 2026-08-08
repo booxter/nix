@@ -9,10 +9,9 @@ let
   hostname = config.networking.hostName;
   lan = hostInventory.site.lan;
   grafanaService = hostInventory.servicesById.grafana;
+  prometheusService = hostInventory.servicesById.prometheus;
   alertmanagerService = hostInventory.servicesById.alertmanager;
   lokiService = hostInventory.servicesById.loki;
-  realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
-  prometheusHost = if realmObservability == null then null else realmObservability.prometheusHost;
   grafanaHost = "${grafanaService.internalEndpointName}.${lan.domain}";
   oidcClient = config.host.sso.oidc.clients.grafana;
   oidcScopes = config.host.sso.oidc.baseScopes;
@@ -58,7 +57,7 @@ in
           message = "Grafana must have an internal endpoint name";
         }
         {
-          assertion = prometheusHost == hostname;
+          assertion = prometheusService.owner == hostname;
           message = "Grafana currently requires its Prometheus datasource on the same host";
         }
         {

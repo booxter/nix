@@ -80,6 +80,13 @@
       glanceCategory = "infrastructure";
     }
     {
+      id = "prometheus";
+      owner = "fana";
+      probePath = "/-/ready";
+      internalEndpointName = null;
+      blackboxProbe = false;
+    }
+    {
       id = "alertmanager";
       owner = "fana";
       probePath = "/-/ready";

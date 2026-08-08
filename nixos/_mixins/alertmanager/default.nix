@@ -11,8 +11,7 @@ let
   hostname = config.networking.hostName;
   alertmanagerService = hostInventory.servicesById.alertmanager;
   grafanaService = hostInventory.servicesById.grafana;
-  realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
-  prometheusHost = if realmObservability == null then null else realmObservability.prometheusHost;
+  prometheusService = hostInventory.servicesById.prometheus;
   alertmanagerPort = cfg.port;
   grafanaUrl = "https://${grafanaService.internalEndpointName}.${hostInventory.site.lan.domain}";
   alertmanagerConfigCheck =
@@ -66,7 +65,7 @@ in
     (lib.mkIf cfg.enable {
       assertions = [
         {
-          assertion = prometheusHost == hostname;
+          assertion = prometheusService.owner == hostname;
           message = "Alertmanager currently requires the realm's Prometheus server on the same host";
         }
         {

@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-dns",resolver="gateway",resolver_title="gateway 192.168.0.1"}'
+      - series: 'probe_success{job="blackbox-dns",resolver="gateway",resolver_title="gateway 192.168.0.1",source="prometheus-host"}'
         values: "0 0 0 0 0"
     alert_rule_test:
       - eval_time: 1m30s
@@ -21,9 +21,10 @@ tests:
               resolver: gateway
               resolver_title: gateway 192.168.0.1
               severity: critical
+              source: prometheus-host
             exp_annotations:
               summary: "DNS probe down: gateway 192.168.0.1"
-              description: "Resolver gateway 192.168.0.1 is failing blackbox DNS probes from fana."
+              description: "Resolver gateway 192.168.0.1 is failing blackbox DNS probes from prometheus-host."
 
   - interval: 30s
     input_series:

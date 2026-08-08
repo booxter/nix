@@ -1,14 +1,14 @@
 {
+  config,
   hostInventory,
   lib,
   pkgs,
 }:
 let
-  fanaRealm = hostInventory.nixosHosts.fana.realm;
   upsServerSpecs = map (name: hostInventory.nixosHosts.${name}) (
     builtins.attrNames (
       lib.filterAttrs (
-        name: _: hostInventory.nixosHosts.${name}.realm == fanaRealm
+        name: _: hostInventory.nixosHosts.${name}.realm == config.host.realm
       ) hostInventory.ups.devices
     )
   );

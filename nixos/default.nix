@@ -55,6 +55,7 @@ in
       ./_mixins/paperless-gpt
       ./_mixins/pki
       ./_mixins/proxmox
+      ./_mixins/prometheus
       ./_mixins/public-ingress.nix
       ./_mixins/qos
       ./_mixins/remote-gui

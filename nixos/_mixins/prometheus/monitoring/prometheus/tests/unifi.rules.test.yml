@@ -22,4 +22,4 @@ tests:
               severity: warning
             exp_annotations:
               summary: "UniFi metrics scrape down"
-              description: "Prometheus has been unable to scrape Unpoller on fana for 5 minutes."
+              description: "Prometheus has been unable to scrape Unpoller for 5 minutes."

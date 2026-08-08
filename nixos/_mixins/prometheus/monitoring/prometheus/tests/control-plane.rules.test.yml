@@ -30,7 +30,7 @@ tests:
               severity: warning
             exp_annotations:
               summary: "Prometheus config reload failed"
-              description: "Prometheus on fana has not successfully reloaded its configuration for 5 minutes."
+              description: "Prometheus on 127.0.0.1:9090 has not successfully reloaded its configuration for 5 minutes."
 
   - interval: 30s
     input_series:
@@ -52,7 +52,7 @@ tests:
               severity: warning
             exp_annotations:
               summary: "Prometheus alert delivery failing"
-              description: "Prometheus on fana has seen alert delivery errors or drops while sending notifications to Alertmanager within the last 15 minutes."
+              description: "Prometheus on 127.0.0.1:9090 has seen alert delivery errors or drops while sending notifications to Alertmanager within the last 15 minutes."
 
   - interval: 30s
     input_series:
@@ -74,7 +74,7 @@ tests:
               severity: warning
             exp_annotations:
               summary: "Prometheus rule evaluation failing"
-              description: "Prometheus on fana has seen rule evaluation failures within the last 15 minutes."
+              description: "Prometheus on 127.0.0.1:9090 has seen rule evaluation failures within the last 15 minutes."
 
   - interval: 30s
     input_series:

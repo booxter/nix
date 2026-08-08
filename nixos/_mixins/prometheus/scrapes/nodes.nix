@@ -30,7 +30,7 @@ let
     };
   nixosNodeExporterTargetNames = builtins.filter (
     name:
-    name != "fana" && (outputs.nixosConfigurations.${name}.config.host.observability.enable or false)
+    name != hostname && (outputs.nixosConfigurations.${name}.config.host.observability.enable or false)
   ) nixosConfigNames;
   remoteNixosNonMtlsNodeTargetNames = builtins.filter (
     name:

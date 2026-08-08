@@ -12,7 +12,7 @@ let
   realmName = config.host.realm;
   realmObservability = hostInventory.realms.${realmName}.services.observability;
   realmProxmox = hostInventory.realms.${realmName}.services.proxmox;
-  blackboxServerHost = realmObservability.prometheusHost;
+  blackboxServerHost = hostInventory.servicesById.prometheus.owner;
   blackboxProbeSourceNames = realmObservability.blackbox.sourceHosts;
   blackboxServices = builtins.filter (service: service.blackboxProbe) hostInventory.services;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
@@ -44,7 +44,10 @@ let
     .${serviceId};
   ownerHostConfigFor =
     service:
-    if service.owner == "fana" then config else outputs.nixosConfigurations.${service.owner}.config;
+    if service.owner == config.networking.hostName then
+      config
+    else
+      outputs.nixosConfigurations.${service.owner}.config;
   ownerHttpsServicesFor = service: (ownerHostConfigFor service).host.internalHttps.services;
   httpsServiceFor =
     service:
@@ -76,7 +79,7 @@ let
         probeUrl = "https://${httpsService.serverName}${probePortSuffix}${probePath}";
         url = "https://${httpsService.serverName}/";
       }
-    else if service.owner == "fana" then
+    else if service.owner == config.networking.hostName then
       {
         probeUrl = "http://127.0.0.1:${toString grafanaPort}/${probePath}";
         url = "http://${service.displayHost}:3000/";
@@ -440,6 +443,7 @@ in
         labels = {
           resolver = resolver.resolver;
           resolver_title = resolver.resolver_title;
+          source = config.services.avahi.hostName;
         };
         targets = [ resolver.target ];
       }) dnsProbeTargets;
