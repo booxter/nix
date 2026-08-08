@@ -41,6 +41,7 @@ in
       ./_mixins/observability
       ./_mixins/proxmox
       ./_mixins/qos
+      ./_mixins/smart-storage.nix
       ./_mixins/sso
       ./_mixins/storage-observability
       ./_mixins/storage.nix

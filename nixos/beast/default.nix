@@ -16,7 +16,6 @@
     ./lolek.nix
     ./nginx.nix
     ./paperless-storage.nix
-    ./raid.nix
     ./sso.nix
   ];
 
@@ -30,5 +29,10 @@
 
   networking.resolvconf.enable = true;
 
-  environment.systemPackages = [ pkgs.join-media-parts ];
+  environment.systemPackages = with pkgs; [
+    hdparm
+    join-media-parts
+    lm_sensors
+    nvme-cli
+  ];
 }
