@@ -9,7 +9,6 @@
 
   imports = [
     ./arr.nix
-    ./audiobookshelf.nix
     ./aurral.nix
     ./backup.nix
     ./ebook-converter.nix

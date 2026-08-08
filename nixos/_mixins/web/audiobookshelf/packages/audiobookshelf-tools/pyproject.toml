@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "audiobookshelf-tools"
 version = "0.1.0"
-description = "Reconcile srvarr Audiobookshelf settings"
+description = "Reconcile Audiobookshelf settings"
 requires-python = ">=3.11"
 dependencies = ["httpx", "pydantic", "pystemd"]
 

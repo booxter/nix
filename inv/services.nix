@@ -170,6 +170,10 @@
     {
       id = "audiobookshelf";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/audiobookshelf";
+        mediaDir = "/data/media";
+      };
       publicHost = "au.${publicDomain}";
       probePath = "";
       glanceCategory = "user";

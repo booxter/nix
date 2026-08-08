@@ -11,6 +11,10 @@ in
   administrator = "ihar";
 
   applications = {
+    audiobookshelf = {
+      adminGroup = "media-admins";
+      userGroup = "media-users";
+    };
     degoog.userGroup = "degoog-users";
     "home-assistant" = {
       adminGroup = "home-admins";

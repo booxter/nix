@@ -57,14 +57,6 @@ in
     serviceConfig.UMask = servarrUMask;
     unitConfig = requiresMediaMount;
   };
-  systemd.services.audiobookshelf = {
-    # Audiobookshelf uses an absolute data dir under /data, but the upstream
-    # module passes that through to StateDirectory=. systemd ignores absolute
-    # StateDirectory paths and logs a warning on every unit reload, so clear
-    # just that directive and keep the rest of the service as generated.
-    serviceConfig.StateDirectory = lib.mkForce null;
-    unitConfig = requiresMediaMount;
-  };
   systemd.services.seerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
   systemd.services.shelfmark = {

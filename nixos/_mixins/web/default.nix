@@ -1,5 +1,6 @@
 {
   imports = [
+    ./audiobookshelf
     ./degoog
     ./external-service.nix
     ./home-assistant

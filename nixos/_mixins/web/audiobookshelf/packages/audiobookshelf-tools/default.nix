@@ -36,7 +36,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "audiobookshelf_tools" ];
 
   meta = {
-    description = "Reconcile srvarr Audiobookshelf settings";
+    description = "Reconcile Audiobookshelf settings";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };
