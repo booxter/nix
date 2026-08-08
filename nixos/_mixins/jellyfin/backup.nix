@@ -10,7 +10,7 @@ let
   backupCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' cfg.package "jellyfin-built-in-backup")
     "--url"
-    cfg.jellyfinUrl
+    jellyfinCfg.localUrl
     "--api-key-file"
     jellyfinCfg.apiKey.file
     "--source-dir"
@@ -31,12 +31,6 @@ in
       type = lib.types.package;
       default = jellyfinCfg.tools.package;
       description = "Package providing the Jellyfin backup helper.";
-    };
-
-    jellyfinUrl = lib.mkOption {
-      type = lib.types.str;
-      default = "http://127.0.0.1:8096";
-      description = "Jellyfin API URL used to request a built-in backup.";
     };
 
     sourceDir = lib.mkOption {

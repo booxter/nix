@@ -18,12 +18,6 @@ in
       description = "Jellyfin exporter package.";
     };
 
-    jellyfinUrl = lib.mkOption {
-      type = lib.types.str;
-      default = "http://127.0.0.1:8096";
-      description = "Jellyfin API URL queried by the exporter.";
-    };
-
     listenPort = lib.mkOption {
       type = lib.types.port;
       default = 19594;
@@ -50,7 +44,7 @@ in
       group = "root";
       mode = "0400";
       content = ''
-        JELLYFIN_ADDRESS=${cfg.jellyfinUrl}
+        JELLYFIN_ADDRESS=${jellyfinCfg.localUrl}
         JELLYFIN_TOKEN=${config.sops.placeholder.${jellyfinCfg.apiKey.sopsKey}}
       '';
     };

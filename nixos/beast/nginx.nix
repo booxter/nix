@@ -36,7 +36,7 @@ let
     org = orgVmAddress;
   };
   publicServicePorts = {
-    jellyfin = config.services.jellyfin.downloadLimiter.backendPort;
+    jellyfin = config.services.jellyfin.localPort;
     seerr = outputs.nixosConfigurations.srvarr.config.services.seerr.port;
     aurral = outputs.nixosConfigurations.srvarr.config.systemd.services.aurral.environment.PORT;
     audiobookshelf = outputs.nixosConfigurations.srvarr.config.services.audiobookshelf.port;

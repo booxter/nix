@@ -25,12 +25,6 @@ in
       description = "Public Jellyfin hostname whose downloads should be limited.";
     };
 
-    backendPort = lib.mkOption {
-      type = lib.types.port;
-      default = 8096;
-      description = "Loopback port on which Jellyfin listens.";
-    };
-
     proxyPort = lib.mkOption {
       type = lib.types.port;
       default = 18096;
@@ -89,7 +83,7 @@ in
           http-request set-var(txn.client_scope) str(external)
           http-request set-var(txn.client_scope) str(lan) if { req.hdr_ip(X-Real-IP) -m ip ${lib.concatStringsSep " " cfg.unlimitedNetworks} }
           http-response set-bandwidth-limit jellyfin_downloads if { var(txn.client_scope) -m str external }
-          server jellyfin 127.0.0.1:${toString cfg.backendPort}
+          server jellyfin 127.0.0.1:${toString jellyfinCfg.localPort}
       '';
     };
 

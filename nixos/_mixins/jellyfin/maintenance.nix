@@ -10,7 +10,7 @@ let
   waitForIdleCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' cfg.package "wait-for-jellyfin-idle")
     "--url"
-    cfg.jellyfinUrl
+    jellyfinCfg.localUrl
     "--api-key-file"
     jellyfinCfg.apiKey.file
   ];
@@ -23,12 +23,6 @@ in
       type = lib.types.package;
       default = jellyfinCfg.tools.package;
       description = "Package providing the Jellyfin maintenance helper.";
-    };
-
-    jellyfinUrl = lib.mkOption {
-      type = lib.types.str;
-      default = "http://127.0.0.1:8096";
-      description = "Jellyfin API URL checked for active playback.";
     };
 
     gateSystemSwitch = lib.mkOption {
