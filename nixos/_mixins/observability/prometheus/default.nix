@@ -35,7 +35,7 @@ let
       prometheusMtlsTlsConfig
       ;
   };
-  blackboxScrapes = import ./scrapes/blackbox.nix {
+  blackboxScrapes = import ./scrapes/blackbox {
     inherit
       config
       grafanaPort
