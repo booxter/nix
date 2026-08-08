@@ -6,6 +6,7 @@
     ./_mixins/internal-pki
     ./_mixins/nix
     ./_mixins/nixpkgs
+    ./_mixins/networking
     ./_mixins/secrets
     ./_mixins/ssh
     ./_mixins/stylix

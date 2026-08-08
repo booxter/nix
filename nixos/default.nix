@@ -8,7 +8,6 @@
   ...
 }:
 let
-  hostname = hostSpec.name;
   username = hostSpec.username;
 in
 (
@@ -95,9 +94,6 @@ in
     time.timeZone = hostInventory.regional.timeZone;
     i18n.defaultLocale = hostInventory.regional.posixLocale;
 
-    networking.dhcpcd.extraConfig = ''
-      clientid ${hostname}
-    '';
     # TODO: revisit hw sensor monitoring (sensord or alternative).
 
     environment.systemPackages = with pkgs; [

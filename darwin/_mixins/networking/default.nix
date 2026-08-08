@@ -24,6 +24,5 @@ in
         "Wi-Fi"
       ];
     computerName = hostname;
-    dhcpClientId = hostname;
   };
 }
