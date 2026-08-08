@@ -58,6 +58,14 @@ func greenToRedThreshold(value float64) *dashboard.ThresholdsConfigBuilder {
 	)
 }
 
+func warningCriticalThresholds(warning, critical float64) *dashboard.ThresholdsConfigBuilder {
+	return absoluteThresholds(
+		dashboard.Threshold{Color: "green", Value: nil},
+		dashboard.Threshold{Color: "orange", Value: ptr(warning)},
+		dashboard.Threshold{Color: "red", Value: ptr(critical)},
+	)
+}
+
 func availabilityMapping() dashboard.ValueMapping {
 	return exactValueMapping(map[string]dashboard.ValueMappingResult{
 		"0": mappedValue("Down", "red", 0),
@@ -78,6 +86,11 @@ func exactValueMapping(values map[string]dashboard.ValueMappingResult) dashboard
 func applicationMetric(metric, service string, matchers ...string) string {
 	labels := []string{`scrape_profile="application"`, fmt.Sprintf("service=%q", service)}
 	labels = append(labels, matchers...)
+	return fmt.Sprintf("%s{%s}", metric, strings.Join(labels, ","))
+}
+
+func nodeMetric(metric string, matchers ...string) string {
+	labels := append([]string{`scrape_profile="node"`}, matchers...)
 	return fmt.Sprintf("%s{%s}", metric, strings.Join(labels, ","))
 }
 
