@@ -11,11 +11,16 @@ let
   fleetRepository = import ./repository.nix;
   regional = import ./regional.nix;
   serviceAccounts = import ./service-accounts.nix;
+  atticFacts = import ./attic.nix { inherit lanDomain; };
   autoUpgradeFacts = import ./auto-upgrade { inherit lib; };
   inherit (user) username;
 
-  siteFacts = import ./site.nix { inherit lanDomain publicDomain readPublicKey; };
+  siteFacts = import ./site.nix {
+    attic = atticFacts;
+    inherit lanDomain publicDomain readPublicKey;
+  };
   realms = import ./realms.nix {
+    attic = atticFacts;
     inherit lanDomain readPublicKey;
     nixCaches = siteFacts.nixCaches;
     ssh = sshFacts;
@@ -67,14 +72,27 @@ let
   normalizeHostSpec =
     spec:
     let
+      realm = realmFor spec;
       network =
         lib.optionalAttrs (spec.isVM or false) {
           primaryInterface = "ens18";
         }
         // (spec.network or { });
+      serviceLocalDnsAliases = lib.concatMap (
+        service:
+        lib.optional (
+          (service.serverHost or null) == spec.name && service ? localDnsName
+        ) service.localDnsName
+      ) (builtins.attrValues realm.services);
+      localDnsAliases = lib.unique ((spec.localDnsAliases or [ ]) ++ serviceLocalDnsAliases);
     in
-    builtins.seq (realmFor spec) (
-      { inherit username; } // spec // lib.optionalAttrs (network != { }) { inherit network; }
+    builtins.seq realm (
+      {
+        inherit username;
+      }
+      // spec
+      // lib.optionalAttrs (network != { }) { inherit network; }
+      // lib.optionalAttrs (localDnsAliases != [ ]) { inherit localDnsAliases; }
     );
   normalizedDarwinHosts = lib.mapAttrs (_: normalizeHostSpec) hostFacts.darwinHosts;
   normalizedNixosHostSpecs = map normalizeHostSpec hostFacts.nixosHostSpecs;

@@ -322,7 +322,6 @@ in
       userProfile = "personal";
       stateVersion = "25.11";
       upsHost = "prx1-lab";
-      localDnsAliases = [ "nix-cache" ];
       dhcpReservation = {
         match = "bc:24:11:0d:85:41";
         ip = "192.168.20.7";

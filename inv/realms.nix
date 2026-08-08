@@ -1,4 +1,5 @@
 {
+  attic,
   lanDomain,
   nixCaches,
   readPublicKey,
@@ -26,11 +27,7 @@
       tickets.trustedCaPublicKeys = ssh.trustedCaPublicKeysForRealm "home";
     };
     services = {
-      attic = {
-        cacheName = "local";
-        endpoint = "https://nix-cache.${lanDomain}";
-        serverHost = "cache";
-      };
+      inherit attic;
       internalPki.rootCaCertificate = ../public-keys/internal-pki/home-root-ca.crt;
       flakehubCache.url = nixCaches.flakehub.url;
       nixCache = {

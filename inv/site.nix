@@ -1,4 +1,5 @@
 {
+  attic,
   lanDomain,
   publicDomain,
   readPublicKey,
@@ -25,7 +26,6 @@ rec {
 
   nixCaches =
     let
-      homeUrl = "https://nix-cache.${lan.domain}/default";
       flakehubUrl = "https://cache.flakehub.com";
     in
     {
@@ -34,11 +34,11 @@ rec {
         key = readPublicKey ../public-keys/nix-cache/nixos.pub;
       };
       home = {
-        url = homeUrl;
+        url = attic.substituterUrl;
         key = readPublicKey ../public-keys/nix-cache/home.pub;
-        defaultUrl = nixCacheUrlWithPriority homeUrl 30;
-        lanUrl = nixCacheUrlWithPriority homeUrl 10;
-        vpnUrl = nixCacheUrlWithPriority homeUrl 30;
+        defaultUrl = nixCacheUrlWithPriority attic.substituterUrl 30;
+        lanUrl = nixCacheUrlWithPriority attic.substituterUrl 10;
+        vpnUrl = nixCacheUrlWithPriority attic.substituterUrl 30;
       };
       flakehub = {
         url = flakehubUrl;
