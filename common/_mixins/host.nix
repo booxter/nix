@@ -157,7 +157,9 @@ in
 
     boot.requiresInteractiveUnlock = lib.mkOption {
       type = lib.types.bool;
-      default = false;
+      default =
+        config.host.storage.systemDisk != null && config.host.storage.systemDisk.layout == "luks-btrfs";
+      readOnly = true;
       internal = true;
       description = "Whether boot requires an interactive disk-unlock credential.";
     };
@@ -197,6 +199,37 @@ in
       default = true;
       internal = true;
       description = "Whether this configuration represents the host's physical storage inventory.";
+    };
+
+    storage.systemDisk = lib.mkOption {
+      type =
+        with lib.types;
+        nullOr (submodule {
+          options = {
+            device = lib.mkOption {
+              type = str;
+              description = "Block device containing the operating system.";
+            };
+            layout = lib.mkOption {
+              type = enum [
+                "ext4"
+                "luks-btrfs"
+              ];
+              description = "Partitioning and filesystem layout for the operating system.";
+            };
+          };
+        });
+      default =
+        if config.host.isVM then
+          {
+            device = "/dev/sda";
+            layout = "ext4";
+          }
+        else
+          hostStorage.systemDisk or null;
+      readOnly = true;
+      internal = true;
+      description = "System disk installation layout declared by inventory.";
     };
 
     storage.volumes = lib.mkOption {

@@ -4,7 +4,6 @@
 }:
 {
   imports = [
-    (import ../disko { })
     ./backup-client.nix
     ./backup-server.nix
     ./jellyfin

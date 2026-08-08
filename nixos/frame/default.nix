@@ -15,7 +15,6 @@ in
   _module.args.framePkgs = framePkgs;
 
   imports = [
-    (import ../disko/luks.nix { })
     inputs.nixos-hardware.nixosModules.framework-desktop-amd-ai-max-300-series
     ./alertmanager-watchdog.nix
     ./remote-desktop.nix

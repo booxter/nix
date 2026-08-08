@@ -3,10 +3,6 @@ let
   username = config.host.username;
 in
 {
-  imports = [
-    (import ../disko { })
-  ];
-
   host.isProxmox = true;
   host.ups.scheduler.critical = true;
 

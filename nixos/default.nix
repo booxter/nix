@@ -28,6 +28,7 @@ in
       ./_mixins/backups
       ./_mixins/btrfs
       ./_mixins/builder.nix
+      ./_mixins/disko
       ./_mixins/ethernet-pause.nix
       ./_mixins/external-service.nix
       ./_mixins/firmware

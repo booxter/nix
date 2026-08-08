@@ -17,6 +17,10 @@ let
     };
   diskNm000H = bay: serial: disk bay serial "ST24000NM000H-3KS103";
   diskNm000C = bay: serial: disk bay serial "ST24000NM000C-3WD103";
+  nvmeSystemDisk = layout: {
+    device = "/dev/nvme0n1";
+    inherit layout;
+  };
   dataVolume = {
     device = "/dev/disk/by-uuid/6c1ea7bf-4fd8-482a-aa6e-a35129c628e6";
     fsType = "btrfs";
@@ -86,6 +90,7 @@ let
 in
 {
   hosts.${beast} = {
+    systemDisk = nvmeSystemDisk "ext4";
     volumes.data = dataVolume;
     diskBays = {
       hbaBackend = "storcli";
@@ -105,18 +110,25 @@ in
       ];
     };
   };
-  hosts.frame.volumes.system = {
-    device = "/dev/mapper/crypted";
-    fsType = "btrfs";
-    mounts = {
-      root.mountPoint = "/";
-      home.mountPoint = "/home";
-      nix = {
-        mountPoint = "/nix";
-        snapshots = false;
+  hosts.frame = {
+    systemDisk = nvmeSystemDisk "luks-btrfs";
+    volumes.system = {
+      device = "/dev/mapper/crypted";
+      fsType = "btrfs";
+      mounts = {
+        root.mountPoint = "/";
+        home.mountPoint = "/home";
+        nix = {
+          mountPoint = "/nix";
+          snapshots = false;
+        };
       };
     };
   };
+  hosts.nvws.systemDisk = nvmeSystemDisk "ext4";
+  hosts."prx1-lab".systemDisk = nvmeSystemDisk "ext4";
+  hosts."prx2-lab".systemDisk = nvmeSystemDisk "ext4";
+  hosts."prx3-lab".systemDisk = nvmeSystemDisk "ext4";
 
   nfs.exports = {
     media = (export "Media" 10 [ "srvarr" ]) // {

@@ -23,7 +23,6 @@ in
   ]
   ++ lib.optionals isVM [
     inputs.proxmox-nixos.nixosModules.declarative-vms
-    (import ../../disko { device = "/dev/sda"; })
   ];
 
   options.host.isProxmox = lib.mkOption {
