@@ -112,7 +112,7 @@ in
             "--url"
             alertmanagerReadyUrl
             "--ca-file"
-            (toString config.host.internalPki.rootCaCertificate)
+            "${config.host.internalPki.rootCaCertificate}"
           ];
           TimeoutStartSec = "45s";
           DynamicUser = true;
