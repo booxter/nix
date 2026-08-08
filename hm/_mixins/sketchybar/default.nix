@@ -101,7 +101,7 @@ let
       if config.programs.sketchybarJellyfin.enable then
         {
           metricsUrl = config.programs.sketchybarJellyfin.metricsUrl;
-          caCertificate = toString internalPkiRootCaPath;
+          caCertificate = "${internalPkiRootCaPath}";
           clientCertificate = config.programs.sketchybarJellyfin.clientCertificate;
           clientKey = config.programs.sketchybarJellyfin.clientKey;
         }
