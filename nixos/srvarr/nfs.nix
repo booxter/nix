@@ -57,7 +57,6 @@ in
     serviceConfig.UMask = servarrUMask;
     unitConfig = requiresMediaMount;
   };
-  systemd.services.seerr.unitConfig = requiresMediaMount;
   systemd.services.lidarr.unitConfig = requiresMediaMount;
   systemd.services.shelfmark = {
     serviceConfig.UMask = servarrUMask;

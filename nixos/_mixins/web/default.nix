@@ -12,6 +12,7 @@
     ./pinepods
     ./public-ingress.nix
     ./romm
+    ./seerr
     ./vikunja
     ./watchstate
   ];

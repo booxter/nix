@@ -20,7 +20,6 @@
     ./paths.nix
     ./qos.nix
     ./sabnzbd.nix
-    ./seerr.nix
     ./shelfmark.nix
     ./slskd.nix
     ./transmission.nix

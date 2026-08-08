@@ -10,7 +10,7 @@ let
     inherit hostInventory sopsTools;
   };
   getFfCookie = pkgs.callPackage ./get-ff-cookie { };
-  seerrTools = pkgs.callPackage ../nixos/srvarr/pkgs/seerr-tools { };
+  seerrTools = pkgs.callPackage ../nixos/_mixins/web/seerr/packages/seerr-tools { };
 in
 {
   get-ff-cookie = getFfCookie;

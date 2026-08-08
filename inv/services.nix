@@ -68,6 +68,7 @@
     {
       id = "seerr";
       owner = "srvarr";
+      instances.srvarr.dataDir = "/data/.state/nixarr/seerr";
       publicHost = "js.${publicDomain}";
       probePath = "/login";
       glanceCategory = "user";
