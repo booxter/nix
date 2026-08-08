@@ -11,7 +11,10 @@ let
   jellyfinHostConfig = outputs.nixosConfigurations.${jellyfinService.owner}.config;
   jellyfinEndpoint = jellyfinHostConfig.host.observability.prometheusEndpoints.jellyfin;
   jellyfinTargetHost = hostInventory.nixosHosts.${jellyfinService.owner}.name;
-  lolekEndpoint = beastPrometheusEndpoints.lolek;
+  lolekService = hostInventory.servicesById.lolek;
+  lolekHostConfig = outputs.nixosConfigurations.${lolekService.owner}.config;
+  lolekEndpoint = lolekHostConfig.host.observability.prometheusEndpoints.lolek;
+  lolekTargetHost = hostInventory.nixosHosts.${lolekService.owner}.name;
   homeAssistantService = hostInventory.servicesById.home;
   homeHostConfig = outputs.nixosConfigurations.${homeAssistantService.owner}.config;
   homeTargetHost = hostInventory.nixosHosts.${homeAssistantService.owner}.name;
@@ -61,9 +64,9 @@ in
       static_configs = [
         {
           targets = [
-            "${beastTargetHost}:${toString lolekEndpoint.port}"
+            "${lolekTargetHost}:${toString lolekEndpoint.port}"
           ];
-          labels.instance = "beast";
+          labels.instance = lolekService.owner;
         }
       ];
     }

@@ -50,6 +50,13 @@
       glanceCategory = "user";
     }
     {
+      id = "lolek";
+      owner = "beast";
+      probePath = "/metrics";
+      internalEndpointName = null;
+      blackboxProbe = false;
+    }
+    {
       id = "watchstate";
       title = "WatchState";
       icon = "sh:watchstate.png";

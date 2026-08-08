@@ -1,7 +1,6 @@
 { ... }:
 {
   services.lolek = {
-    enable = true;
     maxConcurrentDownloads = 4;
     maxConcurrentDownloadsPerChat = 2;
     postSourceCaption = true;
