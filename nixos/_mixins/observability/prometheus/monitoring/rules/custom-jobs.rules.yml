@@ -38,33 +38,6 @@ groups:
         annotations:
           summary: "Adaptive upload metrics stale on srvarr"
           description: "The adaptive upload controller metrics file on srvarr has not been refreshed for more than 10 minutes."
-      - alert: LidarrCueSplitterServiceDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="lidarr-cue-splitter.service",state="active"} < 1
-        for: 5m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Lidarr CUE splitter service down on srvarr"
-          description: "The Lidarr CUE splitter service on srvarr has not been active for 5 minutes."
-      - alert: PinePodsServiceDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name=~"(podman-pinepods|pinepods-valkey|postgresql)\\.service",state="active"} < 1
-        for: 5m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "PinePods service down on srvarr: {{ $labels.name }}"
-          description: "The PinePods application or one of its database/cache dependencies on srvarr has not been active for 5 minutes."
-      - alert: HoundarrStatusCollectorTimerDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name="houndarr-status-collector.timer",state="active"} < 1
-        for: 5m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Houndarr status collector timer down on srvarr"
-          description: "The Houndarr operational status collector timer on srvarr has not been active for 5 minutes."
       - alert: HoundarrStatusCollectionFailed
         expr: host_observability_houndarr_status_ok{job="node-mtls",instance="srvarr"} < 1
         for: 5m

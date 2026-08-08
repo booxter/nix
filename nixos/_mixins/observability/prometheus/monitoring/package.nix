@@ -17,6 +17,7 @@ let
     "availability.rules.yml" = import ./rules/availability.nix { inherit lib; };
     "capacity.rules.yml" = import ./rules/capacity.nix { inherit hostInventory lib; };
     "service-scrapes.rules.yml" = import ./rules/service-scrapes.nix { inherit lib; };
+    "systemd.rules.yml" = import ./rules/systemd.nix { inherit lib; };
   };
   generatedRules = lib.mapAttrs (
     name: definition: yaml.generate name definition

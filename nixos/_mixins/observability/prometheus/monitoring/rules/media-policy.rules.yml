@@ -2,15 +2,6 @@ groups:
   - name: media-policy
     interval: 30s
     rules:
-      - alert: MediaPolicyUnitDown
-        expr: node_systemd_unit_state{job="node-mtls",instance="srvarr",name=~"(adaptive-upload-policy|adaptive-upload-policy-transmission|adaptive-upload-policy-qos|transmission-prioritizer)\\.service",state="active"} < 1
-        for: 5m
-        labels:
-          severity: warning
-          category: media
-        annotations:
-          summary: "Media policy unit down: {{ $labels.name }}"
-          description: "The media pipeline policy unit {{ $labels.name }} on srvarr has not been active for 5 minutes."
       - alert: AdaptiveUploadMissingRemoteBitrateData
         expr: host_observability_adaptive_upload_active_external_media_streams{instance="srvarr"} > 0 and on(instance) host_observability_adaptive_upload_missing_external_media_bitrate_sessions{instance="srvarr"} > 0
         for: 10m
