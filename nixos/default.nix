@@ -35,6 +35,7 @@ in
       ./_mixins/internal-https-service.nix
       ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
+      ./_mixins/llm
       ./_mixins/lolek
       ./_mixins/md-raid.nix
       ./_mixins/media-storage.nix

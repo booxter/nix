@@ -69,8 +69,7 @@ let
         }
       );
   ollamaTunnelPort = 11435;
-  ollamaInternalHost = "ollama.${hostInventory.site.lan.domain}";
-  ollamaClient = config.host.internalPki.clients.ollama;
+  ollamaClient = config.host.llm.clients.paperless-gpt;
   ociImages = import ../../oci { inherit pkgs; };
   paperlessGptImage = ociImages.paperless-gpt.ref;
   paperlessGptImageFile = ociImages.paperless-gpt.imageFile;
@@ -408,34 +407,10 @@ in
     upstream = "http://127.0.0.1:${toString paperlessMetricsInternalPort}/metrics";
   };
 
-  host.internalPki.clients.ollama = {
+  host.llm.clients.paperless-gpt = {
     enable = true;
-    category = "internal";
-    commonName = "ollama.org";
-    materializations.default.restartUnits = [ "stunnel.service" ];
-  };
-
-  services.stunnel = {
-    enable = true;
-    logLevel = lib.mkDefault "warning";
-    user = null;
-    group = null;
-    clients.ollama = {
-      accept = "127.0.0.1:${toString ollamaTunnelPort}";
-      connect = "${ollamaInternalHost}:443";
-      cert = config.sops.secrets.${ollamaClient.materializations.default.certificateSecretName}.path;
-      key = config.sops.secrets.${ollamaClient.materializations.default.keySecretName}.path;
-      checkHost = ollamaInternalHost;
-      sni = ollamaInternalHost;
-      CAFile = toString config.host.internalPki.rootCaCertificate;
-      verifyChain = true;
-      OCSPaia = false;
-    };
-  };
-
-  systemd.services.stunnel = {
-    wants = [ "sops-install-secrets.service" ];
-    after = [ "sops-install-secrets.service" ];
+    identityName = "ollama";
+    localPort = ollamaTunnelPort;
   };
 
   virtualisation.oci-containers = {
@@ -476,7 +451,7 @@ in
         OCR_PROCESS_MODE = "image";
         OCR_PROVIDER = "llm";
         OLLAMA_CONTEXT_LENGTH = "8192";
-        OLLAMA_HOST = "http://127.0.0.1:${toString ollamaTunnelPort}";
+        OLLAMA_HOST = ollamaClient.url;
         OLLAMA_THINK = "false";
         PAPERLESS_BASE_URL = "http://127.0.0.1:${toString config.services.paperless.port}";
         PAPERLESS_PUBLIC_URL = paperlessService.url;

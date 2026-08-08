@@ -1,18 +1,31 @@
 from __future__ import annotations
 
 import argparse
+import sys
 import time
 import urllib.parse
 import urllib.request
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Protocol, cast
+from pathlib import Path
+from typing import BinaryIO, Protocol, cast
 
-from prometheus_client import CollectorRegistry, Gauge
+from atomic_file_writes import write_bytes_atomic
+from prometheus_client import CollectorRegistry, Gauge, generate_latest
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from .textfile import write
+
+def render(registry: CollectorRegistry) -> bytes:
+    return generate_latest(registry)
+
+
+def write(registry: CollectorRegistry, destination: str, stdout: BinaryIO | None = None) -> None:
+    content = render(registry)
+    if destination == "-":
+        (stdout or sys.stdout.buffer).write(content)
+    else:
+        write_bytes_atomic(Path(destination), content, mode=0o644)
 
 
 class ModelDetails(BaseModel):
