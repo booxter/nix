@@ -18,7 +18,6 @@ let
     host_virtual = lib.boolToString hostConfig.host.isVM;
     instance = name;
     realm = hostConfig.host.realm;
-    scrape_expectation = hostConfig.host.availability;
     scrape_profile = "node";
     thermal_profile = hostConfig.host.observability.thermalProfile;
   };

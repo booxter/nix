@@ -9,7 +9,7 @@ in
       rules = [
         (mkAlert {
           name = "NodeTelemetryDown";
-          expr = ''max without (scrape_expectation) (up{job=~"node-local|node-mtls",scrape_expectation!="intermittent"}) < 1'';
+          expr = ''max without (availability) (up{scrape_profile="node",availability!="intermittent"}) < 1'';
           for = "10m";
           severity = "warning";
           category = "observability";
@@ -18,7 +18,7 @@ in
         })
         (mkScrapeDown {
           name = "DNSProbeScrapeDown";
-          selector = ''up{job="blackbox-dns"}'';
+          selector = ''up{job="blackbox-dns",scrape_profile="probe"}'';
           for = "5m";
           category = "observability";
           summary = "DNS probe scrape down: {{ $labels.instance }}";
@@ -26,7 +26,7 @@ in
         })
         (mkScrapeDown {
           name = "SmartctlExporterDown";
-          selector = ''up{job="smartctl"}'';
+          selector = ''up{component="smartctl",scrape_profile="hardware"}'';
           for = "5m";
           category = "storage";
           summary = "SMART exporter down: {{ $labels.instance }}";
