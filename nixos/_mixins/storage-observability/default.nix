@@ -90,6 +90,39 @@ in
             );
             description = "Installed disks mapped to physical chassis bays.";
           };
+          raidSets = lib.mkOption {
+            type = lib.types.attrsOf (
+              lib.types.submodule {
+                options = {
+                  implementation = lib.mkOption {
+                    type = lib.types.enum [ "md" ];
+                    description = "Software implementation managing this RAID set.";
+                  };
+                  level = lib.mkOption {
+                    type = lib.types.enum [
+                      0
+                      1
+                      4
+                      5
+                      6
+                      10
+                    ];
+                    description = "RAID level used by this set.";
+                  };
+                  memberBays = lib.mkOption {
+                    type = lib.types.listOf lib.types.str;
+                    description = "Physical bays containing this RAID set's members.";
+                  };
+                  volume = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Logical storage volume backed by this RAID set.";
+                  };
+                };
+              }
+            );
+            default = { };
+            description = "RAID sets assembled from disks in these bays.";
+          };
         };
       }
     );

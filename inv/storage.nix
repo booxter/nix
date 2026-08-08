@@ -108,6 +108,24 @@ in
         (diskNm000H 13 "ZYD02EQQ")
         (diskNm000C 15 "ZXA0ENE4")
       ];
+      raidSets.data = {
+        implementation = "md";
+        level = 6;
+        memberBays = [
+          "1"
+          "3"
+          "5"
+          "6"
+          "7"
+          "9"
+          "10"
+          "11"
+          "12"
+          "13"
+          "15"
+        ];
+        volume = "data";
+      };
     };
   };
   hosts.frame = {

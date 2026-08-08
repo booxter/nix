@@ -10,7 +10,6 @@
     ./lolek.nix
   ];
 
-  host.storage.mdRaid.enable = true;
   host.ups.scheduler.critical = true;
 
   networking.resolvconf.enable = true;
