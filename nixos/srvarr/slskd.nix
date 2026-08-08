@@ -4,7 +4,6 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
   mediaDir = config.host.srvarrPaths.mediaDir;
   mediaPaths = config.host.srvarrPaths.slskd;
   srvarrSpec = hostInventory.nixosHosts.srvarr;
@@ -22,7 +21,7 @@ let
   ];
 in
 {
-  users.users.slskd.uid = accounts.uids.slskd;
+  users.users.slskd.uid = hostInventory.serviceAccounts.slskd.uid;
 
   sops.secrets = builtins.listToAttrs (
     map (name: {

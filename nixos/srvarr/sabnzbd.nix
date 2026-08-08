@@ -5,7 +5,6 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
   mediaPaths = config.host.srvarrPaths.sabnzbd;
   port = 6336;
   user = "sabnzbd";
@@ -124,7 +123,7 @@ in
   };
 
   users.users.${user} = {
-    uid = accounts.uids.sabnzbd;
+    uid = hostInventory.serviceAccounts.sabnzbd.uid;
   };
 
   host.vpnNamespaceBridgeAccess.tcpPorts = [ port ];

@@ -1,10 +1,11 @@
 {
   config,
+  hostInventory,
   lib,
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  prowlarrAccount = hostInventory.serviceAccounts.prowlarr;
   servarrCommon = import ./servarr-common.nix { inherit config lib; };
   stateDir = "${config.host.srvarrPaths.stateDir}/prowlarr";
   user = "prowlarr";
@@ -34,14 +35,14 @@ lib.mkMerge [
 
     users = {
       groups = {
-        ${group}.gid = accounts.gids.prowlarr;
+        ${group}.gid = prowlarrAccount.gid;
         prowlarr-api = { };
       };
       users.${user} = {
         isSystemUser = true;
         group = group;
         home = "/var/empty";
-        uid = accounts.uids.prowlarr;
+        uid = prowlarrAccount.uid;
         extraGroups = [ "prowlarr-api" ];
       };
     };

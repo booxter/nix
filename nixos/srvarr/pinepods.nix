@@ -8,7 +8,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  pinepodsAccount = hostInventory.serviceAccounts.pinepods;
   ociImages = import ../../oci { inherit pkgs; };
 
   pinepodsService = hostInventory.servicesById.pinepods;
@@ -153,7 +153,7 @@ in
       group = "media";
       home = "/var/empty";
       isSystemUser = true;
-      uid = accounts.uids.pinepods;
+      uid = pinepodsAccount.uid;
     };
     postgres.extraGroups = [ "media" ];
   };
@@ -208,7 +208,7 @@ in
           DEBUG_MODE = "true";
           DEFAULT_LANGUAGE = hostInventory.regional.language.code;
           TZ = config.time.timeZone;
-          PUID = toString accounts.uids.pinepods;
+          PUID = toString pinepodsAccount.uid;
           PGID = toString hostInventory.site.gids.media;
 
           # Keep local login available for gPodder-compatible mobile/API clients,

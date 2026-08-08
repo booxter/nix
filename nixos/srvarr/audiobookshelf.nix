@@ -8,7 +8,6 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
   port = 9292;
   stateDir = "${config.host.srvarrPaths.stateDir}/audiobookshelf";
   user = "audiobookshelf";
@@ -175,7 +174,7 @@ in
 
   users.users.${user} = {
     home = lib.mkForce "/var/empty";
-    uid = accounts.uids.audiobookshelf;
+    uid = hostInventory.serviceAccounts.audiobookshelf.uid;
   };
 
   host.internalHttps.services.audiobookshelf = {

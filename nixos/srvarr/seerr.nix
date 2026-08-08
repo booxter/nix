@@ -6,7 +6,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  seerrAccount = hostInventory.serviceAccounts.seerr;
   stateDir = "${config.host.srvarrPaths.stateDir}/seerr";
   user = "seerr";
   group = "seerr";
@@ -31,12 +31,12 @@ in
     User = user;
   };
 
-  users.groups.${group}.gid = accounts.gids.seerr;
+  users.groups.${group}.gid = seerrAccount.gid;
   users.users.${user} = {
     group = group;
     home = "/var/empty";
     isSystemUser = true;
-    uid = accounts.uids.seerr;
+    uid = seerrAccount.uid;
   };
 
   host.internalHttps.services.seerr = {

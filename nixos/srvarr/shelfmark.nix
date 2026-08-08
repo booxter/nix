@@ -6,7 +6,6 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
   stateDir = "${config.host.srvarrPaths.stateDir}/shelfmark";
   mediaDir = config.host.srvarrPaths.mediaDir;
   booksDir = config.host.srvarrPaths.library.books;
@@ -96,7 +95,7 @@ in
     group = "media";
     home = "/var/empty";
     isSystemUser = true;
-    uid = accounts.uids.shelfmark;
+    uid = hostInventory.serviceAccounts.shelfmark.uid;
   };
 
   host.internalHttps.services.shelfmark = {

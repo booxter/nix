@@ -63,6 +63,8 @@ in
     };
     user = "transmission";
   };
+  users.users.${config.services.transmission.user}.uid =
+    hostInventory.serviceAccounts.transmission.uid;
 
   systemd.services.transmission = {
     # Transmission is currently inheriting a soft RLIMIT_NOFILE of 1024, which

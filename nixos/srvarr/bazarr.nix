@@ -7,7 +7,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  bazarrAccount = hostInventory.serviceAccounts.bazarr;
   group = "media";
   stateDir = "${config.host.srvarrPaths.stateDir}/bazarr";
   user = "bazarr";
@@ -16,7 +16,7 @@ let
     "--config"
     "${stateDir}/config/config.yaml"
     "--uid"
-    (toString accounts.uids.bazarr)
+    (toString bazarrAccount.uid)
     "--gid"
     (toString hostInventory.site.gids.media)
   ];
@@ -37,7 +37,7 @@ in
     extraGroups = lib.mkForce [ "media" ];
     home = lib.mkForce "/var/empty";
     isSystemUser = true;
-    uid = accounts.uids.bazarr;
+    uid = bazarrAccount.uid;
   };
 
   systemd.services.bazarr.serviceConfig.ExecStartPre = "+${enforceBazarrAuthCommand}";

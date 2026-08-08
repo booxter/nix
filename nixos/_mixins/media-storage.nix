@@ -5,15 +5,16 @@
   ...
 }:
 let
-  servarrAccounts = import ../srvarr/accounts.nix;
   mediaExport = hostInventory.storage.nfs.exports.media;
   projectPaths = builtins.mapAttrs (
     _: value: if builtins.isAttrs value then projectPaths value else "${mediaExport.path}/${value}"
   );
   mediaPaths = projectPaths mediaExport.layout;
-  pinepodsUser = toString servarrAccounts.uids.pinepods;
-  rommUser = toString servarrAccounts.uids.romm;
-  slskdUser = toString servarrAccounts.uids.slskd;
+  pinepodsUser = toString hostInventory.serviceAccounts.pinepods.uid;
+  rommUser = toString hostInventory.serviceAccounts.romm.uid;
+  sabnzbdUser = toString hostInventory.serviceAccounts.sabnzbd.uid;
+  slskdUser = toString hostInventory.serviceAccounts.slskd.uid;
+  transmissionUser = toString hostInventory.serviceAccounts.transmission.uid;
 
   mkTmpfilesDir = path: mode: user: group: [
     "d ${path} ${mode} ${user} ${group} - -"
@@ -48,7 +49,7 @@ let
       mediaPaths.romm.pcRoms
       mediaPaths.romm.bios
     ]
-    ++ mkDirSpecs "0755" "70" (
+    ++ mkDirSpecs "0755" transmissionUser (
       [
         mediaPaths.transmission.root
         mediaPaths.transmission.incomplete
@@ -61,12 +62,12 @@ let
       mediaPaths.slskd.incomplete
       mediaPaths.slskd.complete
     ]
-    ++ mkDirSpecs "0755" "38" [
+    ++ mkDirSpecs "0755" sabnzbdUser [
       mediaPaths.sabnzbd.root
       mediaPaths.sabnzbd.incomplete
       mediaPaths.sabnzbd.watch
     ]
-    ++ mkDirSpecs "0775" "38" (
+    ++ mkDirSpecs "0775" sabnzbdUser (
       [ mediaPaths.sabnzbd.complete ] ++ builtins.attrValues mediaPaths.sabnzbd.categories
     )
     ++ map (library: {

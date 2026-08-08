@@ -8,7 +8,7 @@
   ...
 }:
 let
-  accounts = import ./accounts.nix;
+  rommAccount = hostInventory.serviceAccounts.romm;
   rommSso = hostInventory.sso.applications.romm;
   rommAccessGroups = [
     rommSso.adminGroup
@@ -56,7 +56,7 @@ let
   rommAssetsCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' srvarrPkgs.romm-tools "romm-prepare-assets")
     "--socket-url"
-    "http+unix:///run/user/${toString accounts.uids.romm}/podman/podman.sock"
+    "http+unix:///run/user/${toString rommAccount.uid}/podman/podman.sock"
     "--image-ref"
     rommImage
     "--image-file"
@@ -160,8 +160,8 @@ let
 
   runtimeAfter = setupBefore ++ [ "romm-setup.service" ];
   rommUserRuntimeUnits = [
-    "user-runtime-dir@${toString accounts.uids.romm}.service"
-    "user@${toString accounts.uids.romm}.service"
+    "user-runtime-dir@${toString rommAccount.uid}.service"
+    "user@${toString rommAccount.uid}.service"
   ];
   rommPodmanBaseUnits = rommUserRuntimeUnits ++ [ "network-online.target" ];
   rommPodmanRuntimeUnits = rommPodmanBaseUnits ++ runtimeAfter;
@@ -173,7 +173,7 @@ let
 
   podmanRuntimeEnvironment = {
     HOME = stateDir;
-    XDG_RUNTIME_DIR = "/run/user/${toString accounts.uids.romm}";
+    XDG_RUNTIME_DIR = "/run/user/${toString rommAccount.uid}";
   };
   rommSetupConfig = pkgs.writeText "romm-setup.json" (
     builtins.toJSON {
@@ -189,7 +189,7 @@ let
   rommSetupCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' srvarrPkgs.romm-tools "romm-run-setup")
     "--socket-url"
-    "http+unix:///run/user/${toString accounts.uids.romm}/podman/podman.sock"
+    "http+unix:///run/user/${toString rommAccount.uid}/podman/podman.sock"
     "--config"
     rommSetupConfig
     "--environment-file"
@@ -256,7 +256,7 @@ in
       isSystemUser = true;
       group = "media";
       home = stateDir;
-      uid = accounts.uids.romm;
+      uid = rommAccount.uid;
       linger = true;
       autoSubUidGidRange = true;
     };

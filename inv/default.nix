@@ -10,6 +10,7 @@ let
   user = import ./user.nix;
   fleetRepository = import ./repository.nix;
   regional = import ./regional.nix;
+  serviceAccounts = import ./service-accounts.nix;
   autoUpgradeFacts = import ./auto-upgrade { inherit lib; };
   inherit (user) username;
 
@@ -184,6 +185,7 @@ rec {
     fleetRepository
     realms
     regional
+    serviceAccounts
     user
     ;
   storage = storageFacts;
