@@ -2,7 +2,6 @@
   config,
   hostInventory,
   lib,
-  outputs,
   pkgs,
   utils,
   ...
@@ -12,48 +11,9 @@ let
   outboundMail = hostInventory.realms.${config.host.realm}.services.outboundMail or null;
   providerHost = cfg.host;
   idService = hostInventory.servicesById.id;
-  sso = hostInventory.sso;
-  oidcClients = import ./provider-clients.nix {
-    inherit lib outputs providerHost;
-    realm = config.host.realm;
-  };
   kanidmTools = pkgs.callPackage ./packages/kanidm-tools {
     defaultTarget = providerHost;
   };
-  kanidmOAuthSecretAttrName = clientId: "kanidm-oauth2-${clientId}-client-secret";
-  kanidmOAuthSecretKey = clientId: "kanidm/oauth2/${clientId}/client_secret";
-  confidentialOidcClients = lib.filterAttrs (_: client: !client.public) oidcClients;
-  referencedOidcGroups = lib.unique (
-    lib.concatMap (
-      client:
-      builtins.attrNames client.scopeMaps
-      ++ lib.concatMap (claimMap: builtins.attrNames claimMap.valuesByGroup) (
-        builtins.attrValues client.claimMaps
-      )
-    ) (builtins.attrValues oidcClients)
-  );
-  unknownOidcGroups = lib.subtractLists (builtins.attrNames sso.groups) referencedOidcGroups;
-  kanidmProvisionClients =
-    secretPathFor:
-    lib.mapAttrs (_: client: {
-      inherit (client)
-        allowInsecureClientDisablePkce
-        claimMaps
-        displayName
-        enableLocalhostRedirects
-        enableLegacyCrypto
-        originLanding
-        preferShortUsername
-        public
-        scopeMaps
-        ;
-      originUrl =
-        if builtins.length client.originUrls == 1 then
-          builtins.head client.originUrls
-        else
-          client.originUrls;
-      basicSecretFile = if client.public then null else secretPathFor client.clientId;
-    }) oidcClients;
   kanidmPort = 18085;
   kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
@@ -89,16 +49,12 @@ let
   ];
 in
 {
-  imports = [ ./identities.nix ];
+  imports = [
+    ./identities.nix
+    ./oidc.nix
+  ];
 
   config = lib.mkIf cfg.enable {
-    assertions = [
-      {
-        assertion = unknownOidcGroups == [ ];
-        message = "OIDC registrations reference unknown Kanidm groups: ${lib.concatStringsSep ", " unknownOidcGroups}";
-      }
-    ];
-
     sops.secrets = {
       kanidmAdminPassword = {
         key = "kanidm/admin_password";
@@ -135,17 +91,7 @@ in
         mode = "0400";
         restartUnits = [ "kanidm-mail-sender.service" ];
       };
-    }
-    // lib.mapAttrs' (
-      _: client:
-      lib.nameValuePair (kanidmOAuthSecretAttrName client.clientId) {
-        key = kanidmOAuthSecretKey client.clientId;
-        owner = "kanidm";
-        group = "kanidm";
-        mode = "0400";
-        restartUnits = [ "kanidm.service" ];
-      }
-    ) confidentialOidcClients;
+    };
 
     services.kanidm = {
       package = pkgs.kanidmWithSecretProvisioning_1_10;
@@ -170,9 +116,6 @@ in
         adminPasswordFile = config.sops.secrets.kanidmAdminPassword.path;
         idmAdminPasswordFile = config.sops.secrets.kanidmIdmAdminPassword.path;
         instanceUrl = "https://localhost:${toString kanidmPort}";
-        systems.oauth2 = kanidmProvisionClients (
-          clientId: config.sops.secrets."${kanidmOAuthSecretAttrName clientId}".path
-        );
       };
     };
 
