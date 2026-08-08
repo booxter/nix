@@ -56,6 +56,4 @@ in
   security.sudo.wheelNeedsPassword = lib.mkDefault config.host.management.sudoWheelNeedsPassword;
   time.timeZone = hostInventory.regional.timeZone;
   i18n.defaultLocale = hostInventory.regional.posixLocale;
-
-  # TODO: revisit hw sensor monitoring (sensord or alternative).
 }
