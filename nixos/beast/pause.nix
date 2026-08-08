@@ -1,4 +1,8 @@
-{ pkgs, ... }:
+{
+  config,
+  pkgs,
+  ...
+}:
 let
   mkDisablePauseService = iface: {
     description = "Disable Ethernet pause frames on ${iface}";
@@ -15,6 +19,10 @@ in
 {
   # Link on TL2-F7120 can drop intermittently; disabling pause frames here
   # has helped stability. Flow control is also disabled on the switch port.
-  systemd.services.ethtool-enp6s0-disable-pause = mkDisablePauseService "enp6s0";
-  systemd.services.ethtool-enp7s0-disable-pause = mkDisablePauseService "enp7s0";
+  systemd.services = builtins.listToAttrs (
+    map (interface: {
+      name = "ethtool-${interface}-disable-pause";
+      value = mkDisablePauseService interface;
+    }) config.host.network.pauseDisabledInterfaces
+  );
 }

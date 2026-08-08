@@ -126,6 +126,35 @@ in
       description = "Whether this host is a virtual machine.";
     };
 
+    network = {
+      primaryInterface = lib.mkOption {
+        type = with lib.types; nullOr str;
+        default = hostSpec.network.primaryInterface or null;
+        readOnly = true;
+        internal = true;
+        description = "Primary network interface declared by inventory.";
+      };
+
+      pauseDisabledInterfaces = lib.mkOption {
+        type = with lib.types; listOf str;
+        default = hostSpec.network.pauseDisabledInterfaces or [ ];
+        readOnly = true;
+        internal = true;
+        description = "Interfaces whose hardware pause frames should be disabled.";
+      };
+
+      lanWanInterfaces = lib.mkOption {
+        type = with lib.types; listOf str;
+        default =
+          hostSpec.network.lanWanInterfaces or (lib.optional (
+            config.host.network.primaryInterface != null
+          ) config.host.network.primaryInterface);
+        readOnly = true;
+        internal = true;
+        description = "Interfaces used for LAN/WAN traffic accounting.";
+      };
+    };
+
     boot.requiresInteractiveUnlock = lib.mkOption {
       type = lib.types.bool;
       default = false;

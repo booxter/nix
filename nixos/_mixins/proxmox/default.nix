@@ -73,7 +73,7 @@ in
         services.resolved.settings.Resolve.ResolveUnicastSingleLabel = true;
 
         systemd.network.networks."10-lan" = {
-          matchConfig.Name = [ hostSpec.netIface ];
+          matchConfig.Name = [ config.host.network.primaryInterface ];
           networkConfig.Bridge = bridgeName;
         };
 

@@ -45,7 +45,7 @@ in
   };
 
   host.qos.interfaces.wan = {
-    device = "enp6s0";
+    device = config.host.network.primaryInterface;
     limits.cloud-backup = {
       rateMbit = 10;
       match.users = config.host.backups.server.generated.offloadUsers;

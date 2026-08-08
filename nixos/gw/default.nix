@@ -10,7 +10,7 @@ let
   wgInterface = "wg0";
   wgListenPort = wgHome.gateway.listenPort;
   wgAddress = wgHome.gateway.address;
-  lanInterface = "ens18";
+  lanInterface = config.host.network.primaryInterface;
   vpnPeers = lib.mapAttrsToList (name: peer: peer // { inherit name; }) wgHome.peers;
 
   mkPeer = peer: {

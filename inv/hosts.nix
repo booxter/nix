@@ -71,7 +71,7 @@ let
       userProfile = "personal";
       hmFull = false;
       stateVersion = prxStateVersion;
-      netIface = prxNetIface;
+      network.primaryInterface = prxNetIface;
       dhcpReservation = {
         match = macAddress;
         ip = ipAddress;
@@ -121,7 +121,7 @@ in
       isOperatorSeat = true;
       isSecretsOperator = true;
       vnc.enable = true;
-      lanWanInterfaces = [ "en0" ];
+      network.primaryInterface = "en0";
     };
     mmini = {
       stateVersion = 5;
@@ -135,7 +135,7 @@ in
       isSecretsOperator = true;
       vnc.enable = true;
       upsHost = frame;
-      lanWanInterfaces = [ "en0" ];
+      network.primaryInterface = "en0";
     };
     JGWXHWDL4X = {
       stateVersion = 5;
@@ -148,10 +148,13 @@ in
       isDesktop = true;
       isOperatorSeat = true;
       isSecretsOperator = true;
-      lanWanInterfaces = [
-        "en0"
-        "en7"
-      ];
+      network = {
+        primaryInterface = "en0";
+        lanWanInterfaces = [
+          "en0"
+          "en7"
+        ];
+      };
     };
   };
 
@@ -245,7 +248,7 @@ in
       };
       hmFull = false;
       stateVersion = "25.11";
-      netIface = "enp3s0f0";
+      network.primaryInterface = "enp3s0f0";
       ipAddress = "192.168.15.100";
       macAddress = "ac:b4:80:40:05:2e";
       dhcpReservation = {
@@ -263,6 +266,13 @@ in
       autoUpgrade.rebootPolicy = "weekly-if-needed";
       dnsAliases = builtins.filter (domain: domain != "dash.${publicDomain}") publicServiceHosts;
       hmFull = false;
+      network = {
+        primaryInterface = "enp6s0";
+        pauseDisabledInterfaces = [
+          "enp6s0"
+          "enp7s0"
+        ];
+      };
       hardware.videoAcceleration = {
         backend = "qsv";
         device = "/dev/dri/renderD128";

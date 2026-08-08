@@ -1,4 +1,5 @@
 {
+  config,
   hostInventory,
   pkgs,
   ...
@@ -25,7 +26,7 @@
   host.observability.blackbox.remote.enable = true;
   host.ups.scheduler.critical = true;
   # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
-  host.observability.lanWan.interface = "enp6s0";
+  host.observability.lanWan.interface = config.host.network.primaryInterface;
 
   networking.resolvconf.enable = true;
 

@@ -63,7 +63,18 @@ let
       realmName = spec.realm or (throw "host ${spec.name} does not declare a realm");
     in
     realms.${realmName} or (throw "host ${spec.name} declares unknown realm '${realmName}'");
-  normalizeHostSpec = spec: builtins.seq (realmFor spec) ({ inherit username; } // spec);
+  normalizeHostSpec =
+    spec:
+    let
+      network =
+        lib.optionalAttrs (spec.isVM or false) {
+          primaryInterface = "ens18";
+        }
+        // (spec.network or { });
+    in
+    builtins.seq (realmFor spec) (
+      { inherit username; } // spec // lib.optionalAttrs (network != { }) { inherit network; }
+    );
   normalizedDarwinHosts = lib.mapAttrs (_: normalizeHostSpec) hostFacts.darwinHosts;
   normalizedNixosHostSpecs = map normalizeHostSpec hostFacts.nixosHostSpecs;
 
