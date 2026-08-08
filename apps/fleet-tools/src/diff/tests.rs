@@ -177,15 +177,15 @@ impl DiffBackend for FakeBackend {
             "nginx=new\n"
         );
         assert_eq!(
-            fs::read_to_string(
-                root.join("old/home-manager/test-user/home-files/.config/hm.conf")
-            )?,
+            fs::read_to_string(root.join("old/home-manager/test-user/home-files/.config/hm.conf"))?,
             "home=old\n"
         );
         assert_eq!(
-            fs::read_to_string(root.join(
-                "new/home-manager/test-user/session-vars/etc/profile.d/hm-session-vars.sh"
-            ))?,
+            fs::read_to_string(
+                root.join(
+                    "new/home-manager/test-user/session-vars/etc/profile.d/hm-session-vars.sh"
+                )
+            )?,
             "session=new\n"
         );
         Ok(RecursiveDiff::Different("detail output\n".to_owned()))
