@@ -11,16 +11,20 @@ git ls-files -z -- '*Cargo.toml' |
   xargs -0 -r -n 1 cargo fmt --all --manifest-path
 deadnix --fail .
 mbake format --config ./fmt/bake.toml Makefile
-while IFS= read -r -d '' file; do
-  tmp=$(mktemp)
-  trap 'rm -f "$tmp"' EXIT
-  jq -S --indent 2 . "$file" > "$tmp"
-  chmod --reference="$file" "$tmp" 2>/dev/null || true
-  chown --reference="$file" "$tmp" 2>/dev/null || true
-  mv "$tmp" "$file"
-  trap - EXIT
-done < <(git ls-files -z -- '*.json')
 actionlint .github/workflows/*.yml
+
+fmt_json() {
+  local file tmp
+  for file in "$@"; do
+    tmp=$(mktemp)
+    trap 'rm -f "$tmp"' EXIT
+    jq -S --indent 2 . "$file" > "$tmp"
+    chmod --reference="$file" "$tmp" 2>/dev/null || true
+    chown --reference="$file" "$tmp" 2>/dev/null || true
+    mv "$tmp" "$file"
+    trap - EXIT
+  done
+}
 
 fmt_shell() {
   shellcheck "$@"
@@ -44,6 +48,7 @@ fmt_javascript() {
 }
 
 declare -A tracked_formats=(
+  ["*.json"]="json"
   ["*.sh"]="shell"
   ["*.yaml *.yml :(exclude)secrets/*/*.yaml"]="yaml"
   ["*.md"]="markdown"
