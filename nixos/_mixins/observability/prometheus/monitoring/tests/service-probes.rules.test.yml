@@ -6,229 +6,36 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'up{job="blackbox-arr",instance="grafana"}'
-        values: "1x12"
-      - series: 'up{job="blackbox-arr",instance="jellyfin"}'
+      - series: 'probe_success{instance="jellyfin",job="blackbox-arr",probe_family="service",probe_protocol="http",probe_role="frontdoor",probe_title="Front door",scope="external",service="jellyfin",service_title="Jellyfin",target="https://jf.ihar.dev/web/"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
-        alertname: BlackboxARRScrapeDown
+        alertname: ServiceProbeDown
 
   - interval: 30s
     input_series:
-      - series: 'up{job="blackbox-arr",instance="grafana"}'
-        values: "0x10 1x2"
-      - series: 'up{job="blackbox-arr",instance="jellyfin"}'
+      - series: 'probe_success{instance="paperless-gpt",job="blackbox-backend",probe_family="service",probe_protocol="http",probe_role="backend",probe_title="Backend",scope="backend",service="paperless-gpt",service_title="Paperless GPT",target="https://paperless-gpt.home.arpa:9443/api/version"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
-        alertname: BlackboxARRScrapeDown
+        alertname: ServiceProbeDown
       - eval_time: 5m
-        alertname: BlackboxARRScrapeDown
+        alertname: ServiceProbeDown
         exp_alerts:
           - exp_labels:
-              alertname: BlackboxARRScrapeDown
-              category: observability
-              job: blackbox-arr
-              severity: warning
-            exp_annotations:
-              summary: "Public service probe scrape down"
-              description: "Prometheus has been unable to scrape any blackbox-arr probe targets for 5 minutes."
-      - eval_time: 5m30s
-        alertname: BlackboxARRScrapeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'up{job="blackbox-public-wan",instance="jellyfin"}'
-        values: "0x10 1x2"
-    alert_rule_test:
-      - eval_time: 4m30s
-        alertname: BlackboxPublicWANScrapeDown
-      - eval_time: 5m
-        alertname: BlackboxPublicWANScrapeDown
-        exp_alerts:
-          - exp_labels:
-              alertname: BlackboxPublicWANScrapeDown
-              category: observability
-              job: blackbox-public-wan
-              severity: warning
-            exp_annotations:
-              summary: "Public WAN service probe scrape down"
-              description: "Prometheus has been unable to scrape any blackbox-public-wan probe targets for 5 minutes."
-      - eval_time: 5m30s
-        alertname: BlackboxPublicWANScrapeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'up{job="blackbox-backend",instance="paperless-gpt"}'
-        values: "0x10 1x2"
-    alert_rule_test:
-      - eval_time: 4m30s
-        alertname: BlackboxBackendScrapeDown
-      - eval_time: 5m
-        alertname: BlackboxBackendScrapeDown
-        exp_alerts:
-          - exp_labels:
-              alertname: BlackboxBackendScrapeDown
-              category: observability
-              job: blackbox-backend
-              severity: warning
-            exp_annotations:
-              summary: "Backend service probe scrape down"
-              description: "Prometheus has been unable to scrape any blackbox-backend probe targets for 5 minutes."
-      - eval_time: 5m30s
-        alertname: BlackboxBackendScrapeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="jellyfin",scope="external"}'
-        values: "1x12"
-    alert_rule_test:
-      - eval_time: 5m
-        alertname: PublicServiceProbeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="jellyfin",scope="external"}'
-        values: "0x10 1x2"
-    alert_rule_test:
-      - eval_time: 4m30s
-        alertname: PublicServiceProbeDown
-      - eval_time: 5m
-        alertname: PublicServiceProbeDown
-        exp_alerts:
-          - exp_labels:
-              alertname: PublicServiceProbeDown
-              category: service
-              instance: jellyfin
-              job: blackbox-arr
-              scope: external
-              severity: warning
-            exp_annotations:
-              summary: "Public service split-DNS probe down: jellyfin"
-              description: "The split-DNS blackbox probe for jellyfin has been failing for 5 minutes."
-      - eval_time: 5m30s
-        alertname: PublicServiceProbeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-public-wan",instance="jellyfin",scope="external",service="jellyfin",service_title="Jellyfin",public_host="jf.ihar.dev",target="https://ihrachyshka-beast.freeddns.org/web/"}'
-        values: "1x12"
-    alert_rule_test:
-      - eval_time: 5m
-        alertname: PublicServiceWANProbeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-public-wan",instance="jellyfin",scope="external",service="jellyfin",service_title="Jellyfin",public_host="jf.ihar.dev",target="https://ihrachyshka-beast.freeddns.org/web/"}'
-        values: "0x10 1x2"
-    alert_rule_test:
-      - eval_time: 4m30s
-        alertname: PublicServiceWANProbeDown
-      - eval_time: 5m
-        alertname: PublicServiceWANProbeDown
-        exp_alerts:
-          - exp_labels:
-              alertname: PublicServiceWANProbeDown
-              category: service
-              instance: jellyfin
-              job: blackbox-public-wan
-              public_host: jf.ihar.dev
-              scope: external
-              service: jellyfin
-              service_title: Jellyfin
-              severity: warning
-              target: https://ihrachyshka-beast.freeddns.org/web/
-            exp_annotations:
-              summary: "Public service WAN probe down: Jellyfin"
-              description: "The WAN blackbox probe for Jellyfin (jf.ihar.dev via https://ihrachyshka-beast.freeddns.org/web/) has been failing for 5 minutes."
-      - eval_time: 5m30s
-        alertname: PublicServiceWANProbeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="radarr",scope="internal",service="radarr",service_title="Radarr",target="https://radarr.home.arpa/login"}'
-        values: "1x12"
-    alert_rule_test:
-      - eval_time: 5m
-        alertname: InternalServiceProbeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="radarr",scope="internal",service="radarr",service_title="Radarr",target="https://radarr.home.arpa/login"}'
-        values: "0x10 1x2"
-    alert_rule_test:
-      - eval_time: 4m30s
-        alertname: InternalServiceProbeDown
-      - eval_time: 5m
-        alertname: InternalServiceProbeDown
-        exp_alerts:
-          - exp_labels:
-              alertname: InternalServiceProbeDown
-              category: service
-              instance: radarr
-              job: blackbox-arr
-              scope: internal
-              service: radarr
-              service_title: Radarr
-              severity: warning
-              target: https://radarr.home.arpa/login
-            exp_annotations:
-              summary: "Internal service probe down: Radarr"
-              description: "The internal blackbox probe for Radarr (https://radarr.home.arpa/login) has been failing for 5 minutes."
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-arr",instance="proxmox-prx1-lab",scope="internal",service="proxmox-prx1-lab",service_title="Proxmox prx1-lab",target="https://prx1-lab/"}'
-        values: "0x10 1x2"
-    alert_rule_test:
-      - eval_time: 5m
-        alertname: InternalServiceProbeDown
-        exp_alerts:
-          - exp_labels:
-              alertname: InternalServiceProbeDown
-              category: service
-              instance: proxmox-prx1-lab
-              job: blackbox-arr
-              scope: internal
-              service: proxmox-prx1-lab
-              service_title: Proxmox prx1-lab
-              severity: warning
-              target: https://prx1-lab/
-            exp_annotations:
-              summary: "Internal service probe down: Proxmox prx1-lab"
-              description: "The internal blackbox probe for Proxmox prx1-lab (https://prx1-lab/) has been failing for 5 minutes."
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-backend",instance="paperless-gpt",scope="backend",service="paperless-gpt",service_title="Paperless GPT",backend_probe="http",backend_probe_title="Backend HTTP",target="https://paperless-gpt.home.arpa:9443/api/version"}'
-        values: "1x12"
-    alert_rule_test:
-      - eval_time: 5m
-        alertname: BackendServiceProbeDown
-
-  - interval: 30s
-    input_series:
-      - series: 'probe_success{job="blackbox-backend",instance="paperless-gpt",scope="backend",service="paperless-gpt",service_title="Paperless GPT",backend_probe="http",backend_probe_title="Backend HTTP",target="https://paperless-gpt.home.arpa:9443/api/version"}'
-        values: "0x10 1x2"
-    alert_rule_test:
-      - eval_time: 4m30s
-        alertname: BackendServiceProbeDown
-      - eval_time: 5m
-        alertname: BackendServiceProbeDown
-        exp_alerts:
-          - exp_labels:
-              alertname: BackendServiceProbeDown
-              backend_probe: http
-              backend_probe_title: Backend HTTP
+              alertname: ServiceProbeDown
               category: service
               instance: paperless-gpt
               job: blackbox-backend
+              probe_family: service
+              probe_protocol: http
+              probe_role: backend
+              probe_title: Backend
               scope: backend
               service: paperless-gpt
               service_title: Paperless GPT
               severity: warning
-              target: https://paperless-gpt.home.arpa:9443/api/version
+              target: "https://paperless-gpt.home.arpa:9443/api/version"
             exp_annotations:
-              summary: "Backend service probe down: Paperless GPT"
-              description: "The backend blackbox probe for Paperless GPT (https://paperless-gpt.home.arpa:9443/api/version) has been failing for 5 minutes."
+              summary: "Backend probe down: Paperless GPT"
+              description: "The Backend probe for Paperless GPT (https://paperless-gpt.home.arpa:9443/api/version) has been failing for 5 minutes."

@@ -39,7 +39,7 @@ groups:
           summary: "Managed PKI cert expiring critically soon: {{ $labels.host }} / {{ $labels.cert_name }}"
           description: "The managed certificate {{ $labels.cert_name }} for {{ $labels.host }} ({{ $labels.cert_category }}) has less than 14 days remaining."
       - alert: PublicTLSCertExpiringSoon
-        expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",scope="external"} - time()) / 86400) < 21
+        expr: ((probe_ssl_earliest_cert_expiry{probe_family="service",probe_role="frontdoor",scope="external"} - time()) / 86400) < 21
         for: 30m
         labels:
           severity: warning
@@ -48,7 +48,7 @@ groups:
           summary: "Public TLS cert expiring soon: {{ $labels.instance }}"
           description: "The public HTTPS endpoint {{ $labels.instance }} has less than 21 days remaining on its leaf certificate."
       - alert: PublicTLSCertExpiringCritical
-        expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",scope="external"} - time()) / 86400) < 14
+        expr: ((probe_ssl_earliest_cert_expiry{probe_family="service",probe_role="frontdoor",scope="external"} - time()) / 86400) < 14
         for: 30m
         labels:
           severity: critical
@@ -57,7 +57,7 @@ groups:
           summary: "Public TLS cert expiring critically soon: {{ $labels.instance }}"
           description: "The public HTTPS endpoint {{ $labels.instance }} has less than 14 days remaining on its leaf certificate."
       - alert: ManualTLSCertExpiringSoon
-        expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",tls_rotation="manual"} - time()) / 86400) < 30
+        expr: ((probe_ssl_earliest_cert_expiry{probe_family="service",tls_rotation="manual"} - time()) / 86400) < 30
         for: 30m
         labels:
           severity: warning
@@ -66,7 +66,7 @@ groups:
           summary: "Manual TLS cert expiring soon: {{ $labels.service_title }}"
           description: "The manually rotated TLS endpoint {{ $labels.service_title }} ({{ $labels.target }}) has less than 30 days remaining on its leaf certificate."
       - alert: ManualTLSCertExpiringCritical
-        expr: ((probe_ssl_earliest_cert_expiry{job="blackbox-arr",tls_rotation="manual"} - time()) / 86400) < 14
+        expr: ((probe_ssl_earliest_cert_expiry{probe_family="service",tls_rotation="manual"} - time()) / 86400) < 14
         for: 30m
         labels:
           severity: critical

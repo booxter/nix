@@ -137,7 +137,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",probe_family="service",probe_protocol="http",probe_role="frontdoor",scope="external"}'
         values: "1900800x62"
     alert_rule_test:
       - eval_time: 30m
@@ -145,7 +145,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",probe_family="service",probe_protocol="http",probe_role="frontdoor",scope="external"}'
         values: "1728000x60 3456000x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -158,6 +158,9 @@ tests:
               category: pki
               instance: jellyfin
               job: blackbox-arr
+              probe_family: service
+              probe_protocol: http
+              probe_role: frontdoor
               scope: external
               severity: warning
             exp_annotations:
@@ -168,7 +171,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",probe_family="service",probe_protocol="http",probe_role="frontdoor",scope="external"}'
         values: "1728000x62"
     alert_rule_test:
       - eval_time: 30m
@@ -176,7 +179,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",scope="external"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="jellyfin",probe_family="service",probe_protocol="http",probe_role="frontdoor",scope="external"}'
         values: "1123200x60 1728000x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -189,6 +192,9 @@ tests:
               category: pki
               instance: jellyfin
               job: blackbox-arr
+              probe_family: service
+              probe_protocol: http
+              probe_role: frontdoor
               scope: external
               severity: critical
             exp_annotations:
@@ -199,7 +205,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",probe_family="service",probe_protocol="http",probe_role="frontdoor",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
         values: "2678400x62"
     alert_rule_test:
       - eval_time: 30m
@@ -207,7 +213,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",probe_family="service",probe_protocol="http",probe_role="frontdoor",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
         values: "2505600x60 3456000x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -220,6 +226,9 @@ tests:
               category: pki
               instance: unifi
               job: blackbox-arr
+              probe_family: service
+              probe_protocol: http
+              probe_role: frontdoor
               scope: internal
               service: unifi
               service_title: UniFi Console
@@ -234,7 +243,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",probe_family="service",probe_protocol="http",probe_role="frontdoor",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
         values: "1728000x62"
     alert_rule_test:
       - eval_time: 30m
@@ -242,7 +251,7 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
+      - series: 'probe_ssl_earliest_cert_expiry{job="blackbox-arr",instance="unifi",probe_family="service",probe_protocol="http",probe_role="frontdoor",scope="internal",service="unifi",service_title="UniFi Console",target="https://unifi.home.arpa/",tls_rotation="manual"}'
         values: "1123200x60 1728000x2"
     alert_rule_test:
       - eval_time: 29m30s
@@ -255,6 +264,9 @@ tests:
               category: pki
               instance: unifi
               job: blackbox-arr
+              probe_family: service
+              probe_protocol: http
+              probe_role: frontdoor
               scope: internal
               service: unifi
               service_title: UniFi Console

@@ -188,11 +188,13 @@ let
   wanIcmpProbeTargets = [
     {
       probe = "gateway";
+      probe_protocol = "icmp";
       probe_title = "Gateway ${lan.gateway.address}";
       target = lan.gateway.address;
     }
     {
       probe = "cloudflare";
+      probe_protocol = "icmp";
       probe_title = "Cloudflare 1.1.1.1";
       target = "1.1.1.1";
     }
@@ -200,11 +202,13 @@ let
   wanTcpProbeTargets = [
     {
       probe = "gateway-dns";
+      probe_protocol = "tcp";
       probe_title = "Gateway DNS ${lan.gateway.address}:53";
       target = "${lan.gateway.address}:53";
     }
     {
       probe = "cloudflare-https";
+      probe_protocol = "tcp";
       probe_title = "Cloudflare 1.1.1.1:443";
       target = "1.1.1.1:443";
     }
@@ -275,12 +279,14 @@ let
         labels = {
           availability = "always";
           component = "blackbox";
+          probe_family = "network";
+          probe_role = "reachability";
           prober_address = source.exporter;
           prober_scheme = source.scheme;
           realm = realmName;
           scrape_profile = "probe";
           inherit (source) source;
-          inherit (probe) probe probe_title;
+          inherit (probe) probe probe_protocol probe_title;
         };
         targets = [ probe.target ];
       }) probes
@@ -291,6 +297,9 @@ let
       labels = {
         availability = service.observability.availability or "always";
         component = "blackbox";
+        probe_family = "dns";
+        probe_protocol = "dns";
+        probe_role = "public-service";
         realm = realmName;
         scrape_profile = "probe";
         scope = "external";
@@ -308,6 +317,10 @@ let
       availability = service.observability.availability or "always";
       component = "blackbox";
       module = service.blackboxModule or "http_service";
+      probe_family = "service";
+      probe_protocol = "http";
+      probe_role = if service.scope == "backend" then "backend" else "frontdoor";
+      probe_title = if service.scope == "backend" then "Backend" else "Front door";
       realm = realmName;
       scrape_profile = "probe";
       scope = service.scope;
@@ -419,6 +432,10 @@ in
         labels = {
           availability = service.observability.availability or "always";
           component = "blackbox";
+          probe_family = "service";
+          probe_protocol = "http";
+          probe_role = "public-wan";
+          probe_title = "Public WAN";
           realm = realmName;
           scrape_profile = "probe";
           scope = "external";
@@ -459,6 +476,9 @@ in
         labels = {
           availability = "always";
           component = "blackbox";
+          probe_family = "dns";
+          probe_protocol = "dns";
+          probe_role = "resolver";
           realm = realmName;
           resolver = resolver.resolver;
           resolver_title = resolver.resolver_title;

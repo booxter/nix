@@ -6,7 +6,7 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-dns",resolver="gateway",resolver_title="gateway 192.168.0.1",source="prometheus-host"}'
+      - series: 'probe_success{job="blackbox-dns",probe_family="dns",probe_protocol="dns",probe_role="resolver",resolver="gateway",resolver_title="gateway 192.168.0.1",source="prometheus-host"}'
         values: "0 0 0 0 0"
     alert_rule_test:
       - eval_time: 1m30s
@@ -18,6 +18,9 @@ tests:
               alertname: DNSResolverProbeDown
               category: dns
               job: blackbox-dns
+              probe_family: dns
+              probe_protocol: dns
+              probe_role: resolver
               resolver: gateway
               resolver_title: gateway 192.168.0.1
               severity: critical
@@ -28,9 +31,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-public-dns",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="cloudflare",resolver_title="Cloudflare 1.1.1.1"}'
+      - series: 'probe_success{job="blackbox-public-dns",probe_family="dns",probe_protocol="dns",probe_role="public-service",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="cloudflare",resolver_title="Cloudflare 1.1.1.1"}'
         values: "0x12"
-      - series: 'probe_success{job="blackbox-public-dns",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="google",resolver_title="Google 8.8.8.8"}'
+      - series: 'probe_success{job="blackbox-public-dns",probe_family="dns",probe_protocol="dns",probe_role="public-service",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="google",resolver_title="Google 8.8.8.8"}'
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
@@ -38,9 +41,9 @@ tests:
 
   - interval: 30s
     input_series:
-      - series: 'probe_success{job="blackbox-public-dns",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="cloudflare",resolver_title="Cloudflare 1.1.1.1"}'
+      - series: 'probe_success{job="blackbox-public-dns",probe_family="dns",probe_protocol="dns",probe_role="public-service",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="cloudflare",resolver_title="Cloudflare 1.1.1.1"}'
         values: "0x10 1x2"
-      - series: 'probe_success{job="blackbox-public-dns",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="google",resolver_title="Google 8.8.8.8"}'
+      - series: 'probe_success{job="blackbox-public-dns",probe_family="dns",probe_protocol="dns",probe_role="public-service",service="vikunja",service_title="Vikunja",public_host="vi.ihar.dev",resolver="google",resolver_title="Google 8.8.8.8"}'
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s

@@ -17,12 +17,12 @@ in
           description = "Prometheus has been unable to scrape {{ $labels.job }} on {{ $labels.instance }} for 10 minutes.";
         })
         (mkScrapeDown {
-          name = "DNSProbeScrapeDown";
-          selector = ''up{job="blackbox-dns",scrape_profile="probe"}'';
+          name = "ProbeScrapeDown";
+          selector = ''up{scrape_profile="probe"}'';
           for = "5m";
           category = "observability";
-          summary = "DNS probe scrape down: {{ $labels.instance }}";
-          description = "Prometheus has been unable to scrape the blackbox DNS probe target {{ $labels.instance }} for 5 minutes.";
+          summary = "Probe scrape down: {{ $labels.job }} / {{ $labels.instance }}";
+          description = "Prometheus has been unable to collect the {{ $labels.job }} probe target {{ $labels.instance }} for 5 minutes.";
         })
         (mkScrapeDown {
           name = "SmartctlExporterDown";

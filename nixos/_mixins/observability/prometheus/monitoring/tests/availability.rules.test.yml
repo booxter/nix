@@ -68,7 +68,7 @@ tests:
         values: "1x12"
     alert_rule_test:
       - eval_time: 5m
-        alertname: DNSProbeScrapeDown
+        alertname: ProbeScrapeDown
 
   - interval: 30s
     input_series:
@@ -76,22 +76,22 @@ tests:
         values: "0x10 1x2"
     alert_rule_test:
       - eval_time: 4m30s
-        alertname: DNSProbeScrapeDown
+        alertname: ProbeScrapeDown
       - eval_time: 5m
-        alertname: DNSProbeScrapeDown
+        alertname: ProbeScrapeDown
         exp_alerts:
           - exp_labels:
-              alertname: DNSProbeScrapeDown
+              alertname: ProbeScrapeDown
               category: observability
               instance: gateway
               job: blackbox-dns
               scrape_profile: probe
               severity: warning
             exp_annotations:
-              summary: "DNS probe scrape down: gateway"
-              description: "Prometheus has been unable to scrape the blackbox DNS probe target gateway for 5 minutes."
+              summary: "Probe scrape down: blackbox-dns / gateway"
+              description: "Prometheus has been unable to collect the blackbox-dns probe target gateway for 5 minutes."
       - eval_time: 5m30s
-        alertname: DNSProbeScrapeDown
+        alertname: ProbeScrapeDown
 
   - interval: 30s
     input_series:
