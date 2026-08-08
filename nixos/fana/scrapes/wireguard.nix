@@ -5,15 +5,29 @@
   prometheusMtlsTlsConfig,
 }:
 let
-  wgHome = hostInventory.site.wireguard.home;
-  gatewayHostConfig = outputs.nixosConfigurations.${wgHome.gateway.host}.config;
-  wgHomeEndpoint = gatewayHostConfig.host.observability.prometheusEndpoints."wg-home";
-  gatewayTargetHost = wgHome.gateway.host;
-  peers = lib.mapAttrsToList (name: peer: {
-    inherit name;
-    address = builtins.head (lib.splitString "/" peer.address);
-    inherit (peer) publicKey;
-  }) wgHome.peers;
+  endpoints = hostInventory.site.wireguard;
+  endpointData = lib.mapAttrs (
+    name: endpoint:
+    let
+      gatewayHostConfig = outputs.nixosConfigurations.${endpoint.gateway.host}.config;
+    in
+    {
+      inherit name endpoint;
+      metrics = gatewayHostConfig.host.observability.prometheusEndpoints."wg-${name}";
+      peers = lib.mapAttrsToList (peerName: peer: {
+        name = peerName;
+        address = builtins.head (lib.splitString "/" peer.address);
+        inherit (peer) publicKey;
+      }) endpoint.peers;
+    }
+  ) endpoints;
+  metricsPaths = lib.unique (map (data: data.metrics.path) (builtins.attrValues endpointData));
+  metricsPath =
+    if builtins.length metricsPaths == 1 then
+      builtins.head metricsPaths
+    else
+      throw "WireGuard Prometheus endpoints must expose a common metrics path";
+  peers = builtins.concatMap (data: data.peers) (builtins.attrValues endpointData);
   mkPeerMetricRelabels = peer: [
     {
       source_labels = [ "public_key" ];
@@ -33,15 +47,13 @@ in
   scrapeConfigs = [
     {
       job_name = "wireguard";
-      metrics_path = wgHomeEndpoint.path;
+      metrics_path = metricsPath;
       scheme = "https";
       tls_config = prometheusMtlsTlsConfig;
-      static_configs = [
-        {
-          targets = [ "${gatewayTargetHost}:${toString wgHomeEndpoint.port}" ];
-          labels.instance = wgHome.gateway.host;
-        }
-      ];
+      static_configs = lib.mapAttrsToList (_: data: {
+        targets = [ "${data.endpoint.gateway.host}:${toString data.metrics.port}" ];
+        labels.instance = data.endpoint.gateway.host;
+      }) endpointData;
       metric_relabel_configs = builtins.concatMap mkPeerMetricRelabels peers;
     }
   ];

@@ -259,14 +259,12 @@ rec {
   );
   site = siteFacts // {
     lan = siteFacts.lan // {
-      staticRoutes = [
-        {
-          name = "wg-home";
-          destination = siteFacts.wireguard.home.cidr;
-          nextHop = toNixosHostIpv4Address siteFacts.wireguard.home.gateway.host;
-          distance = 1;
-        }
-      ];
+      staticRoutes = lib.mapAttrsToList (name: endpoint: {
+        name = "wg-${name}";
+        destination = endpoint.cidr;
+        nextHop = toNixosHostIpv4Address endpoint.gateway.host;
+        distance = 1;
+      }) siteFacts.wireguard;
 
       dnsRecords =
         let
