@@ -340,7 +340,9 @@ class Arguments:
 
 def parse_arguments(argv: Sequence[str] | None = None) -> Arguments:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--amdgpu-top", default=os.environ.get("FRAME_AMDGPU_TOP", "amdgpu_top"))
+    parser.add_argument(
+        "--amdgpu-top", default=os.environ.get("AMDGPU_METRICS_AMDGPU_TOP", "amdgpu_top")
+    )
     parser.add_argument("--output", default="-")
     parser.add_argument("--sample-interval-ms", type=int, default=1000)
     parser.add_argument("--timeout", type=float, default=10)

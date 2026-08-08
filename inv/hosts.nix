@@ -218,6 +218,10 @@ in
             };
         in
         {
+          gpu = {
+            vendor = "amd";
+            computeBackend = "rocm";
+          };
           # Shared display topology for the kernel, GDM, Hyprland, and ReFrame.
           drmCard = "card1";
           displays = [

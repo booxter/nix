@@ -5,7 +5,7 @@
   python3,
 }:
 python3.pkgs.buildPythonApplication {
-  pname = "frame-observability";
+  pname = "amdgpu-metrics";
   version = "0.1.0";
   pyproject = true;
 
@@ -30,20 +30,20 @@ python3.pkgs.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/frame_observability
+    mypy src/amdgpu_metrics
   '';
 
   postFixup = ''
-    wrapProgram "$out/bin/frame-amdgpu-metrics" \
-      --set-default FRAME_AMDGPU_TOP ${lib.getExe amdgpu_top}
+    wrapProgram "$out/bin/amdgpu-metrics" \
+      --set-default AMDGPU_METRICS_AMDGPU_TOP ${lib.getExe amdgpu_top}
   '';
 
-  pythonImportsCheck = [ "frame_observability" ];
+  pythonImportsCheck = [ "amdgpu_metrics" ];
 
   meta = {
-    description = "Export frame AMD GPU state as Prometheus textfile metrics";
+    description = "Export AMD GPU state as Prometheus textfile metrics";
     license = lib.licenses.mit;
-    mainProgram = "frame-amdgpu-metrics";
+    mainProgram = "amdgpu-metrics";
     platforms = lib.platforms.linux;
   };
 }

@@ -9,7 +9,7 @@ from prometheus_client import CollectorRegistry, generate_latest, write_to_textf
 
 
 def render(registry: CollectorRegistry) -> bytes:
-    """Render one registry using the Prometheus text exposition format."""
+    """Render a registry using the Prometheus text exposition format."""
     return generate_latest(registry)
 
 

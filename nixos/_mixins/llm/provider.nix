@@ -10,6 +10,9 @@ let
   providerHost = if realmLlm == null then null else realmLlm.providerHost;
   cfg = config.host.llm.provider;
   service = if realmLlm == null then null else hostInventory.servicesById.${realmLlm.serviceId};
+  gpu = config.host.gpu;
+  ollamaPackage =
+    if gpu != null && gpu.computeBackend == "rocm" then pkgs.ollama-rocm else pkgs.ollama;
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
   metricsPackage = pkgs.callPackage ./packages/ollama-metrics { inherit atomicFileWrites; };
@@ -51,6 +54,7 @@ in
 
     services.ollama = {
       enable = true;
+      package = ollamaPackage;
       host = "127.0.0.1";
       port = 11434;
       loadModels = cfg.models;

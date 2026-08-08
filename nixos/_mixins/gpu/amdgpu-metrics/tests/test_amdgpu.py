@@ -8,7 +8,7 @@ from prometheus_client import CollectorRegistry
 from prometheus_client.parser import text_string_to_metric_families
 from pydantic import ValidationError
 
-from frame_observability.amdgpu import (
+from amdgpu_metrics.amdgpu import (
     AmdgpuSample,
     Arguments,
     Reading,
@@ -20,7 +20,7 @@ from frame_observability.amdgpu import (
     scaled_value,
     success_registry,
 )
-from frame_observability.textfile import render
+from amdgpu_metrics.textfile import render
 
 
 class StaticSource:
@@ -200,7 +200,7 @@ def test_collection_failure_emits_health_metrics_and_preserves_source_options() 
 
 
 def test_cli_uses_wrapped_executable_default(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("FRAME_AMDGPU_TOP", "/nix/store/amdgpu_top")
+    monkeypatch.setenv("AMDGPU_METRICS_AMDGPU_TOP", "/nix/store/amdgpu_top")
 
     arguments = parse_arguments([])
 
