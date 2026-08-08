@@ -79,7 +79,7 @@ let
       pkgs
       ;
   };
-  monitoringPackage = pkgs.callPackage ./monitoring/package.nix { };
+  monitoringPackage = pkgs.callPackage ./monitoring/package.nix { inherit hostInventory; };
   retentionDays = cfg.retentionDays;
   prometheusRetention = "${toString retentionDays}d";
 in

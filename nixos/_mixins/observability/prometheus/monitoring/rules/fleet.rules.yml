@@ -2,64 +2,6 @@ groups:
   - name: fleet-health
     interval: 30s
     rules:
-      - alert: NodeCpuUsageHigh
-        expr: |
-          100 - (
-            avg by(instance, job) (
-              rate(node_cpu_seconds_total{job=~"node-local|node-mtls",instance!~"builder.*|frame|mair|mmini",mode="idle"}[5m])
-            ) * 100
-          ) > 80
-        for: 5m
-        labels:
-          severity: warning
-          category: capacity
-        annotations:
-          summary: "Node CPU usage high on {{ $labels.instance }}"
-          description: "{{ $labels.instance }} CPU busy has been above 80% for 5 minutes."
-      - alert: NodeCpuUsageCritical
-        expr: |
-          100 - (
-            avg by(instance, job) (
-              rate(node_cpu_seconds_total{job=~"node-local|node-mtls",instance!~"builder.*|frame|mair|mmini",mode="idle"}[5m])
-            ) * 100
-          ) > 90
-        for: 5m
-        labels:
-          severity: critical
-          category: capacity
-        annotations:
-          summary: "Node CPU usage critical on {{ $labels.instance }}"
-          description: "{{ $labels.instance }} CPU busy has been above 90% for 5 minutes."
-      - alert: NodeMemoryUsageHigh
-        expr: |
-          100 * (
-            1 - (
-              node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab|mair|mmini"}
-              / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab|mair|mmini"}
-            )
-          ) > 80
-        for: 5m
-        labels:
-          severity: warning
-          category: capacity
-        annotations:
-          summary: "Node memory usage high on {{ $labels.instance }}"
-          description: "{{ $labels.instance }} memory usage has been above 80% for 5 minutes."
-      - alert: NodeMemoryUsageCritical
-        expr: |
-          100 * (
-            1 - (
-              node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab|mair|mmini"}
-              / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance!~"prx[0-9]+-lab|mair|mmini"}
-            )
-          ) > 90
-        for: 5m
-        labels:
-          severity: critical
-          category: capacity
-        annotations:
-          summary: "Node memory usage critical on {{ $labels.instance }}"
-          description: "{{ $labels.instance }} memory usage has been above 90% for 5 minutes."
       - alert: NodeSwapUsageHigh
         expr: |
           100 * (
@@ -124,34 +66,6 @@ groups:
         annotations:
           summary: "I/O pressure high on {{ $labels.instance }}"
           description: "I/O pressure has stalled all non-idle tasks for more than 50% of wall time on {{ $labels.instance }} for 15 minutes."
-      # Proxmox hosts run large QEMU processes whose RSS includes reclaimable
-      # guest page cache. On 128 GiB nodes, an 80% threshold can still leave
-      # about 25 GiB available, so retain low absolute headroom and a higher
-      # percentage threshold alongside the fleet-wide PSI alerts.
-      - alert: ProxmoxNodeMemoryHeadroomLow
-        expr: |
-          (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"} < 16 * 1024 * 1024 * 1024)
-          or
-          (100 * (1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"})) > 90)
-        for: 5m
-        labels:
-          severity: warning
-          category: capacity
-        annotations:
-          summary: "Proxmox node memory headroom low on {{ $labels.instance }}"
-          description: "{{ $labels.instance }} has less than 16 GiB available or is above 90% memory use for 5 minutes."
-      - alert: ProxmoxNodeMemoryHeadroomCritical
-        expr: |
-          (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"} < 8 * 1024 * 1024 * 1024)
-          or
-          (100 * (1 - (node_memory_MemAvailable_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"} / node_memory_MemTotal_bytes{job=~"node-local|node-mtls",instance=~"prx[0-9]+-lab"})) > 95)
-        for: 5m
-        labels:
-          severity: critical
-          category: capacity
-        annotations:
-          summary: "Proxmox node memory headroom critical on {{ $labels.instance }}"
-          description: "{{ $labels.instance }} has less than 8 GiB available or is above 95% memory use for 5 minutes."
       - alert: RootFilesystemUsageHigh
         expr: 100 * (1 - (node_filesystem_avail_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""} / node_filesystem_size_bytes{job=~"node-local|node-mtls",mountpoint="/",fstype!=""})) > 85
         for: 30m
