@@ -69,10 +69,9 @@
         syncHost = "pki";
         maxMonitors = 10;
         excludedServiceIds = [
-          # Degoog and Paperless are evaluation deployments covered by the
-          # fleet blackbox probes.
+          # Degoog is an evaluation deployment covered by the fleet blackbox
+          # probes.
           "goo"
-          "paperless"
           # PinePods has split-DNS, WAN, and systemd dependency alerts in
           # Prometheus.
           "pinepods"

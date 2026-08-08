@@ -13,6 +13,7 @@ let
   monitoredServices = builtins.filter (
     service: !(builtins.elem service.id excludedServiceIds)
   ) hostInventory.publicServices;
+  monitorCount = builtins.length monitoredServices;
   servicesFile = pkgs.writeText "uptimerobot-services.json" (
     builtins.toJSON (
       map (service: {
@@ -35,8 +36,12 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = builtins.length monitoredServices <= realmUptimeRobot.maxMonitors;
-        message = "UptimeRobot monitor limit exceeded: configured ${toString (builtins.length monitoredServices)}, limit ${toString realmUptimeRobot.maxMonitors}";
+        assertion = monitorCount <= realmUptimeRobot.maxMonitors;
+        message = "UptimeRobot monitor limit exceeded: configured ${toString monitorCount}, limit ${toString realmUptimeRobot.maxMonitors}";
+      }
+      {
+        assertion = monitorCount == realmUptimeRobot.maxMonitors || excludedServiceIds == [ ];
+        message = "UptimeRobot has unused capacity: configured ${toString monitorCount} of ${toString realmUptimeRobot.maxMonitors} monitors while services remain excluded";
       }
     ];
 
