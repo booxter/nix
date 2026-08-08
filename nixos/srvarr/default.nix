@@ -8,7 +8,6 @@
   environment.systemPackages = [ pkgs.join-media-parts ];
 
   imports = [
-    ./aurral.nix
     ./backup.nix
     ./glance.nix
     ./nfs.nix

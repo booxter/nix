@@ -12,8 +12,6 @@ in
 
   transmission-common = transmissionCommon;
 
-  aurral = pkgs.callPackage ./aurral { };
-
   transmission-torrent-cleaner = pkgs.callPackage ./transmission-torrent-cleaner {
     inherit transmissionCommon;
   };

@@ -67,7 +67,7 @@ stdenv.mkDerivation {
     ./keep-proxy-reauth-upgrade-route.patch
     ./disable-local-auth.patch
     # AURRAL_DATA_DIR lives below /data/.state, which sendFile rejects by default.
-    ../../../../overlays/aurral-allow-hidden-image-cache-path.patch
+    ../../../../../overlays/aurral-allow-hidden-image-cache-path.patch
   ];
 
   postPatch = ''

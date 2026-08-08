@@ -1,5 +1,6 @@
 {
   imports = [
+    ./aurral
     ./audiobookshelf
     ./bazarr
     ./degoog

@@ -168,6 +168,7 @@ in
   nfs.exports = {
     media = (export "Media" 10 [ "srvarr" ]) // {
       clientServices = [
+        "aurral"
         "audiobookshelf"
         "bazarr"
         "jellyfin"

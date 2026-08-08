@@ -3,22 +3,25 @@
   hostInventory,
   lib,
   pkgs,
-  srvarrPkgs,
   ...
 }:
 let
   cfg = config.services.aurral;
+  hostCfg = config.host.aurral;
   hostname = config.networking.hostName;
   aurralPort = 3001;
-  mediaPath = config.host.srvarrPaths.mediaDir;
-  aurralStateDir = "${config.host.srvarrPaths.stateDir}/aurral";
-  aurralFlowDir = config.host.srvarrPaths.library.flows;
+  aurralService = hostInventory.servicesById.aurral;
+  instance = aurralService.instances.${hostname} or { };
+  mediaExport = hostInventory.storage.nfs.exports.media;
+  isMediaServer = mediaExport.server == hostname;
+  mediaPath = instance.mediaDir or "/var/lib/aurral-media";
+  aurralStateDir = instance.dataDir or "/var/lib/aurral";
+  aurralFlowDir = "${mediaPath}/${mediaExport.layout.library.flows}";
   slskdDownloadsDir = config.services.slskd.settings.directories.downloads;
-  aurralPackage = srvarrPkgs.aurral.override {
+  aurralPackage = pkgs.callPackage ./package {
     runtimeStateDir = aurralStateDir;
     runtimeFlowDir = aurralFlowDir;
   };
-  aurralService = hostInventory.servicesById.aurral;
   aurralAdminUsers = lib.attrNames (
     lib.filterAttrs (_: person: builtins.elem "media-admins" person.groups) hostInventory.sso.users
   );
@@ -46,22 +49,50 @@ let
   };
 in
 {
-  options.services.aurral = {
-    enable = lib.mkOption {
+  imports = [ ./backup.nix ];
+
+  options = {
+    host.aurral.enable = lib.mkOption {
       type = lib.types.bool;
-      default = builtins.hasAttr hostname aurralService.instances;
-      description = "Whether to run Aurral on this host.";
+      default = hostInventory.serviceRunsOn hostname aurralService;
+      readOnly = true;
+      internal = true;
+      description = "Whether inventory assigns Aurral to this host.";
     };
 
-    soulseek.enable = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = "Whether Aurral consumes downloads from the local slskd instance.";
+    services.aurral = {
+      enable = lib.mkEnableOption "Aurral";
+
+      dataDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/var/lib/aurral";
+        description = "Directory containing Aurral state.";
+      };
+
+      soulseek.enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether Aurral consumes downloads from the local slskd instance.";
+      };
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    assertions = lib.optionals cfg.soulseek.enable [
+  config = lib.mkIf hostCfg.enable {
+    assertions = [
+      {
+        assertion = instance ? dataDir && instance ? mediaDir;
+        message = "The Aurral inventory instance must define dataDir and mediaDir.";
+      }
+      {
+        assertion = builtins.elem hostname mediaExport.clients;
+        message = "The Aurral host must be an authorized media NFS client.";
+      }
+      {
+        assertion = config.host.backups.client.enable;
+        message = "The Aurral host must be a declared backup client.";
+      }
+    ]
+    ++ lib.optionals cfg.soulseek.enable [
       {
         assertion = config.services.slskd.enable;
         message = "Aurral's Soulseek integration requires slskd on the same host.";
@@ -71,6 +102,15 @@ in
         message = "Aurral's local slskd instance must be VPN-confined.";
       }
     ];
+
+    services.aurral = {
+      enable = true;
+      dataDir = aurralStateDir;
+    };
+
+    host.nfs.mounts = lib.mkIf (!isMediaServer) {
+      media = mediaPath;
+    };
 
     # Sharp resolves fonts through fontconfig when rendering playlist artwork.
     fonts.packages = [ pkgs.dejavu_fonts ];

@@ -170,7 +170,10 @@
     }
     {
       id = "aurral";
-      instances.srvarr = { };
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/aurral";
+        mediaDir = "/data/media";
+      };
       publicHost = "mu.${publicDomain}";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health/live";

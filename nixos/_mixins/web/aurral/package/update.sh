@@ -3,7 +3,7 @@ set -euo pipefail
 
 attr="${UPDATE_NIX_ATTR_PATH:-aurral}"
 system="${UPDATE_NIX_SYSTEM:-x86_64-linux}"
-package_file="nixos/srvarr/pkgs/aurral/default.nix"
+package_file="nixos/_mixins/web/aurral/package/default.nix"
 nodejs_selector="${PACKAGE_UPDATES_SELECT_NODEJS:-select-nodejs}"
 
 repo_root="$(git rev-parse --show-toplevel)"
