@@ -115,6 +115,55 @@ let
   renderedExports = lib.mapAttrs' (
     _: export: lib.nameValuePair export.path (exportClients export)
   ) exports;
+  remoteClientMounts = lib.filterAttrs (
+    name: _: (exportFor name).server != hostSpec.name
+  ) clientMounts;
+  tmpfilesSettingsEntries =
+    optionName: settings:
+    lib.flatten (
+      lib.mapAttrsToList (
+        fileName: paths:
+        map (path: {
+          inherit path;
+          source = "${optionName}.${fileName}.${path}";
+        }) (builtins.attrNames paths)
+      ) settings
+    );
+  unquote =
+    value:
+    lib.removeSuffix "'" (lib.removePrefix "'" (lib.removeSuffix "\"" (lib.removePrefix "\"" value)));
+  tmpfilesRuleEntry =
+    rule:
+    let
+      fields = builtins.filter (field: field != "") (
+        lib.splitString " " (lib.replaceStrings [ "\t" ] [ " " ] rule)
+      );
+    in
+    lib.optional (builtins.length fields > 1) {
+      path = unquote (builtins.elemAt fields 1);
+      source = "systemd.tmpfiles.rules: ${rule}";
+    };
+  tmpfilesEntries =
+    tmpfilesSettingsEntries "systemd.tmpfiles.settings" config.systemd.tmpfiles.settings
+    ++ tmpfilesSettingsEntries "boot.initrd.systemd.tmpfiles.settings" config.boot.initrd.systemd.tmpfiles.settings
+    ++ lib.concatMap tmpfilesRuleEntry (
+      lib.concatMap (lib.splitString "\n") config.systemd.tmpfiles.rules
+    );
+  pathIsWithin =
+    mountPoint: path:
+    let
+      root = if mountPoint == "/" then "/" else lib.removeSuffix "/" mountPoint;
+      prefix = if root == "/" then root else "${root}/";
+    in
+    path == root || lib.hasPrefix prefix path;
+  tmpfilesViolations = lib.concatMap (
+    entry:
+    lib.mapAttrsToList (exportName: mountPoint: {
+      inherit exportName mountPoint;
+      inherit (entry) path source;
+      owner = (exportFor exportName).server;
+    }) (lib.filterAttrs (_: mountPoint: pathIsWithin mountPoint entry.path) remoteClientMounts)
+  ) tmpfilesEntries;
 in
 {
   options.host.nfs.mounts = lib.mkOption {
@@ -183,6 +232,17 @@ in
             builtins.length (builtins.attrValues clientMounts)
             == builtins.length (lib.unique (builtins.attrValues clientMounts));
           message = "host.nfs.mounts must use unique local mount points.";
+        }
+        {
+          assertion = tmpfilesViolations == [ ];
+          message =
+            "tmpfiles entries may not target NFS mounts owned by another host: "
+            + lib.concatMapStringsSep "; " (
+              violation:
+              "${violation.source} targets '${violation.path}' within export "
+              + "'${violation.exportName}' mounted at '${violation.mountPoint}' and owned by "
+              + "'${violation.owner}'"
+            ) tmpfilesViolations;
         }
       ]
       ++ lib.mapAttrsToList (name: _: {
