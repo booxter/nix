@@ -53,6 +53,7 @@ func All(config Config) ([]Definition, error) {
 		{path: "Infrastructure/network.json", build: NetworkOverview},
 		{path: "Infrastructure/sso.json", build: SSOOverview},
 		{path: "Infrastructure/thermals.json", build: ThermalsOverview},
+		{path: "Services/home-assistant.json", build: HomeAssistantOverview},
 		{path: "Services/lolek.json", build: LolekOverview},
 		{path: "Services/services.json", build: ServiceProbeOverview},
 		{path: "Services/vikunja.json", build: VikunjaOverview},

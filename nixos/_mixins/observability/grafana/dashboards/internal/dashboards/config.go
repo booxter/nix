@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/grafana/grafana-foundation-sdk/go/common"
@@ -13,6 +14,19 @@ import (
 type DataSource struct {
 	Type string `json:"type"`
 	UID  string `json:"uid"`
+}
+
+func (config Config) serviceHost(service string) (string, error) {
+	hosts := make([]string, 0, 1)
+	for _, host := range config.Hosts {
+		if slices.Contains(host.Services, service) {
+			hosts = append(hosts, host.Name)
+		}
+	}
+	if len(hosts) != 1 {
+		return "", fmt.Errorf("service %q has %d dashboard hosts, want one", service, len(hosts))
+	}
+	return hosts[0], nil
 }
 
 func (source DataSource) reference() common.DataSourceRef {
