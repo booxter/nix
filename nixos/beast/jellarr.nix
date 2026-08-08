@@ -2,7 +2,6 @@
   beastPkgs,
   config,
   hostInventory,
-  hostSpec,
   lib,
   inputs,
   ...
@@ -151,8 +150,8 @@ in
         # TODO: revisit subtitle hardcoding policy once jellarr module exposes
         # explicit subtitle-mode/burn-in options declaratively.
         enableHardwareEncoding = true;
-        hardwareAccelerationType = "qsv";
-        qsvDevice = hostSpec.hardware.igpu.renderDevice;
+        hardwareAccelerationType = config.host.videoAcceleration.backend;
+        qsvDevice = config.host.videoAcceleration.device;
         hardwareDecodingCodecs = [
           "h264"
           "hevc"

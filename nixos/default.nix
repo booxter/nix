@@ -43,6 +43,7 @@ in
       ./_mixins/ups-client
       ./_mixins/ups-sched.nix
       ./_mixins/user
+      ./_mixins/video-acceleration.nix
       ./_mixins/vm.nix
       ./_mixins/yubi.nix
     ];

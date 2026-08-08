@@ -263,7 +263,10 @@ in
       autoUpgrade.rebootPolicy = "weekly-if-needed";
       dnsAliases = builtins.filter (domain: domain != "dash.${publicDomain}") publicServiceHosts;
       hmFull = false;
-      hardware.igpu.renderDevice = "/dev/dri/renderD128";
+      hardware.videoAcceleration = {
+        backend = "qsv";
+        device = "/dev/dri/renderD128";
+      };
       dhcpReservation = {
         match = "bc:fc:e7:3b:fe:da";
         ip = "192.168.16.3";

@@ -1,6 +1,5 @@
 {
   config,
-  hostSpec,
   inputs,
   pkgs,
   ...
@@ -63,8 +62,9 @@ in
       # TODO: Use a first-class upstream module option once lolek exposes one.
       LOLEK_YT_DLP_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
     };
-    hardwareAcceleration.backend = "qsv";
-    hardwareAcceleration.device = hostSpec.hardware.igpu.renderDevice;
+    hardwareAcceleration = {
+      inherit (config.host.videoAcceleration) backend device;
+    };
     metrics = {
       enable = true;
       port = lolekMetricsInternalPort;
