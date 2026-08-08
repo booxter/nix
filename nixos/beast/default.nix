@@ -12,7 +12,6 @@
     ./backup-server.nix
     ./jellarr.nix
     ./jellyfin-backup.nix
-    ./jellyfin-maintenance.nix
     ./jellyfin.nix
     ./library-dirs.nix
     ./lolek.nix
