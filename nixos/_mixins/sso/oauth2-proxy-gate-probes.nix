@@ -33,13 +33,13 @@ let
       builtins.filter (entry: !(lib.hasPrefix "= /" entry.locationName)) (locationEntriesFor gate)
     );
 
-  # Probe-only vhost name created by internal-https-service. Example: `search`
+  # Probe-only vhost name created by internal-service. Example: `search`
   # maps to `internal-https-search-probe`.
   vhostNameFor = serviceName: "internal-https-${serviceName}-probe";
 in
 {
   # Enable the probe listener only for services with explicit probe locations.
-  # Example: a Search health URL turns on `host.internalHttps.services.search.probe`.
+  # Example: a Search health URL turns on `host.internalService.services.search.probe`.
   enableAttrsFor =
     gate:
     lib.genAttrs (serviceNamesFor gate) (_: {
@@ -50,13 +50,13 @@ in
     gateName: gate:
     let
       unknownProbeServices = builtins.filter (
-        serviceName: !(builtins.elem serviceName gate.internalHttpsServiceNames)
+        serviceName: !(builtins.elem serviceName gate.internalServiceNames)
       ) (serviceNamesFor gate);
     in
     [
       {
         assertion = unknownProbeServices == [ ];
-        message = "host.sso.oauth2ProxyGates.${gateName}.probeLocationsByName must only reference internalHttpsServiceNames.";
+        message = "host.sso.oauth2ProxyGates.${gateName}.probeLocationsByName must only reference internalServiceNames.";
       }
       {
         assertion = unsafeLocationNamesFor gate == [ ];

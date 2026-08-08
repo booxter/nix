@@ -130,7 +130,7 @@ in
       "d '${stateDir}/prompts' 0750 ${containerUid} ${containerGid} - -"
     ];
 
-    host.internalHttps.services.paperless-gpt = {
+    host.internalService.services.paperless-gpt = {
       enable = true;
       upstream = "http://127.0.0.1:${toString port}";
     };
@@ -145,7 +145,7 @@ in
       allowedGroups = [ paperlessSso.adminGroup ];
       groupClaim = "paperless_groups";
       whitelistDomains = [ host ];
-      internalHttpsServiceNames = [ "paperless-gpt" ];
+      internalServiceNames = [ "paperless-gpt" ];
       authCookieVariableName = "paperless_gpt_auth_cookie";
       probeLocationsByName.paperless-gpt."= /api/version" = {
         proxyPass = "http://127.0.0.1:${toString port}";

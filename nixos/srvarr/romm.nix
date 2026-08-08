@@ -614,7 +614,7 @@ in
     };
   };
 
-  host.internalHttps.services.romm = {
+  host.internalService.services.romm = {
     enable = true;
     upstream = "http://127.0.0.1:${toString apiPort}";
     path = "/api";

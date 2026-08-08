@@ -368,7 +368,7 @@ in
     title = "PinePods Native Backup";
   };
 
-  host.internalHttps.services.pinepods = {
+  host.internalService.services.pinepods = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
     publicAliases = [ pinepodsService.publicHost ];

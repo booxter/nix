@@ -13,28 +13,28 @@ let
   dashService = hostInventory.servicesById.dash;
   degoogService = hostInventory.servicesById.goo;
   fanaHostConfig = outputs.nixosConfigurations.fana.config;
-  fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
+  fanaHttpsServices = fanaHostConfig.host.internalService.services;
   internalPki = hostInventory.realms.${config.host.realm}.services.internalPki;
   pkiRootCaUrl =
     "https://${internalPki.providerHost}:"
     + toString internalPki.server.port
     + internalPki.server.rootsPath;
-  srvarrHttpsServices = config.host.internalHttps.services;
-  internalHttpsServicesFor =
+  srvarrHttpsServices = config.host.internalService.services;
+  internalServicesFor =
     service:
     if service.owner == "srvarr" then
       srvarrHttpsServices
     else if service.owner == "fana" then
       fanaHttpsServices
     else
-      outputs.nixosConfigurations.${service.owner}.config.host.internalHttps.services;
-  internalHttpsServiceFor =
+      outputs.nixosConfigurations.${service.owner}.config.host.internalService.services;
+  internalServiceFor =
     service:
     let
-      internalHttpsServices = internalHttpsServicesFor service;
-      serviceConfig = builtins.getAttr service.id internalHttpsServices;
+      internalServices = internalServicesFor service;
+      serviceConfig = builtins.getAttr service.id internalServices;
     in
-    if builtins.hasAttr service.id internalHttpsServices && serviceConfig.enable then
+    if builtins.hasAttr service.id internalServices && serviceConfig.enable then
       serviceConfig
     else
       throw "Glance service ${service.id} must expose enabled internal HTTPS";
@@ -44,7 +44,7 @@ let
       service
     else
       let
-        httpsService = internalHttpsServiceFor service;
+        httpsService = internalServiceFor service;
       in
       service
       // {
@@ -183,7 +183,7 @@ in
     };
   };
 
-  host.internalHttps.services = {
+  host.internalService.services = {
     glance = {
       enable = true;
       upstream = "http://127.0.0.1:${toString glanceInternalPort}";

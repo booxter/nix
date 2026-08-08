@@ -14,7 +14,7 @@ let
     if realmLlm == null then
       null
     else
-      builtins.head (hostInventory.toInternalHttpsServiceHosts realmLlm.serviceId);
+      builtins.head (hostInventory.toInternalServiceHosts realmLlm.serviceId);
   clientType =
     { name, config, ... }:
     {

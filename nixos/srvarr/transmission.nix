@@ -135,7 +135,7 @@ in
       };
     };
 
-  host.internalHttps.services.transmission = {
+  host.internalService.services.transmission = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.transmission.settings.rpc-port}";
     recommendedProxySettings = false;

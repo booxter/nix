@@ -5,7 +5,7 @@
   ...
 }:
 let
-  cfg = config.host.internalHttps;
+  cfg = config.host.internalService;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   # A local alias like `search` is served both as the single-label name and as
   # mDNS, for example `search` and `search.local`.
@@ -124,13 +124,13 @@ let
     };
 in
 {
-  options.host.internalHttps.localAliases = lib.mkOption {
+  options.host.internalService.localAliases = lib.mkOption {
     type = with lib.types; listOf str;
     default = [ ];
     description = "Single-label local service names exported by enabled internal HTTPS services.";
   };
 
-  options.host.internalHttps.services = lib.mkOption {
+  options.host.internalService.services = lib.mkOption {
     type =
       with lib.types;
       attrsOf (
@@ -260,7 +260,7 @@ in
   };
 
   config = lib.mkIf (enabledServices != { }) {
-    host.internalHttps.localAliases = lib.unique (
+    host.internalService.localAliases = lib.unique (
       builtins.concatMap (service: service.localAliases) (builtins.attrValues enabledServices)
     );
 
@@ -268,11 +268,11 @@ in
       {
         assertion =
           (builtins.length enabledServerNames) == (builtins.length (lib.unique enabledServerNames));
-        message = "host.internalHttps.services must not reuse the same serverName, serverAlias, or publicAlias on one host.";
+        message = "host.internalService.services must not reuse the same serverName, serverAlias, or publicAlias on one host.";
       }
       {
         assertion = servicesWithProbePortConflicts == { };
-        message = "host.internalHttps.services probe listeners must use a port distinct from the normal service port. Offenders: ${lib.concatStringsSep ", " (builtins.attrNames servicesWithProbePortConflicts)}";
+        message = "host.internalService.services probe listeners must use a port distinct from the normal service port. Offenders: ${lib.concatStringsSep ", " (builtins.attrNames servicesWithProbePortConflicts)}";
       }
     ];
 

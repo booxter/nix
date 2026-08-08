@@ -106,7 +106,7 @@ in
         environmentFile = config.sops.templates."alertmanager.env".path;
       };
 
-      host.internalHttps.services.${alertmanagerService.id} = {
+      host.internalService.services.${alertmanagerService.id} = {
         enable = true;
         upstream = "http://127.0.0.1:${toString alertmanagerPort}";
         path = "= /-/ready";

@@ -306,7 +306,7 @@ in
 
       # Browser OIDC origins are scoped to nginx/443. pveproxy keeps its fixed
       # 8006 listener for Proxmox-native/root fallback access.
-      host.internalHttps.services.proxmox = {
+      host.internalService.services.proxmox = {
         enable = true;
         serverName = cfg.serverName;
         serverAliases = builtins.filter (alias: alias != cfg.serverName) cfg.serverAliases;

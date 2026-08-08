@@ -75,7 +75,7 @@ in
       };
     };
 
-    host.internalHttps.services.id = {
+    host.internalService.services.id = {
       enable = true;
       upstream = "https://127.0.0.1:${toString kanidmPort}";
       publicAliases = [ idService.publicHost ];

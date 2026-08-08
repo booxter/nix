@@ -177,7 +177,7 @@ in
     uid = hostInventory.serviceAccounts.audiobookshelf.uid;
   };
 
-  host.internalHttps.services.audiobookshelf = {
+  host.internalService.services.audiobookshelf = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
     publicAliases = [ audiobookshelfService.publicHost ];

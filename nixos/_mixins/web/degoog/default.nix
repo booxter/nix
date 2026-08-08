@@ -219,7 +219,7 @@ in
       };
     };
 
-    host.internalHttps.services.goo = {
+    host.internalService.services.goo = {
       enable = true;
       inherit upstream;
       publicAliases = [ degoogService.publicHost ];
@@ -237,7 +237,7 @@ in
       groupClaim = "degoog_groups";
       externalOrigin = degoogService.url;
       whitelistDomains = [ degoogService.publicHost ];
-      internalHttpsServiceNames = [ "goo" ];
+      internalServiceNames = [ "goo" ];
       authCookieVariableName = "goo_auth_cookie";
       authRequestHeaders = [
         {

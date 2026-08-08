@@ -9,7 +9,7 @@ let
   oauth2ProxyCookieName = "_srvarr_admin_sso";
   protectedServiceIds = hostInventory.srvarrAdminAppIds;
   protectedServiceHosts = lib.unique (
-    lib.concatMap hostInventory.toInternalHttpsServiceHosts protectedServiceIds
+    lib.concatMap hostInventory.toInternalServiceHosts protectedServiceIds
   );
   houndarrManagedServiceNames = [
     "lidarr"
@@ -138,7 +138,7 @@ in
     allowedGroups = [ "media-admins" ];
     groupClaim = "media_groups";
     whitelistDomains = protectedServiceHosts;
-    internalHttpsServiceNames = protectedServiceIds;
+    internalServiceNames = protectedServiceIds;
     authCookieVariableName = "auth_cookie";
     clearAuthorizationHeader = false;
     authRequestHeaders = [

@@ -65,7 +65,7 @@ in
       };
     };
 
-    host.internalHttps.services.paperless = {
+    host.internalService.services.paperless = {
       enable = true;
       upstream = "http://127.0.0.1:${toString config.services.paperless.port}";
       publicAliases = [ paperlessService.publicHost ];

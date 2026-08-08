@@ -98,7 +98,7 @@ in
     uid = hostInventory.serviceAccounts.shelfmark.uid;
   };
 
-  host.internalHttps.services.shelfmark = {
+  host.internalService.services.shelfmark = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.shelfmark.environment.FLASK_PORT}";
     publicAliases = [ shelfmarkService.publicHost ];

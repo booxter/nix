@@ -83,7 +83,7 @@ in
       };
     };
 
-    host.internalHttps.services.vikunja = {
+    host.internalService.services.vikunja = {
       enable = true;
       upstream = "http://127.0.0.1:${toString vikunjaPort}";
       publicAliases = [ vikunjaService.publicHost ];

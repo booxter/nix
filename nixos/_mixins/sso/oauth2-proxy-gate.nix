@@ -198,10 +198,10 @@ let
           description = "Whether to clear the Authorization header before proxying to protected upstreams.";
         };
 
-        internalHttpsServiceNames = lib.mkOption {
+        internalServiceNames = lib.mkOption {
           type = with lib.types; listOf str;
           default = [ ];
-          description = "host.internalHttps service names protected by this gate.";
+          description = "host.internalService service names protected by this gate.";
         };
 
         externalHostNames = lib.mkOption {
@@ -240,7 +240,7 @@ let
       lib.unique (
         map (host: "https://${host}/oauth2/callback") gate.externalHostNames
         ++ map (host: "https://${host}/oauth2/callback") (
-          lib.concatMap hostInventory.toInternalHttpsServiceHosts gate.internalHttpsServiceNames
+          lib.concatMap hostInventory.toInternalServiceHosts gate.internalServiceNames
         )
       );
 
@@ -375,7 +375,7 @@ let
   internalServiceVhostNames =
     serviceName:
     let
-      service = config.host.internalHttps.services.${serviceName};
+      service = config.host.internalService.services.${serviceName};
     in
     [
       "internal-https-${serviceName}"
@@ -393,9 +393,9 @@ let
           name = vhostName;
           value.locations = locationsFor gate serviceName;
         }) (internalServiceVhostNames serviceName)
-      ) gate.internalHttpsServiceNames
+      ) gate.internalServiceNames
     );
-  # Public vhosts owned by host.externalService instead of host.internalHttps.
+  # Public vhosts owned by host.externalService instead of host.internalService.
   # Example: Beast's Aurral gate protects the external `au.ihar.dev` vhost.
   protectedExternalVhostsFor =
     gate:
@@ -502,10 +502,10 @@ in
       }
     ) enabledGates;
 
-    host.internalHttps.services = lib.mkMerge (
+    host.internalService.services = lib.mkMerge (
       builtins.concatLists (
         map (gate: [
-          (lib.genAttrs gate.internalHttpsServiceNames (_: {
+          (lib.genAttrs gate.internalServiceNames (_: {
             locationExtraConfig = authRequestLocationConfig gate;
           }))
           # Backend probe bypasses intentionally use a separate listener instead

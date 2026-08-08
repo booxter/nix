@@ -257,7 +257,7 @@ in
         paths = [ watchstateBackupStagingDir ];
       };
 
-      host.internalHttps.services.watchstate = {
+      host.internalService.services.watchstate = {
         enable = true;
         upstream = "http://127.0.0.1:${toString watchstatePort}";
         locationExtraConfig = ''
@@ -276,7 +276,7 @@ in
         allowedGroups = [ watchstateSso.adminGroup ];
         groupClaim = "media_groups";
         whitelistDomains = [ watchstateHostName ];
-        internalHttpsServiceNames = [ "watchstate" ];
+        internalServiceNames = [ "watchstate" ];
         # WatchState uses X-User for its own identity selection.
         authRequestHeaders = [ ];
         # WatchState's frontend uses Authorization for its own API session.

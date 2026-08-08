@@ -48,7 +48,7 @@ let
       config
     else
       outputs.nixosConfigurations.${service.owner}.config;
-  ownerHttpsServicesFor = service: (ownerHostConfigFor service).host.internalHttps.services;
+  ownerHttpsServicesFor = service: (ownerHostConfigFor service).host.internalService.services;
   httpsServiceFor =
     service:
     let

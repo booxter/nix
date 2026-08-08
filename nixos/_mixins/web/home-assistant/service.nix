@@ -13,7 +13,7 @@ in
   config = lib.mkIf isOwner {
     services.home-assistant.enable = true;
 
-    host.internalHttps.services.home = {
+    host.internalService.services.home = {
       enable = true;
       upstream = "http://127.0.0.1:${toString port}";
       locationExtraConfig = ''

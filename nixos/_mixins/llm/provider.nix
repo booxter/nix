@@ -98,7 +98,7 @@ in
       "d ${nodeExporterTextfileDir} 0755 root root - -"
     ];
 
-    host.internalHttps.services.${realmLlm.serviceId} = {
+    host.internalService.services.${realmLlm.serviceId} = {
       enable = true;
       upstream = "http://127.0.0.1:${toString config.services.ollama.port}";
       mtls.enable = true;

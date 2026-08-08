@@ -7,7 +7,9 @@
 }:
 let
   aliasAddress = hostInventory.toHostIpv4Address hostSpec;
-  aliases = lib.unique ((hostSpec.localDnsAliases or [ ]) ++ config.host.internalHttps.localAliases);
+  aliases = lib.unique (
+    (hostSpec.localDnsAliases or [ ]) ++ config.host.internalService.localAliases
+  );
   aliasService = alias: {
     name = "avahi-alias-${alias}";
     value = {

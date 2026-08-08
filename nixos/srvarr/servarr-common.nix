@@ -28,7 +28,7 @@ in
         settings = lib.recursiveUpdate commonSettings extraSettings;
       };
 
-      host.internalHttps.services.${name} = {
+      host.internalService.services.${name} = {
         enable = true;
         upstream = "http://127.0.0.1:${toString serviceCfg.settings.server.port}";
       };

@@ -42,7 +42,7 @@ in
       };
     };
 
-    host.internalHttps.services.atticd = {
+    host.internalService.services.atticd = {
       enable = true;
       serverName = "${serviceName}.${hostInventory.site.lan.domain}";
       localAliases = [ serviceName ];

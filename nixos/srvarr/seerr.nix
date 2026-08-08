@@ -39,7 +39,7 @@ in
     uid = seerrAccount.uid;
   };
 
-  host.internalHttps.services.seerr = {
+  host.internalService.services.seerr = {
     enable = true;
     upstream = "http://127.0.0.1:${toString config.services.seerr.port}";
     publicAliases = [ seerrService.publicHost ];

@@ -102,7 +102,7 @@ in
       hostWhitelist = [
         config.networking.hostName
       ]
-      ++ hostInventory.toInternalHttpsServiceHosts "sabnzbd";
+      ++ hostInventory.toInternalServiceHosts "sabnzbd";
       inherit wgNamespaceAddress;
       paths = mediaPaths;
       port = port;
@@ -142,7 +142,7 @@ in
     };
   };
 
-  host.internalHttps.services.sabnzbd = {
+  host.internalService.services.sabnzbd = {
     enable = true;
     upstream = "http://127.0.0.1:${toString port}";
   };

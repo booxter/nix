@@ -22,15 +22,15 @@ let
           inherit (service) publicHost;
           backend = {
             type = "internal-https";
-            serverName = config.host.internalHttps.services.${service.id}.serverName;
+            serverName = config.host.internalService.services.${service.id}.serverName;
           };
         };
       })
       (
         builtins.filter (
           service:
-          builtins.hasAttr service.id config.host.internalHttps.services
-          && config.host.internalHttps.services.${service.id}.enable
+          builtins.hasAttr service.id config.host.internalService.services
+          && config.host.internalService.services.${service.id}.enable
         ) ownedPublicServices
       )
   );

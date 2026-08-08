@@ -99,7 +99,7 @@ pkgs.testers.runNixOSTest {
       ];
 
       options = {
-        host.internalHttps.services = lib.mkOption {
+        host.internalService.services = lib.mkOption {
           type = lib.types.attrsOf lib.types.anything;
           default = { };
         };
@@ -135,7 +135,7 @@ pkgs.testers.runNixOSTest {
         _module.args.hostInventory = {
           servicesById.id.publicHost = "id.example.invalid";
           site.lan.domain = "example.invalid";
-          toInternalHttpsServiceHosts = serviceName: [ "${serviceName}.example.invalid" ];
+          toInternalServiceHosts = serviceName: [ "${serviceName}.example.invalid" ];
         };
 
         sops.placeholder.oauth2-proxy-gate-test-client-secret = "test-client-secret";

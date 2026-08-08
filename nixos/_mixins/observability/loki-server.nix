@@ -47,7 +47,7 @@ in
     }
 
     (lib.mkIf cfg.enable {
-      host.internalHttps.services.${lokiService.id} = {
+      host.internalService.services.${lokiService.id} = {
         enable = true;
         upstream = "http://127.0.0.1:${toString lokiPort}";
         mtls.enable = true;

@@ -136,7 +136,7 @@ in
     };
   };
 
-  host.internalHttps.services.aurral = {
+  host.internalService.services.aurral = {
     enable = true;
     upstream = "http://127.0.0.1:${toString aurralPort}";
     publicAliases = [ aurralService.publicHost ];

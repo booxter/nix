@@ -3,7 +3,7 @@
     ./degoog
     ./external-service.nix
     ./home-assistant
-    ./internal-https-service.nix
+    ./internal-service.nix
     ./jellyfin
     ./paperless
     ./paperless-gpt

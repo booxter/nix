@@ -298,7 +298,7 @@ in
         };
       };
 
-      host.internalHttps.services.${grafanaService.id} = {
+      host.internalService.services.${grafanaService.id} = {
         enable = true;
         upstream = "http://127.0.0.1:${toString grafanaPort}";
       };

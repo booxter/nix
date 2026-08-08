@@ -324,7 +324,7 @@ rec {
       ++ [ (toLocalDnsName name) ]
       ++ lib.optional (lowercaseName != name) (toLocalDnsName lowercaseName)
     );
-  toInternalHttpsServiceHosts =
+  toInternalServiceHosts =
     serviceName:
     let
       endpointName = servicesById.${serviceName}.internalEndpointName;

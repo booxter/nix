@@ -17,7 +17,7 @@ in
     networking_name = networkingName;
     avahi_name = avahiName;
   };
-  internal_services = configuredHost.host.internalHttps.services or { };
+  internal_services = configuredHost.host.internalService.services or { };
   clients = configuredHost.host.internalPki.clients or { };
   proxmox_api =
     if configuredHost.host.proxmox.apiCertificate.enable or false then
