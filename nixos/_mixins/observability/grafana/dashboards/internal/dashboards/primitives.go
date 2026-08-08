@@ -154,6 +154,7 @@ type ValueStatOptions struct {
 	Mappings   []dashboard.ValueMapping
 	Background bool
 	Thresholds *dashboard.ThresholdsConfigBuilder
+	Targets    []PrometheusTarget
 }
 
 func valueStat(options ValueStatOptions) *stat.PanelBuilder {
@@ -168,8 +169,14 @@ func valueStat(options ValueStatOptions) *stat.PanelBuilder {
 		ReduceOptions(common.NewReduceDataOptionsBuilder().
 			Values(false).
 			Calcs([]string{"lastNotNull"}).
-			Fields("")).
-		WithTarget(prometheusQuery("A", options.Expression, options.Legend, true))
+			Fields(""))
+	if len(options.Targets) == 0 {
+		panel.WithTarget(prometheusQuery("A", options.Expression, options.Legend, true))
+	} else {
+		for _, target := range options.Targets {
+			panel.WithTarget(prometheusQuery(target.RefID, target.Expression, target.Legend, true))
+		}
+	}
 	if options.Background {
 		panel.ColorMode(common.BigValueColorModeBackground).
 			GraphMode(common.BigValueGraphModeNone)
