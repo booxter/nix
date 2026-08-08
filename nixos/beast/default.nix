@@ -9,22 +9,22 @@
 
   imports = [
     (import ../disko { })
-    ./sso.nix
     ./backup-server.nix
     ./disk-bays.nix
     ./igpu.nix
-    ./jellyfin.nix
-    ./jellyfin-maintenance.nix
-    ./jellyfin-exporter.nix
-    ./jellyfin-backup.nix
     ./jellarr.nix
-    ./meilisearch.nix
+    ./jellyfin-backup.nix
+    ./jellyfin-exporter.nix
+    ./jellyfin-maintenance.nix
+    ./jellyfin.nix
     ./library-dirs.nix
     ./lolek.nix
+    ./meilisearch.nix
     ./nfs.nix
     ./nginx.nix
     ./pause.nix
     ./raid.nix
+    ./sso.nix
     ./ups.nix
     ./watchstate.nix
   ];

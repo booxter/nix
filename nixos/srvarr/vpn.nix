@@ -24,7 +24,6 @@ let
 in
 {
   imports = [
-    ./wg-bridge-access.nix
     (import ./update-dynamic-ip.nix {
       inherit
         lib
@@ -34,6 +33,7 @@ in
         wgUnitDepsBase
         ;
     })
+    ./wg-bridge-access.nix
   ];
 
   vpnNamespaces.wg = {

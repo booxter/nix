@@ -21,14 +21,14 @@
     ./oauth2-proxy.nix
     ./paths.nix
     ./pinepods.nix
-    ./romm.nix
     ./qos.nix
+    ./romm.nix
     ./sabnzbd.nix
     ./seerr.nix
     ./shelfmark.nix
     ./slskd.nix
-    ./tuning.nix
     ./transmission.nix
+    ./tuning.nix
     ./vpn.nix
   ];
 }

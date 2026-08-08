@@ -20,8 +20,8 @@ let
 in
 {
   imports = [
-    ./transmission-torrent-cleaner.nix
     ./transmission-prioritizer.nix
+    ./transmission-torrent-cleaner.nix
   ];
 
   sops.secrets.transmissionTrackerHosts = {

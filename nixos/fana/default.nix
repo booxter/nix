@@ -6,9 +6,9 @@
   imports = [
     ./grafana
     ./loki.nix
+    ./monitoring
     ./prometheus.nix
     ./unpoller.nix
-    ./monitoring
   ];
 
   host.observability = {

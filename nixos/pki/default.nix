@@ -50,8 +50,8 @@ in
   _module.args = { inherit pkiPkgs; };
 
   imports = [
-    ./id.nix
     ./backup.nix
+    ./id.nix
     ./unifi-sync.nix
     ./uptimerobot-sync.nix
     ./wg-home-dns-sync.nix
