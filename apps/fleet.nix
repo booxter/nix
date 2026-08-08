@@ -116,7 +116,7 @@ let
   seerrRequestStoragePackage = appPackages.seerr-request-storage;
   seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
   pkiRotationPackage = pkgs.pki-rotation;
-  resetOidc = pkgs.callPackage ../nixos/_mixins/sso/packages/kanidm-tools {
+  resetOidc = pkgs.callPackage ../nixos/_mixins/sso/kanidm/packages/kanidm-tools {
     defaultTarget = ssoProviderHost;
   };
   wgHomeClientConfig = fleetTools;

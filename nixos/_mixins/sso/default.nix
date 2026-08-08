@@ -1,7 +1,8 @@
 {
   imports = [
-    ./oidc.nix
+    ./kanidm
     ./oauth2-proxy-gate.nix
-    ./server.nix
+    ./oidc.nix
+    ./provider.nix
   ];
 }

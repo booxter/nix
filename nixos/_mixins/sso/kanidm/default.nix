@@ -8,10 +8,9 @@
   ...
 }:
 let
-  realmSso = hostInventory.realms.${config.host.realm}.services.sso or null;
+  cfg = config.host.sso.provider;
   outboundMail = hostInventory.realms.${config.host.realm}.services.outboundMail or null;
-  providerHost = if realmSso == null then "" else realmSso.providerHost;
-  isProviderHost = providerHost == config.networking.hostName;
+  providerHost = cfg.host;
   idService = hostInventory.servicesById.id;
   sso = hostInventory.sso;
   oidcClients = import ./provider-clients.nix {
@@ -114,7 +113,7 @@ let
   ];
 in
 {
-  config = lib.mkIf isProviderHost {
+  config = lib.mkIf cfg.enable {
     assertions = [
       {
         assertion = unknownOidcGroups == [ ];
