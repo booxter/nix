@@ -7,7 +7,6 @@
 let
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix { inherit hostInventory; };
-  watchstatePort = hostInventory.site.ports.watchstate;
   mkJellyfinUserPasswordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   jellyfinSecretFile = {
     owner = "jellyfin";
@@ -358,57 +357,18 @@ in
             };
         in
         map getUser userDefinitions;
-      plugins =
-        map (name: { inherit name; }) [
-          "AudioDB"
-          "Letterboxd Link on Movies"
-          "Last.fm"
-          "LrcLib Lyrics"
-          "MusicBrainz"
-          "OMDb"
-          "Studio Images"
-          "ThePornDB"
-          "TheTVDB"
-          "TMDb"
-        ]
-        ++ [
-          {
-            name = "Webhook";
-            configuration.GenericOptions = [
-              {
-                WebhookName = "WatchState Global Webhook";
-                WebhookUri = "http://127.0.0.1:${toString watchstatePort}/v1/api/webhook";
-                NotificationTypes = [
-                  "ItemAdded"
-                  "UserDataSaved"
-                  "PlaybackStart"
-                  "PlaybackStop"
-                ];
-                # An empty filter means all Jellyfin users. WatchState maps the
-                # payload's user id to the matching backend configuration.
-                UserFilter = [ ];
-                EnableMovies = true;
-                EnableEpisodes = true;
-                EnableSeries = false;
-                EnableSeasons = false;
-                EnableAlbums = false;
-                EnableSongs = false;
-                EnableVideos = false;
-                SendAllProperties = true;
-                TrimWhitespace = true;
-                SkipEmptyMessageBody = true;
-                EnableWebhook = true;
-                Headers = [
-                  {
-                    Key = "Content-Type";
-                    Value = "application/json";
-                  }
-                ];
-                Fields = [ ];
-              }
-            ];
-          }
-        ];
+      plugins = map (name: { inherit name; }) [
+        "AudioDB"
+        "Letterboxd Link on Movies"
+        "Last.fm"
+        "LrcLib Lyrics"
+        "MusicBrainz"
+        "OMDb"
+        "Studio Images"
+        "ThePornDB"
+        "TheTVDB"
+        "TMDb"
+      ];
     };
   };
 }
