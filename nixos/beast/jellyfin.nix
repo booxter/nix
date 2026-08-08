@@ -12,6 +12,7 @@ in
 {
   services.jellyfin = {
     enable = true;
+    exporter.enable = true;
     logging.playbackDebug = true;
   };
 
