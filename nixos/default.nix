@@ -22,8 +22,9 @@ in
     ]
     ++ [
       ./_mixins/adaptive-upload-policy
-      ./_mixins/avahi
+      ./_mixins/attic
       ./_mixins/auto-upgrade
+      ./_mixins/avahi
       ./_mixins/backups
       ./_mixins/btrfs.nix
       ./_mixins/builder.nix
@@ -37,7 +38,6 @@ in
       ./_mixins/qos
       ./_mixins/sso
       ./_mixins/storage.nix
-      ./_mixins/attic
       ./_mixins/unifi-sync
       ./_mixins/ups-client
       ./_mixins/ups-sched.nix

@@ -20,10 +20,12 @@ in
     inputs.home-manager.darwinModules.home-manager
   ]
   ++ [
+    ./_mixins/attic
+    ./_mixins/browser
     ./_mixins/defaults
     ./_mixins/etc
-    ./_mixins/fonts
     ./_mixins/fleet-cache-warmer
+    ./_mixins/fonts
     ./_mixins/homebrew
     ./_mixins/internal-pki
     ./_mixins/lan-wan-accounting
@@ -38,12 +40,10 @@ in
     ./_mixins/sketchybar-network
     ./_mixins/sudo
     ./_mixins/thermal-accounting
-    ./_mixins/xquartz
-    ./_mixins/yubi.nix
-    ./_mixins/attic
-    ./_mixins/browser
     ./_mixins/vnc
     ./_mixins/vnc-open
+    ./_mixins/xquartz
+    ./_mixins/yubi.nix
   ];
 
   home-manager = {
