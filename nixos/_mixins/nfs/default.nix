@@ -103,7 +103,14 @@ in
   };
 
   config = lib.mkMerge [
-    { users.groups = sharedGroups; }
+    {
+      users.groups = sharedGroups;
+
+      # All current NFS use is v4-only. NixOS enables rpcbind automatically
+      # for NFS filesystems, but rpcbind is only needed by legacy NFSv3/RPC
+      # helpers.
+      services.rpcbind.enable = lib.mkOverride 75 false;
+    }
 
     (lib.mkIf (exports != { }) {
       services.nfs = {

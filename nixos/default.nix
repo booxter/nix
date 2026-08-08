@@ -98,10 +98,6 @@ in
     networking.dhcpcd.extraConfig = ''
       clientid ${hostname}
     '';
-    # All current NFS use is v4-only. NixOS enables rpcbind automatically for
-    # NFS filesystems, but rpcbind is only needed for legacy NFSv3/RPC helpers.
-    services.rpcbind.enable = lib.mkOverride 75 false;
-
     # TODO: revisit hw sensor monitoring (sensord or alternative).
 
     environment.systemPackages = with pkgs; [
