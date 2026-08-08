@@ -71,6 +71,7 @@ in
       ./_mixins/user
       ./_mixins/vikunja
       ./_mixins/vm.nix
+      ./_mixins/watchstate
       ./_mixins/wireguard-endpoint
       ./_mixins/yubi.nix
     ];

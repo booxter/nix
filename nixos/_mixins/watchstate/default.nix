@@ -1,0 +1,327 @@
+{
+  config,
+  hostInventory,
+  lib,
+  pkgs,
+  utils,
+  ...
+}:
+let
+  cfg = config.host.watchstate;
+  hostname = config.networking.hostName;
+  watchstateService = hostInventory.servicesById.watchstate;
+  jellyfinService = hostInventory.servicesById.jellyfin;
+  watchstateAccount = hostInventory.serviceAccounts.watchstate;
+  mediaExport = hostInventory.storage.nfs.exports.media;
+  isMediaServer = mediaExport.server == hostname;
+  mediaRoot = if isMediaServer then mediaExport.path else "/media";
+  sourceLibraryRoot = "${mediaRoot}/${mediaExport.layout.library.root}";
+  jellyfinLibraryRoot = "/media/library";
+  ociImages = import ../../../oci { inherit pkgs; };
+  watchstateImage = ociImages.watchstate.ref;
+  watchstateImageFile = ociImages.watchstate.imageFile;
+  watchstateHostName = "${watchstateService.internalEndpointName}.${hostInventory.site.lan.domain}";
+  watchstateSso = hostInventory.sso.applications.watchstate;
+  watchstateSystemUser = hostInventory.sso.administrator;
+  watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
+  watchstatePort = hostInventory.site.ports.watchstate;
+  watchstateDataDir = "/var/lib/watchstate";
+  dataMount = config.host.storage.volumes.data.mounts.data.mountPoint;
+  watchstateBackupStagingDir =
+    if config.host.backups.client.isLocal then
+      "${dataMount}/backups/staging/watchstate"
+    else
+      "/var/lib/watchstate-backups";
+  backupJob = config.host.backups.destinationJob;
+  backupGroup =
+    if config.host.backups.client.isLocal then config.host.backups.server.cloud.group else "root";
+  watchstateTools = pkgs.callPackage ./watchstate-tools {
+    atomicFileWrites = pkgs.atomic-file-writes;
+  };
+  renderAuthCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' watchstateTools "watchstate-render-auth")
+    "--system-user"
+    watchstateSystemUser
+    "--password-file"
+    config.sops.secrets."watchstate/system/password".path
+    "--output"
+    "/run/watchstate-auth/auth.env"
+  ];
+  backupCommand = utils.escapeSystemdExecArgs [
+    (lib.getExe' watchstateTools "watchstate-native-backup")
+    "--data-dir"
+    watchstateDataDir
+    "--staging-dir"
+    watchstateBackupStagingDir
+    "--keep"
+    "7"
+  ];
+in
+{
+  options.host.watchstate.enable = lib.mkOption {
+    type = lib.types.bool;
+    default = watchstateService.owner == hostname;
+    readOnly = true;
+    internal = true;
+    description = "Whether inventory assigns the WatchState service to this host.";
+  };
+
+  config = lib.mkMerge [
+    {
+      assertions = [
+        {
+          assertion = builtins.hasAttr watchstateService.owner hostInventory.nixosHosts;
+          message = "WatchState owner '${watchstateService.owner}' must be a managed NixOS host";
+        }
+        {
+          assertion =
+            !cfg.enable || hostInventory.nixosHosts.${watchstateService.owner}.realm == config.host.realm;
+          message = "WatchState owner '${watchstateService.owner}' must belong to realm '${config.host.realm}'";
+        }
+      ];
+    }
+
+    (lib.mkIf cfg.enable {
+      services.jellarr.config.plugins = [
+        {
+          name = "Webhook";
+          configuration.GenericOptions = [
+            {
+              WebhookName = "WatchState Global Webhook";
+              WebhookUri = "http://127.0.0.1:${toString watchstatePort}/v1/api/webhook";
+              NotificationTypes = [
+                "ItemAdded"
+                "UserDataSaved"
+                "PlaybackStart"
+                "PlaybackStop"
+              ];
+              # An empty filter means all Jellyfin users. WatchState maps the
+              # payload's user id to the matching backend configuration.
+              UserFilter = [ ];
+              EnableMovies = true;
+              EnableEpisodes = true;
+              EnableSeries = false;
+              EnableSeasons = false;
+              EnableAlbums = false;
+              EnableSongs = false;
+              EnableVideos = false;
+              SendAllProperties = true;
+              TrimWhitespace = true;
+              SkipEmptyMessageBody = true;
+              EnableWebhook = true;
+              Headers = [
+                {
+                  Key = "Content-Type";
+                  Value = "application/json";
+                }
+              ];
+              Fields = [ ];
+            }
+          ];
+        }
+      ];
+
+      users.groups.watchstate.gid = watchstateAccount.gid;
+      users.users.watchstate = {
+        description = "WatchState service user";
+        isSystemUser = true;
+        group = "watchstate";
+        uid = watchstateAccount.uid;
+        home = watchstateDataDir;
+        createHome = false;
+      };
+
+      sops.secrets."watchstate/system/password" = {
+        owner = "root";
+        group = "root";
+        mode = "0400";
+        restartUnits = [
+          "watchstate-password-env.service"
+          "podman-watchstate.service"
+        ];
+      };
+
+      systemd.services.watchstate-password-env = {
+        description = "Render the WatchState authentication environment";
+        requires = [ "sops-install-secrets.service" ];
+        after = [ "sops-install-secrets.service" ];
+        before = [ "podman-watchstate.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          # Keep the credentials outside the generated Podman unit's
+          # /run/watchstate directory: systemd removes that directory whenever the
+          # container stops, while this oneshot remains active and is not rerun.
+          RuntimeDirectory = "watchstate-auth";
+          RuntimeDirectoryMode = "0700";
+          UMask = "0077";
+          ExecStart = renderAuthCommand;
+        };
+      };
+
+      virtualisation.oci-containers = {
+        backend = "podman";
+        containers.watchstate = {
+          image = watchstateImage;
+          imageFile = watchstateImageFile;
+          pull = "never";
+          user = "${toString watchstateAccount.uid}:${toString watchstateAccount.gid}";
+          environment = {
+            TZ = config.time.timeZone;
+            # oauth2-proxy remains the browser-facing authentication boundary.
+            # Trust nginx's loopback connection so WatchState mints its internal
+            # token after SSO instead of prompting for a second password.
+            WS_TRUST_LOCAL = "true";
+            # Webhooks provide low-latency updates, while these staggered jobs
+            # reconcile events that Jellyfin or WatchState may have missed. Import
+            # first so the following export works from the freshest combined state.
+            WS_CRON_IMPORT = "true";
+            WS_CRON_IMPORT_AT = "0 */12 * * *";
+            WS_CRON_EXPORT = "true";
+            WS_CRON_EXPORT_AT = "30 */12 * * *";
+            # Generate the consolidated backend/path audit after the midnight
+            # import and enable file checks against the read-only library mount.
+            WS_CRON_MEDIA_HEALTH = "true";
+            WS_CRON_MEDIA_HEALTH_AT = "0 5 * * *";
+            WS_MEDIA_HEALTH_CHECK_FILES = "true";
+            # Disable WatchState's cron trigger: watchstate-native-backup.service
+            # invokes the same native backup immediately before Restic, ensuring
+            # the latest archive is included and the outcome is monitored.
+            WS_CRON_BACKUP = "false";
+            # Serialize full export comparisons and state writes so large syncs do
+            # not exhaust the reverse proxy or Jellyfin API. WatchState does
+            # not apply this switch to incremental Jellyfin metadata reads, so each
+            # exported Jellyfin backend must also set options.client.http_version
+            # to 1.1. Disabling HTTP/2 multiplexing makes WatchState's built-in
+            # per-host connection limit effective for those requests.
+            WS_HTTP_SYNC_REQUESTS = "true";
+          };
+          environmentFiles = [ "/run/watchstate-auth/auth.env" ];
+          extraOptions = [
+            "--cap-drop=all"
+            # The image probes before WatchState finishes initializing. Podman
+            # exposes that expected startup miss as a failed transient systemd
+            # unit, which makes NixOS activation report a false failure. The
+            # backend endpoint remains covered by the external probe below.
+            "--no-healthcheck"
+            "--security-opt=no-new-privileges"
+          ];
+          ports = [ "127.0.0.1:${toString watchstatePort}:${toString watchstatePort}" ];
+          volumes = [
+            "${watchstateDataDir}:/config:rw"
+            "${sourceLibraryRoot}:${jellyfinLibraryRoot}:ro"
+          ];
+        };
+      };
+
+      systemd.tmpfiles.rules = [
+        "d ${watchstateDataDir} 0700 watchstate watchstate - -"
+        "d ${watchstateBackupStagingDir} 0750 root ${backupGroup} - -"
+      ];
+
+      systemd.services.podman-watchstate = {
+        requires = [ "watchstate-password-env.service" ];
+        wants = [
+          "network-online.target"
+        ];
+        after = [
+          "network-online.target"
+          "watchstate-password-env.service"
+        ];
+        unitConfig.RequiresMountsFor = [
+          watchstateDataDir
+          sourceLibraryRoot
+        ];
+      };
+
+      systemd.services.watchstate-native-backup = {
+        description = "Create a native WatchState backup archive";
+        restartIfChanged = false;
+        stopIfChanged = false;
+        requires = [
+          "podman-watchstate.service"
+          "podman.socket"
+        ];
+        after = [
+          "podman-watchstate.service"
+          "podman.socket"
+        ];
+        unitConfig.RequiresMountsFor = [ watchstateBackupStagingDir ];
+        serviceConfig = {
+          Type = "oneshot";
+          User = "root";
+          Group = backupGroup;
+          UMask = "0027";
+          ExecStart = backupCommand;
+          TimeoutStartSec = "2h";
+        };
+      };
+
+      host.backups.jobs.${backupJob}.preparations.watchstate-native-backup = {
+        service = "watchstate-native-backup";
+        title = "WatchState Native Backup";
+        paths = [ watchstateBackupStagingDir ];
+      };
+
+      host.internalHttps.services.watchstate = {
+        enable = true;
+        upstream = "http://127.0.0.1:${toString watchstatePort}";
+        locationExtraConfig = ''
+          proxy_read_timeout 300s;
+          proxy_send_timeout 300s;
+        '';
+      };
+
+      host.sso.oauth2ProxyGates.watchstate = {
+        enable = true;
+        clientId = "watchstate";
+        displayName = "WatchState";
+        originLanding = "https://${watchstateHostName}/";
+        httpAddress = "http://127.0.0.1:4182";
+        cookieName = "_watchstate_sso";
+        allowedGroups = [ watchstateSso.adminGroup ];
+        groupClaim = "media_groups";
+        whitelistDomains = [ watchstateHostName ];
+        internalHttpsServiceNames = [ "watchstate" ];
+        # WatchState uses X-User for its own identity selection.
+        authRequestHeaders = [ ];
+        # WatchState's frontend uses Authorization for its own API session.
+        clearAuthorizationHeader = false;
+        probeLocationsByName.watchstate."= /v1/api/system/healthcheck" = {
+          proxyPass = "http://127.0.0.1:${toString watchstatePort}";
+          recommendedProxySettings = true;
+          extraConfig = ''
+            auth_request off;
+          '';
+        };
+      };
+
+      host.nfs.mounts = lib.mkIf (!isMediaServer) {
+        media = mediaRoot;
+      };
+
+      assertions = [
+        {
+          assertion = jellyfinService.owner == hostname;
+          message = "WatchState currently requires Jellyfin on the same host.";
+        }
+        {
+          assertion = config.host.backups.client.enable;
+          message = "The WatchState owner must be a declared backup client.";
+        }
+        {
+          assertion = watchstateService.internalEndpointName != null;
+          message = "WatchState must have an internal endpoint name.";
+        }
+        {
+          assertion = builtins.elem watchstateSso.adminGroup watchstateSystemAccount.groups;
+          message = "The WatchState bootstrap owner must belong to its SSO admin group.";
+        }
+        {
+          assertion = builtins.match "[a-z0-9_]+" watchstateSystemUser != null;
+          message = "The WatchState bootstrap owner must be a valid WatchState username.";
+        }
+      ];
+    })
+  ];
+}

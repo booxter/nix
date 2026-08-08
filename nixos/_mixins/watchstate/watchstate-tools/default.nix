@@ -38,7 +38,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "watchstate_tools" ];
 
   meta = {
-    description = "Render authentication and back up the Beast WatchState service";
+    description = "Render authentication and back up WatchState";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
   };

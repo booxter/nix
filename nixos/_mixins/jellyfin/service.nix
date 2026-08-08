@@ -8,7 +8,6 @@ let
   cfg = config.host.jellyfin;
   hostname = config.networking.hostName;
   jellyfinService = hostInventory.servicesById.jellyfin;
-  watchstateService = hostInventory.servicesById.watchstate;
   mediaExport = hostInventory.storage.nfs.exports.media;
   isMediaServer = mediaExport.server == hostname;
   realmPublicIngress = hostInventory.realms.${config.host.realm}.services.publicIngress or null;
@@ -53,10 +52,6 @@ in
         {
           assertion = config.host.gpu != null && config.host.gpu.videoAcceleration != null;
           message = "The Jellyfin owner must provide hardware video acceleration.";
-        }
-        {
-          assertion = watchstateService.owner == hostname;
-          message = "Jellyfin currently requires WatchState on the same host.";
         }
         {
           assertion = realmPublicIngress != null && realmPublicIngress.host == hostname;

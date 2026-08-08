@@ -19,4 +19,8 @@
   shelfmark.uid = 250;
   slskd.uid = 297;
   transmission.uid = 70;
+  watchstate = {
+    uid = 296;
+    gid = 296;
+  };
 }
