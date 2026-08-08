@@ -31,6 +31,7 @@ in
       ./_mixins/external-service.nix
       ./_mixins/firmware
       ./_mixins/internal-https-service.nix
+      ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
       ./_mixins/lolek
       ./_mixins/nix

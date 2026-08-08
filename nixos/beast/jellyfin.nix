@@ -1,7 +1,6 @@
 {
   config,
   hostInventory,
-  pkgs,
   utils,
   ...
 }:
@@ -9,33 +8,12 @@ let
   dataMountPoint = config.host.storage.volumes.data.mounts.data.mountPoint;
   dataMountUnit = "${utils.escapeSystemdPath dataMountPoint}.mount";
   mediaExport = hostInventory.storage.nfs.exports.media;
-  jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (
-    builtins.toJSON {
-      Serilog = {
-        MinimumLevel = {
-          Default = "Information";
-          Override = {
-            Microsoft = "Warning";
-            System = "Warning";
-            "Jellyfin.Api.Controllers.DynamicHlsController" = "Debug";
-            "Jellyfin.Api.Helpers.HlsHelpers" = "Debug";
-            "Emby.Server.Implementations.HttpServer" = "Debug";
-            "Emby.Server.Implementations.Session" = "Debug";
-          };
-        };
-      };
-    }
-  );
 in
 {
   services.jellyfin = {
     enable = true;
+    logging.playbackDebug = true;
   };
-
-  system.activationScripts.jellyfinLoggingConfig.text = ''
-    ${pkgs.coreutils}/bin/install -d -m 0700 -o jellyfin -g jellyfin /var/lib/jellyfin/config
-    ${pkgs.coreutils}/bin/install -m 0600 -o jellyfin -g jellyfin ${jellyfinLoggingConfig} /var/lib/jellyfin/config/logging.json
-  '';
 
   users.users.jellyfin.extraGroups = [
     "media"
@@ -49,7 +27,6 @@ in
     # upstream.
     wantedBy = [ "media.mount" ];
     unitConfig.RequiresMountsFor = "/media";
-    restartTriggers = [ jellyfinLoggingConfig ];
   };
 
   # Keep the existing /media path expected by Jellyfin/Jellarr.
