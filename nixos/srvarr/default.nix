@@ -9,7 +9,6 @@
 
   imports = [
     ./backup.nix
-    ./glance.nix
     ./nfs.nix
     ./oauth2-proxy.nix
     ./paths.nix

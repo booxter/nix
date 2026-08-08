@@ -76,6 +76,8 @@ in
         "media-admin"
         "infrastructure"
       ];
+      # Preserve the existing direct public-name vhost for the full dashboard.
+      publicAliasServiceIds = [ "dash" ];
       inherit search;
     }
     {

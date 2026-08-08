@@ -5,6 +5,7 @@
     ./bazarr
     ./degoog
     ./external-service.nix
+    ./glance
     ./home-assistant
     ./houndarr
     ./internal-service.nix
