@@ -6,6 +6,7 @@
   ...
 }:
 let
+  outboundMail = hostInventory.realms.${config.host.realm}.services.outboundMail;
   vikunjaService = hostInventory.servicesById.vikunja;
   vikunjaMetricsMtlsPort = 9345;
   oidcClient = config.host.sso.oidc.clients.vikunja;
@@ -66,10 +67,8 @@ in
       metrics.enabled = true;
       mailer = {
         enabled = true;
-        host = "smtp.gmail.com";
-        port = 587;
-        username = hostInventory.user.emails.personal;
-        fromemail = hostInventory.user.emails.personal;
+        inherit (outboundMail) host port username;
+        fromemail = outboundMail.fromAddress;
       };
       service = {
         timezone = vikunjaTimezone;

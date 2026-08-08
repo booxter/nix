@@ -21,7 +21,7 @@ let
   };
   realms = import ./realms.nix {
     attic = atticFacts;
-    inherit lanDomain readPublicKey;
+    inherit lanDomain readPublicKey user;
     nixCaches = siteFacts.nixCaches;
     ssh = sshFacts;
   };

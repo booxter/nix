@@ -9,6 +9,7 @@
 }:
 let
   realmSso = hostInventory.realms.${config.host.realm}.services.sso or null;
+  outboundMail = hostInventory.realms.${config.host.realm}.services.outboundMail or null;
   providerHost = if realmSso == null then "" else realmSso.providerHost;
   isProviderHost = providerHost == config.networking.hostName;
   idService = hostInventory.servicesById.id;
@@ -92,10 +93,10 @@ let
     schedule = "*/30 * * * * * *";
     instanceDisplayName = "SSO";
     instanceUrl = "https://${idService.publicHost}";
-    mailFromAddress = hostInventory.user.emails.personal;
-    mailReplyToAddress = hostInventory.user.emails.personal;
-    mailRelay = "smtp.gmail.com";
-    mailUsername = hostInventory.user.emails.personal;
+    mailFromAddress = outboundMail.fromAddress;
+    mailReplyToAddress = outboundMail.replyToAddress;
+    mailRelay = outboundMail.host;
+    mailUsername = outboundMail.username;
     mailConnectTimeoutSeconds = 15;
   };
   writeMailSenderConfigCommand = utils.escapeSystemdExecArgs [

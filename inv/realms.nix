@@ -4,6 +4,7 @@
   nixCaches,
   readPublicKey,
   ssh,
+  user,
 }:
 {
   home = {
@@ -52,6 +53,13 @@
           mtls = true;
         };
         nodeExporter.mtls = true;
+      };
+      outboundMail = {
+        host = "smtp.gmail.com";
+        port = 587;
+        username = user.emails.personal;
+        fromAddress = user.emails.personal;
+        replyToAddress = user.emails.personal;
       };
       publicIngress.host = "beast";
       proxmox.oidcManagerHost = "prx1-lab";
