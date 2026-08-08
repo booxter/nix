@@ -7,11 +7,7 @@
 }:
 let
   cfg = config.host.sso.provider;
-  providerHost = cfg.host;
   idService = hostInventory.servicesById.id;
-  kanidmTools = pkgs.callPackage ./packages/kanidm-tools {
-    defaultTarget = providerHost;
-  };
   kanidmPort = 18085;
   kanidmLocalHost = idService.id;
   kanidmLocalUrl = "https://${kanidmLocalHost}:${toString kanidmPort}";
@@ -22,6 +18,7 @@ in
     ./identities.nix
     ./mail-sender.nix
     ./oidc.nix
+    ./reset-credentials.nix
   ];
 
   config = lib.mkIf cfg.enable {
@@ -93,10 +90,7 @@ in
       '';
     };
 
-    environment.systemPackages = [
-      config.services.kanidm.package
-      kanidmTools
-    ];
+    environment.systemPackages = [ config.services.kanidm.package ];
 
     networking.hosts."127.0.0.1" = [ kanidmLocalHost ];
 
