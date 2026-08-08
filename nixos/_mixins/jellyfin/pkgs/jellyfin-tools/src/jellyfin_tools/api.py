@@ -51,10 +51,10 @@ class JellyfinApi:
     def __init__(self, base_url: str, api_key: str) -> None:
         client = cast(NativeClient, JellyfinClient())
         client.config.app(
-            "beast-jellyfin-tools",
+            "jellyfin-tools",
             "0.1.0",
-            "beast",
-            "beast-jellyfin-tools",
+            "NixOS",
+            "jellyfin-tools",
         )
         client.config.auth(base_url, "", token=api_key, ssl=False)
         client.config.http(max_retries=0, timeout=120)
