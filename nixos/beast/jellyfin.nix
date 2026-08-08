@@ -38,10 +38,7 @@
       sourceMount = config.host.storage.volumes.data.mounts.data.mountPoint;
     };
     meilisearch.enable = true;
-    supplementaryGroups = [
-      "media"
-      "render"
-      "video"
-    ];
+    supplementaryGroups = [ "media" ];
+    useHostVideoAcceleration = true;
   };
 }

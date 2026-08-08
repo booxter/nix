@@ -2,7 +2,6 @@
 {
   services.jellarr = {
     enable = true;
-    useHostVideoAcceleration = true;
     config = {
       version = 1;
       base_url = "https://${hostInventory.servicesById.jellyfin.publicHost}:443";
