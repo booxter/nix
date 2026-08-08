@@ -6,6 +6,8 @@
 {
   _module.args.srvarrPkgs = import ./pkgs pkgs;
 
+  environment.systemPackages = [ pkgs.join-media-parts ];
+
   imports = [
     inputs.vpnconfinement.nixosModules.default
     ./arr.nix
