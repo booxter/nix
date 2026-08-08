@@ -153,7 +153,13 @@ in
           static_configs = [
             {
               targets = [ "127.0.0.1:${toString cfg.port}" ];
-              labels.instance = "unifi";
+              labels = {
+                availability = config.host.availability;
+                component = "unpoller";
+                instance = "unifi";
+                realm = config.host.realm;
+                scrape_profile = "network";
+              };
             }
           ];
         }

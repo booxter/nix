@@ -81,7 +81,14 @@ in
             static_configs = [
               {
                 targets = [ "127.0.0.1:${toString alertmanagerPort}" ];
-                labels.instance = hostname;
+                labels = {
+                  availability = config.host.availability;
+                  component = "alertmanager";
+                  instance = hostname;
+                  realm = config.host.realm;
+                  scrape_profile = "control-plane";
+                  service = alertmanagerService.id;
+                };
               }
             ];
           }

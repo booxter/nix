@@ -305,7 +305,14 @@ in
           static_configs = [
             {
               targets = [ "127.0.0.1:${toString grafanaPort}" ];
-              labels.instance = hostname;
+              labels = {
+                availability = config.host.availability;
+                component = "grafana";
+                instance = hostname;
+                realm = config.host.realm;
+                scrape_profile = "control-plane";
+                service = grafanaService.id;
+              };
             }
           ];
         }

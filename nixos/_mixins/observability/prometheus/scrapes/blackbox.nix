@@ -273,8 +273,12 @@ let
       source:
       map (probe: {
         labels = {
+          availability = "always";
+          component = "blackbox";
           prober_address = source.exporter;
           prober_scheme = source.scheme;
+          realm = realmName;
+          scrape_profile = "probe";
           inherit (source) source;
           inherit (probe) probe probe_title;
         };
@@ -285,6 +289,10 @@ let
     resolver:
     map (service: {
       labels = {
+        availability = service.observability.availability or "always";
+        component = "blackbox";
+        realm = realmName;
+        scrape_profile = "probe";
         scope = "external";
         service = service.id;
         service_title = service.title;
@@ -297,7 +305,11 @@ let
   ) publicDnsProbeTargets;
   mkServiceHttpStaticConfig = service: {
     labels = {
+      availability = service.observability.availability or "always";
+      component = "blackbox";
       module = service.blackboxModule or "http_service";
+      realm = realmName;
+      scrape_profile = "probe";
       scope = service.scope;
       service = service.id;
       service_title = service.title;
@@ -405,6 +417,10 @@ in
       params.module = [ "http_service" ];
       static_configs = map (service: {
         labels = {
+          availability = service.observability.availability or "always";
+          component = "blackbox";
+          realm = realmName;
+          scrape_profile = "probe";
           scope = "external";
           service = service.id;
           service_title = service.title;
@@ -441,8 +457,12 @@ in
       params.module = [ "dns_udp" ];
       static_configs = map (resolver: {
         labels = {
+          availability = "always";
+          component = "blackbox";
+          realm = realmName;
           resolver = resolver.resolver;
           resolver_title = resolver.resolver_title;
+          scrape_profile = "probe";
           source = config.services.avahi.hostName;
         };
         targets = [ resolver.target ];

@@ -52,7 +52,13 @@ in
       tls_config = prometheusMtlsTlsConfig;
       static_configs = lib.mapAttrsToList (_: data: {
         targets = [ "${data.endpoint.gateway.host}:${toString data.metrics.port}" ];
-        labels.instance = data.endpoint.gateway.host;
+        labels = {
+          availability = "always";
+          component = "wireguard";
+          instance = data.endpoint.gateway.host;
+          realm = hostInventory.nixosHosts.${data.endpoint.gateway.host}.realm;
+          scrape_profile = "network";
+        };
       }) endpointData;
       metric_relabel_configs = builtins.concatMap mkPeerMetricRelabels peers;
     }
