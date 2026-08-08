@@ -1,9 +1,3 @@
-{ pkgs, ... }:
 {
-  _module.args.orgPkgs = import ./pkgs pkgs;
-
-  imports = [
-    ./backup.nix
-    ./paperless-gpt.nix
-  ];
+  imports = [ ./backup.nix ];
 }
