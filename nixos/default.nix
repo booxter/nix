@@ -50,6 +50,7 @@ in
       ./_mixins/storage-observability
       ./_mixins/storage.nix
       ./_mixins/unifi-sync
+      ./_mixins/uptimerobot-sync
       ./_mixins/ups
       ./_mixins/user
       ./_mixins/video-acceleration.nix

@@ -14,7 +14,5 @@ in
 
   step-ca-bootstrap = pkgs.callPackage ./step-ca-bootstrap { };
 
-  uptimerobot-sync = pkgs.callPackage ./uptimerobot-sync { };
-
   wg-home-dns-sync = pkgs.callPackage ./wg-home-dns-sync { inherit unifiSync; };
 }
