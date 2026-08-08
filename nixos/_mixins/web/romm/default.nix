@@ -204,7 +204,7 @@ in
   options = {
     host.romm.enable = lib.mkOption {
       type = lib.types.bool;
-      default = rommService.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname rommService;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns RomM to this host.";
@@ -254,18 +254,6 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = [
-        {
-          assertion = builtins.hasAttr rommService.owner hostInventory.nixosHosts;
-          message = "RomM owner '${rommService.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion =
-            !hostCfg.enable || hostInventory.nixosHosts.${rommService.owner}.realm == config.host.realm;
-          message = "RomM owner '${rommService.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-
       services.romm.localUrl = "http://127.0.0.1:${toString cfg.port}";
     }
 
@@ -730,11 +718,11 @@ in
         }
         {
           assertion = builtins.elem hostname mediaExport.clients;
-          message = "The RomM owner must be an authorized media NFS client.";
+          message = "The RomM host must be an authorized media NFS client.";
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The RomM owner must be a declared backup client.";
+          message = "The RomM host must be a declared backup client.";
         }
         {
           assertion = builtins.attrNames rommAdmins == [ hostInventory.sso.administrator ];

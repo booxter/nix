@@ -23,7 +23,7 @@
       id = "id";
       title = "SSO";
       icon = "sh:kanidm";
-      owner = "pki";
+      instances.pki = { };
       publicHost = "id.${publicDomain}";
       probePath = "/status";
     }
@@ -31,27 +31,27 @@
       id = "dash";
       title = "Dashboard";
       icon = "sh:glance";
-      owner = "srvarr";
+      instances.srvarr = { };
       publicHost = "dash.${publicDomain}";
       probePath = "/";
     }
     {
       id = "glance";
-      owner = "srvarr";
+      instances.srvarr = { };
       probePath = "/";
       blackboxProbe = false;
     }
     {
       id = "jellyfin";
       internalEndpointName = null;
-      owner = "beast";
+      instances.beast = { };
       publicHost = "jf.${publicDomain}";
       probePath = "/web/";
       glanceCategory = "user";
     }
     {
       id = "lolek";
-      owner = "beast";
+      instances.beast = { };
       probePath = "/metrics";
       internalEndpointName = null;
       blackboxProbe = false;
@@ -60,14 +60,13 @@
       id = "watchstate";
       title = "WatchState";
       icon = "sh:watchstate.png";
-      owner = "beast";
+      instances.beast = { };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/v1/api/system/healthcheck";
       glanceCategory = "media-admin";
     }
     {
       id = "seerr";
-      owner = "srvarr";
       instances.srvarr.dataDir = "/data/.state/nixarr/seerr";
       publicHost = "js.${publicDomain}";
       probePath = "/login";
@@ -76,7 +75,6 @@
     {
       id = "romm";
       title = "RomM";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/romm";
         databaseDir = "/data/.state/nixarr/mysql";
@@ -88,26 +86,26 @@
     }
     {
       id = "grafana";
-      owner = "fana";
+      instances.fana = { };
       probePath = "/login";
       glanceCategory = "infrastructure";
     }
     {
       id = "prometheus";
-      owner = "fana";
+      instances.fana = { };
       probePath = "/-/ready";
       internalEndpointName = null;
       blackboxProbe = false;
     }
     {
       id = "alertmanager";
-      owner = "fana";
+      instances.fana = { };
       probePath = "/-/ready";
       blackboxProbe = false;
     }
     {
       id = "loki";
-      owner = "fana";
+      instances.fana = { };
       probePath = "/ready";
       blackboxProbe = false;
     }
@@ -115,14 +113,13 @@
       id = "home";
       title = "Home Assistant";
       icon = "sh:home-assistant";
-      owner = "home";
+      instances.home = { };
       probePath = "/";
       glanceCategory = "infrastructure";
     }
     {
       id = "houndarr";
       icon = "sh:houndarr.png";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/houndarr";
         requiresLocalServices = [
@@ -137,7 +134,6 @@
     }
     {
       id = "radarr";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/radarr";
         mediaDir = "/data/media";
@@ -148,7 +144,6 @@
     }
     {
       id = "sonarr";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/sonarr";
         mediaDir = "/data/media";
@@ -159,7 +154,6 @@
     }
     {
       id = "lidarr";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/lidarr";
         mediaDir = "/data/media";
@@ -171,13 +165,12 @@
     {
       id = "letterboxd-list-radarr";
       title = "Letterboxd Radarr";
-      owner = "srvarr";
       instances.srvarr.requiresLocalServices = [ "radarr" ];
       probePath = "/";
     }
     {
       id = "aurral";
-      owner = "srvarr";
+      instances.srvarr = { };
       publicHost = "mu.${publicDomain}";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/health/live";
@@ -185,7 +178,6 @@
     }
     {
       id = "slskd";
-      owner = "srvarr";
       instances.srvarr.vpnConfinement = {
         profile = "airvpn";
         forwardedPort = {
@@ -196,7 +188,6 @@
     }
     {
       id = "audiobookshelf";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/audiobookshelf";
         mediaDir = "/data/media";
@@ -209,7 +200,6 @@
       id = "pinepods";
       title = "PinePods";
       icon = "https://raw.githubusercontent.com/madeofpendletonwool/PinePods/0.9.0/images/icon-192.png";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/pinepods";
         downloadsDir = "/data/media/podcasts/pinepods";
@@ -221,7 +211,6 @@
     }
     {
       id = "shelfmark";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/shelfmark";
         mediaDir = "/data/media";
@@ -232,7 +221,7 @@
     }
     {
       id = "vikunja";
-      owner = "org";
+      instances.org = { };
       publicHost = "vi.${publicDomain}";
       probePath = "";
       glanceCategory = "user";
@@ -241,7 +230,7 @@
       id = "paperless";
       title = "Paperless";
       icon = "sh:paperless-ngx";
-      owner = "org";
+      instances.org = { };
       publicHost = "papers.${publicDomain}";
       probePath = "/accounts/login/";
       glanceCategory = "infrastructure";
@@ -250,7 +239,7 @@
       id = "paperless-gpt";
       title = "Paperless GPT";
       icon = "sh:paperless-ngx";
-      owner = "org";
+      instances.org = { };
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/api/version";
       glanceCategory = "infrastructure";
@@ -259,7 +248,7 @@
       id = "goo";
       title = "Degoog";
       icon = "https://raw.githubusercontent.com/degoog-org/degoog/0.23.0/src/public/images/degoog-logo.png";
-      owner = "org";
+      instances.org = { };
       publicHost = "goo.${publicDomain}";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/readyz";
@@ -268,13 +257,12 @@
     {
       id = "ollama";
       title = "Ollama";
-      owner = llmProviderHost;
+      instances.${llmProviderHost} = { };
       probePath = "/";
       blackboxProbe = false;
     }
     {
       id = "bazarr";
-      owner = "srvarr";
       instances.srvarr = {
         dataDir = "/data/.state/nixarr/bazarr";
         mediaDir = "/data/media";
@@ -285,7 +273,6 @@
     }
     {
       id = "prowlarr";
-      owner = "srvarr";
       instances.srvarr.dataDir = "/data/.state/nixarr/prowlarr";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/ping";
@@ -293,7 +280,6 @@
     }
     {
       id = "transmission";
-      owner = "srvarr";
       instances.srvarr.vpnConfinement = {
         profile = "airvpn";
         forwardedPort = {
@@ -312,7 +298,6 @@
       id = "sabnzbd";
       title = "SABNZB";
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
-      owner = "srvarr";
       instances.srvarr.vpnConfinement.profile = "airvpn";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/__probe/sabnzbd-version";

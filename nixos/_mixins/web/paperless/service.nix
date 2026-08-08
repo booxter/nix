@@ -12,10 +12,10 @@ let
     _: value: "${paperlessStoragePath}/${value}"
   ) hostInventory.storage.nfs.exports.paperless.layout;
   paperlessNfsPaths = builtins.attrValues paperlessStoragePaths;
-  isOwner = paperlessService.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName paperlessService;
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     host.nfs.mounts.paperless = paperlessStoragePath;
 
     services.paperless = {

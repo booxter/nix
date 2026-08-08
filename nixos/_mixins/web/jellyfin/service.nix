@@ -11,13 +11,12 @@ let
   mediaExport = hostInventory.storage.nfs.exports.media;
   isMediaServer = mediaExport.server == hostname;
   realmPublicIngress = hostInventory.realms.${config.host.realm}.services.publicIngress or null;
-  ownerExists = builtins.hasAttr jellyfinService.owner hostInventory.nixosHosts;
   backupStagingDir = "${config.host.backups.staging.root}/jellyfin";
 in
 {
   options.host.jellyfin.enable = lib.mkOption {
     type = lib.types.bool;
-    default = jellyfinService.owner == hostname;
+    default = hostInventory.serviceRunsOn hostname jellyfinService;
     readOnly = true;
     internal = true;
     description = "Whether inventory assigns the Jellyfin service to this host.";
@@ -25,18 +24,6 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = [
-        {
-          assertion = ownerExists;
-          message = "Jellyfin owner '${jellyfinService.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion =
-            !cfg.enable || hostInventory.nixosHosts.${jellyfinService.owner}.realm == config.host.realm;
-          message = "Jellyfin owner '${jellyfinService.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-
       services.jellyfin.enable = cfg.enable;
     }
 
@@ -44,7 +31,7 @@ in
       assertions = [
         {
           assertion = config.host.gpu != null && config.host.gpu.videoAcceleration != null;
-          message = "The Jellyfin owner must provide hardware video acceleration.";
+          message = "The Jellyfin host must provide hardware video acceleration.";
         }
         {
           assertion = realmPublicIngress != null && realmPublicIngress.host == hostname;
@@ -52,7 +39,7 @@ in
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The Jellyfin owner must be a declared backup client.";
+          message = "The Jellyfin host must be a declared backup client.";
         }
       ];
 

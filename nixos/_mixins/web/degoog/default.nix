@@ -64,7 +64,7 @@ let
     };
   };
   degoogService = hostInventory.servicesById.goo;
-  isOwner = degoogService.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName degoogService;
   degoogSso = hostInventory.sso.applications.degoog;
   jellyfinService = hostInventory.servicesById.jellyfin;
   rommService = hostInventory.servicesById.romm;
@@ -93,7 +93,7 @@ let
   ];
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     sops.secrets = lib.genAttrs (map (name: "degoog/${name}") secretNames) (_: {
       owner = serviceUser;
       group = serviceUser;

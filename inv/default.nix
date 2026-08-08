@@ -37,10 +37,21 @@ let
     inherit publicDomain;
     llmProviderHost = realms.home.services.llm.providerHost;
   };
-  serviceOwnersById = builtins.listToAttrs (
+  serviceHosts = service: builtins.attrNames service.instances;
+  serviceRunsOn = hostName: service: builtins.hasAttr hostName service.instances;
+  serviceHost =
+    service:
+    let
+      hosts = serviceHosts service;
+    in
+    assert lib.assertMsg (
+      builtins.length hosts == 1
+    ) "Service ${service.id} requires exactly one instance, found: ${lib.concatStringsSep ", " hosts}";
+    lib.head hosts;
+  serviceHostsById = builtins.listToAttrs (
     map (service: {
       name = service.id;
-      value = service.owner;
+      value = serviceHosts service;
     }) serviceFacts.definitions
   );
   storageFacts = import ./storage.nix;
@@ -49,9 +60,9 @@ let
     let
       clientServices = export.clientServices or [ ];
       unknownClientServices = builtins.filter (
-        service: !builtins.hasAttr service serviceOwnersById
+        service: !builtins.hasAttr service serviceHostsById
       ) clientServices;
-      serviceClients = map (service: serviceOwnersById.${service}) clientServices;
+      serviceClients = lib.concatMap (service: serviceHostsById.${service}) clientServices;
     in
     assert lib.assertMsg (unknownClientServices == [ ])
       "NFS export '${name}' references unknown services: ${lib.concatStringsSep ", " unknownClientServices}";
@@ -222,7 +233,7 @@ let
     glanceCategoryIds: localDnsName:
     {
       id,
-      owner,
+      instances,
       probePath ? null,
       publicHost ? null,
       title ? lib.strings.toSentenceCase id,
@@ -231,7 +242,6 @@ let
       backendProbe ? null,
       glanceCategory ? null,
       internalEndpointName ? if probePath == null then null else id,
-      instances ? { },
     }:
     let
       normalizedInstances = lib.mapAttrs (
@@ -249,7 +259,7 @@ let
           vpnProfile == null || vpnProfile.host == hostName
         ) "Service ${id} instance ${hostName} must use an egress VPN profile hosted on the same machine";
         instance
-      ) ({ ${owner} = { }; } // instances);
+      ) instances;
       scope = if publicHost == null then "internal" else "external";
       showInGlance = glanceCategory != null;
       service = {
@@ -259,7 +269,6 @@ let
           icon
           id
           internalEndpointName
-          owner
           probePath
           scope
           showInGlance
@@ -277,12 +286,13 @@ let
           probeUrl = "${url}${service.probePath}";
         })
         // lib.optionalAttrs (service.scope == "internal" && service.internalEndpointName != null) {
-          displayHost = localDnsName owner;
-          probeHost = owner;
+          displayHost = localDnsName (serviceHost service);
+          probeHost = serviceHost service;
         };
       category = glanceCategory;
       categoryLabel = if category == null then "<missing>" else category;
     in
+    assert lib.assertMsg (normalizedInstances != { }) "Service ${id} must have at least one instance";
     assert lib.asserts.assertMsg (
       category == null || builtins.elem category glanceCategoryIds
     ) "Glance service ${service.id} uses unknown glanceCategory '${categoryLabel}'";
@@ -319,9 +329,11 @@ let
     normalizedServices;
 
   serviceLocalDnsAliases =
-    services: owner:
+    services: hostName:
     map (service: service.internalEndpointName) (
-      builtins.filter (service: service.owner == owner && service.internalEndpointName != null) services
+      builtins.filter (
+        service: serviceRunsOn hostName service && service.internalEndpointName != null
+      ) services
     );
 
   mkDnsARecord = domain: ipv4Address: {
@@ -362,6 +374,7 @@ rec {
   yubi = yubiFacts;
 
   inherit toLocalDnsName;
+  inherit serviceHost serviceHosts serviceRunsOn;
   toSshKnownHostNames =
     spec:
     let
@@ -398,7 +411,7 @@ rec {
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
   srvarrAdminAppIds = map (service: service.id) (
     builtins.filter (
-      service: service.owner == "srvarr" && service.glanceCategory == "media-admin"
+      service: serviceRunsOn "srvarr" service && service.glanceCategory == "media-admin"
     ) services
   );
   site = siteFacts // {

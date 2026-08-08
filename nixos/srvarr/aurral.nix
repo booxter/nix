@@ -223,7 +223,7 @@ in
     services.nginx.virtualHosts.${aurralService.publicHost}.locations = aurralImageLocations;
 
     # Only the public hostname is browser-protected. The backend probe still
-    # needs a probe-only listener on the service owner, so define this exact
+    # needs a probe-only listener on the service host, so define this exact
     # health location locally on srvarr.
     services.nginx.virtualHosts."internal-https-aurral-probe".locations."= /api/health/live" = {
       proxyPass = "http://127.0.0.1:${toString aurralPort}";

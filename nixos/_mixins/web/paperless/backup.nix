@@ -6,12 +6,12 @@
 }:
 let
   paperlessService = hostInventory.servicesById.paperless;
-  isOwner = paperlessService.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName paperlessService;
   backupJob = config.host.backups.destinationJob;
   dataDir = "/var/lib/paperless";
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     host.backups.artifacts.postgresql.paperless = {
       job = backupJob;
       displayName = "Paperless";

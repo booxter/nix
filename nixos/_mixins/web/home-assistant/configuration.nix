@@ -6,11 +6,11 @@
 }:
 let
   service = hostInventory.servicesById.home;
-  isOwner = service.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName service;
   serviceUrl = "https://${service.internalEndpointName}.${hostInventory.site.lan.domain}";
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     services.home-assistant = {
       configWritable = false;
       lovelaceConfigWritable = false;

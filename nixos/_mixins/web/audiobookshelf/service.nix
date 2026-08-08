@@ -32,7 +32,7 @@ in
   options = {
     host.audiobookshelf.enable = lib.mkOption {
       type = lib.types.bool;
-      default = service.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname service;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns Audiobookshelf to this host.";
@@ -69,17 +69,6 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = [
-        {
-          assertion = builtins.hasAttr service.owner hostInventory.nixosHosts;
-          message = "Audiobookshelf owner '${service.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion = !hostCfg.enable || hostInventory.nixosHosts.${service.owner}.realm == config.host.realm;
-          message = "Audiobookshelf owner '${service.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-
       services.audiobookshelf = {
         inherit stateDir;
         localUrl = "http://${cfg.host}:${toString cfg.port}";
@@ -94,11 +83,11 @@ in
         }
         {
           assertion = builtins.elem hostname mediaExport.clients;
-          message = "The Audiobookshelf owner must be an authorized media NFS client.";
+          message = "The Audiobookshelf host must be an authorized media NFS client.";
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The Audiobookshelf owner must be a declared backup client.";
+          message = "The Audiobookshelf host must be a declared backup client.";
         }
       ];
 

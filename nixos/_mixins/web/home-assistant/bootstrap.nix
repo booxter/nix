@@ -7,7 +7,7 @@
 }:
 let
   service = hostInventory.servicesById.home;
-  isOwner = service.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName service;
   administratorName = hostInventory.sso.administrator;
   administrator = hostInventory.sso.users.${administratorName};
   port = config.services.home-assistant.config.http.server_port;
@@ -17,7 +17,7 @@ let
   tools = pkgs.callPackage ./packages/home-assistant-tools { };
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     sops.secrets.${passwordSecret} = {
       owner = "root";
       group = "root";

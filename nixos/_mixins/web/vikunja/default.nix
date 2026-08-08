@@ -8,7 +8,7 @@ let
   backupJob = config.host.backups.destinationJob;
   outboundMail = hostInventory.realms.${config.host.realm}.services.outboundMail;
   vikunjaService = hostInventory.servicesById.vikunja;
-  isOwner = vikunjaService.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName vikunjaService;
   vikunjaMetricsMtlsPort = 9345;
   oidcClient = config.host.sso.oidc.clients.vikunja;
   oidcScopes = config.host.sso.oidc.baseScopes;
@@ -18,7 +18,7 @@ let
   vikunjaTimezone = config.time.timeZone;
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     host.sso.oidc.registrations.vikunja = {
       displayName = "Vikunja";
       originUrls = [ "${vikunjaService.url}/auth/openid/sso" ];

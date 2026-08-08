@@ -7,7 +7,7 @@
 }:
 let
   service = hostInventory.servicesById.home;
-  isOwner = service.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName service;
   stateDir = config.services.home-assistant.configDir;
   databasePath = "${stateDir}/home-assistant_v2.db";
   port = config.services.home-assistant.config.http.server_port;
@@ -18,11 +18,11 @@ let
   tools = pkgs.callPackage ./packages/home-assistant-tools { };
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     assertions = [
       {
         assertion = config.host.backups.client.enable;
-        message = "The Home Assistant owner must be a declared backup client.";
+        message = "The Home Assistant host must be a declared backup client.";
       }
     ];
 

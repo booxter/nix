@@ -39,7 +39,7 @@ in
   options.host.observability.alertmanager = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = alertmanagerService.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname alertmanagerService;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns the Alertmanager service to this host.";
@@ -53,19 +53,10 @@ in
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr alertmanagerService.owner hostInventory.nixosHosts;
-          message = "Alertmanager owner '${alertmanagerService.owner}' must be a managed NixOS host";
-        }
-      ];
-    }
-
     (lib.mkIf cfg.enable {
       assertions = [
         {
-          assertion = prometheusService.owner == hostname;
+          assertion = hostInventory.serviceRunsOn hostname prometheusService;
           message = "Alertmanager currently requires the realm's Prometheus server on the same host";
         }
         {

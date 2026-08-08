@@ -17,7 +17,7 @@ in
   options.host.observability.loki.server = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = lokiService.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname lokiService;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns the Loki service to this host.";
@@ -37,15 +37,6 @@ in
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr lokiService.owner hostInventory.nixosHosts;
-          message = "Loki owner '${lokiService.owner}' must be a managed NixOS host";
-        }
-      ];
-    }
-
     (lib.mkIf cfg.enable {
       host.internalService.services.${lokiService.id} = {
         enable = true;

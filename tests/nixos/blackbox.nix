@@ -116,7 +116,8 @@ pkgs.testers.runNixOSTest {
               };
               nodeExporter.mtls = false;
             };
-            servicesById.prometheus.owner = "collector";
+            servicesById.prometheus.instances.collector = { };
+            serviceRunsOn = hostName: service: builtins.hasAttr hostName service.instances;
             site.lan.domain = "example.invalid";
             toNixosHostCertificateDnsNames = _: [ "blackbox" ];
           };

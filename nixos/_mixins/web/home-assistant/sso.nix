@@ -7,7 +7,7 @@
 }:
 let
   service = hostInventory.servicesById.home;
-  isOwner = service.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName service;
   serviceUrl = "https://${service.internalEndpointName}.${hostInventory.site.lan.domain}";
   sso = hostInventory.sso.applications.home-assistant;
   administratorName = hostInventory.sso.administrator;
@@ -16,7 +16,7 @@ let
   oidcScopes = config.host.sso.oidc.baseScopes;
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     assertions = [
       {
         assertion = builtins.elem sso.adminGroup administrator.groups;

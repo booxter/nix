@@ -8,16 +8,19 @@ let
   beastPrometheusEndpoints = beastHostConfig.host.observability.prometheusEndpoints;
   beastTargetHost = hostInventory.nixosHosts.beast.name;
   jellyfinService = hostInventory.servicesById.jellyfin;
-  jellyfinHostConfig = outputs.nixosConfigurations.${jellyfinService.owner}.config;
+  jellyfinHost = hostInventory.serviceHost jellyfinService;
+  jellyfinHostConfig = outputs.nixosConfigurations.${jellyfinHost}.config;
   jellyfinEndpoint = jellyfinHostConfig.host.observability.prometheusEndpoints.jellyfin;
-  jellyfinTargetHost = hostInventory.nixosHosts.${jellyfinService.owner}.name;
+  jellyfinTargetHost = hostInventory.nixosHosts.${jellyfinHost}.name;
   lolekService = hostInventory.servicesById.lolek;
-  lolekHostConfig = outputs.nixosConfigurations.${lolekService.owner}.config;
+  lolekHost = hostInventory.serviceHost lolekService;
+  lolekHostConfig = outputs.nixosConfigurations.${lolekHost}.config;
   lolekEndpoint = lolekHostConfig.host.observability.prometheusEndpoints.lolek;
-  lolekTargetHost = hostInventory.nixosHosts.${lolekService.owner}.name;
+  lolekTargetHost = hostInventory.nixosHosts.${lolekHost}.name;
   homeAssistantService = hostInventory.servicesById.home;
-  homeHostConfig = outputs.nixosConfigurations.${homeAssistantService.owner}.config;
-  homeTargetHost = hostInventory.nixosHosts.${homeAssistantService.owner}.name;
+  homeHost = hostInventory.serviceHost homeAssistantService;
+  homeHostConfig = outputs.nixosConfigurations.${homeHost}.config;
+  homeTargetHost = hostInventory.nixosHosts.${homeHost}.name;
   homeAssistantEndpoint = homeHostConfig.host.observability.prometheusEndpoints.home-assistant;
   sabnzbdHostConfig = outputs.nixosConfigurations.srvarr.config;
   sabnzbdEndpoint = sabnzbdHostConfig.host.observability.prometheusEndpoints.sabnzbd;
@@ -52,7 +55,7 @@ in
           targets = [
             "${jellyfinTargetHost}:${toString jellyfinEndpoint.port}"
           ];
-          labels.instance = jellyfinService.owner;
+          labels.instance = jellyfinHost;
         }
       ];
     }
@@ -66,7 +69,7 @@ in
           targets = [
             "${lolekTargetHost}:${toString lolekEndpoint.port}"
           ];
-          labels.instance = lolekService.owner;
+          labels.instance = lolekHost;
         }
       ];
     }
@@ -80,7 +83,7 @@ in
           targets = [
             "${homeTargetHost}:${toString homeAssistantEndpoint.port}"
           ];
-          labels.instance = homeAssistantService.owner;
+          labels.instance = homeHost;
         }
       ];
     }

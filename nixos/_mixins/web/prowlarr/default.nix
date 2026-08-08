@@ -19,26 +19,13 @@ in
 {
   options.host.prowlarr.enable = lib.mkOption {
     type = lib.types.bool;
-    default = service.owner == hostname;
+    default = hostInventory.serviceRunsOn hostname service;
     readOnly = true;
     internal = true;
     description = "Whether inventory assigns Prowlarr to this host.";
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr service.owner hostInventory.nixosHosts;
-          message = "Prowlarr owner '${service.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion = !hostCfg.enable || hostInventory.nixosHosts.${service.owner}.realm == config.host.realm;
-          message = "Prowlarr owner '${service.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-    }
-
     (lib.mkIf hostCfg.enable {
       assertions = [
         {
@@ -47,7 +34,7 @@ in
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The Prowlarr owner must be a declared backup client.";
+          message = "The Prowlarr host must be a declared backup client.";
         }
       ];
 

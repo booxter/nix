@@ -47,8 +47,8 @@ in
   config = lib.mkIf cfg.enable {
     assertions = [
       {
-        assertion = service.owner == cfg.host;
-        message = "The realm LLM endpoint must be owned by its provider host.";
+        assertion = hostInventory.serviceRunsOn cfg.host service;
+        message = "The realm LLM endpoint must run on its provider host.";
       }
     ];
 

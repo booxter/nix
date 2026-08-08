@@ -78,7 +78,7 @@ in
   options = {
     host.pinepods.enable = lib.mkOption {
       type = lib.types.bool;
-      default = pinepodsService.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname pinepodsService;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns PinePods to this host.";
@@ -122,18 +122,6 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = [
-        {
-          assertion = builtins.hasAttr pinepodsService.owner hostInventory.nixosHosts;
-          message = "PinePods owner '${pinepodsService.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion =
-            !hostCfg.enable || hostInventory.nixosHosts.${pinepodsService.owner}.realm == config.host.realm;
-          message = "PinePods owner '${pinepodsService.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-
       services.pinepods.localUrl = "http://127.0.0.1:${toString cfg.port}";
     }
 
@@ -478,11 +466,11 @@ in
         }
         {
           assertion = builtins.elem hostname mediaExport.clients;
-          message = "The PinePods owner must be an authorized media NFS client.";
+          message = "The PinePods host must be an authorized media NFS client.";
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The PinePods owner must be a declared backup client.";
+          message = "The PinePods host must be a declared backup client.";
         }
         {
           assertion = builtins.elem pinepodsSso.adminGroup administrator.groups;

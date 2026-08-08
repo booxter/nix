@@ -48,7 +48,7 @@ in
   options = {
     host.houndarr.enable = lib.mkOption {
       type = lib.types.bool;
-      default = service.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname service;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns Houndarr to this host.";
@@ -80,17 +80,6 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = [
-        {
-          assertion = builtins.hasAttr service.owner hostInventory.nixosHosts;
-          message = "Houndarr owner '${service.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion = !hostCfg.enable || hostInventory.nixosHosts.${service.owner}.realm == config.host.realm;
-          message = "Houndarr owner '${service.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-
       services.houndarr.localUrl = "http://127.0.0.1:${toString cfg.port}";
     }
 
@@ -114,7 +103,7 @@ in
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The Houndarr owner must be a declared backup client.";
+          message = "The Houndarr host must be a declared backup client.";
         }
       ];
 

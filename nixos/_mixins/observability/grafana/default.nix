@@ -27,7 +27,7 @@ in
   options.host.observability.grafana = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = grafanaService.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname grafanaService;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns the Grafana service to this host.";
@@ -41,15 +41,6 @@ in
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr grafanaService.owner hostInventory.nixosHosts;
-          message = "Grafana owner '${grafanaService.owner}' must be a managed NixOS host";
-        }
-      ];
-    }
-
     (lib.mkIf cfg.enable {
       assertions = [
         {
@@ -57,15 +48,15 @@ in
           message = "Grafana must have an internal endpoint name";
         }
         {
-          assertion = prometheusService.owner == hostname;
+          assertion = hostInventory.serviceRunsOn hostname prometheusService;
           message = "Grafana currently requires its Prometheus datasource on the same host";
         }
         {
-          assertion = alertmanagerService.owner == hostname;
+          assertion = hostInventory.serviceRunsOn hostname alertmanagerService;
           message = "Grafana currently requires its Alertmanager datasource on the same host";
         }
         {
-          assertion = lokiService.owner == hostname;
+          assertion = hostInventory.serviceRunsOn hostname lokiService;
           message = "Grafana currently requires its Loki datasource on the same host";
         }
       ];

@@ -9,7 +9,7 @@ let
   backupJob = config.host.backups.destinationJob;
   paperlessService = hostInventory.servicesById.paperless;
   paperlessGptService = hostInventory.servicesById."paperless-gpt";
-  isOwner = paperlessGptService.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName paperlessGptService;
   paperlessSso = hostInventory.sso.applications.paperless;
   llm = hostInventory.realms.${config.host.realm}.services.llm;
   stateDir = "/var/lib/paperless-gpt";
@@ -31,11 +31,12 @@ let
   configure = pkgs.callPackage ./packages/paperless-gpt-configure { };
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     assertions = [
       {
-        assertion = paperlessGptService.owner == paperlessService.owner;
-        message = "Paperless GPT and Paperless must have the same service owner.";
+        assertion =
+          hostInventory.serviceHosts paperlessGptService == hostInventory.serviceHosts paperlessService;
+        message = "Paperless GPT and Paperless must have the same service instances.";
       }
       {
         assertion = builtins.elem textModel llm.models;

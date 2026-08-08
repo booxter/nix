@@ -54,27 +54,13 @@ in
 {
   options.host.watchstate.enable = lib.mkOption {
     type = lib.types.bool;
-    default = watchstateService.owner == hostname;
+    default = hostInventory.serviceRunsOn hostname watchstateService;
     readOnly = true;
     internal = true;
     description = "Whether inventory assigns the WatchState service to this host.";
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr watchstateService.owner hostInventory.nixosHosts;
-          message = "WatchState owner '${watchstateService.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion =
-            !cfg.enable || hostInventory.nixosHosts.${watchstateService.owner}.realm == config.host.realm;
-          message = "WatchState owner '${watchstateService.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-    }
-
     (lib.mkIf cfg.enable {
       services.jellarr.config.plugins = [
         {
@@ -296,12 +282,12 @@ in
 
       assertions = [
         {
-          assertion = jellyfinService.owner == hostname;
+          assertion = hostInventory.serviceRunsOn hostname jellyfinService;
           message = "WatchState currently requires Jellyfin on the same host.";
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The WatchState owner must be a declared backup client.";
+          message = "The WatchState host must be a declared backup client.";
         }
         {
           assertion = watchstateService.internalEndpointName != null;

@@ -22,7 +22,7 @@ in
   options = {
     host.seerr.enable = lib.mkOption {
       type = lib.types.bool;
-      default = seerrService.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname seerrService;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns Seerr to this host.";
@@ -36,25 +36,11 @@ in
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr seerrService.owner hostInventory.nixosHosts;
-          message = "Seerr owner '${seerrService.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion =
-            !hostCfg.enable || hostInventory.nixosHosts.${seerrService.owner}.realm == config.host.realm;
-          message = "Seerr owner '${seerrService.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-    }
-
     (lib.mkIf hostCfg.enable {
       assertions = [
         {
           assertion = config.host.backups.client.enable;
-          message = "The Seerr owner must be a declared backup client.";
+          message = "The Seerr host must be a declared backup client.";
         }
       ];
 

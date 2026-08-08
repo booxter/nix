@@ -13,7 +13,8 @@ let
   nfsRateMbit = 1500;
   jellyfinService = hostInventory.servicesById.jellyfin;
   egressVpn = hostInventory.egressVpns.airvpn;
-  jellyfinHostConfig = outputs.nixosConfigurations.${jellyfinService.owner}.config;
+  jellyfinHostConfig =
+    outputs.nixosConfigurations.${hostInventory.serviceHost jellyfinService}.config;
   jellyfinEndpoint = jellyfinHostConfig.host.observability.prometheusEndpoints.jellyfin;
   wgEndpointPort = egressVpn.endpointPort;
   jellyfinClientName = "jellyfin-upload-policy";

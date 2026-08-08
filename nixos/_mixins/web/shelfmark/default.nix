@@ -29,7 +29,7 @@ in
   options = {
     host.shelfmark.enable = lib.mkOption {
       type = lib.types.bool;
-      default = shelfmarkService.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname shelfmarkService;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns Shelfmark to this host.";
@@ -51,20 +51,6 @@ in
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr shelfmarkService.owner hostInventory.nixosHosts;
-          message = "Shelfmark owner '${shelfmarkService.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion =
-            !hostCfg.enable || hostInventory.nixosHosts.${shelfmarkService.owner}.realm == config.host.realm;
-          message = "Shelfmark owner '${shelfmarkService.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-    }
-
     (lib.mkIf hostCfg.enable {
       assertions = [
         {
@@ -73,11 +59,11 @@ in
         }
         {
           assertion = builtins.elem hostname mediaExport.clients;
-          message = "The Shelfmark owner must be an authorized media NFS client.";
+          message = "The Shelfmark host must be an authorized media NFS client.";
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The Shelfmark owner must be a declared backup client.";
+          message = "The Shelfmark host must be a declared backup client.";
         }
       ];
 

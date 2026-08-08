@@ -8,7 +8,7 @@
 }:
 let
   paperlessService = hostInventory.servicesById.paperless;
-  isOwner = paperlessService.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName paperlessService;
   ssoAdministrator = hostInventory.sso.administrator;
   paperlessSso = hostInventory.sso.applications.paperless;
   userNames = builtins.attrNames (
@@ -31,7 +31,7 @@ let
   ];
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     sops.secrets = {
       "paperless/admin/password" = {
         owner = "paperless";

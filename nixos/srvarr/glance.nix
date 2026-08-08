@@ -22,12 +22,12 @@ let
   srvarrHttpsServices = config.host.internalService.services;
   internalServicesFor =
     service:
-    if service.owner == "srvarr" then
+    if hostInventory.serviceRunsOn "srvarr" service then
       srvarrHttpsServices
-    else if service.owner == "fana" then
+    else if hostInventory.serviceRunsOn "fana" service then
       fanaHttpsServices
     else
-      outputs.nixosConfigurations.${service.owner}.config.host.internalService.services;
+      outputs.nixosConfigurations.${hostInventory.serviceHost service}.config.host.internalService.services;
   internalServiceFor =
     service:
     let

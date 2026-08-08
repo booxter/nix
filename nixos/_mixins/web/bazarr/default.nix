@@ -33,7 +33,7 @@ in
   options = {
     host.bazarr.enable = lib.mkOption {
       type = lib.types.bool;
-      default = service.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname service;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns Bazarr to this host.";
@@ -57,19 +57,6 @@ in
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr service.owner hostInventory.nixosHosts;
-          message = "Bazarr owner '${service.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion = !hostCfg.enable || hostInventory.nixosHosts.${service.owner}.realm == config.host.realm;
-          message = "Bazarr owner '${service.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-    }
-
     (lib.mkIf hostCfg.enable {
       assertions = [
         {
@@ -78,11 +65,11 @@ in
         }
         {
           assertion = builtins.elem hostname mediaExport.clients;
-          message = "The Bazarr owner must be an authorized media NFS client.";
+          message = "The Bazarr host must be an authorized media NFS client.";
         }
         {
           assertion = config.host.backups.client.enable;
-          message = "The Bazarr owner must be a declared backup client.";
+          message = "The Bazarr host must be a declared backup client.";
         }
       ];
 

@@ -8,7 +8,7 @@ let
   ssoAdministrator = hostInventory.sso.administrator;
   paperlessSso = hostInventory.sso.applications.paperless;
   paperlessService = hostInventory.servicesById.paperless;
-  isOwner = paperlessService.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName paperlessService;
   oidcClient = config.host.sso.oidc.clients.paperless;
   oidcScopes = config.host.sso.oidc.baseScopes;
   providerId = "sso";
@@ -37,7 +37,7 @@ let
       );
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     assertions = [
       {
         assertion =

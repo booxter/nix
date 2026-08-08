@@ -12,7 +12,7 @@ let
   realmName = config.host.realm;
   realmObservability = hostInventory.realms.${realmName}.services.observability;
   realmProxmox = hostInventory.realms.${realmName}.services.proxmox;
-  blackboxServerHost = hostInventory.servicesById.prometheus.owner;
+  blackboxServerHost = hostInventory.serviceHost hostInventory.servicesById.prometheus;
   blackboxProbeSourceNames = realmObservability.blackbox.sourceHosts;
   blackboxServices = builtins.filter (service: service.blackboxProbe) hostInventory.services;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
@@ -42,17 +42,17 @@ let
       transmission = srvarrHostConfig.services.transmission.settings.rpc-port;
     }
     .${serviceId};
-  ownerHostConfigFor =
+  instanceHostConfigFor =
     service:
-    if service.owner == config.networking.hostName then
+    if hostInventory.serviceRunsOn config.networking.hostName service then
       config
     else
-      outputs.nixosConfigurations.${service.owner}.config;
-  ownerHttpsServicesFor = service: (ownerHostConfigFor service).host.internalService.services;
+      outputs.nixosConfigurations.${hostInventory.serviceHost service}.config;
+  instanceHttpsServicesFor = service: (instanceHostConfigFor service).host.internalService.services;
   httpsServiceFor =
     service:
     let
-      httpsServices = ownerHttpsServicesFor service;
+      httpsServices = instanceHttpsServicesFor service;
     in
     if
       builtins.hasAttr service.id httpsServices && (builtins.getAttr service.id httpsServices).enable
@@ -65,7 +65,7 @@ let
   # `https://search.home.arpa/oauth2/sign_in`; backend probes use the
   # probe-only listener, for example `https://search.home.arpa:9443/healthz`,
   # so auth-bypass checks stay off the public gateway's :443 upstream path.
-  mkOwnerServiceProbe =
+  mkInstanceServiceProbe =
     service: probePath: useProbeListener:
     let
       httpsService = httpsServiceFor service;
@@ -79,12 +79,12 @@ let
         probeUrl = "https://${httpsService.serverName}${probePortSuffix}${probePath}";
         url = "https://${httpsService.serverName}/";
       }
-    else if service.owner == config.networking.hostName then
+    else if hostInventory.serviceRunsOn config.networking.hostName service then
       {
         probeUrl = "http://127.0.0.1:${toString grafanaPort}/${probePath}";
         url = "http://${service.displayHost}:3000/";
       }
-    else if service.owner == "srvarr" then
+    else if hostInventory.serviceRunsOn "srvarr" service then
       {
         probeUrl = "http://${service.probeHost}:${toString (srvarrPortFor service.id)}${probePath}";
         url = "http://${service.displayHost}:${toString (srvarrPortFor service.id)}/";
@@ -96,18 +96,18 @@ let
     if service.scope == "external" then
       service
     else
-      service // (mkOwnerServiceProbe service service.probePath false)
+      service // (mkInstanceServiceProbe service service.probePath false)
   ) blackboxServices;
   backendProbeCatalog = map (
     service:
     let
-      ownerProbe = mkOwnerServiceProbe service service.backendProbe.path true;
+      instanceProbe = mkInstanceServiceProbe service service.backendProbe.path true;
     in
     service
-    // ownerProbe
+    // instanceProbe
     // {
       blackboxModule =
-        service.backendProbe.blackboxModule or (ownerProbe.blackboxModule or "http_service");
+        service.backendProbe.blackboxModule or (instanceProbe.blackboxModule or "http_service");
       backend_probe = service.backendProbe.name or "http";
       backend_probe_title = service.backendProbe.title or "Backend HTTP";
       scope = "backend";

@@ -32,7 +32,7 @@ in
 
   options.host.lolek.enable = lib.mkOption {
     type = lib.types.bool;
-    default = lolekService.owner == hostname;
+    default = hostInventory.serviceRunsOn hostname lolekService;
     readOnly = true;
     internal = true;
     description = "Whether inventory assigns the Lolek service to this host.";
@@ -40,18 +40,6 @@ in
 
   config = lib.mkMerge [
     {
-      assertions = [
-        {
-          assertion = builtins.hasAttr lolekService.owner hostInventory.nixosHosts;
-          message = "Lolek owner '${lolekService.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion =
-            !hostCfg.enable || hostInventory.nixosHosts.${lolekService.owner}.realm == config.host.realm;
-          message = "Lolek owner '${lolekService.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-
       services.lolek.enable = hostCfg.enable;
     }
 

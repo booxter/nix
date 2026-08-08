@@ -11,8 +11,8 @@ let
   realmPublicIngress = hostInventory.realms.${config.host.realm}.services.publicIngress or null;
   freeDns = hostInventory.site.dynamicDns.freeDns;
 
-  ownedPublicServices = builtins.filter (
-    service: service.owner == hostname && service.internalEndpointName != null
+  localPublicServices = builtins.filter (
+    service: hostInventory.serviceRunsOn hostname service && service.internalEndpointName != null
   ) hostInventory.publicServices;
   internalHttpsExports = builtins.listToAttrs (
     map
@@ -31,7 +31,7 @@ let
           service:
           builtins.hasAttr service.id config.host.internalService.services
           && config.host.internalService.services.${service.id}.enable
-        ) ownedPublicServices
+        ) localPublicServices
       )
   );
 
@@ -43,7 +43,7 @@ let
     lib.mapAttrsToList (serviceName: service: {
       name = serviceName;
       value = service // {
-        owner = hostName;
+        host = hostName;
       };
     }) outputs.nixosConfigurations.${hostName}.config.host.publicIngress.exports
   ) realmHostNames;
@@ -51,7 +51,7 @@ let
   services = builtins.listToAttrs contributions;
   expectedServiceNames = map (service: service.id) (
     builtins.filter (
-      service: hostInventory.nixosHosts.${service.owner}.realm == config.host.realm
+      service: hostInventory.nixosHosts.${hostInventory.serviceHost service}.realm == config.host.realm
     ) hostInventory.publicServices
   );
 
@@ -75,7 +75,7 @@ let
   ) cfg.services;
   invalidLocalHttpServices = lib.filterAttrs (
     _: service:
-    service.backend.type == "local-http" && (service.owner != hostname || service.backend.url == null)
+    service.backend.type == "local-http" && (service.host != hostname || service.backend.url == null)
   ) cfg.services;
   edgeAuthenticatedServices = lib.filterAttrs (_: service: service.edgeAuth != null) cfg.services;
   sessionRefreshServices = lib.filterAttrs (

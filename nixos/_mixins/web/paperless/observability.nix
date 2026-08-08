@@ -7,13 +7,13 @@
 }:
 let
   paperlessService = hostInventory.servicesById.paperless;
-  isOwner = paperlessService.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName paperlessService;
   internalPort = 19289;
   mtlsPort = 9348;
   exporter = pkgs.callPackage ./packages/prometheus-paperless-exporter { };
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     systemd.services.prometheus-paperless-exporter = {
       description = "Prometheus exporter for Paperless-ngx";
       wantedBy = [ "multi-user.target" ];

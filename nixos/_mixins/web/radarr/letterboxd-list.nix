@@ -14,7 +14,7 @@ let
   nonLocalRequiredServices = builtins.filter (
     name:
     !builtins.hasAttr name hostInventory.servicesById
-    || hostInventory.servicesById.${name}.owner != hostname
+    || !hostInventory.serviceRunsOn hostname hostInventory.servicesById.${name}
   ) requiredServices;
   port = 5000;
   redisPort = 6381;
@@ -28,7 +28,7 @@ in
   options = {
     host.letterboxdListRadarr.enable = lib.mkOption {
       type = lib.types.bool;
-      default = service.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname service;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns the Letterboxd Radarr bridge to this host.";

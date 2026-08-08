@@ -6,11 +6,11 @@
 }:
 let
   service = hostInventory.servicesById.home;
-  isOwner = service.owner == config.networking.hostName;
+  isLocal = hostInventory.serviceRunsOn config.networking.hostName service;
   port = config.services.home-assistant.config.http.server_port;
 in
 {
-  config = lib.mkIf isOwner {
+  config = lib.mkIf isLocal {
     host.observability.prometheusEndpoints.home-assistant = {
       enable = true;
       port = 9346;

@@ -86,7 +86,7 @@ in
   options.host.observability.prometheus = {
     enable = lib.mkOption {
       type = lib.types.bool;
-      default = prometheusService.owner == hostname;
+      default = hostInventory.serviceRunsOn hostname prometheusService;
       readOnly = true;
       internal = true;
       description = "Whether inventory assigns the Prometheus service to this host.";
@@ -106,20 +106,6 @@ in
   };
 
   config = lib.mkMerge [
-    {
-      assertions = [
-        {
-          assertion = builtins.hasAttr prometheusService.owner hostInventory.nixosHosts;
-          message = "Prometheus owner '${prometheusService.owner}' must be a managed NixOS host";
-        }
-        {
-          assertion =
-            !cfg.enable || hostInventory.nixosHosts.${prometheusService.owner}.realm == config.host.realm;
-          message = "Prometheus owner '${prometheusService.owner}' must belong to realm '${config.host.realm}'";
-        }
-      ];
-    }
-
     (lib.mkIf cfg.enable {
       assertions = nodeScrapes.assertions ++ blackboxScrapes.assertions ++ proxmoxScrapes.assertions;
 

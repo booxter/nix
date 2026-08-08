@@ -13,7 +13,7 @@ let
   alertmanagerPolicy = if observability == null then null else observability.alertmanager or null;
   watchdogHosts = if alertmanagerPolicy == null then [ ] else alertmanagerPolicy.watchdogHosts;
   alertmanagerService = hostInventory.servicesById.alertmanager;
-  alertmanagerHost = alertmanagerService.owner;
+  alertmanagerHost = hostInventory.serviceHost alertmanagerService;
   unknownWatchdogHosts = builtins.filter (
     name: !builtins.hasAttr name hostInventory.nixosHosts
   ) watchdogHosts;
