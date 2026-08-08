@@ -54,22 +54,22 @@ fmt_javascript() {
 }
 
 declare -A tracked_formats=(
-  ["*.nix"]="nix"
-  ["Makefile"]="makefile"
-  ["*.json"]="json"
-  ["*.sh"]="shell"
-  ["*.yaml *.yml :(exclude)secrets/*/*.yaml"]="yaml"
-  ["*.md"]="markdown"
-  ["*.py"]="python"
-  ["*.js"]="javascript"
+  ["nix"]="*.nix"
+  ["makefile"]="Makefile"
+  ["json"]="*.json"
+  ["shell"]="*.sh"
+  ["yaml"]="*.yaml *.yml :(exclude)secrets/*/*.yaml"
+  ["markdown"]="*.md"
+  ["python"]="*.py"
+  ["javascript"]="*.js"
 )
 
-for pathspec in "${!tracked_formats[@]}"; do
+for format in "${!tracked_formats[@]}"; do
+  pathspec=${tracked_formats[$format]}
   read -r -a pathspec_args <<< "$pathspec"
   mapfile -d '' -t files < <(git ls-files -z -- "${pathspec_args[@]}")
   if ((${#files[@]} == 0)); then
     continue
   fi
-  format=${tracked_formats[$pathspec]}
   "fmt_${format}" "${files[@]}"
 done
