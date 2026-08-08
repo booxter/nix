@@ -18,6 +18,39 @@
       managePasswordSecrets = true;
       sudoWheelNeedsPassword = false;
     };
+    network.bandwidthTargets = {
+      mediaIdleUpload = {
+        link = "internet";
+        direction = "egress";
+        rateMbit = 25;
+      };
+      vpnConservativeUpload = {
+        link = "internet";
+        direction = "egress";
+        rateMbit = 8;
+        notAbove = "mediaIdleUpload";
+      };
+      vpnBulkDownload = {
+        link = "internet";
+        direction = "ingress";
+        rateMbit = 400;
+      };
+      nfsClient = {
+        link = "lan";
+        direction = "egress";
+        rateMbit = 1500;
+      };
+      offsiteBackupUpload = {
+        link = "internet";
+        direction = "egress";
+        rateMbit = 10;
+      };
+      remoteAccessUpload = {
+        link = "internet";
+        direction = "egress";
+        rateMbit = 10;
+      };
+    };
     trust.ssh = {
       authorizedKeys = ssh.authorizedKeysForRealm "home";
       fleetBootHosts = true;

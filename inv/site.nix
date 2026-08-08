@@ -12,6 +12,11 @@ rec {
     domain = publicDomain;
   };
 
+  links = {
+    internet = { };
+    lan = { };
+  };
+
   dynamicDns.freeDns = {
     username = "ihrachyshka";
     records = {

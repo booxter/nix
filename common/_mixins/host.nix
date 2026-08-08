@@ -14,6 +14,34 @@ let
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
   hostModule = platformDirectory + "/${hostname}/default.nix";
   hostStorage = hostInventory.storage.hosts.${hostname} or { };
+  bandwidthTargets = realm.network.bandwidthTargets or { };
+  bandwidthTargetType = lib.types.submodule {
+    options = {
+      link = lib.mkOption {
+        type = lib.types.str;
+        description = "Inventory link whose bandwidth this target governs.";
+      };
+
+      direction = lib.mkOption {
+        type = lib.types.enum [
+          "egress"
+          "ingress"
+        ];
+        description = "Traffic direction governed by this target.";
+      };
+
+      rateMbit = lib.mkOption {
+        type = lib.types.addCheck lib.types.number (value: value > 0);
+        description = "Policy target in Mbit/s.";
+      };
+
+      notAbove = lib.mkOption {
+        type = with lib.types; nullOr str;
+        default = null;
+        description = "Related target that this rate must not exceed.";
+      };
+    };
+  };
 in
 {
   imports = lib.optional (builtins.pathExists hostModule) hostModule;
@@ -214,6 +242,14 @@ in
     };
 
     network = {
+      bandwidthTargets = lib.mkOption {
+        type = lib.types.attrsOf bandwidthTargetType;
+        default = bandwidthTargets;
+        readOnly = true;
+        internal = true;
+        description = "Named bandwidth policy targets selected by the host realm.";
+      };
+
       manageIdentity = lib.mkOption {
         type = lib.types.bool;
         default = hostSpec.network.manageIdentity or true;
@@ -604,16 +640,32 @@ in
   };
 
   config = {
-    assertions = [
-      {
-        assertion = isDarwin != isLinux;
-        message = "Inventory platform ${system} must identify exactly one supported kernel.";
-      }
-      {
-        assertion = !config.host.isSecretsOperator || config.host.hasHardwareAgeIdentity;
-        message = "Secrets operator ${hostname} must have a hardware-backed age identity.";
-      }
-    ];
+    assertions =
+      lib.mapAttrsToList (name: target: {
+        assertion = builtins.hasAttr target.link hostInventory.site.links;
+        message = "Bandwidth target '${name}' references unknown link '${target.link}'.";
+      }) config.host.network.bandwidthTargets
+      ++ lib.mapAttrsToList (name: target: {
+        assertion =
+          target.notAbove == null
+          || (
+            builtins.hasAttr target.notAbove config.host.network.bandwidthTargets
+            && target.link == config.host.network.bandwidthTargets.${target.notAbove}.link
+            && target.direction == config.host.network.bandwidthTargets.${target.notAbove}.direction
+            && target.rateMbit <= config.host.network.bandwidthTargets.${target.notAbove}.rateMbit
+          );
+        message = "Bandwidth target '${name}' violates its notAbove relationship.";
+      }) config.host.network.bandwidthTargets
+      ++ [
+        {
+          assertion = isDarwin != isLinux;
+          message = "Inventory platform ${system} must identify exactly one supported kernel.";
+        }
+        {
+          assertion = !config.host.isSecretsOperator || config.host.hasHardwareAgeIdentity;
+          message = "Secrets operator ${hostname} must have a hardware-backed age identity.";
+        }
+      ];
 
     nixpkgs.hostPlatform = system;
     networking.hostName = hostname;
