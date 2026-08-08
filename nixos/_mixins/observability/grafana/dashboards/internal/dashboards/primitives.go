@@ -158,6 +158,8 @@ type TimeseriesOptions struct {
 	DataSource common.DataSourceRef
 	Min        *float64
 	Max        *float64
+	Mappings   []dashboard.ValueMapping
+	Thresholds *dashboard.ThresholdsConfigBuilder
 	Targets    []PrometheusTarget
 }
 
@@ -180,6 +182,12 @@ func timeSeries(options TimeseriesOptions) *timeseries.PanelBuilder {
 	}
 	if options.Max != nil {
 		panel.Max(*options.Max)
+	}
+	if options.Mappings != nil {
+		panel.Mappings(options.Mappings)
+	}
+	if options.Thresholds != nil {
+		panel.Thresholds(options.Thresholds)
 	}
 	for _, target := range options.Targets {
 		panel.WithTarget(prometheusQuery(target.RefID, target.Expression, target.Legend, false))

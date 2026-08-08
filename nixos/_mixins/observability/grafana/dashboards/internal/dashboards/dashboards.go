@@ -42,6 +42,21 @@ func All(config Config) ([]Definition, error) {
 			Dashboard: scrapeHealth,
 		},
 	}
+	generated := []struct {
+		path  string
+		build func(Config) (dashboard.Dashboard, error)
+	}{
+		{path: "Infrastructure/resolver-health.json", build: ResolverProbeOverview},
+		{path: "Infrastructure/sso.json", build: SSOOverview},
+		{path: "Services/services.json", build: ServiceProbeOverview},
+	}
+	for _, item := range generated {
+		model, err := item.build(config)
+		if err != nil {
+			return nil, fmt.Errorf("build %s dashboard: %w", item.path, err)
+		}
+		definitions = append(definitions, Definition{Path: item.path, Dashboard: model})
+	}
 	for _, host := range config.Hosts {
 		hostDashboard, err := HostDashboard(config, host)
 		if err != nil {
