@@ -11,7 +11,6 @@ let
   stagingDir = "${config.host.storage.volumes.data.mounts.data.mountPoint}/backups/staging/jellyfin";
   keepLocalBackups = 7;
   keepJellyfinSourceBackups = 1;
-  backupApiKeySecret = "jellyfin/apiKey";
   localRepoPasswordSecret = "backup/restic/beast/cloud/localPassword";
   localRepo = hostInventory.backups.clients.${config.networking.hostName}.repositoryPath;
   backupCommand = utils.escapeSystemdExecArgs [
@@ -19,7 +18,7 @@ let
     "--url"
     "http://127.0.0.1:8096"
     "--api-key-file"
-    config.sops.secrets.${backupApiKeySecret}.path
+    config.services.jellyfin.apiKey.file
     "--source-dir"
     jellyfinBackupDir
     "--staging-dir"
@@ -31,16 +30,6 @@ let
   ];
 in
 {
-  sops = {
-    secrets = {
-      ${backupApiKeySecret} = {
-        owner = "root";
-        group = "root";
-        mode = "0400";
-      };
-    };
-  };
-
   systemd.tmpfiles.rules = [
     "d ${stagingDir} 0750 root restic-cloud - -"
   ];

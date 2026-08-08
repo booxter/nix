@@ -5,6 +5,7 @@
   ...
 }:
 let
+  jellyfinApiKey = config.services.jellyfin.apiKey;
   jellyfinExporterInternalPort = 19594;
   jellyfinExporterPort = 9594;
 in
@@ -15,7 +16,7 @@ in
     mode = "0400";
     content = ''
       JELLYFIN_ADDRESS=http://127.0.0.1:8096
-      JELLYFIN_TOKEN=${config.sops.placeholder."jellyfin/apiKey"}
+      JELLYFIN_TOKEN=${config.sops.placeholder.${jellyfinApiKey.sopsKey}}
     '';
   };
 

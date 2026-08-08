@@ -7,6 +7,7 @@
   ...
 }:
 let
+  jellyfinApiKey = config.services.jellyfin.apiKey;
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix { inherit hostInventory; };
   watchstatePort = hostInventory.site.ports.watchstate;
@@ -90,7 +91,7 @@ in
     templates."jellarr.env" = {
       inherit (jellyfinSecretFile) owner group mode;
       content = ''
-        JELLARR_API_KEY=${config.sops.placeholder."jellyfin/apiKey"}
+        JELLARR_API_KEY=${config.sops.placeholder.${jellyfinApiKey.sopsKey}}
       '';
     };
   };

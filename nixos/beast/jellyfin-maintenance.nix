@@ -6,7 +6,7 @@
   ...
 }:
 let
-  jellyfinApiKeyFile = config.sops.secrets."jellyfin/apiKey".path;
+  jellyfinApiKeyFile = config.services.jellyfin.apiKey.file;
   waitForJellyfinIdleCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' beastPkgs.jellyfin-tools "wait-for-jellyfin-idle")
     "--url"
