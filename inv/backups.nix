@@ -5,7 +5,7 @@
 {
   server = {
     host = "beast";
-    repositoryRoot = "${storage.hosts.beast.volumes.data.mountPoint}/backups/restic-prod/hosts";
+    repositoryRoot = "${storage.hosts.beast.volumes.data.mounts.data.mountPoint}/backups/restic-prod/hosts";
     localClient = "beast";
   };
 

@@ -12,7 +12,8 @@ let
   mediaExport = nfsExports.media;
   nixCacheExport = nfsExports.nixCache;
   paperlessExport = nfsExports.paperless;
-  dataMountUnit = "${utils.escapeSystemdPath dataVolume.mountPoint}.mount";
+  dataMountPoint = dataVolume.mounts.data.mountPoint;
+  dataMountUnit = "${utils.escapeSystemdPath dataMountPoint}.mount";
   srvarrNfsAddress = hostInventory.toNixosHostIpv4Address "srvarr";
   cacheNfsAddress = hostInventory.toNixosHostIpv4Address "cache";
   orgNfsAddress = hostInventory.toNixosHostIpv4Address "org";
@@ -89,7 +90,7 @@ in
     # NFS back up with it instead of leaving clients stuck until manual repair.
     wantedBy = [ dataMountUnit ];
     unitConfig.RequiresMountsFor = [
-      dataVolume.mountPoint
+      dataMountPoint
       mediaExport.path
       nixCacheExport.path
       paperlessExportPath

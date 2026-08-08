@@ -6,7 +6,7 @@
   ...
 }:
 let
-  dataMountPoint = config.host.storage.volumes.data.mountPoint;
+  dataMountPoint = config.host.storage.volumes.data.mounts.data.mountPoint;
   dataMountUnit = "${utils.escapeSystemdPath dataMountPoint}.mount";
   mediaExport = hostInventory.storage.nfs.exports.media;
   jellyfinLoggingConfig = pkgs.writeText "jellyfin-logging.json" (

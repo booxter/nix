@@ -167,10 +167,6 @@ in
       type = lib.types.attrsOf (
         lib.types.submodule {
           options = {
-            mountPoint = lib.mkOption {
-              type = lib.types.str;
-              description = "Filesystem mount point.";
-            };
             device = lib.mkOption {
               type = lib.types.str;
               description = "Filesystem device.";
@@ -178,6 +174,24 @@ in
             fsType = lib.mkOption {
               type = lib.types.str;
               description = "Filesystem type.";
+            };
+            mounts = lib.mkOption {
+              type = lib.types.attrsOf (
+                lib.types.submodule {
+                  options = {
+                    mountPoint = lib.mkOption {
+                      type = lib.types.str;
+                      description = "Filesystem mount point.";
+                    };
+                    snapshots = lib.mkOption {
+                      type = lib.types.bool;
+                      default = true;
+                      description = "Whether the standard snapshot timeline applies to this mount.";
+                    };
+                  };
+                }
+              );
+              description = "Mounted subvolumes belonging to this storage volume.";
             };
           };
         }

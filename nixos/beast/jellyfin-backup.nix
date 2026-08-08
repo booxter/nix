@@ -8,7 +8,7 @@
 }:
 let
   jellyfinBackupDir = "/var/lib/jellyfin/data/backups";
-  stagingDir = "${config.host.storage.volumes.data.mountPoint}/backups/staging/jellyfin";
+  stagingDir = "${config.host.storage.volumes.data.mounts.data.mountPoint}/backups/staging/jellyfin";
   keepLocalBackups = 7;
   keepJellyfinSourceBackups = 1;
   backupApiKeySecret = "jellyfin/apiKey";

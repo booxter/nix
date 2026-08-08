@@ -8,7 +8,7 @@
 }:
 let
   dataVolume = config.host.storage.volumes.data;
-  volume2 = dataVolume.mountPoint;
+  volume2 = dataVolume.mounts.data.mountPoint;
   volume2MountUnit = "${utils.escapeSystemdPath volume2}.mount";
   maintenance = lib.getExe' beastPkgs.backup-server-tools "btrfs-maintenance";
   btrfs = lib.getExe pkgs.btrfs-progs;

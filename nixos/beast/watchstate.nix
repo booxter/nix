@@ -18,7 +18,7 @@ let
   watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
   watchstatePort = hostInventory.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";
-  watchstateBackupStagingDir = "${config.host.storage.volumes.data.mountPoint}/backups/staging/watchstate";
+  watchstateBackupStagingDir = "${config.host.storage.volumes.data.mounts.data.mountPoint}/backups/staging/watchstate";
   watchstateUid = 296;
   renderAuthCommand = utils.escapeSystemdExecArgs [
     (lib.getExe' beastPkgs.watchstate-tools "watchstate-render-auth")
