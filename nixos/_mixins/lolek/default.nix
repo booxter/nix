@@ -24,14 +24,10 @@ in
     inputs.lolek.nixosModules.default
   ];
 
-  options.services.lolek = {
-    hardwareAcceleration.useHost = lib.mkEnableOption "the host video acceleration capability";
-
-    metrics.mtlsPort = lib.mkOption {
-      type = lib.types.port;
-      default = 9568;
-      description = "LAN-visible port for the mTLS-protected metrics endpoint.";
-    };
+  options.services.lolek.metrics.mtlsPort = lib.mkOption {
+    type = lib.types.port;
+    default = 9568;
+    description = "LAN-visible port for the mTLS-protected metrics endpoint.";
   };
 
   options.host.lolek.enable = lib.mkOption {
@@ -65,7 +61,22 @@ in
           services.lolek = {
             package = lib.mkDefault pkgs.lolek;
             botTokenFile = config.sops.secrets."lolek/botToken".path;
+            maxConcurrentDownloads = lib.mkDefault 4;
+            maxConcurrentDownloadsPerChat = lib.mkDefault 2;
+            postSourceCaption = lib.mkDefault true;
+            postRequesterCaption = lib.mkDefault true;
+            galleryDownloadEnabled = lib.mkDefault true;
+            maxGalleryMedia = lib.mkDefault 20;
+            hardwareAcceleration = lib.mkIf (hostVideoAcceleration != null) {
+              backend = lib.mkDefault hostVideoAcceleration.backend;
+              device = lib.mkDefault hostVideoAcceleration.device;
+            };
+            metrics.enable = lib.mkDefault true;
             metrics.port = lib.mkDefault 19568;
+            localTelegramBotApi = {
+              enable = lib.mkDefault true;
+              verbosity = lib.mkDefault 1;
+            };
             environment = {
               LOLEK_GALLERY_DL_COOKIES_FILE = config.sops.secrets."lolek/galleryDlCookies".path;
               # TODO: Use a first-class upstream module option once Lolek exposes one.
@@ -83,20 +94,6 @@ in
             after = [ "sops-install-secrets.service" ];
           };
         }
-
-        (lib.mkIf cfg.hardwareAcceleration.useHost {
-          assertions = [
-            {
-              assertion = hostVideoAcceleration != null;
-              message = "services.lolek.hardwareAcceleration.useHost requires host.gpu.videoAcceleration.";
-            }
-          ];
-
-          services.lolek.hardwareAcceleration = lib.mkIf (hostVideoAcceleration != null) {
-            backend = lib.mkDefault hostVideoAcceleration.backend;
-            device = lib.mkDefault hostVideoAcceleration.device;
-          };
-        })
 
         (lib.mkIf cfg.metrics.enable {
           host.observability.prometheusEndpoints.lolek = {

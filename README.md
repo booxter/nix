@@ -124,7 +124,7 @@ around `nixmoxer`).
 
 | Machine | Type | Purpose | Config | Includes |
 | --- | --- | --- | --- | --- |
-| `beast` | NixOS (x86_64-linux) | NAS storage + Jellyfin/Jellarr server. | [nixos/beast/default.nix](nixos/beast/default.nix) | [common](common), [nixos](nixos) |
+| `beast` | NixOS (x86_64-linux) | NAS storage + Jellyfin/Jellarr server. | [inventory](inv/hosts.nix) | [common](common), [nixos](nixos) |
 | `nvws` | Proxmox host | Work Proxmox node configuration. Single node. Also serves as a remote x86_64-linux builder for work machines. | [nixos/nvws/default.nix](nixos/nvws/default.nix) | [common](common), [nixos](nixos) |
 | `prx1-lab` | Proxmox host | Lab Proxmox cluster node. | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
 | `prx2-lab` | Proxmox host | Lab Proxmox cluster node. | [nixos/default.nix](nixos/default.nix) | [common](common), [nixos](nixos) |
