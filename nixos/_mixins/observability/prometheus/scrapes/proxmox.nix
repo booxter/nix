@@ -77,11 +77,5 @@ in
       static_configs = proxmoxPveTargetConfigs;
       relabel_configs = proxmoxPveRelabelConfigs;
     }
-    {
-      job_name = "proxmox-pve-exporter";
-      scheme = "https";
-      tls_config = prometheusMtlsTlsConfig;
-      static_configs = proxmoxPveTargetConfigs;
-    }
   ];
 }

@@ -6,25 +6,27 @@ evaluation_interval: 30s
 tests:
   - interval: 30s
     input_series:
-      - series: 'up{job="proxmox-pve-node",instance="prx2-lab.home.arpa"}'
+      - series: 'up{component="proxmox",job="proxmox-pve-node",instance="prx2-lab.home.arpa",scrape_profile="hypervisor"}'
         values: "0 0 0 0 0 0 0 0 0 0 0 1 1"
     alert_rule_test:
       - eval_time: 4m30s
-        alertname: ProxmoxExporterScrapeDown
+        alertname: ProxmoxScrapeDown
       - eval_time: 5m
-        alertname: ProxmoxExporterScrapeDown
+        alertname: ProxmoxScrapeDown
         exp_alerts:
           - exp_labels:
-              alertname: ProxmoxExporterScrapeDown
+              alertname: ProxmoxScrapeDown
               category: proxmox
+              component: proxmox
               instance: prx2-lab.home.arpa
               job: proxmox-pve-node
+              scrape_profile: hypervisor
               severity: warning
             exp_annotations:
               summary: "Proxmox scrape down: prx2-lab.home.arpa"
               description: "Prometheus has been unable to scrape proxmox-pve-node on prx2-lab.home.arpa for 5 minutes."
       - eval_time: 5m30s
-        alertname: ProxmoxExporterScrapeDown
+        alertname: ProxmoxScrapeDown
 
   - interval: 30s
     input_series:

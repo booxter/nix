@@ -2,8 +2,8 @@ groups:
   - name: proxmox-health
     interval: 30s
     rules:
-      - alert: ProxmoxExporterScrapeDown
-        expr: up{job=~"proxmox-pve-(cluster|node|exporter)"} < 1
+      - alert: ProxmoxScrapeDown
+        expr: up{component="proxmox",scrape_profile="hypervisor"} < 1
         for: 5m
         labels:
           severity: warning
