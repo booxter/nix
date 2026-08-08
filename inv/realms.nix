@@ -60,6 +60,11 @@
         vncClient = true;
         x11 = true;
       };
+      unifi = {
+        baseUrl = "https://unifi";
+        site = "default";
+        syncHost = "pki";
+      };
       ups.credentialMode = "sops";
     };
   };
