@@ -157,6 +157,17 @@
       glanceCategory = "user";
     }
     {
+      id = "slskd";
+      owner = "srvarr";
+      instances.srvarr.vpnConfinement = {
+        profile = "airvpn";
+        forwardedPort = {
+          port = 13869;
+          protocol = "tcp";
+        };
+      };
+    }
+    {
       id = "audiobookshelf";
       owner = "srvarr";
       publicHost = "au.${publicDomain}";
@@ -238,6 +249,13 @@
     {
       id = "transmission";
       owner = "srvarr";
+      instances.srvarr.vpnConfinement = {
+        profile = "airvpn";
+        forwardedPort = {
+          port = 45486;
+          protocol = "both";
+        };
+      };
       probePath = "/oauth2/sign_in";
       backendProbe = {
         path = "/__probe/transmission-rpc";
@@ -250,6 +268,7 @@
       title = "SABNZB";
       icon = "https://raw.githubusercontent.com/sabnzbd/sabnzbd/70d5134d28a0c1cddff49c97fa013cb67c356f9e/icons/logo-arrow.svg";
       owner = "srvarr";
+      instances.srvarr.vpnConfinement.profile = "airvpn";
       probePath = "/oauth2/sign_in";
       backendProbe.path = "/__probe/sabnzbd-version";
       glanceCategory = "media-admin";

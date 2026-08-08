@@ -19,6 +19,7 @@ let
     attic = atticFacts;
     inherit lanDomain publicDomain readPublicKey;
   };
+  egressVpnFacts = import ./vpn.nix { lanCidr = siteFacts.lan.cidr; };
   realms = import ./realms.nix {
     attic = atticFacts;
     inherit
@@ -215,22 +216,40 @@ let
       ;
     ssh = sshFacts;
   };
+  toLocalDnsName = label: "${label}.local";
 
   normalizeService =
     glanceCategoryIds: localDnsName:
     {
       id,
       owner,
-      probePath,
+      probePath ? null,
       publicHost ? null,
       title ? lib.strings.toSentenceCase id,
       icon ? "sh:${id}",
-      blackboxProbe ? true,
+      blackboxProbe ? probePath != null,
       backendProbe ? null,
       glanceCategory ? null,
-      internalEndpointName ? id,
+      internalEndpointName ? if probePath == null then null else id,
+      instances ? { },
     }:
     let
+      normalizedInstances = lib.mapAttrs (
+        hostName: instance:
+        let
+          vpnConfinement = instance.vpnConfinement or null;
+          vpnProfile =
+            if vpnConfinement == null then null else egressVpnFacts.${vpnConfinement.profile} or null;
+        in
+        assert lib.assertMsg (builtins.elem hostName rawHostNames)
+          "Service ${id} has an instance on unknown host '${hostName}'";
+        assert lib.assertMsg (vpnConfinement == null || vpnProfile != null)
+          "Service ${id} instance ${hostName} references unknown egress VPN profile '${vpnConfinement.profile}'";
+        assert lib.assertMsg (
+          vpnProfile == null || vpnProfile.host == hostName
+        ) "Service ${id} instance ${hostName} must use an egress VPN profile hosted on the same machine";
+        instance
+      ) ({ ${owner} = { }; } // instances);
       scope = if publicHost == null then "internal" else "external";
       showInGlance = glanceCategory != null;
       service = {
@@ -246,6 +265,7 @@ let
           showInGlance
           title
           ;
+        instances = normalizedInstances;
       }
       // lib.optionalAttrs (backendProbe != null) { inherit backendProbe; }
       // lib.optionalAttrs (publicHost != null) { inherit publicHost; };
@@ -256,7 +276,7 @@ let
           url = "https://${publicHost}";
           probeUrl = "${url}${service.probePath}";
         })
-        // lib.optionalAttrs (service.scope == "internal") {
+        // lib.optionalAttrs (service.scope == "internal" && service.internalEndpointName != null) {
           displayHost = localDnsName owner;
           probeHost = owner;
         };
@@ -267,6 +287,36 @@ let
       category == null || builtins.elem category glanceCategoryIds
     ) "Glance service ${service.id} uses unknown glanceCategory '${categoryLabel}'";
     resolvedService;
+
+  normalizedServices = map (normalizeService glanceCategoryIds toLocalDnsName) serviceFacts.definitions;
+  forwardedPortKeys = lib.concatMap (
+    service:
+    builtins.concatLists (
+      lib.mapAttrsToList (
+        _: instance:
+        let
+          confinement = instance.vpnConfinement or null;
+          forwardedPort = if confinement == null then null else confinement.forwardedPort or null;
+          protocols =
+            if forwardedPort == null then
+              [ ]
+            else if forwardedPort.protocol == "both" then
+              [
+                "tcp"
+                "udp"
+              ]
+            else
+              [ forwardedPort.protocol ];
+        in
+        map (protocol: "${confinement.profile}:${protocol}:${toString forwardedPort.port}") protocols
+      ) service.instances
+    )
+  ) normalizedServices;
+  checkedServices =
+    assert lib.assertMsg (
+      builtins.length forwardedPortKeys == builtins.length (lib.unique forwardedPortKeys)
+    ) "Egress VPN profiles must not allocate the same forwarded port more than once";
+    normalizedServices;
 
   serviceLocalDnsAliases =
     services: owner:
@@ -291,6 +341,7 @@ in
 rec {
   autoUpgrade = autoUpgradeFacts;
   builders = builderFacts;
+  egressVpns = egressVpnFacts;
 
   inherit (serviceFacts) glanceCategories;
   inherit
@@ -310,7 +361,7 @@ rec {
   sso = ssoFacts;
   yubi = yubiFacts;
 
-  toLocalDnsName = label: "${label}.local";
+  inherit toLocalDnsName;
   toSshKnownHostNames =
     spec:
     let
@@ -376,7 +427,7 @@ rec {
     };
   };
 
-  services = map (normalizeService glanceCategoryIds toLocalDnsName) serviceFacts.definitions;
+  services = checkedServices;
 
   darwinHosts = normalizedDarwinHosts;
   nixosHostSpecs = normalizedNixosHostSpecs;
