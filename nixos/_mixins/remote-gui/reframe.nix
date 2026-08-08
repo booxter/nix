@@ -101,27 +101,37 @@ let
   # GDM uses Mutter before login. Mutter's monitors.xml v2 format groups each
   # connector and synthetic EDID identity into a logical monitor with the same
   # position and scale that Hyprland consumes from inventory after login.
-  mkGdmLogicalMonitor = display: ''
-    <logicalmonitor>
-      <x>${toString display.position.x}</x>
-      <y>${toString display.position.y}</y>
-      ${lib.optionalString (display.name == displayConfig.primary) "<primary>yes</primary>"}
-      <scale>${toString scale}</scale>
-      <monitor>
-        <monitorspec>
-          <connector>${display.connector}</connector>
-          <vendor>${syntheticEdid.vendor}</vendor>
-          <product>${syntheticEdid.product}</product>
-          <serial>${syntheticEdid.serial}</serial>
-        </monitorspec>
-        <mode>
-          <width>${toString display.nativeMode.width}</width>
-          <height>${toString display.nativeMode.height}</height>
-          <rate>${toString syntheticEdid.refreshRate}</rate>
-        </mode>
-      </monitor>
-    </logicalmonitor>
-  '';
+  mkGdmLogicalMonitor =
+    display:
+    {
+      x = display.position.x;
+      y = display.position.y;
+      inherit scale;
+      monitor = {
+        monitorspec = {
+          connector = display.connector;
+          inherit (syntheticEdid) vendor product serial;
+        };
+        mode = {
+          inherit (display.nativeMode) width height;
+          rate = syntheticEdid.refreshRate;
+        };
+      };
+    }
+    // lib.optionalAttrs (display.name == displayConfig.primary) {
+      primary = "yes";
+    };
+
+  gdmMonitorsXml = (pkgs.formats.xml { withHeader = false; }).generate "monitors.xml" {
+    monitors = {
+      "@version" = "2";
+      policy.stores.store = "system";
+      configuration = {
+        layoutmode = "logical";
+        logicalmonitor = map mkGdmLogicalMonitor displays;
+      };
+    };
+  };
 in
 {
   config = lib.mkIf vnc.enable {
@@ -170,19 +180,7 @@ in
 
     # Match Hyprland's inventory-derived logical layout at the GDM login screen.
     # ReFrame maps pointer coordinates against the same calculated desktop.
-    environment.etc."xdg/monitors.xml".text = ''
-      <monitors version="2">
-        <policy>
-          <stores>
-            <store>system</store>
-          </stores>
-        </policy>
-        <configuration>
-          <layoutmode>logical</layoutmode>
-          ${lib.concatMapStrings mkGdmLogicalMonitor displays}
-        </configuration>
-      </monitors>
-    '';
+    environment.etc."xdg/monitors.xml".source = gdmMonitorsXml;
 
     services.reframe.enable = true;
 
