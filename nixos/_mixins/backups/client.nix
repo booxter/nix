@@ -6,8 +6,9 @@
 }:
 let
   hostname = config.networking.hostName;
-  backup = hostInventory.backups;
-  isRemoteClient = builtins.hasAttr hostname backup.clients && hostname != backup.server.localClient;
+  backup = hostInventory.realms.${config.host.realm}.services.backups or null;
+  isRemoteClient =
+    backup != null && builtins.hasAttr hostname backup.clients && hostname != backup.server.localClient;
   client = backup.clients.${hostname};
   jobName = backup.server.host;
   jobTitle = "${lib.toUpper (lib.substring 0 1 jobName)}${

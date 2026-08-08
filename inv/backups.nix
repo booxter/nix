@@ -9,7 +9,14 @@
     localClient = "beast";
   };
 
-  cloud.bucketName = "ihar-restic-prod";
+  offsite = {
+    provider = "b2";
+    bucketName = "ihar-restic-prod";
+    repositoryPrefix = "hosts";
+    rateMbit = 10;
+    b2Connections = 1;
+    packSizeMib = 4;
+  };
 
   clients = {
     beast.publicKey = null;

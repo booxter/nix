@@ -5,6 +5,7 @@
   ...
 }:
 let
+  backupHost = hostInventory.realms.${config.host.realm}.services.backups.server.host;
   outboundMail = hostInventory.realms.${config.host.realm}.services.outboundMail;
   vikunjaService = hostInventory.servicesById.vikunja;
   isOwner = vikunjaService.owner == config.networking.hostName;
@@ -96,12 +97,12 @@ in
     };
 
     host.backups.artifacts.sqlite.vikunja = {
-      job = hostInventory.backups.server.host;
+      job = backupHost;
       displayName = "Vikunja";
       databasePath = "/var/lib/vikunja/vikunja.db";
       destinationDir = "/var/lib/vikunja-backup/latest";
     };
 
-    host.backups.jobs.${hostInventory.backups.server.host}.paths = [ "/var/lib/vikunja/files" ];
+    host.backups.jobs.${backupHost}.paths = [ "/var/lib/vikunja/files" ];
   };
 }

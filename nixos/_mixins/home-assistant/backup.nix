@@ -14,14 +14,15 @@ let
   baseUrl = "http://127.0.0.1:${toString port}";
   clientId = "${baseUrl}/";
   passwordSecret = "home-assistant/bootstrap-password";
-  backupHost = hostInventory.backups.server.host;
+  backup = hostInventory.realms.${config.host.realm}.services.backups;
+  backupHost = backup.server.host;
   tools = pkgs.callPackage ./packages/home-assistant-tools { };
 in
 {
   config = lib.mkIf isOwner {
     assertions = [
       {
-        assertion = builtins.hasAttr config.networking.hostName hostInventory.backups.clients;
+        assertion = builtins.hasAttr config.networking.hostName backup.clients;
         message = "The Home Assistant owner must be a declared backup client.";
       }
     ];

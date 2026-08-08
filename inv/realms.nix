@@ -1,5 +1,6 @@
 {
   attic,
+  backupFacts,
   lanDomain,
   nixCaches,
   readPublicKey,
@@ -29,6 +30,7 @@
     };
     services = {
       inherit attic;
+      backups = backupFacts;
       internalPki = {
         providerHost = "pki";
         rootCaCertificate = ../public-keys/internal-pki/home-root-ca.crt;

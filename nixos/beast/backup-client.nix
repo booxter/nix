@@ -4,8 +4,9 @@
   ...
 }:
 let
+  backup = hostInventory.realms.${config.host.realm}.services.backups;
   localRepoPasswordSecret = "backup/restic/beast/cloud/localPassword";
-  localRepo = hostInventory.backups.clients.${config.networking.hostName}.repositoryPath;
+  localRepo = backup.clients.${config.networking.hostName}.repositoryPath;
 in
 {
   host.backups.jobs.beast = {

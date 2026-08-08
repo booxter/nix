@@ -21,12 +21,17 @@ let
   };
   realms = import ./realms.nix {
     attic = atticFacts;
-    inherit lanDomain readPublicKey user;
+    inherit
+      backupFacts
+      lanDomain
+      readPublicKey
+      user
+      ;
     nixCaches = siteFacts.nixCaches;
     ssh = sshFacts;
   };
   hostFactsFor = import ./hosts.nix { inherit frame lib; };
-  backupFacts = import ./backups.nix {
+  rawBackupFacts = import ./backups.nix {
     inherit readPublicKey;
     storage = storageFacts;
   };
@@ -35,10 +40,13 @@ let
     client
     // rec {
       storageName = client.storageName or name;
-      repositoryPath = "${backupFacts.server.repositoryRoot}/${storageName}";
+      repositoryPath = "${rawBackupFacts.server.repositoryRoot}/${storageName}";
       ingestUser = "restic-${name}";
     }
-  ) backupFacts.clients;
+  ) rawBackupFacts.clients;
+  backupFacts = rawBackupFacts // {
+    clients = backupClients;
+  };
   serviceFacts = import ./services.nix {
     inherit publicDomain;
     llmProviderHost = realms.home.services.llm.providerHost;
@@ -196,9 +204,6 @@ let
 in
 rec {
   autoUpgrade = autoUpgradeFacts;
-  backups = backupFacts // {
-    clients = backupClients;
-  };
   builders = builderFacts;
 
   inherit (serviceFacts) glanceCategories;

@@ -7,6 +7,7 @@
   ...
 }:
 let
+  backupHost = hostInventory.realms.${config.host.realm}.services.backups.server.host;
   degoogPkgs = import ./packages pkgs;
   degoogPackage = degoogPkgs.degoog;
   trustedHeaderSettingsAuth = degoogPkgs.degoog-trusted-header-settings-auth;
@@ -254,6 +255,6 @@ in
       };
     };
 
-    host.backups.jobs.${hostInventory.backups.server.host}.paths = [ stateDir ];
+    host.backups.jobs.${backupHost}.paths = [ stateDir ];
   };
 }

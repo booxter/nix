@@ -5,10 +5,10 @@
   ...
 }:
 let
-  backupInventory = hostInventory.backups;
+  backupInventory = hostInventory.realms.${config.host.realm}.services.backups;
   cloudGroup = "restic-cloud";
   inherit (backupInventory) clients;
-  inherit (backupInventory.cloud) bucketName;
+  inherit (backupInventory.offsite) bucketName;
   offloadUser = name: if name == "beast" then cloudGroup else "restic-${name}-offload";
   cloudSecret = name: field: "backup/restic/${name}/cloud/${field}";
   applicationKeyIdSecret = "backup/restic/cloud/b2/applicationKeyId";
@@ -22,8 +22,8 @@ in
       inherit (client) publicKey storageName;
       cloud = {
         enable = true;
-        repository = "b2:${bucketName}:hosts/${client.storageName}";
-        prefix = "hosts/${client.storageName}";
+        repository = "b2:${bucketName}:${backupInventory.offsite.repositoryPrefix}/${client.storageName}";
+        prefix = "${backupInventory.offsite.repositoryPrefix}/${client.storageName}";
         sourcePasswordFile = config.sops.secrets.${cloudSecret name "localPassword"}.path;
         passwordFile = config.sops.secrets.${cloudSecret name "password"}.path;
       };
@@ -34,8 +34,7 @@ in
       applicationKeyFile = config.sops.secrets.${applicationKeySecret}.path;
       # Keep uploads serialized and packs small so shaped B2 requests finish
       # without timing out mid-pack.
-      b2Connections = 1;
-      packSizeMib = 4;
+      inherit (backupInventory.offsite) b2Connections packSizeMib;
       dependencyUnits = [
         "network-online.target"
         "sops-install-secrets.service"
@@ -47,7 +46,7 @@ in
   host.qos.interfaces.wan = {
     device = config.host.network.primaryInterface;
     limits.cloud-backup = {
-      rateMbit = 10;
+      rateMbit = backupInventory.offsite.rateMbit;
       match.users = config.host.backups.server.generated.offloadUsers;
     };
   };

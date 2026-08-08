@@ -6,6 +6,7 @@
   ...
 }:
 let
+  backupHost = hostInventory.realms.${config.host.realm}.services.backups.server.host;
   paperlessService = hostInventory.servicesById.paperless;
   paperlessGptService = hostInventory.servicesById."paperless-gpt";
   isOwner = paperlessGptService.owner == config.networking.hostName;
@@ -161,7 +162,7 @@ in
       localPort = ollamaTunnelPort;
     };
 
-    host.backups.jobs.${hostInventory.backups.server.host}.paths = [ stateDir ];
+    host.backups.jobs.${backupHost}.paths = [ stateDir ];
 
     virtualisation.oci-containers = {
       backend = "podman";

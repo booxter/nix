@@ -7,7 +7,7 @@
 let
   paperlessService = hostInventory.servicesById.paperless;
   isOwner = paperlessService.owner == config.networking.hostName;
-  backupHost = hostInventory.backups.server.host;
+  backupHost = hostInventory.realms.${config.host.realm}.services.backups.server.host;
   dataDir = "/var/lib/paperless";
 in
 {
