@@ -1,1 +1,1 @@
-"""Typed restic and Backblaze B2 usage exporter."""
+"""Restic and Backblaze B2 usage exporter."""

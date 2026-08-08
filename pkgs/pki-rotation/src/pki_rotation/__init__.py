@@ -1,1 +1,1 @@
-"""Typed controller for repository-managed PKI certificate rotation."""
+"""Controller for repository-managed PKI certificate rotation."""

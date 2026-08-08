@@ -1,1 +1,1 @@
-"""Typed helpers for repository-managed SOPS secrets."""
+"""Helpers for repository-managed SOPS secrets."""

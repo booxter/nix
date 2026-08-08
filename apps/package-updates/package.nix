@@ -61,7 +61,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "package_updates" ];
 
   meta = {
-    description = "Typed package and OCI update automation";
+    description = "Package and OCI update automation";
     license = pkgs.lib.licenses.mit;
     mainProgram = "update-packages";
     platforms = pkgs.lib.platforms.unix;

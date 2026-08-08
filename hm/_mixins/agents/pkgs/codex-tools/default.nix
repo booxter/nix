@@ -36,7 +36,7 @@ pythonPackages.buildPythonApplication {
   pythonImportsCheck = [ "codex_tools" ];
 
   meta = {
-    description = "Typed helpers for local Codex account automation";
+    description = "Helpers for local Codex account automation";
     license = lib.licenses.mit;
     mainProgram = "codex-usage-status";
     platforms = lib.platforms.linux ++ lib.platforms.darwin;

@@ -108,7 +108,7 @@ rustPlatform.buildRustPackage {
   cargoTestFlags = [ "--all-targets" ];
 
   meta = {
-    description = "Typed command-line tools for this Nix fleet";
+    description = "Command-line tools for this Nix fleet";
     license = lib.licenses.mit;
     mainProgram = "get-hosts";
     platforms = lib.platforms.unix;

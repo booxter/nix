@@ -1,1 +1,1 @@
-"""Typed orchestration for the beast HBA flashing workflow."""
+"""Orchestration for the beast HBA flashing workflow."""

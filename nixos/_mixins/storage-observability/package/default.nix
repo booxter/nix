@@ -48,7 +48,7 @@ pythonPackages.buildPythonApplication {
   '';
 
   meta = {
-    description = "Typed Prometheus storage collectors";
+    description = "Prometheus storage collectors";
     license = lib.licenses.mit;
     mainProgram = "storage-hba-metrics";
     platforms = lib.platforms.linux;

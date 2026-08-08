@@ -1,1 +1,1 @@
-"""Typed helpers for local Codex account automation."""
+"""Helpers for local Codex account automation."""

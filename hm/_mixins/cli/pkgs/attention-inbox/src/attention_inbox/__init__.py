@@ -1,1 +1,1 @@
-"""Typed attention inbox collection."""
+"""Attention inbox collection."""

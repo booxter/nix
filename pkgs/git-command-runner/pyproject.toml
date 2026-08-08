@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "git-command-runner"
 version = "0.1.0"
-description = "Typed subprocess runner for internal Git applications"
+description = "Subprocess runner for internal Git applications"
 requires-python = ">=3.11"
 dependencies = []
 

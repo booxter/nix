@@ -31,7 +31,7 @@ pythonPackages.buildPythonPackage {
   pythonImportsCheck = [ "atomic_file_writes" ];
 
   meta = {
-    description = "Typed durable atomic file replacement helpers";
+    description = "Durable atomic file replacement helpers";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

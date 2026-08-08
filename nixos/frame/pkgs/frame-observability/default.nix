@@ -41,7 +41,7 @@ python3.pkgs.buildPythonApplication {
   pythonImportsCheck = [ "frame_observability" ];
 
   meta = {
-    description = "Typed Prometheus textfile collectors for frame";
+    description = "Prometheus textfile collectors for frame";
     license = lib.licenses.mit;
     mainProgram = "frame-ollama-metrics";
     platforms = lib.platforms.linux;

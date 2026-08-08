@@ -33,7 +33,7 @@ pythonPackages.buildPythonPackage {
   pythonImportsCheck = [ "git_command_runner" ];
 
   meta = {
-    description = "Typed subprocess runner for internal Git applications";
+    description = "Subprocess runner for internal Git applications";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux ++ lib.platforms.darwin;
   };

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "codex-tools"
 version = "0.1.0"
-description = "Typed helpers for local Codex account automation"
+description = "Helpers for local Codex account automation"
 requires-python = ">=3.11"
 dependencies = ["openai", "pydantic"]
 

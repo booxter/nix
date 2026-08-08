@@ -1,1 +1,1 @@
-"""Typed fleet PKI certificate issuance helpers."""
+"""Fleet PKI certificate issuance helpers."""

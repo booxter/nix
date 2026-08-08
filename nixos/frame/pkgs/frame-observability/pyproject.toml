@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "frame-observability"
 version = "0.1.0"
-description = "Typed Prometheus textfile collectors for frame"
+description = "Prometheus textfile collectors for frame"
 requires-python = ">=3.11"
 dependencies = ["prometheus-client", "pydantic"]
 
