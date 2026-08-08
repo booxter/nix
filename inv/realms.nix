@@ -29,7 +29,15 @@
     };
     services = {
       inherit attic;
-      internalPki.rootCaCertificate = ../public-keys/internal-pki/home-root-ca.crt;
+      internalPki = {
+        providerHost = "pki";
+        rootCaCertificate = ../public-keys/internal-pki/home-root-ca.crt;
+        server = {
+          port = 8443;
+          # Fixed step-ca HTTP API route for the trusted root bundle.
+          rootsPath = "/roots.pem";
+        };
+      };
       flakehubCache.url = nixCaches.flakehub.url;
       nixCache = {
         substituters = [

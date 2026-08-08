@@ -14,9 +14,11 @@ let
   degoogService = hostInventory.servicesById.goo;
   fanaHostConfig = outputs.nixosConfigurations.fana.config;
   fanaHttpsServices = fanaHostConfig.host.internalHttps.services;
-  pkiSpec = hostInventory.nixosHosts.pki;
-  pkiCaServer = pkiSpec.caServer;
-  pkiRootCaUrl = "https://${pkiSpec.name}:" + toString pkiCaServer.port + pkiCaServer.rootsPath;
+  internalPki = hostInventory.realms.${config.host.realm}.services.internalPki;
+  pkiRootCaUrl =
+    "https://${internalPki.providerHost}:"
+    + toString internalPki.server.port
+    + internalPki.server.rootsPath;
   srvarrHttpsServices = config.host.internalHttps.services;
   internalHttpsServicesFor =
     service:

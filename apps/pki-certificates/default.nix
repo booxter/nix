@@ -21,14 +21,18 @@ let
         let
           isLinux = lib.hasSuffix "-linux" system;
           spec = hostInventory.hostSpecsByName.${name};
-          caServer = spec.caServer or null;
+          internalPki = hostInventory.realms.${spec.realm}.services.internalPki or null;
         in
         {
           inherit system;
           configuration = if isLinux then "nixosConfigurations" else "darwinConfigurations";
           runtimeHost = spec.name;
           secretDomain = hostInventory.secretDomainsByHost.${name};
-          caUrl = if caServer == null then null else "https://${spec.name}:${toString caServer.port}";
+          caUrl =
+            if internalPki == null || internalPki.providerHost != name then
+              null
+            else
+              "https://${internalPki.providerHost}:${toString internalPki.server.port}";
         }
       ) hostInventory.systemsByHost
     )

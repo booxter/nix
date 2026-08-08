@@ -420,11 +420,6 @@ in
       realm = "home";
       userProfile = "personal";
       stateVersion = "25.11";
-      caServer = {
-        port = 8443;
-        # Fixed step-ca HTTP API route for the trusted root bundle.
-        rootsPath = "/roots.pem";
-      };
       upsHost = "prx1-lab";
       cores = 2;
       memorySize = 4;

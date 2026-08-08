@@ -9,11 +9,11 @@
 }:
 let
   pkiPkgs = import ./pkgs pkgs;
-  caServer = hostInventory.nixosHosts.pki.caServer;
+  internalPki = hostInventory.realms.${config.host.realm}.services.internalPki;
   caName = "Home Internal PKI";
   certLifetimeDays = 180;
   certLifetime = "${toString (certLifetimeDays * 24)}h0m0s";
-  caPort = caServer.port;
+  caPort = internalPki.server.port;
   caUrl = "https://${config.networking.hostName}:${toString caPort}";
   caProvisioner = "bootstrap@${hostInventory.site.lan.domain}";
   pkiRotationBaseBranch = "master";
