@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
 	"github.com/grafana/grafana-foundation-sdk/go/statetimeline"
+	tablepanel "github.com/grafana/grafana-foundation-sdk/go/table"
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 	"github.com/grafana/grafana-foundation-sdk/go/units"
 )
@@ -110,6 +111,15 @@ func prometheusQuery(refID, expression, legend string, instant bool) *prometheus
 		return query.Instant()
 	}
 	return query.Range()
+}
+
+func prometheusTableQuery(refID, expression string) *prometheus.DataqueryBuilder {
+	return prometheus.NewDataqueryBuilder().
+		RefId(refID).
+		Expr(expression).
+		EditorMode(prometheus.QueryEditorModeCode).
+		Format(prometheus.PromQueryFormatTable).
+		Instant()
 }
 
 func lokiQuery(refID, expression, legend string, datasource common.DataSourceRef) *loki.DataqueryBuilder {
@@ -318,6 +328,28 @@ func stateTimeline(options StateTimelineOptions) *statetimeline.PanelBuilder {
 			Placement(common.LegendPlacementBottom).
 			ShowLegend(false)).
 		WithTarget(prometheusQuery("A", options.Expression, options.Legend, false))
+}
+
+type MetricTableOptions struct {
+	ID         uint32
+	Title      string
+	Expression string
+	Unit       string
+	Grid       dashboard.GridPos
+	DataSource common.DataSourceRef
+}
+
+func metricTable(options MetricTableOptions) *tablepanel.PanelBuilder {
+	panel := tablepanel.NewPanelBuilder().
+		Id(options.ID).
+		Title(options.Title).
+		Datasource(options.DataSource).
+		GridPos(options.Grid).
+		WithTarget(prometheusTableQuery("A", options.Expression))
+	if options.Unit != "" {
+		panel.Unit(options.Unit)
+	}
+	return panel
 }
 
 type panelPlacement struct {
