@@ -20,7 +20,10 @@ var testConfig = Config{
 		{
 			Name: "frame", Platform: "linux", CapacityProfile: "cpu-bursty",
 			ThermalProfile: "standard", Builder: true,
-			Services: []string{"home", "jellyfin", "lidarr", "sabnzbd", "transmission"},
+			Services: []string{
+				"home", "jellyfin", "lidarr", "ollama", "paperless", "paperless-gpt",
+				"sabnzbd", "transmission",
+			},
 		},
 	},
 	Network: Network{Internet: InternetLink{
