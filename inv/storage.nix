@@ -25,10 +25,10 @@ let
       requiredForBoot = false;
     };
   };
-  export = path: fsid: {
+  export = path: fsid: clients: {
     server = beast;
     path = "${dataVolume.mounts.data.mountPoint}/${path}";
-    inherit fsid;
+    inherit clients fsid;
   };
 in
 {
@@ -66,8 +66,12 @@ in
   };
 
   nfs.exports = {
-    media = export "Media" 10;
-    nixCache = export "nix-cache" 11;
-    paperless = export "paperless" 12;
+    media = export "Media" 10 [ "srvarr" ];
+    nixCache = export "nix-cache" 11 [ "cache" ];
+    paperless = (export "paperless" 12 [ "org" ]) // {
+      # Preserve root_squash while presenting root-run client backup jobs as
+      # the Paperless service identity.
+      anonymousIdentity = "paperless";
+    };
   };
 }

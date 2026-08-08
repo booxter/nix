@@ -18,8 +18,8 @@
     ./library-dirs.nix
     ./lolek.nix
     ./meilisearch.nix
-    ./nfs.nix
     ./nginx.nix
+    ./paperless-storage.nix
     ./pause.nix
     ./raid.nix
     ./sso.nix

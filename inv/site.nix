@@ -24,7 +24,6 @@ rec {
   };
 
   ports = {
-    nfs = 2049;
     watchstate = 8080;
   };
 
