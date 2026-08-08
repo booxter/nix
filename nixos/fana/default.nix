@@ -8,7 +8,6 @@
     ./loki.nix
     ./monitoring
     ./prometheus.nix
-    ./unpoller.nix
   ];
 
   host.observability = {

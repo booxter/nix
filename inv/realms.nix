@@ -98,6 +98,7 @@
       sso.providerHost = "pki";
       unifi = {
         baseUrl = "https://unifi";
+        pollerHost = "fana";
         site = "default";
         syncHost = "pki";
       };

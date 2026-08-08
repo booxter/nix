@@ -61,6 +61,7 @@ in
       ./_mixins/storage-observability
       ./_mixins/storage.nix
       ./_mixins/unifi-sync
+      ./_mixins/unpoller.nix
       ./_mixins/uptimerobot-sync
       ./_mixins/ups
       ./_mixins/user
