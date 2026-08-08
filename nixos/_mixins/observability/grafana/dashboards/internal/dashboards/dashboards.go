@@ -55,6 +55,7 @@ func All(config Config) ([]Definition, error) {
 		{path: "Infrastructure/power.json", build: PowerOverview},
 		{path: "Infrastructure/proxmox.json", build: ProxmoxOverview},
 		{path: "Infrastructure/sso.json", build: SSOOverview},
+		{path: "Infrastructure/storage.json", build: StorageOverview},
 		{path: "Infrastructure/thermals.json", build: ThermalsOverview},
 		{path: "Infrastructure/unifi.json", build: UnifiOverview},
 		{path: "Infrastructure/wireguard.json", build: WireGuardOverview},

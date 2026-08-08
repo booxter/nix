@@ -21,7 +21,7 @@ func hostTags(host Host) []string {
 	if host.Hypervisor {
 		tags = append(tags, "hypervisor")
 	}
-	if host.Storage.DiskBays {
+	if host.Storage.DiskBays != nil {
 		tags = append(tags, "storage")
 	}
 	if host.Backups.Server {
@@ -168,7 +168,7 @@ func HostDashboard(config Config, host Host) (dashboard.Dashboard, error) {
 			}))
 	}
 
-	if host.Storage.DiskBays {
+	if host.Storage.DiskBays != nil {
 		storage := layout.row(8, 24)[0]
 		builder.WithPanel(timeSeries(TimeseriesOptions{
 			ID: storage.ID, Title: "Disk temperatures", Unit: units.Celsius,

@@ -52,7 +52,14 @@ let
       );
       storage = {
         btrfs = builtins.any (volume: volume.fsType == "btrfs") volumes;
-        diskBays = storage ? diskBays;
+        diskBays =
+          if storage ? diskBays then
+            {
+              inherit (storage.diskBays) rows;
+              columns = lib.foldl' lib.max 0 (map (disk: builtins.fromJSON disk.col) storage.diskBays.disks);
+            }
+          else
+            null;
         nvme = (storage.systemDisk.transport or null) == "nvme";
       };
       backups = {
@@ -96,8 +103,6 @@ let
   );
   generatedDashboards = pkgs.runCommandLocal "grafana-dashboards" { } ''
     mkdir "$out"
-    cp ${./dashboards/legacy}/*.json "$out/"
-    chmod u+w "$out"/*.json
     ${lib.getExe dashboardGenerator} \
       --config ${dashboardConfig} \
       --output "$out"

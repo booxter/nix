@@ -1,6 +1,7 @@
 package dashboards
 
 import (
+	"fmt"
 	"io/fs"
 	"path/filepath"
 	"testing"
@@ -20,6 +21,7 @@ var testConfig = Config{
 		{
 			Name: "frame", Platform: "linux", CapacityProfile: "cpu-bursty",
 			ThermalProfile: "standard", Builder: true, Backups: HostBackups{Server: true},
+			Storage: HostStorage{DiskBays: &DiskBayLayout{Rows: 5, Columns: 3}},
 			Services: []string{
 				"home", "jellyfin", "lidarr", "ollama", "paperless", "paperless-gpt",
 				"sabnzbd", "transmission",
@@ -46,6 +48,41 @@ func TestHostDashboardReflectsHostCapabilities(t *testing.T) {
 	}
 	if len(model.Panels) != 10 {
 		t.Fatalf("HostDashboard() panels = %d, want 10", len(model.Panels))
+	}
+}
+
+func TestStorageDashboardPreservesPhysicalBayGrid(t *testing.T) {
+	model, err := StorageOverview(testConfig)
+	if err != nil {
+		t.Fatalf("StorageOverview() error = %v", err)
+	}
+
+	panels := make(map[string]struct{})
+	for _, item := range model.Panels {
+		panel := item.Panel
+		if panel == nil || panel.Title == nil || panel.GridPos == nil || panel.GridPos.H != 2 {
+			continue
+		}
+		if panel.GridPos.Y < 6 || panel.GridPos.Y > 14 {
+			continue
+		}
+		key := fmt.Sprintf("%s:%d:%d:%d", *panel.Title, panel.GridPos.X, panel.GridPos.Y, panel.GridPos.W)
+		panels[key] = struct{}{}
+	}
+
+	for column := 0; column < 3; column++ {
+		for row := 0; row < 5; row++ {
+			bay := column*5 + row + 1
+			for _, x := range []uint32{uint32(column * 4), uint32(12 + column*4)} {
+				key := fmt.Sprintf("%d:%d:%d:4", bay, x, 6+row*2)
+				if _, present := panels[key]; !present {
+					t.Errorf("physical bay grid lacks panel %s", key)
+				}
+			}
+		}
+	}
+	if len(panels) != 30 {
+		t.Errorf("physical bay grid has %d slot panels, want 30", len(panels))
 	}
 }
 

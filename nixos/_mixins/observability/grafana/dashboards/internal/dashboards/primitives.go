@@ -331,12 +331,15 @@ func stateTimeline(options StateTimelineOptions) *statetimeline.PanelBuilder {
 }
 
 type MetricTableOptions struct {
-	ID         uint32
-	Title      string
-	Expression string
-	Unit       string
-	Grid       dashboard.GridPos
-	DataSource common.DataSourceRef
+	ID          uint32
+	Title       string
+	Expression  string
+	Unit        string
+	Grid        dashboard.GridPos
+	DataSource  common.DataSourceRef
+	Mappings    []dashboard.ValueMapping
+	Thresholds  *dashboard.ThresholdsConfigBuilder
+	DisplayMode common.TableCellDisplayMode
 }
 
 func metricTable(options MetricTableOptions) *tablepanel.PanelBuilder {
@@ -348,6 +351,15 @@ func metricTable(options MetricTableOptions) *tablepanel.PanelBuilder {
 		WithTarget(prometheusTableQuery("A", options.Expression))
 	if options.Unit != "" {
 		panel.Unit(options.Unit)
+	}
+	if options.Mappings != nil {
+		panel.Mappings(options.Mappings)
+	}
+	if options.Thresholds != nil {
+		panel.Thresholds(options.Thresholds)
+	}
+	if options.DisplayMode != "" {
+		panel.DisplayMode(options.DisplayMode)
 	}
 	return panel
 }
@@ -382,4 +394,17 @@ func (layout *panelLayout) row(height uint32, widths ...uint32) []panelPlacement
 	}
 	layout.y += height
 	return placements
+}
+
+func (layout *panelLayout) place(x, y, width, height uint32) panelPlacement {
+	placement := panelPlacement{
+		ID:   layout.nextID,
+		Grid: grid(x, layout.y+y, width, height),
+	}
+	layout.nextID++
+	return placement
+}
+
+func (layout *panelLayout) advance(height uint32) {
+	layout.y += height
 }

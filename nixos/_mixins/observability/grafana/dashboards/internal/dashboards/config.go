@@ -42,6 +42,19 @@ func (config Config) backupServer() (string, error) {
 	return hosts[0], nil
 }
 
+func (config Config) diskBayHost() (Host, error) {
+	hosts := make([]Host, 0, 1)
+	for _, host := range config.Hosts {
+		if host.Storage.DiskBays != nil {
+			hosts = append(hosts, host)
+		}
+	}
+	if len(hosts) != 1 {
+		return Host{}, fmt.Errorf("dashboard inventory has %d disk-bay hosts, want one", len(hosts))
+	}
+	return hosts[0], nil
+}
+
 func (source DataSource) reference() common.DataSourceRef {
 	return common.DataSourceRef{
 		Type: ptr(source.Type),
@@ -75,9 +88,14 @@ type LinkDirection struct {
 }
 
 type HostStorage struct {
-	Btrfs    bool `json:"btrfs"`
-	DiskBays bool `json:"diskBays"`
-	NVMe     bool `json:"nvme"`
+	Btrfs    bool           `json:"btrfs"`
+	DiskBays *DiskBayLayout `json:"diskBays"`
+	NVMe     bool           `json:"nvme"`
+}
+
+type DiskBayLayout struct {
+	Rows    int `json:"rows"`
+	Columns int `json:"columns"`
 }
 
 type HostBackups struct {
@@ -146,6 +164,14 @@ func DecodeConfig(reader io.Reader) (Config, error) {
 		}
 		if host.CapacityProfile == "" || host.ThermalProfile == "" {
 			return Config{}, fmt.Errorf("host %q lacks observability profiles", host.Name)
+		}
+		if host.Storage.DiskBays != nil {
+			layout := host.Storage.DiskBays
+			if layout.Rows <= 0 || layout.Columns <= 0 || 12%layout.Columns != 0 {
+				return Config{}, fmt.Errorf(
+					"host %q has invalid disk-bay grid %dx%d", host.Name, layout.Columns, layout.Rows,
+				)
+			}
 		}
 	}
 	var trailing any
