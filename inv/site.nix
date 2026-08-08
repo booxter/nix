@@ -95,6 +95,8 @@ rec {
       address = "10.83.0.1/24";
       listenPort = 51820;
       publicEndpoint = "wg.${public.domain}";
+      dynamicDnsRecord = "gw";
+      qos.uploadLimitMbit = 10;
     };
     peers = {
       mair = {

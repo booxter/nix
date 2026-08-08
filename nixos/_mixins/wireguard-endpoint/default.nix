@@ -11,7 +11,12 @@ let
   );
 in
 {
-  imports = [ ./network.nix ];
+  imports = [
+    ./ddns.nix
+    ./network.nix
+    ./observability.nix
+    ./qos.nix
+  ];
 
   options.host.wireguardEndpoint = {
     name = lib.mkOption {
