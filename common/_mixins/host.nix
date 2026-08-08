@@ -12,7 +12,7 @@ let
   realm = hostInventory.realms.${config.host.realm};
   inherit (hostPlatform) isDarwin isLinux system;
   platformDirectory = if isDarwin then ../../darwin else ../../nixos;
-  hostModule = platformDirectory + "/${hostname}";
+  hostModule = platformDirectory + "/${hostname}/default.nix";
   hostStorage = hostInventory.storage.hosts.${hostname} or { };
 in
 {
