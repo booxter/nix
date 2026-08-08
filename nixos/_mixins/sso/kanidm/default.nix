@@ -64,30 +64,6 @@ let
   mailSenderRuntimeDir = "/run/kanidm-mail-sender";
   mailSenderConfigFile = "${mailSenderRuntimeDir}/mail-sender.toml";
   kanidmBackupDir = "/var/lib/kanidm/backups";
-  personMailUsers = sso.users;
-  personMailSecretName = name: "kanidm-person-mail-address-${name}";
-  personMailProvisionService = "kanidm-person-mail-provision";
-  personMailProvisionDir = "/run/${personMailProvisionService}";
-  personMailProvisionFile = "${personMailProvisionDir}/persons.json";
-  kanidmProvisionGroups = lib.mapAttrs (_: _: { }) sso.groups;
-  kanidmProvisionPersons = lib.mapAttrs (
-    _: person:
-    {
-      displayName = person.displayName;
-      groups = person.groups;
-    }
-    // lib.optionalAttrs (person ? legalName) { inherit (person) legalName; }
-  ) sso.users;
-  personMailProvision = pkgs.callPackage ./packages/kanidm-person-mail-provision {
-    atomicFileWrites = pkgs.atomic-file-writes;
-  };
-  personMailProvisionArgs = [
-    personMailProvisionFile
-  ]
-  ++ lib.concatMap (name: [
-    name
-    config.sops.secrets.${personMailSecretName name}.path
-  ]) (builtins.attrNames personMailUsers);
   mailSenderTemplate = (pkgs.formats.json { }).generate "kanidm-mail-sender-template.json" {
     schedule = "*/30 * * * * * *";
     instanceDisplayName = "SSO";
@@ -113,6 +89,8 @@ let
   ];
 in
 {
+  imports = [ ./identities.nix ];
+
   config = lib.mkIf cfg.enable {
     assertions = [
       {
@@ -159,19 +137,6 @@ in
       };
     }
     // lib.mapAttrs' (
-      name: person:
-      lib.nameValuePair (personMailSecretName name) {
-        key = person.mailAddressSopsKey;
-        owner = "kanidm";
-        group = "kanidm";
-        mode = "0400";
-        restartUnits = [
-          "${personMailProvisionService}.service"
-          "kanidm.service"
-        ];
-      }
-    ) personMailUsers
-    // lib.mapAttrs' (
       _: client:
       lib.nameValuePair (kanidmOAuthSecretAttrName client.clientId) {
         key = kanidmOAuthSecretKey client.clientId;
@@ -204,10 +169,7 @@ in
         enable = true;
         adminPasswordFile = config.sops.secrets.kanidmAdminPassword.path;
         idmAdminPasswordFile = config.sops.secrets.kanidmIdmAdminPassword.path;
-        extraJsonFile = personMailProvisionFile;
         instanceUrl = "https://localhost:${toString kanidmPort}";
-        groups = kanidmProvisionGroups;
-        persons = kanidmProvisionPersons;
         systems.oauth2 = kanidmProvisionClients (
           clientId: config.sops.secrets."${kanidmOAuthSecretAttrName clientId}".path
         );
@@ -248,35 +210,8 @@ in
     host.backups.jobs.${hostInventory.backups.server.host}.paths = lib.mkBefore [ kanidmBackupDir ];
 
     systemd.services.kanidm = {
-      requires = [ "${personMailProvisionService}.service" ];
-      wants = [ "sops-install-secrets.service" ];
-      after = [
-        "sops-install-secrets.service"
-        "${personMailProvisionService}.service"
-      ];
-    };
-
-    systemd.services.${personMailProvisionService} = {
-      description = "Render Kanidm person email provisioning data";
       wants = [ "sops-install-secrets.service" ];
       after = [ "sops-install-secrets.service" ];
-      before = [ "kanidm.service" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        User = "kanidm";
-        Group = "kanidm";
-        RuntimeDirectory = personMailProvisionService;
-        RuntimeDirectoryMode = "0700";
-        UMask = "0077";
-        ExecStart = "${lib.getExe personMailProvision} ${lib.escapeShellArgs personMailProvisionArgs}";
-        NoNewPrivileges = true;
-        PrivateDevices = true;
-        PrivateTmp = true;
-        ProtectHome = true;
-        ProtectSystem = "strict";
-        RestrictAddressFamilies = [ "AF_UNIX" ];
-      };
     };
 
     systemd.services.kanidm-mail-sender-bootstrap = {
