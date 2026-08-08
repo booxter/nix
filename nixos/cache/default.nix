@@ -1,38 +1,13 @@
 {
-  pkgs,
   hostInventory,
+  pkgs,
   ...
 }:
 let
-  nixCacheExport = hostInventory.storage.nfs.exports.nixCache;
-  beastNfsAddress = hostInventory.toNixosHostIpv4Address nixCacheExport.server;
   nfsPath = "/cache";
-  # Same recovery semantics as other NFS clients:
-  # - block writes/reads until NAS returns
-  # - avoid boot failure when NAS is unavailable
-  # - use automount to re-establish mount on first access
-  nfsMountOptions = [
-    "nfsvers=4"
-    "hard"
-    "nofail"
-    "_netdev"
-    "noatime"
-    "x-systemd.automount"
-    "x-systemd.idle-timeout=0"
-    "x-systemd.mount-timeout=30s"
-    "x-systemd.requires=network-online.target"
-    "x-systemd.after=network-online.target"
-  ];
-  cache = {
-    device = "${beastNfsAddress}:${nixCacheExport.path}";
-    fsType = "nfs";
-    options = nfsMountOptions;
-  };
 in
 {
-  # local qemu vms override filesystems
-  fileSystems.${nfsPath} = cache;
-  virtualisation.vmVariant.virtualisation.fileSystems.${nfsPath} = cache;
+  host.nfs.mounts.nixCache = nfsPath;
 
   environment.systemPackages = with pkgs; [
     attic-client

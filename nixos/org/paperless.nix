@@ -22,8 +22,6 @@ let
       throw "Paperless bootstrap requires exactly one non-administrator user";
   paperlessService = hostInventory.servicesById.paperless;
   paperlessGptService = hostInventory.servicesById."paperless-gpt";
-  paperlessExport = hostInventory.storage.nfs.exports.paperless;
-  beastNfsAddress = hostInventory.toNixosHostIpv4Address paperlessExport.server;
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
   paperlessStoragePath = "/data/paperless";
@@ -73,19 +71,6 @@ let
   paperlessGptImage = ociImages.paperless-gpt.ref;
   paperlessGptImageFile = ociImages.paperless-gpt.imageFile;
 
-  nfsMountOptions = [
-    "nfsvers=4"
-    "hard"
-    "nofail"
-    "_netdev"
-    "noatime"
-    "x-systemd.automount"
-    "x-systemd.idle-timeout=0"
-    "x-systemd.mount-timeout=30s"
-    "x-systemd.requires=network-online.target"
-    "x-systemd.after=network-online.target"
-  ];
-
   paperlessNfsPaths = [
     "${paperlessStoragePath}/consume"
     "${paperlessStoragePath}/export"
@@ -132,19 +117,7 @@ in
     };
   };
 
-  boot.supportedFilesystems = [ "nfs" ];
-
-  fileSystems.${paperlessStoragePath} = {
-    device = "${beastNfsAddress}:${paperlessExport.path}";
-    fsType = "nfs";
-    options = nfsMountOptions;
-  };
-
-  virtualisation.vmVariant.virtualisation.fileSystems.${paperlessStoragePath} = {
-    device = "${beastNfsAddress}:${paperlessExport.path}";
-    fsType = "nfs";
-    options = nfsMountOptions;
-  };
+  host.nfs.mounts.paperless = paperlessStoragePath;
 
   sops.secrets = {
     "paperless/admin/password" = {
