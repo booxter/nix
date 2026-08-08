@@ -7,6 +7,8 @@ cd -- "$(git rev-parse --show-toplevel)"
 
 deadnix --edit .
 treefmt --tree-root "$PWD" .
+git ls-files -z -- '*Cargo.toml' |
+  xargs -0 -r -n 1 cargo fmt --all --manifest-path
 deadnix --fail .
 mbake format --config ./fmt/bake.toml Makefile
 git ls-files -z -- '*.sh' | xargs -0 -r shellcheck
