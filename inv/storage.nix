@@ -171,6 +171,7 @@ in
         "audiobookshelf"
         "jellyfin"
         "pinepods"
+        "romm"
         "watchstate"
       ];
       layout = mediaLayout;

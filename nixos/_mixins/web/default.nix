@@ -11,6 +11,7 @@
     ./paperless-gpt
     ./pinepods
     ./public-ingress.nix
+    ./romm
     ./vikunja
     ./watchstate
   ];

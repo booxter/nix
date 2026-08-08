@@ -76,6 +76,11 @@
       id = "romm";
       title = "RomM";
       owner = "srvarr";
+      instances.srvarr = {
+        dataDir = "/data/.state/nixarr/romm";
+        databaseDir = "/data/.state/nixarr/mysql";
+        mediaDir = "/data/media";
+      };
       publicHost = "game.${publicDomain}";
       probePath = "/api/heartbeat";
       glanceCategory = "user";

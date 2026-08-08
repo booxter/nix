@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "romm-tools"
 version = "0.1.0"
-description = "Host integration tools for the srvarr RomM service"
+description = "Host integration tools for RomM"
 requires-python = ">=3.11"
 dependencies = [
   "mariadb",

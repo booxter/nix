@@ -19,7 +19,6 @@
     ./oauth2-proxy.nix
     ./paths.nix
     ./qos.nix
-    ./romm.nix
     ./sabnzbd.nix
     ./seerr.nix
     ./shelfmark.nix

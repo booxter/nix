@@ -5,9 +5,7 @@
 let
   backupJob = config.host.backups.destinationJob;
   stateRoot = config.host.srvarrPaths.stateDir;
-  mysqlDataDir = "${stateRoot}/mysql";
   backupPaths = [ stateRoot ];
-  rommDatabaseBackupDir = "${stateRoot}/romm-mariadb-backup/latest";
   aurralConfigDir = "${stateRoot}/aurral";
   aurralBackupDir = "${stateRoot}/aurral-backup/latest";
   seerrConfigDir = "${stateRoot}/seerr";
@@ -17,21 +15,9 @@ let
     "${stateRoot}/*/logs/**"
     "${stateRoot}/*/cache"
     "${stateRoot}/*/cache/**"
-    mysqlDataDir
-    "${mysqlDataDir}/**"
   ];
 in
 {
-  host.backups.artifacts.mariadb.romm = {
-    job = backupJob;
-    displayName = "RomM";
-    destinationDir = rommDatabaseBackupDir;
-    includeInJob = false;
-    requiresMountsFor = [ stateRoot ];
-    after = [ "romm-db-init.service" ];
-    requires = [ "romm-db-init.service" ];
-  };
-
   host.backups.artifacts.sqlite.aurral = {
     job = backupJob;
     displayName = "Aurral";
