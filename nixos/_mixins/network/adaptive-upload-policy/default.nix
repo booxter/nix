@@ -40,7 +40,7 @@ let
     jellyfin = {
       exporter_url = cfg.source.jellyfin.exporterUrl;
       request_timeout_seconds = cfg.source.jellyfin.requestTimeoutSeconds;
-      ca_file = if mtls.enable then toString mtls.caFile else "";
+      ca_file = if mtls.enable then "${mtls.caFile}" else "";
       client_cert_file = if mtls.enable && mtls.certificateFile != null then mtls.certificateFile else "";
       client_key_file = if mtls.enable && mtls.keyFile != null then mtls.keyFile else "";
       media_types = cfg.source.jellyfin.mediaTypes;
