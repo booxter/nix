@@ -23,13 +23,13 @@
     ./pause.nix
     ./raid.nix
     ./sso.nix
-    ./ups.nix
     ./watchstate.nix
   ];
 
   users.groups.media.gid = hostInventory.site.gids.media;
 
   host.observability.blackbox.remote.enable = true;
+  host.ups.scheduler.critical = true;
   # Exclude host-internal Podman bridge traffic from LAN/WAN accounting.
   host.observability.lanWan.interface = "enp6s0";
 

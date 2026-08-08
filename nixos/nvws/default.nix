@@ -5,10 +5,10 @@ in
 {
   imports = [
     (import ../disko { })
-    ./ups.nix
   ];
 
   host.isProxmox = true;
+  host.ups.scheduler.critical = true;
 
   # Work machines do not use sops-managed login passwords.
   users.users = {

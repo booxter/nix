@@ -42,8 +42,7 @@ in
       ./_mixins/storage-observability
       ./_mixins/storage.nix
       ./_mixins/unifi-sync
-      ./_mixins/ups-client
-      ./_mixins/ups-sched.nix
+      ./_mixins/ups
       ./_mixins/user
       ./_mixins/video-acceleration.nix
       ./_mixins/vm.nix

@@ -1,6 +1,7 @@
 {
   config,
   hostInventory,
+  hostSpec,
   lib,
   ...
 }:
@@ -21,6 +22,14 @@ let
     if useLiteralPassword then "/etc/nut/upsclient.pass" else config.sops.secrets.${monitorSecret}.path;
 in
 {
+  options.host.ups.client.server = lib.mkOption {
+    type = lib.types.nullOr lib.types.str;
+    default = hostSpec.upsHost or null;
+    readOnly = true;
+    internal = true;
+    description = "Inventory host providing this host's UPS service.";
+  };
+
   config = lib.mkIf (serverSpec != null) {
     host.ups.scheduler = {
       enable = true;

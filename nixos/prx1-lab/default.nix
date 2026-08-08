@@ -2,8 +2,8 @@
   imports = [
     (import ../disko { })
     ./netboot.nix
-    ./ups.nix
   ];
 
   host.isProxmox = true;
+  host.ups.scheduler.critical = true;
 }

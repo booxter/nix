@@ -285,13 +285,6 @@ in
       description = "User environment profile declared by the host inventory.";
     };
 
-    ups.client.server = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = hostSpec.upsHost or null;
-      readOnly = true;
-      internal = true;
-      description = "Inventory host providing this host's UPS service.";
-    };
   };
 
   config = {

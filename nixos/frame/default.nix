@@ -20,7 +20,6 @@ in
     ./alertmanager-watchdog.nix
     ./remote-desktop.nix
     ./remote-luks.nix
-    ./ups.nix
   ];
 
   host.observability.blackbox.remote.enable = true;

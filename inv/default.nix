@@ -35,6 +35,7 @@ let
   ) backupFacts.clients;
   serviceFacts = import ./services.nix { inherit publicDomain; };
   storageFacts = import ./storage.nix;
+  upsFacts = import ./ups.nix;
   glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
   publicServiceHosts = map (service: service.publicHost) (
     builtins.filter (service: service ? publicHost) serviceFacts.definitions
@@ -175,6 +176,7 @@ rec {
     user
     ;
   storage = storageFacts;
+  ups = upsFacts;
 
   sshTicket = sshTicketFacts;
   ssh = sshFacts;
