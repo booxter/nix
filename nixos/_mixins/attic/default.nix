@@ -14,6 +14,8 @@ let
   ];
 in
 {
+  imports = [ ./server.nix ];
+
   config = lib.mkIf config.host.attic.enable {
     systemd.services.attic-watch-store = {
       description = "Watch the Nix store and push new paths to Attic";
