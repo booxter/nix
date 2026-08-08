@@ -12,8 +12,8 @@ let
   observability = realm.services.observability or null;
   alertmanagerPolicy = if observability == null then null else observability.alertmanager or null;
   watchdogHosts = if alertmanagerPolicy == null then [ ] else alertmanagerPolicy.watchdogHosts;
-  serverHost = if observability == null then null else observability.serverHost;
   alertmanagerService = hostInventory.servicesById.alertmanager;
+  alertmanagerHost = alertmanagerService.owner;
   unknownWatchdogHosts = builtins.filter (
     name: !builtins.hasAttr name hostInventory.nixosHosts
   ) watchdogHosts;
@@ -62,16 +62,12 @@ in
             + lib.concatStringsSep ", " crossRealmWatchdogHosts;
         }
         {
-          assertion = !builtins.elem serverHost watchdogHosts;
+          assertion = !builtins.elem alertmanagerHost watchdogHosts;
           message = "Realm '${realmName}' Alertmanager server cannot watch itself";
         }
         {
           assertion = (realm.services.internalPki or null) != null;
           message = "Realm '${realmName}' Alertmanager watchdogs require internal PKI";
-        }
-        {
-          assertion = alertmanagerService.owner == serverHost;
-          message = "Realm '${realmName}' observability server must own the Alertmanager service";
         }
       ];
     }
@@ -98,7 +94,7 @@ in
       };
 
       systemd.services.${watchdogName} = {
-        description = "Watch ${serverHost} Alertmanager readiness and notify Telegram";
+        description = "Watch ${alertmanagerHost} Alertmanager readiness and notify Telegram";
         wants = [
           "network-online.target"
           "sops-install-secrets.service"

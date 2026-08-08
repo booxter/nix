@@ -12,7 +12,7 @@ let
   realmName = config.host.realm;
   realmObservability = hostInventory.realms.${realmName}.services.observability;
   realmProxmox = hostInventory.realms.${realmName}.services.proxmox;
-  blackboxServerHost = realmObservability.serverHost;
+  blackboxServerHost = realmObservability.prometheusHost;
   blackboxProbeSourceNames = realmObservability.blackbox.sourceHosts;
   blackboxServices = builtins.filter (service: service.blackboxProbe) hostInventory.services;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";

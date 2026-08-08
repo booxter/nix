@@ -11,7 +11,7 @@ let
   realmObservability = hostInventory.realms.${config.host.realm}.services.observability or null;
   sourceHosts = if realmObservability == null then [ ] else realmObservability.blackbox.sourceHosts;
   isSource = builtins.elem config.networking.hostName sourceHosts;
-  isRemoteSource = isSource && config.networking.hostName != realmObservability.serverHost;
+  isRemoteSource = isSource && config.networking.hostName != realmObservability.prometheusHost;
   httpService = {
     http = {
       follow_redirects = true;
