@@ -13,7 +13,6 @@
     ./backup-server.nix
     ./jellyfin
     ./lolek.nix
-    ./paperless-storage.nix
   ];
 
   users.groups.media.gid = hostInventory.site.gids.media;

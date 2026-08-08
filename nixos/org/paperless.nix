@@ -21,6 +21,7 @@ let
     else
       throw "Paperless bootstrap requires exactly one non-administrator user";
   paperlessService = hostInventory.servicesById.paperless;
+  paperlessAccount = hostInventory.serviceAccounts.paperless;
   paperlessGptService = hostInventory.servicesById."paperless-gpt";
   paperlessMetricsInternalPort = 19289;
   paperlessMetricsMtlsPort = 9348;
@@ -206,6 +207,9 @@ in
       PAPERLESS_SOCIAL_AUTO_SIGNUP = false;
     };
   };
+
+  users.groups.paperless.gid = paperlessAccount.gid;
+  users.users.paperless.uid = paperlessAccount.uid;
 
   systemd.services = {
     paperless-scheduler.unitConfig.RequiresMountsFor = paperlessNfsPaths;
