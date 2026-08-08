@@ -10,5 +10,6 @@
     ./media-mount.nix
     ./meilisearch.nix
     ./packages.nix
+    ./runtime.nix
   ];
 }

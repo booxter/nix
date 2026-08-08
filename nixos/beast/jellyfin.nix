@@ -27,12 +27,10 @@
       sourceMount = config.host.storage.volumes.data.mounts.data.mountPoint;
     };
     meilisearch.enable = true;
+    supplementaryGroups = [
+      "media"
+      "render"
+      "video"
+    ];
   };
-
-  users.users.jellyfin.extraGroups = [
-    "media"
-    "render"
-    "video"
-  ];
-
 }
