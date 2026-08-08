@@ -144,6 +144,10 @@ in
     probe.enable = true;
   };
 
+  host.publicIngress.exports.aurral.locationExtraConfig = ''
+    proxy_set_header X-Forwarded-For $remote_addr;
+  '';
+
   services.nginx.proxyCachePath.aurral-images = {
     enable = true;
     keysZoneName = imageProxyCacheZone;

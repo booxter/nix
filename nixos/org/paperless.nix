@@ -367,6 +367,12 @@ in
     '';
   };
 
+  host.publicIngress.exports.paperless.locationExtraConfig = ''
+    client_max_body_size 512m;
+    proxy_read_timeout 300s;
+    proxy_send_timeout 300s;
+  '';
+
   host.internalHttps.services.paperless-gpt = {
     enable = true;
     upstream = "http://127.0.0.1:${toString paperlessGptPort}";

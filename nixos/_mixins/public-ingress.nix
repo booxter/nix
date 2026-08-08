@@ -9,6 +9,8 @@ let
   cfg = config.host.publicIngress;
   hostname = config.networking.hostName;
   realmPublicIngress = hostInventory.realms.${config.host.realm}.services.publicIngress or null;
+  freeDns = hostInventory.site.dynamicDns.freeDns;
+
   ownedPublicServices = builtins.filter (
     service: service.owner == hostname && service.internalEndpointName != null
   ) hostInventory.publicServices;
@@ -32,6 +34,7 @@ let
         ) ownedPublicServices
       )
   );
+
   realmHostNames = map (spec: spec.name) (
     builtins.filter (spec: spec.realm == config.host.realm) hostInventory.nixosHostSpecs
   );
@@ -51,6 +54,55 @@ let
       service: hostInventory.nixosHosts.${service.owner}.realm == config.host.realm
     ) hostInventory.publicServices
   );
+
+  internalHttpsServices = lib.filterAttrs (
+    _: service: service.backend.type == "internal-https"
+  ) cfg.services;
+  internalHttpsServiceNames = builtins.attrNames internalHttpsServices;
+  tunnelPorts = builtins.listToAttrs (
+    lib.imap0 (index: serviceName: {
+      name = serviceName;
+      value = 18000 + index;
+    }) internalHttpsServiceNames
+  );
+  mtlsBackends = lib.mapAttrs (serviceName: service: {
+    clientName = serviceName;
+    inherit (service.backend) serverName;
+    localPort = tunnelPorts.${serviceName};
+  }) internalHttpsServices;
+  invalidInternalHttpsServices = lib.filterAttrs (
+    _: service: service.backend.type == "internal-https" && service.backend.serverName == null
+  ) cfg.services;
+  invalidLocalHttpServices = lib.filterAttrs (
+    _: service:
+    service.backend.type == "local-http" && (service.owner != hostname || service.backend.url == null)
+  ) cfg.services;
+
+  mkVirtualHost =
+    serviceName: service:
+    lib.nameValuePair service.publicHost (
+      if service.backend.type == "internal-https" then
+        let
+          backend = mtlsBackends.${serviceName};
+        in
+        {
+          proxyPass = "https://${backend.serverName}";
+          inherit (service) locationExtraConfig;
+          upstreamTls = {
+            enable = true;
+            inherit (backend)
+              clientName
+              localPort
+              serverName
+              ;
+          };
+        }
+      else
+        {
+          proxyPass = service.backend.url;
+          inherit (service) locationExtraConfig;
+        }
+    );
 in
 {
   options.host.publicIngress = {
@@ -92,6 +144,12 @@ in
                 description = "Local HTTP upstream URL on the public ingress host.";
               };
             };
+
+            locationExtraConfig = lib.mkOption {
+              type = lib.types.lines;
+              default = "";
+              description = "Additional nginx configuration for the public proxy location.";
+            };
           };
         }
       );
@@ -107,25 +165,56 @@ in
     };
   };
 
-  config = {
-    host.publicIngress = {
-      exports = internalHttpsExports;
-      services = if cfg.enable then services else { };
-    };
+  config = lib.mkMerge [
+    {
+      host.publicIngress = {
+        exports = internalHttpsExports;
+        services = if cfg.enable then services else { };
+      };
 
-    assertions = lib.optionals cfg.enable [
-      {
-        assertion = builtins.length contributionNames == builtins.length (lib.unique contributionNames);
-        message = "Public service IDs must be exported by exactly one host.";
-      }
-      {
-        assertion = lib.subtractLists contributionNames expectedServiceNames == [ ];
-        message = "Public services missing realm exports: ${lib.concatStringsSep ", " (lib.subtractLists contributionNames expectedServiceNames)}";
-      }
-      {
-        assertion = lib.subtractLists expectedServiceNames contributionNames == [ ];
-        message = "Unknown public service exports: ${lib.concatStringsSep ", " (lib.subtractLists expectedServiceNames contributionNames)}";
-      }
-    ];
-  };
+      assertions = lib.optionals cfg.enable [
+        {
+          assertion = builtins.length contributionNames == builtins.length (lib.unique contributionNames);
+          message = "Public service IDs must be exported by exactly one host.";
+        }
+        {
+          assertion = lib.subtractLists contributionNames expectedServiceNames == [ ];
+          message = "Public services missing realm exports: ${lib.concatStringsSep ", " (lib.subtractLists contributionNames expectedServiceNames)}";
+        }
+        {
+          assertion = lib.subtractLists expectedServiceNames contributionNames == [ ];
+          message = "Unknown public service exports: ${lib.concatStringsSep ", " (lib.subtractLists expectedServiceNames contributionNames)}";
+        }
+        {
+          assertion = invalidInternalHttpsServices == { };
+          message = "Internal HTTPS ingress exports must declare a server name: ${lib.concatStringsSep ", " (builtins.attrNames invalidInternalHttpsServices)}";
+        }
+        {
+          assertion = invalidLocalHttpServices == { };
+          message = "Local HTTP ingress exports must belong to the ingress host and declare a URL: ${lib.concatStringsSep ", " (builtins.attrNames invalidLocalHttpServices)}";
+        }
+      ];
+    }
+
+    (lib.mkIf cfg.enable {
+      host.internalPki.clients = builtins.mapAttrs (_: _: {
+        enable = true;
+        category = "internal";
+        materializations.default.restartUnits = [ "stunnel.service" ];
+      }) mtlsBackends;
+
+      host.externalService = {
+        ddns = {
+          enable = true;
+          hostname = freeDns.records.${hostname};
+          inherit (freeDns) username;
+        };
+        virtualHosts = lib.mapAttrs' mkVirtualHost cfg.services;
+      };
+
+      # Keep public ingress config-only changes from dropping long-lived
+      # proxied streams.
+      services.nginx.enableReload = true;
+    })
+  ];
 }
