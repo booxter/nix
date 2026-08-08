@@ -50,6 +50,7 @@
         };
         nodeExporter.mtls = true;
       };
+      publicIngress.host = "beast";
       proxmox.oidcManagerHost = "prx1-lab";
       remoteAccess = {
         appleRemoteManagement = true;

@@ -40,6 +40,7 @@ in
       ./_mixins/nfs
       ./_mixins/observability
       ./_mixins/proxmox
+      ./_mixins/public-ingress.nix
       ./_mixins/qos
       ./_mixins/smart-storage.nix
       ./_mixins/sso
