@@ -204,7 +204,6 @@ in
       };
 
       sops = {
-        useSystemdActivation = lib.mkDefault true;
         secrets.externalServiceDdnsPassword = {
           key = cfg.ddns.passwordSopsKey;
           group = "ddclient-secrets";
