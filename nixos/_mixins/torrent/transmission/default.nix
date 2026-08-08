@@ -7,6 +7,7 @@
 let
   cfg = config.host.transmission;
   hostname = config.networking.hostName;
+  backupJob = config.host.backups.destinationJob;
   service = hostInventory.servicesById.transmission;
   instance = service.instances.${hostname} or { };
   mediaExport = hostInventory.storage.nfs.exports.media;
@@ -81,6 +82,10 @@ in
         assertion = builtins.elem hostname mediaExport.clients;
         message = "The Transmission host must be an authorized media NFS client.";
       }
+      {
+        assertion = config.host.backups.client.enable;
+        message = "The Transmission host must be a declared backup client.";
+      }
     ];
 
     sops.secrets.transmissionTrackerHosts = {
@@ -134,6 +139,8 @@ in
       export = "media";
       bandwidthTarget = instance.bandwidthTargets.nfs;
     };
+
+    host.backups.jobs.${backupJob}.paths = [ stateDir ];
 
     users.users.${config.services.transmission.user}.uid =
       hostInventory.serviceAccounts.transmission.uid;

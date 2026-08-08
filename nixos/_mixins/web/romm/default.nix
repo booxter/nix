@@ -689,11 +689,6 @@ in
         requires = [ "romm-db-init.service" ];
       };
 
-      host.backups.jobs.${backupJob}.exclude = [
-        mysqlDataDir
-        "${mysqlDataDir}/**"
-      ];
-
       host.internalService.services.romm = {
         enable = true;
         upstream = cfg.localUrl;

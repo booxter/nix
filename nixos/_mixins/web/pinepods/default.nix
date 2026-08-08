@@ -435,10 +435,6 @@ in
           title = "PinePods Native Backup";
           paths = [ backupDir ];
         };
-        exclude = [
-          databaseDir
-          "${databaseDir}/**"
-        ];
       };
 
       host.internalService.services.pinepods = {

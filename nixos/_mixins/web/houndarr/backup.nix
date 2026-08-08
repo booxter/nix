@@ -14,7 +14,6 @@ in
       displayName = "Houndarr";
       databasePath = "${cfg.dataDir}/houndarr.db";
       destinationDir = "${cfg.dataDir}-backup/latest";
-      includeInJob = false;
       extraCopies = [
         {
           source = "${cfg.dataDir}/houndarr.masterkey";

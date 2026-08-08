@@ -173,7 +173,15 @@ in
         '';
       };
 
-      host.backups.jobs.${backupJob}.paths = [ stateDir ];
+      host.backups.jobs.${backupJob} = {
+        paths = [ stateDir ];
+        exclude = [
+          "${stateDir}/logs"
+          "${stateDir}/logs/**"
+          "${stateDir}/cache"
+          "${stateDir}/cache/**"
+        ];
+      };
     })
   ];
 }

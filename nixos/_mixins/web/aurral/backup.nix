@@ -13,7 +13,6 @@ in
       displayName = "Aurral";
       databasePath = "${cfg.dataDir}/aurral.db";
       destinationDir = "${cfg.dataDir}-backup/latest";
-      includeInJob = false;
     };
   };
 }

@@ -103,7 +103,15 @@ in
         upstream = "http://127.0.0.1:${toString cfg.settings.server.port}";
       };
 
-      host.backups.jobs.${backupJob}.paths = [ instance.dataDir ];
+      host.backups.jobs.${backupJob} = {
+        paths = [ instance.dataDir ];
+        exclude = [
+          "${instance.dataDir}/logs"
+          "${instance.dataDir}/logs/**"
+          "${instance.dataDir}/cache"
+          "${instance.dataDir}/cache/**"
+        ];
+      };
     })
   ];
 }
