@@ -12,14 +12,7 @@ let
   isMediaServer = mediaExport.server == hostname;
   realmPublicIngress = hostInventory.realms.${config.host.realm}.services.publicIngress or null;
   ownerExists = builtins.hasAttr jellyfinService.owner hostInventory.nixosHosts;
-  dataMount = config.host.storage.volumes.data.mounts.data.mountPoint;
-  backupStagingDir =
-    if config.host.backups.client.isLocal then
-      "${dataMount}/backups/staging/jellyfin"
-    else
-      "/var/lib/jellyfin-backups";
-  backupGroup =
-    if config.host.backups.client.isLocal then config.host.backups.server.cloud.group else "root";
+  backupStagingDir = "${config.host.backups.staging.root}/jellyfin";
 in
 {
   options.host.jellyfin.enable = lib.mkOption {
@@ -67,7 +60,7 @@ in
         builtInBackup = {
           enable = true;
           backupJob = config.host.backups.destinationJob;
-          group = backupGroup;
+          group = config.host.backups.staging.group;
           stagingDir = backupStagingDir;
         };
         downloadLimiter = {
@@ -95,7 +88,7 @@ in
         }
         // lib.optionalAttrs isMediaServer {
           source = mediaExport.path;
-          sourceMount = dataMount;
+          sourceMount = mediaExport.backingMount;
         };
         meilisearch.enable = true;
         supplementaryGroups = [ mediaExport.sharedGroup.name ];

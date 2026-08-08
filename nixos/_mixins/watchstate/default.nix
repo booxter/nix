@@ -26,15 +26,9 @@ let
   watchstateSystemAccount = hostInventory.sso.users.${watchstateSystemUser};
   watchstatePort = hostInventory.site.ports.watchstate;
   watchstateDataDir = "/var/lib/watchstate";
-  dataMount = config.host.storage.volumes.data.mounts.data.mountPoint;
-  watchstateBackupStagingDir =
-    if config.host.backups.client.isLocal then
-      "${dataMount}/backups/staging/watchstate"
-    else
-      "/var/lib/watchstate-backups";
+  watchstateBackupStagingDir = "${config.host.backups.staging.root}/watchstate";
   backupJob = config.host.backups.destinationJob;
-  backupGroup =
-    if config.host.backups.client.isLocal then config.host.backups.server.cloud.group else "root";
+  backupGroup = config.host.backups.staging.group;
   watchstateTools = pkgs.callPackage ./watchstate-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };

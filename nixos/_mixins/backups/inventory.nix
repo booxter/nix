@@ -33,6 +33,12 @@ let
     if serverHost != null && builtins.hasAttr serverHost clients then serverHost else null;
   offsite = if backup == null then null else backup.offsite;
   cloudGroup = config.host.backups.server.cloud.group;
+  stagingRoot =
+    if isClient && hostname == localClient then
+      "${mount.mountPoint}/backups/staging"
+    else
+      "/var/lib/backup-staging";
+  stagingGroup = if isClient && hostname == localClient then cloudGroup else "root";
   storageName = name: clients.${name}.storageName or name;
   clientRepositoryPath =
     if !isClient || repositoryRoot == null then "" else "${repositoryRoot}/${storageName hostname}";
@@ -86,6 +92,24 @@ in
         readOnly = true;
         internal = true;
         description = "Repository path assigned to this backup client.";
+      };
+    };
+
+    staging = {
+      root = lib.mkOption {
+        type = lib.types.str;
+        default = stagingRoot;
+        readOnly = true;
+        internal = true;
+        description = "Host-local root for backup preparation artifacts.";
+      };
+
+      group = lib.mkOption {
+        type = lib.types.str;
+        default = stagingGroup;
+        readOnly = true;
+        internal = true;
+        description = "Group permitted to read backup preparation artifacts.";
       };
     };
   };

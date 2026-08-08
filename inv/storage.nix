@@ -35,6 +35,7 @@ let
   export = path: fsid: clientHosts: {
     server = beast;
     path = "${dataVolume.mounts.data.mountPoint}/${path}";
+    backingMount = dataVolume.mounts.data.mountPoint;
     inherit clientHosts fsid;
     clientServices = [ ];
   };
