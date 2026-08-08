@@ -37,6 +37,7 @@ in
       ./_mixins/proxmox
       ./_mixins/qos
       ./_mixins/sso
+      ./_mixins/storage-observability
       ./_mixins/storage.nix
       ./_mixins/unifi-sync
       ./_mixins/ups-client

@@ -170,37 +170,6 @@ in
       description = "Whether this configuration represents the host's physical storage inventory.";
     };
 
-    storage.diskBays = lib.mkOption {
-      type = lib.types.nullOr (
-        lib.types.submodule {
-          options = {
-            rows = lib.mkOption {
-              type = lib.types.ints.positive;
-              description = "Number of physical disk-bay rows.";
-            };
-            disks = lib.mkOption {
-              type = lib.types.listOf (
-                lib.types.submodule {
-                  options = {
-                    bay = lib.mkOption { type = lib.types.str; };
-                    row = lib.mkOption { type = lib.types.str; };
-                    col = lib.mkOption { type = lib.types.str; };
-                    serial = lib.mkOption { type = lib.types.str; };
-                    model = lib.mkOption { type = lib.types.str; };
-                  };
-                }
-              );
-              description = "Installed disks mapped to physical chassis bays.";
-            };
-          };
-        }
-      );
-      default = if config.host.storage.useInventory then hostStorage.diskBays or null else null;
-      readOnly = true;
-      internal = true;
-      description = "Physical disk-bay inventory for this host.";
-    };
-
     storage.volumes = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {

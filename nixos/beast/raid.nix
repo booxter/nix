@@ -1,5 +1,4 @@
 {
-  beastPkgs,
   config,
   lib,
   pkgs,
@@ -8,7 +7,6 @@
 let
   smartctlExporterInternalPort = 19633;
   smartctlExporterPort = 9633;
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
 in
 {
   # Assemble the existing RAID6 array from the previous NAS.
@@ -66,32 +64,6 @@ in
     # textfile exporter instead of the built-in mdadm collector.
     extraFlags = [ "--no-collector.mdadm" ];
   };
-  systemd.services.storage-md-export = {
-    description = "Export md sync status for node exporter";
-    after = [ "local-fs.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = lib.escapeShellArgs [
-        "${beastPkgs.storage-observability}/bin/storage-md-metrics"
-        "--output-file"
-        "${textfileDir}/md-sync.prom"
-      ];
-    };
-  };
-
-  systemd.timers.storage-md-export = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "30s";
-      OnUnitActiveSec = "1min";
-      Unit = "storage-md-export.service";
-    };
-  };
-
-  systemd.tmpfiles.rules = [
-    "d ${textfileDir} 0755 root root - -"
-  ];
-
   environment.systemPackages = with pkgs; [
     hdparm
     lm_sensors

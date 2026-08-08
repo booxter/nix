@@ -35,6 +35,7 @@ in
   hosts.${beast} = {
     volumes.data = dataVolume;
     diskBays = {
+      hbaBackend = "storcli";
       rows = diskBayRows;
       disks = [
         (diskNm000H 1 "ZYD01W48")

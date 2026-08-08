@@ -10,7 +10,6 @@
   imports = [
     (import ../disko { })
     ./backup-server.nix
-    ./disk-bays.nix
     ./igpu.nix
     ./jellarr.nix
     ./jellyfin-backup.nix
