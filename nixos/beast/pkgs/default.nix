@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   ...
 }:
@@ -8,10 +7,6 @@ let
 in
 {
   backup-server-tools = pkgs.callPackage ../../_mixins/backups/server/pkgs/backup-server-tools { };
-
-  jellarr = pkgs.callPackage ./jellarr {
-    src = inputs.jellarr;
-  };
 
   watchstate-tools = pkgs.callPackage ./watchstate-tools {
     inherit atomicFileWrites;

@@ -1,13 +1,10 @@
 {
-  beastPkgs,
   config,
   hostInventory,
   lib,
-  inputs,
   ...
 }:
 let
-  jellyfinApiKey = config.services.jellyfin.apiKey;
   mediaLibraries = import ./media-libraries.nix;
   mediaPaths = import ./media-paths.nix { inherit hostInventory; };
   watchstatePort = hostInventory.site.ports.watchstate;
@@ -80,33 +77,12 @@ let
   ];
 in
 {
-  imports = [
-    inputs.jellarr.nixosModules.default
-  ];
-
-  sops = {
-    secrets = lib.genAttrs (map (user: mkJellyfinUserPasswordSecret user.name) userDefinitions) (
-      _: jellyfinSecretFile
-    );
-    templates."jellarr.env" = {
-      inherit (jellyfinSecretFile) owner group mode;
-      content = ''
-        JELLARR_API_KEY=${config.sops.placeholder.${jellyfinApiKey.sopsKey}}
-      '';
-    };
-  };
-
-  systemd.services.jellarr = {
-    wants = [ "sops-install-secrets.service" ];
-    after = [ "sops-install-secrets.service" ];
-  };
+  sops.secrets = lib.genAttrs (map (user: mkJellyfinUserPasswordSecret user.name) userDefinitions) (
+    _: jellyfinSecretFile
+  );
 
   services.jellarr = {
     enable = true;
-    package = beastPkgs.jellarr;
-    user = "jellyfin";
-    group = "jellyfin";
-    environmentFile = config.sops.templates."jellarr.env".path;
     config = {
       version = 1;
       base_url = "https://jf.${hostInventory.site.public.domain}:443";

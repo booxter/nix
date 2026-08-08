@@ -1,11 +1,10 @@
 {
   hostInventory,
-  inputs,
   pkgs,
   ...
 }:
 {
-  _module.args.beastPkgs = import ./pkgs { inherit inputs pkgs; };
+  _module.args.beastPkgs = import ./pkgs { inherit pkgs; };
 
   imports = [
     (import ../disko { })
