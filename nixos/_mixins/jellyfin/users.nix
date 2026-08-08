@@ -123,6 +123,8 @@ let
     };
 in
 {
-  sops.secrets = lib.genAttrs (map (user: passwordSecret user.name) users) (_: secretFile);
-  services.jellarr.config.users = map renderUser users;
+  config = lib.mkIf config.host.jellyfin.enable {
+    sops.secrets = lib.genAttrs (map (user: passwordSecret user.name) users) (_: secretFile);
+    services.jellarr.config.users = map renderUser users;
+  };
 }

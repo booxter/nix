@@ -1,11 +1,10 @@
 {
   config,
-  hostInventory,
   lib,
   ...
 }:
 let
-  mediaPaths = import ./media-paths.nix { inherit hostInventory; };
+  jellyfinLibraryRoot = "/media/library";
   getTypeOptions =
     {
       isAdult ? false,
@@ -126,7 +125,7 @@ let
     }:
     {
       pathInfos = [
-        { path = mediaPaths.jellyfinLibraryRoot + "/" + path; }
+        { path = jellyfinLibraryRoot + "/" + path; }
       ];
 
       typeOptions = getTypeOptions {
@@ -158,12 +157,14 @@ let
     };
 in
 {
-  services.jellarr.config.library.virtualFolders = map (library: {
-    inherit (library) name collectionType;
-    libraryOptions = getLibraryOptions {
-      inherit (library) path;
-      inherit (library) isAdult preferTmdb;
-      isMusic = library.collectionType == "music";
-    };
-  }) config.services.jellyfin.libraries;
+  config = lib.mkIf config.host.jellyfin.enable {
+    services.jellarr.config.library.virtualFolders = map (library: {
+      inherit (library) name collectionType;
+      libraryOptions = getLibraryOptions {
+        inherit (library) path;
+        inherit (library) isAdult preferTmdb;
+        isMusic = library.collectionType == "music";
+      };
+    }) config.services.jellyfin.libraries;
+  };
 }

@@ -1,7 +1,7 @@
 { ... }:
 {
   imports = [
-    ./jellyfin
+    ./jellyfin/watchstate.nix
     ./lolek.nix
   ];
 }

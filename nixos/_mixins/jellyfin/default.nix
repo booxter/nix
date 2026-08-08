@@ -2,16 +2,21 @@
   imports = [
     ./api.nix
     ./backup.nix
+    ./configuration.nix
     ./download-limiter.nix
     ./exporter.nix
     ./hardware-acceleration.nix
     ./jellarr.nix
+    ./jellarr-libraries.nix
     ./libraries.nix
     ./logging.nix
     ./maintenance.nix
     ./media-mount.nix
+    ./media-libraries.nix
     ./meilisearch.nix
     ./packages.nix
     ./runtime.nix
+    ./service.nix
+    ./users.nix
   ];
 }
