@@ -1,5 +1,4 @@
 {
-  hostInventory,
   pkgs,
   ...
 }:
@@ -11,8 +10,6 @@
     ./jellyfin
     ./lolek.nix
   ];
-
-  users.groups.media.gid = hostInventory.site.gids.media;
 
   host.storage.mdRaid.enable = true;
   host.ups.scheduler.critical = true;

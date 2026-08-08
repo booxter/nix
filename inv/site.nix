@@ -19,10 +19,6 @@ rec {
     };
   };
 
-  gids = {
-    media = 169;
-  };
-
   ports = {
     watchstate = 8080;
   };

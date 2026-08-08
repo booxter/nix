@@ -9,6 +9,7 @@
 }:
 let
   pinepodsAccount = hostInventory.serviceAccounts.pinepods;
+  mediaGroup = hostInventory.storage.nfs.exports.media.sharedGroup;
   ociImages = import ../../oci { inherit pkgs; };
 
   pinepodsService = hostInventory.servicesById.pinepods;
@@ -131,7 +132,7 @@ in
 
     "pinepods-valkey.conf" = {
       owner = user;
-      group = "media";
+      group = mediaGroup.name;
       mode = "0400";
       content = ''
         bind 127.0.0.1
@@ -150,18 +151,18 @@ in
 
   users.users = {
     ${user} = {
-      group = "media";
+      group = mediaGroup.name;
       home = "/var/empty";
       isSystemUser = true;
       uid = pinepodsAccount.uid;
     };
-    postgres.extraGroups = [ "media" ];
+    postgres.extraGroups = [ mediaGroup.name ];
   };
 
   systemd.tmpfiles.rules = [
-    "d '${stateDir}' 0750 root media - -"
+    "d '${stateDir}' 0750 root ${mediaGroup.name} - -"
     "d '${databaseDir}' 0700 postgres postgres - -"
-    "d '${backupDir}' 0750 ${user} media - -"
+    "d '${backupDir}' 0750 ${user} ${mediaGroup.name} - -"
   ];
 
   services.postgresql = {
@@ -209,7 +210,7 @@ in
           DEFAULT_LANGUAGE = hostInventory.regional.language.code;
           TZ = config.time.timeZone;
           PUID = toString pinepodsAccount.uid;
-          PGID = toString hostInventory.site.gids.media;
+          PGID = toString mediaGroup.gid;
 
           # Keep local login available for gPodder-compatible mobile/API clients,
           # while making SSO the normal browser account-provisioning path.
@@ -286,7 +287,7 @@ in
       serviceConfig = {
         ExecStart = "${pkgs.valkey}/bin/valkey-server ${config.sops.templates."pinepods-valkey.conf".path}";
         User = user;
-        Group = "media";
+        Group = mediaGroup.name;
         RuntimeDirectory = "pinepods-valkey";
         RuntimeDirectoryMode = "0700";
         Restart = "on-failure";

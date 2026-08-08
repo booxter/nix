@@ -46,7 +46,7 @@
       sourceMount = config.host.storage.volumes.data.mounts.data.mountPoint;
     };
     meilisearch.enable = true;
-    supplementaryGroups = [ "media" ];
+    supplementaryGroups = [ hostInventory.storage.nfs.exports.media.sharedGroup.name ];
     useHostVideoAcceleration = true;
   };
 

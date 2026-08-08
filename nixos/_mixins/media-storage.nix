@@ -6,6 +6,7 @@
 }:
 let
   mediaExport = hostInventory.storage.nfs.exports.media;
+  mediaGroup = mediaExport.sharedGroup.name;
   projectPaths = builtins.mapAttrs (
     _: value: if builtins.isAttrs value then projectPaths value else "${mediaExport.path}/${value}"
   );
@@ -22,7 +23,7 @@ let
   ];
   mkDirSpec = mode: user: path: {
     inherit mode path user;
-    group = "media";
+    group = mediaGroup;
   };
   mkDirSpecs = mode: user: map (mkDirSpec mode user);
 
@@ -74,7 +75,7 @@ let
       path = "${mediaPaths.library.root}/${library.path}";
       mode = "2775";
       user = "root";
-      group = "media";
+      group = mediaGroup;
     }) config.services.jellyfin.libraries;
 in
 {

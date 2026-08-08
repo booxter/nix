@@ -8,7 +8,8 @@
 }:
 let
   bazarrAccount = hostInventory.serviceAccounts.bazarr;
-  group = "media";
+  mediaGroup = hostInventory.storage.nfs.exports.media.sharedGroup;
+  group = mediaGroup.name;
   stateDir = "${config.host.srvarrPaths.stateDir}/bazarr";
   user = "bazarr";
   enforceBazarrAuthCommand = utils.escapeSystemdExecArgs [
@@ -18,14 +19,14 @@ let
     "--uid"
     (toString bazarrAccount.uid)
     "--gid"
-    (toString hostInventory.site.gids.media)
+    (toString mediaGroup.gid)
   ];
 in
 {
   services.bazarr = {
     enable = true;
     dataDir = stateDir;
-    group = group;
+    inherit group;
     user = user;
   };
 
@@ -34,7 +35,7 @@ in
   ];
 
   users.users.${user} = {
-    extraGroups = lib.mkForce [ "media" ];
+    extraGroups = lib.mkForce [ group ];
     home = lib.mkForce "/var/empty";
     isSystemUser = true;
     uid = bazarrAccount.uid;

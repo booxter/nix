@@ -38,6 +38,14 @@ let
   exports = lib.filterAttrs (
     _: export: export.server == hostSpec.name
   ) hostInventory.storage.nfs.exports;
+  mountedExports = lib.mapAttrs (name: _: exportFor name) clientMounts;
+  participatingExports = exports // mountedExports;
+  sharedGroups = lib.mapAttrs' (
+    _: export:
+    lib.nameValuePair export.sharedGroup.name {
+      inherit (export.sharedGroup) gid;
+    }
+  ) (lib.filterAttrs (_: export: export ? sharedGroup) participatingExports);
   exportPaths = map (export: export.path) (builtins.attrValues exports);
   exportMountPoints = lib.unique (
     builtins.concatMap (
@@ -95,6 +103,8 @@ in
   };
 
   config = lib.mkMerge [
+    { users.groups = sharedGroups; }
+
     (lib.mkIf (exports != { }) {
       services.nfs = {
         server = {

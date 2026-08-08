@@ -121,6 +121,10 @@ in
   nfs.exports = {
     media = (export "Media" 10 [ "srvarr" ]) // {
       layout = mediaLayout;
+      sharedGroup = {
+        name = "media";
+        gid = 169;
+      };
     };
     nixCache = export "nix-cache" 11 [ "cache" ];
     paperless = (export "paperless" 12 [ "org" ]) // {
