@@ -13,9 +13,16 @@ in
       ];
     }
     (lib.mkIf (environment == "hyprland") {
-      services.displayManager = {
-        defaultSession = "hyprland";
-        gdm.enable = true;
+      services = {
+        displayManager = {
+          defaultSession = "hyprland";
+          gdm.enable = true;
+        };
+        xserver = {
+          # Match the native Hyprland input policy for X11-side sessions.
+          autoRepeatDelay = 210;
+          autoRepeatInterval = 30;
+        };
       };
       programs.hyprland.enable = true;
       security.pam.services.hyprlock = { };
