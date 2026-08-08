@@ -1,4 +1,4 @@
-{ config, lib, ... }:
+{ config, ... }:
 let
   meilisearchPort = 7700;
   meilisearchUrl = "http://127.0.0.1:${toString meilisearchPort}";
@@ -41,7 +41,7 @@ in
           enabled = true;
         }
       ];
-      plugins = lib.mkAfter [
+      plugins = [
         {
           name = "Meilisearch";
           configuration = {
