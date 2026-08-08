@@ -14,9 +14,7 @@
     ./jellyfin
     ./library-dirs.nix
     ./lolek.nix
-    ./nginx.nix
     ./paperless-storage.nix
-    ./sso.nix
   ];
 
   users.groups.media.gid = hostInventory.site.gids.media;
