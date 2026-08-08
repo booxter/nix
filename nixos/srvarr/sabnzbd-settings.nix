@@ -1,15 +1,15 @@
 {
   hostWhitelist,
   language,
-  mediaDir,
+  paths,
   port,
   wgNamespaceAddress,
 }:
 {
   misc = {
-    complete_dir = "${mediaDir}/usenet/manual";
-    dirscan_dir = "${mediaDir}/usenet/watch";
-    download_dir = "${mediaDir}/usenet/.incomplete";
+    complete_dir = paths.complete;
+    dirscan_dir = paths.watch;
+    download_dir = paths.incomplete;
     host = wgNamespaceAddress;
     host_whitelist = "${builtins.concatStringsSep "," hostWhitelist},";
     local_ranges = ",";

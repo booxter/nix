@@ -5,14 +5,12 @@
 }:
 let
   mediaLibraries = import ./jellyfin/media-libraries.nix;
-  mediaPaths = import ./jellyfin/media-paths.nix { inherit hostInventory; };
   servarrAccounts = import ../srvarr/accounts.nix;
-  mediaRoot = hostInventory.storage.nfs.exports.media.path;
-  mediaPodcastsRoot = "${mediaRoot}/podcasts";
-  mediaRommRoot = "${mediaRoot}/romm";
-  mediaSlskdRoot = "${mediaRoot}/slskd";
-  mediaTorrentRoot = "${mediaRoot}/torrents";
-  mediaUsenetRoot = "${mediaRoot}/usenet";
+  mediaExport = hostInventory.storage.nfs.exports.media;
+  projectPaths = builtins.mapAttrs (
+    _: value: if builtins.isAttrs value then projectPaths value else "${mediaExport.path}/${value}"
+  );
+  mediaPaths = projectPaths mediaExport.layout;
   pinepodsUser = toString servarrAccounts.uids.pinepods;
   rommUser = toString servarrAccounts.uids.romm;
   slskdUser = toString servarrAccounts.uids.slskd;
@@ -21,227 +19,63 @@ let
     "d ${path} ${mode} ${user} ${group} - -"
     "z ${path} ${mode} ${user} ${group} - -"
   ];
+  mkDirSpec = mode: user: path: {
+    inherit mode path user;
+    group = "media";
+  };
+  mkDirSpecs = mode: user: map (mkDirSpec mode user);
 
-  mediaDirSpecs = [
-    {
-      path = mediaPaths.sourceLibraryRoot;
-      mode = "2775";
-      user = "root";
-      group = "media";
-    }
-    {
-      path = "${mediaPaths.sourceLibraryRoot}/books";
-      mode = "2775";
-      user = "root";
-      group = "media";
-    }
-    {
-      path = "${mediaPaths.sourceLibraryRoot}/audiobooks";
-      mode = "2775";
-      user = "root";
-      group = "media";
-    }
-    {
-      path = "${mediaPaths.sourceLibraryRoot}/flows";
-      mode = "2775";
-      user = "root";
-      group = "media";
-    }
+  mediaDirSpecs =
+    mkDirSpecs "2775" "root" [
+      mediaPaths.library.root
+      mediaPaths.library.books
+      mediaPaths.library.audiobooks
+      mediaPaths.library.flows
+    ]
     # The media tree is exported to srvarr. Use srvarr's numeric service IDs
     # so ownership is meaningful on the NFS client.
-    {
-      path = mediaPodcastsRoot;
+    ++ mkDirSpecs "2775" "root" [ mediaPaths.pinepods.root ]
+    ++ mkDirSpecs "2775" pinepodsUser [ mediaPaths.pinepods.downloads ]
+    ++ mkDirSpecs "2775" rommUser [
+      mediaPaths.romm.root
+      mediaPaths.romm.assets
+      mediaPaths.romm.cache
+      mediaPaths.romm.config
+      mediaPaths.romm.resources
+      mediaPaths.romm.sync
+      mediaPaths.romm.library
+      mediaPaths.romm.roms
+      mediaPaths.romm.pcRoms
+      mediaPaths.romm.bios
+    ]
+    ++ mkDirSpecs "0755" "70" (
+      [
+        mediaPaths.transmission.root
+        mediaPaths.transmission.incomplete
+        mediaPaths.transmission.watch
+      ]
+      ++ builtins.attrValues mediaPaths.transmission.categories
+    )
+    ++ mkDirSpecs "2775" slskdUser [
+      mediaPaths.slskd.root
+      mediaPaths.slskd.incomplete
+      mediaPaths.slskd.complete
+    ]
+    ++ mkDirSpecs "0755" "38" [
+      mediaPaths.sabnzbd.root
+      mediaPaths.sabnzbd.incomplete
+      mediaPaths.sabnzbd.legacyWatch
+      mediaPaths.sabnzbd.watch
+    ]
+    ++ mkDirSpecs "0775" "38" (
+      [ mediaPaths.sabnzbd.complete ] ++ builtins.attrValues mediaPaths.sabnzbd.categories
+    )
+    ++ map (library: {
+      path = "${mediaPaths.library.root}/${library.path}";
       mode = "2775";
       user = "root";
       group = "media";
-    }
-    {
-      path = "${mediaPodcastsRoot}/pinepods";
-      mode = "2775";
-      user = pinepodsUser;
-      group = "media";
-    }
-    {
-      path = mediaRommRoot;
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = "${mediaRommRoot}/assets";
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = "${mediaRommRoot}/config";
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = "${mediaRommRoot}/resources";
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = "${mediaRommRoot}/sync";
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = "${mediaRommRoot}/library";
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = "${mediaRommRoot}/library/roms";
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = "${mediaRommRoot}/library/roms/pc";
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = "${mediaRommRoot}/library/bios";
-      mode = "2775";
-      user = rommUser;
-      group = "media";
-    }
-    {
-      path = mediaTorrentRoot;
-      mode = "0755";
-      user = "70";
-      group = "media";
-    }
-    {
-      path = "${mediaTorrentRoot}/.incomplete";
-      mode = "0755";
-      user = "70";
-      group = "media";
-    }
-    {
-      path = "${mediaTorrentRoot}/.watch";
-      mode = "0755";
-      user = "70";
-      group = "media";
-    }
-    {
-      path = "${mediaTorrentRoot}/manual";
-      mode = "0755";
-      user = "70";
-      group = "media";
-    }
-    {
-      path = "${mediaTorrentRoot}/lidarr";
-      mode = "0755";
-      user = "70";
-      group = "media";
-    }
-    {
-      path = "${mediaTorrentRoot}/radarr";
-      mode = "0755";
-      user = "70";
-      group = "media";
-    }
-    {
-      path = "${mediaTorrentRoot}/sonarr";
-      mode = "0755";
-      user = "70";
-      group = "media";
-    }
-    {
-      path = "${mediaTorrentRoot}/shelfmark";
-      mode = "0755";
-      user = "70";
-      group = "media";
-    }
-    {
-      path = mediaSlskdRoot;
-      mode = "2775";
-      user = slskdUser;
-      group = "media";
-    }
-    {
-      path = "${mediaSlskdRoot}/incomplete";
-      mode = "2775";
-      user = slskdUser;
-      group = "media";
-    }
-    {
-      path = "${mediaSlskdRoot}/complete";
-      mode = "2775";
-      user = slskdUser;
-      group = "media";
-    }
-    {
-      path = mediaUsenetRoot;
-      mode = "0755";
-      user = "38";
-      group = "media";
-    }
-    {
-      path = "${mediaUsenetRoot}/.incomplete";
-      mode = "0755";
-      user = "38";
-      group = "media";
-    }
-    {
-      path = "${mediaUsenetRoot}/.watch";
-      mode = "0755";
-      user = "38";
-      group = "media";
-    }
-    {
-      path = "${mediaUsenetRoot}/watch";
-      mode = "0755";
-      user = "38";
-      group = "media";
-    }
-    {
-      path = "${mediaUsenetRoot}/manual";
-      mode = "0775";
-      user = "38";
-      group = "media";
-    }
-    {
-      path = "${mediaUsenetRoot}/lidarr";
-      mode = "0775";
-      user = "38";
-      group = "media";
-    }
-    {
-      path = "${mediaUsenetRoot}/radarr";
-      mode = "0775";
-      user = "38";
-      group = "media";
-    }
-    {
-      path = "${mediaUsenetRoot}/sonarr";
-      mode = "0775";
-      user = "38";
-      group = "media";
-    }
-    {
-      path = "${mediaUsenetRoot}/shelfmark";
-      mode = "0775";
-      user = "38";
-      group = "media";
-    }
-  ]
-  ++ map (library: {
-    path = "${mediaPaths.sourceLibraryRoot}/${library.path}";
-    mode = "2775";
-    user = "root";
-    group = "media";
-  }) mediaLibraries;
+    }) mediaLibraries;
 in
 {
   systemd.tmpfiles.rules = lib.concatMap (

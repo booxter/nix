@@ -10,8 +10,12 @@ let
   aurralPort = 3001;
   mediaPath = config.host.srvarrPaths.mediaDir;
   aurralStateDir = "${config.host.srvarrPaths.stateDir}/aurral";
-  aurralFlowDir = "${mediaPath}/library/flows";
-  slskdDownloadsDir = "${mediaPath}/slskd/complete";
+  aurralFlowDir = config.host.srvarrPaths.library.flows;
+  slskdDownloadsDir = config.host.srvarrPaths.slskd.complete;
+  aurralPackage = srvarrPkgs.aurral.override {
+    runtimeStateDir = aurralStateDir;
+    runtimeFlowDir = aurralFlowDir;
+  };
   aurralService = hostInventory.servicesById.aurral;
   aurralAdminUsers = lib.attrNames (
     lib.filterAttrs (_: person: builtins.elem "media-admins" person.groups) hostInventory.sso.users
@@ -88,7 +92,7 @@ in
       DISABLE_LOCAL_AUTH = "true";
     };
     serviceConfig = {
-      ExecStart = lib.getExe srvarrPkgs.aurral;
+      ExecStart = lib.getExe aurralPackage;
       User = "aurral";
       Group = "aurral";
       WorkingDirectory = aurralStateDir;

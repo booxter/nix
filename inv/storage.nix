@@ -30,6 +30,60 @@ let
     path = "${dataVolume.mounts.data.mountPoint}/${path}";
     inherit clients fsid;
   };
+  mediaLayout = {
+    library = rec {
+      root = "library";
+      audiobooks = "${root}/audiobooks";
+      books = "${root}/books";
+      flows = "${root}/flows";
+    };
+    pinepods = rec {
+      root = "podcasts";
+      downloads = "${root}/pinepods";
+    };
+    romm = rec {
+      root = "romm";
+      assets = "${root}/assets";
+      cache = "${root}/cache";
+      config = "${root}/config";
+      resources = "${root}/resources";
+      sync = "${root}/sync";
+      library = "${root}/library";
+      roms = "${library}/roms";
+      pcRoms = "${roms}/pc";
+      bios = "${library}/bios";
+    };
+    sabnzbd = rec {
+      root = "usenet";
+      incomplete = "${root}/.incomplete";
+      legacyWatch = "${root}/.watch";
+      watch = "${root}/watch";
+      complete = "${root}/manual";
+      categories = {
+        lidarr = "${root}/lidarr";
+        radarr = "${root}/radarr";
+        shelfmark = "${root}/shelfmark";
+        sonarr = "${root}/sonarr";
+      };
+    };
+    slskd = rec {
+      root = "slskd";
+      incomplete = "${root}/incomplete";
+      complete = "${root}/complete";
+    };
+    transmission = rec {
+      root = "torrents";
+      incomplete = "${root}/.incomplete";
+      watch = "${root}/.watch";
+      categories = {
+        lidarr = "${root}/lidarr";
+        manual = "${root}/manual";
+        radarr = "${root}/radarr";
+        shelfmark = "${root}/shelfmark";
+        sonarr = "${root}/sonarr";
+      };
+    };
+  };
 in
 {
   hosts.${beast} = {
@@ -66,7 +120,9 @@ in
   };
 
   nfs.exports = {
-    media = export "Media" 10 [ "srvarr" ];
+    media = (export "Media" 10 [ "srvarr" ]) // {
+      layout = mediaLayout;
+    };
     nixCache = export "nix-cache" 11 [ "cache" ];
     paperless = (export "paperless" 12 [ "org" ]) // {
       # Preserve root_squash while presenting root-run client backup jobs as

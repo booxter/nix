@@ -5,7 +5,7 @@
   ...
 }:
 let
-  mediaDir = config.host.srvarrPaths.mediaDir;
+  mediaPaths = config.host.srvarrPaths.transmission;
   srvarrSpec = hostInventory.nixosHosts.srvarr;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.transmission;
   stateDir = "${config.host.srvarrPaths.stateDir}/transmission";
@@ -41,10 +41,10 @@ in
       anti-brute-force-threshold = 10;
       cache-size-mb = 256;
       compact-view = true;
-      download-dir = "${mediaDir}/torrents";
+      download-dir = mediaPaths.root;
       download-queue-size = 100;
       encryption = 1;
-      incomplete-dir = "${mediaDir}/torrents/.incomplete";
+      incomplete-dir = mediaPaths.incomplete;
       lpd-enabled = false;
       message-level = 3;
       peer-port = peerPort;
@@ -58,7 +58,7 @@ in
       speed-limit-up = transmissionConservativeUploadLimitKBps;
       speed-limit-up-enabled = true;
       umask = "002";
-      watch-dir = "${mediaDir}/torrents/.watch";
+      watch-dir = mediaPaths.watch;
       watch-dir-enabled = true;
     };
     user = "transmission";

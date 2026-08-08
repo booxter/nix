@@ -28,7 +28,8 @@ let
   mediaDir = config.host.srvarrPaths.mediaDir;
   # RomM's upstream layout keeps all mutable application data under one root:
   # library, resources, assets, config, sync, and launchbox.
-  rommBasePath = "${mediaDir}/romm";
+  mediaPaths = config.host.srvarrPaths.romm;
+  rommBasePath = mediaPaths.root;
   stateDir = "${config.host.srvarrPaths.stateDir}/romm";
   # Host-local MariaDB singleton. RomM is the only current consumer, but keep
   # the storage path neutral so future local databases can share it explicitly.
@@ -269,14 +270,14 @@ in
     "d '${integrationDir}' 0750 ${user} media - -"
     "d '${valkeyDir}' 0750 ${user} media - -"
     "d '${rommBasePath}' 2775 ${user} media - -"
-    "d '${rommBasePath}/assets' 2775 ${user} media - -"
-    "d '${rommBasePath}/cache' 2775 ${user} media - -"
-    "d '${rommBasePath}/config' 2775 ${user} media - -"
-    "d '${rommBasePath}/resources' 2775 ${user} media - -"
-    "d '${rommBasePath}/sync' 2775 ${user} media - -"
-    "d '${rommBasePath}/library' 2775 ${user} media - -"
-    "d '${rommBasePath}/library/roms' 2775 ${user} media - -"
-    "d '${rommBasePath}/library/bios' 2775 ${user} media - -"
+    "d '${mediaPaths.assets}' 2775 ${user} media - -"
+    "d '${mediaPaths.cache}' 2775 ${user} media - -"
+    "d '${mediaPaths.config}' 2775 ${user} media - -"
+    "d '${mediaPaths.resources}' 2775 ${user} media - -"
+    "d '${mediaPaths.sync}' 2775 ${user} media - -"
+    "d '${mediaPaths.library}' 2775 ${user} media - -"
+    "d '${mediaPaths.roms}' 2775 ${user} media - -"
+    "d '${mediaPaths.bios}' 2775 ${user} media - -"
   ];
 
   services.mysql = {
@@ -548,7 +549,7 @@ in
             # Covers and screenshots describe the private library. Reuse RomM's
             # own session/API-token validation before serving them from disk.
             auth_request /_romm_auth;
-            alias ${rommBasePath}/resources/;
+            alias ${mediaPaths.resources}/;
             add_header Cache-Control $romm_resources_cache_control;
           '';
         };
@@ -591,7 +592,7 @@ in
         "/library/" = {
           extraConfig = ''
             internal;
-            alias ${rommBasePath}/library/;
+            alias ${mediaPaths.library}/;
           '';
         };
         "/cache/" = {
@@ -600,7 +601,7 @@ in
             # assembling the ZIP in its cache. The patched module above makes
             # the file group-readable by this host nginx worker.
             internal;
-            alias ${rommBasePath}/cache/;
+            alias ${mediaPaths.cache}/;
           '';
         };
         "/decode" = {

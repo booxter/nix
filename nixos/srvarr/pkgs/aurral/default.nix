@@ -10,6 +10,8 @@
   python3,
   makeWrapper,
   sqlite,
+  runtimeFlowDir ? "/data/media/library/flows",
+  runtimeStateDir ? "/data/.state/nixarr/aurral",
 }:
 let
   nodejs = nodejs_22;
@@ -29,8 +31,6 @@ let
     fetcherVersion = 2;
     hash = npmDepsHash;
   };
-  runtimeStateDir = "/data/.state/nixarr/aurral";
-  runtimeFlowDir = "/data/media/library/flows";
 in
 stdenv.mkDerivation {
   inherit pname version src;

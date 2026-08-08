@@ -9,7 +9,7 @@ let
   accounts = import ./accounts.nix;
   stateDir = "${config.host.srvarrPaths.stateDir}/shelfmark";
   mediaDir = config.host.srvarrPaths.mediaDir;
-  booksDir = "${mediaDir}/library/books";
+  booksDir = config.host.srvarrPaths.library.books;
   ebookConverterStateDir = "/var/lib/ebook-converter";
   user = "shelfmark";
   shelfmarkService = hostInventory.servicesById.shelfmark;

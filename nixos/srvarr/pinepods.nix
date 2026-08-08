@@ -27,7 +27,7 @@ let
   stateDir = "${config.host.srvarrPaths.stateDir}/pinepods";
   databaseDir = "${stateDir}/postgresql";
   backupDir = "${stateDir}/backups";
-  downloadsDir = "${config.host.srvarrPaths.mediaDir}/podcasts/pinepods";
+  downloadsDir = config.host.srvarrPaths.pinepods.downloads;
 
   serviceDependencies = [
     "network-online.target"

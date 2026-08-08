@@ -6,6 +6,7 @@
 }:
 let
   mediaDir = config.host.srvarrPaths.mediaDir;
+  transmissionDir = config.host.srvarrPaths.transmission.root;
   sabnzbdCompleteDir = config.services.sabnzbd.settings.misc.complete_dir;
   lidarrStateDir = "${config.host.srvarrPaths.stateDir}/lidarr";
   stateDir = "/var/lib/lidarr-cue-splitter";
@@ -37,7 +38,7 @@ in
         "--lidarr-config"
         "${lidarrStateDir}/config.xml"
         "--allowed-root"
-        "${mediaDir}/torrents"
+        transmissionDir
         "--allowed-root"
         sabnzbdCompleteDir
         "--work-root"

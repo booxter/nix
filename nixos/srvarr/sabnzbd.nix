@@ -6,7 +6,7 @@
 }:
 let
   accounts = import ./accounts.nix;
-  mediaDir = config.host.srvarrPaths.mediaDir;
+  mediaPaths = config.host.srvarrPaths.sabnzbd;
   port = 6336;
   user = "sabnzbd";
   wgNamespaceAddress = hostInventory.nixosHosts.srvarr.wgNamespace.namespaceAddress;
@@ -35,39 +35,39 @@ let
     username = ${builtins.getAttr (mkSabnzbdServerSecretName server "username") config.sops.placeholder}
     password = ${builtins.getAttr (mkSabnzbdServerSecretName server "password") config.sops.placeholder}
   '') sabnzbdServerNames;
-  mkUsenetDirRule = mode: suffix: "d '${mediaDir}/usenet${suffix}' ${mode} ${user} media - -";
+  mkUsenetDirRule = mode: path: "d '${path}' ${mode} ${user} media - -";
   usenetDirRules = [
     {
       mode = "0755";
-      suffix = "";
+      path = mediaPaths.root;
     }
     {
       mode = "0755";
-      suffix = "/.incomplete";
+      path = mediaPaths.incomplete;
     }
     {
       mode = "0775";
-      suffix = "/watch";
+      path = mediaPaths.watch;
     }
     {
       mode = "0775";
-      suffix = "/manual";
+      path = mediaPaths.complete;
     }
     {
       mode = "0775";
-      suffix = "/lidarr";
+      path = mediaPaths.categories.lidarr;
     }
     {
       mode = "0775";
-      suffix = "/radarr";
+      path = mediaPaths.categories.radarr;
     }
     {
       mode = "0775";
-      suffix = "/sonarr";
+      path = mediaPaths.categories.sonarr;
     }
     {
       mode = "0775";
-      suffix = "/shelfmark";
+      path = mediaPaths.categories.shelfmark;
     }
   ];
 in
@@ -104,16 +104,14 @@ in
         config.networking.hostName
       ]
       ++ hostInventory.toInternalHttpsServiceHosts "sabnzbd";
-      inherit
-        mediaDir
-        wgNamespaceAddress
-        ;
+      inherit wgNamespaceAddress;
+      paths = mediaPaths;
       port = port;
     };
     user = user;
   };
 
-  systemd.tmpfiles.rules = map (dir: mkUsenetDirRule dir.mode dir.suffix) usenetDirRules;
+  systemd.tmpfiles.rules = map (dir: mkUsenetDirRule dir.mode dir.path) usenetDirRules;
 
   systemd.services.sabnzbd = {
     serviceConfig = {

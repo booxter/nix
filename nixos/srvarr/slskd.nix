@@ -6,7 +6,7 @@
 let
   accounts = import ./accounts.nix;
   mediaDir = config.host.srvarrPaths.mediaDir;
-  slskdRoot = "${mediaDir}/slskd";
+  mediaPaths = config.host.srvarrPaths.slskd;
   srvarrSpec = hostInventory.nixosHosts.srvarr;
   apiPort = 5030;
   peerPort = srvarrSpec.wgNamespace.forwardedPorts.slskd;
@@ -56,8 +56,8 @@ in
       # Aurral uses only the API; do not expose slskd's interactive UI.
       headless = true;
       directories = {
-        incomplete = "${slskdRoot}/incomplete";
-        downloads = "${slskdRoot}/complete";
+        inherit (mediaPaths) incomplete;
+        downloads = mediaPaths.complete;
       };
       shares.directories = [ ];
       soulseek = {

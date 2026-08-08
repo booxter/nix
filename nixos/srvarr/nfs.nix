@@ -5,7 +5,7 @@
   ...
 }:
 let
-  mediaPath = "/data/media";
+  mediaPath = config.host.srvarrPaths.mediaDir;
   networkOnlineUnitDeps = {
     Wants = [ "network-online.target" ];
     After = [ "network-online.target" ];

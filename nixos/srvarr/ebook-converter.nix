@@ -5,8 +5,8 @@
   ...
 }:
 let
-  mediaDir = config.host.srvarrPaths.mediaDir;
-  booksDir = "${mediaDir}/library/books";
+  mediaPaths = config.host.srvarrPaths;
+  booksDir = mediaPaths.library.books;
   stateDir = "/var/lib/ebook-converter";
   nodeExporterTextfileDir = "/var/lib/prometheus-node-exporter-textfile";
   metricsFile = "${nodeExporterTextfileDir}/ebook-converter.prom";
@@ -74,8 +74,8 @@ in
       SystemCallArchitectures = "native";
       RemoveIPC = true;
       InaccessiblePaths = [
-        "${mediaDir}/torrents"
-        "${mediaDir}/usenet"
+        mediaPaths.transmission.root
+        mediaPaths.sabnzbd.root
       ];
       ReadWritePaths = [
         booksDir
