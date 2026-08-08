@@ -7,7 +7,8 @@
 let
   clientId = "srvarr-admin-apps";
   oauth2ProxyCookieName = "_srvarr_admin_sso";
-  protectedServiceIds = hostInventory.srvarrAdminAppIds;
+  gate = hostInventory.sso.oauth2ProxyGates.srvarrAdminApps;
+  protectedServiceIds = gate.serviceIds;
   protectedServiceHosts = lib.unique (
     lib.concatMap hostInventory.toInternalServiceHosts protectedServiceIds
   );
@@ -135,7 +136,7 @@ in
     displayName = "srvarr admin apps";
     originLanding = "https://bazarr.${hostInventory.site.lan.domain}/";
     cookieName = oauth2ProxyCookieName;
-    allowedGroups = [ "media-admins" ];
+    inherit (gate) allowedGroups;
     groupClaim = "media_groups";
     whitelistDomains = protectedServiceHosts;
     internalServiceNames = protectedServiceIds;

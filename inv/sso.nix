@@ -43,6 +43,20 @@ in
     };
   };
 
+  oauth2ProxyGates.srvarrAdminApps = {
+    serviceIds = [
+      "houndarr"
+      "radarr"
+      "sonarr"
+      "lidarr"
+      "bazarr"
+      "prowlarr"
+      "transmission"
+      "sabnzbd"
+    ];
+    allowedGroups = [ "media-admins" ];
+  };
+
   groups = {
     "infra-admins" = {
       title = "Infrastructure administrators";

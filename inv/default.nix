@@ -409,11 +409,6 @@ rec {
   toHostIpv4Address = aliasIpv4Address;
   toNixosHostIpv4Address = name: toHostIpv4Address nixosHosts.${name};
   toUpsName = name: "${lib.strings.toUpper name}-UPS";
-  srvarrAdminAppIds = map (service: service.id) (
-    builtins.filter (
-      service: serviceRunsOn "srvarr" service && service.glanceCategory == "media-admin"
-    ) services
-  );
   site = siteFacts // {
     lan = siteFacts.lan // {
       staticRoutes = lib.mapAttrsToList (name: endpoint: {
