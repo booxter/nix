@@ -44,7 +44,7 @@ class DiskBayMetrics:
         self.registry = CollectorRegistry()
         self.info = Gauge(
             "host_observability_disk_bay_info",
-            "Current mapping of beast disk device names to physical bays.",
+            "Current mapping of disk device names to physical bays.",
             ("device", "bay", "bay_row", "bay_col", "serial", "model"),
             registry=self.registry,
         )

@@ -66,25 +66,25 @@ in
     # textfile exporter instead of the built-in mdadm collector.
     extraFlags = [ "--no-collector.mdadm" ];
   };
-  systemd.services.beast-md-sync-export = {
+  systemd.services.storage-md-export = {
     description = "Export md sync status for node exporter";
     after = [ "local-fs.target" ];
     serviceConfig = {
       Type = "oneshot";
       ExecStart = lib.escapeShellArgs [
-        "${beastPkgs.storage-observability}/bin/beast-md-metrics"
+        "${beastPkgs.storage-observability}/bin/storage-md-metrics"
         "--output-file"
         "${textfileDir}/md-sync.prom"
       ];
     };
   };
 
-  systemd.timers.beast-md-sync-export = {
+  systemd.timers.storage-md-export = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "30s";
       OnUnitActiveSec = "1min";
-      Unit = "beast-md-sync-export.service";
+      Unit = "storage-md-export.service";
     };
   };
 

@@ -7,10 +7,10 @@
 }:
 let
   textfileDir = "/var/lib/prometheus-node-exporter-textfile";
-  bayMapName = "beast-hba-bay-map.json";
+  bayMapName = "disk-bay-map.json";
   bayMapPath = "/etc/${bayMapName}";
   diskBayExportCommand = utils.escapeSystemdExecArgs [
-    (lib.getExe' beastPkgs.storage-observability "beast-disk-bay-metrics")
+    (lib.getExe' beastPkgs.storage-observability "storage-disk-bay-metrics")
     "--bay-map"
     bayMapPath
     "--output-file"
@@ -27,8 +27,8 @@ in
 {
   environment.etc.${bayMapName}.text = builtins.toJSON config.host.storage.diskBays.disks;
 
-  systemd.services.beast-disk-bay-export = {
-    description = "Export beast disk bay mapping for node exporter";
+  systemd.services.storage-disk-bay-export = {
+    description = "Export disk bay mapping for node exporter";
     wantedBy = [ "multi-user.target" ];
     after = [ "local-fs.target" ];
     serviceConfig = {
@@ -37,17 +37,17 @@ in
     };
   };
 
-  systemd.timers.beast-disk-bay-export = {
+  systemd.timers.storage-disk-bay-export = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "30s";
       OnUnitActiveSec = "1min";
-      Unit = "beast-disk-bay-export.service";
+      Unit = "storage-disk-bay-export.service";
     };
   };
 
-  systemd.services.beast-hba-export = {
-    description = "Export beast HBA metrics for node exporter";
+  systemd.services.storage-hba-export = {
+    description = "Export HBA metrics for node exporter";
     after = [ "local-fs.target" ];
     serviceConfig = {
       Type = "oneshot";
@@ -55,12 +55,12 @@ in
     };
   };
 
-  systemd.timers.beast-hba-export = {
+  systemd.timers.storage-hba-export = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
       OnBootSec = "45s";
       OnUnitActiveSec = "1min";
-      Unit = "beast-hba-export.service";
+      Unit = "storage-hba-export.service";
     };
   };
 }

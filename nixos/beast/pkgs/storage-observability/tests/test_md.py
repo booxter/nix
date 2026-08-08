@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from beast_storage_observability.md import MdExporter, MdMetrics
+from storage_observability.md import MdExporter, MdMetrics
 
 from .metrics import samples, text_samples, value
 

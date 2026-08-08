@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from beast_storage_observability.cli import disk_bay_main
-from beast_storage_observability.disk_bays import DiskBayExporter
+from storage_observability.cli import disk_bay_main
+from storage_observability.disk_bays import DiskBayExporter
 from tests.metrics import text_samples
 
 

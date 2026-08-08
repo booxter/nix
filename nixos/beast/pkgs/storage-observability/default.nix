@@ -5,13 +5,13 @@
   python3,
   ruff,
   storcli,
-  utillinux,
+  util-linux,
 }:
 let
   pythonPackages = python3.pkgs;
 in
 pythonPackages.buildPythonApplication {
-  pname = "beast-storage-observability";
+  pname = "storage-observability";
   version = "0.2.0";
   pyproject = true;
 
@@ -35,22 +35,22 @@ pythonPackages.buildPythonApplication {
   preCheck = ''
     ruff format --check src tests
     ruff check src tests
-    mypy src/beast_storage_observability
+    mypy src/storage_observability
   '';
 
-  pythonImportsCheck = [ "beast_storage_observability" ];
+  pythonImportsCheck = [ "storage_observability" ];
 
   postFixup = ''
-    wrapProgram "$out/bin/beast-hba-metrics" \
+    wrapProgram "$out/bin/storage-hba-metrics" \
       --prefix PATH : ${lib.makeBinPath [ storcli ]}
-    wrapProgram "$out/bin/beast-disk-bay-metrics" \
-      --prefix PATH : ${lib.makeBinPath [ utillinux ]}
+    wrapProgram "$out/bin/storage-disk-bay-metrics" \
+      --prefix PATH : ${lib.makeBinPath [ util-linux ]}
   '';
 
   meta = {
-    description = "Typed Prometheus storage collectors for beast";
+    description = "Typed Prometheus storage collectors";
     license = lib.licenses.mit;
-    mainProgram = "beast-hba-metrics";
+    mainProgram = "storage-hba-metrics";
     platforms = lib.platforms.linux;
   };
 }
