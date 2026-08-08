@@ -27,8 +27,8 @@ pkgs.testers.runNixOSTest {
       }:
       {
         imports = [
-          ../../nixos/_mixins/adaptive-upload-policy
-          ../../nixos/_mixins/qos
+          ../../nixos/_mixins/network/adaptive-upload-policy
+          ../../nixos/_mixins/network/qos
         ];
 
         networking.firewall = {

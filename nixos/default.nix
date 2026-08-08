@@ -18,32 +18,27 @@ in
       inputs.home-manager.nixosModules.home-manager
     ]
     ++ [
-      ./_mixins/adaptive-upload-policy
       ./_mixins/attic
       ./_mixins/auto-upgrade
-      ./_mixins/avahi
       ./_mixins/backups
       ./_mixins/builder.nix
       ./_mixins/desktop-environment.nix
       ./_mixins/hardware
       ./_mixins/llm
       ./_mixins/lolek
-      ./_mixins/netboot.nix
+      ./_mixins/network
       ./_mixins/nix
       ./_mixins/observability
       ./_mixins/pki
       ./_mixins/proxmox
-      ./_mixins/qos
       ./_mixins/remote-gui
       ./_mixins/remote-unlock.nix
       ./_mixins/sso
       ./_mixins/storage
-      ./_mixins/unifi-sync
       ./_mixins/ups
       ./_mixins/user
       ./_mixins/vm.nix
       ./_mixins/web
-      ./_mixins/wireguard-endpoint
       ./_mixins/yubi.nix
     ];
 

@@ -8,7 +8,7 @@
 let
   cfg = config.services.adaptive-upload-policy;
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
-  transmissionCommon = pkgs.callPackage ../../srvarr/pkgs/transmission-common { };
+  transmissionCommon = pkgs.callPackage ../../../srvarr/pkgs/transmission-common { };
   defaultPackage = pkgs.callPackage ./pkgs/controller {
     atomicFileWrites = pkgs.atomic-file-writes;
     inherit transmissionCommon;
