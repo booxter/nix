@@ -41,6 +41,7 @@ in
       ./_mixins/lolek
       ./_mixins/md-raid.nix
       ./_mixins/media-storage.nix
+      ./_mixins/netboot.nix
       ./_mixins/nix
       ./_mixins/nfs
       ./_mixins/observability
