@@ -1,10 +1,11 @@
 {
+  config,
   hostInventory,
   lib,
   ...
 }:
 let
-  mediaLibraries = import ./jellyfin/media-libraries.nix;
+  mediaLibraries = import ../beast/jellyfin/media-libraries.nix;
   servarrAccounts = import ../srvarr/accounts.nix;
   mediaExport = hostInventory.storage.nfs.exports.media;
   projectPaths = builtins.mapAttrs (
@@ -77,7 +78,9 @@ let
     }) mediaLibraries;
 in
 {
-  systemd.tmpfiles.rules = lib.concatMap (
-    spec: mkTmpfilesDir spec.path spec.mode spec.user spec.group
-  ) mediaDirSpecs;
+  config = lib.mkIf (mediaExport.server == config.networking.hostName) {
+    systemd.tmpfiles.rules = lib.concatMap (
+      spec: mkTmpfilesDir spec.path spec.mode spec.user spec.group
+    ) mediaDirSpecs;
+  };
 }

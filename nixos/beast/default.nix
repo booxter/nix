@@ -12,7 +12,6 @@
     ./backup-client.nix
     ./backup-server.nix
     ./jellyfin
-    ./library-dirs.nix
     ./lolek.nix
     ./paperless-storage.nix
   ];
