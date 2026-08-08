@@ -48,6 +48,7 @@ func All(config Config) ([]Definition, error) {
 	}{
 		{path: "Fleet/overview.json", build: FleetOverview},
 		{path: "Fleet/logs.json", build: LogsOverview},
+		{path: "Infrastructure/backups.json", build: BackupOverview},
 		{path: "Infrastructure/resolver-health.json", build: ResolverProbeOverview},
 		{path: "Infrastructure/pki.json", build: PKIOverview},
 		{path: "Infrastructure/network.json", build: NetworkOverview},

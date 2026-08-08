@@ -29,6 +29,19 @@ func (config Config) serviceHost(service string) (string, error) {
 	return hosts[0], nil
 }
 
+func (config Config) backupServer() (string, error) {
+	hosts := make([]string, 0, 1)
+	for _, host := range config.Hosts {
+		if host.Backups.Server {
+			hosts = append(hosts, host.Name)
+		}
+	}
+	if len(hosts) != 1 {
+		return "", fmt.Errorf("dashboard inventory has %d backup servers, want one", len(hosts))
+	}
+	return hosts[0], nil
+}
+
 func (source DataSource) reference() common.DataSourceRef {
 	return common.DataSourceRef{
 		Type: ptr(source.Type),

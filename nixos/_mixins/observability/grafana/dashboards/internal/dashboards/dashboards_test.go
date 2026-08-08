@@ -19,7 +19,7 @@ var testConfig = Config{
 	Hosts: []Host{
 		{
 			Name: "frame", Platform: "linux", CapacityProfile: "cpu-bursty",
-			ThermalProfile: "standard", Builder: true,
+			ThermalProfile: "standard", Builder: true, Backups: HostBackups{Server: true},
 			Services: []string{
 				"home", "jellyfin", "lidarr", "ollama", "paperless", "paperless-gpt",
 				"sabnzbd", "transmission",
