@@ -283,7 +283,7 @@ in
             }.path;
           checkHost = vhost.upstreamTls.serverName;
           sni = vhost.upstreamTls.serverName;
-          CAFile = toString vhost.upstreamTls.trustedCaCertificate;
+          CAFile = "${vhost.upstreamTls.trustedCaCertificate}";
           verifyChain = true;
           OCSPaia = false;
         }) enabledUpstreamTlsVhosts;
