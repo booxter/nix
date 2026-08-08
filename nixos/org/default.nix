@@ -4,6 +4,6 @@
 
   imports = [
     ./backup.nix
-    ./paperless.nix
+    ./paperless-gpt.nix
   ];
 }
