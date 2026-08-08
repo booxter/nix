@@ -35,7 +35,6 @@ in
       };
     };
     outputs = {
-      transmission.enable = true;
       qos = {
         enable = true;
         profile = "wan";

@@ -10,8 +10,6 @@
   };
 
   config.host.srvarrTuning = {
-    transmissionNonPreferredLowPriorityRatio = 3.0;
-    transmissionNonPreferredPauseRatio = 6.0;
     wgConservativeUploadRateMbit = 8;
   };
 }

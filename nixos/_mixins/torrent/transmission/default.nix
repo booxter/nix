@@ -29,6 +29,11 @@ let
   );
 in
 {
+  imports = [
+    ./cleaner.nix
+    ./tracker-policy.nix
+  ];
+
   options.host.transmission.enable = lib.mkOption {
     type = lib.types.bool;
     default = hostInventory.serviceRunsOn hostname service;
@@ -36,6 +41,12 @@ in
     internal = true;
     description = "Whether inventory assigns Transmission to this host.";
   };
+
+  options.services.transmission.adaptiveUpload.enable =
+    lib.mkEnableOption "adaptive Transmission upload limits"
+    // {
+      default = true;
+    };
 
   config = lib.mkIf cfg.enable {
     assertions = [
@@ -92,6 +103,9 @@ in
       };
       user = "transmission";
     };
+
+    services.adaptive-upload-policy.outputs.transmission.enable =
+      config.services.transmission.adaptiveUpload.enable;
 
     host.nfs.mounts = lib.mkIf (!isMediaServer) {
       media = mediaDir;
