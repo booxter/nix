@@ -10,10 +10,7 @@
     (import ../disko { })
     ./backup-client.nix
     ./backup-server.nix
-    ./jellarr-libraries.nix
-    ./jellarr-users.nix
-    ./jellarr.nix
-    ./jellyfin.nix
+    ./jellyfin
     ./library-dirs.nix
     ./lolek.nix
     ./nginx.nix
@@ -21,7 +18,6 @@
     ./pause.nix
     ./raid.nix
     ./sso.nix
-    ./watchstate.nix
   ];
 
   users.groups.media.gid = hostInventory.site.gids.media;

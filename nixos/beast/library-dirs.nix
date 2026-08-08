@@ -4,8 +4,8 @@
   ...
 }:
 let
-  mediaLibraries = import ./media-libraries.nix;
-  mediaPaths = import ./media-paths.nix { inherit hostInventory; };
+  mediaLibraries = import ./jellyfin/media-libraries.nix;
+  mediaPaths = import ./jellyfin/media-paths.nix { inherit hostInventory; };
   servarrAccounts = import ../srvarr/accounts.nix;
   mediaRoot = hostInventory.storage.nfs.exports.media.path;
   mediaPodcastsRoot = "${mediaRoot}/podcasts";

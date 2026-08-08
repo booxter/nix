@@ -4,6 +4,13 @@
   ...
 }:
 {
+  imports = [
+    ./jellarr-libraries.nix
+    ./jellarr-users.nix
+    ./jellarr.nix
+    ./watchstate.nix
+  ];
+
   services.jellyfin = {
     enable = true;
     builtInBackup = {
