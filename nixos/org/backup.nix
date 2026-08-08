@@ -16,7 +16,6 @@ let
     paperlessDataDir
     paperlessGptStateDir
     paperlessStoragePath
-    "/var/lib/vikunja/files"
   ];
   resticPasswordSecret = "backup/restic/local/password";
   resticSshKeySecret = "backup/restic/local/ssh/privateKey";
@@ -41,14 +40,6 @@ in
       };
     };
 
-    sqlite = {
-      vikunja = {
-        job = "beast";
-        displayName = "Vikunja";
-        databasePath = "/var/lib/vikunja/vikunja.db";
-        destinationDir = "/var/lib/vikunja-backup/latest";
-      };
-    };
   };
 
   host.backups.jobs.beast = {

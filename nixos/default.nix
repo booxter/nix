@@ -55,6 +55,7 @@ in
       ./_mixins/uptimerobot-sync
       ./_mixins/ups
       ./_mixins/user
+      ./_mixins/vikunja
       ./_mixins/video-acceleration.nix
       ./_mixins/vm.nix
       ./_mixins/yubi.nix
