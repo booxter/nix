@@ -6,6 +6,7 @@ let
   hostInventory = import ../inv { lib = pkgs.lib; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
+  ssoProviderHost = hostInventory.realms.home.services.sso.providerHost;
   wireguardGatewaySshHost = wgHome.gateway.host;
   appPackages = import ./packages.nix pkgs;
 
@@ -115,7 +116,9 @@ let
   seerrRequestStoragePackage = appPackages.seerr-request-storage;
   seerrUpdateUserTagsPackage = appPackages.seerr-update-user-tags;
   pkiRotationPackage = pkgs.pki-rotation;
-  resetOidc = pkgs.callPackage ../nixos/pki/pkgs/kanidm-tools { };
+  resetOidc = pkgs.callPackage ../nixos/_mixins/sso/packages/kanidm-tools {
+    defaultTarget = ssoProviderHost;
+  };
   wgHomeClientConfig = fleetTools;
 in
 {
@@ -155,7 +158,7 @@ in
     "pki-rotation" =
       appSpec "${pkiRotationPackage}/bin/pki-rotation" "Inspect repo-managed internal PKI certificates and export rotation status.";
     "reset-oidc" =
-      appSpec "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through pki.";
+      appSpec "${resetOidc}/bin/reset-oidc" "Send a Kanidm OIDC credential reset email through the realm provider.";
     "join-media-parts" =
       appSpec "${pkgs.join-media-parts}/bin/join-media-parts" "Join ordered TS/MP4/MKV media parts into one file.";
     "hba-flash" =

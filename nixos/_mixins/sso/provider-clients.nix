@@ -2,9 +2,12 @@
   lib,
   outputs,
   providerHost,
+  realm,
 }:
 let
-  consumerConfigurations = removeAttrs outputs.nixosConfigurations [ providerHost ];
+  consumerConfigurations = lib.filterAttrs (
+    hostName: host: hostName != providerHost && host.config.host.realm == realm
+  ) outputs.nixosConfigurations;
   contributions = lib.concatLists (
     lib.mapAttrsToList (
       hostName: host:

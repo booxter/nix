@@ -1,10 +1,12 @@
 {
   clippy,
+  defaultTarget,
   lib,
   openssh,
   rustfmt,
   rustPlatform,
 }:
+assert lib.assertMsg (defaultTarget != "") "Kanidm tools require an SSO provider target";
 rustPlatform.buildRustPackage {
   pname = "kanidm-tools";
   version = "0.1.0";
@@ -21,6 +23,7 @@ rustPlatform.buildRustPackage {
   cargoHash = "sha256-wqe6mr0e2tLijyBULreIZ3CiP5+GiONYuzMWVbRB0J4=";
 
   RESET_OIDC_SSH = lib.getExe openssh;
+  RESET_OIDC_DEFAULT_TARGET = defaultTarget;
 
   nativeCheckInputs = [
     clippy
@@ -34,7 +37,7 @@ rustPlatform.buildRustPackage {
   cargoTestFlags = [ "--all-targets" ];
 
   meta = {
-    description = "Administrative Kanidm tools for the PKI host";
+    description = "Administrative tools for the realm Kanidm provider";
     license = lib.licenses.mit;
     mainProgram = "reset-oidc";
     platforms = lib.platforms.unix;

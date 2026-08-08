@@ -15,6 +15,10 @@ pub mod mail_sender_config;
 const PROTOCOL_VERSION: u8 = 1;
 const TTL_SECONDS: u64 = 86_400;
 const REMOTE_PROGRAM: &str = "/run/current-system/sw/bin/reset-oidc-server";
+const DEFAULT_TARGET: &str = match option_env!("RESET_OIDC_DEFAULT_TARGET") {
+    Some(target) => target,
+    None => "",
+};
 const SSH_PROGRAM: &str = match option_env!("RESET_OIDC_SSH") {
     Some(path) => path,
     None => "ssh",
@@ -23,7 +27,7 @@ const SSH_PROGRAM: &str = match option_env!("RESET_OIDC_SSH") {
 #[derive(Debug, Parser)]
 #[command(
     version,
-    about = "Send a Kanidm OIDC credential reset email through pki",
+    about = "Send a Kanidm OIDC credential reset email through the realm provider",
     after_help = "Examples:\n  reset-oidc alice\n  reset-oidc bob"
 )]
 pub struct ClientArgs {
@@ -39,7 +43,7 @@ pub struct ClientArgs {
     #[arg(
         long,
         env = "RESET_OIDC_SSH_TARGET",
-        default_value = "pki",
+        default_value = DEFAULT_TARGET,
         hide_env_values = true,
         value_parser = ssh_target
     )]
@@ -198,7 +202,7 @@ mod tests {
     use anyhow::{bail, Result};
     use clap::{error::ErrorKind, Parser};
 
-    use super::{run_client, run_server, ClientArgs, ResetRequest, ResetTransport};
+    use super::{run_client, run_server, ClientArgs, ResetRequest, ResetTransport, DEFAULT_TARGET};
 
     #[derive(Default)]
     struct FakeTransport {
@@ -225,7 +229,7 @@ mod tests {
 
         assert_eq!(arguments.user_id, "alice");
         assert_eq!(arguments.email.as_deref(), Some("alice@example.com"));
-        assert_eq!(arguments.target, "pki");
+        assert_eq!(arguments.target, DEFAULT_TARGET);
     }
 
     #[test]

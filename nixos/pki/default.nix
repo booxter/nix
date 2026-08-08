@@ -51,7 +51,6 @@ in
 
   imports = [
     ./backup.nix
-    ./id.nix
     ./wg-home-dns-sync.nix
   ];
 

@@ -6,16 +6,11 @@
 let
   backup = hostInventory.backups;
   backupClient = backup.clients.${config.networking.hostName};
-  kanidmBackupDir = "/var/lib/kanidm/backups";
   stepStateDir = "/var/lib/step-ca";
   resticPasswordSecret = "backup/restic/local/password";
   resticSshKeySecret = "backup/restic/local/ssh/privateKey";
 in
 {
-  systemd.tmpfiles.rules = [
-    "d ${kanidmBackupDir} 0700 kanidm kanidm - -"
-  ];
-
   sops.secrets = {
     ${resticPasswordSecret} = { };
     ${resticSshKeySecret} = {
@@ -27,10 +22,7 @@ in
 
   host.backups.jobs.beast = {
     title = "Restic To Beast";
-    paths = [
-      kanidmBackupDir
-      stepStateDir
-    ];
+    paths = [ stepStateDir ];
     timerConfig = {
       OnCalendar = "04:45";
       RandomizedDelaySec = "5m";
