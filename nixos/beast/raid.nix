@@ -88,30 +88,6 @@ in
     };
   };
 
-  systemd.services.beast-hba-export = {
-    description = "Export beast HBA metrics for node exporter";
-    after = [ "local-fs.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = lib.escapeShellArgs [
-        (lib.getExe beastPkgs.storage-observability)
-        "--bay-map"
-        "/etc/beast-hba-bay-map.json"
-        "--output-file"
-        "${textfileDir}/hba.prom"
-      ];
-    };
-  };
-
-  systemd.timers.beast-hba-export = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-      OnBootSec = "45s";
-      OnUnitActiveSec = "1min";
-      Unit = "beast-hba-export.service";
-    };
-  };
-
   systemd.tmpfiles.rules = [
     "d ${textfileDir} 0755 root root - -"
   ];
