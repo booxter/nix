@@ -10,11 +10,29 @@
 let
   realmProxmox = hostInventory.realms.${config.host.realm}.services.proxmox or null;
   clusters = if realmProxmox == null then { } else realmProxmox.clusters;
+  realmClusterNames = builtins.attrNames clusters;
   clusterNames = builtins.attrNames (
     lib.filterAttrs (_: cluster: builtins.elem hostSpec.name cluster.nodes) clusters
   );
   clusterName = if builtins.length clusterNames == 1 then builtins.head clusterNames else null;
   isVM = hostSpec.isVM or false;
+  requestedProxNode = hostSpec.proxNode or null;
+  vmClusterNames =
+    if requestedProxNode == null then
+      realmClusterNames
+    else
+      builtins.attrNames (
+        lib.filterAttrs (_: cluster: builtins.elem requestedProxNode cluster.nodes) clusters
+      );
+  vmClusterName = if builtins.length vmClusterNames == 1 then builtins.head vmClusterNames else null;
+  vmCluster = if vmClusterName == null then null else clusters.${vmClusterName};
+  proxNode =
+    if requestedProxNode != null then
+      requestedProxNode
+    else if vmCluster != null then
+      vmCluster.defaultVmNode
+    else
+      "";
   bridgeName = "vmbr0";
   macAddress = hostSpec.macAddress or null;
   cores = hostSpec.cores or 4;
@@ -55,6 +73,16 @@ in
           {
             assertion = builtins.length clusterNames <= 1;
             message = "host ${hostSpec.name} may belong to at most one Proxmox cluster";
+          }
+        ]
+        ++ lib.optionals isVM [
+          {
+            assertion = vmCluster != null;
+            message =
+              if requestedProxNode == null then
+                "VM ${hostSpec.name} requires exactly one Proxmox cluster in realm ${config.host.realm}"
+              else
+                "VM ${hostSpec.name} proxNode ${requestedProxNode} must belong to exactly one Proxmox cluster in realm ${config.host.realm}";
           }
         ]
         ++ lib.concatLists (
@@ -155,7 +183,7 @@ in
       virtualisation.proxmox = {
         inherit cores;
         name = hostSpec.name;
-        node = hostSpec.proxNode or "prx1-lab";
+        node = proxNode;
         autoInstall = true;
         memory = memorySize * 1024;
         balloon = if balloonSize == null then null else balloonSize * 1024;

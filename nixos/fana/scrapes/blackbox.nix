@@ -11,10 +11,10 @@ let
   lan = hostInventory.site.lan;
   realmName = config.host.realm;
   realmObservability = hostInventory.realms.${realmName}.services.observability;
+  realmProxmox = hostInventory.realms.${realmName}.services.proxmox;
   blackboxServerHost = realmObservability.serverHost;
   blackboxProbeSourceNames = realmObservability.blackbox.sourceHosts;
   blackboxServices = builtins.filter (service: service.blackboxProbe) hostInventory.services;
-  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
   httpsUrlFor = host: port: "https://${host}${lib.optionalString (port != 443) ":${toString port}"}/";
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   publicWanHost = beastHostConfig.host.externalService.ddns.hostname;
@@ -114,11 +114,12 @@ let
   usesHttpMtls = builtins.any (service: (service.blackboxModule or null) == "http_service_mtls") (
     serviceHttpProbeCatalog
   );
-  proxmoxLabNodeNames = builtins.filter (
-    name:
-    (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
-    && (outputs.nixosConfigurations.${name}.config.host.proxmox.apiCertificate.enable or false)
-  ) nixosConfigNames;
+  proxmoxNodeNames = lib.unique (
+    lib.concatMap (cluster: cluster.nodes) (builtins.attrValues realmProxmox.clusters)
+  );
+  proxmoxApiNodeNames = builtins.filter (
+    name: outputs.nixosConfigurations.${name}.config.host.proxmox.apiCertificate.enable
+  ) proxmoxNodeNames;
   proxmoxServiceCatalog = map (
     name:
     let
@@ -133,7 +134,7 @@ let
       probeUrl = url;
       inherit url;
     }
-  ) proxmoxLabNodeNames;
+  ) proxmoxApiNodeNames;
   manualTlsServiceCatalog = [
     {
       id = "unifi";

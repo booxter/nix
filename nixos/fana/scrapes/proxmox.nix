@@ -1,16 +1,20 @@
 {
+  config,
   hostInventory,
+  lib,
   outputs,
   prometheusMtlsTlsConfig,
 }:
 let
-  nixosConfigNames = map (spec: spec.name) hostInventory.nixosHostSpecs;
-  proxmoxLabNodeNames = builtins.filter (
-    name:
-    (outputs.nixosConfigurations.${name}.config.host.isProxmox or false)
-    && (outputs.nixosConfigurations.${name}.config.host.proxmox.prometheusExporter.enable or false)
-  ) nixosConfigNames;
-  proxmoxClusterScrapeNodeName = "prx1-lab";
+  realmProxmox = hostInventory.realms.${config.host.realm}.services.proxmox;
+  clusters = builtins.attrValues realmProxmox.clusters;
+  proxmoxNodeNames = lib.unique (lib.concatMap (cluster: cluster.nodes) clusters);
+  exporterNodeNames = builtins.filter (
+    name: outputs.nixosConfigurations.${name}.config.host.proxmox.prometheusExporter.enable
+  ) proxmoxNodeNames;
+  monitoringNodeNames = map (cluster: cluster.monitoringNode) (
+    builtins.filter (cluster: cluster ? monitoringNode) clusters
+  );
   mkProxmoxPveTargetConfig =
     name:
     let
@@ -25,8 +29,8 @@ let
       };
       targets = [ "${name}:${toString endpoint.port}" ];
     };
-  proxmoxPveTargetConfigs = map mkProxmoxPveTargetConfig proxmoxLabNodeNames;
-  proxmoxClusterTargetConfigs = [ (mkProxmoxPveTargetConfig proxmoxClusterScrapeNodeName) ];
+  proxmoxPveTargetConfigs = map mkProxmoxPveTargetConfig exporterNodeNames;
+  proxmoxClusterTargetConfigs = map mkProxmoxPveTargetConfig monitoringNodeNames;
   proxmoxPveRelabelConfigs = [
     {
       source_labels = [ "pve_target" ];
@@ -35,6 +39,13 @@ let
   ];
 in
 {
+  assertions = [
+    {
+      assertion = lib.all (name: builtins.elem name exporterNodeNames) monitoringNodeNames;
+      message = "Each Proxmox monitoring node must enable the Prometheus exporter";
+    }
+  ];
+
   scrapeConfigs = [
     {
       job_name = "proxmox-pve-cluster";

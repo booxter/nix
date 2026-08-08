@@ -45,7 +45,9 @@ let
   };
   proxmoxScrapes = import ./scrapes/proxmox.nix {
     inherit
+      config
       hostInventory
+      lib
       outputs
       prometheusMtlsTlsConfig
       ;
@@ -77,7 +79,7 @@ let
   prometheusRetention = "${toString retentionDays}d";
 in
 {
-  assertions = nodeScrapes.assertions ++ blackboxScrapes.assertions;
+  assertions = nodeScrapes.assertions ++ blackboxScrapes.assertions ++ proxmoxScrapes.assertions;
 
   host.observability.blackbox = {
     modules = blackboxScrapes.modules;
