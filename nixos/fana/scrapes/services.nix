@@ -7,6 +7,10 @@ let
   beastHostConfig = outputs.nixosConfigurations.beast.config;
   beastPrometheusEndpoints = beastHostConfig.host.observability.prometheusEndpoints;
   beastTargetHost = hostInventory.nixosHosts.beast.name;
+  jellyfinService = hostInventory.servicesById.jellyfin;
+  jellyfinHostConfig = outputs.nixosConfigurations.${jellyfinService.owner}.config;
+  jellyfinEndpoint = jellyfinHostConfig.host.observability.prometheusEndpoints.jellyfin;
+  jellyfinTargetHost = hostInventory.nixosHosts.${jellyfinService.owner}.name;
   lolekEndpoint = beastPrometheusEndpoints.lolek;
   homeHostConfig = outputs.nixosConfigurations.home.config;
   homeTargetHost = hostInventory.nixosHosts.home.name;
@@ -42,9 +46,9 @@ in
       static_configs = [
         {
           targets = [
-            "${beastTargetHost}:${toString beastPrometheusEndpoints.jellyfin.port}"
+            "${jellyfinTargetHost}:${toString jellyfinEndpoint.port}"
           ];
-          labels.instance = "beast";
+          labels.instance = jellyfinService.owner;
         }
       ];
     }

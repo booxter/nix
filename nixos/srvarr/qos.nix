@@ -6,11 +6,14 @@
 }:
 let
   tuning = config.host.srvarrTuning;
-  beastNfsAddress = hostInventory.dhcpReservationsByHostname.beast.ip;
-  beastHostConfig = outputs.nixosConfigurations.beast.config;
-  beastJellyfinEndpoint = beastHostConfig.host.observability.prometheusEndpoints.jellyfin;
-  beastNfsPort = beastHostConfig.services.nfs.settings.nfsd.port;
-  beastNfsRateMbit = 1500;
+  mediaExport = hostInventory.storage.nfs.exports.media;
+  nfsServerConfig = outputs.nixosConfigurations.${mediaExport.server}.config;
+  nfsServerAddress = hostInventory.dhcpReservationsByHostname.${mediaExport.server}.ip;
+  nfsServerPort = nfsServerConfig.services.nfs.settings.nfsd.port;
+  nfsRateMbit = 1500;
+  jellyfinService = hostInventory.servicesById.jellyfin;
+  jellyfinHostConfig = outputs.nixosConfigurations.${jellyfinService.owner}.config;
+  jellyfinEndpoint = jellyfinHostConfig.host.observability.prometheusEndpoints.jellyfin;
   wgEndpointPort = 1637;
   jellyfinClientName = "jellyfin-upload-policy";
   jellyfinClient = config.host.internalPki.clients.${jellyfinClientName};
@@ -20,7 +23,7 @@ in
     enable = true;
     fallbackRateMbit = tuning.wgConservativeUploadRateMbit;
     source.jellyfin = {
-      exporterUrl = "https://${beastHostConfig.networking.hostName}:${toString beastJellyfinEndpoint.port}${beastJellyfinEndpoint.path}";
+      exporterUrl = "https://${jellyfinHostConfig.networking.hostName}:${toString jellyfinEndpoint.port}${jellyfinEndpoint.path}";
       mtls = {
         enable = true;
         certificateFile =
@@ -55,11 +58,11 @@ in
     device = "ens18";
     limits = {
       nfs = {
-        rateMbit = beastNfsRateMbit;
+        rateMbit = nfsRateMbit;
         match = {
           protocol = "tcp";
-          destinationAddress = beastNfsAddress;
-          destinationPort = beastNfsPort;
+          destinationAddress = nfsServerAddress;
+          destinationPort = nfsServerPort;
         };
       };
       wireguard-download = {
