@@ -10,7 +10,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/booxter/nix-config/backup-server-tools/internal/btrfsmaint"
+	"github.com/booxter/nix-config/btrfs-maintenance/internal/btrfsmaint"
 )
 
 func runEnsureSubvolume(ctx context.Context, arguments []string, stderr io.Writer) error {

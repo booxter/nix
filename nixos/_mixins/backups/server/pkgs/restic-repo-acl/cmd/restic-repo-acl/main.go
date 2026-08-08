@@ -8,7 +8,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/booxter/nix-config/backup-server-tools/internal/repoacl"
+	"github.com/booxter/nix-config/restic-repo-acl/internal/repoacl"
 )
 
 func run(arguments []string, stderr io.Writer) error {

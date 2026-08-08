@@ -26,7 +26,7 @@ in
       ./_mixins/auto-upgrade
       ./_mixins/avahi
       ./_mixins/backups
-      ./_mixins/btrfs.nix
+      ./_mixins/btrfs
       ./_mixins/builder.nix
       ./_mixins/ethernet-pause.nix
       ./_mixins/external-service.nix

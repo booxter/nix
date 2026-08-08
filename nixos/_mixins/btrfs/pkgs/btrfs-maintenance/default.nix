@@ -3,16 +3,13 @@
   lib,
 }:
 buildGoModule {
-  pname = "backup-server-tools";
+  pname = "btrfs-maintenance";
   version = "0.1.0";
 
   src = ./.;
   vendorHash = null;
 
-  subPackages = [
-    "cmd/btrfs-maintenance"
-    "cmd/restic-repo-acl"
-  ];
+  subPackages = [ "cmd/btrfs-maintenance" ];
 
   preCheck = ''
     test -z "$(gofmt -l cmd internal)"
@@ -25,8 +22,9 @@ buildGoModule {
   '';
 
   meta = {
-    description = "Native maintenance tools for the Beast backup server";
+    description = "Maintain Btrfs scrubs and snapshot subvolumes";
     license = lib.licenses.mit;
+    mainProgram = "btrfs-maintenance";
     platforms = lib.platforms.linux;
   };
 }

@@ -8,7 +8,7 @@
 let
   cfg = config.host.backups.server;
   inherit (utils.systemdUtils.unitOptions) unitOption;
-  backupServerTools = pkgs.callPackage ./server/pkgs/backup-server-tools { };
+  resticRepoAcl = pkgs.callPackage ./server/pkgs/restic-repo-acl { };
   resticTools = pkgs.callPackage ./server/pkgs/restic-tools {
     atomicFileWrites = pkgs.atomic-file-writes;
   };
@@ -330,7 +330,7 @@ in
           unitConfig.RequiresMountsFor = cfg.repositoryRoot;
           serviceConfig = {
             Type = "oneshot";
-            ExecStart = command (lib.getExe' backupServerTools "restic-repo-acl") [
+            ExecStart = command (lib.getExe resticRepoAcl) [
               "--config"
               (aclConfig name)
             ];

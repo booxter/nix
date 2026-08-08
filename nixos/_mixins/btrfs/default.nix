@@ -8,7 +8,7 @@
 let
   cfg = config.services.btrfs.autoScrub;
   resumeCfg = cfg.resumeInterrupted;
-  maintenancePackage = pkgs.callPackage ./backups/server/pkgs/backup-server-tools { };
+  maintenancePackage = pkgs.callPackage ./pkgs/btrfs-maintenance { };
   maintenance = lib.getExe' maintenancePackage "btrfs-maintenance";
   btrfs = lib.getExe pkgs.btrfs-progs;
 
