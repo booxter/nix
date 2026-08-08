@@ -94,8 +94,8 @@ in
     ]
     ++ lib.optionals cfg.soulseek.enable [
       {
-        assertion = config.services.slskd.enable;
-        message = "Aurral's Soulseek integration requires slskd on the same host.";
+        assertion = config.host.slskd.enable;
+        message = "Aurral's Soulseek integration requires an inventory-assigned slskd instance on the same host.";
       }
       {
         assertion = config.systemd.services.slskd.vpnConfinement.enable;

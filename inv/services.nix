@@ -181,11 +181,14 @@
     }
     {
       id = "slskd";
-      instances.srvarr.vpnConfinement = {
-        profile = "airvpn";
-        forwardedPort = {
-          port = 13869;
-          protocol = "tcp";
+      instances.srvarr = {
+        mediaDir = "/data/media";
+        vpnConfinement = {
+          profile = "airvpn";
+          forwardedPort = {
+            port = 13869;
+            protocol = "tcp";
+          };
         };
       };
     }

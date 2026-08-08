@@ -15,7 +15,6 @@
     ./paths.nix
     ./qos.nix
     ./sabnzbd.nix
-    ./slskd.nix
     ./transmission.nix
     ./tuning.nix
   ];

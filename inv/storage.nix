@@ -177,6 +177,7 @@ in
         "radarr"
         "romm"
         "shelfmark"
+        "slskd"
         "sonarr"
         "watchstate"
       ];

@@ -19,6 +19,7 @@
     ./romm
     ./seerr
     ./shelfmark
+    ./slskd
     ./sonarr
     ./vikunja
     ./watchstate
