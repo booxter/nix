@@ -18,6 +18,8 @@ let
   payloadHash = builtins.hashString "sha256" (builtins.toJSON cfg.environment);
 in
 {
+  imports = [ ./wireguard-dns.nix ];
+
   options.services.unifi-sync = {
     enable = lib.mkOption {
       type = lib.types.bool;

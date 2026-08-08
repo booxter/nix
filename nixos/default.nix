@@ -42,6 +42,7 @@ in
       ./_mixins/nfs
       ./_mixins/observability
       ./_mixins/paperless-storage.nix
+      ./_mixins/pki
       ./_mixins/proxmox
       ./_mixins/public-ingress.nix
       ./_mixins/qos

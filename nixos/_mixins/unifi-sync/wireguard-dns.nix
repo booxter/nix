@@ -1,0 +1,95 @@
+{
+  config,
+  hostInventory,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.services.unifi-sync;
+  internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
+  unifiSyncPackage = pkgs.callPackage ./package { };
+  package = pkgs.callPackage ./wireguard-dns/package { unifiSync = unifiSyncPackage; };
+  lan = hostInventory.site.lan;
+  wgHome = hostInventory.site.wireguard.home;
+  wgHomeExporterPort = 9586;
+  wgHomeExporterHost = "gw.${lan.domain}";
+  wgHomeDnsSyncClientSecretPrefix = "prometheus/clients/wg-home-dns-sync";
+  wgHomeDnsSyncClient = config.host.internalPki.clients."wg-home-dns-sync";
+  wgHomeDnsPeers = lib.mapAttrsToList (name: peer: {
+    inherit name;
+    address = builtins.head (lib.splitString "/" peer.address);
+    domain = "${peer.host}.${lan.domain}";
+    inherit (peer) publicKey;
+  }) (lib.filterAttrs (_name: peer: peer ? host) wgHome.peers);
+  wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
+in
+{
+  config = lib.mkIf cfg.enable {
+    sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
+    sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
+
+    host.internalPki.clients."wg-home-dns-sync" = {
+      enable = true;
+      category = "observability";
+      secretPrefix = wgHomeDnsSyncClientSecretPrefix;
+      materializations.default = {
+        owner = cfg.user;
+        group = cfg.group;
+        restartUnits = [ "wg-home-dns-sync.service" ];
+      };
+    };
+
+    systemd.services.wg-home-dns-sync = {
+      description = "Sync home WireGuard peer DNS overrides to UniFi";
+      wants = [
+        "network-online.target"
+        "sops-install-secrets.service"
+      ];
+      after = [
+        "network-online.target"
+        "sops-install-secrets.service"
+      ];
+      environment = {
+        inherit (cfg.environment) UNIFI_BASE_URL UNIFI_SITE;
+      };
+      serviceConfig = {
+        Type = "oneshot";
+        User = cfg.user;
+        Group = cfg.group;
+        EnvironmentFile = config.sops.templates."unifi-sync.env".path;
+        ExecStart = "${lib.getExe package} --status-url https://${wgHomeExporterHost}:${toString wgHomeExporterPort}/metrics --ca-file ${internalPkiRootCaPath} --client-cert-file ${
+          config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.certificateSecretName}.path
+        } --client-key-file ${
+          config.sops.secrets.${wgHomeDnsSyncClient.materializations.default.keySecretName}.path
+        } --handshake-max-age-seconds 180 --peers-json-file ${wgHomeDnsPeersFile}";
+        NoNewPrivileges = true;
+        PrivateTmp = true;
+        ProtectHome = true;
+        ProtectSystem = "strict";
+        ProtectControlGroups = true;
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        RestrictAddressFamilies = [
+          "AF_UNIX"
+          "AF_INET"
+          "AF_INET6"
+        ];
+        RestrictSUIDSGID = true;
+        SystemCallArchitectures = "native";
+      };
+    };
+
+    systemd.timers.wg-home-dns-sync = {
+      description = "Periodically sync home WireGuard peer DNS overrides";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnBootSec = "2m";
+        OnUnitActiveSec = "1m";
+        RandomizedDelaySec = "10s";
+        Persistent = true;
+        Unit = "wg-home-dns-sync.service";
+      };
+    };
+  };
+}
