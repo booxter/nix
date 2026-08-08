@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-foundation-sdk/go/loki"
 	"github.com/grafana/grafana-foundation-sdk/go/prometheus"
 	"github.com/grafana/grafana-foundation-sdk/go/stat"
+	"github.com/grafana/grafana-foundation-sdk/go/statetimeline"
 	"github.com/grafana/grafana-foundation-sdk/go/timeseries"
 	"github.com/grafana/grafana-foundation-sdk/go/units"
 )
@@ -87,13 +88,15 @@ func exactValueMapping(values map[string]dashboard.ValueMappingResult) dashboard
 }
 
 func applicationMetric(metric, service string, matchers ...string) string {
-	labels := []string{`scrape_profile="application"`, fmt.Sprintf("service=%q", service)}
-	labels = append(labels, matchers...)
-	return fmt.Sprintf("%s{%s}", metric, strings.Join(labels, ","))
+	return profileMetric(metric, "application", append([]string{fmt.Sprintf("service=%q", service)}, matchers...)...)
 }
 
 func nodeMetric(metric string, matchers ...string) string {
-	labels := append([]string{`scrape_profile="node"`}, matchers...)
+	return profileMetric(metric, "node", matchers...)
+}
+
+func profileMetric(metric, profile string, matchers ...string) string {
+	labels := append([]string{fmt.Sprintf("scrape_profile=%q", profile)}, matchers...)
 	return fmt.Sprintf("%s{%s}", metric, strings.Join(labels, ","))
 }
 
@@ -288,6 +291,33 @@ func timeSeries(options TimeseriesOptions) *timeseries.PanelBuilder {
 		panel.WithTarget(lokiQuery(target.RefID, target.Expression, target.Legend, options.DataSource))
 	}
 	return panel
+}
+
+type StateTimelineOptions struct {
+	ID         uint32
+	Title      string
+	Expression string
+	Legend     string
+	Grid       dashboard.GridPos
+	DataSource common.DataSourceRef
+}
+
+func stateTimeline(options StateTimelineOptions) *statetimeline.PanelBuilder {
+	return statetimeline.NewPanelBuilder().
+		Id(options.ID).
+		Title(options.Title).
+		Datasource(options.DataSource).
+		GridPos(options.Grid).
+		Mappings([]dashboard.ValueMapping{availabilityMapping()}).
+		Thresholds(redToGreenThreshold(1)).
+		MergeValues(true).
+		RowHeight(0.9).
+		ShowValue(common.VisibilityModeAuto).
+		Legend(common.NewVizLegendOptionsBuilder().
+			DisplayMode(common.LegendDisplayModeList).
+			Placement(common.LegendPlacementBottom).
+			ShowLegend(false)).
+		WithTarget(prometheusQuery("A", options.Expression, options.Legend, false))
 }
 
 type panelPlacement struct {

@@ -8,7 +8,7 @@ buildGoModule {
 
   src = ./.;
 
-  vendorHash = "sha256-2ZSlZYm0/mR9pfFU+YY0PeLB1HxR6/57/xK9JF74R5E=";
+  vendorHash = "sha256-dfaRNSlE9+CDVYOrfOez5Idv3vyg6xWCSLhIYKdXq/I=";
 
   subPackages = [ "cmd/grafana-dashboards" ];
 
