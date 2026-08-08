@@ -35,6 +35,7 @@ in
       ./_mixins/ethernet-pause.nix
       ./_mixins/external-service.nix
       ./_mixins/firmware
+      ./_mixins/grafana
       ./_mixins/gpu
       ./_mixins/home-assistant
       ./_mixins/internal-https-service.nix

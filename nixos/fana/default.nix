@@ -4,7 +4,6 @@
 }:
 {
   imports = [
-    ./grafana
     ./loki.nix
     ./monitoring
     ./prometheus.nix
