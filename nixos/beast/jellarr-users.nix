@@ -4,10 +4,11 @@
   ...
 }:
 let
+  jellyfin = config.services.jellyfin;
   passwordSecret = name: "jellyfin/users/${lib.toLower name}/password";
   secretFile = {
-    owner = "jellyfin";
-    group = "jellyfin";
+    owner = jellyfin.user;
+    inherit (jellyfin) group;
     mode = "0400";
   };
   users = [
