@@ -7,8 +7,6 @@
 }:
 let
   cfg = config.host.observability.nixosUpgrade;
-  textfileCollectorHandledByOtherMixin = config.host.observability.lanWan.enable;
-  textfileCollectorNeeded = cfg.exportToNodeExporter && !textfileCollectorHandledByOtherMixin;
   writeSuccessMetric = utils.escapeSystemdExecArgs [
     (lib.getExe autoUpgradeTools)
     "write-success-metric"
@@ -28,7 +26,7 @@ in
 
     textfileDir = lib.mkOption {
       type = lib.types.str;
-      default = "/var/lib/prometheus-node-exporter-textfile";
+      default = config.host.observability.nodeExporter.textfile.directory;
       description = "Directory used for the node exporter textfile metric.";
     };
   };
@@ -41,12 +39,9 @@ in
       };
     }
     (lib.mkIf cfg.enable {
-      systemd.services.nixos-upgrade.serviceConfig.ExecStartPost = "${writeSuccessMetric}";
+      host.observability.nodeExporter.textfile.enable = cfg.exportToNodeExporter;
 
-      services.prometheus.exporters.node = lib.mkIf textfileCollectorNeeded {
-        enabledCollectors = [ "textfile" ];
-        extraFlags = [ "--collector.textfile.directory=${cfg.textfileDir}" ];
-      };
+      systemd.services.nixos-upgrade.serviceConfig.ExecStartPost = "${writeSuccessMetric}";
 
       systemd.tmpfiles.rules =
         lib.optional cfg.exportToNodeExporter "d ${cfg.textfileDir} 0755 root root - -"

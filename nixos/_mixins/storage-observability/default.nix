@@ -17,7 +17,7 @@ let
 
   atomicFileWrites = pkgs.python3Packages.callPackage ../../../pkgs/atomic-file-writes { };
   package = pkgs.callPackage ./package { inherit atomicFileWrites; };
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = config.host.observability.nodeExporter.textfile.directory;
   bayMapName = "disk-bay-map.json";
   bayMapPath = "/etc/${bayMapName}";
   diskBayExportCommand = utils.escapeSystemdExecArgs [
@@ -101,7 +101,7 @@ in
 
   config = lib.mkMerge [
     (lib.mkIf exporterEnabled {
-      services.prometheus.exporters.node.enabledCollectors = [ "textfile" ];
+      host.observability.nodeExporter.textfile.enable = true;
       systemd.tmpfiles.rules = [
         "d ${textfileDir} 0755 root root - -"
       ];
@@ -129,15 +129,25 @@ in
       onBootSec = "45s";
     }))
 
-    (lib.mkIf mdEnabled (exporter {
-      command = lib.escapeShellArgs [
-        (lib.getExe' package "storage-md-metrics")
-        "--output-file"
-        "${textfileDir}/md-sync.prom"
-      ];
-      description = "Export md sync status for node exporter";
-      name = "storage-md-export";
-      onBootSec = "30s";
-    }))
+    (lib.mkIf mdEnabled (
+      lib.mkMerge [
+        {
+          # node_exporter 1.10.x cannot parse md raid_disks values like
+          # "11 (10)" during reshape. The custom textfile exporter retains md
+          # visibility without the broken built-in collector.
+          services.prometheus.exporters.node.extraFlags = [ "--no-collector.mdadm" ];
+        }
+        (exporter {
+          command = lib.escapeShellArgs [
+            (lib.getExe' package "storage-md-metrics")
+            "--output-file"
+            "${textfileDir}/md-sync.prom"
+          ];
+          description = "Export md sync status for node exporter";
+          name = "storage-md-export";
+          onBootSec = "30s";
+        })
+      ]
+    ))
   ];
 }

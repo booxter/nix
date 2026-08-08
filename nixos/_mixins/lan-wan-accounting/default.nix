@@ -8,7 +8,7 @@
 }:
 let
   cfg = config.host.observability.lanWan;
-  textfileDir = "/var/lib/prometheus-node-exporter-textfile";
+  textfileDir = config.host.observability.nodeExporter.textfile.directory;
   tableName = "observability_lan_wan";
   interfacePathMode = cfg.mode == "interface-path";
   wanSubclassEnabled = cfg.wanUdpSubclass != null;
@@ -164,10 +164,7 @@ in
       };
     }
     (lib.mkIf cfg.enable {
-      services.prometheus.exporters.node = {
-        enabledCollectors = [ "textfile" ];
-        extraFlags = [ "--collector.textfile.directory=${textfileDir}" ];
-      };
+      host.observability.nodeExporter.textfile.enable = true;
 
       systemd.tmpfiles.rules = [
         "d ${textfileDir} 0755 root root - -"

@@ -35,6 +35,7 @@ in
       ./_mixins/jellyfin
       ./_mixins/lan-wan-accounting
       ./_mixins/lolek
+      ./_mixins/md-raid.nix
       ./_mixins/nix
       ./_mixins/nfs
       ./_mixins/observability

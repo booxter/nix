@@ -1,6 +1,5 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }:
@@ -9,13 +8,6 @@ let
   smartctlExporterPort = 9633;
 in
 {
-  # Assemble the existing RAID6 array from the previous NAS.
-  # Auto-assembly should work; add explicit mdadm config only if needed.
-  boot.swraid.enable = true;
-  boot.swraid.mdadmConf = "PROGRAM ${pkgs.util-linux}/bin/logger -t mdadm-monitor";
-  # Keep md reshape/recovery background I/O gentle so media serving stays responsive.
-  boot.kernel.sysctl."dev.raid.speed_limit_max" = 20000;
-
   # Local disk health monitoring (logs to journal; email relay can be added later).
   services.smartd = {
     enable = true;
@@ -53,21 +45,9 @@ in
     upstream = "http://127.0.0.1:${toString smartctlExporterInternalPort}/metrics";
   };
 
-  services.prometheus.exporters.node = {
-    enabledCollectors = lib.mkForce [
-      "processes"
-      "systemd"
-      "textfile"
-    ];
-    # node_exporter 1.10.x cannot parse md raid_disks values like "11 (10)"
-    # during reshape, so keep md visibility on this host through our custom
-    # textfile exporter instead of the built-in mdadm collector.
-    extraFlags = [ "--no-collector.mdadm" ];
-  };
   environment.systemPackages = with pkgs; [
     hdparm
     lm_sensors
-    mdadm
     nvme-cli
     smartmontools
   ];
