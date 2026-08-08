@@ -4,7 +4,6 @@
 }:
 {
   imports = [
-    ./loki.nix
     ./monitoring
     ./prometheus.nix
   ];

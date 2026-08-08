@@ -43,6 +43,7 @@ in
       ./_mixins/lan-wan-accounting
       ./_mixins/llm
       ./_mixins/lolek
+      ./_mixins/loki.nix
       ./_mixins/md-raid.nix
       ./_mixins/media-storage.nix
       ./_mixins/netboot.nix
