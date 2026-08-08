@@ -59,6 +59,85 @@ in
       description = "Desktop environment selected by the host inventory.";
     };
 
+    display = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.submodule {
+          options = {
+            kvm = lib.mkOption {
+              type = lib.types.str;
+              description = "Shared KVM providing this host's external displays.";
+            };
+
+            drmCard = lib.mkOption {
+              type = with lib.types; nullOr str;
+              default = null;
+              description = "DRM card connected to the shared displays.";
+            };
+
+            scale = lib.mkOption {
+              type = with lib.types; nullOr number;
+              default = null;
+              description = "Logical scale used for the shared displays.";
+            };
+
+            primary = lib.mkOption {
+              type = with lib.types; nullOr str;
+              default = null;
+              description = "Primary monitor in the shared KVM setup.";
+            };
+
+            monitors = lib.mkOption {
+              type = lib.types.attrsOf (
+                lib.types.submodule {
+                  options = {
+                    connector = lib.mkOption {
+                      type = with lib.types; nullOr str;
+                      default = null;
+                      description = "Host display connector attached to this monitor.";
+                    };
+
+                    nativeMode = {
+                      width = lib.mkOption {
+                        type = lib.types.ints.positive;
+                        description = "Native monitor width in pixels.";
+                      };
+
+                      height = lib.mkOption {
+                        type = lib.types.ints.positive;
+                        description = "Native monitor height in pixels.";
+                      };
+
+                      refreshRate = lib.mkOption {
+                        type = lib.types.number;
+                        description = "Native monitor refresh rate in hertz.";
+                      };
+                    };
+
+                    position = {
+                      x = lib.mkOption {
+                        type = lib.types.int;
+                        description = "Logical horizontal monitor position.";
+                      };
+
+                      y = lib.mkOption {
+                        type = lib.types.int;
+                        description = "Logical vertical monitor position.";
+                      };
+                    };
+                  };
+                }
+              );
+              description = "Shared monitors with host-specific connector mappings.";
+            };
+          };
+        }
+      );
+      default = hostInventory.displaysByHost.${hostname} or null;
+      readOnly = true;
+      internal = true;
+      description = "Display setup derived from shared KVM inventory.";
+    };
+
     isDesktop = lib.mkOption {
       type = lib.types.bool;
       default = (hostSpec.isDesktop or false) || config.host.desktop.environment != null;

@@ -37,6 +37,7 @@ let
     llmProviderHost = realms.home.services.llm.providerHost;
   };
   storageFacts = import ./storage.nix;
+  displayFacts = import ./displays.nix;
   upsFacts = import ./ups.nix;
   glanceCategoryIds = map (category: category.id) serviceFacts.glanceCategories;
   publicServiceHosts = map (service: service.publicHost) (
@@ -46,6 +47,80 @@ let
     inherit lanDomain publicDomain publicServiceHosts;
   };
   rawHostSpecs = hostFacts.nixosHostSpecs ++ builtins.attrValues hostFacts.darwinHosts;
+  rawHostNames = map (spec: spec.name) rawHostSpecs;
+  displayConnections = lib.concatMap (
+    kvmName:
+    lib.mapAttrsToList (hostName: connection: {
+      inherit
+        connection
+        hostName
+        kvmName
+        ;
+    }) displayFacts.kvms.${kvmName}.connections
+  ) (builtins.attrNames displayFacts.kvms);
+  displayConnectionHostNames = map (entry: entry.hostName) displayConnections;
+  unknownDisplayHosts = lib.subtractLists rawHostNames displayConnectionHostNames;
+  duplicateDisplayHosts = builtins.filter (
+    hostName: builtins.length (builtins.filter (name: name == hostName) displayConnectionHostNames) > 1
+  ) (lib.unique displayConnectionHostNames);
+  validateDisplayConnection =
+    entry:
+    let
+      kvm = displayFacts.kvms.${entry.kvmName};
+      monitorNames = builtins.attrNames kvm.monitors;
+      layoutNames = builtins.attrNames kvm.layout;
+      connectorNames = builtins.attrNames (entry.connection.connectors or { });
+      primary = entry.connection.primary or null;
+    in
+    assert lib.assertMsg (
+      lib.subtractLists monitorNames layoutNames == [ ]
+      && lib.subtractLists layoutNames monitorNames == [ ]
+    ) "KVM '${entry.kvmName}' layout must cover exactly its monitors";
+    assert lib.assertMsg (
+      lib.subtractLists monitorNames connectorNames == [ ]
+    ) "KVM '${entry.kvmName}' host '${entry.hostName}' references unknown monitors";
+    assert lib.assertMsg (
+      primary == null || builtins.elem primary monitorNames
+    ) "KVM '${entry.kvmName}' host '${entry.hostName}' selects an unknown primary monitor";
+    assert lib.assertMsg (
+      builtins.length (builtins.attrValues (entry.connection.connectors or { }))
+      == builtins.length (lib.unique (builtins.attrValues (entry.connection.connectors or { })))
+    ) "KVM '${entry.kvmName}' host '${entry.hostName}' reuses a display connector";
+    entry;
+  checkedDisplayConnections =
+    assert lib.assertMsg (
+      unknownDisplayHosts == [ ]
+    ) "KVM connections reference unknown hosts: ${lib.concatStringsSep ", " unknownDisplayHosts}";
+    assert lib.assertMsg (
+      duplicateDisplayHosts == [ ]
+    ) "Hosts belong to multiple KVMs: ${lib.concatStringsSep ", " duplicateDisplayHosts}";
+    map validateDisplayConnection displayConnections;
+  displaysByHost = builtins.listToAttrs (
+    map (
+      entry:
+      let
+        kvm = displayFacts.kvms.${entry.kvmName};
+        connection = entry.connection;
+      in
+      {
+        name = entry.hostName;
+        value = {
+          kvm = entry.kvmName;
+          drmCard = connection.drmCard or null;
+          scale = connection.scale or null;
+          primary = connection.primary or null;
+          monitors = lib.mapAttrs (
+            name: monitor:
+            monitor
+            // kvm.layout.${name}
+            // {
+              connector = connection.connectors.${name} or null;
+            }
+          ) kvm.monitors;
+        };
+      }
+    ) checkedDisplayConnections
+  );
   builderFacts = import ./builders.nix {
     inherit
       lib
@@ -200,6 +275,8 @@ rec {
     user
     ;
   storage = storageFacts;
+  displays = displayFacts;
+  inherit displaysByHost;
   ups = upsFacts;
 
   sshTicket = sshTicketFacts;

@@ -7,21 +7,22 @@
 }:
 let
   inherit (hostSpec) vnc;
-  displayHardware = hostSpec.hardware;
-  inherit (displayHardware) displays;
-  displayScale = (builtins.head displays).scale;
+  displayConfig = config.host.display;
+  displays = lib.mapAttrsToList (name: display: display // { inherit name; }) displayConfig.monitors;
+  inherit (displayConfig) scale;
+  logicalSize = dimension: display: builtins.floor (display.nativeMode.${dimension} / scale);
 
   maxLogicalExtent =
     position: size:
     lib.foldl' (
-      maximum: display: lib.max maximum (display.logical.${position} + display.logical.${size})
+      maximum: display: lib.max maximum (display.position.${position} + logicalSize size display)
     ) 0 displays;
   # ReFrame combines normalized VNC pointer coordinates with the physical DRM
   # framebuffer dimensions. Its desktop and monitor offsets must therefore be
   # in physical pixels even though GDM and Hyprland use logical coordinates.
-  desktopWidth = builtins.floor (maxLogicalExtent "x" "width" * displayScale);
-  desktopHeight = builtins.floor (maxLogicalExtent "y" "height" * displayScale);
-  monitorPosition = position: display: builtins.floor (display.logical.${position} * displayScale);
+  desktopWidth = builtins.floor (maxLogicalExtent "x" "width" * scale);
+  desktopHeight = builtins.floor (maxLogicalExtent "y" "height" * scale);
+  monitorPosition = position: display: builtins.floor (display.position.${position} * scale);
 
   reframeInstances = lib.listToAttrs (
     lib.imap0 (
@@ -58,21 +59,21 @@ let
   mkReframeConfig =
     spec@{
       connector,
-      logical,
+      nativeMode,
       port,
       ...
     }:
     ''
       [reframe]
-      card=${displayHardware.drmCard}
+      card=${displayConfig.drmCard}
       connector=${connector}
       rotation=0
       desktop-width=${toString desktopWidth}
       desktop-height=${toString desktopHeight}
       monitor-x=${toString (monitorPosition "x" spec)}
       monitor-y=${toString (monitorPosition "y" spec)}
-      default-width=${toString logical.width}
-      default-height=${toString logical.height}
+      default-width=${toString (builtins.floor (nativeMode.width / scale))}
+      default-height=${toString (builtins.floor (nativeMode.height / scale))}
       resize=true
       # Screen Sharing draws its own local cursor. Do not also composite the
       # DRM cursor plane into the captured image.
@@ -103,10 +104,10 @@ let
   # position and scale that Hyprland consumes from inventory after login.
   mkGdmLogicalMonitor = display: ''
     <logicalmonitor>
-      <x>${toString display.logical.x}</x>
-      <y>${toString display.logical.y}</y>
-      ${lib.optionalString display.primary "<primary>yes</primary>"}
-      <scale>${toString display.scale}</scale>
+      <x>${toString display.position.x}</x>
+      <y>${toString display.position.y}</y>
+      ${lib.optionalString (display.name == displayConfig.primary) "<primary>yes</primary>"}
+      <scale>${toString scale}</scale>
       <monitor>
         <monitorspec>
           <connector>${display.connector}</connector>
@@ -115,18 +116,38 @@ let
           <serial>${syntheticEdid.serial}</serial>
         </monitorspec>
         <mode>
-          <width>${toString display.mode.width}</width>
-          <height>${toString display.mode.height}</height>
+          <width>${toString display.nativeMode.width}</width>
+          <height>${toString display.nativeMode.height}</height>
           <rate>${toString syntheticEdid.refreshRate}</rate>
         </mode>
       </monitor>
     </logicalmonitor>
   '';
 in
-assert lib.assertMsg (lib.all (
-  display: display.scale == displayScale
-) displays) "ReFrame pointer mapping currently requires a uniform display scale";
 {
+  assertions = [
+    {
+      assertion = displayConfig != null;
+      message = "ReFrame requires a host display setup";
+    }
+    {
+      assertion = displayConfig.drmCard != null;
+      message = "ReFrame requires a DRM card";
+    }
+    {
+      assertion = scale != null;
+      message = "ReFrame requires a display scale";
+    }
+    {
+      assertion = displayConfig.primary != null;
+      message = "ReFrame requires a primary monitor";
+    }
+    {
+      assertion = lib.all (display: display.connector != null) displays;
+      message = "ReFrame requires a connector for every monitor";
+    }
+  ];
+
   # The KVM removes the monitors' EDIDs when it selects another computer. Use
   # edid-generator's prebuilt standard 128-byte 4K60 EDID firmware blob
   # (monitor identity and timing data, not executable code). NixOS puts it in

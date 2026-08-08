@@ -13,10 +13,15 @@ let
   vncHosts = builtins.filter (host: host.vnc.enable or false) allHostSpecs;
   directHosts = builtins.filter (host: !(host.vnc.sshTunnel or false)) vncHosts;
   tunneledHosts = builtins.filter (host: host.vnc.sshTunnel or false) vncHosts;
+  displaysFor =
+    host:
+    lib.mapAttrsToList (name: display: display // { inherit name; }) (
+      hostInventory.displaysByHost.${host.name}.monitors
+    );
 
   hostNames = lib.sort builtins.lessThan (map (host: host.name) vncHosts);
   displayNames = lib.unique (
-    lib.concatMap (host: map (display: display.name) host.hardware.displays) tunneledHosts
+    lib.concatMap (host: map (display: display.name) (displaysFor host)) tunneledHosts
   );
 
   directHostPatterns = lib.concatStringsSep "|" (
@@ -35,10 +40,8 @@ let
   mkTunneledHostCase =
     host:
     let
-      displays = host.hardware.displays;
-      defaultDisplay = lib.findFirst (
-        display: display.primary or false
-      ) (builtins.head displays) displays;
+      displayConfig = hostInventory.displaysByHost.${host.name};
+      displays = displaysFor host;
       displayCases = lib.concatStringsSep "\n" (
         lib.imap0 (index: display: ''
           ${lib.escapeShellArg display.name})
@@ -49,7 +52,7 @@ let
     in
     ''
       ${lib.escapeShellArg host.name})
-        selected_display="''${requested_display:-${defaultDisplay.name}}"
+        selected_display="''${requested_display:-${displayConfig.primary}}"
         case "$selected_display" in
       ${displayCases}
           *)

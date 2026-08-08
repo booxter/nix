@@ -1,23 +1,25 @@
 # TODO: refactor the module
 {
-  hostSpec,
   lib,
+  osConfig,
   pkgs,
   ...
 }:
 let
   super = "MOD1";
   cmdButton = "MOD4";
-  displays = hostSpec.hardware.displays;
-  displaysByName = lib.listToAttrs (map (display: lib.nameValuePair display.name display) displays);
+  displayConfig = osConfig.host.display;
+  displaysByName = displayConfig.monitors;
+  displays = lib.mapAttrsToList (name: display: display // { inherit name; }) displaysByName;
   inherit (displaysByName) left right;
   renderMonitor =
     display:
     let
-      inherit (display) logical mode;
+      inherit (display) connector nativeMode position;
     in
-    "${display.connector}, ${toString mode.width}x${toString mode.height}@${toString mode.refreshRate}, ${toString logical.x}x${toString logical.y}, ${toString display.scale}";
+    "${connector}, ${toString nativeMode.width}x${toString nativeMode.height}@${toString nativeMode.refreshRate}, ${toString position.x}x${toString position.y}, ${toString displayConfig.scale}";
 in
+assert lib.assertMsg (displayConfig != null) "Hyprland requires a host display setup";
 {
   home.packages = with pkgs; [
     wev
