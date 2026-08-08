@@ -1,4 +1,8 @@
-{ hostInventory }:
+{
+  baseUrl,
+  hostInventory,
+  site,
+}:
 let
   lan = hostInventory.site.lan;
   netboot = lan.netboot;
@@ -58,8 +62,6 @@ let
     ]
   );
 
-  baseUrl = "https://unifi";
-  site = "default";
 in
 {
   inherit

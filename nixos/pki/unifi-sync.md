@@ -20,12 +20,11 @@ to converge the configured site.
 The data path is:
 
 1. Fleet facts are defined in [inv/default.nix](../../inv/default.nix).
-2. [unifi-sync-env.nix](./unifi-sync-env.nix) renders those facts into
-   the environment consumed by the service.
-3. The [unifi-sync module](../_mixins/unifi-sync/default.nix) defines the
-   service and timer, while [unifi-sync.nix](./unifi-sync.nix) supplies the
-   PKI host's inventory and secret.
-4. [cli.py](./pkgs/unifi-sync/src/unifi_sync/cli.py) reads the environment,
+2. [environment.nix](../_mixins/unifi-sync/environment.nix) renders those
+   facts into the environment consumed by the service.
+3. The [unifi-sync module](../_mixins/unifi-sync/default.nix) derives its owner
+   from the realm and defines the secret, service, and timer.
+4. [cli.py](../_mixins/unifi-sync/package/src/unifi_sync/cli.py) reads the environment,
    compares it with UniFi state, and applies only the required changes.
 
 ## Managed State
@@ -59,8 +58,8 @@ recreate or restore it from repository state.
 
 For dry runs, inspect the pki service command and append `--dry-run` before a
 deployment or live run. Add tests for encoding or payload behavior in
-[test_cli.py](./pkgs/unifi-sync/tests/test_cli.py) rather than documenting sample
-encoded values here.
+[test_cli.py](../_mixins/unifi-sync/package/tests/test_cli.py) rather than
+documenting sample encoded values here.
 
 TLS certificate verification is enabled by default. Use `--insecure-tls` only
 for temporary troubleshooting against an untrusted local console certificate.

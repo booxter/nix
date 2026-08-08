@@ -9,7 +9,6 @@
 let
   internalPkiRootCaPath = config.host.internalPki.rootCaCertificate;
   unifiSyncCfg = config.services.unifi-sync;
-  unifiSyncEnv = import ./unifi-sync-env.nix { inherit hostInventory; };
   lan = hostInventory.site.lan;
   wgHome = hostInventory.site.wireguard.home;
   wgHomeExporterPort = 9586;
@@ -25,6 +24,13 @@ let
   wgHomeDnsPeersFile = pkgs.writeText "wg-home-dns-peers.json" (builtins.toJSON wgHomeDnsPeers);
 in
 {
+  assertions = [
+    {
+      assertion = unifiSyncCfg.enable;
+      message = "wg-home-dns-sync must run on the realm's UniFi sync host";
+    }
+  ];
+
   sops.secrets.unifiApiKey.restartUnits = [ "wg-home-dns-sync.service" ];
   sops.templates."unifi-sync.env".restartUnits = [ "wg-home-dns-sync.service" ];
 
@@ -50,8 +56,7 @@ in
       "sops-install-secrets.service"
     ];
     environment = {
-      UNIFI_BASE_URL = unifiSyncEnv.baseUrl;
-      UNIFI_SITE = unifiSyncEnv.site;
+      inherit (unifiSyncCfg.environment) UNIFI_BASE_URL UNIFI_SITE;
     };
     serviceConfig = {
       Type = "oneshot";

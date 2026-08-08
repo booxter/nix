@@ -52,7 +52,6 @@ in
   imports = [
     ./backup.nix
     ./id.nix
-    ./unifi-sync.nix
     ./uptimerobot-sync.nix
     ./wg-home-dns-sync.nix
   ];

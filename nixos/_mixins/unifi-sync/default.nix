@@ -1,20 +1,30 @@
 {
   config,
+  hostInventory,
   lib,
   pkgs,
   ...
 }:
 let
   cfg = config.services.unifi-sync;
+  realmUnifi = hostInventory.realms.${config.host.realm}.services.unifi or null;
+  isSyncHost = realmUnifi != null && realmUnifi.syncHost == config.networking.hostName;
+  package = pkgs.callPackage ./package { };
+  renderedEnvironment = import ./environment.nix {
+    baseUrl = if realmUnifi == null then "" else realmUnifi.baseUrl;
+    inherit hostInventory;
+    site = if realmUnifi == null then "" else realmUnifi.site;
+  };
   payloadHash = builtins.hashString "sha256" (builtins.toJSON cfg.environment);
 in
 {
   options.services.unifi-sync = {
-    enable = lib.mkEnableOption "inventory-backed UniFi network synchronization";
-
-    package = lib.mkOption {
-      type = lib.types.package;
-      description = "unifi-sync package to execute.";
+    enable = lib.mkOption {
+      type = lib.types.bool;
+      default = isSyncHost;
+      readOnly = true;
+      internal = true;
+      description = "Whether this host owns UniFi synchronization for its realm.";
     };
 
     user = lib.mkOption {
@@ -31,14 +41,10 @@ in
 
     environment = lib.mkOption {
       type = with lib.types; attrsOf str;
-      default = { };
-      description = "Environment variables passed to unifi-sync.";
-    };
-
-    environmentFile = lib.mkOption {
-      type = with lib.types; nullOr str;
-      default = null;
-      description = "Optional systemd environment file containing sensitive settings.";
+      default = renderedEnvironment.environment;
+      readOnly = true;
+      internal = true;
+      description = "Inventory rendered for unifi-sync.";
     };
 
     runOnConfigurationChange = lib.mkOption {
@@ -81,12 +87,37 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = realmUnifi != null && realmUnifi.syncHost == config.networking.hostName;
+        message = "UniFi synchronization must run on the sync host assigned by the realm";
+      }
+    ];
+
     users.users.${cfg.user} = {
       isSystemUser = true;
       group = cfg.group;
     };
 
     users.groups.${cfg.group} = { };
+
+    sops.secrets.unifiApiKey = {
+      key = "unifi/api_key";
+      owner = cfg.user;
+      group = cfg.group;
+      mode = "0400";
+      restartUnits = [ "unifi-sync.service" ];
+    };
+
+    sops.templates."unifi-sync.env" = {
+      owner = cfg.user;
+      group = cfg.group;
+      mode = "0400";
+      content = ''
+        UNIFI_API_KEY=${config.sops.placeholder.unifiApiKey}
+      '';
+      restartUnits = [ "unifi-sync.service" ];
+    };
 
     system.activationScripts.unifiSyncApply = lib.mkIf cfg.runOnConfigurationChange {
       deps = [ "etc" ];
@@ -117,14 +148,21 @@ in
 
     systemd.services.unifi-sync = {
       description = "Sync UniFi reservations, DHCP, DNS, and routes";
-      wants = [ "network-online.target" ];
-      after = [ "network-online.target" ];
+      wants = [
+        "network-online.target"
+        "sops-install-secrets.service"
+      ];
+      after = [
+        "network-online.target"
+        "sops-install-secrets.service"
+      ];
       environment = cfg.environment;
       serviceConfig = {
         Type = "oneshot";
         User = cfg.user;
         Group = cfg.group;
-        ExecStart = lib.getExe cfg.package;
+        EnvironmentFile = config.sops.templates."unifi-sync.env".path;
+        ExecStart = lib.getExe package;
         NoNewPrivileges = true;
         PrivateTmp = true;
         ProtectHome = true;
@@ -139,9 +177,6 @@ in
         ];
         RestrictSUIDSGID = true;
         SystemCallArchitectures = "native";
-      }
-      // lib.optionalAttrs (cfg.environmentFile != null) {
-        EnvironmentFile = cfg.environmentFile;
       };
     };
 
